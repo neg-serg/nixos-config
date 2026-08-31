@@ -23,27 +23,32 @@ case "${1:-}" in
     current=-40.0
     [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || echo -40.0) || true
 
-    # Snap to nearest 0.5
-    current=$(awk "BEGIN { printf \"%.1f\", int($current * 2 + ($current < 0 ? -0.5 : 0.5)) / 2 }")
-
-    if [ "$1" = "up" ]; then
-      target=$(awk "BEGIN { printf \"%.1f\", $current + $STEP_DB }")
-      capped=$(awk "BEGIN { printf \"%.1f\", ($target > -30.0) ? -30.0 : $target }")
-    else
-      target=$(awk "BEGIN { printf \"%.1f\", $current - $STEP_DB }")
-      capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
-    fi
-
-    # Write state instantly — QML picks up via stateReader, display updates immediately
-    echo "$capped" > "$STATE"
-
     if [ "$MODE" = "vm" ]; then
-      # VM-side GLM: relative CC steps (vol+/vol-); GLM applies its own step
-      # per message, so the state file only tracks the host-side estimate.
-      if [ "$1" = "up" ]; then glm-midi vol+ >/dev/null 2>&1 || true
-      else glm-midi vol- >/dev/null 2>&1 || true; fi
+      # VM-side GLM: CC20 sets absolute volume with 1 dB resolution
+      # (dB = value - 127, verified against GLM 5.2), so step by whole dB and
+      # send the exact target — the state file then always matches what GLM
+      # actually applies, keeping the quickshell display in sync.
+      cur=$(awk "BEGIN { printf \"%d\", int($current) }")
+      if [ "$1" = "up" ]; then
+        target=$((cur + 1))
+        [ "$target" -gt -20 ] && target=-20
+      else
+        target=$((cur - 1))
+        [ "$target" -lt -95 ] && target=-95
+      fi
+      echo "$target" > "$STATE"
+      glm-midi volume "${target}dB" >/dev/null 2>&1 || true
     else
-      # Kill any pending genlc, schedule new one after debounce
+      # Host path: 0.5 dB steps via genlc (batched by debounce).
+      current=$(awk "BEGIN { printf \"%.1f\", int($current * 2 + ($current < 0 ? -0.5 : 0.5)) / 2 }")
+      if [ "$1" = "up" ]; then
+        target=$(awk "BEGIN { printf \"%.1f\", $current + $STEP_DB }")
+        capped=$(awk "BEGIN { printf \"%.1f\", ($target > -20.0) ? -20.0 : $target }")
+      else
+        target=$(awk "BEGIN { printf \"%.1f\", $current - $STEP_DB }")
+        capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
+      fi
+      echo "$capped" > "$STATE"
       [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
       (
         sleep 0.06
