@@ -234,7 +234,7 @@ systemctl --user status sing-box-proxy
 
 ## Subscription refresh
 
-When you run `proxy refresh`, the script fetches nodes from five subscription URLs:
+When you run `proxy refresh`, the script fetches nodes from seven subscription URLs:
 
 - `https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt` — VLESS/Hysteria2
 - `https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt` — VLESS/Hysteria2
@@ -243,11 +243,18 @@ When you run `proxy refresh`, the script fetches nodes from five subscription UR
 - `https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt` —
   ss/trojan/vmess
 - `https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub` — mixed protocols
+- `https://raw.githubusercontent.com/Au1rxx/free-vpn-subscriptions/main/output/v2ray-base64.txt` —
+  vless/hy2/vmess/ss/trojan (~1.5k links, hourly refresh, HTTP-verified through sing-box before
+  publishing; **base64-encoded**, decoded by the script)
+- `https://raw.githubusercontent.com/vless-reality/vless-reality.github.io/refs/heads/main/.github/links/v2.txt`
+  — vless (daily auto-update)
 
-Each URL is queried directly with a 20-second timeout; when a direct fetch comes back empty and the
-local proxy is running, the URL is retried through `socks5h://127.0.0.1:10808` (25-second timeout).
-Up to `NODE_SAMPLE` (default 400) random links per URL are kept, and xhttp/splithttp (unsupported by
-sing-box 1.13) plus ss-plugin links are filtered out. The script:
+Each URL is fetched through `fetch_sub`: queried directly with a 20-second timeout; when the direct
+fetch comes back **empty** and the local proxy is running, it is retried through
+`socks5h://127.0.0.1:10808` (25-second timeout). A body that contains no plain `vless://`-style
+links is treated as base64 and decoded before filtering (a non-empty base64 body is never replaced
+by the proxy retry). Up to `NODE_SAMPLE` (default 400) random links per URL are kept, and
+xhttp/splithttp (unsupported by sing-box 1.13) plus ss-plugin links are filtered out. The script:
 
 1. Merges them with any fallback nodes from the SOPS secret (fallback always included first).
 1. TCP-scans every unique host:port (asyncio); UDP-based protocols (hysteria/hysteria2/tuic) skip

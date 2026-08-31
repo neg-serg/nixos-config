@@ -1025,6 +1025,25 @@ PYEOF
 # ============================================================
 # refresh — скачать свежие ноды, проверить их, обновить конфиг
 # ============================================================
+# fetch_sub <url> — fetch a node list; decode base64 sources (v2ray-base64
+# subscriptions) and retry via the running proxy when a direct fetch is empty.
+fetch_sub() {
+    local url="$1" body
+    body=$(curl --noproxy '*' -sL --connect-timeout 8 --max-time 20 "$url" 2>/dev/null || true)
+    # Retry through the running proxy only when the direct fetch came back
+    # empty (a base64 body is not empty and must not be clobbered).
+    if [ -z "$body" ] && pgrep -f 'sing-box.*config.json' > /dev/null 2>&1; then
+        body=$(curl -sL --connect-timeout 8 --max-time 25 \
+          --proxy socks5h://127.0.0.1:10808 "$url" 2>/dev/null || true)
+    fi
+    if ! grep -qE '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' <<<"$body"; then
+        body=$(base64 -d <<<"$body" 2>/dev/null || true)
+    fi
+    grep -E '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' <<<"$body" 2>/dev/null | \
+      grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
+      shuf | head -"${NODE_SAMPLE:-400}" || true
+}
+
 refresh() {
     echo "  Fetching fresh nodes..."
     FALLBACK=$(load_fallback)
@@ -1034,21 +1053,10 @@ refresh() {
       "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt" \
       "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt" \
       "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt" \
-      "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub"; do
-        data=$(curl --noproxy '*' -sL --connect-timeout 8 --max-time 20 "$url" 2>/dev/null | \
-          grep -E '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' | \
-          grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
-          shuf | head -"${NODE_SAMPLE:-400}" || true)
-        # raw.githubusercontent.com and some CDNs are blocked for direct
-        # connections in this region; retry through the running proxy (10808)
-        # when the direct fetch comes back empty.
-        if [ -z "$data" ] && pgrep -f 'sing-box.*config.json' > /dev/null 2>&1; then
-            data=$(curl -sL --connect-timeout 8 --max-time 25 \
-              --proxy socks5h://127.0.0.1:10808 "$url" 2>/dev/null | \
-              grep -E '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' | \
-              grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
-              shuf | head -"${NODE_SAMPLE:-400}" || true)
-        fi
+      "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub" \
+      "https://raw.githubusercontent.com/Au1rxx/free-vpn-subscriptions/main/output/v2ray-base64.txt" \
+      "https://raw.githubusercontent.com/vless-reality/vless-reality.github.io/refs/heads/main/.github/links/v2.txt"; do
+        data=$(fetch_sub "$url")
         if [ -n "$data" ]; then
             echo "    $(echo "$data" | wc -l) from $(basename "$url")"
             NEW_NODES="$NEW_NODES"$'\n'"$data"
