@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Genelec SAM volume control — keyboard wheel
+# Genelec SAM volume control — keyboard wheel (hyprland/sway media keys).
+# Host path: genlc via the GLM USB adapter (dockur VM off).
+# VM path:   glm-midi CC over the TCP relay when the adapter is inside the VM.
 # Writes state file instantly for QML sync. Batches genlc calls via debounce.
 set -euo pipefail
 
@@ -7,6 +9,14 @@ STATE=/tmp/genlc-volume
 STEP_DB=0.5
 DEBOUNCE_PID=/tmp/genlc-media.debounce.pid
 DEBOUNCE_MS=60
+
+# Adapter placement probe: genlc discover exits 0 only when the adapter is on
+# the host (dockur VM off). It is cheap (~10ms), so probe on every call.
+if genlc discover >/dev/null 2>&1; then
+  MODE=host
+else
+  MODE=vm
+fi
 
 case "${1:-}" in
   up|down)
@@ -27,16 +37,27 @@ case "${1:-}" in
     # Write state instantly — QML picks up via stateReader, display updates immediately
     echo "$capped" > "$STATE"
 
-    # Kill any pending genlc, schedule new one after debounce
-    [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
-    (
-      sleep 0.06
-      genlc set-volume --volume "$(cat "$STATE")dB" 2>/dev/null
-    ) &
-    echo $! > "$DEBOUNCE_PID"
+    if [ "$MODE" = "vm" ]; then
+      # VM-side GLM: relative CC steps (vol+/vol-); GLM applies its own step
+      # per message, so the state file only tracks the host-side estimate.
+      if [ "$1" = "up" ]; then glm-midi vol+ >/dev/null 2>&1 || true
+      else glm-midi vol- >/dev/null 2>&1 || true; fi
+    else
+      # Kill any pending genlc, schedule new one after debounce
+      [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
+      (
+        sleep 0.06
+        genlc set-volume --volume "$(cat "$STATE")dB" 2>/dev/null
+      ) &
+      echo $! > "$DEBOUNCE_PID"
+    fi
     ;;
   mute)
-    genlc set-volume --volume -95dB 2>/dev/null &
+    if [ "$MODE" = "vm" ]; then
+      glm-midi mute >/dev/null 2>&1 || true
+    else
+      genlc set-volume --volume -95dB 2>/dev/null &
+    fi
     ;;
   *) exit 1 ;;
 esac
