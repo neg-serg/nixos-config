@@ -198,6 +198,19 @@ RowLayout {
             root._anchorVolume();
         }
     }
+    // Confirmation: 2 s after the last commit, send CC20 once more. GLM
+    // applies MIDI with a delay, so the repeat guarantees the target lands
+    // even if the first anchor was dropped. Re-armed by every commit, never
+    // periodic.
+    Timer {
+        id: confirmTimer
+        interval: 2000
+        repeat: false
+        onTriggered: {
+            if (root.busy) { root.confirmTimer.restart(); return; }
+            root._anchorVolume();
+        }
+    }
     function _queueCommit(dB) {
         var target = clamp(Number(dB));
         root.displayDb = target;
@@ -221,9 +234,11 @@ RowLayout {
         // displayDb, so the reload is a display no-op.
         if (midiMode) {
             Quickshell.execDetached(["/bin/sh", "-c", "echo " + clamped + " > /tmp/genlc-volume"]);
-            // Re-arm the one-shot self-heal anchor after every commit so a
-            // final CC20 lands 400 ms after input settles (never periodically).
+            // Re-arm both one-shot anchors after every commit: CC20 lands
+            // 400 ms after input settles (self-heal) and again 2 s later
+            // (confirmation). Never periodic.
             selfHealTimer.restart();
+            confirmTimer.restart();
         }
     }
     function setVolume(dB) {
