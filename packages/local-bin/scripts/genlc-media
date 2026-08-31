@@ -27,7 +27,7 @@ case "${1:-}" in
     # The clamp is applied to BOTH the current state and the target so a stale
     # state (e.g. GLM session restore above -20, or drift while the relay was
     # down) can never push the monitors louder than -20 dB.
-    current=$(awk "BEGIN { c=$current; printf \"%.0f\", c + (c < 0 ? -0.5 : 0.5) }")
+    current=$(awk "BEGIN { c=$current; printf \"%.0f\", c }")
     current=$(awk "BEGIN { c=$current; if (c > -20.0) c=-20.0; if (c < -95.0) c=-95.0; printf \"%.0f\", c }")
     if [ "$1" = "up" ]; then
       target=$(awk "BEGIN { printf \"%.0f\", $current + $STEP_DB }")
