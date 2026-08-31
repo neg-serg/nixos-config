@@ -37,10 +37,10 @@ case "${1:-}" in
     capped=$(awk "BEGIN { c=$target; if (c > -20.0) c=-20.0; if (c < -95.0) c=-95.0; printf \"%.1f\", c }")
 
     if [ "$MODE" = "vm" ]; then
-      # VM path: glm-vol reads the previous state, sends relative C21/C22
-      # steps and writes the new state (display sync via FileView). The
-      # periodic CC20 re-anchor is done by the quickshell widget.
-      /home/neg/.local/bin/glm-vol "$capped" >/dev/null 2>&1 || true
+      # VM path: only write the target — the quickshell widget's FileView
+      # picks it up and sends via the SAME relative C21/C22 path as the wheel
+      # (_commitAndSend), so keyboard and wheel share one code path.
+      echo "$capped" > "$STATE"
     else
       # Host path: genlc set-volume (0.5 dB), batched by debounce.
       # Write state first — QML picks up via stateReader, display updates.
