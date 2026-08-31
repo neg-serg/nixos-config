@@ -211,6 +211,18 @@ RowLayout {
             root._anchorVolume();
         }
     }
+    // Late confirmation: 8 s after the last commit, send CC20 one final
+    // time. Catches slow GLM applies / restarts after the 2 s repeat.
+    // One-shot, re-armed by every commit — still never periodic.
+    Timer {
+        id: lateConfirmTimer
+        interval: 8000
+        repeat: false
+        onTriggered: {
+            if (root.busy) { root.lateConfirmTimer.restart(); return; }
+            root._anchorVolume();
+        }
+    }
     function _queueCommit(dB) {
         var target = clamp(Number(dB));
         root.displayDb = target;
@@ -234,11 +246,13 @@ RowLayout {
         // displayDb, so the reload is a display no-op.
         if (midiMode) {
             Quickshell.execDetached(["/bin/sh", "-c", "echo " + clamped + " > /tmp/genlc-volume"]);
-            // Re-arm both one-shot anchors after every commit: CC20 lands
-            // 400 ms after input settles (self-heal) and again 2 s later
-            // (confirmation). Never periodic.
+            // Re-arm all one-shot anchors after every commit: CC20 lands
+            // 400 ms after input settles (self-heal), again 2 s later
+            // (confirmation), and one last time at 8 s (late confirmation).
+            // Never periodic.
             selfHealTimer.restart();
             confirmTimer.restart();
+            lateConfirmTimer.restart();
         }
     }
     function setVolume(dB) {
