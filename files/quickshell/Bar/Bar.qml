@@ -367,6 +367,12 @@ Scope {
                 // ShaderEffectSource, and unmapping the PanelLayer surfaces right
                 // after that animation crashed Qt (QQuickItemPrivate::dirty inside
                 // QQuickWindow::maybeUpdate). Snap-hide avoids the race entirely.
+                // The unmap itself is also deferred one event-loop turn: hideUi
+                // flips synchronously inside a Hyprland socket Process handler,
+                // and the same emission keeps evaluating bindings (e.g. the
+                // WsIndicator label text after activeWorkspaceName changes).
+                // Unmapping the PanelLayer windows mid-cascade crashed Qt the
+                // same way (QQuickItemPrivate::dirty inside maybeUpdate).
                 function _syncHide() {
                     if (monitorItem.hideRequested) {
                         if (monitorItem.uiHidden) return;
@@ -374,7 +380,10 @@ Scope {
                         barSlideAnim.stop();
                         monitorItem.barSlideAnimating = false;
                         monitorItem.barSlideProgress = 1.0;
-                        monitorItem.uiHidden = true;
+                        Qt.callLater(function () {
+                            if (monitorItem.hideRequested)
+                                monitorItem.uiHidden = true;
+                        });
                     } else {
                         if (monitorItem._hideAfterAnim) {
                             // Cancelled a slide-out mid-way: reverse from the
