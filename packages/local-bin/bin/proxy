@@ -924,6 +924,8 @@ if not open_keys:
     print("  ERROR: no reachable nodes"); sys.exit(1)
 
 # --- e2e probe: single-node sing-box per open candidate, curl gstatic == 204
+import random
+random.shuffle(open_keys)  # fair e2e sample across all sources, not first-N sorted hosts
 candidates = [k for k in open_keys[:e2e_cap] if parse_outbound(cands[k][1]) is not None]
 print("  E2E probing up to " + str(len(candidates)) + " open nodes...")
 
