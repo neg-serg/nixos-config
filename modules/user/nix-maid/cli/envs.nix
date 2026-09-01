@@ -67,6 +67,10 @@ in
     XSERVERRC = "${configHome}/xinit/xserverrc";
     XZ_DEFAULTS = "-T 0";
     ZDOTDIR = lib.mkForce "${configHome}/zsh";
+    # glib for native non-Nix VSTs (u-he Diva et al.) loaded by REAPER/Renoise:
+    # the .so ships against libgio/libgobject, which are not in the default
+    # loader path on NixOS.
+    LD_LIBRARY_PATH = lib.mkForce "${pkgs.glib.out}/lib";
 
     # XDG compliance (xdg-ninja fixes)
     ANDROID_AVD_HOME = "${dataHome}/android/avd";
