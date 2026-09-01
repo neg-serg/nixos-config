@@ -18,6 +18,11 @@ ConnectivityCapsule {
     property color accentBase: Color.saturate(Theme.accentPrimary, Theme.vpnAccentSaturateBoost)
     property color accentColor: Color.desaturate(accentBase, Theme.vpnDesaturateAmount)
 
+    // The stacked two-line column (14px rows at 11px font) must not inflate
+    // the capsule beyond the bar strip: cap at the uniform capsule height so
+    // the readout fits the bar instead of overflowing/clipping at the screen.
+    implicitHeight: root.uniformCapsuleHeight
+
     Component.onCompleted: {
         if (ConnectivityState) {
             // Initialization verified
