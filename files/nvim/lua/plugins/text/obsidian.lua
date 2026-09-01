@@ -38,6 +38,14 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
 
                 link={style='wiki', prepend_note_path=true},
                 attachments={folder=''},
+                -- Simple [ ] <-> [x] toggle on <C-t>. Obsidian's default cycle
+                -- [ ]->[~]->[!]->[>]->[x] never marked tasks done (felt "strange"),
+                -- and create_new would turn plain lines into checkboxes.
+                checkbox={
+                    enabled=true,
+                    create_new=false,
+                    order={' ', 'x'},
+                },
                 ui={enable=false}, -- fk_markdown.nvim handles rendering
                 daily_notes={
                     folder='',
@@ -55,6 +63,19 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
                 vim.notify('Yanked: ' .. link)
             end
 
+            -- Toggle only real task checkboxes: [ ] <-> [x]. Other lines are
+            -- left untouched so <C-t> never rewrites unrelated list items.
+            local function toggle_checkbox()
+                local line = vim.api.nvim_get_current_line()
+                local state = line:match('%[(.)%]')
+                -- [ ] / [x] plus legacy Obsidian states [~] [!] [>] (normalized by toggle)
+                if state and (state == ' ' or state == 'x' or state == '~' or state == '!' or state == '>') then
+                    vim.cmd('Obsidian toggle_checkbox')
+                else
+                    vim.notify('No task checkbox on this line', vim.log.levels.INFO)
+                end
+            end
+
             local function browse_media()
                 Snacks.picker.files({
                     cwd = vim.fn.expand('~/notes'),
@@ -69,7 +90,7 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
                 vim.keymap.set('n', '<C-S-i>', '<Cmd>Obsidian paste_img<CR>', opts)
                 vim.keymap.set('n', '<C-a>', '<Cmd>Obsidian tags<CR>', opts)
                 vim.keymap.set('n', '<S-m>', browse_media, opts)
-                vim.keymap.set('n', '<C-t>', '<Cmd>Obsidian toggle_checkbox<CR>', opts)
+                vim.keymap.set('n', '<C-t>', toggle_checkbox, opts)
                 vim.keymap.set('n', '<C-y>', yank_notelink, opts)
                 vim.keymap.set('n', '<leader>b', '<Cmd>Obsidian backlinks<CR>', opts)
                 -- New
