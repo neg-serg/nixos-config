@@ -133,8 +133,10 @@ ConnectivityCapsule {
             icon: root.currentLinkIconName
             color: root.linkIconColor
             screen: root.screen
-            labelRef: root.labelItem
-            alignTarget: root.labelItem
+            // In stacked (two-row) mode the label is hidden; baseline-aligning
+            // to it would push the icon out of alignment, so center instead.
+            labelRef: Theme.networkCapsuleStacked ? null : root.labelItem
+            alignTarget: Theme.networkCapsuleStacked ? null : root.labelItem
             outerHorizontalMargin: root.iconHorizontalMargin
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -143,8 +145,7 @@ ConnectivityCapsule {
     // Stacked two-row throughput display (RX top, TX bottom)
     Column {
         visible: Theme.networkCapsuleStacked && root.throughputText && root.throughputText.length > 0
-        spacing: -2
-        y: 2
+        spacing: 0
 
         Text {
             text: root._rxPlain
