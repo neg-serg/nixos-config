@@ -50,6 +50,9 @@ in
           General.Enable = "Source,Sink,Media,Socket";
         };
       };
+
+      # Adwaita Bluetooth — GNOME-style BT device manager (tray applet + daemon)
+      services.adw-bluetooth.enable = true;
     })
   ];
 }
