@@ -417,8 +417,8 @@ Notes:
 - A user service auto-selects the RNNoise source as the default input on login when enabled.
 - You can still manually choose sources in your desktop environment if you prefer.
 
-Russian docs: `docs/howto/build-optimization.ru.md`. TidalCycles docs live in the private notes repo
-(~/notes/music/tidal/).
+Russian docs: `docs/howto/build-optimization.ru.md`. SuperCollider live-coding docs live in the
+private notes repo (~/notes/music/supercollider/).
 
 ## LAN Audio Access (MPD + PipeWire)
 

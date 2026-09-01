@@ -248,7 +248,7 @@ hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+v", hl.dsp.exec_cmd("~/.local/bin/scree
 -- Synths: run-or-raise via packages/local-bin/bin/synth (headless carla + wiring)
 hl.bind(M4 .. "+" .. SH .. "+s", hl.dsp.exec_cmd("synth Surge_XT"))
 hl.bind(M4 .. "+" .. SH .. "+l", hl.dsp.exec_cmd("synth LegendHZ"))
-hl.bind(M4 .. "+" .. SH .. "+t", hl.dsp.exec_cmd("tidalctl demo"))
+hl.bind(M4 .. "+" .. SH .. "+t", hl.dsp.exec_cmd("sc-live")) -- raw SuperCollider live-coding scene (scnvim)
 hl.bind(M1 .. "+q", hl.dsp.exec_cmd(menu))
 hl.bind("Caps_Lock", hl.dsp.exec_cmd("swayosd-client --caps-lock"))
 hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))

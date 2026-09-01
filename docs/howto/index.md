@@ -19,8 +19,8 @@ isn't a step-by-step runbook.
 
 - Build performance analysis (RU): [build-optimization.ru.md](./build-optimization.ru.md)
 
-- TidalCycles setup — moved to the private notes repo (~/notes/music/tidal/), kept out of the public
-  tree on purpose
+- SuperCollider live coding (raw SC, scnvim) — moved to the private notes repo
+  (~/notes/music/supercollider/), kept out of the public tree on purpose
 
 - carlactl — console VST router through headless Carla (list/run/route, fzf):
   [carlactl.ru.md](./carlactl.ru.md)

@@ -642,14 +642,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tidalctl"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "libc",
-]
-
 [[package]]
 name = "tokio"
 version = "1.53.1"

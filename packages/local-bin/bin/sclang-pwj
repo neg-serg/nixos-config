@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# sclang-pwj — run sclang under PipeWire-JACK so scsynth can boot.
+# scnvim launches sclang via this wrapper (sclang.cmd), giving the raw
+# SuperCollider live-coding session a working audio backend (JACK ports
+# are linked to game-stereo by the supercollider-link user service).
+set -euo pipefail
+export LD_LIBRARY_PATH="/run/current-system/sw/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec pw-jack sclang "$@"

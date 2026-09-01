@@ -84,7 +84,7 @@
 - `pitch-f0 FILE [--notes] [--hop MS] [--model tiny|full]` — f0-кривая (torchcrepe, CPU ~14x
   realtime на tiny; --notes добавляет MIDI-ноты). Выход: `time f0 [midi]` на кадр.
 
-## Shabda — Freesound-паки для Tidal/Strudel
+## Shabda — Freesound-паки для Strudel
 
 - `shabda` — хелпер для [shabda.ndre.gr](https://shabda.ndre.gr) (банки Freesound, лицензии
   CC0/BY/BY-NC, генерируются по имени на лету).
@@ -92,8 +92,7 @@
   - `shabda 808` — открыть сайт + скопировать в буфер `!reslist "…/808.json…"` (Tidal);
   - `shabda -s amen` — `samples('…?strudel=1')` (Strudel);
   - `shabda -l amen` — только вывести строку (без браузера/буфера).
-- В nvim (.tidal): `<leader>tS` — ввести имя пака, строка `!reslist …` вставляется в буфер и
-  отправляется в Tidal (требует запущенного GHCi, <leader>tl).
+- В Strudel: вставить `!reslist …` строку в браузерный паттерн (Tidal-стек снят с системы).
 - Пример: `shabda -l 808` → `!reslist "https://shabda.ndre.gr/808.json?licenses=by,cc0,by-nc"`.
 
 ## Прочее
@@ -103,8 +102,8 @@
 - STT: `whisperx FILE` — распознавание + диаризация (модель small, ru). Проверено 2026-08-28.
 - Транскрипция мелодии: `mt3 file.wav [out.mid]` (MR-MT3, чекпоинт `/zero/ai/music/mt3`);
   `basic-pitch OUTDIR file.wav --save-midi` (ONNX-бэкенд — TF saved_model битый на TF 2.21).
-- Генерация MIDI: `amt-generate` удалён (2026-08-28, решение пользователя —
-  «херня какая-то»). Транскрипция — `mt3`/`basic-pitch` (см. выше).
+- Генерация MIDI: `amt-generate` удалён (2026-08-28, решение пользователя — «херня какая-то»).
+  Транскрипция — `mt3`/`basic-pitch` (см. выше).
 - Картинки: `rembg i in.png out.png` (u2net дефолт, модели в `/zero/ai/imgproc`; bria-rmbg тоже
   есть); `triposr img.png --output-dir out` (картинка → 3D-меш OBJ, модель в `/zero/ai/3d`).
 - Все обёртки в `packages/local-bin/bin/`; после изменений — `nh os switch`.

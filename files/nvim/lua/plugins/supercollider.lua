@@ -1,7 +1,8 @@
 -- SuperCollider live coding: edit .scd files and evaluate into a sclang
--- session (scnvim). The audio engine (SuperDirt) runs separately via
--- `tidalctl start`; this REPL is for iterating on SynthDefs/UGens before
--- putting them into ~/notes/music/supercollider/synths.scd.
+-- session (scnvim). The engine runs INSIDE this session: sclang is launched
+-- via the sclang-pwj wrapper (pw-jack), so s.boot starts scsynth as a
+-- PipeWire-JACK client — no separate engine service, no TidalCycles.
+-- Live scene:  sc-live  (opens ~/notes/music/supercollider/live.scd)
 return {
   {
     'davidgranstrom/scnvim',
@@ -10,10 +11,11 @@ return {
       local scnvim = require 'scnvim'
       local map = scnvim.map
       scnvim.setup({
-        -- sclang is found via PATH (system supercollider); no server boot —
-        -- the engine's scsynth (tidalctl) owns 57110, so we stay language-only.
-        -- Keymaps are applied buffer-locally on FileType supercollider, so
-        -- Tidal's <M-CR> semantics for .tidal files stay untouched.
+        -- Launch sclang through the pw-jack wrapper so scsynth can boot with
+        -- a working audio backend (JACK ports linked by supercollider-link).
+        sclang = {
+          cmd = vim.fn.expand '~/.local/bin/sclang-pwj',
+        },
         keymaps = {
           ['<M-CR>'] = map('editor.send_line', { 'n', 'i' }),
           ['<leader>ss'] = map('editor.send_selection', 'x'),
