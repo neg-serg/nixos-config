@@ -7,7 +7,9 @@
       "iconPadding": 0,
       "gapTightenPx": 8,
       "iconHorizontalMargin": 0,
-      "stacked": true
+      // Single-line RX/TX readout (e.g. "20.7/117 K"); stacked (two tiny dim
+      // rows) was practically invisible on the 4K bar.
+      "stacked": false
     }
   }
 }
