@@ -3,6 +3,7 @@ import qs.Components
 import qs.Services as Services
 import qs.Settings
 import "../../Helpers/RichText.js" as Rich
+import "../../Helpers/TooltipText.js" as TooltipText
 import "../../Helpers/WsIconMap.js" as WsMap
 import "../../Helpers/WorkspaceIcons.js" as WorkspaceIcons
 import Quickshell
@@ -62,6 +63,38 @@ CenteredCapsuleRow {
     // Detect terminal workspace
     readonly property var _terminalIcons: ["\uf120", "\ue795", "\ue7a2"]
     property bool isAlphaWs: (wsName || "").toLowerCase().indexOf("alpha") !== -1
+
+    // Short description per workspace name (icon prefix stripped).
+    readonly property var _wsDescriptions: ({
+        "term": "Терминалы и консоль",
+        "web": "Браузер и веб",
+        "dev": "Разработка",
+        "games": "Игры",
+        "doc": "Документы и заметки",
+        "vid": "Видео",
+        "obs": "Стриминг и запись",
+        "pic": "Графика и изображения",
+        "vm": "Виртуальные машины",
+        "wine": "Windows / Wine",
+        "patchbay": "Звуковые соединения",
+        "daw": "Аудио и DAW",
+        "dw": "Dwarf Fortress",
+        "keyboard": "Клавиатуры и мыши",
+        "im": "Мессенджеры",
+        "remote": "Удалённый доступ",
+        "notes": "Заметки",
+        "vital": "Vital — синтезатор",
+        "rack": "VCV Rack — модульный синтез"
+    })
+    readonly property string _tooltipText: (function() {
+        var key = (restName || "").toLowerCase();
+        var desc = root._wsDescriptions[key] || "";
+        var hints = [];
+        if (desc) hints.push(desc);
+        if (submapName) hints.push("Режим: " + submapName);
+        hints.push("Клик — обзор рабочих столов");
+        return TooltipText.compose("Рабочий стол", String(wsId >= 0 ? wsId : "—"), hints);
+    })()
     property bool isTerminalWs: (function(){
         const rn = (restName || "").toLowerCase().trim();
         if (iconGlyph && _terminalIcons.indexOf(iconGlyph) !== -1) return true;
@@ -181,4 +214,9 @@ CenteredCapsuleRow {
         Services.HyprlandWatcher.refreshBinds();
     }
 
+    PanelTooltip {
+        targetItem: root
+        text: root._tooltipText
+        visibleWhen: root.hovered
+    }
 }

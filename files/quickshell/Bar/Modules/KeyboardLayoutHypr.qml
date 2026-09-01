@@ -3,9 +3,20 @@ import Quickshell
 import qs.Components
 import qs.Settings
 import qs.Services as Services
+import "../../Helpers/TooltipText.js" as TooltipText
 
 CenteredCapsuleRow {
     id: kb
+
+    // Current layout + device on hover; click switches to the next layout.
+    readonly property string _tooltipText: (function() {
+        var hints = [];
+        var dev = mainDeviceName || deviceName || "";
+        if (dev) hints.push("Устройство: " + dev);
+        if (submapName) hints.push("Режим: " + submapName);
+        hints.push("Клик — следующая раскладка");
+        return TooltipText.compose("Раскладка", layoutText, hints);
+    })()
 
     // Use text glyph inside the label instead of a separate inline icon
     property bool showKeyboardIcon: false
@@ -325,5 +336,11 @@ CenteredCapsuleRow {
                     kb.layoutText = txt;
             }
         } catch (e) { console.warn("[KeyboardLayoutHypr]", e) }
+    }
+
+    PanelTooltip {
+        targetItem: kb
+        text: kb._tooltipText
+        visibleWhen: kb.hovered
     }
 }
