@@ -31,6 +31,10 @@ PanelOverlaySurface {
     property bool running: false
     property var downHistory: []
     property var upHistory: []
+    // Capsule's on-screen x; the popup opens bottom-left, aligned with it.
+    property real triggerX: 0
+    // First-open latch: the flow stream stays alive across open/close.
+    property bool _procStarted: false
 
     readonly property bool _active: downBps > 1 || upBps > 1
     readonly property real _s: Theme.scale(screen) > 0 ? Theme.scale(screen) : 1.0
@@ -46,7 +50,13 @@ PanelOverlaySurface {
     borderWidth: 0
     width: Math.round(470 * root._s)
     height: Math.round(338 * root._s)
-    anchors.centerIn: parent
+    // Bottom-left, just above the bar, left-aligned with the network capsule.
+    anchors {
+        left: parent.left
+        bottom: parent.bottom
+        leftMargin: Math.max(4 * root._s, root.triggerX)
+        bottomMargin: Math.round(36 * root._s)
+    }
 
     // ── data engine: flow -json-stream ──────────────────────────────
     ProcessRunner {
@@ -68,17 +78,18 @@ PanelOverlaySurface {
     }
 
     function start() {
-        root.downHistory = [];
-        root.upHistory = [];
-        root.peakDown = 0;
-        root.peakUp = 0;
+        // Keep the history/peaks across open/close — only the flow stream is
+        // (re)started once; samples keep appending while the popup is closed.
         root.running = true;
-        flowProc.start();
+        if (!root._procStarted) {
+            root._procStarted = true;
+            flowProc.start();
+        }
     }
 
     function stop() {
         root.running = false;
-        flowProc.stop();
+        // flowProc intentionally stays alive so data is not lost on close.
     }
 
     function _onSample(o) {
