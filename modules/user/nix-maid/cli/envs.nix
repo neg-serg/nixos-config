@@ -86,6 +86,15 @@ in
     W3M_DIR = "${dataHome}/w3m";
   };
 
+  # The same glib LD_LIBRARY_PATH for the systemd user manager: VST hosts
+  # (Renoise, REAPER, …) launched from the graphical session inherit the user
+  # manager env, and a foreign runtime import-environment can clobber
+  # environment.variables. glib.out holds libgio/libgobject needed by native
+  # u-he VSTs (Diva.64.so etc.).
+  systemd.user.settings.Manager.Environment = [
+    "LD_LIBRARY_PATH=${pkgs.glib.out}/lib"
+  ];
+
   # Activation script to ensure profile links (legacy support)
   system.activationScripts.negProfileLinks = lib.stringAfter [ "users" ] ''
     echo "Ensuring legacy profile links for user neg..."
