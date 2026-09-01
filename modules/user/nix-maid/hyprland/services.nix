@@ -26,6 +26,15 @@ let
         PY
       '';
   };
+
+  # Scratchpad geometry persistence daemon (python)
+  scratchpadGeometry = pkgs.writers.writePython3Bin "scratchpad-geometry" {
+    flakeIgnore = [
+      "E203"
+      "E501"
+      "W503"
+    ];
+  } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
 in
 {
   packages = [
@@ -44,6 +53,8 @@ in
     hyprWinList # Hyprland window list via vicinae
 
     pkgs.hyprscratch # sashetophizika/hyprscratch with event-listener keep-alive fix
+
+    scratchpadGeometry # persist scratchpad geometry across show/hide cycles
 
     # hyprmusic script
     (pkgs.writeScriptBin "hyprmusic" ''
@@ -157,6 +168,21 @@ in
       after = [ "hyprland-session.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.hyprscratch} init spotless";
+        Restart = "always";
+        RestartSec = "2";
+      };
+    };
+
+    # Scratchpad geometry persistence: saves window geometry on move/resize
+    # (via event stream + poll) and reapplies it when a special workspace shows.
+    # Exits when the IPC socket dies; Restart=always brings it back.
+    scratchpad-geometry = {
+      description = "Persist Hyprland scratchpad geometry across show/hide cycles";
+      wantedBy = [ "hyprland-session.target" ];
+      bindsTo = [ "hyprland-session.target" ];
+      after = [ "hyprland-session.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe scratchpadGeometry}";
         Restart = "always";
         RestartSec = "2";
       };
