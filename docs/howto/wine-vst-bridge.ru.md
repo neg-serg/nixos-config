@@ -3,7 +3,7 @@
 > Исследование 2026-08-20, собрано субагентами по первоисточникам (GitHub, nixpkgs 26.05, исходники
 > Carla). Нерешённые места помечены [unverified] — требуют живой проверки на odin. Контекст: NixOS
 > 26.05, wineWow64Packages.stable (wine 11), PipeWire (pw-jack, без jackd), Carla из nixpkgs
-> (JACK-only, wine-мост НЕ собран), CLI carlactl для headless-роутинга нативных плагинов.
+> (JACK-only, wine-мост НЕ собран).
 
 ## Таблица сравнения
 
@@ -24,12 +24,15 @@
 \*CLI-оценка: 0 = нет, 1 = есть CLI-конвертация, но нужен GUI-хост, 2 = скриптуемый CLI-поток, 3 =
 чистый CLI end-to-end.
 
-## Рекомендация для odin (ПРОВЕРЕНО end-to-end 2026-08-20)
+## Рекомендация для odin (рабочий вариант 2026-09-01)
 
-**Carla wine bridge — НЕ использовать**: сборка мостов (`make win32/win64`) сломана апстримом в
-2.5.10 и master: `OBJS_arch` неполон, make-переменные затирают флаги, winegcc требует multilib,
-mingw в nativeBuildInputs отравляет нативную сборку (CC/CXX). Вместо этого — **yabridge** (уже в
-nixpkgs, стоит на odin):
+**Carla и carlactl удалены** (коммит «Remove Carla stack»): **yabridge** (nixpkgs, стоит на odin,
+5.1.1) делает Windows-VST обычными Linux VST3/VST2 в `~/.vst3/yabridge` / `~/.vst/yabridge`, а их
+загружает **REAPER** (уже в systemPackages) как обычные VST. VSTPlugin в SuperCollider НЕ подходит
+для yabridge-мостов (search black-list'ит их: yabridge-host требует внешний хост-процесс, VSTPlugin
+dlopen'ит .so напрямую) — поэтому хост именно REAPER.
+
+Установка Windows-VST (все в префикс `vstplugins`):
 
 1. Префикс VST под wine 9.21 (yabridge host): `wineboot -u` из
    `/nix/store/...-wine-wow64-yabridge-9.21/bin/wineboot`.
@@ -37,15 +40,10 @@ nixpkgs, стоит на odin):
    `/gamez/main/wineapps/reaplugs236_x64-install.exe /S`).
 1. `mkdir -p ~/.local/share/yabridge && ln -sf /run/current-system/sw/lib/libyabridge* ~/.local/share/yabridge/`
    → `yabridgectl add "<prefix>/drive_c/Program Files/VSTPlugins/<App>" && yabridgectl sync`.
-1. `carlactl list | grep -i rea` → `carlactl run vst2:reaeq-standalone` → headless Carla с плагином.
 
-Фиксы в carlactl (коммит «Route yabridge plugins through carla frontend»):
-
-- yabridge-плагины генерируются через фронтенд-`.carxp` (`carla -n`), а не через in-process C API —
-  libyabridge падает в asio epoll_reactor при `add_plugin` (SIGSEGV).
-- `NIX_PROFILES` экспортируется в env запуска (nixpkgs-сборка yabridge ищет libs через него).
-
-Проверено: ReaEQ (ReaPlugs) → yabridge 5.1.1 → Carla headless → порты Carla:output_FL/FR в PipeWire.
+Запуск: `synth LegendHZ` (или любой другой yabridge-плагин) открывает REAPER — плагин появляется в
+списке VST3 на FX-цепочке трека. Проверка статуса мостов: `yabridgectl status`. Проверено: ReaEQ
+(ReaPlugs) → yabridge 5.1.1 → REAPER (обычный VST2).
 
 ## Ключевые источники
 
@@ -80,7 +78,7 @@ nixpkgs, стоит на odin):
   `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` → `Program Files/Common Files/VST3/kiloHearts/` (48
   плагинов: Snap Heap, Disperser, Multipass, kHs-модули; Phase Plant удалён 2026-08-25 (не
   поднимался в yabridge — «failed to start wine host»-класс проблем, см. ниже).
-- После установки: `yabridgectl add <каталог с dll/vst3>` + `yabridgectl sync` + `carlactl list`.
+- После установки: `yabridgectl add <каталог с dll/vst3>` + `yabridgectl sync`; проверить `yabridgectl status`.
 
 ### Legend HZ: «запустите от администратора»
 
@@ -102,27 +100,23 @@ nixpkgs, стоит на odin):
 - **Фикс**: глобальный `WINEPREFIX` убран из `envs.nix` (коммит 8fa747a0); yabridge сам находит
   префикс по расположению `.dll/.vst3` (`vstplugins`). Проверка: `bash -lc 'echo $WINEPREFIX'` пуст.
   После пересборки десктопной сессии нужен релогин (старые процессы держат старый env).
-- **Red/green**: `WINEPREFIX=…/default carla -n LegendHZ.carxp` → «exited unexpectedly» (+45 c);
-  `WINEPREFIX=…/vstplugins` → `Finished initializing '…LegendHZ.vst3'`, хост жив.
+- **Red/green**: `WINEPREFIX=…/default yabridgectl sync` → хост стартует в пустом префиксе;
+  `WINEPREFIX=…/vstplugins` (путь по умолчанию, без глобального WINEPREFIX) →
+  `Finished initializing '…LegendHZ.vst3'`, хост жив.
 
-## Играемая цепочка: carla-jack-single + физическая клавиатура
+## Играемая цепочка: REAPER + yabridge + физическая клавиатура
 
-- Carla GUI (патчбей) НЕ отдаёт MIDI-порты плагинов наружу в этой сборке — для MIDI-входа используем
-  `carla-jack-single` (тот же `.carxp`): порт `Carla:LegendHZ:events-in`.
-- MIDI: `Midi-Bridge:External MIDI:HDSPe24048964 MIDI 1 (capture)` → `Carla:LegendHZ:events-in`
-  (физическая клавиатура, RME MIDI IN; мост строит сам PipeWire, a2jmidid не нужен).
-- Audio: `Carla:LegendHZ:output_1/2` → `game-stereo:playback_FL/FR` (game-stereo → RME
-  playback_AUX2/3).
-- Команды: `pw-link "alsa:seq:default:client_16:capture_0" "Carla:input_0"`;
-  `pw-link "Carla:output_0" "game-stereo:playback_FL"` (имена — object.path, без префикса
-  «LegendHZ:»).
-- **ВНИМАНИЕ (исправлено)**: при запуске Carla ВЕСЬ звук превращался в «кашу» не из-за демо-режима
-  Legend HZ, а из-за увода графа PipeWire на 44.1 kHz: Carla (JACK-клиент) переводил граф на 44.1k,
-  RME HDSPe (48k) становился resampling-«follower» и сыпал xrun'ы
-  (`snd_pcm_avail after recover: Broken pipe`) — от этого «хрипело» всё (mpd/ютуб), а CPU pipewire
-  залипал на ~95%. **Фикс**: в `files/media/pipewire/pipewire.conf.d/clock-rate.conf` оставлена
-  только `default.clock.allowed-rates = [ 48000 ]` (коммит d3758472) — граф залочен на нативной
-  частоте RME. Временный аналог до пересборки: `pw-metadata -n settings 0 clock.force-rate 48000`.
+- Хост — REAPER: `synth LegendHZ` запускает его; на треке FX → VST3 → LegendHZ (yabridge-мост
+  выглядит как обычный VST3).
+- MIDI: физическая клавиатура (RME MIDI IN) → REAPER: включить в настройках MIDI-вход (REAPER видит
+  ALSA-клиентов; `Midi-Bridge:External MIDI:HDSPe…` — порт RME). SuperCollider → REAPER:
+  `~/.local/bin/midi-bridge` (SC MIDI out0 → REAPER midi in).
+- Audio: REAPER выводит через JACK/PipeWire; `pw-link` рулит `reaper:out_1/2` →
+  `game-stereo:playback_FL/FR` (game-stereo → RME playback_AUX2/3).
+- **ВНИМАНИЕ (исправлено)**: если график PipeWire «съезжает» на 44.1 kHz и всё хрипит — в
+  `files/media/pipewire/pipewire.conf.d/clock-rate.conf` оставлена только
+  `default.clock.allowed-rates = [ 48000 ]` (коммит d3758472) — граф залочен на нативной частоте
+  RME. Временный аналог до пересборки: `pw-metadata -n settings 0 clock.force-rate 48000`.
 
 ## Osmose (Expressive E) + MPE + Legend HZ (research 2026-08-21)
 
@@ -171,15 +165,11 @@ nixpkgs, стоит на odin):
   `nix eval nixpkgs#odyssey.meta.description`). Настоящий open-source ARP-Odyssey-стиль VA synth —
   Odin 2 (`pkgs.odin2`), но пользователь его не захотел — строка `pkgs.odyssey` остаётся в конфиге
   как есть (осознанное решение, коммит-реверт ceba4734).
-- **Переключение**: `carlactl list` — что стоит; `carlactl play vst3:<имя>` — запустить в
-  carla-jack-single и автоматически заруоутить (Osmose + RME MIDI → events-in, аудио → game-stereo);
-  `carlactl stop` — остановить. carlactl play сам останавливает предыдущий движок (через PIDFILE).
-- **Несколько синтов одновременно (Tidal)**: `carlactl add vst3:<имя>` запускает доп. синт, не
-  останавливая остальные, и фокусирует Osmose/RME на нём; `carlactl map` назначает слоты
-  SuperCollider MIDI (out0..N) на запущенные синты по порядку: Tidal `s "synth1"` → первый синт,
-  `s "synth2"` → второй. Слотов 3 (SC MIDIOut ограничен ALSA-назначениями: RME + Osmose×2). Важно:
-  для seq-bridge MIDI портов pw-link работает только по АЛИАСАМ портов (`Carla:<имя>:events-in`,
-  `SuperCollider:outN`), не по object.path.
+- **Переключение**: `synth <имя>` — run-or-raise: Surge_XT → нативный standalone, Vital →
+  vital-standalone, остальные (LegendHZ, kiloHearts, …) → REAPER (yabridge-плагин на FX-цепочке).
+- **Несколько синтов одновременно**: в REAPER просто добавляются треки/FX; слоты SuperCollider
+  MIDI (out0..N) назначаются через `~/.local/bin/midi-bridge` (SC → REAPER midi in) или a2jmidid.
+  Слотов 3 (SC MIDIOut ограничен ALSA-назначениями: RME + Osmose×2).
 
 ## VCV Rack (лицензия + окно; research 2026-08-21/25)
 
