@@ -23,7 +23,6 @@ with lib;
         };
       };
       spotify.enable = mkBool "enable Spotify stack (spotifyd daemon, spotify-tui)" false;
-      carlaLoopback.enable = mkBool "enable virtual loopback sink for Carla" false;
       cider.enable = mkBool "enable Cider (Apple Music client)" false;
       spicetify.enable = mkBool "enable Spicetify (Spotify customization)" false;
       beets = {

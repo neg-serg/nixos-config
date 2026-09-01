@@ -41,14 +41,12 @@ let
     pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
 
     # -- Patchbays & Plugin Hosts --
-    pkgs.carla # Full-featured JACK/PipeWire patchbay + LV2/VST plugin host
     # zestbay moved to distrobox (CXX-Qt broken in Nix): `distrobox-enter arch-zestbay -- zestbay`
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
     pkgs.neg.zest # CLI for ZestBay plugin management: zest list/add/rm/ls
-    pkgs.neg.carlactl # console VST router via headless Carla: carlactl list/run/route
     pkgs.neg.midi-transcribe # audio->MIDI transcription: midi-transcribe <file.mp3> (hFT-Transformer, CPU)
-    pkgs.jack-keyboard # virtual MIDI keyboard for JACK/PipeWire — plays into Carla/VST MIDI ports
-    pkgs.a2jmidid # ALSA→JACK MIDI bridge (SuperCollider MIDIOut → PipeWire → Carla/VSTs)
+    pkgs.jack-keyboard # virtual MIDI keyboard for JACK/PipeWire — plays into SC/VST MIDI ports
+    pkgs.a2jmidid # ALSA→JACK MIDI bridge (SuperCollider MIDIOut → PipeWire → VSTs via yabridge)
     # -- Noise Processing --
     pkgs.noisetorch # PulseAudio/PipeWire microphone noise gate
     pkgs.rnnoise # WebRTC RNNoise denoiser CLI for mic chains
@@ -139,7 +137,7 @@ in
 
     # VCV Rack standalone — on-demand: systemctl --user start rack.
     # Runs under pw-jack (JACK via PipeWire) so it joins the same audio graph
-    # as Carla/SuperCollider/Vital and can be patched with Carla/helvum/pw-link.
+    # as SuperCollider/Vital and can be patched with helvum/pw-link.
     # Not autostarted; WAYLAND_DISPLAY is required for the GLFW window on Hyprland.
     systemd.user.services.rack = {
       description = "VCV Rack modular synthesizer (pw-jack)";

@@ -77,7 +77,7 @@ local cls = {
   pic         = "^swayimg$",
   vm          = "^(.virt-manager-wrapped|qemu-system-x86_64|Qemu-system-x86_64)$",
   wine        = "^(com.usebottles.bottles)$",
-  patchbay    = "^(zestbay|Carla2)$",
+  patchbay    = "^zestbay$",
   daw         = "^(Renoise)$",
   vital       = "^(Vital)$",
   dw          = "^(org.nicotine_plus.Nicotine)$",
@@ -245,7 +245,7 @@ hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grim -l 0 -g "$(slurp)" "$shot" && pic-info "$shot"'))
 hl.bind(M4 .. "+" .. SH .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec screen"))
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec area"))
--- Synths: run-or-raise via packages/local-bin/bin/synth (headless carla + wiring)
+-- Synths: run-or-raise via packages/local-bin/bin/synth (VSTPlugin in SC / yabridge)
 hl.bind(M4 .. "+" .. SH .. "+s", hl.dsp.exec_cmd("synth Surge_XT"))
 hl.bind(M4 .. "+" .. SH .. "+l", hl.dsp.exec_cmd("synth LegendHZ"))
 hl.bind(M4 .. "+" .. SH .. "+t", hl.dsp.exec_cmd("sc-live")) -- raw SuperCollider live-coding scene (scnvim)
@@ -337,9 +337,7 @@ end)
 hl.bind(M1 .. "+e", hl.dsp.submap("special"))
 hl.define_submap("special", "reset", function()
   submap_resets()
-  binde_reset("q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
   binde_reset("d", hl.dsp.exec_cmd('raise --match "class:regex=^org\\.nicotine_plus\\.Nicotine$" --launch "nicotine"'))
-  binde_reset(SH .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
   binde_reset(SH .. "+l", hl.dsp.exec_cmd("hyprctl switchxkblayout all 0")) -- hyprlock temporarily disabled (2026-08-31)
   binde_reset("e", hl.dsp.window.float({ action = "toggle" }))
   binde_reset("f", hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }))

@@ -78,7 +78,8 @@ dlopen'ит .so напрямую) — поэтому хост именно REAPE
   `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` → `Program Files/Common Files/VST3/kiloHearts/` (48
   плагинов: Snap Heap, Disperser, Multipass, kHs-модули; Phase Plant удалён 2026-08-25 (не
   поднимался в yabridge — «failed to start wine host»-класс проблем, см. ниже).
-- После установки: `yabridgectl add <каталог с dll/vst3>` + `yabridgectl sync`; проверить `yabridgectl status`.
+- После установки: `yabridgectl add <каталог с dll/vst3>` + `yabridgectl sync`; проверить
+  `yabridgectl status`.
 
 ### Legend HZ: «запустите от администратора»
 
@@ -167,9 +168,9 @@ dlopen'ит .so напрямую) — поэтому хост именно REAPE
   как есть (осознанное решение, коммит-реверт ceba4734).
 - **Переключение**: `synth <имя>` — run-or-raise: Surge_XT → нативный standalone, Vital →
   vital-standalone, остальные (LegendHZ, kiloHearts, …) → REAPER (yabridge-плагин на FX-цепочке).
-- **Несколько синтов одновременно**: в REAPER просто добавляются треки/FX; слоты SuperCollider
-  MIDI (out0..N) назначаются через `~/.local/bin/midi-bridge` (SC → REAPER midi in) или a2jmidid.
-  Слотов 3 (SC MIDIOut ограничен ALSA-назначениями: RME + Osmose×2).
+- **Несколько синтов одновременно**: в REAPER просто добавляются треки/FX; слоты SuperCollider MIDI
+  (out0..N) назначаются через `~/.local/bin/midi-bridge` (SC → REAPER midi in) или a2jmidid. Слотов
+  3 (SC MIDIOut ограничен ALSA-назначениями: RME + Osmose×2).
 
 ## VCV Rack (лицензия + окно; research 2026-08-21/25)
 

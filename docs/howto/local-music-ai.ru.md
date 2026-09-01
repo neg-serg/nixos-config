@@ -1,8 +1,8 @@
 # Локальный музыкальный ИИ-стек (odin)
 
 Всё, что относится к нейросетям в музыке/аудио на этой машине: где живёт, как вызывается, как
-пересоздать. Дополняет `carlactl.ru.md` (роутинг плагинов через headless Carla) и `local-llm.md`
-(речевой стек, LLM).
+пересоздать. Дополняет `wine-vst-bridge.ru.md` (Windows-VST через yabridge в REAPER) и
+`local-llm.md` (речевой стек, LLM).
 
 ## Инвентарь venv (все — в ~/src/music-ai/, Python из nix store)
 
@@ -34,13 +34,13 @@
 ## NAM (Neural Amp Modeler) — нейро-усилитель
 
 - Плагин: `~/.lv2/neural_amp_modeler.lv2` (v0.2.3, Linux x64, GPL-3.0,
-  mikeoliphant/neural-amp-modeler-lv2). В Carla доступен как LV2; headless — через
-  `carlactl list --format lv2` (см. carlactl.ru.md).
+  mikeoliphant/neural-amp-modeler-lv2). Доступен как LV2 в любом LV2-хосте (ZestBay/zest); см.
+  wine-vst-bridge.ru.md про VST-часть.
 - Путь плагинов: `LV2_PATH` задан в envs.nix (`~/.lv2:/run/current-system/sw/lib/lv2`).
 - Модели (.nam каптуры): `/zero/ai/music/nam-models/` (пример — Ceriatone King Kong). Большой
   каталог: tonehunt.org. Инференс вне Carla: `venv-nam` + python (init_from_nam; tkinter-заглушка
   при импорте; старые .nam v0.5.0 — только в плагине).
-- Цепочка: гитара → Carla → NAM (усилитель) → RAVE (морфы) → запись/Tidal.
+- Цепочка: гитара → NAM (усилитель, LV2/standalone) → RAVE (морфы) → запись (REAPER/SC).
 
 ## AIDA-X (второй нейро-усилитель)
 
