@@ -166,7 +166,7 @@ let
     # right in sway (i3 convention), so LegendHZ moved to M4+Shift+Ctrl+l.
     bindsym --to-code Mod4+Shift+s exec synth Surge_XT
     bindsym --to-code Mod4+Shift+Ctrl+l exec synth LegendHZ
-    bindsym --to-code Mod4+Shift+t exec tidalctl demo
+    bindsym --to-code Mod4+Shift+t exec sc-live # raw SuperCollider live-coding scene (scnvim)
     # vicinae command menu (app launcher, Alt+q like hyprland).
     bindsym Mod1+q exec vicinae toggle
     # vicinae window switcher (Alt+g).

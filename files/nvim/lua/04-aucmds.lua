@@ -79,7 +79,7 @@ au({'BufNewFile','BufWritePre'}, {pattern='*',
 
 vim.g.markdown_fenced_languages={'shell=bash'}
 vim.filetype.add({
-  extension = { rasi = 'scss', ignore = 'gitignore', ojs = 'javascript', astro = 'astro', mdx = 'mdx', tidal = 'tidal' },
+  extension = { rasi = 'scss', ignore = 'gitignore', ojs = 'javascript', astro = 'astro', mdx = 'mdx' },
   filename = { ['flake.lock'] = 'json' },
 })
 

@@ -108,7 +108,7 @@ lib.mkIf (cfg.enable or false) {
     };
 
     # rtpmidid — RTP-MIDI (AppleMIDI) daemon: exposes ALSA sequencer ports over
-    # the network. Linux MIDI (Tidal/SC/glm-midi) reaches the dockur Windows VM's
+    # the network. Linux MIDI (SC/glm-midi) reaches the dockur Windows VM's
     # rtpMIDI -> Genelec GLM MIDI control (see docs/howto/windows-vm-dockur.ru.md).
     rtpmidid = {
       description = "RTP MIDI (AppleMIDI) daemon";
