@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   # Official prebuilt release from builds.lsfg-vk.dev (2026-08-27). Vendored:
   # builds.lsfg-vk.dev and git.lsfg-vk.dev are unreachable from this region
   # (direct git pack download hangs, cgit snapshots disabled), same pattern as
-  # carla/mprime below. License CC BY-NC-ND 4.0 — binaries shipped unmodified;
+  # mprime below. License CC BY-NC-ND 4.0 — binaries shipped unmodified;
   # only the ELF interpreter/rpath are rewritten for the Nix store.
   src = ./../../files/sources/lsfg-vk-2.0.0-rc1.tar;
 

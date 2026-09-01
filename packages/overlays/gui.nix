@@ -71,7 +71,7 @@ in
   # build/branch choice, not a config toggle. 0.16.x releases and main have the
   # icc=/hdr= rules but a GLES2 fx_renderer that never applies color transforms
   # (see mangowm/mango#1287). Vendored tarball: GitHub fetch is unreliable behind
-  # the proxy (relative-path pattern, see carla in overlay.nix).
+  # the proxy (relative-path pattern, see the vendored-tarball note in overlay.nix).
   mango = prev.mango.overrideAttrs (_old: {
     version = "nightly-wl-only-2026-08-24";
     src = ./../../files/sources/mango-wl-only-2026-08-24.tar.gz;

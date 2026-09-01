@@ -16,15 +16,6 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc // aurPorted // disableChecks)
 // {
-  # Carla: vendored source tarball (GitHub fetch unreliable behind the proxy).
-  # Vendored archives live in files/sources/ and are TRACKED in git (the
-  # relative-path pattern): flake builds are pure, so absolute store paths or
-  # builtins.storePath are forbidden — only relative references to tracked
-  # files work. Keep the tarball in git; do not switch to store paths.
-  carla = finalPrev.carla.overrideAttrs (_: {
-    src = ./../files/sources/carla-2.5.10.tar.gz;
-  });
-
   # a2jmidid: nixpkgs fetches from gitea.ladish.org (unresolvable from the
   # build sandbox); vendor the GitHub mirror tarball (same tag 12) + the
   # siginfo submodule (needed by sigsegv.c/a2jmidid.c).
@@ -115,7 +106,7 @@ in
   # attributes; vcv-rack's own dep/ fetches are covered by the
   # fetchFromBitbucket override further down (same vendored tarballs).
   # (Tarballs are tracked in files/sources/ and referenced by relative path —
-  # see the carla note above.)
+  # see the vendored-tarball note above.)
   pffft = finalPrev.pffft.overrideAttrs (_: {
     src = ./../files/sources/pffft-74d7261.tar.gz;
   });
@@ -213,7 +204,6 @@ in
         systemctl --user start dsh.service 2>/dev/null || true
       '';
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
-      carlactl = final.callPackage ./carlactl { }; # console VST router via headless Carla (list/run/route)
       midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
       virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
@@ -307,7 +297,7 @@ in
   # GitHub tag was re-pushed, so the archive no longer matches the hash pinned
   # in nixpkgs 26.05 (fixed-output fetch fails with a hash mismatch every
   # time). Vendor the current official archive instead (version still 1.2.1;
-  # relative-path pattern — see the carla note above).
+  # relative-path pattern — see the vendored-tarball note above).
   python3 = finalPrev.python3.override {
     packageOverrides = _pfinal: pprev: {
       untangle = pprev.untangle.overrideAttrs (_: {
@@ -329,7 +319,7 @@ in
   # github.com/macports/... raw - that host is blocked/unreachable from this
   # region, so the fixed-output fetch fails. The patch only affects the macOS
   # libtool configure path; vendor the file and keep the rest of the
-  # derivation intact (relative-path pattern, see the carla note above).
+  # derivation intact (relative-path pattern, see the vendored-tarball note above).
   gsl = finalPrev.gsl.overrideAttrs (_old: {
     # Replace the upstream macports patch fetch (blocked host) with the
     # vendored copy - same content, same extraPrefix.
