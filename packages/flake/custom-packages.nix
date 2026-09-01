@@ -12,6 +12,7 @@
   flow = pkgs.neg.flow; # terminal dashboard for real-time network throughput
   skyroads = pkgs.neg.skyroads; # native SDL2 port of the DOS game SkyRoads (freeware data bundled)
   lsfg-vk = pkgs.neg.lsfg-vk; # Vulkan frame-gen layer (LSFG on Linux; CC BY-NC-ND, needs Lossless Scaling on Steam)
+  nixard = pkgs.neg.nixard; # TUI for exploring NixOS package closures
 
   brrtfetch = pkgs.neg.brrtfetch;
   talktype = pkgs.neg.talktype;
