@@ -41,6 +41,9 @@ in
     termeverything = callPkg (packagesRoot + "/termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
     rtpmidid = callPkg (packagesRoot + "/rtpmidid") { }; # RTP-MIDI (AppleMIDI) daemon — ALSA seq <-> network MIDI (GLM VM bridge)
+    flow = callPkg (packagesRoot + "/flow") { }; # Terminal dashboard for real-time network throughput
+    skyroads = callPkg (packagesRoot + "/skyroads") { }; # Native SDL2 port of the DOS game SkyRoads (freeware data bundled)
+    lsfg-vk = callPkg (packagesRoot + "/lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
