@@ -57,15 +57,23 @@ let
     # service deletes the static dir while quickshell can restart before
     # maid-activation recreates it. If shell.qml is gone, wait for activation.
     if [ ! -e "$qs_dir/shell.qml" ] && [ -d "$qs_dir" ]; then
-      systemctl --user start --wait maid-activation.service 2>/dev/null || true
+      # Bound the wait: during `nh os switch` the user systemd transaction is
+      # held while the new generation activates, so an unbounded --wait can
+      # stall past TimeoutStartSec (90s) and fail the whole switch with
+      # "start-pre operation timed out". Fall through to the direct
+      # activation-script fallback instead of hanging.
+      ${pkgs.coreutils}/bin/timeout 25 systemctl --user start --wait maid-activation.service 2>/dev/null || true
       # Fallback: run the activation script directly if the unit didn't help.
       if [ ! -e "$qs_dir/shell.qml" ]; then
-        # Run ONLY the newest activation (ls -t): the glob matches every
-        # generation in the store (dozens); iterating them in hash order
-        # blows the 90s start-pre timeout and wedges the shell in a
-        # restart loop.
-        newest=$(ls -t /nix/store/*-all-maid/nix-maid-neg/bin/activate 2>/dev/null | head -1)
-        [ -n "$newest" ] && [ -x "$newest" ] && "$newest"
+        # Run the SAME activation the unit would run (parsed from the unit
+        # script). NOT `ls -t /nix/store/*-all-maid/...`: every store path
+        # carries the epoch mtime, so ls -t picks a random generation and
+        # can roll ~/.local/bin back to an old one (e.g. dropping the
+        # glm-* scripts, breaking the Genelec wheel).
+        unit_script=$(systemctl --user show maid-activation.service -p ExecStart --value 2>/dev/null | sed -n 's/.*path=\([^ ;]*\).*/\1/p')
+        # The unit script resolves the correct activation path itself
+        # (including $USER); run it directly as the fallback.
+        [ -n "$unit_script" ] && [ -x "$unit_script" ] && "$unit_script"
       fi
     fi
 
