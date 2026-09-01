@@ -7,6 +7,7 @@ import "../../Helpers/Color.js" as Color
 import "../../Helpers/Format.js" as Format
 import "../../Helpers/RichText.js" as Rich
 import "../../Helpers/ConnectivityUi.js" as ConnUi
+import "../../Helpers/TooltipText.js" as TooltipText
 
 ConnectivityCapsule {
     id: root
@@ -231,4 +232,36 @@ ConnectivityCapsule {
         return left + Rich.sepSpan(_slashAccentCss, "/", true) + right;
     }
 
+    // Link / internet / VPN / addresses + live RX/TX on hover.
+    readonly property string _tooltipText: (function() {
+        var hints = [];
+        hints.push(!hasLink ? "Соединения нет"
+            : (hasInternet ? "Интернет: доступен" : "Локальная сеть, интернета нет"));
+        if (vpnConnected) hints.push("VPN: подключён");
+        if (ConnectivityState && ConnectivityState.interfaces) {
+            for (var i = 0; i < ConnectivityState.interfaces.length; i++) {
+                var it = ConnectivityState.interfaces[i];
+                if (!it) continue;
+                var nm = String(it.ifname || "");
+                if (!nm || nm === "lo") continue;
+                var ai = Array.isArray(it.addr_info) ? it.addr_info : [];
+                for (var j = 0; j < ai.length; j++) {
+                    var a = ai[j];
+                    if (a && a.local) hints.push(nm + ": " + a.local);
+                }
+            }
+        }
+        hints.push("Клик — потоковая панель");
+        var rx = (ConnectivityState && isFinite(ConnectivityState.rxKiBps) && ConnectivityState.rxKiBps > 0)
+            ? ConnUi.formatScaledKiBps(ConnectivityState.rxKiBps) : "-";
+        var tx = (ConnectivityState && isFinite(ConnectivityState.txKiBps) && ConnectivityState.txKiBps > 0)
+            ? ConnUi.formatScaledKiBps(ConnectivityState.txKiBps) : "-";
+        return TooltipText.compose("Сеть", "RX " + rx + " · TX " + tx, hints);
+    })()
+
+    PanelTooltip {
+        targetItem: root
+        text: root._tooltipText
+        visibleWhen: root.hovered
+    }
 }
