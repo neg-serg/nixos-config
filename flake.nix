@@ -109,6 +109,30 @@
       url = "github:cmspam/mt7927-nixos/2b6cd295d7c520f79bb490cdfe70fe8311de0c0e";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Pin any top-level nixpkgs attribute (pkgs.*) to an exact version from a
+    # single flake input (no juggling multiple nixpkgs pins). Enabled via
+    # modules/system/multiverse.nix; add pins there.
+    # Pinned rev (main, 2026-09-01): unpinned resolution is blocked on this host
+    # (api.github.com unreachable); update via nix flake lock --update-input multiverse.
+    multiverse.url = "github:fzakaria/nixpkgs-multiverse/4e42650d06172b925d85b134fb924ae6d109cf60";
+    # Nix library for wrapping executables via the module system (by Lassulus,
+    # nh maintainer). Use as inputs.wrappers.lib.wrapPackage / .wrapperModules.
+    wrappers = {
+      url = "github:lassulus/wrappers/b870d84b4fbe38a5a1e38cd2dae8503805bec900";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # CachyOS-patched kernels (BORE/eevdf schedulers, zen4 CPU tunings) + ZFS
+    # module. Deliberately NOT following nixpkgs: upstream warns that overriding
+    # its nixpkgs input can mismatch patches and kernel versions.
+    # Pinned rev (release branch, 2026-09-01) — same reason as multiverse above.
+    nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/594956b9640690cf0079d03d6b3a6a8f380ceea3";
+    # Declarative Agent Skills management (SKILL.md discovery/selection/bundling,
+    # flake-pinned sources). Library via inputs.agent-skills.lib.agent-skills;
+    # home-manager module not wired (this repo uses nix-maid, not home-manager).
+    agent-skills = {
+      url = "github:Kyure-A/agent-skills-nix/1594ba479be81a7cb6dd19faabefcb1ed5b3f964";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
