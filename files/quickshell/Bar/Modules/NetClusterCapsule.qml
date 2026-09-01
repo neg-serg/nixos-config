@@ -89,8 +89,8 @@ ConnectivityCapsule {
                 // Dim the fallback icon when Hiddify icon is shown on top
                 color: root.hiddifyHasTrayIcon ? "transparent" : root.vpnIconColor
                 screen: root.screen
-                labelRef: root.labelItem
-                alignTarget: root.labelItem
+                labelRef: Theme.networkCapsuleStacked ? null : root.labelItem
+                alignTarget: Theme.networkCapsuleStacked ? null : root.labelItem
                 outerHorizontalMargin: root.iconHorizontalMargin
 
                 // Hiddify real tray icon rendered on top when available
@@ -133,8 +133,8 @@ ConnectivityCapsule {
             icon: root.currentLinkIconName
             color: root.linkIconColor
             screen: root.screen
-            labelRef: root.labelItem
-            alignTarget: root.labelItem
+            labelRef: Theme.networkCapsuleStacked ? null : root.labelItem
+            alignTarget: Theme.networkCapsuleStacked ? null : root.labelItem
             outerHorizontalMargin: root.iconHorizontalMargin
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -144,7 +144,6 @@ ConnectivityCapsule {
     Column {
         visible: Theme.networkCapsuleStacked && root.throughputText && root.throughputText.length > 0
         spacing: -2
-        y: 2
 
         Text {
             text: root._rxPlain
