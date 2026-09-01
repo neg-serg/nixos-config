@@ -44,12 +44,10 @@ ConnectivityCapsule {
     backgroundKey: "network"
     iconVisible: false
     glyphLeadingActive: _hasLeading
-    // Plain text label: the RichText color spans rendered in a fallback font
-    // (heavy blocky glyphs, unreadable next to the Iosevka bar text).
-    labelIsRichText: false
-    labelText: Theme.networkCapsuleStacked ? "" : _plainThroughputText
+    labelIsRichText: true
+    labelText: Theme.networkCapsuleStacked ? "" : _richThroughputText
     labelVisible: !Theme.networkCapsuleStacked && throughputText && throughputText.length > 0
-    readonly property string _plainThroughputText: _formatThroughputPlain(throughputText)
+    readonly property string _richThroughputText: _formatThroughputRich(throughputText)
 
     // Stacked (two-row) layout properties
     readonly property string _rxRichText: _dimLeadingZeros(ConnUi.formatRxText(throughputText))
@@ -202,18 +200,16 @@ ConnectivityCapsule {
         return dimmed + rest + dotAndDec + unitSuffix;
     }
 
-    // Plain (non-rich) "RX/TX" readout, e.g. "2.7K/117.6K": strips the
-    // zero-padding ("020.7K" -> "2.7K") without any HTML spans, so the label
-    // renders in the bar font (Iosevka) instead of a RichText fallback font.
-    function _formatThroughputPlain(text) {
+    function _formatThroughputRich(text) {
         const raw = (text === undefined || text === null) ? "" : String(text);
         if (!raw.length)
             return "";
         const slashIdx = raw.indexOf("/");
         if (slashIdx === -1)
-            return raw;
-        const strip = s => s.replace(/^0+(?=\d)/, "");
-        return strip(raw.slice(0, slashIdx)) + "/" + strip(raw.slice(slashIdx + 1));
+            return Rich.esc(raw);
+        const left = _dimLeadingZeros(raw.slice(0, slashIdx));
+        const right = _dimLeadingZeros(raw.slice(slashIdx + 1));
+        return left + Rich.sepSpan(_slashAccentCss, "/", true) + right;
     }
 
 }
