@@ -16,6 +16,7 @@
     pkgs.nix-fast-build # parallel evaluation+building with log renderer
     pkgs.dix # diff closures: dix /run/current-system result (Rust rewrite of nvd)
     pkgs.nix-melt # TUI for nix flake lock --update
+    pkgs.neg.nixard # TUI for exploring NixOS package closures and generating Nix declarations
     pkgs.statix # static analyzer for nix
   ];
 }
