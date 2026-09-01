@@ -44,12 +44,10 @@ ConnectivityCapsule {
     backgroundKey: "network"
     iconVisible: false
     glyphLeadingActive: _hasLeading
-    // Readable single-line readout. The old rich-text stacked path (two
-    // rows of tiny Font.Black glyphs) rendered unreadably in the bar.
-    labelIsRichText: false
-    labelText: _plainThroughputText
-    labelVisible: throughputText && throughputText.length > 0
-    readonly property string _plainThroughputText: _formatThroughputPlain(throughputText)
+    labelIsRichText: true
+    labelText: Theme.networkCapsuleStacked ? "" : _richThroughputText
+    labelVisible: !Theme.networkCapsuleStacked && throughputText && throughputText.length > 0
+    readonly property string _richThroughputText: _formatThroughputRich(throughputText)
 
     // Stacked (two-row) layout properties
     readonly property string _rxRichText: _dimLeadingZeros(ConnUi.formatRxText(throughputText))
@@ -134,11 +132,9 @@ ConnectivityCapsule {
         }
     }
 
-    // Stacked two-row throughput display (RX top, TX bottom) — disabled:
-    // tiny Font.Black rich text was unreadable; the single-line label above
-    // is used instead.
+    // Stacked two-row throughput display (RX top, TX bottom)
     Column {
-        visible: false && Theme.networkCapsuleStacked && root.throughputText && root.throughputText.length > 0
+        visible: Theme.networkCapsuleStacked && root.throughputText && root.throughputText.length > 0
         spacing: -2
         y: 2
 
@@ -204,18 +200,16 @@ ConnectivityCapsule {
         return dimmed + rest + dotAndDec + unitSuffix;
     }
 
-    // Plain "RX/TX" readout, e.g. "2.7K/117.6K": strips the zero-padding
-    // ("020.7K" -> "2.7K") without HTML spans, so the label renders in the
-    // bar font at normal weight instead of the unreadable Font.Black rich text.
-    function _formatThroughputPlain(text) {
+    function _formatThroughputRich(text) {
         const raw = (text === undefined || text === null) ? "" : String(text);
         if (!raw.length)
             return "";
         const slashIdx = raw.indexOf("/");
         if (slashIdx === -1)
-            return raw;
-        const strip = s => s.replace(/^0+(?=\d)/, "");
-        return strip(raw.slice(0, slashIdx)) + "/" + strip(raw.slice(slashIdx + 1));
+            return Rich.esc(raw);
+        const left = _dimLeadingZeros(raw.slice(0, slashIdx));
+        const right = _dimLeadingZeros(raw.slice(slashIdx + 1));
+        return left + Rich.sepSpan(_slashAccentCss, "/", true) + right;
     }
 
 }
