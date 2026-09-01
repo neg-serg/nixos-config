@@ -71,12 +71,8 @@
 
   # Host-specific kernel parameters and boot tuning
   boot = {
-    # CachyOS LTS kernel (6.18.x — same major as the previous default, so ZFS
-    # 2.4 keeps building). NOTE: the active boot kernel is actually rebuilt from
-    # this source by modules/system/kernel/localmodconfig.nix (trimmed .config,
-    # priority 40 wins over this mkDefault); this line is the fallback if that
-    # module is ever disabled. The -latest/-bore variants track 7.x (breaks ZFS).
-    kernelPackages = lib.mkDefault pkgs.cachyosKernels.linuxPackages-cachyos-lts;
+    # Use LTS kernel (ZFS doesn't build with latest 7.x)
+    kernelPackages = lib.mkDefault pkgs.linuxPackages;
 
     # Removed the amdgpu-hmm-userptr-vm-bo-null backport (patch file kept at
     # files/patches/amdgpu-hmm-userptr-parent-fix.patch): upstream commit
