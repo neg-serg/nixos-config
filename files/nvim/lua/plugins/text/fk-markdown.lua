@@ -13,10 +13,27 @@
 --   quote fg      = p.norm       #6c7e96
 --   checkbox hl   = neg groups @markup.list.checked / .unchecked
 --   preview bg    = p.dark; keyword/string/comment/function = neg syntax hues
+--   callout hl    = neg hues: info #669fcf, success #007a66, important #9473a6
+--                  (violet lightened), warning #c8a8ef, error #a66f7f (dred
+--                  lightened), quote #6c7e96
 return {
   'the-mayankjha/fk_markdown.nvim',
   ft = { 'markdown', 'quarto', 'Avante', 'mdx' },
   config = function()
+    -- Override the plugin's callout accent groups (default=true links to
+    -- Diagnostic*) with explicit neg palette hues. Plain set_hl wins.
+    local callout_hl = {
+      RenderMarkdownInfo    = { fg = '#669fcf' }, -- note / info  (heading ramp blue)
+      RenderMarkdownSuccess = { fg = '#007a66' }, -- tip / success (neg diff-add spruce)
+      RenderMarkdownHint    = { fg = '#9473a6' }, -- important     (neg violet lightened)
+      RenderMarkdownWarn    = { fg = '#c8a8ef' }, -- warning       (neg cyberpunk lilac)
+      RenderMarkdownError   = { fg = '#a66f7f' }, -- caution/error (neg dred lightened)
+      RenderMarkdownQuote   = { fg = '#6c7e96' }, -- quote         (neg norm)
+    }
+    for group, spec in pairs(callout_hl) do
+      vim.api.nvim_set_hl(0, group, spec)
+    end
+
     require('fk_markdown').setup({
       preset = 'none', -- 'none' | 'obsidian' | 'lazy'
 
@@ -63,6 +80,38 @@ return {
         border = true,
         bg = 'NONE',
         fg = '#6c7e96',
+      },
+      -- Callouts: [!NOTE] and friends, Russian labels, neg palette accents.
+      callout = {
+        -- GitHub
+        note      = { raw = '[!NOTE]',      rendered = '󰋽 Заметка',    highlight = 'RenderMarkdownInfo' },
+        tip       = { raw = '[!TIP]',       rendered = '󰌶 Совет',       highlight = 'RenderMarkdownSuccess' },
+        important = { raw = '[!IMPORTANT]', rendered = '󰅾 Важно',       highlight = 'RenderMarkdownHint' },
+        warning   = { raw = '[!WARNING]',   rendered = '󰀪 Внимание',    highlight = 'RenderMarkdownWarn' },
+        caution   = { raw = '[!CAUTION]',   rendered = '󰳦 Осторожно',   highlight = 'RenderMarkdownError' },
+        -- Obsidian
+        abstract  = { raw = '[!ABSTRACT]',  rendered = '󰨸 Резюме',      highlight = 'RenderMarkdownInfo' },
+        summary   = { raw = '[!SUMMARY]',   rendered = '󰨸 Итог',        highlight = 'RenderMarkdownInfo' },
+        tldr      = { raw = '[!TLDR]',      rendered = '󰨸 Кратко',      highlight = 'RenderMarkdownInfo' },
+        info      = { raw = '[!INFO]',      rendered = '󰋽 Инфо',        highlight = 'RenderMarkdownInfo' },
+        todo      = { raw = '[!TODO]',      rendered = '󰗡 Задача',      highlight = 'RenderMarkdownInfo' },
+        hint      = { raw = '[!HINT]',      rendered = '󰌶 Подсказка',   highlight = 'RenderMarkdownSuccess' },
+        success   = { raw = '[!SUCCESS]',   rendered = '󰄬 Успех',       highlight = 'RenderMarkdownSuccess' },
+        check     = { raw = '[!CHECK]',     rendered = '󰄬 Готово',      highlight = 'RenderMarkdownSuccess' },
+        done      = { raw = '[!DONE]',      rendered = '󰄬 Сделано',     highlight = 'RenderMarkdownSuccess' },
+        question  = { raw = '[!QUESTION]',  rendered = '󰘥 Вопрос',      highlight = 'RenderMarkdownWarn' },
+        help      = { raw = '[!HELP]',      rendered = '󰘥 Помощь',      highlight = 'RenderMarkdownWarn' },
+        faq       = { raw = '[!FAQ]',       rendered = '󰘥 Вопросы',     highlight = 'RenderMarkdownWarn' },
+        attention = { raw = '[!ATTENTION]', rendered = '󰀪 Внимание',    highlight = 'RenderMarkdownWarn' },
+        failure   = { raw = '[!FAILURE]',   rendered = '󰅖 Провал',      highlight = 'RenderMarkdownError' },
+        fail      = { raw = '[!FAIL]',      rendered = '󰅖 Провал',      highlight = 'RenderMarkdownError' },
+        missing   = { raw = '[!MISSING]',   rendered = '󰅖 Нет данных',  highlight = 'RenderMarkdownError' },
+        danger    = { raw = '[!DANGER]',    rendered = '󱐌 Опасно',      highlight = 'RenderMarkdownError' },
+        error     = { raw = '[!ERROR]',     rendered = '󱐌 Ошибка',      highlight = 'RenderMarkdownError' },
+        bug       = { raw = '[!BUG]',       rendered = '󰨰 Баг',         highlight = 'RenderMarkdownError' },
+        example   = { raw = '[!EXAMPLE]',   rendered = '󰉹 Пример',      highlight = 'RenderMarkdownHint' },
+        quote     = { raw = '[!QUOTE]',     rendered = '󱆨 Цитата',      highlight = 'RenderMarkdownQuote' },
+        cite      = { raw = '[!CITE]',      rendered = '󱆨 Источник',    highlight = 'RenderMarkdownQuote' },
       },
       bullet = {
         enabled = true,
