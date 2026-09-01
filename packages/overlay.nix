@@ -51,6 +51,10 @@ in
       rm -f $out/bin/renoise
       cat > $out/bin/renoise <<WRAP
       #!${final.stdenv.shell}
+      # glib: native u-he VSTs (Diva.64.so) ship against libgio/libgobject,
+      # absent from the default loader path on NixOS. pw-jack prepends its own
+      # lib dir, so an explicit glib prefix is enough for the plugin loader.
+      export LD_LIBRARY_PATH=${final.glib.out}/lib
       exec ${final.pipewire.jack}/bin/pw-jack $out/renoise "\$@"
       WRAP
       chmod +x $out/bin/renoise
