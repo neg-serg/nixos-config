@@ -234,6 +234,7 @@ in
       midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
       virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
+      renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
     };
 
   jack-keyboard = final.callPackage ./jack-keyboard { }; # virtual MIDI keyboard for JACK/PipeWire synth hosts
