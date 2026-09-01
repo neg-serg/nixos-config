@@ -31,6 +31,10 @@ let
         pkg: (pkg.pname or "") == "vst2-sdk" || (pkg.pname or "") == "lsfg-vk"; # lsfg-vk is CC BY-NC-ND 4.0 (user-approved install)
       overlays = [
         bintoolsBootstrapFix
+        # CachyOS kernel packages — overlays.default builds against OUR nixpkgs
+        # rev (the pinned overlay would hijack the whole flake nixpkgs pin and
+        # break the Hyprland 0.56.2 setup); kernels are exposed as pkgs.cachyosKernels.*.
+        inputs.nix-cachyos-kernel.overlays.default
         (hyprlandOverlay system)
         # Local overlay first (for packages not yet migrated)
         ((import ../packages/overlay.nix) inputs)
