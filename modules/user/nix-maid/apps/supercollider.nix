@@ -1,5 +1,5 @@
 ##  Module: user/nix-maid/apps/supercollider
-# Purpose: TidalCycles one-click launch.
+# Purpose: SuperCollider live-coding stack (raw SC, no TidalCycles).
 {
   lib,
   config,
@@ -14,8 +14,9 @@ let
   # packages/vowel) symlinked into SC's default extension dir below — the
   # manual `install-superdirt-quark` step is gone.
   # The startup script itself (superdirt_startup.scd) is NOT deployed here:
-  # it lives in the private ~/notes/music/supercollider and is symlinked by
-  # tidalctl, so the user can edit engine code and custom synths freely.
+  # it lives in the private ~/notes/music/supercollider and is symlinked to
+  # ~/.config/SuperCollider/superdirt_startup.scd, so the user can edit
+  # engine code and custom synths freely.
 
   bootNoop = ''
     s.options.numOutputBusChannels = 2;
@@ -29,10 +30,32 @@ let
     excludeDefaultPaths: false
   '';
 
+  # Server-side UGen plugins (.so) — scsynth finds them via SC_PLUGIN_PATH
+  # (colon-separated dir list: SC3-Plugins + the ported third-party plugins).
+  # Used both by sessionVariables and the supercollider-engine unit env.
+  scPluginPath = lib.concatStringsSep ":" [
+    "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins"
+    "${pkgs.f0plugins}/lib/SuperCollider/plugins"
+    "${pkgs.steroids-ugens}/lib/SuperCollider/plugins"
+    "${pkgs.super-bufrd}/lib/SuperCollider/plugins"
+    "${pkgs.xplaybuf}/lib/SuperCollider/plugins"
+    "${pkgs.mi-ugens}/lib/SuperCollider/plugins"
+    "${pkgs.guttersynth-sc}/lib/SuperCollider/plugins"
+    "${pkgs.my-ugens}/lib/SuperCollider/plugins"
+    "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
+    "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
+    "${pkgs.nn-ar}/lib/SuperCollider/plugins" # nn.ar: neural audio UGens (PyTorch)
+    "${pkgs.flucoma}/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens
+    "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
+    "${pkgs.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
+    "${pkgs.portedplugins}/lib/SuperCollider/plugins" # portedplugins: VA filters, Fverb reverb
+    "${pkgs.sc-faust}/lib/SuperCollider/plugins" # sc_faust: Faust JIT compiler UGen
+  ];
+
   # SuperCollider runs as a pipewire-jack client (LD_LIBRARY_PATH above), but
   # pipewire-jack does NOT auto-connect client ports and WirePlumber ignores
   # JACK nodes (they carry no media.class) — so scsynth's out ports stay
-  # unlinked and Tidal is silent. This watcher links SuperCollider:out_1/2 →
+  # unlinked and the engine is silent. This watcher links SuperCollider:out_1/2 →
   # game-stereo (the hdspe module routes that sink to the RME AES pair)
   # whenever the ports appear, surviving engine restarts.
   supercolliderLinkScript = pkgs.writeShellScript "supercollider-link" ''
@@ -52,25 +75,8 @@ in
     environment.sessionVariables = {
       LD_LIBRARY_PATH = [ "${pkgs.pipewire.jack}/lib" ];
       # Server-side UGen plugins (.so) — scsynth finds them via SC_PLUGIN_PATH
-      # (colon-separated dir list: SC3-Plugins + the ported third-party plugins)
-      SC_PLUGIN_PATH = lib.concatStringsSep ":" [
-        "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins"
-        "${pkgs.f0plugins}/lib/SuperCollider/plugins"
-        "${pkgs.steroids-ugens}/lib/SuperCollider/plugins"
-        "${pkgs.super-bufrd}/lib/SuperCollider/plugins"
-        "${pkgs.xplaybuf}/lib/SuperCollider/plugins"
-        "${pkgs.mi-ugens}/lib/SuperCollider/plugins"
-        "${pkgs.guttersynth-sc}/lib/SuperCollider/plugins"
-        "${pkgs.my-ugens}/lib/SuperCollider/plugins"
-        "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
-        "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
-        "${pkgs.nn-ar}/lib/SuperCollider/plugins" # nn.ar: neural audio UGens (PyTorch)
-        "${pkgs.flucoma}/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens
-        "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
-        "${pkgs.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
-        "${pkgs.portedplugins}/lib/SuperCollider/plugins" # portedplugins: VA filters, Fverb reverb
-        "${pkgs.sc-faust}/lib/SuperCollider/plugins" # sc_faust: Faust JIT compiler UGen
-      ];
+      # (defined once in the let block; shared with supercollider-engine unit)
+      SC_PLUGIN_PATH = scPluginPath;
     };
 
     # Keep scsynth's JACK out ports linked to the game-stereo virtual sink.
@@ -93,6 +99,11 @@ in
         }";
       };
     };
+    # No separate engine unit: the live-coding flow runs the engine inside the
+    # scnvim sclang session (nvim + scnvim REPL boots scsynth itself under
+    # pw-jack, see files/nvim/lua/plugins/supercollider.lua). This keeps code
+    # and engine in one process so edits take effect immediately — the raw
+    # SuperCollider equivalent of Tidal's hot reload, without TidalCycles.
     # SuperDirtMixer keeps its presets in the quark's own presets/ folder
     # ("../../presets/" resolved against the compiled class file path — with
     # the per-subdir symlinks above that lands in the real user dir). Make it

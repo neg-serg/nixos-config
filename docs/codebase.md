@@ -533,7 +533,7 @@ later profiles win).
 | `crucial-library/`         | `crucial-library` (4.1.6-unstable-2018-01-04)  | SuperCollider quark: AbstractPlayer system (Patch, Instr, Sample, scheduling) for live coding                    |
 | `ddwchucklib/`             | `ddwchucklib` (unstable-2015-08-04)            | SuperCollider quark: advanced algorithmic composition (Chuck browser, chucking)                                  |
 | `ddwplug/`                 | `ddwplug` (0.1-unstable-2026-06-19)            | SuperCollider quark: dynamic per-note synth patching                                                             |
-| `dirt-samples/`            | `dirt-samples` (unstable-2025-07-21)           | Audio sample library for SuperDirt / TidalCycles live coding                                                     |
+| `dirt-samples/`            | `dirt-samples` (unstable-2025-07-21)           | Audio sample library for SuperDirt / SuperCollider live coding                                                   |
 | `dsh/`                     | `dsh` (0.1.1-rc.1)                             | DeepSeek Harness (dsh) — open-source agent harness, everything is a plugin                                       |
 | `duf/`                     | `duf` (0.9.1-neg)                              | Disk Usage/Free Utility (fork with plain style support)                                                          |
 | `dwg-reverb/`              | `dwg-reverb` (unstable-2022-02-21)             | SuperCollider plugin: efficient virtual room generator (early reflections + FDN late reverb)                     |
@@ -591,13 +591,12 @@ later profiles win).
 | `steroids-ugens/`          | `steroids-ugens` (unstable-2020-11-14)         | SuperCollider Steroids UGens (SSinOscFB, TDemand)                                                                |
 | `strace-tui/`              | `strace-tui` (1.0.1)                           | TUI for visualizing and exploring strace output                                                                  |
 | `super-bufrd/`             | `super-bufrd` (unstable-2020-04-29)            | SuperCollider UGens for subsample-accurate buffer reading                                                        |
-| `superdirt/`               | `superdirt` (1.7.4-unstable-2025-07-21)        | SuperCollider quark providing the audio engine for TidalCycles live coding                                       |
-| `superdirt-mixer/`         | `superdirt-mixer` (unstable-2026-07-07)        | SuperCollider quark with a graphical mixer UI for SuperDirt (TidalCycles audio engine)                           |
+| `superdirt/`               | `superdirt` (1.7.4-unstable-2025-07-21)        | SuperCollider quark providing the audio engine for SuperCollider live coding (raw SC)                            |
+| `superdirt-mixer/`         | `superdirt-mixer` (unstable-2026-07-07)        | SuperCollider quark with a graphical mixer UI for SuperDirt (SuperCollider audio engine)                         |
 | `swayimg/`                 | `swayimg` (0-unstable-fork)                    | Image viewer for Wayland (forked from artemsen/swayimg, Vulkan-accelerated)                                      |
 | `talktype/`                | `talktype`                                     | Push-to-talk voice typing that works everywhere                                                                  |
 | `termeverything/`          | `termeverything` (0.7.8)                       | Run GUI windows inside your terminal — a Wayland compositor that renders to the terminal via ANSI escape codes   |
 | `tewi/`                    | `geoip2fast` (1.2.2)                           | Text-based interface for BitTorrent clients (Transmission, qBittorrent, Deluge)                                  |
-| `tidalctl/`                | `tidalctl` (0.1.0)                             | TidalCycles session controller — engine start/stop, editor, recording                                            |
 | `timestretch/`             | `timestretch` (1.5.0-unstable-2023-09-16)      | SuperCollider quark: extreme time stretch (Ness Stretch layered STFT algorithm)                                  |
 | `tmd-top/`                 | `typing-extensions` (4.9.0)                    | Real-time Linux network traffic monitor with per-IP connection and bandwidth breakdown (TUI)                     |
 | `torch-rocm/`              | `torch-rocm`                                   |                                                                                                                  |
@@ -687,7 +686,6 @@ later profiles win).
 | `swayimg`                 | `swayimg`                 |
 | `talktype`                | `talktype`                |
 | `termeverything`          | `termeverything`          |
-| `tidalctl`                | `tidalctl`                |
 | `timestretch`             | `timestretch`             |
 | `v2raya`                  | `v2raya`                  |
 | `vsncnn`                  | `vsncnn`                  |

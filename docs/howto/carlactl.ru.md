@@ -8,7 +8,7 @@
 
 - Сборка Carla на этом хосте — **только JACK** (нет нативного PipeWire), а `jackd` отсутствует: JACK
   эмулирует PipeWire. Поэтому всё запускается под `pw-jack` с
-  `LD_LIBRARY_PATH=/run/current-system/sw/lib` (тот же паттерн, что у `tidalctl`).
+  `LD_LIBRARY_PATH=/run/current-system/sw/lib` (тот же паттерн, что у `sclang-pwj`).
 - Headless-режим Carla (`carla -n`) **требует файл проекта .carxp**. Проект генерируется программно
   через C-API Carla (`libcarla_standalone2.so`: `engine_init` → `add_plugin` → `save_project`) — GUI
   не нужен вообще.
@@ -87,7 +87,7 @@ $ carlactl stop
 - Окно Vital открывается на отдельном воркспейсе 21 (𐍆:vital) — роут по классу в
   `files/gui/hypr/hyprland.lua`.
 
-## MIDI (Tidal → Vital)
+## MIDI (SuperCollider → Vital)
 
 ALSA-секвенсор (`snd-seq`) не грузился из-за `security.lockKernelModules`
 (`kernel.modules_disabled=1` — после старта системы модули ядра вообще не загружаются, тихий EPERM).
@@ -97,10 +97,11 @@ ALSA-секвенсор (`snd-seq`) не грузился из-за `security.lo
   initrd, ДО блокировки (вступает в силу после пересборки + перезагрузки).
 - MIDI-выход SuperDirt в `~/notes/music/supercollider/superdirt_startup.scd`: `MIDIClient.init` +
   `~dirt.soundLibrary.addMIDI(\vital, ~midiOut)` + автозапуск `~/.local/bin/midi-bridge`.
-- Алиас `vital = sound "vital"` — в `~/notes/music/tidal/BootTidal.hs`.
+- Алиас/инструмент Vital — в live-сцене `~/notes/music/supercollider/live.scd` (или через MIDI-слоты
+  SuperCollider).
 
-После ребута: `systemctl --user start vital-standalone`, затем `tidalctl start` — мост
+После ребута: `systemctl --user start vital-standalone`, затем `jam` — откроется live-сцена
+(`~/.local/bin/sc-live` → live.scd в nvim, движок бутается внутри scnvim-сессии). Мост
 `SuperCollider → Midi Through → Vital` подключается автоматически (скрипт
-`~/.local/bin/midi-bridge`, вызывается из superdirt_startup.scd). Vital подписан на Midi Through
-сам. В Tidal: `d1 $ vital $ note "0 2 4 7"` (звук `vital` зарегистрирован через
-`~dirt.soundLibrary.addMIDI`). Если мост не поднялся: `~/.local/bin/midi-bridge` вручную.
+`~/.local/bin/midi-bridge`). Vital подписан на Midi Through сам. Паттерны шлются из live.scd
+(Pbind/SynthDef). Если мост не поднялся: `~/.local/bin/midi-bridge` вручную.

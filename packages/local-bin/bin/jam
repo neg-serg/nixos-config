@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # jam — one command for the live-coding audio session:
-#   Vital standalone + SuperDirt engine + MIDI bridge (Tidal → Vital)
+#   Vital standalone + SuperCollider engine (scnvim) + MIDI bridge
 #
 # Usage:
-#   jam          start the session (Vital + engine + MIDI bridge)
-#   jam stop     stop engine + Vital
+#   jam          start the session (Vital + MIDI bridge, open live scene)
+#   jam stop     stop Vital (SC session stops with its sclang)
 #   jam status   show what's running
 set -euo pipefail
 
@@ -14,7 +14,8 @@ BIN="$HOME/.local/bin"
 # Note: no grep -q in pipelines here — with pipefail, grep -q exits early,
 # the producer gets SIGPIPE and the pipeline is reported as failed.
 engine_up() {
-  [[ "$(tidalctl status 2>/dev/null)" == *"UDP 57120 open"* ]]
+  # scsynth is alive when its JACK client exists (supercollider-link watches it)
+  [[ "$(pw-link -o 2>/dev/null)" == *"SuperCollider:out_1"* ]]
 }
 
 vital_up() {
@@ -37,11 +38,13 @@ start_vital() {
 
 start_engine() {
   if engine_up; then
-    echo "✓ SuperDirt уже работает"
+    echo "✓ SC-движок уже работает (scsynth на шине)"
   else
-    echo "▶ Запускаю SuperDirt (сэмплы грузятся ~1 мин)..."
-    tidalctl start
-    echo "✓ SuperDirt готов"
+    echo "▶ Открываю live-сцену SuperCollider (scnvim; s.boot внутри)..."
+    echo "  → в nvim нажми <leader>sc (старт sclang) и <leader>sb (boot + паттерны)"
+    "$BIN/sc-live" &
+    sleep 2
+    echo "  (движок поднимется, когда в live.scd выполнится s.boot)"
   fi
 }
 
@@ -56,8 +59,8 @@ bridge() {
 show_status() {
   echo "=== Vital ==="
   vital_up && echo "  запущен" || echo "  не запущен (jam или systemctl --user start vital-standalone)"
-  echo "=== SuperDirt ==="
-  tidalctl status 2>&1 | head -4
+  echo "=== SC-движок ==="
+  engine_up && echo "  scsynth работает (SuperCollider:out_1/2 видны)" || echo "  не запущен (jam → live.scd → <leader>sc, <leader>sb)"
   echo "=== MIDI ==="
   if [[ "$(aconnect -l 2>/dev/null)" == *"Connecting To: 14:0"* ]]; then
     echo "  мост подключён"
@@ -72,13 +75,12 @@ case "$cmd" in
     start_engine
     bridge
     echo
-    echo 'Готово. Играй в Tidal:  d1 $ vital $ note "0 2 4 7"'
+    echo 'Готово. Паттерны в live.scd (nvim):  Pbind / Ndef / SynthDef — шли <leader>sb'
     ;;
   stop)
-    echo "▶ Останавливаю..."
-    tidalctl stop 2>/dev/null || true
+    echo "▶ Останавливаю Vital..."
     systemctl --user stop vital-standalone 2>/dev/null || true
-    echo "✓ Остановлено"
+    echo "✓ Остановлено (SC-сессию закрой в nvim: <leader>sx)"
     ;;
   status)
     show_status

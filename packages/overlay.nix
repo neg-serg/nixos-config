@@ -170,11 +170,6 @@ in
       '';
   });
 
-  # GHCi with TidalCycles library preloaded — used by tidal.nvim
-  tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
-    exec ${final.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@" # TidalCycles GHCi wrapper
-  '';
-
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =
     (functions.neg or { })
