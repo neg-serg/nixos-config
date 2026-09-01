@@ -44,6 +44,7 @@ let
     # zestbay moved to distrobox (CXX-Qt broken in Nix): `distrobox-enter arch-zestbay -- zestbay`
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
     pkgs.neg.zest # CLI for ZestBay plugin management: zest list/add/rm/ls
+    pkgs.neg.renoise-osc # OSC CLI for Renoise: renoise-osc eval '...' / renoise-reverb [--track N] [--wet X]
     pkgs.neg.midi-transcribe # audio->MIDI transcription: midi-transcribe <file.mp3> (hFT-Transformer, CPU)
     pkgs.jack-keyboard # virtual MIDI keyboard for JACK/PipeWire — plays into SC/VST MIDI ports
     pkgs.a2jmidid # ALSA→JACK MIDI bridge (SuperCollider MIDIOut → PipeWire → VSTs via yabridge)
