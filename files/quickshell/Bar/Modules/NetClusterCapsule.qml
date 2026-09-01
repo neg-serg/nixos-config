@@ -22,6 +22,12 @@ ConnectivityCapsule {
         if (ConnectivityState) {
             // Initialization verified
         }
+        // One-shot diagnostics (remove after widget visibility confirmed).
+        console.log("[netdbg] stacked=" + Theme.networkCapsuleStacked +
+            " throughput=" + JSON.stringify(throughputText) +
+            " rx=" + JSON.stringify(_rxPlain) + " tx=" + JSON.stringify(_txPlain) +
+            " labelVisible=" + labelVisible +
+            " scale=" + capsuleScale)
     }
 
     readonly property bool vpnConnected: ConnectivityState.vpnConnected
