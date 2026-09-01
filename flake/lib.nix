@@ -27,7 +27,8 @@ let
       inherit system;
       # Allow only the proprietary VST2 SDK (needed by vstplugin, the
       # SuperCollider VST host) — everything else stays unfree-blocked.
-      config.allowUnfreePredicate = pkg: (pkg.pname or "") == "vst2-sdk";
+      config.allowUnfreePredicate =
+        pkg: (pkg.pname or "") == "vst2-sdk" || (pkg.pname or "") == "lsfg-vk"; # lsfg-vk is CC BY-NC-ND 4.0 (user-approved install)
       overlays = [
         bintoolsBootstrapFix
         (hyprlandOverlay system)
