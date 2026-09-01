@@ -65,7 +65,7 @@ Feature Flags
 Nix style: `pkgs.*` lists
 - When adding items like `pkgs.<name>` to `environment.systemPackages` or other package lists, add a short comment after each entry describing what the package is/does, whenever it is not completely obvious.
   - Example: `pkgs.supercollider # SuperCollider IDE and audio engine`
-  - Example: `pkgs.haskellPackages.tidal # TidalCycles live-coding library`
+  - Example: `pkgs.supercollider # SuperCollider live-coding engine (raw SC, scnvim REPL)`
 - Keep comments concise and focused on purpose/role in the system, not marketing copy.
 
 General guidance
@@ -187,6 +187,6 @@ Commit style
 - Common scopes: nixpkgs, flake/*, core/*, hosts/<hostname>, dev/*, cli/*, hardware/*, media/*, servers/*, modules/*, packages/*, docs, ci, refactor.
 - Subjects must be in imperative mood, short and specific, without a trailing period.
 - Examples:
-  - `[media/audio] Add TidalCycles live-coding stack`
+  - `[media/audio] Add SuperCollider live-coding stack`
   - `[hosts/odin] Tune cooling profile`
   - `[docs] Document audio creation stack`

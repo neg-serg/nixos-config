@@ -105,8 +105,6 @@ return {
   -- and filetypes must be explicit or the servers never start
   configure('nil', { cmd = { 'nil' }, filetypes = { 'nix' } })
     configure('dockerls', {})
-    -- (hls removed: haskell-language-server was never installed and would
-    --  misfire on .tidal buffers, which tidal.nvim marks as filetype haskell)
 
     configure('lua_ls', {
       settings = {

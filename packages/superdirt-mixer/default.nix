@@ -36,7 +36,7 @@ stdenvNoCC.mkDerivation {
     cp -r assets "$extdir/"
     # Copy default presets (JSON, user-writable copy lives in the home dir)
     cp -r presets "$extdir/"
-    # Copy TidalCycles pattern functions (BootTidal.hs integration)
+    # Copy TidalCycles pattern functions (SC-side helpers for the mixer)
     cp -r tidal "$extdir/"
     # Copy the quark manifest
     cp SuperDirtMixer.quark "$extdir/"

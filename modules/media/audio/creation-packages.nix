@@ -34,11 +34,8 @@ let
     pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
     pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding
     pkgs.faust2sc # compile Faust DSP into SuperCollider UGens (faust2sc.py)
-    pkgs.haskellPackages.tidal # TidalCycles live coding environment (SuperCollider-based)
-    pkgs.neg.superdirt # SuperDirt — TidalCycles audio engine (SC quark)
+    pkgs.neg.superdirt # SuperDirt — SuperCollider audio engine (SC quark, used by raw SC live coding)
     pkgs.neg.dirt-samples # SuperDirt audio sample library
-    pkgs.tidal-ghci # GHCi with TidalCycles preloaded (for tidal.nvim)
-    pkgs.neg.tidalctl # TidalCycles session controller — engine start/stop/status, editor, recording
     pkgs.pipewire.jack # PipeWire JACK compatibility (libjack.so, pw-jack) — needed by SuperCollider
     # -- Session Management --
     pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)

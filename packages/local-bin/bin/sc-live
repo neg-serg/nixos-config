@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# sc-live — open the raw SuperCollider live-coding scene in nvim.
+# The scene (live.scd) boots the engine inside the scnvim sclang session
+# (sclang-pwj wrapper) and is edited/evaluated on the fly — no Tidal.
+#
+# Usage:
+#   sc-live          open live.scd in nvim (scnvim REPL)
+#   sc-live <file>   open another .scd instead
+set -euo pipefail
+
+LIVE="$HOME/notes/music/supercollider/live.scd"
+[ -f "$LIVE" ] || { echo "live scene not found: $LIVE" >&2; exit 1; }
+
+exec "$HOME/.local/bin/v" "${1:-$LIVE}"
