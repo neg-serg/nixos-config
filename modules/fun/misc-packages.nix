@@ -36,6 +36,7 @@ let
     pkgs.toilet # text banners
 
     pkgs.neg.brrtfetch # animated ASCII art GIF renderer for sysinfo
+    pkgs.neg.skyroads # native SDL2 port of the DOS game SkyRoads (freeware data bundled)
 
   ];
 in
