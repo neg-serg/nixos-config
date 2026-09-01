@@ -25,6 +25,8 @@ return {
         enabled = true,
         icon = true,
         icons = { '󰲡 ', '󰲣 ', '󰲥 ', '󰲧 ', '󰲩 ', '󰲫 ' },
+        width = 'block', -- heading background spans only the text width
+        border = true, -- horizontal lines above/below headings
         background = {
           enabled = true,
           bg_color = {
@@ -36,6 +38,10 @@ return {
             '#005f87', '#005173', '#00435f',
           },
         },
+      },
+      paragraph = {
+        enabled = true,
+        left_margin = 2, -- indent each paragraph (org-like)
       },
       code = {
         enabled = true,
@@ -82,7 +88,11 @@ return {
       html = { enabled = true },
       yaml = { enabled = true },
       plant_uml = { enabled = true },
-      anti_conceal = { enabled = true },
+      anti_conceal = {
+        enabled = true,
+        above = 1, -- keep the line above the cursor rendered
+        below = 1, -- keep the line below the cursor rendered
+      },
       win_options = {
         conceallevel = { default = vim.o.conceallevel, rendered = 3 },
         concealcursor = { default = vim.o.concealcursor, rendered = '' },
