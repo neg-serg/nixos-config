@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Persist Hyprland scratchpad geometry across show/hide cycles (host odin).
 
 Hyprland 0.56.2 (Lua config mode) specifics, verified against the running
