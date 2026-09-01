@@ -40,7 +40,8 @@ Bar/Widgets
 
 - showMediaInBar: boolean, default false. Show the media block in the bar.
 - showWeatherInBar: boolean, default false. Show weather button in the bar.
-- showVolumeOnHover: boolean, default true. Show the audio level (volume %, mic level, Genelec dB) when the cursor hovers the capsule — delayed reveal via the existing pill/tooltip timers.
+- showVolumeOnHover: boolean, default true. Show the audio level (volume %, mic level, Genelec dB)
+  when the cursor hovers the capsule — delayed reveal via the existing pill/tooltip timers.
 - collapseSystemTray: boolean, default true. Collapse tray icons.
 - collapsedTrayIcon: string, default "expand_more". Icon when tray is collapsed (Material icon
   name).
