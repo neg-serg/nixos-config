@@ -4,11 +4,39 @@
 # (sclang-pwj wrapper) and is edited/evaluated on the fly — no Tidal.
 #
 # Usage:
-#   sc-live          open live.scd in nvim (scnvim REPL)
-#   sc-live <file>   open another .scd instead
+#   sc-live              open live.scd in nvim (scnvim REPL)
+#   sc-live <file>       open another .scd instead
+#   sc-live status       show engine status (scsynth + port links)
 set -euo pipefail
 
 LIVE="$HOME/notes/music/supercollider/live.scd"
-[ -f "$LIVE" ] || { echo "live scene not found: $LIVE" >&2; exit 1; }
 
-exec "$HOME/.local/bin/v" "${1:-$LIVE}"
+status() {
+  echo "=== SuperCollider engine ==="
+  if pgrep -f 'scsynth -u 57110' >/dev/null 2>&1; then
+    echo "  scsynth: running (port 57110)"
+  else
+    echo "  scsynth: NOT running — start via <leader>sc + <leader>sb in live.scd"
+  fi
+  if pgrep -f 'sclang-pwj' >/dev/null 2>&1; then
+    echo "  sclang:  running (scnvim session)"
+  else
+    echo "  sclang:  not running"
+  fi
+  echo "=== PipeWire links ==="
+  if pw-link -o 2>/dev/null | grep -q '^SuperCollider:out_1'; then
+    echo "  SuperCollider:out_1/2 -> present (linked by supercollider-link)"
+  else
+    echo "  SuperCollider:out_1/2 -> NOT linked (engine off or link service down)"
+  fi
+}
+
+case "${1:-}" in
+  status)
+    status
+    ;;
+  *)
+    [ -f "$LIVE" ] || { echo "live scene not found: $LIVE" >&2; exit 1; }
+    exec "$HOME/.local/bin/v" "${1:-$LIVE}"
+    ;;
+esac
