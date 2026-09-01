@@ -22,6 +22,10 @@ ConnectivityCapsule {
     // the capsule beyond the bar strip: cap at the uniform capsule height so
     // the readout fits the bar instead of overflowing/clipping at the screen.
     implicitHeight: root.uniformCapsuleHeight
+    // Center the capsule in its wrapper's content area: without this the
+    // 26px capsule hangs below the 20px content slot and its icon sits
+    // ~4px lower than the neighboring capsules' icons.
+    anchors.verticalCenter: parent.verticalCenter
 
     Component.onCompleted: {
         if (ConnectivityState) {
