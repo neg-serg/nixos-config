@@ -5,6 +5,7 @@ import "../../Helpers/RichText.js" as Rich
 import "../../Helpers/Time.js" as Time
 import "../../Helpers/Color.js" as Color
 import "../../Helpers/AccentSampler.js" as AccentSampler
+import "../../Helpers/TooltipText.js" as TooltipText
 import qs.Settings
 import qs.Services
 import qs.Components
@@ -12,6 +13,25 @@ import qs.Components
 Item {
     id: mediaControl
     property var sidePanelPopup: null
+
+    // Track + player info on hover.
+    readonly property string _tooltipText: (function() {
+        var title = MusicManager.trackTitle || "";
+        var artist = MusicManager.trackArtist || "";
+        var hints = [];
+        if (MusicManager.trackAlbum) hints.push("Альбом: " + MusicManager.trackAlbum);
+        var q = [];
+        if (MusicManager.trackCodec) q.push(String(MusicManager.trackCodec));
+        if (MusicManager.trackBitrateStr) q.push(String(MusicManager.trackBitrateStr));
+        if (MusicManager.trackSampleRateStr) q.push(String(MusicManager.trackSampleRateStr));
+        if (MusicManager.trackBitDepthStr) q.push(String(MusicManager.trackBitDepthStr));
+        if (q.length) hints.push("Качество: " + q.join(" · "));
+        var player = MusicManager.currentPlayer
+            ? String(MusicManager.currentPlayer.service || MusicManager.currentPlayer.name || MusicManager.currentPlayer.identity || "")
+            : "";
+        if (player) hints.push("Плеер: " + player);
+        return TooltipText.compose(title, artist, hints);
+    })()
     readonly property real capsuleScale: capsule.capsuleScale
     readonly property var capsuleMetrics: capsule.capsuleMetrics
     property int baseHeight: Math.max(capsule.capsuleHeight, Math.round(Theme.panelHeight * capsule.capsuleScale))
@@ -171,6 +191,12 @@ Item {
         if (isFinite(t) && t > 0) return Math.round(t * mediaControl.capsuleScale);
         return fallback;
     }
+    PanelTooltip {
+        targetItem: capsule
+        text: mediaControl._tooltipText
+        visibleWhen: capsule.hovered
+    }
+
     WidgetCapsule {
         id: capsule
         paddingScale: 1.5

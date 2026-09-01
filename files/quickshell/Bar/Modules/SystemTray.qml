@@ -12,6 +12,16 @@ import "../../Helpers/ScreenUtil.js" as ScreenUtil
 Row {
     id: root
     property bool panelHover: false
+    // Single tooltip for the whole tray; the hovered item is tracked by each
+    // delegate's MouseArea (a Window cannot see delegate ids/parent props).
+    property Item _hoveredTrayItem: null
+    property string _trayTipText: ""
+
+    PanelTooltip {
+        targetItem: root._hoveredTrayItem
+        text: root._trayTipText
+        visibleWhen: root._hoveredTrayItem !== null && root._trayTipText.length > 0
+    }
     property bool hotHover: false
     property bool holdOpen: false
     property bool shortHoldActive: false
@@ -168,6 +178,8 @@ Row {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        onEntered: { root._hoveredTrayItem = parent; root._trayTipText = modelData ? String(modelData.title || modelData.id || "") : "" }
+                        onExited: { if (root._hoveredTrayItem === parent) { root._hoveredTrayItem = null; root._trayTipText = "" } }
                         onClicked: mouse => {
                             if (!modelData) return;
                             if (mouse.button === Qt.LeftButton) {

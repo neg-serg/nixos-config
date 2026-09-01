@@ -3,6 +3,7 @@ import qs.Components
 import qs.Settings
 import qs.Services as Services
 import "../../Helpers/SystemMonitorUi.js" as SysUi
+import "../../Helpers/TooltipText.js" as TooltipText
 
 /*!
  * SystemMonitorCapsule — grouped capsule showing 6 system metrics as
@@ -19,8 +20,21 @@ OverlayToggleCapsule {
     capsule.implicitWidth: capsule.horizontalPadding * 2 + metricsRow.implicitWidth
     capsuleVisible: _anyVisible
     autoToggleOnTap: true
-    // Tooltip on capsule hover
-    PanelTooltip{text:"Open system dashboard";targetItem:root;visibleWhen:capsHov.containsMouse}
+    // Tooltip on capsule hover: live CPU/GPU/RAM/temperature summary.
+    readonly property string _tooltipText: (function() {
+        var m = Services.SystemMonitor;
+        var hints = [];
+        if (m) {
+            hints.push("CPU: " + Math.round(m.cpuPercent) + "%");
+            if (m.gpuAvailable) hints.push("GPU: " + Math.round(m.gpuPercent) + "%");
+            if (m.ramTotalGiB > 0)
+                hints.push("RAM: " + Math.round(m.ramPercent) + "% (" + m.ramUsedGiB.toFixed(1) + " / " + m.ramTotalGiB.toFixed(0) + " GiB)");
+            if (m.cpuTempCelsius > 0) hints.push("Температура: " + Math.round(m.cpuTempCelsius) + "°C");
+        }
+        hints.push("Клик — панель мониторинга");
+        return TooltipText.compose("Мониторинг", "", hints);
+    })()
+    PanelTooltip{text:root._tooltipText;targetItem:root;visibleWhen:capsHov.containsMouse}
     MouseArea{id:capsHov;z:-1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.NoButton}
     overlayNamespace: "qs-monitor"
 
