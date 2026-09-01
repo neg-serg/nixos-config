@@ -57,36 +57,44 @@ patch_file(
         # 1a. add the optional `model` parameter after the run_in_background spread.
         (
             "} } : {}\n\t\t\t},\n\t\t\toutput: {",
-            "} } : {},\n"
-            "\t\t\t\tmodel: {\n"
-            '\t\t\t\t\ttype: "string",\n'
-            '\t\t\t\t\tdescription: "Optional model override for the delegated child (e.g. '
-            "deepseek-v4-flash). Falls back to the parent's model when omitted.\"\n"
-            "\t\t\t\t}\n"
-            "\t\t\t},\n"
-            "\t\t\toutput: {",
+            (
+                "} } : {},\n"
+                "\t\t\t\tmodel: {\n"
+                '\t\t\t\t\ttype: "string",\n'
+                '\t\t\t\t\tdescription: "Optional model override for the delegated child (e.g. '
+                "deepseek-v4-flash). Falls back to the parent's model when omitted.\"\n"
+                "\t\t\t\t}\n"
+                "\t\t\t},\n"
+                "\t\t\toutput: {"
+            ),
             1,
         ),
         # 1b. merge the model into the child request's agentOptions.
         (
             "\t\t\t\t\t...config.agentOptions !== void 0 ? { agentOptions: config.agentOptions } : {},",
-            "\t\t\t\t\tagentOptions: {\n"
-            "\t\t\t\t\t\t...(config.agentOptions ?? {}),\n"
-            "\t\t\t\t\t\t...args.model !== void 0 ? { model: args.model } : {}\n"
-            "\t\t\t\t\t},",
+            (
+                "\t\t\t\t\tagentOptions: {\n"
+                "\t\t\t\t\t\t...(config.agentOptions ?? {}),\n"
+                "\t\t\t\t\t\t...args.model !== void 0 ? { model: args.model } : {}\n"
+                "\t\t\t\t\t},"
+            ),
             1,
         ),
         # 2a. subagent presentationMeta (sibling of render inside output).
         (
-            ": outputValueText(value.output)\n"
-            "\t\t\t\t}]\n"
-            "\t\t\t},\n"
-            "\t\t\tisConcurrencySafe: () => true,",
-            ": outputValueText(value.output)\n"
-            "\t\t\t\t}],\n"
-            '\t\t\t\tpresentationMeta: (_args, value) => ({ kind: "subagent", result: value })\n'
-            "\t\t\t},\n"
-            "\t\t\tisConcurrencySafe: () => true,",
+            (
+                ": outputValueText(value.output)\n"
+                "\t\t\t\t}]\n"
+                "\t\t\t},\n"
+                "\t\t\tisConcurrencySafe: () => true,"
+            ),
+            (
+                ": outputValueText(value.output)\n"
+                "\t\t\t\t}],\n"
+                '\t\t\t\tpresentationMeta: (_args, value) => ({ kind: "subagent", result: value })\n'
+                "\t\t\t},\n"
+                "\t\t\tisConcurrencySafe: () => true,"
+            ),
             1,
         ),
     ],
@@ -98,20 +106,24 @@ patch_file(
     [
         # 2b. workflow presentationMeta.
         (
-            "text: renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
-            "\t\t\t}]\n"
-            "\t\t},\n"
-            "\t\tasync execute(args, exec) {",
-            "text: renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
-            "\t\t\t}],\n"
-            "\t\t\tpresentationMeta: (args, value) => ({\n"
-            '\t\t\t\tkind: "workflow",\n'
-            "\t\t\t\trunId: value.runId,\n"
-            "\t\t\t\tagentsStarted: value.agentsStarted,\n"
-            "\t\t\t\tresult: value.result\n"
-            "\t\t\t})\n"
-            "\t\t},\n"
-            "\t\tasync execute(args, exec) {",
+            (
+                "text: renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
+                "\t\t\t}]\n"
+                "\t\t},\n"
+                "\t\tasync execute(args, exec) {"
+            ),
+            (
+                "text: renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
+                "\t\t\t}],\n"
+                "\t\t\tpresentationMeta: (args, value) => ({\n"
+                '\t\t\t\tkind: "workflow",\n'
+                "\t\t\t\trunId: value.runId,\n"
+                "\t\t\t\tagentsStarted: value.agentsStarted,\n"
+                "\t\t\t\tresult: value.result\n"
+                "\t\t\t})\n"
+                "\t\t},\n"
+                "\t\tasync execute(args, exec) {"
+            ),
             1,
         ),
     ],
@@ -123,20 +135,24 @@ patch_file(
     [
         # 2c. ralph presentationMeta.
         (
-            "text: renderResult(value.result, resolved.maxResultChars)\n"
-            "\t\t\t}]\n"
-            "\t\t},\n"
-            "\t\tasync execute(args, exec) {",
-            "text: renderResult(value.result, resolved.maxResultChars)\n"
-            "\t\t\t}],\n"
-            "\t\t\tpresentationMeta: (_args, value) => ({\n"
-            '\t\t\t\tkind: "ralph",\n'
-            "\t\t\t\trunId: value.runId,\n"
-            "\t\t\t\tagentsStarted: value.agentsStarted,\n"
-            "\t\t\t\tresult: value.result\n"
-            "\t\t\t})\n"
-            "\t\t},\n"
-            "\t\tasync execute(args, exec) {",
+            (
+                "text: renderResult(value.result, resolved.maxResultChars)\n"
+                "\t\t\t}]\n"
+                "\t\t},\n"
+                "\t\tasync execute(args, exec) {"
+            ),
+            (
+                "text: renderResult(value.result, resolved.maxResultChars)\n"
+                "\t\t\t}],\n"
+                "\t\t\tpresentationMeta: (_args, value) => ({\n"
+                '\t\t\t\tkind: "ralph",\n'
+                "\t\t\t\trunId: value.runId,\n"
+                "\t\t\t\tagentsStarted: value.agentsStarted,\n"
+                "\t\t\t\tresult: value.result\n"
+                "\t\t\t})\n"
+                "\t\t},\n"
+                "\t\tasync execute(args, exec) {"
+            ),
             1,
         ),
     ],
@@ -155,15 +171,19 @@ patch_file(
         #    envelope key (`case "ignorable": break`, value must be exactly
         #    true), so this is the missing write-side half.
         (
-            "\t\tconst surfaceMetadata = {\n"
-            "\t\t\t...surfaceOpts?.sourceEventSeqs === void 0 ? {} : { sourceEventSeqs: surfaceOpts.sourceEventSeqs },\n"
-            "\t\t\t...surfaceOpts?.surfaceOp === void 0 ? {} : { surfaceOp: surfaceOpts.surfaceOp }\n"
-            "\t\t};",
-            "\t\tconst surfaceMetadata = {\n"
-            "\t\t\t...surfaceOpts?.sourceEventSeqs === void 0 ? {} : { sourceEventSeqs: surfaceOpts.sourceEventSeqs },\n"
-            "\t\t\t...surfaceOpts?.surfaceOp === void 0 ? {} : { surfaceOp: surfaceOpts.surfaceOp },\n"
-            "\t\t\t...surfaceOpts?.ignorable === true ? { ignorable: true } : {}\n"
-            "\t\t};",
+            (
+                "\t\tconst surfaceMetadata = {\n"
+                "\t\t\t...surfaceOpts?.sourceEventSeqs === void 0 ? {} : { sourceEventSeqs: surfaceOpts.sourceEventSeqs },\n"
+                "\t\t\t...surfaceOpts?.surfaceOp === void 0 ? {} : { surfaceOp: surfaceOpts.surfaceOp }\n"
+                "\t\t};"
+            ),
+            (
+                "\t\tconst surfaceMetadata = {\n"
+                "\t\t\t...surfaceOpts?.sourceEventSeqs === void 0 ? {} : { sourceEventSeqs: surfaceOpts.sourceEventSeqs },\n"
+                "\t\t\t...surfaceOpts?.surfaceOp === void 0 ? {} : { surfaceOp: surfaceOpts.surfaceOp },\n"
+                "\t\t\t...surfaceOpts?.ignorable === true ? { ignorable: true } : {}\n"
+                "\t\t};"
+            ),
             1,
         ),
     ],

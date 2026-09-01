@@ -14,7 +14,6 @@ mkIf (builtins.elem "desktop" (config.features.profiles or [ ])) {
       creation.enable = mkDefault true;
       mpd.enable = mkDefault true;
     };
-    emulators.retroarch.full = mkDefault true;
     dev.ai.enable = mkDefault true;
     gui.vicinae.enable = mkDefault true;
   };
