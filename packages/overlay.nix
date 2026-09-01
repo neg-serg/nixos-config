@@ -35,6 +35,14 @@ in
     src = ./../files/sources/dpkg-1.23.7.tar.xz;
   });
 
+  # renoise: files.renoise.com throttles the demo tarball from this region
+  # (HEAD 200 but the body crawls); vendor it (same relative-path pattern).
+  # Hash verified: sha256-RfOhcllmwX3Cy6ywIYjIC+kUX6rXkd+PM9wKj+fCuts= matches
+  # the nixpkgs fetcher hash.
+  renoise = finalPrev.renoise.overrideAttrs (_: {
+    src = ./../files/sources/Renoise_3_5_4_Demo_Linux_x86_64.tar.gz;
+  });
+
   # ouch 0.8.1: "ignore invalid unix permissions and setuid bits from zip"
   # (upstream PR #1007). The pinned nixpkgs-weekly still ships 0.8.0, which
   # applies garbage Unix modes stored in bandcamp pre-order zips (e.g. 0o4032)
