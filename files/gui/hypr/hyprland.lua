@@ -633,6 +633,13 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
 end)
 
+-- Ensure the quickshell panel is running after every config reload
+-- (systemctl start is a no-op when the service is already active,
+-- so this never spawns more than one instance).
+hl.on("config.reloaded", function()
+  hl.exec_cmd("systemctl --user start quickshell.service")
+end)
+
 -- Keep the primary monitor as the home for all workspaces
 hl.on("monitor.added", function(monitor_name)
   if monitor_name == "DP-2" then
