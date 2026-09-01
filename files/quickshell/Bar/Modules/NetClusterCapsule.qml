@@ -65,7 +65,7 @@ ConnectivityCapsule {
     // those rendered as unreadable glyphs). Leading zero-padding is stripped.
     readonly property string _rxPlain: _stripZeroPad(ConnUi.formatRxText(throughputText))
     readonly property string _txPlain: _stripZeroPad(ConnUi.formatTxText(throughputText))
-    readonly property int _stackedRowFontPx: Math.max(8, Math.round(labelPixelSize * 0.7))
+    readonly property int _stackedRowFontPx: Math.max(8, Math.round(labelPixelSize * 0.55))
 
     // Hiddify tray menu popup
     CustomTrayMenu { id: hiddifyMenu }
