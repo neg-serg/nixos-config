@@ -44,6 +44,7 @@ in
     flow = callPkg (packagesRoot + "/flow") { }; # Terminal dashboard for real-time network throughput
     skyroads = callPkg (packagesRoot + "/skyroads") { }; # Native SDL2 port of the DOS game SkyRoads (freeware data bundled)
     lsfg-vk = callPkg (packagesRoot + "/lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
+    nixard = callPkg (packagesRoot + "/nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
