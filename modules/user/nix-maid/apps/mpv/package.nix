@@ -46,7 +46,9 @@ in
     lib.mkMerge [
       {
         # Install Package
-        users.users.neg.packages = [ mpvPackage ];
+        # System-wide (not user profile): Hyprland binds and `pl` launch mpv from
+        # non-login PATHs where ~/.nix-profile/bin is absent.
+        environment.systemPackages = [ mpvPackage ];
       }
     ]
   );
