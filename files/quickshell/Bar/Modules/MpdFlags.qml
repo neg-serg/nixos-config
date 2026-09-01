@@ -2,10 +2,22 @@ import QtQuick
 import qs.Settings
 import qs.Services as Services
 import qs.Components
+import "../../Helpers/TooltipText.js" as TooltipText
 
 WidgetCapsule {
     id: root
     forceHeightFromMetrics: true
+
+    // MPD state + meaning of each active flag on hover.
+    readonly property string _tooltipText: (function() {
+        var hints = [];
+        for (var i = 0; i < activeFlags.length; i++) {
+            var t = activeFlags[i] && (activeFlags[i].title || activeFlags[i].key);
+            if (t) hints.push(String(t));
+        }
+        if (!hints.length) hints.push("Активных флагов нет");
+        return TooltipText.compose("MPD", mpdState, hints);
+    })()
     enabled: false
     property int fallbackIntervalMs:Theme.mpdFlagsFallbackMs
     property color iconColor: Theme.textPrimary
@@ -137,4 +149,10 @@ WidgetCapsule {
     implicitHeight: forceHeightFromMetrics
         ? Math.max(uniformCapsuleHeight, content.implicitHeight + verticalPadding * 2)
         : content.implicitHeight + verticalPadding * 2
+
+    PanelTooltip {
+        targetItem: root
+        text: root._tooltipText
+        visibleWhen: root.hovered
+    }
 }
