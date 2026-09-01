@@ -2,11 +2,17 @@
 -- Fork/rewrite of render-markdown.nvim by the-mayankjha (module: fk_markdown).
 -- Docs: README.md, doc/configuration.md; diagnostics: :checkhealth fk_markdown
 --
--- All rendering subsystems are enabled explicitly: headings, code blocks,
--- tables, callouts/blockquotes, bullets, checkboxes, links (incl. wiki links),
--- thematic breaks, signs, org-style indent, inline highlights, LaTeX, images,
--- HTML, YAML frontmatter and PlantUML -- plus the web preview subsystem with
--- syntax highlighting, KaTeX math and on-demand keymaps (<leader>mp/ms/mt).
+-- Colors are tuned to the neg.nvim palette (~/.local/share/nvim/lazy/neg.nvim/
+-- lua/neg/palette.lua):
+--   heading ramp  = neg markup heading ramp (accent_secondary #005faf blended
+--                   with include #005f87; exact values from neg.util lighten/
+--                   darken)  ->  #669fcf #4087c3 #005faf #005f87 #005173 #00435f
+--   code bg       = p.dark       #121212
+--   code border   = p.drk2       #223f73
+--   code title    = p.func       #7095b0
+--   quote fg      = p.norm       #6c7e96
+--   checkbox hl   = neg groups @markup.list.checked / .unchecked
+--   preview bg    = p.dark; keyword/string/comment/function = neg syntax hues
 return {
   'the-mayankjha/fk_markdown.nvim',
   ft = { 'markdown', 'quarto', 'Avante', 'mdx' },
@@ -21,17 +27,23 @@ return {
         icons = { '󰲡 ', '󰲣 ', '󰲥 ', '󰲧 ', '󰲩 ', '󰲫 ' },
         background = {
           enabled = true,
-          bg_color = { '#1e1e2e', '#1e1e2e', '#1e1e2e', '#1e1e2e', '#1e1e2e', '#1e1e2e' },
-          font_color = { '#f38ba8', '#fab387', '#f9e2af', '#a6e3a1', '#74c7ec', '#cba6f7' },
+          bg_color = {
+            '#121212', '#121212', '#121212',
+            '#121212', '#121212', '#121212',
+          },
+          font_color = {
+            '#669fcf', '#4087c3', '#005faf',
+            '#005f87', '#005173', '#00435f',
+          },
         },
       },
       code = {
         enabled = true,
         style = 'wide',
-        border = { enabled = true, type = 'dynamic', color = '#f38ba8' },
-        background = { enabled = true, color = '#181825' },
+        border = { enabled = true, type = 'dynamic', color = '#223f73' },
+        background = { enabled = true, color = '#121212' },
         padding = { top = 1, bottom = 1, left = 1, right = 2 },
-        title = { enabled = true, type = 'dynamic', color = '#a6e3a1' },
+        title = { enabled = true, type = 'dynamic', color = '#7095b0' },
         icon = { enabled = true },
       },
       pipe_table = {
@@ -44,7 +56,7 @@ return {
         style = 'boxy',
         border = true,
         bg = 'NONE',
-        fg = '#cad3f5',
+        fg = '#6c7e96',
       },
       bullet = {
         enabled = true,
@@ -52,8 +64,8 @@ return {
       },
       checkbox = {
         enabled = true,
-        unchecked = { icon = '󰄱 ', highlight = 'RenderMarkdownUnchecked' },
-        checked = { icon = '󰱒 ', highlight = 'RenderMarkdownChecked' },
+        unchecked = { icon = '󰄱 ', highlight = '@markup.list.unchecked' },
+        checked = { icon = '󰱒 ', highlight = '@markup.list.checked' },
       },
       link = {
         enabled = true,
@@ -93,11 +105,11 @@ return {
           enabled = true,
           theme = 'github-dark',
           colors = {
-            background = '#181825',
-            keyword = '#cba6f7',
-            string = '#a6e3a1',
-            comment = '#6c7086',
-            function_name = '#89b4fa',
+            background = '#121212',
+            keyword = '#669fcf',
+            string = '#6e879f',
+            comment = '#3c4754',
+            function_name = '#7095b0',
           },
         },
         latex = { enabled = true, code_blocks = true },
