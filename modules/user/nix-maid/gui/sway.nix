@@ -162,7 +162,7 @@ let
     # Screen recording (wlroots-specific screenrec helper).
     bindsym --to-code Mod4+Shift+v exec ~/.local/bin/screenrec screen
     bindsym --to-code Mod4+Shift+Ctrl+v exec ~/.local/bin/screenrec area
-    # Music synths (Carla headless via local-bin/synth). M4+Shift+l is move
+    # Music synths (VSTPlugin in SC via local-bin/synth). M4+Shift+l is move
     # right in sway (i3 convention), so LegendHZ moved to M4+Shift+Ctrl+l.
     bindsym --to-code Mod4+Shift+s exec synth Surge_XT
     bindsym --to-code Mod4+Shift+Ctrl+l exec synth LegendHZ

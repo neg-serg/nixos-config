@@ -1,43 +1,59 @@
 #!/usr/bin/env bash
-# synth — run-or-raise / start for a carla-hosted synth (Hyprland-friendly).
+# synth — run-or-raise / start a synth (Hyprland/Sway-friendly).
 #
-# If the synth's engine is running (events-in port present): focus its window
-# if there is one, otherwise report it as running (headless).
-# If not running: start it headless via carlactl play (wires Osmose/RME MIDI
-# + audio + Tidal slot). Headless = stable (the Qt UI variant segfaults).
+# Routes:
+#   Surge_XT / Surge XT  -> native standalone (surge-xt)
+#   LegendHZ             -> REAPER (yabridge Windows VST3, standard ~/.vst3 path)
+#   Vital                -> vital-standalone user service
+#   other                -> REAPER (yabridge plugins appear as regular VSTs)
 #
-# Usage: synth <plugin>        e.g.  synth Surge_XT | synth LegendHZ
+# Usage: synth <name>    e.g.  synth Surge_XT | synth LegendHZ | synth Vital
 set -euo pipefail
 
-name="${1:?usage: synth <plugin>}"
+name="${1:?usage: synth <name>}"
 plain=$(printf '%s' "$name" | sed 's/^vst[23]://; s/  */_/g')
-# the events-in port name uses spaces: "Surge XT:events-in"
-port_name="${plain//_/ }:events-in"
 
-engine_up() {
-  pw-cli ls Port 2>/dev/null | rg -qi "${port_name}"
-}
-
-find_win() {
-  hyprctl clients -j 2>/dev/null | jq -r --arg t "$plain"     '.[] | select(.class=="carla" and (.title|contains($t))) | .address' | head -1
-}
-
-if engine_up; then
-  win=$(find_win)
-  if [ -n "$win" ]; then
-    hyprctl dispatch focuswindow "address:$win" >/dev/null 2>&1 || true
-    echo "synth: $name raised"
-  else
-    echo "synth: $name already running (headless)"
+raise_window() {
+  # $1 = class regex, $2 = title substring (may be empty)
+  local cls="$1" title="$2"
+  if command -v hyprctl >/dev/null 2>&1; then
+    local addr
+    addr=$(hyprctl clients -j 2>/dev/null | jq -r --arg c "$cls" --arg t "$title" \
+      '.[] | select(.class|test($c)) | select($t=="" or (.title|contains($t))) | .address' | head -1)
+    [ -n "$addr" ] && { hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1; return 0; }
   fi
-  exit 0
-fi
+  return 1
+}
 
-echo "synth: starting $name (headless) ..."
-carlactl play "vst3:$name"
-
-for _ in $(seq 1 60); do
-  engine_up && break
-  sleep 1
-done
-engine_up && echo "synth: $name ready (headless, wired)"   || echo "synth: FAILED to start $name" >&2
+case "$plain" in
+  Surge_XT|SurgeXT|surge)
+    if pgrep -f '/bin/Surge XT' >/dev/null 2>&1; then
+      raise_window '^Surge' 'Surge XT' && echo "synth: Surge XT raised" || echo "synth: Surge XT already running"
+    else
+      echo "synth: starting Surge XT standalone ..."
+      nohup "/run/current-system/sw/bin/Surge XT" >/dev/null 2>&1 &
+      echo "synth: Surge XT started"
+    fi
+    ;;
+  Vital|vital)
+    if pgrep -f '/bin/Vital' >/dev/null 2>&1; then
+      echo "synth: Vital already running"
+    else
+      echo "synth: starting Vital (vital-standalone) ..."
+      systemctl --user start vital-standalone
+      echo "synth: Vital started"
+    fi
+    ;;
+  *)
+    # yabridge plugins (LegendHZ, kiloHearts, ...) live in ~/.vst3/yabridge;
+    # REAPER scans that dir and lists them as regular VST3. Focus it if open,
+    # otherwise launch it — add the plugin on a track's FX chain.
+    if pgrep -f '/bin/reaper' >/dev/null 2>&1; then
+      raise_window '^reaper' '' && echo "synth: REAPER raised ($name as VST)" || echo "synth: REAPER already running ($name as VST)"
+    else
+      echo "synth: starting REAPER ($name via yabridge as regular VST3) ..."
+      nohup reaper >/dev/null 2>&1 &
+      echo "synth: REAPER started — add $name on a track FX chain (VST3 list)"
+    fi
+    ;;
+esac

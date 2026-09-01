@@ -22,8 +22,8 @@ isn't a step-by-step runbook.
 - SuperCollider live coding (raw SC, scnvim) — moved to the private notes repo
   (~/notes/music/supercollider/), kept out of the public tree on purpose
 
-- carlactl — console VST router through headless Carla (list/run/route, fzf):
-  [carlactl.ru.md](./carlactl.ru.md)
+- Windows VST through yabridge (regular VST3 in REAPER):
+  [wine-vst-bridge.ru.md](./wine-vst-bridge.ru.md)
 
 - Replacing GUI buttons with text commands (RU):
   [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)

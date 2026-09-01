@@ -1352,28 +1352,6 @@ Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
-## features.media.audio.carlaLoopback.enable
-
-Whether to enable enable virtual loopback sink for Carla.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
 ## features.media.audio.cider.enable
 
 Whether to enable enable Cider (Apple Music client).
