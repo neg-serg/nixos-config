@@ -198,6 +198,8 @@ in
         "${pkgs.atk-sc3}/share/SuperCollider/extensions/atk-sc3";
       ".local/share/SuperCollider/Extensions/VSTPlugin".source =
         "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin";
+      # Renoise Redux VST3 at the standard user VST3 path (hosts scan ~/.vst3)
+      ".vst3/renoise_redux.vst3".source = "${pkgs.neg.renoise-redux}/lib/vst3/renoise_redux.vst3";
       # ATK dependency quarks
       ".local/share/SuperCollider/Extensions/Hilbert".source =
         "${pkgs.hilbert}/share/SuperCollider/extensions/Hilbert";

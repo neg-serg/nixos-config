@@ -35,12 +35,26 @@ in
     src = ./../files/sources/dpkg-1.23.7.tar.xz;
   });
 
-  # renoise: files.renoise.com throttles the demo tarball from this region
-  # (HEAD 200 but the body crawls); vendor it (same relative-path pattern).
-  # Hash verified: sha256-RfOhcllmwX3Cy6ywIYjIC+kUX6rXkd+PM9wKj+fCuts= matches
-  # the nixpkgs fetcher hash.
-  renoise = finalPrev.renoise.overrideAttrs (_: {
-    src = ./../files/sources/Renoise_3_5_4_Demo_Linux_x86_64.tar.gz;
+  # renoise: full licensed release tarball (user's own Renoise 3.5.4 build,
+  # backstage.renoise.com download — not the public demo). Vendored in
+  # files/sources (same relative-path pattern); files.renoise.com throttles
+  # from this region anyway.
+  # The bin wrapper runs under pw-jack so the JACK audio driver joins the
+  # shared 48k PipeWire graph (plain ALSA default grabs 44.1k and distorts).
+  renoise = finalPrev.renoise.overrideAttrs (old: {
+    src = ./../files/sources/rns_354_linux_x86_64.tar.gz;
+    # The nixpkgs installPhase has no runHook postInstall, so wrap the binary
+    # in postFixup (fixupPhase always runs it): under pw-jack the JACK audio
+    # driver joins the shared 48k PipeWire graph (plain ALSA default grabs
+    # 44.1k and distorts).
+    postFixup = (old.postFixup or "") + ''
+      rm -f $out/bin/renoise
+      cat > $out/bin/renoise <<WRAP
+      #!${final.stdenv.shell}
+      exec ${final.pipewire.jack}/bin/pw-jack $out/renoise "\$@"
+      WRAP
+      chmod +x $out/bin/renoise
+    '';
   });
 
   # ouch 0.8.1: "ignore invalid unix permissions and setuid bits from zip"
@@ -212,6 +226,7 @@ in
         systemctl --user start dsh.service 2>/dev/null || true
       '';
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
+      renoise-redux = final.callPackage ./renoise-redux { }; # Renoise Redux VST3 plugin (licensed build)
       midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
       virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
