@@ -1,7 +1,12 @@
 { lib, pkgs, ... }:
 
 let
-  baseKernel = pkgs.linuxPackages.kernel;
+  # CachyOS LTS kernel source (6.18.x, patched) — same major as the previous
+  # stock kernel, so ZFS 2.4 + all out-of-tree modules keep building. The
+  # zen4/ADIOS config tunings do not survive the minimal-config rebuild below
+  # (linuxManualConfig uses this host's trimmed .config instead), but the newer
+  # patched source does. Latest/bore variants track 7.x, which breaks ZFS.
+  baseKernel = pkgs.cachyosKernels.linuxPackages-cachyos-lts.kernel;
 
   # Backported MediaTek MT6639 (MT7927) Bluetooth support: odin's adapter
   # (13d3:3588, ASUS ROG STRIX X870E-E) reports CHIPID=0x0000 and 6.18.y
