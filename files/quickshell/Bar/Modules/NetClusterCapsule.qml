@@ -50,8 +50,10 @@ ConnectivityCapsule {
     readonly property string _richThroughputText: _formatThroughputRich(throughputText)
 
     // Stacked (two-row) layout properties
-    readonly property string _rxRichText: _dimLeadingZeros(ConnUi.formatRxText(throughputText))
-    readonly property string _txRichText: _dimLeadingZeros(ConnUi.formatTxText(throughputText))
+    // Two-row RX/TX readout, plain text (no rich-text spans / Font.Black —
+    // those rendered as unreadable glyphs). Leading zero-padding is stripped.
+    readonly property string _rxPlain: _stripZeroPad(ConnUi.formatRxText(throughputText))
+    readonly property string _txPlain: _stripZeroPad(ConnUi.formatTxText(throughputText))
     readonly property int _stackedRowFontPx: Math.max(8, Math.round(labelPixelSize * 0.7))
 
     // Hiddify tray menu popup
@@ -139,21 +141,19 @@ ConnectivityCapsule {
         y: 2
 
         Text {
-            text: root._rxRichText
-            textFormat: Text.RichText
+            text: root._rxPlain
+            textFormat: Text.PlainText
             font.family: Theme.fontFamily
-            font.weight: Font.Black
+            font.weight: Font.Medium
             font.pixelSize: root._stackedRowFontPx
-            font.letterSpacing: 0.5
             color: Theme.textPrimary
         }
         Text {
-            text: root._txRichText
-            textFormat: Text.RichText
+            text: root._txPlain
+            textFormat: Text.PlainText
             font.family: Theme.fontFamily
-            font.weight: Font.Black
+            font.weight: Font.Medium
             font.pixelSize: root._stackedRowFontPx
-            font.letterSpacing: 0.5
             color: Theme.textPrimary
         }
     }
@@ -198,6 +198,11 @@ ConnectivityCapsule {
             ? ""
             : Rich.colorSpan(_unitAccentCss, unit);
         return dimmed + rest + dotAndDec + unitSuffix;
+    }
+
+    // Strip leading zero-padding ("058.2K" -> "58.2K") for the plain rows.
+    function _stripZeroPad(s) {
+        return String(s || "").replace(/^0+(?=\d)/, "");
     }
 
     function _formatThroughputRich(text) {
