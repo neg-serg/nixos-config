@@ -125,6 +125,9 @@ in
               class = org.telegram.desktop
               command = Telegram
               options = special
+              # Fresh spawns land right-aligned; user geometry (saved by
+              # scratchpad-geometry.service) wins once the window is moved.
+              rules = size monitor_w*0.3 monitor_h-60; move monitor_w*0.7-8 8
           }
           music {
               class = music
