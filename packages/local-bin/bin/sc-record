@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# sc-record — record the live SuperCollider output to a wav file.
+# The engine routes out_1/2 -> playback.game-stereo (supercollider-link);
+# pw-record must tap that node (the game-stereo *sink* monitor is silent).
+#
+# Usage:
+#   sc-record <out.wav> [seconds]     record N seconds (default 60)
+set -euo pipefail
+
+out="${1:?usage: sc-record <out.wav> [seconds]}"
+secs="${2:-60}"
+
+if ! pw-link -o 2>/dev/null | grep -q '^SuperCollider:out_1'; then
+  echo "sc-record: SuperCollider out_1 not found — engine not running?" >&2
+  exit 1
+fi
+
+echo "sc-record: recording ${secs}s -> $out"
+timeout "$secs" pw-record --target "playback.game-stereo" "$out"
+echo "sc-record: done -> $out"
