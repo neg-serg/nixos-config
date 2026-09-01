@@ -6,7 +6,7 @@ in
 {
   # mprime (Prime95): the source zip on download.mersenne.ca / mersenne.org is
   # region-blocked (the fetcher gets a stub page instead of the zip). Vendored
-  # tarball (relative-path pattern, see carla in overlay.nix).
+  # tarball (relative-path pattern, see the vendored-tarball note in overlay.nix).
   mprime = prev.mprime.overrideAttrs (old: {
     # The stock package uses fetchzip (which unpacks during fetch); with a
     # vendored zip the generic unpackPhase needs unzip in nativeBuildInputs.

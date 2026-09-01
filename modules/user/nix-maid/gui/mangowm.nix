@@ -119,7 +119,7 @@ let
     windowrule=appid:^swayimg$,tags:8
     windowrule=appid:^(.virt-manager-wrapped|qemu-system-x86_64)$,tags:9
     windowrule=appid:^(com.usebottles.bottles)$,tags:10
-    windowrule=appid:^(zestbay|Carla2)$,tags:11
+    windowrule=appid:^zestbay$,tags:11
     windowrule=appid:^Renoise$,tags:12
     windowrule=appid:^(org.nicotine_plus.Nicotine)$,tags:13
     windowrule=appid:^(Bazecor|Vial|via)$,tags:14

@@ -1,33 +1,19 @@
 #!/usr/bin/env bash
-# midi-bridge — connect SuperCollider MIDI out to the active synth.
-#  1) carla-hosted synth (carlactl play): SC -> <plugin>:events-in (PipeWire),
-#     resolved dynamically because the events-in object.path index varies
-#     per plugin (Surge XT = Carla:input_2, Legend HZ = Carla:input_0).
+# midi-bridge — connect SuperCollider MIDI out to the active synth/host.
+#  1) REAPER (yabridge Windows VSTs): SC -> REAPER ALSA MIDI in
 #  2) legacy Vital standalone: SC -> Midi Through (Vital auto-subscribes).
 set -euo pipefail
-
-# helper: print the object.path that precedes a port.name matching $1
-pw_path_of() {
-  pw-cli ls Port 2>/dev/null | awk -v pat="$1" '
-    /object.path =/ {p=$3; gsub(/"/,"",p)}
-    $0 ~ pat {print p; exit}'
-}
 
 sc=$(aconnect -l | awk '/^client [0-9]+: .SuperCollider./ {c=$2; sub(":","",c); print c; exit}')
 [ -z "$sc" ] && { echo "no SuperCollider MIDI client" >&2; exit 1; }
 
-# --- 1) carla synth events-in (primary path) ---
-events_target=$(pw_path_of 'events-in')
-if [ -n "$events_target" ]; then
-  sc_out=$(pw_path_of 'SuperCollider:out0 (capture)')
-  if [ -n "$sc_out" ]; then
-    if pw-link "$sc_out" "$events_target" 2>/dev/null; then
-      echo "connected SC MIDI -> $events_target"
-    elif pw-link -l 2>/dev/null | grep -q "$events_target"; then
-      echo "already connected: SC MIDI -> $events_target"
-    else
-      echo "SC MIDI connect failed ($sc_out -> $events_target)" >&2
-    fi
+# --- 1) REAPER (if running) ---
+rpr=$(aconnect -l | awk '/^client [0-9]+: .REAPER./ {c=$2; sub(":","",c); print c; exit}')
+if [ -n "$rpr" ]; then
+  scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
+  rprp=$(aconnect -l | awk -v c="$rpr" '$0 ~ "client " c ":" {inside=1} inside && /midi in|Midi In|in0/ {print $1; exit}')
+  if [ -n "$scp" ] && [ -n "$rprp" ]; then
+    aconnect "$sc:$scp" "$rpr:$rprp" 2>/dev/null && echo "connected SC MIDI -> REAPER" || true
   fi
 fi
 
