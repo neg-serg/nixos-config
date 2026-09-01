@@ -677,7 +677,7 @@ Scope {
                                 visible: WidgetRegistry.isVisible("network")
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: Math.round(Theme.panelNetClusterSpacing * leftPanel.s)
-                                LocalMods.NetClusterCapsule {
+                                LocalMods.NetFlowCapsule {
                                         id: netCapsule
                                         Layout.alignment: Qt.AlignVCenter
                                         screen: leftPanel.screen
