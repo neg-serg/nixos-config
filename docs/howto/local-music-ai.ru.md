@@ -1,7 +1,7 @@
 # Локальный музыкальный ИИ-стек (odin)
 
 Всё, что относится к нейросетям в музыке/аудио на этой машине: где живёт, как вызывается, как
-пересоздать. Дополняет `wine-vst-bridge.ru.md` (Windows-VST через yabridge в REAPER) и
+пересоздать. Дополняет `wine-vst-bridge.ru.md` (Windows-VST через yabridge в Renoise) и
 `local-llm.md` (речевой стек, LLM).
 
 ## Инвентарь venv (все — в ~/src/music-ai/, Python из nix store)
@@ -40,7 +40,7 @@
 - Модели (.nam каптуры): `/zero/ai/music/nam-models/` (пример — Ceriatone King Kong). Большой
   каталог: tonehunt.org. Инференс вне Carla: `venv-nam` + python (init_from_nam; tkinter-заглушка
   при импорте; старые .nam v0.5.0 — только в плагине).
-- Цепочка: гитара → NAM (усилитель, LV2/standalone) → RAVE (морфы) → запись (REAPER/SC).
+- Цепочка: гитара → NAM (усилитель, LV2/standalone) → RAVE (морфы) → запись (Renoise/SC).
 
 ## AIDA-X (второй нейро-усилитель)
 

@@ -22,7 +22,7 @@ isn't a step-by-step runbook.
 - SuperCollider live coding (raw SC, scnvim) — moved to the private notes repo
   (~/notes/music/supercollider/), kept out of the public tree on purpose
 
-- Windows VST through yabridge (regular VST3 in REAPER):
+- Windows VST through yabridge (regular VST3 in Renoise):
   [wine-vst-bridge.ru.md](./wine-vst-bridge.ru.md)
 
 - Replacing GUI buttons with text commands (RU):

@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # midi-bridge — connect SuperCollider MIDI out to the active synth/host.
-#  1) REAPER (yabridge Windows VSTs): SC -> REAPER ALSA MIDI in
+#  1) Renoise (yabridge Windows VSTs): SC -> Renoise ALSA MIDI in
 #  2) legacy Vital standalone: SC -> Midi Through (Vital auto-subscribes).
 set -euo pipefail
 
 sc=$(aconnect -l | awk '/^client [0-9]+: .SuperCollider./ {c=$2; sub(":","",c); print c; exit}')
 [ -z "$sc" ] && { echo "no SuperCollider MIDI client" >&2; exit 1; }
 
-# --- 1) REAPER (if running) ---
-rpr=$(aconnect -l | awk '/^client [0-9]+: .REAPER./ {c=$2; sub(":","",c); print c; exit}')
-if [ -n "$rpr" ]; then
+# --- 1) Renoise (if running) ---
+rno=$(aconnect -l | awk '/^client [0-9]+: .(Renoise|renoise)./ {c=$2; sub(":","",c); print c; exit}')
+if [ -n "$rno" ]; then
   scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
-  rprp=$(aconnect -l | awk -v c="$rpr" '$0 ~ "client " c ":" {inside=1} inside && /midi in|Midi In|in0/ {print $1; exit}')
-  if [ -n "$scp" ] && [ -n "$rprp" ]; then
-    aconnect "$sc:$scp" "$rpr:$rprp" 2>/dev/null && echo "connected SC MIDI -> REAPER" || true
+  rnop=$(aconnect -l | awk -v c="$rno" '$0 ~ "client " c ":" {inside=1} inside && /midi in|Midi In|in0/ {print $1; exit}')
+  if [ -n "$scp" ] && [ -n "$rnop" ]; then
+    aconnect "$sc:$scp" "$rno:$rnop" 2>/dev/null && echo "connected SC MIDI -> Renoise" || true
   fi
 fi
 

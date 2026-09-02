@@ -3,9 +3,9 @@
 #
 # Routes:
 #   Surge_XT / Surge XT  -> native standalone (surge-xt)
-#   LegendHZ             -> REAPER (yabridge Windows VST3, standard ~/.vst3 path)
+#   LegendHZ             -> Renoise (yabridge Windows VST3)
 #   Vital                -> vital-standalone user service
-#   other                -> REAPER (yabridge plugins appear as regular VSTs)
+#   other                -> Renoise (yabridge Windows VST3)
 #
 # Usage: synth <name>    e.g.  synth Surge_XT | synth LegendHZ | synth Vital
 set -euo pipefail
@@ -46,14 +46,14 @@ case "$plain" in
     ;;
   *)
     # yabridge plugins (LegendHZ, kiloHearts, ...) live in ~/.vst3/yabridge;
-    # REAPER scans that dir and lists them as regular VST3. Focus it if open,
+    # Renoise scans that dir and lists them as regular VST3. Focus it if open,
     # otherwise launch it — add the plugin on a track's FX chain.
-    if pgrep -f '/bin/reaper' >/dev/null 2>&1; then
-      raise_window '^reaper' '' && echo "synth: REAPER raised ($name as VST)" || echo "synth: REAPER already running ($name as VST)"
+    if pgrep -f renoise >/dev/null 2>&1; then
+      raise_window '^Renoise' '' && echo "synth: Renoise raised ($name as VST)" || echo "synth: Renoise already running ($name as VST)"
     else
-      echo "synth: starting REAPER ($name via yabridge as regular VST3) ..."
-      nohup reaper >/dev/null 2>&1 &
-      echo "synth: REAPER started — add $name on a track FX chain (VST3 list)"
+      echo "synth: starting Renoise ($name via yabridge as regular VST3) ..."
+      nohup renoise >/dev/null 2>&1 &
+      echo "synth: Renoise started — add $name on a track FX chain (VST3)"
     fi
     ;;
 esac
