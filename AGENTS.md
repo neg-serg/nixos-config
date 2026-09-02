@@ -26,7 +26,8 @@ Scope
   where they conflict with this file.
 
 Quick Commands
-- Quick switch (primary): `nh os switch /etc/nixos#odin --option substitute false`
+- Quick switch (user, primary): `nh os switch /etc/nixos#odin --option substitute false`
+- Agent rollout (passwordless, preferred for the agent): `sudo -n nixos-rebuild switch --flake .#odin --option substitute false`
 - Build & switch (alternative): `sudo nixos-rebuild switch --flake .#odin --option substitute false`
 - Build only: `nixos-rebuild build --flake .#odin --option substitute false`
 - Format all: `just fmt`
@@ -178,7 +179,17 @@ Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
   `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
-- The user's own rebuild binding uses the same flag (`nh os switch /etc/nixos#odin --option substitute false`); keep that convention in any new bindings/scripts.
+- Rollouts (rebuild+switch) are agent-run, not user-run: passwordless sudo is
+  configured on odin via sudoers NOPASSWD (see docs/howto/tpm-sudo.ru.md), and
+  `sudo nixos-rebuild` is explicitly whitelisted. Preferred form:
+  `sudo -n nixos-rebuild switch --flake .#odin --option substitute false`.
+  The user's `nh os switch` binding uses the same flag
+  (`nh os switch /etc/nixos#odin --option substitute false`); keep that
+  convention in any new bindings/scripts. NOTE: arbitrary `sudo` is NOT
+  passwordless — only the whitelisted commands (nixos-rebuild, reboot,
+  poweroff, suspend, dmesg, systemctl xray/sing-box, ...). Before rolling
+  out, `git status` must be clean/intentional: nixos-rebuild consumes the
+  working tree, so concurrent foreign commits/edits would be baked in.
 - The repo's own targets already pass this flag: `just deploy*`, `just check`,
   `just docs-modules`, `just flag`. Do not introduce nix invocations without it.
 
