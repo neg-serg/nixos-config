@@ -28,9 +28,9 @@
 
 **Carla и carlactl удалены** (коммит «Remove Carla stack»): **yabridge** (nixpkgs, стоит на odin,
 5.1.1) делает Windows-VST обычными Linux VST3/VST2 в `~/.vst3/yabridge` / `~/.vst/yabridge`, а их
-загружает **REAPER** (уже в systemPackages) как обычные VST. VSTPlugin в SuperCollider НЕ подходит
+загружает **Renoise** (уже в systemPackages) как обычные VST. VSTPlugin в SuperCollider НЕ подходит
 для yabridge-мостов (search black-list'ит их: yabridge-host требует внешний хост-процесс, VSTPlugin
-dlopen'ит .so напрямую) — поэтому хост именно REAPER.
+dlopen'ит .so напрямую) — поэтому хост именно Renoise.
 
 Установка Windows-VST (все в префикс `vstplugins`):
 
@@ -41,9 +41,9 @@ dlopen'ит .so напрямую) — поэтому хост именно REAPE
 1. `mkdir -p ~/.local/share/yabridge && ln -sf /run/current-system/sw/lib/libyabridge* ~/.local/share/yabridge/`
    → `yabridgectl add "<prefix>/drive_c/Program Files/VSTPlugins/<App>" && yabridgectl sync`.
 
-Запуск: `synth LegendHZ` (или любой другой yabridge-плагин) открывает REAPER — плагин появляется в
+Запуск: `synth LegendHZ` (или любой другой yabridge-плагин) открывает Renoise — плагин появляется в
 списке VST3 на FX-цепочке трека. Проверка статуса мостов: `yabridgectl status`. Проверено: ReaEQ
-(ReaPlugs) → yabridge 5.1.1 → REAPER (обычный VST2).
+(ReaPlugs) → yabridge 5.1.1 → Renoise (обычный VST2).
 
 ## Ключевые источники
 
@@ -105,14 +105,14 @@ dlopen'ит .so напрямую) — поэтому хост именно REAPE
   `WINEPREFIX=…/vstplugins` (путь по умолчанию, без глобального WINEPREFIX) →
   `Finished initializing '…LegendHZ.vst3'`, хост жив.
 
-## Играемая цепочка: REAPER + yabridge + физическая клавиатура
+## Играемая цепочка: Renoise + yabridge + физическая клавиатура
 
-- Хост — REAPER: `synth LegendHZ` запускает его; на треке FX → VST3 → LegendHZ (yabridge-мост
+- Хост — Renoise: `synth LegendHZ` запускает его; на треке FX → VST3 → LegendHZ (yabridge-мост
   выглядит как обычный VST3).
-- MIDI: физическая клавиатура (RME MIDI IN) → REAPER: включить в настройках MIDI-вход (REAPER видит
-  ALSA-клиентов; `Midi-Bridge:External MIDI:HDSPe…` — порт RME). SuperCollider → REAPER:
-  `~/.local/bin/midi-bridge` (SC MIDI out0 → REAPER midi in).
-- Audio: REAPER выводит через JACK/PipeWire; `pw-link` рулит `reaper:out_1/2` →
+- MIDI: физическая клавиатура (RME MIDI IN) → Renoise: включить в настройках MIDI-вход (Renoise видит
+  ALSA-клиентов; `Midi-Bridge:External MIDI:HDSPe…` — порт RME). SuperCollider → Renoise:
+  `~/.local/bin/midi-bridge` (SC MIDI out0 → Renoise midi in).
+- Audio: Renoise выводит через JACK/PipeWire; `pw-link` рулит `renoise:out_1/2` →
   `game-stereo:playback_FL/FR` (game-stereo → RME playback_AUX2/3).
 - **ВНИМАНИЕ (исправлено)**: если график PipeWire «съезжает» на 44.1 kHz и всё хрипит — в
   `files/media/pipewire/pipewire.conf.d/clock-rate.conf` оставлена только
@@ -167,9 +167,9 @@ dlopen'ит .so напрямую) — поэтому хост именно REAPE
   Odin 2 (`pkgs.odin2`), но пользователь его не захотел — строка `pkgs.odyssey` остаётся в конфиге
   как есть (осознанное решение, коммит-реверт ceba4734).
 - **Переключение**: `synth <имя>` — run-or-raise: Surge_XT → нативный standalone, Vital →
-  vital-standalone, остальные (LegendHZ, kiloHearts, …) → REAPER (yabridge-плагин на FX-цепочке).
-- **Несколько синтов одновременно**: в REAPER просто добавляются треки/FX; слоты SuperCollider MIDI
-  (out0..N) назначаются через `~/.local/bin/midi-bridge` (SC → REAPER midi in) или a2jmidid. Слотов
+  vital-standalone, остальные (LegendHZ, kiloHearts, …) → Renoise (yabridge-плагин на FX-цепочке).
+- **Несколько синтов одновременно**: в Renoise просто добавляются треки/FX; слоты SuperCollider MIDI
+  (out0..N) назначаются через `~/.local/bin/midi-bridge` (SC → Renoise midi in) или a2jmidid. Слотов
   3 (SC MIDIOut ограничен ALSA-назначениями: RME + Osmose×2).
 
 ## VCV Rack (лицензия + окно; research 2026-08-21/25)
