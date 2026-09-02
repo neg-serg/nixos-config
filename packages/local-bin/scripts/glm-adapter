@@ -37,7 +37,10 @@ warn() { echo -e "  ${YELLOW}!!${NC}  $1"; }
 fail() { echo -e "  ${RED}xx${NC}   $1"; }
 
 vm_running() { timeout 10 podman ps --format '{{.Names}} {{.Status}}' 2>/dev/null | awk '$1=="windows" && $2=="Up" {print 1; exit}'; }
-qemu_usb()   { docker exec -i "$CT" sh -c 'printf "info usb\n" | timeout 4 nc -N -U /run/shm/monitor.sock' 2>/dev/null | grep -c 'Gnet Adapter'; }
+# Adapter is in the VM when QEMU holds it via usbfs. Detect it in sysfs directly:
+# the QEMU monitor 'info usb' query returns nothing in the dockur container (no nc),
+# so qemu_usb() below used to return 0 and glm-adapter-auto ran + failed every 60 s.
+qemu_usb() { local n=0; for d in /sys/bus/usb/devices/*/idVendor; do [ "$(cat "$d" 2>/dev/null)" = "$VID" ] || continue; dev=${d%/idVendor}; [ "$(cat "$dev/idProduct" 2>/dev/null)" = "$PID" ] || continue; for i in "$dev":1.*; do [ -e "$i" ] || continue; if [ -L "$i/driver" ] && readlink "$i/driver" | grep -q usbfs; then n=$((n+1)); fi; done; done; echo "$n"; [ "$n" -ge 1 ]; }
 host_present(){ lsusb 2>/dev/null | grep -q "$VID:$PID"; }
 host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
 
