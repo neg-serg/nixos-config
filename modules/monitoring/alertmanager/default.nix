@@ -82,8 +82,11 @@ in
       documentation = [ "https://prometheus.io/docs/alerting/latest/alertmanager/" ];
       wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.prometheus-alertmanager} --config.file=${configFile} --web.listen-address=${cfg.listenAddress}:${toString cfg.port} --storage.path=/var/lib/alertmanager --data.retention=120h";
+        # Single instance: the HA cluster port (default 0.0.0.0:9094) would clash
+        # with the Telegram webhook bridge on 127.0.0.1:9094 — disable it.
+        ExecStart = "${lib.getExe pkgs.prometheus-alertmanager} --config.file=${configFile} --web.listen-address=${cfg.listenAddress}:${toString cfg.port} --storage.path=/var/lib/alertmanager --data.retention=120h --cluster.listen-address=";
         Restart = "on-failure";
         RestartSec = 5;
         StateDirectory = "alertmanager";
