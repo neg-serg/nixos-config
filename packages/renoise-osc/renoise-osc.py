@@ -4,21 +4,26 @@
 Usage:
   renoise-osc [--host H] [--port P] eval '<lua expression>'
   renoise-osc [--host H] [--port P] reverb [--track master|N] [--wet X]
+  renoise-osc [--host H] [--port P] load '<plugin name>'
   renoise-osc [--host H] [--port P] <osc-pattern> [args...]
 
-Defaults: 127.0.0.1:8000 (Renoise Preferences -> OSC -> enable server).
+Defaults: 127.0.0.1:9000 (Renoise Preferences -> OSC -> enable server).
 
 'eval' runs arbitrary Renoise Lua remotely via /renoise/evaluate.
 'reverb' inserts the native Reverb FX: --track master (default) or a
 1-based track number; --wet 0..1 sets the device Send parameter (default:
 leave the preset value).
+'load' inserts a new instrument and loads a VST plugin into it by name
+(e.g. 'renoise-osc load Legend HZ'); starts Renoise first if needed.
 
 Bare numeric args become OSC floats; everything else is a string.
 """
 
 import socket
 import struct
+import subprocess
 import sys
+import time
 
 
 def osc_string(b: bytes) -> bytes:
@@ -36,6 +41,15 @@ def build_message(pattern: str, args):
             tags += b"s"
             payload += osc_string(str(a).encode("utf-8"))
     return osc_string(pattern.encode("utf-8")) + osc_string(tags) + payload
+
+
+def _port_open(host: str, port: int) -> bool:
+    try:
+        s = socket.create_connection((host, port), timeout=0.3)
+        s.close()
+        return True
+    except OSError:
+        return False
 
 
 def lua_reverb(track_sel: str, wet) -> str:
@@ -67,8 +81,29 @@ def lua_reverb(track_sel: str, wet) -> str:
     return lua
 
 
+def lua_load_plugin(name: str) -> str:
+    """Insert a new instrument and load a VST plugin into it by name."""
+    esc = name.replace("\\", "\\\\").replace("'", "\\'")
+    lower = name.lower().replace("'", "")
+    lua = (
+        "local ok,err=pcall(function() "
+        "local s=renoise.song() "
+        "local inst=s:insert_instrument_at(#s.instruments+1) "
+        "local path=nil "
+        "for _,i in ipairs(inst.plugin_properties.available_plugin_infos) do "
+        f"if string.lower(i.name):find('{lower}',1,true) then path=i.path break end "
+        "end "
+        f"if not path then error('plugin not found: {esc}') end "
+        "inst.plugin_properties:load_plugin(path) "
+        "s.selected_instrument_index=#s.instruments "
+        "end) "
+        "if not ok then print('renoise-load error: '..tostring(err)) end"
+    )
+    return lua
+
+
 def main(argv):
-    host, port = "127.0.0.1", 8000
+    host, port = "127.0.0.1", 9000
     rest = []
     i = 0
     while i < len(argv):
@@ -107,6 +142,21 @@ def main(argv):
             else:
                 j += 1
         pattern, args = "/renoise/evaluate", [lua_reverb(track_sel, wet)]
+    elif cmd == "load":
+        plugin = " ".join(rest[1:]).strip() or "Legend HZ"
+        pattern, args = "/renoise/evaluate", [lua_load_plugin(plugin)]
+        # Renoise not up yet? start it and wait for the OSC server.
+        if not _port_open(host, port):
+            print("renoise not running - starting it ...")
+            subprocess.Popen(
+                ["renoise"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            for _ in range(45):
+                time.sleep(1)
+                if _port_open(host, port):
+                    break
     else:
         pattern = cmd
         args = []
