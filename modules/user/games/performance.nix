@@ -15,7 +15,18 @@ let
   #        gpu-oc reset                          (reset to stock)
   gpuOc = pkgs.writeShellScriptBin "gpu-oc" ''
     set -e
-    DEV=/sys/class/drm/card1/device/pp_od_clk_voltage
+    # Pick the AMD dGPU whose pp_od_clk_voltage exposes VDDGFX_OFFSET (the
+    # RX 9070 XT). The Granite Ridge iGPU only has a bare SCLK interface and
+    # rejects 'vo' writes; card index varies with probe order.
+    DEV=""
+    for c in /sys/class/drm/card*/device/pp_od_clk_voltage; do
+      [ -r "$c" ] || continue
+      if grep -q "VDDGFX_OFFSET" "$c" 2>/dev/null; then
+        DEV="$c"
+        break
+      fi
+    done
+    [ -n "$DEV" ] || { echo "gpu-oc: no overclockable AMD GPU (VDDGFX_OFFSET) found" >&2; exit 1; }
     # Wait for the GPU sysfs interface to appear (amdgpu probe may lag boot)
     for i in $(seq 1 30); do
       [ -w "$DEV" ] && break
