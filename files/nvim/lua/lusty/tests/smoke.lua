@@ -139,5 +139,34 @@ assert(#bg_e.matches >= 2, 'empty query lists buffers')
 bg_e:cancel()
 print('PASS buffer grep')
 
+-- Cancel via real <C-c> mapping: window closes, caller buffer stays.
+local big = '/tmp/lusty_big_dir'
+vim.fn.mkdir(big, 'p')
+for i = 1, 20 do
+  vim.fn.writefile({ tostring(i) }, big .. '/file' .. string.format('%02d', i) .. '.rs')
+end
+vim.fn.chdir(big)
+vim.cmd('edit ' .. big .. '/file01.rs')
+fs.run(big)
+local big_e = fs.explorer()
+local expected_rows = math.min(20, math.max(6, math.floor((vim.o.lines - 2) * 0.6)))
+assert_eq(big_e.row_count, expected_rows, 'tall layout uses ~60% of screen')
+assert(vim.api.nvim_win_get_height(0) >= expected_rows, 'window height follows rows')
+big_e:cancel()
+
+vim.cmd('edit ' .. dir .. '/alpha.txt')
+vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'dirty caller' }) -- modified, hidden off
+local cc = vim.api.nvim_replace_termcodes('<C-c>', true, false, true)
+local wins_before = #vim.api.nvim_list_wins()
+local buf_before = vim.api.nvim_get_current_buf()
+fs.run(dir)
+vim.api.nvim_feedkeys(cc, 'x!', false)
+vim.wait(30)
+assert(not big_e.running, 'C-c cancels (fs singleton)')
+assert_eq(#vim.api.nvim_list_wins(), wins_before, 'window count restored after C-c')
+assert_eq(vim.api.nvim_get_current_buf(), buf_before, 'caller buffer intact after C-c')
+assert_eq(vim.v.errmsg, '', 'no errors after C-c')
+print('PASS C-c cancel + tall layout')
+
 print('ALL LUSTY SMOKE TESTS PASSED')
 
