@@ -200,6 +200,9 @@ in
         "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin";
       # Renoise Redux VST3 at the standard user VST3 path (hosts scan ~/.vst3)
       ".vst3/renoise_redux.vst3".source = "${pkgs.neg.renoise-redux}/lib/vst3/renoise_redux.vst3";
+      # Protoplug VST2 (Lua live-coding plugins; REAPER scans ~/.vst)
+      ".vst/Lua Protoplug Fx.so".source = "${pkgs.neg.protoplug}/lib/vst/Lua Protoplug Fx.so";
+      ".vst/Lua Protoplug Gen.so".source = "${pkgs.neg.protoplug}/lib/vst/Lua Protoplug Gen.so";
       # ATK dependency quarks
       ".local/share/SuperCollider/Extensions/Hilbert".source =
         "${pkgs.hilbert}/share/SuperCollider/extensions/Hilbert";
