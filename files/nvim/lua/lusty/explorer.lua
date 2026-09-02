@@ -39,34 +39,6 @@ function M.ensure_highlights()
 end
 
 -- ---------------------------------------------------------------------------
--- Settings snapshot/restore (saved-settings.rb, trimmed to current options).
-
-local function settings_save()
-  return {
-    timeoutlen = vim.o.timeoutlen,
-    splitbelow = vim.o.splitbelow,
-    showcmd = vim.o.showcmd,
-    list = vim.o.list,
-    hlsearch = vim.o.hlsearch,
-    sidescroll = vim.o.sidescroll,
-    sidescrolloff = vim.o.sidescrolloff,
-  }
-end
-
-local function settings_restore(s)
-  if not s then
-    return
-  end
-  vim.o.timeoutlen = s.timeoutlen
-  vim.o.splitbelow = s.splitbelow
-  vim.o.showcmd = s.showcmd
-  vim.o.list = s.list
-  vim.o.hlsearch = s.hlsearch
-  vim.o.sidescroll = s.sidescroll
-  vim.o.sidescrolloff = s.sidescrolloff
-end
-
--- ---------------------------------------------------------------------------
 -- Prompt.
 
 local Prompt = {}
@@ -164,9 +136,8 @@ function Explorer.new(opts)
   self.buf_id = nil
   self.calling_win = nil
   self.calling_buf = nil
-  self.saved_alternate = nil
-  self.saved_winrest = nil
-  self.saved_settings = nil
+  self.float_width = nil
+  self.float_max_height = nil
   self.augroup = nil
   return self
 end
@@ -320,9 +291,11 @@ end
 --   rows    - layout row count (nil when empty)
 --   trunc   - whether a truncated indicator was appended
 local function render(self, strings)
-  local max_w = vim.o.columns
-  -- One row is reserved for the in-buffer prompt footer.
-  local max_h = math.max(1, vim.o.lines - 2)
+  local max_w = self.float_width or vim.o.columns
+  -- Rows budget: the float keeps table rows + truncation line + prompt line
+  -- inside float_max_height (borders excluded), so nothing is cut off.
+  local budget = self.float_max_height or (vim.o.lines - 2)
+  local max_h = math.max(1, budget - 2)
 
   if #strings == 0 then
     return { center(NO_MATCHES, max_w) }, {}, nil, false, true
@@ -378,7 +351,7 @@ local function prompt_text(self)
   local body = self.prompt.input
   local hint = (self.prompt:hint_active() and self.hint) and ('   ' .. self.hint) or ''
   local t = PROMPT_PREFIX .. body .. hint
-  local max_w = vim.o.columns - 5
+  local max_w = (self.float_width or vim.o.columns) - 5
   if max_w > 0 and sw(t) > max_w then
     -- Keep the tail (like Prompt#print) so the query/hint stays readable,
     -- dropping whole characters (never split UTF-8 in half).
@@ -495,10 +468,17 @@ function Explorer:refresh(mode)
   lines[#lines + 1] = prompt_text(self)
   write_buffer(self, lines)
 
-  -- Size the window: table rows + (truncated line) + prompt line.
-  local height = math.min(#lines, math.max(1, vim.o.lines - 1))
+  -- Size and re-centre the float: table rows + (truncated line) + prompt.
+  local height = math.min(#lines, self.float_max_height or math.max(6, vim.o.lines - 2))
   if self.win_id and vim.api.nvim_win_is_valid(self.win_id) then
-    pcall(vim.api.nvim_win_set_height, self.win_id, height)
+    local outer_w = (self.float_width or vim.o.columns) + 2 -- rounded border
+    pcall(vim.api.nvim_win_set_config, self.win_id, {
+      relative = 'editor', -- required when reconfiguring a float
+      width = outer_w,
+      height = height,
+      row = math.max(0, math.floor((vim.o.lines - height) / 2)),
+      col = math.max(0, math.floor((vim.o.columns - outer_w) / 2)),
+    })
   end
 
   self.row_count = no_entries and nil or rows
@@ -691,23 +671,30 @@ end
 function Explorer:create_window()
   self.calling_win = vim.fn.win_getid()
   self.calling_buf = vim.fn.bufnr('%')
-  local alt = vim.fn.bufnr('#')
-  self.saved_alternate = alt > 0 and alt or nil
-  self.saved_winrest = vim.fn.winrestcmd()
-  self.saved_settings = settings_save()
 
-  vim.cmd('silent botright 1split')
-  self.win_id = vim.fn.win_getid()
-  -- Fresh scratch buffer: never hijack the caller's buffer.
+  -- Floating window of comfortable size; the content layout uses the
+  -- inner (border-less) width, sizing/centering is updated on every refresh.
+  local outer_w = math.max(44, math.floor(vim.o.columns * 0.9))
+  self.float_width = math.max(40, outer_w - 2) -- minus the rounded border
+  self.float_max_height = math.max(6, math.floor(vim.o.lines * 0.8))
+
   self.buf_id = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_win_set_buf(self.win_id, self.buf_id)
   set_buffer_opts(self.buf_id)
-  set_window_opts(self.win_id)
   pcall(vim.api.nvim_buf_set_name, self.buf_id, self.title)
+
+  self.win_id = vim.api.nvim_open_win(self.buf_id, true, {
+    relative = 'editor',
+    style = 'minimal',
+    width = outer_w,
+    height = 2,
+    row = math.max(0, math.floor((vim.o.lines - 2) / 2) - 1),
+    col = math.max(0, math.floor((vim.o.columns - outer_w) / 2)),
+    border = 'rounded',
+  })
+  set_window_opts(self.win_id)
   setup_keymaps(self)
 
-  -- If the window gets closed some other way (e.g. :q), unwind cleanly.
-  -- This mirrors cancel(): close, restore layout/settings, return focus.
+  -- If the window gets closed some other way, unwind cleanly (same as cancel).
   self.augroup = vim.api.nvim_create_augroup('LustyExplorerPort_' .. self.win_id, { clear = true })
   vim.api.nvim_create_autocmd('WinClosed', {
     group = self.augroup,
@@ -720,7 +707,7 @@ function Explorer:create_window()
   })
 end
 
--- Close the explorer window and restore the calling window/settings.
+-- Close the explorer float and return focus to the calling window.
 function Explorer:cleanup()
   if not self.running then
     return
@@ -740,11 +727,6 @@ function Explorer:cleanup()
   elseif buf and vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) then
     pcall(vim.api.nvim_buf_delete, buf, { force = true })
   end
-
-  if self.saved_winrest then
-    pcall(vim.cmd, 'silent! ' .. self.saved_winrest)
-  end
-  settings_restore(self.saved_settings)
 
   if self.calling_win and vim.api.nvim_win_is_valid(self.calling_win) then
     pcall(vim.api.nvim_set_current_win, self.calling_win)
