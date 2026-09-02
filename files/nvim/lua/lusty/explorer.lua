@@ -277,12 +277,13 @@ local function compute_layout(strings, single_column, max_w, max_h)
     end
   end
 
-  -- Keep several visible rows instead of squeezing everything onto one
-  -- line: with fewer entries than that, show one row per entry.  More rows
-  -- only means fewer columns, which always still fits the window width.
+  -- Prefer a tall listing over squeezing everything into a few dense rows.
+  -- Target roughly 60% of the screen height (more rows = fewer columns,
+  -- which always still fits the window width).  With fewer entries than the
+  -- target, show one entry per row.
   if not single_column and not trunc then
-    local want = math.min(#strings, math.max(rows, 4))
-    if want <= max_h then
+    local want = math.min(#strings, math.max(6, math.floor(max_h * 0.6)))
+    if want > rows then
       rows = want
     end
   end
@@ -705,25 +706,15 @@ function Explorer:create_window()
   pcall(vim.api.nvim_buf_set_name, self.buf_id, self.title)
   setup_keymaps(self)
 
-  -- If the window gets closed some other way, unwind cleanly.
+  -- If the window gets closed some other way (e.g. :q), unwind cleanly.
+  -- This mirrors cancel(): close, restore layout/settings, return focus.
   self.augroup = vim.api.nvim_create_augroup('LustyExplorerPort_' .. self.win_id, { clear = true })
   vim.api.nvim_create_autocmd('WinClosed', {
     group = self.augroup,
     pattern = tostring(self.win_id),
     callback = function()
       if self.running then
-        if self.on_cleanup then
-          self.on_cleanup(self)
-        end
-        self.running = false
-        pcall(vim.cmd, 'silent! ' .. self.saved_winrest)
-        settings_restore(self.saved_settings)
-        if self.saved_alternate then
-          pcall(vim.cmd, 'silent b ' .. self.saved_alternate)
-          if vim.fn.bufnr('%') ~= self.calling_buf then
-            pcall(vim.cmd, 'silent b ' .. self.calling_buf)
-          end
-        end
+        self:cancel()
       end
     end,
   })
@@ -760,17 +751,16 @@ function Explorer:cleanup()
   end
 end
 
--- Esc / <C-c> / <C-g>: cancel; also restore the alternate file dance.
+-- Esc / <C-c> / <C-g>: just close the explorer and give focus back.
+-- No buffer juggling: nvim keeps the caller's alternate/buffer state intact on
+-- its own, and switching buffers here can error with E37 when 'hidden' is off.
 function Explorer:cancel()
   if not self.running then
     return
   end
   self:cleanup()
-  if self.saved_alternate then
-    pcall(vim.cmd, 'silent b ' .. self.saved_alternate)
-    if vim.fn.bufnr('%') ~= self.calling_buf then
-      pcall(vim.cmd, 'silent b ' .. self.calling_buf)
-    end
+  if vim.api.nvim_win_is_valid(self.calling_win) then
+    pcall(vim.api.nvim_set_current_win, self.calling_win)
   end
 end
 
