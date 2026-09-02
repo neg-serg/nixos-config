@@ -29,6 +29,7 @@ local HL_LINKS = {
   LustyNoEntries = 'ErrorMsg',
   LustyTruncated = 'Visual',
   LustyPrompt = 'Comment',
+  LustyPromptHint = 'Comment',
 }
 
 function M.ensure_highlights()
@@ -108,6 +109,14 @@ end
 
 function Prompt:at_dir()
   return self.input == '' or self.input:sub(-1) == '/'
+end
+
+-- True when the user has not typed a query yet (idle state: footer hint).
+function Prompt:hint_active()
+  if self.filesystem then
+    return self.input == '' or self.input:sub(-1) == '/'
+  end
+  return self.input == ''
 end
 
 local function expand_env(s)
@@ -268,6 +277,16 @@ local function compute_layout(strings, single_column, max_w, max_h)
     end
   end
 
+  -- Keep several visible rows instead of squeezing everything onto one
+  -- line: with fewer entries than that, show one row per entry.  More rows
+  -- only means fewer columns, which always still fits the window width.
+  if not single_column and not trunc then
+    local want = math.min(#strings, math.max(rows, 4))
+    if want <= max_h then
+      rows = want
+    end
+  end
+
   -- Column widths; stop adding columns once the window width is exhausted.
   local widths = {}
   local total_width = 0
@@ -355,12 +374,20 @@ local function render(self, strings)
 end
 
 local function prompt_text(self)
-  local t = PROMPT_PREFIX .. self.prompt.input
+  local body = self.prompt.input
+  local hint = (self.prompt:hint_active() and self.hint) and ('   ' .. self.hint) or ''
+  local t = PROMPT_PREFIX .. body .. hint
   local max_w = vim.o.columns - 5
   if max_w > 0 and sw(t) > max_w then
-    -- Keep the tail of the query (like Prompt#print).
+    -- Keep the tail (like Prompt#print) so the query/hint stays readable,
+    -- dropping whole characters (never split UTF-8 in half).
     local keep = math.max(1, max_w - 3)
-    t = '...' .. t:sub(-keep)
+    local nchars = vim.fn.strchars(t)
+    while #t > keep and nchars > 1 do
+      t = vim.fn.strcharpart(t, 1, nchars - 1)
+      nchars = nchars - 1
+    end
+    t = '...' .. t
   end
   return t
 end
@@ -438,10 +465,16 @@ local function paint(self, cells)
     end
   end
 
-  -- Prompt line is the last line.
+  -- Prompt line is the last line: '>> ' plus (when idle) the hint.
   local last = vim.api.nvim_buf_line_count(buf) - 1
   if last >= 0 then
     hl(last, 0, last, #PROMPT_PREFIX, 'LustyPrompt')
+    if self.hint and self.prompt:hint_active() then
+      local line = vim.api.nvim_buf_get_lines(buf, last, last + 1, false)[1] or ''
+      if #line > #PROMPT_PREFIX then
+        hl(last, #PROMPT_PREFIX, last, #line, 'LustyPromptHint')
+      end
+    end
   end
 end
 

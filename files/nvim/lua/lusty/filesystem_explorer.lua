@@ -18,6 +18,9 @@ e.color_entry = function(entry)
   return ls_colors.group_for(entry)
 end
 
+-- Footer hint shown while the prompt is empty.
+e.hint = '"имя/" — войти · <C-w> — вверх · "." — скрытые файлы'
+
 -- Directory contents are memoized per view; <C-r> refreshes the current one.
 local dir_cache = {}
 
