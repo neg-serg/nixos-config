@@ -1,5 +1,9 @@
 -- LustyExplorer port: headless regression smoke test.
--- Run: nvim --headless -l files/nvim/lua/lusty/tests/smoke.lua
+-- Run: nvim --clean --headless -l files/nvim/lua/lusty/tests/smoke.lua
+
+-- Deterministic dircolors palette for the coloring assertions (do not depend
+-- on whatever LS_COLORS the calling shell exports).
+vim.env.LS_COLORS = 'di=01;34:ln=01;36:ex=01;32:*.jpg=01;35'
 
 local base = vim.fn.fnamemodify(arg[0], ':p:h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
@@ -14,6 +18,7 @@ local dir = '/tmp/lusty_smoke_dir'
 vim.fn.mkdir(dir .. '/sub', 'p')
 vim.fn.writefile({ 'gamma' }, dir .. '/sub/gamma.txt')
 vim.fn.writefile({ 'x' }, dir .. '/.hidden')
+vim.fn.writefile({ 'x' }, dir .. '/pic.jpg')
 vim.fn.chdir(dir)
 
 vim.cmd('edit ' .. dir .. '/alpha.txt')
@@ -37,6 +42,19 @@ for _, m in ipairs(e.matches) do labels[#labels + 1] = m.label end
 assert(vim.tbl_contains(labels, 'alpha.txt'), 'alpha.txt listed')
 assert(not vim.tbl_contains(labels, '.hidden'), 'dotfiles hidden by default')
 assert(not vim.tbl_contains(labels, '../'), 'parent hidden by default')
+
+-- dircolors coloring: dirs get the di group, jpg files get *.jpg, plain
+-- files without a matching rule stay uncolored.
+local lsc = require('lusty.ls_colors')
+local function find_entry(name)
+  for _, m in ipairs(e.matches) do
+    if m.label == name then return m end
+  end
+  return nil
+end
+assert(lsc.group_for(find_entry('sub/')) ~= nil, 'dir colored (di)')
+assert(lsc.group_for(find_entry('pic.jpg')) ~= nil, 'jpg colored')
+assert(lsc.group_for(find_entry('alpha.txt')) == nil, 'txt has no rule')
 for _, ch in ipairs({ 'b', 'e', 't', 'a' }) do e:key_pressed(string.byte(ch)) end
 assert_eq(#e.matches, 1, 'one match')
 assert_eq(e.matches[1].label, 'beta.lua', 'match beta.lua')

@@ -2,6 +2,7 @@
 
 local mercury = require('lusty.mercury')
 local buffers = require('lusty.buffer_stack')
+local ls_colors = require('lusty.ls_colors')
 local E = require('lusty.explorer')
 
 local M = {}
@@ -9,6 +10,14 @@ local M = {}
 local e = E.Explorer.new({
   title = 'LustyExplorer--Buffers',
 })
+
+-- Color buffers by their file extension (dircolors rules).
+e.color_entry = function(entry)
+  return ls_colors.group_for({
+    name = entry.name or entry.short_name,
+    is_dir = false,
+  })
+end
 
 -- Prepare the entry list for a fresh run.  The buffer MRU order comes from
 -- buffer_stack.compute_buffer_entries() (most recent first, current rotated

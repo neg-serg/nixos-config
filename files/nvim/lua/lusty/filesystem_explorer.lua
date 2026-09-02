@@ -1,7 +1,9 @@
 -- FilesystemExplorer: port of lusty/src/lusty/filesystem-explorer.rb.
+vim.g.__fs_marker = 'MARK2026'
 
 local util = require('lusty.util')
 local mercury = require('lusty.mercury')
+local ls_colors = require('lusty.ls_colors')
 local E = require('lusty.explorer')
 
 local M = {}
@@ -10,6 +12,11 @@ local e = E.Explorer.new({
   title = 'LustyExplorer--Files',
   filesystem = true,
 })
+
+-- dircolors-style cell coloring (LS_COLORS); nil when the entry has no rule.
+e.color_entry = function(entry)
+  return ls_colors.group_for(entry)
+end
 
 -- Directory contents are memoized per view; <C-r> refreshes the current one.
 local dir_cache = {}
@@ -46,7 +53,12 @@ local function list_remote(view)
   local entries = {}
   for line in vim.fn.split(out, '\n') do
     if line ~= '.' and line ~= '..' then
-      entries[#entries + 1] = { label = line }
+      local is_dir = line:sub(-1) == '/'
+      entries[#entries + 1] = {
+        label = line,
+        name = line:gsub('/+$', ''),
+        is_dir = is_dir,
+      }
     end
   end
   return entries
@@ -73,8 +85,23 @@ local function fetch_view(view)
       -- skip (upstream hides ".." when AlwaysShowDotFiles is set)
     else
       if not util.masked(name, e.masks) then
-        local is_dir = vim.fn.isdirectory(view .. '/' .. name) == 1
-        entries[#entries + 1] = { label = is_dir and (name .. '/') or name }
+        local full = view .. '/' .. name
+        local ftype = vim.fn.getftype(full)
+        local is_dir = vim.fn.isdirectory(full) == 1
+        local is_link = ftype == 'link'
+        local entry = {
+          label = is_dir and (name .. '/') or name,
+          name = name,
+          is_dir = is_dir,
+          is_link = is_link,
+          is_socket = ftype == 'socket',
+          is_pipe = ftype == 'fifo',
+        }
+        if ftype == 'file' then
+          local perm = vim.fn.getfperm(full)
+          entry.is_exec = type(perm) == 'string' and perm:find('x') ~= nil
+        end
+        entries[#entries + 1] = entry
       end
     end
   end
@@ -82,7 +109,7 @@ local function fetch_view(view)
   -- (Hidden by the dotfile filter unless the query starts with '.'; upstream
   -- hides it entirely when LustyExplorerAlwaysShowDotFiles is set.)
   if not always_show_dotfiles() then
-    entries[#entries + 1] = { label = '../' }
+    entries[#entries + 1] = { label = '../', name = '..', is_dir = true }
   end
   return entries
 end

@@ -394,11 +394,18 @@ local function paint(self, cells)
     for _, cell in ipairs(line_cells) do
       local entry = self.matches[cell.entry_idx]
       if entry then
-        -- Directory/path prefix part (LustyDir + contained LustySlash).
-        local slash = not entry.no_dir_hl and cell.content:match('.*()/') or nil
-        if slash then
-          hl(row0, cell.byte_start - 1, row0, cell.byte_start - 1 + slash, 'LustySlash')
-          hl(row0, cell.byte_start - 1, row0, cell.byte_start - 1 + slash, 'LustyDir')
+        -- dircolors-style coloring (LS_COLORS) when the explorer provides a
+        -- color resolver; falls back to the static LustyDir/LustySlash marks.
+        local color_group = self.color_entry and self.color_entry(entry) or nil
+        if color_group then
+          hl(row0, cell.byte_start - 1, row0, cell.byte_end, color_group)
+        else
+          -- Directory/path prefix part (LustyDir + contained LustySlash).
+          local slash = not entry.no_dir_hl and cell.content:match('.*()/') or nil
+          if slash then
+            hl(row0, cell.byte_start - 1, row0, cell.byte_start - 1 + slash, 'LustySlash')
+            hl(row0, cell.byte_start - 1, row0, cell.byte_start - 1 + slash, 'LustyDir')
+          end
         end
         if entry.modified then
           local b = cell.content:find(' [+]', 1, true)
