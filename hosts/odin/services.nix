@@ -41,6 +41,8 @@ let
               echo "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set" >&2
               exit 1
             fi
+            # Export after assignment so cat failures are not masked (SC2155).
+            export TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID
 
             exec python3 -c '
       import json
