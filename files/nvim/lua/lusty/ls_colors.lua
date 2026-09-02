@@ -221,6 +221,20 @@ local FALLBACK = 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:'
   .. '*.xls=01;31:*.xlsx=01;31:*.ppt=01;31:*.pptx=01;31:*.odt=01;31:*.ods=01;31:'
   .. '*.epub=01;31:*.djvu=01;31:*.tex=01;31:*.md=01;31:*.sql=01;31:*.log=01;31'
 
+-- Extra rules appended after the user/system palette.  First match wins, so
+-- these only colour extensions the palette left uncolored (code/config/docs).
+local EXTRA = '*.rs=38;5;114:*.go=38;5;114:*.py=38;5;114:*.lua=38;5;114:*.rb=38;5;114:'
+  .. '*.js=38;5;114:*.mjs=38;5;114:*.cjs=38;5;114:*.ts=38;5;114:*.tsx=38;5;114:*.jsx=38;5;114:'
+  .. '*.m=38;5;114:*.mm=38;5;114:*.c=38;5;114:*.h=38;5;114:*.cpp=38;5;114:*.hpp=38;5;114:'
+  .. '*.cc=38;5;114:*.cs=38;5;114:*.java=38;5;114:*.kt=38;5;114:*.scala=38;5;114:*.swift=38;5;114:'
+  .. '*.php=38;5;114:*.r=38;5;114:*.hs=38;5;114:*.ml=38;5;114:*.ex=38;5;114:*.exs=38;5;114:'
+  .. '*.erl=38;5;114:*.clj=38;5;114:*.nim=38;5;114:*.zig=38;5;114:*.sc=38;5;114:*.scd=38;5;114:'
+  .. '*.sh=38;5;114:*.bash=38;5;114:*.zsh=38;5;114:*.fish=38;5;114:*.ps1=38;5;114:*.sql=38;5;114:'
+  .. '*.nix=38;5;179:*.toml=38;5;179:*.yaml=38;5;179:*.yml=38;5;179:*.json=38;5;179:*.jsonc=38;5;179:'
+  .. '*.ini=38;5;179:*.cfg=38;5;179:*.conf=38;5;179:*.env=38;5;179:*.dockerfile=38;5;179:'
+  .. '*.md=38;5;75:*.markdown=38;5;75:*.rst=38;5;75:*.adoc=38;5;75:*.html=38;5;75:*.htm=38;5;75:'
+  .. '*.css=38;5;81:*.scss=38;5;81:*.less=38;5;81:*.xml=38;5;81:*.tex=38;5;75:*.bib=38;5;75'
+
 local cfg = nil
 local hl_cache = {}
 local hl_counter = 0
@@ -268,6 +282,21 @@ local function load_config()
     end
   end
   cfg = parse_ls_colors(env and env ~= '' and env or FALLBACK)
+
+  -- Append code/config/doc rules that the palette did not cover.
+  local seen = {}
+  for _, it in ipairs(cfg.exts) do
+    seen[lower_keep_classes(it.key)] = true
+  end
+  local extra = parse_ls_colors(EXTRA)
+  for _, it in ipairs(extra.exts) do
+    local key = lower_keep_classes(it.key)
+    if not seen[key] then
+      seen[key] = true
+      cfg.exts[#cfg.exts + 1] = it
+    end
+  end
+
   return cfg
 end
 
