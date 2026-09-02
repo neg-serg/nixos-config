@@ -75,7 +75,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.alertmanager ];
+    environment.systemPackages = [ pkgs.prometheus-alertmanager ]; # nixpkgs renamed alertmanager
 
     systemd.services.alertmanager = {
       description = "Prometheus Alertmanager";
@@ -83,7 +83,7 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.alertmanager} --config.file=${configFile} --web.listen-address=${cfg.listenAddress}:${toString cfg.port} --storage.path=/var/lib/alertmanager --data.retention=120h";
+        ExecStart = "${lib.getExe pkgs.prometheus-alertmanager} --config.file=${configFile} --web.listen-address=${cfg.listenAddress}:${toString cfg.port} --storage.path=/var/lib/alertmanager --data.retention=120h";
         Restart = "on-failure";
         RestartSec = 5;
         StateDirectory = "alertmanager";
