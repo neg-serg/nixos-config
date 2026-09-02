@@ -3,6 +3,7 @@
   stdenv,
   glibc,
   libGL,
+  vulkan-loader,
   makeWrapper,
   patchelf,
   qt6,
@@ -59,6 +60,7 @@ stdenv.mkDerivation rec {
       lib.makeLibraryPath [
         stdenv.cc.cc.lib
         glibc
+        vulkan-loader # libvulkan.so.1 — CLI/layer dlopen it at runtime
       ]
     }"
     patchelf --set-interpreter "$interp" --set-rpath "$basePath" "$out/bin/lsfg-vk-cli"
