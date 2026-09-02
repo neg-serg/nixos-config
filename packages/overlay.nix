@@ -231,6 +231,7 @@ in
       '';
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
       renoise-redux = final.callPackage ./renoise-redux { }; # Renoise Redux VST3 plugin (licensed build)
+      protoplug = final.callPackage ./protoplug { }; # Lua live-coding VST2 plugins (Fx + Gen, MIT)
       midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
       # musescore from the un-overlaid nixpkgs input: global overlays (cmake/stdenv)
       # change the derivation hash, which would force a full source build; the
