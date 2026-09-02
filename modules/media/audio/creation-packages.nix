@@ -115,7 +115,11 @@ in
         # event loop runs but no window is ever shown (Hyprland socket wayland-1).
         Environment = "PATH=/run/wrappers/bin:/run/current-system/sw/bin:/home/neg/.nix-profile/bin:/usr/bin:/bin WAYLAND_DISPLAY=wayland-1";
         ExecStart = "${pkgs.distrobox}/bin/distrobox-enter arch-zestbay -- zestbay";
-        Restart = "on-failure";
+        # Always restart: ZestBay's own QML quits cleanly (exit 0) when its
+        # window is closed unless close_to_tray is set, and on-failure would
+        # leave it dead. close_to_tray lives in ~/.config/zestbay/preferences.json;
+        # Restart=always is the safety net for any clean/abnormal exit.
+        Restart = "always";
         RestartSec = 5;
       };
     };
