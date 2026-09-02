@@ -1,0 +1,237 @@
+-- FilesystemExplorer: port of lusty/src/lusty/filesystem-explorer.rb.
+
+local util = require('lusty.util')
+local mercury = require('lusty.mercury')
+local E = require('lusty.explorer')
+
+local M = {}
+
+local e = E.Explorer.new({
+  title = 'LustyExplorer--Files',
+  filesystem = true,
+})
+
+-- Directory contents are memoized per view; <C-r> refreshes the current one.
+local dir_cache = {}
+
+local function always_show_dotfiles()
+  local v = vim.g.LustyExplorerAlwaysShowDotFiles
+  return v ~= nil and v ~= false and v ~= 0 and v ~= '0'
+end
+
+-- Canonical view (directory whose contents are shown), no trailing slash.
+local function view_path()
+  local v = e.prompt:value()
+  if e.prompt:at_dir() and #v > 1 then
+    return v:sub(1, -2)
+  end
+  return e.prompt:dirname()
+end
+
+-- Query used to filter the current directory.
+local function current_abbreviation()
+  if e.prompt:at_dir() then
+    return ''
+  end
+  return util.basename(e.prompt:value())
+end
+
+local function list_remote(view)
+  local host, path = view:match('^scp://([^/]+)/(.*)$')
+  if not host then
+    return {}
+  end
+  local flag = always_show_dotfiles() and 'a' or ''
+  local out = vim.fn.system({ 'ssh', host, 'ls', '-1pL' .. flag, '--', path })
+  local entries = {}
+  for line in vim.fn.split(out, '\n') do
+    if line ~= '.' and line ~= '..' then
+      entries[#entries + 1] = { label = line }
+    end
+  end
+  return entries
+end
+
+-- List the directory (masks applied, dotfile filtering is separate).
+local function fetch_view(view)
+  local view_str = view
+  if view_str:sub(1, 6) == 'scp://' then
+    return list_remote(view)
+  end
+  if vim.fn.isdirectory(view) ~= 1 then
+    return {}
+  end
+  local ok, names = pcall(vim.fn.readdir, view)
+  if not ok or type(names) ~= 'table' then
+    return {}
+  end
+  local entries = {}
+  for _, name in ipairs(names) do
+    if name == '.' then
+      -- skip
+    elseif name == '..' and always_show_dotfiles() then
+      -- skip (upstream hides ".." when AlwaysShowDotFiles is set)
+    else
+      if not util.masked(name, e.masks) then
+        local is_dir = vim.fn.isdirectory(view .. '/' .. name) == 1
+        entries[#entries + 1] = { label = is_dir and (name .. '/') or name }
+      end
+    end
+  end
+  -- vim.fn.readdir never yields '..'; add it like Dir.foreach would.
+  -- (Hidden by the dotfile filter unless the query starts with '.'; upstream
+  -- hides it entirely when LustyExplorerAlwaysShowDotFiles is set.)
+  if not always_show_dotfiles() then
+    entries[#entries + 1] = { label = '../' }
+  end
+  return entries
+end
+
+local function all_files_at_view()
+  local view = view_path()
+  if not dir_cache[view] then
+    dir_cache[view] = fetch_view(view)
+  end
+  local all = dir_cache[view]
+  local abbrev = current_abbreviation()
+  if always_show_dotfiles() or abbrev:sub(1, 1) == '.' then
+    return all
+  end
+  local visible = {}
+  for _, entry in ipairs(all) do
+    if entry.label:sub(1, 1) ~= '.' then
+      visible[#visible + 1] = entry
+    end
+  end
+  return visible
+end
+
+e.compute_sorted_matches = function()
+  local abbrev = current_abbreviation()
+  local unsorted = all_files_at_view()
+
+  if abbrev == '' then
+    table.sort(unsorted, function(a, b)
+      return a.label < b.label
+    end)
+    return unsorted
+  end
+
+  local matches = {}
+  for _, entry in ipairs(unsorted) do
+    entry.score = mercury.score(entry.label, abbrev)
+    if entry.score ~= 0.0 then
+      matches[#matches + 1] = entry
+    end
+  end
+  if abbrev == '.' then
+    table.sort(matches, function(a, b)
+      return a.label < b.label
+    end)
+  else
+    table.sort(matches, function(a, b)
+      return a.score > b.score
+    end)
+  end
+  return matches
+end
+
+local function is_dir_label(label)
+  return label:sub(-1) == '/'
+end
+
+local function load_file(path, mode)
+  local rel = vim.fn.fnamemodify(path, ':.')
+  local cmd = mode == 'current_tab' and 'e'
+    or mode == 'new_tab' and 'tabe'
+    or mode == 'new_split' and 'sp'
+    or mode == 'new_vsplit' and 'vs'
+    or 'e'
+  vim.cmd('silent ' .. cmd .. ' ' .. vim.fn.fnameescape(rel))
+end
+
+e.open_entry = function(_, entry, mode)
+  local view = view_path()
+  local path
+  if view == '/' then
+    path = '/' .. entry.label
+  else
+    path = view .. '/' .. entry.label
+  end
+
+  if is_dir_label(entry.label) then
+    -- Recurse into the directory.
+    e.prompt:set(path)
+    e.selected = 0
+  elseif entry.label:find('/', 1, true) then
+    -- A fake entry containing a slash cannot be opened.
+    return
+  else
+    e:cleanup()
+    pcall(load_file, path, mode)
+  end
+end
+
+-- <C-a>/<Shift-Enter>: open all non-directories currently in view.
+-- <C-e>: create a new buffer from the prompt text.
+-- <C-r>: refresh the current directory.
+e.key_pressed = function(self, code)
+  if code == 1 or code == 10 then
+    local matches = e.matches
+    e:cleanup()
+    for _, entry in ipairs(matches) do
+      local path
+      if e.prompt:at_dir() then
+        path = e.prompt:value() .. entry.label
+      else
+        local d = e.prompt:dirname()
+        path = d == '/' and (d .. entry.label) or (d .. '/' .. entry.label)
+      end
+      if not is_dir_label(entry.label) then
+        pcall(load_file, path, 'current_tab')
+      end
+    end
+    return
+  elseif code == 5 then
+    -- <C-e> create file with the given name and path.
+    if not e.prompt:at_dir() then
+      local path = e.prompt:value()
+      dir_cache[view_path()] = nil
+      e:cleanup()
+      pcall(load_file, path, 'current_tab')
+    end
+    return
+  elseif code == 18 then
+    -- <C-r> refresh directory contents.
+    dir_cache[view_path()] = nil
+    e.selected = 0
+    e:refresh('full')
+    return
+  end
+  E.Explorer.key_pressed(self, code)
+end
+
+--- Open the filesystem explorer.
+--- @param path string|nil start directory ('' or nil = cwd)
+function M.run(path)
+  if e.running then
+    return
+  end
+  if path == nil or path == '' then
+    path = vim.fn.getcwd()
+  end
+  e.masks = util.read_masks()
+  e.prompt:set(path .. '/')
+  e.selected = 0
+  e:start()
+end
+
+function M.explorer()
+  return e
+end
+
+function M.clear_cache()
+  dir_cache = {}
+end
+
+return M
