@@ -19,6 +19,9 @@ e.color_entry = function(entry)
   })
 end
 
+-- Footer hint shown while the prompt is empty.
+e.hint = 'буквы — фильтр · <C-n>/<C-p> — выбор · <C-d> — выгрузить · <CR> — открыть'
+
 -- Prepare the entry list for a fresh run.  The buffer MRU order comes from
 -- buffer_stack.compute_buffer_entries() (most recent first, current rotated
 -- to the end); the current buffer gets a dedicated highlight.

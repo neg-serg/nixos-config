@@ -55,6 +55,30 @@ end
 assert(lsc.group_for(find_entry('sub/')) ~= nil, 'dir colored (di)')
 assert(lsc.group_for(find_entry('pic.jpg')) ~= nil, 'jpg colored')
 assert(lsc.group_for(find_entry('alpha.txt')) == nil, 'txt has no rule')
+assert(lsc.group_for(find_entry('beta.lua')) ~= nil, 'lua colored via extra rules')
+
+-- Multi-row layout + footer hint: several visible lines, hint about '.'.
+assert_eq(e.row_count, 4, 'multi-row layout (4 rows)')
+local cur_buf = vim.api.nvim_get_current_buf()
+local nlines = vim.api.nvim_buf_line_count(cur_buf)
+assert(nlines >= 5, 'buffer shows several lines')
+local footer = vim.api.nvim_buf_get_lines(cur_buf, nlines - 1, nlines, false)[1] or ''
+assert(footer:find('скрытые', 1, true) ~= nil, 'hint mentions hidden files')
+e:cancel()
+
+-- Typing '.' reveals dotfiles (including the parent '..').
+fs.run(dir)
+e = fs.explorer()
+e:key_pressed(46) -- '.'
+local dot_labels = {}
+for _, m in ipairs(e.matches) do dot_labels[#dot_labels + 1] = m.label end
+assert(vim.tbl_contains(dot_labels, '.hidden'), '.hidden appears after dot')
+assert(vim.tbl_contains(dot_labels, '../'), '.. appears after dot')
+e:cancel()
+
+-- Filtering with letters.
+fs.run(dir)
+e = fs.explorer()
 for _, ch in ipairs({ 'b', 'e', 't', 'a' }) do e:key_pressed(string.byte(ch)) end
 assert_eq(#e.matches, 1, 'one match')
 assert_eq(e.matches[1].label, 'beta.lua', 'match beta.lua')
