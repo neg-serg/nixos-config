@@ -117,6 +117,11 @@
       "zfs.zfs_async_block_max_blocks=100000" # Cap async destroy to prevent OOM on post-crash pool import
       "zfs.zfs_vdev_async_read_min_active=2" # 2x default (1): minimum concurrent async reads
       "zfs.zfs_arc_max=17179869184" # Cap ARC at 16GB on 64GB system (default: ~32GB auto)
+
+      # VFIO: iGPU (Granite Ridge 1002:13c0) + its HDMI audio (1002:1640) go to
+      # the dockur Windows VM (Genelec GLM). Removes the iGPU from host Vulkan
+      # so games/lsfg-vk can never land on it (display stays on the RX 9070 XT).
+      "vfio-pci.ids=1002:13c0,1002:1640"
     ];
 
     # Load ASUS EC sensor driver for detailed telemetry + OpenRGB access
@@ -155,6 +160,7 @@
     # (aconnect, Vital/SuperDirt MIDI) must come up here.
     initrd = {
       kernelModules = [
+        "vfio_pci" # bind iGPU (vfio-pci.ids) BEFORE amdgpu claims it
         "amdgpu"
         "snd-seq" # ALSA sequencer core — MIDI (loaded pre-lock)
         "snd-seq-midi" # ALSA sequencer raw MIDI clients
