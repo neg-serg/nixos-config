@@ -32,6 +32,10 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
   `$VAR` в prompt, dotfiles скрыты, пока запрос не начинается с `.` (или
   `g:LustyExplorerAlwaysShowDotFiles = 1`), маски из `&wildignore` (или устаревший
   `g:LustyExplorerFileMasks`).
+- Цвет как в `ls --color`/dircolors: файлы и каталоги красятся по `LS_COLORS` из окружения Neovim
+  (тип `di`/`ln`/`ex`/`so`/`pi`..., затем правила `*.ext`); если `LS_COLORS` не задан, берётся
+  дефолт `dircolors -b`, иначе встроенный минимум. Каталоги — как `di`, исполняемые — как `ex`,
+  ссылки — как `ln`. То же применяется к именам буферов в BufferExplorer (по расширению файла).
 - `<C-d>` в буферном explorer — выгрузить выбранный буфер.
 - `<C-a>`/`<Shift-Enter>` в файловом — открыть все файлы из текущего вида; `<C-e>` — создать новый
   файл по тексту prompt.
@@ -58,8 +62,9 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
 
 ## Проверка
 
-Headless-тесты (nvim): `nvim --headless -l files/nvim/lua/lusty/tests/smoke.lua` — открытие/фильтр/ навигация/рекурсия
-файлового explorer, MRU-порядок буферов, hits BufferGrep.
+Headless-тесты (nvim): `nvim --clean --headless -l files/nvim/lua/lusty/tests/smoke.lua` —
+открытие/фильтр/навигация/рекурсия файлового explorer, dircolors-раскраска, MRU-порядок буферов,
+C-d, hits BufferGrep (включая `\b`-границы).
 
 Изменения вступают в силу после пересборки конфига:
 `nh os switch /etc/nixos#odin --option substitute false`.
