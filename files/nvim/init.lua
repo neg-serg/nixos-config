@@ -17,6 +17,7 @@ vim.api.nvim_create_autocmd('User', {
     require'08-cmds'
     require'14-abbr'
     require'62-sort-operator'
+    require'lusty'
   end,
 })
 

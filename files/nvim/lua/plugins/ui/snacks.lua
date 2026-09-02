@@ -89,7 +89,7 @@ return {
     { "ee",         function() Snacks.picker.smart() end, desc = "Smart find (buffers+recent+files)" },
     { "<leader>.",  function() Snacks.picker.recent() end, desc = "Recent files (snacks)" },
     { "gz",         function() Snacks.picker.files({ cwd = vim.fn.expand("%:p:h") }) end, desc = "Files in current dir" },
-    { "<leader>l",  function() Snacks.picker.files({ cwd = vim.fn.expand("%:p:h") }) end, desc = "Files in current dir" },
+    -- <leader>l prefix is free for LustyExplorer (lf/lr/lb/lg); use gz for this picker
     { "<leader>L",  function() Snacks.picker.files({ cwd = require("utils.fzf").project_root() }) end, desc = "Files in project root" },
     { "<leader>fg", function() Snacks.picker.grep() end, desc = "Live grep (snacks)" },
     { "<leader>fG", function() Snacks.picker.grep_word() end, desc = "Grep word under cursor" },
