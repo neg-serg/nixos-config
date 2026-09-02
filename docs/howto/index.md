@@ -110,3 +110,6 @@ isn't a step-by-step runbook.
 
 - Dockur Windows VM on odin: GLM USB passthrough, host alias, VM proxy chain (RU):
   [windows-vm-dockur.ru.md](./windows-vm-dockur.ru.md)
+
+- LustyExplorer: Lua-port for modern Neovim (files/buffers explorer + buffer grep, RU):
+  [lusty-explorer-port.ru.md](./lusty-explorer-port.ru.md)
