@@ -92,6 +92,9 @@ local cls = {
 -- ---------------------------------------------------------------------
 hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 1, bitdepth = 10, cm = "auto" })
 hl.monitor({ output = "DP-1", disabled = true })
+-- DP-4: second cable (motherboard iGPU) to the same MPG321UX panel — a phantom
+-- 4K60 screen that only shows if the monitor OSD input is switched. Keep disabled.
+hl.monitor({ output = "DP-4", disabled = true })
 
 -- ---------------------------------------------------------------------
 -- Environment (from env.conf)
