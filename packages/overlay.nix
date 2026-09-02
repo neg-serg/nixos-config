@@ -232,6 +232,12 @@ in
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
       renoise-redux = final.callPackage ./renoise-redux { }; # Renoise Redux VST3 plugin (licensed build)
       midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
+      # musescore from the un-overlaid nixpkgs input: global overlays (cmake/stdenv)
+      # change the derivation hash, which would force a full source build; the
+      # plain build is already in the store.
+      midi2sheet = final.callPackage ./midi2sheet {
+        musescore = inputs.nixpkgs.legacyPackages.${final.stdenv.hostPlatform.system}.musescore;
+      }; # MIDI -> sheet music PDF via headless MuseScore (piano grand staff)
       virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
       renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
