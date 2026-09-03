@@ -13,8 +13,6 @@ local e = E.Explorer.new({
   single_column = true,
 })
 
--- Footer hint shown while the prompt is empty.
-e.hint = 'regex (ruby-стиль), без учёта регистра · <C-u> — очистить · <CR> — переход'
 
 -- State carried between runs (like @previous_* in the original).
 local previous = {
