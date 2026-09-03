@@ -31,6 +31,9 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>) -> io::Result<
     let stdin = io::stdin();
     let stdout = io::stdout();
     let mut out = io::BufWriter::new(stdout.lock());
+    if let Ok(db) = std::env::var("LUSTY_SERVE_DEBUG") {
+        let _ = std::fs::write(&db, format!("entries={} C-about-to-print", entries.len()));
+    }
     writeln!(
         out,
         "C {} {} {}",
@@ -38,6 +41,12 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>) -> io::Result<
         depth,
         root.display()
     )?;
+    out.flush()?;
+    if let Ok(db) = std::env::var("LUSTY_SERVE_DEBUG") {
+        let mut f = std::fs::OpenOptions::new().append(true).open(&db).unwrap();
+        use std::io::Write as _;
+        let _ = f.write_all(b" C-printed\n");
+    }
 
     let mut current_query = String::new();
     for line in stdin.lock().lines() {
