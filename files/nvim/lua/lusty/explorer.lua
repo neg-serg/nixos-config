@@ -827,17 +827,32 @@ local function set_window_opts(win)
   end
 end
 
+-- g:LustyExplorerPerfProbe = 1 logs the wall time of every real keypress
+-- (mapping callback, incl. refresh and the optional redraw) to
+-- /tmp/lusty_perf_probe.log.
+local function probe_log(code, elapsed_ms, running, title)
+  local f = io.open('/tmp/lusty_perf_probe.log', 'a')
+  if f then
+    f:write(string.format('%d\t%s\tkey=%-3d\t%.1fms\trunning=%s\n',
+      os.time(), title, code, elapsed_ms, tostring(running)))
+    f:close()
+  end
+end
+
 local function setup_keymaps(self)
   local buf = self.buf_id
   local function map(lhs, code, cancel)
     local opts = { nowait = true, silent = true, noremap = true }
-    if cancel then
-      opts.callback = function()
+    opts.callback = function()
+      local probe = vim.g.LustyExplorerPerfProbe == 1
+      local t0 = probe and vim.uv.hrtime() or nil
+      if cancel then
         self:cancel()
-      end
-    else
-      opts.callback = function()
+      else
         self:key_pressed(code)
+      end
+      if probe then
+        probe_log(code, (vim.uv.hrtime() - t0) / 1e6, self.running, self.title)
       end
     end
     pcall(vim.api.nvim_buf_set_keymap, buf, 'n', lhs, '', opts)
