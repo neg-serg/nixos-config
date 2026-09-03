@@ -10,6 +10,7 @@ mod glob;
 mod listing;
 mod mount;
 mod rank;
+mod tui;
 
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
@@ -23,10 +24,46 @@ fn main() {
         run_list(&args);
         return;
     }
-    eprintln!(
-        "usage: lusty-native --list <root> [--depth N] [--show-dots] [--skip a,b] [--query Q] [--color]"
-    );
-    std::process::exit(2);
+    // Interactive picker: lusty-native [root] [--depth N] [--skip a,b]
+    let mut root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let mut depth = 2usize;
+    let mut skip = "pic,tmp".to_string();
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--depth" => {
+                i += 1;
+                depth = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(2);
+            }
+            "--skip" => {
+                i += 1;
+                skip = args.get(i).cloned().unwrap_or_default();
+            }
+            other if !other.starts_with("--") => {
+                root = PathBuf::from(other);
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    let opts = listing::Options {
+        depth,
+        skip_dirs: skip
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect(),
+        follow_mounts: false,
+        show_dots: false,
+    };
+    let mut app = tui::App::new(root, opts);
+    match app.run() {
+        Ok(code) => std::process::exit(code),
+        Err(err) => {
+            eprintln!("lusty-native: {err}");
+            std::process::exit(2);
+        }
+    }
 }
 
 fn run_list(args: &[String]) {
@@ -79,32 +116,33 @@ fn run_list(args: &[String]) {
     let dt_list = t0.elapsed();
     let total = entries.len();
 
-    let ranked = if query.is_empty() {
+    let idxs: Vec<usize> = if query.is_empty() {
         eprintln!("{} entries in {:?}", total, dt_list);
-        entries
+        (0..total).collect()
     } else {
         let t1 = Instant::now();
-        let ranked = rank::filter_and_rank(entries, &query);
+        let idxs = rank::rank_indices(&entries, &query);
         eprintln!(
             "{} of {} entries in {:?} (list) + {:?} (rank)",
-            ranked.len(),
+            idxs.len(),
             total,
             dt_list,
             t1.elapsed()
         );
-        ranked
+        idxs
     };
 
     let palette = if color { Some(colors::load()) } else { None };
     let esc = char::from_u32(0x1b).unwrap();
 
     let mut out = String::new();
-    for e in &ranked {
+    for &i in &idxs {
+        let e = &entries[i];
         let code = palette.as_ref().and_then(|p| {
             let exec = e.kind == FileKind::File && is_exec(&e.path);
             p.code_for(&e.name, e.kind, exec)
         });
-        push_label(&mut out, &e, code, esc);
+        push_label(&mut out, e, code, esc);
     }
     print!("{out}");
 }

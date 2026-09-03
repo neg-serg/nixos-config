@@ -14,6 +14,9 @@ use crate::glob;
 use crate::mount;
 
 /// Kind of a listed entry, mirroring what ls --color distinguishes.
+/// Socket/Pipe/Block/Char are unreachable with walkdir (d_type is filtered)
+/// but kept so colors.rs can map them if a future backend supplies them.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileKind {
     File,
