@@ -181,6 +181,17 @@ assert(vim.tbl_contains(gam_hits, 'sub/gamma.txt'), 'fuzzy find hits nested file
 e:cancel()
 vim.g.LustyExplorerSearchDepth = 1
 
+-- Fuzzy engine fallback: g:LustyExplorerFuzzyEngine = 'mercury' restores the
+-- original scorer and still filters correctly.
+vim.g.LustyExplorerFuzzyEngine = 'mercury'
+fs.run(dir)
+e = fs.explorer()
+for _, ch in ipairs({ 'b', 'e', 't', 'a' }) do e:key_pressed(string.byte(ch)) end
+assert_eq(#e.matches, 1, 'mercury engine one match')
+assert_eq(e.matches[1].label, 'beta.lua', 'mercury engine match beta.lua')
+e:cancel()
+vim.g.LustyExplorerFuzzyEngine = nil
+
 -- Filtering with letters.
 fs.run(dir)
 e = fs.explorer()
