@@ -46,8 +46,8 @@ local fs = require('lusty.filesystem_explorer')
 local be = require('lusty.buffer_explorer')
 local bg = require('lusty.buffer_grep')
 
--- ,l (leader+l) = LustyFilesystemExplorerFromHere: opens at the current
--- file's directory.  ,lf (from cwd) and ,lr still work as before.
+-- ,l (leader+l) = LustyFilesystemExplorerFromHere, nowait: opens at the
+-- current file's directory.  Secondary functions live on ,C / ,B / ,G.
 vim.cmd('edit ' .. dir .. '/alpha.txt')
 vim.api.nvim_feedkeys(',l', 'x!', false)
 vim.wait(20)
@@ -55,6 +55,16 @@ local fe = fs.explorer()
 assert(fe.running, ',l opens the from-here explorer')
 assert(fe.prompt:value() == dir .. '/', 'from-here prompt is the file dir')
 fe:cancel()
+
+-- Regression: fast typing right after ,l must not be swallowed by a leader
+-- chord (',lg' used to open BufferGrep with 'ames').
+vim.cmd('edit ' .. dir .. '/alpha.txt')
+vim.api.nvim_feedkeys(',lgames', 'x!', false)
+vim.wait(30)
+assert(not bg.explorer().running, 'typing g after ,l does not open grep')
+assert(fs.explorer().running, ',l stays in the filesystem explorer')
+assert(fs.explorer().prompt.input:find('games$') ~= nil, 'query letters are kept')
+fs.explorer():cancel()
 
 -- Filesystem explorer.
 vim.cmd('edit ' .. dir .. '/alpha.txt')
