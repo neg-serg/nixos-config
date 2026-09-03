@@ -2,6 +2,7 @@
 
 local mercury = require('lusty.mercury')
 local fuzzy = require('lusty.fuzzy')
+local util = require('lusty.util')
 local buffers = require('lusty.buffer_stack')
 local ls_colors = require('lusty.ls_colors')
 local E = require('lusty.explorer')
@@ -55,10 +56,15 @@ e.compute_sorted_matches = function(self)
   local matches = {}
   -- g:LustyExplorerFuzzyEngine = 'mercury' restores the original scorer.
   local use_mercury = tostring(vim.g.LustyExplorerFuzzyEngine or '') == 'mercury'
+  -- First query letter must be a prefix of the buffer's basename.
+  local first = abbrev:sub(1, 1):lower()
   for _, entry in ipairs(self.entries) do
-    entry.score = use_mercury and mercury.score(entry.short_name, abbrev) or fuzzy.score(entry.short_name, abbrev)
-    if entry.score ~= 0.0 then
-      matches[#matches + 1] = entry
+    local base_first = (util.basename(entry.short_name) or ''):sub(1, 1):lower()
+    if base_first == first then
+      entry.score = use_mercury and mercury.score(entry.short_name, abbrev) or fuzzy.score(entry.short_name, abbrev)
+      if entry.score ~= 0.0 then
+        matches[#matches + 1] = entry
+      end
     end
   end
   table.sort(matches, function(a, b)
