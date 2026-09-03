@@ -26,11 +26,24 @@ vim.cmd('badd ' .. dir .. '/beta.lua')
 vim.cmd('enew')
 vim.api.nvim_buf_set_name(0, 'scratch_one')
 
+vim.g.mapleader = ',' -- real config sets this in init.lua before plugins
+vim.o.timeoutlen = 0 -- ,l is a prefix of ,lf/,lr/..., so fire it immediately in tests
 local ok, err = pcall(require, 'lusty')
 assert(ok, 'require lusty: ' .. tostring(err))
+
 local fs = require('lusty.filesystem_explorer')
 local be = require('lusty.buffer_explorer')
 local bg = require('lusty.buffer_grep')
+
+-- ,l (leader+l) = LustyFilesystemExplorerFromHere: opens at the current
+-- file's directory.  ,lf (from cwd) and ,lr still work as before.
+vim.cmd('edit ' .. dir .. '/alpha.txt')
+vim.api.nvim_feedkeys(',l', 'x!', false)
+vim.wait(20)
+local fe = fs.explorer()
+assert(fe.running, ',l opens the from-here explorer')
+assert(fe.prompt:value() == dir .. '/', 'from-here prompt is the file dir')
+fe:cancel()
 
 -- Filesystem explorer.
 vim.cmd('edit ' .. dir .. '/alpha.txt')

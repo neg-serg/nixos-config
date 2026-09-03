@@ -59,8 +59,14 @@ function M.setup()
     deprecated('FilesystemExplorerFromHere', 'LustyFilesystemExplorerFromHere')
   end, {})
 
+  -- Default mappings are ON unless the option explicitly disables them.
   local dm = vim.g.LustyExplorerDefaultMappings
-  if dm ~= nil and dm ~= false and dm ~= 0 and dm ~= '0' then
+  if not (dm == 0 or dm == false or dm == '0') then
+    -- Single-key access: ,l = filesystem explorer from the current file's dir.
+    vim.keymap.set('n', '<leader>l', function()
+      local d = vim.fn.expand('%:p:h')
+      fs.run(d == '' and vim.fn.getcwd() or d)
+    end, { desc = 'Lusty filesystem explorer from here' })
     vim.keymap.set('n', '<leader>lf', function()
       fs.run(nil)
     end, { desc = 'Lusty filesystem explorer (cwd)' })
