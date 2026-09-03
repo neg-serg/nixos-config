@@ -18,6 +18,8 @@ local dir = '/tmp/lusty_smoke_dir'
 vim.fn.mkdir(dir .. '/sub', 'p')
 vim.fn.writefile({ 'gamma' }, dir .. '/sub/gamma.txt')
 vim.fn.writefile({ 'x' }, dir .. '/.hidden')
+vim.fn.mkdir(dir .. '/.hid', 'p')
+vim.fn.writefile({ 'inside' }, dir .. '/.hid/marker.txt')
 vim.fn.writefile({ 'x' }, dir .. '/pic.jpg')
 vim.fn.chdir(dir)
 
@@ -101,6 +103,28 @@ assert(footer:find('скрытые', 1, true) == nil, 'no hint text in the promp
 assert(prompt_hl >= 1, 'LustyPrompt painted on the footer')
 e:cancel()
 
+-- Home directory: the prompt abbreviates to '~' and paints tilde/separators/
+-- path with the neg.omp.json colours (like the shell prompt).
+local hdir2 = os.getenv('HOME') .. '/lusty_home_test'
+vim.fn.mkdir(hdir2, 'p')
+vim.cmd('edit! ' .. hdir2 .. '/a.txt')
+fs.run(hdir2)
+local he = fs.explorer()
+local hbuf = vim.api.nvim_get_current_buf()
+local hn = vim.api.nvim_buf_line_count(hbuf)
+local hfoot = vim.api.nvim_buf_get_lines(hbuf, hn - 1, hn, false)[1] or ''
+assert(hfoot:find('^>> ~/', 1) ~= nil, 'home abbreviated to ~ in prompt')
+local hcounts = { Tilde = 0, Sep = 0, Path = 0 }
+for _, m in ipairs(vim.api.nvim_buf_get_extmarks(hbuf, lusty_ns, 0, -1, { details = true })) do
+  local g = (m[4] or {}).hl_group
+  if g == 'LustyPromptTilde' then hcounts.Tilde = hcounts.Tilde + 1 end
+  if g == 'LustyPromptSep' then hcounts.Sep = hcounts.Sep + 1 end
+  if g == 'LustyPromptPath' then hcounts.Path = hcounts.Path + 1 end
+end
+assert(hcounts.Tilde >= 1 and hcounts.Sep >= 1 and hcounts.Path >= 1, 'prompt path segments painted')
+he:cancel()
+vim.fn.system({ 'rm', '-rf', hdir2 })
+
 -- Typing '.' reveals dotfiles (including the parent '..').
 fs.run(dir)
 e = fs.explorer()
@@ -120,6 +144,18 @@ vim.wait(30)
 local ru_dot_labels = {}
 for _, m in ipairs(e.matches) do ru_dot_labels[#ru_dot_labels + 1] = m.label end
 assert(vim.tbl_contains(ru_dot_labels, '.hidden'), 'RU dot key reveals hidden files')
+assert(vim.tbl_contains(ru_dot_labels, '.hid/'), 'RU dot key reveals hidden dirs')
+assert(vim.tbl_contains(ru_dot_labels, '../'), 'RU dot key shows parent dir')
+-- Hidden directories are navigable: Enter on '.hid/' lists its content.
+local hid_idx = nil
+for i, m in ipairs(e.matches) do
+  if m.label == '.hid/' then hid_idx = i - 1 end
+end
+e.selected = hid_idx
+e:key_pressed(13)
+local hid_labels = {}
+for _, m in ipairs(e.matches) do hid_labels[#hid_labels + 1] = m.label end
+assert(vim.tbl_contains(hid_labels, 'marker.txt'), 'entered hidden dir via Enter')
 e:cancel()
 
 -- Filtering with letters.
