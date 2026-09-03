@@ -666,10 +666,9 @@ end
 --- Define the few extra highlight groups (lsc groups come from its own cache).
 function M.ensure_highlights()
   local ok = pcall(api.nvim_set_hl, 0, 'LustyNativeSel', {
-    bg = '#7e57c2',
+    bg = '#e53935',
     fg = '#ffffff',
     bold = true,
-    underline = true,
   })
   if not ok then
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = 'Gray', fg = 'White', bold = true })
