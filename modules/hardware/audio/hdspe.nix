@@ -112,29 +112,6 @@ let
 
   # routing config for pwroute
 
-  # aes-dedup: keep the RME AES pair fed by the game-stereo loopback ONLY.
-  # WirePlumber (or a pulse client reconnect) occasionally links streams (MPD,
-  # browsers) straight into playback_AUX2/3 in addition to the game-stereo
-  # route - two copies with ~18ms offset reach the DAC -> comb filtering /
-  # muddy bass. This loop drops any such stray direct link within 10s.
-  aesDedupScript = pkgs.writeShellScript "aes-dedup" ''
-    set -u
-    TARGET_BASE="alsa_output.pci-0000_05_00.0.pro-output-0:playback_"
-    while true; do
-      for PORT in AUX2 AUX3; do
-        TARGET="$TARGET_BASE$PORT"
-        pw-link -l 2>/dev/null | sed -n "/^$TARGET$/,/^[^ ]/p" | grep '|<-' | while IFS= read -r ln; do
-          src=$(echo "$ln" | sed -E 's/^[[:space:]]*\|<- //')
-          case "$src" in
-            playback.game-stereo:*|"") ;;
-            *) pw-link -d "$src" "$TARGET" 2>/dev/null && echo "aes-dedup: dropped $src -> $TARGET" ;;
-          esac
-        done
-      done
-      sleep 10
-    done
-  '';
-
   routingYaml = pkgs.writeText "routing.yaml" ''
 
     ---
@@ -217,30 +194,6 @@ in
             pkgs.alsa-utils # ALSA utilities (amixer, aplay, etc.)
             pkgs.gnused # GNU sed
             pkgs.coreutils # GNU core utilities
-          ]
-        }";
-      };
-    };
-
-    # User-level: drop stray direct links into the RME AES pair
-    systemd.user.services."aes-dedup" = {
-      description = "Keep RME AES fed only by the game-stereo loopback";
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      wantedBy = [ "default.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${aesDedupScript}";
-        Restart = "always";
-        RestartSec = 5;
-        Environment = "PATH=${
-          lib.makeBinPath [
-            config.services.pipewire.package # pw-link, pw-cli
-            pkgs.gnugrep # grep
-            pkgs.gnused # GNU sed
-            pkgs.coreutils # sleep/echo
           ]
         }";
       };
