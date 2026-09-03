@@ -12,6 +12,8 @@ LocalComponents.WidgetCapsule {
     property string iconOff: "volume_off"
     property string iconLow: "volume_down"
     property string iconHigh: "volume_up"
+    // Optional custom SVG icon (e.g. Genelec "The Ones") replacing the glyph.
+    property string iconSource: ""
     property string labelSuffix: "%"
     property string labelText: ""
     property bool autoHideWhenMuted: false
@@ -221,12 +223,20 @@ LocalComponents.WidgetCapsule {
         id: pillIndicator
         anchors.centerIn: parent
         icon: iconHigh
+        iconSource: root.iconSource
         text: "0" + labelSuffix
         pillColor: WidgetBg.color(Settings.settings, settingsKey, Theme.surface)
         iconCircleColor: levelColorFor(level)
         iconTextColor: Theme.background
+        // Digits in the pill keep the ordinary text colour (no level tint).
         textColor: Theme.textPrimary
         collapsedIconColor: levelColorFor(level)
+        // No circle behind the audio icon; icon colour follows the level.
+        showDisc: false
+        // Digits stay in the ordinary text colour; the unit sign ("dB" / "%")
+        // and a leading minus are painted with the wallpaper accent.
+        colorizeUnit: true
+        accentUnitColor: Theme.accentPrimary
         autoHide: !root.alwaysShow
         autoHidePauseMs: Theme.volumePillAutoHidePauseMs
         showDelayMs: Theme.volumePillShowDelayMs

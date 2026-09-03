@@ -20,6 +20,9 @@ LocalMods.AudioEndpointTile {
     iconOff: "volume_off"
     iconLow: "volume_down"
     iconHigh: "speaker" // Use speaker icon for hardware monitors
+    // Custom symmetric Genelec "The Ones" coax monitor silhouette, recoloured
+    // to the current volume level at draw time.
+    iconSource: Qt.resolvedUrl("../../art/genelec/genelec-ones.svg")
     labelSuffix: "dB"
     labelText: ""
     levelProperty: "volume"
@@ -101,7 +104,8 @@ LocalMods.AudioEndpointTile {
         var normalized = Math.max(0, 100 * Math.pow(t, 0.4));
         root.updateFrom(Math.max(0, normalized), srv.muted);
         // Update the label to show actual dB (whole dB only)
-        pill.text = Math.round(srv.volume) + " dB";
+        // No space between the value and the dB unit.
+        pill.text = Math.round(srv.volume) + "dB";
     }
 
     function _serviceStep() {
@@ -136,11 +140,8 @@ LocalMods.AudioEndpointTile {
 
     Component.onCompleted: refreshFromService()
 
+    // Digits stay in the ordinary text colour even at cap.
     onAtCapChanged: {
-        if (atCap) {
-            pill.textColor = Theme.panelVolumeHighColor;
-        } else {
-            pill.textColor = Theme.textPrimary;
-        }
+        pill.textColor = Theme.textPrimary;
     }
 }
