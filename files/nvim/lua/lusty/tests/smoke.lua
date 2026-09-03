@@ -25,6 +25,10 @@ vim.fn.mkdir(dir .. '/.hid', 'p')
 vim.fn.writefile({ 'inside' }, dir .. '/.hid/marker.txt')
 vim.fn.mkdir(dir .. '/sub/deep', 'p')
 vim.fn.writefile({ 'z' }, dir .. '/sub/deep/foo.txt')
+vim.fn.mkdir(dir .. '/pic', 'p')
+vim.fn.writefile({ 'p' }, dir .. '/pic/pic_marker.txt')
+vim.fn.mkdir(dir .. '/tmp', 'p')
+vim.fn.writefile({ 't' }, dir .. '/tmp/tmp_marker.txt')
 vim.fn.writefile({ 'x' }, dir .. '/pic.jpg')
 vim.fn.chdir(dir)
 
@@ -97,7 +101,8 @@ assert(painted >= 2, 'dircolors highlights painted on cells')
 
 -- Prompt drawing: no footer hint anymore; an empty query renders exactly
 -- '>> ' and the LustyPrompt highlight covers its prefix.
-assert_eq(e.row_count, 4, 'multi-row layout (4 rows)')
+-- Root listing now has 6 visible entries (alpha/beta/pic.jpg + dirs).
+assert_eq(e.row_count, 6, 'multi-row layout (6 rows)')
 local cur_buf = vim.api.nvim_get_current_buf()
 local nlines = vim.api.nvim_buf_line_count(cur_buf)
 assert(nlines >= 5, 'buffer shows several lines')
@@ -178,7 +183,22 @@ for _, ch in ipairs({ 'g', 'a', 'm' }) do e:key_pressed(string.byte(ch)) end
 local gam_hits = {}
 for _, m in ipairs(e.matches) do gam_hits[#gam_hits + 1] = m.label end
 assert(vim.tbl_contains(gam_hits, 'sub/gamma.txt'), 'fuzzy find hits nested file')
+
+-- Skip dirs (default 'pic,tmp'): entries stay visible but are not walked.
+assert(vim.tbl_contains(deep_labels, 'pic/'), 'skipped dir entry still visible')
+assert(not vim.tbl_contains(deep_labels, 'pic/pic_marker.txt'), 'default skip pic')
+assert(not vim.tbl_contains(deep_labels, 'tmp/tmp_marker.txt'), 'default skip tmp')
 e:cancel()
+-- Re-enabling walking into them.
+vim.g.LustyExplorerSkipDirs = ''
+fs.run(dir)
+e = fs.explorer()
+local skip_off_labels = {}
+for _, m in ipairs(e.matches) do skip_off_labels[#skip_off_labels + 1] = m.label end
+assert(vim.tbl_contains(skip_off_labels, 'pic/pic_marker.txt'), 'skip off walks pic')
+assert(vim.tbl_contains(skip_off_labels, 'tmp/tmp_marker.txt'), 'skip off walks tmp')
+e:cancel()
+vim.g.LustyExplorerSkipDirs = nil
 vim.g.LustyExplorerSearchDepth = 1
 
 -- Fuzzy engine fallback: g:LustyExplorerFuzzyEngine = 'mercury' restores the
