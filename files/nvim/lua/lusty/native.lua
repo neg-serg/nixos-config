@@ -52,9 +52,9 @@ function Picker.new(root)
 end
 
 function Picker:width()
-  local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.62
-  ratio = math.max(0.4, math.min(0.95, ratio))
-  return math.max(50, math.floor(vim.o.columns * ratio))
+  local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.8
+  ratio = math.max(0.5, math.min(0.98, ratio))
+  return math.max(60, math.floor(vim.o.columns * ratio))
 end
 
 function Picker:height()
@@ -115,6 +115,7 @@ function Picker:open_window()
   api.nvim_buf_set_option(buf, 'modifiable', true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
   api.nvim_win_set_option(win, 'wrap', false)
+  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat')
   api.nvim_buf_set_lines(buf, 0, -1, false, {})
   self.buf = buf
   self.win = win
@@ -674,6 +675,7 @@ function M.ensure_highlights()
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = 'Gray', fg = 'White', bold = true })
   end
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
+  api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000000' })
   -- omp.zsh path segment colors (neg.omp.json)
   api.nvim_set_hl(0, 'LustyPromptTilde', { fg = '#287373' })
   api.nvim_set_hl(0, 'LustyPromptSep', { fg = '#005faf' })
