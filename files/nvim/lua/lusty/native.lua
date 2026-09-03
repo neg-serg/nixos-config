@@ -217,7 +217,8 @@ function Picker:draw()
   for r = 1, rows do
     local bufparts = {}
     for c = 1, cols do
-      local pos = self.offset + (c - 1) * rows + (r - 1)
+      -- row-major: fill left-to-right, then next row (original Lusty order)
+      local pos = self.offset + (r - 1) * cols + (c - 1)
       local item = self.window[pos - self.offset + 1]
       if item then
         local label = item.label
@@ -275,8 +276,8 @@ function Picker:draw()
     end
   end
   if self.total > 0 then
-    local sel_line = 1 + (self.selected % rows)
-    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_line - 1, sel_col0, sel_col0 + col_w - 1)
+    local sel_row = math.floor(self.selected / cols)
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_row, sel_col0, sel_col0 + col_w - 1)
   end
   self:paint_prompt(h)
 end
@@ -333,19 +334,12 @@ function Picker:paint_prompt(h)
 end
 
 function Picker:ensure_visible()
-  local rows = self:list_rows()
-  local cols = self:max_cols()
-  local col_start = math.floor(self.offset / rows)
-  local sel_col = math.floor(self.selected / rows)
-  if sel_col < col_start then
-    col_start = sel_col
-  elseif sel_col >= col_start + cols then
-    col_start = sel_col - cols + 1
+  local screen = self:screen_count()
+  if self.selected < self.offset then
+    self.offset = math.max(0, math.floor(self.selected / screen) * screen)
+  elseif self.selected >= self.offset + screen then
+    self.offset = math.floor(self.selected / screen) * screen
   end
-  if col_start < 0 then
-    col_start = 0
-  end
-  self.offset = col_start * rows
 end
 
 --- Move one grid column left/right (wrap), mirroring the Lua port.
