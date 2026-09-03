@@ -70,6 +70,21 @@ assert(lsc.group_for(find_entry('pic.jpg')) ~= nil, 'jpg colored')
 assert(lsc.group_for(find_entry('alpha.txt')) == nil, 'txt has no rule')
 assert(lsc.group_for(find_entry('beta.lua')) ~= nil, 'lua colored via extra rules')
 
+-- The colors must actually be painted as buffer highlights (regression:
+-- nvim_buf_add_highlight takes no end_row; a bad call silently dropped all
+-- extmarks and the listing looked monochrome).
+local marks_buf = vim.api.nvim_get_current_buf()
+local lusty_ns = vim.api.nvim_get_namespaces()['lusty_explorer']
+local marks = vim.api.nvim_buf_get_extmarks(marks_buf, lusty_ns, 0, -1, { details = true })
+local painted = 0
+for _, m in ipairs(marks) do
+  local g = (m[4] or {}).hl_group
+  if g and g:find('^LustyLs') then
+    painted = painted + 1
+  end
+end
+assert(painted >= 2, 'dircolors highlights painted on cells')
+
 -- Multi-row layout + footer hint: several visible lines, hint about '.'.
 assert_eq(e.row_count, 4, 'multi-row layout (4 rows)')
 local cur_buf = vim.api.nvim_get_current_buf()
