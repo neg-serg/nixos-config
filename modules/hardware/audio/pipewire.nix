@@ -159,6 +159,14 @@ in
             "10-default-volume" = {
               "wireplumber.settings"."device.routes.default-sink-volume" = 1.0;
             };
+            # Never restore a stream's old target sink: wireplumber remembers
+            # (stream-properties) that e.g. mpv/MPD once linked straight to the
+            # RME AES pair and re-links them there on every reconnect, on top
+            # of the game-stereo route -> two copies ~18ms apart -> combed,
+            # muddy bass. Streams must always follow the default sink only.
+            "11-no-stream-restore" = {
+              "wireplumber.settings"."node.stream.restore-target" = false;
+            };
           };
         };
       };
