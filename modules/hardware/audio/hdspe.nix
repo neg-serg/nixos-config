@@ -79,8 +79,8 @@ let
     game_sink_id="$(echo "$status" | sed -n '/game-stereo.*Audio\/Sink/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
 
     # Route game-stereo → HDSPe AUX2/AUX3 (AES/EBU): the user's monitors are
-    # on AES, the analog RCA pair (AUX0/1) is unused. ZestBay's patchbay
-    # rules (rules.json "Game Stereo Playback") maintain the same mapping.
+    # on AES, the analog RCA pair (AUX0/1) is unused; this script owns the
+    # mapping.
     if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
       wpctl set-default "$game_sink_id" || true
       # WirePlumber auto-links new stereo streams to the RME's FIRST channels

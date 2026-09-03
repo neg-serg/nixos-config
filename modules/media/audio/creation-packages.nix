@@ -41,9 +41,8 @@ let
     pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
 
     # -- Patchbays & Plugin Hosts --
-    # zestbay moved to distrobox (CXX-Qt broken in Nix): `distrobox-enter arch-zestbay -- zestbay`
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
-    pkgs.neg.zest # CLI for ZestBay plugin management: zest list/add/rm/ls
+    pkgs.neg.zest # CLI for plugin management: zest list/add/rm/ls
     pkgs.neg.renoise-osc # OSC CLI for Renoise: renoise-osc eval '...' / renoise-reverb [--track N] [--wet X]
     pkgs.neg.midi-transcribe # audio->MIDI transcription: midi-transcribe <file.mp3> (hFT-Transformer, CPU)
     pkgs.neg.midi2sheet # MIDI -> sheet music PDF: midi2sheet <file.mid> [-o out.pdf] [--mscz] (headless MuseScore)
@@ -69,38 +68,6 @@ in
 {
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
-
-    # ZestBay (patchbay + LV2/CLAP/VST3 plugin host) autostart at login.
-    # Runs inside the arch distrobox container; keeps learned auto-connect
-    # rules and the plugin chain alive so no manual wiring is needed.
-    # Tray mode: Preferences → "start minimized" / "close to tray" (stored in
-    # ~/.config/zestbay/preferences.json).
-    systemd.user.services.zestbay = {
-      description = "ZestBay PipeWire patchbay and plugin host (distrobox)";
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      wantedBy = [ "graphical-session.target" ];
-      serviceConfig = {
-        Type = "simple";
-        # distrobox-enter needs podman/docker on PATH; systemd-user may not
-        # carry /run/current-system/sw/bin when the unit starts, which makes
-        # distrobox fail with "Missing dependency: we need a container manager".
-        # /run/wrappers/bin must come first: rootless podman needs the setuid
-        # newuidmap wrapper, otherwise "newuidmap: Operation not permitted".
-        # Without WAYLAND_DISPLAY Qt falls back to the offscreen platform: the
-        # event loop runs but no window is ever shown (Hyprland socket wayland-1).
-        Environment = "PATH=/run/wrappers/bin:/run/current-system/sw/bin:/home/neg/.nix-profile/bin:/usr/bin:/bin WAYLAND_DISPLAY=wayland-1";
-        ExecStart = "${pkgs.distrobox}/bin/distrobox-enter arch-zestbay -- zestbay";
-        # Always restart: ZestBay's own QML quits cleanly (exit 0) when its
-        # window is closed unless close_to_tray is set, and on-failure would
-        # leave it dead. close_to_tray lives in ~/.config/zestbay/preferences.json;
-        # Restart=always is the safety net for any clean/abnormal exit.
-        Restart = "always";
-        RestartSec = 5;
-      };
-    };
 
     # Vital standalone synth — on-demand: systemctl --user start vital-standalone.
     # Runs under pw-jack (JACK via PipeWire); LIBGL_ALWAYS_SOFTWARE=1 avoids the
