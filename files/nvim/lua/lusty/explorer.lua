@@ -587,17 +587,25 @@ function Explorer:refresh(mode)
   local t2 = perf and vim.uv.hrtime() or nil
 
   -- Size and re-anchor the float (gravity-aware): table rows + (truncated
-  -- line) + prompt.
+  -- line) + prompt.  Only touch the geometry when it actually changed -
+  -- reconfiguring a float on every keystroke forces a full relayout/redraw
+  -- even when the size and position are identical.
   local height = math.min(#lines, self.float_max_height or math.max(6, vim.o.lines - 2))
-  if self.win_id and vim.api.nvim_win_is_valid(self.win_id) then
-    local outer_w = (self.float_width or vim.o.columns) + 2 -- rounded border
-    pcall(vim.api.nvim_win_set_config, self.win_id, {
-      relative = 'editor', -- required when reconfiguring a float
-      width = outer_w,
-      height = height,
-      row = gravity_row(vim.o.lines, height, self.gravity or 'center'),
-      col = math.max(0, math.floor((vim.o.columns - outer_w) / 2)),
-    })
+  local outer_w = (self.float_width or vim.o.columns) + 2 -- rounded border
+  local new_row = gravity_row(vim.o.lines, height, self.gravity or 'center')
+  local new_col = math.max(0, math.floor((vim.o.columns - outer_w) / 2))
+  local geo = self._geo
+  if not geo or geo.h ~= height or geo.r ~= new_row or geo.c ~= new_col then
+    if self.win_id and vim.api.nvim_win_is_valid(self.win_id) then
+      pcall(vim.api.nvim_win_set_config, self.win_id, {
+        relative = 'editor', -- required when reconfiguring a float
+        width = outer_w,
+        height = height,
+        row = new_row,
+        col = new_col,
+      })
+    end
+    self._geo = { h = height, r = new_row, c = new_col }
   end
 
   self.row_count = no_entries and nil or rows
@@ -844,6 +852,7 @@ function Explorer:create_window()
     col = math.max(0, math.floor((vim.o.columns - outer_w) / 2)),
     border = 'rounded',
   })
+  self._geo = nil -- a fresh window starts at height 2; refresh will size it
   set_window_opts(self.win_id)
   setup_keymaps(self)
 
