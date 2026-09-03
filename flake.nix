@@ -71,10 +71,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     quickshell = {
-      # Pinned after 2026-08-20: contains crash fixes missing from the v0.3.0
-      # tag shipped by nixpkgs (FileView/panelwindow UAF, ScriptModel reentrancy,
-      # ipc deregistration). Update with: nix flake lock --update-input quickshell
-      url = "github:quickshell-mirror/quickshell/9f807554e106f6b0670e60ead82b63f3c0c2ac26";
+      # Pinned 2026-09-03: master @ 2d3b3e9 (0.3.1 + post-0.3.1 fixes:
+      # session-lock reentrancy guard, tray /NO_DBUSMENU, pam free fix,
+      # scriptmodel compare, launch QCoreApplication ordering).
+      # Known residual issue: still crashes on output-set transitions
+      # (QSG teardown, ~/.cache/quickshell/crashes). Update with:
+      # nix flake lock --update-input quickshell
+      url = "github:quickshell-mirror/quickshell/2d3b3e9c70ef380dff751b61d334dc88df016c29";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
