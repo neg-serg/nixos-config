@@ -8,12 +8,17 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
 
 ## Команды и клавиши
 
-| Команда                            | Клавиша                    | Действие                                                                      |
-| ---------------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
-| `:LustyFilesystemExplorer [путь]`  | `<Leader>lf`               | файловый explorer (cwd, либо указанный путь)                                  |
-| `:LustyFilesystemExplorerFromHere` | `<Leader>l` / `<Leader>lr` | файловый explorer из каталога текущего файла (одинарный `,l` — быстрый вызов) |
-| `:LustyBufferExplorer`             | `<Leader>lb`               | explorer буферов (MRU + fuzzy)                                                |
-| `:LustyBufferGrep`                 | `<Leader>lg`               | regex-поиск по всем загруженным буферам                                       |
+| Команда                          | Клавиша   | Действие                                                         |
+| -------------------------------- | --------- | ---------------------------------------------------------------- |
+| :LustyFilesystemExplorer [путь]  | <Leader>C | файловый explorer (cwd, либо указанный путь)                     |
+| :LustyFilesystemExplorerFromHere | <Leader>l | файловый explorer из каталога текущего файла (nowait, мгновенно) |
+| :LustyBufferExplorer             | <Leader>B | explorer буферов (MRU + fuzzy)                                   |
+| :LustyBufferGrep                 | <Leader>G | regex-поиск по всем загруженным буферам                          |
+
+> Примечание: ,l раньше был префиксом старых ,lf/,lr/,lb/,lg - nvim ждал второй клавиши и съедал
+> первую букву набора (,lgames открывал BufferGrep с 'ames'). Теперь ,l мгновенный (nowait),
+> остальные функции на ,C / ,B / ,G. Вернуть старые chords можно в files/nvim/lua/lusty/init.lua,
+> если быстрый ,l не нужен.
 
 Старые имена `:BufferExplorer`, `:FilesystemExplorer`, `:FilesystemExplorerFromHere` оставлены как
 заглушки с предупреждением (как в оригинале).
