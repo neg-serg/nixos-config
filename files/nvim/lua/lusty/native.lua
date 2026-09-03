@@ -66,7 +66,7 @@ function M.run(root)
   vim.wo[win].winhighlight = 'Normal:NormalFloat,FloatBorder:FloatBorder'
 
   -- Returns the job id (0 on failure) so tests can drive the picker.
-  return vim.fn.termopen(cmd, {
+  local job = vim.fn.termopen(cmd, {
     on_exit = function()
       vim.schedule(function()
         local ok, lines = pcall(vim.api.nvim_buf_get_lines, buf, 0, -1, false)
@@ -84,6 +84,10 @@ function M.run(root)
       end)
     end,
   })
+  -- Send keystrokes straight into the picker (like fzf): insert mode on a
+  -- terminal buffer is terminal mode.
+  vim.cmd('startinsert')
+  return job
 end
 
 return M
