@@ -55,6 +55,26 @@ local function colors_enabled()
   return not (v == false or v == 0 or v == '0')
 end
 
+-- g:LustyExplorerGravity: 'top' | 'center' (default) | 'bottom'.
+local function gravity_value()
+  local v = tostring(vim.g.LustyExplorerGravity or ''):lower()
+  if v == 'top' or v == 'bottom' then
+    return v
+  end
+  return 'center'
+end
+
+-- Vertical anchor of the float for a given height (editor lines).
+local function gravity_row(n_lines, height, gravity)
+  local margin = math.max(2, math.floor(n_lines * 0.05))
+  if gravity == 'top' then
+    return margin
+  elseif gravity == 'bottom' then
+    return math.max(0, n_lines - height - margin)
+  end
+  return math.max(0, math.floor((n_lines - height) / 2))
+end
+
 -- ---------------------------------------------------------------------------
 -- Prompt.
 
@@ -473,7 +493,8 @@ function Explorer:refresh(mode)
   lines[#lines + 1] = prompt_text(self)
   write_buffer(self, lines)
 
-  -- Size and re-centre the float: table rows + (truncated line) + prompt.
+  -- Size and re-anchor the float (gravity-aware): table rows + (truncated
+  -- line) + prompt.
   local height = math.min(#lines, self.float_max_height or math.max(6, vim.o.lines - 2))
   if self.win_id and vim.api.nvim_win_is_valid(self.win_id) then
     local outer_w = (self.float_width or vim.o.columns) + 2 -- rounded border
@@ -481,7 +502,7 @@ function Explorer:refresh(mode)
       relative = 'editor', -- required when reconfiguring a float
       width = outer_w,
       height = height,
-      row = math.max(0, math.floor((vim.o.lines - height) / 2)),
+      row = gravity_row(vim.o.lines, height, self.gravity or 'center'),
       col = math.max(0, math.floor((vim.o.columns - outer_w) / 2)),
     })
   end
@@ -701,6 +722,7 @@ function Explorer:create_window()
   -- g:LustyExplorerMaxHeightRatio (default 0.8).
   local wratio = opt_number('LustyExplorerWidthRatio', 0.9, 0.4, 1.0)
   local hratio = opt_number('LustyExplorerMaxHeightRatio', 0.8, 0.3, 0.95)
+  self.gravity = gravity_value()
   local outer_w = math.max(44, math.floor(vim.o.columns * wratio))
   self.float_width = math.max(40, outer_w - 2) -- minus the rounded border
   self.float_max_height = math.max(6, math.floor(vim.o.lines * hratio))
@@ -714,7 +736,7 @@ function Explorer:create_window()
     style = 'minimal',
     width = outer_w,
     height = 2,
-    row = math.max(0, math.floor((vim.o.lines - 2) / 2) - 1),
+    row = gravity_row(vim.o.lines, 2, self.gravity),
     col = math.max(0, math.floor((vim.o.columns - outer_w) / 2)),
     border = 'rounded',
   })

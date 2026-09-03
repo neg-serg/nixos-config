@@ -242,5 +242,21 @@ vim.g.LustyExplorerMaxHeightRatio = nil
 vim.g.LustyExplorerShowColors = nil
 print('PASS option knobs')
 
+-- Gravity: g:LustyExplorerGravity = top | center (default) | bottom anchors
+-- the float on the same content height.
+vim.cmd('edit! ' .. dir .. '/alpha.txt')
+local grav_rows = {}
+for _, g in ipairs({ 'top', 'center', 'bottom' }) do
+  vim.g.LustyExplorerGravity = g
+  fs.run(big)
+  grav_rows[g] = vim.api.nvim_win_get_config(0).row
+  fs.explorer():cancel()
+  vim.wait(15)
+end
+vim.g.LustyExplorerGravity = nil
+assert(grav_rows.top < grav_rows.center, 'gravity top anchors above center')
+assert(grav_rows.center < grav_rows.bottom, 'gravity bottom anchors below center')
+print('PASS gravity')
+
 print('ALL LUSTY SMOKE TESTS PASSED')
 
