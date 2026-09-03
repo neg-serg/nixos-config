@@ -555,13 +555,27 @@ local function paint(self, cells)
   end
 end
 
+-- g:LustyExplorerPerf = 1 appends per-refresh timings to /tmp/lusty_perf.log
+local function perf_log(self, ms_compute, ms_render, ms_paint, nstrings)
+  local f = io.open('/tmp/lusty_perf.log', 'a')
+  if f then
+    f:write(string.format('%d\t%s\tquery=%s\tentries=%d\trows=%s\tcompute=%dms\trender=%dms\tpaint=%dms\n',
+      os.time(), self.title, tostring(self.prompt and self.prompt.input or ''), nstrings,
+      tostring(self.row_count), ms_compute, ms_render, ms_paint))
+    f:close()
+  end
+end
+
 function Explorer:refresh(mode)
   if not self.running then
     return
   end
+  local perf = vim.g.LustyExplorerPerf == 1
+  local t0 = perf and vim.uv.hrtime() or nil
   if mode == 'full' then
     self.matches = self:compute_sorted_matches()
   end
+  local t1 = perf and vim.uv.hrtime() or nil
   local strings = {}
   for _, e in ipairs(self.matches) do
     strings[#strings + 1] = e.label
@@ -570,6 +584,7 @@ function Explorer:refresh(mode)
   local lines, cells, rows, trunc, no_entries = render(self, strings)
   lines[#lines + 1] = prompt_text(self)
   write_buffer(self, lines)
+  local t2 = perf and vim.uv.hrtime() or nil
 
   -- Size and re-anchor the float (gravity-aware): table rows + (truncated
   -- line) + prompt.
@@ -588,12 +603,21 @@ function Explorer:refresh(mode)
   self.row_count = no_entries and nil or rows
   self.cells = cells
   paint(self, cells)
+  local t3 = perf and vim.uv.hrtime() or nil
 
   -- Hide the cursor in the bottom-right corner.
   if self.win_id and vim.api.nvim_win_is_valid(self.win_id) then
     local count = vim.api.nvim_buf_line_count(self.buf_id)
     local last_line = vim.api.nvim_buf_get_lines(self.buf_id, count - 1, count, false)[1] or ''
     pcall(vim.api.nvim_win_set_cursor, self.win_id, { count, #last_line })
+  end
+
+  if perf then
+    perf_log(self,
+      math.floor((t1 - t0) / 1e6),
+      math.floor((t2 - t1) / 1e6),
+      math.floor((t3 - t2) / 1e6),
+      #strings)
   end
 end
 
