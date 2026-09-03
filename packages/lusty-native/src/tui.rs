@@ -276,7 +276,20 @@ fn parse_dsr(s: &str) -> Option<(usize, usize)> {
 impl App {
     fn list_rows(&self) -> usize {
         let h = self.size.1;
-        h.saturating_sub(2).max(1)
+        h.saturating_sub(1).max(1)
+    }
+
+    fn max_cols(&self) -> usize {
+        let w = self.size.0;
+        ((w + 2) / 20).clamp(1, 8)
+    }
+
+    fn col_width(&self) -> usize {
+        let cols = self.max_cols();
+        let w = self.size.0;
+        // pitch = col_w + 2 separator; ensure cols*col_w + 2*(cols-1) <= w
+        let text_w = w.saturating_sub(2 * (cols - 1));
+        (text_w / cols).max(6)
     }
 
     fn clamp_offset(&mut self, rows: usize) {
@@ -362,52 +375,33 @@ impl App {
     fn draw(&mut self, out: &mut io::Stdout) -> io::Result<()> {
         self.ensure_ranked();
         let (w, h) = self.size;
-        // Pad to width-1: writing exactly `w` visible chars wraps and then the
-        // newline produces a blank line, doubling the list and scrolling it.
-        let line_w = w.saturating_sub(1).max(1);
-        let rows = h.saturating_sub(2).max(1);
+        let rows = self.list_rows();
         let esc = char::from_u32(0x1b).unwrap();
-        let mut frame = String::with_capacity((w + 48) * (rows + 2));
+        let mut frame = String::with_capacity((w + 64) * (rows + 2));
 
-        // Clear the whole grid on every frame: inside nvim terminal buffers a
-        // stale size would otherwise scroll frames into the buffer.
         frame.push(esc);
         frame.push_str("[2J");
         frame.push(esc);
         frame.push_str("[H");
 
-        // Status line: root + query + counts.
-        let mut status = String::new();
-        status.push(esc);
-        status.push_str("[2m");
-        status.push_str(&self.root.display().to_string());
-        if !self.query.is_empty() {
-            status.push_str("  q=");
-            status.push_str(&self.query);
-        }
-        status.push_str(&format!("  ({} of {})", self.ranked.len(), self.listing().len()));
-        status.push(esc);
-        status.push_str("[0m");
-        ansi_pad(&mut status, line_w);
-        frame.push_str(&status);
-        frame.push('\n');
-
-        // Result rows.
+        // list rows
         for r in 0..rows {
             let list_i = self.offset + r;
             let mut line = String::new();
             if list_i < self.ranked.len() {
-                let e = self.entry_at(list_i);
+                let i = self.ranked[list_i];
+                let e = self.listing()[i].clone();
                 if list_i == self.selected {
                     line.push(esc);
-                    line.push_str("[48;5;237m");
-                }
-                let exec = e.kind == FileKind::File && is_exec(&e.path);
-                if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
-                    line.push(esc);
-                    line.push('[');
-                    line.push_str(code);
-                    line.push('m');
+                    line.push_str("[48;2;126;87;194;1;38;2;255;255;255m");
+                } else {
+                    let exec = e.kind == FileKind::File && is_exec(&e.path);
+                    if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
+                        line.push(esc);
+                        line.push('[');
+                        line.push_str(code);
+                        line.push('m');
+                    }
                 }
                 line.push_str(&e.label);
                 if e.kind == FileKind::Dir {
@@ -415,23 +409,62 @@ impl App {
                 }
                 line.push(esc);
                 line.push_str("[0m");
-            } else if self.ranked.is_empty() && list_i == 0 {
-                line.push_str("(no matches)");
             }
-            ansi_pad(&mut line, line_w);
+            ansi_pad(&mut line, w.saturating_sub(1).max(1));
             frame.push_str(&line);
             frame.push('\n');
         }
 
-        // Prompt line at the bottom (padded separately: ansi_pad must never
-        // run over the whole multi-line frame, it would truncate the rows).
-        let mut prompt = String::new();
-        prompt.push_str(">> ");
-        prompt.push_str(&self.query);
-        ansi_pad(&mut prompt, line_w);
+        let mut prompt = self.prompt_line();
+        ansi_pad(&mut prompt, w.saturating_sub(1).max(1));
         frame.push_str(&prompt);
+        if let Ok(db) = std::env::var("LUSTY_DUMP_FRAME") {
+            let _ = std::fs::write(&db, &frame);
+        }
         write!(out, "{frame}")?;
         out.flush()
+    }
+
+    /// Bottom line styled like the omp.zsh path segment (neg.omp.json colors).
+    fn prompt_line(&self) -> String {
+        let esc = char::from_u32(0x1b).unwrap();
+        let mut out = String::new();
+        let mut push_painted = |text: &str, code: &str, out: &mut String| {
+            if text.is_empty() {
+                return;
+            }
+            out.push(esc);
+            out.push('[');
+            out.push_str(code);
+            out.push('m');
+            out.push_str(text);
+        };
+        let mut path = self.root.display().to_string();
+        if let Ok(home) = std::env::var("HOME") {
+            if path.starts_with(&home) {
+                path = format!("~{}", &path[home.len()..]);
+            }
+        }
+        if let Some(rest) = path.strip_prefix('~') {
+            push_painted("~", "38;2;40;115;115", &mut out);
+            path = rest.to_string();
+        }
+        let mut current = String::new();
+        for ch in path.chars() {
+            if ch == '/' {
+                push_painted(&current, "38;2;149;167;188", &mut out);
+                push_painted("/", "38;2;0;95;175", &mut out);
+                current.clear();
+            } else {
+                current.push(ch);
+            }
+        }
+        push_painted(&current, "38;2;149;167;188", &mut out);
+        push_painted(" \u{f105} ", "38;2;0;95;175", &mut out);
+        push_painted(&self.query, "1;38;2;255;255;255", &mut out);
+        out.push(esc);
+        out.push_str("[0m");
+        out
     }
 }
 
@@ -441,9 +474,6 @@ fn is_exec(path: &std::path::Path) -> bool {
         .unwrap_or(false)
 }
 
-/// Pad or truncate a possibly-ANSI-colored line to the given number of
-/// visible columns. Escape sequences count as zero width and are always
-/// preserved, so a truncated colored label still closes its SGR codes.
 fn ansi_pad(line: &mut String, width: usize) {
     let src: Vec<char> = line.chars().collect();
     let mut out = String::with_capacity(src.len() + width);
