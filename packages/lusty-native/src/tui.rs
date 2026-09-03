@@ -275,13 +275,13 @@ impl App {
     fn list_rows(&self) -> usize {
         // bottom panel like fzf --height: 12 rows total incl the prompt
         let h = self.size.1;
-        (h.min(12)).saturating_sub(1).max(1)
+        (h.min(12)).saturating_sub(1 + PANEL_BOTTOM_MARGIN).max(3)
     }
 
     /// 0-based top row of the bottom panel.
     fn panel_top(&self) -> usize {
         let h = self.size.1;
-        h.saturating_sub(self.list_rows() + 1)
+        h.saturating_sub(self.list_rows() + 1 + PANEL_BOTTOM_MARGIN)
     }
 
     /// Adaptive columns: as many as the content needs (ceil(total/rows)),
@@ -512,6 +512,9 @@ impl App {
         out
     }
 }
+
+/// Empty rows left below the picker panel (fzf --height feel).
+const PANEL_BOTTOM_MARGIN: usize = 2;
 
 fn is_exec(path: &std::path::Path) -> bool {
     std::fs::metadata(path)
