@@ -708,6 +708,11 @@ function Explorer:key_pressed(code)
 
   if handled then
     self:refresh(mode)
+    -- Force an immediate screen update so typed characters and the filtered
+    -- list appear right after each key instead of being batched by redraw.
+    if self.running then
+      vim.cmd('redraw')
+    end
   end
 end
 
