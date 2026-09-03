@@ -827,14 +827,17 @@ local function set_window_opts(win)
   end
 end
 
--- g:LustyExplorerPerfProbe = 1 logs the wall time of every real keypress
--- (mapping callback, incl. refresh and the optional redraw) to
--- /tmp/lusty_perf_probe.log.
-local function probe_log(code, elapsed_ms, running, title)
+-- g:LustyExplorerPerfProbe = 1 logs every real keypress: wall time of the
+-- mapping callback and the monotonic gap since the previous keypress (so
+-- redraw/blocking time between keys becomes visible).
+local probe_last_ms = nil
+local function probe_log(code, elapsed_ms, running, title, now_ms)
+  local dt_ms = probe_last_ms and (now_ms - probe_last_ms) or 0
+  probe_last_ms = now_ms
   local f = io.open('/tmp/lusty_perf_probe.log', 'a')
   if f then
-    f:write(string.format('%d\t%s\tkey=%-3d\t%.1fms\trunning=%s\n',
-      os.time(), title, code, elapsed_ms, tostring(running)))
+    f:write(string.format('%d\t%s\tt=%dms\tdt=%dms\tkey=%-3d\t%.1fms\trunning=%s\n',
+      os.time(), title, now_ms, dt_ms, code, elapsed_ms, tostring(running)))
     f:close()
   end
 end
@@ -852,7 +855,8 @@ local function setup_keymaps(self)
         self:key_pressed(code)
       end
       if probe then
-        probe_log(code, (vim.uv.hrtime() - t0) / 1e6, self.running, self.title)
+        probe_log(code, (vim.uv.hrtime() - t0) / 1e6, self.running, self.title,
+          math.floor(vim.uv.hrtime() / 1e6))
       end
     end
     pcall(vim.api.nvim_buf_set_keymap, buf, 'n', lhs, '', opts)
