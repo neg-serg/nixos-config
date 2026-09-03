@@ -52,13 +52,15 @@ function Picker.new(root)
 end
 
 function Picker:width()
-  local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.6
-  return math.max(40, math.floor(vim.o.columns * math.min(0.92, ratio + 0.32)))
+  local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.62
+  ratio = math.max(0.4, math.min(0.95, ratio))
+  return math.max(50, math.floor(vim.o.columns * ratio))
 end
 
 function Picker:height()
-  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.8
-  return math.max(10, math.floor(vim.o.lines * math.min(0.9, ratio)))
+  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.5
+  ratio = math.max(0.2, math.min(0.9, ratio))
+  return math.max(8, math.min(24, math.floor(vim.o.lines * ratio)))
 end
 
 function Picker:list_rows()
@@ -94,7 +96,9 @@ end
 
 function Picker:open_window()
   local w, h = self:width(), self:height()
-  local row = math.max(0, math.floor((vim.o.lines - h) / 2))
+  -- bottom orientation (original Lusty gravity): anchored just above the
+  -- statusline, horizontally centered
+  local row = math.max(0, vim.o.lines - h - 1)
   local col = math.max(0, math.floor((vim.o.columns - w) / 2))
   local buf = api.nvim_create_buf(false, true)
   local win = api.nvim_open_win(buf, true, {
