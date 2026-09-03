@@ -666,13 +666,27 @@ end
 
 --- Define the few extra highlight groups (lsc groups come from its own cache).
 function M.ensure_highlights()
+  -- selection styled like the neg.nvim PmenuSel bar: read the live colors
+  -- (bg #005faf / fg #d1e5ff in the neg palette) so it always matches the
+  -- active colorscheme, with a neg fallback
+  local okp, h = pcall(api.nvim_get_hl_by_name, 'PmenuSel', true)
+  local bg = 0x005faf
+  local fg = 0xd1e5ff
+  if okp and type(h) == 'table' then
+    if h.background then
+      bg = h.background
+    end
+    if h.foreground then
+      fg = h.foreground
+    end
+  end
   local ok = pcall(api.nvim_set_hl, 0, 'LustyNativeSel', {
-    bg = '#e53935',
-    fg = '#ffffff',
+    bg = '#' .. string.format('%06x', bg),
+    fg = '#' .. string.format('%06x', fg),
     bold = true,
   })
   if not ok then
-    api.nvim_set_hl(0, 'LustyNativeSel', { bg = 'Gray', fg = 'White', bold = true })
+    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#005faf', fg = '#d1e5ff', bold = true })
   end
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
   -- nearly-black but not #000000: the web/xterm layer treats exact black as
