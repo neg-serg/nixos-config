@@ -18,12 +18,12 @@ use std::path::PathBuf;
 use crate::listing::{self, FileKind, Options};
 use crate::rank;
 
-pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>) -> io::Result<()> {
+pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: bool) -> io::Result<()> {
     let opts = Options {
         depth,
         skip_dirs,
         follow_mounts: false,
-        show_dots: false,
+        show_dots,
     };
     let entries = listing::list(&root, &opts);
     let mut ranked: Vec<usize> = (0..entries.len()).collect();

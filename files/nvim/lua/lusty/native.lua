@@ -44,6 +44,7 @@ function Picker.new(root)
   self.pending = nil
   self.outbuf = {}
   self.dirs = nil -- cached top-level dir names for '/' completion
+  self.show_dots = false
   self.closed = false
   self.orig_win = api.nvim_get_current_win()
   return self
@@ -437,6 +438,9 @@ function Picker:handle(action)
       self.query = ''
       self.selected = 0
       self.offset = 0
+      if self:maybe_toggle_dots() then
+        return
+      end
       self:rerank()
     end
     return
@@ -446,6 +450,9 @@ function Picker:handle(action)
       self.query = self.query:sub(1, -2)
       self.selected = 0
       self.offset = 0
+      if self:maybe_toggle_dots() then
+        return
+      end
       self:rerank()
     end
     return
@@ -479,8 +486,24 @@ function Picker:handle(action)
     self.query = self.query .. ch
     self.selected = 0
     self.offset = 0
+    if self:maybe_toggle_dots() then
+      return
+    end
     self:rerank()
   end
+end
+
+--- Query starting with '.' reveals dotfiles: restart the backend with
+--- --dots when the mode changes (returns true when it did).
+function Picker:maybe_toggle_dots()
+  local want = self.query:sub(1, 1) == '.'
+  if want ~= self.show_dots then
+    self.show_dots = want
+    self.window = {}
+    self:start_backend() -- reranks internally
+    return true
+  end
+  return false
 end
 
 --- '/' descends into a directory when the typed prefix uniquely names one
@@ -488,6 +511,10 @@ end
 function Picker:slash_enter()
   local q = self.query
   if q == '' then
+    -- a lone '/' moves to the filesystem root, Lusty style
+    if self.root ~= '/' then
+      self:restart('/')
+    end
     return
   end
   if self.dirs == nil then
@@ -518,7 +545,13 @@ function Picker:complete_slash(q)
   if #candidates == 1 then
     local path = self.root == '/' and '/' .. candidates[1] or self.root .. '/' .. candidates[1]
     self:restart(path)
+    return
   end
+  -- not a unique directory: let '/' be typed as an ordinary character
+  self.query = q .. '/'
+  self.selected = 0
+  self.offset = 0
+  self:rerank()
 end
 
 function Picker:restart(root)
@@ -557,13 +590,23 @@ function Picker:startup()
     vim.notify('lusty-native binary not found on PATH', vim.log.levels.ERROR)
     return
   end
+  self:open_window()
+  self:start_backend()
+end
+
+function Picker:start_backend()
   local depth = tonumber(vim.g.LustyExplorerSearchDepth) or 2
   local skip = vim.g.LustyExplorerSkipDirs
   if skip == nil or skip == '' then
     skip = 'pic,tmp'
   end
-  self:open_window()
   local cmd = { 'lusty-native', 'serve', self.root, '--depth', tostring(depth), '--skip', skip }
+  if self.show_dots then
+    cmd[#cmd + 1] = '--dots'
+  end
+  if self.job and vim.fn.jobwait({ self.job }, 0)[1] == -1 then
+    vim.fn.jobstop(self.job)
+  end
   local self_ref = self
   local acc = ''
   self.job = vim.fn.jobstart(cmd, {
