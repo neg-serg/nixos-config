@@ -34,8 +34,10 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
   буферов и без `E37`-ошибок даже при `'hidden' off`).
 - Буферы упорядочены по MRU (текущий — последним, выделен подсветкой); при пустом запросе — чистый
   MRU, при запросе — сначала по score Mercury, при равенстве — по номеру буфера.
-- Файловый explorer: мемоизация каталогов (`<C-r>` — refresh), переход по `dir/` и `../`, `~` и
-  `$VAR` в prompt, dotfiles скрыты, пока запрос не начинается с `.` (или
+- Файловый explorer: поиск по умолчанию **с глубиной 2** (`g:LustyExplorerSearchDepth`, 1 =
+  классический список только текущего каталога) — файлы в поддиректориях показываются с путём
+  (`sub/gamma.txt`) и находятся фаззи-набором; мемоизация каталогов (`<C-r>` — refresh), переход по
+  `dir/` и `../`, `~` и `$VAR` в prompt, dotfiles скрыты, пока запрос не начинается с `.` (или
   `g:LustyExplorerAlwaysShowDotFiles = 1`), маски из `&wildignore` (или устаревший
   `g:LustyExplorerFileMasks`).
 - Цвет как в `ls --color`: палитра берётся **строго из `LS_COLORS`, унаследованного от shell** (у
@@ -62,6 +64,8 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
 - `g:LustyExplorerWidthRatio` (0.9) — доля ширины экрана под float (0.4–1.0).
 - `g:LustyExplorerMaxHeightRatio` (0.8) — максимум высоты float в долях экрана (0.3–0.95).
 - `g:LustyExplorerGravity` (`bottom`) — позиция float по вертикали: `top`, `center` или `bottom`.
+- `g:LustyExplorerSearchDepth` (2) — на сколько уровней вниз искать файлы (`1` — только текущий
+  каталог, до 6).
 
 ## Изменения в конфиге
 
