@@ -58,9 +58,11 @@ function Picker:width()
 end
 
 function Picker:height()
-  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.5
-  ratio = math.max(0.2, math.min(0.9, ratio))
-  return math.max(8, math.min(24, math.floor(vim.o.lines * ratio)))
+  -- compact: at most 12 rows total (list + prompt), pinned to the bottom
+  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.4
+  ratio = math.max(0.15, math.min(0.6, ratio))
+  local h = math.floor(vim.o.lines * ratio)
+  return math.max(6, math.min(12, h))
 end
 
 function Picker:list_rows()
