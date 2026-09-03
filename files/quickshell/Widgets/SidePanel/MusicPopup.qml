@@ -155,6 +155,9 @@ Item {
 
         // --- Public control
         function showAt() {
+            try {
+                console.warn("[mediaDebug] showAt() called. toast.visible=" + toast.visible + " sidebarPopup.visible=" + sidebarPopup.visible + " anchorWindow=" + (sidebarPopup.anchorWindow ? "yes h=" + sidebarPopup.anchorWindow.height : "null") + " musicWidget=" + (musicWidget ? "yes ih=" + musicWidget.implicitHeight : "null"));
+            } catch (e) { console.warn("[mediaDebug] showAt pre-log err", e); }
             const scale = Theme.scale(Screen);
             const cfgMargin = (Settings.settings && Settings.settings.musicPopupEdgeMargin !== undefined)
                               ? Settings.settings.musicPopupEdgeMargin
@@ -186,6 +189,7 @@ Item {
             slide.from = slideX;
             slide.to   = 0;
             slide.start();
+            console.warn("[mediaDebug] showAt() done. toast.visible=" + toast.visible + " sidebarPopup.visible=" + sidebarPopup.visible + " marginR=" + toast._marginRight + " marginB=" + toast._marginBottom);
         }
 
         function hidePopup() {

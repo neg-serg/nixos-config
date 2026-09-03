@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Effects
 import qs.Settings
 import "../Helpers/Utils.js" as Utils
+import "../Helpers/Format.js" as Format
 
 Item {
     id: revealPill
@@ -13,6 +15,20 @@ Item {
     property color iconCircleColor: Theme.accentPrimary
     property color iconTextColor: Theme.background
     property color collapsedIconColor: Theme.textPrimary
+    // When true (default) the icon sits on a solid level-coloured disc behind
+    // it; set to false to render the plain icon with no circle.
+    property bool showDisc: true
+    // Optional path to a custom SVG icon. When set it replaces the Material
+    // glyph and is recoloured to the icon colour via MultiEffect.colorization.
+    property string iconSource: ""
+    // Colour the icon is painted with. Without a disc it is always the level
+    // colour (collapsedIconColor) so the volume tint is always visible.
+    readonly property color _iconColor: showDisc ? (showPill ? iconTextColor : collapsedIconColor) : collapsedIconColor
+    // Unit colouring: paint the unit suffix (e.g. "dB") and a leading sign
+    // ("-") with accentUnitColor while the digits keep textColor. Enabled by
+    // the audio readout that wants the wallpaper accent on "dB"/minus.
+    property bool colorizeUnit: false
+    property color accentUnitColor: Theme.accentPrimary
     property int pillHeight: Math.round(Theme.panelPillHeight * Theme.scale(Screen))
     property int iconSize: Math.round(Theme.panelPillIconSize * Theme.scale(Screen))
     property int pillPaddingHorizontal: Theme.panelPillPaddingH
@@ -26,6 +42,27 @@ Item {
     // Internal state
     property bool showPill: false
     property bool shouldAnimateHide: false
+
+    // Split the label into digit runs (kept in textColor) and non-digit runs
+    // (unit/sign, e.g. "-dB") coloured with accentUnitColor. Returns an HTML
+    // rich-text string; plain when there is nothing to colour.
+    readonly property string _unitRichText: (function() {
+        const s = revealPill.text;
+        if (!s) return "";
+        let out = "";
+        let i = 0;
+        const isDigit = ch => ch >= "0" && ch <= "9";
+        while (i < s.length) {
+            const d = isDigit(s[i]);
+            let j = i;
+            while (j < s.length && isDigit(s[j]) === d) j++;
+            const seg = s.slice(i, j);
+            const col = d ? textColor : accentUnitColor;
+            out += '<span style="color:' + Format.colorCss(col) + '">' + seg + "</span>";
+            i = j;
+        }
+        return out;
+    })()
 
     // Exposed width logic
     readonly property int pillOverlap: iconSize / 2
@@ -49,7 +86,8 @@ Item {
         Text {
             id: textItem
             anchors.centerIn: parent
-            text: revealPill.text
+            text: revealPill.colorizeUnit ? revealPill._unitRichText : revealPill.text
+            textFormat: revealPill.colorizeUnit ? Text.RichText : Text.PlainText
             font.pixelSize: Theme.fontSizeSmall * Theme.scale(Screen)
             font.family: Theme.fontFamily
             font.weight: Font.Bold
@@ -66,18 +104,45 @@ Item {
         width: iconSize
         height: iconSize
         radius: width / 2
-        color: showPill ? iconCircleColor : "transparent"
+        color: showPill && showDisc ? iconCircleColor : "transparent"
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
 
         Behavior on color { enabled: Theme.animationsEnabled; ColorFastInOutBehavior {} }
 
+        // Custom SVG icon (e.g. Genelec "The Ones"): recoloured to the icon
+        // colour. When none is set we keep the Material glyph so the component
+        // stays generic for volume/microphone.
+        Image {
+            id: iconImage
+            anchors.centerIn: parent
+            width: iconSize
+            height: iconSize
+            source: revealPill.iconSource
+            sourceSize: Qt.size(Math.round(iconSize * 2), Math.round(iconSize * 2))
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            visible: revealPill.iconSource.length > 0
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                // Recolour the monochrome SVG to the current icon colour.
+                saturation: 0
+                colorization: 1.0
+                colorizationColor: revealPill._iconColor
+            }
+        }
+
         MaterialIcon {
+            id: iconGlyph
             anchors.centerIn: parent
             rounded: showPill
             size: Theme.fontSizeSmall * Theme.scale(Screen)
             icon: revealPill.icon
-            color: showPill ? iconTextColor : collapsedIconColor
+            // No disc: the icon is always painted with the level colour so the
+            // volume tint shows at all times.
+            color: revealPill._iconColor
+            visible: revealPill.iconSource.length === 0
         }
     }
 

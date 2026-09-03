@@ -389,11 +389,14 @@ Item {
                             }
                             onClicked: {
                                 try {
+                                    console.warn("[mediaDebug] track clicked, popup=" + (mediaControl.sidePanelPopup ? "yes" : "null") + " popupVisible=" + (mediaControl.sidePanelPopup ? mediaControl.sidePanelPopup.visible : "n/a") + " textLen=" + (trackText.text ? trackText.text.length : 0));
                                     if (mediaControl.sidePanelPopup) {
                                         if (mediaControl.sidePanelPopup.visible) mediaControl.sidePanelPopup.hidePopup();
                                         else mediaControl.sidePanelPopup.showAt();
+                                    } else {
+                                        console.warn("[mediaDebug] sidePanelPopup is null, cannot open");
                                     }
-                                } catch (e) { /* ignore */ }
+                                } catch (e) { console.warn("[mediaDebug] click error", e); }
                             }
                             cursorShape: Qt.PointingHandCursor
                         }
