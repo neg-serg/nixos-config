@@ -55,13 +55,14 @@ local function colors_enabled()
   return not (v == false or v == 0 or v == '0')
 end
 
--- g:LustyExplorerGravity: 'top' | 'center' (default) | 'bottom'.
+-- g:LustyExplorerGravity: 'top' | 'center' | 'bottom' (default: bottom,
+-- like the original LustyExplorer table which sat at the bottom of the screen).
 local function gravity_value()
   local v = tostring(vim.g.LustyExplorerGravity or ''):lower()
-  if v == 'top' or v == 'bottom' then
+  if v == 'top' or v == 'center' or v == 'bottom' then
     return v
   end
-  return 'center'
+  return 'bottom'
 end
 
 -- Vertical anchor of the float for a given height (editor lines).
