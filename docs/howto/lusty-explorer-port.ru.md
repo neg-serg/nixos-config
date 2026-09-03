@@ -56,6 +56,9 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
 - `g:LustyExplorerDefaultMappings` (по умолчанию 1) — `0` отключает `<Leader>lf/lr/lb/lg`.
 - `g:LustyExplorerAlwaysShowDotFiles` — показывать dotfiles всегда.
 - `g:LustyExplorerFileMasks` — устаревший аналог `&wildignore`.
+- `g:LustyExplorerShowColors` (по умолчанию включено) — `0` отключает dircolors-раскраску ячеек.
+- `g:LustyExplorerWidthRatio` (0.9) — доля ширины экрана под float (0.4–1.0).
+- `g:LustyExplorerMaxHeightRatio` (0.8) — максимум высоты float в долях экрана (0.3–0.95).
 
 ## Изменения в конфиге
 
