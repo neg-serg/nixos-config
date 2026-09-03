@@ -279,17 +279,30 @@ impl App {
         h.saturating_sub(1).max(1)
     }
 
-    fn max_cols(&self) -> usize {
+    /// Adaptive columns: as many as the content needs (ceil(total/rows)),
+    /// no more than fit the width given the widest name (capped at 20).
+    fn max_cols(&mut self) -> usize {
         let w = self.size.0;
-        ((w + 2) / 20).clamp(1, 8)
+        let rows = self.list_rows();
+        let total = self.ranked.len().max(1);
+        let needed = total.div_ceil(rows).max(1);
+        let name_w = self.max_name_w().min(20).max(1);
+        let byw = ((w + 2) / (name_w + 4)).max(1);
+        needed.min(byw).min(8).max(1)
     }
 
-    fn col_width(&self) -> usize {
+    fn col_width(&mut self) -> usize {
         let cols = self.max_cols();
         let w = self.size.0;
         // pitch = col_w + 2 separator; ensure cols*col_w + 2*(cols-1) <= w
         let text_w = w.saturating_sub(2 * (cols - 1));
         (text_w / cols).max(6)
+    }
+
+    /// Widest label (in chars) over the full listing of the current root.
+    fn max_name_w(&mut self) -> usize {
+        let entries = self.listing();
+        entries.iter().map(|e| e.label.chars().count()).max().unwrap_or(0)
     }
 
     fn clamp_offset(&mut self, rows: usize) {
@@ -376,6 +389,8 @@ impl App {
         self.ensure_ranked();
         let (w, h) = self.size;
         let rows = self.list_rows();
+        let cols = self.max_cols();
+        let col_w = self.col_width();
         let esc = char::from_u32(0x1b).unwrap();
         let mut frame = String::with_capacity((w + 64) * (rows + 2));
 
@@ -384,31 +399,41 @@ impl App {
         frame.push(esc);
         frame.push_str("[H");
 
-        // list rows
+        // row-major grid: fill a row left-to-right, then the next row down
         for r in 0..rows {
-            let list_i = self.offset + r;
             let mut line = String::new();
-            if list_i < self.ranked.len() {
-                let i = self.ranked[list_i];
-                let e = self.listing()[i].clone();
-                if list_i == self.selected {
-                    line.push(esc);
-                    line.push_str("[48;2;0;95;175;1;38;2;209;229;255m");
-                } else {
-                    let exec = e.kind == FileKind::File && is_exec(&e.path);
-                    if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
-                        line.push(esc);
-                        line.push('[');
-                        line.push_str(code);
-                        line.push('m');
+            for c in 0..cols {
+                let pos = self.offset + r * cols + c;
+                let mut cell = String::new();
+                let selected = pos == self.selected;
+                if pos < self.ranked.len() {
+                    let i = self.ranked[pos];
+                    let e = self.listing()[i].clone();
+                    if selected {
+                        // neg.nvim PmenuSel style: lit blue bar + light text
+                        cell.push(esc);
+                        cell.push_str("[48;2;0;95;175;1;38;2;209;229;255m");
+                    } else {
+                        let exec = e.kind == FileKind::File && is_exec(&e.path);
+                        if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
+                            cell.push(esc);
+                            cell.push('[');
+                            cell.push_str(code);
+                            cell.push('m');
+                        }
                     }
+                    cell.push_str(&e.label);
+                    if e.kind == FileKind::Dir {
+                        cell.push('/');
+                    }
+                    cell.push(esc);
+                    cell.push_str("[0m");
                 }
-                line.push_str(&e.label);
-                if e.kind == FileKind::Dir {
-                    line.push('/');
+                ansi_pad(&mut cell, col_w);
+                line.push_str(&cell);
+                if c + 1 < cols {
+                    line.push_str("  ");
                 }
-                line.push(esc);
-                line.push_str("[0m");
             }
             ansi_pad(&mut line, w.saturating_sub(1).max(1));
             frame.push_str(&line);
@@ -425,7 +450,6 @@ impl App {
         out.flush()
     }
 
-    /// Bottom line styled like the omp.zsh path segment (neg.omp.json colors).
     fn prompt_line(&self) -> String {
         let esc = char::from_u32(0x1b).unwrap();
         let mut out = String::new();
@@ -483,6 +507,11 @@ fn ansi_pad(line: &mut String, width: usize) {
     for &c in &src {
         if in_esc {
             out.push(c);
+            // '[' after ESC is the CSI introducer, not a final byte; the
+            // escape ends at the first real final byte (0x40..=0x7e).
+            if c == '[' {
+                continue;
+            }
             if (0x40..=0x7e).contains(&(c as u32)) {
                 in_esc = false;
                 if c == 'm' {
@@ -538,5 +567,18 @@ mod tests {
     #[test]
     fn non_ascii_unmapped_is_dropped() {
         assert_eq!(normalize_query_char('ä'), None);
+    }
+}
+
+#[cfg(test)]
+mod apad_test {
+    #[test]
+    fn ansi_pad_keeps_escapes() {
+        let esc = char::from_u32(0x1b).unwrap();
+        let mut s = format!("{}[48;2;0;95;175;1;38;2;209;229;255mdoc/{}[0m", esc, esc);
+        eprintln!("INPUT: {:?}", s);
+        super::ansi_pad(&mut s, 22);
+        eprintln!("OUT: {:?}", s);
+        eprintln!("CHARS: {:?}", s.chars().collect::<Vec<_>>());
     }
 }
