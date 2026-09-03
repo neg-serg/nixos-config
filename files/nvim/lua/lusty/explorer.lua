@@ -37,6 +37,24 @@ function M.ensure_highlights()
   end
 end
 
+-- Options (g:Lusty*), with sane defaults and clamping.
+local function opt_number(name, default, lo, hi)
+  local v = vim.g[name]
+  if type(v) ~= 'number' then
+    v = tonumber(v)
+  end
+  if type(v) ~= 'number' or v ~= v then
+    return default
+  end
+  return math.max(lo, math.min(hi, v))
+end
+
+-- g:LustyExplorerShowColors = 0 disables the dircolors cell coloring.
+local function colors_enabled()
+  local v = vim.g.LustyExplorerShowColors
+  return not (v == false or v == 0 or v == '0')
+end
+
 -- ---------------------------------------------------------------------------
 -- Prompt.
 
@@ -388,8 +406,9 @@ local function paint(self, cells)
       local entry = self.matches[cell.entry_idx]
       if entry then
         -- dircolors-style coloring (LS_COLORS) when the explorer provides a
-        -- color resolver; falls back to the static LustyDir/LustySlash marks.
-        local color_group = self.color_entry and self.color_entry(entry) or nil
+        -- color resolver (unless disabled via g:LustyExplorerShowColors);
+        -- falls back to the static LustyDir/LustySlash marks.
+        local color_group = colors_enabled() and self.color_entry and self.color_entry(entry) or nil
         if color_group then
           hl(line, cell.byte_start - 1, cell.byte_end, color_group)
         else
@@ -678,9 +697,13 @@ function Explorer:create_window()
 
   -- Floating window of comfortable size; the content layout uses the
   -- inner (border-less) width, sizing/centering is updated on every refresh.
-  local outer_w = math.max(44, math.floor(vim.o.columns * 0.9))
+  -- Ratios are configurable: g:LustyExplorerWidthRatio (default 0.9) and
+  -- g:LustyExplorerMaxHeightRatio (default 0.8).
+  local wratio = opt_number('LustyExplorerWidthRatio', 0.9, 0.4, 1.0)
+  local hratio = opt_number('LustyExplorerMaxHeightRatio', 0.8, 0.3, 0.95)
+  local outer_w = math.max(44, math.floor(vim.o.columns * wratio))
   self.float_width = math.max(40, outer_w - 2) -- minus the rounded border
-  self.float_max_height = math.max(6, math.floor(vim.o.lines * 0.8))
+  self.float_max_height = math.max(6, math.floor(vim.o.lines * hratio))
 
   self.buf_id = vim.api.nvim_create_buf(false, true)
   set_buffer_opts(self.buf_id)
