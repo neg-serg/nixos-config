@@ -77,7 +77,6 @@ local cls = {
   pic         = "^swayimg$",
   vm          = "^(.virt-manager-wrapped|qemu-system-x86_64|Qemu-system-x86_64)$",
   wine        = "^(com.usebottles.bottles)$",
-  patchbay    = "^zestbay$",
   daw         = "^(Renoise)$",
   vital       = "^(Vital)$",
   dw          = "^(org.nicotine_plus.Nicotine)$",
@@ -384,7 +383,6 @@ local workspaces = {
   { id = 8,  name = "𐌷:pic",    layout = "scrolling" },
   { id = 9,  name = "𐌺:vm",     layout = "scrolling" },
   { id = 10, name = "𐌻:wine" }, -- master (wine/games)
-  { id = 11, name = "𐌼:patchbay", layout = "scrolling" },
   { id = 12, name = "𐌽:daw" },  -- master (media/audio)
   { id = 13, name = "𐌾:dw",     layout = "scrolling" },
   { id = 14, name = "𐌿:keyboard", layout = "scrolling" },
@@ -528,7 +526,6 @@ local routes = {
   { class = cls.pic,         id = 8 },
   { class = cls.vm,          id = 9 },
   { class = cls.wine,        id = 10 },
-  { class = cls.patchbay,    id = 11 },
   { class = cls.daw,         id = 12 },
   { class = cls.dw,          id = 13 },
   { class = cls.keyboard,    id = 14 },

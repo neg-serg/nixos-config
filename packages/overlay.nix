@@ -229,7 +229,7 @@ in
         sleep 1
         systemctl --user start dsh.service 2>/dev/null || true
       '';
-      zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
+      zest = final.callPackage ./zest { }; # CLI for plugin management (LV2 add/rm/list)
       renoise-redux = final.callPackage ./renoise-redux { }; # Renoise Redux VST3 plugin (licensed build)
       protoplug = final.callPackage ./protoplug { }; # Lua live-coding VST2 plugins (Fx + Gen, MIT)
       midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)

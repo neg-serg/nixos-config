@@ -98,7 +98,6 @@ let
     tagrule=id:8, layout_name:scroller
     tagrule=id:9, layout_name:scroller
     tagrule=id:10, layout_name:scroller
-    tagrule=id:11, layout_name:scroller
     tagrule=id:12, layout_name:scroller
     tagrule=id:13, layout_name:scroller
     tagrule=id:14, layout_name:scroller
@@ -119,7 +118,6 @@ let
     windowrule=appid:^swayimg$,tags:8
     windowrule=appid:^(.virt-manager-wrapped|qemu-system-x86_64)$,tags:9
     windowrule=appid:^(com.usebottles.bottles)$,tags:10
-    windowrule=appid:^zestbay$,tags:11
     windowrule=appid:^Renoise$,tags:12
     windowrule=appid:^(org.nicotine_plus.Nicotine)$,tags:13
     windowrule=appid:^(Bazecor|Vial|via)$,tags:14

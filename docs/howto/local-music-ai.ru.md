@@ -34,7 +34,7 @@
 ## NAM (Neural Amp Modeler) — нейро-усилитель
 
 - Плагин: `~/.lv2/neural_amp_modeler.lv2` (v0.2.3, Linux x64, GPL-3.0,
-  mikeoliphant/neural-amp-modeler-lv2). Доступен как LV2 в любом LV2-хосте (ZestBay/zest); см.
+  mikeoliphant/neural-amp-modeler-lv2). Доступен как LV2 в любом LV2-хосте; см.
   wine-vst-bridge.ru.md про VST-часть.
 - Путь плагинов: `LV2_PATH` задан в envs.nix (`~/.lv2:/run/current-system/sw/lib/lv2`).
 - Модели (.nam каптуры): `/zero/ai/music/nam-models/` (пример — Ceriatone King Kong). Большой
