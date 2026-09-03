@@ -29,7 +29,6 @@ local HL_LINKS = {
   LustyNoEntries = 'ErrorMsg',
   LustyTruncated = 'Visual',
   LustyPrompt = 'Comment',
-  LustyPromptHint = 'Comment',
 }
 
 function M.ensure_highlights()
@@ -81,14 +80,6 @@ end
 
 function Prompt:at_dir()
   return self.input == '' or self.input:sub(-1) == '/'
-end
-
--- True when the user has not typed a query yet (idle state: footer hint).
-function Prompt:hint_active()
-  if self.filesystem then
-    return self.input == '' or self.input:sub(-1) == '/'
-  end
-  return self.input == ''
 end
 
 local function expand_env(s)
@@ -349,11 +340,10 @@ end
 
 local function prompt_text(self)
   local body = self.prompt.input
-  local hint = (self.prompt:hint_active() and self.hint) and ('   ' .. self.hint) or ''
-  local t = PROMPT_PREFIX .. body .. hint
+  local t = PROMPT_PREFIX .. body
   local max_w = (self.float_width or vim.o.columns) - 5
   if max_w > 0 and sw(t) > max_w then
-    -- Keep the tail (like Prompt#print) so the query/hint stays readable,
+    -- Keep the tail (like Prompt#print) so the query stays readable,
     -- dropping whole characters (never split UTF-8 in half).
     local keep = math.max(1, max_w - 3)
     local nchars = vim.fn.strchars(t)
@@ -441,16 +431,10 @@ local function paint(self, cells)
     end
   end
 
-  -- Prompt line is the last line: '>> ' plus (when idle) the hint.
+  -- Prompt line is the last line: '>> ' plus the typed query.
   local last = vim.api.nvim_buf_line_count(buf) - 1
   if last >= 0 then
     hl(last, 0, #PROMPT_PREFIX, 'LustyPrompt')
-    if self.hint and self.prompt:hint_active() then
-      local line = vim.api.nvim_buf_get_lines(buf, last, last + 1, false)[1] or ''
-      if #line > #PROMPT_PREFIX then
-        hl(last, #PROMPT_PREFIX, #line, 'LustyPromptHint')
-      end
-    end
   end
 end
 
