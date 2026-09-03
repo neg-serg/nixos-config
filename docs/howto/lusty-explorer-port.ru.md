@@ -8,12 +8,12 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
 
 ## Команды и клавиши
 
-| Команда                            | Клавиша      | Действие                                     |
-| ---------------------------------- | ------------ | -------------------------------------------- |
-| `:LustyFilesystemExplorer [путь]`  | `<Leader>lf` | файловый explorer (cwd, либо указанный путь) |
-| `:LustyFilesystemExplorerFromHere` | `<Leader>lr` | файловый explorer из каталога текущего файла |
-| `:LustyBufferExplorer`             | `<Leader>lb` | explorer буферов (MRU + fuzzy)               |
-| `:LustyBufferGrep`                 | `<Leader>lg` | regex-поиск по всем загруженным буферам      |
+| Команда                            | Клавиша                    | Действие                                                                      |
+| ---------------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| `:LustyFilesystemExplorer [путь]`  | `<Leader>lf`               | файловый explorer (cwd, либо указанный путь)                                  |
+| `:LustyFilesystemExplorerFromHere` | `<Leader>l` / `<Leader>lr` | файловый explorer из каталога текущего файла (одинарный `,l` — быстрый вызов) |
+| `:LustyBufferExplorer`             | `<Leader>lb`               | explorer буферов (MRU + fuzzy)                                                |
+| `:LustyBufferGrep`                 | `<Leader>lg`               | regex-поиск по всем загруженным буферам                                       |
 
 Старые имена `:BufferExplorer`, `:FilesystemExplorer`, `:FilesystemExplorerFromHere` оставлены как
 заглушки с предупреждением (как в оригинале).
