@@ -555,12 +555,15 @@ local function paint(self, cells)
   end
 end
 
--- g:LustyExplorerPerf = 1 appends per-refresh timings to /tmp/lusty_perf.log
-local function perf_log(self, ms_compute, ms_render, ms_paint, nstrings)
+-- g:LustyExplorerPerf = 1 appends per-refresh timings to /tmp/lusty_perf.log.
+-- dt = time since the previous refresh (catches redraw/input gaps that the
+-- per-phase timings cannot see); t_ms = monotonic ms since nvim start.
+local function perf_log(self, t_ms, dt_ms, ms_compute, ms_render, ms_paint, nstrings)
   local f = io.open('/tmp/lusty_perf.log', 'a')
   if f then
-    f:write(string.format('%d\t%s\tquery=%s\tentries=%d\trows=%s\tcompute=%dms\trender=%dms\tpaint=%dms\n',
-      os.time(), self.title, tostring(self.prompt and self.prompt.input or ''), nstrings,
+    f:write(string.format('%d\t%s\tt=%dms\tdt=%dms\tquery=%s\tentries=%d\trows=%s\tcompute=%dms\trender=%dms\tpaint=%dms\n',
+      os.time(), self.title, t_ms, dt_ms,
+      tostring(self.prompt and self.prompt.input or ''), nstrings,
       tostring(self.row_count), ms_compute, ms_render, ms_paint))
     f:close()
   end
@@ -621,7 +624,10 @@ function Explorer:refresh(mode)
   end
 
   if perf then
-    perf_log(self,
+    local now_ms = math.floor(vim.uv.hrtime() / 1e6)
+    local dt_ms = self._perf_last and (now_ms - self._perf_last) or 0
+    self._perf_last = now_ms
+    perf_log(self, now_ms, dt_ms,
       math.floor((t1 - t0) / 1e6),
       math.floor((t2 - t1) / 1e6),
       math.floor((t3 - t2) / 1e6),
