@@ -108,7 +108,7 @@ let
     STATE_DIR = pathlib.Path("/var/lib/telegram-alert-scanner")
     FAILED_UNITS_FILE = STATE_DIR / "failed-units.json"
     OOM_CURSOR_FILE = STATE_DIR / "oom-journal-cursor"
-    ALERTMANAGER_URL = "http://127.0.0.1:9093/-/alert"
+    ALERTMANAGER_URL = "http://127.0.0.1:9093/api/v2/alerts" # v1 API removed in alertmanager 0.27+
 
     OOM_RE = re.compile(r"Out of memory: Killed process (\d+) \((\S+)\)")
     SSHD_FAIL_RE = re.compile(r"(Failed password|Invalid user)")
