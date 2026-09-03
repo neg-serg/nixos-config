@@ -63,6 +63,8 @@ pub struct App {
     needs_rank: bool,
     selected: usize,
     offset: usize,
+    last_w: usize,
+    last_h: usize,
     palette: Colors,
 }
 
@@ -79,6 +81,8 @@ impl App {
             needs_rank: true,
             selected: 0,
             offset: 0,
+            last_w: 0,
+            last_h: 0,
             palette,
         }
     }
@@ -291,19 +295,33 @@ impl App {
         let w = w as usize;
         let rows = (h as usize).saturating_sub(2).max(1);
         let esc = char::from_u32(0x1b).unwrap();
-        let mut frame = String::with_capacity((w + 32) * (rows + 2));
+        let mut frame = String::with_capacity((w + 48) * (rows + 2));
+
+        // Full clear only on geometry change: every frame redraws all rows
+        // padded to the exact width, so stale wrap artifacts cannot survive.
+        if self.last_w != w || self.last_h != h as usize {
+            frame.push(esc);
+            frame.push_str("[2J");
+            self.last_w = w;
+            self.last_h = h as usize;
+        }
+        frame.push(esc);
+        frame.push_str("[H");
 
         // Status line: root + query + counts.
-        frame.push(esc);
-        frame.push_str("[2m");
-        frame.push_str(&self.root.display().to_string());
+        let mut status = String::new();
+        status.push(esc);
+        status.push_str("[2m");
+        status.push_str(&self.root.display().to_string());
         if !self.query.is_empty() {
-            frame.push_str("  q=");
-            frame.push_str(&self.query);
+            status.push_str("  q=");
+            status.push_str(&self.query);
         }
-        frame.push_str(&format!("  ({} of {})", self.ranked.len(), self.listing().len()));
-        frame.push(esc);
-        frame.push_str("[0m");
+        status.push_str(&format!("  ({} of {})", self.ranked.len(), self.listing().len()));
+        status.push(esc);
+        status.push_str("[0m");
+        ansi_pad(&mut status, w);
+        frame.push_str(&status);
         frame.push('\n');
 
         // Result rows.
@@ -332,7 +350,7 @@ impl App {
             } else if self.ranked.is_empty() && list_i == 0 {
                 line.push_str("(no matches)");
             }
-            truncate_fill(&mut line, w);
+            ansi_pad(&mut line, w);
             frame.push_str(&line);
             frame.push('\n');
         }
@@ -340,9 +358,8 @@ impl App {
         // Prompt line at the bottom.
         frame.push_str(">> ");
         frame.push_str(&self.query);
-        frame.push(esc);
-        frame.push_str("[K");
-        write!(out, "\x1b[H{frame}")?;
+        ansi_pad(&mut frame, w);
+        write!(out, "{frame}")?;
         out.flush()
     }
 }
@@ -353,17 +370,52 @@ fn is_exec(path: &std::path::Path) -> bool {
         .unwrap_or(false)
 }
 
-fn truncate_fill(line: &mut String, width: usize) {
-    let chars: Vec<char> = line.chars().collect();
-    if chars.len() > width {
-        let clipped: String = chars.into_iter().take(width).collect();
-        *line = clipped;
-    } else {
-        while line.chars().count() < width {
-            line.push(' ');
+/// Pad or truncate a possibly-ANSI-colored line to the given number of
+/// visible columns. Escape sequences count as zero width and are always
+/// preserved, so a truncated colored label still closes its SGR codes.
+fn ansi_pad(line: &mut String, width: usize) {
+    let src: Vec<char> = line.chars().collect();
+    let mut out = String::with_capacity(src.len() + width);
+    let mut vis = 0usize;
+    let mut in_esc = false;
+    let mut had_sgr = false;
+    for &c in &src {
+        if in_esc {
+            out.push(c);
+            if (0x40..=0x7e).contains(&(c as u32)) {
+                in_esc = false;
+                if c == 'm' {
+                    had_sgr = true;
+                }
+            }
+            continue;
+        }
+        if c == '\x1b' {
+            in_esc = true;
+            out.push(c);
+            continue;
+        }
+        if vis >= width {
+            continue; // truncate visible content past the width
+        }
+        out.push(c);
+        vis += 1;
+    }
+    if vis > width && had_sgr {
+        out.push_str("\x1b[0m"); // ensure colors are closed after a cut
+    }
+    if vis < width {
+        if had_sgr && !out.ends_with("\x1b[0m") {
+            out.push_str("\x1b[0m");
+        }
+        while vis < width {
+            out.push(' ');
+            vis += 1;
         }
     }
+    *line = out;
 }
+
 
 #[cfg(test)]
 mod tests {
