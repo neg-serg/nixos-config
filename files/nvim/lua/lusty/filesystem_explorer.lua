@@ -427,10 +427,15 @@ e.compute_sorted_matches = function()
   local matches = {}
   -- g:LustyExplorerFuzzyEngine = 'mercury' restores the original scorer.
   local use_mercury = tostring(vim.g.LustyExplorerFuzzyEngine or '') == 'mercury'
+  -- The first query letter must be a prefix of the entry's basename (not just
+  -- appear somewhere in the path), so typing 'c' cannot match 'pic.jpg' etc.
+  local first = abbrev ~= '.' and abbrev:sub(1, 1):lower() or nil
   for _, entry in ipairs(unsorted) do
-    entry.score = use_mercury and mercury.score(entry.label, abbrev) or fuzzy.score(entry.label, abbrev)
-    if entry.score ~= 0.0 then
-      matches[#matches + 1] = entry
+    if not first or (entry.name or ''):sub(1, 1):lower() == first then
+      entry.score = use_mercury and mercury.score(entry.label, abbrev) or fuzzy.score(entry.label, abbrev)
+      if entry.score ~= 0.0 then
+        matches[#matches + 1] = entry
+      end
     end
   end
   if abbrev == '.' then

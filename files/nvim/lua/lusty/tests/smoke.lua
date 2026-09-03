@@ -253,6 +253,23 @@ assert_eq(#e.matches, 1, 'one match')
 assert_eq(e.matches[1].label, 'beta.lua', 'match beta.lua')
 e:cancel()
 
+-- Regression: the first query letter must prefix the basename.  A substring
+-- hit through the middle of a name ('c' inside 'pic.jpg') must not match.
+fs.run(dir)
+e = fs.explorer()
+e:key_pressed(string.byte('p'))
+assert(#e.matches >= 1, "prefix 'p' matches pic.jpg or pic/")
+for _, m in ipairs(e.matches) do
+  assert(m.label:sub(1, 1):lower() == 'p', "every match starts with the query prefix")
+end
+e:cancel()
+
+fs.run(dir)
+e = fs.explorer()
+e:key_pressed(string.byte('c'))
+assert_eq(#e.matches, 0, "'c' is not a prefix of pic.jpg -> no matches")
+e:cancel()
+
 fs.run(dir)
 e = fs.explorer()
 local sel = nil
