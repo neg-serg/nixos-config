@@ -90,11 +90,11 @@ function Picker:setup_keymaps()
   local buf = self.buf
   local self_ref = self
   local function map(lhs, action)
-    local opts = { nowait = true, silent = true, noremap = true, buffer = buf }
+    local opts = { nowait = true, silent = true, noremap = true }
     opts.callback = function()
       self_ref:handle(action)
     end
-    pcall(api.nvim_buf_set_keymap, buf, 'n', lhs, '', opts)
+    api.nvim_buf_set_keymap(buf, 'n', lhs, '', opts)
   end
   for code = 32, 126 do
     local ch = string.char(code)
@@ -174,11 +174,9 @@ function Picker:draw()
     return
   end
   local rows = self:list_rows()
-  local h = rows + 3
+  local h = rows + 2 -- list rows + one prompt line
   local lines = {}
   local meta = {} -- buffer line -> row info
-  -- status line
-  lines[1] = self.root .. '  (' .. self.total .. ')'
   for r = 1, rows do
     local item = self.window[r]
     if item then
@@ -186,19 +184,22 @@ function Picker:draw()
       if item.kind == 'd' then
         label = label .. '/'
       end
-      lines[1 + r] = label
-      meta[1 + r] = item
+      lines[r] = label
+      meta[r] = item
     else
-      lines[1 + r] = ''
+      lines[r] = ''
     end
   end
-  -- prompt line at the bottom
-  lines[h] = '>> ' .. self.query
+  -- pad to full height, then the prompt line at the bottom
+  for i = 1, h do
+    if not lines[i] then
+      lines[i] = ''
+    end
+  end
+  lines[h] = self:prompt_text()
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
-  -- status: dim
-  api.nvim_buf_add_highlight(self.buf, ns, 'Comment', 0, 0, -1)
   for line_no, item in pairs(meta) do
     local entry = {
       name = basename(item.label),
@@ -214,9 +215,59 @@ function Picker:draw()
   -- selection marker
   local sel_line = 1 + (self.selected - self.offset) + 1
   if meta[sel_line - 1] then
-    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_line - 1, 0, -1)
+      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_line - 1, 0, -1)
   end
-  api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativePrompt', h - 1, 3, -1)
+  self:paint_prompt(h)
+end
+
+--- Bottom prompt: current path with Lusty prompt colors, then > query.
+function Picker:prompt_text()
+  local path = self.root
+  local home = os.getenv('HOME') or ''
+  if home ~= '' and path:sub(1, #home) == home then
+    path = '~' .. path:sub(#home + 1)
+  end
+  return path .. ' > ' .. self.query
+end
+
+function Picker:paint_prompt(h)
+  local text = self:prompt_text()
+  local line = h - 1
+  local home = os.getenv('HOME') or ''
+  -- color the path portion: tilde, separators, segments; stop at the ' > '
+  local path_len = #self.root
+  if self.root:sub(1, #home) == home and home ~= '' then
+    path_len = path_len - #home + 1 -- '~' replaces the home prefix
+  end
+  local segs = {} -- {start_col, len, group}
+  local text_start = 0
+  if self.root:sub(1, #home) == home and home ~= '' then
+    segs[#segs + 1] = { 0, 1, 'LustyPromptTilde' }
+    text_start = 1
+  end
+  local rest = text_start == 1 and self.root:sub(#home + 1) or self.root
+  local col = text_start
+  for seg in rest:gmatch('([^/]+)/?') do
+    -- find the separator before this segment
+    local sep = 0
+    if col > text_start then
+      sep = 1
+    end
+    if sep == 1 then
+      segs[#segs + 1] = { col, 1, 'LustyPromptSep' }
+      col = col + 1
+    end
+    segs[#segs + 1] = { col, #seg, 'LustyPromptPath' }
+    col = col + #seg
+    text_start = col
+  end
+  for _, seg in ipairs(segs) do
+    if seg[3] then
+      api.nvim_buf_add_highlight(self.buf, ns, seg[3], line, seg[1], seg[1] + seg[2])
+    end
+  end
+  -- the prompt arrow and query: default fg, bold query area is fine
+  api.nvim_buf_add_highlight(self.buf, ns, 'LustyPromptQuery', line, col + 1, -1)
 end
 
 function Picker:ensure_visible()
@@ -319,12 +370,10 @@ function Picker:handle(action)
 end
 
 function Picker:restart(root)
-  local win = api.nvim_get_current_win()
-  self:close()
+  self:close() -- restores the caller window
   local np = Picker.new(root)
-  np.query = ''
-  api.nvim_set_current_win(win)
   np:startup()
+  return np
 end
 
 function Picker:open_current(action)
@@ -338,12 +387,17 @@ function Picker:open_current(action)
     return
   end
   local cmds = { edit = 'edit', open_tab = 'tabedit', open_split = 'split', open_vsplit = 'vsplit' }
+  local ex = action == 'enter' and 'edit' or cmds[action]
+  if not ex then
+    return
+  end
   local win = api.nvim_get_current_win()
+  local path = item.path
   self:close()
   if api.nvim_win_is_valid(win) then
     pcall(api.nvim_set_current_win, win)
   end
-  vim.cmd.noautocmd(cmds[action] .. ' ' .. vim.fn.fnameescape(item.path))
+  vim.cmd(ex .. ' ' .. vim.fn.fnameescape(path))
 end
 
 function Picker:startup()
@@ -365,7 +419,7 @@ function Picker:startup()
       if self_ref.closed then
         return
       end
-      acc = acc .. table.concat(data, '')
+      acc = acc .. table.concat(data, '\n')
       while true do
         local nl = acc:find('\n', 1, true)
         if not nl then
@@ -404,6 +458,7 @@ function M.ensure_highlights()
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = 'Gray' })
   end
   api.nvim_set_hl(0, 'LustyNativePrompt', { fg = '#95a7bc', bold = true })
+  api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
 end
 
 M.ensure_highlights()
