@@ -393,7 +393,7 @@ impl App {
                 let e = self.listing()[i].clone();
                 if list_i == self.selected {
                     line.push(esc);
-                    line.push_str("[48;2;126;87;194;1;38;2;255;255;255m");
+                    line.push_str("[48;2;229;57;53;1;38;2;255;255;255m");
                 } else {
                     let exec = e.kind == FileKind::File && is_exec(&e.path);
                     if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
