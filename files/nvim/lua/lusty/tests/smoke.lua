@@ -111,6 +111,17 @@ assert(vim.tbl_contains(dot_labels, '.hidden'), '.hidden appears after dot')
 assert(vim.tbl_contains(dot_labels, '../'), '.. appears after dot')
 e:cancel()
 
+-- RU layout (йцукен): the physical '.' key sends 'ю', 'b' sends 'и';
+-- dual mappings must feed the EN query characters.
+fs.run(dir)
+e = fs.explorer()
+vim.api.nvim_feedkeys('ю', 'x!', false)
+vim.wait(30)
+local ru_dot_labels = {}
+for _, m in ipairs(e.matches) do ru_dot_labels[#ru_dot_labels + 1] = m.label end
+assert(vim.tbl_contains(ru_dot_labels, '.hidden'), 'RU dot key reveals hidden files')
+e:cancel()
+
 -- Filtering with letters.
 fs.run(dir)
 e = fs.explorer()
