@@ -4,6 +4,9 @@
 -- Deterministic dircolors palette for the coloring assertions (do not depend
 -- on whatever LS_COLORS the calling shell exports).
 vim.env.LS_COLORS = 'di=01;34:ln=01;36:ex=01;32:*.jpg=01;35:*.lua=38;5;114'
+-- Classic single-directory listing for the tests below; the dedicated
+-- depth-search test enables g:LustyExplorerSearchDepth = 2 itself.
+vim.g.LustyExplorerSearchDepth = 1
 
 local base = vim.fn.fnamemodify(arg[0], ':p:h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
@@ -20,6 +23,8 @@ vim.fn.writefile({ 'gamma' }, dir .. '/sub/gamma.txt')
 vim.fn.writefile({ 'x' }, dir .. '/.hidden')
 vim.fn.mkdir(dir .. '/.hid', 'p')
 vim.fn.writefile({ 'inside' }, dir .. '/.hid/marker.txt')
+vim.fn.mkdir(dir .. '/sub/deep', 'p')
+vim.fn.writefile({ 'z' }, dir .. '/sub/deep/foo.txt')
 vim.fn.writefile({ 'x' }, dir .. '/pic.jpg')
 vim.fn.chdir(dir)
 
@@ -157,6 +162,24 @@ local hid_labels = {}
 for _, m in ipairs(e.matches) do hid_labels[#hid_labels + 1] = m.label end
 assert(vim.tbl_contains(hid_labels, 'marker.txt'), 'entered hidden dir via Enter')
 e:cancel()
+
+-- Depth search: with g:LustyExplorerSearchDepth = 2 nested files are listed
+-- with their relative path and can be found by typing.
+vim.g.LustyExplorerSearchDepth = 2
+fs.run(dir)
+e = fs.explorer()
+local deep_labels = {}
+for _, m in ipairs(e.matches) do deep_labels[#deep_labels + 1] = m.label end
+assert(vim.tbl_contains(deep_labels, 'sub/gamma.txt'), 'depth 2 lists nested file')
+assert(vim.tbl_contains(deep_labels, 'sub/deep/'), 'depth 2 lists level-2 dir')
+-- foo.txt lives at level 3 (sub/deep/foo.txt) and must NOT be listed at depth 2.
+assert(not vim.tbl_contains(deep_labels, 'sub/deep/foo.txt'), 'depth 2 excludes level-3 file')
+for _, ch in ipairs({ 'g', 'a', 'm' }) do e:key_pressed(string.byte(ch)) end
+local gam_hits = {}
+for _, m in ipairs(e.matches) do gam_hits[#gam_hits + 1] = m.label end
+assert(vim.tbl_contains(gam_hits, 'sub/gamma.txt'), 'fuzzy find hits nested file')
+e:cancel()
+vim.g.LustyExplorerSearchDepth = 1
 
 -- Filtering with letters.
 fs.run(dir)

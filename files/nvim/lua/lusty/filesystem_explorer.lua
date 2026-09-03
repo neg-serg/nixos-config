@@ -22,6 +22,18 @@ end
 
 -- Directory contents are memoized per view; <C-r> refreshes the current one.
 local dir_cache = {}
+local deep_cache = {} -- view -> { depth = n, entries = [...] }
+
+-- g:LustyExplorerSearchDepth: include files in subdirectories up to N levels
+-- below the current view (default 2, like 'fd --max-depth 2'); 1 = classic
+-- single-directory listing.
+local function search_depth()
+  local v = tonumber(vim.g.LustyExplorerSearchDepth)
+  if v == nil then
+    return 2
+  end
+  return math.max(1, math.min(6, math.floor(v)))
+end
 
 local function always_show_dotfiles()
   local v = vim.g.LustyExplorerAlwaysShowDotFiles
@@ -116,19 +128,120 @@ local function fetch_view(view)
   return entries
 end
 
+-- Raw children of a directory (no '..', no masks, no dotfile filtering);
+-- used to build the depth > 1 listing.  Symlinked dirs are listed but not
+-- recursed into (avoids loops/duplicates).
+local function raw_children(dir)
+  if vim.fn.isdirectory(dir) ~= 1 then
+    return {}
+  end
+  local ok, names = pcall(vim.fn.readdir, dir)
+  if not ok or type(names) ~= 'table' then
+    return {}
+  end
+  local out = {}
+  for _, name in ipairs(names) do
+    if name ~= '.' and name ~= '..' and not util.masked(name, e.masks) then
+      local full = dir .. '/' .. name
+      local ftype = vim.fn.getftype(full)
+      local is_dir = vim.fn.isdirectory(full) == 1
+      local entry = {
+        name = name,
+        is_dir = is_dir,
+        is_link = ftype == 'link',
+        is_socket = ftype == 'socket',
+        is_pipe = ftype == 'fifo',
+        full = full,
+      }
+      if ftype == 'file' then
+        local perm = vim.fn.getfperm(full)
+        entry.is_exec = type(perm) == 'string' and perm:find('x') ~= nil
+      end
+      out[#out + 1] = entry
+    end
+  end
+  return out
+end
+
+-- Build the depth-aware entry list relative to `view`.
+local function build_deep(view)
+  local depth = search_depth()
+  local entries = {}
+  -- level = number of path components below the view (root = 0).  A child
+  -- at level+1 is listed when level+1 <= depth and recursed into when
+  -- level+1 < depth, so depth 2 covers view/sub/file and view/sub/dir/file.
+  local function walk(abs_dir, rel, level)
+    for _, c in ipairs(raw_children(abs_dir)) do
+      local rel2 = rel == '' and c.name or (rel .. '/' .. c.name)
+      if level + 1 <= depth then
+        entries[#entries + 1] = {
+          label = c.is_dir and (rel2 .. '/') or rel2,
+          name = c.name,
+          is_dir = c.is_dir,
+          is_link = c.is_link,
+          is_socket = c.is_socket,
+          is_pipe = c.is_pipe,
+          is_exec = c.is_exec,
+        }
+      end
+      if c.is_dir and not c.is_link and level + 1 < depth then
+        walk(c.full, rel2, level + 1)
+      end
+    end
+  end
+  walk(view, '', 0)
+  if not always_show_dotfiles() then
+    entries[#entries + 1] = { label = '../', name = '..', is_dir = true }
+  end
+  return entries
+end
+
+local function deep_entries(view)
+  local depth = search_depth()
+  local cached = deep_cache[view]
+  if cached and cached.depth == depth then
+    return cached.entries
+  end
+  local entries = build_deep(view)
+  deep_cache[view] = { depth = depth, entries = entries }
+  return entries
+end
+
+-- Does any path component of the label start with '.' ('../', '.git/x', ...)?
+local function label_has_dot_component(label)
+  local p = label:gsub('/+$', '')
+  if p == '' then
+    return false
+  end
+  for comp in vim.gsplit(p, '/', { plain = true }) do
+    if comp:sub(1, 1) == '.' then
+      return true
+    end
+  end
+  return false
+end
+
 local function all_files_at_view()
   local view = view_path()
-  if not dir_cache[view] then
-    dir_cache[view] = fetch_view(view)
-  end
-  local all = dir_cache[view]
   local abbrev = current_abbreviation()
-  if always_show_dotfiles() or abbrev:sub(1, 1) == '.' then
+  local show_dots = always_show_dotfiles() or abbrev:sub(1, 1) == '.'
+
+  local all
+  if search_depth() > 1 then
+    all = deep_entries(view)
+  else
+    if not dir_cache[view] then
+      dir_cache[view] = fetch_view(view)
+    end
+    all = dir_cache[view]
+  end
+
+  if show_dots then
     return all
   end
   local visible = {}
   for _, entry in ipairs(all) do
-    if entry.label:sub(1, 1) ~= '.' then
+    if not label_has_dot_component(entry.label) then
       visible[#visible + 1] = entry
     end
   end
@@ -192,10 +305,8 @@ e.open_entry = function(_, entry, mode)
     -- Recurse into the directory.
     e.prompt:set(path)
     e.selected = 0
-  elseif entry.label:find('/', 1, true) then
-    -- A fake entry containing a slash cannot be opened.
-    return
   else
+    -- File entries may carry a relative path (depth > 1 listing).
     e:cleanup()
     pcall(load_file, path, mode)
   end
@@ -225,14 +336,18 @@ e.key_pressed = function(self, code)
     -- <C-e> create file with the given name and path.
     if not e.prompt:at_dir() then
       local path = e.prompt:value()
-      dir_cache[view_path()] = nil
+      local v = view_path()
+      dir_cache[v] = nil
+      deep_cache[v] = nil
       e:cleanup()
       pcall(load_file, path, 'current_tab')
     end
     return
   elseif code == 18 then
     -- <C-r> refresh directory contents.
-    dir_cache[view_path()] = nil
+    local v = view_path()
+    dir_cache[v] = nil
+    deep_cache[v] = nil
     e.selected = 0
     e:refresh('full')
     return
@@ -261,6 +376,7 @@ end
 
 function M.clear_cache()
   dir_cache = {}
+  deep_cache = {}
 end
 
 return M
