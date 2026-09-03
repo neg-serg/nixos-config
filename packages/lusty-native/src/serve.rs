@@ -66,6 +66,13 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
                     rank::rank_indices(&entries, &current_query)
                 };
                 writeln!(out, "N {}", ranked.len())?;
+                // max label char count of the ranked set (column sizing)
+                let maxw = ranked
+                    .iter()
+                    .map(|&i| entries[i].label.chars().count())
+                    .max()
+                    .unwrap_or(0);
+                writeln!(out, "W {}", maxw)?;
                 let end = to.min(ranked.len());
                 for &i in &ranked[from.min(ranked.len())..end] {
                     let e = &entries[i];

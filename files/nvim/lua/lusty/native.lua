@@ -45,6 +45,7 @@ function Picker.new(root)
   self.outbuf = {}
   self.dirs = nil -- cached top-level dir names for '/' completion
   self.show_dots = false
+  self.maxw = 12 -- widest label (chars) in the current ranked set
   self.closed = false
   self.orig_win = api.nvim_get_current_win()
   return self
@@ -68,8 +69,14 @@ end
 --- exactly (col_w + 2 separator), so rows never overflow or wrap.
 function Picker:max_cols()
   local w = self:width()
-  local cols = math.floor((w + 2) / 20) -- pitch guess with col_w ~ 18
-  return math.max(1, math.min(8, cols))
+  local rows = self:list_rows()
+  local total = math.max(self.total, 1)
+  local needed = math.max(1, math.ceil(total / rows))
+  -- cap the width influence: one huge name must not force a single column
+  local name_w = math.max(math.min(self.maxw or 12, 20), 1)
+  local byw = math.max(1, math.floor((w + 2) / (name_w + 4)))
+  local cols = math.min(needed, byw, 8)
+  return math.max(1, cols)
 end
 
 function Picker:col_width()
@@ -182,6 +189,11 @@ function Picker:rerank()
       if n then
         total = tonumber(n)
       else
+        local wm = ln:match('^W (%d+)$')
+        if wm then
+          self.maxw = tonumber(wm)
+        else
+
         local i, kind, label, path = ln:match('^R (%d+) (%a) ([^\t]+)\t(.*)$')
         if i then
           win_rows[#win_rows + 1] = {
@@ -190,6 +202,7 @@ function Picker:rerank()
             label = label,
             path = path,
           }
+        end
         end
       end
     end
