@@ -386,6 +386,11 @@ function Picker:close()
   if self.job and vim.fn.jobwait({ self.job }, 0)[1] == -1 then
     vim.fn.jobstop(self.job)
   end
+  -- close the float window itself first: deleting the buffer of a shown
+  -- window can leave an empty floating shell behind
+  if self.win and api.nvim_win_is_valid(self.win) then
+    pcall(api.nvim_win_close, self.win, true)
+  end
   if self.buf and api.nvim_buf_is_valid(self.buf) then
     pcall(api.nvim_buf_delete, self.buf, { force = true })
   end
