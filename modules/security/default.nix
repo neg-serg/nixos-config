@@ -116,12 +116,14 @@ in
         login.u2fAuth = false;
 
         sudo.u2fAuth = false;
-        # Enable AppArmor-aware PAM for common services
-        login.enableAppArmor = true;
-        sshd.enableAppArmor = true;
-        sudo.enableAppArmor = true;
-
-        su.enableAppArmor = true;
+        # AppArmor-aware PAM for common services: disabled. Processes are
+        # unconfined, so change_hat fails on every sudo/login ("unconfined can
+        # not change_hat") and only spams the journal + audit. Re-enable when
+        # profiles confining these stacks exist.
+        login.enableAppArmor = false;
+        sshd.enableAppArmor = false;
+        sudo.enableAppArmor = false;
+        su.enableAppArmor = false;
         greetd.enableAppArmor = false;
       };
 
