@@ -5,7 +5,10 @@ import { settingsNamespace } from '@deepseek-ai/dsh-settings'
  *   /mode  — list the available agent presets (modes) or switch the default one;
  *   /fast  — switch the default to the lean `fast` preset and set model
  *            reasoning effort to `low` (thinks less, fewer tokens);
- *   /smart — switch back to the full `neg` preset with `high` reasoning effort.
+ *   /smart — switch back to the full `neg` preset with `high` reasoning effort;
+ *   /effort — show or set the default model reasoning effort
+ *             (off | low | high | max | auto — auto clears the saved level back
+ *             to the adapter default).
  *
  * The defaults live in the `agent-presets` and `agent-default-model` settings
  * namespaces (~/.dsh/settings.yaml). The settings document is hot-reloaded,
@@ -99,5 +102,52 @@ export function apply(ctx) {
     name: 'smart',
     description: 'режим по умолчанию → neg (полный) + мышление high',
     handler: async () => setFastDefault(ctx, 'neg', 'high', 'high'),
+  })
+
+  // Effort levels the DeepSeek adapter accepts; medium/xhigh are not offered
+  // because the DeepSeek API maps both to `high` on the wire.
+  const EFFORT_LEVELS = ['off', 'low', 'high', 'max']
+
+  ctx.commands.register({
+    name: 'effort',
+    description: 'уровень мышления модели по умолчанию: /effort off|low|high|max|auto',
+    input: { hint: '[off|low|high|max|auto]' },
+    handler: async ({ rawInput }) => {
+      const model = ctx.agentDefaultModel.currentSelection()
+      const arg = rawInput.trim()
+      if (arg === '') {
+        const current = model.reasoningEffort ?? '(auto — дефолт адаптера)'
+        return {
+          kind: 'success',
+          text:
+            `текущая модель: ${model.provider}/${model.model}\n` +
+            `effort по умолчанию: ${current}\n\n` +
+            `сменить: /effort ${EFFORT_LEVELS.join(' | ')} | auto\n` +
+            '(на DeepSeek medium и xhigh эквивалентны high, поэтому не предлагаются)',
+        }
+      }
+      if (arg === 'auto') {
+        await ctx.agentDefaultModel.saveSelection({ provider: model.provider, model: model.model })
+        return {
+          kind: 'success',
+          text: 'effort → auto: новые сессии получат дефолт адаптера (DeepSeek: high).',
+        }
+      }
+      if (!EFFORT_LEVELS.includes(arg)) {
+        return {
+          kind: 'error',
+          text: `неизвестный effort «${arg}»: доступно ${EFFORT_LEVELS.join(' | ')} | auto.`,
+        }
+      }
+      await ctx.agentDefaultModel.saveSelection({
+        provider: model.provider,
+        model: model.model,
+        reasoningEffort: arg,
+      })
+      return {
+        kind: 'success',
+        text: `effort по умолчанию → ${arg}. Применится к новым сессиям; текущая не переключается на лету.`,
+      }
+    },
   })
 }
