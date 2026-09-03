@@ -13,6 +13,18 @@ use walkdir::WalkDir;
 use crate::glob;
 use crate::mount;
 
+/// Kind of a listed entry, mirroring what ls --color distinguishes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileKind {
+    File,
+    Dir,
+    Link,
+    Socket,
+    Pipe,
+    Block,
+    Char,
+}
+
 #[derive(Debug, Clone)]
 pub struct Entry {
     pub name: String,
@@ -21,7 +33,7 @@ pub struct Entry {
     pub path: PathBuf,
     /// Label shown/scored by the picker: the path relative to the root.
     pub label: String,
-    pub is_dir: bool,
+    pub kind: FileKind,
     /// 1 = direct child of the root, 2 = one level deeper, etc.
     pub depth: u32,
 }
@@ -32,6 +44,20 @@ pub struct Options {
     pub skip_dirs: Vec<String>,
     pub follow_mounts: bool,
     pub show_dots: bool,
+}
+
+fn kind_of(e: &walkdir::DirEntry) -> FileKind {
+    let ft = e.file_type();
+    if ft.is_dir() {
+        FileKind::Dir
+    } else if ft.is_symlink() {
+        FileKind::Link
+    } else {
+        // walkdir only exposes dir/file/symlink from the dirent d_type, so
+        // sockets/pipes/devices fall through to File. They are unreachable in
+        // practice: mount points (which is where such nodes live) are skipped.
+        FileKind::File
+    }
 }
 
 /// The label for an entry: its path relative to the root, '/' separated.
@@ -104,8 +130,8 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
             }
             continue;
         }
-        let is_dir = e.file_type().is_dir();
-        if is_dir {
+        let kind = kind_of(&e);
+        if kind == FileKind::Dir {
             if is_skip_dir(&name, e.path(), &opts.skip_dirs) {
                 blocked.insert(rel.clone()); // visible, but not traversed
             } else if !mounts.is_empty() {
@@ -119,7 +145,7 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
             name,
             path: e.path().to_path_buf(),
             label: rel,
-            is_dir,
+            kind,
             depth: e.depth() as u32,
         });
     }
