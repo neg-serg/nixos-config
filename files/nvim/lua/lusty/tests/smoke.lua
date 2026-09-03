@@ -218,5 +218,29 @@ assert_eq(vim.api.nvim_get_current_buf(), buf_before, 'caller buffer intact afte
 assert_eq(vim.v.errmsg, '', 'no errors after C-c')
 print('PASS C-c cancel + tall layout')
 
+-- Options: float size ratios and disabling the dircolors coloring.
+vim.g.LustyExplorerWidthRatio = 0.5
+vim.g.LustyExplorerMaxHeightRatio = 0.5
+vim.g.LustyExplorerShowColors = 0
+vim.cmd('edit! ' .. dir .. '/alpha.txt')
+fs.run(dir)
+local opt_e = fs.explorer()
+assert(opt_e.running, 'explorer opens with custom ratios')
+local opt_cfg = vim.api.nvim_win_get_config(0)
+assert(opt_cfg.width < 70, 'width ratio option applied (narrow float)')
+local opt_marks = vim.api.nvim_buf_get_extmarks(
+  vim.api.nvim_get_current_buf(), lusty_ns, 0, -1, { details = true })
+local ls_marks = 0
+for _, m in ipairs(opt_marks) do
+  local g = (m[4] or {}).hl_group
+  if g and g:find('^LustyLs') then ls_marks = ls_marks + 1 end
+end
+assert_eq(ls_marks, 0, 'LustyExplorerShowColors=0 disables cell colors')
+opt_e:cancel()
+vim.g.LustyExplorerWidthRatio = nil
+vim.g.LustyExplorerMaxHeightRatio = nil
+vim.g.LustyExplorerShowColors = nil
+print('PASS option knobs')
+
 print('ALL LUSTY SMOKE TESTS PASSED')
 
