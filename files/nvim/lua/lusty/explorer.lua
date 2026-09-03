@@ -170,6 +170,7 @@ function Explorer.new(opts)
   self.float_width = nil
   self.float_max_height = nil
   self.augroup = nil
+  self._debounce_timer = nil
   return self
 end
 
@@ -569,6 +570,53 @@ local function perf_log(self, t_ms, dt_ms, ms_compute, ms_render, ms_paint, nstr
   end
 end
 
+-- Input debounce (g:LustyExplorerInputDebounce, ms; 0 = recompute on every
+-- key).  While typing, only the prompt line is echoed immediately and the
+-- (heavier) full table recompute/redraw is deferred until the user pauses.
+local function debounce_delay()
+  local v = tonumber(vim.g.LustyExplorerInputDebounce)
+  if v == nil then
+    return 80
+  end
+  return math.max(0, math.min(500, v))
+end
+
+local function stop_debounce(self)
+  if self._debounce_timer then
+    pcall(vim.fn.timer_stop, self._debounce_timer)
+    self._debounce_timer = nil
+  end
+end
+
+local function echo_prompt(self)
+  local buf = self.buf_id
+  if not (buf and vim.api.nvim_buf_is_valid(buf)) then
+    return
+  end
+  local n = vim.api.nvim_buf_line_count(buf)
+  if n < 1 then
+    return
+  end
+  pcall(vim.api.nvim_buf_set_option, buf, 'modifiable', true)
+  pcall(vim.api.nvim_buf_set_lines, buf, n - 1, n, false, { prompt_text(self) })
+  pcall(vim.api.nvim_buf_set_option, buf, 'modifiable', false)
+end
+
+local function schedule_full_refresh(self)
+  local delay = debounce_delay()
+  if delay <= 0 then
+    self:refresh('full')
+    return
+  end
+  stop_debounce(self)
+  self._debounce_timer = vim.fn.timer_start(delay, function()
+    self._debounce_timer = nil
+    if self.running then
+      self:refresh('full')
+    end
+  end)
+end
+
 function Explorer:refresh(mode)
   if not self.running then
     return
@@ -707,10 +755,29 @@ function Explorer:key_pressed(code)
   end
 
   if handled then
-    self:refresh(mode)
-    -- Force an immediate screen update so typed characters and the filtered
-    -- list appear right after each key instead of being batched by redraw.
-    -- g:LustyExplorerImmediateRedraw = 0 disables it for A/B latency tests.
+    local is_choose = code == 9 or code == 13 or code == 15 or code == 20 or code == 22
+    if mode == 'no_recompute' then
+      -- Navigation: only the selection changes; repaint without recompute.
+      self:refresh('no_recompute')
+    elseif is_choose then
+      -- Enter/Tab/splits: dir recursion refreshes immediately, file opens
+      -- close the explorer (running == false then).
+      if self.running then
+        self:refresh('full')
+      end
+    else
+      -- Typing/clearing input: echo the prompt at once, defer the table
+      -- rebuild until the user pauses (g:LustyExplorerInputDebounce).
+      local delay = debounce_delay()
+      if delay > 0 then
+        echo_prompt(self)
+        schedule_full_refresh(self)
+      else
+        self:refresh('full')
+      end
+    end
+    -- Force an immediate screen update (g:LustyExplorerImmediateRedraw = 0
+    -- disables it for A/B latency tests).
     local immediate = vim.g.LustyExplorerImmediateRedraw
     if self.running and immediate ~= 0 and immediate ~= false and immediate ~= '0' then
       vim.cmd('redraw')
@@ -890,6 +957,7 @@ function Explorer:cleanup()
   if self.on_cleanup then
     self.on_cleanup(self)
   end
+  stop_debounce(self)
   self.running = false
 
   local win = self.win_id
