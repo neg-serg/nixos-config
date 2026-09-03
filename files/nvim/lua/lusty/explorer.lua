@@ -626,6 +626,24 @@ local function setup_keymaps(self)
     map(lhs, code)
   end
 
+  -- Dual-layout support (langmapper-style): the user types on the RU
+  -- (йцукен) layout, where the physical keys produce Cyrillic characters
+  -- ('.' key -> 'ю', 'b' key -> 'и', '/' key -> '.' ...).  Register the RU
+  -- characters so they feed the same EN query characters; langmap alone does
+  -- not apply to keys that participate in mappings.
+  local ru_to_en = {
+    { 'й', 'q' }, { 'ц', 'w' }, { 'у', 'e' }, { 'к', 'r' }, { 'е', 't' },
+    { 'н', 'y' }, { 'г', 'u' }, { 'ш', 'i' }, { 'щ', 'o' }, { 'з', 'p' },
+    { 'х', '[' }, { 'ъ', ']' }, { 'ф', 'a' }, { 'ы', 's' }, { 'в', 'd' },
+    { 'а', 'f' }, { 'п', 'g' }, { 'р', 'h' }, { 'о', 'j' }, { 'л', 'k' },
+    { 'д', 'l' }, { 'ж', ';' }, { 'э', "'" }, { 'я', 'z' }, { 'ч', 'x' },
+    { 'с', 'c' }, { 'м', 'v' }, { 'и', 'b' }, { 'т', 'n' }, { 'ь', 'm' },
+    { 'б', ',' }, { 'ю', '.' }, { '.', '/' },
+  }
+  for _, pair in ipairs(ru_to_en) do
+    map(pair[1], string.byte(pair[2]))
+  end
+
   map('<Tab>', 9)
   map('<CR>', 13)
   map('<S-CR>', 10)
