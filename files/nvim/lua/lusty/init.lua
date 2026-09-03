@@ -62,22 +62,27 @@ function M.setup()
   -- Default mappings are ON unless the option explicitly disables them.
   local dm = vim.g.LustyExplorerDefaultMappings
   if not (dm == 0 or dm == false or dm == '0') then
-    -- Single-key access: ,l = filesystem explorer from the current file's dir.
-    vim.keymap.set('n', '<leader>l', function()
+    -- ,l must fire INSTANTLY: it is an exact map AND a prefix of the old
+    -- ,l[fbgr] chords, so nvim would wait for a second key and swallow the
+    -- first typed query letter (typing ',lgames' opened BufferGrep with
+    -- 'ames').  Secondary functions moved off the 'l' prefix:
+    --   ,l  filesystem explorer from here (nowait)
+    --   ,C  filesystem explorer (cwd)
+    --   ,B  buffer explorer
+    --   ,G  buffer grep
+    local function from_here()
       local d = vim.fn.expand('%:p:h')
       fs.run(d == '' and vim.fn.getcwd() or d)
-    end, { desc = 'Lusty filesystem explorer from here' })
-    vim.keymap.set('n', '<leader>lf', function()
+    end
+    vim.keymap.set('n', '<leader>l', from_here,
+      { nowait = true, desc = 'Lusty filesystem explorer from here' })
+    vim.keymap.set('n', '<leader>C', function()
       fs.run(nil)
     end, { desc = 'Lusty filesystem explorer (cwd)' })
-    vim.keymap.set('n', '<leader>lr', function()
-      local d = vim.fn.expand('%:p:h')
-      fs.run(d == '' and vim.fn.getcwd() or d)
-    end, { desc = 'Lusty filesystem explorer from here' })
-    vim.keymap.set('n', '<leader>lb', function()
+    vim.keymap.set('n', '<leader>B', function()
       be.run()
     end, { desc = 'Lusty buffer explorer' })
-    vim.keymap.set('n', '<leader>lg', function()
+    vim.keymap.set('n', '<leader>G', function()
       bg.run()
     end, { desc = 'Lusty buffer grep' })
   end
