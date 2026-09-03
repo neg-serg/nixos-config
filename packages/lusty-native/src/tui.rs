@@ -186,8 +186,7 @@ impl App {
         // terminal buffer (possibly itself inside a web xterm), whose
         // alt-screen emulation is unreliable. The shim deletes the buffer on
         // exit anyway, so clear the frame and print the selection.
-        let esc = char::from_u32(0x1b).unwrap();
-        write!(io::stdout(), "{esc}[2J{esc}[H")?;
+        self.clear_panel(&mut io::stdout())?;
         terminal::disable_raw_mode()?;
         execute!(io::stdout(), cursor::Show)?;
         let mut so = io::stdout().lock();
@@ -210,8 +209,7 @@ impl App {
             self.size = ((c as usize).max(40), (r as usize).max(10));
         }
         let result = self.loop_events(&mut stdout);
-        let esc = char::from_u32(0x1b).unwrap();
-        write!(stdout, "{esc}[2J{esc}[H")?;
+        self.clear_panel(&mut stdout)?;
         terminal::disable_raw_mode()?;
         execute!(stdout, cursor::Show)?;
         result
@@ -275,8 +273,15 @@ fn parse_dsr(s: &str) -> Option<(usize, usize)> {
 
 impl App {
     fn list_rows(&self) -> usize {
+        // bottom panel like fzf --height: 12 rows total incl the prompt
         let h = self.size.1;
-        h.saturating_sub(1).max(1)
+        (h.min(12)).saturating_sub(1).max(1)
+    }
+
+    /// 0-based top row of the bottom panel.
+    fn panel_top(&self) -> usize {
+        let h = self.size.1;
+        h.saturating_sub(self.list_rows() + 1)
     }
 
     /// Adaptive columns: as many as the content needs (ceil(total/rows)),
@@ -391,15 +396,12 @@ impl App {
         let rows = self.list_rows();
         let cols = self.max_cols();
         let col_w = self.col_width();
+        let top = self.panel_top();
         let esc = char::from_u32(0x1b).unwrap();
         let mut frame = String::with_capacity((w + 64) * (rows + 2));
 
-        frame.push(esc);
-        frame.push_str("[2J");
-        frame.push(esc);
-        frame.push_str("[H");
-
-        // row-major grid: fill a row left-to-right, then the next row down
+        // Bottom panel (fzf --height style): redraw only the panel lines with
+        // absolute positioning and erase-to-EOL; terminal content above stays.
         for r in 0..rows {
             let mut line = String::new();
             for c in 0..cols {
@@ -410,7 +412,6 @@ impl App {
                     let i = self.ranked[pos];
                     let e = self.listing()[i].clone();
                     if selected {
-                        // neg.nvim PmenuSel style: lit blue bar + light text
                         cell.push(esc);
                         cell.push_str("[48;2;0;95;175;1;38;2;209;229;255m");
                     } else {
@@ -436,17 +437,37 @@ impl App {
                 }
             }
             ansi_pad(&mut line, w.saturating_sub(1).max(1));
+            frame.push(esc);
+            frame.push_str(&format!("[{};1H", top + r + 1));
             frame.push_str(&line);
-            frame.push('\n');
+            frame.push(esc);
+            frame.push_str("[K");
         }
-
+        // prompt line at the bottom of the panel
         let mut prompt = self.prompt_line();
         ansi_pad(&mut prompt, w.saturating_sub(1).max(1));
+        frame.push(esc);
+        frame.push_str(&format!("[{};1H", top + rows + 1));
         frame.push_str(&prompt);
-        if let Ok(db) = std::env::var("LUSTY_DUMP_FRAME") {
-            let _ = std::fs::write(&db, &frame);
-        }
+        frame.push(esc);
+        frame.push_str("[K");
         write!(out, "{frame}")?;
+        out.flush()
+    }
+
+    /// Erase the panel lines (used when the picker exits).
+    fn clear_panel(&self, out: &mut io::Stdout) -> io::Result<()> {
+        let rows = self.list_rows() + 1;
+        let top = self.panel_top();
+        let esc = char::from_u32(0x1b).unwrap();
+        let mut s = String::new();
+        for r in 0..rows {
+            s.push(esc);
+            s.push_str(&format!("[{};1H", top + r + 1));
+            s.push(esc);
+            s.push_str("[K");
+        }
+        write!(out, "{s}")?;
         out.flush()
     }
 
