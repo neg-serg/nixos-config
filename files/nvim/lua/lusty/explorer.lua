@@ -386,12 +386,14 @@ local function paint(self, cells)
     return
   end
   local buf = self.buf_id
-  local function hl(start_row, start_col, end_row, end_col, group)
-    pcall(vim.api.nvim_buf_add_highlight, buf, ns, group, start_row, start_col, end_row, end_col)
+  -- nvim_buf_add_highlight(buffer, ns, group, line, col_start, col_end):
+  -- a highlight spans one line only (no end_row parameter).
+  local function hl(line, col_start, col_end, group)
+    pcall(vim.api.nvim_buf_add_highlight, buf, ns, group, line, col_start, col_end)
   end
 
   for row_idx, line_cells in ipairs(cells) do
-    local row0 = row_idx - 1
+    local line = row_idx - 1
     for _, cell in ipairs(line_cells) do
       local entry = self.matches[cell.entry_idx]
       if entry then
@@ -399,29 +401,29 @@ local function paint(self, cells)
         -- color resolver; falls back to the static LustyDir/LustySlash marks.
         local color_group = self.color_entry and self.color_entry(entry) or nil
         if color_group then
-          hl(row0, cell.byte_start - 1, row0, cell.byte_end, color_group)
+          hl(line, cell.byte_start - 1, cell.byte_end, color_group)
         else
           -- Directory/path prefix part (LustyDir + contained LustySlash).
           local slash = not entry.no_dir_hl and cell.content:match('.*()/') or nil
           if slash then
-            hl(row0, cell.byte_start - 1, row0, cell.byte_start - 1 + slash, 'LustySlash')
-            hl(row0, cell.byte_start - 1, row0, cell.byte_start - 1 + slash, 'LustyDir')
+            hl(line, cell.byte_start - 1, cell.byte_start - 1 + slash, 'LustySlash')
+            hl(line, cell.byte_start - 1, cell.byte_start - 1 + slash, 'LustyDir')
           end
         end
         if entry.modified then
           local b = cell.content:find(' [+]', 1, true)
           if b then
-            hl(row0, cell.byte_start - 1 + b - 1, row0, cell.byte_end, 'LustyModified')
+            hl(line, cell.byte_start - 1 + b - 1, cell.byte_end, 'LustyModified')
           end
         end
         if entry.is_current then
-          hl(row0, cell.byte_start - 1, row0, cell.byte_end, 'LustyCurrentBuffer')
+          hl(line, cell.byte_start - 1, cell.byte_end, 'LustyCurrentBuffer')
         end
         -- Subclass-provided marks (e.g. grep match/context splits).
         if entry.marks then
           for _, m in ipairs(entry.marks) do
             if m.group then
-              hl(row0, cell.byte_start - 1 + m.start, row0, cell.byte_start - 1 + m.finish, m.group)
+              hl(line, cell.byte_start - 1 + m.start, cell.byte_start - 1 + m.finish, m.group)
             end
           end
         end
@@ -434,7 +436,7 @@ local function paint(self, cells)
   for row_idx, line_cells in ipairs(cells) do
     for _, cell in ipairs(line_cells) do
       if cell.entry_idx == selected then
-        hl(row_idx - 1, cell.byte_start - 1, row_idx - 1, cell.byte_end, 'LustySelected')
+        hl(row_idx - 1, cell.byte_start - 1, cell.byte_end, 'LustySelected')
       end
     end
   end
@@ -442,11 +444,11 @@ local function paint(self, cells)
   -- Prompt line is the last line: '>> ' plus (when idle) the hint.
   local last = vim.api.nvim_buf_line_count(buf) - 1
   if last >= 0 then
-    hl(last, 0, last, #PROMPT_PREFIX, 'LustyPrompt')
+    hl(last, 0, #PROMPT_PREFIX, 'LustyPrompt')
     if self.hint and self.prompt:hint_active() then
       local line = vim.api.nvim_buf_get_lines(buf, last, last + 1, false)[1] or ''
       if #line > #PROMPT_PREFIX then
-        hl(last, #PROMPT_PREFIX, last, #line, 'LustyPromptHint')
+        hl(last, #PROMPT_PREFIX, #line, 'LustyPromptHint')
       end
     end
   end
