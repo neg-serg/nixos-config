@@ -1198,22 +1198,29 @@ Scope {
                     }
 
                     property string _lastAlbum: ""
+                    property string _lastTrackKey: ""
                     function maybeShowOnAlbumChange() {
                         try {
-                            if (!rightPanel.visible) return;
                             if (!MusicManager.hasPlayer) return;
+                            // Some tracks lack an album tag; derive a robust change
+                            // key from album+title+artist so the popup still fires.
                             const album = String(MusicManager.trackAlbum || "");
-                            if (!album || album.length === 0) return;
-                            if (album !== rightPanel._lastAlbum) {
-                                if (MusicManager.trackTitle || MusicManager.trackArtist) sidebarPopup.showAt();
-                                rightPanel._lastAlbum = album;
-                            }
+                            const title = String(MusicManager.trackTitle || "");
+                            const artist = String(MusicManager.trackArtist || "");
+                            const key = (album + "|" + title + "|" + artist);
+                            if (key === rightPanel._lastTrackKey) return;
+                            if (!title && !artist) return;
+                            rightPanel._lastTrackKey = key;
+                            if (album !== rightPanel._lastAlbum) rightPanel._lastAlbum = album;
+                            if (MusicManager.trackTitle || MusicManager.trackArtist) sidebarPopup.showAt();
                         } catch (e) { /* ignore */ }
                     }
                     
                     Connections {
                         target: MusicManager
                         function onTrackAlbumChanged()  { rightPanel.maybeShowOnAlbumChange(); }
+                        function onTrackTitleChanged()  { rightPanel.maybeShowOnAlbumChange(); }
+                        function onTrackArtistChanged() { rightPanel.maybeShowOnAlbumChange(); }
                     }
 
                     MouseArea {
