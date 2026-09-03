@@ -278,8 +278,8 @@ vim.g.LustyExplorerMaxHeightRatio = nil
 vim.g.LustyExplorerShowColors = nil
 print('PASS option knobs')
 
--- Gravity: g:LustyExplorerGravity = top | center (default) | bottom anchors
--- the float on the same content height.
+-- Gravity: g:LustyExplorerGravity = top | center | bottom anchors the float;
+-- the DEFAULT is bottom (like the original Lusty table).
 vim.cmd('edit! ' .. dir .. '/alpha.txt')
 local grav_rows = {}
 for _, g in ipairs({ 'top', 'center', 'bottom' }) do
@@ -292,6 +292,11 @@ end
 vim.g.LustyExplorerGravity = nil
 assert(grav_rows.top < grav_rows.center, 'gravity top anchors above center')
 assert(grav_rows.center < grav_rows.bottom, 'gravity bottom anchors below center')
+-- Default (option unset) must equal the explicit 'bottom' anchor.
+fs.run(big)
+local def_row = vim.api.nvim_win_get_config(0).row
+fs.explorer():cancel()
+assert_eq(def_row, grav_rows.bottom, 'default gravity is bottom')
 print('PASS gravity')
 
 print('ALL LUSTY SMOKE TESTS PASSED')
