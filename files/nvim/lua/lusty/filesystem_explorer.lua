@@ -1,8 +1,8 @@
 -- FilesystemExplorer: port of lusty/src/lusty/filesystem-explorer.rb.
-vim.g.__fs_marker = 'MARK2026'
 
 local util = require('lusty.util')
 local mercury = require('lusty.mercury')
+local fuzzy = require('lusty.fuzzy')
 local ls_colors = require('lusty.ls_colors')
 local E = require('lusty.explorer')
 
@@ -260,8 +260,10 @@ e.compute_sorted_matches = function()
   end
 
   local matches = {}
+  -- g:LustyExplorerFuzzyEngine = 'mercury' restores the original scorer.
+  local use_mercury = tostring(vim.g.LustyExplorerFuzzyEngine or '') == 'mercury'
   for _, entry in ipairs(unsorted) do
-    entry.score = mercury.score(entry.label, abbrev)
+    entry.score = use_mercury and mercury.score(entry.label, abbrev) or fuzzy.score(entry.label, abbrev)
     if entry.score ~= 0.0 then
       matches[#matches + 1] = entry
     end
