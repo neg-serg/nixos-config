@@ -211,12 +211,19 @@ function Picker:draw()
         if item.kind == 'd' then
           label = label .. '/'
         end
+        -- pad to the full column width (display cells) so columns align
         local text = label
-        if #text > col_w - 1 then
-          text = text:sub(1, col_w - 1)
+        local w = vim.fn.strdisplaywidth(text)
+        if w > col_w - 1 then
+          while w > col_w - 1 do
+            text = text:sub(1, -2)
+            w = vim.fn.strdisplaywidth(text)
+          end
+        else
+          text = text .. string.rep(' ', col_w - w)
         end
         bufparts[c] = text
-        cells[#cells + 1] = { line = r, col = c, item = item, pos = pos }
+        cells[#cells + 1] = { line = r, col = c, item = item, pos = pos, label_w = w }
       end
     end
     lines[r] = table.concat(bufparts, '  ')
@@ -244,7 +251,7 @@ function Picker:draw()
       sel_col0 = start_col
     end
     if group then
-      local len = #(cell.item.label)
+      local len = cell.label_w
       if len > col_w - 1 then
         len = col_w - 1
       end
