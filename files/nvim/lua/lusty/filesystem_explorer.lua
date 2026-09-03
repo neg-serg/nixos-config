@@ -393,12 +393,31 @@ local function all_files_at_view()
   return visible
 end
 
+-- Nesting level of a label (path components below the view): 'src/' = 1,
+-- 'src/foo/' = 2, 'src/foo/bar.txt' = 3.  Shallower entries always sort
+-- above deeper ones so the top of the list stays near the current dir.
+local function label_depth(label)
+  local p = label:gsub('/+$', '')
+  if p == '' then
+    return 0
+  end
+  local n = 1
+  for _ in vim.gsplit(p, '/', { plain = true }) do
+    n = n + 1
+  end
+  return n - 1
+end
+
 e.compute_sorted_matches = function()
   local abbrev = current_abbreviation()
   local unsorted = all_files_at_view()
 
   if abbrev == '' then
     table.sort(unsorted, function(a, b)
+      local da, db = label_depth(a.label), label_depth(b.label)
+      if da ~= db then
+        return da < db
+      end
       return a.label < b.label
     end)
     return unsorted
@@ -415,10 +434,18 @@ e.compute_sorted_matches = function()
   end
   if abbrev == '.' then
     table.sort(matches, function(a, b)
+      local da, db = label_depth(a.label), label_depth(b.label)
+      if da ~= db then
+        return da < db
+      end
       return a.label < b.label
     end)
   else
     table.sort(matches, function(a, b)
+      local da, db = label_depth(a.label), label_depth(b.label)
+      if da ~= db then
+        return da < db
+      end
       return a.score > b.score
     end)
   end

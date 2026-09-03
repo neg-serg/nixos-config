@@ -185,6 +185,28 @@ fs.run(dir)
 e = fs.explorer()
 local deep_labels = {}
 for _, m in ipairs(e.matches) do deep_labels[#deep_labels + 1] = m.label end
+
+-- Shallower entries must always come first: all depth-1 labels precede any
+-- nested (depth >= 2) label.
+local function label_level(l)
+  local p = l:gsub('/+$', '')
+  local n = 0
+  if p ~= '' then
+    for _ in vim.gsplit(p, '/', { plain = true }) do n = n + 1 end
+  end
+  return n
+end
+local last_shallow, first_nested = 0, nil
+for i, m in ipairs(e.matches) do
+  if label_level(m.label) == 1 then
+    last_shallow = i
+  elseif first_nested == nil then
+    first_nested = i
+  end
+end
+assert(last_shallow > 0 and (first_nested == nil or first_nested > last_shallow),
+  'shallower entries listed before nested ones')
+
 assert(vim.tbl_contains(deep_labels, 'sub/gamma.txt'), 'depth 2 lists nested file')
 assert(vim.tbl_contains(deep_labels, 'sub/deep/'), 'depth 2 lists level-2 dir')
 -- foo.txt lives at level 3 (sub/deep/foo.txt) and must NOT be listed at depth 2.
