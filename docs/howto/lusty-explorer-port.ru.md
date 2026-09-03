@@ -39,11 +39,12 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
 - Файловый explorer: поиск по умолчанию **с глубиной 2** (`g:LustyExplorerSearchDepth`, 1 =
   классический список только текущего каталога) — файлы в поддиректориях показываются с путём
   (`sub/gamma.txt`) и находятся фаззи-набором; вглубь **не заходит в точки монтирования** (`music`,
-  `/proc`, другие ФС) — они видны, но не обходятся (`g:LustyExplorerFollowMountPoints = 1`
-  включает); мемоизация каталогов (`<C-r>` — refresh), переход по `dir/` и `../`, `~` и `$VAR` в
-  prompt, dotfiles скрыты, пока запрос не начинается с `.` (или
-  `g:LustyExplorerAlwaysShowDotFiles = 1`), маски из `&wildignore` (или устаревший
-  `g:LustyExplorerFileMasks`).
+  `/proc`, другие ФС) и в **исключённые каталоги** (по умолчанию `pic`, `tmp` — список
+  `g:LustyExplorerSkipDirs`) — они видны, но не обходятся; `g:LustyExplorerFollowMountPoints = 1`
+  включает обход монтирований, `g:LustyExplorerSkipDirs = ''` отключает исключения. Мемоизация
+  каталогов (`<C-r>` — refresh), переход по `dir/` и `../`, `~` и `$VAR` в prompt, dotfiles скрыты,
+  пока запрос не начинается с `.` (или `g:LustyExplorerAlwaysShowDotFiles = 1`), маски из
+  `&wildignore` (или устаревший `g:LustyExplorerFileMasks`).
 - Цвет как в `ls --color`: палитра берётся **строго из `LS_COLORS`, унаследованного от shell** (у
   тебя: `~/.config/dircolors/dircolors` → `dircolors -b` в zsh), без каких-либо собственных правил
   поверх. Если `LS_COLORS` в окружении нет — используется дефолт `dircolors -b` (то же, что у plain
@@ -72,6 +73,8 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
   каталог, до 6).
 - `g:LustyExplorerFollowMountPoints` (0) — `1` разрешает глубокому поиску заходить в точки
   монтирования.
+- `g:LustyExplorerSkipDirs` (`pic,tmp`) — через запятую имена каталогов (или пути с `~`/`*`/`?`), в
+  которые глубокий поиск не заходит; `''` — отключить.
 - `g:LustyExplorerFuzzyEngine` (`smart`) — фаззи-ранжировка: `smart` (fzy-стиль, по умолчанию) или
   `mercury` (оригинальный алгоритм Lusty).
 
