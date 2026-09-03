@@ -209,32 +209,6 @@ local function parse_ls_colors(env)
   return cfg
 end
 
--- Minimal fallback when neither LS_COLORS nor dircolors is available.
-local FALLBACK = 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:'
-  .. 'bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:'
-  .. 'tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.gz=01;31:'
-  .. '*.bz2=01;31:*.xz=01;31:*.zip=01;31:*.7z=01;31:*.rar=01;31:*.deb=01;31:'
-  .. '*.rpm=01;31:*.iso=01;31:*.img=01;31:*.jpg=01;35:*.jpeg=01;35:*.png=01;35:'
-  .. '*.gif=01;35:*.svg=01;35:*.webp=01;35:*.bmp=01;35:*.ico=01;35:*.mp3=01;35:'
-  .. '*.flac=01;35:*.ogg=01;35:*.wav=01;35:*.mp4=01;35:*.mkv=01;35:*.avi=01;35:'
-  .. '*.mov=01;35:*.webm=01;35:*.pdf=01;31:*.ps=01;31:*.doc=01;31:*.docx=01;31:'
-  .. '*.xls=01;31:*.xlsx=01;31:*.ppt=01;31:*.pptx=01;31:*.odt=01;31:*.ods=01;31:'
-  .. '*.epub=01;31:*.djvu=01;31:*.tex=01;31:*.md=01;31:*.sql=01;31:*.log=01;31'
-
--- Extra rules appended after the user/system palette.  First match wins, so
--- these only colour extensions the palette left uncolored (code/config/docs).
-local EXTRA = '*.rs=38;5;114:*.go=38;5;114:*.py=38;5;114:*.lua=38;5;114:*.rb=38;5;114:'
-  .. '*.js=38;5;114:*.mjs=38;5;114:*.cjs=38;5;114:*.ts=38;5;114:*.tsx=38;5;114:*.jsx=38;5;114:'
-  .. '*.m=38;5;114:*.mm=38;5;114:*.c=38;5;114:*.h=38;5;114:*.cpp=38;5;114:*.hpp=38;5;114:'
-  .. '*.cc=38;5;114:*.cs=38;5;114:*.java=38;5;114:*.kt=38;5;114:*.scala=38;5;114:*.swift=38;5;114:'
-  .. '*.php=38;5;114:*.r=38;5;114:*.hs=38;5;114:*.ml=38;5;114:*.ex=38;5;114:*.exs=38;5;114:'
-  .. '*.erl=38;5;114:*.clj=38;5;114:*.nim=38;5;114:*.zig=38;5;114:*.sc=38;5;114:*.scd=38;5;114:'
-  .. '*.sh=38;5;114:*.bash=38;5;114:*.zsh=38;5;114:*.fish=38;5;114:*.ps1=38;5;114:*.sql=38;5;114:'
-  .. '*.nix=38;5;179:*.toml=38;5;179:*.yaml=38;5;179:*.yml=38;5;179:*.json=38;5;179:*.jsonc=38;5;179:'
-  .. '*.ini=38;5;179:*.cfg=38;5;179:*.conf=38;5;179:*.env=38;5;179:*.dockerfile=38;5;179:'
-  .. '*.md=38;5;75:*.markdown=38;5;75:*.rst=38;5;75:*.adoc=38;5;75:*.html=38;5;75:*.htm=38;5;75:'
-  .. '*.css=38;5;81:*.scss=38;5;81:*.less=38;5;81:*.xml=38;5;81:*.tex=38;5;75:*.bib=38;5;75'
-
 local cfg = nil
 local hl_cache = {}
 local hl_counter = 0
@@ -270,9 +244,12 @@ local function load_config()
   if cfg then
     return cfg
   end
+  -- Source of truth: LS_COLORS exported by the shell (dircolors).  Use it
+  -- verbatim; no custom rules of our own are merged in.
   local env = vim.env.LS_COLORS
   if env == nil or env == '' then
-    -- Try the system default (dircolors -b) for parity with 'ls --color'.
+    -- No inherited palette: generate the stock GNU palette the same way the
+    -- shell does (dircolors -b), so colours still match plain 'ls --color'.
     local ok, out = pcall(vim.fn.system, { 'dircolors', '-b' })
     if ok and vim.v.shell_error == 0 and type(out) == 'string' then
       local exported = out:match('LS_COLORS="(.-)"') or out:match("LS_COLORS='(.-)'")
@@ -281,22 +258,7 @@ local function load_config()
       end
     end
   end
-  cfg = parse_ls_colors(env and env ~= '' and env or FALLBACK)
-
-  -- Append code/config/doc rules that the palette did not cover.
-  local seen = {}
-  for _, it in ipairs(cfg.exts) do
-    seen[lower_keep_classes(it.key)] = true
-  end
-  local extra = parse_ls_colors(EXTRA)
-  for _, it in ipairs(extra.exts) do
-    local key = lower_keep_classes(it.key)
-    if not seen[key] then
-      seen[key] = true
-      cfg.exts[#cfg.exts + 1] = it
-    end
-  end
-
+  cfg = parse_ls_colors(env or '')
   return cfg
 end
 
