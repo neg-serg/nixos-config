@@ -137,7 +137,8 @@ lint:
     bash "$repo_root/scripts/dev/check-hyprland-vars.sh" "$repo_root" && \
     bash "$repo_root/scripts/dev/check-markdown-language.sh" && \
     bash "$repo_root/scripts/dev/check-all-syntax.sh" "$repo_root" && \
-    bash "$repo_root/scripts/dev/check-osh-syntax.sh" "$repo_root"
+    bash "$repo_root/scripts/dev/check-osh-syntax.sh" "$repo_root" && \
+    bash "$repo_root/scripts/dev/check-lusty-smoke.sh"
     just lint-annotations
 
 # Check that all packages in environment.systemPackages have inline annotations
