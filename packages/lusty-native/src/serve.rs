@@ -79,6 +79,16 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>) -> io::Result<
                 writeln!(out, "E")?;
                 out.flush()?;
             }
+            "D" => {
+                // top-level directories (depth 1) for '/' completion
+                for e in &entries {
+                    if e.depth == 1 && e.kind == FileKind::Dir {
+                        writeln!(out, "D {}", e.name)?;
+                    }
+                }
+                writeln!(out, "E")?;
+                out.flush()?;
+            }
             "P" => {
                 let i: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 if i < entries.len() {
