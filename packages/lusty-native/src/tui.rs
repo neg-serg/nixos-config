@@ -184,8 +184,14 @@ impl App {
             self.re_root(entry.path);
             return Ok(());
         }
+        // No alternate screen here: the picker usually runs inside a nvim
+        // terminal buffer (possibly itself inside a web xterm), whose
+        // alt-screen emulation is unreliable. The shim deletes the buffer on
+        // exit anyway, so clear the frame and print the selection.
+        let esc = char::from_u32(0x1b).unwrap();
+        write!(io::stdout(), "{esc}[2J{esc}[H")?;
         terminal::disable_raw_mode()?;
-        execute!(io::stdout(), LeaveAlternateScreen, cursor::Show)?;
+        execute!(io::stdout(), cursor::Show)?;
         let mut so = io::stdout().lock();
         writeln!(so, "{}\t{}", action, entry.path.display())?;
         so.flush()?;
@@ -195,10 +201,12 @@ impl App {
     pub fn run(&mut self) -> io::Result<i32> {
         terminal::enable_raw_mode()?;
         let mut stdout = io::stdout();
-        execute!(stdout, EnterAlternateScreen, cursor::Hide)?;
+        execute!(stdout, cursor::Hide)?;
         let result = self.loop_events(&mut stdout);
+        let esc = char::from_u32(0x1b).unwrap();
+        write!(stdout, "{esc}[2J{esc}[H")?;
         terminal::disable_raw_mode()?;
-        execute!(stdout, LeaveAlternateScreen, cursor::Show)?;
+        execute!(stdout, cursor::Show)?;
         result
     }
 }
