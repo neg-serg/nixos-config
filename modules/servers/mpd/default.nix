@@ -26,7 +26,7 @@ in
 {
   config = lib.mkIf cfg.enable {
     systemd.services.mpd.serviceConfig = {
-      Environment = "XDG_RUNTIME_DIR=/run/user/${builtins.toString myUID}";
+      Environment = "XDG_RUNTIME_DIR=/run/user/${builtins.toString myUID} PULSE_SINK=game-stereo"; # pin MPD to the game-stereo virtual sink: never let it auto-link straight to the RME AES pair (double-routing caused ~18ms echo -> muddy bass)
       # Hardening
       ProtectSystem = "strict";
       PrivateTmp = true;
