@@ -43,6 +43,7 @@ function Picker.new(root)
   self.window = {} -- ranked pos (offset+1..) -> { i, kind, label, path }
   self.pending = nil
   self.outbuf = {}
+  self.dirs = nil -- cached top-level dir names for '/' completion
   self.closed = false
   self.orig_win = api.nvim_get_current_win()
   return self
@@ -439,11 +440,53 @@ function Picker:handle(action)
   end
   -- typing: action is a character
   local ch = action
+  if ch == '/' then
+    self:slash_enter()
+    return
+  end
   if #ch == 1 then
     self.query = self.query .. ch
     self.selected = 0
     self.offset = 0
     self:rerank()
+  end
+end
+
+--- '/' descends into a directory when the typed prefix uniquely names one
+--- (exact name or unique prefix), shell style.
+function Picker:slash_enter()
+  local q = self.query
+  if q == '' then
+    return
+  end
+  if self.dirs == nil then
+    self:request({ 'D' }, function(lines)
+      local dirs = {}
+      for _, ln in ipairs(lines) do
+        local name = ln:match('^D (.+)$')
+        if name then
+          dirs[#dirs + 1] = name
+        end
+      end
+      self.dirs = dirs
+      self:complete_slash(q)
+    end)
+    return
+  end
+  self:complete_slash(q)
+end
+
+function Picker:complete_slash(q)
+  local ql = q:lower()
+  local candidates = {}
+  for _, d in ipairs(self.dirs or {}) do
+    if d:lower() == ql or d:lower():sub(1, #ql) == ql then
+      candidates[#candidates + 1] = d
+    end
+  end
+  if #candidates == 1 then
+    local path = self.root == '/' and '/' .. candidates[1] or self.root .. '/' .. candidates[1]
+    self:restart(path)
   end
 end
 
