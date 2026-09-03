@@ -3,9 +3,11 @@
 //! Phase 1 exposes a --list mode for benchmarking the listing engine against
 //! the Lua port (readdir + getftype per entry). The TUI lands in a later phase.
 
+mod fuzzy;
 mod glob;
 mod listing;
 mod mount;
+mod rank;
 
 use std::path::PathBuf;
 use std::time::Instant;
@@ -16,7 +18,7 @@ fn main() {
         run_list(&args);
         return;
     }
-    eprintln!("usage: lusty-native --list <root> [--depth N] [--show-dots] [--skip a,b]");
+    eprintln!("usage: lusty-native --list <root> [--depth N] [--show-dots] [--skip a,b] [--query Q]");
     std::process::exit(2);
 }
 
@@ -25,6 +27,7 @@ fn run_list(args: &[String]) {
     let mut depth = 2usize;
     let mut show_dots = false;
     let mut skip = "pic,tmp".to_string();
+    let mut query = String::new();
 
     let mut i = 1;
     while i < args.len() {
@@ -34,6 +37,10 @@ fn run_list(args: &[String]) {
                 depth = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(2);
             }
             "--show-dots" => show_dots = true,
+            "--query" => {
+                i += 1;
+                query = args.get(i).cloned().unwrap_or_default();
+            }
             "--skip" => {
                 i += 1;
                 skip = args.get(i).cloned().unwrap_or_default();
@@ -59,17 +66,40 @@ fn run_list(args: &[String]) {
     };
 
     let t0 = Instant::now();
-    let entries = listing::list(&root, &opts);
-    let dt = t0.elapsed();
+    let mut entries = listing::list(&root, &opts);
+    let dt_list = t0.elapsed();
+
+    let total = entries.len();
 
     let mut out = String::new();
-    for e in &entries {
-        out.push_str(&e.name);
-        if e.is_dir {
-            out.push('/');
+    if query.is_empty() {
+        for e in &entries {
+            push_label(&mut out, e);
         }
-        out.push('\n');
+        eprintln!("{} entries in {:?}", total, dt_list);
+    } else {
+        let t1 = Instant::now();
+        let ranked = rank::filter_and_rank(std::mem::take(&mut entries), &query);
+        let dt_rank = t1.elapsed();
+        for e in &ranked {
+            push_label(&mut out, e);
+        }
+        eprintln!(
+            "{} of {} entries in {:?} (list) + {:?} (rank '{}')",
+            ranked.len(),
+            total,
+            dt_list,
+            dt_rank,
+            query
+        );
     }
     print!("{out}");
-    eprintln!("{} entries in {:?}", entries.len(), dt);
+}
+
+fn push_label(out: &mut String, e: &listing::Entry) {
+    out.push_str(&e.label);
+    if e.is_dir {
+        out.push('/');
+    }
+    out.push('\n');
 }
