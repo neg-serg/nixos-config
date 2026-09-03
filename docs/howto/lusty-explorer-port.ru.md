@@ -43,13 +43,15 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
   MRU, при запросе — сначала по score Mercury, при равенстве — по номеру буфера.
 - Файловый explorer: поиск по умолчанию **с глубиной 2** (`g:LustyExplorerSearchDepth`, 1 =
   классический список только текущего каталога) — файлы в поддиректориях показываются с путём
-  (`sub/gamma.txt`) и находятся фаззи-набором; вглубь **не заходит в точки монтирования** (`music`,
-  `/proc`, другие ФС) и в **исключённые каталоги** (по умолчанию `pic`, `tmp` — список
-  `g:LustyExplorerSkipDirs`) — они видны, но не обходятся; `g:LustyExplorerFollowMountPoints = 1`
-  включает обход монтирований, `g:LustyExplorerSkipDirs = ''` отключает исключения. Мемоизация
-  каталогов (`<C-r>` — refresh), переход по `dir/` и `../`, `~` и `$VAR` в prompt, dotfiles скрыты,
-  пока запрос не начинается с `.` (или `g:LustyExplorerAlwaysShowDotFiles = 1`), маски из
-  `&wildignore` (или устаревший `g:LustyExplorerFileMasks`).
+  (`sub/gamma.txt`) и находятся фаззи-набором; **менее вложенные записи всегда сверху** (сначала
+  текущий каталог, потом уровень 2), чтобы `Tab`/`Enter` не уводил сразу вглубь; вглубь **не заходит
+  в точки монтирования** (`music`, `/proc`, другие ФС) и в **исключённые каталоги** (по умолчанию
+  `pic`, `tmp` — список `g:LustyExplorerSkipDirs`) — они видны, но не обходятся;
+  `g:LustyExplorerFollowMountPoints = 1` включает обход монтирований, `g:LustyExplorerSkipDirs = ''`
+  отключает исключения. Мемоизация каталогов (`<C-r>` — refresh), переход по `dir/` и `../`, `~` и
+  `$VAR` в prompt, dotfiles скрыты, пока запрос не начинается с `.` (или
+  `g:LustyExplorerAlwaysShowDotFiles = 1`), маски из `&wildignore` (или устаревший
+  `g:LustyExplorerFileMasks`).
 - Цвет как в `ls --color`: палитра берётся **строго из `LS_COLORS`, унаследованного от shell** (у
   тебя: `~/.config/dircolors/dircolors` → `dircolors -b` в zsh), без каких-либо собственных правил
   поверх. Если `LS_COLORS` в окружении нет — используется дефолт `dircolors -b` (то же, что у plain
