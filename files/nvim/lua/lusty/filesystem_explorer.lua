@@ -234,22 +234,22 @@ local function fetch_view(view)
     else
       if not util.masked(name, e.masks) then
         local full = view .. '/' .. name
+        -- One lstat per entry (exec colour is resolved lazily at paint time).
         local ftype = vim.fn.getftype(full)
-        local is_dir = vim.fn.isdirectory(full) == 1
+        local is_dir = ftype == 'dir'
         local is_link = ftype == 'link'
-        local entry = {
+        if is_link then
+          is_dir = vim.fn.isdirectory(full) == 1 -- label symlink-to-dir with '/'
+        end
+        entries[#entries + 1] = {
           label = is_dir and (name .. '/') or name,
           name = name,
+          path = full,
           is_dir = is_dir,
           is_link = is_link,
           is_socket = ftype == 'socket',
           is_pipe = ftype == 'fifo',
         }
-        if ftype == 'file' then
-          local perm = vim.fn.getfperm(full)
-          entry.is_exec = type(perm) == 'string' and perm:find('x') ~= nil
-        end
-        entries[#entries + 1] = entry
       end
     end
   end
@@ -281,21 +281,21 @@ local function raw_children(dir)
   for _, name in ipairs(names) do
     if name ~= '.' and name ~= '..' and not util.masked(name, e.masks) then
       local full = dir .. '/' .. name
+      -- One lstat per child; exec colour resolves lazily at paint time.
       local ftype = vim.fn.getftype(full)
-      local is_dir = vim.fn.isdirectory(full) == 1
-      local entry = {
+      local is_dir = ftype == 'dir'
+      local is_link = ftype == 'link'
+      if is_link then
+        is_dir = vim.fn.isdirectory(full) == 1
+      end
+      out[#out + 1] = {
         name = name,
         is_dir = is_dir,
-        is_link = ftype == 'link',
+        is_link = is_link,
         is_socket = ftype == 'socket',
         is_pipe = ftype == 'fifo',
         full = full,
       }
-      if ftype == 'file' then
-        local perm = vim.fn.getfperm(full)
-        entry.is_exec = type(perm) == 'string' and perm:find('x') ~= nil
-      end
-      out[#out + 1] = entry
     end
   end
   return out
@@ -315,11 +315,12 @@ local function build_deep(view)
         entries[#entries + 1] = {
           label = c.is_dir and (rel2 .. '/') or rel2,
           name = c.name,
+          path = c.full,
           is_dir = c.is_dir,
           is_link = c.is_link,
           is_socket = c.is_socket,
           is_pipe = c.is_pipe,
-          is_exec = c.is_exec,
+          is_exec = nil, -- resolved lazily at paint time
         }
       end
       if c.is_dir and not c.is_link and level + 1 < depth then
