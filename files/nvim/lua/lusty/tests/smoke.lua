@@ -3,7 +3,7 @@
 
 -- Deterministic dircolors palette for the coloring assertions (do not depend
 -- on whatever LS_COLORS the calling shell exports).
-vim.env.LS_COLORS = 'di=01;34:ln=01;36:ex=01;32:*.jpg=01;35'
+vim.env.LS_COLORS = 'di=01;34:ln=01;36:ex=01;32:*.jpg=01;35:*.lua=38;5;114'
 
 local base = vim.fn.fnamemodify(arg[0], ':p:h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
@@ -68,7 +68,7 @@ end
 assert(lsc.group_for(find_entry('sub/')) ~= nil, 'dir colored (di)')
 assert(lsc.group_for(find_entry('pic.jpg')) ~= nil, 'jpg colored')
 assert(lsc.group_for(find_entry('alpha.txt')) == nil, 'txt has no rule')
-assert(lsc.group_for(find_entry('beta.lua')) ~= nil, 'lua colored via extra rules')
+assert(lsc.group_for(find_entry('beta.lua')) ~= nil, 'lua colored from inherited LS_COLORS')
 
 -- The colors must actually be painted as buffer highlights (regression:
 -- nvim_buf_add_highlight takes no end_row; a bad call silently dropped all
@@ -77,21 +77,28 @@ local marks_buf = vim.api.nvim_get_current_buf()
 local lusty_ns = vim.api.nvim_get_namespaces()['lusty_explorer']
 local marks = vim.api.nvim_buf_get_extmarks(marks_buf, lusty_ns, 0, -1, { details = true })
 local painted = 0
+local prompt_hl = 0
 for _, m in ipairs(marks) do
   local g = (m[4] or {}).hl_group
   if g and g:find('^LustyLs') then
     painted = painted + 1
+  elseif g == 'LustyPrompt' then
+    prompt_hl = prompt_hl + 1
   end
 end
 assert(painted >= 2, 'dircolors highlights painted on cells')
 
--- Multi-row layout + footer hint: several visible lines, hint about '.'.
+-- Prompt drawing: no footer hint anymore; an empty query renders exactly
+-- '>> ' and the LustyPrompt highlight covers its prefix.
 assert_eq(e.row_count, 4, 'multi-row layout (4 rows)')
 local cur_buf = vim.api.nvim_get_current_buf()
 local nlines = vim.api.nvim_buf_line_count(cur_buf)
 assert(nlines >= 5, 'buffer shows several lines')
 local footer = vim.api.nvim_buf_get_lines(cur_buf, nlines - 1, nlines, false)[1] or ''
-assert(footer:find('скрытые', 1, true) ~= nil, 'hint mentions hidden files')
+-- FS prompt shows the path being browsed (like the original LustyExplorer).
+assert_eq(footer, '>> ' .. dir .. '/', 'prompt line shows >> + path')
+assert(footer:find('скрытые', 1, true) == nil, 'no hint text in the prompt')
+assert(prompt_hl >= 1, 'LustyPrompt painted on the footer')
 e:cancel()
 
 -- Typing '.' reveals dotfiles (including the parent '..').
