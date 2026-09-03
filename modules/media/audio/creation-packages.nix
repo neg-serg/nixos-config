@@ -42,7 +42,6 @@ let
 
     # -- Patchbays & Plugin Hosts --
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
-    pkgs.neg.zest # CLI for plugin management: zest list/add/rm/ls
     pkgs.neg.renoise-osc # OSC CLI for Renoise: renoise-osc eval '...' / renoise-reverb [--track N] [--wet X]
     pkgs.neg.midi-transcribe # audio->MIDI transcription: midi-transcribe <file.mp3> (hFT-Transformer, CPU)
     pkgs.neg.midi2sheet # MIDI -> sheet music PDF: midi2sheet <file.mid> [-o out.pdf] [--mscz] (headless MuseScore)
