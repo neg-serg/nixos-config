@@ -8,6 +8,9 @@ vim.env.LS_COLORS = 'di=01;34:ln=01;36:ex=01;32:*.jpg=01;35:*.lua=38;5;114'
 -- depth-search test enables g:LustyExplorerSearchDepth = 2 itself.
 vim.g.LustyExplorerSearchDepth = 1
 vim.g.LustyExplorerInputDebounce = 0 -- synchronous recompute for tests
+-- ,l / LustyFilesystemExplorer dispatch to the native Rust picker by default;
+-- keep the smoke exercising the Lua port (the fallback).
+vim.g.LustyExplorerNative = 0
 
 local base = vim.fn.fnamemodify(arg[0], ':p:h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
@@ -402,6 +405,17 @@ local def_row = vim.api.nvim_win_get_config(0).row
 fs.explorer():cancel()
 assert_eq(def_row, grav_rows.bottom, 'default gravity is bottom')
 print('PASS gravity')
+
+-- Native shim: selection-line parsing (the Lua side of the Rust picker).
+local native = require('lusty.native')
+local na, np = native._find_selection({ 'scratch', '', 'edit	/tmp/x.lua', 'tail' })
+assert_eq(na, 'edit', 'native shim parses action')
+assert_eq(np, '/tmp/x.lua', 'native shim parses path')
+local na2 = native._find_selection({ 'no selection here', '' })
+assert(na2 == nil, 'cancel leaves no selection')
+local nv = native._find_selection({ 'vsplit	/sub dir/f.tex' })
+assert_eq(nv, 'vsplit', 'vsplit token parsed')
+print('PASS native shim parsing')
 
 print('ALL LUSTY SMOKE TESTS PASSED')
 
