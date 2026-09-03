@@ -59,7 +59,17 @@ function Picker:height()
 end
 
 function Picker:list_rows()
-  return math.max(1, self:height() - 3)
+  return math.max(1, self:height() - 2)
+end
+
+--- Max columns of the entry grid (original Lusty table feel).
+function Picker:max_cols()
+  return math.max(1, math.min(8, math.floor(self:width() / 18)))
+end
+
+--- Number of positions covered by one screenful of the grid.
+function Picker:screen_count()
+  return self:list_rows() * self:max_cols()
 end
 
 function Picker:open_window()
@@ -118,8 +128,20 @@ function Picker:setup_keymaps()
   map('<C-w>', 'updir')
   map('<C-n>', 'down')
   map('<C-p>', 'up')
-  map('<C-f>', 'pagedown')
-  map('<C-b>', 'pageup')
+  map('<C-n>', 'down')
+  map('<Down>', 'down')
+  map('<C-p>', 'up')
+  map('<Up>', 'up')
+  map('<C-f>', 'colnext')
+  map('<Right>', 'colnext')
+  map('<C-b>', 'colprev')
+  map('<Left>', 'colprev')
+  map('<PageDown>', 'pagedown')
+  map('<PageUp>', 'pageup')
+  map('<Home>', 'first')
+  map('<C-a>', 'first')
+  map('<End>', 'last')
+  map('<C-e>', 'last')
   map('<C-u>', 'clear')
   map('<C-t>', 'open_tab')
   map('<C-o>', 'open_split')
@@ -136,9 +158,8 @@ function Picker:request(parts, handler)
 end
 
 function Picker:rerank()
-  local rows = self:list_rows()
   local from = self.offset
-  local to = self.offset + rows
+  local to = self.offset + self:screen_count()
   self:request({ 'Q', tostring(from), tostring(to), self.query }, function(lines)
     local win_rows = {}
     local total = self.total
@@ -174,23 +195,31 @@ function Picker:draw()
     return
   end
   local rows = self:list_rows()
-  local h = rows + 2 -- list rows + one prompt line
+  local cols = self:max_cols()
+  local h = rows + 1 -- grid rows + one prompt line
+  local col_w = math.max(6, math.floor(self:width() / cols))
   local lines = {}
-  local meta = {} -- buffer line -> row info
+  local cells = {} -- { line, col, item, pos }
   for r = 1, rows do
-    local item = self.window[r]
-    if item then
-      local label = item.label
-      if item.kind == 'd' then
-        label = label .. '/'
+    local bufparts = {}
+    for c = 1, cols do
+      local pos = self.offset + (c - 1) * rows + (r - 1)
+      local item = self.window[pos - self.offset + 1]
+      if item then
+        local label = item.label
+        if item.kind == 'd' then
+          label = label .. '/'
+        end
+        local text = label
+        if #text > col_w - 1 then
+          text = text:sub(1, col_w - 1)
+        end
+        bufparts[c] = text
+        cells[#cells + 1] = { line = r, col = c, item = item, pos = pos }
       end
-      lines[r] = label
-      meta[r] = item
-    else
-      lines[r] = ''
     end
+    lines[r] = table.concat(bufparts, '  ')
   end
-  -- pad to full height, then the prompt line at the bottom
   for i = 1, h do
     if not lines[i] then
       lines[i] = ''
@@ -200,22 +229,30 @@ function Picker:draw()
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
-  for line_no, item in pairs(meta) do
+  local sel_col0 = 0
+  for _, cell in ipairs(cells) do
     local entry = {
-      name = basename(item.label),
-      is_dir = item.kind == 'd',
-      is_link = item.kind == 'l',
-      path = item.path,
+      name = basename(cell.item.label),
+      is_dir = cell.item.kind == 'd',
+      is_link = cell.item.kind == 'l',
+      path = cell.item.path,
     }
     local group = lsc.group_for(entry)
+    local start_col = (cell.col - 1) * (col_w + 2)
+    if cell.pos == self.selected then
+      sel_col0 = start_col
+    end
     if group then
-      api.nvim_buf_add_highlight(self.buf, ns, group, line_no - 1, 0, -1)
+      local len = #(cell.item.label)
+      if len > col_w - 1 then
+        len = col_w - 1
+      end
+      api.nvim_buf_add_highlight(self.buf, ns, group, cell.line - 1, start_col, start_col + len)
     end
   end
-  -- selection marker
-  local sel_line = 1 + (self.selected - self.offset) + 1
-  if meta[sel_line - 1] then
-      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_line - 1, 0, -1)
+  if self.total > 0 then
+    local sel_line = 1 + (self.selected % rows)
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_line - 1, sel_col0, sel_col0 + col_w - 1)
   end
   self:paint_prompt(h)
 end
@@ -272,12 +309,41 @@ end
 
 function Picker:ensure_visible()
   local rows = self:list_rows()
-  if self.selected < self.offset then
-    self.offset = self.selected
-  elseif self.selected >= self.offset + rows then
-    self.offset = self.selected - rows + 1
+  local cols = self:max_cols()
+  local col_start = math.floor(self.offset / rows)
+  local sel_col = math.floor(self.selected / rows)
+  if sel_col < col_start then
+    col_start = sel_col
+  elseif sel_col >= col_start + cols then
+    col_start = sel_col - cols + 1
   end
-  self.offset = math.max(0, self.offset)
+  if col_start < 0 then
+    col_start = 0
+  end
+  self.offset = col_start * rows
+end
+
+--- Move one grid column left/right (wrap), mirroring the Lua port.
+function Picker:column_nav(delta)
+  local rows = self:list_rows()
+  if self.total == 0 or rows == 0 then
+    self.selected = 0
+    return
+  end
+  local columns = math.ceil(self.total / rows)
+  local cur_col = math.floor(self.selected / rows)
+  local cur_row = self.selected % rows
+  local new_col = (cur_col + delta) % columns
+  if (new_col + 1) * (cur_row + 1) > self.total then
+    new_col = delta > 0 and 0 or math.max(0, columns - 2)
+  end
+  local sel = new_col * rows + cur_row
+  if sel >= self.total then
+    sel = self.total - 1
+  end
+  self.selected = sel
+  self:ensure_visible()
+  self:rerank()
 end
 
 function Picker:close()
@@ -320,11 +386,23 @@ function Picker:handle(action)
     end
     return
   end
+  if action == 'colnext' or action == 'colprev' then
+    self:column_nav(action == 'colnext' and 1 or -1)
+    return
+  end
   if action == 'pagedown' or action == 'pageup' then
-    local rows = self:list_rows()
-    local delta = action == 'pagedown' and rows or -rows
+    local screen = self:screen_count()
+    local delta = action == 'pagedown' and screen or -screen
     if self.total > 0 then
       self.selected = math.max(0, math.min(self.selected + delta, self.total - 1))
+      self:ensure_visible()
+      self:rerank()
+    end
+    return
+  end
+  if action == 'first' or action == 'last' then
+    if self.total > 0 then
+      self.selected = action == 'first' and 0 or (self.total - 1)
       self:ensure_visible()
       self:rerank()
     end
