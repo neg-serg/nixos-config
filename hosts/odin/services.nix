@@ -30,7 +30,10 @@ let
   # (fe1a52307^:modules/user/nix-maid/sys/user-services.nix).
   telegramBridgeScript = pkgs.writeShellApplication {
     name = "telegram-alert-bridge";
-    runtimeInputs = [ pkgs.python3 ]; # Python runtime for the webhook listener
+    runtimeInputs = [
+      pkgs.python3
+      pkgs.curl
+    ]; # curl: Telegram API is only reachable via the sing-box socks proxy
     text = ''
             set -euo pipefail
 
@@ -48,8 +51,7 @@ let
       import json
       import os
       from http.server import BaseHTTPRequestHandler, HTTPServer
-      from urllib.parse import urlencode
-      from urllib.request import Request, urlopen
+      import subprocess
 
       TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
       CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
@@ -68,13 +70,18 @@ let
                   severity = labels.get("severity", "unknown")
                   summary = annotations.get("summary", "No summary")
                   msg = "[{0}] [{1}] {2}: {3}".format(status, severity, name, summary)
-                  body = urlencode({"chat_id": CHAT_ID, "text": msg}).encode("utf-8")
-                  urlopen(
-                      Request(
+                  # api.telegram.org is unreachable from this host without the
+                  # sing-box socks proxy (socks5h://127.0.0.1:10808).
+                  subprocess.run(
+                      [
+                          "/run/current-system/sw/bin/curl",
+                          "-s", "-o", "/dev/null",
+                          "--proxy", "socks5h://127.0.0.1:10808",
+                          "--data-urlencode", "chat_id={0}".format(CHAT_ID),
+                          "--data-urlencode", "text={0}".format(msg),
                           API_URL,
-                          data=body,
-                          headers={"Content-Type": "application/x-www-form-urlencoded"},
-                      )
+                      ],
+                      check=False,
                   )
               self.send_response(200)
               self.end_headers()
