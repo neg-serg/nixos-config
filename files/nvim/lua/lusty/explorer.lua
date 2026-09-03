@@ -710,7 +710,9 @@ function Explorer:key_pressed(code)
     self:refresh(mode)
     -- Force an immediate screen update so typed characters and the filtered
     -- list appear right after each key instead of being batched by redraw.
-    if self.running then
+    -- g:LustyExplorerImmediateRedraw = 0 disables it for A/B latency tests.
+    local immediate = vim.g.LustyExplorerImmediateRedraw
+    if self.running and immediate ~= 0 and immediate ~= false and immediate ~= '0' then
       vim.cmd('redraw')
     end
   end
