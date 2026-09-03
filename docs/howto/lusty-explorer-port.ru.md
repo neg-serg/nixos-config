@@ -69,7 +69,9 @@ Ruby) на Lua под конфиг `files/nvim`. Оригинал в Neovim не
 
 ## Опции
 
-- `g:LustyExplorerDefaultMappings` (по умолчанию 1) — `0` отключает `<Leader>lf/lr/lb/lg`.
+- `g:LustyExplorerDefaultMappings` (по умолчанию 1) — `0` отключает дефолтные клавиши.
+- `g:LustyExplorerInputDebounce` (80 мс) — задержка перестроения таблицы при вводе: буквы
+  эхо-мгновенно, список обновляется после паузы (`0` — пересчёт на каждую клавишу).
 - `g:LustyExplorerAlwaysShowDotFiles` — показывать dotfiles всегда.
 - `g:LustyExplorerFileMasks` — устаревший аналог `&wildignore`.
 - `g:LustyExplorerShowColors` (по умолчанию включено) — `0` отключает dircolors-раскраску ячеек.
