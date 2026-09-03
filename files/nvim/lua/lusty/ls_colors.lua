@@ -248,13 +248,23 @@ local function load_config()
   -- verbatim; no custom rules of our own are merged in.
   local env = vim.env.LS_COLORS
   if env == nil or env == '' then
-    -- No inherited palette: generate the stock GNU palette the same way the
-    -- shell does (dircolors -b), so colours still match plain 'ls --color'.
-    local ok, out = pcall(vim.fn.system, { 'dircolors', '-b' })
-    if ok and vim.v.shell_error == 0 and type(out) == 'string' then
-      local exported = out:match('LS_COLORS="(.-)"') or out:match("LS_COLORS='(.-)'")
-      if exported then
-        env = exported
+    -- No inherited palette: prefer the user's own dircolors file (the same
+    -- one the shell evals), then fall back to the stock GNU palette like
+    -- plain 'ls --color'.
+    local candidates = {}
+    local user_file = vim.env.HOME .. '/.config/dircolors/dircolors'
+    if vim.fn.filereadable(user_file) == 1 then
+      candidates[#candidates + 1] = { 'dircolors', '-b', user_file }
+    end
+    candidates[#candidates + 1] = { 'dircolors', '-b' }
+    for _, args in ipairs(candidates) do
+      local ok, out = pcall(vim.fn.system, args)
+      if ok and vim.v.shell_error == 0 and type(out) == 'string' then
+        local exported = out:match('LS_COLORS="(.-)"') or out:match("LS_COLORS='(.-)'")
+        if exported then
+          env = exported
+          break
+        end
       end
     end
   end
