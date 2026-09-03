@@ -7,6 +7,7 @@ vim.env.LS_COLORS = 'di=01;34:ln=01;36:ex=01;32:*.jpg=01;35:*.lua=38;5;114'
 -- Classic single-directory listing for the tests below; the dedicated
 -- depth-search test enables g:LustyExplorerSearchDepth = 2 itself.
 vim.g.LustyExplorerSearchDepth = 1
+vim.g.LustyExplorerInputDebounce = 0 -- synchronous recompute for tests
 
 local base = vim.fn.fnamemodify(arg[0], ':p:h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
