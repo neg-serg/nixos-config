@@ -156,7 +156,8 @@ function Explorer.new(opts)
   local self = setmetatable({}, Explorer)
   self.title = opts.title or 'LustyExplorer'
   self.single_column = opts.single_column or false
-  self.prompt = Prompt.new(opts.filesystem or false)
+  self.filesystem = opts.filesystem or false
+  self.prompt = Prompt.new(self.filesystem)
   self.matches = {}
   self.selected = 0
   self.row_count = nil
@@ -376,8 +377,72 @@ local function render(self, strings)
   return lines, cells, rows, trunc, false
 end
 
+-- Path colors for the FS prompt line, mirroring the 'path' segment of the
+-- user's oh-my-posh config (files/shell/zsh/neg.omp.json): tilde, path
+-- text and '/' separators get distinct colours.
+local PROMPT_TILDE = '#287373'
+local PROMPT_SEP = '#005faf'
+local PROMPT_PATH = '#95a7bc'
+
+local function ensure_prompt_color_groups()
+  vim.api.nvim_set_hl(0, 'LustyPromptTilde', { fg = PROMPT_TILDE, default = true })
+  vim.api.nvim_set_hl(0, 'LustyPromptSep', { fg = PROMPT_SEP, default = true })
+  vim.api.nvim_set_hl(0, 'LustyPromptPath', { fg = PROMPT_PATH, default = true })
+end
+
+-- Split a displayed path into {byte_start, byte_end_excl, group} runs.
+-- Only ASCII '/' and a leading '~' are special; everything else (incl.
+-- multi-byte characters) is plain path text.
+local function path_segments(text)
+  local segs = {}
+  local nchars = vim.fn.strchars(text)
+  local byte = 1
+  local run_group = nil
+  local run_start = 0
+  local function flush()
+    if run_group then
+      segs[#segs + 1] = { start = run_start, finish = byte - 1, group = run_group }
+      run_group = nil
+    end
+  end
+  for ci = 0, nchars - 1 do
+    local ch = vim.fn.strcharpart(text, ci, 1)
+    local len = #ch
+    local group
+    if ch == '~' and byte == 1 then
+      group = 'LustyPromptTilde'
+    elseif ch == '/' then
+      group = 'LustyPromptSep'
+    else
+      group = 'LustyPromptPath'
+    end
+    if group ~= run_group then
+      flush()
+      run_group = group
+      run_start = byte - 1
+    end
+    byte = byte + len
+  end
+  flush()
+  return segs
+end
+
+-- Prompt body for the filesystem explorer: abbreviate $HOME to '~' the same
+-- way the shell prompt does, then let prompt_text/width logic handle the rest.
+local function fs_body(raw)
+  local home = os.getenv('HOME') or vim.fn.expand('~')
+  if home ~= '' and raw:sub(1, #home) == home then
+    local rest = raw:sub(#home + 1)
+    return '~' .. rest
+  end
+  return raw
+end
+
 local function prompt_text(self)
   local body = self.prompt.input
+  if self.filesystem then
+    body = fs_body(body)
+  end
   local t = PROMPT_PREFIX .. body
   local max_w = (self.float_width or vim.o.columns) - 5
   if max_w > 0 and sw(t) > max_w then
@@ -470,10 +535,22 @@ local function paint(self, cells)
     end
   end
 
-  -- Prompt line is the last line: '>> ' plus the typed query.
+  -- Prompt line is the last line: '>> ' plus the typed query.  In the
+  -- filesystem explorer the path is styled like the shell prompt:
+  -- coloured ~, '/' separators and path text (neg.omp.json colours).
   local last = vim.api.nvim_buf_line_count(buf) - 1
   if last >= 0 then
-    hl(last, 0, #PROMPT_PREFIX, 'LustyPrompt')
+    local line = vim.api.nvim_buf_get_lines(buf, last, last + 1, false)[1] or ''
+    if line:sub(1, #PROMPT_PREFIX) == PROMPT_PREFIX then
+      hl(last, 0, #PROMPT_PREFIX, 'LustyPrompt')
+      if self.filesystem then
+        ensure_prompt_color_groups()
+        local body = line:sub(#PROMPT_PREFIX + 1)
+        for _, seg in ipairs(path_segments(body)) do
+          hl(last, #PROMPT_PREFIX + seg.start, #PROMPT_PREFIX + seg.finish, seg.group)
+        end
+      end
+    end
   end
 end
 
@@ -678,7 +755,9 @@ local function setup_keymaps(self)
     { 'а', 'f' }, { 'п', 'g' }, { 'р', 'h' }, { 'о', 'j' }, { 'л', 'k' },
     { 'д', 'l' }, { 'ж', ';' }, { 'э', "'" }, { 'я', 'z' }, { 'ч', 'x' },
     { 'с', 'c' }, { 'м', 'v' }, { 'и', 'b' }, { 'т', 'n' }, { 'ь', 'm' },
-    { 'б', ',' }, { 'ю', '.' }, { '.', '/' },
+    { 'б', ',' }, { 'ю', '.' }, -- RU '.' is the same character as EN '.';
+    -- the EN '.' mapping above already covers it (no separate '/' row: it
+    -- would override the dot with a slash).
   }
   for _, pair in ipairs(ru_to_en) do
     map(pair[1], string.byte(pair[2]))
