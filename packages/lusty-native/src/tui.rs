@@ -301,6 +301,9 @@ impl App {
         self.ensure_ranked();
         let (w, h) = terminal::size().unwrap_or((80, 24));
         let w = w as usize;
+        // Pad to width-1: writing exactly `w` visible chars wraps and then the
+        // newline produces a blank line, doubling the list and scrolling it.
+        let line_w = w.saturating_sub(1).max(1);
         let rows = (h as usize).saturating_sub(2).max(1);
         let esc = char::from_u32(0x1b).unwrap();
         let mut frame = String::with_capacity((w + 48) * (rows + 2));
@@ -328,7 +331,7 @@ impl App {
         status.push_str(&format!("  ({} of {})", self.ranked.len(), self.listing().len()));
         status.push(esc);
         status.push_str("[0m");
-        ansi_pad(&mut status, w);
+        ansi_pad(&mut status, line_w);
         frame.push_str(&status);
         frame.push('\n');
 
@@ -358,7 +361,7 @@ impl App {
             } else if self.ranked.is_empty() && list_i == 0 {
                 line.push_str("(no matches)");
             }
-            ansi_pad(&mut line, w);
+            ansi_pad(&mut line, line_w);
             frame.push_str(&line);
             frame.push('\n');
         }
@@ -368,7 +371,7 @@ impl App {
         let mut prompt = String::new();
         prompt.push_str(">> ");
         prompt.push_str(&self.query);
-        ansi_pad(&mut prompt, w);
+        ansi_pad(&mut prompt, line_w);
         frame.push_str(&prompt);
         write!(out, "{frame}")?;
         out.flush()
