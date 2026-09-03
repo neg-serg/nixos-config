@@ -17,8 +17,25 @@
 local explorer = require('lusty.explorer')
 local buffers = require('lusty.buffer_stack')
 local fs = require('lusty.filesystem_explorer')
+local native = require('lusty.native')
 local be = require('lusty.buffer_explorer')
 local bg = require('lusty.buffer_grep')
+
+-- Native picker is the default; g:LustyExplorerNative = 0 keeps the Lua port
+-- (the fallback). Buffer explorer/grep have no native mode yet, so those
+-- always use the Lua port.
+local function native_enabled()
+  local n = vim.g.LustyExplorerNative
+  return not (n == 0 or n == false or n == '0')
+end
+
+local function run_fs(dir)
+  if native_enabled() then
+    native.run(dir == nil and vim.fn.getcwd() or dir)
+  else
+    fs.run(dir)
+  end
+end
 
 local M = {}
 
@@ -32,13 +49,13 @@ function M.setup()
   buffers.reset()
 
   vim.api.nvim_create_user_command('LustyFilesystemExplorer', function(o)
-    fs.run(o.args == '' and nil or vim.fn.expand(o.args))
-  end, { nargs = '?', desc = 'Lusty filesystem explorer' })
+    run_fs(o.args == '' and nil or vim.fn.expand(o.args))
+  end, { nargs = '?', desc = 'Lusty filesystem explorer (native unless g:LustyExplorerNative=0)' })
 
   vim.api.nvim_create_user_command('LustyFilesystemExplorerFromHere', function()
     local d = vim.fn.expand('%:p:h')
-    fs.run(d == '' and vim.fn.getcwd() or d)
-  end, { desc = 'Lusty filesystem explorer from current file dir' })
+    run_fs(d == '' and vim.fn.getcwd() or d)
+  end, { desc = 'Lusty filesystem explorer from current file dir (native unless g:LustyExplorerNative=0)' })
 
   vim.api.nvim_create_user_command('LustyBufferExplorer', function()
     be.run()
@@ -72,13 +89,13 @@ function M.setup()
     --   ,G  buffer grep
     local function from_here()
       local d = vim.fn.expand('%:p:h')
-      fs.run(d == '' and vim.fn.getcwd() or d)
+      run_fs(d == '' and vim.fn.getcwd() or d)
     end
     vim.keymap.set('n', '<leader>l', from_here,
-      { nowait = true, desc = 'Lusty filesystem explorer from here' })
+      { nowait = true, desc = 'Lusty filesystem explorer from here (native)' })
     vim.keymap.set('n', '<leader>C', function()
-      fs.run(nil)
-    end, { desc = 'Lusty filesystem explorer (cwd)' })
+      run_fs(nil)
+    end, { desc = 'Lusty filesystem explorer (cwd, native)' })
     vim.keymap.set('n', '<leader>B', function()
       be.run()
     end, { desc = 'Lusty buffer explorer' })
