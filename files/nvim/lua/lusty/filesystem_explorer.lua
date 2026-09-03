@@ -43,6 +43,91 @@ local function follow_mounts()
   return v == 1 or v == true or v == '1'
 end
 
+-- g:LustyExplorerSkipDirs: comma-separated directory names (or paths, with
+-- optional '~' / '*' '?' wildcards) that the depth-aware listing must not
+-- descend into.  Defaults to 'pic,tmp' (the user's large non-project dirs);
+-- set to '' to disable.
+local DEFAULT_SKIP = 'pic,tmp'
+local function skip_patterns()
+  local raw = vim.g.LustyExplorerSkipDirs
+  if raw == nil then
+    raw = DEFAULT_SKIP
+  end
+  local out = {}
+  for _, item in ipairs(vim.split(tostring(raw), ',')) do
+    local it = item:gsub('^%s+', ''):gsub('%s+$', '')
+    if it ~= '' then
+      out[#out + 1] = it
+    end
+  end
+  return out
+end
+
+local function skip_signature()
+  local raw = vim.g.LustyExplorerSkipDirs
+  return raw == nil and 'DEFAULT' or tostring(raw)
+end
+
+-- Simple glob ('*' and '?') full-string matcher.
+local function glob_match(pattern, value)
+  if not pattern:find('[*?]') then
+    return pattern == value
+  end
+  local out = { '^' }
+  local i = 1
+  while i <= #pattern do
+    local c = pattern:sub(i, i)
+    if c == '*' then
+      out[#out + 1] = '.*'
+    elseif c == '?' then
+      out[#out + 1] = '.'
+    elseif c:find('[%^%$%(%)%%%.%+%-]') then
+      out[#out + 1] = '%' .. c
+    else
+      out[#out + 1] = c
+    end
+    i = i + 1
+  end
+  out[#out + 1] = '$'
+  return value:find(table.concat(out)) ~= nil
+end
+
+local function expand_home(p)
+  if p:sub(1, 1) == '~' then
+    local home = os.getenv('HOME') or vim.fn.expand('~')
+    local head, rest = p:match('^(~[^/]*)(.*)$')
+    if head == '~' and home then
+      return home .. rest
+    end
+    local ex = vim.fn.expand(head)
+    if ex ~= '' and ex ~= head then
+      return ex .. rest
+    end
+  end
+  return p
+end
+
+-- Is this directory excluded from depth traversal?
+local function dir_skipped(c)
+  local patterns = skip_patterns()
+  if #patterns == 0 then
+    return false
+  end
+  for _, pat in ipairs(patterns) do
+    if pat:find('/') or pat:sub(1, 1) == '~' then
+      -- path-style pattern: compare against the absolute directory path
+      local target = c.full:gsub('/+$', '')
+      if glob_match(expand_home(pat):gsub('/+$', ''), target) then
+        return true
+      end
+    elseif glob_match(pat, c.name) then
+      -- bare name: matches any directory with that basename
+      return true
+    end
+  end
+  return false
+end
+
 -- Mount point set parsed from /proc/self/mountinfo (field 5 of the part
 -- before ' - '), cached for the session.
 local mount_set = nil
@@ -238,8 +323,10 @@ local function build_deep(view)
         }
       end
       if c.is_dir and not c.is_link and level + 1 < depth then
-        -- Do not descend into mount points unless explicitly enabled.
-        if follow_mounts() or not is_mount_point(c.full) then
+        -- Do not descend into mount points or excluded dirs unless enabled.
+        if dir_skipped(c) then
+          -- entry stays visible, contents are not walked
+        elseif follow_mounts() or not is_mount_point(c.full) then
           walk(c.full, rel2, level + 1)
         end
       end
@@ -255,12 +342,13 @@ end
 local function deep_entries(view)
   local depth = search_depth()
   local follow = follow_mounts()
+  local skip = skip_signature()
   local cached = deep_cache[view]
-  if cached and cached.depth == depth and cached.follow == follow then
+  if cached and cached.depth == depth and cached.follow == follow and cached.skip == skip then
     return cached.entries
   end
   local entries = build_deep(view)
-  deep_cache[view] = { depth = depth, follow = follow, entries = entries }
+  deep_cache[view] = { depth = depth, follow = follow, skip = skip, entries = entries }
   return entries
 end
 
