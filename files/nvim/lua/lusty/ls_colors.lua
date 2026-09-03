@@ -188,7 +188,10 @@ local function glob_to_pattern(glob)
 end
 
 local function parse_ls_colors(env)
-  local cfg = { types = {}, exts = {} }
+  -- Simple '*.ext' rules are indexed for O(1) lookup instead of scanning the
+  -- whole (often ~700-entry) palette per painted cell.  Complex patterns with
+  -- wildcards/classes fall back to a short list scan.
+  local cfg = { types = {}, ext_suffix = {}, ext_final = {}, complex = {} }
   if not env or env == '' then
     return cfg
   end
@@ -198,11 +201,22 @@ local function parse_ls_colors(env)
       if #k == 2 then
         cfg.types[k] = v
       elseif k:sub(1, 1) == '*' then
-        cfg.exts[#cfg.exts + 1] = {
-          key = k,
-          pattern = glob_to_pattern(lower_keep_classes(k)),
-          code = v,
-        }
+        local rest = k:sub(2)
+        if not rest:find('[*?%[]') then
+          local ext = lower_keep_classes(rest:sub(2)) -- after '*.'
+          if ext:find('%.') then
+            -- multi-dot rule like '*.tar.gz': match from the first dot
+            cfg.ext_suffix[ext] = v
+          else
+            cfg.ext_final[ext] = v
+          end
+        else
+          cfg.complex[#cfg.complex + 1] = {
+            key = k,
+            pattern = glob_to_pattern(lower_keep_classes(k)),
+            code = v,
+          }
+        end
       end
     end
   end
@@ -301,16 +315,36 @@ function M.group_for(entry)
     code = c.types.cd
   end
 
-  if not code and entry.is_exec then
-    code = c.types.ex
+  -- Executable check is lazy: only for cells that actually get painted, and
+  -- cached on the entry (entries live in the per-view caches).
+  if not code and not entry.is_dir and not entry.is_link and entry.path then
+    if entry.is_exec == nil then
+      local perm = vim.fn.getfperm(entry.path)
+      entry.is_exec = type(perm) == 'string' and perm:find('x') ~= nil
+    end
+    if entry.is_exec then
+      code = c.types.ex
+    end
   end
 
   if not code then
+    -- O(1) palette lookup: specific '*.tar.gz'-style rules first, then the
+    -- plain final-extension rules, then the (rare) wildcard patterns.
     local lname = lower_keep_classes(entry.name)
-    for _, item in ipairs(c.exts) do
-      if lname:match(item.pattern) then
-        code = item.code
-        break
+    local suffix = lname:match('^[^%.]*%.(.*)$')
+    if suffix and c.ext_suffix[suffix] then
+      code = c.ext_suffix[suffix]
+    else
+      local final = lname:match('%.([^%.]+)$')
+      if final and c.ext_final[final] then
+        code = c.ext_final[final]
+      else
+        for _, item in ipairs(c.complex) do
+          if lname:match(item.pattern) then
+            code = item.code
+            break
+          end
+        end
       end
     end
   end
