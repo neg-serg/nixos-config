@@ -63,9 +63,20 @@ function Picker:list_rows()
   return math.max(1, self:height() - 2)
 end
 
---- Max columns of the entry grid (original Lusty table feel).
+--- Max columns of the entry grid: choose a pitch that fits the float width
+--- exactly (col_w + 2 separator), so rows never overflow or wrap.
 function Picker:max_cols()
-  return math.max(1, math.min(8, math.floor(self:width() / 18)))
+  local w = self:width()
+  local cols = math.floor((w + 2) / 20) -- pitch guess with col_w ~ 18
+  return math.max(1, math.min(8, cols))
+end
+
+function Picker:col_width()
+  local cols = self:max_cols()
+  local w = self:width()
+  -- remaining width for the text columns after the separators
+  local text_w = w - 2 * (cols - 1)
+  return math.max(6, math.floor(text_w / cols))
 end
 
 --- Number of positions covered by one screenful of the grid.
@@ -91,6 +102,7 @@ function Picker:open_window()
   api.nvim_buf_set_option(buf, 'swapfile', false)
   api.nvim_buf_set_option(buf, 'modifiable', true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+  api.nvim_win_set_option(win, 'wrap', false)
   api.nvim_buf_set_lines(buf, 0, -1, false, {})
   self.buf = buf
   self.win = win
@@ -198,7 +210,7 @@ function Picker:draw()
   local rows = self:list_rows()
   local cols = self:max_cols()
   local h = rows + 1 -- grid rows + one prompt line
-  local col_w = math.max(6, math.floor(self:width() / cols))
+  local col_w = self:col_width()
   local lines = {}
   local cells = {} -- { line, col, item, pos }
   for r = 1, rows do
@@ -215,8 +227,10 @@ function Picker:draw()
         local text = label
         local w = vim.fn.strdisplaywidth(text)
         if w > col_w - 1 then
-          while w > col_w - 1 do
-            text = text:sub(1, -2)
+          local nchars = vim.fn.strchars(text)
+          while w > col_w - 1 and nchars > 0 do
+            nchars = nchars - 1
+            text = vim.fn.strcharpart(text, 0, nchars)
             w = vim.fn.strdisplaywidth(text)
           end
         else
@@ -272,47 +286,48 @@ function Picker:prompt_text()
   if home ~= '' and path:sub(1, #home) == home then
     path = '~' .. path:sub(#home + 1)
   end
-  return path .. ' > ' .. self.query
+  return path .. ' \u{f105} ' .. self.query
 end
 
 function Picker:paint_prompt(h)
-  local text = self:prompt_text()
   local line = h - 1
   local home = os.getenv('HOME') or ''
-  -- color the path portion: tilde, separators, segments; stop at the ' > '
-  local path_len = #self.root
-  if self.root:sub(1, #home) == home and home ~= '' then
-    path_len = path_len - #home + 1 -- '~' replaces the home prefix
-  end
-  local segs = {} -- {start_col, len, group}
-  local text_start = 0
-  if self.root:sub(1, #home) == home and home ~= '' then
-    segs[#segs + 1] = { 0, 1, 'LustyPromptTilde' }
-    text_start = 1
-  end
-  local rest = text_start == 1 and self.root:sub(#home + 1) or self.root
-  local col = text_start
-  for seg in rest:gmatch('([^/]+)/?') do
-    -- find the separator before this segment
-    local sep = 0
-    if col > text_start then
-      sep = 1
-    end
-    if sep == 1 then
-      segs[#segs + 1] = { col, 1, 'LustyPromptSep' }
-      col = col + 1
-    end
-    segs[#segs + 1] = { col, #seg, 'LustyPromptPath' }
-    col = col + #seg
-    text_start = col
-  end
-  for _, seg in ipairs(segs) do
-    if seg[3] then
-      api.nvim_buf_add_highlight(self.buf, ns, seg[3], line, seg[1], seg[1] + seg[2])
+  local segs = {} -- {start, len, group}
+  local col = 0
+  local function add(text, group)
+    if text and #text > 0 then
+      segs[#segs + 1] = { col, #text, group }
+      col = col + #text
     end
   end
-  -- the prompt arrow and query: default fg, bold query area is fine
-  api.nvim_buf_add_highlight(self.buf, ns, 'LustyPromptQuery', line, col + 1, -1)
+  local path = self.root
+  if home ~= '' and path:sub(1, #home) == home then
+    add('~', 'LustyPromptTilde')
+    path = path:sub(#home + 1)
+  elseif path:sub(1, 1) ~= '/' then
+    -- relative root: show as-is in path color
+  end
+  local seg = ''
+  for i = 1, #path do
+    local ch = path:sub(i, i)
+    if ch == '/' then
+      add(seg, 'LustyPromptPath')
+      add('/', 'LustyPromptSep')
+      seg = ''
+    else
+      seg = seg .. ch
+    end
+  end
+  add(seg, 'LustyPromptPath')
+  add(' ', 'LustyPromptSep')
+  add('\u{f105}', 'LustyPromptSep')
+  add(' ', 'LustyPromptQuery')
+  add(self.query, 'LustyPromptQuery')
+  for _, seg2 in ipairs(segs) do
+    if seg2[3] then
+      api.nvim_buf_add_highlight(self.buf, ns, seg2[3], line, seg2[1], seg2[1] + seg2[2])
+    end
+  end
 end
 
 function Picker:ensure_visible()
@@ -435,6 +450,14 @@ function Picker:handle(action)
     return
   end
   if action == 'updir' then
+    if #self.query > 0 then
+      -- first C-w clears the typed text (shell/vim word-delete feel)
+      self.query = ''
+      self.selected = 0
+      self.offset = 0
+      self:rerank()
+      return
+    end
     local parent = self.root:match('^(.*)/[^/]+$')
     if parent and parent ~= '' then
       self:restart(parent)
@@ -581,12 +604,20 @@ end
 
 --- Define the few extra highlight groups (lsc groups come from its own cache).
 function M.ensure_highlights()
-  local ok = pcall(api.nvim_set_hl, 0, 'LustyNativeSel', { bg = '#3d3d3d' })
+  local ok = pcall(api.nvim_set_hl, 0, 'LustyNativeSel', {
+    bg = '#7e57c2',
+    fg = '#ffffff',
+    bold = true,
+    underline = true,
+  })
   if not ok then
-    api.nvim_set_hl(0, 'LustyNativeSel', { bg = 'Gray' })
+    api.nvim_set_hl(0, 'LustyNativeSel', { bg = 'Gray', fg = 'White', bold = true })
   end
-  api.nvim_set_hl(0, 'LustyNativePrompt', { fg = '#95a7bc', bold = true })
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
+  -- omp.zsh path segment colors (neg.omp.json)
+  api.nvim_set_hl(0, 'LustyPromptTilde', { fg = '#287373' })
+  api.nvim_set_hl(0, 'LustyPromptSep', { fg = '#005faf' })
+  api.nvim_set_hl(0, 'LustyPromptPath', { fg = '#95a7bc' })
 end
 
 M.ensure_highlights()
