@@ -223,7 +223,9 @@ function Picker:draw()
         if item.kind == 'd' then
           label = label .. '/'
         end
-        -- pad to the full column width (display cells) so columns align
+        -- pad to the full column width (display cells) so columns align;
+        -- truncated cells are padded too, otherwise that row shifts by one
+        -- and the selection highlight (fixed pitch) lands off.
         local text = label
         local w = vim.fn.strdisplaywidth(text)
         if w > col_w - 1 then
@@ -233,9 +235,8 @@ function Picker:draw()
             text = vim.fn.strcharpart(text, 0, nchars)
             w = vim.fn.strdisplaywidth(text)
           end
-        else
-          text = text .. string.rep(' ', col_w - w)
         end
+        text = text .. string.rep(' ', math.max(0, col_w - w))
         bufparts[c] = text
         cells[#cells + 1] = { line = r, col = c, item = item, pos = pos, label_w = w }
       end
