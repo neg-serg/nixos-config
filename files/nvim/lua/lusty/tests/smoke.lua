@@ -406,16 +406,13 @@ fs.explorer():cancel()
 assert_eq(def_row, grav_rows.bottom, 'default gravity is bottom')
 print('PASS gravity')
 
--- Native shim: selection-line parsing (the Lua side of the Rust picker).
+-- Native shim: module loads and exposes run() (the Lua-port fallback above
+-- already covers the full explorer behaviour; the Rust side has its own
+-- tests and pty checks).
 local native = require('lusty.native')
-local na, np = native._find_selection({ 'scratch', '', 'edit	/tmp/x.lua', 'tail' })
-assert_eq(na, 'edit', 'native shim parses action')
-assert_eq(np, '/tmp/x.lua', 'native shim parses path')
-local na2 = native._find_selection({ 'no selection here', '' })
-assert(na2 == nil, 'cancel leaves no selection')
-local nv = native._find_selection({ 'vsplit	/sub dir/f.tex' })
-assert_eq(nv, 'vsplit', 'vsplit token parsed')
-print('PASS native shim parsing')
+assert(type(native.run) == 'function', 'native.run exposed')
+assert(type(native.ensure_highlights) == 'function', 'native.ensure_highlights exposed')
+print('PASS native shim api')
 
 print('ALL LUSTY SMOKE TESTS PASSED')
 
