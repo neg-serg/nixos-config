@@ -10,6 +10,7 @@ mod glob;
 mod listing;
 mod mount;
 mod rank;
+mod serve;
 mod tui;
 
 use std::os::unix::fs::PermissionsExt;
@@ -22,6 +23,39 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(|s| s.as_str()) == Some("--list") {
         run_list(&args);
+        return;
+    }
+    if args.first().map(|s| s.as_str()) == Some("serve") {
+        let mut root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let mut depth = 2usize;
+        let mut skip = "pic,tmp".to_string();
+        let mut i = 1;
+        while i < args.len() {
+            match args[i].as_str() {
+                "--depth" => {
+                    i += 1;
+                    depth = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(2);
+                }
+                "--skip" => {
+                    i += 1;
+                    skip = args.get(i).cloned().unwrap_or_default();
+                }
+                "--dots" => { /* accepted; dots served on demand below */ }
+                other if !other.starts_with("--") => {
+                    root = PathBuf::from(other);
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+        let _ = serve::serve(
+            root,
+            depth,
+            skip.split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect(),
+        );
         return;
     }
     // Interactive picker: lusty-native [root] [--depth N] [--skip a,b]
