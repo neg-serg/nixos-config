@@ -112,6 +112,7 @@ name = "lusty-native"
 version = "0.1.0"
 dependencies = [
  "crossterm",
+ "libc",
  "rayon",
  "walkdir",
 ]
