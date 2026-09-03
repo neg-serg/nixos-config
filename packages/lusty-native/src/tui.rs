@@ -355,10 +355,13 @@ impl App {
             frame.push('\n');
         }
 
-        // Prompt line at the bottom.
-        frame.push_str(">> ");
-        frame.push_str(&self.query);
-        ansi_pad(&mut frame, w);
+        // Prompt line at the bottom (padded separately: ansi_pad must never
+        // run over the whole multi-line frame, it would truncate the rows).
+        let mut prompt = String::new();
+        prompt.push_str(">> ");
+        prompt.push_str(&self.query);
+        ansi_pad(&mut prompt, w);
+        frame.push_str(&prompt);
         write!(out, "{frame}")?;
         out.flush()
     }
