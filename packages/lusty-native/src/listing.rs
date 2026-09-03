@@ -1,9 +1,13 @@
-//! Directory listing engine: depth-limited parallel walk with mount-point and
-//! skip-dir pruning, shallower entries first.
+//! Directory listing engine: depth-limited walk with mount-point and skip-dir
+//! pruning, shallower entries first.
+//!
+//! Semantics mirror the Lua port: skip-dirs (pic,tmp), mount points and hidden
+//! dot-dirs stay visible-but-untraversed (their own entry is listed, their
+//! subtree is not walked into the results); hidden entries are dropped when
+//! dots are not shown.
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use rayon::prelude::*;
 use walkdir::WalkDir;
 
 use crate::glob;
@@ -12,7 +16,11 @@ use crate::mount;
 #[derive(Debug, Clone)]
 pub struct Entry {
     pub name: String,
+    /// Full path (used by later phases to open the file).
+    #[allow(dead_code)]
     pub path: PathBuf,
+    /// Label shown/scored by the picker: the path relative to the root.
+    pub label: String,
     pub is_dir: bool,
     /// 1 = direct child of the root, 2 = one level deeper, etc.
     pub depth: u32,
@@ -26,56 +34,29 @@ pub struct Options {
     pub show_dots: bool,
 }
 
-pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
-    let mounts = if opts.follow_mounts {
-        HashSet::new()
-    } else {
-        mount::mount_points()
-    };
-    let root_norm = mount::normalize(root.to_string_lossy());
+/// The label for an entry: its path relative to the root, '/' separated.
+fn rel_label(root: &Path, path: &Path) -> String {
+    path.strip_prefix(root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .to_string()
+}
 
-    let walker = WalkDir::new(root)
-        .min_depth(1)
-        .max_depth(opts.depth)
-        .follow_links(false)
-        .into_iter()
-        .filter_entry(|e| {
-            if e.depth() == 0 {
-                return true;
-            }
-            let name = e.file_name().to_string_lossy().to_string();
-            let is_dir = e.file_type().is_dir();
-            if name.starts_with('.') && !opts.show_dots {
-                return false;
-            }
-            if is_dir {
-                if is_skip_dir(&name, e.path(), &opts.skip_dirs) {
-                    return false;
-                }
-                if !mounts.is_empty() {
-                    let p = mount::normalize(e.path().to_string_lossy());
-                    if p != root_norm && mounts.contains(&p) {
-                        return false;
-                    }
-                }
-            }
-            true
-        });
-
-    let mut entries: Vec<Entry> = walker
-        .filter_map(|e| e.ok())
-        .par_bridge()
-        .map(|e| Entry {
-            name: e.file_name().to_string_lossy().to_string(),
-            path: e.path().to_path_buf(),
-            is_dir: e.file_type().is_dir(),
-            depth: e.depth() as u32,
-        })
-        .collect();
-
-    // Shallower entries first, ties broken by name.
-    entries.sort_by(|a, b| a.depth.cmp(&b.depth).then_with(|| a.name.cmp(&b.name)));
-    entries
+/// True when any proper ancestor directory of rel (e.g. "sub" or "sub/deep"
+/// for "sub/deep/file.txt") is in the blocked set.
+fn under_blocked(rel: &str, blocked: &HashSet<String>) -> bool {
+    let comps: Vec<&str> = rel.split('/').collect();
+    let mut prefix = String::new();
+    for k in 0..comps.len().saturating_sub(1) {
+        if k > 0 {
+            prefix.push('/');
+        }
+        prefix.push_str(comps[k]);
+        if blocked.contains(&prefix) {
+            return true;
+        }
+    }
+    false
 }
 
 fn is_skip_dir(name: &str, path: &Path, skip: &[String]) -> bool {
@@ -92,10 +73,70 @@ fn is_skip_dir(name: &str, path: &Path, skip: &[String]) -> bool {
     false
 }
 
+pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
+    let mounts = if opts.follow_mounts {
+        HashSet::new()
+    } else {
+        mount::mount_points()
+    };
+    let root_norm = mount::normalize(root.to_string_lossy());
+
+    let mut blocked: HashSet<String> = HashSet::new();
+    let mut entries: Vec<Entry> = Vec::new();
+
+    for e in WalkDir::new(root)
+        .min_depth(1)
+        .max_depth(opts.depth)
+        .follow_links(false)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        let name = e.file_name().to_string_lossy().to_string();
+        let rel = rel_label(root, e.path());
+        if under_blocked(&rel, &blocked) {
+            continue;
+        }
+        let hidden = name.starts_with('.');
+        if hidden && !opts.show_dots {
+            // Hidden dot-dir: neither listed nor traversed.
+            if e.file_type().is_dir() {
+                blocked.insert(rel);
+            }
+            continue;
+        }
+        let is_dir = e.file_type().is_dir();
+        if is_dir {
+            if is_skip_dir(&name, e.path(), &opts.skip_dirs) {
+                blocked.insert(rel.clone()); // visible, but not traversed
+            } else if !mounts.is_empty() {
+                let p = mount::normalize(e.path().to_string_lossy());
+                if p != root_norm && mounts.contains(&p) {
+                    blocked.insert(rel.clone()); // visible, but not traversed
+                }
+            }
+        }
+        entries.push(Entry {
+            name,
+            path: e.path().to_path_buf(),
+            label: rel,
+            is_dir,
+            depth: e.depth() as u32,
+        });
+    }
+
+    // Shallower entries first, ties broken by name.
+    entries.sort_by(|a, b| a.depth.cmp(&b.depth).then_with(|| a.name.cmp(&b.name)));
+    entries
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;
+
+    fn opts(depth: usize, skip: Vec<String>, show_dots: bool) -> Options {
+        Options { depth, skip_dirs: skip, follow_mounts: false, show_dots }
+    }
 
     #[test]
     fn depth_one_lists_children() {
@@ -104,12 +145,7 @@ mod tests {
         fs::create_dir_all(dir.join("sub")).unwrap();
         fs::write(dir.join("a.txt"), b"x").unwrap();
         fs::write(dir.join("sub/b.txt"), b"y").unwrap();
-        let entries = list(&dir, &Options {
-            depth: 1,
-            skip_dirs: vec![],
-            follow_mounts: false,
-            show_dots: false,
-        });
+        let entries = list(&dir, &opts(1, vec![], false));
         let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
         assert!(names.contains(&"a.txt"));
         assert!(names.contains(&"sub"));
@@ -124,12 +160,7 @@ mod tests {
         fs::create_dir_all(dir.join("sub")).unwrap();
         fs::write(dir.join("a.txt"), b"x").unwrap();
         fs::write(dir.join("sub/b.txt"), b"y").unwrap();
-        let entries = list(&dir, &Options {
-            depth: 2,
-            skip_dirs: vec![],
-            follow_mounts: false,
-            show_dots: false,
-        });
+        let entries = list(&dir, &opts(2, vec![], false));
         let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
         assert!(names.contains(&"b.txt"));
         // shallower first: a.txt (depth 1) before b.txt (depth 2)
@@ -140,19 +171,15 @@ mod tests {
     }
 
     #[test]
-    fn skip_dirs_are_pruned() {
+    fn skip_dirs_visible_but_not_traversed() {
         let dir = std::env::temp_dir().join("lusty_native_skip_test");
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(dir.join("pic")).unwrap();
         fs::write(dir.join("pic/x.txt"), b"x").unwrap();
-        let entries = list(&dir, &Options {
-            depth: 2,
-            skip_dirs: vec!["pic".to_string()],
-            follow_mounts: false,
-            show_dots: false,
-        });
+        let entries = list(&dir, &opts(2, vec!["pic".to_string()], false));
         let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
-        assert!(!names.contains(&"x.txt"));
+        assert!(names.contains(&"pic"), "skip dir stays visible");
+        assert!(!names.contains(&"x.txt"), "skip dir contents not traversed");
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -162,15 +189,25 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(dir.join(".hid")).unwrap();
         fs::write(dir.join(".hidden"), b"x").unwrap();
-        let entries = list(&dir, &Options {
-            depth: 1,
-            skip_dirs: vec![],
-            follow_mounts: false,
-            show_dots: false,
-        });
+        let entries = list(&dir, &opts(2, vec![], false));
         let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
         assert!(!names.contains(&".hidden"));
         assert!(!names.contains(&".hid"));
+        assert!(!names.contains(&"marker.txt"), "hidden dir not traversed");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn labels_are_root_relative() {
+        let dir = std::env::temp_dir().join("lusty_native_label_test");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("sub/deep")).unwrap();
+        fs::write(dir.join("sub/deep/foo.txt"), b"x").unwrap();
+        let entries = list(&dir, &opts(3, vec![], false));
+        let labels: Vec<&str> = entries.iter().map(|e| e.label.as_str()).collect();
+        assert!(labels.contains(&"sub"));
+        assert!(labels.contains(&"sub/deep"));
+        assert!(labels.contains(&"sub/deep/foo.txt"));
         let _ = fs::remove_dir_all(&dir);
     }
 }
