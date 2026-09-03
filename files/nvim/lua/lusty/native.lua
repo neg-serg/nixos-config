@@ -675,7 +675,9 @@ function M.ensure_highlights()
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = 'Gray', fg = 'White', bold = true })
   end
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
-  api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#0c0d14', fg = '#d4d4d4' })
+  -- nearly-black but not #000000: the web/xterm layer treats exact black as
+  -- the transparent default, while #0c0d14 rendered too gray on this setup
+  api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000001', fg = '#d4d4d4' })
   -- omp.zsh path segment colors (neg.omp.json)
   api.nvim_set_hl(0, 'LustyPromptTilde', { fg = '#287373' })
   api.nvim_set_hl(0, 'LustyPromptSep', { fg = '#005faf' })
