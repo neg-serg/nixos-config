@@ -29,6 +29,7 @@ fn main() {
         let mut root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
         let mut depth = 2usize;
         let mut skip = "pic,tmp".to_string();
+        let mut show_dots = false;
         let mut i = 1;
         while i < args.len() {
             match args[i].as_str() {
@@ -40,7 +41,7 @@ fn main() {
                     i += 1;
                     skip = args.get(i).cloned().unwrap_or_default();
                 }
-                "--dots" => { /* accepted; dots served on demand below */ }
+                "--dots" => show_dots = true,
                 other if !other.starts_with("--") => {
                     root = PathBuf::from(other);
                 }
@@ -55,6 +56,7 @@ fn main() {
                 .map(|s| s.trim().to_string())
                 .filter(|s| !s.is_empty())
                 .collect(),
+            show_dots,
         );
         return;
     }
