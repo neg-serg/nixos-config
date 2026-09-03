@@ -576,9 +576,9 @@ end
 local function debounce_delay()
   local v = tonumber(vim.g.LustyExplorerInputDebounce)
   if v == nil then
-    return 80
+    return 150
   end
-  return math.max(0, math.min(500, v))
+  return math.max(0, math.min(2000, v))
 end
 
 local function stop_debounce(self)
@@ -634,7 +634,24 @@ function Explorer:refresh(mode)
 
   local lines, cells, rows, trunc, no_entries = render(self, strings)
   lines[#lines + 1] = prompt_text(self)
-  write_buffer(self, lines)
+
+  -- Skip the buffer write/repaint entirely when a full recompute produced
+  -- byte-identical lines (no visible change): avoids a full float redraw.
+  local unchanged = mode == 'full' and self._last_lines ~= nil
+    and #self._last_lines == #lines
+  if unchanged then
+    for i = 1, #lines do
+      if lines[i] ~= self._last_lines[i] then
+        unchanged = false
+        break
+      end
+    end
+  end
+
+  if not unchanged then
+    write_buffer(self, lines)
+    self._last_lines = lines
+  end
   local t2 = perf and vim.uv.hrtime() or nil
 
   -- Size and re-anchor the float (gravity-aware): table rows + (truncated
@@ -661,11 +678,13 @@ function Explorer:refresh(mode)
 
   self.row_count = no_entries and nil or rows
   self.cells = cells
-  paint(self, cells)
+  if not unchanged then
+    paint(self, cells)
+  end
   local t3 = perf and vim.uv.hrtime() or nil
 
   -- Hide the cursor in the bottom-right corner.
-  if self.win_id and vim.api.nvim_win_is_valid(self.win_id) then
+  if not unchanged and self.win_id and vim.api.nvim_win_is_valid(self.win_id) then
     local count = vim.api.nvim_buf_line_count(self.buf_id)
     local last_line = vim.api.nvim_buf_get_lines(self.buf_id, count - 1, count, false)[1] or ''
     pcall(vim.api.nvim_win_set_cursor, self.win_id, { count, #last_line })
@@ -776,10 +795,10 @@ function Explorer:key_pressed(code)
         self:refresh('full')
       end
     end
-    -- Force an immediate screen update (g:LustyExplorerImmediateRedraw = 0
-    -- disables it for A/B latency tests).
-    local immediate = vim.g.LustyExplorerImmediateRedraw
-    if self.running and immediate ~= 0 and immediate ~= false and immediate ~= '0' then
+    -- No forced redraw by default: nvim updates the screen after each key
+    -- anyway, and an extra 'redraw' here doubled the repaint cost that was
+    -- causing visible lag.  Set g:LustyExplorerImmediateRedraw = 1 to force it.
+    if self.running and vim.g.LustyExplorerImmediateRedraw == 1 then
       vim.cmd('redraw')
     end
   end
