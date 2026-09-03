@@ -35,6 +35,55 @@ local function search_depth()
   return math.max(1, math.min(6, math.floor(v)))
 end
 
+-- g:LustyExplorerFollowMountPoints: when 0 (default) the depth-aware listing
+-- does not descend into directories that are mount points (music libraries,
+-- /proc, other filesystems, ...) - they are still shown, just not walked.
+local function follow_mounts()
+  local v = vim.g.LustyExplorerFollowMountPoints
+  return v == 1 or v == true or v == '1'
+end
+
+-- Mount point set parsed from /proc/self/mountinfo (field 5 of the part
+-- before ' - '), cached for the session.
+local mount_set = nil
+local function mount_points()
+  if mount_set then
+    return mount_set
+  end
+  mount_set = {}
+  local ok, content = pcall(vim.fn.readfile, '/proc/self/mountinfo')
+  if ok and type(content) == 'table' then
+    for _, line in ipairs(content) do
+      -- Split on the ' - ' separator: the mount point is field 5 of the
+      -- first half (paths may themselves contain '-', so do not split on it).
+      local parts = vim.split(line, ' - ', { plain = true })
+      if parts[1] then
+        local fields = vim.split(parts[1], ' ')
+        if fields[5] then
+          local mp = fields[5]
+          mp = mp:gsub('/+$', '')
+          if mp == '' then
+            mp = '/'
+          end
+          mount_set[mp] = true
+        end
+      end
+    end
+  end
+  mount_set['/'] = true
+  return mount_set
+end
+
+local function is_mount_point(path)
+  -- Normalise: collapse '//' (walk builds '/'-prefixed paths under '/').
+  local p = path:gsub('/+', '/')
+  p = p:gsub('/+$', '')
+  if p == '' then
+    p = '/'
+  end
+  return mount_points()[p] ~= nil
+end
+
 local function always_show_dotfiles()
   local v = vim.g.LustyExplorerAlwaysShowDotFiles
   return v ~= nil and v ~= false and v ~= 0 and v ~= '0'
@@ -135,6 +184,10 @@ local function raw_children(dir)
   if vim.fn.isdirectory(dir) ~= 1 then
     return {}
   end
+  -- Skip unreadable dirs quietly (e.g. /root): readdir would raise E484.
+  if vim.uv.fs_access(dir, 'R') ~= true then
+    return {}
+  end
   local ok, names = pcall(vim.fn.readdir, dir)
   if not ok or type(names) ~= 'table' then
     return {}
@@ -185,7 +238,10 @@ local function build_deep(view)
         }
       end
       if c.is_dir and not c.is_link and level + 1 < depth then
-        walk(c.full, rel2, level + 1)
+        -- Do not descend into mount points unless explicitly enabled.
+        if follow_mounts() or not is_mount_point(c.full) then
+          walk(c.full, rel2, level + 1)
+        end
       end
     end
   end
@@ -198,12 +254,13 @@ end
 
 local function deep_entries(view)
   local depth = search_depth()
+  local follow = follow_mounts()
   local cached = deep_cache[view]
-  if cached and cached.depth == depth then
+  if cached and cached.depth == depth and cached.follow == follow then
     return cached.entries
   end
   local entries = build_deep(view)
-  deep_cache[view] = { depth = depth, entries = entries }
+  deep_cache[view] = { depth = depth, follow = follow, entries = entries }
   return entries
 end
 
