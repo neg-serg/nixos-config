@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use crossterm::cursor;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::execute;
-use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
+use crossterm::terminal::{self};
 
 use crate::colors::{self, Colors};
 use crate::listing::{self, Entry, FileKind, Options};
@@ -63,8 +63,7 @@ pub struct App {
     needs_rank: bool,
     selected: usize,
     offset: usize,
-    last_w: usize,
-    last_h: usize,
+    size: (usize, usize),
     palette: Colors,
 }
 
@@ -81,8 +80,7 @@ impl App {
             needs_rank: true,
             selected: 0,
             offset: 0,
-            last_w: 0,
-            last_h: 0,
+            size: (80, 24),
             palette,
         }
     }
@@ -202,6 +200,15 @@ impl App {
         terminal::enable_raw_mode()?;
         let mut stdout = io::stdout();
         execute!(stdout, cursor::Hide)?;
+        // The ioctl size can be stale when running inside a nvim terminal
+        // buffer; ask the terminal emulator directly (DSR cursor report after
+        // moving to a huge position) for the real grid size.
+        if let Some((cols, rows)) = probe_size() {
+            self.size = (cols, rows);
+        } else {
+            let (c, r) = terminal::size().unwrap_or((80, 24));
+            self.size = ((c as usize).max(40), (r as usize).max(10));
+        }
         let result = self.loop_events(&mut stdout);
         let esc = char::from_u32(0x1b).unwrap();
         write!(stdout, "{esc}[2J{esc}[H")?;
@@ -211,10 +218,65 @@ impl App {
     }
 }
 
+/// Ask the terminal for its real dimensions: move the cursor far away and
+/// request its position (DSR). Every emulator answers ESC[<row>;<col>R.
+fn probe_size() -> Option<(usize, usize)> {
+    use std::io::Read;
+    use std::os::unix::io::AsRawFd;
+    use std::time::{Duration, Instant};
+
+    let esc = char::from_u32(0x1b).unwrap();
+    let mut out = io::stdout();
+    write!(out, "{esc}[9999;9999H{esc}[6n").ok()?;
+    out.flush().ok()?;
+
+    let deadline = Instant::now() + Duration::from_millis(400);
+    let mut stdin = io::stdin();
+    let mut buf = Vec::new();
+    let mut byte = [0u8; 1];
+    loop {
+        if Instant::now() >= deadline {
+            return None;
+        }
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let ms = remaining.as_millis().min(100) as i32;
+        let mut fds = [libc::pollfd {
+            fd: stdin.as_raw_fd(),
+            events: libc::POLLIN,
+            revents: 0,
+        }];
+        // SAFETY: fds is a valid array of pollfds for the stdin fd.
+        let rc = unsafe { libc::poll(fds.as_mut_ptr(), 1, ms) };
+        if rc <= 0 {
+            continue; // timeout or poll error
+        }
+        if stdin.read(&mut byte).is_err() {
+            return None;
+        }
+        buf.push(byte[0]);
+        if byte[0] == b'R' {
+            break;
+        }
+    }
+    let s = String::from_utf8_lossy(&buf);
+    let (row, col) = parse_dsr(&s)?;
+    Some((col, row))
+}
+
+/// Parse ESC[<row>;<col>R.
+fn parse_dsr(s: &str) -> Option<(usize, usize)> {
+    let inner = s.rsplit('[').next()?;
+    let inner = inner.strip_suffix('R')?;
+    let mut parts = inner.split(';');
+    let row: usize = parts.next()?.trim().parse().ok()?;
+    let col: usize = parts.next()?.trim().parse().ok()?;
+    Some((row, col))
+}
+
 impl App {
     fn list_rows(&self) -> usize {
-        let (_, h) = terminal::size().unwrap_or((80, 24));
-        (h as usize).saturating_sub(2).max(1)
+        let h = self.size.1;
+        h.saturating_sub(2).max(1)
     }
 
     fn clamp_offset(&mut self, rows: usize) {
@@ -299,23 +361,18 @@ impl App {
 
     fn draw(&mut self, out: &mut io::Stdout) -> io::Result<()> {
         self.ensure_ranked();
-        let (w, h) = terminal::size().unwrap_or((80, 24));
-        let w = w as usize;
+        let (w, h) = self.size;
         // Pad to width-1: writing exactly `w` visible chars wraps and then the
         // newline produces a blank line, doubling the list and scrolling it.
         let line_w = w.saturating_sub(1).max(1);
-        let rows = (h as usize).saturating_sub(2).max(1);
+        let rows = h.saturating_sub(2).max(1);
         let esc = char::from_u32(0x1b).unwrap();
         let mut frame = String::with_capacity((w + 48) * (rows + 2));
 
-        // Full clear only on geometry change: every frame redraws all rows
-        // padded to the exact width, so stale wrap artifacts cannot survive.
-        if self.last_w != w || self.last_h != h as usize {
-            frame.push(esc);
-            frame.push_str("[2J");
-            self.last_w = w;
-            self.last_h = h as usize;
-        }
+        // Clear the whole grid on every frame: inside nvim terminal buffers a
+        // stale size would otherwise scroll frames into the buffer.
+        frame.push(esc);
+        frame.push_str("[2J");
         frame.push(esc);
         frame.push_str("[H");
 
