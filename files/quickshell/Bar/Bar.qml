@@ -17,6 +17,10 @@ Scope {
     id: rootScope
     property var shell
     property alias visible: barRootItem.visible
+    // Now-playing popup window, hoisted to a top-level Loader in shell.qml so its
+    // PanelWindow maps as a real surface (nested PanelWindow does not map).
+    // Anchored to the right panel once it exists.
+    property var sidebarPopup: (shell && shell.musicPopup) ? shell.musicPopup : null
     property real barHeight: 0 // Expose current bar height for other components (e.g. window mirroring)
     function vpnAccentColor() {
         const boost = Theme.vpnAccentSaturateBoost || 0;
@@ -939,7 +943,7 @@ Scope {
                                 Media {
                                     id: mediaModule
                                     anchors.fill: parent
-                                    sidePanelPopup: sidebarPopup
+                                    sidePanelPopup: rootScope.sidebarPopup
                                 }
                             }
                             LocalMods.MpdFlags {
@@ -1024,6 +1028,7 @@ Scope {
                                 id: widgetsGenelec
                                 visible: true
                                 Layout.alignment: Qt.AlignVCenter
+                                panelHovering: rightPanel.panelHovering
                             }
                         }
 
@@ -1161,11 +1166,17 @@ Scope {
                             clip: false
                         }
 
-                        MusicPopup {
-                            id: sidebarPopup
-                            anchorWindow: rightPanel
-                            panelEdge: "bottom"
+                        // Popup window is hoisted to shell.qml (top-level Loader);
+                        // see rootScope.sidebarPopup. Anchor it to this panel.
+                        readonly property var _sidebarPopup: rootScope.sidebarPopup
+                        function __anchorPopup() {
+                            if (rootScope.sidebarPopup && rootScope.sidebarPopup.anchorWindow !== rightPanel) {
+                                rootScope.sidebarPopup.anchorWindow = rightPanel;
+                                rootScope.sidebarPopup.panelEdge = "bottom";
+                            }
                         }
+                        Component.onCompleted: { __anchorPopup(); }
+                        on_SidebarPopupChanged: Qt.callLater(__anchorPopup)
 
                         states: [
                             State {
@@ -1212,7 +1223,7 @@ Scope {
                             if (!title && !artist) return;
                             rightPanel._lastTrackKey = key;
                             if (album !== rightPanel._lastAlbum) rightPanel._lastAlbum = album;
-                            if (MusicManager.trackTitle || MusicManager.trackArtist) sidebarPopup.showAt();
+                            if (MusicManager.trackTitle || MusicManager.trackArtist) rootScope.sidebarPopup && rootScope.sidebarPopup.showAt();
                         } catch (e) { /* ignore */ }
                     }
                     
