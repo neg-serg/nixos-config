@@ -100,5 +100,24 @@ assert_eq(p.query, 'g', 'buffers picker restores the last query')
 p:handle('cancel')
 print('PASS native query memory')
 
+-- ---------------------------------------------------------------------------
+-- Frecency: recorded files outrank plain oldfiles order.
+local frec = require('lusty.frecency')
+local stfile = '/tmp/lusty_nfs_frec.json'
+pcall(vim.fn.delete, stfile)
+frec.set_state_file(stfile)
+frec.set_now(function() return 1700000000 end)
+frec.record('/etc/nixos/flake.nix')
+frec.record('/etc/nixos/flake.nix')
+frec.record('/tmp/lusty_nfs_recent.md')
+local nr2 = require('lusty.native_recent')
+nr2.set_recent_fn(function() return { '/tmp/lusty_nfs_recent.md', '/etc/nixos/flake.nix' } end)
+nr2.run()
+p = pick.active_pick()
+p:handle('clear') -- ignore remembered query
+assert_eq(p.items[1].path, '/etc/nixos/flake.nix', 'frecency file ranks first')
+p:handle('cancel')
+print('PASS native frecency')
+
 print('ALL NATIVE FLOAT SMOKE TESTS PASSED')
 vim.cmd('qa!')
