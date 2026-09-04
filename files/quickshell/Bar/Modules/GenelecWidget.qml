@@ -20,6 +20,8 @@ LocalMods.AudioEndpointTile {
     iconOff: "volume_off"
     iconLow: "volume_down"
     iconHigh: "speaker" // Use speaker icon for hardware monitors
+    // Hide the monitor icon until the capsule is hovered (keeps bar clean).
+    hideIconWhenIdle: true
     // Custom symmetric Genelec "The Ones" coax monitor silhouette, recoloured
     // to the current volume level at draw time.
     iconSource: Qt.resolvedUrl("../../art/genelec/genelec-ones.svg")
