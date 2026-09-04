@@ -103,14 +103,10 @@ map('n', xk[[<C-M-.>]], '<Cmd>Trouble diagnostics toggle<CR>', {desc = 'Diagnost
 -- Git: C-S-q quick diff HEAD, C-M-q git status picker
 map('n', xk[[<C-S-q>]], '<Cmd>DiffviewOpen<CR>', {desc = 'Git diff'})
 map('n', xk[[<C-M-q>]], function() Snacks.picker.git_status() end, {desc = 'Git status (snacks)'})
-map('n', '<C-b>', function() Snacks.picker.qflist() end, {desc = 'Quickfix picker (snacks)'})
-map('n', '<C-b>q', function() require('utils.fzf').qf_toggle() end, {desc = 'QF toggle'})
-map('n', '<C-b>d', function() require('utils.fzf').qf_clear() end, {desc = 'QF clear'})
-map('n', '<C-b>a', function()
-  vim.ui.input({ prompt = ':cdo ' }, function(cmd)
-    if cmd and cmd ~= '' then require('utils.fzf').apply_cmd_to_qf(cmd) end
-  end)
-end, {desc = 'Apply cmd to QF'})
+-- C-b is Lusty buffer explorer (see lusty/init.lua); quickfix list is
+-- available via :Snacks picker qflist
+map('n', '<leader>bq', function() require('utils.fzf').qf_toggle() end, {desc = 'QF toggle'})
+map('n', '<leader>bd', function() require('utils.fzf').qf_clear() end, {desc = 'QF clear'})
 map('n', 'cd', function() Snacks.picker.zoxide() end, {desc = 'Zoxide dirs (snacks)'})
 map('n', '<leader>sh', function() Snacks.picker.help() end, {desc = 'Help tags (snacks)'})
 
