@@ -235,13 +235,16 @@ Item {
                 visible: !mediaControl.stretchMode && !mediaControl.panelMode
                 enabled: visible
 
-                // Small iPhone-style analyser to the left of the album art,
-                // same style/settings as the toast, just ~5 bars and simpler.
+                // Small iPhone-style analyser to the left of the album art.
+                // Metrics: width = album-art extent (iconPreferredWidth), height =
+                // full capsule height so the mirrored bars fill the row — instead
+                // of a tiny square that reads as "too short".
                 IPhoneSpectrum {
                     id: barMiniSpec
-                    Layout.preferredWidth: Math.round(mediaControl.baseHeight)
-                    Layout.minimumWidth: Math.round(mediaControl.baseHeight)
+                    Layout.preferredWidth: Math.round(mediaControl.iconPreferredWidth)
+                    Layout.minimumWidth: Math.round(mediaControl.iconPreferredWidth)
                     Layout.preferredHeight: Math.round(mediaControl.baseHeight)
+                    Layout.fillHeight: true
                     Layout.alignment: Qt.AlignVCenter
                     values: mediaControl._barSpec
                     targetBars: 5
