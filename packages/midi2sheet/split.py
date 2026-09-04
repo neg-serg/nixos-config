@@ -8,7 +8,6 @@ writes a format-1, two-track MIDI with a piano program change per track.
 
 import argparse
 import struct
-import sys
 
 
 def vlv(n):

@@ -17,7 +17,10 @@ Env: GENLC_CLI (venv genlc binary), HIDAPI_LIB (dir with libhidapi*),
      GLM_OSC_STATE (json state file for volume/mute/power persistence).
 """
 
-import json, math, os, subprocess
+import json
+import math
+import os
+import subprocess
 from pathlib import Path
 from pythonosc import dispatcher, osc_server
 from pythonosc.udp_client import SimpleUDPClient
