@@ -342,6 +342,7 @@ Rectangle {
                                 // Spectrum analyzer in the background of the
                                 // progress area, coloured with the cover accent.
                                 Canvas {
+                                    id: spectrumCanvas
                                     anchors.fill: parent
                                     opacity: 0.4
                                     onPaint: {
@@ -359,7 +360,10 @@ Rectangle {
                                             ctx.fillRect(i * (bw + gap), height - h, bw, h);
                                         }
                                     }
-                                    onCavaValuesChanged: requestPaint()
+                                }
+                                Connections {
+                                    target: MusicManager
+                                    function onCavaValuesChanged() { spectrumCanvas.requestPaint(); }
                                 }
 
                                 // Progress track + accent fill on top of the spectrum.
@@ -389,8 +393,8 @@ Rectangle {
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
-                                    onPressed: playerUI.seekFromX(mouse.x, width)
-                                    onPositionChanged: if (pressed) playerUI.seekFromX(mouse.x, width)
+                                    onPressed: (mouse) => playerUI.seekFromX(mouse.x, width)
+                                    onPositionChanged: (mouse) => { if (pressed) playerUI.seekFromX(mouse.x, width) }
                                 }
                             }
                             Text {
