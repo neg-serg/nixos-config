@@ -34,6 +34,16 @@ Item {
     property real glowOpacity: 0.35
     property real glowSpread: 2.0
 
+    // Frequency band: bars map linearly across spectrumMinHz..spectrumMaxHz;
+    // bars inside colorMinHz..colorMaxHz use the neon/accent colour, the rest
+    // render as a dim neutral so only the selected band pops.
+    property real spectrumMinHz: (Settings.settings.spectrumMinHz !== undefined) ? Settings.settings.spectrumMinHz : 0
+    property real spectrumMaxHz: (Settings.settings.spectrumMaxHz !== undefined) ? Settings.settings.spectrumMaxHz : 40000
+    property real colorMinHz: (Settings.settings.spectrumColorMinHz !== undefined) ? Settings.settings.spectrumColorMinHz : 15000
+    property real colorMaxHz: (Settings.settings.spectrumColorMaxHz !== undefined) ? Settings.settings.spectrumColorMaxHz : 25000
+    property color dimColor: "#ffffff"
+    property real dimOpacity: (Settings.settings.spectrumDimOpacity !== undefined) ? Settings.settings.spectrumDimOpacity : 0.18
+
     function _preset() {
         switch (root.style) {
             case "neon-violet":
@@ -125,6 +135,16 @@ Item {
             alpha
         );
     }
+    // Linear frequency for bar index i across the configured full scale.
+    function freqAt(i) {
+        var n = Math.max(1, root.barCount);
+        var t = (n <= 1) ? 0 : (i / (n - 1));
+        return root.spectrumMinHz + t * (root.spectrumMaxHz - root.spectrumMinHz);
+    }
+    function dimColorAt(alpha) {
+        var c = root.dimColor;
+        return Qt.rgba(c.r, c.g, c.b, alpha);
+    }
 
     readonly property real barW: {
         var n = Math.max(1, root.barCount);
@@ -142,12 +162,19 @@ Item {
             property real v: Utils.clamp01((root._downsampled[index] || 0))
             // Skip bars with no signal so silence does not leave 1px stubs.
             readonly property bool barVisible: v > 0.001
-            property color barColor: root.gradientAt(index, root._barFillOpacity)
+            // Only the selected frequency band is coloured; the rest is dim.
+            readonly property bool inColorBand: {
+                var f = root.freqAt(index);
+                return f >= root.colorMinHz && f <= root.colorMaxHz;
+            }
+            property color barColor: parent.inColorBand
+                ? root.gradientAt(index, root._barFillOpacity)
+                : root.dimColorAt(root.dimOpacity)
             property color glowColor: root.gradientAt(index, root._glowOpacity)
 
-            // Neon halo behind the bottom core bar.
+            // Neon halo behind the bottom core bar (coloured band only).
             Rectangle {
-                visible: parent.barVisible && root._glowEnabled
+                visible: parent.barVisible && root._glowEnabled && parent.inColorBand
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * root._glowSpread
                 radius: width / 2
@@ -180,9 +207,9 @@ Item {
                 }
             }
 
-            // Neon halo behind the top bar (mirrored only).
+            // Neon halo behind the top bar (mirrored, coloured band only).
             Rectangle {
-                visible: root.mirror && parent.barVisible && root._glowEnabled
+                visible: root.mirror && parent.barVisible && root._glowEnabled && parent.inColorBand
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * root._glowSpread
                 radius: width / 2
