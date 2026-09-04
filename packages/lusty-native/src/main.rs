@@ -124,6 +124,10 @@ command-line flags win.
                 i += 1;
                 width = args.get(i).and_then(|s| s.parse().ok());
             }
+            "--columns" => {
+                i += 1;
+                columns = args.get(i).cloned();
+            }
             other if !other.starts_with("--") => {
                 root = PathBuf::from(other);
             }
@@ -151,6 +155,10 @@ command-line flags win.
     app.set_long(long);
     app.set_sort(reverse, dirs_first);
     app.set_sort_mode(sort_mode);
+    let cols_spec = columns.unwrap_or_else(|| std::env::var("LUSTY_COLUMNS").unwrap_or_default());
+    if !cols_spec.is_empty() {
+        app.set_columns(&cols_spec);
+    }
     match app.run() {
         Ok(code) => std::process::exit(code),
         Err(err) => {
@@ -198,10 +206,6 @@ fn run_list(args: &[String]) {
                     Some("time") => 3,
                     _ => 0,
                 };
-            }
-            "--columns" => {
-                i += 1;
-                columns = args.get(i).cloned();
             }
             other if !other.starts_with("--") && root.is_none() => {
                 root = Some(PathBuf::from(other));
