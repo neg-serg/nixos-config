@@ -24,8 +24,9 @@
   и форматируются тем же кодом, что и standalone (listing::meta_line).
 - custom — выбор подмножества полей perm,user,size,time (имя всегда последним); конфиг
   g:LustyExplorerColumns / LUSTY_COLUMNS / --columns.
-- Сортировки: name|size|time|ext, --reverse, --group-dirs-first (standalone; в float — как будет
-  нужно, отдельным пунктом).
+- Сортировки: name|ext|size|time — standalone (CLI --sort) и float (C-s циклирует; serve
+  пересортировывает листинг и между сменами возвращается к каноническому порядку depth+name).
+  --reverse/--group-dirs-first — standalone (CLI).
 - Иконки (nerd font) опционально (LUSTY_ICONS=1, standalone); tree-вид позже.
 - Приоритет опций: CLI > env LUSTY\_\* > g:LustyExplorer\*.
 - Примечание: long-формат общий для standalone и serve (listing::meta_line, маска 1 perm / 2 user /
@@ -42,8 +43,8 @@
 ## Порядок работ
 
 - A: хоткеи, паритет standalone/float — готово.
-- B: long-режим + сортировки — готово в standalone; float: long-режим готов (C-l + serve M),
-  переключение сортировки в float (C-s) — отдельный мелкий пункт.
+- B: long-режим + сортировки — готово: standalone (CLI) и float (C-l long + serve M; C-s цикл
+  name/ext/size/time).
 - C: custom-колонки + env/config + иконки — готово (--columns/LUSTY_COLUMNS в standalone и float;
   g:LustyExplorerColumns читает float).
 - D: превью текст/каталог/буфер/grep — по договорённости не делаем.
