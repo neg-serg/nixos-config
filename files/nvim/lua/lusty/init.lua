@@ -116,12 +116,14 @@ function M.setup()
     -- Simple chords: C-b = buffers, C-g = buffer grep. These override the
     -- stock <C-b> (quickfix list) and <C-g> (word count) normal-mode maps;
     -- lusty loads after 02-bindings, so the set happens later.
+    -- nowait: with <C-b>q/<C-b>d chords still present nvim would wait a
+    -- timeoutlen before firing the plain map; fire instantly instead.
     vim.keymap.set('n', '<C-b>', function()
       run_buffers()
-    end, { desc = 'Lusty buffer explorer (native float)' })
+    end, { nowait = true, desc = 'Lusty buffer explorer (native float)' })
     vim.keymap.set('n', '<C-g>', function()
       run_grep()
-    end, { desc = 'Lusty buffer grep (native float)' })
+    end, { nowait = true, desc = 'Lusty buffer grep (native float)' })
   end
 end
 
