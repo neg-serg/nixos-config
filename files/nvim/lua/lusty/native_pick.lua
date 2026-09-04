@@ -259,6 +259,7 @@ function Pick:draw()
     end
   end
   lines[h] = self.title .. ' ' .. self.arrow .. ' ' .. self.query
+    .. (self.total > 0 and (' [' .. self.total .. ']') or '')
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
@@ -305,6 +306,9 @@ function Pick:paint_prompt(h)
   add(self.arrow, 'LustyPromptSep')
   add(' ', 'LustyPromptQuery')
   add(self.query, 'LustyPromptQuery')
+  if self.total > 0 then
+    add(' [' .. self.total .. ']', 'LustyPromptPath')
+  end
   for _, seg in ipairs(segs) do
     if seg[3] then
       api.nvim_buf_add_highlight(self.buf, ns, seg[3], line, seg[1], seg[1] + seg[2])
