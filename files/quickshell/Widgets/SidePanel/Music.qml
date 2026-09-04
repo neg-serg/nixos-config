@@ -336,7 +336,7 @@ Rectangle {
                             }
                             Item {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(10, Math.round(30 * Theme.scale(screen)))
+                                Layout.preferredHeight: Math.max(10, Math.round(60 * Theme.scale(screen)))
                                 implicitHeight: Layout.preferredHeight
 
                                 // Spectrum analyzer in the background of the
