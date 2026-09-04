@@ -100,6 +100,15 @@ Item {
     // ── Accent color (shared state, sampled by first consumer in a window) ──
     property color accentColor: Theme.accentPrimary
     property bool accentReady: false
+    // Ease accent changes so consumers never snap from a fallback to the
+    // sampled color (the cover sampler is async; without a transition it
+    // flashes from the previous/default accent).
+    Behavior on accentColor {
+        ColorAnimation {
+            duration: Theme.sidePanelPopupSlideMs
+            easing.type: Theme.uiEasingRipple
+        }
+    }
     property string _lastSampledUrl: ""
     property var _accentCache: ({})
 
