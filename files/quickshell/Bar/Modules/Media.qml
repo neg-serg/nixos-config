@@ -252,11 +252,12 @@ Item {
                     Layout.fillHeight: true
                     Layout.alignment: Qt.AlignVCenter
                     values: mediaControl._barSpec
-                    targetBars: 5
+                    targetBars: Settings.settings.barAnalyserBars
                     accentColor: mediaControl.mediaAccent
-                    fillOpacity: 0.8
-                    barGap: 2
-                    minBarWidth: 5
+                    fillOpacity: Settings.settings.barAnalyserFillOpacity
+                    barGap: Settings.settings.barAnalyserBarGap
+                    minBarWidth: Settings.settings.barAnalyserMinBarWidth
+                    mirror: Settings.settings.barAnalyserMirror
                     animDurationMs: 80
                     opacity: 0.95
                     // Hover-only, gated on the bar panel hover signal.
