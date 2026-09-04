@@ -75,7 +75,7 @@ pub struct App {
     icons: bool, // nerd-font icons per entry + dir icon before the prompt
     reverse: bool, // eza --reverse per depth
     dirs_first: bool, // eza --group-dirs-first
-    sort_ext: bool, // eza --sort=ext
+    sort_mode: u8, // 0 name, 1 ext, 2 size, 3 time
     palette: Colors,
 }
 
@@ -103,7 +103,7 @@ impl App {
             icons: std::env::var("LUSTY_ICONS").map(|v| v == "1").unwrap_or(false),
             reverse: false,
             dirs_first: false,
-            sort_ext: false,
+            sort_mode: 0,
             palette,
         }
     }
@@ -117,8 +117,8 @@ impl App {
         self.dirs_first = dirs_first;
     }
 
-    pub fn set_sort_ext(&mut self, on: bool) {
-        self.sort_ext = on;
+    pub fn set_sort_mode(&mut self, mode: u8) {
+        self.sort_mode = mode;
     }
 
     /// Enable the long listing view (mode/size/date + name per row).
@@ -153,10 +153,11 @@ impl App {
                 show_dots: dots,
             };
             let mut listed = cache::cached_list(&self.root, &opts);
-            if self.sort_ext {
-                crate::listing::sort_by_ext(&mut listed);
-            } else {
-                crate::listing::reorder(&mut listed, self.dirs_first, self.reverse);
+            match self.sort_mode {
+                1 => crate::listing::sort_by_ext(&mut listed),
+                2 => crate::listing::sort_by_meta(&self.root, &mut listed, false),
+                3 => crate::listing::sort_by_meta(&self.root, &mut listed, true),
+                _ => crate::listing::reorder(&mut listed, self.dirs_first, self.reverse),
             }
             *cache = Some(listed);
             self.needs_rank = true;
