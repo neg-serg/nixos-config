@@ -336,7 +336,7 @@ Rectangle {
                             }
                             Item {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(10, Math.round(60 * Theme.scale(screen)))
+                                Layout.preferredHeight: Math.max(10, Math.round(84 * Theme.scale(screen)))
                                 implicitHeight: Layout.preferredHeight
 
                                 // Spectrum analyzer in the background of the
@@ -348,18 +348,19 @@ Rectangle {
                                     values: MusicManager.cavaValues
                                     targetBars: 24
                                     accentColor: detailsCol.musicAccent
-                                    fillOpacity: 0.55
+                                    fillOpacity: 0.7
                                     barGap: 2
                                     minBarWidth: 2
                                     animDurationMs: 80
-                                    opacity: 0.75
+                                    opacity: 0.85
                                 }
 
-                                // Progress track + accent fill on top of the spectrum.
+                                // Thin progress line at the bottom of the spectrum band.
                                 Rectangle {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: Math.round(1 * Theme.scale(screen))
                                     height: Math.max(2, Math.round(3 * Theme.scale(screen)))
                                     color: Color.withAlpha(playerUI.musicTextColor, 0.18)
                                     radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
