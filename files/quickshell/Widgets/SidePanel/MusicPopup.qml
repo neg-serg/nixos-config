@@ -120,14 +120,24 @@ Item {
         // card collapsed to a 1px sliver — the window mapped, nothing rendered.
         // The height is (re)assigned in showAt (JS, after the window maps) so
         // an early declarative evaluation seeing NaN cannot stick.
-        property real musicHeightPx: Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
-        property int contentPaddingPx: Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
+        property real musicHeightPx: Math.round(Settings.settings.musicPopupHeight
+            * ((toast.cardWidthPx > 0 ? toast.cardWidthPx : Settings.settings.musicPopupWidth)
+               / Settings.settings.musicPopupWidth))
+        property int contentPaddingPx: Math.round(Settings.settings.musicPopupPadding
+            * ((toast.cardWidthPx > 0 ? toast.cardWidthPx : Settings.settings.musicPopupWidth)
+               / Settings.settings.musicPopupWidth))
         property real cardHeightPx: 300 // refreshed by showAt once the window maps
         function computeCardHeight() {
             try {
-                const pad = Math.max(0, toast.contentPaddingPx) || 12;
-                const mh = toast.musicHeightPx;
-                if (!isFinite(mh) || mh <= 0) return 300;
+                // Derive the scale from the WORKING card width (Theme.scale(Screen)
+                // can be a transient value before the window maps — using it
+                // directly produced a too-short card that left the toast invisible
+                // or made it jump size).
+                const wScale = (toast.cardWidthPx > 0 && Settings.settings.musicPopupWidth > 0)
+                    ? toast.cardWidthPx / Settings.settings.musicPopupWidth : 1.15;
+                const pad = Math.max(0, Math.round(Settings.settings.musicPopupPadding * wScale)) || 12;
+                const mh = Math.round(Settings.settings.musicPopupHeight * wScale);
+                if (!isFinite(mh) || mh <= 0) mh = 300;
                 const floor = Math.round(pad + Math.max(120, mh * 0.5));
                 const cap = Math.max(floor, Math.round(ScreenUtil.height(sidebarPopup) * 0.7));
                 return Math.round(Utils.clamp(pad + mh, floor, cap));
