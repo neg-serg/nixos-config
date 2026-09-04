@@ -74,6 +74,10 @@ fn rel_label(root: &Path, path: &Path) -> String {
 /// True when any proper ancestor directory of rel (e.g. "sub" or "sub/deep"
 /// for "sub/deep/file.txt") is in the blocked set.
 fn under_blocked(rel: &str, blocked: &HashSet<String>) -> bool {
+    // Depth-1 rel is a bare name: no ancestors to check, avoid the split.
+    if !rel.contains('/') {
+        return false;
+    }
     let comps: Vec<&str> = rel.split('/').collect();
     let mut prefix = String::new();
     for k in 0..comps.len().saturating_sub(1) {
@@ -88,14 +92,25 @@ fn under_blocked(rel: &str, blocked: &HashSet<String>) -> bool {
     false
 }
 
-fn is_skip_dir(name: &str, path: &Path, skip: &[String]) -> bool {
-    for pat in skip {
-        if pat.is_empty() {
-            continue;
+/// Precompiled skip pattern: (has_metachar, pattern) with '~' already
+/// expanded. Literal patterns without '/' only need a case-insensitive name
+/// compare; everything else falls back to the full path, built lazily.
+fn is_skip_dir(name: &str, path: &Path, skip: &[(bool, String)]) -> bool {
+    for (glob, pat) in skip {
+        if !glob && !pat.contains('/') && name.eq_ignore_ascii_case(pat) {
+            return true;
         }
-        let expanded = glob::expand_tilde(pat);
-        let full = path.to_string_lossy();
-        if glob::wildcard_match(&expanded, name) || glob::wildcard_match(&expanded, &full) {
+    }
+    if !skip.iter().any(|(glob, pat)| *glob || pat.contains('/')) {
+        return false;
+    }
+    let full = path.to_string_lossy();
+    for (glob, pat) in skip {
+        if *glob {
+            if glob::wildcard_match(pat, name) || glob::wildcard_match(pat, &full) {
+                return true;
+            }
+        } else if pat.contains('/') && full.eq_ignore_ascii_case(pat) {
             return true;
         }
     }
@@ -108,7 +123,16 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
     } else {
         mount::mount_points()
     };
-    let root_norm = mount::normalize(root.to_string_lossy());
+    // Expand '~' and classify patterns once, not per directory entry.
+    let skip: Vec<(bool, String)> = opts
+        .skip_dirs
+        .iter()
+        .filter(|p| !p.is_empty())
+        .map(|p| {
+            let expanded = glob::expand_tilde(p);
+            (expanded.contains('*') || expanded.contains('?'), expanded)
+        })
+        .collect();
 
     let mut blocked: HashSet<String> = HashSet::new();
     let mut entries: Vec<Entry> = Vec::new();
@@ -120,41 +144,61 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
         .into_iter()
         .filter_map(|e| e.ok())
     {
-        let name = e.file_name().to_string_lossy().to_string();
-        let rel = rel_label(root, e.path());
-        if under_blocked(&rel, &blocked) {
-            continue;
-        }
+        let name = e.file_name().to_string_lossy().into_owned();
+        let depth = e.depth();
         let hidden = name.starts_with('.');
         if hidden && !opts.show_dots {
-            // Hidden dot-dir: neither listed nor traversed.
+            // Hidden dot-dir: neither listed nor traversed. At depth 1 the
+            // rel equals the bare name, so no path work is needed.
             if e.file_type().is_dir() {
-                blocked.insert(rel);
+                if depth == 1 {
+                    blocked.insert(name.clone());
+                } else {
+                    blocked.insert(rel_label(root, e.path()));
+                }
             }
+            continue;
+        }
+        // Build the full path at most once per entry.
+        let path = e.path();
+        let rel = if depth == 1 {
+            name.clone()
+        } else {
+            rel_label(root, path)
+        };
+        if under_blocked(&rel, &blocked) {
             continue;
         }
         let kind = kind_of(&e);
         if kind == FileKind::Dir {
-            if is_skip_dir(&name, e.path(), &opts.skip_dirs) {
+            if is_skip_dir(&name, path, &skip) {
                 blocked.insert(rel.clone()); // visible, but not traversed
             } else if !mounts.is_empty() {
-                let p = mount::normalize(e.path().to_string_lossy());
-                if p != root_norm && mounts.contains(&p) {
-                    blocked.insert(rel.clone()); // visible, but not traversed
+                // WalkDir paths are clean absolute paths, so a direct lookup
+                // against the (normalized) mount set suffices; no per-entry
+                // normalization or allocation.
+                if let Some(p) = path.to_str() {
+                    if mounts.contains(p) {
+                        blocked.insert(rel.clone()); // visible, but not traversed
+                    }
                 }
             }
         }
         entries.push(Entry {
             name,
-            path: e.path().to_path_buf(),
+            path: path.to_path_buf(),
             label: rel,
             kind,
-            depth: e.depth() as u32,
+            depth: depth as u32,
         });
     }
 
-    // Shallower entries first, ties broken by name.
-    entries.sort_by(|a, b| a.depth.cmp(&b.depth).then_with(|| a.name.cmp(&b.name)));
+    // Shallower entries first, ties broken by name. Unstable sort avoids the
+    // allocation and extra moves of a stable sort; equal (depth, name) keys
+    // are indistinguishable to the picker anyway.
+    entries.sort_unstable_by(|a, b| {
+        a.depth.cmp(&b.depth).then_with(|| a.name.cmp(&b.name))
+    });
     entries
 }
 
