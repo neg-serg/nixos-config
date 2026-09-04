@@ -202,10 +202,10 @@ Item {
         // so WlrLayershell already ends it at the top of the bar's reserved zone
         // (qs-music layer spans 0..(screenH-barH)). anchorWindow.height must NOT
         // be added here (double-counts the bar); instead the card floats a clear
-        // distance above the bar on top of the base edge margin (~30 scaled px
-        // of extra air, similar to the dunst-style notification offset).
+        // distance above the bar on top of the base edge margin (~64 scaled px
+        // of extra air, well clear of the panel).
         // Extra gap above the panel in scaled logical px (tune here).
-        property real _bottomGapPx: Math.max(0, Math.round(30 * Theme.scale(Screen)))
+        property real _bottomGapPx: Math.max(0, Math.round(56 * Theme.scale(Screen)))
         function computeBottomMargin() {
             return toast.baseMargin() + toast._bottomGapPx;
         }
