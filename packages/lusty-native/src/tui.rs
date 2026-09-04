@@ -64,6 +64,7 @@ pub struct App {
     selected: usize,
     offset: usize,
     size: (usize, usize),
+    cursor_row: Option<usize>,
     palette: Colors,
 }
 
@@ -81,6 +82,7 @@ impl App {
             selected: 0,
             offset: 0,
             size: (80, 24),
+            cursor_row: None,
             palette,
         }
     }
@@ -208,6 +210,7 @@ impl App {
             let (c, r) = terminal::size().unwrap_or((80, 24));
             self.size = ((c as usize).max(40), (r as usize).max(10));
         }
+        self.cursor_row = probe_cursor_row();
         let result = self.loop_events(&mut stdout);
         self.clear_panel(&mut stdout)?;
         terminal::disable_raw_mode()?;
@@ -262,6 +265,51 @@ fn probe_size() -> Option<(usize, usize)> {
 }
 
 /// Parse ESC[<row>;<col>R.
+/// Ask the terminal where the cursor is (DSR), so the panel can start right
+/// below the command line. Returns the 0-based row.
+fn probe_cursor_row() -> Option<usize> {
+    use std::io::Read;
+    use std::os::unix::io::AsRawFd;
+    use std::time::{Duration, Instant};
+
+    let esc = char::from_u32(0x1b).unwrap();
+    let mut out = io::stdout();
+    write!(out, "{esc}[6n").ok()?;
+    out.flush().ok()?;
+
+    let deadline = Instant::now() + Duration::from_millis(200);
+    let mut stdin = io::stdin();
+    let mut buf = Vec::new();
+    let mut byte = [0u8; 1];
+    loop {
+        if Instant::now() >= deadline {
+            return None;
+        }
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let ms = remaining.as_millis().min(50) as i32;
+        let mut fds = [libc::pollfd {
+            fd: stdin.as_raw_fd(),
+            events: libc::POLLIN,
+            revents: 0,
+        }];
+        // SAFETY: valid pollfd array for the stdin fd.
+        let rc = unsafe { libc::poll(fds.as_mut_ptr(), 1, ms) };
+        if rc <= 0 {
+            continue;
+        }
+        if stdin.read(&mut byte).is_err() {
+            return None;
+        }
+        buf.push(byte[0]);
+        if byte[0] == b'R' {
+            break;
+        }
+    }
+    let s = String::from_utf8_lossy(&buf);
+    let (row, _col) = parse_dsr(&s)?;
+    Some(row.saturating_sub(1))
+}
+
 fn parse_dsr(s: &str) -> Option<(usize, usize)> {
     let inner = s.rsplit('[').next()?;
     let inner = inner.strip_suffix('R')?;
@@ -273,15 +321,24 @@ fn parse_dsr(s: &str) -> Option<(usize, usize)> {
 
 impl App {
     fn list_rows(&self) -> usize {
-        // bottom panel like fzf --height: 12 rows total incl the prompt
+        // panel of up to 12 rows (incl the prompt), sized to fit under the
+        // command line the picker was launched from
         let h = self.size.1;
-        (h.min(12)).saturating_sub(1 + PANEL_BOTTOM_MARGIN).max(3)
+        let top = self.panel_top();
+        let avail = h.saturating_sub(top);
+        (avail.min(12)).saturating_sub(1).max(3)
     }
 
-    /// 0-based top row of the bottom panel.
+    /// 0-based top row of the panel: the cursor sits on the blank line right
+    /// under the command line the picker was launched from, so draw there
+    /// (fzf --height behaviour). Falls back near the bottom if unknown.
     fn panel_top(&self) -> usize {
         let h = self.size.1;
-        h.saturating_sub(self.list_rows() + 1 + PANEL_BOTTOM_MARGIN)
+        if let Some(r) = self.cursor_row {
+            r.min(h.saturating_sub(13))
+        } else {
+            h.saturating_sub(14)
+        }
     }
 
     /// Adaptive columns: as many as the content needs (ceil(total/rows)),
