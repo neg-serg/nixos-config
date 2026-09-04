@@ -30,7 +30,7 @@ const MAX_WATCH_DIRS: usize = 4096;
 /// Only bother caching trees with at least this many entries.
 const MIN_ENTRIES: usize = 16;
 
-const MAGIC: &[u8] = b"LSTC";
+const MAGIC: &[u8] = b"LST2";
 
 fn cache_enabled() -> bool {
     match std::env::var("LUSTY_CACHE") {
@@ -114,7 +114,7 @@ fn watch_dirs(root: &Path, entries: &[Entry], opts: &Options) -> Vec<(String, i1
     }
     for e in entries {
         if e.kind == FileKind::Dir && (e.depth as usize) < opts.depth {
-            if let Some((m, l)) = mtime_len(&e.path) {
+            if let Some((m, l)) = mtime_len(&e.path(root)) {
                 out.push((e.label.clone(), m, l));
             }
         }
@@ -167,14 +167,7 @@ fn store(
     for e in entries {
         w.push(kind_char(e.kind));
         put_u32(&mut w, e.depth);
-        if e.name == e.label {
-            w.push(0);
-            put_str(&mut w, &e.label);
-        } else {
-            w.push(1);
-            put_str(&mut w, &e.name);
-            put_str(&mut w, &e.label);
-        }
+        put_str(&mut w, &e.label);
     }
     let tmp = path.with_extension("tmp");
     fs::write(&tmp, &w)?;
@@ -277,12 +270,8 @@ fn try_load(path: &Path, root: &Path, opts: &Options) -> Option<Vec<Entry>> {
     for _ in 0..en {
         let kind = kind_from(c.u8()?);
         let edepth = c.u32()?;
-        let flag = c.u8()?;
-        let extra_name = if flag == 0 { None } else { Some(c.str()?) };
         let label = c.str()?;
-        let name = extra_name.unwrap_or_else(|| label.clone());
-        let path = root.join(&label);
-        entries.push(Entry { name, path, label, kind, depth: edepth });
+        entries.push(Entry { label, kind, depth: edepth });
     }
     Some(entries)
 }

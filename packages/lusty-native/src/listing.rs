@@ -69,15 +69,29 @@ pub enum FileKind {
 
 #[derive(Debug, Clone)]
 pub struct Entry {
-    pub name: String,
-    /// Full path (used by later phases to open the file).
-    #[allow(dead_code)]
-    pub path: PathBuf,
     /// Label shown/scored by the picker: the path relative to the root.
     pub label: String,
     pub kind: FileKind,
     /// 1 = direct child of the root, 2 = one level deeper, etc.
     pub depth: u32,
+}
+
+/// Last label component (the bare file/dir name).
+pub fn basename(label: &str) -> &str {
+    label.rsplit('/').next().unwrap_or(label)
+}
+
+impl Entry {
+    /// Full path for this entry under `root` (labels are root-relative, so
+    /// the path is root.join(label)); built only where actually needed.
+    pub fn path(&self, root: &Path) -> PathBuf {
+        root.join(&self.label)
+    }
+
+    /// Bare entry name (last label component).
+    pub fn basename(&self) -> &str {
+        basename(&self.label)
+    }
 }
 
 pub struct Options {
@@ -173,8 +187,6 @@ fn scan_dir(
             }
         }
         entries.push(Entry {
-            name,
-            path: path.clone(),
             label: rel.clone(),
             kind: kind_of(&ft),
             depth: depth as u32,
@@ -253,12 +265,10 @@ fn sort_by_name(bucket: &mut Vec<Entry>) {
         return;
     }
     let mut order: Vec<u32> = (0..n as u32).collect();
-    order.sort_unstable_by(|&a, &b| bucket[a as usize].name.cmp(&bucket[b as usize].name));
+    order.sort_unstable_by(|&a, &b| basename(&bucket[a as usize].label).cmp(basename(&bucket[b as usize].label)));
     let mut src = std::mem::replace(bucket, Vec::with_capacity(n));
     for &i in &order {
         let empty = Entry {
-            name: String::new(),
-            path: PathBuf::new(),
             label: String::new(),
             kind: FileKind::File,
             depth: 0,
@@ -285,7 +295,7 @@ mod tests {
         fs::write(dir.join("a.txt"), b"x").unwrap();
         fs::write(dir.join("sub/b.txt"), b"y").unwrap();
         let entries = list(&dir, &opts(1, vec![], false));
-        let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
+        let names: Vec<&str> = entries.iter().map(|e| e.basename()).collect();
         assert!(names.contains(&"a.txt"));
         assert!(names.contains(&"sub"));
         assert!(!names.contains(&"b.txt"));
@@ -300,11 +310,11 @@ mod tests {
         fs::write(dir.join("a.txt"), b"x").unwrap();
         fs::write(dir.join("sub/b.txt"), b"y").unwrap();
         let entries = list(&dir, &opts(2, vec![], false));
-        let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
+        let names: Vec<&str> = entries.iter().map(|e| e.basename()).collect();
         assert!(names.contains(&"b.txt"));
         // shallower first: a.txt (depth 1) before b.txt (depth 2)
-        let a = entries.iter().position(|e| e.name == "a.txt").unwrap();
-        let b = entries.iter().position(|e| e.name == "b.txt").unwrap();
+        let a = entries.iter().position(|e| e.basename() == "a.txt").unwrap();
+        let b = entries.iter().position(|e| e.basename() == "b.txt").unwrap();
         assert!(a < b);
         let _ = fs::remove_dir_all(&dir);
     }
@@ -316,7 +326,7 @@ mod tests {
         fs::create_dir_all(dir.join("pic")).unwrap();
         fs::write(dir.join("pic/x.txt"), b"x").unwrap();
         let entries = list(&dir, &opts(2, vec!["pic".to_string()], false));
-        let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
+        let names: Vec<&str> = entries.iter().map(|e| e.basename()).collect();
         assert!(names.contains(&"pic"), "skip dir stays visible");
         assert!(!names.contains(&"x.txt"), "skip dir contents not traversed");
         let _ = fs::remove_dir_all(&dir);
@@ -329,7 +339,7 @@ mod tests {
         fs::create_dir_all(dir.join(".hid")).unwrap();
         fs::write(dir.join(".hidden"), b"x").unwrap();
         let entries = list(&dir, &opts(2, vec![], false));
-        let names: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
+        let names: Vec<&str> = entries.iter().map(|e| e.basename()).collect();
         assert!(!names.contains(&".hidden"));
         assert!(!names.contains(&".hid"));
         assert!(!names.contains(&"marker.txt"), "hidden dir not traversed");

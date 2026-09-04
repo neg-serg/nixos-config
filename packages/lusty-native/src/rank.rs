@@ -26,7 +26,7 @@ pub fn rank_indices(entries: &[Entry], query: &str) -> Vec<usize> {
     for (idx, e) in entries.iter().enumerate() {
         if let Some(first) = first {
             let name_first = e
-                .name
+                .basename()
                 .as_bytes()
                 .first()
                 .copied()
@@ -49,7 +49,7 @@ pub fn rank_indices(entries: &[Entry], query: &str) -> Vec<usize> {
         a.depth
             .cmp(&b.depth)
             .then_with(|| sb.partial_cmp(sa).unwrap_or(std::cmp::Ordering::Equal))
-            .then_with(|| a.name.cmp(&b.name))
+            .then_with(|| a.basename().cmp(b.basename()))
     });
     out.into_iter().map(|(i, _)| i).collect()
 }
@@ -130,7 +130,7 @@ mod tests {
         // ".hidden" starts with '.', so the anchor would never match it; with
         // the exemption the dot rule itself decides (every name has a dot).
         let idxs = rank_indices(&e, ".");
-        assert!(idxs.iter().any(|&i| e[i].name == ".hidden"));
+        assert!(idxs.iter().any(|&i| e[i].basename() == ".hidden"));
         let _ = fs::remove_dir_all(&dir);
     }
 
