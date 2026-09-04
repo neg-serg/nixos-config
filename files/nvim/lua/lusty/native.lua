@@ -48,16 +48,25 @@ function Picker.new(root)
   self.maxw = 12 -- widest label (chars) in the current ranked set
   self.closed = false
   self.orig_win = api.nvim_get_current_win()
+  self._timer = nil
   return self
 end
 
 function Picker:width()
+  local envw = tonumber(os.getenv('LUSTY_WIDTH'))
+  if envw and envw >= 60 then
+    return math.max(60, math.min(envw, vim.o.columns - 4))
+  end
   local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.8
   ratio = math.max(0.5, math.min(0.98, ratio))
   return math.max(60, math.floor(vim.o.columns * ratio))
 end
 
 function Picker:height()
+  local envr = tonumber(os.getenv('LUSTY_ROWS'))
+  if envr and envr >= 6 then
+    return math.max(6, math.min(envr, vim.o.lines - 2))
+  end
   -- compact: at most 12 rows total (list + prompt), pinned to the bottom
   local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.4
   ratio = math.max(0.15, math.min(0.6, ratio))
@@ -405,11 +414,55 @@ function Picker:column_nav(delta)
   self:rerank()
 end
 
+--- Debounce for typing-triggered reranks; 0 (or g:LustyExplorerInputDebounce = 0)
+--- reranks synchronously like before.
+function Picker:debounce_ms()
+  local v = vim.g.LustyExplorerInputDebounce
+  if type(v) == 'number' then
+    return math.max(0, v)
+  end
+  v = tonumber(v)
+  if v then
+    return math.max(0, v)
+  end
+  return 40
+end
+
+--- Rerank after a short quiet period so fast typing on huge listings only
+--- issues one request; navigation reranks immediately.
+function Picker:schedule_rerank()
+  local ms = self:debounce_ms()
+  if ms <= 0 then
+    self:rerank()
+    return
+  end
+  if self._timer then
+    self._timer:stop()
+  end
+  local self_ref = self
+  self._timer = vim.uv.new_timer()
+  self._timer:start(ms, 0, function()
+    vim.schedule(function()
+      if self_ref._timer then
+        self_ref._timer:stop()
+        self_ref._timer = nil
+      end
+      if not self_ref.closed then
+        self_ref:rerank()
+      end
+    end)
+  end)
+end
+
 function Picker:close()
   if self.closed then
     return
   end
   self.closed = true
+  if self._timer then
+    self._timer:stop()
+    self._timer = nil
+  end
   if self.job and vim.fn.jobwait({ self.job }, 0)[1] == -1 then
     vim.fn.jobstop(self.job)
   end
@@ -480,7 +533,7 @@ function Picker:handle(action)
       if self:maybe_toggle_dots() then
         return
       end
-      self:rerank()
+      self:schedule_rerank()
     end
     return
   end
@@ -492,7 +545,7 @@ function Picker:handle(action)
       if self:maybe_toggle_dots() then
         return
       end
-      self:rerank()
+      self:schedule_rerank()
     end
     return
   end
@@ -502,7 +555,7 @@ function Picker:handle(action)
       self.query = ''
       self.selected = 0
       self.offset = 0
-      self:rerank()
+      self:schedule_rerank()
       return
     end
     local parent = self.root:gsub('/[^/]+$', '')
@@ -531,7 +584,7 @@ function Picker:handle(action)
     if self:maybe_toggle_dots() then
       return
     end
-    self:rerank()
+    self:schedule_rerank()
   end
 end
 
