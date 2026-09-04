@@ -84,9 +84,15 @@ command-line flags win.
     let mut skip = "pic,tmp".to_string();
     let mut rows: Option<usize> = None;
     let mut width: Option<usize> = None;
+    let mut long = false;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
+            "--long" => long = true,
+            "--view" => {
+                i += 1;
+                long = args.get(i).map(|s| s.as_str() == "long").unwrap_or(false);
+            }
             "--depth" => {
                 i += 1;
                 depth = args.get(i).and_then(|s| s.parse().ok()).unwrap_or(2);
@@ -120,8 +126,12 @@ command-line flags win.
         follow_mounts: false,
         show_dots: false,
     };
+    if !long {
+        long = std::env::var("LUSTY_VIEW").map(|v| v == "long").unwrap_or(false);
+    }
     let mut app = tui::App::new(root, opts);
     app.set_ui(rows, width);
+    app.set_long(long);
     match app.run() {
         Ok(code) => std::process::exit(code),
         Err(err) => {
