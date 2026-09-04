@@ -71,6 +71,8 @@ pub struct App {
     pop_top: usize, // 0-based screen row of the popup top border
     ui_rows: Option<usize>, // user popup height (outer rows incl borders)
     ui_width: Option<usize>, // user popup width (outer columns incl borders)
+    long: bool, // eza -l style: one entry per row with mode/size/date
+    icons: bool, // nerd-font icons per entry + dir icon before the prompt
     palette: Colors,
 }
 
@@ -94,6 +96,8 @@ impl App {
             pop_top: 0,
             ui_rows: None,
             ui_width: None,
+            long: false,
+            icons: std::env::var("LUSTY_ICONS").map(|v| v != "0").unwrap_or(true),
             palette,
         }
     }
@@ -101,6 +105,11 @@ impl App {
     /// Override the popup size. CLI flags win over LUSTY_ROWS/LUSTY_WIDTH
     /// env vars; None keeps the default (14 outer rows, full terminal
     /// columns, i.e. 12 content rows and 100 content columns).
+    /// Enable the long listing view (mode/size/date + name per row).
+    pub fn set_long(&mut self, on: bool) {
+        self.long = on;
+    }
+
     pub fn set_ui(&mut self, rows: Option<usize>, width: Option<usize>) {
         let env_usize = |name: &str| {
             std::env::var(name)
@@ -547,6 +556,7 @@ impl App {
                                 }
                             }
                         }
+                        (KeyCode::Char('l'), true) => self.long = !self.long,
                         (KeyCode::Char('u'), true) => {
                             if !self.query.is_empty() {
                                 self.query.clear();
@@ -629,8 +639,12 @@ impl App {
         let top = self.pop_top;
         let bh = self.box_h;
         let rows = self.list_rows();
-        let cols = self.max_cols();
-        let col_w = self.col_width();
+        let mut cols = self.max_cols();
+        let mut col_w = self.col_width();
+        if self.long {
+            cols = 1;
+            col_w = self.box_w;
+        }
         let bg = "48;2;0;0;0"; // opaque black popup background
         let border = "38;2;108;126;150"; // #6c7e96 border colour
         let revert = format!("{esc}[22;23;24;39;{bg}m"); // default fg on popup bg
@@ -658,6 +672,13 @@ impl App {
                     if pos < self.ranked.len() {
                         let i = self.ranked[pos];
                         let e = self.listing()[i].clone();
+                        if self.long {
+                            if let Some(m) = meta_line(&root_path.join(&e.label)) {
+                                cell.push_str(&format!("{esc}[38;2;108;126;150m{m}"));
+                                cell.push_str(&revert);
+                                cell.push(' ');
+                            }
+                        }
                         if pos == self.selected {
                             cell.push_str(&format!("{esc}[1;48;2;0;95;175;38;2;209;229;255m"));
                         } else {
@@ -666,8 +687,12 @@ impl App {
                                 cell.push_str(&format!("{esc}[{code}m"));
                             }
                         }
+                        if self.icons {
+                            cell.push_str(icon_for(&e));
+                            cell.push(' ');
+                        }
                         cell.push_str(&e.label);
-                        if e.kind == FileKind::Dir {
+                        if e.kind == FileKind::Dir && !self.icons {
                             cell.push('/');
                         }
                         cell.push_str(&revert);
@@ -719,6 +744,12 @@ impl App {
     fn prompt_line(&self) -> String {
         let esc = char::from_u32(0x1b).unwrap();
         let mut out = String::new();
+        if self.icons {
+            out.push(esc);
+            out.push_str("[38;2;108;126;150m");
+            out.push_str(ICON_DIR);
+            out.push(' ');
+        }
         let push_painted = |text: &str, code: &str, out: &mut String| {
             if text.is_empty() {
                 return;
@@ -760,6 +791,97 @@ impl App {
 
 /// Outer popup height: two border rows plus up to 12 content rows.
 const OUTER_ROWS: usize = 14;
+
+/// Civil-from-days inverse (Howard Hinnant algorithm), returns y-m-d.
+fn civil_from_days(z: i64) -> (i64, u32, u32) {
+    let z = z + 719468;
+    let era = if z >= 0 { z } else { z - 146096 } / 146097;
+    let doe = (z - era * 146097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
+    (if m <= 2 { y + 1 } else { y }, m, d)
+}
+
+/// eza -l style metadata: "rwxr-xr-x   1000   1.2K 2026-09-04 06:40"
+fn meta_line(path: &std::path::Path) -> Option<String> {
+    use std::os::unix::fs::MetadataExt;
+    let md = std::fs::metadata(path).ok()?;
+    let mode = md.mode();
+    let mut perms = String::with_capacity(10);
+    perms.push(if mode & 0o040000 != 0 { 'd' } else if mode & 0o120000 == 0o120000 { 'l' } else { '-' });
+    for (mask, ch) in [
+        (0o400, 'r'),
+        (0o200, 'w'),
+        (0o100, 'x'),
+        (0o040, 'r'),
+        (0o020, 'w'),
+        (0o010, 'x'),
+        (0o004, 'r'),
+        (0o002, 'w'),
+        (0o001, 'x'),
+    ] {
+        perms.push(if mode & mask != 0 { ch } else { '-' });
+    }
+    let size = md.size();
+    let (hs, unit) = if size >= 1 << 30 {
+        (size as f64 / (1 << 30) as f64, 'G')
+    } else if size >= 1 << 20 {
+        (size as f64 / (1 << 20) as f64, 'M')
+    } else if size >= 1 << 10 {
+        (size as f64 / (1 << 10) as f64, 'K')
+    } else {
+        (size as f64, ' ')
+    };
+    let size_s = if unit == ' ' {
+        format!("{size}")
+    } else {
+        format!("{hs:.1}{unit}")
+    };
+    let secs = md.mtime();
+    let days = secs.div_euclid(86400);
+    let rem = secs.rem_euclid(86400);
+    let (y, mo, d) = civil_from_days(days);
+    let hh = rem / 3600;
+    let mm = (rem % 3600) / 60;
+    Some(format!("{perms} {:>5} {:>7} {y:04}-{mo:02}-{d:02} {hh:02}:{mm:02}", md.uid(), size_s))
+}
+
+const ICON_DIR: &str = "\u{f115}";
+const ICON_FILE: &str = "\u{f15b}";
+
+/// Nerd-font glyph for an entry; falls back to the generic file icon.
+fn icon_for(e: &crate::listing::Entry) -> &'static str {
+    match e.kind {
+        crate::listing::FileKind::Dir => ICON_DIR,
+        crate::listing::FileKind::Link => "\u{f481}",
+        _ => {
+            let low = e.basename().to_ascii_lowercase();
+            if low.ends_with(".md") {
+                "\u{f48a}"
+            } else if low.ends_with(".rs") {
+                "\u{e7a8}"
+            } else if low.ends_with(".lua") || low.ends_with(".scd") || low.ends_with(".sc") {
+                "\u{e620}"
+            } else if low.ends_with(".jpg") || low.ends_with(".jpeg") || low.ends_with(".png")
+                || low.ends_with(".webp") || low.ends_with(".gif") {
+                "\u{f1c5}"
+            } else if low.ends_with(".mp3") || low.ends_with(".flac") || low.ends_with(".wav") {
+                "\u{f001}"
+            } else if low.ends_with(".mp4") || low.ends_with(".mkv") || low.ends_with(".webm") {
+                "\u{f03d}"
+            } else if low.ends_with(".zip") || low.ends_with(".tar") || low.ends_with(".gz")
+                || low.ends_with(".7z") {
+                "\u{f410}"
+            } else {
+                ICON_FILE
+            }
+        }
+    }
+}
 
 fn is_exec(path: &std::path::Path) -> bool {
     std::fs::metadata(path)
