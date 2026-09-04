@@ -72,8 +72,7 @@ services.colibri = {
   enable = true;
   serve = {
     enable = true;
-    port = 8000;            # default
-    # apiKeyFile = "/run/secrets/...";  # optional auth
+    port = 8003;            # НЕ 8000: он занят omnirouter (см. таблицу портов ниже)
   };
 };
 ```
