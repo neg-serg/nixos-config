@@ -12,6 +12,7 @@
 -- kind: d (dir) / f (file) / l (link). C-l toggles the long view.
 
 local lsc = require('lusty.ls_colors')
+local frecency = require('lusty.frecency')
 
 local M = {}
 
@@ -913,6 +914,9 @@ function Picker:open_current(action)
   end
   local win = api.nvim_get_current_win()
   local path = item.path
+  -- Record the jump in the lusty frecency journal so the recent explorer
+  -- (",.") reflects opens made from the filesystem picker too.
+  frecency.record(path)
   self:close()
   if api.nvim_win_is_valid(win) then
     pcall(api.nvim_set_current_win, win)
