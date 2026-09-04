@@ -221,13 +221,16 @@ LocalComponents.WidgetCapsule {
         if (mutedHideTimer.running)
             mutedHideTimer.stop();
 
-        if (!root.visible && clamped !== 100)
-            root.visible = true;
+        // A keyboard volume/mute event must bring the indicator up even when
+        // the value is already capped (0% or 100%) and therefore "unchanged".
+        const wasHidden = !root.visible;
+        root.visible = true;
+        const changed = (clamped !== _prevClamped || mutedValue !== _prevMuted);
 
-        // Only show the pill when the value *actually* changed, so the
-        // auto-hide timer can complete instead of being restarted on
-        // every idle sync.
-        if (clamped !== _prevClamped || mutedValue !== _prevMuted)
+        // Only show the pill when the value actually changed, or when the
+        // capsule was hidden and the user pressed volume at a cap — so the
+        // auto-hide timer can complete instead of being restarted by idle syncs.
+        if (changed || (wasHidden && (clamped <= 0 || clamped >= 100)))
             if (!firstChange || clamped !== 100)
                 pillIndicator.show();
         _prevClamped = clamped;
