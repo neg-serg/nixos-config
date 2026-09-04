@@ -76,9 +76,9 @@ Rectangle {
             spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
             visible: !!MusicManager.currentPlayer
 
-            // Typography
-            property int musicFontPx: Math.round(Theme.fontSizeSmall * Theme.scale(screen))
-            property int musicTextPx: Math.round(Theme.fontSizeSmall * Theme.scale(screen))
+            // Typography (toast body text: ~25% smaller than the bar default)
+            property int musicFontPx: Math.round(Theme.fontSizeSmall * Theme.scale(screen) * 0.75)
+            property int musicTextPx: Math.round(Theme.fontSizeSmall * Theme.scale(screen) * 0.75)
             property color musicTextColor: Theme.textOn(card.color)
             Component.onCompleted: musicCard.warnContrast(card.color, musicTextColor, 'musicText')
             property int musicFontWeight: Font.Medium
