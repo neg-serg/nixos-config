@@ -9,8 +9,9 @@
   C-a/C-e первый/последний.
 - Запрос: C-u очистить, C-h/BS backspace, C-w очистить (файлы: затем вверх), C-k в prompt —
   kill-to-end (после перевода промпта в insert-режим).
-- Действия: Enter/Tab открыть, C-t вкладка, C-o/C-v сплиты, C-d удалить буфер, C-s порядок
-  сортировки, C-l цикл режима отображения, C-i иконки, C-Space/P превью, Esc/C-c/C-g закрыть.
+- Действия: Enter/Tab открыть, C-t вкладка, C-o/C-v сплиты, C-d удалить буфер, C-y порядок
+  сортировки (C-s не вешаем: XOFF/kitty-конфликт), C-l цикл режима отображения, C-i иконки,
+  C-Space/P превью, Esc/C-c/C-g закрыть.
 - Ограничения: h/j/k/l не трогаем (буквы фильтра); C-s не вешаем в standalone (terminal suspend);
   паритет standalone/float.
 
@@ -24,7 +25,7 @@
   и форматируются тем же кодом, что и standalone (listing::meta_line).
 - custom — выбор подмножества полей perm,user,size,time (имя всегда последним); конфиг
   g:LustyExplorerColumns / LUSTY_COLUMNS / --columns.
-- Сортировки: name|ext|size|time — standalone (CLI --sort) и float (C-s циклирует; serve
+- Сортировки: name|ext|size|time — standalone (CLI --sort) и float (C-y циклирует; serve
   пересортировывает листинг и между сменами возвращается к каноническому порядку depth+name).
   --reverse/--group-dirs-first — standalone (CLI).
 - Иконки (nerd font) опционально (LUSTY_ICONS=1, standalone); tree-вид позже.
@@ -43,7 +44,7 @@
 ## Порядок работ
 
 - A: хоткеи, паритет standalone/float — готово.
-- B: long-режим + сортировки — готово: standalone (CLI) и float (C-l long + serve M; C-s цикл
+- B: long-режим + сортировки — готово: standalone (CLI) и float (C-l long + serve M; C-y цикл
   name/ext/size/time).
 - C: custom-колонки + env/config + иконки — готово (--columns/LUSTY_COLUMNS в standalone и float;
   g:LustyExplorerColumns читает float).
