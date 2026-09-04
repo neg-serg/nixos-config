@@ -8,6 +8,7 @@ import qs.Components
 import qs.Services
 import "../../Helpers/Color.js" as Color
 import "../../Helpers/Format.js" as Format
+import "../../Helpers/Time.js" as Time
 import "../../Helpers/RichText.js" as Rich
 import "." as MusicWidgets
 
@@ -82,6 +83,12 @@ Rectangle {
             property color musicTextColor: Theme.textOn(card.color)
             Component.onCompleted: musicCard.warnContrast(card.color, musicTextColor, 'musicText')
             property int musicFontWeight: Font.Medium
+            // Playback progress 0..1 for the toast progress bar.
+            function musicProgress() {
+                const total = Time.mprisToMs(MusicManager.trackLength || 0);
+                const pos = Math.max(0, MusicManager.currentPosition || 0);
+                return total > 0 ? Math.min(1, pos / total) : 0;
+            }
 
             
 
@@ -293,6 +300,116 @@ Rectangle {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Math.round(Theme.sidePanelSpacingSmall * 0.5 * Theme.scale(screen))
+
+                    // Now-playing header: title, artist, time/progress, transport.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: MusicManager.trackTitle || ""
+                            color: playerUI.musicTextColor
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Math.round(playerUI.musicTextPx * 1.15)
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: MusicManager.trackArtist || ""
+                            color: playerUI.musicTextColor
+                            font.family: Theme.fontFamily
+                            font.pixelSize: playerUI.musicTextPx
+                            elide: Text.ElideRight
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Math.round(8 * Theme.scale(screen))
+
+                            Text {
+                                text: Format.fmtTime(Math.max(0, MusicManager.currentPosition || 0))
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Math.round(playerUI.musicTextPx * 0.8)
+                                color: playerUI.musicTextColor
+                            }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.max(2, Math.round(3 * Theme.scale(screen)))
+                                color: Color.withAlpha(playerUI.musicTextColor, 0.18)
+                                radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    height: parent.height
+                                    width: parent.width * playerUI.musicProgress()
+                                    color: playerUI.musicTextColor
+                                    radius: parent.radius
+                                }
+                            }
+                            Text {
+                                text: Format.fmtTime(Math.max(0, Time.mprisToMs(MusicManager.trackLength || 0)))
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Math.round(playerUI.musicTextPx * 0.8)
+                                color: playerUI.musicTextColor
+                            }
+                        }
+
+                        // Transport: prev / play-pause / next
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: Math.round(2 * Theme.scale(screen))
+                            spacing: Math.round(14 * Theme.scale(screen))
+
+                            MouseArea {
+                                Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
+                                Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
+                                enabled: MusicManager.canGoPrevious
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: MusicManager.previous()
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "skip_previous"
+                                    font.family: "Material Symbols Outlined"
+                                    font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
+                                    color: playerUI.musicTextColor
+                                    opacity: parent.enabled ? 1 : 0.35
+                                }
+                            }
+                            MouseArea {
+                                Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
+                                Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
+                                enabled: (MusicManager.canPlay || MusicManager.canPause)
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: MusicManager.playPause()
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: MusicManager.isPlaying ? "pause" : "play_arrow"
+                                    font.family: "Material Symbols Outlined"
+                                    font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
+                                    color: playerUI.musicTextColor
+                                    opacity: parent.enabled ? 1 : 0.35
+                                }
+                            }
+                            MouseArea {
+                                Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
+                                Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
+                                enabled: MusicManager.canGoNext
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: MusicManager.next()
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "skip_next"
+                                    font.family: "Material Symbols Outlined"
+                                    font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
+                                    color: playerUI.musicTextColor
+                                    opacity: parent.enabled ? 1 : 0.35
+                                }
+                            }
+                        }
+                    }
 
                     // Details block: time + identity + metadata
                     Rectangle {
