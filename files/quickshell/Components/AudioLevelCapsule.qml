@@ -49,7 +49,10 @@ LocalComponents.WidgetCapsule {
     // whole capsule so nothing black sticks out at the bar edge. The capsule
     // keeps its hover geometry (opacity does not disable input) so hovering the
     // area still reveals the icon+pill; panelHovering keeps it visible too.
-    readonly property real _idleOpacity: (root.hideIconWhenIdle && !root.containsMouse && !root.panelHovering) ? 0 : 1
+    // The pill (e.g. a volume change from the keyboard) must also keep the
+    // capsule visible until it auto-hides, otherwise the OSD cannot pop up
+    // while the cursor is away from the panel.
+    readonly property real _idleOpacity: (root.hideIconWhenIdle && !root.containsMouse && !root.panelHovering && !root.pill.showPill) ? 0 : 1
 
     // Track previous values so updateFrom() does not re-show the pill
     // when nothing actually changed (which prevents auto-hide from ever
