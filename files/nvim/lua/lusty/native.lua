@@ -13,7 +13,6 @@
 
 local lsc = require('lusty.ls_colors')
 local frecency = require('lusty.frecency')
-local zoxide = require('lusty.zoxide')
 
 local M = {}
 
@@ -1012,9 +1011,6 @@ function Picker:open_current(action)
     return
   end
   if item.kind == 'd' then
-    -- Entering a directory: tell zoxide where we went so the shell z
-    -- learns about it too.
-    zoxide.add(item.path)
     self:restart(item.path)
     return
   end
@@ -1028,8 +1024,6 @@ function Picker:open_current(action)
   -- Record the jump in the lusty frecency journal so the recent explorer
   -- (",.") reflects opens made from the filesystem picker too.
   frecency.record(path)
-  -- Sync the opened file directory into zoxide (detached).
-  zoxide.add(path)
   self:close()
   if api.nvim_win_is_valid(win) then
     pcall(api.nvim_set_current_win, win)
