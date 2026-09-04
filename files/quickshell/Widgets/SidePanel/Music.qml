@@ -341,38 +341,18 @@ Rectangle {
 
                                 // Spectrum analyzer in the background of the
                                 // progress area, coloured with the cover accent.
-                                Canvas {
-                                    id: spectrumCanvas
+                                // Reuses the bar's IPhoneSpectrum so values and
+                                // animation are proven to work in this shell.
+                                IPhoneSpectrum {
                                     anchors.fill: parent
-                                    opacity: 0.6
-                                    onPaint: {
-                                        const ctx = getContext("2d");
-                                        ctx.clearRect(0, 0, width, height);
-                                        const vals = MusicManager.cavaValues || [];
-                                        const n = vals.length;
-                                        if (!n) return;
-                                        const gap = Math.max(1, Math.round(2 * Theme.scale(Screen)));
-                                        const bw = (width - gap * (n - 1)) / n;
-                                        ctx.fillStyle = detailsCol.musicAccentCss || "#888";
-                                        for (let i = 0; i < n; i++) {
-                                            const v = Math.max(0.02, Math.min(1, Number(vals[i]) || 0));
-                                            const h = Math.max(1, v * height);
-                                            ctx.fillRect(i * (bw + gap), height - h, bw, h);
-                                        }
-                                    }
-                                }
-                                Connections {
-                                    target: MusicManager
-                                    function onCavaValuesChanged() { spectrumCanvas.requestPaint(); }
-                                }
-                                // cavaValues is often mutated in place (not re-assigned),
-                                // so its changed signal may not fire; repaint on a timer.
-                                Timer {
-                                    id: specTimer
-                                    interval: 120
-                                    repeat: true
-                                    running: MusicManager.hasPlayer
-                                    onTriggered: spectrumCanvas.requestPaint()
+                                    values: MusicManager.cavaValues
+                                    targetBars: 24
+                                    accentColor: detailsCol.musicAccent
+                                    fillOpacity: 0.55
+                                    barGap: 2
+                                    minBarWidth: 2
+                                    animDurationMs: 80
+                                    opacity: 0.75
                                 }
 
                                 // Progress track + accent fill on top of the spectrum.
