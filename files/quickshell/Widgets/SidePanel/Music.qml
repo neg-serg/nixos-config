@@ -387,15 +387,20 @@ Rectangle {
                                         height: parent.height
                                         width: parent.width * playerUI.musicProgress()
 
-                                        // Neon halo behind the fill (kept tight — a wide
-                                        // halo reads as an oversized outline in a thin card).
+                                        // Vertical bloom: same width as the fill, a taller
+                                        // gradient that glows straight up/down from the thin
+                                        // line. No sideways halo, and the bloom height does
+                                        // not scale with the track length.
                                         Rectangle {
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             anchors.verticalCenter: parent.verticalCenter
-                                            width: Math.max(2, parent.width * 1.3)
-                                            height: Math.max(2, parent.height * 1.75)
-                                            radius: height / 2
-                                            color: Color.withAlpha(progressBand._progressFillColor, 0.4)
+                                            width: parent.width
+                                            height: Math.max(2, parent.height * 5)
+                                            gradient: Gradient {
+                                                GradientStop { position: 0.0; color: Color.withAlpha(progressBand._progressFillColor, 0.0) }
+                                                GradientStop { position: 0.5; color: Color.withAlpha(progressBand._progressFillColor, 0.5) }
+                                                GradientStop { position: 1.0; color: Color.withAlpha(progressBand._progressFillColor, 0.0) }
+                                            }
                                             z: -1
                                         }
                                         // Sharp bright core.
@@ -423,14 +428,16 @@ Rectangle {
                             }
                         }
 
-                        // Track title underneath the scrub bar.
+                        // Track title underneath the scrub bar (regular weight,
+                        // 2pt smaller, centered).
                         Text {
                             Layout.fillWidth: true
                             text: MusicManager.trackTitle || ""
                             color: playerUI.musicTextColor
                             font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(playerUI.musicTextPx * 1.15)
-                            font.weight: Font.DemiBold
+                            font.pixelSize: Math.max(8, Math.round(playerUI.musicTextPx * 1.15) - 2)
+                            font.weight: Font.Normal
+                            horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
                         }
 
