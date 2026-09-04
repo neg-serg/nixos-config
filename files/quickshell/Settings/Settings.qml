@@ -99,6 +99,13 @@ Singleton {
             property bool spectrumUseGradient: false
             property bool spectrumMirror: false
             property bool showSpectrumTopHalf: false
+            // Spectrum frequency band: full scale (0..spectrumMaxHz) and the
+            // highlighted (coloured) band inside it.
+            property int spectrumMinHz: 0
+            property int spectrumMaxHz: 40000
+            property int spectrumColorMinHz: 15000
+            property int spectrumColorMaxHz: 25000
+            property real spectrumDimOpacity: 0.18
             // Show audio level (volume/mic/Genelec dB) when the cursor hovers
             // the capsule — delayed reveal via the existing pill/tooltip timers
             property bool showVolumeOnHover: true
