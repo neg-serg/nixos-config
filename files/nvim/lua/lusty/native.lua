@@ -486,8 +486,11 @@ function Picker:handle(action)
       self:rerank()
       return
     end
-    local parent = self.root:match('^(.*)/[^/]+$')
-    if parent and parent ~= '' then
+    local parent = self.root:gsub('/[^/]+$', '')
+    if parent == '' then
+      parent = '/'
+    end
+    if parent ~= self.root then
       self:restart(parent)
     end
     return
