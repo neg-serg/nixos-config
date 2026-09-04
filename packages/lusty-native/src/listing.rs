@@ -74,6 +74,9 @@ pub struct Entry {
     pub kind: FileKind,
     /// 1 = direct child of the root, 2 = one level deeper, etc.
     pub depth: u32,
+    /// Lowercased first byte of the basename (ranking anchor); precomputed
+    /// once so per-keystroke ranking never re-splits every label.
+    pub name0: u8,
 }
 
 /// Last label component (the bare file/dir name).
@@ -190,6 +193,7 @@ fn scan_dir(
             label: rel.clone(),
             kind: kind_of(&ft),
             depth: depth as u32,
+            name0: name.as_bytes().first().copied().unwrap_or(0).to_ascii_lowercase(),
         });
         if descend {
             subdirs.push((path, rel));
@@ -272,6 +276,7 @@ fn sort_by_name(bucket: &mut Vec<Entry>) {
             label: String::new(),
             kind: FileKind::File,
             depth: 0,
+            name0: 0,
         };
         bucket.push(std::mem::replace(&mut src[i as usize], empty));
     }
