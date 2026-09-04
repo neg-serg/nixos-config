@@ -55,12 +55,20 @@ function Pick.new(opts)
 end
 
 function Pick:width()
+  local envw = tonumber(os.getenv('LUSTY_WIDTH'))
+  if envw and envw >= 60 then
+    return math.max(60, math.min(envw, vim.o.columns - 4))
+  end
   local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.8
   ratio = math.max(0.5, math.min(0.98, ratio))
   return math.max(60, math.floor(vim.o.columns * ratio))
 end
 
 function Pick:height()
+  local envr = tonumber(os.getenv('LUSTY_ROWS'))
+  if envr and envr >= 6 then
+    return math.max(6, math.min(envr, vim.o.lines - 2))
+  end
   local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.4
   ratio = math.max(0.15, math.min(0.6, ratio))
   local h = math.floor(vim.o.lines * ratio)
