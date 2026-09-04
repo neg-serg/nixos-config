@@ -367,12 +367,11 @@ Rectangle {
                                     opacity: 0.85
                                 }
 
-                                // Thin progress line at the bottom of the spectrum band.
+                                // Thin progress line through the middle of the spectrum band.
                                 Rectangle {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
-                                    anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: Math.round(1 * Theme.scale(screen))
+                                    anchors.verticalCenter: parent.verticalCenter
                                     height: Math.max(2, Math.round(3 * Theme.scale(screen)))
                                     color: Color.withAlpha(playerUI.musicTextColor, 0.18)
                                     radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
@@ -407,11 +406,14 @@ Rectangle {
                             }
                         }
 
-                        // Transport: prev / play-pause / next
+                        // Transport: prev / play-pause / next (centered)
                         RowLayout {
-                            Layout.fillWidth: true
+                            Layout.fillWidth: false
+                            Layout.alignment: Qt.AlignHCenter
                             Layout.topMargin: Math.round(2 * Theme.scale(screen))
                             spacing: Math.round(14 * Theme.scale(screen))
+                            implicitWidth: Math.round(playerUI.musicTextPx * 1.1) * 3
+                                + Math.round(14 * Theme.scale(screen)) * 2
 
                             MouseArea {
                                 Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
