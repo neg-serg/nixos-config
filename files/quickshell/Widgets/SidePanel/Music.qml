@@ -89,6 +89,13 @@ Rectangle {
                 const pos = Math.max(0, MusicManager.currentPosition || 0);
                 return total > 0 ? Math.min(1, pos / total) : 0;
             }
+            // Mouse scrubbing: map an x position on the progress bar to a seek.
+            function seekFromX(x, w) {
+                const total = Time.mprisToMs(MusicManager.trackLength || 0);
+                if (!total || total <= 0) return;
+                const frac = Math.min(1, Math.max(0, x / Math.max(1, w)));
+                if (typeof MusicManager.seek === "function") MusicManager.seek(Math.round(frac * total));
+            }
 
             
 
@@ -336,9 +343,21 @@ Rectangle {
                                     anchors.left: parent.left
                                     anchors.verticalCenter: parent.verticalCenter
                                     height: parent.height
-                                    width: parent.width * playerUI.musicProgress()
+                                    // Live progress (reactive so it tracks seeks).
+                                    width: parent.width * (function() {
+                                        const total = Time.mprisToMs(MusicManager.trackLength || 0);
+                                        const pos = Math.max(0, MusicManager.currentPosition || 0);
+                                        return total > 0 ? Math.min(1, pos / total) : 0;
+                                    })()
                                     color: detailsCol.musicAccent
                                     radius: parent.radius
+                                }
+                                // Mouse scrubbing: click/drag to seek.
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onPressed: playerUI.seekFromX(mouse.x, width)
+                                    onPositionChanged: if (pressed) playerUI.seekFromX(mouse.x, width)
                                 }
                             }
                             Text {
