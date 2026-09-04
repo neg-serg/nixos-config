@@ -236,6 +236,9 @@ LocalComponents.WidgetCapsule {
         if (changed || (wasHidden && (clamped <= 0 || clamped >= 100)))
             if (!firstChange || clamped !== 100)
                 pillIndicator.show();
+        if (Settings.settings && Settings.settings.debugLogs)
+            console.debug("[vol] updateFrom clamped=" + clamped + " visible=" + root.visible
+                + " showPill=" + pillIndicator.showPill + " changed=" + changed);
         _prevClamped = clamped;
         _prevMuted = mutedValue;
         _prevCategory = category;
