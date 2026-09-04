@@ -246,7 +246,7 @@ function Pick:draw()
           col = c,
           item = item,
           pos = pos,
-          label_w = math.min(tw, col_w - 1),
+          label_w = tw, -- colour the full visible label, incl. the last char
           start_col = (c - 1) * (col_w + 2),
         }
       end
