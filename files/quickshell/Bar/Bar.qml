@@ -1271,16 +1271,27 @@ Scope {
                         acceptedButtons: Qt.NoButton
                         propagateComposedEvents: true
                         z: 10000
+                        // Hover-out grace: keep the bar widgets / tray visible for a
+                        // short moment after the cursor leaves instead of snapping shut.
+                        Timer {
+                            id: hoverOutDelay
+                            interval: 350
+                            repeat: false
+                            onTriggered: {
+                                systemTrayModule.panelHover = false
+                                rightPanel.panelHovering = false
+                                const menuOpen = systemTrayModule.trayMenu && systemTrayModule.trayMenu.visible
+                                if (!systemTrayModule.hotHover && !systemTrayModule.holdOpen && !systemTrayModule.shortHoldActive && !menuOpen) {
+                                    systemTrayModule.expanded = false
+                                }
+                            }
+                        }
                         onEntered: {
+                            hoverOutDelay.stop();
                             systemTrayModule.panelHover = true; rightPanel.panelHovering = true
                         }
                         onExited: {
-                            systemTrayModule.panelHover = false
-                            rightPanel.panelHovering = false
-                            const menuOpen = systemTrayModule.trayMenu && systemTrayModule.trayMenu.visible
-                            if (!systemTrayModule.hotHover && !systemTrayModule.holdOpen && !systemTrayModule.shortHoldActive && !menuOpen) {
-                                systemTrayModule.expanded = false
-                            }
+                            hoverOutDelay.restart();
                         }
                         visible: rightPanel.renderActive
                         Rectangle { visible: false }

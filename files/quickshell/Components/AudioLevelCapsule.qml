@@ -45,6 +45,12 @@ LocalComponents.WidgetCapsule {
     property string lastIconCategory: "up"
     property bool containsMouse: false
 
+    // When the monitor icon is hidden while idle (Genelec), also collapse the
+    // whole capsule so nothing black sticks out at the bar edge. The capsule
+    // keeps its hover geometry (opacity does not disable input) so hovering the
+    // area still reveals the icon+pill; panelHovering keeps it visible too.
+    readonly property real _idleOpacity: (root.hideIconWhenIdle && !root.containsMouse && !root.panelHovering) ? 0 : 1
+
     // Track previous values so updateFrom() does not re-show the pill
     // when nothing actually changed (which prevents auto-hide from ever
     // completing).
@@ -71,6 +77,18 @@ LocalComponents.WidgetCapsule {
     Layout.minimumWidth: width
     Layout.minimumHeight: height
     Layout.maximumWidth: width
+    // Ease the idle collapse so the capsule never vanishes/snaps abruptly.
+    opacity: root._idleOpacity
+    Behavior on opacity { NumberAnimation { duration: 260 } }
+    // Hover-out grace: delay collapsing the pill after the cursor leaves.
+    Timer {
+        id: hoverOutTimer
+        interval: Theme.volumePillAutoHidePauseMs
+        repeat: false
+        onTriggered: {
+            if (!root.containsMouse && !root.alwaysShow) pillIndicator.hide();
+        }
+    }
 
     Timer {
         id: fullHideTimer
@@ -273,15 +291,18 @@ LocalComponents.WidgetCapsule {
             }
             onEntered: {
                 root.containsMouse = true;
+                hoverOutTimer.stop();
                 if (!root.showOnHover) return;
                 pillIndicator.autoHide = false;
                 pillIndicator.showDelayed();
             }
             onExited: {
                 root.containsMouse = false;
+                // Keep the pill for a short grace period after the cursor leaves
+                // (hover-out delay) instead of collapsing it instantly.
                 if (!root.alwaysShow) {
                     pillIndicator.autoHide = true;
-                    pillIndicator.hide();
+                    hoverOutTimer.restart();
                 }
             }
             onWheel: wheel => {
