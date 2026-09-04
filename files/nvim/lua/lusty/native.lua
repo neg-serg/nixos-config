@@ -146,6 +146,7 @@ function Picker.new(root)
   self.dirs_first = dirs_first_enabled() -- dirs grouped first in name order (LUSTY_DIRS_FIRST / g:LustyExplorerDirsFirst)
   self.reverse = reverse_enabled() -- reverse each depth group (LUSTY_REVERSE / g:LustyExplorerReverse)
   self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
+  self.loading = true -- first serve listing not yet received (avoid a wrong [0])
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
   return self
@@ -445,6 +446,7 @@ function Picker:rerank()
       self.selected = self.total - 1
     end
     self.window = win_rows
+    self.loading = false
     vim.schedule(function()
       self:draw()
     end)
@@ -456,6 +458,24 @@ function Picker:draw()
     return
   end
   pf('draw')
+  if self.loading then
+    -- First listing is still in flight from the serve backend: show a plain
+    -- box with a dim ellipsis and the path prompt (no [N] counter, no stale
+    -- grid) instead of flashing a wrong 0 total.
+    local w = self:width()
+    local rows = self:list_rows()
+    local lines = {}
+    for r = 1, rows do
+      lines[r] = string.rep(' ', w)
+    end
+    lines[1] = '…' .. string.rep(' ', math.max(0, w - 1))
+    lines[rows + 1] = self:prompt_text()
+    api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
+    api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeMeta', 0, 0, 1)
+    self:paint_prompt(rows + 1)
+    return
+  end
   local rows = self:list_rows()
   local cols = self:max_cols()
   local h = rows + 1 -- grid rows + one prompt line
