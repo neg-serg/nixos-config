@@ -103,6 +103,8 @@ Item {
     // tree) can gate visibility reliably (the bare capsule id is not in scope
     // there - it lives in a nested component scope).
     readonly property bool _capsuleHovered: capsule.hovered
+    // Media-area hover, set by the MouseArea in layoutHost (reliable).
+    property bool _mediaHovered: false
 
     // ── Small bar analyser: live copy of cava values (in-place mutation won't
     // trigger bindings, so copy on a timer) ──
@@ -233,8 +235,12 @@ Item {
             id: layoutHost
             anchors.fill: parent
             // Hover over the whole media area — the analyser reveals on this.
-            HoverHandler {
-                id: mediaHover
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+                onEntered: mediaControl._mediaHovered = true
+                onExited: mediaControl._mediaHovered = false
             }
 
             RowLayout {
@@ -263,9 +269,9 @@ Item {
                     minBarWidth: 5
                     animDurationMs: 80
                     opacity: 0.95
-                    // Hover-only, gated on the media-area HoverHandler.
+                    // Hover-only, gated on the media-area MouseArea hover.
                     visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
-                        && mediaHover.hovered
+                        && mediaControl._mediaHovered
                 }
 
                 Item {
