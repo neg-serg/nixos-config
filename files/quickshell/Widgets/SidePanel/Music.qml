@@ -366,15 +366,16 @@ Rectangle {
                                     visible: Settings.settings.musicPopupSpectrum
                                 }
 
-                                // Progress line through the middle of the spectrum band.
+                                // Progress line at the bottom of the spectrum band,
+                                // directly above the transport buttons.
                                 Rectangle {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.bottom: parent.bottom
                                     height: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen)))
-                                    // Opaque black track so the spectrum behind it
-                                    // does not glow through the unfilled remainder.
-                                    color: "#000000"
+                                    // Opaque neutral track: visible on the dark card but
+                                    // still blocks the spectrum behind the unfilled part.
+                                    color: "#3D3D3D"
                                     radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
                                     Rectangle {
                                         anchors.left: parent.left
