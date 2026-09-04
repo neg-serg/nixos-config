@@ -254,7 +254,14 @@ Item {
                     values: mediaControl._barSpec
                     targetBars: Settings.settings.barAnalyserBars
                     mirror: Settings.settings.barAnalyserMirror
-                    style: Settings.settings.barAnalyserStyle
+                    // Small preview keeps the classic flat cover-accent look;
+                    // the 3D neon treatment stays on the large toast analyser.
+                    accentColor: mediaControl.mediaAccent
+                    fillOpacity: 0.8
+                    barGap: 2
+                    minBarWidth: 5
+                    glow: false
+                    threeD: false
                     animDurationMs: 80
                     opacity: 0.95
                     // Hover-only, gated on the bar panel hover signal.
