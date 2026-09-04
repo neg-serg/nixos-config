@@ -244,24 +244,32 @@ Item {
                 // Metrics: width = album-art extent (iconPreferredWidth), height =
                 // full capsule height so the mirrored bars fill the row — instead
                 // of a tiny square that reads as "too short".
-                IPhoneSpectrum {
-                    id: barMiniSpec
+                // Slot always occupies the area; the analyser appears when the
+                // pointer is over it (HoverHandler is more reliable than the
+                // capsule's hovered, which is a nested-scope id).
+                Item {
+                    id: barSpecSlot
                     Layout.preferredWidth: Math.round(mediaControl.iconPreferredWidth)
                     Layout.minimumWidth: Math.round(mediaControl.iconPreferredWidth)
                     Layout.preferredHeight: Math.round(mediaControl.baseHeight)
                     Layout.fillHeight: true
                     Layout.alignment: Qt.AlignVCenter
-                    values: mediaControl._barSpec
-                    targetBars: 5
-                    accentColor: mediaControl.mediaAccent
-                    fillOpacity: 0.8
-                    barGap: 3
-                    minBarWidth: 4
-                    animDurationMs: 80
-                    opacity: 0.9
-                    // Appear only while hovering the media capsule.
-                    visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
-                        && mediaControl._capsuleHovered
+                    HoverHandler {
+                        id: barSpecHover
+                    }
+                    IPhoneSpectrum {
+                        anchors.fill: parent
+                        values: mediaControl._barSpec
+                        targetBars: 5
+                        accentColor: mediaControl.mediaAccent
+                        fillOpacity: 0.8
+                        barGap: 2
+                        minBarWidth: 5
+                        animDurationMs: 80
+                        opacity: 0.95
+                        visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
+                            && barSpecHover.hovered
+                    }
                 }
 
                 Item {
