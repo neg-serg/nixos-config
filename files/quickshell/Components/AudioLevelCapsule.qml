@@ -70,7 +70,9 @@ LocalComponents.WidgetCapsule {
     verticalPaddingMin: 0
 
     visible: false
-    width: visible ? implicitWidth : 0
+    // Idle-hidden monitor capsules (Genelec) must also collapse their width,
+    // otherwise the bar keeps an empty slot where the invisible capsule sits.
+    width: (visible && root._idleOpacity > 0) ? implicitWidth : 0
     height: visible ? implicitHeight : 0
     Layout.preferredWidth: width
     Layout.preferredHeight: height
