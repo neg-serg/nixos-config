@@ -15,7 +15,8 @@
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 
-use crate::listing::{self, FileKind, Options};
+use crate::cache;
+use crate::listing::{FileKind, Options};
 use crate::rank;
 
 pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: bool) -> io::Result<()> {
@@ -25,7 +26,7 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
         follow_mounts: false,
         show_dots,
     };
-    let entries = listing::list(&root, &opts);
+    let entries = cache::cached_list(&root, &opts);
 
     let stdin = io::stdin();
     let stdout = io::stdout();

@@ -4,6 +4,7 @@
 //! semantics, query ranking and LS_COLORS-aware coloring. The TUI lands in a
 //! later phase.
 
+mod cache;
 mod colors;
 mod fuzzy;
 mod glob;
@@ -176,7 +177,7 @@ fn run_list(args: &[String]) {
     };
 
     let t0 = Instant::now();
-    let entries = listing::list(&root, &opts);
+    let entries = cache::cached_list(&root, &opts);
     let dt_list = t0.elapsed();
     let total = entries.len();
 
