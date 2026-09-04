@@ -28,20 +28,19 @@ Item {
         visible: false
 
         WlrLayershell.namespace: "qs-music"
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
+        // Default layer + Normal exclusion — the ONLY combo that maps a
+        // surface in this build. WlrLayershell.margins, Ignore, Overlay, and
+        // bottom-only anchors all failed to create the surface. Keep full-height
+        // right anchors (right+top+bottom) exactly like NotificationCenter.
+        WlrLayershell.exclusionMode: ExclusionMode.Normal
 
-        // Position: right edge, above the bottom panel
         anchors.right: true
+        anchors.top: true
         anchors.bottom: true
 
-        // Dynamic margins set in showAt() — right edge + above panel
-        property real _marginRight: 0
-        property real _marginBottom: 0
-        WlrLayershell.margins {
-            right: toast._marginRight
-            bottom: toast._marginBottom
-        }
+        // Kept for showAt() compat; not wired to any window margins.
+        property real _marginRight: 12
+        property real _marginBottom: 30
 
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
@@ -172,7 +171,7 @@ Item {
                 computedHeightPx = Utils.clamp(Math.round(ih), 1, guardMax);
             }
 
-            // Set WlrLayershell margins for positioning: right edge + above panel
+            // Set WlrLayershell margins for positioning: right edge + above panel.
             toast._marginRight = baseMargin;
             if (sidebarPopup.panelEdge === "bottom") {
                 toast._marginBottom = (sidebarPopup.anchorWindow ? sidebarPopup.anchorWindow.height : 0) + baseMargin;
@@ -201,7 +200,7 @@ Item {
         }
 
         // --- Content
-        // Slide container for both background and content
+        // Slide container for both background and content.
         Item {
             id: contentRoot
             anchors.fill: parent

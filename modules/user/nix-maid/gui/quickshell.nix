@@ -116,6 +116,17 @@ let
     cp -rfT "$src/Notifications" "$qs_dir/Notifications" 2>/dev/null || true
     chmod -R u+w "$qs_dir/Notifications" 2>/dev/null || true
 
+    # Widgets/ — force-copy on every start. The nix-maid static tree exposes it
+    # as a symlink without a qmldir, and Quickshell cannot load files from that
+    # symlink ("File not found"/"No such file or directory" for
+    # MusicPopup.qml/ScreenshotToast.qml). Copying to a real dir fixes loading.
+    # Remove the stale nix-maid symlink first so the copy lands in a real dir.
+    rm -rf "$qs_dir/Widgets"
+    mkdir -p "$qs_dir/Widgets"
+    cp -rfT "$src/Widgets" "$qs_dir/Widgets" 2>/dev/null || true
+    cp -rT "$src/Widgets" "$qs_dir/Widgets" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/Widgets" 2>/dev/null || true
+
     # art/, shaders/ — force-copy on every start: the static symlink tree is
     # created by nix-maid activation AFTER the switch, so a shell started
     # meanwhile reads a half-deployed tree (missing 8.svg, wedge_clip.qsb →
@@ -145,6 +156,7 @@ let
     && name != "Bar"
     && name != "Helpers"
     && name != "Notifications"
+    && name != "Widgets"
     && name != "art"
     && name != "shaders"
   ) (builtins.attrNames quickshellSrcEntries);

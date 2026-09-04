@@ -24,6 +24,13 @@ Item {
     // Colour the icon is painted with. Without a disc it is always the level
     // colour (collapsedIconColor) so the volume tint is always visible.
     readonly property color _iconColor: showDisc ? (showPill ? iconTextColor : collapsedIconColor) : collapsedIconColor
+    // Hide the idle (collapsed) icon until the cursor is over the capsule. The
+    // icon stays visible whenever the pill is expanded too (e.g. volume scroll),
+    // so both the icon and the numeric readout appear together.
+    // Uses opacity (not visible) so the capsule keeps its hover area.
+    property bool hideIconWhenIdle: false
+    property bool hovered: false
+    readonly property real _iconOpacity: (hideIconWhenIdle && !hovered && !showPill) ? 0 : 1
     // Unit colouring: paint the unit suffix (e.g. "dB") and a leading sign
     // ("-") with accentUnitColor while the digits keep textColor. Enabled by
     // the audio readout that wants the wallpaper accent on "dB"/minus.
@@ -124,6 +131,7 @@ Item {
             smooth: true
             asynchronous: true
             visible: revealPill.iconSource.length > 0
+            opacity: revealPill._iconOpacity
             layer.enabled: true
             layer.effect: MultiEffect {
                 // Recolour the monochrome SVG to the current icon colour.
@@ -142,6 +150,7 @@ Item {
             // No disc: the icon is always painted with the level colour so the
             // volume tint shows at all times.
             color: revealPill._iconColor
+            opacity: revealPill._iconOpacity
             visible: revealPill.iconSource.length === 0
         }
     }
