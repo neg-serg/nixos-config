@@ -259,10 +259,10 @@ Item {
                     minBarWidth: 5
                     animDurationMs: 80
                     opacity: 0.95
-                    // Always visible while a track is playing (hover-gating was
-                    // unreliable; this guarantees it shows whenever there is
-                    // live audio to analyse).
+                    // Hover-only, but gated on the capsule-hover property that is
+                    // reliably in scope (drives the tooltips), not the bare id.
                     visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
+                        && mediaControl._capsuleHovered
                 }
 
                 Item {
