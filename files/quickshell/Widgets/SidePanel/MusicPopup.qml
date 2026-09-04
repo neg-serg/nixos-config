@@ -146,46 +146,13 @@ Item {
             }
         }
 
-        // --- Appearance: slow, gentle fade. Animate the card Box's opacity
-        // directly (an Item opacity animates reliably), NOT a custom property on
-        // the just-mapped layer window (that flickered/stalled). Fade runs only
-        // on the hidden→shown transition so rapid re-shows never blink it.
+        // --- Appearance: instant (no opacity fade). Animating a custom opacity
+        // while the window is being shown proved unreliable — the card sometimes
+        // stayed invisible (opacity 0) or flickered, because a property on a
+        // just-mapped layer surface does not always animate deterministically.
+        // The card now simply appears and disappears, which is robust.
         property bool _hiding: false
-        property int _fadeInMs: 500
-        property int _fadeOutMs: 350
-        NumberAnimation {
-            id: fadeIn
-            target: cardBox
-            property: "opacity"
-            duration: toast._fadeInMs
-            easing.type: Theme.uiEasingRipple
-        }
-        NumberAnimation {
-            id: fadeOut
-            target: cardBox
-            property: "opacity"
-            duration: toast._fadeOutMs
-            easing.type: Theme.uiEasingRipple
-            onStopped: {
-                if (toast._hiding) {
-                    toast.visible = false;
-                    toast._hiding = false;
-                    cardBox.opacity = 1;
-                }
-            }
-        }
-        Timer {
-            id: hideFallback
-            interval: toast._fadeOutMs + 150
-            repeat: false
-            onTriggered: {
-                if (toast._hiding && toast.visible) {
-                    toast.visible = false;
-                    toast._hiding = false;
-                    cardBox.opacity = 1;
-                }
-            }
-        }
+        property real _contentOpacity: 1
 
         // Keep anchor in sync with panel window changes (margin recalculation)
         Connections {
@@ -232,27 +199,24 @@ Item {
         // --- Public control
         function showAt() {
             toast._hiding = false;
-            hideFallback.stop();
             toast._marginRight = toast.baseMargin();
             toast._marginBottom = toast.computeBottomMargin();
             toast.cardHeightPx = toast.computeCardHeight(); // size before mapping
             if (!toast.visible) {
                 toast.visible = true;
-                cardBox.opacity = 0;
-                fadeIn.from = 0;
-                fadeIn.start(); // slow fade-in
+                toast._contentOpacity = 1; // no fade: card is solid from frame one
             } else {
-                // Already visible: never restart the fade (would blink).
-                if (fadeOut.running) fadeOut.stop();
-                cardBox.opacity = 1;
+                toast._contentOpacity = 1; // re-show is a no-op visually
             }
             toast.startAutoHide();
             if (Settings.settings && Settings.settings.debugLogs) {
                 console.debug("[qs-music] showAt card=" + cardBox.width + "x" + cardBox.height
                     + " mb=" + toast._marginBottom + " mr=" + toast._marginRight);
+                // Re-check after layout settles (implicit sizes / bindings
+                // may still be mid-flight at showAt time).
                 Qt.callLater(function() {
                     console.debug("[qs-music] showAt+layout card=" + cardBox.width + "x" + cardBox.height
-                        + " opacity=" + cardBox.opacity.toFixed(2)
+                        + " opacity=" + toast._contentOpacity.toFixed(2)
                         + " musicH=" + musicHeightPx + " pad=" + contentPaddingPx);
                 });
             }
@@ -261,11 +225,10 @@ Item {
         function hidePopup() {
             if (!visible || _hiding) return;
             _hiding = true;
-            fadeIn.stop();
-            fadeOut.from = cardBox.opacity;
-            fadeOut.to = 0;
-            fadeOut.start(); // onStopped/fallback close the window
-            hideFallback.start();
+            // Instant hide: the card disappears immediately (no fade to stall).
+            toast.visible = false;
+            toast._hiding = false;
+            toast._contentOpacity = 1;
         }
 
         // --- Content
@@ -278,7 +241,7 @@ Item {
             anchors.bottomMargin: toast._marginBottom
             width: toast.cardWidthPx
             height: toast.cardHeightPx
-            // opacity is driven by fadeIn/fadeOut (Item opacity, reliable).
+            opacity: toast._contentOpacity
 
             FocusScope {
                 anchors.fill: parent
