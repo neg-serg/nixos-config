@@ -98,7 +98,7 @@ impl App {
     }
 
     /// Override the popup size. CLI flags win over LUSTY_ROWS/LUSTY_WIDTH
-    /// env vars; None keeps the default (14 outer rows, up to 102 outer
+    /// env vars; None keeps the default (14 outer rows, full terminal
     /// columns, i.e. 12 content rows and 100 content columns).
     pub fn set_ui(&mut self, rows: Option<usize>, width: Option<usize>) {
         let env_usize = |name: &str| {
@@ -431,7 +431,7 @@ impl App {
     /// Recompute the popup box size from the current screen size and the
     /// user overrides (--rows/--width or LUSTY_ROWS/LUSTY_WIDTH). Both
     /// dimensions are clamped so the outer box never exceeds the terminal;
-    /// defaults are OUTER_ROWS rows and up to 102 outer columns.
+    /// defaults are OUTER_ROWS rows and the full terminal width.
     fn compute_box(&mut self) {
         let (w, h) = self.size;
         let outer_h = match self.ui_rows {
@@ -441,7 +441,7 @@ impl App {
         self.box_h = outer_h.max(1);
         let outer_w = match self.ui_width {
             Some(uw) => uw.clamp(10, 400).min(w),
-            None => w.min(102),
+            None => w, // default: span the whole terminal width
         };
         self.box_w = outer_w.saturating_sub(2);
     }
@@ -584,7 +584,7 @@ impl App {
         let rows = self.list_rows();
         let cols = self.max_cols();
         let col_w = self.col_width();
-        let bg = "48;2;11;12;20"; // opaque popup background
+        let bg = "48;2;0;0;0"; // opaque black popup background
         let border = "38;2;108;126;150"; // #6c7e96 border colour
         let revert = format!("{esc}[22;23;24;39;{bg}m"); // default fg on popup bg
         let mut frame = String::with_capacity((w + 64) * (bh + 2));
