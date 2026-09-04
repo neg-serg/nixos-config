@@ -26,7 +26,6 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
         show_dots,
     };
     let entries = listing::list(&root, &opts);
-    let mut ranked: Vec<usize> = (0..entries.len()).collect();
 
     let stdin = io::stdin();
     let stdout = io::stdout();
@@ -48,7 +47,6 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
         let _ = f.write_all(b" C-printed\n");
     }
 
-    let mut current_query = String::new();
     for line in stdin.lock().lines() {
         let line = match line {
             Ok(l) => l,
@@ -59,11 +57,11 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
             "Q" => {
                 let from: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let to: usize = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
-                current_query = parts.get(3).unwrap_or(&"").to_string();
-                ranked = if current_query.is_empty() {
+                let query = parts.get(3).unwrap_or(&"").to_string();
+                let ranked: Vec<usize> = if query.is_empty() {
                     (0..entries.len()).collect()
                 } else {
-                    rank::rank_indices(&entries, &current_query)
+                    rank::rank_indices(&entries, &query)
                 };
                 writeln!(out, "N {}", ranked.len())?;
                 // max label char count of the ranked set (column sizing)

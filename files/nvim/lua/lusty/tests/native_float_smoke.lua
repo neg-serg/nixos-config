@@ -88,5 +88,17 @@ assert_eq(p.items[1].path, '/etc/nixos/flake.nix', 'filters to flake.nix')
 p:handle('cancel')
 print('PASS native recent files')
 
+-- ---------------------------------------------------------------------------
+-- Query memory: the last filter is restored on the next run.
+nbufs.run()
+p = pick.active_pick()
+p:handle('g')
+p:handle('cancel')
+nbufs.run()
+p = pick.active_pick()
+assert_eq(p.query, 'g', 'buffers picker restores the last query')
+p:handle('cancel')
+print('PASS native query memory')
+
 print('ALL NATIVE FLOAT SMOKE TESTS PASSED')
 vim.cmd('qa!')
