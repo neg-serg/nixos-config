@@ -356,7 +356,13 @@ Rectangle {
                                 // Reuses the bar's IPhoneSpectrum so values and
                                 // animation are proven to work in this shell.
                                 IPhoneSpectrum {
-                                    anchors.fill: parent
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    // Leave room at the bottom so the bars end above
+                                    // the progress line instead of growing from behind it.
+                                    anchors.bottomMargin: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen))) + Math.round(3 * Theme.scale(screen))
                                     values: playerUI._spec
                                     targetBars: Settings.settings.toastAnalyserBars
                                     mirror: Settings.settings.toastAnalyserMirror
