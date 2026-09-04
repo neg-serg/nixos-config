@@ -165,8 +165,7 @@ Item {
             }
         }
 
-        // Distance from the screen bottom edge to the card bottom edge:
-        // above the anchor panel (if any) plus the base edge margin.
+        // Base edge margin around the card (right and bottom insets).
         function baseMargin() {
             const scale = Theme.scale(Screen);
             const cfgMargin = (Settings.settings && Settings.settings.musicPopupEdgeMargin !== undefined)
@@ -174,10 +173,13 @@ Item {
                               : Theme.sidePanelPopupOuterMargin;
             return Math.max(0, Math.round(cfgMargin * scale));
         }
+        // Bottom inset for the card. The full-height window is bottom-anchored,
+        // so WlrLayershell already ends it at the top of the bar's reserved zone
+        // (qs-music layer spans 0..(screenH-barH)). Adding anchorWindow.height
+        // again double-counts the bar and leaves a tall gap above it — observed
+        // live as ~30px instead of the intended ~5px. anchorWindow is still used
+        // for hover-pause of the auto-hide timer.
         function computeBottomMargin() {
-            if (sidebarPopup.panelEdge === "bottom" && sidebarPopup.anchorWindow) {
-                return Math.round(sidebarPopup.anchorWindow.height) + toast.baseMargin();
-            }
             return toast.baseMargin();
         }
 
