@@ -43,6 +43,7 @@
     "spectrum3D": { "type": "boolean", "default": true, "description": "Enable 3D perspective arc and specular gradient on analyser bars" },
     "spectrum3DDepth": { "type": "number", "default": 0.35, "minimum": 0, "maximum": 1, "description": "Perspective falloff for the 3D analyser arc" },
     "spectrumColor": { "type": "string", "default": "", "description": "Custom analyser bar colour (hex, e.g. #00e5ff) overriding the preset/accent" },
+    "spectrumMode": { "type": "string", "default": "bars", "enum": ["bars", "led", "wave"], "description": "Analyser render implementation" },
 
     "activeVisualizerProfile": { "type": "string", "default": "classic" },
     "visualizerProfiles": {

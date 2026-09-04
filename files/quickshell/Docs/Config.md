@@ -94,6 +94,7 @@ CAVA / Spectrum (global defaults; each may be overridden per profile in visualiz
 - spectrum3D: boolean, default true. Enable 3D perspective arc and specular gradient on analyser bars.
 - spectrum3DDepth: number 0..1, default 0.35. Perspective falloff for the 3D analyser arc.
 - spectrumColor: string, default "". Custom analyser bar colour (hex, e.g. #00e5ff) overriding the preset/accent.
+- spectrumMode: string, default "bars". Analyser render implementation: bars | led | wave.
 - musicPopupProgressHeight: number, default 3. Progress scrub-bar thickness in logical px (scaled).
 - spectrumFillOpacity: number 0..1, default 0.35. Fill opacity.
 - spectrumHeightFactor: number, default 1.2. Height relative to track text size.

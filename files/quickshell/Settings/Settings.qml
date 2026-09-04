@@ -111,6 +111,8 @@ Singleton {
             property real spectrum3DDepth: 0.35
             // Custom colour for the analyser bars (hex like #00e5ff); empty = use the preset/accent.
             property string spectrumColor: ""
+            // Analyser render implementation: bars | led | wave.
+            property string spectrumMode: "bars"
             // Show audio level (volume/mic/Genelec dB) when the cursor hovers
             // the capsule — delayed reveal via the existing pill/tooltip timers
             property bool showVolumeOnHover: true
