@@ -336,7 +336,7 @@ Rectangle {
                             }
                             Item {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(10, Math.round(24 * Theme.scale(screen)))
+                                Layout.preferredHeight: Math.max(10, Math.round(30 * Theme.scale(screen)))
                                 implicitHeight: Layout.preferredHeight
 
                                 // Spectrum analyzer in the background of the
@@ -344,7 +344,7 @@ Rectangle {
                                 Canvas {
                                     id: spectrumCanvas
                                     anchors.fill: parent
-                                    opacity: 0.4
+                                    opacity: 0.6
                                     onPaint: {
                                         const ctx = getContext("2d");
                                         ctx.clearRect(0, 0, width, height);
@@ -364,6 +364,15 @@ Rectangle {
                                 Connections {
                                     target: MusicManager
                                     function onCavaValuesChanged() { spectrumCanvas.requestPaint(); }
+                                }
+                                // cavaValues is often mutated in place (not re-assigned),
+                                // so its changed signal may not fire; repaint on a timer.
+                                Timer {
+                                    id: specTimer
+                                    interval: 120
+                                    repeat: true
+                                    running: MusicManager.hasPlayer
+                                    onTriggered: spectrumCanvas.requestPaint()
                                 }
 
                                 // Progress track + accent fill on top of the spectrum.
