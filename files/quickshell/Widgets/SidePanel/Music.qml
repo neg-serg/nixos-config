@@ -327,7 +327,7 @@ Rectangle {
                                 visible: !!MusicManager.trackArtist
                                 screen: musicCard.screen
                                 iconName: "person"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 iconSizeMultiplier: 1.05
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackArtist
@@ -339,7 +339,7 @@ Rectangle {
                                 visible: !!MusicManager.trackAlbumArtist && MusicManager.trackAlbumArtist !== MusicManager.trackArtist
                                 screen: musicCard.screen
                                 iconName: "person"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 iconSizeMultiplier: 1.05
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackAlbumArtist
@@ -351,7 +351,7 @@ Rectangle {
                                 visible: !!MusicManager.trackAlbum
                                 screen: musicCard.screen
                                 iconName: "album"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackAlbum
                                 textColor: playerUI.musicTextColor
@@ -364,7 +364,7 @@ Rectangle {
                                 visible: !!MusicManager.trackGenre
                                 screen: musicCard.screen
                                 iconName: "category"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackGenre
                                 textColor: playerUI.musicTextColor
@@ -377,7 +377,7 @@ Rectangle {
                                 visible: !!MusicManager.trackYear && !MusicManager.trackDateStr
                                 screen: musicCard.screen
                                 iconName: "calendar_month"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 iconSizeMultiplier: 1.15
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackYear
@@ -391,7 +391,7 @@ Rectangle {
                                 visible: !!MusicManager.trackLabel
                                 screen: musicCard.screen
                                 iconName: "sell"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 iconSizeMultiplier: 1.15
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackLabel
@@ -405,7 +405,7 @@ Rectangle {
                                 visible: !!MusicManager.trackComposer
                                 screen: musicCard.screen
                                 iconName: "piano"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 iconSizeMultiplier: 1.15
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackComposer
@@ -419,7 +419,7 @@ Rectangle {
                                 visible: !!MusicManager.trackQualitySummary
                                 screen: musicCard.screen
                                 iconName: "high_quality"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 fontPixelSize: playerUI.musicTextPx
                                 textFormat: Text.RichText
                                 textValue: Rich.decorateGlyphs(MusicManager.trackQualitySummary || "", { pua: detailsCol.musicAccentCss })
@@ -477,7 +477,7 @@ Rectangle {
                                 visible: !!MusicManager.trackDateStr
                                 screen: musicCard.screen
                                 iconName: "calendar_month"
-                                iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
+                                iconColor: detailsCol.musicAccent
                                 iconSizeMultiplier: 1.15
                                 fontPixelSize: playerUI.musicTextPx
                                 textValue: MusicManager.trackDateStr
