@@ -88,6 +88,7 @@ command-line flags win.
     let mut reverse = false;
     let mut dirs_first = false;
     let mut sort_mode = 0u8; // 0 name, 1 ext, 2 size, 3 time
+    let mut columns: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -141,7 +142,9 @@ command-line flags win.
         show_dots: false,
     };
     if !long {
-        long = std::env::var("LUSTY_VIEW").map(|v| v == "long").unwrap_or(false);
+        long = std::env::var("LUSTY_VIEW")
+            .map(|v| v == "long")
+            .unwrap_or(false);
     }
     let mut app = tui::App::new(root, opts);
     app.set_ui(rows, width);
@@ -195,6 +198,10 @@ fn run_list(args: &[String]) {
                     Some("time") => 3,
                     _ => 0,
                 };
+            }
+            "--columns" => {
+                i += 1;
+                columns = args.get(i).cloned();
             }
             other if !other.starts_with("--") && root.is_none() => {
                 root = Some(PathBuf::from(other));
