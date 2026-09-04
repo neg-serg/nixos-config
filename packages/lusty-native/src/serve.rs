@@ -5,9 +5,13 @@
 //! (no terminal buffer involved):
 //!
 //!   E                     -> "C <total> <depth> <root>"  (ready)
-//!   Q <from> <to> <query>  -> "N <matched>", "W <maxw>", then
-//!                            "R <i> <kind> <label>\t<path>" rows for ranked
-//!                            indices in [from,to), then "E"
+//!   Q <from> <to> <query> [sort]
+//!                            -> "N <matched>", "W <maxw>", then
+//!                               "R <i> <kind> <label>\t<path>" rows for
+//!                               ranked indices in [from,to), then "E".
+//!                               sort is optional (default 0 = the canonical
+//!                               depth+name order): 1 ext, 2 size desc,
+//!                               3 time desc.
 //!   M <mask> <index>...    -> "K <index> <meta>" per entry index, then "E".
 //!                            <meta> is the eza -l field block selected by
 //!                            mask bits (1 perm, 2 user, 4 size, 8 time),
@@ -22,8 +26,20 @@ use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 
 use crate::cache;
-use crate::listing::{FileKind, Options};
+use crate::listing::{Entry, FileKind, Options};
 use crate::rank;
+
+/// Re-sort the listing by an eza-style key. The sort helpers expect the
+/// canonical (depth, name) order and sort per depth group, so the caller
+/// restores that order from the base snapshot before every change.
+fn apply_sort(entries: &mut Vec<Entry>, root: &std::path::Path, sort: u8) {
+    match sort {
+        1 => crate::listing::sort_by_ext(entries),
+        2 => crate::listing::sort_by_meta(root, entries, false),
+        3 => crate::listing::sort_by_meta(root, entries, true),
+        _ => {}
+    }
+}
 
 pub fn serve(
     root: PathBuf,
@@ -37,7 +53,11 @@ pub fn serve(
         follow_mounts: false,
         show_dots,
     };
-    let entries = cache::cached_list(&root, &opts);
+    // Canonical listing; sorting (Q sort token) reorders it in place and
+    // a pristine snapshot lets later changes start from the (depth, name)
+    // order again instead of stacking.
+    let mut entries = cache::cached_list(&root, &opts);
+    let mut base: Option<Vec<Entry>> = None;
 
     let stdin = io::stdin();
     let stdout = io::stdout();
@@ -59,6 +79,7 @@ pub fn serve(
     // empty query, which would otherwise equal the initial memo_q and never
     // fill the memo (a fresh picker would list nothing until the first key).
     let mut memo_q = String::new();
+    let mut memo_sort = 0u8;
     let mut memo_hit = false;
     let mut memo_ranked: Vec<usize> = Vec::new();
     let mut memo_maxw: usize = 0;
@@ -67,14 +88,33 @@ pub fn serve(
             Ok(l) => l,
             Err(_) => break,
         };
-        let parts: Vec<&str> = line.splitn(4, '\t').collect();
+        // Queries never contain tabs; full split so Q can carry an optional
+        // sort token after the query.
+        let parts: Vec<&str> = line.split('\t').collect();
         match parts[0] {
             "Q" => {
                 let from: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let to: usize = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let query = parts.get(3).unwrap_or(&"").to_string();
-                if !memo_hit || query != memo_q {
+                let sort: u8 = parts
+                    .get(4)
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(0)
+                    .min(3);
+                if !memo_hit || query != memo_q || sort != memo_sort {
                     memo_hit = true;
+                    if sort != memo_sort {
+                        if let Some(b) = &base {
+                            entries = b.clone();
+                        }
+                        if sort != 0 {
+                            if base.is_none() {
+                                base = Some(entries.clone());
+                            }
+                            apply_sort(&mut entries, &root, sort);
+                        }
+                        memo_sort = sort;
+                    }
                     let (ranked, maxw) = if query.is_empty() {
                         let mw = entries
                             .iter()

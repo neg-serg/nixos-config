@@ -5,7 +5,8 @@
 -- The Lua port remains the fallback: g:LustyExplorerNative = 0.
 --
 -- Backend protocol (plain lines, tab separated):
---   Q <from> <to> <query>   -> "N <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
+--   Q <from> <to> <query> [sort] -> "N <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
+--                             sort: 0 name, 1 ext, 2 size, 3 time (C-s cycles)
 --   M <mask> <index>...     -> "K <index> <meta>" per index + "E" (long view;
 --                             mask bits 1 perm, 2 user, 4 size, 8 time)
 -- kind: d (dir) / f (file) / l (link). C-l toggles the long view.
@@ -53,6 +54,9 @@ local function basename(label)
   return label:match('([^/]+)$') or label
 end
 
+-- serve Q sort token: 0 name, 1 ext, 2 size desc, 3 time desc (eza-style).
+local SORT_LABELS = { 'name', 'ext', 'size', 'time' }
+
 local Picker = {}
 Picker.__index = Picker
 
@@ -71,6 +75,7 @@ function Picker.new(root)
   self.maxw = 12 -- widest label (chars) in the current ranked set
   self.closed = false
   self.long = false -- long view: metadata columns via serve M (C-l toggles)
+  self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-s cycles)
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
   return self
@@ -306,6 +311,7 @@ function Picker:setup_keymaps()
   map('<End>', 'last')
   map('<C-e>', 'last')
   map('<C-u>', 'clear')
+  map('<C-s>', 'cycle_sort')
   map('<C-t>', 'open_tab')
   map('<C-o>', 'open_split')
   map('<C-v>', 'open_vsplit')
@@ -325,7 +331,7 @@ function Picker:rerank()
   pf('rerank')
   local from = self.offset
   local to = self.offset + self:screen_count()
-  self:request({ 'Q', tostring(from), tostring(to), self.query }, function(lines)
+  self:request({ 'Q', tostring(from), tostring(to), self.query, tostring(self.sort) }, function(lines)
     local win_rows = {}
     local total = self.total
     for _, ln in ipairs(lines) do
@@ -537,7 +543,14 @@ function Picker:prompt_text()
   if home ~= '' and path:sub(1, #home) == home then
     path = '~' .. path:sub(#home + 1)
   end
-  return path .. ' \u{f105} ' .. self.query .. (self.total > 0 and (' [' .. self.total .. ']') or '')
+  local tail = path .. ' \u{f105} ' .. self.query
+  if self.total > 0 then
+    tail = tail .. ' [' .. self.total .. ']'
+  end
+  if self.sort > 0 then
+    tail = tail .. ' <' .. SORT_LABELS[self.sort + 1] .. '>'
+  end
+  return tail
 end
 
 function Picker:paint_prompt(h)
@@ -702,6 +715,14 @@ function Picker:handle(action)
     if self.total > 0 and screen > 0 then
       self.offset = math.max(0, math.floor(self.selected / screen) * screen)
     end
+    self:rerank()
+    return
+  end
+  if action == 'cycle_sort' then
+    self.sort = (self.sort + 1) % #SORT_LABELS
+    -- the order changed, so restart from the top of the listing
+    self.selected = 0
+    self.offset = 0
     self:rerank()
     return
   end
