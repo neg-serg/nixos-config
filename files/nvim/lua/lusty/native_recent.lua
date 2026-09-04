@@ -26,7 +26,23 @@ local function recent_paths()
   if recent_fn then
     return recent_fn()
   end
-  return vim.v.oldfiles or {}
+  -- v:oldfiles only refreshes at nvim startup, so files opened through the
+  -- pickers this session (recorded in the frecency journal) would stay
+  -- invisible until a restart. Union the journal in; snapshot_items scores
+  -- journal entries by frecency so recently/often visited files rank first.
+  local out = {}
+  local seen = {}
+  for _, p in ipairs(vim.v.oldfiles or {}) do
+    out[#out + 1] = p
+    seen[p] = true
+  end
+  for _, p in ipairs(frecency.paths()) do
+    if not seen[p] then
+      out[#out + 1] = p
+      seen[p] = true
+    end
+  end
+  return out
 end
 
 local function open_path(path, mode)
