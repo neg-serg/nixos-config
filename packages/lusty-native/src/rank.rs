@@ -47,7 +47,7 @@ pub fn rank_indices_mw(entries: &[Entry], query: &str) -> (Vec<usize>, usize) {
                 for (k, e) in chunk.iter().enumerate() {
                     let idx = base + k;
                     if let Some(f) = first {
-                        if e.basename().as_bytes().first().copied().unwrap_or(0).to_ascii_lowercase() != f
+                        if e.name0 != f
                         {
                             continue;
                         }
@@ -80,7 +80,7 @@ pub fn rank_indices_mw(entries: &[Entry], query: &str) -> (Vec<usize>, usize) {
         let mut mw: usize = 0;
         for (idx, e) in entries.iter().enumerate() {
             if let Some(first) = first {
-                if e.basename().as_bytes().first().copied().unwrap_or(0).to_ascii_lowercase() != first
+                if e.name0 != first
                 {
                     continue;
                 }
