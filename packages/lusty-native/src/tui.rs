@@ -97,7 +97,7 @@ impl App {
             ui_rows: None,
             ui_width: None,
             long: false,
-            icons: std::env::var("LUSTY_ICONS").map(|v| v != "0").unwrap_or(true),
+            icons: std::env::var("LUSTY_ICONS").map(|v| v == "1").unwrap_or(false),
             palette,
         }
     }
