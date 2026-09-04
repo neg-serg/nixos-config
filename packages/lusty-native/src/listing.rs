@@ -262,6 +262,34 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
     entries
 }
 
+/// Lowercased extension ("tar.gz" -> "gz", no dot -> "").
+fn ext_of(label: &str) -> &str {
+    let base = basename(label);
+    match base.rfind('.') {
+        Some(i) if i + 1 < base.len() => &base[i + 1..],
+        _ => "",
+    }
+}
+
+/// eza --sort=ext: group each depth by extension, then name.
+pub fn sort_by_ext(entries: &mut Vec<Entry>) {
+    let n = entries.len();
+    let mut i = 0;
+    while i < n {
+        let d = entries[i].depth;
+        let mut j = i + 1;
+        while j < n && entries[j].depth == d {
+            j += 1;
+        }
+        entries[i..j].sort_unstable_by(|a, b| {
+            ext_of(&a.label)
+                .cmp(ext_of(&b.label))
+                .then_with(|| a.basename().cmp(b.basename()))
+        });
+        i = j;
+    }
+}
+
 /// Apply eza-style ordering tweaks on top of the canonical (depth, name)
 /// order: optionally keep directories first within each depth and/or reverse
 /// each depth group. Deterministic, so on-disk cache reuse stays consistent.

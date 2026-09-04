@@ -87,12 +87,17 @@ command-line flags win.
     let mut long = false;
     let mut reverse = false;
     let mut dirs_first = false;
+    let mut sort_ext = false;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
             "--long" => long = true,
             "--reverse" => reverse = true,
             "--dirs-first" => dirs_first = true,
+            "--sort" => {
+                i += 1;
+                sort_ext = args.get(i).map(|s| s == "ext").unwrap_or(false);
+            }
             "--view" => {
                 i += 1;
                 long = args.get(i).map(|s| s.as_str() == "long").unwrap_or(false);
@@ -137,6 +142,7 @@ command-line flags win.
     app.set_ui(rows, width);
     app.set_long(long);
     app.set_sort(reverse, dirs_first);
+    app.set_sort_ext(sort_ext);
     match app.run() {
         Ok(code) => std::process::exit(code),
         Err(err) => {
@@ -155,6 +161,7 @@ fn run_list(args: &[String]) {
     let mut query = String::new();
     let mut reverse = false;
     let mut dirs_first = false;
+    let mut sort_ext = false;
 
     let mut i = 1;
     while i < args.len() {
@@ -175,6 +182,10 @@ fn run_list(args: &[String]) {
             }
             "--reverse" => reverse = true,
             "--dirs-first" => dirs_first = true,
+            "--sort" => {
+                i += 1;
+                sort_ext = args.get(i).map(|s| s == "ext").unwrap_or(false);
+            }
             other if !other.starts_with("--") && root.is_none() => {
                 root = Some(PathBuf::from(other));
             }
@@ -197,7 +208,11 @@ fn run_list(args: &[String]) {
 
     let t0 = Instant::now();
     let mut entries = cache::cached_list(&root, &opts);
-    listing::reorder(&mut entries, dirs_first, reverse);
+    if sort_ext {
+        listing::sort_by_ext(&mut entries);
+    } else {
+        listing::reorder(&mut entries, dirs_first, reverse);
+    }
     let dt_list = t0.elapsed();
     let total = entries.len();
 
