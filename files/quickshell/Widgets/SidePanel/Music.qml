@@ -358,11 +358,12 @@ Rectangle {
                                 IPhoneSpectrum {
                                     anchors.fill: parent
                                     values: playerUI._spec
-                                    targetBars: 24
+                                    targetBars: Settings.settings.toastAnalyserBars
                                     accentColor: detailsCol.musicAccent
-                                    fillOpacity: 1.0
-                                    barGap: 2
-                                    minBarWidth: 2
+                                    fillOpacity: Settings.settings.toastAnalyserFillOpacity
+                                    barGap: Settings.settings.toastAnalyserBarGap
+                                    minBarWidth: Settings.settings.toastAnalyserMinBarWidth
+                                    mirror: Settings.settings.toastAnalyserMirror
                                     animDurationMs: 80
                                     opacity: 1.0
                                     visible: Settings.settings.musicPopupSpectrum

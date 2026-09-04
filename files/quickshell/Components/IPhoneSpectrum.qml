@@ -17,6 +17,9 @@ Item {
     property color accentColor: Theme.accentPrimary
     property color gradientEnd: Qt.lighter(accentColor, 1.4)
     property real fillOpacity: 0.75
+    // Mirror bars above and below the center line; when false, draw a
+    // single bottom-anchored bar per bucket.
+    property bool mirror: true
     // ── Bar shape ──
     property real barGap: 1       // tight spacing, iPhone look
     property real minBarWidth: 2  // thin bars
@@ -71,35 +74,40 @@ Item {
             x: index * (root.barW + root.barGap)
 
             property real v: Utils.clamp01((root._downsampled[index] || 0))
+            property color barColor: {
+                var c = root.colorAt(index);
+                return Qt.rgba(c.r, c.g, c.b, root.fillOpacity);
+            }
+            // Skip bars with no signal so silence does not leave 1px stubs.
+            readonly property bool barVisible: v > 0.001
 
-            // Bottom half bar
+            // Bottom bar: grows upward from the bottom when one-sided,
+            // or downward from the vertical center when mirrored.
             Rectangle {
+                visible: parent.barVisible
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 radius: width / 2
-                height: Math.max(1, parent.v * root.halfH)
-                y: root.halfH
-                color: {
-                    var c = root.colorAt(index);
-                    return Qt.rgba(c.r, c.g, c.b, root.fillOpacity);
-                }
+                height: root.mirror
+                    ? (parent.v * root.halfH)
+                    : (parent.v * root.height)
+                y: root.mirror ? root.halfH : root.height - height
+                color: parent.barColor
                 Behavior on height {
                     enabled: Theme.animationsEnabled
                     SmoothedAnimation { duration: root.animDurationMs }
                 }
             }
 
-            // Top half bar (mirrored)
+            // Top bar: rendered only when mirrored.
             Rectangle {
+                visible: root.mirror && parent.barVisible
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 radius: width / 2
-                height: Math.max(1, parent.v * root.halfH)
+                height: parent.v * root.halfH
                 y: root.halfH - height
-                color: {
-                    var c = root.colorAt(index);
-                    return Qt.rgba(c.r, c.g, c.b, root.fillOpacity);
-                }
+                color: parent.barColor
                 Behavior on height {
                     enabled: Theme.animationsEnabled
                     SmoothedAnimation { duration: root.animDurationMs }
