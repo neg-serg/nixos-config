@@ -680,7 +680,7 @@ impl App {
     fn prompt_line(&self) -> String {
         let esc = char::from_u32(0x1b).unwrap();
         let mut out = String::new();
-        let mut push_painted = |text: &str, code: &str, out: &mut String| {
+        let push_painted = |text: &str, code: &str, out: &mut String| {
             if text.is_empty() {
                 return;
             }
