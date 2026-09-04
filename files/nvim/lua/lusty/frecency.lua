@@ -72,6 +72,15 @@ function M.record(path)
   save()
 end
 
+--- Journal paths (the keys), for merging into MRU/recent sources.
+function M.paths()
+  local out = {}
+  for p in pairs(load()) do
+    out[#out + 1] = p
+  end
+  return out
+end
+
 --- Frecency score for a path, or nil when never opened via a picker.
 function M.score(path)
   local e = load()[path]
