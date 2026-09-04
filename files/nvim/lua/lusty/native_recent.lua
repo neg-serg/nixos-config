@@ -6,6 +6,7 @@
 
 local pick = require('lusty.native_pick')
 local frecency = require('lusty.frecency')
+local zoxide = require('lusty.zoxide')
 local fuzzy = require('lusty.fuzzy')
 local mercury = require('lusty.mercury')
 local util = require('lusty.util')
@@ -127,6 +128,8 @@ function M.run()
     on_open = function(item, mode)
       running = false
       frecency.record(item.path)
+      -- Keep zoxide in sync with files opened from the recent list.
+      zoxide.add(item.path)
       open_path(item.path, mode)
     end,
     on_close = function(p2)
