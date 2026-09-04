@@ -58,6 +58,52 @@ end
 -- serve Q sort token: 0 name, 1 ext, 2 size desc, 3 time desc (eza-style).
 local SORT_LABELS = { 'name', 'ext', 'size', 'time' }
 
+-- Nerd-font icons, same glyphs as the standalone TUI. Off by default:
+-- enable with g:LustyExplorerIcons = 1 (or true) or LUSTY_ICONS=1.
+local ICON_DIR = '\u{f115}'
+local ICON_FILE = '\u{f15b}'
+local ICON_LINK = '\u{f481}'
+
+local function icons_enabled()
+  local g = vim.g.LustyExplorerIcons
+  if type(g) == 'boolean' then
+    return g
+  end
+  if type(g) == 'number' then
+    return g == 1
+  end
+  if type(g) == 'string' then
+    return g == '1' or g == 'true'
+  end
+  return os.getenv('LUSTY_ICONS') == '1'
+end
+
+local function icon_for(item)
+  if item.kind == 'd' then
+    return ICON_DIR
+  end
+  if item.kind == 'l' then
+    return ICON_LINK
+  end
+  local low = basename(item.label):lower()
+  if low:match('%.md$') then
+    return '\u{f48a}'
+  elseif low:match('%.rs$') then
+    return '\u{e7a8}'
+  elseif low:match('%.(lua|scd|sc)$') then
+    return '\u{e620}'
+  elseif low:match('%.(jpg|jpeg|png|webp|gif)$') then
+    return '\u{f1c5}'
+  elseif low:match('%.(mp3|flac|wav)$') then
+    return '\u{f001}'
+  elseif low:match('%.(mp4|mkv|webm)$') then
+    return '\u{f03d}'
+  elseif low:match('%.(zip|tar|gz|7z)$') then
+    return '\u{f410}'
+  end
+  return ICON_FILE
+end
+
 local Picker = {}
 Picker.__index = Picker
 
@@ -76,6 +122,7 @@ function Picker.new(root)
   self.maxw = 12 -- widest label (chars) in the current ranked set
   self.closed = false
   self.long = false -- long view: metadata columns via serve M (C-l toggles)
+  self.icons = icons_enabled() -- nerd-font grid icons (LUSTY_ICONS / g:LustyExplorerIcons)
   self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
@@ -120,6 +167,9 @@ function Picker:max_cols()
   local needed = math.max(1, math.ceil(total / rows))
   -- cap the width influence: one huge name must not force a single column
   local name_w = math.max(math.min(self.maxw or 12, 20), 1)
+  if self.icons then
+    name_w = name_w + 2 -- icon glyph + trailing space occupy two display cells
+  end
   local byw = math.max(1, math.floor((w + 2) / (name_w + 4)))
   local cols = math.min(needed, byw, 8)
   return math.max(1, cols)
@@ -395,8 +445,12 @@ function Picker:draw()
         if meta ~= '' then
           prefix = meta .. ' '
         end
+        local icon_pre = ''
         local name = item.label
-        if item.kind == 'd' then
+        if self.icons then
+          icon_pre = icon_for(item) .. ' '
+          name = icon_pre .. name
+        elseif item.kind == 'd' then
           name = name .. '/'
         end
         local pw = #prefix
@@ -419,7 +473,7 @@ function Picker:draw()
           col = 1,
           item = item,
           pos = pos,
-          label_w = nw,
+          icon_bytes = #icon_pre,
           name_start = pw,
           name_bytes = #text,
           meta = meta,
@@ -430,13 +484,18 @@ function Picker:draw()
   else
     for r = 1, rows do
       local bufparts = {}
+      local byte_start = 0 -- byte offset of the current cell within lines[r]
       for c = 1, cols do
         -- row-major: fill left-to-right, then next row (original Lusty order)
         local pos = self.offset + (r - 1) * cols + (c - 1)
         local item = self.window[pos - self.offset + 1]
         if item then
+          local icon_pre = ''
           local label = item.label
-          if item.kind == 'd' then
+          if self.icons then
+            icon_pre = icon_for(item) .. ' '
+            label = icon_pre .. label
+          elseif item.kind == 'd' then
             label = label .. '/'
           end
           -- pad to the full column width (display cells) so columns align;
@@ -452,9 +511,20 @@ function Picker:draw()
               w = vim.fn.strdisplaywidth(text)
             end
           end
+          local text_bytes = #text
           text = text .. string.rep(' ', math.max(0, col_w - w))
           bufparts[c] = text
-          cells[#cells + 1] = { line = r, col = c, item = item, pos = pos, label_w = w }
+          cells[#cells + 1] = {
+            line = r,
+            col = c,
+            item = item,
+            pos = pos,
+            byte_start = byte_start,
+            text_bytes = text_bytes,
+            cell_bytes = #text,
+            icon_bytes = #icon_pre,
+          }
+          byte_start = byte_start + #text + 2
         end
       end
       lines[r] = table.concat(bufparts, '  ')
@@ -469,7 +539,6 @@ function Picker:draw()
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
-  local sel_col0 = 0
   for _, cell in ipairs(cells) do
     local entry = {
       name = basename(cell.item.label),
@@ -484,14 +553,8 @@ function Picker:draw()
       name_from = cell.name_start
       name_to = cell.name_start + cell.name_bytes
     else
-      name_from = (cell.col - 1) * (col_w + 2)
-      name_to = name_from + cell.label_w
-      if name_to - name_from > col_w - 1 then
-        name_to = name_from + col_w - 1
-      end
-    end
-    if cell.pos == self.selected then
-      sel_col0 = name_from
+      name_from = cell.byte_start
+      name_to = cell.byte_start + cell.text_bytes
     end
     if cell.long and cell.meta ~= '' and cell.pos ~= self.selected then
       api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeMeta', cell.line - 1, 0, #cell.meta)
@@ -507,11 +570,11 @@ function Picker:draw()
         local base = basename(cell.item.label)
         local s, e = base:lower():find(q:lower(), 1, true)
         if s and e then
-          local origin = cell.long and cell.name_start or name_from
+          local name_start = name_from + (cell.icon_bytes or 0)
           local lstart = #cell.item.label - #base
           api.nvim_buf_add_highlight(
             self.buf, ns, 'LustyNativeMatch', cell.line - 1,
-            origin + lstart + s - 1, origin + lstart + e
+            name_start + lstart + s - 1, name_start + lstart + e
           )
         end
       end
@@ -519,8 +582,8 @@ function Picker:draw()
   end
   if self.total > 0 and rows > 0 then
     local sel_row
-    local sel_from = sel_col0
-    local sel_to = sel_col0 + col_w - 1
+    local sel_from = 0
+    local sel_to = 0
     if self.long then
       sel_row = self.selected - self.offset
       if sel_row >= 0 and sel_row < rows then
@@ -530,6 +593,13 @@ function Picker:draw()
       end
     else
       sel_row = math.floor(self.selected / cols)
+      for _, cell in ipairs(cells) do
+        if cell.pos == self.selected then
+          sel_from = cell.byte_start
+          sel_to = cell.byte_start + cell.cell_bytes
+          break
+        end
+      end
     end
     if sel_row >= 0 and sel_row < rows then
       api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_row, sel_from, sel_to)
@@ -548,6 +618,9 @@ function Picker:prompt_text()
     path = '~' .. path:sub(#home + 1)
   end
   local tail = path .. ' \u{f105} ' .. self.query
+  if self.icons then
+    tail = ICON_DIR .. ' ' .. tail
+  end
   if self.total > 0 then
     tail = tail .. ' [' .. self.total .. ']'
   end
@@ -567,6 +640,9 @@ function Picker:paint_prompt(h)
       segs[#segs + 1] = { col, #text, group }
       col = col + #text
     end
+  end
+  if self.icons then
+    add(ICON_DIR .. ' ', 'LustyPromptSep')
   end
   local path = self.root
   if home ~= '' and path:sub(1, #home) == home then
