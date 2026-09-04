@@ -37,7 +37,11 @@ impl Colors {
                 }
             }
         }
-        Colors { types, suffix, complex }
+        Colors {
+            types,
+            suffix,
+            complex,
+        }
     }
 
     /// Resolve the style code for one entry. The is_exec flag is only
@@ -194,7 +198,10 @@ mod tests {
         let c = Colors::parse("di=01;34:ln=01;36:ex=01;32:*.jpg=01;35:*.lua=38;5;114");
         assert_eq!(c.code_for("sub", FileKind::Dir, false), Some("01;34"));
         assert_eq!(c.code_for("pic.jpg", FileKind::File, false), Some("01;35"));
-        assert_eq!(c.code_for("beta.lua", FileKind::File, false), Some("38;5;114"));
+        assert_eq!(
+            c.code_for("beta.lua", FileKind::File, false),
+            Some("38;5;114")
+        );
         assert_eq!(c.code_for("alpha.txt", FileKind::File, false), None);
         assert_eq!(c.code_for("lnk", FileKind::Link, false), Some("01;36"));
         // ex wins over an extension rule for plain files

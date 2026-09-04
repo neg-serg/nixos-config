@@ -46,7 +46,11 @@ fn state_dir() -> Option<PathBuf> {
     let base = std::env::var("XDG_STATE_HOME")
         .map(PathBuf::from)
         .ok()
-        .or_else(|| std::env::var("HOME").ok().map(|h| PathBuf::from(h).join(".local/state")))?;
+        .or_else(|| {
+            std::env::var("HOME")
+                .ok()
+                .map(|h| PathBuf::from(h).join(".local/state"))
+        })?;
     Some(base.join("lusty-native"))
 }
 
@@ -200,7 +204,8 @@ impl<'a> Cur<'a> {
         self.take(1).map(|b| b[0])
     }
     fn u32(&mut self) -> Option<u32> {
-        self.take(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+        self.take(4)
+            .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
     }
     fn u64(&mut self) -> Option<u64> {
         self.take(8).map(|b| {
@@ -273,7 +278,12 @@ fn try_load(path: &Path, root: &Path, opts: &Options) -> Option<Vec<Entry>> {
         let edepth = c.u32()?;
         let name0 = c.u8()?;
         let label = c.str()?;
-        entries.push(Entry { label, kind, depth: edepth, name0 });
+        entries.push(Entry {
+            label,
+            kind,
+            depth: edepth,
+            name0,
+        });
     }
     Some(entries)
 }
@@ -339,7 +349,11 @@ mod tests {
         // add a file -> root mtime/count changes -> cache must invalidate
         fs::write(dir.join("f99.txt"), b"x").unwrap();
         let third = cached_list(&dir, &opts);
-        assert_eq!(third.len(), first.len() + 1, "cache invalidated after a change");
+        assert_eq!(
+            third.len(),
+            first.len() + 1,
+            "cache invalidated after a change"
+        );
         // remove it again
         fs::remove_file(dir.join("f99.txt")).unwrap();
         let fourth = cached_list(&dir, &opts);
