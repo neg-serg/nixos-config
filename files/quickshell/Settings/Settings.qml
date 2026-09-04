@@ -169,6 +169,10 @@ Singleton {
             property int musicPopupHeight: 250    // logical px, scaled (used when content height unknown)
             property int musicPopupPadding: 12    // logical px, scaled (inner content padding)
             property int musicPopupEdgeMargin: 4  // logical px, scaled (distance from screen edge/panel)
+            // Toast extras
+            property bool musicPopupSpectrum: true          // show spectrum analyzer behind progress
+            property bool musicPopupColoredProgress: true   // progress bar in cover accent colour
+            property real musicPopupProgressHeight: 5       // logical px, scaled (progress line thickness)
 
             property int networkPingIntervalMs: 30000
             property string networkPingTarget: "8.8.8.8"
