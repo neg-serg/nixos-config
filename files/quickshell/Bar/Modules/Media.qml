@@ -99,12 +99,10 @@ Item {
     readonly property bool mediaBorderless: Settings.settings.mediaIconBorderless !== false
     onMediaAccentChanged: { accentVersion++; }
 
-    // Capsule hover exposed as a property so the analyser (deep in the content
-    // tree) can gate visibility reliably (the bare capsule id is not in scope
-    // there - it lives in a nested component scope).
-    readonly property bool _capsuleHovered: capsule.hovered
-    // Media-area hover, set by the MouseArea in layoutHost (reliable).
-    property bool _mediaHovered: false
+    // Bar hover, driven by the right panel's top-level hover tracker in
+    // Bar.qml. The media capsule's own WidgetCapsule.hovered is shadowed by
+    // that tracker (z:10000), so the panel-level signal is the reliable one.
+    property bool panelHovering: false
 
     // ── Small bar analyser: live copy of cava values (in-place mutation won't
     // trigger bindings, so copy on a timer) ──
@@ -234,14 +232,6 @@ Item {
         Item {
             id: layoutHost
             anchors.fill: parent
-            // Hover over the whole media area — the analyser reveals on this.
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.NoButton
-                onEntered: mediaControl._mediaHovered = true
-                onExited: mediaControl._mediaHovered = false
-            }
 
             RowLayout {
                 id: mediaRow
@@ -269,9 +259,9 @@ Item {
                     minBarWidth: 5
                     animDurationMs: 80
                     opacity: 0.95
-                    // Hover-only, gated on the media-area MouseArea hover.
+                    // Hover-only, gated on the bar panel hover signal.
                     visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
-                        && mediaControl._mediaHovered
+                        && mediaControl.panelHovering
                 }
 
                 Item {
