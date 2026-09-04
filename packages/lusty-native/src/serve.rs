@@ -19,7 +19,12 @@ use crate::cache;
 use crate::listing::{FileKind, Options};
 use crate::rank;
 
-pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: bool) -> io::Result<()> {
+pub fn serve(
+    root: PathBuf,
+    depth: usize,
+    skip_dirs: Vec<String>,
+    show_dots: bool,
+) -> io::Result<()> {
     let opts = Options {
         depth,
         skip_dirs,
@@ -34,13 +39,7 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
     if let Ok(db) = std::env::var("LUSTY_SERVE_DEBUG") {
         let _ = std::fs::write(&db, format!("entries={} C-about-to-print", entries.len()));
     }
-    writeln!(
-        out,
-        "C {} {} {}",
-        entries.len(),
-        depth,
-        root.display()
-    )?;
+    writeln!(out, "C {} {} {}", entries.len(), depth, root.display())?;
     out.flush()?;
     if let Ok(db) = std::env::var("LUSTY_SERVE_DEBUG") {
         let mut f = std::fs::OpenOptions::new().append(true).open(&db).unwrap();
@@ -66,7 +65,11 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
                 let query = parts.get(3).unwrap_or(&"").to_string();
                 if query != memo_q {
                     let (ranked, maxw) = if query.is_empty() {
-                        let mw = entries.iter().map(|e| e.label.chars().count()).max().unwrap_or(0);
+                        let mw = entries
+                            .iter()
+                            .map(|e| e.label.chars().count())
+                            .max()
+                            .unwrap_or(0);
                         ((0..entries.len()).collect(), mw)
                     } else {
                         rank::rank_indices_mw(&entries, &query)
@@ -86,7 +89,14 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
                         FileKind::Link => 'l',
                         _ => 'f',
                     };
-                    writeln!(out, "R {} {} {}\t{}", i, kind, e.label, e.path(&root).display())?;
+                    writeln!(
+                        out,
+                        "R {} {} {}\t{}",
+                        i,
+                        kind,
+                        e.label,
+                        e.path(&root).display()
+                    )?;
                 }
                 writeln!(out, "E")?;
                 out.flush()?;

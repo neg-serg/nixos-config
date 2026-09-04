@@ -13,8 +13,8 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{self};
 
-use crate::colors::{self, Colors};
 use crate::cache;
+use crate::colors::{self, Colors};
 use crate::listing::{Entry, FileKind, Options};
 use crate::rank;
 
@@ -24,13 +24,38 @@ use crate::rank;
 /// row because it would override the dot).
 pub fn ru_to_en(c: char) -> Option<char> {
     let en = match c {
-        'й' => 'q', 'ц' => 'w', 'у' => 'e', 'к' => 'r', 'е' => 't',
-        'н' => 'y', 'г' => 'u', 'ш' => 'i', 'щ' => 'o', 'з' => 'p',
-        'х' => '[', 'ъ' => ']', 'ф' => 'a', 'ы' => 's', 'в' => 'd',
-        'а' => 'f', 'п' => 'g', 'р' => 'h', 'о' => 'j', 'л' => 'k',
-        'д' => 'l', 'ж' => ';', 'э' => '\'', 'я' => 'z', 'ч' => 'x',
-        'с' => 'c', 'м' => 'v', 'и' => 'b', 'т' => 'n', 'ь' => 'm',
-        'б' => ',', 'ю' => '.',
+        'й' => 'q',
+        'ц' => 'w',
+        'у' => 'e',
+        'к' => 'r',
+        'е' => 't',
+        'н' => 'y',
+        'г' => 'u',
+        'ш' => 'i',
+        'щ' => 'o',
+        'з' => 'p',
+        'х' => '[',
+        'ъ' => ']',
+        'ф' => 'a',
+        'ы' => 's',
+        'в' => 'd',
+        'а' => 'f',
+        'п' => 'g',
+        'р' => 'h',
+        'о' => 'j',
+        'л' => 'k',
+        'д' => 'l',
+        'ж' => ';',
+        'э' => '\'',
+        'я' => 'z',
+        'ч' => 'x',
+        'с' => 'c',
+        'м' => 'v',
+        'и' => 'b',
+        'т' => 'n',
+        'ь' => 'm',
+        'б' => ',',
+        'ю' => '.',
         _ => return None,
     };
     Some(en)
@@ -66,16 +91,17 @@ pub struct App {
     offset: usize,
     size: (usize, usize),
     cursor_row: Option<usize>,
-    box_w: usize, // popup inner width (content columns between the borders)
-    box_h: usize, // popup outer height including the two border rows
-    pop_top: usize, // 0-based screen row of the popup top border
-    ui_rows: Option<usize>, // user popup height (outer rows incl borders)
+    box_w: usize,            // popup inner width (content columns between the borders)
+    box_h: usize,            // popup outer height including the two border rows
+    pop_top: usize,          // 0-based screen row of the popup top border
+    ui_rows: Option<usize>,  // user popup height (outer rows incl borders)
     ui_width: Option<usize>, // user popup width (outer columns incl borders)
-    long: bool, // eza -l style: one entry per row with mode/size/date
-    icons: bool, // nerd-font icons per entry + dir icon before the prompt
-    reverse: bool, // eza --reverse per depth
-    dirs_first: bool, // eza --group-dirs-first
-    sort_mode: u8, // 0 name, 1 ext, 2 size, 3 time
+    long: bool,              // eza -l style: one entry per row with mode/size/date
+    icons: bool,             // nerd-font icons per entry + dir icon before the prompt
+    reverse: bool,           // eza --reverse per depth
+    dirs_first: bool,        // eza --group-dirs-first
+    sort_mode: u8,           // 0 name, 1 ext, 2 size, 3 time
+    cols_mask: u8,           // long view fields: 1 perm, 2 user, 4 size, 8 time
     palette: Colors,
 }
 
@@ -100,10 +126,13 @@ impl App {
             ui_rows: None,
             ui_width: None,
             long: false,
-            icons: std::env::var("LUSTY_ICONS").map(|v| v == "1").unwrap_or(false),
+            icons: std::env::var("LUSTY_ICONS")
+                .map(|v| v == "1")
+                .unwrap_or(false),
             reverse: false,
             dirs_first: false,
             sort_mode: 0,
+            cols_mask: 15,
             palette,
         }
     }
@@ -119,6 +148,23 @@ impl App {
 
     pub fn set_sort_mode(&mut self, mode: u8) {
         self.sort_mode = mode;
+    }
+
+    /// Set the long-view columns from a comma list (perm,user,size,time).
+    pub fn set_columns(&mut self, spec: &str) {
+        let mut mask = 0u8;
+        for tok in spec.split(',').map(|t| t.trim()).filter(|t| !t.is_empty()) {
+            match tok {
+                "perm" => mask |= 1,
+                "user" => mask |= 2,
+                "size" => mask |= 4,
+                "time" => mask |= 8,
+                _ => {}
+            }
+        }
+        if mask != 0 {
+            self.cols_mask = mask;
+        }
     }
 
     /// Enable the long listing view (mode/size/date + name per row).
@@ -144,7 +190,11 @@ impl App {
     /// demand and cached per root.
     fn listing(&mut self) -> &Vec<Entry> {
         let dots = self.show_dots();
-        let cache = if dots { &mut self.dots } else { &mut self.hidden };
+        let cache = if dots {
+            &mut self.dots
+        } else {
+            &mut self.hidden
+        };
         if cache.is_none() {
             let opts = Options {
                 depth: self.opts.depth,
@@ -514,7 +564,11 @@ impl App {
     /// Widest label (in chars) over the full listing of the current root.
     fn max_name_w(&mut self) -> usize {
         let entries = self.listing();
-        entries.iter().map(|e| e.label.chars().count()).max().unwrap_or(0)
+        entries
+            .iter()
+            .map(|e| e.label.chars().count())
+            .max()
+            .unwrap_or(0)
     }
 
     fn clamp_offset(&mut self, rows: usize) {
@@ -541,7 +595,9 @@ impl App {
             self.draw(out)?;
             let ev = event::read()?;
             match ev {
-                Event::Key(KeyEvent { code, modifiers, .. }) => {
+                Event::Key(KeyEvent {
+                    code, modifiers, ..
+                }) => {
                     let ctrl = modifiers.contains(KeyModifiers::CONTROL);
                     match (code, ctrl) {
                         (KeyCode::Esc, _) => return Ok(1),
@@ -550,10 +606,14 @@ impl App {
                         (KeyCode::Char('t'), true) => self.open("tabedit")?,
                         (KeyCode::Char('o'), true) => self.open("split")?,
                         (KeyCode::Char('v'), true) => self.open("vsplit")?,
-                        (KeyCode::Char('n'), true) | (KeyCode::Char('j'), true) | (KeyCode::Down, _) => {
+                        (KeyCode::Char('n'), true)
+                        | (KeyCode::Char('j'), true)
+                        | (KeyCode::Down, _) => {
                             self.move_sel(1);
                         }
-                        (KeyCode::Char('p'), true) | (KeyCode::Char('k'), true) | (KeyCode::Up, _) => {
+                        (KeyCode::Char('p'), true)
+                        | (KeyCode::Char('k'), true)
+                        | (KeyCode::Up, _) => {
                             self.move_sel(-1);
                         }
                         (KeyCode::Char('f'), true) | (KeyCode::Right, _) => {
@@ -696,7 +756,7 @@ impl App {
                         let i = self.ranked[pos];
                         let e = self.listing()[i].clone();
                         if self.long {
-                            if let Some(m) = meta_line(&root_path.join(&e.label)) {
+                            if let Some(m) = meta_line(&root_path.join(&e.label), self.cols_mask) {
                                 cell.push_str(&format!("{esc}[38;2;108;126;150m{m}"));
                                 cell.push_str(&revert);
                                 cell.push(' ');
@@ -705,7 +765,8 @@ impl App {
                         if pos == self.selected {
                             cell.push_str(&format!("{esc}[1;48;2;0;95;175;38;2;209;229;255m"));
                         } else {
-                            let exec = e.kind == FileKind::File && is_exec(&root_path.join(&e.label));
+                            let exec =
+                                e.kind == FileKind::File && is_exec(&root_path.join(&e.label));
                             if let Some(code) = self.palette.code_for(e.basename(), e.kind, exec) {
                                 cell.push_str(&format!("{esc}[{code}m"));
                             }
@@ -830,12 +891,18 @@ fn civil_from_days(z: i64) -> (i64, u32, u32) {
 }
 
 /// eza -l style metadata: "rwxr-xr-x   1000   1.2K 2026-09-04 06:40"
-fn meta_line(path: &std::path::Path) -> Option<String> {
+fn meta_line(path: &std::path::Path, mask: u8) -> Option<String> {
     use std::os::unix::fs::MetadataExt;
     let md = std::fs::metadata(path).ok()?;
     let mode = md.mode();
     let mut perms = String::with_capacity(10);
-    perms.push(if mode & 0o040000 != 0 { 'd' } else if mode & 0o120000 == 0o120000 { 'l' } else { '-' });
+    perms.push(if mode & 0o040000 != 0 {
+        'd'
+    } else if mode & 0o120000 == 0o120000 {
+        'l'
+    } else {
+        '-'
+    });
     for (mask, ch) in [
         (0o400, 'r'),
         (0o200, 'w'),
@@ -870,7 +937,20 @@ fn meta_line(path: &std::path::Path) -> Option<String> {
     let (y, mo, d) = civil_from_days(days);
     let hh = rem / 3600;
     let mm = (rem % 3600) / 60;
-    Some(format!("{perms} {:>5} {:>7} {y:04}-{mo:02}-{d:02} {hh:02}:{mm:02}", md.uid(), size_s))
+    let mut parts: Vec<String> = Vec::new();
+    if mask & 1 != 0 {
+        parts.push(perms);
+    }
+    if mask & 2 != 0 {
+        parts.push(format!("{:>5}", md.uid()));
+    }
+    if mask & 4 != 0 {
+        parts.push(format!("{:>7}", size_s));
+    }
+    if mask & 8 != 0 {
+        parts.push(format!("{y:04}-{mo:02}-{d:02} {hh:02}:{mm:02}"));
+    }
+    Some(parts.join(" "))
 }
 
 const ICON_DIR: &str = "\u{f115}";
@@ -889,15 +969,22 @@ fn icon_for(e: &crate::listing::Entry) -> &'static str {
                 "\u{e7a8}"
             } else if low.ends_with(".lua") || low.ends_with(".scd") || low.ends_with(".sc") {
                 "\u{e620}"
-            } else if low.ends_with(".jpg") || low.ends_with(".jpeg") || low.ends_with(".png")
-                || low.ends_with(".webp") || low.ends_with(".gif") {
+            } else if low.ends_with(".jpg")
+                || low.ends_with(".jpeg")
+                || low.ends_with(".png")
+                || low.ends_with(".webp")
+                || low.ends_with(".gif")
+            {
                 "\u{f1c5}"
             } else if low.ends_with(".mp3") || low.ends_with(".flac") || low.ends_with(".wav") {
                 "\u{f001}"
             } else if low.ends_with(".mp4") || low.ends_with(".mkv") || low.ends_with(".webm") {
                 "\u{f03d}"
-            } else if low.ends_with(".zip") || low.ends_with(".tar") || low.ends_with(".gz")
-                || low.ends_with(".7z") {
+            } else if low.ends_with(".zip")
+                || low.ends_with(".tar")
+                || low.ends_with(".gz")
+                || low.ends_with(".7z")
+            {
                 "\u{f410}"
             } else {
                 ICON_FILE
@@ -947,7 +1034,6 @@ fn ansi_pad(line: &mut String, width: usize) {
     }
     *line = out;
 }
-
 
 #[cfg(test)]
 mod tests {

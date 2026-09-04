@@ -2,7 +2,7 @@
 //! (files/nvim/lua/lusty/fuzzy.lua). Default engine for Lusty-native.
 
 const LEADING_PENALTY: f64 = 0.012; // per skipped char before the first match
-const INNER_GAP: f64 = 0.02;        // per skipped char between two matches
+const INNER_GAP: f64 = 0.02; // per skipped char between two matches
 const CONSECUTIVE_BONUS: f64 = 0.05;
 
 /// Boundary bonus for a haystack byte position (0-based).
