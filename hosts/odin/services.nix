@@ -137,6 +137,23 @@ let
     '';
   };
 
+  # Sends the "odin booted" notice exactly once per real boot. The unit is
+  # wanted by multi-user.target, and nixos-rebuild switch re-runs it every
+  # time, so a marker in /run (tmpfs, cleared on reboot) guards the send.
+  telegramBootNotifyScript = pkgs.writeShellApplication {
+    name = "telegram-notify-boot";
+    runtimeInputs = [ pkgs.coreutils ]; # test/touch of the /run marker
+    text = ''
+      set -euo pipefail
+
+      MARKER="/run/telegram-notify-boot.sent"
+      [ -e "$MARKER" ] && exit 0
+
+      ${lib.getExe telegramSendScript} "odin: загрузился"
+      touch "$MARKER"
+    '';
+  };
+
   # Notifies Telegram on the down->up edge of the dockur Windows VM ("таз"):
   # probes RDP (127.0.0.1:3389) twice 5s apart; when the VM accepts
   # connections and no notification was recorded yet, sends one and marks it.
@@ -880,6 +897,8 @@ lib.mkMerge [
 
     # Telegram "odin booted" notice. The socks proxy is a user unit that
     # starts at login, so keep retrying for a while after network is up.
+    # The /run marker (see telegramBootNotifyScript) makes it fire once per
+    # real boot instead of on every nixos-rebuild switch.
     systemd.services."telegram-notify-boot" = {
       description = "Send a Telegram message that odin has booted";
       after = [ "network-online.target" ];
@@ -887,7 +906,7 @@ lib.mkMerge [
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${lib.getExe telegramSendScript} \"odin: загрузился\" 120";
+        ExecStart = "${lib.getExe telegramBootNotifyScript}";
         Restart = "on-failure";
         RestartSec = 300;
       };
