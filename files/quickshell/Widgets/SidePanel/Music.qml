@@ -306,17 +306,10 @@ Rectangle {
                         Layout.fillWidth: true
                         spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
 
-                        // Title/artist merged into one line; the separator is
-                        // coloured with the cover accent (like the metadata rows).
+                        // Header: track title only (artist lives in the metadata rows).
                         Text {
                             Layout.fillWidth: true
-                            textFormat: Text.RichText
-                            text: (function() {
-                                const t = Rich.esc(MusicManager.trackTitle || "");
-                                const a = Rich.esc(MusicManager.trackArtist || "");
-                                if (t && a) return t + " " + Rich.sepSpan(detailsCol.musicAccentCss, "·") + " " + a;
-                                return t || a;
-                            })()
+                            text: MusicManager.trackTitle || ""
                             color: playerUI.musicTextColor
                             font.family: Theme.fontFamily
                             font.pixelSize: Math.round(playerUI.musicTextPx * 1.15)
