@@ -35,7 +35,8 @@ nvim как редактор. Целевой выигрыш — в 10 и бол�
 
 ## Компоненты
 
-1. `packages/lusty-native` — Rust-крэйт (двоичный `lusty-native`):
+1. `~/src/lusty-native` (flake-инпут `lusty-native` в /etc/nixos) — Rust-крэйт (двоичный
+   `lusty-native`):
 
    - `cli`: mode (files|buffers|grep), root, depth, skip-dirs, follow-mounts, dotfile-флаг,
      стартовый query.
@@ -77,8 +78,11 @@ nvim как редактор. Целевой выигрыш — в 10 и бол�
 
 ## Nix-упаковка
 
-- `packages/lusty-native/default.nix` = `rustPlatform.buildRustPackage` (src `./.`, свой
-  `Cargo.lock`), `meta.mainProgram = "lusty-native"`.
-- Wire в `packages/overlays/tools.nix` через `callPkg (packagesRoot + "/lusty-native") { }`; станет
+- Код живёт отдельным проектом: `~/src/lusty-native` (собственный git-репо; `default.nix` =
+  `rustPlatform.buildRustPackage`, src `./.`, свой `Cargo.lock`,
+  `meta.mainProgram = "lusty-native"`).
+- /etc/nixos подключает его flake-инпутом `lusty-native.url = "path:/home/neg/src/lusty-native"`;
+  оверлей `packages/overlays/tools.nix`: `callPkg (inputs.lusty-native.outPath) { }` →
   `pkgs.neg.lusty-native`.
-- Добавить в home-пакеты (`modules/user/nix-maid/...`) рядом с nvim-конфигом.
+- После изменения кода в `~/src/lusty-native`: `nix flake lock --update-input lusty-native` перед
+  пересборкой.
