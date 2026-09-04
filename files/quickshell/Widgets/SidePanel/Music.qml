@@ -365,14 +365,15 @@ Rectangle {
                                     minBarWidth: 2
                                     animDurationMs: 80
                                     opacity: 0.85
+                                    visible: Settings.settings.musicPopupSpectrum
                                 }
 
-                                // Thin progress line through the middle of the spectrum band.
+                                // Progress line through the middle of the spectrum band.
                                 Rectangle {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
-                                    height: Math.max(2, Math.round(3 * Theme.scale(screen)))
+                                    height: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen)))
                                     color: Color.withAlpha(playerUI.musicTextColor, 0.18)
                                     radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
                                     Rectangle {
@@ -385,7 +386,10 @@ Rectangle {
                                             const pos = Math.max(0, MusicManager.currentPosition || 0);
                                             return total > 0 ? Math.min(1, pos / total) : 0;
                                         })()
-                                        color: detailsCol.musicAccent
+                                        // Cover-accent coloured (clearly), or neutral when disabled.
+                                        color: Settings.settings.musicPopupColoredProgress
+                                            ? detailsCol.musicAccent
+                                            : Color.withAlpha(playerUI.musicTextColor, 0.7)
                                         radius: parent.radius
                                     }
                                 }
