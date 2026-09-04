@@ -278,14 +278,20 @@ let
                 callback = update.get("callback_query")
                 if not callback:
                     continue
+                # Private-chat bot: only presses from the owner count. In a
+                # 1:1 chat both chat.id and from.id equal the user id, which
+                # is the chat id the reminders go to; ignore anything else.
+                message = callback.get("message", {})
+                chat_id = message.get("chat", {}).get("id")
+                from_id = callback.get("from", {}).get("id")
+                if str(chat_id) != CHAT_ID or str(from_id) != CHAT_ID:
+                    continue
                 query_id = callback.get("id", "")
                 data_field = callback.get("data", "")
                 api_call("answerCallbackQuery", {"callback_query_id": query_id})
                 if data_field == "pill_taken":
-                    message = callback.get("message", {})
-                    chat_id = message.get("chat", {}).get("id")
                     message_id = message.get("message_id")
-                    if chat_id and message_id:
+                    if message_id:
                         stamp = time.strftime("%Y-%m-%d %H:%M %Z")
                         api_call(
                             "editMessageText",
