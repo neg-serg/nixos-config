@@ -9,10 +9,10 @@
 --   :LustyBufferGrep
 --
 -- Mappings (unless g:LustyExplorerDefaultMappings == 0):
---   <Leader>lf  filesystem explorer (cwd)
---   <Leader>lr  filesystem explorer at the current file's directory
---   <Leader>lb  buffer explorer
---   <Leader>lg  buffer grep
+--   <Leader>l   filesystem explorer from the current file's directory
+--   <Leader>C   filesystem explorer (cwd)
+--   <C-b>       buffer explorer (native float)
+--   <C-g>       buffer grep (native float)
 
 local explorer = require('lusty.explorer')
 local buffers = require('lusty.buffer_stack')
@@ -102,8 +102,8 @@ function M.setup()
     -- 'ames').  Secondary functions moved off the 'l' prefix:
     --   ,l  filesystem explorer from here (nowait)
     --   ,C  filesystem explorer (cwd)
-    --   ,B  buffer explorer
-    --   ,G  buffer grep
+    --   C-b  buffer explorer
+    --   C-g  buffer grep
     local function from_here()
       local d = vim.fn.expand('%:p:h')
       run_fs(d == '' and vim.fn.getcwd() or d)
@@ -113,12 +113,15 @@ function M.setup()
     vim.keymap.set('n', '<leader>C', function()
       run_fs(nil)
     end, { desc = 'Lusty filesystem explorer (cwd, native)' })
-    vim.keymap.set('n', '<leader>B', function()
+    -- Simple chords: C-b = buffers, C-g = buffer grep. These override the
+    -- stock <C-b> (quickfix list) and <C-g> (word count) normal-mode maps;
+    -- lusty loads after 02-bindings, so the set happens later.
+    vim.keymap.set('n', '<C-b>', function()
       run_buffers()
-    end, { desc = 'Lusty buffer explorer' })
-    vim.keymap.set('n', '<leader>G', function()
+    end, { desc = 'Lusty buffer explorer (native float)' })
+    vim.keymap.set('n', '<C-g>', function()
       run_grep()
-    end, { desc = 'Lusty buffer grep' })
+    end, { desc = 'Lusty buffer grep (native float)' })
   end
 end
 
