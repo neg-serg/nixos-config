@@ -13,6 +13,9 @@ local lsc = require('lusty.ls_colors')
 
 local M = {}
 
+-- Lua port parity: remember the last filter between runs.
+local previous_input = ''
+
 local function open_buffer(bufnr, mode)
   local cmd = mode == 'enter' and 'b ' or mode == 'tab' and 'tab split | b ' or mode == 'split' and 'sp | b ' or 'vs | b '
   vim.cmd('silent ' .. cmd .. bufnr)
@@ -99,14 +102,18 @@ function M.run()
   end
   pick.pick({
     title = 'Buffers',
+    query = previous_input,
     source = make_source(holder),
     on_open = function(item, mode)
       running = false
       open_buffer(item.bufnr, mode)
     end,
     on_delete = on_delete,
-    on_close = function()
+    on_close = function(p2)
       running = false
+      if p2 and p2.query then
+        previous_input = p2.query
+      end
     end,
   })
 end
