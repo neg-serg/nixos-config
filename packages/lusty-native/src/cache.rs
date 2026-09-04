@@ -1,23 +1,26 @@
-//! On-disk listing cache for big roots.
+//! On-disk listing cache for big roots (binary format, "LSTC" v1).
 //!
 //! A listing is a pure function of the tree shape: entry names, kinds and
 //! depths. Content edits never change it, only adds/removes/renames do, and
-//! every one of those bumps the mtime of the directory that contains the
-//! change. So a cached listing can be validated by stat-ing only the
-//! directories we walked into (for a depth-1 root that is a single stat)
-//! instead of re-reading every entry. Used for big trees (e.g. /nix/store,
-//! 155k entries) where a repeat listing goes from ~75ms to well under 1ms.
+//! every one of those bumps the mtime (and entry count) of the directory
+//! that contains the change. So a cached listing can be validated by
+//! stat-ing only the directories we walked into (for a depth-1 root that is
+//! a single stat) instead of re-reading every entry.
 //!
-//! File format is tab-separated records (paths with tabs/newlines are as
-//! unsupported here as in the serve protocol):
-//!   H <depth> <dots> <follow>
-//!   M <mount point>
-//!   E <kind> <depth> <name> <path> <label>
-//!   D <dir path> <mtime-nanos>
-//! Writes go to a temp file and are renamed into place (atomic).
+//! Layout (all integers little-endian):
+//!   magic "LSTC" | depth u32 | dots u8 | follow u8
+//!   mounts:  u32 count, each len u32 + bytes
+//!   dirs:    u32 count, each label-len u32 + label bytes | mtime i64 | count u64
+//!   entries: u32 count, each kind u8 | depth u32 | name-flag u8 | label-len
+//!            u32 + label bytes | (name-len u32 + name bytes when flag=1)
+//! Entry paths are not stored: they are root.join(label) again. The watch
+//! dir labels are relative to the root ("" = root itself).
+//!
+//! Writes build one buffer and fs::write it to a temp file, then rename
+//! into place (atomic). Reads slurp the file once and parse it with a
+//! cursor, which keeps warm loads cheap.
 
 use std::fs;
-use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 use crate::listing::{self, Entry, FileKind, Options};
@@ -26,6 +29,8 @@ use crate::listing::{self, Entry, FileKind, Options};
 const MAX_WATCH_DIRS: usize = 4096;
 /// Only bother caching trees with at least this many entries.
 const MIN_ENTRIES: usize = 16;
+
+const MAGIC: &[u8] = b"LSTC";
 
 fn cache_enabled() -> bool {
     match std::env::var("LUSTY_CACHE") {
@@ -69,48 +74,28 @@ fn key_hash(root: &Path, opts: &Options) -> u64 {
     h
 }
 
-fn kind_char(k: FileKind) -> char {
+fn kind_char(k: FileKind) -> u8 {
     match k {
-        FileKind::Dir => 'd',
-        FileKind::Link => 'l',
-        FileKind::Socket => 's',
-        FileKind::Pipe => 'p',
-        FileKind::Block => 'b',
-        FileKind::Char => 'c',
-        FileKind::File => 'f',
+        FileKind::Dir => b'd',
+        FileKind::Link => b'l',
+        FileKind::Socket => b's',
+        FileKind::Pipe => b'p',
+        FileKind::Block => b'b',
+        FileKind::Char => b'c',
+        FileKind::File => b'f',
     }
 }
 
-fn kind_from(c: char) -> FileKind {
+fn kind_from(c: u8) -> FileKind {
     match c {
-        'd' => FileKind::Dir,
-        'l' => FileKind::Link,
-        's' => FileKind::Socket,
-        'p' => FileKind::Pipe,
-        'b' => FileKind::Block,
-        'c' => FileKind::Char,
+        b'd' => FileKind::Dir,
+        b'l' => FileKind::Link,
+        b's' => FileKind::Socket,
+        b'p' => FileKind::Pipe,
+        b'b' => FileKind::Block,
+        b'c' => FileKind::Char,
         _ => FileKind::File,
     }
-}
-
-
-/// Directories whose contents affect the listing: the root itself plus every
-/// listed dir that was descended into (depth < max_depth). Returns
-/// (path, mtime-nanos, entry-count): entry count catches adds/removes even
-/// when the filesystem mtime granularity is coarse.
-fn watch_dirs(root: &Path, entries: &[Entry], opts: &Options) -> Vec<(PathBuf, i128, u64)> {
-    let mut out = Vec::new();
-    if let Some((m, l)) = mtime_len(root) {
-        out.push((root.to_path_buf(), m, l));
-    }
-    for e in entries {
-        if e.kind == FileKind::Dir && (e.depth as usize) < opts.depth {
-            if let Some((m, l)) = mtime_len(&e.path) {
-                out.push((e.path.clone(), m, l));
-            }
-        }
-    }
-    out
 }
 
 fn mtime_len(p: &Path) -> Option<(i128, u64)> {
@@ -120,48 +105,128 @@ fn mtime_len(p: &Path) -> Option<(i128, u64)> {
     Some((d.as_nanos() as i128, md.len()))
 }
 
+/// Directories whose contents affect the listing (label, mtime, count): the
+/// root itself (label "") plus every listed dir that was descended into.
+fn watch_dirs(root: &Path, entries: &[Entry], opts: &Options) -> Vec<(String, i128, u64)> {
+    let mut out = Vec::new();
+    if let Some((m, l)) = mtime_len(root) {
+        out.push((String::new(), m, l));
+    }
+    for e in entries {
+        if e.kind == FileKind::Dir && (e.depth as usize) < opts.depth {
+            if let Some((m, l)) = mtime_len(&e.path) {
+                out.push((e.label.clone(), m, l));
+            }
+        }
+    }
+    out
+}
+
+// --- binary writer --------------------------------------------------------
+
+fn put_u32(out: &mut Vec<u8>, v: u32) {
+    out.extend_from_slice(&v.to_le_bytes());
+}
+fn put_u64(out: &mut Vec<u8>, v: u64) {
+    out.extend_from_slice(&v.to_le_bytes());
+}
+fn put_i64(out: &mut Vec<u8>, v: i64) {
+    out.extend_from_slice(&v.to_le_bytes());
+}
+fn put_str(out: &mut Vec<u8>, s: &str) {
+    put_u32(out, s.len() as u32);
+    out.extend_from_slice(s.as_bytes());
+}
+
 fn store(
     path: &Path,
     opts: &Options,
     entries: &[Entry],
-    dirs: &[(PathBuf, i128, u64)],
+    dirs: &[(String, i128, u64)],
     mounts: &[String],
 ) -> std::io::Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let tmp = path.with_extension("tmp");
-    {
-        let f = fs::File::create(&tmp)?;
-        let mut w = BufWriter::new(f);
-        writeln!(
-            w,
-            "H\t{}\t{}\t{}",
-            opts.depth,
-            opts.show_dots as u8,
-            opts.follow_mounts as u8
-        )?;
-        for m in mounts {
-            writeln!(w, "M\t{m}")?;
-        }
-        for e in entries {
-            writeln!(
-                w,
-                "E\t{}\t{}\t{}\t{}\t{}",
-                kind_char(e.kind),
-                e.depth,
-                e.name,
-                e.path.display(),
-                e.label
-            )?;
-        }
-        for (d, m, l) in dirs {
-            writeln!(w, "D\t{0}\t{1}\t{2}", d.display(), m, l)?;
-        }
-        w.flush()?;
+    let mut w = Vec::with_capacity(entries.len() * 80 + mounts.len() * 64);
+    w.extend_from_slice(MAGIC);
+    put_u32(&mut w, opts.depth as u32);
+    w.push(opts.show_dots as u8);
+    w.push(opts.follow_mounts as u8);
+    put_u32(&mut w, mounts.len() as u32);
+    for m in mounts {
+        put_str(&mut w, m);
     }
+    put_u32(&mut w, dirs.len() as u32);
+    for (label, m, l) in dirs {
+        put_str(&mut w, label);
+        put_i64(&mut w, *m as i64);
+        put_u64(&mut w, *l);
+    }
+    put_u32(&mut w, entries.len() as u32);
+    for e in entries {
+        w.push(kind_char(e.kind));
+        put_u32(&mut w, e.depth);
+        if e.name == e.label {
+            w.push(0);
+            put_str(&mut w, &e.label);
+        } else {
+            w.push(1);
+            put_str(&mut w, &e.name);
+            put_str(&mut w, &e.label);
+        }
+    }
+    let tmp = path.with_extension("tmp");
+    fs::write(&tmp, &w)?;
     fs::rename(&tmp, path)?;
     Ok(())
+}
+
+// --- binary reader --------------------------------------------------------
+
+struct Cur<'a> {
+    data: &'a [u8],
+    pos: usize,
+}
+
+impl<'a> Cur<'a> {
+    fn new(data: &'a [u8]) -> Self {
+        Cur { data, pos: 0 }
+    }
+    fn take(&mut self, n: usize) -> Option<&'a [u8]> {
+        let end = self.pos.checked_add(n)?;
+        if end > self.data.len() {
+            return None;
+        }
+        let s = &self.data[self.pos..end];
+        self.pos = end;
+        Some(s)
+    }
+    fn u8(&mut self) -> Option<u8> {
+        self.take(1).map(|b| b[0])
+    }
+    fn u32(&mut self) -> Option<u32> {
+        self.take(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+    }
+    fn u64(&mut self) -> Option<u64> {
+        self.take(8).map(|b| {
+            let mut a = [0u8; 8];
+            a.copy_from_slice(b);
+            u64::from_le_bytes(a)
+        })
+    }
+    fn i64(&mut self) -> Option<i64> {
+        self.take(8).map(|b| {
+            let mut a = [0u8; 8];
+            a.copy_from_slice(b);
+            i64::from_le_bytes(a)
+        })
+    }
+    fn str(&mut self) -> Option<String> {
+        let n = self.u32()? as usize;
+        let b = self.take(n)?;
+        Some(String::from_utf8_lossy(b).into_owned())
+    }
 }
 
 fn current_mounts() -> Vec<String> {
@@ -171,64 +236,53 @@ fn current_mounts() -> Vec<String> {
 }
 
 fn try_load(path: &Path, root: &Path, opts: &Options) -> Option<Vec<Entry>> {
-    let f = fs::File::open(path).ok()?;
-    let reader = BufReader::new(f);
-    let mut entries: Vec<Entry> = Vec::new();
-    let mut dirs: Vec<(PathBuf, i128, u64)> = Vec::new();
-    let mut mounts: Vec<String> = Vec::new();
-    let mut header_ok = false;
-    for line in reader.lines() {
-        let line = line.ok()?;
-        let mut it = line.split('\t');
-        match it.next()? {
-            "H" => {
-                let depth: usize = it.next()?.parse().ok()?;
-                let dots: u8 = it.next()?.parse().ok()?;
-                let follow: u8 = it.next()?.parse().ok()?;
-                if depth == opts.depth
-                    && dots == opts.show_dots as u8
-                    && follow == opts.follow_mounts as u8
-                {
-                    header_ok = true;
-                }
-            }
-            "M" => {
-                if let Some(m) = it.next() {
-                    mounts.push(m.to_string());
-                }
-            }
-            "E" => {
-                let kind = kind_from(it.next()?.chars().next()?);
-                let depth: u32 = it.next()?.parse().ok()?;
-                let name = it.next()?.to_string();
-                let path = PathBuf::from(it.next()?);
-                let label = it.next()?.to_string();
-                entries.push(Entry { name, path, label, kind, depth });
-            }
-            "D" => {
-                let d = PathBuf::from(it.next()?);
-                let m: i128 = it.next()?.parse().ok()?;
-                let l: u64 = it.next()?.parse().ok()?;
-                dirs.push((d, m, l));
-            }
-            _ => {}
-        }
-    }
-    if !header_ok || entries.is_empty() {
+    let data = fs::read(path).ok()?;
+    let mut c = Cur::new(&data);
+    if c.take(MAGIC.len())? != MAGIC {
         return None;
     }
-    // mounts must match (a new mount would change traversal decisions)
+    let depth = c.u32()? as usize;
+    let dots = c.u8()?;
+    let follow = c.u8()?;
+    if depth != opts.depth || dots != opts.show_dots as u8 || follow != opts.follow_mounts as u8 {
+        return None;
+    }
+    let mn = c.u32()? as usize;
+    let mut mounts = Vec::with_capacity(mn);
+    for _ in 0..mn {
+        mounts.push(c.str()?);
+    }
     if current_mounts() != mounts {
         return None;
     }
-    // root must still be a directory and every watched dir untouched
     if !root.is_dir() {
         return None;
     }
-    for (d, m, l) in &dirs {
-        if mtime_len(d) != Some((*m, *l)) {
+    let dn = c.u32()? as usize;
+    for _ in 0..dn {
+        let label = c.str()?;
+        let m = c.i64()? as i128;
+        let l = c.u64()?;
+        let p = if label.is_empty() {
+            root.to_path_buf()
+        } else {
+            root.join(&label)
+        };
+        if mtime_len(&p) != Some((m, l)) {
             return None;
         }
+    }
+    let en = c.u32()? as usize;
+    let mut entries = Vec::with_capacity(en);
+    for _ in 0..en {
+        let kind = kind_from(c.u8()?);
+        let edepth = c.u32()?;
+        let flag = c.u8()?;
+        let extra_name = if flag == 0 { None } else { Some(c.str()?) };
+        let label = c.str()?;
+        let name = extra_name.unwrap_or_else(|| label.clone());
+        let path = root.join(&label);
+        entries.push(Entry { name, path, label, kind, depth: edepth });
     }
     Some(entries)
 }
@@ -273,23 +327,32 @@ mod tests {
         fs::create_dir_all(&cache_dir).unwrap();
         std::env::set_var("LUSTY_CACHE_DIR", &cache_dir);
         let opts = Options {
-            depth: 1,
+            depth: 2,
             skip_dirs: vec![],
             follow_mounts: false,
             show_dots: false,
         };
+        fs::create_dir_all(dir.join("sub")).unwrap();
+        fs::write(dir.join("sub/deep.txt"), b"x").unwrap();
         let first = cached_list(&dir, &opts);
-        assert_eq!(first.len(), 40);
+        assert!(first.len() >= 41);
         let second = cached_list(&dir, &opts);
-        assert_eq!(second.len(), 40, "cache hit keeps the entries");
-        // add a file -> root mtime changes -> cache must invalidate
+        assert_eq!(second.len(), first.len(), "cache hit keeps the entries");
+        // path reconstruction must match the real walk
+        let real = listing::list(&dir, &opts);
+        let mut labels: Vec<String> = real.iter().map(|e| e.label.clone()).collect();
+        labels.sort();
+        let mut cached: Vec<String> = second.iter().map(|e| e.label.clone()).collect();
+        cached.sort();
+        assert_eq!(cached, labels, "labels identical to a fresh walk");
+        // add a file -> root mtime/count changes -> cache must invalidate
         fs::write(dir.join("f99.txt"), b"x").unwrap();
         let third = cached_list(&dir, &opts);
-        assert_eq!(third.len(), 41, "cache invalidated after a change");
-        // remove a file again
+        assert_eq!(third.len(), first.len() + 1, "cache invalidated after a change");
+        // remove it again
         fs::remove_file(dir.join("f99.txt")).unwrap();
         let fourth = cached_list(&dir, &opts);
-        assert_eq!(fourth.len(), 40, "cache invalidated after removal");
+        assert_eq!(fourth.len(), first.len(), "cache invalidated after removal");
         let _ = fs::remove_dir_all(&dir);
         let _ = fs::remove_dir_all(&cache_dir);
     }
