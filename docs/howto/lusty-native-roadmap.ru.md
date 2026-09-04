@@ -26,7 +26,9 @@
   g:LustyExplorerColumns / LUSTY_COLUMNS / --columns.
 - Сортировки: name|ext|size|time — standalone (CLI --sort) и float (C-y циклирует; serve
   пересортировывает листинг и между сменами возвращается к каноническому порядку depth+name).
-  --reverse/--group-dirs-first — standalone (CLI).
+  --reverse/--group-dirs-first — standalone (CLI) и float (g:LustyExplorerDirsFirst /
+  g:LustyExplorerReverse или env LUSTY_DIRS_FIRST / LUSTY_REVERSE; как и в standalone, действуют
+  только на канонический порядок по имени).
 - Иконки (nerd font) опционально: standalone — LUSTY_ICONS=1; float — g:LustyExplorerIcons=1 (или
   LUSTY_ICONS=1); tree-вид позже.
 - Приоритет опций: CLI > env LUSTY\_\* > g:LustyExplorer\*.
