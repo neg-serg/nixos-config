@@ -109,6 +109,8 @@ Singleton {
             // 3D depth for the analyser bars: perspective arc + specular gradient.
             property bool spectrum3D: true
             property real spectrum3DDepth: 0.35
+            // Custom colour for the analyser bars (hex like #00e5ff); empty = use the preset/accent.
+            property string spectrumColor: ""
             // Show audio level (volume/mic/Genelec dB) when the cursor hovers
             // the capsule — delayed reveal via the existing pill/tooltip timers
             property bool showVolumeOnHover: true
@@ -182,7 +184,7 @@ Singleton {
             // Toast extras
             property bool musicPopupSpectrum: true          // show spectrum analyzer behind progress
             property bool musicPopupColoredProgress: true   // progress bar in cover accent colour
-            property real musicPopupProgressHeight: 5       // logical px, scaled (progress line thickness)
+            property real musicPopupProgressHeight: 3       // logical px, scaled (progress line thickness)
 
             // Small bar analyser (left of the bar album art)
             property bool barAnalyserMirror: false          // false = one-sided

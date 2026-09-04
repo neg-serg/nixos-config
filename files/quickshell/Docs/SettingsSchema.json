@@ -42,6 +42,7 @@
     "spectrumDimOpacity": { "type": "number", "default": 0.18, "minimum": 0, "maximum": 1, "description": "Opacity of bars outside the coloured band" },
     "spectrum3D": { "type": "boolean", "default": true, "description": "Enable 3D perspective arc and specular gradient on analyser bars" },
     "spectrum3DDepth": { "type": "number", "default": 0.35, "minimum": 0, "maximum": 1, "description": "Perspective falloff for the 3D analyser arc" },
+    "spectrumColor": { "type": "string", "default": "", "description": "Custom analyser bar colour (hex, e.g. #00e5ff) overriding the preset/accent" },
 
     "activeVisualizerProfile": { "type": "string", "default": "classic" },
     "visualizerProfiles": {
@@ -114,11 +115,11 @@
 
     "barAnalyserMirror": { "type": "boolean", "default": false, "description": "Mirror the small bar analyser; false = one-sided bottom-anchored bars" },
     "barAnalyserBars": { "type": "integer", "default": 5, "minimum": 1, "maximum": 64, "description": "Bar count for the small bar analyser" },
-    "barAnalyserStyle": { "type": "string", "default": "neon-cyan", "enum": ["neon-cyan", "neon-violet", "neon-lime", "neon-orange", "holographic", "analog-amber", "analog-rose", "analog-vu"], "description": "Visual preset for the small bar analyser" },
+    "barAnalyserStyle": { "type": "string", "default": "neon-cyan", "enum": ["neon-cyan", "neon-violet", "neon-lime", "neon-orange", "holographic", "aurora", "sunset", "synthwave", "ember", "matrix", "analog-amber", "analog-rose", "analog-vu"], "description": "Visual preset for the small bar analyser" },
 
     "toastAnalyserMirror": { "type": "boolean", "default": false, "description": "Mirror the large toast analyser; false = one-sided bottom-anchored bars" },
     "toastAnalyserBars": { "type": "integer", "default": 64, "minimum": 1, "maximum": 128, "description": "Bar count for the large toast analyser" },
-    "toastAnalyserStyle": { "type": "string", "default": "neon-cyan", "enum": ["neon-cyan", "neon-violet", "neon-lime", "neon-orange", "holographic", "analog-amber", "analog-rose", "analog-vu"], "description": "Visual preset for the large toast analyser" },
+    "toastAnalyserStyle": { "type": "string", "default": "neon-cyan", "enum": ["neon-cyan", "neon-violet", "neon-lime", "neon-orange", "holographic", "aurora", "sunset", "synthwave", "ember", "matrix", "analog-amber", "analog-rose", "analog-vu"], "description": "Visual preset for the large toast analyser" },
 
     "networkPingIntervalMs": { "type": "integer", "default": 30000, "minimum": 1000, "maximum": 600000, "description": "Network ping interval (ms)" },
     "networkNoInternetColor": { "type": "string", "default": "#FF6E00", "description": "No-internet status color" },
