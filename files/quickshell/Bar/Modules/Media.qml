@@ -239,9 +239,9 @@ Item {
                 // same style/settings as the toast, just ~5 bars and simpler.
                 IPhoneSpectrum {
                     id: barMiniSpec
-                    Layout.preferredWidth: Math.round(mediaControl.baseHeight * 0.9)
-                    Layout.minimumWidth: Math.round(mediaControl.baseHeight * 0.9)
-                    Layout.preferredHeight: Math.round(mediaControl.baseHeight * 0.9)
+                    Layout.preferredWidth: Math.round(mediaControl.baseHeight)
+                    Layout.minimumWidth: Math.round(mediaControl.baseHeight)
+                    Layout.preferredHeight: Math.round(mediaControl.baseHeight)
                     Layout.alignment: Qt.AlignVCenter
                     values: mediaControl._barSpec
                     targetBars: 5
