@@ -195,3 +195,63 @@ fn serve_m_returns_meta_per_index() {
     assert!(child.wait().unwrap().success());
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// Fixture whose canonical (depth, name) order deliberately differs from the
+/// size and extension orders: a.txt (1 B), mm.md (5 B), z.txt (10 B).
+fn sorted_dir() -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!("lusty_serve_sort_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("a.txt"), b"x").unwrap();
+    std::fs::write(dir.join("mm.md"), b"hello").unwrap();
+    std::fs::write(dir.join("z.txt"), b"0123456789").unwrap();
+    dir
+}
+
+fn ask_q(
+    stdin: &mut ChildStdin,
+    lines: &mut std::io::Lines<BufReader<std::process::ChildStdout>>,
+    sort: u8,
+) -> Vec<String> {
+    ask(stdin, &format!("Q\t0\t50\t\t{sort}"));
+    let resp = until_e(lines);
+    assert_eq!(
+        resp.first().map(String::as_str),
+        Some("N 3"),
+        "resp: {resp:?}"
+    );
+    resp.iter()
+        .filter(|l| l.starts_with("R "))
+        .map(|l| row_parts(l).2.to_string())
+        .collect()
+}
+
+#[test]
+fn serve_q_sort_cycles_and_resets() {
+    // The Q request carries an optional sort token: 1 ext, 2 size desc,
+    // 3 time desc; 0 restores the canonical depth+name order. Sorting must
+    // always start from that canonical order (no stacking of sorts).
+    let dir = sorted_dir();
+    let (mut child, mut stdin, mut lines) = spawn(&dir);
+    let _ = lines.next().unwrap().unwrap(); // C line
+
+    let name = ask_q(&mut stdin, &mut lines, 0);
+    assert_eq!(name, vec!["a.txt", "mm.md", "z.txt"]);
+
+    let size = ask_q(&mut stdin, &mut lines, 2);
+    assert_eq!(size, vec!["z.txt", "mm.md", "a.txt"]);
+
+    let ext = ask_q(&mut stdin, &mut lines, 1);
+    assert_eq!(ext, vec!["mm.md", "a.txt", "z.txt"]);
+
+    let name_again = ask_q(&mut stdin, &mut lines, 0);
+    assert_eq!(
+        name_again,
+        vec!["a.txt", "mm.md", "z.txt"],
+        "reset to name order"
+    );
+
+    drop(stdin);
+    assert!(child.wait().unwrap().success());
+    let _ = std::fs::remove_dir_all(&dir);
+}
