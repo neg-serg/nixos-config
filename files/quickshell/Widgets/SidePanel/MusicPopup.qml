@@ -185,7 +185,10 @@ Item {
 
         // --- Public control
         function showAt() {
-            if (toast._hiding) toast._hiding = false; // cancel an ongoing fade-out
+            if (toast._hiding) {
+                toast._hiding = false;
+                hideFallback.stop(); // a new show cancels the pending hide
+            }
 
             toast._marginRight = toast.baseMargin();
             toast._marginBottom = toast.computeBottomMargin();
@@ -202,10 +205,27 @@ Item {
             }
         }
 
+        // Safety net: never leave the window mapped with a stuck fade-out.
+        // If the Behavior animation is interrupted or already at 0 (so its
+        // onStopped never fires), force the window closed shortly after.
+        Timer {
+            id: hideFallback
+            interval: Math.max(Theme.sidePanelPopupSlideMs + 120, 350)
+            repeat: false
+            onTriggered: {
+                if (toast._hiding && toast.visible) {
+                    toast.visible = false;
+                    toast._hiding = false;
+                    toast._contentOpacity = 0;
+                }
+            }
+        }
+
         function hidePopup() {
             if (!visible || _hiding) return;
             _hiding = true;
             _contentOpacity = 0; // contentFade hides the window when done
+            hideFallback.start();
         }
 
         // --- Content
