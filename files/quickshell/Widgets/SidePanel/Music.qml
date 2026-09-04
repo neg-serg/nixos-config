@@ -387,19 +387,19 @@ Rectangle {
                                         height: parent.height
                                         width: parent.width * playerUI.musicProgress()
 
-                                        // Vertical bloom: same width as the fill, a taller
-                                        // gradient that glows straight up/down from the thin
-                                        // line. No sideways halo, and the bloom height does
-                                        // not scale with the track length.
+                                        // Vertical bloom: rises from the line up into the
+                                        // band (anchored to the line bottom so it never
+                                        // overlaps the title below). Sized relative to the
+                                        // band height so it fully fits the current layout.
                                         Rectangle {
                                             anchors.horizontalCenter: parent.horizontalCenter
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.bottom: parent.bottom
                                             width: parent.width
-                                            height: Math.max(2, parent.height * 5)
+                                            height: Math.max(2, Math.round(progressBand.height * 0.3))
                                             gradient: Gradient {
                                                 GradientStop { position: 0.0; color: Color.withAlpha(progressBand._progressFillColor, 0.0) }
-                                                GradientStop { position: 0.5; color: Color.withAlpha(progressBand._progressFillColor, 0.5) }
-                                                GradientStop { position: 1.0; color: Color.withAlpha(progressBand._progressFillColor, 0.0) }
+                                                GradientStop { position: 0.6; color: Color.withAlpha(progressBand._progressFillColor, 0.22) }
+                                                GradientStop { position: 1.0; color: Color.withAlpha(progressBand._progressFillColor, 0.55) }
                                             }
                                             z: -1
                                         }
