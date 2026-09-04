@@ -41,6 +41,7 @@ function Pick.new(opts)
   self.on_open = opts.on_open
   self.on_delete = opts.on_delete
   self.on_close = opts.on_close
+  self.keys = opts.keys or {}
   self.single = opts.single_column == true
   self.query = opts.query or ''
   self.arrow = '\u{f105}'
@@ -205,6 +206,17 @@ function Pick:setup_keymaps()
   map('<Esc>', 'cancel')
   map('<C-c>', 'cancel')
   map('<C-g>', 'cancel')
+  -- Caller-supplied keys (raw callbacks, e.g. the MRU files/dirs toggle).
+  for lhs, fn in pairs(self.keys) do
+    api.nvim_buf_set_keymap(buf, 'n', lhs, '', {
+      nowait = true,
+      silent = true,
+      noremap = true,
+      callback = function()
+        fn(self)
+      end,
+    })
+  end
 end
 
 function Pick:refresh()
