@@ -220,16 +220,23 @@ Item {
             toast._marginBottom = toast.computeBottomMargin();
             toast.cardHeightPx = toast.computeCardHeight(); // size before mapping
 
-            if (!visible) {
-                visible = true;
-                _contentOpacity = 0;
-            } else if (_contentOpacity <= 0.01) {
-                _contentOpacity = 0; // self-heal a stale invisible window
+            // Only run the entrance fade on the hidden→shown transition.
+            // Rapid consecutive showAt() calls (e.g. several MusicManager
+            // signals in a row) must NOT restart fadeIn, otherwise the card
+            // blinks: opacity drops back towards 0 and rises again.
+            const wasShown = toast.visible && toast._contentOpacity > 0.01;
+            if (!toast.visible) {
+                toast.visible = true;
+                toast._contentOpacity = 0;
+            } else if (toast._contentOpacity <= 0.01) {
+                toast._contentOpacity = 0; // self-heal a stale invisible window
             }
-            // Animate from the current opacity so an interrupted fade never
-            // jumps; fadeIn.to stays 1.
-            fadeIn.from = Math.max(0, toast._contentOpacity);
-            fadeIn.start();
+            if (!wasShown) {
+                // Animate from the current opacity so an interrupted fade never
+                // jumps; fadeIn.to stays 1.
+                fadeIn.from = Math.max(0, toast._contentOpacity);
+                fadeIn.start();
+            }
             toast.startAutoHide();
             if (Settings.settings && Settings.settings.debugLogs) {
                 console.debug("[qs-music] showAt card=" + cardBox.width + "x" + cardBox.height
