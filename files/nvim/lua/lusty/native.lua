@@ -36,11 +36,6 @@ end
 
 local ns = api.nvim_create_namespace('lusty_native_ls')
 
--- Nerd-font glyphs for the grid; disabled with LUSTY_ICONS=0.
-local ICONS = os.getenv('LUSTY_ICONS') ~= '0'
-local ICON_DIR = '\u{f115}'
-local ICON_FILE = '\u{f15b}'
-
 --- RU (йцукен) layout to EN chars (physical keys under RU produce Cyrillic).
 local RU2EN = {
   ['й'] = 'q', ['ц'] = 'w', ['у'] = 'e', ['к'] = 'r', ['е'] = 't',
@@ -300,10 +295,7 @@ function Picker:draw()
       local item = self.window[pos - self.offset + 1]
       if item then
         local label = item.label
-        if ICONS then
-          local ic = item.kind == 'd' and ICON_DIR or ICON_FILE
-          label = ic .. ' ' .. label
-        elseif item.kind == 'd' then
+        if item.kind == 'd' then
           label = label .. '/'
         end
         -- pad to the full column width (display cells) so columns align;
