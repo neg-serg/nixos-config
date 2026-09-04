@@ -13,6 +13,8 @@ local lsc = require('lusty.ls_colors')
 local M = {}
 
 local api = vim.api
+
+
 local ns = api.nvim_create_namespace('lusty_native_ls')
 
 --- RU (йцукен) layout to EN chars (physical keys under RU produce Cyrillic).
@@ -425,7 +427,7 @@ function Picker:debounce_ms()
   if v then
     return math.max(0, v)
   end
-  return 40
+  return 20
 end
 
 --- Rerank after a short quiet period so fast typing on huge listings only
