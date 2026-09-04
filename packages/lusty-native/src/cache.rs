@@ -30,7 +30,7 @@ const MAX_WATCH_DIRS: usize = 4096;
 /// Only bother caching trees with at least this many entries.
 const MIN_ENTRIES: usize = 16;
 
-const MAGIC: &[u8] = b"LST2";
+const MAGIC: &[u8] = b"LST3";
 
 fn cache_enabled() -> bool {
     match std::env::var("LUSTY_CACHE") {
@@ -167,6 +167,7 @@ fn store(
     for e in entries {
         w.push(kind_char(e.kind));
         put_u32(&mut w, e.depth);
+        w.push(e.name0);
         put_str(&mut w, &e.label);
     }
     let tmp = path.with_extension("tmp");
@@ -270,8 +271,9 @@ fn try_load(path: &Path, root: &Path, opts: &Options) -> Option<Vec<Entry>> {
     for _ in 0..en {
         let kind = kind_from(c.u8()?);
         let edepth = c.u32()?;
+        let name0 = c.u8()?;
         let label = c.str()?;
-        entries.push(Entry { label, kind, depth: edepth });
+        entries.push(Entry { label, kind, depth: edepth, name0 });
     }
     Some(entries)
 }
