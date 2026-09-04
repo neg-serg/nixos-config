@@ -503,40 +503,6 @@ Rectangle {
                             }
                         }
 
-                        // Visualizer mode switcher (bars / led / wave).
-                        RowLayout {
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.topMargin: Math.round(2 * Theme.scale(screen))
-                            spacing: Math.round(6 * Theme.scale(screen))
-                            Repeater {
-                                model: ["bars", "led", "wave"]
-                                delegate: MouseArea {
-                                    required property string modelData
-                                    property bool active: Settings.settings.spectrumMode === modelData
-                                    Layout.preferredWidth: Math.round(playerUI.musicTextPx * 2.4)
-                                    Layout.preferredHeight: Math.round(playerUI.musicTextPx * 0.9)
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: { Settings.settings.spectrumMode = modelData }
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: height / 2
-                                        color: (parent.active ? Color.withAlpha(detailsCol.musicAccent, 0.28)
-                                                 : (parent.containsMouse ? Color.withAlpha(Theme.textPrimary, 0.14) : Color.withAlpha(Theme.textPrimary, 0.06)))
-                                        border.width: 1
-                                        border.color: parent.active ? detailsCol.musicAccent : Color.withAlpha(Theme.textPrimary, 0.18)
-                                    }
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: modelData
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Math.round(playerUI.musicTextPx * 0.62)
-                                        color: parent.active ? detailsCol.musicAccent : playerUI.musicTextColor
-                                        font.weight: parent.active ? Font.DemiBold : Font.Normal
-                                    }
-                                }
-                            }
-                        }
                     }
 
                     // Details block: time + identity + metadata
