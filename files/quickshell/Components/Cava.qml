@@ -46,7 +46,11 @@ Scope {
     ProcessRunner {
         id: process
         property int index: 0
-        autoStart: (Settings.settings.showMediaVisualizer === true) && MusicManager.isPlaying
+        // Run cava whenever audio plays so the media toast's spectrum analyzer
+        // gets real values even when the bar's own visualizer is disabled.
+        // The bar only *shows* a visualizer when showMediaVisualizer /
+        // showIphoneVisualizer are on; cava itself just feeds the analyzer.
+        autoStart: MusicManager.isPlaying
         cmd: ["cava", "-p", "/dev/stdin"]
         stdinEnabled: true
         rawMode: true
