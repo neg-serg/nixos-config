@@ -262,6 +262,36 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
     entries
 }
 
+/// Apply eza-style ordering tweaks on top of the canonical (depth, name)
+/// order: optionally keep directories first within each depth and/or reverse
+/// each depth group. Deterministic, so on-disk cache reuse stays consistent.
+pub fn reorder(entries: &mut Vec<Entry>, dirs_first: bool, reverse: bool) {
+    if !dirs_first && !reverse {
+        return;
+    }
+    let n = entries.len();
+    let mut i = 0;
+    while i < n {
+        let d = entries[i].depth;
+        let mut j = i + 1;
+        while j < n && entries[j].depth == d {
+            j += 1;
+        }
+        let g = &mut entries[i..j];
+        if dirs_first {
+            g.sort_unstable_by(|a, b| match (a.kind == FileKind::Dir, b.kind == FileKind::Dir) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => a.basename().cmp(b.basename()),
+            });
+        }
+        if reverse {
+            g.reverse();
+        }
+        i = j;
+    }
+}
+
 /// Sort one depth bucket by name (in place) via an index permutation.
 fn sort_by_name(bucket: &mut Vec<Entry>) {
     let n = bucket.len();
