@@ -177,15 +177,11 @@ Singleton {
             // Small bar analyser (left of the bar album art)
             property bool barAnalyserMirror: false          // false = one-sided
             property int barAnalyserBars: 5
-            property real barAnalyserFillOpacity: 0.8
-            property int barAnalyserBarGap: 2
-            property int barAnalyserMinBarWidth: 5
+            property string barAnalyserStyle: "neon-cyan"   // neon-cyan | neon-violet | analog-amber | analog-rose
             // Large toast analyser (behind the popup progress bar)
             property bool toastAnalyserMirror: false        // false = one-sided
-            property int toastAnalyserBars: 24
-            property real toastAnalyserFillOpacity: 1.0
-            property int toastAnalyserBarGap: 2
-            property int toastAnalyserMinBarWidth: 2
+            property int toastAnalyserBars: 64
+            property string toastAnalyserStyle: "neon-cyan" // neon-cyan | neon-violet | analog-amber | analog-rose
 
             property int networkPingIntervalMs: 30000
             property string networkPingTarget: "8.8.8.8"

@@ -107,15 +107,11 @@
 
     "barAnalyserMirror": { "type": "boolean", "default": false, "description": "Mirror the small bar analyser; false = one-sided bottom-anchored bars" },
     "barAnalyserBars": { "type": "integer", "default": 5, "minimum": 1, "maximum": 64, "description": "Bar count for the small bar analyser" },
-    "barAnalyserFillOpacity": { "type": "number", "default": 0.8, "minimum": 0, "maximum": 1, "description": "Fill opacity for the small bar analyser" },
-    "barAnalyserBarGap": { "type": "integer", "default": 2, "minimum": 0, "maximum": 16, "description": "Gap between small bar analyser bars (logical px)" },
-    "barAnalyserMinBarWidth": { "type": "integer", "default": 5, "minimum": 1, "maximum": 32, "description": "Minimum bar width for the small bar analyser" },
+    "barAnalyserStyle": { "type": "string", "default": "neon-cyan", "enum": ["neon-cyan", "neon-violet", "analog-amber", "analog-rose"], "description": "Visual preset for the small bar analyser" },
 
     "toastAnalyserMirror": { "type": "boolean", "default": false, "description": "Mirror the large toast analyser; false = one-sided bottom-anchored bars" },
-    "toastAnalyserBars": { "type": "integer", "default": 24, "minimum": 1, "maximum": 128, "description": "Bar count for the large toast analyser" },
-    "toastAnalyserFillOpacity": { "type": "number", "default": 1.0, "minimum": 0, "maximum": 1, "description": "Fill opacity for the large toast analyser" },
-    "toastAnalyserBarGap": { "type": "integer", "default": 2, "minimum": 0, "maximum": 16, "description": "Gap between large toast analyser bars (logical px)" },
-    "toastAnalyserMinBarWidth": { "type": "integer", "default": 2, "minimum": 1, "maximum": 32, "description": "Minimum bar width for the large toast analyser" },
+    "toastAnalyserBars": { "type": "integer", "default": 64, "minimum": 1, "maximum": 128, "description": "Bar count for the large toast analyser" },
+    "toastAnalyserStyle": { "type": "string", "default": "neon-cyan", "enum": ["neon-cyan", "neon-violet", "analog-amber", "analog-rose"], "description": "Visual preset for the large toast analyser" },
 
     "networkPingIntervalMs": { "type": "integer", "default": 30000, "minimum": 1000, "maximum": 600000, "description": "Network ping interval (ms)" },
     "networkNoInternetColor": { "type": "string", "default": "#FF6E00", "description": "No-internet status color" },
