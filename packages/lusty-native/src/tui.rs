@@ -528,7 +528,15 @@ impl App {
                             self.column_nav(-1, rows);
                         }
                         (KeyCode::Char('w'), true) => {
-                            if let Some(parent) = self.root.parent() {
+                            // First C-w clears the typed query (shell/vim
+                            // word-delete feel); only a second C-w with an
+                            // empty query moves up a directory.
+                            if !self.query.is_empty() {
+                                self.query.clear();
+                                self.needs_rank = true;
+                                self.selected = 0;
+                                self.offset = 0;
+                            } else if let Some(parent) = self.root.parent() {
                                 if parent != self.root {
                                     self.re_root(parent.to_path_buf());
                                 }
