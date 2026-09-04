@@ -89,6 +89,18 @@ Rectangle {
                 const pos = Math.max(0, MusicManager.currentPosition || 0);
                 return total > 0 ? Math.min(1, pos / total) : 0;
             }
+            // Copy cava values to a fresh array on a timer: MusicManager.cavaValues
+            // is often mutated in place, so a direct binding never re-evaluates and
+            // the analyzer sits frozen. Reassigning a copy forces IPhoneSpectrum to
+            // re-animate every tick.
+            property var _spec: []
+            Timer {
+                id: specTick
+                interval: 80
+                repeat: true
+                running: MusicManager.hasPlayer && MusicManager.isPlaying
+                onTriggered: playerUI._spec = (MusicManager.cavaValues || []).slice()
+            }
             // Mouse scrubbing: map an x position on the progress bar to a seek.
             function seekFromX(x, w) {
                 const total = Time.mprisToMs(MusicManager.trackLength || 0);
@@ -345,7 +357,7 @@ Rectangle {
                                 // animation are proven to work in this shell.
                                 IPhoneSpectrum {
                                     anchors.fill: parent
-                                    values: MusicManager.cavaValues
+                                    values: playerUI._spec
                                     targetBars: 24
                                     accentColor: detailsCol.musicAccent
                                     fillOpacity: 0.7
