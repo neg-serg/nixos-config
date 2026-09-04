@@ -1224,9 +1224,13 @@ Scope {
                             if (key === rightPanel._lastTrackKey) return;
                             if (!title && !artist) { if (dbg) console.debug("[qs-music] track-change: no metadata yet"); return; }
                             rightPanel._lastTrackKey = key;
-                            if (album !== rightPanel._lastAlbum) rightPanel._lastAlbum = album;
-                            if (MusicManager.trackTitle || MusicManager.trackArtist) {
-                                if (dbg) console.debug("[qs-music] track-change -> showAt");
+                            // Show the toast only when the album (i.e. the cover
+                            // art) actually changes — not on every track change
+                            // within the same album.
+                            const albumChanged = (album !== rightPanel._lastAlbum);
+                            rightPanel._lastAlbum = album;
+                            if (albumChanged && (MusicManager.trackTitle || MusicManager.trackArtist)) {
+                                if (dbg) console.debug("[qs-music] track-change -> showAt (new album)");
                                 rootScope.sidebarPopup && rootScope.sidebarPopup.showAt();
                             }
                         } catch (e) { /* ignore */ }
