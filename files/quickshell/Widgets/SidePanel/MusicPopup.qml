@@ -114,15 +114,19 @@ Item {
 
         // --- Sizing (scaled by per-screen factor)
         property real cardWidthPx: Math.round(Settings.settings.musicPopupWidth * Theme.scale(Screen))
-        property real musicHeightPx: (musicWidget && musicWidget.implicitHeight > 0)
-            ? Math.round(musicWidget.implicitHeight)
-            : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
+        // Fixed content height from settings. Do NOT derive it from the Music
+        // widget's implicitHeight: that value is state-dependent (the metadata
+        // column layout collapses between shows) and once it turned invalid the
+        // card collapsed to a 1px sliver — the window mapped, nothing rendered.
+        property real musicHeightPx: Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
         property int contentPaddingPx: Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
-        // Card height = content + its top inset; clamped to 70% of the screen.
+        // Card height = content + top inset, with a hard floor so a broken
+        // binding can never collapse the card again; capped at 70% of screen.
         property real cardHeightPx: Math.round(Utils.clamp(
             toast.contentPaddingPx + toast.musicHeightPx,
-            1,
-            Math.max(1, Math.round(ScreenUtil.height(sidebarPopup) * 0.7))))
+            Math.round(toast.contentPaddingPx + Math.max(120, toast.musicHeightPx * 0.5)),
+            Math.max(Math.round(toast.contentPaddingPx + Math.max(120, toast.musicHeightPx * 0.5)),
+                     Math.round(ScreenUtil.height(sidebarPopup) * 0.7))))
 
         // --- Fade in/out (explicit animations). Slide was dropped: a moving
         // card would require a mask region tracking the animation; the static
@@ -219,6 +223,13 @@ Item {
             if (Settings.settings && Settings.settings.debugLogs) {
                 console.debug("[qs-music] showAt card=" + cardBox.width + "x" + cardBox.height
                     + " mb=" + toast._marginBottom + " mr=" + toast._marginRight);
+                // Re-check after layout settles (implicit sizes / bindings
+                // may still be mid-flight at showAt time).
+                Qt.callLater(function() {
+                    console.debug("[qs-music] showAt+layout card=" + cardBox.width + "x" + cardBox.height
+                        + " opacity=" + toast._contentOpacity.toFixed(2)
+                        + " musicH=" + musicHeightPx + " pad=" + contentPaddingPx);
+                });
             }
         }
 
