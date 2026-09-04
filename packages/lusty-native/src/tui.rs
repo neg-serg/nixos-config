@@ -73,6 +73,8 @@ pub struct App {
     ui_width: Option<usize>, // user popup width (outer columns incl borders)
     long: bool, // eza -l style: one entry per row with mode/size/date
     icons: bool, // nerd-font icons per entry + dir icon before the prompt
+    reverse: bool, // eza --reverse per depth
+    dirs_first: bool, // eza --group-dirs-first
     palette: Colors,
 }
 
@@ -98,6 +100,8 @@ impl App {
             ui_width: None,
             long: false,
             icons: std::env::var("LUSTY_ICONS").map(|v| v == "1").unwrap_or(false),
+            reverse: false,
+            dirs_first: false,
             palette,
         }
     }
@@ -105,6 +109,12 @@ impl App {
     /// Override the popup size. CLI flags win over LUSTY_ROWS/LUSTY_WIDTH
     /// env vars; None keeps the default (14 outer rows, full terminal
     /// columns, i.e. 12 content rows and 100 content columns).
+    /// Apply eza-style order tweaks to in-memory listings.
+    pub fn set_sort(&mut self, reverse: bool, dirs_first: bool) {
+        self.reverse = reverse;
+        self.dirs_first = dirs_first;
+    }
+
     /// Enable the long listing view (mode/size/date + name per row).
     pub fn set_long(&mut self, on: bool) {
         self.long = on;
@@ -136,7 +146,9 @@ impl App {
                 follow_mounts: self.opts.follow_mounts,
                 show_dots: dots,
             };
-            *cache = Some(cache::cached_list(&self.root, &opts));
+            let mut listed = cache::cached_list(&self.root, &opts);
+            crate::listing::reorder(&mut listed, self.dirs_first, self.reverse);
+            *cache = Some(listed);
             self.needs_rank = true;
         }
         cache.as_ref().unwrap()
