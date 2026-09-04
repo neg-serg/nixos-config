@@ -337,7 +337,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     height: parent.height
                                     width: parent.width * playerUI.musicProgress()
-                                    color: playerUI.musicTextColor
+                                    color: detailsCol.musicAccent
                                     radius: parent.radius
                                 }
                             }
@@ -359,6 +359,7 @@ Rectangle {
                                 Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
                                 Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
                                 enabled: MusicManager.canGoPrevious
+                                hoverEnabled: true
                                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: MusicManager.previous()
                                 Text {
@@ -366,7 +367,8 @@ Rectangle {
                                     text: "skip_previous"
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
-                                    color: playerUI.musicTextColor
+                                    color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
+                                    Behavior on color { ColorAnimation { duration: 180 } }
                                     opacity: parent.enabled ? 1 : 0.35
                                 }
                             }
@@ -374,6 +376,7 @@ Rectangle {
                                 Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
                                 Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
                                 enabled: (MusicManager.canPlay || MusicManager.canPause)
+                                hoverEnabled: true
                                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: MusicManager.playPause()
                                 Text {
@@ -381,7 +384,8 @@ Rectangle {
                                     text: MusicManager.isPlaying ? "pause" : "play_arrow"
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
-                                    color: playerUI.musicTextColor
+                                    color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
+                                    Behavior on color { ColorAnimation { duration: 180 } }
                                     opacity: parent.enabled ? 1 : 0.35
                                 }
                             }
@@ -389,6 +393,7 @@ Rectangle {
                                 Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
                                 Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
                                 enabled: MusicManager.canGoNext
+                                hoverEnabled: true
                                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: MusicManager.next()
                                 Text {
@@ -396,7 +401,8 @@ Rectangle {
                                     text: "skip_next"
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
-                                    color: playerUI.musicTextColor
+                                    color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
+                                    Behavior on color { ColorAnimation { duration: 180 } }
                                     opacity: parent.enabled ? 1 : 0.35
                                 }
                             }
