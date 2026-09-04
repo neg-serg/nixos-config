@@ -398,8 +398,8 @@ Rectangle {
                                             height: Math.max(2, Math.round(progressBand.height * 0.3))
                                             gradient: Gradient {
                                                 GradientStop { position: 0.0; color: Color.withAlpha(progressBand._progressFillColor, 0.0) }
-                                                GradientStop { position: 0.6; color: Color.withAlpha(progressBand._progressFillColor, 0.22) }
-                                                GradientStop { position: 1.0; color: Color.withAlpha(progressBand._progressFillColor, 0.55) }
+                                                GradientStop { position: 0.6; color: Color.withAlpha(progressBand._progressFillColor, 0.15) }
+                                                GradientStop { position: 1.0; color: Color.withAlpha(progressBand._progressFillColor, 0.38) }
                                             }
                                             z: -1
                                         }
