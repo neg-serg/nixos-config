@@ -5,12 +5,18 @@
 //! (no terminal buffer involved):
 //!
 //!   E                     -> "C <total> <depth> <root>"  (ready)
-//!   Q <from> <to> <query>  -> "N <matched>", then "R <i> <kind> <label>"
-//!                            rows for indices in [from,to) of the ranking
+//!   Q <from> <to> <query>  -> "N <matched>", "W <maxw>", then
+//!                            "R <i> <kind> <label>\t<path>" rows for ranked
+//!                            indices in [from,to), then "E"
+//!   M <mask> <index>...    -> "K <index> <meta>" per entry index, then "E".
+//!                            <meta> is the eza -l field block selected by
+//!                            mask bits (1 perm, 2 user, 4 size, 8 time),
+//!                            empty when the stat fails. The client asks only
+//!                            for rows currently visible in the float.
 //!   P <ranked-index>       -> "P <absolute path>"
 //!
 //! kind is one of d/f/l (dir/file/link). Lines are '\n'-terminated; labels
-//! are raw (no ANSI). The process exits on stdin EOF.
+//! and metadata are raw (no ANSI). The process exits on stdin EOF.
 
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
@@ -49,7 +55,11 @@ pub fn serve(
 
     // Memoize the most recent query: navigation and redraws resend the
     // same query, and re-ranking per arrow key on huge listings is waste.
+    // memo_hit tracks "a ranking exists": the first request is always the
+    // empty query, which would otherwise equal the initial memo_q and never
+    // fill the memo (a fresh picker would list nothing until the first key).
     let mut memo_q = String::new();
+    let mut memo_hit = false;
     let mut memo_ranked: Vec<usize> = Vec::new();
     let mut memo_maxw: usize = 0;
     for line in stdin.lock().lines() {
@@ -63,7 +73,8 @@ pub fn serve(
                 let from: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let to: usize = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let query = parts.get(3).unwrap_or(&"").to_string();
-                if query != memo_q {
+                if !memo_hit || query != memo_q {
+                    memo_hit = true;
                     let (ranked, maxw) = if query.is_empty() {
                         let mw = entries
                             .iter()
@@ -117,6 +128,28 @@ pub fn serve(
                     writeln!(out, "P {}", entries[i].path(&root).display())?;
                 } else {
                     writeln!(out, "P ")?;
+                }
+                writeln!(out, "E")?;
+                out.flush()?;
+            }
+            "M" => {
+                // Metadata for the visible rows only: mask first, then entry
+                // indices (the R rows' <i> field). One stat per index, no
+                // ranking involved. Formatting is shared with the standalone
+                // TUI (listing::meta_line) so both views agree bit-for-bit.
+                let toks: Vec<&str> = line.split('\t').collect();
+                let mask: u8 = toks.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+                for tok in toks.iter().skip(2) {
+                    let i: usize = match tok.parse() {
+                        Ok(i) => i,
+                        Err(_) => continue,
+                    };
+                    if i < entries.len() {
+                        let e = &entries[i];
+                        let meta =
+                            crate::listing::meta_line(&e.path(&root), mask).unwrap_or_default();
+                        writeln!(out, "K {} {}", i, meta)?;
+                    }
                 }
                 writeln!(out, "E")?;
                 out.flush()?;
