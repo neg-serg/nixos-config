@@ -35,6 +35,11 @@
     "spectrumOverlapFactor": { "type": "number", "default": 0.2, "minimum": 0, "maximum": 1, "description": "Overlap with text area" },
     "spectrumBarGap": { "type": "number", "default": 1.0, "minimum": 0, "maximum": 10, "description": "Gap between bars (logical px)" },
     "spectrumVerticalRaise": { "type": "number", "default": 0.75, "description": "Vertical offset" },
+    "spectrumMinHz": { "type": "integer", "default": 0, "minimum": 0, "maximum": 96000, "description": "Low end of the full spectrum scale (Hz)" },
+    "spectrumMaxHz": { "type": "integer", "default": 40000, "minimum": 1000, "maximum": 192000, "description": "High end of the full spectrum scale (Hz)" },
+    "spectrumColorMinHz": { "type": "integer", "default": 15000, "minimum": 0, "maximum": 192000, "description": "Low end of the coloured spectrum band (Hz)" },
+    "spectrumColorMaxHz": { "type": "integer", "default": 25000, "minimum": 0, "maximum": 192000, "description": "High end of the coloured spectrum band (Hz)" },
+    "spectrumDimOpacity": { "type": "number", "default": 0.18, "minimum": 0, "maximum": 1, "description": "Opacity of bars outside the coloured band" },
 
     "activeVisualizerProfile": { "type": "string", "default": "classic" },
     "visualizerProfiles": {

@@ -86,6 +86,11 @@ CAVA / Spectrum (global defaults; each may be overridden per profile in visualiz
 - spectrumUseGradient: boolean, default false. Gradient fill.
 - spectrumMirror: boolean, default false. Mirror spectrum.
 - showSpectrumTopHalf: boolean, default false. Show top half only.
+- spectrumMinHz: integer, default 0. Low end of the full spectrum scale (Hz).
+- spectrumMaxHz: integer, default 40000. High end of the full spectrum scale (Hz).
+- spectrumColorMinHz: integer, default 15000. Low end of the coloured band (Hz).
+- spectrumColorMaxHz: integer, default 25000. High end of the coloured band (Hz).
+- spectrumDimOpacity: number 0..1, default 0.18. Opacity of bars outside the coloured band.
 - spectrumFillOpacity: number 0..1, default 0.35. Fill opacity.
 - spectrumHeightFactor: number, default 1.2. Height relative to track text size.
 - spectrumOverlapFactor: number 0..1, default 0.2. Overlap on top of text.
