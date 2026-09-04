@@ -31,12 +31,11 @@ Rectangle {
         Rectangle {
             id: card
             anchors.fill: parent
-            // Solid enough to stand out over dark wallpaper/browser content:
-            // a pure-black translucent card over a black background was
-            // effectively invisible. Outline defines the card edge.
+            // Frameless card (user preference): a slightly higher fill opacity
+            // keeps it legible over dark backgrounds without a visible border.
             color: Color.withAlpha("#000000", 0.92)
-            border.color: Theme.outline
-            border.width: Math.max(1, Math.round(Theme.uiBorderWidth * Theme.scale(Screen)))
+            border.color: "transparent"
+            border.width: Theme.uiBorderNone
             radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
 
         Item {
