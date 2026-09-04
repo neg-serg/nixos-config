@@ -14,11 +14,12 @@ import re
 import shutil
 import subprocess
 import sys
+import unicodedata
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-import unicodedata
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.svgPathPen import SVGPathPen
@@ -50,7 +51,7 @@ VARIATION_RANGES = (
 )
 
 
-def is_codepoint_in_ranges(cp: int, ranges: Sequence[Tuple[int, int]]) -> bool:
+def is_codepoint_in_ranges(cp: int, ranges: Sequence[tuple[int, int]]) -> bool:
     return any(start <= cp <= end for start, end in ranges)
 
 
@@ -67,7 +68,7 @@ class WorkspaceDef:
     ws_id: int
     raw_default: str
     glyph: str
-    codepoints: List[str]
+    codepoints: list[str]
     hypr_name: str
     slug: str
     label: str
@@ -135,12 +136,12 @@ class FontResolver:
     def __init__(self, viewbox: int, padding: int) -> None:
         self.viewbox = viewbox
         self.padding = padding
-        self.info_cache: Dict[str, Tuple[str, str, str]] = {}
-        self.exporter_cache: Dict[str, SvgExporter] = {}
+        self.info_cache: dict[str, tuple[str, str, str]] = {}
+        self.exporter_cache: dict[str, SvgExporter] = {}
 
     def exporter_for_pattern(
         self, pattern: str
-    ) -> Tuple[SvgExporter, Tuple[str, str, str]]:
+    ) -> tuple[SvgExporter, tuple[str, str, str]]:
         info = self.info_cache.get(pattern)
         if info is None:
             info = ensure_font_info(pattern)
@@ -153,8 +154,8 @@ class FontResolver:
         return exporter, info
 
 
-def parse_hypr_workspaces(text: str) -> List[Tuple[int, str]]:
-    entries: List[Tuple[int, str]] = []
+def parse_hypr_workspaces(text: str) -> list[tuple[int, str]]:
+    entries: list[tuple[int, str]] = []
     for line in text.splitlines():
         match = WORKSPACE_RE.match(line)
         if not match:
@@ -176,7 +177,7 @@ def should_capture_icon(cp: int) -> bool:
     return category.startswith("S")
 
 
-def split_glyph(name: str) -> Tuple[str, str, List[str]]:
+def split_glyph(name: str) -> tuple[str, str, list[str]]:
     if not name:
         return "", "", []
     chars = list(name)
@@ -208,7 +209,7 @@ def slugify(value: str) -> str:
     return lowered
 
 
-def derive_slug(rest: str, ws_id: int, seen: set[str]) -> Tuple[str, str]:
+def derive_slug(rest: str, ws_id: int, seen: set[str]) -> tuple[str, str]:
     hypr_name = rest.strip()
     slug_source = hypr_name
     if ":" in slug_source:
@@ -223,7 +224,7 @@ def derive_slug(rest: str, ws_id: int, seen: set[str]) -> Tuple[str, str]:
     return slug, hypr_name or slug_source
 
 
-def load_icon_map(path: Path) -> Dict:
+def load_icon_map(path: Path) -> dict:
     if not path.exists():
         return {
             "fontPattern": DEFAULT_FONT_PATTERN,
@@ -241,7 +242,7 @@ def load_icon_map(path: Path) -> Dict:
     return data
 
 
-def save_json(path: Path, data: Dict) -> None:
+def save_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(data, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
@@ -249,19 +250,20 @@ def save_json(path: Path, data: Dict) -> None:
 
 
 def _get_name_record(name_table, name_id: int, default: str) -> str:
-    try:
-        for record in name_table.names:
-            if record.nameID == name_id:
-                try:
-                    return record.toUnicode()
-                except Exception:
-                    continue
-    except Exception:
-        pass
+    for record in name_table.names:
+        if record.nameID != name_id:
+            continue
+        try:
+            return record.toUnicode()
+        except (UnicodeError, TypeError, LookupError) as exc:
+            print(
+                f"WARN: name record {name_id} undecodable, trying next: {exc}",
+                file=sys.stderr,
+            )
     return default
 
 
-def _font_names_from_file(font_path: Path) -> Tuple[str, str]:
+def _font_names_from_file(font_path: Path) -> tuple[str, str]:
     font = TTFont(str(font_path))
     try:
         name_table = font["name"]
@@ -285,7 +287,7 @@ def _portablize_font_path(file_path: str) -> str:
     return file_path
 
 
-def ensure_font_info(pattern: str) -> Tuple[str, str, str]:
+def ensure_font_info(pattern: str) -> tuple[str, str, str]:
     candidate = Path(os.path.expanduser(pattern))
     if candidate.exists():
         family, style = _font_names_from_file(candidate)
@@ -310,9 +312,7 @@ def ensure_font_info(pattern: str) -> Tuple[str, str, str]:
 
 
 def validate_command(cmd: Sequence[str]) -> None:
-    subprocess.run(
-        cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    subprocess.run(cmd, check=True, capture_output=True)
 
 
 def validate_svg(path: Path) -> None:
@@ -338,11 +338,11 @@ def validate_svg(path: Path) -> None:
 
 
 def build_manifest(
-    font_info: Tuple[str, str, str],
+    font_info: tuple[str, str, str],
     font_pattern: str,
     viewbox: int,
-    items: List[WorkspaceDef],
-) -> Dict:
+    items: list[WorkspaceDef],
+) -> dict:
     family, style, font_file = font_info
     return {
         "generatedAt": datetime.now(timezone.utc).isoformat(),
@@ -375,7 +375,7 @@ def build_manifest(
     }
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     repo_root = Path(__file__).resolve().parents[5]
     parser = argparse.ArgumentParser(
         description="Generate workspace icon assets"
@@ -417,7 +417,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     icon_map = map_data.setdefault("icons", {})
     seen_slugs: set[str] = set()
-    workspace_specs: List[Dict[str, Any]] = []
+    workspace_specs: list[dict[str, Any]] = []
 
     for ws_id, raw in hypr_entries:
         glyph, rest, codepoints = split_glyph(raw)
@@ -435,7 +435,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 f"Missing glyph codepoints for slug '{slug}' (workspace {ws_id})"
             )
         glyph_codes = stored_codes
-        glyph_chars = "".join(chr(int(cp[2:], 16)) for cp in glyph_codes)
+        glyph_chars = "".join(
+            chr(int(cp.removeprefix("U+"), 16)) for cp in glyph_codes
+        )
         filename = f"{ws_id:02d}-{slug}.svg"
         workspace_specs.append(
             {
@@ -454,11 +456,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     workspace_specs.sort(key=lambda item: item["ws_id"])
     resolver = FontResolver(viewbox=viewbox, padding=padding)
     default_font_info = resolver.exporter_for_pattern(font_pattern)[1]
-    final_items: List[WorkspaceDef] = []
+    final_items: list[WorkspaceDef] = []
 
     for spec in workspace_specs:
         map_entry = spec["map_entry"]
-        preferred_patterns: List[str] = []
+        preferred_patterns: list[str] = []
         entry_pattern = (
             map_entry.get("fontPattern")
             if isinstance(map_entry, dict)
@@ -473,10 +475,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 preferred_patterns.append(fallback)
 
         svg_path = svg_dir / spec["icon_filename"]
-        primary_code = int(spec["codepoints"][0][2:], 16)
+        primary_code = int(spec["codepoints"][0].removeprefix("U+"), 16)
         export_info = None
-        exported_path_data: Optional[str] = None
-        last_error: Optional[Exception] = None
+        exported_path_data: str | None = None
+        last_error: Exception | None = None
         for pattern_choice in preferred_patterns:
             exporter_instance, info = resolver.exporter_for_pattern(
                 pattern_choice
