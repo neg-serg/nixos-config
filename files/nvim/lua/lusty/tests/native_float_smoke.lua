@@ -117,6 +117,17 @@ p = pick.active_pick()
 p:handle('clear') -- ignore remembered query
 assert_eq(p.items[1].path, '/etc/nixos/flake.nix', 'frecency file ranks first')
 p:handle('cancel')
+
+-- MRU merges the journal: with no injected source the recent picker must
+-- list files that exist only in the frecency journal (v:oldfiles is empty
+-- in a headless run), ranked by frecency score.
+nr2.set_recent_fn(nil)
+nr2.run()
+p = pick.active_pick()
+p:handle('clear')
+assert(p.total >= 2, 'journal entries merged into MRU, got ' .. tostring(p.total))
+assert_eq(p.items[1].path, '/etc/nixos/flake.nix', 'journal-only entry ranks first by frecency')
+p:handle('cancel')
 print('PASS native frecency')
 
 print('ALL NATIVE FLOAT SMOKE TESTS PASSED')
