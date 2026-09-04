@@ -325,17 +325,6 @@ Rectangle {
                         Layout.fillWidth: true
                         spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
 
-                        // Header: track title only (artist lives in the metadata rows).
-                        Text {
-                            Layout.fillWidth: true
-                            text: MusicManager.trackTitle || ""
-                            color: playerUI.musicTextColor
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(playerUI.musicTextPx * 1.15)
-                            font.weight: Font.DemiBold
-                            elide: Text.ElideRight
-                        }
-
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: Math.round(8 * Theme.scale(screen))
@@ -398,12 +387,13 @@ Rectangle {
                                         height: parent.height
                                         width: parent.width * playerUI.musicProgress()
 
-                                        // Neon halo behind the fill.
+                                        // Neon halo behind the fill (kept tight — a wide
+                                        // halo reads as an oversized outline in a thin card).
                                         Rectangle {
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             anchors.verticalCenter: parent.verticalCenter
-                                            width: Math.max(2, parent.width * 2.6)
-                                            height: Math.max(2, parent.height * 3.4)
+                                            width: Math.max(2, parent.width * 1.3)
+                                            height: Math.max(2, parent.height * 1.75)
                                             radius: height / 2
                                             color: Color.withAlpha(progressBand._progressFillColor, 0.4)
                                             z: -1
@@ -431,6 +421,17 @@ Rectangle {
                                 font.pixelSize: Math.round(playerUI.musicTextPx * 0.8)
                                 color: playerUI.musicTextColor
                             }
+                        }
+
+                        // Track title underneath the scrub bar.
+                        Text {
+                            Layout.fillWidth: true
+                            text: MusicManager.trackTitle || ""
+                            color: playerUI.musicTextColor
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Math.round(playerUI.musicTextPx * 1.15)
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
                         }
 
                         // Transport: prev / play-pause / next (centered)
