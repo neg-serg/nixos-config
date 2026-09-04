@@ -136,37 +136,13 @@ Item {
             }
         }
 
-        // --- Fade in/out (explicit animations). Slide was dropped: a moving
-        // card would require a mask region tracking the animation; the static
-        // mask only describes the resting card. Explicit NumberAnimations are
-        // used instead of a Behavior so a hide can never stall with the window
-        // mapped but invisible (opacity stuck at 0): fadeOut always completes
-        // and its onStopped closes the window.
+        // --- Appearance: instant (no opacity fade). Animating a custom opacity
+        // while the window is being shown proved unreliable — the card sometimes
+        // stayed invisible (opacity 0) or flickered, because a property on a
+        // just-mapped layer surface does not always animate deterministically.
+        // The card now simply appears and disappears, which is robust.
         property bool _hiding: false
-        property real _contentOpacity: 0
-        NumberAnimation {
-            id: fadeIn
-            target: toast
-            property: "_contentOpacity"
-            from: 0
-            to: 1
-            duration: Theme.sidePanelPopupSlideMs
-            easing.type: Theme.uiEasingRipple
-        }
-        NumberAnimation {
-            id: fadeOut
-            target: toast
-            property: "_contentOpacity"
-            duration: Theme.sidePanelPopupSlideMs
-            easing.type: Theme.uiEasingRipple
-            onStopped: {
-                if (toast._hiding) {
-                    toast.visible = false;
-                    toast._hiding = false;
-                    toast._contentOpacity = 0;
-                }
-            }
-        }
+        property real _contentOpacity: 1
 
         // Keep anchor in sync with panel window changes (margin recalculation)
         Connections {
@@ -212,30 +188,15 @@ Item {
 
         // --- Public control
         function showAt() {
-            if (fadeOut.running) fadeOut.stop();
             toast._hiding = false;
-            hideFallback.stop(); // a new show cancels the pending hide
-
             toast._marginRight = toast.baseMargin();
             toast._marginBottom = toast.computeBottomMargin();
             toast.cardHeightPx = toast.computeCardHeight(); // size before mapping
-
-            // Only run the entrance fade on the hidden→shown transition.
-            // Rapid consecutive showAt() calls (e.g. several MusicManager
-            // signals in a row) must NOT restart fadeIn, otherwise the card
-            // blinks: opacity drops back towards 0 and rises again.
-            const wasShown = toast.visible && toast._contentOpacity > 0.01;
             if (!toast.visible) {
                 toast.visible = true;
-                toast._contentOpacity = 0;
-            } else if (toast._contentOpacity <= 0.01) {
-                toast._contentOpacity = 0; // self-heal a stale invisible window
-            }
-            if (!wasShown) {
-                // Animate from the current opacity so an interrupted fade never
-                // jumps; fadeIn.to stays 1.
-                fadeIn.from = Math.max(0, toast._contentOpacity);
-                fadeIn.start();
+                toast._contentOpacity = 1; // no fade: card is solid from frame one
+            } else {
+                toast._contentOpacity = 1; // re-show is a no-op visually
             }
             toast.startAutoHide();
             if (Settings.settings && Settings.settings.debugLogs) {
@@ -251,30 +212,13 @@ Item {
             }
         }
 
-        // Safety net: never leave the window mapped with a stuck fade-out.
-        // If the fade-out animation is interrupted before it completes (so
-        // fadeOut.onStopped never fires), force the window closed shortly after.
-        Timer {
-            id: hideFallback
-            interval: Math.max(Theme.sidePanelPopupSlideMs + 120, 350)
-            repeat: false
-            onTriggered: {
-                if (toast._hiding && toast.visible) {
-                    toast.visible = false;
-                    toast._hiding = false;
-                    toast._contentOpacity = 0;
-                }
-            }
-        }
-
         function hidePopup() {
             if (!visible || _hiding) return;
             _hiding = true;
-            if (fadeIn.running) fadeIn.stop();
-            fadeOut.from = toast._contentOpacity;
-            fadeOut.to = 0;
-            fadeOut.start(); // onStopped closes the window
-            hideFallback.start(); // safety net in case the animation is interrupted
+            // Instant hide: the card disappears immediately (no fade to stall).
+            toast.visible = false;
+            toast._hiding = false;
+            toast._contentOpacity = 1;
         }
 
         // --- Content
