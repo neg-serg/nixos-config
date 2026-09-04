@@ -290,21 +290,8 @@ impl App {
             let (c, r) = terminal::size().unwrap_or((80, 24));
             self.size = ((c as usize).max(40), (r as usize).max(10));
         }
-        let (w, h) = self.size;
-        // Popup geometry: outer box height and width honour the user
-        // overrides (--rows/--width or LUSTY_ROWS/LUSTY_WIDTH) and are
-        // clamped to the screen; defaults are OUTER_ROWS rows and up to 102
-        // outer columns (100 content columns).
-        let outer_h = match self.ui_rows {
-            Some(r) => r.clamp(5, 200).min(h),
-            None => OUTER_ROWS.min(h),
-        };
-        self.box_h = outer_h.max(1);
-        let outer_w = match self.ui_width {
-            Some(uw) => uw.clamp(10, 400).min(w),
-            None => w.min(102),
-        };
-        self.box_w = outer_w.saturating_sub(2);
+        let h = self.size.1;
+        self.compute_box();
         // Place the box directly under the command line; when it would
         // run past the bottom of the screen, scroll the content up first
         // (fzf --height behaviour). probe_size parked the cursor on the
@@ -441,6 +428,24 @@ fn parse_dsr(s: &str) -> Option<(usize, usize)> {
 }
 
 impl App {
+    /// Recompute the popup box size from the current screen size and the
+    /// user overrides (--rows/--width or LUSTY_ROWS/LUSTY_WIDTH). Both
+    /// dimensions are clamped so the outer box never exceeds the terminal;
+    /// defaults are OUTER_ROWS rows and up to 102 outer columns.
+    fn compute_box(&mut self) {
+        let (w, h) = self.size;
+        let outer_h = match self.ui_rows {
+            Some(r) => r.clamp(5, 200).min(h),
+            None => OUTER_ROWS.min(h),
+        };
+        self.box_h = outer_h.max(1);
+        let outer_w = match self.ui_width {
+            Some(uw) => uw.clamp(10, 400).min(w),
+            None => w.min(102),
+        };
+        self.box_w = outer_w.saturating_sub(2);
+    }
+
     fn list_rows(&self) -> usize {
         // Content rows inside the borders minus the prompt line at the
         // bottom (box_h includes the two border rows).
@@ -553,7 +558,17 @@ impl App {
                         _ => {}
                     }
                 }
-                Event::Resize(_, _) => {}
+                Event::Resize(c, r) => {
+                    // Keep the box inside the new grid: recompute dimensions
+                    // from the fresh size and pull the box up if it no
+                    // longer fits below its current top row.
+                    self.size = (c as usize, r as usize);
+                    self.compute_box();
+                    let h = self.size.1;
+                    if self.pop_top + self.box_h > h {
+                        self.pop_top = h.saturating_sub(self.box_h);
+                    }
+                }
                 _ => {}
             }
             self.clamp_offset(self.list_rows());
