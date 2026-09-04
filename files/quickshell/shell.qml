@@ -33,6 +33,18 @@ Scope {
     Loader { source: "Notifications/NotificationOverlay.qml" }
     Loader { source: "Notifications/NotificationCenter.qml" }
 
+    // Now-playing media popup — loaded top-level so its PanelWindow actually
+    // maps as an OS surface (a PanelWindow nested inside Bar.qml does not map).
+    // Relative path like the working Notifications loaders (absolute file://
+    // URLs to Widgets/SidePanel can fail with "No such file or directory").
+    Loader {
+        id: musicPopupLoader
+        source: "Widgets/SidePanel/MusicPopup.qml"
+    }
+    // Public access for Bar.qml (QML ids don't leak into parent scope, so
+    // expose the loaded popup item via an explicit property).
+    readonly property var musicPopup: musicPopupLoader ? musicPopupLoader.item : null
+
     // IPC semaphores for notification bindings (touch to trigger)
     readonly property string _home: {
         var h = Quickshell.env("HOME");

@@ -28,6 +28,9 @@ LocalComponents.WidgetCapsule {
     // shows). Toggle: Settings.json "showVolumeOnHover" (default true, applies
     // to all audio-level capsules: volume, microphone, Genelec).
     property bool showOnHover: Settings.settings ? Settings.settings.showVolumeOnHover !== false : true
+    // Hide the idle (collapsed) icon until the capsule is hovered. Used for the
+    // Genelec monitor icon so the bar stays clean while idle.
+    property bool hideIconWhenIdle: false
     property string offReminderStateKey: ""
     readonly property int effectiveOffReminderCooldownMs: {
         const raw = Settings.settings ? Number(Settings.settings.audioOffReminderCooldownMs) : -1;
@@ -233,6 +236,9 @@ LocalComponents.WidgetCapsule {
         collapsedIconColor: levelColorFor(level)
         // No circle behind the audio icon; icon colour follows the level.
         showDisc: false
+        // Hide the idle icon until the capsule is hovered (Genelec monitor).
+        hideIconWhenIdle: root.hideIconWhenIdle
+        hovered: root.containsMouse || root.panelHovering
         // Digits stay in the ordinary text colour; the unit sign ("dB" / "%")
         // and a leading minus are painted with the wallpaper accent.
         colorizeUnit: true
