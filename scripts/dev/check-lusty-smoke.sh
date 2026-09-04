@@ -15,7 +15,17 @@ fi
 
 log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
-if ! nvim --clean --headless -l files/nvim/lua/lusty/tests/smoke.lua > "$log" 2>&1; then
-  cat "$log" >&2
-  exit 1
-fi
+
+# All headless suites: the Lua-port smoke plus the native float suites
+# (native_pick pickers and the serve-backed filesystem picker).
+suites=(
+  files/nvim/lua/lusty/tests/smoke.lua
+  files/nvim/lua/lusty/tests/native_float_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_smoke.lua
+)
+for suite in "${suites[@]}"; do
+  if ! nvim --clean --headless -l "$suite" > "$log" 2>&1; then
+    cat "$log" >&2
+    exit 1
+  fi
+done
