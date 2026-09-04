@@ -13,6 +13,7 @@
 
 local lsc = require('lusty.ls_colors')
 local frecency = require('lusty.frecency')
+local theme = require('lusty.theme')
 
 local M = {}
 
@@ -1123,9 +1124,20 @@ function M.ensure_highlights()
   if not ok then
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#005faf', fg = '#d1e5ff', bold = true })
   end
-  -- Optional selection style presets: g:LustyExplorerSelStyle = 1..4
-  -- (1 blue default, 2 cyan, 3 purple, 4 reverse video). Overrides the
-  -- PmenuSel-derived colors so the selection can be restyled in place.
+  -- Selection style from the theme TOML (files/nvim/lua/lusty/theme.toml):
+  -- bg/fg/bold/underline/reverse. g:LustyExplorerSelStyle (1..4) overrides
+  -- with a built-in preset for quick switching.
+  local sel = theme.selection()
+  if sel.reverse then
+    api.nvim_set_hl(0, 'LustyNativeSel', { reverse = true, bold = sel.bold ~= false })
+  else
+    api.nvim_set_hl(0, 'LustyNativeSel', {
+      bg = sel.bg or ('#' .. string.format('%06x', bg)),
+      fg = sel.fg or ('#' .. string.format('%06x', fg)),
+      bold = sel.bold ~= false,
+      underline = sel.underline == true,
+    })
+  end
   local st = tonumber(vim.g.LustyExplorerSelStyle)
   if st == 2 then
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#006e9f', fg = '#dfffff', bold = true })
@@ -1135,7 +1147,11 @@ function M.ensure_highlights()
     api.nvim_set_hl(0, 'LustyNativeSel', { reverse = true, bold = true })
   end
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
-  api.nvim_set_hl(0, 'LustyNativeMatch', { underline = true })
+  local mt = theme.match()
+  api.nvim_set_hl(0, 'LustyNativeMatch', {
+    fg = mt.fg or '#ffffff',
+    underline = mt.underline ~= false,
+  })
   api.nvim_set_hl(0, 'LustyNativeMeta', { fg = '#6c7e96' }) -- dim metadata in long view
   -- nearly-black but not #000000: the web/xterm layer treats exact black as
   -- the transparent default, while #0c0d14 rendered too gray on this setup
