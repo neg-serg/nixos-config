@@ -188,6 +188,11 @@ impl App {
         // terminal buffer (possibly itself inside a web xterm), whose
         // alt-screen emulation is unreliable. The shim deletes the buffer on
         // exit anyway, so clear the frame and print the selection.
+        // put the cursor back at the first panel row (right under the command
+        // line) so the selection prints like normal shell output, not below a
+        // gap of erased panel rows
+        let esc = char::from_u32(0x1b).unwrap();
+        write!(io::stdout(), "{esc}[{};1H", self.panel_top() + 1)?;
         self.clear_panel(&mut io::stdout())?;
         terminal::disable_raw_mode()?;
         execute!(io::stdout(), cursor::Show)?;
@@ -212,6 +217,10 @@ impl App {
         }
         self.cursor_row = probe_cursor_row();
         let result = self.loop_events(&mut stdout);
+        // park the cursor at the first panel row before clearing, so the shell
+        // continues directly under the command line
+        let esc = char::from_u32(0x1b).unwrap();
+        write!(stdout, "{esc}[{};1H", self.panel_top() + 1)?;
         self.clear_panel(&mut stdout)?;
         terminal::disable_raw_mode()?;
         execute!(stdout, cursor::Show)?;
