@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
 import qs.Components
+import qs.Services
 import qs.Settings
 import "../../Helpers/Utils.js" as Utils
 import "../../Helpers/ScreenUtil.js" as ScreenUtil
@@ -21,26 +22,43 @@ Item {
     function showAt()   { toast.showAt(); }
     function hidePopup(){ toast.hidePopup(); }
 
-    // ── Music popup as WlrLayershell window for compositor blur (hyprglass) ──
+    // Music toast as a WlrLayershell window (compositor blur, hyprglass).
+    // Mapping constraints in this Quickshell build (0.3.1 rev 2d3b3e9): a
+    // surface appears only for full-height right/top/bottom anchors with
+    // ExclusionMode.Normal, the default layer and NO WlrLayershell.margins.
+    // The window is therefore full-height; the card is pinned to the
+    // bottom-right corner by inner anchors, and the mask Region restricts
+    // input to the card rect so the empty transparent strip never eats clicks.
     PanelWindow {
         id: toast
         color: "transparent"
         visible: false
 
         WlrLayershell.namespace: "qs-music"
-        // Default layer + Normal exclusion — the ONLY combo that maps a
-        // surface in this build. WlrLayershell.margins, Ignore, Overlay, and
-        // bottom-only anchors all failed to create the surface. Keep full-height
-        // right anchors (right+top+bottom) exactly like NotificationCenter.
         WlrLayershell.exclusionMode: ExclusionMode.Normal
 
         anchors.right: true
         anchors.top: true
         anchors.bottom: true
 
-        // Kept for showAt() compat; not wired to any window margins.
-        property real _marginRight: 12
-        property real _marginBottom: 30
+        // Card inset from the screen edges; consumed by the inner cardBox
+        // anchors (margins on the window itself break mapping).
+        property real _marginRight: 0
+        property real _marginBottom: 0
+
+        // Window width = card + right inset, so the card fits on screen
+        // without WlrLayershell.margins.
+        implicitWidth: Math.max(1, Math.round(toast.cardWidthPx + toast._marginRight))
+
+        // Restrict pointer input to the card rect (window-local coords).
+        // Clicks on the transparent full-height strip fall through to the
+        // windows below, same trick as NotificationOverlay.
+        mask: Region {
+            x: cardBox.x
+            y: cardBox.y
+            width: cardBox.width
+            height: cardBox.height
+        }
 
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
@@ -96,47 +114,43 @@ Item {
         }
 
         // --- Sizing (scaled by per-screen factor)
-        property real computedHeightPx: -1
-        property real musicWidthPx: Math.round(Settings.settings.musicPopupWidth * Theme.scale(Screen))
+        property real cardWidthPx: Math.round(Settings.settings.musicPopupWidth * Theme.scale(Screen))
         property real musicHeightPx: (musicWidget && musicWidget.implicitHeight > 0)
             ? Math.round(musicWidget.implicitHeight)
             : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
-        property int contentPaddingPx:Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
+        property int contentPaddingPx: Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
+        // Card height = content + its top inset; clamped to 70% of the screen.
+        property real cardHeightPx: Math.round(Utils.clamp(
+            toast.contentPaddingPx + toast.musicHeightPx,
+            1,
+            Math.max(1, Math.round(ScreenUtil.height(sidebarPopup) * 0.7))))
 
-        implicitWidth: Math.round(musicWidthPx)
-        implicitHeight: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
-
-        // --- Slide animation (animate inner content, not the window)
+        // --- Fade in/out. Slide was dropped: a moving card would require a
+        // mask region tracking the animation; the static mask only describes
+        // the resting card.
         property bool _hiding: false
-        property real slideX: 0
-        NumberFadeBehavior {
-            id: slide
-            target: toast
-            property: "slideX"
-            duration: Theme.sidePanelPopupSlideMs
-            easing.type: Theme.uiEasingRipple
-            onStopped: {
-                if (toast._hiding) {
-                    toast.visible = false;
-                    toast._hiding = false;
+        property real _contentOpacity: 0
+        Behavior on _contentOpacity {
+            NumberAnimation {
+                id: contentFade
+                duration: Theme.sidePanelPopupSlideMs
+                easing.type: Theme.uiEasingRipple
+                onStopped: {
+                    if (toast._hiding && toast._contentOpacity <= 0.001) {
+                        toast.visible = false;
+                        toast._hiding = false;
+                    }
                 }
             }
         }
 
-        // Keep anchor in sync with panel window changes (for margin recalculation)
+        // Keep anchor in sync with panel window changes (margin recalculation)
         Connections {
             target: sidebarPopup.anchorWindow
             ignoreUnknownSignals: true
             function onHeightChanged() {
                 if (!toast.visible) return;
-                const scale = Theme.scale(Screen);
-                const cfgMargin = (Settings.settings && Settings.settings.musicPopupEdgeMargin !== undefined)
-                                  ? Settings.settings.musicPopupEdgeMargin
-                                  : Theme.sidePanelPopupOuterMargin;
-                const baseMargin = Math.max(0, Math.round(cfgMargin * scale));
-                if (sidebarPopup.panelEdge === "bottom") {
-                    toast._marginBottom = (sidebarPopup.anchorWindow ? sidebarPopup.anchorWindow.height : 0) + baseMargin;
-                }
+                toast._marginBottom = toast.computeBottomMargin();
             }
             function onPanelHoveringChanged() {
                 if (!sidebarPopup.anchorWindow) return;
@@ -152,98 +166,120 @@ Item {
             }
         }
 
-        // --- Public control
-        function showAt() {
-            try {
-                console.warn("[mediaDebug] showAt() called. toast.visible=" + toast.visible + " sidebarPopup.visible=" + sidebarPopup.visible + " anchorWindow=" + (sidebarPopup.anchorWindow ? "yes h=" + sidebarPopup.anchorWindow.height : "null") + " musicWidget=" + (musicWidget ? "yes ih=" + musicWidget.implicitHeight : "null"));
-            } catch (e) { console.warn("[mediaDebug] showAt pre-log err", e); }
+        // Distance from the screen bottom edge to the card bottom edge:
+        // above the anchor panel (if any) plus the base edge margin.
+        function baseMargin() {
             const scale = Theme.scale(Screen);
             const cfgMargin = (Settings.settings && Settings.settings.musicPopupEdgeMargin !== undefined)
                               ? Settings.settings.musicPopupEdgeMargin
                               : Theme.sidePanelPopupOuterMargin;
-            const baseMargin = Math.max(0, Math.round(cfgMargin * scale));
-
-            if (computedHeightPx < 0) {
-                var ih = (musicWidget && musicWidget.implicitHeight > 0)
-                         ? musicWidget.implicitHeight
-                         : (Settings.settings.musicPopupHeight * scale);
-                const guardMax = Utils.clamp(Math.round(ScreenUtil.height(sidebarPopup) * 0.7), 1, ScreenUtil.height(sidebarPopup));
-                computedHeightPx = Utils.clamp(Math.round(ih), 1, guardMax);
+            return Math.max(0, Math.round(cfgMargin * scale));
+        }
+        function computeBottomMargin() {
+            if (sidebarPopup.panelEdge === "bottom" && sidebarPopup.anchorWindow) {
+                return Math.round(sidebarPopup.anchorWindow.height) + toast.baseMargin();
             }
+            return toast.baseMargin();
+        }
 
-            // Set WlrLayershell margins for positioning: right edge + above panel.
-            toast._marginRight = baseMargin;
-            if (sidebarPopup.panelEdge === "bottom") {
-                toast._marginBottom = (sidebarPopup.anchorWindow ? sidebarPopup.anchorWindow.height : 0) + baseMargin;
-            } else {
-                toast._marginBottom = baseMargin;
-            }
+        // --- Public control
+        function showAt() {
+            if (toast._hiding) toast._hiding = false; // cancel an ongoing fade-out
+
+            toast._marginRight = toast.baseMargin();
+            toast._marginBottom = toast.computeBottomMargin();
 
             if (!visible) {
                 visible = true;
-                slideX = toast.implicitWidth; // start fully to the right
+                _contentOpacity = 0; // start the fade from a clean slate
             }
-            slide.stop();
-            _hiding = false;
-            slide.from = slideX;
-            slide.to   = 0;
-            slide.start();
-            console.warn("[mediaDebug] showAt() done. toast.visible=" + toast.visible + " sidebarPopup.visible=" + sidebarPopup.visible + " marginR=" + toast._marginRight + " marginB=" + toast._marginBottom);
+            _contentOpacity = 1;
+            toast.startAutoHide();
+            if (Settings.settings && Settings.settings.debugLogs) {
+                console.debug("[qs-music] showAt card=" + cardBox.width + "x" + cardBox.height
+                    + " mb=" + toast._marginBottom + " mr=" + toast._marginRight);
+            }
         }
 
         function hidePopup() {
-            slide.stop();
+            if (!visible || _hiding) return;
             _hiding = true;
-            slide.from = slideX;
-            slide.to   = toast.implicitWidth;
-            slide.start();
+            _contentOpacity = 0; // contentFade hides the window when done
+        }
+
+        // --- Track-change toast: reappear briefly whenever the song changes
+        // (or the player switches), unless that song is already showing.
+        property string _lastTrackSig: ""
+        Connections {
+            target: MusicManager
+            ignoreUnknownSignals: true
+            function onTrackTitleChanged()   { toast.maybeShowTrackToast(); }
+            function onCoverUrlChanged()     { toast.maybeShowTrackToast(); }
+            function onCurrentPlayerChanged(){ toast.maybeShowTrackToast(); }
+        }
+        function maybeShowTrackToast() {
+            if (!MusicManager.hasPlayer) return;
+            if (!(MusicManager.isPlaying || MusicManager.isPaused)) return;
+            const player = MusicManager.currentPlayer;
+            const sig = String(player && (player.id || player.identity || player.name || "player"))
+                + "|" + String(MusicManager.trackTitle || "")
+                + "|" + String(MusicManager.coverUrl || "");
+            if (sig === toast._lastTrackSig) return;
+            toast._lastTrackSig = sig;
+            if (sig.indexOf("||") === sig.length - 2) return; // no metadata at all yet
+            toast.showAt();
         }
 
         // --- Content
-        // Slide container for both background and content.
+        // Card rect pinned to the bottom-right corner of the full-height window.
         Item {
-            id: contentRoot
-            anchors.fill: parent
-            transform: Translate { x: toast.slideX }
+            id: cardBox
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.rightMargin: toast._marginRight
+            anchors.bottomMargin: toast._marginBottom
+            width: toast.cardWidthPx
+            height: toast.cardHeightPx
+            opacity: toast._contentOpacity
 
             FocusScope {
                 anchors.fill: parent
 
-            // Pause auto-hide while pointer is over popup; resume on exit
-            HoverHandler {
-                id: hover
-                onActiveChanged: {
-                    if (active) toast.pauseAutoHide();
-                    else toast.resumeAutoHide();
-                }
-            }
-
-            // Pause while any descendant within this scope has active focus (keyboard interaction)
-            onActiveFocusChanged: {
-                if (activeFocus) toast.pauseAutoHide();
-                else toast.resumeAutoHide();
-            }
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.leftMargin: toast.contentPaddingPx
-                anchors.rightMargin: 0
-                anchors.topMargin: toast.contentPaddingPx
-                spacing: Theme.sidePanelPopupSpacing
-
-                RowLayout {
-                    spacing: Math.round(Theme.sidePanelSpacingMedium * Theme.scale(Screen))
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignRight
-
-                    Music {
-                        id: musicWidget
-                        height: toast.musicHeightPx
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignRight
+                // Pause auto-hide while pointer is over the card; resume on exit
+                HoverHandler {
+                    id: hover
+                    onActiveChanged: {
+                        if (active) toast.pauseAutoHide();
+                        else toast.resumeAutoHide();
                     }
                 }
-            }
+
+                // Pause while a descendant has active focus (keyboard interaction)
+                onActiveFocusChanged: {
+                    if (activeFocus) toast.pauseAutoHide();
+                    else toast.resumeAutoHide();
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: toast.contentPaddingPx
+                    anchors.rightMargin: 0
+                    anchors.topMargin: toast.contentPaddingPx
+                    spacing: Theme.sidePanelPopupSpacing
+
+                    RowLayout {
+                        spacing: Math.round(Theme.sidePanelSpacingMedium * Theme.scale(Screen))
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignRight
+
+                        Music {
+                            id: musicWidget
+                            height: toast.musicHeightPx
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignRight
+                        }
+                    }
+                }
             }
         }
     }

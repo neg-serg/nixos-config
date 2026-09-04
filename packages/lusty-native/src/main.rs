@@ -87,7 +87,7 @@ command-line flags win.
     let mut long = false;
     let mut reverse = false;
     let mut dirs_first = false;
-    let mut sort_ext = false;
+    let mut sort_mode = 0u8; // 0 name, 1 ext, 2 size, 3 time
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -96,7 +96,12 @@ command-line flags win.
             "--dirs-first" => dirs_first = true,
             "--sort" => {
                 i += 1;
-                sort_ext = args.get(i).map(|s| s == "ext").unwrap_or(false);
+                sort_mode = match args.get(i).map(|s| s.as_str()) {
+                    Some("ext") => 1,
+                    Some("size") => 2,
+                    Some("time") => 3,
+                    _ => 0,
+                };
             }
             "--view" => {
                 i += 1;
@@ -142,7 +147,7 @@ command-line flags win.
     app.set_ui(rows, width);
     app.set_long(long);
     app.set_sort(reverse, dirs_first);
-    app.set_sort_ext(sort_ext);
+    app.set_sort_mode(sort_mode);
     match app.run() {
         Ok(code) => std::process::exit(code),
         Err(err) => {
@@ -161,7 +166,7 @@ fn run_list(args: &[String]) {
     let mut query = String::new();
     let mut reverse = false;
     let mut dirs_first = false;
-    let mut sort_ext = false;
+    let mut sort_mode = 0u8; // 0 name, 1 ext, 2 size, 3 time
 
     let mut i = 1;
     while i < args.len() {
@@ -184,7 +189,12 @@ fn run_list(args: &[String]) {
             "--dirs-first" => dirs_first = true,
             "--sort" => {
                 i += 1;
-                sort_ext = args.get(i).map(|s| s == "ext").unwrap_or(false);
+                sort_mode = match args.get(i).map(|s| s.as_str()) {
+                    Some("ext") => 1,
+                    Some("size") => 2,
+                    Some("time") => 3,
+                    _ => 0,
+                };
             }
             other if !other.starts_with("--") && root.is_none() => {
                 root = Some(PathBuf::from(other));
@@ -208,10 +218,11 @@ fn run_list(args: &[String]) {
 
     let t0 = Instant::now();
     let mut entries = cache::cached_list(&root, &opts);
-    if sort_ext {
-        listing::sort_by_ext(&mut entries);
-    } else {
-        listing::reorder(&mut entries, dirs_first, reverse);
+    match sort_mode {
+        1 => listing::sort_by_ext(&mut entries),
+        2 => listing::sort_by_meta(&root, &mut entries, false),
+        3 => listing::sort_by_meta(&root, &mut entries, true),
+        _ => listing::reorder(&mut entries, dirs_first, reverse),
     }
     let dt_list = t0.elapsed();
     let total = entries.len();
