@@ -13,7 +13,7 @@
 --   <Leader>C   filesystem explorer (cwd)
 --   <C-b>       buffer explorer (native float)
 --   <C-g>       buffer grep (native float)
---   <Leader>r   recent files (native float)
+--   <Leader>.   recent files (native float)
 
 local explorer = require('lusty.explorer')
 local buffers = require('lusty.buffer_stack')
@@ -127,8 +127,9 @@ function M.setup()
     vim.keymap.set('n', '<leader>C', function()
       run_fs(nil)
     end, { desc = 'Lusty filesystem explorer (cwd, native)' })
-    -- ,r = recent files (C-r is redo, so it stays on the leader).
-    vim.keymap.set('n', '<leader>r', function()
+    -- ,. = recent files (C-r is redo, so it stays on the leader; the
+    -- dot also hints at the old LustyExplorer dot-toggle style).
+    vim.keymap.set('n', '<leader>.', function()
       run_recent()
     end, { nowait = true, desc = 'Lusty recent files (native float)' })
     -- Simple chords: C-b = buffers, C-g = buffer grep. These override the
