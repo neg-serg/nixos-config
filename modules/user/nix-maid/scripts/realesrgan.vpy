@@ -1,39 +1,29 @@
 import vapoursynth as vs
+
 core = vs.core
 clip = video_in
+src = video_in
 
-scale = 2
-want_anime = False
+# Alt+I AI-upscale toggle: 2x via vsncnn (RealESRGANv2 xsx2) on the RX 9070 XT.
+# Previous chain (vsrealesrgan / core.realesrgan / vsmlrt) is unavailable on
+# odin, so it always fell back to Spline36. Model dir from vsmlrt-models.
+MODEL = "/zero/ai/imgproc/vsmlrt-v15.16/models/RealESRGANv2/RealESRGANv2-animevideo-xsx2.onnx"
 
-def safe_int(x, default=2):
-    try:
-        v = int(x)
-        return v if v in (2, 4) else default
-    except Exception:
-        return default
+def upscale(c):
+    f = c.format
+    is_rgb_f32 = f is not None and f.color_family == vs.RGB and f.sample_type == vs.FLOAT
+    # vsncnn ncnn.Model wants fp32 RGB input
+    rgb = c if is_rgb_f32 else core.resize.Bicubic(c, format=vs.RGBS)
+    out = core.ncnn.Model(clips=[rgb], network_path=MODEL)
+    # mpv requires the vf output format to match the input format
+    if f is not None and not is_rgb_f32:
+        out = core.resize.Bicubic(out, format=f)
+    return out
 
 try:
-    import vsrealesrgan as vr
-    model = 'realesr-animevideov3' if want_anime else 'realesrgan-x4plus'
-    try:
-        clip = vr.Realesrgan(clip, model=model, scale=scale)
-    except Exception:
-        try:
-            clip = core.realesrgan.Model(clip, model=model, scale=scale)
-        except Exception:
-            pass
+    clip = upscale(clip)
 except Exception:
-    try:
-        import vsmlrt
-        clip = vsmlrt.Realesrgan(clip, scale=scale, anime=want_anime)
-    except Exception:
-        pass
-
-# Fallback
-try:
-    if clip.width == video_in.width: # if no upscale happened
-       clip = core.resize.Spline36(clip, width=clip.width * scale, height=clip.height * scale)
-except Exception:
-    pass
+    # keep Alt+I safe: degraded plain resize instead of crashing mpv
+    clip = core.resize.Spline36(src, width=src.width * 2, height=src.height * 2)
 
 clip.set_output()
