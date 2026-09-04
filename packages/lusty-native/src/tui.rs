@@ -181,6 +181,52 @@ impl App {
         self.selected = s.max(0) as usize;
     }
 
+    /// '/' descends into a directory when the typed prefix uniquely names one
+    /// (exact name or unique prefix among the immediate children), shell
+    /// style; a lone '/' moves to the filesystem root, Lusty style. When the
+    /// prefix is not unique, '/' is typed as an ordinary character.
+    fn slash_enter(&mut self) {
+        let q = self.query.clone();
+        if q.is_empty() {
+            let root = std::path::PathBuf::from("/");
+            if self.root != root {
+                self.re_root(root);
+            }
+            return;
+        }
+        let ql = q.to_lowercase();
+        let entries = self.listing().clone();
+        let mut cand: Option<String> = None;
+        let mut dup = false;
+        for e in entries.iter() {
+            if e.kind != FileKind::Dir || e.depth != 1 {
+                continue;
+            }
+            let nl = e.name.to_lowercase();
+            if nl == ql || nl.starts_with(&ql) {
+                if cand.is_some() {
+                    dup = true;
+                } else {
+                    cand = Some(e.name.clone());
+                }
+            }
+        }
+        if let (Some(n), false) = (cand, dup) {
+            let path = if self.root == std::path::Path::new("/") {
+                std::path::PathBuf::from("/").join(&n)
+            } else {
+                self.root.join(&n)
+            };
+            self.re_root(path);
+            return;
+        }
+        // not a unique directory: let '/' be typed as an ordinary character
+        self.query.push('/');
+        self.needs_rank = true;
+        self.selected = 0;
+        self.offset = 0;
+    }
+
     fn open(&mut self, action: &str) -> io::Result<()> {
         if self.ranked.is_empty() {
             return Ok(());
@@ -469,6 +515,7 @@ impl App {
                                 self.selected = 0;
                             }
                         }
+                        (KeyCode::Char('/'), false) => self.slash_enter(),
                         (KeyCode::Char(c), false) => {
                             if let Some(c) = normalize_query_char(c) {
                                 self.query.push(c);
