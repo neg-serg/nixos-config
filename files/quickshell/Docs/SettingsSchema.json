@@ -40,6 +40,8 @@
     "spectrumColorMinHz": { "type": "integer", "default": 15, "minimum": 0, "maximum": 192000, "description": "Low end of the coloured spectrum band (Hz)" },
     "spectrumColorMaxHz": { "type": "integer", "default": 24000, "minimum": 0, "maximum": 192000, "description": "High end of the coloured spectrum band (Hz)" },
     "spectrumDimOpacity": { "type": "number", "default": 0.18, "minimum": 0, "maximum": 1, "description": "Opacity of bars outside the coloured band" },
+    "spectrum3D": { "type": "boolean", "default": true, "description": "Enable 3D perspective arc and specular gradient on analyser bars" },
+    "spectrum3DDepth": { "type": "number", "default": 0.35, "minimum": 0, "maximum": 1, "description": "Perspective falloff for the 3D analyser arc" },
 
     "activeVisualizerProfile": { "type": "string", "default": "classic" },
     "visualizerProfiles": {

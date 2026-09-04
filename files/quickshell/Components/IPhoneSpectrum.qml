@@ -44,6 +44,11 @@ Item {
     property color dimColor: "#ffffff"
     property real dimOpacity: (Settings.settings.spectrumDimOpacity !== undefined) ? Settings.settings.spectrumDimOpacity : 0.18
 
+    // 3D depth: perspective arc (center bars taller) plus a vertical
+    // specular gradient on each bar so they read as rounded/cylindrical.
+    property bool threeD: (Settings.settings.spectrum3D !== undefined) ? Settings.settings.spectrum3D : true
+    property real threeDDepth: (Settings.settings.spectrum3DDepth !== undefined) ? Settings.settings.spectrum3DDepth : 0.35
+
     function _preset() {
         switch (root.style) {
             case "neon-violet":
@@ -171,6 +176,12 @@ Item {
                 ? root.gradientAt(index, root._barFillOpacity)
                 : root.dimColorAt(root.dimOpacity)
             property color glowColor: root.gradientAt(index, root._glowOpacity)
+            // 3D helpers: horizontal position, perspective falloff, specular tip.
+            readonly property real t: (root.barCount <= 1) ? 0 : (index / (root.barCount - 1))
+            readonly property real persp: root.threeD
+                ? (1.0 - root.threeDDepth * Math.abs(2 * t - 1))
+                : 1.0
+            readonly property color _specColor: root.threeD ? Qt.lighter(barColor, 1.5) : barColor
 
             // Neon halo behind the bottom core bar (coloured band only).
             Rectangle {
@@ -178,9 +189,9 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * root._glowSpread
                 radius: width / 2
-                height: root.mirror
+                height: (root.mirror
                     ? (parent.v * root.halfH)
-                    : (parent.v * root.height)
+                    : (parent.v * root.height)) * parent.persp
                 y: root.mirror ? root.halfH : root.height - height
                 color: parent.glowColor
                 Behavior on height {
@@ -196,11 +207,16 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 radius: width / 2
-                height: root.mirror
+                height: (root.mirror
                     ? (parent.v * root.halfH)
-                    : (parent.v * root.height)
+                    : (parent.v * root.height)) * parent.persp
                 y: root.mirror ? root.halfH : root.height - height
-                color: parent.barColor
+                property color cTop: root.mirror ? parent.barColor : parent._specColor
+                property color cBottom: root.mirror ? parent._specColor : parent.barColor
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: cTop }
+                    GradientStop { position: 1.0; color: cBottom }
+                }
                 Behavior on height {
                     enabled: Theme.animationsEnabled
                     SmoothedAnimation { duration: root.animDurationMs }
@@ -213,7 +229,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * root._glowSpread
                 radius: width / 2
-                height: parent.v * root.halfH
+                height: parent.v * root.halfH * parent.persp
                 y: root.halfH - height
                 color: parent.glowColor
                 Behavior on height {
@@ -228,9 +244,14 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 radius: width / 2
-                height: parent.v * root.halfH
+                height: parent.v * root.halfH * parent.persp
                 y: root.halfH - height
-                color: parent.barColor
+                property color cTop: parent._specColor
+                property color cBottom: parent.barColor
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: cTop }
+                    GradientStop { position: 1.0; color: cBottom }
+                }
                 Behavior on height {
                     enabled: Theme.animationsEnabled
                     SmoothedAnimation { duration: root.animDurationMs }

@@ -106,6 +106,9 @@ Singleton {
             property int spectrumColorMinHz: 15
             property int spectrumColorMaxHz: 24000
             property real spectrumDimOpacity: 0.18
+            // 3D depth for the analyser bars: perspective arc + specular gradient.
+            property bool spectrum3D: true
+            property real spectrum3DDepth: 0.35
             // Show audio level (volume/mic/Genelec dB) when the cursor hovers
             // the capsule — delayed reveal via the existing pill/tooltip timers
             property bool showVolumeOnHover: true
