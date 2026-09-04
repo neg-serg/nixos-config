@@ -40,79 +40,114 @@ fn has_match(lower_s: &[u8], lower_a: &[u8]) -> bool {
     a == lower_a.len()
 }
 
-/// Score how well abbrev matches str (case-insensitive).
-/// Returns 0.0 when there is no match.
-pub fn score(str: &str, abbrev: &str) -> f64 {
-    if abbrev.is_empty() {
-        return 0.75; // neutral score for an empty query
+/// Reusable scorer. Ranking thousands of entries on every keystroke must not
+/// allocate two DP rows plus a lowercase copy per candidate, so the scratch
+/// buffers live here and are only grown when a longer label shows up.
+pub struct Scorer {
+    prev: Vec<f64>,
+    cur: Vec<f64>,
+    hay: Vec<u8>,
+}
+
+impl Default for Scorer {
+    fn default() -> Self {
+        Self::new()
     }
-    let s = str.as_bytes();
-    let a = abbrev.as_bytes();
-    if a.len() > s.len() {
-        return 0.0;
+}
+
+impl Scorer {
+    pub fn new() -> Scorer {
+        Scorer {
+            prev: Vec::new(),
+            cur: Vec::new(),
+            hay: Vec::new(),
+        }
     }
 
-    let lower_s: Vec<u8> = s.iter().map(|b| b.to_ascii_lowercase()).collect();
-    let lower_a: Vec<u8> = a.iter().map(|b| b.to_ascii_lowercase()).collect();
-    if !has_match(&lower_s, &lower_a) {
-        return 0.0;
-    }
+    /// Score how well `abbrev` matches `str_` (case-insensitive); 0.0 means
+    /// no subsequence match.
+    pub fn score(&mut self, str_: &str, abbrev: &str) -> f64 {
+        if abbrev.is_empty() {
+            return 0.75; // neutral score for an empty query
+        }
+        let s = str_.as_bytes();
+        let a = abbrev.as_bytes();
+        if a.len() > s.len() {
+            return 0.0;
+        }
+        self.hay.clear();
+        self.hay.extend(s.iter().map(|b| b.to_ascii_lowercase()));
+        let m = self.hay.len();
+        let n = a.len();
+        // Reuse the DP rows; grow only when this label is longer than before.
+        for row in [&mut self.prev, &mut self.cur] {
+            if row.len() < m + 1 {
+                row.resize(m + 1, f64::NEG_INFINITY);
+            }
+            row[..m + 1].fill(f64::NEG_INFINITY);
+        }
+        let lower_a: Vec<u8> = a.iter().map(|b| b.to_ascii_lowercase()).collect();
+        if !has_match(&self.hay, &lower_a) {
+            return 0.0;
+        }
 
-    let n = lower_a.len();
-    let m = lower_s.len();
-    let neg = f64::NEG_INFINITY;
-    // Rolling DP rows over haystack positions (1-based cells, index 0 unused,
-    // mirroring the Lua port). prev[j] = best score for the pattern prefix
-    // ending exactly at haystack position j.
-    let mut prev = vec![neg; m + 1];
-    let mut cur = vec![neg; m + 1];
-    let mut best = neg;
+        let neg = f64::NEG_INFINITY;
+        let (prev, cur) = (&mut self.prev, &mut self.cur);
+        let mut best = neg;
 
-    for i in 1..=n {
-        // Running max of (prev[k] + INNER_GAP * k) over k < j enables the
-        // inner-gap transition in O(1) per cell.
-        let mut best_gap = neg;
-        for j in 1..=m {
-            let mut score_j = neg;
-            if lower_a[i - 1] == lower_s[j - 1] {
-                let bon = bonus_for(s, j - 1);
-                if i == 1 {
-                    score_j = bon - LEADING_PENALTY * (j - 1) as f64;
-                } else {
-                    let mut cand = neg;
-                    if prev[j - 1].is_finite() {
-                        cand = prev[j - 1] + CONSECUTIVE_BONUS;
-                    }
-                    if best_gap.is_finite() {
-                        let via_gap = best_gap - INNER_GAP * (j - 1) as f64;
-                        if via_gap > cand {
-                            cand = via_gap;
+        for i in 1..=n {
+            // Running max of (prev[k] + INNER_GAP * k) over k < j enables the
+            // inner-gap transition in O(1) per cell.
+            let mut best_gap = neg;
+            for j in 1..=m {
+                let mut score_j = neg;
+                if lower_a[i - 1] == self.hay[j - 1] {
+                    let bon = bonus_for(s, j - 1);
+                    if i == 1 {
+                        score_j = bon - LEADING_PENALTY * (j - 1) as f64;
+                    } else {
+                        let mut cand = neg;
+                        if prev[j - 1].is_finite() {
+                            cand = prev[j - 1] + CONSECUTIVE_BONUS;
+                        }
+                        if best_gap.is_finite() {
+                            let via_gap = best_gap - INNER_GAP * (j - 1) as f64;
+                            if via_gap > cand {
+                                cand = via_gap;
+                            }
+                        }
+                        if cand.is_finite() {
+                            score_j = cand + bon;
                         }
                     }
-                    if cand.is_finite() {
-                        score_j = cand + bon;
+                }
+                cur[j] = score_j;
+                if score_j.is_finite() && i == n && score_j > best {
+                    best = score_j;
+                }
+                // Allow prev[j] to serve gap transitions for positions after j.
+                if prev[j].is_finite() {
+                    let with_k = prev[j] + INNER_GAP * j as f64;
+                    if with_k > best_gap {
+                        best_gap = with_k;
                     }
                 }
             }
-            cur[j] = score_j;
-            if score_j.is_finite() && i == n && score_j > best {
-                best = score_j;
-            }
-            // Allow prev[j] to serve gap transitions for positions after j.
-            if prev[j].is_finite() {
-                let with_k = prev[j] + INNER_GAP * j as f64;
-                if with_k > best_gap {
-                    best_gap = with_k;
-                }
-            }
+            std::mem::swap(prev, cur);
         }
-        std::mem::swap(&mut prev, &mut cur);
-    }
 
-    if !best.is_finite() {
-        return 0.0;
+        if !best.is_finite() {
+            return 0.0;
+        }
+        best
     }
-    best
+}
+
+/// One-shot convenience wrapper (allocates scratch per call); used by the
+/// reference tests and handy for callers that score a single pair.
+#[allow(dead_code)]
+pub fn score(str_: &str, abbrev: &str) -> f64 {
+    Scorer::new().score(str_, abbrev)
 }
 
 #[cfg(test)]

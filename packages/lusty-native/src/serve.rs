@@ -48,6 +48,11 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
         let _ = f.write_all(b" C-printed\n");
     }
 
+    // Memoize the most recent query: navigation and redraws resend the
+    // same query, and re-ranking per arrow key on huge listings is waste.
+    let mut memo_q = String::new();
+    let mut memo_ranked: Vec<usize> = Vec::new();
+    let mut memo_maxw: usize = 0;
     for line in stdin.lock().lines() {
         let line = match line {
             Ok(l) => l,
@@ -59,19 +64,20 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
                 let from: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let to: usize = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let query = parts.get(3).unwrap_or(&"").to_string();
-                let ranked: Vec<usize> = if query.is_empty() {
-                    (0..entries.len()).collect()
-                } else {
-                    rank::rank_indices(&entries, &query)
-                };
+                if query != memo_q {
+                    let (ranked, maxw) = if query.is_empty() {
+                        let mw = entries.iter().map(|e| e.label.chars().count()).max().unwrap_or(0);
+                        ((0..entries.len()).collect(), mw)
+                    } else {
+                        rank::rank_indices_mw(&entries, &query)
+                    };
+                    memo_q = query.clone();
+                    memo_ranked = ranked;
+                    memo_maxw = maxw;
+                }
+                let ranked = &memo_ranked;
                 writeln!(out, "N {}", ranked.len())?;
-                // max label char count of the ranked set (column sizing)
-                let maxw = ranked
-                    .iter()
-                    .map(|&i| entries[i].label.chars().count())
-                    .max()
-                    .unwrap_or(0);
-                writeln!(out, "W {}", maxw)?;
+                writeln!(out, "W {}", memo_maxw)?;
                 let end = to.min(ranked.len());
                 for &i in &ranked[from.min(ranked.len())..end] {
                     let e = &entries[i];

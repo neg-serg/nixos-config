@@ -13,8 +13,16 @@ use crate::listing::Entry;
 /// slice (the TUI keeps one cached listing and re-ranks per keystroke without
 /// cloning entries). Empty query returns all indices (listing order).
 pub fn rank_indices(entries: &[Entry], query: &str) -> Vec<usize> {
+    rank_indices_mw(entries, query).0
+}
+
+/// rank_indices plus the widest matched label in chars (single pass over the
+/// candidates; serve needs it for column sizing and this avoids a second
+/// full scan of the matched set per keystroke).
+pub fn rank_indices_mw(entries: &[Entry], query: &str) -> (Vec<usize>, usize) {
     if query.is_empty() {
-        return (0..entries.len()).collect();
+        let mw = entries.iter().map(|e| e.label.chars().count()).max().unwrap_or(0);
+        return ((0..entries.len()).collect(), mw);
     }
     // Only an exact "." query exempts the first-letter anchor (dot reveal).
     let first = if query == "." {
@@ -22,27 +30,75 @@ pub fn rank_indices(entries: &[Entry], query: &str) -> Vec<usize> {
     } else {
         Some(query.as_bytes()[0].to_ascii_lowercase())
     };
-    let mut out: Vec<(usize, f64)> = Vec::new();
-    for (idx, e) in entries.iter().enumerate() {
-        if let Some(first) = first {
-            let name_first = e
-                .basename()
-                .as_bytes()
-                .first()
-                .copied()
-                .unwrap_or(0)
-                .to_ascii_lowercase();
-            if name_first != first {
-                continue;
+    // Rank big listings on the rayon pool: scoring is per-entry and fully
+    // independent, and one keystroke on a 600k-entry tree must not stall.
+    let scored: Vec<(usize, f64)>;
+    let maxw_out: usize;
+    if entries.len() >= 4096 {
+        use rayon::prelude::*;
+        let chunks: Vec<(Vec<(usize, f64)>, usize)> = entries
+            .par_chunks(8192)
+            .enumerate()
+            .map(|(ci, chunk)| {
+                let base = ci * 8192;
+                let mut scorer = fuzzy::Scorer::new();
+                let mut local: Vec<(usize, f64)> = Vec::new();
+                let mut lmw: usize = 0;
+                for (k, e) in chunk.iter().enumerate() {
+                    let idx = base + k;
+                    if let Some(f) = first {
+                        if e.basename().as_bytes().first().copied().unwrap_or(0).to_ascii_lowercase() != f
+                        {
+                            continue;
+                        }
+                    }
+                    let score = scorer.score(&e.label, query);
+                    if score != 0.0 {
+                        local.push((idx, score));
+                        let lw = e.label.chars().count();
+                        if lw > lmw {
+                            lmw = lw;
+                        }
+                    }
+                }
+                (local, lmw)
+            })
+            .collect();
+        let mut merged: Vec<(usize, f64)> = Vec::new();
+        let mut mw: usize = 0;
+        for (mut v, lmw) in chunks {
+            merged.append(&mut v);
+            if lmw > mw {
+                mw = lmw;
             }
         }
-        let score = fuzzy::score(&e.label, query);
-        // Lua keeps any non-zero score (negative ones rank last); 0.0 is
-        // the exact "no subsequence match" sentinel.
-        if score != 0.0 {
-            out.push((idx, score));
+        scored = merged;
+        maxw_out = mw;
+    } else {
+        let mut scorer = fuzzy::Scorer::new();
+        let mut out: Vec<(usize, f64)> = Vec::new();
+        let mut mw: usize = 0;
+        for (idx, e) in entries.iter().enumerate() {
+            if let Some(first) = first {
+                if e.basename().as_bytes().first().copied().unwrap_or(0).to_ascii_lowercase() != first
+                {
+                    continue;
+                }
+            }
+            let score = scorer.score(&e.label, query);
+            if score != 0.0 {
+                out.push((idx, score));
+                let lw = e.label.chars().count();
+                if lw > mw {
+                    mw = lw;
+                }
+            }
         }
+        scored = out;
+        maxw_out = mw;
     }
+    let mut out = scored;
+    let maxw = maxw_out;
     out.sort_by(|(ia, sa), (ib, sb)| {
         let a = &entries[*ia];
         let b = &entries[*ib];
@@ -51,7 +107,7 @@ pub fn rank_indices(entries: &[Entry], query: &str) -> Vec<usize> {
             .then_with(|| sb.partial_cmp(sa).unwrap_or(std::cmp::Ordering::Equal))
             .then_with(|| a.basename().cmp(b.basename()))
     });
-    out.into_iter().map(|(i, _)| i).collect()
+    (out.into_iter().map(|(i, _)| i).collect(), maxw)
 }
 
 #[cfg(test)]
