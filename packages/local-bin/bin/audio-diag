@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+# audio-diag - check audio routing health and unity (0 dB) on odin.
+#
+# Covers the problems that used to bite (and the 0 dB / unity state of the
+# chain):
+#   * two audio sources converging on one point (a stream both going through
+#     game-stereo loopback AND being linked straight into the RME AES pair,
+#     ~18 ms apart -> comb-filtered/muddy bass);
+#   * unity (0 dB) across game-stereo -> loopback -> RME AES, both in
+#     PipeWire volume and in the RME hardware mixer;
+#   * the anti-recurrence guards (restore-target disabled, rme-route-all /
+#     aes-dedup gone, mpd pinned to game-stereo).
+#
+# Usage: audio-diag
+# Exit:  0 all good; 1 at least one FAIL; 2 could not run (missing tooling).
+
+set -uo pipefail
+
+_fail=0
+_ess=0
+
+pass() { printf 'ok    %s\n' "$*"; }
+warn() { printf 'WARN  %s\n' "$*"; }
+fail() { printf 'FAIL  %s\n' "$*"; _fail=$((_fail + 1)); }
+info() { printf '      %s\n' "$*"; }
+
+need() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    _ess=$((_ess + 1))
+    warn "tool '$1' not found"
+    return 1
+  fi
+  return 0
+}
+
+echo "==== audio-diag ($(date '+%F %T')) ===="
+
+need pw-link
+need wpctl
+need amixer
+
+# ---------------------------------------------------------------------------
+# Collect PipeWire links as "source|destination" lines (from pw-link -l).
+# ---------------------------------------------------------------------------
+LINKS="$(
+  pw-link -l 2>/dev/null | awk '
+    /^[^ ]/            { cur = $0; next }
+    /^[[:space:]]*\|->/ { t = $0; sub(/^[[:space:]]*\|->[[:space:]]*/, "", t); print cur "|" t }
+    /^[[:space:]]*\|<-/ { s = $0; sub(/^[[:space:]]*\|<-[[:space:]]*/, "", s); print s "|" cur }
+  ' | sort -u
+)"
+
+# Sources feeding a destination port (literal string compare).
+sources_of() { awk -F'|' -v p="$1" '$2 == p { print $1 }' <<<"$LINKS"; }
+
+# ---------------------------------------------------------------------------
+# 1. Default sink must be game-stereo (everything follows it, nothing 'direct').
+# ---------------------------------------------------------------------------
+if wpctl status 2>/dev/null | grep -E '\*.*game-stereo.*Audio/Sink' >/dev/null; then
+  pass 'default sink = game-stereo'
+else
+  fail 'default sink is not game-stereo'
+fi
+
+# ---------------------------------------------------------------------------
+# 2. Single path into the RME AES pair (AUX2/AUX3): exactly one source each,
+#    and it must be the game-stereo loopback. This is the "two sources into
+#    one point" check.
+# ---------------------------------------------------------------------------
+AES_PORTS="$(printf '%s\n' "$LINKS" | cut -d'|' -f2 | grep -E ':playback_AUX[23]$' | sort -u)"
+
+if [ -z "$AES_PORTS" ]; then
+  if command -v pw-link >/dev/null 2>&1; then
+    info 'no RME AES (AUX2/AUX3) ports linked - RME may be absent or idle'
+  fi
+else
+  for p in $AES_PORTS; do
+    srcs="$(sources_of "$p")"
+    n="$(printf '%s\n' "$srcs" | grep -c . || true)"
+    if [ "$n" -eq 1 ] && printf '%s\n' "$srcs" | grep -q '^playback\.game-stereo:output_'; then
+      pass "AES ${p##*:} <- single source (playback.game-stereo loopback)"
+    else
+      fail "AES ${p##*:} has ${n} source(s) (expected exactly 1 = playback.game-stereo:output_*)"
+      printf '%s\n' "$srcs" | sed 's/^/      src: /'
+    fi
+  done
+fi
+
+# No direct app -> RME playback link (a stream bypassing game-stereo).
+DIRECT="$(printf '%s\n' "$LINKS" | awk -F'|' '$2 ~ /:playback_AUX[0-9]+$/ && $1 !~ /^playback\.game-stereo:output_/ { print $1 " -> " $2 }')"
+if [ -n "$DIRECT" ]; then
+  fail 'direct app -> RME playback links (double route)'
+  printf '%s\n' "$DIRECT" | sed 's/^/      link: /'
+else
+  pass 'no direct app -> RME playback links'
+fi
+
+# ---------------------------------------------------------------------------
+# 3. Unity (0 dB) in PipeWire for the nodes in the chain.
+# ---------------------------------------------------------------------------
+game_sink="$(wpctl status 2>/dev/null | sed -n '/game-stereo.*Audio\/Sink/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
+rme_sink="$(wpctl status 2>/dev/null | sed -n '/RME AIO Pro.*Pro/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
+loop_id="$(wpctl status 2>/dev/null | sed -n '/playback\.game-stereo/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
+
+vol_ok() { # $1 = wpctl node id or "@DEFAULT_AUDIO_SINK@"
+  local id="$1" v muted
+  v="$(wpctl get-volume "$id" 2>/dev/null | sed -n 's/.*Volume: \([0-9.]*\).*/\1/p')"
+  muted="$(wpctl get-volume "$id" 2>/dev/null | grep -qi MUTED && echo yes || echo no)"
+  awk -v v="${v:-0}" 'BEGIN{ exit !(v >= 0.999 && v <= 1.001) }' && [ "$muted" = "no" ]
+}
+
+for name_id in "game-stereo:$game_sink" "rme-pro:$rme_sink" "loopback:$loop_id"; do
+  name="${name_id%%:*}"
+  id="${name_id#*:}"
+  if [ -n "$id" ]; then
+    if vol_ok "$id"; then
+      pass "volume $name (id $id) = 1.00, not muted"
+    else
+      fail "volume $name (id $id) not at unity/muted: $(wpctl get-volume "$id" 2>/dev/null)"
+    fi
+  fi
+done
+
+if vol_ok "@DEFAULT_AUDIO_SINK@"; then
+  pass 'default sink volume = 1.00, not muted'
+else
+  fail "default sink not at unity: $(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null)"
+fi
+
+# ---------------------------------------------------------------------------
+# 4. RME hardware mixer unity (Chn controls = 64, per hdspe.nix).
+# ---------------------------------------------------------------------------
+hdsp_card="$(awk '/HDSPe|RME AIO/{print $1; exit}' /proc/asound/cards 2>/dev/null)"
+if [ -n "$hdsp_card" ]; then
+  chn_vals="$(amixer -c "$hdsp_card" contents 2>/dev/null | grep -A2 "name='Chn'" | grep -o ': values=[0-9]*' | cut -d= -f2)"
+  total="$(printf '%s\n' "$chn_vals" | grep -c . || true)"
+  bad="$(printf '%s\n' "$chn_vals" | awk '$1 != 64 { bad++ } END { print bad + 0 }')"
+  if [ "$total" -ge 16 ] && [ "$bad" -eq 0 ]; then
+    pass "RME mixer Chn (${total} controls) all = 64 (unity)"
+  else
+    fail "RME mixer Chn: ${bad} of ${total} not 64 (unity)"
+  fi
+else
+  info 'RME HDSPe card not detected - skipping hardware mixer check'
+fi
+
+# ---------------------------------------------------------------------------
+# 5. Anti-recurrence guards (informational - WARN only).
+# ---------------------------------------------------------------------------
+if grep -rlq 'restore-target' ~/.config/wireplumber /etc/wireplumber "${XDG_DATA_DIRS:-}" 2>/dev/null; then
+  pass 'restore-target=false present in wireplumber config'
+else
+  warn 'restore-target=false NOT found in wireplumber config (re-link guard may be inactive)'
+fi
+
+shopt -s nullglob
+_legacy_units=(/etc/systemd/user/*rme-route-all* /etc/systemd/user/*aes-dedup*)
+if [ "${#_legacy_units[@]}" -gt 0 ]; then
+  warn 'legacy unit rme-route-all/aes-dedup present'
+else
+  pass 'no rme-route-all / aes-dedup unit'
+fi
+if pgrep -af 'rme-route-all|aes-dedup' >/dev/null 2>&1; then
+  warn 'rme-route-all / aes-dedup process running'
+else
+  pass 'no rme-route-all / aes-dedup process'
+fi
+
+if systemctl show mpd 2>/dev/null | grep -q 'PULSE_SINK=game-stereo'; then
+  pass 'mpd pinned to game-stereo (PULSE_SINK)'
+else
+  warn 'mpd not pinned to game-stereo (PULSE_SINK missing)'
+fi
+
+echo "==== audio-diag done: ${_fail} FAIL(s) ===="
+if [ "$_ess" -gt 0 ]; then
+  exit 2
+fi
+[ "$_fail" -eq 0 ] && exit 0 || exit 1
