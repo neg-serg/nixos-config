@@ -944,6 +944,7 @@ Scope {
                                     id: mediaModule
                                     anchors.fill: parent
                                     sidePanelPopup: rootScope.sidebarPopup
+                                    panelHovering: rightPanel.panelHovering
                                 }
                             }
                             LocalMods.MpdFlags {
