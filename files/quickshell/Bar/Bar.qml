@@ -1212,18 +1212,23 @@ Scope {
                     property string _lastTrackKey: ""
                     function maybeShowOnAlbumChange() {
                         try {
-                            if (!MusicManager.hasPlayer) return;
+                            const dbg = Settings.settings && Settings.settings.debugLogs;
+                            if (!MusicManager.hasPlayer) { if (dbg) console.debug("[qs-music] track-change: no player"); return; }
                             // Some tracks lack an album tag; derive a robust change
                             // key from album+title+artist so the popup still fires.
                             const album = String(MusicManager.trackAlbum || "");
                             const title = String(MusicManager.trackTitle || "");
                             const artist = String(MusicManager.trackArtist || "");
                             const key = (album + "|" + title + "|" + artist);
+                            if (dbg) console.debug("[qs-music] track-change key='" + key + "' last='" + rightPanel._lastTrackKey + "' popup=" + (rootScope.sidebarPopup ? "yes" : "null"));
                             if (key === rightPanel._lastTrackKey) return;
-                            if (!title && !artist) return;
+                            if (!title && !artist) { if (dbg) console.debug("[qs-music] track-change: no metadata yet"); return; }
                             rightPanel._lastTrackKey = key;
                             if (album !== rightPanel._lastAlbum) rightPanel._lastAlbum = album;
-                            if (MusicManager.trackTitle || MusicManager.trackArtist) rootScope.sidebarPopup && rootScope.sidebarPopup.showAt();
+                            if (MusicManager.trackTitle || MusicManager.trackArtist) {
+                                if (dbg) console.debug("[qs-music] track-change -> showAt");
+                                rootScope.sidebarPopup && rootScope.sidebarPopup.showAt();
+                            }
                         } catch (e) { /* ignore */ }
                     }
                     

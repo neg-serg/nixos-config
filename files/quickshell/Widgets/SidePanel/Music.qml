@@ -31,9 +31,12 @@ Rectangle {
         Rectangle {
             id: card
             anchors.fill: parent
-            color: Color.withAlpha("#000000", 0.85)
-            border.color: "transparent"
-            border.width: Theme.uiBorderNone
+            // Solid enough to stand out over dark wallpaper/browser content:
+            // a pure-black translucent card over a black background was
+            // effectively invisible. Outline defines the card edge.
+            color: Color.withAlpha("#000000", 0.92)
+            border.color: Theme.outline
+            border.width: Math.max(1, Math.round(Theme.uiBorderWidth * Theme.scale(Screen)))
             radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
 
         Item {
