@@ -1011,6 +1011,9 @@ function Picker:open_current(action)
     return
   end
   if item.kind == 'd' then
+    -- Entering a directory is a visit too: record it so the dirs MRU
+    -- (,. then C-r) reflects where the filesystem float was used.
+    frecency.record(item.path)
     self:restart(item.path)
     return
   end
