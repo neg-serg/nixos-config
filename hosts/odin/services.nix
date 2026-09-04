@@ -96,6 +96,81 @@ let
     '';
   };
 
+  # Shared Telegram sender: posts one message ("$1", optional detail "$2") to
+  # the chat from secrets/telegram.sops.yaml, appending a local timestamp.
+  # api.telegram.org is only reachable via the user sing-box socks proxy
+  # (127.0.0.1:10808), which starts at login, so retry up to "$3" attempts
+  # (default 12) with 5s pauses between them.
+  telegramSendScript = pkgs.writeShellApplication {
+    name = "telegram-send";
+    runtimeInputs = [
+      pkgs.curl # HTTP(S) client for the Telegram Bot API
+      pkgs.coreutils # date, seq, sleep for retry loop and timestamps
+    ];
+    text = ''
+      set -euo pipefail
+
+      TOKEN="$(cat ${config.sops.secrets."telegram/bot-token".path})"
+      CHAT_ID="$(cat ${config.sops.secrets."telegram/chat-id".path})"
+      export TOKEN CHAT_ID
+
+      msg="$1"
+      detail="''${2:-}"
+      attempts="''${3:-12}"
+      if [ -n "$detail" ]; then
+        msg="$msg: $detail"
+      fi
+      msg="$msg ($(date '+%Y-%m-%d %H:%M %Z'))"
+
+      for _ in $(seq 1 "$attempts"); do
+        if curl -sf -o /dev/null \
+          --proxy socks5h://127.0.0.1:10808 \
+          --data-urlencode "chat_id=$CHAT_ID" \
+          --data-urlencode "text=$msg" \
+          "https://api.telegram.org/bot$TOKEN/sendMessage"; then
+          exit 0
+        fi
+        sleep 5
+      done
+      echo "telegram-send: could not deliver message after $attempts attempts" >&2
+      exit 1
+    '';
+  };
+
+  # Notifies Telegram on the down->up edge of the dockur Windows VM ("таз"):
+  # probes RDP (127.0.0.1:3389) twice 5s apart; when the VM accepts
+  # connections and no notification was recorded yet, sends one and marks it.
+  # A failed probe clears the marker so the next VM boot re-notifies.
+  windowsReadyCheckScript = pkgs.writeShellApplication {
+    name = "telegram-notify-windows-ready";
+    runtimeInputs = [ pkgs.coreutils ]; # rm/touch of the state marker
+    text = ''
+      set -euo pipefail
+
+      STATE_FILE="/var/lib/telegram-notify/windows-ready.sent"
+
+      ok=0
+      for _ in 1 2; do
+        if (exec 3<>/dev/tcp/127.0.0.1/3389) 2>/dev/null; then
+          ok=1
+        else
+          ok=0
+          break
+        fi
+        sleep 5
+      done
+
+      if [ "$ok" != 1 ]; then
+        rm -f "$STATE_FILE"
+        exit 0
+      fi
+      [ -e "$STATE_FILE" ] && exit 0
+
+      ${lib.getExe telegramSendScript} "таз загрузился" "Windows-VM доступна по RDP (127.0.0.1:3389)"
+      touch "$STATE_FILE"
+    '';
+  };
+
   # Telegram alert scanner: python script run by a systemd timer every minute.
   # Posts into Alertmanager (wire format: array of
   # {labels: {alertname, severity}, annotations: {summary}, startsAt}):
@@ -800,6 +875,42 @@ lib.mkMerge [
       timerConfig = {
         OnCalendar = "*-*-* *:*:00";
         Unit = "telegram-alert-scanner.service";
+      };
+    };
+
+    # Telegram "odin booted" notice. The socks proxy is a user unit that
+    # starts at login, so keep retrying for a while after network is up.
+    systemd.services."telegram-notify-boot" = {
+      description = "Send a Telegram message that odin has booted";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${lib.getExe telegramSendScript} \"odin: загрузился\" 120";
+        Restart = "on-failure";
+        RestartSec = 300;
+      };
+    };
+
+    # Telegram "taz is up" notice for the dockur Windows VM (started by
+    # hand, so poll RDP instead of depending on a container unit).
+    systemd.services."telegram-notify-windows-ready" = {
+      description = "Send a Telegram message when the dockur Windows VM accepts RDP";
+      serviceConfig = {
+        Type = "oneshot";
+        StateDirectory = "telegram-notify";
+        ExecStart = "${lib.getExe windowsReadyCheckScript}";
+      };
+    };
+
+    systemd.timers."telegram-notify-windows-ready" = {
+      description = "Poll the dockur Windows VM RDP port and notify on boot";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "60";
+        OnUnitActiveSec = "30";
+        Unit = "telegram-notify-windows-ready.service";
       };
     };
   })
