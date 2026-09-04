@@ -323,6 +323,19 @@ function Pick:draw()
         api.nvim_buf_add_highlight(self.buf, ns, m.group, cell.line - 1, m.start, m.finish)
       end
     end
+    -- Underline matched query letters in the label (incl. the selected row,
+    -- so the match survives the selection bar).
+    local label = cell.item.label
+    if label and self.query ~= '' and self.query:sub(1, 1) ~= '.' then
+      local base = label:match('([^/]+)$') or label
+      local s, e = base:lower():find(self.query:lower(), 1, true)
+      if s and e then
+        local origin = cell.start_col + (#label - #base)
+        api.nvim_buf_add_highlight(
+          self.buf, ns, 'LustyNativeMatch', cell.line - 1, origin + s - 1, origin + e
+        )
+      end
+    end
   end
   if self.total > 0 then
     local sel_row = math.floor((self.selected - self.offset) / cols)

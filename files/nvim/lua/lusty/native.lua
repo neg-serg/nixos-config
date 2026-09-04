@@ -593,19 +593,19 @@ function Picker:draw()
     end
     -- approximate fuzzy-match highlight: underline the first plain
     -- case-insensitive occurrence of the query in the entry basename
-    if cell.pos ~= self.selected then
-      local q = self.query
-      if q ~= '' and q:sub(1, 1) ~= '.' then
-        local base = basename(cell.item.label)
-        local s, e = base:lower():find(q:lower(), 1, true)
-        if s and e then
-          local name_start = name_from + (cell.icon_bytes or 0)
-          local lstart = #cell.item.label - #base
-          api.nvim_buf_add_highlight(
-            self.buf, ns, 'LustyNativeMatch', cell.line - 1,
-            name_start + lstart + s - 1, name_start + lstart + e
-          )
-        end
+    -- Underline the matched query letters in every cell, including the
+    -- selected one, so the match survives the selection bar.
+    local q = self.query
+    if q ~= '' and q:sub(1, 1) ~= '.' then
+      local base = basename(cell.item.label)
+      local s, e = base:lower():find(q:lower(), 1, true)
+      if s and e then
+        local name_start = name_from + (cell.icon_bytes or 0)
+        local lstart = #cell.item.label - #base
+        api.nvim_buf_add_highlight(
+          self.buf, ns, 'LustyNativeMatch', cell.line - 1,
+          name_start + lstart + s - 1, name_start + lstart + e
+        )
       end
     end
   end
@@ -1122,6 +1122,17 @@ function M.ensure_highlights()
   })
   if not ok then
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#005faf', fg = '#d1e5ff', bold = true })
+  end
+  -- Optional selection style presets: g:LustyExplorerSelStyle = 1..4
+  -- (1 blue default, 2 cyan, 3 purple, 4 reverse video). Overrides the
+  -- PmenuSel-derived colors so the selection can be restyled in place.
+  local st = tonumber(vim.g.LustyExplorerSelStyle)
+  if st == 2 then
+    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#006e9f', fg = '#dfffff', bold = true })
+  elseif st == 3 then
+    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#5e35b1', fg = '#ffffff', bold = true })
+  elseif st == 4 then
+    api.nvim_set_hl(0, 'LustyNativeSel', { reverse = true, bold = true })
   end
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
   api.nvim_set_hl(0, 'LustyNativeMatch', { underline = true })
