@@ -99,6 +99,17 @@ Item {
     readonly property bool mediaBorderless: Settings.settings.mediaIconBorderless !== false
     onMediaAccentChanged: { accentVersion++; }
 
+    // ── Small bar analyser: live copy of cava values (in-place mutation won't
+    // trigger bindings, so copy on a timer) ──
+    property var _barSpec: []
+    Timer {
+        id: barSpecTick
+        interval: 80
+        repeat: true
+        running: MusicManager.isPlaying
+        onTriggered: mediaControl._barSpec = (MusicManager.cavaValues || []).slice();
+    }
+
     // ── Accent color sampling (Canvas must live in a windowed component) ──
     property int _accentRetryCount: 0
 
@@ -223,6 +234,25 @@ Item {
                 spacing: mediaControl.mediaRowSpacing
                 visible: !mediaControl.stretchMode && !mediaControl.panelMode
                 enabled: visible
+
+                // Small iPhone-style analyser to the left of the album art,
+                // same style/settings as the toast, just ~5 bars and simpler.
+                IPhoneSpectrum {
+                    id: barMiniSpec
+                    Layout.preferredWidth: Math.round(mediaControl.baseHeight * 0.9)
+                    Layout.minimumWidth: Math.round(mediaControl.baseHeight * 0.9)
+                    Layout.preferredHeight: Math.round(mediaControl.baseHeight * 0.9)
+                    Layout.alignment: Qt.AlignVCenter
+                    values: mediaControl._barSpec
+                    targetBars: 5
+                    accentColor: mediaControl.mediaAccent
+                    fillOpacity: 0.8
+                    barGap: 3
+                    minBarWidth: 4
+                    animDurationMs: 80
+                    opacity: 0.9
+                    visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
+                }
 
                 Item {
                     id: compactIconHost
