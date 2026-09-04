@@ -174,6 +174,19 @@ Singleton {
             property bool musicPopupColoredProgress: true   // progress bar in cover accent colour
             property real musicPopupProgressHeight: 5       // logical px, scaled (progress line thickness)
 
+            // Small bar analyser (left of the bar album art)
+            property bool barAnalyserMirror: false          // false = one-sided
+            property int barAnalyserBars: 5
+            property real barAnalyserFillOpacity: 0.8
+            property int barAnalyserBarGap: 2
+            property int barAnalyserMinBarWidth: 5
+            // Large toast analyser (behind the popup progress bar)
+            property bool toastAnalyserMirror: false        // false = one-sided
+            property int toastAnalyserBars: 24
+            property real toastAnalyserFillOpacity: 1.0
+            property int toastAnalyserBarGap: 2
+            property int toastAnalyserMinBarWidth: 2
+
             property int networkPingIntervalMs: 30000
             property string networkPingTarget: "8.8.8.8"
             property string networkNoInternetColor: "#FF6E00"
