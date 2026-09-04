@@ -81,6 +81,47 @@ Item {
                     glowOpacity: 0.35,
                     glowSpread: 2.1
                 };
+            case "neon-lime":
+                return {
+                    base: Qt.rgba(0.0, 0.87, 0.46, 1),
+                    end: Qt.rgba(0.7, 1.0, 0.35, 1),
+                    minBarWidth: 1,
+                    barGap: 1,
+                    fillOpacity: 0.5,
+                    glowOpacity: 0.5,
+                    glowSpread: 2.5
+                };
+            case "neon-orange":
+                return {
+                    base: Qt.rgba(1.0, 0.42, 0.0, 1),
+                    end: Qt.rgba(1.0, 0.82, 0.5, 1),
+                    minBarWidth: 1,
+                    barGap: 2,
+                    fillOpacity: 0.5,
+                    glowOpacity: 0.5,
+                    glowSpread: 2.4
+                };
+            case "holographic":
+                return {
+                    base: Qt.rgba(0.0, 0.9, 1.0, 1),
+                    end: Qt.rgba(0.84, 0.0, 0.98, 1),
+                    minBarWidth: 1,
+                    barGap: 2,
+                    fillOpacity: 0.55,
+                    glowOpacity: 0.55,
+                    glowSpread: 2.6
+                };
+            case "analog-vu":
+                return {
+                    base: Qt.rgba(0.0, 0.9, 0.46, 1),
+                    end: Qt.rgba(1.0, 0.09, 0.27, 1),
+                    minBarWidth: 2,
+                    barGap: 2,
+                    fillOpacity: 0.75,
+                    glowOpacity: 0.35,
+                    glowSpread: 1.8,
+                    vu: true
+                };
             case "neon-cyan":
             default:
                 return {
@@ -150,6 +191,12 @@ Item {
         var c = root.dimColor;
         return Qt.rgba(c.r, c.g, c.b, alpha);
     }
+    // Classic VU meter ramp: green at low level, amber mid, red hot.
+    function vuColorAt(v, alpha) {
+        var c = (v < 0.5) ? Qt.rgba(0.0, 0.9, 0.46, 1)
+                : (v < 0.8 ? Qt.rgba(1.0, 0.84, 0.0, 1) : Qt.rgba(1.0, 0.09, 0.27, 1));
+        return Qt.rgba(c.r, c.g, c.b, alpha);
+    }
 
     readonly property real barW: {
         var n = Math.max(1, root.barCount);
@@ -172,10 +219,15 @@ Item {
                 var f = root.freqAt(index);
                 return f >= root.colorMinHz && f <= root.colorMaxHz;
             }
-            property color barColor: parent.inColorBand
-                ? root.gradientAt(index, root._barFillOpacity)
-                : root.dimColorAt(root.dimOpacity)
-            property color glowColor: root.gradientAt(index, root._glowOpacity)
+            property color barColor: {
+                if (!parent.inColorBand) return root.dimColorAt(root.dimOpacity);
+                if (root._presetCfg && root._presetCfg.vu) return root.vuColorAt(v, root._barFillOpacity);
+                return root.gradientAt(index, root._barFillOpacity);
+            }
+            property color glowColor: {
+                if (root._presetCfg && root._presetCfg.vu) return root.vuColorAt(v, root._glowOpacity);
+                return root.gradientAt(index, root._glowOpacity);
+            }
             // 3D helpers: horizontal position, perspective falloff, specular tip.
             readonly property real t: (root.barCount <= 1) ? 0 : (index / (root.barCount - 1))
             readonly property real persp: root.threeD
