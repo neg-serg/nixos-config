@@ -20,10 +20,11 @@ local fs = require('lusty.filesystem_explorer')
 local native = require('lusty.native')
 local be = require('lusty.buffer_explorer')
 local bg = require('lusty.buffer_grep')
+local nbufs = require('lusty.native_buffers')
+local ngrep = require('lusty.native_buffer_grep')
 
 -- Native picker is the default; g:LustyExplorerNative = 0 keeps the Lua port
--- (the fallback). Buffer explorer/grep have no native mode yet, so those
--- always use the Lua port.
+-- (the fallback). Buffers and grep use the native float too when enabled.
 local function native_enabled()
   local n = vim.g.LustyExplorerNative
   return not (n == 0 or n == false or n == '0')
@@ -34,6 +35,22 @@ local function run_fs(dir)
     native.run(dir == nil and vim.fn.getcwd() or dir)
   else
     fs.run(dir)
+  end
+end
+
+local function run_buffers()
+  if native_enabled() then
+    nbufs.run()
+  else
+    be.run()
+  end
+end
+
+local function run_grep()
+  if native_enabled() then
+    ngrep.run()
+  else
+    bg.run()
   end
 end
 
@@ -58,12 +75,12 @@ function M.setup()
   end, { desc = 'Lusty filesystem explorer from current file dir (native unless g:LustyExplorerNative=0)' })
 
   vim.api.nvim_create_user_command('LustyBufferExplorer', function()
-    be.run()
-  end, { desc = 'Lusty buffer explorer' })
+    run_buffers()
+  end, { desc = 'Lusty buffer explorer (native float unless g:LustyExplorerNative=0)' })
 
   vim.api.nvim_create_user_command('LustyBufferGrep', function()
-    bg.run()
-  end, { desc = 'Lusty buffer grep' })
+    run_grep()
+  end, { desc = 'Lusty buffer grep (native float unless g:LustyExplorerNative=0)' })
 
   -- Deprecated non-prefixed aliases (they only warn, like the original).
   vim.api.nvim_create_user_command('BufferExplorer', function()
@@ -97,10 +114,10 @@ function M.setup()
       run_fs(nil)
     end, { desc = 'Lusty filesystem explorer (cwd, native)' })
     vim.keymap.set('n', '<leader>B', function()
-      be.run()
+      run_buffers()
     end, { desc = 'Lusty buffer explorer' })
     vim.keymap.set('n', '<leader>G', function()
-      bg.run()
+      run_grep()
     end, { desc = 'Lusty buffer grep' })
   end
 end
