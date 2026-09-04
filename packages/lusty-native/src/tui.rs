@@ -68,6 +68,8 @@ pub struct App {
     box_w: usize, // popup inner width (content columns between the borders)
     box_h: usize, // popup outer height including the two border rows
     pop_top: usize, // 0-based screen row of the popup top border
+    ui_rows: Option<usize>, // user popup height (outer rows incl borders)
+    ui_width: Option<usize>, // user popup width (outer columns incl borders)
     palette: Colors,
 }
 
@@ -89,8 +91,23 @@ impl App {
             box_w: 78,
             box_h: OUTER_ROWS,
             pop_top: 0,
+            ui_rows: None,
+            ui_width: None,
             palette,
         }
+    }
+
+    /// Override the popup size. CLI flags win over LUSTY_ROWS/LUSTY_WIDTH
+    /// env vars; None keeps the default (14 outer rows, up to 102 outer
+    /// columns, i.e. 12 content rows and 100 content columns).
+    pub fn set_ui(&mut self, rows: Option<usize>, width: Option<usize>) {
+        let env_usize = |name: &str| {
+            std::env::var(name)
+                .ok()
+                .and_then(|v| v.trim().parse::<usize>().ok())
+        };
+        self.ui_rows = rows.or_else(|| env_usize("LUSTY_ROWS"));
+        self.ui_width = width.or_else(|| env_usize("LUSTY_WIDTH"));
     }
 
     fn show_dots(&self) -> bool {
@@ -274,10 +291,20 @@ impl App {
             self.size = ((c as usize).max(40), (r as usize).max(10));
         }
         let (w, h) = self.size;
-        // Popup geometry: outer box height capped at OUTER_ROWS, inner
-        // content width capped at 100 columns, always inside the screen.
-        self.box_h = OUTER_ROWS.min(h).max(1);
-        self.box_w = w.saturating_sub(2).min(100);
+        // Popup geometry: outer box height and width honour the user
+        // overrides (--rows/--width or LUSTY_ROWS/LUSTY_WIDTH) and are
+        // clamped to the screen; defaults are OUTER_ROWS rows and up to 102
+        // outer columns (100 content columns).
+        let outer_h = match self.ui_rows {
+            Some(r) => r.clamp(5, 200).min(h),
+            None => OUTER_ROWS.min(h),
+        };
+        self.box_h = outer_h.max(1);
+        let outer_w = match self.ui_width {
+            Some(uw) => uw.clamp(10, 400).min(w),
+            None => w.min(102),
+        };
+        self.box_w = outer_w.saturating_sub(2);
         // Place the box directly under the command line; when it would
         // run past the bottom of the screen, scroll the content up first
         // (fzf --height behaviour). probe_size parked the cursor on the
