@@ -29,7 +29,7 @@ fn main() {
   --depth N listing depth (default 2)
   --skip a,b  directories skipped (default pic,tmp)
   --rows N  popup total height incl borders (default 14)
-  --width N popup total width incl borders (default: up to 102)
+  --width N popup total width incl borders (default: full terminal width)
 
 Size may also come from LUSTY_ROWS / LUSTY_WIDTH env vars;
 command-line flags win.
