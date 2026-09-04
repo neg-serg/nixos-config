@@ -347,9 +347,17 @@ Rectangle {
                                 color: playerUI.musicTextColor
                             }
                             Item {
+                                id: progressBand
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: Math.max(10, Math.round(84 * Theme.scale(screen)))
                                 implicitHeight: Layout.preferredHeight
+                                // Fill colour: custom spectrum colour, else cover accent.
+                                readonly property color _progressFillColor: {
+                                    var c = (Settings.settings.spectrumColor !== undefined && Settings.settings.spectrumColor !== "")
+                                        ? Settings.settings.spectrumColor
+                                        : (Settings.settings.musicPopupColoredProgress ? detailsCol.musicAccent : "");
+                                    return (c !== "") ? c : Color.withAlpha(playerUI.musicTextColor, 0.7);
+                                }
 
                                 // Spectrum analyzer in the background of the
                                 // progress area, coloured with the cover accent.
@@ -372,28 +380,40 @@ Rectangle {
                                     visible: Settings.settings.musicPopupSpectrum
                                 }
 
-                                // Progress line at the bottom of the spectrum band,
-                                // directly above the transport buttons.
+                                // Thin, glowing scrub bar at the bottom of the band.
                                 Rectangle {
+                                    id: scrubTrack
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.bottom: parent.bottom
                                     height: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen)))
-                                    // Opaque neutral track: visible on the dark card but
-                                    // still blocks the spectrum behind the unfilled part.
-                                    color: "#3D3D3D"
-                                    radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
-                                    Rectangle {
+                                    // Subtle hairline track (the spectrum ends well above it).
+                                    color: Color.withAlpha(Theme.textPrimary, 0.16)
+                                    radius: height / 2
+
+                                    Item {
+                                        id: scrubFill
                                         anchors.left: parent.left
                                         anchors.verticalCenter: parent.verticalCenter
                                         height: parent.height
-                                        // Live progress (reactive so it tracks seeks).
                                         width: parent.width * playerUI.musicProgress()
-                                        // Cover-accent coloured (clearly), or neutral when disabled.
-                                        color: Settings.settings.musicPopupColoredProgress
-                                            ? detailsCol.musicAccent
-                                            : Color.withAlpha(playerUI.musicTextColor, 0.7)
-                                        radius: parent.radius
+
+                                        // Neon halo behind the fill.
+                                        Rectangle {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: Math.max(2, parent.width * 2.6)
+                                            height: Math.max(2, parent.height * 3.4)
+                                            radius: height / 2
+                                            color: Color.withAlpha(progressBand._progressFillColor, 0.4)
+                                            z: -1
+                                        }
+                                        // Sharp bright core.
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: parent.height / 2
+                                            color: progressBand._progressFillColor
+                                        }
                                     }
                                 }
 
