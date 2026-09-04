@@ -220,12 +220,12 @@ impl App {
             if e.kind != FileKind::Dir || e.depth != 1 {
                 continue;
             }
-            let nl = e.name.to_lowercase();
+            let nl = e.basename().to_lowercase();
             if nl == ql || nl.starts_with(&ql) {
                 if cand.is_some() {
                     dup = true;
                 } else {
-                    cand = Some(e.name.clone());
+                    cand = Some(e.basename().to_string());
                 }
             }
         }
@@ -251,7 +251,7 @@ impl App {
         }
         let entry = self.entry_at(self.selected);
         if entry.kind == FileKind::Dir {
-            self.re_root(entry.path);
+            self.re_root(entry.path(&self.root));
             return Ok(());
         }
         // No alternate screen here: the picker usually runs inside a nvim
@@ -267,7 +267,7 @@ impl App {
         terminal::disable_raw_mode()?;
         execute!(io::stdout(), cursor::Show)?;
         let mut so = io::stdout().lock();
-        writeln!(so, "{}\t{}", action, entry.path.display())?;
+        writeln!(so, "{}\t{}", action, entry.path(&self.root).display())?;
         so.flush()?;
         std::process::exit(0);
     }
@@ -586,6 +586,7 @@ impl App {
 
     fn draw(&mut self, out: &mut io::Stdout) -> io::Result<()> {
         self.ensure_ranked();
+        let root_path = self.root.clone();
         let esc = char::from_u32(0x1b).unwrap();
         let w = self.box_w;
         let top = self.pop_top;
@@ -623,8 +624,8 @@ impl App {
                         if pos == self.selected {
                             cell.push_str(&format!("{esc}[1;48;2;0;95;175;38;2;209;229;255m"));
                         } else {
-                            let exec = e.kind == FileKind::File && is_exec(&e.path);
-                            if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
+                            let exec = e.kind == FileKind::File && is_exec(&root_path.join(&e.label));
+                            if let Some(code) = self.palette.code_for(e.basename(), e.kind, exec) {
                                 cell.push_str(&format!("{esc}[{code}m"));
                             }
                         }

@@ -204,8 +204,8 @@ fn run_list(args: &[String]) {
     for &i in &idxs {
         let e = &entries[i];
         let code = palette.as_ref().and_then(|p| {
-            let exec = e.kind == FileKind::File && is_exec(&e.path);
-            p.code_for(&e.name, e.kind, exec)
+            let exec = e.kind == FileKind::File && is_exec(&e.path(&root));
+            p.code_for(e.basename(), e.kind, exec)
         });
         push_label(&mut out, e, code, esc);
     }
