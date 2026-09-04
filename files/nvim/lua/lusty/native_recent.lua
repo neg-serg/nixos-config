@@ -5,6 +5,7 @@
 -- directories stays distinguishable.
 
 local pick = require('lusty.native_pick')
+local frecency = require('lusty.frecency')
 local fuzzy = require('lusty.fuzzy')
 local mercury = require('lusty.mercury')
 local util = require('lusty.util')
@@ -35,7 +36,8 @@ end
 
 local function snapshot_items()
   local seen = {}
-  local out = {}
+  local scored = {}
+  local rest = {}
   for i, p in ipairs(recent_paths()) do
     if not seen[p] and vim.fn.filereadable(p) == 1 then
       seen[p] = true
@@ -49,11 +51,30 @@ local function snapshot_items()
       if group then
         item.group = group
       end
-      out[#out + 1] = item
-      if #out >= 150 then
+      local sc = frecency.score(p)
+      if sc then
+        item.frecency = sc
+        scored[#scored + 1] = item
+      else
+        rest[#rest + 1] = item
+      end
+      if #scored + #rest >= 150 then
         break
       end
     end
+  end
+  table.sort(scored, function(a, b)
+    if a.frecency == b.frecency then
+      return a.order < b.order
+    end
+    return a.frecency > b.frecency
+  end)
+  local out = {}
+  for _, it in ipairs(scored) do
+    out[#out + 1] = it
+  end
+  for _, it in ipairs(rest) do
+    out[#out + 1] = it
   end
   return out
 end
@@ -105,6 +126,7 @@ function M.run()
     source = make_source(snap),
     on_open = function(item, mode)
       running = false
+      frecency.record(item.path)
       open_path(item.path, mode)
     end,
     on_close = function(p2)
