@@ -37,11 +37,11 @@
 
 ## Превью (панель справа)
 
-- Файл текст (head, подсветка), файл бинарь (MIME+hexdump), изображение (kitty protocol / degrade),
-  каталог (мини-листинг), буфер (C-b), grep-hit (контекст вокруг), git-diff фрагмент, метаданные
-  stat, recent (голова).
-- Переключение C-Space/P; ширина LUSTY_PREVIEW_WIDTH; асинхронно, debounce, отмена устаревших;
-  лимиты LUSTY_PREVIEW_MAX_BYTES; graceful degrade без изображений/nerd font.
+- Сделано в standalone (C-Space/Shift+P; ширина LUSTY_PREVIEW_WIDTH, лимит LUSTY_PREVIEW_MAX_BYTES):
+  изображения (chafa ANSI-art — работает в любом терминале; нативный kitty-протокол — следующий
+  шаг), git-diff выбранного файла (unstaged), man-страницы (.1..9/.man/.gz через man -l).
+- Не делаем: файл-текст/бинарь/каталог/буфер/grep/stat/recent (пункт D).
+- Асинхронный рендер/отмена устаревших — не делаем (рендер по смене выделения с кэшем).
 
 ## Порядок работ
 
@@ -51,7 +51,8 @@
 - C: custom-колонки + env/config + иконки — готово (--columns/LUSTY_COLUMNS в standalone и float;
   g:LustyExplorerColumns читает float; иконки в float — g:LustyExplorerIcons=1 / LUSTY_ICONS=1).
 - D: превью текст/каталог/буфер/grep — по договорённости не делаем.
-- E: изображения, git-diff, man — отложено (вместе с превью).
+- E: изображения, git-diff, man — готово в standalone (chafa/git diff/man; C-Space/Shift+P);
+  kitty-протокол для изображений — следующий шаг.
 - F: тесты — serve M покрыт Rust-интеграционным тестом (tests/serve_m.rs); headless-смоуки float:
   smoke.lua, native_float_smoke.lua, filesystem_float_smoke.lua, filesystem_float_icons_smoke.lua
   (check-lusty-smoke.sh).
