@@ -70,7 +70,7 @@
       inputs.wl.follows = "wl";
       inputs.rsmetrx.follows = "rsmetrx";
     };
-    nix-maid.url = "github:viperML/nix-maid";
+    nix-maid.url = "git+https://codeberg.org/viperML/nix-maid";
     hyprscratch = {
       url = "github:neg-serg/hyprscratch";
       inputs.nixpkgs.follows = "nixpkgs";
