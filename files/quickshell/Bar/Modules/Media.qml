@@ -254,7 +254,9 @@ Item {
                     minBarWidth: 4
                     animDurationMs: 80
                     opacity: 0.9
+                    // Appear only while hovering the media capsule.
                     visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
+                        && mediaControl.capsule.hovered
                 }
 
                 Item {
