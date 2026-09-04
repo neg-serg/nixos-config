@@ -88,7 +88,7 @@ CAVA / Spectrum (global defaults; each may be overridden per profile in visualiz
 - showSpectrumTopHalf: boolean, default false. Show top half only.
 - spectrumMinHz: integer, default 15. Low end of the full spectrum scale (Hz).
 - spectrumMaxHz: integer, default 24000. High end of the full spectrum scale (Hz).
-- spectrumColorMinHz: integer, default 15000. Low end of the coloured band (Hz).
+- spectrumColorMinHz: integer, default 15. Low end of the coloured band (Hz).
 - spectrumColorMaxHz: integer, default 24000. High end of the coloured band (Hz).
 - spectrumDimOpacity: number 0..1, default 0.18. Opacity of bars outside the coloured band.
 - spectrumFillOpacity: number 0..1, default 0.35. Fill opacity.

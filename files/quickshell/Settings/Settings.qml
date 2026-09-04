@@ -103,7 +103,7 @@ Singleton {
             // highlighted (coloured) band inside it.
             property int spectrumMinHz: 15
             property int spectrumMaxHz: 24000
-            property int spectrumColorMinHz: 15000
+            property int spectrumColorMinHz: 15
             property int spectrumColorMaxHz: 24000
             property real spectrumDimOpacity: 0.18
             // Show audio level (volume/mic/Genelec dB) when the cursor hovers
