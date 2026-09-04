@@ -360,11 +360,11 @@ Rectangle {
                                     values: playerUI._spec
                                     targetBars: 24
                                     accentColor: detailsCol.musicAccent
-                                    fillOpacity: 0.7
+                                    fillOpacity: 1.0
                                     barGap: 2
                                     minBarWidth: 2
                                     animDurationMs: 80
-                                    opacity: 0.85
+                                    opacity: 1.0
                                     visible: Settings.settings.musicPopupSpectrum
                                 }
 
