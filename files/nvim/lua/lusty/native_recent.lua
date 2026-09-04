@@ -10,11 +10,24 @@ local fuzzy = require('lusty.fuzzy')
 local mercury = require('lusty.mercury')
 local util = require('lusty.util')
 local lsc = require('lusty.ls_colors')
+local native = require('lusty.native')
 
 local M = {}
 
 -- Remember the last filter between runs.
 local previous_input = ''
+
+-- Which MRU is shown: 'files' (v:oldfiles + journal files) or 'dirs'
+-- (journal directories). C-r toggles while the picker is open.
+local mode = 'files'
+
+function M.set_mode(m)
+  mode = m == 'dirs' and 'dirs' or 'files'
+end
+
+function M.mode()
+  return mode
+end
 
 -- Test seam / future source override; default reads v:oldfiles.
 local recent_fn = nil
@@ -50,32 +63,48 @@ local function open_path(path, mode)
   vim.cmd('silent ' .. cmd .. vim.fn.fnameescape(path))
 end
 
+local function dir_paths()
+  local out = {}
+  for _, p in ipairs(frecency.paths()) do
+    if vim.fn.isdirectory(p) == 1 then
+      out[#out + 1] = p
+    end
+  end
+  return out
+end
+
 local function snapshot_items()
   local seen = {}
   local scored = {}
   local rest = {}
-  for i, p in ipairs(recent_paths()) do
-    if not seen[p] and vim.fn.filereadable(p) == 1 then
-      seen[p] = true
-      local label = vim.fn.fnamemodify(p, ':.')
-      local item = {
-        path = p,
-        order = i,
-        label = label,
-      }
-      local group = lsc.group_for({ name = p, is_dir = false })
-      if group then
-        item.group = group
-      end
-      local sc = frecency.score(p)
-      if sc then
-        item.frecency = sc
-        scored[#scored + 1] = item
-      else
-        rest[#rest + 1] = item
-      end
-      if #scored + #rest >= 150 then
-        break
+  local is_dir_mode = mode == 'dirs'
+  local paths = is_dir_mode and dir_paths() or recent_paths()
+  for i, p in ipairs(paths) do
+    if not seen[p] then
+      local exists = is_dir_mode and vim.fn.isdirectory(p) == 1 or vim.fn.filereadable(p) == 1
+      if exists then
+        seen[p] = true
+        local label = vim.fn.fnamemodify(p, ':.')
+        local item = {
+          path = p,
+          order = i,
+          label = label,
+          is_dir = is_dir_mode,
+        }
+        local group = lsc.group_for({ name = p, is_dir = is_dir_mode })
+        if group then
+          item.group = group
+        end
+        local sc = frecency.score(p)
+        if sc then
+          item.frecency = sc
+          scored[#scored + 1] = item
+        else
+          rest[#rest + 1] = item
+        end
+        if #scored + #rest >= 150 then
+          break
+        end
       end
     end
   end
@@ -136,14 +165,31 @@ function M.run()
   end
   running = true
   local snap = snapshot_items()
+  local title = mode == 'dirs' and 'Recent Dirs' or 'Recent Files'
   pick.pick({
-    title = 'Recent Files',
+    title = title,
     query = previous_input,
     source = make_source(snap),
-    on_open = function(item, mode)
+    keys = {
+      ['<C-r>'] = function(p2)
+        -- Toggle the MRU source between files and dirs in place.
+        mode = mode == 'dirs' and 'files' or 'dirs'
+        previous_input = p2.query
+        p2:close()
+        vim.schedule(M.run)
+      end,
+    },
+    on_open = function(item, m)
       running = false
       frecency.record(item.path)
-      open_path(item.path, mode)
+      if item.is_dir then
+        -- A visited directory: reopen the filesystem picker rooted there.
+        vim.schedule(function()
+          native.run(item.path)
+        end)
+      else
+        open_path(item.path, m)
+      end
     end,
     on_close = function(p2)
       running = false
