@@ -188,6 +188,121 @@ let
     '';
   };
 
+  # Daily 12:00 pill reminder: sends a Telegram message with an inline
+  # "Отметить" button; telegram-pill-bot turns a press into confirmation.
+  pillReminderScript = pkgs.writeText "telegram-pill-reminder.py" ''
+    import json
+    import subprocess
+    import sys
+    import time
+
+    TOKEN = open("${config.sops.secrets."telegram/bot-token".path}").read().strip()
+    CHAT_ID = open("${config.sops.secrets."telegram/chat-id".path}").read().strip()
+    CURL = "/run/current-system/sw/bin/curl"
+    API = "https://api.telegram.org/bot{0}/sendMessage".format(TOKEN)
+    MARKUP = json.dumps(
+        {"inline_keyboard": [[{"text": "Отметить ✅", "callback_data": "pill_taken"}]]}
+    )
+    TEXT = "💊 12:00 — пора принять таблетку. Нажми «Отметить», когда принял."
+
+    for attempt in range(12):
+        proc = subprocess.run(
+            [
+                CURL,
+                "-s",
+                "-o",
+                "/dev/null",
+                "--proxy",
+                "socks5h://127.0.0.1:10808",
+                "--data-urlencode",
+                "chat_id={0}".format(CHAT_ID),
+                "--data-urlencode",
+                "text={0}".format(TEXT),
+                "--data-urlencode",
+                "reply_markup={0}".format(MARKUP),
+                API,
+            ],
+            check=False,
+        )
+        if proc.returncode == 0:
+            sys.exit(0)
+        time.sleep(5)
+    print("pill-reminder: could not deliver after 12 attempts", file=sys.stderr)
+    sys.exit(1)
+  '';
+
+  # Pill bot: long-polls getUpdates and turns presses of the "pill_taken"
+  # button into a confirmation edit plus a dated line in the state log.
+  pillBotScript = pkgs.writeText "telegram-pill-bot.py" ''
+    import json
+    import pathlib
+    import subprocess
+    import sys
+    import time
+
+    TOKEN = open("${config.sops.secrets."telegram/bot-token".path}").read().strip()
+    CHAT_ID = open("${config.sops.secrets."telegram/chat-id".path}").read().strip()
+    CURL = "/run/current-system/sw/bin/curl"
+    API = "https://api.telegram.org/bot{0}/".format(TOKEN)
+    PROXY = "socks5h://127.0.0.1:10808"
+    STATE_DIR = pathlib.Path("/var/lib/telegram-pill-bot")
+    OFFSET_FILE = STATE_DIR / "offset"
+    LOG_FILE = STATE_DIR / "pill-log.txt"
+
+    def api_call(method, params):
+        cmd = [CURL, "-s", "--proxy", PROXY, "--max-time", "70"]
+        for key, value in params.items():
+            cmd += ["--data-urlencode", "{0}={1}".format(key, value)]
+        cmd.append(API + method)
+        return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+    offset = 0
+    if OFFSET_FILE.exists():
+        try:
+            offset = int(OFFSET_FILE.read_text().strip())
+        except ValueError:
+            offset = 0
+
+    while True:
+        try:
+            resp = api_call("getUpdates", {"offset": str(offset + 1), "timeout": "30"})
+            if resp.returncode != 0:
+                time.sleep(5)
+                continue
+            data = json.loads(resp.stdout or "{}")
+            if not data.get("ok"):
+                time.sleep(5)
+                continue
+            for update in data.get("result", []):
+                offset = max(offset, update.get("update_id", 0))
+                callback = update.get("callback_query")
+                if not callback:
+                    continue
+                query_id = callback.get("id", "")
+                data_field = callback.get("data", "")
+                api_call("answerCallbackQuery", {"callback_query_id": query_id})
+                if data_field == "pill_taken":
+                    message = callback.get("message", {})
+                    chat_id = message.get("chat", {}).get("id")
+                    message_id = message.get("message_id")
+                    if chat_id and message_id:
+                        stamp = time.strftime("%Y-%m-%d %H:%M %Z")
+                        api_call(
+                            "editMessageText",
+                            {
+                                "chat_id": chat_id,
+                                "message_id": message_id,
+                                "text": "💊 Принято ✅ ({0})".format(stamp),
+                            },
+                        )
+                        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+                        with LOG_FILE.open("a") as fh:
+                                fh.write(stamp + "\n")
+            OFFSET_FILE.write_text(str(offset))
+        except Exception as exc:
+            print("pill-bot: {0}".format(exc), file=sys.stderr)
+            time.sleep(5)
+  '';
   # Telegram alert scanner: python script run by a systemd timer every minute.
   # Posts into Alertmanager (wire format: array of
   # {labels: {alertname, severity}, annotations: {summary}, startsAt}):
@@ -930,6 +1045,42 @@ lib.mkMerge [
         OnBootSec = "60";
         OnUnitActiveSec = "30";
         Unit = "telegram-notify-windows-ready.service";
+      };
+    };
+
+    # Telegram pill reminder: daily at 12:00 with a confirm button that
+    # telegram-pill-bot turns into a "taken" confirmation.
+    systemd.services."telegram-pill-reminder" = {
+      description = "Send the daily 12:00 pill reminder to Telegram";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.python3}/bin/python3 ${pillReminderScript}";
+      };
+    };
+
+    systemd.timers."telegram-pill-reminder" = {
+      description = "Daily 12:00 pill reminder";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "*-*-* 12:00:00";
+        Persistent = true;
+        Unit = "telegram-pill-reminder.service";
+      };
+    };
+
+    # Telegram pill bot: long-polls callback queries for the reminder button.
+    systemd.services."telegram-pill-bot" = {
+      description = "Telegram pill confirm button handler";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.python3}/bin/python3 ${pillBotScript}";
+        Restart = "always";
+        RestartSec = 5;
+        StateDirectory = "telegram-pill-bot";
       };
     };
   })
