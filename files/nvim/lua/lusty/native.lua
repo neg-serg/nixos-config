@@ -60,22 +60,41 @@ local SORT_LABELS = { 'name', 'ext', 'size', 'time' }
 
 -- Nerd-font icons, same glyphs as the standalone TUI. Off by default:
 -- enable with g:LustyExplorerIcons = 1 (or true) or LUSTY_ICONS=1.
+-- Dirs-first/reverse mirror the standalone --dirs-first/--reverse CLI
+-- options (they reshape the canonical name order only) and are read the
+-- same way: env LUSTY_* wins over the g: counterpart (roadmap priority).
 local ICON_DIR = '\u{f115}'
 local ICON_FILE = '\u{f15b}'
 local ICON_LINK = '\u{f481}'
 
+local function option_enabled(env, g)
+  local e = os.getenv(env)
+  if e ~= nil and e ~= '' then
+    return e == '1' or e == 'true'
+  end
+  local gv = vim.g[g]
+  if type(gv) == 'boolean' then
+    return gv
+  end
+  if type(gv) == 'number' then
+    return gv == 1
+  end
+  if type(gv) == 'string' then
+    return gv == '1' or gv == 'true'
+  end
+  return false
+end
+
 local function icons_enabled()
-  local g = vim.g.LustyExplorerIcons
-  if type(g) == 'boolean' then
-    return g
-  end
-  if type(g) == 'number' then
-    return g == 1
-  end
-  if type(g) == 'string' then
-    return g == '1' or g == 'true'
-  end
-  return os.getenv('LUSTY_ICONS') == '1'
+  return option_enabled('LUSTY_ICONS', 'LustyExplorerIcons')
+end
+
+local function dirs_first_enabled()
+  return option_enabled('LUSTY_DIRS_FIRST', 'LustyExplorerDirsFirst')
+end
+
+local function reverse_enabled()
+  return option_enabled('LUSTY_REVERSE', 'LustyExplorerReverse')
 end
 
 local function icon_for(item)
@@ -123,6 +142,8 @@ function Picker.new(root)
   self.closed = false
   self.long = false -- long view: metadata columns via serve M (C-l toggles)
   self.icons = icons_enabled() -- nerd-font grid icons (LUSTY_ICONS / g:LustyExplorerIcons)
+  self.dirs_first = dirs_first_enabled() -- dirs grouped first in name order (LUSTY_DIRS_FIRST / g:LustyExplorerDirsFirst)
+  self.reverse = reverse_enabled() -- reverse each depth group (LUSTY_REVERSE / g:LustyExplorerReverse)
   self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
@@ -385,7 +406,15 @@ function Picker:rerank()
   pf('rerank')
   local from = self.offset
   local to = self.offset + self:screen_count()
-  self:request({ 'Q', tostring(from), tostring(to), self.query, tostring(self.sort) }, function(lines)
+  self:request({
+    'Q',
+    tostring(from),
+    tostring(to),
+    self.query,
+    tostring(self.sort),
+    self.dirs_first and '1' or '0',
+    self.reverse and '1' or '0',
+  }, function(lines)
     local win_rows = {}
     local total = self.total
     for _, ln in ipairs(lines) do
