@@ -518,8 +518,12 @@ impl App {
                         (KeyCode::Char('t'), true) => self.open("tabedit")?,
                         (KeyCode::Char('o'), true) => self.open("split")?,
                         (KeyCode::Char('v'), true) => self.open("vsplit")?,
-                        (KeyCode::Char('n'), true) | (KeyCode::Down, _) => self.move_sel(1),
-                        (KeyCode::Char('p'), true) | (KeyCode::Up, _) => self.move_sel(-1),
+                        (KeyCode::Char('n'), true) | (KeyCode::Char('j'), true) | (KeyCode::Down, _) => {
+                            self.move_sel(1);
+                        }
+                        (KeyCode::Char('p'), true) | (KeyCode::Char('k'), true) | (KeyCode::Up, _) => {
+                            self.move_sel(-1);
+                        }
                         (KeyCode::Char('f'), true) | (KeyCode::Right, _) => {
                             let rows = self.list_rows();
                             self.column_nav(1, rows);
@@ -548,6 +552,39 @@ impl App {
                                 self.query.clear();
                                 self.needs_rank = true;
                                 self.selected = 0;
+                            }
+                        }
+                        // readline-ish: C-h = backspace, Home/End = first/last,
+                        // PgUp/PgDn = one page of the grid
+                        (KeyCode::Char('h'), true) => {
+                            if self.query.pop().is_some() {
+                                self.needs_rank = true;
+                                self.selected = 0;
+                            }
+                        }
+                        (KeyCode::Home, _) | (KeyCode::Char('a'), true) => {
+                            if self.ranked_len() > 0 {
+                                self.selected = 0;
+                            }
+                        }
+                        (KeyCode::End, _) | (KeyCode::Char('e'), true) => {
+                            let n = self.ranked_len();
+                            if n > 0 {
+                                self.selected = n - 1;
+                            }
+                        }
+                        (KeyCode::PageUp, _) => {
+                            let n = self.ranked_len();
+                            let page = self.list_rows();
+                            if n > 0 {
+                                self.selected = self.selected.saturating_sub(page);
+                            }
+                        }
+                        (KeyCode::PageDown, _) => {
+                            let n = self.ranked_len();
+                            let page = self.list_rows();
+                            if n > 0 {
+                                self.selected = (self.selected + page).min(n - 1);
                             }
                         }
                         (KeyCode::Backspace, _) => {
