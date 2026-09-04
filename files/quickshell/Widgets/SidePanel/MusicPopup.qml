@@ -3,7 +3,6 @@ import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
 import qs.Components
-import qs.Services
 import qs.Settings
 import "../../Helpers/Utils.js" as Utils
 import "../../Helpers/ScreenUtil.js" as ScreenUtil
@@ -205,29 +204,6 @@ Item {
             if (!visible || _hiding) return;
             _hiding = true;
             _contentOpacity = 0; // contentFade hides the window when done
-        }
-
-        // --- Track-change toast: reappear briefly whenever the song changes
-        // (or the player switches), unless that song is already showing.
-        property string _lastTrackSig: ""
-        Connections {
-            target: MusicManager
-            ignoreUnknownSignals: true
-            function onTrackTitleChanged()   { toast.maybeShowTrackToast(); }
-            function onCoverUrlChanged()     { toast.maybeShowTrackToast(); }
-            function onCurrentPlayerChanged(){ toast.maybeShowTrackToast(); }
-        }
-        function maybeShowTrackToast() {
-            if (!MusicManager.hasPlayer) return;
-            if (!(MusicManager.isPlaying || MusicManager.isPaused)) return;
-            const player = MusicManager.currentPlayer;
-            const sig = String(player && (player.id || player.identity || player.name || "player"))
-                + "|" + String(MusicManager.trackTitle || "")
-                + "|" + String(MusicManager.coverUrl || "");
-            if (sig === toast._lastTrackSig) return;
-            toast._lastTrackSig = sig;
-            if (sig.indexOf("||") === sig.length - 2) return; // no metadata at all yet
-            toast.showAt();
         }
 
         // --- Content
