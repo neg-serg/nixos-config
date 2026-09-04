@@ -756,7 +756,9 @@ impl App {
                         let i = self.ranked[pos];
                         let e = self.listing()[i].clone();
                         if self.long {
-                            if let Some(m) = meta_line(&root_path.join(&e.label), self.cols_mask) {
+                            if let Some(m) =
+                                crate::listing::meta_line(&root_path.join(&e.label), self.cols_mask)
+                            {
                                 cell.push_str(&format!("{esc}[38;2;108;126;150m{m}"));
                                 cell.push_str(&revert);
                                 cell.push(' ');
@@ -875,83 +877,6 @@ impl App {
 
 /// Outer popup height: two border rows plus up to 12 content rows.
 const OUTER_ROWS: usize = 14;
-
-/// Civil-from-days inverse (Howard Hinnant algorithm), returns y-m-d.
-fn civil_from_days(z: i64) -> (i64, u32, u32) {
-    let z = z + 719468;
-    let era = if z >= 0 { z } else { z - 146096 } / 146097;
-    let doe = (z - era * 146097) as u64;
-    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
-    let y = yoe as i64 + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
-    (if m <= 2 { y + 1 } else { y }, m, d)
-}
-
-/// eza -l style metadata: "rwxr-xr-x   1000   1.2K 2026-09-04 06:40"
-fn meta_line(path: &std::path::Path, mask: u8) -> Option<String> {
-    use std::os::unix::fs::MetadataExt;
-    let md = std::fs::metadata(path).ok()?;
-    let mode = md.mode();
-    let mut perms = String::with_capacity(10);
-    perms.push(if mode & 0o040000 != 0 {
-        'd'
-    } else if mode & 0o120000 == 0o120000 {
-        'l'
-    } else {
-        '-'
-    });
-    for (mask, ch) in [
-        (0o400, 'r'),
-        (0o200, 'w'),
-        (0o100, 'x'),
-        (0o040, 'r'),
-        (0o020, 'w'),
-        (0o010, 'x'),
-        (0o004, 'r'),
-        (0o002, 'w'),
-        (0o001, 'x'),
-    ] {
-        perms.push(if mode & mask != 0 { ch } else { '-' });
-    }
-    let size = md.size();
-    let (hs, unit) = if size >= 1 << 30 {
-        (size as f64 / (1 << 30) as f64, 'G')
-    } else if size >= 1 << 20 {
-        (size as f64 / (1 << 20) as f64, 'M')
-    } else if size >= 1 << 10 {
-        (size as f64 / (1 << 10) as f64, 'K')
-    } else {
-        (size as f64, ' ')
-    };
-    let size_s = if unit == ' ' {
-        format!("{size}")
-    } else {
-        format!("{hs:.1}{unit}")
-    };
-    let secs = md.mtime();
-    let days = secs.div_euclid(86400);
-    let rem = secs.rem_euclid(86400);
-    let (y, mo, d) = civil_from_days(days);
-    let hh = rem / 3600;
-    let mm = (rem % 3600) / 60;
-    let mut parts: Vec<String> = Vec::new();
-    if mask & 1 != 0 {
-        parts.push(perms);
-    }
-    if mask & 2 != 0 {
-        parts.push(format!("{:>5}", md.uid()));
-    }
-    if mask & 4 != 0 {
-        parts.push(format!("{:>7}", size_s));
-    }
-    if mask & 8 != 0 {
-        parts.push(format!("{y:04}-{mo:02}-{d:02} {hh:02}:{mm:02}"));
-    }
-    Some(parts.join(" "))
-}
 
 const ICON_DIR: &str = "\u{f115}";
 const ICON_FILE: &str = "\u{f15b}";
