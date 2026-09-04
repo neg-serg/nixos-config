@@ -37,10 +37,10 @@ Item {
     // Frequency band: bars map linearly across spectrumMinHz..spectrumMaxHz;
     // bars inside colorMinHz..colorMaxHz use the neon/accent colour, the rest
     // render as a dim neutral so only the selected band pops.
-    property real spectrumMinHz: (Settings.settings.spectrumMinHz !== undefined) ? Settings.settings.spectrumMinHz : 0
-    property real spectrumMaxHz: (Settings.settings.spectrumMaxHz !== undefined) ? Settings.settings.spectrumMaxHz : 40000
+    property real spectrumMinHz: (Settings.settings.spectrumMinHz !== undefined) ? Settings.settings.spectrumMinHz : 15
+    property real spectrumMaxHz: (Settings.settings.spectrumMaxHz !== undefined) ? Settings.settings.spectrumMaxHz : 24000
     property real colorMinHz: (Settings.settings.spectrumColorMinHz !== undefined) ? Settings.settings.spectrumColorMinHz : 15000
-    property real colorMaxHz: (Settings.settings.spectrumColorMaxHz !== undefined) ? Settings.settings.spectrumColorMaxHz : 25000
+    property real colorMaxHz: (Settings.settings.spectrumColorMaxHz !== undefined) ? Settings.settings.spectrumColorMaxHz : 24000
     property color dimColor: "#ffffff"
     property real dimOpacity: (Settings.settings.spectrumDimOpacity !== undefined) ? Settings.settings.spectrumDimOpacity : 0.18
 
