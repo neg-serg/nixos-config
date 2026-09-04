@@ -12,6 +12,9 @@ local lsc = require('lusty.ls_colors')
 
 local M = {}
 
+-- Remember the last filter between runs.
+local previous_input = ''
+
 -- Test seam / future source override; default reads v:oldfiles.
 local recent_fn = nil
 function M.set_recent_fn(fn)
@@ -98,13 +101,17 @@ function M.run()
   local snap = snapshot_items()
   pick.pick({
     title = 'Recent Files',
+    query = previous_input,
     source = make_source(snap),
     on_open = function(item, mode)
       running = false
       open_path(item.path, mode)
     end,
-    on_close = function()
+    on_close = function(p2)
       running = false
+      if p2 and p2.query then
+        previous_input = p2.query
+      end
     end,
   })
 end
