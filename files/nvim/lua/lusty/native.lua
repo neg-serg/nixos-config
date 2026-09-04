@@ -295,6 +295,22 @@ function Picker:draw()
       end
       api.nvim_buf_add_highlight(self.buf, ns, group, cell.line - 1, start_col, start_col + len)
     end
+    -- approximate fuzzy-match highlight: underline the first plain
+    -- case-insensitive occurrence of the query in the entry basename
+    if cell.pos ~= self.selected then
+      local q = self.query
+      if q ~= '' and q:sub(1, 1) ~= '.' then
+        local base = basename(cell.item.label)
+        local s, e = base:lower():find(q:lower(), 1, true)
+        if s and e then
+          local lstart = #cell.item.label - #base
+          api.nvim_buf_add_highlight(
+            self.buf, ns, 'LustyNativeMatch', cell.line - 1,
+            start_col + lstart + s - 1, start_col + lstart + e
+          )
+        end
+      end
+    end
   end
   if self.total > 0 then
     local sel_row = math.floor(self.selected / cols)
@@ -310,7 +326,7 @@ function Picker:prompt_text()
   if home ~= '' and path:sub(1, #home) == home then
     path = '~' .. path:sub(#home + 1)
   end
-  return path .. ' \u{f105} ' .. self.query
+  return path .. ' \u{f105} ' .. self.query .. (self.total > 0 and (' [' .. self.total .. ']') or '')
 end
 
 function Picker:paint_prompt(h)
@@ -347,6 +363,9 @@ function Picker:paint_prompt(h)
   add('\u{f105}', 'LustyPromptSep')
   add(' ', 'LustyPromptQuery')
   add(self.query, 'LustyPromptQuery')
+  if self.total > 0 then
+    add(' [' .. self.total .. ']', 'LustyPromptPath')
+  end
   for _, seg2 in ipairs(segs) do
     if seg2[3] then
       api.nvim_buf_add_highlight(self.buf, ns, seg2[3], line, seg2[1], seg2[1] + seg2[2])
@@ -694,6 +713,7 @@ function M.ensure_highlights()
     api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#005faf', fg = '#d1e5ff', bold = true })
   end
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
+  api.nvim_set_hl(0, 'LustyNativeMatch', { underline = true })
   -- nearly-black but not #000000: the web/xterm layer treats exact black as
   -- the transparent default, while #0c0d14 rendered too gray on this setup
   api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000001', fg = '#d4d4d4' })

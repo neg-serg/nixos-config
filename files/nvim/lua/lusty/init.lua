@@ -13,6 +13,7 @@
 --   <Leader>C   filesystem explorer (cwd)
 --   <C-b>       buffer explorer (native float)
 --   <C-g>       buffer grep (native float)
+--   <Leader>r   recent files (native float)
 
 local explorer = require('lusty.explorer')
 local buffers = require('lusty.buffer_stack')
@@ -22,6 +23,7 @@ local be = require('lusty.buffer_explorer')
 local bg = require('lusty.buffer_grep')
 local nbufs = require('lusty.native_buffers')
 local ngrep = require('lusty.native_buffer_grep')
+local nrecent = require('lusty.native_recent')
 
 -- Native picker is the default; g:LustyExplorerNative = 0 keeps the Lua port
 -- (the fallback). Buffers and grep use the native float too when enabled.
@@ -54,6 +56,14 @@ local function run_grep()
   end
 end
 
+local function run_recent()
+  if native_enabled() then
+    nrecent.run()
+  else
+    vim.notify('LustyRecent: the Lua port has no recent explorer yet; enable native mode or use v:oldfiles', vim.log.levels.WARN)
+  end
+end
+
 local M = {}
 
 local function deprecated(old, new)
@@ -81,6 +91,10 @@ function M.setup()
   vim.api.nvim_create_user_command('LustyBufferGrep', function()
     run_grep()
   end, { desc = 'Lusty buffer grep (native float unless g:LustyExplorerNative=0)' })
+
+  vim.api.nvim_create_user_command('LustyRecent', function()
+    run_recent()
+  end, { desc = 'Lusty recent files (native float)' })
 
   -- Deprecated non-prefixed aliases (they only warn, like the original).
   vim.api.nvim_create_user_command('BufferExplorer', function()
@@ -113,6 +127,10 @@ function M.setup()
     vim.keymap.set('n', '<leader>C', function()
       run_fs(nil)
     end, { desc = 'Lusty filesystem explorer (cwd, native)' })
+    -- ,r = recent files (C-r is redo, so it stays on the leader).
+    vim.keymap.set('n', '<leader>r', function()
+      run_recent()
+    end, { nowait = true, desc = 'Lusty recent files (native float)' })
     -- Simple chords: C-b = buffers, C-g = buffer grep. These override the
     -- stock <C-b> (quickfix list) and <C-g> (word count) normal-mode maps;
     -- lusty loads after 02-bindings, so the set happens later.
