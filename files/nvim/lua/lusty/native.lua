@@ -6,7 +6,7 @@
 --
 -- Backend protocol (plain lines, tab separated):
 --   Q <from> <to> <query> [sort] -> "N <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
---                             sort: 0 name, 1 ext, 2 size, 3 time (C-s cycles)
+--                             sort: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
 --   M <mask> <index>...     -> "K <index> <meta>" per index + "E" (long view;
 --                             mask bits 1 perm, 2 user, 4 size, 8 time)
 -- kind: d (dir) / f (file) / l (link). C-l toggles the long view.
@@ -75,7 +75,7 @@ function Picker.new(root)
   self.maxw = 12 -- widest label (chars) in the current ranked set
   self.closed = false
   self.long = false -- long view: metadata columns via serve M (C-l toggles)
-  self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-s cycles)
+  self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
   return self
@@ -311,7 +311,8 @@ function Picker:setup_keymaps()
   map('<End>', 'last')
   map('<C-e>', 'last')
   map('<C-u>', 'clear')
-  map('<C-s>', 'cycle_sort')
+  -- C-y: sort cycle (C-s collides with terminal/kitty flow control)
+  map('<C-y>', 'cycle_sort')
   map('<C-t>', 'open_tab')
   map('<C-o>', 'open_split')
   map('<C-v>', 'open_vsplit')
