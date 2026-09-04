@@ -232,6 +232,10 @@ Item {
         Item {
             id: layoutHost
             anchors.fill: parent
+            // Hover over the whole media area — the analyser reveals on this.
+            HoverHandler {
+                id: mediaHover
+            }
 
             RowLayout {
                 id: mediaRow
@@ -259,10 +263,9 @@ Item {
                     minBarWidth: 5
                     animDurationMs: 80
                     opacity: 0.95
-                    // Hover-only, but gated on the capsule-hover property that is
-                    // reliably in scope (drives the tooltips), not the bare id.
+                    // Hover-only, gated on the media-area HoverHandler.
                     visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
-                        && mediaControl._capsuleHovered
+                        && mediaHover.hovered
                 }
 
                 Item {
