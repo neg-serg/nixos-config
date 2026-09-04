@@ -135,7 +135,10 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
         .collect();
 
     let mut blocked: HashSet<String> = HashSet::new();
-    let mut entries: Vec<Entry> = Vec::new();
+    // Collect straight into per-depth buckets: the final order is depth
+    // ascending and each depth sorts by name only, so no mixed comparator
+    // and no global reordering pass later.
+    let mut buckets: Vec<Vec<Entry>> = (0..opts.depth.max(1)).map(|_| Vec::new()).collect();
 
     for e in WalkDir::new(root)
         .min_depth(1)
@@ -184,7 +187,7 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
                 }
             }
         }
-        entries.push(Entry {
+        buckets[depth - 1].push(Entry {
             name,
             path: path.to_path_buf(),
             label: rel,
@@ -193,13 +196,38 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
         });
     }
 
-    // Shallower entries first, ties broken by name. Unstable sort avoids the
-    // allocation and extra moves of a stable sort; equal (depth, name) keys
-    // are indistinguishable to the picker anyway.
-    entries.sort_unstable_by(|a, b| {
-        a.depth.cmp(&b.depth).then_with(|| a.name.cmp(&b.name))
-    });
+    // Shallower entries first, ties broken by name: concatenate the depth
+    // buckets, each sorted by name. Sorting u32 indices instead of moving
+    // whole Entry structs around in the quicksort keeps the partitioning
+    // working set small; the permutation is applied once at the end.
+    let mut entries: Vec<Entry> = Vec::new();
+    for mut bucket in buckets {
+        sort_by_name(&mut bucket);
+        entries.append(&mut bucket);
+    }
     entries
+}
+
+/// Sort one depth bucket by name (in place) via an index permutation.
+fn sort_by_name(bucket: &mut Vec<Entry>) {
+    let n = bucket.len();
+    if n < 2 {
+        return;
+    }
+    let mut order: Vec<u32> = (0..n as u32).collect();
+    order.sort_unstable_by(|&a, &b| bucket[a as usize].name.cmp(&bucket[b as usize].name));
+    let mut src = std::mem::replace(bucket, Vec::with_capacity(n));
+    for &i in &order {
+        let empty = Entry {
+            name: String::new(),
+            path: PathBuf::new(),
+            label: String::new(),
+            kind: FileKind::File,
+            depth: 0,
+        };
+        bucket.push(std::mem::replace(&mut src[i as usize], empty));
+    }
+    // src (now holding only empty placeholders) is dropped here.
 }
 
 #[cfg(test)]
