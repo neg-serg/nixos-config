@@ -14,6 +14,25 @@ local M = {}
 
 local api = vim.api
 
+-- Env-gated phase profiler: LUSTY_PROF_FILE=<path> appends relative-ms
+-- timestamps per phase (key arrival, debounce fire, rerank, serve response,
+-- draw). No-op unless the env var is set.
+local prof_t0 = nil
+local prof_path = os.getenv('LUSTY_PROF_FILE')
+local function pf(tag)
+  if not prof_path then
+    return
+  end
+  if not prof_t0 then
+    prof_t0 = vim.loop.hrtime()
+  end
+  local f = io.open(prof_path, 'a')
+  if f then
+    f:write(string.format('%.2f %s\n', (vim.loop.hrtime() - prof_t0) / 1e6, tag))
+    f:close()
+  end
+end
+
 
 local ns = api.nvim_create_namespace('lusty_native_ls')
 
@@ -198,6 +217,7 @@ function Picker:request(parts, handler)
 end
 
 function Picker:rerank()
+  pf('rerank')
   local from = self.offset
   local to = self.offset + self:screen_count()
   self:request({ 'Q', tostring(from), tostring(to), self.query }, function(lines)
@@ -240,6 +260,7 @@ function Picker:draw()
   if self.closed or not api.nvim_buf_is_valid(self.buf) then
     return
   end
+  pf('draw')
   local rows = self:list_rows()
   local cols = self:max_cols()
   local h = rows + 1 -- grid rows + one prompt line
@@ -328,6 +349,7 @@ function Picker:draw()
     api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_row, sel_col0, sel_col0 + col_w - 1)
   end
   self:paint_prompt(h)
+  pf('drawn')
 end
 
 --- Bottom prompt: current path with Lusty prompt colors, then > query.
@@ -450,6 +472,7 @@ function Picker:schedule_rerank()
         self_ref._timer = nil
       end
       if not self_ref.closed then
+        pf('fire')
         self_ref:rerank()
       end
     end)
@@ -485,6 +508,7 @@ function Picker:handle(action)
   if self.closed then
     return
   end
+  pf('key:' .. tostring(action))
   if action == 'cancel' then
     self:close()
     return
@@ -725,6 +749,7 @@ function Picker:start_backend()
             self_ref.pending = nil
             local out = self_ref.outbuf
             self_ref.outbuf = {}
+            pf('resp')
             handler(out)
           end
         elseif self_ref.pending then
