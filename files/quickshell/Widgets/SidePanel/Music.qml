@@ -347,6 +347,7 @@ Rectangle {
                                 color: playerUI.musicTextColor
                             }
                             Item {
+                                id: progressBand
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: Math.max(10, Math.round(84 * Theme.scale(screen)))
                                 implicitHeight: Layout.preferredHeight
@@ -355,17 +356,31 @@ Rectangle {
                                 // progress area, coloured with the cover accent.
                                 // Reuses the bar's IPhoneSpectrum so values and
                                 // animation are proven to work in this shell.
-                                IPhoneSpectrum {
-                                    anchors.fill: parent
-                                    values: playerUI._spec
-                                    targetBars: 24
-                                    accentColor: detailsCol.musicAccent
-                                    fillOpacity: 1.0
-                                    barGap: 2
-                                    minBarWidth: 2
-                                    animDurationMs: 80
-                                    opacity: 1.0
-                                    visible: Settings.settings.musicPopupSpectrum
+                                // Clip the spectrum to the elapsed fraction so it
+                                // does not glow through the unfilled remainder.
+                                Item {
+                                    id: spectrumClip
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    anchors.left: parent.left
+                                    width: parent.width * playerUI.musicProgress()
+                                    clip: true
+
+                                    IPhoneSpectrum {
+                                        anchors.top: parent.top
+                                        anchors.bottom: parent.bottom
+                                        anchors.left: parent.left
+                                        width: progressBand.width
+                                        values: playerUI._spec
+                                        targetBars: 24
+                                        accentColor: detailsCol.musicAccent
+                                        fillOpacity: 1.0
+                                        barGap: 2
+                                        minBarWidth: 2
+                                        animDurationMs: 80
+                                        opacity: 1.0
+                                        visible: Settings.settings.musicPopupSpectrum
+                                    }
                                 }
 
                                 // Progress line through the middle of the spectrum band.
@@ -381,11 +396,7 @@ Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
                                         height: parent.height
                                         // Live progress (reactive so it tracks seeks).
-                                        width: parent.width * (function() {
-                                            const total = Time.mprisToMs(MusicManager.trackLength || 0);
-                                            const pos = Math.max(0, MusicManager.currentPosition || 0);
-                                            return total > 0 ? Math.min(1, pos / total) : 0;
-                                        })()
+                                        width: parent.width * playerUI.musicProgress()
                                         // Cover-accent coloured (clearly), or neutral when disabled.
                                         color: Settings.settings.musicPopupColoredProgress
                                             ? detailsCol.musicAccent
