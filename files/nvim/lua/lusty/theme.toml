@@ -1,0 +1,18 @@
+# Lusty selection theme - shared by the nvim float and the standalone TUI.
+# The file format is intentionally simple: 'key = "value"' / 'key = true|false'
+# lines under a [section], so both the small Lua reader (nvim) and the small
+# Rust reader (standalone) can parse it without a full TOML dependency.
+#
+# Neg-inspired palette: deep neutral panel, a calm blue selection bar with
+# light text, and a warm amber underline for the query match.
+
+[lusty.selection]
+bg = "#0b3d63"
+fg = "#e6f2ff"
+bold = true
+underline = false
+reverse = false
+
+[lusty.match]
+fg = "#ffd75f"
+underline = true
