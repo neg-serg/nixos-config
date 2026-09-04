@@ -207,6 +207,12 @@ Item {
     function _bustCache(url) {
         // Strip existing cache buster
         var base = String(url).replace(/\?t=\d+$/, "");
+        // file:// URLs must NOT get a cache-buster query appended: Qt then
+        // resolves "path?t=..." as a literal filename and the image cannot
+        // open (album-art square falls back to the placeholder icon).
+        // mpdris2 already names /tmp covers with a random suffix per track,
+        // so the path itself changes and needs no busting.
+        if (/^file:\/\//.test(base)) return base;
         return base + "?t=" + Date.now();
     }
 
