@@ -359,11 +359,8 @@ Rectangle {
                                     anchors.fill: parent
                                     values: playerUI._spec
                                     targetBars: Settings.settings.toastAnalyserBars
-                                    accentColor: detailsCol.musicAccent
-                                    fillOpacity: Settings.settings.toastAnalyserFillOpacity
-                                    barGap: Settings.settings.toastAnalyserBarGap
-                                    minBarWidth: Settings.settings.toastAnalyserMinBarWidth
                                     mirror: Settings.settings.toastAnalyserMirror
+                                    style: Settings.settings.toastAnalyserStyle
                                     animDurationMs: 80
                                     opacity: 1.0
                                     visible: Settings.settings.musicPopupSpectrum
