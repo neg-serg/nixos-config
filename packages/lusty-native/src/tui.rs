@@ -14,7 +14,8 @@ use crossterm::execute;
 use crossterm::terminal::{self};
 
 use crate::colors::{self, Colors};
-use crate::listing::{self, Entry, FileKind, Options};
+use crate::cache;
+use crate::listing::{Entry, FileKind, Options};
 use crate::rank;
 
 /// RU (йцукен) to EN characters, matching the Lua port's table. Physical
@@ -126,7 +127,7 @@ impl App {
                 follow_mounts: self.opts.follow_mounts,
                 show_dots: dots,
             };
-            *cache = Some(listing::list(&self.root, &opts));
+            *cache = Some(cache::cached_list(&self.root, &opts));
             self.needs_rank = true;
         }
         cache.as_ref().unwrap()
