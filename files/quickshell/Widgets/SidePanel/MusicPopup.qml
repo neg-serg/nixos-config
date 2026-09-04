@@ -124,21 +124,34 @@ Item {
             1,
             Math.max(1, Math.round(ScreenUtil.height(sidebarPopup) * 0.7))))
 
-        // --- Fade in/out. Slide was dropped: a moving card would require a
-        // mask region tracking the animation; the static mask only describes
-        // the resting card.
+        // --- Fade in/out (explicit animations). Slide was dropped: a moving
+        // card would require a mask region tracking the animation; the static
+        // mask only describes the resting card. Explicit NumberAnimations are
+        // used instead of a Behavior so a hide can never stall with the window
+        // mapped but invisible (opacity stuck at 0): fadeOut always completes
+        // and its onStopped closes the window.
         property bool _hiding: false
         property real _contentOpacity: 0
-        Behavior on _contentOpacity {
-            NumberAnimation {
-                id: contentFade
-                duration: Theme.sidePanelPopupSlideMs
-                easing.type: Theme.uiEasingRipple
-                onStopped: {
-                    if (toast._hiding && toast._contentOpacity <= 0.001) {
-                        toast.visible = false;
-                        toast._hiding = false;
-                    }
+        NumberAnimation {
+            id: fadeIn
+            target: toast
+            property: "_contentOpacity"
+            from: 0
+            to: 1
+            duration: Theme.sidePanelPopupSlideMs
+            easing.type: Theme.uiEasingRipple
+        }
+        NumberAnimation {
+            id: fadeOut
+            target: toast
+            property: "_contentOpacity"
+            duration: Theme.sidePanelPopupSlideMs
+            easing.type: Theme.uiEasingRipple
+            onStopped: {
+                if (toast._hiding) {
+                    toast.visible = false;
+                    toast._hiding = false;
+                    toast._contentOpacity = 0;
                 }
             }
         }
@@ -185,19 +198,23 @@ Item {
 
         // --- Public control
         function showAt() {
-            if (toast._hiding) {
-                toast._hiding = false;
-                hideFallback.stop(); // a new show cancels the pending hide
-            }
+            if (fadeOut.running) fadeOut.stop();
+            toast._hiding = false;
+            hideFallback.stop(); // a new show cancels the pending hide
 
             toast._marginRight = toast.baseMargin();
             toast._marginBottom = toast.computeBottomMargin();
 
             if (!visible) {
                 visible = true;
-                _contentOpacity = 0; // start the fade from a clean slate
+                _contentOpacity = 0;
+            } else if (_contentOpacity <= 0.01) {
+                _contentOpacity = 0; // self-heal a stale invisible window
             }
-            _contentOpacity = 1;
+            // Animate from the current opacity so an interrupted fade never
+            // jumps; fadeIn.to stays 1.
+            fadeIn.from = Math.max(0, toast._contentOpacity);
+            fadeIn.start();
             toast.startAutoHide();
             if (Settings.settings && Settings.settings.debugLogs) {
                 console.debug("[qs-music] showAt card=" + cardBox.width + "x" + cardBox.height
@@ -206,8 +223,8 @@ Item {
         }
 
         // Safety net: never leave the window mapped with a stuck fade-out.
-        // If the Behavior animation is interrupted or already at 0 (so its
-        // onStopped never fires), force the window closed shortly after.
+        // If the fade-out animation is interrupted before it completes (so
+        // fadeOut.onStopped never fires), force the window closed shortly after.
         Timer {
             id: hideFallback
             interval: Math.max(Theme.sidePanelPopupSlideMs + 120, 350)
@@ -224,8 +241,11 @@ Item {
         function hidePopup() {
             if (!visible || _hiding) return;
             _hiding = true;
-            _contentOpacity = 0; // contentFade hides the window when done
-            hideFallback.start();
+            if (fadeIn.running) fadeIn.stop();
+            fadeOut.from = toast._contentOpacity;
+            fadeOut.to = 0;
+            fadeOut.start(); // onStopped closes the window
+            hideFallback.start(); // safety net in case the animation is interrupted
         }
 
         // --- Content
