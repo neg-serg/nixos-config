@@ -271,6 +271,48 @@ fn ext_of(label: &str) -> &str {
     }
 }
 
+fn dummy_entry() -> Entry {
+    Entry {
+        label: String::new(),
+        kind: FileKind::File,
+        depth: 0,
+        name0: 0,
+    }
+}
+
+/// Parallel stat of every entry (root.join(label)); size or mtime as i128.
+fn meta_keys(root: &Path, entries: &[Entry], by_time: bool) -> Vec<i128> {
+    use std::os::unix::fs::MetadataExt;
+    walk_pool().install(|| {
+        entries
+            .par_iter()
+            .map(|e| {
+                std::fs::metadata(root.join(&e.label))
+                    .map(|m| if by_time { m.mtime() as i128 } else { m.size() as i128 })
+                    .unwrap_or(0)
+            })
+            .collect()
+    })
+}
+
+/// eza --sort=size|time: depth ascending, then size/time descending, then name.
+pub fn sort_by_meta(root: &Path, entries: &mut Vec<Entry>, by_time: bool) {
+    let keys = meta_keys(root, entries, by_time);
+    let n = entries.len();
+    let mut src = std::mem::take(entries);
+    let mut pairs: Vec<(i128, Entry)> = Vec::with_capacity(n);
+    for i in 0..n {
+        pairs.push((keys[i], std::mem::replace(&mut src[i], dummy_entry())));
+    }
+    pairs.sort_unstable_by(|a, b| {
+        a.1.depth
+            .cmp(&b.1.depth)
+            .then_with(|| b.0.cmp(&a.0))
+            .then_with(|| a.1.basename().cmp(b.1.basename()))
+    });
+    *entries = pairs.into_iter().map(|(_, e)| e).collect();
+}
+
 /// eza --sort=ext: group each depth by extension, then name.
 pub fn sort_by_ext(entries: &mut Vec<Entry>) {
     let n = entries.len();
