@@ -118,15 +118,23 @@ Item {
         // widget's implicitHeight: that value is state-dependent (the metadata
         // column layout collapses between shows) and once it turned invalid the
         // card collapsed to a 1px sliver — the window mapped, nothing rendered.
+        // The height is (re)assigned in showAt (JS, after the window maps) so
+        // an early declarative evaluation seeing NaN cannot stick.
         property real musicHeightPx: Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
         property int contentPaddingPx: Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
-        // Card height = content + top inset, with a hard floor so a broken
-        // binding can never collapse the card again; capped at 70% of screen.
-        property real cardHeightPx: Math.round(Utils.clamp(
-            toast.contentPaddingPx + toast.musicHeightPx,
-            Math.round(toast.contentPaddingPx + Math.max(120, toast.musicHeightPx * 0.5)),
-            Math.max(Math.round(toast.contentPaddingPx + Math.max(120, toast.musicHeightPx * 0.5)),
-                     Math.round(ScreenUtil.height(sidebarPopup) * 0.7))))
+        property real cardHeightPx: 300 // refreshed by showAt once the window maps
+        function computeCardHeight() {
+            try {
+                const pad = Math.max(0, toast.contentPaddingPx) || 12;
+                const mh = toast.musicHeightPx;
+                if (!isFinite(mh) || mh <= 0) return 300;
+                const floor = Math.round(pad + Math.max(120, mh * 0.5));
+                const cap = Math.max(floor, Math.round(ScreenUtil.height(sidebarPopup) * 0.7));
+                return Math.round(Utils.clamp(pad + mh, floor, cap));
+            } catch (e) {
+                return 300;
+            }
+        }
 
         // --- Fade in/out (explicit animations). Slide was dropped: a moving
         // card would require a mask region tracking the animation; the static
@@ -208,6 +216,7 @@ Item {
 
             toast._marginRight = toast.baseMargin();
             toast._marginBottom = toast.computeBottomMargin();
+            toast.cardHeightPx = toast.computeCardHeight(); // size before mapping
 
             if (!visible) {
                 visible = true;
