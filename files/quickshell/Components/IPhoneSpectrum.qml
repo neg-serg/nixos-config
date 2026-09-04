@@ -49,6 +49,10 @@ Item {
     property bool threeD: (Settings.settings.spectrum3D !== undefined) ? Settings.settings.spectrum3D : true
     property real threeDDepth: (Settings.settings.spectrum3DDepth !== undefined) ? Settings.settings.spectrum3DDepth : 0.35
 
+    // Custom colour override; when set (non-empty) it wins over the preset
+    // palette or the cover-accent fallback.
+    property color customColor: (Settings.settings.spectrumColor !== undefined && Settings.settings.spectrumColor !== "") ? Settings.settings.spectrumColor : "transparent"
+
     function _preset() {
         switch (root.style) {
             case "neon-violet":
@@ -122,6 +126,56 @@ Item {
                     glowSpread: 1.8,
                     vu: true
                 };
+            case "aurora":
+                return {
+                    base: Qt.rgba(0.0, 0.87, 0.63, 1),
+                    end: Qt.rgba(0.36, 0.55, 1.0, 1),
+                    minBarWidth: 1,
+                    barGap: 2,
+                    fillOpacity: 0.55,
+                    glowOpacity: 0.5,
+                    glowSpread: 2.5
+                };
+            case "sunset":
+                return {
+                    base: Qt.rgba(1.0, 0.42, 0.0, 1),
+                    end: Qt.rgba(0.85, 0.2, 0.6, 1),
+                    minBarWidth: 1,
+                    barGap: 2,
+                    fillOpacity: 0.55,
+                    glowOpacity: 0.5,
+                    glowSpread: 2.4
+                };
+            case "synthwave":
+                return {
+                    base: Qt.rgba(0.6, 0.0, 0.9, 1),
+                    end: Qt.rgba(1.0, 0.45, 0.1, 1),
+                    minBarWidth: 1,
+                    barGap: 2,
+                    fillOpacity: 0.55,
+                    glowOpacity: 0.55,
+                    glowSpread: 2.5
+                };
+            case "ember":
+                return {
+                    base: Qt.rgba(0.7, 0.05, 0.0, 1),
+                    end: Qt.rgba(1.0, 0.55, 0.1, 1),
+                    minBarWidth: 2,
+                    barGap: 2,
+                    fillOpacity: 0.7,
+                    glowOpacity: 0.35,
+                    glowSpread: 2.0
+                };
+            case "matrix":
+                return {
+                    base: Qt.rgba(0.0, 0.95, 0.3, 1),
+                    end: Qt.rgba(0.35, 1.0, 0.5, 1),
+                    minBarWidth: 1,
+                    barGap: 1,
+                    fillOpacity: 0.6,
+                    glowOpacity: 0.5,
+                    glowSpread: 2.3
+                };
             case "neon-cyan":
             default:
                 return {
@@ -137,8 +191,12 @@ Item {
     }
 
     readonly property var _presetCfg: root.style ? root._preset() : null
-    readonly property color _barBase: root._presetCfg ? root._presetCfg.base : root.accentColor
-    readonly property color _barEnd: root._presetCfg ? root._presetCfg.end : root.gradientEnd
+    readonly property color _barBase: root.customColor.a > 0
+        ? root.customColor
+        : (root._presetCfg ? root._presetCfg.base : root.accentColor)
+    readonly property color _barEnd: root.customColor.a > 0
+        ? Qt.lighter(root.customColor, 1.4)
+        : (root._presetCfg ? root._presetCfg.end : root.gradientEnd)
     readonly property real _barGap: root._presetCfg ? root._presetCfg.barGap : root.barGap
     readonly property real _barMinWidth: root._presetCfg ? root._presetCfg.minBarWidth : root.minBarWidth
     readonly property real _barFillOpacity: root._presetCfg ? root._presetCfg.fillOpacity : root.fillOpacity
