@@ -37,7 +37,7 @@
     "spectrumVerticalRaise": { "type": "number", "default": 0.75, "description": "Vertical offset" },
     "spectrumMinHz": { "type": "integer", "default": 15, "minimum": 0, "maximum": 96000, "description": "Low end of the full spectrum scale (Hz)" },
     "spectrumMaxHz": { "type": "integer", "default": 24000, "minimum": 1000, "maximum": 192000, "description": "High end of the full spectrum scale (Hz)" },
-    "spectrumColorMinHz": { "type": "integer", "default": 15000, "minimum": 0, "maximum": 192000, "description": "Low end of the coloured spectrum band (Hz)" },
+    "spectrumColorMinHz": { "type": "integer", "default": 15, "minimum": 0, "maximum": 192000, "description": "Low end of the coloured spectrum band (Hz)" },
     "spectrumColorMaxHz": { "type": "integer", "default": 24000, "minimum": 0, "maximum": 192000, "description": "High end of the coloured spectrum band (Hz)" },
     "spectrumDimOpacity": { "type": "number", "default": 0.18, "minimum": 0, "maximum": 1, "description": "Opacity of bars outside the coloured band" },
 
