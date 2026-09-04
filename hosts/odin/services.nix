@@ -37,15 +37,11 @@ let
     text = ''
             set -euo pipefail
 
-            TELEGRAM_BOT_TOKEN="$(cat ${config.sops.secrets."telegram/bot-token".path})"
-            TELEGRAM_CHAT_ID="$(cat ${config.sops.secrets."telegram/chat-id".path})"
-
-            if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-              echo "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set" >&2
-              exit 1
-            fi
-            # Export after assignment so cat failures are not masked (SC2155).
-            export TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID
+            TELEGRAM_BOT_TOKEN_FILE="${config.sops.secrets."telegram/bot-token".path}"
+            TELEGRAM_CHAT_ID_FILE="${config.sops.secrets."telegram/chat-id".path}"
+            # Re-read the secrets on every request so a chat-id change takes
+            # effect without restarting the bridge.
+            export TELEGRAM_BOT_TOKEN_FILE TELEGRAM_CHAT_ID_FILE
 
             exec python3 -c '
       import json
@@ -53,9 +49,10 @@ let
       from http.server import BaseHTTPRequestHandler, HTTPServer
       import subprocess
 
-      TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-      CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
-      API_URL = "https://api.telegram.org/bot{0}/sendMessage".format(TOKEN)
+      def creds():
+          token = open(os.environ["TELEGRAM_BOT_TOKEN_FILE"]).read().strip()
+          chat_id = open(os.environ["TELEGRAM_CHAT_ID_FILE"]).read().strip()
+          return token, chat_id
 
 
       class Handler(BaseHTTPRequestHandler):
@@ -70,6 +67,8 @@ let
                   severity = labels.get("severity", "unknown")
                   summary = annotations.get("summary", "No summary")
                   msg = "[{0}] [{1}] {2}: {3}".format(status, severity, name, summary)
+                  token, chat_id = creds()
+                  api_url = "https://api.telegram.org/bot{0}/sendMessage".format(token)
                   # api.telegram.org is unreachable from this host without the
                   # sing-box socks proxy (socks5h://127.0.0.1:10808).
                   subprocess.run(
@@ -77,9 +76,9 @@ let
                           "/run/current-system/sw/bin/curl",
                           "-s", "-o", "/dev/null",
                           "--proxy", "socks5h://127.0.0.1:10808",
-                          "--data-urlencode", "chat_id={0}".format(CHAT_ID),
+                          "--data-urlencode", "chat_id={0}".format(chat_id),
                           "--data-urlencode", "text={0}".format(msg),
-                          API_URL,
+                          api_url,
                       ],
                       check=False,
                   )
@@ -240,20 +239,24 @@ let
     import sys
     import time
 
-    TOKEN = open("${config.sops.secrets."telegram/bot-token".path}").read().strip()
-    CHAT_ID = open("${config.sops.secrets."telegram/chat-id".path}").read().strip()
+    TOKEN_FILE = "${config.sops.secrets."telegram/bot-token".path}"
+    CHAT_ID_FILE = "${config.sops.secrets."telegram/chat-id".path}"
     CURL = "/run/current-system/sw/bin/curl"
-    API = "https://api.telegram.org/bot{0}/".format(TOKEN)
     PROXY = "socks5h://127.0.0.1:10808"
     STATE_DIR = pathlib.Path("/var/lib/telegram-pill-bot")
     OFFSET_FILE = STATE_DIR / "offset"
     LOG_FILE = STATE_DIR / "pill-log.txt"
 
-    def api_call(method, params):
+    def read_secrets():
+        token = open(TOKEN_FILE).read().strip()
+        chat_id = open(CHAT_ID_FILE).read().strip()
+        return token, chat_id
+
+    def api_call(method, params, token):
         cmd = [CURL, "-s", "--proxy", PROXY, "--max-time", "70"]
         for key, value in params.items():
             cmd += ["--data-urlencode", "{0}={1}".format(key, value)]
-        cmd.append(API + method)
+        cmd.append("https://api.telegram.org/bot{0}/{1}".format(token, method))
         return subprocess.run(cmd, capture_output=True, text=True, check=False)
 
     offset = 0
@@ -265,7 +268,10 @@ let
 
     while True:
         try:
-            resp = api_call("getUpdates", {"offset": str(offset + 1), "timeout": "30"})
+            token, chat_id = read_secrets()
+            resp = api_call(
+                "getUpdates", {"offset": str(offset + 1), "timeout": "30"}, token
+            )
             if resp.returncode != 0:
                 time.sleep(5)
                 continue
@@ -276,34 +282,51 @@ let
             for update in data.get("result", []):
                 offset = max(offset, update.get("update_id", 0))
                 callback = update.get("callback_query")
+                message = update.get("message") or {}
+                if not callback and message:
+                    # Log who talks to the bot so the owner id can be captured.
+                    sender = message.get("from", {})
+                    chat = message.get("chat", {})
+                    print(
+                        "pill-bot: message from {0} in chat {1} (type {2})".format(
+                            sender.get("id"), chat.get("id"), chat.get("type")
+                        ),
+                        file=sys.stderr,
+                    )
                 if not callback:
                     continue
                 # Private-chat bot: only presses from the owner count. In a
                 # 1:1 chat both chat.id and from.id equal the user id, which
                 # is the chat id the reminders go to; ignore anything else.
-                message = callback.get("message", {})
-                chat_id = message.get("chat", {}).get("id")
+                cb_message = callback.get("message", {})
+                cb_chat = cb_message.get("chat", {})
+                chat_id_n = cb_chat.get("id")
                 from_id = callback.get("from", {}).get("id")
-                if str(chat_id) != CHAT_ID or str(from_id) != CHAT_ID:
+                if str(chat_id_n) != chat_id or str(from_id) != chat_id:
                     continue
                 query_id = callback.get("id", "")
                 data_field = callback.get("data", "")
-                api_call("answerCallbackQuery", {"callback_query_id": query_id})
+                api_call(
+                    "answerCallbackQuery",
+                    {"callback_query_id": query_id},
+                    token,
+                )
                 if data_field == "pill_taken":
-                    message_id = message.get("message_id")
+                    message_id = cb_message.get("message_id")
                     if message_id:
                         stamp = time.strftime("%Y-%m-%d %H:%M %Z")
                         api_call(
                             "editMessageText",
                             {
-                                "chat_id": chat_id,
+                                "chat_id": chat_id_n,
                                 "message_id": message_id,
                                 "text": "💊 Принято ✅ ({0})".format(stamp),
                             },
+                            token,
                         )
                         LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
                         with LOG_FILE.open("a") as fh:
-                                fh.write(stamp + "\n")
+                            fh.write(stamp + "\n")
             OFFSET_FILE.write_text(str(offset))
         except Exception as exc:
             print("pill-bot: {0}".format(exc), file=sys.stderr)
