@@ -80,7 +80,7 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
                         FileKind::Link => 'l',
                         _ => 'f',
                     };
-                    writeln!(out, "R {} {} {}\t{}", i, kind, e.label, e.path.display())?;
+                    writeln!(out, "R {} {} {}\t{}", i, kind, e.label, e.path(&root).display())?;
                 }
                 writeln!(out, "E")?;
                 out.flush()?;
@@ -89,7 +89,7 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
                 // top-level directories (depth 1) for '/' completion
                 for e in &entries {
                     if e.depth == 1 && e.kind == FileKind::Dir {
-                        writeln!(out, "D {}", e.name)?;
+                        writeln!(out, "D {}", e.basename())?;
                     }
                 }
                 writeln!(out, "E")?;
@@ -98,7 +98,7 @@ pub fn serve(root: PathBuf, depth: usize, skip_dirs: Vec<String>, show_dots: boo
             "P" => {
                 let i: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 if i < entries.len() {
-                    writeln!(out, "P {}", entries[i].path.display())?;
+                    writeln!(out, "P {}", entries[i].path(&root).display())?;
                 } else {
                     writeln!(out, "P ")?;
                 }
