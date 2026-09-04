@@ -128,6 +128,25 @@ function Pick:open_window()
   self.buf = buf
   self.win = win
   self:setup_keymaps()
+  -- Modal picker: if focus ever leaves the float (e.g. a click on the
+  -- underlying buffer), pull it straight back. Otherwise letters typed
+  -- outside land in the original buffer, where 'c' starts the change
+  -- operator and nvim waits a timeoutlen for a motion.
+  local self_ref = self
+  self.leave_grp = api.nvim_create_augroup('LustyPickFocus' .. buf, { clear = true })
+  api.nvim_create_autocmd('BufLeave', {
+    group = self.leave_grp,
+    buffer = buf,
+    callback = function()
+      if not self_ref.closed and api.nvim_win_is_valid(self_ref.win) then
+        vim.schedule(function()
+          if not self_ref.closed and api.nvim_win_is_valid(self_ref.win) then
+            api.nvim_set_current_win(self_ref.win)
+          end
+        end)
+      end
+    end,
+  })
 end
 
 function Pick:setup_keymaps()
@@ -443,6 +462,10 @@ function Pick:close()
     return
   end
   self.closed = true
+  if self.leave_grp then
+    pcall(api.nvim_del_augroup_by_name, self.leave_grp)
+    self.leave_grp = nil
+  end
   if self.win and api.nvim_win_is_valid(self.win) then
     pcall(api.nvim_win_close, self.win, true)
   end
