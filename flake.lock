@@ -1004,13 +1004,17 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "narHash": "sha256-gHbRwaAu8zLWeJ5UL/U6pBbdAUT63CwKQIwG9WHUmdA=",
-        "path": "/home/neg/src/lusty-native",
-        "type": "path"
+        "lastModified": 1788535223,
+        "narHash": "sha256-gRojYGgaLuvZAQBB3UjYT1KvhYgsRzbkjqfADQnaHR4=",
+        "owner": "neg-serg",
+        "repo": "lusty-native",
+        "rev": "66852d4a5f9cd3ce99c3222c2f5a89d526cc47aa",
+        "type": "github"
       },
       "original": {
-        "path": "/home/neg/src/lusty-native",
-        "type": "path"
+        "owner": "neg-serg",
+        "repo": "lusty-native",
+        "type": "github"
       }
     },
     "mediatek-mt7927-dkms": {
