@@ -141,8 +141,6 @@ function Picker:open_window()
     col = col,
     style = 'minimal',
     border = 'rounded',
-    title = self:title_text(),
-    title_pos = 'left',
   })
   api.nvim_buf_set_option(buf, 'buftype', 'nofile')
   api.nvim_buf_set_option(buf, 'swapfile', false)
@@ -151,15 +149,10 @@ function Picker:open_window()
   api.nvim_win_set_option(win, 'wrap', false)
   api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat')
   api.nvim_win_set_option(win, 'winblend', 0)
-  local empty = {}
-  for _ = 1, h do
-    empty[#empty + 1] = ''
-  end
-  api.nvim_buf_set_lines(buf, 0, -1, false, empty)
+  api.nvim_buf_set_lines(buf, 0, -1, false, {})
   self.buf = buf
   self.win = win
   self:setup_keymaps()
-  self:setup_input_events()
   -- Modal picker: if focus ever leaves the float (e.g. a click on the
   -- underlying buffer), pull it straight back. Otherwise letters typed
   -- outside land in the original buffer, where 'c' starts the change
@@ -206,115 +199,36 @@ function Picker:setup_keymaps()
   for ru, en in pairs(RU2EN) do
     map(ru, en)
   end
-  -- Telescope-style: edit the query in insert mode on the prompt row, so
-  -- plain letters are just text input and can never hit normal-mode
-  -- operators/prefix timeouts. A normal-mode copy of the maps stays as a
-  -- fallback if the user ever escapes insert (C-c).
-  local function map_i(lhs, action)
-    local opts = { nowait = true, silent = true, noremap = true }
-    opts.callback = function()
-      self_ref:handle(action)
-    end
-    api.nvim_buf_set_keymap(buf, 'i', lhs, '', opts)
-  end
-  map_i('<CR>', 'enter')
-  map_i('<Tab>', 'enter')
-  map_i('<C-n>', 'down')
-  map_i('<Down>', 'down')
-  map_i('<C-p>', 'up')
-  map_i('<Up>', 'up')
-  map_i('<C-f>', 'colnext')
-  map_i('<C-b>', 'colprev')
-  map_i('<PageDown>', 'pagedown')
-  map_i('<PageUp>', 'pageup')
-  map_i('<C-t>', 'open_tab')
-  map_i('<C-o>', 'open_split')
-  map_i('<C-v>', 'open_vsplit')
-  map_i('<C-w>', 'updir')
-  map_i('<C-u>', 'clear_line')
-  map_i('<Esc>', 'cancel')
-  map_i('<C-c>', 'cancel')
-  map_i('<C-g>', 'cancel')
-  -- '/' keeps the Lusty dir-jump behaviour; '.' reveals dots via the change
-  -- handler. RU physical keys type their EN equivalent.
-  map_i('/', 'slash')
-  for ru, en in pairs(RU2EN) do
-    api.nvim_buf_set_keymap(buf, 'i', ru, en, { nowait = true, silent = true, noremap = true })
-  end
+  map('<Tab>', 'enter')
+  map('<CR>', 'enter')
+  map('<S-CR>', 'enter')
+  map('<BS>', 'backspace')
+  map('<C-w>', 'updir')
+  map('<C-n>', 'down')
+  map('<C-p>', 'up')
+  map('<C-n>', 'down')
+  map('<Down>', 'down')
+  map('<C-p>', 'up')
+  map('<Up>', 'up')
+  map('<C-f>', 'colnext')
+  map('<Right>', 'colnext')
+  map('<C-b>', 'colprev')
+  map('<Left>', 'colprev')
+  map('<PageDown>', 'pagedown')
+  map('<PageUp>', 'pageup')
+  map('<Home>', 'first')
+  map('<C-a>', 'first')
+  map('<End>', 'last')
+  map('<C-e>', 'last')
+  map('<C-u>', 'clear')
+  map('<C-t>', 'open_tab')
+  map('<C-o>', 'open_split')
+  map('<C-v>', 'open_vsplit')
+  map('<Esc>', 'cancel')
+  map('<C-c>', 'cancel')
+  map('<C-g>', 'cancel')
 end
 
---- Compact root path shown in the float border title.
-function Picker:title_text()
-  local path = self.root
-  local home = os.getenv('HOME') or ''
-  if home ~= '' and path:sub(1, #home) == home then
-    path = '~' .. path:sub(#home + 1)
-  end
-  if #path > 48 then
-    path = '...' .. path:sub(-45)
-  end
-  return path
-end
-
---- 0-based index of the editable prompt row (the last buffer line).
-function Picker:prompt_row()
-  return self:height() - 1
-end
-
---- Live query: the prompt line of the buffer (insert edits land there).
-function Picker:current_query()
-  if self.buf and api.nvim_buf_is_valid(self.buf) then
-    local rows = api.nvim_buf_get_lines(self.buf, self:prompt_row(), self:prompt_row() + 1, false)
-    return rows[1] or ''
-  end
-  return self.query
-end
-
---- Push self.query into the prompt line and park the cursor at its end
---- (used by actions that change the query programmatically).
-function Picker:sync_query()
-  local row = self:prompt_row()
-  if not self.buf or not api.nvim_buf_is_valid(self.buf) then
-    return
-  end
-  pcall(api.nvim_buf_set_lines, self.buf, row, row + 1, false, { self.query })
-  pcall(api.nvim_win_set_cursor, self.win, { row + 1, #self.query })
-end
-
---- Text changed while typing in insert mode: adopt the new query, reset the
---- selection and rerank (debounced). Dots mode restarts the backend when the
---- leading '.' appears or disappears.
-function Picker:on_text_changed()
-  if self.closed or not self.buf then
-    return
-  end
-  local q = self:current_query()
-  if q == self.query then
-    return
-  end
-  self.query = q
-  self.selected = 0
-  self.offset = 0
-  if self:maybe_toggle_dots() then
-    return
-  end
-  self:schedule_rerank()
-end
-
---- Input events: listen for edits of the prompt line.
-function Picker:setup_input_events()
-  local self_ref = self
-  self.input_grp = api.nvim_create_augroup('LustyPickInput' .. self.buf, { clear = true })
-  api.nvim_create_autocmd({ 'TextChangedI', 'TextChangedP' }, {
-    group = self.input_grp,
-    buffer = self.buf,
-    callback = function()
-      vim.schedule(function()
-        self_ref:on_text_changed()
-      end)
-    end,
-  })
-end
 function Picker:request(parts, handler)
   self.pending = handler
   self.outbuf = {}
@@ -323,7 +237,6 @@ end
 
 function Picker:rerank()
   pf('rerank')
-  self.query = self:current_query()
   local from = self.offset
   local to = self.offset + self:screen_count()
   self:request({ 'Q', tostring(from), tostring(to), self.query }, function(lines)
@@ -404,14 +317,13 @@ function Picker:draw()
     end
     lines[r] = table.concat(bufparts, '  ')
   end
-  for i = 1, h - 1 do
+  for i = 1, h do
     if not lines[i] then
       lines[i] = ''
     end
   end
-  -- rows 0..h-2 are list + spacer; the last row is the editable prompt and
-  -- is never rewritten here (typing owns it, cursor must not move)
-  api.nvim_buf_set_lines(self.buf, 0, h - 1, false, lines)
+  lines[h] = self:prompt_text()
+  api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
   local sel_col0 = 0
@@ -455,19 +367,61 @@ function Picker:draw()
     local sel_row = math.floor(self.selected / cols)
     api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_row, sel_col0, sel_col0 + col_w - 1)
   end
-  self:paint_prompt()
+  self:paint_prompt(h)
   pf('drawn')
 end
 
---- The prompt row holds only the editable query; the count is painted as a
---- right-aligned-ish suffix after it.
-function Picker:paint_prompt()
-  local row = self:prompt_row()
-  local q = self:current_query()
-  api.nvim_buf_add_highlight(self.buf, ns, 'LustyPromptQuery', row, 0, math.max(0, #q))
+--- Bottom prompt: current path with Lusty prompt colors, then > query.
+function Picker:prompt_text()
+  local path = self.root
+  local home = os.getenv('HOME') or ''
+  if home ~= '' and path:sub(1, #home) == home then
+    path = '~' .. path:sub(#home + 1)
+  end
+  return path .. ' \u{f105} ' .. self.query .. (self.total > 0 and (' [' .. self.total .. ']') or '')
+end
+
+function Picker:paint_prompt(h)
+  local line = h - 1
+  local home = os.getenv('HOME') or ''
+  local segs = {} -- {start, len, group}
+  local col = 0
+  local function add(text, group)
+    if text and #text > 0 then
+      segs[#segs + 1] = { col, #text, group }
+      col = col + #text
+    end
+  end
+  local path = self.root
+  if home ~= '' and path:sub(1, #home) == home then
+    add('~', 'LustyPromptTilde')
+    path = path:sub(#home + 1)
+  elseif path:sub(1, 1) ~= '/' then
+    -- relative root: show as-is in path color
+  end
+  local seg = ''
+  for i = 1, #path do
+    local ch = path:sub(i, i)
+    if ch == '/' then
+      add(seg, 'LustyPromptPath')
+      add('/', 'LustyPromptSep')
+      seg = ''
+    else
+      seg = seg .. ch
+    end
+  end
+  add(seg, 'LustyPromptPath')
+  add(' ', 'LustyPromptSep')
+  add('\u{f105}', 'LustyPromptSep')
+  add(' ', 'LustyPromptQuery')
+  add(self.query, 'LustyPromptQuery')
   if self.total > 0 then
-    local suffix = ' [' .. self.total .. ']'
-    api.nvim_buf_add_highlight(self.buf, ns, 'LustyPromptPath', row, #q + 1, #q + 1 + #suffix)
+    add(' [' .. self.total .. ']', 'LustyPromptPath')
+  end
+  for _, seg2 in ipairs(segs) do
+    if seg2[3] then
+      api.nvim_buf_add_highlight(self.buf, ns, seg2[3], line, seg2[1], seg2[1] + seg2[2])
+    end
   end
 end
 
@@ -553,10 +507,6 @@ function Picker:close()
     pcall(api.nvim_del_augroup_by_name, self.leave_grp)
     self.leave_grp = nil
   end
-  if self.input_grp then
-    pcall(api.nvim_del_augroup_by_name, self.input_grp)
-    self.input_grp = nil
-  end
   if self._timer then
     self._timer:stop()
     self._timer = nil
@@ -625,11 +575,10 @@ function Picker:handle(action)
     return
   end
   if action == 'clear' then
-    if #self.current_query() > 0 then
+    if #self.query > 0 then
       self.query = ''
       self.selected = 0
       self.offset = 0
-      self:sync_query()
       if self:maybe_toggle_dots() then
         return
       end
@@ -638,11 +587,10 @@ function Picker:handle(action)
     return
   end
   if action == 'backspace' then
-    if #self.current_query() > 0 then
+    if #self.query > 0 then
       self.query = self.query:sub(1, -2)
       self.selected = 0
       self.offset = 0
-      self:sync_query()
       if self:maybe_toggle_dots() then
         return
       end
@@ -651,12 +599,11 @@ function Picker:handle(action)
     return
   end
   if action == 'updir' then
-    if #self.current_query() > 0 then
+    if #self.query > 0 then
       -- first C-w clears the typed text (shell/vim word-delete feel)
       self.query = ''
       self.selected = 0
       self.offset = 0
-      self:sync_query()
       self:schedule_rerank()
       return
     end
@@ -673,61 +620,21 @@ function Picker:handle(action)
     self:open_current(action)
     return
   end
-  if action == 'slash' then
-    self:slash_typed()
+  -- typing: action is a character
+  local ch = action
+  if ch == '/' then
+    self:slash_enter()
     return
   end
-  if action == 'clear_line' then
-    if self:current_query() ~= '' then
-      self.query = ''
-      self.selected = 0
-      self.offset = 0
-      self:sync_query()
-      if self:maybe_toggle_dots() then
-        return
-      end
-      self:schedule_rerank()
-    end
-    return
-  end
-  -- typing (normal-mode fallback path): keep the prompt line in sync
-  if #action == 1 then
-    self.query = self.query .. action
+  if #ch == 1 then
+    self.query = self.query .. ch
     self.selected = 0
     self.offset = 0
-    self:sync_query()
     if self:maybe_toggle_dots() then
       return
     end
     self:schedule_rerank()
   end
-end
-
---- '/' pressed while editing in insert mode: same dir-jump semantics as
---- before, decided against the live buffer query.
-function Picker:slash_typed()
-  local q = self:current_query()
-  if q == '' then
-    if self.root ~= '/' then
-      self:restart('/')
-    end
-    return
-  end
-  if self.dirs == nil then
-    self:request({ 'D' }, function(lines)
-      local dirs = {}
-      for _, ln in ipairs(lines) do
-        local name = ln:match('^D (.+)$')
-        if name then
-          dirs[#dirs + 1] = name
-        end
-      end
-      self.dirs = dirs
-      self:complete_slash(q)
-    end)
-    return
-  end
-  self:complete_slash(q)
 end
 
 --- Query starting with '.' reveals dotfiles: restart the backend with
@@ -788,7 +695,6 @@ function Picker:complete_slash(q)
   self.query = q .. '/'
   self.selected = 0
   self.offset = 0
-  self:sync_query()
   self:rerank()
 end
 
@@ -829,9 +735,6 @@ function Picker:startup()
     return
   end
   self:open_window()
-  -- telescope-style: edit the query on the prompt row in insert mode
-  pcall(api.nvim_win_set_cursor, self.win, { self:prompt_row() + 1, 0 })
-  vim.cmd('startinsert')
   self:start_backend()
 end
 
