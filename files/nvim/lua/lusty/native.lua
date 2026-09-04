@@ -69,7 +69,7 @@ function Picker.new(root)
   self.offset = 0 -- top visible ranked position
   self.total = 0
   self.window = {} -- ranked pos (offset+1..) -> { i, kind, label, path }
-  self.pending = nil
+  self.handlers = {} -- FIFO of response handlers; serve answers in order
   self.outbuf = {}
   self.dirs = nil -- cached top-level dir names for '/' completion
   self.show_dots = false
@@ -169,7 +169,7 @@ end
 --- float is redrawn. Skipped while another request is in flight; the draw
 --- that follows that response re-runs ensure_meta if rows are still missing.
 function Picker:ensure_meta()
-  if not self.long or self.pending then
+  if not self.long or #self.handlers > 0 then
     return
   end
   local mask = self:meta_mask()
@@ -324,8 +324,10 @@ function Picker:setup_keymaps()
 end
 
 function Picker:request(parts, handler)
-  self.pending = handler
-  self.outbuf = {}
+  if #self.handlers == 0 then
+    self.outbuf = {}
+  end
+  self.handlers[#self.handlers + 1] = handler
   vim.fn.chansend(self.job, table.concat(parts, '\t') .. '\n')
 end
 
@@ -962,15 +964,18 @@ function Picker:start_backend()
         local line = acc:sub(1, nl - 1)
         acc = acc:sub(nl + 1)
         if line == 'E' then
-          if self_ref.pending then
-            local handler = self_ref.pending
-            self_ref.pending = nil
-            local out = self_ref.outbuf
-            self_ref.outbuf = {}
+          -- Serve answers requests in order; each response goes to the
+          -- handler that queued it, so fast key repeats never lose or
+          -- misroute replies (a single pending slot used to drop the
+          -- last response when the next request overtook it).
+          local handler = table.remove(self_ref.handlers, 1)
+          local out = self_ref.outbuf
+          self_ref.outbuf = {}
+          if handler then
             pf('resp')
             handler(out)
           end
-        elseif self_ref.pending then
+        else
           self_ref.outbuf[#self_ref.outbuf + 1] = line
         end
       end
