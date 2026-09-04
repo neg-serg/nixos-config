@@ -21,6 +21,22 @@ use listing::FileKind;
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        println!(
+            "usage: lusty-native [root] [--depth N] [--skip a,b] [--rows N] [--width N]
+
+  root      start directory (default: current)
+  --depth N listing depth (default 2)
+  --skip a,b  directories skipped (default pic,tmp)
+  --rows N  popup total height incl borders (default 14)
+  --width N popup total width incl borders (default: up to 102)
+
+Size may also come from LUSTY_ROWS / LUSTY_WIDTH env vars;
+command-line flags win.
+"
+        );
+        return;
+    }
     if args.first().map(|s| s.as_str()) == Some("--list") {
         run_list(&args);
         return;
@@ -61,9 +77,12 @@ fn main() {
         return;
     }
     // Interactive picker: lusty-native [root] [--depth N] [--skip a,b]
+    // [--rows N] [--width N]
     let mut root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let mut depth = 2usize;
     let mut skip = "pic,tmp".to_string();
+    let mut rows: Option<usize> = None;
+    let mut width: Option<usize> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -74,6 +93,14 @@ fn main() {
             "--skip" => {
                 i += 1;
                 skip = args.get(i).cloned().unwrap_or_default();
+            }
+            "--rows" => {
+                i += 1;
+                rows = args.get(i).and_then(|s| s.parse().ok());
+            }
+            "--width" => {
+                i += 1;
+                width = args.get(i).and_then(|s| s.parse().ok());
             }
             other if !other.starts_with("--") => {
                 root = PathBuf::from(other);
@@ -93,6 +120,7 @@ fn main() {
         show_dots: false,
     };
     let mut app = tui::App::new(root, opts);
+    app.set_ui(rows, width);
     match app.run() {
         Ok(code) => std::process::exit(code),
         Err(err) => {
