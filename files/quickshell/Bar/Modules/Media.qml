@@ -99,6 +99,11 @@ Item {
     readonly property bool mediaBorderless: Settings.settings.mediaIconBorderless !== false
     onMediaAccentChanged: { accentVersion++; }
 
+    // Capsule hover exposed as a property so the analyser (deep in the content
+    // tree) can gate visibility reliably (the bare capsule id is not in scope
+    // there - it lives in a nested component scope).
+    readonly property bool _capsuleHovered: capsule.hovered
+
     // ── Small bar analyser: live copy of cava values (in-place mutation won't
     // trigger bindings, so copy on a timer) ──
     property var _barSpec: []
@@ -256,7 +261,7 @@ Item {
                     opacity: 0.9
                     // Appear only while hovering the media capsule.
                     visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
-                        && capsule.hovered
+                        && mediaControl._capsuleHovered
                 }
 
                 Item {
