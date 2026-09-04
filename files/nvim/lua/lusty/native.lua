@@ -5,8 +5,10 @@
 -- The Lua port remains the fallback: g:LustyExplorerNative = 0.
 --
 -- Backend protocol (plain lines, tab separated):
---   Q <from> <to> <query>   -> "N <total>" + "R <i> <kind> <label>\t<path>" rows + "E"
--- kind: d (dir) / f (file) / l (link)
+--   Q <from> <to> <query>   -> "N <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
+--   M <mask> <index>...     -> "K <index> <meta>" per index + "E" (long view;
+--                             mask bits 1 perm, 2 user, 4 size, 8 time)
+-- kind: d (dir) / f (file) / l (link). C-l toggles the long view.
 
 local lsc = require('lusty.ls_colors')
 
@@ -68,6 +70,7 @@ function Picker.new(root)
   self.show_dots = false
   self.maxw = 12 -- widest label (chars) in the current ranked set
   self.closed = false
+  self.long = false -- long view: metadata columns via serve M (C-l toggles)
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
   return self
@@ -102,6 +105,9 @@ end
 --- Max columns of the entry grid: choose a pitch that fits the float width
 --- exactly (col_w + 2 separator), so rows never overflow or wrap.
 function Picker:max_cols()
+  if self.long then
+    return 1
+  end
   local w = self:width()
   local rows = self:list_rows()
   local total = math.max(self.total, 1)
@@ -119,6 +125,84 @@ function Picker:col_width()
   -- remaining width for the text columns after the separators
   local text_w = w - 2 * (cols - 1)
   return math.max(6, math.floor(text_w / cols))
+end
+
+--- Long-view column mask: LUSTY_COLUMNS wins over g:LustyExplorerColumns;
+--- unknown tokens are ignored, an empty result means all fields
+--- (perm,user,size,time). CLI flags do not apply to the nvim float.
+function Picker:meta_mask()
+  local spec = os.getenv('LUSTY_COLUMNS')
+  if spec == nil or spec == '' then
+    spec = vim.g.LustyExplorerColumns
+  end
+  if type(spec) ~= 'string' or spec == '' then
+    return 15
+  end
+  local mask = 0
+  for tok in spec:gmatch('[^,]+') do
+    local t = tok:match('^%s*(.-)%s*$') or ''
+    if t == 'perm' then
+      mask = mask + 1
+    elseif t == 'user' then
+      mask = mask + 2
+    elseif t == 'size' then
+      mask = mask + 4
+    elseif t == 'time' then
+      mask = mask + 8
+    end
+  end
+  if mask == 0 then
+    return 15
+  end
+  return mask
+end
+
+--- Fetch eza-style metadata for the visible rows only (serve request M:
+--- mask first, then entry indices). The backend answers one "K <i> <meta>"
+--- line per index; meta lines attach to the matching window row, then the
+--- float is redrawn. Skipped while another request is in flight; the draw
+--- that follows that response re-runs ensure_meta if rows are still missing.
+function Picker:ensure_meta()
+  if not self.long or self.pending then
+    return
+  end
+  local mask = self:meta_mask()
+  if mask == 0 then
+    return
+  end
+  local seen = {}
+  local idx = {}
+  for _, item in ipairs(self.window) do
+    if item.meta == nil and not seen[item.i] then
+      seen[item.i] = true
+      idx[#idx + 1] = tostring(item.i)
+    end
+  end
+  if #idx == 0 then
+    return
+  end
+  local self_ref = self
+  local parts = { 'M', tostring(mask) }
+  for _, i in ipairs(idx) do
+    parts[#parts + 1] = i
+  end
+  self:request(parts, function(lines)
+    for _, ln in ipairs(lines) do
+      local i, meta = ln:match('^K (%d+) ?(.*)$')
+      if i then
+        i = tonumber(i)
+        for _, item in ipairs(self_ref.window) do
+          if item.i == i then
+            item.meta = meta
+            break
+          end
+        end
+      end
+    end
+    vim.schedule(function()
+      self_ref:draw()
+    end)
+  end)
 end
 
 --- Number of positions covered by one screenful of the grid.
@@ -225,6 +309,7 @@ function Picker:setup_keymaps()
   map('<C-t>', 'open_tab')
   map('<C-o>', 'open_split')
   map('<C-v>', 'open_vsplit')
+  map('<C-l>', 'toggle_long')
   map('<Esc>', 'cancel')
   map('<C-c>', 'cancel')
   map('<C-g>', 'cancel')
@@ -287,36 +372,83 @@ function Picker:draw()
   local col_w = self:col_width()
   local lines = {}
   local cells = {} -- { line, col, item, pos }
-  for r = 1, rows do
-    local bufparts = {}
-    for c = 1, cols do
-      -- row-major: fill left-to-right, then next row (original Lusty order)
-      local pos = self.offset + (r - 1) * cols + (c - 1)
+  if self.long then
+    -- long view: one entry per line; serve already supplied the metadata
+    -- (item.meta, eza -l style). Metadata is ascii, so byte length == width.
+    local w = self:width()
+    for r = 1, rows do
+      local pos = self.offset + (r - 1)
       local item = self.window[pos - self.offset + 1]
       if item then
-        local label = item.label
-        if item.kind == 'd' then
-          label = label .. '/'
+        local meta = item.meta or ''
+        local prefix = ''
+        if meta ~= '' then
+          prefix = meta .. ' '
         end
-        -- pad to the full column width (display cells) so columns align;
-        -- truncated cells are padded too, otherwise that row shifts by one
-        -- and the selection highlight (fixed pitch) lands off.
-        local text = label
-        local w = vim.fn.strdisplaywidth(text)
-        if w > col_w - 1 then
+        local name = item.label
+        if item.kind == 'd' then
+          name = name .. '/'
+        end
+        local pw = #prefix
+        local maxw = math.max(4, w - pw)
+        local text = name
+        local nw = vim.fn.strdisplaywidth(text)
+        if nw > maxw then
           local nchars = vim.fn.strchars(text)
-          while w > col_w - 1 and nchars > 0 do
+          while nw > maxw and nchars > 0 do
             nchars = nchars - 1
             text = vim.fn.strcharpart(text, 0, nchars)
-            w = vim.fn.strdisplaywidth(text)
+            nw = vim.fn.strdisplaywidth(text)
           end
         end
-        text = text .. string.rep(' ', math.max(0, col_w - w))
-        bufparts[c] = text
-        cells[#cells + 1] = { line = r, col = c, item = item, pos = pos, label_w = w }
+        local full = prefix .. text
+        full = full .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(full)))
+        lines[r] = full
+        cells[#cells + 1] = {
+          line = r,
+          col = 1,
+          item = item,
+          pos = pos,
+          label_w = nw,
+          name_start = pw,
+          name_bytes = #text,
+          meta = meta,
+          long = true,
+        }
       end
     end
-    lines[r] = table.concat(bufparts, '  ')
+  else
+    for r = 1, rows do
+      local bufparts = {}
+      for c = 1, cols do
+        -- row-major: fill left-to-right, then next row (original Lusty order)
+        local pos = self.offset + (r - 1) * cols + (c - 1)
+        local item = self.window[pos - self.offset + 1]
+        if item then
+          local label = item.label
+          if item.kind == 'd' then
+            label = label .. '/'
+          end
+          -- pad to the full column width (display cells) so columns align;
+          -- truncated cells are padded too, otherwise that row shifts by one
+          -- and the selection highlight (fixed pitch) lands off.
+          local text = label
+          local w = vim.fn.strdisplaywidth(text)
+          if w > col_w - 1 then
+            local nchars = vim.fn.strchars(text)
+            while w > col_w - 1 and nchars > 0 do
+              nchars = nchars - 1
+              text = vim.fn.strcharpart(text, 0, nchars)
+              w = vim.fn.strdisplaywidth(text)
+            end
+          end
+          text = text .. string.rep(' ', math.max(0, col_w - w))
+          bufparts[c] = text
+          cells[#cells + 1] = { line = r, col = c, item = item, pos = pos, label_w = w }
+        end
+      end
+      lines[r] = table.concat(bufparts, '  ')
+    end
   end
   for i = 1, h do
     if not lines[i] then
@@ -336,16 +468,26 @@ function Picker:draw()
       path = cell.item.path,
     }
     local group = lsc.group_for(entry)
-    local start_col = (cell.col - 1) * (col_w + 2)
+    local name_from
+    local name_to
+    if cell.long then
+      name_from = cell.name_start
+      name_to = cell.name_start + cell.name_bytes
+    else
+      name_from = (cell.col - 1) * (col_w + 2)
+      name_to = name_from + cell.label_w
+      if name_to - name_from > col_w - 1 then
+        name_to = name_from + col_w - 1
+      end
+    end
     if cell.pos == self.selected then
-      sel_col0 = start_col
+      sel_col0 = name_from
+    end
+    if cell.long and cell.meta ~= '' and cell.pos ~= self.selected then
+      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeMeta', cell.line - 1, 0, #cell.meta)
     end
     if group then
-      local len = cell.label_w
-      if len > col_w - 1 then
-        len = col_w - 1
-      end
-      api.nvim_buf_add_highlight(self.buf, ns, group, cell.line - 1, start_col, start_col + len)
+      api.nvim_buf_add_highlight(self.buf, ns, group, cell.line - 1, name_from, name_to)
     end
     -- approximate fuzzy-match highlight: underline the first plain
     -- case-insensitive occurrence of the query in the entry basename
@@ -355,21 +497,37 @@ function Picker:draw()
         local base = basename(cell.item.label)
         local s, e = base:lower():find(q:lower(), 1, true)
         if s and e then
+          local origin = cell.long and cell.name_start or name_from
           local lstart = #cell.item.label - #base
           api.nvim_buf_add_highlight(
             self.buf, ns, 'LustyNativeMatch', cell.line - 1,
-            start_col + lstart + s - 1, start_col + lstart + e
+            origin + lstart + s - 1, origin + lstart + e
           )
         end
       end
     end
   end
-  if self.total > 0 then
-    local sel_row = math.floor(self.selected / cols)
-    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_row, sel_col0, sel_col0 + col_w - 1)
+  if self.total > 0 and rows > 0 then
+    local sel_row
+    local sel_from = sel_col0
+    local sel_to = sel_col0 + col_w - 1
+    if self.long then
+      sel_row = self.selected - self.offset
+      if sel_row >= 0 and sel_row < rows then
+        local line = lines[sel_row + 1] or ''
+        sel_from = 0
+        sel_to = math.max(1, #line)
+      end
+    else
+      sel_row = math.floor(self.selected / cols)
+    end
+    if sel_row >= 0 and sel_row < rows then
+      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_row, sel_from, sel_to)
+    end
   end
   self:paint_prompt(h)
   pf('drawn')
+  self:ensure_meta()
 end
 
 --- Bottom prompt: current path with Lusty prompt colors, then > query.
@@ -535,6 +693,16 @@ function Picker:handle(action)
   pf('key:' .. tostring(action))
   if action == 'cancel' then
     self:close()
+    return
+  end
+  if action == 'toggle_long' then
+    self.long = not self.long
+    -- realign the page to the new geometry (grid rows*cols vs long rows)
+    local screen = self:screen_count()
+    if self.total > 0 and screen > 0 then
+      self.offset = math.max(0, math.floor(self.selected / screen) * screen)
+    end
+    self:rerank()
     return
   end
   if action == 'down' then
@@ -818,6 +986,7 @@ function M.ensure_highlights()
   end
   api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
   api.nvim_set_hl(0, 'LustyNativeMatch', { underline = true })
+  api.nvim_set_hl(0, 'LustyNativeMeta', { fg = '#6c7e96' }) -- dim metadata in long view
   -- nearly-black but not #000000: the web/xterm layer treats exact black as
   -- the transparent default, while #0c0d14 rendered too gray on this setup
   api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000001', fg = '#d4d4d4' })
