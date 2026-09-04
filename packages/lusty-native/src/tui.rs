@@ -65,6 +65,9 @@ pub struct App {
     offset: usize,
     size: (usize, usize),
     cursor_row: Option<usize>,
+    box_w: usize, // popup inner width (content columns between the borders)
+    box_h: usize, // popup outer height including the two border rows
+    pop_top: usize, // 0-based screen row of the popup top border
     palette: Colors,
 }
 
@@ -83,6 +86,9 @@ impl App {
             offset: 0,
             size: (80, 24),
             cursor_row: None,
+            box_w: 78,
+            box_h: OUTER_ROWS,
+            pop_top: 0,
             palette,
         }
     }
@@ -206,21 +212,53 @@ impl App {
         terminal::enable_raw_mode()?;
         let mut stdout = io::stdout();
         execute!(stdout, cursor::Hide)?;
-        // The ioctl size can be stale when running inside a nvim terminal
-        // buffer; ask the terminal emulator directly (DSR cursor report after
-        // moving to a huge position) for the real grid size.
-        if let Some((cols, rows)) = probe_size() {
+        // Capture the prompt position first: the cursor sits on the
+        // empty line right below the command line the picker was
+        // launched from.
+        self.cursor_row = probe_cursor_row();
+        // The ioctl size can be stale when running inside a nvim
+        // terminal buffer; ask the terminal emulator directly (DSR
+        // cursor report after moving to a huge position) for the real
+        // grid size.
+        let probed = probe_size();
+        if let Some((cols, rows)) = probed {
             self.size = (cols, rows);
         } else {
             let (c, r) = terminal::size().unwrap_or((80, 24));
             self.size = ((c as usize).max(40), (r as usize).max(10));
         }
-        self.cursor_row = probe_cursor_row();
-        let result = self.loop_events(&mut stdout);
-        // clear first, then park the cursor at the first panel row so the
-        // shell continues directly under the command line
-        self.clear_panel(&mut stdout)?;
+        let (w, h) = self.size;
+        // Popup geometry: outer box height capped at OUTER_ROWS, inner
+        // content width capped at 100 columns, always inside the screen.
+        self.box_h = OUTER_ROWS.min(h).max(1);
+        self.box_w = w.saturating_sub(2).min(100);
+        // Place the box directly under the command line; when it would
+        // run past the bottom of the screen, scroll the content up first
+        // (fzf --height behaviour). probe_size parked the cursor on the
+        // bottom row, so plain newlines scroll.
         let esc = char::from_u32(0x1b).unwrap();
+        let r0 = self
+            .cursor_row
+            .map(|r| r.min(h.saturating_sub(1)))
+            .unwrap_or(h.saturating_sub(self.box_h));
+        let scroll_by = (r0 + self.box_h).saturating_sub(h);
+        if scroll_by > 0 && probed.is_some() {
+            let mut s = String::with_capacity(scroll_by + 1);
+            for _ in 0..scroll_by {
+                s.push('\n');
+            }
+            write!(stdout, "{s}")?;
+            stdout.flush()?;
+            self.pop_top = r0 - scroll_by;
+        } else if scroll_by > 0 {
+            self.pop_top = h.saturating_sub(self.box_h);
+        } else {
+            self.pop_top = r0;
+        }
+        let result = self.loop_events(&mut stdout);
+        // Clear first, then park the cursor at the top of the popup area
+        // so the shell continues directly under the command line.
+        self.clear_panel(&mut stdout)?;
         write!(stdout, "{esc}[{};1H", self.panel_top() + 1)?;
         terminal::disable_raw_mode()?;
         execute!(stdout, cursor::Show)?;
@@ -231,8 +269,6 @@ impl App {
 /// Ask the terminal for its real dimensions: move the cursor far away and
 /// request its position (DSR). Every emulator answers ESC[<row>;<col>R.
 fn probe_size() -> Option<(usize, usize)> {
-    use std::io::Read;
-    use std::os::unix::io::AsRawFd;
     use std::time::{Duration, Instant};
 
     let esc = char::from_u32(0x1b).unwrap();
@@ -241,7 +277,6 @@ fn probe_size() -> Option<(usize, usize)> {
     out.flush().ok()?;
 
     let deadline = Instant::now() + Duration::from_millis(400);
-    let mut stdin = io::stdin();
     let mut buf = Vec::new();
     let mut byte = [0u8; 1];
     loop {
@@ -251,7 +286,7 @@ fn probe_size() -> Option<(usize, usize)> {
         let remaining = deadline.saturating_duration_since(Instant::now());
         let ms = remaining.as_millis().min(100) as i32;
         let mut fds = [libc::pollfd {
-            fd: stdin.as_raw_fd(),
+            fd: 0,
             events: libc::POLLIN,
             revents: 0,
         }];
@@ -260,7 +295,10 @@ fn probe_size() -> Option<(usize, usize)> {
         if rc <= 0 {
             continue; // timeout or poll error
         }
-        if stdin.read(&mut byte).is_err() {
+        // Read raw from fd 0; see probe_cursor_row for why not io::stdin.
+        // SAFETY: byte is a valid 1-byte buffer for the stdin fd.
+        let n = unsafe { libc::read(0, byte.as_mut_ptr().cast(), 1) };
+        if n <= 0 {
             return None;
         }
         buf.push(byte[0]);
@@ -277,8 +315,6 @@ fn probe_size() -> Option<(usize, usize)> {
 /// Ask the terminal where the cursor is (DSR), so the panel can start right
 /// below the command line. Returns the 0-based row.
 fn probe_cursor_row() -> Option<usize> {
-    use std::io::Read;
-    use std::os::unix::io::AsRawFd;
     use std::time::{Duration, Instant};
 
     let esc = char::from_u32(0x1b).unwrap();
@@ -287,7 +323,6 @@ fn probe_cursor_row() -> Option<usize> {
     out.flush().ok()?;
 
     let deadline = Instant::now() + Duration::from_millis(200);
-    let mut stdin = io::stdin();
     let mut buf = Vec::new();
     let mut byte = [0u8; 1];
     loop {
@@ -297,7 +332,7 @@ fn probe_cursor_row() -> Option<usize> {
         let remaining = deadline.saturating_duration_since(Instant::now());
         let ms = remaining.as_millis().min(50) as i32;
         let mut fds = [libc::pollfd {
-            fd: stdin.as_raw_fd(),
+            fd: 0,
             events: libc::POLLIN,
             revents: 0,
         }];
@@ -306,7 +341,11 @@ fn probe_cursor_row() -> Option<usize> {
         if rc <= 0 {
             continue;
         }
-        if stdin.read(&mut byte).is_err() {
+        // Read raw from fd 0 (not io::stdin, whose BufReader would swallow
+        // the rest of the DSR reply and strand it outside the kernel queue).
+        // SAFETY: byte is a valid 1-byte buffer for the stdin fd.
+        let n = unsafe { libc::read(0, byte.as_mut_ptr().cast(), 1) };
+        if n <= 0 {
             return None;
         }
         buf.push(byte[0]);
@@ -330,30 +369,21 @@ fn parse_dsr(s: &str) -> Option<(usize, usize)> {
 
 impl App {
     fn list_rows(&self) -> usize {
-        // panel of up to 12 rows (incl the prompt), sized to fit under the
-        // command line the picker was launched from
-        let h = self.size.1;
-        let top = self.panel_top();
-        let avail = h.saturating_sub(top);
-        (avail.min(12)).saturating_sub(1).max(3)
+        // Content rows inside the borders minus the prompt line at the
+        // bottom (box_h includes the two border rows).
+        self.box_h.saturating_sub(3).max(1)
     }
 
-    /// 0-based top row of the panel: the cursor sits on the blank line right
-    /// under the command line the picker was launched from, so draw there
-    /// (fzf --height behaviour). Falls back near the bottom if unknown.
+    /// 0-based screen row of the popup top border, fixed at startup to
+    /// sit directly under the command line the picker was launched from.
     fn panel_top(&self) -> usize {
-        let h = self.size.1;
-        if let Some(r) = self.cursor_row {
-            r.min(h.saturating_sub(13))
-        } else {
-            h.saturating_sub(14)
-        }
+        self.pop_top
     }
 
     /// Adaptive columns: as many as the content needs (ceil(total/rows)),
-    /// no more than fit the width given the widest name (capped at 20).
+    /// no more than fit the popup width given the widest name (capped at 20).
     fn max_cols(&mut self) -> usize {
-        let w = self.size.0;
+        let w = self.box_w;
         let rows = self.list_rows();
         let total = self.ranked.len().max(1);
         let needed = total.div_ceil(rows).max(1);
@@ -364,7 +394,7 @@ impl App {
 
     fn col_width(&mut self) -> usize {
         let cols = self.max_cols();
-        let w = self.size.0;
+        let w = self.box_w;
         // pitch = col_w + 2 separator; ensure cols*col_w + 2*(cols-1) <= w
         let text_w = w.saturating_sub(2 * (cols - 1));
         (text_w / cols).max(6)
@@ -458,76 +488,89 @@ impl App {
 
     fn draw(&mut self, out: &mut io::Stdout) -> io::Result<()> {
         self.ensure_ranked();
-        let (w, h) = self.size;
+        let esc = char::from_u32(0x1b).unwrap();
+        let w = self.box_w;
+        let top = self.pop_top;
+        let bh = self.box_h;
         let rows = self.list_rows();
         let cols = self.max_cols();
         let col_w = self.col_width();
-        let top = self.panel_top();
-        let esc = char::from_u32(0x1b).unwrap();
-        let mut frame = String::with_capacity((w + 64) * (rows + 2));
+        let bg = "48;2;11;12;20"; // opaque popup background
+        let border = "38;2;108;126;150"; // #6c7e96 border colour
+        let revert = format!("{esc}[22;23;24;39;{bg}m"); // default fg on popup bg
+        let mut frame = String::with_capacity((w + 64) * (bh + 2));
 
-        // Bottom panel (fzf --height style): redraw only the panel lines with
-        // absolute positioning and erase-to-EOL; terminal content above stays.
-        for r in 0..rows {
-            let mut line = String::new();
-            for c in 0..cols {
-                let pos = self.offset + r * cols + c;
-                let mut cell = String::new();
-                let selected = pos == self.selected;
-                if pos < self.ranked.len() {
-                    let i = self.ranked[pos];
-                    let e = self.listing()[i].clone();
-                    if selected {
-                        cell.push(esc);
-                        cell.push_str("[48;2;0;95;175;1;38;2;209;229;255m");
-                    } else {
-                        let exec = e.kind == FileKind::File && is_exec(&e.path);
-                        if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
-                            cell.push(esc);
-                            cell.push('[');
-                            cell.push_str(code);
-                            cell.push('m');
-                        }
-                    }
-                    cell.push_str(&e.label);
-                    if e.kind == FileKind::Dir {
-                        cell.push('/');
-                    }
-                    cell.push(esc);
-                    cell.push_str("[0m");
-                }
-                ansi_pad(&mut cell, col_w);
-                line.push_str(&cell);
-                if c + 1 < cols {
-                    line.push_str("  ");
-                }
-            }
-            ansi_pad(&mut line, w.saturating_sub(1).max(1));
-            frame.push(esc);
-            frame.push_str(&format!("[{};1H", top + r + 1));
-            frame.push_str(&line);
-            frame.push(esc);
-            frame.push_str("[K");
+        // Top border: box-drawing frame around w content columns.
+        frame.push_str(&format!("{esc}[{};1H", top + 1));
+        frame.push_str(&format!("{esc}[{bg}m{esc}[{border}m"));
+        frame.push('\u{250c}'); // \u250c
+        for _ in 0..w {
+            frame.push('\u{2500}'); // \u2500
         }
-        // prompt line at the bottom of the panel
-        let mut prompt = self.prompt_line();
-        ansi_pad(&mut prompt, w.saturating_sub(1).max(1));
-        frame.push(esc);
-        frame.push_str(&format!("[{};1H", top + rows + 1));
-        frame.push_str(&prompt);
-        frame.push(esc);
-        frame.push_str("[K");
+        frame.push('\u{2510}'); // \u2510
+        frame.push_str(&format!("{esc}[0m{esc}[K"));
+        // Content rows: entry grid on top, prompt as the bottom line.
+        for r in 0..(bh.saturating_sub(2)) {
+            frame.push_str(&format!("{esc}[{};1H", top + 2 + r));
+            frame.push_str(&format!("{esc}[{bg}m{esc}[{border}m"));
+            frame.push('\u{2502}'); // \u2502
+            let mut line = String::new();
+            if r < rows {
+                for c in 0..cols {
+                    let pos = self.offset + r * cols + c;
+                    let mut cell = String::new();
+                    if pos < self.ranked.len() {
+                        let i = self.ranked[pos];
+                        let e = self.listing()[i].clone();
+                        if pos == self.selected {
+                            cell.push_str(&format!("{esc}[1;48;2;0;95;175;38;2;209;229;255m"));
+                        } else {
+                            let exec = e.kind == FileKind::File && is_exec(&e.path);
+                            if let Some(code) = self.palette.code_for(&e.name, e.kind, exec) {
+                                cell.push_str(&format!("{esc}[{code}m"));
+                            }
+                        }
+                        cell.push_str(&e.label);
+                        if e.kind == FileKind::Dir {
+                            cell.push('/');
+                        }
+                        cell.push_str(&revert);
+                    }
+                    ansi_pad(&mut cell, col_w);
+                    line.push_str(&cell);
+                    if c + 1 < cols {
+                        line.push_str("  ");
+                    }
+                }
+            } else if r == rows {
+                line = self.prompt_line();
+            }
+            ansi_pad(&mut line, w);
+            frame.push_str(&line);
+            frame.push_str(&format!("{esc}[{border}m"));
+            frame.push('\u{2502}'); // \u2502
+            frame.push_str(&format!("{esc}[0m{esc}[K"));
+        }
+        // Bottom border.
+        frame.push_str(&format!("{esc}[{};1H", top + bh));
+        frame.push_str(&format!("{esc}[{bg}m{esc}[{border}m"));
+        frame.push('\u{2514}'); // \u2514
+        for _ in 0..w {
+            frame.push('\u{2500}'); // \u2500
+        }
+        frame.push('\u{2518}'); // \u2518
+        frame.push_str(&format!("{esc}[0m{esc}[K"));
         write!(out, "{frame}")?;
         out.flush()
     }
 
     /// Erase the panel lines (used when the picker exits).
     fn clear_panel(&self, out: &mut io::Stdout) -> io::Result<()> {
-        let rows = self.list_rows() + 1;
-        let top = self.panel_top();
+        let bh = self.box_h;
+        let top = self.pop_top;
         let esc = char::from_u32(0x1b).unwrap();
         let mut s = String::new();
-        for r in 0..rows {
+        for r in 0..bh {
             s.push(esc);
             s.push_str(&format!("[{};1H", top + r + 1));
             s.push(esc);
@@ -574,13 +617,13 @@ impl App {
         push_painted(" \u{f105} ", "38;2;0;95;175", &mut out);
         push_painted(&self.query, "1;38;2;255;255;255", &mut out);
         out.push(esc);
-        out.push_str("[0m");
+        out.push_str("[22;23;24;39m");
         out
     }
 }
 
-/// Empty rows left below the picker panel (fzf --height feel).
-const PANEL_BOTTOM_MARGIN: usize = 2;
+/// Outer popup height: two border rows plus up to 12 content rows.
+const OUTER_ROWS: usize = 14;
 
 fn is_exec(path: &std::path::Path) -> bool {
     std::fs::metadata(path)
@@ -593,7 +636,6 @@ fn ansi_pad(line: &mut String, width: usize) {
     let mut out = String::with_capacity(src.len() + width);
     let mut vis = 0usize;
     let mut in_esc = false;
-    let mut had_sgr = false;
     for &c in &src {
         if in_esc {
             out.push(c);
@@ -604,9 +646,6 @@ fn ansi_pad(line: &mut String, width: usize) {
             }
             if (0x40..=0x7e).contains(&(c as u32)) {
                 in_esc = false;
-                if c == 'm' {
-                    had_sgr = true;
-                }
             }
             continue;
         }
@@ -621,17 +660,9 @@ fn ansi_pad(line: &mut String, width: usize) {
         out.push(c);
         vis += 1;
     }
-    if vis > width && had_sgr {
-        out.push_str("\x1b[0m"); // ensure colors are closed after a cut
-    }
-    if vis < width {
-        if had_sgr && !out.ends_with("\x1b[0m") {
-            out.push_str("\x1b[0m");
-        }
-        while vis < width {
-            out.push(' ');
-            vis += 1;
-        }
+    while vis < width {
+        out.push(' ');
+        vis += 1;
     }
     *line = out;
 }
