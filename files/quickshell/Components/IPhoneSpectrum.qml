@@ -25,6 +25,10 @@ Item {
     property real minBarWidth: 2  // thin bars
     // ── Animation ──
     property int animDurationMs: 80
+    // Render implementation: "bars" (rounded columns), "led" (segmented LED
+    // columns), or "wave" (smooth mirrored waveform area).
+    property string renderMode: (Settings.settings.spectrumMode !== undefined) ? Settings.settings.spectrumMode : "bars"
+    property int ledSegments: 10
 
     // Preset style. Empty = use the granular colour/shape properties above.
     // Named presets override colour, thickness, opacity and glow.
@@ -292,10 +296,27 @@ Item {
                 ? (1.0 - root.threeDDepth * Math.abs(2 * t - 1))
                 : 1.0
             readonly property color _specColor: root.threeD ? Qt.lighter(barColor, 1.5) : barColor
+            readonly property int litCount: Math.round(v * root.ledSegments)
+
+            // LED segment columns (renderMode === "led").
+            Repeater {
+                model: root.renderMode === "led" ? root.ledSegments : 0
+                delegate: Rectangle {
+                    readonly property bool _lit: index < parent.litCount
+                    readonly property real _segGap: Math.max(1, Math.round(root._barGap * 0.5))
+                    width: parent.width * 0.82
+                    height: Math.max(2, (parent.height - (root.ledSegments - 1) * _segGap) / root.ledSegments)
+                    x: (parent.width - width) / 2
+                    y: parent.height - (index + 1) * height - index * _segGap
+                    radius: Math.max(1, height * 0.3)
+                    visible: root.renderMode === "led"
+                    color: _lit ? parent.barColor : Qt.rgba(0.62, 0.62, 0.62, 0.12)
+                }
+            }
 
             // Neon halo behind the bottom core bar (coloured band only).
             Rectangle {
-                visible: parent.barVisible && root._glowEnabled && parent.inColorBand
+                visible: root.renderMode === "bars" && parent.barVisible && root._glowEnabled && parent.inColorBand
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * root._glowSpread
                 radius: width / 2
@@ -313,7 +334,7 @@ Item {
             // Bottom bar: grows upward from the bottom when one-sided,
             // or downward from the vertical center when mirrored.
             Rectangle {
-                visible: parent.barVisible
+                visible: root.renderMode === "bars" && parent.barVisible
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 radius: width / 2
@@ -335,7 +356,7 @@ Item {
 
             // Neon halo behind the top bar (mirrored, coloured band only).
             Rectangle {
-                visible: root.mirror && parent.barVisible && root._glowEnabled && parent.inColorBand
+                visible: root.renderMode === "bars" && root.mirror && parent.barVisible && root._glowEnabled && parent.inColorBand
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * root._glowSpread
                 radius: width / 2
@@ -350,7 +371,7 @@ Item {
 
             // Top bar: rendered only when mirrored.
             Rectangle {
-                visible: root.mirror && parent.barVisible
+                visible: root.renderMode === "bars" && root.mirror && parent.barVisible
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 radius: width / 2
@@ -367,6 +388,73 @@ Item {
                     SmoothedAnimation { duration: root.animDurationMs }
                 }
             }
+        }
+    }
+
+    // Waveform implementation (renderMode === "wave") — smooth mirrored area graph.
+    Canvas {
+        id: waveCanvas
+        anchors.fill: parent
+        visible: root.renderMode === "wave"
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        Timer {
+            interval: 80
+            running: root.renderMode === "wave" && root.values.length > 0
+            repeat: true
+            onTriggered: waveCanvas.requestPaint()
+        }
+        onPaint: {
+            var ctx = getContext("2d");
+            ctx.reset();
+            ctx.clearRect(0, 0, width, height);
+            var n = root.barCount;
+            if (n < 2) return;
+            var mid = height / 2;
+            var step = width / (n - 1);
+            var pts = [];
+            for (var i = 0; i < n; i++) {
+                var v = Utils.clamp01(root._downsampled[i] || 0);
+                var amp = v * (height * 0.42);
+                pts.push(Qt.point(i * step, mid - amp));
+            }
+            var b = root._barBase;
+            function fillPath(getY) {
+                ctx.beginPath();
+                ctx.moveTo(0, mid);
+                for (var i = 0; i < n; i++) {
+                    var x = pts[i].x, y = getY(i);
+                    if (i === 0) ctx.lineTo(x, y);
+                    else {
+                        var prev = pts[i - 1], mx = (prev.x + x) / 2;
+                        ctx.bezierCurveTo(mx, prev.y, mx, y, x, y);
+                    }
+                }
+                ctx.lineTo(width, mid);
+                ctx.closePath();
+                ctx.fill();
+            }
+            var gTop = ctx.createLinearGradient(0, 0, 0, mid);
+            gTop.addColorStop(0, Qt.rgba(b.r, b.g, b.b, 0.9));
+            gTop.addColorStop(1, Qt.rgba(b.r, b.g, b.b, 0));
+            ctx.fillStyle = gTop;
+            fillPath(function (i) { return pts[i].y; });
+            var gBot = ctx.createLinearGradient(0, mid, 0, height);
+            gBot.addColorStop(0, Qt.rgba(b.r, b.g, b.b, 0.9));
+            gBot.addColorStop(1, Qt.rgba(b.r, b.g, b.b, 0));
+            ctx.fillStyle = gBot;
+            fillPath(function (i) { return mid + (mid - pts[i].y); });
+            var e = root._barEnd;
+            ctx.beginPath();
+            ctx.moveTo(0, mid);
+            for (var i = 1; i < n; i++) {
+                var prev = pts[i - 1], x = pts[i].x;
+                var mx = (prev.x + x) / 2;
+                ctx.bezierCurveTo(mx, prev.y, mx, pts[i].y, x, pts[i].y);
+            }
+            ctx.strokeStyle = Qt.rgba(e.r, e.g, e.b, 0.9);
+            ctx.lineWidth = Math.max(2, root._barFillOpacity * 6);
+            ctx.stroke();
         }
     }
 }
