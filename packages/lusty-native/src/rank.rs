@@ -21,7 +21,11 @@ pub fn rank_indices(entries: &[Entry], query: &str) -> Vec<usize> {
 /// full scan of the matched set per keystroke).
 pub fn rank_indices_mw(entries: &[Entry], query: &str) -> (Vec<usize>, usize) {
     if query.is_empty() {
-        let mw = entries.iter().map(|e| e.label.chars().count()).max().unwrap_or(0);
+        let mw = entries
+            .iter()
+            .map(|e| e.label.chars().count())
+            .max()
+            .unwrap_or(0);
         return ((0..entries.len()).collect(), mw);
     }
     // Only an exact "." query exempts the first-letter anchor (dot reveal).
@@ -47,8 +51,7 @@ pub fn rank_indices_mw(entries: &[Entry], query: &str) -> (Vec<usize>, usize) {
                 for (k, e) in chunk.iter().enumerate() {
                     let idx = base + k;
                     if let Some(f) = first {
-                        if e.name0 != f
-                        {
+                        if e.name0 != f {
                             continue;
                         }
                     }
@@ -80,8 +83,7 @@ pub fn rank_indices_mw(entries: &[Entry], query: &str) -> (Vec<usize>, usize) {
         let mut mw: usize = 0;
         for (idx, e) in entries.iter().enumerate() {
             if let Some(first) = first {
-                if e.name0 != first
-                {
+                if e.name0 != first {
                     continue;
                 }
             }
@@ -131,7 +133,15 @@ mod tests {
     }
 
     fn entries(dir: &Path) -> Vec<Entry> {
-        list(dir, &Options { depth: 2, skip_dirs: vec![], follow_mounts: false, show_dots: false })
+        list(
+            dir,
+            &Options {
+                depth: 2,
+                skip_dirs: vec![],
+                follow_mounts: false,
+                show_dots: false,
+            },
+        )
     }
 
     fn labels(entries: &[Entry], idxs: &[usize]) -> Vec<String> {
@@ -142,7 +152,11 @@ mod tests {
     fn first_letter_must_prefix_basename() {
         let dir = fixture("anchor");
         let e = entries(&dir);
-        assert_eq!(rank_indices(&e, "c").len(), 0, "query c must not match pic.jpg");
+        assert_eq!(
+            rank_indices(&e, "c").len(),
+            0,
+            "query c must not match pic.jpg"
+        );
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -177,12 +191,15 @@ mod tests {
     fn dot_query_skips_anchor() {
         let dir = fixture("dotq");
         fs::write(dir.join(".hidden"), b"x").unwrap();
-        let e = list(dir.as_path(), &Options {
-            depth: 1,
-            skip_dirs: vec![],
-            follow_mounts: false,
-            show_dots: true,
-        });
+        let e = list(
+            dir.as_path(),
+            &Options {
+                depth: 1,
+                skip_dirs: vec![],
+                follow_mounts: false,
+                show_dots: true,
+            },
+        );
         // ".hidden" starts with '.', so the anchor would never match it; with
         // the exemption the dot rule itself decides (every name has a dot).
         let idxs = rank_indices(&e, ".");

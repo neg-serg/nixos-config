@@ -47,7 +47,10 @@ fn walk_pool() -> &'static rayon::ThreadPool {
             .and_then(|v| v.trim().parse::<usize>().ok())
             .unwrap_or(DEFAULT_THREADS)
             .max(1);
-        rayon::ThreadPoolBuilder::new().num_threads(n).build().expect("walk pool")
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(n)
+            .build()
+            .expect("walk pool")
     })
 }
 
@@ -193,7 +196,12 @@ fn scan_dir(
             label: rel.clone(),
             kind: kind_of(&ft),
             depth: depth as u32,
-            name0: name.as_bytes().first().copied().unwrap_or(0).to_ascii_lowercase(),
+            name0: name
+                .as_bytes()
+                .first()
+                .copied()
+                .unwrap_or(0)
+                .to_ascii_lowercase(),
         });
         if descend {
             subdirs.push((path, rel));
@@ -231,7 +239,9 @@ pub fn list(root: &Path, opts: &Options) -> Vec<Entry> {
             walk_pool().install(|| {
                 level
                     .par_iter()
-                    .map(|(p, rel)| scan_dir(p, rel, depth, opts.depth, &skip, &mounts, opts.show_dots))
+                    .map(|(p, rel)| {
+                        scan_dir(p, rel, depth, opts.depth, &skip, &mounts, opts.show_dots)
+                    })
                     .collect()
             })
         } else {
@@ -288,7 +298,13 @@ fn meta_keys(root: &Path, entries: &[Entry], by_time: bool) -> Vec<i128> {
             .par_iter()
             .map(|e| {
                 std::fs::metadata(root.join(&e.label))
-                    .map(|m| if by_time { m.mtime() as i128 } else { m.size() as i128 })
+                    .map(|m| {
+                        if by_time {
+                            m.mtime() as i128
+                        } else {
+                            m.size() as i128
+                        }
+                    })
                     .unwrap_or(0)
             })
             .collect()
@@ -349,11 +365,13 @@ pub fn reorder(entries: &mut Vec<Entry>, dirs_first: bool, reverse: bool) {
         }
         let g = &mut entries[i..j];
         if dirs_first {
-            g.sort_unstable_by(|a, b| match (a.kind == FileKind::Dir, b.kind == FileKind::Dir) {
-                (true, false) => std::cmp::Ordering::Less,
-                (false, true) => std::cmp::Ordering::Greater,
-                _ => a.basename().cmp(b.basename()),
-            });
+            g.sort_unstable_by(
+                |a, b| match (a.kind == FileKind::Dir, b.kind == FileKind::Dir) {
+                    (true, false) => std::cmp::Ordering::Less,
+                    (false, true) => std::cmp::Ordering::Greater,
+                    _ => a.basename().cmp(b.basename()),
+                },
+            );
         }
         if reverse {
             g.reverse();
@@ -369,7 +387,9 @@ fn sort_by_name(bucket: &mut Vec<Entry>) {
         return;
     }
     let mut order: Vec<u32> = (0..n as u32).collect();
-    order.sort_unstable_by(|&a, &b| basename(&bucket[a as usize].label).cmp(basename(&bucket[b as usize].label)));
+    order.sort_unstable_by(|&a, &b| {
+        basename(&bucket[a as usize].label).cmp(basename(&bucket[b as usize].label))
+    });
     let mut src = std::mem::replace(bucket, Vec::with_capacity(n));
     for &i in &order {
         let empty = Entry {
@@ -389,7 +409,12 @@ mod tests {
     use std::fs;
 
     fn opts(depth: usize, skip: Vec<String>, show_dots: bool) -> Options {
-        Options { depth, skip_dirs: skip, follow_mounts: false, show_dots }
+        Options {
+            depth,
+            skip_dirs: skip,
+            follow_mounts: false,
+            show_dots,
+        }
     }
 
     #[test]
@@ -418,8 +443,14 @@ mod tests {
         let names: Vec<&str> = entries.iter().map(|e| e.basename()).collect();
         assert!(names.contains(&"b.txt"));
         // shallower first: a.txt (depth 1) before b.txt (depth 2)
-        let a = entries.iter().position(|e| e.basename() == "a.txt").unwrap();
-        let b = entries.iter().position(|e| e.basename() == "b.txt").unwrap();
+        let a = entries
+            .iter()
+            .position(|e| e.basename() == "a.txt")
+            .unwrap();
+        let b = entries
+            .iter()
+            .position(|e| e.basename() == "b.txt")
+            .unwrap();
         assert!(a < b);
         let _ = fs::remove_dir_all(&dir);
     }
