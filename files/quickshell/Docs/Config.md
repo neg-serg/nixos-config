@@ -69,14 +69,12 @@ iPhone-style analyser (shared component; bar and toast are configured separately
 
 - barAnalyserMirror: boolean, default false. Mirror the small bar analyser; false = one-sided.
 - barAnalyserBars: integer, default 5. Bar count for the small bar analyser.
-- barAnalyserFillOpacity: number 0..1, default 0.8. Fill opacity for the small bar analyser.
-- barAnalyserBarGap: integer, default 2. Gap between small bar analyser bars.
-- barAnalyserMinBarWidth: integer, default 5. Minimum bar width for the small bar analyser.
+- barAnalyserStyle: string, default "neon-cyan". Visual preset for the small bar analyser:
+  neon-cyan | neon-violet | analog-amber | analog-rose.
 - toastAnalyserMirror: boolean, default false. Mirror the large toast analyser; false = one-sided.
-- toastAnalyserBars: integer, default 24. Bar count for the large toast analyser.
-- toastAnalyserFillOpacity: number 0..1, default 1.0. Fill opacity for the large toast analyser.
-- toastAnalyserBarGap: integer, default 2. Gap between large toast analyser bars.
-- toastAnalyserMinBarWidth: integer, default 2. Minimum bar width for the large toast analyser.
+- toastAnalyserBars: integer, default 64. Bar count for the large toast analyser.
+- toastAnalyserStyle: string, default "neon-cyan". Visual preset for the large toast analyser:
+  neon-cyan | neon-violet | analog-amber | analog-rose.
 
 CAVA / Spectrum (global defaults; each may be overridden per profile in visualizerProfiles.<name>)
 
