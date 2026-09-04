@@ -334,24 +334,57 @@ Rectangle {
                                 font.pixelSize: Math.round(playerUI.musicTextPx * 0.8)
                                 color: playerUI.musicTextColor
                             }
-                            Rectangle {
+                            Item {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(2, Math.round(3 * Theme.scale(screen)))
-                                color: Color.withAlpha(playerUI.musicTextColor, 0.18)
-                                radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
+                                Layout.preferredHeight: Math.max(10, Math.round(24 * Theme.scale(screen)))
+                                implicitHeight: Layout.preferredHeight
+
+                                // Spectrum analyzer in the background of the
+                                // progress area, coloured with the cover accent.
+                                Canvas {
+                                    anchors.fill: parent
+                                    opacity: 0.4
+                                    onPaint: {
+                                        const ctx = getContext("2d");
+                                        ctx.clearRect(0, 0, width, height);
+                                        const vals = MusicManager.cavaValues || [];
+                                        const n = vals.length;
+                                        if (!n) return;
+                                        const gap = Math.max(1, Math.round(2 * Theme.scale(Screen)));
+                                        const bw = (width - gap * (n - 1)) / n;
+                                        ctx.fillStyle = detailsCol.musicAccentCss || "#888";
+                                        for (let i = 0; i < n; i++) {
+                                            const v = Math.max(0.02, Math.min(1, Number(vals[i]) || 0));
+                                            const h = Math.max(1, v * height);
+                                            ctx.fillRect(i * (bw + gap), height - h, bw, h);
+                                        }
+                                    }
+                                    onCavaValuesChanged: requestPaint()
+                                }
+
+                                // Progress track + accent fill on top of the spectrum.
                                 Rectangle {
                                     anchors.left: parent.left
+                                    anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
-                                    height: parent.height
-                                    // Live progress (reactive so it tracks seeks).
-                                    width: parent.width * (function() {
-                                        const total = Time.mprisToMs(MusicManager.trackLength || 0);
-                                        const pos = Math.max(0, MusicManager.currentPosition || 0);
-                                        return total > 0 ? Math.min(1, pos / total) : 0;
-                                    })()
-                                    color: detailsCol.musicAccent
-                                    radius: parent.radius
+                                    height: Math.max(2, Math.round(3 * Theme.scale(screen)))
+                                    color: Color.withAlpha(playerUI.musicTextColor, 0.18)
+                                    radius: Math.max(1, Math.round(2 * Theme.scale(screen)))
+                                    Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        height: parent.height
+                                        // Live progress (reactive so it tracks seeks).
+                                        width: parent.width * (function() {
+                                            const total = Time.mprisToMs(MusicManager.trackLength || 0);
+                                            const pos = Math.max(0, MusicManager.currentPosition || 0);
+                                            return total > 0 ? Math.min(1, pos / total) : 0;
+                                        })()
+                                        color: detailsCol.musicAccent
+                                        radius: parent.radius
+                                    }
                                 }
+
                                 // Mouse scrubbing: click/drag to seek.
                                 MouseArea {
                                     anchors.fill: parent
