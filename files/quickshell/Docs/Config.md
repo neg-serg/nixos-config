@@ -91,6 +91,8 @@ CAVA / Spectrum (global defaults; each may be overridden per profile in visualiz
 - spectrumColorMinHz: integer, default 15. Low end of the coloured band (Hz).
 - spectrumColorMaxHz: integer, default 24000. High end of the coloured band (Hz).
 - spectrumDimOpacity: number 0..1, default 0.18. Opacity of bars outside the coloured band.
+- spectrum3D: boolean, default true. Enable 3D perspective arc and specular gradient on analyser bars.
+- spectrum3DDepth: number 0..1, default 0.35. Perspective falloff for the 3D analyser arc.
 - spectrumFillOpacity: number 0..1, default 0.35. Fill opacity.
 - spectrumHeightFactor: number, default 1.2. Height relative to track text size.
 - spectrumOverlapFactor: number 0..1, default 0.2. Overlap on top of text.
