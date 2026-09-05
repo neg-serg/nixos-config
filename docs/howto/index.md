@@ -108,6 +108,9 @@ isn't a step-by-step runbook.
 - Fastfetch: black-metal blizzard (animated logo, RU):
   [fastfetch-blizzard.ru.md](./fastfetch-blizzard.ru.md)
 
+- Quickshell: медиа-тост — как делать правильно (позиция/высота/стиль, RU):
+  [quickshell-music-toast.ru.md](./quickshell-music-toast.ru.md)
+
 - Dockur Windows VM on odin: GLM USB passthrough, host alias, VM proxy chain (RU):
   [windows-vm-dockur.ru.md](./windows-vm-dockur.ru.md)
 
