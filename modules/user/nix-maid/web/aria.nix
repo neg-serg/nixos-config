@@ -1,31 +1,13 @@
 {
-  config,
   lib,
-  neg,
+  config,
   ...
 }:
-let
-  inherit (config.users.users.neg) home;
-in
 {
-  config = lib.mkIf (config.lib.neg.enabled "web" && config.lib.neg.enabled "web.tools") (
-    lib.mkMerge [
-      {
-        # aria2 is installed via cli/file-ops.nix
-      }
-      (neg.mkHomeFiles {
-        # Use .local/share for session file (XDG_DATA_HOME typically)
-        ".local/share/aria2/session".text = "";
-
-        # Config file
-        ".config/aria2/aria2.conf".text = ''
-          dir=${home}/dw/aria
-          enable-rpc=true
-          save-session=${home}/.local/share/aria2/session
-          input-file=${home}/.local/share/aria2/session
-          save-session-interval=1800
-        '';
-      })
-    ]
-  );
+  # aria2 config + systemd user service are owned by sys/services-manual.nix
+  # (single source of truth). This module used to write a *duplicate*
+  # .config/aria2/aria2.conf alongside services-manual.nix, which produced a
+  # doubled config file on disk — the duplication is removed here.
+  # The aria2 binary itself is installed via cli/file-ops.nix.
+  config = lib.mkIf (config.lib.neg.enabled "web" && config.lib.neg.enabled "web.tools") { };
 }

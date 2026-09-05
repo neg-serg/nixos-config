@@ -22,6 +22,10 @@ let
     save-session-interval = "1800";
     # Additional Aria2 defaults often useful
     continue = "true";
+    # HTTP(S) conditional re-fetch: don't re-download an already-current file
+    conditional-get = "true";
+    # Fairly share bandwidth across simultaneous downloads (RPC batches)
+    optimize-concurrent-downloads = "true";
   };
 
   # Aria2 config in key=value format
@@ -39,6 +43,9 @@ in
             serviceConfig = {
               ExecStart = "${lib.getExe pkgs.aria2} --conf-path=%h/.config/aria2/aria2.conf";
               TimeoutStopSec = "5s";
+              # Exit 7 = stopped (TERM/INT) while downloads were unfinished but none
+              # failed; don't mark the unit as failed on a graceful stop.
+              SuccessExitStatus = "7";
             };
           };
           # aria2 is installed via cli/file-ops.nix
