@@ -1,14 +1,13 @@
 # Repository development helpers for NixOS workflows
 set shell := ["bash", "-cu"]
 
-
 # --- System Management -----------------------------------------------------------
 
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
 deploy host="odin":
     # Build system closure with network tuning
-    nix build .#nixosConfigurations.{{host}}.config.system.build.toplevel \
+    nix build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
       --out-link result \
       --option connect-timeout 60 \
       --option download-attempts 2 \
@@ -22,15 +21,15 @@ deploy host="odin":
 
 # Deploy (Legacy/Slow) - keeps nh features like pretty print
 deploy-nh host="odin":
-    nh os switch . --hostname {{host}} --option substitute false
+    nh os switch . --hostname {{ host }} --option substitute false
 
 # Deploy with maximum verbosity (logs + trace + verbose)
 deploy-debug host="odin":
-    nh os switch . --hostname {{host}} -L -t -v --option substitute false
+    nh os switch . --hostname {{ host }} -L -t -v --option substitute false
 
 # Alias for deploy
 switch host="odin":
-    just deploy {{host}}
+    just deploy {{ host }}
 
 # Show diff between last two generations
 diff:
@@ -42,7 +41,6 @@ diff:
 nvim-lock-sync:
     cp "$HOME/.local/state/nvim/lazy-lock.json" files/nvim/lazy-lock.json
     git diff --stat -- files/nvim/lazy-lock.json
-
 
 # --- Repo-wide workflows ---------------------------------------------------------
 fmt:
@@ -172,7 +170,7 @@ update:
 
 # Eval one odin feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
-    nix eval .#nixosConfigurations.odin.config.{{flag-path}} --option substitute false
+    nix eval .#nixosConfigurations.odin.config.{{ flag-path }} --option substitute false
 
 # Regenerate hosts/odin/unbound-hosts.nix from its sources
 # (unbound-local.txt + files/sources/malw-hosts.txt)
@@ -183,7 +181,6 @@ unbound-hosts:
 
 hooks-enable:
     git config core.hooksPath .githooks
-
 
 systemd-status:
     set -eu
@@ -228,16 +225,63 @@ subtree-pull-packages:
 
 # Generate perf+Inferno flamegraph SVG for nix eval
 flamegraph-eval host="odin":
-    bash scripts/dev/nix-flamegraph.sh {{host}}
+    bash scripts/dev/nix-flamegraph.sh {{ host }}
 
 # Generate perf+Inferno flamegraph SVG for nix eval
 profile-eval: flamegraph-eval
 
-
-
 # --- TidalCycles Live Coding --------------------------------------------------
 # Engine, editor, recording and monitoring are handled by the `tidalctl` CLI
-# (packages/tidalctl): `tidalctl start|stop|status|code|new|record|monitor|patch`.
+# (packages/tidalctl); recipes below are thin wrappers over it plus the Renoise
+# launcher, so a daily live-coding session is `just tidal-start` + `just renoise`.
+
+# Start the SuperDirt engine (sclang + scsynth) in the background
+tidal-start:
+    @$HOME/.local/bin/tidalctl start
+
+# Stop the engine
+tidal-stop:
+    @$HOME/.local/bin/tidalctl stop
+
+# Restart the engine (applies edits to superdirt_startup.scd / synths.scd)
+tidal-restart:
+    @$HOME/.local/bin/tidalctl restart
+
+# Engine status: processes, OSC ports, audio links
+tidal-status:
+    @$HOME/.local/bin/tidalctl status
+
+# Start the engine and open the demo jam scene in nvim
+tidal-demo:
+    @$HOME/.local/bin/tidalctl demo
+
+# Open the Tidal workspace in nvim with a visible ghci terminal (right split)
+tidal-edit:
+    @$HOME/.local/bin/tidal-edit
+
+# Create a new .tidal file and open it
+tidal-new:
+    @$HOME/.local/bin/tidalctl new
+
+# Record SuperDirt output (prompts for duration)
+tidal-record:
+    @$HOME/.local/bin/tidalctl record
+
+# Live PipeWire monitor (pw-top)
+tidal-monitor:
+    @$HOME/.local/bin/tidalctl monitor
+
+# Open the ZestBay patchbay (distrobox Arch container)
+tidal-patch:
+    @$HOME/.local/bin/tidalctl patch
+
+# Run the Renoise tracker under pw-jack (JACK driver into the shared graph)
+renoise:
+    @$HOME/.local/bin/renoise-pwj
+
+# Send OSC to Renoise's built-in OSC server (eval/reverb/load/transport)
+renoise-osc args="":
+    @renoise-osc {{ args }}
 
 # --- dsh-web-ui plugin bundles ------------------------------------------------
 # The dsh web profile serves each plugin's BUILT lib/ (node_modules are
