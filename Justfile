@@ -279,9 +279,13 @@ tidal-patch:
 renoise:
     @$HOME/.local/bin/renoise-pwj
 
-# Send OSC to Renoise's built-in OSC server (eval/reverb/load/transport)
+# Send OSC to Renoise's built-in OSC server (help lists all commands)
 renoise-osc args="":
     @renoise-osc {{ args }}
+
+# Record the Renoise audio (game-stereo sink by default; see renoise-osc help record)
+renoise-record args="":
+    @renoise-record {{ args }}
 
 # --- dsh-web-ui plugin bundles ------------------------------------------------
 # The dsh web profile serves each plugin's BUILT lib/ (node_modules are

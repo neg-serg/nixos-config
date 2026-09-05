@@ -12,7 +12,8 @@
     just tidal-record   # запись SuperDirt → ~/src/art/music/tidal/recordings/
     just tidal-edit     # workspace + ghci-терминал (tidal-ghci) в nvim
     just tidal-monitor  # pw-top
-    just renoise-osc    # OSC-CLI для Renoise (см. ниже)
+    just renoise-osc    # OSC-CLI для Renoise (renoise-osc help / --help)
+    just renoise-record # захват аудио Renoise в wav (см. «Запись»)
 
 Raw-SuperCollider (scnvim, без Tidal): хоткей M4+Shift+t → sc-live (live.scd,
 s.boot в сессии). Renoise/плагины: synth LegendHZ, synth Surge_XT, …; класс
@@ -37,18 +38,25 @@ glm-osc (Genelec SAM) — не возвращай Renoise на 9000.
 
     renoise-osc-config            # прописать в Config.xml: enabled/Udp/9002 (Renoise закрыт!)
     renoise-osc status            # Renoise запущен? порт слушается?
-    renoise-osc transport start   # /renoise/transport/start
-    renoise-osc transport stop    # stop
-    renoise-osc transport toggle  # start/stop через Lua
-    renoise-osc transport panic   # panic
+    renoise-osc transport start|stop|continue|panic|toggle
+    renoise-osc bpm 128           # темп (20–999); lpb 1–255; tpl 1–16
+    renoise-osc loop pattern on   # зациклить паттерн / loop block on|off
+    renoise-osc loop sequence 1 8 # диапазон цикла по секвенции
+    renoise-osc track 1 mute|unmute|solo
+    renoise-osc track 1 volume 0.8 | volume-db -6 | pan 0.5
+    renoise-osc instr 1 volume-db -3 | transpose 12 | macro 3 0.5
+    renoise-osc device 1 1 bypass on     # трек, устройство, on|off
+    renoise-osc record [--secs 30] [--target renoise] [--out FILE]
     renoise-osc eval '…lua…'      # произвольный Lua через /renoise/evaluate
     renoise-osc reverb [--track master|N] [--wet X]
     renoise-osc load 'Legend HZ'  # новый инструмент + VST (сам запустит Renoise, если надо)
+    renoise-osc help <cmd>        # развёрнутая помощь по команде
+    renoise-osc --dry <cmd> …     # показать OSC-сообщение, не отправляя
 
-Документированные адреса (без ответов — fire-and-forget): transport
-start/stop/continue/panic, loop/*, song/bpm|lpb|tpl, instrument/track/device
-параметры (см. GlobalOscActions.lua в поставке Renoise). Ошибки eval видны в
-консоли скриптинга Renoise, не в CLI.
+Команды оборачивают документированные адреса из GlobalOscActions.lua
+(поставка Renoise): transport/loop, song/bpm|lpb|tpl, track/instrument/device
+параметры. Ответов сервер не шлёт (fire-and-forget); ошибки eval видны в
+консоли скриптинга Renoise.
 
 ## Пути и воркспейсы (канон)
 
@@ -73,10 +81,26 @@ start/stop/continue/panic, loop/*, song/bpm|lpb|tpl, instrument/track/device
   virtual-midi out0-3 — стабильные слоты для синтов; glm-midi — Genelec GLM
   по rtpMIDI (см. windows-vm-dockur.ru.md).
 
-## Запись
+## Запись и рендер в Renoise
 
-- SuperDirt: just tidal-record (pw-record, target = SuperCollider:out*).
-- Любой поток sink: sc-record <сек> / pw-record --target playback.game-stereo.
+Renoise — трекер без аудио-дорожек, поэтому «запись» бывает двух видов.
+
+**1) Офлайн-рендер песни (лучшее качество, финальный микс).**
+Меню File → Export Audio…: выбираешь формат (WAV/FLAC/OGG), sample rate
+(48 kHz), битность, громкость/нормализацию; рендерится вся песня (или
+выбранный диапазон/треки). Это делается в GUI — в OSC/Lua API экспорта нет.
+
+**2) Живой захват сессии (что реально звучит, включая live-входы).**
+Renoise-аудио авто-линкуется в sink game-stereo (сервис renoise-link), поэтому:
+
+    just renoise-record                  # в ~/src/art/music/renoise/recordings/
+    renoise-osc record --secs 30         # те же 30 секунд
+    renoise-osc record --target renoise  # только Renoise, без остального микса
+    renoise-osc record --out ~/x.wav     # свой путь (pw-record под капотом)
+
+Стоп: Ctrl+C либо ограничь --secs. SuperDirt-сессия пишется так же:
+just tidal-record (в ~/src/art/music/tidal/recordings/); любой поток —
+sc-record <сек> или pw-record --target playback.game-stereo.
 
 ## Грабли (проверено)
 
