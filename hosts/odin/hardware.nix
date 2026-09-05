@@ -353,7 +353,7 @@
   # guest RAM (~14GB with RAM_SIZE=16G) for DMA into the vfio container, but
   # systemd/pam memlock defaults (8MB–4GB) are far below that → dma_map fails
   # with ENOMEM. Raise the lock limit for the whole user session.
-  systemd.extraConfig = "DefaultLimitMEMLOCK=infinity";
+  systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity";
   security.pam.loginLimits = lib.mkAfter [
     {
       domain = "neg";
