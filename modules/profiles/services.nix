@@ -192,5 +192,6 @@ in
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
     samba.enable = opts.mkEnableOption "Samba (SMB/CIFS) fileshare profile.";
+    searx.enable = opts.mkEnableOption "SearXNG self-hosted metasearch (localhost, default search).";
   };
 }
