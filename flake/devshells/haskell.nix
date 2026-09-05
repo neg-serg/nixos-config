@@ -17,6 +17,8 @@ pkgs.mkShell {
     pkgs.hlint # linter
     pkgs.ormolu # formatter
     pkgs.ghcid # fast GHCi reload loop
+    pkgs.tidal-ghci # TidalCycles GHCi wrapper (defined once in packages/overlay.nix)
+    pkgs.haskellPackages.tidal # TidalCycles library
   ]
   ++ optionalHaskellTools;
 }
