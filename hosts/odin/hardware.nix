@@ -302,6 +302,12 @@
     # Disable writeback throttling on NVMe — conflicts with ZFS's own I/O scheduler.
     # WBT adds latency jitter that ZFS doesn't need (ZFS schedules I/O internally).
     ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
+
+    # vfio group nodes (iGPU 7c:00.0/7c:00.1 → /dev/vfio/30,31) must be
+    # world-accessible for the userns'd dockur QEMU (root -> host nobody),
+    # same rationale as the GLM USB 0666 rule above.
+    KERNEL=="vfio", MODE="0666"
+    SUBSYSTEM=="vfio", MODE="0666"
   '';
   environment.systemPackages = [
     (pkgs.writeShellScriptBin "kexec-rebuild" ''
@@ -342,4 +348,19 @@
         $out/lib/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin
     '')
   ];
+
+  # dockur Windows VM + vfio (iGPU 1002:13c0 passthrough): QEMU must pin the
+  # guest RAM (~14GB with RAM_SIZE=16G) for DMA into the vfio container, but
+  # systemd/pam memlock defaults (8MB–4GB) are far below that → dma_map fails
+  # with ENOMEM. Raise the lock limit for the whole user session.
+  systemd.extraConfig = "DefaultLimitMEMLOCK=infinity";
+  security.pam.loginLimits = lib.mkAfter [
+    {
+      domain = "neg";
+      type = "-"; # soft + hard
+      item = "memlock";
+      value = "infinity";
+    }
+  ];
+
 }
