@@ -407,10 +407,20 @@ fn start() -> Result<()> {
     // Run sclang under pw-jack: PipeWire's JACK emulation is a libjack
     // replacement (LD_LIBRARY_PATH), not a jackd daemon — without it scsynth
     // fails to boot ("Cannot connect to server socket").
-    let mut child: Child = Command::new("pw-jack")
-        .arg("sclang")
+    // SuperDirt startup may touch Qt (SuperDirtMixer/EQui). When the engine
+    // is started from a context without a display (launcher, cron, dsh),
+    // QT_QPA_PLATFORM falls back to offscreen so sclang does not SIGABRT on
+    // the missing xcb platform plugin.
+    let qt_platform = env::var("QT_QPA_PLATFORM").ok();
+    let has_display = env::var_os("WAYLAND_DISPLAY").is_some() || env::var_os("DISPLAY").is_some();
+    let mut cmd = Command::new("pw-jack");
+    cmd.arg("sclang")
         .args(["-l", conf.to_str().unwrap(), startup.to_str().unwrap()])
-        .env("LD_LIBRARY_PATH", "/run/current-system/sw/lib")
+        .env("LD_LIBRARY_PATH", "/run/current-system/sw/lib");
+    if qt_platform.is_none() && !has_display {
+        cmd.env("QT_QPA_PLATFORM", "offscreen");
+    }
+    let mut child: Child = cmd
         .stdout(Stdio::from(log_handle.try_clone().context("clone log")?))
         .stderr(Stdio::from(log_handle))
         .spawn()

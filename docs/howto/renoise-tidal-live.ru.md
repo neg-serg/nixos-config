@@ -97,6 +97,9 @@ start/stop/continue/panic, loop/*, song/bpm|lpb|tpl, instrument/track/device
 6. NeuralTranscribe тул (Tools → Neural MIDI Transcription): грузится после
    фикса strict-global guard (rawget); ошибки импорта MIDI — в
    ~/.local/share/renoise-neural/.
+7. tidalctl start падает с qt.qpa/xcb (SuperDirtMixer хочет Qt, а запуск без
+   дисплея): новая версия сама ставит QT_QPA_PLATFORM=offscreen при отсутствии
+   WAYLAND_DISPLAY/DISPLAY — просто обнови систему.
 
 ## Ссылки
 
