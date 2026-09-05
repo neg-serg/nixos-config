@@ -356,7 +356,7 @@ broot, khal, zsh vi-mode, kitty-hints — им не нужны дубли, по�
 `systemctl --user status ru-layout`; в kitty поднять `M4+S` → в соседнем окне раскладка сама
 вернётся на us, в браузере — на ru.
 
-### MangoWM (сессия mango)
+## MangoWM (сессия mango)
 
 Тот же флаг включает сервис `ru-layout-mango` (`mango-session.target`) — порт демона на IPC-сокет
 mango (`get focusing-client` + `dispatch switch_keyboard_layout,<idx>`, индексы 1-базированные: 1 =
