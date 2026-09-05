@@ -1,28 +1,46 @@
 #!/usr/bin/env bash
 # midi-bridge — connect SuperCollider MIDI out to the active synth/host.
-#  1) Renoise (yabridge Windows VSTs): SC -> Renoise ALSA MIDI in
-#  2) legacy Vital standalone: SC -> Midi Through (Vital auto-subscribes).
+#  1) Renoise (yabridge Windows VSTs): SC out0 -> Renoise ALSA MIDI in
+#  2) Vital standalone (legacy): SC out0 -> Midi Through (Vital auto-subscribes)
+# Reports each target that was connected / skipped; aconnect errors are shown.
 set -euo pipefail
 
 sc=$(aconnect -l | awk '/^client [0-9]+: .SuperCollider./ {c=$2; sub(":","",c); print c; exit}')
-[ -z "$sc" ] && { echo "no SuperCollider MIDI client" >&2; exit 1; }
+if [ -z "$sc" ]; then
+  echo "midi-bridge: no SuperCollider MIDI client (engine not started?)" >&2
+  exit 1
+fi
+
+link() {
+  # link <dstclient> <dstport-pattern> <label> — resolve SC out0 once per call.
+  local dst dstp label scp err
+  dst=$1
+  dstp=$(aconnect -l | awk -v c="$dst" -v p="$2" '$0 ~ "client " c ":" {inside=1} inside && $0 ~ p {print $1; exit}')
+  label=$3
+  scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
+  if [ -z "$scp" ] || [ -z "$dstp" ]; then
+    echo "midi-bridge: $label skipped (ports not found: SC out0=[$scp], $label in=[$dstp])"
+    return 0
+  fi
+  if err=$(aconnect "$sc:$scp" "$dst:$dstp" 2>&1); then
+    echo "midi-bridge: connected SC MIDI -> $label"
+  else
+    echo "midi-bridge: failed to connect SC MIDI -> $label: $err" >&2
+  fi
+}
 
 # --- 1) Renoise (if running) ---
 rno=$(aconnect -l | awk '/^client [0-9]+: .(Renoise|renoise)./ {c=$2; sub(":","",c); print c; exit}')
 if [ -n "$rno" ]; then
-  scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
-  rnop=$(aconnect -l | awk -v c="$rno" '$0 ~ "client " c ":" {inside=1} inside && /midi in|Midi In|in0/ {print $1; exit}')
-  if [ -n "$scp" ] && [ -n "$rnop" ]; then
-    aconnect "$sc:$scp" "$rno:$rnop" 2>/dev/null && echo "connected SC MIDI -> Renoise" || true
-  fi
+  link "$rno" 'midi in|Midi In|in0' 'Renoise'
+else
+  echo "midi-bridge: Renoise not running — SC MIDI -> Renoise skipped"
 fi
 
 # --- 2) Vital standalone via Midi Through (legacy) ---
 mt=$(aconnect -l | awk '/^client [0-9]+: .Midi Through./ {c=$2; sub(":","",c); print c; exit}')
 if [ -n "$mt" ]; then
-  scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
-  mtp=$(aconnect -l | awk -v c="$mt" '$0 ~ "client " c ":" {inside=1} inside && /Midi Through Port-0/ {print $1; exit}')
-  if [ -n "$scp" ] && [ -n "$mtp" ]; then
-    aconnect "$sc:$scp" "$mt:$mtp" 2>/dev/null || true
-  fi
+  link "$mt" 'Midi Through Port-0' 'Vital (Midi Through)'
+else
+  echo "midi-bridge: Vital not running — SC MIDI -> Midi Through skipped"
 fi
