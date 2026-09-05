@@ -8,7 +8,7 @@
 # are a bug, because they silently desync from the latin binds.
 #
 # Mechanics and the per-app coverage matrix:
-# docs/howto/hotkeys-ru-layout.ru.md
+# docs/howto/hotkeys-ru-layout.md
 #
 # Pure file: no config/flake dependencies. Exposed to modules via specialArgs.neg
 # (lib/neg-helpers.nix) and unit-tested by flake/checks.nix ("ru-keys" check).

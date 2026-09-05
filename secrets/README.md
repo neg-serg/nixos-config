@@ -5,7 +5,7 @@ Encrypted secrets for the configuration.
 ## Documentation
 
 - Vaultix migration guidance: `../docs/runbooks/vaultix-migration.md` (EN)
-- Vaultix migration (RU): `../docs/runbooks/vaultix-migration.ru.md`
+- Vaultix migration (RU): `../docs/runbooks/vaultix-migration.md`
 
 ## Usage
 

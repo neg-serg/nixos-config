@@ -1,6 +1,6 @@
 /**
  * dsh-desktop: Linux desktop control for DSH (backlog plan:
- * docs/howto/agent-backlog-research.ru.md §3).
+ * docs/howto/agent-backlog-research.md §3).
  *
  * Layered backends (lib/backends.js):
  *   native — zero-daemon: hyprctl (windows/focus/move/resize), grim
