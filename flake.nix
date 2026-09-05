@@ -15,7 +15,7 @@
       url = "github:DeterminateSystems/nix-src/b1123363e07a216333222d483cfe8e682b95d7c1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Moved to nixos-unstable (2026-08) for newer Hyprland/Sway/color-mgmt
+    # Moved to nixos-unstable (2026-08) for newer Hyprland/color-mgmt
     # (ICC + HDR). Deliberate, even though it re-locks nixpkgs: the pin from
     # nixos-26.05 (commit e16f4269, which reverted the weekly experiment) had
     # a stable Hyprland 0.55.4; unstable tracks 0.56+ with HDR/color-management

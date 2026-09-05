@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# synth — run-or-raise / start a synth (Hyprland/Sway-friendly).
+# synth — run-or-raise / start a synth (Hyprland-friendly).
 #
 # Routes:
 #   Surge_XT / Surge XT  -> native standalone (surge-xt)

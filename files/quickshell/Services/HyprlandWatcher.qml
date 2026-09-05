@@ -3,23 +3,15 @@ import QtQuick
 import Quickshell
 import qs.Services
 
-// Session-aware facade over HyprlandWatcherImpl / WlrWatcher.
-// The panel keeps using Services.HyprlandWatcher; the backend is chosen by
-// QS_SESSION (set to "mango" by start-mango / the mango quickshell service).
+// Hyprland keyboard/workspace watcher facade (Hyprland is the desktop).
 Scope {
     id: root
 
-    readonly property bool isMango: Quickshell.env("QS_SESSION") === "mango"
-
-    Component { id: hyprBackend; HyprlandWatcherImpl { } }
-    Component { id: wlrBackend; WlrWatcher { } }
-
-    Loader {
-        id: backendLoader
-        sourceComponent: root.isMango ? wlrBackend : hyprBackend
+    HyprlandWatcherImpl {
+        id: watcher
     }
 
-    readonly property var backend: backendLoader.item
+    readonly property var backend: watcher
     readonly property bool available: backend ? backend.available : false
     readonly property int activeWorkspaceId: backend ? backend.activeWorkspaceId : -1
     readonly property string activeWorkspaceName: backend ? backend.activeWorkspaceName : ""
