@@ -58,7 +58,7 @@
 # first durable tool/call event the model sees only persistent `bash` plus
 # `str_replace_editor`, only the `persona` prompt section, no runtime
 # contexts, and only direct user messages. `anchorGate` holds the promotion
-# open until the first reasoning block is minimal-like (four-step fallback);
+# open until the first reasoning block is disciplined (four-step fallback);
 # `promoteAfterFirstResponse` avoids a permanent two-tool session after a
 # tool-less first response, and releases an anchor-gated session once its
 # first turn ends (`turn/end`). After promotion the catalog is presented as
