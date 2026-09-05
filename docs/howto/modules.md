@@ -248,6 +248,28 @@ true
 
 - [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.ai.rocm.enable
+
+Whether to enable install PyTorch with ROCm (gfx1201) + torch-rocm CLI for GPU fine-tuning.
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
+
 ## features.dev.bpf.enable
 
 Whether to enable enable BPF tracing tools (bpftrace, below).
@@ -868,25 +890,9 @@ true
 
 - [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
-## features.gui.iconTheme
+## features.gui.hyprwhspr.enable
 
-Icon theme to apply system-wide (GTK + Qt).
-
-*Type:* string
-
-*Default:*
-
-```nix
-"kora-pgrey"
-```
-
-*Declared by:*
-
-- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
-
-## features.gui.mangowm.enable
-
-Whether to enable enable MangoWM (dwl-based Wayland compositor, alternative to Hyprland).
+Whether to enable enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland).
 
 *Type:* boolean
 
@@ -900,6 +906,22 @@ false
 
 ```nix
 true
+```
+
+*Declared by:*
+
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
+
+## features.gui.iconTheme
+
+Icon theme to apply system-wide (GTK + Qt).
+
+*Type:* string
+
+*Default:*
+
+```nix
+"kora-pgrey"
 ```
 
 *Declared by:*
