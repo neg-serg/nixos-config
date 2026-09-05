@@ -565,17 +565,17 @@ if tg_grp is None and real_tags:
     cfg["outbounds"].append({"type": "urltest", "tag": "tg-auto",
                              "outbounds": real_tags, "interval": "15s",
                              "tolerance": 50})
-# Normalize urltest interval on existing groups too (faster failover than 1m).
-for o in cfg.get("outbounds", []):
-    if o.get("type") == "urltest" and o.get("interval") not in (None, "15s"):
-        o["interval"] = "15s"
-        changed = True
     changed = True
     log(":: Config: added tg-auto group (all nodes until next refresh)")
 elif tg_grp is not None and not tg_grp.get("outbounds") and real_tags:
     tg_grp["outbounds"] = real_tags
     changed = True
     log(":: Config: tg-auto group had no nodes - reset to all nodes")
+# Normalize urltest interval on existing groups too (faster failover than 1m).
+for o in cfg.get("outbounds", []):
+    if o.get("type") == "urltest" and o.get("interval") not in (None, "15s"):
+        o["interval"] = "15s"
+        changed = True
 if cfg.get("dns") != FINAL_DNS or cfg.get("route") != FINAL_ROUTE:
     cfg["dns"] = FINAL_DNS
     cfg["route"] = FINAL_ROUTE
