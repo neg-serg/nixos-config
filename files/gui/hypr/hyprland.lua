@@ -172,9 +172,6 @@ local SH = "SHIFT"
 local browser = "vivaldi"
 local menu    = "vicinae toggle"
 
--- Raw dispatch helper for dispatchers without a dedicated hl.dsp.* helper
-local function dispatch(args) return hl.dsp.exec_cmd("hyprctl dispatch " .. args) end
-
 -- --- Top-level binds (bindings.conf) ---
 -- Use "all" (not "current"): kanata's virtual keyboard is the last active
 -- device, so "current" switches only it and the bar/typing layouts diverge.
@@ -267,8 +264,8 @@ hl.bind(M4 .. "+" .. SH .. "+d", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/
 
 
 -- --- Split ratio helpers (tiling-helpers.conf) ---
-hl.bind(M4 .. "+" .. C .. "+d", dispatch("splitratio -0.1"), { repeating = true })
-hl.bind(M4 .. "+" .. C .. "+f", dispatch("splitratio +0.1"), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+d", hl.dsp.layout("splitratio -0.1"), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+f", hl.dsp.layout("splitratio +0.1"), { repeating = true })
 
 -- =====================================================================
 -- Emacs-style navigation (additive layer)
@@ -285,10 +282,10 @@ hl.bind(M4 .. "+" .. C .. "+f", dispatch("splitratio +0.1"), { repeating = true 
 --   C-- / C-=        previous / next workspace
 local E = M4 .. "+" .. M1
 
-hl.bind(E .. "+n", dispatch("movefocus d"))
-hl.bind(E .. "+p", dispatch("movefocus u"))
-hl.bind(E .. "+f", dispatch("movefocus r"))
-hl.bind(E .. "+b", dispatch("movefocus l"))
+hl.bind(E .. "+n", hl.dsp.focus({ direction = "down" }))
+hl.bind(E .. "+p", hl.dsp.focus({ direction = "up" }))
+hl.bind(E .. "+f", hl.dsp.focus({ direction = "right" }))
+hl.bind(E .. "+b", hl.dsp.focus({ direction = "left" }))
 hl.bind(E .. "+a", hl.dsp.focus({ workspace = "1" }))
 hl.bind(E .. "+e", hl.dsp.focus({ workspace = "19" }))
 hl.bind(E .. "+o", hl.dsp.window.cycle_next({ next = true }))
@@ -642,7 +639,11 @@ end)
 hl.on("monitor.added", function(monitor_name)
   if monitor_name == "DP-2" then
     hl.exec_cmd("systemctl --user restart hyprscratch.service")
-    hl.exec_cmd("zsh -c 'hyprctl workspaces -j | jq -r \".[] | select(.monitor != \\\"DP-2\\\") | .id\" | while read ws; do hyprctl dispatch moveworkspacetomonitor \"$ws\" DP-2; done'")
+    for _, ws in ipairs(hl.get_workspaces()) do
+      if ws.monitor ~= "DP-2" then
+        hl.dsp.workspace.move({ workspace = ws.id, monitor = "DP-2" })
+      end
+    end
   end
 end)
 
