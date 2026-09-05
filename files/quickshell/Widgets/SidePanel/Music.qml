@@ -96,7 +96,8 @@ Rectangle {
             property var _spec: []
             Timer {
                 id: specTick
-                interval: 80
+                // ~30 Hz sample of the CAVA stream (was 12.5 Hz — looked laggy).
+                interval: 32
                 repeat: true
                 running: MusicManager.hasPlayer && MusicManager.isPlaying
                 onTriggered: playerUI._spec = (MusicManager.cavaValues || []).slice()
@@ -366,8 +367,11 @@ Rectangle {
                                     values: playerUI._spec
                                     targetBars: Settings.settings.toastAnalyserBars
                                     mirror: Settings.settings.toastAnalyserMirror
+                                    // Empty style => cover accent; set the accent so the
+                                    // analyser follows the album cover colour.
+                                    accentColor: detailsCol.musicAccent
                                     style: Settings.settings.toastAnalyserStyle
-                                    animDurationMs: 80
+                                    animDurationMs: 40
                                     opacity: 1.0
                                     visible: Settings.settings.musicPopupSpectrum
                                 }

@@ -109,7 +109,8 @@ Item {
     property var _barSpec: []
     Timer {
         id: barSpecTick
-        interval: 80
+        // ~30 Hz sample (was 12.5 Hz).
+        interval: 32
         repeat: true
         running: MusicManager.isPlaying
         onTriggered: mediaControl._barSpec = (MusicManager.cavaValues || []).slice();
