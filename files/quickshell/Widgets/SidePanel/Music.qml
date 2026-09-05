@@ -260,7 +260,9 @@ Rectangle {
                     id: albumArtContainer
                     width: albumArtwork.width
                     height: albumArtwork.height
-                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    // Bottom-align the cover so it sits right on the card edge,
+                    // i.e. just above the panel.
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
 
                     
 
@@ -318,6 +320,7 @@ Rectangle {
                 // Track metadata
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignBottom
                     spacing: Math.round(Theme.sidePanelSpacingSmall * 0.5 * Theme.scale(screen))
 
                     // Now-playing header: title, artist, time/progress, transport.
@@ -377,7 +380,8 @@ Rectangle {
                                     anchors.bottom: parent.bottom
                                     height: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen)))
                                     // Subtle hairline track (the spectrum ends well above it).
-                                    color: Color.withAlpha(Theme.textPrimary, 0.16)
+                                    // Hairline track tinted with the cover accent.
+                                    color: Color.withAlpha(progressBand._progressFillColor, 0.14)
                                     radius: height / 2
 
                                     Item {
