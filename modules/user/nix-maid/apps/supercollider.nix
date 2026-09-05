@@ -1,5 +1,6 @@
 ##  Module: user/nix-maid/apps/supercollider
-# Purpose: SuperCollider live-coding stack (raw SC, no TidalCycles).
+# Purpose: SuperCollider live-coding stack (raw SC via scnvim; the TidalCycles
+# client stack — tidalctl, tidal-ghci, nvim tidal plugin — runs alongside).
 {
   lib,
   config,

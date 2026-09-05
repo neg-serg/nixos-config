@@ -187,6 +187,12 @@ in
       '';
   });
 
+  # GHCi with the TidalCycles library preloaded — used by the nvim tidal
+  # ftplugin (tidal-edit / tidalctl demo/code) to boot a tidal> REPL.
+  tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
+    exec ${final.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@"
+  '';
+
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =
     (functions.neg or { })
