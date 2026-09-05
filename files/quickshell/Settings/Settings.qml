@@ -62,6 +62,9 @@ Singleton {
 
             // Enable wedge clip ShaderEffect path (env vars can override in debug)
             property bool enableWedgeClipShader: false
+            // Recolor the bar content through a live FBO tint pass. Costs CPU
+            // (~5-6% of a core) even when idle; disable to drop that cost.
+            property bool panelTintEnabled: true
             property string weatherCity: "Saint Petersburg"
             property string userAgent: "NegPanel"
             // Unified logging toggle for low-importance debug logs

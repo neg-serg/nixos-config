@@ -494,7 +494,7 @@ Scope {
                     // Panel background transparency is configurable via Settings:
                     // - panelBgAlphaScale: 0..1 multiplier applied to the base theme alpha
                     property color barBgColor: "transparent"
-                    property bool panelTintEnabled: true
+                    property bool panelTintEnabled: Settings.settings.panelTintEnabled
                     property color panelTintColor: Color.withAlpha(Theme.panelTintColor, Theme.panelTintAlpha)
                     Behavior on panelTintColor {
                         enabled: Theme._themeLoaded
@@ -583,7 +583,7 @@ Scope {
                             sourceItem: leftPanelTintFX
                             // Hide the tint effect when the clipped tint path is active.
                             hideSource: leftTintClipLoader.active === true
-                            live: true
+                            live: leftPanel.panelTintEnabled && leftFaceClipLoader.active === true
                             recursive: true
                         }
                         // Legacy tint mask fallback removed — shader path only
@@ -725,7 +725,7 @@ Scope {
                         sourceItem: leftPanelContent
                         transform: Translate { y: leftPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
                         hideSource: false
-                        live: true
+                        live: leftPanel.panelTintEnabled
                         recursive: true
                     }
 
@@ -784,7 +784,7 @@ Scope {
                     // Panel background transparency is configurable via Settings:
                     // - panelBgAlphaScale: 0..1 multiplier applied to the base theme alpha
                     property color barBgColor: "transparent"
-                    property bool panelTintEnabled: true
+                    property bool panelTintEnabled: Settings.settings.panelTintEnabled
                     property color panelTintColor: Color.withAlpha(Theme.panelTintColor, Theme.panelTintAlpha)
                     Behavior on panelTintColor {
                         enabled: Theme._themeLoaded
@@ -876,7 +876,7 @@ Scope {
                             sourceItem: rightPanelTintFX
                             // Hide the tint effect when the clipped tint path is active.
                             hideSource: rightTintClipLoader.active === true
-                            live: true
+                            live: rightPanel.panelTintEnabled && rightFaceClipLoader.active === true
                             recursive: true
                         }
                         // Legacy tint mask fallback removed — shader path only
@@ -1219,7 +1219,7 @@ Scope {
                         sourceItem: rightPanelContent
                         transform: Translate { y: rightPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
                         hideSource: false
-                        live: true
+                        live: rightPanel.panelTintEnabled
                         recursive: true
                     }
 
