@@ -136,18 +136,18 @@ Item {
                 const wScale = (toast.cardWidthPx > 0 && Settings.settings.musicPopupWidth > 0)
                     ? toast.cardWidthPx / Settings.settings.musicPopupWidth : 1.15;
                 const pad = Math.max(0, Math.round(Settings.settings.musicPopupPadding * wScale)) || 12;
-                const mh = Math.round(Settings.settings.musicPopupHeight * wScale);
-                if (!isFinite(mh) || mh <= 0) mh = 300;
-                // Height = content + top padding. Cap against the real primary
-                // screen, NOT this window's own height: using the window height
-                // fed back into the clamp and capped the card down, so raising
-                // musicPopupHeight never made the toast actually taller.
+                // Height hugs the actual content; musicPopupHeight is only a
+                // fallback while the widget has not laid out yet.
+                const fallbackH = Math.round(Settings.settings.musicPopupHeight * wScale);
+                const contentH = (musicWidget && musicWidget.implicitHeight && musicWidget.implicitHeight > 0)
+                    ? musicWidget.implicitHeight : fallbackH;
+                if (!isFinite(contentH) || contentH <= 0) return Math.round(pad + fallbackH);
                 const sc = (Qt.application.screens && Qt.application.screens[0] && Qt.application.screens[0].virtualGeometry)
                     ? Qt.application.screens[0].virtualGeometry
                     : null;
                 const screenH = (sc && sc.height) ? sc.height : 1080;
                 const cap = Math.round(screenH * 0.95);
-                return Math.round(Utils.clamp(pad + mh, 200, cap));
+                return Math.round(Utils.clamp(pad + contentH, 200, cap));
             } catch (e) {
                 return 300;
             }
@@ -210,6 +210,9 @@ Item {
             toast._marginRight = toast.baseMargin();
             toast._marginBottom = toast.computeBottomMargin();
             toast.cardHeightPx = toast.computeCardHeight(); // size before mapping
+            // Re-sync to the content once the widget has laid out, so the card
+            // hugs the actual content height (stable across shows).
+            Qt.callLater(function() { toast.cardHeightPx = toast.computeCardHeight(); });
             if (!toast.visible) {
                 toast.visible = true;
                 toast._contentOpacity = 1; // no fade: card is solid from frame one
@@ -283,7 +286,8 @@ Item {
 
                         Music {
                             id: musicWidget
-                            height: toast.musicHeightPx
+                            // Size to content so the card hugs the actual layout
+                            // instead of a fixed musicPopupHeight.
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignRight
                         }
