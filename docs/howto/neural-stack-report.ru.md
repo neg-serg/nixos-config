@@ -1,6 +1,6 @@
 # Отчёт: тестирование нейросетевых инструментов на odin
 
-Дата проверки: **2026-08-28 … 2026-09-04**. Хост: odin (NixOS, AMD RX 9070 XT, Ryzen 9 9950X3D, 60
+Дата проверки: **2026-08-28 … 2026-09-05**. Хост: odin (NixOS, AMD RX 9070 XT, Ryzen 9 9950X3D, 60
 ГБ RAM). Цель — проверить, что все установленные нейро-инструменты реально работают после сборки,
 починить сломанное, задокументировать статус. Все модели живут в `/zero/ai/**`.
 
@@ -30,7 +30,7 @@
 | `rembg`                                     | удаление фона (u2net / bria-rmbg / birefnet)        | ✅ работает       | u2net + bria                                                                                                                                                                      |
 | `triposr`                                   | картинка → 3D-меш                                   | ✅ работает       | mesh.obj 7.2 МБ                                                                                                                                                                   |
 | `audio-analysis master`                     | мастеринг по референсу (matchering)                 | ✅ работает       | 2026-08-29: Zinovia + DOOM-реф → **-13.3 → -9.8 dB**                                                                                                                              |
-| `vsmlrt-models`                             | ONNX-модели vs-mlrt (mpv-апскейл)                   | ✅ работает       | 2026-09-04: **реальный тест**: vspipe + vsncnn, 320×240→640×480 RealESRGANv2 xsx2, **49.8 fps** на RX 9070 XT (RADV); Alt+I в mpv ещё чинить (fallback Spline36)                  |
+| `vsmlrt-models`                             | ONNX-модели vs-mlrt (mpv-апскейл)                   | ✅ работает       | 2026-09-05: Alt+I в mpv починен по-настоящему — YUV-путь vpy падал без `matrix_in_s` (3074) и тихо уходил в Spline36 (vsncnn, onnx-загрузка); добавлен **RealESRGAN-x4plus** (общий 4x, экспорт из офиц. `.pth`) — 320×240→1280×960 **~2.3 fps**, 640×360→2560×1440 **~0.7 fps** (GPU свободен); починен YUV-путь vpy (matrix_in_s — иначе тихий фолбэк Spline36); xsx2 (анime 2x) — **49.8 fps** (живой просмотр), x4plus — для пауз/SD |
 | `seed-vc`                                   | zero-shot конверсия голоса (ByteDance SOTA)         | ✅ работает       | 2026-09-04: **--svc (пение) готов**: 44k f0-чекпоинт (820 МБ) + rmvpe + bigvgan; RTF ~5-10; обёртка `seed-vc ... --svc` проверена                                                 |
 | `rvc`                                       | конверсия голоса с обучением (стандарт индустрии)   | 🚧 готов          | 2026-08-29: venv-rvc (torch rocm, numpy\<2, gradio-патч), hubert/rmvpe (370 МБ), CLI `infer/cli.py` на ROCm грузится; нужна обученная модель                                      |
 | SC-ревербы (mdugens/portedplugins/sc-faust) | PlateReverb, Fverb, jpverb (Faust)                  | ✅ собрано        | 2026-08-29: 3 nix-пакета (CMake/scPluginFarm + release-binary), грузятся в scsynth; в SC_PLUGIN_PATH/Extensions после `nh os switch`                                              |
@@ -129,7 +129,6 @@
 - `whisperx` alignment/диаризация — зависает (регрессия с 19.08; STT работает). Фикс: пин версий
   torch/lightning в venv-whisperx.
 - `rvc` — venv/ассеты готовы, CLI грузится; нет обученной модели (нужен целевой голос).
-- `vsmlrt` real upscale — модели скачаны (883 МБ), фича включена; smoke-прогон не зафиксирован.
 - `pic-ocr` NN-движок (qwen3-vl) — разовый прогон, если используется кнопка «OCR NN» в
   скриншот-тосте.
 - `venv-tags`/PANNs — сирота (весов нет, python висит на несуществующем пути) — кандидат на
