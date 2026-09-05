@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# renoise-osc-config — pin Renoise's OSC server to UDP 127.0.0.1:9002 so the
+# renoise-osc CLI (UDP) has a working, conflict-free path. glm-osc owns UDP
+# 9000 (Genelec SAM), so Renoise must NOT stay on 9000/UDP.
+#
+# Patches ~/.config/Renoise/V3.5.4/Config.xml only while Renoise is closed
+# (it rewrites the file on exit). Keeps a timestamped backup on first use.
+set -euo pipefail
+
+port="${RENOISE_OSC_PORT:-9002}"
+cfg="$HOME/.config/Renoise/V3.5.4/Config.xml"
+
+if pgrep -x renoise >/dev/null 2>&1; then
+  echo "renoise is running — close it first, then re-run" >&2
+  exit 1
+fi
+[ -f "$cfg" ] || { echo "Config.xml not found: $cfg" >&2; exit 1; }
+
+if ! grep -q '<OscServerEnabled>true</OscServerEnabled>' "$cfg"; then
+  echo "note: OSC server is disabled in Config.xml — enabling it" >&2
+fi
+
+backup="$cfg.renoise-osc.bak"
+[ -f "$backup" ] || cp "$cfg" "$backup"
+
+python3 - "$cfg" "$port" <<'PY'
+import re
+import sys
+
+path, port = sys.argv[1], sys.argv[2]
+with open(path, encoding="utf-8") as fh:
+    text = fh.read()
+
+text = re.sub(r"<OscServerEnabled>.*?</OscServerEnabled>",
+              "<OscServerEnabled>true</OscServerEnabled>", text, count=1)
+text = re.sub(r"<OscServerProtocol>.*?</OscServerProtocol>",
+              "<OscServerProtocol>Udp</OscServerProtocol>", text, count=1)
+text = re.sub(r"<OscServerPort>.*?</OscServerPort>",
+              f"<OscServerPort>{port}</OscServerPort>", text, count=1)
+with open(path, "w", encoding="utf-8") as fh:
+    fh.write(text)
+PY
+
+echo "Config.xml: OSC enabled, protocol Udp, port $port"
+echo "backup kept at: $backup"
+
