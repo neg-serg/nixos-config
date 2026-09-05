@@ -1,9 +1,7 @@
 # Documentation
 
-- Manuals (canonical workflows): [manual/README.md](./manual/README.md)
 - How-tos and reference (focused guides, pinning notes, hotkeys): [howto/index.md](./howto/index.md)
-- Runbooks and scripts (operational steps, credentials, maintenance helpers):
-  [runbooks/index.md](./runbooks/index.md)
+- Runbooks (operational steps, credentials, maintenance helpers): [runbook-index.md](./runbook-index.md)
 
 ## Structure / Options Docs — which doc to read
 

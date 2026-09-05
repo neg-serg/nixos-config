@@ -305,8 +305,8 @@ local-bin.
   prose in docs; the markdown-language check fails on Cyrillic/CJK in any `*.md` file.
 - Generated docs: `just docs-modules` → `docs/howto/modules.md`; `just codebase` →
   `docs/codebase.md`. `OPTIONS.md` is maintained manually.
-- Placement: `docs/manual/` — canonical user-facing workflows; `docs/howto/` — focused
-  guides/reference; `docs/runbooks/` — operational steps.
+- Placement: `docs/howto/` — focused guides/reference; `docs/runbook-*.md` — operational
+  steps; add new topics to `docs/index.md` / `docs/howto/index.md`.
 
 ## 9. Verify & deploy
 

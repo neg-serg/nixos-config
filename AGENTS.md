@@ -49,7 +49,7 @@ Project Structure
 - `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
 - `files/` — config files (Hyprland, Quickshell panel, scripts)
-- `docs/` — manuals and howtos (`docs/manual/`, `docs/howto/`)
+- `docs/` — documentation (`docs/index.md`, `docs/howto/`, `docs/runbook-*.md`)
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild, theming)
 - `.githooks/` — git hooks (enable with `just hooks-enable`)
