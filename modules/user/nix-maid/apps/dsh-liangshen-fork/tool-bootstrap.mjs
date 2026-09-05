@@ -11,8 +11,9 @@
  *
  * Promotion opens the full tool catalog and restores runtime contexts and all
  * prompt sections. With `anchorGate` the promotion after the first tool call
- * also requires one minimal-like reasoning block (a first block containing
- * `we` and no `let me`) or the `maxBootstrapSteps` fallback.
+ * also requires one disciplined reasoning block (structural markers, no
+ * first-person/filler markers — see classifyReasoning) or the
+ * `maxBootstrapSteps` fallback.
  * `promoteAfterFirstResponse` promotes a tool-less first response once it has
  * responded, and also releases an anchor-gated session when its first turn
  * ends (`turn/end`). With `promotedPresentation: code` the promoted catalog
@@ -81,37 +82,62 @@ function integerAtLeast(value, field, minimum) {
   return value
 }
 
-function countWord(text, regex) {
-  return [...text.matchAll(regex)].length
+/**
+ * Anchor classifier for promotion gating, matched to the preset's thinking-mode
+ * persona (no parenthetical monologues, no first-person narration, only
+ * constraint -> tool -> plan -> execute). A reasoning block counts as
+ * `disciplined` when it carries a structural marker (the `→` action chain or
+ * a Russian stage word) and no first-person/filler marker; a block with any
+ * first-person/filler marker is `undisciplined`; everything else is
+ * `ambiguous`. The gate decides trajectory surface, not model identity — the
+ * old English `we`/`let me` probe no longer applies now that the persona
+ * instructs the model to reason in Russian, impersonally.
+ */
+
+/** Lowercase word tokens (Unicode-aware, so Cyrillic words tokenize). */
+function tokensOf(text) {
+  return new Set(String(text ?? '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean))
 }
 
-/**
- * Anchor classifier for promotion gating. A reasoning block counts as
- * minimal-like when it contains `we` and no `let me`; a block with any
- * `let me` is standard-like; everything else is ambiguous. This is a
- * deliberate relaxation of the modeltest identity probe: the gate decides
- * trajectory surface, not model identity, and `we` presence without
- * first-person execution phrases is the stable surface marker.
- */
+/** True when any token starts with the given stage stem. */
+function hasStem(tokens, stem) {
+  for (const token of tokens) if (token.startsWith(stem)) return true
+  return false
+}
+
+/** Structural markers the thinking-mode discipline prescribes. */
+const STRUCTURAL_STEMS = ['ограничен', 'инструмент', 'план', 'исполнен', 'шаг', 'вызыва', 'проверк']
+
+/** First-person / filler markers the thinking-mode discipline forbids. */
+const FILLER_WORDS = new Set([
+  'я', 'мне', 'меня', 'мой', 'моя', 'моё', 'мои',
+  'надо', 'нужно', 'наверное', 'возможно', 'может', 'стоит',
+  'думаю', 'думал', 'думать', 'подумать', 'кажется', 'хочу', 'хотел', 'хотелось',
+  'попробую', 'попробовал', 'полагаю',
+  'i', 'we', 'me', 'let', 'think', 'my', 'our',
+])
+
 export function classifyReasoning(text) {
   const trimmed = String(text ?? '').trim()
-  const we = countWord(trimmed, /\bwe\b/gi)
-  const letMe = countWord(trimmed, /\blet me\b/gi)
-  const metrics = { we, letMe }
-  if (we > 0 && letMe === 0) return { label: 'minimal-like', score: 4, metrics }
-  if (letMe > 0) return { label: 'standard-like', score: -4, metrics }
+  const tokens = tokensOf(trimmed)
+  const structural = ((trimmed.includes('→') || trimmed.includes('->')) ? 1 : 0)
+    + STRUCTURAL_STEMS.reduce((n, stem) => n + (hasStem(tokens, stem) ? 1 : 0), 0)
+  const filler = [...tokens].reduce((n, word) => n + (FILLER_WORDS.has(word) ? 1 : 0), 0)
+  const metrics = { structural, filler }
+  if (structural > 0 && filler === 0) return { label: 'disciplined', score: 4, metrics }
+  if (filler > 0) return { label: 'undisciplined', score: -4, metrics }
   return { label: 'ambiguous', score: 0, metrics }
 }
 
 /**
  * Whether the FIRST reasoning block of an assistant message classifies as
- * minimal-like. Later blocks do not override an earlier standard-like first
+ * disciplined. Later blocks do not override an earlier undisciplined first
  * block.
  */
 export function hasAnchoredReasoning(content) {
   if (!Array.isArray(content)) return false
   const first = content.find(block => block?.type === 'reasoning')
-  return first !== undefined && classifyReasoning(first.text).label === 'minimal-like'
+  return first !== undefined && classifyReasoning(first.text).label === 'disciplined'
 }
 
 /**
