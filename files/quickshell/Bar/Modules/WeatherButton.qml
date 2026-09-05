@@ -18,7 +18,11 @@ OverlayToggleCapsule {
     autoToggleOnTap: true
     overlayNamespace: "qs-weather"
 
-    Component.onCompleted: Services.Weather.start()
+    // Fetch weather only while the button is actually shown (or the popup is
+    // opened). An invisible button must not keep the Weather fetch loop alive.
+    Component.onCompleted: { if (root.visible) Services.Weather.start(); }
+    onVisibleChanged: { if (root.visible) Services.Weather.start(); else Services.Weather.stop(); }
+    onOpened: Services.Weather.start()
 
     readonly property var _weatherData: Services.Weather.weatherData
     readonly property var _current: _weatherData && _weatherData.current ? _weatherData.current : null

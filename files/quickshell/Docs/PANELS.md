@@ -127,3 +127,11 @@ plate remains instead of popping away.
   visibility toggles.
 
 ______________________________________________________________________
+
+______________________________________________________________________
+
+Panel recolor (tint)
+
+- `Settings.json` -> `panelTintEnabled` (default `true`). The tint pass keeps live FBO copies
+  of the bar content; setting it to `false` removes the tint look but saves roughly 5-6% of a
+  CPU core. Can be toggled at runtime without a rebuild.
