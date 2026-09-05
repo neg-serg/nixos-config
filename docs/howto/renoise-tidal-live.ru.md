@@ -17,7 +17,8 @@
 
 Raw-SuperCollider (scnvim, без Tidal): хоткей M4+Shift+t → sc-live (live.scd,
 s.boot в сессии). Renoise/плагины: synth LegendHZ, synth Surge_XT, …; класс
-Renoise всегда на workspace 12 «daw».
+Renoise всегда на workspace 12 «daw». Запуск самого Renoise (run-or-raise):
+M4+Shift+a — фокусирует открытое окно Renoise или запускает его.
 
 ## Два движка не запускаются одновременно
 
