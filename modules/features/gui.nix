@@ -13,12 +13,6 @@ with lib;
       enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;
       manageConfig = mkBool "let Nix manage vicinae theme/settings (disable for interactive config)" false;
     };
-    mangowm = {
-      enable = mkBool "enable MangoWM (dwl-based Wayland compositor, alternative to Hyprland)" false;
-    };
-    sway = {
-      enable = mkBool "enable Sway/SwayFX sessions (wlroots, 10-bit/HDR capable)" false;
-    };
     atrium = {
       enable = mkBool "enable atrium (Wayland multiseat display manager)" false;
     };
