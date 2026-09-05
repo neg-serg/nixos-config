@@ -556,6 +556,8 @@ lib.mkMerge [
     servicesProfiles = {
       unbound.enable = true;
       adguardhome.enable = true;
+      # SearXNG metasearch on 127.0.0.1:7777 (default search in Vivaldi)
+      searx.enable = true;
       # Local sshd, key-only auth (hardened profile). The dsh web agent has a
       # dedicated key in ~/.ssh/agent/dsh-agent-key (authorized_keys entry
       # restricted to localhost) so its SSH tools/terminal can reach the host.
