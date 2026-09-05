@@ -93,6 +93,10 @@ in
           "gfbliohnnapiefjpjlpjnehglfpaknnc;https://clients2.google.com/service/update2/crx" # SurfingKeys (vim-like keybindings)
           "dhdgffkkebhmkfjojejmpbldmpobfkfo;https://clients2.google.com/service/update2/crx" # Tampermonkey (userscript manager)
           "godiecgffnchndlihlpaajjcplehddca;https://clients2.google.com/service/update2/crx" # GhostText (edit textareas in real Neovim)
+          "mnjggcdmjocbbbhaepdhchncahnbgone;https://clients2.google.com/service/update2/crx" # SponsorBlock (skip YouTube sponsors/intros)
+          "hlepfoohegkhhmjieoechaddaejaokhf;https://clients2.google.com/service/update2/crx" # Refined GitHub (streamline GitHub UI)
+          "gebbhagfogifgggkldgodflihgfeippi;https://clients2.google.com/service/update2/crx" # Return YouTube Dislike
+          "dnhpnfgdlenaccegplpojghhmaamnnfp;https://clients2.google.com/service/update2/crx" # Augmented Steam (IsThereAnyDeal price history)
         ];
 
         # Default font: Iosevka everywhere (matches system-wide fontconfig default)
@@ -135,6 +139,10 @@ in
           "gfbliohnnapiefjpjlpjnehglfpaknnc;https://clients2.google.com/service/update2/crx" # SurfingKeys (vim-like keybindings)
           "dhdgffkkebhmkfjojejmpbldmpobfkfo;https://clients2.google.com/service/update2/crx" # Tampermonkey (userscript manager)
           "godiecgffnchndlihlpaajjcplehddca;https://clients2.google.com/service/update2/crx" # GhostText (edit textareas in real Neovim)
+          "mnjggcdmjocbbbhaepdhchncahnbgone;https://clients2.google.com/service/update2/crx" # SponsorBlock (skip YouTube sponsors/intros)
+          "hlepfoohegkhhmjieoechaddaejaokhf;https://clients2.google.com/service/update2/crx" # Refined GitHub (streamline GitHub UI)
+          "gebbhagfogifgggkldgodflihgfeippi;https://clients2.google.com/service/update2/crx" # Return YouTube Dislike
+          "dnhpnfgdlenaccegplpojghhmaamnnfp;https://clients2.google.com/service/update2/crx" # Augmented Steam (IsThereAnyDeal price history)
         ];
       };
     };
