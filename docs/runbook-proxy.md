@@ -159,9 +159,13 @@ proxy refresh
 Env knobs: `E2E_CAP`, `MIN_WORKING`, `MIN_SPEED` (default 100000 B/s), `SPEED_BYTES` (default
 2000000), `SPEED_TIMEOUT` (default 12s), `NODE_SAMPLE` (default 400; per-URL random sample; at
 fetch, xhttp/splithttp links and ss-plugin links are filtered out as unsupported by stock sing-box).
-The urltest group re-probes every 1m so a dying node is abandoned within a minute. Free pools die
+The urltest groups re-probe every 15s, so a dying node is abandoned within seconds. Free pools die
 fast, so a working config can degrade to dead nodes within days — re-run `proxy refresh` and it
-validates again instead of trusting the pool blindly.
+validates again instead of trusting the pool blindly. After regenerating, `refresh` keeps a
+snapshot (`config.json.prev`), restarts the service and smoke-tests the new config through the
+live proxy (generic 204 + api.telegram.org, retried over ~45s while urltest settles); if nothing
+works it rolls back to the previous config, so a batch of nodes that died between validation and
+switch never replaces a working proxy.
 
 #### Telegram-aware node selection
 
