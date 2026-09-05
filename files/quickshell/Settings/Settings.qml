@@ -92,7 +92,7 @@ Singleton {
             // Media spectrum / CAVA
             property int cavaBars: 86
             // CAVA tuning
-            property int cavaFramerate: 24
+            property int cavaFramerate: 60
             property bool cavaMonstercat: false
             property int cavaGravity: 150000
             property int cavaNoiseReduction: 12
@@ -126,7 +126,7 @@ Singleton {
             property var visualizerProfiles: ({
                     classic: {
                         cavaBars: 86,
-                        cavaFramerate: 24,
+                        cavaFramerate: 60,
                         cavaMonstercat: false,
                         cavaGravity: 150000,
                         cavaNoiseReduction: 12,
