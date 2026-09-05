@@ -48,14 +48,14 @@ vfio_container_dma_map(...) = -12 (Cannot allocate memory)
 
 1. `systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — systemd (system); действует на
    системные сервисы, включая `user@.service` при его (пере)запуске.
-2. `systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — менеджер пользователя
-   (user units: dsh web, терминалы под systemd --user).
-3. `security.pam.loginLimits` для neg — свежие login-сессии (PAM).
+1. `systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — менеджер пользователя (user
+   units: dsh web, терминалы под systemd --user).
+1. `security.pam.loginLimits` для neg — свежие login-сессии (PAM).
 
-Важно: ни systemd-дефолты, ни pam_limits не ретрофитят уже живые сессии — они читаются при
-старте менеджера/логине. Сессии, запущенные до применения конфига (например, после ребута с новым
-ядром, включившим vfio), остаются со старым жёстким лимитом (4 GiB) и `docker start windows`
-падает с ENOMEM, хотя конфиг уже «правильный». Лечится без ребута (от root):
+Важно: ни systemd-дефолты, ни pam_limits не ретрофитят уже живые сессии — они читаются при старте
+менеджера/логине. Сессии, запущенные до применения конфига (например, после ребута с новым ядром,
+включившим vfio), остаются со старым жёстким лимитом (4 GiB) и `docker start windows` падает с
+ENOMEM, хотя конфиг уже «правильный». Лечится без ребута (от root):
 
 ```bash
 # поднять лимит всем живым процессам нужных cgroup (менеджер + сессии):
