@@ -9,7 +9,7 @@
 # Ctrl+letter shortcuts break (ghostty-org/ghostty#3513, #3584 — sends wrong
 # CSI-u sequences under the Russian layout). Do NOT switch to ghostty before a
 # version with W3C key-code based bindings (#7320). See
-# docs/howto/hotkeys-ru-layout.ru.md.
+# docs/howto/hotkeys-ru-layout.md.
 
 # ── Font ──────────────────────────────────────────────────────────────
 font-family = Iosevka Medium

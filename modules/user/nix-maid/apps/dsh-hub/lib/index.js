@@ -1,7 +1,7 @@
 /**
  * dsh-hub: supervised long-running processes (REPLs, watchers, dev servers).
  *
- * Ported from omp's hub tool (plan: docs/howto/agent-deferred.ru.md §6). A
+ * Ported from omp's hub tool (plan: docs/howto/agent-deferred.md §6). A
  * process started with op:start lives between calls, its output is buffered
  * (bounded), stdin can be written with op:send, and it is cleaned up when the
  * plugin shuts down. Processes are scoped to the session that started them.

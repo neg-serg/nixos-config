@@ -1,7 +1,7 @@
 /**
  * dsh-checkpoint: context checkpoint / soft rewind (ported from omp).
  *
- * Plan: docs/howto/agent-deferred.ru.md §3. checkpoint stores a session-scoped
+ * Plan: docs/howto/agent-deferred.md §3. checkpoint stores a session-scoped
  * marker before exploratory work; rewind returns the concise report as a
  * synthetic instruction, replacing intermediate exploration in the model's
  * working context. v1 is SOFT: no history surgery — the model is told to

@@ -359,7 +359,7 @@
   # 3) pam loginLimits (fresh login sessions; does not retrofit live ones).
   # Live sessions that predate this config still carry the old 4GiB hard limit;
   # remedy without reboot: sudo prlimit --pid <pid> --memlock=unlimited:unlimited
-  # (see docs/howto/windows-vm-dockur.ru.md, "Грабли: memlock").
+  # (see docs/howto/windows-vm-dockur.md, "Pitfall: memlock").
   systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity";
   systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity";
   security.pam.loginLimits = lib.mkAfter [

@@ -3,7 +3,7 @@
  * and subagents; reset clears it; a crashed kernel is restarted with a clean
  * namespace and an explicit notice.
  *
- * Ported from omp's eval tool (plan: docs/howto/agent-deferred.ru.md §2). v1:
+ * Ported from omp's eval tool (plan: docs/howto/agent-deferred.md §2). v1:
  * serial cells only (no parallel(thunks)); line-delimited JSON protocol to the
  * kernel process.
  */

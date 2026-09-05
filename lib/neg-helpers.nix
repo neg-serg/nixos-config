@@ -63,6 +63,6 @@ rec {
       value;
 
   # ЙЦУКЕН hotkey table + generators — single source of truth for Russian-layout
-  # duplicate binds (see lib/ru-keys.nix and docs/howto/hotkeys-ru-layout.ru.md).
+  # duplicate binds (see lib/ru-keys.nix and docs/howto/hotkeys-ru-layout.md).
   ruKeys = import ./ru-keys.nix;
 }

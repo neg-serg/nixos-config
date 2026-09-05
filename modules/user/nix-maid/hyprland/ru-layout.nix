@@ -10,7 +10,7 @@
 # never reverted until the focus moves away.
 #
 # Feature flag: features.input.ruHotkeys.* (declared in features/hardware.nix).
-# Mechanics and the per-app coverage matrix: docs/howto/hotkeys-ru-layout.ru.md.
+# Mechanics and the per-app coverage matrix: docs/howto/hotkeys-ru-layout.md.
 {
   lib,
   config,
