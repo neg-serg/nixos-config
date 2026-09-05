@@ -69,11 +69,11 @@ Rectangle {
 
         ColumnLayout {
             id: playerUI
-            anchors.fill: parent
-            anchors.leftMargin: Theme.uiMarginNone
-            anchors.rightMargin: Theme.uiMarginNone
-            anchors.topMargin: Theme.uiMarginNone
-            anchors.bottomMargin: Theme.uiMarginNone
+            // Span the full width but centre vertically in the taller card so
+            // the layout does not leave an empty strip at the bottom.
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
             spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
             visible: !!MusicManager.currentPlayer
 

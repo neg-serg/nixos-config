@@ -342,12 +342,7 @@ Item {
                     ? (parent.v * root.halfH)
                     : (parent.v * root.height)) * parent.persp
                 y: root.mirror ? root.halfH : root.height - height
-                property color cTop: root.mirror ? parent.barColor : parent._specColor
-                property color cBottom: root.mirror ? parent._specColor : parent.barColor
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: cTop }
-                    GradientStop { position: 1.0; color: cBottom }
-                }
+                color: parent.barColor
                 Behavior on height {
                     enabled: Theme.animationsEnabled
                     SmoothedAnimation { duration: root.animDurationMs }
@@ -377,12 +372,7 @@ Item {
                 radius: width / 2
                 height: parent.v * root.halfH * parent.persp
                 y: root.halfH - height
-                property color cTop: parent._specColor
-                property color cBottom: parent.barColor
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: cTop }
-                    GradientStop { position: 1.0; color: cBottom }
-                }
+                color: parent.barColor
                 Behavior on height {
                     enabled: Theme.animationsEnabled
                     SmoothedAnimation { duration: root.animDurationMs }
