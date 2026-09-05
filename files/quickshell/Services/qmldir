@@ -4,7 +4,6 @@ singleton Connectivity 1.0 Connectivity.qml
 singleton Genelec 1.0 Genelec.qml
 HyprlandWatcherImpl 1.0 HyprlandWatcherImpl.qml
 singleton HyprlandWatcher 1.0 HyprlandWatcher.qml
-WlrWatcher 1.0 WlrWatcher.qml
 singleton MusicManager 1.0 MusicManager.qml
 CoverResolver 1.0 CoverResolver.qml
 MusicMeta 1.0 MusicMeta.qml
