@@ -380,6 +380,18 @@ def cmd_record(host, port, argv, dry):
         else:
             print(f"unknown record arg: {a}", file=sys.stderr)
             return 2
+    if dry:
+        shown = (
+            str(out)
+            if out
+            else "<~/src/art/music/renoise/recordings/renoise-<ts>.wav>"
+        )
+        cmd = ["pw-record", "--target", target, "--rate", "48000"]
+        if secs:
+            cmd += ["-n", str(int(secs * 48000))]
+        cmd.append(shown)
+        print("[dry] " + " ".join(cmd))
+        return 0
     if not udp_port_bound(host, port):
         print(
             "renoise OSC not bound — is Renoise running? (renoise-osc status)",
@@ -390,13 +402,11 @@ def cmd_record(host, port, argv, dry):
         outdir = Path.home() / "src/art/music/renoise/recordings"
         outdir.mkdir(parents=True, exist_ok=True)
         out = outdir / f"renoise-{time.strftime('%Y%m%d-%H%M%S')}.wav"
-    cmd = ["pw-record", "--target", target]
+    cmd = ["pw-record", "--target", target, "--rate", "48000"]
     if secs:
-        cmd.append(f"--duration={int(secs)}")
+        # pw-record has no --duration; stop after N samples at 48 kHz.
+        cmd += ["-n", str(int(secs * 48000))]
     cmd.append(str(out))
-    if dry:
-        print("[dry] " + " ".join(cmd))
-        return 0
     print(
         "Recording Renoise ("
         + target
