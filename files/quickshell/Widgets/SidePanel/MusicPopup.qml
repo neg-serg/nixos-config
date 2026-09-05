@@ -197,12 +197,11 @@ Item {
         // be added here (double-counts the bar); instead the card floats a clear
         // distance above the bar on top of the base edge margin (~64 scaled px
         // of extra air, well clear of the panel).
-        // Extra gap above the panel in scaled logical px (tune here).
-        // Only a tiny gap so the card (and its cover) sits right on top of the
-        // panel instead of floating far above it.
-        property real _bottomGapPx: Math.max(0, Math.round(2 * Theme.scale(Screen)))
+        // Press the card against the panel: keep only a hairline gap so the
+        // card sits flush on top of the bar (the window already ends at the top
+        // of the bar's reserved zone, so no extra air is needed).
         function computeBottomMargin() {
-            return toast.baseMargin() + toast._bottomGapPx;
+            return Math.max(0, Math.round(1 * Theme.scale(Screen)));
         }
 
         // --- Public control
