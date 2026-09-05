@@ -1,9 +1,10 @@
 ##
 # Package: renoise-osc
-# Purpose: Send OSC messages to Renoise's built-in OSC server from the shell,
-#   primarily /renoise/evaluate (remote Lua) so devices/transport can be driven
-#   without the mouse. Dependency-free Python OSC sender (UDP, no python-osc).
-#   Also installs renoise-reverb: insert native Reverb on master or a track.
+# Purpose: Send OSC messages to Renoise's built-in OSC server from the shell
+#   (UDP 127.0.0.1:9002 by default): eval/reverb/load/transport/status plus raw
+#   patterns. Dependency-free Python OSC sender; no python-osc. Also installs
+#   renoise-reverb (insert native Reverb) and renoise-osc-config (pins
+#   Config.xml to UDP on port 9002 — run with Renoise closed).
 {
   python3,
   symlinkJoin,
