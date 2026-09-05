@@ -2,7 +2,7 @@
  * dsh-ast-grep: structural code search and rewrite via the ast-grep binary
  * (sg, from nixpkgs). Use when syntax shape matters more than text.
  *
- * Ported from omp's ast_grep tool (plan: docs/howto/agent-deferred.ru.md §5).
+ * Ported from omp's ast_grep tool (plan: docs/howto/agent-deferred.md §5).
  * Ops: search (pattern + optional lang/glob/path, JSON output) and rewrite
  * (pattern -> rewrite; apply:false previews the match count, default applies
  * with -U update-all). One language per call; $NAME captures are ast-grep's.

@@ -18,7 +18,7 @@ Commands:
   <osc-pattern> [args...]             raw OSC message
 --dry prints the OSC message instead of sending. Default port from env
 RENOISE_OSC_PORT; protocol UDP (apply while Renoise is closed with
-renoise-osc-config). See docs/howto/renoise-tidal-live.ru.md.
+renoise-osc-config). See docs/howto/renoise-tidal-live.md.
 """
 
 import os

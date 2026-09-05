@@ -1,6 +1,6 @@
 /**
  * dsh-advisor: peer-shadow quality advisor for DSH (port of the omp advisor
- * pattern; design: /etc/nixos/docs/howto/agent-advisor.ru.md).
+ * pattern; design: /etc/nixos/docs/howto/agent-advisor.md).
  *
  * Mechanism: on agent/pre-step (AGENT plane, like dsh-ttsr) every `interval`
  * steps the plugin ASYNCHRONOUSLY asks a LOCAL Ollama model for one short
@@ -27,7 +27,7 @@ const MAX_ADVICE_PER_SESSION = 5
 const MAX_TRANSCRIPT = 4000
 const WINDOW = 12
 
-/** Advisor system prompt (compact adaptation of agent-advisor.ru.md). */
+/** Advisor system prompt (compact adaptation of agent-advisor.md). */
 const SYSTEM_PROMPT = 'Ты — советник (advisor) поверх основного агента: защитник качества кода и точности исполнения запроса пользователя. Получаешь инкрементальный транскрипт последних шагов. Оспаривай преждевременное done, тонкую верификацию, пропущенные рассуждения. Флагуй дрейф от запроса пользователя немедленно. Предотвращай кроличьи норы и запечённые edge-case-ы. НЕ повторяй то, что агент уже знает: ошибки типов, диагностику, упавшие тесты, линт. НЕ утверждай конкретные значения для скрытых аргументов — только наблюдаемые факты. Сначала проверь (read/grep/glob), потом поднимай вопрос; после достаточного исследования предлагай подход или фикс, а не только предупреждение. Реплика: ОДНА короткая конкретная фраза. Когда сказать нечего — верни пустую строку. Отвечай на языке транскрипта. Без markdown, без пояснений, только сама реплика или пусто.'
 
 /** Fold the last WINDOW messages into a bounded transcript line. */

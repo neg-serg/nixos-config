@@ -16,7 +16,7 @@ let
   # ЙЦУКЕН duplicate binds are GENERATED from lib/ru-keys.nix (single source of
   # truth). Each entry mirrors a latin bind from files/kitty/key.conf; the
   # generator derives the literal Cyrillic chars, so typos are impossible.
-  # Table: docs/howto/hotkeys-ru-layout.ru.md
+  # Table: docs/howto/hotkeys-ru-layout.md
   kittyRuBinds = [
     {
       mod = "ctrl+shift";
@@ -290,7 +290,7 @@ let
     # same actions to the literal Cyrillic chars produced by the same physical
     # keys (keysym NAMES are unusable: kitty resolves them via libxkbcommon,
     # which is not loadable on this system).
-    # Table: docs/howto/hotkeys-ru-layout.ru.md
+    # Table: docs/howto/hotkeys-ru-layout.md
   ''
   + builtins.concatStringsSep "\n" (neg.ruKeys.mkKittyLines kittyRuBinds)
   + "\n";

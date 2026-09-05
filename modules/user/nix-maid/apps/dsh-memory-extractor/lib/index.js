@@ -15,7 +15,7 @@
  *   timeoutMs— default 45000
  *   enabled  — default true; false keeps the v1 draft-only behavior
  *
- * Design: /etc/nixos/docs/howto/designs/memory-pipeline.ru.md.
+ * Design: /etc/nixos/docs/howto/designs/memory-pipeline.md.
  */
 
 export const name = 'dsh-memory-extractor'

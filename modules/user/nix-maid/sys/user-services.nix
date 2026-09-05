@@ -109,7 +109,7 @@ lib.mkIf (cfg.enable or false) {
 
     # rtpmidid — RTP-MIDI (AppleMIDI) daemon: exposes ALSA sequencer ports over
     # the network. Linux MIDI (SC/glm-midi) reaches the dockur Windows VM's
-    # rtpMIDI -> Genelec GLM MIDI control (see docs/howto/windows-vm-dockur.ru.md).
+    # rtpMIDI -> Genelec GLM MIDI control (see docs/howto/windows-vm-dockur.md).
     rtpmidid = {
       description = "RTP MIDI (AppleMIDI) daemon";
       after = [ "pipewire.service" ];
@@ -124,7 +124,7 @@ lib.mkIf (cfg.enable or false) {
 
     # glm-osc — OSC bridge for Genelec SAM monitors (volume/mute/power/status
     # via Python genlc over the GLM USB adapter, no official GLM required).
-    # Listen: UDP 127.0.0.1:9000; map in docs/howto/windows-vm-dockur.ru.md.
+    # Listen: UDP 127.0.0.1:9000; map in docs/howto/windows-vm-dockur.md.
     glm-osc = {
       description = "OSC bridge for Genelec SAM monitors";
       serviceConfig = {
