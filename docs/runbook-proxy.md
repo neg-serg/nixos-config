@@ -93,15 +93,17 @@ proxy status
 ```
 
 One-screen dashboard: service state, listening ports, outbound count and config age, a live upstream
-check through the proxy, and (best-effort) the currently selected node. Example output (colors when
-stderr is a tty):
+check through the proxy, a Telegram reachability check, and (best-effort) the currently selected
+node. Example output (colors when stderr is a tty):
 
 ```
 == proxy status ==
 Service:   RUNNING
 Listeners: 10808 10810 10811 10812
 Nodes:     6 outbounds (config: 2026-09-01 00:55:15)
+TG:        4 nodes in tg-auto group
 Upstream:  OK in 0.32s
+Telegram:  OK (HTTP 302 in 0.21s)
 Active:    52.76.37.112 (urltest pick)
 Xray:      stopped
 ```
@@ -161,6 +163,18 @@ The urltest group re-probes every 1m so a dying node is abandoned within a minut
 fast, so a working config can degrade to dead nodes within days — re-run `proxy refresh` and it
 validates again instead of trusting the pool blindly.
 
+#### Telegram-aware node selection
+
+The e2e probe additionally checks that a working candidate can reach `https://api.telegram.org`
+through the tunnel. Nodes that pass land in the config's `tg-auto` urltest group; route rules pin
+Telegram domains (`*.telegram.org`, `t.me`, …) and DC IP ranges (`149.154.160.0/20`, `91.108.*`, …)
+to that group. Free relays often block Telegram DCs while serving generic traffic fine — without
+this split such a node could win the generic urltest and Telegram would drop out at random.
+`proxy status` shows both group sizes and a live Telegram check. When a refresh finds no
+Telegram-capable node, `tg-auto` falls back to all nodes and refresh prints a warning. `proxy gen`
+(also the `ExecStartPre` of `sing-box-proxy`) heals pre-refresh configs the same way (tg-auto = all
+current nodes) until the next `proxy refresh` re-classifies them.
+
 ### Dashboard
 
 Once sing-box is running, open the built-in web dashboard:
@@ -182,14 +196,15 @@ proxy status
 
 **Possible causes:**
 
-| Symptom                                                                                                                                                    | Likely cause                                                                                   | Fix                                                                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Xray is running (hardcoded server is dead)                                                                                                                 | Xray was started manually but its server is unreachable                                        | `proxy on` to switch to sing-box                                                                                       |
-| Neither Xray nor sing-box is running                                                                                                                       | No proxy active (e.g. `proxy off` was run)                                                     | `proxy on`                                                                                                             |
-| sing-box is running but internet still fails                                                                                                               | All nodes are stale                                                                            | `proxy refresh` to fetch fresh nodes                                                                                   |
-| `Connection refused` on 10808                                                                                                                              | Nothing is listening                                                                           | Start a proxy                                                                                                          |
-| `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING                                                                         | sing-box nodes are all dead; or no fallback + no subscriptions available                       | `proxy refresh` and check the log at `/tmp/sing-box-trojan.log`                                                        |
-| Connections work (login OK) but **domain** traffic fails/slows down (`lookup <domain>: exchange4/6: dial tcp [2001:4860:4860::8888]:443 …` in the journal) | Node(s) resolve domains server-side with a broken resolver (default dns.google DoT, IPv6-only) | Config already routes via client-side resolve (see "DNS" below); run `proxy gen` + restart `sing-box-proxy` to re-heal |
+| Symptom                                                                                                                                                    | Likely cause                                                                                                      | Fix                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Xray is running (hardcoded server is dead)                                                                                                                 | Xray was started manually but its server is unreachable                                                           | `proxy on` to switch to sing-box                                                                                                             |
+| Neither Xray nor sing-box is running                                                                                                                       | No proxy active (e.g. `proxy off` was run)                                                                        | `proxy on`                                                                                                                                   |
+| sing-box is running but internet still fails                                                                                                               | All nodes are stale                                                                                               | `proxy refresh` to fetch fresh nodes                                                                                                         |
+| `Connection refused` on 10808                                                                                                                              | Nothing is listening                                                                                              | Start a proxy                                                                                                                                |
+| `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING                                                                         | sing-box nodes are all dead; or no fallback + no subscriptions available                                          | `proxy refresh` and check the log at `/tmp/sing-box-trojan.log`                                                                              |
+| Connections work (login OK) but **domain** traffic fails/slows down (`lookup <domain>: exchange4/6: dial tcp [2001:4860:4860::8888]:443 …` in the journal) | Node(s) resolve domains server-side with a broken resolver (default dns.google DoT, IPv6-only)                    | Config already routes via client-side resolve (see "DNS" below); run `proxy gen` + restart `sing-box-proxy` to re-heal                       |
+| Browsing works but Telegram drops out (client cannot connect, boot/alert notices fail)                                                                     | The node the urltest picked (or the only fallback node) blocks Telegram DCs; the free pool is full of such relays | `proxy refresh` (e2e now probes api.telegram.org and pins TG traffic to the `tg-auto` group); `proxy status` shows the live `Telegram:` line |
 
 ### DNS
 
