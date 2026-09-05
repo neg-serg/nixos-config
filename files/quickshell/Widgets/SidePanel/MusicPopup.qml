@@ -138,9 +138,16 @@ Item {
                 const pad = Math.max(0, Math.round(Settings.settings.musicPopupPadding * wScale)) || 12;
                 const mh = Math.round(Settings.settings.musicPopupHeight * wScale);
                 if (!isFinite(mh) || mh <= 0) mh = 300;
-                const floor = Math.round(pad + Math.max(120, mh * 0.5));
-                const cap = Math.max(floor, Math.round(ScreenUtil.height(sidebarPopup) * 0.7));
-                return Math.round(Utils.clamp(pad + mh, floor, cap));
+                // Height = content + top padding. Cap against the real primary
+                // screen, NOT this window's own height: using the window height
+                // fed back into the clamp and capped the card down, so raising
+                // musicPopupHeight never made the toast actually taller.
+                const sc = (Qt.application.screens && Qt.application.screens[0] && Qt.application.screens[0].virtualGeometry)
+                    ? Qt.application.screens[0].virtualGeometry
+                    : null;
+                const screenH = (sc && sc.height) ? sc.height : 1080;
+                const cap = Math.round(screenH * 0.95);
+                return Math.round(Utils.clamp(pad + mh, 200, cap));
             } catch (e) {
                 return 300;
             }
