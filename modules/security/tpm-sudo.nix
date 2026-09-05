@@ -7,7 +7,7 @@
 #   asking for a password. The private key never leaves the TPM.
 # Gate: features.security.tpmSudo.enable (default false). Enable fTPM in
 #   UEFI/BIOS BEFORE flipping this on, otherwise boot stalls on the tpmrm
-#   device wait. Full setup: docs/howto/tpm-sudo.ru.md.
+#   device wait. Full setup: docs/howto/tpm-sudo.md.
 # Dependencies: security.tpm2 (tpm2-tools/tpm2-pkcs11), pam_ssh_agent_auth,
 #   openssh (ssh-agent + ssh-add).
 {
@@ -32,7 +32,7 @@
       enable = true;
       # Root-owned, keyed by the INVOKING user (%u → neg). Never point at a
       # user-writeable path (nixpkgs#31611). Put the TPM key's public part in
-      # /etc/ssh/authorized_keys.d/neg — see docs/howto/tpm-sudo.ru.md.
+      # /etc/ssh/authorized_keys.d/neg — see docs/howto/tpm-sudo.md.
       authorizedKeysFiles = [ "/etc/ssh/authorized_keys.d/%u" ];
     };
     security.pam.services.sudo.sshAgentAuth = true;

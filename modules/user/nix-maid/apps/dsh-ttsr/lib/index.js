@@ -2,7 +2,7 @@
  * dsh-ttsr: time-traveling stream rules (TTSR) for DSH — advisory correction
  * injection on the agent's own output.
  *
- * Ported from omp hindsight/omfg-user (plan: docs/howto/agent-deferred.ru.md
+ * Ported from omp hindsight/omfg-user (plan: docs/howto/agent-deferred.md
  * §4). Mechanism: on agent/pre-step, scan the last assistant message text;
  * when a rule's regex matches, append a correction user-message before the
  * next step (deduped per rule per session). Mounted in the AGENT plane

@@ -516,7 +516,7 @@ api.map(';pc', ':setProxyMode clear', 0, 'Proxy: clear (no control)');
 // latin-letter bind breaks. Map each Cyrillic letter to its Latin command
 // (api.map rhs is a key sequence dispatched to the command handler, no DOM
 // key event is re-created, so this cannot loop).
-// Reference table: docs/howto/hotkeys-ru-layout.ru.md
+// Reference table: docs/howto/hotkeys-ru-layout.md
 // @GENERATED ru2en — see modules/user/nix-maid/web/browsing.nix (skRu2en)
 Object.entries(ru2en).forEach(([ru, en]) => api.map(ru, en));
 

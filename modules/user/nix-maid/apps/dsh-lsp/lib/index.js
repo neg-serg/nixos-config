@@ -1,7 +1,7 @@
 /**
  * dsh-lsp: symbol-aware code intelligence via the Language Server Protocol.
  *
- * Ported from omp's lsp tool (plan: docs/howto/agent-deferred.ru.md §1). One
+ * Ported from omp's lsp tool (plan: docs/howto/agent-deferred.md §1). One
  * `lsp` tool; a pool of LSP servers keyed by (adapter, project root); servers
  * are spawned on first use and shut down with the plugin. Ops: hover, definition,
  * references, rename (preview or apply), code_actions (list).

@@ -133,7 +133,7 @@ let
   zellijRuBlock =
     binds:
     "        // Russian layout (ЙЦУКЕН) — GENERATED from lib/ru-keys.nix\n"
-    + "        // Table: docs/howto/hotkeys-ru-layout.ru.md\n"
+    + "        // Table: docs/howto/hotkeys-ru-layout.md\n"
     + lib.concatStringsSep "\n" (
       map (d: "        bind \"${d.mod}${ruKeys.toRu d.key}\" { ${d.action}; }") binds
     );

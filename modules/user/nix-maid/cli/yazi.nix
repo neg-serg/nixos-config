@@ -314,7 +314,7 @@ let
       # ru layout. Lowercase Cyrillic only (uppercase implies SHIFT, which the RU
       # layout reports differently). All duplicates are GENERATED from
       # lib/ru-keys.nix (single source of truth) — do not hand-edit the chars.
-      # Table: docs/howto/hotkeys-ru-layout.ru.md
+      # Table: docs/howto/hotkeys-ru-layout.md
       {
         run = "arrow next";
         on = ruKeys.mkRuKeys [ "j" ];
