@@ -42,7 +42,7 @@
 ## ✨ Highlights
 
 > [!TIP]
-> **New to NixOS?** Check out the [User Manual](docs/manual/README.md) for a comprehensive guide!
+> **New to NixOS?** Check out the [docs index](docs/index.md) for a comprehensive guide!
 
 🎯 **What makes this configuration special:**
 
@@ -263,8 +263,7 @@ flowchart LR
 │   ├── 📁 gui/hypr/                  # Hyprland configs
 │   ├── 📁 quickshell/                # Panel configuration
 ├── 📂 scripts/dev/                   # 🔧 Dev & CI scripts
-├── 📂 docs/                          # 📚 Documentation
-│   └── 📁 manual/                    # User manual
+├── 📂 docs/                          # 📚 Documentation (index, howto/, runbook-*.md)
 ```
 
 ---
@@ -550,7 +549,7 @@ Rust launcher wrapper in `packages/game/`:
 
 | Resource | Description |
 |----------|-------------|
-| 📖 [User Manual](docs/manual/README.md) | Comprehensive guide |
+| 📖 [Docs index](docs/index.md) | Repo documentation entry point |
 
 | 💬 [Package Annotations](modules/) | Inline comments |
 | 🔧 [CI Scripts](scripts/dev/) | Development tools |
