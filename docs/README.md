@@ -417,7 +417,7 @@ Notes:
 - A user service auto-selects the RNNoise source as the default input on login when enabled.
 - You can still manually choose sources in your desktop environment if you prefer.
 
-Russian docs: `docs/howto/build-optimization.ru.md`. SuperCollider live-coding docs live in the
+Docs are English-only (hard rule). SuperCollider live-coding docs live in the
 private notes repo (~/notes/music/supercollider/).
 
 ## LAN Audio Access (MPD + PipeWire)
@@ -496,9 +496,9 @@ scope.
 
 Additionally, a Markdown language policy is enforced:
 
-- English docs live in `*.md`.
-- Russian docs must live in `*.ru.md`. `scripts/dev/check-markdown-language.sh` flags Cyrillic in
-  non-`*.ru.md` files (currently warn-only).
+- All docs live in English-only `*.md` files.
+- `scripts/dev/check-markdown-language.sh` fails on any Cyrillic/CJK in `*.md`
+  (only layout-glyph examples are allowlisted).
 
 ## Module Pattern & Option Helpers
 
