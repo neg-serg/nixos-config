@@ -544,8 +544,18 @@ Scope {
                             // Hide the source item only when we are actually using
                             // the shader clip. Otherwise allow the base fill to draw.
                             hideSource: leftFaceClipLoader.active === true
-                            live: true
+                            // leftBarFill is a plain static fill: re-render the clip
+                            // texture only when the fill changes, not on every frame.
+                            live: false
                             recursive: true
+                            Component.onCompleted: scheduleUpdate()
+                            Connections {
+                                target: leftBarFill
+                                function onWidthChanged() { leftBarFillSource.scheduleUpdate() }
+                                function onHeightChanged() { leftBarFillSource.scheduleUpdate() }
+                                function onColorChanged() { leftBarFillSource.scheduleUpdate() }
+                                function onVisibleChanged() { leftBarFillSource.scheduleUpdate() }
+                            }
                         }
                         // Legacy Canvas/OpacityMask fallback removed — shader path only
                         // Panel tint (left) drawn and masked within leftPanelContent so anchors are valid siblings
@@ -827,8 +837,18 @@ Scope {
                             // Hide the source item only when we are actually using the shader
                             // clip. Otherwise allow the base fill to draw.
                             hideSource: rightFaceClipLoader.active === true
-                            live: true
+                            // rightBarFill is a plain static fill: re-render the clip
+                            // texture only when the fill changes, not on every frame.
+                            live: false
                             recursive: true
+                            Component.onCompleted: scheduleUpdate()
+                            Connections {
+                                target: rightBarFill
+                                function onWidthChanged() { rightBarFillSource.scheduleUpdate() }
+                                function onHeightChanged() { rightBarFillSource.scheduleUpdate() }
+                                function onColorChanged() { rightBarFillSource.scheduleUpdate() }
+                                function onVisibleChanged() { rightBarFillSource.scheduleUpdate() }
+                            }
                         }
                         // Legacy Canvas/OpacityMask fallback removed — shader path only
                         // Panel tint (right) drawn and masked within rightPanelContent so anchors are valid siblings
