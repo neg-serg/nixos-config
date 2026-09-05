@@ -33,6 +33,42 @@ docker run -d --name windows \
 - `-e ARGUMENTS="-device usb-host,…"` — проброс USB-устройства в QEMU (hotplug-аналог —
   `device_add usb-host,vendorid=…,productid=…` через монитор).
 
+### Грабли: memlock (vfio dma_map ENOMEM)
+
+С пробросом iGPU (vfio-pci 1002:13c0) QEMU пинит ~14 ГБ гостевой RAM для DMA в vfio-контейнер на
+старте. Если RLIMIT_MEMLOCK процесса QEMU ниже этого, контейнер падает сразу:
+
+```
+qemu-system-x86_64: -device vfio-pci,host=0000:7c:00.0: vfio 0000:7c:00.0: failed to setup
+container for group 30: memory listener initialization failed: Region pc.ram:
+vfio_container_dma_map(...) = -12 (Cannot allocate memory)
+```
+
+Лимит поднимается в hardware.nix на трёх уровнях (все три нужны):
+
+1. `systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — systemd (system); действует на
+   системные сервисы, включая `user@.service` при его (пере)запуске.
+2. `systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — менеджер пользователя
+   (user units: dsh web, терминалы под systemd --user).
+3. `security.pam.loginLimits` для neg — свежие login-сессии (PAM).
+
+Важно: ни systemd-дефолты, ни pam_limits не ретрофитят уже живые сессии — они читаются при
+старте менеджера/логине. Сессии, запущенные до применения конфига (например, после ребута с новым
+ядром, включившим vfio), остаются со старым жёстким лимитом (4 GiB) и `docker start windows`
+падает с ENOMEM, хотя конфиг уже «правильный». Лечится без ребута (от root):
+
+```bash
+# поднять лимит всем живым процессам нужных cgroup (менеджер + сессии):
+for cg in /sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service \
+           /sys/fs/cgroup/user.slice/user-1000.slice/session-3.scope; do
+  while read -r p; do sudo prlimit --pid "$p" --memlock=unlimited:unlimited; done < "$cg/cgroup.procs"
+done
+# (user@1000.service: пройти рекурсивно по вложенным cgroup — cgroup.procs родителя пуст)
+```
+
+После ребута всё подхватывается само (user@.service наследует infinity от system-дефолта, сессии —
+от pam). Проверка: `grep -i locked /proc/<pid qemu>/limits` → `unlimited`.
+
 ## USB-проброс Genelec GLM (Gnet Adapter)
 
 Устройство: `1781:0e39` (Bus 009). Три грабли, без которых «проброс не виден»:
