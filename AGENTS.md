@@ -4,18 +4,23 @@ Communication language (hard rule)
 - The user (neg) cannot read Chinese at all. NEVER write anything to them in
   Chinese — not in chat replies, not in dsh-ui components, not in commit
   messages, not in any file they will read. Treat this as a hard rule.
-- The user's language is Russian. English is acceptable for technical terms,
-  code, and identifiers. When in doubt, write in Russian.
+- The user's language is Russian. Chat replies and UI copy are Russian;
+  documentation and code comments are English only. This is a hard rule:
+  do NOT create or edit any *.ru.md / *.ru.mdown / *.ru.markdown file, do
+  NOT write documentation prose in Russian in any file, and do NOT translate
+  English docs into Russian. When in doubt about chat language, use Russian;
+  when in doubt about docs, use English.
 - Code comments (in .hs/.scd/.tidal/.rs/nix/… source files) are written in
-  English; Russian is for chat replies, docs, and UI copy. Commit subjects
-  are English imperative (see Commit style below); commit bodies may be
-  Russian. (User requirement — musical code lives in the private ~/notes repo.)
+  English. Commit subjects are English imperative (see Commit style below);
+  commit bodies may be Russian. (User requirement — musical code lives in
+  the private ~/notes repo.)
 - Note: the dsh web GUI itself may contain Chinese strings from plugins
   (e.g. pet.json, dshmarket UI); that is app data, not something we write.
   Do not copy those strings into replies for the user.
 - Before committing, check that files you wrote contain no stray Chinese
-  characters: `just lint` warns on CJK in *.md (scripts/dev/check-markdown-language.sh);
-  review other text files manually.
+  or Cyrillic characters in docs: `just lint` runs
+  scripts/dev/check-markdown-language.sh, which must pass clean for all *.md
+  (no CJK, no Cyrillic). Review other text files manually.
 
 Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
@@ -72,8 +77,9 @@ Nix style: `pkgs.*` lists
 General guidance
 - Keep changes minimal and focused on the feature you are touching.
 - Avoid drive-by refactors; mention unrelated issues separately instead of fixing them silently.
-- When changing behavior, prefer updating relevant docs under `docs/` or `docs/manual/` as needed.
-- For WireGuard/VPN host vs user-level setup, see `docs/manual/manual.ru.md` (section “WireGuard VPN (host / user)”) for prior research and patterns.
+- When changing behavior, prefer updating relevant docs under `docs/` as needed.
+- For WireGuard/VPN host vs user-level setup patterns, see `git log` and the
+  howtos under `docs/howto/`.
 - For a quick orientation, `docs/codebase.md` is a generated repo map (modules, features, profiles, packages); regenerate with `just codebase` when structure changes.
 - For verified step-by-step change workflows (add module/flag/package/host/script/secret, docs, commit rules), see `docs/howto/agent-recipes.md`.
 - Before committing: run `just fmt` then `just check`; never commit unformatted
@@ -147,7 +153,7 @@ Goal completion audit (ported from omp)
 Golden tool set (agent habits) — hard rules
 - Always prefer the fast modern replacements over legacy coreutils when working on this host.
   They are installed system-wide; the full reference (rationale, config wiring, examples,
-  caveats) is `docs/howto/golden-tools.ru.md`.
+  caveats) is `docs/howto/golden-tools.md`.
   - `rg` (ripgrep) or `ugrep` instead of `grep -r`; `rg --pcre2` covers PCRE-only patterns
   - `fd` instead of `find`
   - `bat` instead of `cat` for terminal peeks (the `read` tool stays primary for files)
@@ -180,7 +186,7 @@ Builds: substitute = false
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
   `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
 - Rollouts (rebuild+switch) are agent-run, not user-run: passwordless sudo is
-  configured on odin via sudoers NOPASSWD (see docs/howto/tpm-sudo.ru.md), and
+  configured on odin via sudoers NOPASSWD (see docs/howto/tpm-sudo.md), and
   `sudo nixos-rebuild` is explicitly whitelisted. Preferred form:
   `sudo -n nixos-rebuild switch --flake .#odin --option substitute false`.
   The user's `nh os switch` binding uses the same flag

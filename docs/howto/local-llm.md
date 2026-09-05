@@ -72,7 +72,7 @@ services.colibri = {
   enable = true;
   serve = {
     enable = true;
-    port = 8003;            # НЕ 8000: он занят omnirouter (см. таблицу портов ниже)
+    port = 8003;            # NOT 8000: taken by omnirouter (see the port table below)
   };
 };
 ```
