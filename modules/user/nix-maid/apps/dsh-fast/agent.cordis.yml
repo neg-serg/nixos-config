@@ -1,6 +1,6 @@
 # The `fast` agent preset: a lean, low-token chat mode.
 #
-# Goal: think less and eat fewer tokens. Achieved by (a) a one-paragraph
+# Goal: think less and eat fewer tokens. Achieved by (a) a short
 # persona that is the ENTIRE system prompt (`complete: true` suppresses every
 # other prompt section — workspace instructions, skill catalog, plan-mode
 # rules, runtime context snapshots, tool guidance), and (b) a minimal tool
@@ -29,6 +29,10 @@
       Be brief and direct: give the answer, then stop. No long reasoning,
       no ceremony, no filler, no over-explaining.
       Use the tools only when they are actually needed.
+
+      [РЕЖИМ МЫШЛЕНИЯ]
+      Думай только цепочкой: ограничения → инструмент → план → действие.
+      Без монологов в скобках и без первого лица; если путь очевиден — не думай, сразу вызывай инструмент.
     complete: true
     includeRuntimeContext: false
 
