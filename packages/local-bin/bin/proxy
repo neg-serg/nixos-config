@@ -466,9 +466,9 @@ if not tg_tags:
     tg_tags = list(tags)
 
 outbounds.append({"type": "urltest", "tag": "auto",
-                  "outbounds": tags, "interval": "1m", "tolerance": 50})
+                  "outbounds": tags, "interval": "15s", "tolerance": 50})
 outbounds.append({"type": "urltest", "tag": "tg-auto",
-                  "outbounds": tg_tags, "interval": "1m", "tolerance": 50})
+                  "outbounds": tg_tags, "interval": "15s", "tolerance": 50})
 outbounds.append({"type": "direct", "tag": "direct"})
 
 in_lan = {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}
@@ -563,8 +563,13 @@ real_tags = [o.get("tag") for o in cfg.get("outbounds", [])
 tg_grp = next((o for o in cfg.get("outbounds", []) if o.get("tag") == "tg-auto"), None)
 if tg_grp is None and real_tags:
     cfg["outbounds"].append({"type": "urltest", "tag": "tg-auto",
-                             "outbounds": real_tags, "interval": "1m",
+                             "outbounds": real_tags, "interval": "15s",
                              "tolerance": 50})
+# Normalize urltest interval on existing groups too (faster failover than 1m).
+for o in cfg.get("outbounds", []):
+    if o.get("type") == "urltest" and o.get("interval") not in (None, "15s"):
+        o["interval"] = "15s"
+        changed = True
     changed = True
     log(":: Config: added tg-auto group (all nodes until next refresh)")
 elif tg_grp is not None and not tg_grp.get("outbounds") and real_tags:
@@ -1283,6 +1288,11 @@ refresh() {
         warn "no Telegram-capable nodes - Telegram may fail until a good node appears"
     fi
 
+    # Keep a snapshot so a bad batch can never replace a working config.
+    if [ -f "$CONFIG" ]; then
+        cp "$CONFIG" "$CONFIG.prev"
+    fi
+
     say "Regenerating config with $COUNT validated nodes..."
     printf '%s\n' "$WORKING_LINES" > "$TMPD/nodes.txt"
     export CFG_PATH="$CONFIG"
@@ -1296,6 +1306,34 @@ refresh() {
     else
         start
     fi
+    # Smoke test the NEW config through the live proxy before declaring the
+    # refresh successful: free-pool nodes can die between validation and the
+    # switch, and urltest needs a few 15s cycles to settle on a good node.
+    say "Smoke-testing the new config (up to ~45s)..."
+    pass=0
+    for attempt in 1 2 3 4; do
+        sleep 6
+        up=$(curl -sS -m 5 -o /dev/null -w '%{http_code}' --socks5-hostname 127.0.0.1:10808 https://www.gstatic.com/generate_204 2>/dev/null || echo 000)
+        tg=$(curl -sS -m 8 -o /dev/null -w '%{http_code}' --socks5-hostname 127.0.0.1:10808 https://api.telegram.org 2>/dev/null || echo 000)
+        if [ "$up" = "204" ] && [ "$tg" != "000" ]; then
+            pass=1
+            break
+        fi
+    done
+    if [ "$pass" = "1" ]; then
+        ok "Smoke test passed (upstream $up, telegram $tg)"
+    else
+        warn "new config failed the smoke test - restoring previous config"
+        if [ -f "$CONFIG.prev" ]; then
+            cp "$CONFIG.prev" "$CONFIG"
+            systemctl --user restart sing-box-proxy.service 2>/dev/null || start
+            ok "previous config restored"
+            return 1
+        fi
+        warn "no previous config to restore - keeping the new one"
+        return 1
+    fi
+
 }
 
 # ============================================================
