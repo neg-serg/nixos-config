@@ -1,0 +1,10 @@
+[package]
+name = "tidalctl"
+version = "0.1.0"
+edition = "2021"
+description = "TidalCycles session controller — engine start/stop, editor, recording, monitoring"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+libc = "0.2"
