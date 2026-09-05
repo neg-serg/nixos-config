@@ -419,6 +419,10 @@ lib.mkMerge [
         executable = true;
         text = builtins.readFile ../scripts/ai-upscale-video.sh;
       };
+      ".local/bin/upscale-image" = {
+        executable = true;
+        text = builtins.readFile ../scripts/upscale-image.sh;
+      };
       # VapourSynth script for the Alt+I vf toggle (~~/vs/ai/realesrgan.vpy). NOT in scripts/: mpv would load it as a Lua script.
       ".config/mpv/vs/ai/realesrgan.vpy".text = builtins.readFile ../scripts/realesrgan.vpy;
     }
