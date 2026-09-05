@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Genelec SAM volume control — keyboard wheel (hyprland/sway media keys).
+# Genelec SAM volume control — keyboard wheel (Hyprland media keys via swayosd).
 # Host path: genlc via the GLM USB adapter (dockur VM off).
 # VM path:   glm-midi CC over the TCP relay when the adapter is inside the VM.
 # Writes state file instantly for QML sync. Batches genlc calls via debounce.
