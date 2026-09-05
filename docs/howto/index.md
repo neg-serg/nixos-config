@@ -22,6 +22,9 @@ isn't a step-by-step runbook.
 - SuperCollider live coding (raw SC, scnvim) — moved to the private notes repo
   (~/notes/music/supercollider/), kept out of the public tree on purpose
 
+- Renoise + TidalCycles daily live-coding workflow (RU):
+  [renoise-tidal-live.ru.md](./renoise-tidal-live.ru.md)
+
 - Windows VST through yabridge (regular VST3 in Renoise):
   [wine-vst-bridge.ru.md](./wine-vst-bridge.ru.md)
 

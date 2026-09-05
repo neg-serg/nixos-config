@@ -92,7 +92,7 @@
   - `shabda 808` — открыть сайт + скопировать в буфер `!reslist "…/808.json…"` (Tidal);
   - `shabda -s amen` — `samples('…?strudel=1')` (Strudel);
   - `shabda -l amen` — только вывести строку (без браузера/буфера).
-- В Strudel: вставить `!reslist …` строку в браузерный паттерн (Tidal-стек снят с системы).
+- В Strudel: вставить `!reslist …` строку в браузерный паттерн. (Tidal-стек снова в системе — см. [renoise-tidal-live.ru.md](./renoise-tidal-live.ru.md); shabda-строка формата Strudel отличается от Tidal-формата.)
 - Пример: `shabda -l 808` → `!reslist "https://shabda.ndre.gr/808.json?licenses=by,cc0,by-nc"`.
 
 ## Прочее
