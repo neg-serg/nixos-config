@@ -1,121 +1,112 @@
-# Howtos and Reference
-
-Task-focused notes: pinning guides, hotkeys, client inventories, and other reference material that
-isn't a step-by-step runbook.
-
-- Hyprland hy3 plugin notes: [hyprland-plugin.md](./hyprland-plugin.md)
+# Howtos and)
 
 - hxtools cheat sheet: [hxtools.md](./hxtools.md)
 
 - /nix dedup benchmark: [nix-dedup-vdo.en.md](./nix-dedup-vdo.en.md)
 
-- Swayimg hotkeys: [swayimg-hotkeys.ru.md](./swayimg-hotkeys.ru.md)
+- Swayimg hotkey: [swayimg-hotkeys.md](./swayimg-hotkeys.md)
 
-- Hotkeys vs Russian keyboard layout — inventory & fix plan (RU):
-  [hotkeys-ru-layout.ru.md](./hotkeys-ru-layout.ru.md)
+- Hotkeys vs)
 
 - Kanata — CapsLock layout: status and history (simple scheme active, caps-nav reverted to a
-  separate experiment, RU): [kanata.ru.md](./kanata.ru.md)
+ separate experiment): [kanata.md](./kanata.md)
 
-- Build performance analysis (RU): [build-optimization.ru.md](./build-optimization.ru.md)
+- Build performance analysis: [build-optimization.md](./build-optimization.md)
 
 - SuperCollider live coding (raw SC, scnvim) — moved to the private notes repo
-  (~/notes/music/supercollider/), kept out of the public tree on purpose
+ (~/notes/music/supercollider/), kept out of the public tree on purpose
 
-- Renoise + TidalCycles daily live-coding workflow (RU):
-  [renoise-tidal-live.ru.md](./renoise-tidal-live.ru.md)
+-)
 
-- Windows VST through yabridge (regular VST3 in Renoise):
-  [wine-vst-bridge.ru.md](./wine-vst-bridge.ru.md)
+- Windows VST through yabridge (regular VST3 in):
+ [wine-vst-bridge.md](./wine-vst-bridge.md)
 
-- Replacing GUI buttons with text commands (RU):
-  [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)
+-)
 
-- Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits (RU):
-  [golden-tools.ru.md](./golden-tools.ru.md)
+- Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits:
+ [golden-tools.md](./golden-tools.md)
 
-- dsh-osm — OpenStreetMap tools + map card in dsh (RU): [dsh-osm.ru.md](./dsh-osm.ru.md)
+- dsh-osm — OpenStreetMap tools + map card in dsh: [dsh-osm.md](./dsh-osm.md)
 
-- neg — fork of the LiangShen preset (anchored-standard) as the default preset (RU):
-  [dsh-liangshen-fork.ru.md](./dsh-liangshen-fork.ru.md)
+- neg — fork of the LiangShen preset (anchored-standard) as the default preset:
+ [dsh-liangshen-fork.md](./dsh-liangshen-fork.md)
 
-- dsh-status-rotator — live turn-status phrases instead of "Deep diving..." (RU):
-  [dsh-status-rotator.ru.md](./dsh-status-rotator.ru.md)
+- dsh-status-rotator — live turn-status phrases instead of "Deep diving...":
+ [dsh-status-rotator.md](./dsh-status-rotator.md)
 
-- dsh-ssh — SSH operations, web terminal, and localhost for the agent (RU):
-  [dsh-ssh.ru.md](./dsh-ssh.ru.md)
+- dsh- h — SSH operations, web terminal, and localhost for the agent:
+ [dsh- h.md](./dsh- h.md)
 
-- dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration (RU):
-  [dsh-web-forks.ru.md](./dsh-web-forks.ru.md)
+- dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:
+ [dsh-web-forks.md](./dsh-web-forks.md)
 
 - Options/modules reference: [modules.md](./modules.md)
 
-- Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I, RAG
-  embeddings): [local-llm.md](./local-llm.md)
+- Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I,): [local-llm.md](./local-llm.md)
 
 - Neural tools test report on odin (whisperx/mt3/amt-generate/basic-pitch/rembg/triposr — status,
-  fixes, model paths) (RU): [neural-stack-report.ru.md](./neural-stack-report.ru.md)
+ fixes, model paths): [neural-stack-report.md](./neural-stack-report.md)
 
 - Verified change workflows (add module / flag / package / host / script / secret):
-  [agent-recipes.md](./agent-recipes.md)
+ [agent-recipes.md](./agent-recipes.md)
 
-- Agent guards: recovery from loops and stalls (ported from omp / oh-my-opencode) (RU):
-  [agent-guards.ru.md](./agent-guards.ru.md)
+- Agent guard: recovery from loops and stalls (ported from omp / oh-my-opencode):
+ [agent-guards.md](./agent-guards.md)
 
-- Intent categories instead of model names (ported from oh-my-opencode) (RU):
-  [agent-categories.ru.md](./agent-categories.ru.md)
+- Intent categories instead of model names (ported from oh-my-opencode):
+ [agent-categories.md](./agent-categories.md)
 
-- omp / oh-my-opencode research: what was harvested and how to change the port plan (RU):
-  [agent-port-research.ru.md](./agent-port-research.ru.md)
+- omp / oh-my-opencode research: what was harvested and how to change the port plan:
+ [agent-port-research.md](./agent-port-research.md)
 
-- Advisor pattern: a counselor on top of the agent (ported from omp) (RU):
-  [agent-advisor.ru.md](./agent-advisor.ru.md)
+- Advisor pattern: a counselor on top of the agent (ported from omp):
+ [agent-advisor.md](./agent-advisor.md)
 
-- Memory: two-stage extract → consolidate → SKILL.md pipeline (ported from omp) (RU):
-  [agent-memory-pipeline.ru.md](./agent-memory-pipeline.ru.md)
+- Memory: two-stage extract → consolidate → SKILL.md pipeline (ported from omp):
+ [agent-memory-pipeline.md](./agent-memory-pipeline.md)
 
-- Subagent contract: Role/Context/Plan/Coop/Completion + yield protocol (ported from omp) (RU):
-  [subagent-contract.ru.md](./subagent-contract.ru.md)
+- Subagent contract:):
+ [subagent-contract.md](./subagent-contract.md)
 
-- Harness features: backlog (hashline, hook ideas from oh-my-opencode) (RU):
-  [agent-harness-features.ru.md](./agent-harness-features.ru.md)
+- Harne  feature: backlog (hashline, hook ideas from oh-my-opencode):
+ [agent-harne -features.md](./agent-harne -features.md)
 
-- Harness features: designs and rollout plan (DSH recon + subagent designs) (RU):
-  [agent-harness-implementation.ru.md](./agent-harness-implementation.ru.md) — details in
-  [designs/](./designs/) (dsh-recon, rules-hooks, hashline, memory-pipeline)
+- Harne  feature: designs and rollout plan (DSH recon + subagent designs):
+ [agent-harne -implementation.md](./agent-harne -implementation.md) — details in
+ [designs/](./designs/) (dsh-recon, rules-hooks, hashline, memory-pipeline)
 
-- Niche omp features: vibe / cleanse / export / secrets / tan — port notes (RU):
-  [agent-misc-ports.ru.md](./agent-misc-ports.ru.md)
+- Niche omp feature: vibe / cleanse / export / secrets / tan — port notes:
+ [agent-misc-ports.md](./agent-misc-ports.md)
 
-- Deferred port of complex omp/omo features (task for strong models) (RU):
-  [agent-deferred.ru.md](./agent-deferred.ru.md)
+- Deferred port of complex omp/omo features (task for strong models):
+ [agent-deferred.md](./agent-deferred.md)
 
-- **Port omp/oh-my-opencode → DSH: final summary** (RU):
-  [agent-port-summary.ru.md](./agent-port-summary.ru.md)
+- **Port omp/oh-my-opencode → DSH: final summary**:
+ [agent-port-summary.md](./agent-port-summary.md)
 
-- Port of hermes-agent (Nous Research) and similar projects: map of what to port (RU):
-  [agent-port-hermes.ru.md](./agent-port-hermes.ru.md)
+- Port of hermes-agent (Nous) and similar project: map of what to port:
+ [agent-port-hermes.md](./agent-port-hermes.md)
 
-- Micro-compaction: continuous compaction design for DSH (ported from hermes-agent) (RU):
-  [agent-micro-compaction.ru.md](./agent-micro-compaction.ru.md)
+- Micro-compaction: continuous compaction design for DSH (ported from hermes-agent):
+ [agent-micro-compaction.md](./agent-micro-compaction.md)
 
-- SKILL.md skill authoring contract (ported from hermes-agent) (RU):
-  [agent-skill-authoring.ru.md](./agent-skill-authoring.ru.md)
+- SKILL.md skill authoring contract (ported from hermes-agent):
+ [agent-skill-authoring.md](./agent-skill-authoring.md)
 
-- Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
-  [tpm-sudo.ru.md](./tpm-sudo.ru.md)
+- Pa wordle  sudo via TPM (non-exportable SSH key + pam_ h_agent_auth, no manual actions):
+ [tpm-sudo.md](./tpm-sudo.md)
 
-- Long-running goal (ongoing Goal): how to deploy, run and manage (RU):
-  [ongoing-goal.ru.md](./ongoing-goal.ru.md)
+- Long-running goal (ongoing Goal): how to deploy, run and manage:
+ [ongoing-goal.md](./ongoing-goal.md)
 
-- Fastfetch: black-metal blizzard (animated logo, RU):
-  [fastfetch-blizzard.ru.md](./fastfetch-blizzard.ru.md)
+- Fastfetch: black-metal blizzard (animated logo):
+ [fastfetch-blizzard.md](./fastfetch-blizzard.md)
 
-- Quickshell: медиа-тост — как делать правильно (позиция/высота/стиль, RU):
-  [quickshell-music-toast.ru.md](./quickshell-music-toast.ru.md)
+- Quickshell: media toast — how to do it right (position/height/style):
+ [quickshell-music-toast.md](./quickshell-music-toast.md)
 
-- Dockur Windows VM on odin: GLM USB passthrough, host alias, VM proxy chain (RU):
-  [windows-vm-dockur.ru.md](./windows-vm-dockur.ru.md)
+- Dockur Windows VM on odin: GLM USB pa through, host alias, VM proxy chain:
+ [windows-vm-dockur.md](./windows-vm-dockur.md)
 
-- LustyExplorer: Lua-port for modern Neovim (files/buffers explorer + buffer grep, RU):
-  [lusty-explorer-port.ru.md](./lusty-explorer-port.ru.md)
+- LustyExplorer: Lua-port for modern Neovim (files/buffers explorer + buffer grep):
+ [lusty-explorer-port.md](./lusty-explorer-port.md)

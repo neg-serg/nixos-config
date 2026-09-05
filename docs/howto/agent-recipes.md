@@ -301,8 +301,8 @@ local-bin.
 
 - Cross-link new documents from `docs/index.md` (and `docs/howto/index.md` for how-tos) — required
   by `docs/AGENTS.md`.
-- EN/RU pairs stay in sync; Russian content lives in `*.ru.md` files — Cyrillic in non-`.ru.md`
-  markdown is flagged by the markdown-language check.
+- Docs are English-only (hard rule, root `AGENTS.md`): no `*.ru.md` variants, no Russian
+  prose in docs; the markdown-language check fails on Cyrillic/CJK in any `*.md` file.
 - Generated docs: `just docs-modules` → `docs/howto/modules.md`; `just codebase` →
   `docs/codebase.md`. `OPTIONS.md` is maintained manually.
 - Placement: `docs/manual/` — canonical user-facing workflows; `docs/howto/` — focused
