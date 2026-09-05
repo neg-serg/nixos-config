@@ -8,9 +8,9 @@ configuration.
 ## Working Tree Layout
 
 - `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
-  (`docs/manual`, `docs/howto`, `docs/runbooks`).
+  (`docs/index.md`, `docs/howto/`, `docs/runbook-*.md`).
 - `files/` — static config files linked to user homes via nix-maid.
-- `docs/manual/manual.*.md` — canonical guides (this file).
+- `docs/index.md` — entry point; `docs/howto/` — focused guides; `docs/runbook-*.md` — operational steps.
 
 ## Quick Start (System)
 
