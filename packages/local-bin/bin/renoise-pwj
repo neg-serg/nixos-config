@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# renoise-pwj — run Renoise under PipeWire-JACK so it joins the shared audio
-# graph (JACK driver) instead of grabbing ALSA default at 44.1k and fighting
-# the 48k PipeWire graph (distorted sound).
+# renoise-pwj - launch Renoise. The system 'renoise' wrapper
+# (packages/overlay.nix) already runs it under pw-jack with the glib VST lib
+# path; this script is kept as a stable entry point for recipes and other
+# scripts that predate the wrapper.
 set -euo pipefail
-export LD_LIBRARY_PATH="/run/current-system/sw/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-exec pw-jack renoise "$@"
+exec renoise "$@"
