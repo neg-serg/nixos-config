@@ -99,6 +99,19 @@ def load_nodes():
             return f.read()
     return os.environ["NODES_TEXT"]
 
+def load_tg_nodes():
+    # Telegram-capable subset written by validate_nodes during refresh: nodes
+    # that reached api.telegram.org in the e2e probe. Empty list -> Telegram
+    # routing degrades to all nodes.
+    nf = os.environ.get("TG_NODES_FILE")
+    if nf:
+        try:
+            with open(nf, "r") as f:
+                return f.read()
+        except OSError:
+            return ""
+    return os.environ.get("TG_NODES_TEXT", "")
+
 text = load_nodes()
 cfg_path = os.environ["CFG_PATH"]
 lan_auth = os.environ.get("LAN_AUTH", "")
@@ -405,6 +418,7 @@ def parse_line(line):
 
 outbounds = []
 seen = set()
+tag_by_key = {}
 for line in text.strip().split('\n'):
     line = line.strip()
     if not line: continue
@@ -419,6 +433,7 @@ for line in text.strip().split('\n'):
         seen.add(key)
         ob["tag"] = ob["type"][:2] + "-" + str(len(outbounds))
         outbounds.append(ob)
+        tag_by_key[key] = ob["tag"]
     except Exception:
         continue
 
@@ -427,8 +442,33 @@ if not outbounds:
     sys.exit(1)
 
 tags = [o["tag"] for o in outbounds]
+
+# Telegram-capable subset (validate_nodes e2e probe): these nodes could reach
+# api.telegram.org, so Telegram traffic is pinned to them. Free relays that
+# block Telegram DCs never carry it, even when urltest would pick them as the
+# fastest node for generic browsing.
+tg_text = load_tg_nodes()
+tg_tags = []
+for line in tg_text.strip().split('\n'):
+    line = line.strip()
+    if not line: continue
+    try:
+        ob = parse_line(line)
+        if ob is None: continue
+        canon = line.split('#')[0].strip()
+        t = tag_by_key.get((ob["server"].lower(), ob["server_port"], canon))
+        if t and t not in tg_tags:
+            tg_tags.append(t)
+    except Exception:
+        continue
+if not tg_tags:
+    log("! no Telegram-capable nodes — tg-auto falls back to all nodes")
+    tg_tags = list(tags)
+
 outbounds.append({"type": "urltest", "tag": "auto",
                   "outbounds": tags, "interval": "1m", "tolerance": 50})
+outbounds.append({"type": "urltest", "tag": "tg-auto",
+                  "outbounds": tg_tags, "interval": "1m", "tolerance": 50})
 outbounds.append({"type": "direct", "tag": "direct"})
 
 in_lan = {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}
@@ -450,7 +490,16 @@ inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port":
 dns = {"servers": [{"tag": "remote", "type": "https", "server": "1.1.1.1",
                     "server_port": 443}],
        "strategy": "ipv4_only"}
+# Telegram domains/IPs are pinned to the tg-auto urltest group; the rest
+# keeps the generic auto group. Domain rules match pre-resolution, ip_cidr
+# catches direct DC dials (MTProto clients connect to IPs, no domain).
+TG_CIDRS = ["91.108.4.0/22", "91.108.8.0/22", "91.108.12.0/22",
+            "91.108.16.0/22", "91.108.56.0/22", "95.161.64.0/20",
+            "149.154.160.0/20", "185.76.151.0/24"]
 route = {"rules": [{"ip_is_private": True, "outbound": "direct"},
+                   {"domain_suffix": ["telegram.org", "t.me", "telegram.me",
+                                      "telegram.dog"], "outbound": "tg-auto"},
+                   {"ip_cidr": TG_CIDRS, "outbound": "tg-auto"},
                    {"action": "resolve", "server": "remote", "strategy": "ipv4_only"}],
          "final": "auto", "auto_detect_interface": True,
          "default_domain_resolver": "remote"}
@@ -460,7 +509,8 @@ cfg = {"log": {"level": "error"}, "dns": dns, "inbounds": inbounds,
 os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
 with open(cfg_path, "w") as f:
     json.dump(cfg, f, indent=2)
-log("✓ Config: " + str(len(tags)) + " outbounds + urltest")
+log("✓ Config: " + str(len(tags)) + " outbounds + urltest ("
+    + str(len(tg_tags)) + " tg-capable)")
 PYEOF
 }
 
@@ -494,16 +544,47 @@ FINAL_DNS = {"servers": [
               {"tag": "remote", "type": "https", "server": "1.1.1.1",
                "server_port": 443}],
              "strategy": "ipv4_only"}
+TG_DOMAINS = ["telegram.org", "t.me", "telegram.me", "telegram.dog"]
+TG_CIDRS = ["91.108.4.0/22", "91.108.8.0/22", "91.108.12.0/22",
+            "91.108.16.0/22", "91.108.56.0/22", "95.161.64.0/20",
+            "149.154.160.0/20", "185.76.151.0/24"]
 FINAL_ROUTE = {"rules": [
                 {"ip_is_private": True, "outbound": "direct"},
+                {"domain_suffix": TG_DOMAINS, "outbound": "tg-auto"},
+                {"ip_cidr": TG_CIDRS, "outbound": "tg-auto"},
                 {"action": "resolve", "server": "remote", "strategy": "ipv4_only"}],
                "final": "auto", "auto_detect_interface": True,
                "default_domain_resolver": "remote"}
+# Pre-refresh configs have no tg-auto group: heal it so Telegram routing is
+# pinned even when the config predates the classifier. Degraded until the
+# next refresh (tg-auto carries every live node).
+real_tags = [o.get("tag") for o in cfg.get("outbounds", [])
+             if o.get("type") not in ("urltest", "direct") and o.get("tag")]
+tg_grp = next((o for o in cfg.get("outbounds", []) if o.get("tag") == "tg-auto"), None)
+if tg_grp is None and real_tags:
+    cfg["outbounds"].append({"type": "urltest", "tag": "tg-auto",
+                             "outbounds": real_tags, "interval": "1m",
+                             "tolerance": 50})
+    changed = True
+    log(":: Config: added tg-auto group (all nodes until next refresh)")
+elif tg_grp is not None and not tg_grp.get("outbounds") and real_tags:
+    tg_grp["outbounds"] = real_tags
+    changed = True
+    log(":: Config: tg-auto group had no nodes - reset to all nodes")
 if cfg.get("dns") != FINAL_DNS or cfg.get("route") != FINAL_ROUTE:
     cfg["dns"] = FINAL_DNS
     cfg["route"] = FINAL_ROUTE
     changed = True
     log(":: Config: DNS/route reset to final shape (client-side resolve)")
+
+
+
+
+
+
+
+
+
 want_users = None
 if lan_auth:
     u, p = lan_auth.split(":", 1)
@@ -1052,9 +1133,23 @@ try:
                      "https://speed.cloudflare.com/__down?bytes=" + str(speed_bytes)],
                     capture_output=True, text=True, timeout=speed_timeout + 5)
                 speed = float(r.stdout.strip() or "0")
-                return speed >= min_speed
+                if speed < min_speed:
+                    return None
             except Exception:
-                return False
+                return None
+            # Telegram probe: the relay must also reach api.telegram.org. Free
+            # nodes that block Telegram DCs would otherwise pass the generic
+            # checks and then drop the messenger at random.
+            try:
+                r = subprocess.run(
+                    ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                     "--max-time", "8", "--socks5-hostname",
+                     "127.0.0.1:" + str(port), "https://api.telegram.org"],
+                    capture_output=True, text=True, timeout=12)
+                tg_ok = r.returncode == 0 and r.stdout.strip().isdigit()
+            except Exception:
+                tg_ok = False
+            return "tg" if tg_ok else "ok"
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as ex:
             futs = {ex.submit(probe, BASE + wave_start + wave.index(k)): k for k in wave}
             for fut in concurrent.futures.as_completed(futs):
@@ -1082,6 +1177,7 @@ finally:
     subprocess.run(["pkill", "-f", "sing-box.*" + tmp], capture_output=True)
 
 work = [k for k in candidates if okmap.get(k)]
+tg_work = [k for k in candidates if okmap.get(k) == "tg"]
 log("✓ e2e working: " + str(len(work)) + "/" + str(len(candidates)))
 if len(work) == 0:
     log("✗ ERROR: no working nodes; keeping existing config")
@@ -1089,6 +1185,13 @@ if len(work) == 0:
 if len(work) < min_working:
     log("! only " + str(len(work)) + " working nodes (wanted >= "
         + str(min_working) + "); proceeding with verified subset")
+if tg_work:
+    tg_path = os.path.join(tmp, "tg-working.txt")
+    with open(tg_path, "w") as f:
+        f.write("\n".join(cands[k][1] for k in tg_work) + "\n")
+    log("✓ Telegram-capable: " + str(len(tg_work)) + "/" + str(len(work)))
+else:
+    log("! no Telegram-capable nodes (telegram routing will degrade)")
 for k in work:
     print(cands[k][1])  # stdout: machine-readable node URIs for refresh
 PYEOF
@@ -1171,10 +1274,20 @@ refresh() {
         return 1
     fi
 
+    # validate_nodes writes the Telegram-capable subset next to its probes;
+    # pass it to the generator so Telegram gets its own urltest group.
+    TG_FILE="$VALIDATE_TMP/tg-working.txt"
+    if [ -s "$TG_FILE" ]; then
+        ok "$(wc -l < "$TG_FILE") Telegram-capable nodes"
+    else
+        warn "no Telegram-capable nodes - Telegram may fail until a good node appears"
+    fi
+
     say "Regenerating config with $COUNT validated nodes..."
     printf '%s\n' "$WORKING_LINES" > "$TMPD/nodes.txt"
     export CFG_PATH="$CONFIG"
     export LAN_AUTH="$(load_lan_auth)"
+    export TG_NODES_FILE="$TG_FILE"
     gen_cfg
     ok "Config regenerated: $CONFIG ($COUNT nodes)"
     if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
@@ -1266,6 +1379,8 @@ case "$CMD" in
                 "$CONFIG" 2>/dev/null || echo "?")
             age=$(stat -c '%y' "$CONFIG" 2>/dev/null | cut -d. -f1)
             echo "Nodes:     $n outbounds (config: $age)"
+            tg=$(jq -r '[.outbounds[] | select(.tag == "tg-auto") | .outbounds[]] | length' "$CONFIG" 2>/dev/null || echo "?")
+            echo "TG:        $tg nodes in tg-auto group"
         fi
         if [ "$state" = "RUNNING" ]; then
             r=$(curl -sS -m 6 -o /dev/null -w '%{http_code}|%{time_total}' \
@@ -1276,6 +1391,13 @@ case "$CMD" in
                 printf '%-10s %sOK%s in %ss\n' "Upstream:" "$_c_green" "$_c_reset" "$t"
             else
                 printf '%-10s %sFAIL%s (code %s)\n' "Upstream:" "$_c_red" "$_c_reset" "$code"
+            fi
+            tr=$(curl -sS -m 8 -o /dev/null -w '%{http_code}|%{time_total}' --socks5-hostname 127.0.0.1:10808 https://api.telegram.org 2>/dev/null || echo "000|0")
+            tcode=${tr%%|*}; tt=${tr##*|}
+            if [ "$tcode" != "000" ]; then
+                printf '%-10s %sOK%s (HTTP %s in %ss)\n' "Telegram:" "$_c_green" "$_c_reset" "$tcode" "$tt"
+            else
+                printf '%-10s %sFAIL%s\n' "Telegram:" "$_c_red" "$_c_reset"
             fi
             spid=$(pgrep -f 'sing-box run -c /home/neg/.config' | head -1) || true
             if [ -n "$spid" ]; then
