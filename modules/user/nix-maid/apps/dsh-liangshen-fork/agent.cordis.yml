@@ -1,16 +1,16 @@
 # The `neg` agent preset — a fork of the upstream `liangshen`
 # (LiangShen mode) preset, maintained declaratively in /etc/nixos (see NOTICE
-# for upstream provenance and licenses). Behavior is identical to upstream:
-# phase 1 exposes the builtin Minimal preset's exact two tools (persistent
-# `bash` plus `str_replace_editor`) and the same one-line persona, with no
-# runtime contexts and no injected pre-step messages, anchoring the Minimal
-# trajectory; after a stabilized anchor the wire switches to Code Mode (PTC)
-# and the ordinary injections open. The phase-1 surface matches the official
-# "exact RL prompt and schemas" snapshot byte-for-byte on the model-visible
-# wire shape, at the cost of keeping the persistent shell for the whole
-# session. Unlike the builtin Minimal preset, the phase-1 editor inherits the
-# host file sandbox instead of mounting a bare local filesystem (see the
-# filesystem section below).
+# for upstream provenance and licenses). Phase 1 keeps the Minimal trajectory:
+# it exposes the builtin Minimal preset's two tools (persistent `bash` plus
+# `str_replace_editor`), no runtime contexts, and no injected pre-step
+# messages; after a stabilized anchor the wire switches to Code Mode (PTC) and
+# the ordinary injections open. The persona is the preset's own, replacing
+# upstream's bare one-liner on the user's request: a software-engineer identity
+# plus a strict thinking-mode discipline (no parenthetical monologues, no
+# first-person narration, constraint -> tool -> plan -> execute, and skip
+# thinking when the path is obvious). Unlike the builtin Minimal preset, the
+# phase-1 editor inherits the host file sandbox instead of mounting a bare
+# local filesystem (see the filesystem section below).
 #
 # Adapted from the builtin `minimal` and `standard` presets.
 #
@@ -33,17 +33,26 @@
 
 # ── identity ────────────────────────────────────────────────────────────────
 
-# Phase 1 shows only this one-line persona: `tool-bootstrap` filters the
-# assembled sections down to the persona section (`deployment:persona`, the
-# name `dsh-persona` registers under, plus the legacy `persona` name) during
-# phase 1 and restores every section after promotion, appending the session's
-# working directory to the persona — so the agent knows its workspace and
-# plan-mode's `plan:policy` takes effect instead of being permanently
-# shadowed by a `complete` persona.
+# The persona is the only prompt section `tool-bootstrap` keeps during
+# phase 1 (`deployment:persona`, the name `dsh-persona` registers under,
+# plus the legacy `persona` name); every other section returns after
+# promotion, and the session's working directory is appended to the persona so
+# the agent knows its workspace and plan-mode's `plan:policy` takes effect
+# instead of being permanently shadowed by a `complete` persona. The text
+# below is the whole phase-1 prompt: the software-engineer identity plus the
+# thinking-mode discipline.
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: You are a helpful software engineer assistant.
+    text: |-
+      You are a helpful software engineer assistant.
+
+      [РЕЖИМ МЫШЛЕНИЯ]
+      В thinking-блоке строго запрещено:
+      1. Внутренние монологи в скобках (типа "(надо подумать...)", "(хм, интересно...)").
+      2. Повествование от первого лица ("я думаю", "мне кажется", "наверное стоит...").
+      3. Разрешена только цепочка: анализ ограничений → выбор инструмента → план действий → исполнение.
+      4. Если путь очевиден — thinking не нужен, сразу вызывай инструмент.
 
 # Two-phase input bootstrap with the exact Minimal phase-1 tools. Before the
 # first durable tool/call event the model sees only persistent `bash` plus
