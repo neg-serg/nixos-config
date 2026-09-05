@@ -15,3 +15,12 @@ Quick Checklist
 - Ensure sources hide: `ShaderEffectSource.hideSource === Loader.active`; raise clip z (e.g.
   `z: 50`) during debug
 - Panel transparency affects perceived wedge strength — see `Docs/PANELS.md`
+
+Performance notes
+
+- Wedge clip sources (`leftBarFillSource`/`rightBarFillSource`) sample plain static fills, so
+  they run with `live: false` and re-render only when the fill geometry/color/visibility
+  changes (`scheduleUpdate()` via Connections). Keeps the wedge visuals without paying for a
+  per-frame FBO update of the base fill.
+- The 20 fps procedural sun icon in `Widgets/SidePanel/Weather.qml` animates only while its
+  popup overlay window is mapped (`Window.window.visible`); the Timer is stopped otherwise.
