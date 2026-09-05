@@ -389,7 +389,7 @@ Item {
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
         Timer {
-            interval: 80
+            interval: 32
             running: root.renderMode === "wave" && root.values.length > 0
             repeat: true
             onTriggered: waveCanvas.requestPaint()
@@ -443,7 +443,7 @@ Item {
                 ctx.bezierCurveTo(mx, prev.y, mx, pts[i].y, x, pts[i].y);
             }
             ctx.strokeStyle = Qt.rgba(e.r, e.g, e.b, 0.9);
-            ctx.lineWidth = Math.max(2, root._barFillOpacity * 6);
+            ctx.lineWidth = Math.max(1, root._barFillOpacity * 2.2);
             ctx.stroke();
         }
     }

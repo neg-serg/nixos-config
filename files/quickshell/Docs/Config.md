@@ -69,12 +69,14 @@ iPhone-style analyser (shared component; bar and toast are configured separately
 
 - barAnalyserMirror: boolean, default false. Mirror the small bar analyser; false = one-sided.
 - barAnalyserBars: integer, default 5. Bar count for the small bar analyser.
-- barAnalyserStyle: string, default "neon-cyan". Visual preset for the small bar analyser:
-  neon-cyan | neon-violet | neon-lime | neon-orange | holographic | aurora | sunset | synthwave | ember | matrix | analog-amber | analog-rose | analog-vu.
+- barAnalyserStyle: string, default "neon-cyan". Visual preset for the small bar analyser: neon-cyan
+  | neon-violet | neon-lime | neon-orange | holographic | aurora | sunset | synthwave | ember |
+  matrix | analog-amber | analog-rose | analog-vu.
 - toastAnalyserMirror: boolean, default false. Mirror the large toast analyser; false = one-sided.
 - toastAnalyserBars: integer, default 64. Bar count for the large toast analyser.
 - toastAnalyserStyle: string, default "neon-cyan". Visual preset for the large toast analyser:
-  neon-cyan | neon-violet | neon-lime | neon-orange | holographic | aurora | sunset | synthwave | ember | matrix | analog-amber | analog-rose | analog-vu.
+  neon-cyan | neon-violet | neon-lime | neon-orange | holographic | aurora | sunset | synthwave |
+  ember | matrix | analog-amber | analog-rose | analog-vu.
 
 CAVA / Spectrum (global defaults; each may be overridden per profile in visualizerProfiles.<name>)
 
@@ -91,9 +93,11 @@ CAVA / Spectrum (global defaults; each may be overridden per profile in visualiz
 - spectrumColorMinHz: integer, default 15. Low end of the coloured band (Hz).
 - spectrumColorMaxHz: integer, default 24000. High end of the coloured band (Hz).
 - spectrumDimOpacity: number 0..1, default 0.18. Opacity of bars outside the coloured band.
-- spectrum3D: boolean, default true. Enable 3D perspective arc and specular gradient on analyser bars.
+- spectrum3D: boolean, default true. Enable 3D perspective arc and specular gradient on analyser
+  bars.
 - spectrum3DDepth: number 0..1, default 0.35. Perspective falloff for the 3D analyser arc.
-- spectrumColor: string, default "". Custom analyser bar colour (hex, e.g. #00e5ff) overriding the preset/accent.
+- spectrumColor: string, default "". Custom analyser bar colour (hex, e.g. #00e5ff) overriding the
+  preset/accent.
 - spectrumMode: string, default "bars". Analyser render implementation: bars | led | wave.
 - musicPopupProgressHeight: number, default 3. Progress scrub-bar thickness in logical px (scaled).
 - spectrumFillOpacity: number 0..1, default 0.35. Fill opacity.
