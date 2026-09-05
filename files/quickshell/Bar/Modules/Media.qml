@@ -258,8 +258,8 @@ Item {
                     // the 3D neon treatment stays on the large toast analyser.
                     accentColor: mediaControl.mediaAccent
                     fillOpacity: 0.8
-                    barGap: 2
-                    minBarWidth: 5
+                    barGap: 4
+                    minBarWidth: 1
                     glow: false
                     threeD: false
                     animDurationMs: 80
