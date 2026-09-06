@@ -44,7 +44,7 @@ in
     flow = callPkg (packagesRoot + "/flow") { }; # Terminal dashboard for real-time network throughput
     lsfg-vk = callPkg (packagesRoot + "/lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
     nixard = callPkg (packagesRoot + "/nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
-    lusty-native = callPkg (inputs.lusty-native.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/lusty-native
+    lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/lusty
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };

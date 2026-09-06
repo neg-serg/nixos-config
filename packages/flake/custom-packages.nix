@@ -19,7 +19,7 @@
   omp = pkgs.neg.omp; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
-  lusty-native = pkgs.neg.lusty-native; # Native file/buffer picker for Neovim (Lusty successor)
+  lusty = pkgs.neg.lusty; # Native file/buffer picker for Neovim (Lusty successor)
   oryx = pkgs.neg.oryx; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
   pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
