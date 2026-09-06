@@ -4,11 +4,11 @@ Everything about neural networks for music/audio on this machine: where it lives
 it is called, how to recreate it. Complements `wine-vst-bridge.md` (Windows VSTs via
 yabridge in Renoise) and `local-llm.md` (speech stack, LLM).
 
-## venv inventory (all in ~/src/music-ai/, Python from the nix store)
+## venv inventory (all in /zero/ai/music-ai/, Python from the nix store)
 
 | venv | Python | Purpose | Recreate |
 | --- | --- | --- | --- |
-| `venv-rave311` | 3.11 (store `python3-3.11.15`) | acids-rave 2.3.1: RAVE VC/inference | `uv pip install --python $(ls -d /nix/store/*python3-3.11*/bin/python3.11)/bin/python3.11` not needed: the venv already exists; packages: `uv pip install --python ~/src/music-ai/venv-rave311/bin/python acids-rave` |
+| `venv-rave311` | 3.11 (store `python3-3.11.15`) | acids-rave 2.3.1: RAVE VC/inference | `uv pip install --python $(ls -d /nix/store/*python3-3.11*/bin/python3.11)/bin/python3.11` not needed: the venv already exists; packages: `uv pip install --python /zero/ai/music-ai/venv-rave311/bin/python acids-rave` |
 | `venv-beat` | 3.11 | madmom (beats), torchcrepe (pitch), librosa | numpy==1.23.5 + scipy==1.10.1 (for madmom), then `--no-build-isolation` madmom; torchcrepe with plain pip |
 | `venv-nam` | 3.11 | neural-amp-modeler (NAM inference) | `uv pip install --python .../venv-nam/bin/python neural-amp-modeler` |
 | `venv-demucs` | 3.13 (default) | demucs 4.1 + audio-separator (BS-RoFormer) | `uv pip install --python .../bin/python demucs audio-separator onnxruntime audioread`; librosa==0.10.2.post1 (for audio-separator) |
