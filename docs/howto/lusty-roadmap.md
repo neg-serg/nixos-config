@@ -1,6 +1,6 @@
-# Lusty-native: roadmap (rendering, hotkeys, preview)
+# Lusty: roadmap (rendering, hotkeys, preview)
 
-Agreed development plan for the pickers (standalone `lusty-native` + nvim float
+Agreed development plan for the pickers (standalone `lusty` + nvim float
 `native.lua`/`native_pick`).
 
 ## Hotkeys

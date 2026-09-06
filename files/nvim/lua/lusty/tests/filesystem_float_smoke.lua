@@ -2,15 +2,15 @@
 -- end. Runs headless like the other smokes:
 --   nvim --clean --headless -l files/nvim/lua/lusty/tests/filesystem_float_smoke.lua
 -- Covers: initial listing, long view metadata (serve M), sort cycling
--- (serve Q sort token) and query filtering. Requires the lusty-native
+-- (serve Q sort token) and query filtering. Requires the lusty
 -- binary on PATH (native.lua degrades with a notify when it is missing —
 -- the test skips then).
 
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty-native') ~= 1 then
-  print('SKIP filesystem float smoke: lusty-native not on PATH')
+if vim.fn.executable('lusty') ~= 1 then
+  print('SKIP filesystem float smoke: lusty not on PATH')
   vim.cmd('qa!')
   return
 end

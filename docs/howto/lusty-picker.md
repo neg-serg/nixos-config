@@ -1,4 +1,4 @@
-# Lusty-native: separate Rust picker (architecture)
+# Lusty: separate Rust picker (architecture)
 
 ## Goal
 
@@ -25,7 +25,7 @@ Two bottlenecks in the current Lua port:
 ## Process model (Model 1, fzf-style)
 
 - An nvim wrapper (`,l`/`,C`/`,B`/`,G`) opens a terminal via `termopen` and runs
-  `lusty-native <mode> <root>`.
+  `lusty <mode> <root>`.
 - The binary draws on the alternate screen (ratatui/crossterm); the user types/picks; on selection
   the binary prints an `ACTION<TAB>PATH` line to stdout and exits with code 0; cancel — code 1.
 - `on_exit` in Lua reads stdout and opens the file in nvim (edit/tab/split), reusing the current
@@ -34,8 +34,8 @@ Two bottlenecks in the current Lua port:
 
 ## Components
 
-1. `~/src/lusty-native` (flake input `lusty-native` in /etc/nixos) — a Rust crate (binary
-   `lusty-native`):
+1. `~/src/lusty` (flake input `lusty` in /etc/nixos) — a Rust crate (binary
+   `lusty`):
 
    - `cli`: mode (files|buffers|grep), root, depth, skip-dirs, follow-mounts, dotfile flag,
      initial query.
@@ -74,11 +74,11 @@ Two bottlenecks in the current Lua port:
 
 ## Nix packaging
 
-- The code lives in a separate project: `~/src/lusty-native` (its own git repo; `default.nix` =
+- The code lives in a separate project: `~/src/lusty` (its own git repo; `default.nix` =
   `rustPlatform.buildRustPackage`, src `./.`, its own `Cargo.lock`,
-  `meta.mainProgram = "lusty-native"`).
-- /etc/nixos pulls it in as a flake input `lusty-native.url = "path:/home/neg/src/lusty-native"`;
-  overlay `packages/overlays/tools.nix`: `callPkg (inputs.lusty-native.outPath) { }` →
-  `pkgs.neg.lusty-native`.
-- After changing the code in `~/src/lusty-native`: run `nix flake lock --update-input lusty-native`
+  `meta.mainProgram = "lusty"`).
+- /etc/nixos pulls it in as a flake input `lusty.url = "path:/home/neg/src/lusty"`;
+  overlay `packages/overlays/tools.nix`: `callPkg (inputs.lusty.outPath) { }` →
+  `pkgs.neg.lusty`.
+- After changing the code in `~/src/lusty`: run `nix flake lock --update-input lusty`
   before rebuilding.
