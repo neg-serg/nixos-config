@@ -34,5 +34,4 @@ if [[ -r "${ZDOTDIR}/99-fix-aliases.zsh" ]]; then
 fi
 
 
-[[ $NEOVIM_TERMINAL ]] && source "${ZDOTDIR}/08-neovim-cd.zsh"
 # vim: ft=zsh:nowrap
