@@ -6,8 +6,8 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty-native') ~= 1 then
-  print('SKIP filesystem float icons smoke: lusty-native not on PATH')
+if vim.fn.executable('lusty') ~= 1 then
+  print('SKIP filesystem float icons smoke: lusty not on PATH')
   vim.cmd('qa!')
   return
 end

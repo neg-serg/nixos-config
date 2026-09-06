@@ -1,4 +1,4 @@
--- Lusty-native picker: Rust backend (lusty-native serve) rendered as a normal
+-- Lusty picker: Rust backend (lusty serve) rendered as a normal
 -- nvim floating window with real highlights. No terminal buffer involved, so
 -- it renders reliably even when nvim itself runs inside a web xterm.
 --
@@ -1056,8 +1056,8 @@ function Picker:open_current(action)
 end
 
 function Picker:startup()
-  if vim.fn.executable('lusty-native') ~= 1 then
-    vim.notify('lusty-native binary not found on PATH', vim.log.levels.ERROR)
+  if vim.fn.executable('lusty') ~= 1 then
+    vim.notify('lusty binary not found on PATH', vim.log.levels.ERROR)
     return
   end
   self:open_window()
@@ -1070,7 +1070,7 @@ function Picker:start_backend()
   if skip == nil or skip == '' then
     skip = 'pic,tmp'
   end
-  local cmd = { 'lusty-native', 'serve', self.root, '--depth', tostring(depth), '--skip', skip }
+  local cmd = { 'lusty', 'serve', self.root, '--depth', tostring(depth), '--skip', skip }
   if self.show_dots then
     cmd[#cmd + 1] = '--dots'
   end
