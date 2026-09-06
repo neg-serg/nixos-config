@@ -237,23 +237,23 @@ profile-eval: flamegraph-eval
 
 # Start the SuperDirt engine (sclang + scsynth) in the background
 tidal-start:
-    @$HOME/.local/bin/tidalctl start
+    @tidalctl start
 
 # Stop the engine
 tidal-stop:
-    @$HOME/.local/bin/tidalctl stop
+    @tidalctl stop
 
 # Restart the engine (applies edits to superdirt_startup.scd / synths.scd)
 tidal-restart:
-    @$HOME/.local/bin/tidalctl restart
+    @tidalctl restart
 
 # Engine status: processes, OSC ports, audio links
 tidal-status:
-    @$HOME/.local/bin/tidalctl status
+    @tidalctl status
 
 # Start the engine and open the demo jam scene in nvim
 tidal-demo:
-    @$HOME/.local/bin/tidalctl demo
+    @tidalctl demo
 
 # Open the Tidal workspace in nvim with a visible ghci terminal (right split)
 tidal-edit:
@@ -261,19 +261,19 @@ tidal-edit:
 
 # Create a new .tidal file and open it
 tidal-new:
-    @$HOME/.local/bin/tidalctl new
+    @tidalctl new
 
 # Record SuperDirt output (prompts for duration)
 tidal-record:
-    @$HOME/.local/bin/tidalctl record
+    @tidalctl record
 
 # Live PipeWire monitor (pw-top)
 tidal-monitor:
-    @$HOME/.local/bin/tidalctl monitor
+    @tidalctl monitor
 
 # Open the ZestBay patchbay (distrobox Arch container)
 tidal-patch:
-    @$HOME/.local/bin/tidalctl patch
+    @tidalctl patch
 
 # Run the Renoise tracker under pw-jack (JACK driver into the shared graph)
 renoise:
