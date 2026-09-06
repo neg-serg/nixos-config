@@ -191,9 +191,24 @@ let
   # "Отметить" button; telegram-pill-bot turns a press into confirmation.
   pillReminderScript = pkgs.writeText "telegram-pill-reminder.py" ''
     import json
+    import pathlib
     import subprocess
     import sys
     import time
+
+    # Idempotency guard: on this VM snapshot restores / late boot catch-ups can
+    # fire the timer more than once a day. Stamp the date on every successful
+    # send and skip if we already reminded today, so it is at most once/24h.
+    STATE_DIR = pathlib.Path("/var/lib/telegram-pill-reminder")
+    MARKER = STATE_DIR / "last-sent.txt"
+    TODAY = time.strftime("%Y-%m-%d")
+
+    try:
+        if MARKER.read_text().strip() == TODAY:
+            print("pill-reminder: already sent today, skipping")
+            sys.exit(0)
+    except FileNotFoundError:
+        pass
 
     TOKEN = open("${config.sops.secrets."telegram/bot-token".path}").read().strip()
     CHAT_ID = open("${config.sops.secrets."telegram/chat-id".path}").read().strip()
@@ -224,6 +239,8 @@ let
             check=False,
         )
         if proc.returncode == 0:
+            MARKER.parent.mkdir(parents=True, exist_ok=True)
+            MARKER.write_text(TODAY)
             sys.exit(0)
         time.sleep(5)
     print("pill-reminder: could not deliver after 12 attempts", file=sys.stderr)
@@ -1093,16 +1110,19 @@ lib.mkMerge [
       wants = [ "network-online.target" ];
       serviceConfig = {
         Type = "oneshot";
+        StateDirectory = "telegram-pill-reminder";
         ExecStart = "${pkgs.python3}/bin/python3 ${pillReminderScript}";
       };
     };
 
+    # No Persistent=true: on this VM snapshot restores / boot catch-ups made
+    # systemd re-send "catch-up" reminders at ~midnight, doubling the daily
+    # message. The script itself also guards "at most one send per day".
     systemd.timers."telegram-pill-reminder" = {
       description = "Daily 12:00 pill reminder";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = "*-*-* 12:00:00";
-        Persistent = true;
         Unit = "telegram-pill-reminder.service";
       };
     };
