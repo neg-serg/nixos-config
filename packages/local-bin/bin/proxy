@@ -623,7 +623,7 @@ if changed:
 PYEOF
         return
     fi
-    FALLBACK=$(load_fallback)
+    FALLBACK=$(expand_fallback)
     if [ -z "$FALLBACK" ]; then
         warn "No fallback nodes — run 'proxy refresh' or create the SOPS secret"
         return
@@ -1224,10 +1224,35 @@ fetch_sub() {
       shuf | head -"${NODE_SAMPLE:-400}" || true
 }
 
+# expand_fallback — expand SOPS fallback entries: plain node URIs pass
+# through; http(s):// lines are treated as subscription URLs and fetched
+# (fetch_sub base64-decodes them and retries via the running proxy when
+# a direct fetch comes back empty).
+expand_fallback() {
+    local line data out=""
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        case "$line" in
+            http://*|https://*)
+                data=$(fetch_sub "$line")
+                if [ -n "$data" ]; then
+                    out="$out"$'\n'"$data"
+                else
+                    warn "no nodes from fallback subscription $(basename "$line")"
+                fi
+                ;;
+            *)
+                out="$out"$'\n'"$line"
+                ;;
+        esac
+    done <<< "$(load_fallback)"
+    printf '%s\n' "$out" | sed '/^$/d'
+}
+
 refresh() {
     step "proxy refresh"
     say "Fetching fresh nodes..."
-    FALLBACK=$(load_fallback)
+    FALLBACK=$(expand_fallback)
     NEW_NODES=""
     for url in \
       "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt" \
