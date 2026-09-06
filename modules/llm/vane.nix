@@ -42,13 +42,24 @@ in
     enable = lib.mkEnableOption "Vane (Perplexica) self-hosted AI search on the local ollama";
     image = lib.mkOption {
       type = lib.types.str;
-      default = "itzcrazykns1337/vane:latest";
+      # Fully-qualified: no unqualified-search registries are configured on
+      # odin (see /etc/containers/registries.conf), so a bare short-name fails
+      # with "did not resolve to an alias". Same docker.io/ prefix the dockur
+      # windows image uses on this host.
+      default = "docker.io/itzcrazykns1337/vane:latest";
       description = "OCI image (single container: UI + API + private SearXNG).";
     };
     port = lib.mkOption {
       type = lib.types.port;
+      # 3000 is taken by AdGuard Home (bound 127.0.0.1) on this host, so Vane
+      # listens on a free port. Published on all interfaces for LAN access.
+      default = 3005;
+      description = "Host port to publish the Vane web UI on (all interfaces).";
+    };
+    containerPort = lib.mkOption {
+      type = lib.types.port;
       default = 3000;
-      description = "Host port to publish the Vane web UI on.";
+      description = "Port the web UI listens on inside the container.";
     };
     ollamaUrl = lib.mkOption {
       type = lib.types.str;
@@ -75,7 +86,7 @@ in
         ExecStart = lib.concatStringsSep " " [
           "${lib.getExe pkgs.podman} run"
           "--name vane --replace --rm"
-          "-p 127.0.0.1:${toString cfg.port}:${toString cfg.port}"
+          "-p ${toString cfg.port}:${toString cfg.containerPort}"
           "-e OLLAMA_BASE_URL=${cfg.ollamaUrl}"
           "-e OLLAMA_EMBEDDING_MODEL=${cfg.embeddingModel}"
           "-v vane-data:/home/vane/data"
@@ -86,5 +97,9 @@ in
         TimeoutStartSec = 300;
       };
     };
+
+    # Open the published port so LAN devices (household) can reach the UI.
+    networking.firewall.allowedTCPPorts = [ cfg.port ];
   };
+
 }
