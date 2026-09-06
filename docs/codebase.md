@@ -343,7 +343,7 @@ Defined in `modules/features/*.nix` (auto-imported); human-readable reference: `
 - `features.input.ruHotkeys.ruLayoutIndex` — default: `1` (type: `int`) — XKB group index of the ru
   layout (kb_layout = us,ru invariant).
 - `features.input.ruHotkeys.usClasses` — default:
-  `[ "term" # plain shell (kitty --class term) "nwim" # nvim wrapper (kitty --class nwim) "music" # rmpc (M4+f) "teardown" # btop (M4+d) "torrment" # rustmission (M4+t) "vpn" # tun status (M4+u) "mixer" # ncpamixer (M4+C+p) "rebuild" # nh os switch (M4+S+n) "mpd-add" # rmpc spawns this class "mpv" # video player: no text input, vim-style keys ]`
+  `[ "term" # plain shell (kitty --class term) "nwim" # nvim wrapper (kitty --class nwim) "music" # rmpc (M4+f) "teardown" # btop (M4+d) "torrment" # rustmission (M4+t) "vpn" # tun status (M4+u) "mixer" # ncpamixer (M4+C+p) "rebuild" # nh os switch (M4+S+n) "mpv" # video player: no text input, vim-style keys ]`
   (type: `listOf`) — Hyprland window classes forced to the us layout on focus. Everything else
   defaults to ru (typing-first). Switching happens only on focus transitions — a manual M4+S switch
   stays until the next focus change.
