@@ -39,21 +39,21 @@ broken, document the status. All models live in `/zero/ai/**`.
 
 ### whisperx — STT + diarization
 
-- Wrapper: `packages/local-bin/bin/whisperx` (venv `~/src/music-ai/venv-whisperx`).
+- Wrapper: `packages/local-bin/bin/whisperx` (venv `/zero/ai/music-ai/venv-whisperx`).
 - Command: `whisperx audio.wav --model small --language ru --diarize --output_dir out/`.
 - Result: `/tmp/whisperx-out/test-ru.{txt,srt,vtt,json,tsv}` — recognition + speaker labeling.
 - Coexists with `whisper.cpp` (:8002) from the speech stack — that is a different backend.
 
 ### mt3 — audio-to-MIDI transcription
 
-- Wrapper: `packages/local-bin/bin/mt3` (venv `~/src/music-ai/venv-mt3`, inference
-  `~/src/music-ai/mt3-infer`).
+- Wrapper: `packages/local-bin/bin/mt3` (venv `/zero/ai/music-ai/venv-mt3`, inference
+  `/zero/ai/music-ai/mt3-infer`).
 - Command: `mt3 file.wav [out.mid]`; MR-MT3 checkpoint at `/zero/ai/music/mt3/mr_mt3`.
 - Result: `/tmp/mt3-out.mid` — 171 notes.
 
 ### ~~amt-generate~~ — removed (2026-08-28)
 
-The user dismissed the generation as garbage; removed: wrappers `~/src/music-ai/bin/amt-*`, venv
+The user dismissed the generation as garbage; removed: wrappers `/zero/ai/music-ai/bin/amt-*`, venv
 `venv-amt` (incl. torch 2.13.0+rocm7.1), sources `anticipation/`, models
 `music-small-100k`/`music-small-ar-100k` (980 MB), artifacts and wheels
 (`/zero/ai/music/renders/amt-20260828/`, `/zero/ai/music/tmp-dl/`), symlink in `~/.local/bin`.
@@ -107,9 +107,9 @@ The user dismissed the generation as garbage; removed: wrappers `~/src/music-ai/
 ## Infrastructure
 
 - **venv**:
-  `~/src/music-ai/venv-{amt,analysis,bp,demucs,denoise,groovae,magenta,midi2tidal,mt3,nam,omnizart,rave,rave311,rembg,tags,triposr,whisperx,xtts}`.
+  `/zero/ai/music-ai/venv-{amt,analysis,bp,demucs,denoise,groovae,magenta,midi2tidal,mt3,nam,omnizart,rave,rave311,rembg,tags,triposr,whisperx,xtts}`.
 - **Wrappers**: `packages/local-bin/bin/` (Nix-managed; test via the direct path from the repo —
-  they land in `~/.local/bin` after `nh os switch`). `amt-generate` — symlink to `~/src/music-ai/bin/`.
+  they land in `~/.local/bin` after `nh os switch`). `amt-generate` — symlink to `/zero/ai/music-ai/bin/`.
 - **Models (`/zero/ai`)**: `3d` (TripoSR), `imgproc` (rembg/u2net/bria/birefnet, RealESRGAN,
   vs-mlrt), `music` (mt3/mr_mt3, rave, nam-models, separation, instruments), `speech`
   (piper/whisper.cpp/cosyvoice-engines, voices), `whisperx` (hub), `ocr` (got-ocr2, paddleocr),

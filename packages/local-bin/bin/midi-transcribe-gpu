@@ -1,8 +1,8 @@
 #!/bin/sh
 # midi-transcribe-gpu: midi-transcribe (hFT-Transformer / RobustAMT) with ROCm GPU torch.
-# Runtime: ~/src/music-ai/midi-transcribe-gpu (device-patched copy of the nix package)
-# + ~/src/music-ai/venv-denoise (torch 2.13.0+rocm7.1). ~100x faster than CPU hFT.
+# Runtime: /zero/ai/music-ai/midi-transcribe-gpu (device-patched copy of the nix package)
+# + /zero/ai/music-ai/venv-denoise (torch 2.13.0+rocm7.1). ~100x faster than CPU hFT.
 # Usage: midi-transcribe-gpu audio.wav [-o out.mid] [--model hft|robust] [options]
 set -eu
 export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib:${LD_LIBRARY_PATH:-}"
-exec ~/src/music-ai/venv-denoise/bin/python ~/src/music-ai/midi-transcribe-gpu/transcribe.py "$@"
+exec /zero/ai/music-ai/venv-denoise/bin/python /zero/ai/music-ai/midi-transcribe-gpu/transcribe.py "$@"

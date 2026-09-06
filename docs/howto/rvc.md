@@ -18,8 +18,8 @@ a target voice — not done** (a dataset/model is needed).
 
 | Component       | Path                                                      | Status                      |
 | --------------- | --------------------------------------------------------- | --------------------------- |
-| Repository      | `~/src/music-ai/Retrieval-based-Voice-Conversion-WebUI` | cloned                      |
-| venv            | `~/src/music-ai/venv-rvc` (torch 2.13.0+rocm7.1, GPU)   | ready                       |
+| Repository      | `/zero/ai/music-ai/Retrieval-based-Voice-Conversion-WebUI` | cloned                      |
+| venv            | `/zero/ai/music-ai/venv-rvc` (torch 2.13.0+rocm7.1, GPU)   | ready                       |
 | hubert          | `assets/hubert/hubert_base.pt` (190 MB)                 | downloaded                  |
 | rmvpe           | `assets/rmvpe/rmvpe.pt` (181 MB)                        | downloaded                  |
 | CLI             | `infer/cli.py`                                          | loads on ROCm without errors |
@@ -29,8 +29,8 @@ a target voice — not done** (a dataset/model is needed).
 
 ```bash
 export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib"
-cd ~/src/music-ai/Retrieval-based-Voice-Conversion-WebUI
-~/src/music-ai/venv-rvc/bin/python infer/cli.py --model weights/MYVOICE.pth --input in.wav --output out.wav --f0-method rmvpe
+cd /zero/ai/music-ai/Retrieval-based-Voice-Conversion-WebUI
+/zero/ai/music-ai/venv-rvc/bin/python infer/cli.py --model weights/MYVOICE.pth --input in.wav --output out.wav --f0-method rmvpe
 ```
 
 Key options: `--speaker-id` (multi-voice models), `--pitch` (pitch shift in semitones),
