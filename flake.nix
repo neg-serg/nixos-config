@@ -58,10 +58,10 @@
       url = "github:neg-serg/iosevka-neg";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # lusty-native: own repo on github (source of truth).
-    # Re-lock after pushes: nix flake lock --update-input lusty-native (via proxy).
-    lusty-native = {
-      url = "github:neg-serg/lusty-native";
+    # lusty: own repo on github (source of truth).
+    # Re-lock after pushes: nix flake lock --update-input lusty (via proxy).
+    lusty = {
+      url = "github:neg-serg/lusty";
     };
     neg-pkgs = {
       url = "github:neg-serg/nixos-pkgs";

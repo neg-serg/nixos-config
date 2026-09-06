@@ -999,21 +999,21 @@
         "type": "github"
       }
     },
-    "lusty-native": {
+    "lusty": {
       "inputs": {
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1788552122,
-        "narHash": "sha256-g5P7ic+5s5kvqJDu8iTBBKOwwCdPCi8EIfLSs5tzCko=",
+        "lastModified": 1788552853,
+        "narHash": "sha256-rGmz3lLfgRO0d7Sn2/NJDiM8Vrg21xOt5IzHn1r2M3g=",
         "owner": "neg-serg",
-        "repo": "lusty-native",
-        "rev": "53f8f1642a66684253427e90ce3ab61303d9b653",
+        "repo": "lusty",
+        "rev": "1d0d8168c27080fd702e12f3e82a465b6ee04d7b",
         "type": "github"
       },
       "original": {
         "owner": "neg-serg",
-        "repo": "lusty-native",
+        "repo": "lusty",
         "type": "github"
       }
     },
@@ -1434,7 +1434,7 @@
         "hy3": "hy3",
         "hyprscratch": "hyprscratch",
         "iosevka-neg": "iosevka-neg",
-        "lusty-native": "lusty-native",
+        "lusty": "lusty",
         "mt7927": "mt7927",
         "multiverse": "multiverse",
         "neg-pkgs": "neg-pkgs",
