@@ -1179,7 +1179,6 @@ next focus change.
   "vpn"
   "mixer"
   "rebuild"
-  "mpd-add"
   "mpv"
 ]
 ```
