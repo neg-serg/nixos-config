@@ -1,6 +1,6 @@
 #!/bin/sh
 # triposr: image → 3D mesh (VAST-AI TripoSR, MIT). Uses the pip venv at
-# ~/src/music-ai/venv-triposr (torch CPU + torchmcubes/xatlas/moderngl).
+# /zero/ai/music-ai/venv-triposr (torch CPU + torchmcubes/xatlas/moderngl).
 # Model weights (VAST-AI/TripoSR, ~700MB) live in /zero/ai/3d (HF_HOME);
 # falls back to ~/.cache/huggingface until /zero/ai/3d exists (next rebuild).
 #
@@ -15,4 +15,4 @@ else
   export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
 fi
 
-exec "$HOME/src/music-ai/venv-triposr/bin/python" "$HOME/src/music-ai/triposr-repo/run.py" "$@"
+exec "/zero/ai/music-ai/venv-triposr/bin/python" "/zero/ai/music-ai/triposr-repo/run.py" "$@"
