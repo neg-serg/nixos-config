@@ -679,6 +679,7 @@ lib.mkMerge [
       # Enable Samba profile on this host (guest-access share under /zero/sync/smb)
       samba.enable = false;
     };
+
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
     # Disable RNNoise virtual mic for this host by default
@@ -793,6 +794,11 @@ lib.mkMerge [
 
     services = lib.mkMerge [
       {
+        # Vane (Perplexica): self-hosted Perplexity-style AI search on the local
+        # ollama (modules/llm/vane.nix). LAN-only, no auth; needs llm domain
+        # (active on odin). Image/port unverified — first boot pulls the OCI
+        # image and shows the one-time setup wizard (see modules/llm/vane.nix).
+        vane.enable = true;
         # dsh-ssh ssh_tunnel: with allowTcpForwarding enabled in
         # servicesProfiles.openssh above, restrict forwarded destinations to
         # loopback so the hardened sshd cannot be used as a pivot into the LAN.
