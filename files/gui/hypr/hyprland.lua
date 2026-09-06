@@ -52,7 +52,6 @@ local m = {
   telegram_wrapped   = "^(.telegram-desktop-wrapped)$",
   telegram_org       = "^(org\\.telegram.desktop)$",
   utility            = "^(qt5ct|wine|steamwebhelper|sun-awt-X11-XFramePeer|xdg-desktop-portal-gtk)$",
-  mpd_add            = "^(mpd-add)(.*)$",
   steam_app          = "^(steam_app)",
   xwaylandvideobridge = "^(xwaylandvideobridge)$",
   -- scratchpad classes
@@ -442,7 +441,6 @@ hl.window_rule({ name = "file-dialog", match = { title = m.file_dialog }, center
 hl.window_rule({ name = "telegram-wrapped", match = { class = m.telegram_wrapped }, center = true, tag = "telegram" })
 hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, float = true, tag = "telegram" })
 hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, tag = "utility" })
-hl.window_rule({ name = "mpd-add", match = { class = m.mpd_add }, float = true, size = "35% 35%", move = "64% 59%", tag = "mpd-add" })
 
 -- Scratchpad rules: float + size + no dim (monitor-relative expressions)
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7 - 8 8", no_dim = true })

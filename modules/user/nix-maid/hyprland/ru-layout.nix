@@ -34,7 +34,6 @@ let
       "vpn"
       "mixer"
       "rebuild"
-      "mpd-add"
       "mpv"
     ]
   );
