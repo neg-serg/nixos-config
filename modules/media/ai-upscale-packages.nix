@@ -23,7 +23,7 @@ in
           pkgs.upscayl # GUI batch upscaler (Vulkan), good for photo albums
           # NB: rembg intentionally NOT here — nixpkgs rembg builds onnxruntime from
           # source (libhwy) and gets OOM-killed on this host. Installed in a pip
-          # venv instead (~/src/music-ai/venv-rembg), see packages/local-bin/bin/rembg.
+          # venv instead (/zero/ai/music-ai/venv-rembg), see packages/local-bin/bin/rembg.
         ];
       })
       (lib.mkIf (!(haveRealesrgan && haveFfmpeg)) {

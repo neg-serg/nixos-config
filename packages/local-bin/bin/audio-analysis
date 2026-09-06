@@ -6,7 +6,7 @@
 #   audio-analysis master   input.wav ref.wav out.wav   → reference-based mastering
 set -eu
 
-BASE="$HOME/src/music-ai"
+BASE="/zero/ai/music-ai"
 TORCHLIB="$BASE/venv-analysis/lib/python3.12/site-packages/torch/lib"
 for lib in "$TORCHLIB" \
   /nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib \
