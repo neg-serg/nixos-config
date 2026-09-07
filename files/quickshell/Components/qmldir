@@ -33,6 +33,7 @@ PanelWithOverlay 1.0 PanelWithOverlay.qml
 PillIndicator 1.0 PillIndicator.qml
 ProcessRunner 1.0 ProcessRunner.qml
 RotateBehavior 1.0 RotateBehavior.qml
+SlideReveal 1.0 SlideReveal.qml
 Spinner 1.0 Spinner.qml
 StyledTooltip 1.0 StyledTooltip.qml
 SubmenuHost 1.0 SubmenuHost.qml
