@@ -293,6 +293,18 @@ OverlayToggleCapsule {
                             }
                             opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(13*Theme.scale(root.screen)); font.weight: (isToday||(isWeekend&&isCurrentMonth))?Font.Bold:Font.Normal }
 
+                        // Weekend ring: square red outline around Sat/Sun of the
+                        // current month (today keeps its gold ring).
+                        Rectangle {
+                            visible: isWeekend && isCurrentMonth && !isToday
+                            anchors.fill: parent
+                            anchors.margins: 1
+                            radius: 0
+                            color: "transparent"
+                            border.color: Theme.error
+                            border.width: Math.max(1, Math.round(1.2 * Theme.scale(root.screen)))
+                        }
+
                         Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:hasRealHoliday?Theme.error:root.goldAccent; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
                         Rectangle { visible:root.showPill&&(pillStatus==="taken"||pillStatus==="missed"); width:4*Theme.scale(root.screen); height:width; radius:width/2; color:pillStatus==="taken"?root.goldAccent:Theme.error; anchors.top:parent.top; anchors.left:parent.left; anchors.margins:2 }
 
