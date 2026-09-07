@@ -187,8 +187,18 @@ let
     '';
   };
 
+  # Quickshell PillTracker state files (user neg): the panel pill capsule
+  # writes this state and the calendar event; the Telegram reminder and
+  # pill bot mirror marks in both directions (panel <-> chat).
+  pillPanelStateFile = "/home/neg/.local/state/quickshell/pill-tracker.json";
+  pillPanelIcsDir = "/home/neg/.config/vdirsyncer/calendars/pills";
+  pillPanelUser = "neg";
+
   # Daily 12:00 pill reminder: sends a Telegram message with an inline
   # "Отметить" button; telegram-pill-bot turns a press into confirmation.
+  # The message is skipped when the panel already recorded today's dose,
+  # and its id is remembered so the bot can edit the very same message
+  # when the dose gets marked (or unmarked) from the panel.
   pillReminderScript = pkgs.writeText "telegram-pill-reminder.py" ''
     import json
     import pathlib
@@ -196,12 +206,27 @@ let
     import sys
     import time
 
+    # Shared with the Quickshell PillTracker (panel pill capsule).
+    PANEL_STATE_FILE = pathlib.Path("${pillPanelStateFile}")
+
     # Idempotency guard: on this VM snapshot restores / late boot catch-ups can
     # fire the timer more than once a day. Stamp the date on every successful
     # send and skip if we already reminded today, so it is at most once/24h.
     STATE_DIR = pathlib.Path("/var/lib/telegram-pill-reminder")
     MARKER = STATE_DIR / "last-sent.txt"
+    LAST_MSG_FILE = STATE_DIR / "last-message.json"
     TODAY = time.strftime("%Y-%m-%d")
+
+    def already_taken_today():
+        try:
+            state = json.loads(PANEL_STATE_FILE.read_text())
+        except (OSError, ValueError):
+            return False
+        return state.get("todayDate") == TODAY and bool(state.get("taken"))
+
+    if already_taken_today():
+        print("pill-reminder: pill already taken today, skipping")
+        sys.exit(0)
 
     try:
         if MARKER.read_text().strip() == TODAY:
@@ -224,8 +249,6 @@ let
             [
                 CURL,
                 "-s",
-                "-o",
-                "/dev/null",
                 "--proxy",
                 "socks5h://127.0.0.1:10808",
                 "--data-urlencode",
@@ -236,11 +259,31 @@ let
                 "reply_markup={0}".format(MARKUP),
                 API,
             ],
+            capture_output=True,
+            text=True,
             check=False,
         )
         if proc.returncode == 0:
             MARKER.parent.mkdir(parents=True, exist_ok=True)
             MARKER.write_text(TODAY)
+            # Remember the sent message so a later panel-side "taken" can edit
+            # the same message and keep panel and chat confirmations in sync.
+            try:
+                sent = json.loads(proc.stdout or "{}")
+                message_id = sent.get("result", {}).get("message_id")
+                if message_id:
+                    LAST_MSG_FILE.write_text(
+                        json.dumps(
+                            {
+                                "date": TODAY,
+                                "chat_id": CHAT_ID,
+                                "message_id": message_id,
+                                "confirmed": False,
+                            }
+                        )
+                    )
+            except (OSError, ValueError):
+                print("pill-reminder: could not record sent message id", file=sys.stderr)
             sys.exit(0)
         time.sleep(5)
     print("pill-reminder: could not deliver after 12 attempts", file=sys.stderr)
@@ -249,9 +292,15 @@ let
 
   # Pill bot: long-polls getUpdates and turns presses of the "pill_taken"
   # button into a confirmation edit plus a dated line in the state log.
+  # It is also the panel <-> Telegram bridge: a Telegram press marks the
+  # Quickshell PillTracker (capsule + vdirsyncer calendar event), and a
+  # panel-side mark/unmark edits the same Telegram reminder message, so
+  # the pill can be confirmed from either source.
   pillBotScript = pkgs.writeText "telegram-pill-bot.py" ''
     import json
+    import os
     import pathlib
+    import pwd
     import subprocess
     import sys
     import time
@@ -263,6 +312,20 @@ let
     STATE_DIR = pathlib.Path("/var/lib/telegram-pill-bot")
     OFFSET_FILE = STATE_DIR / "offset"
     LOG_FILE = STATE_DIR / "pill-log.txt"
+    LAST_MSG_FILE = pathlib.Path("/var/lib/telegram-pill-reminder/last-message.json")
+
+    # Quickshell PillTracker files owned by the desktop user's panel.
+    PANEL_STATE_FILE = pathlib.Path("${pillPanelStateFile}")
+    PANEL_ICS_DIR = pathlib.Path("${pillPanelIcsDir}")
+    PILL_OWNER = "${pillPanelUser}"
+
+    # Must match telegram-pill-reminder.py: used to restore the reminder
+    # message (with its button) when the panel mark is reverted.
+    REMINDER_TEXT = "💊 12:00 — пора принять таблетку. Нажми «Отметить», когда принял."
+    REMINDER_MARKUP = json.dumps(
+        {"inline_keyboard": [[{"text": "Отметить ✅", "callback_data": "pill_taken"}]]}
+    )
+    CONFIRMED_TEXT = "💊 Принято ✅ ({0})"
 
     def read_secrets():
         token = open(TOKEN_FILE).read().strip()
@@ -276,6 +339,116 @@ let
         cmd.append("https://api.telegram.org/bot{0}/{1}".format(token, method))
         return subprocess.run(cmd, capture_output=True, text=True, check=False)
 
+    def stamp_now():
+        return time.strftime("%Y-%m-%d %H:%M %Z")
+
+    def owner_ids():
+        pw = pwd.getpwnam(PILL_OWNER)
+        return pw.pw_uid, pw.pw_gid
+
+    def read_panel_state():
+        try:
+            return json.loads(PANEL_STATE_FILE.read_text())
+        except (OSError, ValueError):
+            return {}
+
+    def write_panel_state(state):
+        uid, gid = owner_ids()
+        PANEL_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        PANEL_STATE_FILE.write_text(json.dumps(state, indent=4) + "\n")
+        os.chown(PANEL_STATE_FILE, uid, gid)
+        os.chmod(PANEL_STATE_FILE, 0o644)
+
+    def write_panel_ics(today, taken_at):
+        uid, gid = owner_ids()
+        PANEL_ICS_DIR.mkdir(parents=True, exist_ok=True)
+        path = PANEL_ICS_DIR / ("pill-" + today + ".ics")
+        dtstart = today.replace("-", "")
+        ics = "\r\n".join([
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Neg//PillTracker//EN",
+            "BEGIN:VEVENT",
+            "DTSTART;VALUE=DATE:" + dtstart,
+            "DTEND;VALUE=DATE:" + dtstart,
+            "SUMMARY:Pill \u2705",
+            "DESCRIPTION:Taken at " + taken_at,
+            "CATEGORIES:Health",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            "",
+        ])
+        path.write_text(ics)
+        os.chown(path, uid, gid)
+        os.chmod(path, 0o644)
+        # The collection dir may have been created above as root; hand it
+        # back to the desktop user so vdirsyncer stays writable.
+        st = os.stat(PANEL_ICS_DIR)
+        if (st.st_uid, st.st_gid) != (uid, gid):
+            os.chown(PANEL_ICS_DIR, uid, gid)
+
+    def remove_panel_ics(today):
+        (PANEL_ICS_DIR / ("pill-" + today + ".ics")).unlink(missing_ok=True)
+
+    def mark_panel_taken(today, taken_at):
+        state = read_panel_state()
+        state["todayDate"] = today
+        state["taken"] = True
+        state["takenAt"] = taken_at
+        if not isinstance(state.get("history"), list):
+            state["history"] = []
+        write_panel_state(state)
+        write_panel_ics(today, taken_at)
+
+    def last_message(today):
+        try:
+            data = json.loads(LAST_MSG_FILE.read_text())
+        except (OSError, ValueError):
+            return None
+        if not isinstance(data, dict) or data.get("date") != today:
+            return None
+        data.setdefault("confirmed", False)
+        return data
+
+    def save_last_message(data):
+        LAST_MSG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        LAST_MSG_FILE.write_text(json.dumps(data))
+
+    def log_line(text):
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with LOG_FILE.open("a") as fh:
+            fh.write(text + "\n")
+
+    def edit_message(msg, text, token, reply_markup=None):
+        params = {
+            "chat_id": str(msg["chat_id"]),
+            "message_id": str(msg["message_id"]),
+            "text": text,
+        }
+        if reply_markup is not None:
+            params["reply_markup"] = reply_markup
+        return api_call("editMessageText", params, token)
+
+    def sync_from_panel(today, token):
+        """Converge the day's Telegram reminder message on the panel state."""
+        msg = last_message(today)
+        if not msg:
+            return
+        state = read_panel_state()
+        taken = state.get("todayDate") == today and bool(state.get("taken"))
+        if msg.get("confirmed") == taken:
+            return
+        if taken:
+            taken_at = state.get("takenAt") or time.strftime("%H:%M")
+            resp = edit_message(msg, CONFIRMED_TEXT.format(today + " " + taken_at), token)
+        else:
+            resp = edit_message(msg, REMINDER_TEXT, token, REMINDER_MARKUP)
+        if resp.returncode == 0:
+            msg["confirmed"] = taken
+            save_last_message(msg)
+            if taken:
+                log_line(stamp_now())
+
     offset = 0
     if OFFSET_FILE.exists():
         try:
@@ -286,8 +459,15 @@ let
     while True:
         try:
             token, chat_id = read_secrets()
+            today = time.strftime("%Y-%m-%d")
+
+            # Bridge: panel-side marks edit the Telegram reminder message and
+            # Telegram-side marks update the panel capsule/calendar. Converging
+            # on the recorded confirmation also heals any half-applied state.
+            sync_from_panel(today, token)
+
             resp = api_call(
-                "getUpdates", {"offset": str(offset + 1), "timeout": "30"}, token
+                "getUpdates", {"offset": str(offset + 1), "timeout": "25"}, token
             )
             if resp.returncode != 0:
                 time.sleep(5)
@@ -331,19 +511,36 @@ let
                 if data_field == "pill_taken":
                     message_id = cb_message.get("message_id")
                     if message_id:
-                        stamp = time.strftime("%Y-%m-%d %H:%M %Z")
+                        taken_at = stamp_now()
+                        # Record in the panel first: the capsule lights up and
+                        # the day is marked in the vdirsyncer calendar. If the
+                        # Telegram-side edit below fails, sync_from_panel heals
+                        # it on the next pass.
+                        mark_panel_taken(today, time.strftime("%H:%M"))
                         api_call(
                             "editMessageText",
                             {
                                 "chat_id": chat_id_n,
                                 "message_id": message_id,
-                                "text": "💊 Принято ✅ ({0})".format(stamp),
+                                "text": CONFIRMED_TEXT.format(taken_at),
                             },
                             token,
                         )
+                        # Remember the message so later panel-side changes can
+                        # edit it back (button restore on unmark).
+                        msg = last_message(today)
+                        if not msg:
+                            msg = {
+                                "date": today,
+                                "chat_id": chat_id_n,
+                                "message_id": message_id,
+                            }
+                        if msg.get("message_id") == message_id:
+                            msg["confirmed"] = True
+                            save_last_message(msg)
                         LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
                         with LOG_FILE.open("a") as fh:
-                            fh.write(stamp + "\n")
+                            fh.write(taken_at + "\n")
             OFFSET_FILE.write_text(str(offset))
         except Exception as exc:
             print("pill-bot: {0}".format(exc), file=sys.stderr)
