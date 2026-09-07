@@ -487,7 +487,7 @@ in
       # deployed as-is from files/kitty/.
       ".config/kitty/key.conf".text = kittyKeyConf;
       ".config/kitty/font.conf".source = "${kittyConf}/font.conf";
-      ".config/kitty/kittens".source = "${kittyConf}/kittens";
+
       ".config/kitty/kitty.conf".source = "${kittyConf}/kitty.conf";
       ".config/kitty/mouse.conf".source = "${kittyConf}/mouse.conf";
       ".config/kitty/range_select.py".source = "${kittyConf}/range_select.py";
