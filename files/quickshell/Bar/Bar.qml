@@ -663,7 +663,36 @@ Scope {
                             anchors.left: leftBarBackground.left
                             anchors.leftMargin: leftPanel.sideMargin
                             spacing: leftPanel.interWidgetSpacing
-                            ClockWidget { Layout.alignment: Qt.AlignVCenter; visible: WidgetRegistry.isVisible("clock"); screen: modelData }
+                            // Clock + pill sit close together (tight internal gap).
+                            // The pill capsule rides out/in smoothly via SlideReveal -
+                            // no reserved slot, neighbours close up. When taken,
+                            // hovering the left module row peeks it back.
+                            RowLayout {
+                                id: clockPillGroup
+                                Layout.alignment: Qt.AlignVCenter
+                                spacing: Math.max(1, Math.round(2 * leftPanel.s))
+
+                                ClockWidget {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    visible: WidgetRegistry.isVisible("clock")
+                                    screen: modelData
+                                }
+
+                                // Pill capsule rides out smoothly via SlideReveal
+                                // instead of toggling visibility.
+                                SlideReveal {
+                                    id: pillReveal
+                                    Layout.alignment: Qt.AlignVCenter
+                                    revealed: WidgetRegistry.isVisible("pill")
+                                        && (PillTracker.reminderActive
+                                            || (PillTracker.taken && pillRevealHover.hovered))
+
+                                    LocalMods.PillCapsule {
+                                        id: pillCapsule
+                                        screen: modelData
+                                    }
+                                }
+                            }
                             WsIndicator {
                                 id: wsindicator
                                 visible: WidgetRegistry.isVisible("workspaces")
@@ -715,6 +744,14 @@ Scope {
                                 capsule.triangleHighlightEnabled: true
                                 capsule.triangleHighlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(rootScope.vpnAccentColor(), 0.2), 0.3), 0.2), 0.3)
                                 capsule.triangleHighlightWidth: Math.max(2, Math.round(leftPanel.s * 3))
+                            }
+
+                            // Passive hover zone covering the left module row: with the
+                            // pill taken, hovering anywhere on the left side of the bar
+                            // peeks the pill capsule back. HoverHandler does not steal
+                            // hover from module tooltips/buttons.
+                            HoverHandler {
+                                id: pillRevealHover
                             }
                         }
                     }
@@ -975,16 +1012,6 @@ Scope {
                                 enabled: _mediaVisible && MusicManager.isCurrentMpdPlayer()
                                 iconPx: Math.round(Theme.fontSizeSmall * Theme.scale(rightPanel.screen))
                                 iconColor: Theme.textPrimary
-                            }
-                            LocalMods.PillCapsule {
-                                id: pillCapsule
-                                // Shown only once the pill reminder is active (after the 12:00
-                                // deadline, until taken); peeks back while the bar is hovered so the
-                                // taken state stays reachable.
-                                visible: WidgetRegistry.isVisible("pill")
-                                    && (PillTracker.reminderActive || (PillTracker.taken && rightPanel.panelHovering))
-                                Layout.alignment: Qt.AlignVCenter
-                                screen: modelData
                             }
                             Item {
                                 id: systemTrayWrapper
