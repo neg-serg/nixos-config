@@ -17,7 +17,6 @@ let
       pkgs.curl # HTTP(S) client for the Telegram Bot API
       pkgs.coreutils # date, seq, sleep, cat, df
       pkgs.inetutils # hostname of this machine
-      pkgs.procps # uptime -p for the human-readable uptime line
       pkgs.systemd # systemctl --failed for the failed-units check
       pkgs.zfs # zpool list for pool fill/health
     ];
@@ -42,7 +41,14 @@ let
 
       # --- header -----------------------------------------------------------
       msg="📋 Сводка: $wd, $(date '+%d.%m.%Y %H:%M %Z')"
-      msg="$msg$nl🖥 $(hostname) · аптайм: $(uptime -p)"
+        # Human uptime from /proc/uptime (portable — `uptime -p` flag support differs between procps and GNU coreutils' uptime on PATH).
+        read -r up_s _ </proc/uptime
+        up_s=$(( ''${up_s%.*} ))
+        d=$(( up_s/86400 )); h=$(( (up_s%86400)/3600 )); m=$(( (up_s%3600)/60 ))
+        if [ "$d" -gt 0 ]; then up_str="''${d}д ''${h}ч ''${m}м"
+        elif [ "$h" -gt 0 ]; then up_str="''${h}ч ''${m}м"
+        else up_str="''${m}м"; fi
+        msg="$msg$nl🖥 $(hostname) · аптайм: $up_str"
 
       # --- ZFS pools ---------------------------------------------------------
       msg="$msg$nl$nl💾 Пулы ZFS:"
