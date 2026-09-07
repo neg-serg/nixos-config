@@ -24,6 +24,10 @@ _exists sudo && {
     for c in ${sudo_list[@]}; {_exists "$c" && alias "$c=sudo $c"}
 }
 _exists journalctl && journalctl() {command journalctl "${@:--b}";}
+
+# Run any command through the local SOCKS5 proxy (nh os switch, nix flake lock,
+# git over https, curl/yt-dlp...). Thin wrapper over `proxy run <cmd...>`.
+_exists proxy && xp() { proxy run "$@"; }
 _exists mpc && {
     cdm(){
         dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"
