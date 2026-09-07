@@ -15,8 +15,21 @@ local r = ls.restore_node
 local fmt = require("luasnip.extras.fmt").fmt
 local fmta = require("luasnip.extras.fmt").fmta
 
-local calculate_comment_string = require("Comment.ft").calculate
-local utils = require "Comment.utils"
+-- Comment.nvim is lazy-loaded in this config (keys gc/gb), so it may not be
+-- present yet when this file is (lazy-)loaded. Resolve it lazily inside the
+-- helpers instead of at load time; fall back to vim.bo.commentstring.
+local comment_ready
+local function comment_api()
+  if comment_ready == nil then
+    local ok_c = pcall(require, "Comment.ft")
+    local ok_u = pcall(require, "Comment.utils")
+    comment_ready = ok_c and ok_u
+  end
+  if not comment_ready then
+    return nil, nil
+  end
+  return require("Comment.ft").calculate, require("Comment.utils")
+end
 
 --------------------------------
 --        BOX COMMENTS        --
@@ -26,12 +39,28 @@ local utils = require "Comment.utils"
 ---@param ctype integer 1 for `line`-comment and 2 for `block`-comment
 ---@return table comment_strings {begcstring, endcstring}
 local get_cstring = function(ctype)
-  -- use the `Comments.nvim` API to fetch the comment string for the region (eq. '--%s' or '--[[%s]]' for `lua`)
-  local cstring = calculate_comment_string { ctype = ctype, range = utils.get_region() } or vim.bo.commentstring
-  -- as we want only the strings themselves and not strings ready for using `format` we want to split the left and right side
-  local left, right = utils.unwrap_cstr(cstring)
-  -- create a `{left, right}` table for it
-  return { left, right }
+  -- prefer the Comment.nvim API (per-filetype, exact for the cursor region)
+  local calculate, utils = comment_api()
+  local cstring
+  if calculate and utils then
+    cstring = calculate { ctype = ctype, range = utils.get_region() } or vim.bo.commentstring
+    if cstring then
+      -- we want only the strings themselves, not ready-to-`format` pairs
+      local left, right = utils.unwrap_cstr(cstring)
+      return { left, right }
+    end
+  end
+  -- fallback: split vim.bo.commentstring on the %s placeholder (eq. "-- %s")
+  cstring = vim.bo.commentstring
+  if cstring then
+    local left, right = cstring:match("^(.-)%%s(.-)$")
+    if left then
+      return { left, right }
+    end
+    -- single token, no placeholder: line comment char repeated on both sides
+    return { cstring, "" }
+  end
+  return { "--", "" }
 end
 
 local function pick_comment_start_and_end()
@@ -119,7 +148,7 @@ local todo_snippet_nodes = function(aliases, opts)
     end),
     c(1, aliases_nodes), -- [name-of-comment]
     i(3), -- {comment-text}
-    i(2, sigmark_nodes), -- [comment-mark]
+    c(2, sigmark_nodes), -- [comment-mark]
     f(function()
       return get_cstring(opts.ctype)[2] -- get <comment-string[2]>
     end),
