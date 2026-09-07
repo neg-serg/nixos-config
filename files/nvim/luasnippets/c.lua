@@ -11,8 +11,7 @@ local extras = require "luasnip.extras"
 local rep = extras.rep
 local fmt = require("luasnip.extras.fmt").fmt
 
-return {
-  c = {
+ls.add_snippets("c", {
     s("INCLUDE", {
       d(1, function(args, snip)
         local headers_to_load_into_choice_node = {}
@@ -144,5 +143,4 @@ return {
         return args[1]
       end, 1),
     }),
-  },
-}
+})
