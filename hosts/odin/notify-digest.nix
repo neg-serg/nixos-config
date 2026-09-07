@@ -47,7 +47,7 @@ let
       # --- ZFS pools ---------------------------------------------------------
       msg="$msg$nl$nl💾 Пулы ZFS:"
       if zfs_out="$(zpool list -H -o name,size,alloc,free,cap,health 2>/dev/null)"; then
-        while IFS=$'\t' read -r pname psize palloc pfree pcap phealth; do
+        while IFS=$'\t' read -r pname psize palloc _pfree pcap phealth; do
           [ -n "$pname" ] || continue
           msg="$msg$nl  • $pname: $palloc/$psize · $pcap · $phealth"
         done <<< "$zfs_out"
