@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # proxy — запуск/остановка/обновление прокси sing-box (vless/vmess/hysteria2/hysteria/tuic/ss/trojan/anytls)
-# Usage: proxy [on|off|status|refresh|gen]
+# Usage: proxy [on|off|status|refresh|gen|run <cmd...>]
 # Credentials: from /run/secrets/proxy-fallback (SOPS-encrypted)
 # refresh validates candidates (TCP scan + e2e probe) before writing the config,
 # so dead free-pool nodes never replace a working config.
@@ -1424,6 +1424,33 @@ case "$CMD" in
     off|stop)    stop ;;
     refresh)     refresh ;;
     gen|bootstrap) bootstrap ;;
+    run|exec)
+        # Run an arbitrary command through the local SOCKS5 proxy, so callers
+        # don't have to prefix ALL_PROXY/HTTPS_PROXY themselves (nh, nix flake,
+        # git over https, curl, yt-dlp, ...). Env only touches this process tree.
+        shift
+        if [ $# -eq 0 ]; then
+            fail "nothing to run"
+            echo "Usage: $0 run <command...>" >&2
+            exit 1
+        fi
+        if ! { systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null \
+               || systemctl is-active --quiet xray.service 2>/dev/null \
+               || pgrep -f 'sing-box run -c' >/dev/null 2>&1; }; then
+            warn "no proxy detected on 127.0.0.1:10808 — run '$0 on' first"
+        fi
+        # Set both cases: git/wget/curl read lowercase, Go/Rust/nh read uppercase.
+        export ALL_PROXY="socks5h://127.0.0.1:10808"
+        export all_proxy="$ALL_PROXY"
+        export HTTPS_PROXY="$ALL_PROXY"
+        export https_proxy="$ALL_PROXY"
+        export HTTP_PROXY="$ALL_PROXY"
+        export http_proxy="$ALL_PROXY"
+        export NO_PROXY="${NO_PROXY:-127.0.0.1,localhost}"
+        export no_proxy="$NO_PROXY"
+        say "via socks5h://127.0.0.1:10808: $*"
+        exec "$@"
+        ;;
     status)
         # --- proxy state ---
         if systemctl --user is-failed --quiet sing-box-proxy.service 2>/dev/null; then
@@ -1478,5 +1505,5 @@ case "$CMD" in
             echo "Xray:      stopped"
         fi
         ;;
-    *) fail "unknown command: $CMD"; echo "Usage: $0 {on|off|status|refresh|gen}" >&2; exit 1 ;;
+    *) fail "unknown command: $CMD"; echo "Usage: $0 {on|off|status|refresh|gen|run <cmd...>}" >&2; exit 1 ;;
 esac
