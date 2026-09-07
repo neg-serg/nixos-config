@@ -122,7 +122,6 @@ lib.mkIf (builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml")) {
     description = "Send the daily 08:00 Telegram morning digest";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
       StateDirectory = "telegram-digest";

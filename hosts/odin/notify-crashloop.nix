@@ -230,7 +230,6 @@ in
       description = "Scan for crash-looping systemd services and alert on Telegram";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pkgs.python3}/bin/python3 ${crashLoopScript}";

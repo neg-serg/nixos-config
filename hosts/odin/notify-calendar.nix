@@ -180,7 +180,6 @@ in
           description = "Send today's khal calendar events to Telegram in the morning";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
-          wantedBy = [ "multi-user.target" ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = "${lib.getExe script}";
