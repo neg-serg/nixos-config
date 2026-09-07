@@ -86,13 +86,12 @@ in
         # Chrome 114+ semantics: 0 = disallowed for force-installed extensions
         # (default), 1 = allowed everywhere, 2 = disallowed everywhere.
         "DeveloperToolsAvailability" = 1; # Allowed everywhere (incl. force-installed extensions)
-        # Force-install SurfingKeys/Tampermonkey/GhostText: Vivaldi downloads and
+        # Force-install SurfingKeys/Tampermonkey: Vivaldi downloads and
         # self-heals them on every startup (root fix for recurring
         # "extensions disappeared" — no profile file injection).
         "ExtensionInstallForcelist" = [
           "gfbliohnnapiefjpjlpjnehglfpaknnc;https://clients2.google.com/service/update2/crx" # SurfingKeys (vim-like keybindings)
           "dhdgffkkebhmkfjojejmpbldmpobfkfo;https://clients2.google.com/service/update2/crx" # Tampermonkey (userscript manager)
-          "godiecgffnchndlihlpaajjcplehddca;https://clients2.google.com/service/update2/crx" # GhostText (edit textareas in real Neovim)
           "mnjggcdmjocbbbhaepdhchncahnbgone;https://clients2.google.com/service/update2/crx" # SponsorBlock (skip YouTube sponsors/intros)
           "hlepfoohegkhhmjieoechaddaejaokhf;https://clients2.google.com/service/update2/crx" # Refined GitHub (streamline GitHub UI)
           "gebbhagfogifgggkldgodflihgfeippi;https://clients2.google.com/service/update2/crx" # Return YouTube Dislike
@@ -138,7 +137,6 @@ in
         ExtensionInstallForcelist = [
           "gfbliohnnapiefjpjlpjnehglfpaknnc;https://clients2.google.com/service/update2/crx" # SurfingKeys (vim-like keybindings)
           "dhdgffkkebhmkfjojejmpbldmpobfkfo;https://clients2.google.com/service/update2/crx" # Tampermonkey (userscript manager)
-          "godiecgffnchndlihlpaajjcplehddca;https://clients2.google.com/service/update2/crx" # GhostText (edit textareas in real Neovim)
           "mnjggcdmjocbbbhaepdhchncahnbgone;https://clients2.google.com/service/update2/crx" # SponsorBlock (skip YouTube sponsors/intros)
           "hlepfoohegkhhmjieoechaddaejaokhf;https://clients2.google.com/service/update2/crx" # Refined GitHub (streamline GitHub UI)
           "gebbhagfogifgggkldgodflihgfeippi;https://clients2.google.com/service/update2/crx" # Return YouTube Dislike
