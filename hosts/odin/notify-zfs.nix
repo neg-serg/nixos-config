@@ -249,7 +249,6 @@ in
     description = "Watch ZFS pool health and scrub completions, alert to Telegram";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${pkgs.python3}/bin/python3 ${watchScript}";
