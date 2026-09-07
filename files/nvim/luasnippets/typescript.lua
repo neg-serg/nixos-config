@@ -185,30 +185,3 @@ it('{test_case}', {async}() => {{
   ),
 })
 
----#Vue
-ls.add_snippets("vue", {
-  s(
-    "defineComponent",
-    fmt(
-      [[
-defineComponent({{
-	name: '{name}',
-	{props}
-	setup({props_arg}{ctx}) {{
-		{body}
-	}}
-}})
-    ]],
-      {
-        name = f(function(args, parent)
-          local env = parent.snippet.env
-          return env.TM_FILENAME:match "^(.+)%..+$"
-        end, {}),
-        props = c(1, { sn(nil, { t { "props: {", "" }, i(1), t { "", "}," } }), t "" }),
-        props_arg = c(2, { t "props", t "" }),
-        ctx = c(3, { t ", ctx", t "" }),
-        body = i(0),
-      }
-    )
-  ),
-})
