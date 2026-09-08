@@ -58,6 +58,25 @@ let
       fi
       restore_ai
       trap - EXIT
+
+      # `dsh plugin add` also reconciles every bundle-declaring dependency
+      # into dsh.profile.bundles, which re-adds @linxin666/dsh-ssh as a
+      # standalone bundle. dsh-market.nix mounts ssh via the dsh-web-ui-all
+      # bundle patch, so the standalone row duplicates the `ssh` loader
+      # entry and dsh fails to boot. Strip it before the restart; the
+      # workspace dependency stays.
+      python3 - "$PROFILE_DIR/package.json" <<'PY'
+    import json, sys
+    p = sys.argv[1]
+    with open(p) as f:
+        pkg = json.load(f)
+    bundles = pkg.get("dsh", {}).get("profile", {}).get("bundles")
+    if bundles and "@linxin666/dsh-ssh" in bundles:
+        bundles.remove("@linxin666/dsh-ssh")
+        with open(p, "w") as f:
+            json.dump(pkg, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+    PY
     fi
 
     if [ "$changed" = 1 ]; then
