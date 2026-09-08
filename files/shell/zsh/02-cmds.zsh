@@ -28,6 +28,7 @@ _exists journalctl && journalctl() {command journalctl "${@:--b}";}
 # Run any command through the local SOCKS5 proxy (nh os switch, nix flake lock,
 # git over https, curl/yt-dlp...). Thin wrapper over `proxy run <cmd...>`.
 _exists proxy && xp() { proxy run "$@"; }
+_exists proxy && nxp() { xp nix "$@"; } # nix через прокси: nxp flake update / nxp flake lock --update-input <name>
 _exists mpc && {
     cdm(){
         dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"
