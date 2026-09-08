@@ -133,6 +133,7 @@
       "hid-sony" # Sony PS3 pads (Sixaxis/DS3) + PS Move
       "hidp" # Bluetooth classic HID profile (BT mice/keyboards/gamepads)
       "uhid" # Userspace HID — HID over GATT via bluez (modern BT gamepads)
+      "uvcvideo" # USB webcams (UVC) — module pre-loaded before lockKernelModules; media core is modular so this cannot be built-in
     ];
     # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
     # Plain list (no mkForce): lets the mt7927 module append its out-of-tree
