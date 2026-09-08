@@ -545,6 +545,28 @@ let
             f.write(new)
     PY
 
+            # `dsh plugin add` reconciles every dependency that declares
+            # dsh.bundle into dsh.profile.bundles. @linxin666/dsh-ssh is a
+            # dependency only so pnpm keeps the workspace link (see above) —
+            # mounting it standalone duplicates the `ssh` loader entry the
+            # dsh-web-ui-all bundle patch already inserts, and dsh fails to
+            # boot with "duplicate loader entry id: ssh" (observed after the
+            # first dsh-archify `plugin add`, 2026-09-08). Strip the bundle
+            # row after any plugin-add run; the dependency stays.
+            python3 - "$PROFILE_DIR/package.json" <<'PY'
+    import json, sys
+    p = sys.argv[1]
+    with open(p) as f:
+        pkg = json.load(f)
+    bundles = pkg.get("dsh", {}).get("profile", {}).get("bundles")
+    if bundles and "@linxin666/dsh-ssh" in bundles:
+        bundles.remove("@linxin666/dsh-ssh")
+        with open(p, "w") as f:
+            json.dump(pkg, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        print("dsh-market: stripped standalone @linxin666/dsh-ssh from profile bundles")
+    PY
+
             # LAN phone pairing (dsh-remote-web-ui): dsh itself stays bound to
             # loopback; a narrow LAN socket (systemd-socket-proxyd, see dsh.nix)
             # forwards 192.168.2.87:3080 → 127.0.0.1:3080 so a phone on the
