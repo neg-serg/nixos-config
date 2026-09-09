@@ -133,6 +133,7 @@ hl.config({
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
     shadow = { enabled = false, range = 10, render_power = 2, color = shadow_color }, -- disabled for now (values kept for later tuning)
     blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy },
+    motion_blur = { enabled = true, samples = 24 }, -- жирный motion blur
     dim_special = false,
   },
   input = {
@@ -443,10 +444,10 @@ hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, floa
 hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, tag = "utility" })
 
 -- Scratchpad rules: float + size + no dim (monitor-relative expressions)
-hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7 - 8 8", no_dim = true })
+hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
 hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
 hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
-hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6 - 8 8", no_dim = true })
+hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
 hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
