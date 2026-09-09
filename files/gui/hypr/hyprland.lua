@@ -131,7 +131,7 @@ hl.config({
   decoration = {
     rounding = rounding, rounding_power = rounding_power,
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
-    shadow = { enabled = true, range = 10, render_power = 2, color = shadow_color },
+    shadow = { enabled = false, range = 10, render_power = 2, color = shadow_color }, -- disabled for now (values kept for later tuning)
     blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy },
     dim_special = false,
   },
