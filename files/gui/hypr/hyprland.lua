@@ -150,7 +150,7 @@ hl.config({
     vrr = 2, disable_autoreload = 1,
   },
   cursor = {
-    sync_gsettings_theme = true, min_refresh_rate = 240, inactive_timeout = 0,
+    sync_gsettings_theme = true, min_refresh_rate = 175, inactive_timeout = 0,
     hide_on_key_press = true, warp_on_change_workspace = false,
   },
   render = { direct_scanout = 2 },
