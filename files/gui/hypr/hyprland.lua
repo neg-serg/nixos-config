@@ -133,7 +133,7 @@ hl.config({
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
     shadow = { enabled = false, range = 10, render_power = 2, color = shadow_color }, -- disabled for now (values kept for later tuning)
     blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy },
-    motion_blur = { enabled = true, samples = 24 }, -- жирный motion blur
+    motion_blur = { enabled = false, samples = 24 }, -- disabled for now
     dim_special = false,
   },
   input = {
