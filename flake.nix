@@ -141,6 +141,13 @@
       url = "github:Kyure-A/agent-skills-nix/1594ba479be81a7cb6dd19faabefcb1ed5b3f964";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Waylandar — standalone Wayland calendar widget + dashboard (Quickshell + Python).
+    # Local clone ~/src/waylandar is at the same rev; nixpkgs follows the top-level
+    # pin so the build reuses the cached quickshell/python closure.
+    waylandar = {
+      url = "github:samjoshuadud/waylandar/b46d5c348f846ca489071f2d271312ea35c019b4";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
