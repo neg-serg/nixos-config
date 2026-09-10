@@ -34,6 +34,11 @@ let
       "E501"
       "W503"
     ];
+    # hyprctl (from pkgs.hyprland) must be on PATH: systemd user services
+    # run with a minimal PATH, so the daemon could never call hyprctl.
+    makeWrapperArgs = [
+      "--prefix" "PATH" ":" (pkgs.lib.makeBinPath [ pkgs.hyprland ])
+    ];
   } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
 in
 {
