@@ -22,8 +22,8 @@ keyboard, like a terminal.
   reversible and does not break React.
 - **If there is no command, add one**, then hide the button.
 - Where the edits live: the personal **dsh-terminal-ui** skin (a fork of `dsh-web-ui`,
-  `packages/dsh-terminal-ui/lib/client.js`), which already owns the look of the composer and
-  injects a single `<style>` for the lifetime of the page.
+  `packages/dsh-terminal-ui/lib/client.js`), which already owns the look of the composer and injects
+  a single `<style>` for the lifetime of the page.
 
 ## Mechanics (how to make changes)
 
@@ -38,8 +38,8 @@ keyboard, like a terminal.
    - **host** (`lib/index.js`: commands, routes, service injections) is loaded once at dsh startup —
      after edits you need `systemctl --user restart dsh`.
 1. Client check:
-   `curl -s http://127.0.0.1:3080/plugins/dsh-terminal-ui/client.js | grep <new selector>`.
-   Host check: `node --check lib/index.js` + restart + check in the `/` palette.
+   `curl -s http://127.0.0.1:3080/plugins/dsh-terminal-ui/client.js | grep <new selector>`. Host
+   check: `node --check lib/index.js` + restart + check in the `/` palette.
 1. Commit to the fork: `theme(terminal-ui): …` (as in the history).
 
 ### Auto page reload on edits
@@ -53,8 +53,8 @@ palette, e.g. `/export-md`). Boot parsing: a regex over `window.__DSH_BOOT__ = {
 ### Generated configs (rule)
 
 `~/.dsh/profiles/web/cordis.patch.yml` is **generated** from
-`modules/user/nix-maid/apps/dsh-market.nix` (activated at rebuild/login; the file carries a
-"Managed by NixOS — do not edit" header). Any profile disabling/edits must be made **in the module**,
+`modules/user/nix-maid/apps/dsh-market.nix` (activated at rebuild/login; the file carries a "Managed
+by NixOS — do not edit" header). Any profile disabling/edits must be made **in the module**,
 otherwise `nh os switch` will overwrite them. The same goes for disabling plugins:
 `- id: <plugin> / disabled: true` in the module — and a dsh restart.
 
@@ -103,9 +103,8 @@ separate button for an interruptible subagent run).
 - **Send** is already duplicated by **Enter** in the input field (Shift+Enter — a new line,
   Ctrl+Enter — fast send / «insert into the queue»).
 - **Stop** had no hotkey; **Esc** was added (a JS feature in `dsh-terminal-ui`): if a run is in
-  progress (the «Stop» button is in the DOM) and no popups/modals are open, click it. Open menus
-  are closed by Esc as before (the React handler fires first, our listener runs in the bubbling
-  phase).
+  progress (the «Stop» button is in the DOM) and no popups/modals are open, click it. Open menus are
+  closed by Esc as before (the React handler fires first, our listener runs in the bubbling phase).
 
 CSS:
 
@@ -115,6 +114,7 @@ CSS:
   display: none;
 }
 ```
+
 ## Step 3 (done): model selection
 
 **What it is.** The model/effort selector on the right in the input field — a popup menu
@@ -140,12 +140,12 @@ tracking.
 
 **Replacement** (modifier combos; plain letters remain for typing):
 
-| Hotkey | Action |
-| --- | --- |
-| `Ctrl+Alt+C` | copy the text of the last message (user or assistant) |
-| `Ctrl+Alt+B` | branch the last message (assistant only, when available) |
-| `Ctrl+Alt+E` | edit the last queued message (Enter — save, Esc — cancel) |
-| `Ctrl+Alt+Backspace` | delete the last queued message |
+| Hotkey               | Action                                                    |
+| -------------------- | --------------------------------------------------------- |
+| `Ctrl+Alt+C`         | copy the text of the last message (user or assistant)     |
+| `Ctrl+Alt+B`         | branch the last message (assistant only, when available)  |
+| `Ctrl+Alt+E`         | edit the last queued message (Enter — save, Esc — cancel) |
+| `Ctrl+Alt+Backspace` | delete the last queued message                            |
 
 Hidden with CSS (copy/branch only inside `[data-time-hover-root] [class$="_actions"]`, so the copy
 buttons in code blocks are not affected):
@@ -173,23 +173,22 @@ sessions). There were no hotkeys.
 
 **Replacement.**
 
-| Hotkey | Action |
-| --- | --- |
-| `/new` (command in the input field) | new chat |
-| `Ctrl+Alt+N` | new chat (quick hotkey) |
-| `Ctrl+Alt+J` | next session in the sidebar list |
-| `Ctrl+Alt+K` | previous session |
-| `Ctrl+Alt+W` | pick a workspace (when the input field is the «Choose workspace» trigger; Enter while it is focused also works out of the box) |
+| Hotkey                              | Action                                                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `/new` (command in the input field) | new chat                                                                                                                       |
+| `Ctrl+Alt+N`                        | new chat (quick hotkey)                                                                                                        |
+| `Ctrl+Alt+J`                        | next session in the sidebar list                                                                                               |
+| `Ctrl+Alt+K`                        | previous session                                                                                                               |
+| `Ctrl+Alt+W`                        | pick a workspace (when the input field is the «Choose workspace» trigger; Enter while it is focused also works out of the box) |
 
-**The `/new` command — how it works.** dsh slash commands run on the host
-(`ctx.commands.register`), while «new chat» is a client-side action, so a host command alone is not
-enough. Instead, the skin registers a **client command source** (the `inputTriggers` service, the
-same pipeline as `/`): the `new` candidate appears in the menu when `/` is typed, `matchEnter`
-handles a bare `/new` + Enter, and `onPick`/`matchEnter` call `ctx.workspaces.startSession()` (the
-same thing the button does) and strip the `/new` token from the field via the
-`slash/input-consume-token` event (as stock ui-commands does). The heading of the separate menu
-group is hidden with CSS (`[data-source="local"]`), so that `/new` reads as part of the command
-group.
+**The `/new` command — how it works.** dsh slash commands run on the host (`ctx.commands.register`),
+while «new chat» is a client-side action, so a host command alone is not enough. Instead, the skin
+registers a **client command source** (the `inputTriggers` service, the same pipeline as `/`): the
+`new` candidate appears in the menu when `/` is typed, `matchEnter` handles a bare `/new` + Enter,
+and `onPick`/`matchEnter` call `ctx.workspaces.startSession()` (the same thing the button does) and
+strip the `/new` token from the field via the `slash/input-consume-token` event (as stock
+ui-commands does). The heading of the separate menu group is hidden with CSS
+(`[data-source="local"]`), so that `/new` reads as part of the command group.
 
 CSS:
 
@@ -206,12 +205,12 @@ button[aria-label="New session"] {
 
 **Switch commands** (in the same client source as `/new`):
 
-| Command | Action |
-| --- | --- |
+| Command           | Action                                                                                                      |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
 | `/session <name>` | jump to a session: exact title match → prefix → substring → fallback by message content (`sessions.search`) |
-| `/next` | next session in the sidebar list |
-| `/prev` | previous session |
-| `/new` | new chat (as before) |
+| `/next`           | next session in the sidebar list                                                                            |
+| `/prev`           | previous session                                                                                            |
+| `/new`            | new chat (as before)                                                                                        |
 
 Mechanics: the `onPick`/`matchEnter` of the source call `ctx.sessions.open(id)` / a click on the
 list row; the token is stripped via `slash/input-consume-token`. Picking `/session` in the menu
@@ -223,6 +222,7 @@ opened (you landed in the middle). Now the skin is subscribed to `ctx.sessions.l
 `Ctrl+Alt+J/K`, `/session`, `/next`, `/prev`, `/new` — the `[data-conversation-scroll]` scrollport
 jumps to the end (a double rAF plus a retry after 700 ms to catch lazy-loaded content). The stock
 handler then sees that we are at the bottom and keeps following the stream.
+
 ## Step 7 (done): code/file edits auto-expand
 
 Tool-call cards are mounted collapsed (the body is **not** in the DOM until opened — CSS cannot
@@ -233,13 +233,13 @@ the column. A row collapsed manually is no longer auto-expanded (only new rows f
 
 ## Step 8 (done): header and sidebar → commands
 
-| Button | Where | Replacement command | How it is hidden |
-| --- | --- | --- | --- |
-| Session log | header (`.nL4_yW_sessionLogButton`) | `/export` — the stock `dsh-session-log-export` command (the same ZIP) | CSS |
-| `⬇ md` (export to Markdown) | header (`.tui-export-btn`, a skin feature) | `/export-md` (added, see below) | CSS |
-| SSH | sidebar (`.mL8Uca_entry`) | `ssh`/`ssh-hosts`/`ssh-cluster`/`ssh-tunnel` | plugin enabled (dsh-ssh), the sidebar entry is visible |
-| Collapse/expand sidebar | sidebar (`.hHd-Xa_toggle`) | — (the panel is fixed) | CSS |
-| DeepSeek logo | sidebar (`.hHd-Xa_brand`) | — (new session — `/new`, `Ctrl+Alt+N`) | CSS |
+| Button                      | Where                                      | Replacement command                                                   | How it is hidden                                       |
+| --------------------------- | ------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------ |
+| Session log                 | header (`.nL4_yW_sessionLogButton`)        | `/export` — the stock `dsh-session-log-export` command (the same ZIP) | CSS                                                    |
+| `⬇ md` (export to Markdown) | header (`.tui-export-btn`, a skin feature) | `/export-md` (added, see below)                                       | CSS                                                    |
+| SSH                         | sidebar (`.mL8Uca_entry`)                  | `ssh`/`ssh-hosts`/`ssh-cluster`/`ssh-tunnel`                          | plugin enabled (dsh-ssh), the sidebar entry is visible |
+| Collapse/expand sidebar     | sidebar (`.hHd-Xa_toggle`)                 | — (the panel is fixed)                                                | CSS                                                    |
+| DeepSeek logo               | sidebar (`.hHd-Xa_brand`)                  | — (new session — `/new`, `Ctrl+Alt+N`)                                | CSS                                                    |
 
 The shared CSS block (in the skin):
 
@@ -252,8 +252,8 @@ The shared CSS block (in the skin):
 }
 ```
 
-The class hashes come from the pinned dsh release plus the fork build; after an upgrade, verify
-them against the served bundles.
+The class hashes come from the pinned dsh release plus the fork build; after an upgrade, verify them
+against the served bundles.
 
 ### The `/export-md` command
 
@@ -262,8 +262,8 @@ them against the served bundles.
 - **Client** (`lib/client.js`): the export logic was moved out of the feat-9 feature into a shared
   `exportMarkdown()` function at the `apply()` level; a `ctx.on("command/executed", …)` listener
   calls it on a successful `/export-md`. The function collects messages from the DOM
-  (`.Md3f7G_flowItem`: user/assistant roots + tool rows `.Md3f7G_callRow`) and downloads a `.md`
-  via a Blob.
+  (`.Md3f7G_flowItem`: user/assistant roots + tool rows `.Md3f7G_callRow`) and downloads a `.md` via
+  a Blob.
 - The `⬇ md` button stays in the code (hidden with CSS) — once the command is settled, the button
   code in feat-9 can be removed.
 
@@ -280,9 +280,9 @@ Graph + `/git/*` host routes. Disabled in `dsh-market.nix`:
 ```
 
 Gotcha: the chip does NOT disappear by itself — a dsh restart is required, and the edit must be in
-the module (not in `cordis.patch.yml`), otherwise the chip returns after a rebuild. (That is
-exactly what happened: the first attempt seemed to work, but there was no trace in the configs —
-the chip stayed.)
+the module (not in `cordis.patch.yml`), otherwise the chip returns after a rebuild. (That is exactly
+what happened: the first attempt seemed to work, but there was no trace in the configs — the chip
+stayed.)
 
 ## Step 9 (done): session-name autocomplete
 
@@ -293,17 +293,17 @@ a custom popup above the composer with matching session titles (from `sessions.l
 
 - `↓`/`↑` — select; `Enter`/`Tab` — open the session (the token is stripped via
   `slash/input-consume-token`, like a bare `/session`); `Esc` — close; click — open.
-- The keys are intercepted in the capture phase, so the React Enter handler does not send
-  «/session …» as a message.
+- The keys are intercepted in the capture phase, so the React Enter handler does not send «/session
+  …» as a message.
 - `/session ` without an argument shows the first 8 sessions.
 
 ## Step 9b (done): trajectory, settings, panels
 
-| Button | Where | Replacement command |
-| --- | --- | --- |
+| Button               | Where                   | Replacement command                                           |
+| -------------------- | ----------------------- | ------------------------------------------------------------- |
 | Chat/Trajectory tabs | dock above the composer | `/trajectory` (clicks the matching tab; again — back to Chat) |
-| Settings | sidebar | `/settings` (clicks the hidden trigger) |
-| Panels | — | `/sidebar` / `/details` / `/panels` (the layout service) |
+| Settings             | sidebar                 | `/settings` (clicks the hidden trigger)                       |
+| Panels               | —                       | `/sidebar` / `/details` / `/panels` (the layout service)      |
 
 Hidden with CSS: `.wSkVaW_tabs`, `button[aria-label="Settings"]`, `.VOzbGW_trigger`. A collapsed
 sidebar leaves a 56 px icon rail — the rail is removed by a JS watcher (the right-panel track width
@@ -313,12 +313,12 @@ is dynamic; pure CSS does not suffice).
 
 **Workspace buttons in the sidebar** (rows of the Workspaces section):
 
-| Button | Replacement command |
-| --- | --- |
-| Workspace row (expand/select) | `/workspace <name>` — switch: exact name → path → prefix → substring; opens the last real session of the workspace, an empty one gets a fresh session (`startSession`) |
-| Ellipsis menu (Rename / Delete) | `/workspace rename <name> <new>` · `/workspace delete <name>` |
-| «+» (New session in …) | `/workspace <name>` + `/new` |
-| «Add workspace» in the section header | `/workspace add <path>` (absolute path; `create` directly, like the menu) |
+| Button                                | Replacement command                                                                                                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace row (expand/select)         | `/workspace <name>` — switch: exact name → path → prefix → substring; opens the last real session of the workspace, an empty one gets a fresh session (`startSession`) |
+| Ellipsis menu (Rename / Delete)       | `/workspace rename <name> <new>` · `/workspace delete <name>`                                                                                                          |
+| «+» (New session in …)                | `/workspace <name>` + `/new`                                                                                                                                           |
+| «Add workspace» in the section header | `/workspace add <path>` (absolute path; `create` directly, like the menu)                                                                                              |
 
 In `/workspace rename` the old name is matched as the longest prefix of the rest of the line — names
 with spaces work. Deletion happens without a confirmation dialog (a typed command is a deliberate
@@ -331,10 +331,14 @@ are shown in a short status line above the composer (`.tui-ws-status`), like `/e
 
 **Sidebar footer buttons** (the `@linxin666/dsh-remote-web-ui` plugin):
 
-| Button | Replacement command |
-| --- | --- |
-| Phone («Mobile remote control», QR panel) | `/phone` |
-| Update («Check for updates», self-update panel) | `/update` |
+> Temporarily unavailable: the plugin is disabled while it is ported off the contracts dsh
+> 0.1.5-rc.1 removed (see "dsh 0.1.5-rc.1: SDK breaks" in `dsh-web-forks.md`), so the buttons are
+> absent and `/phone` / `/update` have nothing to click until then.
+
+| Button                                          | Replacement command |
+| ----------------------------------------------- | ------------------- |
+| Phone («Mobile remote control», QR panel)       | `/phone`            |
+| Update («Check for updates», self-update panel) | `/update`           |
 
 Both open their panels by clicking a hidden button (`clickByLabel`, like `/settings`); closing uses
 the stock panel buttons (the ✕, a click on the mask).
@@ -360,6 +364,7 @@ button[aria-label="Check for updates"] {
 ```
 
 All of this is the client side of the skin — no dsh restart is needed.
+
 ## Step 11 (done): JSON highlighting in tool call output
 
 Tool-call cards render the input/output (IN/OUT) as a single text node (`.o3BgMG_ioText` inside
@@ -374,8 +379,8 @@ Tool-call cards render the input/output (IN/OUT) as a single text node (`.o3BgMG
   expands it (the state is remembered per node).
 
 Limits: non-JSON text is not touched; output > 200 KB is skipped (parsing on every re-render would
-jank the UI). React rewrites the text node on re-renders, so the feature re-applies itself through
-a MutationObserver (the same pattern as `tui-no-tps`).
+jank the UI). React rewrites the text node on re-renders, so the feature re-applies itself through a
+MutationObserver (the same pattern as `tui-no-tps`).
 
 Classes: `.tui-json`, `.tui-json-{punct,key,str,num,bool,null}`, `.tui-json-collapsed` (CSS in the
 skin). This is a purely client-side feature (`client.js`) — no dsh restart is needed.
@@ -397,9 +402,9 @@ the stock ✕ and Refresh work.
 registered in the `@deepseek-ai/dsh-web-app` bundle, which loads before the skin, so typing
 `/memory` shows a host candidate in the `/` menu, and Enter on a bare `/memory` goes into the host
 claim (it waits for an argument) instead of opening the panel. To avoid duplicating a menu entry and
-breaking memory management, the panel command is called `/mem` — short and terminal, like the
-skin's other commands. `/memory` remains the host command (the full management set), as visible in
-the menu.
+breaking memory management, the panel command is called `/mem` — short and terminal, like the skin's
+other commands. `/memory` remains the host command (the full management set), as visible in the
+menu.
 
 CSS:
 
@@ -421,39 +426,39 @@ also applies to steps 3–4 (fixed in the same edit).
 
 ## Hotkey and command summary
 
-| Action | Command |
-| --- | --- |
-| Command menu | `/` in the input field |
-| Send | `Enter` (Shift+Enter — a new line; Ctrl+Enter — insert into the queue) |
-| Stop | `Esc` (only while running, with no menus open) |
-| Model selection | `Ctrl+M` (arrows + Enter inside) |
-| Copy the last message | `Ctrl+Alt+C` |
-| Branch the last message | `Ctrl+Alt+B` |
-| Edit the last queued message | `Ctrl+Alt+E` |
-| Delete the last queued message | `Ctrl+Alt+Backspace` |
-| New chat | `/new` in the input field **or** `Ctrl+Alt+N` |
-| Go to a session | `/session <name>` |
-| Session autocomplete | `/session <part>` + `↓`/`↑`, `Enter`/`Tab`, `Esc` |
-| Next / previous session | `/next` / `/prev` **or** `Ctrl+Alt+J` / `Ctrl+Alt+K` |
-| Pick a workspace | `Ctrl+Alt+W` (or Enter in the trigger) |
-| Session log (ZIP) | `/export` |
-| Export the conversation to Markdown | `/export-md` |
-| Switch workspace | `/workspace <name>` (or `/workspace <part>` + `Enter`/`Tab` on the popup) |
-| Add workspace | `/workspace add <path>` |
-| Rename workspace | `/workspace rename <name> <new>` |
-| Delete workspace | `/workspace delete <name>` |
-| Mobile control (QR) | `/phone` |
-| Check for updates | `/update` |
-| Memory panel (dsh-memento) | `/mem` (again — close); `/memory` — the host management command |
-| Hotkey help | `?` as the first character of the input line (typed, not pasted; again — hide, Esc — close) |
+| Action                              | Command                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| Command menu                        | `/` in the input field                                                                      |
+| Send                                | `Enter` (Shift+Enter — a new line; Ctrl+Enter — insert into the queue)                      |
+| Stop                                | `Esc` (only while running, with no menus open)                                              |
+| Model selection                     | `Ctrl+M` (arrows + Enter inside)                                                            |
+| Copy the last message               | `Ctrl+Alt+C`                                                                                |
+| Branch the last message             | `Ctrl+Alt+B`                                                                                |
+| Edit the last queued message        | `Ctrl+Alt+E`                                                                                |
+| Delete the last queued message      | `Ctrl+Alt+Backspace`                                                                        |
+| New chat                            | `/new` in the input field **or** `Ctrl+Alt+N`                                               |
+| Go to a session                     | `/session <name>`                                                                           |
+| Session autocomplete                | `/session <part>` + `↓`/`↑`, `Enter`/`Tab`, `Esc`                                           |
+| Next / previous session             | `/next` / `/prev` **or** `Ctrl+Alt+J` / `Ctrl+Alt+K`                                        |
+| Pick a workspace                    | `Ctrl+Alt+W` (or Enter in the trigger)                                                      |
+| Session log (ZIP)                   | `/export`                                                                                   |
+| Export the conversation to Markdown | `/export-md`                                                                                |
+| Switch workspace                    | `/workspace <name>` (or `/workspace <part>` + `Enter`/`Tab` on the popup)                   |
+| Add workspace                       | `/workspace add <path>`                                                                     |
+| Rename workspace                    | `/workspace rename <name> <new>`                                                            |
+| Delete workspace                    | `/workspace delete <name>`                                                                  |
+| Mobile control (QR)                 | `/phone`                                                                                    |
+| Check for updates                   | `/update`                                                                                   |
+| Memory panel (dsh-memento)          | `/mem` (again — close); `/memory` — the host management command                             |
+| Hotkey help                         | `?` as the first character of the input line (typed, not pasted; again — hide, Esc — close) |
 
 ## Step 14 (done): hotkey help via «?»
 
-Typing a question mark as the **first character** of an input line (typing specifically — `inputType`
-`insertText`; pasting does not trigger it) opens a popup above the composer with all GUI hotkeys and
-commands. Pressing «?» again (or `Esc`) closes the popup and removes the «?» itself; if you type
-text after «?» (e.g. «?sessions»), the popup closes while the text stays — «?» behaves like an
-ordinary question mark.
+Typing a question mark as the **first character** of an input line (typing specifically —
+`inputType` `insertText`; pasting does not trigger it) opens a popup above the composer with all GUI
+hotkeys and commands. Pressing «?» again (or `Esc`) closes the popup and removes the «?» itself; if
+you type text after «?» (e.g. «?sessions»), the popup closes while the text stays — «?» behaves like
+an ordinary question mark.
 
 Hotkeys are **collected into one registry**, `window.__DSH_HOTKEYS__` (a lazy global: whoever loads
 first creates it; plugin order does not matter). Each fork plugin registers its bindings via
@@ -466,9 +471,9 @@ first creates it; plugin order does not matter). Each fork plugin registers its 
   `CapsLock+W (C-w)`, `M-f/M-b`, `C-y`, `C-t`, `C-_/C-/`, …).
 
 The popup re-reads the registry on every open, so new registrations (including from plugins loaded
-later) appear without edits. The code lives in `dsh-terminal-ui/lib/client.js` (the «? composer
-help popup» feature + the registry factory at the top of the file); the gui-tweaks registration is
-in `dsh-gui-tweaks/lib/client.js` (the beginning of `apply`).
+later) appear without edits. The code lives in `dsh-terminal-ui/lib/client.js` (the «? composer help
+popup» feature + the registry factory at the top of the file); the gui-tweaks registration is in
+`dsh-gui-tweaks/lib/client.js` (the beginning of `apply`).
 
 ## Locale: selectors by `aria-label`
 
@@ -486,29 +491,29 @@ dead weight).
 
 ## Candidates for the next steps (for approval)
 
-| Button | Where | Replacement command | Status |
-| --- | --- | --- | --- |
-| «+» (command menu) | input field, left | `/` | ✅ implemented |
-| Send / Stop | input field, right | Enter / Esc | ✅ implemented |
-| Model selection | input field, right | Ctrl+M | ✅ implemented |
-| Copy / Branch / Edit / Delete | on messages and in the queue | Ctrl+Alt+C/B/E/Backspace | ✅ implemented |
-| New chat / session list | sidebar | `/new`, Ctrl+Alt+N / Ctrl+Alt+J,K | ✅ implemented |
-| Workspace picker | input field | Ctrl+Alt+W | ✅ implemented |
-| Session log | header | `/export` | ✅ implemented |
-| `⬇ md` | header | `/export-md` | ✅ implemented |
-| SSH | sidebar | `ssh`/`ssh-hosts`/`ssh-cluster`/`ssh-tunnel` | ✅ plugin disabled |
-| Collapse/expand sidebar | sidebar | — (the panel is fixed) | ✅ hidden |
-| DeepSeek logo | sidebar | — (new session — `/new`) | ✅ hidden |
-| git-graph branch chip | dock above the composer | — (git — in the terminal) | ✅ plugin `ui-git-graph` disabled |
-| Workspace buttons (rows, rename/delete, «+», Add workspace) | sidebar | `/workspace` / `/workspace rename` / `/workspace delete` / `/workspace add` | ✅ implemented (step 10) |
-| Phone («Mobile remote control») | sidebar footer | `/phone` | ✅ implemented (step 10) |
-| Update («Check for updates») | sidebar footer | `/update` | ✅ implemented (step 10) |
-| Memory button (`#mem-open`, dsh-memento) | floating, bottom-right | `/mem` | ✅ implemented (step 12) |
-| Session search («Search sessions») | sidebar | `Ctrl+Alt+F` | ✅ implemented (step 13) |
-| Session list options («View options») | sidebar | `Ctrl+Alt+O` | ✅ implemented (step 13) |
-| Like/dislike a response («Good/Bad response») | on messages | `Ctrl+Alt+G/D`, `/like`, `/dislike` | ✅ implemented (step 13) |
-| Scroll to bottom («Back to bottom») | chat | `Ctrl+Alt+End`, `/bottom` | ✅ implemented (step 13) |
-| File upload («Upload file», dsh-file-upload) | composer | `Ctrl+Alt+U`, `/upload` | ✅ implemented (step 13) |
+| Button                                                      | Where                        | Replacement command                                                         | Status                            |
+| ----------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------- | --------------------------------- |
+| «+» (command menu)                                          | input field, left            | `/`                                                                         | ✅ implemented                    |
+| Send / Stop                                                 | input field, right           | Enter / Esc                                                                 | ✅ implemented                    |
+| Model selection                                             | input field, right           | Ctrl+M                                                                      | ✅ implemented                    |
+| Copy / Branch / Edit / Delete                               | on messages and in the queue | Ctrl+Alt+C/B/E/Backspace                                                    | ✅ implemented                    |
+| New chat / session list                                     | sidebar                      | `/new`, Ctrl+Alt+N / Ctrl+Alt+J,K                                           | ✅ implemented                    |
+| Workspace picker                                            | input field                  | Ctrl+Alt+W                                                                  | ✅ implemented                    |
+| Session log                                                 | header                       | `/export`                                                                   | ✅ implemented                    |
+| `⬇ md`                                                      | header                       | `/export-md`                                                                | ✅ implemented                    |
+| SSH                                                         | sidebar                      | `ssh`/`ssh-hosts`/`ssh-cluster`/`ssh-tunnel`                                | ✅ plugin disabled                |
+| Collapse/expand sidebar                                     | sidebar                      | — (the panel is fixed)                                                      | ✅ hidden                         |
+| DeepSeek logo                                               | sidebar                      | — (new session — `/new`)                                                    | ✅ hidden                         |
+| git-graph branch chip                                       | dock above the composer      | — (git — in the terminal)                                                   | ✅ plugin `ui-git-graph` disabled |
+| Workspace buttons (rows, rename/delete, «+», Add workspace) | sidebar                      | `/workspace` / `/workspace rename` / `/workspace delete` / `/workspace add` | ✅ implemented (step 10)          |
+| Phone («Mobile remote control»)                             | sidebar footer               | `/phone`                                                                    | ✅ implemented (step 10)          |
+| Update («Check for updates»)                                | sidebar footer               | `/update`                                                                   | ✅ implemented (step 10)          |
+| Memory button (`#mem-open`, dsh-memento)                    | floating, bottom-right       | `/mem`                                                                      | ✅ implemented (step 12)          |
+| Session search («Search sessions»)                          | sidebar                      | `Ctrl+Alt+F`                                                                | ✅ implemented (step 13)          |
+| Session list options («View options»)                       | sidebar                      | `Ctrl+Alt+O`                                                                | ✅ implemented (step 13)          |
+| Like/dislike a response («Good/Bad response»)               | on messages                  | `Ctrl+Alt+G/D`, `/like`, `/dislike`                                         | ✅ implemented (step 13)          |
+| Scroll to bottom («Back to bottom»)                         | chat                         | `Ctrl+Alt+End`, `/bottom`                                                   | ✅ implemented (step 13)          |
+| File upload («Upload file», dsh-file-upload)                | composer                     | `Ctrl+Alt+U`, `/upload`                                                     | ✅ implemented (step 13)          |
 
-The order and the scope are by choice: we fix one button at a time, and after each one — a GUI
-check and a commit.
+The order and the scope are by choice: we fix one button at a time, and after each one — a GUI check
+and a commit.
