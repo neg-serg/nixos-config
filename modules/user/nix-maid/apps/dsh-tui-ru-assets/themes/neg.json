@@ -1,0 +1,26 @@
+{
+  "base": "cobalt",
+  "background": "dark",
+  "description": "neg \u2014 muted navy/teal/violet scheme (kitty theme.conf, neg.omp.json), contrast-checked for the TUI's dark nominal background",
+  "colors": {
+    "primary": "#6096BF",
+    "secondary": "#6C7E96",
+    "success": "#53A6A6",
+    "warning": "#BF85CC",
+    "error": "#CF4F88",
+    "dim": "#617287",
+    "pulseQuiet": "#4A6E93",
+    "pulseActive": "#6096BF",
+    "pulseAlert": "#CF4F88",
+    "toolShell": "#477AB3",
+    "toolEdit": "#7E62B3",
+    "toolTest": "#53A6A6",
+    "toolDelegate": "#BF85CC"
+  },
+  "overrides": {
+    "userColor": "#CF4F88",
+    "assistantColor": "#899CA1",
+    "muted": "#6C7E96",
+    "systemColor": "#617287"
+  }
+}
