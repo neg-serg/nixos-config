@@ -1,5 +1,3 @@
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-
 /**
  * dsh-mode: slash commands for the dsh web GUI —
  *   /mode  — list the available agent presets (modes) or switch the default one;
@@ -23,8 +21,13 @@ export const name = 'dsh-mode'
 /** Required services: slash-command registry, settings store, preset roster, default model. */
 export const inject = ['commands', 'settings', 'agentPresets', 'agentDefaultModel']
 
-/** Settings namespace the agent-presets service registers. */
-const SETTINGS_NS = settingsNamespace('agent-presets')
+/**
+ * Settings namespace the agent-presets service registers. dsh 0.1.5-rc.1
+ * dropped the `settingsNamespace()` helper (and @deepseek-ai/dsh-settings'
+ * other exports besides the service class): a namespace is now the bare
+ * string, and section registration goes through ctx.settings.installSection.
+ */
+const SETTINGS_NS = 'agent-presets'
 
 /** One line per preset; marks the current default and broken presets. */
 function renderPresets(presets, current) {

@@ -44,7 +44,7 @@ function readTodos(agent, ctx) {
       if (Array.isArray(snap)) return snap
     }
   } catch (e) { /* fall through to event fold */ }
-  const events = Array.from((agent.session && agent.session.events) || [])
+  const events = agent !== undefined && agent.session !== undefined && agent.session !== null && typeof agent.session.snapshotEvents === 'function' ? agent.session.snapshotEvents() : []
   for (let i = events.length - 1; i >= 0; i--) {
     if (events[i].type === 'todo/write') return events[i].data.todos || []
   }

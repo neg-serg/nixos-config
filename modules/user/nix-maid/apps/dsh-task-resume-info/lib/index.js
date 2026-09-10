@@ -21,7 +21,7 @@ export const inject = []
 const MAX_USER_ASKS = 3
 
 function foldTodos(session) {
-  const events = Array.from((session && session.events) || [])
+  const events = session !== undefined && session !== null && typeof session.snapshotEvents === 'function' ? session.snapshotEvents() : []
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const e = events[i]
     if (e && e.type === 'todo/write' && Array.isArray(e.data?.todos)) {
@@ -34,7 +34,7 @@ function foldTodos(session) {
 }
 
 function lastUserAsks(session) {
-  const events = Array.from((session && session.events) || [])
+  const events = session !== undefined && session !== null && typeof session.snapshotEvents === 'function' ? session.snapshotEvents() : []
   const asks = []
   for (let i = events.length - 1; i >= 0 && asks.length < MAX_USER_ASKS; i -= 1) {
     const e = events[i]

@@ -54,7 +54,7 @@ export function apply(ctx) {
           `cwd: ${h.cwd ?? "—"}`,
           `пресет: ${h.agentPreset ?? "—"}`,
           `родитель: ${h.parentSession ?? "—"}`,
-          `событий: ${session.events?.length ?? "?"}`,
+          `событий: ${typeof session.seq === 'number' ? session.seq : "?"}`,
         ].join("\n"),
       }
     },

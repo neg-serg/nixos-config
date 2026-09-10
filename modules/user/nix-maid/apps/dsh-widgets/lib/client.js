@@ -33,7 +33,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
     const { useState, useMemo, useEffect, useRef } = React;
 
-    const inject = ["slots", "sessions", "conversationEvents"];
+    const inject = ["slots", "sessions", "uiConversation"];
 
     const MAX_DEPTH = 400;
     const CHILD_CAP = 100;
@@ -1445,7 +1445,7 @@ window.__ModuleLoader__.load({
       });
 
       // ---- live bash streaming node ----
-      ctx.conversationEvents.register(bashLiveDefinition);
+      ctx.uiConversation.events.register(bashLiveDefinition);
       ctx.slots.inject("conversation.chat.node", () => ctx.slots.register(
         { name: "conversation.chat.node", key: "bash-live" },
         BashLiveNode,

@@ -122,7 +122,7 @@ function eventText(event) {
 /** Bound the session event list to the last 400 events, one line each. */
 function foldTranscript(session) {
   const parts = []
-  const events = Array.from((session && session.events) || [])
+  const events = session !== undefined && session !== null && typeof session.snapshotEvents === 'function' ? session.snapshotEvents() : []
   const limit = Math.max(0, events.length - 400) // last 400 events
   for (let i = limit; i < events.length; i++) {
     const text = eventText(events[i])
