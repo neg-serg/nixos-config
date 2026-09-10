@@ -1450,6 +1450,7 @@
         "steam-config-nix": "steam-config-nix",
         "tailray": "tailray",
         "talktype": "talktype",
+        "waylandar": "waylandar",
         "wl": "wl",
         "wrappers": "wrappers",
         "xdg-desktop-portal-hyprland": "xdg-desktop-portal-hyprland"
@@ -1776,6 +1777,27 @@
       "original": {
         "owner": "lmacan1",
         "repo": "talktype",
+        "type": "github"
+      }
+    },
+    "waylandar": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786865422,
+        "narHash": "sha256-KWjrQvDN00hcHfj54MhiFD9P7mQVxe4ddaqh3q86Hsk=",
+        "owner": "samjoshuadud",
+        "repo": "waylandar",
+        "rev": "b46d5c348f846ca489071f2d271312ea35c019b4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "samjoshuadud",
+        "repo": "waylandar",
+        "rev": "b46d5c348f846ca489071f2d271312ea35c019b4",
         "type": "github"
       }
     },
