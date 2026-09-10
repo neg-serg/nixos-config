@@ -125,6 +125,163 @@ let
         print(f"dsh-market: {path} already up to date")
   '';
 
+  # Profile-patch caretaker for subagent per-call model selection: upstream
+  # 0.1.5-rc.1 ships the host row in the web-app bundle (enabled=false,
+  # allowedModels=[] by default), so the profile may only supply config — a
+  # profile-level `- insert:` of the same id aborts boot with "duplicate
+  # loader entry id". Idempotent: migrates the pre-upgrade insert form in
+  # place and appends the override when the row is absent.
+  modelSelectionPatch = pkgs.writeText "dsh-model-selection-patch.py" ''
+    import sys
+
+    path = sys.argv[1]
+    with open(path, encoding="utf-8") as f:
+        src = f.read()
+
+    ROW = "- id: subagent-model-selection-settings\n"
+    LEGACY = "- insert:\n    - id: subagent-model-selection-settings\n"
+    NAME = "  name: '@deepseek-ai/dsh-tool-subagent/model-selection-settings'"
+    BLOCK = """\
+    # Subagent per-call model selection — the host row ships in the web-app
+    # bundle; this supplies the deployment opt-in (upstream defaults are
+    # enabled=false, allowedModels=[]). Exact routes only: a delegation tool
+    # opting in via modelSelectionSettings lets the model pick among these,
+    # and the settings GUI can override them later.
+    - id: subagent-model-selection-settings
+      config:
+        enabled: true
+        allowedModels:
+          - provider: deepseek-official
+            model: deepseek-v4-flash
+          - provider: deepseek-official
+            model: deepseek-v4-pro
+    """
+
+    if src.count(ROW) > 1 or src.count(LEGACY) > 1:
+        raise SystemExit(
+            f"dsh-market: {path}: duplicate subagent-model-selection-settings rows"
+        )
+
+    if LEGACY in src:
+        # Pre-upgrade form: a profile-level insert of an id the web-app bundle
+        # already owns -> "duplicate loader entry id" at boot. Collapse the
+        # block into an id-targeted override.
+        head, rest = src.split(LEGACY, 1)
+        lines = rest.split("\n")
+        moved = 0
+        while moved < len(lines) and (
+            lines[moved].strip() == "" or lines[moved].startswith("    ")
+        ):
+            moved += 1
+        body = [line[4:] if line.startswith("    ") else line for line in lines[:moved]]
+        if body and body[0] == NAME:
+            del body[0]
+        src = head + ROW + "\n".join(body) + "\n".join(lines[moved:])
+        action = "migrated the insert form"
+    elif ROW in src:
+        print(f"dsh-market: {path}: model selection row already overridden")
+        sys.exit(0)
+    else:
+        src = src.rstrip("\n") + "\n\n" + BLOCK
+        action = "appended the override"
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(src)
+    print(f"dsh-market: {path}: {action}")
+  '';
+
+  # Profile-patch caretaker for rows the installed plugin set no longer ships:
+  # a profile-level override for an absent id is dead weight dsh reports on
+  # every boot ("patch: entry ... not found"). Drops the `- id: X` +
+  # `disabled: true` pair wherever it stands; ids already gone are a no-op.
+  staleRowsPatch = pkgs.writeText "dsh-stale-rows-patch.py" ''
+    import sys
+
+    path, *stale = sys.argv[1:]
+    with open(path, encoding="utf-8") as f:
+        lines = f.read().split("\n")
+
+    removed = []
+    kept = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        is_row = line.startswith("- id: ") and line[len("- id: "):] in stale
+        if is_row and index + 1 < len(lines) and lines[index + 1] == "  disabled: true":
+            removed.append(line[len("- id: "):])
+            index += 2
+            continue
+        kept.append(line)
+        index += 1
+
+    if not removed:
+        print(f"dsh-market: {path}: no stale rows to drop")
+        sys.exit(0)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(kept))
+    print(f"dsh-market: {path}: dropped stale rows {removed}")
+  '';
+
+  # Profile-patch caretaker for the pre-0.1.5 row gate: the rows behind the
+  # plugins that still import a contract 0.1.5-rc.1 removed must stay disabled
+  # (one failing import refuses the WHOLE plugin tree — "loader entries failed
+  # to apply" — and dsh never binds the port). The gate is rewritten in place
+  # from the pending list at the call site, so porting a plugin means deleting
+  # its id there; an empty list removes the block. Idempotent, and it fails
+  # loudly on duplicate ids (the "duplicate loader entry id" boot abort).
+  rowGatePatch = pkgs.writeText "dsh-row-gate-patch.py" ''
+    import sys
+
+    MARKER = "# 0.1.5 SDK port pending"
+    HEADER = ["# rows are still built against the contracts 0.1.5-rc.1 removed."]
+    NAME = "- id: "
+
+    path, *pending = sys.argv[1:]
+    if len(set(pending)) != len(pending):
+        raise SystemExit(f"{path}: duplicate ids in the pending list: {pending}")
+
+    with open(path, encoding="utf-8") as f:
+        src = f.read()
+
+    def render(ids):
+        # Top level, like every other patch row: the block is appended at EOF,
+        # so an indented form would nest under whichever entry happens to end
+        # the file (observed: a `!!js` config block, YAML "bad indentation").
+        block = [MARKER + " — see dsh-market.nix: the plugins behind these"]
+        block += HEADER
+        for entry in ids:
+            block += [f"{NAME}{entry}", "  disabled: true"]
+        return block
+
+    lines = src.split("\n")
+    start = next((i for i, line in enumerate(lines) if MARKER in line), None)
+    found = []
+    if start is not None:
+        # The gate reads marker -> header comments -> `- id:`/`disabled: true`
+        # pairs; the first line outside that shape ends the block.
+        cursor = start + 1
+        while cursor < len(lines) and lines[cursor].strip().startswith("# "):
+            cursor += 1
+        while cursor < len(lines) and lines[cursor].strip().startswith(NAME):
+            found.append(lines[cursor].strip()[len(NAME):])
+            cursor += 1
+            if cursor >= len(lines) or lines[cursor].strip() != "disabled: true":
+                raise SystemExit(f"{path}: {found[-1]} is not disabled by the gate")
+            cursor += 1
+        del lines[start:cursor]
+
+    rebuilt = "\n".join(lines).rstrip("\n") + "\n"
+    if pending:
+        rebuilt = rebuilt.rstrip("\n") + "\n\n" + "\n".join(render(pending)) + "\n"
+
+    if rebuilt == src:
+        print(f"dsh-market: {path}: row gate already {pending or 'absent'}")
+        sys.exit(0)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(rebuilt)
+    print(f"dsh-market: {path}: row gate now {pending or 'absent'} (was {found})")
+  '';
+
   # The harness's own copy of the core @deepseek-ai package family. pnpm
   # (the profile's workspace sets nodeLinker: hoisted) hoists the transitive
   # @deepseek-ai deps of the third-party bundles into the profile's top-level
@@ -194,7 +351,7 @@ let
               "dsh-plugin-recall:dsh-plugin-recall" \
               "dsh-memento:dsh-memento" \
               "dsh-startup-guard:dsh-startup-guard" \
-              "dsh-free-search:dsh-free-search" \
+              "dsh-free-search:dsh-free-search@^0.4.24" \
               "dsh-status-rotator:github:01Virex/dsh-status-rotator"; do
               name="''${entry%%:*}"
               spec="''${entry#*:}"
@@ -207,6 +364,26 @@ let
                 fi
               fi
             done
+
+            # dsh-free-search below 0.4.24 registers its settings section
+            # through the helpers dsh 0.1.5 removed (module-level
+            # installSettingsSection/settingsNamespace), so the loader refuses
+            # the whole plugin tree while the `web-search-free` row is enabled.
+            # Upstream 0.4.24 speaks the 0.1.5 API (ctx.settings.installSection
+            # with plain namespace strings) and keeps the old path only behind
+            # typeof guards; bump a profile that predates it.
+            FS_PKG="$PROFILE_DIR/node_modules/dsh-free-search/package.json"
+            if [ -f "$FS_PKG" ]; then
+              FS_VER="$(jq -r '.version // "0.0.0"' "$FS_PKG")"
+              if [ "$(printf '%s\n%s\n' 0.4.24 "$FS_VER" | sort -V | head -1)" != "0.4.24" ]; then
+                echo "dsh-market: upgrading dsh-free-search $FS_VER -> ^0.4.24 (0.1.5 settings API)..."
+                if dsh plugin --profile web add 'dsh-free-search@^0.4.24' -w; then
+                  installed=1
+                else
+                  echo "dsh-market: dsh-free-search upgrade failed — will retry on next login" >&2
+                fi
+              fi
+            fi
 
             # gavel-review (JohnXu22786/adversarial-review) is not on npm and
             # ships no committed build — bootstrap a local clone + build, then
@@ -386,6 +563,32 @@ let
     YAML
             fi
 
+            # `dream-skin` and `better-sidebar` left the shipped plugin set;
+            # their overrides only produce "entry not found" warnings.
+            python3 ${staleRowsPatch} "$PATCH" dream-skin better-sidebar \
+              || echo "dsh-market: stale row prune failed" >&2
+
+            # Plugins still built against the pre-0.1.5 SDK. dsh 0.1.5-rc.1
+            # removed three contracts the dsh-web-ui fork and dsh-free-search
+            # were written against: the @deepseek-ai/dsh-settings helpers
+            # (installSettingsSection / settingsNamespace — now the
+            # ctx.settings service method installSection), the `apiProxy` host
+            # service (@deepseek-ai/dsh-host-apiproxy, replaced by the Typert
+            # gateway: ctx.typertGateway / ctx.remote) and
+            # @deepseek-ai/dsh-client-runtime (absent from 0.1.5; the browser
+            # halves inject it). Each affected row fails to import, and one
+            # failing entry refuses the WHOLE plugin tree ("loader entries
+            # failed to apply") — dsh never binds the port. Drop a row once its
+            # plugin is ported (fork checkout:
+            # ~/src/1st-level/@projects/dsh-web-ui).
+            #
+            # Nothing is pending: every row whose plugin was ported is enabled,
+            # and web-search-free rides the 0.4.24+ release of dsh-free-search
+            # (the upgrade guard above keeps a profile off the pre-0.1.5
+            # helpers). See docs/howto/designs/dsh-0.1.5-fork-port.md.
+            python3 ${rowGatePatch} "$PATCH" \
+              || echo "dsh-market: row gate patch failed" >&2
+
             # @linxin666/dsh-liangshen (LiangShen agent-preset plugin) is
             # unmounted — replaced by the neg preset (dsh-liangshen-fork.nix).
             # The include row from the dsh-web-ui-all bundle patch no longer
@@ -532,18 +735,10 @@ let
               echo "dsh-ssh: fork checkout missing at $SSH_FORK — plugin not installed" >&2
             fi
 
-            # Drop the old - id: ssh / disabled: true patch row (bec9992d)
-            # so the dsh-web-ui-all bundle row mounts the plugin again.
-            python3 - "$PATCH" <<'PY'
-    import re, sys
-    p = sys.argv[1]
-    with open(p) as f:
-        s = f.read()
-    new = re.sub(r"(?m)^\s*- id: ssh\s*\n\s*disabled: true\s*\n", "", s)
-    if new != s:
-        with open(p, "w") as f:
-            f.write(new)
-    PY
+            # The legacy "drop - id: ssh / disabled: true" strip (bec9992d) is
+            # deliberately gone: ssh is disabled again by the 0.1.5 SDK block
+            # above until its fork plugin is ported, so nothing may re-enable
+            # the row here.
 
             # `dsh plugin add` reconciles every dependency that declares
             # dsh.bundle into dsh.profile.bundles. @linxin666/dsh-ssh is a
@@ -566,6 +761,91 @@ let
             f.write("\n")
         print("dsh-market: stripped standalone @linxin666/dsh-ssh from profile bundles")
     PY
+
+            # The fork plugins behind the rows this port re-enabled (see the
+            # row gate above). The dsh-web-ui checkout is a member of the
+            # profile workspace (pnpm-workspace.yaml links packages/*), so the
+            # workspace dep plus a node_modules symlink at the checkout is all
+            # it takes for the loader to run the ported code instead of the
+            # stale npm copy — no publish, no reinstall. A missing checkout
+            # leaves the npm copy in place (fresh machine before `git clone`).
+            for pair in \
+              "dsh-remote-web-ui:@linxin666/dsh-remote-web-ui" \
+              "dsh-tool-describe-image:@linxin666/dsh-tool-describe-image" \
+              "dsh-live-stats:@linxin666/dsh-live-stats" \
+              "dsh-web-ui-settings:@linxin666/dsh-client-ui-web-ui-settings"; do
+              FORK_DIR="''${pair%%:*}"
+              FORK_NAME="''${pair#*:}"
+              FORK_PKG="${homeDir}/src/1st-level/@projects/dsh-web-ui/packages/$FORK_DIR"
+              DEST="$PROFILE_DIR/node_modules/$FORK_NAME"
+              if [ ! -d "$FORK_PKG" ]; then
+                echo "dsh-market: $FORK_NAME: fork checkout missing at $FORK_PKG — plugin not linked" >&2
+                continue
+              fi
+              # Declare the workspace dep so pnpm keeps the link on installs.
+              python3 - "$PROFILE_DIR/package.json" "$FORK_NAME" <<'PY'
+    import json, sys
+    path, name = sys.argv[1], sys.argv[2]
+    with open(path) as f:
+        pkg = json.load(f)
+    deps = pkg.setdefault("dependencies", {})
+    if deps.get(name) != "workspace:^0.1.16":
+        deps[name] = "workspace:^0.1.16"
+        with open(path, "w") as f:
+            json.dump(pkg, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+    PY
+              mkdir -p "$PROFILE_DIR/node_modules/@linxin666"
+              # Replace the stale npm copy with the symlink.
+              if [ ! -L "$DEST" ]; then
+                rm -rf -- "$DEST" 2>/dev/null || true
+              fi
+              ln -sfn "$FORK_PKG" "$DEST"
+            done
+
+            # `dsh plugin add` reconciles every dependency that declares
+            # dsh.bundle into dsh.profile.bundles. These plugins are
+            # dependencies only so pnpm keeps the workspace link; their rows
+            # come from the dsh-web-ui-all bundle patch, so a standalone bundle
+            # row duplicates the loader entry and dsh fails to boot
+            # ("duplicate loader entry id"). Strip them; the deps stay.
+            python3 - "$PROFILE_DIR/package.json" <<'PY'
+    import json, sys
+    path = sys.argv[1]
+    names = (
+        "@linxin666/dsh-remote-web-ui",
+        "@linxin666/dsh-tool-describe-image",
+        "@linxin666/dsh-live-stats",
+        "@linxin666/dsh-client-ui-web-ui-settings",
+    )
+    with open(path) as f:
+        pkg = json.load(f)
+    bundles = pkg.get("dsh", {}).get("profile", {}).get("bundles")
+    if bundles is not None:
+        kept = [bundle for bundle in bundles if bundle not in names]
+        if kept != bundles:
+            pkg["dsh"]["profile"]["bundles"] = kept
+            with open(path, "w") as f:
+                json.dump(pkg, f, ensure_ascii=False, indent=2)
+                f.write("\n")
+            print("dsh-market: stripped standalone fork plugins from profile bundles")
+    PY
+
+            # dsh-free-search ships a Chinese market default (`lang: zh`,
+            # `bingMarket: zh-CN`), so its results come back Chinese-first; pin
+            # an English market for this deployment. `bingMarket` takes
+            # precedence over the lang profile, hence both keys.
+            if ! grep -q 'bingMarket: en-US' "$PATCH" 2>/dev/null; then
+              cat >> "$PATCH" <<'YAML'
+
+    # dsh-free-search: English search market (the shipped default is
+    # lang zh + bingMarket zh-CN, i.e. Chinese-first results).
+    - id: web-search-free
+      config:
+        lang: en
+        bingMarket: en-US
+    YAML
+            fi
 
             # LAN phone pairing (dsh-remote-web-ui): dsh itself stays bound to
             # loopback; a narrow LAN socket (systemd-socket-proxyd, see dsh.nix)
@@ -607,6 +887,15 @@ let
         default: neg
     YAML
             fi
+
+            # Subagent per-call model selection (upstream 0.1.5-rc.1, replacing
+            # packages/dsh/patch-widgets.py's old `model` parameter patch): the
+            # delegation tools expose the optional provider/model/reasoning_effort
+            # fields and list_subagent_models only when the Host owns this
+            # settings service. Upstream ships the row itself — the profile only
+            # supplies config (see modelSelectionPatch).
+            python3 ${modelSelectionPatch} "$PATCH" \
+              || echo "dsh-market: model selection patch failed" >&2
 
             if [ "$installed" = 1 ]; then
               export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
