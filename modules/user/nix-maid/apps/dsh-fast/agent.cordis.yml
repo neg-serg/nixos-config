@@ -23,7 +23,9 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: |-
+    # 0.1.5 renders the persona as the `deployment:persona-prefix` section;
+    # the removed rc.6 field was `text`.
+    prefix: |-
       You are a fast, concise assistant.
       Answer in the user's language (Russian unless asked otherwise).
       Be brief and direct: give the answer, then stop. No long reasoning,
