@@ -101,6 +101,19 @@ for (const [relPath, table] of Object.entries(map)) {
     continue;
   }
 
+  // A bundle that still carries many CJK literals means the map went stale
+  // (the plugin was upgraded upstream): warn loudly, the UI would show Chinese.
+  const codeOnly = bundle.split("\n").filter((line) => {
+    const t = line.trim();
+    return !(t.startsWith("//") || t.startsWith("*") || t.startsWith("/*"));
+  }).join("\n");
+  const dq = /"[^"\n]*[\u4e00-\u9fff][^"\n]*"/g;
+  const tpl = /`[^`\n]*[\u4e00-\u9fff][^`\n]*`/g;
+  const leftoverCjk = new Set([...codeOnly.matchAll(dq)].map((m) => m[0]).concat([...codeOnly.matchAll(tpl)].map((m) => m[0]))).size;
+  if (leftoverCjk > 0) {
+    log(`WARNING: ${leftoverCjk} Chinese string literals remain in ${relPath} — extend i18n.json`);
+  }
+
   // First-time backup of the pristine bundle.
   if (!fs.existsSync(origPath)) {
     fs.writeFileSync(origPath, fs.readFileSync(bundlePath));
