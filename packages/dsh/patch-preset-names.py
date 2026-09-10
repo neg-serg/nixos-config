@@ -6,23 +6,25 @@ commands (/mode) render these names/descriptions. The strings below are the
 exact upstream literals; a dsh upgrade that drifts any of them fails this
 script loudly instead of silently shipping Chinese again.
 
-Usage: patch-preset-names.py <dsh-package-root>
+Usage: patch-preset-names.py <dsh-agent-presets/presets dir>
 """
 
 import pathlib
 import sys
 
-PRESETS_DIR = pathlib.Path(sys.argv[1]) / "config" / "agent-presets"
+PRESETS_DIR = pathlib.Path(sys.argv[1])
 
 # id -> { old literal: new literal }, each old string must occur exactly once.
 REWRITES = {
-    "code": {
+    # 0.1.5-rc.1 renamed the `code` preset to `ptc` and reworded `minimal`;
+    # `cordis` is unchanged. `standard` is deleted before this runs.
+    "ptc": {
         "name: PTC 模式": "name: PTC mode",
-        "description: 具备标准模式的全部能力，并通过 Code Mode SDK 呈现工具，让模型用一个 TypeScript 程序组合多步操作。": "description: All the capabilities of the standard mode; tools are presented through the Code Mode SDK so the model composes multi-step operations in a single TypeScript program.",
+        "description: 功能完整的编码 Agent，但默认不提供 workflow 工具；其他工具通过 PTC 模式 SDK 呈现，让模型用一个 TypeScript 程序组合多步操作。": "description: A fully capable coding agent that omits the workflow tool by default; the remaining tools are presented through the PTC mode SDK so the model composes multi-step operations in a single TypeScript program.",
     },
     "minimal": {
         "name: 极简模式": "name: Minimal mode",
-        "description: 仅提供持久 bash 与 str_replace_editor 的双工具编码 Agent。": "description: A two-tool coding agent: persistent bash and str_replace_editor only.",
+        "description: 仅提供持久 shell 的单工具编码 Agent。": "description: A single-tool coding agent: persistent shell only.",
     },
     "cordis": {
         "name: 创造模式": "name: Creator mode",
