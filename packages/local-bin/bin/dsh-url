@@ -7,10 +7,12 @@
 #   cleared cookie jar, or a different authority than the one that minted the
 #   cookie.
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0
+  sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0
 fi
 
-line="$(journalctl --user -u dsh.service --no-pager 2>/dev/null | grep 'dsh web: ' | tail -n 1)"
+# Match the URL line, not the sibling "dsh web: opening the default browser"
+# notice that shares the prefix.
+line="$(journalctl --user -u dsh.service --no-pager 2>/dev/null | grep 'dsh web: http' | tail -n 1)"
 if [ -z "$line" ]; then
   echo "dsh-url: no 'dsh web:' line in the dsh.service journal — is the service running?" >&2
   exit 1
