@@ -215,9 +215,11 @@ function decidePromotion(state, config) {
 
 /** Scan newly appended session events and update promotion state. */
 function scanEvents(state, session) {
-  const events = session.events
-  for (; state.next < events.length; state.next += 1) {
-    const event = events[state.next]
+  // dsh 0.1.5 dropped `Session.events`; `snapshotEvents(from)` returns the log
+  // tail from a sequence number and `session.seq` is the current log length.
+  const from = state.next
+  const events = typeof session.snapshotEvents === 'function' ? session.snapshotEvents(from) : []
+  for (const event of events) {
     if (event === undefined) continue
     if (event.type === 'tool/call') {
       state.toolCalled = true
@@ -230,6 +232,7 @@ function scanEvents(state, session) {
       if (!state.anchored) state.anchored = hasAnchoredReasoning(event.data?.message?.content)
     }
   }
+  state.next = typeof session.seq === 'number' ? session.seq : from + events.length
 }
 
 /** Update one agent's promotion state and apply its post-promotion presentation. */

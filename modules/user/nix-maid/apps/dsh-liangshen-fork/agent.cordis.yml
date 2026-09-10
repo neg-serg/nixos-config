@@ -44,7 +44,9 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: |-
+    # 0.1.5 renders the persona as the `deployment:persona-prefix` section;
+    # the removed rc.6 field was `text`.
+    prefix: |-
       You are a helpful software engineer assistant.
 
       [РЕЖИМ МЫШЛЕНИЯ]
@@ -276,7 +278,18 @@
         provider: spawn
         toolName: subagent
         backgroundMode: continuable
+        # Per-call child route selection (upstream 0.1.5-rc.1; replaces the
+        # old packages/dsh/patch-widgets.py `model` parameter patch). Exposes
+        # optional provider/model/reasoning_effort fields plus the shared
+        # list_subagent_models tool, whitelisted by the Host-scope
+        # `subagent-model-selection-settings` row (dsh-market.nix). The spawn
+        # provider advertises `agentOptions`, which this mode requires.
+        modelSelectionSettings: true
 
+    # No modelSelectionSettings here on purpose: a fork child inherits the
+    # parent's history, and letting it change provider/model would forfeit the
+    # KV-Cache reuse that makes the fork backend worth using (upstream notes
+    # the same rationale for the shipped base row).
     - id: tool-subagent-fork
       name: '@deepseek-ai/dsh-tool-subagent'
       config:
