@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""Patch dsh 0.1.0-rc.6 compiled tool bundles for dsh-widgets.
+"""Patch dsh 0.1.5-rc.1 compiled tool bundles for dsh-widgets.
 
-Three additions, all staged server-side (they take effect after a dsh rebuild):
+The per-call subagent `model` parameter this script used to inject was
+upstreamed in 0.1.5-rc.1: the delegation tools now take `provider` /
+`model` / `reasoning_effort` and fold them into the child's agentOptions
+themselves (gated on the tool config `modelSelectionSettings`).
 
-1. dsh-tool-subagent: an optional `model` parameter on the subagent tool that
-   is merged into the child's agentOptions. The subagent provider already
-   resolves the child model as `request.agentOptions?.model ?? parent.options.model`
-   (dsh-subagent/lib/index.js), so this is a pure pass-through — the model can
-   now delegate to a cheaper/faster model (e.g. deepseek-v4-flash) per call.
+The remaining additions are staged server-side (they take effect after a dsh
+rebuild):
 
-2. presentationMeta on the subagent / workflow / ralph tools: each attaches a
+1. presentationMeta on the subagent / workflow / ralph tools: each attaches a
    compact `{ kind, … }` descriptor to the persisted tool/result meta, so a
    capable client renders a structured card from logged data (replay-stable)
    instead of regex-parsing the rendered text. The dsh-widgets client cards
    still parse text today; the meta is the hardening path.
 
-3. dsh-session `Session.append`: accept `{ ignorable: true }` in the surface
-   opts and carry it on the event envelope. rc.6 otherwise cannot mark plugin
+2. dsh-session `Session.append`: accept `{ ignorable: true }` in the surface
+   opts and carry it on the event envelope. the harness otherwise cannot mark plugin
    events ignorable, and the history reader refuses logs with unknown
    non-ignorable event types (SessionFormatUnsupportedError) — the
    dsh-widgets `bash_live` stream events used to kill their session on every
@@ -54,46 +54,23 @@ SUBAGENT = "dsh-tool-subagent/lib/index.js"
 patch_file(
     SUBAGENT,
     [
-        # 1a. add the optional `model` parameter after the run_in_background spread.
-        (
-            "} } : {}\n\t\t\t},\n\t\t\toutput: {",
-            (
-                "} } : {},\n"
-                "\t\t\t\tmodel: {\n"
-                '\t\t\t\t\ttype: "string",\n'
-                '\t\t\t\t\tdescription: "Optional model override for the delegated child (e.g. '
-                "deepseek-v4-flash). Falls back to the parent's model when omitted.\"\n"
-                "\t\t\t\t}\n"
-                "\t\t\t},\n"
-                "\t\t\toutput: {"
-            ),
-            1,
-        ),
-        # 1b. merge the model into the child request's agentOptions.
-        (
-            "\t\t\t\t\t...config.agentOptions !== void 0 ? { agentOptions: config.agentOptions } : {},",
-            (
-                "\t\t\t\t\tagentOptions: {\n"
-                "\t\t\t\t\t\t...(config.agentOptions ?? {}),\n"
-                "\t\t\t\t\t\t...args.model !== void 0 ? { model: args.model } : {}\n"
-                "\t\t\t\t\t},"
-            ),
-            1,
-        ),
+        # 1a/1b (optional `model` parameter + agentOptions pass-through) are
+        # gone — see the module docstring.
+        #
         # 2a. subagent presentationMeta (sibling of render inside output).
         (
             (
                 ": outputValueText(value.output)\n"
-                "\t\t\t\t}]\n"
-                "\t\t\t},\n"
-                "\t\t\tisConcurrencySafe: () => true,"
+                "\t\t\t\t\t\t}]\n"
+                "\t\t\t\t\t},\n"
+                "\t\t\t\t\tisConcurrencySafe: () => true,"
             ),
             (
                 ": outputValueText(value.output)\n"
-                "\t\t\t\t}],\n"
-                '\t\t\t\tpresentationMeta: (_args, value) => ({ kind: "subagent", result: value })\n'
-                "\t\t\t},\n"
-                "\t\t\tisConcurrencySafe: () => true,"
+                "\t\t\t\t\t\t}],\n"
+                '\t\t\t\t\tpresentationMeta: (_args, value) => ({ kind: "subagent", result: value })\n'
+                "\t\t\t\t\t},\n"
+                "\t\t\t\t\tisConcurrencySafe: () => true,"
             ),
             1,
         ),
