@@ -63,42 +63,35 @@ REPL = [
 
 REPL.sort(key=lambda kv: len(kv[0]), reverse=True)
 
-# Conversation client bundle (dsh-client-ui-conversation/lib/client.js):
-# 1) drop the "{turns} turns · {steps} steps" metric from the turn status
+# Chat client bundle (dsh-client-ui-chat/lib/client.js) — 0.1.5-rc.1 moved the
+# turn-status pills (and the reasoning row) here from
+# dsh-client-ui-conversation, and re-keyed the copy into the chat locale
+# dictionaries:
+# 1) drop the "{turns} turns {steps} steps" metric from the turn status
 #    (user doesn't understand it), and
 # 2) shorten the token displays: drop the "tok" unit word while KEEPING the
-#    numbers ("{throughput} tok/s" -> "{throughput}/s", "{tps} tok/s" ->
-#    "{tps}/s"), and render the token counts as compact arrow icons +
-#    IN/OUT labels ("Input {input} tok · Output {output} tok" ->
-#    "IN {input} / OUT {output}").
-# The joins that build the status line filter empty segments so the removed
-# metric leaves no stray " | " separators behind.
+#    numbers ("{tps} tok/s" -> "{tps}/s", "{count} tok" -> "{count}").
+# The emptied counts group still renders its own "·" separator and would leave
+# a stray glyph / dangling aria-label, so both call sites are guarded.
 CONV_REPL = [
     # turns/steps metric -> remove entirely (en + zh dictionaries)
-    ('"{turns} turns · {steps} steps"', '""'),  # en stats.counts
-    ('"{turns} 轮 · {steps} 步"', '""'),  # zh stats.counts
+    ('"{turns} turns {steps} steps"', '""'),  # en stats.counts
+    ('"{turns} 轮 {steps} 步"', '""'),  # zh stats.counts
     # tok words -> drop the unit, keep the numbers
-    (
-        '"{throughput} tok/s"',
-        '"{throughput}/s"',
-    ),  # stats.tokensPerSecond (en + zh)
     ('"{tps} tok/s"', '"{tps}/s"'),  # message.tokensPerSecond (en + zh)
+    ('"{count} tok"', '"{count}"'),  # message.turnUsage.count (en + zh)
+    # the label renders [counts, sep + tps]; with counts emptied the separator
+    # span still fires, and the aria-label reads " · {tps}".
     (
-        '"Input {input} tok · Output {output} tok"',
-        '"IN {input} / OUT {output}"',
-    ),  # en stats.tokens
+        '"aria-label": tps === null ? counts : `${counts} · ${tps}`,',
+        '"aria-label": counts === "" ? tps ?? "" : tps === null ? counts : `${counts} · ${tps}`,',
+    ),
     (
-        '"输入 {input} tok · 输出 {output} tok"',
-        '"输入 {input} / 输出 {output}"',
-    ),  # zh stats.tokens
-    # joins: drop the now-empty segments so no stray " | " separators remain
-    ('groups.join(" | ")', 'groups.filter(Boolean).join(" | ")'),
-    ('speeds.join(" · ")', 'speeds.filter(Boolean).join(" · ")'),
-    # render: the emptied turns/steps group still occupies a slot and gets its
-    # own separator span (and the next group its own) — that renders stray
-    # "|" glyphs and doubled separators. Filter empty groups before the map.
-    ("groups.map((group, i) =>", "groups.filter(Boolean).map((group, i) =>"),
+        "children: [counts, tps !== null && ",
+        'children: [counts, counts !== "" && tps !== null && ',
+    ),
 ]
+
 
 # Think (reasoning) block: render the expanded body through MarkdownText so
 # thoughts get the same markdown/KaTeX/links/images treatment as message text
@@ -266,8 +259,8 @@ def patch_bytes(
 
 
 def patch_conversation(root: pathlib.Path) -> int:
-    """Drop turns/steps metric and shorten tok displays in the conversation bundle."""
-    conv = root / "dsh-client-ui-conversation" / "lib" / "client.js"
+    """Drop turns/steps metric and shorten tok displays in the chat bundle."""
+    conv = root / "dsh-client-ui-chat" / "lib" / "client.js"
     if not conv.exists():
         print(f"skip (absent): {conv.relative_to(root)}")
         return 0
@@ -277,11 +270,9 @@ def patch_conversation(root: pathlib.Path) -> int:
         conv.write_bytes(new_data)
         print(f"patched: {conv.relative_to(root)}")
         if missing:
-            print(
-                f"note: {len(missing)} conversation keys absent: {sorted(missing)}"
-            )
+            print(f"note: {len(missing)} chat keys absent: {sorted(missing)}")
         return 1
-    print(f"note: conversation bundle unchanged (keys absent: {missing})")
+    print(f"note: chat bundle unchanged (keys absent: {missing})")
     return 0
 
 
@@ -414,7 +405,7 @@ def patch_simple(root: pathlib.Path, rel: str, table, name: str) -> int:
 
 def patch_reasoning_markdown(root: pathlib.Path) -> int:
     """Render the Think (reasoning) block body as markdown in the conversation bundle."""
-    conv = root / "dsh-client-ui-conversation" / "lib" / "client.js"
+    conv = root / "dsh-client-ui-chat" / "lib" / "client.js"
     if not conv.exists():
         print(f"skip (absent): {conv.relative_to(root)}")
         return 0
@@ -489,13 +480,18 @@ def main() -> int:
         print(f"error: {root} is not a directory", file=sys.stderr)
         return 1
 
-    bundle = (
-        root / "dsh-web-frontend" / "dist" / "assets" / "index-Dqw48FrP.js"
+    # The frontend entry chunk is content-hashed (index-<hash>.js); glob it
+    # instead of pinning one hash, which silently skipped this patch whenever
+    # the harness was upgraded.
+    bundles = sorted(
+        (root / "dsh-web-frontend" / "dist" / "assets").glob("index-*.js")
     )
     html = root / "dsh-web-frontend" / "dist" / "index.html"
 
     patched = 0
-    if bundle.exists():
+    if not bundles:
+        print("skip (absent): dsh-web-frontend/dist/assets/index-*.js")
+    for bundle in bundles:
         data = bundle.read_bytes()
         new_data, missing = patch_bytes(data, REPL)
         if new_data != data:
@@ -504,10 +500,9 @@ def main() -> int:
             print(f"patched: {bundle.relative_to(root)}")
         if missing:
             print(
-                f"note: {len(missing)} dictionary keys absent from the bundle: {sorted(missing)}"
+                f"note: {len(missing)}/{len(REPL)} dictionary keys absent from "
+                f"{bundle.name}: {sorted(missing)}"
             )
-    else:
-        print(f"skip (absent): {bundle.relative_to(root)}")
 
     patched += patch_conversation(root)
     patched += patch_commands(root)
@@ -536,12 +531,13 @@ def main() -> int:
             patched += 1
             print(f"patched: {html.relative_to(root)} lang -> en")
 
-    # verify no CJK left in the bundle
-    if bundle.exists():
+    # verify no CJK left in the patched bundles
+    for bundle in bundles:
         left = sorted(set(CJK.findall(bundle.read_text(encoding="utf-8"))))
         if left:
             print(
-                f"WARNING: bundle still contains CJK: {left}", file=sys.stderr
+                f"WARNING: {bundle.name} still contains CJK: {left}",
+                file=sys.stderr,
             )
 
     print(f"done: patched {patched} files")
