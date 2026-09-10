@@ -901,6 +901,22 @@ let
               export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
               ${pkgs.neg.dsh-restart}
             fi
+
+            # Stale-host warning: the browser loads the plugin CLIENT halves from
+            # these directories on every page load, but the running dsh holds the
+            # HOST halves it booted with. Editing a host bundle without restarting
+            # dsh leaves the two halves out of step (a changed wire protocol then
+            # shows up as broken menus and commands in an otherwise fresh page) —
+            # which is exactly what a rebuild-without-reinstall used to hide.
+            export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+            if systemctl --user is-active --quiet dsh.service 2>/dev/null; then
+              started="$(systemctl --user show dsh.service -p ActiveEnterTimestamp --value 2>/dev/null || true)"
+              stale="$([ -n "$started" ] && find "$PROFILE_DIR/node_modules" -name 'index.js' -path '*/lib/*' -newermt "$started" 2>/dev/null | head -5)"
+              if [ -n "$stale" ]; then
+                echo "dsh-market: host halves newer than the running dsh — restart it (dsh-restart):" >&2
+                printf '  %s\n' $stale >&2
+              fi
+            fi
   '';
 in
 {
