@@ -42,6 +42,99 @@ try {
 }
 const mapSha = crypto.createHash("sha256").update(mapRaw).digest("hex");
 
+/**
+ * Count string literals that still contain CJK after patching. A bundle that
+ * keeps hundreds of them means the map no longer matches (e.g. the plugin was
+ * upgraded upstream) — the silent failure mode that leaves a Chinese UI.
+ * @param text - the patched bundle text.
+ * @returns the number of distinct CJK-bearing literals.
+ */
+function remainingCjkLiterals(text) {
+  // Comment lines keep their Chinese (invisible to the user): a leftover there
+  // is not a gap, so only code lines count.
+  const code = text.split("\n").filter((line) => {
+    const t = line.trim();
+    return !(t.startsWith("//") || t.startsWith("*") || t.startsWith("/*"));
+  }).join("\n");
+  const dq = /"[^"\n]*[\u4e00-\u9fff][^"\n]*"/g;
+  const tpl = /`[^`\n]*[\u4e00-\u9fff][^`\n]*`/g;
+  return new Set([...code.matchAll(dq)].map((m) => m[0]).concat([...code.matchAll(tpl)].map((m) => m[0]))).size;
+}
+
+/**
+ * Code-level fixes this repo needs on top of the translations. Each entry is an
+ * exact literal occurrence in the bundle: `from` is what upstream ships, `to`
+ * what this deployment needs. Applied before the map, so `bundleSha` below
+ * still records the pristine input.
+ */
+const FIXES = [
+  {
+    id: "tui-default-preset",
+    from: 'const DEFAULT_PRESET_ID = "standard";',
+    to: 'const DEFAULT_PRESET_ID = "neg";',
+  },
+  {
+    id: "truncation-marker-russian",
+    // The regex parses the marker back out of already-rendered lines; the
+    // translated markers are Russian, so they have to match too.
+    from: "/…\\s*\\+\\s*\\d+\\s*行(?:\\s*·\\s*ctrl\\+o\\s*展开)?|…\\s*\\+\\s*\\d+\\s*行 diff|…\\s*\\+\\s*\\d+\\s*lines\\s*\\[Ctrl\\+O\\]/i",
+    to: "/…\\s*\\+\\s*\\d+\\s*行(?:\\s*·\\s*ctrl\\+o\\s*展开)?|…\\s*\\+\\s*\\d+\\s*行 diff|…\\s*\\+\\s*\\d+\\s*lines\\s*\\[Ctrl\\+O\\]|…\\s*(?:выше|ещё)\\s*\\d+\\s*строк|скрыто(?:\\s+выше)?\\s*\\d+\\s*строк/i",
+  },
+
+  {
+    id: "cjk-\u76ee\u6807\u5df2\u963b\u585e",
+    from: "`\u76ee\u6807\u5df2\u963b\u585e: ${goals.block(agent, ref, {",
+    to: "`\u0426\u0435\u043b\u044c \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d\u0430: ${goals.block(agent, ref, {",
+  },
+  {
+    id: "cjk-\u5df2\u4fdd\u5b58\u8bb0\u5fc6",
+    from: "`\u5df2\u4fdd\u5b58\u8bb0\u5fc6: ${(await memory.save({",
+    to: "`\u041f\u0430\u043c\u044f\u0442\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0430: ${(await memory.save({",
+  },
+  {
+    id: "usage-2",
+    from: "const USAGE_TEXT = `dsh-tianshu-tui \u2014 DeepSeek Harness \u4ea4\u4e92\u5f0f\u7ec8\u7aef\u754c\u9762 / interactive terminal UI",
+    to: "const USAGE_TEXT = `dsh-tianshu-tui \u2014 DeepSeek Harness interactive terminal UI",
+  },
+  {
+    id: "usage-3",
+    from: "\u7528\u6cd5 / Usage:",
+    to: "Usage:",
+  },
+  {
+    id: "usage-4",
+    from: "  dsh --profile tui                   \u542f\u52a8\u4ea4\u4e92\u5f0f TUI / start the interactive TUI",
+    to: "  dsh --profile tui                   start the interactive TUI",
+  },
+  {
+    id: "usage-5",
+    from: "  dsh --profile tui \"<\u043f\u0440\u043e\u043c\u043f\u0442>\"        \u542f\u52a8\u5e76\u76f4\u63a5\u53d1\u9001\u63d0\u793a\u8bcd / start and send a prompt",
+    to: "  dsh --profile tui \"<\u043f\u0440\u043e\u043c\u043f\u0442>\"        start and send a prompt",
+  },
+  {
+    id: "usage-6",
+    from: "  dsh --profile tui --help            \u663e\u793a\u672c\u5e2e\u52a9 / show this help",
+    to: "  dsh --profile tui --help            show this help",
+  },
+  {
+    id: "usage-7",
+    from: "  dsh --profile tui --version         \u8f93\u51fa\u7248\u672c / print the version",
+    to: "  dsh --profile tui --version         print the version",
+  },
+  {
+    id: "usage-8",
+    from: "\u5feb\u6377\u952e / Keys: ctrl+n \u65b0\u4f1a\u8bdd \u00b7 ctrl+s \u6062\u590d \u00b7 ctrl+p \u547d\u4ee4\u9762\u677f \u00b7 / slash \u547d\u4ee4 \u00b7 ctrl+o \u5c55\u5f00\u63a8\u7406 \u00b7 shift+tab \u6a21\u5f0f\u5faa\u73af \u00b7 ctrl+q / /exit \u9000\u51fa",
+    to: "Keys: ctrl+n new session \u00b7 ctrl+s resume \u00b7 ctrl+p command palette \u00b7 / slash commands \u00b7 ctrl+o expand reasoning \u00b7 shift+tab mode cycle \u00b7 ctrl+q / /exit quit",
+  },
+
+  {
+    id: "session-list-snapshot-header",
+    from: ".map((header) => {\n\t\tconst summary = toSummary(header);",
+    to: ".map((entry) => {\n\t\tconst header = entry?.header ?? entry;\n\t\tconst summary = toSummary(header);",
+  },
+];
+const fixesSha = crypto.createHash("sha256").update(JSON.stringify(FIXES)).digest("hex");
+
 const pkgDir = path.resolve(path.dirname(bundlePath), "..");
 const markerPath = path.join(pkgDir, ".dsh-tui-ru.json");
 const origPath = `${bundlePath}.orig`;
@@ -60,9 +153,26 @@ let marker = null;
 try {
   marker = JSON.parse(fs.readFileSync(markerPath, "utf8"));
 } catch {}
-if (marker && marker.mapSha === mapSha && marker.bundleSha === bundleSha) {
+if (marker && marker.mapSha === mapSha && marker.bundleSha === bundleSha
+    && marker.fixesSha === fixesSha) {
   log(`up to date: ${bundlePath}`);
   process.exit(0);
+}
+
+// The TUI's own defaults first: they are code, not copy, and the translation
+// map below must not be able to mask them.
+const fixNotes = [];
+for (const fix of FIXES) {
+  if (bundle.includes(fix.to) && !bundle.includes(fix.from)) {
+    fixNotes.push(`${fix.id}: already applied`);
+    continue;
+  }
+  if (!bundle.includes(fix.from)) {
+    fixNotes.push(`${fix.id}: not present in this version (skipped)`);
+    continue;
+  }
+  bundle = bundle.split(fix.from).join(fix.to);
+  fixNotes.push(`${fix.id}: applied`);
 }
 
 // Apply replacements longest-first (so overlapping literals stay consistent).
@@ -101,9 +211,11 @@ fs.writeFileSync(
   `${JSON.stringify(
     {
       mapSha,
+      fixesSha,
       bundleSha,
       at: new Date().toISOString(),
       stringsApplied: applied,
+      fixes: fixNotes,
     },
     null,
     2
@@ -111,4 +223,10 @@ fs.writeFileSync(
 );
 
 log(`patched ${bundlePath}: ${applied} strings replaced, ${missing.length} not present in this version (covered by longer entries or plugin-version drift)`);
+for (const note of fixNotes) log(`  fix ${note}`);
+const leftoverCjk = remainingCjkLiterals(bundle);
+if (leftoverCjk > 0) {
+  log(`WARNING: ${leftoverCjk} Chinese string literals remain in ${bundlePath}`);
+  log("  the translation map may be stale for this bundle version — extend i18n.json and re-run");
+}
 process.exit(0);
