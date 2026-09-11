@@ -8,25 +8,25 @@ dsh-tool-todo, dsh-session-projection, dsh-llm (createUserMessage); example dsh-
 
 ## 1. Behavioral specification
 
-Goal: when the agent goes idle while unclosed tasks remain in the todo, the harness itself wakes
-the agent with a system directive and makes it continue working until the tasks are done. This is
-the "Sisyphus stone": the agent must not stop.
+Goal: when the agent goes idle while unclosed tasks remain in the todo, the harness itself wakes the
+agent with a system directive and makes it continue working until the tasks are done. This is the
+"Sisyphus stone": the agent must not stop.
 
 ### Triggers
 
-- Main trigger — the agent going idle: the DSH event agent/status with status === "idle". On it
-  the check and the countdown start.
-- Stop events cancel an already running countdown and reset part of the state: a new user
-  message, an assistant message, a tool-call (message.updated, message.part.updated,
-  message.part.delta, tool.execute.before/after, agent/status → running).
-- session.error with AbortError / MessageAbortedError sets wasCancelled and cancels the
-  countdown; a token-limit or non-retryable request error (400/422 + isRetryable:false) sets the
-  corresponding flag and stops the loop.
+- Main trigger — the agent going idle: the DSH event agent/status with status === "idle". On it the
+  check and the countdown start.
+- Stop events cancel an already running countdown and reset part of the state: a new user message,
+  an assistant message, a tool-call (message.updated, message.part.updated, message.part.delta,
+  tool.execute.before/after, agent/status → running).
+- session.error with AbortError / MessageAbortedError sets wasCancelled and cancels the countdown; a
+  token-limit or non-retryable request error (400/422 + isRetryable:false) sets the corresponding
+  flag and stops the loop.
 
 ### Countdown — 2 seconds
 
-- A successful check does NOT inject immediately: startCountdown() shows the toast "Resuming in Ns...
-  (K tasks remaining)", TOAST_DURATION_MS = 900ms, tick 1s.
+- A successful check does NOT inject immediately: startCountdown() shows the toast "Resuming in
+  Ns... (K tasks remaining)", TOAST_DURATION_MS = 900ms, tick 1s.
 - COUNTDOWN_SECONDS = 2: after 2000ms the countdown is cancelled and injectContinuation() is called.
 - COUNTDOWN_GRACE_PERIOD_MS = 500: a user message in the first 500ms after the countdown starts is
   ignored (protection against the race "we are already counting while the user is still typing").
@@ -36,35 +36,35 @@ the "Sisyphus stone": the agent must not stop.
 
 ### Backoff and cooldown
 
-- CONTINUATION_COOLDOWN_MS = 5000: the minimum interval between two injections into one session (also
-  passed as semanticDedupeHoldMs to the gate — do not spawn duplicates within 5s).
+- CONTINUATION_COOLDOWN_MS = 5000: the minimum interval between two injections into one session
+  (also passed as semanticDedupeHoldMs to the gate — do not spawn duplicates within 5s).
 - Exponential backoff on repeated failures: effective cooldown = COOLDOWN_MS * 2 \*\*
   min(consecutiveFailures, 5) → 5s, 10s, 20s, 40s, 80s, 160s (base ×2, cap ×32).
 - MAX_CONSECUTIVE_FAILURES = 5: after 5 failed injections in a row injections stop; a retry is
   allowed only after FAILURE_RESET_WINDOW_MS = 5 * 60 * 1000 (a 5-minute pause), with the counter
   reset to 0.
-- ⚠️ Divergence from the backlog: agent-harness-features.md and agent-guards.md say "base 30s,
-  ×2". In the omo code the exponent base is 5s (CONTINUATION_COOLDOWN_MS). Decide before
-  implementation (see risks): for DSH I recommend following the omo code (5s) unless a literal port
-  of the backlog text is required.
+- ⚠️ Divergence from the backlog: agent-harness-features.md and agent-guards.md say "base 30s, ×2".
+  In the omo code the exponent base is 5s (CONTINUATION_COOLDOWN_MS). Decide before implementation
+  (see risks): for DSH I recommend following the omo code (5s) unless a literal port of the backlog
+  text is required.
 
 ### Stagnation detection — max 3
 
 - Counted on each idle after a successful injection: if the next check saw no progress on the todo,
   stagnationCount += 1.
 - Progress = a decrease in incompleteCount, an increase in the number of completed, or a change in
-  the snapshot {id → status} (changing only content/priority does NOT count as progress — omo
-  issue #4013).
+  the snapshot {id → status} (changing only content/priority does NOT count as progress — omo issue
+  #4013).
 - When stagnationCount >= MAX_STAGNATION_COUNT = 3, injection stops for the session (the agent
   "responds to the directive but does not move the tasks"). Reset — on any progress.
 
 ### Compaction guard — 60 seconds
 
 - COMPACTION_GUARD_MS = 60_000. On a compaction event the guard is armed with a new epoch.
-- While the guard is active and the epoch has not been acknowledged by the agent, the idle
-  injection is skipped: right after compaction the context has just been rebuilt, and an immediate
-  directive breaks the recovery. The guard is acknowledged when agent-info appears on the resolved
-  agent; after ack or 60s injection is allowed.
+- While the guard is active and the epoch has not been acknowledged by the agent, the idle injection
+  is skipped: right after compaction the context has just been rebuilt, and an immediate directive
+  breaks the recovery. The guard is acknowledged when agent-info appears on the resolved agent;
+  after ack or 60s injection is allowed.
 
 ### When NOT to inject (full list)
 
@@ -89,8 +89,7 @@ the "Sisyphus stone": the agent must not stop.
    system/subagent roles).
 1. The compaction guard is active for the current epoch (or a compaction without a resolved agent).
 1. isContinuationStopped(sessionID) — an external stop of the continuation.
-1. continuationBlockReason — a pause at the turn boundary (directive-response or
-   user-interruption).
+1. continuationBlockReason — a pause at the turn boundary (directive-response or user-interruption).
 1. The agent has no write permission (edit/write is not deny/false).
 1. Fetch of messages/todo failed — skip safely (do not inject blindly).
 
@@ -101,8 +100,8 @@ browser client.ts only draws the toast/indicator.
 
 ### Files to add (in the dsh-web-ui fork, packages/dsh-boulder/)
 
-- package.json — name @deepseek-ai/dsh-boulder, exports . and ./client, dsh.client.platform:
-  "web", peerDeps on dsh-agent/dsh-session/dsh-llm/dsh-tool-todo/cordis.
+- package.json — name @deepseek-ai/dsh-boulder, exports . and ./client, dsh.client.platform: "web",
+  peerDeps on dsh-agent/dsh-session/dsh-llm/dsh-tool-todo/cordis.
 - src/index.ts → lib/index.js — host: apply + state-store + all the logic.
 - src/client.ts → lib/client.js — browser: window.__ModuleLoader__.load(...), renders the
   countdown-toast/status.
@@ -121,9 +120,9 @@ cancels the countdown (the analog of non-idle-events).
 
 Two paths:
 
-1. Projection (preferred): ctx.sessionProjections.snapshot(agent.session).values.todos →
-   TodoItem[] | null (the last todo/write, last-wins). The projection is registered by
-   dsh-tool-todo; if the service is not loaded yet — fallback.
+1. Projection (preferred): ctx.sessionProjections.snapshot(agent.session).values.todos → TodoItem[]
+   | null (the last todo/write, last-wins). The projection is registered by dsh-tool-todo; if the
+   service is not loaded yet — fallback.
 1. Fallback without dependencies: fold agent.session.events and take the last todo/write:
    events.filter(e => e.type === "todo/write").at(-1)?.data.todos.
 
@@ -151,8 +150,8 @@ the list "- [status] content").
 - SessionStateStore: Map\<SessionId, State>; omo fields: countdownTimer/Interval, lastInjectedAt,
   lastIncompleteCount, stagnationCount, consecutiveFailures, abortDetectedAt, wasCancelled,
   tokenLimitDetected, unrecoverableErrorDetected, inFlight, awaitingPostInjectionProgressCheck,
-  continuationResponseObserved, continuationBlockReason, pendingUserMessageID,
-  allTodosCompletedAt, recentCompactionAt/Epoch, acknowledgedCompactionEpoch.
+  continuationResponseObserved, continuationBlockReason, pendingUserMessageID, allTodosCompletedAt,
+  recentCompactionAt/Epoch, acknowledgedCompactionEpoch.
 - TTL of 10 min + prune every 2 min; session.deleted → cleanup().
 - dispose()/fiber disposal → cancelAllCountdowns + shutdown.
 
@@ -408,7 +407,6 @@ function emitToast(message: string): void {
 }
 ```
 
-
 Implementation note: in real code the state store lives in the closure of apply and is passed
 explicitly (here, for brevity, via ctx.\_\_boulderStore); reading todos goes through
 ctx.inject(["sessionProjections"], ...) or a fold of agent.session.events; replace the compaction
@@ -440,9 +438,9 @@ window.__ModuleLoader__.load({
 
 ## 4. Risks / open questions
 
-1. 30s vs 5s. The backlog (agent-harness-features.md, agent-guards.md) records "backoff 30s×2",
-   but the omo constants.ts has CONTINUATION_COOLDOWN_MS = 5_000 as the exponent base. An explicit
-   owner decision is needed: 30s (per the backlog) or 5s (per the omo code).
+1. 30s vs 5s. The backlog (agent-harness-features.md, agent-guards.md) records "backoff 30s×2", but
+   the omo constants.ts has CONTINUATION_COOLDOWN_MS = 5_000 as the exponent base. An explicit owner
+   decision is needed: 30s (per the backlog) or 5s (per the omo code).
 1. steer vs inject. steer wakes the agent and can be perceived as a new user message; an
    internal-source UserMessage or a dedupe marker is needed so it does not fall into
    "user-interruption" and loop the classification. In omo this is
@@ -453,13 +451,13 @@ window.__ModuleLoader__.load({
 1. Compaction event. In DSH compaction is done by dsh-compaction; the event name and payload
    (session.compacted?) must be confirmed against its types, otherwise the guard will not fire.
 1. Pending question. omo uses hasUnansweredQuestion based on messages; in DSH the questions are
-   dsh-user-questions / ask_user_question. An exact signal "waiting for a user answer" is needed
-   so the agent is not woken on top of a question.
+   dsh-user-questions / ask_user_question. An exact signal "waiting for a user answer" is needed so
+   the agent is not woken on top of a question.
 1. State persistence. The omo state lives in the memory of the process. In DSH, restarting the web
    profile loses the counters (stagnation/failures); either accept that or store them in a session
    projection/JSON file.
-1. Races and reentrancy. agent/status is an emit; the injection is asynchronous. inFlight is
-   needed — cancel the countdown on any running/tool/message event, otherwise double injections are
+1. Races and reentrancy. agent/status is an emit; the injection is asynchronous. inFlight is needed
+   — cancel the countdown on any running/tool/message event, otherwise double injections are
    possible on fast idle⇄running flips.
 1. Tests. Cover on dsh-agent-loop-testkit: idle+incomplete → injection; all skip conditions;
    cooldown/backoff; stagnation 3; compaction-guard 60s; abort-window; token-limit;

@@ -1,19 +1,21 @@
 # Hotkeys and the Russian layout: inventory and fix plan
 
-> Status: **implemented** — P0 (Hyprland), P1 (kitty/mpv/SurfingKeys), P2 (zellij/yazi/rmpc); mutt and
-> rustmission are **not fixable via config** (confirmed from the source — see "Validation"); btop/ghostty
-> are known issues. The RU duplicates are additive (the US layout is unaffected); exception — kitty's
-> Emacs scroll layer was moved from Ctrl+Shift to Ctrl+Alt to remove a conflict with `kitty_mod+b/f/p`.
+> Status: **implemented** — P0 (Hyprland), P1 (kitty/mpv/SurfingKeys), P2 (zellij/yazi/rmpc); mutt
+> and rustmission are **not fixable via config** (confirmed from the source — see "Validation");
+> btop/ghostty are known issues. The RU duplicates are additive (the US layout is unaffected);
+> exception — kitty's Emacs scroll layer was moved from Ctrl+Shift to Ctrl+Alt to remove a conflict
+> with `kitty_mod+b/f/p`.
 
 ## TL;DR
 
 - **Hyprland (WM) hotkeys already work under both layouts.** Why: `kb_layout = "us,ru"` — `us` is
-  first, and `input:resolve_binds_by_sym` is unset (defaults to `false`), so binds are matched against
-  the **first** layout's symbol (us), not the active one. Everything breaks only if the layouts are
-  reordered (`ru,us`) or `resolve_binds_by_sym = true` is enabled.
-- **Main victims of the RU layout** are programs that match hotkeys against the active layout's keysym
-  with no fallback:
-  - `kitty` — every `kitty_mod` (Ctrl+Shift+letter) and `Ctrl+letter` shortcut from `files/kitty/key.conf`;
+  first, and `input:resolve_binds_by_sym` is unset (defaults to `false`), so binds are matched
+  against the **first** layout's symbol (us), not the active one. Everything breaks only if the
+  layouts are reordered (`ru,us`) or `resolve_binds_by_sym = true` is enabled.
+- **Main victims of the RU layout** are programs that match hotkeys against the active layout's
+  keysym with no fallback:
+  - `kitty` — every `kitty_mod` (Ctrl+Shift+letter) and `Ctrl+letter` shortcut from
+    `files/kitty/key.conf`;
   - `mpv` — letter keys (`p i r t v f l h L H m j s`, etc.);
   - SurfingKeys in Vivaldi — vim navigation (`j k h l t d u w o e b v s H L F`, etc.);
   - TUI programs in the terminal (zellij, mutt, yazi, rustmission, rmpc, khal, broot, tig) — "bare"
@@ -29,63 +31,63 @@ A keyboard event carries two identifiers:
 - **keycode** — the physical key (e.g. `KEY_D` = 40). Independent of the layout.
 - **keysym** — the character the key produces in the **active** layout (`d` in us, `в` in ru).
 
-A hotkey bound to a Latin letter is matched by keysym. Under the RU layout the keysym becomes Cyrillic
-and the match fails. What happens next depends on the layer:
+A hotkey bound to a Latin letter is matched by keysym. Under the RU layout the keysym becomes
+Cyrillic and the match fails. What happens next depends on the layer:
 
-| Layer | Behavior under RU |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hyprland (binds)** | ✅ Binds are matched against the keysym of the **first** layout (`us`), because `resolve_binds_by_sym = false` (default) and the translation state is built from `kb_layout` with group 0. All `SUPER+d`, `M4+SHIFT+r` and submaps work under both layouts. |
-| **Qt apps** | ✅ `Ctrl+letter` works (Qt takes the Latin key from group 0 while a modifier is pressed). ❌ Bare letters and `Alt+letter` are matched by the actual character. |
-| **GTK apps** | ✅ `Ctrl+letter` mostly works (falls back to the keyval of group 0). ❌ Bare letters break. |
-| **Electron/Chromium** (Vivaldi, Obsidian, VS Code) | ✅ `Ctrl+letter` works (Chromium accelerators are derived from the physical key/US keycode). ❌ Modifier-free binds (vim style) match `event.key` → Cyrillic. |
-| **kitty** | ❌ Own shortcuts are matched against the **active** layout's keysym (see kovidgoyal/kitty#2000 — official workaround: duplicates like `map ctrl+CYRILLIC_ES ...`). |
-| **ghostty** | ⚠️ Known bugs even with `Ctrl+letter` under RU (ghostty-org/ghostty#3513, #3584); fixed in newer versions by moving to W3C key-code binds (#7320). |
-| **TUIs in the terminal** | ✅ `Ctrl+letter` — the terminal turns it into a control byte (0x00–0x1F) from the physical key. ❌ A letter without a modifier / `Alt+letter` — the app receives a Cyrillic character. |
-| **Games (SDL)** | ✅ Physical key scan codes — the layout has no effect. |
+| Layer                                              | Behavior under RU                                                                                                                                                                                                                                           |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hyprland (binds)**                               | ✅ Binds are matched against the keysym of the **first** layout (`us`), because `resolve_binds_by_sym = false` (default) and the translation state is built from `kb_layout` with group 0. All `SUPER+d`, `M4+SHIFT+r` and submaps work under both layouts. |
+| **Qt apps**                                        | ✅ `Ctrl+letter` works (Qt takes the Latin key from group 0 while a modifier is pressed). ❌ Bare letters and `Alt+letter` are matched by the actual character.                                                                                             |
+| **GTK apps**                                       | ✅ `Ctrl+letter` mostly works (falls back to the keyval of group 0). ❌ Bare letters break.                                                                                                                                                                 |
+| **Electron/Chromium** (Vivaldi, Obsidian, VS Code) | ✅ `Ctrl+letter` works (Chromium accelerators are derived from the physical key/US keycode). ❌ Modifier-free binds (vim style) match `event.key` → Cyrillic.                                                                                               |
+| **kitty**                                          | ❌ Own shortcuts are matched against the **active** layout's keysym (see kovidgoyal/kitty#2000 — official workaround: duplicates like `map ctrl+CYRILLIC_ES ...`).                                                                                          |
+| **ghostty**                                        | ⚠️ Known bugs even with `Ctrl+letter` under RU (ghostty-org/ghostty#3513, #3584); fixed in newer versions by moving to W3C key-code binds (#7320).                                                                                                          |
+| **TUIs in the terminal**                           | ✅ `Ctrl+letter` — the terminal turns it into a control byte (0x00–0x1F) from the physical key. ❌ A letter without a modifier / `Alt+letter` — the app receives a Cyrillic character.                                                                      |
+| **Games (SDL)**                                    | ✅ Physical key scan codes — the layout has no effect.                                                                                                                                                                                                      |
 
 ## Validation: what was checked and where
 
-| Claim | How it was verified | Result |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| Hyprland binds resolve against the **first** layout | Source at the pinned revision `36b2e0cf`: `KeybindManager.cpp` — `xkb_state_key_get_one_sym(m_resolveBindsBySym ? m_xkbSymState : m_xkbTranslationState, KEYCODE)`; `m_xkbTranslationState = xkb_state_new(keymap)` (group 0); `ConfigValues.cpp` — `resolve_binds_by_sym` default `false` | ✅ |
-| kitty matches shortcuts against the **active** layout's keysym; `CYRILLIC_*` names are valid | `kitty/key_names.py` (names parsed through `xkb_keysym_from_name`); the maintainer's official workaround in kovidgoyal/kitty#2000 (`map ctrl+CYRILLIC_ES send_text all \x03`) | ✅ |
-| mpv matches the "translated" text of the active layout; literal Unicode keys in input.conf | mpv `DOCS/man/input.rst`: "`<key>` is either the literal character … (ASCII or Unicode)", "mpv uses input translated by the current OS keyboard layout, rather than physical scan codes" | ✅ |
-| zellij accepts Cyrillic keys in its config | `zellij-utils/src/data.rs` — `BareKey::from_str`: any single char; matching via `KeyCode::Char(c)` (`input/mod.rs`) | ✅ |
-| In the terminal `Ctrl+letter` = a control byte from the physical key | Standard terminal behavior (kitty without the keyboard protocol sends the control byte from the keycode) | ✅ |
-| Chromium/Electron: `Ctrl+letter` from the physical key | Known, widely documented behavior (accelerator = US `KeyboardCode` from `DomCode`) | ✅ (empirically) |
-| yazi accepts Cyrillic keys (lowercase) | `yazi-config/src/keymap/key.rs` — `Key::from_str`: any single char; uppercase implies SHIFT → an uppercase Cyrillic letter will not match | ✅ (lowercase) |
-| rmpc accepts Cyrillic keys | `rmpc/src/config/keys/key.rs` — winnow `any` (any Unicode char), case → SHIFT | ✅ |
-| neomutt does **not** accept Cyrillic keys | `key/keymap.c` — `parse_keys`: `*d = (unsigned char) *s` (byte); a UTF-8 char (2 bytes) binds to its first byte and breaks input | ❌ not fixable |
-| rustmission does **not** accept Cyrillic keys | intuitils `keybindings.rs`: `if key.len() == 1` (byte length); Cyrillic = 2 bytes → parse error | ❌ not fixable |
+| Claim                                                                                        | How it was verified                                                                                                                                                                                                                                                                        | Result           |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| Hyprland binds resolve against the **first** layout                                          | Source at the pinned revision `36b2e0cf`: `KeybindManager.cpp` — `xkb_state_key_get_one_sym(m_resolveBindsBySym ? m_xkbSymState : m_xkbTranslationState, KEYCODE)`; `m_xkbTranslationState = xkb_state_new(keymap)` (group 0); `ConfigValues.cpp` — `resolve_binds_by_sym` default `false` | ✅               |
+| kitty matches shortcuts against the **active** layout's keysym; `CYRILLIC_*` names are valid | `kitty/key_names.py` (names parsed through `xkb_keysym_from_name`); the maintainer's official workaround in kovidgoyal/kitty#2000 (`map ctrl+CYRILLIC_ES send_text all \x03`)                                                                                                              | ✅               |
+| mpv matches the "translated" text of the active layout; literal Unicode keys in input.conf   | mpv `DOCS/man/input.rst`: "`<key>` is either the literal character … (ASCII or Unicode)", "mpv uses input translated by the current OS keyboard layout, rather than physical scan codes"                                                                                                   | ✅               |
+| zellij accepts Cyrillic keys in its config                                                   | `zellij-utils/src/data.rs` — `BareKey::from_str`: any single char; matching via `KeyCode::Char(c)` (`input/mod.rs`)                                                                                                                                                                        | ✅               |
+| In the terminal `Ctrl+letter` = a control byte from the physical key                         | Standard terminal behavior (kitty without the keyboard protocol sends the control byte from the keycode)                                                                                                                                                                                   | ✅               |
+| Chromium/Electron: `Ctrl+letter` from the physical key                                       | Known, widely documented behavior (accelerator = US `KeyboardCode` from `DomCode`)                                                                                                                                                                                                         | ✅ (empirically) |
+| yazi accepts Cyrillic keys (lowercase)                                                       | `yazi-config/src/keymap/key.rs` — `Key::from_str`: any single char; uppercase implies SHIFT → an uppercase Cyrillic letter will not match                                                                                                                                                  | ✅ (lowercase)   |
+| rmpc accepts Cyrillic keys                                                                   | `rmpc/src/config/keys/key.rs` — winnow `any` (any Unicode char), case → SHIFT                                                                                                                                                                                                              | ✅               |
+| neomutt does **not** accept Cyrillic keys                                                    | `key/keymap.c` — `parse_keys`: `*d = (unsigned char) *s` (byte); a UTF-8 char (2 bytes) binds to its first byte and breaks input                                                                                                                                                           | ❌ not fixable   |
+| rustmission does **not** accept Cyrillic keys                                                | intuitils `keybindings.rs`: `if key.len() == 1` (byte length); Cyrillic = 2 bytes → parse error                                                                                                                                                                                            | ❌ not fixable   |
 
 ## Inventory from the config
 
 Legend: ✅ works / ❌ breaks / ⚠️ partial or needs checking.
 
-| Program | What happens under the RU layout | Status | File |
-| ----------------------------- | -------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------- |
-| Hyprland (all binds, submaps) | binds resolve against the first layout — work | ✅ | `files/gui/hypr/hyprland.lua` |
-| greetd / Hyprland greeter | `us,ru`, starts in us; no binds | ✅ | `modules/user/session/greetd.nix` |
-| swayimg | JCUKEN duplicates for all actions | ✅ (fixed) | `files/gui/swayimg/init.lua` |
-| neovim | langmap + langmapper.nvim | ✅ (fixed) | `files/nvim/lua/00-settings.lua`, `files/nvim/lua/plugins/keymap/langmap.lua` |
-| espanso | `ALT+SPACE` — no letters; `:date` triggers are text | ✅ | `modules/user/nix-maid/cli/espanso.nix` |
-| vicinae | `Ctrl+letter` binds (Qt fallback) | ✅ (check manually) | `modules/user/nix-maid/apps/vicinae.nix` |
-| kitty | `kitty_mod+letter` (Ctrl+Shift), `Ctrl+s>l/p/h`, `kitty_mod+,/.`/grave/`[`/`]`, `Alt+n`, etc. | ❌ | `files/kitty/key.conf` |
-| mpv | `p i r t v f l h L H m j s A`, `Ctrl+h/l/H`, `Alt+I/U`, `>`/`<` (RU duplicates `Ю`/`Б`) | ✅ (fixed) | `modules/user/nix-maid/apps/mpv/input.nix` |
-| SurfingKeys (Vivaldi) | vim keys `j k h l t d u w o e b v s H L F J+,`; the **hint letter set** (`asdfghjkl`) too | ❌ | `files/surfingkeys.js` |
-| zellij | `Alt+h/j/k/l`; in resize/tab/scroll modes: `h j k l n r` | ✅ (fixed) | `files/gui/zellij/config.kdl` |
-| mutt | `j k g G R u gg`, macros with letters; arrows work | ❌ (not fixable) | `modules/user/nix-maid/mutt-conf/04-bindings.mutt` |
-| yazi | `g d f p` and `h j k l` navigation | ✅ (fixed, lowercase) | `modules/user/nix-maid/cli/yazi.nix` |
-| rustmission | `h l k j H L` | ❌ (not fixable) | `files/config/rustmission/keymap.toml` |
-| rmpc | `p s q u w b f o z r y a d g G j k h l n N m M`, etc. | ✅ (fixed) | `files/rmpc/config.ron` |
-| khal | `e` (edit), `d` (duplicate) | ❌ | `modules/user/nix-maid/sys/khal.nix` |
-| btop | toggles `d n m c f` — **keys are hardcoded, not remappable via config** | ❌ (not fixable) | `modules/user/nix-maid/cli/monitoring.nix` |
-| broot / tig / amfora | letter binds | ❌ | (standard configs) |
-| nethack | letter commands (game) | ❌ | `modules/user/nix-maid/fun/nethack.nix` |
-| zsh vi-mode | `h/j/k/l` in command mode | ❌ | `modules/user/nix-maid/cli/shells.nix` |
-| satty (screenshots) | single letters (GTK, no modifier) | ⚠️ | — |
-| ghostty | config deployed, **package not installed**; known `Ctrl+letter` bugs under RU | ⚠️ | `files/cli/ghostty/config` |
-| Vivaldi / Obsidian (Chromium) | system `Ctrl+letter` ✅; extension letter binds ❌ | ⚠️ | — |
+| Program                       | What happens under the RU layout                                                              | Status                | File                                                                          |
+| ----------------------------- | --------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
+| Hyprland (all binds, submaps) | binds resolve against the first layout — work                                                 | ✅                    | `files/gui/hypr/hyprland.lua`                                                 |
+| greetd / Hyprland greeter     | `us,ru`, starts in us; no binds                                                               | ✅                    | `modules/user/session/greetd.nix`                                             |
+| swayimg                       | JCUKEN duplicates for all actions                                                             | ✅ (fixed)            | `files/gui/swayimg/init.lua`                                                  |
+| neovim                        | langmap + langmapper.nvim                                                                     | ✅ (fixed)            | `files/nvim/lua/00-settings.lua`, `files/nvim/lua/plugins/keymap/langmap.lua` |
+| espanso                       | `ALT+SPACE` — no letters; `:date` triggers are text                                           | ✅                    | `modules/user/nix-maid/cli/espanso.nix`                                       |
+| vicinae                       | `Ctrl+letter` binds (Qt fallback)                                                             | ✅ (check manually)   | `modules/user/nix-maid/apps/vicinae.nix`                                      |
+| kitty                         | `kitty_mod+letter` (Ctrl+Shift), `Ctrl+s>l/p/h`, `kitty_mod+,/.`/grave/`[`/`]`, `Alt+n`, etc. | ❌                    | `files/kitty/key.conf`                                                        |
+| mpv                           | `p i r t v f l h L H m j s A`, `Ctrl+h/l/H`, `Alt+I/U`, `>`/`<` (RU duplicates `Ю`/`Б`)       | ✅ (fixed)            | `modules/user/nix-maid/apps/mpv/input.nix`                                    |
+| SurfingKeys (Vivaldi)         | vim keys `j k h l t d u w o e b v s H L F J+,`; the **hint letter set** (`asdfghjkl`) too     | ❌                    | `files/surfingkeys.js`                                                        |
+| zellij                        | `Alt+h/j/k/l`; in resize/tab/scroll modes: `h j k l n r`                                      | ✅ (fixed)            | `files/gui/zellij/config.kdl`                                                 |
+| mutt                          | `j k g G R u gg`, macros with letters; arrows work                                            | ❌ (not fixable)      | `modules/user/nix-maid/mutt-conf/04-bindings.mutt`                            |
+| yazi                          | `g d f p` and `h j k l` navigation                                                            | ✅ (fixed, lowercase) | `modules/user/nix-maid/cli/yazi.nix`                                          |
+| rustmission                   | `h l k j H L`                                                                                 | ❌ (not fixable)      | `files/config/rustmission/keymap.toml`                                        |
+| rmpc                          | `p s q u w b f o z r y a d g G j k h l n N m M`, etc.                                         | ✅ (fixed)            | `files/rmpc/config.ron`                                                       |
+| khal                          | `e` (edit), `d` (duplicate)                                                                   | ❌                    | `modules/user/nix-maid/sys/khal.nix`                                          |
+| btop                          | toggles `d n m c f` — **keys are hardcoded, not remappable via config**                       | ❌ (not fixable)      | `modules/user/nix-maid/cli/monitoring.nix`                                    |
+| broot / tig / amfora          | letter binds                                                                                  | ❌                    | (standard configs)                                                            |
+| nethack                       | letter commands (game)                                                                        | ❌                    | `modules/user/nix-maid/fun/nethack.nix`                                       |
+| zsh vi-mode                   | `h/j/k/l` in command mode                                                                     | ❌                    | `modules/user/nix-maid/cli/shells.nix`                                        |
+| satty (screenshots)           | single letters (GTK, no modifier)                                                             | ⚠️                    | —                                                                             |
+| ghostty                       | config deployed, **package not installed**; known `Ctrl+letter` bugs under RU                 | ⚠️                    | `files/cli/ghostty/config`                                                    |
+| Vivaldi / Obsidian (Chromium) | system `Ctrl+letter` ✅; extension letter binds ❌                                            | ⚠️                    | —                                                                             |
 
 ### kitty specifics (`files/kitty/key.conf`)
 
@@ -98,8 +100,8 @@ change position under RU (`,` → `б`, `.` → `ю`, `` ` `` → `ё`, `[` → 
 - `kitty_mod+grave` (move_window_to_top), `kitty_mod+l` (next_layout)
 - `kitty_mod+p/u/e/h/o` (hints / scrollback), `kitty_mod+s>f/w/l/p/h` (neghints)
 - `Ctrl+s>w/l/p/h` (neghints to stdout), `Ctrl+alt+s` (screen scrollback), `alt+n` (new_tab)
-- `kitty_mod+t` (new_tab — restored, the standard ctrl+shift+t), `kitty_mod+alt+t`
-  (set_tab_title — the RU duplicate is generated with `alt`, i.e. `ctrl+shift+alt+т`)
+- `kitty_mod+t` (new_tab — restored, the standard ctrl+shift+t), `kitty_mod+alt+t` (set_tab_title —
+  the RU duplicate is generated with `alt`, i.e. `ctrl+shift+alt+т`)
 - `kitty_mod+r>r` / `r>e` / `r>w`, `kitty_mod+a>1/d/l/m` (opacity)
 - `kitty_mod+/` (search) — **US-only**: under RU `/`→`.` and it conflicts with `kitty_mod+.`
   (move_tab_forward), unreachable as a standalone hotkey (same for `>`/`<`)
@@ -116,17 +118,17 @@ Breaks: `p` (pause), `i` (top bar), `r/t` (subtitles), `v` (subtitle visibility)
 `l/h/L/H` (seek), `m` (mute), `A` (audio track), `R` (window-scale), `j/s` (subtitles),
 `Alt+I`/`Alt+U` (AI upscale), `>`/`<` (next/prev) — RU duplicates: `Ю`/`Б` (in JCUKEN `Shift+period`
 gives `Ю`, `Shift+comma` gives `Б`; the `>`/`<` chars are absent from the layout, but the physical
-keys are the same). `Ctrl+h/l/H` (speed) — also breaks (these are mpv shortcuts, not terminal control
-bytes). `space`, `0/9`, `WHEEL_*`, `Alt+0/1/2`, `Ctrl+enter` — layout-independent ✅.
+keys are the same). `Ctrl+h/l/H` (speed) — also breaks (these are mpv shortcuts, not terminal
+control bytes). `space`, `0/9`, `WHEEL_*`, `Alt+0/1/2`, `Ctrl+enter` — layout-independent ✅.
 
 ### SurfingKeys specifics (`files/surfingkeys.js`)
 
 Modifier-free vim navigation: `j k h l` (scroll), `t` (new tab), `d` (close), `u` (restore), `w`
-(tab list), `o` (address bar), `e` (next tab), `b/v/s` (scroll), `H/L` (back/forward), `F` (open in a
-new tab), `J`/`,`+letter (sites), `]`/`[` (video speed), etc. — all of it is matched via `event.key` →
-Cyrillic. Limitation: hints mode (`f`) accepts only `hintChars = "asdfghjkl"` — under RU the hint
-letter set breaks and cannot be fixed via config (a US layout is needed for hints). The same applies
-to `kitten hints --alphabet wersdfa` in kitty.
+(tab list), `o` (address bar), `e` (next tab), `b/v/s` (scroll), `H/L` (back/forward), `F` (open in
+a new tab), `J`/`,`+letter (sites), `]`/`[` (video speed), etc. — all of it is matched via
+`event.key` → Cyrillic. Limitation: hints mode (`f`) accepts only `hintChars = "asdfghjkl"` — under
+RU the hint letter set breaks and cannot be fixed via config (a US layout is needed for hints). The
+same applies to `kitten hints --alphabet wersdfa` in kitty.
 
 URL exceptions: `settings.blocklistPattern` disables SurfingKeys entirely on the dsh web GUI
 (`127.0.0.1:3080` / `localhost:3080` — it has its own shortcuts and Tab autocomplete), as well as on
@@ -154,16 +156,16 @@ resolve_binds_by_sym = false,
 
 ### P1 — kitty (the main terminal, the most frequent scenario)
 
-**File:** `files/kitty/key.conf` — the `Russian layout duplicates (ЙЦУКЕН)` block is **generated** from
-`lib/ru-keys.nix` (`kittyRuBinds` in `shells.nix`) and uses **literal Cyrillic characters**
+**File:** `files/kitty/key.conf` — the `Russian layout duplicates (ЙЦУКЕН)` block is **generated**
+from `lib/ru-keys.nix` (`kittyRuBinds` in `shells.nix`) and uses **literal Cyrillic characters**
 (`map ctrl+shift+м …`) — exactly like kitty's Latin binds.
 
 > ⚠️ Fix (2026-08): the original plan used `CYRILLIC_*` keysym names — on this system they **do not
 > work**: kitty resolves them via `xkb_keysym_from_name`, and `libxkbcommon` fails to load (no ld
 > cache), so the names are silently dropped as "unknown key" (case matters too: `Cyrillic_em`, not
-> `CYRILLIC_EM`). Literal characters are parsed without the library and matched by the same mechanism
-> as Latin binds: a Cyrillic keysym event carries the character itself (confirmed by kitty tests,
-> `kitty_tests/keys.py`).
+> `CYRILLIC_EM`). Literal characters are parsed without the library and matched by the same
+> mechanism as Latin binds: a Cyrillic keysym event carries the character itself (confirmed by kitty
+> tests, `kitty_tests/keys.py`).
 
 Below is a historical example (do not apply as is):
 
@@ -241,16 +243,16 @@ Alt+ш vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurren
 Alt+г run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""                          # Alt+U
 ```
 
-`>`/`<` (next/prev) — RU duplicates on `Ю`/`Б` were added (in JCUKEN `shift+`.`/`,` give `Ю`/`Б`).
-`Alt+0/1/2` — digits are the same under RU, no duplicates needed.
+`>`/`<` (next/prev) — RU duplicates on `Ю`/`Б` were added (in JCUKEN
+`shift+`.`/`,`give`Ю`/`Б`). `Alt+0/1/2\` — digits are the same under RU, no duplicates needed.
 
 **Check:** `mpv --input-test` under RU (the name of the pressed key), then `p`/`l`/`h`/`F`/`Alt+I`.
 
 ### P1 — SurfingKeys
 
-**File:** `files/surfingkeys.js` — after the existing `map`/`mapkey` calls add a compact
-"langmap" block (the rhs of `api.map` is a key sequence that is dispatched into commands without
-recreating a DOM event, so Cyrillic on the lhs does not loop):
+**File:** `files/surfingkeys.js` — after the existing `map`/`mapkey` calls add a compact "langmap"
+block (the rhs of `api.map` is a key sequence that is dispatched into commands without recreating a
+DOM event, so Cyrillic on the lhs does not loop):
 
 ```js
 // Russian layout: Cyrillic → Latin commands (ЙЦУКЕН)
@@ -281,16 +283,16 @@ restore.
 
 Verified against the neomutt source (`key/keymap.c`): `parse_keys` decomposes the key into **bytes**
 (`*d = (unsigned char) *s`), and a Cyrillic character is 2 bytes of UTF-8. A binding like
-`bind pager о ...` would bind the byte `0xD0` (the first byte of any Cyrillic character) and
-**break Cyrillic input** in mutt. We do not add duplicates. Arrow navigation (the default) works
-under RU; the letter binds (`j k g G R u`) remain US-only — known issue.
+`bind pager о ...` would bind the byte `0xD0` (the first byte of any Cyrillic character) and **break
+Cyrillic input** in mutt. We do not add duplicates. Arrow navigation (the default) works under RU;
+the letter binds (`j k g G R u`) remain US-only — known issue.
 
 ### P2 — yazi ✅ / rustmission ❌ / rmpc ✅
 
-- **yazi** (`modules/user/nix-maid/cli/yazi.nix`): duplicates added — navigation `о/л/р/д` (j/k/h/l),
-  `п п` (gg → top), `в` (d → yank), `п ы / п я / п к / п з` (g s / g z / g r / g p), `з` (p →
-  smart-paste). Verified against the source (`Key::from_str` accepts any single char); **lowercase
-  only** — an uppercase Cyrillic letter carries SHIFT and will not match.
+- **yazi** (`modules/user/nix-maid/cli/yazi.nix`): duplicates added — navigation `о/л/р/д`
+  (j/k/h/l), `п п` (gg → top), `в` (d → yank), `п ы / п я / п к / п з` (g s / g z / g r / g p), `з`
+  (p → smart-paste). Verified against the source (`Key::from_str` accepts any single char);
+  **lowercase only** — an uppercase Cyrillic letter carries SHIFT and will not match.
 - **rustmission** (`files/config/rustmission/keymap.toml`): ❌ not fixable — the intuitils parser
   checks `key.len() == 1` (bytes); Cyrillic (2 bytes) → parse error for keymap.toml. Navigation
   remains US-only — known issue.
@@ -310,32 +312,31 @@ reference, with a note in the header of `files/cli/ghostty/config` and in the mo
 `modules/user/nix-maid/cli/ghostty.nix`: "do not use with RU until the version with W3C key-code
 binds (#7320)". If ghostty is ever needed — remove the note after checking.
 
-
 ### P3 — system-level (optional)
 
 - A single source of the EN↔JCUKEN correspondence (table below) so the duplicates in
-  kitty/mpv/surfingkeys are generated consistently, as already done in
-  `files/gui/swayimg/init.lua` via `key2()`.
+  kitty/mpv/surfingkeys are generated consistently, as already done in `files/gui/swayimg/init.lua`
+  via `key2()`.
 - Gradually move important hotkeys to non-letter ("physical") keys so duplicates do not multiply
   endlessly.
 
 ## Changes made (by file)
 
-| File | Change |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `files/gui/hypr/hyprland.lua` | P0: comment about the invariants + explicit `resolve_binds_by_sym = false` |
-| `files/kitty/key.conf` | P1: Latin binds; RU duplicates are **generated** and appended from `lib/ru-keys.nix` (see "Duplicate generation") |
-| `modules/user/nix-maid/cli/shells.nix` | P1: `kittyRuBinds` data + `key.conf` generation; kitty config is deployed per file |
-| `modules/user/nix-maid/apps/mpv/input.nix` | P1: Cyrillic duplicates (pause/seek/fullscreen/mute/subtitles/upscale) |
-| `files/surfingkeys.js` | P1: langmap block `ru2en` + `api.map` |
-| `files/gui/zellij/config.kdl` | P2: `Alt+р/о/л/д` duplicates, resize/tab/scroll |
-| `modules/user/nix-maid/cli/yazi.nix` | P2: navigation and custom-bind duplicates — **generated** from `lib/ru-keys.nix` (`neg.ruKeys.mkRuKeys`) |
-| `files/rmpc/config.ron` | P2: global/navigation/queue duplicates (incl. uppercase) |
-| `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: "do not use with RU" note (config kept as a migration reference) |
-| `lib/ru-keys.nix` | **new**: qwerty→JCUKEN table + generators (`mkRuKeys`, `kittySeq`, `mkKittyLines`, `mkLangmap`) — the single source of truth |
-| `lib/ru-keys-tests.nix`, `flake/checks.nix` | **new**: `ru-keys` check (table completeness, bijection, golden for langmap/kitty lines) |
-| `modules/user/nix-maid/hyprland/ru-layout.nix` | **new**: layout-daemon — layout by active window (us in kitty/mpv, ru in the rest) |
-| `docs/howto/hotkeys-ru-layout.md`, `docs/howto/index.md` | this document |
+| File                                                                | Change                                                                                                                       |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `files/gui/hypr/hyprland.lua`                                       | P0: comment about the invariants + explicit `resolve_binds_by_sym = false`                                                   |
+| `files/kitty/key.conf`                                              | P1: Latin binds; RU duplicates are **generated** and appended from `lib/ru-keys.nix` (see "Duplicate generation")            |
+| `modules/user/nix-maid/cli/shells.nix`                              | P1: `kittyRuBinds` data + `key.conf` generation; kitty config is deployed per file                                           |
+| `modules/user/nix-maid/apps/mpv/input.nix`                          | P1: Cyrillic duplicates (pause/seek/fullscreen/mute/subtitles/upscale)                                                       |
+| `files/surfingkeys.js`                                              | P1: langmap block `ru2en` + `api.map`                                                                                        |
+| `files/gui/zellij/config.kdl`                                       | P2: `Alt+р/о/л/д` duplicates, resize/tab/scroll                                                                              |
+| `modules/user/nix-maid/cli/yazi.nix`                                | P2: navigation and custom-bind duplicates — **generated** from `lib/ru-keys.nix` (`neg.ruKeys.mkRuKeys`)                     |
+| `files/rmpc/config.ron`                                             | P2: global/navigation/queue duplicates (incl. uppercase)                                                                     |
+| `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: "do not use with RU" note (config kept as a migration reference)                                                         |
+| `lib/ru-keys.nix`                                                   | **new**: qwerty→JCUKEN table + generators (`mkRuKeys`, `kittySeq`, `mkKittyLines`, `mkLangmap`) — the single source of truth |
+| `lib/ru-keys-tests.nix`, `flake/checks.nix`                         | **new**: `ru-keys` check (table completeness, bijection, golden for langmap/kitty lines)                                     |
+| `modules/user/nix-maid/hyprland/ru-layout.nix`                      | **new**: layout-daemon — layout by active window (us in kitty/mpv, ru in the rest)                                           |
+| `docs/howto/hotkeys-ru-layout.md`, `docs/howto/index.md`            | this document                                                                                                                |
 
 "Not fixable via config" (mutt, rustmission, btop) is now **fixed automatically** by the
 layout-daemon (see "Layout-daemon") — we do not touch the configs of these programs; the compositor
@@ -363,8 +364,8 @@ switches back to us by itself, in the browser to ru.
 ## Duplicate generation (refactor, `lib/ru-keys.nix`)
 
 Handwritten Cyrillic duplicates are scattered across configs and silently drift out of sync with the
-Latin binds. With `lib/ru-keys.nix` all duplicates are **generated** from a single table
-(qwerty → JCUKEN):
+Latin binds. With `lib/ru-keys.nix` all duplicates are **generated** from a single table (qwerty →
+JCUKEN):
 
 - modules receive it as `neg.ruKeys` (via `lib/neg-helpers.nix`, specialArgs);
 - `neg.ruKeys.mkRuKeys [ "j" ]` → `[ "о" ]` (yazi and similar apps with key lists);
@@ -378,8 +379,9 @@ The `nix eval .#checks.x86_64-linux.ru-keys` check (and `nix flake check`) catch
 Migration state (handwritten duplicates → generators):
 
 - **done**: kitty (`kittyRuBinds` in `shells.nix`), yazi (`mkRuKeys`), mpv (`mpvRuBinds`), zellij
-  (`zellijRuBinds` in `hosts/odin/default.nix`), rmpc (`rmpcRuBinds` in `sys/media.nix`), SurfingKeys
-  (`skRu2en` in `web/browsing.nix`); neovim langmap cross-checked against the `mkLangmap` golden test.
+  (`zellijRuBinds` in `hosts/odin/default.nix`), rmpc (`rmpcRuBinds` in `sys/media.nix`),
+  SurfingKeys (`skRu2en` in `web/browsing.nix`); neovim langmap cross-checked against the
+  `mkLangmap` golden test.
 - **still manual**: swayimg `init.lua` — its binds are inline-lua closures; generation would only
   move the duplication into data without a gain. The duplicates there work and are already verified.
 
@@ -408,8 +410,7 @@ kitty/zellij/rmpc are needed to apply them.
 
 - US layout: nothing broke (the duplicates are additive; `hyprctl binds` shows no conflicts).
 - RU layout:
-  - Hyprland: `M4+*` binds work as before (`hyprctl getoption input:resolve_binds_by_sym` =
-    false).
+  - Hyprland: `M4+*` binds work as before (`hyprctl getoption input:resolve_binds_by_sym` = false).
   - kitty: paste, closing tabs/windows, switching tabs/windows, scroll_to_prompt.
   - mpv: `з/ш/д/р/А/Ф` (pause/top bar/seek/fullscreen/audio), `Alt+ш/г` (upscale).
   - SurfingKeys: scroll/tabs/navigation.
@@ -421,29 +422,29 @@ kitty/zellij/rmpc are needed to apply them.
 
 ## Appendix: JCUKEN ↔ Latin ↔ keysym
 
-| Latin | RU | Keysym (xkb) | Latin | RU | Keysym (xkb) |
-| --------- | --- | ----------------- | ----------------- | ------ | ----------------- |
-| q | й | Cyrillic_shorti | z | я | Cyrillic_ya |
-| w | ц | Cyrillic_tse | x | ч | Cyrillic_che |
-| e | у | Cyrillic_u | c | с | Cyrillic_es |
-| r | к | Cyrillic_ka | v | м | Cyrillic_em |
-| t | е | Cyrillic_ie | b | и | Cyrillic_i |
-| y | н | Cyrillic_en | n | т | Cyrillic_te |
-| u | г | Cyrillic_ghe | m | ь | Cyrillic_softsign |
-| i | ш | Cyrillic_sha | , | б | Cyrillic_be |
-| o | щ | Cyrillic_shcha | . | ю | Cyrillic_yu |
-| p | з | Cyrillic_ze | \` | ё | Cyrillic_io |
-| \[ | х | Cyrillic_ha | ' | э | Cyrillic_e |
-| \] | ъ | Cyrillic_hardsign | ; | ж | Cyrillic_zhe |
-| a | ф | Cyrillic_ef | / | . | period |
-| s | ы | Cyrillic_yeru | - | - | minus (same) |
-| d | в | Cyrillic_ve | = | = | equal (same) |
-| f | а | Cyrillic_a | Space | space | space (same) |
-| g | п | Cyrillic_pe | Enter/Tab/arrows | | same |
-| h | р | Cyrillic_er | Esc/F1–F12 | | same |
-| j | о | Cyrillic_o | | | |
-| k | л | Cyrillic_el | | | |
-| l | д | Cyrillic_de | | | |
+| Latin | RU  | Keysym (xkb)      | Latin            | RU    | Keysym (xkb)      |
+| ----- | --- | ----------------- | ---------------- | ----- | ----------------- |
+| q     | й   | Cyrillic_shorti   | z                | я     | Cyrillic_ya       |
+| w     | ц   | Cyrillic_tse      | x                | ч     | Cyrillic_che      |
+| e     | у   | Cyrillic_u        | c                | с     | Cyrillic_es       |
+| r     | к   | Cyrillic_ka       | v                | м     | Cyrillic_em       |
+| t     | е   | Cyrillic_ie       | b                | и     | Cyrillic_i        |
+| y     | н   | Cyrillic_en       | n                | т     | Cyrillic_te       |
+| u     | г   | Cyrillic_ghe      | m                | ь     | Cyrillic_softsign |
+| i     | ш   | Cyrillic_sha      | ,                | б     | Cyrillic_be       |
+| o     | щ   | Cyrillic_shcha    | .                | ю     | Cyrillic_yu       |
+| p     | з   | Cyrillic_ze       | \`               | ё     | Cyrillic_io       |
+| \[    | х   | Cyrillic_ha       | '                | э     | Cyrillic_e        |
+| \]    | ъ   | Cyrillic_hardsign | ;                | ж     | Cyrillic_zhe      |
+| a     | ф   | Cyrillic_ef       | /                | .     | period            |
+| s     | ы   | Cyrillic_yeru     | -                | -     | minus (same)      |
+| d     | в   | Cyrillic_ve       | =                | =     | equal (same)      |
+| f     | а   | Cyrillic_a        | Space            | space | space (same)      |
+| g     | п   | Cyrillic_pe       | Enter/Tab/arrows |       | same              |
+| h     | р   | Cyrillic_er       | Esc/F1–F12       |       | same              |
+| j     | о   | Cyrillic_o        |                  |       |                   |
+| k     | л   | Cyrillic_el       |                  |       |                   |
+| l     | д   | Cyrillic_de       |                  |       |                   |
 
 Under the RU layout the characters `>`, `<`, `~` do not exist (in us they are on their own keys):
 direct binds on `>`/`<` are unreachable, so for mpv duplicates were added on `Ю`/`Б` (the same
@@ -464,4 +465,3 @@ physical keys); `~` can only be remapped.
   https://github.com/ghostty-org/ghostty/issues/3513
 - ghostty-org/ghostty#7320 — switching to W3C key code binds (Breaking Change):
   https://github.com/ghostty-org/ghostty/pull/7320
-

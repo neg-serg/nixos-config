@@ -1,7 +1,7 @@
 # Dockur Windows VM on odin: GLM USB passthrough and proxy
 
-Windows 11 runs in a **dockur/windows** container (QEMU/KVM); the disk lives in a podman volume (survives
-container re-creation). Access: RDP `127.0.0.1:3389` (user from `USERNAME`, password from
+Windows 11 runs in a **dockur/windows** container (QEMU/KVM); the disk lives in a podman volume
+(survives container re-creation). Access: RDP `127.0.0.1:3389` (user from `USERNAME`, password from
 `PASSWORD`) or the noVNC/KasmVNC web UI `http://127.0.0.1:8006`.
 
 ## Running the container
@@ -26,7 +26,8 @@ docker run -d --name windows \
 
 Key flags:
 
-- `-v f1047db9…:/storage` — persistent disk (Windows is installed once; re-creations do not lose it).
+- `-v f1047db9…:/storage` — persistent disk (Windows is installed once; re-creations do not lose
+  it).
 - `-v /dev/bus/usb:/dev/bus/usb` — **live** USB bind-mount. `--device /dev/bus/usb` is NOT enough:
   podman copies the nodes at start (a snapshot) and does not see devices plugged in later.
 - `-e ARGUMENTS="-device usb-host,…"` — USB device passthrough into QEMU (hotplug analogue —
@@ -34,8 +35,9 @@ Key flags:
 
 ### Gotchas: memlock (vfio dma_map ENOMEM)
 
-With iGPU passthrough (vfio-pci 1002:13c0) QEMU pins ~14 GB of guest RAM for DMA in the vfio container at
-start. If the RLIMIT_MEMLOCK of the QEMU process is below that, the container crashes immediately:
+With iGPU passthrough (vfio-pci 1002:13c0) QEMU pins ~14 GB of guest RAM for DMA in the vfio
+container at start. If the RLIMIT_MEMLOCK of the QEMU process is below that, the container crashes
+immediately:
 
 ```
 qemu-system-x86_64: -device vfio-pci,host=0000:7c:00.0: vfio 0000:7c:00.0: failed to setup
@@ -45,16 +47,17 @@ vfio_container_dma_map(...) = -12 (Cannot allocate memory)
 
 The limit is raised in hardware.nix at three levels (all three are needed):
 
-1. `systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — systemd (system); applies to
-   system services, including `user@.service` when it is (re)started.
-1. `systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — the user manager (user
-   units: dsh web, terminals under systemd --user).
+1. `systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — systemd (system); applies to system
+   services, including `user@.service` when it is (re)started.
+1. `systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity"` — the user manager (user units:
+   dsh web, terminals under systemd --user).
 1. `security.pam.loginLimits` for neg — fresh login sessions (PAM).
 
-Important: neither the systemd defaults nor pam_limits retro-fit already-running sessions — they are read
-at manager start/login time. Sessions started before the config was applied (e.g. after a reboot with a
-new kernel that enabled vfio) keep the old hard limit (4 GiB) and `docker start windows` fails with
-ENOMEM even though the config is already “correct”. Fixable without a reboot (as root):
+Important: neither the systemd defaults nor pam_limits retro-fit already-running sessions — they are
+read at manager start/login time. Sessions started before the config was applied (e.g. after a
+reboot with a new kernel that enabled vfio) keep the old hard limit (4 GiB) and
+`docker start windows` fails with ENOMEM even though the config is already “correct”. Fixable
+without a reboot (as root):
 
 ```bash
 # raise the limit for every live process of the needed cgroups (manager + sessions):
@@ -65,25 +68,25 @@ done
 # (user@1000.service: recurse into the nested cgroups — the parent cgroup.procs is empty)
 ```
 
-After a reboot everything is picked up by itself (user@.service inherits infinity from the system default,
-sessions from pam). Check: `grep -i locked /proc/<pid qemu>/limits` → `unlimited`.
+After a reboot everything is picked up by itself (user@.service inherits infinity from the system
+default, sessions from pam). Check: `grep -i locked /proc/<pid qemu>/limits` → `unlimited`.
 
 ## Genelec GLM (Gnet Adapter) USB passthrough
 
 Device: `1781:0e39` (Bus 009). Three gotchas without which the “passthrough is not visible”:
 
 1. **Container user namespace**: root inside = `nobody` on the host. udev creates USB nodes with
-   `0664 root:root` permissions → the container gets `EPERM` and cannot open the device (QEMU shows a
-   fake `USB Host Device` at 1.5 Mb/s instead of `Gnet Adapter` at 12 Mb/s). Fixed by a udev rule (in
-   `hosts/odin/hardware.nix`):
+   `0664 root:root` permissions → the container gets `EPERM` and cannot open the device (QEMU shows
+   a fake `USB Host Device` at 1.5 Mb/s instead of `Gnet Adapter` at 12 Mb/s). Fixed by a udev rule
+   (in `hosts/odin/hardware.nix`):
    ```
    SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0e39", MODE="0666"
    ```
    Runtime check: `chmod 666 /dev/bus/usb/009/004` (after re-plugging, the node may change).
-1. **USB snapshot**: `--device /dev/bus/usb` copies the nodes at start. The live variant is a bind-mount
-   `-v /dev/bus/usb:/dev/bus/usb` (see the command above).
-1. **udev may not create a node** for unusual HID devices: sysfs exists, `/dev/bus/usb` does not. Trigger:
-   `sudo udevadm trigger --attr-match=idVendor=1781`.
+1. **USB snapshot**: `--device /dev/bus/usb` copies the nodes at start. The live variant is a
+   bind-mount `-v /dev/bus/usb:/dev/bus/usb` (see the command above).
+1. **udev may not create a node** for unusual HID devices: sysfs exists, `/dev/bus/usb` does not.
+   Trigger: `sudo udevadm trigger --attr-match=idVendor=1781`.
 
 Passthrough check (deterministic, without a GUI):
 
@@ -95,9 +98,9 @@ printf 'info usb\n' | timeout 5 docker exec -i windows nc -U /run/shm/monitor.so
 
 ## VM network: IP conflict and host alias
 
-pasta/passt give the VM **the same IP as the host** (`192.168.2.87`) — the VM physically cannot reach
-the host on its main address. Therefore an **alias `192.168.2.88`** was added on net1 (declaratively in
-`hosts/odin/networking.nix` — Address as a list):
+pasta/passt give the VM **the same IP as the host** (`192.168.2.87`) — the VM physically cannot
+reach the host on its main address. Therefore an **alias `192.168.2.88`** was added on net1
+(declaratively in `hosts/odin/networking.nix` — Address as a list):
 
 ```nix
 Address = [
@@ -106,18 +109,18 @@ Address = [
 ];
 ```
 
-All VM proxies go through `192.168.2.88`. (A runtime alias `ip addr add …` is washed away by networkd —
-that is why it lives in the config.)
+All VM proxies go through `192.168.2.88`. (A runtime alias `ip addr add …` is washed away by
+networkd — that is why it lives in the config.)
 
 ## Proxy for the VM (inside the host sing-box)
 
 Two passwordless inbounds, added to the generator `packages/local-bin/bin/proxy` (tags `in-lan-vm` /
 `in-lan-vm-http`):
 
-| Port    | Type          | Purpose                                                             |
-| ------- | ------------- | ------------------------------------------------------------------- |
-| `10811` | SOCKS5        | Chromium/Edge (cannot do SOCKS authentication)                      |
-| `10812` | HTTP CONNECT  | WinINET system proxy — GLM and other GUI apps (WinINET cannot do SOCKS) |
+| Port    | Type         | Purpose                                                                 |
+| ------- | ------------ | ----------------------------------------------------------------------- |
+| `10811` | SOCKS5       | Chromium/Edge (cannot do SOCKS authentication)                          |
+| `10812` | HTTP CONNECT | WinINET system proxy — GLM and other GUI apps (WinINET cannot do SOCKS) |
 
 Firewall (`modules/system/net/firewall.nix`): both ports are allowed only from private ranges
 (`10/8`, `172.16/12`, `192.168/16`), as is `10810`.
@@ -150,28 +153,29 @@ Firewall (`modules/system/net/firewall.nix`): both ports are allowed only from p
   ```
 - Proxy log: `journalctl --user -u sing-box-proxy`. DNS timeouts
   (`lookup failed … context deadline exceeded`, DoH 1.1.1.1) are transient and need no action.
-- **GLM “Cloud connection error” / 400**: the Genelec cloud (`glmcloud.genelec.com`) is reachable both
-  directly and through the proxy (curl → 200). A 400 is a Genelec API/account issue, not the network or
-  the proxy.
+- **GLM “Cloud connection error” / 400**: the Genelec cloud (`glmcloud.genelec.com`) is reachable
+  both directly and through the proxy (curl → 200). A 400 is a Genelec API/account issue, not the
+  network or the proxy.
 
 ## MIDI control of GLM from Linux (TCP bridge → rtpMIDI → GLM 5)
 
-GLM 5 supports MIDI remote (volume/mute/dim/power). Chain: `glm-midi` (CLI) → `glm-midi-relay`
-(user service, TCP) → bridge in the VM (`glm-midi-bridge.ps1`, TCP client) → **rtpMIDI** (a virtual
-MIDI port in Windows) → GLM 5.
+GLM 5 supports MIDI remote (volume/mute/dim/power). Chain: `glm-midi` (CLI) → `glm-midi-relay` (user
+service, TCP) → bridge in the VM (`glm-midi-bridge.ps1`, TCP client) → **rtpMIDI** (a virtual MIDI
+port in Windows) → GLM 5.
 
 Why a TCP bridge and not RTP-MIDI: the VM shares the host IP (192.168.2.87 via pasta), so the host
-replies to the RTP-MIDI UDP handshake go “to itself” and get lost — a bidirectional protocol physically
-does not work in this topology (rtpmidid/rtpMIDI stay in the repo as a fallback but are not used). The
-only bidirectional host↔VM channel is a TCP connection initiated by the VM itself (VM outbound traffic
-via passt works; replies come back — like through the .88:10812 proxy). Hence the bridge in the VM
-connects to the host on its own.
+replies to the RTP-MIDI UDP handshake go “to itself” and get lost — a bidirectional protocol
+physically does not work in this topology (rtpmidid/rtpMIDI stay in the repo as a fallback but are
+not used). The only bidirectional host↔VM channel is a TCP connection initiated by the VM itself (VM
+outbound traffic via passt works; replies come back — like through the .88:10812 proxy). Hence the
+bridge in the VM connects to the host on its own.
 
 ### Linux (odin)
 
-- `packages/local-bin/bin/glm-midi-relay` — Python daemon: listens on `0.0.0.0:9003` (the bridge from
-  the VM connects here) and `127.0.0.1:9004` (where `glm-midi` sends), forwarding packets into the
-  current VM connection. User service `glm-midi-relay` (`modules/user/nix-maid/sys/user-services.nix`).
+- `packages/local-bin/bin/glm-midi-relay` — Python daemon: listens on `0.0.0.0:9003` (the bridge
+  from the VM connects here) and `127.0.0.1:9004` (where `glm-midi` sends), forwarding packets into
+  the current VM connection. User service `glm-midi-relay`
+  (`modules/user/nix-maid/sys/user-services.nix`).
 - `packages/local-bin/bin/glm-midi` — CLI: sends 3 bytes (B0 cc val) to `127.0.0.1:9004`.
 - Check: `systemctl --user status glm-midi-relay`; `ss -tlnp | grep -E '9003|9004'`.
 
@@ -182,24 +186,25 @@ connects to the host on its own.
   on a drop it reconnects every 2 s. Launch:
   `powershell -ExecutionPolicy Bypass -File C:\OEM\glm-midi-bridge.ps1` (or download it from
   `http://192.168.2.88:8010/glm-midi-bridge.ps1` and run).
-- In rtpMIDI, leave the GLM listening port as MIDI-in; the rtpMIDI network session is no longer needed.
+- In rtpMIDI, leave the GLM listening port as MIDI-in; the rtpMIDI network session is no longer
+  needed.
 
 ### GLM 5 MIDI CC map (from VOL20toGenelecGLM/CONSTANTS.md)
 
-| CC      | Function                                        |
-| ------- | ------------------------------------------------ |
-| 20      | absolute volume 0..127 (dB = value − 127)        |
-| 21 / 22 | volume + / −                                     |
-| 23      | Mute (toggle)                                    |
-| 24      | Dim (toggle)                                     |
-| 28      | Power (toggle)                                   |
+| CC      | Function                                  |
+| ------- | ----------------------------------------- |
+| 20      | absolute volume 0..127 (dB = value − 127) |
+| 21 / 22 | volume + / −                              |
+| 23      | Mute (toggle)                             |
+| 24      | Dim (toggle)                              |
+| 28      | Power (toggle)                            |
 
 In GLM: Settings → MIDI → “Enable GLM MIDI interface”; Mute/Dim/Power are in Toggle mode.
 
 ### Container
 
-No port forwarding is needed for the bridge: the VM initiates the outbound TCP connection itself (as for
-the proxy).
+No port forwarding is needed for the bridge: the VM initiates the outbound TCP connection itself (as
+for the proxy).
 
 ### Usage
 
@@ -220,8 +225,8 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 - `hosts/odin/default.nix` — flag `features.net.proxy.enable`
 - `hosts/odin/networking.nix` — alias `192.168.2.88/24`
 - `hosts/odin/hardware.nix` — Genelec GLM udev rule (0666)
-- `modules/system/net/firewall.nix` — ports 10811/10812, 5010/5011 (RTP-MIDI, fallback), 9003
-  (MIDI bridge)
+- `modules/system/net/firewall.nix` — ports 10811/10812, 5010/5011 (RTP-MIDI, fallback), 9003 (MIDI
+  bridge)
 - `packages/local-bin/bin/glm-midi-relay` + `glm-midi` — MIDI bridge (relay) and CLI
 - `packages/dockur-windows/oem/glm-midi-bridge.ps1` — bridge in the VM
 - `packages/local-bin/bin/proxy` — the inbounds `in-lan-vm` (SOCKS 10811) and `in-lan-vm-http` (HTTP
@@ -230,8 +235,8 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 ## GLM alternative: the glm-osc OSC bridge (adapter on the host)
 
 Since 2026-08-30 everyday monitor control runs WITHOUT the official GLM: the USB adapter (1781:0e39)
-lives on the host, the `glm-osc` service (Python genlc + python-osc) listens on UDP 127.0.0.1:9000 and
-drives the monitors over OSC. The VM with GLM is needed only for calibration (see below).
+lives on the host, the `glm-osc` service (Python genlc + python-osc) listens on UDP 127.0.0.1:9000
+and drives the monitors over OSC. The VM with GLM is needed only for calibration (see below).
 
 OSC map:
 
@@ -245,16 +250,16 @@ OSC map:
 /glm/status | /glm/discover   # replies in /glm/status/reply and /glm/discover/reply
 ```
 
-Example from Tidal/SuperCollider: `NetAddr("127.0.0.1", 9000).sendMsg("/glm/volume", -20)`; from Tidal
-via `osc` patterns (`Sound.Tidal.OSC`). State (last volume, mute, power) is stored in
+Example from Tidal/SuperCollider: `NetAddr("127.0.0.1", 9000).sendMsg("/glm/volume", -20)`; from
+Tidal via `osc` patterns (`Sound.Tidal.OSC`). State (last volume, mute, power) is stored in
 `~/.local/state/glm-osc-state.json`.
 
 Important:
 
 - **Do not run GLM (VM) and glm-osc at the same time** — the adapter is single-master.
 - genlc does NOT support dim and input selection (0x0D/0x40) — only volume/mute/power/LED/status.
-- Calibration and input selection: start the VM (the adapter goes into passthrough), do it in GLM, Store
-  settings (calibration is stored ON THE MONITORS), shut down the VM — the adapter returns to the host,
-  control goes through glm-osc again.
-- udev: hardware.nix binds usbhid to the adapter (otherwise there is no /dev/hidraw and genlc does not
-  see the device).
+- Calibration and input selection: start the VM (the adapter goes into passthrough), do it in GLM,
+  Store settings (calibration is stored ON THE MONITORS), shut down the VM — the adapter returns to
+  the host, control goes through glm-osc again.
+- udev: hardware.nix binds usbhid to the adapter (otherwise there is no /dev/hidraw and genlc does
+  not see the device).

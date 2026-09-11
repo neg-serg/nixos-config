@@ -55,7 +55,8 @@ report with file paths and line numbers; instruct them to be factual and not inv
 > Check /etc/nixos/treefmt.toml, .gitignore, pyproject.toml, Justfile, scripts/, docs/, README.md,
 > OPTIONS.md, \*AGENTS.md. Report: stale exclude/ignore paths (paths that no longer exist), broken
 > links, claims contradicting reality (flake.nix vs flake/nixos.nix, modules.nix vs default.nix,
-> GitHub Actions without .github/, Russian-doc leftovers (English-only policy), "generated (not tracked)" for tracked files).
+> GitHub Actions without .github/, Russian-doc leftovers (English-only policy), "generated (not
+> tracked)" for tracked files).
 
 ### 3. Verify before acting
 

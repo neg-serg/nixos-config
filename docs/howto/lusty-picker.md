@@ -3,24 +3,25 @@
 ## Goal
 
 Replace the slow parts of LustyExplorer (the Lua port in nvim) with a separate native process while
-keeping nvim as the editor. The target win is 10× or more on typing and on listing large directories.
+keeping nvim as the editor. The target win is 10× or more on typing and on listing large
+directories.
 
 Measurements (headless, repo copy, /etc/nixos):
 
-| Operation                                  | Now (Lua)              | Target (Rust)                      |
-| ------------------------------------------ | ---------------------- | ---------------------------------- |
-| list /home/neg, depth 1 (11 entries)       | 4.9 ms                 | < 1 ms                             |
-| list /etc/nixos, depth 2 (271 entries)     | 8.0 ms                 | < 2 ms                             |
-| list /nix/store, depth 1 (151,363 entries) | **4884 ms**            | < 150 ms                           |
-| fuzzy.score × 5000                         | 1.2 ms                 | < 0.5 ms                           |
-| typing (latency)                           | nvim float redraw      | native ratatui, partial redraw     |
+| Operation                                  | Now (Lua)         | Target (Rust)                  |
+| ------------------------------------------ | ----------------- | ------------------------------ |
+| list /home/neg, depth 1 (11 entries)       | 4.9 ms            | < 1 ms                         |
+| list /etc/nixos, depth 2 (271 entries)     | 8.0 ms            | < 2 ms                         |
+| list /nix/store, depth 1 (151,363 entries) | **4884 ms**       | < 150 ms                       |
+| fuzzy.score × 5000                         | 1.2 ms            | < 0.5 ms                       |
+| typing (latency)                           | nvim float redraw | native ratatui, partial redraw |
 
 Two bottlenecks in the current Lua port:
 
 1. **B1 — nvim float-window redraw** on every keypress (this is the "typing lags" on ordinary
    directories; the logic here is 0.1–0.2 ms per callback).
-1. **B2 — synchronous listing** `vim.fn.readdir` + one `vim.fn.getftype` (stat) per file on the
-   UI thread: 151k files = 4.9 s. Native `fd` does the same 151k in ~107 ms and asynchronously.
+1. **B2 — synchronous listing** `vim.fn.readdir` + one `vim.fn.getftype` (stat) per file on the UI
+   thread: 151k files = 4.9 s. Native `fd` does the same 151k in ~107 ms and asynchronously.
 
 ## Process model (Model 1, fzf-style)
 
@@ -34,11 +35,10 @@ Two bottlenecks in the current Lua port:
 
 ## Components
 
-1. `~/src/lusty` (flake input `lusty` in /etc/nixos) — a Rust crate (binary
-   `lusty`):
+1. `~/src/lusty` (flake input `lusty` in /etc/nixos) — a Rust crate (binary `lusty`):
 
-   - `cli`: mode (files|buffers|grep), root, depth, skip-dirs, follow-mounts, dotfile flag,
-     initial query.
+   - `cli`: mode (files|buffers|grep), root, depth, skip-dirs, follow-mounts, dotfile flag, initial
+     query.
    - `listing`: `ignore`/`walkdir` + `rayon` (parallel traversal), depth limit, skipping mount
      points (/proc/self/mountinfo), skip-dirs glob (`~`/`*`/`?`), "less nested on top" ordering.
    - `scoring`: port of `fuzzy.lua` (fzy-style) to Rust + prefix anchor on the first letter (the
@@ -49,8 +49,8 @@ Two bottlenecks in the current Lua port:
      selection, RU layout (dual-mapping of physical keys to EN), the same key set.
    - `output`: on Enter/Tab/C-t/C-o/C-v prints `ACTION<TAB>PATH`.
 
-1. `files/nvim/lua/lusty/native.lua` — a shim: `termopen` + `on_exit` + option forwarding. The
-   old Lua port stays as the fallback (`g:LustyExplorerNative=0`).
+1. `files/nvim/lua/lusty/native.lua` — a shim: `termopen` + `on_exit` + option forwarding. The old
+   Lua port stays as the fallback (`g:LustyExplorerNative=0`).
 
 ## UX parity (must be preserved)
 
@@ -75,10 +75,8 @@ Two bottlenecks in the current Lua port:
 ## Nix packaging
 
 - The code lives in a separate project: `~/src/lusty` (its own git repo; `default.nix` =
-  `rustPlatform.buildRustPackage`, src `./.`, its own `Cargo.lock`,
-  `meta.mainProgram = "lusty"`).
-- /etc/nixos pulls it in as a flake input `lusty.url = "path:/home/neg/src/lusty"`;
-  overlay `packages/overlays/tools.nix`: `callPkg (inputs.lusty.outPath) { }` →
-  `pkgs.neg.lusty`.
-- After changing the code in `~/src/lusty`: run `nix flake lock --update-input lusty`
-  before rebuilding.
+  `rustPlatform.buildRustPackage`, src `./.`, its own `Cargo.lock`, `meta.mainProgram = "lusty"`).
+- /etc/nixos pulls it in as a flake input `lusty.url = "path:/home/neg/src/lusty"`; overlay
+  `packages/overlays/tools.nix`: `callPkg (inputs.lusty.outPath) { }` → `pkgs.neg.lusty`.
+- After changing the code in `~/src/lusty`: run `nix flake lock --update-input lusty` before
+  rebuilding.

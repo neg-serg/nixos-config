@@ -9,21 +9,21 @@ a target voice — not done** (a dataset/model is needed).
   specific person's voice (~10 min of clean material) and gives the maximum resemblance to it. Used
   for covers, voice-overs, streams.
 - Difference from Seed-VC: Seed-VC is **zero-shot** (a reference sample is enough, no training); RVC
-  is **training on a voice** (higher accuracy for a specific target). XTTS is a TTS (text→speech), not
-  conversion of arbitrary audio.
+  is **training on a voice** (higher accuracy for a specific target). XTTS is a TTS (text→speech),
+  not conversion of arbitrary audio.
 - Russian: works with Russian training data (RVC itself is language-independent — quality depends on
   the dataset).
 
 ## Status on odin
 
-| Component       | Path                                                      | Status                      |
-| --------------- | --------------------------------------------------------- | --------------------------- |
-| Repository      | `/zero/ai/music-ai/Retrieval-based-Voice-Conversion-WebUI` | cloned                      |
-| venv            | `/zero/ai/music-ai/venv-rvc` (torch 2.13.0+rocm7.1, GPU)   | ready                       |
-| hubert          | `assets/hubert/hubert_base.pt` (190 MB)                 | downloaded                  |
-| rmvpe           | `assets/rmvpe/rmvpe.pt` (181 MB)                        | downloaded                  |
-| CLI             | `infer/cli.py`                                          | loads on ROCm without errors |
-| Trained model   | —                                                         | ❌ needs a target voice     |
+| Component     | Path                                                       | Status                       |
+| ------------- | ---------------------------------------------------------- | ---------------------------- |
+| Repository    | `/zero/ai/music-ai/Retrieval-based-Voice-Conversion-WebUI` | cloned                       |
+| venv          | `/zero/ai/music-ai/venv-rvc` (torch 2.13.0+rocm7.1, GPU)   | ready                        |
+| hubert        | `assets/hubert/hubert_base.pt` (190 MB)                    | downloaded                   |
+| rmvpe         | `assets/rmvpe/rmvpe.pt` (181 MB)                           | downloaded                   |
+| CLI           | `infer/cli.py`                                             | loads on ROCm without errors |
+| Trained model | —                                                          | ❌ needs a target voice      |
 
 ## Inference (with a ready-made model)
 

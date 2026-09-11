@@ -10,13 +10,13 @@ One long-running goal per session (same-session goal): an objective plus a round
 cards/chips in the GUI. The implementation lives in the base packages of the profile (rows in
 `cordis.patch.yml`):
 
-| Patch row             | Package                                | Role                                                       |
-| --------------------- | -------------------------------------- | ---------------------------------------------------------- |
-| `goal`                | `@deepseek-ai/dsh-goal`                | goal service (`ctx.goals`), event-sourcing from `goal/change` |
-| `goal-round-driver`   | `@deepseek-ai/dsh-goal-round-driver`   | auto-continuation of rounds (`agent.followup`) when armed + active |
-| `command-goal`        | `@deepseek-ai/dsh-command-goal`        | human command `/goal`                                      |
-| `ui-goal`             | `@deepseek-ai/dsh-client-ui-goal`      | GoalBar in the input dock (progress “rounds N/M”)          |
-| `tool-goal`           | `@deepseek-ai/dsh-tool-goal`           | model-facing tools (served through Gateway Remote)         |
+| Patch row           | Package                              | Role                                                               |
+| ------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| `goal`              | `@deepseek-ai/dsh-goal`              | goal service (`ctx.goals`), event-sourcing from `goal/change`      |
+| `goal-round-driver` | `@deepseek-ai/dsh-goal-round-driver` | auto-continuation of rounds (`agent.followup`) when armed + active |
+| `command-goal`      | `@deepseek-ai/dsh-command-goal`      | human command `/goal`                                              |
+| `ui-goal`           | `@deepseek-ai/dsh-client-ui-goal`    | GoalBar in the input dock (progress “rounds N/M”)                  |
+| `tool-goal`         | `@deepseek-ai/dsh-tool-goal`         | model-facing tools (served through Gateway Remote)                 |
 
 Goal shape:
 `{id, revision, objective, phase, activation (armed/disarmed), roundsStarted, maxGoalRounds, blockedReason}`.
@@ -36,15 +36,15 @@ returns `{goal: null}` when there is no goal.
 
 ## Managing
 
-| Action            | Tool / command                                                                              |
-| ----------------- | ------------------------------------------------------------------------------------------- |
-| Create            | `create_goal` or `/goal <objective>`                                                        |
-| Inspect           | `get_goal` (also `/goal` without arguments)                                                 |
-| Change objective  | `update_goal edit` (or `/goal edit <text>`); `maxGoalRounds` stays unchanged                |
-| Pause / resume    | `update_goal pause` / `update_goal resume`                                                  |
-| Complete          | `update_goal complete`                                                                      |
-| Block             | `update_goal blocked` (after the minimum round count; reason in `blockedReason`)            |
-| Clear             | `/goal clear` (only while the goal is active/paused)                                        |
+| Action           | Tool / command                                                                   |
+| ---------------- | -------------------------------------------------------------------------------- |
+| Create           | `create_goal` or `/goal <objective>`                                             |
+| Inspect          | `get_goal` (also `/goal` without arguments)                                      |
+| Change objective | `update_goal edit` (or `/goal edit <text>`); `maxGoalRounds` stays unchanged     |
+| Pause / resume   | `update_goal pause` / `update_goal resume`                                       |
+| Complete         | `update_goal complete`                                                           |
+| Block            | `update_goal blocked` (after the minimum round count; reason in `blockedReason`) |
+| Clear            | `/goal clear` (only while the goal is active/paused)                             |
 
 After a session resume/fork, an active goal arrives disarmed — re-arm it with `update_goal resume`
 (or simply say “continue” — the agent re-arms it itself).

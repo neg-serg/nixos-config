@@ -16,8 +16,8 @@ Design for DSH web 0.1.0-rc.6 (store `@deepseek-ai`). Verified by reading the bu
         config: { rulesDir: "rules" }
   ```
   Host plane: `~/.dsh/profiles/web/cordis.patch.yml` + package in
-  `~/.dsh/profiles/web/node_modules/<name>`. Agent plane (what we need for per-session
-  hooks): `~/.dsh/.agent-presets/neg/agent.cordis.yml` (preset `neg`).
+  `~/.dsh/profiles/web/node_modules/<name>`. Agent plane (what we need for per-session hooks):
+  `~/.dsh/.agent-presets/neg/agent.cordis.yml` (preset `neg`).
 - Confirmed events (`ctx.on`): `tools/pre-execute`, `tools/execute`, `tools/post-execute`,
   `tools/result`, `session/event`, `session/created`, `agent/pre-step`, `agent/created`,
   `fs/observed`, `fs/write-intent`, `fs/edit-intent`, `system-prompt/assemble`, `subagent/start`,
@@ -25,32 +25,31 @@ Design for DSH web 0.1.0-rc.6 (store `@deepseek-ai`). Verified by reading the bu
 - `tools/post-execute(exec, result, next)`: `next()` returns
   `{ kind, value, additionalContexts?, feedback? }`; context can be prepended — the precedent is
   `dsh-repeat-tool-reminder` (guard, mounted in `dsh-base`).
-- `agent/pre-step({ agent, messages, signal }, next)`: `next()` yields `decision.messages` — synthetic
-  messages are appended there before the step. Precedent — `dsh-tool-skill` (injects skill
+- `agent/pre-step({ agent, messages, signal }, next)`: `next()` yields `decision.messages` —
+  synthetic messages are appended there before the step. Precedent — `dsh-tool-skill` (injects skill
   text).
-- `session/event(session, event)`: event.type comes from `KNOWN_SESSION_EVENT_TYPES`; there are `todo/write`,
-  `compaction/start`, `compaction/end`, `compaction/summary`, `compaction/prune`.
-- `todo_write` (`dsh-tool-todo`) does `session.append("todo/write", { todos })` on every call
-  — the todo state lives in the session log; compaction collapses it. Recovery is a repeated
-  `append`.
+- `session/event(session, event)`: event.type comes from `KNOWN_SESSION_EVENT_TYPES`; there are
+  `todo/write`, `compaction/start`, `compaction/end`, `compaction/summary`, `compaction/prune`.
+- `todo_write` (`dsh-tool-todo`) does `session.append("todo/write", { todos })` on every call — the
+  todo state lives in the session log; compaction collapses it. Recovery is a repeated `append`.
 - Skills: the `ctx.skills` service (`ctx.skills.snapshot/get`) — for categories/list.
 - Delegation: `dsh-tool-subagent` registers `subagent` and `subagent_fork`.
 
-Conclusion: all four features are a **server plugin (cordis) in the agent preset**, not a client plugin (the browser has
-no tool lifecycle / session log) and not a fork patch (the required hooks already exist — none are
-missing). docs-only is only a cheap v0 for reminders.
+Conclusion: all four features are a **server plugin (cordis) in the agent preset**, not a client
+plugin (the browser has no tool lifecycle / session log) and not a fork patch (the required hooks
+already exist — none are missing). docs-only is only a cheap v0 for reminders.
 
 ______________________________________________________________________
 
 ## 1. rules-injector (rules/\*.md + alwaysApply, injection on read)
 
-- **Feasibility:** server plugin. The `tools/post-execute`, `fs/observed`, `session/event` hooks already
-  exist; the omo logic (finder/parser/matcher/dedup) is ported.
-- **Integration point:** the `neg` agent preset (`agent.cordis.yml`). Trigger — `tools/post-execute` for
-  `read`/`write`/`edit`/`str_replace_editor`; take the file path from `result.value.path` (or
-  `exec.arguments.file_path`). Optionally `fs/observed(target, observation, actor)` for the fact "file
-  read". The "already injected in this session" cache is cleared via `session/event` (`compaction/start`,
-  `session/end-seed`).
+- **Feasibility:** server plugin. The `tools/post-execute`, `fs/observed`, `session/event` hooks
+  already exist; the omo logic (finder/parser/matcher/dedup) is ported.
+- **Integration point:** the `neg` agent preset (`agent.cordis.yml`). Trigger — `tools/post-execute`
+  for `read`/`write`/`edit`/`str_replace_editor`; take the file path from `result.value.path` (or
+  `exec.arguments.file_path`). Optionally `fs/observed(target, observation, actor)` for the fact
+  "file read". The "already injected in this session" cache is cleared via `session/event`
+  (`compaction/start`, `session/end-seed`).
 - **Sketch:**
 
 ```js
@@ -109,20 +108,19 @@ export function apply(ctx, config = {}) {
 ```
 
 - **Effort:** M. The logic is simple, but it needs: a full frontmatter parser, an honest glob (no
-  picomatch — write a mini-matcher or add a dependency), finder/matcher/dedup tests, cache
-  cleanup. If limited to `alwaysApply` and `rules/*.md` + `AGENTS.md` names without
-  arbitrary globs — S.
-- **Risk:** scan order and dedup must be deterministic; do not inject the rules for the
-  `read` of the rule file itself (otherwise recursion/junk).
+  picomatch — write a mini-matcher or add a dependency), finder/matcher/dedup tests, cache cleanup.
+  If limited to `alwaysApply` and `rules/*.md` + `AGENTS.md` names without arbitrary globs — S.
+- **Risk:** scan order and dedup must be deterministic; do not inject the rules for the `read` of
+  the rule file itself (otherwise recursion/junk).
 
 ______________________________________________________________________
 
 ## 2. compaction-todo-preserver (the todo list survives compaction)
 
-- **Feasibility:** server plugin. Everything needed already exists: `session/event` with `todo/write`,
-  `compaction/start`, `compaction/end`; recovery is a repeated
-  `session.append("todo/write", { todos })`. The omo Atlas-bootstrap wrapper is not needed in DSH (no
-  Atlas).
+- **Feasibility:** server plugin. Everything needed already exists: `session/event` with
+  `todo/write`, `compaction/start`, `compaction/end`; recovery is a repeated
+  `session.append("todo/write", { todos })`. The omo Atlas-bootstrap wrapper is not needed in DSH
+  (no Atlas).
 - **Integration point:** agent preset; one `session/event` handler.
 - **Sketch:**
 
@@ -150,11 +148,11 @@ export function apply(ctx) {
 ```
 
 - **Effort:** S (~50 lines + test). The main question is idempotency: if compaction kept
-  `todo/write` in the summary, a repeated append will add a duplicate. Safe option: on `compaction/end`
-  always re-append (the model sees the actual list; a duplicate in the log is harmless because the projection takes
-  the last `todo/write`).
-- **Verification:** an "empty" compaction must not create a todo list out of nothing; a session restart/reset
-  clears the Map (`session/end-seed`).
+  `todo/write` in the summary, a repeated append will add a duplicate. Safe option: on
+  `compaction/end` always re-append (the model sees the actual list; a duplicate in the log is
+  harmless because the projection takes the last `todo/write`).
+- **Verification:** an "empty" compaction must not create a todo list out of nothing; a session
+  restart/reset clears the Map (`session/end-seed`).
 
 ______________________________________________________________________
 
@@ -201,9 +199,9 @@ export function apply(ctx, config = {}) {
 ```
 
 - **Effort:** S-M. S if doing docs-only (a line in the preset); M for the runtime hook
-  + counter test. Categories/skill mapping are set via config.
-- **Nuance:** in DSH delegation has no `category` field like omo; the "category → skills" mapping will have to
-  live in the plugin config (or parse `config/agent-presets`).
+  - counter test. Categories/skill mapping are set via config.
+- **Nuance:** in DSH delegation has no `category` field like omo; the "category → skills" mapping
+  will have to live in the plugin config (or parse `config/agent-presets`).
 
 ______________________________________________________________________
 
@@ -241,8 +239,8 @@ export function apply(ctx, config = {}) {
 }
 ```
 
-- **Effort:** S (~70 lines + test). Maximum reuse — copy the
-  `repeat-tool-reminder` skeleton (Config schema, `additionalContexts`, `agent/pre-step`).
+- **Effort:** S (~70 lines + test). Maximum reuse — copy the `repeat-tool-reminder` skeleton (Config
+  schema, `additionalContexts`, `agent/pre-step`).
 - **Nuance:** the SEARCH list must be calibrated for DSH (`rg`/`glob`/read-only `bash`) so that
   ordinary edits are not spammed by the reminder.
 
@@ -255,12 +253,12 @@ ______________________________________________________________________
    compaction.
 1. **rules-injector** — M (or S without arbitrary glob), the most valuable one, but requires
    parser/matcher/tests; do it after the server-plugin pattern is proven on 1–2.
-1. **category-skill-reminder** — M; a docs-only v0 (a line in the system prompt) can be shipped right away,
-   the runtime hook later.
+1. **category-skill-reminder** — M; a docs-only v0 (a line in the system prompt) can be shipped
+   right away, the runtime hook later.
 
-The common deployment step on odin for each plugin: a package in `modules/user/nix-maid/apps/<name>/`
-(`package.json` + `lib/index.js`), an ensure script modeled on `dsh-mode.nix` copies it to
-`~/.dsh/profiles/web/node_modules/<name>`; the row is added **not** to the profile `cordis.patch.yml`,
-but to `~/.dsh/.agent-presets/neg/agent.cordis.yml` (or to `dsh-liangshen-fork/agent.cordis.yml` and
-the sync script), then `systemctl --user restart dsh.service`. We do not touch any
-upstream/fork repository files.
+The common deployment step on odin for each plugin: a package in
+`modules/user/nix-maid/apps/<name>/` (`package.json` + `lib/index.js`), an ensure script modeled on
+`dsh-mode.nix` copies it to `~/.dsh/profiles/web/node_modules/<name>`; the row is added **not** to
+the profile `cordis.patch.yml`, but to `~/.dsh/.agent-presets/neg/agent.cordis.yml` (or to
+`dsh-liangshen-fork/agent.cordis.yml` and the sync script), then
+`systemctl --user restart dsh.service`. We do not touch any upstream/fork repository files.

@@ -106,8 +106,8 @@ ______________________________________________________________________
 
 ## 6. Boulder: uncompleted todos (oh-my-opencode: todo-continuation-enforcer)
 
-The exact injection text from `hooks/todo-continuation-enforcer/constants.ts`
-(CONTINUATION_PROMPT), inserted on the `session.idle` event when tasks remain open:
+The exact injection text from `hooks/todo-continuation-enforcer/constants.ts` (CONTINUATION_PROMPT),
+inserted on the `session.idle` event when tasks remain open:
 
 ```
 [system-directive todo_continuation]
@@ -121,9 +121,9 @@ Incomplete tasks remain in your todo list. Continue working on the next pending 
 ```
 
 Mechanics (for automation): 2s countdown (toast 900ms, grace 500ms, abort window 3s); exponential
-backoff: base 30s, ×2 per failure, max 5 in a row, then a 5 min pause; 5s cooldown;
-stagnation detection (max 3). Do not inject while waiting for a user answer
-(pending-question-detection) or right after a fresh compaction (compaction-guard, 60s).
+backoff: base 30s, ×2 per failure, max 5 in a row, then a 5 min pause; 5s cooldown; stagnation
+detection (max 3). Do not inject while waiting for a user answer (pending-question-detection) or
+right after a fresh compaction (compaction-guard, 60s).
 
 ______________________________________________________________________
 
@@ -161,8 +161,8 @@ ______________________________________________________________________
 
 The user complains about repeating agent behavior. Instead of promises — write one concrete filter
 rule (TTSR): a regex condition on the output/tool-argument stream + a narrow scope + a short
-correction guide. The condition must catch exactly the offensive output from the current conversation,
-not be a broad catch-all.
+correction guide. The condition must catch exactly the offensive output from the current
+conversation, not be a broad catch-all.
 
 ______________________________________________________________________
 

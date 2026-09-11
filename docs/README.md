@@ -10,7 +10,8 @@ configuration.
 - `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
   (`docs/index.md`, `docs/howto/`, `docs/runbook-*.md`).
 - `files/` — static config files linked to user homes via nix-maid.
-- `docs/index.md` — entry point; `docs/howto/` — focused guides; `docs/runbook-*.md` — operational steps.
+- `docs/index.md` — entry point; `docs/howto/` — focused guides; `docs/runbook-*.md` — operational
+  steps.
 
 ## Quick Start (System)
 
@@ -417,8 +418,8 @@ Notes:
 - A user service auto-selects the RNNoise source as the default input on login when enabled.
 - You can still manually choose sources in your desktop environment if you prefer.
 
-Docs are English-only (hard rule). SuperCollider live-coding docs live in the
-private notes repo (~/notes/music/supercollider/).
+Docs are English-only (hard rule). SuperCollider live-coding docs live in the private notes repo
+(~/notes/music/supercollider/).
 
 ## LAN Audio Access (MPD + PipeWire)
 
@@ -497,8 +498,8 @@ scope.
 Additionally, a Markdown language policy is enforced:
 
 - All docs live in English-only `*.md` files.
-- `scripts/dev/check-markdown-language.sh` fails on any Cyrillic/CJK in `*.md`
-  (only layout-glyph examples are allowlisted).
+- `scripts/dev/check-markdown-language.sh` fails on any Cyrillic/CJK in `*.md` (only layout-glyph
+  examples are allowlisted).
 
 ## Module Pattern & Option Helpers
 

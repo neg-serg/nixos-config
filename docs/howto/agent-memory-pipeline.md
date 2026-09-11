@@ -12,7 +12,7 @@ Strict JSON, nothing else:
 ```
 
 - `rollout_summary`: compact synopsis that future runs should remember.
-- `rollout_slug`: short lowercase slug (letters/digits/_), or null.
+- `rollout_slug`: short lowercase slug (letters/digits/\_), or null.
 - `raw_memory`: detailed durable blocks — enough context for reuse.
 - No durable signal → empty strings and null. Noise is discarded; nothing is kept "just in case".
 - Keep: constraints, decisions, workflows, pitfalls, resolved failures.
@@ -33,14 +33,14 @@ Strict JSON: `memory_md`, `memory_summary`, `skills[]`.
 1. Then `MEMORY.md` and `skills/<name>/SKILL.md` as needed.
 1. Memory = heuristics and process context; current repo state, runtime output, and the user
    instruction = facts/final decisions.
-1. Memory contradicts repo/instruction → memory is outdated; fix the behavior and update the artifact.
+1. Memory contradicts repo/instruction → memory is outdated; fix the behavior and update the
+   artifact.
 1. Confidence only after checking the repo; memory alone is NEVER proof.
 
 ## Mapping onto dsh-memento
 
 - `memory_md` ≈ agent-track records (workspace); `memory_summary` ≈ session memory snapshot.
-- `skills[]` ≈ the DSH SKILL catalog: repeatedly successful session techniques can be
-  auto-promoted into SKILL.md playbooks.
+- `skills[]` ≈ the DSH SKILL catalog: repeatedly successful session techniques can be auto-promoted
+  into SKILL.md playbooks.
 - Pipeline = two prompts (extractor/consolidator) + session-completion hooks; the memento budget
   limit is the natural consolidation bound.
-

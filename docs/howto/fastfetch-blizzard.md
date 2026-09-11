@@ -44,9 +44,9 @@ python3 ~/.local/share/fastfetch/make_blizzard.py       --dither fs --palette as
 Regenerating presets: `~/.local/share/fastfetch/blizzard.sh fs` (or without an argument — all 6
 ditherings).
 
-Lua/QuickJS in `format` (experimental, 2.64.0+) is enabled via an overlay (`modules/tools/default.nix`)
-— it adds lua to the `fastfetch-unwrapped` buildInputs plus `-DENABLE_LUA` so that `lua:`/`qjs:`
-specifiers work.
+Lua/QuickJS in `format` (experimental, 2.64.0+) is enabled via an overlay
+(`modules/tools/default.nix`) — it adds lua to the `fastfetch-unwrapped` buildInputs plus
+`-DENABLE_LUA` so that `lua:`/`qjs:` specifiers work.
 
 ## Reference
 
