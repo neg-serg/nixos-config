@@ -5,8 +5,8 @@
  * Two halves:
  *   A. patcher mechanics: run the real patcher against a synthetic bundle that
  *      carries the exact upstream `from` literal, then assert the fix landed
- *      and that a second run is a no-op (idempotency is what the activation
- *      script relies on);
+ *      and that a second run is a no-op (the marker records the produced
+ *      bundle, so idempotency is what the activation script relies on);
  *   B. decision table: pull the inserted helper out of the *patched* text and
  *      exercise it with fakes, including the regression this fix exists for —
  *      an OSC notification must still fire when SSH_* is set, because the
@@ -96,17 +96,23 @@ ok(
   "marker written (idempotency gate)"
 );
 
-// The marker stores the pre-patch hash, so the run right after patching still
-// re-applies the fixes; the "up to date" fast path only engages on the run
-// after that. Notify-osc must report "already applied" rather than re-insert.
+// The marker records the hash of the bundle this run PRODUCED, so the very next
+// run is already a no-op.
 const secondOut = runPatcher();
-ok(secondOut.includes("fix notify-osc: already applied"), "second run re-applies nothing (notify-osc already applied)");
+ok(secondOut.includes("up to date"), "second run hits the marker fast path");
 ok(
   fs.readFileSync(bundlePath, "utf8") === patched,
   "second run leaves the bundle byte-identical"
 );
-const thirdOut = runPatcher();
-ok(thirdOut.includes("up to date"), "third run hits the marker fast path");
+
+// Regression for the marker bug this fixed: restoring the pristine bundle must
+// re-apply the fixes instead of being reported as "up to date" while they are
+// absent.
+fs.copyFileSync(`${bundlePath}.orig`, bundlePath);
+ok(!fs.readFileSync(bundlePath, "utf8").includes("/* dsh-notify:osc —"), "the restored bundle is pristine again");
+const restoredOut = runPatcher();
+ok(restoredOut.includes("fix notify-osc: applied"), "a restored bundle is re-patched, not skipped");
+ok(fs.readFileSync(bundlePath, "utf8").includes("/* dsh-notify:osc —"), "the fix is back in the bundle");
 
 // ── B. decision table on the patched artifact ────────────────────────────────
 const helperStart = patched.indexOf("/* dsh-notify:osc —");

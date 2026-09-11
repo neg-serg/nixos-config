@@ -118,7 +118,7 @@ const syntax = spawnSync(process.execPath, ["--check", bundlePath], { encoding: 
 ok(syntax.status === 0, `the patched bundle parses (${(syntax.stderr ?? "").split("\n")[0] || "ok"})`);
 
 const second = runPatcher();
-ok(second.includes("tui-keymap-helper: already applied"), "a second run re-applies nothing");
+ok(second.includes("up to date"), "a second run hits the marker fast path (post-patch hash)");
 ok(fs.readFileSync(bundlePath, "utf8") === patched, "a second run leaves the bundle byte-identical");
 ok((patched.match(/function applyUserKeymap\(/g) ?? []).length === 1, "the helper is not duplicated");
 ok((patched.match(/applyUserKeymap\(createBuiltinActions\(/g) ?? []).length === 2, "both call sites are wrapped exactly once");
