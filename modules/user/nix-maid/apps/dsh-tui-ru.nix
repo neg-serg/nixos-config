@@ -168,6 +168,14 @@ let
       name = "dsh-plugin-vetting";
       path = ./dsh-plugin-vetting;
     }
+    # /worktree: drives the dsh-worktree helper (packages/local-bin) from inside
+    # a session — create/list/remove the worktrees that isolate parallel dsh
+    # sessions. Host/agent-plane: it injects `commands` and `subprocess`, both
+    # mounted here (dsh-subprocess-local is what the bash tool already uses).
+    {
+      name = "dsh-worktree";
+      path = ./dsh-worktree;
+    }
   ];
 
   # Loader rows for the plugins above, mirroring the web profile's patch layer
