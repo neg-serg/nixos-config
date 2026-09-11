@@ -152,6 +152,29 @@ in
         ''
       );
 
+  # ── dsh-worktree guard ─────────────────────────────────────────────
+  # packages/local-bin/bin/dsh-worktree creates real git worktrees outside the
+  # repository so parallel dsh sessions never fight over the working copy. The
+  # guard pins the contract: trees stay out of the main checkout's `git status`,
+  # each carries its own branch, and a dirty tree is not removed without
+  # --force. It runs against a throwaway repository in $TMPDIR.
+
+  "dsh-worktree-guard" =
+    pkgs.runCommand "check-dsh-worktree"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.git
+        ];
+      }
+      ''
+        export HOME="$TMPDIR/home"
+        mkdir -p "$HOME"
+        bash ${../scripts/dev/check-dsh-worktree.sh} ${../packages/local-bin/bin/dsh-worktree}
+        touch $out
+      '';
+
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
   # via mkTestHost (threaded from flake.nix; stripped from the
