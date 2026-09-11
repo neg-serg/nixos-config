@@ -1,0 +1,12 @@
+{
+  "name": "dsh-statusline",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh session status line in the terminal title: runs the dsh-statusline script with the session JSON on stdin and writes the first line back as OSC 1/2.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}

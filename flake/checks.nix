@@ -175,6 +175,30 @@ in
         touch $out
       '';
 
+  # ── dsh-statusline guard ───────────────────────────────────────────
+  # packages/local-bin/bin/dsh-statusline is the content half of the status
+  # line: session JSON on stdin, one line on stdout. The guard pins the protocol
+  # subset (branch, dirty counts, context from ratio or tokens/max, turn), the
+  # worktree naming, DSH_STATUSLINE_PARTS, and that a missing field degrades
+  # instead of printing an empty line.
+
+  "dsh-statusline-guard" =
+    pkgs.runCommand "check-dsh-statusline"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.git
+          pkgs.jq
+        ];
+      }
+      ''
+        export HOME="$TMPDIR/home"
+        mkdir -p "$HOME"
+        bash ${../scripts/dev/check-dsh-statusline.sh} ${../packages/local-bin/bin/dsh-statusline}
+        touch $out
+      '';
+
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
   # via mkTestHost (threaded from flake.nix; stripped from the

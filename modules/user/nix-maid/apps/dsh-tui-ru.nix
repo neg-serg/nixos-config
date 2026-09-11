@@ -184,6 +184,16 @@ let
       name = "dsh-diff";
       path = ./dsh-diff;
     }
+    # status line in the terminal title. Upstream Tianshu ships a scriptable
+    # status line (StatusLineRunner) but never instantiates it in rc.29, and the
+    # render slot above the input belongs to the TUI — so this drives OSC 1/2
+    # with the output of packages/local-bin/bin/dsh-statusline, which speaks the
+    # same documented protocol and plugs into the upstream runner unchanged if it
+    # is ever wired. Injects subprocess only.
+    {
+      name = "dsh-statusline";
+      path = ./dsh-statusline;
+    }
   ];
 
   # Loader rows for the plugins above, mirroring the web profile's patch layer
