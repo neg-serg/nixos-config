@@ -59,24 +59,30 @@ in `cordis.patch.yml`).
 | `dsh-mode`          | `/mode` — list/switch the default agent preset                   |
 | `dsh-session-tools` | `/rename`, `/status`, `/remember`, `/forget` — session utilities |
 
-The client popup commands `/fork`, `/goto`, `/help` and the action `/new` are a build-time injection
-in `packages/dsh/web-ui-en/patch.py` (the commands anchor pattern).
+The client command family (`/new`, `/fork`, `/archive`, `/session`, `/next`, `/prev`, …) is **not**
+injected by this repo any more: it lives in the fork's `dsh-terminal-ui` client source
+(`packages/dsh-terminal-ui/lib/client.js`, mounted by `dsh-market.nix`), which registers its own `/`
+input source through `ctx.inputTriggers.registerSource` and claims the line from `matchEnter`
+(`"handled"` is still a valid `PickOutcome` at 0.1.5). `packages/dsh/web-ui-en/patch.py` used to
+splice a second copy of four of them into the compiled `ui-commands` bundle; duplicate contribution
+names throw at registration, so that injection was removed when the fork took them over.
 
-That injection has to satisfy the 0.1.5 client contract
-(`dsh-client-ui-commands/lib/types/client/contract.d.ts`) — a stale shape fails silently, which is
-what left the `/` menu empty and `/new` inert after the 0.1.5 upgrade:
+0.1.5 split the workspace service the old merged face exposed, and a stale call in that source is
+what left `/new` inert: `workspaces.startSession()` no longer exists, the `TypeError` escaped the
+pick handler, the line was never claimed and the draft went to the model as a chat message.
 
-| Contract point                     | 0.1.5 requirement                                                                                                                                  |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `description`                      | a **function** (`() => "…"`) — candidate synthesis calls it per pass, so a string throws and kills the whole `/` menu, not just that one command  |
-| `ui.kind`                          | required: `"popupSelect"` (with `options`/`onSelect`) or `"action"` (with `run`)                                                                   |
-| `new`                              | an `action` — a popup only opens for a session that already has a live client scope, so a `popupSelect` `/new` no-ops on a fresh/blank session     |
-| `available(session)`               | `ClientSessionContext` carries `sessionId` alone (no `blankBit`); blank state lives in `sessions.list.getSnapshot().byId[id].blank`                |
-| picking a contribution from `/help` | `this.invoke(name, ui, session, { via: "menu" })`; there is no `openPopup` method                                                                  |
+| Client service | Owns                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------- |
+| `workspaces`   | data only — `list`, `create`, `delete`, `rename`, `archiveSession`, `insertBefore`, … |
+| `uiWorkspace`  | navigation flows — `startSession(workspaceId?)`, `openWorkspace`, `openSession`, …    |
 
-`/model` and the remaining client popups are upstream-provided, not injected here. The session list
-snapshot rows are `{id, displayTitle, running, blank, updatedAt, title?, cwd?}`, which is why `/goto`
-reads `byId` while `SessionManager`'s own list uses `items`.
+So `/new` and the archive fallback call `uiWorkspace.startSession()`, while `/archive` stays on
+`workspaces.archiveSession(sessionId)`. `/fork` is new and runs
+`sessions.fork({ sessionId, increaseTitle: true })` followed by `sessions.open(childId)`.
+
+`/model` and the remaining client popups are upstream-provided. The session list snapshot rows are
+`{id, displayTitle, running, blank, updatedAt, title?, cwd?}` — `sessions.list` exposes them under
+`byId` while the workspace controller's own list uses `items`.
 
 ## TUI: the 0.1.5 assistant stream
 
@@ -92,11 +98,11 @@ showed it.
 entries carry a `probe` marker: they insert code and keep their `from` anchor, so presence of the
 probe — not the from/to pair — is what tells an applied bundle apart from a pristine one.
 
-| Fix                               | What it does                                                                                                                        |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Fix                                                         | What it does                                                                                                                                                                                                |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `compat-assistant-stream-subscribe` / `-field` / `-dispose` | subscribe `agent/assistant-stream` with `{ global: true }`, tracking `turn`/`step` from the `start` frame and folding `chunk` frames into the existing `assistant/chunk` handler; disposed with the session |
-| `compat-chunk-flag`               | mark that live frames arrived, so the settled message is not committed twice                                                        |
-| `compat-settled-message-text`     | commit the durable `assistant/message` content (`message.content` via `foldText`/`foldReasoning`) when nothing streamed              |
+| `compat-chunk-flag`                                         | mark that live frames arrived, so the settled message is not committed twice                                                                                                                                |
+| `compat-settled-message-text`                               | commit the durable `assistant/message` content (`message.content` via `foldText`/`foldReasoning`) when nothing streamed                                                                                     |
 
 Verification (no browser/CDP by policy): run `dsh --profile tui` in a PTY and check the reply text
 reaches the scrollback. The reasoning block header appearing is the signal the live path is wired;
