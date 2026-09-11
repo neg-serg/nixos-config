@@ -36,6 +36,9 @@
 - dsh TUI — completion notifications through the terminal (OSC 99/9, works over SSH):
   [dsh-tui-notifications.md](./dsh-tui-notifications.md)
 
+- dsh-worktree — parallel dsh sessions in isolated git worktrees:
+  [dsh-worktrees.md](./dsh-worktrees.md)
+
 - dsh- h — SSH operations, web terminal, and localhost for the agent: \[dsh- h.md\](./dsh- h.md)
 
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:
