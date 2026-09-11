@@ -21,16 +21,16 @@ work is the same, but in pieces — no pause, the bill is spread out, context st
   next user message. In tool-heavy work that is where most tokens live (file reads/command output).
 - The **whole turn** is taken, not an individual tool result: valid role alternation is preserved —
   the summary marker has the assistant role, the turn is bounded by user messages on both sides.
-- **User messages are never compacted.** The pass starts from an assistant message and goes
-  past user messages. User instructions remain verbatim for the whole session: assistant narrative
-  ("read the file, ran the command") survives summarization, user intent does not; paraphrasing
-  "use the retry helper, don't add a new one" is a direct path to the agent doing the opposite
-  six turns later.
+- **User messages are never compacted.** The pass starts from an assistant message and goes past
+  user messages. User instructions remain verbatim for the whole session: assistant narrative ("read
+  the file, ran the command") survives summarization, user intent does not; paraphrasing "use the
+  retry helper, don't add a new one" is a direct path to the agent doing the opposite six turns
+  later.
 
 ## Mechanics
 
-1. Hook on turn end (in DSH — session/event of the "turn done" type or agent/pre-step, see the
-   seam below).
+1. Hook on turn end (in DSH — session/event of the "turn done" type or agent/pre-step, see the seam
+   below).
 1. If there is an unabsorbed exchange: call summarization (local model, see below), replace the
    exchange in the transcript with a single assistant-role summary message.
 1. Defrag: when the running summary exceeds the threshold (defrag_threshold_tokens, default 2000),
@@ -59,8 +59,8 @@ exchange still advances the cadence and does not stall the mechanics. Values \<1
 - A **small fast non-reasoning instruct model** fits. Hermes observations: a local 7B 4-bit model
   (MLX) ~31s per pass; a large reasoning model is noticeably slower (thinking tokens on
   summarization) and usually no better.
-- DSH on odin already has a local Ollama: qwen3:8b-q8_0 (52 tok/s, memory-extractor benchmark) —
-  the default for summarization; gemma4:12b as an option.
+- DSH on odin already has a local Ollama: qwen3:8b-q8_0 (52 tok/s, memory-extractor benchmark) — the
+  default for summarization; gemma4:12b as an option.
 - If passes are too slow (descending order of effect): smaller/faster model → less loaded host →
   disable micro-compaction and fall back to batch.
 
@@ -76,24 +76,24 @@ values:
 
 ## Cost
 
-Each pass breaks the prefix cache once (frozen prefix + inserted summary). So the feature is
-opt-in, and the cadence is a deliberate choice: on a deep cache discount (expensive provider) choose 5,
-on local models — 1.
+Each pass breaks the prefix cache once (frozen prefix + inserted summary). So the feature is opt-in,
+and the cadence is a deliberate choice: on a deep cache discount (expensive provider) choose 5, on
+local models — 1.
 
 ## Seam in DSH (checked against dsh plugins)
 
-| Layer                                                           | What exists in DSH                                                                  |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| End-of-turn hook                                                | session/event (KNOWN_SESSION_EVENT_TYPES) or agent/pre-step — like in                |
-| dsh-boulder / dsh-ttsr                                          |                                                                                     |
-| Transcript write                                                | ctx / steer mechanics (agent-plane), dsh-compaction-todo-preserver as an             |
-| example of "surviving compaction"                               |                                                                                     |
-| Local summarization                                             | Ollama API (http://127.0.0.1:11434/api/chat) — the pattern from                     |
-| dsh-memory-extractor                                            |                                                                                     |
-| Config                                                          | patch-row in cordis.patch.yml (like memory-extractor: endpoint/model/everyNTurns/   |
-| defragThreshold/enabled)                                        |                                                                                     |
-| Test                                                            | mock session: 5 turns, feature enabled → oldest exchange replaced with a summary;   |
-| user messages untouched; 3 failures → cursor moved on; disabled → nothing changes    |                                                                                     |
+| Layer                                                                             | What exists in DSH                                                                |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| End-of-turn hook                                                                  | session/event (KNOWN_SESSION_EVENT_TYPES) or agent/pre-step — like in             |
+| dsh-boulder / dsh-ttsr                                                            |                                                                                   |
+| Transcript write                                                                  | ctx / steer mechanics (agent-plane), dsh-compaction-todo-preserver as an          |
+| example of "surviving compaction"                                                 |                                                                                   |
+| Local summarization                                                               | Ollama API (http://127.0.0.1:11434/api/chat) — the pattern from                   |
+| dsh-memory-extractor                                                              |                                                                                   |
+| Config                                                                            | patch-row in cordis.patch.yml (like memory-extractor: endpoint/model/everyNTurns/ |
+| defragThreshold/enabled)                                                          |                                                                                   |
+| Test                                                                              | mock session: 5 turns, feature enabled → oldest exchange replaced with a summary; |
+| user messages untouched; 3 failures → cursor moved on; disabled → nothing changes |                                                                                   |
 
 ## Relationship to existing functionality
 

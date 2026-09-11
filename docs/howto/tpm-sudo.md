@@ -1,8 +1,8 @@
 # TPM-sudo — passwordless sudo via TPM (no manual steps)
 
-How to get `sudo` without typing a password yet with protection: the private SSH key lives **inside the TPM**
-(non-exportable) and signs requests without a PIN; `sudo` authenticates through the ssh-agent via
-`pam_ssh_agent_auth`.
+How to get `sudo` without typing a password yet with protection: the private SSH key lives **inside
+the TPM** (non-exportable) and signs requests without a PIN; `sudo` authenticates through the
+ssh-agent via `pam_ssh_agent_auth`.
 
 ## How it works
 
@@ -12,13 +12,13 @@ sudo → pam_ssh_agent_auth → ssh-agent → PKCS#11 (tpm2-pkcs11) → TPM sign
 
 - The key **never leaves the TPM** — it cannot be extracted from the machine.
 - Empty PIN → **zero manual steps** after the one-time setup.
-- `sudo` does not ask for a password: `pam_ssh_agent_auth` is inserted as `auth sufficient`, and `nixpkgs` itself
-  adds `Defaults env_keep+=SSH_AUTH_SOCK`.
+- `sudo` does not ask for a password: `pam_ssh_agent_auth` is inserted as `auth sufficient`, and
+  `nixpkgs` itself adds `Defaults env_keep+=SSH_AUTH_SOCK`.
 
 ## Flag
 
-`features.security.tpmSudo.enable` (default `false`). Enable it in `hosts/odin/default.nix`.
-When enabled, the module `modules/security/tpm-sudo.nix`:
+`features.security.tpmSudo.enable` (default `false`). Enable it in `hosts/odin/default.nix`. When
+enabled, the module `modules/security/tpm-sudo.nix`:
 
 - enables `security.tpm2` + `security.tpm2.pkcs11` + `tctiEnvironment`;
 - enables `security.pam.sshAgentAuth` + `sudo.sshAgentAuth`;
@@ -28,11 +28,11 @@ When enabled, the module `modules/security/tpm-sudo.nix`:
 
 ## Step 1 — enable fTPM in UEFI/BIOS
 
-`odin` (Ryzen) has "AMD fTPM" / "PSP fTPM". In the BIOS: **Advanced → AMD fTPM configuration → TPM Device
-Selection → Firmware TPM** → Enabled.
+`odin` (Ryzen) has "AMD fTPM" / "PSP fTPM". In the BIOS: **Advanced → AMD fTPM configuration → TPM
+Device Selection → Firmware TPM** → Enabled.
 
-> Without this step the flag must not be enabled: the system will wait for the `tpmrm` device at boot (the very
-> pause because of which TPM was disabled).
+> Without this step the flag must not be enabled: the system will wait for the `tpmrm` device at
+> boot (the very pause because of which TPM was disabled).
 
 ## Step 2 — enable the flag
 
@@ -102,15 +102,15 @@ features.security.tpmSudo.enable = false;
 nh os switch /etc/nixos#odin --option substitute false
 ```
 
-TPM is disabled again: the modules are blacklisted, `/dev/tpmrm0` is not created, and `sudo` works with a password
-as before.
+TPM is disabled again: the modules are blacklisted, `/dev/tpmrm0` is not created, and `sudo` works
+with a password as before.
 
 ## Security and trade-offs
 
 - The key is non-exportable and bound to the hardware — the key file cannot be stolen.
-- **Empty PIN** means: the TPM signs for any process in the `tss` group (i.e. for processes
-  of the user `neg`). This protects against *key theft*, but not against *abuse from your own session* —
+- **Empty PIN** means: the TPM signs for any process in the `tss` group (i.e. for processes of the
+  user `neg`). This protects against *key theft*, but not against *abuse from your own session* —
   just like any passwordless sudo.
-- For stricter setups: set a PIN (`--userpin=...`); then `ssh-add -s` will ask for it once per session (and
-  `tpm2-ssh-add.service` for auto-loading will not do — a manual `ssh-add -s` is needed). This requires one
-  manual action.
+- For stricter setups: set a PIN (`--userpin=...`); then `ssh-add -s` will ask for it once per
+  session (and `tpm2-ssh-add.service` for auto-loading will not do — a manual `ssh-add -s` is
+  needed). This requires one manual action.

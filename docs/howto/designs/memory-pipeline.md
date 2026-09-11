@@ -5,8 +5,9 @@ Sources: omp `prompts/memories/` (`stage_one_system.md`, `consolidation.md`, `re
 (`~/.dsh/profiles/web/node_modules/dsh-memento`), `@deepseek-ai/dsh-skill-filesystem` (SKILL.md
 format).
 
-Below are two ready-made prompt files (stage 1 and stage 2) and the integration specification. The prompts
-are written for LLM invocation; `{{...}}` are placeholders filled in by the integration layer.
+Below are two ready-made prompt files (stage 1 and stage 2) and the integration specification. The
+prompts are written for LLM invocation; `{{...}}` are placeholders filled in by the integration
+layer.
 
 ______________________________________________________________________
 
@@ -139,36 +140,36 @@ ______________________________________________________________________
 
 ### When to run
 
-| Stage | Trigger | Input | Output |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| memory-extract | end of every completed rollout: goal/round complete, delegated task finished, session closing (incl. after compaction) | session transcript (user/assistant/tool events), `todo_write` history, tool results, optionally a compaction summary | strict JSON (summary/slug/raw_memory); NOT written to memento |
+| Stage              | Trigger                                                                                                                                | Input                                                                                                                                         | Output                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| memory-extract     | end of every completed rollout: goal/round complete, delegated task finished, session closing (incl. after compaction)                 | session transcript (user/assistant/tool events), `todo_write` history, tool results, optionally a compaction summary                          | strict JSON (summary/slug/raw_memory); NOT written to memento                    |
 | memory-consolidate | after 3–5 extract results accumulate; or agent/workspace is ≥ ~70% full; or `BUDGET_EXCEEDED` is received; or the working session ends | accumulated `raw_memory` + `rollout_summary`, current `memento_snapshot` (agent/workspace + user layers) with budgets, `existing_skill_names` | plan JSON (memory_md/memory_summary/skills[]) — applied by the integration layer |
 
 Implementation recommendation: stage 1 is a lightweight subagent on goal/round completion (DSH
-`dsh-goal`/goal-round driver); stage 2 is a separate step of the integration plugin or a
-foreground subagent on a schedule/budget trigger. The exact hook is registered for the harness version; the
+`dsh-goal`/goal-round driver); stage 2 is a separate step of the integration plugin or a foreground
+subagent on a schedule/budget trigger. The exact hook is registered for the harness version; the
 prompts themselves do not depend on the hook.
 
 ### Mapping of omp artifacts → DSH
 
-| omp                             | DSH memento / skills                                                                                                      |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `rollout_summary` | input only for stage 2; not stored separately |
-| `rollout_slug` | provenance prefix in the entry text and in skill files |
-| `raw_memory` | stage-2 corpus; standalone durable facts can go directly into agent/workspace |
-| `memory_summary` | `memory add` track=agent scope=workspace text=`[summary] <text>`; replaces the previous one by the unique substring `[summary]` |
-| `memory_md` (`## topic` sections) | split by headings; each section → `memory add/replace` track=agent scope=workspace text=`<slug>: <topic> — <section>` |
-| `memory_md` (`## user:` sections) | track=user; scope=user-global (cross-workspace) or workspace (for the current cwd) |
-| `skills[].name` / `content` | write `<skillsRoot>/<name>/SKILL.md`; `name` must match the directory name (kebab-case) |
-| `skills[].files` | write `<skillsRoot>/<name>/<path>`; only `SKILL.md` auto-loads, the rest are reference files |
-| stale artifacts | absent from the output → the integration layer runs `memory remove` (unique substring) or deletes the skill directory |
+| omp                               | DSH memento / skills                                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `rollout_summary`                 | input only for stage 2; not stored separately                                                                                   |
+| `rollout_slug`                    | provenance prefix in the entry text and in skill files                                                                          |
+| `raw_memory`                      | stage-2 corpus; standalone durable facts can go directly into agent/workspace                                                   |
+| `memory_summary`                  | `memory add` track=agent scope=workspace text=`[summary] <text>`; replaces the previous one by the unique substring `[summary]` |
+| `memory_md` (`## topic` sections) | split by headings; each section → `memory add/replace` track=agent scope=workspace text=`<slug>: <topic> — <section>`           |
+| `memory_md` (`## user:` sections) | track=user; scope=user-global (cross-workspace) or workspace (for the current cwd)                                              |
+| `skills[].name` / `content`       | write `<skillsRoot>/<name>/SKILL.md`; `name` must match the directory name (kebab-case)                                         |
+| `skills[].files`                  | write `<skillsRoot>/<name>/<path>`; only `SKILL.md` auto-loads, the rest are reference files                                    |
+| stale artifacts                   | absent from the output → the integration layer runs `memory remove` (unique substring) or deletes the skill directory           |
 
 ### Where to write SKILL.md (dsh-skill-filesystem)
 
 - Workspace playbooks: `<projectRoot>/.dsh/skills/<name>/SKILL.md` (rank 100).
 - Cross-workspace playbooks: `<dshHome>/skills/<name>/SKILL.md` (usually `~/.dsh/skills`, rank 400).
-- Frontmatter is required: `name` + `description`; `whenToUse` is optional. Only name+description reach the model catalog;
-  the body is loaded on demand (`skill` tool or `/name`).
+- Frontmatter is required: `name` + `description`; `whenToUse` is optional. Only name+description
+  reach the model catalog; the body is loaded on demand (`skill` tool or `/name`).
 
 ### Write order (integration layer)
 
@@ -176,15 +177,14 @@ prompts themselves do not depend on the hook.
 1. Remove/replace stale entries by a unique substring (ambiguous → use a longer substring).
 1. Add new entries; on `BUDGET_EXCEEDED` — `memory consolidate` (1–20 into one) and repeat.
 1. Write/update `SKILL.md`, remove the cleaned-up skill directories.
-1. All entries go through the dsh-memento approval gate (`writePolicy: ask|auto|off`); prompts do not
-   bypass it.
+1. All entries go through the dsh-memento approval gate (`writePolicy: ask|auto|off`); prompts do
+   not bypass it.
 
 ### Reading rules (adaptation of read-path.md)
 
 1. First `memory_summary` (the `[summary]` entry).
 1. Then memory_md entries and `SKILL.md` as needed.
-1. Memory = heuristics/process context; repository/runtime/user instruction =
-   facts/final decisions.
+1. Memory = heuristics/process context; repository/runtime/user instruction = facts/final decisions.
 1. Memory contradicts repo/instruction → it is stale: fix the behavior, then update/regenerate the
    artifact.
 1. Confidence only after verification in the repository; memory by itself is NEVER evidence.

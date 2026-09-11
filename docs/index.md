@@ -1,7 +1,8 @@
 # Documentation
 
 - How-tos and reference (focused guides, pinning notes, hotkeys): [howto/index.md](./howto/index.md)
-- Runbooks (operational steps, credentials, maintenance helpers): [runbook-index.md](./runbook-index.md)
+- Runbooks (operational steps, credentials, maintenance helpers):
+  [runbook-index.md](./runbook-index.md)
 
 ## Structure / Options Docs — which doc to read
 

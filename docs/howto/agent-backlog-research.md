@@ -11,8 +11,8 @@ implementation, risks, estimate. Conclusions: what to close as covered, what to 
 - DSH: persistent subagents + `send_message` (worker addressability), `dsh-tool-web` (web_search
   only; `fetch: false` on the host — policy), `tools.restrict()` in dsh-tools (narrowing the tool
   scope), multi-session web GUI, `dsh-api-remotes`/`dsh-client-connection`.
-- Already ported: vibe-director workflow (omp ln-mode), boulder (todo control), ab-bench.mjs (A/B
-  of prompts), code-review.mjs (git diff → model).
+- Already ported: vibe-director workflow (omp ln-mode), boulder (todo control), ab-bench.mjs (A/B of
+  prompts), code-review.mjs (git diff → model).
 
 ## 1. collab — live collaboration
 
@@ -31,8 +31,8 @@ implementation, risks, estimate. Conclusions: what to close as covered, what to 
 - E2E (AES) over WS for multi-user; session isolation by scope (like worker ids in vibe).
 - Do NOT reinvent the transport: DSH already has client-connection; build on top of it.
 
-**Conclusion**: do not start. Local collaboration (sessions + subagents) is covered; the external
-IM bridge (agentchat) is a foreign stack; relay/AES is a separate project with no explicit request.
+**Conclusion**: do not start. Local collaboration (sessions + subagents) is covered; the external IM
+bridge (agentchat) is a foreign stack; relay/AES is a separate project with no explicit request.
 
 ## 2. browser — browser automation
 
@@ -49,8 +49,8 @@ IM bridge (agentchat) is a foreign stack; relay/AES is a separate project with n
 
 - Direct CDP instead of Playwright: headless Chromium (`--remote-debugging-port` or pipe) + a CDP
   client (Runtime/Page/Input/Emulation domains). Fewer dependencies, closer to the metal.
-- Page screenshot → vision model (local qwen2.5vl:7b) for understanding → actions via the
-  Input domain (click/type/scroll) and the Page domain (navigate/extract DOM).
+- Page screenshot → vision model (local qwen2.5vl:7b) for understanding → actions via the Input
+  domain (click/type/scroll) and the Page domain (navigate/extract DOM).
 
 **Implementation in DSH**
 
@@ -95,8 +95,8 @@ availability in nixpkgs. **Estimate**: medium; expected to work on Hyprland (hyp
 
 **Fact** (omp docs/vibe-mode.md): vibe mode = the top session becomes the DIRECTOR: its tools are
 narrowed to read/todo/worker-control; workers do the searching/editing/running; the director
-verifies worker claims by reading files. Workers are persistent, addressable, scoped to their
-owner; `/vibe` switches the mode.
+verifies worker claims by reading files. Workers are persistent, addressable, scoped to their owner;
+`/vibe` switches the mode.
 
 **Conclusion**: in DSH this is ALREADY covered at the workflow + infrastructure level:
 
@@ -113,8 +113,8 @@ owner; `/vibe` switches the mode.
 
 **How to do it (runtime)**
 
-1. Task set from real sessions: `export-session.mjs` (JSONL → HTML) → distill tasks, plus a
-   manually maintained tasks.json.
+1. Task set from real sessions: `export-session.mjs` (JSONL → HTML) → distill tasks, plus a manually
+   maintained tasks.json.
 1. Background run: `systemd-run --user` launches ab-bench on the test set; reports accumulate in a
    directory (e.g. `~/.local/share/ab-bench/` or `/zero/ai/ab-reports`).
 1. Compare presets by accumulated statistics (wins, time, answer lengths).
@@ -124,18 +124,17 @@ owner; `/vibe` switches the mode.
 
 ## Summary: order and decisions
 
-| Direction            | Decision                                                                                                                          | Estimate |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| vibe-runtime         | ✅ covered (workflow + subagents); optional preset with restrict                                                                  | small    |
-| autoresearch-runtime | do: background runner + reports on top of ab-bench.mjs                                                                            | small    |
-| browser              | ~~do: browser-cdp (CDP) + tool + vision~~ — dropped (2026-08): CDP is not used                                                   | —        |
+| Direction            | Decision                                                                                                                                                                                           | Estimate |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| vibe-runtime         | ✅ covered (workflow + subagents); optional preset with restrict                                                                                                                                   | small    |
+| autoresearch-runtime | do: background runner + reports on top of ab-bench.mjs                                                                                                                                             | small    |
+| browser              | ~~do: browser-cdp (CDP) + tool + vision~~ — dropped (2026-08): CDP is not used                                                                                                                     | —        |
 | computer             | ✅ **extended (2026-08-20, v0.2)**: native layers (hyprctl/grim/wtype, zero-daemon) + CUL MCP (click/drag/scroll/state, per-call) + AT-SPI (apps; org.a11y.Bus enabled in NixOS); 36 live tests ✅ | medium   |
-| collab               | do not start (covered locally; agentchat — foreign stack; relay — a project)                                                      | —        |
+| collab               | do not start (covered locally; agentchat — foreign stack; relay — a project)                                                                                                                       | —        |
 
-Security everywhere: explicit calls, approval, allowlist, local VL models (screenshots do not
-leave the host). All features rely on the free GPU/local models — without external APIs.
+Security everywhere: explicit calls, approval, allowlist, local VL models (screenshots do not leave
+the host). All features rely on the free GPU/local models — without external APIs.
 
 Tool choice: `desktop` — for human-like GUI interaction (real windows, AT-SPI, local vision);
 `browser` (CDP) removed (2026-08) — programmatic page access is not needed. Fixed in AGENTS.md
 (Automation: desktop only, CDP not used).
-

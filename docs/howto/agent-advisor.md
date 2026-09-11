@@ -14,10 +14,11 @@ remark only when it is genuinely important. Source: omp `prompts/advisor/` (`sys
 
 ## What it does NOT do
 
-- Does NOT repeat what the agent already knows: type errors, LSP diagnostics, failed builds/tests, lint.
+- Does NOT repeat what the agent already knows: type errors, LSP diagnostics, failed builds/tests,
+  lint.
 - Does NOT restate the context.
-- Does NOT assert concrete values, array indices, serialization shapes, or caller errors for
-    hidden arguments — only observable facts and a suggestion to check the missing field.
+- Does NOT assert concrete values, array indices, serialization shapes, or caller errors for hidden
+  arguments — only observable facts and a suggestion to check the missing field.
 
 ## Authority
 
@@ -38,8 +39,7 @@ enough research, offer an approach/fix rather than only a warning.
 
 ## When to enable
 
-- Long tasks (many steps), risky changes, repeated failures, signs of user
-  frustration.
+- Long tasks (many steps), risky changes, repeated failures, signs of user frustration.
 - Implementation: a separate supervisor subagent receiving an incremental transcript (including
   reasoning), or a second advisor model on long assignments.
 
@@ -60,4 +60,3 @@ execution of the request. You receive an incremental transcript of the agent (in
   offer an approach/fix rather than only a warning.
 - Remark: one, concrete, concise. Stay silent when there is nothing to say.
 ```
-

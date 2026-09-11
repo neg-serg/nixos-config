@@ -1,8 +1,8 @@
 # SKILL.md skill-authoring contract (port from hermes-agent)
 
 Unified skill format from **NousResearch/hermes-agent** (82 SKILL.md; the contract —
-`skills/software-development/hermes-agent-skill-authoring/SKILL.md`, MIT). Port goal: DSH/repo skills get
-identical frontmatter and short descriptions, so the skill index (and
+`skills/software-development/hermes-agent-skill-authoring/SKILL.md`, MIT). Port goal: DSH/repo
+skills get identical frontmatter and short descriptions, so the skill index (and
 dsh-category-skill-reminder reminders) find them by trigger, not by marketing.
 
 ## Frontmatter
@@ -32,8 +32,8 @@ metadata:
 - If description contains ":", wrap it in double quotes (otherwise YAML parses a mapping and the
   docs generator crashes). Quotes don't count toward the 60.
 
-Good: "Track named companies for material news with cited digests." Bad: "Use when a user asks
-to monitor named competitors or companies for product launches, pricing changes, funding, ..." (240
+Good: "Track named companies for material news with cited digests." Bad: "Use when a user asks to
+monitor named competitors or companies for product launches, pricing changes, funding, ..." (240
 characters — rejected in review).
 
 ## Body structure
@@ -43,8 +43,8 @@ characters — rejected in review).
 - Iron laws (if any) go at the beginning, in a blockquote or code block, and are duplicated at the
   start of the steps.
 - References — separate files in references/ (don't bloat SKILL.md).
-- Reference example in the repo: skills/software-development/systematic-debugging/SKILL.md (Iron
-  Law + Feedback Loop Rule + phases + anti-patterns).
+- Reference example in the repo: skills/software-development/systematic-debugging/SKILL.md (Iron Law
+  \+ Feedback Loop Rule + phases + anti-patterns).
 
 ## Discovery (4 levels)
 
@@ -53,8 +53,8 @@ characters — rejected in review).
 
 ## Skill-embedded MCP
 
-An MCP server inside a skill is isolated by the sessionID:skill:server key — the state of one
-skill doesn't leak between sessions. For DSH: skills come from the session directory; when MCP is
+An MCP server inside a skill is isolated by the sessionID:skill:server key — the state of one skill
+doesn't leak between sessions. For DSH: skills come from the session directory; when MCP is
 connected, the same isolation principle applies.
 
 ## Port into this repository

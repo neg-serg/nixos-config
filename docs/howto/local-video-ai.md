@@ -14,14 +14,14 @@ Image/video/3D generation through ComfyUI on RX 9070 XT (gfx1201).
 
 ## Models (/zero/ai/video/models + comfyui/models/diffusion_models)
 
-| Model                         | Status                                                                         |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| LTX 2.3 (63G)                 | ✅ verified by rendering (frames in comfyui-output)                            |
-| Wan 2.1/2.2 (all)             | ❌ removed (2026-08-20, ~75GB) — not needed; user decided                      |
-| HunyuanVideo 1.5              | ✅ files present                                                               |
-| Hunyuan3D-2.0                 | ✅ fixed (pymeshlab + libglvnd/e2fsprogs in the launcher), workflow not run    |
-| Qwen-Image, SDXL, FLUX (image)| ✅ files present                                                               |
-| triposr (3D from photo)       | ✅ verified (glb in comfyui-output)                                            |
+| Model                          | Status                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| LTX 2.3 (63G)                  | ✅ verified by rendering (frames in comfyui-output)                         |
+| Wan 2.1/2.2 (all)              | ❌ removed (2026-08-20, ~75GB) — not needed; user decided                   |
+| HunyuanVideo 1.5               | ✅ files present                                                            |
+| Hunyuan3D-2.0                  | ✅ fixed (pymeshlab + libglvnd/e2fsprogs in the launcher), workflow not run |
+| Qwen-Image, SDXL, FLUX (image) | ✅ files present                                                            |
+| triposr (3D from photo)        | ✅ verified (glb in comfyui-output)                                         |
 
 ## Limitations
 

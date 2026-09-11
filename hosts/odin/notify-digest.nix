@@ -8,7 +8,13 @@
 # Everything is gated on secrets/telegram.sops.yaml existing; without the secret
 # file the whole unit stays disabled (same pattern as the other Telegram units
 # in hosts/odin/services.nix).
-{ config, lib, pkgs, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 
 let
   telegramDigestScript = pkgs.writeShellApplication {

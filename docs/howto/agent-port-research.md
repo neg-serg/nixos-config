@@ -1,14 +1,14 @@
 # Agent prompts: omp and oh-my-opencode research — full survey
 
 A supplement to the already-ported pieces (AGENTS.md sections, docs/howto/agent-guards.md,
-.agent/workflows/plan-before-code.md, .agent/workflows/delegate-task.md). Here — what was
-mined during the deep dive and how it changes the port plan.
+.agent/workflows/plan-before-code.md, .agent/workflows/delegate-task.md). Here — what was mined
+during the deep dive and how it changes the port plan.
 
 ## Sources
 
-- **omp 17.3.4** — local: /nix/store/6f6a8cbpqzilf5lv4y6zd0gpkkm5y0mk-omp-17.3.4/share/omp/src
-  (read directly: advisor/, memories/, bench/, security/, personalities, the base system prompt,
-  subagent prompts, the goal machine, ~10 tool contracts, 9 agent prompts).
+- **omp 17.3.4** — local: /nix/store/6f6a8cbpqzilf5lv4y6zd0gpkkm5y0mk-omp-17.3.4/share/omp/src (read
+  directly: advisor/, memories/, bench/, security/, personalities, the base system prompt, subagent
+  prompts, the goal machine, ~10 tool contracts, 9 agent prompts).
 - **oh-my-openagent (oh-my-opencode)** — cloned: /tmp/omo-repo (52 MB, dev branch):
   packages/prompts-core/prompts/ (atlas/, prometheus/, ultrawork/, mode/),
   packages/omo-opencode/src/agents/, src/hooks/ (46 hooks), .agents/skills/ + .opencode/skills/
@@ -37,57 +37,58 @@ advise_tool — only when something is actually important. What it does:
 
 memories/stage_one_system.md: a strict JSON is extracted from a “rollout” — rollout_summary,
 rollout_slug, raw_memory; no durable signal → empty strings (noise is discarded).
-memories/consolidation.md: stage two merges the corpora into memory_md (long-term memory), memory_summary
-(a hint for the prompt timer) and skills[] (reusable playbooks, each = skills/<name>/SKILL.md
-+ optionally scripts/templates/examples). memories/read-path.md: memory is heuristics and process
-context; the current repo state, runtime output and the user's instruction are facts; “memory alone is
-NEVER proof”. Port: a direct analogy with dsh-memento; the summary +
-playbooks-as-skills format is worth adopting.
+memories/consolidation.md: stage two merges the corpora into memory_md (long-term memory),
+memory_summary (a hint for the prompt timer) and skills[] (reusable playbooks, each =
+skills/<name>/SKILL.md
+
+- optionally scripts/templates/examples). memories/read-path.md: memory is heuristics and process
+  context; the current repo state, runtime output and the user's instruction are facts; “memory
+  alone is NEVER proof”. Port: a direct analogy with dsh-memento; the summary + playbooks-as-skills
+  format is worth adopting.
 
 ### 3. Security pipeline
 
-security/scan-request.md: scanning = running an immutable plan
-(repo/kind/revisions/include/exclude, plan-fingerprint) → scope inventory → delegating
-non-overlapping assignments to a security-reviewer via task → reconciling the results → one
-security_publish with findings, honest coverage and the final report. Port: a template for the
-gavel/plugin_vet pairing in DSH.
+security/scan-request.md: scanning = running an immutable plan (repo/kind/revisions/include/exclude,
+plan-fingerprint) → scope inventory → delegating non-overlapping assignments to a security-reviewer
+via task → reconciling the results → one security_publish with findings, honest coverage and the
+final report. Port: a template for the gavel/plugin_vet pairing in DSH.
 
 ### 4. subagent-system-prompt (omp)
 
-Structure: Role → Context → Plan (the assignment wins on conflict; do NOT re-read the plan from disk) →
-Coop (isolated worktree, “never touch files outside the tree”, irc peers via hub: ask the file owner
-first, short messages, await only when genuinely stuck) → Completion
-(no todo narration or progress updates; only a terminal yield with a result or
-incremental sections of type: string[]). Port: a ready template for DSH subagents.
+Structure: Role → Context → Plan (the assignment wins on conflict; do NOT re-read the plan from
+disk) → Coop (isolated worktree, “never touch files outside the tree”, irc peers via hub: ask the
+file owner first, short messages, await only when genuinely stuck) → Completion (no todo narration
+or progress updates; only a terminal yield with a result or incremental sections of type: string[]).
+Port: a ready template for DSH subagents.
 
 ### 5. Misc
 
 - bench/cache-prefix\*.md — a namespace for the prompt cache (a narrow topic, not critical).
-- modes/ — modes (print-mode, interactive-mode, ultrathink, turn-budget, loop-limit, ...) —
-  not read in detail (see “What is still unread”).
+- modes/ — modes (print-mode, interactive-mode, ultrathink, turn-budget, loop-limit, ...) — not read
+  in detail (see “What is still unread”).
 
 ## oh-my-opencode — key findings
 
 ### 1. Disciplinary agents and their real prompts
 
-- Sisyphus (orchestrator): todo-driven workflow, Intent Gate (intent classification),
-  strategic delegation, parallel execution; after 3 failures in a row — a strategy change,
-  documenting the attempts; completion criterion: todos done + lsp_diagnostics clean
+- Sisyphus (orchestrator): todo-driven workflow, Intent Gate (intent classification), strategic
+  delegation, parallel execution; after 3 failures in a row — a strategy change, documenting the
+  attempts; completion criterion: todos done + lsp_diagnostics clean
   - the build passes + the original request is fully closed.
 - Hephaestus (deep worker): “Senior Staff Engineer. You do not guess. You verify. You do not stop
   early. You complete.” — a goal, not a recipe.
-- Prometheus (planner): plan mode is sticky (“do X” = “plan X”); execution only in a separate
-  worker session via /start-work; all the logic lives in the ulw-plan skill.
+- Prometheus (planner): plan mode is sticky (“do X” = “plan X”); execution only in a separate worker
+  session via /start-work; all the logic lives in the ulw-plan skill.
 - ulw-plan skill: explore-first, “ask few sharp questions — or none”; output = ONE decision-complete
-  plan that the worker executes without a single clarification; approval gate (waits for an explicit ok); plan-gate:
-  metis/momus reviews are allowed only when a plan file with review_required exists; optional
-  advisory lanes architect/ultrabrain (read-only, TASK/ DELIVERABLE/SCOPE/VERIFY/STOP WHEN, “claims
-  to verify, not decisions”).
+  plan that the worker executes without a single clarification; approval gate (waits for an explicit
+  ok); plan-gate: metis/momus reviews are allowed only when a plan file with review_required exists;
+  optional advisory lanes architect/ultrabrain (read-only, TASK/ DELIVERABLE/SCOPE/VERIFY/STOP WHEN,
+  “claims to verify, not decisions”).
 - Metis (gap analysis before planning): intent classification (refactor/feature/bugfix/unknown)
   decides the strategy; MUST-lists like “Define Must NOT Have section (AI over-engineering
   prevention)”, “Record all user decisions in Key Decisions”, “Flag assumptions explicitly”.
-- Momus (plan reviewer): approval bias, blocks only verifiable defects (files exist,
-  tasks do not contradict each other, QA scenarios are concrete, ~80% clear = executable).
+- Momus (plan reviewer): approval bias, blocks only verifiable defects (files exist, tasks do not
+  contradict each other, QA scenarios are concrete, ~80% clear = executable).
 - Oracle: a read-only consultant on architecture/debugging (the AmpCode pattern).
 - Atlas (todo orchestrator): Anti-Duplication Rule, 6-Section Prompt Structure (MANDATORY),
   AUTO-CONTINUE POLICY (strict), Parallel Delegation — DEFAULT, NOT OPTIONAL, verify personally
@@ -120,23 +121,25 @@ pending-question detection (do not inject while waiting for the user's answer), 
 
 On read, every line gets a {line}#{hash} tag (CID alphabet ZPMQVRWSNKTXJBYH, 2 characters); edits
 reference the tags; on a hash mismatch the edit is rejected BEFORE corruption; there are
-replace/append/prepend operations, autocorrect on line shifts, errors: hash mismatch, invalid reference,
-overlapping ranges. Claimed effect (per README): Grok Code Fast edit success 6.7% → 68.3%.
+replace/append/prepend operations, autocorrect on line shifts, errors: hash mismatch, invalid
+reference, overlapping ranges. Claimed effect (per README): Grok Code Fast edit success 6.7% →
+68.3%.
 
 ### 4. Categories and skills
 
 - Categories: quick, deep, ultrabrain, artistry, visual-engineering, writing, unspecified-low/high;
-  category → model fallback chain; the category-skill-reminder hook reminds one to load the skills for
-  the category.
-- SKILL.md: YAML frontmatter (name, description with triggers, metadata); 4 discovery levels (project
+  category → model fallback chain; the category-skill-reminder hook reminds one to load the skills
+  for the category.
+- SKILL.md: YAML frontmatter (name, description with triggers, metadata); 4 discovery levels
+  (project
   > opencode > user > builtin); skill-embedded MCP is isolated with the key sessionID:skill:server.
 - hyperplan: 5 “hostile” members (unspecified-low/high, deep, ultrabrain, artistry) through
-  team-mode, cross-criticism, surviving insights → to the plan agent; hard preconditions (team-mode on,
-  lead role).
-- security-research: 3 vulnerability hunters + 2 PoC engineers in parallel, severity by
-  actual exploitability.
-- ulw-plan — see above; git-master (atomic commits), frontend (design-first UI), playwright
-  (browser automation) — “bundle” skills of instructions + MCP.
+  team-mode, cross-criticism, surviving insights → to the plan agent; hard preconditions (team-mode
+  on, lead role).
+- security-research: 3 vulnerability hunters + 2 PoC engineers in parallel, severity by actual
+  exploitability.
+- ulw-plan — see above; git-master (atomic commits), frontend (design-first UI), playwright (browser
+  automation) — “bundle” skills of instructions + MCP.
 
 ### 5. Hooks: 46 of them, 3 tiers
 
@@ -160,11 +163,12 @@ goal-completion audit, 9 agent guards, plan-before-code, delegate-task (7 items)
 
 Refinements to the existing pieces:
 
-- delegate-task.md: in Atlas/Sisyphus there are officially 6 sections (TASK/EXPECTED OUTCOME/REQUIRED TOOLS/ MUST
-  DO/MUST NOT DO/CONTEXT); REQUIRED SKILLS comes separately via load_skills — mark the 7th
-  item as optional.
-- agent-guards.md §6: replace the retelling with the exact omo CONTINUATION_PROMPT text + the mechanics
-  (backoff 30s×2, max 5, 5-minute pause; do not inject while waiting for the user's answer).
+- delegate-task.md: in Atlas/Sisyphus there are officially 6 sections (TASK/EXPECTED
+  OUTCOME/REQUIRED TOOLS/ MUST DO/MUST NOT DO/CONTEXT); REQUIRED SKILLS comes separately via
+  load_skills — mark the 7th item as optional.
+- agent-guards.md §6: replace the retelling with the exact omo CONTINUATION_PROMPT text + the
+  mechanics (backoff 30s×2, max 5, 5-minute pause; do not inject while waiting for the user's
+  answer).
 
 New candidates (priority order):
 
@@ -180,9 +184,9 @@ New candidates (priority order):
 
 ## What is still unread (honestly)
 
-- omp modes/* in detail; ~50 files of omp system/ and ~45 tools/ (lists obtained; the subagents
-  launched for condensation came back with a ready status and no delivered reports — the material was
-  collected directly).
+- omp modes/\* in detail; ~50 files of omp system/ and ~45 tools/ (lists obtained; the subagents
+  launched for condensation came back with a ready status and no delivered reports — the material
+  was collected directly).
 - Full texts of atlas/default.md (497 pages), ultrawork/default.md (339 pages), the prompt bodies of
   metis/momus/oracle/explore/librarian from TS (key fragments extracted, not everything).
 - docs/guide/agent-model-matching.md, docs/guide/team-mode.md (passed to a subagent; the key ideas

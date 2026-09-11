@@ -483,23 +483,23 @@ Done while writing this plan (fork working tree, uncommitted):
 
 - **Preflight false positives fixed (guard patch + suppression).** The `dsh-startup-guard`
   composition check concatenated every patch file's entry ids and flagged *any* repeat as a
-  loader-level boot failure. On 0.1.5 that is the normal override mechanism
-  (`@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-web-app` both ship `tool-bash`/`tools`/…, the
-  profile patch overrides `web-runtime`/`agent-presets`, and `@linxin666/dsh-web-ui-all`
-  re-declares its sub-plugin rows), so every boot reported 37 web + 1 tui issues while the tree
-  booted clean. New module `dsh-startup-guard.nix` (assets `dsh-startup-guard-assets/`) re-applies
-  two things at activation and login, because a pnpm re-install overwrites the plugin:
+  loader-level boot failure. On 0.1.5 that is the normal override mechanism (`@deepseek-ai/dsh-base`
+  and `@deepseek-ai/dsh-web-app` both ship `tool-bash`/`tools`/…, the profile patch overrides
+  `web-runtime`/`agent-presets`, and `@linxin666/dsh-web-ui-all` re-declares its sub-plugin rows),
+  so every boot reported 37 web + 1 tui issues while the tree booted clean. New module
+  `dsh-startup-guard.nix` (assets `dsh-startup-guard-assets/`) re-applies two things at activation
+  and login, because a pnpm re-install overwrites the plugin:
 
   - `guard-patch.mjs` scopes the duplicate check to one patch file (a same-file repeat stays fatal,
-    so strict mode still blocks real authoring bugs). Idempotent through a sentinel comment, with
-    an `.orig` backup and a `node --check` pass before the live file is replaced.
-  - `guard-config.json` adds the guard's supported `exclude` for `dsh-pathlink` and `dsh-memento`
-    — their host-smoke failures are the two documented checker false positives, and suppression is
-    the remedy the guard README offers (`exclude` skips the client-validity and host-smoke passes
-    for those two bundles; everything else stays guarded).
+    so strict mode still blocks real authoring bugs). Idempotent through a sentinel comment, with an
+    `.orig` backup and a `node --check` pass before the live file is replaced.
+  - `guard-config.json` adds the guard's supported `exclude` for `dsh-pathlink` and `dsh-memento` —
+    their host-smoke failures are the two documented checker false positives, and suppression is the
+    remedy the guard README offers (`exclude` skips the client-validity and host-smoke passes for
+    those two bundles; everything else stays guarded).
 
   Verified with `compositionPreflight` directly against the live profiles (37 → 0 web, 1 → 0 tui;
-  same-file duplicates still reported) and with a full `runGuard` dry-run (issues 0, `brokenHost`
-  0, broken 0, `fixNeeded` 0). Upstream note: the guard's own test *"composed stack duplicate entry
-  ids are reported as loader-level issues"* encodes the cross-file behavior we now treat as an
-  override; a proper upstream fix should make that check layer-aware.
+  same-file duplicates still reported) and with a full `runGuard` dry-run (issues 0, `brokenHost` 0,
+  broken 0, `fixNeeded` 0). Upstream note: the guard's own test *"composed stack duplicate entry ids
+  are reported as loader-level issues"* encodes the cross-file behavior we now treat as an override;
+  a proper upstream fix should make that check layer-aware.
