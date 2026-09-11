@@ -176,6 +176,16 @@ Automation: desktop only, CDP is not used (hard rule)
 - Prefer the `desktop` tool (computer-use-linux: real windows, AT-SPI semantic selectors,
   grim screenshots → local vision) for HUMAN-LIKE GUI interaction — working an application or
   a website as the user would (click/type/scroll by element name, read the actual screen).
+- Never drive the pointer through raw `ydotool`/uinput: clicks, drags and scrolls go through the
+  `desktop` tool, whose CUL backend owns the virtual pointer. A hand-rolled `ydotool click 0x40`
+  is a left-button *down only* — `0x41`/`0x42`/`0x43` are the down-only codes for the other
+  buttons, a full left click is `0xC0`, and `0x80` is the left up. The down event sticks in the
+  kernel for the rest of the session and Hyprland then swallows every real click, while the cursor
+  still moves (kanata registers the `ydotoold` device as an input source, so the held button shows
+  up on two virtual devices). This is not hypothetical: on 2026-09-11 an agent ran
+  `ydotool click 0x40` without the release and left the left button stuck for 18 hours. If it
+  happens anyway, release it with `ydotool click 0x80` (left up) or
+  `systemctl --user restart ydotoold.service`.
 - Screenshots from the desktop tool go through local VL models (qwen2.5vl) — data never leaves the host.
 - Downscale captures before vision: `magick shot.png -resize 1280x small.png` — full-res 4K
   screenshots exceed the local VL context (4096 tokens). Desktop tool verified live end-to-end
