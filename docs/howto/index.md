@@ -39,6 +39,9 @@
 - dsh-worktree — parallel dsh sessions in isolated git worktrees:
   [dsh-worktrees.md](./dsh-worktrees.md)
 
+- dsh diff review — the `show_diff` tool (structured diff card) and `/diff`:
+  [dsh-diff-review.md](./dsh-diff-review.md)
+
 - dsh- h — SSH operations, web terminal, and localhost for the agent: \[dsh- h.md\](./dsh- h.md)
 
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:

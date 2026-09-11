@@ -53,6 +53,7 @@ in
       && n != "dsh-plugin-recall"
       && n != "dsh-plugin-vetting"
       && n != "dsh-worktree"
+      && n != "dsh-diff"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
