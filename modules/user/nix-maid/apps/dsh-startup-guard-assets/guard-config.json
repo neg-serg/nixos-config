@@ -1,0 +1,8 @@
+{
+  "mode": "fix",
+  "autoRepairComposition": false,
+  "exclude": [
+    "dsh-pathlink",
+    "dsh-memento"
+  ]
+}
