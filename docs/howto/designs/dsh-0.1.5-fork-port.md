@@ -461,3 +461,22 @@ Done while writing this plan (fork working tree, uncommitted):
   (`patch: entry … not found`). A new `staleRowsPatch` caretaker drops such rows wherever they stand
   (idempotent; only `- id: X` + `disabled: true` pairs), and `dsh --profile web --dump-config` is
   warning-free now.
+
+- **Post-port: the theme's upstream selectors re-derived (fork commit `67f80f12`).** The neg theme
+  (`packages/dsh-terminal-ui`) restyles the host UI by CSS-module class, and every hash in it came
+  from the 0.1.1 bundles. 0.1.5 rebuilt those modules — the conversation UI split into
+  `dsh-client-ui-chat` / `-tool` / `-approval` — so **24 of its 63 targets matched nothing**: the
+  layout rules stopped applying *and* the rules that hide stock chrome stopped hiding it, which
+  reads as "the theme was rolled back" while the page still loads. The same class of rot hit
+  `dsh-tool-describe-image`, whose decorator anchored on `.Md3f7G_flowItem` and silently stopped
+  appending preview strips (fork commit `92ad2496`).
+
+  Method worth repeating on the next upgrade: match the old family to the served one by **suffix
+  set** (e.g. `column`/`flowItem`/`turnStatus` -> `EvIC1a`, overlap 1.00; `bubble`/`userRow` ->
+  `Sixlwa`, 0.77), or match a rule by its declarations (`--dsh-chat-content-width` identified the
+  stats pill row). Only the *theme* was affected: the other host-patching plugins (`dsh-gui-tweaks`,
+  `dsh-prompt`, `dsh-layout-slash`, `dsh-osm`, `dsh-widgets`) select by stable attributes and ARIA
+  roles, and a repository-wide sweep of quoted selectors in plugin bundles found no other stale
+  hash. Verification is a scan of every class/attribute the theme names against all served bundles
+  (`@deepseek-ai/**` plus fork and local plugins, symlinks followed): zero dead targets, and the
+  served plugin group carries the new selectors.
