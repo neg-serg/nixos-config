@@ -66,6 +66,11 @@ function remainingCjkLiterals(text) {
  * exact literal occurrence in the bundle: `from` is what upstream ships, `to`
  * what this deployment needs. Applied before the map, so `bundleSha` below
  * still records the pristine input.
+ *
+ * Insert-style entries (the host-compat ones) leave `from` in place, so the
+ * from/to pair cannot tell an applied bundle from a pristine one — they carry
+ * `probe`, a marker substring that lands in the bundle exactly once and is
+ * checked first in the loop below.
  */
 const FIXES = [
   {
@@ -132,6 +137,45 @@ const FIXES = [
     from: ".map((header) => {\n\t\tconst summary = toSummary(header);",
     to: ".map((entry) => {\n\t\tconst header = entry?.header ?? entry;\n\t\tconst summary = toSummary(header);",
   },
+
+  // --- dsh 0.1.5 host-compat ---------------------------------------------
+  // 0.1.5 dropped the durable `assistant/chunk` stream event (it commits one
+  // `assistant/attempt` when an attempt settles and publishes in-flight deltas
+  // as transient `agent/assistant-stream` frames). The TUI renders assistant
+  // text only from chunks pushed into its StreamRenderer, so on 0.1.5 a turn
+  // finished with nothing on screen — the live area stayed frozen on the
+  // spinner. Two halves: consume the transient frames (restores live
+  // streaming) and, when nothing streamed, commit the settled message text.
+  {
+    id: "compat-assistant-stream-subscribe",
+    probe: "dsh-compat:agent-stream — 0.1.5 publishes in-flight deltas",
+    from: '\t\tthis.streamFeed = this.ctx.on("session/event", (owner, event) => {\n\t\t\tif (owner.id !== id) return;\n\t\t\tif (this.replayActive) {\n\t\t\t\tthis.streamEventBacklog.push(event);\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tthis.handleStreamEvent(event);\n\t\t});',
+    to: '\t\tthis.streamFeed = this.ctx.on("session/event", (owner, event) => {\n\t\t\tif (owner.id !== id) return;\n\t\t\tif (this.replayActive) {\n\t\t\t\tthis.streamEventBacklog.push(event);\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tthis.handleStreamEvent(event);\n\t\t});\n\t\t/* dsh-compat:agent-stream — 0.1.5 publishes in-flight deltas as transient `agent/assistant-stream` frames (global dispatch on the agent scope), not as durable `assistant/chunk` session events. Fold them into the same handler so live rendering keeps working. */\n\t\tthis.streamLiveFeed = this.ctx.on("agent/assistant-stream", ({ agent, frame }) => {\n\t\t\tif (agent.session.id !== id || this.replayActive) return;\n\t\t\tif (frame.type === "start") {\n\t\t\t\tthis.__dsh015Streamed = false;\n\t\t\t\tthis.__dsh015Turn = frame.turn;\n\t\t\t\tthis.__dsh015Step = frame.step;\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tif (frame.type !== "chunk") return;\n\t\t\tthis.handleStreamEvent({\n\t\t\t\ttype: "assistant/chunk",\n\t\t\t\ttime: frame.time,\n\t\t\t\tdata: {\n\t\t\t\t\tturn: this.__dsh015Turn,\n\t\t\t\t\tstep: this.__dsh015Step,\n\t\t\t\t\tchunk: frame.chunk\n\t\t\t\t}\n\t\t\t});\n\t\t}, { global: true });',
+  },
+  {
+    id: "compat-assistant-stream-field",
+    probe: "dsh-compat:agent-stream — transient 0.1.5 live-stream subscription",
+    from: "\t/** 流式提交供给的 session/event 订阅；随会话挂载/卸载。 */\n\tstreamFeed = null;",
+    to: "\t/** 流式提交供给的 session/event 订阅；随会话挂载/卸载。 */\n\tstreamFeed = null;\n\t/** dsh-compat:agent-stream — transient 0.1.5 live-stream subscription; mounted/disposed with the session. */\n\tstreamLiveFeed = null;",
+  },
+  {
+    id: "compat-assistant-stream-dispose",
+    probe: "this.streamLiveFeed?.();",
+    from: "\t\tthis.streamFeed?.();\n\t\tthis.streamFeed = null;",
+    to: "\t\tthis.streamFeed?.();\n\t\tthis.streamFeed = null;\n\t\tthis.streamLiveFeed?.();\n\t\tthis.streamLiveFeed = null;",
+  },
+  {
+    id: "compat-chunk-flag",
+    probe: "__dsh015Streamed = true;",
+    from: '\t\t\tcase "assistant/chunk": {\n\t\t\t\tconst { chunk } = event.data;',
+    to: '\t\t\tcase "assistant/chunk": {\n\t\t\t\tthis.__dsh015Streamed = true;\n\t\t\t\tconst { chunk } = event.data;',
+  },
+  {
+    id: "compat-settled-message-text",
+    probe: "dsh-compat:settled-message — the durable message carries",
+    from: '\t\t\tcase "assistant/message":\n\t\t\t\tthis.commitReasoningBlock();\n\t\t\t\tif (event.data.usage !== void 0) {',
+    to: '\t\t\tcase "assistant/message":\n\t\t\t\t/* dsh-compat:settled-message — the durable message carries the authoritative content; without the 0.1.5 chunk stream nothing fed the renderer, so commit it here when no live frames arrived. */\n\t\t\t\tif (this.__dsh015Streamed !== true) {\n\t\t\t\t\tconst settled = event.data.message;\n\t\t\t\t\tif (settled !== void 0) {\n\t\t\t\t\t\tconst settledReasoning = foldReasoning(settled.content);\n\t\t\t\t\t\tif (settledReasoning !== "") {\n\t\t\t\t\t\t\tif (this.reasoningText === "") this.reasoningStartedAt = event.time;\n\t\t\t\t\t\t\tthis.reasoningText += settledReasoning;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tconst settledText = foldText(settled.content);\n\t\t\t\t\t\tif (settledText !== "") this.streamRenderer.push(settledText);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tthis.__dsh015Streamed = false;\n\t\t\t\tthis.commitReasoningBlock();\n\t\t\t\tif (event.data.usage !== void 0) {',
+  },
 ];
 const fixesSha = crypto.createHash("sha256").update(JSON.stringify(FIXES)).digest("hex");
 
@@ -163,6 +207,12 @@ if (marker && marker.mapSha === mapSha && marker.bundleSha === bundleSha
 // map below must not be able to mask them.
 const fixNotes = [];
 for (const fix of FIXES) {
+  // Insert-style fixes keep their anchor, so only their probe distinguishes an
+  // applied bundle from a pristine one.
+  if (fix.probe !== undefined && bundle.includes(fix.probe)) {
+    fixNotes.push(`${fix.id}: already applied`);
+    continue;
+  }
   if (bundle.includes(fix.to) && !bundle.includes(fix.from)) {
     fixNotes.push(`${fix.id}: already applied`);
     continue;
