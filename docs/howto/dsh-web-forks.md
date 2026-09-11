@@ -148,11 +148,23 @@ model control"), and the deployment default lives in a third place
 | TUI                           | `/model` with **no arguments opens a picker**; `/model <provider/model\|spark-flash\|spark-pro> [off\|high\|max] [default]` switches (a trailing `default` also persists it); the status line always shows `provider/model · effort` |
 | TUI, effort                   | `/effort off\|high\|max\|auto\|default`                                                                                                                                                                                              |
 
-Model ids on the `deepseek-official` route (see `@deepseek-ai/dsh-llm-deepseek/README.md`):
-`deepseek-flash` (V4.1 Flash, text + image), `deepseek-v4-flash`, `deepseek-v4-pro`,
-`deepseek-v4-flash-vision-exp` (text + image), each with a 1M-token context window. Unlisted ids
-still pass through as text-only routes; the local Ollama routes come from `llm-pi-ai` in
-`settings.yaml`.
+Model ids on the `deepseek-official` route (see the first-party
+[API docs](https://api-docs.deepseek.com/) and the
+[DeepSeek-V4.1-Flash model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash)); V4.1
+Flash shipped 2026-09-10 and replaced every V4 Flash route:
+
+| id                                          | what it serves now                                                                                                                      |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `deepseek-flash`                            | DeepSeek-V4.1-Flash — the canonical id to use (text + image, 1M context, continuously controllable reasoning effort 1–100)              |
+| `deepseek-v4-flash`, `…-vision-exp`, `chat` | accepted legacy ids, but the V4 models are **retired**: every request is served by V4.1-Flash and billed at the Flash price             |
+| `deepseek-v4-pro`                           | still a distinct model today; from 12:00 Beijing time (= 04:00 UTC) on 2026-09-14 it is **routed to V4.1-Flash** until V4.1 Pro appears |
+
+`@deepseek-ai/dsh-llm-deepseek` ships advisory capability metadata per id, and the legacy rows still
+describe V4-era limits: `deepseek-v4-flash` is listed as text-only, so the harness projects
+attachments to `[Unsupported Image]` before dispatch, and only `deepseek-flash` declares
+`systemPromptUpdate: in-history` (mid-conversation system messages). Capability metadata is advisory
+— the wire model is the same either way. Unlisted ids still pass through as text-only routes; the
+local Ollama routes come from `llm-pi-ai` in `settings.yaml`.
 
 Note for the theme: `packages/dsh-terminal-ui` used to hide the composer model seat entirely
 (`[data-composer-card] button[aria-haspopup="menu"]`) and left only `Ctrl+M`; the seat is visible
