@@ -176,6 +176,65 @@ const FIXES = [
     from: '\t\t\tcase "assistant/message":\n\t\t\t\tthis.commitReasoningBlock();\n\t\t\t\tif (event.data.usage !== void 0) {',
     to: '\t\t\tcase "assistant/message":\n\t\t\t\t/* dsh-compat:settled-message — the durable message carries the authoritative content; without the 0.1.5 chunk stream nothing fed the renderer, so commit it here when no live frames arrived. */\n\t\t\t\tif (this.__dsh015Streamed !== true) {\n\t\t\t\t\tconst settled = event.data.message;\n\t\t\t\t\tif (settled !== void 0) {\n\t\t\t\t\t\tconst settledReasoning = foldReasoning(settled.content);\n\t\t\t\t\t\tif (settledReasoning !== "") {\n\t\t\t\t\t\t\tif (this.reasoningText === "") this.reasoningStartedAt = event.time;\n\t\t\t\t\t\t\tthis.reasoningText += settledReasoning;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tconst settledText = foldText(settled.content);\n\t\t\t\t\t\tif (settledText !== "") this.streamRenderer.push(settledText);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tthis.__dsh015Streamed = false;\n\t\t\t\tthis.commitReasoningBlock();\n\t\t\t\tif (event.data.usage !== void 0) {',
   },
+
+  {
+    id: "notify-osc",
+    probe: "/* dsh-notify:osc —",
+    // Terminal-native desktop notification. Upstream shells out to
+    // notify-send (Linux) / osascript (macOS) and drops the notification
+    // entirely when SSH_* is set, because those helpers need a local session
+    // bus. An OSC sequence written to our own stdout is just bytes on the
+    // pty: it survives SSH and is understood by kitty (OSC 99) and by
+    // iTerm2 / WezTerm / Ghostty (OSC 9). notify-send stays as the fallback
+    // for terminals we cannot identify, and DSH_NOTIFY_OSC=0|1 overrides the
+    // detection (0 = legacy path only, 1 = force OSC 9).
+    from: 'function notifyOs(payload, prefs) {\n\tsendOsNotify(payload, { prefs });\n}',
+    to: `/* dsh-notify:osc — terminal-native desktop notification (kitty OSC 99, iTerm2/WezTerm/Ghostty OSC 9). The notify-send path needs a local session bus and is skipped over SSH; an escape sequence on stdout is just bytes on the pty, so remote sessions get it too. */
+function oscNotifyProtocol(env) {
+	if (env.DSH_NOTIFY_OSC === "0" || env.DSH_NOTIFY_OSC === "false") return null;
+	if (env.DSH_NOTIFY_OSC === "1" || env.DSH_NOTIFY_OSC === "true") return "osc9";
+	if (env.KITTY_WINDOW_ID !== void 0 && env.KITTY_WINDOW_ID !== "" || String(env.TERM || "").includes("kitty")) return "kitty";
+	const program = String(env.TERM_PROGRAM || "");
+	if (/^(iTerm\\.app|WezTerm|ghostty)$/i.test(program)) return "osc9";
+	if (String(env.TERM || "").includes("ghostty")) return "osc9";
+	return null;
+}
+/** OSC 99 (kitty) takes one plain-text payload with the two mandatory semicolons; OSC 9 takes the same text as the body. Both are control-only: they never touch the visible grid. */
+function oscNotifySequence(payload, protocol) {
+	const title = sanitizeNotifyText(payload.title, 80);
+	const body = sanitizeNotifyText(payload.body, 200);
+	const text = title === "" ? body : body === "" ? title : title + " — " + body;
+	if (text === "") return null;
+	if (protocol === "kitty") return "\\x1b]99;;" + text + "\\x1b\\\\";
+	return "\\x1b]9;" + text + "\\x07";
+}
+function oscShouldNotify(env, prefs) {
+	if (prefs !== void 0 && prefs !== null && prefs.notifyOs === false) return false;
+	if (flag(env, "DSH_TUI_SKIP_NOTIFY")) return false;
+	if (flag(env, "VITEST")) return false;
+	if (flag(env, "CI")) return false;
+	return true;
+}
+function tryOscNotify(payload, prefs, env) {
+	const e = env || process.env;
+	if (process.stdout === void 0 || process.stdout.isTTY !== true) return false;
+	if (!oscShouldNotify(e, prefs)) return false;
+	const protocol = oscNotifyProtocol(e);
+	if (protocol === null) return false;
+	const seq = oscNotifySequence(payload, protocol);
+	if (seq === null) return false;
+	try {
+		process.stdout.write(seq);
+		return true;
+	} catch {
+		return false;
+	}
+}
+function notifyOs(payload, prefs) {
+	if (tryOscNotify(payload, prefs)) return;
+	sendOsNotify(payload, { prefs });
+}`,
+  },
 ];
 const fixesSha = crypto.createHash("sha256").update(JSON.stringify(FIXES)).digest("hex");
 

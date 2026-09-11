@@ -33,6 +33,9 @@
 - dsh-status-rotator — live turn-status phrases instead of "Deep diving...":
   [dsh-status-rotator.md](./dsh-status-rotator.md)
 
+- dsh TUI — completion notifications through the terminal (OSC 99/9, works over SSH):
+  [dsh-tui-notifications.md](./dsh-tui-notifications.md)
+
 - dsh- h — SSH operations, web terminal, and localhost for the agent: \[dsh- h.md\](./dsh- h.md)
 
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:
