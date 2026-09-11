@@ -123,8 +123,11 @@ Runtime level (PTY, `script -qec 'stty rows 40 cols 120; dsh --profile tui'`):
 - with no command configured, the patched frame is **byte-identical** to the pre-patch run (only
   `script`'s own timestamps differ), i.e. zero behavioural change.
 
-### Known quirk (pre-existing)
+### Marker semantics
 
-The patch marker records the hash of the bundle **as read** (pre-patch), so restoring a pre-patch
-bundle makes the patcher report `up to date` and silently skip the fixes. Delete `.dsh-tui-ru.json`
-next to the bundle to force a re-apply; the fix is to record the post-patch hash.
+The patch marker records the hash of the bundle the run **produced**, not the one it read, so "up to
+date" is true only while the file on disk is still the patcher's own output. It used to record the
+pre-patch hash, which made a bundle restored to its pristine state (a backup, a reverted edit, a
+pnpm re-install) look patched while the fixes were absent — the patcher then skipped them silently.
+`notify-osc.test.mjs` pins the regression: restore the `.orig` fixture and the next run must
+re-apply.

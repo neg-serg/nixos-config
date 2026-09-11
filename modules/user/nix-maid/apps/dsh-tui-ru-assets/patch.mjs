@@ -435,14 +435,20 @@ try {
   log(`cannot read bundle: ${e.message}`);
   process.exit(1);
 }
-const bundleSha = crypto.createHash("sha256").update(bundle).digest("hex");
+// Hash of what we are ABOUT to patch. The marker records the hash of what we
+// PRODUCED instead: comparing the two is what makes "already patched" true only
+// when the file on disk is still our output. Recording the pre-patch hash — as
+// this did before — meant a bundle restored to its pristine state (a backup, a
+// reverted edit, a pnpm re-install) looked "up to date" while the fixes were
+// absent, and the patcher silently skipped them.
+const inputSha = crypto.createHash("sha256").update(bundle).digest("hex");
 
 // Already patched with this exact map on this exact bundle?
 let marker = null;
 try {
   marker = JSON.parse(fs.readFileSync(markerPath, "utf8"));
 } catch {}
-if (marker && marker.mapSha === mapSha && marker.bundleSha === bundleSha
+if (marker && marker.mapSha === mapSha && marker.bundleSha === inputSha
     && marker.fixesSha === fixesSha) {
   log(`up to date: ${bundlePath}`);
   process.exit(0);
@@ -507,7 +513,8 @@ fs.writeFileSync(
     {
       mapSha,
       fixesSha,
-      bundleSha,
+      // The hash of the bundle this run produced (see inputSha above).
+      bundleSha: crypto.createHash("sha256").update(bundle).digest("hex"),
       at: new Date().toISOString(),
       stringsApplied: applied,
       fixes: fixNotes,

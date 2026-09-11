@@ -128,7 +128,7 @@ const syntax = spawnSync(process.execPath, ["--check", path.join(pkgDir, "lib", 
 ok(syntax.status === 0, `the patched bundle parses (${(syntax.stderr ?? "").split("\n")[0] || "ok"})`);
 
 const second = runPatcher();
-ok(second.includes("tui-statusline-helper: already applied"), "a second run re-applies nothing");
+ok(second.includes("up to date"), "a second run hits the marker fast path (post-patch hash)");
 ok(fs.readFileSync(bundlePath, "utf8") === patched, "a second run leaves the bundle byte-identical");
 
 // ── the inserted helper, exercised ───────────────────────────────────────────
