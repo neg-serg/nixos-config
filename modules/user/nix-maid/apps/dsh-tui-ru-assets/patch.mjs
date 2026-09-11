@@ -235,6 +235,62 @@ function notifyOs(payload, prefs) {
 	sendOsNotify(payload, { prefs });
 }`,
   },
+
+  // --- dsh-statusline:frame ------***------
+  // Upstream ships a scriptable status line (StatusLineRunner, the
+  // Claude-Code-compatible protocol: session JSON on stdin, first stdout line
+  // above the input) but never instantiates it: the bundle has exactly one
+  // `shell: true` spawn — inside the class itself — and the app renders its own
+  // WorkflowStatusLine through MetricsGlanceController instead. These four
+  // fixes wire it into that existing glance status slot, which is the only
+  // render surface a TUI-owned layout exposes.
+  //
+  // The slot carries one line, so the script output is *combined* with the
+  // built-in phase/tool text rather than replacing it: the workflow status is
+  // the reason that line exists. Each insertion is defensive (try/catch, no
+  // behaviour change when no command is configured) so a drifted bundle degrades
+  // to the previous behaviour instead of breaking the render path.
+  {
+    id: "tui-statusline-helper",
+    probe: "/* dsh-statusline:frame — the scriptable status line",
+    from: "function deriveGlance(statusText, live, columns, elapsedMs = 0) {",
+    to: `/* dsh-statusline:frame — the scriptable status line (StatusLineRunner) that upstream ships but never instantiates. This wires it into the glance status slot: resolveStatusLineCommand finds the user script, mountSession constructs the runner per session, and the glance status becomes "<script output> · <workflow phase>". */
+function resolveStatusLineCommand(ctx) {
+	const fromEnv = process.env.DSH_TUI_STATUSLINE;
+	if (typeof fromEnv === "string" && fromEnv.trim() !== "") return fromEnv.trim();
+	try {
+		const settings = typeof ctx?.get === "function" ? ctx.get("settings") : void 0;
+		const section = settings?.get?.("ui.statusLine") ?? settings?.get?.("ui-statusLine") ?? void 0;
+		if (section !== void 0 && section !== null && typeof section.command === "string" && section.command.trim() !== "") return section.command.trim();
+	} catch {}
+	return null;
+}
+/** dsh-statusline:frame — frame→plugin handshake: while the frame renders the status line, the terminal-title fallback (the dsh-statusline plugin) stays quiet. */
+function markStatusLineFrame() {
+	try {
+		globalThis.__dshTuiStatusLineFrame = true;
+	} catch {}
+}
+function deriveGlance(statusText, live, columns, elapsedMs = 0) {`,
+  },
+  {
+    id: "tui-statusline-fields",
+    probe: "/** dsh-statusline:frame — user script status line (upstream StatusLineRunner); mounted/unmounted with the session. */",
+    from: '\t/** 工作流阶段/活动投影（Phase 5.1/6.2）；随会话挂载/卸载，dispose 时解绑订阅。 */\n\tstatusLine = null;',
+    to: '\t/** 工作流阶段/活动投影（Phase 5.1/6.2）；随会话挂载/卸载，dispose 时解绑订阅。 */\n\tstatusLine = null;\n\t/** dsh-statusline:frame — user script status line (upstream StatusLineRunner); mounted/unmounted with the session. */\n\tuserStatusLine = null;\n\t/** dsh-statusline:frame — payload builder handed to the runner on every refresh. */\n\tuserStatusLinePayload = null;',
+  },
+  {
+    id: "tui-statusline-mount",
+    probe: "const statusCommand = resolveStatusLineCommand(this.ctx);",
+    from: '\t\tthis.statusLine = new WorkflowStatusLine(this.ctx, id, () => {\n\t\t\tthis.renderBatcher.schedule();\n\t\t});',
+    to: '\t\tthis.statusLine = new WorkflowStatusLine(this.ctx, id, () => {\n\t\t\tthis.renderBatcher.schedule();\n\t\t});\n\t\t/* dsh-statusline:frame — optional user script status line; absent command → no runner, zero behaviour change. */\n\t\tthis.userStatusLine = null;\n\t\tthis.userStatusLinePayload = null;\n\t\ttry {\n\t\t\tconst statusCommand = resolveStatusLineCommand(this.ctx);\n\t\t\tif (statusCommand !== null) {\n\t\t\t\tthis.userStatusLinePayload = () => ({\n\t\t\t\t\tsession_id: id,\n\t\t\t\t\tworkspace: {\n\t\t\t\t\t\tcurrent_dir: session.header?.cwd ?? process.cwd()\n\t\t\t\t\t},\n\t\t\t\t\tmodel: {\n\t\t\t\t\t\tdisplay_name: this.glanceModelName ?? ""\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t\tthis.userStatusLine = new StatusLineRunner({\n\t\t\t\t\tcommand: statusCommand\n\t\t\t\t}, () => {\n\t\t\t\t\tthis.renderBatcher.schedule();\n\t\t\t\t});\n\t\t\t\tmarkStatusLineFrame();\n\t\t\t}\n\t\t} catch {}',
+  },
+  {
+    id: "tui-statusline-glance",
+    probe: "user.refresh(this.userStatusLinePayload?.() ?? {});",
+    from: '\t\t\tgetStatusText: () => this.statusLine?.current ?? null,',
+    to: '\t\t\tgetStatusText: () => {\n\t\t\t\t/* dsh-statusline:frame — drive the user script from the render loop (the runner throttles and is single-flight), then show its line next to the workflow phase. */\n\t\t\t\tconst user = this.userStatusLine;\n\t\t\t\tif (user !== null && user !== void 0) {\n\t\t\t\t\ttry {\n\t\t\t\t\t\tuser.refresh(this.userStatusLinePayload?.() ?? {});\n\t\t\t\t\t} catch {}\n\t\t\t\t}\n\t\t\t\tconst parts = [user?.current ?? null, this.statusLine?.current ?? null].filter((part) => part !== null && part !== void 0 && part !== "");\n\t\t\t\treturn parts.length === 0 ? null : parts.join(" · ");\n\t\t\t},',
+  },
 ];
 const fixesSha = crypto.createHash("sha256").update(JSON.stringify(FIXES)).digest("hex");
 
