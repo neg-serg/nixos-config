@@ -9,8 +9,8 @@
 --
 -- Sessions are owned by the harness (listable and resumable), so this chat
 -- buffer is a thin client: the agent supplies the workspace, the tools, and its
--- own model route. The advertised model can be switched from the chat buffer;
--- the profile's shipped default is deepseek-official/deepseek-v4-flash.
+-- own model route. The profile pins deepseek-official/deepseek-flash (V4.1),
+-- the deployment's only cloud model, so the picker offers nothing else.
 --
 -- The ACP surface is deliberately automation-only: no DSH-specific plans,
 -- terminal panes or elicitation cards, unlike the web and TUI profiles.
