@@ -102,7 +102,7 @@ buildNpmPackage {
 
     # dsh-widgets server patches (exact-string + count-asserted, fails the
     # build loudly on dsh version drift): subagent model override param
-    # (delegate to deepseek-v4-flash etc. per call) + presentationMeta on the
+    # (delegate to deepseek-flash etc. per call) + presentationMeta on the
     # subagent / workflow / ralph tools so their persisted tool/result meta
     # carries a structured descriptor, and Session.append() accepts
     # { ignorable: true } for plugin events (bash_live) so they stop killing
