@@ -1,0 +1,36 @@
+{
+  "name": "dsh-plugin-recall",
+  "version": "0.1.1",
+  "description": "DeepSeek Harness plugin: cross-session memory for the model. Full-text search all past sessions (SQLite FTS5 via ctx.sessionQuery) and bring the strongest matching excerpts back into the current context — recall earlier decisions, commands, and mistakes.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/truelove-dreamer/dsh-plugin-recall.git"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "memory",
+    "recall",
+    "session-history",
+    "full-text-search"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
