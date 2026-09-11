@@ -48,7 +48,7 @@
 - dsh keymap — rebind TUI keys by action id (`~/.dsh-tui/keymap.json`):
   [dsh-keymap.md](./dsh-keymap.md)
 
-- dsh- h — SSH operations, web terminal, and localhost for the agent: \[dsh- h.md\](./dsh- h.md)
+- dsh-ssh — SSH operations, web terminal, and localhost for the agent: [dsh-ssh.md](./dsh-ssh.md)
 
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:
   [dsh-web-forks.md](./dsh-web-forks.md)
@@ -81,12 +81,12 @@
 
 - Subagent contract:): [subagent-contract.md](./subagent-contract.md)
 
-- Harne feature: backlog (hashline, hook ideas from oh-my-opencode): \[agent-harne
-  -features.md\](./agent-harne -features.md)
+- Harness feature: backlog (hashline, hook ideas from oh-my-opencode):
+  [agent-harness-features.md](./agent-harness-features.md)
 
-- Harne feature: designs and rollout plan (DSH recon + subagent designs): \[agent-harne
-  -implementation.md\](./agent-harne -implementation.md) — details in [designs/](./designs/)
-  (dsh-recon, rules-hooks, hashline, memory-pipeline, dsh-0.1.5-fork-port)
+- Harness feature: designs and rollout plan (DSH recon + subagent designs):
+  [agent-harness-implementation.md](./agent-harness-implementation.md) — details in
+  [designs/](./designs/) (dsh-recon, rules-hooks, hashline, memory-pipeline, dsh-0.1.5-fork-port)
 
 - Niche omp feature: vibe / cleanse / export / secrets / tan — port notes:
   [agent-misc-ports.md](./agent-misc-ports.md)
