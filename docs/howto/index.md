@@ -48,6 +48,9 @@
 - dsh keymap — rebind TUI keys by action id (`~/.dsh-tui/keymap.json`):
   [dsh-keymap.md](./dsh-keymap.md)
 
+- dsh voice input — why there is nothing to build (the local stack is switched off on purpose):
+  [dsh-voice.md](./dsh-voice.md)
+
 - dsh-ssh — SSH operations, web terminal, and localhost for the agent: [dsh-ssh.md](./dsh-ssh.md)
 
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:
