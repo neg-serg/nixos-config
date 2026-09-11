@@ -1,0 +1,171 @@
+#!/bin/sh
+# dsh-statusline: one status line for a dsh session.
+#
+# Protocol mode (what a status-line host calls): the session state arrives as
+# JSON on stdin and the FIRST LINE of stdout is the status line. The payload is
+# the Tianshu/Claude-Code-compatible subset:
+#
+#   { "session_id": "...", "turn": 7,
+#     "model": { "display_name": "deepseek-v4" },
+#     "workspace": { "current_dir": "/path/to/repo" },
+#     "git": { "branch": "main" },
+#     "context": { "ratio": 0.42, "estimated_tokens": 54000, "max_tokens": 128000 },
+#     "cost": { "total_yuan": 0.12 } }
+#
+# Every field is optional; missing data is simply left out of the line. The
+# script is deliberately fast and local (one `git status`), because a host may
+# call it every few seconds with a ~2s timeout.
+#
+# Modes:
+#   dsh-statusline                 protocol mode (JSON on stdin)
+#   dsh-statusline --git [DIR]     only the git/worktree segment (for a prompt
+#                                  or `kitty @ set-tab-title`)
+#   dsh-statusline --demo          run protocol mode against a canned payload
+#   dsh-statusline --help
+#
+# Env:
+#   DSH_STATUSLINE_PARTS   comma list to limit segments:
+#                          place,state,context,turn,cost (default: all)
+
+set -eu
+
+SEP=' · '
+
+usage() {
+	sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+have_jq() { command -v jq >/dev/null 2>&1; }
+
+want_part() {
+	case ",${DSH_STATUSLINE_PARTS:-place,state,context,turn,cost}," in
+	*",$1,"*) return 0 ;;
+	*) return 1 ;;
+	esac
+}
+
+# The worktree a dsh session runs in, when it is one of ours; otherwise the
+# branch. Trees live under $DSH_WORKTREE_ROOT/<repo>-<hash>/<name>.
+worktree_name() {
+	_dir="$1"
+	_root="${DSH_WORKTREE_ROOT:-$HOME/.dsh/worktrees}"
+	case "$_dir" in
+	"$_root"/*)
+		_rest="${_dir#"$_root"/}"
+		printf '%s' "${_rest##*/}"
+		;;
+	*) printf '' ;;
+	esac
+}
+
+# "3 staged, 2 modified, 1 untracked" → compact glyphs, empty when clean.
+dirty_summary() {
+	_dir="$1"
+	command -v git >/dev/null 2>&1 || return 0
+	git -C "$_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+	_counts="$(git -C "$_dir" status --porcelain=v1 2>/dev/null | awk '
+		BEGIN { s = 0; m = 0; u = 0 }
+		/^\?\?/ { u++; next }
+		{ if (substr($0,1,1) != " " && substr($0,1,1) != "?") s++;
+		  if (substr($0,2,1) != " " && substr($0,2,1) != "?") m++ }
+		END { printf "%d %d %d", s, m, u }
+	')"
+	[ -n "$_counts" ] || return 0
+	# Word splitting is intended: the awk output is three counters.
+	# shellcheck disable=SC2086
+	set -- $_counts
+	_out=""
+	[ "${1:-0}" -gt 0 ] && _out="$_out ◆$1"
+	[ "${2:-0}" -gt 0 ] && _out="$_out ✚$2"
+	[ "${3:-0}" -gt 0 ] && _out="$_out ?$3"
+	printf '%s' "$_out"
+}
+
+place_segment() {
+	_dir="$1"
+	_wt="$(worktree_name "$_dir")"
+	if [ -n "$_wt" ]; then
+		printf 'wt:%s' "$_wt"
+		return 0
+	fi
+	_branch="$(git -C "$_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+	if [ -n "$_branch" ] && [ "$_branch" != "HEAD" ]; then
+		printf '⎇ %s' "$_branch"
+	fi
+}
+
+git_only() {
+	_dir="${1:-$PWD}"
+	[ -d "$_dir" ] || _dir="$PWD"
+	_place="$(place_segment "$_dir")"
+	_state="$(dirty_summary "$_dir")"
+	[ -n "$_place" ] || _place="$(basename "$_dir")"
+	printf '%s%s\n' "$_place" "$_state"
+}
+
+protocol() {
+	have_jq || {
+		echo 'dsh-statusline: jq is required in protocol mode' >&2
+		exit 1
+	}
+	payload="$(cat)"
+
+	dir="$(printf '%s' "$payload" | jq -r '.workspace.current_dir // empty' 2>/dev/null || true)"
+	[ -n "$dir" ] || dir="$PWD"
+	turn="$(printf '%s' "$payload" | jq -r '.turn // empty' 2>/dev/null || true)"
+	ratio="$(printf '%s' "$payload" | jq -r '.context.ratio // empty' 2>/dev/null || true)"
+	tokens="$(printf '%s' "$payload" | jq -r '.context.estimated_tokens // empty' 2>/dev/null || true)"
+	maxtok="$(printf '%s' "$payload" | jq -r '.context.max_tokens // empty' 2>/dev/null || true)"
+	cost="$(printf '%s' "$payload" | jq -r '.cost.total_yuan // empty' 2>/dev/null || true)"
+	model="$(printf '%s' "$payload" | jq -r '.model.display_name // empty' 2>/dev/null || true)"
+
+	line=""
+	append() { line="${line}${line:+$SEP}$1"; }
+
+	if want_part place || want_part state; then
+		place="$(place_segment "$dir")"
+		[ -n "$place" ] || place="$(basename "$dir" 2>/dev/null || printf '?')"
+		want_part place && append "$place"
+		want_part state && {
+			state="$(dirty_summary "$dir")"
+			[ -n "$state" ] && append "$(printf '%s' "$state" | sed 's/^ //')"
+		}
+	fi
+
+	if want_part context; then
+		if [ -n "$ratio" ] && [ "$ratio" != "null" ]; then
+			append "ctx $(printf '%s' "$ratio" | awk '{ printf "%d%%", ($1 * 100) + 0.5 }')"
+		elif [ -n "$tokens" ] && [ -n "$maxtok" ] && [ "$maxtok" != "null" ]; then
+			append "ctx $(awk -v t="$tokens" -v m="$maxtok" 'BEGIN { printf "%d%%", (t / m) * 100 + 0.5 }')"
+		elif [ -n "$tokens" ]; then
+			append "$(awk -v t="$tokens" 'BEGIN { printf "%dk tok", t / 1000 }')"
+		fi
+	fi
+
+	want_part turn && [ -n "$turn" ] && [ "$turn" != "-1" ] && append "turn $turn"
+	want_part cost && [ -n "$cost" ] && [ "$cost" != "null" ] &&
+		[ "$(awk -v c="$cost" 'BEGIN { print (c > 0) ? 1 : 0 }')" = 1 ] &&
+		append "$(awk -v c="$cost" 'BEGIN { printf "¥%.3f", c }')"
+	[ -n "$model" ] && [ -n "$line" ] || true
+
+	# Never print an empty line: a host that renders stdout verbatim would show
+	# a blank status row.
+	[ -n "$line" ] || line="dsh"
+	printf '%s\n' "$line"
+}
+
+case "${1:-}" in
+"" | --stdin) protocol ;;
+--git)
+	shift
+	git_only "${1:-$PWD}"
+	;;
+--demo)
+	printf '%s' '{"session_id":"demo","turn":7,"model":{"display_name":"deepseek-v4"},"workspace":{"current_dir":"'"$PWD"'"},"context":{"ratio":0.42},"cost":{"total_yuan":0.1234}}' | protocol
+	;;
+-h | --help | help) usage ;;
+*)
+	echo "dsh-statusline: unknown option '$1' (use --git, --demo, --help)" >&2
+	exit 2
+	;;
+esac
