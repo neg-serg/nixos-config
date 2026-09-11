@@ -49,6 +49,8 @@ in
       && n != "dsh-plan-format-validator"
       && n != "dsh-task-resume-info"
       && n != "dsh-delegate-task-retry"
+      && n != "dsh-plugin-recall"
+      && n != "dsh-plugin-vetting"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");

@@ -62,7 +62,13 @@ let
   # /mode // /fast // /rename family. Every entry is host/agent-plane (injects
   # tools, commands or memory — no webServer/slots), so it mounts in a terminal
   # profile unchanged; the web-only ones (widgets, osm, preview, live-stats,
-  # remote-web-ui, web-ui-settings, gui-tweaks, pet) stay out.
+  # remote-web-ui, web-ui-settings, gui-tweaks, pet) stay out. The tail of the
+  # list is ported from the web profile: secrets-masker/recall/plugin-vetting
+  # carry no UI face and need no web runtime (see the note below).
+  # Every plugin directory must be `git add`ed before the switch: the flake
+  # source is a git snapshot, so an untracked directory never reaches the store
+  # and the caretaker reports it missing while the row is already in the patch
+  # layer — a state that breaks the next TUI start.
   tuiPlugins = [
     {
       name = "dsh-mode";
@@ -142,6 +148,23 @@ let
     {
       name = "dsh-task-resume-info";
       path = ./dsh-task-resume-info;
+    }
+    # Ported from the web profile (2026-09): the three are host/agent-plane with
+    # no webServer/slots, and every service they inject exists here as well —
+    # tool lifecycle hooks (secrets-masker), `ctx.sessionQuery` (recall; provided
+    # by @deepseek-ai/dsh-session-query-sqlite, already mounted) and
+    # `ctx.subprocess`/`ctx.tools` (plugin-vetting; dsh-subprocess-local).
+    {
+      name = "dsh-secrets-masker";
+      path = ./dsh-secrets-masker;
+    }
+    {
+      name = "dsh-plugin-recall";
+      path = ./dsh-plugin-recall;
+    }
+    {
+      name = "dsh-plugin-vetting";
+      path = ./dsh-plugin-vetting;
     }
   ];
 
@@ -297,7 +320,11 @@ let
       cp -rf "$src/lib" "$PROFILE_DIR/node_modules/$name/lib"
       echo "dsh-tui-ensure: seeded $name"
     }
-    ${lib.concatMapStrings (p: "seed_pkg " + p.name + " " + toString p.path + "\n") tuiPlugins}
+    # Path interpolation (not toString): it registers each plugin directory as a
+    # build input, so the store copy exists even for plugins no other module
+    # references (a toString-only string leaves the path outside the closure and
+    # seed_pkg then reports it missing).
+    ${lib.concatMapStrings (p: "seed_pkg ${p.name} ${p.path}\n") tuiPlugins}
     # The neg preset's own plugins (agent plane, referenced by the preset file).
     seed "${./dsh-advisor}" dsh-advisor package.json lib/index.js
     seed "${./dsh-category-skill-reminder}" dsh-category-skill-reminder package.json lib/index.js
