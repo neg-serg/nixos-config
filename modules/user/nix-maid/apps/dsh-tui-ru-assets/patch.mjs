@@ -291,6 +291,136 @@ function deriveGlance(statusText, live, columns, elapsedMs = 0) {`,
     from: '\t\t\tgetStatusText: () => this.statusLine?.current ?? null,',
     to: '\t\t\tgetStatusText: () => {\n\t\t\t\t/* dsh-statusline:frame — drive the user script from the render loop (the runner throttles and is single-flight), then show its line next to the workflow phase. */\n\t\t\t\tconst user = this.userStatusLine;\n\t\t\t\tif (user !== null && user !== void 0) {\n\t\t\t\t\ttry {\n\t\t\t\t\t\tuser.refresh(this.userStatusLinePayload?.() ?? {});\n\t\t\t\t\t} catch {}\n\t\t\t\t}\n\t\t\t\tconst parts = [user?.current ?? null, this.statusLine?.current ?? null].filter((part) => part !== null && part !== void 0 && part !== "");\n\t\t\t\treturn parts.length === 0 ? null : parts.join(" · ");\n\t\t\t},',
   },
+
+  // --- dsh-keymap:user ------***------
+  // The TUI's built-in keys are a declarative action table (createBuiltinActions:
+  // id / keys / category / hint / keymapOrder), consumed twice — by
+  // ActionRegistry for dispatch and by projectKeymapEntries for the Ctrl+.
+  // overlay. Overriding `keys` by action id therefore rebinds both surfaces at
+  // once and is what the overlay then displays.
+  //
+  // ActionRegistry.register() validates key conflicts and throws on a clash, so
+  // a bad user map could kill startup: applyUserKeymap pre-validates and falls
+  // back to the built-ins, and a single unknown spec keeps that action's
+  // built-in binding. No keymap file → the array is returned untouched.
+  {
+    id: "tui-keymap-helper",
+    probe: "/* dsh-keymap:user —",
+    from: "function createBuiltinActions(options) {",
+    to: `/* dsh-keymap:user — optional user keymap at ~/.dsh-tui/keymap.json (or $DSH_TUI_KEYMAP): { "app.quit": "ctrl+shift+q", "palette.toggle": ["ctrl+p", "alt+p"], "session.new": [] }. Binds by action id so the Ctrl+. overlay and the dispatcher agree; an invalid or conflicting map falls back to the built-ins instead of failing startup. */
+function dshUserKeymapPath() {
+const override = process.env.DSH_TUI_KEYMAP;
+if (typeof override === "string" && override.trim() !== "") return override.trim();
+return join(homedir(), ".dsh-tui", "keymap.json");
+}
+function dshUserKeymap() {
+try {
+const path = dshUserKeymapPath();
+if (!existsSync(path)) return null;
+const parsed = JSON.parse(readFileSync(path, "utf8"));
+if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+return parsed;
+} catch {
+return null;
+}
+}
+/** One spec ("ctrl+n", "alt+w", "shift+tab", "enter", "space", "a") to a binding object, or null when it is not one. */
+function dshKeyBinding(spec) {
+if (typeof spec !== "string") return null;
+const text = spec.trim();
+if (text === "") return null;
+const parts = text.split("+");
+const last = parts[parts.length - 1] ?? "";
+const mods = parts.slice(0, -1).map((part) => part.toLowerCase());
+const ctrlMod = mods.includes("ctrl") || mods.includes("control");
+const altMod = mods.includes("alt") || mods.includes("meta") || mods.includes("option");
+const shiftMod = mods.includes("shift");
+if (ctrlMod && altMod) return null;
+/* The decoder folds Ctrl+Shift+<letter> into ctrl_<letter> and Meta+Shift into
+   the uppercase char, so those spellings cannot name a distinct binding —
+   reject them instead of silently collapsing onto another key. */
+if (ctrlMod && shiftMod) return null;
+if (altMod && shiftMod) return null;
+const lower = last.toLowerCase();
+if (altMod) return last.length === 1 ? {
+char: lower,
+meta: true
+} : null;
+if (ctrlMod) {
+if (lower === "enter" || lower === "return") return { name: "ctrl_return" };
+return last.length === 1 ? { name: "ctrl_" + lower } : null;
+}
+if (shiftMod) {
+if (lower === "tab") return { name: "shift_tab" };
+return last.length === 1 ? { char: last.toUpperCase() } : null;
+}
+const named = {
+enter: "return",
+return: "return",
+esc: "escape",
+escape: "escape",
+tab: "tab",
+space: "space",
+up: "up",
+down: "down",
+left: "left",
+right: "right",
+home: "home",
+end: "end",
+pageup: "pageup",
+pgup: "pageup",
+pagedown: "pagedown",
+pgdn: "pagedown",
+backspace: "backspace",
+delete: "delete"
+};
+if (Object.prototype.hasOwnProperty.call(named, lower)) return { name: named[lower] };
+return last.length === 1 ? { char: last } : null;
+}
+function dshKeyBindings(spec) {
+const list = Array.isArray(spec) ? spec : [spec];
+const out = [];
+for (const entry of list) {
+const binding = dshKeyBinding(entry);
+if (binding === null) return null;
+out.push(binding);
+}
+return out;
+}
+/** Apply the user keymap to the built-in action table; any problem returns the table unchanged. */
+function applyUserKeymap(actions) {
+try {
+const map = dshUserKeymap();
+if (map === null) return actions;
+const next = actions.map((action) => {
+if (!Object.prototype.hasOwnProperty.call(map, action.id)) return action;
+const bindings = dshKeyBindings(map[action.id]);
+if (bindings === null) return action;
+return {
+...action,
+keys: bindings
+};
+});
+validateActionConflicts(next);
+return next;
+} catch {
+return actions;
+}
+}
+function createBuiltinActions(options) {`,
+  },
+  {
+    id: "tui-keymap-overlay",
+    probe: 'applyUserKeymap(createBuiltinActions({ editorKey: "ctrl_e" }))',
+    from: 'return projectKeymapEntries(createBuiltinActions({ editorKey: "ctrl_e" }), INPUT_LAYER_ROWS, { kittyKeyboard: supportsKittyKeyboard(env) });',
+    to: 'return projectKeymapEntries(applyUserKeymap(createBuiltinActions({ editorKey: "ctrl_e" })), INPUT_LAYER_ROWS, { kittyKeyboard: supportsKittyKeyboard(env) });',
+  },
+  {
+    id: "tui-keymap-registry",
+    probe: 'applyUserKeymap(createBuiltinActions({ editorKey: this.editorKey }))',
+    from: 'this.actions = new ActionRegistry(createBuiltinActions({ editorKey: this.editorKey }));',
+    to: 'this.actions = new ActionRegistry(applyUserKeymap(createBuiltinActions({ editorKey: this.editorKey })));',
+  },
 ];
 const fixesSha = crypto.createHash("sha256").update(JSON.stringify(FIXES)).digest("hex");
 
