@@ -45,6 +45,9 @@
 - dsh status line — terminal-title status line, scriptable, OSC 1/2:
   [dsh-statusline.md](./dsh-statusline.md)
 
+- dsh keymap — rebind TUI keys by action id (`~/.dsh-tui/keymap.json`):
+  [dsh-keymap.md](./dsh-keymap.md)
+
 - dsh- h — SSH operations, web terminal, and localhost for the agent: \[dsh- h.md\](./dsh- h.md)
 
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:
