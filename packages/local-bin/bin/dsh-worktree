@@ -1,0 +1,253 @@
+#!/bin/sh
+# dsh-worktree: git worktrees for parallel dsh sessions (one pane per task).
+# Usage:
+#   dsh-worktree new <name> [--from REF] [--open auto|kitty|zellij|print]
+#                           [--cmd CMD] [--copy RELPATH]... [--branch BR]
+#   dsh-worktree list
+#   dsh-worktree path <name>
+#   dsh-worktree rm <name> [--force]
+#   dsh-worktree prune
+#
+# Every worktree gets its own branch (wt/<name>) and its own dsh session, so
+# nothing has to be stashed and two agents never fight over the working copy.
+# Trees live outside the repository, under $DSH_WORKTREE_ROOT, so they never
+# pollute `git status` of the main checkout.
+#
+# Env:
+#   DSH_WORKTREE_ROOT         where trees live (default: ~/.dsh/worktrees)
+#   DSH_WORKTREE_CMD          command a launched pane runs (default: dsh --profile tui)
+#   DSH_WORKTREE_POST_CREATE  hook run inside the new worktree after creation
+#                             (e.g. "ln -s ../../node_modules node_modules")
+
+set -eu
+
+ROOT="${DSH_WORKTREE_ROOT:-$HOME/.dsh/worktrees}"
+DEFAULT_CMD="${DSH_WORKTREE_CMD:-dsh --profile tui}"
+
+usage() {
+	sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+die() {
+	printf 'dsh-worktree: %s\n' "$*" >&2
+	exit 1
+}
+
+repo_root() {
+	git rev-parse --show-toplevel 2>/dev/null ||
+		die "not inside a git repository (run from the repository you want to isolate)"
+}
+
+# One directory per repository, keyed by name + hash of the absolute path so two
+# checkouts with the same basename never collide.
+repo_slug() {
+	_hash="$(printf '%s' "$1" | sha1sum | cut -c1-8)"
+	printf '%s-%s' "$(basename "$1")" "$_hash"
+}
+
+worktree_path() {
+	printf '%s/%s/%s' "$ROOT" "$(repo_slug "$(repo_root)")" "$1"
+}
+
+check_name() {
+	[ -n "$1" ] || die "empty worktree name"
+	case "$1" in
+	*/* | *..*) die "worktree name must not contain '/' or '..': $1" ;;
+	esac
+	# Portable character check: allow the set that is safe in a branch name and
+	# in a path component.
+	case "$1" in
+	*[!A-Za-z0-9._-]*) die "worktree name may only use letters, digits, '.', '_' and '-': $1" ;;
+	esac
+}
+
+cmd_new() {
+	[ $# -ge 1 ] || die "usage: dsh-worktree new <name> [options]"
+	name="$1"
+	shift
+	check_name "$name"
+
+	from=""
+	open="auto"
+	cmd="$DEFAULT_CMD"
+	branch=""
+	copies=""
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		--from)
+			[ $# -ge 2 ] || die "--from needs a ref"
+			from="$2"
+			shift 2
+			;;
+		--open)
+			[ $# -ge 2 ] || die "--open needs a mode"
+			open="$2"
+			shift 2
+			;;
+		--cmd)
+			[ $# -ge 2 ] || die "--cmd needs a command"
+			cmd="$2"
+			shift 2
+			;;
+		--branch)
+			[ $# -ge 2 ] || die "--branch needs a name"
+			branch="$2"
+			shift 2
+			;;
+		--copy)
+			[ $# -ge 2 ] || die "--copy needs a path"
+			copies="$copies $2"
+			shift 2
+			;;
+		*) die "unknown option: $1" ;;
+		esac
+	done
+
+	top="$(repo_root)"
+	path="$(worktree_path "$name")"
+	[ ! -e "$path" ] || die "already exists: $path (use 'dsh-worktree rm $name' first)"
+	[ -n "$branch" ] || branch="wt/$name"
+	if git show-ref --verify --quiet "refs/heads/$branch"; then
+		die "branch '$branch' already exists (pick another name or --branch)"
+	fi
+	[ -n "$from" ] || from="$(git rev-parse HEAD)"
+
+	mkdir -p "$(dirname "$path")"
+	printf 'dsh-worktree: creating %s (branch %s, from %s)\n' "$path" "$branch" "$from" >&2
+	git worktree add -b "$branch" "$path" "$from" >&2
+
+	# Local, gitignored files (.env, editor config, …) do not follow a worktree
+	# into existence; --copy brings the ones the task needs.
+	for rel in $copies; do
+		src="$top/$rel"
+		dst="$path/$rel"
+		if [ ! -e "$src" ]; then
+			printf 'dsh-worktree: --copy %s: not in the main checkout, skipped\n' "$rel" >&2
+			continue
+		fi
+		mkdir -p "$(dirname "$dst")"
+		cp -a "$src" "$dst"
+	done
+
+	if [ -n "${DSH_WORKTREE_POST_CREATE:-}" ]; then
+		printf 'dsh-worktree: post-create hook in %s\n' "$path" >&2
+		(cd "$path" && sh -c "$DSH_WORKTREE_POST_CREATE")
+	fi
+
+	open_pane "$open" "$name" "$path" "$cmd"
+	printf '%s\n' "$path"
+}
+
+resolve_open() {
+	case "$1" in
+	auto)
+		if [ -n "${KITTY_LISTEN_ON:-}" ] && kitty @ ls >/dev/null 2>&1; then
+			printf 'kitty'
+		elif [ -n "${ZELLIJ:-}" ]; then
+			printf 'zellij'
+		else
+			printf 'print'
+		fi
+		;;
+	kitty | zellij | print) printf '%s' "$1" ;;
+	*) die "unknown --open mode: $1 (auto|kitty|zellij|print)" ;;
+	esac
+}
+
+open_pane() {
+	mode="$(resolve_open "$1")"
+	name="$2"
+	path="$3"
+	cmd="$4"
+	label="wt:$name"
+
+	# Word-split the command on purpose: DSH_WORKTREE_CMD/--cmd is a command
+	# line, not a single argv entry.
+	# shellcheck disable=SC2086
+	set -- $cmd
+
+	case "$mode" in
+	kitty)
+		kitty @ launch --type=tab --cwd "$path" --tab-title "$label" -- "$@" >/dev/null ||
+			die "kitty launch failed (is allow_remote_control on?)"
+		printf 'dsh-worktree: opened a kitty tab in %s\n' "$path" >&2
+		;;
+	zellij)
+		zellij action new-pane --cwd "$path" --name "$label" -- "$@" >/dev/null ||
+			die "zellij launch failed (are you inside a zellij session?)"
+		printf 'dsh-worktree: opened a zellij pane in %s\n' "$path" >&2
+		;;
+	print)
+		printf 'dsh-worktree: cd %s && %s\n' "$path" "$cmd" >&2
+		;;
+	esac
+}
+
+cmd_list() {
+	top="$(repo_root)"
+	want="$(printf '%s/%s' "$ROOT" "$(repo_slug "$top")")"
+	cur=""
+	br=""
+	git worktree list --porcelain | while IFS= read -r line; do
+		case "$line" in
+		worktree\ *) cur="${line#worktree }" ;;
+		branch\ *) br="${line#branch }" ;;
+		"")
+			if [ -n "${cur:-}" ]; then
+				case "$cur" in
+				"$want"/*)
+					printf '%-28s %-28s %s\n' "$(basename "$cur")" "${br#refs/heads/}" "$cur"
+					;;
+				esac
+			fi
+			cur=""
+			br=""
+			;;
+		esac
+	done
+}
+
+cmd_path() {
+	[ $# -ge 1 ] || die "usage: dsh-worktree path <name>"
+	printf '%s\n' "$(worktree_path "$1")"
+}
+
+cmd_rm() {
+	[ $# -ge 1 ] || die "usage: dsh-worktree rm <name> [--force]"
+	name="$1"
+	shift
+	check_name "$name"
+	force=""
+	if [ "${1:-}" = "--force" ]; then
+		force="--force"
+	fi
+	path="$(worktree_path "$name")"
+	[ -e "$path" ] || die "no such worktree: $name"
+	# shellcheck disable=SC2086
+	git worktree remove $force "$path"
+	printf 'dsh-worktree: removed %s\n' "$path" >&2
+}
+
+cmd_prune() {
+	repo_root >/dev/null
+	git worktree prune -v
+}
+
+[ $# -ge 1 ] || {
+	usage
+	exit 2
+}
+
+action="$1"
+shift
+
+case "$action" in
+new) cmd_new "$@" ;;
+list) cmd_list "$@" ;;
+path) cmd_path "$@" ;;
+rm) cmd_rm "$@" ;;
+prune) cmd_prune "$@" ;;
+-h | --help | help) usage ;;
+*) die "unknown command: $action (new|list|path|rm|prune)" ;;
+esac
