@@ -1,0 +1,12 @@
+{
+  "name": "dsh-diff",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh review surface: a `show_diff` tool that renders the uncommitted changes as a structured diff card, plus a /diff command for the working tree, the index or a ref.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
