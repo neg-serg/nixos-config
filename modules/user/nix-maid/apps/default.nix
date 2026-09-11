@@ -52,6 +52,7 @@ in
       && n != "dsh-delegate-task-retry"
       && n != "dsh-plugin-recall"
       && n != "dsh-plugin-vetting"
+      && n != "dsh-worktree"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");

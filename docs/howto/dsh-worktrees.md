@@ -64,9 +64,33 @@ kitty needs `allow_remote_control yes` (already set in `files/kitty/kitty.conf`)
 Gitignored files (`.env`, local editor config) do not follow a worktree into existence: pass
 `--copy .env` for the ones a task needs, or use the post-create hook.
 
+## From inside a session: `/worktree`
+
+The `dsh-worktree` plugin (`modules/user/nix-maid/apps/dsh-worktree`, mounted by `dsh-tui-ru.nix`)
+registers the same verbs as a slash command, so a session can spawn a worker session beside itself
+instead of leaving the terminal:
+
+```text
+/worktree new auth-fix --copy .env     # tree + branch + a kitty/zellij pane running dsh there
+/worktree list
+/worktree path auth-fix
+/worktree rm auth-fix --force
+/worktree                              # bare = list
+```
+
+The plugin owns no policy: it only validates the verb and forwards argv to the helper, so every rule
+above (root, branch naming, launcher, `--force`) has one implementation.
+
+One seam is worth knowing about: the harness's `ctx.subprocess` service **deliberately scrubs
+`DSH_*` names** out of a child's environment (harness identity must not leak implicitly), and
+`DSH_WORKTREE_*` is exactly such a name. The plugin therefore forwards those three variables
+explicitly through the spawn spec's `env`, which merges after the scrub — without that, a tree
+created from inside a session would land in the default root while the shell's `dsh-worktree` used
+the configured one.
+
 ## Guard
 
-`scripts/dev/check-dsh-worktree.sh` (28 assertions) creates a throwaway repository in `$TMPDIR` and
+`scripts/dev/check-dsh-worktree.sh` (29 assertions) creates a throwaway repository in `$TMPDIR` and
 pins the contract — clean main checkout, own branch, populated tree, rejected name/branch
 collisions, rejection outside a repository, `--copy` and the post-create hook, and `rm` refusing a
 dirty tree. It is wired into `just check` as the `dsh-worktree-guard` flake check, so a regression

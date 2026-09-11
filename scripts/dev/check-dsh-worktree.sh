@@ -117,6 +117,8 @@ run new 'bad/name' --open print > /dev/null 2>&1
 assert_fails $? "a slash in the name is rejected"
 run new 'bad name' --open print > /dev/null 2>&1
 assert_fails $? "a space in the name is rejected"
+run new --force --open print > /dev/null 2>&1
+assert_fails $? "a leading dash is rejected (a mistyped flag cannot become a name)"
 run new other --branch wt/task1 --open print > /dev/null 2>&1
 assert_fails $? "an existing branch is rejected"
 (cd "$work" && run new outsider --open print > /dev/null 2>&1)
