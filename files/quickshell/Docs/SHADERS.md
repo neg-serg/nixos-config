@@ -18,9 +18,9 @@ Quick Checklist
 
 Performance notes
 
-- Wedge clip sources (`leftBarFillSource`/`rightBarFillSource`) sample plain static fills, so
-  they run with `live: false` and re-render only when the fill geometry/color/visibility
-  changes (`scheduleUpdate()` via Connections). Keeps the wedge visuals without paying for a
-  per-frame FBO update of the base fill.
-- The 20 fps procedural sun icon in `Widgets/SidePanel/Weather.qml` animates only while its
-  popup overlay window is mapped (`Window.window.visible`); the Timer is stopped otherwise.
+- Wedge clip sources (`leftBarFillSource`/`rightBarFillSource`) sample plain static fills, so they
+  run with `live: false` and re-render only when the fill geometry/color/visibility changes
+  (`scheduleUpdate()` via Connections). Keeps the wedge visuals without paying for a per-frame FBO
+  update of the base fill.
+- The 20 fps procedural sun icon in `Widgets/SidePanel/Weather.qml` animates only while its popup
+  overlay window is mapped (`Window.window.visible`); the Timer is stopped otherwise.

@@ -16,10 +16,10 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 resolve_dsh() {
   local path=""
-  path="$(systemctl --user show -p ExecStart --value dsh.service 2>/dev/null |
-    grep -o '/nix/store/[a-z0-9]*-dsh-[0-9][^/]*' | head -n1 || true)"
+  path="$(systemctl --user show -p ExecStart --value dsh.service 2> /dev/null \
+    | grep -o '/nix/store/[a-z0-9]*-dsh-[0-9][^/]*' | head -n1 || true)"
   if [[ -z "$path" ]]; then
-    path="$(command -v dsh 2>/dev/null | xargs -r grep -oh '/nix/store/[a-z0-9]*-dsh-[0-9][^/]*' 2>/dev/null | head -n1 || true)"
+    path="$(command -v dsh 2> /dev/null | xargs -r grep -oh '/nix/store/[a-z0-9]*-dsh-[0-9][^/]*' 2> /dev/null | head -n1 || true)"
   fi
   printf '%s' "$path"
 }
