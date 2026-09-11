@@ -176,6 +176,14 @@ let
       name = "dsh-worktree";
       path = ./dsh-worktree;
     }
+    # /diff + show_diff: the diff-review surface. The tool declares the harness's
+    # `card: "diff"` presenter (the same one the edit-approval preview uses), so
+    # a review renders as structured red/green file diffs; the command is the
+    # textual entry point. Injects tools + commands + subprocess.
+    {
+      name = "dsh-diff";
+      path = ./dsh-diff;
+    }
   ];
 
   # Loader rows for the plugins above, mirroring the web profile's patch layer
