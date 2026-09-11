@@ -54,6 +54,7 @@ in
       && n != "dsh-plugin-vetting"
       && n != "dsh-worktree"
       && n != "dsh-diff"
+      && n != "dsh-statusline"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
