@@ -38,7 +38,8 @@ locale:
 - The base web bundle of dsh itself — the Nix package `packages/dsh/web-ui-en` (`patch.py` at build
   time); the profile `@deepseek-ai` symlink points at it (`dshAiStore` in dsh-market.nix).
 - The TUI profile (`~/.dsh/profiles/tui`) — `dsh-tui-ru` (the same patch.mjs + map; hundreds of
-  strings).
+  strings). The same patcher carries the host-compat fixes for that bundle; see "TUI: the 0.1.5
+  assistant stream" below.
 
 **Why not forks:** these packages are foreign compiled code with foreign dependencies. Example:
 `dsh-file-upload` weighs 19 MB (nested pdfjs-dist, mammoth, markitdown-node, read-excel-file) —
@@ -58,8 +59,48 @@ in `cordis.patch.yml`).
 | `dsh-mode`          | `/mode` — list/switch the default agent preset                   |
 | `dsh-session-tools` | `/rename`, `/status`, `/remember`, `/forget` — session utilities |
 
-The client popup commands `/fork`, `/new`, `/goto`, `/model`, `/help` are a build-time injection in
-`packages/dsh/web-ui-en/patch.py` (the commands anchor pattern).
+The client popup commands `/fork`, `/goto`, `/help` and the action `/new` are a build-time injection
+in `packages/dsh/web-ui-en/patch.py` (the commands anchor pattern).
+
+That injection has to satisfy the 0.1.5 client contract
+(`dsh-client-ui-commands/lib/types/client/contract.d.ts`) — a stale shape fails silently, which is
+what left the `/` menu empty and `/new` inert after the 0.1.5 upgrade:
+
+| Contract point                     | 0.1.5 requirement                                                                                                                                  |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `description`                      | a **function** (`() => "…"`) — candidate synthesis calls it per pass, so a string throws and kills the whole `/` menu, not just that one command  |
+| `ui.kind`                          | required: `"popupSelect"` (with `options`/`onSelect`) or `"action"` (with `run`)                                                                   |
+| `new`                              | an `action` — a popup only opens for a session that already has a live client scope, so a `popupSelect` `/new` no-ops on a fresh/blank session     |
+| `available(session)`               | `ClientSessionContext` carries `sessionId` alone (no `blankBit`); blank state lives in `sessions.list.getSnapshot().byId[id].blank`                |
+| picking a contribution from `/help` | `this.invoke(name, ui, session, { via: "menu" })`; there is no `openPopup` method                                                                  |
+
+`/model` and the remaining client popups are upstream-provided, not injected here. The session list
+snapshot rows are `{id, displayTitle, running, blank, updatedAt, title?, cwd?}`, which is why `/goto`
+reads `byId` while `SessionManager`'s own list uses `items`.
+
+## TUI: the 0.1.5 assistant stream
+
+`dsh-tianshu-tui` renders assistant output from stream deltas it receives as session events. 0.1.5
+removed the durable `assistant/chunk` event: an attempt now settles as one `assistant/attempt` and
+its in-flight deltas travel as **transient `agent/assistant-stream` frames** on the agent scope
+(`{ type: 'start' | 'chunk' | 'end', turn?, step?, time?, chunk? }`). A bundle written for the older
+event shape therefore renders nothing while a turn runs and leaves the live area frozen on the
+"thinking" spinner — the model answered (the session store has the message) but the screen never
+showed it.
+
+`dsh-tui-ru-assets/patch.mjs` fixes both halves through its `FIXES` list, which is why the compat
+entries carry a `probe` marker: they insert code and keep their `from` anchor, so presence of the
+probe — not the from/to pair — is what tells an applied bundle apart from a pristine one.
+
+| Fix                               | What it does                                                                                                                        |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `compat-assistant-stream-subscribe` / `-field` / `-dispose` | subscribe `agent/assistant-stream` with `{ global: true }`, tracking `turn`/`step` from the `start` frame and folding `chunk` frames into the existing `assistant/chunk` handler; disposed with the session |
+| `compat-chunk-flag`               | mark that live frames arrived, so the settled message is not committed twice                                                        |
+| `compat-settled-message-text`     | commit the durable `assistant/message` content (`message.content` via `foldText`/`foldReasoning`) when nothing streamed              |
+
+Verification (no browser/CDP by policy): run `dsh --profile tui` in a PTY and check the reply text
+reaches the scrollback. The reasoning block header appearing is the signal the live path is wired;
+before the fix the capture ends on a bare spinner.
 
 ## How to add your own plugin
 
