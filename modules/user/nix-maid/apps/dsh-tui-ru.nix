@@ -65,6 +65,8 @@ let
   # remote-web-ui, web-ui-settings, gui-tweaks, pet) stay out. The tail of the
   # list is ported from the web profile: secrets-masker/recall/plugin-vetting
   # carry no UI face and need no web runtime (see the note below).
+  # dsh-free-search is mounted as well, but through pnpm instead of the repo
+  # seed — the caretaker installs it and owns its English-market config row.
   # Every plugin directory must be `git add`ed before the switch: the flake
   # source is a git snapshot, so an untracked directory never reaches the store
   # and the caretaker reports it missing while the row is already in the patch
@@ -177,6 +179,28 @@ let
           name: ${name}
   '') (map (p: p.name) (lib.filter (p: p.name != "dsh-memory-extractor") tuiPlugins));
 
+  # Mount + English market for dsh-free-search (the shipped default is lang zh +
+  # bingMarket zh-CN, i.e. Chinese-first results). Rows are spelled out rather
+  # than relying on the plugin's bundled patch: `dsh plugin add` registers the
+  # package as a dependency but not in `dsh.profile.bundles`, so that layer never
+  # applies. The `web` row override must keep `fetchProvider` — patch semantics
+  # replace the whole row config, and dropping it re-registers web-fetch-http as
+  # a duplicate loader entry. Appended only when the package is actually
+  # installed: a row without its plugin is what makes the next TUI start fail.
+  tuiSearchRows = ''
+    # dsh-free-search: keyless engines, English market (module: dsh-tui-ru.nix).
+    - insert:
+        - id: web-search-free
+          name: dsh-free-search
+          config:
+            lang: en
+            bingMarket: en-US
+    - id: web
+      config:
+        searchProvider: ddg
+        fetchProvider: http
+  '';
+
   # The profile ships `cordis.patch.yml` as an empty list; rows must replace
   # that `[]` (a second YAML root node is a parse error). The caretaker rewrites
   # the header comments plus its own row, so a hand-edited or half-written file
@@ -269,15 +293,56 @@ let
     PROFILE_DIR="${homeDir}/.dsh/profiles/tui"
     [ -d "$PROFILE_DIR" ] || exit 0
 
+    # pnpm cannot write nested node_modules through the @deepseek-ai store
+    # symlink (read-only /nix/store), and a fresh `dsh plugin add` re-links the
+    # tree: park the symlink for the duration of the pnpm operations and let the
+    # relink below restore it (same contract as dsh-market.nix for the web
+    # profile).
+    PROFILE_AI="$PROFILE_DIR/node_modules/@deepseek-ai"
+    if [ -L "$PROFILE_AI" ]; then
+      mv "$PROFILE_AI" "$PROFILE_AI.parked"
+    fi
+
     PKG="$PROFILE_DIR/node_modules/@huiliyi37/dsh-tianshu-tui/package.json"
+    VER=""
     if [ -f "$PKG" ]; then
       VER="$(jq -r '.version // "0.0.0"' "$PKG")"
-      if [ "$(printf '%s\n%s\n' 0.1.2-rc.29 "$VER" | sort -V | head -1)" != "0.1.2-rc.29" ]; then
-        echo "dsh-tui-ensure: upgrading dsh-tianshu-tui $VER -> ^0.1.2-rc.29 (0.1.5 session API)..."
-        ( cd "$PROFILE_DIR" && dsh plugin --profile tui add '@huiliyi37/dsh-tianshu-tui@^0.1.2-rc.29' -w ) \
-          || echo "dsh-tui-ensure: upgrade failed — will retry on next login" >&2
-      fi
     fi
+    if [ -z "$VER" ] || [ "$(printf '%s\n%s\n' 0.1.2-rc.29 "$VER" | sort -V | head -1)" != "0.1.2-rc.29" ]; then
+      echo "dsh-tui-ensure: installing dsh-tianshu-tui ^0.1.2-rc.29 (current: ''${VER:-missing}; 0.1.5 session API)..."
+      ( cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add '@huiliyi37/dsh-tianshu-tui@^0.1.2-rc.29' -w ) \
+        || echo "dsh-tui-ensure: install failed — will retry on next login" >&2
+    fi
+
+    # dsh-free-search: keyless search engines (ddg/bing/...), platform search,
+    # `web_fetch`. The shipped `deepseek-official` provider answers with an empty
+    # body from this region, so the profile rows below point the harness `web`
+    # row at this plugin's `ddg` provider. 0.4.24 is the first release on the
+    # 0.1.5 settings API; the relink further down repairs pnpm's peer copies.
+    FS_PKG="$PROFILE_DIR/node_modules/dsh-free-search/package.json"
+    FS_WANT=0.4.24
+    # Registered means: the package is a profile dependency and its files are
+    # there. A leftover directory from a half-finished pnpm run is deliberately
+    # not "installed" — and note that `dsh plugin add` writes the dependency but
+    # NOT `dsh.profile.bundles`, so the mount below is spelled out as explicit
+    # rows instead of relying on the plugin's own bundle layer.
+    fs_ok() {
+      [ -f "$FS_PKG" ] || return 1
+      [ "$(jq -r '.dependencies["dsh-free-search"] // ""' "$PROFILE_DIR/package.json")" != "" ] || return 1
+      return 0
+    }
+    FS_HAVE=""
+    if [ -f "$FS_PKG" ]; then
+      FS_HAVE="$(jq -r '.version // ""' "$FS_PKG")"
+    fi
+    if ! fs_ok || [ "$(printf '%s\n%s\n' "$FS_WANT" "$FS_HAVE" | sort -V | head -1)" != "$FS_WANT" ]; then
+      echo "dsh-tui-ensure: installing dsh-free-search ^$FS_WANT (keyless web search)..."
+      ( cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "dsh-free-search@^$FS_WANT" -w ) \
+        || echo "dsh-tui-ensure: dsh-free-search install failed — will retry on next login" >&2
+    fi
+
+    # the parked symlink is superseded by the relink below
+    rm -rf "$PROFILE_AI.parked"
 
     HARNESS_AI="${pkgs.neg.dsh}/lib/node_modules/@deepseek-ai"
     AI="$PROFILE_DIR/node_modules/@deepseek-ai"
@@ -291,6 +356,9 @@ let
     if [ -f "$PATCH" ]; then
       ROWS="$(mktemp)"
       printf '%s\n' ${lib.escapeShellArg tuiPluginRows} > "$ROWS"
+      if fs_ok; then
+        printf '%s\n' ${lib.escapeShellArg tuiSearchRows} >> "$ROWS"
+      fi
       python3 ${presetPatch} "$PATCH" "$ROWS" || echo "dsh-tui-ensure: preset patch failed" >&2
       rm -f "$ROWS"
     fi
