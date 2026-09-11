@@ -1,0 +1,12 @@
+{
+  "name": "dsh-worktree",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh slash command: /worktree — create, list and remove the git worktrees that isolate parallel dsh sessions (wraps the dsh-worktree helper from packages/local-bin).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}

@@ -52,6 +52,7 @@ worktree_path() {
 check_name() {
 	[ -n "$1" ] || die "empty worktree name"
 	case "$1" in
+	-*) die "worktree name must not start with '-': $1" ;;
 	*/* | *..*) die "worktree name must not contain '/' or '..': $1" ;;
 	esac
 	# Portable character check: allow the set that is safe in a branch name and
