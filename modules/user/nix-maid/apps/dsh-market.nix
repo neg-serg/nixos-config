@@ -129,8 +129,9 @@ let
   # 0.1.5-rc.1 ships the host row in the web-app bundle (enabled=false,
   # allowedModels=[] by default), so the profile may only supply config — a
   # profile-level `- insert:` of the same id aborts boot with "duplicate
-  # loader entry id". Idempotent: migrates the pre-upgrade insert form in
-  # place and appends the override when the row is absent.
+  # loader entry id". Idempotent: migrates the pre-upgrade insert form,
+  # converges an existing override onto the canonical model list, and appends
+  # the override when the row is absent.
   modelSelectionPatch = pkgs.writeText "dsh-model-selection-patch.py" ''
     import sys
 
@@ -140,22 +141,23 @@ let
 
     ROW = "- id: subagent-model-selection-settings\n"
     LEGACY = "- insert:\n    - id: subagent-model-selection-settings\n"
-    NAME = "  name: '@deepseek-ai/dsh-tool-subagent/model-selection-settings'"
     BLOCK = """\
     # Subagent per-call model selection — the host row ships in the web-app
     # bundle; this supplies the deployment opt-in (upstream defaults are
     # enabled=false, allowedModels=[]). Exact routes only: a delegation tool
     # opting in via modelSelectionSettings lets the model pick among these,
-    # and the settings GUI can override them later.
+    # and the settings GUI can override them later. The id is the canonical
+    # V4.1 route: `deepseek-flash` is the only entry that
+    # @deepseek-ai/dsh-llm-deepseek describes with image input and the
+    # in-history system-prompt update, and V4 Pro retires on 2026-09-14.
     - id: subagent-model-selection-settings
       config:
         enabled: true
         allowedModels:
           - provider: deepseek-official
-            model: deepseek-v4-flash
-          - provider: deepseek-official
-            model: deepseek-v4-pro
+            model: deepseek-flash
     """
+    BODY = BLOCK.split(ROW, 1)[1]
 
     if src.count(ROW) > 1 or src.count(LEGACY) > 1:
         raise SystemExit(
@@ -166,21 +168,22 @@ let
         # Pre-upgrade form: a profile-level insert of an id the web-app bundle
         # already owns -> "duplicate loader entry id" at boot. Collapse the
         # block into an id-targeted override.
-        head, rest = src.split(LEGACY, 1)
-        lines = rest.split("\n")
-        moved = 0
-        while moved < len(lines) and (
-            lines[moved].strip() == "" or lines[moved].startswith("    ")
-        ):
-            moved += 1
-        body = [line[4:] if line.startswith("    ") else line for line in lines[:moved]]
-        if body and body[0] == NAME:
-            del body[0]
-        src = head + ROW + "\n".join(body) + "\n".join(lines[moved:])
+        src = src.split(LEGACY, 1)[0] + BLOCK
         action = "migrated the insert form"
     elif ROW in src:
-        print(f"dsh-market: {path}: model selection row already overridden")
-        sys.exit(0)
+        # Converge an existing override: the caretaker may have appended an
+        # earlier revision, and leaving stale model ids behind would silently
+        # keep subagents on a retired route.
+        head, rest = src.split(ROW, 1)
+        lines = rest.split("\n")
+        end = 0
+        while end < len(lines) and lines[end].startswith("  "):
+            end += 1
+        if "\n".join(lines[:end]).rstrip("\n") == BODY.rstrip("\n"):
+            print(f"dsh-market: {path}: model selection row already up to date")
+            sys.exit(0)
+        src = head + ROW + BODY + "\n".join(lines[end:])
+        action = "converged the override onto the canonical model list"
     else:
         src = src.rstrip("\n") + "\n\n" + BLOCK
         action = "appended the override"
