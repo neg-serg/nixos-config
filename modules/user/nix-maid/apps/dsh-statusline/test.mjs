@@ -161,6 +161,19 @@ ok(titleSequence("x") === "\u001b]2;x\u0007\u001b]1;x\u0007", "the title sequenc
   ok(h.spawns.length === 0, "a non-TTY stdout is never written to");
 }
 {
+  // The frame renderer (the dsh-tui-ru patch) owns the status line when present.
+  globalThis.__dshTuiStatusLineFrame = true;
+  const h = harness();
+  await captured(() => h.emit(SESSION, { type: "turn/end", data: { turn: 1 } }), h);
+  ok(h.spawns.length === 0, "the plugin stands down while the frame renders the status line");
+  process.env.DSH_STATUSLINE_TARGET = "title";
+  const h2 = harness();
+  await captured(() => h2.emit(SESSION, { type: "turn/end", data: { turn: 1 } }), h2);
+  ok(h2.spawns.length === 1, "DSH_STATUSLINE_TARGET=title overrides the handshake");
+  delete process.env.DSH_STATUSLINE_TARGET;
+  delete globalThis.__dshTuiStatusLineFrame;
+}
+{
   const h = harness({ intervalMs: 60_000 });
   await captured(() => h.emit(SESSION, { type: "turn/end", data: { turn: 1 } }), h);
   await captured(() => h.emit(SESSION, { type: "turn/end", data: { turn: 2 } }), h);

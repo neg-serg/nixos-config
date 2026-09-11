@@ -11,8 +11,17 @@ let
   # Wrap dsh so it loads DEEPSEEK_API_KEY from the sops secret itself, rather
   # than relying on shell init — works even from a terminal opened before the
   # secret was wired (a shell only sources .zshenv at startup).
+  #
+  # DSH_TUI_STATUSLINE is the user-script status line. The TUI bundle ships the
+  # runner but never instantiates it (see docs/howto/dsh-statusline.md), so
+  # dsh-tui-ru.nix patches it in and reads the command from this variable; only
+  # the terminal profile's bundle looks at it, so the web/headless profiles are
+  # unaffected. Overridable, and skipped when the helper is not installed.
   dshWrapped = pkgs.writeShellScriptBin "dsh" ''
     export DEEPSEEK_API_KEY="''${DEEPSEEK_API_KEY:-$(cat /run/secrets/deepseek-api 2>/dev/null)}"
+    if [ -x "${homeDir}/.local/bin/dsh-statusline" ]; then
+      export DSH_TUI_STATUSLINE="''${DSH_TUI_STATUSLINE:-${homeDir}/.local/bin/dsh-statusline}"
+    fi
     exec ${pkgs.neg.dsh}/bin/dsh "$@"
   '';
 
