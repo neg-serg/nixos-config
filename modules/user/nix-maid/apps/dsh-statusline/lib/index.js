@@ -17,6 +17,12 @@
  * the same: throttle (default 3s), single flight (skip while the previous run is
  * outstanding), keep the previous title when the script fails or is too slow,
  * never let the title flicker with an empty string.
+ *
+ * The frame is the better surface, so the two never render at once: the patch
+ * that wires the runner into the frame publishes `globalThis.__dshTuiStatusLineFrame`,
+ * and this plugin stands down while that marker is present (set
+ * DSH_STATUSLINE_TARGET=title|both to override, e.g. to keep the title in sync
+ * as well).
  */
 
 /** Cordis plugin name — must match the patch row / package name. */
@@ -77,8 +83,16 @@ export function apply(ctx, config) {
     return body
   }
 
+  /** The frame renderer (dsh-tui-ru patch) publishes this marker; see module doc. */
+  function frameOwnsStatusLine() {
+    if (globalThis.__dshTuiStatusLineFrame !== true) return false
+    const target = process.env.DSH_STATUSLINE_TARGET
+    return target !== 'title' && target !== 'both'
+  }
+
   async function refresh(session) {
     if (disabled(process.env) || flagOn(process.env, 'VITEST')) return
+    if (frameOwnsStatusLine()) return
     if (process.stdout === undefined || process.stdout.isTTY !== true) return
     const sid = session?.id ?? 'unknown'
     const now = Date.now()
