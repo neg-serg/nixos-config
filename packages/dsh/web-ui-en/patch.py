@@ -276,123 +276,6 @@ def patch_conversation(root: pathlib.Path) -> int:
     return 0
 
 
-# Client-side slash commands injected into the commands plugin bundle
-# (dsh-client-ui-commands/lib/client.js). The host already exposes the
-# session.fork / session.create RPCs and the client sessions service has
-# fork()/open() — these contributions surface them as /fork, /new, /goto
-# and /help.
-#
-# The 0.1.5 client contract (lib/types/client/contract.d.ts) is:
-#   CommandContribution = { name, description: () => string, available(session),
-#                           ui: PopupSelectSpec | ActionSpec }
-#   PopupSelectSpec = { kind: "popupSelect", options(session, signal), onSelect(option, session) }
-#   ActionSpec      = { kind: "action", run(session) }
-# `description` is a FUNCTION (the menu calls it per candidate pass), `ui.kind`
-# is required, and a popup only opens when the session already has a live
-# client scope — an ActionSpec runs regardless, which is why /new is one.
-# ClientSessionContext carries sessionId alone; the blank bit lives in the
-# sessions list snapshot (their own displayTitle/blank fields).
-COMMANDS_ANCHOR = "this.directory.resetConnected();\n\t\t\t\t});"
-COMMANDS_INSERT = (
-    "\n"
-    "\t\t\t\tthis.register({\n"
-    '\t\t\t\t\tname: "fork",\n'
-    '\t\t\t\t\tdescription: () => "Fork the current session into a new one",\n'
-    "\t\t\t\t\tavailable: (session) => this.sessions().list.getSnapshot().byId[session.sessionId]?.blank !== true,\n"
-    "\t\t\t\t\tui: {\n"
-    '\t\t\t\t\t\tkind: "popupSelect",\n'
-    "\t\t\t\t\t\toptions: async (session) => [ {\n"
-    '\t\t\t\t\t\t\tid: "fork",\n'
-    '\t\t\t\t\t\t\tlabel: "Fork session",\n'
-    '\t\t\t\t\t\t\tdetail: "New session carrying this conversation history"\n'
-    "\t\t\t\t\t\t} ],\n"
-    "\t\t\t\t\t\tonSelect: async (option, session) => {\n"
-    "\t\t\t\t\t\t\tconst id = await this.sessions().fork({ sessionId: session.sessionId, increaseTitle: true });\n"
-    "\t\t\t\t\t\t\tthis.sessions().open(id);\n"
-    "\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t}\n"
-    "\t\t\t\t});\n"
-    "\t\t\t\tthis.register({\n"
-    '\t\t\t\t\tname: "new",\n'
-    '\t\t\t\t\tdescription: () => "Start a new blank session",\n'
-    "\t\t\t\t\tavailable: () => true,\n"
-    "\t\t\t\t\tui: {\n"
-    '\t\t\t\t\t\tkind: "action",\n'
-    "\t\t\t\t\t\trun: async () => {\n"
-    "\t\t\t\t\t\t\tconst id = await this.sessions().create();\n"
-    "\t\t\t\t\t\t\tthis.sessions().open(id);\n"
-    "\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t}\n"
-    "\t\t\t\t});\n"
-    "\t\t\t\tthis.register({\n"
-    '\t\t\t\t\tname: "goto",\n'
-    '\t\t\t\t\tdescription: () => "Jump to another session",\n'
-    "\t\t\t\t\tavailable: () => true,\n"
-    "\t\t\t\t\tui: {\n"
-    '\t\t\t\t\t\tkind: "popupSelect",\n'
-    "\t\t\t\t\t\toptions: async (session) => {\n"
-    "\t\t\t\t\t\t\tconst list = this.sessions().list.getSnapshot();\n"
-    "\t\t\t\t\t\t\tconst current = list.current;\n"
-    '\t\t\t\t\t\t\treturn Object.values(list.byId || {}).filter((s) => s.id !== current).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 60).map((s) => ({ id: s.id, label: s.displayTitle || s.id, detail: s.running ? "running" : s.id }));\n'
-    "\t\t\t\t\t\t},\n"
-    "\t\t\t\t\t\tonSelect: async (option) => {\n"
-    "\t\t\t\t\t\t\tif (option.id) this.sessions().open(option.id);\n"
-    "\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t}\n"
-    "\t\t\t\t});\n"
-    "\t\t\t\tthis.register({\n"
-    '\t\t\t\t\tname: "help",\n'
-    '\t\t\t\t\tdescription: () => "Browse all slash commands",\n'
-    "\t\t\t\t\tavailable: () => true,\n"
-    "\t\t\t\t\tui: {\n"
-    '\t\t\t\t\t\tkind: "popupSelect",\n'
-    "\t\t\t\t\t\toptions: async (session, signal) => {\n"
-    "\t\t\t\t\t\t\tawait this.directory.ensureReady(session.sessionId, signal);\n"
-    "\t\t\t\t\t\t\tconst entry = this.directory.entry(session.sessionId);\n"
-    "\t\t\t\t\t\t\tconst rows = [];\n"
-    '\t\t\t\t\t\t\tfor (const desc of entry?.commands ?? []) rows.push({ id: desc.name, label: "/" + desc.name, detail: desc.description });\n'
-    "\t\t\t\t\t\t\tfor (const contribution of this.live.contributions.values()) {\n"
-    '\t\t\t\t\t\t\t\tif (contribution.available(session)) rows.push({ id: contribution.name, label: "/" + contribution.name, detail: contribution.description() });\n'
-    "\t\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t\t\treturn rows;\n"
-    "\t\t\t\t\t\t},\n"
-    "\t\t\t\t\t\tonSelect: async (option, session) => {\n"
-    "\t\t\t\t\t\t\tconst contribution = this.live.contributions.get(option.id);\n"
-    "\t\t\t\t\t\t\tif (contribution) {\n"
-    '\t\t\t\t\t\t\t\tthis.invoke(option.id, contribution.ui, session, { via: "menu" });\n'
-    "\t\t\t\t\t\t\t\treturn;\n"
-    "\t\t\t\t\t\t\t}\n"
-    '\t\t\t\t\t\t\tawait this.execute(session, "/" + option.id);\n'
-    "\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t}\n"
-    "\t\t\t\t});\n"
-    "\t\t\t"
-)
-
-
-def patch_commands(root: pathlib.Path) -> int:
-    """Add /fork, /new, /goto and /help client slash commands."""
-    cmd = root / "dsh-client-ui-commands" / "lib" / "client.js"
-    if not cmd.exists():
-        print(f"skip (absent): {cmd.relative_to(root)}")
-        return 0
-    data = cmd.read_bytes()
-    text = data.decode("utf-8")
-    if COMMANDS_INSERT.strip() in text:
-        print("note: commands bundle already patched")
-        return 0
-    if COMMANDS_ANCHOR not in text:
-        print(
-            "WARNING: commands anchor not found — /fork and /new not injected",
-            file=sys.stderr,
-        )
-        return 0
-    text = text.replace(COMMANDS_ANCHOR, COMMANDS_ANCHOR + COMMANDS_INSERT, 1)
-    cmd.write_bytes(text.encode("utf-8"))
-    print(f"patched: {cmd.relative_to(root)} (/fork, /new, /goto, /help)")
-    return 1
-
-
 def patch_simple(root: pathlib.Path, rel: str, table, name: str) -> int:
     """Apply a literal replacement table to one bundle; report absent keys."""
     p = root / rel
@@ -515,7 +398,6 @@ def main() -> int:
             )
 
     patched += patch_conversation(root)
-    patched += patch_commands(root)
     patched += patch_reasoning_markdown(root)
     patched += patch_simple(
         root, "dsh-client-ui-primitives/lib/index.js", PRIM_REPL, "primitives"
