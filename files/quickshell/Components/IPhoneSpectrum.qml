@@ -390,7 +390,10 @@ Item {
         onHeightChanged: requestPaint()
         Timer {
             interval: 32
-            running: root.renderMode === "wave" && root.values.length > 0
+            // Gate on visibility too: `values` keeps its last contents after
+            // playback stops, so without this a hidden spectrum repaints at
+            // ~31 Hz forever, forcing continuous scene updates.
+            running: root.renderMode === "wave" && root.visible && root.values.length > 0
             repeat: true
             onTriggered: waveCanvas.requestPaint()
         }
