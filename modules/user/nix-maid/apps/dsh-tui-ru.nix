@@ -46,7 +46,8 @@ let
   #    the TUI plugin's own peer copies (0.1.2-rc.x), and those ship an older
   #    agent-presets schema — the shipped `standard` preset then fails to mount
   #    ("$.prefix missing required value"). Linking the harness tree keeps one
-  #    instance per package, exactly as dsh-market.nix does for the web profile.
+  #    instance per package (the web profile used the same relink before it was
+  #    removed in 2026-09).
   # 3. The base default preset is `standard`, which the harness build removes
   #    (packages/dsh/default.nix): the profile fallback below names `neg`, and the
   #    TUI's own hardcoded DEFAULT_PRESET_ID is rewritten to `neg` by the
@@ -96,9 +97,8 @@ let
       name = "dsh-hashline";
       path = ./dsh-hashline;
     }
-    # dsh-memory-extractor stays web-only: it injects the `memory` service,
-    # which this profile does not provide (the web profile gets it from the
-    # memento plugin).
+    # dsh-memory-extractor was removed with the web GUI (2026-09): it injected
+    # the `memory` service, which this profile does not provide.
     {
       name = "dsh-debug";
       path = ./dsh-debug;
@@ -322,8 +322,7 @@ let
     # pnpm cannot write nested node_modules through the @deepseek-ai store
     # symlink (read-only /nix/store), and a fresh `dsh plugin add` re-links the
     # tree: park the symlink for the duration of the pnpm operations and let the
-    # relink below restore it (same contract as dsh-market.nix for the web
-    # profile).
+    # relink below restore it.
     PROFILE_AI="$PROFILE_DIR/node_modules/@deepseek-ai"
     if [ -L "$PROFILE_AI" ]; then
       mv "$PROFILE_AI" "$PROFILE_AI.parked"
@@ -473,5 +472,14 @@ in
       Type = "oneshot";
       ExecStart = ensureTui;
     };
+  };
+
+  # The TUI self-updater (the self-update-park-harness fix in patch.mjs)
+  # re-applies the Russian patch through this helper right after it installs a
+  # bundle, before the host can restart into it — a raw npm release is
+  # Chinese-only. Same script as the login/activation patch services.
+  users.users.${user}.maid.file.home.".local/bin/dsh-tui-repatch" = {
+    source = runPatch;
+    executable = true;
   };
 }
