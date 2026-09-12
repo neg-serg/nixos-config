@@ -25,13 +25,8 @@
 - Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits:
   [golden-tools.md](./golden-tools.md)
 
-- dsh-osm — OpenStreetMap tools + map card in dsh: [dsh-osm.md](./dsh-osm.md)
-
 - neg — fork of the LiangShen preset (anchored-standard) as the default preset:
   [dsh-liangshen-fork.md](./dsh-liangshen-fork.md)
-
-- dsh-status-rotator — live turn-status phrases instead of "Deep diving...":
-  [dsh-status-rotator.md](./dsh-status-rotator.md)
 
 - dsh TUI — completion notifications through the terminal (OSC 99/9, works over SSH):
   [dsh-tui-notifications.md](./dsh-tui-notifications.md)
@@ -54,10 +49,8 @@
 - dsh TUI boot — what happens while it boots and the boot progress line:
   [dsh-tui-boot.md](./dsh-tui-boot.md)
 
-- dsh-ssh — SSH operations, web terminal, and localhost for the agent: [dsh-ssh.md](./dsh-ssh.md)
-
-- dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:
-  [dsh-web-forks.md](./dsh-web-forks.md)
+- dsh TUI self-update — why `pnpm add` hit EROFS and how the bundle is parked around it:
+  [dsh-tui-self-update.md](./dsh-tui-self-update.md)
 
 - Options/modules reference: [modules.md](./modules.md)
 

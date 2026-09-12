@@ -14,9 +14,8 @@ Communication language (hard rule)
   English. Commit subjects are English imperative (see Commit style below);
   commit bodies may be Russian. (User requirement — musical code lives in
   the private ~/notes repo.)
-- Note: the dsh web GUI itself may contain Chinese strings from plugins
-  (e.g. pet.json, dshmarket UI); that is app data, not something we write.
-  Do not copy those strings into replies for the user.
+- Note: upstream dsh bundles (the TUI package, plugin data) may contain Chinese
+  strings we did not write. Do not copy them into replies for the user.
 - Before committing, check that files you wrote contain no stray Chinese
   or Cyrillic characters in docs: `just lint` runs
   scripts/dev/check-markdown-language.sh, which must pass clean for all *.md
