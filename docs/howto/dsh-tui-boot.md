@@ -66,5 +66,7 @@ boot keeps the spinner and the elapsed counter moving.
 - The TUI also runs a self-update check at startup (`registry.npmjs.org`, then
   `registry.npmmirror.com`, 3 s timeout each). It is a background task; when it decides to install,
   pnpm runs while the UI is already up and a blank session is restarted afterwards. Disable with
-  `DSH_TUI_SKIP_UPDATE=1`.
+  `DSH_TUI_SKIP_UPDATE=1`. The install used to die with `ERR_PNPM_EROFS` on the read-only
+  `@deepseek-ai` store symlink — see [dsh-tui-self-update.md](./dsh-tui-self-update.md) for the
+  `self-update-park-harness` fix.
 - `docs/howto/dsh-tui-notifications.md` — the same patcher's completion-notification fixes.
