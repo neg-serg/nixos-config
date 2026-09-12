@@ -339,7 +339,9 @@ RowLayout {
     }
 
     // Adapter placement probe: genlc discover succeeds only when the adapter
-    // is on the host (VM off). Poll to follow VM start/stop.
+    // is on the host (VM off). Poll to follow VM start/stop. The interval is
+    // deliberately slow: genlc spawn costs ~30 ms of process setup and the
+    // VM/adapter state changes on human timescales, not every few seconds.
     ProcessRunner {
         id: probeProc
         autoStart: false
@@ -348,7 +350,7 @@ RowLayout {
     }
     Timer {
         id: adapterProbeTimer
-        interval: 5000
+        interval: 30000
         repeat: true
         running: true
         onTriggered: {

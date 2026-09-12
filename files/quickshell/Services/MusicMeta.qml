@@ -244,6 +244,11 @@ Item {
         cmd: ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format"]
         parseJson: true
         autoStart: false
+        // One-shot probe, started explicitly by startIntrospection(). It must
+        // not inherit the restartOnExit: true default, otherwise it re-runs the
+        // same command forever (~every 2.5 s) even when the track has not
+        // changed.
+        restartMode: "never"
         onJson: (obj) => {
             if (targetPath !== root._lastPath) return;
             try {
@@ -264,6 +269,8 @@ Item {
         cmd: ["mediainfo", "--Output=JSON"]
         parseJson: true
         autoStart: false
+        // One-shot fallback probe: same reasoning as ffprobeProcess above.
+        restartMode: "never"
         onJson: (obj) => {
             if (targetPath !== root._lastPath) return;
             try {
