@@ -34,6 +34,10 @@ vim.fn.writefile({ 'p' }, dir .. '/pic/pic_marker.txt')
 vim.fn.mkdir(dir .. '/tmp', 'p')
 vim.fn.writefile({ 't' }, dir .. '/tmp/tmp_marker.txt')
 vim.fn.writefile({ 'x' }, dir .. '/pic.jpg')
+-- alpha/beta are opened below and expected to appear in the filesystem
+-- listing, so they must exist on disk (a bare `:edit` only opens a buffer).
+vim.fn.writefile({ 'a' }, dir .. '/alpha.txt')
+vim.fn.writefile({ 'b' }, dir .. '/beta.lua')
 vim.fn.chdir(dir)
 
 vim.cmd('edit ' .. dir .. '/alpha.txt')
