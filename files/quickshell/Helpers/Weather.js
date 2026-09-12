@@ -215,6 +215,19 @@ function _fetchWttrIn(latitude, longitude, callback, errorCallback, options) {
     var timeoutMs = options.timeoutMs || DEFAULTS.timeoutMs;
     var _ua = (options && options.userAgent) ? String(options.userAgent) : "Quickshell";
 
+    // Stop retrying an unreachable fallback: each attempt burns the full HTTP
+    // timeout on a blackholed connection.
+    if (_wttrFailures >= _WTTR_SKIP_THRESHOLD && _now() < _wttrSkipUntil) {
+        errorCallback && errorCallback("wttr.in skipped after repeated failures");
+        return;
+    }
+
+    function _onWttrError(err) {
+        _wttrFailures++;
+        if (_wttrFailures >= _WTTR_SKIP_THRESHOLD) _wttrSkipUntil = _now() + _WTTR_SKIP_COOLDOWN_MS;
+        errorCallback && errorCallback(err);
+    }
+
     var coords = String(latitude) + "," + String(longitude);
 
     // Skip JSON (format=j1) entirely — wttr.in's JSON response is often
@@ -226,7 +239,10 @@ function _fetchWttrIn(latitude, longitude, callback, errorCallback, options) {
         console.warn("[Weather] Open-Meteo unreachable, falling back to wttr.in text for", coords);
     }
     var textUrl = "https://wttr.in/" + coords + "?format=%c|%t|%h|%w|%C|%p|%P|%u";
-    _fetchWttrText(textUrl, timeoutMs, _ua, callback, errorCallback);
+    _fetchWttrText(textUrl, timeoutMs, _ua, function(data) {
+        _wttrFailures = 0;
+        callback(data);
+    }, _onWttrError);
 }
 
 function _fetchWttrText(url, timeoutMs, userAgent, callback, errorCallback) {
@@ -339,11 +355,24 @@ function _httpGetJson(url, timeoutMs, success, fail, userAgent) {
 }
 
 
-// ── Open-Meteo persistent failure tracking ─────────────────────────────
-// After N consecutive Open-Meteo failures, skip it entirely for the
-// session and go straight to wttr.in. Reset on any successful fetch.
+// ── Provider failure tracking ──────────────────────────────────────────
+// After N consecutive Open-Meteo failures, prefer wttr.in for a cooldown
+// window. This must be a cooldown and not a latch: the counter only resets on a
+// successful Open-Meteo fetch, which never happens while it is skipped, so a
+// latch would pin the entire session to the fallback provider after a single
+// transient outage.
 var _openMeteoFailures = 0;
 var _OPEN_METEO_SKIP_THRESHOLD = 5;
+var _OPEN_METEO_SKIP_COOLDOWN_MS = 15 * 60 * 1000;
+var _openMeteoSkipUntil = 0;
+// Circuit breaker for the fallback provider. A weather endpoint can stop
+// answering without closing the connection (observed: wttr.in's JSON endpoint
+// streams for 12 s), so an unhealthy provider would otherwise burn the full
+// HTTP timeout on every refresh and abort an open TLS socket each time.
+var _wttrFailures = 0;
+var _WTTR_SKIP_THRESHOLD = 3;
+var _WTTR_SKIP_COOLDOWN_MS = 30 * 60 * 1000;
+var _wttrSkipUntil = 0;
 
 // Defaults (can be overridden via options argument)
 var DEFAULTS = {
@@ -439,9 +468,10 @@ function fetchWeather(latitude, longitude, callback, errorCallback, options) {
         }
     }
 
-    // After N consecutive failures, skip Open-Meteo entirely and go
-    // straight to wttr.in. Resets on any successful Open-Meteo fetch.
-    var skipOpenMeteo = _openMeteoFailures >= _OPEN_METEO_SKIP_THRESHOLD;
+    // After N consecutive failures, prefer wttr.in until the cooldown expires,
+    // then try Open-Meteo again (see the counter comment above).
+    var skipOpenMeteo = (_openMeteoFailures >= _OPEN_METEO_SKIP_THRESHOLD)
+        && (_now() < _openMeteoSkipUntil);
 
     if (skipOpenMeteo) {
         // Open-Meteo persistently failing — use wttr.in directly
@@ -472,13 +502,17 @@ function fetchWeather(latitude, longitude, callback, errorCallback, options) {
     var _ua = (options && options.userAgent) ? String(options.userAgent) : "Quickshell";
     var dbg = !!(options && options.debug);
     _httpGetJson(url, cfg.timeoutMs, function(weatherData) {
-        // Open-Meteo succeeded — reset failure counter
+        // Open-Meteo succeeded — reset the failure counter and skip window
         _openMeteoFailures = 0;
+        _openMeteoSkipUntil = 0;
         if (cacheKey) _writeCacheSuccess(_weatherCache, cacheKey, weatherData, cfg.weatherTtlMs);
         callback(weatherData);
     }, function(err) {
-        // Open-Meteo failed — increment counter, try fallback (wttr.in)
+        // Open-Meteo failed — count it, arm the cooldown, then use the fallback
         _openMeteoFailures++;
+        if (_openMeteoFailures >= _OPEN_METEO_SKIP_THRESHOLD) {
+            _openMeteoSkipUntil = _now() + _OPEN_METEO_SKIP_COOLDOWN_MS;
+        }
         _fetchWttrIn(latitude, longitude, function(fbData) {
             if (cacheKey) _writeCacheSuccess(_weatherCache, cacheKey, fbData, cfg.weatherTtlMs);
             callback(fbData);
