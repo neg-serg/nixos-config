@@ -40,13 +40,81 @@ Item {
     signal json(var obj)
     signal exited(int code, int status)
 
-    property int _consumed: 0
+    // stdout parsers.
+    //
+    // StdioCollector must never be used for streaming: with waitForEnd = false it
+    // retains every byte ever received and re-decodes the whole buffer on each
+    // `text` read, so a long-running stream costs O(n^2) CPU and O(n) memory.
+    // Measured before this change: a 440 MB cava backlog pinned quickshell at
+    // ~100% CPU and ~2 GB RSS, with 52% of all samples inside
+    // StdioCollector -> QString::fromUtf8 -> QUtf8::convertToUnicode.
+    // SplitParser drops its buffer after every chunk, so streaming stays
+    // O(chunk); it is attached only when the whole output is not needed.
+    StdioCollector {
+        id: jsonStdout
+        waitForEnd: true
+        onStreamFinished: {
+            if (!root.parseJson) return;
+            try {
+                const obj = JSON.parse(text);
+                root.json(obj);
+            } catch (e) { /* ignore parse errors */ }
+        }
+    }
 
+    // Empty splitMarker => arbitrary chunks (raw/binary mode). "\n" => one
+    // complete line per chunk, which also keeps multi-byte UTF-8 intact.
+    SplitParser {
+        id: streamStdout
+        splitMarker: root.rawMode ? "" : "\n"
+        onRead: (data) => root._handleChunk(data)
+    }
+
+    // stderr is not consumed by ProcessRunner; bound it so a chatty child cannot
+    // grow the buffer without limit (a null parser would close the channel).
+    SplitParser { splitMarker: "\n" }
+
+    // Streaming chunk handler: raw bytes in rawMode, one complete line otherwise.
+    function _handleChunk(data) {
+        if (root.rawMode) {
+            if (root.debounceMs > 0) {
+                root._pendingLines.push(data);
+                debounce.restart();
+            } else {
+                root.chunk(data);
+            }
+            return;
+        }
+        const s = String(data || "").trim();
+        if (s.length === 0) return;
+        root._pendingLines.push(s);
+        if (root.debounceMs > 0) {
+            debounce.restart();
+        } else {
+            root._flushPending();
+        }
+    }
+
+    // Debounce buffer for streaming output
+    property var _pendingLines: []
+    Timer {
+        id: debounce
+        interval: Math.max(1, root.debounceMs)
+        repeat: false
+        onTriggered: root._flushPending()
+    }
+
+    // Restart backoff. `backoff.running` participates in the `running` binding
+    // below instead of imperatively assigning `proc.running = true`: an
+    // imperative assignment destroys the declarative binding, after which
+    // `autoStart` is never re-evaluated and a stream keeps running after it
+    // should have stopped (that is why cava streamed for 19 h with playback
+    // stopped). Using `!backoff.running` keeps the backoff delay and survives
+    // restarts.
     Timer {
         id: backoff
         interval: root.backoffMs
         repeat: false
-        onTriggered: proc.running = true
     }
 
     Timer {
@@ -57,78 +125,17 @@ Item {
         onTriggered: if (!proc.running) proc.running = true
     }
 
-    // Debounce buffer for streaming output
-    property string _pendingTail: ""
-    property var _pendingLines: []
-    Timer {
-        id: debounce
-        interval: Math.max(1, root.debounceMs)
-        repeat: false
-        onTriggered: root._flushPending()
-    }
-
     Process {
         id: proc
         command: root.cmd
         environment: (root.env && typeof root.env === 'object') ? root.env : ({})
-        running: root.intervalMs === 0 ? root.autoStart : false
+        running: root.intervalMs === 0 ? (root.autoStart && !backoff.running) : false
         stdinEnabled: root.stdinEnabled
         onStarted: { root.started() }
 
-        stdout: StdioCollector {
-            waitForEnd: root.parseJson
-            onTextChanged: {
-                if (root.parseJson) return;
-                // Raw chunk mode: emit new data directly
-                if (root.rawMode) {
-                    const all = text;
-                    if (root._consumed >= all.length) return;
-                    const chunk = all.substring(root._consumed);
-                    root._consumed = all.length;
-                    if (root.debounceMs > 0) {
-                        root._pendingLines.push(chunk);
-                        debounce.restart();
-                    } else {
-                        root.chunk(chunk);
-                    }
-                    return;
-                }
-                const all = text;
-                if (root._consumed >= all.length) return;
-                const chunk = all.substring(root._consumed);
-                // Combine with tail and split into lines
-                const combined = root._pendingTail + chunk;
-                let lines = combined.split("\n");
-                // Last element is tail (may be empty if chunk ended with \n)
-                root._pendingTail = lines.pop() || "";
-                // Update consumed to leave tail for next time
-                root._consumed = all.length - root._pendingTail.length;
-                // Stash lines for debounced flush
-                for (let i = 0; i < lines.length; i++) {
-                    const s = (lines[i] || "").trim();
-                    if (!s) continue;
-                    root._pendingLines.push(s);
-                }
-                if (root.debounceMs > 0) {
-                    debounce.restart();
-                } else {
-                    root._flushPending();
-                }
-            }
-            onStreamFinished: {
-                if (!root.parseJson) return;
-                try {
-                    const obj = JSON.parse(text);
-                    root.json(obj);
-                } catch (e) { /* ignore parse errors */ }
-            }
-        }
-
-        stderr: StdioCollector { waitForEnd: true }
+        stdout: root.parseJson ? jsonStdout : streamStdout
 
         onExited: function(exitCode, exitStatus) {
-            root._consumed = 0;
-            root._pendingTail = "";
             root.exited(exitCode, exitStatus);
             function _shouldRestart() {
                 var m = String(root.restartMode || "").toLowerCase();
