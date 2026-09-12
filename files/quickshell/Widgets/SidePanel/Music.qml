@@ -19,6 +19,11 @@ Rectangle {
     color: "transparent"
     implicitWidth: playerUI.implicitWidth + Math.round(Theme.sidePanelSpacingMedium * Theme.scale(screen))
     implicitHeight: playerUI.implicitHeight
+    // The popup component stays loaded while hidden and its local `visible`
+    // bindings are still true, so gate the analyser feed on the window actually
+    // being mapped: pushing cava frames into a hidden spectrum re-animates every
+    // bar and dirties the window on each frame.
+    readonly property bool onScreen: !!(Window.window && Window.window.visible)
 
     function warnContrast(bg, fg, label) {
         try {
@@ -99,7 +104,7 @@ Rectangle {
                 // ~30 Hz sample of the CAVA stream (was 12.5 Hz — looked laggy).
                 interval: 32
                 repeat: true
-                running: MusicManager.hasPlayer && MusicManager.isPlaying
+                running: musicCard.onScreen && MusicManager.hasPlayer && MusicManager.isPlaying
                 onTriggered: playerUI._spec = (MusicManager.cavaValues || []).slice()
             }
             // Mouse scrubbing: map an x position on the progress bar to a seek.
