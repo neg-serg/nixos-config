@@ -72,19 +72,4 @@ _exists docker && {
 _exists broot && autoload -Uz br
 autoload zc
 
-# Bare `qs` must not start a second panel: quickshell does not take over from a
-# running instance (it only exits on an explicit IPC kill), so a plain `qs` while
-# the bar runs leaves two instances drawing two bars on top of each other.
-# Restart the managed panel instead; arguments (qs ipc / qs kill / qs -p ...)
-# pass through to the real binary unchanged.
-_exists qs && qs() {
-    if (( $# > 0 )); then
-        command qs "$@"
-    elif command -v quickshell-restart >/dev/null; then
-        quickshell-restart
-    else
-        systemctl --user restart quickshell.service
-    fi
-}
-
 # vim: ft=zsh:nowrap

@@ -80,5 +80,7 @@ Systemd user service (single instance)
    which waits for the panel to come up and notifies on failure). A bare `qs` does **not** replace a
    running panel: quickshell only exits on an explicit IPC kill (`qs kill`), so it draws a second
    bar on top of the first — two instances, two overlapping panels and a D-Bus notification-server
-   conflict. Because of that, `files/shell/zsh/02-cmds.zsh` defines a `qs` shell function that turns
-   a bare `qs` into a managed panel restart.
+   conflict. Because of that, `lib/quickshell-wrapper.nix` turns a bare `qs` (outside systemd) into
+   a managed panel restart: it drops any leftover instance of this config and starts
+   `quickshell.service`. `qs` with arguments (`ipc`, `kill`, `-p ...`) goes straight to the binary,
+   and the unit's own invocation runs under systemd, where nothing is intercepted.
