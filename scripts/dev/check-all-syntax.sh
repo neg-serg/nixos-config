@@ -9,6 +9,15 @@ set -euo pipefail
 REPO_ROOT="${1:-$(git rev-parse --show-toplevel 2> /dev/null || pwd)}"
 cd "$REPO_ROOT"
 
+# Git-tracked files matching the given pathspecs that still exist on disk. A
+# file deleted in the working tree but not yet staged is still in the index;
+# handing it to a checker aborts the run with a misleading FileNotFoundError.
+tracked() {
+  git ls-files -z -- "$@" | while IFS= read -r -d '' file; do
+    [ -e "$file" ] && printf '%s\0' "$file"
+  done
+}
+
 fail=0
 
 # --- Lua ---------------------------------------------------------------
@@ -25,7 +34,7 @@ if command -v luajit > /dev/null 2>&1; then
       echo ""
       fail=1
     fi
-  done < <(git ls-files -z -- '*.lua')
+  done < <(tracked '*.lua')
   echo "Checked $lua_count Lua file(s)"
 else
   echo "WARNING: luajit not found; skipping Lua syntax check" >&2
@@ -51,7 +60,7 @@ if command -v node > /dev/null 2>&1; then
       echo ""
       fail=1
     fi
-  done < <(git ls-files -z -- '*.js')
+  done < <(tracked '*.js')
   echo "Checked $js_count JavaScript file(s)"
 else
   echo "WARNING: node not found; skipping JavaScript syntax check" >&2
@@ -69,7 +78,7 @@ if command -v jq > /dev/null 2>&1; then
       echo ""
       fail=1
     fi
-  done < <(git ls-files -z -- '*.json')
+  done < <(tracked '*.json')
   echo "Checked $json_count JSON file(s)"
 else
   echo "WARNING: jq not found; skipping JSON syntax check" >&2
@@ -90,7 +99,7 @@ if command -v jq > /dev/null 2>&1; then
       echo ""
       fail=1
     fi
-  done < <(git ls-files -z -- '*.jsonc')
+  done < <(tracked '*.jsonc')
   echo "Checked $jsonc_count JSONC file(s)"
 else
   echo "WARNING: jq not found; skipping JSONC syntax check" >&2
@@ -108,7 +117,7 @@ if python3 -c 'import yaml' 2> /dev/null; then
       echo ""
       fail=1
     fi
-  done < <(git ls-files -z -- '*.yml' '*.yaml')
+  done < <(tracked '*.yml' '*.yaml')
   echo "Checked $yaml_count YAML file(s)"
 else
   echo "WARNING: PyYAML not found; skipping YAML syntax check" >&2
@@ -126,7 +135,7 @@ if command -v python3 > /dev/null 2>&1; then
       echo ""
       fail=1
     fi
-  done < <(git ls-files -z -- '*.toml')
+  done < <(tracked '*.toml')
   echo "Checked $toml_count TOML file(s)"
 else
   echo "WARNING: python3 not found; skipping TOML syntax check" >&2
@@ -152,7 +161,7 @@ EOF
       echo ""
       fail=1
     fi
-  done < <(git ls-files -z -- '*.css')
+  done < <(tracked '*.css')
   echo "Checked $css_count CSS file(s)"
 else
   echo "WARNING: python3 not found; skipping CSS brace check" >&2
