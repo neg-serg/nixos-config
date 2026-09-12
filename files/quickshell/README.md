@@ -75,3 +75,10 @@ Systemd user service (single instance)
 1. Enable + start: `systemctl --user enable --now quickshell-panel.service`.
 1. Afterwards control the panel with `systemctl --user restart quickshell-panel.service` instead of
    launching `qs` manually — systemd keeps only one instance alive and auto-restarts on crashes.
+   With the nix-maid unit the service is already provided as `quickshell.service`, so the equivalent
+   command is `systemctl --user restart quickshell.service` (or the packaged `quickshell-restart`,
+   which waits for the panel to come up and notifies on failure). A bare `qs` does **not** replace a
+   running panel: quickshell only exits on an explicit IPC kill (`qs kill`), so it draws a second
+   bar on top of the first — two instances, two overlapping panels and a D-Bus notification-server
+   conflict. Because of that, `files/shell/zsh/02-cmds.zsh` defines a `qs` shell function that turns
+   a bare `qs` into a managed panel restart.
