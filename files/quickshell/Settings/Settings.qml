@@ -62,9 +62,21 @@ Singleton {
 
             // Enable wedge clip ShaderEffect path (env vars can override in debug)
             property bool enableWedgeClipShader: false
-            // Recolor the bar content through a live FBO tint pass. Costs CPU
-            // (~5-6% of a core) even when idle; disable to drop that cost.
-            property bool panelTintEnabled: true
+            // Recolor the bar content through a live FBO tint pass. The tint shader
+            // is a descendant of the content it samples, so the feedback keeps the
+            // scene dirty on every frame: the bar renders at ~480 fps instead of
+            // redrawing on change only. Measured idle cost with it ON: ~15.8% of a
+            // core at ~480 fps; with it OFF: ~0.6-1.8% at ~1 fps (8-15x depending on
+            // what else wakes the shell). The original "~5-6% of a core" estimate is
+            // too low.
+            //
+            // Turning it off is NOT visually neutral. The tint also draws a
+            // near-opaque copy of the panel content over itself, which flattens the
+            // panel's own glow/seam rendering. Without it that glow shows at full
+            // strength and the bar reads as "doubled"/busier (measured 13.9% RMSE in
+            // the seam area, 3.8% across the whole strip). Re-enable this if the look
+            // matters more than the CPU cost.
+            property bool panelTintEnabled: false
             property string weatherCity: "Saint Petersburg"
             property string userAgent: "NegPanel"
             // Unified logging toggle for low-importance debug logs
