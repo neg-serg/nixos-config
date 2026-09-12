@@ -72,7 +72,7 @@ let
 in
 {
   # Runs on every rebuild (as the user, so the profile stays user-owned) and on
-  # every login — same pattern as dsh-models / dsh-market / dsh-tui-ru.
+  # every login — same pattern as dsh-models / dsh-tui-ru.
   system.activationScripts.dshAcp = lib.stringAfter [ "users" "dshModels" ] ''
     ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${ensure} || true
   '';
@@ -81,7 +81,6 @@ in
     enable = true;
     description = "dsh-acp — keep the ACP profile on the V4.1 route";
     after = [ "network.target" ];
-    before = [ "dsh.service" ];
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "oneshot";
