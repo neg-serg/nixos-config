@@ -107,12 +107,27 @@ Item {
     // ── Small bar analyser: live copy of cava values (in-place mutation won't
     // trigger bindings, so copy on a timer) ──
     property var _barSpec: []
+    // Stand-in bound while an analyser is off screen. Feeding a hidden spectrum
+    // still updates every bar height (and its SmoothedAnimation), which dirties
+    // the window on each cava frame: measured ~9% of a core while music played
+    // with the bar not hovered and every analyser hidden.
+    readonly property var _emptySpec: []
+    // None of these read cavaValues, so they do not re-evaluate ~60x/s.
+    readonly property bool _barSpecWanted: Settings.settings.musicPopupSpectrum === true
+        && MusicManager.isPlaying
+        && mediaControl.panelHovering
+    readonly property bool _iphoneSpecWanted: Settings.settings.showIphoneVisualizer === true
+        && MusicManager.visualizerAllowed
+        && MusicManager.isPlaying
+    readonly property bool _linearSpecWanted: Settings.settings.showMediaVisualizer === true
+        && MusicManager.visualizerAllowed
+        && MusicManager.isPlaying
     Timer {
         id: barSpecTick
         // ~30 Hz sample (was 12.5 Hz).
         interval: 32
         repeat: true
-        running: MusicManager.isPlaying
+        running: mediaControl._barSpecWanted
         onTriggered: mediaControl._barSpec = (MusicManager.cavaValues || []).slice();
     }
 
@@ -370,7 +385,7 @@ Item {
                         implicitHeight: Math.round(mediaControl.baseHeight * 0.55)
                         height: implicitHeight
                         width: implicitWidth
-                        values: MusicManager.cavaValues
+                        values: mediaControl._iphoneSpecWanted ? MusicManager.cavaValues : mediaControl._emptySpec
                         targetBars: Math.max(12, Math.min(32, Math.round(implicitWidth / 2.5)))
                         accentColor: mediaControl.accentReady ? mediaControl.mediaAccent : Theme.accentPrimary
                         fillOpacity: 0.8
@@ -480,7 +495,7 @@ Item {
                                     ? _vizProfile.spectrumHeightFactor
                                     : Settings.settings.spectrumHeightFactor))
                             width: Math.ceil(titleMeasure.width)
-                            values: MusicManager.cavaValues
+                            values: mediaControl._linearSpecWanted ? MusicManager.cavaValues : mediaControl._emptySpec
                             amplitudeScale: 1.0
                             barGap: (((_vizProfile && _vizProfile.spectrumBarGap !== undefined)
                                        ? _vizProfile.spectrumBarGap
