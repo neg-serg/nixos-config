@@ -51,6 +51,9 @@
 - dsh voice input — why there is nothing to build (the local stack is switched off on purpose):
   [dsh-voice.md](./dsh-voice.md)
 
+- dsh TUI boot — what happens while it boots and the boot progress line:
+  [dsh-tui-boot.md](./dsh-tui-boot.md)
+
 - dsh-ssh — SSH operations, web terminal, and localhost for the agent: [dsh-ssh.md](./dsh-ssh.md)
 
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration:

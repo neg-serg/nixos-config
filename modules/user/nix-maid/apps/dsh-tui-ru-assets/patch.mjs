@@ -64,8 +64,8 @@ function remainingCjkLiterals(text) {
 /**
  * Code-level fixes this repo needs on top of the translations. Each entry is an
  * exact literal occurrence in the bundle: `from` is what upstream ships, `to`
- * what this deployment needs. Applied before the map, so `bundleSha` below
- * still records the pristine input.
+ * what this deployment needs. Applied before the translation map, so the
+ * marker's `bundleSha` is the hash of the finished bundle.
  *
  * Insert-style entries (the host-compat ones) leave `from` in place, so the
  * from/to pair cannot tell an applied bundle from a pristine one — they carry
@@ -290,6 +290,136 @@ function deriveGlance(statusText, live, columns, elapsedMs = 0) {`,
     probe: "user.refresh(this.userStatusLinePayload?.() ?? {});",
     from: '\t\t\tgetStatusText: () => this.statusLine?.current ?? null,',
     to: '\t\t\tgetStatusText: () => {\n\t\t\t\t/* dsh-statusline:frame — drive the user script from the render loop (the runner throttles and is single-flight), then show its line next to the workflow phase. */\n\t\t\t\tconst user = this.userStatusLine;\n\t\t\t\tif (user !== null && user !== void 0) {\n\t\t\t\t\ttry {\n\t\t\t\t\t\tuser.refresh(this.userStatusLinePayload?.() ?? {});\n\t\t\t\t\t} catch {}\n\t\t\t\t}\n\t\t\t\tconst parts = [user?.current ?? null, this.statusLine?.current ?? null].filter((part) => part !== null && part !== void 0 && part !== "");\n\t\t\t\treturn parts.length === 0 ? null : parts.join(" · ");\n\t\t\t},',
+  },
+
+  // --- dsh-tui-boot ------***------
+  // The harness mounts the whole plugin tree before the TUI paints its first
+  // frame. That window is silent: on a cold nix-store page cache or a large
+  // session resume it reads as a hang. These fixes draw one self-clearing
+  // status line with the current phase and elapsed seconds, and wipe it right
+  // before flushLiveRender() paints the first real frame. The line is drawn as
+  // soon as the runner mounts and is a no-op unless stdout is a TTY
+  // (DSH_TUI_BOOT_QUIET=1 also disables it).
+  //
+  // The helper is the only insertion; the wiring anchors are extended in place
+  // (or, for flushLiveRender, rewritten in place). Every fix carries a `probe`
+  // that marks the applied bundle and keeps re-runs idempotent. The line clears
+  // itself before the first frame so it can never damage the rendered UI.
+  {
+    id: "boot-progress-helper",
+    probe: "function createBootProgress(stream, env) {",
+    from: 'const name = "tui-runner";',
+    to: `const name = "tui-runner";
+/* dsh-tui-boot — one self-clearing boot status line. It draws as soon as the
+   runner mounts and is wiped before the first frame; a non-TTY stream (piped
+   --help/--version, a test harness) keeps the whole thing a no-op. */
+function createBootProgress(stream, env) {
+	const active = Boolean(stream && stream.isTTY) && env?.DSH_TUI_BOOT_QUIET !== "1" && env?.DSH_TUI_BOOT_QUIET !== "true" && env?.CI !== "true" && env?.CI !== "1" && env?.VITEST !== "true";
+	const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+	const CLEAR_LINE = String.fromCharCode(13, 27) + "[2K";
+	let label = "";
+	let startedAt = 0;
+	let timer = null;
+	let index = 0;
+	let drawn = false;
+	let stopped = true;
+	const draw = () => {
+		const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
+		try {
+			stream.write(CLEAR_LINE + frames[index % frames.length] + " " + label + " " + secs + "s");
+			drawn = true;
+		} catch {}
+		index += 1;
+	};
+	const api = {
+		start(text) {
+			if (!active || !stopped) return api;
+			stopped = false;
+			startedAt = Date.now();
+			label = text;
+			index = 0;
+			draw();
+			timer = setInterval(draw, 120);
+			if (typeof timer.unref === "function") timer.unref();
+			return api;
+		},
+		step(text) {
+			if (!active || stopped) return api;
+			label = text;
+			index = 0;
+			draw();
+			return api;
+		},
+		stop() {
+			if (!active || stopped) return api;
+			stopped = true;
+			if (timer !== null) clearInterval(timer);
+			timer = null;
+			if (drawn) try {
+				stream.write(CLEAR_LINE);
+			} catch {}
+			drawn = false;
+			return api;
+		}
+	};
+	return api;
+}
+/* dsh-tui-boot — module-level handle so TuiApp.attach() can advance the line. */
+let dshBootProgress = null;`,
+  },
+  {
+    id: "boot-progress-start",
+    probe: "dshBootProgress = createBootProgress(stdout, process.env);",
+    from: "\tconst stdin = config.stdin ?? process.stdin;\n\tconst stdout = config.stdout ?? process.stdout;",
+    to: '\tconst stdin = config.stdin ?? process.stdin;\n\tconst stdout = config.stdout ?? process.stdout;\n\t/* dsh-tui-boot — arm the line before the service wait. */\n\tdshBootProgress = createBootProgress(stdout, process.env);\n\tdshBootProgress.start("Загрузка dsh…");',
+  },
+  {
+    id: "boot-progress-services",
+    probe: 'dshBootProgress?.step("Инициализация TUI…");',
+    from: "\t\tconst requestHostExit = () => {",
+    to: '\t\tdshBootProgress?.step("Инициализация TUI…");\n\t\tconst requestHostExit = () => {',
+  },
+  {
+    id: "boot-progress-host-services",
+    probe: 'dshBootProgress?.step("Сервисы ядра…");',
+    from: "\t\tawait this.waitForHostServices();",
+    to: '\t\tawait this.waitForHostServices();\n\t\tdshBootProgress?.step("Сервисы ядра…");',
+  },
+  {
+    id: "boot-progress-settings",
+    probe: 'dshBootProgress?.step("Настройки и учётные данные…");',
+    from: '\t\tawait this.waitForServicesReady(["settings", "credentials"]);',
+    to: '\t\tawait this.waitForServicesReady(["settings", "credentials"]);\n\t\tdshBootProgress?.step("Настройки и учётные данные…");',
+  },
+  {
+    id: "boot-progress-session",
+    probe: 'dshBootProgress?.step("Возобновление сессии…");',
+    from: "\t\tif (target !== void 0) await this.switchSession(target);",
+    to: '\t\tdshBootProgress?.step("Возобновление сессии…");\n\t\tif (target !== void 0) await this.switchSession(target);',
+  },
+  {
+    id: "boot-progress-sessions-list",
+    probe: 'dshBootProgress?.step("Восстановление списка сессий…");',
+    from: "\t\tawait this.renderRestorableSessions();",
+    to: '\t\tdshBootProgress?.step("Восстановление списка сессий…");\n\t\tawait this.renderRestorableSessions();',
+  },
+  {
+    id: "boot-progress-help",
+    probe: 'if (wantHelp || wantVersion) {\n\t\t\tdshBootProgress?.stop();',
+    from: "\t\tif (wantHelp || wantVersion) {",
+    to: '\t\tif (wantHelp || wantVersion) {\n\t\t\tdshBootProgress?.stop();',
+  },
+  {
+    id: "boot-progress-first-frame",
+    probe: '\tflushLiveRender() {\n\t\t/* dsh-tui-boot',
+    from: "\tflushLiveRender() {\n\t\tthis.renderBatcher.flushNow();",
+    to: '\tflushLiveRender() {\n\t\t/* dsh-tui-boot — clear the boot line before the first painted frame; the first frame can come from a session switch or the welcome, not only the end of attach(). */\n\t\tdshBootProgress?.stop();\n\t\tthis.renderBatcher.flushNow();',
+  },
+  {
+    id: "boot-progress-safety",
+    probe: "app.attach().finally(() => dshBootProgress?.stop())",
+    from: "\t\tconst attachPromise = app.attach().catch((err) => {",
+    to: "\t\tconst attachPromise = app.attach().finally(() => dshBootProgress?.stop()).catch((err) => {",
   },
 
   // --- dsh-keymap:user ------***------
