@@ -62,16 +62,8 @@ Item {
         repeat: true
         running: Services.WidgetRegistry.isVisible("sysmon")
         onTriggered: {
-            if (!cpuRamProbe.running)
-                cpuRamProbe.start();
-            if (!swapProbe.running)
-                swapProbe.start();
-            if (!ioProbe.running)
-                ioProbe.start();
-            if (root._tempPath && !tempProbe.running)
-                tempProbe.start();
-            if (root._gpuPath && !gpuProbe.running)
-                gpuProbe.start();
+            if (!probeAll.running)
+                probeAll.start();
         }
     }
 
@@ -103,126 +95,116 @@ Item {
         }
     }
 
-    // ── CPU + RAM probe ──
-    // Outputs: "cpu <user> <nice> <sys> <idle> <iowait> <irq> <softirq> <steal>"
-    // then: "mem <totalKB> <availKB>"
+    // ── System probe: one shell + one awk per poll ──
+    // Tagged output: "cpu <user..steal>", "mem <totalKB> <availKB>",
+    // "swap <totalKB> <usedKB>", "io <readSectors> <writeSectors>",
+    // "temp <millideg>" and "gpu <busyPercent>".
+    //
+    // This replaces five separate runners, which spawned dash, head, awk and
+    // two cats (nine processes) every _pollMs. Measured at ~135 spawns/min,
+    // that churn cost ~0.6% of a core on its own; one awk reading all four
+    // procfs files plus the discovered sysfs paths costs two processes.
+    readonly property string _awkProgram: [
+        'FILENAME=="/proc/stat"      { if (FNR==1) print "cpu", $2,$3,$4,$5,$6,$7,$8,$9; next }',
+        'FILENAME=="/proc/meminfo"   { if ($1=="MemTotal:") t=$2; else if ($1=="MemAvailable:") a=$2; next }',
+        'FILENAME=="/proc/swaps"     { if (FNR>1) { st+=$3; su+=$4 } next }',
+        'FILENAME=="/proc/diskstats" { if ($3 ~ /^(sd[a-z]|nvme[0-9]+n[0-9]+|vd[a-z])$/) { r+=$6; w+=$10 } next }',
+        'FILENAME==tp                { print "temp", $1+0; next }',
+        'FILENAME==gp                { print "gpu", $1+0; next }',
+        'END { print "mem", t+0, a+0; print "swap", st+0, su+0; print "io", r+0, w+0 }'
+    ].join("; ")
+
+    readonly property var _probeCmd: {
+        var tp = String(root._tempPath || "");
+        var gp = String(root._gpuPath || "");
+        var files = ["/proc/stat", "/proc/meminfo", "/proc/swaps", "/proc/diskstats"];
+        if (tp) files.push(tp);
+        if (gp) files.push(gp);
+        return ["dash", "-c", "awk -v tp='" + tp + "' -v gp='" + gp + "' '" + root._awkProgram + "' " + files.join(" ")];
+    }
+
     ProcessRunner {
-        id: cpuRamProbe
-        cmd: ["dash", "-c", "head -1 /proc/stat;" + "awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{print \"mem\",t,a}' /proc/meminfo"]
+        id: probeAll
+        cmd: root._probeCmd
         autoStart: Services.WidgetRegistry.isVisible("sysmon")
         restartOnExit: false
-        onLine: s => {
-            try {
-                var line = String(s).trim();
-                if (line.indexOf("cpu ") === 0) {
-                    root._parseCpu(line);
-                } else if (line.indexOf("mem ") === 0) {
-                    var parts = line.split(/\s+/);
-                    var totalKB = parseInt(parts[1], 10) || 0;
-                    var availKB = parseInt(parts[2], 10) || 0;
-                    root.ramTotalGiB = totalKB / 1048576;
-                    var usedKB = totalKB - availKB;
-                    root.ramUsedGiB = usedKB / 1048576;
-                    root.ramPercent = totalKB > 0 ? Math.max(0, Math.min(1, usedKB / totalKB)) : 0;
-                }
-            } catch (e) {
-                console.warn("[SystemMonitor.cpuRam]", e);
-            }
+        onLine: s => root._handleProbeLine(s)
+    }
+
+    // Routes a tagged probe line to its parser.
+    function _handleProbeLine(s) {
+        try {
+            var line = String(s).trim();
+            if (line.length === 0)
+                return;
+            var tag = line.split(/\s+/)[0];
+            if (tag === "cpu") { _parseCpu(line); return; }
+            if (tag === "mem") { _parseMem(line); return; }
+            if (tag === "swap") { _parseSwap(line); return; }
+            if (tag === "io") { _parseIo(line); return; }
+            if (tag === "temp") { _parseTemp(line); return; }
+            if (tag === "gpu") { _parseGpu(line); return; }
+        } catch (e) {
+            console.warn("[SystemMonitor.probe]", e);
         }
     }
 
-    // ── Swap probe ──
-    // Outputs: "swap <totalKB> <usedKB>" or "swap 0 0"
-    ProcessRunner {
-        id: swapProbe
-        cmd: ["dash", "-c", "awk 'NR>1{t+=$3;u+=$4} END{print \"swap\",t+0,u+0}' /proc/swaps"]
-        autoStart: Services.WidgetRegistry.isVisible("sysmon")
-        restartOnExit: false
-        onLine: s => {
-            try {
-                var parts = String(s).trim().split(/\s+/);
-                if (parts[0] !== "swap")
-                    return;
-                var totalKB = parseInt(parts[1], 10) || 0;
-                var usedKB = parseInt(parts[2], 10) || 0;
-                root.swapAvailable = totalKB > 0;
-                root.swapTotalGiB = totalKB / 1048576;
-                root.swapUsedGiB = usedKB / 1048576;
-                root.swapPercent = totalKB > 0 ? Math.max(0, Math.min(1, usedKB / totalKB)) : 0;
-            } catch (e) {
-                console.warn("[SystemMonitor.swap]", e);
-            }
-        }
+    function _parseMem(line) {
+        var parts = line.split(/\s+/);
+        var totalKB = parseInt(parts[1], 10) || 0;
+        var availKB = parseInt(parts[2], 10) || 0;
+        root.ramTotalGiB = totalKB / 1048576;
+        var usedKB = totalKB - availKB;
+        root.ramUsedGiB = usedKB / 1048576;
+        root.ramPercent = totalKB > 0 ? Math.max(0, Math.min(1, usedKB / totalKB)) : 0;
     }
 
-    // ── Disk I/O probe ──
-    // Outputs: "io <totalReadSectors> <totalWriteSectors>"
-    ProcessRunner {
-        id: ioProbe
-        cmd: ["dash", "-c", "awk '$3~/^(sd[a-z]|nvme[0-9]+n[0-9]+|vd[a-z])$/{r+=$6;w+=$10} END{print \"io\",r+0,w+0}' /proc/diskstats"]
-        autoStart: Services.WidgetRegistry.isVisible("sysmon")
-        restartOnExit: false
-        onLine: s => {
-            try {
-                var parts = String(s).trim().split(/\s+/);
-                if (parts[0] !== "io")
-                    return;
-                var totalRead = parseInt(parts[1], 10) || 0;
-                var totalWrite = parseInt(parts[2], 10) || 0;
-                var now = Date.now();
-                if (root._prevIo !== null && root._prevIoTs > 0) {
-                    var dtSec = (now - root._prevIoTs) / 1000;
-                    if (dtSec > 0) {
-                        var rdKiBps = ((totalRead - root._prevIo.rd) * 0.5) / dtSec;
-                        var wrKiBps = ((totalWrite - root._prevIo.wr) * 0.5) / dtSec;
-                        root.ioReadKiBps = Math.max(0, rdKiBps);
-                        root.ioWriteKiBps = Math.max(0, wrKiBps);
-                        var totalKiBps = root.ioReadKiBps + root.ioWriteKiBps;
-                        root.ioPercent = Math.max(0, Math.min(1, totalKiBps / root._ioMaxKiBps));
-                    }
-                }
-                root._prevIo = {
-                    rd: totalRead,
-                    wr: totalWrite
-                };
-                root._prevIoTs = now;
-            } catch (e) {
-                console.warn("[SystemMonitor.io]", e);
-            }
-        }
+    // "swap <totalKB> <usedKB>" or "swap 0 0"
+    function _parseSwap(line) {
+        var parts = line.split(/\s+/);
+        var totalKB = parseInt(parts[1], 10) || 0;
+        var usedKB = parseInt(parts[2], 10) || 0;
+        root.swapAvailable = totalKB > 0;
+        root.swapTotalGiB = totalKB / 1048576;
+        root.swapUsedGiB = usedKB / 1048576;
+        root.swapPercent = totalKB > 0 ? Math.max(0, Math.min(1, usedKB / totalKB)) : 0;
     }
 
-    // ── CPU temperature probe (path resolved once by tempDiscover) ──
-    ProcessRunner {
-        id: tempProbe
-        cmd: root._tempPath ? ["cat", root._tempPath] : []
-        autoStart: false
-        restartOnExit: false
-        onLine: s => {
-            try {
-                var millideg = parseInt(String(s).trim(), 10) || 0;
-                root.cpuTempCelsius = millideg / 1000;
-                root.cpuTempPercent = Math.max(0, Math.min(1, (root.cpuTempCelsius - 30) / 70));
-            } catch (e) {
-                console.warn("[SystemMonitor.temp]", e);
+    // "io <totalReadSectors> <totalWriteSectors>"
+    function _parseIo(line) {
+        var parts = line.split(/\s+/);
+        var totalRead = parseInt(parts[1], 10) || 0;
+        var totalWrite = parseInt(parts[2], 10) || 0;
+        var now = Date.now();
+        if (root._prevIo !== null && root._prevIoTs > 0) {
+            var dtSec = (now - root._prevIoTs) / 1000;
+            if (dtSec > 0) {
+                var rdKiBps = ((totalRead - root._prevIo.rd) * 0.5) / dtSec;
+                var wrKiBps = ((totalWrite - root._prevIo.wr) * 0.5) / dtSec;
+                root.ioReadKiBps = Math.max(0, rdKiBps);
+                root.ioWriteKiBps = Math.max(0, wrKiBps);
+                var totalKiBps = root.ioReadKiBps + root.ioWriteKiBps;
+                root.ioPercent = Math.max(0, Math.min(1, totalKiBps / root._ioMaxKiBps));
             }
         }
+        root._prevIo = {
+            rd: totalRead,
+            wr: totalWrite
+        };
+        root._prevIoTs = now;
     }
 
-    // ── GPU probe (path resolved once by gpuDiscover) ──
-    ProcessRunner {
-        id: gpuProbe
-        cmd: root._gpuPath ? ["cat", root._gpuPath] : []
-        autoStart: false
-        restartOnExit: false
-        onLine: s => {
-            try {
-                var val = parseInt(String(s).trim(), 10) || 0;
-                root.gpuPercent = Math.max(0, Math.min(1, val / 100));
-            } catch (e) {
-                console.warn("[SystemMonitor.gpu]", e);
-            }
-        }
+    // "temp <millideg>" (path resolved once by tempDiscover)
+    function _parseTemp(line) {
+        var millideg = parseInt(line.split(/\s+/)[1], 10) || 0;
+        root.cpuTempCelsius = millideg / 1000;
+        root.cpuTempPercent = Math.max(0, Math.min(1, (root.cpuTempCelsius - 30) / 70));
+    }
+
+    // "gpu <busyPercent>" (path resolved once by gpuDiscover)
+    function _parseGpu(line) {
+        var val = parseInt(line.split(/\s+/)[1], 10) || 0;
+        root.gpuPercent = Math.max(0, Math.min(1, val / 100));
     }
 
     // ── CPU delta parser ──
