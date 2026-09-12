@@ -6,22 +6,17 @@ let
   entries = builtins.readDir ./.;
 in
 {
-  # dsh-tui-ru-assets/, dsh-osm/, dsh-widgets/, dsh-web-en-assets/,
-  # dsh-startup-guard-assets/, dsh-liangshen-fork/ and dsh-fast/ are data
-  # (patch scripts, plugin bundles, translation maps, agent presets) consumed
-  # by their modules — not modules themselves.
-  # (dsh-gui-tweaks/prompt/layout-slash now live in the dsh-web-ui fork
-  # checkout, see their modules.)
+  # Data directories here are not modules: dsh-tui-ru-assets/ (the TUI patcher,
+  # translation map and themes), dsh-liangshen-fork/ and dsh-fast/ (agent
+  # presets), and the per-plugin bundles the TUI profile seeds through
+  # dsh-tui-ru.nix (dsh-advisor/, dsh-hashline/, …). The web-profile plugin
+  # caretakers were removed in 2026-09 with the web GUI.
   imports =
     builtins.attrNames entries
     |> builtins.filter (
       n:
       n != "default.nix"
       && n != "dsh-tui-ru-assets"
-      && n != "dsh-osm"
-      && n != "dsh-widgets"
-      && n != "dsh-web-en-assets"
-      && n != "dsh-startup-guard-assets"
       && n != "dsh-liangshen-fork"
       && n != "dsh-fast"
       && n != "dsh-mode"
@@ -30,12 +25,9 @@ in
       && n != "dsh-compaction-todo-preserver"
       && n != "dsh-rules-injector"
       && n != "dsh-category-skill-reminder"
-      && n != "dsh-boulder"
       && n != "dsh-hashline"
-      && n != "dsh-memory-extractor"
       && n != "dsh-debug"
       && n != "dsh-secrets-masker"
-      && n != "dsh-lsp"
       && n != "dsh-eval"
       && n != "dsh-ttsr"
       && n != "dsh-hub"

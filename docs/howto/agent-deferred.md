@@ -11,11 +11,12 @@ Each plugin = 4 files + a test:
 - `modules/user/nix-maid/apps/dsh-<name>/package.json` — name/type=module/main=lib/index.js/exports;
 - `modules/user/nix-maid/apps/dsh-<name>/lib/index.js` — `export const name` + `apply(ctx)`; when
   services are used, `export const inject = [...]` is MANDATORY (lesson: ctx.tools/ctx.memory);
-- `modules/user/nix-maid/apps/dsh-<name>.nix` — ensure script (copy files + insert line into
-  cordis.patch.yml + dsh-restart), activationScripts, systemd user service (copy of dsh-osm.nix);
+- `modules/user/nix-maid/apps/dsh-<name>/` — the plugin bundle (package.json + lib/index.js). The
+  web-profile caretaker modules were removed with the web GUI in 2026-09; the TUI profile seeds the
+  bundle through `dsh-tui-ru.nix` (`tuiPlugins` / `seed`), so no per-plugin `.nix` is needed;
 - `modules/user/nix-maid/apps/default.nix` — add `n != "dsh-<name>"` to the exclude list;
-- functional test: copy lib into `~/.dsh/profiles/web/node_modules/.test/`, run node with an
-  `apply({tools:{register}, effect})` mock, verify a real scenario (like hashline/debug).
+- functional test: run node against the bundle from `~/.dsh/profiles/tui/node_modules/` (or a copy),
+  with an `apply({tools:{register}, effect})` mock, verifying a real scenario (like hashline/debug).
 
 Pre-commit checks: `node --check`, `nix-instantiate --parse`,
 `bash scripts/dev/check-all-syntax.sh`, `just fmt`, pre-commit lint (--no-verify only for foreign

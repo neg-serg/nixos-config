@@ -145,8 +145,8 @@ let
 in
 {
   # Runs on every rebuild (as the user, so the settings file stays user-owned)
-  # and on every login — same pattern as dsh-market / dsh-tui-ru.
-  system.activationScripts.dshModels = lib.stringAfter [ "users" "dshMarketEnsure" ] ''
+  # and on every login — same pattern as dsh-tui-ru.
+  system.activationScripts.dshModels = lib.stringAfter [ "users" ] ''
     ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${ensure} || true
   '';
 
@@ -154,7 +154,6 @@ in
     enable = true;
     description = "dsh-models — keep ~/.dsh/settings.yaml on the V4.1 model policy";
     after = [ "network.target" ];
-    before = [ "dsh.service" ];
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "oneshot";

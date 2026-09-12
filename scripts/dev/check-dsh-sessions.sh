@@ -9,19 +9,12 @@ set -euo pipefail
 #
 # Usage: check-dsh-sessions.sh [dsh-store-path] [sessions-root]
 #
-# Without an argument the dsh store path is taken from the running
-# dsh.service unit, then from the `dsh` wrapper on PATH.
+# Without an argument the dsh store path is taken from the `dsh` wrapper on PATH.
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 resolve_dsh() {
-  local path=""
-  path="$(systemctl --user show -p ExecStart --value dsh.service 2> /dev/null \
-    | grep -o '/nix/store/[a-z0-9]*-dsh-[0-9][^/]*' | head -n1 || true)"
-  if [[ -z "$path" ]]; then
-    path="$(command -v dsh 2> /dev/null | xargs -r grep -oh '/nix/store/[a-z0-9]*-dsh-[0-9][^/]*' 2> /dev/null | head -n1 || true)"
-  fi
-  printf '%s' "$path"
+  command -v dsh 2> /dev/null | xargs -r grep -oh '/nix/store/[a-z0-9]*-dsh-[0-9][^/]*' 2> /dev/null | head -n1 || true
 }
 
 dsh_path="${1:-$(resolve_dsh)}"
