@@ -160,10 +160,14 @@ in
               command = "/run/current-system/sw/bin/dmesg";
               options = [ "NOPASSWD" ];
             }
-            {
-              command = "/run/current-system/sw/bin/awg-quick";
-              options = [ "NOPASSWD" ];
-            }
+            # amneziawg is off on this host (the out-of-tree module is
+            # incompatible with the boot kernel — hosts/odin/hardware.nix) and
+            # nothing in the repo calls awg-quick. Its NOPASSWD entry was
+            # passwordless arbitrary root: the config path is taken verbatim
+            # (CONFIG_FILE="$1", any *.conf) and the file's PostUp/PostDown
+            # hooks are run through `eval` as root. Removed; a real VPN up/down
+            # needs the root-owned config under /etc/amnezia/amneziawg and can
+            # ask for a password.
             {
               command = "/run/current-system/sw/bin/nixos-rebuild";
               options = [ "NOPASSWD" ];
