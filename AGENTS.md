@@ -194,9 +194,15 @@ Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
   `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
-- Rollouts (rebuild+switch) are agent-run, not user-run: passwordless sudo is
-  configured on odin via sudoers NOPASSWD (see docs/howto/tpm-sudo.md), and
-  `sudo nixos-rebuild` is explicitly whitelisted. Preferred form:
+- Rollouts (rebuild+switch) are agent-run, not user-run. Never ask the user to run
+  one, and never ask for a password: `sudo -n nixos-rebuild` is whitelisted through
+  sudoers NOPASSWD (see docs/howto/tpm-sudo.md), so `-n` cannot prompt — run it
+  directly. The `sudo` itself is not interchangeable with a bare command, though:
+  the agent is uid 1000, and the activation step writes the root-owned
+  `/nix/var/nix/profiles` (`drwxr-xr-x root root`, verified not writable by `neg`;
+  nixos-rebuild does not escalate on its own). A bare `nixos-rebuild switch` builds
+  the whole system and only then fails at activation, so it wastes a full
+  source-build. Preferred form:
   `sudo -n nixos-rebuild switch --flake .#odin --option substitute false`.
   The user's `nh os switch` binding uses the same flag
   (`nh os switch /etc/nixos#odin --option substitute false`); keep that
