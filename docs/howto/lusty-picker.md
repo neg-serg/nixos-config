@@ -94,5 +94,12 @@ Two bottlenecks in the current Lua port:
 - Backend death: `native.lua` reports `lusty serve`'s stderr/exit code with `vim.notify` and closes
   the float instead of leaving the loading placeholder forever.
 - Long-view timestamps are local time (`localtime_r`, UTC only as a fallback), matching `eza -l`.
-- Regression coverage: `cargo test` (`tests/serve_escape.rs`, `listing::tests`) and the headless
-  `filesystem_float_special_smoke.lua` in `check-lusty-smoke.sh`.
+- Frecency: `native.lua` ships the open-frequency journal once as fire-and-forget
+  `F <score> <escaped path>` records (no reply, so the response FIFO is untouched). With a non-empty
+  map the empty query orders by (depth, score, canonical index) — the shallower depth still wins,
+  and inside a depth the most frequent/recent paths lead. `LUSTY_FRECENCY=0` /
+  `g:LustyExplorerFrecency=0` disables it (then no `F` is sent and the canonical order stands).
+- Regression coverage: `cargo test` (`tests/serve_escape.rs`, `tests/serve_frec.rs`,
+  `listing::tests`, `rank::tests`) and the headless `filesystem_float_special_smoke.lua` /
+  `filesystem_float_frecency_smoke.lua` in `check-lusty-smoke.sh` (both self-skip on an older
+  deployed backend).

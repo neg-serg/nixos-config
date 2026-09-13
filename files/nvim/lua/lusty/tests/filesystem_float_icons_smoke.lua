@@ -12,6 +12,11 @@ if vim.fn.executable('lusty') ~= 1 then
   return
 end
 
+-- Isolate the frecency journal: the client ships F records and a stale real
+-- journal would reorder the empty query.
+require('lusty.frecency').set_state_file('/tmp/lusty_fs_icons_frec.json')
+pcall(vim.fn.delete, '/tmp/lusty_fs_icons_frec.json')
+
 vim.g.LustyExplorerIcons = 1
 
 local tmp = '/tmp/lusty_fs_icons_smoke'

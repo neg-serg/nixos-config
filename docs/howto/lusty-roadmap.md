@@ -56,6 +56,10 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
 - E: images, git-diff, man — done in standalone (chafa/git diff/man; C-Space/Shift+P); kitty
   protocol for images — next step.
 - F: tests — serve M is covered by a Rust integration test (tests/serve_m.rs); serve escaping and
-  non-UTF8 paths by tests/serve_escape.rs; headless float smokes: smoke.lua, native_float_smoke.lua,
-  filesystem_float_smoke.lua, filesystem_float_icons_smoke.lua, filesystem_float_special_smoke.lua
-  (check-lusty-smoke.sh).
+  non-UTF8 paths by tests/serve_escape.rs; frecency ordering by tests/serve_frec.rs; headless float
+  smokes: smoke.lua, native_float_smoke.lua, filesystem_float_smoke.lua,
+  filesystem_float_icons_smoke.lua, filesystem_float_special_smoke.lua,
+  filesystem_float_frecency_smoke.lua (check-lusty-smoke.sh).
+- G: frecency ordering — done: the client ships its open-frequency journal as `F` records and the
+  empty query leads with the higher-scored paths inside each depth (opt-out: LUSTY_FRECENCY=0 /
+  g:LustyExplorerFrecency=0).
