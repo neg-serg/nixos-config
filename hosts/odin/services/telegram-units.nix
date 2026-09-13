@@ -15,69 +15,13 @@ let
       pkgs.python3
       pkgs.curl
     ]; # curl: Telegram API is only reachable via the sing-box socks proxy
-    text = ''
-            set -euo pipefail
+    text = builtins.readFile (
+      pkgs.replaceVars ./telegram/bridge.sh {
+        botTokenPath = config.odin.telegram.botTokenPath;
+        chatIdPath = config.odin.telegram.chatIdPath;
+      }
+    );
 
-            TELEGRAM_BOT_TOKEN_FILE="${config.odin.telegram.botTokenPath}"
-            TELEGRAM_CHAT_ID_FILE="${config.odin.telegram.chatIdPath}"
-            # Re-read the secrets on every request so a chat-id change takes
-            # effect without restarting the bridge.
-            export TELEGRAM_BOT_TOKEN_FILE TELEGRAM_CHAT_ID_FILE
-
-            exec python3 -c '
-      import json
-      import os
-      from http.server import BaseHTTPRequestHandler, HTTPServer
-      import subprocess
-
-      def creds():
-          token = open(os.environ["TELEGRAM_BOT_TOKEN_FILE"]).read().strip()
-          chat_id = open(os.environ["TELEGRAM_CHAT_ID_FILE"]).read().strip()
-          return token, chat_id
-
-
-      class Handler(BaseHTTPRequestHandler):
-          def do_POST(self):
-              length = int(self.headers.get("Content-Length", 0))
-              data = json.loads(self.rfile.read(length))
-              for alert in data.get("alerts", []):
-                  status = str(alert.get("status", "UNKNOWN")).upper()
-                  labels = alert.get("labels", {})
-                  annotations = alert.get("annotations", {})
-                  name = labels.get("alertname", "Unknown")
-                  severity = labels.get("severity", "unknown")
-                  summary = annotations.get("summary", "No summary")
-                  msg = "[{0}] [{1}] {2}: {3}".format(status, severity, name, summary)
-                  token, chat_id = creds()
-                  api_url = "https://api.telegram.org/bot{0}/sendMessage".format(token)
-                  # api.telegram.org is unreachable from this host without the
-                  # sing-box socks proxy (socks5h://127.0.0.1:10808).
-                  # The URL carries the bot token and /proc/<pid>/cmdline is
-                  # world-readable, so feed the URL to curl through a "-K -"
-                  # stdin config instead of argv (tokens are [0-9A-Za-z_:-]).
-                  subprocess.run(
-                      [
-                          "/run/current-system/sw/bin/curl",
-                          "-s", "-o", "/dev/null",
-                          "--proxy", "socks5h://127.0.0.1:10808",
-                          "-K", "-",
-                          "--data-urlencode", "chat_id={0}".format(chat_id),
-                          "--data-urlencode", "text={0}".format(msg),
-                      ],
-                      input=("url = \"{0}\"\n".format(api_url)).encode(),
-                      check=False,
-                  )
-              self.send_response(200)
-              self.end_headers()
-              self.wfile.write(b"OK")
-
-          def log_message(self, format, *args):
-              pass
-
-
-      HTTPServer(("127.0.0.1", 9094), Handler).serve_forever()
-      '
-    '';
   };
 
   # Sends the "odin booted" notice exactly once per real boot. The unit is
@@ -104,31 +48,12 @@ let
   windowsReadyCheckScript = pkgs.writeShellApplication {
     name = "telegram-notify-windows-ready";
     runtimeInputs = [ pkgs.coreutils ]; # rm/touch of the state marker
-    text = ''
-      set -euo pipefail
+    text = builtins.readFile (
+      pkgs.replaceVars ./telegram/windows-ready.sh {
+        sender = lib.getExe config.odin.telegram.sender;
+      }
+    );
 
-      STATE_FILE="/var/lib/telegram-notify/windows-ready.sent"
-
-      ok=0
-      for _ in 1 2; do
-        if (exec 3<>/dev/tcp/127.0.0.1/3389) 2>/dev/null; then
-          ok=1
-        else
-          ok=0
-          break
-        fi
-        sleep 5
-      done
-
-      if [ "$ok" != 1 ]; then
-        rm -f "$STATE_FILE"
-        exit 0
-      fi
-      [ -e "$STATE_FILE" ] && exit 0
-
-      ${lib.getExe config.odin.telegram.sender} "таз загрузился" "Windows-VM доступна по RDP (127.0.0.1:3389)"
-      touch "$STATE_FILE"
-    '';
   };
 
   # Quickshell PillTracker state files (user neg): the panel pill capsule
