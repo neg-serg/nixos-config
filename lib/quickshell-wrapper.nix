@@ -23,53 +23,67 @@ let
       name = "quickshell-wrapped";
       buildInputs = [ pkgs.makeWrapper ]; # utility to create shell wrappers
       dontUnpack = true;
-      installPhase = ''
-                mkdir -p "$out/bin"
-                makeWrapper ${qsBin} "$out/bin/.qs-wrapped" \
-                  --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-                  --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qt5compat}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-                  --prefix QT_PLUGIN_PATH : "${pkgs.kdePackages.qtwayland}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-                  --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-                  --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qt5compat}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-                  --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtdeclarative}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-                  --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtpositioning}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-                  --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-                  --prefix QML2_IMPORT_PATH : "${pkgs.kdePackages.syntax-highlighting}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-                  --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qtmultimedia}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-                  --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtmultimedia}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-                  --prefix QML2_IMPORT_PATH : "${qsQmlPath}" \
-                  --prefix XDG_DATA_DIRS : "${pkgs.hicolor-icon-theme}/share" \
-                  --set QT_QPA_PLATFORM wayland \
-                  --set QML_XHR_ALLOW_FILE_READ 1 \
-                  --prefix PATH : ${qsPath}
-
-                # A bare `qs` must never draw a second panel: quickshell only exits on an
-                # explicit IPC kill (`qs kill`), so starting it while the panel already
-                # runs leaves two instances, two overlapping bars and a D-Bus conflict.
-                # Outside systemd, drop any leftover instance of this config and hand the
-                # panel back to systemd so it stays supervised. Anything with arguments
-                # (ipc / kill / -p ...) goes to the real binary untouched, and under
-                # systemd (INVOCATION_ID set) nothing is intercepted, so the unit can
-                # always start even if another instance is around.
-                cat > "$out/bin/qs" <<'SHIM'
-        #!@shell@
-        if [ -z "$INVOCATION_ID" ] && [ "$#" -eq 0 ]; then
-          for _ in 1 2 3 4 5; do
-            @wrapped@ kill >/dev/null 2>&1 || break
-            sleep 0.3
-          done
-          if command -v systemctl >/dev/null 2>&1 && systemctl --user start quickshell.service >/dev/null 2>&1; then
-            exit 0
-          fi
-        fi
-        exec @wrapped@ "$@"
-        SHIM
-                substituteInPlace "$out/bin/qs" \
-                  --replace-fail '@shell@' ${pkgs.runtimeShell} \
-                  --replace-fail '@wrapped@' "$out/bin/.qs-wrapped"
-                chmod +x "$out/bin/qs"
-                ln -s qs "$out/bin/quickshell"
-      '';
+      installPhase =
+        builtins.replaceStrings
+          [
+            "@QSBIN@"
+            "@QTBASE@"
+            "@QTPLUGINPREFIX@"
+            "@QT5COMPAT@"
+            "@QTPLUGINPREFIX_V2@"
+            "@QTWAYLAND@"
+            "@QTPLUGINPREFIX_V3@"
+            "@QTSVG@"
+            "@QTPLUGINPREFIX_V4@"
+            "@QT5COMPAT_V2@"
+            "@QTQMLPREFIX@"
+            "@QTDECLARATIVE@"
+            "@QTQMLPREFIX_V2@"
+            "@QTPOSITIONING@"
+            "@QTQMLPREFIX_V3@"
+            "@QTSVG_V2@"
+            "@QTQMLPREFIX_V4@"
+            "@HIGHLIGHTING@"
+            "@QTQMLPREFIX_V5@"
+            "@QTMULTIMEDIA@"
+            "@QTPLUGINPREFIX_V5@"
+            "@QTMULTIMEDIA_V2@"
+            "@QTQMLPREFIX_V6@"
+            "@QSQMLPATH@"
+            "@THEME@"
+            "@QSPATH@"
+            "@RUNTIMESHELL@"
+          ]
+          [
+            "${qsBin}"
+            "${pkgs.qt6.qtbase}"
+            "${pkgs.qt6.qtbase.qtPluginPrefix}"
+            "${pkgs.qt6.qt5compat}"
+            "${pkgs.qt6.qtbase.qtPluginPrefix}"
+            "${pkgs.kdePackages.qtwayland}"
+            "${pkgs.qt6.qtbase.qtPluginPrefix}"
+            "${pkgs.qt6.qtsvg}"
+            "${pkgs.qt6.qtbase.qtPluginPrefix}"
+            "${pkgs.qt6.qt5compat}"
+            "${pkgs.qt6.qtbase.qtQmlPrefix}"
+            "${pkgs.qt6.qtdeclarative}"
+            "${pkgs.qt6.qtbase.qtQmlPrefix}"
+            "${pkgs.qt6.qtpositioning}"
+            "${pkgs.qt6.qtbase.qtQmlPrefix}"
+            "${pkgs.qt6.qtsvg}"
+            "${pkgs.qt6.qtbase.qtQmlPrefix}"
+            "${pkgs.kdePackages.syntax-highlighting}"
+            "${pkgs.qt6.qtbase.qtQmlPrefix}"
+            "${pkgs.qt6.qtmultimedia}"
+            "${pkgs.qt6.qtbase.qtPluginPrefix}"
+            "${pkgs.qt6.qtmultimedia}"
+            "${pkgs.qt6.qtbase.qtQmlPrefix}"
+            "${qsQmlPath}"
+            "${pkgs.hicolor-icon-theme}"
+            "${qsPath}"
+            "${pkgs.runtimeShell}"
+          ]
+          (builtins.readFile ./quickshell-wrapper-install.sh);
       meta.mainProgram = "qs";
     };
 in

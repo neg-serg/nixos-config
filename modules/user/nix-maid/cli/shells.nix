@@ -309,53 +309,13 @@ let
 
   # --- ZSH Config Generator ---
   # Git fsmonitor auto-enable for large repos (ported from legacy Salt 05-git.zsh)
-  zshenvExtras = ''
-    # Auto-enable git core.fsmonitor for large repositories (>50k files via index size proxy)
-    __git_fsmonitor_threshold=$((5 * 1024 * 1024))
-    __git_fsmonitor_checked=()
-
-    _git_fsmonitor_auto_enable() {
-      local git_root
-      git_root="$(git rev-parse --show-toplevel 2>/dev/null)" || return
-      [[ " ''${__git_fsmonitor_checked[@]} " =~ " $git_root " ]] && return
-      __git_fsmonitor_checked+=("$git_root")
-      local index_path="$git_root/.git/index"
-      [[ -f "$index_path" ]] || return
-      local index_size
-      index_size=$(stat -c%s "$index_path" 2>/dev/null) || return
-      if (( index_size > __git_fsmonitor_threshold )); then
-        git config --local core.fsmonitor true
-        echo -e "\033[33m[git]\033[0m enabled core.fsmonitor for \033[36m''${git_root##*/}\033[0m ($((index_size / 1024))K index)"
-      fi
-    }
-    autoload -Uz add-zsh-hook
-    add-zsh-hook chpwd _git_fsmonitor_auto_enable
-  '';
-  zshConfigSource = pkgs.runCommandLocal "neg-zsh-config" { } ''
-    mkdir -p "$out"
-    cp -R ${shellFiles}/zsh/. "$out"/
-    chmod -R u+w "$out"
-    sed -i "s|@zinit@|${pkgs.zinit}|g" "$out/.zshrc"
-    sed -i "s|@native-syntax@|${pkgs.neg.zsh-native-syntax}|g" "$out/.zshrc"
-    cat > "$out/.zshenv" <<'EOF'
-    # shellcheck disable=SC1090
-    skip_global_compinit=1
-    # Hardcoded path for profile session vars (standard location)
-    session_vars="$HOME/.nix-profile/etc/profile.d/session-vars.sh"
-    if [ -r "$session_vars" ]; then
-      . "$session_vars"
-    elif [ -r "/etc/profiles/per-user/$USER/etc/profile.d/session-vars.sh" ]; then
-      . "/etc/profiles/per-user/$USER/etc/profile.d/session-vars.sh"
-    fi
-    # DEEPSEEK API key for dsh (from SOPS secret; keep any existing override)
-    export DEEPSEEK_API_KEY="''${DEEPSEEK_API_KEY:-$(cat /run/secrets/deepseek-api 2>/dev/null)}"
-    export WORDCHARS='*/?_-.[]~&;!#$%^(){}<>~` '
-    export KEYTIMEOUT=10
-    export REPORTTIME=60
-    export ESCDELAY=1
-    ${zshenvExtras}
-    EOF
-  '';
+  zshenvExtras = builtins.readFile (config.lib.neg.path "files/shell/zshenv-extras.zsh");
+  zshConfigSource = pkgs.runCommandLocal "neg-zsh-config" { } (
+    builtins.replaceStrings
+      [ "@SHELLFILES@" "@ZINIT@" "@SYNTAX@" "@ZSHENVEXTRAS@" ]
+      [ "${shellFiles}" "${pkgs.zinit}" "${pkgs.neg.zsh-native-syntax}" "${zshenvExtras}" ]
+      (builtins.readFile ./zsh-config-source.sh)
+  );
 
   # Kitty Scrollback Path (for session variable)
   nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
