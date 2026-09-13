@@ -104,39 +104,14 @@ let
     "--hostlist-auto=/var/lib/zapret2/hostlist-auto.txt"
   ];
 
-  rolloutScript = pkgs.writeShellScript "zapret2-rollout" ''
-    set -euo pipefail
-    MODE="''${1:-prepare}"
-    BIN="${nfqws}"
-
-    case "$MODE" in
-      prepare|preflight)
-        [ -x "$BIN" ] || { echo "ERROR: nfqws not found at $BIN" >&2; exit 1; }
-        "$BIN" --dry-run ${builtins.concatStringsSep " " strategyFlags} >/dev/null 2>&1 \
-          || { echo "ERROR: nfqws --dry-run failed" >&2; exit 1; }
-        echo "[OK] nfqws present and config valid"
-        ;;
-      preview)
-        echo "[INFO] zapret2: ${nfqws}"
-        echo "       flags: ${builtins.concatStringsSep " " strategyFlags}"
-        ;;
-      smoke)
-        "$BIN" --version
-        ;;
-      activate)
-        systemctl start zapret2
-        echo "[OK] zapret2 activated"
-        ;;
-      deactivate)
-        systemctl stop zapret2
-        echo "[OK] zapret2 deactivated"
-        ;;
-      *)
-        echo "Usage: $0 {prepare|preflight|preview|smoke|activate|deactivate}"
-        exit 1
-        ;;
-    esac
-  '';
+  rolloutScript = pkgs.writeShellScript "zapret2-rollout" (
+    builtins.readFile (
+      pkgs.replaceVars ./rollout.sh {
+        strategyFlags = builtins.concatStringsSep " " strategyFlags;
+        inherit nfqws;
+      }
+    )
+  );
 in
 {
   config = mkIf cfg.enable {
