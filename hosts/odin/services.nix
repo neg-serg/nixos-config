@@ -37,8 +37,8 @@ let
     text = ''
             set -euo pipefail
 
-            TELEGRAM_BOT_TOKEN_FILE="${config.sops.secrets."telegram/bot-token".path}"
-            TELEGRAM_CHAT_ID_FILE="${config.sops.secrets."telegram/chat-id".path}"
+            TELEGRAM_BOT_TOKEN_FILE="${config.odin.telegram.botTokenPath}"
+            TELEGRAM_CHAT_ID_FILE="${config.odin.telegram.chatIdPath}"
             # Re-read the secrets on every request so a chat-id change takes
             # effect without restarting the bridge.
             export TELEGRAM_BOT_TOKEN_FILE TELEGRAM_CHAT_ID_FILE
@@ -95,47 +95,6 @@ let
     '';
   };
 
-  # Shared Telegram sender: posts one message ("$1", optional detail "$2") to
-  # the chat from secrets/telegram.sops.yaml, appending a local timestamp.
-  # api.telegram.org is only reachable via the user sing-box socks proxy
-  # (127.0.0.1:10808), which starts at login, so retry up to "$3" attempts
-  # (default 12) with 5s pauses between them.
-  telegramSendScript = pkgs.writeShellApplication {
-    name = "telegram-send";
-    runtimeInputs = [
-      pkgs.curl # HTTP(S) client for the Telegram Bot API
-      pkgs.coreutils # date, seq, sleep for retry loop and timestamps
-    ];
-    text = ''
-      set -euo pipefail
-
-      TOKEN="$(cat ${config.sops.secrets."telegram/bot-token".path})"
-      CHAT_ID="$(cat ${config.sops.secrets."telegram/chat-id".path})"
-      export TOKEN CHAT_ID
-
-      msg="$1"
-      detail="''${2:-}"
-      attempts="''${3:-12}"
-      if [ -n "$detail" ]; then
-        msg="$msg: $detail"
-      fi
-      msg="$msg ($(date '+%Y-%m-%d %H:%M %Z'))"
-
-      for _ in $(seq 1 "$attempts"); do
-        if curl -sf -o /dev/null \
-          --proxy socks5h://127.0.0.1:10808 \
-          --data-urlencode "chat_id=$CHAT_ID" \
-          --data-urlencode "text=$msg" \
-          "https://api.telegram.org/bot$TOKEN/sendMessage"; then
-          exit 0
-        fi
-        sleep 5
-      done
-      echo "telegram-send: could not deliver message after $attempts attempts" >&2
-      exit 1
-    '';
-  };
-
   # Sends the "odin booted" notice exactly once per real boot. The unit is
   # wanted by multi-user.target, and nixos-rebuild switch re-runs it every
   # time, so a marker in /run (tmpfs, cleared on reboot) guards the send.
@@ -148,7 +107,7 @@ let
       MARKER="/run/telegram-notify-boot.sent"
       [ -e "$MARKER" ] && exit 0
 
-      ${lib.getExe telegramSendScript} "odin: загрузился"
+      ${lib.getExe config.odin.telegram.sender} "odin: загрузился"
       touch "$MARKER"
     '';
   };
@@ -182,7 +141,7 @@ let
       fi
       [ -e "$STATE_FILE" ] && exit 0
 
-      ${lib.getExe telegramSendScript} "таз загрузился" "Windows-VM доступна по RDP (127.0.0.1:3389)"
+      ${lib.getExe config.odin.telegram.sender} "таз загрузился" "Windows-VM доступна по RDP (127.0.0.1:3389)"
       touch "$STATE_FILE"
     '';
   };
@@ -235,8 +194,8 @@ let
     except FileNotFoundError:
         pass
 
-    TOKEN = open("${config.sops.secrets."telegram/bot-token".path}").read().strip()
-    CHAT_ID = open("${config.sops.secrets."telegram/chat-id".path}").read().strip()
+    TOKEN = open("${config.odin.telegram.botTokenPath}").read().strip()
+    CHAT_ID = open("${config.odin.telegram.chatIdPath}").read().strip()
     CURL = "/run/current-system/sw/bin/curl"
     API = "https://api.telegram.org/bot{0}/sendMessage".format(TOKEN)
     MARKUP = json.dumps(
@@ -305,8 +264,8 @@ let
     import sys
     import time
 
-    TOKEN_FILE = "${config.sops.secrets."telegram/bot-token".path}"
-    CHAT_ID_FILE = "${config.sops.secrets."telegram/chat-id".path}"
+    TOKEN_FILE = "${config.odin.telegram.botTokenPath}"
+    CHAT_ID_FILE = "${config.odin.telegram.chatIdPath}"
     CURL = "/run/current-system/sw/bin/curl"
     PROXY = "socks5h://127.0.0.1:10808"
     STATE_DIR = pathlib.Path("/var/lib/telegram-pill-bot")
@@ -1201,23 +1160,11 @@ lib.mkMerge [
   #   - telegram-alert-bridge: 127.0.0.1:9094 -> Telegram Bot API;
   #   - telegram-alert-scanner: every minute, failed units / OOM kills /
   #     sshd brute-force attempts -> Alertmanager.
-  # Everything is gated on secrets/telegram.sops.yaml existing; without the
-  # secret file the whole stack stays disabled (same pattern as resilio).
-  (lib.mkIf (builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml")) {
+  # Everything is gated on config.odin.telegram.enable, which defaults to the
+  # existence of secrets/telegram.sops.yaml (see hosts/odin/telegram.nix);
+  # without the secret file the whole stack stays disabled.
+  (lib.mkIf config.odin.telegram.enable {
     monitoring.alertmanager.enable = true;
-
-    sops.secrets."telegram/bot-token" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-      key = "bot-token";
-      owner = "root";
-      mode = "0400";
-    };
-    sops.secrets."telegram/chat-id" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-      key = "chat-id";
-      owner = "root";
-      mode = "0400";
-    };
 
     systemd.services."telegram-alert-bridge" = {
       description = "Alertmanager Telegram webhook bridge";
