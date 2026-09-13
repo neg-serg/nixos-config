@@ -5,9 +5,8 @@
   ...
 }:
 let
-  user = config.users.main.name or "neg";
-  userData = lib.attrByPath [ "users" "users" user ] { } config;
-  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  inherit (config.lib.neg) mainUser homeDir;
+  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 
   # dsh-tianshu-tui hardcodes its UI in Chinese with no language switch.
   # Assets below localize it to Russian: the translation map (i18n.json) and
@@ -473,26 +472,24 @@ in
   # The profile caretaker runs as the user (it writes the profile's files) and
   # before the terminal UI starts; the Russian patch above only rewrites strings
   # and stays independent of it.
-  system.activationScripts.dshTuiEnsure = lib.stringAfter [ "users" ] ''
-    ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${ensureTui} || true
-  '';
+  system.activationScripts.dshTuiEnsure = systemdUser.mkUserActivation {
+    inherit pkgs;
+    user = mainUser;
+    home = homeDir;
+    script = ensureTui;
+  };
 
-  systemd.user.services.dsh-tui-ensure = {
-    enable = true;
+  systemd.user.services.dsh-tui-ensure = systemdUser.mkUserOneshot {
     description = "dsh-tianshu-tui — keep the TUI profile on the installed harness";
+    script = ensureTui;
     after = [ "network.target" ];
-    wantedBy = [ "default.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = ensureTui;
-    };
   };
 
   # The TUI self-updater (the self-update-park-harness fix in patch.mjs)
   # re-applies the Russian patch through this helper right after it installs a
   # bundle, before the host can restart into it — a raw npm release is
   # Chinese-only. Same script as the login/activation patch services.
-  users.users.${user}.maid.file.home.".local/bin/dsh-tui-repatch" = {
+  users.users.${mainUser}.maid.file.home.".local/bin/dsh-tui-repatch" = {
     source = runPatch;
     executable = true;
   };
