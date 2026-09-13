@@ -18,9 +18,10 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
 - Source: metadata only for visible rows (serve: request M by index; standalone: `fs::metadata`
   lazily). The listing cache is mode-independent.
 - grid — row-major (name+color).
-- long — one line per file: perms uid size time name (like `eza -l`), human-readable size.
-  Standalone and nvim-float: C-l toggles; in float, metadata arrives via serve M requests only for
-  the visible rows and is formatted by the same code as standalone (`listing::meta_line`).
+- long — one line per file: perms uid size time name (like `eza -l`; the timestamp is local time),
+  human-readable size. Standalone and nvim-float: C-l toggles; in float, metadata arrives via serve
+  M requests only for the visible rows and is formatted by the same code as standalone
+  (`listing::meta_line`).
 - custom — choose a subset of the perm,user,size,time fields (name always last); config
   g:LustyExplorerColumns / LUSTY_COLUMNS / --columns.
 - Sorting: name|ext|size|time — standalone (CLI --sort) and float (C-y cycles; serve re-sorts the
@@ -52,6 +53,7 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
 - D: preview of text/dir/buffer/grep — by agreement, not doing.
 - E: images, git-diff, man — done in standalone (chafa/git diff/man; C-Space/Shift+P); kitty
   protocol for images — next step.
-- F: tests — serve M is covered by a Rust integration test (tests/serve_m.rs); headless float
-  smokes: smoke.lua, native_float_smoke.lua, filesystem_float_smoke.lua,
-  filesystem_float_icons_smoke.lua (check-lusty-smoke.sh).
+- F: tests — serve M is covered by a Rust integration test (tests/serve_m.rs); serve escaping and
+  non-UTF8 paths by tests/serve_escape.rs; headless float smokes: smoke.lua, native_float_smoke.lua,
+  filesystem_float_smoke.lua, filesystem_float_icons_smoke.lua, filesystem_float_special_smoke.lua
+  (check-lusty-smoke.sh).
