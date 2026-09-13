@@ -254,41 +254,24 @@ goBuild (finalAttrs: {
       ) "-DOLLAMA_LLAMA_BACKENDS=${llamaBackend}";
 
     in
-    ''
-      ${lib.optionalString enableVulkan ''
-        # Ollama builds each per-accelerator llama.cpp runner via
-        # cmake/local.cmake's ExternalProject_Add(ollama-llama-server-vulkan …).
-        # Two things need to cross the parent → child boundary:
-        #
-        # 1. The SPIRV-Headers cmake config — so `find_package(SPIRV-Headers
-        #    REQUIRED)` at ggml-vulkan/CMakeLists.txt:14 succeeds in the
-        #    child. CMAKE_PREFIX_PATH as a flag wouldn't propagate; as env
-        #    var it does.
-        # 2. The SPIRV-Headers include directory in the compile env. The
-        #    ggml-vulkan target's `target_link_libraries(... Vulkan::Vulkan)`
-        #    notably does NOT link `SPIRV-Headers::SPIRV-Headers`, so the
-        #    interface include directory the cmake config exports never
-        #    flows into the compile commands — even though the find_package
-        #    call succeeded. `#include <spirv/unified1/spirv.hpp>` then
-        #    fails at compile time. Patching upstream's CMakeLists for
-        #    one missing link line is fragile across llama.cpp pins;
-        #    NIX_CFLAGS_COMPILE forces the include path globally and
-        #    survives version bumps.
-        export CMAKE_PREFIX_PATH="${spirv-headers}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-        export NIX_CFLAGS_COMPILE="-isystem ${spirv-headers}/include $NIX_CFLAGS_COMPILE"
-      ''}
-      cmake -B build \
-        -DCMAKE_SKIP_BUILD_RPATH=ON \
-        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
-        -DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP="$TMPDIR/llama-cpp-src" \
-        -DOLLAMA_MLX_BACKENDS="" \
-        $cmakeFlags \
-        ${cmakeFlagsCudaArchitectures} \
-        ${cmakeFlagsRocmTargets} \
-        ${cmakeFlagsBackend}
-
-      cmake --build build -j $NIX_BUILD_CORES
-    '';
+    builtins.replaceStrings
+      [
+        "@NIX_CFLAGS_COMPILE@"
+        "@CMAKEFLAGSCUDAARCHITECTURES@"
+        "@CMAKEFLAGSROCMTARGETS@"
+        "@CMAKEFLAGSBACKEND@"
+      ]
+      [
+        (lib.optionalString enableVulkan (
+          builtins.replaceStrings [ "@HEADERS@" "@HEADERS_V2@" ] [ "${spirv-headers}" "${spirv-headers}" ] (
+            builtins.readFile ./vulkan-env.sh.in
+          )
+        ))
+        "${cmakeFlagsCudaArchitectures}"
+        "${cmakeFlagsRocmTargets}"
+        "${cmakeFlagsBackend}"
+      ]
+      (builtins.readFile ./pre-build.sh.in);
 
   # The llama.cpp sub-build is driven by ExternalProject_Add and does
   # not inherit the parent's CMAKE_SKIP_BUILD_RPATH setting, so its

@@ -1,0 +1,24 @@
+IMAPAccount @NAME@
+Host @HOST@
+User @USERNAME@
+PassCmd "@PASSCMD@"
+AuthMechs LOGIN
+TLSType IMAPS
+CertificateFile /etc/ssl/certs/ca-bundle.crt
+
+IMAPStore @NAME_V2@-remote
+Account @NAME_V3@
+
+MaildirStore @NAME_V4@-local
+Subfolders Verbatim
+Path @HOME@/.local/mail/@NAME_V5@/
+Inbox @HOME_V2@/.local/mail/@NAME_V6@/INBOX/
+
+Channel @NAME_V7@
+Far :@NAME_V8@-remote:
+Near :@NAME_V9@-local:
+Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/All Mail" "[Gmail]/Trash" "[Gmail]/Spam"
+Sync Pull
+Create Near
+Expunge Near
+SyncState *
