@@ -1,4 +1,6 @@
-import json, os, sys
+import json
+import os
+import sys
 
 prefs = os.path.expanduser("~/.config/vivaldi/Default/Preferences")
 if not os.path.isfile(prefs):

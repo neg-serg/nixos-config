@@ -70,7 +70,7 @@ for _, block in BLOCKS:
     body += "\n\n" + "\n".join(block)
 body = body.rstrip("\n") + "\n"
 # keep any non-owned rows the user added, after ours
-extra = [l for l in kept if l.strip() and not l.startswith("#")]
+extra = [row for row in kept if row.strip() and not row.startswith("#")]
 if extra:
     body = body.rstrip("\n") + "\n" + "\n".join(extra) + "\n"
 
