@@ -1,0 +1,12 @@
+{
+  "name": "dsh-notify-input",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh session notification: fires an OSC desktop notification when the agent stops and waits for a human — the approval card and the structured question — which the TUI's own notifyOs call sites (subagent / workflow / background task finished) do not cover.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}

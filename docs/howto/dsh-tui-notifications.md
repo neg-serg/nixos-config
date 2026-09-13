@@ -66,9 +66,18 @@ the old behaviour rather than silently swallowing the notification.
   covering patcher mechanics (insert, rewire, idempotency, `.orig` backup, marker) and the protocol
   decision table, including the SSH case and the non-TTY guard.
 
-### Known quirk (pre-existing, not from this fix)
+### Marker semantics
 
-The patcher's marker stores the hash of the bundle **as read** (pre-patch), so the run immediately
-after patching always re-applies the fixes and only the following run reports `up to date`. It is
-idempotent either way — the bundle is byte-identical — but the fast path engages one run later than
-the marker comment implies. Fix would be to record the post-patch hash.
+The marker records the hash of the bundle the run **produced**, not the one it read, so `up to date`
+is true only while the file on disk is still the patcher's own output — the fast path engages on the
+first run after patching. It used to record the pre-patch hash, which made a bundle restored to its
+pristine state (a backup, a reverted edit, a pnpm re-install) look patched while the fixes were
+absent; the patcher then skipped them silently. `notify-osc.test.mjs` pins the regression, and
+[dsh-statusline.md](dsh-statusline.md) documents the same semantics.
+
+## Input-needed notifications
+
+This patch covers work that **finished**. The two requests that block a turn — the approval card and
+the structured question — are covered by the `dsh-notify-input` plugin instead, which registers
+ahead of the TUI's waterfall handlers and reuses the protocol table above: see
+[dsh-notify-input.md](dsh-notify-input.md).

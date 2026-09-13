@@ -194,6 +194,20 @@ let
       name = "dsh-statusline";
       path = ./dsh-statusline;
     }
+    # Notify the human when the turn *blocks* on them: the approval card and the
+    # structured question. The TUI's own notifyOs covers finished work only
+    # (subagent / workflow / background task — the three call sites in the
+    # bundle), and both request events are waterfalls whose TUI handler resolves
+    # while the card is up, so a listener appended after it never runs — the
+    # plugin registers `prepend: true`, continues the waterfall with `next()`,
+    # and reports a request that is still unresolved after the grace (an
+    # auto-approved tool settles on the next microtask and stays silent). Writes
+    # OSC 99/9 straight to stdout: control-only, never the text grid. Injects no
+    # service — the host event bus is the only seam.
+    {
+      name = "dsh-notify-input";
+      path = ./dsh-notify-input;
+    }
   ];
 
   # Loader rows for the plugins above, mirroring the web profile's patch layer
