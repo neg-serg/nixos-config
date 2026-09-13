@@ -90,8 +90,10 @@ lint:
       grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.[A-Za-z0-9_-]+' . | grep -v -E 'pkgs\.lib\b' || true; \
       exit 1; \
     fi
+    # `&&` so a failing ruff fails this line: the recipe runs under `bash -cu`
+    # (no -e) and a plain `;` would let black's success mask it.
     if git ls-files -- '*.py' >/dev/null 2>&1; then \
-      ruff check -- .; \
+      ruff check -- . && \
       black --check --line-length 79 --extend-exclude '(files/kitty|files/art/fun-art)' .; \
     fi
     # TOML syntax/style — tracked files only: a bare `taplo lint` follows result/
