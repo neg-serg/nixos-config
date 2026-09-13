@@ -408,7 +408,7 @@ Example:
   # Globally (module default is true)
   hardware.audio.rnnoise.enable = true;
 
-  # Per-host override (e.g., hosts/odin/services.nix)
+  # Per-host override (e.g., hosts/odin/services/policy.nix)
   hardware.audio.rnnoise.enable = false;
 }
 ```
@@ -667,7 +667,7 @@ Tuning tips:
 
 - Netdata (local, very light):
 
-  - Enable per-host: set `monitoring.netdata.enable = true;` (see hosts/odin/services.nix).
+  - Enable per-host: set `monitoring.netdata.enable = true;` (see hosts/odin/services/policy.nix).
   - Opens a local UI at `http://127.0.0.1:19999` with CPU/GPU/sensors/disks/net.
   - Service is de‑prioritized (nice/CPU/IO weights) to minimize impact.
   - Extend via `services.netdata.config` if you need extra collectors.

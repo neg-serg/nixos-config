@@ -15,7 +15,7 @@ Each host directory contains:
 - `default.nix` — Entry point
 - `hardware.nix` — Hardware configuration
 - `networking.nix` — Network settings
-- `services.nix` — Host-specific services
+- `services/` — Host-specific services (`policy.nix`, `vpn.nix`, `telegram-units.nix`)
 
 ## Adding a Host
 

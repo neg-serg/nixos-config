@@ -194,7 +194,7 @@ entry needs a `# comment`.
 
 **Touch:**
 
-- `hosts/<name>/default.nix` (+ `hardware.nix`, `networking.nix`, `services.nix`)
+- `hosts/<name>/default.nix` (+ `hardware.nix`, `networking.nix`, `services/`)
 - `flake/nixos.nix` — register the host in the output set
 - optional `hosts/<name>/extra.nix` — host-only modules (auto-included)
 
