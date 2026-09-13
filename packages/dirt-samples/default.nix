@@ -19,31 +19,7 @@ stdenvNoCC.mkDerivation {
     hash = "sha256-/w4qzraivPpYXl5UYnfc28k9M8B7zUU/9d4arng9G4c=";
   };
 
-  installPhase = ''
-    runHook preInstall
-
-    # Place samples where SuperDirt expects them:
-    #   $out/share/Dirt-Samples/
-    # The Tidal startup script (~/.config/SuperCollider/superdirt_startup.scd)
-    # points ~dirt.loadSoundFiles at this path explicitly.
-    mkdir -p "$out/share/Dirt-Samples"
-
-    # Copy all sample directories (each is a sound name like "bd", "sn", "hh")
-    for dir in */; do
-      # Skip non-sample files
-      case "$dir" in
-        Dirt-Samples.quark|README.md|.git*)
-          continue
-          ;;
-      esac
-      cp -r "$dir" "$out/share/Dirt-Samples/"
-    done
-
-    # Also copy the quark manifest so SC quark system can discover it
-    cp Dirt-Samples.quark "$out/share/Dirt-Samples/" 2>/dev/null || true
-
-    runHook postInstall
-  '';
+  installPhase = builtins.readFile ./install.sh;
 
   meta = with lib; {
     description = "Audio sample library for SuperDirt / TidalCycles live coding";
