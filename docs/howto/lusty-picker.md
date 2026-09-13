@@ -83,10 +83,11 @@ Two bottlenecks in the current Lua port:
 
 - The code lives in a separate project: `~/src/lusty` (its own git repo; `default.nix` =
   `rustPlatform.buildRustPackage`, src `./.`, its own `Cargo.lock`, `meta.mainProgram = "lusty"`).
-- /etc/nixos pulls it in as a flake input `lusty.url = "path:/home/neg/src/lusty"`; overlay
+- /etc/nixos pulls it in as a flake input `lusty.url = "github:neg-serg/lusty"`; overlay
   `packages/overlays/tools.nix`: `callPkg (inputs.lusty.outPath) { }` → `pkgs.neg.lusty`.
-- After changing the code in `~/src/lusty`: run `nix flake lock --update-input lusty` before
-  rebuilding.
+- After changing the code in `~/src/lusty`: push it, then re-lock before rebuilding. The GitHub API
+  is only reachable through the local proxy, otherwise `nix flake lock` times out and silently keeps
+  the cached revision: `all_proxy=socks5h://127.0.0.1:10808 nix flake lock --update-input lusty`.
 
 ## Protocol hardening
 
