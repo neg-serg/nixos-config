@@ -180,13 +180,16 @@ in
               command = "/run/current-system/sw/bin/glm-adapter-priv";
               options = [ "NOPASSWD" ];
             }
-            # nh os switch: activation runs wrapped in `sudo env <vars> ...`
-            # (nix build --profile and <toplevel>/bin/switch-to-configuration).
-            # `env *` NOPASSWD lets nh rebuild without a password prompt.
-            {
-              command = "/run/current-system/sw/bin/env *";
-              options = [ "NOPASSWD" ];
-            }
+            # `nh os switch` runs its activation as `sudo env <vars> ...`
+            # (nix build --profile and <toplevel>/bin/switch-to-configuration),
+            # and a NOPASSWD rule for `env *` used to keep it prompt-free.
+            # That rule is passwordless arbitrary root (`sudo -n env sh -c …`)
+            # and cannot be narrowed by argument wildcards — a pattern like
+            # `env * /run/current-system/sw/bin/nixos-rebuild *` also matches
+            # `env sh -c '… nixos-rebuild'`. Removed: nh now asks for a
+            # password like any other wheel command (wheelNeedsPassword).
+            # The agent rollout stays passwordless through the nixos-rebuild
+            # rule above (`sudo -n nixos-rebuild …`).
             {
               command = "/run/current-system/sw/bin/systemctl stop xray.service";
               options = [ "NOPASSWD" ];
