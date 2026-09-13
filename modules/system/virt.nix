@@ -5,7 +5,7 @@
   ...
 }:
 let
-  mainUser = config.users.main.name or "neg";
+  mainUser = config.lib.neg.mainUser;
 in
 {
   config = {

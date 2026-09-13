@@ -13,7 +13,7 @@ let
   # LAN access: with features.media.audio.lanAccess enabled, MPD listens on
   # all interfaces so LAN clients (mpc, mobile apps) can connect directly.
   lanAccess = config.features.media.audio.lanAccess.enable or false;
-  myUser = config.users.main.name or "neg";
+  myUser = config.lib.neg.mainUser;
   myUID = config.users.main.uid or 1000;
   myGroup =
     let

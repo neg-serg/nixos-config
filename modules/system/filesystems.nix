@@ -5,7 +5,9 @@
   ...
 }:
 let
-  mainUser = config.users.main.name or "neg";
+  mainUser = config.lib.neg.mainUser;
+  # Plain "/home/<name>": this module feeds the users/filesystems fixpoint, so
+  # config.lib.neg.homeDir (which dereferences users.users.<name>.home) recurses.
   homeDir = "/home/${mainUser}";
   isOdin = config.networking.hostName == "odin";
 in
