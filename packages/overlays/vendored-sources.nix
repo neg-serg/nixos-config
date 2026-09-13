@@ -117,19 +117,16 @@ _inputs: final: finalPrev: {
     };
   };
 
-  # pffft/fuzzysearchdatabase: bitbucket.org is RKN-blocked here
-  # (DNS-poisoned, sandboxed fetches hang). The attribute overrides below
-  # cover direct consumers of the pkgs.pffft / pkgs.fuzzysearchdatabase
-  # attributes; vcv-rack's own dep/ fetches are covered by the
-  # fetchFromBitbucket override further down (same vendored tarballs).
+  # pffft: bitbucket.org is RKN-blocked here (DNS-poisoned, sandboxed fetches
+  # hang). This override covers direct consumers of pkgs.pffft; vcv-rack's own
+  # dep/ fetches are covered by the fetchFromBitbucket override below (same
+  # vendored tarball). fuzzysearchdatabase has no top-level nixpkgs attribute
+  # (it is a local fetchFromBitbucket call inside vcv-rack's package.nix), so
+  # only that interception reaches it — do not add an attribute override for it.
   # (Tarballs are tracked in files/sources/ and referenced by relative path —
   # see the vendored-tarball note above.)
   pffft = finalPrev.pffft.overrideAttrs (_: {
     src = ./../../files/sources/pffft-74d7261.tar.gz;
-  });
-
-  fuzzysearchdatabase = finalPrev.fuzzysearchdatabase.overrideAttrs (_: {
-    src = ./../../files/sources/fuzzysearchdatabase-23122d1.tar.gz;
   });
 
   # vcv-rack vendors its dep/ libraries itself: its package.nix calls
