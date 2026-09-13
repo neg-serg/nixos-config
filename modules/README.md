@@ -1,7 +1,7 @@
 # Modules
 
 Dendritic NixOS module tree. Each domain lives in its own directory with a `default.nix` that
-auto-imports all sibling `.nix` files and subdirectories (via `builtins.readDir`).
+auto-imports all sibling `.nix` files and module subdirectories via `neg.importDir`.
 
 ```
 modules/
@@ -9,7 +9,7 @@ modules/
 ├── features/            # feature flags (auto-import)
 ├── profiles/            # host profiles: feature presets + system toggles (auto-import)
 └── <domain>/            # one directory per domain
-    ├── default.nix      # auto-imports everything below
+    ├── default.nix      # auto-imports flat modules + submodule dirs
     ├── *.nix            # flat module files
     └── <sub>/           # subdirectory → resolved to <sub>/default.nix
 ```
@@ -80,19 +80,22 @@ User config management — `apps/`, `cli/`, `gui/`, `web/`, `sys/`, `fun/`.
 ## Adding a module
 
 1. Create a `.nix` file or subdirectory with `default.nix` inside the relevant domain.
-1. That's it — the domain's `default.nix` auto-imports everything via `readDir`.
+1. That's it — the domain's `default.nix` auto-imports everything via `neg.importDir`.
 1. For a new top-level domain, add it to `modules/default.nix`.
 
 ## Import conventions
 
-- **Domains auto-import via `readDir`** (drop a `.nix` file = it is imported; no registration).
-  Single-file domains may skip `readDir` entirely — there are no siblings to import.
-- **`user/nix-maid` and `user/session` use explicit import lists** (`default.nix`) — import ordering
-  and mixed file/directory imports there are deliberate; add files to the list, not just to the
-  directory.
-- **Data files are not modules**: non-module nix data (cache lists, config data) lives in `lib/`
-  (e.g. `lib/caches.nix`), never in a module directory — so domain `readDir` stays clean without
-  exclusion lists.
+- **Domains auto-import via `neg.importDir`** (drop a `.nix` file = it is imported; no
+  registration). `includeDirs = true` also imports each subdirectory that carries its own
+  `default.nix`; a directory without one is skipped automatically, so data directories need no
+  exclusion list. Single-file domains may skip the import entirely — there are no siblings to
+  import.
+- **Data directories are skipped, not listed**: `user/nix-maid/apps` carries 30+ plugin/asset
+  directories that have no `default.nix`; `neg.importDir` ignores them. Add an explicit `exclude`
+  only for a regular `.nix` file that must not be imported (e.g. `open-webui.nix`,
+  `disabled-modules.nix`).
+- **Non-module nix data** (cache lists, config data) still lives in `lib/` (e.g. `lib/caches.nix`),
+  never in a module directory.
 - **Flake-imported exceptions** (`modules/system/disabled-modules.nix`, imported by
   `flake/nixos.nix` outside the domain filter) are excluded explicitly in the domain's `default.nix`
   with a comment — keep such exceptions documented.

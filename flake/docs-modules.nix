@@ -6,6 +6,12 @@
 let
   # Evaluate the modules to get the options
   eval = lib.evalModules {
+    # modules/features/default.nix builds its imports via neg.importDir, and
+    # `imports` is evaluated before the config fixpoint exists — so `neg` must
+    # arrive through specialArgs, not _module.args.
+    specialArgs = {
+      neg = import ../lib/neg-helpers.nix;
+    };
     modules = [
       # Include the features module
       (self + "/modules/features")

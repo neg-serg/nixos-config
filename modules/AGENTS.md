@@ -8,8 +8,8 @@ Scope
 Guidelines
 
 - Follow the layout in `modules/README.md`: put new modules in the appropriate domain folder — the
-  domain's `default.nix` auto-imports sibling `.nix` files and subdirectories via `builtins.readDir`
-  (no `modules.nix` registration exists).
+  domain's `default.nix` auto-imports sibling `.nix` files and module subdirectories via
+  `neg.importDir` (no `modules.nix` registration exists).
 - Define new options in `modules/features/<domain>.nix` and refresh option docs
   (`OPTIONS.md`/generated outputs) when behavior changes.
 - Reuse existing helpers (`lib.neg.*`, `mkDefault`/`mkForce` patterns) instead of ad-hoc wiring;

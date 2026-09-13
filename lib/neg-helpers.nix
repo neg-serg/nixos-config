@@ -23,6 +23,45 @@ rec {
   # Pass-through for impure values
   linkImpure = x: x;
 
+  # Import modules from a directory — single replacement for the
+  # `builtins.readDir ./. |> attrNames |> filter |> map` pipeline copied into
+  # every auto-importing default.nix.
+  #
+  #   importDir { dir = ./.; }                      # flat *.nix files
+  #   importDir { dir = ./.; includeDirs = true; }  # + module subdirectories
+  #   importDir { dir = ./.; exclude = [ "x.nix" ]; }
+  #
+  # default.nix is always dropped (it is the importer itself). With
+  # includeDirs, a subdirectory is imported only when it carries its own
+  # default.nix — data directories (scripts/, mutt-conf/, asset bundles) are
+  # skipped automatically instead of being listed in every caller's exclude.
+  importDir =
+    {
+      dir,
+      includeDirs ? false,
+      suffix ? ".nix",
+      exclude ? [ ],
+    }:
+    let
+      entries = builtins.readDir dir;
+      hasSuffix =
+        suf: s:
+        let
+          sLen = builtins.stringLength s;
+          sufLen = builtins.stringLength suf;
+        in
+        sLen >= sufLen && builtins.substring (sLen - sufLen) sufLen s == suf;
+      isModuleDir =
+        name: entries.${name} == "directory" && builtins.pathExists (dir + "/${name}/default.nix");
+      isModuleFile = name: entries.${name} != "directory" && hasSuffix suffix name;
+      keep =
+        name:
+        name != "default.nix"
+        && !(builtins.elem name exclude)
+        && (if includeDirs then isModuleDir name || isModuleFile name else isModuleFile name);
+    in
+    builtins.map (name: dir + "/${name}") (builtins.filter keep (builtins.attrNames entries));
+
   # fzf parses FZF_*_OPTS values as its own CLI options and treats a '#' at
   # the start of a token (after whitespace, outside quotes) as a comment that
   # silently drops the rest of the string — all colors/binds after it vanish

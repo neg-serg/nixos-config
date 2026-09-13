@@ -200,13 +200,13 @@ in
       '';
 
   # ── nix-maid app directory guard ───────────────────────────────────
-  # modules/user/nix-maid/apps/default.nix auto-imports every sibling directory
-  # as a module and keeps an explicit filter list for the data and plugin-bundle
-  # directories. A plugin directory missing from that list breaks the whole
-  # system *evaluation*:
-  #   error: Path '.../apps/<name>/default.nix' does not exist in Git repository
-  # which reads like a flake/git problem and only surfaces during a rebuild.
-  # The guard makes the rule fast and local, and names the line to add.
+  # modules/user/nix-maid/apps/default.nix imports sibling directories via
+  # neg.importDir { includeDirs = true; }, which skips any directory without a
+  # default.nix. That makes data and plugin-bundle directories safe by default
+  # (no deny-list). The guard pins the contract: the importDir call, and the
+  # default.nix existence check inside lib/neg-helpers.nix that backs the skip.
+  # A hand-rolled builtins.readDir filter would import every entry and break
+  # evaluation with "Path '.../apps/<name>/default.nix' does not exist".
 
   "nix-maid-app-dirs-guard" =
     pkgs.runCommand "check-nix-maid-app-dirs"
@@ -215,11 +215,12 @@ in
           pkgs.bash
           pkgs.coreutils
           pkgs.gnugrep
-          pkgs.gnused
         ];
       }
       ''
-        bash ${../scripts/dev/check-nix-maid-app-dirs.sh} ${../modules/user/nix-maid/apps}
+        bash ${../scripts/dev/check-nix-maid-app-dirs.sh} \
+          ${../modules/user/nix-maid/apps} \
+          ${../lib/neg-helpers.nix}
         touch $out
       '';
 
