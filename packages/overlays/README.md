@@ -3,18 +3,19 @@
 ## Overview
 
 - Entry: `packages/overlay.nix`
-  - Loads overlays from `packages/overlays/{functions,tools,media,dev,gui,fix-tinycc,vendored-sources}.nix`
+  - Loads overlays from
+    `packages/overlays/{functions,tools,media,dev,gui,fix-tinycc,vendored-sources}.nix`
   - Merges their attrsets and exposes a combined namespace under `pkgs.neg`
-  - `disable-checks.nix` is merged last on purpose (its `overrideAttrs` resets
-    prior overrides on the same package)
+  - `disable-checks.nix` is merged last on purpose (its `overrideAttrs` resets prior overrides on
+    the same package)
 - Structure is intentional and should be kept as:
   - functions.nix — shared helpers under pkgs.neg.functions
   - tools.nix — CLI/desktop helpers under pkgs.neg.\*
   - media.nix — audio/video tools under pkgs.neg.\*
   - dev.nix — development/toolchain tweaks and scoped overrides
-  - vendored-sources.nix — overrides for region-blocked/unreachable upstream
-    fetches, using vendored tarballs/patches from `files/sources` and
-    `files/patches` (the vendored-tarball note lives there)
+  - vendored-sources.nix — overrides for region-blocked/unreachable upstream fetches, using vendored
+    tarballs/patches from `files/sources` and `files/patches` (the vendored-tarball note lives
+    there)
 
 ## Helpers (`pkgs.neg.functions`)
 
