@@ -52,15 +52,19 @@ let
                   api_url = "https://api.telegram.org/bot{0}/sendMessage".format(token)
                   # api.telegram.org is unreachable from this host without the
                   # sing-box socks proxy (socks5h://127.0.0.1:10808).
+                  # The URL carries the bot token and /proc/<pid>/cmdline is
+                  # world-readable, so feed the URL to curl through a "-K -"
+                  # stdin config instead of argv (tokens are [0-9A-Za-z_:-]).
                   subprocess.run(
                       [
                           "/run/current-system/sw/bin/curl",
                           "-s", "-o", "/dev/null",
                           "--proxy", "socks5h://127.0.0.1:10808",
+                          "-K", "-",
                           "--data-urlencode", "chat_id={0}".format(chat_id),
                           "--data-urlencode", "text={0}".format(msg),
-                          api_url,
                       ],
+                      input=("url = \"{0}\"\n".format(api_url)).encode(),
                       check=False,
                   )
               self.send_response(200)
