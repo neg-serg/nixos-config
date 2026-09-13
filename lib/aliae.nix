@@ -42,188 +42,192 @@ let
     hasMpc
     ;
 
-  content = lib.concatStrings [
-    "# Aliae aliases (cross-shell)\n"
-    "# Edit and reload your shell to apply changes.\n"
-    "alias:\n"
+  # Unconditional aliases: name -> value. Rendered in attr-name order by
+  # builtins.attrNames, so the section comments are organizational only.
+  aliases = {
     # Core eza/ls aliases
-    (mkAlias "ls" "eza --icons=auto --hyperlink")
-    (mkAlias "l" "eza --icons=auto --hyperlink -lbF --git")
-    (mkAlias "ll" "eza --icons=auto --hyperlink -lbGF --git")
-    (mkAlias "llm" "eza --icons=auto --hyperlink -lbGF --git --sort=modified")
-    (mkAlias "la" "eza --icons=auto --hyperlink -lbhHigUmuSa --time-style=long-iso --git --color-scale")
-    (mkAlias "lx" "eza --icons=auto --hyperlink -lbhHigUmuSa@ --time-style=long-iso --git --color-scale")
-    (mkAlias "lt" "eza --icons=auto --hyperlink --tree --level=2")
-    (mkAlias "eza" "${mkCmd "eza"} --icons=auto --hyperlink")
-    (mkAlias "lS" "eza --icons=auto --hyperlink -1") # One entry per line
-    (mkAlias "lcr" "eza --icons=auto --hyperlink -al --sort=created --color=always")
-    (mkAlias "lsd" "eza --icons=auto --hyperlink -alD --sort=created --color=always")
+    "ls" = "eza --icons=auto --hyperlink";
+    "l" = "eza --icons=auto --hyperlink -lbF --git";
+    "ll" = "eza --icons=auto --hyperlink -lbGF --git";
+    "llm" = "eza --icons=auto --hyperlink -lbGF --git --sort=modified";
+    "la" = "eza --icons=auto --hyperlink -lbhHigUmuSa --time-style=long-iso --git --color-scale";
+    "lx" = "eza --icons=auto --hyperlink -lbhHigUmuSa@ --time-style=long-iso --git --color-scale";
+    "lt" = "eza --icons=auto --hyperlink --tree --level=2";
+    "eza" = "${mkCmd "eza"} --icons=auto --hyperlink";
+    "lS" = "eza --icons=auto --hyperlink -1"; # One entry per line
+    "lcr" = "eza --icons=auto --hyperlink -al --sort=created --color=always";
+    "lsd" = "eza --icons=auto --hyperlink -alD --sort=created --color=always";
     # Core tools
-    (mkAlias "cat" "bat -pp")
-    (mkAlias "g" "git")
-    (mkAlias "gs" "git status -sb")
-    (mkAlias "qe" "${mkCmd "qe"}")
-    (mkAlias "acp" "cp")
-    (mkAlias "als" "ls")
+    "cat" = "bat -pp";
+    "g" = "git";
+    "gs" = "git status -sb";
+    "qe" = "${mkCmd "qe"}";
+    "acp" = "cp";
+    "als" = "ls";
     # Git shortcuts
-    (mkAlias "add" "git add")
-    (mkAlias "checkout" "git checkout")
-    (mkAlias "commit" "git commit")
-    (mkAliasIf (!isNushell) "fc" "fc -liE 100")
-    (mkAlias "ga" "git add")
-    (mkAlias "gaa" "git add --all")
-    (mkAlias "gam" "git am")
-    (mkAlias "gama" "git am --abort")
-    (mkAlias "gamc" "git am --continue")
-    (mkAlias "gams" "git am --skip")
-    (mkAlias "gamscp" "git am --show-current-patch")
-    (mkAlias "gap" "git apply")
-    (mkAlias "gapa" "git add --patch")
-    (mkAlias "gapt" "git apply --3way")
-    (mkAlias "gau" "git add --update")
-    (mkAlias "gav" "git add --verbose")
-    (mkAlias "gb" "git branch")
-    (mkAlias "gbD" "git branch -D")
-    (mkAlias "gba" "git branch -a")
-    (mkAlias "gbd" "git branch -d")
-    (mkAlias "gbl" "git blame -b -w")
-    (mkAlias "gbnm" "git branch --no-merged")
-    (mkAlias "gbr" "git branch --remote")
-    (mkAlias "gbs" "git bisect")
-    (mkAlias "gbsb" "git bisect bad")
-    (mkAlias "gbsg" "git bisect good")
-    (mkAlias "gbsr" "git bisect reset")
-    (mkAlias "gbss" "git bisect start")
-    (mkAlias "gc" "git commit -v")
-    (mkAlias "gc!" "git commit -v --amend")
-    (mkAlias "gca" "git commit -v -a")
-    (mkAlias "gca!" "git commit -v -a --amend")
-    (mkAliasIf (!isNushell) "gcam" "git commit -a -m")
-    (mkAlias "gcan!" "git commit -v -a --no-edit --amend")
-    (mkAlias "gcans!" "git commit -v -a -s --no-edit --amend")
-    (mkAlias "gcas" "git commit -a -s")
-    (mkAliasIf (!isNushell) "gcasm" "git commit -a -s -m")
-    (mkAlias "gcb" "git checkout -b")
-    (mkAlias "gcl" "git clone --recurse-submodules")
-    (mkAlias "gclean" "git clean -id")
-    (mkAliasIf (!isNushell) "gcmsg" "git commit -m")
-    (mkAlias "gcn!" "git commit -v --no-edit --amend")
-    (mkAlias "gco" "git checkout")
-    (mkAlias "gcor" "git checkout --recurse-submodules")
-    (mkAlias "gcount" "git shortlog -sn")
-    (mkAlias "gcp" "git cherry-pick")
-    (mkAlias "gcpa" "git cherry-pick --abort")
-    (mkAlias "gcpc" "git cherry-pick --continue")
-    (mkAlias "gcs" "git commit -S")
-    (mkAliasIf (!isNushell) "gcsm" "git commit -s -m")
-    (mkAlias "gd" "git diff -w -U0 --word-diff-regex=[^[:space:]]")
-    (mkAlias "gdca" "git diff --cached")
-    (mkAlias "gdcw" "git diff --cached --word-diff")
-    (mkAlias "gds" "git diff --staged")
-    (mkAlias "gdup" "git diff @{upstream}")
-    (mkAlias "gdw" "git diff --word-diff")
-    (mkAlias "gf" "git fetch")
-    (mkAlias "gfa" "git fetch --all --prune")
-    (mkAlias "gfg" "git ls-files | grep")
-    (mkAlias "gfo" "git fetch origin")
-    (mkAlias "gignore" "git update-index --assume-unchanged")
-    (mkAlias "gignored" "git ls-files -v | grep '^[[:lower:]]'")
-    (mkAlias "gl" "git log -n 4 --oneline")
-    (mkAlias "gm" "git merge")
-    (mkAlias "gma" "git merge --abort")
-    (mkAlias "gmtl" "git mergetool --no-prompt")
-    (mkAlias "gp" "git push")
-    (mkAlias "gpd" "git push --dry-run")
-    (mkAlias "gpf" "git push --force-with-lease")
-    (mkAlias "gpf!" "git push --force")
-    (mkAliasIf (!isNushell) "gpr" "git pull --rebase")
-    (mkAlias "gpv" "git push -v")
-    (mkAlias "gr" "git remote")
-    (mkAlias "gra" "git remote --add")
-    (mkAlias "grb" "git rebase")
-    (mkAlias "grba" "git rebase --abort")
-    (mkAlias "grbc" "git rebase --continue")
-    (mkAlias "grbi" "git rebase -i")
-    (mkAlias "grbo" "git rebase --onto")
-    (mkAlias "grbs" "git rebase --skip")
-    (mkAlias "grev" "git revert")
-    (mkAlias "grh" "git reset")
-    (mkAlias "grhh" "git reset --hard")
-    (mkAlias "grm" "git rm")
-    (mkAlias "grmc" "git rm --cached")
-    (mkAlias "grs" "git restore")
-    (mkAlias "grup" "git remote update")
-    (mkAlias "gsh" "git show")
-    (mkAlias "gsi" "git submodule init")
-    (mkAlias "gsta" "git stash save")
-    (mkAlias "gstaa" "git stash apply")
-    (mkAlias "gstall" "git stash --all")
-    (mkAlias "gstc" "git stash clear")
-    (mkAlias "gstd" "git stash drop")
-    (mkAlias "gstl" "git stash list")
-    (mkAlias "gstp" "git stash pop")
-    (mkAlias "gsts" "git stash show --text")
-    (mkAlias "gstu" "git stash --include-untracked")
-    (mkAlias "gsu" "git submodule update")
-    (mkAlias "gsw" "git switch")
-    (mkAlias "gswc" "git switch -c")
-    (mkAlias "gts" "git tag -s")
-    (mkAlias "gu" "git reset --soft 'HEAD^'")
-    (mkAliasIf (!isNushell) "gup" "git pull --rebase")
-    (mkAliasIf (!isNushell) "gupa" "git pull --rebase --autostash")
-    (mkAliasIf (!isNushell) "gupav" "git pull --rebase --autostash -v")
-    (mkAliasIf (!isNushell) "gupv" "git pull --rebase -v")
-    (mkAlias "pull" "git pull")
-    (mkAlias "push" "git push")
-    (mkAlias "resolve" "git mergetool --tool=nwim")
-    (mkAlias "stash" "git stash")
-    (mkAlias "status" "git status")
+    "add" = "git add";
+    "checkout" = "git checkout";
+    "commit" = "git commit";
+    "ga" = "git add";
+    "gaa" = "git add --all";
+    "gam" = "git am";
+    "gama" = "git am --abort";
+    "gamc" = "git am --continue";
+    "gams" = "git am --skip";
+    "gamscp" = "git am --show-current-patch";
+    "gap" = "git apply";
+    "gapa" = "git add --patch";
+    "gapt" = "git apply --3way";
+    "gau" = "git add --update";
+    "gav" = "git add --verbose";
+    "gb" = "git branch";
+    "gbD" = "git branch -D";
+    "gba" = "git branch -a";
+    "gbd" = "git branch -d";
+    "gbl" = "git blame -b -w";
+    "gbnm" = "git branch --no-merged";
+    "gbr" = "git branch --remote";
+    "gbs" = "git bisect";
+    "gbsb" = "git bisect bad";
+    "gbsg" = "git bisect good";
+    "gbsr" = "git bisect reset";
+    "gbss" = "git bisect start";
+    "gc" = "git commit -v";
+    "gc!" = "git commit -v --amend";
+    "gca" = "git commit -v -a";
+    "gca!" = "git commit -v -a --amend";
+    "gcan!" = "git commit -v -a --no-edit --amend";
+    "gcans!" = "git commit -v -a -s --no-edit --amend";
+    "gcas" = "git commit -a -s";
+    "gcb" = "git checkout -b";
+    "gcl" = "git clone --recurse-submodules";
+    "gclean" = "git clean -id";
+    "gcn!" = "git commit -v --no-edit --amend";
+    "gco" = "git checkout";
+    "gcor" = "git checkout --recurse-submodules";
+    "gcount" = "git shortlog -sn";
+    "gcp" = "git cherry-pick";
+    "gcpa" = "git cherry-pick --abort";
+    "gcpc" = "git cherry-pick --continue";
+    "gcs" = "git commit -S";
+    "gd" = "git diff -w -U0 --word-diff-regex=[^[:space:]]";
+    "gdca" = "git diff --cached";
+    "gdcw" = "git diff --cached --word-diff";
+    "gds" = "git diff --staged";
+    "gdup" = "git diff @{upstream}";
+    "gdw" = "git diff --word-diff";
+    "gf" = "git fetch";
+    "gfa" = "git fetch --all --prune";
+    "gfg" = "git ls-files | grep";
+    "gfo" = "git fetch origin";
+    "gignore" = "git update-index --assume-unchanged";
+    "gignored" = "git ls-files -v | grep '^[[:lower:]]'";
+    "gl" = "git log -n 4 --oneline";
+    "gm" = "git merge";
+    "gma" = "git merge --abort";
+    "gmtl" = "git mergetool --no-prompt";
+    "gp" = "git push";
+    "gpd" = "git push --dry-run";
+    "gpf" = "git push --force-with-lease";
+    "gpf!" = "git push --force";
+    "gpv" = "git push -v";
+    "gr" = "git remote";
+    "gra" = "git remote --add";
+    "grb" = "git rebase";
+    "grba" = "git rebase --abort";
+    "grbc" = "git rebase --continue";
+    "grbi" = "git rebase -i";
+    "grbo" = "git rebase --onto";
+    "grbs" = "git rebase --skip";
+    "grev" = "git revert";
+    "grh" = "git reset";
+    "grhh" = "git reset --hard";
+    "grm" = "git rm";
+    "grmc" = "git rm --cached";
+    "grs" = "git restore";
+    "grup" = "git remote update";
+    "gsh" = "git show";
+    "gsi" = "git submodule init";
+    "gsta" = "git stash save";
+    "gstaa" = "git stash apply";
+    "gstall" = "git stash --all";
+    "gstc" = "git stash clear";
+    "gstd" = "git stash drop";
+    "gstl" = "git stash list";
+    "gstp" = "git stash pop";
+    "gsts" = "git stash show --text";
+    "gstu" = "git stash --include-untracked";
+    "gsu" = "git submodule update";
+    "gsw" = "git switch";
+    "gswc" = "git switch -c";
+    "gts" = "git tag -s";
+    "gu" = "git reset --soft 'HEAD^'";
+    "pull" = "git pull";
+    "push" = "git push";
+    "resolve" = "git mergetool --tool=nwim";
+    "stash" = "git stash";
+    "status" = "git status";
     # Misc
-    (mkAliasIf (!isNushell) "sudo" "sudo ")
-    (mkAlias "cp" "${mkCmd "cp"} --reflink=auto")
-    (mkAlias "mv" "${mkCmd "mv"} -i")
-    (mkAlias "mk" "${mkCmd "mkdir"} -p")
-    (mkAlias "rd" "rmdir")
-    (mkAlias "x" "xargs")
-    (mkAlias "sort" "${mkCmd "sort"} --parallel 8 -S 16M")
-    (mkAlias ":q" "exit")
-    (mkAlias "s" "sudo ")
-    (mkAlias "dig" "${if isNushell then "^dig '+noall' '+answer'" else "dig +noall +answer"}")
-    (mkAlias "rsync" "${
+    "cp" = "${mkCmd "cp"} --reflink=auto";
+    "mv" = "${mkCmd "mv"} -i";
+    "mk" = "${mkCmd "mkdir"} -p";
+    "rd" = "rmdir";
+    "x" = "xargs";
+    "sort" = "${mkCmd "sort"} --parallel 8 -S 16M";
+    ":q" = "exit";
+    "s" = "sudo ";
+    "dig" = "${if isNushell then "^dig '+noall' '+answer'" else "dig +noall +answer"}";
+    "rsync" = "${
       if isNushell then
         "^rsync -az --compress-choice=zstd '--info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS'"
       else
         "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS"
-    }")
-    (mkAlias "nrb" "sudo nixos-rebuild")
-    (mkAlias "nrs" "nixos-rebuild switch --no-reexec") # fast rebuild, skip nixos-rebuild self-eval
-    (mkAlias "j" "journalctl")
-    (mkAlias "beet-update" "beet update -F field_that_isnt -M") # beets rescan without moving files
-    (mkAlias "wl-restart" "systemctl --user restart wl-daemon.service && sleep 0.5 && wl random ~/pic/wl") # restart wallpaper daemon
-    (mkAlias "jl" "jupyter lab --no-browser")
-    (mkAlias "dosbox" "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf")
-    (mkAlias "gdb" "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit")
-    (mkAlias "iostat" "${mkCmd "iostat"} --compact -p -h -s")
-    (mkAlias "mtrr" "mtr -wzbe")
-    (mkAlias "nvidia-settings" "nvidia-settings --config=${mkEnvVar "XDG_CONFIG_HOME"}/nvidia/settings")
+    }";
+    "nrb" = "sudo nixos-rebuild";
+    "nrs" = "nixos-rebuild switch --no-reexec"; # fast rebuild, skip nixos-rebuild self-eval
+    "j" = "journalctl";
+    "beet-update" = "beet update -F field_that_isnt -M"; # beets rescan without moving files
+    "wl-restart" = "systemctl --user restart wl-daemon.service && sleep 0.5 && wl random ~/pic/wl"; # restart wallpaper daemon
+    "jl" = "jupyter lab --no-browser";
+    "dosbox" = "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf";
+    "gdb" = "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit";
+    "iostat" = "${mkCmd "iostat"} --compact -p -h -s";
+    "mtrr" = "mtr -wzbe";
+    "nvidia-settings" = "nvidia-settings --config=${mkEnvVar "XDG_CONFIG_HOME"}/nvidia/settings";
+    "matrix" = "unimatrix -l Aang -s 95";
+    "svn" = "${mkCmd "svn"} --config-dir ${mkEnvVar "XDG_CONFIG_HOME"}/subversion";
+    "scp" = "${mkCmd "scp"} -r";
+    "dd" = "${mkCmd "dd"} status=progress";
+    "ip" = "${mkCmd "ip"} -c";
+    "readelf" = "${mkCmd "readelf"} -W";
+    "objdump" = "${mkCmd "objdump"} -M intel -d";
+    "strace" = "${mkCmd "strace"} -yy";
+    "xz" = "${mkCmd "xz"} --threads=0";
+    "zstd" = "${mkCmd "zstd"} --threads=0";
+    "ctl" = "systemctl";
+    "stl" = "sudo systemctl";
+    "utl" = "systemctl --user";
+    "ut" = "systemctl --user start";
+    "un" = "systemctl --user stop";
+    "up" = "sudo systemctl start";
+    "dn" = "sudo systemctl stop";
+  };
+
+  # Conditional aliases: emitted only when the condition holds (package
+  # presence or shell flavour), in listed order.
+  conditional = [
+    (mkAliasIf (!isNushell) "fc" "fc -liE 100")
+    (mkAliasIf (!isNushell) "gcam" "git commit -a -m")
+    (mkAliasIf (!isNushell) "gcasm" "git commit -a -s -m")
+    (mkAliasIf (!isNushell) "gcmsg" "git commit -m")
+    (mkAliasIf (!isNushell) "gcsm" "git commit -s -m")
+    (mkAliasIf (!isNushell) "gpr" "git pull --rebase")
+    (mkAliasIf (!isNushell) "gup" "git pull --rebase")
+    (mkAliasIf (!isNushell) "gupa" "git pull --rebase --autostash")
+    (mkAliasIf (!isNushell) "gupav" "git pull --rebase --autostash -v")
+    (mkAliasIf (!isNushell) "gupv" "git pull --rebase -v")
+    (mkAliasIf (!isNushell) "sudo" "sudo ")
     (mkAliasIf (!isNushell) "ssh" "TERM=xterm-256color ssh")
-    (mkAlias "matrix" "unimatrix -l Aang -s 95")
-    (mkAlias "svn" "${mkCmd "svn"} --config-dir ${mkEnvVar "XDG_CONFIG_HOME"}/subversion")
-    (mkAlias "scp" "${mkCmd "scp"} -r")
-    (mkAlias "dd" "${mkCmd "dd"} status=progress")
-    (mkAlias "ip" "${mkCmd "ip"} -c")
-    (mkAlias "readelf" "${mkCmd "readelf"} -W")
-    (mkAlias "objdump" "${mkCmd "objdump"} -M intel -d")
-    (mkAlias "strace" "${mkCmd "strace"} -yy")
-    (mkAlias "xz" "${mkCmd "xz"} --threads=0")
-    (mkAlias "zstd" "${mkCmd "zstd"} --threads=0")
-    (mkAlias "ctl" "systemctl")
-    (mkAlias "stl" "sudo systemctl")
-    (mkAlias "utl" "systemctl --user")
-    (mkAlias "ut" "systemctl --user start")
-    (mkAlias "un" "systemctl --user stop")
-    (mkAlias "up" "sudo systemctl start")
-    (mkAlias "dn" "sudo systemctl stop")
     (mkAliasIf hasMpv "mpv" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mpa" "mpv --mute=yes") # mpv audio-only (--mute=yes, not -mute: works in all mpv versions)
@@ -271,6 +275,14 @@ let
     (mkAliasIf hasUg "fgrep" "ug -F")
     (mkAliasIf hasUg "xgrep" "ug -W")
     (mkAliasIf hasUg "zgrep" "ug -zG")
+  ];
+
+  content = lib.concatStrings [
+    "# Aliae aliases (cross-shell)\n"
+    "# Edit and reload your shell to apply changes.\n"
+    "alias:\n"
+    (lib.concatMapStrings (n: mkAlias n aliases.${n}) (builtins.attrNames aliases))
+    (lib.concatStrings conditional)
   ];
 in
 content
