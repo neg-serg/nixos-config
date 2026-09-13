@@ -13,8 +13,12 @@ if vim.fn.executable('lusty') ~= 1 then
   return
 end
 
--- Keep the frecency journal out of the real state dir.
-require('lusty.frecency').set_state_file('/tmp/lusty_marks_frecency.json')
+-- Keep the frecency journal out of the real state dir and deterministic (a
+-- stale journal would reorder the empty query).
+local frec = require('lusty.frecency')
+frec.set_state_file('/tmp/lusty_marks_frecency.json')
+pcall(vim.fn.delete, '/tmp/lusty_marks_frecency.json')
+frec.set_now(function() return 1700000000 end)
 
 local tmp = '/tmp/lusty_fs_marks_smoke'
 vim.fn.delete(tmp, 'rf')

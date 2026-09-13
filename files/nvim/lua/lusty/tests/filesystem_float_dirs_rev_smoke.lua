@@ -12,6 +12,11 @@ if vim.fn.executable('lusty') ~= 1 then
   return
 end
 
+-- Isolate the frecency journal: the client ships F records and a stale real
+-- journal would reorder the empty query.
+require('lusty.frecency').set_state_file('/tmp/lusty_fs_dirs_rev_frec.json')
+pcall(vim.fn.delete, '/tmp/lusty_fs_dirs_rev_frec.json')
+
 local tmp = '/tmp/lusty_fs_dirs_rev_smoke'
 vim.fn.mkdir(tmp, 'p')
 vim.fn.writefile({ 'hello' }, tmp .. '/alpha.txt')
