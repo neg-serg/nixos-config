@@ -14,7 +14,8 @@
 --                             higher-scored paths inside each depth)
 -- kind: d (dir) / f (file) / l (link). C-l toggles the long view, C-y cycles
 -- the sort order, C-Space marks files (multi-select: Enter opens the marked
--- set, the first via edit and the rest via badd).
+-- set, the first via edit and the rest via badd), C-e opens the typed text as
+-- a new buffer, C-d cycles the search depth (1..6).
 -- Backslash/TAB/LF inside a label, path or D name are escaped as \\, \t, \n
 -- (reversed by `unescape` below), so a file name containing them cannot break
 -- the framing; non-UTF8 paths travel as raw bytes.
@@ -208,7 +209,7 @@ end
 local Picker = {}
 Picker.__index = Picker
 
-function Picker.new(root)
+function Picker.new(root, depth)
   local self = setmetatable({}, Picker)
   self.root = root
   self.query = ''
@@ -227,6 +228,9 @@ function Picker.new(root)
   self.dirs_first = dirs_first_enabled() -- dirs grouped first in name order (LUSTY_DIRS_FIRST / g:LustyExplorerDirsFirst)
   self.reverse = reverse_enabled() -- reverse each depth group (LUSTY_REVERSE / g:LustyExplorerReverse)
   self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
+  -- Search depth: g:LustyExplorerSearchDepth is only the starting value; C-d
+  -- cycles it at runtime and the new value survives navigation (restart).
+  self.depth = depth or tonumber(vim.g.LustyExplorerSearchDepth) or 2
   self.marked = {} -- path -> true: files picked with C-Space (multi-select)
   self.mark_order = {} -- marked paths in pick order (open order)
   self.loading = true -- first serve listing not yet received (avoid a wrong [0])
@@ -466,7 +470,11 @@ function Picker:setup_keymaps()
   map('<Home>', 'first')
   map('<C-a>', 'first')
   map('<End>', 'last')
-  map('<C-e>', 'last')
+  -- C-e: open the typed text as a new buffer (Lua-port parity; parent dirs are
+  -- created). C-d: cycle the search depth 1..6 at runtime (buffers/grep use C-d
+  -- for delete instead; this is the filesystem float).
+  map('<C-e>', 'create')
+  map('<C-d>', 'cycle_depth')
   map('<C-u>', 'clear')
   map('<C-Space>', 'mark')
   -- C-y: sort cycle (C-s collides with terminal/kitty flow control)
@@ -790,6 +798,7 @@ function Picker:prompt_text()
   if #self.mark_order > 0 then
     tail = tail .. ' (' .. #self.mark_order .. ' marked)'
   end
+  tail = tail .. '  d' .. tostring(self.depth)
   return tail
 end
 
@@ -833,6 +842,14 @@ function Picker:paint_prompt(h)
   if self.total > 0 then
     add(' [' .. self.total .. ']', 'LustyPromptPath')
   end
+  if self.sort > 0 then
+    add(' <' .. SORT_LABELS[self.sort + 1] .. '>', 'LustyPromptPath')
+  end
+  if #self.mark_order > 0 then
+    add(' (' .. #self.mark_order .. ' marked)', 'LustyPromptPath')
+  end
+  -- Search depth (C-d cycles it), dimmed; must stay in sync with prompt_text.
+  add('  d' .. tostring(self.depth), 'LustyNativeMeta')
   for _, seg2 in ipairs(segs) do
     if seg2[3] then
       api.nvim_buf_add_highlight(self.buf, ns, seg2[3], line, seg2[1], seg2[1] + seg2[2])
@@ -971,6 +988,14 @@ function Picker:handle(action)
       end
       self:draw()
     end
+    return
+  end
+  if action == 'create' then
+    self:create_file()
+    return
+  end
+  if action == 'cycle_depth' then
+    self:cycle_depth()
     return
   end
   if action == 'toggle_long' then
@@ -1153,11 +1178,48 @@ function Picker:complete_slash(q)
   self:rerank()
 end
 
-function Picker:restart(root)
+function Picker:restart(root, depth)
   self:close() -- restores the caller window
-  local np = Picker.new(root)
+  local np = Picker.new(root, depth or self.depth)
   np:startup()
   return np
+end
+
+--- C-d: bump the search depth 1..6 and re-list in place, keeping the query.
+function Picker:cycle_depth()
+  self.depth = self.depth % 6 + 1
+  local query = self.query
+  local np = self:restart(self.root, self.depth)
+  if query ~= '' then
+    np.query = query
+    np:rerank()
+  end
+  return np
+end
+
+--- C-e: treat the typed text as a path and open it as a buffer, creating the
+--- parent directories first; the file itself appears on :w (Lua-port parity).
+function Picker:create_file()
+  local name = self.query
+  if name == '' then
+    vim.notify('lusty: type a file name first (C-e creates it)', vim.log.levels.WARN)
+    return
+  end
+  local path = name
+  if path:sub(1, 1) ~= '/' and path:sub(1, 1) ~= '~' then
+    path = self.root .. '/' .. path
+  end
+  path = vim.fn.expand(path)
+  local dir = vim.fn.fnamemodify(path, ':h')
+  if dir ~= '' and vim.fn.isdirectory(dir) == 0 then
+    vim.fn.mkdir(dir, 'p')
+  end
+  local win = api.nvim_get_current_win()
+  self:close()
+  if api.nvim_win_is_valid(win) then
+    pcall(api.nvim_set_current_win, win)
+  end
+  vim.cmd('edit ' .. vim.fn.fnameescape(path))
 end
 
 function Picker:open_current(action)
@@ -1219,7 +1281,7 @@ function Picker:startup()
 end
 
 function Picker:start_backend()
-  local depth = tonumber(vim.g.LustyExplorerSearchDepth) or 2
+  local depth = self.depth
   local skip = vim.g.LustyExplorerSkipDirs
   if skip == nil or skip == '' then
     skip = 'pic,tmp'
