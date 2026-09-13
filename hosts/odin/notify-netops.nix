@@ -32,68 +32,14 @@ let
       pkgs.coreutils # cat, rm, sleep for retry loop
       pkgs.systemd # systemctl tunnel state probe
     ];
-    text = ''
-      set -euo pipefail
-
-      STATE=/var/lib/telegram-vpn-watch
-      IP_FILE="$STATE/ip.txt"
-      DOWN_MARKER="$STATE/down"
-      SYSCTL=${pkgs.systemd}/bin/systemctl
-      CURL=${pkgs.curl}/bin/curl
-      SEND=${config.odin.telegram.sender}/bin/telegram-send
-
-      # Delivery failure is not a unit failure; the shared sender retries
-      # ~1 min through the socks proxy on its own.
-      send() { # $1 = message text
-        "$SEND" "$1" || true
+    text = builtins.readFile (
+      pkgs.replaceVars ./notify/netops-vpn-watch.sh {
+        sender = config.odin.telegram.sender;
+        curl = pkgs.curl;
+        systemd = pkgs.systemd;
+        inherit socksProxy;
       }
-
-      # 1. Down (stopped manually / inactive) is a normal action here — record
-      #    the down edge and stay silent (no Telegram spam).
-      if ! $SYSCTL is-active --quiet wg-quick-vpn-odin; then
-        touch "$DOWN_MARKER"
-        exit 0
-      fi
-
-      # 2. Tunnel is active. Fetch the public egress IP; when the tunnel is up
-      #    the default route already egresses through it. Fall back to the
-      #    socks proxy variant if the direct fetch fails.
-      ip=$($CURL -sf -m 10 https://api.ipify.org || true)
-      if [ -z "$ip" ]; then
-        ip=$($CURL -sf -m 10 --proxy ${socksProxy} https://api.ipify.org || true)
-      fi
-      if [ -z "$ip" ]; then
-        echo "telegram-vpn-watch: could not fetch public IP" >&2
-        exit 0 # leave state untouched; retry next tick
-      fi
-
-      prev=""
-      if [ -f "$IP_FILE" ]; then
-        prev=$(cat "$IP_FILE")
-      fi
-
-      # 3. Down->up transition: notify "поднят".
-      if [ -f "$DOWN_MARKER" ]; then
-        rm -f "$DOWN_MARKER"
-        send "🌐 VPN поднят (IP: $ip)"
-        printf '%s\n' "$ip" > "$IP_FILE"
-        exit 0
-      fi
-
-      # First observation while already up (fresh state): record, notify once.
-      if [ -z "$prev" ]; then
-        send "🌐 VPN поднят (IP: $ip)"
-        printf '%s\n' "$ip" > "$IP_FILE"
-        exit 0
-      fi
-
-      # IP changed while the tunnel stayed up: notify, keep the same marker.
-      if [ "$prev" != "$ip" ]; then
-        send "🌐 VPN: публичный IP сменился $prev -> $ip"
-      fi
-      printf '%s\n' "$ip" > "$IP_FILE"
-      exit 0
-    '';
+    );
   };
 
   # Part B: weekly "system flake is stale" reminder on the local ntfy server.
@@ -104,36 +50,11 @@ let
       pkgs.coreutils # date arithmetic
       pkgs.git # read last flake.lock-touching commit date
     ];
-    text = ''
-      set -euo pipefail
-
-      CURL=${pkgs.curl}/bin/curl
-      NTFY_URL="http://127.0.0.1:2586/system"
-
-      # 1. Age (days) of the last commit that touched flake.lock.
-      last=$(git -C /etc/nixos log -1 --format=%cs -- flake.lock || true)
-      if [ -z "$last" ]; then
-        echo "ntfy-system-stale: no flake.lock commit date found" >&2
-        exit 0
-      fi
-      last_epoch=$(date -d "$last" +%s)
-      now_epoch=$(date +%s)
-      age=$(( (now_epoch - last_epoch) / 86400 ))
-
-      # 2. Fresh enough -> silent exit.
-      if [ "$age" -le 14 ]; then
-        exit 0
-      fi
-
-      # 3. Post an info/low reminder to the local ntfy `system` topic.
-      msg="Флейк не обновлялся $age дней (последний раз $last). Пора nix flake update."
-      $CURL -sS -m 5 -X POST \
-        -H "Title: Система" \
-        -H "Priority: low" \
-        --data "$msg" \
-        "$NTFY_URL" >/dev/null 2>&1 || true
-      exit 0
-    '';
+    text = builtins.readFile (
+      pkgs.replaceVars ./notify/netops-stale.sh {
+        curl = pkgs.curl;
+      }
+    );
   };
 in
 mkMerge [
