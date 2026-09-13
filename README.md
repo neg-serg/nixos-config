@@ -234,7 +234,7 @@ flowchart LR
 │   └── 📁 odin/                    # Primary workstation
 │       ├── hardware.nix
 │       ├── networking.nix
-│       └── services.nix
+│       └── services/                # policy.nix, vpn.nix, telegram-units.nix
 ├── 📂 modules/                       # 🧩 System modules (28 domains)
 │   ├── 📁 features/                  # ⚙️ Feature flags (14 files)
 │   │   ├── core.nix                 # Core feature options

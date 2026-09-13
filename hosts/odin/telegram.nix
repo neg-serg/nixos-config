@@ -8,8 +8,8 @@
 # Shared Telegram notification stack for odin.
 #
 # The two SOPS secrets and the `telegram-send` wrapper live here exactly once;
-# the alert/notify units and scripts (services.nix, notify-*.nix, the pill
-# stack) consume config.odin.telegram.{sender,botTokenPath,chatIdPath} instead
+# the alert/notify units and scripts (services/telegram-units.nix, notify-*.nix,
+# the pill stack) consume config.odin.telegram.{sender,botTokenPath,chatIdPath} instead
 # of redeclaring the secrets and re-implementing the socks-proxy curl retry.
 #
 # api.telegram.org is only reachable through the user sing-box socks proxy
