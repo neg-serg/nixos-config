@@ -9,35 +9,54 @@ Windows 11 runs in a **dockur/windows** container (QEMU/KVM); the disk lives in 
 The disk lives in the podman volume `f1047db9589f…` (bind into `/storage`). Re-creation command:
 
 ```bash
-docker run -d --name windows \
+podman run -d --name windows \
+  --device /dev/kvm \
+  --device /dev/vfio/vfio --device /dev/vfio/30 --device /dev/vfio/31 \
   -v f1047db9589f2c0f4f8f31b6b4b4eeca2e4954d482ed0b8ed605cd3eb9033dc8:/storage \
   -v /dev/bus/usb:/dev/bus/usb \
-  --device=/dev/kvm \
-  --device /dev/bus/usb \
+  -v /etc/nixos/packages/dockur-windows/oem:/oem \
+  -p 8006:8006/tcp -p 3389:3389/tcp -p 3389:3389/udp -p 5004:5004/udp -p 5005:5005/udp \
   --cap-add NET_ADMIN \
-  -p 8006:8006 -p 3389:3389/tcp -p 3389:3389/udp \
-  -e VERSION="win11" -e USERNAME="neg" -e PASSWORD="password" \
-  -e RAM_SIZE="16G" -e DISK_SIZE="120G" -e CPU_CORES="2" \
-  -e TPM_VERSION="2.0" -e SECURE_BOOT="Y" \
-  -e ARGUMENTS="-device usb-host,vendorid=0x1781,productid=0x0e39" \
+  --network pasta \
+  --memory 10g --cpus 2 --cpu-shares 512 \
   --stop-timeout 120 \
-  docker.io/dockurr/windows
+  -e VERSION="win11" -e USERNAME="neg" -e PASSWORD="…" \
+  -e RAM_SIZE="6G" -e DISK_SIZE="120G" -e CPU_CORES="2" \
+  -e TPM_VERSION="2.0" -e SECURE_BOOT="Y" \
+  -e ARGUMENTS="-device usb-host,vendorid=0x1781,productid=0x0e39 -device vfio-pci,host=0000:7c:00.0 -device vfio-pci,host=0000:7c:00.1" \
+  docker.io/dockurr/windows:latest
+```
+
+The authoritative record of how the live container was created (this block is hand-kept):
+
+```bash
+podman inspect windows | jq -r '.[0].Config.CreateCommand[]'
 ```
 
 Key flags:
 
 - `-v f1047db9…:/storage` — persistent disk (Windows is installed once; re-creations do not lose
   it).
-- `-v /dev/bus/usb:/dev/bus/usb` — **live** USB bind-mount. `--device /dev/bus/usb` is NOT enough:
-  podman copies the nodes at start (a snapshot) and does not see devices plugged in later.
-- `-e ARGUMENTS="-device usb-host,…"` — USB device passthrough into QEMU (hotplug analogue —
-  `device_add usb-host,vendorid=…,productid=…` via the monitor).
+- `-v /dev/bus/usb:/dev/bus/usb` — **live** USB bind-mount. A snapshot of the device nodes is not
+  enough: `--device /dev/bus/usb` is rejected outright (it is a directory), and `--device` on a
+  single node is frozen at container start, so devices plugged in later never appear.
+- `-v /etc/nixos/packages/dockur-windows/oem:/oem` — the auto-provisioning payload (`install.bat`),
+  see `packages/dockur-windows/README.md`.
+- `-e ARGUMENTS="-device usb-host,… -device vfio-pci,…"` — devices passed straight into QEMU
+  (hotplug analogue — `device_add usb-host,vendorid=…,productid=…` via the monitor).
+- `/dev/vfio/NN` are **IOMMU group numbers** and can change across reboots — re-check them before
+  re-creating the container:
+  ```bash
+  basename "$(readlink -f /sys/bus/pci/devices/0000:7c:00.0/iommu_group)"   # 30 (iGPU video)
+  basename "$(readlink -f /sys/bus/pci/devices/0000:7c:00.1/iommu_group)"   # 31 (iGPU HDMI audio)
+  ```
+- `--memory/--cpus/--cpu-shares` and `RAM_SIZE` — see “Resource footprint and tuning” below.
 
 ### Gotchas: memlock (vfio dma_map ENOMEM)
 
-With iGPU passthrough (vfio-pci 1002:13c0) QEMU pins ~14 GB of guest RAM for DMA in the vfio
-container at start. If the RLIMIT_MEMLOCK of the QEMU process is below that, the container crashes
-immediately:
+With iGPU passthrough (vfio-pci 1002:13c0) QEMU pins roughly the whole guest RAM for DMA in the vfio
+container at start (~14 GB at `RAM_SIZE=16G`, ~5-6 GB at 6G). If the RLIMIT_MEMLOCK of the QEMU
+process is below that, the container crashes immediately:
 
 ```
 qemu-system-x86_64: -device vfio-pci,host=0000:7c:00.0: vfio 0000:7c:00.0: failed to setup
@@ -71,6 +90,103 @@ done
 After a reboot everything is picked up by itself (user@.service inherits infinity from the system
 default, sessions from pam). Check: `grep -i locked /proc/<pid qemu>/limits` → `unlimited`.
 
+## Resource footprint and tuning
+
+Measured on odin (host: 60 GiB RAM, Ryzen 9 9950X3D, 32 threads; numbers from `docker stats` and
+`/proc/<qemu pid>/status`):
+
+| Metric                            | `RAM_SIZE=16G` (old) | `RAM_SIZE=6G` (current) |
+| --------------------------------- | -------------------- | ----------------------- |
+| Container memory (`docker stats`) | 17.5 GB              | 6.7 GB                  |
+| QEMU `VmRSS` (resident, pinned)   | 16.1 GB              | 6.1 GB                  |
+| Host `used` (`free -h`)           | 27 GiB               | 21 GiB                  |
+
+CPU is **not** governed by `RAM_SIZE`: both instances peak at 125-140 % during boot and then decay
+to a run-dependent idle of 5-20 % while Windows finishes its own background work (Defender, Update
+checks over the proxied network, telemetry, pagefile resize after a RAM change — the 6G instance
+still showed growing block/network I/O 16 minutes after boot). The stable, reproducible part is the
+memory picture: the guest RAM is pinned, so `RAM_SIZE` maps 1:1 onto host RAM.
+
+Host-side verification after any change:
+
+```bash
+docker stats --no-stream --format '{{.Name}} mem={{.MemUsage}} cpu={{.CPUPerc}}' windows
+tr '\0' ' ' < "/proc/$(pgrep -f qemu-system-x86_64 | head -1)/cmdline" | grep -o -- '-m [0-9]*[GM]'   # -m 6G
+pid=$(pgrep -f qemu-system-x86_64 | head -1); grep -i locked "/proc/$pid/limits"                     # unlimited
+```
+
+### Why `RAM_SIZE` is the only memory lever
+
+The iGPU passthrough makes QEMU `MLOCK` the guest RAM for VFIO DMA, so it is resident and **cannot
+be reclaimed**. There is no balloon device in dockur's QEMU command line (`info balloon` →
+`No balloon device has been activated`), therefore ballooning, KSM and swap are all no-ops for this
+VM. Every GB removed from `RAM_SIZE` removes exactly one GB of host RAM. Windows 11 x64 needs 4 GB
+minimum; 6 GB leaves room for Edge and Windows Update. `4G` is the dockur default — `16G` was our
+override.
+
+Changing `RAM_SIZE` does not touch the installed Windows (no reinstall, no re-activation); the first
+boot after the change spends a few minutes resizing the pagefile, which is why CPU stays elevated
+for a while.
+
+### cgroup limits
+
+- `--memory 10g` — hard ceiling: 6 GB guest + ~1 GB QEMU overhead + page cache. Not hit in normal
+  operation; it only bounds a runaway.
+- `--cpus 2` — matches `CPU_CORES=2`, i.e. a no-op ceiling against QEMU thread oversubscription.
+- `--cpu-shares 512` — half the default weight, so the VM yields to the desktop under contention.
+- `--cpuset-cpus` does **not** work here: rootless podman would need the `cpuset` controller, but
+  `user@1000.service` delegates only `cpu io memory pids` (check:
+  `cat /sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/cgroup.controllers`). To keep the
+  VM off the 3D V-cache CCD, pin it at runtime instead (CCD 1 = CPUs 8-15,24-31; CCD 0 = 0-7,16-23):
+  ```bash
+  taskset -pc 8,9 "$(pgrep -f 'qemu-system-x86_64' | head -1)"
+  ```
+
+### Guest-side idle trimming
+
+Pull the VM down to work only for calibration (run once inside Windows, as admin):
+
+```cmd
+powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 70
+powercfg /setactive SCHEME_CURRENT
+powercfg -h off
+sc config SysMain start= disabled & sc stop SysMain
+sc config WSearch start= disabled & sc stop WSearch
+sc config DiagTrack start= disabled & sc config dmwappushservice start= disabled
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v EnableTransparency /t REG_DWORD /d 0 /f
+```
+
+`Set-MpPreference -DisableRealtimeMonitoring $true` removes Defender, a real idle CPU/IO consumer —
+acceptable only because this VM is a single-purpose GLM box. Keep the noVNC tab (port 8006) closed
+when unused: a connected client keeps the VNC encoder busy.
+
+### Cheapest option: leave it stopped
+
+Everyday monitor control runs on the host via `glm-osc`; the VM (and its ~6.7 GB resident) is only
+needed for GLM itself and calibration:
+
+```bash
+podman stop windows     # graceful ACPI shutdown, ~8s on a healthy guest
+podman start windows
+```
+
+### Shutdown: SIGTERM works, do not shorten `--stop-timeout`
+
+dockur traps SIGTERM, sends an ACPI `system_powerdown` through the QEMU monitor, then waits for the
+guest. `podman logs windows` shows the progress:
+
+```
+❯ Received SIGTERM signal, sending ACPI shutdown signal...
+❯ Waiting for Windows to shut down... (1/100)
+❯ Shutdown completed!
+```
+
+A healthy guest powers off in ~8 s. `--stop-timeout 120` is required: with the podman default (10 s)
+the container gets SIGKILLed mid-shutdown, leaving NTFS dirty. If the guest ever hangs at shutdown,
+the full timeout elapses and podman kills it anyway — the
+`Waiting for Windows to shut down… (n/100)` counter in the logs is what distinguishes a clean
+shutdown from a kill.
+
 ## Genelec GLM (Gnet Adapter) USB passthrough
 
 Device: `1781:0e39` (Bus 009). Three gotchas without which the “passthrough is not visible”:
@@ -91,10 +207,15 @@ Device: `1781:0e39` (Bus 009). Three gotchas without which the “passthrough is
 Passthrough check (deterministic, without a GUI):
 
 ```bash
-printf 'info usb\n' | timeout 5 docker exec -i windows nc -U /run/shm/monitor.sock
+printf 'info usb\n' | timeout 5 docker exec -i windows nc -N -U /run/shm/monitor.sock
 # Expected: Device 0.2, Port 2, Speed 12 Mb/s, Product Gnet Adapter
 # Bad:      Device 0.0, Port 2, Speed 1.5 Mb/s, Product USB Host Device
 ```
+
+Always pass `nc -N` (shutdown on EOF): plain `nc -U` never closes the connection, and the leftover
+clients pile up inside the container until the monitor stops answering at all (verified — five stale
+`nc` processes made every subsequent query time out). Clean up with
+`docker exec windows pkill -f 'nc .*monitor.sock'`.
 
 ## VM network: IP conflict and host alias
 
