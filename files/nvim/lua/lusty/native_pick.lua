@@ -10,6 +10,12 @@
 --   current marks the row with the group (buffers: the current buffer)
 --   marks   byte ranges for single-column rows
 -- label may contain multibyte text; cells are truncated by display width.
+--
+-- With opts.multi = true the picker binds C-Space: it marks the item under the
+-- cursor (keyed stably via opts.key, default item.path/bufnr/label, so marks
+-- survive refresh) and highlights it with LustyNativeMark. Enter then calls
+-- opts.on_open_many(items, mode) when provided, and C-d calls opts.on_delete
+-- for every marked item. opts.markable(item) can veto marking (e.g. dirs).
 
 local api = vim.api
 local ns = api.nvim_create_namespace('lusty_native_pick')
@@ -43,6 +49,12 @@ function Pick.new(opts)
   self.on_close = opts.on_close
   self.keys = opts.keys or {}
   self.single = opts.single_column == true
+  self.multi = opts.multi == true
+  self.on_open_many = opts.on_open_many
+  self.key_fn = opts.key
+  self.markable = opts.markable
+  self.marked = {} -- stable key -> item
+  self.mark_order = {} -- { { key = ..., item = ... }, ... } in mark order
   self.query = opts.query or ''
   self.arrow = '\u{f105}'
   self.selected = 0
@@ -53,6 +65,13 @@ function Pick.new(opts)
   self.closed = false
   self.orig_win = api.nvim_get_current_win()
   return self
+end
+
+function Pick:key_of(item)
+  if self.key_fn then
+    return self.key_fn(item)
+  end
+  return item.path or item.bufnr or item.label
 end
 
 function Pick:width()
@@ -203,6 +222,9 @@ function Pick:setup_keymaps()
   map('<C-o>', 'open_split')
   map('<C-v>', 'open_vsplit')
   map('<C-d>', 'delete')
+  if self.multi then
+    map('<C-Space>', 'mark')
+  end
   map('<Esc>', 'cancel')
   map('<C-c>', 'cancel')
   map('<C-g>', 'cancel')
@@ -302,6 +324,7 @@ function Pick:draw()
   end
   lines[h] = self.title .. ' ' .. self.arrow .. ' ' .. self.query
     .. (self.total > 0 and (' [' .. self.total .. ']') or '')
+    .. (#self.mark_order > 0 and (' (' .. #self.mark_order .. ' marked)') or '')
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
@@ -336,6 +359,11 @@ function Pick:draw()
         )
       end
     end
+    if self.multi and self.marked[self:key_of(cell.item)] then
+      api.nvim_buf_add_highlight(
+        self.buf, ns, 'LustyNativeMark', cell.line - 1, cell.start_col, cell.start_col + cell.label_w
+      )
+    end
   end
   if self.total > 0 then
     local sel_row = math.floor((self.selected - self.offset) / cols)
@@ -363,6 +391,9 @@ function Pick:paint_prompt(h)
   add(self.query, 'LustyPromptQuery')
   if self.total > 0 then
     add(' [' .. self.total .. ']', 'LustyPromptPath')
+  end
+  if #self.mark_order > 0 then
+    add(' (' .. #self.mark_order .. ' marked)', 'LustyPromptPath')
   end
   for _, seg in ipairs(segs) do
     if seg[3] then
@@ -407,6 +438,15 @@ function Pick:handle(action)
     local item = self.items[self.selected + 1]
     if item then
       local mode = action == 'enter' and 'enter' or action == 'open_tab' and 'tab' or action == 'open_split' and 'split' or 'vsplit'
+      if self.multi and #self.mark_order > 0 and self.on_open_many then
+        local items = {}
+        for _, m in ipairs(self.mark_order) do
+          items[#items + 1] = m.item
+        end
+        self:close()
+        pcall(self.on_open_many, items, mode)
+        return
+      end
       self:close()
       if self.on_open then
         pcall(self.on_open, item, mode)
@@ -414,7 +454,37 @@ function Pick:handle(action)
     end
     return
   end
+  if action == 'mark' then
+    local item = self.items[self.selected + 1]
+    if item and (not self.markable or self.markable(item)) then
+      local key = self:key_of(item)
+      if self.marked[key] then
+        self.marked[key] = nil
+        for i, m in ipairs(self.mark_order) do
+          if m.key == key then
+            table.remove(self.mark_order, i)
+            break
+          end
+        end
+      else
+        self.marked[key] = item
+        self.mark_order[#self.mark_order + 1] = { key = key, item = item }
+      end
+      self:draw()
+    end
+    return
+  end
   if action == 'delete' then
+    if self.multi and #self.mark_order > 0 and self.on_delete then
+      -- Delete the whole marked set in one go, then drop the stale marks.
+      for _, m in ipairs(self.mark_order) do
+        pcall(self.on_delete, m.item)
+      end
+      self.marked = {}
+      self.mark_order = {}
+      self:refresh()
+      return
+    end
     local item = self.items[self.selected + 1]
     if item and self.on_delete then
       local keep = pcall(self.on_delete, item)
