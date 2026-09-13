@@ -15,37 +15,9 @@ in
         environment.systemPackages = [ pkgs.khal ]; # CLI calendar application
       }
       (neg.mkHomeFiles {
-        ".config/khal/config".text = ''
-          [calendars]
-          [[calendars_discovery]]
-          path = ~/.config/vdirsyncer/calendars/
-          type = discover
-
-
-          [locale]
-          timeformat = %H:%M
-          dateformat = %d.%m.%Y
-          longdateformat = %d.%m.%Y %H:%M
-          datetimeformat = %d.%m.%Y %H:%M
-          longdatetimeformat = %d.%m.%Y %H:%M
-          firstweekday = 0
-          default_timezone = ${config.time.timeZone}
-
-          [default]
-          timedelta = 30m
-          show_all_days = True
-
-          [keybindings]
-          search = /
-          external_edit = e
-          duplicate = d
-          save = ctrl s
-
-          [view]
-          agenda_event_format = {calendar-color}{cancelled}{start-end-time-style} {title}{repeat-symbol}{reset}
-          agenda_day_format = {bold}{name} · {date-long}{reset}
-          monthdisplay = firstfullweek
-        '';
+        ".config/khal/config".text =
+          builtins.replaceStrings [ "@TIMEZONE@" ] [ "${config.time.timeZone}" ]
+            (builtins.readFile (config.lib.neg.path "files/config/khal/config"));
       })
     ]
   );

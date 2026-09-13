@@ -277,39 +277,9 @@
 
   # Host-specific hardware tools
   # Bakecore udev rules for Dygma keyboards
-  services.udev.extraRules = ''
-    # Dygma Raise
-    SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0105", MODE="0666"
-    # Dygma Defy
-    SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0108", MODE="0666"
-
-    # Genelec GLM USB adapter (Gnet Adapter): 0666 so the dockur Windows VM's
-    # QEMU (user-namespaced container, root -> host nobody) can open the node
-    # for usb-host passthrough. Default 0644 root:root blocks it with EPERM.
-    SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0e39", MODE="0666"
-    # Bind usbhid to the GLM adapter so a /dev/hidraw node exists (genlc's
-    # hidraw backend needs it; the adapter does not auto-bind to usbhid).
-    # NB: no DEVTYPE key — udevadm verify rejects it as an invalid match key.
-    # ATTRS{idVendor}/ATTRS{idProduct} match the usb_interface event via its
-    # parent chain; the device event's bind attempt is a harmless no-op.
-    ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="1781", ATTRS{idProduct}=="0e39", RUN+="/bin/sh -c 'echo %k > /sys/bus/usb/drivers/usbhid/bind'"
-
-    # Speed up NVMe boot: skip blkid probing for ZFS member partitions.
-    # ZFS has its own label system — udev's blkid scan is wasted time
-    # (saves ~1-2s per ZFS disk on boot).
-    SUBSYSTEM=="block", ENV{ID_PART_ENTRY_TYPE}=="6a898cc3-1dd2-11b2-99a6-080020736631", \
-      ENV{ID_FS_TYPE}=="zfs_member", OPTIONS+="nowatch"
-
-    # Disable writeback throttling on NVMe — conflicts with ZFS's own I/O scheduler.
-    # WBT adds latency jitter that ZFS doesn't need (ZFS schedules I/O internally).
-    ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
-
-    # vfio group nodes (iGPU 7c:00.0/7c:00.1 → /dev/vfio/30,31) must be
-    # world-accessible for the userns'd dockur QEMU (root -> host nobody),
-    # same rationale as the GLM USB 0666 rule above.
-    KERNEL=="vfio", MODE="0666"
-    SUBSYSTEM=="vfio", MODE="0666"
-  '';
+  services.udev.extraRules = builtins.readFile (
+    config.lib.neg.path "files/hardware/udev/odin-host.rules"
+  );
   environment.systemPackages = [
     (pkgs.writeShellScriptBin "kexec-rebuild" ''
       set -eu
