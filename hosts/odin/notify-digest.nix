@@ -5,14 +5,13 @@
 # secrets/telegram.sops.yaml. api.telegram.org is only reachable through the
 # user sing-box socks proxy (127.0.0.1:10808), so the send retries a few times.
 #
-# Everything is gated on secrets/telegram.sops.yaml existing; without the secret
-# file the whole unit stays disabled (same pattern as the other Telegram units
-# in hosts/odin/services.nix).
+# Everything is gated on config.odin.telegram.enable (see
+# hosts/odin/telegram.nix); without the secret file the whole unit stays
+# disabled.
 {
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 
@@ -20,8 +19,7 @@ let
   telegramDigestScript = pkgs.writeShellApplication {
     name = "telegram-digest";
     runtimeInputs = [
-      pkgs.curl # HTTP(S) client for the Telegram Bot API
-      pkgs.coreutils # date, seq, sleep, cat, df
+      pkgs.coreutils # date, cat, df for the digest body
       pkgs.inetutils # hostname of this machine
       pkgs.systemd # systemctl --failed for the failed-units check
       pkgs.zfs # zpool list for pool fill/health
@@ -29,8 +27,7 @@ let
     text = ''
       set -euo pipefail
 
-      TOKEN="$(cat ${config.sops.secrets."telegram/bot-token".path})"
-      CHAT_ID="$(cat ${config.sops.secrets."telegram/chat-id".path})"
+      SEND=${config.odin.telegram.sender}/bin/telegram-send
 
       nl=$'\n'
 
@@ -94,36 +91,13 @@ let
         msg="$msg$nl  (systemctl недоступен)"
       fi
 
-      # --- send as a single Telegram message, retrying for a while ------------
-      for _ in $(seq 1 12); do
-        if curl -sf -o /dev/null \
-          --proxy socks5h://127.0.0.1:10808 \
-          --data-urlencode "chat_id=$CHAT_ID" \
-          --data-urlencode "text=$msg" \
-          "https://api.telegram.org/bot$TOKEN/sendMessage"; then
-          exit 0
-        fi
-        sleep 5
-      done
-      echo "telegram-digest: could not deliver the digest after 12 attempts" >&2
-      exit 1
+      # --- send as a single Telegram message (sender retries ~1 min) --------
+      # The digest header carries its own timestamp; keep the plain format.
+      TELEGRAM_SEND_PLAIN=1 "$SEND" "$msg"
     '';
   };
 in
-lib.mkIf (builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml")) {
-  sops.secrets."telegram/bot-token" = {
-    sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-    key = "bot-token";
-    owner = "root";
-    mode = "0400";
-  };
-  sops.secrets."telegram/chat-id" = {
-    sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-    key = "chat-id";
-    owner = "root";
-    mode = "0400";
-  };
-
+lib.mkIf config.odin.telegram.enable {
   systemd.services."telegram-digest" = {
     description = "Send the daily 08:00 Telegram morning digest";
     after = [ "network-online.target" ];

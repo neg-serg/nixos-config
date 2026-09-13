@@ -2,28 +2,26 @@
   lib,
   config,
   pkgs,
-  inputs,
   ...
 }:
 # Morning Telegram calendar reminder. Each day at 07:30 (Europe/Moscow) the
 # oneshot unit lists the local user (neg) khal calendar events for "today";
 # if there are any, it posts a single "📅 Сегодня:" message to the Telegram
-# chat from secrets/telegram.sops.yaml, otherwise it exits silently.
+# chat from secrets/telegram.sops.yaml via the shared sender in
+# hosts/odin/telegram.nix, otherwise it exits silently.
 #
-# Auto-imported from hosts/odin/*.nix. Self-contained: does not touch the
-# shared telegramSendScript in services.nix (re-implements the socks-proxy
-# curl sender so this file can be added/removed independently).
+# Auto-imported from hosts/odin/*.nix.
 #
-# Gating (same as the rest of the Telegram alert stack):
+# Gating:
 #   - khal is only present when features.mail.enable is set (see
 #     modules/user/nix-maid/sys/khal.nix);
-#   - the whole stack is inert without secrets/telegram.sops.yaml.
+#   - the whole stack is inert without secrets/telegram.sops.yaml
+#     (config.odin.telegram.enable).
 let
   mailOn = config.features.mail.enable or false;
-  telegramSecrets = builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml");
 in
 {
-  config = lib.mkIf (mailOn && telegramSecrets) (
+  config = lib.mkIf (mailOn && config.odin.telegram.enable) (
     let
       # Runs khal as the user that owns the calendars (neg) and posts a
       # Telegram message through the sing-box socks proxy when today has
@@ -32,9 +30,8 @@ in
       script = pkgs.writeShellApplication {
         name = "telegram-calendar-reminder";
         runtimeInputs = [
-          pkgs.curl # HTTP(S) client for the Telegram Bot API (socks proxy)
           pkgs.python3 # event parsing / JSON handling
-          pkgs.coreutils # runuser environment / sleep retries
+          pkgs.coreutils # runuser environment
         ];
         text = ''
           # khal/config discovered config, calendar files and cache live in the
@@ -45,13 +42,11 @@ in
           import os
           import subprocess
           import sys
-          import time
 
           KHAL = "/run/current-system/sw/bin/khal"
           RUNUSER = "/run/current-system/sw/bin/runuser"
           KHAL_CONFIG = "/home/neg/.config/khal/config"
-          BOT_TOKEN_FILE = "${config.sops.secrets."telegram/bot-token".path}"
-          CHAT_ID_FILE = "${config.sops.secrets."telegram/chat-id".path}"
+          SENDER = "${config.odin.telegram.sender}/bin/telegram-send"
 
           # allow a test harness to substitute the khal invocation (e.g. a
           # scratch config); if unset, root runs khal via runuser as neg.
@@ -124,30 +119,13 @@ in
                   return 0  # no events today: do nothing
 
               msg = "\U0001F4C5 Сегодня:\n" + "\n".join(lines)
-              token = open(BOT_TOKEN_FILE).read().strip()
-              chat_id = open(CHAT_ID_FILE).read().strip()
-              api_url = "https://api.telegram.org/bot%s/sendMessage" % token
-              # api.telegram.org is only reachable via the sing-box socks proxy
-              # (127.0.0.1:10808) that starts at login; retry 5s x 12.
-              ok = False
-              for _ in range(12):
-                  try:
-                      proc = subprocess.run(
-                          ["/run/current-system/sw/bin/curl", "-sf", "-o", "/dev/null",
-                           "--proxy", "socks5h://127.0.0.1:10808",
-                           "--data-urlencode", "chat_id=%s" % chat_id,
-                           "--data-urlencode", "text=%s" % msg,
-                           api_url],
-                          timeout=30,
-                      )
-                      if proc.returncode == 0:
-                          ok = True
-                          break
-                  except Exception:  # noqa: BLE001 - keep retrying
-                      pass
-                  time.sleep(5)
-              if not ok:
-                  # Do not fail the unit if Telegram is unreachable.
+              # The shared sender retries through the sing-box socks proxy;
+              # never fail the unit if Telegram is unreachable.
+              try:
+                  proc = subprocess.run([SENDER, msg], timeout=90)
+                  if proc.returncode != 0:
+                      raise OSError("sender exited with %s" % proc.returncode)
+              except Exception:  # noqa: BLE001
                   sys.stderr.write(
                       "telegram-calendar-reminder: could not deliver after retries\n")
               return 0
@@ -159,22 +137,6 @@ in
       };
     in
     lib.mkMerge [
-      {
-        # Telegram credentials, mirroring services.nix so this unit is
-        # independent of that file's block.
-        sops.secrets."telegram/bot-token" = {
-          sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-          key = "bot-token";
-          owner = "root";
-          mode = "0400";
-        };
-        sops.secrets."telegram/chat-id" = {
-          sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-          key = "chat-id";
-          owner = "root";
-          mode = "0400";
-        };
-      }
       {
         systemd.services."telegram-calendar-reminder" = {
           description = "Send today's khal calendar events to Telegram in the morning";
