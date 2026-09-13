@@ -199,6 +199,30 @@ in
         touch $out
       '';
 
+  # ── nix-maid app directory guard ───────────────────────────────────
+  # modules/user/nix-maid/apps/default.nix auto-imports every sibling directory
+  # as a module and keeps an explicit filter list for the data and plugin-bundle
+  # directories. A plugin directory missing from that list breaks the whole
+  # system *evaluation*:
+  #   error: Path '.../apps/<name>/default.nix' does not exist in Git repository
+  # which reads like a flake/git problem and only surfaces during a rebuild.
+  # The guard makes the rule fast and local, and names the line to add.
+
+  "nix-maid-app-dirs-guard" =
+    pkgs.runCommand "check-nix-maid-app-dirs"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.gnugrep
+          pkgs.gnused
+        ];
+      }
+      ''
+        bash ${../scripts/dev/check-nix-maid-app-dirs.sh} ${../modules/user/nix-maid/apps}
+        touch $out
+      '';
+
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
   # via mkTestHost (threaded from flake.nix; stripped from the
