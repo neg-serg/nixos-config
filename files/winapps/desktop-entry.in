@@ -1,0 +1,13 @@
+cat > "$out/share/applications/winapps-@APPNAME@.desktop" << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=@NAME@
+GenericName=@FULLNAME@
+Comment=@FULLNAME_V2@ (Windows via RDP)
+Icon=@APPDIR@/@APPNAME_V2@/icon.svg
+Exec=@APPNAME_V3@/bin/winapps-@APPNAME_V4@ %F
+Categories=@CATEGORIES@
+MimeType=@MIMETYPES@
+Terminal=false
+NoDisplay=false
+DESKTOP

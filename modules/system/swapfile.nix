@@ -49,27 +49,16 @@ in
       };
       before = [ "swap.target" ]; # must run before any swap units
       wantedBy = [ "swap.target" ]; # run automatically during boot
-      script = ''
-        set -euo pipefail
-        P=${lib.escapeShellArg cfg.path}
-        S=${toString cfg.sizeGiB}
-        if [ ! -f "$P" ]; then
-          echo "[swapfile-ensure] Creating swapfile $P (${toString cfg.sizeGiB}G)"
-          umask 077
-          mkdir -p "$(dirname "$P")"
-          if command -v fallocate >/dev/null 2>&1; then
-            fallocate -l "${toString cfg.sizeGiB}G" "$P"
-          else
-            # Fallback: allocate by writing zeros (slower but portable)
-            dd if=/dev/zero of="$P" bs=1G count="$S" status=none
-          fi
-          chmod 600 "$P"
-          chown root:root "$P"
-          mkswap -f "$P"
-        else
-          echo "[swapfile-ensure] Swapfile already exists: $P (skipping)"
-        fi
-      '';
+      script =
+        builtins.replaceStrings
+          [ "@PATH@" "@SIZEGIB@" "@SIZEGIB_V2@" "@SIZEGIB_V3@" ]
+          [
+            "${lib.escapeShellArg cfg.path}"
+            "${toString cfg.sizeGiB}"
+            "${toString cfg.sizeGiB}"
+            "${toString cfg.sizeGiB}"
+          ]
+          (builtins.readFile ./swapfile-ensure.sh);
     };
   };
 }
