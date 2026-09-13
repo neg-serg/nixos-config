@@ -344,49 +344,9 @@ lib.mkMerge [
 
     ".config/swayimg".source = config.lib.neg.path "files/gui/swayimg";
 
-    ".config/ncpamixer.conf".text = ''
-      theme = "c0r73x"
-
-      [theme-c0r73x]
-      bar-start = "|"
-      bar-normal = "."
-      bar-end = "|"
-      color-state = "blue"
-
-      [settings]
-      appearance = "auto"
-      mouse-wheel-step = 1
-
-      [keybindings]
-      up = "k"
-      down = "j"
-      mute-toggle = "m"
-      tab-next = "n"
-      tab-prev = "p"
-      volume-up = "+"
-      volume-down = "-"
-      volume-up-1 = "K"
-      volume-down-1 = "J"
-      volume-up-5 = "5"
-      volume-down-5 = "6"
-      volume-set-0 = "0"
-      volume-set-10 = "1"
-      volume-set-20 = "2"
-      volume-set-30 = "3"
-      volume-set-40 = "4"
-      volume-set-50 = "5"
-      volume-set-60 = "6"
-      volume-set-70 = "7"
-      volume-set-80 = "8"
-      volume-set-90 = "9"
-      volume-set-100 = "0"
-      set-default = "d"
-      tab-playback = "F1"
-      tab-recording = "F2"
-      tab-output = "F3"
-      tab-input = "F4"
-      tab-config = "F5"
-    '';
+    ".config/ncpamixer.conf".text = builtins.readFile (
+      config.lib.neg.path "files/media/ncpamixer.conf"
+    );
 
     # Spicetify Config (partial management)
     ".config/spicetify/config-xpui.ini" = lib.mkIf (config.lib.neg.enabled "media.audio.spicetify") {
