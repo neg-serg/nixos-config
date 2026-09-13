@@ -3,8 +3,8 @@
 # (A) telegram-vpn-watch (oneshot + timer, every 10 min): watches the on-demand
 #     WireGuard tunnel (wg-quick-vpn-odin) and the public egress IP. Sends a
 #     Telegram message on a down->up transition ("VPN поднят") and on a public
-#     IP change while the tunnel stays up. Gated on the telegram sops file
-#     existing (same pattern as the rest of services.nix).
+#     IP change while the tunnel stays up. Gated on config.odin.telegram.enable
+#     (see hosts/odin/telegram.nix).
 # (B) ntfy-system-stale (oneshot + timer, weekly Monday 10:00): reminds to run
 #     `nix flake update` when the last commit that touched flake.lock is older
 #     than 14 days. Posts an info/low ntfy message to the local server topic
@@ -14,7 +14,6 @@
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 let
@@ -29,40 +28,24 @@ let
   vpnWatchScript = pkgs.writeShellApplication {
     name = "telegram-vpn-watch";
     runtimeInputs = [
-      pkgs.curl # public-IP fetch + Telegram Bot API delivery
+      pkgs.curl # public-IP fetch (delivery goes through the shared sender)
       pkgs.coreutils # cat, rm, sleep for retry loop
       pkgs.systemd # systemctl tunnel state probe
     ];
     text = ''
       set -euo pipefail
 
-      TOKEN_FILE=${config.sops.secrets."telegram/bot-token".path}
-      CHAT_FILE=${config.sops.secrets."telegram/chat-id".path}
-
       STATE=/var/lib/telegram-vpn-watch
       IP_FILE="$STATE/ip.txt"
       DOWN_MARKER="$STATE/down"
       SYSCTL=${pkgs.systemd}/bin/systemctl
       CURL=${pkgs.curl}/bin/curl
+      SEND=${config.odin.telegram.sender}/bin/telegram-send
 
-      # Telegram is only reachable via the socks proxy; retry up to ~1 min.
+      # Delivery failure is not a unit failure; the shared sender retries
+      # ~1 min through the socks proxy on its own.
       send() { # $1 = message text
-        local token chat msg
-        token=$(cat "$TOKEN_FILE")
-        chat=$(cat "$CHAT_FILE")
-        msg="$1"
-        for _ in $(seq 1 12); do
-          if $CURL -sf -o /dev/null \
-            --proxy ${socksProxy} \
-            --data-urlencode "chat_id=$chat" \
-            --data-urlencode "text=$msg" \
-            "https://api.telegram.org/bot$token/sendMessage"; then
-            return 0
-          fi
-          sleep 5
-        done
-        echo "telegram-vpn-watch: could not deliver message" >&2
-        return 0 # delivery failure is not a unit failure
+        "$SEND" "$1" || true
       }
 
       # 1. Down (stopped manually / inactive) is a normal action here — record
@@ -155,20 +138,7 @@ let
 in
 mkMerge [
   # ---- Part A: telegram-vpn-watch (gated on the telegram sops file) ----
-  (mkIf (builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml")) {
-    sops.secrets."telegram/bot-token" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-      key = "bot-token";
-      owner = "root";
-      mode = "0400";
-    };
-    sops.secrets."telegram/chat-id" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-      key = "chat-id";
-      owner = "root";
-      mode = "0400";
-    };
-
+  (mkIf config.odin.telegram.enable {
     systemd.services."telegram-vpn-watch" = {
       description = "Notify Telegram on WireGuard up/public-IP changes";
       after = [ "network-online.target" ];

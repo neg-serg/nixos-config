@@ -2,7 +2,6 @@
   lib,
   config,
   pkgs,
-  inputs,
   ...
 }:
 # ZFS pool health + scrub-completion Telegram watcher for odin.
@@ -14,8 +13,8 @@
 #   - problems appeared           -> "⚠️ ZFS <pool>: <problems>"
 #   - problems cleared            -> "✅ ZFS <pool>: recovered"
 #   - a NEW monthly scrub finish  -> "🧹 ZFS scrub <pool> закончен: <N> ..."
-# Telegram is only reachable via the local socks proxy (sing-box on
-# 127.0.0.1:10808), matching the rest of hosts/odin/services.nix.
+# Telegram delivery goes through the shared sender (hosts/odin/telegram.nix),
+# which owns the sing-box socks-proxy retry.
 let
   # State keeps, per pool, the last observed health (ok/problems) and the last
   # completed scrub date+errors so the script only alerts on real changes.
@@ -28,16 +27,11 @@ let
     import re
     import subprocess
     import sys
-    import time
 
     STATE_FILE = pathlib.Path("${stateFile}")
     STATE_DIR = pathlib.Path("${stateDir}")
     ZPOOL = "/run/current-system/sw/bin/zpool"
-    CURL = "${pkgs.curl}/bin/curl"
-    PROXY = "socks5h://127.0.0.1:10808"
-    API_BASE = "https://api.telegram.org/bot{0}/sendMessage"
-    TOKEN_FILE = "${config.sops.secrets."telegram/bot-token".path}"
-    CHAT_ID_FILE = "${config.sops.secrets."telegram/chat-id".path}"
+    SENDER = "${config.odin.telegram.sender}/bin/telegram-send"
 
     # vdev states that indicate a fault even when the error counters are 0.
     FAULT_STATES = {"DEGRADED", "FAULTED", "OFFLINE", "UNAVAIL", "REMOVED"}
@@ -136,31 +130,12 @@ let
             return {"pools": {}}
 
     def send_telegram(text):
-        token = open(TOKEN_FILE).read().strip()
-        chat_id = open(CHAT_ID_FILE).read().strip()
-        url = API_BASE.format(token)
-        for _ in range(12):
-            proc = subprocess.run(
-                [
-                    CURL,
-                    "-s",
-                    "-o",
-                    "/dev/null",
-                    "--proxy",
-                    PROXY,
-                    "--data-urlencode",
-                    "chat_id={0}".format(chat_id),
-                    "--data-urlencode",
-                    "text={0}".format(text),
-                    url,
-                ],
-                check=False,
-            )
-            if proc.returncode == 0:
-                return True
-            time.sleep(5)
-        print("zfs-watch: telegram delivery failed for: {0}".format(text), file=sys.stderr)
-        return False
+        # The shared sender (hosts/odin/telegram.nix) owns the socks-proxy retry.
+        proc = subprocess.run([SENDER, text], check=False)
+        if proc.returncode != 0:
+            print("zfs-watch: telegram delivery failed for: {0}".format(text), file=sys.stderr)
+            return False
+        return True
 
     def main():
         STATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -229,22 +204,8 @@ let
     sys.exit(0)
   '';
 in
-# Mirror the services.nix telegram stack: only active when the telegram sops
-# file exists; root-owned secrets pulled from secrets/telegram.sops.yaml.
-(lib.mkIf (builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml")) {
-  sops.secrets."telegram/bot-token" = {
-    sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-    key = "bot-token";
-    owner = "root";
-    mode = "0400";
-  };
-  sops.secrets."telegram/chat-id" = {
-    sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-    key = "chat-id";
-    owner = "root";
-    mode = "0400";
-  };
-
+# Telegram is gated on config.odin.telegram.enable (see hosts/odin/telegram.nix).
+(lib.mkIf config.odin.telegram.enable {
   systemd.services."telegram-zfs-watch" = {
     description = "Watch ZFS pool health and scrub completions, alert to Telegram";
     after = [ "network-online.target" ];

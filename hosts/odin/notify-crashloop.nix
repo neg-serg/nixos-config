@@ -2,7 +2,6 @@
   lib,
   config,
   pkgs,
-  inputs,
   ...
 }:
 let
@@ -10,9 +9,8 @@ let
   # that auto-restart (Restart=always/on-failure/on-abnormal) and whose
   # NRestarts counter jumped by >= CRASH_THRESHOLD since the previous run,
   # then posts one Telegram alert per affected unit with a per-unit cooldown
-  # so it can never spam. api.telegram.org is only reachable through the user
-  # sing-box socks proxy (127.0.0.1:10808), which starts at login, so a send
-  # retries 5s x SEND_ATTEMPTS (matches the telegramSendScript convention).
+  # so it can never spam. Delivery goes through the shared sender in
+  # hosts/odin/telegram.nix (socks-proxy retry lives there).
   crashLoopScript = pkgs.writeText "telegram-crashloop.py" ''
     import json
     import pathlib
@@ -22,11 +20,7 @@ let
 
     STATE_DIR = pathlib.Path("/var/lib/telegram-crashloop")
     STATE_FILE = STATE_DIR / "state.json"
-    TOKEN_FILE = "${config.sops.secrets."telegram/bot-token".path}"
-    CHAT_ID_FILE = "${config.sops.secrets."telegram/chat-id".path}"
-    CURL = "/run/current-system/sw/bin/curl"
-    PROXY = "socks5h://127.0.0.1:10808"
-    API = "https://api.telegram.org/bot{0}/sendMessage"
+    SENDER = "${config.odin.telegram.sender}/bin/telegram-send"
 
     # A unit is deemed to be crash-looping when NRestarts grew by at least
     # this many within one ~5 min scan window, which is well above any
@@ -34,7 +28,6 @@ let
     CRASH_THRESHOLD = 6
     # Do not re-alert the same unit more than once per hour.
     COOLDOWN_SECONDS = 60 * 60
-    SEND_ATTEMPTS = 12
 
     # Focus only on units systemd is configured to auto-restart: a unit with
     # Restart=no can never accumulate NRestarts while crash-looping.
@@ -102,39 +95,16 @@ let
 
 
     def send_alert(text):
-        # Retry loop 5s x SEND_ATTEMPTS through the socks proxy. Returns True
-        # only on an actual successful delivery.
+        # The shared sender (hosts/odin/telegram.nix) owns the socks-proxy
+        # retry; return True only on an actual successful delivery.
         try:
-            token = open(TOKEN_FILE).read().strip()
-            chat_id = open(CHAT_ID_FILE).read().strip()
+            proc = subprocess.run([SENDER, text], check=False)
         except OSError as exc:
-            print("crashloop: cannot read telegram secrets: {0}".format(exc), file=sys.stderr)
+            print("crashloop: sender error: {0}".format(exc), file=sys.stderr)
             return False
-        for _ in range(SEND_ATTEMPTS):
-            try:
-                proc = subprocess.run(
-                    [
-                        CURL,
-                        "-s",
-                        "-o",
-                        "/dev/null",
-                        "--proxy",
-                        PROXY,
-                        "--data-urlencode",
-                        "chat_id={0}".format(chat_id),
-                        "--data-urlencode",
-                        "text={0}".format(text),
-                        API.format(token),
-                    ],
-                    check=False,
-                )
-            except OSError as exc:
-                print("crashloop: curl error: {0}".format(exc), file=sys.stderr)
-                return False
-            if proc.returncode == 0:
-                return True
-            time.sleep(5)
-        print("crashloop: could not deliver alert after {0} attempts".format(SEND_ATTEMPTS), file=sys.stderr)
+        if proc.returncode == 0:
+            return True
+        print("crashloop: could not deliver alert", file=sys.stderr)
         return False
 
 
@@ -210,22 +180,9 @@ let
   '';
 in
 {
-  # Telegram crash-loop scanner for systemd services. Gated on the telegram
-  # secret existing, exactly like the rest of the telegram stack in services.nix.
-  config = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml")) {
-    sops.secrets."telegram/bot-token" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-      key = "bot-token";
-      owner = "root";
-      mode = "0400";
-    };
-    sops.secrets."telegram/chat-id" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
-      key = "chat-id";
-      owner = "root";
-      mode = "0400";
-    };
-
+  # Telegram crash-loop scanner for systemd services. Gated on
+  # config.odin.telegram.enable (see hosts/odin/telegram.nix).
+  config = lib.mkIf config.odin.telegram.enable {
     systemd.services."telegram-crashloop-scan" = {
       description = "Scan for crash-looping systemd services and alert on Telegram";
       after = [ "network-online.target" ];
