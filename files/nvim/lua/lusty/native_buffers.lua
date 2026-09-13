@@ -1,8 +1,8 @@
 -- Native buffer explorer: the Lusty buffer explorer (MRU order, current
 -- buffer last, modified [+] marker, extension colours) rendered in the
--- native bottom float instead of the Lua table UI. C-d unloads the
--- selected buffer, Enter/Tab switch to it, C-t/C-o/C-v open it in a
--- tab/split/vsplit.
+-- native bottom float instead of the Lua table UI. C-d unloads the selected
+-- buffer, Enter/Tab switch to it, C-t/C-o/C-v open it in a tab/split/vsplit.
+-- C-Space marks buffers (multi-select): C-d then unloads the whole marked set.
 
 local buffers = require('lusty.buffer_stack')
 local pick = require('lusty.native_pick')
@@ -103,6 +103,7 @@ function M.run()
   pick.pick({
     title = 'Buffers',
     query = previous_input,
+    multi = true,
     source = make_source(holder),
     on_open = function(item, mode)
       running = false

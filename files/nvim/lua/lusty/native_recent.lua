@@ -170,6 +170,37 @@ function M.run()
     title = title,
     query = previous_input,
     source = make_source(snap),
+    multi = true,
+    -- Directories are not markable: they cannot be opened in bulk.
+    markable = function(it)
+      return not it.is_dir
+    end,
+    -- Enter with marks opens every marked file: the first via edit, the rest
+    -- as buffers (same semantics as the filesystem float).
+    on_open_many = function(items, m)
+      running = false
+      local files = {}
+      for _, it in ipairs(items) do
+        if not it.is_dir then
+          files[#files + 1] = it
+        end
+      end
+      if #files == 0 then
+        return
+      end
+      local cmd = m == 'enter' and 'edit'
+        or m == 'tab' and 'tabedit'
+        or m == 'split' and 'split'
+        or 'vsplit'
+      for i, it in ipairs(files) do
+        frecency.record(it.path)
+        if cmd == 'edit' and i > 1 then
+          vim.cmd('silent badd ' .. vim.fn.fnameescape(it.path))
+        else
+          vim.cmd('silent ' .. cmd .. ' ' .. vim.fn.fnameescape(it.path))
+        end
+      end
+    end,
     keys = {
       ['<C-r>'] = function(p2)
         -- Toggle the MRU source between files and dirs in place.
