@@ -15,6 +15,11 @@ if vim.fn.executable('lusty') ~= 1 then
   return
 end
 
+-- Isolate the frecency journal: the client ships F records and a stale real
+-- journal would reorder the empty query.
+require('lusty.frecency').set_state_file('/tmp/lusty_fs_smoke_frec.json')
+pcall(vim.fn.delete, '/tmp/lusty_fs_smoke_frec.json')
+
 local function assert_eq(got, want, msg)
   if got ~= want then
     error((msg or 'assert') .. ': got ' .. tostring(got) .. ' want ' .. tostring(want))

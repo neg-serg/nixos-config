@@ -9,6 +9,9 @@
 --                             sort: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
 --   M <mask> <index>...     -> "K <index> <meta>" per index + "E" (long view;
 --                             mask bits 1 perm, 2 user, 4 size, 8 time)
+--   F <score> <path>        frecency record, no reply (the client sends its
+--                             journal once; the empty query then leads with the
+--                             higher-scored paths inside each depth)
 -- kind: d (dir) / f (file) / l (link). C-l toggles the long view, C-y cycles
 -- the sort order, C-Space marks files (multi-select: Enter opens the marked
 -- set, the first via edit and the rest via badd).
@@ -107,6 +110,12 @@ local function unescape(s, keep_controls)
   return table.concat(out)
 end
 
+--- Escape a path for the client-to-server direction (`F` frecency records);
+--- reverse of `unescape` with the same three sequences.
+local function escape(s)
+  return (s:gsub('\\', '\\\\'):gsub('\t', '\\t'):gsub('\n', '\\n'))
+end
+
 -- serve Q sort token: 0 name, 1 ext, 2 size desc, 3 time desc (eza-style).
 local SORT_LABELS = { 'name', 'ext', 'size', 'time' }
 
@@ -147,6 +156,27 @@ end
 
 local function reverse_enabled()
   return option_enabled('LUSTY_REVERSE', 'LustyExplorerReverse')
+end
+
+--- Frecency ordering is on unless explicitly disabled: the empty-query listing
+--- then leads with the files the user opens most (g:LustyExplorerFrecency = 0
+--- or LUSTY_FRECENCY=0 turns it off).
+local function frecency_enabled()
+  local e = os.getenv('LUSTY_FRECENCY')
+  if e ~= nil and e ~= '' then
+    return e == '1' or e == 'true'
+  end
+  local gv = vim.g.LustyExplorerFrecency
+  if gv == nil then
+    return true
+  end
+  if type(gv) == 'boolean' then
+    return gv
+  end
+  if type(gv) == 'number' then
+    return gv ~= 0
+  end
+  return not (gv == '0' or gv == 'false')
 end
 
 local function icon_for(item)
@@ -456,6 +486,25 @@ function Picker:request(parts, handler)
   end
   self.handlers[#self.handlers + 1] = handler
   vim.fn.chansend(self.job, table.concat(parts, '\t') .. '\n')
+end
+
+--- Ship the frecency journal once, before the first Q, as fire-and-forget
+--- `F <score> <path>` records. The backend then leads the empty query with the
+--- paths the user opens most; an old backend simply ignores the unknown lines.
+function Picker:send_frecency()
+  if not frecency_enabled() then
+    return
+  end
+  local records = {}
+  for _, path in ipairs(frecency.paths()) do
+    local score = frecency.score(path)
+    if score and score > 0 then
+      records[#records + 1] = 'F\t' .. string.format('%.6f', score) .. '\t' .. escape(path)
+    end
+  end
+  if #records > 0 then
+    vim.fn.chansend(self.job, table.concat(records, '\n') .. '\n')
+  end
 end
 
 function Picker:rerank()
@@ -1239,6 +1288,7 @@ function Picker:start_backend()
       end)
     end,
   })
+  self:send_frecency()
   self:rerank()
 end
 
