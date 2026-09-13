@@ -48,6 +48,19 @@ MARKUP = json.dumps(
 )
 TEXT = "💊 12:00 — пора принять таблетку. Нажми «Отметить», когда принял."
 
+
+def curl_url_config(url):
+    """Render a curl config that carries only the URL.
+
+    The bot token lives in the request URL and /proc/<pid>/cmdline is
+    world-readable, so the URL must never reach argv: it is handed to
+    `curl -K -` on stdin instead. Quotes/backslashes are escaped for the
+    config parser (the token charset itself is [0-9A-Za-z_:-]).
+    """
+    escaped = url.replace("\\", "\\\\").replace('"', '\\"')
+    return 'url = "{0}"\n'.format(escaped)
+
+
 for attempt in range(12):
     proc = subprocess.run(
         [
@@ -55,14 +68,16 @@ for attempt in range(12):
             "-s",
             "--proxy",
             "socks5h://127.0.0.1:10808",
+            "-K",
+            "-",
             "--data-urlencode",
             "chat_id={0}".format(CHAT_ID),
             "--data-urlencode",
             "text={0}".format(TEXT),
             "--data-urlencode",
             "reply_markup={0}".format(MARKUP),
-            API,
         ],
+        input=curl_url_config(API),
         capture_output=True,
         text=True,
         check=False,
