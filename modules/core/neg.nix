@@ -22,15 +22,21 @@
     _module.args.mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
 
     # Expose helpers under config.lib.neg: the pure neg-helpers from
-    # specialArgs (mkHomeFiles, mkLocalBin, ...) extended with uniform
-    # feature gating that closes over config.
+    # specialArgs (mkHomeFiles, mkLocalBin, ...) extended with helpers that
+    # close over config.
     lib.neg = neg // {
       # enabled "gui" → features.gui.enable, or false when unset. Sites that
       # previously wrote `or true` (default-on) keep the explicit form.
+      #
+      # Keep this a plain predicate used inside a value, e.g.
+      # `config = lib.mkIf (config.lib.neg.enabled "x") { … }`. Do NOT add a
+      # `gate = path: body: lib.mkIf (config.lib.neg.enabled path) body` and
+      # apply it at module top level: the module's shape would then depend on
+      # `config`, which is evaluated before the config fixpoint exists →
+      # infinite recursion (tried in the gate-adoption refactor, reverted).
       enabled =
         path:
         (lib.attrByPath (lib.splitString "." path) { enable = false; } config.features).enable or false;
-      gate = path: body: lib.mkIf (config.lib.neg.enabled path) body;
 
       # Resolve a repo-root-relative path (e.g. "files/gui/theme.toml") to an
       # absolute path. repoRoot is a real path (not a string), so the result
