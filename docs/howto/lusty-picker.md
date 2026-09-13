@@ -109,10 +109,11 @@ Two bottlenecks in the current Lua port:
 - Preview: `native.lua` opens a second float to the right (`C-r`) and asks for the pane with
   `V <index> <w> <h>`; the backend renders content / git diff / man / chafa and answers
   `V <lines> <dim>` plus one `L <text>` row per line (the `L ` prefix keeps a content line equal to
-  `E` from ending the response). ANSI is stripped server-side and rows are clipped to the pane
-  width, so the buffer never sees control bytes. The server announces `X preview` right after the
-  banner; without that capability the key notifies instead of sending `V` (an old backend cannot
-  reply, which would stall the response FIFO).
+  `E` from ending the response). SGR sequences are passed through and the client turns the colour
+  runs into extmarks (chafa art renders in colour); other ANSI escapes are dropped, TAB becomes a
+  space and rows are clipped by visible characters, so the buffer never sees control bytes. The
+  server announces `X preview` right after the banner; without that capability the key notifies
+  instead of sending `V` (an old backend cannot reply, which would stall the response FIFO).
 - Regression coverage: `cargo test` (`tests/serve_escape.rs`, `tests/serve_frec.rs`,
   `tests/serve_preview.rs`, `listing::tests`, `rank::tests`, `preview::tests`) and the headless
   `filesystem_float_special_smoke.lua` / `filesystem_float_frecency_smoke.lua` /
