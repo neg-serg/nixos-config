@@ -31,7 +31,7 @@ Scope
 
 Quick Commands
 - Quick switch (user, primary): `nh os switch /etc/nixos#odin --option substitute false`
-- Agent rollout (passwordless, preferred for the agent): `sudo -n nixos-rebuild switch --flake .#odin --option substitute false`
+- Agent rollout (passwordless, preferred for the agent): `sudo -n nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`
 - Build & switch (alternative): `sudo nixos-rebuild switch --flake .#odin --option substitute false`
 - Build only: `nixos-rebuild build --flake .#odin --option substitute false`
 - Format all: `just fmt`
@@ -202,8 +202,9 @@ Builds: substitute = false
   `/nix/var/nix/profiles` (`drwxr-xr-x root root`, verified not writable by `neg`;
   nixos-rebuild does not escalate on its own). A bare `nixos-rebuild switch` builds
   the whole system and only then fails at activation, so it wastes a full
-  source-build. Preferred form:
-  `sudo -n nixos-rebuild switch --flake .#odin --option substitute false`.
+  source-build. Preferred form (redirect stdin when it is a socket — agent/CI
+  shells; see `.agent/workflows/rebuild.md`):
+  `sudo -n nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`.
   The user's `nh os switch` binding uses the same flag
   (`nh os switch /etc/nixos#odin --option substitute false`); keep that
   convention in any new bindings/scripts. NOTE: arbitrary `sudo` is NOT
