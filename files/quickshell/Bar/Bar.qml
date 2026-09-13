@@ -590,6 +590,7 @@ Scope {
                             id: leftPanelTintSource
                             anchors.fill: leftBarFill
                             sourceItem: leftPanelTintFX
+                            visible: leftPanel.panelTintEnabled
                             // Hide the tint effect when the clipped tint path is active.
                             hideSource: leftTintClipLoader.active === true
                             live: leftPanel.panelTintEnabled && leftFaceClipLoader.active === true
@@ -771,6 +772,10 @@ Scope {
                         sourceItem: leftPanelContent
                         transform: Translate { y: leftPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
                         hideSource: false
+                        // Texture provider for the panel tint only. Without this the
+                        // panel content is drawn a second time as a frozen snapshot
+                        // (doubled glyphs, stale values) - the visible "second panel".
+                        visible: leftPanel.panelTintEnabled
                         live: leftPanel.panelTintEnabled
                         recursive: true
                     }
@@ -920,6 +925,7 @@ Scope {
                             id: rightPanelTintSource
                             anchors.fill: rightBarFill
                             sourceItem: rightPanelTintFX
+                            visible: rightPanel.panelTintEnabled
                             // Hide the tint effect when the clipped tint path is active.
                             hideSource: rightTintClipLoader.active === true
                             live: rightPanel.panelTintEnabled && rightFaceClipLoader.active === true
@@ -1255,6 +1261,8 @@ Scope {
                         sourceItem: rightPanelContent
                         transform: Translate { y: rightPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
                         hideSource: false
+                        // See leftPanelSource: never draw the copy itself.
+                        visible: rightPanel.panelTintEnabled
                         live: rightPanel.panelTintEnabled
                         recursive: true
                     }
