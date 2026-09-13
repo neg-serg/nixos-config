@@ -12,32 +12,42 @@ let
 
   # Helper to generate mbsync config
   # ... (rest of mkMbsyncConfig remains unchanged)
-  mkMbsyncConfig = acct: ''
-    IMAPAccount ${acct.name}
-    Host ${acct.imap.host}
-    User ${acct.userName}
-    PassCmd "${acct.passCmd}"
-    AuthMechs LOGIN
-    TLSType IMAPS
-    CertificateFile /etc/ssl/certs/ca-bundle.crt
-
-    IMAPStore ${acct.name}-remote
-    Account ${acct.name}
-
-    MaildirStore ${acct.name}-local
-    Subfolders Verbatim
-    Path ${home}/.local/mail/${acct.name}/
-    Inbox ${home}/.local/mail/${acct.name}/INBOX/
-
-    Channel ${acct.name}
-    Far :${acct.name}-remote:
-    Near :${acct.name}-local:
-    Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/All Mail" "[Gmail]/Trash" "[Gmail]/Spam"
-    Sync Pull
-    Create Near
-    Expunge Near
-    SyncState *
-  '';
+  mkMbsyncConfig =
+    acct:
+    builtins.replaceStrings
+      [
+        "@NAME@"
+        "@HOST@"
+        "@USERNAME@"
+        "@PASSCMD@"
+        "@NAME_V2@"
+        "@NAME_V3@"
+        "@NAME_V4@"
+        "@HOME@"
+        "@NAME_V5@"
+        "@HOME_V2@"
+        "@NAME_V6@"
+        "@NAME_V7@"
+        "@NAME_V8@"
+        "@NAME_V9@"
+      ]
+      [
+        "${acct.name}"
+        "${acct.imap.host}"
+        "${acct.userName}"
+        "${acct.passCmd}"
+        "${acct.name}"
+        "${acct.name}"
+        "${acct.name}"
+        "${home}"
+        "${acct.name}"
+        "${home}"
+        "${acct.name}"
+        "${acct.name}"
+        "${acct.name}"
+        "${acct.name}"
+      ]
+      (builtins.readFile (config.lib.neg.path "files/config/mbsync/mbsyncrc"));
 
   # Account definition
   account = {

@@ -16,27 +16,21 @@ pkgs.stdenv.mkDerivation {
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
 
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out/bin $out/lib/midi2sheet
-    install -m 0644 ${./split.py} $out/lib/midi2sheet/split.py
-    install -m 0644 ${./patch_title.py} $out/lib/midi2sheet/patch_title.py
-    install -m 0755 ${./midi2sheet.sh} $out/lib/midi2sheet/midi2sheet.sh
-
-    makeWrapper $out/lib/midi2sheet/midi2sheet.sh $out/bin/midi2sheet \
-      --prefix PATH : ${
-        lib.makeBinPath [
+  installPhase =
+    builtins.replaceStrings
+      [ "@PY@" "@PY_V2@" "@SH@" "@COREUTILS@" ]
+      [
+        "${./split.py}"
+        "${./patch_title.py}"
+        "${./midi2sheet.sh}"
+        "${lib.makeBinPath [
           musescore
           pkgs.xvfb-run
           pkgs.python3
           pkgs.coreutils
-        ]
-      } \
-      --set LIB $out/lib/midi2sheet
-
-    runHook postInstall
-  '';
+        ]}"
+      ]
+      (builtins.readFile ./install.sh);
 
   meta = with lib; {
     description = "MIDI to sheet music PDF: pitch-split piano into grand staff, engrave with headless MuseScore";

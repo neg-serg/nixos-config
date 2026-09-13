@@ -42,27 +42,36 @@ let
       let
         app = parseAppInfo appName;
       in
-      ''
-        cat > "$out/share/applications/winapps-${appName}.desktop" << 'DESKTOP'
-        [Desktop Entry]
-        Type=Application
-        Name=${app.name}
-        GenericName=${app.fullName}
-        Comment=${app.fullName} (Windows via RDP)
-        Icon=${appDir}/${appName}/icon.svg
-        Exec=${pkgs.writeShellScriptBin "winapps-${appName}" ''
-          exec winapps ${appName} "''${1:-}"
-        ''}/bin/winapps-${appName} %F
-        Categories=${
-          builtins.replaceStrings [ "WinApps;" ] [ "" ] (
+      builtins.replaceStrings
+        [
+          "@APPNAME@"
+          "@NAME@"
+          "@FULLNAME@"
+          "@FULLNAME_V2@"
+          "@APPDIR@"
+          "@APPNAME_V2@"
+          "@APPNAME_V3@"
+          "@APPNAME_V4@"
+          "@CATEGORIES@"
+          "@MIMETYPES@"
+        ]
+        [
+          "${appName}"
+          "${app.name}"
+          "${app.fullName}"
+          "${app.fullName}"
+          "${appDir}"
+          "${appName}"
+          "${pkgs.writeShellScriptBin "winapps-${appName}" ''
+            exec winapps ${appName} "''${1:-}"
+          ''}"
+          "${appName}"
+          "${builtins.replaceStrings [ "WinApps;" ] [ "" ] (
             if app.categories == "" then "Office" else app.categories
-          )
-        }
-        MimeType=${app.mimeTypes}
-        Terminal=false
-        NoDisplay=false
-        DESKTOP
-      ''
+          )}"
+          "${app.mimeTypes}"
+        ]
+        (builtins.readFile (config.lib.neg.path "files/winapps/desktop-entry.in"))
     ) desktopApps
   );
 
@@ -82,52 +91,19 @@ in
 
     environment.systemPackages = lib.mkAfter (
       [
-        (pkgs.writeShellScriptBin "winapps" ''
-          set -euo pipefail
-
-          if [ -f "$HOME/.config/winapps/winapps.conf" ]; then
-            . "$HOME/.config/winapps/winapps.conf"
-          elif [ -f /etc/winapps/winapps.conf ]; then
-            . /etc/winapps/winapps.conf
-          fi
-
-          APPS_DIR="${appDir}"
-          RDP_IP="''${RDP_IP:-127.0.0.1}"
-          RDP_USER="''${RDP_USER:-neg}"
-          RDP_DOMAIN="''${RDP_DOMAIN:-}"
-          RDP_SCALE="''${RDP_SCALE:-100}"
-          RDP_FLAGS="''${RDP_FLAGS:-/network:auto /sound:auto /microphone:auto /gfx:avc444 /bpp:32}"
-          RDP_PASS="''${RDP_PASS:-}"
-
-          if [ $# -eq 0 ]; then
-            echo "Usage: winapps <app> [file]"
-            echo "Available: $(${pkgs.coreutils}/bin/ls "$APPS_DIR" | ${pkgs.coreutils}/bin/sort)"
-            exit 1
-          fi
-
-          APP="$1"; shift; FILE="''${1:-}"
-          if [ ! -f "$APPS_DIR/$APP/info" ]; then
-            echo "Unknown app: $APP" >&2; exit 1
-          fi
-
-          . "$APPS_DIR/$APP/info"
-          ICON="$APPS_DIR/$APP/icon.svg"
-
-          if [ -n "$FILE" ]; then
-            WIN_FILE=$(echo "$FILE" | ${pkgs.gnused}/bin/sed 's|'"$HOME"'|\\\\tsclient\\home|;s|/|\\|g;s|\\|\\\\|g')
-            exec ${pkgs.freerdp}/bin/xfreerdp \
-              /v:"$RDP_IP" /u:"$RDP_USER" /p:"$RDP_PASS" \
-              /cert:tofu +auto-reconnect +clipboard +home-drive \
-              /scale:"$RDP_SCALE" /dynamic-resolution \
-              /app:"program:$WIN_EXECUTABLE,cmd:\"$WIN_FILE\",icon:$ICON,name:$FULL_NAME"
-          else
-            exec ${pkgs.freerdp}/bin/xfreerdp \
-              /v:"$RDP_IP" /u:"$RDP_USER" /p:"$RDP_PASS" \
-              /cert:tofu +auto-reconnect +clipboard +home-drive \
-              /scale:"$RDP_SCALE" /dynamic-resolution \
-              /app:"program:$WIN_EXECUTABLE,icon:$ICON,name:$FULL_NAME"
-          fi
-        '')
+        (pkgs.writeShellScriptBin "winapps" (
+          builtins.replaceStrings
+            [ "@APPDIR@" "@COREUTILS@" "@COREUTILS_V2@" "@GNUSED@" "@FREERDP@" "@FREERDP_V2@" ]
+            [
+              "${appDir}"
+              "${pkgs.coreutils}"
+              "${pkgs.coreutils}"
+              "${pkgs.gnused}"
+              "${pkgs.freerdp}"
+              "${pkgs.freerdp}"
+            ]
+            (builtins.readFile ./winapps.sh)
+        ))
         pkgs.freerdp # RDP client for WinApps
         pkgs.qemu_kvm # KVM virtual machines for WinApps
         pkgs.virt-manager # VM management GUI

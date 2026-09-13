@@ -1,0 +1,19 @@
+{
+  // local whisper.cpp transcription, no API keys
+  "audio_feedback": true,
+  "start_sound_volume": 0.1,
+  "stop_sound_volume": 0.1,
+  "auto_copy_clipboard": true,
+  "transcription": {
+    "provider": "whisper_cpp",
+    "request_timeout_secs": 45,
+    "whisper_cpp": {
+      "model": "small",
+      "threads": 12,
+      "gpu_layers": 0,
+      "fallback_cli": true,
+      "no_speech_threshold": 0.6,
+      "models_dirs": [ "@HOMEDIR@/.local/share/hyprwhspr-rs/models" ]
+    }
+  }
+}
