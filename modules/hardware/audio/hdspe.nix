@@ -10,103 +10,24 @@ let
   # Set HDSPe hardware mixer levels for ALL output channels at unity gain.
   # The snd-hdspe driver initializes the mixer to all zeros (silent),
   # so we need to set "Chn N" controls to 64 (unity) for audio to pass.
-  hdspeMixerScript = pkgs.writeShellScript "hdspe-init-mixer" ''
-    set -euo pipefail
-    amixer_bin=${pkgs.alsa-utils}/bin/amixer
-
-    # Find HDSPe card
-    found=""
-    for card in "RMEAIO" "HDSPeAIO" "HDSPe" "AIO" "RME_AIO" "HDSPe24048964"; do
-      if $amixer_bin -c "$card" info >/dev/null 2>&1; then
-        found="$card"
-        break
-      fi
-    done
-    if [ -z "$found" ]; then
-      # Fallback: scan all cards for HDSPe
-      for card in $($amixer_bin cards 2>/dev/null | grep -ioE 'card[0-9]+|HDSPe[0-9]+' | tr -d ','); do
-        if $amixer_bin -c "$card" info 2>/dev/null | grep -qi "HDSPe\|RME.*AIO"; then
-          found="$card"
-          break
-        fi
-      done
-    fi
-
-    [ -n "$found" ] || exit 0
-
-    # Set all Chn N controls to unity gain (64)
-    # AIO Pro has up to 16 output channels at single speed
-    for chn in $(seq 1 16); do
-      $amixer_bin -c "$found" set "Chn $chn" 64 >/dev/null 2>&1 || true
-    done
-  '';
+  hdspeMixerScript = pkgs.writeShellScript "hdspe-init-mixer" (
+    builtins.readFile (pkgs.replaceVars ./hdspe/init-mixer.sh { alsaUtils = pkgs.alsa-utils; })
+  );
 
   # Set HDSPe pro-audio output as default PipeWire sink
   # NOTE: uses bare command names (amixer/wpctl/pw-link/sed) — PATH is
   # set by the systemd service config below via config.services.pipewire.package.
-  hdspeDefaultScript = pkgs.writeShellScript "wpctl-set-hdspe-default" ''
-    set -euo pipefail
-
-    # Check if HDSPe card is present first — avoid waiting if hardware absent
-    found=""
-    for card in "RMEAIO" "HDSPeAIO" "HDSPe" "AIO" "RME_AIO" "HDSPe24048964"; do
-      if amixer -c "$card" info >/dev/null 2>&1; then
-        found="$card"
-        break
-      fi
-    done
-    [ -n "$found" ] || exit 0
-
-    # Wait up to 20s for the RME sink: wireplumber recreates the ALSA node on
-    # every restart, and the sink appears a moment after wireplumber is up.
-    # Without this wait, the pw-link calls below fail and the loopback stream
-    # stays auto-linked to the analog pair (AUX0/1) → no sound on AES monitors.
-    # Pure bash matching (no grep) — the unit PATH only carries pipewire/coreutils.
-    for _ in $(seq 1 40); do
-      if [[ "$(wpctl status 2>/dev/null)" == *"RME AIO Pro"* ]]; then
-        break
-      fi
-      sleep 0.5
-    done
-
-    status="$(wpctl status 2>/dev/null || true)"
-
-    # Find HDSPe hardware sink and game-stereo virtual sink
-    hdspe_sink_id="$(echo "$status" | sed -n '/RME AIO Pro.*Pro/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
-    # Match the SINK line only: the loopback's stream "playback.game-stereo"
-    # appears earlier in wpctl status, and sed -q would grab its id (46) instead
-    # of the sink (47). Require the "Audio/Sink" marker on the same line.
-    game_sink_id="$(echo "$status" | sed -n '/game-stereo.*Audio\/Sink/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
-
-    # Route game-stereo → HDSPe AUX2/AUX3 (AES/EBU): the user's monitors are
-    # on AES, the analog RCA pair (AUX0/1) is unused; this script owns the
-    # mapping.
-    if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
-      wpctl set-default "$game_sink_id" || true
-      # WirePlumber auto-links new stereo streams to the RME's FIRST channels
-      # (AUX0/1 = analog). Drop those stray links so the loopback feeds only
-      # the AES pair, then connect virtual sink playback to HDSPe AES (AUX2/3).
-      pw-link -d playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
-      pw-link -d playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
-      pw-link playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX2 2>/dev/null || true
-      pw-link playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX3 2>/dev/null || true
-    fi
-  '';
+  hdspeDefaultScript = pkgs.writeShellScript "wpctl-set-hdspe-default" (
+    builtins.readFile ./hdspe/set-default.sh
+  );
 
   # pwroute-aes with a startup race workaround: wireplumber creates the RME
   # sink a moment after the session starts, and pwroute then fails with
   # "RME AIO Pro sink not found" (a oneshot never retries). Wait up to 30s
   # for the sink before routing to AES.
-  pwrouteAesScript = pkgs.writeShellScript "pwroute-aes-wait" ''
-    set -u
-    for _ in $(seq 1 30); do
-      if [[ "$(wpctl status 2>/dev/null)" == *"RME AIO Pro"* ]]; then
-        exec ${pkgs.pwroute}/bin/pwroute aes
-      fi
-      sleep 1
-    done
-    exit 0
-  '';
+  pwrouteAesScript = pkgs.writeShellScript "pwroute-aes-wait" (
+    builtins.readFile (pkgs.replaceVars ./hdspe/aes-wait.sh { pwroute = pkgs.pwroute; })
+  );
 
   # pwroute: switch RME AIO Pro output between an/aes/spdif/phones
 
