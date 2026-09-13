@@ -56,6 +56,148 @@ end
 local ns = api.nvim_create_namespace('lusty_native_ls')
 local preview_ns = api.nvim_create_namespace('lusty_native_preview')
 
+-- xterm-256 palette (16 base + 6x6x6 cube + 24 grays) as {r,g,b}. chafa emits
+-- `38;5;N` when asked for 256 colours; truecolour `38;2;r;g;b` is used as is.
+local XTERM = {}
+do
+  local base = {
+    { 0, 0, 0 },
+    { 128, 0, 0 },
+    { 0, 128, 0 },
+    { 128, 128, 0 },
+    { 0, 0, 128 },
+    { 128, 0, 128 },
+    { 0, 128, 128 },
+    { 192, 192, 192 },
+    { 128, 128, 128 },
+    { 255, 0, 0 },
+    { 0, 255, 0 },
+    { 255, 255, 0 },
+    { 0, 0, 255 },
+    { 255, 0, 255 },
+    { 0, 255, 255 },
+    { 255, 255, 255 },
+  }
+  for i = 0, 15 do
+    XTERM[i] = base[i + 1]
+  end
+  local lv = { 0, 95, 135, 175, 215, 255 }
+  for r = 0, 5 do
+    for g = 0, 5 do
+      for b = 0, 5 do
+        XTERM[16 + 36 * r + 6 * g + b] = { lv[r + 1], lv[g + 1], lv[b + 1] }
+      end
+    end
+  end
+  for i = 0, 23 do
+    local v = 8 + i * 10
+    XTERM[232 + i] = { v, v, v }
+  end
+end
+
+local preview_hl = {}
+--- Highlight group for one preview colour, created on first use.
+local function preview_color(kind, rgb)
+  local hex = string.format('#%02x%02x%02x', rgb[1], rgb[2], rgb[3])
+  local key = kind .. hex
+  local group = preview_hl[key]
+  if not group then
+    group = 'LustyPreview' .. (kind == 'fg' and 'F' or 'B') .. hex:sub(2)
+    api.nvim_set_hl(0, group, kind == 'fg' and { fg = hex } or { bg = hex })
+    preview_hl[key] = group
+  end
+  return group
+end
+
+--- Split one preview row into display text and colour runs. Byte offsets are
+--- returned because nvim highlights are byte-based and chafa symbols are
+--- multibyte. Supports the SGR subset chafa emits: reset, 30-37/90-97,
+--- 40-47/100-107, 38;5;N / 48;5;N and 38;2;r;g;b / 48;2;r;g;b.
+local function parse_sgr(line)
+  local text = {}
+  local runs = {}
+  local fg, bg
+  local run_start = 0
+  local off = 0
+  local function close_run()
+    if (fg or bg) and off > run_start then
+      runs[#runs + 1] = { run_start, off, fg, bg }
+    end
+    run_start = off
+  end
+  local function push(s)
+    for c in s:gmatch('.') do
+      text[#text + 1] = c
+      off = off + #c
+    end
+  end
+  local pos = 1
+  while true do
+    local s, e, params = line:find('\27%[([%d;]*)m', pos)
+    if not s then
+      push(line:sub(pos))
+      break
+    end
+    push(line:sub(pos, s - 1))
+    close_run()
+    local list = {}
+    if params == '' then
+      list[1] = '0'
+    else
+      for p in params:gmatch('[^;]+') do
+        list[#list + 1] = p
+      end
+    end
+    local j = 1
+    while j <= #list do
+      local code = tonumber(list[j])
+      if code == 0 then
+        fg, bg = nil, nil
+      elseif code == 39 then
+        fg = nil
+      elseif code == 49 then
+        bg = nil
+      elseif code and code >= 30 and code <= 37 then
+        fg = XTERM[code - 30]
+      elseif code and code >= 90 and code <= 97 then
+        fg = XTERM[code - 90 + 8]
+      elseif code and code >= 40 and code <= 47 then
+        bg = XTERM[code - 40]
+      elseif code and code >= 100 and code <= 107 then
+        bg = XTERM[code - 100 + 8]
+      elseif code == 38 or code == 48 then
+        local mode = tonumber(list[j + 1])
+        if mode == 5 then
+          local c = XTERM[tonumber(list[j + 2]) or -1]
+          if c then
+            if code == 38 then
+              fg = c
+            else
+              bg = c
+            end
+          end
+          j = j + 2
+        elseif mode == 2 then
+          local r, g, b = tonumber(list[j + 2]), tonumber(list[j + 3]), tonumber(list[j + 4])
+          if r and g and b then
+            local c = { r, g, b }
+            if code == 38 then
+              fg = c
+            else
+              bg = c
+            end
+          end
+          j = j + 4
+        end
+      end
+      j = j + 1
+    end
+    pos = e + 1
+  end
+  close_run()
+  return table.concat(text), runs
+end
+
 --- RU (йцукен) layout to EN chars (physical keys under RU produce Cyrillic).
 local RU2EN = {
   ['й'] = 'q', ['ц'] = 'w', ['у'] = 'e', ['к'] = 'r', ['е'] = 't',
@@ -498,17 +640,48 @@ function Picker:refresh_preview()
   end)
 end
 
---- Paint the last preview response into the pane buffer (dimmed).
+--- Paint the last preview response into the pane buffer. Rows carrying SGR
+--- (chafa art) become colour extmarks; colourless rows are dimmed like before.
 function Picker:render_preview()
   if not self.preview_on or not self.preview_buf or not api.nvim_buf_is_valid(self.preview_buf) then
     return
   end
   local data = (self.preview_lines and self.preview_lines.lines) or {}
-  api.nvim_buf_set_lines(self.preview_buf, 0, -1, false, data)
-  api.nvim_buf_clear_namespace(self.preview_buf, preview_ns, 0, -1)
+  local rows, all_runs = {}, {}
   for i = 1, #data do
-    if #data[i] > 0 then
-      api.nvim_buf_add_highlight(self.preview_buf, preview_ns, 'LustyNativeMeta', i - 1, 0, -1)
+    rows[i], all_runs[i] = parse_sgr(data[i])
+  end
+  api.nvim_buf_set_lines(self.preview_buf, 0, -1, false, rows)
+  api.nvim_buf_clear_namespace(self.preview_buf, preview_ns, 0, -1)
+  for i = 1, #rows do
+    local runs = all_runs[i]
+    if #runs == 0 then
+      if #rows[i] > 0 then
+        api.nvim_buf_add_highlight(self.preview_buf, preview_ns, 'LustyNativeMeta', i - 1, 0, -1)
+      end
+    else
+      for _, r in ipairs(runs) do
+        if r[3] then
+          api.nvim_buf_add_highlight(
+            self.preview_buf,
+            preview_ns,
+            preview_color('fg', r[3]),
+            i - 1,
+            r[1],
+            r[2]
+          )
+        end
+        if r[4] then
+          api.nvim_buf_add_highlight(
+            self.preview_buf,
+            preview_ns,
+            preview_color('bg', r[4]),
+            i - 1,
+            r[1],
+            r[2]
+          )
+        end
+      end
     end
   end
 end
