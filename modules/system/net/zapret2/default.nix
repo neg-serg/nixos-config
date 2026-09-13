@@ -51,28 +51,9 @@ let
 
   # Redirect matching traffic to NFQUEUE queue 1 (nfqws --qnum=1).
   # Without a queue rule, nfqws fails with nfq_unbind_pf(): Invalid argument.
-  nftablesRules = pkgs.writeText "zapret2-nftables.conf" ''
-    table inet zapret2 {
-      # Outbound (client->server) direction — nfqws must see the TLS
-      # ClientHello / HTTP request to desync it. postrouting (not output)
-      # so nfqws can resolve the egress interface for generated packets.
-      chain postrouting {
-        type filter hook postrouting priority mangle; policy accept;
-        # Skip local/LAN/loopback destinations — don't touch local HTTP(S).
-        ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8 } return
-        # Exclude nfqws-generated packets (fwmark 0x40000000) to avoid loops.
-        meta mark and 0x40000000 == 0 tcp dport { 80, 443 } queue num 1 bypass
-        meta mark and 0x40000000 == 0 udp dport 443 queue num 1 bypass
-      }
-      # Inbound (server->client) replies for response-side desync.
-      chain prerouting {
-        type filter hook prerouting priority filter; policy accept;
-        # Skip local/LAN/loopback destinations — don't touch local HTTP(S).
-        ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8 } return
-        meta mark and 0x40000000 == 0 tcp sport { 80, 443 } queue num 1 bypass
-      }
-    }
-  '';
+  nftablesRules = pkgs.writeText "zapret2-nftables.conf" (
+    builtins.readFile (config.lib.neg.path "files/net/zapret2-nftables.conf")
+  );
 
   # Multi-strategy (nfqws applies the first strategy whose port filter
   # matches; common flags --qnum/hostlist must precede the first --new):

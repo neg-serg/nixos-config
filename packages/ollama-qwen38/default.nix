@@ -208,32 +208,9 @@ goBuild (finalAttrs: {
     ++ lib.optionals enableVulkan vulkanLibs;
 
   # replace inaccurate version number with actual release version
-  postPatch = ''
-    substituteInPlace version/version.go \
-      --replace-fail 0.0.0 '${finalAttrs.version}'
-
-    # cmd/launch/*_test.go are integration tests for user-facing CLI
-    # launchers (claude, qwen, cline, codex, kimi, droid, openclaw, hermes,
-    # …) that install the target binary via npm and then exec it on PATH.
-    # Both prerequisites are unavailable in the nix sandbox, so the launch
-    # subpackage's tests can't pass here. Drop them.
-    rm cmd/launch/*_test.go
-
-    rm -r app
-
-    # Pre-stage llama.cpp for the FetchContent step and apply Ollama's
-    # compat patch. When FETCHCONTENT_SOURCE_DIR_LLAMA_CPP is set, neither
-    # `cmake/local.cmake` nor `llama/server/CMakeLists.txt` auto-applies
-    # the patch (the parent's ExternalProject_Add passes
-    # OLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON to the child build) — the
-    # caller has to. The apply-patch.cmake script is idempotent so this
-    # is safe to re-run.
-    cp -r ${llamaCppSrc} $TMPDIR/llama-cpp-src
-    chmod -R +w $TMPDIR/llama-cpp-src
-    ( cd $TMPDIR/llama-cpp-src && \
-      cmake -DPATCH_DIR=$NIX_BUILD_TOP/source/llama/compat \
-        -P $NIX_BUILD_TOP/source/llama/compat/apply-patch.cmake )
-  '';
+  postPatch =
+    builtins.replaceStrings [ "@VERSION@" "@LLAMACPPSRC@" ] [ "${finalAttrs.version}" "${llamaCppSrc}" ]
+      (builtins.readFile ./post-patch.sh.in);
 
   overrideModAttrs = _: _: {
     # don't run llama.cpp build in the module fetch phase
