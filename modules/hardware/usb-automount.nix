@@ -23,7 +23,7 @@ let
     }
 
     if [ $# -ne 2 ]; then
-        usage
+        usage "$@"
     fi
 
     ACTION=$1
@@ -34,13 +34,13 @@ let
     MOUNT_POINT=$(mount | grep ''${DEVICE} | awk '{ print $3 }')
 
     do_mount() {
-        if [ -n ''${MOUNT_POINT} ]; then
+        if [ -n "''${MOUNT_POINT}" ]; then
             echo "Warning: ''${DEVICE} is already mounted at ''${MOUNT_POINT}"
             exit 1
         fi
 
         # Get info for this drive: $ID_FS_LABEL, $ID_FS_UUID, and $ID_FS_TYPE
-        eval $(blkid -o udev ''${DEVICE})
+        eval "$(blkid -o udev "''${DEVICE}")"
 
         # Figure out a mount point to use
         LABEL=''${ID_FS_LABEL}
@@ -75,7 +75,7 @@ let
     }
 
     do_unmount() {
-        if [ -z ''${MOUNT_POINT} ]; then
+        if [ -z "''${MOUNT_POINT}" ]; then
             echo "Warning: ''${DEVICE} is not mounted"
         else
             umount -l ''${DEVICE}
@@ -101,7 +101,7 @@ let
             do_unmount
             ;;
         *)
-            usage
+            usage "$@"
             ;;
     esac
   '';
