@@ -1,15 +1,14 @@
-{ lib, ... }:
+{ neg, lib, ... }:
 let
   inherit (builtins) concatStringsSep length;
   inherit (lib.lists) zipListsWith;
   inherit (lib.strings) escapeShellArg;
 in
 {
-  imports =
-    builtins.readDir ./.
-    |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix")
-    |> builtins.map (n: ./. + "/${n}");
+  imports = neg.importDir {
+    dir = ./.;
+    includeDirs = true;
+  };
 
   # create an overlay for nix-output-monitor to match the inconsistent
   # and frankly ugly icons with nerdfonts ones. they look a little larger
