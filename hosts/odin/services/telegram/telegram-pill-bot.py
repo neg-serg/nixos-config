@@ -43,12 +43,30 @@ def read_secrets():
     return token, chat_id
 
 
+def curl_url_config(url):
+    """Render a curl config that carries only the URL.
+
+    The bot token lives in the request URL and /proc/<pid>/cmdline is
+    world-readable, so the URL must never reach argv: it is handed to
+    `curl -K -` on stdin instead. Quotes/backslashes are escaped for the
+    config parser (the token charset itself is [0-9A-Za-z_:-]).
+    """
+    escaped = url.replace("\\", "\\\\").replace('"', '\\"')
+    return 'url = "{0}"\n'.format(escaped)
+
+
 def api_call(method, params, token):
-    cmd = [CURL, "-s", "--proxy", PROXY, "--max-time", "70"]
+    cmd = [CURL, "-s", "--proxy", PROXY, "--max-time", "70", "-K", "-"]
     for key, value in params.items():
         cmd += ["--data-urlencode", "{0}={1}".format(key, value)]
-    cmd.append("https://api.telegram.org/bot{0}/{1}".format(token, method))
-    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+    url = "https://api.telegram.org/bot{0}/{1}".format(token, method)
+    return subprocess.run(
+        cmd,
+        input=curl_url_config(url),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
 def stamp_now():
