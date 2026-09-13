@@ -70,5 +70,5 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
   g:LustyExplorerFrecency=0).
 - H: preview in the nvim float — done: C-r opens a sibling float and `V <index> <w> <h>` returns the
   pane (content / git diff / man / chafa); the backend advertises `X preview` so an older server
-  makes the key a no-op. Images are monochrome (ANSI stripped server-side); SGR→extmarks colour in
-  the float and the kitty protocol remain next steps.
+  makes the key a no-op. SGR runs become extmarks, so chafa art is coloured in the float; the kitty
+  protocol for true image placement remains the next step.
