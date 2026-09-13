@@ -176,7 +176,7 @@ let
   ];
 in
 {
-  # unbound-hosts.nix is generated data (a list), imported by services.nix —
+  # unbound-hosts.nix is generated data (a list), imported by services/policy.nix —
   # not a module, so it stays out of the auto-import.
   imports = [
     # Out-of-tree MT7927/MT6639 WiFi (mt76/mt7925e) — see hardware flags below

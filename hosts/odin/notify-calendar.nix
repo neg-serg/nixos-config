@@ -151,8 +151,9 @@ in
         };
       }
       {
-        # No Persistent=true (same reasoning as services.nix: boot catch-ups
-        # on snapshot restore would re-send spurious morning reminders).
+        # No Persistent=true (same reasoning as the pill reminder in
+        # services/telegram-units.nix: boot catch-ups on snapshot restore would
+        # re-send spurious morning reminders).
         systemd.timers."telegram-calendar-reminder" = {
           description = "Daily 07:30 morning calendar reminder";
           wantedBy = [ "timers.target" ];
