@@ -318,6 +318,9 @@ local-bin.
   `just deploy-debug` — verbose
 - dry-run before touching the system:
   `nix build .#nixosConfigurations.<host>.config.system.build.toplevel`
+- `nix flake check` does **not** force derivations, so a lazy eval error can pass the checks and
+  fail the switch. Force the toplevel drv as well:
+  `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`
 
 ## 10. Commit
 
@@ -327,3 +330,76 @@ local-bin.
 1. The `pre-commit` hook runs the full lint in the `.#lint` devshell; if the devshell isn't built
    yet, the first commit is slow — that's normal.
 1. Hooks inactive? Run `just hooks-enable`.
+
+## 11. Extract an inline Nix string block into a file
+
+**Goal:** move a `''...''` block (build phase, script body, config, rule set) out of a `.nix` file
+into a real file without changing behaviour. Verified across the repo (31 commits): every extracted
+block was A/B-checked against the old evaluated text.
+
+**Where the file goes**
+
+- config/rule/data sets → `files/<area>/<name>`, read through `config.lib.neg.path "files/..."` (see
+  recipe 2). Module directories without a `default.nix` are skipped by `neg.importDir`, so script
+  files can live next to a module.
+- module-local script body → next to the module (`modules/<domain>/<name>.sh`, no shebang: the
+  `writeShellScript*` wrapper still adds it).
+- package build phase → next to the package (`packages/<pkg>/install.sh`, `post-install.sh`).
+- placeholder template that treefmt would reflow **and** that must stay byte-identical → keep a
+  non-`.sh` suffix (e.g. `post-patch.sh.in`) so shfmt skips it. Any byte change to a phase text
+  flips the derivation hash; that is how a cosmetic edit triggers a ROCm-sized rebuild.
+
+**How to read it back**
+
+```nix
+builtins.readFile (config.lib.neg.path "files/<area>/<name>") # plain text
+builtins.replaceStrings [ "@FOO@" ] [ foo ] (builtins.readFile ./x.sh) # with substitutions
+```
+
+Use `builtins.replaceStrings`, **not** `pkgs.replaceVars`, when the text is a build phase or a
+substituted value has to be reachable at build time:
+
+- a phase must stay a **string**: a store path (what `pkgs.replaceVars` returns) is executed as a
+  separate process, so `runHook` and setup hooks such as `makeWrapper` do not exist in it;
+- `pkgs.replaceVars` drops the store context of a **path** value (`lib.escapeShellArg` → `toString`,
+  and `toString` of a path carries no context: `builtins.hasContext "${path}"` is true while
+  `builtins.hasContext (toString path)` is false), so a phase that `cp`s or `exec`s that path fails
+  in the sandbox with "No such file or directory";
+- `builtins.replaceStrings` preserves context, so the derivation keeps its inputs.
+
+`pkgs.replaceVars` remains the right tool for text that is only *written* (for example the `text` of
+`writeShellApplication`), which is the pattern used across `modules/`.
+
+**Translating the block (Nix indented-string rules)**
+
+1. drop the first newline and the final `\n<indent>` before the closing `''`;
+1. strip the common indentation from **every** line — whitespace-only lines included (Nix strips
+   their prefix too; forgetting this leaves stray spaces in the file);
+1. unescape `''${` → `${`, `'''` → `''`, `''\n`, `''\t`, `''\\`;
+1. replace each `${expr}` with `@NAME@` using brace counting (escape sequences first, then
+   interpolations);
+1. leave `@NAME@` tokens that the block itself consumes (e.g. mojo's `@PYTHON@`, replaced by an
+   in-phase `sed`) out of the replacement set — `builtins.replaceStrings` ignores them, while
+   `pkgs.replaceVars` fails the build on any unmatched `@[A-Za-z_][0-9A-Za-z_'-]*@`;
+1. wrap substituted values that are paths or derivations as `"${...}"`: a bare `pkgs.a-b` value
+   reaches `replaceStrings` as a derivation set ("expected a string but found a set");
+1. parenthesise the whole expression when it sits in an argument position
+   (`runCommandLocal "x" { } (<expr>)`, `writeText "x" (<expr>)`), otherwise Nix keeps reading the
+   remaining arguments as further parameters of the call.
+
+**Verify**
+
+- the extracted file must equal the old evaluated text: for a phase compare
+  `nix derivation show <drv>` → `derivations.<drv>.env.installPhase`; for an option compare the
+  `nix eval` value. Byte-exact for config/rule/Lua files, `shfmt -i 2 -ci -bn -sr`-normalised for
+  `.sh` files (treefmt reformats those, that is the only accepted difference);
+- A/B the evaluation: `git stash push` the touched files, capture the old values
+  (`nix eval --json --apply '...' .#nixosConfigurations.odin.config`), `git stash pop`, then diff.
+  For home files compare `config.users.users.neg.maid.file.home` (all ~340 entries) — this catches
+  stray whitespace and wrong substitutions;
+- an unchanged derivation is the strongest signal: the same `drvPath` (or the same output store path
+  in the new generation) means the text is byte-identical;
+- before rolling out, force the toplevel:
+  `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`.
+  `nix flake check` evaluates the configuration but does **not** force derivations, so lazy eval
+  errors (like the dashed-path one above) surface only at rollout time.
