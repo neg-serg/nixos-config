@@ -18,3 +18,7 @@ See [../../packages/hwctl/src/main.rs](../../packages/hwctl/src/main.rs) for the
 
 - [../../scripts/dev/check-markdown-language.sh](../../scripts/dev/check-markdown-language.sh) —
   enforce Markdown language annotations locally.
+- [../../scripts/dev/check-nix-maid-app-dirs.sh](../../scripts/dev/check-nix-maid-app-dirs.sh) —
+  verify every directory under `modules/user/nix-maid/apps` is either a real module or listed in the
+  filter in that directory's `default.nix`; a plugin directory missing from that list breaks the
+  whole system evaluation. Wired into `just check` as the `nix-maid-app-dirs-guard` flake check.
