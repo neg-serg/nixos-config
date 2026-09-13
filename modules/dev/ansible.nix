@@ -11,34 +11,7 @@ let
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
 
   # Ansible Config
-  ansibleCfg = ''
-    [defaults]
-    roles_path = ~/.local/share/ansible/roles
-    collections_paths = ~/.local/share/ansible/collections
-    inventory = ~/.config/ansible/hosts
-    retry_files_enabled = False
-    stdout_callback = yaml
-    bin_ansible_callbacks = True
-    interpreter_python = auto_silent
-    forks = 20
-    strategy = free
-    gathering = smart
-    fact_caching = jsonfile
-    fact_caching_connection = ~/.cache/ansible/facts
-    fact_caching_timeout = 86400
-    timeout = 30
-
-    [galaxy]
-    server_list = galaxy
-
-    [galaxy_server.galaxy]
-    url=https://galaxy.ansible.com/
-
-    [ssh_connection]
-    pipelining = True
-    control_path_dir = ~/.cache/ansible/ssh
-    ssh_args = -o ControlMaster=auto -o ControlPersist=60s
-  '';
+  ansibleCfg = builtins.readFile (config.lib.neg.path "files/ansible/ansible.cfg");
 
   ansibleHosts = ''
     # Add your inventory groups/hosts here
