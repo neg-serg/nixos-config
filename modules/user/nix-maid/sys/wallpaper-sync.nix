@@ -42,46 +42,17 @@ let
   # wl-daemon (see wl-daemon.service); on re-add the daemon's surfaces are
   # stale, so `wl restore` re-issues them from ~/.local/state/wl/state.json.
   # NOTE: bash `< file` can't open a unix socket (ENXIO) — use socat.
-  wlMonitorWatch = pkgs.writeShellScript "wl-monitor-watch" ''
-    set -euo pipefail
-    export PATH="${
-      lib.makeBinPath [
-        pkgs.coreutils # sleep, head
-        pkgs.socat # socket relay for hyprctl event socket
-        pkgs.wl # wallpaper daemon
-      ]
-    }"
-    HYPRCTL="/run/current-system/sw/bin/hyprctl"
-    while true; do
-      sock="$(ls -d "''${XDG_RUNTIME_DIR:-/run/user/1000}"/hypr/*/.socket2.sock 2>/dev/null | head -1 || true)"
-      if [ -z "$sock" ]; then
-        sleep 3
-        continue
-      fi
-      # Read events; on monitor loss notify, on (re)connect ensure the daemon
-      # is alive (DPMS removal can kill it) and restore the wallpapers.
-      socat -u UNIX-CONNECT:"$sock" STDOUT | while read -r line; do
-        case "$line" in
-          monitoradded*|monitorremoved*)
-            mon="''${line#*>>}"
-            sleep 1
-            case "$line" in
-              monitorremoved*)
-                "$HYPRCTL" notify -1 6000 "rgb(ff5555)" "Monitor lost: $mon" >/dev/null 2>&1 || true
-                ;;
-              *)
-                "/run/current-system/sw/bin/systemctl" --user is-active wl-daemon.service >/dev/null 2>&1 \
-                  || "/run/current-system/sw/bin/systemctl" --user restart wl-daemon.service
-                sleep 1
-                wl restore || true
-                ;;
-            esac
-            ;;
-        esac
-      done
-      sleep 2
-    done
-  '';
+  wlMonitorWatch = pkgs.writeShellScript "wl-monitor-watch" (
+    builtins.readFile (
+      pkgs.replaceVars ./wallpaper-sync/wl-monitor-watch.sh {
+        binPath = lib.makeBinPath [
+          pkgs.coreutils # sleep, head
+          pkgs.socat # socket relay for hyprctl event socket
+          pkgs.wl # wallpaper daemon
+        ];
+      }
+    )
+  );
 in
 lib.mkIf (cfg.enable or false) {
   # wl-daemon: auto-restart on crash (DPMS output removal kills it)
