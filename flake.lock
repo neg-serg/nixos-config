@@ -1004,11 +1004,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1788736357,
-        "narHash": "sha256-DVenxSiLuMInlQMs5R0HnykOiPDWfh4bPVLL784/8NQ=",
+        "lastModified": 1789332416,
+        "narHash": "sha256-uaitHBzWRPLstsYf4JdFnn6lfRP0K7p9qIfhxxfKTwo=",
         "owner": "neg-serg",
         "repo": "lusty",
-        "rev": "ddefc2e9972c2157da7ecd34a655f4e517e3bc16",
+        "rev": "1e3538c03529cd861c9392dc70825e8994f66f16",
         "type": "github"
       },
       "original": {
