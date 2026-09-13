@@ -144,5 +144,66 @@ p:handle('cancel')
 nr2.set_mode('files')
 print('PASS native frecency')
 
+-- ------***------------------------------------
+-- Multi-select (buffers): C-Space marks, C-d removes the whole marked set.
+mk_listed('/tmp/lusty_mark_a.txt', { 'a' })
+local bm2 = mk_listed('/tmp/lusty_mark_b.txt', { 'b' })
+vim.cmd('buffer ' .. bm2)
+bs.reset()
+nbufs.run()
+p = pick.active_pick()
+assert(p.multi, 'buffer picker enables multi-select')
+p:handle('clear')
+assert(p.total >= 2, 'buffers listed, got ' .. tostring(p.total))
+p.selected = 0
+p:handle('mark')
+p.selected = 1
+p:handle('mark')
+assert_eq(#p.mark_order, 2, 'two buffers marked')
+p:handle('mark') -- C-Space on the same entry unmarks it
+assert_eq(#p.mark_order, 1, 'C-Space toggles a mark off')
+p:handle('mark')
+assert_eq(#p.mark_order, 2, 're-marked')
+local last = vim.api.nvim_buf_line_count(p.buf)
+local prompt_line = vim.api.nvim_buf_get_lines(p.buf, last - 1, last, false)[1] or ''
+assert(prompt_line:find('2 marked', 1, true), 'prompt shows the marked count: ' .. prompt_line)
+local ns_id = vim.api.nvim_get_namespaces()['lusty_native_pick']
+local painted = false
+for _, m in ipairs(vim.api.nvim_buf_get_extmarks(p.buf, ns_id, 0, -1, { details = true })) do
+  if m[4] and m[4].hl_group == 'LustyNativeMark' then
+    painted = true
+  end
+end
+assert(painted, 'marked buffer carries the mark highlight')
+local marked = { p.mark_order[1].item.bufnr, p.mark_order[2].item.bufnr }
+p:handle('delete')
+assert_eq(vim.fn.buflisted(marked[1]), 0, 'first marked buffer unloaded')
+assert_eq(vim.fn.buflisted(marked[2]), 0, 'second marked buffer unloaded')
+assert_eq(#p.mark_order, 0, 'marks cleared after the bulk delete')
+p:handle('cancel')
+print('PASS native multi-select (buffers)')
+
+-- ------***------------------------------------
+-- Multi-select (recent): Enter opens every marked file, first edit then badd.
+local rm = '/tmp/lusty_nfs_marks_recent.md'
+vim.fn.writefile({ 'x' }, rm)
+nr2.set_mode('files')
+nr2.set_recent_fn(function() return { rm, '/etc/nixos/flake.nix' } end)
+nr2.run()
+p = pick.active_pick()
+p:handle('clear')
+assert(p.multi, 'recent picker enables multi-select')
+p.selected = 0
+p:handle('mark')
+p.selected = 1
+p:handle('mark')
+assert_eq(#p.mark_order, 2, 'two recent files marked')
+local wanted = { p.mark_order[1].item.path, p.mark_order[2].item.path }
+p:handle('enter')
+assert_eq(vim.fn.bufexists(wanted[1]), 1, 'first marked file loaded: ' .. wanted[1])
+assert_eq(vim.fn.bufexists(wanted[2]), 1, 'second marked file added: ' .. wanted[2])
+assert_eq(vim.api.nvim_buf_get_name(0), wanted[1], 'first marked file is current')
+print('PASS native multi-select (recent)')
+
 print('ALL NATIVE FLOAT SMOKE TESTS PASSED')
 vim.cmd('qa!')
