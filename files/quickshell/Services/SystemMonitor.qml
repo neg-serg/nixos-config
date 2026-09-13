@@ -11,6 +11,10 @@ import qs.Services as Services
 Item {
     id: root
 
+    // Polling follows panelLayout (evaluated when the service is created).
+    property bool pollEnabled: !!Services.WidgetRegistry.visibleSetFor(
+        Settings.settings ? Settings.settings.panelLayout : undefined)["sysmon"]
+
     // ── CPU ──
     property real cpuPercent: 0.0
 
@@ -60,7 +64,7 @@ Item {
         id: pollTimer
         interval: root._pollMs
         repeat: true
-        running: Services.WidgetRegistry.isVisible("sysmon")
+        running: root.pollEnabled
         onTriggered: {
             if (!probeAll.running)
                 probeAll.start();
@@ -126,7 +130,7 @@ Item {
     ProcessRunner {
         id: probeAll
         cmd: root._probeCmd
-        autoStart: Services.WidgetRegistry.isVisible("sysmon")
+        autoStart: root.pollEnabled
         restartOnExit: false
         onLine: s => root._handleProbeLine(s)
     }

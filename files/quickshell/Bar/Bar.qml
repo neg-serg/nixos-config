@@ -21,6 +21,14 @@ Scope {
     // PanelWindow maps as a real surface (nested PanelWindow does not map).
     // Anchored to the right panel once it exists.
     property var sidebarPopup: (shell && shell.musicPopup) ? shell.musicPopup : null
+    // Panel widget visibility, resolved from Settings.panelLayout.
+    // NOTE: the settings adapter applies Settings.json only after the bar has been
+    // built and blocks change notifications while doing so (JsonAdapter::
+    // changesBlocked), so this binding reflects the layout as it is when the object
+    // is created. Settings.json edits need a panel restart to take effect.
+    readonly property var panelWidgets: WidgetRegistry.visibleSetFor(
+        Settings.settings ? Settings.settings.panelLayout : undefined)
+
     property real barHeight: 0 // Expose current bar height for other components (e.g. window mirroring)
     function vpnAccentColor() {
         const boost = Theme.vpnAccentSaturateBoost || 0;
@@ -86,6 +94,7 @@ Scope {
         // Force WallpaperAccent singleton to instantiate
         var wa = WallpaperAccent;
         _recalcTerminalWs();
+        _refreshPanelWidgets();
     }
 
     function makeTriangleVariant(widthPx, heightPx, variantSelector) {
@@ -674,7 +683,7 @@ Scope {
 
                                 ClockWidget {
                                     Layout.alignment: Qt.AlignVCenter
-                                    visible: WidgetRegistry.isVisible("clock")
+                                    visible: rootScope.panelWidgets["clock"]
                                     screen: modelData
                                 }
 
@@ -683,7 +692,7 @@ Scope {
                                 SlideReveal {
                                     id: pillReveal
                                     Layout.alignment: Qt.AlignVCenter
-                                    revealed: WidgetRegistry.isVisible("pill")
+                                    revealed: rootScope.panelWidgets["pill"]
                                         && (PillTracker.reminderActive
                                             || (PillTracker.taken && pillRevealHover.hovered))
 
@@ -695,7 +704,7 @@ Scope {
                             }
                             WsIndicator {
                                 id: wsindicator
-                                visible: WidgetRegistry.isVisible("workspaces")
+                                visible: rootScope.panelWidgets["workspaces"]
                                 Layout.alignment: Qt.AlignVCenter
                                 workspaceGlyphDetached: true
                                 showSubmapIcon: false
@@ -703,7 +712,7 @@ Scope {
                             }
                             RowLayout {
                                 id: kbCluster
-                                visible: WidgetRegistry.isVisible("keyboard")
+                                visible: rootScope.panelWidgets["keyboard"]
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: Math.round(Theme.panelNetClusterSpacing * leftPanel.s)
 
@@ -717,7 +726,7 @@ Scope {
                             }
                             Row {
                                 id: netCluster
-                                visible: WidgetRegistry.isVisible("network")
+                                visible: rootScope.panelWidgets["network"]
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: Math.round(Theme.panelNetClusterSpacing * leftPanel.s)
                                 LocalMods.NetFlowCapsule {
@@ -730,13 +739,13 @@ Scope {
                             }
                             LocalMods.SystemMonitorCapsule {
                                 id: systemMonitorCapsule
-                                visible: WidgetRegistry.isVisible("sysmon")
+                                visible: rootScope.panelWidgets["sysmon"]
                                 Layout.alignment: Qt.AlignVCenter
                                 screen: modelData
                             }
                             LocalMods.WeatherButton {
                                 id: weatherButton
-                                visible: WidgetRegistry.isVisible("weather") && Settings.settings.showWeatherInBar === true
+                                visible: rootScope.panelWidgets["weather"] && Settings.settings.showWeatherInBar === true
                                 Layout.alignment: Qt.AlignVCenter
                                 screen: modelData
                                 capsule.rightTriangleVisible: true
@@ -995,7 +1004,7 @@ Scope {
                                 Layout.preferredWidth: implicitWidth
                                 implicitWidth: mediaModule.parent === mediaRowSlot ? Math.max(mediaModule.implicitWidth, 1) : 0
                                 implicitHeight: mediaModule.parent === mediaRowSlot ? Math.max(mediaModule.implicitHeight, 1) : 0
-                                visible: WidgetRegistry.isVisible("media") && mediaModule.parent === mediaRowSlot && Settings.settings.showMediaInBar && MusicManager.hasPlayer && (MusicManager.isPlaying || MusicManager.isPaused)
+                                visible: rootScope.panelWidgets["media"] && mediaModule.parent === mediaRowSlot && Settings.settings.showMediaInBar && MusicManager.hasPlayer && (MusicManager.isPlaying || MusicManager.isPaused)
 
                                 Media {
                                     id: mediaModule
@@ -1006,7 +1015,7 @@ Scope {
                             }
                             LocalMods.MpdFlags {
                                 id: mpdFlagsBar
-                                visible: WidgetRegistry.isVisible("mpdFlags") && _mediaVisible && activeFlags.length > 0
+                                visible: rootScope.panelWidgets["mpdFlags"] && _mediaVisible && activeFlags.length > 0
                                 Layout.alignment: Qt.AlignVCenter
                                 property bool _mediaVisible: Settings.settings.showMediaInBar && MusicManager.hasPlayer
                                 enabled: _mediaVisible && MusicManager.isCurrentMpdPlayer()
@@ -1019,7 +1028,7 @@ Scope {
                                 Layout.fillHeight: true
                                 Layout.preferredHeight: pillCapsule.capsule.uniformCapsuleHeight
                                 readonly property bool trayCapsuleHidden: Settings.settings.hideSystemTrayCapsule === true
-                                readonly property bool trayVisible: WidgetRegistry.isVisible("systray") && (!trayCapsuleHidden || systemTrayModule.expanded)
+                                readonly property bool trayVisible: rootScope.panelWidgets["systray"] && (!trayCapsuleHidden || systemTrayModule.expanded)
                                 readonly property bool tightSpacing: Settings.settings.systemTrayTightSpacing !== false
                                 readonly property int horizontalPadding: tightSpacing ? 0 : Math.max(4, Math.round(Theme.panelTrayInlinePadding * rightPanel.s * 0.75))
                                 readonly property color capsuleColor: WidgetBg.color(Settings.settings, "systemTray", Theme.surface)
@@ -1062,13 +1071,13 @@ Scope {
                             CustomTrayMenu { id: externalTrayMenu }
                             Microphone {
                                 id: widgetsMicrophone
-                                visible: WidgetRegistry.isVisible("microphone")
+                                visible: rootScope.panelWidgets["microphone"]
                                 Layout.alignment: Qt.AlignVCenter
                                 panelHovering: rightPanel.panelHovering
                             }
                             Volume {
                                 id: widgetsVolume
-                                visible: WidgetRegistry.isVisible("volume")
+                                visible: rootScope.panelWidgets["volume"]
                                 Layout.alignment: Qt.AlignVCenter
                                 panelHovering: rightPanel.panelHovering
                             }
