@@ -21,22 +21,11 @@ let
   cfg = config.features.input.ruHotkeys or { };
   enabled = cfg.enable or false;
 
-  # Terminal windows are launched with custom kitty classes (see the
-  # M4+* scratch binds in files/gui/hypr/hyprland.lua) — keep this list in
-  # sync when adding one. `mpv` is a hotkey-heavy GUI.
-  usClasses = lib.concatStringsSep " " (
-    cfg.usClasses or [
-      "term"
-      "nwim"
-      "music"
-      "teardown"
-      "torrment"
-      "vpn"
-      "mixer"
-      "rebuild"
-      "mpv"
-    ]
-  );
+  # Window classes forced to `us` come from the option's default in
+  # modules/features/hardware.nix (each class annotated there) — the list is
+  # deliberately not duplicated here. The fallback only covers a trimmed eval
+  # that drops the hardware domain, in which case the module is not imported.
+  usClasses = lib.concatStringsSep " " (cfg.usClasses or [ ]);
   usIdx = toString (cfg.usLayoutIndex or 0);
   ruIdx = toString (cfg.ruLayoutIndex or 1);
   pollSec = cfg.pollSec or "0.5";
