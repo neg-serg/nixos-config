@@ -112,31 +112,7 @@ let
 
   # routing config for pwroute
 
-  routingYaml = pkgs.writeText "routing.yaml" ''
-
-    ---
-    rme:
-      nick: "RME AIO Pro"
-      card_name: "RME AIO Pro"
-      profile: "pro-audio"
-      routes:
-        aes:
-          left: 2
-          right: 3
-          label: "AES"
-        an:
-          left: 0
-          right: 1
-          label: "Speakers"
-        spdif:
-          left: 4
-          right: 5
-          label: "SPDIF"
-        phones:
-          left: 6
-          right: 7
-          label: "Headphones"
-  '';
+  routingYaml = config.lib.neg.path "files/media/hdspe-routing.yaml";
 in
 {
   options.hardware.audio.hdspe = {
