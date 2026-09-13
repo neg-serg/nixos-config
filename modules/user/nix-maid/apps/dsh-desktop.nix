@@ -5,9 +5,8 @@
   ...
 }:
 let
-  user = config.users.main.name or "neg";
-  userData = lib.attrByPath [ "users" "users" user ] { } config;
-  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  inherit (config.lib.neg) mainUser homeDir;
+  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 
   # dsh-desktop: Linux desktop control. computer-use-linux (used by the TUI's
   # dsh-desktop plugin through the `desktop` tool) is a prebuilt GitHub release,
@@ -65,18 +64,16 @@ in
 
   # Keep the CUL binary present on every rebuild and login: it is a plain file
   # in ~/.local/bin, not a profile package, so nothing else restores it.
-  system.activationScripts.dshDesktop = lib.stringAfter [ "users" ] ''
-    ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${installCul} || true
-  '';
+  system.activationScripts.dshDesktop = systemdUser.mkUserActivation {
+    inherit pkgs;
+    user = mainUser;
+    home = homeDir;
+    script = installCul;
+  };
 
-  systemd.user.services.dsh-desktop-cul = {
-    enable = true;
+  systemd.user.services.dsh-desktop-cul = systemdUser.mkUserOneshot {
     description = "computer-use-linux — keep the desktop-control binary in ~/.local/bin";
+    script = installCul;
     after = [ "network.target" ];
-    wantedBy = [ "default.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = installCul;
-    };
   };
 }

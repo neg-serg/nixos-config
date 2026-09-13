@@ -5,9 +5,8 @@
   ...
 }:
 let
-  user = config.users.main.name or "neg";
-  userData = lib.attrByPath [ "users" "users" user ] { } config;
-  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  inherit (config.lib.neg) mainUser homeDir;
+  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 
   # dsh model policy: keep the deployment on the V4.1 route everywhere.
   #
@@ -146,18 +145,16 @@ in
 {
   # Runs on every rebuild (as the user, so the settings file stays user-owned)
   # and on every login — same pattern as dsh-tui-ru.
-  system.activationScripts.dshModels = lib.stringAfter [ "users" ] ''
-    ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${ensure} || true
-  '';
+  system.activationScripts.dshModels = systemdUser.mkUserActivation {
+    inherit pkgs;
+    user = mainUser;
+    home = homeDir;
+    script = ensure;
+  };
 
-  systemd.user.services.dsh-models = {
-    enable = true;
+  systemd.user.services.dsh-models = systemdUser.mkUserOneshot {
     description = "dsh-models — keep ~/.dsh/settings.yaml on the V4.1 model policy";
+    script = ensure;
     after = [ "network.target" ];
-    wantedBy = [ "default.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = ensure;
-    };
   };
 }

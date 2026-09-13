@@ -5,9 +5,8 @@
   ...
 }:
 let
-  user = config.users.main.name or "neg";
-  userData = lib.attrByPath [ "users" "users" user ] { } config;
-  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  inherit (config.lib.neg) mainUser homeDir;
+  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 
   # dsh-liangshen-fork: the user's own fork of the LiangShen (anchored-standard)
   # agent preset, kept declaratively in ./dsh-liangshen-fork and synced into
@@ -48,22 +47,20 @@ let
   '';
 in
 {
-  # Apply on every nixos-rebuild (as the user, so ~/.dsh files stay
-  # user-owned) — same pattern as dsh-market-ensure / dsh-osm.
-  system.activationScripts.dshLiangshenFork = lib.stringAfter [ "users" ] ''
-    ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${ensureLiangshenFork} || true
-  '';
+  # Apply on every nixos-rebuild (as the user, so ~/.dsh files stay user-owned)
+  # and on every login, so the preset survives a fresh ~/.dsh or a manual
+  # re-sync of .agent-presets — same pattern as dsh-market-ensure / dsh-osm.
+  # No dsh.service restart: the roster and the settings default are read per
+  # call (hot-reloaded).
+  system.activationScripts.dshLiangshenFork = systemdUser.mkUserActivation {
+    inherit pkgs;
+    user = mainUser;
+    home = homeDir;
+    script = ensureLiangshenFork;
+  };
 
-  # ...and on every login, so the preset survives a fresh ~/.dsh or a
-  # manual re-sync of .agent-presets. No dsh.service restart: the roster
-  # and the settings default are read per call (hot-reloaded).
-  systemd.user.services.dsh-liangshen-fork = {
-    enable = true;
+  systemd.user.services.dsh-liangshen-fork = systemdUser.mkUserOneshot {
     description = "dsh-liangshen-fork — sync the neg (LiangShen fork) agent preset into ~/.dsh/.agent-presets";
-    wantedBy = [ "default.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = ensureLiangshenFork;
-    };
+    script = ensureLiangshenFork;
   };
 }
