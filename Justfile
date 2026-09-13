@@ -94,8 +94,11 @@ lint:
       ruff check -- .; \
       black --check --line-length 79 --extend-exclude '(files/kitty|files/art/fun-art)' .; \
     fi
-    # TOML syntax/style
-    if command -v taplo >/dev/null 2>&1; then taplo lint; else echo "taplo not found — skipping TOML lint"; fi
+    # TOML syntax/style — tracked files only: a bare `taplo lint` follows result/
+    # into the nix store (pyright's typeshed alone is ~200 METADATA.toml) plus the
+    # local nix/ dump, for ~1s of pointless walking; RUST_LOG=warn hides taplo's
+    # file-list INFO line.
+    if command -v taplo >/dev/null 2>&1; then git ls-files -z -- '*.toml' 2>/dev/null | RUST_LOG=warn xargs -0 -r taplo lint; else echo "taplo not found — skipping TOML lint"; fi
     # Rust formatting (edition-aware via nearest Cargo.toml)
     if command -v rustfmt >/dev/null 2>&1; then bash scripts/dev/check-rustfmt.sh; else echo "rustfmt not found — skipping Rust check"; fi
     # Optional guard: prefer `let exe = lib.getExe' pkgs.pkg "bin"; in "${exe} …" over direct ${pkgs.*}/bin paths
