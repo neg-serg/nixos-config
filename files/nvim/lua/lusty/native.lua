@@ -10,6 +10,9 @@
 --   M <mask> <index>...     -> "K <index> <meta>" per index + "E" (long view;
 --                             mask bits 1 perm, 2 user, 4 size, 8 time)
 -- kind: d (dir) / f (file) / l (link). C-l toggles the long view.
+-- Backslash/TAB/LF inside a label, path or D name are escaped as \\, \t, \n
+-- (reversed by `unescape` below), so a file name containing them cannot break
+-- the framing; non-UTF8 paths travel as raw bytes.
 
 local lsc = require('lusty.ls_colors')
 local frecency = require('lusty.frecency')
@@ -54,6 +57,52 @@ local RU2EN = {
 
 local function basename(label)
   return label:match('([^/]+)$') or label
+end
+
+--- Reverse the serve-side byte escaping: backslash, TAB and LF inside a label
+--- or path are written as `\\`, `\t`, `\n` so a file name containing them
+--- cannot break the line protocol. Byte-wise, so non-UTF8 paths pass through.
+---
+--- `keep_controls` is used for display labels: a raw LF in a buffer line makes
+--- nvim_buf_set_lines fail and a raw TAB breaks the grid pitch, so those stay
+--- in their visible two-character form. Paths must be decoded fully — they are
+--- handed to the filesystem verbatim.
+local function decode_escape(n, keep_controls)
+  if n == '\\' then
+    return '\\'
+  end
+  if keep_controls then
+    return '\\' .. n
+  end
+  if n == 't' then
+    return '\t'
+  end
+  if n == 'n' then
+    return '\n'
+  end
+  if n == 'r' then
+    return '\r'
+  end
+  return n
+end
+
+local function unescape(s, keep_controls)
+  if not s:find('\\', 1, true) then
+    return s
+  end
+  local out = {}
+  local i = 1
+  while i <= #s do
+    local c = s:sub(i, i)
+    if c == '\\' and i < #s then
+      out[#out + 1] = decode_escape(s:sub(i + 1, i + 1), keep_controls)
+      i = i + 2
+    else
+      out[#out + 1] = c
+      i = i + 1
+    end
+  end
+  return table.concat(out)
 end
 
 -- serve Q sort token: 0 name, 1 ext, 2 size desc, 3 time desc (eza-style).
@@ -434,8 +483,10 @@ function Picker:rerank()
           win_rows[#win_rows + 1] = {
             i = tonumber(i),
             kind = kind,
-            label = label,
-            path = path,
+            -- Display label: control escapes stay visible (see unescape).
+            label = unescape(label, true),
+            -- Open path: exact bytes, non-UTF8 included.
+            path = unescape(path),
           }
         end
         end
@@ -987,7 +1038,7 @@ function Picker:slash_enter()
       for _, ln in ipairs(lines) do
         local name = ln:match('^D (.+)$')
         if name then
-          dirs[#dirs + 1] = name
+          dirs[#dirs + 1] = unescape(name)
         end
       end
       self.dirs = dirs
@@ -1079,6 +1130,7 @@ function Picker:start_backend()
   end
   local self_ref = self
   local acc = ''
+  local errbuf = ''
   self.job = vim.fn.jobstart(cmd, {
     on_stdout = function(_, data)
       if self_ref.closed then
@@ -1108,6 +1160,29 @@ function Picker:start_backend()
           self_ref.outbuf[#self_ref.outbuf + 1] = line
         end
       end
+    end,
+    on_stderr = function(_, data)
+      if self_ref.closed then
+        return
+      end
+      local chunk = table.concat(data, '\n'):gsub('%s+$', '')
+      if chunk ~= '' then
+        errbuf = (errbuf .. '\n' .. chunk):sub(-2000)
+      end
+    end,
+    on_exit = function(_, code)
+      -- A live picker whose backend died would otherwise sit on the loading
+      -- placeholder forever with no explanation (bad flag, panic, killed).
+      if self_ref.closed then
+        return
+      end
+      local msg = errbuf ~= '' and errbuf or ('lusty serve exited with code ' .. code)
+      vim.schedule(function()
+        if not self_ref.closed then
+          vim.notify('lusty: ' .. msg, vim.log.levels.ERROR)
+          self_ref:close()
+        end
+      end)
     end,
   })
   self:rerank()
