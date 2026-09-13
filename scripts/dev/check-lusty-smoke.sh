@@ -27,6 +27,8 @@ suites=(
   files/nvim/lua/lusty/tests/filesystem_float_special_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_marks_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_frecency_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_create_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_depth_smoke.lua
 )
 for suite in "${suites[@]}"; do
   if ! nvim --clean --headless -l "$suite" > "$log" 2>&1; then
