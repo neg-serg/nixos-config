@@ -58,6 +58,18 @@ let
       touch $out
     '';
 
+  # Eval-only unit checks (lib/*-tests.nix) return { failures, checks, report }.
+  # A clean run becomes a trivial runCommand; a failure aborts evaluation.
+  mkOkCheck =
+    name: t:
+    if t.failures == [ ] then
+      pkgs.runCommand "check-${name}" { } ''
+        echo "check: ${name} OK (${toString (builtins.length t.checks)} assertions)"
+        touch $out
+      ''
+    else
+      builtins.throw "${name} check failures: ${t.report}";
+
 in
 {
   # ── Module-level checks ──────────────────────────────────────────
@@ -81,17 +93,7 @@ in
   # ── Unit checks (pure nix, eval-only) ──────────────────────────────
   # lib/ru-keys.nix is the single source of truth for ЙЦУКЕН hotkey
   # duplicates; these assertions pin the table and every generator.
-  "ru-keys" =
-    let
-      t = import ../lib/ru-keys-tests.nix { lib = nixpkgs.lib; };
-    in
-    if t.failures == [ ] then
-      pkgs.runCommand "check-ru-keys" { } ''
-        echo "check: ru-keys OK (${toString (builtins.length t.checks)} assertions)"
-        touch $out
-      ''
-    else
-      builtins.throw "ru-keys check failures: ${t.report}";
+  "ru-keys" = mkOkCheck "ru-keys" (import ../lib/ru-keys-tests.nix { lib = nixpkgs.lib; });
 
   # ── fzf opts guards ────────────────────────────────────────────────
   # fzf parses FZF_*_OPTS values as its own CLI options; a standalone '#'
@@ -99,17 +101,7 @@ in
   # colors/binds). fzf-opts-guard pins the predicate, fzf-opts parses the
   # real odin values with fzf itself.
 
-  "fzf-opts-guard" =
-    let
-      t = import ../lib/fzf-opts-tests.nix;
-    in
-    if t.failures == [ ] then
-      pkgs.runCommand "check-fzf-opts-guard" { } ''
-        echo "check: fzf-opts-guard OK (${toString (builtins.length t.checks)} assertions)"
-        touch $out
-      ''
-    else
-      builtins.throw "fzf-opts-guard check failures: ${t.report}";
+  "fzf-opts-guard" = mkOkCheck "fzf-opts-guard" (import ../lib/fzf-opts-tests.nix);
 
   "fzf-opts" =
     let
