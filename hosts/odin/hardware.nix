@@ -351,7 +351,7 @@
   ];
 
   # dockur Windows VM + vfio (iGPU 1002:13c0 passthrough): QEMU must pin the
-  # guest RAM (~14GB with RAM_SIZE=16G) for DMA into the vfio container, but
+  # guest RAM (~5-6GB with RAM_SIZE=6G) for DMA into the vfio container, but
   # systemd/pam memlock defaults (8MB–4GB) are far below that → dma_map fails
   # with ENOMEM. Raise the lock limit for the whole user session. Three layers
   # are needed because the VM is started from user-space (rootless podman):
