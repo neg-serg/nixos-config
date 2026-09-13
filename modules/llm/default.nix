@@ -1,4 +1,5 @@
 {
+  neg,
   config,
   lib,
   pkgs,
@@ -8,14 +9,12 @@ let
   cfg = config.services.ollama;
 in
 {
-  imports =
-    let
-      excludes = [ "open-webui.nix" ]; # disabled — not wired yet (heavy dep tree: jupyterlab/yarn-berry)
-    in
-    builtins.readDir ./.
-    |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
-    |> builtins.map (n: ./. + "/${n}");
+  # open-webui.nix is disabled — not wired yet (heavy dep tree: jupyterlab/yarn-berry)
+  imports = neg.importDir {
+    dir = ./.;
+    includeDirs = true;
+    exclude = [ "open-webui.nix" ];
+  };
   config = lib.mkIf (config.lib.neg.enabled "llm") (
     lib.mkMerge [
       {

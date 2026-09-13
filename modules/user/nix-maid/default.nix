@@ -1,29 +1,18 @@
 {
+  neg,
   inputs,
   pkgs,
   lib,
   ...
 }:
-let
-  entries = builtins.readDir ./.;
-in
 {
   imports = [
     inputs.nix-maid.nixosModules.default # user configuration framework (nix-maid)
   ]
-  ++ (
-    # Each subdomain (apps, cli, fun, gui, hyprland, sys, web) owns its
-    # own default.nix; mutt-conf/ and scripts/ are data directories.
-    builtins.attrNames entries
-    |> builtins.filter (
-      n:
-      n != "default.nix"
-      && n != "mutt-conf"
-      && n != "scripts"
-      && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
-    )
-    |> builtins.map (n: ./. + "/${n}")
-  );
+  ++ neg.importDir {
+    dir = ./.; # mutt-conf/ and scripts/ are data directories — importDir skips them
+    includeDirs = true;
+  };
 
   users.users.neg.maid = { };
 

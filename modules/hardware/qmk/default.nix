@@ -1,14 +1,11 @@
 {
+  neg,
   lib,
   config,
   ...
 }:
 {
-  imports =
-    builtins.readDir ./.
-    |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
-    |> builtins.map (n: ./. + "/${n}");
+  imports = neg.importDir { dir = ./.; };
 
   # Enable upstream QMK module to ship udev rules and create 'plugdev'.
   hardware.keyboard.qmk.enable = true;
