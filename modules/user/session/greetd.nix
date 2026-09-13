@@ -7,12 +7,7 @@
 }:
 let
   guiEnabled = config.features.gui.enable or true;
-  mainUser = config.users.main.name or "neg";
-  mainHome =
-    if builtins.hasAttr mainUser config.users.users then
-      config.users.users.${mainUser}.home or "/home/${mainUser}"
-    else
-      "/home/${mainUser}";
+  mainHome = config.lib.neg.homeDir;
   greeterCache = "/home/greeter/.cache";
   greeterWallpaperDst = "${greeterCache}/greeter-wallpaper";
   # Fallback when no dynamic source yields a file at activation time.

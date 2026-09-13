@@ -1,13 +1,10 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
 let
-  user = config.users.main.name or "neg";
-  userData = lib.attrByPath [ "users" "users" user ] { } config;
-  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  inherit (config.lib.neg) homeDir;
   # Wrap dsh so it loads DEEPSEEK_API_KEY from the sops secret itself, rather
   # than relying on shell init — works even from a terminal opened before the
   # secret was wired (a shell only sources .zshenv at startup).

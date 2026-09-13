@@ -5,9 +5,8 @@
   ...
 }:
 let
-  user = config.users.main.name or "neg";
-  userData = lib.attrByPath [ "users" "users" user ] { } config;
-  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  inherit (config.lib.neg) mainUser homeDir;
+  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 
   # dsh ACP profile: the editor surface (Agent Client Protocol over stdio),
   # used by CodeCompanion in Neovim.
@@ -73,18 +72,20 @@ in
 {
   # Runs on every rebuild (as the user, so the profile stays user-owned) and on
   # every login — same pattern as dsh-models / dsh-tui-ru.
-  system.activationScripts.dshAcp = lib.stringAfter [ "users" "dshModels" ] ''
-    ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${ensure} || true
-  '';
+  system.activationScripts.dshAcp = systemdUser.mkUserActivation {
+    inherit pkgs;
+    user = mainUser;
+    home = homeDir;
+    script = ensure;
+    after = [
+      "users"
+      "dshModels"
+    ];
+  };
 
-  systemd.user.services.dsh-acp = {
-    enable = true;
+  systemd.user.services.dsh-acp = systemdUser.mkUserOneshot {
     description = "dsh-acp — keep the ACP profile on the V4.1 route";
+    script = ensure;
     after = [ "network.target" ];
-    wantedBy = [ "default.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = ensure;
-    };
   };
 }

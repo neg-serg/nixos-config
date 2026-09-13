@@ -1,13 +1,10 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
 let
-  user = config.users.main.name or "neg";
-  userData = lib.attrByPath [ "users" "users" user ] { } config;
-  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  inherit (config.lib.neg) homeDir;
 in
 {
   # OmniRouter — unified LLM API router, local mode.

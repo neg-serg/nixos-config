@@ -15,7 +15,7 @@ let
   cfg = config.features.wine or { };
   enabled = cfg.enable or false;
   apps = cfg.apps or { };
-  mainUser = config.users.main.name or "neg";
+  mainUser = config.lib.neg.mainUser;
 
   registry = builtins.toJSON (
     lib.mapAttrs (name: app: {

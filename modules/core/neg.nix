@@ -5,6 +5,15 @@
   config,
   ...
 }:
+let
+  # Primary (login) user name. `users.main` is declared by
+  # modules/system/users.nix; keep the "neg" fallback for hosts that omit it.
+  mainUser = config.users.main.name or "neg";
+
+  # Effective passwd entry for the primary user (may be absent in trimmed
+  # evals; each field below falls back individually).
+  mainUserEntry = lib.attrByPath [ "users" "users" mainUser ] { } config;
+in
 {
   options.neg = {
     repoRoot = lib.mkOption {
@@ -25,6 +34,13 @@
     # specialArgs (mkHomeFiles, mkLocalBin, ...) extended with helpers that
     # close over config.
     lib.neg = neg // {
+      # Primary user identity — single source for the preamble
+      # (`user = config.users.main.name or "neg"` plus the attrByPath lookups
+      # for home/group) that modules used to repeat.
+      inherit mainUser;
+      homeDir = mainUserEntry.home or "/home/${mainUser}";
+      mainGroup = mainUserEntry.group or mainUser;
+
       # enabled "gui" → features.gui.enable, or false when unset. Sites that
       # previously wrote `or true` (default-on) keep the explicit form.
       #
