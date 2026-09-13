@@ -58,8 +58,9 @@ Two bottlenecks in the current Lua port:
   (sort name/ext/size/time), C-u (clear), C-Space (multi-select mark in the native pickers: Enter
   opens all marked files in the filesystem/recent floats, C-d unloads all marked buffers), C-e
   (create a file from the typed path in the filesystem float), C-d (cycle the search depth 1..6 in
-  the filesystem floats and the standalone; delete in the buffer pickers), Esc/C-c/C-g (cancel), C-w
-  (up a directory), dot (show hidden), RU layout without switching.
+  the filesystem floats and the standalone; delete in the buffer pickers), C-r (preview pane in the
+  filesystem float), Esc/C-c/C-g (cancel), C-w (up a directory), dot (show hidden), RU layout
+  without switching.
 - Search depth: `g:LustyExplorerSearchDepth` is the starting value; C-d cycles it at runtime and the
   value survives navigation. The standalone restores its last query from
   `$XDG_STATE_HOME/lusty/history` (`LUSTY_HISTORY` overrides the path, `LUSTY_HISTORY=0` disables).
@@ -104,7 +105,15 @@ Two bottlenecks in the current Lua port:
   map the empty query orders by (depth, score, canonical index) — the shallower depth still wins,
   and inside a depth the most frequent/recent paths lead. `LUSTY_FRECENCY=0` /
   `g:LustyExplorerFrecency=0` disables it (then no `F` is sent and the canonical order stands).
+- Preview: `native.lua` opens a second float to the right (`C-r`) and asks for the pane with
+  `V <index> <w> <h>`; the backend renders content / git diff / man / chafa and answers
+  `V <lines> <dim>` plus one `L <text>` row per line (the `L ` prefix keeps a content line equal to
+  `E` from ending the response). ANSI is stripped server-side and rows are clipped to the pane
+  width, so the buffer never sees control bytes. The server announces `X preview` right after the
+  banner; without that capability the key notifies instead of sending `V` (an old backend cannot
+  reply, which would stall the response FIFO).
 - Regression coverage: `cargo test` (`tests/serve_escape.rs`, `tests/serve_frec.rs`,
-  `listing::tests`, `rank::tests`) and the headless `filesystem_float_special_smoke.lua` /
-  `filesystem_float_frecency_smoke.lua` in `check-lusty-smoke.sh` (both self-skip on an older
+  `tests/serve_preview.rs`, `listing::tests`, `rank::tests`, `preview::tests`) and the headless
+  `filesystem_float_special_smoke.lua` / `filesystem_float_frecency_smoke.lua` /
+  `filesystem_float_preview_smoke.lua` in `check-lusty-smoke.sh` (each self-skips on an older
   deployed backend).
