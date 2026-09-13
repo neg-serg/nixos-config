@@ -6,7 +6,7 @@ exists, emails will not be sent.
 
 ## Where it’s configured
 
-- Prometheus → Alertmanager wiring and alert rules: `hosts/odin/services.nix`
+- Prometheus → Alertmanager wiring and alert rules: `hosts/odin/services/telegram-units.nix`
 - Alertmanager SMTP config uses environment variables: `$ALERT_SMTP_USER`, `$ALERT_SMTP_PASS`
 - Secret path expected by NixOS: `sops.secrets."alertmanager/env"` → file
   `secrets/alertmanager.env.sops`

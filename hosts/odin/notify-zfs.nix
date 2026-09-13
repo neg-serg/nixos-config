@@ -219,7 +219,8 @@ in
     };
   };
 
-  # No Persistent=true (see the pill-reminder comment in services.nix): on VM
+  # No Persistent=true (see the pill-reminder comment in
+  # services/telegram-units.nix): on VM
   # snapshot restores / boot catch-ups it would fire catch-up runs; a plain
   # every-10-minutes schedule keeps alerts strictly transition-driven.
   systemd.timers."telegram-zfs-watch" = {
