@@ -80,3 +80,18 @@ Two bottlenecks in the current Lua port:
   `packages/overlays/tools.nix`: `callPkg (inputs.lusty.outPath) { }` → `pkgs.neg.lusty`.
 - After changing the code in `~/src/lusty`: run `nix flake lock --update-input lusty` before
   rebuilding.
+
+## Protocol hardening
+
+- Escaping: backslash, TAB and LF inside a label, a path or a `D` name travel as `\\`, `\t`, `\n`,
+  so a file name containing them cannot break the line framing. The client reverses this (`unescape`
+  in `native.lua`); display labels keep TAB/LF in the visible escaped form because a raw LF makes
+  `nvim_buf_set_lines` fail and a raw TAB breaks the grid pitch.
+- Non-UTF8 names: `Entry` keeps the raw Unix path bytes (`rel_bytes`) and the serve rows send the
+  path as those bytes; the label is the lossy form (display only). Opening, stat, preview and the
+  long view all go through `Entry::path`, so such names stay usable.
+- Backend death: `native.lua` reports `lusty serve`'s stderr/exit code with `vim.notify` and closes
+  the float instead of leaving the loading placeholder forever.
+- Long-view timestamps are local time (`localtime_r`, UTC only as a fallback), matching `eza -l`.
+- Regression coverage: `cargo test` (`tests/serve_escape.rs`, `listing::tests`) and the headless
+  `filesystem_float_special_smoke.lua` in `check-lusty-smoke.sh`.
