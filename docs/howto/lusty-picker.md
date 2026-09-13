@@ -56,8 +56,13 @@ Two bottlenecks in the current Lua port:
 
 - Keys: Enter/Tab, C-t, C-o/C-v, C-n/C-p, C-f/C-b (columns), C-l (long mode with metadata), C-y
   (sort name/ext/size/time), C-u (clear), C-Space (multi-select mark in the native pickers: Enter
-  opens all marked files in the filesystem/recent floats, C-d unloads all marked buffers),
-  Esc/C-c/C-g (cancel), C-w (up a directory), dot (show hidden), RU layout without switching.
+  opens all marked files in the filesystem/recent floats, C-d unloads all marked buffers), C-e
+  (create a file from the typed path in the filesystem float), C-d (cycle the search depth 1..6 in
+  the filesystem floats and the standalone; delete in the buffer pickers), Esc/C-c/C-g (cancel), C-w
+  (up a directory), dot (show hidden), RU layout without switching.
+- Search depth: `g:LustyExplorerSearchDepth` is the starting value; C-d cycles it at runtime and the
+  value survives navigation. The standalone restores its last query from
+  `$XDG_STATE_HOME/lusty/history` (`LUSTY_HISTORY` overrides the path, `LUSTY_HISTORY=0` disables).
 - glob-skip `~`/`*`/`?`, prefix anchor.
 - Only dircolors/LS_COLORS; the path in the prompt is colored like zsh/oh-my-posh.
 - Buffers: MRU order (current last) + fuzzy; grep: hits + `\b` boundaries.
