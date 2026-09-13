@@ -10,13 +10,14 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
 - Query: C-u clear, C-h/BS backspace, C-w clear (files: then up).
 - Actions: Enter/Tab open, C-t tab, C-o/C-v splits, C-e create file from the typed path (fs float),
   C-d delete buffer (buffers; with C-Space marks: the whole marked set) / cycle the search depth
-  1..6 (filesystem floats and the standalone), C-y sort order (we do not bind C-s: XOFF/kitty
-  conflict), C-l cycle display mode, C-Space mark (multi-select in the native pickers: files — Enter
-  opens all, buffers — C-d unloads all; preview in standalone), Esc/C-c/C-g close.
+  1..6 (filesystem floats and the standalone), C-r preview pane (filesystem float; C-Space previews
+  in standalone), C-y sort order (we do not bind C-s: XOFF/kitty conflict), C-l cycle display mode,
+  C-Space mark (multi-select in the native pickers: files — Enter opens all, buffers — C-d unloads
+  all), Esc/C-c/C-g close.
 - Standalone: the last query is restored from $XDG_STATE_HOME/lusty/history (LUSTY_HISTORY overrides
   the file, 0 disables it).
 - Constraints: h/j/k/l are not touched (query letters); C-s is not bound in standalone (terminal
-  suspend); shared keys keep standalone/float parity except the documented C-d/C-e/C-Space
+  suspend); shared keys keep standalone/float parity except the documented C-d/C-e/C-r/C-Space
   divergences.
 
 ## Display modes (eza approach)
@@ -60,10 +61,14 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
 - E: images, git-diff, man — done in standalone (chafa/git diff/man; C-Space/Shift+P); kitty
   protocol for images — next step.
 - F: tests — serve M is covered by a Rust integration test (tests/serve_m.rs); serve escaping and
-  non-UTF8 paths by tests/serve_escape.rs; frecency ordering by tests/serve_frec.rs; headless float
-  smokes: smoke.lua, native_float_smoke.lua, filesystem_float_smoke.lua,
-  filesystem_float_icons_smoke.lua, filesystem_float_special_smoke.lua,
-  filesystem_float_frecency_smoke.lua (check-lusty-smoke.sh).
+  non-UTF8 paths by tests/serve_escape.rs; frecency ordering by tests/serve_frec.rs; the V preview
+  framing by tests/serve_preview.rs; headless float smokes: smoke.lua, native_float_smoke.lua,
+  filesystem_float_smoke.lua, filesystem_float_icons_smoke.lua, filesystem_float_special_smoke.lua,
+  filesystem_float_frecency_smoke.lua, filesystem_float_preview_smoke.lua (check-lusty-smoke.sh).
 - G: frecency ordering — done: the client ships its open-frequency journal as `F` records and the
   empty query leads with the higher-scored paths inside each depth (opt-out: LUSTY_FRECENCY=0 /
   g:LustyExplorerFrecency=0).
+- H: preview in the nvim float — done: C-r opens a sibling float and `V <index> <w> <h>` returns the
+  pane (content / git diff / man / chafa); the backend advertises `X preview` so an older server
+  makes the key a no-op. Images are monochrome (ANSI stripped server-side); SGR→extmarks colour in
+  the float and the kitty protocol remain next steps.
