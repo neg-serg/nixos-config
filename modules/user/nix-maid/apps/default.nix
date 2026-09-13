@@ -47,6 +47,7 @@ in
       && n != "dsh-worktree"
       && n != "dsh-diff"
       && n != "dsh-statusline"
+      && n != "dsh-notify-input"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
