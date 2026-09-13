@@ -1,11 +1,8 @@
-{ ... }:
+{ neg, ... }:
 {
-  imports =
-    let
-      excludes = [ "scripts" ]; # helper scripts, not a NixOS module
-    in
-    builtins.readDir ./.
-    |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
-    |> builtins.map (n: ./. + "/${n}");
+  # scripts/ is a data directory (no default.nix) — importDir skips it.
+  imports = neg.importDir {
+    dir = ./.;
+    includeDirs = true;
+  };
 }

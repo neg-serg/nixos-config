@@ -1,9 +1,8 @@
-{ ... }: {
-  imports =
-    builtins.readDir ./.
-    |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix")
-    |> builtins.map (n: ./. + "/${n}");
+{ neg, ... }: {
+  imports = neg.importDir {
+    dir = ./.;
+    includeDirs = true;
+  };
   services.flatpak = {
     enable = true;
     overrides = {

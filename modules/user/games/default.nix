@@ -2,13 +2,9 @@
 #
 # Main entry point for gaming configuration.
 # Imports submodules for launchers, performance, and VR.
-{ lib, ... }:
+{ neg, lib, ... }:
 {
-  imports =
-    builtins.readDir ./.
-    |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
-    |> builtins.map (n: ./. + "/${n}");
+  imports = neg.importDir { dir = ./.; };
 
   options.profiles.games = {
     enable = lib.mkOption {

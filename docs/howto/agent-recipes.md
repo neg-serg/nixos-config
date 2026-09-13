@@ -30,7 +30,7 @@ structure — feature flags, module domains, packages, overlay wiring.
 **Touch:**
 
 - `modules/<domain>/<name>.nix` — flat file; the domain's `default.nix` auto-imports it via
-  `builtins.readDir` (no registration needed)
+  `neg.importDir` (no registration needed)
 - or `modules/<domain>/<sub>/default.nix` — subdirectory module
 - new **top-level** domain → also register in `modules/default.nix`:
   `domain "name" ./name/default.nix`

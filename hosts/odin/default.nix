@@ -1,4 +1,5 @@
 {
+  neg,
   pkgs,
   config,
   lib,
@@ -6,8 +7,6 @@
   ...
 }:
 let
-  entries = builtins.readDir ./.;
-
   # --- zellij: Russian-layout duplicate binds (ЙЦУКЕН) ------------------------
   # GENERATED from lib/ru-keys.nix (single source of truth) — do not edit the
   # generated chars. Latin binds live in files/gui/zellij/config.kdl with the
@@ -183,16 +182,11 @@ in
     # Out-of-tree MT7927/MT6639 WiFi (mt76/mt7925e) — see hardware flags below
     inputs.mt7927.nixosModules.default
   ]
-  ++ (
-    builtins.attrNames entries
-    |> builtins.filter (
-      n:
-      n != "default.nix"
-      && n != "unbound-hosts.nix"
-      && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
-    )
-    |> builtins.map (n: ./. + "/${n}")
-  );
+  ++ neg.importDir {
+    dir = ./.; # unbound-hosts.nix is generated data (a list), not a module
+    includeDirs = true;
+    exclude = [ "unbound-hosts.nix" ];
+  };
   system.preserveFlake = false;
 
   # Composable profiles: order matters, last wins on conflicts

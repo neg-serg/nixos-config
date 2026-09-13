@@ -1,4 +1,5 @@
 {
+  neg,
   lib,
   ...
 }:
@@ -14,9 +15,5 @@
   };
 
   # All profiles always imported (Nix is lazy — they only run when mkIf condition passes).
-  imports =
-    builtins.readDir ./.
-    |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
-    |> builtins.map (n: ./. + "/${n}");
+  imports = neg.importDir { dir = ./.; };
 }
