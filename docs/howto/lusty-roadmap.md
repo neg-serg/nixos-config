@@ -5,15 +5,19 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
 
 ## Hotkeys
 
-- Navigation: C-n/C-j/↓ down, C-p/C-k/↑ up, C-f/C-b/←/→ columns, PgUp/PgDn page, Home/End and
-  C-a/C-e first/last.
+- Navigation: C-n/C-j/↓ down, C-p/C-k/↑ up, C-f/C-b/←/→ columns, PgUp/PgDn page, Home/End and C-a
+  first (C-e is last in standalone only; it creates a file in the float).
 - Query: C-u clear, C-h/BS backspace, C-w clear (files: then up).
-- Actions: Enter/Tab open, C-t tab, C-o/C-v splits, C-d delete buffer (with C-Space marks: the whole
-  marked set), C-y sort order (we do not bind C-s: XOFF/kitty conflict), C-l cycle display mode,
-  C-Space mark (multi-select in the native pickers: files — Enter opens all, buffers — C-d unloads
-  all; preview in standalone), Esc/C-c/C-g close.
+- Actions: Enter/Tab open, C-t tab, C-o/C-v splits, C-e create file from the typed path (fs float),
+  C-d delete buffer (buffers; with C-Space marks: the whole marked set) / cycle the search depth
+  1..6 (filesystem floats and the standalone), C-y sort order (we do not bind C-s: XOFF/kitty
+  conflict), C-l cycle display mode, C-Space mark (multi-select in the native pickers: files — Enter
+  opens all, buffers — C-d unloads all; preview in standalone), Esc/C-c/C-g close.
+- Standalone: the last query is restored from $XDG_STATE_HOME/lusty/history (LUSTY_HISTORY overrides
+  the file, 0 disables it).
 - Constraints: h/j/k/l are not touched (query letters); C-s is not bound in standalone (terminal
-  suspend); standalone/float parity.
+  suspend); shared keys keep standalone/float parity except the documented C-d/C-e/C-Space
+  divergences.
 
 ## Display modes (eza approach)
 
