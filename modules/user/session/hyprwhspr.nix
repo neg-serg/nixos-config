@@ -14,27 +14,11 @@ let
     name = "ggml-small.bin";
   };
 
-  hyprwhsprConfig = pkgs.writeText "hyprwhspr-config.jsonc" ''
-    {
-      // local whisper.cpp transcription, no API keys
-      "audio_feedback": true,
-      "start_sound_volume": 0.1,
-      "stop_sound_volume": 0.1,
-      "auto_copy_clipboard": true,
-      "transcription": {
-        "provider": "whisper_cpp",
-        "request_timeout_secs": 45,
-        "whisper_cpp": {
-          "model": "small",
-          "threads": 12,
-          "gpu_layers": 0,
-          "fallback_cli": true,
-          "no_speech_threshold": 0.6,
-          "models_dirs": [ "${homeDir}/.local/share/hyprwhspr-rs/models" ]
-        }
-      }
-    }
-  '';
+  hyprwhsprConfig = pkgs.writeText "hyprwhspr-config.jsonc" (
+    builtins.replaceStrings [ "@HOMEDIR@" ] [ "${homeDir}" ] (
+      builtins.readFile (config.lib.neg.path "files/hyprwhspr/config.jsonc")
+    )
+  );
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui.hyprwhspr") {

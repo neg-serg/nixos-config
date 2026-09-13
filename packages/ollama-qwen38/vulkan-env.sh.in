@@ -1,0 +1,20 @@
+# Ollama builds each per-accelerator llama.cpp runner via
+# cmake/local.cmake's ExternalProject_Add(ollama-llama-server-vulkan …).
+# Two things need to cross the parent → child boundary:
+#
+# 1. The SPIRV-Headers cmake config — so `find_package(SPIRV-Headers
+#    REQUIRED)` at ggml-vulkan/CMakeLists.txt:14 succeeds in the
+#    child. CMAKE_PREFIX_PATH as a flag wouldn't propagate; as env
+#    var it does.
+# 2. The SPIRV-Headers include directory in the compile env. The
+#    ggml-vulkan target's `target_link_libraries(... Vulkan::Vulkan)`
+#    notably does NOT link `SPIRV-Headers::SPIRV-Headers`, so the
+#    interface include directory the cmake config exports never
+#    flows into the compile commands — even though the find_package
+#    call succeeded. `#include <spirv/unified1/spirv.hpp>` then
+#    fails at compile time. Patching upstream's CMakeLists for
+#    one missing link line is fragile across llama.cpp pins;
+#    NIX_CFLAGS_COMPILE forces the include path globally and
+#    survives version bumps.
+export CMAKE_PREFIX_PATH="@HEADERS@${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+export NIX_CFLAGS_COMPILE="-isystem @HEADERS_V2@/include $NIX_CFLAGS_COMPILE"
