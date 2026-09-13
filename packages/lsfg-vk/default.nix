@@ -54,33 +54,27 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  postInstall = ''
-    interp="$(cat $NIX_CC/nix-support/dynamic-linker)"
-    basePath="${
-      lib.makeLibraryPath [
-        stdenv.cc.cc.lib
-        glibc
-        vulkan-loader # libvulkan.so.1 — CLI/layer dlopen it at runtime
+  postInstall =
+    builtins.replaceStrings
+      [ "@RUNTIME@" "@QTDECLARATIVE@" "@QTBASE@" "@QTDECLARATIVE_V2@" "@QTBASE_V2@" ]
+      [
+        (lib.makeLibraryPath [
+          stdenv.cc.cc.lib
+          glibc
+          vulkan-loader # libvulkan.so.1 — CLI/layer dlopen it at runtime
+        ])
+        (lib.makeLibraryPath [
+          stdenv.cc.cc.lib
+          glibc
+          libGL
+          qt6.qtbase
+          qt6.qtdeclarative
+        ])
+        "${qt6.qtbase}"
+        "${qt6.qtdeclarative}"
+        "${qt6.qtbase}"
       ]
-    }"
-    patchelf --set-interpreter "$interp" --set-rpath "$basePath" "$out/bin/lsfg-vk-cli"
-    patchelf --set-rpath "$basePath" "$out/lib/liblsfg-vk-layer.so"
-    # Qt6 UI (lsfg-vk-ui): rpath + plugin/QML import paths via wrapper
-    qtPath="${
-      lib.makeLibraryPath [
-        stdenv.cc.cc.lib
-        glibc
-        libGL
-        qt6.qtbase
-        qt6.qtdeclarative
-      ]
-    }"
-    patchelf --set-interpreter "$interp" --set-rpath "$qtPath" "$out/libexec/lsfg-vk-ui"
-    makeWrapper "$out/libexec/lsfg-vk-ui" "$out/bin/lsfg-vk-ui" \
-      --prefix QT_PLUGIN_PATH : "${qt6.qtbase}/lib/qt-6/plugins" \
-      --prefix QML2_IMPORT_PATH : "${qt6.qtdeclarative}/lib/qt-6/qml" \
-      --prefix QT_QPA_PLATFORM_PLUGIN_PATH : "${qt6.qtbase}/lib/qt-6/plugins/platforms"
-  '';
+      (builtins.readFile ./post-install.sh);
 
   meta = with lib; {
     description = "Lossless Scaling Frame Generation on Linux — Vulkan frame-gen layer (requires owning Lossless Scaling on Steam, lsfg-vk branch)";
