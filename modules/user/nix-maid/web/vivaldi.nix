@@ -182,55 +182,7 @@ in
     # re-apply at login.
     systemd.user.services.vivaldi-css-mods-pref =
       let
-        prefScript = pkgs.writeText "vivaldi-css-mods-pref.py" ''
-          import json, os, sys
-          prefs = os.path.expanduser("~/.config/vivaldi/Default/Preferences")
-          if not os.path.isfile(prefs):
-              sys.exit(0)
-          with open(prefs) as f:
-              p = json.load(f)
-
-          neg_theme = "6265ce0d-0cec-40c1-8002-ef5c1f962c7a"
-          changed = False
-
-          a = p.setdefault("vivaldi", {}).setdefault("appearance", {})
-          target = os.path.expanduser("~/.config/vivaldi/css-mods")
-          if a.get("css_ui_mods_directory") != target:
-              a["css_ui_mods_directory"] = target
-              changed = True
-
-          # Neg dark theme must stay selected; if it was dropped, the browser
-          # chrome falls back to the default grey theme.
-          th = p.setdefault("vivaldi", {}).setdefault("themes", {})
-          if th.get("current") != neg_theme:
-              th["current"] = neg_theme
-              changed = True
-          if th.get("current_private") != neg_theme:
-              th["current_private"] = neg_theme
-              changed = True
-
-          # Hide the panel bar by default for new windows (was visible again
-          # after the pref reset).
-          wd = p.setdefault("vivaldi", {}).setdefault("panels", {}).setdefault("window_defaults", {})
-          if wd.get("barVisible") is not False:
-              wd["barVisible"] = False
-              changed = True
-          if wd.get("contentVisible") is not False:
-              wd["contentVisible"] = False
-              changed = True
-
-          # DevTools UI theme: keep it dark like the browser chrome. The value
-          # inside devtools.preferences is a JSON-encoded string ("dark").
-          dt = p.setdefault("devtools", {}).setdefault("preferences", {})
-          if dt.get("uiTheme") != '"dark"':
-              dt["uiTheme"] = '"dark"'
-              changed = True
-
-          if changed:
-              with open(prefs, "w") as f:
-                  json.dump(p, f, indent=1)
-              print("css_ui_mods_directory, Neg theme, hidden panel bar and DevTools dark theme re-asserted")
-        '';
+        prefScript = ./vivaldi-css-mods-pref.py;
       in
       {
         description = "Point Vivaldi CSS mods at the profile mods folder; re-assert Neg theme, hidden panel and DevTools dark theme";
@@ -251,32 +203,7 @@ in
     # Vivaldi rewrites Preferences from memory on exit, so re-apply at login.
     systemd.user.services.vivaldi-auto-hide-pref =
       let
-        prefScript = pkgs.writeText "vivaldi-auto-hide-pref.py" ''
-          import json, os, sys
-          prefs = os.path.expanduser("~/.config/vivaldi/Default/Preferences")
-          if not os.path.isfile(prefs):
-              sys.exit(0)
-          with open(prefs) as f:
-              p = json.load(f)
-          ah = p.setdefault("vivaldi", {}).setdefault("auto_hide", {})
-          target = {
-              "enabled": False,  # master switch — off = no hover popups
-              "panel": False,
-              "tab_bar": False,
-              "bookmarks_bar": False,
-              "status_bar": False,
-              "in_fullscreen": False,  # also off in fullscreen (address bar pops on hover otherwise)
-          }
-          changed = False
-          for k, v in target.items():
-              if ah.get(k) != v:
-                  ah[k] = v
-                  changed = True
-          if changed:
-              with open(prefs, "w") as f:
-                  json.dump(p, f, indent=1)
-              print("UI Auto-hide disabled:", target)
-        '';
+        prefScript = ./vivaldi-auto-hide-pref.py;
       in
       {
         description = "Disable Vivaldi UI Auto-hide (hover popups)";
@@ -296,28 +223,7 @@ in
     # Vivaldi rewrites Preferences from memory on exit, so re-apply at login.
     systemd.user.services.vivaldi-emacs-keys-pref =
       let
-        prefScript = pkgs.writeText "vivaldi-emacs-keys-pref.py" ''
-          import json, os, sys
-          prefs = os.path.expanduser("~/.config/vivaldi/Default/Preferences")
-          if not os.path.isfile(prefs):
-              sys.exit(0)
-          with open(prefs) as f:
-              p = json.load(f)
-          acts = p.setdefault("vivaldi", {}).setdefault("actions", [{}])
-          if isinstance(acts, list):
-              if not acts:
-                  acts.append({})
-              act = acts[0]
-          else:
-              act = acts
-          close_tab = act.setdefault("COMMAND_CLOSE_TAB", {})
-          shortcuts = close_tab.get("shortcuts", [])
-          if "ctrl+w" in shortcuts:
-              close_tab["shortcuts"] = [s for s in shortcuts if s != "ctrl+w"]
-              with open(prefs, "w") as f:
-                  json.dump(p, f, indent=1)
-              print("Ctrl+W unbound from close-tab:", close_tab["shortcuts"])
-        '';
+        prefScript = ./vivaldi-emacs-keys-pref.py;
       in
       {
         description = "Unbind Ctrl+W from Vivaldi close-tab (emacs keys in dsh web)";
