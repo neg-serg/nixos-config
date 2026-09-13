@@ -12,10 +12,15 @@
 --   F <score> <path>        frecency record, no reply (the client sends its
 --                             journal once; the empty query then leads with the
 --                             higher-scored paths inside each depth)
+--   V <index> <w> <h>       -> "V <lines> <dim>" + one "L <text>" per row + "E"
+--                             preview pane (C-r); the prefix keeps a content
+--                             line equal to "E" from ending the response
+-- The server also sends "X <caps>" right after the banner; the client only
+-- sends V when it has seen the "preview" capability.
 -- kind: d (dir) / f (file) / l (link). C-l toggles the long view, C-y cycles
 -- the sort order, C-Space marks files (multi-select: Enter opens the marked
 -- set, the first via edit and the rest via badd), C-e opens the typed text as
--- a new buffer, C-d cycles the search depth (1..6).
+-- a new buffer, C-d cycles the search depth (1..6), C-r toggles the preview.
 -- Backslash/TAB/LF inside a label, path or D name are escaped as \\, \t, \n
 -- (reversed by `unescape` below), so a file name containing them cannot break
 -- the framing; non-UTF8 paths travel as raw bytes.
@@ -49,6 +54,7 @@ end
 
 
 local ns = api.nvim_create_namespace('lusty_native_ls')
+local preview_ns = api.nvim_create_namespace('lusty_native_preview')
 
 --- RU (йцукен) layout to EN chars (physical keys under RU produce Cyrillic).
 local RU2EN = {
@@ -233,6 +239,12 @@ function Picker.new(root, depth)
   self.depth = depth or tonumber(vim.g.LustyExplorerSearchDepth) or 2
   self.marked = {} -- path -> true: files picked with C-Space (multi-select)
   self.mark_order = {} -- marked paths in pick order (open order)
+  self.caps = {} -- backend capabilities from the `X <names>` line (e.g. preview)
+  self.preview_on = false -- C-r toggles the preview pane
+  self.preview_win = nil
+  self.preview_buf = nil
+  self.preview_key = nil -- path|w|h cache key of the rendered pane
+  self.preview_lines = nil -- { dim = bool, lines = { ... } }
   self.loading = true -- first serve listing not yet received (avoid a wrong [0])
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
@@ -376,6 +388,131 @@ function Picker:screen_count()
   return self:list_rows() * self:max_cols()
 end
 
+--- Preview pane width: LUSTY_PREVIEW_WIDTH / g:LustyExplorerPreviewWidth,
+--- else ~35% of the editor, clamped so the picker still fits beside it.
+function Picker:preview_width()
+  local w = tonumber(os.getenv('LUSTY_PREVIEW_WIDTH')) or tonumber(vim.g.LustyExplorerPreviewWidth)
+  if not w or w < 8 then
+    w = math.max(24, math.floor(vim.o.columns * 0.35))
+  end
+  return math.max(8, math.min(w, vim.o.columns - 20))
+end
+
+--- Open the preview float to the right of the picker (focus stays on the
+--- picker). Geometry is fixed at open time; reopen on C-r to resize.
+function Picker:open_preview()
+  local w = self:preview_width()
+  local ph = self:height()
+  local row = math.max(0, vim.o.lines - ph - 1)
+  local picker_col = math.max(0, math.floor((vim.o.columns - self:width()) / 2))
+  local col = math.min(vim.o.columns - w - 1, picker_col + self:width() + 1)
+  local buf = api.nvim_create_buf(false, true)
+  local win = api.nvim_open_win(buf, false, {
+    relative = 'editor',
+    width = w,
+    height = ph,
+    row = row,
+    col = math.max(0, col),
+    style = 'minimal',
+    border = 'rounded',
+  })
+  api.nvim_buf_set_option(buf, 'buftype', 'nofile')
+  api.nvim_buf_set_option(buf, 'swapfile', false)
+  api.nvim_buf_set_option(buf, 'modifiable', true)
+  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+  api.nvim_win_set_option(win, 'wrap', false)
+  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat')
+  self.preview_buf = buf
+  self.preview_win = win
+  self.preview_key = nil
+  self.preview_lines = nil
+end
+
+function Picker:close_preview()
+  if self.preview_win and api.nvim_win_is_valid(self.preview_win) then
+    pcall(api.nvim_win_close, self.preview_win, true)
+  end
+  if self.preview_buf and api.nvim_buf_is_valid(self.preview_buf) then
+    pcall(api.nvim_buf_delete, self.preview_buf, { force = true })
+  end
+  self.preview_win = nil
+  self.preview_buf = nil
+  self.preview_key = nil
+  self.preview_lines = nil
+end
+
+function Picker:toggle_preview()
+  if not self.caps.preview then
+    vim.notify('lusty: this backend has no preview (no X preview)', vim.log.levels.WARN)
+    return
+  end
+  self.preview_on = not self.preview_on
+  if self.preview_on then
+    self:open_preview()
+    self:refresh_preview()
+  else
+    self:close_preview()
+  end
+end
+
+--- Request the preview for the selected row; the (path, width, height) key
+--- skips re-requesting when nothing changed (e.g. plain redraws).
+function Picker:refresh_preview()
+  if not self.preview_on or not self.preview_buf or not api.nvim_buf_is_valid(self.preview_buf) then
+    return
+  end
+  local item = self.window[self.selected - self.offset + 1]
+  if not item then
+    if self.preview_key ~= 'none' then
+      self.preview_key = 'none'
+      self.preview_lines = { dim = true, lines = { '(no selection)' } }
+      self:render_preview()
+    end
+    return
+  end
+  local w = api.nvim_win_get_width(self.preview_win)
+  local h = api.nvim_win_get_height(self.preview_win)
+  local key = item.path .. '|' .. w .. '|' .. h
+  if key == self.preview_key then
+    return
+  end
+  self.preview_key = key
+  self:request({ 'V', tostring(item.i), tostring(w), tostring(h) }, function(lines)
+    local dim = true
+    local body = {}
+    for _, ln in ipairs(lines) do
+      local n, d = ln:match('^V (%d+) ([01])$')
+      if n then
+        dim = d == '1'
+      else
+        local text = ln:match('^L ?(.*)$')
+        if text then
+          body[#body + 1] = text
+        end
+      end
+    end
+    self.preview_lines = { dim = dim, lines = body }
+    vim.schedule(function()
+      self:render_preview()
+    end)
+  end)
+end
+
+--- Paint the last preview response into the pane buffer (dimmed).
+function Picker:render_preview()
+  if not self.preview_on or not self.preview_buf or not api.nvim_buf_is_valid(self.preview_buf) then
+    return
+  end
+  local data = (self.preview_lines and self.preview_lines.lines) or {}
+  api.nvim_buf_set_lines(self.preview_buf, 0, -1, false, data)
+  api.nvim_buf_clear_namespace(self.preview_buf, preview_ns, 0, -1)
+  for i = 1, #data do
+    if #data[i] > 0 then
+      api.nvim_buf_add_highlight(self.preview_buf, preview_ns, 'LustyNativeMeta', i - 1, 0, -1)
+    end
+  end
+end
+
 function Picker:open_window()
   local w, h = self:width(), self:height()
   -- bottom orientation (original Lusty gravity): anchored just above the
@@ -483,6 +620,8 @@ function Picker:setup_keymaps()
   map('<C-o>', 'open_split')
   map('<C-v>', 'open_vsplit')
   map('<C-l>', 'toggle_long')
+  -- C-r: preview pane (only when the backend advertises `X preview`).
+  map('<C-r>', 'toggle_preview')
   map('<Esc>', 'cancel')
   map('<C-c>', 'cancel')
   map('<C-g>', 'cancel')
@@ -562,6 +701,7 @@ function Picker:rerank()
     self.loading = false
     vim.schedule(function()
       self:draw()
+      self:refresh_preview()
     end)
   end)
 end
@@ -946,6 +1086,7 @@ function Picker:close()
   if self.job and vim.fn.jobwait({ self.job }, 0)[1] == -1 then
     vim.fn.jobstop(self.job)
   end
+  self:close_preview()
   -- close the float window itself first: deleting the buffer of a shown
   -- window can leave an empty floating shell behind
   if self.win and api.nvim_win_is_valid(self.win) then
@@ -996,6 +1137,10 @@ function Picker:handle(action)
   end
   if action == 'cycle_depth' then
     self:cycle_depth()
+    return
+  end
+  if action == 'toggle_preview' then
+    self:toggle_preview()
     return
   end
   if action == 'toggle_long' then
@@ -1296,6 +1441,7 @@ function Picker:start_backend()
   local self_ref = self
   local acc = ''
   local errbuf = ''
+  self.caps = {}
   self.job = vim.fn.jobstart(cmd, {
     on_stdout = function(_, data)
       if self_ref.closed then
@@ -1309,7 +1455,14 @@ function Picker:start_backend()
         end
         local line = acc:sub(1, nl - 1)
         acc = acc:sub(nl + 1)
-        if line == 'E' then
+        if line:sub(1, 2) == 'X ' then
+          -- Capability line: never reaches a response handler. An older
+          -- backend has no X line, so `caps` stays empty and the preview key
+          -- is a no-op instead of stalling the response FIFO.
+          for cap in line:sub(3):gmatch('%S+') do
+            self_ref.caps[cap] = true
+          end
+        elseif line == 'E' then
           -- Serve answers requests in order; each response goes to the
           -- handler that queued it, so fast key repeats never lose or
           -- misroute replies (a single pending slot used to drop the
