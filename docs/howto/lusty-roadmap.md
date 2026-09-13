@@ -9,7 +9,8 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
   C-a/C-e first/last.
 - Query: C-u clear, C-h/BS backspace, C-w clear (files: then up).
 - Actions: Enter/Tab open, C-t tab, C-o/C-v splits, C-d delete buffer, C-y sort order (we do not
-  bind C-s: XOFF/kitty conflict), C-l cycle display mode, C-Space/P preview, Esc/C-c/C-g close.
+  bind C-s: XOFF/kitty conflict), C-l cycle display mode, C-Space mark (multi-select in the native
+  float; Enter opens every marked file) / preview in standalone, Esc/C-c/C-g close.
 - Constraints: h/j/k/l are not touched (query letters); C-s is not bound in standalone (terminal
   suspend); standalone/float parity.
 

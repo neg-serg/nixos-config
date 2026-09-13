@@ -55,8 +55,9 @@ Two bottlenecks in the current Lua port:
 ## UX parity (must be preserved)
 
 - Keys: Enter/Tab, C-t, C-o/C-v, C-n/C-p, C-f/C-b (columns), C-l (long mode with metadata), C-y
-  (sort name/ext/size/time), C-u (clear), Esc/C-c/C-g (cancel), C-w (up a directory), dot (show
-  hidden), RU layout without switching.
+  (sort name/ext/size/time), C-u (clear), C-Space (multi-select mark in the nvim float; Enter opens
+  all marked files), Esc/C-c/C-g (cancel), C-w (up a directory), dot (show hidden), RU layout
+  without switching.
 - glob-skip `~`/`*`/`?`, prefix anchor.
 - Only dircolors/LS_COLORS; the path in the prompt is colored like zsh/oh-my-posh.
 - Buffers: MRU order (current last) + fuzzy; grep: hits + `\b` boundaries.

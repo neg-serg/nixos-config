@@ -9,7 +9,9 @@
 --                             sort: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
 --   M <mask> <index>...     -> "K <index> <meta>" per index + "E" (long view;
 --                             mask bits 1 perm, 2 user, 4 size, 8 time)
--- kind: d (dir) / f (file) / l (link). C-l toggles the long view.
+-- kind: d (dir) / f (file) / l (link). C-l toggles the long view, C-y cycles
+-- the sort order, C-Space marks files (multi-select: Enter opens the marked
+-- set, the first via edit and the rest via badd).
 -- Backslash/TAB/LF inside a label, path or D name are escaped as \\, \t, \n
 -- (reversed by `unescape` below), so a file name containing them cannot break
 -- the framing; non-UTF8 paths travel as raw bytes.
@@ -195,6 +197,8 @@ function Picker.new(root)
   self.dirs_first = dirs_first_enabled() -- dirs grouped first in name order (LUSTY_DIRS_FIRST / g:LustyExplorerDirsFirst)
   self.reverse = reverse_enabled() -- reverse each depth group (LUSTY_REVERSE / g:LustyExplorerReverse)
   self.sort = 0 -- listing order: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
+  self.marked = {} -- path -> true: files picked with C-Space (multi-select)
+  self.mark_order = {} -- marked paths in pick order (open order)
   self.loading = true -- first serve listing not yet received (avoid a wrong [0])
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
@@ -434,6 +438,7 @@ function Picker:setup_keymaps()
   map('<End>', 'last')
   map('<C-e>', 'last')
   map('<C-u>', 'clear')
+  map('<C-Space>', 'mark')
   -- C-y: sort cycle (C-s collides with terminal/kitty flow control)
   map('<C-y>', 'cycle_sort')
   map('<C-t>', 'open_tab')
@@ -680,6 +685,11 @@ function Picker:draw()
         )
       end
     end
+    -- Marked file (C-Space): a distinct tint over the whole name, drawn after
+    -- the match underline so it wins; the selection bar is painted later on top.
+    if self.marked[cell.item.path] then
+      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeMark', cell.line - 1, name_from, name_to)
+    end
   end
   if self.total > 0 and rows > 0 then
     local sel_row
@@ -727,6 +737,9 @@ function Picker:prompt_text()
   end
   if self.sort > 0 then
     tail = tail .. ' <' .. SORT_LABELS[self.sort + 1] .. '>'
+  end
+  if #self.mark_order > 0 then
+    tail = tail .. ' (' .. #self.mark_order .. ' marked)'
   end
   return tail
 end
@@ -887,6 +900,28 @@ function Picker:handle(action)
   pf('key:' .. tostring(action))
   if action == 'cancel' then
     self:close()
+    return
+  end
+  if action == 'mark' then
+    -- Multi-select: C-Space toggles the file under the cursor. Directories are
+    -- not markable (Enter on a directory re-roots the picker anyway).
+    local item = self.window[self.selected - self.offset + 1]
+    if item and item.kind ~= 'd' then
+      local path = item.path
+      if self.marked[path] then
+        self.marked[path] = nil
+        for i, p in ipairs(self.mark_order) do
+          if p == path then
+            table.remove(self.mark_order, i)
+            break
+          end
+        end
+      else
+        self.marked[path] = true
+        self.mark_order[#self.mark_order + 1] = path
+      end
+      self:draw()
+    end
     return
   end
   if action == 'toggle_long' then
@@ -1094,16 +1129,35 @@ function Picker:open_current(action)
   if not ex then
     return
   end
+  -- Multi-select: with marks open every marked file (plus the cursor if it is
+  -- unmarked); without marks just the selection. `edit` loads the first and
+  -- adds the rest as buffers, so "open several" does not silently replace.
+  local paths = {}
+  if #self.mark_order > 0 then
+    for _, p in ipairs(self.mark_order) do
+      paths[#paths + 1] = p
+    end
+    if not self.marked[item.path] then
+      paths[#paths + 1] = item.path
+    end
+  else
+    paths[1] = item.path
+  end
   local win = api.nvim_get_current_win()
-  local path = item.path
-  -- Record the jump in the lusty frecency journal so the recent explorer
-  -- (",.") reflects opens made from the filesystem picker too.
-  frecency.record(path)
   self:close()
   if api.nvim_win_is_valid(win) then
     pcall(api.nvim_set_current_win, win)
   end
-  vim.cmd(ex .. ' ' .. vim.fn.fnameescape(path))
+  for i, path in ipairs(paths) do
+    -- Record the jump in the lusty frecency journal so the recent explorer
+    -- (",.") reflects opens made from the filesystem picker too.
+    frecency.record(path)
+    if ex == 'edit' and i > 1 then
+      vim.cmd('badd ' .. vim.fn.fnameescape(path))
+    else
+      vim.cmd(ex .. ' ' .. vim.fn.fnameescape(path))
+    end
+  end
 end
 
 function Picker:startup()
@@ -1248,6 +1302,8 @@ function M.ensure_highlights()
     underline = mt.underline ~= false,
   })
   api.nvim_set_hl(0, 'LustyNativeMeta', { fg = '#6c7e96' }) -- dim metadata in long view
+  -- Multi-select mark (C-Space): warm tint, distinct from the match underline.
+  api.nvim_set_hl(0, 'LustyNativeMark', { fg = '#ffd75f', bold = true })
   -- nearly-black but not #000000: the web/xterm layer treats exact black as
   -- the transparent default, while #0c0d14 rendered too gray on this setup
   api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000001', fg = '#d4d4d4' })
