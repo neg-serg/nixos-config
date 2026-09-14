@@ -199,15 +199,8 @@ local function parse_sgr(line)
 end
 
 --- RU (йцукен) layout to EN chars (physical keys under RU produce Cyrillic).
-local RU2EN = {
-  ['й'] = 'q', ['ц'] = 'w', ['у'] = 'e', ['к'] = 'r', ['е'] = 't',
-  ['н'] = 'y', ['г'] = 'u', ['ш'] = 'i', ['щ'] = 'o', ['з'] = 'p',
-  ['х'] = '[', ['ъ'] = ']', ['ф'] = 'a', ['ы'] = 's', ['в'] = 'd',
-  ['а'] = 'f', ['п'] = 'g', ['р'] = 'h', ['о'] = 'j', ['л'] = 'k',
-  ['д'] = 'l', ['ж'] = ';', ['э'] = "'", ['я'] = 'z', ['ч'] = 'x',
-  ['с'] = 'c', ['м'] = 'v', ['и'] = 'b', ['т'] = 'n', ['ь'] = 'm',
-  ['б'] = ',', ['ю'] = '.',
-}
+-- RU (йцукен) keymap table, shared with the other pickers (`lusty.ru2en`).
+local RU2EN = require('lusty.ru2en')
 
 local function basename(label)
   return label:match('([^/]+)$') or label
@@ -273,9 +266,10 @@ local SORT_LABELS = { 'name', 'ext', 'size', 'time' }
 -- Dirs-first/reverse mirror the standalone --dirs-first/--reverse CLI
 -- options (they reshape the canonical name order only) and are read the
 -- same way: env LUSTY_* wins over the g: counterpart (roadmap priority).
-local ICON_DIR = '\u{f115}'
-local ICON_FILE = '\u{f15b}'
-local ICON_LINK = '\u{f481}'
+-- Nerd-font icons, single source of truth in `lusty.icons` (parity-checked
+-- against the Rust table by `lusty --icon-map`).
+local icons = require('lusty.icons')
+local ICON_DIR = icons.dir
 
 local function option_enabled(env, g)
   local e = os.getenv(env)
@@ -330,28 +324,18 @@ end
 
 local function icon_for(item)
   if item.kind == 'd' then
-    return ICON_DIR
+    return icons.dir
   end
   if item.kind == 'l' then
-    return ICON_LINK
+    return icons.link
   end
   local low = basename(item.label):lower()
-  if low:match('%.md$') then
-    return '\u{f48a}'
-  elseif low:match('%.rs$') then
-    return '\u{e7a8}'
-  elseif low:match('%.(lua|scd|sc)$') then
-    return '\u{e620}'
-  elseif low:match('%.(jpg|jpeg|png|webp|gif)$') then
-    return '\u{f1c5}'
-  elseif low:match('%.(mp3|flac|wav)$') then
-    return '\u{f001}'
-  elseif low:match('%.(mp4|mkv|webm)$') then
-    return '\u{f03d}'
-  elseif low:match('%.(zip|tar|gz|7z)$') then
-    return '\u{f410}'
+  for _, pair in ipairs(icons.ext) do
+    if low:sub(-#pair[1]) == pair[1] then
+      return pair[2]
+    end
   end
-  return ICON_FILE
+  return icons.file
 end
 
 local Picker = {}

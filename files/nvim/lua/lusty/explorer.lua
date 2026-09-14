@@ -3,6 +3,7 @@
 -- window}.rb from github.com/sjbach/lusty (Stephen Bach, Matt Tolton).
 
 local util = require('lusty.util')
+local ru2en = require('lusty.ru2en')
 
 local M = {}
 
@@ -899,19 +900,11 @@ local function setup_keymaps(self)
   -- ('.' key -> 'ю', 'b' key -> 'и', '/' key -> '.' ...).  Register the RU
   -- characters so they feed the same EN query characters; langmap alone does
   -- not apply to keys that participate in mappings.
-  local ru_to_en = {
-    { 'й', 'q' }, { 'ц', 'w' }, { 'у', 'e' }, { 'к', 'r' }, { 'е', 't' },
-    { 'н', 'y' }, { 'г', 'u' }, { 'ш', 'i' }, { 'щ', 'o' }, { 'з', 'p' },
-    { 'х', '[' }, { 'ъ', ']' }, { 'ф', 'a' }, { 'ы', 's' }, { 'в', 'd' },
-    { 'а', 'f' }, { 'п', 'g' }, { 'р', 'h' }, { 'о', 'j' }, { 'л', 'k' },
-    { 'д', 'l' }, { 'ж', ';' }, { 'э', "'" }, { 'я', 'z' }, { 'ч', 'x' },
-    { 'с', 'c' }, { 'м', 'v' }, { 'и', 'b' }, { 'т', 'n' }, { 'ь', 'm' },
-    { 'б', ',' }, { 'ю', '.' }, -- RU '.' is the same character as EN '.';
-    -- the EN '.' mapping above already covers it (no separate '/' row: it
-    -- would override the dot with a slash).
-  }
-  for _, pair in ipairs(ru_to_en) do
-    map(pair[1], string.byte(pair[2]))
+  -- Single source of truth for the table (`lusty.ru2en`). The EN '.' mapping
+  -- above already covers 'ю' (no separate '/' row: it would override the dot
+  -- with a slash).
+  for ru, en in pairs(ru2en) do
+    map(ru, string.byte(en))
   end
 
   map('<Tab>', 9)
