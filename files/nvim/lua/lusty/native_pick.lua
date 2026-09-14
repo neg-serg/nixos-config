@@ -82,12 +82,15 @@ function Pick:height()
     -- standalone `--rows`; the window itself is two rows shorter.
     return math.max(2, math.min(envr - 2, vim.o.lines - 2))
   end
-  -- 4 rows in total on screen: two border rows, one entry row and the prompt.
-  return math.min(2, math.max(1, vim.o.lines - 2))
+  -- 8 rows in total on screen: the rounded border takes two, the window holds
+  -- five entry rows plus the prompt.
+  return math.min(6, math.max(1, vim.o.lines - 2))
 end
 
 function Pick:list_rows()
-  return math.max(1, self:height() - 2)
+  -- Entry rows inside the window: everything but the prompt line, so the grid
+  -- fills the window instead of leaving its last row empty.
+  return math.max(1, self:height() - 1)
 end
 
 function Pick:max_cols()
