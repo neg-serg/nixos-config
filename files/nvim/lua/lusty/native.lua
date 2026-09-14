@@ -406,11 +406,11 @@ function Picker:height()
   if envr and envr >= 6 then
     return math.max(6, math.min(envr, vim.o.lines - 2))
   end
-  -- compact: at most 12 rows total (list + prompt), pinned to the bottom
-  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.4
-  ratio = math.max(0.15, math.min(0.6, ratio))
+  -- compact: at most 18 rows total (list + prompt), pinned to the bottom
+  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.45
+  ratio = math.max(0.15, math.min(0.75, ratio))
   local h = math.floor(vim.o.lines * ratio)
-  return math.max(6, math.min(12, h))
+  return math.max(6, math.min(18, h))
 end
 
 function Picker:list_rows()
@@ -561,7 +561,7 @@ function Picker:open_preview()
   api.nvim_buf_set_option(buf, 'modifiable', true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
   api.nvim_win_set_option(win, 'wrap', false)
-  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat')
+  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder')
   self.preview_buf = buf
   self.preview_win = win
   self.preview_key = nil
@@ -705,7 +705,7 @@ function Picker:open_window()
   api.nvim_buf_set_option(buf, 'modifiable', true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
   api.nvim_win_set_option(win, 'wrap', false)
-  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat')
+  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder')
   api.nvim_win_set_option(win, 'winblend', 0)
   api.nvim_buf_set_lines(buf, 0, -1, false, {})
   self.buf = buf
@@ -1746,6 +1746,9 @@ function M.ensure_highlights()
   -- nearly-black but not #000000: the web/xterm layer treats exact black as
   -- the transparent default, while #0c0d14 rendered too gray on this setup
   api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000001', fg = '#d4d4d4' })
+  -- Frame one notch darker than the float body: the colorscheme's FloatBorder
+  -- (VertSplit link) reads too bright against the near-black panel
+  api.nvim_set_hl(0, 'LustyNativeBorder', { fg = '#3a4454', bg = '#000001' })
   -- omp.zsh path segment colors (neg.omp.json)
   api.nvim_set_hl(0, 'LustyPromptTilde', { fg = '#287373' })
   api.nvim_set_hl(0, 'LustyPromptSep', { fg = '#005faf' })
