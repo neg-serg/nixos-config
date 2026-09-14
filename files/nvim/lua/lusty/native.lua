@@ -406,11 +406,11 @@ function Picker:height()
   if envr and envr >= 6 then
     return math.max(6, math.min(envr, vim.o.lines - 2))
   end
-  -- compact: at most 18 rows total (list + prompt), pinned to the bottom
-  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.45
-  ratio = math.max(0.15, math.min(0.75, ratio))
+  -- compact: at most 10 rows total (list + prompt), pinned to the bottom
+  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.4
+  ratio = math.max(0.15, math.min(0.6, ratio))
   local h = math.floor(vim.o.lines * ratio)
-  return math.max(6, math.min(18, h))
+  return math.max(6, math.min(10, h))
 end
 
 function Picker:list_rows()
