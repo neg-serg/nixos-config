@@ -2,8 +2,8 @@
 
 ## Goal
 
-Replace the slow parts of LustyExplorer (the Lua port in nvim) with a separate native process while
-keeping nvim as the editor. The target win is 10× or more on typing and on listing large
+The slow parts of the former LustyExplorer Lua port were replaced with a separate native process
+while keeping nvim as the editor. The target win was 10× or more on typing and on listing large
 directories.
 
 Measurements (headless, repo copy, /etc/nixos):
@@ -16,7 +16,7 @@ Measurements (headless, repo copy, /etc/nixos):
 | fuzzy.score × 5000                         | 1.2 ms            | < 0.5 ms                       |
 | typing (latency)                           | nvim float redraw | native ratatui, partial redraw |
 
-Two bottlenecks in the current Lua port:
+Two bottlenecks in the Lua port it replaced:
 
 1. **B1 — nvim float-window redraw** on every keypress (this is the "typing lags" on ordinary
    directories; the logic here is 0.1–0.2 ms per callback).
@@ -49,8 +49,9 @@ Two bottlenecks in the current Lua port:
      selection, RU layout (dual-mapping of physical keys to EN), the same key set.
    - `output`: on Enter/Tab/C-t/C-o/C-v prints `ACTION<TAB>PATH`.
 
-1. `files/nvim/lua/lusty/native.lua` — a shim: `termopen` + `on_exit` + option forwarding. The old
-   Lua port stays as the fallback (`g:LustyExplorerNative=0`).
+1. `files/nvim/lua/lusty/native.lua` — the nvim float client: `jobstart` + the response FIFO +
+   option forwarding. It is the only picker now — the Lua port stayed as the fallback until it was
+   removed after the native path reached parity.
 
 ## UX parity (must be preserved)
 
@@ -77,7 +78,7 @@ Two bottlenecks in the current Lua port:
 1. ratatui UI + keys + RU layout + gravity.
 1. nvim shim: termopen + on_exit + options; wire up `,l`/`,C`/`,B`/`,G`; regression.
 1. Buffers + grep modes.
-1. Bench + documentation + Lua fallback.
+1. Bench + documentation (the Lua fallback was dropped in the consolidation).
 
 ## Nix packaging
 

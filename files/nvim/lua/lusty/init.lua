@@ -1,68 +1,26 @@
--- LustyExplorer (sjbach/lusty) Lua port for modern Neovim.
+-- Lusty pickers for the files/nvim config (native Rust backend).
 --
--- Provides the LustyExplorer commands/filesystem/buffer explorers with the
--- original bottom-table + prompt UX, Mercury fuzzy matching and MRU ordering.
---
---   :LustyFilesystemExplorer [path]
---   :LustyFilesystemExplorerFromHere
---   :LustyBufferExplorer
---   :LustyBufferGrep
+--   :LustyFilesystemExplorer [path]   filesystem float (cwd or the given path)
+--   :LustyFilesystemExplorerFromHere  filesystem float from the current file's dir
+--   :LustyBufferExplorer              MRU buffer float
+--   :LustyBufferGrep                  Ruby-ish regex over the loaded buffers
+--   :LustyRecent                      recent files / visited dirs
 --
 -- Mappings (unless g:LustyExplorerDefaultMappings == 0):
 --   <Leader>l   filesystem explorer from the current file's directory
 --   <Leader>C   filesystem explorer (cwd)
---   <C-b>       buffer explorer (native float)
---   <C-g>       buffer grep (native float)
---   <Leader>.   recent files (native float)
+--   <C-b>       buffer explorer
+--   <C-g>       buffer grep
+--   <Leader>.   recent files
+--
+-- The pickers are rendered by the Rust backend (`lusty serve`, see native.lua);
+-- the historical Lua port was removed, so there is no fallback mode any more.
 
-local explorer = require('lusty.explorer')
 local buffers = require('lusty.buffer_stack')
-local fs = require('lusty.filesystem_explorer')
 local native = require('lusty.native')
-local be = require('lusty.buffer_explorer')
-local bg = require('lusty.buffer_grep')
 local nbufs = require('lusty.native_buffers')
 local ngrep = require('lusty.native_buffer_grep')
 local nrecent = require('lusty.native_recent')
-
--- Native picker is the default; g:LustyExplorerNative = 0 keeps the Lua port
--- (the fallback). Buffers and grep use the native float too when enabled.
-local function native_enabled()
-  local n = vim.g.LustyExplorerNative
-  return not (n == 0 or n == false or n == '0')
-end
-
-local function run_fs(dir)
-  if native_enabled() then
-    native.run(dir == nil and vim.fn.getcwd() or dir)
-  else
-    fs.run(dir)
-  end
-end
-
-local function run_buffers()
-  if native_enabled() then
-    nbufs.run()
-  else
-    be.run()
-  end
-end
-
-local function run_grep()
-  if native_enabled() then
-    ngrep.run()
-  else
-    bg.run()
-  end
-end
-
-local function run_recent()
-  if native_enabled() then
-    nrecent.run()
-  else
-    vim.notify('LustyRecent: the Lua port has no recent explorer yet; enable native mode or use v:oldfiles', vim.log.levels.WARN)
-  end
-end
 
 local M = {}
 
@@ -70,31 +28,40 @@ local function deprecated(old, new)
   vim.notify(':' .. old .. ' is deprecated; use :' .. new .. ' instead.', vim.log.levels.WARN)
 end
 
+local function run_fs(dir)
+  native.run(dir == nil and vim.fn.getcwd() or dir)
+end
+
 function M.setup()
-  explorer.ensure_highlights()
+  -- g:LustyExplorerNative = 0 used to select the Lua port; it is gone now.
+  local n = vim.g.LustyExplorerNative
+  if n == 0 or n == false or n == '0' then
+    vim.notify('lusty: the Lua port was removed; using the native picker', vim.log.levels.WARN)
+  end
+
   buffers.register_autocmds()
   buffers.reset()
 
   vim.api.nvim_create_user_command('LustyFilesystemExplorer', function(o)
     run_fs(o.args == '' and nil or vim.fn.expand(o.args))
-  end, { nargs = '?', desc = 'Lusty filesystem explorer (native unless g:LustyExplorerNative=0)' })
+  end, { nargs = '?', desc = 'Lusty filesystem explorer' })
 
   vim.api.nvim_create_user_command('LustyFilesystemExplorerFromHere', function()
     local d = vim.fn.expand('%:p:h')
     run_fs(d == '' and vim.fn.getcwd() or d)
-  end, { desc = 'Lusty filesystem explorer from current file dir (native unless g:LustyExplorerNative=0)' })
+  end, { desc = 'Lusty filesystem explorer from the current file dir' })
 
   vim.api.nvim_create_user_command('LustyBufferExplorer', function()
-    run_buffers()
-  end, { desc = 'Lusty buffer explorer (native float unless g:LustyExplorerNative=0)' })
+    nbufs.run()
+  end, { desc = 'Lusty buffer explorer' })
 
   vim.api.nvim_create_user_command('LustyBufferGrep', function()
-    run_grep()
-  end, { desc = 'Lusty buffer grep (native float unless g:LustyExplorerNative=0)' })
+    ngrep.run()
+  end, { desc = 'Lusty buffer grep' })
 
   vim.api.nvim_create_user_command('LustyRecent', function()
-    run_recent()
-  end, { desc = 'Lusty recent files (native float)' })
+    nrecent.run()
+  end, { desc = 'Lusty recent files' })
 
   -- Deprecated non-prefixed aliases (they only warn, like the original).
   vim.api.nvim_create_user_command('BufferExplorer', function()
@@ -110,39 +77,32 @@ function M.setup()
   -- Default mappings are ON unless the option explicitly disables them.
   local dm = vim.g.LustyExplorerDefaultMappings
   if not (dm == 0 or dm == false or dm == '0') then
-    -- ,l must fire INSTANTLY: it is an exact map AND a prefix of the old
-    -- ,l[fbgr] chords, so nvim would wait for a second key and swallow the
-    -- first typed query letter (typing ',lgames' opened BufferGrep with
-    -- 'ames').  Secondary functions moved off the 'l' prefix:
-    --   ,l  filesystem explorer from here (nowait)
-    --   ,C  filesystem explorer (cwd)
-    --   C-b  buffer explorer
-    --   C-g  buffer grep
+    -- ,l fires INSTANTLY (nowait): it used to be a prefix of the ,l[fbgr]
+    -- chords, so nvim waited for a second key and swallowed the first typed
+    -- query letter (',lgames' opened BufferGrep with 'ames'). The secondary
+    -- functions live on ,C / C-b / C-g / ,. instead.
     local function from_here()
       local d = vim.fn.expand('%:p:h')
       run_fs(d == '' and vim.fn.getcwd() or d)
     end
     vim.keymap.set('n', '<leader>l', from_here,
-      { nowait = true, desc = 'Lusty filesystem explorer from here (native)' })
+      { nowait = true, desc = 'Lusty filesystem explorer from here' })
     vim.keymap.set('n', '<leader>C', function()
       run_fs(nil)
-    end, { desc = 'Lusty filesystem explorer (cwd, native)' })
-    -- ,. = recent files (C-r is redo, so it stays on the leader; the
-    -- dot also hints at the old LustyExplorer dot-toggle style).
+    end, { desc = 'Lusty filesystem explorer (cwd)' })
     vim.keymap.set('n', '<leader>.', function()
-      run_recent()
-    end, { nowait = true, desc = 'Lusty recent files (native float)' })
-    -- Simple chords: C-b = buffers, C-g = buffer grep. These override the
-    -- stock <C-b> (quickfix list) and <C-g> (word count) normal-mode maps;
-    -- lusty loads after 02-bindings, so the set happens later.
-    -- nowait: with <C-b>q/<C-b>d chords still present nvim would wait a
-    -- timeoutlen before firing the plain map; fire instantly instead.
+      nrecent.run()
+    end, { nowait = true, desc = 'Lusty recent files' })
+    -- C-b / C-g override the stock normal-mode maps (quickfix list / word
+    -- count); lusty loads after 02-bindings, so the set happens later.
+    -- nowait: with <C-b>q/<C-b>d chords present nvim would wait for a
+    -- timeoutlen before firing the plain map.
     vim.keymap.set('n', '<C-b>', function()
-      run_buffers()
-    end, { nowait = true, desc = 'Lusty buffer explorer (native float)' })
+      nbufs.run()
+    end, { nowait = true, desc = 'Lusty buffer explorer' })
     vim.keymap.set('n', '<C-g>', function()
-      run_grep()
-    end, { nowait = true, desc = 'Lusty buffer grep (native float)' })
+      ngrep.run()
+    end, { nowait = true, desc = 'Lusty buffer grep' })
   end
 end
 
