@@ -403,14 +403,13 @@ end
 
 function Picker:height()
   local envr = tonumber(os.getenv('LUSTY_ROWS'))
-  if envr and envr >= 6 then
-    return math.max(6, math.min(envr, vim.o.lines - 2))
+  if envr and envr >= 4 then
+    -- Total box height including the two rounded-border rows, matching the
+    -- standalone `--rows`; the window itself is two rows shorter.
+    return math.max(2, math.min(envr - 2, vim.o.lines - 2))
   end
-  -- compact: at most 10 rows total (list + prompt), pinned to the bottom
-  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.4
-  ratio = math.max(0.15, math.min(0.6, ratio))
-  local h = math.floor(vim.o.lines * ratio)
-  return math.max(6, math.min(10, h))
+  -- 4 rows in total on screen: two border rows, one entry row and the prompt.
+  return math.min(2, math.max(1, vim.o.lines - 2))
 end
 
 function Picker:list_rows()
