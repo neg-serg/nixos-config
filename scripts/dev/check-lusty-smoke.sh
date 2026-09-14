@@ -16,10 +16,10 @@ fi
 log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
 
-# All headless suites: the Lua-port smoke plus the native float suites
-# (native_pick pickers and the serve-backed filesystem picker).
+# All headless suites: the native float suites (native_pick pickers, the
+# serve-backed filesystem picker) plus the shared-helper and parity checks.
 suites=(
-  files/nvim/lua/lusty/tests/smoke.lua
+  files/nvim/lua/lusty/tests/grep_pattern_smoke.lua
   files/nvim/lua/lusty/tests/native_float_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_icons_smoke.lua
@@ -29,6 +29,7 @@ suites=(
   files/nvim/lua/lusty/tests/filesystem_float_frecency_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_create_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_depth_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_dots_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_preview_smoke.lua
   files/nvim/lua/lusty/tests/tables_parity_smoke.lua
   files/nvim/lua/lusty/tests/theme_parity_smoke.lua
