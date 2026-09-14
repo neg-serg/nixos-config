@@ -118,5 +118,5 @@
 - Dockur Windows VM on odin: GLM USB pa through, host alias, VM proxy chain:
   [windows-vm-dockur.md](./windows-vm-dockur.md)
 
-- LustyExplorer: Lua-port for modern Neovim (files/buffers explorer + buffer grep):
-  [lusty-explorer-port.md](./lusty-explorer-port.md)
+- Lusty pickers: commands, keys, options and behaviour (native float backend):
+  [lusty-commands.md](./lusty-commands.md)

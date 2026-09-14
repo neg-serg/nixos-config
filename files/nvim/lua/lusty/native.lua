@@ -1,8 +1,7 @@
 -- Lusty picker: Rust backend (lusty serve) rendered as a normal
 -- nvim floating window with real highlights. No terminal buffer involved, so
--- it renders reliably even when nvim itself runs inside a web xterm.
---
--- The Lua port remains the fallback: g:LustyExplorerNative = 0.
+-- it renders reliably even when nvim itself runs inside a web xterm. This is
+-- the only picker implementation (the historical Lua port was removed).
 --
 -- Backend protocol (plain lines, tab separated):
 --   Q <from> <to> <query> [sort] -> "N <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
@@ -322,6 +321,20 @@ local function frecency_enabled()
   return not (gv == '0' or gv == 'false')
 end
 
+--- g:LustyExplorerFollowMountPoints = 1 lets the deep walk enter mount points
+--- (the deep search never crosses them by default).
+local function follow_mounts_enabled()
+  local v = vim.g.LustyExplorerFollowMountPoints
+  return v == 1 or v == true or v == '1'
+end
+
+--- g:LustyExplorerAlwaysShowDotFiles = 1 keeps dotfiles visible from the start
+--- (without it the query has to begin with '.').
+local function always_dots_enabled()
+  local v = vim.g.LustyExplorerAlwaysShowDotFiles
+  return v == 1 or v == true or v == '1'
+end
+
 local function icon_for(item)
   if item.kind == 'd' then
     return icons.dir
@@ -352,7 +365,8 @@ function Picker.new(root, depth)
   self.handlers = {} -- FIFO of response handlers; serve answers in order
   self.outbuf = {}
   self.dirs = nil -- cached top-level dir names for '/' completion
-  self.show_dots = false
+  self.show_dots = always_dots_enabled() -- g:LustyExplorerAlwaysShowDotFiles
+  self.always_dots = self.show_dots
   self.maxw = 12 -- widest label (chars) in the current ranked set
   self.closed = false
   self.long = false -- long view: metadata columns via serve M (C-l toggles)
@@ -1422,7 +1436,7 @@ end
 --- Query starting with '.' reveals dotfiles: restart the backend with
 --- --dots when the mode changes (returns true when it did).
 function Picker:maybe_toggle_dots()
-  local want = self.query:sub(1, 1) == '.'
+  local want = self.query:sub(1, 1) == '.' or self.always_dots
   if want ~= self.show_dots then
     self.show_dots = want
     self.window = {}
@@ -1591,6 +1605,9 @@ function Picker:start_backend()
   local cmd = { 'lusty', 'serve', self.root, '--depth', tostring(depth), '--skip', skip }
   if self.show_dots then
     cmd[#cmd + 1] = '--dots'
+  end
+  if follow_mounts_enabled() then
+    cmd[#cmd + 1] = '--follow-mounts'
   end
   if self.job and vim.fn.jobwait({ self.job }, 0)[1] == -1 then
     vim.fn.jobstop(self.job)

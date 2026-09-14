@@ -75,9 +75,15 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
   graphics protocol when the terminal supports it (LUSTY_KITTY=0 disables, ANSI art is the
   fallback).
 - I: shared tables + parity — done: lusty/ru2en.lua and lusty/icons.lua are the single Lua sources
-  (native.lua, native_pick.lua, explorer.lua require them) and tests/tables_parity_smoke.lua
-  compares them with `lusty --ru-map` / `--icon-map`, so the Rust and Lua tables cannot drift.
+  (required by native.lua / native_pick.lua) and tests/tables_parity_smoke.lua compares them with
+  `lusty --ru-map` / `--icon-map`, so the Rust and Lua tables cannot drift.
   tests/theme_parity_smoke.lua does the same for the theme reader (`--theme-map`; both sides honour
   LUSTY_THEME, and the Rust parser learned `selection.underline` / `match.fg`, which it used to
   ignore), and tests/ls_colors_parity_smoke.lua compares LS_COLORS resolution (`--color-map`)
   against ls_colors.code_for for one controlled palette.
+- J: consolidation — done: the Lua port (explorer.lua, filesystem_explorer.lua, buffer_explorer.lua,
+  buffer_grep.lua and its smoke) was removed; native\_\* is the only implementation, the regex
+  translator moved to grep_pattern.lua and util.lua kept only basename/longest_common_prefix. No
+  user-facing option was lost: `g:LustyExplorerFollowMountPoints` and
+  `g:LustyExplorerAlwaysShowDotFiles` are wired again through `serve --follow-mounts` / `--dots`
+  (covered by filesystem_float_dots_smoke.lua).
