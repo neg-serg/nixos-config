@@ -35,8 +35,8 @@ Inside the floats (the full list is in [lusty-roadmap.md](./lusty-roadmap.md#hot
 ## Behaviour
 
 - Floats: bottom-anchored rounded windows (gravity `bottom`), full-width-ish from
-  `g:LustyExplorerWidthRatio` (`LUSTY_WIDTH` wins) and 4 rows tall in total (two border rows, one
-  entry row, the prompt); `LUSTY_ROWS` is the total height in rows, as in the standalone `--rows`.
+  `g:LustyExplorerWidthRatio` (`LUSTY_WIDTH` wins) and 8 rows tall in total (two border rows, five
+  entry rows, the prompt); `LUSTY_ROWS` is the total height in rows, as in the standalone `--rows`.
 - Fuzzy ranking: fzy-style with the first query letter anchored to the basename start; the Russian
   (JCUKEN) layout is mapped to EN keys automatically (`ru2en.lua`).
 - Filesystem float: depth-limited parallel walk, skip dirs (`g:LustyExplorerSkipDirs`), mount points
