@@ -2,22 +2,29 @@
 -- over the open listed buffers) rendered in the native bottom float.
 -- An empty pattern lists the buffers themselves; typing greps them live.
 -- Enter/Tab switch to the buffer, C-t/C-o/C-v open in tab/split/vsplit and
--- jump to the matched line (like the Lua port).
+-- jump to the matched line.
 
 local buffers = require('lusty.buffer_stack')
 local pick = require('lusty.native_pick')
-local explorer = require('lusty.explorer')
--- Regex translation is shared with the Lua port implementation.
-local lua_grep = require('lusty.buffer_grep')
+local grep_pattern = require('lusty.grep_pattern')
 
 local M = {}
 
--- Lua port parity: remember the last pattern between runs.
+-- Highlight groups for the grep marks (the removed Lua-port base engine used
+-- to provide them; only these four are still used).
+local function ensure_highlights()
+  vim.api.nvim_set_hl(0, 'LustyGrepMatch', { link = 'IncSearch', default = true })
+  vim.api.nvim_set_hl(0, 'LustyGrepLineNumber', { link = 'Directory', default = true })
+  vim.api.nvim_set_hl(0, 'LustyGrepFileName', { link = 'Comment', default = true })
+  vim.api.nvim_set_hl(0, 'LustyGrepContext', { link = 'Comment', default = true })
+end
+
+-- Remember the last pattern between runs.
 local previous_input = ''
 local running = false
 
 local function compile_pattern(input)
-  local ok, vpat = pcall(lua_grep.translate_regex, input)
+  local ok, vpat = pcall(grep_pattern.translate_regex, input)
   if not ok then
     return nil
   end
@@ -94,10 +101,7 @@ function M.run()
     return
   end
   running = true
-  explorer.ensure_highlights()
-  -- LustyGrepContext is used by the marks but has no link in the Lua
-  -- port highlight map; make sure it exists.
-  pcall(vim.api.nvim_set_hl, 0, 'LustyGrepContext', { link = 'Comment', default = true })
+  ensure_highlights()
   local snap = buffers.compute_buffer_entries()
   local last_input = previous_input
   pick.pick({
@@ -122,6 +126,7 @@ function M.is_running()
   return running
 end
 
-M.translate_regex = lua_grep.translate_regex
+-- Regex translation is shared with the parity smoke.
+M.translate_regex = grep_pattern.translate_regex
 
 return M
