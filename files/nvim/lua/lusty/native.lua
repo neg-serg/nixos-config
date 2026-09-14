@@ -870,6 +870,16 @@ function Picker:rerank()
     end
     self.window = win_rows
     self.loading = false
+    -- The first Q cannot know `total` yet, so max_cols() guesses a single
+    -- column and the page covers only list_rows() entries; with the total in
+    -- hand the grid may want more columns and the fetched page is too short
+    -- to fill it. Re-ask once for the full page instead of leaving the extra
+    -- rows empty.
+    local want = math.min(self.total, self:screen_count())
+    if #win_rows < want and to < want then
+      self:rerank()
+      return
+    end
     vim.schedule(function()
       self:draw()
       self:refresh_preview()
