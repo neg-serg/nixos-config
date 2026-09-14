@@ -25,17 +25,8 @@ local native = require('lusty.native')
 local M = {}
 local active = nil
 
--- RU (йцукен) layout to EN chars: physical keys under RU produce Cyrillic,
--- mapped the same way as in the native filesystem float.
-local RU2EN = {
-  ['й'] = 'q', ['ц'] = 'w', ['у'] = 'e', ['к'] = 'r', ['е'] = 't',
-  ['н'] = 'y', ['г'] = 'u', ['ш'] = 'i', ['щ'] = 'o', ['з'] = 'p',
-  ['х'] = '[', ['ъ'] = ']', ['ф'] = 'a', ['ы'] = 's', ['в'] = 'd',
-  ['а'] = 'f', ['п'] = 'g', ['р'] = 'h', ['о'] = 'j', ['л'] = 'k',
-  ['д'] = 'l', ['ж'] = ';', ['э'] = "'", ['я'] = 'z', ['ч'] = 'x',
-  ['с'] = 'c', ['м'] = 'v', ['и'] = 'b', ['т'] = 'n', ['ь'] = 'm',
-  ['б'] = ',', ['ю'] = '.',
-}
+-- RU (йцукен) layout to EN chars, shared with the other pickers.
+local RU2EN = require('lusty.ru2en')
 
 local Pick = {}
 Pick.__index = Pick

@@ -70,5 +70,10 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
   g:LustyExplorerFrecency=0).
 - H: preview in the nvim float — done: C-r opens a sibling float and `V <index> <w> <h>` returns the
   pane (content / git diff / man / chafa); the backend advertises `X preview` so an older server
-  makes the key a no-op. SGR runs become extmarks, so chafa art is coloured in the float; the kitty
-  protocol for true image placement remains the next step.
+  makes the key a no-op. SGR runs become extmarks, so chafa art is coloured in the float. The
+  standalone pane renders on a worker thread (no UI stalls) and places images with the kitty
+  graphics protocol when the terminal supports it (LUSTY_KITTY=0 disables, ANSI art is the
+  fallback).
+- I: shared tables + parity — done: lusty/ru2en.lua and lusty/icons.lua are the single Lua sources
+  (native.lua, native_pick.lua, explorer.lua require them) and tests/tables_parity_smoke.lua
+  compares them with `lusty --ru-map` / `--icon-map`, so the Rust and Lua tables cannot drift.
