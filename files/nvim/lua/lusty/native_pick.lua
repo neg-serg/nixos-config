@@ -80,10 +80,10 @@ function Pick:height()
   if envr and envr >= 6 then
     return math.max(6, math.min(envr, vim.o.lines - 2))
   end
-  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.4
-  ratio = math.max(0.15, math.min(0.6, ratio))
+  local ratio = tonumber(vim.g.LustyExplorerMaxHeightRatio) or 0.45
+  ratio = math.max(0.15, math.min(0.75, ratio))
   local h = math.floor(vim.o.lines * ratio)
-  return math.max(6, math.min(12, h))
+  return math.max(6, math.min(18, h))
 end
 
 function Pick:list_rows()
@@ -133,7 +133,7 @@ function Pick:open_window()
   api.nvim_buf_set_option(buf, 'modifiable', true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
   api.nvim_win_set_option(win, 'wrap', false)
-  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat')
+  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder')
   api.nvim_win_set_option(win, 'winblend', 0)
   api.nvim_buf_set_lines(buf, 0, -1, false, {})
   self.buf = buf

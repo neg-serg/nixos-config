@@ -70,7 +70,7 @@ where both exist:
 | `LustyExplorerFuzzyEngine`        | `smart`         | –                       |
 | `LustyExplorerInputDebounce`      | 20 ms           | –                       |
 | `LustyExplorerWidthRatio`         | 0.8             | `LUSTY_WIDTH` (columns) |
-| `LustyExplorerMaxHeightRatio`     | 0.4             | `LUSTY_ROWS` (rows)     |
+| `LustyExplorerMaxHeightRatio`     | 0.45            | `LUSTY_ROWS` (rows)     |
 | `LustyExplorerPreviewWidth`       | `box/3`         | `LUSTY_PREVIEW_WIDTH`   |
 | `LustyExplorerSelStyle`           | 1 (theme file)  | –                       |
 
