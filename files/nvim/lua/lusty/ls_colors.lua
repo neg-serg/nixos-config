@@ -289,12 +289,14 @@ end
 -- ---------------------------------------------------------------------------
 -- Lookup.
 
---- Resolve the highlight group for one filesystem entry.
+--- Raw LS_COLORS code for one entry (nil when no rule matches). Exposed for
+--- the Rust parity smoke (`lusty --color-map`); `group_for` builds the
+--- highlight group from it.
 --- Entry fields understood: name, is_dir, is_link, is_socket, is_pipe,
 --- is_block, is_char, is_exec (all optional booleans).
 --- @param entry table
---- @return string|nil group name
-function M.group_for(entry)
+--- @return string|nil code
+function M.code_for(entry)
   if not entry or not entry.name then
     return nil
   end
@@ -316,8 +318,9 @@ function M.group_for(entry)
   end
 
   -- Executable check is lazy: only for cells that actually get painted, and
-  -- cached on the entry (entries live in the per-view caches).
-  if not code and not entry.is_dir and not entry.is_link and entry.path then
+  -- cached on the entry (entries live in the per-view caches). A caller that
+  -- already knows `is_exec` needs no path.
+  if not code and not entry.is_dir and not entry.is_link and (entry.path or entry.is_exec) then
     if entry.is_exec == nil then
       local perm = vim.fn.getfperm(entry.path)
       entry.is_exec = type(perm) == 'string' and perm:find('x') ~= nil
@@ -349,6 +352,14 @@ function M.group_for(entry)
     end
   end
 
+  return code
+end
+
+--- Resolve the highlight group for one filesystem entry.
+--- @param entry table
+--- @return string|nil group name
+function M.group_for(entry)
+  local code = M.code_for(entry)
   if not code then
     return nil
   end

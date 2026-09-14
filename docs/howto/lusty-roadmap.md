@@ -77,3 +77,7 @@ Agreed development plan for the pickers (standalone `lusty` + nvim float
 - I: shared tables + parity — done: lusty/ru2en.lua and lusty/icons.lua are the single Lua sources
   (native.lua, native_pick.lua, explorer.lua require them) and tests/tables_parity_smoke.lua
   compares them with `lusty --ru-map` / `--icon-map`, so the Rust and Lua tables cannot drift.
+  tests/theme_parity_smoke.lua does the same for the theme reader (`--theme-map`; both sides honour
+  LUSTY_THEME, and the Rust parser learned `selection.underline` / `match.fg`, which it used to
+  ignore), and tests/ls_colors_parity_smoke.lua compares LS_COLORS resolution (`--color-map`)
+  against ls_colors.code_for for one controlled palette.
