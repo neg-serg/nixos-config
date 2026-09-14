@@ -6,7 +6,12 @@ local M = {}
 
 local function parse()
   local out = { selection = {}, match = {} }
-  local path = vim.fn.stdpath('config') .. '/lua/lusty/theme.toml'
+  -- LUSTY_THEME overrides the file (the Rust reader honours it too), so the
+  -- parity smoke can point both interfaces at one fixture.
+  local path = os.getenv('LUSTY_THEME')
+  if not path or path == '' then
+    path = vim.fn.stdpath('config') .. '/lua/lusty/theme.toml'
+  end
   local ok, data = pcall(vim.fn.readfile, path)
   if not ok or not data then
     return out
