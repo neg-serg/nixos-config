@@ -85,6 +85,10 @@ if not backend_escapes() then
   return
 end
 
+-- The default box is 4 rows tall (one entry row), so only a few grid slots
+-- are on screen; this suite needs all four names visible at once.
+vim.env.LUSTY_ROWS = '12'
+
 local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
