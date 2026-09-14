@@ -31,6 +31,7 @@ suites=(
   files/nvim/lua/lusty/tests/filesystem_float_depth_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_dots_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_preview_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_page_smoke.lua
   files/nvim/lua/lusty/tests/tables_parity_smoke.lua
   files/nvim/lua/lusty/tests/theme_parity_smoke.lua
   files/nvim/lua/lusty/tests/ls_colors_parity_smoke.lua
