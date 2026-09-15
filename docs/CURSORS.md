@@ -2,8 +2,9 @@
 
 - Current theme: Alkano-aio, size 23 set in `modules/user/nix-maid/gui/theme.nix`
   (XCURSOR/HYPRCURSOR/GTK/Stylix all aligned).
-- Extracted pointer frames: `docs/cursors/alkano/left-main_000.png`…`left-main_029.png` with
-  metadata `docs/cursors/alkano/left-main.conf` (sizes/hotspots) plus reports
+- Extracted pointer frames (generated locally, NOT tracked in git):
+  `docs/cursors/alkano/left-main_000.png`…`left-main_029.png` with metadata
+  `docs/cursors/alkano/left-main.conf` (sizes/hotspots) plus reports
   `docs/cursors/alkano/color-summary.txt` (color ➜ size) and `docs/cursors/alkano/hotspot.txt`
   (hotspot pixel, top 3×3 color per size).
 - Hotspots: sizes 16–25 use (1,1); 28–37 use (3,3); 39–48 use (4,4) as xhot/yhot (see

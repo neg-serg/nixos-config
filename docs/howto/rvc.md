@@ -59,5 +59,4 @@ curl -L -o model.pth https://hf-mirror.com/<owner>/<repo>/resolve/main/<file>.pt
 
 - Repository: <https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI>
 - Overall neural-stack report: [neural-stack-report.md](./neural-stack-report.md)
-- Zero-shot alternative: [seed-vc.md](./seed-vc.md) (the document will appear once the SVC mode is
-  finished)
+- Zero-shot alternative: seed-vc (to be documented once the SVC mode is finished)
