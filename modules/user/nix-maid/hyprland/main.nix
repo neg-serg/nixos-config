@@ -21,7 +21,8 @@ let
 in
 {
   # System-level Hyprland pieces (hyprglass overlay) — consolidated here from
-  # modules/nix/hyprland.nix so the whole compositor stack lives in one domain.
+  # the old `modules/nix` Hyprland module so the whole compositor stack lives in
+  # one domain.
   imports = [ ./overlay.nix ];
 
   config = lib.mkIf guiEnabled (

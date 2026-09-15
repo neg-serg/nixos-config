@@ -63,7 +63,7 @@ in
       quickshellEnabled =
         enabled "gui" && enabled "gui.qt" && enabled "gui.quickshell" && !(enabled "devSpeed");
 
-      # Resolve a repo-root-relative path (e.g. "files/gui/theme.toml") to an
+      # Resolve a repo-root-relative path (e.g. "files/gui/vicinae-theme.toml") to an
       # absolute path. repoRoot is a real path (not a string), so the result
       # carries Nix path context: when used in a derivation or home file it is
       # copied into the store and tracked as a closure dependency — the same

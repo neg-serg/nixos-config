@@ -112,7 +112,8 @@ in
           # Game audio virtual stereo sink is now in
           # files/media/pipewire/pipewire.conf.d/20-game-stereo.conf — a loopback
           # that creates actual playback ports (playback_FL/playback_FR) routable
-          # to hardware via pw-link (see modules/hardware/audio/hdspe/default.nix).
+          # to hardware via pw-link (see modules/hardware/audio/hdspe.nix; the
+          # hdspe/ directory next to it holds the driver helper scripts).
           # The loopback is created unconditionally (no hardcoded ALSA target),
           # so it's always visible to games even before hardware ALSA nodes are up.
         }
