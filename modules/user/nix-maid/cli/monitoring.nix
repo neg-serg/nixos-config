@@ -101,7 +101,7 @@ in
         pkgs.hwatch # Modern alternative to watch command with history
         pkgs.sysdig # System-wide visibility tool
       ]
-      ++ (lib.optionals (config.profiles.network.wifi.enable || (config.lib.neg.enabled "net.wifi")) [
+      ++ (lib.optionals config.lib.neg.wifiEnabled [
         pkgs.wavemon # Wireless device monitoring
       ]);
     }

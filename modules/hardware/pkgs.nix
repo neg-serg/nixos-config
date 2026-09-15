@@ -5,7 +5,7 @@
   ...
 }:
 let
-  wifiEnabled = config.profiles.network.wifi.enable || (config.lib.neg.enabled "net.wifi");
+  wifiEnabled = config.lib.neg.wifiEnabled;
 in
 {
   environment.systemPackages = lib.unique (
