@@ -4,7 +4,7 @@ with lib;
   options.features.web = {
     enable = mkBool "enable Web stack (browsers + tools)" true;
     default = mkOption {
-      type = types.str;
+      type = types.nullOr types.str;
       default = null;
       description = "Default browser used for XDG handlers, \$BROWSER, and integrations.";
     };
