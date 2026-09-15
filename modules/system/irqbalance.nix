@@ -31,7 +31,11 @@ let
     echo "IRQ affinity fix done"
   '';
 
-  # Custom package containing only the systemd unit (no drop-ins generated)
+  # Custom package containing only the systemd unit (no drop-ins generated).
+  # The unit's PATH used to carry literal store paths for coreutils/grep/sed/
+  # systemd: they went stale (systemd-260.2 and gnused-4.9 while the system
+  # runs 261.1/4.10) and none of them was in the system closure. Interpolate
+  # them from pkgs instead; gawk already was.
   fixUnit = pkgs.runCommandLocal "irq-affinity-unit" { } ''
         mkdir -p $out/lib/systemd/system
         cat > $out/lib/systemd/system/irq-affinity-fix.service << UNIT
@@ -43,7 +47,7 @@ let
     Type=oneshot
     RemainAfterExit=true
     ExecStart=${lib.getExe pkgs.bash} ${fixScript}
-    Environment=PATH=/run/wrappers/bin:/nix/store/sr26flm2nkfa12dkrwj2630kqsfakky4-coreutils-9.11/bin:/nix/store/w8xlvapzxcz23ba312q119p57bnc7200-gnugrep-3.12/bin:/nix/store/0hamsiy8hsyfw1hmizbc3bf93ad7fa1v-gnused-4.9/bin:/nix/store/arcwm5lynrra8yjn5wvbj5mr3rikmb30-systemd-260.2/bin:${pkgs.gawk}/bin
+    Environment=PATH=/run/wrappers/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.gnused}/bin:${pkgs.systemd}/bin:${pkgs.gawk}/bin
 
     [Install]
     WantedBy=multi-user.target
