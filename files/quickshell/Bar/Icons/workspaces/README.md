@@ -27,12 +27,14 @@ pass `--skip-validate`). The script:
 1. Parses workspace ids/labels from the `workspaces` table in `files/gui/hypr/hyprland.lua`
    (`id`/`name`/`layout`, fed to `hl.workspace_rule`). The old hyprlang layout
    (`files/gui/hypr/workspaces.conf`, `quickshell/.config/quickshell/...`) is gone and the parser
-   was ported to the table in 2026-09. **Known blockers before a full regeneration:** Font Awesome 6
-   Pro (the font behind 12 of the 17 committed icons) is not installed on this host any more —
-   `fc-match 'Font Awesome 6 Pro'` resolves to Iosevka and the run aborts with
-   `No glyph for codepoint U+…`, and `vital` (18) / `rack` (19) have no codepoints in
-   `icon-map.json`. The run resolves *every* icon before writing anything, so a blocked run leaves
-   this directory untouched.
+   was ported to the table in 2026-09. Every glyph now comes from fonts that are actually installed
+   (`FiraCode Nerd Font Mono` for 17 icons, `Iosevka` for `obs`); the icons that used to be drawn
+   from the licensed Font Awesome 6 Pro were re-picked in 2026-09 (`term` → `cod-terminal`, `dev` →
+   `oct-code_square`, `vm` → `cod-vm`, `im` → `fa-comments`, `remote` → `fa-download`, `notes` →
+   `fa-clone`; the rest kept their codepoints because the nerd font carries the same FA glyphs). The
+   orphan `patchbay` map entry (no such workspace) was dropped. The run resolves *every* icon before
+   writing anything, so a blocked run leaves this directory untouched, and a second run is
+   byte-identical apart from `generatedAt` (verified).
 1. Uses `icon-map.json` to map slugs to glyph codepoints and preferred fonts. If you removed glyphs
    from Hypr, make sure `icon-map.json` still lists the correct codepoints.
 1. Exports each glyph to `workspaces/<id>-<slug>.svg`, normalizing to a square 1024 viewBox.

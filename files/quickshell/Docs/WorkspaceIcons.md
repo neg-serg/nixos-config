@@ -29,9 +29,10 @@ Hyprland or the QuickShell theme changes.
 
    The parser reads the `workspaces` table in `files/gui/hypr/hyprland.lua` (ported 2026-09) and the
    run is all-or-nothing: every workspace must resolve its glyph before any file is written, so a
-   failed run cannot leave the icon set half-regenerated. Still blocking a *full* regeneration: Font
-   Awesome 6 Pro is not installed here (12 of the 17 committed icons come from it) and
-   `icon-map.json` has no codepoints for `vital` (18) / `rack` (19).
+   failed run cannot leave the icon set half-regenerated, and a second run is byte-identical apart
+   from `generatedAt`. Every glyph comes from an installed font (`FiraCode Nerd Font Mono`,
+   `Iosevka`) — the Font Awesome 6 Pro codepoints were re-picked in 2026-09, see
+   `Bar/Icons/workspaces/README.md`.
 
 1. The script will:
 
