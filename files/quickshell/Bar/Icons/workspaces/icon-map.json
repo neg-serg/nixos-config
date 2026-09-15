@@ -105,6 +105,18 @@
         "U+E202"
       ],
       "fontPattern": "Font Awesome 6 Pro"
+    },
+    "vital": {
+      "codepoints": [
+        "U+F1DE"
+      ],
+      "fontPattern": "FiraCode Nerd Font Mono"
+    },
+    "rack": {
+      "codepoints": [
+        "U+F02C1"
+      ],
+      "fontPattern": "FiraCode Nerd Font Mono"
     }
   },
   "fontFallbacks": [
