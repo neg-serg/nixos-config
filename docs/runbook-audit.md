@@ -80,9 +80,10 @@ Subagent claims are starting points, not truth. Spot-check every finding you pla
 ### 5. Close the loop
 
 - Regenerate the docs that the audit touched: `just docs-guard` (runs `just codebase` +
-  `just docs-modules` + `just fmt` and fails if the committed artifacts still differ), plus
+  `just docs-modules` + `just fmt` and fails if the committed artifacts still differ) and
   `just unbound-hosts` if host DNS data changed. Commit the regenerated files in the same batch —
-  there is no automated gate on them elsewhere, so this recipe *is* the gate.
+  neither gate runs in `just lint`, so running them is the check: `just unbound-hosts-guard` and
+  `just docs-guard` rerun the generators against a scratch copy and fail on drift.
 - Update `OPTIONS.md`/`modules/README.md` only for genuinely new human knowledge.
 - Note remaining open items in the report for the next run — an audit that only fixes things and
   never records what's left is not repeatable.

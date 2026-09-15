@@ -319,6 +319,9 @@ local-bin.
 - `just lint` — full lint suite (statix, deadnix, ruff/black, shellcheck,
   QML/Hyprland/markdown/syntax checks, package annotations)
 - `just check` — `nix flake check -L`
+- `just docs-guard` / `just unbound-hosts-guard` — freshness gates for generated artifacts
+  (`docs/codebase.md`, `docs/howto/modules.md`, `hosts/odin/unbound-hosts.nix`); they rerun the
+  generators and diff, and are not part of `just lint`
 - `just deploy [host]` — build + switch (default `odin`); `just deploy-nh` — nh-based alternative;
   `just deploy-debug` — verbose
 - dry-run before touching the system:
