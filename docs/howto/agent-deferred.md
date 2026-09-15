@@ -241,8 +241,11 @@ Each feature is a separate commit `[dev/ai] Add dsh-<name> ...` with a functiona
 
 ## Non-plugin deferred problems (odin config)
 
-- **fastfetch: the animated WebP logo (blizzard) is rendered TOO SMALL** when launching
-  `fastfetch --logo-type kitty-icat --logo <blizzard-*.webp>` — the picture comes out small, which
-  is unsatisfactory. The size needs to be increased via `--logo-width` / `--logo-height` (or
-  `logo.width/height` in the config) so the skull with the blizzard takes up a noticeable share next
-  to the info column.
+- ~~**fastfetch: the animated WebP logo (blizzard) is rendered TOO SMALL**~~ — **CLOSED
+  (2026-09-15)**: the wrapper `files/fastfetch/fetch` no longer passes a fixed 29x45 box (29 columns
+  forced the portrait image down to ~17 rows). It now derives the box from the terminal: fastfetch
+  scales the image to the requested height and the width follows the aspect (~1.57 cells per row),
+  so the width is matched to the height and the height is capped only by the ~84 cells the stats
+  column needs. A maximised window gets ~61x38 instead of 29x17; a narrow tiled window keeps the old
+  size on purpose (the stats must not wrap). Details and the remaining cosmetic wrap of the longest
+  info line: `docs/howto/fastfetch-blizzard.md` §Logo size.
