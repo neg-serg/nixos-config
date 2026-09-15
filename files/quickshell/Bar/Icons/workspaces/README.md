@@ -24,11 +24,15 @@ python3 files/quickshell/Tools/workspace-icons/generate.py
 Requires: `python`, `python-fonttools`, `libxml2` (xmllint), `librsvg` (rsvg-convert — without it
 pass `--skip-validate`). The script:
 
-1. Parses workspace ids/labels from the Hypr config. **Known blocker:** the parser still expects the
-   pre-Lua layout (`files/gui/hypr/workspaces.conf`, `quickshell/.config/quickshell/...`), while the
-   names now live in the `workspaces` table in `files/gui/hypr/hyprland.lua` (`id`/`name`/ `layout`,
-   fed to `hl.workspace_rule`), so port `HYPR_REL_PATH`/`ICONS_REL_DIR` and `parse_hypr_workspaces`
-   before re-running it.
+1. Parses workspace ids/labels from the `workspaces` table in `files/gui/hypr/hyprland.lua`
+   (`id`/`name`/`layout`, fed to `hl.workspace_rule`). The old hyprlang layout
+   (`files/gui/hypr/workspaces.conf`, `quickshell/.config/quickshell/...`) is gone and the parser
+   was ported to the table in 2026-09. **Known blockers before a full regeneration:** Font Awesome 6
+   Pro (the font behind 12 of the 17 committed icons) is not installed on this host any more —
+   `fc-match 'Font Awesome 6 Pro'` resolves to Iosevka and the run aborts with
+   `No glyph for codepoint U+…`, and `vital` (18) / `rack` (19) have no codepoints in
+   `icon-map.json`. The run resolves *every* icon before writing anything, so a blocked run leaves
+   this directory untouched.
 1. Uses `icon-map.json` to map slugs to glyph codepoints and preferred fonts. If you removed glyphs
    from Hypr, make sure `icon-map.json` still lists the correct codepoints.
 1. Exports each glyph to `workspaces/<id>-<slug>.svg`, normalizing to a square 1024 viewBox.
