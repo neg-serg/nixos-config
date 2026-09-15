@@ -6,6 +6,8 @@
 }:
 let
   cfg = config.features.gui;
+  # Module-shaped systemd user units (lib/systemd-user.nix)
+  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 
   # podman pasta --config-net copies ALL host net1 addresses (incl. the .88
   # alias) into the dockur container netns, shadowing the host alias and
@@ -62,7 +64,8 @@ lib.mkIf (cfg.enable or false) {
         };
 
     # Pic dirs notifier
-    "pic-dirs" = {
+    "pic-dirs" = systemdUser.mkUserService {
+      presets = [ "defaultWanted" ];
       description = "Pic dirs notification";
       unitConfig = {
         ConditionUser = "!greeter";
@@ -80,7 +83,6 @@ lib.mkIf (cfg.enable or false) {
         Restart = "on-failure";
         RestartSec = "1";
       };
-      wantedBy = [ "default.target" ];
     };
 
     # sing-box proxy — SOCKS5 on 127.0.0.1:10808 for Telegram etc. (apps use
@@ -125,21 +127,22 @@ lib.mkIf (cfg.enable or false) {
     # glm-osc — OSC bridge for Genelec SAM monitors (volume/mute/power/status
     # via Python genlc over the GLM USB adapter, no official GLM required).
     # Listen: UDP 127.0.0.1:9000; map in docs/howto/windows-vm-dockur.md.
-    glm-osc = {
+    glm-osc = systemdUser.mkUserService {
+      presets = [ "defaultWanted" ];
       description = "OSC bridge for Genelec SAM monitors";
       serviceConfig = {
         ExecStart = "${pkgs.glm-osc}/bin/glm-osc-server";
         Restart = "on-failure";
         RestartSec = 5;
       };
-      wantedBy = [ "default.target" ];
     };
 
     # glm-midi-relay — one-way MIDI relay to the dockur Windows VM: the VM's
     # bridge (oem/glm-midi-bridge.ps1) connects OUT to :9003 (VM-initiated TCP
     # is the only bidirectional host<->VM channel under the same-IP pasta
     # topology, unlike RTP-MIDI UDP); local glm-midi feeds 127.0.0.1:9004.
-    glm-midi-relay = {
+    glm-midi-relay = systemdUser.mkUserService {
+      presets = [ "defaultWanted" ];
       description = "MIDI relay to the dockur Windows VM";
       serviceConfig = {
         # Script shebang is /usr/bin/env python3, which is not in the minimal
@@ -150,7 +153,6 @@ lib.mkIf (cfg.enable or false) {
         # Log every forwarded packet (what the wheel sends) to /tmp/glm-relay.log.
         Environment = [ "GLM_RELAY_LOG=/tmp/glm-relay.log" ];
       };
-      wantedBy = [ "default.target" ];
     };
 
     # glm-adapter-auto — self-heal the GLM adapter placement: if the dockur
