@@ -1,6 +1,6 @@
 #!/bin/sh
 # whisperx: STT + speaker diarization (faster-whisper/CTranslate2 CPU backend,
-# pyannote-community diarization). Uses the pip venv at /zero/ai/music-ai/venv-whisperx.
+# pyannote-community diarization). Uses the pip venv at @MUSIC_AI_BASE@/venv-whisperx.
 # Coexists with whisper.cpp (:8002) from the speech stack — different backend.
 #
 # Usage: whisperx audio.wav --model large-v3 --language ru --diarize
@@ -15,4 +15,4 @@ else
   export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
 fi
 
-exec "/zero/ai/music-ai/venv-whisperx/bin/whisperx" "$@"
+exec "@MUSIC_AI_BASE@/venv-whisperx/bin/whisperx" "$@"

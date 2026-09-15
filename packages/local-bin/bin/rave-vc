@@ -20,4 +20,4 @@ done
 case "$SRC" in */*) SRC_PATH="$SRC" ;; *) SRC_PATH="/zero/ai/music/rave/$SRC.ts" ;; esac
 case "$TGT" in */*) TGT_PATH="$TGT" ;; *) TGT_PATH="/zero/ai/music/rave/$TGT.ts" ;; esac
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
-exec /zero/ai/music-ai/venv-rave311/bin/python /zero/ai/music/rave-live/vc.py "$SRC_PATH" "$TGT_PATH" "$IN" "$OUT"
+exec @MUSIC_AI_BASE@/venv-rave311/bin/python /zero/ai/music/rave-live/vc.py "$SRC_PATH" "$TGT_PATH" "$IN" "$OUT"

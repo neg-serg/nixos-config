@@ -6,4 +6,4 @@
 set -e
 [ -n "$1" ] && [ -f "$2" ] || { echo "usage: basic-pitch OUT_DIR AUDIO... [--save-midi]" >&2; exit 2; }
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
-exec /zero/ai/music-ai/venv-bp/bin/basic-pitch "$@" --model-serialization onnx
+exec @MUSIC_AI_BASE@/venv-bp/bin/basic-pitch "$@" --model-serialization onnx

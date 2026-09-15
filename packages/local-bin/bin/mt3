@@ -1,10 +1,10 @@
 #!/bin/sh
 # mt3: multi-instrument audio→MIDI transcription (mt3-infer, MR-MT3 PyTorch).
-# venv: /zero/ai/music-ai/venv-mt3; checkpoint auto-downloaded on first use.
+# venv: @MUSIC_AI_BASE@/venv-mt3; checkpoint auto-downloaded on first use.
 # Usage: mt3 input.wav [output.mid]
 set -eu
 
-BASE="/zero/ai/music-ai"
+BASE="@MUSIC_AI_BASE@"
 TORCHLIB="$BASE/venv-mt3/lib/python3.12/site-packages/torch/lib"
 export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:$TORCHLIB:${LD_LIBRARY_PATH:-}"
 
