@@ -5,7 +5,7 @@
 #   SOURCE = твой голос/аудио, TARGET_REF = референс голоса (1-30s).
 #   --svc = режим пения (f0-condition, нужен rmvpe — качается отдельно).
 set -eu
-export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib:${LD_LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 export HF_HUB_OFFLINE=1
 SRC="${1:?usage: seed-vc SOURCE.wav TARGET_REF.wav [OUTDIR] [--steps N] [--svc]}"; REF="${2:?}"; OUT="${3:-/tmp/svc-out}"; STEPS=25; SVC=0
 shift $(( $# >= 2 ? 2 : $# ))

@@ -13,6 +13,22 @@
         binDir = config.lib.neg.path "packages/local-bin/bin";
         scriptsDir = config.lib.neg.path "packages/local-bin/scripts";
 
+        # Shared runtime library dirs for the music-AI scripts. Twenty of them
+        # used to carry literal /nix/store paths for these libs: the copies went
+        # stale on the next nixpkgs bump and fell out of the system closure (the
+        # gcc one had no gc root left at all), so a `nix-collect-garbage -d`
+        # silently broke every script. Substituting them here keeps one source
+        # of truth and puts the paths into the derivation's string context, so
+        # the store keeps them alive.
+        libDirSubsts = {
+          "@GCC_LIB_DIR@" = "${pkgs.gcc.cc.lib}/lib"; # libstdc++/libgomp for the torch wheels
+          "@ZLIB_LIB_DIR@" = "${pkgs.zlib}/lib"; # libz
+          "@ZSTD_LIB_DIR@" = "${pkgs.zstd.out}/lib"; # libzstd (torch >= 2.13 links it)
+        };
+        substLibDirs = lib.replaceStrings (builtins.attrNames libDirSubsts) (
+          builtins.attrValues libDirSubsts
+        );
+
         # Python library paths for special scripts
         sp = pkgs.python3.sitePackages; # High-level dynamically-typed programming language
         libpp = "${pkgs.neg.pretty_printer}/${sp}";
@@ -36,7 +52,7 @@
           name = ".local/bin/${name}";
           value = {
             executable = true;
-            text = builtins.readFile (binDir + "/${name}");
+            text = substLibDirs (builtins.readFile (binDir + "/${name}"));
           };
         };
 
@@ -62,7 +78,7 @@
           name = ".local/bin/${name}";
           value = {
             executable = true;
-            text = builtins.readFile (scriptsDir + "/${name}");
+            text = substLibDirs (builtins.readFile (scriptsDir + "/${name}"));
           };
         };
 
@@ -75,16 +91,16 @@
         # 3. Special cases (Substitutions)
 
         # ren (Python) - Needs library paths
-        renTpl = builtins.readFile (scriptsDir + "/ren");
+        renTpl = substLibDirs (builtins.readFile (scriptsDir + "/ren"));
         renText = lib.replaceStrings [ "@LIBPP@" "@LIBCOLORED@" ] [ libpp libcolored ] renTpl;
 
         # vid-info.py (Python) - Needs library paths.
-        vidInfoTpl = builtins.readFile (scriptsDir + "/vid-info.py");
+        vidInfoTpl = substLibDirs (builtins.readFile (scriptsDir + "/vid-info.py"));
         vidInfoText = lib.replaceStrings [ "@LIBPP@" "@LIBCOLORED@" ] [ libpp libcolored ] vidInfoTpl;
 
         # kitty-scrollback-nvim substitution
         nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
-        ksbTpl = builtins.readFile (binDir + "/kitty-scrollback-nvim");
+        ksbTpl = substLibDirs (builtins.readFile (binDir + "/kitty-scrollback-nvim"));
         ksbText = lib.replaceStrings [ "@NIX_KSB_PATH@" ] [ nixKsbPath ] ksbTpl;
       in
       autoEntries
