@@ -218,20 +218,24 @@ lib.mkMerge [
     ];
 
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
-    environment.systemPackages = lib.mkAfter [
-      pkgs.openrgb # per-device RGB controller UI
-      pkgs.rustup # Rust toolchain manager (rustc, cargo, rust-analyzer via rustup)
-      pkgs.rust-analyzer # Rust LSP server
-      (pkgs.writeShellScriptBin "cpu-boost" ''
-        exec ${lib.getExe pkgs.neg.hwctl} cpu boost "$@"
-      '') # CLI toggle for AMD Precision Boost
-      (pkgs.writeShellScriptBin "fan-manual" ''
-        exec ${lib.getExe pkgs.neg.hwctl} fan manual ''${1:-}
-      '') # Switch fans to manual control
-      (pkgs.writeShellScriptBin "fan-auto" ''
-        exec ${lib.getExe pkgs.neg.hwctl} fan auto
-      '') # Switch fans to automatic control
-    ];
+    environment.systemPackages = lib.mkAfter (
+      [ pkgs.openrgb ] # per-device RGB controller UI
+      ++ lib.optionals config.features.dev.rust.enable [
+        pkgs.rustup # Rust toolchain manager (rustc, cargo, rust-analyzer via rustup)
+        pkgs.rust-analyzer # Rust LSP server
+      ]
+      ++ [
+        (pkgs.writeShellScriptBin "cpu-boost" ''
+          exec ${lib.getExe pkgs.neg.hwctl} cpu boost "$@"
+        '') # CLI toggle for AMD Precision Boost
+        (pkgs.writeShellScriptBin "fan-manual" ''
+          exec ${lib.getExe pkgs.neg.hwctl} fan manual ''${1:-}
+        '') # Switch fans to manual control
+        (pkgs.writeShellScriptBin "fan-auto" ''
+          exec ${lib.getExe pkgs.neg.hwctl} fan auto
+        '') # Switch fans to automatic control
+      ]
+    );
     servicesProfiles.avahi.services = [
       {
         name = "smb";
