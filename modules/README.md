@@ -31,12 +31,11 @@ modules/
 | `fun`           | Terminal toys, ASCII art, screensavers                                                                                                  |
 | `games`         | System-level gaming config (controllers, etc.)                                                                                          |
 | `hardware`      | Hardware — GPU (AMD/NVIDIA), audio, cooling, QMK, udev, USB automount                                                                   |
-| `lib`           | Shared helper modules (systemd-user presets); runtime helpers live in `lib/` + `config.lib.neg`                                         |
 | `llm`           | Local LLM — Ollama (ROCm on RX 9070 XT), CLI tools. Models at `/zero/llm/`                                                              |
 | `media`         | Audio (PipeWire, MPD), images, video (FFmpeg, VapourSynth, AI upscaling)                                                                |
 | `monitoring`    | System monitoring — Alertmanager, sysstat, vnstat                                                                                       |
 | `nix`           | Nix daemon — caches, GC, nix-ld, Hyprland, settings                                                                                     |
-| `profiles`      | Host profiles — feature presets (desktop, gaming, dev) + system toggles (aliases, debug, performance, security, vm, work) — auto-import |
+| `profiles`      | Host profiles — feature presets (desktop, gaming, dev) + system toggles (debug, performance, security, vm, work, services) — auto-import |
 | `secrets`       | sops-nix secrets — pass, yubikey, pkgs                                                                                                  |
 | `security`      | Hardening — AppArmor, sudo, PAM limits, polkit, pcscd                                                                                   |
 | `servers`       | Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound                                                                   |

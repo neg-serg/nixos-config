@@ -1,61 +1,3 @@
-## \_module.args
-
-Additional arguments passed to each module in addition to ones like `lib`, `config`, and `pkgs`,
-`modulesPath`.
-
-This option is also available to all submodules. Submodules do not inherit args from their parent
-module, nor do they provide args to their parent module or sibling submodules. The sole exception to
-this is the argument `name` which is provided by parent modules to a submodule and contains the
-attribute name the submodule is bound to, or a unique generated name if it is not bound to an
-attribute.
-
-Some arguments are already passed by default, of which the following *cannot* be changed with this
-option:
-
-- `lib`: The nixpkgs library.
-
-- `config`: The results of all options after merging the values from all modules together.
-
-- `options`: The options declared in all modules.
-
-- `specialArgs`: The `specialArgs` argument passed to `evalModules`.
-
-- All attributes of `specialArgs`
-
-  Whereas option values can generally depend on other option values thanks to laziness, this does
-  not apply to `imports`, which must be computed statically before anything else.
-
-  For this reason, callers of the module system can provide `specialArgs` which are available during
-  import resolution.
-
-  For NixOS, `specialArgs` includes `modulesPath`, which allows you to import extra modules from the
-  nixpkgs package tree without having to somehow make the module aware of the location of the
-  `nixpkgs` or NixOS directories.
-
-  ```
-  { modulesPath, ... }: {
-    imports = [
-      (modulesPath + "/profiles/minimal.nix")
-    ];
-  }
-  ```
-
-For NixOS, the default value for this option includes at least this argument:
-
-- `pkgs`: The nixpkgs package set according to the `nixpkgs.pkgs` option.
-
-*Type:* lazy attribute set of raw value
-
-*Default:*
-
-```nix
-{ }
-```
-
-*Declared by:*
-
-- [\<nixpkgs/lib/modules.nix>](https://github.com/NixOS/nixpkgs/blob//lib/modules.nix)
-
 ## features.apps.obsidian.enable
 
 Whether to enable enable Obsidian knowledge base app + vault.
@@ -1791,6 +1733,66 @@ true
 *Declared by:*
 
 - [/modules/features/optimization.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/optimization.nix)
+
+## features.optimization.scx.enable
+
+Whether to enable SCX BPF scheduler (replaces CFS).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/system/scx.nix](https://github.com/neg-serg/nixos/blob/master/modules/system/scx.nix)
+
+## features.optimization.scx.scheduler
+
+SCX scheduler to run. scx_lavd is recommended for X3D gaming: it detects dual-CCD topology and
+favours the V-Cache CCD for latency-sensitive tasks.
+
+*Type:* one of “scx_beerland”, “scx_bpfland”, “scx_cake”, “scx_chaos”, “scx_cosmos”, “scx_flash”,
+“scx_flow”, “scx_lavd”, “scx_layered”, “scx_mitosis”, “scx_p2dq”, “scx_pandemonium”, “scx_rlfifo”,
+“scx_rustland”, “scx_rusty”, “scx_tickless”
+
+*Default:*
+
+```nix
+"scx_lavd"
+```
+
+*Declared by:*
+
+- [/modules/system/scx.nix](https://github.com/neg-serg/nixos/blob/master/modules/system/scx.nix)
+
+## features.profiles
+
+List of enabled system profiles. Each profile sets a bundle of feature-flag defaults via mkDefault.
+Order matters — profiles listed later override earlier ones. Available: desktop, gaming, dev.
+
+*Type:* list of string
+
+*Default:*
+
+```nix
+[
+  "desktop"
+]
+```
+
+*Declared by:*
+
+- [/modules/profiles/default.nix](https://github.com/neg-serg/nixos/blob/master/modules/profiles/default.nix)
 
 ## features.secrets.enable
 
