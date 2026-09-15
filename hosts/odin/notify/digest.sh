@@ -19,15 +19,15 @@ esac
 msg="📋 Сводка: $wd, $(date '+%d.%m.%Y %H:%M %Z')"
 # Human uptime from /proc/uptime (portable — `uptime -p` flag support differs between procps and GNU coreutils' uptime on PATH).
 read -r up_s _ < /proc/uptime
-up_s=$((''${up_s%.*}))
+up_s=$((${up_s%.*}))
 d=$((up_s / 86400))
 h=$(((up_s % 86400) / 3600))
 m=$(((up_s % 3600) / 60))
 if [ "$d" -gt 0 ]; then
-  up_str="''${d}д ''${h}ч ''${m}м"
+  up_str="${d}д ${h}ч ${m}м"
 elif [ "$h" -gt 0 ]; then
-  up_str="''${h}ч ''${m}м"
-else up_str="''${m}м"; fi
+  up_str="${h}ч ${m}м"
+else up_str="${m}м"; fi
 msg="$msg$nl🖥 $(hostname) · аптайм: $up_str"
 
 # --- ZFS pools ---------------------------------------------------------
@@ -60,7 +60,7 @@ if failed="$(systemctl --failed --no-legend --plain 2> /dev/null)"; then
   else
     while IFS= read -r fline; do
       [ -n "$fline" ] || continue
-      unit=''${fline%% *}
+      unit=${fline%% *}
       msg="$msg$nl  • $unit"
     done <<< "$failed"
   fi
