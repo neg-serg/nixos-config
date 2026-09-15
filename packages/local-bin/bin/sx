@@ -1,6 +1,12 @@
 #!/usr/bin/env zsh
-# sx: view images in swayimg sorted by ctime (newest first)
+# sx: the swayimg launcher — gallery mode, images sorted by ctime (newest first).
 # Usage: sx [DIR...]
+#
+# Supersedes the former `swayimg-first` wrapper (removed 2026-09): the fork starts
+# its own IPC server, exports SWAYIMG_IPC to helper scripts and only accepts
+# next_file/prev_file, so the wrapper's --ipc/first_file plumbing never worked.
+# Pseudo-fullscreen comes from the Hyprland rule "pic-pseudo-fullscreen"
+# (maximize), hence swayimg's own -F/--fullscreen is not passed below.
 
 IFS=$'\n\t'
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -29,8 +35,6 @@ filter_ext() {
   fi
 }
 
-# Pseudo-fullscreen comes from the Hyprland rule "pic-pseudo-fullscreen" (maximize),
-# so swayimg's own -F/--fullscreen request is intentionally not used here.
 "$swimg_bin" -c "${XDG_CONFIG_HOME:-$HOME/.config}/swayimg/init.lua" -g -f <(
   # Follow symlinks and sort by ctime (newest first)
   find -L "$@" -type f -printf '%C@ %p\n' \
