@@ -1,8 +1,14 @@
 -- tidal.lua: evaluate TidalCycles patterns from .tidal buffers.
 -- <C-CR> / <leader>ts: send current line to the Tidal ghci terminal.
 -- <leader>tb: send whole buffer. ghci terminal auto-created (visible split).
-local GHCI = "/nix/store/dblqzi4fyk94jgsvkw1zhn2khqrgs41k-ghc-9.10.3/lib/ghc-9.10.3/bin/ghc"
-local GHCI_LIB = "/nix/store/8la161r2gjh44jcciyfsldzyn99crm27-ghc-9.10.3-with-packages/lib/ghc-9.10.3/lib"
+-- pkgs.tidal-ghci is in the system profile and is the ghc build with the Tidal
+-- package db preloaded, so its ghci finds its own lib dir: no absolute store
+-- paths and no -B/-ghci-lib juggling (those pinned a ghc build and went stale
+-- on the next nixpkgs bump). exepath resolves it once; fall back to $PATH.
+local GHCI = vim.fn.exepath("tidal-ghci")
+if GHCI == "" then
+	GHCI = "tidal-ghci"
+end
 local BOOT = vim.fn.expand("~/.config/tidal/BootTidal.hs")
 local function find_ghci_job()
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -22,7 +28,7 @@ local function ensure_ghci()
 	end
 	vim.cmd("vsplit")
 	vim.cmd(
-		"terminal " .. GHCI .. " -B" .. GHCI_LIB .. " --interactive -XOverloadedStrings -ghci-script=" .. BOOT .. " -v0"
+		"terminal " .. GHCI .. " --interactive -XOverloadedStrings -ghci-script=" .. BOOT .. " -v0"
 	)
 	vim.wait(6000, function()
 		return find_ghci_job() ~= nil
