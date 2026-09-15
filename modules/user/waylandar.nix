@@ -15,13 +15,7 @@
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  guiEnabled = config.lib.neg.enabled "gui";
-  qtEnabled = config.lib.neg.enabled "gui.qt";
-  quickshellEnabled =
-    guiEnabled
-    && qtEnabled
-    && (config.lib.neg.enabled "gui.quickshell")
-    && (!(config.lib.neg.enabled "devSpeed"));
+  quickshellEnabled = config.lib.neg.quickshellEnabled;
 
   # Same nixpkgs instance the flake input follows (raw, no repo overlays):
   # reuses the already-built python closure already present in the store.

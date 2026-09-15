@@ -10,12 +10,8 @@ let
   # Source path
   quickshellSrc = config.lib.neg.path "files/quickshell";
 
-  # Feature flags check
-  quickshellEnabled =
-    config.lib.neg.enabled "gui"
-    && config.lib.neg.enabled "gui.qt"
-    && config.lib.neg.enabled "gui.quickshell"
-    && !(config.lib.neg.enabled "devSpeed");
+  # Feature flags check (single source: config.lib.neg.quickshellEnabled)
+  quickshellEnabled = config.lib.neg.quickshellEnabled;
 
   # Quickshell package from the pinned flake input (post-v0.3.0 crash fixes),
   # same source the greeter already uses; nixpkgs' v0.3.0 tag lacks them.
