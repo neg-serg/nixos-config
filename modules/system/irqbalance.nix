@@ -21,9 +21,16 @@ let
       if [ -n "$b" ]; then seq "$a" "$b"; else echo "$a"; fi
     done | sort -n | uniq | ${gawkBin} '{for(i=1;i<=NF;i++) m=or(m,lshift(1,$i))} END{printf "0x%X\n",m}')
 
-    echo "$MASK" > /proc/irq/default_smp_affinity 2>/dev/null \
-      && echo "default_smp_affinity set to $MASK" \
-      || echo "default_smp_affinity: FAILED"
+    # The kernel prints this file as bare hex ("ffffffff") and rejected the write
+    # with a "0x" prefix on 6.18: the unit logged FAILED on every run since
+    # 2026-09-02 while the file kept reading ffffffff, so only the per-IRQ loop
+    # below ever took effect. Write the bare mask, keep stderr in the journal, and
+    # report what the kernel actually kept.
+    if echo "''${MASK#0x}" > /proc/irq/default_smp_affinity; then
+      echo "default_smp_affinity: requested ''${MASK#0x}, now $(cat /proc/irq/default_smp_affinity)"
+    else
+      echo "default_smp_affinity: FAILED (still $(cat /proc/irq/default_smp_affinity))"
+    fi
 
     for f in /proc/irq/*/smp_affinity_list; do
       echo "$HOUSECPUS" > "$f" 2>/dev/null || true
