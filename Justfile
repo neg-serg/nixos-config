@@ -205,6 +205,29 @@ unbound-hosts:
     "$repo_root/packages/local-bin/scripts/gen-unbound-hosts" "$repo_root"; \
     nix fmt
 
+# Freshness gate for the same generated file: reruns the generator against a
+# scratch root (only the two sources are copied in) and diffs the result, so a
+# stale committed file fails here instead of silently keeping old host entries.
+# Not wired into the lint pass or the pre-commit hook — like docs-guard it runs
+# a generator, which is slower than lint. Run it (and docs-guard) before
+# committing changes to either source file.
+unbound-hosts-guard:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    repo_root="$(git rev-parse --show-toplevel)"
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    mkdir -p "$tmp/hosts/odin" "$tmp/files/sources"
+    cp "$repo_root/hosts/odin/unbound-local.txt" "$tmp/hosts/odin/"
+    cp "$repo_root/files/sources/malw-hosts.txt" "$tmp/files/sources/"
+    "$repo_root/packages/local-bin/scripts/gen-unbound-hosts" "$tmp"
+    if ! diff -q "$repo_root/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" >/dev/null; then
+      echo "hosts/odin/unbound-hosts.nix is stale — run 'just unbound-hosts' and commit it:" >&2
+      diff -u "$repo_root/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" | head -40 >&2
+      exit 1
+    fi
+    echo "unbound-hosts.nix is fresh"
+
 hooks-enable:
     git config core.hooksPath .githooks
 
