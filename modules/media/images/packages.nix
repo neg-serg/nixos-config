@@ -1,6 +1,6 @@
 ##
 # Module: media/images/packages
-# Purpose: Provide image editing/recovery/metadata tooling and swayimg wrappers system-wide.
+# Purpose: Provide image editing/recovery/metadata tooling system-wide.
 {
   lib,
   config,
@@ -9,16 +9,6 @@
 }:
 let
   enabled = config.lib.neg.enabled "gui";
-  swayimgFirst = pkgs.writeShellScriptBin "swayimg-first" (
-    let
-      tpl = builtins.readFile ./swayimg-first.sh;
-      replacements = [
-        (lib.getExe pkgs.swayimg) # Image viewer for Sway/Wayland
-        (lib.getExe pkgs.socat) # Utility for bidirectional data transfer between two indep...
-      ];
-    in
-    lib.replaceStrings [ "@SWAYIMG_BIN@" "@SOCAT_BIN@" ] replacements tpl
-  );
   packages = [
     # -- Color --
     pkgs.lutgen # procedurally render LUTs for stylizing
@@ -44,8 +34,7 @@ let
     pkgs.qrencode # generate QR codes for wallpaper/text overlays
 
     # -- Viewer --
-    pkgs.swayimg # primary image viewer with IPC hooks
-    swayimgFirst # wrapper that ensures swayimg session state
+    pkgs.swayimg # primary image viewer with IPC hooks (launched via `sx`)
   ];
 in
 {
