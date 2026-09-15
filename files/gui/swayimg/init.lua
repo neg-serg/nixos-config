@@ -140,8 +140,9 @@ swayimg.viewer.on_key("Escape", function() swayimg.set_mode("gallery") end)
 swayimg.viewer.on_key("Space", function() swayimg.viewer.open("next") end)
 swayimg.viewer.on_key("Shift+Space", function() swayimg.viewer.open("prev") end)
 
--- Toggle fullscreen / antialiasing / info
-swayimg.viewer.on_key("f", function() swayimg.toggle_fullscreen() end)
+-- Antialiasing / info
+-- Pseudo-fullscreen is handled by Hyprland (rule "pic-pseudo-fullscreen"),
+-- so swayimg's own toggle_fullscreen() / -F are intentionally unused.
 swayimg.viewer.on_key("a", function()
   aa_enabled = not aa_enabled
   swayimg.enable_antialiasing(aa_enabled)
@@ -267,7 +268,6 @@ key2({"з"}, function() swayimg.viewer.open("prev") end)
 key2({"п"}, function() swayimg.viewer.open("first") end)
 key2({"Shift-п"}, function() swayimg.viewer.open("last") end)
 key2({"й"}, function() swayimg.exit(0) end)
-key2({"а"}, function() swayimg.toggle_fullscreen() end)
 key2({"ф"}, function() aa_enabled = not aa_enabled swayimg.enable_antialiasing(aa_enabled) end)
 key2({"ш"}, function() swayimg.text.show() end)
 key2({"с","ы"}, function() local i=swayimg.viewer.current_image() exec(actions.." copyname "..cp(i['path'])) end)
@@ -324,7 +324,6 @@ swayimg.gallery.on_key("p", function() swayimg.gallery.select("left") end)
 
 -- Open selected in viewer / go back to gallery
 swayimg.gallery.on_key("Return", function() swayimg.set_mode("viewer") end)
-swayimg.gallery.on_key("f", function() swayimg.toggle_fullscreen() end)
 
 -- Image info
 swayimg.gallery.on_key("i", function() swayimg.text.show() end)
@@ -459,7 +458,6 @@ key2g({"о"}, function() swayimg.gallery.select("down") end)
 key2g({"т"}, function() swayimg.gallery.select("right") end)
 key2g({"з"}, function() swayimg.gallery.select("left") end)
 key2g({"О"}, function() swayimg.gallery.select("down") end)
-key2g({"а"}, function() swayimg.toggle_fullscreen() end)
 key2g({"ш"}, function() swayimg.text.show() end)
 key2g({"с","ы"}, function() local i=swayimg.gallery.current_image() exec(actions.." copyname "..cp(i['path'])) end)
 key2g({"в"}, function() local i=swayimg.gallery.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
@@ -480,7 +478,6 @@ swayimg.slideshow.set_timeout(3)
 -- Slideshow keybindings
 swayimg.slideshow.bind_reset()
 
-swayimg.slideshow.on_key("f", function() swayimg.toggle_fullscreen() end)
 swayimg.slideshow.on_key("q", function() swayimg.exit(0) end)
 swayimg.slideshow.on_key("s", function()
   local img = swayimg.slideshow.current_image()
@@ -554,7 +551,6 @@ swayimg.slideshow.on_key("Down", function() local p=get_slideshow_pos() swayimg.
 
 -- Slideshow: Russian layout duplicates (ЙЦУКЕН)
 key2s({"й"}, function() swayimg.exit(0) end)
-key2s({"а"}, function() swayimg.toggle_fullscreen() end)
 key2s({"с","ы"}, function() local i=swayimg.slideshow.current_image() exec(actions.." copyname "..cp(i['path'])) end)
 key2s({"в"}, function() local i=swayimg.slideshow.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
 key2s({"Ctrl-в"}, function() local i=swayimg.slideshow.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
