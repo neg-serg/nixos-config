@@ -4,4 +4,4 @@
 # Usage: groove-humanize input.mid -o output.mid [--tempo 120]
 set -eu
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
-exec "/zero/ai/music-ai/venv-groovae/bin/python" "/zero/ai/music-ai/groovae/groove_humanize.py" "$@"
+exec "@MUSIC_AI_BASE@/venv-groovae/bin/python" "@MUSIC_AI_BASE@/groovae/groove_humanize.py" "$@"

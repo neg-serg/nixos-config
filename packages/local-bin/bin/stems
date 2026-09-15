@@ -17,4 +17,4 @@ done
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 mkdir -p "$OUT"
 # GPU (ROCm torch in venv-demucs): fp16 gives ~4x speedup (16s vs 64s on 40s audio).
-exec /zero/ai/music-ai/venv-demucs/bin/audio-separator   --model_filename model_bs_roformer_ep_317_sdr_12.9755.ckpt   --output_dir "$OUT" --single_stem "$TWO" --use_native_fp16 "$IN"
+exec @MUSIC_AI_BASE@/venv-demucs/bin/audio-separator   --model_filename model_bs_roformer_ep_317_sdr_12.9755.ckpt   --output_dir "$OUT" --single_stem "$TWO" --use_native_fp16 "$IN"

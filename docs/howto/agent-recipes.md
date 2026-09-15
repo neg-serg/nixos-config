@@ -234,11 +234,11 @@ normal hosts.
 1. Runtime Nix store paths must go through the substitution table in
    `modules/user/nix-maid/cli/local-bin.nix` (applied to every file under `bin/` and `scripts/`) —
    never paste a literal `/nix/store/...` path into a script. Tokens today: `@LIBPP@`/`@LIBCOLORED@`
-   (`ren`, `vid-info.py`), `@NIX_KSB_PATH@` (`kitty-scrollback-nvim`), and the shared music-AI lib
-   dirs `@GCC_LIB_DIR@`/`@ZLIB_LIB_DIR@`/`@ZSTD_LIB_DIR@`. A literal path pins nothing: it goes
-   stale on the next nixpkgs bump and no gc root keeps it — 20 scripts carried
-   `gcc-15.2.0-lib`/`zlib`/`zstd` literals until 2026-09-15 and the gcc one had no root at all (see
-   `docs/runbook-scripts.md`).
+   (`ren`, `vid-info.py`), `@NIX_KSB_PATH@` (`kitty-scrollback-nvim`), the shared music-AI lib dirs
+   `@GCC_LIB_DIR@`/`@ZLIB_LIB_DIR@`/`@ZSTD_LIB_DIR@` and the venv tree root `@MUSIC_AI_BASE@`
+   (`/zero/ai/music-ai`, outside the repo). A literal path pins nothing: it goes stale on the next
+   nixpkgs bump and no gc root keeps it — 20 scripts carried `gcc-15.2.0-lib`/`zlib`/`zstd` literals
+   until 2026-09-15 and the gcc one had no root at all (see `docs/runbook-scripts.md`).
 1. Naming: extensionless python files avoid the `*.py` lint path (`just lint` runs ruff/black only
    on `*.py`); `.sh`/`.bash` files are shellchecked when they carry a bash shebang.
 

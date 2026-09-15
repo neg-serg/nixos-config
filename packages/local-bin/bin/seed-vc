@@ -1,6 +1,6 @@
 #!/bin/sh
 # seed-vc: zero-shot voice conversion (ByteDance Seed-VC, SOTA 2025-2026).
-# venv-seedvc (torch 2.13+rocm7.1); checkpoints cached offline in /zero/ai/music-ai/seed-vc/checkpoints.
+# venv-seedvc (torch 2.13+rocm7.1); checkpoints cached offline in @MUSIC_AI_BASE@/seed-vc/checkpoints.
 # Usage: seed-vc SOURCE.wav TARGET_REF.wav [OUTDIR] [--steps N] [--svc]
 #   SOURCE = твой голос/аудио, TARGET_REF = референс голоса (1-30s).
 #   --svc = режим пения (f0-condition, нужен rmvpe — качается отдельно).
@@ -15,9 +15,9 @@ while [ "$#" -gt 0 ]; do case "$1" in
   *) OUT="$1"; shift;;
 esac; done
 OUT="$(readlink -f "$OUT")"
-cd /zero/ai/music-ai/seed-vc
+cd @MUSIC_AI_BASE@/seed-vc
 if [ "$SVC" = "1" ]; then
-  exec /zero/ai/music-ai/venv-seedvc/bin/python inference.py --source "$SRC" --target "$REF" --output "$OUT" --diffusion-steps "$STEPS" --fp16 True --f0-condition True
+  exec @MUSIC_AI_BASE@/venv-seedvc/bin/python inference.py --source "$SRC" --target "$REF" --output "$OUT" --diffusion-steps "$STEPS" --fp16 True --f0-condition True
 else
-  exec /zero/ai/music-ai/venv-seedvc/bin/python inference.py --source "$SRC" --target "$REF" --output "$OUT" --diffusion-steps "$STEPS" --fp16 True
+  exec @MUSIC_AI_BASE@/venv-seedvc/bin/python inference.py --source "$SRC" --target "$REF" --output "$OUT" --diffusion-steps "$STEPS" --fp16 True
 fi

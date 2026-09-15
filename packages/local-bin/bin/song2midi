@@ -17,4 +17,4 @@ while [ "$#" -gt 0 ]; do
 done
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 mkdir -p "$OUT"
-exec /zero/ai/music-ai/venv-omnizart/bin/omnizart "$MODEL" transcribe "$IN" -o "$OUT"
+exec @MUSIC_AI_BASE@/venv-omnizart/bin/omnizart "$MODEL" transcribe "$IN" -o "$OUT"
