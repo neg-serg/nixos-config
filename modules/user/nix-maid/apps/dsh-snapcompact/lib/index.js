@@ -39,14 +39,14 @@ function frameFile(dir, sessionID) {
   return join(dir, String(sessionID).replace(/[^A-Za-z0-9._-]/g, '_') + '.jsonl')
 }
 
-export function apply(ctx) {
-  const config = { ...DEFAULTS, ...(ctx.config ?? {}) }
-  const dir = frameDir(config)
+export function apply(ctx, config = {}) {
+  const settings = { ...DEFAULTS, ...config }
+  const dir = frameDir(settings)
   /** sessionID -> { compactionId, turn, note } */
   const pending = new Map()
 
   ctx.on('session/event', (session, event) => {
-    if (!config.enabled || !session || !event) return
+    if (!settings.enabled || !session || !event) return
     const sid = session.id
     if (!sid) return
     const data = event.data ?? {}
@@ -78,7 +78,7 @@ export function apply(ctx) {
       } catch {
         // A read-only or full disk must not break the agent loop.
       }
-      if (config.note) {
+      if (settings.note) {
         const seqs = frame.shadowedSeqs.length
         const range = frame.shadowedRange
           ? `${frame.shadowedRange.start}..${frame.shadowedRange.end}`
@@ -101,7 +101,7 @@ export function apply(ctx) {
 
   ctx.on('agent/pre-step', async function ({ agent }, next) {
     const decision = await next()
-    if (!config.enabled || !config.note) return decision
+    if (!settings.enabled || !settings.note) return decision
     const sid = agent && agent.session ? agent.session.id : null
     const state = sid ? pending.get(sid) : null
     if (!state || !state.note) return decision

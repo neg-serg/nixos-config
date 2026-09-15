@@ -26,8 +26,10 @@ const mod = await import('./lib/index.js')
 
 function makeCtx(config) {
   const handlers = new Map()
+  const ctx = { on: (event, fn) => handlers.set(event, fn) }
   return {
-    ctx: { config, on: (event, fn) => handlers.set(event, fn) },
+    ctx,
+    start: () => mod.apply(ctx, config),
     emit: (event, session, data) => handlers.get('session/event')(session, { type: event, data }),
     preStep: (session) =>
       handlers.get('agent/pre-step')({ agent: { session } }, async () => ({ messages: [] })),
@@ -48,7 +50,7 @@ const summary = (compactionId, start, end, tokens) => ({
 {
   const dir = mkdtempSync(join(tmpdir(), 'snapcompact-'))
   const h = makeCtx({ dir })
-  mod.apply(h.ctx)
+  h.start()
 
   const session = { id: 'sess-1' }
   h.emit('compaction/start', session, { compactionId: 'c1', turn: 7 })
@@ -88,7 +90,7 @@ const summary = (compactionId, start, end, tokens) => ({
 {
   const dir = mkdtempSync(join(tmpdir(), 'snapcompact-off-'))
   const h = makeCtx({ dir, enabled: false })
-  mod.apply(h.ctx)
+  h.start()
   const session = { id: 'sess-2' }
   h.emit('compaction/start', session, { compactionId: 'c1', turn: 1 })
   h.emit('compaction/summary', session, summary('c1', 1, 2, 3))
