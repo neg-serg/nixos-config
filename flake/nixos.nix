@@ -23,12 +23,6 @@ let
     inputs.extra-container.nixosModules.default
   ];
 
-  hostExtras =
-    name:
-    lib.optional (builtins.pathExists (hostsDir + "/" + name + "/extra.nix")) (
-      hostsDir + "/" + name + "/extra.nix"
-    );
-
   # -------------------------------------------------------------------------
   # Domain filter — enables parallel eval by skipping unused module domains.
   # Each domain maps to a subdirectory under modules/. The filter
@@ -115,8 +109,7 @@ let
       specialArgs = mkSpecialArgs // {
         domainFilter = mkDomainFilter (if name == "odin" then odinDomains else allDomains);
       };
-      modules =
-        commonModules ++ [ (import ((builtins.toString hostsDir) + "/" + name)) ] ++ (hostExtras name);
+      modules = commonModules ++ [ (import ((builtins.toString hostsDir) + "/" + name)) ];
     };
 
   # A/B test configurations: same base host but WITH ONLY THE TEST PROFILE ACTIVE.
@@ -138,7 +131,6 @@ let
       modules =
         commonModules
         ++ [ (import ((builtins.toString hostsDir) + "/" + baseName)) ]
-        ++ (hostExtras baseName)
         ++ [
           # mkForce: replace host profiles entirely so the test profile is the sole active one
           { features.profiles = lib.mkForce [ testProfile ]; }
