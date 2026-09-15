@@ -17,8 +17,9 @@ with the Hyprland compositor without hopping across multiple files.
   `modules/nix/hyprland.nix`) adds the `hyprglass` decoration plugin to `pkgs.hyprlandPlugins`,
   gated behind `features.gui.enable` so headless hosts skip the `pkgs.hyprland` evaluation.
 - The flake-pinned builds are wired in `flake/lib.nix` `hyprlandOverlay`: it routes
-  `pkgs.xdg-desktop-portal-hyprland` (pinned input) and `pkgs.hyprlandPlugins.hy3` (`inputs.hy3`) so
-  the rest of the configuration consumes them without touching `inputs.*` directly.
+  `pkgs.xdg-desktop-portal-hyprland` (pinned input) so the rest of the configuration consumes it
+  without touching `inputs.*` directly. `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build — the `hy3`
+  flake input tracked Hyprland 0.56+, failed to load here and was removed (audit 2026-09-15).
 - Because everything flows through `pkgs`, Home-Manager modules just reference
   `pkgs.hyprlandPlugins.hy3` and stay agnostic of how the plugin was produced.
 

@@ -2,13 +2,13 @@
 let
   hyprlandOverlay =
     system:
-    (_: prev: {
+    (_final: _prev: {
       inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
       # NOTE: hy3 comes from nixpkgs 26.05 (0.55.0), built against the same
       # Hyprland 0.55.4 the system ships. The github:outfoxxed/hy3 flake input
-      # tracks Hyprland 0.56+ and its .so fails to load here (undefined symbol
-      # IModeAlgorithm::getFSHandler), so we deliberately do NOT override it.
-      hyprlandPlugins = prev.hyprlandPlugins;
+      # tracked Hyprland 0.56+ and its .so failed to load here (undefined symbol
+      # IModeAlgorithm::getFSHandler); it was never used, so the input is gone
+      # (audit 2026-09-15) and hyprlandPlugins stays exactly as nixpkgs ships it.
     });
 
   bintoolsBootstrapFix = _: prev: {

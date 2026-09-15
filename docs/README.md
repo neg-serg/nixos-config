@@ -241,8 +241,10 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 - The compositor (`pkgs.hyprland`) comes from nixpkgs (`modules/user/nix-maid/hyprland/overlay.nix`,
   consolidated from the former `modules/nix/hyprland.nix`); the dedicated `hyprland` flake input was
   removed (it had no functional references).
-- `inputs.hy3` provides the hy3 plugin (`flake/lib.nix` hyprlandOverlay →
-  `pkgs.hyprlandPlugins.hy3`).
+- `pkgs.hyprlandPlugins.hy3` comes from nixpkgs (0.55.0, built against the Hyprland 0.55.4 the
+  system ships). The dedicated `hy3` flake input tracked Hyprland 0.56+ and its `.so` failed to load
+  here (`undefined symbol IModeAlgorithm::getFSHandler`), so it was never used and has been removed
+  (audit 2026-09-15).
 - `inputs.xdg-desktop-portal-hyprland` is pinned to the same rev the hyprland flake used to carry
   (08d99f72); the overlay routes it as `pkgs.xdg-desktop-portal-hyprland`.
 - Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already
