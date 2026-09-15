@@ -35,12 +35,8 @@ _: _: finalPrev: {
     cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DSKIP_TEST_SUITES=psa_crypto;psa_crypto_init" ];
   });
 
-  # XFS breaks nix-util readLinkAt test on kernel 7.0+
-  # Build failures on nixpkgs-unstable
-  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-  valkey = finalPrev.valkey.overrideAttrs (_old: {
-    doCheck = false;
-  });
+  # (valkey override removed: with doCheckByDefault = false it already evaluates
+  # to doCheck = false — verified against the same pin, audit 2026-09-15)
   notmuch = finalPrev.notmuch.overrideAttrs (_old: {
     doCheck = false;
   });
@@ -85,42 +81,16 @@ _: _: finalPrev: {
     doCheck = false;
   });
 
-  # Disable flaky pylint tests (primer output diff, network-dependent)
-  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-  pylint = finalPrev.pylint.overrideAttrs (_old: {
-    doCheck = false;
-  });
+  # (pylint override removed: already doCheck = false via doCheckByDefault,
+  # verified against the same pin, audit 2026-09-15)
 
-  # Disable flaky samba tests (timing-dependent, fail on loaded systems)
-  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-  samba = finalPrev.samba.overrideAttrs (_old: {
-    doCheck = false;
-  });
+  # (samba override removed: already doCheck = false via doCheckByDefault,
+  # verified against the same pin, audit 2026-09-15)
   # (samba4 removed: it is a nixpkgs alias of samba, and allowAliases=false is
   # set in flake/lib.nix, so finalPrev.samba4 was a latent eval error)
-  # Disable flaky pytest-xdist tests
-  pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
-    (_python-final: python-prev: {
-      pytest-xdist = python-prev.pytest-xdist.overrideAttrs (_old: {
-        doCheck = false;
-      });
-      uvloop = python-prev.uvloop.overrideAttrs (_old: {
-        doCheck = false; # flaky timing test
-      });
-      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-      rich = python-prev.rich.overrideAttrs (_old: {
-        doCheck = false; # flaky test_brokenpipeerror
-      });
-      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-      aiohttp = python-prev.aiohttp.overrideAttrs (_old: {
-        doCheck = false; # flaky tests
-      });
-      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-      django = python-prev.django.overrideAttrs (_old: {
-        doCheck = false; # flaky test DB teardown
-      });
-    })
-  ];
+  # (pytest-xdist/uvloop/rich/aiohttp/django overrides removed: with
+  # doCheckByDefault = false (flake/lib.nix) they already evaluate to
+  # doCheck = false — verified by eval against the same nixpkgs pin, audit 2026-09-15)
 
   # Limit WebKit parallelism: unified builds + 32 cores OOMs on 64GB
   webkitgtk_4_1 = finalPrev.webkitgtk_4_1.overrideAttrs (_old: {
