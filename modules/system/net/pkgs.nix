@@ -10,7 +10,7 @@
   ...
 }:
 let
-  wifiEnabled = config.profiles.network.wifi.enable || (config.lib.neg.enabled "net.wifi");
+  wifiEnabled = config.lib.neg.wifiEnabled;
 in
 {
   # Open KDE Connect ports only if the program is enabled

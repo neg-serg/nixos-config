@@ -33,7 +33,7 @@ in
     # Expose helpers under config.lib.neg: the pure neg-helpers from
     # specialArgs (mkHomeFiles, mkLocalBin, ...) extended with helpers that
     # close over config.
-    lib.neg = neg // {
+    lib.neg = neg // rec {
       # Primary user identity — single source for the preamble
       # (`user = config.users.main.name or "neg"` plus the attrByPath lookups
       # for home/group) that modules used to repeat.
@@ -53,6 +53,15 @@ in
       enabled =
         path:
         (lib.attrByPath (lib.splitString "." path) { enable = false; } config.features).enable or false;
+
+      # Wi-Fi stack: the host profile opt-in (profiles.network.wifi.enable) or
+      # the net.wifi feature. Four modules used to repeat this predicate.
+      wifiEnabled = (config.profiles.network.wifi.enable or false) || enabled "net.wifi";
+
+      # Quickshell panel: full GUI + Qt + quickshell flags, off in dev-speed
+      # mode. Three modules used to repeat this conjunction.
+      quickshellEnabled =
+        enabled "gui" && enabled "gui.qt" && enabled "gui.quickshell" && !(enabled "devSpeed");
 
       # Resolve a repo-root-relative path (e.g. "files/gui/theme.toml") to an
       # absolute path. repoRoot is a real path (not a string), so the result
