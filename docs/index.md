@@ -3,6 +3,9 @@
 - How-tos and reference (focused guides, pinning notes, hotkeys): [howto/index.md](./howto/index.md)
 - Runbooks (operational steps, credentials, maintenance helpers):
   [runbook-index.md](./runbook-index.md)
+- Script catalog (hwctl CLI + `scripts/dev/` gates): [runbook-scripts.md](./runbook-scripts.md)
+- Cursor theme notes (hotspot/size analysis; the extracted frames are generated locally and not
+  tracked): [CURSORS.md](./CURSORS.md)
 
 ## Structure / Options Docs — which doc to read
 
