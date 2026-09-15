@@ -59,30 +59,23 @@ in
     (mkIf (!config.lib.neg.enabled "mail") {
       features.mail.vdirsyncer.enable = mkForce false;
     })
-    # Consistency assertions for nested flags
+    # Consistency assertions for nested flags. Only the pairs that are NOT
+    # force-disabled above are asserted: when a parent is off, the merge chain
+    # already forces the child off (mkForce), so an assertion for those pairs
+    # could never fire.
     {
       assertions =
         let
           gui = config.features.gui;
-          dev = config.features.dev;
-          devAi = dev.ai;
           guiApps = config.features.apps;
         in
         [
-          (assertParent gui.enable gui.qt.enable "features.gui.qt.enable requires features.gui.enable = true")
-          (assertParent gui.enable gui.quickshell.enable
-            "features.gui.quickshell.enable requires features.gui.enable = true"
-          )
           (assertParent gui.enable gui.vicinae.enable
             "features.gui.vicinae.enable requires features.gui.enable = true"
           )
           (assertParent gui.enable guiApps.winapps.enable
             "features.apps.winapps.enable requires features.gui.enable = true"
           )
-          (assertParent (config.lib.neg.enabled "web") (config.lib.neg.enabled "web.tools")
-            "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)"
-          )
-          (assertParent dev.enable devAi.enable "features.dev.ai.enable requires features.dev.enable = true")
         ];
     }
   ];
