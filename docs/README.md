@@ -97,8 +97,8 @@ Full-TUN proxy: routes all non-private traffic through the working VLESS/Hysteri
 - Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
   `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
   layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click.
-- Swayimg wrappers (`swayimg-first`) land in `~/.local/bin/swayimg` and are tuned via Hyprland
-  window rules.
+- Swayimg is launched via `sx` (`packages/local-bin/bin/sx`): gallery mode, images sorted by ctime
+  (newest first). Its window is tuned via Hyprland window rules (`pic-pseudo-fullscreen`).
 
 ### Miscellaneous Developer Notes
 
