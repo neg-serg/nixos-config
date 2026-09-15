@@ -27,22 +27,17 @@ in
         alsa.support32Bit = true;
         pulse.enable = true;
         jack.enable = true;
-        # Base low-latency tuning + optional RNNoise virtual mic
+        # Base low-latency tuning + optional RNNoise virtual mic.
+        # The clock/quantum settings deliberately live in ONE place: the user
+        # drop-in files/media/pipewire/pipewire.conf.d/clock-rate.conf (via
+        # nix-maid, modules/user/nix-maid/sys/pipewire.nix), which is parsed
+        # after this file and therefore wins — it locks the graph to the RME
+        # HDSPe's 48 kHz / 256-frame periods (see the comments there). Keys
+        # duplicated in both files used to contradict each other (128 here vs
+        # 256 there) and only the drop-in took effect; audit 2026-09-15.
         extraConfig.pipewire = {
           "92-low-latency" = {
             "context.properties" = {
-              "default.clock.rate" = 48000;
-              "default.clock.allowed-rates" = [
-                44100
-                48000
-                88200
-                96000
-                176400
-                192000
-              ];
-              "default.clock.quantum" = 128;
-              "default.clock.min-quantum" = 32;
-              "default.clock.max-quantum" = 4096;
               "link.max-buffers" = 16;
               "cpu.zero.denormals" = true;
               "clock.power-of-two-quantum" = true;
