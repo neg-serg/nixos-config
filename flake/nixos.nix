@@ -138,7 +138,12 @@ let
     baseName: testProfile:
     lib.nixosSystem {
       inherit pkgs;
-      specialArgs = mkSpecialArgs;
+      # Same domain filter as mkHost: a test host must evaluate the configuration
+      # the real host runs, not the all-domains superset (odin excludes
+      # appimage/apps, so importing them here hid real eval breakage).
+      specialArgs = mkSpecialArgs // {
+        domainFilter = mkDomainFilter (if baseName == "odin" then odinDomains else allDomains);
+      };
       modules =
         commonModules
         ++ [ (import ((builtins.toString hostsDir) + "/" + baseName)) ]
