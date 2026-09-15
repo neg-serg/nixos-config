@@ -46,6 +46,32 @@ Run by `nix flake check`:
   plugin directory missing from the list breaks the whole system evaluation (flake check
   `nix-maid-app-dirs-guard`).
 
+## User scripts — `packages/local-bin/`
+
+84 commands installed into `~/.local/bin` as managed home files by
+`modules/user/nix-maid/cli/local-bin.nix`:
+
+- `bin/` — `$PATH` commands; every regular file is installed, `autoSkip` lists the exceptions that
+  get a hand-written entry (`kitty-scrollback-nvim`).
+- `scripts/` — same mechanism, `scriptSkip` holds the two files whose *content* is templated (`ren`,
+  `vid-info.py`, both python helpers needing library paths).
+
+The files are templates: the module runs `lib.replaceStrings` over the text before it becomes a home
+file. Tokens:
+
+| token                     | value                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| `@GCC_LIB_DIR@`           | `${pkgs.gcc.cc.lib}/lib` — libstdc++/libgomp for the torch wheels               |
+| `@ZLIB_LIB_DIR@`          | `${pkgs.zlib}/lib` — libz                                                       |
+| `@ZSTD_LIB_DIR@`          | `${pkgs.zstd.out}/lib` — libzstd (torch ≥ 2.13 links it)                        |
+| `@LIBPP@`, `@LIBCOLORED@` | python site-packages of `neg.pretty_printer` / `colored` (`ren`, `vid-info.py`) |
+| `@NIX_KSB_PATH@`          | `kitty-scrollback-nvim` python module path                                      |
+
+Never paste a literal `/nix/store/...` path: it goes stale on the next nixpkgs bump and nothing
+keeps it in the store (2026-09-15: 20 scripts pointed at an unrooted `gcc-15.2.0-lib`, and `demucs`
+could not `import torch`). Regression gates for two of the scripts live in `flake/checks.nix`
+(`dsh-worktree-guard`, `dsh-statusline-guard`).
+
 Manual tools (no recipe or check runs them — call them directly):
 
 - [check-dsh-sessions.sh](../scripts/dev/check-dsh-sessions.sh) — session-format regression gate for
