@@ -14,8 +14,18 @@ how to recreate it. Complements `wine-vst-bridge.md` (Windows VSTs via yabridge 
 | `venv-demucs`  | 3.13 (default)                 | demucs 4.1 + audio-separator (BS-RoFormer)  | `uv pip install --python .../bin/python demucs audio-separator onnxruntime audioread`; librosa==0.10.2.post1 (for audio-separator)                                                                                       |
 | `venv-xtts`    | 3.11                           | coqui-tts 0.27.5 (XTTS-v2 RU cloning)       | `coqui-tts` + CPU torch 2.8/torchaudio 2.8 (NOT 2.9+: requires torchcodec/CUDA) + transformers==4.53.0; the first launch accepts the ToS (echo y)                                                                        |
 
-General pattern for pip things on NixOS:
-`export LD_LIBRARY_PATH=/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib`
+General pattern for pip things on NixOS — derive the library dirs instead of pasting hashes:
+
+```sh
+export LD_LIBRARY_PATH="$(nix eval --raw --impure --option substitute false --expr 'let p = (builtins.getFlake "/etc/nixos").inputs.nixpkgs.legacyPackages.x86_64-linux; in "${p.gcc.cc.lib}/lib:${p.zlib}/lib:${p.zstd.out}/lib"'):${LD_LIBRARY_PATH:-}"
+```
+
+Those are the same three dirs the `~/.local/bin` wrappers (`demucs`, `rave`, `stems`, …) export from
+`modules/user/nix-maid/cli/local-bin.nix` (`@GCC_LIB_DIR@`/`@ZLIB_LIB_DIR@`/`@ZSTD_LIB_DIR@`, see
+[runbook-scripts.md](../runbook-scripts.md)); the manual export is only needed when calling a venv
+by hand. Never copy a literal `/nix/store/...` path: it goes stale on the next nixpkgs bump and a
+`nix-collect-garbage -d` removes it (2026-09-15: the old `gcc-15.2.0-lib` prefix had no gc root
+left).
 
 ## RAVE (neural autoencoder)
 

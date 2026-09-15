@@ -28,7 +28,8 @@ a target voice — not done** (a dataset/model is needed).
 ## Inference (with a ready-made model)
 
 ```bash
-export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib"
+# library dirs from nix, not from a stale hash (see docs/howto/local-music-ai.md)
+export LD_LIBRARY_PATH="$(nix eval --raw --impure --option substitute false --expr 'let p = (builtins.getFlake "/etc/nixos").inputs.nixpkgs.legacyPackages.x86_64-linux; in "${p.gcc.cc.lib}/lib:${p.zlib}/lib:${p.zstd.out}/lib"'):${LD_LIBRARY_PATH:-}"
 cd /zero/ai/music-ai/Retrieval-based-Voice-Conversion-WebUI
 /zero/ai/music-ai/venv-rvc/bin/python infer/cli.py --model weights/MYVOICE.pth --input in.wav --output out.wav --f0-method rmvpe
 ```
