@@ -13,5 +13,8 @@ Guidelines
   overlay patterns when required.
 - Fill out `meta` fields (description, homepage, license, platforms, maintainers) and keep fetcher
   hashes current; note when using binary sources.
+  - `maintainers = [ ]` is the convention for local-only packages (nothing here is upstream), and
+    environments built with `python3.withPackages` carry no `meta` at all — say so in a comment
+    instead of inventing one.
 - Put small helper scripts intended for `$PATH` in `packages/local-bin` with clear names and minimal
   dependencies.
