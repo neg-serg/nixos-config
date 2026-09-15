@@ -30,7 +30,11 @@ let
       src = fetchFromGitHub {
         owner = "markbergsma";
         repo = "genlc";
-        rev = "master";
+        # Pinned to the master tip (2021-08-29): the repo has seen no commits
+        # since, and this SHA's tarball hashes to the sha256 recorded below
+        # (verified with nix-prefetch-url --unpack). Was `rev = "master"`, the
+        # last floating rev in packages/ (audit 2026-09-15).
+        rev = "a210f8b5e15df8ff7be38f4aa7089860272cf90b";
         sha256 = "sha256-26cM5Cz4KdDLQsIUJ+qqaQByDvwyz7Uif1t79IFID30=";
       };
       pyproject = true;
