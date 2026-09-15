@@ -15,6 +15,12 @@ let
     modules = [
       # Include the features module
       (self + "/modules/features")
+      # features.* flags declared outside modules/features: without these the
+      # generated reference was not exhaustive (features.profiles and
+      # features.optimization.scx were missing while OPTIONS.md promised
+      # "every features.* flag"; audit 2026-09-15).
+      (self + "/modules/profiles/default.nix")
+      (self + "/modules/system/scx.nix")
       # Mock necessary config for evaluation
       (
         { lib, ... }:
@@ -24,6 +30,9 @@ let
           # (real providers: modules/core/neg.nix for mkBool, flake specialArgs for pkgs)
           config._module.args.mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
           config._module.args.pkgs = pkgs;
+          # modules/profiles/*.nix take `opts` (lib/opts.nix) — same value the
+          # real hosts get from flake/nixos.nix specialArgs.
+          config._module.args.opts = import ../lib/opts.nix { inherit lib; };
         }
       )
       # Mock assertions to avoid evaluation errors
@@ -41,7 +50,11 @@ let
 
   # Use nixosOptionsDoc to generate the documentation
   optionsDoc = pkgs.nixosOptionsDoc {
-    options = eval.options;
+    # Only the `features.*` subtree: OPTIONS.md links this file as the reference
+    # for every features.* flag. The two extra modules above are evaluated for
+    # their features.* declarations, not for their own options (profiles.*,
+    # services.scx.*), which would otherwise flood the document.
+    options = { inherit (eval.options) features; };
     documentType = "none"; # Don't generate a full manual, just the options
     transformOptions =
       opt:
