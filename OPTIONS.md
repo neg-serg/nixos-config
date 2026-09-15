@@ -29,10 +29,12 @@ removed — it was never read by any module.
 
 ## Package Exclusions
 
-- `features.excludePkgs = [ "pkgName" ... ]`
-  - Globally exclude packages (by `pname`) from curated module lists that adopt this filter (e.g.,
-    pentest/sniffing).
-  - Useful to avoid building/adding problematic packages without modifying module files.
+The `features.excludePkgs` filter was removed: nothing in the repo (or in the `neg-pkgs` flake input)
+ever read it into a curated list, and the `config.lib.neg.pkgsList` helper its comment referenced was
+never implemented. Dev tooling is gated where it is installed instead — `features.dev.cpp` /
+`features.dev.java` control their package lists (`modules/user/nix-maid/sys/dev.nix`,
+`modules/dev/java/`), `features.dev.rust` gates the host list in
+`hosts/odin/services/policy.nix`, and `flake/devshells/*` stay static by design.
 
 ## Notable Behaviors
 
