@@ -29,7 +29,9 @@ filter_ext() {
   fi
 }
 
-"$swimg_bin" -c "${XDG_CONFIG_HOME:-$HOME/.config}/swayimg/init.lua" -g -F -f <(
+# Pseudo-fullscreen comes from the Hyprland rule "pic-pseudo-fullscreen" (maximize),
+# so swayimg's own -F/--fullscreen request is intentionally not used here.
+"$swimg_bin" -c "${XDG_CONFIG_HOME:-$HOME/.config}/swayimg/init.lua" -g -f <(
   # Follow symlinks and sort by ctime (newest first)
   find -L "$@" -type f -printf '%C@ %p\n' \
   | sort -rn \
