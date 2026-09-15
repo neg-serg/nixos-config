@@ -11,10 +11,7 @@
 set -euo pipefail
 
 BASE="/zero/ai/music-ai"
-GCCLIB=/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib
-ZLIB=/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
-ZSTD=/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib
-export LD_LIBRARY_PATH="$GCCLIB:$ZLIB:$ZSTD:${LD_LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 
 SRC="${1:?usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise] [--no-stems]}"; shift
 OUT=""; TIDAL=0; DENOISE=1; STEMS=1
