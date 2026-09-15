@@ -18,9 +18,6 @@ with lib;
     cpp = {
       enable = mkBool "enable C/C++ tooling (gcc/clang, cmake, ninja, lldb)" true;
     };
-    haskell = {
-      enable = mkBool "enable Haskell tooling (ghc, cabal, stack, HLS)" true;
-    };
     java = {
       enable = mkBool "enable Java/JVM development tooling (JDK, Maven)" false;
       maven = mkBool "enable Apache Maven build tool" true;
