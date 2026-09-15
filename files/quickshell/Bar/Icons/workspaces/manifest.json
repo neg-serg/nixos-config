@@ -131,8 +131,7 @@
       "font": {
         "pattern": "Iosevka",
         "family": "Iosevka",
-        "style": "Regular",
-        "file": "/nix/store/zn39wcnh97vh1r0jzf5xhl3ad14vqwp4-iosevka-nerd-font-33.3.4/share/fonts/truetype/Iosevka-Regular.ttf"
+        "style": "Regular"
       }
     },
     {

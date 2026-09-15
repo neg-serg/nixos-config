@@ -274,8 +274,14 @@ def _font_names_from_file(font_path: Path) -> tuple[str, str]:
         font.close()
 
 
-def _portablize_font_path(file_path: str) -> str:
-    """Replace absolute home dir prefix with $XDG_DATA_HOME or ~ for portability."""
+def _portablize_font_path(file_path: str) -> str | None:
+    """Return a home-relative path, or None when the font lives outside $HOME.
+
+    Paths outside the user's tree (nix store builds) are dropped: nothing at
+    runtime reads them, they go stale on the next nixpkgs bump, and they used
+    to leak an absolute store path into a committed manifest. Fontconfig
+    resolves such fonts by pattern/family anyway.
+    """
     home = os.path.expanduser("~")
     xdg_data = os.environ.get(
         "XDG_DATA_HOME", os.path.join(home, ".local", "share")
@@ -284,7 +290,18 @@ def _portablize_font_path(file_path: str) -> str:
         return "$XDG_DATA_HOME/" + file_path[len(xdg_data) + 1 :]
     if file_path.startswith(home + "/"):
         return "~/" + file_path[len(home) + 1 :]
-    return file_path
+    return None
+
+
+def _font_block(
+    pattern: str, family: str, style: str, file_path: str
+) -> dict[str, str]:
+    """Font metadata for the manifest, with "file" only when it is portable."""
+    block = {"pattern": pattern, "family": family, "style": style}
+    portable = _portablize_font_path(file_path)
+    if portable:
+        block["file"] = portable
+    return block
 
 
 def ensure_font_info(pattern: str) -> tuple[str, str, str]:
@@ -347,12 +364,7 @@ def build_manifest(
     return {
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "viewBox": viewbox,
-        "font": {
-            "pattern": font_pattern,
-            "family": family,
-            "style": style,
-            "file": _portablize_font_path(font_file),
-        },
+        "font": _font_block(font_pattern, family, style, font_file),
         "icons": [
             {
                 "id": item.ws_id,
@@ -363,12 +375,12 @@ def build_manifest(
                 "svg": str(Path(SVG_SUBDIR) / item.icon_filename),
                 "path": item.path_data,
                 "defaultName": item.raw_default,
-                "font": {
-                    "pattern": item.font_pattern,
-                    "family": item.font_family,
-                    "style": item.font_style,
-                    "file": _portablize_font_path(item.font_file),
-                },
+                "font": _font_block(
+                    item.font_pattern,
+                    item.font_family,
+                    item.font_style,
+                    item.font_file,
+                ),
             }
             for item in items
         ],
@@ -376,7 +388,10 @@ def build_manifest(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    repo_root = Path(__file__).resolve().parents[5]
+    # <repo>/files/quickshell/Tools/workspace-icons/generate.py -> parents[4] is
+    # the repo root (parents[5] pointed one level above it, so the documented
+    # "python3 files/quickshell/Tools/workspace-icons/generate.py" failed).
+    repo_root = Path(__file__).resolve().parents[4]
     parser = argparse.ArgumentParser(
         description="Generate workspace icon assets"
     )
