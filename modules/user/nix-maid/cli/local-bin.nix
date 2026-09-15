@@ -24,6 +24,9 @@
           "@GCC_LIB_DIR@" = "${pkgs.gcc.cc.lib}/lib"; # libstdc++/libgomp for the torch wheels
           "@ZLIB_LIB_DIR@" = "${pkgs.zlib}/lib"; # libz
           "@ZSTD_LIB_DIR@" = "${pkgs.zstd.out}/lib"; # libzstd (torch >= 2.13 links it)
+          # marker falls back to this when llama-server is not in PATH; the
+          # literal it used to carry (llama-cpp-9190) is gone from the store.
+          "@LLAMA_SERVER_BIN@" = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
         };
         substLibDirs = lib.replaceStrings (builtins.attrNames libDirSubsts) (
           builtins.attrValues libDirSubsts
