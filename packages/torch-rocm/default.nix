@@ -48,6 +48,9 @@ let
     rocmPackages = rocm;
   };
 in
+# No `meta`: this is a Python *environment* (python3.withPackages), not a single
+# package — the members carry their own meta, and withPackages does not accept
+# one (audit 2026-09-15; the other packages under packages/ set meta normally).
 pkgs.python3.withPackages (ps: [
   torchRocm
   ps.numpy

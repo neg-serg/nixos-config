@@ -8,12 +8,20 @@
 #   renoise-reverb, renoise-record aliases and renoise-osc-config (pins
 #   Config.xml to UDP on port 9002 — run with Renoise closed).
 {
+  lib,
   python3,
   symlinkJoin,
   writeShellScriptBin,
 }:
 symlinkJoin {
   name = "renoise-osc";
+  meta = {
+    description = "Send OSC messages to Renoise's built-in OSC server from the shell";
+    homepage = "https://github.com/neg-serg/nixos-config";
+    license = lib.licenses.mit;
+    platforms = lib.platforms.linux;
+    maintainers = [ ]; # local-only package: no upstream maintainer to credit
+  };
   paths = [
     (writeShellScriptBin "renoise-osc" ''
       exec ${python3}/bin/python3 ${./renoise-osc.py} "$@"
