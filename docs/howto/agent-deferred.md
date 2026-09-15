@@ -151,10 +151,22 @@ subclass that writes a snapshot frame before the regular compaction and cuts the
 of breaking sessions is removed by the fact that the engine already knows how to replace a range
 with one node.
 
-**Goal**: compaction with context snapshots (omp snapcompact-\*). Plan: 1) ✅ API research
-(CompactionEngine subclass seam + compactCheckpointSource + summary fields); 2) prototype
-`dsh-snapcompact` (subclass, snapshot frame, trigger policy); 3) test on a live session. Priority:
-medium (after harness polish items).
+**Goal**: compaction with context snapshots (omp snapcompact-\*). Plan: 1) ✅ API research; 2) ✅
+prototype `dsh-snapcompact` (2026-09-15) — see below; 3) live-session evaluation, still open.
+Priority: medium (after harness polish items).
+
+**Prototype (2026-09-15)**: the installed dsh 0.1.5-rc.1 does not expose a `CompactionEngine`
+subclass seam to plugins, but it does emit the whole compaction lifecycle as session events
+(`compaction/start`, `compaction/summary`, `compaction/end`; the summary carries `shadowedRange`,
+`shadowedSeqs`, `shadowedTokenCount`, `provider`, `model` — verified against the `SessionEventMap`
+types shipped in the profile). So instead of subclassing the engine, `dsh-snapcompact` observes
+those events: it appends one JSON frame per compaction to `$DSH_HOME/snapcompact/<session>.jsonl`
+and injects one short `[snapcompact]` user message at the next `agent/pre-step` (the dsh-advisor
+idiom), naming the shadowed range and the frame file. It writes only to its own file and never
+appends session events, so it cannot corrupt a session log or a compaction. Offline functional test
+(`modules/user/nix-maid/apps/dsh-snapcompact/test.mjs`, run from the profile's node_modules) covers
+the frame contents, the one-shot note and the `enabled: false` path. Live-session evaluation and a
+`compaction/prune`-aware trigger policy are the remaining work.
 
 ## 10. stt / tts — ✅ COVERED by the existing stack (speech.nix), omp port NOT needed
 
