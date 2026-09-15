@@ -27,11 +27,11 @@ Hyprland or the QuickShell theme changes.
    Requires python3, `fonttools`, `xmllint`, and `rsvg-convert` (available via `nix shell`; without
    `rsvg-convert` pass `--skip-validate`).
 
-   **Known blocker:** the script still expects the pre-Lua layout —
-   `HYPR_REL_PATH = files/gui/hypr/workspaces.conf` and
-   `ICONS_REL_DIR = quickshell/.config/quickshell/...` — both gone after the Hyprland Lua migration,
-   so a run fails before doing anything. Port the two constants and `parse_hypr_workspaces` to the
-   `workspaces` table in `files/gui/hypr/hyprland.lua` first.
+   The parser reads the `workspaces` table in `files/gui/hypr/hyprland.lua` (ported 2026-09) and the
+   run is all-or-nothing: every workspace must resolve its glyph before any file is written, so a
+   failed run cannot leave the icon set half-regenerated. Still blocking a *full* regeneration: Font
+   Awesome 6 Pro is not installed here (12 of the 17 committed icons come from it) and
+   `icon-map.json` has no codepoints for `vital` (18) / `rack` (19).
 
 1. The script will:
 

@@ -30,8 +30,8 @@ DEFAULT_FONT_PATTERN = "Font Awesome 6 Pro"
 DEFAULT_FONT_FALLBACKS = ["FiraCode Nerd Font Mono", "Iosevka"]
 DEFAULT_VIEWBOX = 1024
 DEFAULT_PADDING = 48
-HYPR_REL_PATH = Path("files/gui/hypr/workspaces.conf")
-ICONS_REL_DIR = Path("quickshell/.config/quickshell/Bar/Icons/workspaces")
+HYPR_REL_PATH = Path("files/gui/hypr/hyprland.lua")
+ICONS_REL_DIR = Path("files/quickshell/Bar/Icons/workspaces")
 MAP_FILENAME = "icon-map.json"
 MANIFEST_FILENAME = "manifest.json"
 SVG_SUBDIR = "workspaces"
@@ -39,7 +39,10 @@ SVG_EXT = ".svg"
 XML_HEADER = '<?xml version="1.0" encoding="UTF-8"?>'
 SVG_NS = "http://www.w3.org/2000/svg"
 
-WORKSPACE_RE = re.compile(r"^\s*workspace\s*=\s*([^,]+),\s*defaultName:(.+)$")
+WORKSPACES_TABLE_RE = re.compile(r"^local\s+workspaces\s*=\s*\{", re.M)
+WORKSPACE_ENTRY_RE = re.compile(
+    r"\{\s*id\s*=\s*(\d+)\s*,\s*name\s*=\s*\"([^\"]+)\""
+)
 PRIVATE_RANGES = (
     (0xE000, 0xF8FF),  # BMP PUA
     (0xF0000, 0xFFFFD),  # Plane 15
@@ -93,7 +96,13 @@ class SvgExporter:
         self.padding = padding
         self.available = viewbox - 2 * padding
 
-    def export_svg(self, codepoint: int, dest: Path) -> str:
+    def render_svg(self, codepoint: int) -> tuple[str, str]:
+        """Return (path_data, svg_text) without touching the filesystem.
+
+        The caller writes every SVG only after all workspaces resolved: the old
+        export_svg() wrote as it went, so a failure halfway through (e.g. a font
+        that no longer carries the glyph) left the icon set partly regenerated.
+        """
         glyph_name = self.cmap.get(codepoint)
         if not glyph_name:
             raise RuntimeError(f"No glyph for codepoint U+{codepoint:04X}")
@@ -118,10 +127,7 @@ class SvgExporter:
         path_data = svg_pen.getCommands().strip()
         if not path_data:
             raise RuntimeError(f"Glyph {glyph_name} yielded empty path")
-        svg = self._wrap_svg(path_data)
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(svg, encoding="utf-8")
-        return path_data
+        return path_data, self._wrap_svg(path_data)
 
     def _wrap_svg(self, path: str) -> str:
         return (
@@ -155,19 +161,26 @@ class FontResolver:
 
 
 def parse_hypr_workspaces(text: str) -> list[tuple[int, str]]:
-    entries: list[tuple[int, str]] = []
-    for line in text.splitlines():
-        match = WORKSPACE_RE.match(line)
-        if not match:
-            continue
-        key, value = match.groups()
-        key = key.strip()
-        try:
-            ws_id = int(key)
-        except ValueError:
-            continue
-        entries.append((ws_id, value.strip()))
-    return entries
+    """(id, name) pairs from the `local workspaces = { ... }` table.
+
+    The Hyprland config moved from hyprlang (``workspace = N, defaultName:...``)
+    to Lua in 2026-09, so the table below `local workspaces = {` is the source of
+    truth. Names keep the Gothic/Coptic prefix but no longer embed the glyph: the
+    codepoints live in icon-map.json (see docs/howto/WorkspaceIcons.md).
+    """
+    start = WORKSPACES_TABLE_RE.search(text)
+    if not start:
+        raise RuntimeError(
+            "no `local workspaces = {` table in the Hypr config"
+        )
+    body = text[start.end() :]
+    end = body.find("\n}")
+    if end != -1:
+        body = body[:end]
+    return [
+        (int(match.group(1)), match.group(2).strip())
+        for match in WORKSPACE_ENTRY_RE.finditer(body)
+    ]
 
 
 def should_capture_icon(cp: int) -> bool:
@@ -472,6 +485,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     resolver = FontResolver(viewbox=viewbox, padding=padding)
     default_font_info = resolver.exporter_for_pattern(font_pattern)[1]
     final_items: list[WorkspaceDef] = []
+    pending_svgs: list[tuple[Path, str, str]] = []
 
     for spec in workspace_specs:
         map_entry = spec["map_entry"]
@@ -499,8 +513,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 pattern_choice
             )
             try:
-                exported_path_data = exporter_instance.export_svg(
-                    primary_code, svg_path
+                exported_path_data, svg_text = exporter_instance.render_svg(
+                    primary_code
                 )
             except RuntimeError as err:
                 last_error = err
@@ -519,8 +533,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         used_pattern, used_family, used_style, used_file = export_info
         if isinstance(map_entry, dict):
             map_entry["fontPattern"] = used_pattern
-        if not args.skip_validate:
-            validate_svg(svg_path)
+        pending_svgs.append((svg_path, svg_text, spec["slug"]))
 
         final_items.append(
             WorkspaceDef(
@@ -539,6 +552,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 path_data=exported_path_data,
             )
         )
+
+    # Everything resolved: now it is safe to touch the tree.
+    for svg_path, svg_text, slug in pending_svgs:
+        svg_path.parent.mkdir(parents=True, exist_ok=True)
+        svg_path.write_text(svg_text, encoding="utf-8")
+        if not args.skip_validate:
+            validate_svg(svg_path)
+        print(f"wrote {svg_path.name} ({slug})")
 
     save_json(map_path, map_data)
 
