@@ -561,6 +561,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             validate_svg(svg_path)
         print(f"wrote {svg_path.name} ({slug})")
 
+    # Prune icons of workspaces that no longer exist: renumbering and removed
+    # workspaces used to leave orphans behind (11-patchbay.svg here, three
+    # generations of them in the deployed directory). Only reached after every
+    # icon resolved, so a failed run still touches nothing.
+    keep = {svg_path.name for svg_path, _, _ in pending_svgs}
+    for stale in sorted(svg_dir.glob(f"*{SVG_EXT}")):
+        if stale.name not in keep:
+            stale.unlink()
+            print(f"pruned {stale.name} (workspace no longer defined)")
+
     save_json(map_path, map_data)
 
     manifest = build_manifest(
