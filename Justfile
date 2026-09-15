@@ -167,6 +167,29 @@ codebase:
     "$repo_root/packages/local-bin/bin/gen-codebase" "$repo_root"; \
     nix fmt # normalize markdown (mdformat) so the artifact is fmt-stable
 
+# Fail if the committed generated docs drift from what the generators produce.
+# They are checked-in artifacts (docs/codebase.md, docs/howto/modules.md), so a
+# structure/flag change that forgets to regenerate them is a silent lie; run
+# this before committing such a change (and after every audit, see
+# docs/runbook-audit.md).
+docs-guard:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    repo_root="$(git rev-parse --show-toplevel)"
+    cd "$repo_root"
+    just codebase
+    just docs-modules
+    just fmt
+    # -I: gen-codebase stamps the document with the generation time, so a
+    # timestamp-only change must not count as drift (real content changes still
+    # produce other lines in the hunk and fail the check).
+    if ! git diff --quiet -I 'Generated: [0-9]' -- docs/codebase.md docs/howto/modules.md; then
+      echo "Generated docs are stale — regenerate and commit them:" >&2
+      git diff --stat -I 'Generated: [0-9]' -- docs/codebase.md docs/howto/modules.md >&2
+      exit 1
+    fi
+    echo "generated docs are fresh"
+
 # Update the flake lock (all inputs)
 update:
     nix flake update
