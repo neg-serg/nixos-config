@@ -7,12 +7,7 @@
 }:
 let
   guiEnabled = config.lib.neg.enabled "gui";
-  qtEnabled = config.lib.neg.enabled "gui.qt";
-  quickshellEnabled =
-    guiEnabled
-    && qtEnabled
-    && (config.lib.neg.enabled "gui.quickshell")
-    && (!(config.lib.neg.enabled "devSpeed"));
+  quickshellEnabled = config.lib.neg.quickshellEnabled;
   hostSystem = pkgs.stdenv.hostPlatform.system;
   rsmetrxPkg =
     if inputs ? rsmetrx then
