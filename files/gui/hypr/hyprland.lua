@@ -73,7 +73,9 @@ local cls = {
   doc         = "^(sioyek)$",
   vid         = "^(mpv)$",
   obs         = "^(obs)$",
-  pic         = "^swayimg$",
+  -- swayimg (fork) appends "_<pid>" to app_id when overlay mode is enabled
+  -- (files/gui/swayimg/init.lua: swayimg.enable_overlay(true)), so allow the suffix.
+  pic         = "^swayimg(_[0-9]+)?$",
   vm          = "^(.virt-manager-wrapped|qemu-system-x86_64|Qemu-system-x86_64)$",
   wine        = "^(com.usebottles.bottles)$",
   daw         = "^(Renoise)$",
@@ -205,7 +207,7 @@ hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .
 hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch "kitty --class term"'))
 hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch "kitty --class nwim -e /home/neg/.local/bin/v"'))
 hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch "~/.local/bin/pl video"'))
-hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg$" --launch "swayimg ~/dw"'))
+hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg(_[0-9]+)?$" --launch "swayimg ~/dw"'))
 hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
 
 -- --- System ────────────────────────────────────────────────────────────
@@ -501,9 +503,12 @@ hl.window_rule({ name = "pinentry", match = { class = "(pinentry-)(.*)" }, stay_
 hl.window_rule({ name = "file-manager", match = { class = m.file_manager }, opacity = 0.92, tag = "file-manager" })
 hl.window_rule({ name = "xwayland-video-bridge", match = { class = m.xwaylandvideobridge }, opacity = 0.0, no_anim = true, no_initial_focus = true, max_size = "1 1", no_blur = true, tag = "xwaylandvideobridge" })
 
--- swayimg (workspaces.nix)
-hl.window_rule({ name = "swayimg", match = { class = "^(swayimg)$" }, float = true, size = "1200 800", move = "100 100", tag = "swayimg" })
-hl.window_rule({ name = "pic-fullscreen", match = { class = cls.pic }, fullscreen = true })
+-- swayimg (workspaces.nix). Pseudo-fullscreen: maximize (internal state 1) fills
+-- the monitor work area and keeps the bar on top, unlike the client's real
+-- fullscreen request (swayimg's -F / toggle_fullscreen are disabled). Un-maximizing
+-- falls back to the floating geometry from the rule above.
+hl.window_rule({ name = "swayimg", match = { class = cls.pic }, float = true, size = "1200 800", move = "100 100", tag = "swayimg" })
+hl.window_rule({ name = "pic-pseudo-fullscreen", match = { class = cls.pic }, maximize = true })
 
 -- No borders / rounding on TV / fullscreen workspaces
 hl.window_rule({ name = "no-border-tv", match = { workspace = "w[tv1]" }, border_size = 0, rounding = 0 })
