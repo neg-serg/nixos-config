@@ -4,9 +4,14 @@
 # files/patches/) and referenced by a *relative path literal*
 # (`./../../files/sources/...`). Being a path, Nix copies it into the store and
 # tracks it as a closure dependency — the same behavior as a remote fetch.
+# Exception: files >100 MB (the licensed Renoise installers) cannot be
+# committed (GitHub rejects them), and relocating them inside the tree does not
+# work either (the flake source is tracked-files-only; absolute paths are
+# forbidden in pure evaluation). They live outside the repo and arrive as the
+# `renoise-src` path input (flake.nix); see the renoise block below.
 # Other overlays refer to this as "the vendored-tarball note in
 # overlays/vendored-sources.nix".
-_inputs: final: finalPrev: {
+inputs: final: finalPrev: {
   # a2jmidid: nixpkgs fetches from gitea.ladish.org (unresolvable from the
   # build sandbox); vendor the GitHub mirror tarball (same tag 12) + the
   # siginfo submodule (needed by sigsegv.c/a2jmidid.c).
@@ -27,13 +32,13 @@ _inputs: final: finalPrev: {
   });
 
   # renoise: full licensed release tarball (user's own Renoise 3.5.4 build,
-  # backstage.renoise.com download — not the public demo). Vendored in
-  # files/sources (same relative-path pattern); files.renoise.com throttles
-  # from this region anyway.
+  # backstage.renoise.com download — not the public demo). Too large to commit,
+  # so it comes from the `renoise-src` path input (see the header comment);
+  # files.renoise.com throttles from this region anyway.
   # The bin wrapper runs under pw-jack so the JACK audio driver joins the
   # shared 48k PipeWire graph (plain ALSA default grabs 44.1k and distorts).
   renoise = finalPrev.renoise.overrideAttrs (old: {
-    src = ./../../files/sources/rns_354_linux_x86_64.tar.gz;
+    src = inputs.renoise-src + "/rns_354_linux_x86_64.tar.gz";
     # The nixpkgs installPhase has no runHook postInstall, so wrap the binary
     # in postFixup (fixupPhase always runs it): under pw-jack the JACK audio
     # driver joins the shared 48k PipeWire graph (plain ALSA default grabs
