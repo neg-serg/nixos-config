@@ -10,13 +10,16 @@
   alsa-lib,
   libx11,
   libxext,
+  # Vendored licensed installers (>100 MB, so they live outside the repo and
+  # arrive as the `renoise-src` path input; see flake.nix).
+  renoiseSrc,
 }:
 
 stdenv.mkDerivation rec {
   pname = "renoise-redux";
   version = "1.4.4";
 
-  src = ./../../files/sources/rns_rdx_144_linux_x86_64.tar.gz;
+  src = renoiseSrc + "/rns_rdx_144_linux_x86_64.tar.gz";
 
   buildInputs = [
     alsa-lib
