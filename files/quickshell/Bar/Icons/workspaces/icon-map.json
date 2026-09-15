@@ -1,14 +1,13 @@
 {
-  "fontPattern": "Font Awesome 6 Pro",
+  "fontPattern": "FiraCode Nerd Font Mono",
   "viewBox": 1024,
   "padding": 48,
   "icons": {
     "term": {
       "codepoints": [
-        "U+E236",
-        "U+FE01"
+        "U+EA85"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "web": {
       "codepoints": [
@@ -18,9 +17,9 @@
     },
     "dev": {
       "codepoints": [
-        "U+E267"
+        "U+F4B0"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "games": {
       "codepoints": [
@@ -32,13 +31,13 @@
       "codepoints": [
         "U+F15C"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "vid": {
       "codepoints": [
         "U+F008"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "obs": {
       "codepoints": [
@@ -50,13 +49,13 @@
       "codepoints": [
         "U+F03E"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "vm": {
       "codepoints": [
-        "U+F1CD"
+        "U+EA7A"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "wine": {
       "codepoints": [
@@ -64,47 +63,41 @@
       ],
       "fontPattern": "FiraCode Nerd Font Mono"
     },
-    "patchbay": {
-      "codepoints": [
-        "U+F001"
-      ],
-      "fontPattern": "Font Awesome 6 Pro"
-    },
     "daw": {
       "codepoints": [
         "U+F001"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "dw": {
       "codepoints": [
         "U+F0ED"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "keyboard": {
       "codepoints": [
         "U+F11C"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "im": {
       "codepoints": [
-        "U+F4B6"
+        "U+F086"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "remote": {
       "codepoints": [
-        "U+E1C6"
+        "U+F019"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "notes": {
       "codepoints": [
-        "U+E202"
+        "U+F24D"
       ],
-      "fontPattern": "Font Awesome 6 Pro"
+      "fontPattern": "FiraCode Nerd Font Mono"
     },
     "vital": {
       "codepoints": [
