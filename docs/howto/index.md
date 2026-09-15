@@ -1,4 +1,4 @@
-# Howtos and)
+# Howtos and Reference
 
 - hxtools cheat sheet: [hxtools.md](./hxtools.md)
 
@@ -6,7 +6,8 @@
 
 - Swayimg hotkey: [swayimg-hotkeys.md](./swayimg-hotkeys.md)
 
-- Hotkeys vs)
+- Hotkeys vs Russian keyboard layout — inventory & fix plan:
+  [hotkeys-ru-layout.md](./hotkeys-ru-layout.md)
 
 - Kanata — CapsLock layout: status and history (simple scheme active, caps-nav reverted to a
   separate experiment): [kanata.md](./kanata.md)
@@ -16,11 +17,9 @@
 - SuperCollider live coding (raw SC, scnvim) — moved to the private notes repo
   (~/notes/music/supercollider/), kept out of the public tree on purpose
 
--)
+- Renoise + TidalCycles daily live-coding workflow: [renoise-tidal-live.md](./renoise-tidal-live.md)
 
-- Windows VST through yabridge (regular VST3 in): [wine-vst-bridge.md](./wine-vst-bridge.md)
-
--)
+- Windows VST through yabridge (regular VST3 in Renoise): [wine-vst-bridge.md](./wine-vst-bridge.md)
 
 - Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits:
   [golden-tools.md](./golden-tools.md)
@@ -78,7 +77,7 @@
 - Memory: two-stage extract → consolidate → SKILL.md pipeline (ported from omp):
   [agent-memory-pipeline.md](./agent-memory-pipeline.md)
 
-- Subagent contract:): [subagent-contract.md](./subagent-contract.md)
+- Subagent contract: [subagent-contract.md](./subagent-contract.md)
 
 - Harness feature: backlog (hashline, hook ideas from oh-my-opencode):
   [agent-harness-features.md](./agent-harness-features.md)
@@ -104,7 +103,7 @@
 - SKILL.md skill authoring contract (ported from hermes-agent):
   [agent-skill-authoring.md](./agent-skill-authoring.md)
 
-- Pa wordle sudo via TPM (non-exportable SSH key + pam\_ h_agent_auth, no manual actions):
+- Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions):
   [tpm-sudo.md](./tpm-sudo.md)
 
 - Long-running goal (ongoing Goal): how to deploy, run and manage:
@@ -115,7 +114,7 @@
 - Quickshell: media toast — how to do it right (position/height/style):
   [quickshell-music-toast.md](./quickshell-music-toast.md)
 
-- Dockur Windows VM on odin: GLM USB pa through, host alias, VM proxy chain:
+- Dockur Windows VM on odin: GLM USB passthrough, host alias, VM proxy chain:
   [windows-vm-dockur.md](./windows-vm-dockur.md)
 
 - Lusty pickers: commands, keys, options and behaviour (native float backend):
