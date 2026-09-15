@@ -27,10 +27,9 @@ from pythonosc.udp_client import SimpleUDPClient
 
 STATE_FILE = Path(os.environ.get("GLM_OSC_STATE", "/tmp/glm-osc-state.json"))
 GENLC = os.environ.get("GENLC_CLI", "/tmp/glm-osc-venv/bin/genlc")
-HIDAPI_LIB = os.environ.get(
-    "HIDAPI_LIB",
-    "/nix/store/alh3yprinmpxww2hsi6vdkba20x9d7ir-hidapi-0.15.0/lib",
-)
+# Set by the wrapper (--set-default HIDAPI_LIB). When it is empty the inherited
+# LD_LIBRARY_PATH is kept instead of clobbering it with a stale store path.
+HIDAPI_LIB = os.environ.get("HIDAPI_LIB", "")
 
 DEFAULT = {"volume_db": -20.0, "muted": False, "power": True}
 
@@ -51,7 +50,8 @@ def save_state(st):
 
 def run_genlc(*args, timeout=40):
     env = dict(os.environ)
-    env["LD_LIBRARY_PATH"] = HIDAPI_LIB
+    if HIDAPI_LIB:
+        env["LD_LIBRARY_PATH"] = HIDAPI_LIB
     r = subprocess.run(
         [GENLC, *args],
         capture_output=True,

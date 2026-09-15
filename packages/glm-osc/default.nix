@@ -61,6 +61,7 @@ stdenv.mkDerivation {
     mkdir -p $out/bin
     makeWrapper ${py}/bin/python $out/bin/glm-osc-server \
       --set LD_LIBRARY_PATH "${hidapi}/lib" \
+      --set-default HIDAPI_LIB "${hidapi}/lib" \
       --set-default GENLC_CLI "${py}/bin/genlc" \
       --set-default GLM_OSC_STATE "$HOME/.local/state/glm-osc-state.json" \
       --add-flags "${./server.py}"
