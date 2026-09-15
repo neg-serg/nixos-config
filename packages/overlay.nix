@@ -56,7 +56,9 @@ in
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
       vowel = final.callPackage ./vowel { }; # Vowel SC quark (formant tables) used by SuperDirt
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
-      renoise-redux = final.callPackage ./renoise-redux { }; # Renoise Redux VST3 plugin (licensed build)
+      renoise-redux = final.callPackage ./renoise-redux {
+        renoiseSrc = inputs.renoise-src;
+      }; # Renoise Redux VST3 plugin (licensed build)
       protoplug = final.callPackage ./protoplug { }; # Lua live-coding VST2 plugins (Fx + Gen, MIT)
       midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
       # musescore from the un-overlaid nixpkgs input: global overlays (cmake/stdenv)

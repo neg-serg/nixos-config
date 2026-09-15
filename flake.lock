@@ -1425,6 +1425,18 @@
         "type": "github"
       }
     },
+    "renoise-src": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-gzwQVepFoz5g9QNwCYkQWVPLuT6R7mXvh5bL6xD+euM=",
+        "path": "/home/neg/nixos-src/renoise",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/neg/nixos-src/renoise",
+        "type": "path"
+      }
+    },
     "root": {
       "inputs": {
         "agent-skills": "agent-skills",
@@ -1445,6 +1457,7 @@
         "nixpkgs": "nixpkgs_5",
         "quickshell": "quickshell",
         "raise": "raise",
+        "renoise-src": "renoise-src",
         "rsmetrx": "rsmetrx",
         "sops-nix": "sops-nix",
         "steam-config-nix": "steam-config-nix",
