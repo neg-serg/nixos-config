@@ -264,8 +264,9 @@ How to update Hyprland (and hy3):
   - `profiles.gaming` — gaming optimizations + GUI apps
   - `profiles.dev` — development toolchains
 
-- Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to
-  `servicesProfiles.<name>.enable`).
+- Service profiles: toggle per‑service via `servicesProfiles.<name>.enable` (declared in
+  `modules/profiles/services.nix`). The former `profiles.services.*` alias module was removed as
+  dead code (audit 2026-09-15) — nothing ever set those aliases.
 
   - Hosts set desired values directly (no mkForce needed).
 
