@@ -1,14 +1,10 @@
 {
   lib,
   pkgs,
-  config,
   ...
 }:
 let
-  pnameOf = pkg: (pkg.pname or (builtins.parseDrvName (pkg.name or "")).name);
-  excludePkgs = config.features.excludePkgs or [ ];
-  filterExcluded = pkgList: lib.filter (pkg: !(builtins.elem (pnameOf pkg) excludePkgs)) pkgList;
-  packages = filterExcluded [
+  packages = [
     pkgs.handlr # xdg-open replacement with per-handler rules
     pkgs.xdg-utils # classic xdg helpers (xdg-open/xdg-mime/etc.)
     pkgs.xdg-ninja # detect mislocated files in $HOME

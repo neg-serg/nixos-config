@@ -138,6 +138,28 @@ WinApps to generate .desktop files for (e.g. [ “excel” “word” “vscode�
 
 - [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.cli.enable
+
+Whether to enable enable CLI tooling (fastfetch blizzard wrappers and helpers).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
+
 ## features.cli.broot.enable
 
 Whether to enable enable broot file manager and shell integration.
@@ -615,22 +637,6 @@ true
 *Declared by:*
 
 - [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
-
-## features.excludePkgs
-
-List of package names (pname) to exclude from curated home.packages lists.
-
-*Type:* list of string
-
-*Default:*
-
-```nix
-[ ]
-```
-
-*Declared by:*
-
-- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
 ## features.flatpak.builder.enable
 
