@@ -336,28 +336,6 @@ true
 
 - [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features.dev.haskell.enable
-
-Whether to enable enable Haskell tooling (ghc, cabal, stack, HLS).
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
 ## features.dev.java.enable
 
 Whether to enable enable Java/JVM development tooling (JDK, Maven).
@@ -2256,7 +2234,7 @@ true
 
 Default browser used for XDG handlers, $BROWSER, and integrations.
 
-*Type:* string
+*Type:* null or string
 
 *Default:*
 
