@@ -9,13 +9,7 @@
 #   marker_single file.pdf --output_dir out/   # single file
 set -eu
 
-for lib in \
-  /nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib \
-  /nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
-do
-  [ -d "$lib" ] && LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
-done
-export LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 
 # marker v2's surya VLM backend needs a llama-server binary (surya spawns it for
 # table/OCR VLM steps). Use the system llama-cpp-vulkan build (also used by the
