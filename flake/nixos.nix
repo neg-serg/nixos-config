@@ -77,18 +77,9 @@ let
 
   # Odin: full desktop minus domains with zero odin references.
   # Excluded: appimage (no odin usage), apps (obsidian via flatpak).
-  odinDomains = basicDomains ++ [
-    "dev"
-    "emulators"
-    "flatpak"
-    "fun"
-    "games"
-    "llm"
-    "media"
-    "servers"
-    "torrent"
-    "user"
-  ];
+  # Derived from allDomains so a domain added above is never silently missing
+  # here (the previous hand-written copy repeated the same tail).
+  odinDomains = builtins.filter (d: d != "appimage" && d != "apps") allDomains;
 
   mkDomainFilter = domains: name: builtins.elem name domains;
 
