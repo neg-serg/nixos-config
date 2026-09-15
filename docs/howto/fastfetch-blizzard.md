@@ -18,13 +18,31 @@ Quick `fetch` command (randomizer):
 fetch                            # random variant (dithering x palette x blizzard)
 fetch ember                      # ember palette only (or ash / ice)
 fetch "#ff0000"                  # custom color — generates its own gradient
-fetch --big                      # larger (logo box up to its maximum)
+fetch --big                      # larger (92% of the terminal rows instead of 80%)
 fetch --shader rgb               # chromatic shift (red/cyan)
 fetch --shader invert            # negative
 fetch --big --shader invert:rgb  # combined
 fetch --cover                    # current track cover as the logo
 fetch -w 2                       # live mode (refresh every 2 s)
 ```
+
+### Logo size
+
+The kitty-icat box is derived from the terminal on every run instead of being a fixed 29x45:
+
+- fastfetch scales the image to the requested **height**, and the width follows the image aspect
+  (640x806) and the cell ratio — measured on this setup the drawing is ~1.57 cells wide per row, so
+  a box that is only as tall as it is wide gets limited by the width and renders at about half the
+  height. The wrapper therefore requests a width matched to the height.
+- The height is capped by the space left after reserving ~84 cells for the stats column (the widest
+  line plus fastfetch's own 12 cells of logo padding). In a narrow tiled window that is deliberate:
+  the logo stays at roughly the old size (~28x17 in a 112x47 window) so the stats stay readable.
+- A maximised window (~224 columns) gets the full-height logo (~61x38 cells, vs 29x17 before), and
+  --big uses 92% of the rows instead of 80%.
+- Known cosmetic issue, pre-existing: the longest info line ("… [31.55 inches, 139.66 ppi] \[HDR
+  Compatible\]") is ~76 cells wide, so in a ~112-column window its tail wraps onto the next line
+  even with the old 29-cell logo. Trimming that line is the fix if the wrap should go away;
+  shrinking the logo further is not.
 
 zsh defines a `fastfetch` function that delegates to `fetch` (defined in `01-init.zsh`), so
 `fastfetch ...` works the same way.
