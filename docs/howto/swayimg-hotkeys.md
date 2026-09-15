@@ -84,7 +84,6 @@ log file either way so you can read them later via `tail -f ~/tmp/swayimg-action
 | `i` / `ш` (RU)           | `text.show()`         | Show image info overlay.                 |
 | `Return` / `Escape`      | `set_mode("gallery")` | Switch to gallery.                       |
 | `Space`                  | toggle                | Pause/resume (toggles viewer↔slideshow). |
-| `f` / `а` (RU)           | `toggle_fullscreen()` | Toggle fullscreen.                       |
 | `q` / `й` (RU)           | `exit(0)`             | Quit.                                    |
 
 ### File Operations
@@ -118,6 +117,11 @@ log file either way so you can read them later via `tail -f ~/tmp/swayimg-action
 - All file moves/copies are blocked on VCS directories by `_is_vcs_path` to keep repo trees intact.
 - Wallpaper helpers rely on `swww`. The script starts the daemon on demand and serializes calls via
   a lock directory so multiple instances do not collide.
+- **Pseudo-fullscreen**: the window is maximized by the Hyprland rule `pic-pseudo-fullscreen`
+  (`files/gui/hypr/hyprland.lua`), so it fills the monitor work area with the bar still on top.
+  swayimg's own fullscreen (`toggle_fullscreen()`, the former `f`/`а` bind, and `-F` in `sx`) is
+  intentionally disabled. Window rules must allow the fork's `_<pid>` app_id suffix
+  (`^swayimg(_[0-9]+)?$`), added because `init.lua` enables overlay mode.
 - Range actions require launching swayimg via `sx` (or the `swayimg-first.sh` wrapper) so that the
   helper can read the per-session playlist and cache the range anchor under
   `$XDG_DATA_HOME/swayimg/<session>.{list,range}`.
