@@ -1,6 +1,6 @@
 # swayimg Custom Hotkeys
 
-Custom bindings for swayimg live in `modules/media/images/swayimg/conf/bindings.conf` and call
+Custom bindings for swayimg live in `files/gui/swayimg/init.lua` and call
 `~/.local/bin/swayimg-actions.sh`. The tables below list every non-default shortcut that runs this
 helper script. Unless noted otherwise, the bindings act on the file that is currently highlighted in
 the given mode.
@@ -123,6 +123,9 @@ log file either way so you can read them later via `tail -f ~/tmp/swayimg-action
   intentionally disabled; use the global Hyprland toggle `Super+Shift+F` instead (dispatcher
   `fullscreen mode=maximized action=toggle`). Window rules must allow the fork's `_<pid>` app_id
   suffix (`^swayimg(_[0-9]+)?$`), added because `init.lua` enables overlay mode.
-- Range actions require launching swayimg via `sx` (or the `swayimg-first.sh` wrapper) so that the
-  helper can read the per-session playlist and cache the range anchor under
-  `$XDG_DATA_HOME/swayimg/<session>.{list,range}`.
+- Range actions need `sx` as the launcher: the helper locates the running instance through
+  `$SWAYIMG_IPC` (exported by swayimg's own IPC server) or the newest `swayimg-*.sock`, keeps the
+  anchor in `$XDG_DATA_HOME/swayimg/range_mark`, and recomputes the file list with the same ctime
+  ordering as `sx`. The former `swayimg-first` wrapper was removed: the fork starts its own IPC
+  server and only accepts `next_file`/`prev_file`, so its `--ipc`/`first_file` plumbing was dead
+  code.
