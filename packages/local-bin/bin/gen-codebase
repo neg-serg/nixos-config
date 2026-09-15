@@ -272,8 +272,13 @@ def build_hosts(root: Path) -> str:
                 r"features\.profiles\s*=\s*\[([^\]]*)\]", text
             ):
                 profiles.update(re.findall(r'"([^"]+)"', m.group(1)))
+            # `[ \t]*` (never `\s*`) keeps the match on one line: `\s*` used to
+            # cross the newline, so a flag's trailing comment was captured from
+            # the NEXT line. `^[ \t]*` also skips commented-out flags, which
+            # were previously reported as enabled.
             for m in re.finditer(
-                r"features\.([A-Za-z0-9_.]+)\s*=\s*(true|false)\s*;?\s*(#.*)?$",
+                r"^[ \t]*features\.([A-Za-z0-9_.]+)[ \t]*=[ \t]*"
+                r"(true|false)[ \t]*;?[ \t]*(#.*)?$",
                 text,
                 re.M,
             ):
