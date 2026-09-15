@@ -6,7 +6,7 @@
 set -e
 [ -n "$1" ] && [ -f "$1" ] || { echo "usage: audio-beats FILE" >&2; exit 2; }
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
-PY=/zero/ai/music-ai/venv-beat/bin/python
+PY=@MUSIC_AI_BASE@/venv-beat/bin/python
 "$PY" - "$1" <<'PYEOF'
 import sys, collections, collections.abc
 collections.MutableSequence = collections.abc.MutableSequence

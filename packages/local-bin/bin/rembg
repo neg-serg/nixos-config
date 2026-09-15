@@ -1,7 +1,7 @@
 #!/bin/sh
 # rembg: AI background removal with models kept on the ZFS pool (/zero/ai),
 # per the "all AI assets in /zero/ai/*" convention. Uses the pip venv at
-# /zero/ai/music-ai/venv-rembg (nixpkgs rembg fails to build: onnxruntime/libhwy
+# @MUSIC_AI_BASE@/venv-rembg (nixpkgs rembg fails to build: onnxruntime/libhwy
 # OOM-killed; see modules/media/ai-upscale-packages.nix).
 #
 # Models are downloaded on first use to $U2NET_HOME (/zero/ai/imgproc):
@@ -30,4 +30,4 @@ case " $* " in
   *) set -- "$@" -m u2net ;;
 esac
 
-exec "/zero/ai/music-ai/venv-rembg/bin/rembg" "$@"
+exec "@MUSIC_AI_BASE@/venv-rembg/bin/rembg" "$@"

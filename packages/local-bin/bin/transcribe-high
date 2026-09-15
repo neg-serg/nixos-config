@@ -10,7 +10,7 @@
 # Usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise] [--no-stems]
 set -euo pipefail
 
-BASE="/zero/ai/music-ai"
+BASE="@MUSIC_AI_BASE@"
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 
 SRC="${1:?usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise] [--no-stems]}"; shift

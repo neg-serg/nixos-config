@@ -65,6 +65,8 @@ file. Tokens:
 | `@ZLIB_LIB_DIR@`          | `${pkgs.zlib}/lib` — libz                                                       |
 | `@ZSTD_LIB_DIR@`          | `${pkgs.zstd.out}/lib` — libzstd (torch ≥ 2.13 links it)                        |
 | `@LIBPP@`, `@LIBCOLORED@` | python site-packages of `neg.pretty_printer` / `colored` (`ren`, `vid-info.py`) |
+| `@LLAMA_SERVER_BIN@`      | `${pkgs.llama-cpp-vulkan}/bin/llama-server` (marker's fallback)                 |
+| `@MUSIC_AI_BASE@`         | `/zero/ai/music-ai` — the music-AI venv tree outside the repo                   |
 | `@NIX_KSB_PATH@`          | `kitty-scrollback-nvim` python module path                                      |
 
 Never paste a literal `/nix/store/...` path: it goes stale on the next nixpkgs bump and nothing

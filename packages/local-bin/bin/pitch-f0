@@ -6,7 +6,7 @@
 set -e
 [ -n "$1" ] && [ -f "$1" ] || { echo "usage: pitch-f0 FILE [--notes]" >&2; exit 2; }
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
-PY=/zero/ai/music-ai/venv-beat/bin/python
+PY=@MUSIC_AI_BASE@/venv-beat/bin/python
 "$PY" - "$@" <<'PYEOF'
 import sys, numpy as np, soundfile as sf, torch, torchcrepe
 
