@@ -185,6 +185,10 @@ hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
+-- Pseudo-fullscreen (maximize) toggle: fills the work area but stays a normal
+-- window (bar stays on top) — the same state swayimg gets from the
+-- "pic-pseudo-fullscreen" rule, and the only fullscreen-ish toggle for it.
+hl.bind(M4 .. "+" .. SH .. "+f", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 hl.bind(M4 .. "+Return", hl.dsp.exec_cmd("kitty"), { locked = true })
 -- pass-2col: pick a password/OTP entry from the pass store via vicinae dmenu
 hl.bind(M4 .. "+p", hl.dsp.exec_cmd("pass-2col"), { locked = true })
