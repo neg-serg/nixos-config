@@ -222,12 +222,24 @@ in
   # nixosConfigurations output so flake-schemas sees a pure machine set).
   # These ensure the A/B test configurations evaluate without errors.
 
+  # test-odin-gaming also pins the domain filter: the test host must import the
+  # same domains as the real host (mkHost → odinDomains, which excludes
+  # appimage/apps), otherwise it validates a configuration odin never runs.
+  # modules/appimage/default.nix is the probe — it registers the appimage binfmt
+  # format, so the registration is present exactly when that domain is imported.
   "test-odin-gaming" =
     let
       cfg = mkTestHost "odin" "gaming";
+      appimageImported = cfg.config.boot.binfmt.registrations ? appimage;
     in
     pkgs.runCommand "check-test-odin-gaming" { } ''
-      echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
+      ${lib.optionalString appimageImported ''
+        echo "FAIL: the test host imported the appimage domain (domainFilter diverged from mkHost)" >&2
+        exit 1
+      ''}
+      echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options, appimage domain: ${
+        if appimageImported then "imported" else "excluded"
+      })"
       touch $out
     '';
 }
