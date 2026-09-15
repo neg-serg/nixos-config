@@ -19,8 +19,9 @@ agent-workspace cleanup). The process below is what produced it; it is designed 
 
 - Record the current commit and system generation: `git rev-parse HEAD`,
   `readlink /nix/var/nix/profiles/system`.
-- Create a report file: `audit-YYYY-MM-DD.md` (private agent workspace, gitignored) or
-  `docs/audit/YYYY-MM-DD.md` if you want it versioned. Copy the previous report's structure.
+- Create a report file: `.agent/audit/YYYY-MM-DD.md` (tracked; `.agent/` already holds the agent
+  research reports). `~/tmp/` is not durable — the 2026-09-15 report written there was deleted by an
+  unrelated cleanup the same day. Copy the previous report's structure.
 
 ### 2. Fan out 4 parallel zone audits (subagents)
 
