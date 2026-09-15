@@ -10,7 +10,7 @@ echo "Ensuring legacy profile links for user neg..."
 
   # Legacy zshenv-extra logic: ensure ~/tmp is a symlink to a temp dir if invalid
   # (Though usually ~/tmp should be ephemeral or just a dir)
-  # We replicate the logic from home/modules/user/envs/zshenv-extra.sh
+  # We replicate the logic from files/shell/zshenv-extras.zsh
   if [ ! -e "$HOME/tmp" ] || [ ! -L "$HOME/tmp" ]; then
      rm -rf "$HOME/tmp"
      # Create a secure temp dir and link it?
