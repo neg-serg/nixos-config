@@ -13,33 +13,25 @@
 {
   nixpkgs,
   self,
-  inputs,
   mkTestHost,
+  mkSpecialArgs,
   ...
 }:
 pkgs:
 let
   inherit (nixpkgs) lib;
 
-  # Real specialArgs that the module tree needs for evalModules.
-  # The dom-* checks evaluate the FULL module tree via modules/default.nix,
-  # so they need the real inputs (modules reference inputs.steam-config-nix,
-  # inputs.hyprscratch, ...) — only the structural extras are stubbed.
-  mkStubArgs = domainFilter: {
-    inherit domainFilter;
-    inputs = inputs // {
-      inherit self;
+  # Module arguments for the evalModules-based checks, built by the same
+  # function the real hosts use (flake/nixos.nix mkSpecialArgs). The previous
+  # hand-kept copy had drifted: no `opts`, `iosevkaNeg = { }` and a raw `self`
+  # as `filteredSource`. `pkgs` is added here because lib.evalModules, unlike
+  # lib.nixosSystem, does not inject it.
+  mkStubArgs =
+    domainFilter:
+    mkSpecialArgs
+    // {
+      inherit domainFilter pkgs;
     };
-    locale = "C";
-    timeZone = "UTC";
-    filteredSource = self;
-    iosevkaNeg = { };
-    # Repo root as a real path literal — same as flake/nixos.nix specialArgs.
-    repoRoot = ../.;
-    # Real helpers (lib/neg-helpers.nix) — their home/user config outputs are
-    # inert here because evalModules runs with _module.check = false.
-    neg = import ../lib/neg-helpers.nix;
-  };
 
   mkModuleCheck =
     name: extraModules: domainFilter:
@@ -222,15 +214,26 @@ in
   # nixosConfigurations output so flake-schemas sees a pure machine set).
   # These ensure the A/B test configurations evaluate without errors.
 
-  # test-odin-gaming also pins the domain filter: the test host must import the
-  # same domains as the real host (mkHost → odinDomains, which excludes
-  # appimage/apps), otherwise it validates a configuration odin never runs.
+  # test-odin-gaming evaluates a profile-specific NixOS configuration for odin
+  # (via mkTestHost, threaded from flake.nix) and forces its whole build graph:
+  # counting option names never evaluated the configuration, so a module body
+  # that throws passed this check.
+  #
+  # It also pins the domain filter: the test host must import the same domains
+  # as the real host (mkHost → odinDomains, which excludes appimage/apps),
+  # otherwise it validates a configuration odin never runs.
   # modules/appimage/default.nix is the probe — it registers the appimage binfmt
   # format, so the registration is present exactly when that domain is imported.
   "test-odin-gaming" =
     let
       cfg = mkTestHost "odin" "gaming";
       appimageImported = cfg.config.boot.binfmt.registrations ? appimage;
+      # Force the full system evaluation: `builtins.seq` on the derivation
+      # itself, never on a `.drvPath`/`outPath` string — those carry store
+      # context and would pull the whole system closure in as build inputs of
+      # this check (it would try to build the world). A module body that throws
+      # now fails the check.
+      forced = builtins.seq cfg.config.system.build.toplevel 0;
     in
     pkgs.runCommand "check-test-odin-gaming" { } ''
       ${lib.optionalString appimageImported ''
@@ -240,6 +243,7 @@ in
       echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options, appimage domain: ${
         if appimageImported then "imported" else "excluded"
       })"
+      echo "check: test-odin-gaming config fully evaluated (${toString forced} errors)"
       touch $out
     '';
 }

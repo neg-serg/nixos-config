@@ -1,9 +1,9 @@
 {
   self,
-  inputs,
   nixpkgs,
   flakeLib,
   mkTestHost,
+  mkSpecialArgs,
   pkgs,
   ...
 }:
@@ -54,8 +54,8 @@ in
     inherit
       nixpkgs
       self
-      inputs
       mkTestHost
+      mkSpecialArgs
       ;
   } pkgs;
 }

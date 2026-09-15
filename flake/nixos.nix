@@ -161,5 +161,7 @@ in
   configurations = {
     odin = mkHost "odin";
   };
-  inherit mkTestHost;
+  # `mkSpecialArgs` is exported so flake/checks.nix builds its evalModules stub
+  # from the same arguments the real hosts use (it used to keep a drifting copy).
+  inherit mkSpecialArgs mkTestHost;
 }

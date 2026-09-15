@@ -196,6 +196,7 @@
             flakeLib
             ;
           mkTestHost = nixosOut.mkTestHost;
+          mkSpecialArgs = nixosOut.mkSpecialArgs;
           pkgs = sharedPackages.${system};
         } system;
     in
