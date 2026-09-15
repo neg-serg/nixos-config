@@ -5,7 +5,8 @@
   ...
 }:
 let
-  # Hyprland window list via vicinae (moved here from modules/user/session/hyprland.nix)
+  # Hyprland window list via vicinae (moved here from the old user-session
+  # Hyprland module)
   hyprWinList = pkgs.writeShellApplication {
     name = "hypr-win-list"; # Hyprland window list via vicinae
     runtimeInputs = [
