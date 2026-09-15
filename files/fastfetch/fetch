@@ -43,7 +43,43 @@ elif [ "$shader" != "none" ]; then
 fi
 [ -z "$logo" ] && logo=$(printf '%s\n' "$LOGO_DIR"/blizzard-*.webp 2>/dev/null | shuf -n1)
 [ -z "$logo" ] && logo="$LOGO_DIR/blizzard-fs-ash.webp"
-W=29; H=36; [ "$big" = 1 ] && W=36; H=45
+# Logo box. The webp is portrait (640x806) and a kitty cell is ~2x taller than
+# wide, so a box that is only as wide as it is tall gets limited by the width and
+# renders at roughly half the height (the old fixed 29 columns collapsed the image
+# to ~29x17 cells even though H was 45). The width must be ~1.8x the height to
+# fill the rows; the box is capped at 55% of the columns so the info keeps room.
+if [ -t 1 ]; then
+  lines=$(tput lines 2>/dev/null || echo 40)
+  cols=$(tput cols 2>/dev/null || echo 120)
+else
+  lines=40; cols=120
+fi
+case "$lines" in '' | *[!0-9]*) lines=40 ;; esac
+case "$cols" in '' | *[!0-9]*) cols=120 ;; esac
+pct=80
+[ "$big" = 1 ] && pct=92
+# Measured on this setup (font 13, kitty): fastfetch scales the kitty-icat image
+# to the requested *height* and the width follows the image aspect (640x806) and
+# the cell ratio, i.e. rendered width ~= 1.57 * height in cells. So the height is
+# what must be capped: reserve ~62 cells for the info column (its widest line is
+# ~55 incl. the icon) and derive H from the space left, then request exactly the
+# width the image will occupy — otherwise the reserved column is narrower than
+# the drawing and the image overlaps the stats (observed: 52 reserved, ~58 drawn).
+# 84 = ~70 cells the info column actually needs (the widest line — "3840x2160 px
+# @ 239.99 Hz – 700x390 mm [31.55 inches, 139.66 ppi] [HDR]" plus its icon — plus
+# 2 cells of slack, measured from screenshots: at 33 logo cells in a 112-column
+# window that line wrapped) + 12 cells of fastfetch's own left/right logo padding.
+# So a narrow window keeps the logo at roughly the old size on purpose (a wider
+# box is what made the stats wrap), while a maximised window (~224 columns) gets
+# a full-height logo instead of the old fixed 29x45.
+avail=$((cols - 84))
+[ "$avail" -lt 20 ] && avail=20
+H=$((lines * pct / 100))
+cap=$((avail * 100 / 157))
+[ "$H" -gt "$cap" ] && H=$cap
+[ "$H" -lt 10 ] && H=10
+W=$((H * 157 / 100 + 2))
+
 if [ -t 1 ] && command -v kitten >/dev/null 2>&1; then
   exec fastfetch --logo-type kitty-icat --logo "$logo" --logo-width "$W" --logo-height "$H" "${newargs[@]}"
 else
