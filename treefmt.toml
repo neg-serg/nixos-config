@@ -13,7 +13,7 @@ excludes = [
   # ASCII-art scripts — shfmt/black would mangle the layout
   "files/art/fun-art/*.sh",
   "files/art/fun-art/zalgo.py",
-  # Personal Obsidian vault — not repo content, never format
+  # Personal Obsidian vault — tracked, but prose-only: kept out of formatting
   "files/obsidian-vault/**",
   # Zsh-specific scripts that shfmt can't parse
   "packages/local-bin/bin/swayimg-actions.sh",

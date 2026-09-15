@@ -71,11 +71,10 @@ lint:
     # Prefer mkLocalBin or per-file force on managed files/wrappers.
     if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
          'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules | \
-       grep -v 'modules/dev/cachix/default.nix' | grep -q .; then \
+       grep -q .; then \
       echo 'Found ExecStartPre/ExecStart with mkdir/touch/rm. Use mkLocalBin or per-file force instead.' >&2; \
       grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
-        'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules \
-        | grep -v 'modules/dev/cachix/default.nix' || true; \
+        'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules || true; \
       exit 1; \
     fi
     # Guard: avoid `with pkgs.lib` — use explicit pkgs.lib.*
@@ -121,7 +120,6 @@ lint:
       tmp=$(mktemp); \
       grep -R -nE --include='*.nix' 'ExecStart\s*=\s*let[^;]+in\s*"\$\{exe\}\s' modules \
         | grep -v 'escapeShellArgs' \
-        | grep -v 'modules/user/mail/isync/default.nix' \
         > "$tmp" || true; \
       if [ -s "$tmp" ]; then \
         echo 'Found ExecStart pattern using ${exe} without lib.escapeShellArgs for args:' >&2; \
@@ -295,10 +293,12 @@ renoise-record args="":
 # --- dsh-web-ui plugin bundles ------------------------------------------------
 # The dsh web profile serves each plugin's BUILT lib/ (node_modules are
 # workspace symlinks into ~/src/1st-level/@projects/dsh-web-ui), so src edits
-# only take effect after tsdown rebuilds lib/. The background watcher
-# (systemd user unit dsh-web-ui-watch, module sys/dsh-web-ui-build.nix) does
-# this automatically on save; these targets are the manual one-off and the
-# staleness check (what "fixed in src but old behavior" usually means).
+# only take effect after tsdown rebuilds lib/. These targets are the manual
+# one-off and the staleness check (what "fixed in src but old behavior" usually
+# means); they operate on that external checkout, not on this repo. The
+# automatic on-save watcher (systemd user unit dsh-web-ui-watch) is gone — its
+# module was deleted with the dsh web GUI in 4a31f6de5.
+# Enable the staleness check on demand with `just dsh-ui-stale`.
 
 # Rebuild lib/ for every src-based dsh-web-ui plugin (tsdown, one by one)
 dsh-ui-build:
