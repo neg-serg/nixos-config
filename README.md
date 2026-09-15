@@ -13,9 +13,9 @@
 **Performance-Tuned • Developer-Focused • Gaming-Optimized**
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config)
-[![NixOS](https://img.shields.io/badge/NixOS-26.05-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
+[![NixOS](https://img.shields.io/badge/NixOS-26.11-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
 [![Hyprland](https://img.shields.io/badge/Hyprland-Dynamic_Tiling-00D9FF?style=for-the-badge&logo=wayland&logoColor=white)](https://hyprland.org)
-[![Commits](https://img.shields.io/badge/commits-4000+-FF6B35?style=for-the-badge&logo=git&logoColor=white)](https://github.com/neg-serg/nixos-config/commits)
+[![Commits](https://img.shields.io/badge/commits-3200+-FF6B35?style=for-the-badge&logo=git&logoColor=white)](https://github.com/neg-serg/nixos-config/commits)
 [![Stars](https://img.shields.io/github/stars/neg-serg/nixos-config?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config/stargazers)
 
 ---
@@ -27,13 +27,13 @@
 - [✨ Highlights](#-highlights)
 - [🚀 Quick Start](#-quick-start)
 - [📊 Project Statistics](#-project-statistics)
-- [🏗️ Architecture](#️-architecture)
+- [🏗️ Architecture](#-architecture)
 - [🎯 Key Features](#-key-features)
-- [🗂️ Module Categories](#️-module-categories)
+- [🗂️ Module Categories](#-module-categories)
 - [🔧 Development Workflow](#-development-workflow)
 - [🎮 Gaming Setup](#-gaming-setup)
 - [🌐 Hyprland Configuration](#-hyprland-configuration)
-- [🛠️ Custom Packages](#️-custom-packages)
+- [🛠️ Custom Packages](#-custom-packages)
 - [📚 Documentation](#-documentation)
 - [🤝 Contributing](#-contributing)
 
@@ -49,10 +49,10 @@
 - 🚄 **Blazingly Fast Builds** - Optimized evaluation with module archiving
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
-- 🎨 **Beautiful Hyprland** - 19 workspaces, 7 scratchpads, custom Quickshell panel
+- 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom Quickshell panel
 - 📦 **30 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 27 domain modules with feature flags, 403 Nix files
-- 🔄 **Continuous Integration** - Automated formatting, linting, and testing
+- 🧩 **Modular Architecture** - 27 domain modules with feature flags, 502 Nix files
+- 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
 
 ---
 
@@ -84,11 +84,11 @@ nh os switch
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
 | **Module Domains** | 27 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 403 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Custom Packages** | 30 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Active Modules** | 403 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 502 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 107 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Module Files** | 319 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
-| **Total Commits** | 4000+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Total Commits** | 3200+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
 </div>
 
@@ -149,7 +149,7 @@ graph TB
 
 ```mermaid
 flowchart LR
-    A[📝 Edit Config] --> B{🔍 CI Checks}
+    A[📝 Edit Config] --> B{🔍 Pre-commit + flake check}
     B -->|✅ Pass| C[🎨 Format]
     B -->|❌ Fail| A
     C --> D[🔎 Lint]
@@ -208,7 +208,7 @@ flowchart LR
 - 🎨 **Hyprland** - Dynamic tiling Wayland compositor
 
 - 📐 **19 Workspaces** - Semantic routing (term, web, dev, games, etc.)
-- 💾 **6 Scratchpads** - Telegram, Discord, Music, Torrents, System, Mixer
+- 💾 **8 Scratchpads** - Telegram, Music, Mail, Mixer, Torrents, Teardown, VPN, Rebuild
 - 🎛️ **Quickshell Panel** - Custom status bar with system info
 
 </details>
@@ -235,14 +235,14 @@ flowchart LR
 │       ├── hardware.nix
 │       ├── networking.nix
 │       └── services/                # policy.nix, vpn.nix, telegram-units.nix, telegram/*.py
-├── 📂 modules/                       # 🧩 System modules (28 domains)
-│   ├── 📁 features/                  # ⚙️ Feature flags (14 files)
+├── 📂 modules/                       # 🧩 System modules (27 domains)
+│   ├── 📁 features/                  # ⚙️ Feature flags (16 files)
 │   │   ├── core.nix                 # Core feature options
 │   │   ├── gui.nix                  # GUI stack options
 │   │   ├── dev.nix                  # Development tools
 │   │   └── ...
 │   ├── 📁 cli/                       # 💻 CLI tools (10 files)
-│   │   ├── tools.nix                # 65 packages
+│   │   ├── tools.nix                # 28 packages
 │   │   ├── dev.nix                  # Git, encoding, fetch
 │   │   └── ...
 │   ├── 📁 user/nix-maid/             # 👤 User configuration
@@ -382,14 +382,14 @@ just deploy
 just hooks-enable
 ```
 
-### 🔄 CI/CD Pipeline
+### 🔄 Local Gates (no CI service)
 
 > [!IMPORTANT]
 > Changes are validated by the pre-commit hook (`just lint`) and `nix flake check -L`
 
 ```mermaid
 graph LR
-    A[📝 Push] --> B[🎨 Format Check]
+    A[📝 Commit] --> B[🎨 Format Check]
     B --> C[🔎 Lint Check]
     C --> D[🧪 Build Test]
     D --> E[✅ NixOS Eval]
@@ -496,7 +496,6 @@ gamescope-hdr %command%
 | 8 | 𐌷:pic | 🖼️ | Pictures |
 | 9 | 𐌺:vm | 💿 | Virtual Machines |
 | 10 | 𐌻:wine | 🍷 | Wine/Proton |
-| 11 | 𐌼:patchbay | 🎚️ | Audio Patchbay |
 | 12 | 𐌽:daw | 🎹 | DAW |
 | 13 | 𐌾:dw | 📊 | Data/DWM |
 | 14 | 𐌿:keyboard | ⌨️ | Keyboard tools |
@@ -514,12 +513,17 @@ Quick-access overlays for common applications:
 
 | Scratchpad | App | Keybind | Size |
 |------------|-----|---------|------|
-| 💬 **im** | Telegram | `Super+I` | 30% × 95% |
-| 🎮 **discord** | Vesktop | `Super+D` | 50% × 40% |
-| 🎵 **music** | RMPC | `Super+M` | 70% × 40% |
-| ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% |
-| 📊 **teardown** | Btop | `Super+B` | 98% × 50% |
-| 🔊 **mixer** | Pwvucontrol | `Super+V` | 40% × 90% |
+| 💬 **im** | Telegram | `Super+E` | 30% × full height (right edge) |
+| 🎵 **music** | RMPC | `Super+F` | 70% × 40% |
+| 📬 **mail** | neomutt | — (class rule only) | 50% × 50% (centered) |
+| 🔊 **mixer** | ncpamixer | `Super+Ctrl+P` | 40% × full height (right edge) |
+| ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% (top-left) |
+| 📊 **teardown** | btop | `Super+D` | 98% × 50% (top-left) |
+| 🔒 **vpn** | tunnel status | `Super+U` | 50% × 30% (centered) |
+| 🔁 **rebuild** | `nh os switch` | `Super+Shift+N` | 98% × 50% (top-left) |
+
+`Super+Shift+H` hides all scratchpads. Every row mirrors the class match, bind and window rule in
+`files/gui/hypr/hyprland.lua`; there is no Discord/Vesktop scratchpad.
 
 ---
 
@@ -606,7 +610,7 @@ Special thanks to:
 
 ### 🌟 Star this repo if you find it useful!
 
-**Last Updated:** July 2026 • **Version:** 26.05 • **Commits:** 4000+
+**Last Updated:** September 2026 • **Version:** 26.11 • **Commits:** 3200+
 
 Made with ❤️ and ☕ by [neg-serg](https://github.com/neg-serg)
 
