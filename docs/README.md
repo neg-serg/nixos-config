@@ -55,7 +55,7 @@ configuration.
 ### Secrets (sops-nix / vaultix)
 
 - Secrets live under `secrets/` and are wired via sops-nix; vaultix migration docs now live in
-  `docs/runbooks/vaultix-migration.md`.
+  `docs/runbook-vaultix-migration.md`.
 - Age keys should reside in `~/.config/sops/age/keys.txt`.
 
 ### Systemd (User) Services
@@ -114,7 +114,7 @@ Use the same expectations regardless of whether you work under `modules/` or
 
 - Runtime helpers (`config.lib.neg.*`): defined in `flake/nixos.nix` specialArgs, exposed via
   `modules/core/neg.nix` (`mkHomeFiles`, `mkLocalBin`, `mkXdgText`).
-- systemd-user helpers: `modules/lib/systemd-user.nix` (`mkUnitFromPresets`, legacy `mkSimple*`).
+- systemd-user helpers: `lib/systemd-user.nix` (`mkUnitFromPresets`, legacy `mkSimple*`).
 - Feature definitions/options: `modules/features/`
 
 ### Package Availability Checks
@@ -306,7 +306,7 @@ Service override examples
 
 ## Kernel Modules Layout
 
-- params: kernel cmdline and packaging (modules/params) in `modules/system/kernel/params.nix`.
+- params: kernel cmdline and packaging — `modules/system/kernel/params.nix`.
 - sysctl: network/security sysctls in `modules/system/kernel/sysctl.nix`.
 - minimize/localmodconfig: kernel size reduction in
   `modules/system/kernel/{minimize.nix,localmodconfig.nix}`.
@@ -700,7 +700,7 @@ Tuning tips:
 ## DNS Resolver Monitoring
 
 - Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache hits):
-  see `docs/runbooks/unbound-metrics.md`.
+  see `docs/runbook-unbound-metrics.md`.
 
 ______________________________________________________________________
 

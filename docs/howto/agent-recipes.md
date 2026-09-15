@@ -258,7 +258,7 @@ local-bin.
    sops secrets/home/<name>.sops.yaml        # opens editor, creates + encrypts
    ```
 
-   Editing an existing file re-encrypts in place on save (see `docs/runbooks/proxy.md` for a full
+   Editing an existing file re-encrypts in place on save (see `docs/runbook-proxy.md` for a full
    example).
 
 1. Wire it in NixOS (sops-nix module is already in `commonModules`, `flake/nixos.nix`). Two patterns

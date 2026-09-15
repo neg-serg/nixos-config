@@ -3,10 +3,10 @@
 Plan for re-enabling the six plugin rows that the 0.1.5-rc.1 upgrade disabled, and for rewriting the
 one plugin whose transport contract was removed rather than renamed.
 
-Context and the break inventory live in [dsh-web-forks.md](../dsh-web-forks.md) (section "dsh
-0.1.5-rc.1: SDK breaks and the rows disabled meanwhile"). Current state: `ssh`, `live-stats`,
-`describe-image`, `ui-web-ui-settings`, `remote-web-ui`, `web-search-free` are `disabled: true` in
-the profile patch; everything else runs.
+Context and the break inventory live in the dsh-web forks notes (section "dsh 0.1.5-rc.1: SDK breaks
+and the rows disabled meanwhile"). Current state: `ssh`, `live-stats`, `describe-image`,
+`ui-web-ui-settings`, `remote-web-ui`, `web-search-free` are `disabled: true` in the profile patch;
+everything else runs.
 
 Status: A0 (the harness is `scripts/dev/check-dsh-sessions.sh`), A1's roster tokens and A4 are done;
 A5 is blocked on the fork's dependency wiring — see "A2. Give the fork its own dependency tree". The
