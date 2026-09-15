@@ -4,10 +4,13 @@
 
 - Entry: `packages/overlay.nix`
   - Loads overlays from
-    `packages/overlays/{functions,tools,media,dev,gui,fix-tinycc,vendored-sources}.nix`
+    `packages/overlays/{functions,tools,media,dev,gui,aur-ported,fix-tinycc,vendored-sources,disable-checks}.nix`
   - Merges their attrsets and exposes a combined namespace under `pkgs.neg`
   - `disable-checks.nix` is merged last on purpose (its `overrideAttrs` resets prior overrides on
     the same package)
+  - `flake/lib.nix` applies the external `neg-pkgs` overlay *after* this one, so anything both
+    overlays define (e.g. `python3-lto`, `buildFHSEnv`, several `pkgs.neg.*` entries) resolves to
+    the neg-pkgs version
 - Structure is intentional and should be kept as:
   - functions.nix — shared helpers under pkgs.neg.functions
   - tools.nix — CLI/desktop helpers under pkgs.neg.\*
@@ -19,69 +22,48 @@
 
 ## Helpers (`pkgs.neg.functions`)
 
-- withOverrideAttrs drv f
-  - Shortcut for drv.overrideAttrs f.
-- overridePyScope f
-  - Shorthand for python3Packages.overrideScope f.
-- overrideScopeFor name f
-  - Generic overrideScope for a top-level package set by name.
-  - Returns an attrset you can merge into the overlay output.
-  - Example: \_final.neg.functions.overrideScopeFor "python3Packages" (self: super: { ... })
-- overrideRustCrates drv hash
-  - Sets cargoHash/cargoSha256 for buildRustPackage derivations.
-- overrideGoModule drv hash
-  - Sets vendorHash for buildGoModule derivations.
+- callPkg path extraArgs
+  - `prev.callPackage path extraArgs`, injecting `inputs` automatically when the package declares an
+    `inputs` argument (sniffed with `builtins.functionArgs`).
+  - Alias it once per overlay (`callPkg = final.neg.functions.callPkg;`) instead of redefining it.
+  - It is the only shared helper: the previous `overridePyScope`, `overrideScopeFor`,
+    `withOverrideAttrs`, `overrideRustCrates`, `overrideGoModule`, `withAutoreconf` and
+    `withCMakePolicyFloor` had no callers anywhere in the repo and were removed (audit 2026-09-15) —
+    use `prev.<set>.overrideScope` / `drv.overrideAttrs` directly.
 
 ## Usage examples
 
-1. Override a Python package (preferred generic form):
+1. Add a package that needs the flake inputs:
 
    ```nix
-   # packages/overlays/dev.nix
+   # packages/overlays/tools.nix
+   inputs: final: prev:
+   let
+     callPkg = final.neg.functions.callPkg;
+   in
+   {
+     neg = {
+       mystat = callPkg (packagesRoot + "/mystat") { }; # CLI that reads inputs.<name>
+     };
+   }
+   ```
+
+1. Override a scoped package set (no helper needed):
+
+   ```nix
    _final: prev: {
-     # other overrides...
-   } // (
-     _final.neg.functions.overrideScopeFor "python3Packages" (self: super: {
-       ncclient =
-         super.ncclient.overrideAttrs (_: {
-           src = prev.fetchFromGitHub {
-             owner = "ncclient";
-             repo = "ncclient";
-             rev = "v0.7.0";
-             hash = "sha256-...";
-           };
-         });
-     })
-   )
-   ```
-
-1. Override a Python package (explicit helper):
-
-   ```nix
-   python3Packages =
-     _final.neg.functions.overridePyScope (self: super: {
-       foo = super.foo.overrideAttrs (_: { /* ... */ });
+     python3Packages = prev.python3Packages.overrideScope (self: super: {
+       ncclient = super.ncclient.overrideAttrs (_: { src = prev.fetchFromGitHub { /* ... */ }; });
      });
-   ```
-
-1. Override a Rust crate vendor hash:
-
-   ```nix
-   myTool = _final.neg.functions.overrideRustCrates prev.myTool "sha256-...";
-   ```
-
-1. Override a Go module vendor hash:
-
-   ```nix
-   myGo = _final.neg.functions.overrideGoModule prev.myGo "sha256-...";
+   }
    ```
 
 ## Conventions
 
 - Keep domain-specific packages in tools.nix / media.nix / dev.nix.
 - Put only reusable helpers into functions.nix.
-- When overriding scoped sets (e.g., python3Packages), prefer overrideScopeFor and merge its result
-  with //.
+- When overriding scoped sets (e.g., python3Packages), use `overrideScope` and merge the result with
+  `//`.
 - Expose custom packages under pkgs.neg to avoid name clashes with upstream.
 
 ## Validation tips
