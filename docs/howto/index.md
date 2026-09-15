@@ -21,6 +21,15 @@
 
 - Windows VST through yabridge (regular VST3 in Renoise): [wine-vst-bridge.md](./wine-vst-bridge.md)
 
+- Windows VSTs without yabridge — the free-plugin route:
+  [free-windows-vst.md](./free-windows-vst.md)
+
+- Hyprland plugins: what nixpkgs ships, what the flake pins, how to add one:
+  [hyprland-plugin.md](./hyprland-plugin.md)
+
+- Local video AI on odin (VRAM budget, models, what actually runs):
+  [local-video-ai.md](./local-video-ai.md)
+
 - Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits:
   [golden-tools.md](./golden-tools.md)
 
