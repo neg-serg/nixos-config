@@ -44,7 +44,6 @@ configuration.
   - Dev stacks (`features.dev.*`, `features.dev.unreal.*`)
   - Media/Torrent (`features.media.*`, `features.torrent.enable`)
   - Fun extras (`features.fun.enable`)
-  - Package exclusions by pname via `features.excludePkgs`
 
 ### Everyday Commands
 

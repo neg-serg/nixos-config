@@ -48,50 +48,6 @@ in
         };
       };
     })
-    (mkIf
-      (
-        !config.lib.neg.enabled "dev.haskell"
-        || !config.lib.neg.enabled "dev.rust"
-        || !config.lib.neg.enabled "dev.cpp"
-        || !config.lib.neg.enabled "dev.java"
-      )
-      {
-        # When dev language tooling is disabled, exclude their pnames from curated package lists
-        # that honor features.excludePkgs via config.lib.neg.pkgsList.
-        features.excludePkgs = mkAfter (
-          lib.optionals (!config.lib.neg.enabled "dev.haskell") [
-            "ghc"
-            "cabal-install"
-            "stack"
-            "haskell-language-server"
-            "hlint"
-            "ormolu"
-            "fourmolu"
-            "hindent"
-            "ghcid"
-          ]
-          ++ lib.optionals (!config.lib.neg.enabled "dev.rust") [
-            "rustup"
-            "rust-analyzer"
-            "cargo"
-            "rustc"
-            "clippy"
-            "rustfmt"
-          ]
-          ++ lib.optionals (!config.lib.neg.enabled "dev.cpp") [
-            "gcc"
-            "cmake"
-            "ninja"
-            "ccache"
-            "lldb"
-          ]
-          ++ lib.optionals (!config.lib.neg.enabled "dev.java") [
-            "jdk"
-            "maven"
-          ]
-        );
-      }
-    )
     (mkIf (!config.lib.neg.enabled "gui") {
       features = {
         gui = {
