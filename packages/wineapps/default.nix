@@ -5,16 +5,26 @@
 #   Wine prefixes under $XDG_DATA_HOME/wineprefixes (on odin bind-mounted to
 #   /gamez/main/wineprefixes): list/install/uninstall/run/sync.
 {
+  lib,
   python3,
   wineWow64Packages,
   winetricks,
   writeShellScriptBin,
 }:
-writeShellScriptBin "wineapps" ''
+(writeShellScriptBin "wineapps" ''
   export WINE="${wineWow64Packages.stable}/bin/wine"
   export WINEBOOT="${wineWow64Packages.stable}/bin/wineboot"
   export WINESERVER="${wineWow64Packages.stable}/bin/wineserver"
   export WINETRICKS="${winetricks}/bin/winetricks"
   export WINEPREFIX_BASE="''${WINEPREFIX_BASE:-$HOME/.local/share/wineprefixes}"
   exec ${python3}/bin/python3 ${./wineapps.py} "$@"
-''
+'').overrideAttrs
+  (old: {
+    meta = (old.meta or { }) // {
+      description = "Declarative Wine app manager (list/install/uninstall/run)";
+      homepage = "https://github.com/neg-serg/nixos-config";
+      license = lib.licenses.mit;
+      platforms = lib.platforms.linux;
+      maintainers = [ ]; # local-only package: no upstream maintainer to credit
+    };
+  })
