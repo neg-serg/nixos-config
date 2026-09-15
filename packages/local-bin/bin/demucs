@@ -3,7 +3,7 @@
 # Usage: demucs [--two-stems vocals] input.wav [-o outdir]
 set -eu
 
-BASE="/zero/ai/music-ai"
+BASE="@MUSIC_AI_BASE@"
 export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 
 exec "$BASE/venv-demucs/bin/python" -m demucs "$@"

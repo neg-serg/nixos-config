@@ -13,7 +13,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
-PY=/zero/ai/music-ai/venv-xtts/bin/python
+PY=@MUSIC_AI_BASE@/venv-xtts/bin/python
 TEXT="$TEXT" REF="$REF" OUT="$OUT" LANG="$LANG" "$PY" - <<'PYEOF'
 import os
 from TTS.api import TTS
