@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * dsh-export-session: render a dsh session (session.jsonl.zstd) into a
- * standalone HTML transcript (ported from omp export idea; plan
- * docs/howto/agent-deferred.ru.md §8).
+ * standalone HTML transcript (ported from the omp export idea; see
+ * docs/howto/agent-deferred.md §8).
  *
  * Usage: node export-session.mjs <session-id-or-path> [out.html]
  * Looks up ~/.dsh/sessions/<project>/<id>/session.jsonl.zstd, decompresses
