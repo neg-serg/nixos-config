@@ -1,0 +1,12 @@
+{
+  "name": "dsh-snapcompact",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Snapshot frames for session compaction: records the shadowed sequence range/token count of every compaction and hands the model a short pointer to the frame.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}

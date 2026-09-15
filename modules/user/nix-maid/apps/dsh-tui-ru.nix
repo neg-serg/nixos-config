@@ -89,6 +89,10 @@ let
       path = ./dsh-compaction-todo-preserver;
     }
     {
+      name = "dsh-snapcompact";
+      path = ./dsh-snapcompact;
+    }
+    {
       name = "dsh-rules-injector";
       path = ./dsh-rules-injector;
     }
