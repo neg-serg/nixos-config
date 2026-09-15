@@ -169,89 +169,36 @@ in
     # re-asserts css_ui_mods_directory to ~/.config/vivaldi/css-mods at login,
     # so that directory was never active. One mechanism only now.
 
-    # Point Vivaldi's CSS mods directory at the profile mods folder so the
-    # compact address bar mod loads. The css_ui_mods_directory pref is empty by
-    # default ("Allow for using CSS modifications" must be enabled); setting it
-    # via the Preferences file is the declarative way (Settings → Appearance →
-    # Custom UI Modifications would do the same). Vivaldi keeps user-set prefs,
-    # so this oneshot only rewrites the file when the value is missing/wrong.
-    # Also re-asserts the Neg theme and the hidden panel bar: both are plain
-    # Preferences values that Vivaldi rewrites from memory on exit/restart and
-    # can drop (theme reset → grey/black-and-white UI; barVisible=true → the
-    # left panel reappears). Same caveat as the auto-hide service below:
-    # re-apply at login.
-    systemd.user.services.vivaldi-css-mods-pref =
+    # Vivaldi Preferences surgery, re-applied at login: a running Vivaldi
+    # rewrites Preferences from memory on exit, so every script below must run
+    # before the browser starts. One Type=oneshot unit with several ExecStart
+    # lines (run in order) instead of four near-identical services:
+    #   1. point the CSS mods dir at the profile mods folder so the compact
+    #      address-bar mod loads (css_ui_mods_directory is empty by default and
+    #      "Allow for using CSS modifications" must be on); also re-assert the Neg
+    #      theme and the hidden panel bar, which Vivaldi drops from memory
+    #      (theme reset → grey UI; barVisible=true → the left panel reappears);
+    #   2. disable "UI Auto-hide" (Vivaldi 7.9+): toolbars slide out on hover –
+    #      reads as random popups. Force the master switch and per-toolbar flags
+    #      off; bars keep their manual visibility;
+    #   3. unbind Ctrl+W from close-tab so the emacs keys reach web pages (dsh web
+    #      composer/terminal; xterm forwards it to zsh as C-w);
+    #   4. bind Ctrl+G to close-tab. Vivaldi ships Ctrl+G as "Find Next in Page",
+    #      so the script frees that key; Ctrl+F4 keeps working too.
+    systemd.user.services.vivaldi-prefs =
       let
-        prefScript = ./vivaldi-css-mods-pref.py;
+        python = lib.getExe' pkgs.python3 "python3";
       in
       {
-        description = "Point Vivaldi CSS mods at the profile mods folder; re-assert Neg theme, hidden panel and DevTools dark theme";
+        description = "Re-assert Vivaldi preferences (CSS mods dir, UI auto-hide, Ctrl+W free, Ctrl+G closes the tab)";
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
-        };
-        after = [ "graphical-session.target" ];
-        wants = [ "graphical-session.target" ];
-        wantedBy = [ "graphical-session.target" ];
-      };
-
-    # Disable "UI Auto-hide" (Vivaldi 7.9+): toolbars (Tab Bar, Panel, Bookmarks
-    # Bar, Status Bar) slide out when the mouse hovers the window edge — reads as
-    # random "popups". Force the master switch and the per-toolbar flags off so
-    # nothing pops on hover; bars keep their manual visibility (e.g. tab bar stays
-    # hidden via vivaldi.tabs.visible). Same caveat as the css-mods service:
-    # Vivaldi rewrites Preferences from memory on exit, so re-apply at login.
-    systemd.user.services.vivaldi-auto-hide-pref =
-      let
-        prefScript = ./vivaldi-auto-hide-pref.py;
-      in
-      {
-        description = "Disable Vivaldi UI Auto-hide (hover popups)";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
-        };
-        after = [ "graphical-session.target" ];
-        wants = [ "graphical-session.target" ];
-        wantedBy = [ "graphical-session.target" ];
-      };
-
-    # Emacs keys in web pages (dsh web composer/terminal): unbind Ctrl+W from
-    # Vivaldi's "close tab" command so the key reaches the page (dsh-gui-tweaks
-    # binds it to backward-kill-word; xterm forwards it to zsh as C-w). Close
-    # tab stays available via Ctrl+F4 and Ctrl+G (service below). Same caveat
-    # as the services above: Vivaldi rewrites Preferences from memory on exit,
-    # so re-apply at login.
-    systemd.user.services.vivaldi-emacs-keys-pref =
-      let
-        prefScript = ./vivaldi-emacs-keys-pref.py;
-      in
-      {
-        description = "Unbind Ctrl+W from Vivaldi close-tab (emacs keys in dsh web)";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
-        };
-        after = [ "graphical-session.target" ];
-        wants = [ "graphical-session.target" ];
-        wantedBy = [ "graphical-session.target" ];
-      };
-
-    # Ctrl+G closes the tab: the emacs-keys service above unbinds Ctrl+W, so
-    # the close-tab command needs a second muscle-memory binding next to
-    # Ctrl+F4. Vivaldi ships Ctrl+G as "Find Next in Page" (F3 keeps working),
-    # so the script frees that key instead of leaving a conflict. Same caveat
-    # as the services above: Vivaldi rewrites Preferences from memory on exit,
-    # so re-apply at login.
-    systemd.user.services.vivaldi-close-tab-pref =
-      let
-        prefScript = ./vivaldi-close-tab-pref.py;
-      in
-      {
-        description = "Bind Ctrl+G to Vivaldi close-tab (Ctrl+W stays free for web pages)";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
+          ExecStart = [
+            "${python} ${./vivaldi-css-mods-pref.py}"
+            "${python} ${./vivaldi-auto-hide-pref.py}"
+            "${python} ${./vivaldi-emacs-keys-pref.py}"
+            "${python} ${./vivaldi-close-tab-pref.py}"
+          ];
         };
         after = [ "graphical-session.target" ];
         wants = [ "graphical-session.target" ];
