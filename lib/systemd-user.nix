@@ -134,124 +134,60 @@ in
     }
     // lib.optionalAttrs (after != [ ]) { inherit after; };
 
-  mkSimpleService =
+  # Module-shaped user unit for `systemd.user.services.<name>` — the shape the
+  # hand-rolled units in this repo use (description / unitConfig / serviceConfig
+  # / path / enable plus the module's own after/wants/partOf/wantedBy). The raw
+  # `Unit`/`Service`/`Install` shape that once lived here (mkSimpleService/
+  # mkSimpleTimer/mkSimpleSocket) had no callers and was removed with the C6
+  # audit item (2026-09-15).
+  #
+  #   systemd.user.services.foo = systemdUser.mkUserService {
+  #     description = "…";
+  #     presets = [ "defaultWanted" ];                  # scheduling presets
+  #     serviceConfig = { ExecStart = "…"; Restart = "on-failure"; };
+  #     unitConfig = { ConditionUser = "!greeter"; };   # optional
+  #     path = [ pkgs.inotify-tools ];                  # optional
+  #   };
+  #
+  # Only the fields the caller provides end up in the unit, so a migrated unit
+  # evaluates to exactly the same attrset as the hand-written one.
+  mkUserService =
     {
-      name,
-      execStart,
-      presets ? [ ],
       description ? null,
-      serviceExtra ? { },
-      unitExtra ? { },
+      presets ? [ ],
       after ? [ ],
       wants ? [ ],
       partOf ? [ ],
       wantedBy ? [ ],
-    }:
-    {
-      systemd.user.services."${name}" =
-        lib.recursiveUpdate
-          {
-            Unit = (lib.optionalAttrs (description != null) { Description = description; }) // unitExtra;
-            Service = {
-              ExecStart = execStart;
-            }
-            // serviceExtra;
-          }
-          (mkUnitFromPresets {
-            inherit
-              presets
-              after
-              wants
-              partOf
-              wantedBy
-              ;
-          });
-    };
-
-  mkSimpleTimer =
-    {
-      name,
-      presets ? [ ],
-      description ? null,
-      onCalendar ? null,
-      accuracySec ? null,
-      persistent ? null,
-      timerExtra ? { },
-      unitExtra ? { },
-      after ? [ ],
-      wants ? [ ],
-      partOf ? [ ],
-      wantedBy ? null,
+      serviceConfig ? { },
+      unitConfig ? { },
+      path ? [ ],
+      enable ? true,
     }:
     let
-      finalWantedBy =
-        if wantedBy != null then wantedBy else (lib.optional (lib.elem "timers" presets) "timers.target");
-    in
-    {
-      systemd.user.timers."${name}" =
-        lib.recursiveUpdate
-          {
-            Unit = (lib.optionalAttrs (description != null) { Description = description; }) // unitExtra;
-            Timer =
-              { }
-              // lib.optionalAttrs (onCalendar != null) { OnCalendar = onCalendar; }
-              // lib.optionalAttrs (accuracySec != null) { AccuracySec = accuracySec; }
-              // lib.optionalAttrs (persistent != null) { Persistent = persistent; }
-              // timerExtra;
-          }
-          (mkUnitFromPresets {
-            inherit
-              presets
-              after
-              wants
-              partOf
-              ;
-            wantedBy = finalWantedBy;
-          });
-    };
-
-  mkSimpleSocket =
-    {
-      name,
-      presets ? [ ],
-      description ? null,
-      listenStream ? null,
-      listenDatagram ? null,
-      listenFIFO ? null,
-      socketExtra ? { },
-      unitExtra ? { },
-      after ? [ ],
-      wants ? [ ],
-      partOf ? [ ],
-      wantedBy ? null,
-    }:
-    let
-      finalWantedBy =
-        if wantedBy != null then
+      schedule = mkUnitFromPresets {
+        inherit
+          presets
+          after
+          wants
+          partOf
           wantedBy
-        else
-          (lib.optional (lib.elem "socketsTarget" presets) "sockets.target");
+          ;
+      };
+      unit = schedule.Unit or { };
     in
     {
-      systemd.user.sockets."${name}" =
-        lib.recursiveUpdate
-          {
-            Unit = (lib.optionalAttrs (description != null) { Description = description; }) // unitExtra;
-            Socket =
-              { }
-              // lib.optionalAttrs (listenStream != null) { ListenStream = listenStream; }
-              // lib.optionalAttrs (listenDatagram != null) { ListenDatagram = listenDatagram; }
-              // lib.optionalAttrs (listenFIFO != null) { ListenFIFO = listenFIFO; }
-              // socketExtra;
-          }
-          (mkUnitFromPresets {
-            inherit
-              presets
-              after
-              wants
-              partOf
-              ;
-            wantedBy = finalWantedBy;
-          });
+      inherit enable;
+    }
+    // lib.optionalAttrs (description != null) { inherit description; }
+    // lib.optionalAttrs (path != [ ]) { inherit path; }
+    // lib.optionalAttrs (unitConfig != { }) { inherit unitConfig; }
+    // lib.optionalAttrs (serviceConfig != { }) { inherit serviceConfig; }
+    // lib.optionalAttrs ((unit.After or [ ]) != [ ]) { after = unit.After; }
+    // lib.optionalAttrs ((unit.Wants or [ ]) != [ ]) { wants = unit.Wants; }
+    // lib.optionalAttrs ((unit.PartOf or [ ]) != [ ]) { partOf = unit.PartOf; }
+    // lib.optionalAttrs (((schedule.Install or { }).WantedBy or [ ]) != [ ]) {
+      wantedBy = schedule.Install.WantedBy;
     };
+
 }
