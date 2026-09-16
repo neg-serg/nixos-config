@@ -53,14 +53,17 @@ buildNpmPackage {
 
   # The HMR plugin requires node --expose-internals, which the default wrapper
   # omits. Rewrap the launcher the same way the dsh systemd service does.
+  # The patch scripts import the shared count-assert helper (./lib/patchlib.py)
+  # through PYTHONPATH, so that directory is substituted in alongside them.
   postInstall =
     builtins.replaceStrings
-      [ "@NODEJS@" "@PY@" "@PY_V2@" "@PY_V3@" ]
+      [ "@NODEJS@" "@PY@" "@PY_V2@" "@PY_V3@" "@PATCHLIB_DIR@" ]
       [
         (lib.getExe nodejs)
         "${./patch-widgets.py}"
         "${./patch-session-format.py}"
         "${./patch-preset-names.py}"
+        "${./lib}"
       ]
       (builtins.readFile ./post-install.sh);
 

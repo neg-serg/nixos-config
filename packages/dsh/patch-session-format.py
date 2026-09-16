@@ -31,12 +31,13 @@ Usage: patch-session-format.py <node_modules/@deepseek-ai dir>
 """
 
 import sys
+from functools import partial
+
+from patchlib import normalizer, patch_file
 
 ROOT = sys.argv[1]  # .../node_modules/@deepseek-ai
 
-
-def normalizer(doc, body, anchor):
-    return f"{doc}\n{body}\n\n{anchor}"
+patch = partial(patch_file, ROOT, prog="patch-session-format")
 
 
 PERMISSION_DOC = """/**
@@ -208,18 +209,7 @@ FILES = [
 ]
 
 for rel, replacements in FILES:
-    path = f"{ROOT}/{rel}"
-    with open(path, encoding="utf-8") as f:
-        src = f.read()
-    for old, new, label in replacements:
-        count = src.count(old)
-        if count != 1:
-            raise SystemExit(
-                f"patch-session-format: {label} found {count} time(s) in {rel}, expected 1"
-            )
-        src = src.replace(old, new)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(src)
+    patch(rel, replacements)
 
 print(
     "patch-session-format: released-0.1.x payloads (permission/preset origin, "
