@@ -1,9 +1,13 @@
 import sys
 
 path = sys.argv[1]
-MARKER_PRESET = "# dsh-tui-ensure: default preset"
-MARKER_RUNTIME = "# dsh-tui-ensure: code runtime"
-MARKER_PLUGINS = "# dsh-tui-ensure: plugin rows"
+# Marker/echo prefix: each terminal profile owns its own marker text, so a
+# rewrite never mistakes another profile's blocks for its own. The tui profile
+# (dsh-tui-ensure.sh) keeps the default; the martty profile passes its own name.
+PREFIX = sys.argv[3] if len(sys.argv) > 3 else "dsh-tui-ensure"
+MARKER_PRESET = f"# {PREFIX}: default preset"
+MARKER_RUNTIME = f"# {PREFIX}: code runtime"
+MARKER_PLUGINS = f"# {PREFIX}: plugin rows"
 rows_path = sys.argv[2] if len(sys.argv) > 2 else None
 plugin_rows = []
 if rows_path is not None:
@@ -75,10 +79,8 @@ if extra:
     body = body.rstrip("\n") + "\n" + "\n".join(extra) + "\n"
 
 if body == src:
-    print(f"dsh-tui-ensure: {path}: profile layer already current")
+    print(f"{PREFIX}: {path}: profile layer already current")
     sys.exit(0)
 with open(path, "w", encoding="utf-8") as f:
     f.write(body)
-print(
-    f"dsh-tui-ensure: {path}: wrote the profile layer (preset + code runtime)"
-)
+print(f"{PREFIX}: {path}: wrote the profile layer (preset + code runtime)")
