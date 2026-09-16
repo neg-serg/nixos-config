@@ -1,4 +1,4 @@
-{ ... }: {
+{ lib, ... }: {
   disabledModules = [
     # Web servers — not used on odin (no web serving from this machine)
     "services/web-servers/nginx.nix"
@@ -72,4 +72,33 @@
     # which facter's virtualisation module references. Odin is bare metal; no auto-detection needed.
     "hardware/facter"
   ];
+
+  # Option stubs for the disabled display-manager modules above. nixpkgs
+  # services/x11/xserver.nix reads displayManager.{gdm,ly,lemurs,
+  # plasma-login-manager}.enable unconditionally while services.xserver.enable
+  # is on, so evaluation dies with "attribute 'gdm' missing" (the FVWM recipe
+  # session is what turns X11 on). Delete the matching stub when a module is
+  # re-enabled — a double declaration is an evaluation error.
+  options.services.displayManager = {
+    gdm.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Stub for the disabled gdm module (see disabledModules).";
+    };
+    ly.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Stub for the disabled ly module (see disabledModules).";
+    };
+    lemurs.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Stub for the disabled lemurs module (see disabledModules).";
+    };
+    plasma-login-manager.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Stub for the disabled plasma-login-manager module (see disabledModules).";
+    };
+  };
 }
