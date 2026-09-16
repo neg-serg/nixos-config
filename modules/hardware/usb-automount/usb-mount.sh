@@ -28,6 +28,18 @@ do_mount() {
   # Get info for this drive: $ID_FS_LABEL, $ID_FS_UUID, and $ID_FS_TYPE
   eval "$(blkid -o udev "${DEVICE}")"
 
+  # The udev rules fire for whole disks (sda) as well as for their partitions
+  # (sda1). A partitioned disk holds no filesystem of its own, so mounting it
+  # always fails (journal: "fsconfig() failed: /dev/sda: Can't open blockdev")
+  # and the unit is reported failed on every boot with such a stick attached.
+  # Its partitions raise their own add events and mount themselves, so skip the
+  # container device quietly. Devices without partitions (superfloppy) still
+  # have no child entries under /sys/class/block/<dev>/ and mount normally.
+  if [ -z "${ID_FS_TYPE}" ] && ls -d /sys/class/block/"${DEVBASE}"/"${DEVBASE}"[0-9]* > /dev/null 2>&1; then
+    echo "Skipping ${DEVICE}: has partitions, they mount themselves"
+    exit 0
+  fi
+
   # Figure out a mount point to use
   LABEL=${ID_FS_LABEL}
   if [ -z "${LABEL}" ]; then
