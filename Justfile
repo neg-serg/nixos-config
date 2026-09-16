@@ -94,7 +94,7 @@ lint:
     # (no -e) and a plain `;` would let black's success mask it.
     if git ls-files -- '*.py' >/dev/null 2>&1; then \
       ruff check -- . && \
-      black --check --line-length 79 --extend-exclude '(files/kitty|files/art/fun-art)' .; \
+      black --check --line-length 79 --extend-exclude '(files/kitty|files/art/fun-art|files/x11/rice|files/x11/decay-gtk)' .; \
     fi
     # TOML syntax/style — tracked files only: a bare `taplo lint` follows result/
     # into the nix store (pyright's typeshed alone is ~200 METADATA.toml) plus the
@@ -131,7 +131,9 @@ lint:
       rm -f "$tmp"; \
     fi
     # Shellcheck opt-in: check only files that declare a POSIX/Bash shebang
-    git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
+    # `:!files/x11/**` keeps the vendored FVWM rice out of the corpus (upstream
+    # shell does not survive shfmt/shellcheck; see files/x11/README.md).
+    git ls-files -z -- '*.sh' '*.bash' ':!files/x11/**' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
       | xargs -0 -r shellcheck -S warning -x
     bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
