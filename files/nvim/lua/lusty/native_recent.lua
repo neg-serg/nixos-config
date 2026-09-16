@@ -4,34 +4,17 @@
 -- relative to the cwd when possible so the same basename from different
 -- directories stays distinguishable.
 
-local pick = require('lusty.native_pick')
 local frecency = require('lusty.frecency')
-local filter = require('lusty.filter')
 local lsc = require('lusty.ls_colors')
 local native = require('lusty.native')
-
-local M = {}
-
--- Remember the last filter between runs.
-local previous_input = ''
+local source = require('lusty.native_source')
 
 -- Which MRU is shown: 'files' (v:oldfiles + journal files) or 'dirs'
 -- (journal directories). C-r toggles while the picker is open.
 local mode = 'files'
 
-function M.set_mode(m)
-  mode = m == 'dirs' and 'dirs' or 'files'
-end
-
-function M.mode()
-  return mode
-end
-
 -- Test seam / future source override; default reads v:oldfiles.
 local recent_fn = nil
-function M.set_recent_fn(fn)
-  recent_fn = fn
-end
 
 local function recent_paths()
   if recent_fn then
@@ -122,86 +105,80 @@ local function snapshot_items()
   return out
 end
 
-local running = false
-
-function M.run()
-  if running then
-    return
-  end
-  running = true
-  local snap = snapshot_items()
-  local title = mode == 'dirs' and 'Recent Dirs' or 'Recent Files'
-  -- First query letter must prefix the label; ties broken by recency.
-  local source = filter.source(function()
-    return snap
-  end, 'label', 'order')
-  pick.pick({
-    title = title,
-    query = previous_input,
-    source = source,
-    multi = true,
-    -- Directories are not markable: they cannot be opened in bulk.
-    markable = function(it)
-      return not it.is_dir
-    end,
-    -- Enter with marks opens every marked file: the first via edit, the rest
-    -- as buffers (same semantics as the filesystem float).
-    on_open_many = function(items, m)
-      running = false
-      local files = {}
-      for _, it in ipairs(items) do
-        if not it.is_dir then
-          files[#files + 1] = it
-        end
+-- The run guard, the query memory, the first-letter filter and the running
+-- flag around on_open/on_open_many/on_close are shared with the other source
+-- pickers (lusty.native_source).
+local M = source.define({
+  title = function()
+    return mode == 'dirs' and 'Recent Dirs' or 'Recent Files'
+  end,
+  multi = true,
+  snapshot = snapshot_items,
+  filter_key = 'label',
+  filter_tie = 'order',
+  -- Directories are not markable: they cannot be opened in bulk.
+  markable = function(it)
+    return not it.is_dir
+  end,
+  -- Enter with marks opens every marked file: the first via edit, the rest
+  -- as buffers (same semantics as the filesystem float).
+  on_open_many = function(items, m)
+    local files = {}
+    for _, it in ipairs(items) do
+      if not it.is_dir then
+        files[#files + 1] = it
       end
-      if #files == 0 then
-        return
+    end
+    if #files == 0 then
+      return
+    end
+    local cmd = m == 'enter' and 'edit'
+      or m == 'tab' and 'tabedit'
+      or m == 'split' and 'split'
+      or 'vsplit'
+    for i, it in ipairs(files) do
+      frecency.record(it.path)
+      if cmd == 'edit' and i > 1 then
+        vim.cmd('silent badd ' .. vim.fn.fnameescape(it.path))
+      else
+        vim.cmd('silent ' .. cmd .. ' ' .. vim.fn.fnameescape(it.path))
       end
-      local cmd = m == 'enter' and 'edit'
-        or m == 'tab' and 'tabedit'
-        or m == 'split' and 'split'
-        or 'vsplit'
-      for i, it in ipairs(files) do
-        frecency.record(it.path)
-        if cmd == 'edit' and i > 1 then
-          vim.cmd('silent badd ' .. vim.fn.fnameescape(it.path))
-        else
-          vim.cmd('silent ' .. cmd .. ' ' .. vim.fn.fnameescape(it.path))
-        end
-      end
-    end,
-    keys = {
+    end
+  end,
+  keys = function(state)
+    return {
       ['<C-r>'] = function(p2)
         -- Toggle the MRU source between files and dirs in place.
         mode = mode == 'dirs' and 'files' or 'dirs'
-        previous_input = p2.query
+        state.query = p2.query
         p2:close()
-        vim.schedule(M.run)
+        vim.schedule(state.run)
       end,
-    },
-    on_open = function(item, m)
-      running = false
-      frecency.record(item.path)
-      if item.is_dir then
-        -- A visited directory: reopen the filesystem picker rooted there.
-        vim.schedule(function()
-          native.run(item.path)
-        end)
-      else
-        open_path(item.path, m)
-      end
-    end,
-    on_close = function(p2)
-      running = false
-      if p2 and p2.query then
-        previous_input = p2.query
-      end
-    end,
-  })
+    }
+  end,
+  on_open = function(item, m)
+    frecency.record(item.path)
+    if item.is_dir then
+      -- A visited directory: reopen the filesystem picker rooted there.
+      vim.schedule(function()
+        native.run(item.path)
+      end)
+    else
+      open_path(item.path, m)
+    end
+  end,
+})
+
+function M.set_mode(m)
+  mode = m == 'dirs' and 'dirs' or 'files'
 end
 
-function M.is_running()
-  return running
+function M.mode()
+  return mode
+end
+
+function M.set_recent_fn(fn)
+  recent_fn = fn
 end
 
 return M

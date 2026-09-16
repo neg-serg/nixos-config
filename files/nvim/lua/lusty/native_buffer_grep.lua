@@ -5,10 +5,8 @@
 -- jump to the matched line.
 
 local buffers = require('lusty.buffer_stack')
-local pick = require('lusty.native_pick')
 local grep_pattern = require('lusty.grep_pattern')
-
-local M = {}
+local source = require('lusty.native_source')
 
 -- Highlight groups for the grep marks (the removed Lua-port base engine used
 -- to provide them; only these four are still used).
@@ -18,10 +16,6 @@ local function ensure_highlights()
   vim.api.nvim_set_hl(0, 'LustyGrepFileName', { link = 'Comment', default = true })
   vim.api.nvim_set_hl(0, 'LustyGrepContext', { link = 'Comment', default = true })
 end
-
--- Remember the last pattern between runs.
-local previous_input = ''
-local running = false
 
 local function compile_pattern(input)
   local ok, vpat = pcall(grep_pattern.translate_regex, input)
@@ -96,35 +90,23 @@ local function make_source(snap)
   end
 end
 
-function M.run()
-  if running then
-    return
-  end
-  running = true
+local function snapshot_items()
   ensure_highlights()
-  local snap = buffers.compute_buffer_entries()
-  local last_input = previous_input
-  pick.pick({
-    title = 'Buffer Grep',
-    single_column = true,
-    query = last_input,
-    source = make_source(snap),
-    on_open = function(item, mode)
-      running = false
-      open_grep_entry(item, mode)
-    end,
-    on_close = function(p)
-      running = false
-      if p and p.query then
-        previous_input = p.query
-      end
-    end,
-  })
+  return buffers.compute_buffer_entries()
 end
 
-function M.is_running()
-  return running
-end
+-- The run guard, the pattern memory and the running flag around on_open /
+-- on_close are shared with the other source pickers (lusty.native_source);
+-- the grep builds its own query->rows source instead of the name filter.
+local M = source.define({
+  title = 'Buffer Grep',
+  single_column = true,
+  snapshot = snapshot_items,
+  source = make_source,
+  on_open = function(item, mode)
+    open_grep_entry(item, mode)
+  end,
+})
 
 -- Regex translation is shared with the parity smoke.
 M.translate_regex = grep_pattern.translate_regex
