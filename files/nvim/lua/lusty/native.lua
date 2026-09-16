@@ -27,6 +27,7 @@
 local lsc = require('lusty.ls_colors')
 local frecency = require('lusty.frecency')
 local theme = require('lusty.theme')
+local core = require('lusty.native_core')
 
 local M = {}
 
@@ -197,10 +198,6 @@ local function parse_sgr(line)
   return table.concat(text), runs
 end
 
---- RU (йцукен) layout to EN chars (physical keys under RU produce Cyrillic).
--- RU (йцукен) keymap table, shared with the other pickers (`lusty.ru2en`).
-local RU2EN = require('lusty.ru2en')
-
 local function basename(label)
   return label:match('([^/]+)$') or label
 end
@@ -354,6 +351,10 @@ end
 local Picker = {}
 Picker.__index = Picker
 
+-- Geometry, the float window, the keymap base, cursor/query handling and the
+-- teardown are shared with the generic list float (`lusty.native_pick`).
+core.bind(Picker)
+
 function Picker.new(root, depth)
   local self = setmetatable({}, Picker)
   self.root = root
@@ -389,62 +390,6 @@ function Picker.new(root, depth)
   self.orig_win = api.nvim_get_current_win()
   self._timer = nil
   return self
-end
-
-function Picker:width()
-  local envw = tonumber(os.getenv('LUSTY_WIDTH'))
-  if envw and envw >= 60 then
-    return math.max(60, math.min(envw, vim.o.columns - 4))
-  end
-  local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.8
-  ratio = math.max(0.5, math.min(0.98, ratio))
-  return math.max(60, math.floor(vim.o.columns * ratio))
-end
-
-function Picker:height()
-  local envr = tonumber(os.getenv('LUSTY_ROWS'))
-  if envr and envr >= 4 then
-    -- Total box height including the two rounded-border rows, matching the
-    -- standalone `--rows`; the window itself is two rows shorter.
-    return math.max(2, math.min(envr - 2, vim.o.lines - 2))
-  end
-  -- 8 rows in total on screen: the rounded border takes two, the window holds
-  -- five entry rows plus the prompt.
-  return math.min(6, math.max(1, vim.o.lines - 2))
-end
-
-function Picker:list_rows()
-  -- Entry rows inside the window: everything but the prompt line, so the grid
-  -- fills the window instead of leaving its last row empty.
-  return math.max(1, self:height() - 1)
-end
-
---- Max columns of the entry grid: choose a pitch that fits the float width
---- exactly (col_w + 2 separator), so rows never overflow or wrap.
-function Picker:max_cols()
-  if self.long then
-    return 1
-  end
-  local w = self:width()
-  local rows = self:list_rows()
-  local total = math.max(self.total, 1)
-  local needed = math.max(1, math.ceil(total / rows))
-  -- cap the width influence: one huge name must not force a single column
-  local name_w = math.max(math.min(self.maxw or 12, 20), 1)
-  if self.icons then
-    name_w = name_w + 2 -- icon glyph + trailing space occupy two display cells
-  end
-  local byw = math.max(1, math.floor((w + 2) / (name_w + 4)))
-  local cols = math.min(needed, byw, 8)
-  return math.max(1, cols)
-end
-
-function Picker:col_width()
-  local cols = self:max_cols()
-  local w = self:width()
-  -- remaining width for the text columns after the separators
-  local text_w = w - 2 * (cols - 1)
-  return math.max(6, math.floor(text_w / cols))
 end
 
 --- Long-view column mask: LUSTY_COLUMNS wins over g:LustyExplorerColumns;
@@ -523,11 +468,6 @@ function Picker:ensure_meta()
       self_ref:draw()
     end)
   end)
-end
-
---- Number of positions covered by one screenful of the grid.
-function Picker:screen_count()
-  return self:list_rows() * self:max_cols()
 end
 
 --- Preview pane width: LUSTY_PREVIEW_WIDTH / g:LustyExplorerPreviewWidth,
@@ -686,118 +626,25 @@ function Picker:render_preview()
   end
 end
 
-function Picker:open_window()
-  local w, h = self:width(), self:height()
-  -- bottom orientation (original Lusty gravity): anchored just above the
-  -- statusline, horizontally centered
-  local row = math.max(0, vim.o.lines - h - 1)
-  local col = math.max(0, math.floor((vim.o.columns - w) / 2))
-  local buf = api.nvim_create_buf(false, true)
-  local win = api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = w,
-    height = h,
-    row = row,
-    col = col,
-    style = 'minimal',
-    border = 'rounded',
-  })
-  api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-  api.nvim_buf_set_option(buf, 'swapfile', false)
-  api.nvim_buf_set_option(buf, 'modifiable', true)
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_win_set_option(win, 'wrap', false)
-  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder')
-  api.nvim_win_set_option(win, 'winblend', 0)
-  api.nvim_buf_set_lines(buf, 0, -1, false, {})
-  self.buf = buf
-  self.win = win
-  self:setup_keymaps()
-  -- Modal picker: if focus ever leaves the float (e.g. a click on the
-  -- underlying buffer), pull it straight back. Otherwise letters typed
-  -- outside land in the original buffer, where 'c' starts the change
-  -- operator and nvim waits a timeoutlen for a motion.
-  local self_ref = self
-  self.leave_grp = api.nvim_create_augroup('LustyPickFocus' .. buf, { clear = true })
-  api.nvim_create_autocmd('BufLeave', {
-    group = self.leave_grp,
-    buffer = buf,
-    callback = function()
-      if not self_ref.closed and api.nvim_win_is_valid(self_ref.win) then
-        vim.schedule(function()
-          if not self_ref.closed and api.nvim_win_is_valid(self_ref.win) then
-            api.nvim_set_current_win(self_ref.win)
-          end
-        end)
-      end
-    end,
-  })
-end
-
 function Picker:setup_keymaps()
-  local buf = self.buf
-  local self_ref = self
-  local function map(lhs, action)
-    local opts = { nowait = true, silent = true, noremap = true }
-    opts.callback = function()
-      self_ref:handle(action)
-    end
-    api.nvim_buf_set_keymap(buf, 'n', lhs, '', opts)
-  end
-  for code = 32, 126 do
-    local ch = string.char(code)
-    local lhs = ch
-    if ch == '<' then
-      lhs = '<lt>'
-    elseif ch == '|' then
-      lhs = '<Bar>'
-    elseif ch == '\\' then
-      lhs = '<Bslash>'
-    end
-    map(lhs, ch)
-  end
-  for ru, en in pairs(RU2EN) do
-    map(ru, en)
-  end
-  map('<Tab>', 'enter')
-  map('<CR>', 'enter')
-  map('<S-CR>', 'enter')
-  map('<BS>', 'backspace')
-  map('<C-h>', 'backspace')
-  map('<C-w>', 'updir')
-  map('<C-n>', 'down')
-  map('<C-j>', 'down')
-  map('<C-p>', 'up')
-  map('<C-k>', 'up')
-  map('<Down>', 'down')
-  map('<Up>', 'up')
-  map('<C-f>', 'colnext')
-  map('<Right>', 'colnext')
-  map('<C-b>', 'colprev')
-  map('<Left>', 'colprev')
-  map('<PageDown>', 'pagedown')
-  map('<PageUp>', 'pageup')
-  map('<Home>', 'first')
-  map('<C-a>', 'first')
-  map('<End>', 'last')
-  -- C-e: open the typed text as a new buffer (Lua-port parity; parent dirs are
-  -- created). C-d: cycle the search depth 1..6 at runtime (buffers/grep use C-d
-  -- for delete instead; this is the filesystem float).
-  map('<C-e>', 'create')
-  map('<C-d>', 'cycle_depth')
-  map('<C-u>', 'clear')
-  map('<C-Space>', 'mark')
-  -- C-y: sort cycle (C-s collides with terminal/kitty flow control)
-  map('<C-y>', 'cycle_sort')
-  map('<C-t>', 'open_tab')
-  map('<C-o>', 'open_split')
-  map('<C-v>', 'open_vsplit')
-  map('<C-l>', 'toggle_long')
-  -- C-r: preview pane (only when the backend advertises `X preview`).
-  map('<C-r>', 'toggle_preview')
-  map('<Esc>', 'cancel')
-  map('<C-c>', 'cancel')
-  map('<C-g>', 'cancel')
+  core.setup_keymaps(self, {
+    actions = {
+      ['<S-CR>'] = 'enter',
+      -- C-w: parent directory (after the typed text is cleared).
+      ['<C-w>'] = 'updir',
+      -- C-e: open the typed text as a new buffer (Lua-port parity; parent
+      -- dirs are created). C-d: cycle the search depth 1..6 at runtime
+      -- (buffers/grep use C-d for delete instead; this is the filesystem float).
+      ['<C-e>'] = 'create',
+      ['<C-d>'] = 'cycle_depth',
+      ['<C-Space>'] = 'mark',
+      -- C-y: sort cycle (C-s collides with terminal/kitty flow control)
+      ['<C-y>'] = 'cycle_sort',
+      ['<C-l>'] = 'toggle_long',
+      -- C-r: preview pane (only when the backend advertises `X preview`).
+      ['<C-r>'] = 'toggle_preview',
+    },
+  })
 end
 
 function Picker:request(parts, handler)
@@ -941,16 +788,7 @@ function Picker:draw()
         end
         local pw = #prefix
         local maxw = math.max(4, w - pw)
-        local text = name
-        local nw = vim.fn.strdisplaywidth(text)
-        if nw > maxw then
-          local nchars = vim.fn.strchars(text)
-          while nw > maxw and nchars > 0 do
-            nchars = nchars - 1
-            text = vim.fn.strcharpart(text, 0, nchars)
-            nw = vim.fn.strdisplaywidth(text)
-          end
-        end
+        local text = core.fit(name, maxw)
         local full = prefix .. text
         full = full .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(full)))
         lines[r] = full
@@ -987,18 +825,9 @@ function Picker:draw()
           -- pad to the full column width (display cells) so columns align;
           -- truncated cells are padded too, otherwise that row shifts by one
           -- and the selection highlight (fixed pitch) lands off.
-          local text = label
-          local w = vim.fn.strdisplaywidth(text)
-          if w > col_w - 1 then
-            local nchars = vim.fn.strchars(text)
-            while w > col_w - 1 and nchars > 0 do
-              nchars = nchars - 1
-              text = vim.fn.strcharpart(text, 0, nchars)
-              w = vim.fn.strdisplaywidth(text)
-            end
-          end
+          local text, tw = core.fit(label, col_w - 1)
           local text_bytes = #text
-          text = text .. string.rep(' ', math.max(0, col_w - w))
+          text = text .. string.rep(' ', math.max(0, col_w - tw))
           bufparts[c] = text
           cells[#cells + 1] = {
             line = r,
@@ -1128,14 +957,7 @@ end
 function Picker:paint_prompt(h)
   local line = h - 1
   local home = os.getenv('HOME') or ''
-  local segs = {} -- {start, len, group}
-  local col = 0
-  local function add(text, group)
-    if text and #text > 0 then
-      segs[#segs + 1] = { col, #text, group }
-      col = col + #text
-    end
-  end
+  local add, segs = core.prompt_segments() -- {start, len, group}
   if self.icons then
     add(ICON_DIR .. ' ', 'LustyPromptSep')
   end
@@ -1173,43 +995,12 @@ function Picker:paint_prompt(h)
   end
   -- Search depth (C-d cycles it), dimmed; must stay in sync with prompt_text.
   add('  d' .. tostring(self.depth), 'LustyNativeMeta')
-  for _, seg2 in ipairs(segs) do
-    if seg2[3] then
-      api.nvim_buf_add_highlight(self.buf, ns, seg2[3], line, seg2[1], seg2[1] + seg2[2])
-    end
-  end
-end
-
-function Picker:ensure_visible()
-  local screen = self:screen_count()
-  if self.selected < self.offset then
-    self.offset = math.max(0, math.floor(self.selected / screen) * screen)
-  elseif self.selected >= self.offset + screen then
-    self.offset = math.floor(self.selected / screen) * screen
-  end
+  core.paint_segments(self, ns, line, segs)
 end
 
 --- Move one grid column left/right (wrap), mirroring the Lua port.
 function Picker:column_nav(delta)
-  local rows = self:list_rows()
-  if self.total == 0 or rows == 0 then
-    self.selected = 0
-    return
-  end
-  local columns = math.ceil(self.total / rows)
-  local cur_col = math.floor(self.selected / rows)
-  local cur_row = self.selected % rows
-  local new_col = (cur_col + delta) % columns
-  if (new_col + 1) * (cur_row + 1) > self.total then
-    new_col = delta > 0 and 0 or math.max(0, columns - 2)
-  end
-  local sel = new_col * rows + cur_row
-  if sel >= self.total then
-    sel = self.total - 1
-  end
-  self.selected = sel
-  self:ensure_visible()
-  self:rerank()
+  core.column_nav(self, delta, 'rerank')
 end
 
 --- Debounce for typing-triggered reranks; 0 (or g:LustyExplorerInputDebounce = 0)
@@ -1254,33 +1045,7 @@ function Picker:schedule_rerank()
 end
 
 function Picker:close()
-  if self.closed then
-    return
-  end
-  self.closed = true
-  if self.leave_grp then
-    pcall(api.nvim_del_augroup_by_name, self.leave_grp)
-    self.leave_grp = nil
-  end
-  if self._timer then
-    self._timer:stop()
-    self._timer = nil
-  end
-  if self.job and vim.fn.jobwait({ self.job }, 0)[1] == -1 then
-    vim.fn.jobstop(self.job)
-  end
-  self:close_preview()
-  -- close the float window itself first: deleting the buffer of a shown
-  -- window can leave an empty floating shell behind
-  if self.win and api.nvim_win_is_valid(self.win) then
-    pcall(api.nvim_win_close, self.win, true)
-  end
-  if self.buf and api.nvim_buf_is_valid(self.buf) then
-    pcall(api.nvim_buf_delete, self.buf, { force = true })
-  end
-  if api.nvim_win_is_valid(self.orig_win) then
-    pcall(api.nvim_set_current_win, self.orig_win)
-  end
+  core.close(self)
 end
 
 function Picker:handle(action)
@@ -1344,68 +1109,6 @@ function Picker:handle(action)
     self:rerank()
     return
   end
-  if action == 'down' then
-    if self.total > 0 then
-      self.selected = (self.selected + 1) % self.total
-      self:ensure_visible()
-      self:rerank()
-    end
-    return
-  end
-  if action == 'up' then
-    if self.total > 0 then
-      self.selected = (self.selected - 1) % self.total
-      self:ensure_visible()
-      self:rerank()
-    end
-    return
-  end
-  if action == 'colnext' or action == 'colprev' then
-    self:column_nav(action == 'colnext' and 1 or -1)
-    return
-  end
-  if action == 'pagedown' or action == 'pageup' then
-    local screen = self:screen_count()
-    local delta = action == 'pagedown' and screen or -screen
-    if self.total > 0 then
-      self.selected = math.max(0, math.min(self.selected + delta, self.total - 1))
-      self:ensure_visible()
-      self:rerank()
-    end
-    return
-  end
-  if action == 'first' or action == 'last' then
-    if self.total > 0 then
-      self.selected = action == 'first' and 0 or (self.total - 1)
-      self:ensure_visible()
-      self:rerank()
-    end
-    return
-  end
-  if action == 'clear' then
-    if #self.query > 0 then
-      self.query = ''
-      self.selected = 0
-      self.offset = 0
-      if self:maybe_toggle_dots() then
-        return
-      end
-      self:schedule_rerank()
-    end
-    return
-  end
-  if action == 'backspace' then
-    if #self.query > 0 then
-      self.query = self.query:sub(1, -2)
-      self.selected = 0
-      self.offset = 0
-      if self:maybe_toggle_dots() then
-        return
-      end
-      self:schedule_rerank()
-    end
-    return
-  end
   if action == 'updir' then
     if #self.query > 0 then
       -- first C-w clears the typed text (shell/vim word-delete feel)
@@ -1428,21 +1131,23 @@ function Picker:handle(action)
     self:open_current(action)
     return
   end
-  -- typing: action is a character
-  local ch = action
-  if ch == '/' then
-    self:slash_enter()
-    return
-  end
-  if #ch == 1 then
-    self.query = self.query .. ch
-    self.selected = 0
-    self.offset = 0
-    if self:maybe_toggle_dots() then
-      return
-    end
-    self:schedule_rerank()
-  end
+  -- Cursor movement, column/page jumps, query editing and plain typing are
+  -- shared with the generic list float; '/' is intercepted before the typed
+  -- character is appended, and a dotfile-mode flip restarts the backend
+  -- instead of scheduling a rerank.
+  core.handle_common(self, action, 'rerank', {
+    query_refresh = 'schedule_rerank',
+    on_char = function(picker, ch)
+      if ch == '/' then
+        picker:slash_enter()
+        return true
+      end
+      return false
+    end,
+    on_query = function(picker)
+      return picker:maybe_toggle_dots()
+    end,
+  })
 end
 
 --- Query starting with '.' reveals dotfiles: restart the backend with
