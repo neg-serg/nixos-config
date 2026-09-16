@@ -20,8 +20,8 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="${1:-$here/../../packages/local-bin/bin/dsh-statusline}"
 
 if [ ! -f "$BIN" ]; then
-  echo "check-dsh-statusline: no such script: $BIN" >&2
-  exit 1
+	echo "check-dsh-statusline: no such script: $BIN" >&2
+	exit 1
 fi
 
 run() { sh "$BIN" "$@"; }
@@ -29,33 +29,10 @@ run() { sh "$BIN" "$@"; }
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-pass=0
-fail=0
-assert() {
-  if [ "$1" -eq 0 ]; then
-    pass=$((pass + 1))
-    echo "  ok   $2"
-  else
-    fail=$((fail + 1))
-    echo "  FAIL $2"
-  fi
-}
-assert_fails() {
-  if [ "$1" -ne 0 ]; then
-    pass=$((pass + 1))
-    echo "  ok   $2"
-  else
-    fail=$((fail + 1))
-    echo "  FAIL $2"
-  fi
-}
-rc=0
-check() {
-  "$@"
-  rc=$?
-}
-contains() { case "$1" in *"$2"*) return 0 ;; *) return 1 ;; esac }
-not_contains() { case "$1" in *"$2"*) return 1 ;; *) return 0 ;; esac }
+# Counters, assertions, contains/not_contains and the footer live in the shared
+# helper, so every dev gate reports and exits identically.
+# shellcheck source-path=SCRIPTDIR source=lib.sh
+. "$here/lib.sh"
 
 sh -n "$BIN"
 assert $? "the script parses as POSIX sh"
@@ -67,17 +44,17 @@ cd "$repo" || exit 1
 git init -q -b main .
 git config user.email check@dsh-statusline
 git config user.name check-dsh-statusline
-printf 'one\n' > tracked.txt
-printf 'two\n' > staged.txt
+printf 'one\n' >tracked.txt
+printf 'two\n' >staged.txt
 git add -A
 git commit -qm init
-printf 'one changed\n' > tracked.txt
-printf 'two changed\n' > staged.txt
+printf 'one changed\n' >tracked.txt
+printf 'two changed\n' >staged.txt
 git add staged.txt
-printf 'fresh\n' > untracked.txt
+printf 'fresh\n' >untracked.txt
 
 payload() {
-  printf '{"session_id":"s1","turn":7,"workspace":{"current_dir":"%s"}%s}' "$1" "$2"
+	printf '{"session_id":"s1","turn":7,"workspace":{"current_dir":"%s"}%s}' "$1" "$2"
 }
 
 line="$(payload "$repo" '' | run)"
@@ -124,11 +101,9 @@ check contains "$(run --git "$repo")" "⎇ main"
 assert $rc "--git prints the git segment for a directory"
 check test -n "$(run --demo)"
 assert $rc "--demo runs the protocol against a canned payload"
-run --help > /dev/null 2>&1
+run --help >/dev/null 2>&1
 assert $? "--help exits 0"
-run --nope > /dev/null 2>&1
+run --nope >/dev/null 2>&1
 assert_fails $? "an unknown option fails"
 
-echo
-echo "check-dsh-statusline: $pass passed, $fail failed"
-[ "$fail" -eq 0 ]
+summary "check-dsh-statusline"

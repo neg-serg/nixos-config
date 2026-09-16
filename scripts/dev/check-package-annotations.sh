@@ -5,7 +5,8 @@
 
 set -euo pipefail
 
-REPO_ROOT="${1:-$(git rev-parse --show-toplevel 2> /dev/null || pwd)}"
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
+REPO_ROOT="$(repo_root "${1:-}")"
 cd "$REPO_ROOT"
 
 EXIT_CODE=0
@@ -20,22 +21,22 @@ EXCLUDE_PATTERN='(with pkgs|inherit|pkgs\.lib|pkgs\.stdenv|pkgs\.system|pkgs\.co
 
 # We look for lines in modules/ that have a package reference but no '#' comment.
 # We focus on lines where pkgs. starts after some whitespace (common for list items).
-results=$(grep -rnE "${PKG_PATTERN}" modules/ \
-  | grep -v '#' \
-  | grep -vE "${EXCLUDE_PATTERN}" \
-  | grep -E '^modules/.*:[0-9]+:\s*(pkgs|inputs)\.' || true)
+results=$(grep -rnE "${PKG_PATTERN}" modules/ |
+	grep -v '#' |
+	grep -vE "${EXCLUDE_PATTERN}" |
+	grep -E '^modules/.*:[0-9]+:\s*(pkgs|inputs)\.' || true)
 
 if [ -n "$results" ]; then
-  echo "Error: Found unannotated package references:"
-  echo "--------------------------------------------------------------------------------"
-  echo "$results"
-  echo "--------------------------------------------------------------------------------"
-  echo ""
-  echo "Please add a short inline comment to each package, e.g.:"
-  echo "  pkgs.hello # a friendly greeting tool"
-  EXIT_CODE=1
+	echo "Error: Found unannotated package references:"
+	echo "--------------------------------------------------------------------------------"
+	echo "$results"
+	echo "--------------------------------------------------------------------------------"
+	echo ""
+	echo "Please add a short inline comment to each package, e.g.:"
+	echo "  pkgs.hello # a friendly greeting tool"
+	EXIT_CODE=1
 else
-  echo "All package references appear to have annotations. Good job!"
+	echo "All package references appear to have annotations. Good job!"
 fi
 
 exit "$EXIT_CODE"

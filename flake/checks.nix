@@ -155,7 +155,8 @@ in
       ''
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
-        bash ${../scripts/dev/check-dsh-worktree.sh} ${../packages/local-bin/bin/dsh-worktree}
+        # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
+        bash ${../scripts/dev}/check-dsh-worktree.sh ${../packages/local-bin/bin/dsh-worktree}
         touch $out
       '';
 
@@ -179,7 +180,8 @@ in
       ''
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
-        bash ${../scripts/dev/check-dsh-statusline.sh} ${../packages/local-bin/bin/dsh-statusline}
+        # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
+        bash ${../scripts/dev}/check-dsh-statusline.sh ${../packages/local-bin/bin/dsh-statusline}
         touch $out
       '';
 
@@ -202,7 +204,8 @@ in
         ];
       }
       ''
-        bash ${../scripts/dev/check-nix-maid-app-dirs.sh} \
+        # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
+        bash ${../scripts/dev}/check-nix-maid-app-dirs.sh \
           ${../modules/user/nix-maid/apps} \
           ${../lib/neg-helpers.nix}
         touch $out
