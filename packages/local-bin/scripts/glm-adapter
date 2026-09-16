@@ -27,6 +27,10 @@ CT=windows
 STATE=/tmp/genlc-volume
 GENLC=/run/current-system/sw/bin/genlc
 PRIV=/run/current-system/sw/bin/glm-adapter-priv
+# pasta re-adds the host's 192.168.2.88 alias to the container's netns on every
+# start; left there, the guest's packets to .88 are answered by the container
+# instead of the host (see fix_vm_net below).
+NETFIX="$HOME/.local/bin/glm-vm-netfix"
 GREEN=$'\e[32m'; RED=$'\e[31m'; YELLOW=$'\e[33m'; NC=$'\e[0m'
 DO_GLM=0
 ARGS=()
@@ -86,6 +90,25 @@ notify_reset() {
   echo "ok" > "$NOTIFY_STATE"
 }
 
+# pasta copies the host uplink's whole address list into the container ('--config-net'),
+# including the 192.168.2.88 alias the VM must reach the host on: while it is in the
+# container, the guest's packets to .88 are answered by the container itself
+# ("Connection refused") and the MIDI bridge holds a dead connection while still
+# printing "connected to host relay". The normal start path is covered by ExecStartPost
+# of windows-vm.service; this covers the restarts glm-adapter performs itself.
+fix_vm_net() {
+  local out
+  if [ ! -x "$NETFIX" ]; then
+    warn "glm-vm-netfix not found ($NETFIX) — the VM may lose the route to :9003"
+    return 0
+  fi
+  if out=$(timeout 90 "$NETFIX" "$CT" 2>&1); then
+    [ -z "$out" ] || printf '%s\n' "$out" | sed 's/^/       /'
+  else
+    warn "glm-vm-netfix failed: $out"
+  fi
+}
+
 vm_restart() {
   local now recent i
   mkdir -p "$STATE_DIR"
@@ -110,6 +133,7 @@ vm_restart() {
     notify firing "таз: не получилось перезапустить контейнер — смотри podman logs windows"
     return 1
   }
+  fix_vm_net
   for i in $(seq 1 30); do
     if [ "$(qemu_usb)" -ge 1 ]; then
       notify resolved "таз: перезапущен, адаптер снова в VM (usbfs) — GLM поднимется сам"
