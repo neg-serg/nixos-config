@@ -23,9 +23,22 @@ let
 in
 {
   # DeepSeek Harness (dsh) — agent harness, everything is a plugin. Terminal
-  # only on this host: the web GUI (the `web` service on port 3080, the LAN
-  # phone proxy, the watchdog and the port-3080 firewall opening) was removed
-  # in 2026-09. The TUI lives in dsh-tui-ru.nix; nothing here starts a daemon.
+  # first on this host: the web GUI service (port 3080), the watchdog and the
+  # port-3080 firewall opening were removed in 2026-09, so `dsh web` runs on
+  # demand only and stays loopback-bound. The TUI lives in dsh-tui-ru.nix;
+  # nothing here starts a daemon.
+
+  # Phone access (dsh-pocket, installed in the `web` profile). While `dsh web`
+  # runs, the plugin's in-process bridge listens on 0.0.0.0:3081 and proxies to
+  # the loopback web app — only the bridge is reachable from the LAN, and every
+  # non-loopback request must pass the plugin's own 8-char PIN, so this rule is
+  # the second gate rather than the only one.
+  #
+  # Scoped to the uplink the phone shares (Wi-Fi clients of the 192.168.2.x
+  # router arrive here), the same way net-health opens 2586.
+  networking.firewall.interfaces.net1.allowedTCPPorts = [
+    3081 # dsh-pocket phone bridge (proxies 127.0.0.1:3080, PIN-gated)
+  ];
 
   # Install the dsh CLI into the environment (PATH).
   environment.systemPackages = [
