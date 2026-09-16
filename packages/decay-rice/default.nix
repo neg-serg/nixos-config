@@ -16,10 +16,16 @@
   brightnessctl,
   clipmenu,
   fvwm3,
+  atk,
   gdk-pixbuf,
+  glib,
+  gobject-introspection, # xlib-2.0 typelib, required by GdkX11 in the X session
   gtk3,
+  harfbuzz,
   imagemagick,
   less,
+  lib,
+  pango,
   papirus-icon-theme,
   pamixer,
   playerctl,
@@ -43,11 +49,29 @@ let
     ps.wand
   ]);
 
+  # Every typelib the eww widgets pull in through Gtk (Gtk -> Atk/Pango/
+  # GdkPixbuf/GdkX11, plus playerctl and the xlib namespace GdkX11 wants in an X
+  # session). Missing entries show up as "Namespace X not available" at runtime.
+  # lib.getLib: the typelibs live in the library output (pango's default output
+  # resolves to -bin, which has an empty girepository dir).
+  widgetTypelibs = lib.makeSearchPath "lib/girepository-1.0" (
+    map lib.getLib [
+      atk
+      gdk-pixbuf
+      glib
+      gobject-introspection
+      gtk3
+      harfbuzz
+      pango
+      playerctl
+    ]
+  );
+
   # Upstream calls bare `python`, `albert`, `parcellite` and `light`. The shims
   # below keep the vendored scripts and ~/.fvwm/config byte-identical.
   pythonShim = writeShellScriptBin "python" ''
     # GI typelibs the widgets import; playerctl/magick arrive through PATH.
-    export GI_TYPELIB_PATH="${playerctl}/lib/girepository-1.0:${gtk3}/lib/girepository-1.0:${gdk-pixbuf}/lib/girepository-1.0''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+    export GI_TYPELIB_PATH="${widgetTypelibs}''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
     export PATH="${playerctl}/bin:${imagemagick}/bin''${PATH:+:$PATH}"
     exec ${ewwPython}/bin/python3 "$@"
   '';
@@ -124,6 +148,14 @@ runCommandLocal "decay-rice" { } ''
     --replace-fail 'lockfile=~/.scripts/volume-lockfile' 'lockfile="$XDG_RUNTIME_DIR/fvwm-volume.lock"'
   # logger.py uses GNU env's --split-string form, which patchShebangs cannot
   # resolve; point it at the python shim (copied into $out/bin below).
+  # The eww notification logger asks DBus for notification *eavesdropping*;
+  # dbus-broker (services.dbus.implementation = "broker" on this host) rejects any
+  # `eavesdrop=` key in a match rule with MatchRuleInvalid and upstream's script
+  # then dies with a traceback on every session start. Comment the key out: the
+  # rule stays valid and the widget survives (it just receives nothing, i.e. no
+  # notification history on this host).
+  substituteInPlace $out/home/.config/eww/scripts/cache.py \
+    --replace-fail '"eavesdrop": "true",  # https://bugs.freedesktop.org/show_bug.cgi?id=39450' '# "eavesdrop": "true",  # NixOS: dbus-broker rejects eavesdropping'
   substituteInPlace $out/home/.config/eww/scripts/logger.py \
     --replace-fail "#!/usr/bin/env --split-string=python -u" "#!${pythonShim}/bin/python -u"
   substituteInPlace $out/home/.config/jgmenu/*.csv \
@@ -141,6 +173,23 @@ runCommandLocal "decay-rice" { } ''
   cp ${lightShim}/bin/light $out/bin/light
   cp ${firefoxShim}/bin/firefox $out/bin/firefox
   PATH="$out/bin:$PATH" patchShebangs $out/home
+
+  # --- DockBarX theme archives ---------------------------------------------
+  # Upstream ships these three as .tar.gz, which .gitignore refuses to track
+  # ("no compressed blobs"), so the extracted trees live in
+  # files/x11/rice/dockbarx-themes and are packed back here. DockBarX only looks
+  # at themes/**/*.tar.gz, hence the archive form is required.
+  mkdir -p $out/home/.local/share/dockbarx/themes/dock $out/home/.local/share/dockbarx/themes/popup_styles
+  for pair in \
+    "${rice}/dockbarx-themes/themes-root-Decay:Decay.tar.gz" \
+    "${rice}/dockbarx-themes/dock-invisible:dock/invisible.tar.gz" \
+    "${rice}/dockbarx-themes/popup-styles-Decay:popup_styles/Decay.tar.gz"; do
+    src="''${pair%%:*}"; dst="''${pair##*:}"
+    # --transform strips the ./ prefix: DockBarX looks up members by plain name
+    # (tar.extractfile("config")).
+    ( cd "$src" && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner --transform 's,^\./,,' -czf "$out/home/.local/share/dockbarx/themes/$dst" ./* )
+  done
+  tar tzf $out/home/.local/share/dockbarx/themes/Decay.tar.gz | head -1
 
   # --- fonts, cursor theme, jgmenu icons -----------------------------------
   # Metropolis (fvwm/eww/rofi/i3lock) and GE Inspira (conky Izar) are not in
