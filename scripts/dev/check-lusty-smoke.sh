@@ -9,9 +9,9 @@ set -euo pipefail
 REPO_ROOT="$(repo_root)"
 cd "$REPO_ROOT"
 
-if ! command -v nvim >/dev/null 2>&1; then
-	echo "check-lusty-smoke: nvim not found, skipping" >&2
-	exit 0
+if ! command -v nvim > /dev/null 2>&1; then
+  echo "check-lusty-smoke: nvim not found, skipping" >&2
+  exit 0
 fi
 
 log="$(mktemp)"
@@ -20,26 +20,26 @@ trap 'rm -f "$log"' EXIT
 # All headless suites: the native float suites (native_pick pickers, the
 # serve-backed filesystem picker) plus the shared-helper and parity checks.
 suites=(
-	files/nvim/lua/lusty/tests/grep_pattern_smoke.lua
-	files/nvim/lua/lusty/tests/native_float_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_icons_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_dirs_rev_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_special_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_marks_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_frecency_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_create_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_depth_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_dots_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_preview_smoke.lua
-	files/nvim/lua/lusty/tests/filesystem_float_page_smoke.lua
-	files/nvim/lua/lusty/tests/tables_parity_smoke.lua
-	files/nvim/lua/lusty/tests/theme_parity_smoke.lua
-	files/nvim/lua/lusty/tests/ls_colors_parity_smoke.lua
+  files/nvim/lua/lusty/tests/grep_pattern_smoke.lua
+  files/nvim/lua/lusty/tests/native_float_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_icons_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_dirs_rev_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_special_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_marks_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_frecency_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_create_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_depth_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_dots_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_preview_smoke.lua
+  files/nvim/lua/lusty/tests/filesystem_float_page_smoke.lua
+  files/nvim/lua/lusty/tests/tables_parity_smoke.lua
+  files/nvim/lua/lusty/tests/theme_parity_smoke.lua
+  files/nvim/lua/lusty/tests/ls_colors_parity_smoke.lua
 )
 for suite in "${suites[@]}"; do
-	if ! nvim --clean --headless -l "$suite" >"$log" 2>&1; then
-		cat "$log" >&2
-		exit 1
-	fi
+  if ! nvim --clean --headless -l "$suite" > "$log" 2>&1; then
+    cat "$log" >&2
+    exit 1
+  fi
 done
