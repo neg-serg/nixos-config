@@ -20,6 +20,13 @@ let
     fi
     exec ${pkgs.neg.dsh}/bin/dsh "$@"
   '';
+
+  # Martty trial launcher: the trial profile (see dsh-martty.nix) behind the
+  # same wrapper, so it inherits the DEEPSEEK_API_KEY bootstrap. The Tianshu
+  # status-line variable is dropped — Martty drives its own composer/status UI.
+  dshMartty = pkgs.writeShellScriptBin "dsh-martty" ''
+    exec ${dshWrapped}/bin/dsh --profile martty "$@"
+  '';
 in
 {
   # DeepSeek Harness (dsh) — agent harness, everything is a plugin. Terminal
@@ -43,6 +50,7 @@ in
   # Install the dsh CLI into the environment (PATH).
   environment.systemPackages = [
     dshWrapped # DeepSeek Harness agent CLI (dsh) — wrapped to load the DeepSeek API key
+    dshMartty # `dsh-martty` — launches the trial martty profile (see dsh-martty.nix)
     pkgs.pnpm # pnpm package manager (used by `dsh plugin --profile <name> add`)
     pkgs.gnumake # make — required by node-gyp when pnpm builds native deps (node-pty) in a profile
   ];
