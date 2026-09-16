@@ -58,7 +58,6 @@ User config management — `apps/`, `cli/`, `gui/`, `web/`, `sys/`, `fun/`.
 - `kernel/` — kernel config, params, modules
 - `net/` — NetworkManager, firewall, VPN (WireGuard, sing-box, AmneziaWG)
 - `systemd/` — systemd unit overrides
-- `vm/definitions.nix` — libvirt domain XML (gentoo, nixos, win11)
 
 ### `dev/`
 
@@ -91,7 +90,7 @@ User config management — `apps/`, `cli/`, `gui/`, `web/`, `sys/`, `fun/`.
   import.
 - **Data directories are skipped, not listed**: `user/nix-maid/apps` carries 30+ plugin/asset
   directories that have no `default.nix`; `neg.importDir` ignores them. Add an explicit `exclude`
-  only for a regular `.nix` file that must not be imported (e.g. `open-webui.nix`,
+  only for a regular `.nix` file that must not be imported (e.g. `alkano-aio.nix`,
   `disabled-modules.nix`).
 - **Non-module nix data** (cache lists, config data) still lives in `lib/` (e.g. `lib/caches.nix`),
   never in a module directory.
