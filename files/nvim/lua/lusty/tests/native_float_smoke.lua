@@ -6,11 +6,9 @@
 local base = vim.fn.fnamemodify(arg[0], ':p:h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-local function assert_eq(got, want, msg)
-  if got ~= want then
-    error((msg or 'assert') .. ': got ' .. tostring(got) .. ' want ' .. tostring(want))
-  end
-end
+local H = require('lusty.tests.harness')
+
+local assert_eq = H.assert_eq
 
 local function mk_listed(name, lines)
   local b = vim.api.nvim_create_buf(true, false)
@@ -205,5 +203,4 @@ assert_eq(vim.fn.bufexists(wanted[2]), 1, 'second marked file added: ' .. wanted
 assert_eq(vim.api.nvim_buf_get_name(0), wanted[1], 'first marked file is current')
 print('PASS native multi-select (recent)')
 
-print('ALL NATIVE FLOAT SMOKE TESTS PASSED')
-vim.cmd('qa!')
+H.finish('ALL NATIVE FLOAT SMOKE TESTS PASSED')

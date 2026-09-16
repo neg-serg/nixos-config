@@ -7,17 +7,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP theme parity smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
 
-local help = table.concat(vim.fn.systemlist({ 'lusty', '--help' }), '\n')
-if not help:find('--theme-map', 1, true) then
-  print('SKIP theme parity smoke: backend without the dump flag')
-  vim.cmd('qa!')
-  return
+if not H.require_lusty('theme parity smoke') then return end
+
+if not H.has_flag('--theme-map') then
+  return H.skip('theme parity smoke', 'backend without the dump flag')
 end
 
 local fixture = '/tmp/lusty_theme_parity.toml'
@@ -59,5 +54,4 @@ check('match.fg', mt.fg)
 check('match.underline', tostring(mt.underline))
 
 vim.env.LUSTY_THEME = nil
-print('PASS theme parity smoke')
-vim.cmd('qa!')
+H.finish('PASS theme parity smoke')

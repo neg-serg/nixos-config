@@ -7,16 +7,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float depth smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float depth smoke') then return end
 
 -- Isolate the frecency journal (the client ships F records).
-local frec = require('lusty.frecency')
-frec.set_state_file('/tmp/lusty_fs_depth_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_depth_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_depth_frec.json')
 
 local tmp = '/tmp/lusty_fs_depth_smoke'
 vim.fn.delete(tmp, 'rf')
@@ -30,16 +26,7 @@ local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 assert(p.depth == 1, 'initial depth comes from g:LustyExplorerSearchDepth')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 wait_until(function() return p.window and #p.window > 0 end, 'rows at depth 1')
 assert(p.total == 2, 'depth 1 lists the dir and the file only, got ' .. tostring(p.total))
@@ -60,5 +47,4 @@ for _, want in ipairs({ 3, 4, 5, 6, 1 }) do
 end
 q:handle('cancel')
 
-print('PASS filesystem float depth smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float depth smoke')

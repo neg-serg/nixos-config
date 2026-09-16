@@ -6,16 +6,13 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float icons smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float icons smoke') then return end
 
 -- Isolate the frecency journal: the client ships F records and a stale real
 -- journal would reorder the empty query.
-require('lusty.frecency').set_state_file('/tmp/lusty_fs_icons_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_icons_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_icons_frec.json')
 
 vim.g.LustyExplorerIcons = 1
 
@@ -29,16 +26,7 @@ local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 wait_until(function() return p.window and #p.window > 0 end, 'initial rows')
 
@@ -50,6 +38,5 @@ wait_until(function()
   return all:find(dir_icon, 1, true) and all:find(file_icon, 1, true)
 end, 'icons rendered in float buffer')
 
-print('PASS filesystem float icons smoke')
 p:handle('cancel')
-vim.cmd('qa!')
+H.finish('PASS filesystem float icons smoke')
