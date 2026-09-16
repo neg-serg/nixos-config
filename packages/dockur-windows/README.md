@@ -69,11 +69,15 @@ inside the VM — `C:\OEM\provisioned.txt` and logs.
 
 pasta (`--config-net`) copies the host addresses into the container — including the `192.168.2.88`
 alias when it already exists on net1. The container then treats .88 as its own address and answers
-`Connection refused` to itself on 10811/10812 (the VM goes the same way through passt). After every
-container re-creation remove it:
+`Connection refused` to itself on 10811/10812 (the VM goes the same way through passt) — and on
+9003 for the MIDI bridge, which then holds a dead TCP connection while still printing `connected to
+host relay`, so every CC silently disappears. This is no longer a manual step: `glm-vm-netfix`
+removes the alias, and `windows-vm.service` runs it as `ExecStartPost` while `glm-adapter` calls it
+after the VM restarts it performs itself. After any other container (re)start run it by hand:
 
 ```bash
-docker exec windows ip addr del 192.168.2.88/24 dev net1
+glm-vm-netfix windows           # script form
+podman exec windows ip addr del 192.168.2.88/24 dev net1   # what it does
 ```
 
 (Or add the .88 alias on the host only AFTER the container has started.)
