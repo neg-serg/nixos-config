@@ -39,6 +39,9 @@
 - dsh TUI — completion notifications through the terminal (OSC 99/9, works over SSH):
   [dsh-tui-notifications.md](./dsh-tui-notifications.md)
 
+- dsh martty profile — the upstream terminal UI (Martty) as a second profile:
+  [dsh-martty.md](./dsh-martty.md)
+
 - dsh-worktree — parallel dsh sessions in isolated git worktrees:
   [dsh-worktrees.md](./dsh-worktrees.md)
 
