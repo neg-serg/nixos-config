@@ -1470,28 +1470,6 @@ true
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
-## features.media.audio.spotify.enable
-
-Whether to enable enable Spotify stack (spotifyd daemon, spotify-tui).
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
 ## features.media.photo.enable
 
 Whether to enable enable photography workflow (darktable, rawtherapee, testdisk).
