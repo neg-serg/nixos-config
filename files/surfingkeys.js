@@ -475,12 +475,11 @@ Object.entries(quickmarks).forEach(([key, site]) => {
 });
 
 // ========== Site-specific ==========
-// dsh web GUI (127.0.0.1:3080) is blocklisted: normal-mode keys like d/x
-// (close tab) fire whenever the composer textarea isn't focused, and Tab
-// handling belongs to the GUI's own autocomplete. Everything else keeps
-// SurfingKeys. Port-scoped so other loopback pages (e.g. localhost:5173)
-// still get SurfingKeys.
-settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com|app\.slack\.com|127\.0\.0\.1:3080|localhost:3080/i;
+// The dsh web GUI (127.0.0.1:3080) used to be blocklisted here (normal-mode
+// keys like d/x fired when its composer textarea was unfocused, and Tab
+// belonged to the GUI's own autocomplete); the GUI was removed in 2026-09, so
+// the port-scoped entries are gone.
+settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com|app\.slack\.com/i;
 
 // ========== Image Download ==========
 api.mapkey('zi', 'Download image without dialog', function() {
