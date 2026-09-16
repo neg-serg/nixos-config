@@ -71,7 +71,7 @@ let
 in
 {
   # Runs on every rebuild (as the user, so the profile stays user-owned) and on
-  # every login — same pattern as dsh-models / dsh-tui-ru.
+  # every login — same pattern as dsh-models / dsh-tui.
   system.activationScripts.dshAcp = systemdUser.mkUserActivation {
     inherit pkgs;
     user = mainUser;
