@@ -39,7 +39,7 @@ function getState() {
         } else {
           state = "Unknown";
         }
-        resolve({ state: state, detail: detail, raw: out });
+        resolve({ state: state, detail: "", raw: out });
       });
     } catch (e) {
       resolve({ state: "Error", detail: e.message, raw: "" });
