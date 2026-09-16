@@ -21,152 +21,83 @@ tracked() {
 
 fail=0
 
-# --- Lua ---------------------------------------------------------------
-echo "Checking Lua syntax..."
-if command -v luajit >/dev/null 2>&1; then
-	lua_count=0
-	while IFS= read -r -d '' file; do
-		((lua_count++)) || true
-		# -b compiles to bytecode without executing; -l lists it (sent to /dev/null).
-		# Syntax errors land on stderr and make the command fail.
-		if ! output=$(luajit -bl "$file" 2>&1 >/dev/null); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	done < <(tracked '*.lua')
-	echo "Checked $lua_count Lua file(s)"
-else
-	echo "WARNING: luajit not found; skipping Lua syntax check" >&2
-fi
+# --- per-language checkers (file path in $1; diagnostics on stdout) --------
+# luajit -b compiles to bytecode without executing; -l lists it (sent to
+# /dev/null). Syntax errors land on stderr and make the command fail.
+check_lua() { { luajit -bl "$1" >/dev/null; } 2>&1; }
 
-# --- JavaScript --------------------------------------------------------
-echo "Checking JavaScript syntax..."
-if command -v node >/dev/null 2>&1; then
-	js_count=0
-	while IFS= read -r -d '' file; do
-		((js_count++)) || true
-		# QML JavaScript modules start with `.pragma library` (Qt Quick directive),
-		# which node does not parse; strip those lines before checking.
-		# ESM files (top-level import/export, e.g. dsh plugin host halves) fail a
-		# plain CJS stdin check; pass --input-type=module when one is detected.
-		input_type=commonjs
-		if grep -qE '^(import|export)[[:space:]]' "$file"; then
-			input_type=module
-		fi
-		if ! output=$(sed '/^\.pragma/d' "$file" | node --input-type="$input_type" --check - 2>&1); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	done < <(tracked '*.js')
-	echo "Checked $js_count JavaScript file(s)"
-else
-	echo "WARNING: node not found; skipping JavaScript syntax check" >&2
-fi
+# QML JavaScript modules start with `.pragma library` (Qt Quick directive),
+# which node does not parse; strip those lines before checking. ESM files
+# (top-level import/export, e.g. dsh plugin host halves) fail a plain CJS stdin
+# check; pass --input-type=module when one is detected.
+check_js() {
+	local input_type=commonjs
+	if grep -qE '^(import|export)[[:space:]]' "$1"; then
+		input_type=module
+	fi
+	sed '/^\.pragma/d' "$1" | node --input-type="$input_type" --check - 2>&1
+}
 
-# --- JSON --------------------------------------------------------------
-echo "Checking JSON syntax..."
-if command -v jq >/dev/null 2>&1; then
-	json_count=0
-	while IFS= read -r -d '' file; do
-		((json_count++)) || true
-		if ! output=$(jq . "$file" 2>&1 >/dev/null); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	done < <(tracked '*.json')
-	echo "Checked $json_count JSON file(s)"
-else
-	echo "WARNING: jq not found; skipping JSON syntax check" >&2
-fi
+# JSONC files may contain whole-line // comments and /* */ blocks. Only
+# line-anchored comments are stripped, so // inside strings (e.g. URLs) is
+# preserved.
+check_json() { { jq . "$1" >/dev/null; } 2>&1; }
+check_jsonc() { { sed -e '/^[[:space:]]*\/\//d' -e '/^[[:space:]]*\/\*/,/^[[:space:]]*\*\//d' "$1" | jq . >/dev/null; } 2>&1; }
+check_yaml() { python3 -c 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))' "$1" 2>&1; }
+check_toml() { python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' "$1" 2>&1; }
 
-# --- JSONC -------------------------------------------------------------
-# JSONC files may contain whole-line // comments and /* */ blocks.
-# Only line-anchored comments are stripped, so // inside strings (e.g. URLs)
-# is preserved.
-echo "Checking JSONC syntax..."
-if command -v jq >/dev/null 2>&1; then
-	jsonc_count=0
-	while IFS= read -r -d '' file; do
-		((jsonc_count++)) || true
-		if ! output=$(sed -e '/^[[:space:]]*\/\//d' -e '/^[[:space:]]*\/\*/,/^[[:space:]]*\*\//d' "$file" | jq . 2>&1 >/dev/null); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	done < <(tracked '*.jsonc')
-	echo "Checked $jsonc_count JSONC file(s)"
-else
-	echo "WARNING: jq not found; skipping JSONC syntax check" >&2
-fi
-
-# --- YAML --------------------------------------------------------------
-echo "Checking YAML syntax..."
-if python3 -c 'import yaml' 2>/dev/null; then
-	yaml_count=0
-	while IFS= read -r -d '' file; do
-		((yaml_count++)) || true
-		if ! output=$(python3 -c 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))' "$file" 2>&1); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	done < <(tracked '*.yml' '*.yaml')
-	echo "Checked $yaml_count YAML file(s)"
-else
-	echo "WARNING: PyYAML not found; skipping YAML syntax check" >&2
-fi
-
-# --- TOML --------------------------------------------------------------
-echo "Checking TOML syntax..."
-if command -v python3 >/dev/null 2>&1; then
-	toml_count=0
-	while IFS= read -r -d '' file; do
-		((toml_count++)) || true
-		if ! output=$(python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' "$file" 2>&1); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	done < <(tracked '*.toml')
-	echo "Checked $toml_count TOML file(s)"
-else
-	echo "WARNING: python3 not found; skipping TOML syntax check" >&2
-fi
-
-# --- CSS ---------------------------------------------------------------
 # No CSS parser in the devshell; brace balance catches the common error class.
-echo "Checking CSS brace balance..."
-if command -v python3 >/dev/null 2>&1; then
-	css_count=0
-	while IFS= read -r -d '' file; do
-		((css_count++)) || true
-		if ! output=$(
-			python3 - "$file" <<'EOF'
+check_css() {
+	python3 - "$1" <<'EOF'
 import sys
 text = open(sys.argv[1]).read()
 if text.count('{') != text.count('}'):
     raise ValueError(f"Unbalanced braces: {text.count('{')} open vs {text.count('}')} close")
 EOF
-		); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	done < <(tracked '*.css')
-	echo "Checked $css_count CSS file(s)"
-else
-	echo "WARNING: python3 not found; skipping CSS brace check" >&2
-fi
+}
+
+has_cmd() { command -v "$1" >/dev/null 2>&1; }
+has_pyyaml() { python3 -c 'import yaml' 2>/dev/null; }
+
+# Section table: header|guard|guard-arg|checker|count-label|globs|skip-warning
+sections=(
+	"Lua syntax|has_cmd|luajit|check_lua|Lua|*.lua|luajit not found; skipping Lua syntax check"
+	"JavaScript syntax|has_cmd|node|check_js|JavaScript|*.js|node not found; skipping JavaScript syntax check"
+	"JSON syntax|has_cmd|jq|check_json|JSON|*.json|jq not found; skipping JSON syntax check"
+	"JSONC syntax|has_cmd|jq|check_jsonc|JSONC|*.jsonc|jq not found; skipping JSONC syntax check"
+	"YAML syntax|has_pyyaml||check_yaml|YAML|*.yml *.yaml|PyYAML not found; skipping YAML syntax check"
+	"TOML syntax|has_cmd|python3|check_toml|TOML|*.toml|python3 not found; skipping TOML syntax check"
+	"CSS brace balance|has_cmd|python3|check_css|CSS|*.css|python3 not found; skipping CSS brace check"
+)
+
+# Run one section: announce it, skip when the tool is absent, otherwise check
+# every tracked match and report the first 5 lines of each failure.
+run_section() {
+	local header=$1 guard=$2 guard_arg=$3 checker=$4 count_label=$5 globs=$6 warning=$7
+	local -a pathspecs
+	local count=0 file output
+	read -ra pathspecs <<<"$globs"
+	echo "Checking $header..."
+	if "$guard" "$guard_arg"; then
+		while IFS= read -r -d '' file; do
+			((count++)) || true
+			if ! output=$("$checker" "$file"); then
+				echo "ERROR: $file"
+				echo "$output" | head -5
+				echo ""
+				fail=1
+			fi
+		done < <(tracked "${pathspecs[@]}")
+		echo "Checked $count $count_label file(s)"
+	else
+		echo "WARNING: $warning" >&2
+	fi
+}
+
+for section in "${sections[@]}"; do
+	IFS='|' read -r header guard guard_arg checker count_label globs warning <<<"$section"
+	run_section "$header" "$guard" "$guard_arg" "$checker" "$count_label" "$globs" "$warning"
+done
 
 echo ""
 if [[ $fail -ne 0 ]]; then
