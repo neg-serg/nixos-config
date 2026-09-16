@@ -1,4 +1,5 @@
 import QtQuick
+import qs.components
 
 Item {
 	id: root
@@ -44,21 +45,7 @@ Item {
 			height: groove.height
 		}
 
-		Rectangle {
-			id: grooveFill
-
-			anchors {
-				left: groove.left
-				top: groove.top
-				bottom: groove.bottom
-			}
-
-			radius: 5
-			color: "#80ceffff"
-			width: __valueOffset
-		}
-
-		Rectangle {
+		GrooveTrack {
 			id: groove
 
 			anchors {
@@ -67,20 +54,9 @@ Item {
 				verticalCenter: parent.verticalCenter
 			}
 
-			implicitHeight: 7
-			color: "transparent"
-			border.color: "#20050505"
-			border.width: 1
-			radius: 5
-		}
-
-		Rectangle {
-			id: handle
-			anchors.verticalCenter: groove.verticalCenter
-			height: 15
-			width: height
-			radius: height * 0.5
-			x: __valueOffset - width * 0.5
+			fillWidth: __valueOffset
+			grooveBorderColor: "#20050505"
+			showHandle: true
 		}
 
 		onWheel: event => {
