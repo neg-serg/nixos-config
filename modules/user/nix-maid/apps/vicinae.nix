@@ -86,7 +86,6 @@ let
     fallbacks = [
       "@neg/wl-switcher:wprandom"
       "@neg/wl-switcher:wpgrid"
-      "@neg/unsplash:wallpaper"
       "files:search"
       "clipboard:history"
     ];
@@ -126,11 +125,6 @@ let
       "action.save" = "control+S";
     };
     providers = {
-      "@neg/unsplash" = {
-        preferences = {
-          wallpaperPath = "~/pic/wl";
-        };
-      };
       "@neg/wl-switcher" = {
         preferences = {
           wallpaperPath = "~/pic/wl";
