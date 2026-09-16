@@ -16,6 +16,9 @@ with lib;
     atrium = {
       enable = mkBool "enable atrium (Wayland multiseat display manager)" false;
     };
+    fvwm = {
+      enable = mkBool "enable the FVWM3 (X11) \"An essence of decay\" rice session (syndrizzle/hotfiles)" false;
+    };
     iconTheme = lib.mkOption {
       type = types.str;
       default = "kora-pgrey";

@@ -149,6 +149,7 @@ in
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
   features.dev.ai.rocm.enable = true; # ROCm PyTorch (gfx1201) for GPU fine-tuning (kernel side: features.hardware.amdgpu.rocm)
   features.virt.libvirtd.enable = true;
+  features.gui.fvwm.enable = true; # FVWM3 X11 rice session ("An essence of decay")
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [
     "excel"
