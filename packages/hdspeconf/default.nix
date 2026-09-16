@@ -39,12 +39,10 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "User space configuration tool for RME HDSPe cards (snd-hdspe driver)";
     homepage = "https://github.com/PhilippeBekaert/hdspeconf";
-    license = licenses.gpl3;
-    platforms = platforms.linux;
+    license = lib.licenses.gpl3;
     mainProgram = "hdspeconf";
-    maintainers = [ ];
   };
 }

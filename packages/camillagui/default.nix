@@ -52,12 +52,10 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Web GUI for CamillaDSP (aiohttp backend + prebuilt React frontend)";
     homepage = "https://github.com/HEnquist/camillagui-backend";
-    license = licenses.gpl3;
+    license = lib.licenses.gpl3;
     mainProgram = "camillagui";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }

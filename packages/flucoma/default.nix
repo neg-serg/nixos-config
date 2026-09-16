@@ -129,11 +129,9 @@ stdenv.mkDerivation rec {
     rmdir "$out/FluidCorpusManipulation"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Fluid Corpus Manipulation Toolkit for SuperCollider (57 UGen plugins)";
     homepage = "https://github.com/flucoma/flucoma-sc";
-    license = licenses.bsd3; # BSD-3-Clause
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.bsd3; # BSD-3-Clause
   };
 }

@@ -50,11 +50,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/Steroids"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider Steroids UGens (SSinOscFB, TDemand)";
     homepage = "https://github.com/tai-studio/steroids-ugens";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus;
   };
 }

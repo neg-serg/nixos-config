@@ -42,7 +42,7 @@ rustPlatform.buildRustPackage rec {
     pipewire
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Accessible GTK4 PipeWire patchbay with auto-connect presets";
     longDescription = ''
       An accessible GTK4 patchbay for PipeWire. Unlike visual node-graph tools,
@@ -50,9 +50,7 @@ rustPlatform.buildRustPackage rec {
       Features auto-connect presets, system tray, and full keyboard navigation.
     '';
     homepage = "https://github.com/destructatron/pw-audioshare";
-    license = licenses.mit;
-    maintainers = [ ];
+    license = lib.licenses.mit;
     mainProgram = "pw-audioshare";
-    platforms = platforms.linux;
   };
 }

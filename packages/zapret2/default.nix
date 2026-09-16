@@ -57,11 +57,9 @@ stdenv.mkDerivation rec {
     cp -r nfq/*.conf $out/share/zapret2/ 2>/dev/null || true
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "DPI bypass tool — nfqueue-based traffic filter (nfqws2)";
     homepage = "https://github.com/bol-van/zapret";
-    license = licenses.gpl3Only;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Only;
   };
 }

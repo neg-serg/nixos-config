@@ -29,12 +29,11 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "TUI for sniffing network traffic using eBPF";
     homepage = "https://github.com/pythops/oryx";
-    license = licenses.gpl3Only;
+    license = lib.licenses.gpl3Only;
     mainProgram = "oryx";
     platforms = [ "x86_64-linux" ];
-    maintainers = [ ];
   };
 }

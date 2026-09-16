@@ -30,12 +30,11 @@ stdenv.mkDerivation rec {
     cp brrtfetch $out/bin/
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Render animated ASCII art from a GIF for your sysinfo fetcher of choice";
     homepage = "https://github.com/ferrebarrat/brrtfetch";
-    license = licenses.mit;
+    license = lib.licenses.mit;
     mainProgram = "brrtfetch";
-    maintainers = [ ];
-    platforms = platforms.all;
+    platforms = lib.platforms.all;
   };
 }

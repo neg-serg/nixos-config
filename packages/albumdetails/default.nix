@@ -28,12 +28,11 @@ stdenv.mkDerivation {
     install -m755 albumdetails "$out/bin/albumdetails"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Generate details for music album";
     homepage = "https://github.com/neg-serg/albumdetails";
-    license = licenses.mit;
-    platforms = platforms.unix;
+    license = lib.licenses.mit;
+    platforms = lib.platforms.unix;
     mainProgram = "albumdetails";
-    maintainers = [ ];
   };
 }

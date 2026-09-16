@@ -188,12 +188,10 @@ pypi.buildPythonApplication rec {
     "tmd_top.main"
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Real-time Linux network traffic monitor with per-IP connection and bandwidth breakdown (TUI)";
     homepage = "https://gitee.com/Davin168/tmd-top";
-    license = licenses.mit;
-    platforms = platforms.linux;
+    license = lib.licenses.mit;
     mainProgram = "tmd-top";
-    maintainers = [ ];
   };
 }

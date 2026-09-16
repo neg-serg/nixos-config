@@ -30,12 +30,10 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Open-source code analysis platform for C/C++, Java, JS, Python, and more";
     homepage = "https://joern.io";
-    license = licenses.asl20;
-    platforms = platforms.linux;
+    license = lib.licenses.asl20;
     mainProgram = "joern";
-    maintainers = [ ];
   };
 }

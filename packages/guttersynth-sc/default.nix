@@ -39,11 +39,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/GutterSynth"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider GutterSynth UGen — coupled duffing oscillators through modal synthesis";
     homepage = "https://github.com/madskjeldgaard/guttersynth-sc";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus;
   };
 }

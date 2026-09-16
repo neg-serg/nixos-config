@@ -35,12 +35,10 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Terminal UI to explore NixOS package closures and generate Nix declarations";
     homepage = "https://github.com/manelinux/nixard";
-    license = licenses.mit;
+    license = lib.licenses.mit;
     mainProgram = "nixard";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }

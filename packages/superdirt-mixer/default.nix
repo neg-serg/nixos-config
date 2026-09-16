@@ -20,7 +20,7 @@ stdenvNoCC.mkDerivation {
 
   installPhase = builtins.readFile ./install.sh;
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider quark with a graphical mixer UI for SuperDirt (TidalCycles audio engine)";
     longDescription = ''
       SuperDirtMixer is a mixer UI for the SuperDirt sound engine used with
@@ -29,8 +29,6 @@ stdenvNoCC.mkDerivation {
       management in JSON files. Depends on SuperDirt, EQui and JSONlib.
     '';
     homepage = "https://github.com/thgrund/SuperDirtMixer";
-    license = licenses.gpl3; # LICENSE is GPL-3.0
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3; # LICENSE is GPL-3.0
   };
 }

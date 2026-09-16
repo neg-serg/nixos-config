@@ -113,11 +113,9 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Native Rust-powered syntax highlighting engine for Zsh (zle module)";
     homepage = "https://github.com/neg-serg/zsh-native-syntax";
-    license = licenses.mit;
-    maintainers = [ ];
-    platforms = platforms.linux;
+    license = lib.licenses.mit;
   };
 }

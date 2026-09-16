@@ -50,7 +50,7 @@ buildNpmPackage {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents, and more";
     longDescription = ''
       A fork of Pi with batteries included: LSP integration, debugger (DAP) support,
@@ -58,9 +58,8 @@ buildNpmPackage {
       time-traveling stream rules, advisor model, and 32 built-in tools.
     '';
     homepage = "https://omp.sh";
-    license = licenses.mit;
+    license = lib.licenses.mit;
     mainProgram = "omp";
     platforms = [ "x86_64-linux" ];
-    maintainers = [ ];
   };
 }

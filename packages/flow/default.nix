@@ -23,12 +23,10 @@ buildGoModule rec {
     "-X main.version=${version}"
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Terminal dashboard for real-time network throughput";
     homepage = "https://github.com/programmersd21/flow";
-    license = licenses.mit;
+    license = lib.licenses.mit;
     mainProgram = "flow";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }
