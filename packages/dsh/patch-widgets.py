@@ -29,29 +29,17 @@ a half-patched tree.
 """
 
 import sys
+from functools import partial
+
+from patchlib import patch_file
 
 ROOT = sys.argv[1]  # .../node_modules/@deepseek-ai
 
-
-def patch_file(rel, replacements):
-    path = f"{ROOT}/{rel}"
-    with open(path, encoding="utf-8") as f:
-        src = f.read()
-    for old, new, expected in replacements:
-        n = src.count(old)
-        if n != expected:
-            raise SystemExit(
-                f"patch-widgets: {rel}: pattern found {n} time(s), expected {expected}: "
-                f"{old[:90]!r}"
-            )
-        src = src.replace(old, new)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(src)
-    print(f"patch-widgets: patched {rel}")
+patch = partial(patch_file, ROOT, prog="patch-widgets", announce=True)
 
 
 SUBAGENT = "dsh-tool-subagent/lib/index.js"
-patch_file(
+patch(
     SUBAGENT,
     [
         # 1a/1b (optional `model` parameter + agentOptions pass-through) are
@@ -78,7 +66,7 @@ patch_file(
 )
 
 WORKFLOW = "dsh-tool-workflow/lib/index.js"
-patch_file(
+patch(
     WORKFLOW,
     [
         # 2b. workflow presentationMeta.
@@ -107,7 +95,7 @@ patch_file(
 )
 
 RALPH = "dsh-tool-ralph/lib/index.js"
-patch_file(
+patch(
     RALPH,
     [
         # 2c. ralph presentationMeta.
@@ -136,7 +124,7 @@ patch_file(
 )
 
 SESSION = "dsh-session/lib/index.js"
-patch_file(
+patch(
     SESSION,
     [
         # 3. Session.append: accept `{ ignorable: true }` in the surface opts

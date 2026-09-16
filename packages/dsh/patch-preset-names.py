@@ -12,6 +12,8 @@ Usage: patch-preset-names.py <dsh-agent-presets/presets dir>
 import pathlib
 import sys
 
+from patchlib import patch_path
+
 PRESETS_DIR = pathlib.Path(sys.argv[1])
 
 # id -> { old literal: new literal }, each old string must occur exactly once.
@@ -33,16 +35,11 @@ REWRITES = {
 }
 
 for preset_id, replacements in REWRITES.items():
-    path = PRESETS_DIR / preset_id / "preset.yml"
-    text = path.read_text(encoding="utf-8")
-    for old, new in replacements.items():
-        count = text.count(old)
-        if count != 1:
-            raise SystemExit(
-                f"patch-preset-names: expected exactly 1 occurrence of {old!r} in {path}, found {count}"
-            )
-        text = text.replace(old, new)
-    path.write_text(text, encoding="utf-8")
+    patch_path(
+        PRESETS_DIR / preset_id / "preset.yml",
+        replacements,
+        "patch-preset-names",
+    )
 
 print(
     "patch-preset-names: rewrote shipped preset names/descriptions to English"
