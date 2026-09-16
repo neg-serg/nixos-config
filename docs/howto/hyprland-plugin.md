@@ -14,8 +14,9 @@ with the Hyprland compositor without hopping across multiple files.
 ## nixpkgs Overlay
 
 - `modules/user/nix-maid/hyprland/overlay.nix` (consolidated from the former
-  `modules/nix/hyprland.nix`) adds the `hyprglass` decoration plugin to `pkgs.hyprlandPlugins`,
-  gated behind `features.gui.enable` so headless hosts skip the `pkgs.hyprland` evaluation.
+  `modules/nix/hyprland.nix`, now removed) adds the `hyprglass` decoration plugin to
+  `pkgs.hyprlandPlugins`, gated behind `features.gui.enable` so headless hosts skip the
+  `pkgs.hyprland` evaluation.
 - The flake-pinned builds are wired in `flake/lib.nix` `hyprlandOverlay`: it routes
   `pkgs.xdg-desktop-portal-hyprland` (pinned input) so the rest of the configuration consumes it
   without touching `inputs.*` directly. `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build — the `hy3`
@@ -35,7 +36,7 @@ with the Hyprland compositor without hopping across multiple files.
   assembles `environment.nix` (the `hyprland.conf` text: `plugin = hy3/hyprglass` lines plus
   `source` of the lua config), `files.nix` (home-file links: `hyprland.conf`, `hyprland.lua`,
   `hyprlock.conf`, `hypridle.conf`, animations), and `services.nix` (systemd user services + the
-  Hyprland-related package set, incl. the session packages formerly in
+  Hyprland-related package set; the session packages moved here from the removed
   `modules/user/session/hyprland.nix`).
 - `files.nix` also writes the `permission = ..., plugin, allow` stanza into `hyprland.conf`,
   ensuring hy3 can register without triggering the ecosystem permission guard, plus the wlroots

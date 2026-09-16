@@ -27,8 +27,12 @@ Memento — the third-party plugin `dsh-memento` (`ctx.provide('memory')`, SQLit
 
 ## Rollout status (updated)
 
-All 7 plan items are **implemented** and committed as server plugins in
-`modules/user/nix-maid/apps/` (dsh-osm pattern: package.json + lib/index.js + ensure + patch-row):
+All 7 plan items were **implemented** and committed as server plugins in
+`modules/user/nix-maid/apps/` (the now-removed `dsh-osm` was the pattern: package.json +
+lib/index.js
+
+- ensure + patch-row). Two of them, `dsh-memory-extractor` and `dsh-boulder`, were removed with the
+  dsh web GUI in 2026-09 and are marked below:
 
 1. ✅ **dsh-agent-usage-reminder** — `tools/post-execute` + `additionalContexts`.
 1. ✅ **dsh-compaction-todo-preserver** — `session/event` compaction/start→end, re-append
@@ -37,11 +41,11 @@ All 7 plan items are **implemented** and committed as server plugins in
    (frontmatter alwaysApply/glob, per-session dedupe).
 1. ✅ **dsh-category-skill-reminder** — agent plane (`dsh-liangshen-fork/agent.cordis.yml`), skill
    catalog via `ctx.skills.snapshot`.
-1. ✅ **dsh-memory-extractor** — `session/end-seed`/`compaction/end` → draft-extract into memento;
-   **TODO**: LLM step (plugins have no model-call service in this DSH build).
-1. ✅ **dsh-boulder** — `agent/status` idle + todo projection + `agent.steer` with
-   CONTINUATION_PROMPT (countdown 2s, backoff 5s×2, max 5, 5-minute pause, stagnation 3, compaction
-   guard 60s) + toast-client.
+1. **dsh-memory-extractor** — *removed 2026-09:* `session/end-seed`/`compaction/end` → draft-extract
+   into memento; **TODO**: LLM step (plugins have no model-call service in this DSH build).
+1. **dsh-boulder** — *removed 2026-09, design-only now:* `agent/status` idle + todo projection +
+   `agent.steer` with CONTINUATION_PROMPT (countdown 2s, backoff 5s×2, max 5, 5-minute pause,
+   stagnation 3, compaction guard 60s) + toast-client.
 1. ✅ **dsh-hashline** — `read_hashline` + `hashline_edit` (FNV-1a → CID, hash validation, atomic
    write); functionally tested.
 
@@ -67,9 +71,9 @@ verified).
 
 ## Open questions
 
-- Where do the neg-preset fork plugins live (`~/.dsh/profiles/web/` vs
-  `modules/user/nix-maid/apps/`) — recon points at server plugins, but the fork source directory for
-  new packages still needs to be chosen (for example `packages/dsh/server-plugins/`).
+- Where do the neg-preset fork plugins live (`modules/user/nix-maid/apps/` vs a fork source tree) —
+  recon points at server plugins, but the fork source directory for new packages still needs to be
+  chosen (for example `packages/dsh/server-plugins/`).
 - Whether `dsh-memento` is patched as a third-party plugin in the profile or through a fork — to be
   clarified when implementing item 5.
 - boulder: the exact "do not inject while waiting for the user's answer" scenario requires checking

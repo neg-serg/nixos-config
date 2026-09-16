@@ -2,8 +2,8 @@
 
 - Current theme: Alkano-aio, size 23 set in `modules/user/nix-maid/gui/theme.nix`
   (XCURSOR/HYPRCURSOR/GTK/Stylix all aligned).
-- Extracted pointer frames (generated locally, NOT tracked in git):
-  `docs/cursors/alkano/left-main_000.png`…`left-main_029.png` with metadata
+- Extracted pointer frames (generated locally, NOT tracked in git — there is no `docs/cursors/` tree
+  in a fresh checkout): `docs/cursors/alkano/left-main_000.png`…`left-main_029.png` with metadata
   `docs/cursors/alkano/left-main.conf` (sizes/hotspots) plus reports
   `docs/cursors/alkano/color-summary.txt` (color ➜ size) and `docs/cursors/alkano/hotspot.txt`
   (hotspot pixel, top 3×3 color per size).
@@ -13,5 +13,6 @@
   30,34,35,41,45,46; `202020cc`: 33,44; `192529cc`: 29,40; `182528ce`: 31,42; `002000cc`: 32,43;
   `000000ce`: 37,48; `fbfbfbcc`: 16,24; `0021006a`: 20; `2121216a`: 21; `2121216c`: 23; `1826286a`:
   17; `b2a53fed`: 18; `65a230ed`: 19; `aa2525ed`: 22; `aaaaaaed`: 25.
-- Re-generate locally:
+- Re-generate locally (the `docs/cursors/` output tree is local-only — create it first with
+  `mkdir -p docs/cursors/alkano`):
   `nix build -E 'with import <nixpkgs> {}; callPackage ./modules/user/nix-maid/gui/alkano-aio.nix {}' -o /tmp/alkano && nix shell nixpkgs#xcur2png -c xcur2png -d docs/cursors/alkano -c docs/cursors/alkano/left-main.conf /tmp/alkano/share/icons/Alkano-aio/cursors/left-main`.

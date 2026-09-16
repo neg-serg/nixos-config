@@ -1,9 +1,10 @@
 # DSH hooks: rules-injector / compaction-todo-preserver / category-skill-reminder / agent-usage-reminder
 
-Design for DSH web 0.1.0-rc.6 (store `@deepseek-ai`). Verified by reading the built code in
+Design for DSH web 0.1.0-rc.6 (store `@deepseek-ai`), written before the web GUI was removed in
+2026-09. Verified by reading the built code in the then-current (now GC'd)
 `/nix/store/zvfrqpjr7x0w0ns3m53l9sx05wf24scw-dsh-web-en-0.1.0-rc.6`, the sources of
-`omo-opencode/src/hooks`, the `dsh-web-ui` fork and the `/etc/nixos` modules (`dsh-mode`,
-`dsh-liangshen-fork`, `dsh-gui-tweaks`).
+`omo-opencode/src/hooks`, the `dsh-web-ui` fork (removed in 2026-09) and the `/etc/nixos` modules
+(`dsh-mode`, `dsh-liangshen-fork`; `dsh-gui-tweaks` no longer exists).
 
 ## Key DSH facts (what the assessment is based on)
 

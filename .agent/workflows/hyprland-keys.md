@@ -4,52 +4,78 @@ ______________________________________________________________________
 
 # Hyprland Keybindings
 
-## Configuration Files
+## Configuration File
 
-| File | Purpose | |------|---------| | `files/gui/hypr/bindings/apps.conf` | Application launchers
-| | `files/gui/hypr/bindings/special.conf` | Special keys | | `files/gui/hypr/bindings/wm.conf` |
-Window management |
+All keybindings live in one Lua file:
+
+`files/gui/hypr/hyprland.lua`
+
+Hyprland 0.55+ auto-detects `~/.config/hypr/hyprland.lua` and ignores the legacy `hyprland.conf`, so
+the old `bindings/apps.conf`, `bindings/special.conf` and `bindings/wm.conf` files are gone. The Lua
+file is read into the Nix store at build time by `modules/user/nix-maid/hyprland/main.nix` and
+linked to `~/.config/hypr/hyprland.lua`.
 
 ## Syntax
 
-```
-bind = MODS, KEY, ACTION, ARGS
+```lua
+hl.bind(MODS .. "+KEY", hl.dsp.<dispatcher>({ ... }), { OPTIONS })
 ```
 
-### Modifiers:
+Modifiers are Lua locals declared at the top of the file:
 
-- `SUPER` (Mod4) — Windows/Super key
-- `SHIFT`
-- `CTRL`
-- `ALT`
+| Local | Key     |
+| ----- | ------- |
+| `M4`  | `SUPER` |
+| `M1`  | `ALT`   |
+| `C`   | `CTRL`  |
+| `SH`  | `SHIFT` |
+
+Join them with `..` and `"+"`, e.g. `M4 .. "+" .. SH .. "+c"`.
+
+Dispatchers are `hl.dsp.*` calls; the config uses `exec_cmd`, `focus`, `layout`, `submap`,
+`workspace.move` and `window.{close,cycle_next,drag,float,fullscreen,fullscreen_state,move,resize}`.
+
+The optional third argument holds bind options: `{ locked = true }`, `{ repeating = true }`,
+`{ mouse = true }`, `{ release = true }`.
 
 ## Examples
 
 ### Launch application:
 
-```
-bind = SUPER, Return, exec, kitty
-bind = SUPER, D, exec, ~/.local/bin/main-menu
+```lua
+hl.bind(M4 .. "+Return", hl.dsp.exec_cmd("kitty"), { locked = true })
+hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("~/.local/bin/main-menu"))
 ```
 
 ### Window control:
 
-```
-bind = SUPER, Q, killactive
-bind = SUPER, F, fullscreen
-bind = SUPER, Space, togglefloating
+```lua
+hl.bind(M4 .. "+Escape", hl.dsp.window.close())
+hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
+hl.bind(M4 .. "+" .. SH .. "+f",
+  hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 ```
 
-### Workspaces:
+### Workspaces and submaps:
 
+```lua
+hl.bind(M4 .. "+1", hl.dsp.focus({ workspace = "1" }))
+hl.bind(M4 .. "+mouse_down", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(M4 .. "+minus", hl.dsp.submap("tiling"))
 ```
-bind = SUPER, 1, workspace, 1
-bind = SUPER SHIFT, 1, movetoworkspace, 1
-```
+
+Toggling floating windows uses `hl.dsp.window.float({ action = "toggle" })` (see the `special`
+submap); submaps are declared with `hl.define_submap(name, reset_key, function() ... end)`.
 
 ## Apply Changes
 
-After editing:
+The file is linked from the Nix store, so a repo edit needs a rebuild first:
+
+```bash
+nh os switch /etc/nixos#odin --option substitute false
+```
+
+Then reload the running compositor:
 
 ```bash
 hyprctl reload

@@ -6,13 +6,33 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 
 - `opts.nix` — option helpers (`mkOpt`, `mkBoolOpt`, `mkStrOpt`, …); consumed via `opts` specialArg
   (see `flake/nixos.nix`) and directly by modules.
-- `aliae.nix` — shell alias definitions (`alias`-style helpers for the user's shell).
-- `package-checks.nix` — package sanity checks wired into `aliae.nix`.
 - `neg-helpers.nix` — structural helpers: home-file helpers (`mkHomeFiles`, `mkXdgText`,
   `mkLocalBin`, `linkImpure`) and `importDir` (directory auto-import for every module aggregator);
-  single source for `specialArgs.neg` (flake/nixos.nix) and `flake/checks.nix`.
+  single source for `specialArgs.neg` (flake/nixos.nix) and `flake/checks.nix`; also re-exports
+  `ruKeys` from `ru-keys.nix`.
+- `systemd-user.nix` — systemd user unit helpers: `mkUnitFromPresets` plus the module-shaped
+  `mkUserService` / `mkUserOneshot` / `mkUserActivation`; the legacy `mkSimple*` helpers were
+  removed.
+- `aliae.nix` — shell alias definitions (`alias`-style helpers for the user's shell); imports
+  `package-checks.nix` to skip aliases whose packages are missing.
+- `package-checks.nix` — package availability checks (`hasRg`, `hasNmap`, `hasCurl`, …) for the
+  alias generators.
+- `fzf-opts-tests.nix` — eval-only assertions over `neg-helpers.nix`'s `hasFzfHashComment`; wired
+  into `flake/checks.nix` as the `fzf-opts-guard` check.
+- `ru-keys.nix` — single source of truth for the RU-layout hotkey problem: latin key → the char the
+  ru layout produces, and every per-app duplicate bind is generated from this table. Exposed as
+  `neg.ruKeys`; mechanics in `docs/howto/hotkeys-ru-layout.md`.
+- `ru-keys-tests.nix` — eval-only assertions over `ru-keys.nix` (neovim langmap golden, table
+  parity); wired into `flake/checks.nix` as the `ru-keys` check.
+- `caches.nix` — shared binary-cache `trusted-public-keys` (official cache plus community mirrors);
+  imported by `modules/nix/settings.nix`.
+- `python-packages.nix` — shared Python package list; single source for the system Python env
+  (`modules/dev/python/pkgs.nix`) and the Python devshell (`flake/devshells/python.nix`).
 - `quickshell-wrapper.nix` — Quickshell wrapper helpers (used by
   `modules/user/nix-maid/gui/quickshell.nix`).
+- `quickshell-wrapper-install.sh` — install-phase template read by `quickshell-wrapper.nix`
+  (`builtins.readFile`); builds the wrapped `qs` binary with the Qt/QML import paths, theme data and
+  `QT_QPA_PLATFORM=wayland`.
 
 Runtime helpers (`mkHomeFiles`, `mkLocalBin`, `mkXdgText`, `systemdUser`, `path`, …) live on
 `config.lib.neg` (defined in `flake/nixos.nix` specialArgs + exposed via `modules/core/neg.nix`),

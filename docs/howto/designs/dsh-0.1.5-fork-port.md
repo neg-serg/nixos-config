@@ -3,10 +3,14 @@
 Plan for re-enabling the six plugin rows that the 0.1.5-rc.1 upgrade disabled, and for rewriting the
 one plugin whose transport contract was removed rather than renamed.
 
-Context and the break inventory live in the dsh-web forks notes (section "dsh 0.1.5-rc.1: SDK breaks
-and the rows disabled meanwhile"). Current state: `ssh`, `live-stats`, `describe-image`,
-`ui-web-ui-settings`, `remote-web-ui`, `web-search-free` are `disabled: true` in the profile patch;
-everything else runs.
+> **Archived (2026-09).** The dsh web GUI and its `dsh-web-ui` fork checkout were removed in
+> 2026-09; the `dsh-market.nix`, `dsh-web-en-assets/` and `dsh-startup-guard*` modules referenced
+> below are gone too. This plan describes the removed setup and is kept as history.
+
+Context and the break inventory lived in the dsh-web forks notes (section "dsh 0.1.5-rc.1: SDK
+breaks and the rows disabled meanwhile") — that note was removed in 2026-09. Current state: `ssh`,
+`live-stats`, `describe-image`, `ui-web-ui-settings`, `remote-web-ui`, `web-search-free` are
+`disabled: true` in the profile patch; everything else runs.
 
 Status: A0 (the harness is `scripts/dev/check-dsh-sessions.sh`), A1's roster tokens and A4 are done;
 A5 is blocked on the fork's dependency wiring — see "A2. Give the fork its own dependency tree". The
@@ -15,9 +19,9 @@ code work.
 
 ## Definition of done
 
-- The fork checkout `~/src/1st-level/@projects/dsh-web-ui` installs, typechecks, builds and tests
-  against `@deepseek-ai/*@0.1.5-rc.1` (`pnpm install`, `pnpm typecheck`, `pnpm -r build`,
-  `pnpm -r test`, `pnpm docs:check`, `pnpm aggregate:check`).
+- The fork checkout `~/src/1st-level/@projects/dsh-web-ui` — removed in 2026-09 — installs,
+  typechecks, builds and tests against `@deepseek-ai/*@0.1.5-rc.1` (`pnpm install`,
+  `pnpm typecheck`, `pnpm -r build`, `pnpm -r test`, `pnpm docs:check`, `pnpm aggregate:check`).
 - All six rows are enabled again and the web UI boots with no "did not activate" banner.
 - Phone pairing works end to end (QR → `/m` surface) with the LAN gate unchanged.
 - `dsh-preflight` reports no host-smoke failures (its two known false positives are fixed or
@@ -188,8 +192,9 @@ Deliverable: QR pairing works from a phone, live updates arrive, `requirePairing
 **Landed** — the gate is now a patcher with a pending list (today: `live-stats`, `web-search-free`);
 verification in the progress log.
 
-- **C1.** Remove the row lines from the `0.1.5 SDK port pending` block in
-  `modules/user/nix-maid/apps/dsh-market.nix` as each plugin is verified.
+- **C1.** Remove the row lines from the `0.1.5 SDK port pending` block in the
+  `modules/user/nix-maid/apps/dsh-market.nix` module (removed in 2026-09) as each plugin is
+  verified.
 - **C2.** Re-seed the profile copies — those modules copy only when missing, so
   `rm -rf ~/.dsh/profiles/web/node_modules/<pkg>` and let the module's ensure script (or the next
   rebuild/login) re-create it; then `systemctl --user restart dsh.service`. Fork packages are
@@ -200,8 +205,9 @@ verification in the progress log.
 ## Workstream D — external
 
 - **D1.** `dsh-free-search`: track the author's release and keep the row disabled meanwhile. If the
-  plugin matters before that, vendor the two-line settings-API patch through the existing
-  marker-based profile patcher pattern (`modules/user/nix-maid/apps/dsh-web-en-assets/patch.mjs`).
+  plugin matters before that, vendor the two-line settings-API patch through the former marker-based
+  profile patcher pattern (`modules/user/nix-maid/apps/dsh-web-en-assets/patch.mjs`, removed in
+  2026-09).
 
 ## Verification protocol
 
@@ -311,7 +317,8 @@ Done while writing this plan (fork working tree, uncommitted):
     ship their browser dependencies as `devDependencies` upstream (their own bundles inline them),
     so the npm copies need them resolvable — they now sit in the fork's **root** `devDependencies`,
     which is where vite walks up to from `.pnpm/…`;
-  - `shared/package.json` and `scripts/plugin-template/package.json` still carried the dead
+  - `shared/package.json` and `scripts/plugin-template/package.json` — the whole fork tree,
+    including `scripts/plugin-template/`, was removed in 2026-09 — still carried the dead
     `dsh-client-runtime` dependency and the old `^0.1.0-rc.6` specs (the earlier sweep covered only
     `packages/**`); the template's `dsh.client.inject` now names the renderer.
 
@@ -482,13 +489,14 @@ Done while writing this plan (fork working tree, uncommitted):
   served plugin group carries the new selectors.
 
 - **Preflight false positives fixed (guard patch + suppression).** The `dsh-startup-guard`
-  composition check concatenated every patch file's entry ids and flagged *any* repeat as a
-  loader-level boot failure. On 0.1.5 that is the normal override mechanism (`@deepseek-ai/dsh-base`
-  and `@deepseek-ai/dsh-web-app` both ship `tool-bash`/`tools`/…, the profile patch overrides
-  `web-runtime`/`agent-presets`, and `@linxin666/dsh-web-ui-all` re-declares its sub-plugin rows),
-  so every boot reported 37 web + 1 tui issues while the tree booted clean. New module
-  `dsh-startup-guard.nix` (assets `dsh-startup-guard-assets/`) re-applies two things at activation
-  and login, because a pnpm re-install overwrites the plugin:
+  composition check (removed in 2026-09 with the web GUI) concatenated every patch file's entry ids
+  and flagged *any* repeat as a loader-level boot failure. On 0.1.5 that is the normal override
+  mechanism (`@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-web-app` both ship `tool-bash`/`tools`/…,
+  the profile patch overrides `web-runtime`/`agent-presets`, and `@linxin666/dsh-web-ui-all`
+  re-declares its sub-plugin rows), so every boot reported 37 web + 1 tui issues while the tree
+  booted clean. New module `dsh-startup-guard.nix` (assets `dsh-startup-guard-assets/`, removed in
+  2026-09) re-applied two things at activation and login, because a pnpm re-install overwrote the
+  plugin:
 
   - `guard-patch.mjs` scopes the duplicate check to one patch file (a same-file repeat stays fatal,
     so strict mode still blocks real authoring bugs). Idempotent through a sentinel comment, with an

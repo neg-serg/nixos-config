@@ -48,7 +48,8 @@ seam / overlap / double-compaction risk).
 ### Large (already partially ported as prompts)
 
 - **todo-continuation-enforcer** (boulder): exact text in `agent-guards.md` §6; mechanics (countdown
-  2s, backoff 30s×2, max 5, 5-minute pause) — ✅ implemented by the dsh-boulder plugin.
+  2s, backoff 30s×2, max 5, 5-minute pause) — the `dsh-boulder` plugin that implemented it was
+  removed in 2026-09; the design lives in `designs/boulder.md`.
 - **preemptive-compaction**: preemptive compaction before the token limit — 📐 design ready:
   micro-compaction (continuous amortized compaction after every turn, port from hermes-agent) —
   `agent-micro-compaction.md`; implementation by the dsh-micro-compaction plugin is a separate task

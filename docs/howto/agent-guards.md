@@ -106,6 +106,9 @@ ______________________________________________________________________
 
 ## 6. Boulder: uncompleted todos (oh-my-opencode: todo-continuation-enforcer)
 
+> Status: design-only — there is no `boulder` code in this repo (the plugin was removed with the dsh
+> web GUI in 2026-09; see `designs/boulder.md`). The text below is the reference prompt.
+
 The exact injection text from `hooks/todo-continuation-enforcer/constants.ts` (CONTINUATION_PROMPT),
 inserted on the `session.idle` event when tasks remain open:
 
