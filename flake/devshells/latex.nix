@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   nativeBuildInputs = [
     pkgs.rubber # Wrapper for LaTeX and friends
     (pkgs.texlive.combined.scheme-full.withPackages (ps: [

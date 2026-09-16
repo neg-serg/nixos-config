@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   # professional audio production environment (DAWs, editors, synths)
   nativeBuildInputs = [
     pkgs.glicol-cli # audio DSL for generative compositions

@@ -1,6 +1,7 @@
 {
   nixpkgs,
   pkgs,
+  flakeLib,
   ...
 }:
 _system:
@@ -9,9 +10,7 @@ let
 in
 {
   devShells = import ./devshells/default.nix {
-    inherit
-      pkgs
-      lib
-      ;
+    inherit pkgs lib;
+    mkDevShell = flakeLib.mkDevShell pkgs;
   };
 }

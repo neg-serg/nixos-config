@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   # single-purpose tools consolidated for eval efficiency
   packages = [
     pkgs.difftastic # structural diff tool

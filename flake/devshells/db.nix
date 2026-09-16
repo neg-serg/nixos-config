@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   packages = [
     pkgs.iredis # Redis enhanced CLI
     pkgs.pgcli # PostgreSQL TUI client
