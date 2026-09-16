@@ -209,7 +209,7 @@ With that, the only open entries are the owner decisions below.
 | #   | Item                                                                       | Evidence (re-checked at the end of the pass)                                                                                                                                                                                                                                                                                                                                       | Suggested action                                       |
 | --- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | C1  | `secrets/github-netrc.sops.yaml`                                           | re-checked: **no functional reference.** The only hits are a comment in `modules/user/nix-maid/sys/secrets.nix:15` ("github-netrc, mpdas, musicbrainz are managed elsewhere" — that file declares `github-token`, not this one) and prose in `docs/runbook-vaultix-migration.md:126`; nothing declares or reads the secret, so it looks like a leftover from the vaultix migration | needs your call — the subtree is off-limits without it |
-| C2  | dead quickshell assets                                                     | **verified dead, see the section below** — 19 files, 171 332 B: 12 shaders, `illustrations/moon_nasa.jpg`, `Theme/.theme-light.json`, `files/winapps/windows.svg` and four greeter icons                                                                                                                                                                                           | delete on request                                      |
+| C2  | dead quickshell assets                                                     | **verified dead and removed** — 19 files, 171 332 B: 12 shaders, `illustrations/moon_nasa.jpg`, `Theme/.theme-light.json`, `files/winapps/windows.svg` and four greeter icons; see the verification section below                                                                                                                                                                  | done                                                   |
 | C3  | `hosts/odin/boot-probe.nix`                                                | still marked TEMPORARY; the audit's 130/130 `pwnam_ms=0` measurements were not re-run                                                                                                                                                                                                                                                                                              | remove on request                                      |
 | C4  | `hal.html` (115 528 B, untracked, repo root)                               | **removed on request** (2026-09-16): an untracked research article (`<html lang="fr">`), referenced only by the two audit documents; the repository root is now clean of stray files                                                                                                                                                                                               | done                                                   |
 | C5  | marker files (`.keep`, `.gitkeep`, `files/shell/btop/themes/neg.theme`, …) | kept on purpose                                                                                                                                                                                                                                                                                                                                                                    | leave                                                  |
@@ -232,6 +232,17 @@ session.
 Verdict: all 19 files are unreferenced, and for the three classes that could be probed the running
 shell did not notice their absence. The only remaining uncertainty is the greeter icons, where the
 evidence is static.
+
+**Removed** on request: all nineteen files, in `af2a576b8` (quickshell, 18 files) and `c6f910a86`
+(winapps). Verdict re-checked on the deployed shell after the switch — the shaders that remain are
+`panel_tint_mix` and `wedge_clip`, the bar renders, and the startup warning set is the pre-existing
+one.
+
+One deployment note found while verifying: `pre-start.sh` force-copies `shaders/`, `art/`,
+`Widgets/` and `Notifications/` with `cp -rfT`, which overwrites but never prunes, and `Theme/` is a
+writable directory that is not refreshed at all — so right after the switch the deployed
+`~/.config/quickshell` still held the twelve deleted shaders and `.theme-light.json`. They were
+removed by hand; a `rm -rf` before the copy (or a pruning pass) would make the deployment exact.
 
 ## Process note
 
