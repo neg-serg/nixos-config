@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   packages = [
     pkgs.valgrind # Tool for debugging and profiling
     pkgs.nixfmt # nix formatter

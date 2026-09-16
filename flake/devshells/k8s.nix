@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   packages = [
     pkgs.kubectl # Kubernetes CLI
     pkgs.kubectx # fast switch Kubernetes contexts

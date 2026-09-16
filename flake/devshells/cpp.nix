@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   nativeBuildInputs = [
     pkgs.clang # C language family frontend for LLVM (wrapper script)
     pkgs.clang-tools # Standalone command line tools for C++ development

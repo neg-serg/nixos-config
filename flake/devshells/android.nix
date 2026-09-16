@@ -1,9 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, lib, ... }: {
   nativeBuildInputs = [
     pkgs.android-tools # Android ADB and fastboot tools
     pkgs.scrcpy # Display and control Android devices over USB or TCP/IP

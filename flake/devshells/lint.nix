@@ -1,11 +1,8 @@
-{
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 # Lightweight devshell for 'just lint' / .githooks/pre-commit.
 # No preCommit shellHook here (unlike base.nix) so running the lint suite
 # never touches .git/hooks. Keep the tool list in sync with base.nix.
-pkgs.mkShell {
+{
   packages = [
     pkgs.just # command runner
     pkgs.jq # json processor
