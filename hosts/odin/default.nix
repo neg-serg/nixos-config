@@ -14,116 +14,40 @@ let
   # terminal, so these duplicates only matter after a manual M4+S switch.
   ruKeys = import ../../lib/ru-keys.nix;
 
+  # Positional constructor for the table below: nixfmt keeps a three-name
+  # `inherit` on one line, so each record costs one line instead of five.
+  zellijBind = mod: key: action: { inherit mod key action; };
+
   zellijRuBinds = {
     focus = [
-      {
-        mod = "Alt ";
-        key = "h";
-        action = "MoveFocus \"left\"";
-      }
-      {
-        mod = "Alt ";
-        key = "j";
-        action = "MoveFocus \"down\"";
-      }
-      {
-        mod = "Alt ";
-        key = "k";
-        action = "MoveFocus \"up\"";
-      }
-      {
-        mod = "Alt ";
-        key = "l";
-        action = "MoveFocus \"right\"";
-      }
+      (zellijBind "Alt " "h" "MoveFocus \"left\"")
+      (zellijBind "Alt " "j" "MoveFocus \"down\"")
+      (zellijBind "Alt " "k" "MoveFocus \"up\"")
+      (zellijBind "Alt " "l" "MoveFocus \"right\"")
       # Emacs-style focus (Alt + npfb)
-      {
-        mod = "Alt ";
-        key = "n";
-        action = "MoveFocus \"down\"";
-      }
-      {
-        mod = "Alt ";
-        key = "p";
-        action = "MoveFocus \"up\"";
-      }
-      {
-        mod = "Alt ";
-        key = "f";
-        action = "MoveFocus \"right\"";
-      }
-      {
-        mod = "Alt ";
-        key = "b";
-        action = "MoveFocus \"left\"";
-      }
+      (zellijBind "Alt " "n" "MoveFocus \"down\"")
+      (zellijBind "Alt " "p" "MoveFocus \"up\"")
+      (zellijBind "Alt " "f" "MoveFocus \"right\"")
+      (zellijBind "Alt " "b" "MoveFocus \"left\"")
     ];
     resize = [
-      {
-        mod = "";
-        key = "h";
-        action = "Resize \"left\"";
-      }
-      {
-        mod = "";
-        key = "j";
-        action = "Resize \"down\"";
-      }
-      {
-        mod = "";
-        key = "k";
-        action = "Resize \"up\"";
-      }
-      {
-        mod = "";
-        key = "l";
-        action = "Resize \"right\"";
-      }
+      (zellijBind "" "h" "Resize \"left\"")
+      (zellijBind "" "j" "Resize \"down\"")
+      (zellijBind "" "k" "Resize \"up\"")
+      (zellijBind "" "l" "Resize \"right\"")
     ];
     tab = [
-      {
-        mod = "";
-        key = "l";
-        action = "GoToNextTab";
-      }
-      {
-        mod = "";
-        key = "h";
-        action = "GoToPreviousTab";
-      }
-      {
-        mod = "";
-        key = "n";
-        action = "NewTab; SwitchToMode \"normal\"";
-      }
-      {
-        mod = "";
-        key = "r";
-        action = "SwitchToMode \"rename-tab\"";
-      }
+      (zellijBind "" "l" "GoToNextTab")
+      (zellijBind "" "h" "GoToPreviousTab")
+      (zellijBind "" "n" "NewTab; SwitchToMode \"normal\"")
+      (zellijBind "" "r" "SwitchToMode \"rename-tab\"")
     ];
     scroll = [
-      {
-        mod = "";
-        key = "j";
-        action = "ScrollDown";
-      }
-      {
-        mod = "";
-        key = "k";
-        action = "ScrollUp";
-      }
+      (zellijBind "" "j" "ScrollDown")
+      (zellijBind "" "k" "ScrollUp")
       # Emacs-style scroll (n/p)
-      {
-        mod = "";
-        key = "n";
-        action = "ScrollDown";
-      }
-      {
-        mod = "";
-        key = "p";
-        action = "ScrollUp";
-      }
+      (zellijBind "" "n" "ScrollDown")
+      (zellijBind "" "p" "ScrollUp")
     ];
   };
 
