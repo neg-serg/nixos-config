@@ -11,21 +11,7 @@ Item {
 	implicitHeight: 7
 	implicitWidth: 200
 
-	Rectangle {
-		id: grooveFill
-
-		anchors {
-			left: groove.left
-			top: groove.top
-			bottom: groove.bottom
-		}
-
-		radius: 5
-		color: "#80ceffff"
-		width: root.width * ((root.value - root.from) / (root.to - root.from))
-	}
-
-	Rectangle {
+	GrooveTrack {
 		id: groove
 
 		anchors {
@@ -35,9 +21,6 @@ Item {
 		}
 
 		height: 7
-		color: "transparent"
-		border.color: "#20eeffff"
-		border.width: 1
-		radius: 5
+		fillWidth: root.width * ((root.value - root.from) / (root.to - root.from))
 	}
 }

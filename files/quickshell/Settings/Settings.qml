@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.Helpers
 
 Singleton {
     property string shellName: "quickshell"
@@ -16,42 +17,13 @@ Singleton {
         }
     }
 
-    FileView {
+    GuardedFileView {
         id: settingFileView
         path: settingsFile
-        watchChanges: true
-        property bool _reloadPending: false
-        property bool _loading: false
-        onFileChanged: {
-            if (!settingFileView._reloadPending) {
-                settingFileView._reloadPending = true;
-                Qt.callLater(function () {
-                    settingFileView._reloadPending = false;
-                    settingFileView._reload();
-                });
-            }
-        }
-        onAdapterUpdated: {
-            // A reload applying file changes must not write back to the file
-            // (that would trigger onFileChanged -> reload -> onAdapterUpdated loop).
-            if (settingFileView._loading) {
-                settingFileView._loading = false;
-                return;
-            }
-            writeAdapter();
-        }
-        Component.onCompleted: function () {
-            _reload();
-        }
         onLoadFailed: function (error) {
             settingAdapter = {};
             writeAdapter();
             settingFileView._loading = false;
-        }
-        // Wrap reload() so adapter updates caused by it are not echoed back to disk.
-        function _reload() {
-            settingFileView._loading = true;
-            settingFileView.reload();
         }
         JsonAdapter {
             id: settingAdapter

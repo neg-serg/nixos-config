@@ -1,3 +1,4 @@
 module qs.Helpers
+GuardedFileView 1.0 GuardedFileView.qml
 IdleInhibitor 1.0 IdleInhibitor.qml
 IPCHandlers 1.0 IPCHandlers.qml

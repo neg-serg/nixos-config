@@ -4,64 +4,6 @@ var _weatherCache = {}; // key: cityLower -> { value: weatherObject, expiry: ts,
 
 // ── Fallback provider: wttr.in ──────────────────────────────────────────────
 
-// WorldWeatherOnline (WWO) weather codes → WMO weather interpretation codes
-// wttr.in uses WWO codes internally; this maps them to the WMO standard used
-// by Open-Meteo and the WeatherIcons.js icon mapping.
-var _WWO_TO_WMO = {
-    "113": 0,   // Sunny / Clear
-    "116": 2,   // Partly cloudy
-    "119": 3,   // Cloudy
-    "122": 3,   // Overcast
-    "143": 45,  // Mist
-    "176": 80,  // Light rain shower
-    "179": 85,  // Light snow shower
-    "182": 86,  // Heavy snow shower
-    "185": 87,  // Light sleet showers
-    "200": 95,  // Thundery outbreaks
-    "227": 76,  // Blowing snow
-    "230": 77,  // Blizzard
-    "248": 45,  // Fog
-    "260": 48,  // Freezing fog
-    "263": 51,  // Light drizzle
-    "266": 53,  // Drizzle
-    "281": 56,  // Freezing drizzle
-    "284": 57,  // Heavy freezing drizzle
-    "293": 61,  // Light rain
-    "296": 61,  // Light rain
-    "299": 63,  // Moderate rain
-    "302": 65,  // Heavy rain
-    "305": 65,  // Heavy rain
-    "308": 65,  // Very heavy rain
-    "311": 66,  // Light sleet
-    "314": 67,  // Moderate sleet
-    "317": 67,  // Heavy sleet
-    "320": 71,  // Light snow
-    "323": 71,  // Light snow
-    "326": 71,  // Light snow
-    "329": 73,  // Moderate snow
-    "332": 73,  // Moderate snow
-    "335": 75,  // Heavy snow
-    "338": 75,  // Heavy snow
-    "350": 77,  // Hail
-    "353": 80,  // Light rain shower
-    "356": 81,  // Moderate rain shower
-    "359": 82,  // Heavy rain shower
-    "362": 85,  // Light sleet shower
-    "365": 86,  // Moderate sleet shower
-    "368": 85,  // Light snow shower
-    "371": 86,  // Heavy snow shower
-    "374": 85,  // Light sleet shower
-    "377": 86,  // Heavy sleet shower
-    "386": 95,  // Thundery outbreaks with light rain
-    "389": 96,  // Thundery outbreaks with heavy rain
-    "392": 97,  // Thundery snow showers
-    "395": 99   // Heavy thundery snow
-};
-
-function _wwoToWmo(wwoCode) {
-    return _WWO_TO_WMO[String(wwoCode)] !== undefined ? _WWO_TO_WMO[String(wwoCode)] : 2;
-}
-
 // ── wttr.in text-format helpers ────────────────────────────────────────────
 // Used when the JSON format (format=j1) is truncated or unparseable.
 
@@ -148,65 +90,6 @@ function _parseWttrText(text) {
         wind_direction_10m: windDirDeg,
         relative_humidity_2m: humidity,
         surface_pressure: pressure
-    };
-}
-
-// Normalise wttr.in "format=j1" JSON to the Open-Meteo shape the QML expects.
-// Handles possible truncation gracefully — returns current conditions even if
-// daily forecast is missing.
-function _normalizeWttrIn(data) {
-    if (!data || !data.current_condition || !data.current_condition[0]) return null;
-    var cc = data.current_condition[0];
-
-    var tempC = parseFloat(cc.temp_C);
-    if (isNaN(tempC)) return null;
-
-    var wmoCode = _wwoToWmo(cc.weatherCode);
-    var humidity = parseFloat(cc.humidity) || 0;
-    var windDir = parseFloat(cc.winddirDegree) || 0;
-    var windMs = (parseFloat(cc.windspeedKmph) || 0) / 3.6;
-    var pressure = parseFloat(cc.pressure) || 0;
-
-    // Derive daily forecast from the "weather" array (up to 7 days).
-    // wttr.in doesn't provide explicit maxtempC/mintempC in free tier,
-    // so we compute them from hourly entries.
-    var daily = { time: [], weathercode: [], temperature_2m_max: [], temperature_2m_min: [] };
-    if (data.weather && data.weather.length > 0) {
-        for (var i = 0; i < data.weather.length; i++) {
-            var day = data.weather[i];
-            if (!day || !day.date) break;
-            daily.time.push(day.date);
-
-            var hrs = day.hourly;
-            var maxT = -Infinity, minT = Infinity;
-            var noonCode = wmoCode;
-            if (hrs && hrs.length > 0) {
-                for (var h = 0; h < hrs.length; h++) {
-                    var ht = parseFloat(hrs[h].tempC);
-                    if (!isNaN(ht)) { if (ht > maxT) maxT = ht; if (ht < minT) minT = ht; }
-                    // Use the middle-of-day hourly for representative weather code
-                    if (h === Math.floor(hrs.length / 2) && hrs[h].weatherCode)
-                        noonCode = _wwoToWmo(hrs[h].weatherCode);
-                }
-            }
-            daily.temperature_2m_max.push(isFinite(maxT) ? maxT : (parseFloat(day.avgtempC) || 0));
-            daily.temperature_2m_min.push(isFinite(minT) ? minT : (parseFloat(day.avgtempC) || 0));
-            daily.weathercode.push(noonCode);
-        }
-    }
-
-    return {
-        current: {
-            temperature_2m: tempC,
-            weather_code: wmoCode,
-            wind_speed_10m: windMs,
-            wind_direction_10m: windDir,
-            relative_humidity_2m: humidity,
-            surface_pressure: pressure
-        },
-        daily: daily,
-        timezone_abbreviation: "MSK",
-        _provider: "wttr.in"
     };
 }
 

@@ -63,24 +63,10 @@ FullwidthMouseArea {
 
 		implicitHeight: column.implicitHeight + 10
 
-		BackgroundArt {
+		WiredBackgroundArt {
 			id: bkg
 			anchors.fill: parent
 			overlay.color: "#30000000"
-
-			function updateArt(reverse: bool) {
-				this.setArt(MprisController.activeTrack.artUrl, reverse, false)
-			}
-
-			Component.onCompleted: this.updateArt(false);
-
-			Connections {
-				target: MprisController
-
-				function onTrackChanged(reverse: bool) {
-					bkg.updateArt(reverse);
-				}
-			}
 		}
 
 		ColumnLayout {
@@ -260,7 +246,7 @@ FullwidthMouseArea {
 			// so we'll try to preload them.
 			preloadBackground: root.containsMouse
 
-			backgroundComponent: BackgroundArt {
+			backgroundComponent: WiredBackgroundArt {
 				id: popupBkg
 				anchors.fill: parent
 				renderHeight: rightclickMenu.implicitHeight
@@ -269,18 +255,7 @@ FullwidthMouseArea {
 				blurSamples: 201
 
 				overlay.color: "#80000000"
-
-				Connections {
-					target: MprisController
-
-					function onTrackChanged(reverse: bool) {
-						popupBkg.setArt(MprisController.activeTrack.artUrl, reverse, false);
-					}
-				}
-
-				Component.onCompleted: {
-					setArt(MprisController.activeTrack.artUrl, false, true);
-				}
+				immediateOnComplete: true
 			}
 
 			contentItem {
