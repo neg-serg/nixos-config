@@ -6,10 +6,9 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 
 - `opts.nix` — option helpers (`mkOpt`, `mkBoolOpt`, `mkStrOpt`, …); consumed via `opts` specialArg
   (see `flake/nixos.nix`) and directly by modules.
-- `neg-helpers.nix` — structural helpers: home-file helpers (`mkHomeFiles`, `mkXdgText`,
-  `mkLocalBin`, `linkImpure`) and `importDir` (directory auto-import for every module aggregator);
-  single source for `specialArgs.neg` (flake/nixos.nix) and `flake/checks.nix`; also re-exports
-  `ruKeys` from `ru-keys.nix`.
+- `neg-helpers.nix` — structural helpers: the home-file helper (`mkHomeFiles`) and `importDir`
+  (directory auto-import for every module aggregator); single source for `specialArgs.neg`
+  (flake/nixos.nix) and `flake/checks.nix`; also re-exports `ruKeys` from `ru-keys.nix`.
 - `systemd-user.nix` — systemd user unit helpers: `mkUnitFromPresets` plus the module-shaped
   `mkUserService` / `mkUserOneshot` / `mkUserActivation`; the legacy `mkSimple*` helpers were
   removed.
@@ -34,9 +33,8 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   (`builtins.readFile`); builds the wrapped `qs` binary with the Qt/QML import paths, theme data and
   `QT_QPA_PLATFORM=wayland`.
 
-Runtime helpers (`mkHomeFiles`, `mkLocalBin`, `mkXdgText`, `systemdUser`, `path`, …) live on
-`config.lib.neg` (defined in `flake/nixos.nix` specialArgs + exposed via `modules/core/neg.nix`),
-not under `lib/`.
+Runtime helpers (`mkHomeFiles`, `path`, `pathExists`, `enabled`, …) live on `config.lib.neg`
+(defined in `flake/nixos.nix` specialArgs + exposed via `modules/core/neg.nix`), not under `lib/`.
 
 ## Repo-root file references
 
