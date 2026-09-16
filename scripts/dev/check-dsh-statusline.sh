@@ -20,8 +20,8 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="${1:-$here/../../packages/local-bin/bin/dsh-statusline}"
 
 if [ ! -f "$BIN" ]; then
-	echo "check-dsh-statusline: no such script: $BIN" >&2
-	exit 1
+  echo "check-dsh-statusline: no such script: $BIN" >&2
+  exit 1
 fi
 
 run() { sh "$BIN" "$@"; }
@@ -44,17 +44,17 @@ cd "$repo" || exit 1
 git init -q -b main .
 git config user.email check@dsh-statusline
 git config user.name check-dsh-statusline
-printf 'one\n' >tracked.txt
-printf 'two\n' >staged.txt
+printf 'one\n' > tracked.txt
+printf 'two\n' > staged.txt
 git add -A
 git commit -qm init
-printf 'one changed\n' >tracked.txt
-printf 'two changed\n' >staged.txt
+printf 'one changed\n' > tracked.txt
+printf 'two changed\n' > staged.txt
 git add staged.txt
-printf 'fresh\n' >untracked.txt
+printf 'fresh\n' > untracked.txt
 
 payload() {
-	printf '{"session_id":"s1","turn":7,"workspace":{"current_dir":"%s"}%s}' "$1" "$2"
+  printf '{"session_id":"s1","turn":7,"workspace":{"current_dir":"%s"}%s}' "$1" "$2"
 }
 
 line="$(payload "$repo" '' | run)"
@@ -101,9 +101,9 @@ check contains "$(run --git "$repo")" "⎇ main"
 assert $rc "--git prints the git segment for a directory"
 check test -n "$(run --demo)"
 assert $rc "--demo runs the protocol against a canned payload"
-run --help >/dev/null 2>&1
+run --help > /dev/null 2>&1
 assert $? "--help exits 0"
-run --nope >/dev/null 2>&1
+run --nope > /dev/null 2>&1
 assert_fails $? "an unknown option fails"
 
 summary "check-dsh-statusline"
