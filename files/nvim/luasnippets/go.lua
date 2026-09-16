@@ -1,8 +1,6 @@
 -- Requires {{{
-local ls = require("luasnip")
-local fmt = require("luasnip.extras.fmt").fmt
-local fmta = require("luasnip.extras.fmt").fmta
-local rep = require("luasnip.extras").rep
+local P = require('luasnip_pre')
+local ls, fmt, fmta, rep = P.ls, P.fmt, P.fmta, P.rep
 local ok_util, util = pcall(require, "settings.luasnip.util")
 if not ok_util then
   -- Provide stubs so snippets that use util still load (without conditions)

@@ -1,17 +1,9 @@
 -- LuaSnip config and keymaps are in plugins/completion/luasnip.lua
-local success, ls = pcall(require, "luasnip")
-if not success then
+local P = require('luasnip_pre')
+if not P.ls then
   return
 end
-local s = ls.snippet
-local sn = ls.snippet_node
-local i = ls.insert_node
-local t = ls.text_node
-local d = ls.dynamic_node
-local c = ls.choice_node
-local r = ls.restore_node
-local f = ls.function_node
-local fmt = require("luasnip.extras.fmt").fmt
+local ls, s, sn, i, t, d, c, r, f, fmt = P.ls, P.s, P.sn, P.i, P.t, P.d, P.c, P.r, P.f, P.fmt
 
 ---#Typescript
 local ts_function_fmt = [[

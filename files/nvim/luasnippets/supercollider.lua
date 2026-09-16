@@ -1,9 +1,5 @@
-local ls = require('luasnip')
-local s = ls.snippet
-local i = ls.insert_node
-local t = ls.text_node
-local c = ls.choice_node
-local fmt = require('luasnip.extras.fmt').fmt
+local P = require('luasnip_pre')
+local ls, s, i, t, c, fmt = P.ls, P.s, P.i, P.t, P.c, P.fmt
 
 -- SuperCollider live-coding snippets (raw SC / scnvim session).
 -- Trigger with <C-j> (expand) after typing the trig word.

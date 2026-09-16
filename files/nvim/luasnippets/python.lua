@@ -1,11 +1,5 @@
-local ls = require('luasnip')
-local s = ls.snippet
-local i = ls.insert_node
-local t = ls.text_node
-local c = ls.choice_node
-local sn = ls.snippet_node
-local isn = ls.indent_snippet_node
-local fmt = require('luasnip.extras.fmt').fmt
+local P = require('luasnip_pre')
+local ls, s, i, t, c, sn, isn, fmt = P.ls, P.s, P.i, P.t, P.c, P.sn, P.isn, P.fmt
 local types = require("luasnip.util.types")
 
 local function node_with_virtual_text(pos, node, text)
