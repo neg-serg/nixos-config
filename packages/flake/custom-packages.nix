@@ -23,6 +23,9 @@
   oryx = pkgs.neg.oryx; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
   pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
+
+  decay-rice = pkgs.decay-rice; # FVWM "An essence of decay" session payload (dotfiles + shims)
+  decay-gtk-theme = pkgs.decay-gtk-theme; # GTK3 Decay theme of the same rice
   dsh = pkgs.neg.dsh;
 
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
