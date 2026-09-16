@@ -139,8 +139,9 @@ in
         restartSec = 300;
       })
 
-      # Telegram "taz is up" notice for the dockur Windows VM (started by
-      # hand, so poll RDP instead of depending on a container unit).
+      # Telegram "taz is up" notice for the dockur Windows VM: the VM is started
+      # by the windows-vm user unit, but readiness is an RDP accept — poll that,
+      # not the container state.
       (systemdUser.mkOneshotTimer {
         name = "telegram-notify-windows-ready";
         description = "Send a Telegram message when the dockur Windows VM accepts RDP";

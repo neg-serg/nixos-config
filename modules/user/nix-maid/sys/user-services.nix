@@ -155,10 +155,13 @@ lib.mkIf (cfg.enable or false) {
       };
     };
 
-    # glm-adapter-auto — self-heal the GLM adapter placement: if the dockur
-    # VM is running but the adapter got stuck on the host (usbhid bound), move
-    # it back into the VM (NOPASSWD via glm-adapter-priv). Idempotent no-op
-    # when the adapter is already inside the VM or the VM is stopped.
+    # glm-adapter-auto — self-heal the GLM adapter placement with the VM as the
+    # primary owner: when the VM runs without the adapter (lost on the bus,
+    # replugged, left on the host), restart the VM — QEMU claims a passed-through
+    # device only at its own start (no libusb hotplug inside the container).
+    # Never moves the adapter back to the host; rate-limited inside the script.
+    # Idempotent no-op when the adapter is already inside the VM or the VM is
+    # stopped.
     glm-adapter-auto = {
       description = "Auto-attach the GLM adapter to the dockur VM when needed";
       serviceConfig = {
@@ -167,7 +170,7 @@ lib.mkIf (cfg.enable or false) {
         # script's #!/usr/bin/env bash shebang would fail (status 127).
         # The default NixOS user-service PATH has only coreutils/grep/sed —
         # the script also needs awk/podman/docker/genlc/lsusb/ss/sudo.
-        ExecStart = "${lib.getExe pkgs.bash} %h/.local/bin/glm-adapter attach";
+        ExecStart = "${lib.getExe pkgs.bash} %h/.local/bin/glm-adapter auto";
         Environment = [
           "PATH=/run/wrappers/bin:/run/current-system/sw/bin:/home/neg/.local/bin:/usr/bin:/bin"
         ];
