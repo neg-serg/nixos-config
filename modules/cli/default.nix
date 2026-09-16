@@ -1,7 +1,1 @@
-{ neg, ... }:
-{
-  imports = neg.importDir {
-    dir = ./.;
-    includeDirs = true;
-  };
-}
+{ neg, ... }: neg.importDomain ./.
