@@ -6,9 +6,7 @@
 
 local buffers = require('lusty.buffer_stack')
 local pick = require('lusty.native_pick')
-local fuzzy = require('lusty.fuzzy')
-local mercury = require('lusty.mercury')
-local util = require('lusty.util')
+local filter = require('lusty.filter')
 local lsc = require('lusty.ls_colors')
 
 local M = {}
@@ -50,40 +48,6 @@ local function snapshot_items()
   return out
 end
 
--- Filtering mirrors the Lua buffer explorer: the first query letter must
--- prefix the buffer basename, then entries are scored (mercury or the
--- fuzzy engine) on the short name, ties broken by buffer number.
-local function make_source(holder)
-  return function(query)
-    if query == '' then
-      return holder.items
-    end
-    local use_mercury = tostring(vim.g.LustyExplorerFuzzyEngine or '') == 'mercury'
-    local first = query:sub(1, 1):lower()
-    local scored = {}
-    for _, it in ipairs(holder.items) do
-      local base_first = (util.basename(it.short_name) or ''):sub(1, 1):lower()
-      if base_first == first then
-        local score = use_mercury and mercury.score(it.short_name, query) or fuzzy.score(it.short_name, query)
-        if score and score ~= 0.0 then
-          scored[#scored + 1] = { it = it, score = score }
-        end
-      end
-    end
-    table.sort(scored, function(a, b)
-      if a.score == b.score then
-        return a.it.bufnr < b.it.bufnr
-      end
-      return a.score > b.score
-    end)
-    local res = {}
-    for _, s in ipairs(scored) do
-      res[#res + 1] = s.it
-    end
-    return res
-  end
-end
-
 local running = false
 
 function M.run()
@@ -100,11 +64,15 @@ function M.run()
     -- sees the fresh list on its next refresh
     holder.items = snapshot_items()
   end
+  -- First query letter must prefix the short name; ties broken by buffer number.
+  local source = filter.source(function()
+    return holder.items
+  end, 'short_name', 'bufnr')
   pick.pick({
     title = 'Buffers',
     query = previous_input,
     multi = true,
-    source = make_source(holder),
+    source = source,
     on_open = function(item, mode)
       running = false
       open_buffer(item.bufnr, mode)

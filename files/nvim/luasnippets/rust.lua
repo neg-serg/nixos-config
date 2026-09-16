@@ -1,11 +1,5 @@
-local ls = require "luasnip"
-local s = ls.snippet
-local sn = ls.snippet_node
-local t = ls.text_node
-local i = ls.insert_node
-local f = ls.function_node
-local c = ls.choice_node
-local r = ls.restore_node
+local P = require('luasnip_pre')
+local ls, s, sn, t, i, f, c, r = P.ls, P.s, P.sn, P.t, P.i, P.f, P.c, P.r
 
 ls.add_snippets("rust", {
 
