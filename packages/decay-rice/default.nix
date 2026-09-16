@@ -117,6 +117,11 @@ runCommandLocal "decay-rice" { } ''
     --replace-fail "/usr/share/icons/Papirus-Dark" "${papirus-icon-theme}/share/icons/Papirus-Dark"
   substituteInPlace $out/home/.config/kitty-decay/kitty.conf \
     --replace-fail "usr/bin/less" "${less}/bin/less"
+  # ~/.scripts stays a read-only link into the store, so volume.sh keeps its lock
+  # file in the runtime dir instead of next to the script (upstream:
+  # lockfile=~/.scripts/volume-lockfile).
+  substituteInPlace $out/home/.scripts/volume.sh \
+    --replace-fail 'lockfile=~/.scripts/volume-lockfile' 'lockfile="$XDG_RUNTIME_DIR/fvwm-volume.lock"'
   # logger.py uses GNU env's --split-string form, which patchShebangs cannot
   # resolve; point it at the python shim (copied into $out/bin below).
   substituteInPlace $out/home/.config/eww/scripts/logger.py \
@@ -164,6 +169,15 @@ runCommandLocal "decay-rice" { } ''
   export XCURSOR_SIZE=28
   export GTK_THEME=decay
   export QT_QPA_PLATFORMTHEME=qt5ct
+
+  # fvwm writes its pid file and the FvwmCommand socket into $FVWM_USERDIR, which
+  # must not be the rice's ~/.fvwm (that one is an immutable link into the store).
+  export FVWM_USERDIR="''${XDG_STATE_HOME:-$HOME/.local/state}/fvwm"
+  mkdir -p "$FVWM_USERDIR"
+
+  # `volume.sh` keeps a lock file next to the other runtime state.
+  export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
+
 
   # shims (python/albert/parcellite/light) + the X tools the rice Execs.
   export PATH="@out@/bin:$PATH"

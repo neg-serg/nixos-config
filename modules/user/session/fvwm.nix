@@ -35,32 +35,21 @@ let
     fi
     # odin's 4K panel gets the 1080p logical desktop the rice was designed for.
     rice-display
-    exec ${pkgs.fvwm3}/bin/fvwm3
+    # -f: the config comes from the immutable ~/.fvwm; $FVWM_USERDIR (set by
+    # start-fvwm-decay) only carries fvwm's pid file and the FvwmCommand socket.
+    exec ${pkgs.fvwm3}/bin/fvwm3 -f "$HOME/.fvwm/config"
   '';
 
-  # The rice's trees. Entries are per file/dir below writable parent
-  # directories: fvwm keeps its pid file and the FvwmCommand socket in
-  # $FVWM_USERDIR, volume.sh a lock file next to the scripts and DockBarX a
-  # log/state dir, so those three parents are real (tmpfiles-created) dirs rather
-  # than links into the store. Files *below a symlinked parent* are also what
-  # makes systemd-tmpfiles bail out with "unsafe path transition" (exit 73 =
-  # CANTCREAT), so the parents must exist before nix-maid links into them.
-  scriptFiles = [
-    "adbfix"
-    "backlight.sh"
-    "dunst"
-    "fvwm.sh"
-    "lock"
-    "music-art"
-    "prime-mc.sh"
-    "shot.sh"
-    "speaker.sh"
-    "test.py"
-    "tint2-fix"
-    "volume.sh"
-  ];
-
-  configPaths = [
+  # Trees of the rice, one symlink per tree: nix-maid links them straight from
+  # the store, and systemd-tmpfiles refuses to manage files *below a symlinked
+  # parent* ("unsafe path transition", exit 73/CANTCREAT, which fails nix-maid's
+  # activation). Everything the rice needs to write is redirected instead:
+  # fvwm's pid file/socket to $FVWM_USERDIR, volume.sh's lock file to
+  # $XDG_RUNTIME_DIR, DockBarX's log/state to a real ~/.local/share/dockbarx
+  # (created by the tmpfiles rules below).
+  homeTrees = [
+    ".fvwm"
+    ".scripts"
     ".config/eww"
     ".config/conky"
     ".config/dunst"
@@ -75,20 +64,23 @@ let
     ".config/kitty-decay"
   ];
 
-  leaf = sub: p: lib.nameValuePair "${sub}/${p}" { source = "${rice}/home/${sub}/${p}"; };
-  scriptPair = f: lib.nameValuePair ".scripts/${f}" { source = "${rice}/home/.scripts/${f}"; };
+  homeFiles = lib.genAttrs homeTrees (p: {
+    source = "${rice}/home/${p}";
+  });
 
-  homeFiles =
-    (lib.listToAttrs (map scriptPair scriptFiles))
-    // (lib.listToAttrs (
-      map (leaf ".fvwm") [
-        "config"
-        "icons"
-      ]
-    ))
-    // (lib.genAttrs configPaths (p: {
-      source = "${rice}/home/${p}";
-    }));
+  # DockBarX keeps its preferences in dconf (upstream's dotfiles do not carry
+  # them): a starter set of pinned launchers. An entry is "<identifier>;<path to
+  # .desktop>"; the empty identifier makes DockBarX derive it from the desktop
+  # file itself.
+  dockLaunchers = [
+    "kitty" # terminal of the rice
+    "thunar" # file manager from the desktop menu
+    "vivaldi-stable" # browser (the rice's firefox/brave entries are shimmed to Vivaldi)
+    "mpv" # media player
+  ];
+  dockLauncherEntries = map (
+    name: ";/run/current-system/sw/share/applications/${name}.desktop"
+  ) dockLaunchers;
 in
 lib.mkIf cfg.enable {
   services.xserver.enable = true;
@@ -101,14 +93,18 @@ lib.mkIf cfg.enable {
     "d /usr/lib 0755 root root -" # NixOS has no /usr/lib
     "d /usr/lib/mate-polkit 0755 root root -"
     "L+ /usr/lib/mate-polkit/polkit-mate-authentication-agent-1 - - - - ${pkgs.mate-polkit}/libexec/polkit-mate-authentication-agent-1"
-    # Writable parents of the rice files linked by nix-maid: fvwm keeps its pid
-    # file and the FvwmCommand socket in $FVWM_USERDIR, volume.sh a lock file
-    # next to the scripts, DockBarX a log/state dir. (Files below a *symlinked*
-    # parent make systemd-tmpfiles exit 73/CANTCREAT and nix-maid's activation
-    # fail, so these must be real directories.)
-    "d ${homeDir}/.fvwm 0700 ${mainUser} ${mainUser} -"
-    "d ${homeDir}/.scripts 0700 ${mainUser} ${mainUser} -"
+    # DockBarX logs and stores state below ~/.local/share/dockbarx, so that tree
+    # is a real directory (not a nix-maid link: files below a symlinked parent
+    # make systemd-tmpfiles exit 73/CANTCREAT and fail nix-maid's activation) and
+    # the rice's theme archives are linked into it file by file. DockBarX reads
+    # only themes/**/*.tar.gz, so the extracted copies of upstream stay unused.
     "d ${homeDir}/.local/share/dockbarx 0700 ${mainUser} ${mainUser} -"
+    "d ${homeDir}/.local/share/dockbarx/themes 0700 ${mainUser} ${mainUser} -"
+    "d ${homeDir}/.local/share/dockbarx/themes/dock 0700 ${mainUser} ${mainUser} -"
+    "d ${homeDir}/.local/share/dockbarx/themes/popup_styles 0700 ${mainUser} ${mainUser} -"
+    "L+ ${homeDir}/.local/share/dockbarx/themes/Decay.tar.gz - - - - ${rice}/home/.local/share/dockbarx/themes/Decay.tar.gz"
+    "L+ ${homeDir}/.local/share/dockbarx/themes/dock/invisible.tar.gz - - - - ${rice}/home/.local/share/dockbarx/themes/dock/invisible.tar.gz"
+    "L+ ${homeDir}/.local/share/dockbarx/themes/popup_styles/Decay.tar.gz - - - - ${rice}/home/.local/share/dockbarx/themes/popup_styles/Decay.tar.gz"
   ];
 
   environment.systemPackages = [
@@ -152,15 +148,36 @@ lib.mkIf cfg.enable {
     pkgs.xwininfo # session inspection (window tree of the X display)
   ];
 
+  # DockBarX reads its dock style and launchers from dconf; seed the rice's ones
+  # (see dockLaunchers). Locks are not used, so the GUI can still change them.
+  programs.dconf = {
+    enable = true;
+    profiles.user.databases = [
+      {
+        settings."org/dockbarx/dockbarx" = {
+          # themes/dock/invisible.tar.gz — the dock style the rice shipped (its
+          # internal name is Decay).
+          theme-file = lib.gvariant.mkString "invisible.tar.gz";
+          # themes/popup_styles/Decay.tar.gz
+          popup-style-file = lib.gvariant.mkString "Decay";
+          # lib.gvariant.mkString keeps the quotes out of the value (a plain
+          # string in `settings` ends up stored *with* quotes, see the
+          # gtk-theme key of modules/user/nix-maid/gui/theme.nix).
+          launchers = lib.gvariant.mkArray (map lib.gvariant.mkString dockLauncherEntries);
+        };
+      }
+    ];
+  };
+
   # Metropolis (fvwm/eww/rofi/i3lock) and GE Inspira (conky Izar) ship inside
-  # pkgs.decay-rice: nixpkgs has neither.
-  fonts.packages = [ rice ];
+  # pkgs.decay-rice: nixpkgs has neither. JetBrainsMono Nerd Font is the rice's
+  # kitty font_family (kitty falls back to Iosevka without it).
+  fonts.packages = [
+    rice # Metropolis (fvwm/eww/rofi) + GE Inspira (conky Izar) from the payload
+    pkgs.nerd-fonts.jetbrains-mono # the rice's kitty font_family (JetBrainsMono Nerd Font)
+  ];
 
   users.users.neg.maid.file.home = homeFiles // {
-    # DockBarX's themes live in a symlinked subdir of the writable state dir.
-    ".local/share/dockbarx/themes" = {
-      source = "${rice}/home/.local/share/dockbarx/themes";
-    };
     ".Xresources" = {
       source = "${rice}/home/.Xresources";
     };
