@@ -77,6 +77,14 @@ in
 
       # Existence check for optional repo files (no eval error when missing).
       pathExists = p: builtins.pathExists (config.neg.repoRoot + ("/" + p));
+
+      # Read a repo-root-relative file: the one-line form of
+      # `builtins.readFile (path "…")`.
+      readFile = p: builtins.readFile (path p);
+
+      # Per-user systemd unit helpers (lib/systemd-user.nix). The module closes
+      # over `lib` only, so callers no longer import it themselves.
+      systemdUser = import (path "lib/systemd-user.nix") { inherit lib; };
     };
   };
 }

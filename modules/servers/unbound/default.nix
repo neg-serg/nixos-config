@@ -4,39 +4,10 @@
   ...
 }:
 let
-  # Defaults when option set is missing (keeps evaluation safe)
-  cfg =
-    config.servicesProfiles.unbound or {
-      enable = false;
-      mode = "dot";
-      dnssec = {
-        enable = true;
-      };
-      dotUpstreams = [
-        "1.1.1.1@853#cloudflare-dns.com"
-        "1.0.0.1@853#cloudflare-dns.com"
-        "9.9.9.9@853#dns.quad9.net"
-        "149.112.112.112@853#dns.quad9.net"
-      ];
-      tuning = {
-        minimalResponses = true;
-        prefetch = true;
-        prefetchKey = true;
-        aggressiveNsec = true;
-        serveExpired = {
-          enable = true;
-          maxTtl = 3600;
-          replyTtl = 30;
-        };
-        cacheMinTtl = null;
-        cacheMaxTtl = null;
-        verbosity = 1;
-        logQueries = false;
-        logReplies = false;
-        logLocalActions = false;
-        logServfail = false;
-      };
-    };
+  # Every field is declared with its default in modules/profiles/services.nix
+  # (the `profiles` domain is always imported, also by the checks stubs), so
+  # there is no local copy of the defaults to drift.
+  cfg = config.servicesProfiles.unbound;
 
   mkForwardZone =
     if cfg.mode == "dot" then

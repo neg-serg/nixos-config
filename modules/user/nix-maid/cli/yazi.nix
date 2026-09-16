@@ -288,9 +288,7 @@ let
     return { entry = entry }
   '';
 
-  save-file-plugin = builtins.readFile (
-    config.lib.neg.path "files/yazi/plugins/save-file.yazi/main.lua"
-  );
+  save-file-plugin = config.lib.neg.readFile "files/yazi/plugins/save-file.yazi/main.lua";
 
   yazi-plugins = pkgs.fetchFromGitHub {
     owner = "yazi-rs";
