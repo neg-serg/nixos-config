@@ -48,27 +48,78 @@ host_present(){ lsusb 2>/dev/null | grep -q "$VID:$PID"; }
 host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
 
 # A fresh QEMU is the only thing that opens a passed-through device again (see
-# the header), so a lost adapter is healed by restarting the VM. Rate-limited:
-# a flapping adapter must not turn into a reboot loop.
-RESTART_STAMP=/tmp/glm-adapter-restart.stamp
-RESTART_MIN_INTERVAL=600
+# the header), so a lost adapter is healed by restarting the VM. Rate-limited
+# with a leaky bucket: a flapping adapter must not turn into a reboot loop, but
+# a second flap minutes later should still recover instead of locking the VM out
+# until a cooldown expires.
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/glm-adapter"
+RESTART_LOG="$STATE_DIR/restart.log"
+NOTIFY_STATE="$STATE_DIR/notify-state"
+RESTART_MAX_PER_HOUR=3
+
+# Telegram goes through the root-side webhook bridge that already serves
+# Alertmanager (telegram-alert-bridge on 127.0.0.1:9094): it owns the SOPS
+# secrets, while this script runs as the login user and cannot read them.
+# Override the endpoint with GLM_NOTIFY_BRIDGE, set it empty to stay silent.
+GLM_NOTIFY_BRIDGE=${GLM_NOTIFY_BRIDGE-http://127.0.0.1:9094}
+notify() {
+  local status=$1 msg=$2 payload
+  [ -n "$GLM_NOTIFY_BRIDGE" ] || return 0
+  payload=$(jq -nc --arg s "$status" --arg m "$msg"     '{alerts:[{status:$s,labels:{alertname:"GLM adapter",severity:"info"},annotations:{summary:$m}}]}') || return 0
+  curl -s -m 10 -X POST -H 'Content-Type: application/json' --data "$payload" "$GLM_NOTIFY_BRIDGE" >/dev/null 2>&1 \
+    || warn "telegram notification failed (bridge $GLM_NOTIFY_BRIDGE)"
+}
+
+# Edge-triggered: the auto timer runs every 60 s, a flapping adapter must not
+# turn into a message storm. notify_reset re-arms the next notification.
+notify_once() {
+  mkdir -p "$STATE_DIR"
+  if [ -f "$NOTIFY_STATE" ] && [ "$(cat "$NOTIFY_STATE" 2>/dev/null)" = "$1" ]; then
+    return 0
+  fi
+  echo "$1" > "$NOTIFY_STATE"
+  notify "$2" "$3"
+}
+
+notify_reset() {
+  mkdir -p "$STATE_DIR"
+  echo "ok" > "$NOTIFY_STATE"
+}
 
 vm_restart() {
-  local now last i
+  local now recent i
+  mkdir -p "$STATE_DIR"
   now=$(date +%s)
-  last=0
-  if [ -f "$RESTART_STAMP" ]; then last=$(cat "$RESTART_STAMP" 2>/dev/null || echo 0); fi
-  if [ "$((now - last))" -lt "$RESTART_MIN_INTERVAL" ]; then
-    warn "VM restart skipped: the previous one was $(((now - last) / 60)) min ago"
+  recent=0
+  if [ -f "$RESTART_LOG" ]; then
+    recent=$(awk -v now="$now" '$1 > now - 3600' "$RESTART_LOG" | wc -l)
+    if awk -v now="$now" '$1 > now - 3600' "$RESTART_LOG" > "$RESTART_LOG.new"; then
+      mv "$RESTART_LOG.new" "$RESTART_LOG"
+    fi
+  fi
+  if [ "$recent" -ge "$RESTART_MAX_PER_HOUR" ]; then
+    warn "VM restart suppressed: $recent restarts within the last hour"
+    notify_once "suppressed" firing "таз: адаптер снова не в VM, но перезапусков уже $recent за час — не перезапускаю, проверь кабель/порт адаптера"
     return 1
   fi
   warn "restarting VM '$CT' (QEMU claims the adapter only at its own start)"
-  echo "$now" > "$RESTART_STAMP"
-  timeout 180 podman restart "$CT" >/dev/null 2>&1 || { fail "podman restart '$CT' failed"; return 1; }
+  notify firing "таз: GLM-адаптер отвалился от VM — перезапускаю (Windows поднимется за ~1 мин)"
+  echo "$now" >> "$RESTART_LOG"
+  timeout 180 podman restart "$CT" >/dev/null 2>&1 || {
+    fail "podman restart '$CT' failed"
+    notify firing "таз: не получилось перезапустить контейнер — смотри podman logs windows"
+    return 1
+  }
   for i in $(seq 1 30); do
-    if [ "$(qemu_usb)" -ge 1 ]; then return 0; fi
+    if [ "$(qemu_usb)" -ge 1 ]; then
+      notify resolved "таз: перезапущен, адаптер снова в VM (usbfs) — GLM поднимется сам"
+      notify_reset
+      return 0
+    fi
     sleep 2
   done
+  fail "adapter still not attached after the restart"
+  notify_once "failed" firing "таз: перезапуск не помог — адаптер всё ещё не в VM, проверь кабель/порт адаптера"
   return 1
 }
 
@@ -183,13 +234,16 @@ cmd_auto() {
   # its own (host control stays available manually: `glm-adapter host`).
   # Idempotent — this is the entry point of the glm-adapter-auto timer.
   if [ "$(vm_running)" != 1 ]; then
+    notify_reset
     return 0
   fi
   if [ "$(qemu_usb)" -ge 1 ]; then
+    notify_reset
     return 0
   fi
   if ! host_present; then
     warn "adapter is not on the host USB — restarting the VM would not help"
+    notify_once "missing" firing "таз: GLM-адаптер не найден на USB-шине хоста — проверь кабель/питание адаптера, VM без него мониторами не управляет"
     return 0
   fi
   if vm_restart; then
