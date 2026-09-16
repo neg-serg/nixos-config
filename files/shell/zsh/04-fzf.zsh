@@ -33,18 +33,16 @@ source "${_fzf_cache_dir}/key-bindings.zsh" 2>/dev/null
 # limit + excludes keeps ~/m/new fuzzy completion instant.
 # NOTE: .local/.cache are skipped, so paths under them are not fuzzy-completed
 # (plain Tab completion still works there).
-_fzf_compgen_path() {
-  command fd -H -t f -t d -d 8 \
+_fzf_fd() {
+  local root=$1
+  shift
+  command fd -H -d 8 "$@" \
     --exclude .cache --exclude .local --exclude .git \
     --exclude node_modules --exclude .dsh --exclude .var \
-    . "$1" 2>/dev/null
+    . "$root" 2>/dev/null
 }
-_fzf_compgen_dir() {
-  command fd -H -t d -d 8 \
-    --exclude .cache --exclude .local --exclude .git \
-    --exclude node_modules --exclude .dsh --exclude .var \
-    . "$1" 2>/dev/null
-}
+_fzf_compgen_path() { _fzf_fd "$1" -t f -t d; }
+_fzf_compgen_dir() { _fzf_fd "$1" -t d; }
 
 # fzf-on-tab: Tab does normal completion, and words whose parent dir does
 # not exist (~/m/new, d/) are fuzzy-expanded to the real path (no symlinks:

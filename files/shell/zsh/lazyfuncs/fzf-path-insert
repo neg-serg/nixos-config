@@ -20,18 +20,15 @@ leftover=${leftover#/}
 local opts=${FZF_DEFAULT_OPTS// --exact/}
 opts=${opts//--exact /}
 
-# dirs first — the common navigation case
-if (( $+functions[_fzf_compgen_dir] )); then
-    best=$(_fzf_compgen_dir "$root" 2>/dev/null \
+# dirs first — the common navigation case; fall back to any path (files too)
+local gen
+for gen in _fzf_compgen_dir _fzf_compgen_path; do
+    (( ${+functions[$gen]} )) || continue
+    best=$("$gen" "$root" 2>/dev/null \
         | FZF_DEFAULT_OPTS=$opts fzf --scheme=path --filter "$leftover" 2>/dev/null \
         | head -1)
-fi
-# fallback: any path (files too)
-if [[ -z $best ]] && (( $+functions[_fzf_compgen_path] )); then
-    best=$(_fzf_compgen_path "$root" 2>/dev/null \
-        | FZF_DEFAULT_OPTS=$opts fzf --scheme=path --filter "$leftover" 2>/dev/null \
-        | head -1)
-fi
+    [[ -n $best ]] && break
+done
 [[ -n $best ]] || return 1
 
 # replace the current word in the buffer with the best match
