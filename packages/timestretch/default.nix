@@ -6,35 +6,27 @@
 # Source: https://github.com/spluta/TimeStretch
 {
   lib,
-  stdenvNoCC,
-  fetchFromGitHub,
+  mkScQuark,
 }:
-stdenvNoCC.mkDerivation {
+mkScQuark {
   pname = "timestretch";
   version = "1.5.0-unstable-2023-09-16";
 
-  src = fetchFromGitHub {
-    owner = "spluta";
-    repo = "TimeStretch";
-    rev = "e8b7ab3a0ffb3152380c6be38515410fd6afa00a";
-    hash = "sha256-Uw525EvAzAR2Gd8aL8q7lqPxi+A3TBAFZOf58ESdJW4=";
-  };
+  owner = "spluta";
+  repo = "TimeStretch";
+  rev = "e8b7ab3a0ffb3152380c6be38515410fd6afa00a";
+  hash = "sha256-Uw525EvAzAR2Gd8aL8q7lqPxi+A3TBAFZOf58ESdJW4=";
 
-  installPhase = ''
-    runHook preInstall
-    extdir="$out/share/SuperCollider/extensions/TimeStretch"
-    mkdir -p "$extdir"
+  installDir = "TimeStretch";
+  install = ''
     cp -r supercollider/Classes "$extdir/"
     cp -r supercollider/HelpSource "$extdir/"
     cp TimeStretch.quark LICENSE "$extdir/" 2>/dev/null || true
-    runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = {
     description = "SuperCollider quark: extreme time stretch (Ness Stretch layered STFT algorithm)";
     homepage = "https://github.com/spluta/TimeStretch";
-    license = licenses.gpl3Plus; # quark manifest says GPLv3
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus; # quark manifest says GPLv3
   };
 }

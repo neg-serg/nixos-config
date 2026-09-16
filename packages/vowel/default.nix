@@ -5,39 +5,28 @@
 # Source: https://github.com/supercollider-quarks/Vowel
 {
   lib,
-  stdenvNoCC,
-  fetchFromGitHub,
+  mkScQuark,
 }:
-stdenvNoCC.mkDerivation {
+mkScQuark {
   pname = "vowel";
   version = "unstable-2025-07-25";
 
-  src = fetchFromGitHub {
-    owner = "supercollider-quarks";
-    repo = "Vowel";
-    rev = "ab59caa870201ecf2604b3efdd2196e21a8b5446";
-    hash = "sha256-zfF6cvAGDNYWYsE8dOIo38b+dIymd17Pexg0HiPFbxM=";
-  };
+  owner = "supercollider-quarks";
+  repo = "Vowel";
+  rev = "ab59caa870201ecf2604b3efdd2196e21a8b5446";
+  hash = "sha256-zfF6cvAGDNYWYsE8dOIo38b+dIymd17Pexg0HiPFbxM=";
 
-  installPhase = ''
-    runHook preInstall
-
-    # SuperCollider looks for extensions in a fixed layout:
-    #   $out/share/SuperCollider/extensions/<QuarkName>/
-    extdir="$out/share/SuperCollider/extensions/Vowel"
-    mkdir -p "$extdir"
-
+  installDir = "Vowel";
+  install = ''
     # Class files (the actual formant data + Vowel class)
     cp Vowel.sc Formants.sc "$extdir/"
     # Help source
     cp -r HelpSource "$extdir/"
     # Quark manifest + license
     cp Vowel.quark LICENSE "$extdir/"
-
-    runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = {
     description = "SuperCollider quark with formant tables (Vowel class), used by SuperDirt";
     longDescription = ''
       Vowel provides the Vowel class with formant frequency tables for a
@@ -46,8 +35,6 @@ stdenvNoCC.mkDerivation {
       class path for the vowel-based synths to work.
     '';
     homepage = "https://github.com/supercollider-quarks/Vowel";
-    license = licenses.lgpl21Plus; # GNU LGPL 2.1
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.lgpl21Plus; # GNU LGPL 2.1
   };
 }

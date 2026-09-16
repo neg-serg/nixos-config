@@ -29,27 +29,29 @@ _inputs: final: prev:
   mdugens = prev.callPackage ../mdugens { scPluginFarm = final.sc-plugin-farm; }; # MDUGens: TPT SVF filters, SOSBank, PlateReverb/Phaser/Chorus FX
   portedplugins = prev.callPackage ../portedplugins { scPluginFarm = final.sc-plugin-farm; }; # portedplugins: VA filters, drum synths, Fverb reverb
   sc-faust = prev.callPackage ../sc-faust { }; # sc_faust: JIT-compile Faust DSP in scsynth (incl. jpverb)
-  timestretch = prev.callPackage ../timestretch { }; # TimeStretch SC quark: Ness Stretch extreme time stretch
-  pitchshiftpa = prev.callPackage ../pitchshiftpa { }; # PitchShiftPA SC quark: phase-aligned pitch/formant shifter
+  timestretch = prev.callPackage ../timestretch { inherit (final.neg.functions) mkScQuark; }; # TimeStretch SC quark: Ness Stretch extreme time stretch
+  pitchshiftpa = prev.callPackage ../pitchshiftpa { inherit (final.neg.functions) mkScQuark; }; # PitchShiftPA SC quark: phase-aligned pitch/formant shifter
   softcut-sc = prev.callPackage ../softcut-sc { scPluginFarm = final.sc-plugin-farm; }; # monome Softcut multi-voice looper as SC UGen
-  signalbox = prev.callPackage ../signalbox { }; # SignalBox SC quark: time/frequency-domain analysis tools
-  crucial-library = prev.callPackage ../crucial-library { }; # crucial-library SC quark: AbstractPlayer live-coding system
+  signalbox = prev.callPackage ../signalbox { inherit (final.neg.functions) mkScQuark; }; # SignalBox SC quark: time/frequency-domain analysis tools
+  crucial-library = prev.callPackage ../crucial-library { inherit (final.neg.functions) mkScQuark; }; # crucial-library SC quark: AbstractPlayer live-coding system
   # -- analysis / spatial / VST hosting --
   scmir = prev.callPackage ../scmir { }; # SCMIR: music IR analysis library + CLI tools
-  atk-sc3 = prev.callPackage ../atk-sc3 { }; # Ambisonic Toolkit SC quark
+  atk-sc3 = prev.callPackage ../atk-sc3 { inherit (final.neg.functions) mkScQuark; }; # Ambisonic Toolkit SC quark
   vstplugin = prev.callPackage ../vstplugin { scPluginFarm = final.sc-plugin-farm; }; # host VST2/VST3 in scsynth
   flucoma = prev.callPackage ../flucoma { scPluginFarm = final.sc-plugin-farm; }; # FluCoMa: corpus manipulation UGens (57 plugins)
   # -- ATK dependency quarks --
-  hilbert = prev.callPackage ../hilbert { }; # Hilbert transform utilities (ATK dep)
-  pointview = prev.callPackage ../pointview { }; # spherical point visualization (ATK dep)
-  sphericaldesign = prev.callPackage ../sphericaldesign { }; # spherical design point sets (ATK dep)
-  filelog = prev.callPackage ../filelog { }; # file logging/player classes (ATK dep)
-  mathlib = prev.callPackage ../mathlib { }; # math classes, matrices (ATK dep)
+  hilbert = prev.callPackage ../hilbert { inherit (final.neg.functions) mkScQuark; }; # Hilbert transform utilities (ATK dep)
+  pointview = prev.callPackage ../pointview { inherit (final.neg.functions) mkScQuark; }; # spherical point visualization (ATK dep)
+  sphericaldesign = prev.callPackage ../sphericaldesign { inherit (final.neg.functions) mkScQuark; }; # spherical design point sets (ATK dep)
+  filelog = prev.callPackage ../filelog { inherit (final.neg.functions) mkScQuark; }; # file logging/player classes (ATK dep)
+  mathlib = prev.callPackage ../mathlib { inherit (final.neg.functions) mkScQuark; }; # math classes, matrices (ATK dep)
   # -- live coding quarks --
-  safetynet = prev.callPackage ../safetynet { }; # protect against dangerous audio signals
-  ddwplug = prev.callPackage ../ddwplug { }; # dynamic per-note synth patching
-  miscellaneous-lib = prev.callPackage ../miscellaneous-lib { }; # patterns, granulation, live coding utilities
-  ixiquarks = prev.callPackage ../ixiquarks { }; # GUI instruments/effects toolset
+  safetynet = prev.callPackage ../safetynet { inherit (final.neg.functions) mkScQuark; }; # protect against dangerous audio signals
+  ddwplug = prev.callPackage ../ddwplug { inherit (final.neg.functions) mkScQuark; }; # dynamic per-note synth patching
+  miscellaneous-lib = prev.callPackage ../miscellaneous-lib {
+    inherit (final.neg.functions) mkScQuark;
+  }; # patterns, granulation, live coding utilities
+  ixiquarks = prev.callPackage ../ixiquarks { inherit (final.neg.functions) mkScQuark; }; # GUI instruments/effects toolset
   # -- neural audio --
   nn-ar = prev.callPackage ../nn-ar { scPluginFarm = final.sc-plugin-farm; }; # nn.ar: PyTorch models in scsynth
 }
