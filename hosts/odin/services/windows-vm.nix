@@ -41,7 +41,9 @@ let
   '';
 in
 {
-  # Rootless podman runs under the user manager, so the VM is a user unit.
+  # Rootless podman runs under the user manager, so the VM is a user unit. The
+  # glm-adapter self-heal path reports through the Alertmanager Telegram bridge
+  # on 127.0.0.1:9094 (see packages/local-bin/scripts/glm-adapter, notify*).
   systemd.user.services.windows-vm = {
     description = "dockur Windows VM (GLM control path)";
     after = [ "network-online.target" ];
