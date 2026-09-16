@@ -3,9 +3,11 @@ line-length = 100
 target-version = "py310"
 exclude = [
   ".git",
-  "files/kitty",       # vendored kitty kittens
-  "files/art/fun-art", # ASCII-art scripts
-  "nix",               # accidental nix store dump (gitignored)
+  "files/kitty",         # vendored kitty kittens
+  "files/art/fun-art",   # ASCII-art scripts
+  "files/x11",           # vendored FVWM rice (files/x11/README.md)
+  "files/x11/decay-gtk", # vendored GTK3 theme sources
+  "nix",                 # accidental nix store dump (gitignored)
 ]
 
 [tool.ruff.lint]
