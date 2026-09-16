@@ -170,9 +170,9 @@ in
     # so that directory was never active. One mechanism only now.
 
     # Vivaldi Preferences surgery, re-applied at login: a running Vivaldi
-    # rewrites Preferences from memory on exit, so every script below must run
-    # before the browser starts. One Type=oneshot unit with several ExecStart
-    # lines (run in order) instead of four near-identical services:
+    # rewrites Preferences from memory on exit, so the oneshot below must run
+    # before the browser starts. One script (vivaldi-prefs.py) loads and dumps
+    # the profile once and performs all four fixes in order:
     #   1. point the CSS mods dir at the profile mods folder so the compact
     #      address-bar mod loads (css_ui_mods_directory is empty by default and
     #      "Allow for using CSS modifications" must be on); also re-assert the Neg
@@ -193,12 +193,7 @@ in
         description = "Re-assert Vivaldi preferences (CSS mods dir, UI auto-hide, Ctrl+W free, Ctrl+G closes the tab)";
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = [
-            "${python} ${./vivaldi-css-mods-pref.py}"
-            "${python} ${./vivaldi-auto-hide-pref.py}"
-            "${python} ${./vivaldi-emacs-keys-pref.py}"
-            "${python} ${./vivaldi-close-tab-pref.py}"
-          ];
+          ExecStart = "${python} ${./vivaldi-prefs.py}";
         };
         after = [ "graphical-session.target" ];
         wants = [ "graphical-session.target" ];
