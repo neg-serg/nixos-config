@@ -27,6 +27,15 @@ in
         user = "greeter";
       };
     };
+    # NixOS ships greetd as Type=idle, which makes systemd defer the spawn of
+    # the service binary until all jobs are dispatched. On odin that placed the
+    # greetd process ~6s after the unit was already marked active (2026-09-15
+    # boot: ActiveEnter 8.52s, ExecMainStart 14.53s — the only unit on the host
+    # with such a gap), delaying the login prompt by the same amount. greetd is
+    # an ordinary long-running foreground daemon; upstream's own unit uses
+    # Type=simple.
+    # mkForce: the nixpkgs greetd module hardcodes Type=idle on this unit.
+    systemd.services.greetd.serviceConfig.Type = lib.mkForce "simple";
     # Wait for input devices before starting greetd to avoid keyboard/mouse
     # not working during the first few seconds after greeter appears.
     systemd.services.greetd.preStart = ''
