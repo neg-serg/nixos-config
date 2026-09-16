@@ -129,7 +129,12 @@ def load_norm(path):
     return np.array(img).astype(float) / 255.0
 
 
-def dither_fs(g):
+def _diffuse(g, kern, divisor=1):
+    """Error-diffusion dither shared by fs/atkinson/sierra/stucki.
+
+    ``kern`` is a list of (dx, dy, weight); ``divisor`` scales the
+    quantisation error (Atkinson uses 8, the others 1).
+    """
     buf = g.tolist()
     hh = len(buf)
     ww = len(buf[0])
@@ -143,110 +148,65 @@ def dither_fs(g):
             old = buf[y][x]
             new = 1.0 if old >= 0.5 else 0.0
             o[y][x] = new
-            err = old - new
-            for dx, dy, k in [
-                (1, 0, 7 / 16),
-                (-1, 1, 3 / 16),
-                (0, 1, 5 / 16),
-                (1, 1, 1 / 16),
-            ]:
+            err = (old - new) / divisor
+            for dx, dy, k in kern:
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < ww and 0 <= ny < hh:
                     buf[ny][nx] = cl(buf[ny][nx] + err * k)
     return np.array(o)
+
+
+def dither_fs(g):
+    return _diffuse(
+        g,
+        [(1, 0, 7 / 16), (-1, 1, 3 / 16), (0, 1, 5 / 16), (1, 1, 1 / 16)],
+    )
 
 
 def dither_atkinson(g):
-    buf = g.tolist()
-    hh = len(buf)
-    ww = len(buf[0])
-    o = [[0] * ww for _ in range(hh)]
-
-    def cl(v):
-        return max(0.0, min(1.0, v))
-
-    kern = [(1, 0), (2, 0), (-1, 1), (0, 1), (1, 1), (0, 2)]
-    for y in range(hh):
-        for x in range(ww):
-            old = buf[y][x]
-            new = 1.0 if old >= 0.5 else 0.0
-            o[y][x] = new
-            err = (old - new) / 8
-            for dx, dy in kern:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < ww and 0 <= ny < hh:
-                    buf[ny][nx] = cl(buf[ny][nx] + err)
-    return np.array(o)
+    return _diffuse(
+        g,
+        [(1, 0, 1), (2, 0, 1), (-1, 1, 1), (0, 1, 1), (1, 1, 1), (0, 2, 1)],
+        divisor=8,
+    )
 
 
 def dither_sierra(g):
-    buf = g.tolist()
-    hh = len(buf)
-    ww = len(buf[0])
-    o = [[0] * ww for _ in range(hh)]
-
-    def cl(v):
-        return max(0.0, min(1.0, v))
-
-    kern = [
-        (1, 0, 5 / 32),
-        (2, 0, 3 / 32),
-        (-2, 1, 2 / 32),
-        (-1, 1, 4 / 32),
-        (0, 1, 5 / 32),
-        (1, 1, 4 / 32),
-        (2, 1, 2 / 32),
-        (-1, 2, 2 / 32),
-        (0, 2, 3 / 32),
-        (1, 2, 2 / 32),
-    ]
-    for y in range(hh):
-        for x in range(ww):
-            old = buf[y][x]
-            new = 1.0 if old >= 0.5 else 0.0
-            o[y][x] = new
-            err = old - new
-            for dx, dy, k in kern:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < ww and 0 <= ny < hh:
-                    buf[ny][nx] = cl(buf[ny][nx] + err * k)
-    return np.array(o)
+    return _diffuse(
+        g,
+        [
+            (1, 0, 5 / 32),
+            (2, 0, 3 / 32),
+            (-2, 1, 2 / 32),
+            (-1, 1, 4 / 32),
+            (0, 1, 5 / 32),
+            (1, 1, 4 / 32),
+            (2, 1, 2 / 32),
+            (-1, 2, 2 / 32),
+            (0, 2, 3 / 32),
+            (1, 2, 2 / 32),
+        ],
+    )
 
 
 def dither_stucki(g):
-    buf = g.tolist()
-    hh = len(buf)
-    ww = len(buf[0])
-    o = [[0] * ww for _ in range(hh)]
-
-    def cl(v):
-        return max(0.0, min(1.0, v))
-
-    kern = [
-        (1, 0, 8 / 42),
-        (2, 0, 4 / 42),
-        (-2, 1, 2 / 42),
-        (-1, 1, 4 / 42),
-        (0, 1, 8 / 42),
-        (1, 1, 4 / 42),
-        (2, 1, 2 / 42),
-        (-2, 2, 1 / 42),
-        (-1, 2, 2 / 42),
-        (0, 2, 4 / 42),
-        (1, 2, 2 / 42),
-        (2, 2, 1 / 42),
-    ]
-    for y in range(hh):
-        for x in range(ww):
-            old = buf[y][x]
-            new = 1.0 if old >= 0.5 else 0.0
-            o[y][x] = new
-            err = old - new
-            for dx, dy, k in kern:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < ww and 0 <= ny < hh:
-                    buf[ny][nx] = cl(buf[ny][nx] + err * k)
-    return np.array(o)
+    return _diffuse(
+        g,
+        [
+            (1, 0, 8 / 42),
+            (2, 0, 4 / 42),
+            (-2, 1, 2 / 42),
+            (-1, 1, 4 / 42),
+            (0, 1, 8 / 42),
+            (1, 1, 4 / 42),
+            (2, 1, 2 / 42),
+            (-2, 2, 1 / 42),
+            (-1, 2, 2 / 42),
+            (0, 2, 4 / 42),
+            (1, 2, 2 / 42),
+            (2, 2, 1 / 42),
+        ],
+    )
 
 
 def dither_bayer(g, n=4):
