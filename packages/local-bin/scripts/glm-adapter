@@ -3,14 +3,17 @@
 # between the host and the dockur Windows VM, and verify the control chain.
 #
 # Why: the adapter is passed through to the VM via QEMU usb-host while the VM
-# runs. After VM stop/start cycles (or physical replugs) it can end up on the
-# host (usbhid bound) while the VM still expects it, or vice versa. GLM inside
-# the VM then shows the monitors as OFFLINE and volume control dies.
+# runs. QEMU opens a passed-through device only when the QEMU process starts —
+# libusb hotplug events never reach the container (its own netns, no /run/udev) —
+# so a device that is lost or replugged while the VM runs is never re-claimed:
+# the only cure is a fresh QEMU, i.e. a VM restart. Without the adapter GLM in
+# the VM shows the monitors as OFFLINE and volume control dies.
 #
 # Usage:
 #   glm-adapter status             # where is the adapter + chain state
+#   glm-adapter auto               # keep the adapter in the VM (timer entry point)
 #   glm-adapter attach             # move the adapter into the VM (default)
-#   glm-adapter host               # move the adapter back to the host
+#   glm-adapter host               # move the adapter back to the host (manual reserve)
 #   glm-adapter verify             # check the control chain only
 #   glm-adapter <cmd> --glm        # also OCR-check the GLM window inside the VM
 #
@@ -43,6 +46,31 @@ vm_running() { timeout 10 podman ps --format '{{.Names}} {{.Status}}' 2>/dev/nul
 qemu_usb() { local n=0; for d in /sys/bus/usb/devices/*/idVendor; do [ "$(cat "$d" 2>/dev/null)" = "$VID" ] || continue; dev=${d%/idVendor}; [ "$(cat "$dev/idProduct" 2>/dev/null)" = "$PID" ] || continue; for i in "$dev":1.*; do [ -e "$i" ] || continue; if [ -L "$i/driver" ] && readlink "$i/driver" | grep -q usbfs; then n=$((n+1)); fi; done; done; echo "$n"; [ "$n" -ge 1 ]; }
 host_present(){ lsusb 2>/dev/null | grep -q "$VID:$PID"; }
 host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
+
+# A fresh QEMU is the only thing that opens a passed-through device again (see
+# the header), so a lost adapter is healed by restarting the VM. Rate-limited:
+# a flapping adapter must not turn into a reboot loop.
+RESTART_STAMP=/tmp/glm-adapter-restart.stamp
+RESTART_MIN_INTERVAL=600
+
+vm_restart() {
+  local now last i
+  now=$(date +%s)
+  last=0
+  if [ -f "$RESTART_STAMP" ]; then last=$(cat "$RESTART_STAMP" 2>/dev/null || echo 0); fi
+  if [ "$((now - last))" -lt "$RESTART_MIN_INTERVAL" ]; then
+    warn "VM restart skipped: the previous one was $(((now - last) / 60)) min ago"
+    return 1
+  fi
+  warn "restarting VM '$CT' (QEMU claims the adapter only at its own start)"
+  echo "$now" > "$RESTART_STAMP"
+  timeout 180 podman restart "$CT" >/dev/null 2>&1 || { fail "podman restart '$CT' failed"; return 1; }
+  for i in $(seq 1 30); do
+    if [ "$(qemu_usb)" -ge 1 ]; then return 0; fi
+    sleep 2
+  done
+  return 1
+}
 
 adapter_dev() {
   for d in /sys/bus/usb/devices/*/idVendor; do
@@ -89,7 +117,7 @@ cmd_status() {
   if host_present; then echo "  host: adapter present on host USB"; else echo "  host: no adapter on host USB"; fi
   if host_genlc_ok; then ok "host genlc: adapter usable"; else fail "host genlc: adapter NOT usable"; fi
   if [ "$(vm_running)" = 1 ]; then
-    n=$(qemu_usb)
+    n=$(qemu_usb) || true
     if [ "$n" -ge 1 ]; then ok "VM: adapter attached ($n)"; else fail "VM: adapter NOT attached"; fi
   else
     echo "  VM: not running (adapter should be on the host)"
@@ -127,14 +155,18 @@ cmd_attach() {
     fail "adapter not found on the host USB — is it plugged in?"
     return 1
   fi
-  # Unbind usbhid so QEMU re-claims the device via usbfs (NOPASSWD helper).
-  warn "unbinding usbhid from the adapter (QEMU will re-claim)"
+  # Unbind usbhid so QEMU could claim the device via usbfs (NOPASSWD helper).
+  # QEMU does not re-claim a device it has lost (no libusb hotplug inside the
+  # container), so fall back to the one action that does work: a fresh VM.
+  warn "unbinding usbhid from the adapter"
   sudo "$PRIV" to-vm 2>/dev/null || true
   sleep 4
   if [ "$(qemu_usb)" -ge 1 ]; then
     ok "adapter attached to the VM"
+  elif vm_restart; then
+    ok "adapter attached to the VM (after restarting $CT)"
   else
-    fail "QEMU did not re-claim the adapter — replug it and retry"
+    fail "adapter still not attached — check the USB cable/port, then retry"
     return 1
   fi
   if host_genlc_ok; then
@@ -143,6 +175,30 @@ cmd_attach() {
     ok "host genlc no longer sees the adapter (expected)"
   fi
   verify_chain
+}
+
+cmd_auto() {
+  # VM-primary policy: the VM is the everyday GLM control path, so the adapter
+  # belongs to the VM whenever the VM runs and never moves back to the host on
+  # its own (host control stays available manually: `glm-adapter host`).
+  # Idempotent — this is the entry point of the glm-adapter-auto timer.
+  if [ "$(vm_running)" != 1 ]; then
+    return 0
+  fi
+  if [ "$(qemu_usb)" -ge 1 ]; then
+    return 0
+  fi
+  if ! host_present; then
+    warn "adapter is not on the host USB — restarting the VM would not help"
+    return 0
+  fi
+  if vm_restart; then
+    ok "adapter attached to the VM (after restarting $CT)"
+    verify_chain
+  else
+    fail "adapter still not attached — check the USB cable/port"
+    return 1
+  fi
 }
 
 cmd_host() {
@@ -162,8 +218,9 @@ cmd_verify() { verify_chain; }
 
 case "${1:-attach}" in
   status) cmd_status ;;
+  auto) cmd_auto ;;
   attach) cmd_attach ;;
   host|detach) cmd_host ;;
   verify) cmd_verify ;;
-  *) echo "usage: $0 {status|attach|host|verify} [--glm]" >&2; exit 1 ;;
+  *) echo "usage: $0 {status|auto|attach|host|verify} [--glm]" >&2; exit 1 ;;
 esac
