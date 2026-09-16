@@ -160,15 +160,34 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v E
 acceptable only because this VM is a single-purpose GLM box. Keep the noVNC tab (port 8006) closed
 when unused: a connected client keeps the VNC encoder busy.
 
-### Cheapest option: leave it stopped
+### Autostart: the VM owns the adapter
 
-Everyday monitor control runs on the host via `glm-osc`; the VM (and its ~6.7 GB resident) is only
-needed for GLM itself and calibration:
+The VM is the primary control path, so it starts with the machine: user unit `windows-vm`
+(`hosts/odin/services/windows-vm.nix`) waits for the GLM adapter to appear on the bus and then runs
+`podman start windows`. Host-side control (`glm-osc` + `glm-adapter host`) is a manual reserve —
+nothing moves the adapter back to the host on its own.
+
+Manual control still works:
 
 ```bash
-podman stop windows     # graceful ACPI shutdown, ~8s on a healthy guest
-podman start windows
+podman stop windows               # graceful ACPI shutdown, ~8s on a healthy guest
+systemctl --user start windows-vm # ≡ podman start windows (idempotent)
 ```
+
+### A lost adapter needs a VM restart (no USB hotplug inside the container)
+
+QEMU opens a passed-through device only when the QEMU process starts: libusb hotplug events never
+reach the container (its own netns, no `/run/udev`). Therefore
+
+- an adapter that leaves the bus while the VM runs is **not** re-claimed — neither by
+  `glm-adapter attach` (it only unbinds `usbhid`) nor by a physical replug;
+- the only cure is a fresh QEMU, i.e. a VM restart.
+
+`glm-adapter-auto` (user timer, every 60 s) implements that policy: VM running without the adapter →
+restart the VM, rate-limited to one restart per 10 min (`/tmp/glm-adapter-restart.stamp`). A manual
+`glm-adapter attach` falls back to the same restart. Placement check: `glm-adapter status` →
+`VM: adapter attached (1)`, which on the host means the adapter interface carries the `usbfs`
+driver.
 
 ### Shutdown: SIGTERM works, do not shorten `--stop-timeout`
 
@@ -189,7 +208,7 @@ shutdown from a kill.
 
 ## Genelec GLM (Gnet Adapter) USB passthrough
 
-Device: `1781:0e39` (Bus 009). Three gotchas without which the “passthrough is not visible”:
+Device: `1781:0e39` (Bus 009). Gotchas without which the “passthrough is not visible”:
 
 1. **Container user namespace**: root inside = `nobody` on the host. udev creates USB nodes with
    `0664 root:root` permissions → the container gets `EPERM` and cannot open the device (QEMU shows
@@ -203,6 +222,11 @@ Device: `1781:0e39` (Bus 009). Three gotchas without which the “passthrough is
    bind-mount `-v /dev/bus/usb:/dev/bus/usb` (see the command above).
 1. **udev may not create a node** for unusual HID devices: sysfs exists, `/dev/bus/usb` does not.
    Trigger: `sudo udevadm trigger --attr-match=idVendor=1781`.
+1. **udev binds `usbhid` on add** (`files/hardware/udev/odin-host.rules`, node `0666`): every
+   replug/enumeration gives the host a `/dev/hidraw` immediately. The VM path does not need it —
+   QEMU detaches the kernel driver when it opens the device at VM start — but a device that arrives
+   while the VM already runs stays on the host, because QEMU never re-claims it (see “A lost adapter
+   needs a VM restart”): `glm-adapter-auto` restarts the VM instead.
 
 Passthrough check (deterministic, without a GUI):
 
@@ -355,9 +379,10 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 
 ## GLM alternative: the glm-osc OSC bridge (adapter on the host)
 
-Since 2026-08-30 everyday monitor control runs WITHOUT the official GLM: the USB adapter (1781:0e39)
-lives on the host, the `glm-osc` service (Python genlc + python-osc) listens on UDP 127.0.0.1:9000
-and drives the monitors over OSC. The VM with GLM is needed only for calibration (see below).
+Fallback for a stopped VM: the adapter moves back to the host (`podman stop windows` +
+`glm-adapter host`) and the `glm-osc` service (Python genlc + python-osc) listens on UDP
+127.0.0.1:9000, driving the monitors over OSC without the official GLM. While the VM runs, GLM in
+the VM holds the adapter and this bridge cannot see it (single master).
 
 OSC map:
 
@@ -382,5 +407,6 @@ Important:
 - Calibration and input selection: start the VM (the adapter goes into passthrough), do it in GLM,
   Store settings (calibration is stored ON THE MONITORS), shut down the VM — the adapter returns to
   the host, control goes through glm-osc again.
-- udev: hardware.nix binds usbhid to the adapter (otherwise there is no /dev/hidraw and genlc does
-  not see the device).
+- udev: `files/hardware/udev/odin-host.rules` binds usbhid to the adapter and sets the node to
+  `0666` (otherwise there is no `/dev/hidraw` and genlc does not see the device) — required by this
+  host path only; the VM path relies on QEMU detaching the kernel driver itself.
