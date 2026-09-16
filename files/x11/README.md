@@ -22,6 +22,31 @@ is replaced by greetd; Albert is replaced by a shim), the remaining wallpapers,
 `.config/{fish,spicetify,gtk-3.0,starship.toml}` (per-user Wayland config, already nix-managed),
 `conky/Izar/preview.png`, `__pycache__`.
 
+## Files we had to add
+
+`dockbarx-themes/` holds the three DockBarX theme archives of the rice, unpacked: `.gitignore`
+refuses to track compressed blobs (`*.gz`), while DockBarX reads only `themes/**/*.tar.gz`, so
+`packages/decay-rice` packs them back (member names without a `./` prefix, sorted, fixed mtime →
+reproducible).
+
+`home/.config/rofi/decay.rasi` is ours: `config.rasi` loads it via `@theme "decay"` and
+`screenshot/config.rasi` reads its variables (`bg-col`, `fg-col`, `fg-col2`, `border-col`,
+`selected-col`) — upstream's copy of that file was never committed to the dotfiles repo, rofi then
+refuses to render the menus ("the variable 'bg-col' … failed to resolve"). The colours are the Decay
+palette the rest of the rice uses (kitty `colors.conf`, the eww scss files, `.fvwm/config`).
+
+## Runtime state
+
+The trees nix-maid links are read-only, and files below a *symlinked* parent make `systemd-tmpfiles`
+exit 73/CANTCREAT (which fails nix-maid's activation), so the rice's mutable bits are redirected:
+
+| What                                                     | Where                                                                                                                                                          |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fvwm pid file + FvwmCommand socket                       | `$FVWM_USERDIR` = `$XDG_STATE_HOME/fvwm` (set by `bin/start-fvwm-decay`; `fvwm3 -f ~/.fvwm/config` keeps reading the config from the store)                    |
+| `volume.sh` lock file                                    | `$XDG_RUNTIME_DIR/fvwm-volume.lock`                                                                                                                            |
+| DockBarX log/state + themes                              | real `~/.local/share/dockbarx` (tmpfiles), theme archives linked file by file                                                                                  |
+| DockBarX dock style, window-list style, pinned launchers | dconf `org/dockbarx/dockbarx` (`theme-file=invisible.tar.gz`, `popup-style-file=Decay`, four launchers) — user-db values still win, so the GUI can change them |
+
 ## Deviations
 
 The upstream files are tracked byte-identical; `packages/decay-rice/default.nix` applies only the
