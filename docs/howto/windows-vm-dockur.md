@@ -257,6 +257,14 @@ Address = [
 All VM proxies go through `192.168.2.88`. (A runtime alias `ip addr add …` is washed away by
 networkd — that is why it lives in the config.)
 
+While the alias is on the host, pasta copies it **into the container** on every start
+(`--config-net` copies the host uplink's whole address list). The container then answers as .88
+itself, so the VM gets `Connection refused` instead of reaching the host: the MIDI bridge sits in a
+dead connection (still printing `connected to host relay`, every CC disappears) and the proxy dies
+too. `packages/local-bin/scripts/glm-vm-netfix` drops the alias right after each start —
+`windows-vm.service` runs it as `ExecStartPost` and `glm-adapter` calls it after the VM restarts it
+performs itself. After a manual `podman (re)start windows` (outside those paths) run it by hand.
+
 ## Proxy for the VM (inside the host sing-box)
 
 Two passwordless inbounds, added to the generator `packages/local-bin/bin/proxy` (tags `in-lan-vm` /
@@ -376,6 +384,9 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 - `packages/dockur-windows/oem/glm-midi-bridge.ps1` — bridge in the VM
 - `packages/local-bin/bin/proxy` — the inbounds `in-lan-vm` (SOCKS 10811) and `in-lan-vm-http` (HTTP
   10812\)
+- `hosts/odin/services/windows-vm.nix` — VM start unit (`ExecStartPost` runs `glm-vm-netfix`)
+- `packages/local-bin/scripts/glm-vm-netfix` — drops the .88 alias pasta copies into the container,
+  otherwise the bridge and the VM proxy get `Connection refused` from the container itself
 
 ## GLM alternative: the glm-osc OSC bridge (adapter on the host)
 
