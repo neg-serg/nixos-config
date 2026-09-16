@@ -33,97 +33,29 @@ let
     type: default: docAttrs:
     mkOption ({ inherit type default; } // docAttrs);
 
-  # Primitive helpers
-  mkBoolOpt =
-    {
-      default ? false,
-      description,
-      notes ? null,
-      example ? null,
-      defaultText ? null,
-    }:
-    mkOpt types.bool default (mkDoc {
-      inherit
-        description
-        notes
-        example
-        defaultText
-        ;
-    });
+  # The typed helpers all have one shape: a `{ default, description, notes,
+  # example, defaultText }` record in, an option out. Only the type and the
+  # fallback default differ, so they are one constructor plus five one-liners.
+  mkTypedOpt =
+    type: { default, ... }@args: mkOpt type default (mkDoc (builtins.removeAttrs args [ "default" ]));
 
-  mkStrOpt =
-    {
-      default ? "",
-      description,
-      notes ? null,
-      example ? null,
-      defaultText ? null,
-    }:
-    mkOpt types.str default (mkDoc {
-      inherit
-        description
-        notes
-        example
-        defaultText
-        ;
-    });
+  withDefault = fallback: args: { default = fallback; } // args;
 
-  mkIntOpt =
-    {
-      default ? 0,
-      description,
-      notes ? null,
-      example ? null,
-      defaultText ? null,
-    }:
-    mkOpt types.int default (mkDoc {
-      inherit
-        description
-        notes
-        example
-        defaultText
-        ;
-    });
+  mkBoolOpt = args: mkTypedOpt types.bool (withDefault false args);
 
-  # Higher-level helpers
-  mkListOpt =
-    elemType:
-    {
-      default ? [ ],
-      description,
-      notes ? null,
-      example ? null,
-      defaultText ? null,
-    }:
-    mkOpt (types.listOf elemType) default (mkDoc {
-      inherit
-        description
-        notes
-        example
-        defaultText
-        ;
-    });
+  mkStrOpt = args: mkTypedOpt types.str (withDefault "" args);
 
+  mkIntOpt = args: mkTypedOpt types.int (withDefault 0 args);
+
+  mkListOpt = elemType: args: mkTypedOpt (types.listOf elemType) (withDefault [ ] args);
+
+  # An explicit `default = null` still means "the first enum value".
   mkEnumOpt =
-    values:
-    {
-      default ? null,
-      description,
-      notes ? null,
-      example ? null,
-      defaultText ? null,
-    }:
+    values: args:
     let
-      def = if default == null then builtins.head values else default;
+      chosen = if (args.default or null) == null then builtins.head values else args.default;
     in
-    mkOpt (types.enum values) def (mkDoc {
-      inherit
-        description
-        notes
-        example
-        defaultText
-        ;
-    });
+    mkTypedOpt (types.enum values) (withDefault chosen (builtins.removeAttrs args [ "default" ]));
 in
 {
   inherit
