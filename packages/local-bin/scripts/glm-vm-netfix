@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# glm-vm-netfix — drop the host's 192.168.2.88 alias that pasta copies INTO the
+# dockur Windows container on every (re)start.
+#
+# podman starts pasta with `--config-net`, which copies the whole address list of
+# the host uplink (net1: 192.168.2.87/24 plus the 192.168.2.88/24 alias) into the
+# container's network namespace. The guest shares the host IP (192.168.2.87,
+# passt user-mode networking), so while that alias is present 192.168.2.88 is the
+# container's OWN address: the guest's packets are answered inside the container,
+# where nothing listens on 9003 (glm-midi-relay) or 10811/10812 (the VM proxy).
+# The MIDI bridge then holds a dead TCP connection — it keeps printing
+# "connected to host relay" and every CC disappears — and the VM proxy dies too.
+# pasta recreates the alias on every container start, so it has to be removed
+# each time:
+#   * windows-vm.service runs this as ExecStartPost (normal start path);
+#   * glm-adapter calls this after the VM restarts it performs itself.
+# See docs/howto/windows-vm-dockur.md, "Pitfall: .88 alias inside the container".
+#
+# Usage: glm-vm-netfix [container]          # default container: windows
+# Env:   PODMAN (default: podman; absolute path in systemd units),
+#        NETFIX_ADDR (default 192.168.2.88/24),
+#        NETFIX_WAIT (default 10) — seconds to wait for the address to appear (pasta
+#        configures the container netns before the container process starts, so it is
+#        normally there on the first check; the loop only covers slow starts).
+set -euo pipefail
+
+CT=${1:-windows}
+ADDR=${NETFIX_ADDR:-192.168.2.88/24}
+PODMAN=${PODMAN:-podman}
+WAIT=${NETFIX_WAIT:-10}
+
+running() { [ "$("$PODMAN" container inspect -f '{{.State.Running}}' "$CT" 2>/dev/null)" = true ]; }
+
+for _ in $(seq 1 "$WAIT"); do
+  if ! running; then
+    echo "glm-vm-netfix: container '$CT' is not running — nothing to fix" >&2
+    exit 0
+  fi
+  # `ip -o -4 addr show` inside the container: "<idx>: <dev> inet <addr>/<pfx> …".
+  # Parsed in pure shell — the systemd user PATH has no awk.
+  dev=""
+  while read -r _ d _ a _; do
+    if [ "$a" = "$ADDR" ]; then
+      dev=$d
+      break
+    fi
+  done <<EOF
+$("$PODMAN" exec "$CT" ip -o -4 addr show 2>/dev/null || true)
+EOF
+
+  if [ -n "${dev:-}" ]; then
+    "$PODMAN" exec "$CT" ip addr del "$ADDR" dev "$dev"
+    echo "glm-vm-netfix: removed $ADDR from $dev in '$CT' (pasta copied the host alias)"
+    exit 0
+  fi
+  sleep 1
+done
+echo "glm-vm-netfix: $ADDR absent in '$CT' after ${WAIT}s — nothing removed" >&2
+exit 0
