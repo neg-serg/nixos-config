@@ -24,16 +24,12 @@ lib.mkMerge [
   }
 
   (neg.mkHomeFiles {
-    ".config/fastfetch/config.jsonc".text = builtins.readFile (
-      config.lib.neg.path "files/fastfetch/config.jsonc"
-    );
+    ".config/fastfetch/config.jsonc".text = config.lib.neg.readFile "files/fastfetch/config.jsonc";
 
     ".config/fastfetch/skull".text = builtins.readFile (config.lib.neg.path "files/fastfetch/skull");
 
     ".config/amfora".source = config.lib.neg.path "files/config/amfora";
 
-    ".config/tealdeer/config.toml".text = builtins.readFile (
-      config.lib.neg.path "files/tealdeer/config.toml"
-    );
+    ".config/tealdeer/config.toml".text = config.lib.neg.readFile "files/tealdeer/config.toml";
   })
 ]

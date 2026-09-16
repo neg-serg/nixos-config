@@ -1,12 +1,10 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
 let
-  inherit (config.lib.neg) mainUser homeDir;
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  inherit (config.lib.neg) mainUser homeDir systemdUser;
 
   # dsh-liangshen-fork: the user's own fork of the LiangShen (anchored-standard)
   # agent preset, kept declaratively in ./dsh-liangshen-fork and synced into

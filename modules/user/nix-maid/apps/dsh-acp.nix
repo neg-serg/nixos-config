@@ -1,12 +1,10 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
 let
-  inherit (config.lib.neg) mainUser homeDir;
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  inherit (config.lib.neg) mainUser homeDir systemdUser;
 
   # dsh ACP profile: the editor surface (Agent Client Protocol over stdio),
   # used by CodeCompanion in Neovim.
