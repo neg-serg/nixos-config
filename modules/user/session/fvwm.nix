@@ -93,18 +93,12 @@ lib.mkIf cfg.enable {
     "d /usr/lib 0755 root root -" # NixOS has no /usr/lib
     "d /usr/lib/mate-polkit 0755 root root -"
     "L+ /usr/lib/mate-polkit/polkit-mate-authentication-agent-1 - - - - ${pkgs.mate-polkit}/libexec/polkit-mate-authentication-agent-1"
-    # DockBarX logs and stores state below ~/.local/share/dockbarx, so that tree
-    # is a real directory (not a nix-maid link: files below a symlinked parent
-    # make systemd-tmpfiles exit 73/CANTCREAT and fail nix-maid's activation) and
-    # the rice's theme archives are linked into it file by file. DockBarX reads
-    # only themes/**/*.tar.gz, so the extracted copies of upstream stay unused.
+    # DockBarX logs and stores state below ~/.local/share/dockbarx, so that
+    # directory is real (not a nix-maid link: files below a symlinked parent make
+    # systemd-tmpfiles exit 73/CANTCREAT, which fails nix-maid's activation) while
+    # its read-only themes tree is a single link to the store.
     "d ${homeDir}/.local/share/dockbarx 0700 ${mainUser} ${mainUser} -"
-    "d ${homeDir}/.local/share/dockbarx/themes 0700 ${mainUser} ${mainUser} -"
-    "d ${homeDir}/.local/share/dockbarx/themes/dock 0700 ${mainUser} ${mainUser} -"
-    "d ${homeDir}/.local/share/dockbarx/themes/popup_styles 0700 ${mainUser} ${mainUser} -"
-    "L+ ${homeDir}/.local/share/dockbarx/themes/Decay.tar.gz - - - - ${rice}/home/.local/share/dockbarx/themes/Decay.tar.gz"
-    "L+ ${homeDir}/.local/share/dockbarx/themes/dock/invisible.tar.gz - - - - ${rice}/home/.local/share/dockbarx/themes/dock/invisible.tar.gz"
-    "L+ ${homeDir}/.local/share/dockbarx/themes/popup_styles/Decay.tar.gz - - - - ${rice}/home/.local/share/dockbarx/themes/popup_styles/Decay.tar.gz"
+    "L+ ${homeDir}/.local/share/dockbarx/themes - - - - ${rice}/home/.local/share/dockbarx/themes"
   ];
 
   environment.systemPackages = [
