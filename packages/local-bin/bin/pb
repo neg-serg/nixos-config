@@ -43,11 +43,9 @@ EOF
 	exit 0
 }
 
-need() { command -v "$1" >/dev/null 2>&1 || { printf 'pb: missing %s\n' "$1" >&2; :; }; }
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 
-case ${1:-} in
-    -h|--help|help|\?) usage ;;
-esac
+help_dispatch "$@"
 
 need curl
 

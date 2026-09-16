@@ -7,11 +7,11 @@
 #   qr              # screenshot entire desktop → clipboard (PNG) + notify
 #   qr -h|--help    # this help
 
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 
 IFS=' 	
 '
 
-need() { command -v "$1" >/dev/null 2>&1 || { printf 'qr: missing %s\n' "$1" >&2; :; }; }
 need grim
 need slurp
 need wl-copy
@@ -24,7 +24,7 @@ clip() { # usage: clip [-t mimetype] (reads from stdin)
 }
 
 case "${1:-}" in
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     gen) need qrencode; mkdir -p "$HOME/tmp"; qrencode -l H -d 75 -s 10 -o - "$(wl-paste)" > "$HOME/tmp/qrcode.png" ;;
     # select a region to screenshot (or click to screenshot window)
     select) maimselect | clip -t image/png; notify-send "Screenshot" "Screenshot taken" ;;

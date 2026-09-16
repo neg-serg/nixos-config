@@ -6,16 +6,14 @@
 #   profile      Show music collection profile
 #   interactive  Browse music files with similarity previews
 
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 IFS=' 	
 '
-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 0
-fi
+help_from_header 2 7 "$@"
 
 MUSIC_DIR="${MUSIC_DIR:-$HOME/music}"
 INDEX_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/music-index"
 
-die() { print -u2 "music-tui: $*"; exit 1; }
 need() { command -v "$1" >/dev/null 2>&1 || die "command not found: $1"; }
 
 _find_audio() {
