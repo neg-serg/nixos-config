@@ -5,15 +5,10 @@
 #   pl cmd <playerctl-args>
 #   pl vol {mute|unmute}
 
-
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 IFS=$'\n\t'
 
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'
-  exit 0
-fi
-
-need() { command -v "$1" >/dev/null 2>&1 || { print -u2 "pl: missing $1"; :; }; }
+help_from_header 2 6 "$@"
 
 mp() {
     local -a files

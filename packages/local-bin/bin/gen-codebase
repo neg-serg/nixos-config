@@ -250,11 +250,8 @@ LAYOUT = {
 
 
 def build_layout(root: Path) -> str:
-    out = ["## Repo layout", "", "| Path | Purpose |", "|------|----------|"]
-    for name, purpose in LAYOUT.items():
-        if (root / name).exists():
-            out.append(f"| `{name}` | {purpose} |")
-    return "\n".join(out)
+    rows = [f"| `{name}` | {purpose} |" for name, purpose in LAYOUT.items() if (root / name).exists()]
+    return "\n".join(["## Repo layout", "", "| Path | Purpose |", "|------|----------|", *rows])
 
 
 def build_hosts(root: Path) -> str:
@@ -299,16 +296,8 @@ def build_modules(root: Path) -> str:
     if not mods.is_dir():
         return "\n".join(out + ["_(no modules/ directory)_"])
     for d in sorted(p for p in mods.iterdir() if p.is_dir()):
-        files = sorted(
-            p.name
-            for p in d.iterdir()
-            if p.is_file() and p.suffix == ".nix" and p.name != "default.nix"
-        )
-        subdirs = sorted(
-            p.name
-            for p in d.iterdir()
-            if p.is_dir() and not p.name.startswith(".")
-        )
+        files = sorted(p.name for p in d.iterdir() if p.is_file() and p.suffix == ".nix" and p.name != "default.nix")
+        subdirs = sorted(p.name for p in d.iterdir() if p.is_dir() and not p.name.startswith("."))
         out.append(f"### {d.name}")
         out.append("- `default.nix` (auto-import entry)" if (d / "default.nix").exists() else "- _(no default.nix)_")
         if files:
@@ -335,9 +324,7 @@ def build_features(root: Path) -> str:
     if not feats_dir.is_dir():
         return "\n".join(out + ["_(no modules/features/ directory)_"])
     by_domain: dict[str, list[str]] = {}
-    for f in sorted(feats_dir.glob("*.nix")):
-        if f.name == "default.nix":
-            continue
+    for f in sorted(p for p in feats_dir.glob("*.nix") if p.name != "default.nix"):
         for leaf in parse_leaves(f):
             parts = leaf["path"]  # e.g. [options, features, dev, ai, enable]
             if parts[:2] != ["options", "features"]:
@@ -345,16 +332,11 @@ def build_features(root: Path) -> str:
             display = "features." + ".".join(parts[2:])
             domain = parts[2] if len(parts) > 2 else "misc"
             if leaf["kind"] == "bool":
-                entry = (
-                    f"- `{display}` — default: `{leaf['value']}` — "
-                    f"{leaf['desc']}"
-                )
+                entry = f"- `{display}` — default: `{leaf['value']}` — {leaf['desc']}"
             elif leaf["kind"] == "option":
                 extra = f" (type: `{leaf['type']}`)" if leaf["type"] else ""
-                entry = (
-                    f"- `{display}` — default: `{leaf['value']}`{extra}"
-                    + (f" — {leaf['desc']}" if leaf["desc"] else "")
-                )
+                entry = f"- `{display}` — default: `{leaf['value']}`{extra}"
+                entry += f" — {leaf['desc']}" if leaf["desc"] else ""
             else:
                 continue
             by_domain.setdefault(domain, []).append(entry)
@@ -375,9 +357,7 @@ def build_profiles(root: Path) -> str:
     profs_dir = root / "modules/profiles"
     if not profs_dir.is_dir():
         return "\n".join(out + ["_(no modules/profiles/ directory)_"])
-    for f in sorted(profs_dir.glob("*.nix")):
-        if f.name == "default.nix":
-            continue
+    for f in sorted(p for p in profs_dir.glob("*.nix") if p.name != "default.nix"):
         text = f.read_text(encoding="utf-8")
         cond = re.search(r'builtins\.elem\s+"([^"]+)"', text)
         name = cond.group(1) if cond else f.stem
@@ -414,12 +394,10 @@ def build_packages(root: Path) -> str:
             version = ""
         desc = extract_meta_description(text)
         cell = f"`{name}`" + (f" ({version})" if version else "")
-        rows.append((d.name, cell, desc))
+        rows.append(f"| `{d.name}/` | {cell} | {desc} |")
     if rows:
-        out.append("| Package dir | Package | Description |")
-        out.append("|-------------|---------|-------------|")
-        for dname, cell, desc in rows:
-            out.append(f"| `{dname}/` | {cell} | {desc} |")
+        out += ["| Package dir | Package | Description |", "|-------------|---------|-------------|"]
+        out += rows
     out.append("")
     out.append("### Overlay wiring (`packages/overlays/`)")
     ov_dir = pkgs_dir / "overlays"
@@ -448,11 +426,9 @@ def build_packages(root: Path) -> str:
                 text,
             ):
                 rows.append((m.group(1), m.group(2)[3:].strip("/")))
-    if rows:
-        out.append("| Attr | Source |")
-        out.append("|------|--------|")
-        for attr, src in sorted(set(rows)):
-            out.append(f"| `{attr}` | `{src}` |")
+    table = [f"| `{attr}` | `{src}` |" for attr, src in sorted(set(rows))]
+    if table:
+        out += ["| Attr | Source |", "|------|--------|", *table]
     else:
         out.append("_(none found)_")
     return "\n".join(out)
@@ -495,38 +471,31 @@ def repo_root(arg: str | None) -> Path:
 
 def build_doc(root: Path) -> str:
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    return "\n".join(
-        [
-            "# Codebase Map",
-            "",
-            "> Auto-generated by `packages/local-bin/bin/gen-codebase` — do not",
-            "> edit by hand. Regenerate with `just codebase` (or run",
-            "> `gen-codebase`) whenever the structure changes.",
-            # Keep the stamp in its own paragraph inside the blockquote: mdformat
-            # otherwise joins the lines and wraps the date/time onto two lines,
-            # which makes the docs-fresh gate (git diff -I) unable to ignore it.
-            ">",
-            f"> Generated: {stamp}",
-            "",
-            "> Purpose: compact orientation map for AI agents and quick human",
-            "> reference. Read this first instead of grepping the whole tree.",
-            "",
-            build_layout(root),
-            "",
-            build_hosts(root),
-            "",
-            build_modules(root),
-            "",
-            build_features(root),
-            "",
-            build_profiles(root),
-            "",
-            build_packages(root),
-            "",
-            build_pointers(),
-            "",
-        ]
-    )
+    head = [
+        "# Codebase Map",
+        "",
+        "> Auto-generated by `packages/local-bin/bin/gen-codebase` — do not",
+        "> edit by hand. Regenerate with `just codebase` (or run",
+        "> `gen-codebase`) whenever the structure changes.",
+        # Keep the stamp in its own paragraph inside the blockquote: mdformat
+        # otherwise joins the lines and wraps the date/time onto two lines,
+        # which makes the docs-fresh gate (git diff -I) unable to ignore it.
+        ">",
+        f"> Generated: {stamp}",
+        "",
+        "> Purpose: compact orientation map for AI agents and quick human",
+        "> reference. Read this first instead of grepping the whole tree.",
+    ]
+    sections = [
+        build_layout(root),
+        build_hosts(root),
+        build_modules(root),
+        build_features(root),
+        build_profiles(root),
+        build_packages(root),
+        build_pointers(),
+    ]
+    return "\n\n".join(["\n".join(head), *sections]) + "\n"
 
 
 def main(argv: list[str]) -> int:

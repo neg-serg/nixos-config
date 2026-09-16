@@ -4,6 +4,7 @@
 # Example: any firefox
 #          any -u neg -x sshd
 
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 
 IFS=' 	
 '
@@ -13,11 +14,7 @@ usage() {
   exit 1
 }
 
-need() { command -v "$1" >/dev/null 2>&1 || { printf 'any: missing %s\n' "$1" >&2; :; }; }
-
-case "${1:-}" in
-  -h|--help|help|\?) usage ;;
-esac
+help_dispatch "$@"
 
 need pgrep
 need ps
