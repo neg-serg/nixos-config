@@ -53,20 +53,13 @@
           "kitty-scrollback-nvim"
         ];
 
-        # Helper to generate the home.file entry
-        mkAuto = name: {
-          name = ".local/bin/${name}";
-          value = {
-            executable = true;
-            text = subst (builtins.readFile (binDir + "/${name}"));
-          };
-        };
-
         autoEntries =
-          builtins.attrNames binFiles
-          |> lib.filter (n: !(lib.elem n autoSkip))
-          |> map mkAuto
-          |> builtins.listToAttrs;
+          neg.mkDirEntries ".local/bin"
+            (builtins.attrNames binFiles |> lib.filter (n: !(lib.elem n autoSkip)))
+            (name: {
+              executable = true;
+              text = subst (builtins.readFile (binDir + "/${name}"));
+            });
 
         # 2. Scripts from packages/local-bin/scripts
         scriptFiles =
@@ -80,19 +73,13 @@
           "vid-info.py"
         ]; # These need substitution
 
-        mkScriptAuto = name: {
-          name = ".local/bin/${name}";
-          value = {
-            executable = true;
-            text = subst (builtins.readFile (scriptsDir + "/${name}"));
-          };
-        };
-
         scriptEntries =
-          builtins.attrNames scriptFiles
-          |> lib.filter (n: !(lib.elem n scriptSkip))
-          |> map mkScriptAuto
-          |> builtins.listToAttrs;
+          neg.mkDirEntries ".local/bin"
+            (builtins.attrNames scriptFiles |> lib.filter (n: !(lib.elem n scriptSkip)))
+            (name: {
+              executable = true;
+              text = subst (builtins.readFile (scriptsDir + "/${name}"));
+            });
 
         # 3. Special cases (Substitutions)
 
