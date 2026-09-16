@@ -91,141 +91,36 @@ OverlayToggleCapsule {
         anchors.centerIn: parent
         spacing: root._metricSpacing
 
-        // ── CPU ──
-        Row {
-            visible: root._visCpu
-            spacing: Math.round(2 * capsuleScale)
-            anchors.verticalCenter: parent.verticalCenter
-            MaterialIcon {
-                icon: "memory_alt"
-                size: root._iconSz
-                color: root._idleCpu ? Theme.textDisabled : SysUi.thresholdColor(Services.SystemMonitor.cpuPercent,
-                    Theme.textSecondary, Theme.warning, Theme.error, root._warnThr, root._critThr)
-                Behavior on color { ColorFastInOutBehavior {} }
+        // Metric rows; the getters keep every value a live binding.
+        Repeater {
+            model: [
+                { icon: "memory_alt",      shown: function() { return root._visCpu; },  idle: function() { return root._idleCpu; },  value: function() { return Services.SystemMonitor.cpuPercent; },      warn: function() { return root._warnThr; }, crit: function() { return root._critThr; } },
+                { icon: "memory",          shown: function() { return root._visRam; },  idle: function() { return root._idleRam; },  value: function() { return Services.SystemMonitor.ramPercent; },      warn: function() { return root._warnThr; }, crit: function() { return root._critThr; } },
+                { icon: "developer_board", shown: function() { return root._visGpu; },  idle: function() { return root._idleGpu; },  value: function() { return Services.SystemMonitor.gpuPercent; },      warn: function() { return root._warnThr; }, crit: function() { return root._critThr; } },
+                { icon: "thermostat",      shown: function() { return root._visTemp; }, idle: function() { return root._idleTemp; }, value: function() { return Services.SystemMonitor.cpuTempPercent; },  warn: function() { return 0.43; },          crit: function() { return 0.71; } },
+                { icon: "storage",         shown: function() { return root._visIo; },   idle: function() { return root._idleIo; },   value: function() { return Services.SystemMonitor.ioPercent; },       warn: function() { return root._warnThr; }, crit: function() { return root._critThr; } },
+                { icon: "swap_horiz",      shown: function() { return root._visSwap; }, idle: function() { return root._idleSwap; }, value: function() { return Services.SystemMonitor.swapPercent; },     warn: function() { return root._warnThr; }, crit: function() { return root._critThr; } }
+            ]
+            delegate: Row {
+                visible: modelData.shown()
+                spacing: Math.round(2 * capsuleScale)
                 anchors.verticalCenter: parent.verticalCenter
-            }
-            MonitorBar {
-                value: Services.SystemMonitor.cpuPercent
-                barHeight: root.barH
-                warnThreshold: root._warnThr
-                critThreshold: root._critThr
-                screen: root.screen
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        // ── RAM ──
-        Row {
-            visible: root._visRam
-            spacing: Math.round(2 * capsuleScale)
-            anchors.verticalCenter: parent.verticalCenter
-            MaterialIcon {
-                icon: "memory"
-                size: root._iconSz
-                color: root._idleRam ? Theme.textDisabled : SysUi.thresholdColor(Services.SystemMonitor.ramPercent,
-                    Theme.textSecondary, Theme.warning, Theme.error, root._warnThr, root._critThr)
-                Behavior on color { ColorFastInOutBehavior {} }
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            MonitorBar {
-                value: Services.SystemMonitor.ramPercent
-                barHeight: root.barH
-                warnThreshold: root._warnThr
-                critThreshold: root._critThr
-                screen: root.screen
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        // ── GPU ──
-        Row {
-            visible: root._visGpu
-            spacing: Math.round(2 * capsuleScale)
-            anchors.verticalCenter: parent.verticalCenter
-            MaterialIcon {
-                icon: "developer_board"
-                size: root._iconSz
-                color: root._idleGpu ? Theme.textDisabled : SysUi.thresholdColor(Services.SystemMonitor.gpuPercent,
-                    Theme.textSecondary, Theme.warning, Theme.error, root._warnThr, root._critThr)
-                Behavior on color { ColorFastInOutBehavior {} }
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            MonitorBar {
-                value: Services.SystemMonitor.gpuPercent
-                barHeight: root.barH
-                warnThreshold: root._warnThr
-                critThreshold: root._critThr
-                screen: root.screen
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        // ── Temperature ──
-        Row {
-            visible: root._visTemp
-            spacing: Math.round(2 * capsuleScale)
-            anchors.verticalCenter: parent.verticalCenter
-            MaterialIcon {
-                icon: "thermostat"
-                size: root._iconSz
-                color: root._idleTemp ? Theme.textDisabled : SysUi.thresholdColor(Services.SystemMonitor.cpuTempPercent,
-                    Theme.textSecondary, Theme.warning, Theme.error, 0.43, 0.71)
-                Behavior on color { ColorFastInOutBehavior {} }
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            MonitorBar {
-                value: Services.SystemMonitor.cpuTempPercent
-                barHeight: root.barH
-                warnThreshold: 0.43
-                critThreshold: 0.71
-                screen: root.screen
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        // ── I/O ──
-        Row {
-            visible: root._visIo
-            spacing: Math.round(2 * capsuleScale)
-            anchors.verticalCenter: parent.verticalCenter
-            MaterialIcon {
-                icon: "storage"
-                size: root._iconSz
-                color: root._idleIo ? Theme.textDisabled : SysUi.thresholdColor(Services.SystemMonitor.ioPercent,
-                    Theme.textSecondary, Theme.warning, Theme.error, root._warnThr, root._critThr)
-                Behavior on color { ColorFastInOutBehavior {} }
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            MonitorBar {
-                value: Services.SystemMonitor.ioPercent
-                barHeight: root.barH
-                warnThreshold: root._warnThr
-                critThreshold: root._critThr
-                screen: root.screen
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        // ── Swap ──
-        Row {
-            visible: root._visSwap
-            spacing: Math.round(2 * capsuleScale)
-            anchors.verticalCenter: parent.verticalCenter
-            MaterialIcon {
-                icon: "swap_horiz"
-                size: root._iconSz
-                color: root._idleSwap ? Theme.textDisabled : SysUi.thresholdColor(Services.SystemMonitor.swapPercent,
-                    Theme.textSecondary, Theme.warning, Theme.error, root._warnThr, root._critThr)
-                Behavior on color { ColorFastInOutBehavior {} }
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            MonitorBar {
-                value: Services.SystemMonitor.swapPercent
-                barHeight: root.barH
-                warnThreshold: root._warnThr
-                critThreshold: root._critThr
-                screen: root.screen
-                anchors.verticalCenter: parent.verticalCenter
+                MaterialIcon {
+                    icon: modelData.icon
+                    size: root._iconSz
+                    color: modelData.idle() ? Theme.textDisabled : SysUi.thresholdColor(modelData.value(),
+                        Theme.textSecondary, Theme.warning, Theme.error, modelData.warn(), modelData.crit())
+                    Behavior on color { ColorFastInOutBehavior {} }
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                MonitorBar {
+                    value: modelData.value()
+                    barHeight: root.barH
+                    warnThreshold: modelData.warn()
+                    critThreshold: modelData.crit()
+                    screen: root.screen
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
         }
     }

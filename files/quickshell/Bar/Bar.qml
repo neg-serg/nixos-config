@@ -12,6 +12,7 @@ import qs.Widgets.SidePanel
 import "../Helpers/Color.js" as Color
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/WidgetBg.js" as WidgetBg
+import "../Helpers/AccentSampler.js" as AccentSampler
 
 Scope {
     id: rootScope
@@ -1161,43 +1162,6 @@ Scope {
                                 }
                             }
 
-                            function _sampleAccent(imageData) {
-                                if (!imageData || !imageData.data) return null;
-                                var data = imageData.data;
-                                var len = data.length;
-                                var satMin = 10, lumMin = 20, lumMax = 235;
-                                var satRelax = 8, lumRelaxMin = 20, lumRelaxMax = 240;
-                                var rs = 0, gs = 0, bs = 0, n = 0;
-                                for (var i = 0; i < len; i += 4) {
-                                    var a = data[i + 3]; if (a < 128) continue;
-                                    var r = data[i], g = data[i + 1], b = data[i + 2];
-                                    var maxv = Math.max(r, g, b), minv = Math.min(r, g, b);
-                                    var sat = maxv - minv; if (sat < satMin) continue;
-                                    var lum = (r + g + b) / 3; if (lum < lumMin || lum > lumMax) continue;
-                                    rs += r; gs += g; bs += b; ++n;
-                                }
-                                if (n === 0) {
-                                    rs = 0; gs = 0; bs = 0; n = 0;
-                                    for (var j = 0; j < len; j += 4) {
-                                        var a2 = data[j + 3]; if (a2 < 128) continue;
-                                        var r2 = data[j], g2 = data[j + 1], b2 = data[j + 2];
-                                        var max2 = Math.max(r2, g2, b2), min2 = Math.min(r2, g2, b2);
-                                        var sat2 = max2 - min2; if (sat2 < satRelax) continue;
-                                        var lum2 = (r2 + g2 + b2) / 3; if (lum2 < lumRelaxMin || lum2 > lumRelaxMax) continue;
-                                        rs += r2; gs += g2; bs += b2; ++n;
-                                    }
-                                }
-                                if (n > 0) return { r: Math.min(255, Math.round(rs / n)), g: Math.min(255, Math.round(gs / n)), b: Math.min(255, Math.round(bs / n)) };
-                                // Ultimate fallback: average all non-transparent pixels (handles dark grayscale images)
-                                rs = 0; gs = 0; bs = 0; n = 0;
-                                for (var k = 0; k < len; k += 4) {
-                                    var a3 = data[k + 3]; if (a3 < 128) continue;
-                                    rs += data[k]; gs += data[k + 1]; bs += data[k + 2]; ++n;
-                                }
-                                if (n > 0) return { r: Math.min(255, Math.round(rs / n)), g: Math.min(255, Math.round(gs / n)), b: Math.min(255, Math.round(bs / n)) };
-                                return null;
-                            }
-
                             Canvas {
                                 id: _wpCanvas
                                 width: 48
@@ -1210,7 +1174,7 @@ Scope {
                                     ctx.clearRect(0, 0, width, height);
                                     ctx.drawImage(_wpImage, 0, 0, width, height);
                                     var img = ctx.getImageData(0, 0, width, height);
-                                    var rgb = _wpSampler._sampleAccent(img);
+                                    var rgb = AccentSampler.sampleAccent(img, { finalFallback: true });
                                     if (!rgb) {
                                         _wpRetry.restart();
                                         return;

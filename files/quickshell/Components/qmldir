@@ -25,7 +25,6 @@ NumberStdOutBehavior 1.0 NumberStdOutBehavior.qml
 OverlayFrame 1.0 OverlayFrame.qml
 OverlayToggle 1.0 OverlayToggle.qml
 OverlayToggleCapsule 1.0 OverlayToggleCapsule.qml
-PanelIconButton 1.0 PanelIconButton.qml
 PanelLayer 1.0 PanelLayer.qml
 PanelOverlaySurface 1.0 PanelOverlaySurface.qml
 PanelTooltip 1.0 PanelTooltip.qml
