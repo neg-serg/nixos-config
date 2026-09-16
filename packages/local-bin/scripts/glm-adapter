@@ -128,8 +128,15 @@ vm_restart() {
   warn "restarting VM '$CT' (QEMU claims the adapter only at its own start)"
   notify firing "таз: GLM-адаптер отвалился от VM — перезапускаю (Windows поднимется за ~1 мин)"
   echo "$now" >> "$RESTART_LOG"
-  timeout 180 podman restart "$CT" >/dev/null 2>&1 || {
-    fail "podman restart '$CT' failed"
+  # stop + start, not `podman restart`: an automatic restart was followed by a
+  # container with only `lo` inside and an empty route table (no pasta tap, no
+  # copied host addresses), so nothing the guest sent could reach the host
+  # (:9003 relay, 10811/10812 proxy) and the MIDI bridge kept a dead connection.
+  # An explicit stop + start is the sequence that was verified to bring the
+  # pasta interface (net1) and its addresses back.
+  timeout 180 podman stop "$CT" >/dev/null 2>&1 || warn "podman stop '$CT' failed — starting anyway"
+  timeout 120 podman start "$CT" >/dev/null 2>&1 || {
+    fail "podman start '$CT' failed"
     notify firing "таз: не получилось перезапустить контейнер — смотри podman logs windows"
     return 1
   }
