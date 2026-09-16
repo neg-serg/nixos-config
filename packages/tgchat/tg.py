@@ -224,11 +224,36 @@ async def cmd_login(args) -> int:
         print(f"code sent to {args.phone}; rerun with --code")
         await cli.disconnect()
         return 0
-    return await qr_login(cli)
+    return await qr_login(cli, args)
 
 
-async def qr_login(cli) -> int:
-    """QR flow: write a PNG the user scans in Telegram -> Devices."""
+def two_factor_password(args) -> str:
+    """2FA password: --password, $TELEGRAM_2FA or an interactive prompt."""
+    password = args.password or os.environ.get("TELEGRAM_2FA", "")
+    if password:
+        return password
+    if sys.stdin.isatty():
+        import getpass
+
+        return getpass.getpass("2FA password: ")
+    die(
+        "2FA is enabled: pass --password, set $TELEGRAM_2FA or run interactively"
+    )
+
+
+def needs_two_factor(exc: Exception) -> bool:
+    from telethon.errors import SessionPasswordNeededError
+
+    return isinstance(exc, SessionPasswordNeededError)
+
+
+async def qr_login(cli, args) -> int:
+    """QR flow: write a PNG the user scans in Telegram -> Devices.
+
+    With two-step verification enabled the approved token still needs the
+    account password (Telegram requires it before exporting the login token),
+    so the password is collected here and the sign-in finished with it.
+    """
     qr = await cli.qr_login()
     print("scan the QR in Telegram: Settings -> Devices -> Link Desktop")
     while not await cli.is_user_authorized():
@@ -244,7 +269,18 @@ async def qr_login(cli) -> int:
         try:
             await qr.wait(timeout=25)
         except asyncio.TimeoutError:
-            await qr.recreate()
+            try:
+                await qr.recreate()
+            except Exception as exc:  # noqa: BLE001 - 2FA surfaces here
+                if needs_two_factor(exc):
+                    await cli.sign_in(password=two_factor_password(args))
+                    break
+                raise
+        except Exception as exc:  # noqa: BLE001 - 2FA surfaces here too
+            if not needs_two_factor(exc):
+                raise
+            await cli.sign_in(password=two_factor_password(args))
+            break
     me = await cli.get_me()
     print(f"authorized as {me.first_name} (id={me.id})")
     QR_PNG.unlink(missing_ok=True)
