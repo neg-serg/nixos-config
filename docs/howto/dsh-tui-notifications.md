@@ -1,5 +1,9 @@
 # dsh TUI: completion notifications through the terminal (OSC)
 
+> Tianshu generation: the `tui` profile now runs dsh-TUI — see
+> [dsh-tui-profile.md](./dsh-tui-profile.md). The OSC patch below applies to Tianshu bundles only
+> and is dormant while dsh-TUI is installed.
+
 How the Tianshu TUI (`@huiliyi37/dsh-tianshu-tui`, profile `~/.dsh/profiles/tui`) tells you a turn
 finished, and why the shipped path had to be replaced.
 

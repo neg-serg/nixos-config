@@ -3,23 +3,31 @@ export PATH=/run/current-system/sw/bin:$PATH
 PROFILE_DIR="@homeDir@/.dsh/profiles/tui"
 [ -d "$PROFILE_DIR" ] || exit 0
 
-# pnpm cannot write nested node_modules through the @deepseek-ai store
-# symlink (read-only /nix/store), and a fresh `dsh plugin add` re-links the
-# tree: park the symlink for the duration of the pnpm operations and let the
-# relink below restore it.
+# The profile runs dsh-TUI (@deepseek-harness-tui/dsh-tui), the Cordis terminal
+# front door. It replaced Tianshu (@huiliyi37/dsh-tianshu-tui) in 2026-09.
+#
+# The Tianshu era needed the profile's @deepseek-ai tree linked to the harness
+# tree: pnpm installed the plugin's own peer copies (0.1.2-rc.x), and those ship
+# an older agent-presets schema, so the shipped `standard` preset failed to
+# mount. dsh-TUI does not need that link — the harness packages are peers of
+# the bundle and dsh's own profile module fallback resolves them — and the link
+# actively breaks it: the healer creates its links under
+# node_modules/@deepseek-ai, which through a store symlink is read-only
+# (EROFS at every start). So a leftover link is removed instead of re-created.
 PROFILE_AI="$PROFILE_DIR/node_modules/@deepseek-ai"
 if [ -L "$PROFILE_AI" ]; then
-  mv "$PROFILE_AI" "$PROFILE_AI.parked"
+  rm -f "$PROFILE_AI"
+  echo "dsh-tui-ensure: removed the legacy @deepseek-ai store link (dsh owns the module fallback now)"
 fi
 
-PKG="$PROFILE_DIR/node_modules/@huiliyi37/dsh-tianshu-tui/package.json"
+PKG="$PROFILE_DIR/node_modules/@deepseek-harness-tui/dsh-tui/package.json"
 VER=""
 if [ -f "$PKG" ]; then
   VER="$(jq -r '.version // "0.0.0"' "$PKG")"
 fi
-if [ -z "$VER" ] || [ "$(printf '%s\n%s\n' 0.1.2-rc.29 "$VER" | sort -V | head -1)" != "0.1.2-rc.29" ]; then
-  echo "dsh-tui-ensure: installing dsh-tianshu-tui ^0.1.2-rc.29 (current: ${VER:-missing}; 0.1.5 session API)..."
-  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add '@huiliyi37/dsh-tianshu-tui@^0.1.2-rc.29' -w) \
+if [ -z "$VER" ] || [ "$(printf '%s\n%s\n' 0.10.1 "$VER" | sort -V | head -1)" != "0.10.1" ]; then
+  echo "dsh-tui-ensure: installing @deepseek-harness-tui/dsh-tui ^0.10.1 (current: ${VER:-missing})..."
+  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add '@deepseek-harness-tui/dsh-tui@^0.10.1' -w) \
     || echo "dsh-tui-ensure: install failed — will retry on next login" >&2
 fi
 
@@ -27,7 +35,7 @@ fi
 # `web_fetch`. The shipped `deepseek-official` provider answers with an empty
 # body from this region, so the profile rows below point the harness `web`
 # row at this plugin's `ddg` provider. 0.4.24 is the first release on the
-# 0.1.5 settings API; the relink further down repairs pnpm's peer copies.
+# 0.1.5 settings API.
 FS_PKG="$PROFILE_DIR/node_modules/dsh-free-search/package.json"
 FS_WANT=0.4.24
 # Registered means: the package is a profile dependency and its files are
@@ -50,17 +58,6 @@ if ! fs_ok || [ "$(printf '%s\n%s\n' "$FS_WANT" "$FS_HAVE" | sort -V | head -1)"
     || echo "dsh-tui-ensure: dsh-free-search install failed — will retry on next login" >&2
 fi
 
-# the parked symlink is superseded by the relink below
-rm -rf "$PROFILE_AI.parked"
-
-HARNESS_AI="@dsh@/lib/node_modules/@deepseek-ai"
-AI="$PROFILE_DIR/node_modules/@deepseek-ai"
-if [ -d "$HARNESS_AI" ] && { [ ! -L "$AI" ] || [ "$(readlink "$AI")" != "$HARNESS_AI" ]; }; then
-  rm -rf "$AI"
-  ln -s "$HARNESS_AI" "$AI"
-  echo "dsh-tui-ensure: linked the profile @deepseek-ai to the harness tree"
-fi
-
 PATCH="$PROFILE_DIR/cordis.patch.yml"
 if [ -f "$PATCH" ]; then
   ROWS="$(mktemp)"
@@ -68,15 +65,20 @@ if [ -f "$PATCH" ]; then
   if fs_ok; then
     printf '%s\n' @searchRows@ >> "$ROWS"
   fi
-  python3 @presetPatch@ "$PATCH" "$ROWS" || echo "dsh-tui-ensure: preset patch failed" >&2
+  # dsh-TUI's bundle patch owns the agent-preset roster under the scoped
+  # `dsh-tui-agent-presets` id (the base `agent-presets` row is gone), and it
+  # already inserts a code-runtime row — a second one is a duplicate
+  # `codeRuntime` registration and kills the boot. Both facts are parameters:
+  # `<prefix> <preset-row-id> <no-runtime|runtime>`.
+  python3 @presetPatch@ "$PATCH" "$ROWS" dsh-tui-ensure dsh-tui-agent-presets no-runtime \
+    || echo "dsh-tui-ensure: preset patch failed" >&2
   rm -f "$ROWS"
 fi
 
-# The neg preset (the TUI default, see below) mounts three repo-local
-# plugins that the web profile seeds through their own modules; without
-# copies here the preset aborts with "rows name plugins that cannot be
-# resolved". Copy-if-missing, the same contract those modules use, so local
-# tweaks survive.
+# The profile fallback preset (settings.yaml still wins) mounts three repo-local
+# plugins that the web profile seeds through their own modules; without copies
+# here the preset aborts with "rows name plugins that cannot be resolved".
+# Copy-if-missing, the same contract those modules use, so local tweaks survive.
 seed() {
   src="$1"
   name="$2"
@@ -113,14 +115,22 @@ seed "@advisor@" dsh-advisor package.json lib/index.js
 seed "@categoryPlugin@" dsh-category-skill-reminder package.json lib/index.js
 seed "@ttsr@" dsh-ttsr package.json lib/index.js lib/rules.json
 
-# Theme: the repo copy is the source of truth (like the presets), but the
-# chosen theme in prefs.json is the user's — seed `custom:neg` only while
-# no theme is set, so `/theme` choices survive a rebuild.
-TUI_THEME_DIR="@homeDir@/.dsh-tui/themes"
-mkdir -p "$TUI_THEME_DIR"
-cp -f "@themeJson@" "$TUI_THEME_DIR/neg.json"
-TUI_PREFS="@homeDir@/.dsh-tui/prefs.json"
-if [ -f "$TUI_PREFS" ] && [ "$(jq -r '.theme // ""' "$TUI_PREFS")" = "" ]; then
-  jq '.theme = "custom:neg"' "$TUI_PREFS" > "$TUI_PREFS.tmp" && mv "$TUI_PREFS.tmp" "$TUI_PREFS"
-  echo "dsh-tui-ensure: seeded the neg theme (custom:neg)"
-fi
+# Theme and language. dsh-TUI discovers user themes as
+# ~/.dsh-tui/themes/<name>.json and persists the choices in
+# ~/.dsh-tui/{theme,lang}.json; Tianshu's prefs.json is not read. The repo copy
+# is the theme's source of truth (like the presets), but the chosen theme and
+# language are the user's — seed each preference only while it is unset, so
+# /theme and /lang survive a rebuild.
+TUI_DIR="@homeDir@/.dsh-tui"
+mkdir -p "$TUI_DIR/themes"
+cp -f "@themeJson@" "$TUI_DIR/themes/neg.json"
+for pref in theme:neg lang:en; do
+  key="${pref%%:*}"
+  value="${pref##*:}"
+  file="$TUI_DIR/$key.json"
+  if [ ! -f "$file" ] || [ "$(jq -r --arg k "$key" '.[$k] // ""' "$file" 2> /dev/null)" = "" ]; then
+    printf '{\n  "%s": "%s"\n}\n' "$key" "$value" > "$file.tmp"
+    mv "$file.tmp" "$file"
+    echo "dsh-tui-ensure: seeded $key=$value"
+  fi
+done

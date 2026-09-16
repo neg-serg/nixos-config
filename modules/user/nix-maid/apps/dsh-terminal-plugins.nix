@@ -1,10 +1,10 @@
 # Plugin roster shared by the terminal dsh profiles.
 #
 # Both terminal profiles run dsh-base plus this host/agent-plane set: the tui
-# profile's Tianshu TUI (dsh-tui-ru.nix) and the martty profile's Martty TUI
-# (dsh-martty.nix). One roster for both keeps their caretaker scripts from
-# drifting — a row whose plugin is missing is what makes the next terminal
-# start fail.
+# profile's dsh-TUI (@deepseek-harness-tui/dsh-tui, dsh-tui-ru.nix) and the
+# martty profile's Martty TUI (dsh-martty.nix). One roster for both keeps their
+# caretaker scripts from drifting — a row whose plugin is missing is what makes
+# the next terminal start fail.
 #
 # The user's own host/agent plugins, mounted by the web profile through its
 # modules. A terminal profile carries only dsh-base + its terminal UI, so without

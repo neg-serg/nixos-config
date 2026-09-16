@@ -42,6 +42,9 @@
 - dsh martty profile — the upstream terminal UI (Martty) as a second profile:
   [dsh-martty.md](./dsh-martty.md)
 
+- dsh tui profile — what `dsh --profile tui` runs (dsh-TUI), and the profile facts that break a boot
+  when ignored: [dsh-tui-profile.md](./dsh-tui-profile.md)
+
 - dsh-worktree — parallel dsh sessions in isolated git worktrees:
   [dsh-worktrees.md](./dsh-worktrees.md)
 

@@ -1,5 +1,9 @@
 # dsh TUI: what happens while it boots
 
+> Tianshu generation: the `tui` profile now runs dsh-TUI — see
+> [dsh-tui-profile.md](./dsh-tui-profile.md). This document describes the Tianshu boot-progress
+> patch, which is dormant while dsh-TUI is installed.
+
 Why `dsh --profile tui` shows nothing for a moment, what the boot progress line reports, and how to
 turn it off.
 

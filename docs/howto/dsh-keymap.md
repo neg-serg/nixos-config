@@ -1,5 +1,9 @@
 # dsh keymap: rebinding the TUI keys
 
+> Tianshu generation: the `tui` profile now runs dsh-TUI — see
+> [dsh-tui-profile.md](./dsh-tui-profile.md). The keymap patch described here is dormant while
+> dsh-TUI is installed; dsh-TUI carries its own keymap layer.
+
 The Tianshu TUI's built-in keys are **not** hardcoded: `createBuiltinActions()` returns a
 declarative action table
 

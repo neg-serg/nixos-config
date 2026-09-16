@@ -1,5 +1,10 @@
 # dsh status line
 
+> Tianshu generation: the `tui` profile now runs dsh-TUI — see
+> [dsh-tui-profile.md](./dsh-tui-profile.md). dsh-TUI does not read `DSH_TUI_STATUSLINE`, so the
+> frame patch below is dormant while it is installed; the `dsh-statusline` helper itself is
+> unchanged.
+
 A session status line for dsh: branch (or worktree), how dirty the tree is, context usage, the turn
 number, cost. The content lives in `packages/local-bin/bin/dsh-statusline` — session state arrives
 as JSON on stdin, the first line of stdout is the status line — and two surfaces can render it.
