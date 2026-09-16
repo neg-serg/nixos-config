@@ -16,6 +16,8 @@
 }:
 
 let
+  systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+
   telegramDigestScript = pkgs.writeShellApplication {
     name = "telegram-digest";
     runtimeInputs = [
@@ -31,29 +33,13 @@ let
     );
   };
 in
-lib.mkIf config.odin.telegram.enable {
-  systemd.services."telegram-digest" = {
+lib.mkIf config.odin.telegram.enable (
+  systemdUser.mkOneshotTimer {
+    name = "telegram-digest";
     description = "Send the daily 08:00 Telegram morning digest";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      StateDirectory = "telegram-digest";
-      ExecStart = "${lib.getExe telegramDigestScript}";
-      # A missed digest is not an incident, but retry transient send failures.
-      Restart = "on-failure";
-      RestartSec = 60;
-    };
-  };
-
-  systemd.timers."telegram-digest" = {
-    description = "Daily 08:00 Telegram morning digest";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      # No Persistent=true: on VM snapshot restores / boot catch-ups this would
-      # fire late "catch-up" digests; a missed one is fine.
-      OnCalendar = "*-*-* 08:00:00";
-      Unit = "telegram-digest.service";
-    };
-  };
-}
+    timerDescription = "Daily 08:00 Telegram morning digest";
+    script = lib.getExe telegramDigestScript;
+    onCalendar = "*-*-* 08:00:00";
+    stateDirectory = "telegram-digest";
+  }
+)

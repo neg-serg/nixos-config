@@ -9,9 +9,9 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 - `neg-helpers.nix` — structural helpers: the home-file helper (`mkHomeFiles`) and `importDir`
   (directory auto-import for every module aggregator); single source for `specialArgs.neg`
   (flake/nixos.nix) and `flake/checks.nix`; also re-exports `ruKeys` from `ru-keys.nix`.
-- `systemd-user.nix` — systemd user unit helpers: `mkUnitFromPresets` plus the module-shaped
-  `mkUserService` / `mkUserOneshot` / `mkUserActivation`; the legacy `mkSimple*` helpers were
-  removed.
+- `systemd-user.nix` — systemd unit helpers: `mkUnitFromPresets` plus the module-shaped
+  `mkUserService` / `mkUserOneshot` / `mkUserActivation`, and the system-level oneshot+timer factory
+  `mkOneshotTimer` used by `hosts/odin`; the legacy `mkSimple*` helpers were removed.
 - `aliae.nix` — shell alias definitions (`alias`-style helpers for the user's shell); imports
   `package-checks.nix` to skip aliases whose packages are missing.
 - `package-checks.nix` — package availability checks (`hasRg`, `hasNmap`, `hasCurl`, …) for the

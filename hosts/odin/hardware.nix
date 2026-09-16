@@ -277,9 +277,7 @@
 
   # Host-specific hardware tools
   # Bakecore udev rules for Dygma keyboards
-  services.udev.extraRules = builtins.readFile (
-    config.lib.neg.path "files/hardware/udev/odin-host.rules"
-  );
+  services.udev.extraRules = config.lib.neg.readFile "files/hardware/udev/odin-host.rules";
   environment.systemPackages = [
     (pkgs.writeShellScriptBin "kexec-rebuild" ''
       set -eu

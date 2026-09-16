@@ -148,4 +148,65 @@ in
       wantedBy = schedule.Install.WantedBy;
     };
 
+  # System-level oneshot service + matching timer (emits `systemd.services` /
+  # `systemd.timers`, not user units) — the shape hosts/odin repeats. Returns a
+  # fragment keyed by `name`, so the caller keeps its own gating and `config =` key:
+  #
+  #   config = lib.mkIf cond (systemdUser.mkOneshotTimer {
+  #     name = "telegram-digest"; description = "…"; timerDescription = "…";
+  #     script = lib.getExe telegramDigestScript;      # ExecStart, verbatim
+  #     onCalendar = "*-*-* 08:00:00";                 # or onBootSec[/OnUnitActiveSec]
+  #     restartSec = 30; stateDirectory = "telegram-digest";   # default 60
+  #   });
+  # Implied: Type = "oneshot", Unit = "<name>.service", WantedBy = timers.target
+  # and, unless `networkOnline = false`, After = Wants = network-online.target
+  # (`after` appends extra After= entries; `restart = null` drops Restart and
+  # RestartSec). Persistent is never set: on VM snapshot restores / boot
+  # catch-ups systemd would otherwise fire missed runs.
+  mkOneshotTimer =
+    {
+      name,
+      description,
+      timerDescription,
+      script,
+      onCalendar ? null,
+      onBootSec ? null,
+      onUnitActiveSec ? null,
+      networkOnline ? true,
+      after ? [ ],
+      wantedBy ? [ ],
+      restart ? "on-failure",
+      restartSec ? 60,
+      stateDirectory ? null,
+    }:
+    let
+      serviceAfter = lib.unique (lib.optional networkOnline "network-online.target" ++ after);
+    in
+    {
+      systemd.services.${name} = lib.filterAttrs (_: v: v != [ ]) {
+        inherit description;
+        serviceConfig = lib.filterAttrs (_: v: v != null) {
+          Type = "oneshot";
+          ExecStart = script;
+          Restart = restart;
+          RestartSec = if restart == null then null else restartSec;
+          StateDirectory = stateDirectory;
+        };
+        after = serviceAfter;
+        wants = lib.optional networkOnline "network-online.target";
+        inherit wantedBy;
+      };
+
+      systemd.timers.${name} = {
+        description = timerDescription;
+        wantedBy = [ "timers.target" ];
+        timerConfig = lib.filterAttrs (_: v: v != null) {
+          OnCalendar = onCalendar;
+          OnBootSec = onBootSec;
+          OnUnitActiveSec = onUnitActiveSec;
+          Unit = "${name}.service";
+        };
+      };
+    };
+
 }
