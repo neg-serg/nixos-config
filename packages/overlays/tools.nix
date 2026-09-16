@@ -17,9 +17,6 @@ in
     sourceRoot = ".";
   });
 
-  # Qwen3.8-Flash-Next (qwen4exp arch) llama.cpp — experimental PR #27742
-  # Vulkan build (+ graph_max_nodes patch); serves llama-server-flash-next.
-  llama-cpp-qwen4exp = callPkg (packagesRoot + "/llama-cpp-qwen4exp") { };
   # ROCm (HIP) twin — Vulkan/RADV llama.cpp is pathologically slow on this host
   # (~0.2 tok/s for VRAM-resident models); ROCm is the working compute path.
   llama-cpp-qwen4exp-rocm = callPkg (packagesRoot + "/llama-cpp-qwen4exp-rocm") { };
