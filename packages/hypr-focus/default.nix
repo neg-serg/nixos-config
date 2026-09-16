@@ -8,12 +8,10 @@ rustPlatform.buildRustPackage rec {
 
   cargoLock.lockFile = ./Cargo.lock;
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Hyprland focus history tracker and window management CLI";
     homepage = "https://github.com/neg-serg/nixos-config";
-    license = licenses.mit;
+    license = lib.licenses.mit;
     mainProgram = "hypr-focus";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }

@@ -29,11 +29,10 @@ python3.pkgs.buildPythonPackage rec {
     python3.pkgs.websocket-client
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Python library for communicating with CamillaDSP";
     homepage = "https://github.com/HEnquist/pycamilladsp";
-    license = licenses.mit;
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.mit;
+    platforms = lib.platforms.all;
   };
 }

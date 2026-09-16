@@ -28,13 +28,12 @@ stdenvNoCC.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Code2000 shareware Unicode TrueType font with broad script coverage";
     homepage = "https://www.code2001.com/code2000_page.htm";
     # Shareware: $5 registration expected after evaluation; the unaltered ZIP
     # itself may be copied and distributed freely.
-    license = licenses.unfreeRedistributable;
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.unfreeRedistributable;
+    platforms = lib.platforms.all;
   };
 }

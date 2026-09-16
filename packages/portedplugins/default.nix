@@ -48,11 +48,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/PortedPlugins"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider plugin: 30+ ported analog-style UGens (VA filters, drum synths, Fverb reverb)";
     homepage = "https://github.com/madskjeldgaard/portedplugins";
-    license = licenses.gpl3;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3;
   };
 }

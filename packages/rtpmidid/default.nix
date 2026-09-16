@@ -43,7 +43,7 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "RTP MIDI (AppleMIDI) daemon: share ALSA sequencer devices over the network";
     longDescription = ''
       rtpmidid exposes ALSA sequencer ports over RTP-MIDI (AppleMIDI) and imports
@@ -51,9 +51,7 @@ stdenv.mkDerivation {
       send MIDI from Linux into the dockur Windows VM for Genelec GLM MIDI control.
     '';
     homepage = "https://github.com/davidmoreno/rtpmidid";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
+    license = lib.licenses.gpl3Plus;
     mainProgram = "rtpmidid";
-    maintainers = [ ];
   };
 }

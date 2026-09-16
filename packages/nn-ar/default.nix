@@ -48,11 +48,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/nn.ar"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider UGens for neural audio processing (PyTorch models in scsynth)";
     homepage = "https://github.com/elgiano/nn.ar";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus;
   };
 }

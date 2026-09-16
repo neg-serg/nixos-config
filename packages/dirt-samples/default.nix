@@ -21,7 +21,7 @@ stdenvNoCC.mkDerivation {
 
   installPhase = builtins.readFile ./install.sh;
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Audio sample library for SuperDirt / TidalCycles live coding";
     longDescription = ''
       The standard sample library used by SuperDirt, containing percussive
@@ -29,8 +29,7 @@ stdenvNoCC.mkDerivation {
       Required for SuperDirt to produce anything beyond raw oscillators.
     '';
     homepage = "https://github.com/musikinformatik/Dirt-Samples";
-    license = licenses.cc0; # CC0/public-domain sample sets
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.cc0; # CC0/public-domain sample sets
+    platforms = lib.platforms.all;
   };
 }

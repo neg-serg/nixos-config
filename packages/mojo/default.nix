@@ -105,12 +105,11 @@ stdenv.mkDerivation {
       ]
       (builtins.readFile ./install.sh);
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Mojo programming language (compiler, LSP, formatter, lldb tooling)";
     homepage = "https://mojolang.org/";
-    license = licenses.unfree; # LicenseRef-MAX-Platform-Software-License on PyPI
+    license = lib.licenses.unfree; # LicenseRef-MAX-Platform-Software-License on PyPI
     mainProgram = "mojo";
     platforms = [ "x86_64-linux" ];
-    maintainers = [ ];
   };
 }

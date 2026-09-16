@@ -58,11 +58,9 @@ stdenv.mkDerivation rec {
     test -d "$out/share/SuperCollider/Extensions/Myplugins"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Sonoro1234 MyUGens — DWG instruments, Karplus, IIR filters, pitch tracking, plucked strings";
     homepage = "https://github.com/sonoro1234/MyUGens";
-    license = licenses.gpl2Plus; # MyUGens suite (no LICENSE file; DWG code is GPL)
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl2Plus; # MyUGens suite (no LICENSE file; DWG code is GPL)
   };
 }

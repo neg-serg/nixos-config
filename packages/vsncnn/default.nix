@@ -59,11 +59,9 @@ stdenv.mkDerivation rec {
     endif()'
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "VapourSynth NCNN (Vulkan) plugin for AI upscaling/interpolation/denoising (vs-mlrt)";
     homepage = "https://github.com/AmusementClub/vs-mlrt";
-    license = licenses.gpl3Only;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Only;
   };
 }

@@ -29,11 +29,9 @@ stdenvNoCC.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Flight GTK theme (dark and light variants)";
     homepage = "https://github.com/neg-serg/Flight-Plasma-Themes";
-    license = licenses.gpl3Only;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Only;
   };
 }

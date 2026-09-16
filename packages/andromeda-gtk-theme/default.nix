@@ -30,11 +30,9 @@ stdenvNoCC.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Andromeda — an elegant dark GTK theme for Gnome, MATE, Budgie, Cinnamon, XFCE";
     homepage = "https://github.com/EliverLara/Andromeda-gtk";
-    license = licenses.gpl3Only;
-    platforms = platforms.linux;
-    maintainers = with maintainers; [ ];
+    license = lib.licenses.gpl3Only;
   };
 }
