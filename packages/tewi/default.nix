@@ -70,12 +70,11 @@ pypi.buildPythonApplication rec {
     "tewi.app"
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Text-based interface for BitTorrent clients (Transmission, qBittorrent, Deluge)";
     homepage = "https://github.com/anlar/tewi";
-    license = licenses.gpl3Plus;
-    platforms = platforms.all;
+    license = lib.licenses.gpl3Plus;
+    platforms = lib.platforms.all;
     mainProgram = "tewi";
-    maintainers = [ ];
   };
 }

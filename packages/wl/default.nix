@@ -41,12 +41,10 @@ rustPlatform.buildRustPackage rec {
       --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ vulkan-loader ]}
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Vulkan-accelerated wallpaper daemon for Wayland compositors";
     homepage = "https://github.com/neg-serg/wl";
-    license = licenses.gpl3Only;
-    platforms = platforms.linux;
+    license = lib.licenses.gpl3Only;
     mainProgram = "wl";
-    maintainers = [ ];
   };
 }

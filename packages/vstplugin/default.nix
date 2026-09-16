@@ -64,11 +64,9 @@ stdenv.mkDerivation rec {
     "-DSUPERNOVA=OFF"
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider plugin: host VST2/VST3 plugins inside scsynth";
     homepage = "https://github.com/Spacechild1/vstplugin";
-    license = licenses.gpl2Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl2Plus;
   };
 }

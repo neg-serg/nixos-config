@@ -49,12 +49,10 @@ pyPkgs.buildPythonApplication {
 
   doInstallCheck = false;
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Push-to-talk voice typing that works everywhere";
     homepage = "https://github.com/lmacan1/talktype";
-    license = licenses.mit;
-    platforms = platforms.linux;
+    license = lib.licenses.mit;
     mainProgram = "talktype";
-    maintainers = [ ];
   };
 }

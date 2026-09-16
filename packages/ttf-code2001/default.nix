@@ -29,12 +29,11 @@ stdenvNoCC.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Code2001 freeware Unicode TrueType font for Plane 1 (ancient/historic scripts)";
     homepage = "https://www.code2001.com/code2001.htm";
     # Freeware: may be used freely, must not be altered.
-    license = licenses.unfreeRedistributable;
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.unfreeRedistributable;
+    platforms = lib.platforms.all;
   };
 }

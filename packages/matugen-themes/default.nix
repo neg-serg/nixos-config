@@ -28,11 +28,10 @@ stdenvNoCC.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Template collection for Matugen theme generator";
     homepage = "https://github.com/InioX/matugen-themes";
-    license = licenses.mit;
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.mit;
+    platforms = lib.platforms.all;
   };
 }

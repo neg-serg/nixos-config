@@ -28,12 +28,10 @@ rustPlatform.buildRustPackage {
     patchelf --add-rpath ${lib.makeLibraryPath [ libusb1 ]} $out/bin/genlc
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Genelec SAM loudspeaker CLI volume control (Rust)";
     homepage = "https://github.com/neg-serg/genlc";
-    license = licenses.mit;
+    license = lib.licenses.mit;
     mainProgram = "genlc";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }

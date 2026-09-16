@@ -27,11 +27,10 @@ python3.pkgs.buildPythonPackage rec {
     python3.pkgs.pyyaml
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Validate, evaluate and plot configs and filters for CamillaDSP";
     homepage = "https://github.com/HEnquist/pycamilladsp-plot";
-    license = licenses.mit;
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.mit;
+    platforms = lib.platforms.all;
   };
 }

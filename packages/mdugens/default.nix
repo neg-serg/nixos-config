@@ -43,11 +43,9 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider plugin: TPT SVF filters + SOSBank + PlateReverb/Phaser/Chorus FX classes";
     homepage = "https://github.com/michaeldzjap/MDUGens";
-    license = licenses.mit;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.mit;
   };
 }

@@ -67,7 +67,7 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider plugin: efficient virtual room generator (early reflections + FDN late reverb)";
     longDescription = ''
       DWGReverb is a SuperCollider UGen plugin providing a very efficient
@@ -77,8 +77,6 @@ stdenv.mkDerivation {
       partitioned-convolution triggers. C++ implementation using nova-simd.
     '';
     homepage = "https://github.com/sonoro1234/DWGReverb";
-    license = licenses.gpl2Plus; # MyUGens suite is GPL; DWGReverb ships no LICENSE file
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl2Plus; # MyUGens suite is GPL; DWGReverb ships no LICENSE file
   };
 }

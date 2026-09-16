@@ -76,13 +76,11 @@ stdenv.mkDerivation rec {
       ]
       (builtins.readFile ./post-install.sh);
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Lossless Scaling Frame Generation on Linux — Vulkan frame-gen layer (requires owning Lossless Scaling on Steam, lsfg-vk branch)";
     homepage = "https://lsfg-vk.dev";
     # CC BY-NC-ND 4.0 (non-free): no commercial use, no derivatives.
-    license = licenses.cc-by-nc-nd-40;
+    license = lib.licenses.cc-by-nc-nd-40;
     mainProgram = "lsfg-vk-cli";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }

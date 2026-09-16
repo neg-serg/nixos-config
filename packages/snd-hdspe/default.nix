@@ -58,11 +58,9 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "New Linux ALSA driver for RME HDSPe MADI/AES/RayDAT/AIO/AIO Pro";
     homepage = "https://github.com/PhilippeBekaert/snd-hdspe";
-    license = licenses.gpl3;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3;
   };
 }

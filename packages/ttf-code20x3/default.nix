@@ -28,12 +28,11 @@ stdenvNoCC.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Code20X3 freeware Unicode TrueType font for Plane 3 (CJK Extensions G/H)";
     homepage = "https://www.code2001.com/Code20X3_page.htm";
     # Freeware: may be used freely, must not be altered.
-    license = licenses.unfreeRedistributable;
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.unfreeRedistributable;
+    platforms = lib.platforms.all;
   };
 }
