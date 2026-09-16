@@ -5,8 +5,7 @@
   ...
 }:
 let
-  inherit (config.lib.neg) mainUser homeDir;
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  inherit (config.lib.neg) mainUser homeDir systemdUser;
 
   # dsh model policy: keep the deployment on the V4.1 route everywhere.
   #

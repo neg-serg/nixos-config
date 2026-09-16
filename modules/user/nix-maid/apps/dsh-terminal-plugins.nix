@@ -20,131 +20,63 @@
 # and the caretaker reports it missing while the row is already in the patch
 # layer — a state that breaks the next terminal start.
 { lib }:
+let
+  # The roster is an explicit allow-list (`{ name; path; }`, one directory per
+  # plugin): do NOT derive it with `builtins.readDir` — that would change which
+  # plugins mount. Interpolating the name keeps `path` a path literal (not
+  # toString), so each directory stays in the store closure — see `seeds` below.
+  mkPlugin = name: {
+    inherit name;
+    path = ./${name};
+  };
+in
 rec {
-  plugins = [
-    {
-      name = "dsh-mode";
-      path = ./dsh-mode;
-    }
-    {
-      name = "dsh-session-tools";
-      path = ./dsh-session-tools;
-    }
-    {
-      name = "dsh-agent-usage-reminder";
-      path = ./dsh-agent-usage-reminder;
-    }
-    {
-      name = "dsh-compaction-todo-preserver";
-      path = ./dsh-compaction-todo-preserver;
-    }
-    {
-      name = "dsh-snapcompact";
-      path = ./dsh-snapcompact;
-    }
-    {
-      name = "dsh-rules-injector";
-      path = ./dsh-rules-injector;
-    }
-    {
-      name = "dsh-hashline";
-      path = ./dsh-hashline;
-    }
+  plugins = map mkPlugin [
+    "dsh-mode"
+    "dsh-session-tools"
+    "dsh-agent-usage-reminder"
+    "dsh-compaction-todo-preserver"
+    "dsh-snapcompact"
+    "dsh-rules-injector"
+    "dsh-hashline"
     # dsh-memory-extractor was removed with the web GUI (2026-09): it injected
     # the `memory` service, which this profile does not provide.
-    {
-      name = "dsh-debug";
-      path = ./dsh-debug;
-    }
-    {
-      name = "dsh-ast-grep";
-      path = ./dsh-ast-grep;
-    }
-    {
-      name = "dsh-checkpoint";
-      path = ./dsh-checkpoint;
-    }
-    {
-      name = "dsh-eval";
-      path = ./dsh-eval;
-    }
-    {
-      name = "dsh-hub";
-      path = ./dsh-hub;
-    }
-    {
-      name = "dsh-read-tags";
-      path = ./dsh-read-tags;
-    }
-    {
-      name = "dsh-desktop";
-      path = ./dsh-desktop;
-    }
-    {
-      name = "dsh-json-error-recovery";
-      path = ./dsh-json-error-recovery;
-    }
-    {
-      name = "dsh-keyword-detector";
-      path = ./dsh-keyword-detector;
-    }
-    {
-      name = "dsh-notepad-write-guard";
-      path = ./dsh-notepad-write-guard;
-    }
-    {
-      name = "dsh-delegate-task-retry";
-      path = ./dsh-delegate-task-retry;
-    }
-    {
-      name = "dsh-plan-format-validator";
-      path = ./dsh-plan-format-validator;
-    }
-    {
-      name = "dsh-task-resume-info";
-      path = ./dsh-task-resume-info;
-    }
+    "dsh-debug"
+    "dsh-ast-grep"
+    "dsh-checkpoint"
+    "dsh-eval"
+    "dsh-hub"
+    "dsh-read-tags"
+    "dsh-desktop"
+    "dsh-json-error-recovery"
+    "dsh-keyword-detector"
+    "dsh-notepad-write-guard"
+    "dsh-delegate-task-retry"
+    "dsh-plan-format-validator"
+    "dsh-task-resume-info"
     # Ported from the web profile (2026-09): the three are host/agent-plane with
     # no webServer/slots, and every service they inject exists here as well —
     # tool lifecycle hooks (secrets-masker), `ctx.sessionQuery` (recall; provided
     # by @deepseek-ai/dsh-session-query-sqlite, already mounted) and
     # `ctx.subprocess`/`ctx.tools` (plugin-vetting; dsh-subprocess-local).
-    {
-      name = "dsh-secrets-masker";
-      path = ./dsh-secrets-masker;
-    }
-    {
-      name = "dsh-plugin-recall";
-      path = ./dsh-plugin-recall;
-    }
-    {
-      name = "dsh-plugin-vetting";
-      path = ./dsh-plugin-vetting;
-    }
+    "dsh-secrets-masker"
+    "dsh-plugin-recall"
+    "dsh-plugin-vetting"
     # /worktree: drives the dsh-worktree helper (packages/local-bin) from inside
     # a session — create/list/remove the worktrees that isolate parallel dsh
     # sessions. Host/agent-plane: it injects `commands` and `subprocess`, both
     # mounted here (dsh-subprocess-local is what the bash tool already uses).
-    {
-      name = "dsh-worktree";
-      path = ./dsh-worktree;
-    }
+    "dsh-worktree"
     # /diff + show_diff: the diff-review surface. The tool declares the harness's
     # `card: "diff"` presenter (the same one the edit-approval preview uses), so
     # a review renders as structured red/green file diffs; the command is the
     # textual entry point. Injects tools + commands + subprocess.
-    {
-      name = "dsh-diff";
-      path = ./dsh-diff;
-    }
+    "dsh-diff"
     # status line in the terminal title. The TUI renders its own in-frame status
     # line, so this drives OSC 1/2 from packages/local-bin/bin/dsh-statusline,
     # which speaks the Claude-Code-compatible protocol (session JSON on stdin,
     # first stdout line is the line). Injects subprocess only.
-    {
-      name = "dsh-statusline";
-      path = ./dsh-statusline;
-    }
+    "dsh-statusline"
     # Notify the human when the turn *blocks* on them: the approval card and the
     # structured question. The TUI's own notifyOs covers finished work only
     # (subagent / workflow / background task — the three call sites in the
@@ -155,10 +87,7 @@ rec {
     # auto-approved tool settles on the next microtask and stays silent). Writes
     # OSC 99/9 straight to stdout: control-only, never the text grid. Injects no
     # service — the host event bus is the only seam.
-    {
-      name = "dsh-notify-input";
-      path = ./dsh-notify-input;
-    }
+    "dsh-notify-input"
   ];
 
   # Loader rows for the plugins above, mirroring the web profile's patch layer

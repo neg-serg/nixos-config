@@ -9,12 +9,7 @@
   ...
 }:
 let
-  cfg =
-    config.servicesProfiles.adguardhome or {
-      enable = false;
-      rewrites = [ ];
-      filterLists = [ ];
-    };
+  cfg = config.servicesProfiles.adguardhome;
 in
 {
   config = lib.mkIf cfg.enable {

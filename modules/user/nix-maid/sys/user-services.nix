@@ -7,7 +7,7 @@
 let
   cfg = config.features.gui;
   # Module-shaped systemd user units (lib/systemd-user.nix)
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  systemdUser = config.lib.neg.systemdUser;
 
   # podman pasta --config-net copies ALL host net1 addresses (incl. the .88
   # alias) into the dockur container netns, shadowing the host alias and

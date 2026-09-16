@@ -83,9 +83,7 @@ in
       ];
 
       # System-wide MangoHud defaults
-      etc."xdg/MangoHud/MangoHud.conf".text = builtins.readFile (
-        config.lib.neg.path "files/gui/MangoHud.conf"
-      );
+      etc."xdg/MangoHud/MangoHud.conf".text = config.lib.neg.readFile "files/gui/MangoHud.conf";
     };
   };
 }

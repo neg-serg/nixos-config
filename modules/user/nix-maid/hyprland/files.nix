@@ -5,17 +5,7 @@
 }:
 let
   lockDir = config.lib.neg.path "files/gui/hypr/hyprlock";
-
-  mkFiles =
-    destDir: sourceDir: files:
-    files
-    |> map (f: {
-      name = "${destDir}/${f}";
-      value = {
-        source = sourceDir + "/${f}";
-      };
-    })
-    |> builtins.listToAttrs;
+  lockNames = builtins.attrNames (builtins.readDir lockDir);
 in
 {
   generateFileLinks =
@@ -29,9 +19,7 @@ in
 
         ".config/hypr/hyprland.lua".text = hyprlandLuaText;
 
-        ".config/hypr/hyprlock.conf".text = builtins.readFile (
-          config.lib.neg.path "files/gui/hypr/hyprlock.conf"
-        );
+        ".config/hypr/hyprlock.conf".text = config.lib.neg.readFile "files/gui/hypr/hyprlock.conf";
 
         ".config/hypr/hypridle.conf".text = ''
           # Hypridle — idle configuration
@@ -64,6 +52,6 @@ in
 -- See ~/.config/hypr/hyprland.lua for reference
 ";
       }
-      // (mkFiles ".config/hypr/hyprlock" lockDir (builtins.attrNames (builtins.readDir lockDir)))
+      // (neg.mkDirLinks ".config/hypr/hyprlock" lockDir lockNames)
     );
 }
