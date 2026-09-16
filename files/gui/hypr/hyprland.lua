@@ -251,6 +251,8 @@ hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grim -l 0 -g "$(slurp)" "$shot" && pic-info "$shot"'))
 hl.bind(M4 .. "+" .. SH .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec screen"))
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec area"))
+-- Screen annotation overlay (wayscriber): toggle the resident drawing layer
+hl.bind(M4 .. "+" .. SH .. "+z", hl.dsp.exec_cmd("wayscriber --daemon-toggle"), { locked = true })
 -- Synths: run-or-raise via packages/local-bin/bin/synth (VSTPlugin in SC / yabridge)
 hl.bind(M4 .. "+" .. SH .. "+s", hl.dsp.exec_cmd("synth Surge_XT"))
 hl.bind(M4 .. "+" .. SH .. "+l", hl.dsp.exec_cmd("synth LegendHZ"))
@@ -634,6 +636,7 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("wl-clip-persist --clipboard regular")
   hl.exec_cmd("zsh -c 'pkill \"wl-paste --watch cliphist store\"; wl-paste --watch cliphist store'")
   hl.exec_cmd("nicotine -s") -- start hidden (Soulseek client); summon via special-submap d
+  hl.exec_cmd("wayscriber --daemon") -- keep the annotation overlay resident; M4+SHIFT+Z toggles it
   hl.exec_cmd("systemctl --user start --no-block vicinae.service")
   hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
