@@ -9,16 +9,13 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float special smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float special smoke') then return end
 
 -- Isolate the frecency journal: the client ships F records and a stale real
 -- journal would reorder the empty query.
-require('lusty.frecency').set_state_file('/tmp/lusty_fs_special_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_special_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_special_frec.json')
 
 local tmp = '/tmp/lusty_fs_special_smoke'
 vim.fn.delete(tmp, 'rf')
@@ -80,9 +77,7 @@ local function backend_escapes()
 end
 
 if not backend_escapes() then
-  print('SKIP filesystem float special smoke: backend without protocol escaping')
-  vim.cmd('qa!')
-  return
+  return H.skip('filesystem float special smoke', 'backend without protocol escaping')
 end
 
 -- The default box is 4 rows tall (one entry row), so only a few grid slots
@@ -93,16 +88,7 @@ local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 wait_until(function() return p.window and #p.window > 0 end, 'initial rows')
 
@@ -137,5 +123,4 @@ assert(raw, 'non-UTF8 path keeps its raw bytes')
 assert(raw.label == 'caf\239\191\189.txt', 'lossy label for display: ' .. tostring(raw.label))
 
 p:handle('cancel')
-print('PASS filesystem float special smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float special smoke')
