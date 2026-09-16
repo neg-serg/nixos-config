@@ -362,81 +362,35 @@ PanelOverlaySurface {
         Row {
             width: parent.width
             spacing: 10
-            Rectangle {
-                id: c1
-                width: (parent.width - parent.spacing * 2) / 3
-                height: root._cardH
-                radius: Math.round(6 * Theme.scale(root.screen))
-                color: root.cardBg
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 2
-                    Text {
-                        text: root.totalLogs.toString()
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeMedium | 0
-                        color: Theme.textPrimary
-                        font.bold: true
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Text {
-                        text: "Log Lines"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeSmall | 0
-                        color: Theme.textSecondary
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-            }
-            Rectangle {
-                id: c2
-                width: (parent.width - parent.spacing * 2) / 3
-                height: root._cardH
-                radius: Math.round(6 * Theme.scale(root.screen))
-                color: root.cardBg
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 2
-                    Text {
-                        text: root.errorCount.toString()
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeMedium | 0
-                        color: root.errorCount > 0 ? Theme.error : Theme.textPrimary
-                        font.bold: true
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Text {
-                        text: "Errors"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeSmall | 0
-                        color: Theme.textSecondary
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-            }
-            Rectangle {
-                id: c3
-                width: (parent.width - parent.spacing * 2) / 3
-                height: root._cardH
-                radius: Math.round(6 * Theme.scale(root.screen))
-                color: root.cardBg
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 2
-                    Text {
-                        text: root.serviceCount.toString()
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeMedium | 0
-                        color: Theme.textPrimary
-                        font.bold: true
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Text {
-                        text: "Services"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeSmall | 0
-                        color: Theme.textSecondary
-                        anchors.horizontalCenter: parent.horizontalCenter
+            Repeater {
+                model: [
+                    { value: function() { return root.totalLogs.toString(); },    label: "Log Lines", warn: false },
+                    { value: function() { return root.errorCount.toString(); },   label: "Errors",    warn: true },
+                    { value: function() { return root.serviceCount.toString(); }, label: "Services",  warn: false }
+                ]
+                delegate: Rectangle {
+                    width: (parent.width - parent.spacing * 2) / 3
+                    height: root._cardH
+                    radius: Math.round(6 * Theme.scale(root.screen))
+                    color: root.cardBg
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 2
+                        Text {
+                            text: modelData.value()
+                            font.family: Theme.fontFamily
+                            font.pixelSize: root._fontSizeMedium | 0
+                            color: (modelData.warn && root.errorCount > 0) ? Theme.error : Theme.textPrimary
+                            font.bold: true
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        Text {
+                            text: modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: root._fontSizeSmall | 0
+                            color: Theme.textSecondary
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
                     }
                 }
             }
@@ -470,30 +424,22 @@ PanelOverlaySurface {
                 }
                 header: RowLayout {
                     width: parent ? parent.width : 800
-                    Text {
-                        text: "Time"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeSmall | 0
-                        color: Theme.textSecondary
-                        font.bold: true
-                        Layout.preferredWidth: 70
-                    }
-                    Text {
-                        text: "Service"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeSmall | 0
-                        color: Theme.textSecondary
-                        font.bold: true
-                        Layout.preferredWidth: 140
-                    }
-                    Text {
-                        text: "Message"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root._fontSizeSmall | 0
-                        color: Theme.textSecondary
-                        font.bold: true
-                        Layout.fillWidth: true
-                        elide: Text.ElideRight
+                    Repeater {
+                        model: [
+                            { label: "Time",    width: 70,  fill: false, elide: false },
+                            { label: "Service", width: 140, fill: false, elide: false },
+                            { label: "Message", width: 0,   fill: true,  elide: true }
+                        ]
+                        delegate: Text {
+                            text: modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: root._fontSizeSmall | 0
+                            color: Theme.textSecondary
+                            font.bold: true
+                            Layout.preferredWidth: modelData.fill ? -1 : modelData.width
+                            Layout.fillWidth: modelData.fill
+                            elide: modelData.elide ? Text.ElideRight : Text.ElideNone
+                        }
                     }
                 }
                 delegate: Rectangle {

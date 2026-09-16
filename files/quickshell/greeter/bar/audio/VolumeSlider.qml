@@ -85,8 +85,10 @@ Item {
 
 		onWheel: event => {
 			event.accepted = true;
-			__wheelValue = value + (event.angleDelta.y / 120) * 0.05
-			__wheelValue = -1
+			__wheelValue = value + (event.angleDelta.y / 120) * 0.05;
+			// Defer the sentinel reset so the Binding above can apply the value
+			// (and its onValueChanged write-back) before RestoreBinding runs.
+			Qt.callLater(function() { root.__wheelValue = -1; });
 		}
 	}
 

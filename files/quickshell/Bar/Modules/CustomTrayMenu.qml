@@ -67,6 +67,17 @@ import "../../Helpers/ScreenUtil.js" as ScreenUtil
         visible = false; searchField.text = ""; destroySubmenusRecursively(listView);
     }
 
+    // Trigger the highlighted entry; shared by Return and search-bar accept.
+    function activateCurrentItem() {
+        if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
+            var del = listView.currentItem;
+            if (del && del.entryItem && del.entryItem.entryData) {
+                del.entryItem.entryData.triggered();
+                trayMenu.visible = false;
+            }
+        }
+    }
+
 
     Item {
         anchors.fill: parent;
@@ -135,24 +146,8 @@ import "../../Helpers/ScreenUtil.js" as ScreenUtil
                                 trayMenu.hideMenu();
                             }
                         }
-                        Keys.onReturnPressed: {
-                            if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
-                                var del = listView.currentItem;
-                                if (del && del.entryItem && del.entryItem.entryData) {
-                                    del.entryItem.entryData.triggered();
-                                    trayMenu.visible = false;
-                                }
-                            }
-                        }
-                        onAccepted: {
-                            if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
-                                var del = listView.currentItem;
-                                if (del && del.entryItem && del.entryItem.entryData) {
-                                    del.entryItem.entryData.triggered();
-                                    trayMenu.visible = false;
-                                }
-                            }
-                        }
+                        Keys.onReturnPressed: trayMenu.activateCurrentItem()
+                        onAccepted: trayMenu.activateCurrentItem()
                         onTextChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0;
                     }
                 }
