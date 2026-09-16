@@ -39,7 +39,7 @@ esac
 _OMP_FLASH_MODEL="deepseek/deepseek-flash"
 _OMP_ROLE_OVERLAY="$(mktemp -t omp-model-roles.XXXXXX.yml)"
 trap 'rm -f "$_OMP_ROLE_OVERLAY"' EXIT INT TERM
-cat > "$_OMP_ROLE_OVERLAY" <<EOF
+cat > "$_OMP_ROLE_OVERLAY" << EOF
 modelRoles:
   default: $_OMP_FLASH_MODEL
   smol: $_OMP_FLASH_MODEL
