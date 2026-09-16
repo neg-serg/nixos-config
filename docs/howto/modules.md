@@ -778,6 +778,28 @@ true
 
 - [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.fvwm.enable
+
+Whether to enable enable the FVWM3 (X11) “An essence of decay” rice session (syndrizzle/hotfiles).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
+
 ## features.gui.gtkTheme
 
 GTK theme to apply system-wide.
