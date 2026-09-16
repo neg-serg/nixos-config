@@ -51,14 +51,14 @@ fi
 # carries a structured descriptor, and Session.append() accepts
 # { ignorable: true } for plugin events (bash_live) so they stop killing
 # sessions (see packages/dsh/patch-widgets.py).
-python3 @PY@ "$search_pkg"
+PYTHONPATH=@PATCHLIB_DIR@ python3 @PY@ "$search_pkg"
 
 # Session history: released v0 (0.1.1) wrote an obsolete `origin` member in
 # `permission/preset` events, and 0.1.5's frozen v0 inventory refuses it, so
 # pre-upgrade sessions fail to open ("Failed to load history: ... refuses
 # this format v0 Session"). The patcher strips the member while migrating
 # (exact-string + count-asserted, see packages/dsh/patch-session-format.py).
-python3 @PY_V2@ "$search_pkg"
+PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V2@ "$search_pkg"
 
 # Drop the shipped `standard` agent preset from the roster: the user runs
 # the neg preset (liangshen fork) by default (see
@@ -73,4 +73,4 @@ rm -rf "$presets/standard"
 # The shipped preset.yml names/descriptions are Chinese (PTC 模式 / 极简模式
 # / 创造模式); the user's de-Chinese rule covers UI copy, and the picker and
 # /mode render these. Exact-match + count-asserted (see patch-preset-names.py).
-python3 @PY_V3@ "$presets"
+PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V3@ "$presets"
