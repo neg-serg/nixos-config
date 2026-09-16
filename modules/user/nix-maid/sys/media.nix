@@ -16,148 +16,50 @@ let
   # these duplicates only matter after a manual M4+S switch inside the window.
   ruKeys = neg.ruKeys;
 
+  # Positional constructor for the table below: nixfmt keeps a two-name
+  # `inherit` on one line, so each record costs one line instead of four.
+  rmpcBind = key: action: { inherit key action; };
+
   rmpcRuBinds = {
     global = [
-      {
-        key = "p";
-        action = "TogglePause";
-      }
-      {
-        key = "q";
-        action = "Quit";
-      }
-      {
-        key = "s";
-        action = "Stop";
-      }
-      {
-        key = "u";
-        action = "Update";
-      }
-      {
-        key = "w";
-        action = "ShowHelp";
-      }
-      {
-        key = "b";
-        action = "SeekBack";
-      }
-      {
-        key = "f";
-        action = "SeekForward";
-      }
-      {
-        key = "o";
-        action = "ShowOutputs";
-      }
-      {
-        key = "z";
-        action = "ToggleRepeat";
-      }
-      {
-        key = "r";
-        action = "ToggleRandom";
-      }
-      {
-        key = "y";
-        action = "ToggleSingle";
-      }
-      {
-        key = "L";
-        action = "ExternalCommand(command: [\"mpc\", \"clear\"])";
-      }
-      {
-        key = "O";
-        action = "ShowOutputs";
-      }
-      {
-        key = "P";
-        action = "PlaylistsTab";
-      }
-      {
-        key = "U";
-        action = "Rescan";
-      }
-      {
-        key = "R";
-        action = "ToggleConsume";
-      }
+      (rmpcBind "p" "TogglePause")
+      (rmpcBind "q" "Quit")
+      (rmpcBind "s" "Stop")
+      (rmpcBind "u" "Update")
+      (rmpcBind "w" "ShowHelp")
+      (rmpcBind "b" "SeekBack")
+      (rmpcBind "f" "SeekForward")
+      (rmpcBind "o" "ShowOutputs")
+      (rmpcBind "z" "ToggleRepeat")
+      (rmpcBind "r" "ToggleRandom")
+      (rmpcBind "y" "ToggleSingle")
+      (rmpcBind "L" "ExternalCommand(command: [\"mpc\", \"clear\"])")
+      (rmpcBind "O" "ShowOutputs")
+      (rmpcBind "P" "PlaylistsTab")
+      (rmpcBind "U" "Rescan")
+      (rmpcBind "R" "ToggleConsume")
     ];
     navigation = [
-      {
-        key = "a";
-        action = "Select";
-      }
-      {
-        key = "A";
-        action = "AddAll";
-      }
-      {
-        key = "D";
-        action = "Delete";
-      }
-      {
-        key = "g";
-        action = "Top";
-      }
-      {
-        key = "G";
-        action = "Bottom";
-      }
-      {
-        key = "h";
-        action = "Left";
-      }
-      {
-        key = "i";
-        action = "FocusInput";
-      }
-      {
-        key = "j";
-        action = "Down";
-      }
-      {
-        key = "J";
-        action = "MoveDown";
-      }
-      {
-        key = "k";
-        action = "Up";
-      }
-      {
-        key = "K";
-        action = "MoveUp";
-      }
-      {
-        key = "l";
-        action = "Right";
-      }
-      {
-        key = "n";
-        action = "NextResult";
-      }
-      {
-        key = "N";
-        action = "PreviousResult";
-      }
-      {
-        key = "r";
-        action = "Rename";
-      }
+      (rmpcBind "a" "Select")
+      (rmpcBind "A" "AddAll")
+      (rmpcBind "D" "Delete")
+      (rmpcBind "g" "Top")
+      (rmpcBind "G" "Bottom")
+      (rmpcBind "h" "Left")
+      (rmpcBind "i" "FocusInput")
+      (rmpcBind "j" "Down")
+      (rmpcBind "J" "MoveDown")
+      (rmpcBind "k" "Up")
+      (rmpcBind "K" "MoveUp")
+      (rmpcBind "l" "Right")
+      (rmpcBind "n" "NextResult")
+      (rmpcBind "N" "PreviousResult")
+      (rmpcBind "r" "Rename")
     ];
     queue = [
-      {
-        key = "a";
-        action = "AddToPlaylist";
-      }
-      {
-        key = "C";
-        action = "DeleteAll";
-      }
-      {
-        key = "d";
-        action = "Delete";
-      }
+      (rmpcBind "a" "AddToPlaylist")
+      (rmpcBind "C" "DeleteAll")
+      (rmpcBind "d" "Delete")
     ];
   };
 
