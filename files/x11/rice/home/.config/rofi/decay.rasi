@@ -1,0 +1,28 @@
+/*
+ * Reconstructed theme for this rice: upstream's ~/.config/rofi/decay.rasi
+ * (referenced by config.rasi via `@theme "decay"`) and
+ * screenshot/theme.rasi's variables were never part of the dotfiles repo.
+ * Colours are the Decay palette of the rest of the rice: kitty colors.conf,
+ * the eww scss files and ~/.fvwm/config (#171b20 bg, #b6beca fg, #4d5768
+ * highlight, #78dba9 green, #e05f65 red, #f1cf8a yellow, #70a5eb blue).
+ */
+
+/* Core palette used by config.rasi and screenshot/config.rasi */
+bg-col: #171b20;
+bg-col-light: #21262e;
+fg-col: #b6beca;
+fg-col2: #4d5768;
+border-col: #4d5768;
+selected-col: #78dba9;
+accent: #78dba9;
+
+/* Aliases used by window-switcher/box.rasi (rofi's own defaults when the file
+ * is opened with `-theme`, which drops the default theme's variables) */
+background: #171b20;
+background-alt: #21262e;
+background-bar: #485263;
+foreground: #b6beca;
+foreground-alt: #b6beca;
+selected: #78dba9;
+normal: #b6beca;
+urgent: #e05f65;
