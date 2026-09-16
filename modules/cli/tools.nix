@@ -67,6 +67,7 @@ in
     pkgs.neg.talktype # push-to-talk voice typing (F9 record, transcribe, paste)
     pkgs.neg.termeverything # Wayland compositor that renders GUI windows in the terminal
     pkgs.neg.lusty # native file/buffer picker for Neovim (Lusty successor)
+    pkgs.neg.tgchat # Telegram chat access for the agent (Telethon, user session)
     pkgs.procs # modern 'ps' replacement
     pkgs.pwgen # password generator
     pkgs.sd # intuitive find & replace CLI (sed replacement)
