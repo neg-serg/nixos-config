@@ -7,6 +7,26 @@ rec {
     users.users.neg.maid.file.home = files;
   };
 
+  # Map `names` to home-file entries named `<destDir>/<name>`; `mkValue name`
+  # builds each entry's value. Single home for the
+  # `builtins.listToAttrs (map (name: { name = …; value = …; }))` block that
+  # several modules used to open-code.
+  mkDirEntries =
+    destDir: names: mkValue:
+    builtins.listToAttrs (
+      map (name: {
+        name = "${destDir}/${name}";
+        value = mkValue name;
+      }) names
+    );
+
+  # Symlink variant: `<destDir>/<name>` → `<sourceDir>/<name>`.
+  mkDirLinks =
+    destDir: sourceDir: names:
+    mkDirEntries destDir names (name: {
+      source = "${sourceDir}/${name}";
+    });
+
   # Import modules from a directory — single replacement for the
   # `builtins.readDir ./. |> attrNames |> filter |> map` pipeline copied into
   # every auto-importing default.nix.
