@@ -43,6 +43,7 @@ in
     lsfg-vk = callPkg (packagesRoot + "/lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
     nixard = callPkg (packagesRoot + "/nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/lusty
+    tgchat = callPkg (packagesRoot + "/tgchat") { }; # Telegram chat access via Telethon (read/send as the user)
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
