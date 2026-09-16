@@ -8,21 +8,34 @@ let
   inherit (config.lib.neg) mainUser homeDir;
   systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 
-  # dsh-tianshu-tui hardcodes its UI in Chinese with no language switch.
-  # Assets below localize it to Russian: the translation map (i18n.json) and
-  # the idempotent patcher (patch.mjs). gen.mjs regenerates the map against a
-  # newer bundle when the plugin is upgraded.
+  # ── Tianshu Russian layer (dormant since the dsh-TUI switch) ────────────
+  # The `tui` profile used to run the Tianshu TUI
+  # (@huiliyi37/dsh-tianshu-tui), whose interface is hardcoded Chinese with no
+  # language switch. The translation map (i18n.json) and the idempotent patcher
+  # (patch.mjs) localized it to Russian; gen.mjs regenerates the map against a
+  # newer bundle after an upgrade.
+  #
+  # Since 2026-09 the profile runs dsh-TUI (@deepseek-harness-tui/dsh-tui) — a
+  # different codebase with a built-in `zh`/`en` switch and no Russian
+  # dictionary. Its bundle does not match the glob in runPatch below, so this
+  # layer is a no-op. It stays wired on purpose: reverting the package pin in
+  # dsh-tui-ensure.sh back to Tianshu restores the Russian UI without
+  # re-adding the module. Note that themes/neg.json was re-keyed to the
+  # dsh-TUI custom-theme schema at the same time, so a revert also needs the
+  # Tianshu-format theme file back from git history.
   i18nJson = ./dsh-tui-ru-assets/i18n.json;
   patcher = ./dsh-tui-ru-assets/patch.mjs;
-  # The neg look for the TUI itself: the built-in palettes are upstream themes
+  # The neg look for the TUI: the built-in palettes are upstream themes
   # (cobalt/graphite/pastel/...), none of them the muted navy/teal/violet the
-  # rest of the system uses (files/kitty/theme.conf, neg.omp.json). The TUI
-  # loads custom themes from ~/.dsh-tui/themes/*.json and references them as
-  # `custom:<name>`.
+  # rest of the system uses (files/kitty/theme.conf, neg.omp.json). dsh-TUI
+  # discovers user themes as ~/.dsh-tui/themes/<name>.json (the file name is
+  # the theme name) and persists the choice in ~/.dsh-tui/theme.json; the
+  # caretaker below copies this file and seeds that preference.
   themeJson = ./dsh-tui-ru-assets/themes/neg.json;
 
   # Patch every installed dsh-tianshu-tui bundle under ~/.dsh/profiles.
   # Idempotent (marker file); safe to run as root from an activation script.
+  # With dsh-TUI installed the loop matches nothing and exits 0.
   runPatch = pkgs.writeShellScript "dsh-tui-ru-patch" ''
     set +e
     for bundle in ${homeDir}/.dsh/profiles/*/node_modules/@huiliyi37/dsh-tianshu-tui/lib/index.js; do
@@ -33,37 +46,23 @@ let
     exit 0
   '';
 
-  # The TUI profile's caretaker. Three things have to hold for the terminal UI
-  # to work on this harness, and pnpm undoes two of them on every install:
-  #
-  # 1. dsh-tianshu-tui must be recent enough for the installed harness. Releases
-  #    <= 0.1.2-rc.6 read `session.events`, an array the 0.1.5 Session no longer
-  #    exposes, so the TUI died at startup with
-  #    "attach failed: TypeError: session.events is not iterable"; the rc.29 line
-  #    reads the current session face (the same break the plugin family hit).
-  # 2. The profile's @deepseek-ai tree must BE the harness tree. pnpm installs
-  #    the TUI plugin's own peer copies (0.1.2-rc.x), and those ship an older
-  #    agent-presets schema — the shipped `standard` preset then fails to mount
-  #    ("$.prefix missing required value"). Linking the harness tree keeps one
-  #    instance per package (the web profile used the same relink before it was
-  #    removed in 2026-09).
-  # 3. The base default preset is `standard`, which the harness build removes
-  #    (packages/dsh/default.nix): the profile fallback below names `neg`, and the
-  #    TUI's own hardcoded DEFAULT_PRESET_ID is rewritten to `neg` by the
-  #    translation patcher (dsh-tui-ru-assets/patch.mjs) — otherwise every start
-  #    warns that the default preset did not apply. settings.yaml still wins over
-  #    the row's fallback.
-  # The profile ships `cordis.patch.yml` as an empty list; rows must replace
-  # that `[]`, not be appended after it (a second YAML root node is a parse
-  # error). Idempotent through its own marker comment.
+  # The tui profile's caretaker. It keeps the profile on the installed harness:
+  # installs/upgrades the dsh-TUI plugin, keeps dsh-free-search, removes a
+  # leftover @deepseek-ai store link (dsh's own profile module fallback owns
+  # that tree now and cannot write through the read-only link), rewrites the
+  # profile's patch layer, seeds the repo-local plugin copies, and seeds the neg
+  # theme plus the `en` default language. The profile itself is created by hand
+  # once (see the `[ -d "$PROFILE_DIR" ] || exit 0` guard).
   # The plugin roster, its loader rows, the seed list and the search rows are
   # shared with the martty profile — see dsh-terminal-plugins.nix.
   roster = import ./dsh-terminal-plugins.nix { inherit lib; };
 
   # The profile ships `cordis.patch.yml` as an empty list; rows must replace
   # that `[]` (a second YAML root node is a parse error). The caretaker rewrites
-  # the header comments plus its own row, so a hand-edited or half-written file
-  # heals on the next run.
+  # the header comments plus its own rows, so a hand-edited or half-written file
+  # heals on the next run. The extra arguments tell the shared script which
+  # preset row id this profile's TUI bundle exposes and that the bundle already
+  # carries its own code-runtime row.
   presetPatch = ./dsh-tui-preset-patch.py;
 
   ensureTui = pkgs.writeShellScript "dsh-tui-ensure" (
@@ -78,14 +77,14 @@ let
         pluginSeeds = roster.seeds;
         pluginRows = lib.escapeShellArg roster.rows;
         searchRows = lib.escapeShellArg roster.searchRows;
-        dsh = pkgs.neg.dsh;
       }
     )
   );
 in
 {
   # Apply on every nixos-rebuild (runs as root; bundles live under the user
-  # home, so a rebuild after reinstall reproduces the Russian UI).
+  # home, so a rebuild after reinstall reproduces the Russian UI of a Tianshu
+  # bundle). A no-op while the profile runs dsh-TUI.
   system.activationScripts.dshTuiRu = lib.stringAfter [ "users" ] ''
     ${runPatch} || true
   '';
@@ -94,7 +93,7 @@ in
   # after the last rebuild.
   systemd.user.services.dsh-tui-ru = {
     enable = true;
-    description = "dsh-tianshu-tui — apply Russian UI patch";
+    description = "dsh-tianshu-tui — apply Russian UI patch (dormant under dsh-TUI)";
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "oneshot";
@@ -113,15 +112,15 @@ in
   };
 
   systemd.user.services.dsh-tui-ensure = systemdUser.mkUserOneshot {
-    description = "dsh-tianshu-tui — keep the TUI profile on the installed harness";
+    description = "dsh-TUI — keep the tui profile on the installed harness";
     script = ensureTui;
     after = [ "network.target" ];
   };
 
-  # The TUI self-updater (the self-update-park-harness fix in patch.mjs)
-  # re-applies the Russian patch through this helper right after it installs a
-  # bundle, before the host can restart into it — a raw npm release is
-  # Chinese-only. Same script as the login/activation patch services.
+  # The Tianshu self-updater (the self-update-park-harness fix in patch.mjs)
+  # re-applied the Russian patch through this helper right after it installed a
+  # bundle. dsh-TUI ships its own updater and needs no repatch hook; the helper
+  # stays as part of the dormant Tianshu layer.
   users.users.${mainUser}.maid.file.home.".local/bin/dsh-tui-repatch" = {
     source = runPatch;
     executable = true;

@@ -1,5 +1,9 @@
 # dsh TUI self-update on NixOS
 
+> Tianshu generation: the `tui` profile now runs dsh-TUI — see
+> [dsh-tui-profile.md](./dsh-tui-profile.md). dsh-TUI ships its own updater, so the parking fix
+> below concerns Tianshu-only installs.
+
 The terminal UI (`@huiliyi37/dsh-tianshu-tui`) checks npm `latest` for itself at startup and
 installs a newer release into `~/.dsh/profiles/tui` with `pnpm add`. On this host that install used
 to die with `ERR_PNPM_EROFS`; this note records why, how the `self-update-park-harness` patch fixes
