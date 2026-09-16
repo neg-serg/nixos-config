@@ -1,15 +1,9 @@
 -- LuaSnip config and keymaps are in plugins/completion/luasnip.lua
-local success, ls = pcall(require, "luasnip")
-if not success then
+local P = require('luasnip_pre')
+if not P.ls then
   return
 end
-local s = ls.snippet
-local sn = ls.snippet_node
-local i = ls.insert_node
-local t = ls.text_node
-local f = ls.function_node
-local c = ls.choice_node
-local fmt = require("luasnip.extras.fmt").fmt
+local ls, s, sn, i, t, f, c, fmt = P.ls, P.s, P.sn, P.i, P.t, P.f, P.c, P.fmt
 
 ls.add_snippets("vue", {
   s(

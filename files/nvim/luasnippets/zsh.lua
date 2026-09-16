@@ -1,10 +1,7 @@
 -- Zsh snippets (ft=zsh: .zshrc, .zshenv, zsh scripts).
 -- LuaSnip config and keymaps are in plugins/completion/luasnip.lua
-local ls = require "luasnip"
-local s = ls.snippet
-local i = ls.insert_node
-local t = ls.text_node
-local rep = require("luasnip.extras").rep
+local P = require('luasnip_pre')
+local ls, s, i, t, rep = P.ls, P.s, P.i, P.t, P.rep
 
 ls.add_snippets("zsh", {
   -- header / location

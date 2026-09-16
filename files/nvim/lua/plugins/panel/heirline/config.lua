@@ -43,24 +43,28 @@ return function()
       end
     end
 
+    -- Recreating a user command errors while the old one still exists, so
+    -- every (re)definition drops the previous version first.
+    local function define_command(name, fn)
+      pcall(api.nvim_del_user_command, name)
+      api.nvim_create_user_command(name, fn, {})
+    end
+
     -- User commands (debug)
-    pcall(api.nvim_del_user_command, 'HeirlineDebugToggle')
-    api.nvim_create_user_command('HeirlineDebugToggle', function()
+    define_command('HeirlineDebugToggle', function()
       DEBUG = not DEBUG; vim.g.heirline_debug = DEBUG
       dbg_notify('debug mode: ' .. (DEBUG and 'ON' or 'OFF'))
-    end, {})
-    pcall(api.nvim_del_user_command, 'HeirlineDebugDump')
-    api.nvim_create_user_command('HeirlineDebugDump', function()
+    end)
+    define_command('HeirlineDebugDump', function()
       local b = api.nvim_create_buf(false, true)
       api.nvim_buf_set_lines(b, 0, -1, false, dbg_log)
       vim.bo[b].bufhidden = 'wipe'
       vim.bo[b].filetype = 'log'
       api.nvim_set_current_buf(b)
-    end, {})
-    pcall(api.nvim_del_user_command, 'HeirlineDebugClear')
-    api.nvim_create_user_command('HeirlineDebugClear', function()
+    end)
+    define_command('HeirlineDebugClear', function()
       dbg_log = {}; dbg_notify('log cleared')
-    end, {})
+    end)
     if DEBUG then
       api.nvim_create_autocmd({ 'LspAttach','LspDetach','DiagnosticChanged','WinResized' }, {
         group = AUG,
@@ -355,52 +359,50 @@ return function()
       end
     end
 
+    -- Rebuild the palette from `src`: adjust unless it already is the pristine
+    -- theme, then push it into `colors` and resync the statusline highlights.
+    local function apply_palette(src)
+      if src ~= initial_colors then apply_palette_adjustments(src) end
+      colors_assign(colors, src)
+      apply_statusline_highlights()
+    end
+
     -- Toggles (remember state)
-    pcall(api.nvim_del_user_command, 'HeirlineIconsToggle')
-    api.nvim_create_user_command('HeirlineIconsToggle', function()
+    define_command('HeirlineIconsToggle', function()
       USE_ICONS = not USE_ICONS
       vim.g.heirline_use_icons = USE_ICONS
       save_state()
       notify('Heirline: icons ' .. (USE_ICONS and 'ON' or 'OFF'))
       vim.cmd('redrawstatus')
-    end, {})
+    end)
 
-    pcall(api.nvim_del_user_command, 'HeirlineThemeToggle')
-    api.nvim_create_user_command('HeirlineThemeToggle', function()
+    define_command('HeirlineThemeToggle', function()
       USE_THEME = not USE_THEME
       vim.g.heirline_use_theme_colors = USE_THEME
-      local fresh = themed_colors(colors_fallback)
-      apply_palette_adjustments(fresh)
-      colors_assign(colors, fresh)
-      apply_statusline_highlights()
+      apply_palette(themed_colors(colors_fallback))
       save_state()
       notify('Heirline: theme-colors ' .. (USE_THEME and 'ON' or 'OFF'))
       vim.cmd('redrawstatus')
-    end, {})
+    end)
 
-    pcall(api.nvim_del_user_command, 'HeirlineThemeLockToggle')
-    api.nvim_create_user_command('HeirlineThemeLockToggle', function()
+    define_command('HeirlineThemeLockToggle', function()
       LOCK_THEME = not LOCK_THEME
       vim.g.heirline_lock_theme = LOCK_THEME
       local src = LOCK_THEME and initial_colors or themed_colors(colors_fallback)
-      if src ~= initial_colors then apply_palette_adjustments(src) end
-      colors_assign(colors, src)
-      apply_statusline_highlights()
+      apply_palette(src)
       save_state()
       notify('Heirline: theme lock ' .. (LOCK_THEME and 'ENABLED' or 'DISABLED'))
       vim.cmd('redrawstatus')
-    end, {})
+    end)
 
-    pcall(api.nvim_del_user_command, 'HeirlineThemeUseOriginal')
-    api.nvim_create_user_command('HeirlineThemeUseOriginal', function()
+    define_command('HeirlineThemeUseOriginal', function()
       USE_THEME = true; vim.g.heirline_use_theme_colors = true
       LOCK_THEME = true; vim.g.heirline_lock_theme = true
-      colors_assign(colors, initial_colors)
-      apply_statusline_highlights()
+      apply_palette(initial_colors)
       save_state()
       notify('Heirline: using ORIGINAL theme (locked)')
       vim.cmd('redrawstatus')
-    end, {})
+    end)
 
     -- Components
     local ok_parts, parts_ctor = pcall(require, 'plugins.panel.heirline.components')
@@ -449,14 +451,7 @@ return function()
         -- Defer to let the colorscheme fully apply before reading highlight groups
         vim.defer_fn(function()
           _hl_cache = {}
-          if LOCK_THEME then
-            colors_assign(colors, initial_colors)
-          else
-            local fresh = themed_colors(colors_fallback)
-            apply_palette_adjustments(fresh)
-            colors_assign(colors, fresh)
-          end
-          apply_statusline_highlights()
+          apply_palette(LOCK_THEME and initial_colors or themed_colors(colors_fallback))
           vim.cmd('redrawstatus')
           if DEBUG then dbg_notify(LOCK_THEME and 'colors reapplied (locked to original)' or 'colors refreshed from theme') end
         end, 50)
@@ -469,10 +464,7 @@ return function()
       pattern = 'NegColorUpdate',
       callback = function()
         _hl_cache = {}
-        local fresh = themed_colors(colors_fallback)
-        apply_palette_adjustments(fresh)
-        colors_assign(colors, fresh)
-        apply_statusline_highlights()
+        apply_palette(themed_colors(colors_fallback))
         vim.cmd('redrawstatus')
       end,
     })

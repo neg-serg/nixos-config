@@ -1,11 +1,6 @@
-local ls = require "luasnip"
-
-local s = ls.s
-local i = ls.insert_node
-local t = ls.text_node
-local c = ls.choice_node
-local fmt = require("luasnip.extras.fmt").fmt
--- local rep = require("luasnip.extras").rep
+local P = require('luasnip_pre')
+local ls, s, i, t, c, fmt = P.ls, P.s, P.i, P.t, P.c, P.fmt
+-- local rep = P.rep
 
 ls.add_snippets("markdown", {
   s("t", fmt("- [{}] {}", { c(2, { t " ", t "-", t "x" }), i(1, "task") })),

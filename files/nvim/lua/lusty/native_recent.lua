@@ -6,9 +6,7 @@
 
 local pick = require('lusty.native_pick')
 local frecency = require('lusty.frecency')
-local fuzzy = require('lusty.fuzzy')
-local mercury = require('lusty.mercury')
-local util = require('lusty.util')
+local filter = require('lusty.filter')
 local lsc = require('lusty.ls_colors')
 local native = require('lusty.native')
 
@@ -124,39 +122,6 @@ local function snapshot_items()
   return out
 end
 
--- Filtering mirrors the other explorers: first query letter must prefix the
--- basename; then fuzzy/mercury score on the label, ties by recency.
-local function make_source(snap)
-  return function(query)
-    if query == '' then
-      return snap
-    end
-    local use_mercury = tostring(vim.g.LustyExplorerFuzzyEngine or '') == 'mercury'
-    local first = query:sub(1, 1):lower()
-    local scored = {}
-    for _, it in ipairs(snap) do
-      local base_first = (util.basename(it.label) or ''):sub(1, 1):lower()
-      if base_first == first then
-        local score = use_mercury and mercury.score(it.label, query) or fuzzy.score(it.label, query)
-        if score and score ~= 0.0 then
-          scored[#scored + 1] = { it = it, score = score }
-        end
-      end
-    end
-    table.sort(scored, function(a, b)
-      if a.score == b.score then
-        return a.it.order < b.it.order
-      end
-      return a.score > b.score
-    end)
-    local res = {}
-    for _, s in ipairs(scored) do
-      res[#res + 1] = s.it
-    end
-    return res
-  end
-end
-
 local running = false
 
 function M.run()
@@ -166,10 +131,14 @@ function M.run()
   running = true
   local snap = snapshot_items()
   local title = mode == 'dirs' and 'Recent Dirs' or 'Recent Files'
+  -- First query letter must prefix the label; ties broken by recency.
+  local source = filter.source(function()
+    return snap
+  end, 'label', 'order')
   pick.pick({
     title = title,
     query = previous_input,
-    source = make_source(snap),
+    source = source,
     multi = true,
     -- Directories are not markable: they cannot be opened in bulk.
     markable = function(it)
