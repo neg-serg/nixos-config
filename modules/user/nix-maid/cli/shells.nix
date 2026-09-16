@@ -12,273 +12,61 @@ let
   irisConfig = config.lib.neg.path "files/iris";
   dircolorsConfig = config.lib.neg.path "files/shell/dircolors/dircolors";
 
+  # Positional constructor for the table below: nixfmt keeps a three-name
+  # `inherit` on one line, so each record costs one line instead of five.
+  kittyBind = mod: keys: action: { inherit mod keys action; };
+
   # --- Kitty key.conf: generated Russian-layout duplicates ---
   # ЙЦУКЕН duplicate binds are GENERATED from lib/ru-keys.nix (single source of
   # truth). Each entry mirrors a latin bind from files/kitty/key.conf; the
   # generator derives the literal Cyrillic chars, so typos are impossible.
   # Table: docs/howto/hotkeys-ru-layout.md
   kittyRuBinds = [
-    {
-      mod = "ctrl+shift";
-      keys = [ "v" ];
-      action = "paste_from_clipboard";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "z" ];
-      action = "scroll_to_prompt -1";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "x" ];
-      action = "scroll_to_prompt 1";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "q" ];
-      action = "close_tab";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "w" ];
-      action = "close_window";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "," ];
-      action = "move_tab_backward";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "." ];
-      action = "move_tab_forward";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "b" ];
-      action = "move_window_backward";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "f" ];
-      action = "move_window_forward";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "`" ];
-      action = "move_window_to_top";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "]" ];
-      action = "next_window";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "[" ];
-      action = "previous_window";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "l" ];
-      action = "next_layout";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "u" ];
-      action = "kitten unicode_input";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "e" ];
-      action = "neghints --type=url";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "h" ];
-      action = "kitty_scrollback_nvim";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "o" ];
-      action = "kitty_scrollback_nvim --env KSB_OPEN_GF=1";
-    }
-    {
-      mod = "ctrl+shift+alt";
-      keys = [ "t" ];
-      action = "set_tab_title";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [ "t" ];
-      action = "new_tab";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "s"
-        "f"
-      ];
-      action = "neghints --program @";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "s"
-        "w"
-      ];
-      action = "neghints --type word --program @";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "s"
-        "l"
-      ];
-      action = "neghints --type line --program @";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "s"
-        "p"
-      ];
-      action = "neghints --type path --program @";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "s"
-        "h"
-      ];
-      action = "neghints --type hash --program @";
-    }
-    {
-      mod = "Ctrl";
-      keys = [
-        "s"
-        "w"
-      ];
-      action = "neghints --type word --program -";
-    }
-    {
-      mod = "Ctrl";
-      keys = [
-        "s"
-        "l"
-      ];
-      action = "neghints --type line --program -";
-    }
-    {
-      mod = "Ctrl";
-      keys = [
-        "s"
-        "p"
-      ];
-      action = "neghints --type path --program -";
-    }
-    {
-      mod = "Ctrl";
-      keys = [
-        "s"
-        "h"
-      ];
-      action = "neghints --type hash --program -";
-    }
-    {
-      mod = "Ctrl+alt";
-      keys = [ "s" ];
-      action = "kitty_scrollback_nvim --config screen";
-    }
-    {
-      mod = "alt";
-      keys = [ "n" ];
-      action = "new_tab";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "r"
-        "r"
-      ];
-      action = "load_config_file";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "r"
-        "e"
-      ];
-      action = "debug_config";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "r"
-        "w"
-      ];
-      action = "start_resizing_window";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "a"
-        "1"
-      ];
-      action = "set_background_opacity 1";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "a"
-        "d"
-      ];
-      action = "set_background_opacity default";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "a"
-        "l"
-      ];
-      action = "set_background_opacity -0.1";
-    }
-    {
-      mod = "ctrl+shift";
-      keys = [
-        "a"
-        "m"
-      ];
-      action = "set_background_opacity +0.1";
-    }
+    (kittyBind "ctrl+shift" [ "v" ] "paste_from_clipboard")
+    (kittyBind "ctrl+shift" [ "z" ] "scroll_to_prompt -1")
+    (kittyBind "ctrl+shift" [ "x" ] "scroll_to_prompt 1")
+    (kittyBind "ctrl+shift" [ "q" ] "close_tab")
+    (kittyBind "ctrl+shift" [ "w" ] "close_window")
+    (kittyBind "ctrl+shift" [ "," ] "move_tab_backward")
+    (kittyBind "ctrl+shift" [ "." ] "move_tab_forward")
+    (kittyBind "ctrl+shift" [ "b" ] "move_window_backward")
+    (kittyBind "ctrl+shift" [ "f" ] "move_window_forward")
+    (kittyBind "ctrl+shift" [ "`" ] "move_window_to_top")
+    (kittyBind "ctrl+shift" [ "]" ] "next_window")
+    (kittyBind "ctrl+shift" [ "[" ] "previous_window")
+    (kittyBind "ctrl+shift" [ "l" ] "next_layout")
+    (kittyBind "ctrl+shift" [ "u" ] "kitten unicode_input")
+    (kittyBind "ctrl+shift" [ "e" ] "neghints --type=url")
+    (kittyBind "ctrl+shift" [ "h" ] "kitty_scrollback_nvim")
+    (kittyBind "ctrl+shift" [ "o" ] "kitty_scrollback_nvim --env KSB_OPEN_GF=1")
+    (kittyBind "ctrl+shift+alt" [ "t" ] "set_tab_title")
+    (kittyBind "ctrl+shift" [ "t" ] "new_tab")
+    (kittyBind "ctrl+shift" [ "s" "f" ] "neghints --program @")
+    (kittyBind "ctrl+shift" [ "s" "w" ] "neghints --type word --program @")
+    (kittyBind "ctrl+shift" [ "s" "l" ] "neghints --type line --program @")
+    (kittyBind "ctrl+shift" [ "s" "p" ] "neghints --type path --program @")
+    (kittyBind "ctrl+shift" [ "s" "h" ] "neghints --type hash --program @")
+    (kittyBind "Ctrl" [ "s" "w" ] "neghints --type word --program -")
+    (kittyBind "Ctrl" [ "s" "l" ] "neghints --type line --program -")
+    (kittyBind "Ctrl" [ "s" "p" ] "neghints --type path --program -")
+    (kittyBind "Ctrl" [ "s" "h" ] "neghints --type hash --program -")
+    (kittyBind "Ctrl+alt" [ "s" ] "kitty_scrollback_nvim --config screen")
+    (kittyBind "alt" [ "n" ] "new_tab")
+    (kittyBind "ctrl+shift" [ "r" "r" ] "load_config_file")
+    (kittyBind "ctrl+shift" [ "r" "e" ] "debug_config")
+    (kittyBind "ctrl+shift" [ "r" "w" ] "start_resizing_window")
+    (kittyBind "ctrl+shift" [ "a" "1" ] "set_background_opacity 1")
+    (kittyBind "ctrl+shift" [ "a" "d" ] "set_background_opacity default")
+    (kittyBind "ctrl+shift" [ "a" "l" ] "set_background_opacity -0.1")
+    (kittyBind "ctrl+shift" [ "a" "m" ] "set_background_opacity +0.1")
     # Emacs-style scrollback navigation (files/kitty/key.conf).
     # Uses Ctrl+Alt (not Ctrl+Shift) so it does not collide with the kitty_mod
     # (Ctrl+Shift) window-move / window-focus binds on b/f/p.
-    {
-      mod = "ctrl+alt";
-      keys = [ "n" ];
-      action = "scroll_line_down";
-    }
-    {
-      mod = "ctrl+alt";
-      keys = [ "p" ];
-      action = "scroll_line_up";
-    }
-    {
-      mod = "ctrl+alt";
-      keys = [ "f" ];
-      action = "scroll_page_down";
-    }
-    {
-      mod = "ctrl+alt";
-      keys = [ "b" ];
-      action = "scroll_page_up";
-    }
-    {
-      mod = "alt";
-      keys = [ "v" ];
-      action = "scroll_page_up";
-    }
+    (kittyBind "ctrl+alt" [ "n" ] "scroll_line_down")
+    (kittyBind "ctrl+alt" [ "p" ] "scroll_line_up")
+    (kittyBind "ctrl+alt" [ "f" ] "scroll_page_down")
+    (kittyBind "ctrl+alt" [ "b" ] "scroll_page_up")
+    (kittyBind "alt" [ "v" ] "scroll_page_up")
   ];
 
   kittyRuBlock = ''
@@ -316,6 +104,34 @@ let
       [ "${shellFiles}" "${pkgs.zinit}" "${pkgs.neg.zsh-native-syntax}" "${zshenvExtras}" ]
       (builtins.readFile ./zsh-config-source.sh)
   );
+
+  # --- zsh-native-syntax theme, derived from the f-sy-h theme ---
+  # files/shell/f-sy-h/neg.ini is the single source for both themes: the Rust
+  # engine reads ~/.config/zsh-native-syntax/theme.ini, which differs from
+  # neg.ini only in the [paths] values (plus path-tilde) and the extra
+  # [param-expansion] section. Materialised in the Nix store so ~/.config stays
+  # the same read-only symlink it was when theme.ini was a second checked-in copy.
+  zshNativeThemeText = builtins.toFile "theme.ini" (
+    lib.replaceStrings
+      [
+        "path          = none"
+        "pathseparator = 4"
+        "path-to-dir   = 248,underline"
+        "history-expansion    = blue,bold"
+      ]
+      [
+        "path          = white"
+        "pathseparator = blue,bold"
+        "path-to-dir   = white\npath-tilde    = green,bold"
+        "history-expansion    = blue,bold\n\n[param-expansion]\nparamvar     = 63\nparamoper    = 141\nparamdefault = 249"
+      ]
+      (builtins.readFile (shellFiles + "/f-sy-h/neg.ini"))
+  );
+
+  zshNativeSyntaxTheme = pkgs.runCommandLocal "neg-zsh-native-syntax" { } ''
+    mkdir -p $out
+    cp ${zshNativeThemeText} $out/theme.ini
+  '';
 
   # Kitty Scrollback Path (for session variable)
   nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
@@ -385,7 +201,7 @@ in
       ".config/iris/theme.toml".source = "${irisConfig}/theme.toml";
       ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
       ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
-      ".config/zsh-native-syntax".source = "${shellFiles}/zsh-native-syntax";
+      ".config/zsh-native-syntax".source = zshNativeSyntaxTheme;
       # --- Terminal & Specific Shell Configs ---
       # kitty dir deployed per-file: key.conf is GENERATED (latin binds from
       # files/kitty/key.conf + RU duplicates from lib/ru-keys.nix), the rest is
