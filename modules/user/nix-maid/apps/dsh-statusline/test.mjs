@@ -161,7 +161,7 @@ ok(titleSequence("x") === "\u001b]2;x\u0007\u001b]1;x\u0007", "the title sequenc
   ok(h.spawns.length === 0, "a non-TTY stdout is never written to");
 }
 {
-  // The frame renderer (the dsh-tui-ru patch) owns the status line when present.
+  // A TUI bundle patch's frame renderer would own the status line when present.
   globalThis.__dshTuiStatusLineFrame = true;
   const h = harness();
   await captured(() => h.emit(SESSION, { type: "turn/end", data: { turn: 1 } }), h);

@@ -4,14 +4,13 @@ PROFILE_DIR="@homeDir@/.dsh/profiles/tui"
 [ -d "$PROFILE_DIR" ] || exit 0
 
 # The profile runs dsh-TUI (@deepseek-harness-tui/dsh-tui), the Cordis terminal
-# front door. It replaced Tianshu (@huiliyi37/dsh-tianshu-tui) in 2026-09.
+# front door over dsh-base.
 #
-# The Tianshu era needed the profile's @deepseek-ai tree linked to the harness
-# tree: pnpm installed the plugin's own peer copies (0.1.2-rc.x), and those ship
-# an older agent-presets schema, so the shipped `standard` preset failed to
-# mount. dsh-TUI does not need that link — the harness packages are peers of
-# the bundle and dsh's own profile module fallback resolves them — and the link
-# actively breaks it: the healer creates its links under
+# Profiles on this host used to link node_modules/@deepseek-ai to the harness
+# tree, because an older plugin pulled in its own peer copies and those broke
+# the preset mount. dsh-TUI does not need that link — the harness packages are
+# peers of the bundle and dsh's own profile module fallback resolves them — and
+# the link actively breaks it: the fallback creates its links under
 # node_modules/@deepseek-ai, which through a store symlink is read-only
 # (EROFS at every start). So a leftover link is removed instead of re-created.
 PROFILE_AI="$PROFILE_DIR/node_modules/@deepseek-ai"
@@ -65,12 +64,10 @@ if [ -f "$PATCH" ]; then
   if fs_ok; then
     printf '%s\n' @searchRows@ >> "$ROWS"
   fi
-  # dsh-TUI's bundle patch owns the agent-preset roster under the scoped
-  # `dsh-tui-agent-presets` id (the base `agent-presets` row is gone), and it
-  # already inserts a code-runtime row — a second one is a duplicate
-  # `codeRuntime` registration and kills the boot. Both facts are parameters:
-  # `<prefix> <preset-row-id> <no-runtime|runtime>`.
-  python3 @presetPatch@ "$PATCH" "$ROWS" dsh-tui-ensure dsh-tui-agent-presets no-runtime \
+  # The rewriter owns the fallback-preset row (the scoped id dsh-TUI's bundle
+  # exposes) and the plugin rows; see its header for the retired code-runtime
+  # block it also consumes.
+  python3 @presetPatch@ "$PATCH" "$ROWS" dsh-tui-ensure \
     || echo "dsh-tui-ensure: preset patch failed" >&2
   rm -f "$ROWS"
 fi
@@ -117,10 +114,9 @@ seed "@ttsr@" dsh-ttsr package.json lib/index.js lib/rules.json
 
 # Theme and language. dsh-TUI discovers user themes as
 # ~/.dsh-tui/themes/<name>.json and persists the choices in
-# ~/.dsh-tui/{theme,lang}.json; Tianshu's prefs.json is not read. The repo copy
-# is the theme's source of truth (like the presets), but the chosen theme and
-# language are the user's — seed each preference only while it is unset, so
-# /theme and /lang survive a rebuild.
+# ~/.dsh-tui/{theme,lang}.json. The repo copy is the theme's source of truth
+# (like the presets), but the chosen theme and language are the user's — seed
+# each preference only while it is unset, so /theme and /lang survive a rebuild.
 TUI_DIR="@homeDir@/.dsh-tui"
 mkdir -p "$TUI_DIR/themes"
 cp -f "@themeJson@" "$TUI_DIR/themes/neg.json"

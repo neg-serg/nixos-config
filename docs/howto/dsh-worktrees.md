@@ -66,7 +66,7 @@ Gitignored files (`.env`, local editor config) do not follow a worktree into exi
 
 ## From inside a session: `/worktree`
 
-The `dsh-worktree` plugin (`modules/user/nix-maid/apps/dsh-worktree`, mounted by `dsh-tui-ru.nix`)
+The `dsh-worktree` plugin (`modules/user/nix-maid/apps/dsh-worktree`, mounted by `dsh-tui.nix`)
 registers the same verbs as a slash command, so a session can spawn a worker session beside itself
 instead of leaving the terminal:
 

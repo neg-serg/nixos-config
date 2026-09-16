@@ -1,10 +1,8 @@
-# Plugin roster shared by the terminal dsh profiles.
+# Plugin roster for the terminal dsh profile.
 #
-# Both terminal profiles run dsh-base plus this host/agent-plane set: the tui
-# profile's dsh-TUI (@deepseek-harness-tui/dsh-tui, dsh-tui-ru.nix) and the
-# martty profile's Martty TUI (dsh-martty.nix). One roster for both keeps their
-# caretaker scripts from drifting — a row whose plugin is missing is what makes
-# the next terminal start fail.
+# The tui profile runs dsh-base plus this host/agent-plane set over the dsh-TUI
+# front door (dsh-tui.nix) — a row whose plugin is missing is what makes the
+# next terminal start fail.
 #
 # The user's own host/agent plugins, mounted by the web profile through its
 # modules. A terminal profile carries only dsh-base + its terminal UI, so without
@@ -139,12 +137,10 @@ rec {
       name = "dsh-diff";
       path = ./dsh-diff;
     }
-    # status line in the terminal title. Upstream Tianshu ships a scriptable
-    # status line (StatusLineRunner) but never instantiates it in rc.29, and the
-    # render slot above the input belongs to the TUI — so this drives OSC 1/2
-    # with the output of packages/local-bin/bin/dsh-statusline, which speaks the
-    # same documented protocol and plugs into the upstream runner unchanged if it
-    # is ever wired. Injects subprocess only.
+    # status line in the terminal title. The TUI renders its own in-frame status
+    # line, so this drives OSC 1/2 from packages/local-bin/bin/dsh-statusline,
+    # which speaks the Claude-Code-compatible protocol (session JSON on stdin,
+    # first stdout line is the line). Injects subprocess only.
     {
       name = "dsh-statusline";
       path = ./dsh-statusline;

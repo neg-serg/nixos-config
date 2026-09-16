@@ -38,8 +38,8 @@ the wrong seam here for three reasons:
   request without changing the outcome. It also registers `global: true`, the dispatch context
   filter the TUI's question handler opts out of the same way — without it a filtered dispatch can
   drop the listener entirely.
-- **Lifetime.** A plugin is unmounted and remounted by the loader; a patch is re-applied by
-  `dsh-tui-repatch` after every TUI install.
+- **Lifetime.** A plugin is unmounted and remounted by the loader, so it survives a TUI reinstall
+  without a bundle patch.
 
 ## How it decides
 
@@ -106,7 +106,7 @@ timer.
 ## Where it lives / how to verify
 
 - Plugin: `modules/user/nix-maid/apps/dsh-notify-input/lib/index.js`; mounted through the
-  `tuiPlugins` list in `dsh-tui-ru.nix`, which generates the loader row (the row id is the package
+  `tuiPlugins` list in `dsh-tui.nix`, which generates the loader row (the row id is the package
   name) and seeds the package into the profile.
 - Test: `node modules/user/nix-maid/apps/dsh-notify-input/test.mjs` — 71 assertions: the protocol
   table and forced-override cases, the gate matrix (prefs / env / TTY / unknown terminal), the copy

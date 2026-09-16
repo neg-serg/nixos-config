@@ -1,28 +1,21 @@
 /**
  * dsh-statusline: a session status line in the terminal's title.
  *
- * Upstream Tianshu ships a scriptable status line (`StatusLineRunner`, the
- * Claude-Code-compatible protocol: session JSON on stdin, first stdout line
- * rendered above the input). In rc.29 that class is exported but never
- * instantiated, so the feature cannot be switched on from configuration — the
- * render slot above the input belongs to the TUI.
- *
- * What a plugin *can* own is the terminal title: the TUI never writes OSC 0/1/2,
- * so this plugin drives kitty/Ghostty/WezTerm/the tab bar with the same status
- * text. That text comes from the `dsh-statusline` script (packages/local-bin),
- * which speaks the documented protocol — so if the upstream runner is ever
- * wired, the same script plugs in unchanged.
+ * The TUI renders its own in-frame status line and never writes OSC 0/1/2, so
+ * the terminal title is free: this plugin drives kitty/Ghostty/WezTerm/the tab
+ * bar with the output of the `dsh-statusline` script (packages/local-bin),
+ * which speaks the Claude-Code-compatible protocol (session JSON on stdin, the
+ * first stdout line is the status line).
  *
  * Steady-state contract copied from upstream's runner, because the reasons are
  * the same: throttle (default 3s), single flight (skip while the previous run is
  * outstanding), keep the previous title when the script fails or is too slow,
  * never let the title flicker with an empty string.
  *
- * The frame is the better surface, so the two never render at once: the patch
- * that wires the runner into the frame publishes `globalThis.__dshTuiStatusLineFrame`,
- * and this plugin stands down while that marker is present (set
- * DSH_STATUSLINE_TARGET=title|both to override, e.g. to keep the title in sync
- * as well).
+ * A TUI bundle patch that mounts its own frame renderer publishes
+ * `globalThis.__dshTuiStatusLineFrame`; this plugin stands down while that
+ * marker is present so the two never render at once (set
+ * DSH_STATUSLINE_TARGET=title|both to override).
  */
 
 /** Cordis plugin name — must match the patch row / package name. */
@@ -83,7 +76,7 @@ export function apply(ctx, config) {
     return body
   }
 
-  /** The frame renderer (dsh-tui-ru patch) publishes this marker; see module doc. */
+  /** The frame renderer (dsh-tui patch) publishes this marker; see module doc. */
   function frameOwnsStatusLine() {
     if (globalThis.__dshTuiStatusLineFrame !== true) return false
     const target = process.env.DSH_STATUSLINE_TARGET

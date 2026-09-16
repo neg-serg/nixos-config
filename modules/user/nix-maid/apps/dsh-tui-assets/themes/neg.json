@@ -2,7 +2,7 @@
   "name": "neg",
   "displayName": "neg",
   "base": "dark",
-  "description": "neg — muted navy/teal/violet scheme (kitty theme.conf, neg.omp.json). dsh-TUI custom-theme schema: `base` selects the built-in palette the file overlays, `colors` holds Theme keys. The Tianshu build of this file used Tianshu keys (primary/secondary/pulse*/tool*) and base \"cobalt\"; the palette values below are the same, re-keyed.",
+  "description": "neg — muted navy/teal/violet scheme (kitty theme.conf, neg.omp.json). dsh-TUI custom-theme schema: `base` selects the built-in palette the file overlays, `colors` holds Theme keys.",
   "colors": {
     "accent": "#6096BF",
     "accentShimmer": "#7DA1DE",

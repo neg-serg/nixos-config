@@ -3,7 +3,7 @@
 #
 # Protocol mode (what a status-line host calls): the session state arrives as
 # JSON on stdin and the FIRST LINE of stdout is the status line. The payload is
-# the Tianshu/Claude-Code-compatible subset:
+# the Claude-Code-compatible subset:
 #
 #   { "session_id": "...", "turn": 7,
 #     "model": { "display_name": "deepseek-v4" },
