@@ -5,35 +5,27 @@
 # Source: https://github.com/adcxyz/SafetyNet
 {
   lib,
-  stdenvNoCC,
-  fetchFromGitHub,
+  mkScQuark,
 }:
-stdenvNoCC.mkDerivation {
+mkScQuark {
   pname = "safetynet";
   version = "unstable-2026-04-24";
 
-  src = fetchFromGitHub {
-    owner = "adcxyz";
-    repo = "SafetyNet";
-    rev = "276d3c3e9628df1882ade51ced20ccd8b06f4d32";
-    hash = "sha256-2jTFphxrLMmY/Rk9cCyLb3UmOcPbXmCSNoyCGiyq6xA=";
-  };
+  owner = "adcxyz";
+  repo = "SafetyNet";
+  rev = "276d3c3e9628df1882ade51ced20ccd8b06f4d32";
+  hash = "sha256-2jTFphxrLMmY/Rk9cCyLb3UmOcPbXmCSNoyCGiyq6xA=";
 
-  installPhase = ''
-    runHook preInstall
-    extdir="$out/share/SuperCollider/extensions/SafetyNet"
-    mkdir -p "$extdir"
+  installDir = "SafetyNet";
+  install = ''
     cp -r Classes "$extdir/"
     cp -r HelpSource "$extdir/"
     cp SafetyNet.quark README.md "$extdir/" 2>/dev/null || true
-    runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = {
     description = "SuperCollider quark: protects against dangerous audio signals in live coding";
     homepage = "https://github.com/adcxyz/SafetyNet";
-    license = licenses.gpl3Plus;
-    platforms = platforms.all;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus;
   };
 }

@@ -50,11 +50,11 @@ in
       joern = final.callPackage ./joern { }; # Open-source code analysis platform
       superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
       superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)
-      equi = final.callPackage ./equi { }; # EQui SC quark (parametric EQ) — SuperDirtMixer dependency
-      jsonlib = final.callPackage ./jsonlib { }; # JSONlib SC quark (JSON en/decoder) — SuperDirtMixer dependency
+      equi = final.callPackage ./equi { inherit (final.neg.functions) mkScQuark; }; # EQui SC quark (parametric EQ) — SuperDirtMixer dependency
+      jsonlib = final.callPackage ./jsonlib { inherit (final.neg.functions) mkScQuark; }; # JSONlib SC quark (JSON en/decoder) — SuperDirtMixer dependency
       dwg-reverb = final.callPackage ./dwg-reverb { }; # compiled SC UGen plugin: virtual room reverb (early reflections + FDN late reverb)
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
-      vowel = final.callPackage ./vowel { }; # Vowel SC quark (formant tables) used by SuperDirt
+      vowel = final.callPackage ./vowel { inherit (final.neg.functions) mkScQuark; }; # Vowel SC quark (formant tables) used by SuperDirt
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
       renoise-redux = final.callPackage ./renoise-redux {
         renoiseSrc = inputs.renoise-src;

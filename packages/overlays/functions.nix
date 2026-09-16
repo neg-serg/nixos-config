@@ -16,6 +16,9 @@ inputs: _final: prev: {
         in
         prev.callPackage path (autoArgs // extraArgs);
 
+      # mkScQuark: shared builder for the pure-sclang SuperCollider quark
+      # packages (no build step) — see packages/lib/mkScQuark.nix.
+      mkScQuark = prev.callPackage ../lib/mkScQuark.nix { };
     };
   };
 }
