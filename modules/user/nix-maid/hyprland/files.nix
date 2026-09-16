@@ -4,7 +4,6 @@
   ...
 }:
 let
-  animDir = config.lib.neg.path "files/gui/hypr/animations";
   lockDir = config.lib.neg.path "files/gui/hypr/hyprlock";
 
   mkFiles =
@@ -65,7 +64,6 @@ in
 -- See ~/.config/hypr/hyprland.lua for reference
 ";
       }
-      // (mkFiles ".config/hypr/animations" animDir (builtins.attrNames (builtins.readDir animDir)))
       // (mkFiles ".config/hypr/hyprlock" lockDir (builtins.attrNames (builtins.readDir lockDir)))
     );
 }

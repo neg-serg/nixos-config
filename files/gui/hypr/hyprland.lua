@@ -5,7 +5,8 @@
 -- NixOS config that used to be a set of hyprlang files (init.conf, vars.conf,
 -- classes.conf, rules.conf, workspaces.conf, bindings/). Those files are gone:
 -- this Lua file is the single source of truth, and the workspace list lives in
--- the `workspaces` table further down. animations/neg.conf is still separate.
+-- the `workspaces` table further down. Animations are defined inline below; the
+-- separate animations/ preset directory no longer exists.
 --
 -- The CachyOS template provided the Lua API structure (hl.*); the behaviour is
 -- the NixOS config's.
@@ -410,7 +411,7 @@ hl.workspace_rule({ workspace = "w[tv1]", gaps_out = 0, gaps_in = 0 })
 hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
 
 -- =====================================================================
--- Animations (animations/neg.conf)
+-- Animations (defined inline below; the old animations/ preset directory is gone)
 -- =====================================================================
 hl.curve("myBezier",      { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.05} } })
 hl.curve("linear",        { type = "bezier", points = { {0, 0}, {1, 1} } })
