@@ -11,6 +11,18 @@ let
       g = config.users.main.group or null;
     in
     if g == null then mainUser else g;
+
+  # Positional constructor for the loginLimits table below (nixpkgs expects
+  # these four attribute names).  nixfmt expands a four-name `inherit` here,
+  # but every call site stays on one line.
+  loginLimit = domain: item: type: value: {
+    inherit
+      domain
+      item
+      type
+      value
+      ;
+  };
 in
 {
   imports = [ ./tpm-sudo.nix ];
@@ -44,72 +56,17 @@ in
     };
     pam = {
       loginLimits = [
-        {
-          domain = "*";
-          item = "nofile";
-          type = "soft";
-          value = "65536";
-        }
-        {
-          domain = "*";
-          item = "nofile";
-          type = "hard";
-          value = "1048576";
-        }
-        {
-          domain = "@gamemode";
-          item = "nice";
-          type = "-";
-          value = "-10";
-        }
-        {
-          domain = "@audio";
-          item = "rtprio";
-          type = "-";
-          value = "95";
-        }
-        {
-          domain = "@audio";
-          item = "memlock";
-          type = "-";
-          value = "4194304";
-        }
-        {
-          domain = mainUser;
-          item = "rtprio";
-          type = "-";
-          value = "95";
-        }
-        {
-          domain = mainUser;
-          item = "memlock";
-          type = "-";
-          value = "4194304";
-        }
-        {
-          domain = "@realtime";
-          item = "rtprio";
-          type = "-";
-          value = "95";
-        }
-        {
-          domain = "@pipewire";
-          item = "rtprio";
-          type = "-";
-          value = "95";
-        }
-        {
-          domain = "@pipewire";
-          item = "nice";
-          type = "-";
-          value = "-19";
-        }
-        {
-          domain = "@pipewire";
-          item = "memlock";
-          type = "-";
-          value = "4194304";
-        }
+        (loginLimit "*" "nofile" "soft" "65536")
+        (loginLimit "*" "nofile" "hard" "1048576")
+        (loginLimit "@gamemode" "nice" "-" "-10")
+        (loginLimit "@audio" "rtprio" "-" "95")
+        (loginLimit "@audio" "memlock" "-" "4194304")
+        (loginLimit mainUser "rtprio" "-" "95")
+        (loginLimit mainUser "memlock" "-" "4194304")
+        (loginLimit "@realtime" "rtprio" "-" "95")
+        (loginLimit "@pipewire" "rtprio" "-" "95")
+        (loginLimit "@pipewire" "nice" "-" "-19")
+        (loginLimit "@pipewire" "memlock" "-" "4194304")
       ];
       services = {
         # hyprlock PAM service removed with hyprlock (temporarily disabled, 2026-08-31)
