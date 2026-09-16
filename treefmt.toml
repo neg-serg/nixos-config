@@ -17,6 +17,10 @@ excludes = [
   "files/obsidian-vault/**",
   # Zsh-specific scripts that shfmt can't parse
   "packages/local-bin/bin/swayimg-actions.sh",
+  # FVWM rice: upstream files are vendored byte-identical (files/x11/README.md);
+  # shfmt/black would rewrite them and break the diff against upstream.
+  "files/x11/rice/**",
+  "files/x11/decay-gtk/src/**",
 ]
 
 # Nix files: format with nixfmt
