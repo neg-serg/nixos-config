@@ -19,8 +19,10 @@ PopupWindow {
     readonly property int _searchBarImplicitH: _searchBarH + 8
     // Not required: the root tray menu is created without a handle and gets it
     // assigned on right-click (SystemTray / NetClusterCapsule). Nested hosts
-    // always pass one through DelegateEntry's createObject().
-    property var menu
+    // always pass one through DelegateEntry's createObject(). Default to null
+    // rather than leave it undefined: QsMenuOpener below takes a QsMenuHandle*,
+    // and an undefined value warns on every start.
+    property var menu: null
     required property Component submenuHostComponent
     property var anchorItem: null
     property real anchorX
