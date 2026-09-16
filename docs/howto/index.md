@@ -36,12 +36,6 @@
 - neg — fork of the LiangShen preset (anchored-standard) as the default preset:
   [dsh-liangshen-fork.md](./dsh-liangshen-fork.md)
 
-- dsh TUI — completion notifications through the terminal (OSC 99/9, works over SSH):
-  [dsh-tui-notifications.md](./dsh-tui-notifications.md)
-
-- dsh martty profile — the upstream terminal UI (Martty) as a second profile:
-  [dsh-martty.md](./dsh-martty.md)
-
 - dsh tui profile — what `dsh --profile tui` runs (dsh-TUI), and the profile facts that break a boot
   when ignored: [dsh-tui-profile.md](./dsh-tui-profile.md)
 
@@ -54,17 +48,8 @@
 - dsh status line — terminal-title status line, scriptable, OSC 1/2:
   [dsh-statusline.md](./dsh-statusline.md)
 
-- dsh keymap — rebind TUI keys by action id (`~/.dsh-tui/keymap.json`):
-  [dsh-keymap.md](./dsh-keymap.md)
-
 - dsh voice input — why there is nothing to build (the local stack is switched off on purpose):
   [dsh-voice.md](./dsh-voice.md)
-
-- dsh TUI boot — what happens while it boots and the boot progress line:
-  [dsh-tui-boot.md](./dsh-tui-boot.md)
-
-- dsh TUI self-update — why `pnpm add` hit EROFS and how the bundle is parked around it:
-  [dsh-tui-self-update.md](./dsh-tui-self-update.md)
 
 - Options/modules reference: [modules.md](./modules.md)
 

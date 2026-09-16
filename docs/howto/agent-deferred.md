@@ -13,7 +13,7 @@ Each plugin = 4 files + a test:
   services are used, `export const inject = [...]` is MANDATORY (lesson: ctx.tools/ctx.memory);
 - `modules/user/nix-maid/apps/dsh-<name>/` — the plugin bundle (package.json + lib/index.js). The
   web-profile caretaker modules were removed with the web GUI in 2026-09; the TUI profile seeds the
-  bundle through `dsh-tui-ru.nix` (`tuiPlugins` / `seed`), so no per-plugin `.nix` is needed;
+  bundle through `dsh-tui.nix` (`tuiPlugins` / `seed`), so no per-plugin `.nix` is needed;
 - `modules/user/nix-maid/apps/default.nix` — add `n != "dsh-<name>"` to the exclude list;
 - functional test: run node against the bundle from `~/.dsh/profiles/tui/node_modules/` (or a copy),
   with an `apply({tools:{register}, effect})` mock, verifying a real scenario (like hashline/debug).

@@ -12,7 +12,7 @@ Two harness facts decide the design:
   — it cannot carry a presentation.
 - A **tool** declares `output.presentationMeta(args, value)` and `presentResult(args, result)`, and
   a UI maps the returned `ToolCallView` union. `card: "diff"` with `diffs: FileDiff[]` is the same
-  presenter the edit-approval preview uses, so a capable TUI (Tianshu) renders structured red/green
+  presenter the edit-approval preview uses, so a capable TUI (dsh-TUI) renders structured red/green
   file diffs.
 
 So the review surface is the `show_diff` tool, and `/diff` is the textual entry point for the human.
