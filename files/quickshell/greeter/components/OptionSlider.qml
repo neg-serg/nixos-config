@@ -15,8 +15,8 @@ Item {
 		id: mouseArea
 		anchors.fill: root
 
-		property real halfHandle: handle.width / 2;
-		property real activeWidth: groove.width - handle.width;
+		property real halfHandle: groove.handleWidth / 2;
+		property real activeWidth: groove.width - groove.handleWidth;
 		property real valueOffset: mouseArea.halfHandle + (root.index / (root.values.length - 1)) * mouseArea.activeWidth;
 
 		Repeater {
@@ -53,21 +53,7 @@ Item {
 			}
 		}
 
-		Rectangle {
-			id: grooveFill
-
-			anchors {
-				left: groove.left
-				top: groove.top
-				bottom: groove.bottom
-			}
-
-			radius: 5
-			color: "#80ceffff"
-			width: mouseArea.valueOffset
-		}
-
-		Rectangle {
+		GrooveTrack {
 			id: groove
 
 			anchors {
@@ -76,20 +62,8 @@ Item {
 			}
 
 			y: 5
-			implicitHeight: 7
-			color: "transparent"
-			border.color: "#20eeffff"
-			border.width: 1
-			radius: 5
-		}
-
-		Rectangle {
-			id: handle
-			anchors.verticalCenter: groove.verticalCenter
-			height: 15
-			width: handle.height
-			radius: handle.height * 0.5
-			x: mouseArea.valueOffset - handle.width * 0.5
+			fillWidth: mouseArea.valueOffset
+			showHandle: true
 		}
 	}
 
