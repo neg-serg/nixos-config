@@ -21,6 +21,8 @@ in
   wallhaven = prev.callPackage (inputs.self + "/packages/wallhaven") { };
   hyprwhspr = prev.callPackage (inputs.self + "/packages/hyprwhspr") { };
   camillagui = callPkg (inputs.self + "/packages/camillagui") { }; # web GUI for CamillaDSP
+  decay-gtk-theme = callPkg (inputs.self + "/packages/decay-gtk-theme") { }; # GTK3 theme of the FVWM decay rice
+  decay-rice = callPkg (inputs.self + "/packages/decay-rice") { }; # FVWM "An essence of decay" session payload
   atrium = callPkg (inputs.self + "/packages/atrium") { }; # Wayland multiseat display manager
 
   # hyprscratch: patched to exit after 5 event-listener failures
