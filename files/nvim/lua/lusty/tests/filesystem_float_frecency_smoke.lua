@@ -7,16 +7,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float frecency smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float frecency smoke') then return end
 
 -- Deterministic, isolated journal: one recorded open of zzz.txt.
-local frec = require('lusty.frecency')
-frec.set_state_file('/tmp/lusty_fs_frec_smoke.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_frec_smoke.json')
+local frec = H.isolate_frecency('/tmp/lusty_fs_frec_smoke.json')
 frec.set_now(function() return 1700000000 end)
 
 local tmp = '/tmp/lusty_fs_frec_smoke'
@@ -59,23 +55,12 @@ local function backend_orders_by_frecency()
 end
 
 if not backend_orders_by_frecency() then
-  print('SKIP filesystem float frecency smoke: backend without the F request')
-  vim.cmd('qa!')
-  return
+  return H.skip('filesystem float frecency smoke', 'backend without the F request')
 end
 
 local native = require('lusty.native')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
@@ -97,5 +82,4 @@ assert(
 )
 p2:handle('cancel')
 
-print('PASS filesystem float frecency smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float frecency smoke')

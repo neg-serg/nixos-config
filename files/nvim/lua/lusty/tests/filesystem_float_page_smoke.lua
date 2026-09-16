@@ -9,15 +9,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float page smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float page smoke') then return end
 
 -- Isolate the frecency journal: a stale real one would reorder the listing.
-require('lusty.frecency').set_state_file('/tmp/lusty_fs_page_smoke_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_page_smoke_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_page_smoke_frec.json')
 
 local tmp = '/tmp/lusty_fs_page_smoke'
 vim.fn.delete(tmp, 'rf')
@@ -30,16 +27,7 @@ local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 wait_until(function() return p.total == 40 end, 'total known')
 -- The grid must be filled: every visible position carries an entry, so the
@@ -50,5 +38,4 @@ end, 'page fills the grid')
 assert(p:max_cols() > 1, 'grid uses more than one column')
 assert(#p.window > p:list_rows(), 'page is wider than the first single column')
 
-print('PASS filesystem float page smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float page smoke')

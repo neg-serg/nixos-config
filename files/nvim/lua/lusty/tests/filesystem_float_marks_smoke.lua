@@ -7,17 +7,13 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float marks smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float marks smoke') then return end
 
 -- Keep the frecency journal out of the real state dir and deterministic (a
 -- stale journal would reorder the empty query).
-local frec = require('lusty.frecency')
-frec.set_state_file('/tmp/lusty_marks_frecency.json')
-pcall(vim.fn.delete, '/tmp/lusty_marks_frecency.json')
+local frec = H.isolate_frecency('/tmp/lusty_marks_frecency.json')
 frec.set_now(function() return 1700000000 end)
 
 local tmp = '/tmp/lusty_fs_marks_smoke'
@@ -31,16 +27,7 @@ local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 wait_until(function() return p.window and #p.window > 0 end, 'initial rows')
 assert(p.window[1].label == 'm1.txt', 'name order first')
@@ -84,5 +71,4 @@ end
 local current = vim.api.nvim_buf_get_name(0)
 assert(current == wanted[1], 'first marked file is current: ' .. current .. ' vs ' .. wanted[1])
 
-print('PASS filesystem float marks smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float marks smoke')

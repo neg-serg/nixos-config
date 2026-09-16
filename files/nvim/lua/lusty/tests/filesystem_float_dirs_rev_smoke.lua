@@ -6,16 +6,13 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float dirs/rev smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float dirs/rev smoke') then return end
 
 -- Isolate the frecency journal: the client ships F records and a stale real
 -- journal would reorder the empty query.
-require('lusty.frecency').set_state_file('/tmp/lusty_fs_dirs_rev_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_dirs_rev_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_dirs_rev_frec.json')
 
 local tmp = '/tmp/lusty_fs_dirs_rev_smoke'
 vim.fn.mkdir(tmp, 'p')
@@ -26,16 +23,7 @@ vim.fn.mkdir(tmp .. '/zeta_dir', 'p')
 
 local native = require('lusty.native')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 local function labels(p)
   local out = {}
@@ -69,5 +57,4 @@ assert(labels(p2)[1] == 'zeta_dir', 'reverse puts zeta_dir first')
 assert(labels(p2)[4] == 'alpha.txt', 'reverse puts alpha.txt last')
 p2:handle('cancel')
 
-print('PASS filesystem float dirs/rev smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float dirs/rev smoke')

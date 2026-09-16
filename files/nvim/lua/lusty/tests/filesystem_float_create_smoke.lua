@@ -7,16 +7,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float create smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float create smoke') then return end
 
 -- Isolate the frecency journal (the client ships F records).
-local frec = require('lusty.frecency')
-frec.set_state_file('/tmp/lusty_fs_create_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_create_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_create_frec.json')
 
 local tmp = '/tmp/lusty_fs_create_smoke'
 vim.fn.delete(tmp, 'rf')
@@ -26,16 +22,7 @@ local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 -- The fixture root is empty on purpose; wait for the first backend answer.
 wait_until(function() return not p.loading end, 'first listing')
@@ -58,5 +45,4 @@ p2:handle('create')
 assert(not p2.closed, 'empty C-e keeps the picker open')
 p2:handle('cancel')
 
-print('PASS filesystem float create smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float create smoke')
