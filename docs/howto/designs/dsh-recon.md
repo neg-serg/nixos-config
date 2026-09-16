@@ -1,8 +1,12 @@
 # DSH web recon — source map for adding "harness features"
 
+> **Historical (2026-09).** The dsh web GUI was removed in 2026-09 together with the `dsh-web-ui`
+> fork checkout and the `dsh-web-en` build; every path in this map is kept as reference and no
+> longer exists in the repo.
+
 ## 1. Where the web app source lives; build/serve; the neg fork
 
-- Base (immutable) checkout:
+- Base (immutable, historical) checkout — store path since GC'd:
   `/nix/store/zvfrqpjr7x0w0ns3m53l9sx05wf24scw-dsh-web-en-0.1.0-rc.6/node_modules/@deepseek-ai/`
   (195 packages). The "web app" is not one package — it is a Cordis host composed from a patch file.
 - Key packages: `dsh-web-app` (web surface bundle + `cordis.patch.yml` + `src/startup.ts` CLI),
@@ -16,14 +20,14 @@
   overrides `dsh-base` rows and inserts the webserver/api-gateway/workspace/browser-roster rows.
 - Runtime profile: `~/.dsh/profiles/web/` (`cordis.yml`, `cordis.patch.yml`, `package.json`,
   `node_modules`). Plugins are installed there.
-- neg fork: `/etc/nixos/packages/dsh/web-ui-en/default.nix` is a `runCommand` that `cp -a` the built
-  `@deepseek-ai` tree, then runs `patch.py` (+ `radii.py`, `codeblocks.py`). `patch.py` is a
-  build-time compiled-bundle string rewriter: Chinese UI copy → English, reasoning blocks →
-  MarkdownText, image-preview scheme fixes. `radii.py` halves border-radius; `codeblocks.py` caps
-  long code blocks with scroll. The output store path is exposed as `dshAiStore` in
-  `/etc/nixos/modules/user/nix-maid/apps/dsh-market.nix`, which symlinks the profile's
-  `node_modules/@deepseek-ai` to it. Fork-plugin source edits hot-apply on refresh; `@deepseek-ai`
-  bundle edits require rebuilding this Nix package + refresh.
+- neg fork (removed in 2026-09): `/etc/nixos/packages/dsh/web-ui-en/default.nix` was a `runCommand`
+  that `cp -a` the built `@deepseek-ai` tree, then ran `patch.py` (+ `radii.py`, `codeblocks.py`).
+  `patch.py` was a build-time compiled-bundle string rewriter: Chinese UI copy → English, reasoning
+  blocks → MarkdownText, image-preview scheme fixes. `radii.py` halved border-radius;
+  `codeblocks.py` capped long code blocks with scroll. The output store path was exposed as
+  `dshAiStore` in `/etc/nixos/modules/user/nix-maid/apps/dsh-market.nix` (removed in 2026-09), which
+  symlinked the profile's `node_modules/@deepseek-ai` to it. Fork-plugin source edits hot-applied on
+  refresh; `@deepseek-ai` bundle edits required rebuilding this Nix package + refresh.
 
 ## 2. Client plugin format
 
@@ -40,7 +44,8 @@ optionally add `"bundle": { "patch": "cordis.patch.yml" }`). `exports` has `.` (
   `ctx.slots.inject("tool.call.toolview", function*(){ yield ctx.slots.register({name,key,priority}, Component) })`
   overrides tool cards; plain DOM listeners + MutationObserver + injected `<style>` are the common
   pattern.
-- Examples: `~/src/1st-level/@projects/dsh-web-ui/packages/dsh-terminal-ui` (host route
+- Examples (all removed with the fork in 2026-09):
+  `~/src/1st-level/@projects/dsh-web-ui/packages/dsh-terminal-ui` (host route
   `/terminal-ui/wallpaper` + `/export-md` command; client theme CSS), `.../dsh-gui-tweaks` (pure
   client; todo/ask cards via `slots`), `.../dsh-preview` (host-only `/dsh-preview` route).
   Third-party: `~/.dsh/profiles/web/node_modules/dsh-memento`.

@@ -128,7 +128,9 @@ Use the same expectations regardless of whether you work under `modules/` or
 - Stick to upstream Qt 6 best practices: small declarative components, property bindings over the
   imperative approach, no binding loops or global JS helpers, explicit signal handlers.
 - Assume Qt 6+ APIs; review the latest Hyprland/Quickshell release notes before suggesting changes.
-- Automated QML linters are currently unavailable, so rely on these conventions.
+- QML syntax is checked by `scripts/dev/check-qml-syntax.sh` (invoked by `just lint`), which runs
+  `qmlformat --dry-run` over `files/quickshell`; it validates syntax only, so style still relies on
+  these conventions.
 
 ### Runtime Helpers (Preferred)
 

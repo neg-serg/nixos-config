@@ -11,8 +11,9 @@ implementation, risks, estimate. Conclusions: what to close as covered, what to 
 - DSH: persistent subagents + `send_message` (worker addressability), `dsh-tool-web` (web_search
   only; `fetch: false` on the host — policy), `tools.restrict()` in dsh-tools (narrowing the tool
   scope), multi-session web GUI, `dsh-api-remotes`/`dsh-client-connection`.
-- Already ported: vibe-director workflow (omp ln-mode), boulder (todo control), ab-bench.mjs (A/B of
-  prompts), code-review.mjs (git diff → model).
+- Already ported: vibe-director workflow (omp ln-mode), ab-bench.mjs (A/B of prompts),
+  code-review.mjs (git diff → model). `boulder` is design-only — there is no code for it in this
+  repo (see [designs/boulder.md](./designs/boulder.md)).
 
 ## 1. collab — live collaboration
 

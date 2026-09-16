@@ -34,7 +34,8 @@ as a NixOS module plus a helper CLI.
 
 1. **Inventory existing secrets**
 
-   - Export a list from `secrets/default.nix` and note their current paths, owners, and file modes.
+   - Export a list of the declared secrets (`sops.secrets` entries in `hosts/`/`modules/`, plus the
+     encrypted files under `secrets/`) and note their current paths, owners, and file modes.
    - Decide which secrets must be available during system activation (passwords, VPN keys, WireGuard
      keys, etc.).
 
@@ -83,7 +84,8 @@ as a NixOS module plus a helper CLI.
 
    This block teaches `vaultix` where the Age identity lives and what host set to manage.
 
-1. **Define per-secret metadata** Create `secrets/default.nix` with entries like:
+1. **Define per-secret metadata** Create a new `secrets/default.nix` (the sops-only layout has no
+   such file) with entries like:
 
    ```nix
    {

@@ -20,8 +20,10 @@ Each plugin = 4 files + a test:
 
 Pre-commit checks: `node --check`, `nix-instantiate --parse`,
 `bash scripts/dev/check-all-syntax.sh`, `just fmt`, pre-commit lint (--no-verify only for foreign
-ghost files). Activation:
-`rm -rf ~/.dsh/profiles/web/node_modules/dsh-<name> && systemctl --user restart dsh`.
+ghost files). Activation: the plugins are seeded into the TUI profile, so deleting
+`~/.dsh/profiles/tui/node_modules/dsh-<name>` and restarting the TUI (`dsh --profile tui`) picks up
+the new copy (the old `~/.dsh/profiles/web` + `systemctl --user restart dsh` pair is gone with the
+dsh web GUI, 2026-09).
 
 ## 1. dsh-lsp — symbolic code navigation (priority #1)
 

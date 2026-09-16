@@ -1,5 +1,9 @@
 # Boulder — todo-continuation enforcer for DSH
 
+> **Status: (not implemented — no code in this repo; design note only).** There is no `boulder` code
+> under `modules/`, `packages/`, `flake/` or `hosts/` (`rg -i boulder` there returns no matches);
+> sections 2-3 describe the intended DSH integration, not shipped code.
+
 Sources: /etc/nixos/docs/howto/agent-guards.md item 6; omo
 packages/omo-opencode/src/hooks/todo-continuation-enforcer/ (constants.ts, handler.ts,
 idle-event.ts, continuation-injection.ts, non-idle-events.ts, session-state.ts, compaction-guard.ts,
@@ -95,7 +99,8 @@ agent with a system directive and makes it continue working until the tasks are 
 
 ## 2. Integration design (DSH layer)
 
-DSH is a Cordis plugin in the web profile. The host half, apply(ctx), subscribes to events; the
+DSH is a Cordis plugin mounted in a dsh profile (this note was written for the web profile, removed
+in 2026-09; the live one is the TUI profile). The host half, apply(ctx), subscribes to events; the
 browser client.ts only draws the toast/indicator.
 
 ### Files to add (in the dsh-web-ui fork, packages/dsh-boulder/)

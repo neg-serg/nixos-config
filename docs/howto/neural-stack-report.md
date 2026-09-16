@@ -88,7 +88,8 @@ The user dismissed the generation as garbage; removed: wrappers `/zero/ai/music-
 
 1. **Broken venvs due to python 3.14** (system python is now 3.14.7, packages in the venv sit in
    `lib/python3.12` or 3.13 → ModuleNotFoundError). Fixed by relinking `bin/python3` to the 3.12.13
-   store path:
+   store path (that path has since been garbage-collected — re-point the symlink at a current
+   `python312` interpreter if a venv breaks again):
    `ln -sfn /nix/store/71d4s2c3dfqk4afkjp8w8g4l3f1glcsy-python3-3.12.13/bin/python3.12 $venv/bin/python3`
    - `ln -sfn python3 $venv/bin/python`. Affected: whisperx, amt, mt3, bp, rembg, triposr, denoise,
      analysis.

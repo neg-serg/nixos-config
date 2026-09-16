@@ -1,7 +1,7 @@
 # ongoing Goal — a long-running goal in dsh (how to set one up)
 
-The “ongoing Goal” mechanic is already deployed in the base DSH web profile — no separate plugin or
-Nix module is needed. This document covers how it is wired up and how to start/manage a goal.
+The “ongoing Goal” mechanic is part of the base DSH profile (`dsh-base`) — no separate plugin or Nix
+module is needed. This document covers how it is wired up and how to start/manage a goal.
 
 ## What it is
 
@@ -32,7 +32,8 @@ returns `{goal: null}` when there is no goal.
    the round-driver continues rounds on its own within the same session (a round = the agent’s next
    turn, `roundsStarted + 1`; the budget is never exceeded).
 1. Progress is visible in the GoalBar (chip “rounds N/M”) and in the result card of
-   `create_goal`/`get_goal`/`update_goal` (rendered by the dsh-widgets plugin).
+   `create_goal`/`get_goal`/`update_goal` (the web-GUI `dsh-widgets` renderer was removed in
+   2026-09; in the TUI the result card is rendered by dsh-TUI).
 
 ## Managing
 

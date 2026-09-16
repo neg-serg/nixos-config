@@ -48,6 +48,9 @@
 - dsh status line — terminal-title status line, scriptable, OSC 1/2:
   [dsh-statusline.md](./dsh-statusline.md)
 
+- dsh notify-input — TUI notifications while a turn waits on an approval or question card:
+  [dsh-notify-input.md](./dsh-notify-input.md)
+
 - dsh voice input — why there is nothing to build (the local stack is switched off on purpose):
   [dsh-voice.md](./dsh-voice.md)
 
@@ -56,8 +59,17 @@
 - Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I,):
   [local-llm.md](./local-llm.md)
 
+- Local music AI stack on odin (RAVE, demucs, NAM, XTTS venvs, wrappers and how to recreate):
+  [local-music-ai.md](./local-music-ai.md)
+
+- RVC — voice conversion with training on a target voice (venv/assets ready, training pending):
+  [rvc.md](./rvc.md)
+
 - Neural tools test report on odin (whisperx/mt3/amt-generate/basic-pitch/rembg/triposr — status,
   fixes, model paths): [neural-stack-report.md](./neural-stack-report.md)
+
+- midi2sheet — MIDI to piano PDF via headless MuseScore (package `pkgs.neg.midi2sheet`):
+  [midi2sheet.md](./midi2sheet.md)
 
 - Verified change workflows (add module / flag / package / host / script / secret):
   [agent-recipes.md](./agent-recipes.md)
@@ -92,6 +104,9 @@
 - Deferred port of complex omp/omo features (task for strong models):
   [agent-deferred.md](./agent-deferred.md)
 
+- Backlog research: collab / browser / computer / vibe / autoresearch — facts, patterns, decisions:
+  [agent-backlog-research.md](./agent-backlog-research.md)
+
 - **Port omp/oh-my-opencode → DSH: final summary**: [agent-port-summary.md](./agent-port-summary.md)
 
 - Port of hermes-agent (Nous) and similar project: map of what to port:
@@ -119,3 +134,9 @@
 
 - Lusty pickers: commands, keys, options and behaviour (native float backend):
   [lusty-commands.md](./lusty-commands.md)
+
+- Lusty standalone picker — native Rust architecture, process model and serve protocol:
+  [lusty-picker.md](./lusty-picker.md)
+
+- Lusty roadmap — hotkeys, display modes, preview and consolidation status:
+  [lusty-roadmap.md](./lusty-roadmap.md)

@@ -31,8 +31,8 @@ the picker, sessions and the default reference `neg`.
   `apps/default.nix`.
 - The default preset: `agent-presets.default: neg` in `~/.dsh/settings.yaml` (read with hot-reload,
   applies to **new** sessions; no dsh restart is needed). A duplicate fallback in the roster config
-  (`- id: agent-presets / config.default` in `~/.dsh/profiles/web/cordis.patch.yml`, see
-  `dsh-market.nix`) guards against a settings.yaml reset.
+  (`- id: dsh-tui-agent-presets / config.default` in `~/.dsh/profiles/tui/cordis.patch.yml`, written
+  by `dsh-tui-preset-patch.py`) guards against a settings.yaml reset.
 - The built-in `standard` preset is removed from the dsh package build (`packages/dsh/default.nix` —
   postInstall cuts out `config/agent-presets/standard`), so it is absent from the picker.
 - The original upstream `liangshen` preset (from the unmounted `@linxin666/dsh-liangshen` plugin) is
