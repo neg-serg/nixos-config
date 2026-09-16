@@ -33,12 +33,10 @@ buildGoModule rec {
 
   subPackages = [ "." ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Run GUI windows inside your terminal — a Wayland compositor that renders to the terminal via ANSI escape codes";
     homepage = "https://github.com/mmulet/term.everything";
-    license = licenses.agpl3Only;
-    maintainers = [ ];
-    platforms = platforms.linux;
+    license = lib.licenses.agpl3Only;
     mainProgram = "term.everything";
   };
 }

@@ -37,12 +37,10 @@ buildGoModule rec {
     "-X github.com/versenilvis/iris/root.Version=v${version}"
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "IRIS (Intelligent Real-time Input Suggestion) — shell auto-completion that works like code editor's IntelliSense";
     homepage = "https://github.com/versenilvis/iris";
-    license = licenses.bsd0;
-    maintainers = [ ];
+    license = lib.licenses.bsd0;
     mainProgram = "iris";
-    platforms = platforms.linux;
   };
 }

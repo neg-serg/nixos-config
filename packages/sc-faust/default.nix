@@ -62,11 +62,9 @@ stdenvNoCC.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider plugin: JIT-compile Faust DSP in scsynth (Faust UGen, incl. jpverb reverb)";
     homepage = "https://github.com/capital-G/sc_faust";
-    license = licenses.gpl3;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3;
   };
 }

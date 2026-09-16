@@ -1,4 +1,14 @@
-inputs: _final: prev: {
+inputs: _final: prev:
+let
+  # mkMeta: shared `meta` builder for local packages — see packages/lib/mkMeta.nix.
+  mkMeta = prev.callPackage ../lib/mkMeta.nix { };
+in
+{
+  # Reach every package as `lib.mkMeta`: callPackage hands pkgs.lib to the
+  # packages that declare a `lib` argument, so one additive lib extension here
+  # beats adding a `mkMeta` formal to each of the ~60 package files using it.
+  lib = prev.lib.extend (_libFinal: _libPrev: { inherit mkMeta; });
+
   # Shared helper functions under pkgs.neg.functions to DRY up overlay patterns.
   # neg sub-attributes are merged once in packages/overlay.nix — no
   # `(prev.neg or {})` accumulation here (prev is the unmodified base).
@@ -19,6 +29,8 @@ inputs: _final: prev: {
       # mkScQuark: shared builder for the pure-sclang SuperCollider quark
       # packages (no build step) — see packages/lib/mkScQuark.nix.
       mkScQuark = prev.callPackage ../lib/mkScQuark.nix { };
+
+      inherit mkMeta;
     };
   };
 }

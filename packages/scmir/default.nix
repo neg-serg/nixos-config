@@ -60,11 +60,9 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider Music Information Retrieval library (analysis + CLI tools)";
     homepage = "https://github.com/sicklincoln/SCMIR";
-    license = licenses.gpl2Plus; # COPYING GPL
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl2Plus; # COPYING GPL
   };
 }

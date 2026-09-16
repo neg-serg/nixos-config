@@ -13,10 +13,8 @@ stdenv.mkDerivation {
     cp -r . $out/
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Vicinae extension for wl wallpaper daemon — browse and switch wallpapers";
-    license = licenses.mit;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.mit;
   };
 }

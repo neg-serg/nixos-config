@@ -20,7 +20,7 @@ stdenvNoCC.mkDerivation {
 
   installPhase = builtins.readFile ./install.sh;
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider quark providing the audio engine for TidalCycles live coding";
     longDescription = ''
       SuperDirt is a SuperCollider-based audio synthesis engine designed
@@ -29,8 +29,6 @@ stdenvNoCC.mkDerivation {
       messages from TidalCycles pattern language.
     '';
     homepage = "https://codeberg.org/musikinformatik/SuperDirt";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus;
   };
 }

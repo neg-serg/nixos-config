@@ -39,11 +39,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/XPlayBuf"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider XPlayBuf UGen — granular playback with crossfade";
     homepage = "https://github.com/elgiano/XPlayBuf";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus;
   };
 }

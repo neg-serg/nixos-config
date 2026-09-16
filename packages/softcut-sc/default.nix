@@ -61,11 +61,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/Softcut"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "SuperCollider UGen: monome Softcut multi-voice looper/sampler";
     homepage = "https://github.com/madskjeldgaard/softcut-sc";
-    license = licenses.mit; # softcut-lib is MIT; plugin code MIT (LICENSE)
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.mit; # softcut-lib is MIT; plugin code MIT (LICENSE)
   };
 }

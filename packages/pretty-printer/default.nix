@@ -25,12 +25,10 @@ python3Packages.buildPythonApplication rec {
     (lib.makeBinPath [ coreutils ])
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Custom pretty-printer utilities (colors + file info)";
     homepage = "https://github.com/neg-serg/nixos-home";
-    license = licenses.unlicense;
-    platforms = platforms.linux;
+    license = lib.licenses.unlicense;
     mainProgram = "ppinfo";
-    maintainers = [ ];
   };
 }

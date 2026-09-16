@@ -50,11 +50,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/f0plugins"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "redFrik SuperCollider plugins (sound chips, rhythms, wavesets, sives)";
     homepage = "https://github.com/redFrik/f0plugins";
-    license = licenses.gpl2Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl2Plus;
   };
 }

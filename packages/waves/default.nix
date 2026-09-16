@@ -32,12 +32,11 @@ buildGoModule rec {
     "-X main.version=${version}"
   ];
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Keyboard-driven terminal music player with Soulseek downloads and Last.fm integration";
     homepage = "https://github.com/llehouerou/waves";
-    license = licenses.gpl3Only;
+    license = lib.licenses.gpl3Only;
     mainProgram = "waves";
-    platforms = platforms.unix;
-    maintainers = [ ];
+    platforms = lib.platforms.unix;
   };
 }

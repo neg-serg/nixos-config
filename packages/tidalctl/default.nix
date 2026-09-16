@@ -13,7 +13,7 @@ rustPlatform.buildRustPackage rec {
 
   cargoLock.lockFile = ./Cargo.lock;
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "TidalCycles session controller — engine start/stop, editor, recording";
     longDescription = ''
       CLI for managing a TidalCycles live-coding session on NixOS:
@@ -22,9 +22,7 @@ rustPlatform.buildRustPackage rec {
       records SuperDirt output, and monitors the PipeWire graph.
     '';
     homepage = "https://github.com/neg-serg/nixos-config";
-    license = licenses.mit;
+    license = lib.licenses.mit;
     mainProgram = "tidalctl";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }

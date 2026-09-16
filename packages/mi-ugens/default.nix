@@ -65,11 +65,9 @@ stdenv.mkDerivation rec {
     rm -rf "$out/mi-UGens"
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Mutable Instruments eurorack modules as SuperCollider UGens";
     homepage = "https://github.com/v7b1/mi-UGens";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
-    maintainers = [ ];
+    license = lib.licenses.gpl3Plus;
   };
 }

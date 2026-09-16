@@ -52,12 +52,10 @@ stdenv.mkDerivation {
     sed -i -e '/meson.add_install_script/d' -e '/skip_if_destdir: true)/d' meson.build
   '';
 
-  meta = with lib; {
+  meta = lib.mkMeta {
     description = "Wayland multiseat display manager";
     homepage = "https://github.com/kavau/atrium";
-    license = licenses.gpl2Plus;
+    license = lib.licenses.gpl2Plus;
     mainProgram = "atrium";
-    platforms = platforms.linux;
-    maintainers = [ ];
   };
 }
