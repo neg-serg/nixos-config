@@ -1,52 +1,10 @@
 { lib }:
 let
   presets = {
-    graphical = {
-      after = [ "graphical-session.target" ];
-      wants = [ "graphical-session.target" ];
-      wantedBy = [ "graphical-session.target" ];
-      partOf = [ ];
-    };
     defaultWanted = {
       after = [ ];
       wants = [ ];
       wantedBy = [ "default.target" ];
-      partOf = [ ];
-    };
-    timers = {
-      after = [ ];
-      wants = [ ];
-      wantedBy = [ "timers.target" ];
-      partOf = [ ];
-    };
-    net = {
-      after = [ "network.target" ];
-      wants = [ ];
-      wantedBy = [ ];
-      partOf = [ ];
-    };
-    netOnline = {
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ ];
-      partOf = [ ];
-    };
-    sops = {
-      after = [ "sops-nix.service" ];
-      wants = [ "sops-nix.service" ];
-      wantedBy = [ ];
-      partOf = [ ];
-    };
-    dbusSocket = {
-      after = [ "dbus.socket" ];
-      wants = [ ];
-      wantedBy = [ ];
-      partOf = [ ];
-    };
-    socketsTarget = {
-      after = [ "sockets.target" ];
-      wants = [ ];
-      wantedBy = [ ];
       partOf = [ ];
     };
   };

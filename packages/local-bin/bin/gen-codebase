@@ -235,7 +235,7 @@ LAYOUT = {
     "files/": "Dotfiles, shell config, static user files",
     "flake/": "Flake internals (nixos.nix, checks, devshells)",
     "hosts/": "Per-host entry points (hosts/<host>/default.nix)",
-    "lib/": "Custom Nix library (mkLocalBin, mkHomeFiles, systemdUser, ...)",
+    "lib/": "Custom Nix library (mkHomeFiles, importDir, systemdUser, ...)",
     "modules/": "Dendritic module tree (auto-importing domains)",
     "packages/": "Local packages + overlays",
     "scripts/": "Dev tooling (syntax checks, lint helpers)",

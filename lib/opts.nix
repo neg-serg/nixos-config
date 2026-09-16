@@ -85,28 +85,6 @@ let
         ;
     });
 
-  mkPathOpt =
-    {
-      default ? null,
-      description,
-      notes ? null,
-      example ? null,
-      defaultText ? null,
-      nullable ? true,
-    }:
-    let
-      t = if nullable then types.nullOr types.path else types.path;
-      d = if default == null && !nullable then "" else default;
-    in
-    mkOpt t d (mkDoc {
-      inherit
-        description
-        notes
-        example
-        defaultText
-        ;
-    });
-
   # Higher-level helpers
   mkListOpt =
     elemType:
@@ -154,7 +132,6 @@ in
     mkBoolOpt
     mkStrOpt
     mkIntOpt
-    mkPathOpt
     mkListOpt
     mkEnumOpt
     mkEnableOption

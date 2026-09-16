@@ -31,7 +31,7 @@ in
     _module.args.mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
 
     # Expose helpers under config.lib.neg: the pure neg-helpers from
-    # specialArgs (mkHomeFiles, mkLocalBin, ...) extended with helpers that
+    # specialArgs (mkHomeFiles, importDir, ...) extended with helpers that
     # close over config.
     lib.neg = neg // rec {
       # Primary user identity — single source for the preamble
