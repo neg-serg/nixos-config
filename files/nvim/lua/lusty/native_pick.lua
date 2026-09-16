@@ -21,15 +21,17 @@ local api = vim.api
 local ns = api.nvim_create_namespace('lusty_native_pick')
 
 local native = require('lusty.native')
+local core = require('lusty.native_core')
 
 local M = {}
 local active = nil
 
--- RU (йцукен) layout to EN chars, shared with the other pickers.
-local RU2EN = require('lusty.ru2en')
-
 local Pick = {}
 Pick.__index = Pick
+
+-- Geometry, the float window, the keymap base, cursor/query handling and the
+-- teardown are shared with the filesystem float (`lusty.native`).
+core.bind(Pick)
 
 function Pick.new(opts)
   local self = setmetatable({}, Pick)
@@ -65,175 +67,20 @@ function Pick:key_of(item)
   return item.path or item.bufnr or item.label
 end
 
-function Pick:width()
-  local envw = tonumber(os.getenv('LUSTY_WIDTH'))
-  if envw and envw >= 60 then
-    return math.max(60, math.min(envw, vim.o.columns - 4))
-  end
-  local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.8
-  ratio = math.max(0.5, math.min(0.98, ratio))
-  return math.max(60, math.floor(vim.o.columns * ratio))
-end
-
-function Pick:height()
-  local envr = tonumber(os.getenv('LUSTY_ROWS'))
-  if envr and envr >= 4 then
-    -- Total box height including the two rounded-border rows, matching the
-    -- standalone `--rows`; the window itself is two rows shorter.
-    return math.max(2, math.min(envr - 2, vim.o.lines - 2))
-  end
-  -- 8 rows in total on screen: the rounded border takes two, the window holds
-  -- five entry rows plus the prompt.
-  return math.min(6, math.max(1, vim.o.lines - 2))
-end
-
-function Pick:list_rows()
-  -- Entry rows inside the window: everything but the prompt line, so the grid
-  -- fills the window instead of leaving its last row empty.
-  return math.max(1, self:height() - 1)
-end
-
-function Pick:max_cols()
-  if self.single then
-    return 1
-  end
-  local w = self:width()
-  local rows = self:list_rows()
-  local total = math.max(self.total, 1)
-  local needed = math.max(1, math.ceil(total / rows))
-  local name_w = math.max(math.min(self.maxw or 12, 20), 1)
-  local byw = math.max(1, math.floor((w + 2) / (name_w + 4)))
-  return math.max(1, math.min(needed, byw, 8))
-end
-
-function Pick:col_width()
-  local cols = self:max_cols()
-  local w = self:width()
-  local text_w = w - 2 * (cols - 1)
-  return math.max(6, math.floor(text_w / cols))
-end
-
-function Pick:screen_count()
-  return self:list_rows() * self:max_cols()
-end
-
-function Pick:open_window()
-  local w, h = self:width(), self:height()
-  local row = math.max(0, vim.o.lines - h - 1)
-  local col = math.max(0, math.floor((vim.o.columns - w) / 2))
-  local buf = api.nvim_create_buf(false, true)
-  local win = api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = w,
-    height = h,
-    row = row,
-    col = col,
-    style = 'minimal',
-    border = 'rounded',
-  })
-  api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-  api.nvim_buf_set_option(buf, 'swapfile', false)
-  api.nvim_buf_set_option(buf, 'modifiable', true)
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_win_set_option(win, 'wrap', false)
-  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder')
-  api.nvim_win_set_option(win, 'winblend', 0)
-  api.nvim_buf_set_lines(buf, 0, -1, false, {})
-  self.buf = buf
-  self.win = win
-  self:setup_keymaps()
-  -- Modal picker: if focus ever leaves the float (e.g. a click on the
-  -- underlying buffer), pull it straight back. Otherwise letters typed
-  -- outside land in the original buffer, where 'c' starts the change
-  -- operator and nvim waits a timeoutlen for a motion.
-  local self_ref = self
-  self.leave_grp = api.nvim_create_augroup('LustyPickFocus' .. buf, { clear = true })
-  api.nvim_create_autocmd('BufLeave', {
-    group = self.leave_grp,
-    buffer = buf,
-    callback = function()
-      if not self_ref.closed and api.nvim_win_is_valid(self_ref.win) then
-        vim.schedule(function()
-          if not self_ref.closed and api.nvim_win_is_valid(self_ref.win) then
-            api.nvim_set_current_win(self_ref.win)
-          end
-        end)
-      end
-    end,
-  })
-end
-
 function Pick:setup_keymaps()
-  local buf = self.buf
-  local function map(lhs, action)
-    api.nvim_buf_set_keymap(buf, 'n', lhs, '', {
-      nowait = true,
-      silent = true,
-      noremap = true,
-      callback = function()
-        self:handle(action)
-      end,
-    })
-  end
-  for code = 32, 126 do
-    local ch = string.char(code)
-    local lhs = ch
-    if ch == '<' then
-      lhs = '<lt>'
-    elseif ch == '|' then
-      lhs = '<Bar>'
-    elseif string.byte(ch) == 92 then -- backslash
-      lhs = '<Bslash>'
-    end
-    map(lhs, ch)
-  end
-  for ru, en in pairs(RU2EN) do
-    map(ru, en)
-  end
-  map('<Tab>', 'enter')
-  map('<CR>', 'enter')
-  map('<BS>', 'backspace')
-  map('<C-h>', 'backspace')
-  map('<C-w>', 'clear')
-  map('<C-u>', 'clear')
-  map('<C-n>', 'down')
-  map('<C-j>', 'down')
-  map('<Down>', 'down')
-  map('<C-p>', 'up')
-  map('<C-k>', 'up')
-  map('<Up>', 'up')
-  map('<C-f>', 'colnext')
-  map('<Right>', 'colnext')
-  map('<C-b>', 'colprev')
-  map('<Left>', 'colprev')
-  map('<PageDown>', 'pagedown')
-  map('<PageUp>', 'pageup')
-  map('<Home>', 'first')
-  map('<C-a>', 'first')
-  map('<End>', 'last')
-  map('<C-e>', 'last')
-  map('<C-t>', 'open_tab')
-  map('<C-o>', 'open_split')
-  map('<C-v>', 'open_vsplit')
-  map('<C-d>', 'delete')
+  local actions = {
+    ['<C-w>'] = 'clear',
+    ['<C-e>'] = 'last',
+    ['<C-d>'] = 'delete',
+  }
   if self.multi then
-    map('<C-Space>', 'mark')
+    -- Multi-select (C-Space) is only bound when the caller asks for it.
+    actions['<C-Space>'] = 'mark'
   end
-  map('<Esc>', 'cancel')
-  map('<C-c>', 'cancel')
-  map('<C-g>', 'cancel')
-  -- Caller-supplied keys (raw callbacks, e.g. the MRU files/dirs toggle).
-  for lhs, fn in pairs(self.keys) do
-    api.nvim_buf_set_keymap(buf, 'n', lhs, '', {
-      nowait = true,
-      silent = true,
-      noremap = true,
-      callback = function()
-        fn(self)
-      end,
-    })
-  end
+  -- Caller-supplied keys are raw callbacks (e.g. the MRU files/dirs toggle).
+  core.setup_keymaps(self, { actions = actions, raw = self.keys })
 end
+
 
 function Pick:refresh()
   self.items = self.source(self.query) or {}
@@ -252,35 +99,6 @@ function Pick:refresh()
   self:draw()
 end
 
-function Pick:ensure_visible()
-  local screen = math.max(1, self:screen_count())
-  if self.total == 0 then
-    self.offset = 0
-    return
-  end
-  if self.selected < self.offset then
-    self.offset = math.max(0, math.floor(self.selected / screen) * screen)
-  elseif self.selected >= self.offset + screen then
-    self.offset = math.floor(self.selected / screen) * screen
-  end
-end
-
--- Truncate a label to at most w display columns (whole chars), returning
--- the text and its display width.
-local function fit(text, w)
-  local tw = vim.fn.strdisplaywidth(text)
-  if tw <= w then
-    return text, tw
-  end
-  local nchars = vim.fn.strchars(text)
-  while tw > w and nchars > 0 do
-    nchars = nchars - 1
-    text = vim.fn.strcharpart(text, 0, nchars)
-    tw = vim.fn.strdisplaywidth(text)
-  end
-  return text, tw
-end
-
 function Pick:draw()
   if self.closed or not api.nvim_buf_is_valid(self.buf) then
     return
@@ -297,7 +115,7 @@ function Pick:draw()
       local pos = self.offset + (r - 1) * cols + (c - 1)
       local item = self.items[pos - self.offset + 1]
       if item then
-        local text, tw = fit(item.label or '', col_w)
+        local text, tw = core.fit(item.label or '', col_w)
         parts[c] = text .. string.rep(' ', math.max(0, col_w - tw))
         cells[#cells + 1] = {
           line = r,
@@ -370,14 +188,7 @@ end
 
 function Pick:paint_prompt(h)
   local line = h - 1
-  local segs = {}
-  local col = 0
-  local function add(text, group)
-    if text and #text > 0 then
-      segs[#segs + 1] = { col, #text, group }
-      col = col + #text
-    end
-  end
+  local add, segs = core.prompt_segments()
   add(self.title, 'LustyPromptPath')
   add(' ', 'LustyPromptSep')
   add(self.arrow, 'LustyPromptSep')
@@ -389,35 +200,11 @@ function Pick:paint_prompt(h)
   if #self.mark_order > 0 then
     add(' (' .. #self.mark_order .. ' marked)', 'LustyPromptPath')
   end
-  for _, seg in ipairs(segs) do
-    if seg[3] then
-      api.nvim_buf_add_highlight(self.buf, ns, seg[3], line, seg[1], seg[1] + seg[2])
-    end
-  end
+  core.paint_segments(self, ns, line, segs)
 end
 
 function Pick:column_nav(delta)
-  if self.single then
-    return
-  end
-  local rows = self:list_rows()
-  if self.total == 0 or rows == 0 then
-    self.selected = 0
-    return
-  end
-  local columns = math.ceil(self.total / rows)
-  local cur_col = math.floor(self.selected / rows)
-  local cur_row = self.selected % rows
-  local new_col = (cur_col + delta) % columns
-  if (new_col + 1) * (cur_row + 1) > self.total then
-    new_col = delta > 0 and 0 or math.max(0, columns - 2)
-  end
-  local sel = new_col * rows + cur_row
-  if sel >= self.total then
-    sel = self.total - 1
-  end
-  self.selected = sel
-  self:refresh()
+  core.column_nav(self, delta, 'refresh')
 end
 
 function Pick:handle(action)
@@ -488,85 +275,16 @@ function Pick:handle(action)
     end
     return
   end
-  if action == 'down' then
-    if self.total > 0 then
-      self.selected = (self.selected + 1) % self.total
-      self:refresh()
-    end
-    return
-  end
-  if action == 'up' then
-    if self.total > 0 then
-      self.selected = (self.selected - 1) % self.total
-      self:refresh()
-    end
-    return
-  end
-  if action == 'colnext' or action == 'colprev' then
-    self:column_nav(action == 'colnext' and 1 or -1)
-    return
-  end
-  if action == 'pagedown' or action == 'pageup' then
-    local screen = self:screen_count()
-    local delta = action == 'pagedown' and screen or -screen
-    if self.total > 0 then
-      self.selected = math.max(0, math.min(self.selected + delta, self.total - 1))
-      self:refresh()
-    end
-    return
-  end
-  if action == 'first' or action == 'last' then
-    if self.total > 0 then
-      self.selected = action == 'first' and 0 or (self.total - 1)
-      self:refresh()
-    end
-    return
-  end
-  if action == 'clear' then
-    if #self.query > 0 then
-      self.query = ''
-      self.selected = 0
-      self.offset = 0
-      self:refresh()
-    end
-    return
-  end
-  if action == 'backspace' then
-    if #self.query > 0 then
-      self.query = self.query:sub(1, -2)
-      self.selected = 0
-      self.offset = 0
-      self:refresh()
-    end
-    return
-  end
-  -- typing
-  if #action == 1 then
-    self.query = self.query .. action
-    self.selected = 0
-    self.offset = 0
-    self:refresh()
-  end
+  -- Cursor movement, column/page jumps and query editing are shared with the
+  -- filesystem float; 'refresh' is this picker's re-list entry point.
+  core.handle_common(self, action, 'refresh')
 end
 
 function Pick:close()
   if self.closed then
     return
   end
-  self.closed = true
-  if self.leave_grp then
-    pcall(api.nvim_del_augroup_by_name, self.leave_grp)
-    self.leave_grp = nil
-  end
-  if self.win and api.nvim_win_is_valid(self.win) then
-    pcall(api.nvim_win_close, self.win, true)
-  end
-  if self.buf and api.nvim_buf_is_valid(self.buf) then
-    pcall(api.nvim_buf_delete, self.buf, { force = true })
-  end
-  if api.nvim_win_is_valid(self.orig_win) then
-    pcall(api.nvim_set_current_win, self.orig_win)
-  end
+  core.close(self)
   active = nil
   if self.on_close then
     pcall(self.on_close, self)
