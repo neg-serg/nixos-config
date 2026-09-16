@@ -146,16 +146,32 @@ in
     # starts at login, so keep retrying for a while after network is up.
     # The /run marker (see telegramBootNotifyScript) makes it fire once per
     # real boot instead of on every nixos-rebuild switch.
+    #
+    # Deliberately NOT wantedBy multi-user.target: the sender blocks until the
+    # user-session socks proxy (127.0.0.1:10808) answers, which cannot happen
+    # before login. As a target dependency it held multi-user.target (and thus
+    # graphical.target) for 20-45s on every boot (journal 2026-09-16:
+    # "Started" ~8.5s, multi-user reached only at 33.7s). The timer fires it
+    # off the boot critical path; the sender's own retry loop (12 x 5s) covers
+    # the proxy coming up after login.
     systemd.services."telegram-notify-boot" = {
       description = "Send a Telegram message that odin has booted";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${lib.getExe telegramBootNotifyScript}";
         Restart = "on-failure";
         RestartSec = 300;
+      };
+    };
+
+    systemd.timers."telegram-notify-boot" = {
+      description = "Fire the boot notice shortly after boot, off the boot critical path";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "20s";
+        Unit = "telegram-notify-boot.service";
       };
     };
 
