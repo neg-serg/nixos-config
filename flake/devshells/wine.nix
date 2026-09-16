@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   packages = [
     pkgs.dxvk # setup script for DXVK
     pkgs.vkd3d # DX12 for Wine

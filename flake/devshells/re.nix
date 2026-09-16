@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   nativeBuildInputs = [
     pkgs.radare2 # UNIX-like reverse engineering framework and command-line ...
     pkgs.cutter # Free and Open Source Reverse Engineering Platform powered...

@@ -1,13 +1,10 @@
-{
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 let
   # Shared package list — single source in lib/python-packages.nix
   pythonLists = import ../../lib/python-packages.nix { };
   pythonEnv = pkgs.python3-lto.withPackages pythonLists.myPythonPackages;
 in
-pkgs.mkShell {
+{
   nativeBuildInputs = [
     pythonEnv
     pkgs.pipx # Install and run Python applications in isolated environments

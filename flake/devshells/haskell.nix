@@ -1,14 +1,10 @@
-{
-  pkgs,
-  lib,
-  ...
-}:
+{ pkgs, lib, ... }:
 let
   optionalHaskellTools =
     lib.optionals (pkgs ? fourmolu) [ pkgs.fourmolu ] # haskell formatter
     ++ lib.optionals (pkgs ? hindent) [ pkgs.hindent ]; # alternative haskell formatter
 in
-pkgs.mkShell {
+{
   nativeBuildInputs = [
     pkgs.ghc # compiler
     pkgs.cabal-install # package/build tool
