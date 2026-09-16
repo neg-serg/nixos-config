@@ -14,20 +14,12 @@ import { mkdirSync, readFileSync, writeFileSync, appendFileSync, existsSync } fr
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
+import { parseArgs } from './lib.mjs'
+
 const HERE = dirname(fileURLToPath(import.meta.url))
 const DEFAULT_TASKS = join(HERE, '..', 'bench', 'tasks.json')
 const DEFAULT_PRESETS = join(HERE, '..', 'bench', 'presets.json')
 const OUT_DIR = process.env.AB_BENCH_DIR || join(process.env.HOME, '.local/share', 'ab-bench')
-
-function parseArgs(argv) {
-  const out = {}
-  for (let i = 0; i < argv.length; i += 2) {
-    const key = argv[i]
-    if (!key || !key.startsWith('--')) { i -= 1; continue }
-    out[key.slice(2)] = argv[i + 1]
-  }
-  return out
-}
 
 function stamp() {
   const d = new Date()
