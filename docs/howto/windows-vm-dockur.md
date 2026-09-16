@@ -184,10 +184,12 @@ reach the container (its own netns, no `/run/udev`). Therefore
 - the only cure is a fresh QEMU, i.e. a VM restart.
 
 `glm-adapter-auto` (user timer, every 60 s) implements that policy: VM running without the adapter →
-restart the VM, rate-limited to one restart per 10 min (`/tmp/glm-adapter-restart.stamp`). A manual
-`glm-adapter attach` falls back to the same restart. Placement check: `glm-adapter status` →
-`VM: adapter attached (1)`, which on the host means the adapter interface carries the `usbfs`
-driver.
+restart the VM — an explicit `podman stop` + `start` (a plain `podman restart` was followed by a
+container with only `lo` inside and an empty route table, so the guest lost the route to the host
+while the MIDI bridge kept a dead connection) — rate-limited to three restarts per hour
+(`~/.local/state/glm-adapter/restart.log`). A manual `glm-adapter attach` falls back to the same
+restart. Placement check: `glm-adapter status` → `VM: adapter attached (1)`, which on the host means
+the adapter interface carries the `usbfs` driver.
 
 ### Shutdown: SIGTERM works, do not shorten `--stop-timeout`
 
