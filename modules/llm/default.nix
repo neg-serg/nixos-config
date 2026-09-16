@@ -9,11 +9,9 @@ let
   cfg = config.services.ollama;
 in
 {
-  # open-webui.nix is disabled — not wired yet (heavy dep tree: jupyterlab/yarn-berry)
   imports = neg.importDir {
     dir = ./.;
     includeDirs = true;
-    exclude = [ "open-webui.nix" ];
   };
   config = lib.mkIf (config.lib.neg.enabled "llm") (
     lib.mkMerge [
