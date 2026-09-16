@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   nativeBuildInputs = [
     pkgs.jdk # Open-source Java Development Kit
     pkgs.gradle # Enterprise-grade build system

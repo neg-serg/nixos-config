@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   nativeBuildInputs = [
     pkgs.guestfs-tools # tools for accessing and modifying virtual machine disk images
     pkgs.lima # Linux virtual machines

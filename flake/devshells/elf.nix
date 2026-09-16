@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-pkgs.mkShell {
+{ pkgs, ... }: {
   nativeBuildInputs = [
     pkgs.patchelf # Small utility to modify the dynamic linker and RPATH of E...
     pkgs.elfutils # Set of utilities to handle ELF objects
