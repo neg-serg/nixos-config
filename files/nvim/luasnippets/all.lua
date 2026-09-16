@@ -3,17 +3,8 @@ if not ok_info then
   info = { username = vim.env.USER or "user", email = "" }
 end
 
-local ls = require "luasnip"
-local s = ls.snippet
-local sn = ls.snippet_node
-local t = ls.text_node
-local i = ls.insert_node
-local f = ls.function_node
-local c = ls.choice_node
-local d = ls.dynamic_node
-local r = ls.restore_node
-local fmt = require("luasnip.extras.fmt").fmt
-local fmta = require("luasnip.extras.fmt").fmta
+local P = require('luasnip_pre')
+local ls, s, sn, t, i, f, c, d, r, fmt, fmta = P.ls, P.s, P.sn, P.t, P.i, P.f, P.c, P.d, P.r, P.fmt, P.fmta
 
 -- Comment.nvim is lazy-loaded in this config (keys gc/gb), so it may not be
 -- present yet when this file is (lazy-)loaded. Resolve it lazily inside the
