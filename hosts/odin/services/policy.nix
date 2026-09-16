@@ -313,8 +313,9 @@ lib.mkMerge [
             RateLimitBurst=1000
           '';
         };
-        # Keep X11 off for this host
-        xserver.enable = lib.mkForce false;
+        # Keep X11 off for this host — the FVWM rice session is the only thing
+        # that wants a real X server (services.xserver.enable in modules/user/session/fvwm.nix).
+        xserver.enable = lib.mkForce config.features.gui.fvwm.enable;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
         resilio = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml")) {
