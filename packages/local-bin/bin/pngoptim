@@ -2,16 +2,14 @@
 # pngoptim: optimize a PNG file with optipng/advpng/advdef
 # Usage: pngoptim FILE.png
 
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 
 IFS=' 	
 '
 
 usage() { printf "Usage: pngoptim FILE.png\n" >&2; exit 1; }
-need() { command -v "$1" >/dev/null 2>&1 || { printf 'pngoptim: missing %s\n' "$1" >&2; :; }; }
 
-case "${1:-}" in
-  -h|--help|help|\?) usage ;;
-esac
+help_dispatch "$@"
 [ -n "${1:-}" ] || usage
 [ -f "$1" ] || { printf 'pngoptim: no such file: %s\n' "$1" >&2; exit 1; }
 
