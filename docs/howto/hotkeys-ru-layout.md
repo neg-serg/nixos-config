@@ -130,10 +130,11 @@ a new tab), `J`/`,`+letter (sites), `]`/`[` (video speed), etc. — all of it is
 RU the hint letter set breaks and cannot be fixed via config (a US layout is needed for hints). The
 same applies to `kitten hints --alphabet wersdfa` in kitty.
 
-URL exceptions: `settings.blocklistPattern` disables SurfingKeys entirely on the dsh web GUI
-(`127.0.0.1:3080` / `localhost:3080` — it has its own shortcuts and Tab autocomplete), as well as on
-`mail.google.com`, `docs.google.com`, `discord.com`, `app.slack.com`. The port is restricted so that
-other loopback pages (e.g. `localhost:5173`) keep SurfingKeys. Check: `check-surfingkeys`.
+URL exceptions: `settings.blocklistPattern` disables SurfingKeys entirely on `mail.google.com`,
+`docs.google.com`, `discord.com` and `app.slack.com`. The dsh web GUI (`127.0.0.1:3080` /
+`localhost:3080`) used to be listed too (it had its own shortcuts and Tab autocomplete), but the GUI
+was removed in 2026-09 and the port-scoped entries were dropped, so other loopback pages (e.g.
+`localhost:5173`) keep SurfingKeys. Check: `check-surfingkeys`.
 
 ## Fix plan (by priority)
 
