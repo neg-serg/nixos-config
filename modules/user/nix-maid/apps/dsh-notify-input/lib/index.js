@@ -17,7 +17,7 @@
  * touches the visible grid and interleaving it with the renderer is safe. The
  * protocol table mirrors the bundle's own `notify-osc` patch: kitty OSC 99,
  * iTerm2/WezTerm/Ghostty OSC 9. An unrecognised terminal stays silent rather
- * than shelling out to `notify-send` (see docs/howto/dsh-tui-notifications.md).
+ * than shelling out to `notify-send` (see docs/howto/dsh-notify-input.md).
  */
 
 import { readFileSync } from 'node:fs'

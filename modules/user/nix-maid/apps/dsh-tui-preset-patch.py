@@ -1,27 +1,23 @@
 import sys
 
-# Rewrite the owned blocks of a terminal profile's cordis.patch.yml.
+# Rewrite the owned blocks of the tui profile's cordis.patch.yml.
 #
-# Usage: dsh-tui-preset-patch.py <patch.yml> <rows-file> [prefix] [preset-id] [runtime]
+# Usage: dsh-tui-preset-patch.py <patch.yml> <rows-file> [prefix]
 #
-# The profile layer is shared by the two terminal profiles, but the TUI bundles
-# differ in two id-level facts the layer has to mirror:
-#   * the agent-preset roster row — Martty keeps the base `agent-presets`,
-#     dsh-TUI's bundle patch replaces it with the scoped `dsh-tui-agent-presets`;
-#   * the code-runtime row — dsh-TUI's bundle already inserts one, and a second
-#     copy is a duplicate `codeRuntime` registration that kills the boot, while
-#     Martty's bundle has none.
-# `runtime`/`no-runtime` select whether this script writes the code-runtime
-# insert at all.
+# Two facts about the dsh-TUI bundle the profile layer has to mirror:
+#   * its bundle patch replaces the base `agent-presets` roster row with the
+#     scoped `dsh-tui-agent-presets` id, so the fallback-preset row must target
+#     that id (a row naming `agent-presets` is dropped with
+#     `patch: entry "agent-presets" not found` on every start);
+#   * the bundle already inserts its own code-runtime row, and a second one is a
+#     duplicate `codeRuntime` registration that kills the boot — so the runtime
+#     block this script used to write is retired and any leftover copy is
+#     consumed (see OWNED_MARKERS).
 path = sys.argv[1]
-# Marker/echo prefix: each terminal profile owns its own marker text, so a
-# rewrite never mistakes another profile's blocks for its own. The tui profile
-# (dsh-tui-ensure.sh) keeps the default; the martty profile passes its own name.
+# Marker/echo prefix: the profile owns its marker text, so a rewrite never
+# mistakes a hand-written block for its own.
 PREFIX = sys.argv[3] if len(sys.argv) > 3 else "dsh-tui-ensure"
-PRESET_ID = sys.argv[4] if len(sys.argv) > 4 else "agent-presets"
-WANT_RUNTIME = (
-    sys.argv[5] if len(sys.argv) > 5 else "runtime"
-) != "no-runtime"
+PRESET_ID = "dsh-tui-agent-presets"
 MARKER_PRESET = f"# {PREFIX}: default preset"
 MARKER_RUNTIME = f"# {PREFIX}: code runtime"
 MARKER_PLUGINS = f"# {PREFIX}: plugin rows"
@@ -47,26 +43,10 @@ BLOCKS = [
         [MARKER_PLUGINS] + plugin_rows,
     ),
 ]
-# Markers we own even when we no longer emit them: a stale code-runtime block
-# must be consumed, not re-read as a user row (that would keep the duplicate
-# the switch to dsh-TUI has to remove).
+# Markers we own even though we no longer emit their block: the retired
+# code-runtime insert must be consumed, not re-read as a user row (that would
+# keep the duplicate this script exists to avoid).
 OWNED_MARKERS = [MARKER_PRESET, MARKER_RUNTIME, MARKER_PLUGINS]
-if WANT_RUNTIME:
-    BLOCKS.append(
-        (
-            MARKER_RUNTIME,
-            [
-                MARKER_RUNTIME
-                + " — the neg preset promotes the agent to Code Mode",
-                "# (tool-bootstrap `promotedPresentation: code`), and dsh-tools refuses",
-                '# mode "code" without a ctx.codeRuntime implementation. The web profile',
-                "# mounts it; a terminal profile whose bundle does not must add it here.",
-                "- insert:",
-                "    - id: code-runtime",
-                "      name: '@deepseek-ai/dsh-code-runtime-worker-thread'",
-            ],
-        )
-    )
 
 with open(path, encoding="utf-8") as f:
     src = f.read()
@@ -75,9 +55,6 @@ lines = src.split("\n")
 header, kept, index = [], [], 0
 while index < len(lines):
     line = lines[index]
-    # A marker we own is consumed whether or not we still emit its block, so a
-    # retired block (the code-runtime insert under `no-runtime`) cannot leak
-    # back in as a user row.
     owned = next((marker for marker in OWNED_MARKERS if marker in line), None)
     if owned is not None:
         # Skip this block: its marker line plus everything up to the next
@@ -96,8 +73,6 @@ while index < len(lines):
     (header if not kept and line.startswith("#") else kept).append(line)
     index += 1
 
-# Blocks we no longer emit (the code-runtime insert under `no-runtime`) were
-# already consumed by the skip loop above via OWNED_MARKERS.
 body = "\n".join(header).rstrip("\n")
 for _, block in BLOCKS:
     body += "\n\n" + "\n".join(block)
@@ -112,4 +87,4 @@ if body == src:
     sys.exit(0)
 with open(path, "w", encoding="utf-8") as f:
     f.write(body)
-print(f"{PREFIX}: {path}: wrote the profile layer (preset + code runtime)")
+print(f"{PREFIX}: {path}: wrote the profile layer (preset + plugin rows)")

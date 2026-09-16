@@ -78,7 +78,7 @@ let
 in
 {
   # Runs on every rebuild (as the user, so the settings file stays user-owned)
-  # and on every login — same pattern as dsh-tui-ru.
+  # and on every login — same pattern as dsh-tui.
   system.activationScripts.dshModels = systemdUser.mkUserActivation {
     inherit pkgs;
     user = mainUser;
