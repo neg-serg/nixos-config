@@ -7,17 +7,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP ls_colors parity smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
 
-local help = table.concat(vim.fn.systemlist({ 'lusty', '--help' }), '\n')
-if not help:find('--color-map', 1, true) then
-  print('SKIP ls_colors parity smoke: backend without the dump flag')
-  vim.cmd('qa!')
-  return
+if not H.require_lusty('ls_colors parity smoke') then return end
+
+if not H.has_flag('--color-map') then
+  return H.skip('ls_colors parity smoke', 'backend without the dump flag')
 end
 
 -- Controlled palette: types, an exec rule, a simple extension, a multi-dot
@@ -81,5 +76,4 @@ for _, spec in ipairs(probes) do
 end
 
 vim.env.LS_COLORS = nil
-print('PASS ls_colors parity smoke')
-vim.cmd('qa!')
+H.finish('PASS ls_colors parity smoke')

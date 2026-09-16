@@ -7,11 +7,9 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-local function assert_eq(got, want, msg)
-  if got ~= want then
-    error((msg or 'assert') .. ': got ' .. tostring(got) .. ' want ' .. tostring(want))
-  end
-end
+local H = require('lusty.tests.harness')
+
+local assert_eq = H.assert_eq
 
 -- Ruby-ish -> Vim magic: groups and alternation are escaped and the pattern is
 -- case-insensitive (\c appended).
@@ -41,5 +39,4 @@ assert(lsc.group_for({ name = 'pic.jpg' }) ~= nil, 'jpg matches *.jpg')
 assert(lsc.group_for({ name = 'beta.lua' }) ~= nil, 'lua matches *.lua')
 assert(lsc.group_for({ name = 'alpha.txt' }) == nil, 'no rule for .txt')
 
-print('PASS grep pattern smoke')
-vim.cmd('qa!')
+H.finish('PASS grep pattern smoke')

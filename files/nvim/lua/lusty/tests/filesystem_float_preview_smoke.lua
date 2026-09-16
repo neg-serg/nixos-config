@@ -8,16 +8,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float preview smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float preview smoke') then return end
 
 -- Isolate the frecency journal (the client ships F records).
-local frec = require('lusty.frecency')
-frec.set_state_file('/tmp/lusty_fs_preview_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_preview_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_preview_frec.json')
 
 local tmp = '/tmp/lusty_fs_preview_smoke'
 vim.fn.delete(tmp, 'rf')
@@ -31,23 +27,12 @@ local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 wait_until(function() return not p.loading end, 'first listing')
 
 if not p.caps.preview then
-  print('SKIP filesystem float preview smoke: backend without preview')
-  vim.cmd('qa!')
-  return
+  return H.skip('filesystem float preview smoke', 'backend without preview')
 end
 
 local function pane_lines()
@@ -109,5 +94,4 @@ assert(not p.preview_on, 'preview toggled off')
 assert(p.preview_win == nil, 'preview window closed')
 
 p:handle('cancel')
-print('PASS filesystem float preview smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float preview smoke')

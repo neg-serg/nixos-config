@@ -9,22 +9,15 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP filesystem float smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
+
+if not H.require_lusty('filesystem float smoke') then return end
 
 -- Isolate the frecency journal: the client ships F records and a stale real
 -- journal would reorder the empty query.
-require('lusty.frecency').set_state_file('/tmp/lusty_fs_smoke_frec.json')
-pcall(vim.fn.delete, '/tmp/lusty_fs_smoke_frec.json')
+H.isolate_frecency('/tmp/lusty_fs_smoke_frec.json')
 
-local function assert_eq(got, want, msg)
-  if got ~= want then
-    error((msg or 'assert') .. ': got ' .. tostring(got) .. ' want ' .. tostring(want))
-  end
-end
+local assert_eq = H.assert_eq
 
 local tmp = '/tmp/lusty_fs_smoke'
 vim.fn.mkdir(tmp, 'p')
@@ -36,16 +29,7 @@ local native = require('lusty.native')
 local p = native.run(tmp)
 assert(p, 'filesystem picker opens')
 
-local function wait_until(cond, what, ms)
-  ms = ms or 5000
-  local t0 = vim.loop.hrtime()
-  while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
-      error('timeout waiting for ' .. what)
-    end
-    vim.wait(10)
-  end
-end
+local wait_until = H.wait_until
 
 wait_until(function() return p.window and #p.window > 0 end, 'initial rows')
 assert_eq(p.total, 3, 'depth-2 listing has 3 entries')
@@ -92,5 +76,4 @@ wait_until(function() return p.total == 1 and p.window[1] end, 'filter b')
 assert_eq(p.window[1].label, 'beta.lua', 'b filters to beta.lua')
 p:handle('cancel')
 
-print('PASS filesystem float smoke')
-vim.cmd('qa!')
+H.finish('PASS filesystem float smoke')

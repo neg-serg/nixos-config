@@ -7,17 +7,12 @@
 local base = vim.fn.fnamemodify(arg[0], ':h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path
 
-if vim.fn.executable('lusty') ~= 1 then
-  print('SKIP tables parity smoke: lusty not on PATH')
-  vim.cmd('qa!')
-  return
-end
+local H = require('lusty.tests.harness')
 
-local help = table.concat(vim.fn.systemlist({ 'lusty', '--help' }), '\n')
-if not help:find('--ru-map', 1, true) then
-  print('SKIP tables parity smoke: backend without the dump flags')
-  vim.cmd('qa!')
-  return
+if not H.require_lusty('tables parity smoke') then return end
+
+if not H.has_flag('--ru-map') then
+  return H.skip('tables parity smoke', 'backend without the dump flags')
 end
 
 local function dump(flag)
@@ -66,5 +61,4 @@ for i, pair in ipairs(icons.ext) do
   )
 end
 
-print('PASS tables parity smoke')
-vim.cmd('qa!')
+H.finish('PASS tables parity smoke')
