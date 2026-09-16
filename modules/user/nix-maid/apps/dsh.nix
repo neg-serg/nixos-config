@@ -9,10 +9,12 @@ let
   # than relying on shell init — works even from a terminal opened before the
   # secret was wired (a shell only sources .zshenv at startup).
   #
-  # DSH_TUI_STATUSLINE is the user-script status line. The TUI bundle ships the
-  # runner but never instantiates it (see docs/howto/dsh-statusline.md), so
-  # dsh-tui-ru.nix patches it in and reads the command from this variable.
-  # Overridable, and skipped when the helper is not installed.
+  # DSH_TUI_STATUSLINE is the user-script status line of the dormant Tianshu
+  # layer. That bundle ships the runner but never instantiates it (see
+  # docs/howto/dsh-statusline.md), so dsh-tui-ru.nix patched it in and read the
+  # command from this variable. dsh-TUI does not read the variable; the export
+  # stays for a Tianshu revert. Overridable, and skipped when the helper is not
+  # installed.
   dshWrapped = pkgs.writeShellScriptBin "dsh" ''
     export DEEPSEEK_API_KEY="''${DEEPSEEK_API_KEY:-$(cat /run/secrets/deepseek-api 2>/dev/null)}"
     if [ -x "${homeDir}/.local/bin/dsh-statusline" ]; then
