@@ -9,123 +9,43 @@ let
   # source for Russian-layout duplicate binds in this file.
   ruKeys = neg.ruKeys;
 
+  # Positional constructor for the table below: nixfmt keeps a two-name
+  # `inherit` on one line, so each record costs one line instead of four.
+  mpvRuBind = key: command: { inherit key command; };
+
   # Russian-layout duplicates for the latin binds above. Each entry mirrors a
   # latin bind; the generator derives the Cyrillic key, so typos are impossible.
   # `>`/`<` (uosc next/prev) — ru counterparts are Ю/Б (Shift+period/comma in ru).
   mpvRuBinds = [
-    {
-      key = "p";
-      command = "cycle pause; script-binding uosc/flash-pause-indicator";
-    }
-    {
-      key = "i";
-      command = "script-message-to uosc flash-top-bar";
-    }
-    {
-      key = "r";
-      command = "add sub-pos -1";
-    }
-    {
-      key = "t";
-      command = "add sub-pos +1";
-    }
-    {
-      key = "v";
-      command = "cycle sub-visibility 1";
-    }
-    {
-      key = "F";
-      command = "cycle fullscreen 1";
-    }
-    {
-      key = "l";
-      command = "seek +5; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "h";
-      command = "seek -5; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "L";
-      command = "seek +60; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "H";
-      command = "seek -60; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "m";
-      command = "no-osd cycle mute; script-binding uosc/flash-volume";
-    }
-    {
-      key = "A";
-      command = "cycle audio 1";
-    }
-    {
-      key = "R";
-      command = "cycle_values window-scale 2 0.5 1";
-    }
-    {
-      key = "j";
-      command = "cycle sub";
-    }
-    {
-      key = "s";
-      command = "cycle sub";
-    }
-    {
-      key = "Ctrl+h";
-      command = "multiply speed 1/1.1";
-    }
-    {
-      key = "Ctrl+l";
-      command = "multiply speed 1.1";
-    }
-    {
-      key = "Ctrl+H";
-      command = "set speed 1.0";
-    }
-    {
-      key = "Alt+I";
-      command = "vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1";
-    }
-    {
-      key = "Alt+U";
-      command = "run \"/bin/sh\" \"-c\" \"~/.local/bin/ai-upscale-video \\\"$path\\\"\"";
-    }
+    (mpvRuBind "p" "cycle pause; script-binding uosc/flash-pause-indicator")
+    (mpvRuBind "i" "script-message-to uosc flash-top-bar")
+    (mpvRuBind "r" "add sub-pos -1")
+    (mpvRuBind "t" "add sub-pos +1")
+    (mpvRuBind "v" "cycle sub-visibility 1")
+    (mpvRuBind "F" "cycle fullscreen 1")
+    (mpvRuBind "l" "seek +5; script-binding uosc/flash-timeline")
+    (mpvRuBind "h" "seek -5; script-binding uosc/flash-timeline")
+    (mpvRuBind "L" "seek +60; script-binding uosc/flash-timeline")
+    (mpvRuBind "H" "seek -60; script-binding uosc/flash-timeline")
+    (mpvRuBind "m" "no-osd cycle mute; script-binding uosc/flash-volume")
+    (mpvRuBind "A" "cycle audio 1")
+    (mpvRuBind "R" "cycle_values window-scale 2 0.5 1")
+    (mpvRuBind "j" "cycle sub")
+    (mpvRuBind "s" "cycle sub")
+    (mpvRuBind "Ctrl+h" "multiply speed 1/1.1")
+    (mpvRuBind "Ctrl+l" "multiply speed 1.1")
+    (mpvRuBind "Ctrl+H" "set speed 1.0")
+    (mpvRuBind "Alt+I" "vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1")
+    (mpvRuBind "Alt+U" "run \"/bin/sh\" \"-c\" \"~/.local/bin/ai-upscale-video \\\"$path\\\"\"")
     # Emacs-style seek/navigation (additive; vim h/l/L/H still work)
-    {
-      key = "Ctrl+b";
-      command = "seek -5; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "Ctrl+f";
-      command = "seek +5; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "Ctrl+n";
-      command = "playlist_next; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "Ctrl+p";
-      command = "playlist_prev; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "Ctrl+a";
-      command = "seek 0 absolute; script-binding uosc/flash-timeline";
-    }
-    {
-      key = "Ctrl+e";
-      command = "seek 100 absolute-percent; script-binding uosc/flash-timeline";
-    }
-    {
-      key = ">";
-      command = "script-binding uosc/next; script-message-to uosc flash-elements top_bar,timeline";
-    }
-    {
-      key = "<";
-      command = "script-binding uosc/prev; script-message-to uosc flash-elements top_bar,timeline";
-    }
+    (mpvRuBind "Ctrl+b" "seek -5; script-binding uosc/flash-timeline")
+    (mpvRuBind "Ctrl+f" "seek +5; script-binding uosc/flash-timeline")
+    (mpvRuBind "Ctrl+n" "playlist_next; script-binding uosc/flash-timeline")
+    (mpvRuBind "Ctrl+p" "playlist_prev; script-binding uosc/flash-timeline")
+    (mpvRuBind "Ctrl+a" "seek 0 absolute; script-binding uosc/flash-timeline")
+    (mpvRuBind "Ctrl+e" "seek 100 absolute-percent; script-binding uosc/flash-timeline")
+    (mpvRuBind ">" "script-binding uosc/next; script-message-to uosc flash-elements top_bar,timeline")
+    (mpvRuBind "<" "script-binding uosc/prev; script-message-to uosc flash-elements top_bar,timeline")
   ];
 
   # mpv key with a modifier prefix ("Ctrl+h") → the same physical key's Cyrillic

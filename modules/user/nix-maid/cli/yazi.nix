@@ -208,172 +208,64 @@ let
     };
   };
 
+  # Positional constructors for the keymap below: nixfmt keeps a three-name
+  # `inherit` on one line, so each record costs one line instead of 6-8.
+  yaziBind = on: run: desc: { inherit on run desc; };
+  yaziBindNoDesc = on: run: { inherit on run; };
   keymap = {
     mgr.prepend_keymap = [
-      {
-        on = [
-          "g"
-          "s"
-        ];
-        run = "plugin save-file --args=overwrite";
-        desc = "Save (Default/Overwrite)";
-      }
-      {
-        on = [
-          "g"
-          "z"
-        ];
-        run = "plugin save-file --args=input";
-        desc = "Save as new file (Input)";
-      }
-      {
-        on = [ "<C-s>" ];
-        run = "quit";
-        desc = "Confirm selection (Save)";
-      }
-      {
-        on = [
-          "g"
-          "r"
-        ];
-        run = ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'';
-        desc = "Go to git root";
-      }
-      {
-        run = "close";
-        on = [ "<Esc>" ];
-      }
-      {
-        run = "close";
-        on = [ "<C-q>" ];
-      }
-      {
-        run = "yank --cut";
-        on = [ "d" ];
-      }
-      {
-        run = "remove --force";
-        on = [ "D" ];
-      }
-      {
-        run = "remove --permanently";
-        on = [ "X" ];
-      }
-      {
-        on = [ "f" ];
-        run = ''shell "$SHELL" --block'';
-        desc = "Open $SHELL here";
-      }
-      {
-        run = "plugin smart-paste";
-        on = [ "p" ];
-        desc = "Smart paste";
-      }
-      {
-        run = "plugin paste-to-select";
-        on = [
-          "g"
-          "p"
-        ];
-        desc = "Reveal file from clipboard";
-      }
+      (yaziBind [ "g" "s" ] "plugin save-file --args=overwrite" "Save (Default/Overwrite)")
+      (yaziBind [ "g" "z" ] "plugin save-file --args=input" "Save as new file (Input)")
+      (yaziBind [ "<C-s>" ] "quit" "Confirm selection (Save)")
+      (yaziBind [ "g" "r" ] ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'' "Go to git root")
+      (yaziBindNoDesc [ "<Esc>" ] "close")
+      (yaziBindNoDesc [ "<C-q>" ] "close")
+      (yaziBindNoDesc [ "d" ] "yank --cut")
+      (yaziBindNoDesc [ "D" ] "remove --force")
+      (yaziBindNoDesc [ "X" ] "remove --permanently")
+      (yaziBind [ "f" ] ''shell "$SHELL" --block'' "Open $SHELL here")
+      (yaziBind [ "p" ] "plugin smart-paste" "Smart paste")
+      (yaziBind [ "g" "p" ] "plugin paste-to-select" "Reveal file from clipboard")
       # --- Emacs-style navigation (additive; vi keys still work) ---
       # Ctrl binds are layout-independent, so no RU duplicates are needed.
-      {
-        run = "arrow next";
-        on = [ "<C-n>" ];
-        desc = "Down (emacs C-n)";
-      }
-      {
-        run = "arrow prev";
-        on = [ "<C-p>" ];
-        desc = "Up (emacs C-p)";
-      }
-      {
-        run = "leave";
-        on = [ "<C-b>" ];
-        desc = "Parent directory (emacs C-b)";
-      }
-      {
-        run = "enter";
-        on = [ "<C-f>" ];
-        desc = "Open entry (emacs C-f)";
-      }
-      {
-        run = "arrow top";
-        on = [ "<C-a>" ];
-        desc = "First entry (emacs C-a)";
-      }
-      {
-        run = "arrow bottom";
-        on = [ "<C-e>" ];
-        desc = "Last entry (emacs C-e)";
-      }
+      (yaziBind [ "<C-n>" ] "arrow next" "Down (emacs C-n)")
+      (yaziBind [ "<C-p>" ] "arrow prev" "Up (emacs C-p)")
+      (yaziBind [ "<C-b>" ] "leave" "Parent directory (emacs C-b)")
+      (yaziBind [ "<C-f>" ] "enter" "Open entry (emacs C-f)")
+      (yaziBind [ "<C-a>" ] "arrow top" "First entry (emacs C-a)")
+      (yaziBind [ "<C-e>" ] "arrow bottom" "Last entry (emacs C-e)")
       # --- Russian layout duplicates (ЙЦУКЕН) -------------------------------------
       # yazi matches keys by the produced char; latin-letter binds break under the
       # ru layout. Lowercase Cyrillic only (uppercase implies SHIFT, which the RU
       # layout reports differently). All duplicates are GENERATED from
       # lib/ru-keys.nix (single source of truth) — do not hand-edit the chars.
       # Table: docs/howto/hotkeys-ru-layout.md
-      {
-        run = "arrow next";
-        on = ruKeys.mkRuKeys [ "j" ];
-      }
-      {
-        run = "arrow prev";
-        on = ruKeys.mkRuKeys [ "k" ];
-      }
-      {
-        run = "leave";
-        on = ruKeys.mkRuKeys [ "h" ];
-      }
-      {
-        run = "enter";
-        on = ruKeys.mkRuKeys [ "l" ];
-      }
-      {
-        run = "arrow top";
-        on = ruKeys.mkRuKeys [
-          "g"
-          "g"
-        ];
-      }
-      {
-        run = "yank --cut";
-        on = ruKeys.mkRuKeys [ "d" ];
-      }
-      {
-        run = "plugin save-file --args=overwrite";
-        on = ruKeys.mkRuKeys [
-          "g"
-          "s"
-        ];
-      }
-      {
-        run = "plugin save-file --args=input";
-        on = ruKeys.mkRuKeys [
-          "g"
-          "z"
-        ];
-      }
-      {
-        run = ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'';
-        on = ruKeys.mkRuKeys [
-          "g"
-          "r"
-        ];
-      }
-      {
-        run = "plugin smart-paste";
-        on = ruKeys.mkRuKeys [ "p" ];
-      }
-      {
-        run = "plugin paste-to-select";
-        on = ruKeys.mkRuKeys [
-          "g"
-          "p"
-        ];
-      }
+      (yaziBindNoDesc (ruKeys.mkRuKeys [ "j" ]) "arrow next")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [ "k" ]) "arrow prev")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [ "h" ]) "leave")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [ "l" ]) "enter")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [
+        "g"
+        "g"
+      ]) "arrow top")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [ "d" ]) "yank --cut")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [
+        "g"
+        "s"
+      ]) "plugin save-file --args=overwrite")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [
+        "g"
+        "z"
+      ]) "plugin save-file --args=input")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [
+        "g"
+        "r"
+      ]) ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'')
+      (yaziBindNoDesc (ruKeys.mkRuKeys [ "p" ]) "plugin smart-paste")
+      (yaziBindNoDesc (ruKeys.mkRuKeys [
+        "g"
+        "p"
+      ]) "plugin paste-to-select")
     ];
   };
 
