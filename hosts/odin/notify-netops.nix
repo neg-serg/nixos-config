@@ -19,6 +19,8 @@
 let
   inherit (lib) mkIf mkMerge;
 
+  systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+
   # Shared facts: the telegram sender must egress via the user sing-box socks
   # proxy (127.0.0.1:10808), which starts at login, so keep retrying ~1 min.
   socksProxy = "socks5h://127.0.0.1:10808";
@@ -59,52 +61,27 @@ let
 in
 mkMerge [
   # ---- Part A: telegram-vpn-watch (gated on the telegram sops file) ----
-  (mkIf config.odin.telegram.enable {
-    systemd.services."telegram-vpn-watch" = {
+  (mkIf config.odin.telegram.enable (
+    systemdUser.mkOneshotTimer {
+      name = "telegram-vpn-watch";
       description = "Notify Telegram on WireGuard up/public-IP changes";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        StateDirectory = "telegram-vpn-watch";
-        ExecStart = "${lib.getExe vpnWatchScript}";
-        Restart = "on-failure";
-        RestartSec = 30;
-      };
-    };
-
-    systemd.timers."telegram-vpn-watch" = {
-      description = "Watch the WireGuard tunnel and public IP every 10 minutes";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = "*-*-* *:0/10:00";
-        Unit = "telegram-vpn-watch.service";
-      };
-    };
-  })
+      timerDescription = "Watch the WireGuard tunnel and public IP every 10 minutes";
+      script = lib.getExe vpnWatchScript;
+      onCalendar = "*-*-* *:0/10:00";
+      restartSec = 30;
+      stateDirectory = "telegram-vpn-watch";
+    }
+  ))
 
   # ---- Part B: ntfy-system-stale (gated on the net-health feature flag that
   # supplies the local ntfy server on :2586) ----
-  (mkIf (config.features.net.netHealth.enable or false) {
-    systemd.services."ntfy-system-stale" = {
+  (mkIf (config.features.net.netHealth.enable or false) (
+    systemdUser.mkOneshotTimer {
+      name = "ntfy-system-stale";
       description = "Remind to nix flake update when flake.lock is stale";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${lib.getExe staleScript}";
-        Restart = "on-failure";
-        RestartSec = 60;
-      };
-    };
-
-    systemd.timers."ntfy-system-stale" = {
-      description = "Weekly stale-flake reminder";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = "Mon *-*-* 10:00:00";
-        Unit = "ntfy-system-stale.service";
-      };
-    };
-  })
+      timerDescription = "Weekly stale-flake reminder";
+      script = lib.getExe staleScript;
+      onCalendar = "Mon *-*-* 10:00:00";
+    }
+  ))
 ]

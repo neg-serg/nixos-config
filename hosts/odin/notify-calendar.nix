@@ -23,6 +23,8 @@ in
 {
   config = lib.mkIf (mailOn && config.odin.telegram.enable) (
     let
+      systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+
       # Extracted to ./notify/telegram-calendar-reminder.py (linted as Python);
       # the shared sender path is substituted at build time.
       calendarScript = pkgs.replaceVars ./notify/telegram-calendar-reminder.py {
@@ -46,33 +48,12 @@ in
         '';
       };
     in
-    lib.mkMerge [
-      {
-        systemd.services."telegram-calendar-reminder" = {
-          description = "Send today's khal calendar events to Telegram in the morning";
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${lib.getExe script}";
-            Restart = "on-failure";
-            RestartSec = 60;
-          };
-        };
-      }
-      {
-        # No Persistent=true (same reasoning as the pill reminder in
-        # services/telegram-units.nix: boot catch-ups on snapshot restore would
-        # re-send spurious morning reminders).
-        systemd.timers."telegram-calendar-reminder" = {
-          description = "Daily 07:30 morning calendar reminder";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* 07:30:00";
-            Unit = "telegram-calendar-reminder.service";
-          };
-        };
-      }
-    ]
+    systemdUser.mkOneshotTimer {
+      name = "telegram-calendar-reminder";
+      description = "Send today's khal calendar events to Telegram in the morning";
+      timerDescription = "Daily 07:30 morning calendar reminder";
+      script = "${lib.getExe script}";
+      onCalendar = "*-*-* 07:30:00";
+    }
   );
 }
