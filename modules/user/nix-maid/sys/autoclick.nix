@@ -5,35 +5,25 @@
   ...
 }:
 let
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  systemdUser = config.lib.neg.systemdUser;
 in
 with lib;
 mkIf (config.lib.neg.enabled "gui") (
   lib.mkMerge [
     {
-      systemd.user.services.ydotoold =
-        let
-          preset = systemdUser.mkUnitFromPresets { presets = [ "defaultWanted" ]; };
-        in
-        {
-          description = "ydotool virtual input daemon";
-          serviceConfig = {
-            ExecStart =
-              let
-                exe = lib.getExe' pkgs.ydotool "ydotoold"; # Generic Linux command-line automation tool
-              in
-              "${exe}";
-            Restart = "on-failure";
-            RestartSec = "2";
-            Slice = "background-graphical.slice";
-            # Run unprivileged; uinput access comes from the group. Avoid any
-            # capability tweaking because systemd --user cannot adjust caps.
-          };
-          after = preset.Unit.After or [ ];
-          wants = preset.Unit.Wants or [ ];
-          partOf = preset.Unit.PartOf or [ ];
-          wantedBy = preset.Install.WantedBy or [ ];
+      systemd.user.services.ydotoold = systemdUser.mkUserService {
+        description = "ydotool virtual input daemon";
+        presets = [ "defaultWanted" ];
+        serviceConfig = {
+          # Generic Linux command-line automation tool
+          ExecStart = lib.getExe' pkgs.ydotool "ydotoold";
+          Restart = "on-failure";
+          RestartSec = "2";
+          Slice = "background-graphical.slice";
+          # Run unprivileged; uinput access comes from the group. Avoid any
+          # capability tweaking because systemd --user cannot adjust caps.
         };
+      };
     }
   ]
 )

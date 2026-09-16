@@ -14,14 +14,7 @@ let
   # `:Lazy sync` updates the committed lockfile directly (lua/01-plugins.lua).
   nvimSrcEntries = builtins.readDir nvimConf;
   nvimSrcNames = builtins.filter (name: name != "lazy-lock.json") (builtins.attrNames nvimSrcEntries);
-  nvimHomeFiles = builtins.listToAttrs (
-    map (name: {
-      name = ".config/nvim/${name}";
-      value = {
-        source = "${nvimConf}/${name}";
-      };
-    }) nvimSrcNames
-  );
+  nvimHomeFiles = neg.mkDirLinks ".config/nvim" nvimConf nvimSrcNames;
 in
 lib.mkIf devEnabled (
   lib.mkMerge [

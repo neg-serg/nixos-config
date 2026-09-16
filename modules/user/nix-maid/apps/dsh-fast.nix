@@ -1,12 +1,10 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
 let
-  inherit (config.lib.neg) mainUser homeDir;
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  inherit (config.lib.neg) mainUser homeDir systemdUser;
 
   # dsh-fast: the lean low-token agent preset (see ./dsh-fast/agent.cordis.yml).
   # Synced into ~/.dsh/.agent-presets/fast — the discovery root the dsh

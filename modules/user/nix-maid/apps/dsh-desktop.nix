@@ -1,12 +1,10 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
 let
-  inherit (config.lib.neg) mainUser homeDir;
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  inherit (config.lib.neg) mainUser homeDir systemdUser;
 
   # dsh-desktop: Linux desktop control. computer-use-linux (used by the TUI's
   # dsh-desktop plugin through the `desktop` tool) is a prebuilt GitHub release,
@@ -46,8 +44,7 @@ in
   # user unit for dbus activation of org.a11y.Bus (SystemdService in the
   # .service file points here); at-spi2-core ships the unit file, we just
   # declare it so dbus-broker can start it on demand.
-  systemd.user.services."at-spi-dbus-bus" = {
-    enable = true;
+  systemd.user.services."at-spi-dbus-bus" = systemdUser.mkUserService {
     description = "Accessibility services bus";
     partOf = [ "graphical-session.target" ];
     serviceConfig = {

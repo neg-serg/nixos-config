@@ -246,9 +246,7 @@ lib.mkMerge [
 
     ".config/swayimg".source = config.lib.neg.path "files/gui/swayimg";
 
-    ".config/ncpamixer.conf".text = builtins.readFile (
-      config.lib.neg.path "files/media/ncpamixer.conf"
-    );
+    ".config/ncpamixer.conf".text = config.lib.neg.readFile "files/media/ncpamixer.conf";
 
     # Spicetify Config (partial management)
     ".config/spicetify/config-xpui.ini" = lib.mkIf (config.lib.neg.enabled "media.audio.spicetify") {

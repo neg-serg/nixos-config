@@ -74,14 +74,7 @@ let
     && name != "shaders"
   ) (builtins.attrNames quickshellSrcEntries);
 
-  quickshellHomeFiles = builtins.listToAttrs (
-    map (name: {
-      name = ".config/quickshell/${name}";
-      value = {
-        source = "${quickshellSrc}/${name}";
-      };
-    }) quickshellSrcNames
-  );
+  quickshellHomeFiles = neg.mkDirLinks ".config/quickshell" quickshellSrc quickshellSrcNames;
 in
 lib.mkIf quickshellEnabled (
   lib.mkMerge [

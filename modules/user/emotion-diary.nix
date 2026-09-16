@@ -5,7 +5,7 @@
   ...
 }:
 let
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  systemdUser = config.lib.neg.systemdUser;
 
   # Aura is a single-file offline diary that lives in the user's src tree. It is
   # served over HTTP rather than opened as a file because localStorage is scoped

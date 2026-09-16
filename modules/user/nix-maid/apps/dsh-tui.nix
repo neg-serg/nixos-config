@@ -5,8 +5,7 @@
   ...
 }:
 let
-  inherit (config.lib.neg) mainUser homeDir;
-  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
+  inherit (config.lib.neg) mainUser homeDir systemdUser;
 
   # The neg look for the TUI: the built-in palettes are upstream themes
   # (graphite/pastel/cobalt/...), none of them the muted navy/teal/violet the
