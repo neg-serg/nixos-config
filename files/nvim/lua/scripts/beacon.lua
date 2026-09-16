@@ -100,8 +100,8 @@ function beacon:__gradient ()
 	return gradient;
 end
 
-function beacon:__list_render ()
-	if vim.wo[self.window].list == false then return; end
+function beacon:__render (list_on)
+	if vim.wo[self.window].list ~= list_on then return; end
 	local Y, X = self.pos[1] - 1, self.pos[2];
 	vim.api.nvim_buf_clear_namespace(self.buffer, self.ns, Y, Y + 1);
 	local line = vim.api.nvim_buf_get_lines(self.buffer, Y, Y + 1, false)[1] or "";
@@ -122,53 +122,7 @@ function beacon:__list_render ()
 			local col = #(before .. removed) - #first;
 			local virt_text = {};
 			while width >= 1 do
-				table.insert(virt_text, { " ", self.colors[C] });
-				C = C + 1;
-				width = width - 1;
-			end
-			vim.api.nvim_buf_set_extmark(self.buffer, self.ns, Y, col, {
-				virt_text_pos = "overlay", virt_text = virt_text, hl_mode = "combine"
-			});
-		else
-			local col = #(before .. removed) - #first;
-			vim.api.nvim_buf_set_extmark(self.buffer, self.ns, Y, col, {
-				end_col = col + 1, hl_group = self.colors[C],
-			});
-			C = C + 1;
-		end
-		after = vim.fn.strcharpart(after, 1);
-	end
-	if #virt_eol > 0 then
-		local col = #line;
-		pcall(vim.api.nvim_buf_set_extmark, self.buffer, self.ns, Y, col, {
-			virt_text_pos = "inline", virt_text = virt_eol,
-		})
-	end
-end
-
-function beacon:__nolist_render ()
-	if vim.wo[self.window].list == true then return; end
-	local Y, X = self.pos[1] - 1, self.pos[2];
-	vim.api.nvim_buf_clear_namespace(self.buffer, self.ns, Y, Y + 1);
-	local line = vim.api.nvim_buf_get_lines(self.buffer, Y, Y + 1, false)[1] or "";
-	local before = vim.fn.strpart(line, 0, X);
-	local after = vim.fn.strpart(line, X);
-	local C = 1;
-	local removed = "";
-	local virt_eol = {};
-
-	while C <= #self.colors do
-		local first = vim.fn.strcharpart(after, 0, 1);
-		removed = removed .. first;
-		local width = last_width(before .. removed);
-		if after == "" then
-			table.insert(virt_eol, { " ", self.colors[C] });
-			C = C + 1;
-		elseif width > 1 then
-			local col = #(before .. removed) - #first;
-			local virt_text = {};
-			while width >= 1 do
-				if X == col and width > 1 then
+				if (not list_on) and X == col and width > 1 then
 					table.insert(virt_text, { " " });
 				else
 					table.insert(virt_text, { " ", self.colors[C] });
@@ -190,10 +144,24 @@ function beacon:__nolist_render ()
 	end
 	if #virt_eol > 0 then
 		local col = #line;
-		vim.api.nvim_buf_set_extmark(self.buffer, self.ns, Y, col, {
-			virt_text_pos = "inline", virt_text = virt_eol,
-		})
+		if list_on then
+			pcall(vim.api.nvim_buf_set_extmark, self.buffer, self.ns, Y, col, {
+				virt_text_pos = "inline", virt_text = virt_eol,
+			})
+		else
+			vim.api.nvim_buf_set_extmark(self.buffer, self.ns, Y, col, {
+				virt_text_pos = "inline", virt_text = virt_eol,
+			})
+		end
 	end
+end
+
+function beacon:__list_render ()
+	return self:__render(true);
+end
+
+function beacon:__nolist_render ()
+	return self:__render(false);
 end
 
 function beacon:render ()
