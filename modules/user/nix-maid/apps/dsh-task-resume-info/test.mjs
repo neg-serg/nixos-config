@@ -10,7 +10,10 @@ ok(typeof listeners["agent/pre-step"] === "function", "pre-step listener registe
 const next = async () => ({ kind: "accept", messages: [] });
 
 function fakeSession(id, events) {
-  return { id, events };
+  // The plugin reads the session face (`snapshotEvents()`), not the raw
+  // `events` array the 0.1.2-era Session exposed; the fake has to speak the
+  // same face or the test asserts against an empty history.
+  return { id, events, snapshotEvents: () => events };
 }
 function todoEvent(todos) { return { type: "todo/write", data: { todos } }; }
 function userMsg(text) { return { type: "assistant/message", data: { message: { role: "user", content: [{ type: "text", text }] } } }; }
