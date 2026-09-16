@@ -67,12 +67,12 @@ lint:
       grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs' . || true; \
       exit 1; \
     fi
-    # Guard: avoid mkdir/touch/rm in ExecStartPre/ExecStart within systemd units
-    # Prefer mkLocalBin or per-file force on managed files/wrappers.
+    # Guard: avoid mkdir/touch/rm in ExecStartPre/ExecStart within systemd units —
+    # declare managed files (per-file `force = true`) or wrappers instead.
     if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
          'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules | \
        grep -q .; then \
-      echo 'Found ExecStartPre/ExecStart with mkdir/touch/rm. Use mkLocalBin or per-file force instead.' >&2; \
+      echo 'Found ExecStartPre/ExecStart with mkdir/touch/rm. Declare managed files (force = true) or wrappers instead.' >&2; \
       grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
         'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules || true; \
       exit 1; \

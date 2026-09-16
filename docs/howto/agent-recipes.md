@@ -62,8 +62,8 @@ installs via `environment.systemPackages`.
 `nix build .#nixosConfigurations.odin.config.system.build.toplevel`.
 
 **Gotchas:** `lib` must be in the function args for `mkIf`; never write `with pkgs; [...]` (lint
-guard); scripts needed by systemd units should not `mkdir`/`touch`/`rm` in `ExecStart*` — prefer
-`neg.mkLocalBin` or a `writeShellScriptBin` wrapper (lint guard).
+guard); scripts needed by systemd units should not `mkdir`/`touch`/`rm` in `ExecStart*` — prefer a
+declaratively managed file (`force = true`) or a `writeShellScriptBin` wrapper (lint guard).
 
 ## 2. Reference repo files by root path (`config.lib.neg.path`)
 
@@ -248,8 +248,7 @@ normal hosts.
 **Verify:** `~/.local/bin/<name>` exists after rebuild and behaves; `just lint` stays clean.
 
 **Gotchas:** don't hardcode Nix store paths in scripts — add a substitution case in local-bin.nix
-instead; scripts meant for the system (not the user) belong in a package or `neg.mkLocalBin`, not
-local-bin.
+instead; scripts meant for the system (not the user) belong in a package, not local-bin.
 
 ## 7. Add a sops secret
 

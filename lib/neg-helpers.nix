@@ -7,22 +7,6 @@ rec {
     users.users.neg.maid.file.home = files;
   };
 
-  # A single home file with text content
-  mkXdgText = path: text: {
-    home."${path}".text = text;
-  };
-
-  # An executable script under ~/.local/bin
-  mkLocalBin = name: text: {
-    home.".local/bin/${name}" = {
-      inherit text;
-      executable = true;
-    };
-  };
-
-  # Pass-through for impure values
-  linkImpure = x: x;
-
   # Import modules from a directory — single replacement for the
   # `builtins.readDir ./. |> attrNames |> filter |> map` pipeline copied into
   # every auto-importing default.nix.
@@ -39,7 +23,6 @@ rec {
     {
       dir,
       includeDirs ? false,
-      suffix ? ".nix",
       exclude ? [ ],
     }:
     let
@@ -53,7 +36,7 @@ rec {
         sLen >= sufLen && builtins.substring (sLen - sufLen) sufLen s == suf;
       isModuleDir =
         name: entries.${name} == "directory" && builtins.pathExists (dir + "/${name}/default.nix");
-      isModuleFile = name: entries.${name} != "directory" && hasSuffix suffix name;
+      isModuleFile = name: entries.${name} != "directory" && hasSuffix ".nix" name;
       keep =
         name:
         name != "default.nix"

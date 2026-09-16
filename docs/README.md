@@ -60,8 +60,8 @@ configuration.
 
 ### Systemd (User) Services
 
-- Prefer `config.lib.neg.systemdUser.mkUnitFromPresets` to attach the correct targets: `graphical`,
-  `netOnline`, `defaultWanted`, `timers`, `dbusSocket`, `socketsTarget`.
+- Prefer `config.lib.neg.systemdUser.mkUnitFromPresets` to attach the correct targets; the
+  `defaultWanted` preset wires a unit into `default.target`.
 - Manage services via `systemctl --user start|stop|status <unit>`, logs via
   `journalctl --user -u <unit>`.
 
@@ -113,7 +113,7 @@ Use the same expectations regardless of whether you work under `modules/` or
 ### Key Locations
 
 - Runtime helpers (`config.lib.neg.*`): defined in `flake/nixos.nix` specialArgs, exposed via
-  `modules/core/neg.nix` (`mkHomeFiles`, `mkLocalBin`, `mkXdgText`).
+  `modules/core/neg.nix` (`mkHomeFiles`, `path`, `pathExists`, `enabled`, …).
 - systemd-user helpers: `lib/systemd-user.nix` (`mkUnitFromPresets`, legacy `mkSimple*`).
 - Feature definitions/options: `modules/features/`
 
@@ -134,14 +134,15 @@ Use the same expectations regardless of whether you work under `modules/` or
 
 ### Runtime Helpers (Preferred)
 
-- Use `config.lib.neg.mkHomeFiles`, `neg.mkLocalBin`, `neg.mkXdgText` instead of ad‑hoc `home.file`
-  or shell commands.
+- Use `config.lib.neg.mkHomeFiles` or `neg.mkHomeFiles` instead of ad‑hoc `home.file` or shell
+  commands.
 
 ### Activation Helpers
 
 - Use per-file `force = true` instead of re‑adding global XDG cleanup.
-- Local scripts: `config.lib.neg.mkLocalBin name text` removes conflicts and marks the file
-  executable before linking.
+- Local scripts: use `neg.mkHomeFiles` with `executable = true` (for example
+  `{ ".local/bin/<name>" = { text = …; executable = true; }; }`) so the file is marked executable
+  before linking.
 
 ### Systemd (User) Pattern
 
@@ -149,7 +150,7 @@ Use the same expectations regardless of whether you work under `modules/` or
   `After=/WantedBy=` wiring; avoid the legacy `mkSimple*` helpers (they have recursion edge cases).
 - Examples:
   - Service: preset `["defaultWanted"]`
-  - Timer: preset `["timers"]`
+  - Timer: set `wantedBy = [ "timers.target" ]` directly.
 
 ### Editor Shim
 
@@ -182,9 +183,8 @@ Use the same expectations regardless of whether you work under `modules/` or
 - Structure modules with `lib.mkMerge [ … ]` and the helper sugar above. Factor package groups into
   local `groups = { … };` sets.
 - Systemd user units/paths/sockets should reuse `config.lib.neg.systemdUser.mkUnitFromPresets`.
-- For xdg-managed files prefer `config.lib.neg.mkXdgText` (or `home.file` with `force = true` where
-  parent dirs are needed).
-- Use `config.lib.neg.mkLocalBin` for scripts under `~/.local/bin`.
+- For xdg-managed files prefer `home.file` with `force = true` where parent dirs are needed.
+- Use `neg.mkHomeFiles` with `executable = true` for scripts under `~/.local/bin`.
 - Keep warnings actionable via `warnings = lib.optional cond "…";` and ensure the condition is cheap
   (avoid referencing `config.lib.neg` while declaring the warning).
 - Commit messages must follow `[scope] subject` unless performing `Merge`, `Revert`, `fixup!`,
