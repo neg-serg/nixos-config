@@ -28,6 +28,19 @@ let
     exit 0
   '';
 
+  # pasta runs with --config-net, which copies the host uplink's whole address
+  # list into the container's netns — including the 192.168.2.88 alias the guest
+  # needs to reach the host on (:9003 MIDI relay, 10811/10812 VM proxy). While
+  # that alias is present inside the container the guest's packets are answered
+  # by the container itself — "Connection refused" — so the MIDI bridge holds a
+  # dead TCP connection (still printing "connected to host relay") and every CC
+  # disappears. pasta recreates the alias on every start, so drop it right after
+  # each one (the same script glm-adapter runs after its own VM restarts).
+  netfix = pkgs.writeShellScript "windows-vm-netfix" ''
+    export PODMAN=${podman}
+    ${builtins.readFile ../../../packages/local-bin/scripts/glm-vm-netfix}
+  '';
+
   startVm = pkgs.writeShellScript "windows-vm-start" ''
     if ! ${podman} container exists windows; then
       echo "container 'windows' does not exist — recreate it (docs/howto/windows-vm-dockur.md)" >&2
@@ -53,6 +66,7 @@ in
       RemainAfterExit = true;
       ExecStartPre = waitForAdapter;
       ExecStart = startVm;
+      ExecStartPost = netfix;
       # `podman start` returns as soon as QEMU is detached; the guest keeps booting.
       TimeoutStartSec = 180;
     };
