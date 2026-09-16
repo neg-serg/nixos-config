@@ -14,30 +14,30 @@ set -euo pipefail
 REPO_ROOT="$(repo_root "${1:-}")"
 cd "$REPO_ROOT"
 
-if ! command -v osh >/dev/null 2>&1; then
-	echo "WARNING: osh not found; skipping OSH syntax check" >&2
-	exit 0
+if ! command -v osh > /dev/null 2>&1; then
+  echo "WARNING: osh not found; skipping OSH syntax check" >&2
+  exit 0
 fi
 
 fail=0
 count=0
 while IFS= read -r -d '' file; do
-	# Only files that declare a POSIX/Bash shebang — the same filter as the
-	# lint step in Justfile, but covering extensionless scripts too.
-	if head -n 1 "$file" | grep -qE '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh\b'; then
-		((count++)) || true
-		if ! output=$(osh -n "$file" 2>&1); then
-			echo "ERROR: $file"
-			echo "$output" | head -5
-			echo ""
-			fail=1
-		fi
-	fi
+  # Only files that declare a POSIX/Bash shebang — the same filter as the
+  # lint step in Justfile, but covering extensionless scripts too.
+  if head -n 1 "$file" | grep -qE '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh\b'; then
+    ((count++)) || true
+    if ! output=$(osh -n "$file" 2>&1); then
+      echo "ERROR: $file"
+      echo "$output" | head -5
+      echo ""
+      fail=1
+    fi
+  fi
 done < <(git ls-files -z)
 
 echo "Checked $count shell script(s) with osh -n"
 if [[ $fail -ne 0 ]]; then
-	echo "FAILED: osh parse errors found (see above)"
-	exit 1
+  echo "FAILED: osh parse errors found (see above)"
+  exit 1
 fi
 echo "All shell scripts parse under osh!"
