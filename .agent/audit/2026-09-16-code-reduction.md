@@ -1,10 +1,10 @@
 # Code-reduction survey — 2026-09-16
 
-Research only (no refactor in this document): what could shrink the repository without losing
-functionality. Six read-only zones ran as parallel subagents — **modules/ (nix)**, **quickshell
-(QML/JS)**, **nvim + files/**, **packages/ + scripts/**, **flake/ + hosts/ + lib/ + Justfile + dsh
-scaffold**, plus a mechanical pass run by the parent. Raw zone reports: `/tmp/refactor-*.md`
-(ephemeral); this file is the durable summary. Companion: `2026-09-16.md` (the dead-code audit).
+Research first, then the log of the pass it triggered. Six read-only zones ran as parallel subagents
+— **modules/ (nix)**, **quickshell (QML/JS)**, **nvim + files/**, **packages/ + scripts/**, **flake/
+\+ hosts/ + lib/ + Justfile + dsh scaffold**, plus a mechanical pass run by the parent. Raw zone
+reports: `/tmp/refactor-*.md` (ephemeral); this file is the durable summary. Companion:
+`2026-09-16.md` (the dead-code audit).
 
 ## Baseline (measured)
 
@@ -52,6 +52,35 @@ scaffold**, plus a mechanical pass run by the parent. Raw zone reports: `/tmp/re
 | shared `scripts/dev/lib.sh` + `.agent/scripts/lib.mjs`                                                                                                                           | −20 net            | `shellcheck -S warning`, `osh -n`, both dsh gates byte-identical stdout, argv vectors identical                                                                                                                                          |
 | bug fixes: `hyprwhspr/status.js` (`detail` out of scope), `hyprland.lua` (duplicate `XF86AudioMute`), stale `dsh-task-resume-info` test (fake session lacked `snapshotEvents()`) | ~0                 | `node --check`, `lua loadfile`, the test now reports 10 passed / 0 failed                                                                                                                                                                |
 | shared `test-harness.mjs` for the small dsh tests — **tried, reverted**                                                                                                          | 0                  | 7 tests −38 lines, harness +37 → net −1                                                                                                                                                                                                  |
+
+### Last round (parallel writers)
+
+Eleven items landed through three disjoint-scope writers plus a parent pass; every row below was
+re-verified by the parent against the pre-change version before committing.
+
+| Change                                                                | Δ lines           | Evidence (parent's own runs)                                                                                                                                                                                                                                      |
+| --------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/dsh/lib/patchlib.py` for the three count-assert patch loops | −25 dup (+32 net) | `py_compile` ×4, `nix-instantiate --parse`, `shellcheck`; nine-scenario equivalence harness (one/zero/two matches × three message styles) — files, stdout, stderr and rc identical; the build is the only caller (`PYTHONPATH=@PATCHLIB_DIR@` at all three sites) |
+| `packages/local-bin/bin/_localbin.sh` for the need/die/usage preamble | −17 dup (+36 net) | sh/bash/zsh `-n`, `shellcheck` clean, 31 run comparisons (20 help variants, 11 stripped-PATH dependency paths) with identical stdout/stderr/rc; `gen-codebase --stdout` byte-identical to HEAD                                                                    |
+| `neg.mkDirEntries` for the two `~/.local/bin` entry tables            | −20               | both entry sets and rendered files unchanged; `_localbin.sh` rides along because the directory is installed wholesale                                                                                                                                             |
+| Justfile `repo_root :=` variable                                      | −8                | `just --list` and `--dry-run` render; the `\|\| pwd` fallback kept (a recipe run evaluates the backtick even when `--list` does not)                                                                                                                              |
+| `files/shell/f-sy-h/fsyh_theme_common.py`                             | −3 net            | 14 stdout comparisons byte-identical (real 61-line theme + synthetic input × 7 flag sets); `--write` result and `.bak` identical, second run silent                                                                                                               |
+| shared `_fzf_fd` in `files/shell/zsh`                                 | −5                | `zsh -n`; fd listing (9 entries) and inserter candidates (4) plus the picker result identical on nine sampled inputs                                                                                                                                              |
+| mpv `[audio-osd]` for the four audio extension profiles               | 0                 | `mpv --show-profile=extension.flac` resolves the shared profile and prints the same `term-osd-bar` options; the `[extension.a\|b]`, comma and space forms are proven not to match                                                                                 |
+| Vivaldi: four oneshot pref scripts (146) → `vivaldi-prefs.py` (144)   | −2 net            | seven fixtures (empty, minimal, both `actions` shapes, already-correct, the real 371 KB profile, missing file) with identical JSON bytes, stdout, stderr and rc                                                                                                   |
+| nvim `lusty/native_core.lua` shared picker core                       | −139 net          | 99-scenario mock-vim harness, before/after dumps identical (21 531 lines, 0 diff), 16/16 headless smoke, `check-lusty-smoke.sh` exit 0                                                                                                                            |
+| `scripts/dev` gates reformatted (fmt drift left by `b84d277a0`)       | 0                 | `nix fmt` idempotent afterwards; whitespace only (248 lines)                                                                                                                                                                                                      |
+
+Gate results on the committed tree: `just lint` exit 0, `just check` exit 0, `nixos-rebuild switch`
+exit 0. Two of the changes above were *found* by verification rather than written by a writer:
+`qr`'s `-h` range had been pushed onto implementation text by the new source line (help now prints
+exactly its header block), and `check-osh-syntax.sh` printed four `head: cannot open …` errors for
+the Vivaldi scripts that were deleted but not yet staged.
+
+Running total since `b3e8f158b` (the dead-code audit commit): **37 commits, 280 files, +3 529 / −6
+761 → net −3 232 lines.** The reduction is coarser than the original estimate because the survey
+counted *duplication removed*, while a shared, documented module also adds lines; the sections below
+keep both numbers where they differ.
 
 ## Ranked ideas
 
