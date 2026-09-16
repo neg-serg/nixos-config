@@ -5,6 +5,8 @@
   ...
 }:
 let
+  systemdUser = import ../../../lib/systemd-user.nix { inherit lib; };
+
   # Alertmanager Telegram webhook bridge: HTTPServer on 127.0.0.1:9094 that
   # forwards every Alertmanager webhook notification to a Telegram chat.
   # Restored as a system service from git history
@@ -97,142 +99,106 @@ let
   telegramAlertScannerScript = ./telegram/telegram-alert-scanner.py;
 in
 {
-  config = lib.mkIf config.odin.telegram.enable {
-    monitoring.alertmanager.enable = true;
+  config = lib.mkIf config.odin.telegram.enable (
+    lib.mkMerge [
+      { monitoring.alertmanager.enable = true; }
 
-    systemd.services."telegram-alert-bridge" = {
-      description = "Alertmanager Telegram webhook bridge";
-      documentation = [
-        "https://prometheus.io/docs/alerting/latest/configuration/#webhook_config"
-      ];
-      after = [
-        "network-online.target"
-        "alertmanager.service"
-      ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe telegramBridgeScript}";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-    };
+      (systemdUser.mkOneshotTimer {
+        name = "telegram-alert-scanner";
+        description = "Scan failed units, OOM kills and sshd brute-force attempts into Alertmanager";
+        timerDescription = "Run the Telegram alert scanner every minute";
+        script = "${pkgs.python3}/bin/python3 ${telegramAlertScannerScript}";
+        onCalendar = "*-*-* *:*:00";
+        networkOnline = false;
+        after = [ "alertmanager.service" ];
+        wantedBy = [ "multi-user.target" ];
+        restartSec = 10;
+        # Journal access requires root; keeps the snapshot/cursor files under
+        # /var/lib/telegram-alert-scanner.
+        stateDirectory = "telegram-alert-scanner";
+      })
 
-    systemd.services."telegram-alert-scanner" = {
-      description = "Scan failed units, OOM kills and sshd brute-force attempts into Alertmanager";
-      after = [ "alertmanager.service" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.python3}/bin/python3 ${telegramAlertScannerScript}";
-        Restart = "on-failure";
-        RestartSec = 10;
-        # Journal access requires root; StateDirectory keeps the
-        # snapshot/cursor files under /var/lib/telegram-alert-scanner.
-        StateDirectory = "telegram-alert-scanner";
-      };
-    };
+      # Telegram "odin booted" notice. The socks proxy is a user unit that
+      # starts at login, so keep retrying for a while after network is up.
+      # The /run marker (see telegramBootNotifyScript) makes it fire once per
+      # real boot instead of on every nixos-rebuild switch.
+      #
+      # Deliberately NOT wantedBy multi-user.target: the sender blocks until the
+      # user-session socks proxy (127.0.0.1:10808) answers, which cannot happen
+      # before login. As a target dependency it held multi-user.target (and thus
+      # graphical.target) for 20-45s on every boot (journal 2026-09-16:
+      # "Started" ~8.5s, multi-user reached only at 33.7s). The timer fires it
+      # off the boot critical path; the sender's own retry loop (12 x 5s) covers
+      # the proxy coming up after login.
+      (systemdUser.mkOneshotTimer {
+        name = "telegram-notify-boot";
+        description = "Send a Telegram message that odin has booted";
+        timerDescription = "Fire the boot notice shortly after boot, off the boot critical path";
+        script = lib.getExe telegramBootNotifyScript;
+        onBootSec = "20s";
+        restartSec = 300;
+      })
 
-    systemd.timers."telegram-alert-scanner" = {
-      description = "Run the Telegram alert scanner every minute";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = "*-*-* *:*:00";
-        Unit = "telegram-alert-scanner.service";
-      };
-    };
+      # Telegram "taz is up" notice for the dockur Windows VM (started by
+      # hand, so poll RDP instead of depending on a container unit).
+      (systemdUser.mkOneshotTimer {
+        name = "telegram-notify-windows-ready";
+        description = "Send a Telegram message when the dockur Windows VM accepts RDP";
+        timerDescription = "Poll the dockur Windows VM RDP port and notify on boot";
+        script = lib.getExe windowsReadyCheckScript;
+        onBootSec = "60";
+        onUnitActiveSec = "30";
+        networkOnline = false;
+        restart = null;
+        stateDirectory = "telegram-notify";
+      })
 
-    # Telegram "odin booted" notice. The socks proxy is a user unit that
-    # starts at login, so keep retrying for a while after network is up.
-    # The /run marker (see telegramBootNotifyScript) makes it fire once per
-    # real boot instead of on every nixos-rebuild switch.
-    #
-    # Deliberately NOT wantedBy multi-user.target: the sender blocks until the
-    # user-session socks proxy (127.0.0.1:10808) answers, which cannot happen
-    # before login. As a target dependency it held multi-user.target (and thus
-    # graphical.target) for 20-45s on every boot (journal 2026-09-16:
-    # "Started" ~8.5s, multi-user reached only at 33.7s). The timer fires it
-    # off the boot critical path; the sender's own retry loop (12 x 5s) covers
-    # the proxy coming up after login.
-    systemd.services."telegram-notify-boot" = {
-      description = "Send a Telegram message that odin has booted";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${lib.getExe telegramBootNotifyScript}";
-        Restart = "on-failure";
-        RestartSec = 300;
-      };
-    };
+      # Telegram pill reminder: daily at 12:00 with a confirm button that
+      # telegram-pill-bot turns into a "taken" confirmation. The script itself
+      # guards "at most one send per day".
+      (systemdUser.mkOneshotTimer {
+        name = "telegram-pill-reminder";
+        description = "Send the daily 12:00 pill reminder to Telegram";
+        timerDescription = "Daily 12:00 pill reminder";
+        script = "${pkgs.python3}/bin/python3 ${pillReminderScript}";
+        onCalendar = "*-*-* 12:00:00";
+        restart = null;
+        stateDirectory = "telegram-pill-reminder";
+      })
 
-    systemd.timers."telegram-notify-boot" = {
-      description = "Fire the boot notice shortly after boot, off the boot critical path";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "20s";
-        Unit = "telegram-notify-boot.service";
-      };
-    };
+      {
+        systemd.services."telegram-alert-bridge" = {
+          description = "Alertmanager Telegram webhook bridge";
+          documentation = [
+            "https://prometheus.io/docs/alerting/latest/configuration/#webhook_config"
+          ];
+          after = [
+            "network-online.target"
+            "alertmanager.service"
+          ];
+          wants = [ "network-online.target" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            ExecStart = "${lib.getExe telegramBridgeScript}";
+            Restart = "on-failure";
+            RestartSec = 5;
+          };
+        };
 
-    # Telegram "taz is up" notice for the dockur Windows VM (started by
-    # hand, so poll RDP instead of depending on a container unit).
-    systemd.services."telegram-notify-windows-ready" = {
-      description = "Send a Telegram message when the dockur Windows VM accepts RDP";
-      serviceConfig = {
-        Type = "oneshot";
-        StateDirectory = "telegram-notify";
-        ExecStart = "${lib.getExe windowsReadyCheckScript}";
-      };
-    };
-
-    systemd.timers."telegram-notify-windows-ready" = {
-      description = "Poll the dockur Windows VM RDP port and notify on boot";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "60";
-        OnUnitActiveSec = "30";
-        Unit = "telegram-notify-windows-ready.service";
-      };
-    };
-
-    # Telegram pill reminder: daily at 12:00 with a confirm button that
-    # telegram-pill-bot turns into a "taken" confirmation.
-    systemd.services."telegram-pill-reminder" = {
-      description = "Send the daily 12:00 pill reminder to Telegram";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        StateDirectory = "telegram-pill-reminder";
-        ExecStart = "${pkgs.python3}/bin/python3 ${pillReminderScript}";
-      };
-    };
-
-    # No Persistent=true: on this VM snapshot restores / boot catch-ups made
-    # systemd re-send "catch-up" reminders at ~midnight, doubling the daily
-    # message. The script itself also guards "at most one send per day".
-    systemd.timers."telegram-pill-reminder" = {
-      description = "Daily 12:00 pill reminder";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = "*-*-* 12:00:00";
-        Unit = "telegram-pill-reminder.service";
-      };
-    };
-
-    # Telegram pill bot: long-polls callback queries for the reminder button.
-    systemd.services."telegram-pill-bot" = {
-      description = "Telegram pill confirm button handler";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        ExecStart = "${pkgs.python3}/bin/python3 ${pillBotScript}";
-        Restart = "always";
-        RestartSec = 5;
-        StateDirectory = "telegram-pill-bot";
-      };
-    };
-  };
+        # Telegram pill bot: long-polls callback queries for the reminder button.
+        systemd.services."telegram-pill-bot" = {
+          description = "Telegram pill confirm button handler";
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            ExecStart = "${pkgs.python3}/bin/python3 ${pillBotScript}";
+            Restart = "always";
+            RestartSec = 5;
+            StateDirectory = "telegram-pill-bot";
+          };
+        };
+      }
+    ]
+  );
 }
