@@ -173,13 +173,13 @@ OverlayToggleCapsule {
 
                 RowLayout {
                     Layout.fillWidth: true; spacing: 2
-                    PanelIconButton { icon: "chevron_left"
+                    IconButton { icon: "chevron_left"
                         onClicked: { var d=new Date(root.currentYear,root.currentMonth-1,1); root.currentYear=d.getFullYear(); root.currentMonth=d.getMonth(); root.updateAll() } }
                     Text {
                         Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter
                         text: { var m=["January","February","March","April","May","June","July","August","September","October","November","December"]; return m[root.currentMonth]+"  ·  "+root.currentYear }
                         color: root.goldAccent; font.family: Theme.fontFamily; font.pixelSize: Math.round(16*Theme.scale(root.screen)); font.weight: Font.DemiBold; font.letterSpacing: 1.2 }
-                    PanelIconButton { icon: "chevron_right"
+                    IconButton { icon: "chevron_right"
                         onClicked: { var d=new Date(root.currentYear,root.currentMonth+1,1); root.currentYear=d.getFullYear(); root.currentMonth=d.getMonth(); root.updateAll() } }
                 }
 
@@ -329,57 +329,30 @@ OverlayToggleCapsule {
                     spacing: Math.round(10 * Theme.scale(root.screen))
                     Layout.alignment: Qt.AlignHCenter
 
-                    Rectangle {
-                        width: Math.round(8 * Theme.scale(root.screen)); height: width; radius: width / 2
-                        color: root.goldAccent
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    Text {
-                        text: "Taken"
-                        color: root.textWarmDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(10 * Theme.scale(root.screen))
-                        opacity: 0.8
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    Rectangle {
-                        width: Math.round(8 * Theme.scale(root.screen)); height: width; radius: width / 2
-                        color: Theme.error
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    Text {
-                        text: "Missed"
-                        color: root.textWarmDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(10 * Theme.scale(root.screen))
-                        opacity: 0.8
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    Rectangle {
-                        width: Math.round(8 * Theme.scale(root.screen)); height: width; radius: width / 2
-                        color: Theme.error
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    Text {
-                        text: "Pending"
-                        color: root.textWarmDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(10 * Theme.scale(root.screen))
-                        opacity: 0.8
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    Rectangle {
-                        width: Math.round(8 * Theme.scale(root.screen)); height: width; radius: width / 2
-                        color: Theme.textDisabled
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    Text {
-                        text: "No data"
-                        color: root.textWarmDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(10 * Theme.scale(root.screen))
-                        opacity: 0.8
-                        Layout.alignment: Qt.AlignVCenter
+                    Repeater {
+                        model: [
+                            { color: function() { return root.goldAccent; },    label: "Taken" },
+                            { color: function() { return Theme.error; },        label: "Missed" },
+                            { color: function() { return Theme.error; },        label: "Pending" },
+                            { color: function() { return Theme.textDisabled; }, label: "No data" }
+                        ]
+                        delegate: RowLayout {
+                            spacing: Math.round(10 * Theme.scale(root.screen))
+                            Layout.alignment: Qt.AlignVCenter
+                            Rectangle {
+                                width: Math.round(8 * Theme.scale(root.screen)); height: width; radius: width / 2
+                                color: modelData.color()
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                            Text {
+                                text: modelData.label
+                                color: root.textWarmDim
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Math.round(10 * Theme.scale(root.screen))
+                                opacity: 0.8
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                        }
                     }
                 }
 

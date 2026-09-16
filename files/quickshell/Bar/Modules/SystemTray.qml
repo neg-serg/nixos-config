@@ -210,7 +210,7 @@ Row {
     }
 
     // Collapsed trigger button (placed after inline box)
-    PanelIconButton {
+    IconButton {
         id: collapsedButton
         z: 1002
         visible: false // hidden; tray reveals by hover in bottom-right hot zone

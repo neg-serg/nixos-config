@@ -41,6 +41,17 @@ PopupWindow {
     function hideMenu() { visible = false; searchField.text = ""; }
     function containsMouse() { return subMenu.containsMouse }
 
+    // Trigger the highlighted entry; shared by Return and search-bar accept.
+    function activateCurrentItem() {
+        if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
+            var del = listView.currentItem;
+            if (del && del.entryItem && del.entryItem.entryData) {
+                del.entryItem.entryData.triggered();
+                subMenu.visible = false;
+            }
+        }
+    }
+
     Item { anchors.fill: parent; Keys.onEscapePressed: subMenu.hideMenu() }
 
     QsMenuOpener { id: opener; menu: subMenu.menu }
@@ -102,24 +113,8 @@ PopupWindow {
                                 subMenu.hideMenu();
                             }
                         }
-                        Keys.onReturnPressed: {
-                            if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
-                                var del = listView.currentItem;
-                                if (del && del.entryItem && del.entryItem.entryData) {
-                                    del.entryItem.entryData.triggered();
-                                    subMenu.visible = false;
-                                }
-                            }
-                        }
-                        onAccepted: {
-                            if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
-                                var del = listView.currentItem;
-                                if (del && del.entryItem && del.entryItem.entryData) {
-                                    del.entryItem.entryData.triggered();
-                                    subMenu.visible = false;
-                                }
-                            }
-                        }
+                        Keys.onReturnPressed: subMenu.activateCurrentItem()
+                        onAccepted: subMenu.activateCurrentItem()
                         onTextChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0
                     }
                 }
