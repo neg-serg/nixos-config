@@ -5,14 +5,8 @@
 -- C-Space marks buffers (multi-select): C-d then unloads the whole marked set.
 
 local buffers = require('lusty.buffer_stack')
-local pick = require('lusty.native_pick')
-local filter = require('lusty.filter')
 local lsc = require('lusty.ls_colors')
-
-local M = {}
-
--- Lua port parity: remember the last filter between runs.
-local previous_input = ''
+local source = require('lusty.native_source')
 
 local function open_buffer(bufnr, mode)
   local cmd = mode == 'enter' and 'b ' or mode == 'tab' and 'tab split | b ' or mode == 'split' and 'sp | b ' or 'vs | b '
@@ -48,47 +42,23 @@ local function snapshot_items()
   return out
 end
 
-local running = false
-
-function M.run()
-  if running then
-    return
-  end
-  running = true
-  local holder = { items = snapshot_items() }
-  local function on_delete(item)
+-- The run guard, the query memory, the first-letter filter and the running
+-- flag around on_open/on_delete/on_close are shared with the other source
+-- pickers (lusty.native_source).
+local M = source.define({
+  title = 'Buffers',
+  multi = true,
+  snapshot = snapshot_items,
+  filter_key = 'short_name',
+  filter_tie = 'bufnr',
+  on_open = function(item, mode)
+    open_buffer(item.bufnr, mode)
+  end,
+  on_delete = function(item)
     if vim.fn.bufexists(item.bufnr) == 1 then
       vim.cmd('silent bdelete! ' .. item.bufnr)
     end
-    -- rebuild the item list; the source reads holder.items, so the picker
-    -- sees the fresh list on its next refresh
-    holder.items = snapshot_items()
-  end
-  -- First query letter must prefix the short name; ties broken by buffer number.
-  local source = filter.source(function()
-    return holder.items
-  end, 'short_name', 'bufnr')
-  pick.pick({
-    title = 'Buffers',
-    query = previous_input,
-    multi = true,
-    source = source,
-    on_open = function(item, mode)
-      running = false
-      open_buffer(item.bufnr, mode)
-    end,
-    on_delete = on_delete,
-    on_close = function(p2)
-      running = false
-      if p2 and p2.query then
-        previous_input = p2.query
-      end
-    end,
-  })
-end
-
-function M.is_running()
-  return running
-end
+  end,
+})
 
 return M
