@@ -166,7 +166,7 @@ def parse_hypr_workspaces(text: str) -> list[tuple[int, str]]:
     The Hyprland config moved from hyprlang (``workspace = N, defaultName:...``)
     to Lua in 2026-09, so the table below `local workspaces = {` is the source of
     truth. Names keep the Gothic/Coptic prefix but no longer embed the glyph: the
-    codepoints live in icon-map.json (see docs/howto/WorkspaceIcons.md).
+    codepoints live in icon-map.json (see files/quickshell/Docs/WorkspaceIcons.md).
     """
     start = WORKSPACES_TABLE_RE.search(text)
     if not start:
