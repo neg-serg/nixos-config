@@ -35,7 +35,7 @@ with the Hyprland compositor without hopping across multiple files.
 - Everything Hyprland lives under `modules/user/nix-maid/hyprland/` (one domain): `main.nix`
   assembles `environment.nix` (the `hyprland.conf` text: `plugin = hy3/hyprglass` lines plus
   `source` of the lua config), `files.nix` (home-file links: `hyprland.conf`, `hyprland.lua`,
-  `hyprlock.conf`, `hypridle.conf`, animations), and `services.nix` (systemd user services + the
+  `hyprlock.conf`, `hypridle.conf`), and `services.nix` (systemd user services + the
   Hyprland-related package set; the session packages moved here from the removed
   `modules/user/session/hyprland.nix`).
 - `files.nix` also writes the `permission = ..., plugin, allow` stanza into `hyprland.conf`,
