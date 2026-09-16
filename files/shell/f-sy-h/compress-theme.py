@@ -4,6 +4,8 @@ import re
 import argparse
 from collections import defaultdict, OrderedDict
 
+from fsyh_theme_common import strip_quotes
+
 # Matches: ${FAST_HIGHLIGHT_STYLES[key]:=value}
 STYLE_RE = re.compile(r"\$\{FAST_HIGHLIGHT_STYLES\[([^\]]+)\]:=([^}]+)\}")
 
@@ -21,16 +23,6 @@ TNAME_ZSTYLE_RE = re.compile(
 def trim(s: str) -> str:
     """Trim whitespace from both ends."""
     return s.strip()
-
-
-def dequote(s: str) -> str:
-    """Remove single/double quotes if present around the string."""
-    s = s.strip()
-    if (s.startswith('"') and s.endswith('"')) or (
-        s.startswith("'") and s.endswith("'")
-    ):
-        return s[1:-1]
-    return s
 
 
 def parse_file(path: str):
@@ -56,11 +48,11 @@ def parse_file(path: str):
             # Detect theme name from typeset or zstyle
             m = TNAME_TYPES_RE.search(line)
             if m:
-                theme_detected = dequote(m.group(1))
+                theme_detected = strip_quotes(m.group(1))
                 continue
             m = TNAME_ZSTYLE_RE.search(line)
             if m:
-                theme_detected = dequote(m.group(1))
+                theme_detected = strip_quotes(m.group(1))
                 continue
 
             # Match style assignment lines

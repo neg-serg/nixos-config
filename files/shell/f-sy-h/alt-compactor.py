@@ -3,6 +3,8 @@ import re
 import sys
 from pathlib import Path
 
+from fsyh_theme_common import cut_comment, strip_quotes
+
 ARRAY = "FAST_HIGHLIGHT_STYLES"
 
 # Patterns
@@ -27,39 +29,6 @@ zstyle_theme_re = re.compile(
 )
 
 
-def strip_q(s: str) -> str:
-    s = s.strip()
-    if (s.startswith("'") and s.endswith("'")) or (
-        s.startswith('"') and s.endswith('"')
-    ):
-        return s[1:-1]
-    return s
-
-
-def cut_comment(s: str) -> str:
-    out = []
-    in_q = False
-    q = ""
-    i = 0
-    while i < len(s):
-        ch = s[i]
-        if ch in ("'", '"'):
-            if not in_q:
-                in_q = True
-                q = ch
-            elif q == ch:
-                in_q = False
-                q = ""
-            out.append(ch)
-            i += 1
-            continue
-        if ch == "#" and not in_q:
-            break
-        out.append(ch)
-        i += 1
-    return "".join(out).strip()
-
-
 def parse_literal_block(lines, start):
     d = {}
     i = start + 1
@@ -69,8 +38,8 @@ def parse_literal_block(lines, start):
             return i, d
         m = literal_entry_re.search(line)
         if m:
-            key = strip_q(m.group(1))
-            val = strip_q(cut_comment(m.group(2)))
+            key = strip_quotes(m.group(1))
+            val = strip_quotes(cut_comment(m.group(2)))
             d[key] = val
         i += 1
     raise RuntimeError(f"Unterminated array starting at line {start+1}")
@@ -131,20 +100,20 @@ def transform_file(path: Path, write: bool):
 
         m = default_re.match(line)
         if m:
-            key = strip_q(cut_comment(m.group(1)))
-            val = strip_q(cut_comment(m.group(2)))
+            key = strip_quotes(cut_comment(m.group(1)))
+            val = strip_quotes(cut_comment(m.group(2)))
             collected[key] = val
             continue
         m2 = setstyle_re.match(line)
         if m2:
-            key = strip_q(cut_comment(m2.group(1)))
-            val = strip_q(cut_comment(m2.group(2)))
+            key = strip_quotes(cut_comment(m2.group(1)))
+            val = strip_quotes(cut_comment(m2.group(2)))
             collected[key] = val
             continue
         m3 = assign_re.match(line)
         if m3:
-            key = strip_q(cut_comment(m3.group(1)))
-            val = strip_q(cut_comment(m3.group(2)))
+            key = strip_quotes(cut_comment(m3.group(1)))
+            val = strip_quotes(cut_comment(m3.group(2)))
             collected[key] = val
             continue
         keep.append(line)
