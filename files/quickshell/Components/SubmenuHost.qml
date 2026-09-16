@@ -17,7 +17,10 @@ PopupWindow {
 
     readonly property int _searchBarH: Math.max(1, Math.round(Theme.panelMenuItemHeight * 0.85))
     readonly property int _searchBarImplicitH: _searchBarH + 8
-    required property var menu
+    // Not required: the root tray menu is created without a handle and gets it
+    // assigned on right-click (SystemTray / NetClusterCapsule). Nested hosts
+    // always pass one through DelegateEntry's createObject().
+    property var menu
     required property Component submenuHostComponent
     property var anchorItem: null
     property real anchorX
@@ -25,6 +28,33 @@ PopupWindow {
     anchor.item: anchorItem ? anchorItem : null
     anchor.rect.x: anchorX
     anchor.rect.y: anchorY - Math.round(Theme.panelMenuAnchorYOffset * Theme.scale(ScreenUtil.screen(subMenu)))
+
+    // Only the root tray menu owns the whole submenu tree; a nested host is
+    // torn down by its parent (see CustomTrayMenu), so it keeps the plain hide.
+    property bool destroySubmenusOnHide: false
+
+    // Recursively destroy all open submenus in delegate tree
+    function destroySubmenusRecursively(item) {
+        if (!item || !item.contentItem) return;
+        // Iterate a snapshot and collect submenus first: destroying children
+        // while iterating the live children list mutates the list being walked.
+        var children = item.contentItem.children.slice();
+        var submenus = [];
+        for (var i = 0; i < children.length; ++i) {
+            var child = children[i];
+            if (child.subMenu) {
+                submenus.push(child.subMenu);
+                child.subMenu = null;
+            }
+            if (child.contentItem) {
+                destroySubmenusRecursively(child);
+            }
+        }
+        for (var j = 0; j < submenus.length; ++j) {
+            submenus[j].hideMenu();
+            submenus[j].destroy();
+        }
+    }
 
     function showAt(item, x, y) {
         if (!item) return;
@@ -38,7 +68,10 @@ PopupWindow {
             searchField.forceActiveFocus();
         });
     }
-    function hideMenu() { visible = false; searchField.text = ""; }
+    function hideMenu() {
+        visible = false; searchField.text = "";
+        if (destroySubmenusOnHide) destroySubmenusRecursively(listView);
+    }
     function containsMouse() { return subMenu.containsMouse }
 
     // Trigger the highlighted entry; shared by Return and search-bar accept.
