@@ -65,6 +65,16 @@ rec {
     in
     builtins.map (name: dir + "/${name}") (builtins.filter keep (builtins.attrNames entries));
 
+  # importDomain DIR — the body of a per-domain aggregator: import every
+  # *.nix file and every module subdirectory of DIR.
+  #   { neg, ... }: neg.importDomain ./.
+  importDomain = dir: {
+    imports = importDir {
+      inherit dir;
+      includeDirs = true;
+    };
+  };
+
   # fzf parses FZF_*_OPTS values as its own CLI options and treats a '#' at
   # the start of a token (after whitespace, outside quotes) as a comment that
   # silently drops the rest of the string — all colors/binds after it vanish
