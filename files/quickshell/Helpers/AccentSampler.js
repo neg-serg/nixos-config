@@ -10,6 +10,8 @@
 //   satRelax    – relaxed saturation floor (default 8)
 //   lumRelaxMin – relaxed luminance floor  (default 20)
 //   lumRelaxMax – relaxed luminance ceil   (default 240)
+//   finalFallback – average all non-transparent pixels when both passes find
+//                   nothing (default false)
 function sampleAccent(imageData, opts) {
     if (!imageData || !imageData.data) return null;
     var data = imageData.data;
@@ -21,6 +23,7 @@ function sampleAccent(imageData, opts) {
     var satRelax = (o.satRelax !== undefined) ? o.satRelax : 8;
     var lumRelaxMin = (o.lumRelaxMin !== undefined) ? o.lumRelaxMin : 20;
     var lumRelaxMax = (o.lumRelaxMax !== undefined) ? o.lumRelaxMax : 240;
+    var finalFallback = !!o.finalFallback;
 
     var rs = 0, gs = 0, bs = 0, n = 0;
     for (var i = 0; i < len; i += 4) {
@@ -48,6 +51,21 @@ function sampleAccent(imageData, opts) {
             g: Math.min(255, Math.round(gs / n)),
             b: Math.min(255, Math.round(bs / n))
         };
+    }
+    if (finalFallback) {
+        // Average all non-transparent pixels (handles dark grayscale images)
+        rs = 0; gs = 0; bs = 0; n = 0;
+        for (var k = 0; k < len; k += 4) {
+            var a3 = data[k + 3]; if (a3 < 128) continue;
+            rs += data[k]; gs += data[k + 1]; bs += data[k + 2]; ++n;
+        }
+        if (n > 0) {
+            return {
+                r: Math.min(255, Math.round(rs / n)),
+                g: Math.min(255, Math.round(gs / n)),
+                b: Math.min(255, Math.round(bs / n))
+            };
+        }
     }
     return null;
 }

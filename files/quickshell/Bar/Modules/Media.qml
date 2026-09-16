@@ -32,6 +32,13 @@ Item {
         if (player) hints.push("Плеер: " + player);
         return TooltipText.compose(title, artist, hints);
     })()
+    // Plain "Artist — Title" label. The hidden width measurement (titleMeasure)
+    // and the regex-restyled rendered title (trackText.titlePart) must derive
+    // from this single expression, or the spectrum is sized against a string
+    // that differs from the one displayed.
+    readonly property string _trackTitlePlain: (MusicManager.trackArtist || MusicManager.trackTitle)
+        ? [MusicManager.trackArtist, MusicManager.trackTitle].filter(function(x) { return !!x; }).join(" — ")
+        : ""
     readonly property real capsuleScale: capsule.capsuleScale
     readonly property var capsuleMetrics: capsule.capsuleMetrics
     property int baseHeight: Math.max(capsule.capsuleHeight, Math.round(Theme.panelHeight * capsule.capsuleScale))
@@ -465,11 +472,7 @@ Item {
                         Text {
                             id: titleMeasure
                             visible: false
-                            text: (MusicManager.trackArtist || MusicManager.trackTitle)
-                                  ? [MusicManager.trackArtist, MusicManager.trackTitle]
-                                        .filter(function(x){ return !!x; })
-                                        .join(" — ")
-                                  : ""
+                            text: mediaControl._trackTitlePlain
                             font.pixelSize: mediaControl.musicTextPx
                             font.weight: Font.Medium
                         }
@@ -541,9 +544,7 @@ Item {
                                     var a = MusicManager.isPlaying ? Theme.mediaTimeAlphaPlaying : Theme.mediaTimeAlphaPaused;
                                     return Format.colorCss(c, a);
                                 })()
-                                property string titlePart: (MusicManager.trackArtist || MusicManager.trackTitle)
-                                    ? [MusicManager.trackArtist, MusicManager.trackTitle].filter(function(x){return !!x;}).join(" - ")
-                                    : ""
+                                property string titlePart: mediaControl._trackTitlePlain
                                 property string _accentCss: (mediaControl.mediaAccentCss ? mediaControl.mediaAccentCss : Format.colorCss(Theme.accentPrimary, 1))
                                 property bool _accentReady: mediaControl.accentReady
                                 property int _accentVer: mediaControl.accentVersion

@@ -463,56 +463,20 @@ Rectangle {
                             implicitWidth: Math.round(playerUI.musicTextPx * 1.1) * 3
                                 + Math.round(14 * Theme.scale(screen)) * 2
 
-                            MouseArea {
-                                Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
-                                Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
+                            TransportButton {
                                 enabled: MusicManager.canGoPrevious
-                                hoverEnabled: true
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: MusicManager.previous()
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "skip_previous"
-                                    font.family: "Material Symbols Outlined"
-                                    font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
-                                    color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
-                                    Behavior on color { ColorAnimation { duration: 180 } }
-                                    opacity: parent.enabled ? 1 : 0.35
-                                }
+                                glyph: "skip_previous"
+                                onActivated: MusicManager.previous()
                             }
-                            MouseArea {
-                                Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
-                                Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
+                            TransportButton {
                                 enabled: (MusicManager.canPlay || MusicManager.canPause)
-                                hoverEnabled: true
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: MusicManager.playPause()
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: MusicManager.isPlaying ? "pause" : "play_arrow"
-                                    font.family: "Material Symbols Outlined"
-                                    font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
-                                    color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
-                                    Behavior on color { ColorAnimation { duration: 180 } }
-                                    opacity: parent.enabled ? 1 : 0.35
-                                }
+                                glyph: MusicManager.isPlaying ? "pause" : "play_arrow"
+                                onActivated: MusicManager.playPause()
                             }
-                            MouseArea {
-                                Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
-                                Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
+                            TransportButton {
                                 enabled: MusicManager.canGoNext
-                                hoverEnabled: true
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: MusicManager.next()
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "skip_next"
-                                    font.family: "Material Symbols Outlined"
-                                    font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
-                                    color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
-                                    Behavior on color { ColorAnimation { duration: 180 } }
-                                    opacity: parent.enabled ? 1 : 0.35
-                                }
+                                glyph: "skip_next"
+                                onActivated: MusicManager.next()
                             }
                         }
 
@@ -719,6 +683,30 @@ Rectangle {
             }
 
             
+        }
+    }
+
+
+    // Transport control (prev / play-pause / next); all three share the same
+    // geometry, hover colour and disabled opacity. Set `enabled` at the use site.
+    component TransportButton: MouseArea {
+        property string glyph: ""
+        signal activated()
+
+        Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
+        Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
+        hoverEnabled: true
+        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+        onClicked: activated()
+
+        Text {
+            anchors.centerIn: parent
+            text: glyph
+            font.family: "Material Symbols Outlined"
+            font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
+            color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
+            Behavior on color { ColorAnimation { duration: 180 } }
+            opacity: parent.enabled ? 1 : 0.35
         }
     }
 

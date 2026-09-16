@@ -219,28 +219,8 @@ Item {
                             { icon: "text_fields",  label: "OCR",   action: function() { Quickshell.execDetached([root._home + "/.local/bin/pic-ocr", "--engine=tesseract", root.shotPath]); toast.hide(); } },
                             { icon: "auto_awesome", label: "OCR NN", action: function() { Quickshell.execDetached([root._home + "/.local/bin/pic-ocr", "--engine=nn", root.shotPath]); toast.hide(); } }
                         ]
-                        delegate: Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36; radius: 6
-                            color: hh.hovered ? Theme.surfaceVariant : "#181C24"
-                            border.width: 1; border.color: Theme.outline
-                            RowLayout {
-                                id: btnRow
-                                anchors.centerIn: parent
-                                spacing: 5
-                                MaterialIcon {
-                                    icon: modelData.icon
-                                    size: 14
-                                    color: "#BFCAD0"
-                                }
-                                Text {
-                                    text: modelData.label
-                                    font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 12
-                                    color: "#BFCAD0"
-                                }
-                            }
-                            HoverHandler { id: hh }
-                            TapHandler { onTapped: modelData.action() }
+                        delegate: ShotActionButton {
+                            fillWidth: true
                         }
                     }
                 }
@@ -254,32 +234,43 @@ Item {
                             { icon: "folder_open",  label: "Open",     action: function() { Quickshell.execDetached(["xdg-open", root.shotPath]); toast.hide(); } },
                             { icon: "delete",       label: "Dismiss",  action: function() { toast.hide(); } }
                         ]
-                        delegate: Rectangle {
-                            Layout.preferredWidth: btnRow.implicitWidth + 20
-                            Layout.preferredHeight: 36; radius: 6
-                            color: hh.hovered ? Theme.surfaceVariant : "#181C24"
-                            border.width: 1; border.color: Theme.outline
-                            RowLayout {
-                                id: btnRow
-                                anchors.centerIn: parent
-                                spacing: 5
-                                MaterialIcon {
-                                    icon: modelData.icon
-                                    size: 14
-                                    color: "#BFCAD0"
-                                }
-                                Text {
-                                    text: modelData.label
-                                    font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 12
-                                    color: "#BFCAD0"
-                                }
-                            }
-                            HoverHandler { id: hh }
-                            TapHandler { onTapped: modelData.action() }
+                        delegate: ShotActionButton {
+                            widthPadding: 20
                         }
                     }
                 }
             }
         }
+    }
+
+    // Shared action-button composite for both Repeater rows. fillWidth reproduces
+    // the equal-width OCR buttons; widthPadding reproduces the content-width ones.
+    component ShotActionButton: Rectangle {
+        property bool fillWidth: false
+        property int widthPadding: 0
+
+        Layout.fillWidth: fillWidth
+        Layout.preferredWidth: btnRow.implicitWidth + widthPadding
+        Layout.preferredHeight: 36; radius: 6
+        color: hh.hovered ? Theme.surfaceVariant : "#181C24"
+        border.width: 1; border.color: Theme.outline
+
+        RowLayout {
+            id: btnRow
+            anchors.centerIn: parent
+            spacing: 5
+            MaterialIcon {
+                icon: modelData.icon
+                size: 14
+                color: "#BFCAD0"
+            }
+            Text {
+                text: modelData.label
+                font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 12
+                color: "#BFCAD0"
+            }
+        }
+        HoverHandler { id: hh }
+        TapHandler { onTapped: modelData.action() }
     }
 }
