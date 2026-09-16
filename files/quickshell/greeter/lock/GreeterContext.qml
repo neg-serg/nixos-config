@@ -16,17 +16,18 @@ Scope {
 	property var allSessions: []
 	property int currentSessionIndex: 0
 
-	// Sessions filtered by current user's allowed session type
+	// Sessions filtered by the session types the current user may start
 	readonly property var sessions: {
-		const utype = userSessionType[currentUser] || "wayland";
-		return allSessions.filter(s => s.type === utype);
+		const utypes = userSessionTypes[currentUser] || ["wayland"];
+		return allSessions.filter(s => utypes.indexOf(s.type) !== -1);
 	}
 
-	// Map user → session type. Users not listed default to "wayland".
-	// Managed declaratively: add new users here when their session type is known.
-	readonly property var userSessionType: ({
-		"neg": "wayland",
-		"xen": "x11"
+	// Map user → session types that user may start. Users not listed default to
+	// "wayland". Managed declaratively: add new users here when their sessions
+	// are known (neg starts either Hyprland or the FVWM X11 rice session).
+	readonly property var userSessionTypes: ({
+		"neg": ["wayland", "x11"],
+		"xen": ["x11"],
 	})
 
 	readonly property string currentUser: users.length > 0 ? users[currentUserIndex] : "neg"
