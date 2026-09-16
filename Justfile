@@ -1,6 +1,10 @@
 # Repository development helpers for NixOS workflows
 set shell := ["bash", "-cu"]
 
+# Repository root for the repo-wide recipes. Every recipe run evaluates this
+# backtick, so it falls back to the invocation dir when not in a git repo.
+repo_root := `git rev-parse --show-toplevel 2>/dev/null || pwd`
+
 # --- System Management -----------------------------------------------------------
 
 # Rebuild and switch to the new system configuration
@@ -44,16 +48,13 @@ nvim-lock-sync:
 
 # --- Repo-wide workflows ---------------------------------------------------------
 fmt:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$repo_root" && nix fmt
+    cd "{{repo_root}}" && nix fmt
 
 check:
-    repo_root="$(git rev-parse --show-toplevel)"; \
     nix flake check -L --option substitute false
 
 lint:
     set -eu
-    repo_root="$(git rev-parse --show-toplevel)"
     statix check -- .
     deadnix --fail .
     # Guard: discourage `with pkgs; [ ... ]` lists (prefer explicit pkgs.*)
@@ -133,24 +134,21 @@ lint:
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
       | xargs -0 -r shellcheck -S warning -x
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    bash "$repo_root/scripts/dev/check-qml-syntax.sh" "$repo_root" && \
-    bash "$repo_root/scripts/dev/check-hyprland-vars.sh" "$repo_root" && \
-    bash "$repo_root/scripts/dev/check-markdown-language.sh" && \
-    bash "$repo_root/scripts/dev/check-all-syntax.sh" "$repo_root" && \
-    bash "$repo_root/scripts/dev/check-osh-syntax.sh" "$repo_root" && \
-    bash "$repo_root/scripts/dev/check-lusty-smoke.sh"
+    bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-markdown-language.sh" && \
+    bash "{{repo_root}}/scripts/dev/check-all-syntax.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-osh-syntax.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-lusty-smoke.sh"
     just lint-annotations
 
 # Check that all packages in environment.systemPackages have inline annotations
 lint-annotations:
-    repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; \
-    bash "$repo_root/scripts/dev/check-package-annotations.sh" "$repo_root"
+    bash "{{repo_root}}/scripts/dev/check-package-annotations.sh" "{{repo_root}}"
 
 # Format Rust sources (edition-aware, via nearest Cargo.toml)
 rustfmt:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    bash "$repo_root/scripts/dev/check-rustfmt.sh" "$repo_root" fix
+    bash "{{repo_root}}/scripts/dev/check-rustfmt.sh" "{{repo_root}}" fix
 
 docs-modules:
     # Generate modules documentation (opt-in)
@@ -163,8 +161,7 @@ docs-modules:
 
 # Regenerate the codebase map (docs/codebase.md) for agents/quick orientation
 codebase:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    "$repo_root/packages/local-bin/bin/gen-codebase" "$repo_root"; \
+    "{{repo_root}}/packages/local-bin/bin/gen-codebase" "{{repo_root}}"; \
     nix fmt # normalize markdown (mdformat) so the artifact is fmt-stable
 
 # Fail if the committed generated docs drift from what the generators produce.
@@ -175,8 +172,7 @@ codebase:
 docs-guard:
     #!/usr/bin/env bash
     set -euo pipefail
-    repo_root="$(git rev-parse --show-toplevel)"
-    cd "$repo_root"
+    cd "{{repo_root}}"
     just codebase
     just docs-modules
     just fmt
@@ -201,8 +197,7 @@ flag flag-path="features.cli.broot.enable":
 # Regenerate hosts/odin/unbound-hosts.nix from its sources
 # (unbound-local.txt + files/sources/malw-hosts.txt)
 unbound-hosts:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    "$repo_root/packages/local-bin/scripts/gen-unbound-hosts" "$repo_root"; \
+    "{{repo_root}}/packages/local-bin/scripts/gen-unbound-hosts" "{{repo_root}}"; \
     nix fmt
 
 # Freshness gate for the same generated file: reruns the generator against a
@@ -214,16 +209,15 @@ unbound-hosts:
 unbound-hosts-guard:
     #!/usr/bin/env bash
     set -euo pipefail
-    repo_root="$(git rev-parse --show-toplevel)"
     tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"' EXIT
     mkdir -p "$tmp/hosts/odin" "$tmp/files/sources"
-    cp "$repo_root/hosts/odin/unbound-local.txt" "$tmp/hosts/odin/"
-    cp "$repo_root/files/sources/malw-hosts.txt" "$tmp/files/sources/"
-    "$repo_root/packages/local-bin/scripts/gen-unbound-hosts" "$tmp"
-    if ! diff -q "$repo_root/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" >/dev/null; then
+    cp "{{repo_root}}/hosts/odin/unbound-local.txt" "$tmp/hosts/odin/"
+    cp "{{repo_root}}/files/sources/malw-hosts.txt" "$tmp/files/sources/"
+    "{{repo_root}}/packages/local-bin/scripts/gen-unbound-hosts" "$tmp"
+    if ! diff -q "{{repo_root}}/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" >/dev/null; then
       echo "hosts/odin/unbound-hosts.nix is stale — run 'just unbound-hosts' and commit it:" >&2
-      diff -u "$repo_root/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" | head -40 >&2
+      diff -u "{{repo_root}}/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" | head -40 >&2
       exit 1
     fi
     echo "unbound-hosts.nix is fresh"
@@ -252,8 +246,7 @@ clean-caches:
 # --- Package flake sync (git-subtree) -------------------------------------------------
 # Push packages/ subtree to standalone nixos-pkgs repo
 subtree-push-packages:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$$repo_root"; \
+    cd "{{repo_root}}"; \
     if ! git remote | grep -q neg-pkgs; then \
       echo "Adding remote: git remote add neg-pkgs git@github.com:neg-serg/nixos-pkgs.git"; \
       git remote add neg-pkgs git@github.com:neg-serg/nixos-pkgs.git; \
@@ -262,8 +255,7 @@ subtree-push-packages:
 
 # Pull updates from standalone nixos-pkgs repo back into packages/ subtree
 subtree-pull-packages:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$$repo_root"; \
+    cd "{{repo_root}}"; \
     if ! git remote | grep -q neg-pkgs; then \
       echo "Error: remote 'neg-pkgs' not configured. Run: git remote add neg-pkgs git@github.com:neg-serg/nixos-pkgs.git"; \
       exit 1; \
