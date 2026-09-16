@@ -16,8 +16,8 @@
 
 import { readFileSync, writeFileSync } from 'node:fs'
 
-const NL = String.fromCharCode(10)
-const ENDPOINT = 'http://127.0.0.1:11434/api/chat'
+import { NL, parseArgs, chat, runMain } from './lib.mjs'
+
 const DEFAULT_JUDGE = 'qwen3:8b-q8_0'
 
 const DEMO_TASKS = [
@@ -33,16 +33,6 @@ const DEMO_PRESETS = [
 
 /** Judge rubric: strict JSON verdict. */
 const JUDGE_SYSTEM = 'Ты — жюри A/B-теста. Получаешь задачу и два ответа (A и B). Оцени, какой ответ лучше по критериям: правильность, полнота, ясность, соответствие запросу. Верни СТРОГО JSON без markdown и пояснений: {\"winner\": \"a\" | \"b\" | \"tie\", \"reason\": \"кратко почему\"}.'
-
-function parseArgs(argv) {
-  const out = {}
-  for (let i = 0; i < argv.length; i += 2) {
-    const key = argv[i]
-    if (!key || !key.startsWith('--')) { i -= 1; continue }
-    out[key.slice(2)] = argv[i + 1]
-  }
-  return out
-}
 
 function loadJson(path, fallback, label) {
   if (!path) return fallback
@@ -62,25 +52,6 @@ function parseJson(text) {
   }
 }
 
-async function chat(model, system, user, temperature) {
-  const res = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      stream: false,
-      options: { temperature: Number(temperature) || 0.2 },
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-    }),
-  })
-  if (!res.ok) throw new Error('ollama HTTP ' + res.status + ' for ' + model)
-  const data = await res.json()
-  return data && data.message ? String(data.message.content || '') : ''
-}
-
 async function main() {
   const a = parseArgs(process.argv.slice(2))
   const tasks = loadJson(a.tasks, DEMO_TASKS, 'tasks')
@@ -97,7 +68,7 @@ async function main() {
       process.stdout.write('  run ' + p.id + ' on ' + task.id + ' ... ')
       const t0 = Date.now()
       try {
-        responses[task.id][p.id] = { text: await chat(p.model, p.system, task.prompt, p.temperature), ms: Date.now() - t0 }
+        responses[task.id][p.id] = { text: await chat(p.model, p.system, task.prompt, p.temperature, { mentionModel: true }), ms: Date.now() - t0 }
         console.log('ok (' + Math.round((Date.now() - t0) / 1000) + 's)')
       } catch (e) {
         responses[task.id][p.id] = { text: '', ms: Date.now() - t0, error: String(e) }
@@ -122,7 +93,7 @@ async function main() {
         const user = 'Задача: ' + task.prompt + NL + NL
           + 'Ответ A (' + pa.id + '):\n' + ra.text.slice(0, 2000) + NL + NL
           + 'Ответ B (' + pb.id + '):\n' + rb.text.slice(0, 2000)
-        const raw = await chat(judge, JUDGE_SYSTEM, user, 0)
+        const raw = await chat(judge, JUDGE_SYSTEM, user, 0, { mentionModel: true })
         const v = parseJson(raw) || {}
         const winner = v.winner === 'a' ? pa.id : v.winner === 'b' ? pb.id : 'tie'
         verdicts.push({ task: task.id, a: pa.id, b: pb.id, winner: winner, reason: String(v.reason || raw.slice(0, 120)) })
@@ -157,4 +128,4 @@ async function main() {
   for (const v of verdicts) console.log('  ' + v.task + ': ' + v.winner + (v.reason ? ' — ' + String(v.reason).slice(0, 140) : ''))
 }
 
-main().catch(function (e) { console.error('ab-bench: ' + e); process.exit(1) })
+runMain('ab-bench', main)
