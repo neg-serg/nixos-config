@@ -18,8 +18,8 @@
         {
           "name": "text",
           "type": "text",
-          "placeholder": "Что чувствуешь — можно надиктовать",
-          "required": true
+          "placeholder": "Что чувствуешь — можно надиктовать (пусто → возьму диктовку из буфера)",
+          "required": false
         }
       ]
     },
