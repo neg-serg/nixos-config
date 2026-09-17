@@ -428,9 +428,12 @@ hl.config({
   },
 })
 
--- Trackpad: 3-finger swipe switches workspaces, 4-finger swipes scroll the tape.
+-- Trackpad: 3-finger swipe switches workspaces.
+-- NOTE: only ONE horizontal gesture can exist — Hyprland keys the gesture table on
+-- the direction alone, so a second horizontal entry (e.g. 4-finger scroll_move for
+-- the scrolling tape) is silently shadowed by the first ("Gesture will be
+-- overshadowed by a previous gesture"). The tape is scrolled with M4+[ / M4+].
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
-hl.gesture({ fingers = 4, direction = "horizontal", action = "scroll_move" })
 hl.gesture({ fingers = 3, direction = "down", mods = "ALT", action = "close" })
 
 -- Scrolling binds — brackets (free keys; M4+comma/period are the player)
