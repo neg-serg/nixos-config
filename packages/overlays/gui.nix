@@ -20,6 +20,7 @@ in
   wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
   wallhaven = prev.callPackage (inputs.self + "/packages/wallhaven") { };
   hyprwhspr = prev.callPackage (inputs.self + "/packages/hyprwhspr") { };
+  aura = prev.callPackage (inputs.self + "/packages/aura") { }; # the emotion/CBT diary: record a note from the launcher
   camillagui = callPkg (inputs.self + "/packages/camillagui") { }; # web GUI for CamillaDSP
   decay-gtk-theme = callPkg (inputs.self + "/packages/decay-gtk-theme") { }; # GTK3 theme of the FVWM decay rice
   decay-rice = callPkg (inputs.self + "/packages/decay-rice") { }; # FVWM "An essence of decay" session payload
