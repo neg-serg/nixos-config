@@ -38,7 +38,7 @@ let
       MARKER="/run/telegram-notify-boot.sent"
       [ -e "$MARKER" ] && exit 0
 
-      ${lib.getExe config.odin.telegram.sender} "odin: загрузился"
+      ${lib.getExe config.odin.telegram.sender} "🚀 odin: загрузился"
       touch "$MARKER"
     '';
   };
