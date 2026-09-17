@@ -7,16 +7,19 @@ var cp = require("child_process");
 var api = require("@vicinae/api");
 
 // The diary's own recorder: it runs the diary's own recognition (elm/tools/RecordRunner.elm) and
-// queues the entry for the diary to merge when it opens. The path is fixed because the diary lives
-// in the user's src tree; AURA_RECORD overrides it.
+// queues the entry for the diary to merge when it opens. The paths are fixed because the diary
+// lives in the user's src tree; AURA_RECORD and AURA_DIARY override them.
 var CLI = process.env.AURA_RECORD || process.env.HOME + "/src/emotion-diary/scripts/aura-record.mjs";
 var DIARY = process.env.AURA_DIARY || "http://127.0.0.1:8080/";
 
+// With no text the recorder takes the clipboard, which is where hyprwhspr leaves a dictation
+// (auto_copy_clipboard): dictate, open the launcher, press Enter, done.
 function record(text) {
   return new Promise(function (resolve) {
-    cp.execFile("node", [CLI, text], { timeout: 60000, maxBuffer: 1024 * 1024 }, function (error, stdout, stderr) {
+    var args = text ? [CLI, text] : [CLI];
+    cp.execFile("node", args, { timeout: 60000, maxBuffer: 4 * 1024 * 1024 }, function (error, stdout, stderr) {
       if (error) {
-        resolve({ ok: false, detail: (stderr || error.message || "").trim() });
+        resolve({ ok: false, detail: (stderr || stdout || error.message || "").trim() });
         return;
       }
       resolve({ ok: true, detail: (stdout || "").trim() });
@@ -29,31 +32,26 @@ function openDiary() {
 }
 
 function RecordCommand(props) {
-  var text = ((props.arguments && props.arguments.text) || "").trim();
+  var typed = ((props.arguments && props.arguments.text) || "").trim();
   var state = React.useState({ status: "running" });
   var answer = state[0];
   var setAnswer = state[1];
 
   React.useEffect(function () {
     var alive = true;
-    if (!text) {
-      setAnswer({ status: "empty" });
-      return undefined;
-    }
-    record(text).then(function (result) {
-      if (alive) setAnswer(result.ok ? { status: "done", detail: result.detail } : { status: "failed", detail: result.detail });
+    record(typed).then(function (result) {
+      if (!alive) return;
+      setAnswer(result.ok ? { status: "done", detail: result.detail } : { status: "failed", detail: result.detail });
     });
     return function () { alive = false; };
-  }, [text]);
+  }, [typed]);
 
   var markdown =
     answer.status === "running"
-      ? "### Записываю\n\n> " + text
+      ? "### Записываю\n\n> " + (typed || "текст из буфера обмена")
       : answer.status === "done"
         ? "### Записано в дневник\n\n```\n" + answer.detail + "\n```"
-        : answer.status === "empty"
-          ? "### Пусто\n\nНадиктуй или набери заметку — и повтори."
-          : "### Не получилось\n\n```\n" + (answer.detail || "нет ответа") + "\n```";
+        : "### Не получилось\n\n```\n" + (answer.detail || "нет ответа") + "\n```";
 
   return React.createElement(
     api.Detail,
@@ -64,20 +62,13 @@ function RecordCommand(props) {
         api.ActionPanel,
         null,
         React.createElement(api.Action, { title: "Открыть дневник", onAction: openDiary }),
-        React.createElement(api.Action, { title: "Скопировать заметку", onAction: function () { api.Clipboard.copy(text); } })
+        React.createElement(api.Action, {
+          title: "Скопировать заметку",
+          onAction: function () { api.Clipboard.copy(typed); }
+        })
       )
     }
   );
 }
 
-function OpenCommand() {
-  React.useEffect(openDiary, []);
-  return null;
-}
-
-exports.default = function AuraCommand(props) {
-  // the command name is in props.command? Vicinae tells the entry point which command ran through
-  // the file it imported: `record.js` and `open.js` are separate entry points, so the name is the
-  // module's own. Here the command is decided by the entry file name.
-  return RecordCommand(props);
-};
+exports.default = RecordCommand;
