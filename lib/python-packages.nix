@@ -42,6 +42,11 @@
       plumbum # shell commands as Python objects
       typer # CLI apps from type-annotated functions
 
+      # Jupyter (molten-nvim remote plugin host + default python kernel)
+      jupyter-client # molten-nvim requires it in the interpreter that hosts it
+      ipykernel # python3 kernel spec, so `:MoltenInit python3` works out of the box
+      nbformat # import/export of cell outputs to .ipynb (MoltenImport/ExportOutput)
+
       # Debugging (nvim-dap: python3 -m debugpy.adapter)
       debugpy
 
