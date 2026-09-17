@@ -12,6 +12,13 @@ import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import subprocess
 
+# Bracketed status/severity words ([FIRING] [INFO] …) read badly in a phone
+# notification, so each of them is one emoji instead: the first is the alert
+# status, the second its severity. Unknown values fall back to ❔.
+STATUS_EMOJI = {"firing": "🔥", "resolved": "✅"}
+SEVERITY_EMOJI = {"critical": "🚨", "warning": "⚠️", "info": "ℹ️"}
+
+
 def creds():
     token = open(os.environ["TELEGRAM_BOT_TOKEN_FILE"]).read().strip()
     chat_id = open(os.environ["TELEGRAM_CHAT_ID_FILE"]).read().strip()
@@ -23,13 +30,14 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         data = json.loads(self.rfile.read(length))
         for alert in data.get("alerts", []):
-            status = str(alert.get("status", "UNKNOWN")).upper()
+            status_emoji = STATUS_EMOJI.get(str(alert.get("status", "")).lower(), "❔")
             labels = alert.get("labels", {})
             annotations = alert.get("annotations", {})
             name = labels.get("alertname", "Unknown")
             severity = labels.get("severity", "unknown")
             summary = annotations.get("summary", "No summary")
-            msg = "[{0}] [{1}] {2}: {3}".format(status, severity, name, summary)
+            severity_emoji = SEVERITY_EMOJI.get(str(severity).lower(), "❔")
+            msg = "{0} {1} {2}: {3}".format(status_emoji, severity_emoji, name, summary)
             token, chat_id = creds()
             api_url = "https://api.telegram.org/bot{0}/sendMessage".format(token)
             # api.telegram.org is unreachable from this host without the
