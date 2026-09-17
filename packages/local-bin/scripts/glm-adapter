@@ -243,8 +243,8 @@ vm_unhealthy() {
 
 vm_restart() {
   local now recent i why okmsg
-  why="${1:-GLM-адаптер отвалился от VM}"
-  okmsg="${2:-таз: перезапущен, адаптер снова в VM (usbfs) — GLM поднимется сам}"
+  why="${1:-адаптер не в VM}"
+  okmsg="${2:-ok, адаптер в VM}"
   mkdir -p "$STATE_DIR"
   # One restart at a time: the 60 s timer and a manual `glm-adapter attach` can
   # otherwise run two stop/start sequences on the same container — the very race
@@ -264,11 +264,11 @@ vm_restart() {
   fi
   if [ "$recent" -ge "$RESTART_MAX_PER_HOUR" ]; then
     warn "VM restart suppressed: $recent restarts within the last hour"
-    notify_once "suppressed" firing "таз: $why, но перезапусков уже $recent за час — не перезапускаю, проверь VM вручную"
+    notify_once "suppressed" firing "$recent рестарта за час → не трогаю ($why)"
     return 1
   fi
   warn "restarting VM '$CT' ($why)"
-  notify firing "таз: $why — перезапускаю (Windows поднимется за ~1 мин)"
+  notify firing "рестарт: $why"
   echo "$now" >> "$RESTART_LOG"
   # stop + start, not `podman restart`: an automatic restart was followed by a
   # container with only `lo` inside and an empty route table (no pasta tap, no
@@ -281,7 +281,7 @@ vm_restart() {
     warn "VM did not come back up — retrying the restart once"
     if ! vm_cycle; then
       fail "container '$CT' is not up with the adapter attached after two restarts (podman logs windows)"
-      notify_once "failed" firing "таз: перезапуск не помог — $why, проверь VM вручную"
+      notify_once "failed" firing "рестарт не помог: $why"
       return 1
     fi
   fi
@@ -406,7 +406,7 @@ cmd_auto() {
   # is meaningful (see vm_unhealthy).
   if vm_unhealthy; then
     warn "VM '$CT' is Up but 127.0.0.1:3389 is dead — the host-side plumbing is gone"
-    if vm_restart "контейнер Up, но RDP-порт мёртв — умерла обвязка pasta" "таз: перезапущен, обвязка pasta поднята — Windows грузится, RDP через ~1-2 мин"; then
+    if vm_restart "RDP мёртв → обвязка pasta умерла" "ok, pasta поднят, Windows грузится"; then
       rm -f "$RDP_STRIKES_FILE"
       ok "VM restarted — the guest is booting, RDP answers within ~1-2 min"
     fi
@@ -422,7 +422,7 @@ cmd_auto() {
   fi
   if ! host_present; then
     warn "adapter is not on the host USB — restarting the VM would not help"
-    notify_once "missing" firing "таз: GLM-адаптер не найден на USB-шине хоста — проверь кабель/питание адаптера, VM без него мониторами не управляет"
+    notify_once "missing" firing "адаптера нет на USB"
     return 0
   fi
   if vm_restart; then
