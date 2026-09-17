@@ -1,13 +1,17 @@
 # Module: hyprland/ru-layout — per-window keyboard layout daemon.
 #
-# Watches the focused Hyprland window class and switches the XKB layout on
-# focus transitions: hotkey-heavy windows (kitty, mpv, …) get `us`, everything
-# else defaults to `ru` (typing-first). This fixes bare-letter hotkeys under
-# the ru layout for ALL apps at once — including the ones that cannot be fixed
-# by config at all (mutt, rustmission, btop, kitty hints, zsh vi-mode, …).
+# Upstream `hyprland-per-window-layout` (nixpkgs) runs as a systemd user service:
+# it subscribes to the Hyprland event socket (`.socket2.sock`) and remembers the
+# XKB group per window address, replaying it when the window regains focus.
+# Event-driven — no polling, no shell loop (the in-house polling daemon it
+# replaced burned 48 min of CPU in 30 h: two `hyprctl` spawns per second).
 #
-# Rules apply only on transitions, so a manual M4+S switch inside a window is
-# never reverted until the focus moves away.
+# `usClasses` reaches the daemon as `default_layouts` in
+# ~/.config/hyprland-per-window-layout/options.toml (generated in files.nix).
+# A window matching that list is switched to `usLayoutIndex` on focus; any other
+# window *starts* on `usLayoutIndex` as well — that is `us` under the invariant
+# kb_layout = "us,ru" — and then keeps whatever layout it was switched to, so
+# `ru` picked once in a typing-first window survives focus changes.
 #
 # Feature flag: features.input.ruHotkeys.* (declared in features/hardware.nix).
 # Mechanics and the per-app coverage matrix: docs/howto/hotkeys-ru-layout.md.
@@ -21,42 +25,20 @@ let
   cfg = config.features.input.ruHotkeys or { };
   enabled = cfg.enable or false;
 
-  # Window classes forced to `us` come from the option's default in
-  # modules/features/hardware.nix (each class annotated there) — the list is
-  # deliberately not duplicated here. The fallback only covers a trimmed eval
-  # that drops the hardware domain, in which case the module is not imported.
-  usClasses = lib.concatStringsSep " " (cfg.usClasses or [ ]);
-  usIdx = toString (cfg.usLayoutIndex or 0);
-  ruIdx = toString (cfg.ruLayoutIndex or 1);
-  pollSec = cfg.pollSec or "0.5";
-
-  # All runtime binaries are embedded by absolute path — no PATH assumptions in
-  # the user session.
-  daemon = pkgs.writeShellScript "ru-layout-daemon" (
-    builtins.readFile (
-      pkgs.replaceVars ./ru-layout-daemon.sh {
-        sleepBin = lib.getExe' pkgs.coreutils "sleep";
-        awkBin = lib.getExe' pkgs.gawk "awk";
-        hyprctlBin = lib.getExe' pkgs.hyprland "hyprctl";
-        inherit
-          pollSec
-          ruIdx
-          usIdx
-          usClasses
-          ;
-      }
-    )
-  );
+  systemdUser = config.lib.neg.systemdUser;
 in
 lib.mkIf enabled {
-  systemd.user.services.ru-layout = {
-    description = "Per-window keyboard layout switching (us in hotkey-heavy apps)";
+  # The binary calls `hyprctl` itself: user units run with a minimal PATH, so
+  # hyprctl is injected through the unit's own `path`.
+  systemd.user.services.ru-layout = systemdUser.mkUserService {
+    description = "Per-window keyboard layout switching (hyprland-per-window-layout)";
     partOf = [ "hyprland-session.target" ];
     after = [ "graphical-session-pre.target" ];
     wantedBy = [ "hyprland-session.target" ];
+    path = [ pkgs.hyprland ];
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${daemon}";
+      ExecStart = lib.getExe pkgs.hyprland-per-window-layout;
       Restart = "on-failure";
       RestartSec = 2;
     };
