@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+  "name": "aura",
+  "title": "Aura",
+  "description": "Дневник эмоций и КПТ: записать заметку голосом или текстом, открыть дневник",
+  "categories": ["Productivity", "Health"],
+  "license": "MIT",
+  "platforms": ["Linux"],
+  "author": "neg",
+  "commands": [
+    {
+      "name": "record",
+      "title": "Aura — записать в дневник",
+      "subtitle": "Заметка голосом или текстом",
+      "description": "Продиктованная или набранная заметка уходит в дневник эмоций: распознаётся тем же кодом, что и в самом дневнике",
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "text",
+          "type": "text",
+          "placeholder": "Что чувствуешь — можно надиктовать",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "open",
+      "title": "Aura — открыть дневник",
+      "subtitle": "http://127.0.0.1:8080/",
+      "description": "Открыть дневник эмоций в браузере",
+      "mode": "no-view"
+    }
+  ],
+  "preferences": [],
+  "dependencies": {
+    "@vicinae/api": "^1.0.0"
+  }
+}
