@@ -52,7 +52,6 @@ let
     ".scripts"
     ".config/eww"
     ".config/conky"
-    ".config/dunst"
     ".config/rofi"
     ".config/jgmenu"
     ".config/tint2"
@@ -108,7 +107,6 @@ lib.mkIf cfg.enable {
     pkgs.picom # compositor started by fvwm's InitFunction
     pkgs.eww # bottom panel + widgets (bar, notifications, system menu)
     pkgs.rofi # application menu, window switcher, screenshot menu
-    pkgs.dunst # notification daemon
     pkgs.dockbarx # dock (dockx), Decay theme in ~/.local/share/dockbarx
     pkgs.jgmenu # desktop menu (jgmenu_run)
     pkgs.nitrogen # wallpaper restore (nitrogen --restore)
