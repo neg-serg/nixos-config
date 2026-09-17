@@ -191,6 +191,49 @@ while the MIDI bridge kept a dead connection) — rate-limited to three restarts
 restart. Placement check: `glm-adapter status` → `VM: adapter attached (1)`, which on the host means
 the adapter interface carries the `usbfs` driver.
 
+The stop has to be *finished* before the start, not just returned: `podman stop` returns as soon as
+the container is dead, while its rootfs teardown (fuse-overlayfs unmount, conmon reap) is still
+running. A `start` landing in that window pulls the merged dir out from under the fresh QEMU and
+Windows never reaches the login screen:
+
+```
+power.sh: line 480: touch: command not found
+server.sh: line 273: /usr/bin/rm: Transport endpoint is not connected
+❯ ERROR: QEMU exited unexpectedly!
+```
+
+(first seen 2026-09-17 02:46, container torn down 0.3 s after start). So `wait_teardown()` waits for
+the `exited` state and for the overlay to be unmounted before starting, and `vm_cycle()` accepts the
+result only when the container is `Up` **and** the adapter is attached — a lone `qemu_usb` check
+used to report `ok adapter attached to the VM` while the container was already dead. A cycle that
+still comes up dead is retried once; two failures page Telegram. Restarts are serialized with
+`flock` on `~/.local/state/glm-adapter/restart.lock`, so the 60 s timer and a manual
+`glm-adapter attach` cannot run two stop/start sequences on one container at the same time.
+
+### Pitfall: `Up` container with dead host-side plumbing
+
+`podman ps` is not a health check for this VM. When the container is started while a straggler
+stop/start of the previous instance is still tearing down its namespace, QEMU survives but the pasta
+helper that owns the published ports does not: the container stays `Up` indefinitely while nothing
+listens on `127.0.0.1:3389`/`:8006` and every `podman exec` fails with
+
+```
+crun: open `true`: Transport endpoint is not connected
+```
+
+Seen 2026-09-17 03:00 → 04:25: the VM was unreachable for 1.5 h, `glm-adapter-auto` kept reporting a
+healthy VM every 60 s, and only the Telegram RDP probe (`telegram-notify-windows-ready`) noticed. A
+fresh stop → teardown → start is the only cure, so the RDP port is the liveness probe for the
+container as a whole:
+
+- `glm-adapter health` — reports the container age, `:3389` and `:8006`;
+- `glm-adapter auto` (the 60 s `glm-adapter-auto` timer) — restarts the VM when the port stays
+  closed for two consecutive runs, and only when the container is older than 5 min (`RDP_GRACE` /
+  `RDP_STRIKES`). The grace period keeps a booting Windows out of the restart path, the two strikes
+  keep a Windows Update reboot (it closes `:3389` too) out of it. The age comes from the mtime of
+  the container's netns file (`vm_uptime()`), not from `.State.StartedAt`: that one is Go-formatted
+  (`… +0300 MSK`) and the user-service environment has no `TZDIR` for `date -d`.
+
 ### Shutdown: SIGTERM works, do not shorten `--stop-timeout`
 
 dockur traps SIGTERM, sends an ACPI `system_powerdown` through the QEMU monitor, then waits for the
@@ -387,6 +430,7 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 - `packages/local-bin/bin/proxy` — the inbounds `in-lan-vm` (SOCKS 10811) and `in-lan-vm-http` (HTTP
   10812\)
 - `hosts/odin/services/windows-vm.nix` — VM start unit (`ExecStartPost` runs `glm-vm-netfix`)
+- `packages/local-bin/scripts/glm-adapter` — adapter placement + VM liveness (`health`/`auto`)
 - `packages/local-bin/scripts/glm-vm-netfix` — drops the .88 alias pasta copies into the container,
   otherwise the bridge and the VM proxy get `Connection refused` from the container itself
 
