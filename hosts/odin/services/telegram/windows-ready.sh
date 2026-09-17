@@ -19,5 +19,5 @@ if [ "$ok" != 1 ]; then
 fi
 [ -e "$STATE_FILE" ] && exit 0
 
-@sender@ "таз загрузился" "Windows-VM доступна по RDP (127.0.0.1:3389)"
+@sender@ "🪟 таз загрузился" "Windows-VM доступна по RDP (127.0.0.1:3389)"
 touch "$STATE_FILE"
