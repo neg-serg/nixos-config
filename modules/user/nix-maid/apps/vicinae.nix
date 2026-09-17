@@ -263,6 +263,7 @@ in
         # Extension symlinks from Nix store to user vicinae extensions dir
         "L+ %h/.local/share/vicinae/extensions/wallhaven - - - - ${pkgs.wallhaven}"
         "L+ %h/.local/share/vicinae/extensions/hyprwhspr - - - - ${pkgs.hyprwhspr}"
+        "L+ %h/.local/share/vicinae/extensions/aura - - - - ${pkgs.aura}"
         "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
         # C (copy) for themes: writable copy (mode 0644) so "Open Theme File" works.
         # Won't overwrite user edits (source has epoch mtime, dest is newer).
