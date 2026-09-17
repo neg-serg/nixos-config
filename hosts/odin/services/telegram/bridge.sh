@@ -13,10 +13,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import subprocess
 
 # Bracketed status/severity words ([FIRING] [INFO] …) read badly in a phone
-# notification, so each of them is one emoji instead: the first is the alert
-# status, the second its severity. Unknown values fall back to ❔.
+# push, so each is one emoji with no space between them: status first, severity
+# second. The severity emoji is kept only for warning/critical (info carries no
+# news) and any unknown value falls back to ❔, so a push stays one short line.
 STATUS_EMOJI = {"firing": "🔥", "resolved": "✅"}
-SEVERITY_EMOJI = {"critical": "🚨", "warning": "⚠️", "info": "ℹ️"}
+SEVERITY_EMOJI = {"critical": "🚨", "warning": "⚠️"}
 
 
 def creds():
@@ -36,8 +37,8 @@ class Handler(BaseHTTPRequestHandler):
             name = labels.get("alertname", "Unknown")
             severity = labels.get("severity", "unknown")
             summary = annotations.get("summary", "No summary")
-            severity_emoji = SEVERITY_EMOJI.get(str(severity).lower(), "❔")
-            msg = "{0} {1} {2}: {3}".format(status_emoji, severity_emoji, name, summary)
+            severity_emoji = SEVERITY_EMOJI.get(str(severity).lower(), "")
+            msg = "{0}{1} {2}: {3}".format(status_emoji, severity_emoji, name, summary)
             token, chat_id = creds()
             api_url = "https://api.telegram.org/bot{0}/sendMessage".format(token)
             # api.telegram.org is unreachable from this host without the
