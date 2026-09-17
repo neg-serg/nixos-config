@@ -23,7 +23,7 @@ let
   # keys, NOT the plugin's Lua API: that path aborts the compositor) are pushed
   # through `hyprctl eval`. builtins.replaceStrings (not pkgs.replaceVars): files.nix
   # assigns the lua text to a home-file `.text` entry, which must be a string.
-  hyprglassSetup = pkgs.writeShellScript "hyprglass-setup" ''
+  hyprglassSetup = pkgs.writeShellScriptBin "hyprglass-setup" ''
     hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
 
     # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
@@ -35,9 +35,9 @@ let
     $(cat ${pkgs.writeText "hyprglass.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprglass.lua"))})" || true
   '';
 
-  hyprlandLuaText = builtins.replaceStrings [ "@hyprglass_setup@" ] [ "${hyprglassSetup}" ] (
-    builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua")
-  );
+  hyprlandLuaText =
+    builtins.replaceStrings [ "@hyprglass_setup@" ] [ "${hyprglassSetup}/bin/hyprglass-setup" ]
+      (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
 {
   # System-level Hyprland pieces (hyprglass overlay) — consolidated here from
