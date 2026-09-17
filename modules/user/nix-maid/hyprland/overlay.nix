@@ -13,13 +13,20 @@
       # inputs.xdg-desktop-portal-hyprland.overlays.default  # disabled: see above
       (final: prev: {
         hyprglass = final.stdenv.mkDerivation {
+          # v0.8.1 targets Hyprland 0.56.2 (hyprpm.toml pin) — the 0.55 postPatch
+          # that rewrote m_realPosition/m_realSize/m_alpha is obsolete and gone.
+          # NOT loaded anywhere: on 2026-09-17 a live `hyprctl plugin load` of this
+          # build crashed the compositor twice (SIGABRT with the stack inside
+          # libhyprglass.so, +0x5a5cc — see ~/.cache/hyprland/hyprlandCrashReport*.txt);
+          # the watchdog then brought Hyprland up in --safe-mode. Re-test in a nested
+          # instance before wiring it into the config again.
           pname = "hyprglass";
-          version = "0.7.0";
+          version = "0.8.1";
           src = final.fetchFromGitHub {
             owner = "hyprnux";
             repo = "hyprglass";
-            rev = "v0.7.0";
-            hash = "sha256-x/584kY+XXlU/OWKtZAFo89VtowjLXs1DiP9PC0o0Os=";
+            rev = "v0.8.1";
+            hash = "sha256-yUU0gKu1CXqpUQBtyb3IWNBYZ1bCAm99mfTUV7ceJyg=";
           };
 
           nativeBuildInputs = with final; [ pkg-config ];
@@ -51,20 +58,6 @@
             lua
           ];
           env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
-
-          postPatch = ''
-            sed -i 's/layerSurface->alpha()\.getTotal()/layerSurface->m_alpha->value()/' src/main.cpp
-            sed -i 's/Desktop::viewState()->windows()/g_pCompositor->m_windows/' src/main.cpp
-            sed -i 's/window->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT)/window->m_realPosition->value()/' src/GlassDecoration.cpp
-            sed -i 's/window->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT)/window->m_realSize->value()/' src/GlassDecoration.cpp
-            sed -i 's/layerSurface->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT)/layerSurface->m_realPosition->value()/' src/LayerGeometry.hpp
-            sed -i 's/layerSurface->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT)/layerSurface->m_realSize->value()/' src/LayerGeometry.hpp
-            sed -i 's/layerSurface->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT)/layerSurface->m_realPosition->value()/' src/GlassLayerSurface.cpp
-            sed -i 's/layerSurface->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT)/layerSurface->m_realSize->value()/' src/GlassLayerSurface.cpp
-            sed -i 's/layerSurface->positionAnimation()->isBeingAnimated()/layerSurface->m_realPosition->isBeingAnimated()/g' src/GlassLayerSurface.cpp
-            sed -i 's/layerSurface->sizeAnimation()->isBeingAnimated()/layerSurface->m_realSize->isBeingAnimated()/g' src/GlassLayerSurface.cpp
-            sed -i 's/layerSurface->alpha()\[Desktop::View::LS_ALPHA_FADE\]->isBeingAnimated()/layerSurface->m_alpha->isBeingAnimated()/g' src/GlassLayerSurface.cpp
-          '';
 
           installPhase = ''
             mkdir -p $out/lib
