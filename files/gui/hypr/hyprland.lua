@@ -412,6 +412,43 @@ hl.workspace_rule({ workspace = "w[tv1]", gaps_out = 0, gaps_in = 0 })
 hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
 
 -- =====================================================================
+-- Scrolling layout (core since 0.55 — no plugin; the `layout = "scrolling"`
+-- workspace rules above select it per workspace)
+-- =====================================================================
+hl.config({
+  scrolling = {
+    column_width = 0.6, -- Denial-style: the focused column is a bit wider than half the screen
+    focus_fit_method = 0, -- 0 = keep the focused column centered (1 = fit it into view)
+    follow_focus = true,
+    follow_min_visible = 0.4,
+    direction = "right", -- new windows land to the right, the tape scrolls right
+    wrap_focus = true,
+    wrap_swapcol = true,
+    explicit_column_widths = "0.333, 0.5, 0.667, 1.0", -- cycled by colresize +conf/-conf
+  },
+})
+
+-- Trackpad: 3-finger swipe switches workspaces, 4-finger swipes scroll the tape.
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.gesture({ fingers = 4, direction = "horizontal", action = "scroll_move" })
+hl.gesture({ fingers = 3, direction = "down", mods = "ALT", action = "close" })
+
+-- Scrolling binds — brackets (free keys; M4+comma/period are the player)
+hl.bind(M4 .. "+bracketright", hl.dsp.layout("move +col"), { repeating = true })
+hl.bind(M4 .. "+bracketleft", hl.dsp.layout("move -col"), { repeating = true })
+hl.bind(M4 .. "+" .. SH .. "+bracketright", hl.dsp.layout("swapcol r"))
+hl.bind(M4 .. "+" .. SH .. "+bracketleft", hl.dsp.layout("swapcol l"))
+hl.bind(M4 .. "+" .. C .. "+bracketright", hl.dsp.layout("colresize +conf"), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+bracketleft", hl.dsp.layout("colresize -conf"), { repeating = true })
+hl.bind(M4 .. "+" .. M1 .. "+bracketright", hl.dsp.layout("promote")) -- window into its own column
+hl.bind(M4 .. "+" .. M1 .. "+bracketleft", hl.dsp.layout("fit_into_view"))
+hl.bind(M4 .. "+left", hl.dsp.focus({ direction = "left" }))
+hl.bind(M4 .. "+right", hl.dsp.focus({ direction = "right" }))
+
+-- Terminal columns start narrow (other windows use the 0.6 default)
+hl.window_rule({ name = "scrolling-term-width", match = { class = "^(term|nwim)$" }, scrolling_width = 0.5 })
+
+-- =====================================================================
 -- Animations (defined inline below; the old animations/ preset directory is gone)
 -- =====================================================================
 hl.curve("myBezier",      { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.05} } })
@@ -429,18 +466,31 @@ hl.curve("easeOutCirc",   { type = "bezier", points = { {0, 0.55}, {0.45, 1} } }
 hl.curve("easeOutExpo",   { type = "bezier", points = { {0.16, 1}, {0.3, 1} } })
 hl.curve("md2",           { type = "bezier", points = { {0.4, 0}, {0.2, 1} } })
 
-hl.animation({ leaf = "borderangle",      enabled = false, speed = 8,    bezier = "default" }) -- frameless
-hl.animation({ leaf = "windows",          enabled = true, speed = 0.35,  bezier = "md3_decel",  style = "popin 60%" })
-hl.animation({ leaf = "windowsIn",        enabled = true, speed = 0.35,  bezier = "md3_decel",  style = "popin 60%" })
-hl.animation({ leaf = "windowsOut",       enabled = true, speed = 0.35,  bezier = "md3_accel",  style = "popin 60%" })
+-- Spring curves: physics-based easing (mass 1; stiffness = speed, dampening = 1/bounce).
+-- Same model Denial uses for its shell (Flutter SpringDescription/SpringSimulation).
+-- `dampening` is the accepted spelling — the official example's "damping" fails to parse.
+hl.curve("spring_gentle", { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 }) -- Hyprland's shipped default spring
+hl.curve("spring_snappy", { type = "spring", mass = 1, stiffness = 500,       dampening = 30 })
+hl.curve("spring_soft",   { type = "spring", mass = 1, stiffness = 160,       dampening = 26 })
+
+-- NOTE: speed is a duration in ds (1 = 100 ms) — the previous 0.25–0.5 values meant
+-- 25–50 ms, i.e. animations were effectively instant. 4–6 ds is the smooth range.
+hl.animation({ leaf = "borderangle",      enabled = false, speed = 8,     bezier = "default" }) -- frameless
 hl.animation({ leaf = "border",           enabled = false, speed = 0.625, bezier = "default" }) -- frameless
-hl.animation({ leaf = "fade",             enabled = true, speed = 0.35,  bezier = "md3_decel" })
-hl.animation({ leaf = "layersIn",         enabled = true, speed = 0.5,   bezier = "menu_decel", style = "slide" })
-hl.animation({ leaf = "layersOut",        enabled = true, speed = 0.25,  bezier = "menu_accel" })
-hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 0.25,  bezier = "menu_decel" })
-hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 0.0625, bezier = "menu_accel" })
-hl.animation({ leaf = "workspaces",       enabled = true, speed = 0.3,   bezier = "menu_decel", style = "slide" })
-hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 0.35,  bezier = "md3_decel",  style = "slidefadevert 15%" })
+hl.animation({ leaf = "windows",          enabled = true, speed = 4.5, spring = "spring_snappy", style = "popin 60%" })
+hl.animation({ leaf = "windowsIn",        enabled = true, speed = 4.0, spring = "spring_snappy", style = "popin 60%" })
+hl.animation({ leaf = "windowsOut",       enabled = true, speed = 2.5, spring = "spring_snappy", style = "popin 60%" })
+-- windowsMove covers every in-between motion: tile rearranges, drag/resize AND the
+-- scrolling tape. This is what makes windows glide like Denial's.
+hl.animation({ leaf = "windowsMove",      enabled = true, speed = 4.5, spring = "spring_gentle" })
+hl.animation({ leaf = "fade",             enabled = true, speed = 3.0, spring = "spring_gentle" })
+hl.animation({ leaf = "fadeSwitch",       enabled = true, speed = 2.0, spring = "spring_snappy" })
+hl.animation({ leaf = "layersIn",         enabled = true, speed = 3.5,  bezier = "menu_decel", style = "slide" })
+hl.animation({ leaf = "layersOut",        enabled = true, speed = 2.5,  bezier = "menu_accel" })
+hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 2.5,  bezier = "menu_decel" })
+hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 1.5,  bezier = "menu_accel" })
+hl.animation({ leaf = "workspaces",       enabled = true, speed = 5.0, spring = "spring_gentle", style = "slide" })
+hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 4.5, spring = "spring_gentle", style = "slidefadevert 15%" })
 
 -- =====================================================================
 -- Window rules (rules.conf + workspaces.nix)
