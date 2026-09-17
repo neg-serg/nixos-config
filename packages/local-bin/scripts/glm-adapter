@@ -16,6 +16,7 @@
 #   glm-adapter host               # move the adapter back to the host (manual reserve)
 #   glm-adapter verify             # check the control chain only
 #   glm-adapter <cmd> --glm        # also OCR-check the GLM window inside the VM
+#   glm-adapter health             # VM liveness only (RDP port; `auto` heals it)
 #
 # Privileged unbind/bind calls use sudo — run `sudo -v` first to cache the
 # credentials, or run interactively.
@@ -51,6 +52,87 @@ qemu_usb() { local n=0; for d in /sys/bus/usb/devices/*/idVendor; do [ "$(cat "$
 host_present(){ lsusb 2>/dev/null | grep -q "$VID:$PID"; }
 host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
 
+# Container state, empty when the container is gone.
+ct_state() { timeout 10 podman inspect -f '{{.State.Status}}' "$CT" 2>/dev/null || true; }
+
+# RDP port of the guest — the liveness probe for the whole container, see
+# vm_unhealthy() below. 127.0.0.1 works because pasta/passt give the guest the
+# host's own address.
+vm_rdp_ok() { (exec 3<>/dev/tcp/127.0.0.1/3389) 2>/dev/null; }
+
+# Seconds since the container was started, taken from the mtime of the netns file
+# podman created for it: `.State.StartedAt` is Go-formatted ("… +0300 MSK") and
+# `date -d` cannot be relied on to parse the timezone abbreviation in the minimal
+# user-service environment. Fails (empty) when the netns file is gone.
+vm_uptime() {
+  local key started
+  key=$(timeout 10 podman inspect -f '{{.NetworkSettings.SandboxKey}}' "$CT" 2>/dev/null) || return 1
+  [ -n "$key" ] && [ -e "$key" ] || return 1
+  started=$(stat -c %Y "$key" 2>/dev/null) || return 1
+  echo $(( $(date +%s) - started ))
+}
+
+# `podman stop` returns as soon as the container is dead, but its rootfs is torn
+# down after that (fuse-overlayfs unmount + conmon scope exit). A `start` landing
+# inside that window loses the merged dir mid-boot — 2026-09-17 02:46:
+#   power.sh: line 480: touch: command not found
+#   server.sh: line 273: /usr/bin/rm: Transport endpoint is not connected
+#   ❯ ERROR: QEMU exited unexpectedly!
+# So wait for `exited`, for the overlay to be unmounted, and for conmon to be reaped.
+wait_teardown() {
+  local i st upper merged
+  st=""
+  for i in $(seq 1 60); do
+    st=$(ct_state)
+    if [ "$st" = "exited" ] || [ -z "$st" ]; then break; fi
+    sleep 1
+  done
+  if [ -n "$st" ] && [ "$st" != "exited" ]; then
+    warn "container '$CT' is still '$st' after 60 s"
+    return 1
+  fi
+  upper=$(timeout 10 podman inspect -f '{{.GraphDriver.Data.UpperDir}}' "$CT" 2>/dev/null) || upper=""
+  if [ -n "$upper" ]; then
+    merged="${upper%/diff}/merged"
+    for i in $(seq 1 30); do
+      grep -qF "$merged" /proc/self/mountinfo 2>/dev/null || break
+      sleep 1
+    done
+    if grep -qF "$merged" /proc/self/mountinfo 2>/dev/null; then
+      warn "container rootfs is still mounted ($merged) — unmounting"
+      fusermount3 -u "$merged" 2>/dev/null || warn "could not unmount $merged"
+    fi
+  fi
+  sleep 2 # let conmon / the container scope finish exiting
+}
+
+# One stop → teardown → start cycle; 0 when the container is back up with the
+# adapter attached. Split out of vm_restart so a cycle killed by a straggler
+# podman operation can be retried once.
+vm_cycle() {
+  timeout 180 podman stop "$CT" >/dev/null 2>&1 || warn "podman stop '$CT' failed — starting anyway"
+  wait_teardown || warn "teardown did not finish cleanly — starting anyway"
+  timeout 120 podman start "$CT" >/dev/null 2>&1 || {
+    fail "podman start '$CT' failed"
+    return 1
+  }
+  # A start that a straggler podman operation kills dies within seconds (on
+  # 2026-09-17 02:46:39 the fresh container was dead 0.3 s after start), so wait
+  # before believing it — and before touching the netns of a dead container.
+  sleep 5
+  [ "$(vm_running)" = 1 ] || return 1
+  fix_vm_net
+  # qemu_usb alone lies here: the dying QEMU still holds the adapter for a few
+  # seconds, so on 02:46 the restart reported "ok adapter attached" while the
+  # container was already dead. Require a running container as well.
+  for i in $(seq 1 28); do
+    if [ "$(vm_running)" = 1 ] && [ "$(qemu_usb)" -ge 1 ]; then return 0; fi
+    sleep 2
+  done
+  return 1
+}
+
+
 # A fresh QEMU is the only thing that opens a passed-through device again (see
 # the header), so a lost adapter is healed by restarting the VM. Rate-limited
 # with a leaky bucket: a flapping adapter must not turn into a reboot loop, but
@@ -60,6 +142,12 @@ STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/glm-adapter"
 RESTART_LOG="$STATE_DIR/restart.log"
 NOTIFY_STATE="$STATE_DIR/notify-state"
 RESTART_MAX_PER_HOUR=3
+
+# RDP liveness probe — see vm_unhealthy(): the guest's RDP port, two consecutive
+# strikes (a Windows Update reboot closes it too), never a fresh container.
+RDP_GRACE=300
+RDP_STRIKES=2
+RDP_STRIKES_FILE="$STATE_DIR/rdp.strikes"
 
 # Telegram goes through the root-side webhook bridge that already serves
 # Alertmanager (telegram-alert-bridge on 127.0.0.1:9094): it owns the SOPS
@@ -109,9 +197,63 @@ fix_vm_net() {
   fi
 }
 
-vm_restart() {
-  local now recent i
+# The dockur container can be `Up` with its host-side plumbing already dead: qemu
+# keeps running, so `podman ps` stays green while the pasta helper that owns the
+# published ports is gone — nothing listens on 127.0.0.1:3389/8006, every
+# `podman exec` fails with `crun: open …: Transport endpoint is not connected`,
+# and the MIDI bridge/proxy lose the guest (2026-09-17 03:00 → 04:25: a `start`
+# landing next to a straggler stop left the VM unreachable for 1.5 h while
+# glm-adapter-auto kept reporting a healthy VM). Only a fresh stop+start brings
+# the plumbing back, so the RDP port is the liveness probe for the container as a
+# whole: a Windows Update reboot also closes :3389, hence RDP_STRIKES consecutive
+# failures, and a container younger than RDP_GRACE is never touched, so a booting
+# guest cannot be restarted mid-flight.
+#
+# 0 = the VM looks dead (cmd_auto restarts it); 1 = alive, too young to judge, or
+# strikes not reached yet. A manual `glm-adapter health` only reports.
+vm_unhealthy() {
+  local now count up
+  [ "$(vm_running)" = 1 ] || return 1
+  if vm_rdp_ok; then
+    rm -f "$RDP_STRIKES_FILE"
+    return 1
+  fi
+  # An unreadable uptime (netns file gone) must not look like a young container —
+  # that is exactly the broken-plumbing case this check exists for.
+  up=$(vm_uptime) || up=""
+  if [ -n "$up" ] && [ "$up" -lt "$RDP_GRACE" ]; then
+    rm -f "$RDP_STRIKES_FILE"
+    return 1
+  fi
   mkdir -p "$STATE_DIR"
+  now=$(date +%s)
+  count=0
+  if [ -f "$RDP_STRIKES_FILE" ]; then
+    count=$(cat "$RDP_STRIKES_FILE" 2>/dev/null) || count=0
+    case $count in '' | *[!0-9]*) count=0 ;; esac
+    # A gap longer than 10 min (timer stopped, machine suspended) re-arms the count.
+    if [ $((now - $(stat -c %Y "$RDP_STRIKES_FILE" 2>/dev/null || echo "$now"))) -ge 600 ]; then
+      count=0
+    fi
+  fi
+  count=$((count + 1))
+  printf '%s\n' "$count" > "$RDP_STRIKES_FILE"
+  [ "$count" -ge "$RDP_STRIKES" ]
+}
+
+vm_restart() {
+  local now recent i why okmsg
+  why="${1:-GLM-адаптер отвалился от VM}"
+  okmsg="${2:-таз: перезапущен, адаптер снова в VM (usbfs) — GLM поднимется сам}"
+  mkdir -p "$STATE_DIR"
+  # One restart at a time: the 60 s timer and a manual `glm-adapter attach` can
+  # otherwise run two stop/start sequences on the same container — the very race
+  # wait_teardown() exists for.
+  exec 8>"$STATE_DIR/restart.lock"
+  if ! flock -n 8; then
+    warn "another restart is already in progress — skipping"
+    return 1
+  fi
   now=$(date +%s)
   recent=0
   if [ -f "$RESTART_LOG" ]; then
@@ -122,36 +264,30 @@ vm_restart() {
   fi
   if [ "$recent" -ge "$RESTART_MAX_PER_HOUR" ]; then
     warn "VM restart suppressed: $recent restarts within the last hour"
-    notify_once "suppressed" firing "таз: адаптер снова не в VM, но перезапусков уже $recent за час — не перезапускаю, проверь кабель/порт адаптера"
+    notify_once "suppressed" firing "таз: $why, но перезапусков уже $recent за час — не перезапускаю, проверь VM вручную"
     return 1
   fi
-  warn "restarting VM '$CT' (QEMU claims the adapter only at its own start)"
-  notify firing "таз: GLM-адаптер отвалился от VM — перезапускаю (Windows поднимется за ~1 мин)"
+  warn "restarting VM '$CT' ($why)"
+  notify firing "таз: $why — перезапускаю (Windows поднимется за ~1 мин)"
   echo "$now" >> "$RESTART_LOG"
   # stop + start, not `podman restart`: an automatic restart was followed by a
   # container with only `lo` inside and an empty route table (no pasta tap, no
   # copied host addresses), so nothing the guest sent could reach the host
   # (:9003 relay, 10811/10812 proxy) and the MIDI bridge kept a dead connection.
   # An explicit stop + start is the sequence that was verified to bring the
-  # pasta interface (net1) and its addresses back.
-  timeout 180 podman stop "$CT" >/dev/null 2>&1 || warn "podman stop '$CT' failed — starting anyway"
-  timeout 120 podman start "$CT" >/dev/null 2>&1 || {
-    fail "podman start '$CT' failed"
-    notify firing "таз: не получилось перезапустить контейнер — смотри podman logs windows"
-    return 1
-  }
-  fix_vm_net
-  for i in $(seq 1 30); do
-    if [ "$(qemu_usb)" -ge 1 ]; then
-      notify resolved "таз: перезапущен, адаптер снова в VM (usbfs) — GLM поднимется сам"
-      notify_reset
-      return 0
+  # pasta interface (net1) and its addresses back. The stop must also be
+  # *finished* (rootfs unmounted, conmon reaped) before the start — wait_teardown().
+  if ! vm_cycle; then
+    warn "VM did not come back up — retrying the restart once"
+    if ! vm_cycle; then
+      fail "container '$CT' is not up with the adapter attached after two restarts (podman logs windows)"
+      notify_once "failed" firing "таз: перезапуск не помог — $why, проверь VM вручную"
+      return 1
     fi
-    sleep 2
-  done
-  fail "adapter still not attached after the restart"
-  notify_once "failed" firing "таз: перезапуск не помог — адаптер всё ещё не в VM, проверь кабель/порт адаптера"
-  return 1
+  fi
+  notify resolved "$okmsg"
+  notify_reset
+  return 0
 }
 
 adapter_dev() {
@@ -189,6 +325,7 @@ verify_chain() {
   echo "--- control chain ---"
   if ss -tln 2>/dev/null | grep -q ':9003 '; then ok "relay listening :9003 (glm-midi-relay)"; else warn "relay not listening on :9003"; fi
   if ss -tln 2>/dev/null | grep -q ':9004 '; then ok "relay listening :9004 (glm-midi)"; else warn "relay not listening on :9004"; fi
+  if [ "$(vm_running)" = 1 ] && ! vm_rdp_ok; then warn "VM is Up but RDP (:3389) is dead — the host-side plumbing is gone (see glm-adapter health)"; fi
   if ss -tn 2>/dev/null | grep -q ':9003 '; then ok "VM bridge connected to :9003"; else warn "VM bridge NOT connected (check Windows autostart)"; fi
   if [ -f "$STATE" ]; then echo "       state: $(cat "$STATE") dB (quickshell display)"; else warn "no state file $STATE"; fi
   if [ "$DO_GLM" = 1 ]; then check_glm_vm; fi
@@ -264,6 +401,17 @@ cmd_auto() {
   # belongs to the VM whenever the VM runs and never moves back to the host on
   # its own (host control stays available manually: `glm-adapter host`).
   # Idempotent — this is the entry point of the glm-adapter-auto timer.
+  # Liveness first: with dead pasta/netns plumbing the container is Up while
+  # nothing can reach the guest, and that has to be fixed before an adapter check
+  # is meaningful (see vm_unhealthy).
+  if vm_unhealthy; then
+    warn "VM '$CT' is Up but 127.0.0.1:3389 is dead — the host-side plumbing is gone"
+    if vm_restart "контейнер Up, но RDP-порт мёртв — умерла обвязка pasta" "таз: перезапущен, обвязка pasta поднята — Windows грузится, RDP через ~1-2 мин"; then
+      rm -f "$RDP_STRIKES_FILE"
+      ok "VM restarted — the guest is booting, RDP answers within ~1-2 min"
+    fi
+    return 0
+  fi
   if [ "$(vm_running)" != 1 ]; then
     notify_reset
     return 0
@@ -301,11 +449,32 @@ cmd_host() {
 
 cmd_verify() { verify_chain; }
 
+# Liveness only: `auto` heals (restarts), this reports — the manual counterpart of
+# vm_unhealthy(), plus the published port of the web viewer.
+cmd_health() {
+  echo "=== VM liveness ==="
+  if [ "$(vm_running)" != 1 ]; then
+    echo "  VM: not running"
+    return 0
+  fi
+  echo "  VM: Up for $(vm_uptime || echo '?') s"
+  if vm_rdp_ok; then
+    ok "RDP 127.0.0.1:3389 answers"
+  else
+    fail "RDP 127.0.0.1:3389 is dead — host-side plumbing gone ('glm-adapter auto' restarts the VM)"
+  fi
+  if ss -tln 2>/dev/null | grep -q ':8006 '; then ok "web viewer listening on :8006"; else warn "web viewer not listening on :8006"; fi
+  if [ -f "$RDP_STRIKES_FILE" ]; then
+    echo "       consecutive RDP failures: $(cat "$RDP_STRIKES_FILE") (restart at $RDP_STRIKES)"
+  fi
+}
+
 case "${1:-attach}" in
   status) cmd_status ;;
   auto) cmd_auto ;;
   attach) cmd_attach ;;
   host|detach) cmd_host ;;
   verify) cmd_verify ;;
-  *) echo "usage: $0 {status|auto|attach|host|verify} [--glm]" >&2; exit 1 ;;
+  health) cmd_health ;;
+  *) echo "usage: $0 {status|auto|attach|host|verify|health} [--glm]" >&2; exit 1 ;;
 esac
