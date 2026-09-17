@@ -469,30 +469,31 @@ hl.curve("md2",           { type = "bezier", points = { {0.4, 0}, {0.2, 1} } })
 -- Spring curves: physics-based easing (mass 1; stiffness = speed, dampening = 1/bounce).
 -- Same model Denial uses for its shell (Flutter SpringDescription/SpringSimulation).
 -- `dampening` is the accepted spelling — the official example's "damping" fails to parse.
--- Damping ratios sit just under 1.0, so each motion settles without wobble: a short
--- duration still reads as smooth instead of abrupt.
-hl.curve("spring_crisp",  { type = "spring", mass = 1, stiffness = 750, dampening = 38 }) -- windows / fades (~0.17 s)
-hl.curve("spring_glide",  { type = "spring", mass = 1, stiffness = 600, dampening = 34 }) -- long travel: tape, workspaces
+-- Both curves are critically damped (dampening = 2*sqrt(stiffness)): the motion ends
+-- sharply instead of dragging out an exponential tail, which is what reads as "slow"
+-- even at short durations. No overshoot, no wobble.
+hl.curve("spring_crisp",  { type = "spring", mass = 1, stiffness = 900, dampening = 60 })   -- windows / fades
+hl.curve("spring_glide",  { type = "spring", mass = 1, stiffness = 700, dampening = 52.915 }) -- long travel: tape, workspaces
 hl.curve("spring_gentle", { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 }) -- Hyprland's shipped default, kept for tuning
 
--- NOTE: speed is a duration in ds (1 = 100 ms). The values below are fast (~0.15–0.27 s)
--- but still eased; bump a single leaf by ~1 ds if it starts to feel hasty.
+-- NOTE: speed is a duration in ds (1 = 100 ms). Windows settle in ~0.14-0.2 s here;
+-- a single leaf can be raised by ~1 ds on its own if it feels hasty.
 hl.animation({ leaf = "borderangle",      enabled = false, speed = 8,     bezier = "default" }) -- frameless
 hl.animation({ leaf = "border",           enabled = false, speed = 0.625, bezier = "default" }) -- frameless
-hl.animation({ leaf = "windows",          enabled = true, speed = 2.4, spring = "spring_crisp", style = "popin 60%" })
-hl.animation({ leaf = "windowsIn",        enabled = true, speed = 2.2, spring = "spring_crisp", style = "popin 60%" })
-hl.animation({ leaf = "windowsOut",       enabled = true, speed = 1.5, spring = "spring_crisp", style = "popin 60%" })
+hl.animation({ leaf = "windows",          enabled = true, speed = 1.8, spring = "spring_crisp", style = "popin 60%" })
+hl.animation({ leaf = "windowsIn",        enabled = true, speed = 1.7, spring = "spring_crisp", style = "popin 60%" })
+hl.animation({ leaf = "windowsOut",       enabled = true, speed = 1.3, spring = "spring_crisp", style = "popin 60%" })
 -- windowsMove covers every in-between motion: tile rearranges, drag/resize AND the
 -- scrolling tape. This is what makes windows glide like Denial's.
-hl.animation({ leaf = "windowsMove",      enabled = true, speed = 2.6, spring = "spring_glide" })
-hl.animation({ leaf = "fade",             enabled = true, speed = 1.8, spring = "spring_crisp" })
-hl.animation({ leaf = "fadeSwitch",       enabled = true, speed = 1.4, spring = "spring_crisp" })
-hl.animation({ leaf = "layersIn",         enabled = true, speed = 2.2, bezier = "menu_decel", style = "slide" })
-hl.animation({ leaf = "layersOut",        enabled = true, speed = 1.5, bezier = "menu_accel" })
-hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 1.8, bezier = "menu_decel" })
-hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 1.0, bezier = "menu_accel" })
-hl.animation({ leaf = "workspaces",       enabled = true, speed = 2.6, spring = "spring_glide", style = "slide" })
-hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 2.4, spring = "spring_glide", style = "slidefadevert 15%" })
+hl.animation({ leaf = "windowsMove",      enabled = true, speed = 2.0, spring = "spring_glide" })
+hl.animation({ leaf = "fade",             enabled = true, speed = 1.5, spring = "spring_crisp" })
+hl.animation({ leaf = "fadeSwitch",       enabled = true, speed = 1.2, spring = "spring_crisp" })
+hl.animation({ leaf = "layersIn",         enabled = true, speed = 1.8, bezier = "menu_decel", style = "slide" })
+hl.animation({ leaf = "layersOut",        enabled = true, speed = 1.3, bezier = "menu_accel" })
+hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 1.5, bezier = "menu_decel" })
+hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 0.9, bezier = "menu_accel" })
+hl.animation({ leaf = "workspaces",       enabled = true, speed = 2.0, spring = "spring_glide", style = "slide" })
+hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 1.9, spring = "spring_glide", style = "slidefadevert 15%" })
 
 -- =====================================================================
 -- Window rules (rules.conf + workspaces.nix)
