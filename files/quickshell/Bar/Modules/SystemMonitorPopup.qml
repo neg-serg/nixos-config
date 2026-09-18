@@ -363,6 +363,7 @@ PanelOverlaySurface {
         }
 
         Row {
+            id: gridRow
             width: parent.width
             spacing: 10
             Repeater {
@@ -372,7 +373,11 @@ PanelOverlaySurface {
                     { value: function() { return root.serviceCount.toString(); }, label: "Services",  warn: false }
                 ]
                 delegate: Rectangle {
-                    width: (parent.width - parent.spacing * 2) / 3
+                    // `parent` is the Repeater, which has no `spacing` property:
+                    // the expression was (width - undefined*2)/3 = NaN, and Qt
+                    // silently fell back to the implicit width. The gap belongs to
+                    // the Row that holds the Repeater.
+                    width: (parent.width - gridRow.spacing * 2) / 3
                     height: root._cardH
                     radius: Math.round(6 * Theme.scale(root.screen))
                     color: root.cardBg
