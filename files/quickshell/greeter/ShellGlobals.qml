@@ -11,7 +11,16 @@ import Quickshell
 // with hardcoded fallback defaults for when the file is unavailable.
 Singleton {
 	id: root
-	readonly property string rtpath: "/tmp/quickshell-greeter"
+	// Per-session scratch (screenshot of the locked screen), so it belongs in
+// XDG_RUNTIME_DIR (0700, cleared on logout) rather than the fixed, world-
+// writable /tmp path it used to be — a predictable name there is a symlink
+// target for any other process, and leftovers survive the session. The
+// greeter runs before any user config is read, so the fallback mirrors what
+// the shell scripts do with `${XDG_RUNTIME_DIR:-/run/user/$(id -u)}`.
+readonly property string rtpath: {
+const dir = Quickshell.env("XDG_RUNTIME_DIR");
+return (dir && dir !== "") ? (dir + "/quickshell-greeter") : ("/run/user/" + Quickshell.env("UID") + "/quickshell-greeter");
+}
 
 	readonly property var colors: QtObject {
 		readonly property color bar: GreeterTheme.barColor
