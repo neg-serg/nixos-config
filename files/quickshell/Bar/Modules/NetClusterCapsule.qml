@@ -58,16 +58,13 @@ ConnectivityCapsule {
     readonly property string _richThroughputText: _formatThroughputRich(throughputText)
 
     // Stacked (two-row) layout properties
-    // Two-row RX/TX readout. The rows are rendered flat: no dimmed leading zeros,
-    // no downscaled decimal dot, no accent-coloured unit letter — with those the
-    // top row measured 140 mean ink luminance against 175 on the bottom row, i.e.
-    // half of the readout looked lighter than the rest. Glyphs and metrics unchanged.
-    readonly property string _rxRichText: Theme.networkCapsuleStacked
-        ? _uniformReadout(ConnUi.formatRxText(throughputText))
-        : _dimLeadingZeros(ConnUi.formatRxText(throughputText))
-    readonly property string _txRichText: Theme.networkCapsuleStacked
-        ? _uniformReadout(ConnUi.formatTxText(throughputText))
-        : _dimLeadingZeros(ConnUi.formatTxText(throughputText))
+    // Two-row RX/TX readout, in both layouts: leading zeros dimmed, the decimal
+    // dot at 70%, the unit letter (M/G/T) in the accent colour. The stacked rows
+    // used to go through a flat variant that dropped all three, which is what the
+    // readout was then: plain text, no highlight on the unit letter, nothing to
+    // tell a leading zero from a significant digit.
+    readonly property string _rxRichText: _dimLeadingZeros(ConnUi.formatRxText(throughputText))
+    readonly property string _txRichText: _dimLeadingZeros(ConnUi.formatTxText(throughputText))
     readonly property int _stackedRowFontPx: Math.max(8, Math.round(labelPixelSize * 0.7))
 
     // Hiddify tray menu popup
@@ -190,17 +187,6 @@ ConnectivityCapsule {
     readonly property string _dimZeroCss: Format.colorCss(Theme.textDisabled, 1)
     readonly property color _unitAccentColor: Color.matchLightness(accentColor, Theme.textDisabled)
     readonly property string _unitAccentCss: Format.colorCss(_unitAccentColor, 1)
-
-    // Flat readout for the stacked rows: same glyphs as _dimLeadingZeros() (leading
-    // zeros kept so the numbers do not jitter, trailing "K" still hidden) but every
-    // glyph in one single colour — no dimmed prefix, no 70% decimal dot, no accent
-    // unit letter, so both rows read as one even block.
-    function _uniformReadout(side) {
-        var s = (side === undefined || side === null) ? "" : String(side);
-        if (s.slice(-1) === "K")
-            s = s.slice(0, -1);
-        return Rich.esc(s);
-    }
 
     // Dim leading zeros and unit suffix in "NNN.DU" or "NNNU" formatted string
     function _dimLeadingZeros(side) {
