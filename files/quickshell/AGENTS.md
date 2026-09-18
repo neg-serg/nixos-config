@@ -12,6 +12,36 @@ Relevant docs and scripts
 - scripts/compile_shaders.sh — compile all `shaders/*.frag` to `.qsb` using Qt 6 Shader Tools.
 - README.md — quick links and a wedge shader checklist.
 
+Greeter tree is a fork, not a copy (`greeter/`)
+
+- The greeter runs as a different user (`greeter`), with its own
+  `XDG_CONFIG_HOME` and its own entry point: greetd launches
+  `qs -p /etc/greetd/quickshell/greeter/greeter.qml` (see
+  `files/gui/hypr/greetd.lua`). It does **not** import the main tree: the only
+  `qs.*` imports in `greeter/` are its own submodules (`qs.lock`, `qs.bar.*`,
+  `qs.notifications`, …). `greeter/ShellGlobals.qml` states the reason: the
+  greeter must come up with no user config at all, so it cannot depend on
+  `qs.Settings` or `Theme`.
+- Eight file names exist in both trees (Bar.qml, ClockWidget.qml,
+  DaemonNotification.qml, NotificationDisplay.qml, NotificationManager.qml,
+  NotificationOverlay.qml, TrackedNotification.qml, shell.qml) and **all eight
+  differ**, e.g. `Bar.qml` is 1095 lines in the bar and 93 in the greeter. The
+  same is true of the notification stack the two trees both have: its four files
+  differ in size and structure from the bar's. There is no shared code to lift —
+  a search for identical bodies across the two trees finds none.
+- What that means in practice: a change to notifications/bar rendering in the
+  main tree does **not** reach the greeter, and vice versa. When you touch
+  `Notifications/*`, `Bar/Bar.qml` or `Components/*` and the change concerns what
+  a user sees, check the greeter's counterpart by name before assuming it is
+  fine; when the fix only makes sense for one tree, leave the other alone and say
+  so in the commit message.
+- Renaming the greeter's files to make the pairs obvious was considered and
+  skipped: the names are how the pairs are found, the entry point path is
+  referenced outside the tree (greetd), and a rename would not remove the
+  duplication — it would only hide the correspondence.
+- The greeter is linted by the same qmllint gate (`scripts/dev/check-qml-lint.sh`
+  covers `files/quickshell` in full, greeter included).
+
 Shader build rules (Qt 6)
 
 - Always compile fragment shaders to `.qsb` with: `qsb --glsl "100es,120,150"`.
