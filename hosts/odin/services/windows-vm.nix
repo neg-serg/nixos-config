@@ -41,6 +41,20 @@ let
     ${builtins.readFile ../../../packages/local-bin/scripts/glm-vm-netfix}
   '';
 
+  # Guest shutdown for the ExecStop path. `podman stop` alone is not enough: it
+  # relies on dockur's own SIGTERM handler, which needs the container's plumbing
+  # to still be alive — on 2026-09-17 13:44 it was not (`Warning: QEMU PID file
+  # does not exist?`, rootfs already unmounted), no ACPI was ever sent, and the
+  # SIGKILL at the stop timeout left a dirty NTFS that booted into WinRE
+  # "Automatic Repair" (14 h of a VM that looked up while serving nothing).
+  # windows-vm-stop asks the guest to power off through the QEMU monitor itself and
+  # waits for the rootfs teardown, so a shutdown rides on the ACPI path and not on
+  # whatever state podman is in.
+  stopVm = pkgs.writeShellScript "windows-vm-stop" ''
+    export PODMAN=${podman}
+    ${builtins.readFile ../../../packages/local-bin/scripts/windows-vm-stop}
+  '';
+
   startVm = pkgs.writeShellScript "windows-vm-start" ''
     if ! ${podman} container exists windows; then
       echo "container 'windows' does not exist — recreate it (docs/howto/windows-vm-dockur.md)" >&2
@@ -57,18 +71,28 @@ in
   # Rootless podman runs under the user manager, so the VM is a user unit. The
   # glm-adapter self-heal path reports through the Alertmanager Telegram bridge
   # on 127.0.0.1:9094 (see packages/local-bin/scripts/glm-adapter, notify*).
+
   systemd.user.services.windows-vm = {
     description = "dockur Windows VM (GLM control path)";
     after = [ "network-online.target" ];
-    wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStartPre = waitForAdapter;
       ExecStart = startVm;
       ExecStartPost = netfix;
+      # `systemctl --user start windows-vm` is a no-op while the unit is active,
+      # even after a container stopped outside systemd (RemainAfterExit keeps it
+      # active) — use `restart`: it runs ExecStop first and always ends running.
+      # ACPI shutdown of the guest (see stopVm), started early enough at host
+      # shutdown that podman's 120 s stop timeout never has to kill QEMU.
+      ExecStop = stopVm;
       # `podman start` returns as soon as QEMU is detached; the guest keeps booting.
       TimeoutStartSec = 180;
+      # Must cover ACPI_WAIT + STOP_WAIT of windows-vm-stop (180 + 120 s) plus the
+      # rootfs teardown, otherwise systemd SIGKILLs the stop script and we are back
+      # to a hard power-off.
+      TimeoutStopSec = 360;
     };
   };
 }
