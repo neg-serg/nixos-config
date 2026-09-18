@@ -1,5 +1,5 @@
 module qs.lock
-Controller 1.0 Controller.qml
+singleton Controller 1.0 Controller.qml
 GreeterContext 1.0 GreeterContext.qml
 LockButton 1.0 LockButton.qml
 LockContent 1.0 LockContent.qml

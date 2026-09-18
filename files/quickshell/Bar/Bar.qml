@@ -1024,7 +1024,7 @@ Scope {
                             rightPanel._lastAlbum = album;
                             if (albumChanged && (MusicManager.trackTitle || MusicManager.trackArtist)) {
                                 if (dbg) console.debug("[qs-music] track-change -> showAt (new album)");
-                                rootScope.sidebarPopup && rootScope.sidebarPopup.showAt();
+                                if (rootScope.sidebarPopup) rootScope.sidebarPopup.showAt();
                             }
                         } catch (e) { /* ignore */ }
                     }

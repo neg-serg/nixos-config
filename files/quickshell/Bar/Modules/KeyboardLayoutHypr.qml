@@ -213,7 +213,11 @@ CenteredCapsuleRow {
         return (String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"));
     }
     function deviceAllowed(name, identifier) {
-        const needle = (kb.deviceMatch || kb.deviceName || "").toLowerCase().trim();
+        // `deviceMatch` was never a property of this component (the pinned device
+        // is `deviceName`, with `deviceNeedle` as the normalized alternative), so
+        // the first operand was always undefined and the function silently
+        // matched only on the device name.
+        const needle = (kb.deviceNeedle || kb.deviceName || "").toLowerCase().trim();
         if (!needle)
             return true;
         const n1 = (name || "").toLowerCase();
@@ -227,7 +231,7 @@ CenteredCapsuleRow {
         if (!Array.isArray(list) || list.length === 0)
             return null;
         // 1) If explicitly matched/pinned, honor it
-        const needle = (kb.deviceMatch || kb.deviceName || "").toLowerCase().trim();
+        const needle = (kb.deviceNeedle || kb.deviceName || "").toLowerCase().trim();
         if (needle.length) {
             for (let k of list) {
                 if ((k.name || "").toLowerCase().includes(needle) || (k.identifier || "").toLowerCase().includes(needle) || norm(k.name).includes(norm(needle)) || norm(k.identifier).includes(norm(needle)))
