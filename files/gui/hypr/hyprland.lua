@@ -202,10 +202,6 @@ hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
 hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
--- Tray/app menus in a vicinae mini window: menu-search walks every
--- StatusNotifierItem's DBusMenu (submenus included), so a menu entry is a hotkey
--- plus a few letters instead of a mouse hunt through the tray icons.
-hl.bind(M4 .. "+" .. SH .. "+b", hl.dsp.exec_cmd("menu-search"), { locked = true })
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 -- Pseudo-fullscreen (maximize) toggle: fills the work area but stays a normal
@@ -276,7 +272,10 @@ hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch
 -- hyprwhspr-rs dictation: hold ALT+` to talk (released fires on key up)
 hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record start"))
 hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record stop"), { release = true })
-hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("~/.local/bin/main-menu"))
+-- One search window for the tray/app menus (StatusNotifierItem DBusMenus, submenus
+-- included) *and* the main-menu helper actions — menu-search lists both and fires
+-- the chosen entry. Replaces the bare main-menu picker on this hotkey.
+hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("menu-search"), { locked = true })
 hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grim -l 0 "$shot" && pic-info "$shot"'))
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grim -l 0 -g "$(slurp)" "$shot" && pic-info "$shot"'))
 hl.bind(M4 .. "+" .. SH .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec screen"))
