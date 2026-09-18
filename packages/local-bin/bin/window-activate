@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""window-activate — raise a Hyprland window by class or title.
+
+Why this exists
+---------------
+Qt's Wayland client implements no `xdg-activation` at all: it never asks the
+compositor to focus a window, so `QWindow::requestActivate()` is a no-op. That
+is exactly what Telegram's tray entry "Open Telegram" does internally
+(Telegram's Tray calls `Application::activate()` → `widget->activateWindow()`),
+and why clicking it — from the tray or from menu-search — changes nothing.
+
+Hyprland can still be asked directly, through the Lua `focus` dispatcher:
+
+    hyprctl dispatch 'hl.dsp.focus({ window = "class:^(org\\.telegram\\.desktop)$" })'
+
+Unlike the raw `focuswindow` dispatcher this is the Lua-config landing path, and
+it focuses the window even when it lives on a hidden special workspace (which is
+where the Telegram scratchpad keeps it), bringing that workspace up with it.
+
+This script is the missing piece as a CLI: match a window, focus it, say what
+happened.
+
+Usage
+-----
+  window-activate --list                        every window: "class<TAB>title"
+  window-activate org.telegram.desktop          exact class
+  window-activate --class telegram --substring  case-insensitive substring
+  window-activate --title 'птичка'              case-insensitive substring
+
+Exit codes: 0 raised (or listed), 1 nothing matched, 2 usage / no hyprctl.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import shutil
+import subprocess
+import sys
+
+
+def hyprctl(*args: str, timeout: float = 10.0) -> str:
+    exe = shutil.which("hyprctl")
+    if not exe:
+        raise RuntimeError("hyprctl not found — window-activate drives Hyprland")
+    try:
+        proc = subprocess.run([exe, *args], capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"hyprctl {' '.join(args)} timed out")
+    if proc.returncode != 0:
+        raise RuntimeError(f"hyprctl {' '.join(args)} failed: {proc.stderr.strip() or proc.stdout.strip()}")
+    return proc.stdout
+
+
+def windows() -> list[dict]:
+    out = hyprctl("clients", "-j")
+    try:
+        data = json.loads(out)
+    except json.JSONDecodeError:
+        # An empty client list makes some hyprland versions print nothing at all.
+        return []
+    return [w for w in data if isinstance(w, dict)]
+
+
+def workspace_of(window: dict) -> str:
+    ws = window.get("workspace") or {}
+    return str(ws.get("name") or ws.get("id") or "?")
+
+
+def lua_string(value: str) -> str:
+    """A Lua string literal safe to paste into `hyprctl dispatch`."""
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def matches(window: dict, want_class: str | None, want_title: str | None, substring: bool) -> bool:
+    cls = str(window.get("class") or window.get("initialClass") or "")
+    title = str(window.get("title") or "")
+    if want_class:
+        if substring:
+            if want_class.lower() in cls.lower():
+                return True
+        elif cls == want_class:
+            return True
+    if want_title and want_title.lower() in title.lower():
+        return True
+    return False
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="window-activate",
+        description="Raise a Hyprland window by class or title, special workspaces included.",
+    )
+    parser.add_argument("window_class", nargs="?", help="exact window class, unless --class is given")
+    parser.add_argument("--class", dest="class_opt", help="exact window class")
+    parser.add_argument("--title", help="case-insensitive substring of the window title")
+    parser.add_argument("--substring", action="store_true", help="treat the class as a case-insensitive substring")
+    parser.add_argument("--list", action="store_true", help="print 'class<TAB>title' for every window and exit")
+    args = parser.parse_args(argv)
+
+    want_class = args.class_opt or args.window_class
+    if not args.list and not want_class and not args.title:
+        parser.error("a window class, --class, --title or --list is required")
+
+    try:
+        open_windows = windows()
+    except RuntimeError as exc:
+        print(f"window-activate: {exc}", file=sys.stderr)
+        return 2
+
+    if args.list:
+        for w in open_windows:
+            print(f"{w.get('class', '?')}\t{w.get('title', '')}\t[{workspace_of(w)}]")
+        return 0
+
+    target = next((w for w in open_windows if matches(w, want_class, args.title, args.substring)), None)
+    if target is None:
+        print(f"window-activate: no window matched {want_class or args.title!r}", file=sys.stderr)
+        return 1
+
+    cls = str(target.get("class") or target.get("initialClass") or "")
+    # Anchored so `class:^(org.telegram.desktop)$` cannot match a longer class by accident.
+    selector = f"class:^({re.escape(cls)})$"
+    try:
+        hyprctl("dispatch", f"hl.dsp.focus({{ window = {lua_string(selector)} }})")
+    except RuntimeError as exc:
+        print(f"window-activate: {exc}", file=sys.stderr)
+        return 2
+
+    print(f"window-activate: {target.get('title', '?')} ({cls}, {workspace_of(target)})", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
