@@ -211,6 +211,15 @@ hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty --class torrmen
 hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty --class vpn -e tun status' special"))
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch mixer 'kitty --class mixer -e ncpamixer' special"))
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
+-- --- Overview (hyprexpo) ───────────────────────────────────────────────
+-- The dispatcher goes through hyprctl eval on purpose: hyprexpo is dlopen'd by
+-- the hyprexpo-setup helper at session start, i.e. after this file is parsed, so
+-- hl.plugin.hyprexpo is still nil *here* (same constraint as hyprglass). In Lua
+-- config mode `hyprctl dispatch X` is only a deprecated shorthand and mangles
+-- plugin dispatchers ("expected a dispatcher"), so the runtime Lua namespace is
+-- used instead — verified in a nested 0.56.2 instance.
+
+hl.bind(M4 .. "+grave", hl.dsp.exec_cmd([[hyprctl eval 'hl.plugin.hyprexpo.expo("toggle")']]))
 
 -- --- App launchers (ex-apps.conf; formerly ~/.config/hypr/bindings/apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
@@ -675,6 +684,10 @@ hl.on("hyprland.start", function()
 
   -- Liquid glass: loads the plugin and pushes files/gui/hypr/hyprglass.lua
   hl.exec_cmd("@hyprglass_setup@")
+
+  -- HyprExpo: same load-then-push pattern (plugin .so + files/gui/hypr/hyprexpo.lua).
+  -- Re-runnable in a live session: `hyprexpo-setup` (also in PATH).
+  hl.exec_cmd("@hyprexpo_setup@")
   hl.exec_cmd("systemctl --user restart quickshell.service")
   hl.exec_cmd("systemctl --user restart hyprscratch.service")
   hl.exec_cmd("systemctl --user start wl-daemon.service")
