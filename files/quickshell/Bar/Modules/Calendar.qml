@@ -337,6 +337,12 @@ OverlayToggleCapsule {
                             { color: function() { return Theme.textDisabled; }, label: "No data" }
                         ]
                         delegate: RowLayout {
+                            // Declare the model role explicitly: this delegate lives inside the
+                            // per-screen Repeater of Bar.qml, so an unqualified `modelData` here
+                            // bound to the SCREEN (QuickshellScreenInfo) instead of the legend
+                            // entry — modelData.color() threw 120×/day and the dot colour stayed
+                            // undefined. Required property shadows the outer role.
+                            required property var modelData
                             spacing: Math.round(10 * Theme.scale(root.screen))
                             Layout.alignment: Qt.AlignVCenter
                             Rectangle {
