@@ -1,0 +1,239 @@
+#!/usr/bin/env python3
+"""menu-search — search the tray apps' menus in a vicinae mini window.
+
+Every StatusNotifierItem publishes its context menu over DBusMenu; that tree is
+exactly what you get by right-clicking a tray icon, submenus included. This
+script walks all of them, renders flattened entries as "App > Path > Item" into
+`vicinae dmenu` (a compact always-focused window with vicinae's own search, which
+ranks with lusty's matcher) and triggers the chosen entry on the bus, so a menu
+entry is a hotkey plus a few letters instead of a mouse hunt through the tray.
+
+Usage:
+  menu-search                       open the mini window (default)
+  menu-search --list                print every entry, one per line
+  menu-search --list --json         machine-readable dump (for other UIs)
+  menu-search --query Q             pre-fill the query
+  menu-search --width W --height H  window size
+  menu-search --no-window           only enumerate (same as --list)
+
+Exit status: 0 on success (also when the user dismisses the window), 1 on error.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import subprocess
+import sys
+import time
+
+BUSCTL = shutil.which("busctl")
+VICINAE = shutil.which("vicinae")
+WATCHER = "org.kde.StatusNotifierWatcher"
+WATCHER_PATH = "/StatusNotifierWatcher"
+SNI_IFACE = "org.kde.StatusNotifierItem"
+MENU_IFACE = "com.canonical.dbusmenu"
+
+
+def busctl(*args: str, json_out: bool = True) -> str:
+    cmd = [BUSCTL, "--user"]
+    if json_out:
+        cmd.append("--json=short")
+    cmd += args
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(proc.stderr.strip() or f"busctl {' '.join(args)} failed")
+    return proc.stdout
+
+
+def busctl_json(*args: str) -> object:
+    return json.loads(busctl(*args))
+
+
+def property_of(service: str, path: str, iface: str, name: str):
+    try:
+        value = busctl_json("get-property", service, path, iface, name)
+    except RuntimeError:
+        return None
+    return value.get("data") if isinstance(value, dict) else value
+
+
+def tray_items() -> list[tuple[str, str]]:
+    """Every registered item as (service, object path)."""
+    registered = property_of(WATCHER, WATCHER_PATH, WATCHER, "RegisteredStatusNotifierItems") or []
+    items: list[tuple[str, str]] = []
+    for entry in registered:
+        service, _, path = str(entry).partition("/")
+        items.append((service, "/" + path if path else "/StatusNotifierItem"))
+    return items
+
+
+def item_title(service: str, path: str) -> str:
+    for prop in ("Title", "Id"):
+        value = property_of(service, path, SNI_IFACE, prop)
+        if value:
+            text = str(value).split(".")[-1] if prop == "Id" else str(value)
+            if text:
+                return text
+    return service
+
+
+def menu_path(service: str, path: str) -> str | None:
+    value = property_of(service, path, SNI_IFACE, "Menu")
+    if value:
+        return str(value)
+    for guess in ("/MenuBar", "/StatusNotifierItem/menu"):
+        try:
+            busctl_json("call", "--", service, guess, MENU_IFACE, "GetLayout", "iias", "0", "-1", "0")
+            return guess
+        except RuntimeError:
+            continue
+    return None
+
+
+def walk(children: list, prefix: list[str], out: list[dict]) -> None:
+    for child in children:
+        entry = child.get("data") if isinstance(child, dict) else child
+        if not isinstance(entry, list) or len(entry) != 3:
+            continue
+        item_id, props, sub = entry
+        props = props or {}
+        if str(props.get("type", {}).get("data", "")) == "separator":
+            continue
+        if props.get("visible", {}).get("data", True) is False:
+            continue
+        label = str(props.get("label", {}).get("data", "")).replace("_", "").replace("&", "").strip()
+        is_submenu = "children-display" in props or bool(sub)
+        if is_submenu:
+            walk(sub, prefix + ([label] if label else []), out)
+            continue
+        if not label:
+            continue
+        out.append(
+            {
+                "id": item_id,
+                "label": label,
+                "path": prefix,
+                "enabled": props.get("enabled", {}).get("data", True) is not False,
+            }
+        )
+
+
+def collect(service: str, path: str) -> list[dict]:
+    menu = menu_path(service, path)
+    if not menu:
+        return []
+    try:
+        layout = busctl_json("call", "--", service, menu, MENU_IFACE, "GetLayout", "iias", "0", "-1", "0")
+    except RuntimeError:
+        return []
+    children = layout.get("data", [None, [None, None, []]])[1][2]
+    entries: list[dict] = []
+    walk(children, [], entries)
+    for entry in entries:
+        entry["service"] = service
+        entry["menu"] = menu
+        entry["app"] = item_title(service, path)
+    return entries
+
+
+def trigger(entry: dict, dry_run: bool = False) -> None:
+    """Click a DBusMenu item the way a mouse would."""
+    args = [
+        "busctl",
+        "--user",
+        "call",
+        "--",
+        entry["service"],
+        entry["menu"],
+        MENU_IFACE,
+        "Event",
+        "isvu",
+        str(entry["id"]),
+        "clicked",
+        "s",
+        "",
+        str(int(time.time())),
+    ]
+    if dry_run:
+        print(" ".join(args))
+        return
+    subprocess.run(args, capture_output=True, text=True, check=False)
+
+
+def entry_line(entry: dict) -> str:
+    return " › ".join([entry["app"], *entry["path"], entry["label"]])
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="fuzzy-search the tray apps' menus")
+    parser.add_argument("--list", action="store_true", help="print entries instead of opening a window")
+    parser.add_argument("--json", action="store_true", help="with --list: dump JSON")
+    parser.add_argument("--query", default="", help="initial query")
+    parser.add_argument("--width", type=int, default=560)
+    parser.add_argument("--height", type=int, default=420)
+    parser.add_argument("--placeholder", default="Menus: ❯")
+    parser.add_argument("--print-trigger", action="store_true", help="do not click, print the busctl call")
+    args = parser.parse_args()
+
+    if not BUSCTL:
+        print("menu-search: busctl not found", file=sys.stderr)
+        return 1
+
+    entries: list[dict] = []
+    for service, path in tray_items():
+        entries.extend(collect(service, path))
+
+    if not entries:
+        print("menu-search: no tray menu entries found", file=sys.stderr)
+        return 1
+
+    entries.sort(key=entry_line)
+    if args.json:
+        json.dump([{**e, "line": entry_line(e)} for e in entries], sys.stdout, ensure_ascii=False, indent=1)
+        print()
+        return 0
+    if args.list or not VICINAE:
+        for entry in entries:
+            print(entry_line(entry))
+        if not VICINAE:
+            print("menu-search: vicinae not found, printed the entries instead", file=sys.stderr)
+        return 0
+
+    lines = [entry_line(e) for e in entries]
+    # `vicinae dmenu` renders the list in a compact window and returns the chosen
+    # line; vicinae's own search ranks it (lusty's matcher, see the vicinae patch).
+    cmd = [
+        VICINAE,
+        "dmenu",
+        "-p",
+        args.placeholder,
+        "-q",
+        args.query,
+        "-W",
+        str(args.width),
+        "-H",
+        str(args.height),
+    ]
+    if args.print_trigger:
+        cmd.append("--no-quick-look")
+    proc = subprocess.run(cmd, input="\n".join(lines) + "\n", capture_output=True, text=True)
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return 0  # dismissed
+    chosen = proc.stdout.strip().splitlines()[-1]
+    for entry in entries:
+        if entry_line(entry) == chosen:
+            if args.print_trigger:
+                print(f"chosen: {chosen}")
+            trigger(entry, dry_run=args.print_trigger)
+            return 0
+    print(f"menu-search: {chosen!r} did not match an entry", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(0)
