@@ -49,8 +49,10 @@ CenteredCapsuleRow {
     }
 
 
-    // Final values for display
-    property string iconGlyph: leadingIcon(wsName)
+    // Final values for display. `iconGlyph` belongs to CenteredCapsuleRow (its
+    // own Text reads it); declaring it here again shadowed the base property for
+    // no reason, so this binds the inherited one instead.
+    iconGlyph: leadingIcon(wsName)
     property string restName: restAfterLeadingIcon(wsName)
 
     // Detect terminal workspace

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window 2.15
 import qs.Settings
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 import qs.Components
 import "../Helpers/Utils.js" as Utils
 
@@ -93,27 +94,14 @@ Window {
         visible = true;
     }
 
+    // The screen's rectangle, via ScreenUtil (which resolves the screen without
+    // touching the Screen attached property — that one crashes when the window
+    // has no screen yet). Before: every candidate was tested with
+    // `screen.virtualGeometry`, a property no screen here has, so this always
+    // returned null and the tooltip positioned itself in a fixed 1000x1000 box
+    // around the target instead of inside the monitor.
     function getScreenGeometry() {
-        if (screen && screen.virtualGeometry) {
-            return screen.virtualGeometry;
-        }
-        if (targetItem) {
-            var parentWindow = targetItem.Window ? targetItem.Window.window : null;
-            if (parentWindow && parentWindow.screen && parentWindow.screen.virtualGeometry) {
-                return parentWindow.screen.virtualGeometry;
-            }
-            if (targetItem.screen && targetItem.screen.virtualGeometry) {
-                return targetItem.screen.virtualGeometry;
-            }
-        }
-        // Screen attached-property access removed (crash risk on null window
-        // screen); the Qt.application.screens fallback below is null-safe.
-        if (Qt.application && Qt.application.screens && Qt.application.screens.length > 0) {
-            var primaryScreen = Qt.application.screens[0];
-            if (primaryScreen.virtualGeometry) return primaryScreen.virtualGeometry;
-            if (primaryScreen.desktopAvailableRect) return primaryScreen.desktopAvailableRect;
-        }
-        return null;
+        return ScreenUtil.geometry(targetItem)
     }
 
     function getFallbackGeometry() {
