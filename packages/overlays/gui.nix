@@ -36,8 +36,8 @@ in
 
   # vicinae — MANUALLY PINNED: version and behavior are controlled here, not by
   # nixpkgs. nixpkgs updates will NOT touch this package. To bump: update
-  # version/src hash (+ apiDeps/extensionManagerDeps) and re-verify both patches
-  # apply (git clone --branch v<X> ... && patch -p1 --dry-run).
+  # version/src hash (+ apiDeps/extensionManagerDeps) and re-verify that all
+  # patches apply (git clone --branch v<X> ... && patch -p1 --dry-run).
   vicinae =
     let
       src = prev.fetchFromGitHub {
@@ -53,10 +53,14 @@ in
       # Tab/Shift+Tab navigate the item list (launcher-menu style) + Ctrl+C
       # dismiss — QML SearchBar patch, ported to v0.23.2. The dmenu patch keeps
       # the `vicinae dmenu` picker alive across focus changes and resolves the
-      # CLI request when the window closes (upstream issue #1827).
+      # CLI request when the window closes (upstream issue #1827). The lusty
+      # patch ranks the root search with the lusty-fuzzy crate's matcher
+      # (ported to src/lib/fuzzy/include/fuzzy/lusty.hpp) instead of fzf's v2
+      # scorer, so the pickers, the tray and the launcher rank identically.
       patches = (old.patches or [ ]) ++ [
         ./../vicinae-tab-qml.patch
         ./../vicinae-dmenu-fix.patch
+        ./../vicinae-lusty-search.patch
       ];
       apiDeps = prev.fetchNpmDeps {
         src = "${src}/src/typescript/api";
