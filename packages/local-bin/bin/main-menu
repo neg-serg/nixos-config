@@ -1,6 +1,13 @@
 #!/bin/sh
 # main-menu: vicinae dmenu-driven helper actions for music/clipboard/network/etc
-# Usage: main-menu
+#
+# Usage:
+#   main-menu                 # the classic dmenu picker
+#   main-menu --list          # print the action names (for other pickers)
+#   main-menu --run NAME      # run one action non-interactively
+#
+# menu-search (the tray/app menu mini window) lists these actions too, so the
+# actions stay searchable after the Super+Shift+M binding moved over to it.
 # shellcheck shell=sh
 
 IFS=' 	
@@ -87,4 +94,31 @@ handler() {
 }
 
 dac_name='RME HDSPe AIO'
+
+case "${1:-}" in
+--list)
+    generate_menu
+    exit 0
+    ;;
+--run)
+    action="${2:-}"
+    if [ -z "$action" ]; then
+        printf 'main-menu: --run needs an action name\n' >&2
+        exit 2
+    fi
+    for t in $main_menu; do
+        if [ "$action" = "$t" ]; then
+            "$t"
+            exit 0
+        fi
+    done
+    printf 'main-menu: unknown action: %s\n' "$action" >&2
+    exit 2
+    ;;
+--help | -h)
+    printf 'usage: main-menu [--list | --run NAME]\n'
+    exit 0
+    ;;
+esac
+
 generate_menu | vicinae dmenu -p '❯>' | handler
