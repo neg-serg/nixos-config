@@ -542,12 +542,17 @@ hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 2.4, spring = 
 -- =====================================================================
 -- Window rules (rules.conf + workspaces.nix)
 -- =====================================================================
-hl.window_rule({ name = "nm-connection-editor", match = { class = "^(nm-connection-editor)$" }, float = true, size = "45% 45%", center = true, tag = "nm-connection-editor" })
-hl.window_rule({ name = "picture-in-picture", match = { title = m.pip }, float = true, keep_aspect_ratio = true, move = "73% 72%", size = "25% 25%", pin = true, tag = "pip" })
-hl.window_rule({ name = "file-dialog", match = { title = m.file_dialog }, center = true, float = true, tag = "file-dialog" })
+-- Float-on-top windows get their own open animation: `animation` is a real
+-- window rule in 0.56 (the Lua API rejects unknown fields outright, so this is
+-- validated, not silently ignored). Dialogs and launchers scale in from a wider
+-- source than tiled windows (popin 60%) because they are small and centred — a
+-- 60% popin on a 45%-wide dialog reads as a blink.
+hl.window_rule({ name = "nm-connection-editor", match = { class = "^(nm-connection-editor)$" }, float = true, size = "45% 45%", center = true, animation = "popin 80%", tag = "nm-connection-editor" })
+hl.window_rule({ name = "picture-in-picture", match = { title = m.pip }, float = true, keep_aspect_ratio = true, move = "73% 72%", size = "25% 25%", pin = true, animation = "popin 90%", tag = "pip" })
+hl.window_rule({ name = "file-dialog", match = { title = m.file_dialog }, center = true, float = true, animation = "popin 80%", tag = "file-dialog" })
 hl.window_rule({ name = "telegram-wrapped", match = { class = m.telegram_wrapped }, center = true, tag = "telegram" })
 hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, float = true, tag = "telegram" })
-hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, tag = "utility" })
+hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, animation = "popin 85%", tag = "utility" })
 
 -- Scratchpad rules: float + size + no dim (monitor-relative expressions)
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
@@ -695,6 +700,13 @@ end
 -- slide animations for side panels
 hl.layer_rule({ name = "slide-left", match = { namespace = "sideleft.*" }, animation = "slide left" })
 hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, animation = "slide right" })
+
+-- quickshell's notification toasts and its history sidebar are bottom-right /
+-- right-edge surfaces (namespaces "shell:*", not the older "notifications"
+-- ones the blur pass still lists), so they enter from the right edge instead of
+-- only cross-fading.
+hl.layer_rule({ name = "slide-notif", match = { namespace = "shell:notifications" }, animation = "slide right" })
+hl.layer_rule({ name = "slide-notif-center", match = { namespace = "shell:notification-center" }, animation = "slide right" })
 
 -- bottom-up slide for overlay popups
 hl.layer_rule({ name = "slide-up", match = { namespace = "qs-weather" }, animation = "slide bottom" })
