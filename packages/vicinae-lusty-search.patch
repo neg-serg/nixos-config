@@ -1,0 +1,537 @@
+diff --git a/src/lib/fuzzy/include/fuzzy/lusty.hpp b/src/lib/fuzzy/include/fuzzy/lusty.hpp
+new file mode 100644
+index 0000000..58bf18c
+--- /dev/null
++++ b/src/lib/fuzzy/include/fuzzy/lusty.hpp
+@@ -0,0 +1,348 @@
++/**
++ * lusty fuzzy matcher — C++ port of the lusty-fuzzy crate.
++ *
++ * Source of truth: the lusty repo, crates/lusty-fuzzy (scorer.rs, rank.rs,
++ * layout.rs). The launcher uses it instead of the fzf v2 scorer so that the
++ * pickers, the quickshell tray and vicinae rank with one algorithm; the numeric
++ * semantics are pinned by golden vectors from `lusty --fuzzy-vectors`
++ * (see the "golden vectors" test cases in tests/main.cpp).
++ *
++ * Differences from fzf's scorer, on purpose:
++ *   - fzy-style scoring with the crate's weights (leading penalty, inner gap,
++ *     consecutive bonus, boundary bonuses) instead of fzf's integer scheme;
++ *   - byte-based matching with ASCII-only lowering, exactly like the crate, so
++ *     spans are byte ranges and a Latin query never matches Cyrillic text by
++ *     accident of Unicode folding — except when folding is requested
++ *     (scoreWeightedFold), which mirrors the crate's RankOpts::fold_case;
++ *   - a query typed in the RU layout is also read as its EN characters and the
++ *     better reading wins (crate's Layout::RuToEnFallback);
++ *   - no first-letter anchor: a menu/launcher is searched by any word in it.
++ */
++#pragma once
++
++#include "fuzzy/normalize.hpp"
++
++#include <algorithm>
++#include <cmath>
++#include <cstddef>
++#include <optional>
++#include <string>
++#include <string_view>
++#include <vector>
++
++namespace lusty {
++
++// Kept in sync with the crate: bump together with the golden vectors.
++constexpr int WEIGHTS_VERSION = 1;
++
++constexpr double LEADING_PENALTY = 0.012; // per skipped byte before the first match
++constexpr double INNER_GAP = 0.02;        // per skipped byte between two matches
++constexpr double CONSECUTIVE_BONUS = 0.05;
++
++struct Span {
++  std::size_t begin = 0;
++  std::size_t end = 0; // exclusive, byte offsets
++};
++
++struct MatchResult {
++  double score = 0.0;
++  std::vector<Span> spans;
++};
++
++namespace detail {
++
++inline bool isAsciiDigit(char c) { return c >= '0' && c <= '9'; }
++
++inline double bonusFor(std::string_view raw, std::size_t i) {
++  if (i == 0) return 0.9;
++  char const ch = raw[i];
++  if (ch == '/') return 0.9;
++  char const prev = raw[i - 1];
++  if (prev == '-' || prev == '_' || prev == ' ' || prev == '.') return 0.8;
++  if (prev == '/') return 0.9;
++  if (prev >= 'a' && prev <= 'z' && ch >= 'A' && ch <= 'Z') return 0.7; // camelCase
++  return 0.0;
++}
++
++inline std::vector<unsigned char> asciiLowered(std::string_view s) {
++  std::vector<unsigned char> out(s.size());
++  for (std::size_t i = 0; i < s.size(); ++i) {
++    auto const c = static_cast<unsigned char>(s[i]);
++    out[i] = (c >= 'A' && c <= 'Z') ? static_cast<unsigned char>(c + 32) : c;
++  }
++  return out;
++}
++
++inline bool hasMatch(const std::vector<unsigned char> &hay, const std::vector<unsigned char> &needle) {
++  std::size_t a = 0, b = 0;
++  while (a < needle.size() && b < hay.size()) {
++    if (needle[a] == hay[b]) ++a;
++    ++b;
++  }
++  return a == needle.size();
++}
++
++} // namespace detail
++
++/// Subsequence check with the crate's byte semantics (ASCII-case-insensitive).
++inline bool matches(std::string_view label, std::string_view query) {
++  if (query.empty()) return true;
++  if (query.size() > label.size()) return false;
++  return detail::hasMatch(detail::asciiLowered(label), detail::asciiLowered(query));
++}
++
++/// Score plus the coalesced byte spans of the winning alignment.
++inline MatchResult scoreWithSpans(std::string_view label, std::string_view query) {
++  if (query.empty()) return {.score = 0.75, .spans = {}}; // neutral score, like the crate
++
++  auto const hay = detail::asciiLowered(label);
++  auto const needle = detail::asciiLowered(query);
++  if (needle.size() > hay.size() || !detail::hasMatch(hay, needle)) return {};
++
++  std::size_t const m = hay.size();
++  std::size_t const n = needle.size();
++  double const neg = -std::numeric_limits<double>::infinity();
++  constexpr std::size_t CONSEC = static_cast<std::size_t>(-1);
++
++  std::vector<std::vector<double>> dp(n + 1, std::vector<double>(m + 1, neg));
++  std::vector<std::vector<std::size_t>> pred(n + 1, std::vector<std::size_t>(m + 1, CONSEC));
++
++  for (std::size_t i = 1; i <= n; ++i) {
++    double bestGap = neg;
++    std::size_t bestGapK = 0;
++    for (std::size_t j = 1; j <= m; ++j) {
++      double scoreJ = neg;
++      if (needle[i - 1] == hay[j - 1]) {
++        double const bon = detail::bonusFor(label, j - 1);
++        if (i == 1) {
++          scoreJ = bon - LEADING_PENALTY * static_cast<double>(j - 1);
++        } else {
++          double cand = neg;
++          bool fromGap = false;
++          if (std::isfinite(dp[i - 1][j - 1])) cand = dp[i - 1][j - 1] + CONSECUTIVE_BONUS;
++          if (std::isfinite(bestGap)) {
++            double const viaGap = bestGap - INNER_GAP * static_cast<double>(j - 1);
++            if (viaGap > cand) {
++              cand = viaGap;
++              fromGap = true;
++            }
++          }
++          if (std::isfinite(cand)) {
++            scoreJ = cand + bon;
++            pred[i][j] = fromGap ? bestGapK : CONSEC;
++          }
++        }
++      }
++      dp[i][j] = scoreJ;
++      if (std::isfinite(dp[i - 1][j])) {
++        double const withK = dp[i - 1][j] + INNER_GAP * static_cast<double>(j);
++        if (withK > bestGap) {
++          bestGap = withK;
++          bestGapK = j;
++        }
++      }
++    }
++  }
++
++  // First maximum in the last row, exactly like the crate.
++  double best = neg;
++  std::size_t bestJ = 0;
++  for (std::size_t j = 1; j <= m; ++j) {
++    if (std::isfinite(dp[n][j]) && dp[n][j] > best) {
++      best = dp[n][j];
++      bestJ = j;
++    }
++  }
++  if (!std::isfinite(best)) return {};
++
++  std::vector<std::size_t> matched;
++  matched.reserve(n);
++  std::size_t i = n, j = bestJ;
++  while (i >= 1) {
++    matched.push_back(j - 1);
++    if (i == 1) break;
++    if (pred[i][j] == CONSEC) {
++      --i;
++      --j;
++    } else {
++      j = pred[i][j];
++      --i;
++    }
++  }
++  std::reverse(matched.begin(), matched.end());
++
++  std::vector<Span> spans;
++  for (std::size_t const pos : matched) {
++    if (!spans.empty() && spans.back().end == pos) {
++      spans.back().end = pos + 1;
++    } else {
++      spans.push_back({.begin = pos, .end = pos + 1});
++    }
++  }
++  return {.score = best, .spans = std::move(spans)};
++}
++
++/// Hot path: score only, no backtracking (mirrors the crate's Scorer::score).
++inline double score(std::string_view label, std::string_view query) {
++  if (query.empty()) return 0.75;
++  auto const hay = detail::asciiLowered(label);
++  auto const needle = detail::asciiLowered(query);
++  if (needle.size() > hay.size() || !detail::hasMatch(hay, needle)) return 0.0;
++
++  std::size_t const m = hay.size();
++  std::size_t const n = needle.size();
++  double const neg = -std::numeric_limits<double>::infinity();
++  std::vector<double> prev(m + 1, neg), cur(m + 1, neg);
++  double best = neg;
++
++  for (std::size_t i = 1; i <= n; ++i) {
++    double bestGap = neg;
++    for (std::size_t j = 1; j <= m; ++j) {
++      double scoreJ = neg;
++      if (needle[i - 1] == hay[j - 1]) {
++        double const bon = detail::bonusFor(label, j - 1);
++        if (i == 1) {
++          scoreJ = bon - LEADING_PENALTY * static_cast<double>(j - 1);
++        } else {
++          double cand = neg;
++          if (std::isfinite(prev[j - 1])) cand = prev[j - 1] + CONSECUTIVE_BONUS;
++          if (std::isfinite(bestGap)) {
++            double const viaGap = bestGap - INNER_GAP * static_cast<double>(j - 1);
++            if (viaGap > cand) cand = viaGap;
++          }
++          if (std::isfinite(cand)) scoreJ = cand + bon;
++        }
++      }
++      cur[j] = scoreJ;
++      if (std::isfinite(scoreJ) && i == n && scoreJ > best) best = scoreJ;
++      if (std::isfinite(prev[j])) {
++        double const withK = prev[j] + INNER_GAP * static_cast<double>(j);
++        if (withK > bestGap) bestGap = withK;
++      }
++    }
++    std::swap(prev, cur);
++  }
++  return std::isfinite(best) ? best : 0.0;
++}
++
++// ── RU (йцукен) → EN, mirrored from layout.rs ────────────────────────────────
++
++/// The physical key a Cyrillic letter sits on, in EN: 'щ' → 'o' and so on.
++inline std::optional<char> ruToEn(char32_t c) {
++  switch (c) {
++  case U'й': return 'q';
++  case U'ц': return 'w';
++  case U'у': return 'e';
++  case U'к': return 'r';
++  case U'е': return 't';
++  case U'н': return 'y';
++  case U'г': return 'u';
++  case U'ш': return 'i';
++  case U'щ': return 'o';
++  case U'з': return 'p';
++  case U'х': return '[';
++  case U'ъ': return ']';
++  case U'ф': return 'a';
++  case U'ы': return 's';
++  case U'в': return 'd';
++  case U'а': return 'f';
++  case U'п': return 'g';
++  case U'р': return 'h';
++  case U'о': return 'j';
++  case U'л': return 'k';
++  case U'д': return 'l';
++  case U'ж': return ';';
++  case U'э': return '\'';
++  case U'я': return 'z';
++  case U'ч': return 'x';
++  case U'с': return 'c';
++  case U'м': return 'v';
++  case U'и': return 'b';
++  case U'т': return 'n';
++  case U'ь': return 'm';
++  case U'б': return ',';
++  case U'ю': return '.';
++  default: return std::nullopt;
++  }
++}
++
++/// One typed character → the EN character it stands for, or nullopt when the
++/// character is not a printable ASCII query character. Uppercase RU (Shift) maps
++/// to uppercase EN so case-insensitive matching still sees the letter.
++inline std::optional<char> normalizeQueryChar(char32_t c) {
++  char32_t lower = c;
++  if (c >= U'A' && c <= U'Z') {
++    lower = c + 0x20;
++  } else if (c >= U'А' && c <= U'Я') { // А-Я
++    lower = c + 0x20;
++  } else if (c == U'Ё') {
++    lower = U'ё';
++  }
++
++  char mapped = 0;
++  if (auto const en = ruToEn(lower)) {
++    mapped = *en;
++  } else if (lower <= 0x7f) {
++    mapped = static_cast<char>(lower);
++  } else {
++    return std::nullopt;
++  }
++
++  if (c != lower && mapped >= 'a' && mapped <= 'z') { mapped = static_cast<char>(mapped - 32); }
++  auto const uc = static_cast<unsigned char>(mapped);
++  if ((uc >= 33 && uc <= 126) || mapped == ' ') return mapped;
++  return std::nullopt;
++}
++
++inline std::string normalizeQuery(std::string_view query) {
++  std::string out;
++  out.reserve(query.size());
++  for (std::size_t i = 0; i < query.size();) {
++    auto const [cp, len] = fzf::decodeUtf8(query, i);
++    i += static_cast<std::size_t>(len);
++    if (auto const mapped = normalizeQueryChar(cp)) { out.push_back(*mapped); }
++  }
++  return out;
++}
++
++/// Field with a weight, mirroring the launcher's own title/subtitle/alias/keywords
++/// weighting (vicinae used the same shape for fzf's scorer).
++struct WeightedField {
++  std::string_view text;
++  double weight = 1.0;
++};
++
++namespace detail {
++
++inline double scoreBest(std::vector<WeightedField> const &fields, std::string_view query) {
++  bool const hasCyrillic = std::any_of(query.begin(), query.end(), [](char c) {
++    return static_cast<unsigned char>(c) >= 0x80;
++  });
++  std::string const mapped = hasCyrillic ? normalizeQuery(query) : std::string{};
++  bool const mappedIsAscii = !mapped.empty() && std::all_of(mapped.begin(), mapped.end(), [](char c) {
++    return static_cast<unsigned char>(c) < 0x80;
++  });
++
++  double best = 0.0;
++  for (auto const &field : fields) {
++    double fieldScore = score(field.text, query) * field.weight;
++    // A query typed in the RU layout is also read as its EN characters; the
++    // better reading wins (crate's Layout::RuToEnFallback merge).
++    if (mappedIsAscii && mapped != query) {
++      fieldScore = std::max(fieldScore, score(field.text, mapped) * field.weight);
++    }
++    best = std::max(best, fieldScore);
++  }
++  return best;
++}
++
++} // namespace detail
++
++/// Score several fields and keep the best weighted match, so a title hit always
++/// beats a subtitle hit (the launcher's fields: title/alias 1.0, subtitle 0.5,
++/// keywords 0.3 — same weights the fzf-based scorer used).
++inline double scoreWeighted(std::vector<WeightedField> const &fields, std::string_view query) {
++  return detail::scoreBest(fields, query);
++}
++
++} // namespace lusty
+diff --git a/src/lib/fuzzy/tests/main.cpp b/src/lib/fuzzy/tests/main.cpp
+index 3561d78..1cd69ee 100644
+--- a/src/lib/fuzzy/tests/main.cpp
++++ b/src/lib/fuzzy/tests/main.cpp
+@@ -1,5 +1,7 @@
++#include <catch2/catch_approx.hpp>
+ #include <catch2/catch_test_macros.hpp>
+ #include "fuzzy/fzf.hpp"
++#include "fuzzy/lusty.hpp"
+ #include "order-helpers.hpp"
+ 
+ TEST_CASE("fuzzy_match_v2: exact substring scores positive and matches range") {
+@@ -98,3 +100,78 @@ TEST_CASE("ordering: github issue #946 examples") {
+   fuzzy::test::expectRankedOrder({"Avidemux", "Donate to vicinae"}, "avi");
+   fuzzy::test::expectRankedOrder({"Spotify", "Reload Script Directories", "Sysprog"}, "Spo");
+ }
++
++// ── lusty matcher ────────────────────────────────────────────────────────────
++//
++// The launcher ranks with the lusty-fuzzy crate's algorithm (ported in
++// fuzzy/lusty.hpp) instead of fzf's v2 scorer. These cases pin the port against
++// the crate's golden vectors: the expected numbers are copied from
++// `lusty --fuzzy-vectors` over crates/lusty-fuzzy/tests/corpus/menu.txt (the
++// crate's own tests assert the same values against the Rust implementation), so
++// a drift in either direction fails here.
++
++TEST_CASE("lusty: golden vectors from the crate") {
++  using Catch::Approx;
++  auto const eps = Catch::Approx(0.0).epsilon(1e-9);
++
++  REQUIRE(lusty::score("Open in browser", "op") == Catch::Approx(0.95).epsilon(1e-9));
++  REQUIRE(lusty::score("Open in browser", "b") == Catch::Approx(0.704).epsilon(1e-9));
++  REQUIRE(lusty::score("Copy address", "copy") == Catch::Approx(1.05).epsilon(1e-9));
++  REQUIRE(lusty::score("Copy address", "cp") == Catch::Approx(0.88).epsilon(1e-9));
++  REQUIRE(lusty::score("Lock screen", "lock") == Catch::Approx(1.05).epsilon(1e-9));
++  REQUIRE(lusty::score("Lock screen", "sc") == Catch::Approx(0.79).epsilon(1e-9));
++  REQUIRE(lusty::score("Mark as read", "mrs") == Catch::Approx(0.82).epsilon(1e-9));
++  REQUIRE(lusty::score("Quit Telegram", "quit") == Catch::Approx(1.76).epsilon(1e-9));
++  (void)eps;
++}
++
++TEST_CASE("lusty: empty query is neutral, a miss is zero") {
++  REQUIRE(lusty::score("Open in browser", "") == Catch::Approx(0.75));
++  REQUIRE(lusty::score("Lock screen", "zzzz") == 0.0);
++  REQUIRE_FALSE(lusty::matches("Lock screen", "zzzz"));
++  REQUIRE(lusty::matches("Lock screen", ""));
++}
++
++TEST_CASE("lusty: spans cover exactly the matched bytes") {
++  auto const op = lusty::scoreWithSpans("Open in browser", "op");
++  REQUIRE(op.score == Catch::Approx(0.95).epsilon(1e-9));
++  REQUIRE(op.spans.size() == 1);
++  REQUIRE(op.spans[0].begin == 0);
++  REQUIRE(op.spans[0].end == 2);
++
++  auto const cp = lusty::scoreWithSpans("Copy address", "cp");
++  REQUIRE(cp.spans.size() == 2);
++  REQUIRE(cp.spans[0].begin == 0);
++  REQUIRE(cp.spans[0].end == 1);
++  REQUIRE(cp.spans[1].begin == 2);
++  REQUIRE(cp.spans[1].end == 3);
++
++  // The span path and the hot path must agree byte for byte.
++  for (auto const &label : {"Open in browser", "Preferences", "Take screenshot", "Quit Telegram"}) {
++    for (auto const &query : {"o", "pref", "ts", "quit", "zz"}) {
++      REQUIRE(lusty::scoreWithSpans(label, query).score == lusty::score(label, query));
++    }
++  }
++}
++
++TEST_CASE("lusty: a query typed in the RU layout still matches") {
++  REQUIRE(lusty::normalizeQuery("щз") == "op");
++  REQUIRE(lusty::normalizeQuery("дщсл") == "lock");
++  REQUIRE(lusty::normalizeQuery("И") == "B"); // Shift+RU keeps the letter's case
++  REQUIRE(lusty::normalizeQuery("abcd") == "abcd");
++  REQUIRE(lusty::normalizeQuery("äö") == ""); // unmapped scripts drop out
++
++  std::vector<lusty::WeightedField> const fields{{"Open in browser", 1.0}, {"Lock screen", 1.0}};
++  REQUIRE(lusty::scoreWeighted(fields, "щз") == Catch::Approx(0.95).epsilon(1e-9));
++  REQUIRE(lusty::scoreWeighted(fields, "дщсл") == Catch::Approx(1.05).epsilon(1e-9));
++}
++
++TEST_CASE("lusty: weighted fields keep the best field") {
++  // A title hit must beat a subtitle hit, and weights must not multiply a
++  // match into a higher score than the same match on a stronger field.
++  std::vector<lusty::WeightedField> const fields{{"Nothing here", 1.0}, {"Preferences", 0.5}};
++  REQUIRE(lusty::scoreWeighted(fields, "pref") == Catch::Approx(0.5 * 1.05).epsilon(1e-9));
++
++  std::vector<lusty::WeightedField> const strong{{"Preferences", 1.0}, {"Nothing here", 0.5}};
++  REQUIRE(lusty::scoreWeighted(strong, "pref") == Catch::Approx(1.05).epsilon(1e-9));
++}
+diff --git a/src/server/src/services/root-item-manager/root-item-manager.cpp b/src/server/src/services/root-item-manager/root-item-manager.cpp
+index 7522707..43056fb 100644
+--- a/src/server/src/services/root-item-manager/root-item-manager.cpp
++++ b/src/server/src/services/root-item-manager/root-item-manager.cpp
+@@ -8,6 +8,7 @@
+ #include "glaze-qt.hpp"
+ #include "root-search/extensions/extension-root-provider.hpp"
+ #include "fuzzy/fzf.hpp"
++#include "fuzzy/lusty.hpp"
+ #include "config/config.hpp"
+ #include "services/local-storage/local-storage-service.hpp"
+ #include "utils.hpp"
+@@ -133,15 +134,31 @@ void RootItemManager::updateIndex() {
+ }
+ 
+ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
+-  using WS = fzf::WeightedString;
+-  std::string alias = meta->alias.value_or("");
+-  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
+-  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
+-  float const score =
+-      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern);
++  // Ranking comes from lusty's matcher (crates/lusty-fuzzy, ported in
++  // fuzzy/lusty.hpp) instead of fzf's v2 scorer: the pickers, the tray and the
++  // launcher then rank with one algorithm. Same fields and weights as before —
++  // title/alias 1.0, subtitle 0.5, keywords 0.3 — and the best weighted field
++  // wins, so a title hit always beats a subtitle hit. A query typed in the RU
++  // layout is additionally read as its EN characters (the better reading wins).
++  std::string const alias = meta->alias.value_or("");
++  if (pattern.empty()) {
++    double const boost = frecencyBoost();
++    return static_cast<float>(1.0 + boost);
++  }
++
++  std::vector<lusty::WeightedField> fields = {{title, 1.0}, {subtitle, 0.5}, {alias, 1.0}};
++  fields.reserve(fields.size() + keywords.size());
++  for (auto const &kw : keywords) {
++    fields.push_back({kw, 0.3});
++  }
++  double const score = lusty::scoreWeighted(fields, pattern);
+ 
+   if (score == 0) return 0;
+ 
++  return static_cast<float>(score + frecencyBoost());
++}
++
++double RootItemManager::SearchableRootItem::frecencyBoost() const {
+   constexpr double FRECENCY_BOOST_CAP = 25.0;
+   constexpr double FRECENCY_FREQ_SCALE = 5.0;
+   constexpr double FRECENCY_RECENCY_PEAK = 10.0;
+@@ -159,9 +176,7 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern)
+         FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
+   }
+ 
+-  double const boost = std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
+-
+-  return score + boost;
++  return std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
+ }
+ 
+ std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
+@@ -210,7 +225,6 @@ std::vector<RootItemManager::ProviderSearchGroup>
+ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPrefixSearchOptions &opts) {
+   std::string const pattern = query.toStdString();
+   std::string_view const patternView = pattern;
+-  const auto &matcher = fzf::threadLocalMatcher();
+ 
+   std::unordered_map<std::string, RootProvider *> providerById;
+   std::unordered_map<std::string, double> providerNameScore;
+@@ -218,8 +232,8 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
+     if (provider->isTransient()) continue;
+     auto id = provider->uniqueId().toStdString();
+     providerById.emplace(id, provider);
+-    int const score = matcher.fuzzy_match_v2_score_query(provider->displayName().toStdString(), patternView);
+-    if (score > 0) providerNameScore.emplace(id, static_cast<double>(score));
++    double const score = lusty::score(provider->displayName().toStdString(), patternView);
++    if (score > 0) providerNameScore.emplace(id, score);
+   }
+ 
+   struct ScoredEntry {
+diff --git a/src/server/src/services/root-item-manager/root-item-manager.hpp b/src/server/src/services/root-item-manager/root-item-manager.hpp
+index ea1bbe8..75e3be3 100644
+--- a/src/server/src/services/root-item-manager/root-item-manager.hpp
++++ b/src/server/src/services/root-item-manager/root-item-manager.hpp
+@@ -235,6 +235,7 @@ public:
+     RootItemMetadata *meta = nullptr;
+ 
+     float fuzzyScore(std::string_view pattern = "") const;
++    double frecencyBoost() const;
+   };
+ 
+   struct ScoredItem {
