@@ -496,18 +496,25 @@ hl.curve("easeOutCirc",   { type = "bezier", points = { {0, 0.55}, {0.45, 1} } }
 hl.curve("easeOutExpo",   { type = "bezier", points = { {0.16, 1}, {0.3, 1} } })
 hl.curve("md2",           { type = "bezier", points = { {0.4, 0}, {0.2, 1} } })
 
--- Spring curves: physics-based easing (mass 1; stiffness = speed, dampening = 1/bounce).
+-- Spring curves: physics-based easing (mass 1; stiffness sets the pace, dampening the bounce).
 -- Same model Denial uses for its shell (Flutter SpringDescription/SpringSimulation).
 -- `dampening` is the accepted spelling — the official example's "damping" fails to parse.
 -- Both curves are critically damped (dampening = 2*sqrt(stiffness)): the motion ends
--- sharply instead of dragging out an exponential tail, which is what reads as "slow"
--- even at short durations. No overshoot, no wobble.
-hl.curve("spring_crisp",  { type = "spring", mass = 1, stiffness = 900, dampening = 60 })   -- windows / fades
-hl.curve("spring_glide",  { type = "spring", mass = 1, stiffness = 700, dampening = 52.915 }) -- long travel: tape, workspaces
+-- sharply instead of dragging out an exponential tail, which is what reads as "slow".
+-- No overshoot, no wobble.
+--
+-- SPRING SPEED IS NOT `speed`: a spring leaf ignores its duration and is advanced
+-- by real frame time (hyprutils advanceSpring, driven by OMEGA0 = sqrt(stiffness/mass)),
+-- so the settle time only moves with stiffness. Critically damped settle (4.6/OMEGA0)
+-- was ~153 ms / ~174 ms; stiffness x4 doubles OMEGA0 and halves both to ~77 ms / ~87 ms,
+-- with dampening x2 keeping the ratio at 1.0 (dampening = 2*sqrt(stiffness) for mass 1).
+hl.curve("spring_crisp",  { type = "spring", mass = 1, stiffness = 3600, dampening = 120 })   -- windows / fades (was 900/60)
+hl.curve("spring_glide",  { type = "spring", mass = 1, stiffness = 2800, dampening = 105.83 }) -- long travel: tape, workspaces (was 700/52.915)
 hl.curve("spring_gentle", { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 }) -- Hyprland's shipped default, kept for tuning
 
--- NOTE: speed is a duration in ds (1 = 100 ms). Windows settle in ~0.14-0.2 s here;
--- a single leaf can be raised by ~1 ds on its own if it feels hasty.
+-- NOTE: for the bezier leaves `speed` is a duration in ds (1 = 100 ms) and is the
+-- knob that was halved below; for the spring leaves it is inert (see above), which
+-- is why their speed fields are left alone — the curve is what times them.
 --
 -- `global` is the fallback for every leaf without an entry of its own (fadeDpms,
 -- fadeGlow, ...); the lines below only override what needs its own feel. A spring
@@ -528,11 +535,13 @@ hl.animation({ leaf = "fade",             enabled = true, speed = 1.5, spring = 
 -- closing snappier than opening.
 hl.animation({ leaf = "fadeIn",           enabled = true, speed = 1.5, spring = "spring_crisp" })
 hl.animation({ leaf = "fadeOut",          enabled = true, speed = 1.1, spring = "spring_crisp" })
-hl.animation({ leaf = "layers",           enabled = true, speed = 1.8, bezier = "menu_decel" }) -- fallback for the layer leaves
-hl.animation({ leaf = "layersIn",         enabled = true, speed = 1.8, bezier = "menu_decel", style = "slide" })
-hl.animation({ leaf = "layersOut",        enabled = true, speed = 1.3, bezier = "menu_accel" })
-hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 1.5, bezier = "menu_decel" })
-hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 0.9, bezier = "menu_accel" })
+-- The layer leaves are the only bezier ones left, so they carry the whole 2x:
+-- their durations are halved (1.8 -> 0.9 ds etc.). Everything else rides a spring.
+hl.animation({ leaf = "layers",           enabled = true, speed = 0.9, bezier = "menu_decel" }) -- fallback for the layer leaves
+hl.animation({ leaf = "layersIn",         enabled = true, speed = 0.9, bezier = "menu_decel", style = "slide" })
+hl.animation({ leaf = "layersOut",        enabled = true, speed = 0.65, bezier = "menu_accel" })
+hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 0.75, bezier = "menu_decel" })
+hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 0.45, bezier = "menu_accel" })
 hl.animation({ leaf = "workspaces",       enabled = true, speed = 2.0, spring = "spring_glide", style = "slide" })
 -- workspacesIn/Out let the incoming and the outgoing desktop travel at different
 -- speeds; `workspaces` stays the shared fallback.
