@@ -9,6 +9,15 @@ them, so one search window covers both. This script walks the menus, renders fla
 ranks with lusty's matcher) and triggers the chosen entry on the bus, so a menu
 entry is a hotkey plus a few letters instead of a mouse hunt through the tray.
 
+A Qt app cannot raise its own window on Wayland: Qt's Wayland client implements
+no xdg-activation, so the "Open Telegram"-style item switches nothing when the
+window sits on a hidden special workspace. Those entries are therefore backed up
+by a focus request (see raise_window_for): after a menu item whose label reads
+like "open/show" fires, the matching window is focused via `window-activate`,
+which can bring up even a special workspace. Nothing happens for entries whose
+label means the opposite ("minimize", "hide", "quit"), and nothing happens when
+there is no window for the entry at all.
+
 The entry list is cached (see --refresh): the window is fed from the cache so it
 opens without waiting for the DBus walk (~0.75 s on the current session — 15+
 busctl round-trips), and a detached refresh updates the cache for the next
@@ -130,10 +139,21 @@ def walk(children: list, prefix: list[str], out: list[dict]) -> None:
         )
 
 
+def item_id(service: str, path: str) -> str:
+    """The StatusNotifierItem id — for Telegram `TelegramDesktop`, for Steam `steam`.
+
+    It is what the tray registry uses as the app identity, and it usually shares
+    the window class' tail (`org.nicotine_plus.Nicotine`), which is what
+    raise_window_for matches on.
+    """
+    return str(property_of(service, path, SNI_IFACE, "Id") or "")
+
+
 def collect(service: str, path: str) -> list[dict]:
     menu = menu_path(service, path)
     if not menu:
         return []
+    app_id = item_id(service, path)
     try:
         layout = busctl_json("call", "--", service, menu, MENU_IFACE, "GetLayout", "iias", "0", "-1", "0")
     except RuntimeError:
@@ -145,6 +165,7 @@ def collect(service: str, path: str) -> list[dict]:
         entry["service"] = service
         entry["menu"] = menu
         entry["app"] = item_title(service, path)
+        entry["app_id"] = app_id
     return entries
 
 
@@ -171,6 +192,84 @@ def trigger(entry: dict, dry_run: bool = False) -> None:
         return True
     proc = subprocess.run(args, capture_output=True, text=True, check=False)
     return proc.returncode == 0
+
+
+# --- the "app cannot focus itself" workaround -------------------------------
+
+# Labels that mean "bring it up". Qt tray menus are translated, so the prefixes
+# cover Russian and English; only the beginning of the label is looked at, so
+# "Quit Telegram" / "Minimize to tray" never match.
+OPEN_LABELS = ("open", "show", "открыть", "показать", "развернуть")
+
+# Tray ids and window classes disagree sometimes (Telegram's tray id is
+# `TelegramDesktop`, its window class `org.telegram.desktop`), and appidding
+# "telegram" to the search would match a chat window titled "telegram" too. This
+# is the explicit list of the disagreements that matter, in a file the user can
+# extend: `~/.config/menu-search/window-class.tsv`, "id<TAB>window class".
+WINDOW_CLASS_FILE = (
+    pathlib.Path(os.environ.get("XDG_CONFIG_HOME", pathlib.Path.home() / ".config"))
+    / "menu-search"
+    / "window-class.tsv"
+)
+def window_activate_bin() -> str | None:
+    found = shutil.which("window-activate")
+    if found:
+        return found
+    fallback = pathlib.Path.home() / ".local/bin/window-activate"
+    return str(fallback) if fallback.is_file() else None
+
+
+def window_class_hints() -> dict[str, str]:
+    """The id → window class overrides, from window-class.tsv (missing file = {})."""
+    try:
+        lines = WINDOW_CLASS_FILE.read_text().splitlines()
+    except OSError:
+        return {}
+    hints = {}
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        fields = [f.strip() for f in line.split("\t") if f.strip()]
+        if len(fields) >= 2:
+            hints[fields[0]] = fields[1]
+    return hints
+
+
+def raise_window_for(entry: dict) -> str | None:
+    """Focus the window behind a "Open ..." menu entry; None if nothing was raised.
+
+    The tray item and the window rarely agree on their names, so the match is
+    tried in both directions: the item id (`org.telegram.desktop` for the
+    Telegram tray icon, `org.nicotine_plus.Nicotine` for Nicotine+) against the
+    window class, then the app title against the window class and title.
+    """
+    label = str(entry.get("label", "")).strip().lower()
+    if not label.startswith(OPEN_LABELS):
+        return None
+    binary = window_activate_bin()
+    if not binary:
+        return None
+
+    item_id = str(entry.get("app_id", "") or "")
+    app = str(entry.get("app", "") or "")
+    hint = window_class_hints().get(item_id)
+    if hint:
+        proc = subprocess.run([binary, "--class", hint, "--substring"], capture_output=True, text=True)
+        if proc.returncode == 0:
+            return proc.stderr.strip() or hint
+    for needle in (item_id, app):
+        if not needle:
+            continue
+        proc = subprocess.run([binary, "--class", needle, "--substring"], capture_output=True, text=True)
+        if proc.returncode == 0:
+            return proc.stderr.strip() or needle
+    for needle in (item_id, app):
+        if needle:
+            proc = subprocess.run([binary, "--title", needle], capture_output=True, text=True)
+            if proc.returncode == 0:
+                return proc.stderr.strip() or needle
+    return None
 
 
 def main_menu_bin() -> str | None:
@@ -227,7 +326,7 @@ def run_action(entry: dict, dry_run: bool = False) -> None:
 CACHE_DIR = pathlib.Path(os.environ.get("XDG_CACHE_HOME", pathlib.Path.home() / ".cache")) / "menu-search"
 CACHE_FILE = CACHE_DIR / "entries.tsv"
 LOCK_FILE = CACHE_DIR / "refresh.lock"
-CACHE_VERSION = "1"
+CACHE_VERSION = "2"
 
 
 def cache_path() -> pathlib.Path:
@@ -242,16 +341,17 @@ def load_cache() -> list[dict]:
     entries: list[dict] = []
     for line in lines:
         fields = line.split("\t")
-        if len(fields) != 7 or fields[0] != CACHE_VERSION:
+        if len(fields) != 8 or fields[0] != CACHE_VERSION:
             continue
-        _, kind, service, menu, item_id, action, display = fields
+        _, kind, service, menu, entry_id, action, app_id, display = fields
         entries.append(
             {
                 "kind": kind,
                 "service": service,
                 "menu": menu,
-                "id": int(item_id) if item_id.lstrip("-").isdigit() else item_id,
+                "id": int(entry_id) if entry_id.lstrip("-").isdigit() else entry_id,
                 "action": action,
+                "app_id": app_id,
                 "line": display,
             }
         )
@@ -272,6 +372,7 @@ def save_cache(entries: list[dict]) -> None:
                         str(entry.get("menu", "")),
                         str(entry.get("id", "")),
                         str(entry.get("action", "")),
+                        str(entry.get("app_id", "")),
                         entry_line(entry),
                     ]
                 )
@@ -335,6 +436,7 @@ def main() -> int:
     parser.add_argument("--refresh", action="store_true", help="rebuild the entry cache and exit")
     parser.add_argument("--no-cache", action="store_true", help="walk the menus now, ignore the cache")
     parser.add_argument("--print-trigger", action="store_true", help="do not click, print the busctl call")
+    parser.add_argument("--verbose", action="store_true", help="report the windows raised for an entry")
     args = parser.parse_args()
 
     if args.refresh:
@@ -401,7 +503,16 @@ def main() -> int:
             print(f"chosen: {chosen}")
         if entry.get("kind") == "action":
             return run_action(entry, dry_run=args.print_trigger)
-        return trigger(entry, dry_run=args.print_trigger)
+        fired = trigger(entry, dry_run=args.print_trigger)
+        if fired and not args.print_trigger:
+            # "Open Telegram" fires here and does nothing on its own: Qt never
+            # asks the compositor to focus the window (no xdg-activation in
+            # Qt's Wayland client), so the window stays where it was. Raising it
+            # is what the entry promised.
+            raised = raise_window_for(entry)
+            if raised and args.verbose:
+                print(f"menu-search: raised {raised}", file=sys.stderr)
+        return fired
 
     def find(source: list[dict]) -> dict | None:
         for entry in source:
