@@ -41,8 +41,10 @@ local rounding_power         = 0
 local opacity_active         = 1.0
 local opacity_inactive       = 1.0
 local shadow_color           = 0xd0000000 -- neutral near-black shadow (was blue rgba(005fafaa))
-local blur_size              = 9
-local blur_passes            = 2
+local blur_size              = 26 -- was 9; the bar/panels dropped hyprglass's 36px layer blur
+local blur_passes            = 4  -- was 2; those surfaces rely on Hyprland's own blur now,
+                               -- (hyprglass glasses only windows + popups now), so the
+                               -- knobs here are the bar's blur strength.
 local blur_vibrancy          = 0.1696
 
 -- ---------------------------------------------------------------------
@@ -629,7 +631,7 @@ end
 
 -- blur with per-namespace ignore_alpha
 local blur_layers = {
-  { ns = "qs-.*",           ia = 0.6 },
+  { ns = "qs-.*",           ia = 0.05 }, -- was 0.6: the bar chips are semi-transparent, 0.6 dropped their blur
   { ns = "quickshell",      ia = 0.5 },
   { ns = "vicinae",         ia = 0.6 },
   { ns = "launcher",        ia = 0.5 },
