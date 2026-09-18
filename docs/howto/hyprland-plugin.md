@@ -95,6 +95,29 @@ behind Hyprland.
   std 4.4; 0.06 with the layer glass off), measured on 0.56.2 + v0.8.1 on 2026-09-17. The plugin
   keeps the layer surfaces it has already registered, so a changed namespace list only applies once
   those surfaces are recreated (a quickshell restart).
+### hyprexpo (exposé / workspace overview)
+
+- **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — upstream retired hyprexpo from
+  `hyprwm/hyprland-plugins` (which is why nixpkgs has no `hyprlandPlugins.hyprexpo`), so the
+  maintained fork `sandwichfarm/hyprexpo` is built with nixpkgs' `mkHyprlandPlugin` helper. The rev
+  is the fork's own 0.56.2 pin from its `hyprpm.toml` (`5891014c…`), i.e. the plugin and the
+  compositor are guaranteed to be the same commit family.
+- **Load + configure**: same load-then-push pattern as hyprglass — the `hyprland.start` hook runs
+  `@hyprexpo_setup@`, which `hyprctl plugin load`s `libhyprexpo.so` and pushes
+  `files/gui/hypr/hyprexpo.lua` through `hyprctl eval`. The helper is in PATH, so the overview can
+  be reconfigured in a live session with `hyprexpo-setup`.
+- **Bind**: `SUPER+grave` → `hyprctl eval 'hl.plugin.hyprexpo.expo("toggle")'`. It goes through
+  `hyprctl` because the plugin is loaded *after* `hyprland.lua` is parsed, so `hl.plugin.hyprexpo` is
+  nil at parse time. In Lua config mode `hyprctl dispatch hyprexpo:expo toggle` does **not** work —
+  `dispatch` is a deprecated shorthand that rewrites the whole argument list into
+  `hl.dispatch(hyprexpo:expo toggle)` and dies with "expected a dispatcher" (reproduced in a nested
+  0.56.2 instance); the runtime Lua namespace via `hyprctl eval` does.
+  because the plugin is loaded *after* `hyprland.lua` is parsed, so `hl.plugin.hyprexpo` is nil at
+  parse time. `hl.plugin.hyprexpo.expo(...)` is only usable from `hyprctl eval`-pushed code.
+- **Gesture**: 3-finger swipe with `gesture_direction = "vertical"`; the horizontal 3-finger swipe
+  stays with `hl.gesture()` (the scrolling tape), since Hyprland keys gestures per finger count +
+  direction and one would shadow the other.
+
 
 ## Testing a plugin without endangering the session
 

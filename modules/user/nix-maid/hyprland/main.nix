@@ -35,8 +35,27 @@ let
     $(cat ${pkgs.writeText "hyprglass.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprglass.lua"))})" || true
   '';
 
+  # HyprExpo follows the same load-then-push pattern as hyprglass: the .so is
+  # dlopen'd first, then the plugin's registered config keys are pushed with
+  # `hyprctl eval` (files/gui/hypr/hyprexpo.lua). The bind in hyprland.lua uses
+  # `hyprctl dispatch hyprexpo:expo toggle` instead of hl.plugin.hyprexpo.* —
+  # the plugin is not loaded while hyprland.lua is parsed, so the Lua namespace
+  # is nil at that point.
+  hyprexpoSetup = pkgs.writeShellScriptBin "hyprexpo-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+
+    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
+    "$hyprctl_bin" plugin load ${pkgs.hyprlandPlugins.hyprexpo}/lib/libhyprexpo.so || true
+
+    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
+    # comment) as a flag, hence the leading newline.
+    "$hyprctl_bin" eval "
+    $(cat ${pkgs.writeText "hyprexpo.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprexpo.lua"))})" || true
+  '';
   hyprlandLuaText =
-    builtins.replaceStrings [ "@hyprglass_setup@" ] [ "${hyprglassSetup}/bin/hyprglass-setup" ]
+    builtins.replaceStrings
+      [ "@hyprglass_setup@" "@hyprexpo_setup@" ]
+      [ "${hyprglassSetup}/bin/hyprglass-setup" "${hyprexpoSetup}/bin/hyprexpo-setup" ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
 {
@@ -50,7 +69,7 @@ in
       {
         # hyprglass-setup is in PATH as well, so the glass can be (re)applied in a
         # running session without logging out (the start hook only fires on start).
-        environment.systemPackages = services.packages ++ [ hyprglassSetup ];
+        environment.systemPackages = services.packages ++ [ hyprglassSetup hyprexpoSetup ];
 
         systemd.user.targets = services.systemdTargets;
         systemd.user.services = services.systemdServices;

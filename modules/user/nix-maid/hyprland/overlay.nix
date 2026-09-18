@@ -71,6 +71,44 @@
           # (getMonitorFromCursor/warpCursorTo/m_monitors) no longer compiles
           # against 0.56, which moved monitor access into a State query system
           # and made CCompositor a small class. Re-port them before re-exporting.
+          # HyprExpo: upstream retired the plugin from hyprwm/hyprland-plugins
+          # (hence no nixpkgs attr), sandwichfarm's fork continues it and pins
+          # 0.56.2 at commit 5891014c (see its hyprpm.toml). Built with the
+          # nixpkgs helper so it links against the same Hyprland as the session;
+          # the .so is dlopen'd by hyprexpo-setup at session start (see main.nix).
+          hyprexpo = final.hyprlandPlugins.mkHyprlandPlugin {
+            pluginName = "hyprexpo";
+            version = "0-unstable-2026-09-18";
+
+            src = final.fetchFromGitHub {
+              owner = "sandwichfarm";
+              repo = "hyprexpo";
+              rev = "5891014c611e1bd56d0121143f0221d46b5c0967";
+              hash = "sha256-86gJ8YixG+FeEcnkGHc0O3eCemoDLe9/cOa21VZKdQM=";
+            };
+
+            dontUseCmakeConfigure = true;
+            # The Makefile links lua through pkg-config (lua5.4, falls back to lua).
+            # pkg-config finds it only if the dev output is on PKG_CONFIG_PATH.
+            buildInputs = [ final.lua5_4 ];
+            env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/lib
+              mv hyprexpo.so $out/lib/libhyprexpo.so
+
+              runHook postInstall
+            '';
+
+            meta = {
+              homepage = "https://github.com/sandwichfarm/hyprexpo";
+              description = "Expose-style workspace overview for Hyprland";
+              license = final.lib.licenses.bsd3;
+              platforms = final.lib.platforms.linux;
+            };
+          };
         };
       })
     ];
