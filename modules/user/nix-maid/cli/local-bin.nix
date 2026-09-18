@@ -12,6 +12,10 @@
         # Path to the source directories
         binDir = config.lib.neg.path "packages/local-bin/bin";
         scriptsDir = config.lib.neg.path "packages/local-bin/scripts";
+        # Data files of the local-bin tools (the window-class table of
+        # menu-search, see raise_window_for there) — these are configuration,
+        # not scripts, so they live under files/ and are rendered verbatim.
+        filesDir = config.lib.neg.path "files/menu-search";
 
         # Substitution table for the local-bin scripts. The runtime library dirs
         # used to be literal /nix/store paths copied into twenty scripts: the
@@ -114,6 +118,12 @@
         ".local/bin/hypr-focus-hist" = {
           executable = true;
           source = "${pkgs.neg.hypr-focus}/bin/hypr-focus";
+        };
+        # menu-search reads it to match a tray entry to its window (the id in the
+        # tray registry vs. the window class); deleting the file only costs the
+        # fallback to the heuristic match, it is not an error.
+        ".config/menu-search/window-class.tsv" = {
+          text = builtins.readFile (filesDir + "/window-class.tsv");
         };
       }
     )
