@@ -22,6 +22,12 @@ PopupWindow {
     visible: false
     color: "transparent"
 
+    // An xdg-popup only gets keyboard input when it asks for the popup grab:
+    // without this the search field never saw a keystroke, the menu could not be
+    // closed with Escape and the search looked dead (typing went to the focused
+    // toplevel instead). grabFocus is only meaningful while the popup is mapped.
+    grabFocus: visible
+
     readonly property int _searchBarH: Math.max(1, Math.round(Theme.panelMenuItemHeight * 0.85))
     readonly property int _searchBarImplicitH: _searchBarH + 8
     // Not required: the root tray menu is created without a handle and gets it
@@ -76,7 +82,17 @@ PopupWindow {
             if (menuHost.anchor && menuHost.anchor.item) menuHost.anchor.updateAnchor();
             searchField.forceActiveFocus();
         });
+        // The grab is granted asynchronously: forceActiveFocus() above may run
+        // while the window is still inactive, so retry once it certainly is.
+        focusRetry.restart();
     }
+    Timer {
+        id: focusRetry
+        interval: 60
+        repeat: false
+        onTriggered: if (menuHost.visible) searchField.forceActiveFocus()
+    }
+
     function hideMenu() {
         visible = false; searchField.text = "";
         if (destroySubmenusOnHide) destroySubmenusRecursively(listView);
