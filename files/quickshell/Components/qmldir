@@ -36,7 +36,7 @@ SlideReveal 1.0 SlideReveal.qml
 Spinner 1.0 Spinner.qml
 StyledTooltip 1.0 StyledTooltip.qml
 SubmenuHost 1.0 SubmenuHost.qml
-ThemedHoverRect 1.0 ThemedHoverRect.qml
+
 TriangleOverlay 1.0 TriangleOverlay.qml
 TrayIcon 1.0 TrayIcon.qml
 WidgetCapsule 1.0 WidgetCapsule.qml
