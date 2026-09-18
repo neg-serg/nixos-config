@@ -8,6 +8,10 @@ import Quickshell.Io
 Item {
     id: root
 
+    // The route helper, called with an argument array. It used to be spliced
+    // into `sh -c` strings ("pwroute " + name), which meant a route key with a
+    // space or a shell metacharacter changed the command; passing argv directly
+    // takes the shell out of the path entirely.
     readonly property string _pwRouteCommand: "pwroute"
 
     property var defaultAudioSink: Pipewire.defaultAudioSink
@@ -145,7 +149,7 @@ Item {
 
     Process {
         id: loadRoutesProc
-        command: ["sh", "-c", _pwRouteCommand + " list"]
+        command: [_pwRouteCommand, "list"]
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
@@ -167,11 +171,11 @@ Item {
 
     function setRoute(name) {
         if (name === currentRoute || name === "unknown") return;
-        Quickshell.execDetached(["sh", "-c", _pwRouteCommand + " " + name]);
+        Quickshell.execDetached([_pwRouteCommand, name]);
     }
 
     function toggleRoute() {
-        Quickshell.execDetached(["sh", "-c", _pwRouteCommand + " toggle"])
+        Quickshell.execDetached([_pwRouteCommand, "toggle"])
     }
 
     Timer {
@@ -193,7 +197,7 @@ Item {
 
     Process {
         id: routeProc
-        command: ["sh", "-c", _pwRouteCommand + " current"]
+        command: [_pwRouteCommand, "current"]
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
