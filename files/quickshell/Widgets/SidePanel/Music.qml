@@ -18,11 +18,23 @@ Rectangle {
     color: "transparent"
     implicitWidth: playerUI.implicitWidth + Math.round(Theme.sidePanelSpacingMedium * Theme.scale(screen))
     implicitHeight: playerUI.implicitHeight
-    // The popup component stays loaded while hidden and its local `visible`
-    // bindings are still true, so gate the analyser feed on the window actually
-    // being mapped: pushing cava frames into a hidden spectrum re-animates every
+    // Whether this card is really on screen. The popup stays loaded while hidden
+    // and its local `visible` bindings are still true, so the analyser feed is
+    // gated on this: pushing cava frames into a hidden spectrum re-animates every
     // bar and dirties the window on each frame.
-    readonly property bool onScreen: !!(Window.window && Window.window.visible)
+    //
+    // (Named isOnScreen, not onScreen: QML reads an `on<Capital>` name as a signal
+    // handler, so assigning to it from the host fails with "Cannot assign a value
+    // to a signal".)
+    //
+    // It used to ask `Window.window.visible`, which is null here — the card lives
+    // inside a top-level PanelWindow (shell.qml loads MusicPopup there so its
+    // surface actually maps), and the attached `Window` property resolves for
+    // items inside a window while a PanelWindow *is* the window. The condition
+    // was therefore always false and the panel's spectrum never received a frame
+    // (values stayed [] while cava streamed into MusicManager.cavaValues). The
+    // host that owns the surface says whether it is shown.
+    property bool isOnScreen: false
 
     function warnContrast(bg, fg, label) {
         try {
@@ -103,7 +115,7 @@ Rectangle {
                 // ~30 Hz sample of the CAVA stream (was 12.5 Hz — looked laggy).
                 interval: 32
                 repeat: true
-                running: musicCard.onScreen && MusicManager.hasPlayer && MusicManager.isPlaying
+                running: musicCard.isOnScreen && MusicManager.hasPlayer && MusicManager.isPlaying
                 onTriggered: playerUI._spec = (MusicManager.cavaValues || []).slice()
             }
             // Mouse scrubbing: map an x position on the progress bar to a seek.
