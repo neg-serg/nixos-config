@@ -189,7 +189,7 @@ Row {
                                 root.dismissOverlayNow();
                             } else if (mouse.button === Qt.MiddleButton) {
                                 if (trayMenu && trayMenu.visible) trayMenu.hideMenu();
-                                modelData.secondaryActivate && modelData.secondaryActivate();
+                                if (modelData.secondaryActivate) modelData.secondaryActivate();
                                 expanded = false;
                                 root.dismissOverlayNow();
                             } else if (mouse.button === Qt.RightButton) {
