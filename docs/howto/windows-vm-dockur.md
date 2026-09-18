@@ -170,8 +170,9 @@ nothing moves the adapter back to the host on its own.
 Manual control still works:
 
 ```bash
-podman stop windows               # graceful ACPI shutdown, ~8s on a healthy guest
-systemctl --user start windows-vm # ≡ podman start windows (idempotent)
+systemctl --user stop windows-vm    # ACPI shutdown via windows-vm-stop, ~10-30s
+podman stop windows                 # same ACPI path, but through dockur's SIGTERM handler
+systemctl --user restart windows-vm # stop + start, the one that always ends running
 ```
 
 ### A lost adapter needs a VM restart (no USB hotplug inside the container)
@@ -223,33 +224,76 @@ crun: open `true`: Transport endpoint is not connected
 
 Seen 2026-09-17 03:00 → 04:25: the VM was unreachable for 1.5 h, `glm-adapter-auto` kept reporting a
 healthy VM every 60 s, and only the Telegram RDP probe (`telegram-notify-windows-ready`) noticed. A
-fresh stop → teardown → start is the only cure, so the RDP port is the liveness probe for the
-container as a whole:
+fresh stop → teardown → start is the only cure. The probe is **the guest's RDP reply, not the TCP
+port**: passt completes the handshake from its own stack, so `connect()` succeeds even when the guest
+is dead (2026-09-17: 14 h of `ok RDP answers` over a Windows stuck in WinRE, see “The guest can be up
+but not serving” below). `vm_rdp_ok()` therefore sends an X.224 Connection Request and waits for the
+`03 00 …` Connection Confirm;
 
-- `glm-adapter health` — reports the container age, `:3389` and `:8006`;
-- `glm-adapter auto` (the 60 s `glm-adapter-auto` timer) — restarts the VM when the port stays
-  closed for two consecutive runs, and only when the container is older than 5 min (`RDP_GRACE` /
+
+- `glm-adapter health` — reports the container age, whether the guest actually answers RDP, and
+  `:8006`;
+- `glm-adapter auto` (the 60 s `glm-adapter-auto` timer) — restarts the VM when the guest stays
+  silent for two consecutive runs, and only when the container is older than 5 min (`RDP_GRACE` /
   `RDP_STRIKES`). The grace period keeps a booting Windows out of the restart path, the two strikes
-  keep a Windows Update reboot (it closes `:3389` too) out of it. The age comes from the mtime of
+  keep a Windows Update reboot (it stops answering too) out of it. The age comes from the mtime of
   the container's netns file (`vm_uptime()`), not from `.State.StartedAt`: that one is Go-formatted
   (`… +0300 MSK`) and the user-service environment has no `TZDIR` for `date -d`.
 
-### Shutdown: SIGTERM works, do not shorten `--stop-timeout`
+### The guest can be up but not serving: WinRE / Automatic Repair
 
-dockur traps SIGTERM, sends an ACPI `system_powerdown` through the QEMU monitor, then waits for the
-guest. `podman logs windows` shows the progress:
+The two failure modes behind a dead RDP reply look identical from the host (container `Up`, port
+accepting or not), but they need opposite reactions:
 
+- **nothing accepts on `:3389`** — the pasta plumbing died, a restart is the cure (above);
+- **the port accepts but the guest sends nothing** — Windows is not serving. If it is not a reboot in
+  progress, it is usually Windows Recovery: “Automatic Repair — Your PC did not start correctly”.
+  A restart does **not** help there (the guest boots back into the same screen) and only a human can
+  click through it, so `cmd_auto` screendumps the guest, OCRs the picture (`vm_recovery_screen`) and
+  pages Telegram instead of burning the hourly restart budget on a reboot loop.
+
+Seen 2026-09-17 14:39 → 2026-09-18 05:30: after an unclean shutdown left NTFS dirty (see “Shutdown”
+below), the VM came up into Automatic Repair and sat there for 14 h — `podman ps` said `Up`, the
+TCP-only probe said `ok RDP answers`, and the MIDI bridge/proxy were dead the whole time. Fix (once):
+`sendkey ret` on the WinRE dialog through the monitor, which is “Restart”:
+
+```bash
+podman exec windows sh -c 'printf "sendkey ret\n" | timeout 5 nc -N -U /run/shm/monitor.sock'
 ```
-❯ Received SIGTERM signal, sending ACPI shutdown signal...
-❯ Waiting for Windows to shut down... (1/100)
-❯ Shutdown completed!
-```
 
-A healthy guest powers off in ~8 s. `--stop-timeout 120` is required: with the podman default (10 s)
-the container gets SIGKILLed mid-shutdown, leaving NTFS dirty. If the guest ever hangs at shutdown,
-the full timeout elapses and podman kills it anyway — the
-`Waiting for Windows to shut down… (n/100)` counter in the logs is what distinguishes a clean
-shutdown from a kill.
+If it lands on the same screen again, use Advanced options → Startup Repair (or `chkdsk /f` from a
+recovery console) in the noVNC UI at `http://127.0.0.1:8006`.
+
+### Shutdown: ACPI first, `podman stop` last
+
+`windows-vm.service` carries an `ExecStop` (`packages/local-bin/scripts/windows-vm-stop`,
+`TimeoutStopSec=360`) instead of leaving the teardown to podman. Reason, seen 2026-09-17 13:44: the
+host was shutting down and dockur got SIGTERM, but its own ACPI path needed the container's plumbing —
+`Warning: QEMU PID file does not exist?` plus `power.sh: line 480: touch: command not found` (the
+rootfs was already unmounted by a straggler teardown) — so no ACPI was ever sent and QEMU was
+SIGKILLed when the 120 s stop timeout expired. The guest came back in Automatic Repair (previous
+section).
+
+The stop path is therefore:
+
+1. `system_powerdown` through the QEMU monitor from inside the container (`/run/shm/monitor.sock`) —
+   the same ACPI power button dockur would have pressed, but not dependent on dockur's pidfile or on
+   podman reporting a live container;
+2. wait up to `ACPI_WAIT` (180 s) for the guest to actually leave (`❯ Shutdown completed!` in
+   `podman logs windows`, container `Exited (0)`; ~10-30 s on a healthy guest);
+3. only then fall back to `podman stop -t 120`, and
+4. wait out the rootfs teardown (fuse-overlayfs unmount + conmon reap) so the next start does not land
+   in the window that produced the `touch: command not found` errors.
+
+A healthy guest powers off in ~8 s after the power button. `--stop-timeout 120` is still required for
+the `podman stop` fallback: with the podman default (10 s) the container gets SIGKILLed mid-shutdown,
+leaving NTFS dirty. If the guest hangs at shutdown, the full timeout elapses and podman kills it anyway
+— the `Waiting for Windows to shut down… (n/100)` counter in the logs is what distinguishes a clean
+shutdown from a kill, and the same counter is what tells dockur's own path apart from ours.
+
+`systemctl --user start windows-vm` is a no-op while the unit is active (`RemainAfterExit` keeps it
+active even when the container was stopped outside systemd), so **use `systemctl --user restart
+windows-vm`** when the VM is down and the unit thinks otherwise — `restart` runs the stop path first.
 
 ## Genelec GLM (Gnet Adapter) USB passthrough
 
@@ -430,7 +474,9 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 - `packages/local-bin/bin/proxy` — the inbounds `in-lan-vm` (SOCKS 10811) and `in-lan-vm-http` (HTTP
   10812\)
 - `hosts/odin/services/windows-vm.nix` — VM start unit (`ExecStartPost` runs `glm-vm-netfix`)
-- `packages/local-bin/scripts/glm-adapter` — adapter placement + VM liveness (`health`/`auto`)
+- `packages/local-bin/scripts/glm-adapter` — adapter placement + VM liveness (`health`/`auto`; the
+  probe is the guest's RDP reply, and a WinRE screen pages instead of restarting)
+- `packages/local-bin/scripts/windows-vm-stop` — ACPI shutdown of the guest for the unit's `ExecStop`
 - `packages/local-bin/scripts/glm-vm-netfix` — drops the .88 alias pasta copies into the container,
   otherwise the bridge and the VM proxy get `Connection refused` from the container itself
 
