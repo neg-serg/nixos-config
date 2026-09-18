@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
-import QtQuick.Window 2.15
+import QtQuick.Window
 import qs.Settings
 import qs.Components
 import qs.Services
