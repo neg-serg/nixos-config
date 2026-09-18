@@ -95,8 +95,8 @@ Scope {
         // Force WallpaperAccent singleton to instantiate
         var wa = WallpaperAccent;
         _recalcTerminalWs();
-        _refreshPanelWidgets();
     }
+
 
     function makeTriangleVariant(widthPx, heightPx, variantSelector) {
         const w = Math.max(1, Math.round(widthPx || 0));
