@@ -734,6 +734,11 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("nicotine -s") -- start hidden (Soulseek client); summon via special-submap d
   hl.exec_cmd("wayscriber --daemon") -- keep the annotation overlay resident; M4+SHIFT+Z toggles it
   hl.exec_cmd("systemctl --user start --no-block vicinae.service")
+  -- Warm the menu-search entry cache once the tray apps have registered their
+  -- StatusNotifierItems: the window is fed from that cache, so Super+Shift+M
+  -- opens without walking the bus for every menu (menu-search --refresh; it also
+  -- refreshes in the background on every use).
+  hl.exec_cmd("zsh -c 'sleep 8; menu-search --refresh'")
   hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
 end)
