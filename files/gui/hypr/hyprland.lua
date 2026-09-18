@@ -157,6 +157,9 @@ hl.config({
     disable_hyprland_logo = false, enable_anr_dialog = false, force_default_wallpaper = 0,
     font_family = "Iosevka", splash_font_family = "Iosevka",
     vrr = 2, disable_autoreload = 1,
+    -- Motion for actions Hyprland would otherwise snap: manual resizes and
+    -- mouse window dragging both replay through the windowsMove spring.
+    animate_manual_resizes = true, animate_mouse_windowdragging = true,
   },
   cursor = {
     sync_gsettings_theme = true, min_refresh_rate = 175, inactive_timeout = 0,
@@ -494,6 +497,12 @@ hl.curve("spring_gentle", { type = "spring", mass = 1, stiffness = 238.1191, dam
 
 -- NOTE: speed is a duration in ds (1 = 100 ms). Windows settle in ~0.14-0.2 s here;
 -- a single leaf can be raised by ~1 ds on its own if it feels hasty.
+--
+-- `global` is the fallback for every leaf without an entry of its own (fadeDpms,
+-- fadeGlow, ...); the lines below only override what needs its own feel. A spring
+-- ignores the bezier and vice versa, so speed and curve are independent knobs.
+
+hl.animation({ leaf = "global",           enabled = true, speed = 2.0, spring = "spring_glide" })
 hl.animation({ leaf = "borderangle",      enabled = false, speed = 8,     bezier = "default" }) -- frameless
 hl.animation({ leaf = "border",           enabled = false, speed = 0.625, bezier = "default" }) -- frameless
 hl.animation({ leaf = "windows",          enabled = true, speed = 1.8, spring = "spring_crisp", style = "popin 60%" })
@@ -503,13 +512,25 @@ hl.animation({ leaf = "windowsOut",       enabled = true, speed = 1.3, spring = 
 -- scrolling tape. This is what makes windows glide like Denial's.
 hl.animation({ leaf = "windowsMove",      enabled = true, speed = 2.0, spring = "spring_glide" })
 hl.animation({ leaf = "fade",             enabled = true, speed = 1.5, spring = "spring_crisp" })
-hl.animation({ leaf = "fadeSwitch",       enabled = true, speed = 1.2, spring = "spring_crisp" })
+-- fadeIn/fadeOut are the open/close pair, `fade` the generic one and fadeSwitch
+-- the cross-fade when one surface replaces another in place. Separate speeds keep
+-- closing snappier than opening.
+hl.animation({ leaf = "fadeIn",           enabled = true, speed = 1.5, spring = "spring_crisp" })
+hl.animation({ leaf = "fadeOut",          enabled = true, speed = 1.1, spring = "spring_crisp" })
+hl.animation({ leaf = "layers",           enabled = true, speed = 1.8, bezier = "menu_decel" }) -- fallback for the layer leaves
 hl.animation({ leaf = "layersIn",         enabled = true, speed = 1.8, bezier = "menu_decel", style = "slide" })
 hl.animation({ leaf = "layersOut",        enabled = true, speed = 1.3, bezier = "menu_accel" })
 hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 1.5, bezier = "menu_decel" })
 hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 0.9, bezier = "menu_accel" })
 hl.animation({ leaf = "workspaces",       enabled = true, speed = 2.0, spring = "spring_glide", style = "slide" })
+-- workspacesIn/Out let the incoming and the outgoing desktop travel at different
+-- speeds; `workspaces` stays the shared fallback.
+hl.animation({ leaf = "workspacesIn",     enabled = true, speed = 1.6, spring = "spring_crisp", style = "slide" })
+hl.animation({ leaf = "workspacesOut",    enabled = true, speed = 1.6, spring = "spring_glide", style = "slide" })
 hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 1.9, spring = "spring_glide", style = "slidefadevert 15%" })
+-- zoomFactor drives the scaled/zoomed layouts (scrolling tape zoom and similar
+-- passes); spring_glide keeps it in step with windowsMove.
+hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 2.4, spring = "spring_glide" })
 
 -- =====================================================================
 -- Window rules (rules.conf + workspaces.nix)
