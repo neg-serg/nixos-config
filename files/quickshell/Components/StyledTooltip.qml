@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Window 2.15
+import QtQuick.Window
 import qs.Settings
 import "../Helpers/ScreenUtil.js" as ScreenUtil
 import qs.Components

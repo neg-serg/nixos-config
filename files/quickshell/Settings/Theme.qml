@@ -1,7 +1,7 @@
 // Theme.qml
 pragma Singleton
 import QtQuick
-import Qt.labs.folderlistmodel 2.15
+import Qt.labs.folderlistmodel
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/Color.js" as Color
 import "../Helpers/ThemeParts.js" as ThemeParts

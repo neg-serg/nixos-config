@@ -130,7 +130,9 @@ Singleton {
 
             // Displays
             property var barMonitors: []
-            property var monitorScaleOverrides: {}
+            // `({})` and not `{}`: the analyzer reads a bare empty block as an
+            // accidental one, which has to be spelled out for an object literal here.
+            property var monitorScaleOverrides: ({})
 
             property bool collapseSystemTray: true
             property string collapsedTrayIcon: "expand_more"
