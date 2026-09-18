@@ -197,6 +197,9 @@ Row {
                                 if (modelData.hasMenu && modelData.menu && trayMenu) {
                                     const menuX = (width / 2) - (trayMenu.width / 2);
                                     const menuY = height + Math.round(Services.TrayController.menuYOffset * root._scale);
+                                    // Whose menu this is: entries do not carry the
+                                    // item id, and it is what identifies the window.
+                                    trayMenu.trayContext = modelData;
                                     trayMenu.menu = modelData.menu;
                                     trayMenu.showAt(parent, menuX, menuY);
                                     trayOverlay.open("tray-menu");
