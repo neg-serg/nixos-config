@@ -25,6 +25,12 @@ OverlayToggleCapsule {
         throughputText: root.throughputText
     }
 
+    // The host capsule owns the panel: the cluster below is a capsule too and
+    // must stay transparent, otherwise the panel is filled twice (see
+    // NetClusterCapsule.qml). Key kept here so widgetBackgrounds.network still
+    // applies, exactly like systemMonitor/weather.
+    capsule.backgroundKey: "network"
+
     // WidgetCapsule defaults to implicitWidth 0; derive it from the content
     // or the whole capsule collapses to zero width and vanishes from the bar
     // (same pattern as WeatherButton/PillCapsule/SystemMonitorCapsule).
