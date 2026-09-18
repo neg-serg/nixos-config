@@ -9,8 +9,14 @@ them, so one search window covers both. This script walks the menus, renders fla
 ranks with lusty's matcher) and triggers the chosen entry on the bus, so a menu
 entry is a hotkey plus a few letters instead of a mouse hunt through the tray.
 
+The entry list is cached (see --refresh): the window is fed from the cache so it
+opens without waiting for the DBus walk (~0.75 s on the current session — 15+
+busctl round-trips), and a detached refresh updates the cache for the next
+invocation. A stale entry is retried from a fresh walk before giving up.
+
 Usage:
-  menu-search                       open the mini window (default)
+  menu-search                       open the mini window (default, from cache)
+  menu-search --refresh             rebuild the cache and exit
   menu-search --list                print every entry (menus + local actions)
   menu-search --list --json         machine-readable dump (for other UIs)
   menu-search --query Q             pre-fill the query
@@ -23,7 +29,10 @@ Exit status: 0 on success (also when the user dismisses the window), 1 on error.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
+import os
+import pathlib
 import shutil
 import subprocess
 import sys
@@ -159,8 +168,9 @@ def trigger(entry: dict, dry_run: bool = False) -> None:
     ]
     if dry_run:
         print(" ".join(args))
-        return
-    subprocess.run(args, capture_output=True, text=True, check=False)
+        return True
+    proc = subprocess.run(args, capture_output=True, text=True, check=False)
+    return proc.returncode == 0
 
 
 def main_menu_bin() -> str | None:
@@ -209,12 +219,109 @@ def run_action(entry: dict, dry_run: bool = False) -> None:
     args = [binary, "--run", entry["action"]]
     if dry_run:
         print(" ".join(args))
-        return
-    subprocess.run(args, capture_output=True, text=True, check=False)
+        return True
+    proc = subprocess.run(args, capture_output=True, text=True, check=False)
+    return proc.returncode == 0
+
+
+CACHE_DIR = pathlib.Path(os.environ.get("XDG_CACHE_HOME", pathlib.Path.home() / ".cache")) / "menu-search"
+CACHE_FILE = CACHE_DIR / "entries.tsv"
+LOCK_FILE = CACHE_DIR / "refresh.lock"
+CACHE_VERSION = "1"
+
+
+def cache_path() -> pathlib.Path:
+    return CACHE_FILE
+
+
+def load_cache() -> list[dict]:
+    try:
+        lines = cache_path().read_text().splitlines()
+    except OSError:
+        return []
+    entries: list[dict] = []
+    for line in lines:
+        fields = line.split("\t")
+        if len(fields) != 7 or fields[0] != CACHE_VERSION:
+            continue
+        _, kind, service, menu, item_id, action, display = fields
+        entries.append(
+            {
+                "kind": kind,
+                "service": service,
+                "menu": menu,
+                "id": int(item_id) if item_id.lstrip("-").isdigit() else item_id,
+                "action": action,
+                "line": display,
+            }
+        )
+    return entries
+
+
+def save_cache(entries: list[dict]) -> None:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = cache_path().with_suffix(".tmp")
+    with tmp.open("w") as fh:
+        for entry in entries:
+            fh.write(
+                "\t".join(
+                    [
+                        CACHE_VERSION,
+                        str(entry.get("kind", "menu")),
+                        str(entry.get("service", "")),
+                        str(entry.get("menu", "")),
+                        str(entry.get("id", "")),
+                        str(entry.get("action", "")),
+                        entry_line(entry),
+                    ]
+                )
+                + "\n"
+            )
+    os.replace(tmp, cache_path())
+
+
+def refresh_cache_background() -> None:
+    """Rebuild the cache for the next invocation without delaying this one."""
+    try:
+        subprocess.Popen(
+            [sys.executable, os.path.abspath(__file__), "--refresh"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError:
+        pass
 
 
 def entry_line(entry: dict) -> str:
+    """The line shown for an entry. Cached entries already carry it."""
+    if "line" in entry:
+        return entry["line"]
     return " › ".join([entry["app"], *entry["path"], entry["label"]])
+
+
+def enumerate_entries() -> list[dict]:
+    entries: list[dict] = []
+    for service, path in tray_items():
+        entries.extend(collect(service, path))
+    entries.extend(action_entries())
+    entries.sort(key=entry_line)
+    return entries
+
+
+def refresh_cache() -> int:
+    """Walk the menus and store the result. Serialised: two refreshes never race."""
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    with LOCK_FILE.open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            return 0  # someone else is already refreshing
+        entries = enumerate_entries()
+        if entries:
+            save_cache(entries)
+    return 0
 
 
 def main() -> int:
@@ -225,23 +332,37 @@ def main() -> int:
     parser.add_argument("--width", type=int, default=560)
     parser.add_argument("--height", type=int, default=420)
     parser.add_argument("--placeholder", default="Menus: ❯")
+    parser.add_argument("--refresh", action="store_true", help="rebuild the entry cache and exit")
+    parser.add_argument("--no-cache", action="store_true", help="walk the menus now, ignore the cache")
     parser.add_argument("--print-trigger", action="store_true", help="do not click, print the busctl call")
     args = parser.parse_args()
+
+    if args.refresh:
+        if not BUSCTL:
+            print("menu-search: busctl not found", file=sys.stderr)
+            return 1
+        return refresh_cache()
 
     if not BUSCTL:
         print("menu-search: busctl not found", file=sys.stderr)
         return 1
 
-    entries: list[dict] = []
-    for service, path in tray_items():
-        entries.extend(collect(service, path))
-    entries.extend(action_entries())
+    if args.no_cache:
+        entries = enumerate_entries()
+    else:
+        # Cache first, walk later: feeding the window from disk is what makes it
+        # appear immediately (vicinae slurps stdin before it opens the window).
+        entries = load_cache()
+        if entries:
+            refresh_cache_background()
+        else:
+            entries = enumerate_entries()
+            if entries:
+                save_cache(entries)
 
     if not entries:
         print("menu-search: no menu entries found", file=sys.stderr)
         return 1
-
-    entries.sort(key=entry_line)
     if args.json:
         json.dump([{**e, "line": entry_line(e)} for e in entries], sys.stdout, ensure_ascii=False, indent=1)
         print()
@@ -274,15 +395,34 @@ def main() -> int:
     if proc.returncode != 0 or not proc.stdout.strip():
         return 0  # dismissed
     chosen = proc.stdout.strip().splitlines()[-1]
-    for entry in entries:
-        if entry_line(entry) == chosen:
-            if args.print_trigger:
-                print(f"chosen: {chosen}")
-            if entry.get("kind") == "action":
-                run_action(entry, dry_run=args.print_trigger)
-            else:
-                trigger(entry, dry_run=args.print_trigger)
+
+    def fire(entry: dict) -> bool:
+        if args.print_trigger:
+            print(f"chosen: {chosen}")
+        if entry.get("kind") == "action":
+            return run_action(entry, dry_run=args.print_trigger)
+        return trigger(entry, dry_run=args.print_trigger)
+
+    def find(source: list[dict]) -> dict | None:
+        for entry in source:
+            if entry.get("line", entry_line(entry)) == chosen:
+                return entry
+        return None
+
+    entry = find(entries)
+    if entry and fire(entry):
+        return 0
+    # The cached item may be gone (the app rebuilt its menu): walk once more and
+    # retry the same label before reporting failure.
+    if entry:
+        fresh = enumerate_entries()
+        if fresh:
+            save_cache(fresh)
+        retry = find(fresh)
+        if retry and fire(retry):
             return 0
+        print(f"menu-search: {chosen!r} is no longer available", file=sys.stderr)
+        return 1
     print(f"menu-search: {chosen!r} did not match an entry", file=sys.stderr)
     return 1
 
