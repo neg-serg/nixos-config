@@ -14,6 +14,21 @@ Item {
     id: mediaControl
     property var sidePanelPopup: null
 
+    // Clicking the widget opens (or closes) the now-playing panel. Only the track
+    // text did this before: the cover — the biggest thing in the capsule, and the
+    // part that looks clickable — had no handler at all, so a click there did
+    // nothing. Both go through here now.
+    function toggleSidePanel() {
+        try {
+            if (!sidePanelPopup) {
+                console.warn("[mediaDebug] sidePanelPopup is null, cannot open");
+                return;
+            }
+            if (sidePanelPopup.visible) sidePanelPopup.hidePopup();
+            else sidePanelPopup.showAt();
+        } catch (e) { console.warn("[mediaDebug] toggle error", e) }
+    }
+
     // Track + player info on hover.
     readonly property string _tooltipText: (function() {
         var title = MusicManager.trackTitle || "";
@@ -308,6 +323,14 @@ Item {
                         anchors.fill: parent
                         implicitWidth: mediaControl.iconPreferredWidth
                         implicitHeight: mediaControl.iconPreferredWidth
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                console.warn("[mediaDebug] cover clicked, popup=" + (mediaControl.sidePanelPopup ? "yes" : "null"));
+                                mediaControl.toggleSidePanel();
+                            }
+                        }
                         readonly property real iconExtent: Math.min(width, height)
 
                         Rectangle {
@@ -456,15 +479,8 @@ Item {
                                 }
                             }
                             onClicked: {
-                                try {
-                                    console.warn("[mediaDebug] track clicked, popup=" + (mediaControl.sidePanelPopup ? "yes" : "null") + " popupVisible=" + (mediaControl.sidePanelPopup ? mediaControl.sidePanelPopup.visible : "n/a") + " textLen=" + (trackText.text ? trackText.text.length : 0));
-                                    if (mediaControl.sidePanelPopup) {
-                                        if (mediaControl.sidePanelPopup.visible) mediaControl.sidePanelPopup.hidePopup();
-                                        else mediaControl.sidePanelPopup.showAt();
-                                    } else {
-                                        console.warn("[mediaDebug] sidePanelPopup is null, cannot open");
-                                    }
-                                } catch (e) { console.warn("[mediaDebug] click error", e); }
+                                console.warn("[mediaDebug] track clicked, popup=" + (mediaControl.sidePanelPopup ? "yes" : "null") + " popupVisible=" + (mediaControl.sidePanelPopup ? mediaControl.sidePanelPopup.visible : "n/a") + " textLen=" + (trackText.text ? trackText.text.length : 0));
+                                mediaControl.toggleSidePanel();
                             }
                             cursorShape: Qt.PointingHandCursor
                         }
