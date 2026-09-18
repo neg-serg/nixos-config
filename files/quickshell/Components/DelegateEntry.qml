@@ -4,8 +4,6 @@ import QtQuick.Layouts 1.15
 import qs.Settings
 import qs.Components
 import "../Helpers/ScreenUtil.js" as ScreenUtil
-import "../Helpers/Fuzzy.js" as Fuzzy
-import "../Helpers/Format.js" as Format
 
 Rectangle {
     id: entry
@@ -17,20 +15,6 @@ required property var entryData
     required property Component submenuHostComponent
     // Parent menu window (PopupWindow) to attach submenus to
     required property var menuWindow
-
-    // Byte ranges matched by the search (Fuzzy.rank) — rendered as highlighted
-    // runs. Empty for "no search": the label is drawn as plain text so eliding
-    // keeps working.
-    property var matchSpans: []
-
-    // Rich-text label with the matched runs marked (Fuzzy.highlightMarkup escapes
-    // the slices: menu labels come from third-party apps verbatim).
-    readonly property string _highlightedLabel: {
-        if (!entry.matchSpans || entry.matchSpans.length === 0)
-            return entry.entryLabel;
-        return Fuzzy.highlightMarkup(entry.entryLabel, entry.matchSpans,
-                                     "color:" + Format.colorCss(Theme.accentPrimary, 1) + "; font-weight:bold");
-    }
 
     // Optional screen (for Theme.scale)
     property var screen: (menuWindow && menuWindow.screen) ? menuWindow.screen : null
@@ -75,16 +59,12 @@ required property var entryData
                 color: mouseArea.containsMouse
                        ? bg.hoverTextColor
                        : ((entryData?.enabled ?? true) ? Theme.textPrimary : Theme.textDisabled)
-                text: entry._highlightedLabel
-                textFormat: (entry.matchSpans && entry.matchSpans.length > 0) ? Text.RichText : Text.PlainText
+                text: entry.entryLabel
                 font.family: Theme.fontFamily
                 font.pixelSize: entry._computedPx
                 font.weight: mouseArea.containsMouse ? Font.DemiBold : Font.Medium
                 verticalAlignment: Text.AlignVCenter
-                // Qt elides plain text only; while searching the label is rich
-                // (highlighted) and clipped instead of elided.
-                elide: (entry.matchSpans && entry.matchSpans.length > 0) ? Text.ElideNone : Text.ElideRight
-                clip: true
+                elide: Text.ElideRight
                 z: 10
             }
 
