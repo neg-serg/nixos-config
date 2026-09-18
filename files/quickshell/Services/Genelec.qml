@@ -227,6 +227,17 @@ RowLayout {
         root._lastRequestMs = Date.now();
         wheelCommitTimer.start();
     }
+    // The state file genlc, glm-vol, genlc-media, glm-sync and glm-adapter share.
+    // It is per-session state, so it belongs in XDG_RUNTIME_DIR (0700, wiped on
+    // logout) and not in the fixed, world-writable /tmp path it used to be.
+    // XDG_RUNTIME_DIR is always set in a user session; the fallback mirrors what
+    // the shell scripts do (`${XDG_RUNTIME_DIR:-/run/user/$(id -u)}`).
+    readonly property string _runtimeDir: {
+        var dir = Quickshell.env("XDG_RUNTIME_DIR");
+        return (dir && dir !== "") ? dir : "/run/user/" + Quickshell.env("UID");
+    }
+    readonly property string statePath: _runtimeDir + "/genlc-volume"
+
     function _commitAndSend(dB) {
         var clamped = clamp(Number(dB));
         volume = clamped;
@@ -234,12 +245,15 @@ RowLayout {
         muted = false;
         _lastSendMs = Date.now();
         _sendToHardware(clamped);
-        // Persist the target so /tmp/genlc-volume is never stale after wheel
+        // Persist the target so the state file is never stale after wheel
         // scrolling (the wheel path bypasses genlc-media, the only other
         // writer). The FileView above watches this file; the value equals
         // displayDb, so the reload is a display no-op.
         if (midiMode) {
-            Quickshell.execDetached(["/bin/sh", "-c", "echo " + clamped + " > /tmp/genlc-volume"]);
+            // glm-vol owns the state file (path, validation, clamping), so the
+            // widget asks it instead of writing the file itself — one definition
+            // of where the volume lives, and no shell in the path at all.
+            Quickshell.execDetached(["glm-vol", String(clamped)]);
             // Re-arm all one-shot anchors after every commit: CC20 lands
             // 400 ms after input settles (self-heal), again 2 s later
             // (confirmation), and one last time at 8 s (late confirmation).
@@ -369,11 +383,11 @@ RowLayout {
         genlcProc.start();
     }
     // CLI sync — watch the state file for external volume changes.
-    // FileView tracks /tmp/genlc-volume; genlc rewrites it in place, so the
-    // watcher fires on each write without per-interval subprocesses.
+    // genlc rewrites the file in place, so the watcher fires on each write
+    // without per-interval subprocesses.
     FileView {
         id: stateReader
-        path: "/tmp/genlc-volume"
+        path: root.statePath
         watchChanges: true
         preload: true
         printErrors: false
@@ -412,7 +426,7 @@ RowLayout {
     Component.onCompleted: {
         genlcOk = true;
         // Ensure the state file exists so FileView can watch it (genlc rewrites it in place).
-        Quickshell.execDetached(["touch", "/tmp/genlc-volume"]);
+        Quickshell.execDetached(["touch", root.statePath]);
         // Initial adapter probe (the Timer handles the follow-ups).
         probeProc.cmd = ["/run/current-system/sw/bin/genlc", "discover"];
         probeProc.start();
