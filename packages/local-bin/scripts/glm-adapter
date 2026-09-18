@@ -25,7 +25,15 @@ set -euo pipefail
 VID=1781
 PID=0e39
 CT=windows
-STATE=/tmp/genlc-volume
+# The state file is per-user session state, not a system-wide temporary: it used
+# to be the fixed /tmp/genlc-volume, which is a symlink-attack and cross-user
+# collision surface and survives the session it belongs to. XDG_RUNTIME_DIR is
+# cleared on logout, is 0700, and is what every other per-session file here uses.
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+STATE="$RUNTIME_DIR/genlc-volume"
+
+# Diagnostic dumps of the VM screen live for one session, not for the boot:
+# /tmp/<fixed name> piles up across users and reboots, and is writable by anyone.
 GENLC=/run/current-system/sw/bin/genlc
 PRIV=/run/current-system/sw/bin/glm-adapter-priv
 # pasta re-adds the host's 192.168.2.88 alias to the container's netns on every
@@ -135,7 +143,7 @@ wait_teardown() {
 # Status 1 means "no picture": the tools are missing, the exec failed (dead
 # plumbing) or the guest is not drawing.
 vm_screen_text() {
-  local base=${1:-/tmp/glm-vm-screen}
+  local base=${1:-$RUNTIME_DIR/glm-vm-screen}
   command -v magick >/dev/null 2>&1 || return 1
   command -v tesseract >/dev/null 2>&1 || return 1
   timeout 20 podman exec "$CT" sh -c 'rm -f /dev/shm/glm-screen.ppm; printf "screendump /dev/shm/glm-screen.ppm\n" | timeout 5 nc -N -U /run/shm/monitor.sock' >/dev/null 2>&1 || return 1
@@ -156,7 +164,7 @@ vm_screen_text() {
 # WinRE, so cmd_auto pages instead of restarting when the screen shows this.
 vm_recovery_screen() {
   local txt
-  txt=$(vm_screen_text /tmp/glm-vm-recovery) || return 1
+  txt=$(vm_screen_text "$RUNTIME_DIR/glm-vm-recovery") || return 1
   grep -qiE 'automatic repair|did not start correctly|startup repair|recovery|winre' "$txt" 2>/dev/null
 }
 
@@ -358,7 +366,7 @@ check_glm_vm() {
   # Best-effort: screendump the VM and OCR the GLM window for OFFLINE.
   local txt
   [ "$(vm_running)" = 1 ] || { warn "VM not running — skipping GLM screen check"; return; }
-  if ! txt=$(vm_screen_text /tmp/glm-adapter-shot); then
+  if ! txt=$(vm_screen_text "$RUNTIME_DIR/glm-adapter-shot"); then
     warn "could not OCR the VM screen (magick/tesseract missing, plumbing dead or the guest is not drawing)"
     return
   fi

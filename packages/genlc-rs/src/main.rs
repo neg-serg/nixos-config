@@ -67,6 +67,21 @@ fn parse_volume(s: &str) -> Result<f64> {
     }
 }
 
+/// Where genlc and the quickshell Genelec widget exchange the volume target.
+///
+/// Per-session state, so it belongs in XDG_RUNTIME_DIR (0700, wiped on logout)
+/// rather than the fixed `/tmp/genlc-volume` it used to be: a world-writable
+/// path with a predictable name is a symlink-attack surface and a collision
+/// between users, and a value left over from yesterday's session would be read
+/// as today's target. The shell scripts (glm-vol, genlc-media, glm-sync,
+/// glm-adapter) resolve the same path with `${XDG_RUNTIME_DIR:-/run/user/$(id -u)}`.
+fn state_file() -> Option<std::path::PathBuf> {
+    let runtime = std::env::var("XDG_RUNTIME_DIR")
+        .ok()
+        .filter(|dir| !dir.is_empty())?;
+    Some(std::path::Path::new(&runtime).join("genlc-volume"))
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let transport = protocol::HidTransport::open()?;
@@ -77,7 +92,13 @@ fn main() -> Result<()> {
             let db = parse_volume(&volume)?;
             eprintln!("Setting volume to {db:.2} dB");
             group.set_volume(db)?;
-            let _ = std::fs::write("/tmp/genlc-volume", format!("{:.1}", db));
+            // No XDG_RUNTIME_DIR (cron, a bare container, a shell without the
+            // session environment) means there is no per-session state file to
+            // sync through: the widget is not running either in that case, so
+            // skipping the write is the honest outcome, not an error.
+            if let Some(path) = state_file() {
+                let _ = std::fs::write(path, format!("{:.1}", db));
+            }
         }
         Commands::Discover => group.discover()?,
         Commands::Wakeup => group.wakeup()?,
