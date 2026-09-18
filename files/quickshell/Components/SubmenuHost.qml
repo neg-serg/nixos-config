@@ -47,6 +47,12 @@ PopupWindow {
     // torn down by its parent (see CustomTrayMenu), so it keeps the plain hide.
     property bool destroySubmenusOnHide: false
 
+    // Identity of the tray app this menu belongs to, so a clicked entry can be
+    // turned back into "the window of that app" (see TrayRaise). The root tray
+    // menu is told which item was right-clicked in SystemTray; nested hosts
+    // inherit the value through DelegateEntry's createObject().
+    property var trayContext: null
+
     // Recursively destroy all open submenus in delegate tree
     function destroySubmenusRecursively(item) {
         if (!item || !item.contentItem) return;
@@ -98,12 +104,21 @@ PopupWindow {
     }
     function containsMouse() { return menuHost.containsMouse }
 
+    // Every way of choosing an entry goes through here: it triggers the item and
+    // then gives TrayRaise a chance to raise the window behind it (a Qt app
+    // cannot do that itself on Wayland; see TrayRaise).
+    function activateEntry(entryData) {
+        if (!entryData) return;
+        entryData.triggered();
+        TrayRaise.raiseForEntry(entryData);
+    }
+
     // Trigger the highlighted entry; shared by Return and search-bar accept.
     function activateCurrentItem() {
         if (listView.currentIndex >= 0 && listView.currentIndex < listView.count) {
             var del = listView.currentItem;
             if (del && del.entryItem && del.entryItem.entryData) {
-                del.entryItem.entryData.triggered();
+                menuHost.activateEntry(del.entryItem.entryData);
                 menuHost.visible = false;
             }
         }
@@ -213,6 +228,7 @@ PopupWindow {
                         listViewRef: listView
                         submenuHostComponent: menuHost.submenuHostComponent
                         menuWindow: menuHost
+                        trayContext: menuHost.trayContext
                     }
                 }
             }
