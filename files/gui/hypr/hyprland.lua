@@ -140,7 +140,11 @@ hl.config({
     rounding = rounding, rounding_power = rounding_power,
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
     shadow = { enabled = false, range = 10, render_power = 2, color = shadow_color }, -- disabled for now (values kept for later tuning)
-    blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy },
+    -- xray: sample what is *behind* the surface and ignore whatever sits between
+    -- it and the wallpaper (the same idea as the xray layer rule further down).
+    -- Without it a stacked layer re-blurs an already blurred window underneath,
+    -- which is what made the bar/panel blur muddy against hyprglass windows.
+    blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = true },
     motion_blur = { enabled = false, samples = 24 }, -- disabled for now
     dim_special = false,
   },
