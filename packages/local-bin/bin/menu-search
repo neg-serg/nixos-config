@@ -2,15 +2,16 @@
 """menu-search — search the tray apps' menus in a vicinae mini window.
 
 Every StatusNotifierItem publishes its context menu over DBusMenu; that tree is
-exactly what you get by right-clicking a tray icon, submenus included. This
-script walks all of them, renders flattened entries as "App > Path > Item" into
+exactly what you get by right-clicking a tray icon, submenus included. The local
+helper actions of `main-menu` (music/clipboard/network helpers) are listed next to
+them, so one search window covers both. This script walks the menus, renders flattened entries as "App > Path > Item" into
 `vicinae dmenu` (a compact always-focused window with vicinae's own search, which
 ranks with lusty's matcher) and triggers the chosen entry on the bus, so a menu
 entry is a hotkey plus a few letters instead of a mouse hunt through the tray.
 
 Usage:
   menu-search                       open the mini window (default)
-  menu-search --list                print every entry, one per line
+  menu-search --list                print every entry (menus + local actions)
   menu-search --list --json         machine-readable dump (for other UIs)
   menu-search --query Q             pre-fill the query
   menu-search --width W --height H  window size
@@ -162,6 +163,56 @@ def trigger(entry: dict, dry_run: bool = False) -> None:
     subprocess.run(args, capture_output=True, text=True, check=False)
 
 
+def main_menu_bin() -> str | None:
+    found = shutil.which("main-menu")
+    if found:
+        return found
+    fallback = pathlib.Path.home() / ".local/bin/main-menu"
+    return str(fallback) if fallback.is_file() else None
+
+
+def action_entries() -> list[dict]:
+    """The local helper actions (`main-menu --list`), searchable next to the menus.
+
+    They keep living in main-menu; this only borrows the names, and triggers them
+    with `main-menu --run` — so the Super+Shift+M binding can move to the search
+    window without losing a single action.
+    """
+    binary = main_menu_bin()
+    if not binary:
+        return []
+    proc = subprocess.run([binary, "--list"], capture_output=True, text=True)
+    if proc.returncode != 0:
+        return []
+    entries = []
+    for name in proc.stdout.split():
+        entries.append(
+            {
+                "kind": "action",
+                "id": name,
+                "label": name,
+                "path": [],
+                "app": "Actions",
+                "action": name,
+                "enabled": True,
+                "service": "",
+                "menu": "",
+            }
+        )
+    return entries
+
+
+def run_action(entry: dict, dry_run: bool = False) -> None:
+    binary = main_menu_bin()
+    if not binary:
+        return
+    args = [binary, "--run", entry["action"]]
+    if dry_run:
+        print(" ".join(args))
+        return
+    subprocess.run(args, capture_output=True, text=True, check=False)
+
+
 def entry_line(entry: dict) -> str:
     return " › ".join([entry["app"], *entry["path"], entry["label"]])
 
@@ -184,9 +235,10 @@ def main() -> int:
     entries: list[dict] = []
     for service, path in tray_items():
         entries.extend(collect(service, path))
+    entries.extend(action_entries())
 
     if not entries:
-        print("menu-search: no tray menu entries found", file=sys.stderr)
+        print("menu-search: no menu entries found", file=sys.stderr)
         return 1
 
     entries.sort(key=entry_line)
@@ -226,7 +278,10 @@ def main() -> int:
         if entry_line(entry) == chosen:
             if args.print_trigger:
                 print(f"chosen: {chosen}")
-            trigger(entry, dry_run=args.print_trigger)
+            if entry.get("kind") == "action":
+                run_action(entry, dry_run=args.print_trigger)
+            else:
+                trigger(entry, dry_run=args.print_trigger)
             return 0
     print(f"menu-search: {chosen!r} did not match an entry", file=sys.stderr)
     return 1
