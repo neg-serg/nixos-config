@@ -5,9 +5,14 @@
 # Writes state file instantly for QML sync. Batches genlc calls via debounce.
 set -euo pipefail
 
-STATE=/tmp/genlc-volume
+# The state file is per-user session state, not a system-wide temporary: it used
+# to be the fixed /tmp/genlc-volume, which is a symlink-attack and cross-user
+# collision surface and survives the session it belongs to. XDG_RUNTIME_DIR is
+# cleared on logout, is 0700, and is what every other per-session file here uses.
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+STATE="$RUNTIME_DIR/genlc-volume"
 STEP_DB=1   # whole dB only (GLM CC20 is integer)
-DEBOUNCE_PID=/tmp/genlc-media.debounce.pid
+DEBOUNCE_PID="$RUNTIME_DIR/genlc-media.debounce.pid"
 DEBOUNCE_MS=60
 
 # Adapter placement probe: genlc discover exits 0 only when the adapter is on
