@@ -7,6 +7,7 @@ import qs.Settings
 import "../Helpers/Color.js" as Color
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/MenuUtils.js" as MenuUtils
+import "../Helpers/Fuzzy.js" as Fuzzy
 import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 PopupWindow {
@@ -174,13 +175,26 @@ PopupWindow {
 
                 model: ScriptModel {
                     id: subMenuModel
+                    // Fuzzy ranking of Helpers/Fuzzy.js (the JS port of the
+                    // lusty-fuzzy crate; pinned by scripts/dev/check-fuzzy-parity.sh).
+                    // Labels are matched without their DBus mnemonic markers, no
+                    // first-letter anchor (a menu label is searched by any word in
+                    // it) and the matched byte ranges ride along for the highlight.
                     values: {
                         var items = MenuUtils.unwindMenuChildren(opener);
-                        var q = (searchField.text || "").toLowerCase().trim();
-                        if (!q) return items;
-                        return items.filter(function(item) {
-                            var label = (item.text || item.label || item.title || "");
-                            return label.toLowerCase().indexOf(q) !== -1;
+                        var q = (searchField.text || "").trim();
+                        if (!q.length)
+                            return items.map(function(item) { return { entry: item, spans: [] }; });
+                        var labels = items.map(function(item) {
+                            return Fuzzy.stripMnemonic(MenuUtils.entryLabel(item));
+                        });
+                        var ranked = Fuzzy.rank(labels, q, {
+                            anchor: "none",
+                            layout: "ru-to-en-fallback",
+                            foldCase: true
+                        });
+                        return ranked.map(function(m) {
+                            return { entry: items[m.index], spans: m.spans };
                         });
                     }
                     onValuesChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0
@@ -193,7 +207,8 @@ PopupWindow {
                     readonly property alias entryItem: entryItem
                     DelegateEntry {
                         id: entryItem
-                        entryData: parent.modelData
+                        entryData: parent.modelData.entry
+                        matchSpans: parent.modelData.spans
                         listViewRef: listView
                         submenuHostComponent: menuHost.submenuHostComponent
                         menuWindow: menuHost
