@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Pipewire
 import qs
-import qs.bar
 
 ColumnLayout {
 	id: root

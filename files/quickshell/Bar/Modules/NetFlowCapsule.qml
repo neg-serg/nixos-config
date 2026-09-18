@@ -1,6 +1,5 @@
 import QtQuick
 import qs.Components
-import qs.Settings
 
 /*!
  * NetFlowCapsule — networking capsule that opens the flow dashboard popup

@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import qs.Components
-import qs.Services
 import qs.Settings
 
 // ScreenshotToast — screenshot feedback card with large preview, dunst-matched style.

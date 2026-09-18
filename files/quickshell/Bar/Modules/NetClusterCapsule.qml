@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 import qs.Components
 import qs.Settings
 import "../../Components" as LocalComponents
