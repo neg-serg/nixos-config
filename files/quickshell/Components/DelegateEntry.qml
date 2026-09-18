@@ -11,6 +11,9 @@ Rectangle {
 required property var entryData
     // Reference to parent ListView for sibling submenu cleanup
     required property ListView listViewRef
+    // The tray app this menu belongs to; passed through to nested submenus and
+    // used to raise the app's window after a click (see TrayRaise).
+    property var trayContext: null
     // Component to create submenu host
     required property Component submenuHostComponent
     // Parent menu window (PopupWindow) to attach submenus to
@@ -124,7 +127,8 @@ required property var entryData
                     menu: entryData,
                     anchorItem: entry,
                     anchorX: anchorX,
-                    anchorY: 0
+                    anchorY: 0,
+                    trayContext: entry.trayContext
                 });
                 entry.subMenu.showAt(entry, anchorX, 0);
             }
@@ -132,7 +136,8 @@ required property var entryData
             onClicked: {
                 if (!entryData) return;
                 if (entryData.hasChildren) return; // submenu opens on hover
-                entryData.triggered();
+                if (menuWindow.activateEntry) menuWindow.activateEntry(entryData);
+                else entryData.triggered();
                 // Close the root menu
                 menuWindow.visible = false;
             }
