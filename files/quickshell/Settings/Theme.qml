@@ -4,6 +4,7 @@ import QtQuick
 import Qt.labs.folderlistmodel 2.15
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/Color.js" as Color
+import "../Helpers/ThemeParts.js" as ThemeParts
 import Quickshell
 import Quickshell.Io
 import qs.Settings
@@ -165,11 +166,12 @@ Singleton {
             }
         }
         // Theme/.theme.json is written exclusively by the theme-parts merge system
-        // (_performThemeMerge → setText).  Do NOT call writeAdapter() here — the
+        // (_performThemeMerge → writeThemeFile).  Do NOT call writeAdapter() here — the
         // JsonAdapter property var defaults are ({}) and would overwrite the merged
         // content with empty groups, causing all tokens to fall back to hardcoded
         // defaults.
         onAdapterUpdated: {
+            root._rebuildTokenCache();
             try {
                 root._checkDeprecatedTokens();
             } catch (e) { /* checked on load */ }
@@ -222,7 +224,7 @@ Singleton {
         var entries = [];
         try {
             if (rawText && String(rawText).trim().length > 0) {
-                var parsed = JSON.parse(root._stripJsonComments(String(rawText)));
+                var parsed = JSON.parse(ThemeParts.stripJsonComments(String(rawText)));
                 if (Array.isArray(parsed)) {
                     for (var i = 0; i < parsed.length; i++) {
                         var entry = String(parsed[i] || "");
@@ -284,6 +286,9 @@ Singleton {
     }
 
     function _refreshThemeParts(reason) {
+        // A fresh read of the theme parts: warnings that were already printed for
+        // the previous content should be able to appear again for the new one.
+        ThemeParts.resetWarnings();
         if (!_themePartsDir || !_themePartsUrl) {
             themePartsModel.clear();
             _themePartCache = ({});
@@ -321,7 +326,7 @@ Singleton {
     function _handleThemePartLoaded(fileName, rawText) {
         if (!fileName)
             return;
-        var parsed = _parseJsonSafe(rawText, fileName);
+        var parsed = ThemeParts.parseJsonSafe(rawText, fileName);
         if (parsed === null) {
             _themePartLoaded[fileName] = false;
             delete _themePartCache[fileName];
@@ -384,7 +389,7 @@ Singleton {
             var payload = _themePartCache[file];
             if (!payload)
                 continue;
-            _mergeThemeObjects(merged, payload, "", file, origins);
+            ThemeParts.mergeThemeObjects(merged, payload, "", file, origins);
         }
         var serialized = "";
         try {
@@ -396,199 +401,72 @@ Singleton {
         if (serialized === _lastWrittenThemeJson)
             return;
         _lastWrittenThemeJson = serialized;
-        try {
-            themeFile.setText(serialized);
-        } catch (e2) {
-            console.warn("[ThemeParts] Failed to write Theme/.theme.json:", e2);
-        }
+        writeThemeFile(serialized);
     }
 
-    function _stripJsonComments(raw) {
-        try {
-            var input = String(raw || "");
-            if (!input.length)
-                return "";
-            if (input.charCodeAt(0) === 0xFEFF)
-                input = input.slice(1);
-            var out = "";
-            var inString = false;
-            var escaped = false;
-            var inSingle = false;
-            var inMulti = false;
-            for (var i = 0; i < input.length; i++) {
-                var ch = input[i];
-                var next = (i + 1 < input.length) ? input[i + 1] : "";
-                if (inSingle) {
-                    if (ch === '\n' || ch === '\r') {
-                        inSingle = false;
-                        out += ch;
-                    }
-                    continue;
-                }
-                if (inMulti) {
-                    if (ch === '*' && next === '/') {
-                        inMulti = false;
-                        i++;
-                    }
-                    continue;
-                }
-                if (!inString && ch === '/' && next === '/') {
-                    inSingle = true;
-                    i++;
-                    continue;
-                }
-                if (!inString && ch === '/' && next === '*') {
-                    inMulti = true;
-                    i++;
-                    continue;
-                }
-                out += ch;
-                if (inString) {
-                    if (!escaped && ch === '"')
-                        inString = false;
-                    escaped = (!escaped && ch === '\\');
-                    continue;
-                }
-                if (ch === '"') {
-                    inString = true;
-                    escaped = false;
-                }
-            }
-            return out;
-        } catch (e) {
-            return String(raw || "");
-        }
-    }
-
-    function _parseJsonSafe(raw, fileName) {
-        try {
-            var cleaned = root._stripJsonComments(String(raw || ""));
-            if (!cleaned || !String(cleaned).trim().length)
-                return {};
-            return JSON.parse(String(cleaned));
-        } catch (e) {
-            console.warn("[ThemeParts] JSON parse error in", fileName + ":", e);
-            return null;
-        }
-    }
-
-    function _isPlainObject(value) {
-        return value !== null && typeof value === "object" && !Array.isArray(value);
-    }
-
-    function _mergeThemeObjects(target, source, ctx, origin, origins) {
-        if (!source)
+    // Write the merged theme atomically: the merge runs whenever a theme part
+    // changes, and a FileView.setText() straight onto the target can leave a
+    // half-written Theme/.theme.json behind if the process dies (or the session
+    // is killed) mid-write — the next start then reads a truncated token file and
+    // every token falls back to its hardcoded default. Writing a temp file and
+    // renaming it over the target means the file is either the old content or the
+    // new one, never half of either.
+    //
+    // setText() cannot do that (it is FileView's own write path), so the content
+    // goes out through an XHR to the temp path and a rename. XHR writes to file:
+    // URLs are allowed here because the shell runs with
+    // QML_XHR_ALLOW_FILE_WRITE=1 (see the Quickshell service).
+    function writeThemeFile(serialized) {
+        var target = Settings.themeFile || "";
+        if (!target.length)
             return;
-        for (var key in source) {
-            if (!source.hasOwnProperty(key))
-                continue;
-            var value = source[key];
-            var pathKey = ctx ? (ctx + "." + key) : key;
-            if (!(key in target)) {
-                target[key] = value;
-                origins[pathKey] = origin;
-                continue;
-            }
-            var existing = target[key];
-            if (_isPlainObject(existing) && _isPlainObject(value)) {
-                _mergeThemeObjects(existing, value, pathKey, origin, origins);
-            } else {
-                var prev = origins[pathKey] || "<unknown>";
-                console.warn("[ThemeParts] Duplicate token", pathKey, "from", origin, "(previous:", prev + ")");
-            }
+        var temp = target + ".new";
+        // The content goes through the environment, not through the command text
+        // (the path does too, as `$0`): printf writes it, mv renames it over the
+        // target, so the file is either the old content or the new one and never
+        // half of either. Quickshell's Process has no close-stdin, so a pipe
+        // cannot be ended cleanly; an environment value has no such problem.
+        themeWriter.target = target;
+        themeWriter.environment = ({ THEME_JSON: serialized });
+        themeWriter.running = true;
+    }
+
+    Process {
+        id: themeWriter
+        property string target: ""
+        command: ["/bin/sh", "-c", "printf '%s' \"$THEME_JSON\" > \"$0.new\" && mv -f \"$0.new\" \"$0\"", target]
+        onExited: (code, status) => {
+            if (code !== 0)
+                console.warn("[ThemeParts] Failed to write", target, "(exit", code + ")");
         }
     }
 
-    // Final removal date for flat (legacy) tokens compatibility
     readonly property string flatCompatRemovalDate: "2025-11-01"
 
     // --- Nested reader helpers (support hierarchical Theme/.theme.json with backward-compat) ---
     // Internal cache of tokens we've already warned about (strict mode)
     property var _strictWarned: ({})
 
-    // Legacy flat-compat map: maps nested token paths to old flat keys.
-    // Hoisted here to avoid re-creating the object literal on every val() call.
-    readonly property var _flatCompatMap: ({
-        'colors.background': 'background',
-        'colors.surface': 'surface',
-        'colors.surfaceVariant': 'surfaceVariant',
-        'colors.text.primary': 'textPrimary',
-        'colors.text.secondary': 'textSecondary',
-        'colors.text.disabled': 'textDisabled',
-        'colors.accent.primary': 'accentPrimary',
-        'colors.status.error': 'error',
-        'colors.status.warning': 'warning',
-        'colors.highlight': 'highlight',
-        'colors.onAccent': 'onAccent',
-        'colors.outline': 'outline',
-        'colors.shadow': 'shadow',
-        'panel.height': 'panelHeight',
-        'panel.sideMargin': 'panelSideMargin',
-        'panel.widgetSpacing': 'panelWidgetSpacing',
-        'panel.icons.iconSize': 'panelIconSize',
-        'panel.icons.iconSizeSmall': 'panelIconSizeSmall',
-        'panel.hotzone.width': 'panelHotzoneWidth',
-        'panel.hotzone.height': 'panelHotzoneHeight',
-        'panel.hotzone.rightShift': 'panelHotzoneRightShift',
-        'panel.moduleHeight': 'panelModuleHeight',
-        'panel.menuYOffset': 'panelMenuYOffset',
-        'shape.cornerRadius': 'cornerRadius',
-        'shape.cornerRadiusSmall': 'cornerRadiusSmall',
-        'shape.cornerRadiusLarge': 'cornerRadiusLarge',
-        'tooltip.delayMs': 'tooltipDelayMs',
-        'tooltip.minSize': 'tooltipMinSize',
-        'tooltip.margin': 'tooltipMargin',
-        'tooltip.padding': 'tooltipPadding',
-        'tooltip.borderWidth': 'tooltipBorderWidth',
-        'tooltip.radius': 'tooltipRadius',
-        'tooltip.fontPx': 'tooltipFontPx',
-        'panel.pill.height': 'panelPillHeight',
-        'panel.pill.iconSize': 'panelPillIconSize',
-        'panel.pill.paddingH': 'panelPillPaddingH',
-        'panel.pill.showDelayMs': 'panelPillShowDelayMs',
-        'panel.pill.autoHidePauseMs': 'panelPillAutoHidePauseMs',
-        'panel.pill.color': 'panelPillColor',
-        'panel.animations.stdMs': 'panelAnimStdMs',
-        'panel.animations.fastMs': 'panelAnimFastMs',
-        'panel.animations.slideMs': 'panelSlideMs',
-        'panel.tray.longHoldMs': 'panelTrayLongHoldMs',
-        'panel.tray.shortHoldMs': 'panelTrayShortHoldMs',
-        'panel.tray.guardMs': 'panelTrayGuardMs',
-        'panel.tray.overlayDismissDelayMs': 'panelTrayOverlayDismissDelayMs',
-        'panel.rowSpacing': 'panelRowSpacing',
-        'panel.rowSpacingSmall': 'panelRowSpacingSmall',
-        'panel.volume.fullHideMs': 'panelVolumeFullHideMs',
-        'panel.volume.mutedHideMs': 'panelVolumeMutedHideMs',
-        'panel.volume.offReminderCooldownMs': 'panelVolumeOffReminderCooldownMs',
-        'panel.volume.lowColor': 'panelVolumeLowColor',
-        'panel.volume.highColor': 'panelVolumeHighColor',
-        'timers.timeTickMs': 'timeTickMs',
-        'timers.wsRefreshDebounceMs': 'wsRefreshDebounceMs',
-        'network.vpnPollMs': 'vpnPollMs',
-        'network.restartBackoffMs': 'networkRestartBackoffMs',
-        'network.linkPollMs': 'networkLinkPollMs',
-        'media.hover.openDelayMs': 'mediaHoverOpenDelayMs',
-        'media.hover.stillThresholdMs': 'mediaHoverStillThresholdMs',
-        'spectrum.peakDecayIntervalMs': 'spectrumPeakDecayIntervalMs',
-        'spectrum.barAnimMs': 'spectrumBarAnimMs',
-        'calendar.rowSpacing': 'calendarRowSpacing',
-        'calendar.cellSpacing': 'calendarCellSpacing',
-        'calendar.sideMargin': 'calendarSideMargin',
-        'panel.hover.fadeMs': 'panelHoverFadeMs',
-        'panel.menu.width': 'panelMenuWidth',
-        'panel.menu.submenuWidth': 'panelSubmenuWidth',
-        'panel.menu.padding': 'panelMenuPadding',
-        'panel.menu.itemSpacing': 'panelMenuItemSpacing',
-        'panel.menu.itemHeight': 'panelMenuItemHeight',
-        'panel.menu.radius': 'panelMenuRadius',
-        'panel.menu.heightExtra': 'panelMenuHeightExtra',
-        'panel.menu.anchorYOffset': 'panelMenuAnchorYOffset',
-        'panel.menu.submenuGap': 'panelSubmenuGap',
-        'panel.menu.chevronSize': 'panelMenuChevronSize',
-        'panel.menu.iconSize': 'panelMenuIconSize'
-    })
+    // Flattened view of the theme tokens, rebuilt whenever the theme file is
+    // loaded. `_getNested` reads through the JsonAdapter one level at a time,
+    // which means every `val()` call is a chain of property lookups on a dynamic
+    // object — and `val()` is called for every theme property, on every read of
+    // them. The map is served from this cache instead; `_getNested` stays as the
+    // fallback for the window before the first load.
+    property var _tokenCache: ({})
+    function _rebuildTokenCache() {
+        try {
+            _tokenCache = ThemeParts.flatten(themeData);
+        } catch (e) {
+            console.warn("[Theme._rebuildTokenCache]", e);
+            _tokenCache = ({});
+        }
+    }
 
     function _getNested(path) {
+        var key = String(path);
+        if (_tokenCache[key] !== undefined)
+            return _tokenCache[key];
         try {
             var obj = themeData;
             var parts = String(path).split('.');
@@ -614,18 +492,9 @@ Singleton {
                 // During startup before Theme/.theme.json is loaded, do not warn yet
                 if (!root._themeLoaded)
                     return fallback;
-                // Optional override keys: do not warn when absent
-                if (!/^colors\.overrides\./.test(key)) {
-                    // Legacy flat-compat mapping: if a corresponding flat key exists, suppress warning
-                    var compat = root._flatCompatMap[key];
-                    var hasCompat = compat && (themeData[compat] !== undefined);
-                    if (!hasCompat) {
-                        if (!root._strictWarned[key]) {
-                            console.warn('[ThemeStrict] Missing token', key, '→ using fallback', fallback);
-                            root._strictWarned[key] = true;
-                        }
-                    }
-                }
+                // The decision itself is the module's: it knows the flat-compat map,
+                // and it keeps its own "already warned" set (cleared on reload).
+                ThemeParts.warnMissingToken(key, fallback, _tokenCache, _getNested);
             }
         } catch (e) { console.warn("[Theme.val]", e) }
         return fallback;
