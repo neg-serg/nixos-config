@@ -40,7 +40,6 @@ local rounding               = 0
 local rounding_power         = 0
 local opacity_active         = 1.0
 local opacity_inactive       = 1.0
-local shadow_color           = 0xd0000000 -- neutral near-black shadow (was blue rgba(005fafaa))
 local blur_size              = 26 -- was 9; the bar/panels dropped hyprglass's 36px layer blur
 local blur_passes            = 4  -- was 2; those surfaces rely on Hyprland's own blur now,
                                -- (hyprglass glasses only windows + popups now), so the
@@ -139,7 +138,7 @@ hl.config({
   decoration = {
     rounding = rounding, rounding_power = rounding_power,
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
-    shadow = { enabled = false, range = 10, render_power = 2, color = shadow_color }, -- disabled for now (values kept for later tuning)
+    shadow = { enabled = false }, -- frameless: the compositor never draws a shadow here
     -- xray: sample what is *behind* the surface and ignore whatever sits between
     -- it and the wallpaper (the same idea as the xray layer rule further down).
     -- Without it a stacked layer re-blurs an already blurred window underneath,
@@ -483,78 +482,57 @@ hl.bind(M4 .. "+right", hl.dsp.focus({ direction = "right" }))
 hl.window_rule({ name = "scrolling-term-width", match = { class = "^(term|nwim)$" }, scrolling_width = 0.5 })
 
 -- =====================================================================
--- Animations (defined inline below; the old animations/ preset directory is gone)
+-- Animations
 -- =====================================================================
-hl.curve("myBezier",      { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.05} } })
-hl.curve("linear",        { type = "bezier", points = { {0, 0}, {1, 1} } })
-hl.curve("md3_standard",  { type = "bezier", points = { {0.2, 0}, {0, 1} } })
-hl.curve("md3_decel",     { type = "bezier", points = { {0.05, 0.7}, {0.1, 1} } })
-hl.curve("md3_accel",     { type = "bezier", points = { {0.3, 0}, {0.8, 0.15} } })
-hl.curve("overshot",      { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.1} } })
-hl.curve("crazyshot",     { type = "bezier", points = { {0.1, 1.5}, {0.76, 0.92} } })
-hl.curve("hyprnostretch", { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.0} } })
+-- Only the curves that are actually referenced below are declared; Hyprland
+-- ships `default` itself, and beziers nothing points at are dead weight:
+--   menu_decel / menu_accel -> the layer leaves (the only bezier leaves left)
+--   spring_crisp            -> windows, fades
+--   spring_glide            -> long travel: the scrolling tape, workspaces
 hl.curve("menu_decel",    { type = "bezier", points = { {0.1, 1}, {0, 1} } })
 hl.curve("menu_accel",    { type = "bezier", points = { {0.38, 0.04}, {1, 0.07} } })
-hl.curve("easeInOutCirc", { type = "bezier", points = { {0.85, 0}, {0.15, 1} } })
-hl.curve("easeOutCirc",   { type = "bezier", points = { {0, 0.55}, {0.45, 1} } })
-hl.curve("easeOutExpo",   { type = "bezier", points = { {0.16, 1}, {0.3, 1} } })
-hl.curve("md2",           { type = "bezier", points = { {0.4, 0}, {0.2, 1} } })
 
--- Spring curves: physics-based easing (mass 1; stiffness sets the pace, dampening the bounce).
--- Same model Denial uses for its shell (Flutter SpringDescription/SpringSimulation).
--- `dampening` is the accepted spelling — the official example's "damping" fails to parse.
--- Both curves are critically damped (dampening = 2*sqrt(stiffness)): the motion ends
--- sharply instead of dragging out an exponential tail, which is what reads as "slow".
--- No overshoot, no wobble.
+-- Spring curves: physics-based easing (mass 1; stiffness sets the pace, dampening
+-- the bounce). Same model Denial uses for its shell (Flutter SpringDescription).
+-- `dampening` is the accepted spelling — the official example's "damping" fails to
+-- parse. Both are critically damped (dampening = 2*sqrt(stiffness)), so the motion
+-- ends sharply and never overshoots.
 --
--- SPRING SPEED IS NOT `speed`: a spring leaf ignores its duration and is advanced
--- by real frame time (hyprutils advanceSpring, driven by OMEGA0 = sqrt(stiffness/mass)),
--- so the settle time only moves with stiffness. Critically damped settle (4.6/OMEGA0)
--- was ~153 ms / ~174 ms; stiffness x4 doubles OMEGA0 and halves both to ~77 ms / ~87 ms,
--- with dampening x2 keeping the ratio at 1.0 (dampening = 2*sqrt(stiffness) for mass 1).
-hl.curve("spring_crisp",  { type = "spring", mass = 1, stiffness = 3600, dampening = 120 })   -- windows / fades (was 900/60)
-hl.curve("spring_glide",  { type = "spring", mass = 1, stiffness = 2800, dampening = 105.83 }) -- long travel: tape, workspaces (was 700/52.915)
-hl.curve("spring_gentle", { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 }) -- Hyprland's shipped default, kept for tuning
+-- A spring ignores the leaf's duration and is advanced by real frame time
+-- (hyprutils advanceSpring, OMEGA0 = sqrt(stiffness/mass)), so stiffness is the
+-- only knob: critically damped settle is 4.6/OMEGA0, i.e. ~77 ms here (~87 ms on
+-- the glide curve). Stiffness x4 = 2x faster, dampening x2 keeps ratio 1.0.
+hl.curve("spring_crisp",  { type = "spring", mass = 1, stiffness = 3600, dampening = 120 })
+hl.curve("spring_glide",  { type = "spring", mass = 1, stiffness = 2800, dampening = 105.83 })
 
--- NOTE: for the bezier leaves `speed` is a duration in ds (1 = 100 ms) and is the
--- knob that was halved below; for the spring leaves it is inert (see above), which
--- is why their speed fields are left alone — the curve is what times them.
---
--- `global` is the fallback for every leaf without an entry of its own (fadeDpms,
--- fadeGlow, ...); the lines below only override what needs its own feel. A spring
--- ignores the bezier and vice versa, so speed and curve are independent knobs.
-
-hl.animation({ leaf = "global",           enabled = true, speed = 2.0, spring = "spring_glide" })
-hl.animation({ leaf = "borderangle",      enabled = false, speed = 8,     bezier = "default" }) -- frameless
-hl.animation({ leaf = "border",           enabled = false, speed = 0.625, bezier = "default" }) -- frameless
-hl.animation({ leaf = "windows",          enabled = true, speed = 1.8, spring = "spring_crisp", style = "popin 60%" })
-hl.animation({ leaf = "windowsIn",        enabled = true, speed = 1.7, spring = "spring_crisp", style = "popin 60%" })
-hl.animation({ leaf = "windowsOut",       enabled = true, speed = 1.3, spring = "spring_crisp", style = "popin 60%" })
+-- NOTE: the schema requires `speed` (> 0) on every leaf, even a spring one where
+-- it is inert, so it is kept at a neutral 1 instead of a per-leaf number that only
+-- pretends to matter. Layer leaves are the only ones it actually times.
+hl.animation({ leaf = "borderangle",      enabled = false }) -- frameless
+hl.animation({ leaf = "border",           enabled = false }) -- frameless
+hl.animation({ leaf = "global",           enabled = true, speed = 1, spring = "spring_glide" })
+hl.animation({ leaf = "windows",          enabled = true, speed = 1, spring = "spring_crisp", style = "popin 60%" })
+hl.animation({ leaf = "windowsIn",        enabled = true, speed = 1, spring = "spring_crisp", style = "popin 60%" })
+hl.animation({ leaf = "windowsOut",       enabled = true, speed = 1, spring = "spring_crisp", style = "popin 60%" })
 -- windowsMove covers every in-between motion: tile rearranges, drag/resize AND the
 -- scrolling tape. This is what makes windows glide like Denial's.
-hl.animation({ leaf = "windowsMove",      enabled = true, speed = 2.0, spring = "spring_glide" })
-hl.animation({ leaf = "fade",             enabled = true, speed = 1.5, spring = "spring_crisp" })
+hl.animation({ leaf = "windowsMove",      enabled = true, speed = 1, spring = "spring_glide" })
+hl.animation({ leaf = "fade",             enabled = true, speed = 1, spring = "spring_crisp" })
 -- fadeIn/fadeOut are the open/close pair, `fade` the generic one and fadeSwitch
--- the cross-fade when one surface replaces another in place. Separate speeds keep
--- closing snappier than opening.
-hl.animation({ leaf = "fadeIn",           enabled = true, speed = 1.5, spring = "spring_crisp" })
-hl.animation({ leaf = "fadeOut",          enabled = true, speed = 1.1, spring = "spring_crisp" })
--- The layer leaves are the only bezier ones left, so they carry the whole 2x:
--- their durations are halved (1.8 -> 0.9 ds etc.). Everything else rides a spring.
-hl.animation({ leaf = "layers",           enabled = true, speed = 0.9, bezier = "menu_decel" }) -- fallback for the layer leaves
-hl.animation({ leaf = "layersIn",         enabled = true, speed = 0.9, bezier = "menu_decel", style = "slide" })
+-- the cross-fade when one surface replaces another in place.
+hl.animation({ leaf = "fadeIn",           enabled = true, speed = 1, spring = "spring_crisp" })
+hl.animation({ leaf = "fadeOut",          enabled = true, speed = 1, spring = "spring_crisp" })
+hl.animation({ leaf = "fadeSwitch",       enabled = true, speed = 1, spring = "spring_crisp" })
+hl.animation({ leaf = "layers",           enabled = true, speed = 0.9,  bezier = "menu_decel" })
+hl.animation({ leaf = "layersIn",         enabled = true, speed = 0.9,  bezier = "menu_decel", style = "slide" })
 hl.animation({ leaf = "layersOut",        enabled = true, speed = 0.65, bezier = "menu_accel" })
 hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 0.75, bezier = "menu_decel" })
 hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 0.45, bezier = "menu_accel" })
-hl.animation({ leaf = "workspaces",       enabled = true, speed = 2.0, spring = "spring_glide", style = "slide" })
--- workspacesIn/Out let the incoming and the outgoing desktop travel at different
--- speeds; `workspaces` stays the shared fallback.
-hl.animation({ leaf = "workspacesIn",     enabled = true, speed = 1.6, spring = "spring_crisp", style = "slide" })
-hl.animation({ leaf = "workspacesOut",    enabled = true, speed = 1.6, spring = "spring_glide", style = "slide" })
-hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 1.9, spring = "spring_glide", style = "slidefadevert 15%" })
--- zoomFactor drives the scaled/zoomed layouts (scrolling tape zoom and similar
--- passes); spring_glide keeps it in step with windowsMove.
-hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 2.4, spring = "spring_glide" })
+hl.animation({ leaf = "workspaces",       enabled = true, speed = 1, spring = "spring_glide", style = "slide" })
+hl.animation({ leaf = "workspacesIn",     enabled = true, speed = 1, spring = "spring_crisp", style = "slide" })
+hl.animation({ leaf = "workspacesOut",    enabled = true, speed = 1, spring = "spring_glide", style = "slide" })
+hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 1, spring = "spring_glide", style = "slidefadevert 15%" })
+hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 1, spring = "spring_glide" })
 
 -- =====================================================================
 -- Window rules (rules.conf + workspaces.nix)
