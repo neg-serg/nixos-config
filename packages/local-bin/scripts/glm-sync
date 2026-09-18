@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # glm-sync — read the ACTUAL GLM volume from the dockur VM screen and write it
-# to /tmp/genlc-volume so the quickshell Genelec widget matches reality.
+# to the state file so the quickshell Genelec widget matches reality.
 # GLM is the source of truth; the widget's FileView picks up the state file.
 #
 # Reader: local vision model (qwen3-vl:8b via Ollama) on the full VM
@@ -12,7 +12,13 @@
 set -euo pipefail
 
 CT=windows
-STATE=/tmp/genlc-volume
+# The state file is per-user session state, not a system-wide temporary: it used
+# to be the fixed /tmp/genlc-volume, which is a symlink-attack and cross-user
+# collision surface and survives the session it belongs to. XDG_RUNTIME_DIR is
+# cleared on logout, is 0700, and is what every other per-session file here uses.
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+STATE="$RUNTIME_DIR/genlc-volume"
+SCREEN_DUMP="$RUNTIME_DIR/glm-sync.ppm"
 
 # Silent no-op when the VM isn't running (no QEMU monitor socket) — the
 # periodic timer would otherwise log failures every few seconds.
@@ -27,13 +33,13 @@ shot() {
   # No -i: keeping stdin open makes docker exec wait forever (the historical
   # glm-sync hang). screendump + cat + rm are all non-interactive.
   timeout 10 docker exec "$CT" sh -c 'printf "screendump /dev/shm/q.ppm\n" | timeout 5 nc -N -U /run/shm/monitor.sock' >/dev/null 2>&1 || return 1
-  timeout 10 docker exec "$CT" sh -c 'cat /dev/shm/q.ppm' > /tmp/glm-sync.ppm 2>/dev/null || return 1
+  timeout 10 docker exec "$CT" sh -c 'cat /dev/shm/q.ppm' > "$SCREEN_DUMP" 2>/dev/null || return 1
   docker exec "$CT" sh -c 'rm -f /dev/shm/q.ppm' 2>/dev/null || true
 }
 
 read_volume() {
   local b64 payload resp
-  b64="$(magick /tmp/glm-sync.ppm -resize '1600x1600>' -quality 85 jpg:- 2>/dev/null | base64 -w0)" || return 1
+  b64="$(magick "$SCREEN_DUMP" -resize '1600x1600>' -quality 85 jpg:- 2>/dev/null | base64 -w0)" || return 1
   [ -n "$b64" ] || return 1
   payload="$(jq -n --arg m "$MODEL" --arg img "data:image/jpeg;base64,$b64" \
     --arg p "This is a Windows VM screenshot with a GLM (Genelec) application window. Find the CURRENT master volume value (a number with dB near the top of the GLM window). Reply with ONLY the number, e.g. -46.0. Ignore preset buttons like -40.0 dB and -50.0 dB — those are not the current value." \
