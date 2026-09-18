@@ -196,21 +196,14 @@ def trigger(entry: dict, dry_run: bool = False) -> None:
 
 # --- the "app cannot focus itself" workaround -------------------------------
 
-# Labels that mean "bring it up". Qt tray menus are translated, so the prefixes
-# cover Russian and English; only the beginning of the label is looked at, so
-# "Quit Telegram" / "Minimize to tray" never match.
-OPEN_LABELS = ("open", "show", "открыть", "показать", "развернуть")
+# window-activate owns the whole "the app cannot raise itself" trick, including
+# which labels mean "bring it up" (--open-prefix) and the id → window-class table
+# in ~/.config/menu-search/window-class.tsv. menu-search only decides *when* a
+# click deserves one, so nothing here has to know about window classes.
+DEFAULT_OPEN_LABELS = ("open", "show", "открыть", "показать", "развернуть")
+_open_labels: tuple[str, ...] | None = None
 
-# Tray ids and window classes disagree sometimes (Telegram's tray id is
-# `TelegramDesktop`, its window class `org.telegram.desktop`), and appidding
-# "telegram" to the search would match a chat window titled "telegram" too. This
-# is the explicit list of the disagreements that matter, in a file the user can
-# extend: `~/.config/menu-search/window-class.tsv`, "id<TAB>window class".
-WINDOW_CLASS_FILE = (
-    pathlib.Path(os.environ.get("XDG_CONFIG_HOME", pathlib.Path.home() / ".config"))
-    / "menu-search"
-    / "window-class.tsv"
-)
+
 def window_activate_bin() -> str | None:
     found = shutil.which("window-activate")
     if found:
@@ -219,57 +212,48 @@ def window_activate_bin() -> str | None:
     return str(fallback) if fallback.is_file() else None
 
 
-def window_class_hints() -> dict[str, str]:
-    """The id → window class overrides, from window-class.tsv (missing file = {})."""
-    try:
-        lines = WINDOW_CLASS_FILE.read_text().splitlines()
-    except OSError:
-        return {}
-    hints = {}
-    for line in lines:
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        fields = [f.strip() for f in line.split("\t") if f.strip()]
-        if len(fields) >= 2:
-            hints[fields[0]] = fields[1]
-    return hints
+def open_labels() -> tuple[str, ...]:
+    """The prefixes that promise "bring it up", as window-activate defines them.
+
+    Asked for rather than hard-coded so the two tools cannot drift; the local
+    default only covers the window in which window-activate is not installed yet.
+    """
+    global _open_labels
+    if _open_labels is None:
+        labels: tuple[str, ...] = ()
+        binary = window_activate_bin()
+        if binary:
+            proc = subprocess.run([binary, "--open-prefix"], capture_output=True, text=True)
+            if proc.returncode == 0:
+                labels = tuple(line.strip().lower() for line in proc.stdout.splitlines() if line.strip())
+        _open_labels = labels or DEFAULT_OPEN_LABELS
+    return _open_labels
 
 
 def raise_window_for(entry: dict) -> str | None:
-    """Focus the window behind a "Open ..." menu entry; None if nothing was raised.
+    """Focus the window behind an "Open ..." menu entry; None if nothing was raised.
 
-    The tray item and the window rarely agree on their names, so the match is
-    tried in both directions: the item id (`org.telegram.desktop` for the
-    Telegram tray icon, `org.nicotine_plus.Nicotine` for Nicotine+) against the
-    window class, then the app title against the window class and title.
+    Handing the tray item's id to window-activate is the whole job: that tool
+    knows the id → window class exceptions and picks the most recently focused
+    window when several share the class (the Setup Assistant next to Nicotine+).
     """
     label = str(entry.get("label", "")).strip().lower()
-    if not label.startswith(OPEN_LABELS):
+    if not label.startswith(open_labels()):
         return None
     binary = window_activate_bin()
     if not binary:
         return None
-
-    item_id = str(entry.get("app_id", "") or "")
-    app = str(entry.get("app", "") or "")
-    hint = window_class_hints().get(item_id)
-    if hint:
-        proc = subprocess.run([binary, "--class", hint, "--substring"], capture_output=True, text=True)
-        if proc.returncode == 0:
-            return proc.stderr.strip() or hint
-    for needle in (item_id, app):
-        if not needle:
-            continue
-        proc = subprocess.run([binary, "--class", needle, "--substring"], capture_output=True, text=True)
-        if proc.returncode == 0:
-            return proc.stderr.strip() or needle
-    for needle in (item_id, app):
-        if needle:
-            proc = subprocess.run([binary, "--title", needle], capture_output=True, text=True)
-            if proc.returncode == 0:
-                return proc.stderr.strip() or needle
-    return None
+    tray_id = str(entry.get("app_id", "") or "") or str(entry.get("app", "") or "")
+    if not tray_id:
+        return None
+    args = [binary, "--raise-for", tray_id]
+    title = str(entry.get("app", "") or "")
+    if title:
+        args += ["--tray-title", title]
+    proc = subprocess.run(args, capture_output=True, text=True)
+    if proc.returncode != 0:
+        return None
+    return proc.stderr.strip() or tray_id
 
 
 def main_menu_bin() -> str | None:

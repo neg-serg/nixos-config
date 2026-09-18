@@ -20,12 +20,31 @@ where the Telegram scratchpad keeps it), bringing that workspace up with it.
 This script is the missing piece as a CLI: match a window, focus it, say what
 happened.
 
+The tray menus know the item that was clicked, not the window it belongs to, so
+they call `window-activate --raise-for <id>`. Which label means "bring it up" is
+decided here, next to the rest of the logic: `--open-prefix` prints the list
+(one per line) so callers that filter menus themselves ask instead of guessing.
+
 Usage
 -----
   window-activate --list                        every window: "class<TAB>title"
   window-activate org.telegram.desktop          exact class
   window-activate --class telegram --substring  case-insensitive substring
   window-activate --title 'птичка'              case-insensitive substring
+  window-activate --raise-for TelegramDesktop   "the window of this tray item"
+  window-activate --open-prefix                 labels that mean "bring it up"
+
+Reports go to stderr (so a caller can keep stdout clean), except with
+`--stdout-report`: the tray menu runs the helper through a process runner that
+consumes stdout only, and it should show up in the session log.
+
+`--raise-for` is what the tray menus (quickshell) and menu-search call: they
+know the StatusNotifierItem they clicked (its id, its title), not what the app
+calls its window. The id is the window class for most apps; the ones where it is
+not are listed in ~/.config/menu-search/window-class.tsv, next to the rule that
+uses it (see raise_window_for in menu-search). Several windows can share a
+class — the Setup Assistant next to Nicotine+ — so the most recently focused one
+wins (`focusHistoryID`), which is the window the user opened last.
 
 Exit codes: 0 raised (or listed), 1 nothing matched, 2 usage / no hyprctl.
 """
@@ -34,10 +53,42 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import pathlib
 import re
 import shutil
 import subprocess
 import sys
+
+
+# Tray ids that are not the window class, "id<TAB>window class". The file is
+# shared with menu-search (which reads the same mapping for its own entries);
+# a missing file only costs the heuristic match below.
+WINDOW_CLASS_FILE = (
+    pathlib.Path(os.environ.get("XDG_CONFIG_HOME", pathlib.Path.home() / ".config"))
+    / "menu-search"
+    / "window-class.tsv"
+)
+
+
+def window_class_hints() -> dict[str, str]:
+    try:
+        lines = WINDOW_CLASS_FILE.read_text().splitlines()
+    except OSError:
+        return {}
+    hints = {}
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        fields = [f.strip() for f in line.split("\t") if f.strip()]
+        if len(fields) >= 2:
+            hints[fields[0]] = fields[1]
+    return hints
+
+
+def report(message: str, to_stdout: bool) -> None:
+    print(message, file=sys.stdout if to_stdout else sys.stderr)
 
 
 def hyprctl(*args: str, timeout: float = 10.0) -> str:
@@ -73,6 +124,57 @@ def lua_string(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+# Labels that promise "bring it up". Tray menus are translated, so both languages
+# are covered; the comparison is a prefix one, so "Quit Telegram" and
+# "Minimize to tray" never count as an open.
+OPEN_LABELS = ("open", "show", "открыть", "показать", "развернуть")
+
+
+def app_id_of(window: dict) -> str:
+    return str(window.get("class") or window.get("initialClass") or "")
+
+
+def pick_window(windows: list[dict], tray_id: str = "", tray_title: str = "") -> dict | None:
+    """The window behind a tray item: its id, then its name, against class and title.
+
+    The tray registry and the windows disagree about naming more often than one
+    would hope (`TelegramDesktop` vs `org.telegram.desktop`), and the tray id of
+    an app can also simply be its name (`steam`), so each candidate is checked
+    both ways round: needle in class, class in needle.
+    """
+    hints = window_class_hints()
+    needles = [n.strip() for n in (tray_id, tray_title) if n and n.strip()]
+    if not needles:
+        return None
+
+    def candidates(needle: str) -> list[dict]:
+        found = []
+        for w in windows:
+            cls = app_id_of(w)
+            title = str(w.get("title") or "")
+            low = needle.lower()
+            if low in cls.lower() or cls.lower() in low or low in title.lower():
+                found.append(w)
+        return found
+
+    # The explicit hint for this id wins over everything else.
+    hint = hints.get(needles[0])
+    if hint:
+        hinted = [w for w in windows if hint.lower() in app_id_of(w).lower()]
+        if hinted:
+            return by_recency(hinted)
+    for needle in needles:
+        found = candidates(needle)
+        if found:
+            return by_recency(found)
+    return None
+
+
+def by_recency(windows: list[dict]) -> dict:
+    """Most recently focused first: hyprland's focusHistoryID counts down from 0."""
+    return min(windows, key=lambda w: w.get("focusHistoryID", 10_000))
+
+
 def matches(window: dict, want_class: str | None, want_title: str | None, substring: bool) -> bool:
     cls = str(window.get("class") or window.get("initialClass") or "")
     title = str(window.get("title") or "")
@@ -97,11 +199,20 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--title", help="case-insensitive substring of the window title")
     parser.add_argument("--substring", action="store_true", help="treat the class as a case-insensitive substring")
     parser.add_argument("--list", action="store_true", help="print 'class<TAB>title' for every window and exit")
+    parser.add_argument("--raise-for", metavar="TRAY_ID", help="the window of this tray item id (uses window-class.tsv)")
+    parser.add_argument("--open-prefix", action="store_true", help="print the labels that mean 'bring it up' and exit")
+    parser.add_argument("--stdout-report", action="store_true", help="report on stdout (for a stdout-only process runner)")
+    parser.add_argument("--tray-title", default="", help="the tray item's title, as a second hint (with --raise-for)")
     args = parser.parse_args(argv)
 
+    if args.open_prefix:
+        for label in OPEN_LABELS:
+            print(label)
+        return 0
+
     want_class = args.class_opt or args.window_class
-    if not args.list and not want_class and not args.title:
-        parser.error("a window class, --class, --title or --list is required")
+    if not args.list and not args.raise_for and not want_class and not args.title:
+        parser.error("a window class, --class, --title, --raise-for or --list is required")
 
     try:
         open_windows = windows()
@@ -114,9 +225,13 @@ def main(argv: list[str]) -> int:
             print(f"{w.get('class', '?')}\t{w.get('title', '')}\t[{workspace_of(w)}]")
         return 0
 
-    target = next((w for w in open_windows if matches(w, want_class, args.title, args.substring)), None)
+    if args.raise_for:
+        target = pick_window(open_windows, args.raise_for, args.tray_title)
+    else:
+        target = next((w for w in open_windows if matches(w, want_class, args.title, args.substring)), None)
     if target is None:
-        print(f"window-activate: no window matched {want_class or args.title!r}", file=sys.stderr)
+        what = args.raise_for or want_class or args.title
+        report(f"window-activate: no window matched {what!r}", args.stdout_report)
         return 1
 
     cls = str(target.get("class") or target.get("initialClass") or "")
@@ -128,7 +243,7 @@ def main(argv: list[str]) -> int:
         print(f"window-activate: {exc}", file=sys.stderr)
         return 2
 
-    print(f"window-activate: {target.get('title', '?')} ({cls}, {workspace_of(target)})", file=sys.stderr)
+    report(f"window-activate: {target.get('title', '?')} ({cls}, {workspace_of(target)})", args.stdout_report)
     return 0
 
 
