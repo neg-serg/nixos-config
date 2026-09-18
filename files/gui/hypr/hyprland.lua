@@ -145,7 +145,11 @@ hl.config({
     -- Without it a stacked layer re-blurs an already blurred window underneath,
     -- which is what made the bar/panel blur muddy against hyprglass windows.
     blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = true },
-    motion_blur = { enabled = false, samples = 24 }, -- disabled for now
+    -- motion blur: adds a smear while anything on screen is moving — the
+    -- scrolling tape and dragged windows are where it reads. 24 samples is the
+    -- tuning knob (higher = smoother, more GPU); `hyprctl eval 'hl.config({
+    -- decoration = { motion_blur = { enabled = false } } })' turns it off live.
+    motion_blur = { enabled = true, samples = 24 },
     dim_special = false,
   },
   input = {
