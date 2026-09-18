@@ -3,10 +3,8 @@ import Quickshell
 import QtQuick
 import Quickshell.Io
 import qs.Bar
-import qs.Bar.Modules
 import qs.Helpers
 import qs.Notifications
-import qs.Services
 
 Scope {
     id: root

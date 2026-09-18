@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.Settings
 import "." as LocalComponents
 
 /*!

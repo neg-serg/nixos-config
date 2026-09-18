@@ -11,7 +11,6 @@ import qs.Settings
 import qs.Widgets.SidePanel
 import "../Helpers/BarLayout.js" as BarLayout
 import "../Helpers/Color.js" as Color
-import "../Helpers/Utils.js" as Utils
 import "../Helpers/WidgetBg.js" as WidgetBg
 import "../Helpers/WorkspaceName.js" as WorkspaceName
 import "../Helpers/AccentSampler.js" as AccentSampler

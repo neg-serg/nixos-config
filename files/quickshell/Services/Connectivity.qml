@@ -1,6 +1,5 @@
 pragma Singleton
 import QtQuick
-import Quickshell
 import qs.Settings
 import qs.Components
 // No runtime clamping: Settings.json is validated by schema
