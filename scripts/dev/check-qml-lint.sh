@@ -97,22 +97,67 @@ done
 
 # Known-inherent: qmllint cannot see through Quickshell's plugin types or the Qt
 # framework's own members (Qt.callLater, Screen.virtualGeometry, …), and the
-# greeter is a deliberate fork of the tree with its own singletons. Reported as
-# a count — a new finding of these kinds moves it, which is the signal — and
-# capped so a burst fails instead of scrolling past.
-INHERENT_CAP=160
-inherent=$(grep -cE "\[(missing-type|missing-property|unresolved-type|uncreatable-type|incompatible-type|property-override|import|signal-handler-parameters|duplicate-property-binding)\]" "$REPORT" || true)
+# greeter is a deliberate fork of the tree with its own singletons. The per-
+# category numbers live in .qmllint-baseline.tsv, with the reason for each; a
+# category above its baseline fails, and one below it is printed as progress.
+# Counting per category rather than in total is what keeps a regression legible:
+# a new missing-property cannot hide inside a drop of unqualified.
+BASELINE_FILE=".qmllint-baseline.tsv"
+baseline_violations=0
+inherent=0
+if [ -f "$BASELINE_FILE" ]; then
+  while IFS=$'\t' read -r category expected _rest; do
+    expected=${expected:-0}
+    [ "$category" = "__observed" ] && continue
+    case "$category" in ""|"#"*) continue ;; esac
+    count=$(grep -c "\[$category\]" "$REPORT" || true)
+    count=${count:-0}
+    inherent=$((inherent + count))
+    if [ "$count" -gt "$expected" ]; then
+      printf 'REGRESSION    %-28s %4d   (baseline %s)\n' "$category" "$count" "$expected"
+      baseline_violations=$((baseline_violations + 1))
+    elif [ "$count" -lt "$expected" ]; then
+      printf 'improved      %-28s %4d   (baseline %s)\n' "$category" "$count" "$expected"
+    fi
+  done < "$BASELINE_FILE"
+else
+  echo "WARNING: $BASELINE_FILE not found — inherent findings are not compared" >&2
+  inherent=$(grep -cE "\[(unqualified|missing-property|unresolved-type|uncreatable-type|incompatible-type|property-override|import|signal-handler-parameters|duplicate-property-binding|missing-type)\]" "$REPORT" || true)
+fi
 
 echo ""
 echo "defect-kind findings: $defects"
-echo "known-inherent findings: ${inherent:-0} (cap $INHERENT_CAP)"
+echo "known-inherent findings: $inherent"
+
+# QMLLINT_SHOW=1 prints the findings that are not in the disabled category, for
+# when a number has to be looked at.
+if [ "${QMLLINT_SHOW:-0}" = "1" ]; then
+  echo ""
+  grep -vE "\[unqualified\]" "$REPORT" | head -200
+fi
 
 if [ "${defects:-0}" -gt 0 ]; then
   echo "FAILED: $defects finding(s) of a kind that indicates a real defect"
   exit 1
 fi
-if [ "${inherent:-0}" -gt "$INHERENT_CAP" ]; then
-  echo "FAILED: known-inherent findings grew past the cap — inspect the report"
+if [ "$baseline_violations" -gt 0 ]; then
+  echo "FAILED: $baseline_violations categories above their baseline (see .qmllint-baseline.tsv)"
   exit 1
+fi
+
+# Record what was observed, into the file the baseline lives in (the numbers stay
+# in the reviewed tree, not in a hidden cache). Only lowered automatically: a
+# category that grew would have failed above, and a human has to look at that
+# before the number moves.
+if [ -f "$BASELINE_FILE" ]; then
+  tmp="$(mktemp)"
+  while IFS=$'\t' read -r category expected _rest; do
+    case "$category" in ""|"#"*) printf '%s\n' "$category" >> "$tmp"; continue ;; esac
+    count=$(grep -c "\[$category\]" "$REPORT" || true)
+    count=${count:-0}
+    [ "$count" -lt "$expected" ] && expected="$count"
+    printf '%s\t%s\n' "$category" "$expected" >> "$tmp"
+  done < "$BASELINE_FILE"
+  mv "$tmp" "$BASELINE_FILE"
 fi
 echo "OK: no defect-kind findings"

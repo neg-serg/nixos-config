@@ -1,0 +1,37 @@
+# qmllint findings that are inherent to the toolchain, per category, as measured
+# on the current tree. The gate (scripts/dev/check-qml-lint.sh) reads this file:
+# a category above its number fails, a category below it is printed as progress
+# (lower is better — delete a line when it reaches 0, and raise a number only
+# with the reason in the commit message).
+#
+# Why each of them is inherent:
+#   unqualified               delegates and inline components reaching for their
+#                             enclosing scope (modelData, an id defined above)
+#   missing-property          a property reached through `parent.`/scope, where the
+#                             analyzer only knows the C++ base type
+#   unresolved-type           Quickshell's plugin types ship no qmltypes
+#                             (QsMenuEntry, PopupAnchor, BluetoothDeviceState, …)
+#   import                    the greeter's own submodules and Widgets.*
+#   uncreatable-type          PanelWindow (Quickshell.Wayland) is a base type, not
+#                             something to instantiate
+#   incompatible-type         those same plugin types used as property values
+#   property-override         C++ base members shadowed on purpose (CursorShape on
+#                             WidgetCapsule, Item.state in the greeter's animations)
+#   signal-handler-parameters QProcess::ExitStatus has no qmltypes
+#   duplicate-property-binding  animated properties driven by a value source and a
+#                             binding at once — a QML idiom the checker dislikes
+#   missing-type              properties of our own QML components, which have no
+#                             generated qmltypes either
+#
+# Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
+# the gate prints.
+unqualified	717
+missing-property	52
+unresolved-type	34
+import	6
+uncreatable-type	11
+incompatible-type	7
+property-override	6
+signal-handler-parameters	5
+duplicate-property-binding	4
+missing-type	1
