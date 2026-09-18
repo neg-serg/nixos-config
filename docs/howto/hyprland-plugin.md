@@ -87,6 +87,14 @@ behind Hyprland.
   settings live in that form.
 - **Glass off**: window rules `hgrm-term` (kitty/term), `hgrm-mpv`, `hgrm-fullscreen` via the
   `hyprglass_disabled` tag.
+- **Layer glass**: popups and notifications only (`quickshell`, `notifications`, `qs-music`,
+  `qs-calendar`, `qs-monitor`, `qs-weather`, `sideleft-weather`, `sysmon-popup`). The always-on bar
+  surfaces (`qs-panel`, `quickshell-bar-reserve`, `qs-content-left/right`) are deliberately left to
+  Hyprland's own layer blur: hyprglass's layer pass re-samples the background between frames, so the
+  glass there flickered between none / normal / double strength (bar strip chroma 1.4 / 9.9 / 18.7,
+  std 4.4; 0.06 with the layer glass off), measured on 0.56.2 + v0.8.1 on 2026-09-17. The plugin
+  keeps the layer surfaces it has already registered, so a changed namespace list only applies once
+  those surfaces are recreated (a quickshell restart).
 
 ## Testing a plugin without endangering the session
 
