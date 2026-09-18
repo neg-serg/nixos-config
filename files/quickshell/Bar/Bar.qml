@@ -375,7 +375,11 @@ Scope {
                                     0
                                 )
                                 property vector4d params1: Qt.vector4d(
-                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.uiRadiusSmall * 0.5 * leftPanel.s)) / Math.max(1, leftBarFill.width)))) ,
+                                    // Theme.uiRadiusSmall never existed: Math.round(undefined) is
+                                    // NaN and the outer clamp turned that into 0, so the shader's
+                                    // corner-radius parameter was silently disabled. The intended
+                                    // radius is the small corner radius the theme does define.
+                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.cornerRadiusSmall * 0.5 * leftPanel.s)) / Math.max(1, leftBarFill.width)))) ,
                                     0,0,0
                                 )
                                 // In shader-test mode, force visible magenta overlay for tint path as well
@@ -411,7 +415,7 @@ Scope {
                                 )
                                 // params1: x=feather
                                 property vector4d params1: Qt.vector4d(
-                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.uiRadiusSmall * 0.5 * leftPanel.s)) / Math.max(1, leftBarFill.width)))) ,
+                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.cornerRadiusSmall * 0.5 * leftPanel.s)) / Math.max(1, leftBarFill.width)))) ,
                                     0,0,0
                                 )
                                 // Enable magenta wedge overlay when QS_WEDGE_DEBUG=1
@@ -710,7 +714,7 @@ Scope {
                                     0
                                 )
                                 property vector4d params1: Qt.vector4d(
-                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.uiRadiusSmall * 0.5 * rightPanel.s)) / Math.max(1, rightBarFill.width)))) ,
+                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.cornerRadiusSmall * 0.5 * rightPanel.s)) / Math.max(1, rightBarFill.width)))) ,
                                     0,0,0
                                 )
                                 // In shader-test mode, force visible magenta overlay for tint path as well
@@ -746,7 +750,7 @@ Scope {
                                 )
                                 // params1: x=feather
                                 property vector4d params1: Qt.vector4d(
-                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.uiRadiusSmall * 0.5 * rightPanel.s)) / Math.max(1, rightBarFill.width)))) ,
+                                    Math.max(0.0, Math.min(0.05, (Math.max(1, Math.round(Theme.cornerRadiusSmall * 0.5 * rightPanel.s)) / Math.max(1, rightBarFill.width)))) ,
                                     0,0,0
                                 )
                                 // Enable magenta wedge overlay when QS_WEDGE_DEBUG=1

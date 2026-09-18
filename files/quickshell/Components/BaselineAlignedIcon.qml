@@ -11,7 +11,11 @@ Item {
     // Optional token-style API; falls back to legacy props
     property var scaleToken:undefined
     property var baselineOffsetToken:undefined
-    property real scale: 1.0
+    // Renamed from `scale`, which shadowed Item.scale — the property that really
+    // transforms the item — while being used as a plain multiplier for this
+    // component's own icon sizing. No caller passed `scale:`, so the rename costs
+    // nothing and `iconScale` says what it is.
+    property real iconScale: 1.0
     property int baselineAdjust:0
     property string mode: "text"
     // Auto-tune size to match label visual height
@@ -40,7 +44,7 @@ Item {
     property var alignTarget: null
 
     // Effective inputs (token adds to direct prop)
-    readonly property real _effScale: (typeof scaleToken === 'number') ? scaleToken : scale
+    readonly property real _effScale: (typeof scaleToken === 'number') ? scaleToken : iconScale
     readonly property int  _effBaselineOffset: ((typeof baselineOffsetToken === 'number') ? baselineOffsetToken : 0) + baselineAdjust
 
     // Fallback base size when labelRef is missing

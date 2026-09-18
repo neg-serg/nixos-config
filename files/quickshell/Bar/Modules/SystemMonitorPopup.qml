@@ -92,7 +92,10 @@ PanelOverlaySurface {
     readonly property int _iconSz: Math.round(Theme.fontSizeSmall * 1.2) || 18
     readonly property int _fontSize: Math.round(Theme.fontSizeSmall * 1.2) || 14
     readonly property int _fontSizeSmall: Math.round(Theme.fontSizeSmall * 0.95) || 12
-    readonly property int _fontSizeMedium: Math.round(Theme.fontSizeMedium * 1.2) || 18
+    // Theme.fontSizeMedium does not exist (the token list stops at caption/small/
+    // body/header), so this read undefined, Math.round(undefined) stayed NaN and
+    // `|| 18` quietly produced the literal — the same value, but by accident.
+    readonly property int _fontSizeMedium: Math.round(Theme.fontSizeBody * 1.2) || 18
     readonly property real _pad: Math.round(14 * Theme.scale(root.screen))
     readonly property real _spacing: Math.round(8 * Theme.scale(root.screen))
     readonly property real _cardH: Math.round(56 * Theme.scale(root.screen))

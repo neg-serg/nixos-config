@@ -5,7 +5,6 @@ import "../../Helpers/TooltipText.js" as TooltipText
 
 CenteredCapsuleRow {
     id: clockWidget
-    property var screen: (typeof modelData !== 'undefined' ? modelData : null)
     backgroundKey: "clock"
     iconVisible: false
     labelText: Time.time
