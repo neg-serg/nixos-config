@@ -4,8 +4,6 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
-import qs.Services
 
 // NotificationCenter — notification history sidebar.
 // Full-height panel on the right edge, displaces other surfaces.

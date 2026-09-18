@@ -1,6 +1,5 @@
 import QtQuick
 import qs.Components
-import qs.Settings
 
 /*!
  * OverlayToggleCapsule bundles a WidgetCapsule trigger with OverlayToggle

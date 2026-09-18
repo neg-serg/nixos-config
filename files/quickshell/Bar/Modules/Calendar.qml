@@ -10,7 +10,6 @@ import qs.Components
 import qs.Services as Services
 import qs.Settings
 import "../../Helpers/Color.js" as Color
-import "../../Helpers/TooltipText.js" as TooltipText
 
 OverlayToggleCapsule {
     id: root

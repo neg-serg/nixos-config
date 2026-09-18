@@ -6,7 +6,6 @@ import Quickshell
 import Quickshell.Io
 import qs.Settings
 import qs.Components
-import "../Helpers/Utils.js" as Utils
 import "../Helpers/Color.js" as Color
 
 /*!

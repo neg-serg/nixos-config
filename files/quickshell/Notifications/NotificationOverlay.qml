@@ -2,8 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
-import qs.Services
 
 // NotificationOverlay — live toast popups, dunst-style bottom-right.
 // PanelWindow with ExclusionMode.Ignore so it doesn't displace other surfaces.
