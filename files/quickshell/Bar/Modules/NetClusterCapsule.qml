@@ -28,18 +28,6 @@ ConnectivityCapsule {
     // ~4px lower than the neighboring capsules' icons.
     anchors.verticalCenter: parent.verticalCenter
 
-    Component.onCompleted: {
-        if (ConnectivityState) {
-            // Initialization verified
-        }
-        // One-shot diagnostics (remove after widget visibility confirmed).
-        console.log("[netdbg] stacked=" + Theme.networkCapsuleStacked +
-            " throughput=" + JSON.stringify(throughputText) +
-            " rx=" + JSON.stringify(_rxRichText) + " tx=" + JSON.stringify(_txRichText) +
-            " labelVisible=" + labelVisible +
-            " scale=" + capsuleScale)
-    }
-
     readonly property bool vpnConnected: ConnectivityState.vpnConnected
     readonly property bool hasLink: ConnectivityState.hasLink
     readonly property bool hasInternet: ConnectivityState.hasInternet
