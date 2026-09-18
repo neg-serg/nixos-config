@@ -203,6 +203,10 @@ hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
 hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
+-- Tray/app menus in a vicinae mini window: menu-search walks every
+-- StatusNotifierItem's DBusMenu (submenus included), so a menu entry is a hotkey
+-- plus a few letters instead of a mouse hunt through the tray icons.
+hl.bind(M4 .. "+" .. SH .. "+b", hl.dsp.exec_cmd("menu-search"), { locked = true })
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 -- Pseudo-fullscreen (maximize) toggle: fills the work area but stays a normal
