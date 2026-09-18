@@ -10,7 +10,13 @@ import "../Helpers/MenuUtils.js" as MenuUtils
 import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 PopupWindow {
-    id: subMenu
+    // Do not call this id `subMenu`: DelegateEntry declares a property of that name
+    // (`property var subMenu: null`), and inside its body an unqualified `subMenu`
+    // binds to that property instead of to this window. The delegate used to pass
+    // `subMenu.submenuHostComponent` / `menuWindow: subMenu`, so both were null:
+    // every menu entry ended up disabled (`enabled: … && menuWindow.visible`) and
+    // nested submenus could not be created. Verified with a minimal Qt 6.11 repro.
+    id: menuHost
     implicitWidth: Theme.panelSubmenuWidth
     visible: false
     color: "transparent"
@@ -29,7 +35,7 @@ PopupWindow {
     property real anchorY
     anchor.item: anchorItem ? anchorItem : null
     anchor.rect.x: anchorX
-    anchor.rect.y: anchorY - Math.round(Theme.panelMenuAnchorYOffset * Theme.scale(ScreenUtil.screen(subMenu)))
+    anchor.rect.y: anchorY - Math.round(Theme.panelMenuAnchorYOffset * Theme.scale(ScreenUtil.screen(menuHost)))
 
     // Only the root tray menu owns the whole submenu tree; a nested host is
     // torn down by its parent (see CustomTrayMenu), so it keeps the plain hide.
@@ -66,7 +72,7 @@ PopupWindow {
         visible = true;
         searchField.text = "";
         Qt.callLater(() => {
-            if (subMenu.anchor && subMenu.anchor.item) subMenu.anchor.updateAnchor();
+            if (menuHost.anchor && menuHost.anchor.item) menuHost.anchor.updateAnchor();
             searchField.forceActiveFocus();
         });
     }
@@ -74,7 +80,7 @@ PopupWindow {
         visible = false; searchField.text = "";
         if (destroySubmenusOnHide) destroySubmenusRecursively(listView);
     }
-    function containsMouse() { return subMenu.containsMouse }
+    function containsMouse() { return menuHost.containsMouse }
 
     // Trigger the highlighted entry; shared by Return and search-bar accept.
     function activateCurrentItem() {
@@ -82,14 +88,14 @@ PopupWindow {
             var del = listView.currentItem;
             if (del && del.entryItem && del.entryItem.entryData) {
                 del.entryItem.entryData.triggered();
-                subMenu.visible = false;
+                menuHost.visible = false;
             }
         }
     }
 
-    Item { anchors.fill: parent; Keys.onEscapePressed: subMenu.hideMenu() }
+    Item { anchors.fill: parent; Keys.onEscapePressed: menuHost.hideMenu() }
 
-    QsMenuOpener { id: opener; menu: subMenu.menu }
+    QsMenuOpener { id: opener; menu: menuHost.menu }
 
     Rectangle {
         id: bg
@@ -109,7 +115,7 @@ PopupWindow {
             Rectangle {
                 id: searchContainer
                 Layout.fillWidth: true
-                implicitHeight: subMenu._searchBarImplicitH
+                implicitHeight: menuHost._searchBarImplicitH
                 radius: 3
                 color: Color.withAlpha(Theme.accentPrimary, 0.08)
                 border.color: Color.withAlpha(Theme.accentPrimary, 0.2)
@@ -124,7 +130,7 @@ PopupWindow {
 
                     MaterialIcon {
                         icon: "search"
-                        size: Math.max(1, Math.round(subMenu._searchBarH * 0.7))
+                        size: Math.max(1, Math.round(menuHost._searchBarH * 0.7))
                         color: Theme.textSecondary
                         Layout.alignment: Qt.AlignVCenter
                         Layout.preferredWidth: size
@@ -133,7 +139,7 @@ PopupWindow {
                     TextInput {
                         id: searchField
                         Layout.fillWidth: true
-                        Layout.preferredHeight: subMenu._searchBarH;
+                        Layout.preferredHeight: menuHost._searchBarH;
                         color: Theme.textPrimary
                         font.family: Theme.fontFamily
                         font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85)
@@ -145,11 +151,11 @@ PopupWindow {
                             if (searchField.text.length > 0) {
                                 searchField.text = "";
                             } else {
-                                subMenu.hideMenu();
+                                menuHost.hideMenu();
                             }
                         }
-                        Keys.onReturnPressed: subMenu.activateCurrentItem()
-                        onAccepted: subMenu.activateCurrentItem()
+                        Keys.onReturnPressed: menuHost.activateCurrentItem()
+                        onAccepted: menuHost.activateCurrentItem()
                         onTextChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0
                     }
                 }
@@ -189,8 +195,8 @@ PopupWindow {
                         id: entryItem
                         entryData: parent.modelData
                         listViewRef: listView
-                        submenuHostComponent: subMenu.submenuHostComponent
-                        menuWindow: subMenu
+                        submenuHostComponent: menuHost.submenuHostComponent
+                        menuWindow: menuHost
                     }
                 }
             }
