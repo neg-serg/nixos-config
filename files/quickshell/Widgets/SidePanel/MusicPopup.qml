@@ -142,10 +142,10 @@ Item {
                 const contentH = (musicWidget && musicWidget.implicitHeight && musicWidget.implicitHeight > 0)
                     ? musicWidget.implicitHeight : fallbackH;
                 if (!isFinite(contentH) || contentH <= 0) return Math.round(pad + fallbackH);
-                const sc = (Qt.application.screens && Qt.application.screens[0] && Qt.application.screens[0].virtualGeometry)
-                    ? Qt.application.screens[0].virtualGeometry
-                    : null;
-                const screenH = (sc && sc.height) ? sc.height : 1080;
+                // Qt.application.screens does not exist in Qt 6, so this used to fall
+                // through to a hardcoded 1080 and computed the height cap for the wrong
+                // monitor; the toast's own PanelWindow knows its screen.
+                const screenH = (toast.screen && toast.screen.height) ? toast.screen.height : 1080;
                 const cap = Math.round(screenH * 0.95);
                 return Math.round(Utils.clamp(pad + contentH, 200, cap));
             } catch (e) {
