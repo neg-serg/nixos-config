@@ -27,10 +27,15 @@ hl.config({
       adaptive_dim = 0.5,
       layers = {
         enabled = true,
-        -- Layer surfaces (quickshell bars/panels + the notification layer)
-        namespaces = "qs-panel,qs-content-left,qs-content-right,quickshell-bar-reserve,quickshell,notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
+        -- Layer surfaces: popups/notifications only. The always-on bar surfaces
+        -- (qs-panel, quickshell-bar-reserve, qs-content-left/right) are deliberately
+        -- excluded: hyprglass's layer pass re-samples the background between frames,
+        -- so the glass there flickered between none / normal / double strength (0.56.2
+        -- + hyprglass 0.8.1, measured 2026-09-17). Those surfaces keep Hyprland's
+        -- own layer blur (layerrule blur-qs-.* , ignore_alpha 0.6) instead.
+        namespaces = "quickshell,notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
         -- Above the shadow alpha, otherwise shadows trigger glass on the whole surface
-        namespace_mask_thresholds = "qs-panel=0.3,qs-content-left=0.3,qs-content-right=0.3,quickshell=0.3,notifications=0.3",
+        namespace_mask_thresholds = "quickshell=0.3,notifications=0.3",
       },
     },
   },
