@@ -2,10 +2,8 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
-import qs.Components
 import qs.Settings
 import "../../Helpers/Utils.js" as Utils
-import "../../Helpers/ScreenUtil.js" as ScreenUtil
 
 Item {
     id: sidebarPopup

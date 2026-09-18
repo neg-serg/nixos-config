@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import qs.Settings
 import qs.Components
 import "../../Helpers/Color.js" as Color

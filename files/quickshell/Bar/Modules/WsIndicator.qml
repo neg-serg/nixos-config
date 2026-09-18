@@ -7,7 +7,6 @@ import "../../Helpers/TooltipText.js" as TooltipText
 import "../../Helpers/WsIconMap.js" as WsMap
 import "../../Helpers/WorkspaceName.js" as WorkspaceName
 import "../../Helpers/WorkspaceIcons.js" as WorkspaceIcons
-import Quickshell
 CenteredCapsuleRow {
     interactive: true
     id: root
