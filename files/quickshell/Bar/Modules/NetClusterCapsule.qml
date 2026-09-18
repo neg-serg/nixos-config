@@ -45,7 +45,12 @@ ConnectivityCapsule {
         : (!hasInternet ? ConnUi.warningColor(Settings.settings, Theme) : accentColor)
     readonly property string currentLinkIconName: "lan"
 
-    backgroundKey: "network"
+    // This cluster is the *content* of OverlayToggleCapsule's capsule (see
+    // NetFlowCapsule) and both are WidgetCapsules, so this level must not paint a
+    // background of its own: the two stacked translucent fills rendered the
+    // network chip visibly darker than every other capsule in the bar. The host
+    // capsule owns the panel (and carries backgroundKey "network").
+    color: "transparent"
     iconVisible: false
     glyphLeadingActive: _hasLeading
     labelIsRichText: true
