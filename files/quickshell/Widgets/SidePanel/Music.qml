@@ -498,7 +498,7 @@ Rectangle {
                                     color: playerUI.musicTextColor
                                     font.family: Theme.fontFamily
                                     font.pixelSize: playerUI.musicTextPx
-                                    font.weight: (detailsCol && detailsCol.textWeight !== undefined) ? detailsCol.textWeight : Font.DemiBold
+                                    font.weight: Font.DemiBold
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                                 Text {
@@ -507,7 +507,7 @@ Rectangle {
                                     color: playerUI.musicTextColor
                                     font.family: Theme.fontFamily
                                     font.pixelSize: playerUI.musicTextPx
-                                    font.weight: (detailsCol && detailsCol.textWeight !== undefined) ? detailsCol.textWeight : Font.DemiBold
+                                    font.weight: Font.DemiBold
                                     elide: Text.ElideRight
                                     Layout.alignment: Qt.AlignVCenter
                                 }
