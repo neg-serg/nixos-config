@@ -16,7 +16,7 @@
 #   glm-adapter host               # move the adapter back to the host (manual reserve)
 #   glm-adapter verify             # check the control chain only
 #   glm-adapter <cmd> --glm        # also OCR-check the GLM window inside the VM
-#   glm-adapter health             # VM liveness only (RDP port; `auto` heals it)
+#   glm-adapter health             # VM liveness only (guest RDP; `auto` heals it)
 #
 # Privileged unbind/bind calls use sudo — run `sudo -v` first to cache the
 # credentials, or run interactively.
@@ -55,10 +55,32 @@ host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
 # Container state, empty when the container is gone.
 ct_state() { timeout 10 podman inspect -f '{{.State.Status}}' "$CT" 2>/dev/null || true; }
 
-# RDP port of the guest — the liveness probe for the whole container, see
-# vm_unhealthy() below. 127.0.0.1 works because pasta/passt give the guest the
-# host's own address.
-vm_rdp_ok() { (exec 3<>/dev/tcp/127.0.0.1/3389) 2>/dev/null; }
+# Guest liveness on 127.0.0.1:3389 (pasta/passt hand the guest the host's own
+# address). Two probes, because a bare TCP connect is not one: passt completes
+# the handshake from its own stack, so the port stays "open" while the guest
+# serves nothing at all — 2026-09-17: 14 h of `ok RDP answers` over a Windows
+# stuck in WinRE (Automatic Repair). vm_rdp_port_open() is therefore only used to
+# tell the two failure modes apart; vm_rdp_ok() is the liveness signal.
+vm_rdp_port_open() { (exec 3<>/dev/tcp/127.0.0.1/3389) 2>/dev/null; }
+
+# The real probe: an RDP server answers the X.224 Connection Request below with
+# a Connection Confirm — a TPKT header (03 00 <len hi> <len lo>). It sends
+# nothing on its own, so the request is required; a guest that is booting, stuck
+# in WinRE or dead never answers, and a read timeout is what the liveness checks
+# (and so the restarts) key on. RDP_STRIKES consecutive failures are still
+# required (see vm_unhealthy) so a guest mid-reboot is not restarted.
+RDP_READ_TIMEOUT=5
+vm_rdp_ok() {
+  local hdr
+  exec 3<>/dev/tcp/127.0.0.1/3389 2>/dev/null || return 1
+  # X.224 Connection Request without a cookie (0x13 bytes, neg RDP/SSL+hybrid).
+  printf '\x03\x00\x00\x13\x0e\xe0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x03\x00\x00\x00' >&3 2>/dev/null \
+    || { exec 3<&- 3>&- 2>/dev/null; return 1; }
+  hdr=$(timeout "$RDP_READ_TIMEOUT" head -c 4 <&3 2>/dev/null | od -An -tx1 | tr -d ' \n') || hdr=""
+  exec 3<&- 3>&- 2>/dev/null || true
+  case "$hdr" in 0300*) return 0 ;; esac
+  return 1
+}
 
 # Seconds since the container was started, taken from the mtime of the netns file
 # podman created for it: `.State.StartedAt` is Go-formatted ("… +0300 MSK") and
@@ -104,6 +126,38 @@ wait_teardown() {
     fi
   fi
   sleep 2 # let conmon / the container scope finish exiting
+}
+
+# Screendump the guest through the QEMU monitor and OCR it; prints the path of the
+# OCR text file. The monitor lives inside the container (/run/shm/monitor.sock),
+# hence the exec + nc dance — and always `nc -N`: a plain `nc -U` never closes the
+# connection, and the leftover clients make the monitor stop answering at all.
+# Status 1 means "no picture": the tools are missing, the exec failed (dead
+# plumbing) or the guest is not drawing.
+vm_screen_text() {
+  local base=${1:-/tmp/glm-vm-screen}
+  command -v magick >/dev/null 2>&1 || return 1
+  command -v tesseract >/dev/null 2>&1 || return 1
+  timeout 20 podman exec "$CT" sh -c 'rm -f /dev/shm/glm-screen.ppm; printf "screendump /dev/shm/glm-screen.ppm\n" | timeout 5 nc -N -U /run/shm/monitor.sock' >/dev/null 2>&1 || return 1
+  podman exec "$CT" sh -c 'cat /dev/shm/glm-screen.ppm' >"$base.ppm" 2>/dev/null || return 1
+  podman exec "$CT" sh -c 'rm -f /dev/shm/glm-screen.ppm' >/dev/null 2>&1 || true
+  [ -s "$base.ppm" ] || return 1
+  magick "$base.ppm" -resize 1600x\> "$base.png" 2>/dev/null || return 1
+  tesseract "$base.png" "$base" -l eng >/dev/null 2>&1 || true
+  [ -s "$base.txt" ] || return 1
+  echo "$base.txt"
+}
+
+# A guest sitting in Windows Recovery ("Automatic Repair — Your PC did not start
+# correctly", Startup Repair, WinRE) answers no RDP, and a restart is no cure: it
+# boots back into the same screen. On 2026-09-17 the VM spent 14 h there after an
+# unclean shutdown (the host killed QEMU because dockur could not send ACPI) while
+# the TCP-only probe kept reporting a healthy VM. Only a human can click through
+# WinRE, so cmd_auto pages instead of restarting when the screen shows this.
+vm_recovery_screen() {
+  local txt
+  txt=$(vm_screen_text /tmp/glm-vm-recovery) || return 1
+  grep -qiE 'automatic repair|did not start correctly|startup repair|recovery|winre' "$txt" 2>/dev/null
 }
 
 # One stop → teardown → start cycle; 0 when the container is back up with the
@@ -302,30 +356,30 @@ adapter_dev() {
 
 check_glm_vm() {
   # Best-effort: screendump the VM and OCR the GLM window for OFFLINE.
-  command -v magick >/dev/null 2>&1 || { warn "magick missing — skipping GLM screen check"; return; }
-  command -v tesseract >/dev/null 2>&1 || { warn "tesseract missing — skipping GLM screen check"; return; }
+  local txt
   [ "$(vm_running)" = 1 ] || { warn "VM not running — skipping GLM screen check"; return; }
-  timeout 10 docker exec -i "$CT" sh -c 'printf "screendump /dev/shm/q.ppm\n" | timeout 5 nc -N -U /run/shm/monitor.sock' >/dev/null 2>&1
-  sleep 2
-  docker exec "$CT" sh -c 'cat /dev/shm/q.ppm' > /tmp/glm-adapter-shot.ppm 2>/dev/null || true
-  docker exec "$CT" sh -c 'rm -f /dev/shm/q.ppm' 2>/dev/null || true
-  magick /tmp/glm-adapter-shot.ppm -resize 1600x\> /tmp/glm-adapter-shot.png 2>/dev/null || true
-  tesseract /tmp/glm-adapter-shot.png /tmp/glm-adapter-shot -l eng 2>/dev/null || true
-  if [ ! -s /tmp/glm-adapter-shot.txt ]; then
-    warn "could not OCR the VM screen (GLM may be behind another window)"
-  elif grep -q -i 'offline' /tmp/glm-adapter-shot.txt 2>/dev/null; then
+  if ! txt=$(vm_screen_text /tmp/glm-adapter-shot); then
+    warn "could not OCR the VM screen (magick/tesseract missing, plumbing dead or the guest is not drawing)"
+    return
+  fi
+  if grep -q -i 'offline' "$txt" 2>/dev/null; then
     fail "GLM in the VM shows OFFLINE — click Reconnect in GLM (or replug the adapter)"
   else
     ok "no OFFLINE detected on the VM screen (GLM online?)"
-    grep -o -E '\-?[0-9]+(\.[0-9]+)? ?dB' /tmp/glm-adapter-shot.txt 2>/dev/null | head -3 | sed 's/^/       GLM dB: /' || true
+    grep -o -E '\-?[0-9]+(\.[0-9]+)? ?dB' "$txt" 2>/dev/null | head -3 | sed 's/^/       GLM dB: /' || true
   fi
 }
+
+
+
+
+
 
 verify_chain() {
   echo "--- control chain ---"
   if ss -tln 2>/dev/null | grep -q ':9003 '; then ok "relay listening :9003 (glm-midi-relay)"; else warn "relay not listening on :9003"; fi
   if ss -tln 2>/dev/null | grep -q ':9004 '; then ok "relay listening :9004 (glm-midi)"; else warn "relay not listening on :9004"; fi
-  if [ "$(vm_running)" = 1 ] && ! vm_rdp_ok; then warn "VM is Up but RDP (:3389) is dead — the host-side plumbing is gone (see glm-adapter health)"; fi
+  if [ "$(vm_running)" = 1 ] && ! vm_rdp_port_open; then warn "VM is Up but nothing accepts on :3389 — the host-side plumbing is gone (see glm-adapter health)"; fi
   if ss -tn 2>/dev/null | grep -q ':9003 '; then ok "VM bridge connected to :9003"; else warn "VM bridge NOT connected (check Windows autostart)"; fi
   if [ -f "$STATE" ]; then echo "       state: $(cat "$STATE") dB (quickshell display)"; else warn "no state file $STATE"; fi
   if [ "$DO_GLM" = 1 ]; then check_glm_vm; fi
@@ -405,12 +459,31 @@ cmd_auto() {
   # nothing can reach the guest, and that has to be fixed before an adapter check
   # is meaningful (see vm_unhealthy).
   if vm_unhealthy; then
-    warn "VM '$CT' is Up but 127.0.0.1:3389 is dead — the host-side plumbing is gone"
+    # Two failure modes hide behind a dead RDP probe. Either nothing accepts on
+    # the port — the host-side plumbing died and a restart is the cure — or passt
+    # still accepts while the guest serves nothing: Windows is stuck in WinRE
+    # (Automatic Repair after an unclean shutdown, see vm_recovery_screen).
+    # Restarting that guest is useless (it boots back into the same screen) and
+    # would only burn the hourly restart budget, so page the user instead. The
+    # screen is OCRed only once the strikes are in, i.e. at most once a minute.
+    if vm_rdp_port_open && vm_recovery_screen; then
+      rm -f "$RDP_STRIKES_FILE"
+      warn "guest is on a recovery screen (WinRE/Automatic Repair) — a VM restart cannot fix it"
+      notify_once "recovery" firing "Windows застряла в WinRE (Automatic Repair) — нужен ручной восстановительный запуск: http://127.0.0.1:8006"
+      return 0
+    fi
+    warn "VM '$CT' is Up but 127.0.0.1:3389 does not answer — the host-side plumbing is gone"
     if vm_restart "RDP мёртв → обвязка pasta умерла" "ok, pasta поднят, Windows грузится"; then
       rm -f "$RDP_STRIKES_FILE"
       ok "VM restarted — the guest is booting, RDP answers within ~1-2 min"
     fi
     return 0
+
+
+
+
+
+
   fi
   if [ "$(vm_running)" != 1 ]; then
     notify_reset
@@ -459,9 +532,17 @@ cmd_health() {
   fi
   echo "  VM: Up for $(vm_uptime || echo '?') s"
   if vm_rdp_ok; then
-    ok "RDP 127.0.0.1:3389 answers"
+    ok "RDP 127.0.0.1:3389 answers (guest is serving RDP)"
+  elif vm_rdp_port_open; then
+    # passt accepts from its own stack, so this happens while the guest is dead
+    # or still booting — it is exactly the state the TCP-only probe used to call
+    # healthy (see vm_rdp_ok).
+    fail "RDP port accepts but the guest sends nothing — Windows is not up (booting, or a recovery screen)"
+    if vm_recovery_screen; then
+      fail "VM screen shows WinRE (Automatic Repair) — click Restart/Startup Repair at http://127.0.0.1:8006, a VM restart will not help"
+    fi
   else
-    fail "RDP 127.0.0.1:3389 is dead — host-side plumbing gone ('glm-adapter auto' restarts the VM)"
+    fail "RDP 127.0.0.1:3389 does not accept — host-side plumbing gone ('glm-adapter auto' restarts the VM)"
   fi
   if ss -tln 2>/dev/null | grep -q ':8006 '; then ok "web viewer listening on :8006"; else warn "web viewer not listening on :8006"; fi
   if [ -f "$RDP_STRIKES_FILE" ]; then
