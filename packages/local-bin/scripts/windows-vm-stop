@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# windows-vm-stop — power the dockur Windows guest off cleanly and wait for it.
+#
+# Why not let podman handle it: dockur traps SIGTERM and sends ACPI
+# `system_powerdown` through the QEMU monitor itself, but that path needs the
+# container's own plumbing to be alive. On 2026-09-17 13:44 it was not — the log
+# shows `Warning: QEMU PID file does not exist?` and `power.sh: line 480: touch:
+# command not found` (rootfs already unmounted by a straggler teardown), so no
+# ACPI was ever sent, the guest was SIGKILLed when the 120 s stop timeout expired
+# and the *next* boot landed in WinRE "Automatic Repair" — 14 h of a VM that
+# looked up while serving nothing. A hard power-off is exactly what makes NTFS
+# dirty, so the guest has to be asked to shut down *before* podman is involved.
+#
+# Hence: send `system_powerdown` through the QEMU monitor from inside the container
+# (the monitor socket lives in the container's /run/shm), wait for the guest to
+# really leave, and only then fall back to `podman stop`. The rootfs teardown
+# (fuse-overlayfs unmount + conmon reap) is awaited too, because a start landing
+# in that window pulls the merged dir out from under a fresh QEMU mid-boot — the
+# same race glm-adapter's wait_teardown() exists for.
+#
+# Usage: windows-vm-stop [container]        # default container: windows
+# Env:   PODMAN (default: podman; absolute path in systemd units),
+#        ACPI_WAIT (default 180) — seconds to wait for the guest to power off,
+#        STOP_WAIT (default 120) — `podman stop -t` value for the fallback,
+#        TEARDOWN_WAIT (default 60) — seconds to wait for the rootfs to be gone.
+#
+# Exit status: 0 when the container is down (or was already), 1 when it survived
+# every attempt — systemd then proceeds with its own TimeoutStopSec kill.
+set -euo pipefail
+
+CT=${1:-windows}
+PODMAN=${PODMAN:-podman}
+ACPI_WAIT=${ACPI_WAIT:-180}
+STOP_WAIT=${STOP_WAIT:-120}
+TEARDOWN_WAIT=${TEARDOWN_WAIT:-60}
+
+log()  { echo "windows-vm-stop: $*"; }
+warn() { echo "windows-vm-stop: $*" >&2; }
+
+running() { [ "$(timeout 10 "$PODMAN" container inspect -f '{{.State.Running}}' "$CT" 2>/dev/null)" = true ]; }
+
+# ACPI power button through the QEMU monitor. `nc -N` is required: a plain `nc -U`
+# never closes the connection and the stale clients make the monitor stop
+# answering (see docs/howto/windows-vm-dockur.md).
+acpi() {
+  timeout 20 "$PODMAN" exec "$CT" sh -c \
+    'printf "system_powerdown\n" | timeout 5 nc -N -U /run/shm/monitor.sock' >/dev/null 2>&1
+}
+
+# 0 when the container left the running state within $1 seconds.
+wait_down() {
+  for _ in $(seq 1 "$1"); do
+    running || return 0
+    sleep 1
+  done
+  running || return 0
+  return 1
+}
+
+# The container is down but its rootfs may still be mounted; a start inside that
+# window is what produced `touch: command not found` / `Transport endpoint is not
+# connected` and a QEMU that died 0.3 s after it started.
+wait_teardown() {
+  local upper merged
+  for _ in $(seq 1 "$TEARDOWN_WAIT"); do
+    upper=$(timeout 10 "$PODMAN" container inspect -f '{{.GraphDriver.Data.UpperDir}}' "$CT" 2>/dev/null) || upper=""
+    [ -n "$upper" ] || return 0
+    merged="${upper%/diff}/merged"
+    grep -qF "$merged" /proc/self/mountinfo 2>/dev/null || return 0
+    sleep 1
+  done
+  warn "rootfs of '$CT' is still mounted after ${TEARDOWN_WAIT}s — unmounting"
+  fusermount3 -u "$merged" 2>/dev/null || warn "could not unmount $merged"
+  sleep 2
+}
+
+if ! running; then
+  log "'$CT' is not running — nothing to stop"
+  exit 0
+fi
+
+if acpi; then
+  log "ACPI system_powerdown sent — waiting for the guest (max ${ACPI_WAIT}s)"
+else
+  warn "QEMU monitor is not answering — falling back to 'podman stop'"
+fi
+
+if wait_down "$ACPI_WAIT"; then
+  log "guest powered off cleanly"
+else
+  warn "guest did not power off within ${ACPI_WAIT}s — 'podman stop -t $STOP_WAIT' (risks a dirty NTFS)"
+  timeout $((STOP_WAIT + 30)) "$PODMAN" stop -t "$STOP_WAIT" "$CT" >/dev/null 2>&1 || true
+  if ! wait_down "$STOP_WAIT"; then
+    warn "'$CT' is still running — leaving it to systemd (TimeoutStopSec)"
+    exit 1
+  fi
+  warn "'$CT' was killed, not shut down — the guest may come back in Automatic Repair"
+fi
+
+wait_teardown
+log "'$CT' is down"
