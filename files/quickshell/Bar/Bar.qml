@@ -9,9 +9,11 @@ import "Modules" as LocalMods
 import qs.Services
 import qs.Settings
 import qs.Widgets.SidePanel
+import "../Helpers/BarLayout.js" as BarLayout
 import "../Helpers/Color.js" as Color
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/WidgetBg.js" as WidgetBg
+import "../Helpers/WorkspaceName.js" as WorkspaceName
 import "../Helpers/AccentSampler.js" as AccentSampler
 
 Scope {
@@ -38,51 +40,29 @@ Scope {
         return Color.desaturate(base, desat);
     }
     readonly property real _defaultPanelAlphaScale: 0.2
+    // The arithmetic itself lives in Helpers/BarLayout.js (pure functions, tested
+    // on their own); these stay as the scope-level names the panel tree calls.
     function panelBgAlphaScale() {
-        const raw = Settings.settings ? Settings.settings.panelBgAlphaScale : undefined;
-        let val = Number(raw);
-        if (!isFinite(val))
-            val = _defaultPanelAlphaScale;
-        return Utils.clamp01(val);
+        return BarLayout.panelBgAlphaScale(Settings.settings, _defaultPanelAlphaScale);
     }
     function wedgeWidthNorm(faceWidth, seamWidth) {
-        var ww = Number(Quickshell.env("QS_WEDGE_WIDTH_PCT") || "");
-        if (isFinite(ww) && ww > 0) return Utils.clamp01(ww/100.0);
-        var faceW = Math.max(1, faceWidth);
-        var targetPx = Math.max(1, Math.round(seamWidth));
-        var capPx = Math.round(faceW * 0.35);
-        var wpx = Math.min(targetPx, capPx);
-        return Math.max(0.02, Math.min(0.98, wpx / faceW));
+        return BarLayout.wedgeWidthNorm(faceWidth, seamWidth, Quickshell.env);
     }
 
     // Env toggles to hard-disable expensive paths during perf triage
-    readonly property bool wedgeClipAllowed: ((Quickshell.env("QS_DISABLE_WEDGE") || "") !== "1")
-    readonly property bool trianglesAllowed: ((Quickshell.env("QS_DISABLE_TRIANGLES") || "") !== "1")
+    readonly property bool wedgeClipAllowed: BarLayout.wedgeClipAllowed(Quickshell.env)
+    readonly property bool trianglesAllowed: BarLayout.trianglesAllowed(Quickshell.env)
 
-    // Terminal workspace detection — makes seam gap fully transparent on non-terminal workspaces
-    readonly property var _terminalIcons: ["\uf120", "\ue795", "\ue7a2"]
+    // Terminal workspace detection — makes seam gap fully transparent on
+    // non-terminal workspaces. The name parsing is shared with the workspace
+    // indicator (Helpers/WorkspaceName.js) so the bar and its own indicator
+    // cannot disagree about what a workspace is called.
     property bool isTerminalWs: false
 
     function _recalcTerminalWs() {
-        const name = HyprlandWatcher.activeWorkspaceName || "";
-        let glyph = "";
-        let rest = name;
-        if (name.length > 0) {
-            const cp = name.codePointAt(0);
-            if (cp >= 0xE000 && cp <= 0xF8FF) {
-                const skip = (cp > 0xFFFF) ? 2 : 1;
-                glyph = String.fromCodePoint(cp);
-                rest = name.substring(skip).replace(/^\s+/, "");
-            }
-        }
-        const rn = rest.toLowerCase().trim();
-        let terminal = false;
-        if (glyph && _terminalIcons.indexOf(glyph) !== -1) { terminal = true; }
-        else if (rn.startsWith("term")) { terminal = true; }
-        else if (rn.endsWith("term")) { terminal = true; }
-        isTerminalWs = terminal;
+        isTerminalWs = WorkspaceName.isTerminal(HyprlandWatcher.activeWorkspaceName || "");
         if (Settings.settings && Settings.settings.debugLogs)
-            console.debug('[Bar] workspace:', JSON.stringify(name), 'glyph:', JSON.stringify(glyph), 'rest:', JSON.stringify(rest), 'rn:', JSON.stringify(rn), 'isTerminalWs:', terminal);
+            console.debug('[Bar] workspace:', JSON.stringify(HyprlandWatcher.activeWorkspaceName || ""), 'isTerminalWs:', isTerminalWs);
     }
 
     Connections {
@@ -97,225 +77,6 @@ Scope {
         _recalcTerminalWs();
     }
 
-
-    function makeTriangleVariant(widthPx, heightPx, variantSelector) {
-        const w = Math.max(1, Math.round(widthPx || 0));
-        const h = Math.max(1, Math.round(heightPx || 0));
-        const variants = [
-            { key: "identity", flipX: false, flipY: false },
-            { key: "flipX", flipX: true, flipY: false },
-            { key: "flipY", flipX: false, flipY: true },
-            { key: "flipXY", flipX: true, flipY: true }
-        ];
-        let idx = 0;
-        if (typeof variantSelector === "string") {
-            const lowered = variantSelector.trim().toLowerCase();
-            const nameToIdx = { identity: 0, normal: 0, flipx: 1, flipy: 2, flipxy: 3, rotate: 3 };
-            idx = nameToIdx[lowered] !== undefined ? nameToIdx[lowered] : 0;
-        } else if (variantSelector !== undefined && variantSelector !== null && variantSelector !== "") {
-            const numeric = Number(variantSelector);
-            if (isFinite(numeric)) {
-                idx = Math.floor(numeric) % variants.length;
-                if (idx < 0)
-                    idx += variants.length;
-            }
-        }
-        const transform = variants[idx] || variants[0];
-        const baseVerts = [
-            Qt.point(0, h),
-            Qt.point(0, 0),
-            Qt.point(w, 0)
-        ];
-        const mapPoint = (pt) => Qt.point(
-            transform.flipX ? (w - pt.x) : pt.x,
-            transform.flipY ? (h - pt.y) : pt.y
-        );
-        return {
-            key: transform.key,
-            flipX: transform.flipX,
-            flipY: transform.flipY,
-            vertices: baseVerts.map(mapPoint)
-        };
-    }
-
-    function makeTriangleVariantSet(widthPx, heightPx) {
-        const out = [];
-        for (let i = 0; i < 4; i++) {
-            out.push(makeTriangleVariant(widthPx, heightPx, i));
-        }
-        return out;
-    }
-
-    component PanelSeparator : Rectangle {
-        id: panelSeparator
-        required property real scaleFactor
-        required property int panelHeightPx
-        // Control overall visibility: panelActive is toggled by parent panel,
-        // while userVisible lets callers add per-instance conditions.
-        property bool panelActive: true
-        property bool userVisible: true
-        property real alpha: 0.0
-        property bool triangleEnabled: false
-        property string backgroundKey: ""
-        property color fallbackColor: Theme.surface
-        property color backgroundColorOverride: "transparent"
-        property color triangleColor: backgroundColorOverride.a > 0
-            ? backgroundColorOverride
-            : WidgetBg.color(Settings.settings, backgroundKey, fallbackColor)
-        property real triangleWidthFactor: 1.0
-        property bool mirrorTriangle: false
-        property real mirrorTriangleWidthFactor: triangleWidthFactor
-        property real widthScale: 1.0
-        property Item snapLeft: null
-        property Item snapRight: null
-        property real snapWidth: 0
-        property real snapInset: 0
-
-        readonly property bool _snapLeftVisible: snapLeft ? snapLeft.visible : true
-        readonly property bool _snapRightVisible: snapRight ? snapRight.visible : true
-        readonly property bool _snapGated: {
-            if (!snapLeft && !snapRight) return true;
-            if (snapRight) return snapRight.visible;
-            return snapLeft.visible;
-        }
-        readonly property bool _snapPrimaryEnabled: snapLeft ? snapLeft.visible : true
-        readonly property bool _snapMirrorEnabled: snapRight ? snapRight.visible : true
-        readonly property real _heightRaw: panelHeightPx
-        readonly property int triangleHeightPx: Math.max(2, Math.round(_heightRaw))
-        property bool highlightHypotenuse: false
-        property bool highlightMirror: false
-        property color highlightColor: Theme.accentPrimary
-        property real highlightWidth: Math.max(1, Math.round(scaleFactor * 2))
-        // Advanced controls to toggle which wedges render and whether they should flip horizontally.
-        property bool useMirrorTriangleOnly: false
-        property bool usePrimaryTriangleOnly: false
-        property bool flipAcrossVerticalAxis: false
-        width: snapWidth > 0
-            ? Math.max(1, Math.round(snapWidth))
-            : Math.max(1, Math.round(widthScale * Theme.panelSeparatorWidthFactor * scaleFactor * Math.max(1, Theme.uiBorderWidth) * 16))
-        height: triangleHeightPx
-        implicitHeight: triangleHeightPx
-        Layout.preferredHeight: triangleHeightPx
-        property var triangleVariant: "flipY"
-        readonly property var triangleVariantSpec: rootScope.makeTriangleVariant(width, height, triangleVariant)
-        readonly property bool triangleFlipX: triangleVariantSpec.flipX
-        readonly property bool triangleFlipY: triangleVariantSpec.flipY
-        readonly property var triangleVertices: triangleVariantSpec.vertices
-        readonly property var triangleVariants: rootScope.makeTriangleVariantSet(width, height)
-        readonly property bool _preferPrimary: usePrimaryTriangleOnly && useMirrorTriangleOnly
-        readonly property bool primaryTriangleEnabled: (triangleEnabled && visible
-                                                        && !(useMirrorTriangleOnly && !usePrimaryTriangleOnly)
-                                                        && _snapPrimaryEnabled)
-        readonly property bool mirrorTriangleEnabled: (triangleEnabled && mirrorTriangle && visible
-                                                        && !(usePrimaryTriangleOnly && !useMirrorTriangleOnly)
-                                                        && !_preferPrimary
-                                                        && _snapMirrorEnabled)
-        readonly property bool primaryFlipX: flipAcrossVerticalAxis ? !triangleFlipX : triangleFlipX
-        readonly property bool mirrorFlipX: flipAcrossVerticalAxis ? triangleFlipX : !triangleFlipX
-        radius: 0
-        color: Color.withAlpha(Theme.textPrimary, alpha)
-        opacity: 1.0
-        Layout.alignment: Qt.AlignVCenter
-        Layout.leftMargin: snapInset > 0 ? -Math.round(snapInset) : 0
-        Layout.rightMargin: snapInset > 0 ? -Math.round(snapInset) : 0
-        visible: panelActive && userVisible && rootScope.trianglesAllowed && _snapGated
-
-
-        TriangleOverlay {
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: (parent.primaryFlipX ? undefined : parent.left)
-            anchors.right: (parent.primaryFlipX ? parent.right : undefined)
-            width: parent.width
-            height: parent.height
-            color: parent.triangleColor
-            flipX: parent.primaryFlipX
-            flipY: parent.triangleFlipY
-            xCoverage: parent.triangleWidthFactor
-            z: parent.z + 0.5
-            visible: parent.primaryTriangleEnabled && !parent.useMirrorTriangleOnly
-        }
-
-        TriangleOverlay {
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: (!parent.mirrorFlipX ? undefined : parent.left)
-            anchors.right: (!parent.mirrorFlipX ? parent.right : undefined)
-            width: parent.width
-            height: parent.height
-            color: parent.triangleColor
-            flipX: parent.mirrorFlipX
-            flipY: !parent.triangleFlipY
-            xCoverage: parent.mirrorTriangleWidthFactor
-            z: parent.z + 0.5
-            visible: parent.mirrorTriangleEnabled && !parent.usePrimaryTriangleOnly
-        }
-
-        Canvas {
-            id: hypotenuseStroke
-            anchors.fill: parent
-            visible: parent.highlightHypotenuse && (parent.primaryTriangleEnabled || parent.mirrorTriangleEnabled)
-            z: parent.z + 1
-            antialiasing: true
-
-            function drawHypotenuse(flipX, flipY, coverage, useMirror) {
-                var w = width;
-                var h = height;
-                if (w <= 0 || h <= 0)
-                    return;
-                var cov = Utils.clamp01(coverage);
-                var span = Math.max(1, Math.min(w, w * cov));
-                var drawFlipX = useMirror ? parent.mirrorFlipX : parent.primaryFlipX;
-                var drawFlipY = useMirror ? !parent.triangleFlipY : parent.triangleFlipY;
-                var xBase = drawFlipX ? w : 0;
-                var xEdge = drawFlipX ? Math.max(0, w - span) : span;
-                var yBase = drawFlipY ? 0 : h;
-                var yOpp = drawFlipY ? h : 0;
-                var ctx = getContext("2d");
-                ctx.clearRect(0, 0, w, h);
-                ctx.lineWidth = Math.max(1, parent.highlightWidth);
-                ctx.lineCap = "round";
-                ctx.lineJoin = "round";
-                ctx.strokeStyle = parent.highlightColor;
-                ctx.beginPath();
-                ctx.moveTo(xEdge, yBase);
-                ctx.lineTo(xBase, yOpp);
-                ctx.stroke();
-            }
-
-            onPaint: {
-                var targetMirror = parent.highlightMirror || (!parent.primaryTriangleEnabled && parent.mirrorTriangleEnabled);
-                var span = targetMirror ? parent.mirrorTriangleWidthFactor : parent.triangleWidthFactor;
-                var canDraw = targetMirror ? parent.mirrorTriangleEnabled : parent.primaryTriangleEnabled;
-                if (!canDraw) {
-                    var ctx = getContext("2d");
-                    ctx.clearRect(0, 0, width, height);
-                    return;
-                }
-                drawHypotenuse(parent.triangleFlipX, parent.triangleFlipY, span, targetMirror);
-            }
-            onVisibleChanged: requestPaint()
-            onWidthChanged: requestPaint()
-            onHeightChanged: requestPaint()
-        }
-
-        onTriangleWidthFactorChanged: hypotenuseStroke.requestPaint()
-        onMirrorTriangleWidthFactorChanged: hypotenuseStroke.requestPaint()
-        onTriangleFlipXChanged: hypotenuseStroke.requestPaint()
-        onTriangleFlipYChanged: hypotenuseStroke.requestPaint()
-        onHighlightColorChanged: hypotenuseStroke.requestPaint()
-        onHighlightWidthChanged: hypotenuseStroke.requestPaint()
-        onHighlightMirrorChanged: hypotenuseStroke.requestPaint()
-        onUseMirrorTriangleOnlyChanged: hypotenuseStroke.requestPaint()
-        onUsePrimaryTriangleOnlyChanged: hypotenuseStroke.requestPaint()
-        onFlipAcrossVerticalAxisChanged: hypotenuseStroke.requestPaint()
-    }
-
-    component PillSeparator : PanelSeparator {
-        readonly property color pillColor: Theme.surface
-        backgroundColorOverride: pillColor
-        fallbackColor: pillColor
-        color: pillColor
-        alpha: pillColor.a
-    }
 
     // Workaround: Hyprland skips wallpaper render behind transparent bar
     // on first workspace (term). Brief opacity toggle forces a full repaint.

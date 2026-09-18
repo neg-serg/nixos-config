@@ -5,6 +5,7 @@ import qs.Settings
 import "../../Helpers/RichText.js" as Rich
 import "../../Helpers/TooltipText.js" as TooltipText
 import "../../Helpers/WsIconMap.js" as WsMap
+import "../../Helpers/WorkspaceName.js" as WorkspaceName
 import "../../Helpers/WorkspaceIcons.js" as WorkspaceIcons
 import Quickshell
 CenteredCapsuleRow {
@@ -37,18 +38,14 @@ CenteredCapsuleRow {
         return Rich.decorateGlyphs(name, { pua: workspaceGlyphColor, oldItalic: gothicColor });
     }
 
+    // Workspace-name parsing is shared with Bar.qml (Helpers/WorkspaceName.js) so
+    // the bar and this indicator cannot disagree about the same workspace.
     function leadingIcon(name) {
-        if (!name || typeof name !== "string" || name.length === 0) return "";
-        const cp = name.codePointAt(0);
-        return Rich.isPUA(cp) ? String.fromCodePoint(cp) : "";
+        return WorkspaceName.leadingIcon(name);
     }
 
     function restAfterLeadingIcon(name) {
-        if (!name || typeof name !== "string" || name.length === 0) return "";
-        const cp = name.codePointAt(0);
-        if (!Rich.isPUA(cp)) return name;
-        const skip = (cp > 0xFFFF) ? 2 : 1;
-        return name.substring(skip).replace(/^\s+/, "");
+        return WorkspaceName.restAfterIcon(name);
     }
 
 
@@ -57,7 +54,6 @@ CenteredCapsuleRow {
     property string restName: restAfterLeadingIcon(wsName)
 
     // Detect terminal workspace
-    readonly property var _terminalIcons: ["\uf120", "\ue795", "\ue7a2"]
     property bool isAlphaWs: (wsName || "").toLowerCase().indexOf("alpha") !== -1
 
     // Short description per workspace name (icon prefix stripped).
@@ -91,13 +87,7 @@ CenteredCapsuleRow {
         hints.push("Клик — обзор рабочих столов");
         return TooltipText.compose("Рабочий стол", String(wsId >= 0 ? wsId : "—"), hints);
     })()
-    property bool isTerminalWs: (function(){
-        const rn = (restName || "").toLowerCase().trim();
-        if (iconGlyph && _terminalIcons.indexOf(iconGlyph) !== -1) return true;
-        if (rn.startsWith("term")) return true;
-        if (rn.endsWith("term")) return true; // e.g., names like "dev-term"
-        return false;
-    })()
+    property bool isTerminalWs: WorkspaceName.isTerminal(wsName)
     property bool isSpaciousWs: isAlphaWs
 
     // Fallback to workspace id if name is empty
