@@ -1,0 +1,146 @@
+{
+  "weights_version": 1,
+  "anchor": "none",
+  "layout": "ru-to-en-fallback",
+  "fold_case": true,
+  "labels": [
+    "Open in browser",
+    "Open in terminal",
+    "Copy address",
+    "Copy message",
+    "Lock screen",
+    "Log out",
+    "Take screenshot",
+    "Show hidden files",
+    "Toggle Wi-Fi",
+    "Turn off Bluetooth",
+    "Preferences",
+    "Power off",
+    "Restart",
+    "Suspend",
+    "Recent documents",
+    "Attach file",
+    "Mark as read",
+    "Mute notifications",
+    "Check for updates",
+    "Quit Telegram",
+    "About",
+    "Показать скрытые файлы",
+    "Настройки",
+    "Заблокировать экран"
+  ],
+  "cases": [
+    {
+      "query": "op",
+      "results": [
+        {"index": 0, "label": "Open in browser", "score": 0.950000000, "spans": [[0, 2]]},
+        {"index": 1, "label": "Open in terminal", "score": 0.950000000, "spans": [[0, 2]]},
+        {"index": 2, "label": "Copy address", "score": 0.038000000, "spans": [[1, 3]]},
+        {"index": 3, "label": "Copy message", "score": 0.038000000, "spans": [[1, 3]]},
+        {"index": 18, "label": "Check for updates", "score": -0.144000000, "spans": [[7, 8], [11, 12]]}
+      ]
+    },
+    {
+      "query": "o",
+      "results": [
+        {"index": 0, "label": "Open in browser", "score": 0.900000000, "spans": [[0, 1]]},
+        {"index": 1, "label": "Open in terminal", "score": 0.900000000, "spans": [[0, 1]]},
+        {"index": 5, "label": "Log out", "score": 0.752000000, "spans": [[4, 5]]},
+        {"index": 9, "label": "Turn off Bluetooth", "score": 0.740000000, "spans": [[5, 6]]},
+        {"index": 11, "label": "Power off", "score": 0.728000000, "spans": [[6, 7]]},
+        {"index": 2, "label": "Copy address", "score": -0.012000000, "spans": [[1, 2]]},
+        {"index": 3, "label": "Copy message", "score": -0.012000000, "spans": [[1, 2]]},
+        {"index": 4, "label": "Lock screen", "score": -0.012000000, "spans": [[1, 2]]},
+        {"index": 8, "label": "Toggle Wi-Fi", "score": -0.012000000, "spans": [[1, 2]]},
+        {"index": 7, "label": "Show hidden files", "score": -0.024000000, "spans": [[2, 3]]},
+        {"index": 20, "label": "About", "score": -0.024000000, "spans": [[2, 3]]},
+        {"index": 17, "label": "Mute notifications", "score": -0.072000000, "spans": [[6, 7]]},
+        {"index": 18, "label": "Check for updates", "score": -0.084000000, "spans": [[7, 8]]},
+        {"index": 14, "label": "Recent documents", "score": -0.096000000, "spans": [[8, 9]]},
+        {"index": 6, "label": "Take screenshot", "score": -0.156000000, "spans": [[13, 14]]}
+      ]
+    },
+    {
+      "query": "b",
+      "results": [
+        {"index": 0, "label": "Open in browser", "score": 0.704000000, "spans": [[8, 9]]},
+        {"index": 9, "label": "Turn off Bluetooth", "score": 0.692000000, "spans": [[9, 10]]},
+        {"index": 20, "label": "About", "score": -0.012000000, "spans": [[1, 2]]}
+      ]
+    },
+    {
+      "query": "copy",
+      "results": [
+        {"index": 2, "label": "Copy address", "score": 1.050000000, "spans": [[0, 4]]},
+        {"index": 3, "label": "Copy message", "score": 1.050000000, "spans": [[0, 4]]}
+      ]
+    },
+    {
+      "query": "cp",
+      "results": [
+        {"index": 2, "label": "Copy address", "score": 0.880000000, "spans": [[0, 1], [2, 3]]},
+        {"index": 3, "label": "Copy message", "score": 0.880000000, "spans": [[0, 1], [2, 3]]},
+        {"index": 18, "label": "Check for updates", "score": 0.700000000, "spans": [[0, 1], [11, 12]]}
+      ]
+    },
+    {
+      "query": "lock",
+      "results": [
+        {"index": 4, "label": "Lock screen", "score": 1.050000000, "spans": [[0, 4]]}
+      ]
+    },
+    {
+      "query": "sc",
+      "results": [
+        {"index": 4, "label": "Lock screen", "score": 0.790000000, "spans": [[5, 7]]},
+        {"index": 6, "label": "Take screenshot", "score": 0.790000000, "spans": [[5, 7]]}
+      ]
+    },
+    {
+      "query": "mrs",
+      "results": [
+        {"index": 16, "label": "Mark as read", "score": 0.820000000, "spans": [[0, 1], [2, 3], [6, 7]]}
+      ]
+    },
+    {
+      "query": "quit",
+      "results": [
+        {"index": 19, "label": "Quit Telegram", "score": 1.760000000, "spans": [[0, 3], [5, 6]]}
+      ]
+    },
+    {
+      "query": "щз",
+      "results": [
+        {"index": 0, "label": "Open in browser", "score": 0.950000000, "spans": [[0, 2]]},
+        {"index": 1, "label": "Open in terminal", "score": 0.950000000, "spans": [[0, 2]]},
+        {"index": 2, "label": "Copy address", "score": 0.038000000, "spans": [[1, 3]]},
+        {"index": 3, "label": "Copy message", "score": 0.038000000, "spans": [[1, 3]]},
+        {"index": 18, "label": "Check for updates", "score": -0.144000000, "spans": [[7, 8], [11, 12]]}
+      ]
+    },
+    {
+      "query": "дщсл",
+      "results": [
+        {"index": 4, "label": "Lock screen", "score": 1.050000000, "spans": [[0, 4]]}
+      ]
+    },
+    {
+      "query": "скр",
+      "results": [
+        {"index": 21, "label": "Показать скрытые файлы", "score": 0.846000000, "spans": [[17, 23]]},
+        {"index": 6, "label": "Take screenshot", "score": -0.102000000, "spans": [[6, 8], [12, 13]]}
+      ]
+    },
+    {
+      "query": "настр",
+      "results": [
+        {"index": 22, "label": "Настройки", "score": 1.350000000, "spans": [[0, 10]]}
+      ]
+    },
+    {
+      "query": "zzzz",
+      "results": [
+      ]
+    }
+  ]
+}

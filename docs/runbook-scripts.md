@@ -34,6 +34,12 @@ Run by `just lint`:
   nearest `Cargo.toml` (`--fix` formats in place).
 - [check-lusty-smoke.sh](../scripts/dev/check-lusty-smoke.sh) — headless smoke test for the
   LustyExplorer nvim picker (`files/nvim/lua/lusty`).
+- [check-fuzzy-parity.sh](../scripts/dev/check-fuzzy-parity.sh) — replays the golden vectors
+  (`files/quickshell/Helpers/tests/fuzzy-vectors.json`) against the JS port of the lusty-fuzzy
+  matcher and re-derives the fixture from the deployed `lusty` when it supports it
+  (`--fuzzy-vectors`). See [howto/quickshell-tray-fuzzy.md](./howto/quickshell-tray-fuzzy.md).
+- [gen-fuzzy-vectors.sh](../scripts/dev/gen-fuzzy-vectors.sh) — rewrites that fixture from a
+  lusty binary; run it when the crate's scoring or ranking changes.
 
 Run by `nix flake check`:
 
