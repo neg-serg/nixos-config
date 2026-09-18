@@ -55,7 +55,18 @@ RowLayout {
         return -40;
     }
 
-    function _saveState() { if (StateCache.state) { StateCache.state.genelecVolume = _lastSetVolume; try { StateCache.stateFileView.writeAdapter(); } catch(e) {} } }
+    // Persisting is StateCache's own business: its GuardedFileView writes the file
+    // whenever the adapter changes (onAdapterUpdated → writeAdapter), so assigning
+    // genelecVolume is all that is needed here. The writeAdapter() call that used
+    // to sit next to it addressed `StateCache.stateFileView` — an id inside
+    // StateCache.qml, which is file-scoped and not a property of the singleton —
+    // so it threw a TypeError into an empty catch. The volume was persisted by the
+    // assignment all along; verified on a probe instance with XDG_CACHE_HOME
+    // pointed at a scratch dir: assigning -33 wrote "genelecVolume": -33.
+    function _saveState() {
+        if (StateCache.state)
+            StateCache.state.genelecVolume = _lastSetVolume;
+    }
 
     // ---- Normalized 0..1 for slider ----
     readonly property real sliderPos: (displayDb - minVolume) / (maxVolume - minVolume)

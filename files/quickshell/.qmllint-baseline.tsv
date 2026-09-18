@@ -26,7 +26,7 @@
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
 unqualified	717
-missing-property	52
+missing-property	51
 unresolved-type	34
 import	6
 uncreatable-type	11
