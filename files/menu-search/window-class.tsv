@@ -1,0 +1,10 @@
+# id<TAB>window class — where a tray id and its window class disagree.
+#
+# menu-search raises the window behind an "Open ..." tray entry, and normally the
+# item id IS the window class (org.nicotine_plus.Nicotine, org.telegram.desktop),
+# so nothing is needed here. Telegram is the exception: its tray id is
+# `TelegramDesktop` while its window is `org.telegram.desktop`, and letting the
+# matcher guess from the common word would also match a chat window titled
+# "telegram". One line per exception, "id<TAB>window class"; the class is matched
+# as a case-insensitive substring, so `org.telegram` would do as well.
+TelegramDesktop	org.telegram.desktop
