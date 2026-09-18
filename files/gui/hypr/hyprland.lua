@@ -169,7 +169,10 @@ hl.config({
     sync_gsettings_theme = true, min_refresh_rate = 175, inactive_timeout = 0,
     hide_on_key_press = true, warp_on_change_workspace = false,
   },
-  render = { direct_scanout = 2 },
+  -- new_render_scheduling: 0.56's alternative frame scheduler (the old one is
+  -- still the default). Reverting needs no reload — in a live session
+  -- `hyprctl keyword render:new_render_scheduling false` is enough.
+  render = { direct_scanout = 2, new_render_scheduling = true },
   xwayland = { force_zero_scaling = true, use_nearest_neighbor = true },
   master = { new_status = "master", mfact = 0.6, orientation = "left", allow_small_split = true, smart_resizing = true },
 })
