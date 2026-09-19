@@ -101,6 +101,9 @@ hl.monitor({ output = "DP-1", disabled = true })
 -- 4K60 screen that only shows if the monitor OSD input is switched. Keep disabled.
 hl.monitor({ output = "DP-4", disabled = true })
 
+
+
+
 -- ---------------------------------------------------------------------
 -- VRR: games only
 -- ---------------------------------------------------------------------
@@ -305,39 +308,6 @@ hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 -- used instead — verified in a nested 0.56.2 instance.
 
 hl.bind(M4 .. "+grave", hl.dsp.exec_cmd([[hyprctl eval 'hl.plugin.hyprexpo.expo("toggle")']]))
-
--- --- Window shaders (HyprWindowShade) ──────────────────────────────────
--- Plugin functions live under hl.plugin.HyprWindowShade.* only *after* the .so
--- is dlopen'd by hyprwindowshade-setup (session start, i.e. after this file is
--- parsed), so every bind looks the namespace up at keypress time — the pattern
--- the plugin's own README prescribes. That also keeps the bind alive when the
--- plugin failed to load, and says so instead of failing silently.
--- SHADERS mirrors files/gui/hypr/hyprwindowshade.lua.
-local SHADERS = (os.getenv("HOME") or "") .. "/.config/hypr/shaders/"
-
-local shade_ns = function()
-  local ns = hl.plugin.HyprWindowShade
-  if not ns then
-    hl.notification.create({
-      text = "[HyprWindowShade] plugin not loaded",
-      timeout = 3000,
-      color = "rgb(ff5555)",
-    })
-  end
-  return ns
-end
-
--- Obscure the focused window (pixelate); press again to clear it.
-hl.bind(M4 .. "+" .. SH .. "+x", function()
-  local ns = shade_ns()
-  if ns then ns.togglewindowshader(SHADERS .. "pixelate.glsl") end
-end)
-
--- Strip every shader from the focused window (undo).
-hl.bind(M4 .. "+" .. SH .. "+u", function()
-  local ns = shade_ns()
-  if ns then ns.togglewindowshader("clear") end
-end)
 
 -- --- App launchers (ex-apps.conf; formerly ~/.config/hypr/bindings/apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
