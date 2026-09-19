@@ -87,12 +87,15 @@ in
           profiles.user.databases = [
             {
               settings."org/gnome/desktop/interface" = {
-                icon-theme = "'${iconTheme}'";
-                gtk-theme = "'${realThemeName}'";
-                cursor-theme = "'Alkano-aio'";
-                font-name = "'Iosevka 10'";
+                # Plain strings: the dconf module wraps them as GVariant "s".
+                # Quotes added here would become part of the value, which
+                # silently breaks enum keys such as color-scheme.
+                icon-theme = iconTheme;
+                gtk-theme = realThemeName;
+                cursor-theme = "Alkano-aio";
+                font-name = "Iosevka 10";
                 # libadwaita reads dark mode from color-scheme, not from GTK_THEME.
-                color-scheme = "'prefer-dark'";
+                color-scheme = "prefer-dark";
               };
             }
           ];
