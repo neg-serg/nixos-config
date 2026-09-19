@@ -621,6 +621,11 @@ Singleton {
     // Accent Colors — wallpaper-derived accent overrides theme default when available
     // WallpaperAccent is in qs.Services; we read it via _wpAccent to avoid circular import
     property color _wpAccent: "#000000"
+    // The glass surfaces and the bar take their backdrop from the wallpaper, so
+    // "is it light?" is what decides whether glyphs get a shadow (GlyphShadow):
+    // on a dark wallpaper the shadow is invisible and not worth a texture pass.
+    readonly property bool backdropIsLight: _wpHasAccent
+        && Color.luminance(_wpAccent) > val('ui.textShadow.lightThreshold', 0.5)
     property bool _wpHasAccent: false
     property color accentPrimary: _wpHasAccent
         ? Color.matchHue(_wpAccent, val('colors.accent.primary', "#006FCC"))
