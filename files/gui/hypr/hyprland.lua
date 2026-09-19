@@ -618,8 +618,9 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 
 -- Scratchpad rules: float + size + no dim (monitor-relative expressions), plus the
 -- `hyprglass_preset_scratch` tag. That preset is defined by hyprglass-apply
--- (blur_strength 16 with the maximum of 5 gaussian passes, against the global pair
--- the panel keeps in ~/.config/hypr/hyprglass.json),
+-- (blur_strength 16 with the maximum of 5 gaussian passes and adaptive_dim 0, so
+-- the heavier frost does not drag the adaptive dimming in with it; the global pair
+-- lives in the panel's ~/.config/hypr/hyprglass.json),
 -- so what sits behind a scratchpad is frosted much harder than the rest of the
 -- session, where the shipped blur stays as it is.
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })

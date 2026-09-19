@@ -204,13 +204,21 @@ fi
 #                of 5 gaussian passes. The global pair lives in the panel's JSON
 #                (10.5/4 at the time of writing, the shipped default is 6/5), so a
 #                scratchpad frosts roughly 1.5x the rest of the session.
+#                adaptive_dim is zeroed here on purpose: the shader multiplies the
+#                frosted colour by (1 - adaptiveDim * smoothstep(0.25, 0.55,
+#                blurredLum)) (src/Shaders.hpp), i.e. the dim rides on the blurred
+#                luminance, and that curve is tuned for the luminance a *normal*
+#                blur compresses into 0.3-0.7. A much stronger blur averages the
+#                backdrop further and pushes more content into the dim part of the
+#                curve, so the heavier frost would arrive with a visible darkening
+#                of the scratchpad. Zero here = the extra blur without the dim.
 #   media-dark — the panel's now-playing card (layers:namespace_presets maps
 #                qs-music to it): dark brightness 0.55, i.e. 1.5x darker than the
 #                dark theme's 0.82.
 #
 # A `hyprctl reload` drops them again (the plugin re-reads its config), which is
 # also what makes the nine knobs drift, so the next push restores these too.
-"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5 })' >/dev/null 2>&1 || true
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.55 } })' >/dev/null 2>&1 || true
 
 # Record what the plugin reports now: the next check compares against this, so a
