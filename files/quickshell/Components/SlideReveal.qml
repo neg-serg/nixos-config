@@ -30,10 +30,16 @@ Item {
     property bool revealed: false
     // When false the state switches instantly (reduced-motion friendly).
     property bool animate: Theme.animationsEnabled
-    // Slide duration.
+    // Slide duration. Opening and closing are timed separately: collapsing an
+    // item away is read as abrupt when it snaps back at the open speed, so the
+    // close is normally given more time (and a smoother curve) than the open.
     property int durationMs: Theme.panelAnimStdMs
+    property int openDurationMs: root.durationMs
+    property int closeDurationMs: root.durationMs
     // Easing curve used while opening/closing.
     property int easing: Theme.uiEasingStdOut
+    property int openEasing: root.easing
+    property int closeEasing: root.easing
     // Optional open-size overrides; auto-detected when left at -1.
     property real contentWidthHint: -1
     property real contentHeightHint: -1
@@ -47,30 +53,27 @@ Item {
         ? root.contentHeightHint
         : (root.contentItem ? root.contentItem.height : 0)
 
-    Layout.preferredWidth: root.revealed ? root.openWidth : 0
+    // 0 = collapsed, 1 = fully revealed. Animating this single value drives
+    // both the width and the content fade, so the two can never drift apart,
+    // and the timing/curve can be picked per direction (see above).
+    property real progress: root.revealed ? 1 : 0
+
+    Behavior on progress {
+        enabled: root.animate
+        NumberAnimation {
+            duration: root.revealed ? root.openDurationMs : root.closeDurationMs
+            easing.type: root.revealed ? root.openEasing : root.closeEasing
+        }
+    }
+
+    Layout.preferredWidth: root.openWidth * root.progress
     Layout.preferredHeight: Math.max(1, root.openHeight)
     implicitWidth: 0
     implicitHeight: Math.max(1, root.openHeight)
 
-    Behavior on Layout.preferredWidth {
-        enabled: root.animate
-        NumberAnimation {
-            duration: root.durationMs
-            easing.type: root.easing
-        }
-    }
-
     // Inner content fades in/out while it slides.
     Item {
         id: revealContent
-        opacity: root.revealed ? 1 : 0
-
-        Behavior on opacity {
-            enabled: root.animate
-            NumberAnimation {
-                duration: Math.max(1, Math.round(root.durationMs * 0.6))
-                easing.type: Easing.OutCubic
-            }
-        }
+        opacity: root.progress
     }
 }
