@@ -302,6 +302,22 @@ lib.mkIf (cfg.enable or false) {
   # the shell BEFORE nix-maid activation updates the config symlinks, so the
   # running shell keeps the OLD code until manually restarted. Watching the
   # shell.qml symlink catches the flip and reloads the new config.
+  # Re-apply the hyprglass settings when they are (re)deployed or when the Glass
+  # panel writes overrides: the plugin only reads its config when it is pushed, so
+  # without this a switch would leave the running session on the old glass until
+  # the next login.
+  systemd.user.paths.hyprglass-config = {
+    description = "Push hyprglass settings when they change";
+    wantedBy = [ "paths.target" ];
+    pathConfig = {
+      PathChanged = [
+        "/home/neg/.config/hypr/hyprglass.lua"
+        "/home/neg/.config/hypr/hyprglass-user.lua"
+      ];
+      Unit = "hyprglass-apply.service";
+    };
+  };
+
   systemd.user.paths.quickshell-config = {
     description = "Restart quickshell when its config changes";
     wantedBy = [ "paths.target" ];
