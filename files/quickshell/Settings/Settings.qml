@@ -33,6 +33,13 @@ Singleton {
             property real panelBgAlphaScale: 0.2
 
             // Enable wedge clip ShaderEffect path (env vars can override in debug)
+            // Per-window hyprglass overrides, edited in the Glass panel
+            // (win+shift+g) and turned into custom presets + window-rule tags by
+            // hyprglass-apply. Shape: [{ class, enabled, blurStrength,
+            // glassOpacity, adaptiveDim, tint }] — tint is RRGGBBAA or "" to
+            // inherit, and a missing field means "inherit the global value".
+            property var glassWindowOverrides: []
+
             property bool enableWedgeClipShader: false
             // Recolor the bar content through a live FBO tint pass. The tint shader
             // is a descendant of the content it samples, so the feedback keeps the

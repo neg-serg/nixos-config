@@ -226,6 +226,55 @@ fi
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.40 }, blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 
+# ── per-window overrides ─────────────────────────────────────────────────────
+# The Glass panel keeps a list of { class, enabled, blurStrength, glassOpacity,
+# adaptiveDim, tint } entries; each one becomes a custom preset here, plus the
+# window rule that carries hyprglass_preset_<slug> for that class. The panel only
+# owns the data — the Lua is generated from the JSON, not typed by hand, which is
+# what makes it checkable at all.
+#
+# Two mechanics worth knowing when reading this:
+#   * the plugin resolves a preset's *values* every frame, so redefining a preset
+#     re-tunes windows that are already open (that is how editing an entry takes
+#     effect immediately);
+#   * a window's *tags* are computed when it is mapped, so the rule part only
+#     reaches windows opened after the push (Hyprland does not recompute tags for
+#     live windows).
+# A disabled entry gets an empty preset: the chain then resolves to the theme and
+# the global values, so a tag left over from earlier in the session is neutral
+# instead of the preset it used to point at.
+slug() { printf '%s' "$1" | tr -c 'A-Za-z0-9' '_'; }
+
+if [ "$have_json" = 1 ]; then
+  override_count="$(jq -r '(.windowOverrides // []) | length' "$overrides" 2>/dev/null || echo 0)"
+  i=0
+  while [ "$i" -lt "$override_count" ]; do
+    entry="$(jq -c --argjson i "$i" '(.windowOverrides // [])[$i]' "$overrides")"
+    i=$((i + 1))
+    cls="$(printf '%s' "$entry" | jq -r '.class // empty')"
+    [ -n "$cls" ] || continue
+    preset_name="win_$(slug "$cls")"
+    enabled="$(printf '%s' "$entry" | jq -r 'if .enabled == false then "false" else "true" end')"
+
+    if [ "$enabled" = "true" ]; then
+      preset_lua="$(printf '%s' "$entry" | jq -r --arg name "$preset_name" '
+        "hl.plugin.hyprglass.preset(\"" + $name + "\", { " +
+        ([ (if .blurStrength then "blur_strength = \(.blurStrength)" else empty end),
+           (if .glassOpacity  then "glass_opacity = \(.glassOpacity)" else empty end),
+           (if .adaptiveDim   then "adaptive_dim = \(.adaptiveDim)" else empty end),
+           (if ((.tint // "") | test("^[0-9A-Fa-f]{8}$")) then "dark = { tint_color = 0x\(.tint) }" else empty end)
+         ] | join(", ")) + " })"')"
+      out="$("$hyprctl_bin" eval "$preset_lua" 2>&1 || true)"
+      case "$out" in
+        *error* | *expected*) echo "hyprglass: override $cls: $out" >&2 ;;
+      esac
+      "$hyprctl_bin" eval "hl.window_rule({ name = \"hyprglass-override-$preset_name\", match = { class = \"^$cls\$\" }, tag = \"+hyprglass_preset_$preset_name\" })" >/dev/null 2>&1 || true
+    else
+      "$hyprctl_bin" eval "hl.plugin.hyprglass.preset(\"$preset_name\", {})" >/dev/null 2>&1 || true
+    fi
+  done
+fi
+
 # Record what the plugin reports now: the next check compares against this, so a
 # later drift is visible even in a session where the panel was never opened.
 if command -v jq >/dev/null 2>&1; then
