@@ -52,9 +52,9 @@ Singleton {
 
             // Glass (hyprglass) values, driven by the Glass panel
             // (Widgets/Glass/GlassPanel.qml). The panel writes them through to
-            // ~/.config/hypr/hyprglass-user.lua, and hyprglass-apply pushes that
-            // into the running session; the shipped defaults live in
-            // files/gui/hypr/hyprglass.lua.
+            // ~/.config/hypr/hyprglass.json, and hyprglass-apply turns that into
+            // the plugin's config, pushes it and verifies it; the shipped defaults
+            // live in files/gui/hypr/hyprglass.lua.
             property real glassBlurStrength: 6
             property int glassBlurIterations: 5
             property real glassVibrancy: 0.5
