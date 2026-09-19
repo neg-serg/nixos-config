@@ -44,6 +44,17 @@ let
       (pkgs.lib.makeBinPath [ pkgs.hyprland ])
     ];
   } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
+  # Frost for a glass scratchpad pane (see kitty-glass-frost.sh): a heavily blurred,
+  # darkened slice of the current wallpaper pushed into the pane as kitty's
+  # background image, because nothing on the compositor side moves that window's
+  # blur any more.
+  kittyGlassFrost = pkgs.writeShellScriptBin "kitty-glass-frost" (
+    builtins.replaceStrings
+      [ "@hyprctl@" "@kitten@" ]
+      [ "${lib.getExe' pkgs.hyprland "hyprctl"}" "${lib.getExe' pkgs.kitty "kitten"}" ]
+      (builtins.readFile ./kitty-glass-frost.sh)
+  );
+
   # Push the hyprglass settings into a running session (see hyprglass-apply.sh).
   # The runtime paths are substituted here because systemd user services and the
   # session shell both run with a minimal PATH.
@@ -74,6 +85,7 @@ in
     # pkgs.hyprlock — temporarily removed (2026-08-31); re-add to restore the lock screen
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     hyprglassApply # pushes glass settings into the running session (panel, path unit)
+    kittyGlassFrost # frosts a scratchpad pane with a blurred wallpaper slice
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
     pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
@@ -171,8 +183,32 @@ in
 
       [ "$tint_enabled" = 1 ] || tint="#000000"
 
+      # Split the command after -e off: the music pane runs it through the frost
+      # helper first (kitty-glass-frost.sh), so the pane draws its own blurred
+      # wallpaper slice — nothing on the compositor side moves this window's blur
+      # any more, and the slice has to be cropped to the window's screen rect,
+      # which only exists once the window is mapped.
+      opts=()
+      payload=()
+      seen=0
+      for arg in "$@"; do
+        if [ "$seen" = 1 ]; then
+          payload+=("$arg")
+        else
+          opts+=("$arg")
+          [ "$arg" = "-e" ] || [ "$arg" = "--" ] && seen=1
+        fi
+      done
+
       # A little inset so the TUI does not run into the glass edge; kitty's own
       # config keeps 0 for ordinary terminals.
+      if [ "$class" = music ]; then
+        # cscaled keeps the slice covering the pane on any resize.
+        exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
+          -o background="$tint" -o window_padding_width=8 \
+          -o background_image_layout=cscaled \
+          "''${opts[@]}" sh -c 'kitty-glass-frost music; exec "$@"' sh "''${payload[@]}"
+      fi
       exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
         -o background="$tint" -o window_padding_width=8 "$@"
     '')
