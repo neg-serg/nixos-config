@@ -7,8 +7,15 @@
 set -euo pipefail
 hyprctl_bin="@hyprctl@"
 
-# Already loaded when the session-start hook ran; the failure is fine.
-"$hyprctl_bin" plugin load @plugin@ || true
+# Only load when it is not there yet: `plugin load` on a loaded plugin prints
+# "Cannot load a plugin twice!" on every apply, which is noise in the journal.
+if ! "$hyprctl_bin" plugin list 2>/dev/null | grep -qi hyprglass; then
+  "$hyprctl_bin" plugin load @plugin@ || true
+fi
+
+# Let a burst of writes (a slider drag) settle so the last value is the one that
+# lands, instead of pushing every intermediate step.
+sleep 0.15
 
 for f in "$HOME/.config/hypr/hyprglass.lua" "$HOME/.config/hypr/hyprglass-user.lua"; do
   [ -r "$f" ] || continue
