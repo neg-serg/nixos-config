@@ -558,14 +558,13 @@ hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scra
 hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
 hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 
--- Scratchpads are frosted like the media popup. hyprglass replaces Hyprland's
--- window blur pass, so a class has to keep blur enabled to be glassed at all
--- (the routed workspace classes switch it off wholesale). The translucency the
--- frost needs comes from the `kitty-glass` launcher, see
--- modules/user/nix-maid/hyprland/services.nix.
-for _, sp in ipairs({ "teardown", "music", "torrment", "vpn", "mixer", "rebuild" }) do
-  hl.window_rule({ name = "glass-" .. sp, match = { class = "^(" .. sp .. ")$" }, blur = true })
-end
+-- Scratchpads are frosted like the media popup: hyprglass replaces Hyprland's
+-- window blur pass, so a class keeps blur enabled here (window rules only carry
+-- `no_blur`, there is no positive `blur` field to switch it back on) and the
+-- translucency the frost needs comes from the `kitty-glass` launcher, see
+-- modules/user/nix-maid/hyprland/services.nix. The scratchpad classes therefore
+-- must stay out of the `routes` table above and away from `no_blur`, or their
+-- glass disappears.
 
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
