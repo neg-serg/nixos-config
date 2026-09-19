@@ -623,8 +623,13 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 -- lives in the panel's ~/.config/hypr/hyprglass.json),
 -- so what sits behind a scratchpad is frosted much harder than the rest of the
 -- session, where the shipped blur stays as it is.
+--
+-- The rmpc pane is the one scratchpad with its own tag, `hyprglass_preset_music_strong`
+-- (blur_strength 64 = 4x the scratch frost, same 5 passes and no dim): it runs at
+-- 0.45 opacity with nothing of its own drawn over the backdrop (services.nix), so
+-- the plugin's frost is the whole pane and 16 read as too weak there.
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
+hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, tag = "+hyprglass_preset_music_strong", size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
 hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
 hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })

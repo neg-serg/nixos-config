@@ -212,6 +212,14 @@ fi
 #                backdrop further and pushes more content into the dim part of the
 #                curve, so the heavier frost would arrive with a visible darkening
 #                of the scratchpad. Zero here = the extra blur without the dim.
+#   music_strong — the rmpc pane (window rule music-scratchpad in hyprland.lua):
+#                blur_strength 64, i.e. 4x the scratch preset (radius 768 px
+#                against 192), all 5 gaussian passes, adaptive_dim 0. The pane is
+#                the one scratchpad whose backdrop is the whole picture — it runs
+#                at 0.45 opacity with nothing drawn over the frost — and at 16 the
+#                frost read as too weak behind it. blur_strength is a plain scale
+#                (value * 12 px) with no clamp: 64, 128 and 256 are all accepted,
+#                so this number is the knob to turn if it is still too weak.
 #   media-dark — the panel's now-playing card (layers:namespace_presets maps
 #                qs-music to it): dark brightness 0.40 and the strongest frost the
 #                plugin offers (blur_strength 16, all 5 gaussian passes), with
@@ -225,6 +233,7 @@ fi
 # also what makes the nine knobs drift, so the next push restores these too.
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.40 }, blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("music_strong", { blur_strength = 64, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 
 # ── per-window overrides ─────────────────────────────────────────────────────
 # The Glass panel keeps a list of { class, enabled, blurStrength, glassOpacity,
