@@ -117,6 +117,15 @@ behind Hyprland.
 - **Gesture**: 3-finger swipe with `gesture_direction = "vertical"`; the horizontal 3-finger swipe
   stays with `hl.gesture()` (the scrolling tape), since Hyprland keys gestures per finger count +
   direction and one would shadow the other.
+- **Panel entry points**: the workspace capsule in the bar and the IPC both funnel into
+  `Services/Expo.qml` (`Quickshell.execDetached` of the same eval command as the bind):
+  `Bar/Modules/WsIndicator.qml` toggles on click, and `quickshell ipc call globalIPC
+  toggleOverview` exposes it to scripts and extra binds. The capsule sets
+  `activateOnPress: true` (`Components/CapsuleButton.qml`): hovering the left module row
+  reveals the pill capsule and slides the workspace capsule sideways, and a
+  release-based tap is cancelled when the release lands outside the item — Qt's
+  `TapHandler` insists on `parentContains(point)` at release under *every*
+  `gesturePolicy` (qquicktaphandler.cpp, setPressed()), so the click was silently lost.
 
 
 ## Testing a plugin without endangering the session
