@@ -63,6 +63,19 @@ host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
 # Container state, empty when the container is gone.
 ct_state() { timeout 10 podman inspect -f '{{.State.Status}}' "$CT" 2>/dev/null || true; }
 
+# Is the container rootfs still mounted? Rootless podman mounts the overlay inside
+# its own mount namespace, so the caller never sees it in /proc/self/mountinfo —
+# the old check here found nothing, declared the teardown finished and let a
+# `start` land mid-dismount (verified 2026-09-19: 0 hits in the shell's namespace,
+# 1 via `podman unshare` for the same merged dir). That is the crash wait_teardown()
+# exists for, and on 2026-09-19 18:28 it left the container dead. `podman unshare`
+# enters podman's namespace; the caller's own is checked too, for a storage driver
+# that mounts outside it.
+overlay_mounted() {
+  podman unshare grep -qF "$1" /proc/self/mountinfo 2>/dev/null && return 0
+  grep -qF "$1" /proc/self/mountinfo 2>/dev/null
+}
+
 # Guest liveness on 127.0.0.1:3389 (pasta/passt hand the guest the host's own
 # address). Two probes, because a bare TCP connect is not one: passt completes
 # the handshake from its own stack, so the port stays "open" while the guest
@@ -109,6 +122,10 @@ vm_uptime() {
 #   server.sh: line 273: /usr/bin/rm: Transport endpoint is not connected
 #   ❯ ERROR: QEMU exited unexpectedly!
 # So wait for `exited`, for the overlay to be unmounted, and for conmon to be reaped.
+# The namespace blindness of that check (see overlay_mounted) is why it kept coming
+# back: the wait for the unmount returned instantly, so the `start` raced a rooted
+# teardown. 2026-09-19 18:28 reproduced it — and that time nobody started the
+# container again, so the VM stayed down with the adapter unbound (cmd_auto).
 wait_teardown() {
   local i st upper merged
   st=""
@@ -125,14 +142,25 @@ wait_teardown() {
   if [ -n "$upper" ]; then
     merged="${upper%/diff}/merged"
     for i in $(seq 1 30); do
-      grep -qF "$merged" /proc/self/mountinfo 2>/dev/null || break
+      overlay_mounted "$merged" || break
       sleep 1
     done
-    if grep -qF "$merged" /proc/self/mountinfo 2>/dev/null; then
+    if overlay_mounted "$merged"; then
       warn "container rootfs is still mounted ($merged) — unmounting"
-      fusermount3 -u "$merged" 2>/dev/null || warn "could not unmount $merged"
+      podman unshare fusermount3 -u "$merged" 2>/dev/null \
+        || fusermount3 -u "$merged" 2>/dev/null \
+        || warn "could not unmount $merged"
+      if overlay_mounted "$merged"; then
+        warn "rootfs is still mounted after the unmount — the next start may land mid-teardown"
+      fi
     fi
   fi
+  # `.State.Pid` drops to 0 once the container scope is gone; a live PID means the
+  # storage teardown has not finished either, whatever the mount table says.
+  for i in $(seq 1 30); do
+    [ "$(timeout 10 podman inspect -f '{{.State.Pid}}' "$CT" 2>/dev/null || echo 0)" = "0" ] && break
+    sleep 1
+  done
   sleep 2 # let conmon / the container scope finish exiting
 }
 
@@ -494,7 +522,33 @@ cmd_auto() {
 
   fi
   if [ "$(vm_running)" != 1 ]; then
-    notify_reset
+    local cst
+    cst=$(ct_state)
+    # A container that died behind systemd's back (the unit is RemainAfterExit, so
+    # it stays `active`) used to end the run here with a `notify_reset` + return 0:
+    # the VM stayed down, the adapter stayed on the dead side (usbhid unbound, no
+    # QEMU — usable neither in the guest nor by host genlc), the MIDI bridge stayed
+    # dead, and the timer printed a cheerful "Finished" every 60 s. Seen
+    # 2026-09-19 18:28: QEMU exited during the teardown race and windows was still
+    # Exited 3 min later. The VM is the primary GLM path, so a crash is state to
+    # heal, not a state to leave — vm_restart carries the lock, the hourly budget
+    # and the notifications.
+    if [ "$cst" != "exited" ]; then
+      notify_reset
+      return 0
+    fi
+    if ! host_present; then
+      warn "VM '$CT' is down and the adapter is not on the host USB — nothing to hand over"
+      notify_once "down" firing "VM '$CT' лежит, адаптера нет на USB"
+      return 0
+    fi
+    if vm_restart "контейнер '$CT' лежит (Exited) — поднимаю ВМ" "ok, ВМ поднята после падения"; then
+      ok "VM '$CT' is back up after the crash"
+      verify_chain
+    else
+      fail "VM '$CT' is still down after the crash — starting it by hand needs: systemctl --user restart windows-vm"
+      return 1
+    fi
     return 0
   fi
   if [ "$(qemu_usb)" -ge 1 ]; then
