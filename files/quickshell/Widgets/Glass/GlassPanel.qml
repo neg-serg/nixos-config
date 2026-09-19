@@ -5,16 +5,16 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.Settings
+import qs.Components
 import "../../Helpers/Color.js" as Color
 
 // Glass panel: live tuning for the hyprglass settings.
 //
-// The values live in Settings.json (so they survive restarts and the shell's own
-// persistence handles them) and are written through to
-// ~/.config/hypr/hyprglass-user.lua on every change. `hyprglass-apply` picks that
-// file up through the hyprglass-config path unit, which is what pushes the values
-// into the running compositor — the panel never talks to hyprctl itself, so there
-// is exactly one place that knows how the plugin wants its config.
+// The values live in Settings.json (the shell's own persistence) and are written
+// as ~/.config/hypr/hyprglass.json, which `hyprglass-apply` turns into the
+// plugin's config and then verifies against the running compositor. The panel
+// never talks to hyprctl itself, and it polls the same check while it is open, so
+// what the panel shows is what the compositor actually has.
 PanelWindow {
     id: toast
 
@@ -68,46 +68,46 @@ PanelWindow {
         for (var k in p.values) Settings.settings[k] = p.values[k];
     }
 
-    // ── Writing the plugin's file ────────────────────────────────────────────
-    // hyprglass takes plain config keys (its own Lua API aborts the compositor),
-    // so the panel emits exactly that call. Values are pushed through the path
-    // unit, not from here.
+    // ── Handing the values over ─────────────────────────────────────────────
+    // The panel writes one JSON file and nothing else: hyprglass-apply reads it,
+    // generates the plugin's config from it and then *checks* that the running
+    // plugin actually took the values. Keeping a single machine-readable source
+    // is what makes the check possible at all — the placeholder version emitted
+    // Lua by hand, had nothing to compare against, and quietly half-applied.
     readonly property string _home: {
         var h = Quickshell.env("HOME");
         return (h && h !== "") ? h : "/tmp";
     }
-    readonly property string userFile: _home + "/.config/hypr/hyprglass-user.lua"
+    readonly property string valuesFile: _home + "/.config/hypr/hyprglass.json"
 
-    function luaText() {
+    function valuesJson() {
         var s = Settings.settings;
-        var light = s.glassLightFrost ? s.glassVibrancy : -1;
-        return "-- Written by the quickshell Glass panel — edit it in the panel, not here.\n"
-            + "hl.config({ plugin = { hyprglass = {\n"
-            + "  blur_strength = " + Number(s.glassBlurStrength).toFixed(1) + ",\n"
-            + "  blur_iterations = " + Math.round(Number(s.glassBlurIterations)) + ",\n"
-            + "  vibrancy = " + Number(s.glassVibrancy).toFixed(2) + ",\n"
-            + "  glass_opacity = " + Number(s.glassOpacity).toFixed(2) + ",\n"
-            + "  refraction_strength = " + Number(s.glassRefraction).toFixed(2) + ",\n"
-            + "  chromatic_aberration = " + Number(s.glassChromatic).toFixed(2) + ",\n"
-            + "  fresnel_strength = " + Number(s.glassFresnel).toFixed(2) + ",\n"
-            + "  specular_strength = " + Number(s.glassSpecular).toFixed(2) + ",\n"
-            + "  adaptive_dim = " + Number(s.glassAdaptiveDim).toFixed(2) + ",\n"
-            + "  light = { vibrancy = " + light + " },\n"
-            + "} } })\n";
+        return JSON.stringify({
+            blurStrength: Number(s.glassBlurStrength),
+            blurIterations: Math.round(Number(s.glassBlurIterations)),
+            vibrancy: Number(s.glassVibrancy),
+            glassOpacity: Number(s.glassOpacity),
+            refraction: Number(s.glassRefraction),
+            chromatic: Number(s.glassChromatic),
+            fresnel: Number(s.glassFresnel),
+            specular: Number(s.glassSpecular),
+            adaptiveDim: Number(s.glassAdaptiveDim),
+            lightFrost: s.glassLightFrost === true
+        }, null, 2) + "\n";
     }
 
     FileView {
-        id: userFileView
-        path: toast.userFile
+        id: valuesFileView
+        path: toast.valuesFile
         blockWrites: false
     }
-    // Debounced: a slider drag fires dozens of changes, and each one would start
-    // the apply service.
+
+    // Debounced: a drag fires dozens of changes and each write starts the apply.
     Timer {
         id: writeDebounce
         interval: 200
         repeat: false
-        onTriggered: userFileView.setText(toast.luaText())
+        onTriggered: valuesFileView.setText(toast.valuesJson())
     }
     function scheduleWrite() { writeDebounce.restart(); }
 
@@ -124,6 +124,42 @@ PanelWindow {
         function onGlassSpecularChanged() { toast.scheduleWrite(); }
         function onGlassAdaptiveDimChanged() { toast.scheduleWrite(); }
         function onGlassLightFrostChanged() { toast.scheduleWrite(); }
+    }
+
+    // ── Verification ────────────────────────────────────────────────────────
+    // The plugin has been observed to keep some values and drop others, so the
+    // panel does not assume: it polls the check while it is open and says what
+    // the compositor actually reports. "Переприменить" pushes again.
+    property bool inSync: true
+    property var differences: []
+    property bool checked: false
+
+    ProcessRunner {
+        id: verifyRunner
+        cmd: ["hyprglass-apply", "--check", "--json"]
+        intervalMs: 3000
+        parseJson: true
+        autoStart: toast.visible
+        onJson: (obj) => {
+            toast.checked = true;
+            toast.inSync = obj && obj.inSync === true;
+            toast.differences = (obj && obj.differences) ? obj.differences : [];
+        }
+    }
+
+    ProcessRunner {
+        id: applyRunner
+        cmd: ["hyprglass-apply"]
+        intervalMs: 0
+        restartMode: "never"
+        autoStart: false
+        onLine: (l) => { /* the check that follows reports the outcome */ }
+        onExited: verifyRunner.start()
+    }
+
+    function reapply() {
+        toast.checked = false;
+        applyRunner.start();
     }
 
     // ── Card ────────────────────────────────────────────────────────────────
@@ -248,10 +284,56 @@ PanelWindow {
                 }
             }
 
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: Math.round(4 * Theme.scale(Screen))
+                spacing: Math.round(8 * Theme.scale(Screen))
+
+                Text {
+                    Layout.fillWidth: true
+                    text: !toast.checked
+                        ? "Проверяю…"
+                        : (toast.inSync ? "Применено" : "Расходится: " + toast.differences.join(", "))
+                    color: !toast.checked
+                        ? Color.withAlpha(Theme.textPrimary, 0.5)
+                        : (toast.inSync
+                            ? Color.withAlpha(Theme.accentPrimary, 0.95)
+                            : Color.withAlpha("#e8b04b", 0.95))
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.85)
+                    elide: Text.ElideRight
+                    wrapMode: Text.NoWrap
+                }
+
+                Rectangle {
+                    id: reapplyButton
+                    implicitWidth: Math.round(96 * Theme.scale(Screen))
+                    implicitHeight: Math.round(22 * Theme.scale(Screen))
+                    radius: Math.round(Theme.cornerRadiusSmall * Theme.scale(Screen))
+                    color: reapplyHover.containsMouse
+                        ? Color.withAlpha(Theme.accentPrimary, 0.25)
+                        : Color.withAlpha(Theme.textPrimary, 0.07)
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Переприменить"
+                        color: Theme.textPrimary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.8)
+                    }
+                    MouseArea {
+                        id: reapplyHover
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: toast.reapply()
+                    }
+                }
+            }
+
             Text {
                 Layout.fillWidth: true
                 Layout.topMargin: Math.round(2 * Theme.scale(Screen))
-                text: "Применяется сразу — через hyprglass-apply"
+                text: "Значения — в ~/.config/hypr/hyprglass.json"
                 color: Color.withAlpha(Theme.textPrimary, 0.5)
                 font.family: Theme.fontFamily
                 font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.85)
