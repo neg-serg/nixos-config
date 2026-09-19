@@ -7,7 +7,6 @@ import qs.Services
 import qs.Settings
 import qs.Components
 import "../Helpers/MusicIds.js" as MusicIds
-import "../Helpers/Color.js" as Color
 // Settings are schema-validated; avoid runtime clamps
 
 Item {
@@ -111,45 +110,12 @@ Item {
             easing.type: Theme.uiEasingRipple
         }
     }
-    // ── Album tint for the music scratchpad ─────────────────────────────────
-    // kitty takes its background colour at launch, so the shell publishes the
-    // darkened cover accent where the `kitty-glass` launcher can read it: the rmpc
-    // pane then arrives tinted like the record it is playing. Writing is debounced
-    // because accentColor eases towards the new value.
-    readonly property string glassTintPath: (Quickshell.env("XDG_CACHE_HOME")
-        || (Quickshell.env("HOME") + "/.cache")) + "/quickshell-glass-tint"
-    // 0.93: the pane has to stay a terminal first, so only a hint of the record's
-    // colour survives the darkening (0.86 read as a coloured terminal, not a
-    // tinted one).
-    readonly property string glassTint: accentReady
-        ? String(Color.towardsBlack(accentColor, 0.93))
-        : ""
-    // Off = the panes keep kitty's own background ("back to a plain colour"),
-    // which is what Settings.scratchpadTint and the panel's switch are for.
-    readonly property bool scratchpadTintEnabled: Settings.settings.scratchpadTint !== false
-    FileView {
-        id: glassTintFile
-        path: manager.glassTintPath
-        blockWrites: false
-    }
-    Timer {
-        id: glassTintDebounce
-        interval: 600
-        repeat: false
-        onTriggered: {
-            // The file is what a *newly launched* pane reads; the live push is what
-            // makes an already open one follow the record (kitty cannot change its
-            // background by itself).
-            if (manager.glassTint.length > 0)
-                glassTintFile.setText(manager.scratchpadTintColor + "\n");
-            Quickshell.execDetached(["kitty-glass-tint", manager.scratchpadTintColor]);
-        }
-    }
-    readonly property string scratchpadTintColor: (scratchpadTintEnabled && glassTint.length > 0)
-        ? glassTint : "#000000"
-    onAccentReadyChanged: if (accentReady) glassTintDebounce.restart()
-    onAccentColorChanged: if (accentReady) glassTintDebounce.restart()
-    onScratchpadTintEnabledChanged: glassTintDebounce.restart()
+    // ── Album accent ────────────────────────────────────────────────────────
+    // accentColor stays a *panel* accent: it stops here. The rmpc scratchpad pane
+    // used to be tinted from it (a darkened accent published to
+    // ~/.cache/quickshell-glass-tint plus a live kitty set-colors push), but the
+    // pane has to read black — see the kitty-glass launcher in
+    // modules/user/nix-maid/hyprland/services.nix.
 
     property string _lastSampledUrl: ""
     property var _accentCache: ({})
