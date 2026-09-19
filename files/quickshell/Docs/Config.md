@@ -47,6 +47,26 @@ Bar/Widgets
   name).
 - trayFallbackIcon: string, default "broken_image". Fallback tray icon name.
 
+Startup gate (the bar at login)
+
+- startupCleanBar: boolean, default true. At login the bar shows only the widgets listed in
+  startupCleanWidgets and hides the rest, so the first thing on screen is the wallpaper, the clock
+  and the weather. The first real window brings the full bar back, and it then stays normal for the
+  rest of the session. The gate arms only when the panel starts together with the session (the
+  login marker in `$QS_LOGIN_STATE_DIR` has to be fresh), so a panel restarted in the middle of
+  work — `systemctl --user restart quickshell`, a Hyprland config reload — never strips the bar.
+- startupCleanWidgets: string array, default ["clock", "weather"]. Widget identifiers that survive
+  the login view; they still obey panelLayout and their own conditions (e.g. showWeatherInBar).
+- startupCleanMinMs: number, default 10000. How long the clean look is held once the panel is up,
+  counted from panel start. Without the dwell the autostart burst (kitty term, telegram, …) would
+  map a window within a second and the bar would be back to normal before it finished sliding in.
+- startupCleanIgnoreSpecial: boolean, default true. Ignore windows on special workspaces (the
+  scratchpads pre-launched at login) and hidden daemon windows (`nicotine -s`) when deciding
+  whether "the first window" has appeared. Turn it off to count every window, including those.
+
+Previewing the look without logging out: `QS_STARTUP_CLEAN=1` holds the gate up for as long as the
+panel runs (restart the panel to leave it), `QS_STARTUP_CLEAN=0` disables the gate outright.
+
 Monitors & Scaling
 
 - barMonitors: string array, default []. Which monitors show the bar (optional; otherwise
