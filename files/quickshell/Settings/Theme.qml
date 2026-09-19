@@ -636,6 +636,13 @@ Singleton {
     property color outline: val('colors.outline', "#3B4C5C")
     // Shadows & Overlays
     property color shadow: applyOpacity(val('colors.shadow', "#000000"), "B3")
+    // Glyphs that sit on glass take their backdrop from whatever is behind the
+    // surface, and a bright wallpaper can wash both the fill and the text out.
+    // A soft shadow under the glyphs fixes the reading without darkening the
+    // glass, and it is invisible against a dark backdrop (see GlyphShadow).
+    property bool textShadowEnabled: val('ui.textShadow.enabled', true)
+    property color textShadow: shadow
+    property real textShadowOpacity: val('ui.textShadow.opacity', 0.75)
 
     property string fontFamily: "Iosevka" // Font Properties
     // Font size multiplier - adjust this in Settings.json to scale all fonts

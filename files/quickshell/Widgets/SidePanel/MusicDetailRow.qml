@@ -38,6 +38,10 @@ RowLayout {
         font.weight: Font.DemiBold
         wrapMode: Text.NoWrap
         elide: Text.ElideRight
+        // Soft shadow under the glyphs: the card is glass, so on a bright
+        // wallpaper its fill washes the row text out (Components/GlyphShadow).
+        layer.enabled: Theme.textShadowEnabled
+        layer.effect: GlyphShadow {}
         Layout.alignment: detailRow.textAlignment
     }
 }
