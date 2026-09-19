@@ -132,18 +132,30 @@ Rectangle {
 
                 Item {
                     id: albumArtContainer
-                    width: albumArtwork.width
-                    height: albumArtwork.height
-                    // Bottom-align the cover so it sits right on the card edge,
-                    // i.e. just above the panel.
-                    Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
-
-                    
+                    // Square cover. It used to declare only `width`/`height` while
+                    // the RowLayout owns those properties — the layout sized the
+                    // item from its (zero) implicit size and simply overrode the
+                    // bindings, so the art came out smaller than the theme value
+                    // and, being bottom-aligned, floated with a gap above it
+                    // whenever the metadata block grew. Now the item carries real
+                    // layout sizes and its side follows the info column: same
+                    // height as the text block, never below the theme size, so the
+                    // two columns line up on the card edge.
+                    readonly property real side: Math.max(
+                        Math.round(Theme.sidePanelAlbumArtSize * Theme.scale(musicCard.screen)),
+                        Math.round(infoColumn.implicitHeight))
+                    // Centred vertically (user preference): the art is a fixed
+                    // square that is usually taller than the metadata block, and
+                    // centring shares the slack between top and bottom instead of
+                    // dropping the gap onto one side.
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    Layout.preferredWidth: side
+                    Layout.preferredHeight: side
+                    implicitWidth: side
+                    implicitHeight: side
 
                     Rectangle {
                         id: albumArtwork
-                            width: Math.round(Theme.sidePanelAlbumArtSize * Theme.scale(screen))
-                            height: Math.round(Theme.sidePanelAlbumArtSize * Theme.scale(screen))
                             anchors.fill: parent
                             radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(screen))
                             color: "transparent"
@@ -193,6 +205,7 @@ Rectangle {
 
                 // Track metadata
                 ColumnLayout {
+                    id: infoColumn
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignBottom
                     spacing: Math.round(Theme.sidePanelSpacingSmall * 0.5 * Theme.scale(screen))
