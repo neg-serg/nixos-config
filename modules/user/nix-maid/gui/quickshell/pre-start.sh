@@ -85,3 +85,21 @@ chmod -R u+w "$qs_dir/art" 2> /dev/null || true
 mkdir -p "$qs_dir/shaders"
 cp -rfT "$src/shaders" "$qs_dir/shaders" 2> /dev/null || true
 chmod -R u+w "$qs_dir/shaders" 2> /dev/null || true
+
+# ── Genelec volume: seed the runtime state file before the panel starts ──────
+# The widget reads $XDG_RUNTIME_DIR/genlc-volume at startup and *sends* whatever
+# it finds (the MIDI anchor pushes the widget's volume to the monitors as soon as
+# the adapter is up), and the file is wiped with the runtime dir on every logout.
+# Left empty, the widget fell back to its hardcoded -40 dB default and pushed the
+# monitors there on each restart — the "volume drops to -40 after a restart"
+# report. The last value the widget committed lives in its own cache, so copy it
+# in before quickshell reads the file; the widget's own restore in
+# Services/Genelec.qml stays as the fallback for a panel restart inside a
+# session.
+genlc_state="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/genlc-volume"
+if [ ! -s "$genlc_state" ] && command -v jq > /dev/null 2>&1; then
+  v="$(jq -r '.genelecVolume // empty' "${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/state.json" 2> /dev/null || true)"
+  case "$v" in
+    -[0-9]*) printf '%s' "$v" > "$genlc_state" 2> /dev/null || true ;;
+  esac
+fi

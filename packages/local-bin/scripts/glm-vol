@@ -23,7 +23,18 @@ usage() { echo "usage: glm-vol {<dB> | read}" >&2; exit 1; }
 
 case "$1" in
   read|current)
-    cat "$STATE" 2>/dev/null || echo "-40"
+    # An existing-but-empty state file (every fresh session: XDG_RUNTIME_DIR is
+    # wiped on logout) used to answer with an empty line, which callers then read
+    # as "no volume" or as -40 depending on their fallback. The widget keeps the
+    # last committed value in its own cache, so use that before giving up.
+    v="$(cat "$STATE" 2>/dev/null || true)"
+    case "$v" in
+      '' | *[!0-9-]*)
+        cached="$(jq -r '.genelecVolume // empty' "${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/state.json" 2>/dev/null || true)"
+        if [ -n "$cached" ]; then v="$cached"; else v="-40"; fi
+        ;;
+    esac
+    echo "$v"
     exit 0
     ;;
 esac

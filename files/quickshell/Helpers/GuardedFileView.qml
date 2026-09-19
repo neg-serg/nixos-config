@@ -13,6 +13,13 @@ FileView {
 
     watchChanges: true
 
+    // Read the file before Component.onCompleted: the persisted singletons
+    // (StateCache, Settings) are consulted from other components' startup code,
+    // and without this the adapter still holds its defaults at that moment —
+    // which is how the Genelec widget managed to restore -40 instead of the
+    // volume actually stored in ~/.cache/quickshell/state.json.
+    preload: true
+
     property bool _reloadPending: false
     property bool _loading: false
 

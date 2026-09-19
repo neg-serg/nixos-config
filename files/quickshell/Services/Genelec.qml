@@ -55,6 +55,15 @@ RowLayout {
         return -40;
     }
 
+    // Same source as _lastSetVolume: the volume the widget had when it was muted.
+    // Not in the runtime file (that one is per-session and only carries the
+    // current target), so it has to come from StateCache.
+    readonly property real _restoredPreMute: {
+        if (StateCache.state && StateCache.state.genelecPreMuteVolume !== undefined)
+            return StateCache.state.genelecPreMuteVolume;
+        return root._lastSetVolume;
+    }
+
     // Persisting is StateCache's own business: its GuardedFileView writes the file
     // whenever the adapter changes (onAdapterUpdated → writeAdapter), so assigning
     // genelecVolume is all that is needed here. The writeAdapter() call that used
@@ -64,8 +73,10 @@ RowLayout {
     // assignment all along; verified on a probe instance with XDG_CACHE_HOME
     // pointed at a scratch dir: assigning -33 wrote "genelecVolume": -33.
     function _saveState() {
-        if (StateCache.state)
+        if (StateCache.state) {
             StateCache.state.genelecVolume = _lastSetVolume;
+            StateCache.state.genelecPreMuteVolume = Math.round(preMuteVolume);
+        }
     }
 
     // ---- Normalized 0..1 for slider ----
@@ -437,6 +448,25 @@ RowLayout {
         genlcOk = true;
         // Ensure the state file exists so FileView can watch it (genlc rewrites it in place).
         Quickshell.execDetached(["touch", root.statePath]);
+        // The widget used to start at the hardcoded -40 dB and only ever *react*
+        // to the runtime file, so any restart (panel, logout, reboot — the file
+        // lives in XDG_RUNTIME_DIR and is wiped on logout) silently reset the
+        // monitors to -40 on the first volume key. Seed from StateCache instead;
+        // nothing is sent here, the hardware keeps whatever it has.
+        var haveFileValue = !isNaN(parseFloat(stateReader.text() || ""));
+        if (!haveFileValue) {
+            root.volume = root._lastSetVolume;
+            root.displayDb = root._lastSetVolume;
+            root.pendingDb = root._lastSetVolume;
+            root._animDb = root._lastSetVolume;
+        }
+        // preMuteVolume is never in the runtime file, so it always comes from the
+        // cache (unmute after a restart would otherwise go to -40).
+        root.preMuteVolume = root._restoredPreMute;
+        // Hand the value to the CLI tools too (glm-vol read / genlc-media read
+        // the runtime file): an empty file used to print an empty line.
+        if (!haveFileValue)
+            Quickshell.execDetached(["glm-vol", String(Math.round(root._lastSetVolume))]);
         // Initial adapter probe (the Timer handles the follow-ups).
         probeProc.cmd = ["/run/current-system/sw/bin/genlc", "discover"];
         probeProc.start();

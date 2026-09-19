@@ -624,7 +624,10 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 -- so what sits behind a scratchpad is frosted much harder than the rest of the
 -- session, where the shipped blur stays as it is.
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
+-- rmpc (class music) is the one scratchpad that gets its own glass: smoked black
+-- instead of the shared heavy frost (preset black_glass in hyprglass-apply). A
+-- window resolves a single preset, hence the different tag here.
+hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, tag = "+hyprglass_preset_black_glass", size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
 hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
 hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
