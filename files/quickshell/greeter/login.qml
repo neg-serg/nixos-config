@@ -104,7 +104,6 @@ ShellRoot {
 		state.failed = false;
 		state.error = "";
 		root.writeState("session");
-		exitTimer.start();
 	}
 
 	function failLogin(message) {
@@ -115,12 +114,14 @@ ShellRoot {
 	}
 
 	function writeState(value) {
-		// A Process rather than FileView.setText: the marker has to be on disk
-		// before this process exits, because hyprland.lua reads it to decide
-		// whether the desktop may start.
+		// A Process rather than FileView.setText: the marker has to be on disk —
+		// and verified — before the screen is handed over, because hyprland.lua
+		// reads it to decide whether the desktop may start. The `mkdir -p` is for a
+		// layer started by hand, whose QS_LOGIN_STATE_DIR may not exist yet (under
+		// greetd the wrapper creates it).
 		stateWriter.command = [
 			"sh", "-c",
-			"printf '%s\\n' \"$1\" > \"$2\"",
+			"mkdir -p \"$(dirname \"$2\")\" 2> /dev/null; printf '%s\\n' \"$1\" > \"$2\" && [ \"$(cat \"$2\")\" = \"$1\" ]",
 			"login-state", value, root.statePath,
 		];
 		stateWriter.running = true;
@@ -128,13 +129,31 @@ ShellRoot {
 
 	Process {
 		id: stateWriter
+
+		onExited: code => {
+			if (code !== 0) {
+				// Nothing was recorded: keep the lock and say so instead of quitting
+				// into a compositor whose config would decide on a marker that never
+				// arrived (it would put the layer back up, or start no session at all).
+				root.failLogin("Could not record the login");
+				return;
+			}
+			// Unlock *before* quitting. Destroying a session-lock object while it is
+			// still locked is a protocol violation: the compositor has to assume a
+			// crashed lock client and may keep the session locked (quickshell warns
+			// about exactly that on the way out). Unlocking first also leaves the
+			// compositor free for the next attempt if this one never reaches the
+			// desktop — hyprland.lua's retry loop needs to be able to take the lock
+			// again.
+			login.locked = false;
+			// …and let the unlock reach the compositor before this process goes away.
+			exitTimer.start();
+		}
 	}
 
-	// Let the write above land, then release the compositor: hyprland.lua starts
-	// the desktop session once this process is gone.
 	Timer {
 		id: exitTimer
-		interval: 150
+		interval: 80
 		onTriggered: Qt.quit()
 	}
 
@@ -164,6 +183,7 @@ ShellRoot {
 				state: state
 				context: null
 			}
+
 		}
 	}
 }
