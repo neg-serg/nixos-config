@@ -6,11 +6,21 @@
 #
 # Why each of them is inherent:
 #   unqualified               delegates and inline components reaching for their
-#                             enclosing scope (modelData, an id defined above)
+#                             enclosing scope (modelData, an id defined above). One
+#                             of the 719 is new: the genelec capsule reads the startup
+#                             gate property of Bar.qml's scope to stay out of the login
+#                             view — the same inherent kind, hence 718 → 719.
+#                             One more (719 → 720): the music popup's
+#                             BackgroundEffect.blurRegion literal reaches for cardBox
+#                             and Theme from the enclosing window scope, which the
+#                             analyzer cannot resolve through the attached-property
+#                             type that is itself unresolved (see unresolved-type).
 #   missing-property          a property reached through `parent.`/scope, where the
 #                             analyzer only knows the C++ base type
 #   unresolved-type           Quickshell's plugin types ship no qmltypes
 #                             (QsMenuEntry, PopupAnchor, BluetoothDeviceState, …)
+#                             BackgroundEffect.blurRegion is typed PendingRegion and
+#                             that type is one of them (34 → 35).
 #   import                    the greeter's own submodules and Widgets.*
 #   uncreatable-type          PanelWindow (Quickshell.Wayland) is a base type, not
 #                             something to instantiate
@@ -27,9 +37,9 @@
 #
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
-unqualified	718
+unqualified	720
 missing-property	51
-unresolved-type	34
+unresolved-type	35
 import	6
 uncreatable-type	12
 incompatible-type	7
