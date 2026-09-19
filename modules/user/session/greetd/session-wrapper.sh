@@ -66,8 +66,20 @@ if [ ! -r "$QS_LOGIN_STATE_DIR/state" ]; then
   printf 'login\n' > "$QS_LOGIN_STATE_DIR/state"
 fi
 
-# Wallpaper for the login layer: same source priority as the session's own
-# wallpaper, so login and desktop show the same image.
+# Systemd-visible half of the same marker: quickshell.service and hypridle.service
+# carry ConditionPathExists=!%t/quickshell-login/login-phase, i.e. they refuse to
+# start while the login screen is up. They have to: nix-maid's sd-switch starts
+# changed units *directly*, bypassing the session target, and did exactly that
+# during the login phase (2026-09-19 18:25:47 — the bar came up behind the lock
+# surface; hypr-start then killed and restarted it right after the password, which
+# is both wasted work and a visible blink). login.qml removes the file when the
+# password is accepted, and hypr-start removes it as well, so a crashed layer can
+# never leave the desktop blocked.
+: > "$QS_LOGIN_STATE_DIR/login-phase"
+
+# Wallpaper for the login layer: resolved by the script the session side also
+# asks (scripts/wl-wallpaper-resolve.sh), so login and desktop show one image.
+
 if [ -x /etc/quickshell/scripts/login-wallpaper.sh ]; then
   /etc/quickshell/scripts/login-wallpaper.sh || true
 fi

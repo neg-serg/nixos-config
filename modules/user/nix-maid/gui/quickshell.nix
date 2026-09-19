@@ -93,7 +93,19 @@ lib.mkIf quickshellEnabled (
         unitConfig = {
           StartLimitIntervalSec = 30;
           StartLimitBurst = 5;
+          # Refuse to start while the login screen is up. The bar belongs to the
+          # session, and hyprland.lua's login branch starts nothing of the session
+          # — but that intent is not enough on its own: nix-maid's sd-switch starts
+          # changed units *directly*, bypassing the session target, and on
+          # 2026-09-19 18:25:47 it brought the bar up behind the login screen's
+          # lock surface. hypr-start then killed and restarted it right after the
+          # password (PartOf=hyprland-session.target), i.e. ~5 s of shell work and
+          # a visible blink. The marker is removed when the password is accepted
+          # (greeter/login.qml + hypr-start), and the condition is re-evaluated
+          # then, so the shell still starts with the session target.
+          ConditionPathExists = "!%t/quickshell-login/login-phase";
         };
+
         after = [
           "graphical-session-pre.target"
           "pipewire.service"
