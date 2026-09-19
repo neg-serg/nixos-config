@@ -217,12 +217,12 @@ hl.bind(M4 .. "+mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(M4 .. "+mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- --- Scratchpads (sashetophizika/hyprscratch with special workspace) ---
-hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty --class teardown -e btop' special"))
+hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty-glass --class teardown -e btop' special"))
 hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch toggle telegram"))
-hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hyprscratch music 'kitty --class music -e rmpc' special"))
-hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty --class torrment -e rustmission' special"))
-hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty --class vpn -e tun status' special"))
-hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch mixer 'kitty --class mixer -e ncpamixer' special"))
+hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hyprscratch music 'kitty-glass --class music -e rmpc' special"))
+hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class torrment -e rustmission' special"))
+hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty-glass --class vpn -e tun status' special"))
+hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch mixer 'kitty-glass --class mixer -e ncpamixer' special"))
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 -- --- Overview (hyprexpo) ───────────────────────────────────────────────
 -- The dispatcher goes through hyprctl eval on purpose: hyprexpo is dlopen'd by
@@ -243,7 +243,7 @@ hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swa
 hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
 
 -- --- System ────────────────────────────────────────────────────────────
-hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty --class rebuild -e nh os switch /etc/nixos#odin --option substitute false' special"))
+hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty-glass --class rebuild -e nh os switch /etc/nixos#odin --option substitute false' special"))
 hl.bind(M4 .. "+" .. C .. "+v", hl.dsp.exec_cmd('raise --match "class:regex=^Bazecor$" --launch "bazecor"'))
 hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam"'))
 hl.bind(M4 .. "+" .. C .. "+o", hl.dsp.exec_cmd('raise --match "class:regex=^(obs|com\\.obsproject\\.Studio)$" --launch "obs"'))
@@ -557,6 +557,15 @@ hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scra
 hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
 hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
+
+-- Scratchpads are frosted like the media popup. hyprglass replaces Hyprland's
+-- window blur pass, so a class has to keep blur enabled to be glassed at all
+-- (the routed workspace classes switch it off wholesale). The translucency the
+-- frost needs comes from the `kitty-glass` launcher, see
+-- modules/user/nix-maid/hyprland/services.nix.
+for _, sp in ipairs({ "teardown", "music", "torrment", "vpn", "mixer", "rebuild" }) do
+  hl.window_rule({ name = "glass-" .. sp, match = { class = "^(" .. sp .. ")$" }, blur = true })
+end
 
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
