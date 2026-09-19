@@ -18,6 +18,7 @@ InlineTrayCapsule 1.0 InlineTrayCapsule.qml
 LinearSpectrum 1.0 LinearSpectrum.qml
 IPhoneSpectrum 1.0 IPhoneSpectrum.qml
 MaterialIcon 1.0 MaterialIcon.qml
+GlyphShadow 1.0 GlyphShadow.qml
 MoonPhaseIcon 1.0 MoonPhaseIcon.qml
 MonitorBar 1.0 MonitorBar.qml
 NumberFadeBehavior 1.0 NumberFadeBehavior.qml

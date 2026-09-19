@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.Settings
+import "." as LocalComponents
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/Format.js" as Format
 
@@ -98,6 +99,10 @@ Item {
             anchors.centerIn: parent
             text: revealPill.colorizeUnit ? revealPill._unitRichText : revealPill.text
             textFormat: revealPill.colorizeUnit ? Text.RichText : Text.PlainText
+            // The pill's own fill is semi-transparent, so its label needs the same
+            // help as the card's rows when the wallpaper behind is bright.
+            layer.enabled: Theme.textShadowEnabled
+            layer.effect: LocalComponents.GlyphShadow {}
             font.pixelSize: Theme.fontSizeSmall * Theme.scale(Screen)
             font.family: Theme.fontFamily
             font.weight: Font.Bold
