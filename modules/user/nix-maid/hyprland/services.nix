@@ -201,6 +201,12 @@ in
     # or the panel writes overrides.
     hyprglass-apply = {
       description = "Push hyprglass settings into the running session";
+      unitConfig = {
+        # A slider drag rewrites the override file several times per second, and
+        # the default StartLimitBurst (5 in 10 s) turned that into
+        # "start-limit-hit": the applies stopped and the units went to failed.
+        StartLimitIntervalSec = 0;
+      };
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${hyprglassApply}/bin/hyprglass-apply";
