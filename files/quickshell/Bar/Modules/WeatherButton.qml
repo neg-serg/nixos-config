@@ -70,6 +70,8 @@ OverlayToggleCapsule {
         Text {
             id: tempLabel
             text: root.temperatureText
+            layer.enabled: Theme.textShadowEnabled && Theme.backdropIsLight
+            layer.effect: GlyphShadow {}
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(Theme.fontSizeSmall * capsuleScale)
             color: Theme.textPrimary
@@ -89,6 +91,8 @@ OverlayToggleCapsule {
             id: humidityLabel
             visible: root.hasHumidity
             text: root.humidityText
+            layer.enabled: Theme.textShadowEnabled && Theme.backdropIsLight
+            layer.effect: GlyphShadow {}
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(Theme.fontSizeSmall * capsuleScale * 0.85)
             color: Theme.textSecondary
@@ -109,6 +113,8 @@ OverlayToggleCapsule {
             id: windLabel
             visible: root.hasWind
             text: root.windSpeed
+            layer.enabled: Theme.textShadowEnabled && Theme.backdropIsLight
+            layer.effect: GlyphShadow {}
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(Theme.fontSizeSmall * capsuleScale * 0.85)
             color: Theme.textSecondary
