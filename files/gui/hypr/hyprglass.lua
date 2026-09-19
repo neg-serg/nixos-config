@@ -48,6 +48,11 @@ hl.config({
         namespaces = "quickshell,notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
         -- Above the shadow alpha, otherwise shadows trigger glass on the whole surface
         namespace_mask_thresholds = "quickshell=0.3,notifications=0.3,qs-music=0.3",
+        -- The layer pass re-samples the backdrop between frames and the result
+        -- reads as a ghost of whatever is behind the surface (the bar was taken
+        -- out of this pass for the same reason). Off: the glass still blurs and
+        -- refracts, it just stops chasing every frame.
+        live_resample = false,
       },
     },
   },
