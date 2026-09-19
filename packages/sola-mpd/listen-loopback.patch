@@ -1,0 +1,14 @@
+--- a/packages/backend/src/index.ts
++++ b/packages/backend/src/index.ts
+@@ -50,6 +50,9 @@
+ });
+ 
+ const PORT = process.env.PORT || 3000;
+-server.listen(PORT, () => {
+-	console.info(`Listening on http://localhost:${PORT}`);
++// HOST defaults to the loopback interface: this server is an MPD remote control
++// and is not meant to be reachable from the network without a proxy in front.
++const HOST = process.env.HOST || "127.0.0.1";
++server.listen(PORT, HOST, () => {
++	console.info(`Listening on http://${HOST}:${PORT}`);
+ });

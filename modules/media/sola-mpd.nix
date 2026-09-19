@@ -24,7 +24,15 @@ in
       presets = [ "defaultWanted" ];
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.sola-mpd}";
-        Environment = [ "PORT=${toString port}" ];
+        # The app is an MPD remote control with no authentication, so it is
+        # pinned to the loopback interface (the package patches in a HOST
+        # override, defaulting to 127.0.0.1). systemd's own IPAddressDeny cannot
+        # do it here: for a user unit it is refused with "unit configures an IP
+        # firewall, but not running as root".
+        Environment = [
+          "PORT=${toString port}"
+          "HOST=127.0.0.1"
+        ];
         Restart = "on-failure";
         RestartSec = "2";
       };
