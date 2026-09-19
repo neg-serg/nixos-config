@@ -1,11 +1,13 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.Services
 import qs.Settings
 import qs.Components
 import "../Helpers/MusicIds.js" as MusicIds
+import "../Helpers/Color.js" as Color
 // Settings are schema-validated; avoid runtime clamps
 
 Item {
@@ -109,6 +111,33 @@ Item {
             easing.type: Theme.uiEasingRipple
         }
     }
+    // ── Album tint for the music scratchpad ─────────────────────────────────
+    // kitty takes its background colour at launch, so the shell publishes the
+    // darkened cover accent where the `kitty-glass` launcher can read it: the rmpc
+    // pane then arrives tinted like the record it is playing. Writing is debounced
+    // because accentColor eases towards the new value.
+    readonly property string glassTintPath: (Quickshell.env("XDG_CACHE_HOME")
+        || (Quickshell.env("HOME") + "/.cache")) + "/quickshell-glass-tint"
+    readonly property string glassTint: accentReady
+        ? String(Color.towardsBlack(accentColor, 0.86))
+        : ""
+    FileView {
+        id: glassTintFile
+        path: manager.glassTintPath
+        blockWrites: false
+    }
+    Timer {
+        id: glassTintDebounce
+        interval: 600
+        repeat: false
+        onTriggered: {
+            if (manager.glassTint.length > 0)
+                glassTintFile.setText(manager.glassTint + "\n");
+        }
+    }
+    onAccentReadyChanged: if (accentReady) glassTintDebounce.restart()
+    onAccentColorChanged: if (accentReady) glassTintDebounce.restart()
+
     property string _lastSampledUrl: ""
     property var _accentCache: ({})
 
