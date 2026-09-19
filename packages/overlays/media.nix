@@ -9,6 +9,8 @@ _inputs: final: prev:
   genlc = prev.callPackage ../genlc-rs { };
   # OSC bridge for Genelec SAM monitors via Python genlc (no official GLM).
   glm-osc = prev.callPackage ../glm-osc { };
+  # MPD client for large libraries: Node backend + React UI, served on loopback.
+  sola-mpd = prev.callPackage ../sola-mpd { };
   # Kernel module (RME HDSPe ALSA driver) — takes `kernel`; the default kernel
   # set is a placeholder, the host overrides it with the actual boot kernel.
   snd-hdspe = prev.callPackage ../snd-hdspe { kernel = prev.linuxPackages.kernel; };
