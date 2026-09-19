@@ -66,9 +66,10 @@ Singleton {
             property real glassAdaptiveDim: 0.5
             // Frosted tint against the light theme: the panel's switch for it.
             property bool glassLightFrost: false
-            // Tint the scratchpad terminals by the record that is playing (the
-            // music pane takes the darkened cover accent). Off = plain kitty
-            // background, which is what the Glass panel's switch flips.
+            // Per-class tints of the scratchpad terminals (warm for rebuilds, cold
+            // blue for downloads, green for the VPN, ...). Off = plain kitty
+            // background for every pane, which is what the Glass panel's switch
+            // flips. The rmpc pane is black either way (see kitty-glass).
             property bool scratchpadTint: true
             property string weatherCity: "Saint Petersburg"
             property string userAgent: "NegPanel"

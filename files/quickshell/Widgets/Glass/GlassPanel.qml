@@ -215,10 +215,11 @@ PanelWindow {
                 onToggled: (value) => Settings.settings.glassLightFrost = value
             }
 
-            // Off = the scratchpad terminals keep kitty's own background: the way
-            // back to a plain colour when the album tint is not wanted.
+            // Off = the scratchpad terminals keep kitty's own background, i.e. the
+            // per-class tints are skipped for every pane (the music pane is black
+            // either way, see the kitty-glass launcher).
             GlassToggle {
-                label: "Тон скратчпадов по обложке"
+                label: "Тон скратчпадов"
                 checked: Settings.settings.scratchpadTint !== false
                 onToggled: (value) => Settings.settings.scratchpadTint = value
             }
