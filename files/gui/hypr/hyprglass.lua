@@ -15,7 +15,15 @@ hl.config({
       default_theme = "dark",
       default_preset = "default",
       manage_window_blur = true, -- glass replaces Hyprland's blur (noblur on glassed windows)
-      blur_strength = 3, -- blur radius scale (value * 12 px)
+      -- 4 (48 px): 3 left the frost barely readable behind the surfaces, which is
+      -- what "the special glass blur is missing" turned out to mean.
+      blur_strength = 4, -- blur radius scale (value * 12 px)
+      -- Frosted tint. Off by default (-1) in the plugin, which is why the glass
+      -- read as plain transparency with a blur; 0.3 gives it the milky cast.
+      vibrancy = 0.3,
+      -- ...but only against the dark theme: the same tint washes the light one
+      -- out, so there it stays off.
+      light = { vibrancy = -1 },
       blur_iterations = 5, -- gaussian passes, capped at 5
       refraction_strength = 0.5, -- edge refraction
       chromatic_aberration = 0.3,
