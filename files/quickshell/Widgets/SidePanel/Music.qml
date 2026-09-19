@@ -227,126 +227,6 @@ Rectangle {
                     Layout.alignment: Qt.AlignBottom
                     spacing: Math.round(Theme.sidePanelSpacingSmall * 0.5 * Theme.scale(screen))
 
-                    // Now-playing header: title, artist, time/progress, transport.
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: Math.round(8 * Theme.scale(screen))
-
-                            Item {
-                                id: progressBand
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(10, Math.round(84 * Theme.scale(screen)))
-                                implicitHeight: Layout.preferredHeight
-                                // Fill colour: custom spectrum colour, else cover accent.
-                                readonly property color _progressFillColor: {
-                                    var c = (Settings.settings.spectrumColor !== undefined && Settings.settings.spectrumColor !== "")
-                                        ? Settings.settings.spectrumColor
-                                        : (Settings.settings.musicPopupColoredProgress ? detailsCol.musicAccent : "");
-                                    return (c !== "") ? c : Color.withAlpha(playerUI.musicTextColor, 0.7);
-                                }
-
-                                // Spectrum analyzer in the background of the
-                                // progress area, coloured with the cover accent.
-                                // Reuses the bar's IPhoneSpectrum so values and
-                                // animation are proven to work in this shell.
-                                IPhoneSpectrum {
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    // Leave room at the bottom so the bars end above
-                                    // the progress line instead of growing from behind it.
-                                    anchors.bottomMargin: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen))) + Math.round(3 * Theme.scale(screen))
-                                    values: playerUI._spec
-                                    targetBars: Settings.settings.toastAnalyserBars
-                                    mirror: Settings.settings.toastAnalyserMirror
-                                    // Empty style => cover accent; set the accent so the
-                                    // analyser follows the album cover colour.
-                                    accentColor: detailsCol.musicAccent
-                                    style: Settings.settings.toastAnalyserStyle
-                                    animDurationMs: 40
-                                    opacity: 1.0
-                                    visible: Settings.settings.musicPopupSpectrum
-                                }
-
-                                // Thin, glowing scrub bar at the bottom of the band.
-                                Rectangle {
-                                    id: scrubTrack
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.bottom: parent.bottom
-                                    height: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen)))
-                                    // Subtle hairline track (the spectrum ends well above it).
-                                    // Hairline track tinted with the cover accent.
-                                    color: Color.withAlpha(progressBand._progressFillColor, 0.14)
-                                    radius: height / 2
-
-                                    Item {
-                                        id: scrubFill
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        height: parent.height
-                                        width: parent.width * playerUI.musicProgress()
-
-                                        // Vertical bloom: rises from the line up into the
-                                        // band (anchored to the line bottom so it never
-                                        // overlaps the title below). Sized relative to the
-                                        // band height so it fully fits the current layout.
-                                        Rectangle {
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            anchors.bottom: parent.bottom
-                                            width: parent.width
-                                            height: Math.max(2, Math.round(progressBand.height * 0.3))
-                                            gradient: Gradient {
-                                                GradientStop { position: 0.0; color: Color.withAlpha(progressBand._progressFillColor, 0.0) }
-                                                GradientStop { position: 0.6; color: Color.withAlpha(progressBand._progressFillColor, 0.15) }
-                                                GradientStop { position: 1.0; color: Color.withAlpha(progressBand._progressFillColor, 0.38) }
-                                            }
-                                            z: -1
-                                        }
-                                        // Sharp bright core.
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            radius: parent.height / 2
-                                            color: progressBand._progressFillColor
-                                        }
-                                    }
-                                }
-
-                                // Mouse scrubbing: click/drag to seek.
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onPressed: (mouse) => playerUI.seekFromX(mouse.x, width)
-                                    onPositionChanged: (mouse) => { if (pressed) playerUI.seekFromX(mouse.x, width) }
-                                }
-                            }
-                        }
-
-                        // Colored now-playing readout, composed the same way as the
-                        // bar capsule's time span: accent brackets and slash, digits
-                        // in the card's text colour. Replaces the two counters that
-                        // used to flank the spectrum.
-                        Text {
-                            Layout.fillWidth: true
-                            textFormat: Text.RichText
-                            text: musicCard.timeReadout
-                            horizontalAlignment: Text.AlignHCenter
-                            color: playerUI.musicTextColor
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(playerUI.musicTextPx * 0.9)
-                            font.weight: Font.Normal
-                        }
-
-                        // Track title removed on request: the card carries the
-                        // identity rows below and the bar keeps the title.
-
-                    }
-
                     // Details block: time + identity + metadata
                     Rectangle {
                         Layout.fillWidth: true
@@ -543,6 +423,129 @@ Rectangle {
 
                             // ReplayGain removed per configuration
                         }
+                    }
+
+                    // Time readout + spectrum/scrub, deliberately LAST in the column
+                    // and therefore at the bottom of the card: the card's content is
+                    // bottom-anchored, so the seek line and the spectrogram the user
+                    // reads it against both sit on the card's bottom edge.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
+
+                        // Time readout directly above the seek line, in the bar
+                        // capsule's style: accent brackets and slash, digits in the
+                        // card's text colour. Replaces the two counters that used to
+                        // flank the spectrum.
+                        Text {
+                            Layout.fillWidth: true
+                            textFormat: Text.RichText
+                            text: musicCard.timeReadout
+                            horizontalAlignment: Text.AlignHCenter
+                            color: playerUI.musicTextColor
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Math.round(playerUI.musicTextPx * 0.9)
+                            font.weight: Font.Normal
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Math.round(8 * Theme.scale(screen))
+
+                            Item {
+                                id: progressBand
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.max(10, Math.round(84 * Theme.scale(screen)))
+                                implicitHeight: Layout.preferredHeight
+                                // Fill colour: custom spectrum colour, else cover accent.
+                                readonly property color _progressFillColor: {
+                                    var c = (Settings.settings.spectrumColor !== undefined && Settings.settings.spectrumColor !== "")
+                                        ? Settings.settings.spectrumColor
+                                        : (Settings.settings.musicPopupColoredProgress ? detailsCol.musicAccent : "");
+                                    return (c !== "") ? c : Color.withAlpha(playerUI.musicTextColor, 0.7);
+                                }
+
+                                // Spectrum analyzer in the background of the
+                                // progress area, coloured with the cover accent.
+                                // Reuses the bar's IPhoneSpectrum so values and
+                                // animation are proven to work in this shell.
+                                IPhoneSpectrum {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    // Leave room at the bottom so the bars end above
+                                    // the progress line instead of growing from behind it.
+                                    anchors.bottomMargin: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen))) + Math.round(3 * Theme.scale(screen))
+                                    values: playerUI._spec
+                                    targetBars: Settings.settings.toastAnalyserBars
+                                    mirror: Settings.settings.toastAnalyserMirror
+                                    // Empty style => cover accent; set the accent so the
+                                    // analyser follows the album cover colour.
+                                    accentColor: detailsCol.musicAccent
+                                    style: Settings.settings.toastAnalyserStyle
+                                    animDurationMs: 40
+                                    opacity: 1.0
+                                    visible: Settings.settings.musicPopupSpectrum
+                                }
+
+                                // Thin, glowing scrub bar at the bottom of the band.
+                                Rectangle {
+                                    id: scrubTrack
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    height: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen)))
+                                    // Subtle hairline track (the spectrum ends well above it).
+                                    // Hairline track tinted with the cover accent.
+                                    color: Color.withAlpha(progressBand._progressFillColor, 0.14)
+                                    radius: height / 2
+
+                                    Item {
+                                        id: scrubFill
+                                        anchors.left: parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        height: parent.height
+                                        width: parent.width * playerUI.musicProgress()
+
+                                        // Vertical bloom: rises from the line up into the
+                                        // band (anchored to the line bottom so it never
+                                        // overlaps the title below). Sized relative to the
+                                        // band height so it fully fits the current layout.
+                                        Rectangle {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            anchors.bottom: parent.bottom
+                                            width: parent.width
+                                            height: Math.max(2, Math.round(progressBand.height * 0.3))
+                                            gradient: Gradient {
+                                                GradientStop { position: 0.0; color: Color.withAlpha(progressBand._progressFillColor, 0.0) }
+                                                GradientStop { position: 0.6; color: Color.withAlpha(progressBand._progressFillColor, 0.15) }
+                                                GradientStop { position: 1.0; color: Color.withAlpha(progressBand._progressFillColor, 0.38) }
+                                            }
+                                            z: -1
+                                        }
+                                        // Sharp bright core.
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: parent.height / 2
+                                            color: progressBand._progressFillColor
+                                        }
+                                    }
+                                }
+
+                                // Mouse scrubbing: click/drag to seek.
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onPressed: (mouse) => playerUI.seekFromX(mouse.x, width)
+                                    onPositionChanged: (mouse) => { if (pressed) playerUI.seekFromX(mouse.x, width) }
+                                }
+                            }
+                        }
+
+                        // Track title removed on request: the card carries the
+                        // identity rows below and the bar keeps the title.
+
                     }
                 }
             }
