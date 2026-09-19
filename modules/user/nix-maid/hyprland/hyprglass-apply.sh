@@ -214,12 +214,14 @@ fi
 #                of the scratchpad. Zero here = the extra blur without the dim.
 #   music_strong — the rmpc pane (window rule music-scratchpad in hyprland.lua):
 #                blur_strength 64, i.e. 4x the scratch preset (radius 768 px
-#                against 192), all 5 gaussian passes, adaptive_dim 0. The pane is
-#                the one scratchpad whose backdrop is the whole picture — it runs
-#                at 0.45 opacity with nothing drawn over the frost — and at 16 the
-#                frost read as too weak behind it. blur_strength is a plain scale
-#                (value * 12 px) with no clamp: 64, 128 and 256 are all accepted,
-#                so this number is the knob to turn if it is still too weak.
+#                against 192), all 5 gaussian passes, adaptive_dim 0. It was the
+#                one scratchpad whose backdrop was the whole picture (0.45 opacity
+#                with nothing drawn over the frost) and at 16 the frost read as too
+#                weak behind it; rmpc has since moved to the scratchpad opacity of
+#                0.85 (services.nix), so the tag now sits behind a nearly opaque
+#                pane. blur_strength is a plain scale (value * 12 px) with no
+#                clamp: 64, 128 and 256 are all accepted, so this number is the knob
+#                to turn if the frost is ever handed the pane back.
 #   media-dark — the panel's now-playing card (layers:namespace_presets maps
 #                qs-music to it): dark brightness 0.40 and the strongest frost the
 #                plugin offers (blur_strength 16, all 5 gaussian passes), with
