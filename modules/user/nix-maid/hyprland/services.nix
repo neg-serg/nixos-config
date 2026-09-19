@@ -119,13 +119,11 @@ in
     # on the pane itself: 0.60 gave (13.4, 16.2, 21.2) and 0.85 gave (10.6, 13.1,
     # 15.4), where 0.96 keeps only ~1/255 of the wallpaper through.
     #
-    # ...and then it turned out that is too black to see anything of the desktop
-    # through it, which is the point of a glass scratchpad, so the pane sits at
-    # 0.75: over a bright surface behind it the fill reads (40,40,41) instead of
-    # (6,6,6) at 0.96 (measured against an opaque 200-grey window: 0.96 -> 6,
-    # 0.85 -> 24, 0.80 -> 32, 0.75 -> 40, 0.70 -> 49, i.e. 25% of the backdrop
-    # now comes through). The frost must stay the black one: the pane is a
-    # terminal first, and its tint is what keeps the text readable over it.
+    # ...but 0.96 read as a sealed black window, so the pane sits at 0.92: just
+    # enough backdrop comes through to tell there is a desktop under it, and the
+    # black tint keeps the TUI readable. Measured over an opaque 200-grey window:
+    # 0.96 -> (6,6,6), 0.85 -> (24,24,24), 0.80 -> (32,32,32), 0.75 -> (40,40,41),
+    # 0.70 -> (49,49,49); 0.92 lands between the first two, around (11,11,11).
     #
     # The opacity can be tuned without a rebuild: write a number into
     # ~/.config/kitty/glass-opacity and reopen the scratchpad (the file is picked
@@ -141,7 +139,7 @@ in
 
       # Per-class default; the override file below still wins over both.
       case "$class" in
-        music) opacity=0.75 ;; # rmpc: black first, but the desktop shows through
+        music) opacity=0.92 ;; # rmpc: black first, a hint of the desktop through
         *) opacity=0.85 ;;
       esac
       override="$HOME/.config/kitty/glass-opacity"
