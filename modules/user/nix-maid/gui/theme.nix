@@ -61,6 +61,7 @@ in
         environment.systemPackages = [
           alkano-aio
           gtkThemePkg
+          pkgs.gsettings-desktop-schemas # org.gnome.desktop.interface schemas (dconf + libadwaita dark mode)
           pkgs.kora-icon-theme # flat icon theme
           iosevkaNeg.nerd-font
         ];
@@ -79,7 +80,8 @@ in
         };
 
         # dconf/GSettings — xdg-desktop-portal-gtk reads icon theme from here,
-        # NOT from settings.ini (which only affects GTK apps directly)
+        # NOT from settings.ini (which only affects GTK apps directly).
+        # color-scheme is what libadwaita apps actually use for dark mode.
         programs.dconf = {
           enable = true;
           profiles.user.databases = [
@@ -89,6 +91,8 @@ in
                 gtk-theme = "'${realThemeName}'";
                 cursor-theme = "'Alkano-aio'";
                 font-name = "'Iosevka 10'";
+                # libadwaita reads dark mode from color-scheme, not from GTK_THEME.
+                color-scheme = "'prefer-dark'";
               };
             }
           ];
