@@ -44,7 +44,9 @@ local blur_size              = 26 -- was 9; the bar/panels dropped hyprglass's 3
 local blur_passes            = 4  -- was 2; those surfaces rely on Hyprland's own blur now,
                                -- (hyprglass glasses only windows + popups now), so the
                                -- knobs here are the bar's blur strength.
-local blur_vibrancy          = 0.1696
+local blur_vibrancy          = 0 -- was 0.1696: the vibrancy boost saturated whatever the blur
+                               -- sampled — with xray that is the wallpaper, so the bar showed
+                               -- its hue at full strength instead of a neutral frost.
 
 -- ---------------------------------------------------------------------
 -- Common window matcher regexes (from vars.conf / classes.conf)
@@ -759,6 +761,16 @@ hl.window_rule({ name = "route-rack", match = { title = "^VCV Rack" }, no_blur =
 -- xray: see through all layers
 hl.layer_rule({ name = "xray-all", match = { namespace = ".*" }, xray = true })
 
+-- ...except the bar: it is the one surface that has to blur what is *actually*
+-- under it. With xray on the bar samples the wallpaper through everything and
+-- reads as the wallpaper's own colour — a cyan wallpaper turned the whole bar
+-- cyan, a pink one turned it pink — instead of the content it covers. Layer
+-- rules are matched last-first, so these override xray-all for the bar's four
+-- surfaces while every other layer keeps it.
+for _, ns in ipairs({ "qs-content-left", "qs-content-right", "qs-panel", "quickshell-bar-reserve" }) do
+  hl.layer_rule({ name = "no-xray-" .. ns, match = { namespace = ns }, xray = false })
+end
+
 -- no animation
 for _, ns in ipairs({ "selection", "indicator.*", "hyprpicker" }) do
   hl.layer_rule({ name = "noanim-" .. ns, match = { namespace = ns }, no_anim = true })
@@ -767,7 +779,9 @@ end
 -- blur with per-namespace ignore_alpha
 local blur_layers = {
   { ns = "qs-.*",           ia = 0.05 }, -- was 0.6: the bar chips are semi-transparent, 0.6 dropped their blur
-  { ns = "quickshell",      ia = 0.5 },
+  { ns = "quickshell-bar-reserve", ia = 0.05 }, -- the bar's shared backdrop strip; a bare
+                                                -- "quickshell" entry matched no surface (layer
+                                                -- rules match a namespace in full)
   { ns = "vicinae",         ia = 0.6 },
   { ns = "launcher",        ia = 0.5 },
   { ns = "notifications",   ia = 0.69 },
