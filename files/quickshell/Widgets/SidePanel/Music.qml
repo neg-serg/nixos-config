@@ -48,11 +48,15 @@ Rectangle {
         Rectangle {
             id: card
             anchors.fill: parent
-            // Frameless card (user preference): a slightly higher fill opacity
-            // keeps it legible over dark backgrounds without a visible border.
-            color: Color.withAlpha("#000000", 0.92)
-            border.color: "transparent"
-            border.width: Theme.uiBorderNone
+            // Glass card: the fill is deliberately translucent because
+            // hyprglass blurs and refracts what is *behind* the surface — an
+            // opaque fill (0.92 black before) showed none of it, which is why
+            // the popup never looked glassy even though `qs-music` is in the
+            // plugin's layer namespace list. The hairline border is the glass
+            // edge the plugin's fresnel pass then lights up.
+            color: Color.withAlpha(Theme.surface, Theme.sidePanelPopupGlassOpacity)
+            border.color: Color.withAlpha(Theme.textPrimary, Theme.sidePanelPopupGlassBorderOpacity)
+            border.width: Theme.uiBorderWidth
             radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
 
         Item {

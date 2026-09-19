@@ -35,7 +35,7 @@ hl.config({
         -- own layer blur (layerrule blur-qs-.* , ignore_alpha 0.6) instead.
         namespaces = "quickshell,notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
         -- Above the shadow alpha, otherwise shadows trigger glass on the whole surface
-        namespace_mask_thresholds = "quickshell=0.3,notifications=0.3",
+        namespace_mask_thresholds = "quickshell=0.3,notifications=0.3,qs-music=0.3",
       },
     },
   },

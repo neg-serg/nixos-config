@@ -769,6 +769,13 @@ Singleton {
     property int sidePanelPopupOuterMargin: val('sidePanel.popup.outerMargin', 4)
     // Side-panel popup spacing (between inner items)
     property int sidePanelPopupSpacing: val('sidePanel.popup.spacing', 0)
+    // Fill of the now-playing card. It has to stay translucent: hyprglass
+    // blurs and refracts what is *behind* the surface, so the old hard-coded
+    // 0.92 black showed none of it (the popup stayed flat even though
+    // `qs-music` is in the plugin's layer namespace list).
+    property real sidePanelPopupGlassOpacity: val('sidePanel.popup.glassOpacity', 0.45)
+    // Hairline edge of the glass card; the plugin's fresnel pass lights it up.
+    property real sidePanelPopupGlassBorderOpacity: val('sidePanel.popup.glassBorderOpacity', 0.1)
     // Media dominant-accent sampler/logic (extract hardcoded tuning)
     property int mediaArtDebounceMs: val('media.artDebounceMs', 60)
     property int mediaAccentRetryMs: val('media.accent.retryMs', 120)
