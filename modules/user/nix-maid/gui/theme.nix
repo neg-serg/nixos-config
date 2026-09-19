@@ -18,14 +18,19 @@ let
 
   # nixos-unstable removed the GTK2/murrine-based themes (flat-remix-gtk,
   # flight-gtk-theme, andromeda-gtk-theme) — they were dropped upstream.
-  # Use the available modern GTK theme (adw-gtk3, "Adwaita-dark") as the
-  # migration default; Flat-Remix variants no longer build in unstable.
+  # neg-gtk maps to adw-gtk3-dark: its GTK3 half is a libadwaita port and uses
+  # the same window_bg_color/accent_bg_color names as GTK4, so a single palette
+  # (files/gui/neg-gtk{3,4}.css) recolors both toolkits.
   realThemeName =
     {
-      "neg-gtk" = "Adwaita-dark";
-      "Flat-Remix-GTK-Blue-Darkest" = "Adwaita-dark";
+      "neg-gtk" = "adw-gtk3-dark";
+      "Flat-Remix-GTK-Blue-Darkest" = "adw-gtk3-dark";
     }
     .${gtkThemeName} or gtkThemeName;
+
+  # GTK4 keeps the built-in Adwaita: libadwaita apps ignore gtk-theme-name, and
+  # adw-gtk3's gtk-4.0 directory is only a frozen copy of Adwaita.
+  gtk4ThemeName = "Adwaita";
 
   gtkThemePkg =
     {
@@ -35,8 +40,11 @@ let
     }
     .${gtkThemeName} or pkgs.adw-gtk3;
 
-  # GTK Settings — use the real theme name so GTK finds the theme directory
-  gtkSettings = {
+  # GTK Settings — use the real theme name so GTK finds the theme directory.
+  # Settings are written per toolkit (no GTK_THEME session variable): GTK_THEME
+  # overrides gtk-theme-name for all GTK versions at once, which would pin GTK3
+  # to the GTK4 theme.
+  gtk3Settings = {
     "gtk-application-prefer-dark-theme" = 1;
     "gtk-cursor-theme-name" = "Alkano-aio";
     "gtk-cursor-theme-size" = 23;
@@ -45,7 +53,12 @@ let
     "gtk-theme-name" = realThemeName;
   };
 
-  gtkIni = lib.generators.toINI { } { Settings = gtkSettings; };
+  gtk4Settings = gtk3Settings // {
+    "gtk-theme-name" = gtk4ThemeName;
+  };
+
+  gtk3Ini = lib.generators.toINI { } { Settings = gtk3Settings; };
+  gtk4Ini = lib.generators.toINI { } { Settings = gtk4Settings; };
 
   # GTK CSS override: neg.nvim colors for neg-gtk theme, else empty.
   # GTK3 and GTK4 get separate files: libadwaita exposes a different (much
@@ -68,7 +81,6 @@ in
 
         # 2. Environment Variables
         environment.sessionVariables = {
-          GTK_THEME = realThemeName;
           XCURSOR_THEME = "Alkano-aio";
           XCURSOR_SIZE = "23";
           HYPRCURSOR_THEME = "Alkano-aio";
@@ -103,9 +115,9 @@ in
       }
       # 3. GTK settings + CSS + gtkrc
       (neg.mkHomeFiles {
-        ".config/gtk-3.0/settings.ini".text = gtkIni;
+        ".config/gtk-3.0/settings.ini".text = gtk3Ini;
         ".config/gtk-3.0/gtk.css".text = gtk3Css;
-        ".config/gtk-4.0/settings.ini".text = gtkIni;
+        ".config/gtk-4.0/settings.ini".text = gtk4Ini;
         ".config/gtk-4.0/gtk.css".text = gtk4Css;
 
         ".config/gtk-2.0/gtkrc".text = ''
