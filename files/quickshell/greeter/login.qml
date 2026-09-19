@@ -144,9 +144,16 @@ ShellRoot {
 		// reads it to decide whether the desktop may start. The `mkdir -p` is for a
 		// layer started by hand, whose QS_LOGIN_STATE_DIR may not exist yet (under
 		// greetd the wrapper creates it).
+		//
+		// `rm -f login-phase` is the systemd-visible half of the same marker: while
+		// that file exists, quickshell.service and hypridle.service refuse to start
+		// (ConditionPathExists=!%t/quickshell-login/login-phase), which keeps the
+		// desktop out of the login screen even when nix-maid's sd-switch starts a
+		// changed unit directly (see session-wrapper.sh). Removing it — after the
+		// state file is written and verified — is what lets the desktop start.
 		stateWriter.command = [
 			"sh", "-c",
-			"mkdir -p \"$(dirname \"$2\")\" 2> /dev/null; printf '%s\\n' \"$1\" > \"$2\" && [ \"$(cat \"$2\")\" = \"$1\" ]",
+			"mkdir -p \"$(dirname \"$2\")\" 2> /dev/null; printf '%s\\n' \"$1\" > \"$2\" && [ \"$(cat \"$2\")\" = \"$1\" ] && rm -f \"$(dirname \"$2\")/login-phase\"",
 			"login-state", value, root.statePath,
 		];
 		stateWriter.running = true;

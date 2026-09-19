@@ -853,6 +853,19 @@ hl.on("hyprland.start", function()
     -- "session" into the marker while it quits, and only then does the desktop
     -- start (the `exec` also keeps hypr-start out of the layer's process tree).
     --
+    -- Wallpaper first, so it is painted *behind* the login screen: wl-daemon
+    -- paints the desktop's wallpaper (the same file the login layer shows, see
+    -- files/quickshell/scripts/wl-wallpaper-resolve.sh), so releasing the lock
+    -- reveals an already-painted desktop instead of a bare compositor background.
+    -- Doing it here also moves the daemon's ~1 s Vulkan init off the post-login
+    -- path (before this, the daemon started only with the session target, i.e.
+    -- ~2.4 s after the lock was gone — the "hyprland without wallpaper" flash).
+    -- import-environment first: the unit inherits the *user manager's*
+    -- environment, and WAYLAND_DISPLAY only exists in this compositor.
+    hl.exec_cmd(
+      "sh -c 'systemctl --user import-environment WAYLAND_DISPLAY XDG_RUNTIME_DIR; systemctl --user start wl-daemon.service'"
+    )
+
     -- hyprctl dispatch exec returns immediately (the command is backgrounded),
     -- so this never blocks the config load.
     --
@@ -866,7 +879,7 @@ hl.on("hyprland.start", function()
       sh -c '
         for _ in 1 2 3; do
           qs-login-layer
-          if grep -qx session "${QS_LOGIN_STATE_DIR:-/tmp}/state" 2>/dev/null; then exec hypr-start; fi
+          if grep -qx session "${QS_LOGIN_STATE_DIR:-/tmp}/state" 2>/dev/null; then exec hypr-start --login; fi
           sleep 1
         done
         printf "login layer exited without a login, three times, at %s\n" "$(date)" >> /tmp/qs-login-layer.log
