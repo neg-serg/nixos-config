@@ -213,18 +213,18 @@ fi
 #                curve, so the heavier frost would arrive with a visible darkening
 #                of the scratchpad. Zero here = the extra blur without the dim.
 #   media-dark — the panel's now-playing card (layers:namespace_presets maps
-#                qs-music to it): dark brightness 0.55, i.e. 1.5x darker than the
-#                dark theme's 0.82 — and adaptive_dim 0, for the same reason as
-#                above: the plate was asked to be exactly 1.5x darker, but with the
-#                global adaptive_dim left on, the shader multiplies that 0.55 by
-#                another (1 - adaptiveDim * lumCurve) *unconditionally*, i.e. up to
-#                ~3x darker than the theme default on a bright backdrop. The
-#                requested factor is the tint, not a backdrop-dependent bonus dim.
+#                qs-music to it): dark brightness 0.40 and the strongest frost the
+#                plugin offers (blur_strength 16, all 5 gaussian passes), with
+#                adaptive_dim 0 so the darkness is the tint and nothing else.
+#                0.40 is ~2x the dark theme's 0.82 — the first pass (0.55, exactly
+#                1.5x) read too light once the adaptive dim was taken off it, and
+#                the card is small enough that the hardest blur still reads as
+#                glass rather than a smear.
 #
 # A `hyprctl reload` drops them again (the plugin re-reads its config), which is
 # also what makes the nine knobs drift, so the next push restores these too.
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
-"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.55 }, adaptive_dim = 0 })' >/dev/null 2>&1 || true
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.40 }, blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 
 # Record what the plugin reports now: the next check compares against this, so a
 # later drift is visible even in a session where the panel was never opened.
