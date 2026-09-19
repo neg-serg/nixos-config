@@ -627,9 +627,10 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 -- session, where the shipped blur stays as it is.
 --
 -- The rmpc pane is the one scratchpad with its own tag, `hyprglass_preset_music_strong`
--- (blur_strength 64 = 4x the scratch frost, same 5 passes and no dim): it runs at
--- 0.45 opacity with nothing of its own drawn over the backdrop (services.nix), so
--- the plugin's frost is the whole pane and 16 read as too weak there.
+-- (blur_strength 64 = 4x the scratch frost, same 5 passes and no dim). That tag no
+-- longer carries the pane: rmpc moved to the scratchpad opacity of 0.85 (services.nix),
+-- so the frost sits behind a nearly opaque surface and 64 is insurance. Set 0.45 back
+-- there (or write a number into ~/.config/kitty/glass-opacity) to hand the pane back to it.
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
 hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, tag = "+hyprglass_preset_music_strong", size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
 hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
