@@ -9,7 +9,8 @@
 let
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
-  negGtkCss = builtins.readFile (config.lib.neg.path "files/gui/neg-gtk.css");
+  negGtk3Css = builtins.readFile (config.lib.neg.path "files/gui/neg-gtk3.css");
+  negGtk4Css = builtins.readFile (config.lib.neg.path "files/gui/neg-gtk4.css");
 
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";
 
@@ -46,8 +47,11 @@ let
 
   gtkIni = lib.generators.toINI { } { Settings = gtkSettings; };
 
-  # GTK CSS override: neg.nvim colors for neg-gtk theme, else empty
-  cssContent = if gtkThemeName == "neg-gtk" then negGtkCss else "/* @import 'colors.css'; */";
+  # GTK CSS override: neg.nvim colors for neg-gtk theme, else empty.
+  # GTK3 and GTK4 get separate files: libadwaita exposes a different (much
+  # larger) set of named colors than GTK3's Adwaita.
+  gtk3Css = if gtkThemeName == "neg-gtk" then negGtk3Css else "/* @import 'colors.css'; */";
+  gtk4Css = if gtkThemeName == "neg-gtk" then negGtk4Css else "/* @import 'colors.css'; */";
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui") (
@@ -93,9 +97,9 @@ in
       # 3. GTK settings + CSS + gtkrc
       (neg.mkHomeFiles {
         ".config/gtk-3.0/settings.ini".text = gtkIni;
-        ".config/gtk-3.0/gtk.css".text = cssContent;
+        ".config/gtk-3.0/gtk.css".text = gtk3Css;
         ".config/gtk-4.0/settings.ini".text = gtkIni;
-        ".config/gtk-4.0/gtk.css".text = cssContent;
+        ".config/gtk-4.0/gtk.css".text = gtk4Css;
 
         ".config/gtk-2.0/gtkrc".text = ''
           gtk-theme-name="${realThemeName}"
