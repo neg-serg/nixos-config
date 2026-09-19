@@ -17,6 +17,15 @@ set -u
 
 export QML2_IMPORT_PATH="/etc/quickshell${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
 
+# Keyboard layout: under a session lock the compositor's own binds do not fire,
+# and hyprland.lua sets kb_options = "" — no xkb group-switch key either. A login
+# screen that happens to be in the wrong layout cannot be typed into at all: the
+# password arrives as Cyrillic and PAM rejects it with nothing in the UI hinting
+# why (2026-09-19 18:05, three failed attempts on a session whose focused window
+# was Russian). Index 0 is `us`, the first entry of hyprland.lua's kb_layout;
+# login.qml's layout chip toggles it from inside the lock surface.
+hyprctl switchxkblayout all 0 > /dev/null 2>&1 || true
+
 # `quickshell` here is the wrapped package (modules/user/nix-maid/gui/quickshell.nix):
 # it carries the Qt import paths, the icon theme and the extra PATH, so the login
 # screen gets the same toolkit environment as the desktop shell.
