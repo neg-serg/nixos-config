@@ -373,6 +373,8 @@ Rectangle {
                                 Text {
                                     text: "Layout"
                                     color: playerUI.musicTextColor
+                                    layer.enabled: Theme.textShadowEnabled
+                                    layer.effect: GlyphShadow {}
                                     font.family: Theme.fontFamily
                                     font.pixelSize: playerUI.musicTextPx
                                     font.weight: Font.DemiBold
@@ -382,6 +384,8 @@ Rectangle {
                                     Layout.fillWidth: true
                                     text: MusicManager.trackChannelLayout
                                     color: playerUI.musicTextColor
+                                    layer.enabled: Theme.textShadowEnabled
+                                    layer.effect: GlyphShadow {}
                                     font.family: Theme.fontFamily
                                     font.pixelSize: playerUI.musicTextPx
                                     font.weight: Font.DemiBold
@@ -674,6 +678,8 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: progressBand.seekTimeText
                                         color: Theme.textOn(progressBand._progressFillColor)
+                                        layer.enabled: Theme.textShadowEnabled
+                                        layer.effect: GlyphShadow {}
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Math.max(8, Math.round(playerUI.musicTextPx * 0.85))
                                         font.weight: Font.DemiBold
