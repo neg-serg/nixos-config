@@ -120,31 +120,38 @@ local function isGameClass(class)
   return false
 end
 
-local games_open = 0
-local function applyVrr()
-  hl.config({ misc = { vrr = games_open > 0 and 1 or 0 } })
+-- Counted from the live window list rather than with a counter: a window can
+-- disappear without a `close` event (kill, crash), and a counter would then keep
+-- VRR on for the rest of the session.
+local function gamesOpen()
+  local n = 0
+  for _, win in ipairs(hl.get_windows()) do
+    if isGameClass(win.class) then n = n + 1 end
+  end
+  return n
 end
 
--- A reload with a game already mapped must not lose VRR, so start from what is
--- actually on screen.
-for _, win in ipairs(hl.get_windows()) do
-  if isGameClass(win.class) then games_open = games_open + 1 end
+local vrrState = nil
+local function applyVrr()
+  local on = gamesOpen() > 0
+  if on == vrrState then return end -- no point pushing the same value again
+  vrrState = on
+  hl.config({ misc = { vrr = on and 1 or 0 } })
 end
+
+-- A reload with a game already mapped must not lose VRR.
 applyVrr()
 
-hl.on("window.open", function(win)
-  if isGameClass(win and win.class) then
-    games_open = games_open + 1
-    applyVrr()
-  end
-end)
+-- The window list settles a moment after the event (a closing window may still be
+-- in it while the handler runs), so the recount is deferred as well as immediate.
+local function vrrOnWindowChange()
+  applyVrr()
+  hl.timer(applyVrr, { timeout = 300, type = "oneshot" })
+end
 
-hl.on("window.close", function(win)
-  if isGameClass(win and win.class) then
-    games_open = math.max(0, games_open - 1)
-    if games_open == 0 then applyVrr() end
-  end
-end)
+for _, event in ipairs({ "window.open", "window.close", "window.destroy" }) do
+  hl.on(event, vrrOnWindowChange)
+end
 
 -- ---------------------------------------------------------------------
 -- Environment (from env.conf)
