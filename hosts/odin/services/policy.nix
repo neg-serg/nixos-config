@@ -160,6 +160,10 @@ lib.mkMerge [
     # Disabled on request (2026-08-28): local speech NN servers (STT/TTS) turned off.
     features.media.audio.speech.enable = false;
 
+    # Sola MPD: browser MPD client for the big local library (Node backend + web
+    # UI on http://localhost:3000, served as the systemd user unit sola-mpd).
+    features.media.audio.solaMpd.enable = true;
+
     # AI image processing: realesrgan-ncnn-vulkan (upscale, Vulkan) + ffmpeg-full.
     features.media.aiUpscale.enable = true;
 
