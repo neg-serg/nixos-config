@@ -56,6 +56,15 @@ wait_down() {
   running || return 0
   return 1
 }
+# Rootless podman mounts the container overlay in its own mount namespace, where
+# the caller's /proc/self/mountinfo shows nothing — the check in wait_teardown used
+# to return "teardown finished" immediately for that reason and let a start race the
+# dismount (verified 2026-09-19: 0 hits in the shell's namespace, 1 via `podman
+# unshare` for the same merged dir).
+overlay_mounted() {
+  "$PODMAN" unshare grep -qF "$1" /proc/self/mountinfo 2>/dev/null && return 0
+  grep -qF "$1" /proc/self/mountinfo 2>/dev/null
+}
 
 # The container is down but its rootfs may still be mounted; a start inside that
 # window is what produced `touch: command not found` / `Transport endpoint is not
@@ -66,11 +75,13 @@ wait_teardown() {
     upper=$(timeout 10 "$PODMAN" container inspect -f '{{.GraphDriver.Data.UpperDir}}' "$CT" 2>/dev/null) || upper=""
     [ -n "$upper" ] || return 0
     merged="${upper%/diff}/merged"
-    grep -qF "$merged" /proc/self/mountinfo 2>/dev/null || return 0
+    overlay_mounted "$merged" || return 0
     sleep 1
   done
   warn "rootfs of '$CT' is still mounted after ${TEARDOWN_WAIT}s — unmounting"
-  fusermount3 -u "$merged" 2>/dev/null || warn "could not unmount $merged"
+  "$PODMAN" unshare fusermount3 -u "$merged" 2>/dev/null \
+    || fusermount3 -u "$merged" 2>/dev/null \
+    || warn "could not unmount $merged"
   sleep 2
 }
 
