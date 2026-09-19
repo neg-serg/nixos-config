@@ -37,13 +37,21 @@ done
 # not fire for that path — measured), and nothing else notices. Run by a timer:
 # a cheap check, and a push only when something actually drifted.
 if [ "${watch:-0}" = 1 ]; then
-  "$0" --check >/dev/null 2>&1
-  case "$?" in
+  # The status is captured instead of left to `set -e`: a drifted check exits 1,
+  # and the shell's error handling killed the script right there — the watchdog
+  # reported "failed" every tick and never re-applied anything.
+  # Resolved, not "$0": a relative invocation (a test harness, a shell that
+  # sourced the file) would have the nested call looked up in PATH and fail with
+  # 127, which reads exactly like "drifted" and re-applies on every tick.
+  self="$(readlink -f "${BASH_SOURCE[0]}")"
+  status=0
+  "$self" --check >/dev/null 2>&1 || status=$?
+  case "$status" in
     0) exit 0 ;;                 # in sync
-    2) exit 2 ;;                 # cannot reach Hyprland: not our business here
+    2) exit 0 ;;                 # cannot reach Hyprland: nothing to repair
   esac
   echo "hyprglass: settings drifted, re-applying" >&2
-  "$0" >/dev/null 2>&1 || true
+  "$self" >/dev/null 2>&1 || true
   exit 0
 fi
 
