@@ -95,7 +95,11 @@ local cls = {
 -- ---------------------------------------------------------------------
 -- Monitors (from init.conf)
 -- ---------------------------------------------------------------------
-hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 1, bitdepth = 10, cm = "auto" })
+-- vrr = 3: Adaptive Sync only for fullscreen video/game content. The old
+-- per-display 1 (always on) held the panel in adaptive sync during ordinary
+-- work — the refresh followed frame pacing and visibly twitched — and
+-- overrode every misc.vrr value, so "fullscreen only" (2) looked broken.
+hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 3, bitdepth = 10, cm = "auto" })
 hl.monitor({ output = "DP-1", disabled = true })
 -- DP-4: second cable (motherboard iGPU) to the same MPG321UX panel — a phantom
 -- 4K60 screen that only shows if the monitor OSD input is switched. Keep disabled.
