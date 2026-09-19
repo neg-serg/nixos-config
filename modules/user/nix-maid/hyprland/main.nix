@@ -34,6 +34,13 @@ let
     "$hyprctl_bin" eval "
     $(cat ${pkgs.writeText "hyprglass.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprglass.lua"))})" || true
 
+    # The session's Hyprland socket signature is what hyprctl needs, and systemd's
+    # user environment does not have it: without this the glass watchdog (and any
+    # other user service calling hyprctl) can never reach the compositor and just
+    # reports failure forever. Imported at session start, it is there for every
+    # service of this session.
+    systemctl --user import-environment HYPRLAND_INSTANCE_SIGNATURE XDG_RUNTIME_DIR >/dev/null 2>&1 || true
+
     # Then the real thing: the deployed base plus the values the Glass panel keeps
     # in ~/.config/hypr/hyprglass.json, and it checks that they landed. The eval
     # above is the fallback for the case where the deployed file is not there yet
