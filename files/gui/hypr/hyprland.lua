@@ -762,14 +762,24 @@ hl.window_rule({ name = "route-rack", match = { title = "^VCV Rack" }, no_blur =
 -- xray: see through all layers
 hl.layer_rule({ name = "xray-all", match = { namespace = ".*" }, xray = true })
 
--- ...except the bar: it is the one surface that has to blur what is *actually*
--- under it. With xray on the bar samples the wallpaper through everything and
+-- ...except quickshell: every surface of the shell has to blur what is *actually*
+-- under it. With xray on a surface samples the wallpaper through everything and
 -- reads as the wallpaper's own colour — a cyan wallpaper turned the whole bar
 -- cyan, a pink one turned it pink — instead of the content it covers. Layer
--- rules are matched last-first, so these override xray-all for the bar's four
+-- rules are matched last-first, so these override xray-all for the shell's
 -- surfaces while every other layer keeps it.
 for _, ns in ipairs({ "qs-content-left", "qs-content-right", "qs-panel", "quickshell-bar-reserve" }) do
   hl.layer_rule({ name = "no-xray-" .. ns, match = { namespace = ns }, xray = false })
+end
+-- Popups, panels and notifications need the same treatment: with xray on they
+-- showed a blurred *wallpaper* behind a window that sat right under them, which
+-- is what "quickshell shows a cached background instead of what is beneath it"
+-- turned out to mean. Matched by pattern so a new shell surface (qs-weather,
+-- qs-calendar, qs-monitor, qs-netflow, qs-music, qs-glass, ...) inherits the
+-- rule without a second edit here.
+for _, pat in ipairs({ "^qs-", "^quickshell", "^sideleft-weather",
+                       "^shell:notifications", "^shell:notification-center" }) do
+  hl.layer_rule({ name = "no-xray-" .. pat, match = { namespace = pat }, xray = false })
 end
 
 -- no animation
