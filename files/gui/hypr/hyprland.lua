@@ -615,11 +615,16 @@ hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratc
 -- must stay out of the `routes` table above and away from `no_blur`, or their
 -- glass disappears.
 
--- Scratchpads get their own entrance: the workspace they live on already slides
--- with `slidefadevert`, so matching it makes summoning one feel like the desk
--- sliding in rather than a window popping over it.
-for _, sp in ipairs({ "teardown", "music", "torrment", "vpn", "mixer", "rebuild" }) do
-  hl.window_rule({ name = "anim-" .. sp, match = { class = "^(" .. sp .. ")$" }, animation = "slidefadevert 12%" })
+-- Scratchpads get their own entrance. The default `popin 60%` scales a window up
+-- out of its own middle, which reads as a pop rather than a summon; the special
+-- workspace they live on already slides vertically, so a vertical slide+fade
+-- makes the desk arrive with the window. Covers every scratchpad class the config
+-- knows about: the kitty terminals plus the app scratchpads (telegram, mail).
+for i, pattern in ipairs({
+  "^teardown$", "^music$", "^torrment$", "^vpn$", "^mixer$", "^rebuild$",
+  m.im_scratchpad, m.mail_scratchpad,
+}) do
+  hl.window_rule({ name = "anim-scratchpad-" .. i, match = { class = pattern }, animation = "slidefadevert 12%" })
 end
 
 -- Wine / Steam
