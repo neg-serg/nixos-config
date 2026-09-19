@@ -98,7 +98,10 @@ behind Hyprland.
     into.
   - `media-dark` is attached to the panel's now-playing card through
     `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
-    `dark.brightness = 0.55`, i.e. 1.5x darker than the dark theme's 0.82. Note the pair separator
+    `dark.brightness = 0.55` — 1.5x darker than the dark theme's 0.82 — with `adaptive_dim = 0`
+    alongside, so the requested factor is the tint and nothing else. Leaving the global
+    `adaptive_dim` in play would multiply the 0.55 by another `1 - adaptiveDim * lumCurve` (up to
+    the same 2x on a bright backdrop), landing near 3x darker than asked. Note the pair separator
     is `:` (the plugin parses these with `parseKeyValuePairs(..., ':')`, `src/main.cpp`), unlike the
     mask thresholds which use `=`.
   - Both are pushed by `hyprglass-apply` with `hyprctl eval` + the plugin's
