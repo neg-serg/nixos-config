@@ -36,36 +36,6 @@ Rectangle {
     // host that owns the surface says whether it is shown.
     property bool isOnScreen: false
 
-    // ── Colored "(current/total)" readout ────────────────────────────────
-    // Composed exactly like the bar capsule's time span (accent brackets and
-    // slash, digits in the card's text colour). The strings are cached and
-    // refreshed at 1 Hz for the same reason the bar caches them: re-rendering
-    // rich text on every currentPosition tick fed the QQuickText::setText
-    // crash cascade.
-    property string _timeCur: ""
-    property string _timeTot: ""
-    Timer {
-        id: playerTimeTimer
-        interval: 1000
-        repeat: true
-        running: musicCard.isOnScreen && MusicManager.hasPlayer
-        triggeredOnStart: true
-        onTriggered: {
-            musicCard._timeCur = Format.fmtTime(Math.max(0, MusicManager.currentPosition || 0));
-            musicCard._timeTot = Format.fmtTime(Math.max(0, Time.mprisToMs(MusicManager.trackLength || 0)));
-        }
-    }
-    readonly property string timeReadout: {
-        var bp = Rich.bracketPair(Settings.settings.timeBracketStyle || "square");
-        var accent = Format.colorCss(MusicManager.accentColor, 1);
-        var digits = Format.colorCss(playerUI.musicTextColor, 1);
-        return Rich.bracketSpan(accent, bp.l)
-             + Rich.timeSpan(digits, musicCard._timeCur)
-             + Rich.sepSpan(accent, "/")
-             + Rich.timeSpan(digits, musicCard._timeTot)
-             + Rich.bracketSpan(accent, bp.r);
-    }
-
     function warnContrast(bg, fg, label) {
         try {
             if (!(Settings.settings && Settings.settings.debugLogs)) return;
@@ -425,28 +395,13 @@ Rectangle {
                         }
                     }
 
-                    // Time readout + spectrum/scrub, deliberately LAST in the column
-                    // and therefore at the bottom of the card: the card's content is
-                    // bottom-anchored, so the seek line and the spectrogram the user
-                    // reads it against both sit on the card's bottom edge.
+                    // Spectrum/scrub, deliberately LAST in the column and therefore at
+                    // the bottom of the card: the card's content is bottom-anchored and
+                    // the seek line sits on the band's bottom edge, so the spectrogram
+                    // and the line both sit on the card's bottom.
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
-
-                        // Time readout directly above the seek line, in the bar
-                        // capsule's style: accent brackets and slash, digits in the
-                        // card's text colour. Replaces the two counters that used to
-                        // flank the spectrum.
-                        Text {
-                            Layout.fillWidth: true
-                            textFormat: Text.RichText
-                            text: musicCard.timeReadout
-                            horizontalAlignment: Text.AlignHCenter
-                            color: playerUI.musicTextColor
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(playerUI.musicTextPx * 0.9)
-                            font.weight: Font.Normal
-                        }
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -540,12 +495,12 @@ Rectangle {
                                     onPressed: (mouse) => playerUI.seekFromX(mouse.x, width)
                                     onPositionChanged: (mouse) => { if (pressed) playerUI.seekFromX(mouse.x, width) }
                                 }
+
                             }
                         }
 
                         // Track title removed on request: the card carries the
                         // identity rows below and the bar keeps the title.
-
                     }
                 }
             }
