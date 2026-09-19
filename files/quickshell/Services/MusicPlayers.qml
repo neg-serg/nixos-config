@@ -105,6 +105,14 @@ Item {
                     let p = byId[_lastActiveStack[i]];
                     if (p && p.isPlaying && isPlayerMpd(p)) return p;
                 }
+                // Fall back to the full list, like the neighbouring rules do. The
+                // MRU stack is what a GUI MPD client ends up at the front of (it
+                // registers later and pokes its metadata more often), so without
+                // this an MPD-biased priority silently lost to it — and with it
+                // the file URL the metadata introspection needs.
+                for (let j = 0; j < avail.length; j++) {
+                    if (avail[j] && avail[j].isPlaying && isPlayerMpd(avail[j])) return avail[j];
+                }
                 return null;
             case "anyPlaying":
                 for (let i = 0; i < _lastActiveStack.length; i++) {
