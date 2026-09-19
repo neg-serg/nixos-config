@@ -8,11 +8,24 @@
 let
   guiEnabled = config.features.gui.enable or true;
   mainHome = config.lib.neg.homeDir;
+  inherit (config.lib.neg) mainUser;
   greeterCache = "/home/greeter/.cache";
   greeterWallpaperDst = "${greeterCache}/greeter-wallpaper";
   # Fallback when no dynamic source yields a file at activation time.
   greeterWallpaperFallback = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
-  hyprlandConfig = pkgs.replaceVars (config.lib.neg.path "files/gui/hypr/greetd.lua") {
+  # The interactive login is no longer a greeter session: greetd runs this
+  # wrapper as the main user and the compositor it starts paints the login
+  # screen itself (files/quickshell/greeter/login.qml, login phase in
+  # files/gui/hypr/hyprland.lua). See session-wrapper.sh for the marker that
+  # separates the two phases.
+  sessionWrapper = pkgs.writeScript "session-wrapper" (builtins.readFile ./greetd/session-wrapper.sh);
+  # Called from hyprland.lua during the login phase; the tree it loads is
+  # deployed at /etc/quickshell below.
+  loginLayer = pkgs.writeShellScriptBin "qs-login-layer" (builtins.readFile ./greetd/login-layer.sh);
+  # Old greeter session config: kept, but nothing starts it any more — see
+  # settings.default_session. It is the fallback if the single-compositor login
+  # has to be reverted (point default_session back at it).
+  greetdHyprlandConfig = pkgs.replaceVars (config.lib.neg.path "files/gui/hypr/greetd.lua") {
     quickshell = lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
   };
 
@@ -22,9 +35,22 @@ in
     services.greetd = {
       enable = true;
       restart = false;
+      # Single-compositor login: this *is* the session — no greeter process, no
+      # second compositor, no DRM mode re-set on login.
+      #
+      # greetd starts the default session whenever no session is running, so
+      # after a logout (the compositor exits, i.e. the default session exits) it
+      # comes straight back here and the login screen returns. The wrapper runs
+      # as the main user through greetd's PAM stack, which is what creates the
+      # logind session, /run/user/$UID and the user systemd instance the
+      # desktop's `systemctl --user start hyprland-session.target` needs.
+      #
+      # No authentication happens here (greetd has no one to ask): the session
+      # starts and the login layer in it asks for the password. The old greeter
+      # config is kept in `greetdHyprlandConfig` for a revert.
       settings.default_session = {
-        command = "${lib.getExe pkgs.hyprland} -c ${hyprlandConfig} > /dev/null 2>&1";
-        user = "greeter";
+        command = "${sessionWrapper}";
+        user = mainUser;
       };
     };
     # NixOS ships greetd as Type=idle, which makes systemd defer the spawn of
@@ -58,13 +84,23 @@ in
       group = "greeter";
     };
     users.groups.greeter = { };
-    # NB: quickshell for the greeter is NOT installed system-wide — the
-    # greeter runs it via an absolute path (exec-once above). The global
-    # `quickshell` binary comes from the nix-maid wrapper (single source).
+    # The login layer (started by hyprland.lua in the login phase) loads the tree
+    # from /etc/quickshell: that phase runs before the session target, so
+    # ~/.config/quickshell — nix-maid's symlink farm — is not guaranteed to be
+    # deployed yet, and a login screen that depends on it could not be trusted.
+    # `quickshell` itself comes from the nix-maid wrapper (single source), so the
+    # layer needs no absolute path.
+    environment.etc."quickshell".source = config.lib.neg.path "files/quickshell";
+    environment.systemPackages = [ loginLayer ];
+    # Kept for the greeter fallback (greetdHyprlandConfig / greetd.lua): the old
+    # greeter reads its quickshell tree and its session launcher from /etc/greetd.
+    # Nothing starts that session any more — see settings.default_session.
     environment.etc."greetd/quickshell".source = config.lib.neg.path "files/quickshell";
-    environment.etc."greetd/session-wrapper".source = pkgs.writeScript "session-wrapper" (
-      builtins.readFile ./greetd/session-wrapper.sh
-    );
+    environment.etc."greetd/session-wrapper".source = sessionWrapper;
+    # …and the old greeter's compositor config, so reverting is a one-line change
+    # (point default_session back at `${lib.getExe pkgs.hyprland} -c /etc/greetd/greetd-hyprland-config.lua`
+    # with user = "greeter").
+    environment.etc."greetd/greetd-hyprland-config.lua".source = greetdHyprlandConfig;
     # Expose wayland/x11 session .desktop files so the greeter can list and
     # switch sessions (Hyprland only).
     environment.pathsToLink = lib.mkAfter [
