@@ -22,6 +22,10 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-FOGTaK5odKHR2nh6r+vMS4ymGIvMjxHRSG+cLZPpIbs=";
   };
 
+  # The upstream server binds every interface (server.listen(PORT)); the patch
+  # adds the HOST override and defaults it to loopback — see the patch header.
+  patches = [ ./listen-loopback.patch ];
+
   # The workspace ships a lockfile for pnpm 10 (packageManager: pnpm@10.33.2), and
   # nixpkgs' default pnpm is 11 — a different lockfile dialect.
   nativeBuildInputs = [
