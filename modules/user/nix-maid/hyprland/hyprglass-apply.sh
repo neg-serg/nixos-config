@@ -214,12 +214,17 @@ fi
 #                of the scratchpad. Zero here = the extra blur without the dim.
 #   media-dark — the panel's now-playing card (layers:namespace_presets maps
 #                qs-music to it): dark brightness 0.55, i.e. 1.5x darker than the
-#                dark theme's 0.82.
+#                dark theme's 0.82 — and adaptive_dim 0, for the same reason as
+#                above: the plate was asked to be exactly 1.5x darker, but with the
+#                global adaptive_dim left on, the shader multiplies that 0.55 by
+#                another (1 - adaptiveDim * lumCurve) *unconditionally*, i.e. up to
+#                ~3x darker than the theme default on a bright backdrop. The
+#                requested factor is the tint, not a backdrop-dependent bonus dim.
 #
 # A `hyprctl reload` drops them again (the plugin re-reads its config), which is
 # also what makes the nine knobs drift, so the next push restores these too.
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
-"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.55 } })' >/dev/null 2>&1 || true
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.55 }, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 
 # Record what the plugin reports now: the next check compares against this, so a
 # later drift is visible even in a session where the panel was never opened.
