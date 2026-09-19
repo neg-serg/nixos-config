@@ -10,6 +10,16 @@ with lib;
       apps.enable = mkBool "enable audio apps (players, tools)" true;
       creation.enable = mkBool "enable audio creation stack (DAW, synths)" true;
       mpd.enable = mkBool "enable MPD stack (mpd, clients, mpdris2)" true;
+      # Sola MPD: browser MPD client (Node backend + React UI on loopback) aimed
+      # at large libraries — flexible browsing, search and queue editing.
+      solaMpd = {
+        enable = mkBool "enable Sola MPD (browser MPD client: backend + web UI)" false;
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 3000;
+          description = "Loopback port the Sola MPD backend listens on.";
+        };
+      };
       # LAN audio access: MPD binds to all interfaces, PipeWire exposes a
       # Pulse-compatible TCP server (port 4713) and an RTP multicast sink.
       lanAccess = {
