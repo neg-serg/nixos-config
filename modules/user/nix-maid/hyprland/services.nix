@@ -86,11 +86,12 @@ in
     '')
     # Glass scratchpad terminal. hyprglass frosts what is behind a window, so the
     # terminal itself has to be translucent for the backdrop to read through:
-    # kitty's 0.88 default is nearly opaque and showed no glass at all. 0.65 black
-    # keeps it glassy while staying visibly darker than the media card (0.45).
+    # kitty's 0.88 default is nearly opaque and showed no glass at all. 0.75 black
+    # keeps a visible frost while staying decisively darker than the media card
+    # (0.45) — a terminal that faint competes with its own text.
     # Used by the scratchpad binds in files/gui/hypr/hyprland.lua.
     (pkgs.writeShellScriptBin "kitty-glass" ''
-      exec ${lib.getExe pkgs.kitty} -o background_opacity=0.65 "$@"
+      exec ${lib.getExe pkgs.kitty} -o background_opacity=0.75 "$@"
     '')
     # hypr-fix script (Reload Hyprland config)
     (pkgs.writeShellScriptBin "hypr-fix" ''
