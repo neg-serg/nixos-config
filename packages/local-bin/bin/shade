@@ -1,0 +1,144 @@
+#!/bin/sh
+# shade — HyprWindowShade: fragment shaders on windows and layers.
+#
+#   shade list                list ~/.config/hypr/shaders (name + one-line description)
+#   shade on [NAME]           toggle NAME on the focused window; without NAME an
+#                             fzf picker opens (and falls back to listing them)
+#   shade off                 strip every shader from the focused window
+#   shade class CLASS [NAME]  toggle NAME for every window of CLASS; without NAME
+#                             it clears that class
+#   shade layer NS [NAME]     toggle NAME for a layer namespace (rofi, mpvpaper, …)
+#   shade reload              re-read every .glsl from disk
+#
+# NAME is a shader in ~/.config/hypr/shaders, with or without the .glsl suffix;
+# an absolute path works too. Shaders are HyprShade-compatible GLSL ES 3.20 and
+# are re-read every frame, so editing one needs no reload.
+#
+# The plugin exposes its actions only through its Lua namespace, which exists
+# after hyprwindowshade-setup has dlopen'd the .so — hence hyprctl eval, not
+# dispatch (see docs/howto/hyprland-plugin.md).
+
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
+
+SHADER_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/hypr/shaders
+
+usage() { usage_from_header 2 18; }
+
+require hyprctl
+
+# shade_call FN [ARG…] — run a plugin action, ignoring the dispatcher noise the
+# plugin cannot avoid (reports a failure even when the action landed).
+shade_call() {
+  fn=$1
+  shift
+  args=
+  for a in "$@"; do
+    case $a in
+      *\"* | *\\*) die "argument contains a quote or backslash: $a" ;;
+    esac
+    args="${args:+$args,}\"$a\""
+  done
+  hyprctl eval "hl.plugin.HyprWindowShade.$fn($args)" > /dev/null 2>&1 || true
+}
+
+plugin_loaded() {
+  hyprctl plugin list 2> /dev/null | grep -q HyprWindowShade ||
+    die "plugin is not loaded — run hyprwindowshade-setup"
+}
+
+list_shaders() {
+  [ -d "$SHADER_DIR" ] || die "shader directory not found: $SHADER_DIR"
+  for f in "$SHADER_DIR"/*.glsl; do
+    [ -f "$f" ] || continue
+    name=${f##*/}
+    name=${name%.glsl}
+    desc=$(sed -n 's|^// HyprWindowShade: ||p' "$f" | head -n 1)
+    printf '%-15s %s\n' "$name" "$desc"
+  done
+}
+
+# resolve NAME — print the shader path, or die with a hint.
+resolve() {
+  case $1 in
+    /*.glsl)
+      [ -f "$1" ] || die "no such shader: $1"
+      printf '%s' "$1"
+      return
+      ;;
+    */*) die "no such shader: $1" ;;
+  esac
+  name=${1%.glsl}
+  path=$SHADER_DIR/$name.glsl
+  [ -f "$path" ] || die "no such shader: $name (see 'shade list')"
+  printf '%s' "$path"
+}
+
+cmd=${1:-list}
+[ $# -gt 0 ] && shift
+
+case $cmd in
+  -h | --help | help | \?)
+    usage
+    ;;
+  list | ls)
+    list_shaders
+    ;;
+  on | toggle)
+    plugin_loaded
+    pick=${1:-}
+    if [ -z "$pick" ]; then
+      if command -v fzf > /dev/null 2>&1; then
+        pick=$(list_shaders | fzf --prompt 'shader> ' | awk '{print $1}')
+        [ -n "$pick" ] || exit 0
+      else
+        list_shaders
+        die "name a shader, e.g. shade on crt"
+      fi
+    fi
+    path=$(resolve "$pick")
+    shade_call togglewindowshader "$path"
+    printf 'shade: %s → focused window (again to remove)\n' "${path##*/}"
+    ;;
+  off | clear)
+    plugin_loaded
+    shade_call togglewindowshader clear
+    printf 'shade: cleared the focused window\n'
+    ;;
+  class)
+    plugin_loaded
+    [ -n "${1:-}" ] || die "usage: shade class CLASS [NAME]"
+    cls=$1
+    shift
+    if [ -n "${1:-}" ]; then
+      path=$(resolve "$1")
+      shade_call toggleclassshader "$cls" "$path"
+      printf 'shade: %s → class %s\n' "${path##*/}" "$cls"
+    else
+      shade_call classshader "$cls" clear
+      printf 'shade: cleared class %s\n' "$cls"
+    fi
+    ;;
+  layer)
+    plugin_loaded
+    [ -n "${1:-}" ] || die "usage: shade layer NAMESPACE [NAME]"
+    ns=$1
+    shift
+    if [ -n "${1:-}" ]; then
+      path=$(resolve "$1")
+      shade_call togglelayershader "$ns" "$path"
+      printf 'shade: %s → layer %s\n' "${path##*/}" "$ns"
+    else
+      shade_call layershader "$ns" clear
+      printf 'shade: cleared layer %s\n' "$ns"
+    fi
+    ;;
+  reload)
+    plugin_loaded
+    shade_call reloadshaders
+    printf 'shade: shader cache dropped, .glsl files re-read\n'
+    ;;
+  *)
+    usage
+    die "unknown command: $cmd"
+    ;;
+esac
