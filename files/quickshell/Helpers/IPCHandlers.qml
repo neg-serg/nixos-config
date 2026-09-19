@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import qs.Notifications
+import qs.Services as Services
 
 
 Item {
@@ -16,5 +17,8 @@ Item {
         function toggleNotificationCenter(): void {
             NotificationManager.showTrayNotifs = !NotificationManager.showTrayNotifs;
         }
+        // Same path the workspace capsule click uses; handy for binds, scripts
+        // and anything else that should not re-implement the hyprctl incantation.
+        function toggleOverview(): void { Services.Expo.toggle(); }
     }
 }
