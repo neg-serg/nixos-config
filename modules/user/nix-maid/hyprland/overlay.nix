@@ -109,6 +109,46 @@
               platforms = final.lib.platforms.linux;
             };
           };
+
+          # HyprWindowShade: per-window, per-layer and per-class fragment shaders
+          # (HyprShade-compatible GLSL ES 3.20). Upstream ships a Makefile for hyprpm;
+          # the rev is the commit its hyprpm.toml pins for the Hyprland commit we run
+          # (efb50993780079460b0cbed1363e2166a2de1d9f = 0.56.2), so the plugin and the
+          # compositor stay in one commit family. The .so is dlopen'd by the generated
+          # hyprwindowshade-setup helper at session start (see main.nix).
+          hyprwindowshade = final.hyprlandPlugins.mkHyprlandPlugin {
+            pluginName = "hyprwindowshade";
+            version = "0-unstable-2026-09-19";
+
+            src = final.fetchFromGitHub {
+              owner = "ManofJELLO";
+              repo = "HyprWindowShade";
+              rev = "a4c6b8af424a189072427c4c90ef2938e1b481d3";
+              hash = "sha256-hFs3AVnH6j9ZnDzfG19pAL9cO+pVl21pT9q9A1c6DNw=";
+            };
+
+            dontUseCmakeConfigure = true;
+            # The Makefile asks pkg-config for Hyprland's flags and links
+            # GLES/EGL/GL, which libglvnd provides.
+            buildInputs = [ final.libglvnd ];
+            env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
+
+            installPhase = ''
+              runHook preInstall
+
+              mkdir -p $out/lib
+              mv HyprWindowShade.so $out/lib/libHyprWindowShade.so
+
+              runHook postInstall
+            '';
+
+            meta = {
+              homepage = "https://github.com/ManofJELLO/HyprWindowShade";
+              description = "Per-window, per-layer and per-class fragment shaders for Hyprland";
+              license = final.lib.licenses.mit;
+              platforms = final.lib.platforms.linux;
+            };
+          };
         };
       })
     ];
