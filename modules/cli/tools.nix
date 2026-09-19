@@ -73,6 +73,9 @@ in
     pkgs.sd # intuitive find & replace CLI (sed replacement)
     pkgs.wlrctl # command-line utility for miscellaneous wlroots Wayland extensions
 
+    # Wallpaper / cartography
+    pkgs.neg.topowall # topographic contour wallpapers from real elevation data (GPU render)
+
     # Python
     (pkgs.python3.withPackages (ps: [ ps.pexpect ])) # python3 with pexpect for expect-style automation
   ]
