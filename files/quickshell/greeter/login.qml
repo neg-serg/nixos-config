@@ -62,6 +62,29 @@ ShellRoot {
 		onLoadFailed: root.wallpaperFile = ""
 	}
 
+	// Keyboard layout. While a session lock is up the compositor's binds do not
+	// fire and kb_options is empty (files/gui/hypr/hyprland.lua), so there is no
+	// way to change the layout at the login screen — a Latin password typed in a
+	// Russian layout is simply rejected, with nothing in the UI hinting why
+	// (2026-09-19 18:05: three attempts, no way out but to kill the layer).
+	// `qs-login-layer` therefore puts the compositor on index 0 (`us`, the first
+	// entry of kb_layout) before this file loads, and the chip in the corner
+	// toggles it from inside the lock surface (the button in the corner). The label
+	// is the layout we set, not a reading of the device: nothing else can change
+	// it while the lock is up.
+	property int layoutIndex: 0
+	readonly property string layoutName: root.layoutIndex === 0 ? "US" : (root.layoutIndex === 1 ? "RU" : String(root.layoutIndex))
+
+	Process {
+		id: layoutSet
+	}
+
+	function setLayout(index) {
+		root.layoutIndex = index;
+		layoutSet.command = ["hyprctl", "switchxkblayout", "all", String(index)];
+		layoutSet.running = true;
+	}
+
 	LockState {
 		id: state
 
@@ -85,7 +108,7 @@ ShellRoot {
 			if (pam.responseRequired) {
 				pam.respond(state.currentText);
 			} else if (pam.messageIsError) {
-				root.failLogin(pam.message);
+				root.failLogin(pam.message + " — keymap " + root.layoutName);
 			}
 		}
 
@@ -98,7 +121,9 @@ ShellRoot {
 	function finishLogin(success) {
 		state.isUnlocking = false;
 		if (!success) {
-			root.failLogin("Invalid password");
+			// The layout is the one failure mode the UI cannot show on its own, so
+			// it goes into the message (see the layout chip below).
+			root.failLogin("Invalid password — keymap " + root.layoutName);
 			return;
 		}
 		state.failed = false;
@@ -184,6 +209,45 @@ ShellRoot {
 				context: null
 			}
 
+			// Keyboard-layout button: shows which layout the password is being typed
+			// in and switches it on click (see the layout note further up). A button
+			// and not a hint, because a wrong layout is exactly the failure the rest
+			// of the login screen cannot show: the password just comes back rejected.
+			// Styled like the greeter's own lock buttons (ShellGlobals colours, same
+			// hover interpolation, same 5 px radius).
+			Rectangle {
+				id: layoutButton
+
+				anchors.right: parent.right
+				anchors.bottom: parent.bottom
+				anchors.margins: 40
+				implicitWidth: layoutLabel.implicitWidth + 44
+				implicitHeight: 48
+				radius: 5
+				border.width: 1
+				border.color: ShellGlobals.colors.widgetOutline
+				color: ShellGlobals.interpolateColors(
+					layoutMouse.containsMouse || layoutMouse.pressed ? 1000 : 0,
+					ShellGlobals.colors.widget,
+					ShellGlobals.colors.widgetActive
+				)
+
+				Text {
+					id: layoutLabel
+					anchors.centerIn: parent
+					text: "layout: " + root.layoutName
+					color: "white"
+					font.pixelSize: 20
+				}
+
+				MouseArea {
+					id: layoutMouse
+					anchors.fill: parent
+					hoverEnabled: true
+					cursorShape: Qt.PointingHandCursor
+					onClicked: root.setLayout(root.layoutIndex === 0 ? 1 : 0)
+				}
+			}
 		}
 	}
 }
