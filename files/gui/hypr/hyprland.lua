@@ -824,10 +824,68 @@ hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, ani
 -- =====================================================================
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
+-- The login layer is a session-lock surface inside this compositor
+-- (files/quickshell/greeter/login.qml), so the login screen is painted by the
+-- same compositor that will run the session: no greeter process exits, no second
+-- Hyprland, no DRM mode re-set on login. The layer process itself is
+-- `qs-login-layer` (modules/user/session/greetd/login-layer.sh).
+--
+-- Phase detection reads the marker the session wrapper maintains and exports:
+--   $QS_LOGIN_STATE_DIR/state   "login" | "session"   (see greetd/session-wrapper.sh)
+-- The directory sits in XDG_RUNTIME_DIR, which logind wipes when the session
+-- ends — a logout therefore always comes back to the login screen, with nobody
+-- having to reset the marker. No QS_LOGIN_STATE_DIR (a compositor started by
+-- hand, outside greetd) means session phase.
+local loginStateDir = os.getenv("QS_LOGIN_STATE_DIR")
+local loginPhase = (function()
+  if not loginStateDir then return false end
+  local f = io.open(loginStateDir .. "/state", "r")
+  if not f then return false end
+  local v = f:read("*l") or ""
+  f:close()
+  return v:match("^%s*login%s*$") ~= nil
+end)()
+
 hl.on("hyprland.start", function()
-  -- Restart the session target chain: import env, clean stale portals and
-  -- stop/start hyprland-session.target so quickshell, hypridle, hyprscratch
-  -- and ru-layout come back after a Hyprland (re)start.
+  if loginPhase then
+    -- Login phase: start the login layer instead of the desktop. Nothing of the
+    -- session (target, shell, autostart apps) is started yet; the layer writes
+    -- "session" into the marker while it quits, and only then does the desktop
+    -- start (the `exec` also keeps hypr-start out of the layer's process tree).
+    --
+    -- hyprctl dispatch exec returns immediately (the command is backgrounded),
+    -- so this never blocks the config load.
+    --
+    -- The three attempts cover a layer that crashed before the password was
+    -- entered: without them the compositor would sit on a black screen with
+    -- nothing able to reach it. They are not a lockout risk either — if the
+    -- layer did come up, the session lock owns the input and the attempts never
+    -- run again. If all three fail there is no lock in place, so the rescue bind
+    -- below still gets the desktop started.
+    hl.exec_cmd([[
+      sh -c '
+        for _ in 1 2 3; do
+          qs-login-layer
+          if grep -qx session "${QS_LOGIN_STATE_DIR:-/tmp}/state" 2>/dev/null; then exec hypr-start; fi
+          sleep 1
+        done
+        printf "login layer exited without a login, three times, at %s\n" "$(date)" >> /tmp/qs-login-layer.log
+      '
+    ]])
+    return
+  end
+
+  -- Rescue bind: reachable only while *no* session lock is up — a locked
+  -- compositor routes every event to the lock surface — so it cannot be used to
+  -- skip the login screen. It is the way back in when the login layer fails to
+  -- start (three attempts above) and the shortcut for a hand-started compositor.
+  hl.bind(M4 .. "+" .. SH .. "+F12", hl.dsp.exec_cmd(
+    "sh -c 'printf \"session\\n\" > \"${QS_LOGIN_STATE_DIR:-/tmp}/state\"; hypr-start'"
+  ))
+
+  -- Session phase: restart the session target chain: import env, clean stale
+  -- portals and stop/start hyprland-session.target so quickshell, hypridle,
+  -- hyprscratch and ru-layout come back after a Hyprland (re)start.
   hl.exec_cmd("hypr-start")
 
   -- Liquid glass: loads the plugin and pushes files/gui/hypr/hyprglass.lua
@@ -865,6 +923,10 @@ end)
 -- (systemctl start is a no-op when the service is already active,
 -- so this never spawns more than one instance).
 hl.on("config.reloaded", function()
+  -- Not during the login phase: the marker still says "login", the login layer
+  -- owns the screen, and a reload (or the desktop shell starting behind the
+  -- login screen) would put the panel on top of it.
+  if loginPhase then return end
   hl.exec_cmd("systemctl --user start quickshell.service")
 end)
 
