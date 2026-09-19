@@ -45,8 +45,8 @@ local blur_passes            = 4  -- was 2; those surfaces rely on Hyprland's ow
                                -- (hyprglass glasses only windows + popups now), so the
                                -- knobs here are the bar's blur strength.
 local blur_vibrancy          = 0 -- was 0.1696: the vibrancy boost saturated whatever the blur
-                               -- sampled — with xray that is the wallpaper, so the bar showed
-                               -- its hue at full strength instead of a neutral frost.
+                               -- sampled — with the old xray that was the wallpaper, so the
+                               -- bar showed its hue at full strength instead of a neutral frost.
 
 -- ---------------------------------------------------------------------
 -- Common window matcher regexes (from vars.conf / classes.conf)
@@ -163,16 +163,17 @@ hl.config({
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
     shadow = { enabled = false }, -- frameless: the compositor never draws a shadow here
     -- Live backdrop: the blur samples the frame *behind* the surface, not the
-    -- wallpaper. With `xray` (or `new_optimizations`, which caches the same
-    -- render target) Hyprland blurs `m_blurFB` — a pre-rendered wallpaper blur
-    -- that ignores every window between the surface and the wallpaper, so a
+    -- wallpaper. With `xray` Hyprland blurs `m_blurFB` — a pre-rendered wallpaper
+    -- blur that ignores every window between the surface and the wallpaper, so a
     -- translucent window showed a frozen picture of the desktop instead of the
-    -- desktop (IHyprRenderer::shouldUseNewBlurOptimizations() → ElementRenderer
-    -- picks m_blurFB over blurMainFramebuffer()). Cost: a stacked translucent
-    -- window now re-blurs an already blurred surface underneath, which is what
-    -- made the bar/panel read muddy against hyprglass windows; the shell opted
-    -- out of the wallpaper sample per namespace below (no-xray-* rules), so both
-    -- halves of the config say the same thing now.
+    -- desktop (IHyprRenderer::shouldUseNewBlurOptimizations() returns true for a
+    -- layer with xray on → ElementRenderer picks m_blurFB over
+    -- blurMainFramebuffer()). With `new_optimizations` off, `m_blurFB` is never
+    -- rendered: preRender() bails out and preBlurQueued() returns false, so an
+    -- xray layer would sample a stale buffer. Both knobs are therefore false and
+    -- no layer rule turns xray back on — every surface blurs the live
+    -- framebuffer. Cost: a stacked translucent window re-blurs an already
+    -- blurred surface underneath.
     blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
     -- motion blur: adds a smear while anything on screen is moving — the
     -- scrolling tape and dragged windows are where it reads. 24 samples is the
@@ -766,28 +767,15 @@ hl.window_rule({ name = "route-rack", match = { title = "^VCV Rack" }, no_blur =
 -- =====================================================================
 -- Layer rules (rules.conf)
 -- =====================================================================
--- xray: see through all layers
-hl.layer_rule({ name = "xray-all", match = { namespace = ".*" }, xray = true })
-
--- ...except quickshell: every surface of the shell has to blur what is *actually*
--- under it. With xray on a surface samples the wallpaper through everything and
--- reads as the wallpaper's own colour — a cyan wallpaper turned the whole bar
--- cyan, a pink one turned it pink — instead of the content it covers. Layer
--- rules are matched last-first, so these override xray-all for the shell's
--- surfaces while every other layer keeps it.
-for _, ns in ipairs({ "qs-content-left", "qs-content-right", "qs-panel", "quickshell-bar-reserve" }) do
-  hl.layer_rule({ name = "no-xray-" .. ns, match = { namespace = ns }, xray = false })
-end
--- Popups, panels and notifications need the same treatment: with xray on they
--- showed a blurred *wallpaper* behind a window that sat right under them, which
--- is what "quickshell shows a cached background instead of what is beneath it"
--- turned out to mean. Matched by pattern so a new shell surface (qs-weather,
--- qs-calendar, qs-monitor, qs-netflow, qs-music, qs-glass, ...) inherits the
--- rule without a second edit here.
-for _, pat in ipairs({ "^qs-", "^quickshell", "^sideleft-weather",
-                       "^shell:notifications", "^shell:notification-center" }) do
-  hl.layer_rule({ name = "no-xray-" .. pat, match = { namespace = pat }, xray = false })
-end
+-- No rule sets xray. xray makes a layer sample `m_blurFB`
+-- (IHyprRenderer::shouldUseNewBlurOptimizations() returns true for a layer with
+-- xray on → ElementRenderer picks m_blurFB over blurMainFramebuffer()), the
+-- pre-rendered wallpaper blur that ignores everything between the surface and
+-- the wallpaper. With `new_optimizations = false` (decoration.blur above)
+-- `m_blurFB` is never rendered — preRender() bails out and preBlurQueued()
+-- returns false — so an xray layer would sample a stale/never-rendered buffer.
+-- The `xray-all` rule and the per-namespace `no-xray-*` overrides it needed are
+-- gone: xray stays off everywhere and every layer blurs the live framebuffer.
 
 -- no animation
 for _, ns in ipairs({ "selection", "indicator.*", "hyprpicker" }) do
