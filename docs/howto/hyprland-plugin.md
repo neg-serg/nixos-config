@@ -96,6 +96,11 @@ behind Hyprland.
     along: the shader scales the frosted colour by `1 - adaptiveDim * smoothstep(0.25, 0.55,
     blurredLum)`, whose curve is tuned for the luminance range a normal-strength blur compresses
     into.
+  - `black_glass` is attached to the rmpc window (class `music`) by tag in
+    `files/gui/hypr/hyprland.lua`: smoked black glass — `tint_color = 0x000000cc` (RRGGBBAA,
+    mixed over the blurred backdrop by the shader's closing `mix`), `glass_opacity 0.9`,
+    `vibrancy 0` and the same hardest blur the scratchpads use. The rmpc rule trades the
+    `hyprglass_preset_scratch` tag for this one because a window resolves a single preset.
   - `media-dark` is attached to the panel's now-playing card through
     `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
     `dark.brightness = 0.40` — ~2x the dark theme's 0.82 — plus the hardest frost
