@@ -1,0 +1,136 @@
+/* neg-gtk — GTK4 / libadwaita palette override, applied on top of Adwaita.
+ *
+ * Palette source: neg.nvim, kept in sync with the other themed surfaces of this
+ * repo (ghostty palettes 25/247/251, rmpc neg.ron, vicinae, btop midnight-ocean).
+ *
+ *   background  #000000 (view) -> #040f1c (window) -> #0c1c30 (card/headerbar)
+ *   text        #a4b3c6, secondary #6d839e, bright #d1e5ff
+ *   accent      #005faf (surfaces), #5c9fdf (text)
+ *   states      success #007a66, error #6b0f2a, warning #c8a8ef
+ *
+ * Notes:
+ *  - libadwaita ignores both GTK_THEME and gtk-application-prefer-dark-theme;
+ *    dark mode has to come from org.gnome.desktop.interface color-scheme
+ *    (prefer-dark), which modules/user/nix-maid/gui/theme.nix sets via dconf.
+ *  - The full set of names below is the one libadwaita itself defines; every
+ *    name it does not get from us stays at Adwaita's default (light!) value,
+ *    which is what produced a half-light window before.
+ *  - Colors are defined unconditionally (not inside a prefers-color-scheme
+ *    query) so the palette also holds for apps that request the light variant.
+ *  - The legacy theme_* aliases are kept for plain GTK4 apps (Adwaita theme)
+ *    and for the shared GTK3 code paths of mixed applications.
+ */
+
+/* ── Palette ─────────────────────────────────────────────────────────── */
+
+@define-color neg_bg          #040f1c;
+@define-color neg_bg_dark     #000000;
+@define-color neg_bg_card     #0c1c30;
+@define-color neg_bg_widget   #10233a;
+@define-color neg_bg_hover    #1c334e;
+@define-color neg_border      #2b4462;
+@define-color neg_border_dim  #1c334e;
+@define-color neg_fg          #a4b3c6;
+@define-color neg_fg_dim      #6d839e;
+@define-color neg_fg_bright   #d1e5ff;
+@define-color neg_accent      #005faf;
+@define-color neg_accent_text #5c9fdf;
+@define-color neg_select_bg   #0d1824;
+@define-color neg_success     #007a66;
+@define-color neg_error       #6b0f2a;
+@define-color neg_warning     #c8a8ef;
+
+/* ── Surfaces ────────────────────────────────────────────────────────── */
+
+@define-color window_bg_color     @neg_bg;
+@define-color window_fg_color     @neg_fg;
+@define-color view_bg_color       @neg_bg_dark;
+@define-color view_fg_color       @neg_fg;
+
+@define-color headerbar_bg_color        @neg_bg_card;
+@define-color headerbar_fg_color        @neg_fg;
+@define-color headerbar_border_color    @neg_border;
+@define-color headerbar_backdrop_color  @neg_bg;
+@define-color headerbar_shade_color     rgba(0, 0, 6, 0.36);
+@define-color headerbar_darker_shade_color rgba(0, 0, 12, 0.90);
+
+@define-color sidebar_bg_color            @neg_bg_card;
+@define-color sidebar_fg_color            @neg_fg;
+@define-color sidebar_backdrop_color      #08152a;
+@define-color sidebar_border_color        rgba(0, 0, 6, 0.36);
+@define-color sidebar_shade_color         rgba(0, 0, 6, 0.25);
+
+@define-color secondary_sidebar_bg_color       @neg_bg;
+@define-color secondary_sidebar_fg_color       @neg_fg;
+@define-color secondary_sidebar_backdrop_color #02070f;
+@define-color secondary_sidebar_border_color   rgba(0, 0, 6, 0.36);
+@define-color secondary_sidebar_shade_color    rgba(0, 0, 6, 0.25);
+
+@define-color card_bg_color    @neg_bg_widget;
+@define-color card_fg_color    @neg_fg;
+@define-color card_shade_color rgba(0, 0, 6, 0.36);
+
+@define-color dialog_bg_color  @neg_bg_card;
+@define-color dialog_fg_color  @neg_fg;
+
+@define-color popover_bg_color    @neg_bg_card;
+@define-color popover_fg_color    @neg_fg;
+@define-color popover_shade_color rgba(0, 0, 6, 0.25);
+
+@define-color thumbnail_bg_color @neg_bg_widget;
+@define-color thumbnail_fg_color @neg_fg_dim;
+
+@define-color shade_color              rgba(0, 0, 6, 0.25);
+@define-color scrollbar_outline_color  rgba(0, 0, 12, 0.95);
+
+/* ── Accent and status colors ────────────────────────────────────────── */
+
+@define-color accent_bg_color  @neg_accent;
+@define-color accent_fg_color  @neg_fg_bright;
+@define-color accent_color     @neg_accent_text;
+
+@define-color destructive_bg_color @neg_error;
+@define-color destructive_fg_color #ffdfe6;
+@define-color destructive_color    #ff9fb0;
+
+@define-color success_bg_color @neg_success;
+@define-color success_fg_color #d6fff5;
+@define-color success_color    #4fc2a6;
+
+@define-color warning_bg_color @neg_warning;
+@define-color warning_fg_color #1b1030;
+@define-color warning_color    @neg_warning;
+
+@define-color error_bg_color @neg_error;
+@define-color error_fg_color #ffdfe6;
+@define-color error_color    #ff9fb0;
+
+/* ── Insensitive and borders ─────────────────────────────────────────── */
+
+@define-color insensitive_bg_color   #08152a;
+@define-color insensitive_base_color #050d17;
+@define-color insensitive_fg_color   #55677d;
+
+@define-color borders           @neg_border;
+@define-color unfocused_borders @neg_border_dim;
+
+/* ── Legacy aliases (plain GTK4 widgets) ─────────────────────────────── */
+
+@define-color theme_bg_color      @neg_bg;
+@define-color theme_base_color    @neg_bg_dark;
+@define-color theme_fg_color      @neg_fg;
+@define-color theme_text_color    @neg_fg;
+@define-color theme_selected_bg_color @neg_accent;
+@define-color theme_selected_fg_color @neg_fg_bright;
+@define-color theme_unfocused_bg_color   #08152a;
+@define-color theme_unfocused_base_color #02070f;
+@define-color theme_unfocused_fg_color   @neg_fg_dim;
+@define-color theme_unfocused_text_color @neg_fg_dim;
+@define-color theme_unfocused_selected_bg_color #0a4a8a;
+@define-color theme_unfocused_selected_fg_color #b9cde3;
+
+@define-color bg_color          @neg_bg;
+@define-color text_color        @neg_fg;
+@define-color selected_bg_color @neg_accent;
+@define-color selected_fg_color @neg_fg_bright;
+@define-color content_view_bg   @neg_bg_dark;

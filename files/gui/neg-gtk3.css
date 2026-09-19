@@ -1,0 +1,106 @@
+/* neg-gtk — GTK3 palette override, applied on top of Adwaita / Adwaita-dark.
+ *
+ * Palette source: neg.nvim, kept in sync with the other themed surfaces of this
+ * repo (ghostty palettes 25/247/251, rmpc neg.ron, vicinae, btop midnight-ocean).
+ *
+ *   background  #000000 (view) -> #040f1c (window) -> #0c1c30 (card/headerbar)
+ *   text        #a4b3c6, secondary #6d839e, bright #d1e5ff
+ *   accent      #005faf (surfaces), #5c9fdf (text/links)
+ *   states      success #007a66, error #6b0f2a, warning #c8a8ef
+ *
+ * Only named colors are redefined here (plus links, which Adwaita hardcodes to
+ * #3584e4): Adwaita's widget rules stay intact, so buttons, entries, scrollbars
+ * and headerbars keep their native dark styling instead of being patched over.
+ */
+
+/* ── Palette ─────────────────────────────────────────────────────────── */
+
+@define-color neg_bg          #040f1c;
+@define-color neg_bg_dark     #000000;
+@define-color neg_bg_card     #0c1c30;
+@define-color neg_bg_widget   #10233a;
+@define-color neg_bg_hover    #1c334e;
+@define-color neg_border      #2b4462;
+@define-color neg_border_dim  #1c334e;
+@define-color neg_fg          #a4b3c6;
+@define-color neg_fg_dim      #6d839e;
+@define-color neg_fg_bright   #d1e5ff;
+@define-color neg_accent      #005faf;
+@define-color neg_accent_text #5c9fdf;
+@define-color neg_select_bg   #0d1824;
+@define-color neg_success     #007a66;
+@define-color neg_error       #6b0f2a;
+@define-color neg_warning     #c8a8ef;
+
+/* ── Core theme colors (the names Adwaita 3.24 actually uses) ────────── */
+
+@define-color theme_bg_color      @neg_bg;
+@define-color theme_base_color    @neg_bg_dark;
+@define-color theme_fg_color      @neg_fg;
+@define-color theme_text_color    @neg_fg;
+
+@define-color theme_selected_bg_color @neg_accent;
+@define-color theme_selected_fg_color @neg_fg_bright;
+
+@define-color theme_unfocused_bg_color   #08152a;
+@define-color theme_unfocused_base_color #02070f;
+@define-color theme_unfocused_fg_color   @neg_fg_dim;
+@define-color theme_unfocused_text_color @neg_fg_dim;
+@define-color theme_unfocused_selected_bg_color #0a4a8a;
+@define-color theme_unfocused_selected_fg_color #b9cde3;
+
+@define-color borders           @neg_border;
+@define-color unfocused_borders @neg_border_dim;
+
+/* Legacy aliases still referenced by older widgets. */
+@define-color bg_color           @neg_bg;
+@define-color text_color         @neg_fg;
+@define-color selected_bg_color  @neg_accent;
+@define-color selected_fg_color  @neg_fg_bright;
+@define-color content_view_bg    @neg_bg_dark;
+@define-color text_view_bg       @neg_bg_dark;
+@define-color view_bg_color      @neg_bg_dark;
+@define-color view_fg_color      @neg_fg;
+
+@define-color insensitive_bg_color          #08152a;
+@define-color insensitive_base_color        #050d17;
+@define-color insensitive_fg_color          #55677d;
+@define-color unfocused_insensitive_color   #45566b;
+
+/* ── Status colors ───────────────────────────────────────────────────── */
+
+@define-color error_color        #ff9fb0;
+@define-color error_bg_color     @neg_error;
+@define-color error_fg_color     #ffdfe6;
+@define-color warning_color      @neg_warning;
+@define-color warning_bg_color   @neg_warning;
+@define-color warning_fg_color   #1b1030;
+@define-color success_color      #4fc2a6;
+@define-color destructive_bg_color @neg_error;
+@define-color destructive_fg_color #ffdfe6;
+
+/* ── Client-side titlebar (GtkHeaderBar / wm_* names) ────────────────── */
+
+@define-color wm_title           @neg_fg_bright;
+@define-color wm_unfocused_title @neg_fg_dim;
+@define-color wm_bg_a            @neg_bg_card;
+@define-color wm_bg_b            @neg_bg_card;
+@define-color wm_border          @neg_border;
+@define-color wm_borders_edge    @neg_border_dim;
+@define-color wm_highlight       rgba(255, 255, 255, 0.06);
+@define-color wm_shadow          rgba(0, 0, 0, 0.6);
+
+/* ── Links ───────────────────────────────────────────────────────────── */
+
+/* Adwaita compiles these to a literal #3584e4, hence the explicit rules. */
+button:link,
+button:visited,
+*:link {
+  color: @neg_accent_text;
+}
+
+button:link:hover,
+button:visited:hover,
+*:link:hover {
+  color: #7fb6e6;
+}
