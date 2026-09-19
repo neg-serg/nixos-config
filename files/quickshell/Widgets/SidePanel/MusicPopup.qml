@@ -298,6 +298,9 @@ Item {
                             // Music.onScreen), so the surface's own visibility is
                             // passed down: this is what gates the cava feed.
                             isOnScreen: toast.visible
+                            // Screen insets of this surface, for the frost slice.
+                            edgeMarginRight: toast._marginRight
+                            edgeMarginBottom: toast._marginBottom
                         }
                     }
                 }
