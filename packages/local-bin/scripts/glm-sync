@@ -38,13 +38,20 @@ shot() {
 }
 
 read_volume() {
-  local b64 payload resp
-  b64="$(magick "$SCREEN_DUMP" -resize '1600x1600>' -quality 85 jpg:- 2>/dev/null | base64 -w0)" || return 1
-  [ -n "$b64" ] || return 1
-  payload="$(jq -n --arg m "$MODEL" --arg img "data:image/jpeg;base64,$b64" \
+  local b64file bodyfile resp
+  # Both the base64 image and the request body travel through files, not through
+  # argv: a 1600px JPEG is hundreds of kilobytes of base64, far past the per
+  # argument limit, and passing it as an argument is exactly what made this
+  # reader die with "Argument list too long" (E2BIG) instead of reading GLM.
+  b64file="$RUNTIME_DIR/glm-sync.b64"
+  bodyfile="$RUNTIME_DIR/glm-sync.request.json"
+  magick "$SCREEN_DUMP" -resize '1600x1600>' -quality 85 jpg:- 2>/dev/null | base64 -w0 > "$b64file" || return 1
+  [ -s "$b64file" ] || return 1
+  jq -n --arg m "$MODEL" --rawfile img "$b64file" \
     --arg p "This is a Windows VM screenshot with a GLM (Genelec) application window. Find the CURRENT master volume value (a number with dB near the top of the GLM window). Reply with ONLY the number, e.g. -46.0. Ignore preset buttons like -40.0 dB and -50.0 dB — those are not the current value." \
-    '{model:$m,messages:[{role:"user",content:[{type:"image_url",image_url:{url:$img}},{type:"text",text:$p}]}],stream:false}')"
-  resp="$(curl -s --max-time 120 "$OLLAMA/chat/completions" -H "Content-Type: application/json" -d "$payload")" || return 1
+    '{model:$m,messages:[{role:"user",content:[{type:"image_url",image_url:{url:("data:image/jpeg;base64,"+$img)}},{type:"text",text:$p}]}],stream:false}' > "$bodyfile" || return 1
+  resp="$(curl -s --max-time 120 "$OLLAMA/chat/completions" -H "Content-Type: application/json" --data-binary "@$bodyfile")" || return 1
+  rm -f "$b64file" "$bodyfile"
   echo "$resp" | jq -r '.choices[0].message.content // empty' 2>/dev/null
 }
 

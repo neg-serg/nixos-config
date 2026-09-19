@@ -25,6 +25,7 @@ Singleton {
             stateAdapter.lastActivePlayers = [];
             stateAdapter.audioOffReminderLastShownAt = 0;
             stateAdapter.genelecVolume = -40;
+            stateAdapter.genelecPreMuteVolume = -40;
             writeAdapter();
         }
         JsonAdapter {
@@ -35,6 +36,9 @@ Singleton {
             property var lastActivePlayers: []
             property double audioOffReminderLastShownAt: 0
             property int genelecVolume: -40 // Last-set Genelec SAM hardware volume (dB)
+            // Volume that was active when the widget got muted: without it a
+            // restart makes unmute jump back to the hardcoded -40.
+            property int genelecPreMuteVolume: -40
         }
     }
 }
