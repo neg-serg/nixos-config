@@ -14,10 +14,13 @@ FileView {
     watchChanges: true
 
     // Read the file before Component.onCompleted: the persisted singletons
-    // (StateCache, Settings) are consulted from other components' startup code,
-    // and without this the adapter still holds its defaults at that moment —
-    // which is how the Genelec widget managed to restore -40 instead of the
-    // volume actually stored in ~/.cache/quickshell/state.json.
+    // (StateCache, Settings) are consulted from other components' startup code.
+    // `preload` only *starts* the read that early, though — the adapter still
+    // holds its declared defaults while a consumer's Component.onCompleted runs,
+    // because the singleton is instantiated at that moment (the Genelec widget
+    // pulling in StateCache) and the file read completes afterwards. Consumers
+    // that must not mistake a default for data gate on the adapter's own change
+    // signal — StateCache.ready is the example.
     preload: true
 
     property bool _reloadPending: false
@@ -36,6 +39,8 @@ FileView {
     onAdapterUpdated: {
         // A reload applying file changes must not write back to the file
         // (that would trigger onFileChanged -> reload -> onAdapterUpdated loop).
+        // Note: a preload does not emit this at all in 0.3.1, so it cannot be used
+        // as a readiness signal — see the `preload` comment above.
         if (root._loading) {
             root._loading = false;
             return;
