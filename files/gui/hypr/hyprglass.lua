@@ -45,7 +45,14 @@ hl.config({
         -- so the glass there flickered between none / normal / double strength (0.56.2
         -- + hyprglass 0.8.1, measured 2026-09-17). Those surfaces keep Hyprland's
         -- own layer blur (layerrule blur-qs-.* , ignore_alpha 0.6) instead.
-        namespaces = "quickshell,notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
+        -- NOTE: the list is matched as a substring, not as a full namespace, so a bare
+        -- "quickshell" entry also catches quickshell-bar-reserve — the bar's shared
+        -- backdrop surface. That is where the bar picked up the wallpaper's hue: the
+        -- glass pass samples the wallpaper, not what lies under the surface, so the
+        -- whole bar read as the wallpaper's own colour (saturation 0.7-0.9, measured
+        -- 2026-09-19) and went neutral the moment this entry was dropped. The bar
+        -- keeps Hyprland's own blur (the no-xray-* layer rules) instead.
+        namespaces = "notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
         -- The panel's now-playing card (Widgets/SidePanel/MusicPopup.qml) gets a
         -- darker glass than the rest: `media-dark` is defined by hyprglass-apply
         -- with dark.brightness = 0.55, i.e. 1.5x the dark theme's 0.82. Pair
