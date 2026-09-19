@@ -128,6 +128,35 @@ behind Hyprland.
   `gesturePolicy` (qquicktaphandler.cpp, setPressed()), so the click was silently lost.
 
 
+### HyprWindowShade (per-window / per-layer fragment shaders)
+
+- **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — nixpkgs has no
+  `hyprlandPlugins.hyprwindowshade`, so it is built with nixpkgs' `mkHyprlandPlugin` helper. The
+  rev is the commit its `hyprpm.toml` pins for the Hyprland commit we run (`efb5099378…` = 0.56.2),
+  so plugin and compositor stay in one commit family. Upstream ships a Makefile that links
+  GLES/EGL/GL, hence `dontUseCmakeConfigure` + `libglvnd` + the dev output of `hyprland` on
+  `PKG_CONFIG_PATH`.
+- **Load + configure**: same load-then-push pattern as hyprglass/hyprexpo — the `hyprland.start`
+  hook runs `hyprwindowshade-setup`, which `hyprctl plugin load`s `libHyprWindowShade.so` and pushes
+  `files/gui/hypr/hyprwindowshade.lua` through `hyprctl eval`. The helper is in PATH, so the rules
+  can be re-applied in a live session.
+- **Shaders**: `files/gui/hypr/shaders/*.glsl`, linked into `~/.config/hypr/shaders`. GLSL ES 3.20
+  with HyprShade's interface (`v_texcoord` / `tex` / `fragColor`) plus the plugin's per-frame
+  uniforms (`is_active`, `surface_size`, `time`, `window_box`, …). Editing a shader takes effect on
+  the next frame — no reload, no config change.
+- **Binds**: `SUPER+SHIFT+x` toggles `pixelate.glsl` on the focused window, `SUPER+SHIFT+u` strips
+  every shader from it. Plugin functions only exist under `hl.plugin.HyprWindowShade.*` *after* the
+  dlopen, so both binds look the table up inside a closure (the plugin README's pattern) and pop a
+  notification when the plugin is missing; `hl.bind` registers them as `__lua` dispatchers.
+- **Verified** in a nested 0.56.2 instance: `classshader` on a window drops its unique colour count
+  292 → 1; the rule from `hyprwindowshade.lua` leaves an unfocused window at 0.1445 mean luminance /
+  0.237 saturation against 0.2356 / 0.496 focused — exactly the shader's 0.62 and 0.55 constants;
+  `togglewindowshader` → `clear` measured the same way (unique colours 1649 → 778 → 1649).
+  Keypresses themselves cannot be synthesised on this host: `wtype` delivers text to clients, but
+  its virtual-keyboard modifier events do not match Hyprland binds (checked against a plain
+  `exec_cmd` bind in a nested instance), so the binds are covered by registration
+  (`hyprctl binds -j`: modmask 65 = SUPER+SHIFT, dispatcher `__lua`) plus the action test above.
+
 ## Testing a plugin without endangering the session
 
 Plugins run inside the compositor, so a crashing one takes the whole session with it (that is how
