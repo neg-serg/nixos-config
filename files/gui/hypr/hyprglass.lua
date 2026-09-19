@@ -46,6 +46,13 @@ hl.config({
         -- + hyprglass 0.8.1, measured 2026-09-17). Those surfaces keep Hyprland's
         -- own layer blur (layerrule blur-qs-.* , ignore_alpha 0.6) instead.
         namespaces = "quickshell,notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
+        -- The panel's now-playing card (Widgets/SidePanel/MusicPopup.qml) gets a
+        -- darker glass than the rest: `media-dark` is defined by hyprglass-apply
+        -- with dark.brightness = 0.55, i.e. 1.5x the dark theme's 0.82. Pair
+        -- separator is ':' on purpose — the plugin parses these with
+        -- parseKeyValuePairs(..., ':') (src/main.cpp), unlike the mask thresholds
+        -- which use '='.
+        namespace_presets = "qs-music:media-dark",
         -- Above the shadow alpha, otherwise shadows trigger glass on the whole surface
         namespace_mask_thresholds = "quickshell=0.3,notifications=0.3,qs-music=0.3",
         -- The layer pass re-samples the backdrop between frames and the result

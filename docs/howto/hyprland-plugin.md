@@ -87,6 +87,23 @@ behind Hyprland.
   settings live in that form.
 - **Glass off**: window rules `hgrm-term` (kitty/term), `hgrm-mpv`, `hgrm-fullscreen` via the
   `hyprglass_disabled` tag.
+- **Presets** (custom, defined by `hyprglass-apply` — see below): `scratch` and `media-dark`.
+  - `scratch` is attached by tag to every scratchpad window rule in `files/gui/hypr/hyprland.lua`
+    (`hyprglass_preset_scratch`): `blur_strength 16` with the maximum of 5 gaussian passes, against
+    the global pair (10.5/4 in the panel's JSON at the time of writing), so the desk behind a
+    scratchpad is frosted much harder.
+  - `media-dark` is attached to the panel's now-playing card through
+    `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
+    `dark.brightness = 0.55`, i.e. 1.5x darker than the dark theme's 0.82. Note the pair separator
+    is `:` (the plugin parses these with `parseKeyValuePairs(..., ':')`, `src/main.cpp`), unlike the
+    mask thresholds which use `=`.
+  - Both are pushed by `hyprglass-apply` with `hyprctl eval` + the plugin's
+    `hl.plugin.hyprglass.preset(...)`, because custom presets cannot be expressed as config values
+    and the `preset` keyword is unavailable in Lua-config mode —
+    `hyprctl keyword plugin:hyprglass:preset …` answers "keyword can't work with non-legacy
+    parsers. Use eval." (measured in a nested 0.56.2). `preset()` itself is safe: it goes through
+    `handleLuaPreset`, while it is `config()` that aborts the compositor. A `hyprctl reload` drops
+    the presets along with the nine knobs, and the next push restores both.
 - **Layer glass**: popups and notifications only (`quickshell`, `notifications`, `qs-music`,
   `qs-calendar`, `qs-monitor`, `qs-weather`, `sideleft-weather`, `sysmon-popup`). The always-on bar
   surfaces (`qs-panel`, `quickshell-bar-reserve`, `qs-content-left/right`) are deliberately left to
