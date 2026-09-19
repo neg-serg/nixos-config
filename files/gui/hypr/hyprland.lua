@@ -102,6 +102,51 @@ hl.monitor({ output = "DP-1", disabled = true })
 hl.monitor({ output = "DP-4", disabled = true })
 
 -- ---------------------------------------------------------------------
+-- VRR: games only
+-- ---------------------------------------------------------------------
+-- Adaptive sync lets the panel refresh follow the frame pacing, which is what
+-- makes the rate visibly twitch during ordinary work, and it is the one thing
+-- games genuinely want. The policy from the misc block therefore stays off and
+-- is switched on only while a game window exists. Enabling it means flipping
+-- `misc.vrr` at runtime (the Lua API's hl.config, which applies live) rather
+-- than a static value, so nothing else needs to be toggled per game.
+local VRR_GAME_CLASSES = { "^steam_app_", "^osu!$", "^cs2$", "^gamescope" }
+
+local function isGameClass(class)
+  if not class then return false end
+  for _, pattern in ipairs(VRR_GAME_CLASSES) do
+    if class:match(pattern) then return true end
+  end
+  return false
+end
+
+local games_open = 0
+local function applyVrr()
+  hl.config({ misc = { vrr = games_open > 0 and 1 or 0 } })
+end
+
+-- A reload with a game already mapped must not lose VRR, so start from what is
+-- actually on screen.
+for _, win in ipairs(hl.get_windows()) do
+  if isGameClass(win.class) then games_open = games_open + 1 end
+end
+applyVrr()
+
+hl.on("window.open", function(win)
+  if isGameClass(win and win.class) then
+    games_open = games_open + 1
+    applyVrr()
+  end
+end)
+
+hl.on("window.close", function(win)
+  if isGameClass(win and win.class) then
+    games_open = math.max(0, games_open - 1)
+    if games_open == 0 then applyVrr() end
+  end
+end)
+
+-- ---------------------------------------------------------------------
 -- Environment (from env.conf)
 -- ---------------------------------------------------------------------
 hl.env("CLUTTER_BACKEND", "wayland")
@@ -163,7 +208,11 @@ hl.config({
   misc = {
     disable_hyprland_logo = false, enable_anr_dialog = false, force_default_wallpaper = 0,
     font_family = "Iosevka", splash_font_family = "Iosevka",
-    vrr = 2, disable_autoreload = 1,
+    -- VRR is driven per game window, see the block after the monitor rules:
+    -- "fullscreen only" (2) still left the output in adaptive-sync mode for the
+    -- whole session, and the panel refresh then twitched along with the frame
+    -- pacing while working.
+    vrr = 0, disable_autoreload = 1,
     -- Motion for actions Hyprland would otherwise snap: manual resizes and
     -- mouse window dragging both replay through the windowsMove spring.
     animate_manual_resizes = true, animate_mouse_windowdragging = true,
