@@ -29,7 +29,7 @@ unqualified	715
 missing-property	51
 unresolved-type	34
 import	6
-uncreatable-type	11
+uncreatable-type	12
 incompatible-type	7
 property-override	6
 signal-handler-parameters	5
