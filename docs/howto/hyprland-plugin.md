@@ -109,6 +109,12 @@ behind Hyprland.
     "enabled":true,"blurStrength":16,"glassOpacity":0.9,"adaptiveDim":0,"tint":"000000cc"}'`,
     `… removeGlassWindowOverride music`, `… listGlassWindowOverrides`. `tint` is RRGGBBAA (the
     plugin's packing, see the shader's closing `mix`) and `""` means "inherit".
+  - `music_strong` is the same for the rmpc scratchpad (`music-scratchpad` rule, tag
+    `hyprglass_preset_music_strong`): `blur_strength 64` — 4x the scratch preset, a 768 px radius — with
+    the same 5 passes and no adaptive dim. The pane draws nothing over its backdrop (0.45 opacity, no
+    baked slice any more), so the plugin's frost is the whole picture there, and 16 read as too weak.
+    `blur_strength` is a plain scale (`value * 12` px) with no clamp: 64, 128 and 256 are all accepted
+    by the config manager, so this is the knob to turn.
   - `media-dark` is attached to the panel's now-playing card through
     `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
     `dark.brightness = 0.40` — ~2x the dark theme's 0.82 — plus the hardest frost
