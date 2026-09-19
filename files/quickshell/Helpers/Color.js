@@ -48,6 +48,12 @@ function _luminance(rgb) {
     return 0.2126*r + 0.7152*g + 0.0722*b;
 }
 
+// Relative luminance (0..1) of a colour: the "is this backdrop light?" check
+// behind Theme.backdropIsLight and the glyph shadow.
+function luminance(c) {
+    try { return _luminance(_toRgb(c)); } catch (e) { return 0.5; }
+}
+
 function contrastOn(bg, light, dark, threshold) {
     try {
         var rgb = _toRgb(bg);
