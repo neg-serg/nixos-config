@@ -187,7 +187,8 @@ in
       # helper first (kitty-glass-frost.sh), so the pane draws its own blurred
       # wallpaper slice — nothing on the compositor side moves this window's blur
       # any more, and the slice has to be cropped to the window's screen rect,
-      # which only exists once the window is mapped.
+      # which only exists once the window is mapped. The watcher started next to
+      # the initial push keeps the slice in step with the wallpaper afterwards.
       opts=()
       payload=()
       seen=0
@@ -207,7 +208,7 @@ in
         exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
           -o background="$tint" -o window_padding_width=8 \
           -o background_image_layout=cscaled \
-          "''${opts[@]}" sh -c 'kitty-glass-frost music; exec "$@"' sh "''${payload[@]}"
+          "''${opts[@]}" sh -c 'kitty-glass-frost music; kitty-glass-frost --watch music & exec "$@"' sh "''${payload[@]}"
       fi
       exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
         -o background="$tint" -o window_padding_width=8 "$@"
