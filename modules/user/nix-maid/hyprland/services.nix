@@ -84,6 +84,14 @@ in
         /org/mpris/MediaPlayer2 \
         "org.mpris.MediaPlayer2.Player.$MEMBER"
     '')
+    # Glass scratchpad terminal. hyprglass frosts what is behind a window, so the
+    # terminal itself has to be translucent for the backdrop to read through:
+    # kitty's 0.88 default is nearly opaque and showed no glass at all. 0.65 black
+    # keeps it glassy while staying visibly darker than the media card (0.45).
+    # Used by the scratchpad binds in files/gui/hypr/hyprland.lua.
+    (pkgs.writeShellScriptBin "kitty-glass" ''
+      exec ${lib.getExe pkgs.kitty} -o background_opacity=0.65 "$@"
+    '')
     # hypr-fix script (Reload Hyprland config)
     (pkgs.writeShellScriptBin "hypr-fix" ''
       set -euo pipefail
