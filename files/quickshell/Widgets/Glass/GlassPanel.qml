@@ -46,7 +46,7 @@ PanelWindow {
     // ── Values ───────────────────────────────────────────────────────────────
     // Slider bounds; the plugin's own defaults live in files/gui/hypr/hyprglass.lua.
     property var knobs: [
-        { key: "glassBlurStrength",   label: "Блюр",        hint: "радиус = значение × 12 px",        min: 1,  max: 12, step: 0.5, digits: 1 },
+        { key: "glassBlurStrength",   label: "Блюр",        hint: "радиус = значение × 12 px",        min: 1,  max: 16, step: 0.5, digits: 1 },
         { key: "glassBlurIterations", label: "Проходов",    hint: "гауссовых проходов, максимум 5",   min: 1,  max: 5,  step: 1,   digits: 0 },
         { key: "glassVibrancy",       label: "Мороз",       hint: "морозный оттенок, −1 = выключен",  min: -1, max: 1,  step: 0.05, digits: 2 },
         { key: "glassOpacity",        label: "Плотность",   hint: "сколько стекла на поверхности",    min: 0,  max: 1,  step: 0.05, digits: 2 },
