@@ -338,6 +338,13 @@ hl.bind(M4 .. "+" .. SH .. "+i", hl.dsp.exec_cmd("~/.local/bin/pl vol mute"), { 
 hl.bind(M4 .. "+" .. SH .. "+o", hl.dsp.exec_cmd("~/.local/bin/pl vol unmute"), { locked = true })
 hl.bind(M4 .. "+m", hl.dsp.exec_cmd("~/.local/bin/music-rename current"), { locked = true })
 
+-- Euphonica (GTK4/libadwaita MPD client) — run-or-raise, the GUI counterpart
+-- to the M4+f rmpc scratchpad.
+hl.bind(M4 .. "+" .. SH .. "+e", hl.dsp.exec_cmd('raise --match "class:regex=^(euphonica|io\\.github\\.htkhiem\\.Euphonica)$" --launch "euphonica"'), { locked = true })
+-- MPD transport mode (submap below): ncmpcpp/rmpc letters for the verbs MPRIS
+-- does not carry (repeat/random/single/consume, relative seek, software volume).
+hl.bind(M4 .. "+" .. SH .. "+p", hl.dsp.submap("music"))
+
 -- --- Misc (misc.conf) ---
 hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
 
@@ -479,6 +486,40 @@ hl.define_submap("tiling", "reset", function()
   hl.bind(SH .. "+j", hl.dsp.window.move({ direction = "d" }))
   hl.bind(SH .. "+k", hl.dsp.window.move({ direction = "u" }))
   hl.bind(SH .. "+l", hl.dsp.window.move({ direction = "r" }))
+end)
+
+-- Submap: music (MPD transport with ncmpcpp/rmpc letter bindings)
+-- mpc drives MPD directly: playerctl/mpdris2 relays only play-pause and skips,
+-- while repeat/random/single/consume, relative seek and the MPD software mixer
+-- (mixer_type "software" in mpd.conf) exist only on the MPD protocol.
+-- Letters follow the rmpc config (files/rmpc/config.ron) and ncmpcpp:
+--   p/space toggle   s stop   n/N next/prev (also ,/.)
+--   b/f seek -/+10s  h/l seek -/+5s
+--   z repeat  r random  y single  R consume  u update  U rescan
+--   -/= MPD volume   e Euphonica
+hl.define_submap("music", "reset", function()
+  submap_resets()
+  hl.bind(M4 .. "+" .. SH .. "+p", hl.dsp.submap("reset"))
+  hl.bind("p", hl.dsp.exec_cmd("mpc toggle"))
+  hl.bind("space", hl.dsp.exec_cmd("mpc toggle"))
+  hl.bind("s", hl.dsp.exec_cmd("mpc stop"))
+  hl.bind("n", hl.dsp.exec_cmd("mpc next"))
+  hl.bind("N", hl.dsp.exec_cmd("mpc prev"))
+  hl.bind("comma", hl.dsp.exec_cmd("mpc prev"))
+  hl.bind("period", hl.dsp.exec_cmd("mpc next"))
+  hl.bind("b", hl.dsp.exec_cmd("mpc seek -10"), { repeating = true })
+  hl.bind("f", hl.dsp.exec_cmd("mpc seek +10"), { repeating = true })
+  hl.bind("h", hl.dsp.exec_cmd("mpc seek -5"), { repeating = true })
+  hl.bind("l", hl.dsp.exec_cmd("mpc seek +5"), { repeating = true })
+  hl.bind("minus", hl.dsp.exec_cmd("mpc volume -5"), { repeating = true })
+  hl.bind("equal", hl.dsp.exec_cmd("mpc volume +5"), { repeating = true })
+  hl.bind("z", hl.dsp.exec_cmd("mpc repeat"))
+  hl.bind("r", hl.dsp.exec_cmd("mpc random"))
+  hl.bind("y", hl.dsp.exec_cmd("mpc single"))
+  hl.bind("R", hl.dsp.exec_cmd("mpc consume"))
+  hl.bind("u", hl.dsp.exec_cmd("mpc update"))
+  hl.bind("U", hl.dsp.exec_cmd("mpc rescan"))
+  hl.bind("e", hl.dsp.exec_cmd('raise --match "class:regex=^(euphonica|io\\.github\\.htkhiem\\.Euphonica)$" --launch "euphonica"'))
 end)
 
 -- =====================================================================
