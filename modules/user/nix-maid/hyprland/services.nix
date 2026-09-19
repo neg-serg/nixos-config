@@ -44,6 +44,13 @@ let
       (pkgs.lib.makeBinPath [ pkgs.hyprland ])
     ];
   } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
+  # Tint the running music scratchpad pane (see kitty-glass-tint.sh).
+  kittyGlassTint = pkgs.writeShellScriptBin "kitty-glass-tint" (
+    builtins.replaceStrings [ "@kitten@" ] [ "${lib.getExe' pkgs.kitty "kitten"}" ] (
+      builtins.readFile ./kitty-glass-tint.sh
+    )
+  );
+
   # Push the hyprglass settings into a running session (see hyprglass-apply.sh).
   # The runtime paths are substituted here because systemd user services and the
   # session shell both run with a minimal PATH.
@@ -60,6 +67,7 @@ in
     # pkgs.hyprlock — temporarily removed (2026-08-31); re-add to restore the lock screen
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     hyprglassApply # pushes glass settings into the running session (panel, path unit)
+    kittyGlassTint # tints the running music scratchpad pane by the record
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
     pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
@@ -115,6 +123,14 @@ in
       # Colour code by purpose: each scratchpad gets its own dark tint, so the
       # window says what it is before the title is read. Kept close to black —
       # the tint sits under the compositor's glass, it does not replace it.
+      # The panel's switch: off means "no tinting at all", i.e. kitty's own
+      # background for every scratchpad.
+      tint_enabled=1
+      if command -v jq >/dev/null 2>&1; then
+        setting="$(jq -r 'if has("scratchpadTint") then .scratchpadTint else true end' "$HOME/.config/quickshell/Settings.json" 2>/dev/null)"
+        [ "$setting" = "false" ] && tint_enabled=0
+      fi
+
       class=""
       previous=""
       for arg in "$@"; do
@@ -139,6 +155,8 @@ in
         teardown) tint="#0b0d11" ;; # neutral slate — system overview
         *)        tint="#000000" ;;
       esac
+
+      [ "$tint_enabled" = 1 ] || tint="#000000"
 
       # A little inset so the TUI does not run into the glass edge; kitty's own
       # config keeps 0 for ordinary terminals.
@@ -228,14 +246,16 @@ in
         # read the panel's JSON plus the usual text tools. Without this it silently
         # pushed only the defaults and the Glass panel's values never landed.
         Environment = [
-          "PATH=${lib.makeBinPath [
-            pkgs.coreutils # shell plumbing (mkdir, mv, tr, date)
-            pkgs.gnused # rewrites the generated lua's numbers
-            pkgs.gnugrep # scans the plugin list
-            pkgs.gawk # compares the reported values with the wanted ones
-            pkgs.jq # reads the Glass panel's JSON overrides
-            pkgs.hyprland # hyprctl, the only way to talk to the plugin
-          ]}"
+          "PATH=${
+            lib.makeBinPath [
+              pkgs.coreutils # shell plumbing (mkdir, mv, tr, date)
+              pkgs.gnused # rewrites the generated lua's numbers
+              pkgs.gnugrep # scans the plugin list
+              pkgs.gawk # compares the reported values with the wanted ones
+              pkgs.jq # reads the Glass panel's JSON overrides
+              pkgs.hyprland # hyprctl, the only way to talk to the plugin
+            ]
+          }"
         ];
         ExecStart = "${hyprglassApply}/bin/hyprglass-apply";
       };
