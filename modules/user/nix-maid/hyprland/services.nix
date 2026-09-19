@@ -44,13 +44,6 @@ let
       (pkgs.lib.makeBinPath [ pkgs.hyprland ])
     ];
   } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
-  # Tint the running music scratchpad pane (see kitty-glass-tint.sh).
-  kittyGlassTint = pkgs.writeShellScriptBin "kitty-glass-tint" (
-    builtins.replaceStrings [ "@kitten@" ] [ "${lib.getExe' pkgs.kitty "kitten"}" ] (
-      builtins.readFile ./kitty-glass-tint.sh
-    )
-  );
-
   # Push the hyprglass settings into a running session (see hyprglass-apply.sh).
   # The runtime paths are substituted here because systemd user services and the
   # session shell both run with a minimal PATH.
@@ -81,7 +74,6 @@ in
     # pkgs.hyprlock — temporarily removed (2026-08-31); re-add to restore the lock screen
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     hyprglassApply # pushes glass settings into the running session (panel, path unit)
-    kittyGlassTint # tints the running music scratchpad pane by the record
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
     pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
@@ -122,12 +114,28 @@ in
     # keeps a hint of frost while staying decisively darker than the media card
     # (0.45) — a terminal that faint competes with its own text.
     #
+    # The music pane (rmpc) is the one exception: it has to read black, so it runs
+    # at 0.96 over a black background instead of 0.85 over the album tint. Measured
+    # on the pane itself: 0.60 gave (13.4, 16.2, 21.2) and 0.85 gave (10.6, 13.1,
+    # 15.4), where 0.96 keeps only ~1/255 of the wallpaper through.
+    #
     # The opacity can be tuned without a rebuild: write a number into
     # ~/.config/kitty/glass-opacity and reopen the scratchpad (the file is picked
     # up per launch, so a switch is only needed to change the launcher itself).
     # Used by the scratchpad binds in files/gui/hypr/hyprland.lua.
     (pkgs.writeShellScriptBin "kitty-glass" ''
-      opacity=0.85
+      class=""
+      previous=""
+      for arg in "$@"; do
+        [ "$previous" = "--class" ] && class="$arg"
+        previous="$arg"
+      done
+
+      # Per-class default; the override file below still wins over both.
+      case "$class" in
+        music) opacity=0.96 ;; # rmpc: black first, the frost is only a hint
+        *) opacity=0.85 ;;
+      esac
       override="$HOME/.config/kitty/glass-opacity"
       [ -r "$override" ] && opacity="$(head -n 1 "$override" | tr -d '[:space:]')"
       case "$opacity" in
@@ -145,26 +153,11 @@ in
         [ "$setting" = "false" ] && tint_enabled=0
       fi
 
-      class=""
-      previous=""
-      for arg in "$@"; do
-        [ "$previous" = "--class" ] && class="$arg"
-        previous="$arg"
-      done
       case "$class" in
         rebuild)  tint="#171008" ;; # warm — the rebuilds it runs
         torrment) tint="#08131a" ;; # cold blue — downloads
         vpn)      tint="#08160f" ;; # green — the tunnel
-        music)
-          # Follow the record: the shell publishes its darkened cover accent to
-          # ~/.cache/quickshell-glass-tint, so the pane is tinted like the album it
-          # is playing. Falls back to the static violet when there is no cover.
-          from_shell="$(head -n 1 "$HOME/.cache/quickshell-glass-tint" 2>/dev/null | tr -d '[:space:]')"
-          case "$from_shell" in
-            '#'[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) tint="$from_shell" ;;
-            *) tint="#120a18" ;;
-          esac
-          ;;
+        music)    tint="#000000" ;; # rmpc: the pane stays black, no cover accent
         mixer)    tint="#181207" ;; # amber — audio
         teardown) tint="#0b0d11" ;; # neutral slate — system overview
         *)        tint="#000000" ;;
