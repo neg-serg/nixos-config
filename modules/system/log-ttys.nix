@@ -51,6 +51,15 @@ let
     };
   };
 
+  # amdgpu prints "Overdrive is enabled, please disable it..." at KERN_CRIT on
+  # every boot while the overdrive bit (0x4000) is set in amdgpu.ppfeaturemask
+  # (hosts/odin/hardware.nix). That bit must stay enabled for CoreCtrl UV/OC,
+  # the kernel cannot suppress a single message, and journald's LogFilterPatterns
+  # only applies to unit messages — so drop the line from the TTY viewers here.
+  # journalctl --grep is PCRE2 (negative lookahead); "^..." anchoring keeps all
+  # other messages matching so only that one line is filtered out.
+  suppressOdNotice = "-g \"^(?!.*Overdrive is enabled).*\"";
+
   mkLogService =
     name:
     {
@@ -83,7 +92,7 @@ let
             else
               "${lib.getExe' pkgs.systemd "journalctl"} -f${if prio != null then " -p ${prio}" else ""}${
                 if filter != null then " ${filter}" else ""
-              } -o short-monotonic";
+              } -o short-monotonic ${suppressOdNotice}";
           StandardOutput = "tty";
           TTYPath = "/dev/${tty}";
           TTYReset = true;

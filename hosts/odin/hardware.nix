@@ -98,6 +98,9 @@
       "pcie_port_pm=off" # Disable PCIe port power management — keeps NVMe accessible during import
       "nvme_core.io_timeout=4294967295" # Max NVMe I/O timeout
       "amdgpu.ppfeaturemask=0xffffffff" # Enable all AMD GPU overdrive features
+      # ^ 0x4000 (overdrive bit) makes amdgpu log a KERN_CRIT notice on every boot.
+      #   It cannot be suppressed selectively — hidden from the console via
+      #   boot.consoleLogLevel = 2 and from the TTY viewers in modules/system/log-ttys.nix.
       "udev.children_max=64" # Parallelize udev device init
       "udev.event_timeout=10" # Kill stuck udev workers after 10s
       "rd.udev.event_timeout=10" # Same for initrd udev
@@ -172,7 +175,11 @@
     };
 
     # Lower console log level during/after boot; messages stay in journalctl
-    consoleLogLevel = 3;
+    consoleLogLevel = 2; # was 3 — level 2 also hides KERN_CRIT, which is the
+    # level amdgpu uses for "Overdrive is enabled, please disable it before
+    # reporting any bugs unrelated to overdrive" (the overdrive bit 0x4000 in
+    # amdgpu.ppfeaturemask below prints it on every boot; the bit stays because
+    # CoreCtrl needs it for UV/OC). "quiet" alone does not cover it.
 
     loader = {
       timeout = 1; # seconds (1s to press any key, then boots immediately)

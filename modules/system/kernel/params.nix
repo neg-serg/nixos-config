@@ -27,7 +27,13 @@ let
     "rd.systemd.show_status=false"
     "rd.udev.log_priority=3"
     # Lower kernel and userspace verbosity on the console
-    "loglevel=3"
+    # loglevel=2 (not 3) also hides KERN_CRIT console output: amdgpu prints
+    # "Overdrive is enabled, please disable it before reporting any bugs..." at
+    # KERN_CRIT on every boot as long as the overdrive bit (0x4000) is set in
+    # amdgpu.ppfeaturemask (see hosts/odin/hardware.nix) — that bit must stay on
+    # for CoreCtrl UV/OC. The line stays in the journal (kernel messages go to
+    # /dev/kmsg and bypass journald's LogFilterPatterns, which is unit-only).
+    "loglevel=2"
     "udev.log_priority=3"
     "splash"
     "systemd.show_status=false"
