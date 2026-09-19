@@ -9,6 +9,14 @@ import "../../Helpers/WorkspaceName.js" as WorkspaceName
 import "../../Helpers/WorkspaceIcons.js" as WorkspaceIcons
 CenteredCapsuleRow {
     interactive: true
+    // Hovering the left module row reveals the pill capsule next to this one, which
+    // slides the workspace capsule out from under the pointer; a release-based tap
+    // is then cancelled and the click is silently lost. Activating on press keeps
+    // the click tied to where the pointer actually was.
+    activateOnPress: true
+    // Left click opens/closes the hyprexpo workspace overview — the tooltip below
+    // has advertised this since the indicator existed, but nothing was wired to it.
+    onClicked: Services.Expo.toggle()
     id: root
     property string wsName: "?"
     property int wsId: -1

@@ -1,6 +1,7 @@
 module qs.Services
 singleton Audio 1.0 Audio.qml
 singleton Connectivity 1.0 Connectivity.qml
+singleton Expo 1.0 Expo.qml
 singleton Genelec 1.0 Genelec.qml
 HyprlandWatcherImpl 1.0 HyprlandWatcherImpl.qml
 singleton HyprlandWatcher 1.0 HyprlandWatcher.qml
