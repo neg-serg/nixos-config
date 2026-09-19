@@ -191,6 +191,28 @@ if [ "$have_json" = 1 ]; then
 $lua" >/dev/null 2>&1 || true
 fi
 
+# ── custom presets ───────────────────────────────────────────────────────────
+# Presets cannot come from the config file. `hl.config()` only reaches registered
+# config *values*, and the `preset` keyword is unavailable in Lua-config mode
+# ("keyword can't work with non-legacy parsers. Use eval." — measured in a nested
+# 0.56.2), so the plugin's own Lua call is the only path. `preset()` is safe there:
+# it runs through handleLuaPreset, while it is `config()` that aborts the
+# compositor (forwardLuaConfig, see files/gui/hypr/hyprglass.lua).
+#
+#   scratch    — scratchpad windows, tagged hyprglass_preset_scratch in
+#                hyprland.lua: blur_strength 16 (radius 16*12 px) with the maximum
+#                of 5 gaussian passes. The global pair lives in the panel's JSON
+#                (10.5/4 at the time of writing, the shipped default is 6/5), so a
+#                scratchpad frosts roughly 1.5x the rest of the session.
+#   media-dark — the panel's now-playing card (layers:namespace_presets maps
+#                qs-music to it): dark brightness 0.55, i.e. 1.5x darker than the
+#                dark theme's 0.82.
+#
+# A `hyprctl reload` drops them again (the plugin re-reads its config), which is
+# also what makes the nine knobs drift, so the next push restores these too.
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5 })' >/dev/null 2>&1 || true
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.55 } })' >/dev/null 2>&1 || true
+
 # Record what the plugin reports now: the next check compares against this, so a
 # later drift is visible even in a session where the panel was never opened.
 if command -v jq >/dev/null 2>&1; then

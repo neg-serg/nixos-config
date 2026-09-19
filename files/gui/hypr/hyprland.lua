@@ -616,15 +616,20 @@ hl.window_rule({ name = "telegram-wrapped", match = { class = m.telegram_wrapped
 hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, float = true, tag = "telegram" })
 hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, animation = "popin 85%", tag = "utility" })
 
--- Scratchpad rules: float + size + no dim (monitor-relative expressions)
-hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
-hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
-hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
-hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
-hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
-hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
-hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
+-- Scratchpad rules: float + size + no dim (monitor-relative expressions), plus the
+-- `hyprglass_preset_scratch` tag. That preset is defined by hyprglass-apply
+-- (blur_strength 16 with the maximum of 5 gaussian passes, against the global pair
+-- the panel keeps in ~/.config/hypr/hyprglass.json),
+-- so what sits behind a scratchpad is frosted much harder than the rest of the
+-- session, where the shipped blur stays as it is.
+hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
+hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
+hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
+hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
+hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
+hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
+hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
+hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 
 -- Scratchpads are frosted like the media popup: hyprglass replaces Hyprland's
 -- window blur pass, so a class keeps blur enabled here (window rules only carry
