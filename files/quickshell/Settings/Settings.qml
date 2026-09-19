@@ -49,6 +49,23 @@ Singleton {
             // the seam area, 3.8% across the whole strip). Re-enable this if the look
             // matters more than the CPU cost.
             property bool panelTintEnabled: false
+
+            // Glass (hyprglass) values, driven by the Glass panel
+            // (Widgets/Glass/GlassPanel.qml). The panel writes them through to
+            // ~/.config/hypr/hyprglass-user.lua, and hyprglass-apply pushes that
+            // into the running session; the shipped defaults live in
+            // files/gui/hypr/hyprglass.lua.
+            property real glassBlurStrength: 6
+            property int glassBlurIterations: 5
+            property real glassVibrancy: 0.5
+            property real glassOpacity: 0.65
+            property real glassRefraction: 0.5
+            property real glassChromatic: 0.3
+            property real glassFresnel: 0.3
+            property real glassSpecular: 0.1
+            property real glassAdaptiveDim: 0.5
+            // Frosted tint against the light theme: the panel's switch for it.
+            property bool glassLightFrost: false
             property string weatherCity: "Saint Petersburg"
             property string userAgent: "NegPanel"
             // Unified logging toggle for low-importance debug logs
