@@ -32,7 +32,10 @@ RowLayout {
     // ---- Runtime state ----
     property real volume: -40
     property bool muted: false
-    property real preMuteVolume: -40
+    // Bound, not assigned: the cache is not readable during Component.onCompleted
+    // (see _seedVolume), and a binding follows the adapter once it lands, so
+    // unmute after a restart no longer jumps to -40. The first mute breaks it.
+    property real preMuteVolume: root._restoredPreMute
     property bool busy: false
     // Host GLM path: genlc can reach the GLM adapter on the host (dockur VM off).
     property bool adapterOnHost: true
@@ -62,6 +65,60 @@ RowLayout {
         if (StateCache.state && StateCache.state.genelecPreMuteVolume !== undefined)
             return StateCache.state.genelecPreMuteVolume;
         return root._lastSetVolume;
+    }
+
+    // The stored volume, or NaN while the cache has not been read yet. The
+    // StateCache adapter carries its own -40 defaults before the preloaded file
+    // lands, so a raw read cannot tell "stored -40" from "not loaded yet".
+    readonly property real _cachedVolume: {
+        if (!StateCache.ready || !StateCache.state) return NaN;
+        var v = StateCache.state.genelecVolume;
+        return v === undefined ? NaN : v;
+    }
+
+    // False until a real volume is known from either source — the runtime file or
+    // the cache. Everything that reaches the hardware waits for it: the MIDI
+    // anchor fires when the adapter probe flips midiMode, which happens before the
+    // preloaded state lands, and sending the -40 placeholder from that window is
+    // what dropped the monitors to -40 dB on every restart.
+    property bool _volumeKnown: false
+
+    // Seeds the volume from the runtime file (authoritative for this session) or,
+    // when that file is empty, from the cache. Driven by the loaders —
+    // stateReader.onLoaded and the StateCache ready change — never by
+    // Component.onCompleted, where neither source has a value yet.
+    function _seedVolume() {
+        if (root._volumeKnown) return;
+        var fileV = parseFloat(stateReader.text() || "");
+        if (!isNaN(fileV)) {
+            // The runtime file names this session's target; the onLoaded handler
+            // applies it and re-asserts it on the monitors, so only the gate for
+            // the anchor flips here.
+            root._volumeKnown = true;
+            return;
+        }
+        // No runtime value (a fresh XDG_RUNTIME_DIR after logout/reboot): the last
+        // committed volume lives in the cache. Wait for it instead of falling back
+        // to -40 the way this used to.
+        if (!StateCache.ready) return;
+        root._volumeKnown = true;
+        var cached = root._cachedVolume;
+        if (isNaN(cached)) return;  // nothing stored anywhere: leave the monitors alone
+        root.displayDb = cached;
+        root.pendingDb = cached;    // pendingDb starts at the -40 placeholder too, and
+        root.volume = cached;       // commitTimer commits it once input settles
+        root._animDb = cached;
+        // Name the target for the CLI tools (genlc-media reads the file before a
+        // key step) and for the next session's pre-start seeding: the commit below
+        // only writes it on the MIDI path, and the host path can fail outright when
+        // the adapter sits in the VM.
+        Quickshell.execDetached(["glm-vol", String(Math.round(cached))]);
+        root._commitAndSend(cached);
+    }
+
+    Connections {
+        target: StateCache
+        function onReadyChanged() { root._seedVolume(); }
     }
 
     // Persisting is StateCache's own business: its GuardedFileView writes the file
@@ -197,8 +254,22 @@ RowLayout {
     // absolute target in GLM once. Whole dB only — CC20 is integer.
     // No periodic re-sync: idle volume must not move on its own.
     function _anchorVolume() {
-        if (busy || !midiMode) return;
+        // !_volumeKnown: the anchor is armed by the adapter probe flipping
+        // midiMode, which can beat the preloaded state by a few hundred ms. It
+        // used to fire there with the -40 placeholder and set the monitors to
+        // -40 dB — the "volume drops to -40 after a restart" report.
+        if (!midiMode || !root._volumeKnown) return;
+        // The seed's own send can still be in flight (a genlc call that fails
+        // because the adapter sits in the VM). Dropping the anchor in that window
+        // is how a restore used to go nowhere, so wait instead.
+        if (busy) { anchorRetryTimer.restart(); return; }
         _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", volume + "dB"]);
+    }
+    Timer {
+        id: anchorRetryTimer
+        interval: 300
+        repeat: false
+        onTriggered: root._anchorVolume()
     }
     // Self-heal: 400 ms after the last widget commit, re-anchor CC20 once so
     // a dropped relative step is corrected. Not periodic — the timer is only
@@ -260,6 +331,7 @@ RowLayout {
 
     function _commitAndSend(dB) {
         var clamped = clamp(Number(dB));
+        root._volumeKnown = true;   // a real value arrived, the anchor may fire
         volume = clamped;
         displayDb = clamped; // keep the slider in sync in midiMode too
         muted = false;
@@ -427,6 +499,7 @@ RowLayout {
             });
         }
         onLoaded: function() {
+            root._seedVolume();
             root._onGenlcFileChanged();
         }
     }
@@ -438,6 +511,7 @@ RowLayout {
         var line = stateReader.text() || "";
         var v = parseFloat(line);
         if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
+            root._volumeKnown = true;   // the file names a real value
             root._showSlider();
             root.displayDb = v;
             root.pendingDb = v;
@@ -453,25 +527,14 @@ RowLayout {
         genlcOk = true;
         // Ensure the state file exists so FileView can watch it (genlc rewrites it in place).
         Quickshell.execDetached(["touch", root.statePath]);
-        // The widget used to start at the hardcoded -40 dB and only ever *react*
-        // to the runtime file, so any restart (panel, logout, reboot — the file
-        // lives in XDG_RUNTIME_DIR and is wiped on logout) silently reset the
-        // monitors to -40 on the first volume key. Seed from StateCache instead;
-        // nothing is sent here, the hardware keeps whatever it has.
-        var haveFileValue = !isNaN(parseFloat(stateReader.text() || ""));
-        if (!haveFileValue) {
-            root.volume = root._lastSetVolume;
-            root.displayDb = root._lastSetVolume;
-            root.pendingDb = root._lastSetVolume;
-            root._animDb = root._lastSetVolume;
-        }
-        // preMuteVolume is never in the runtime file, so it always comes from the
-        // cache (unmute after a restart would otherwise go to -40).
-        root.preMuteVolume = root._restoredPreMute;
-        // Hand the value to the CLI tools too (glm-vol read / genlc-media read
-        // the runtime file): an empty file used to print an empty line.
-        if (!haveFileValue)
-            Quickshell.execDetached(["glm-vol", String(Math.round(root._lastSetVolume))]);
+        // Nothing is seeded, written or sent here. Both sources are preloaded
+        // asynchronously: at this point stateReader.text() is still empty and the
+        // StateCache adapter still holds its -40 defaults, so the seeding that used
+        // to live here wrote -40 into the state file and — through the file watcher
+        // and the MIDI anchor — pushed -40 dB to the monitors on every restart.
+        // preMuteVolume is bound to the cache above for the same reason.
+        // _seedVolume() runs from the loaders instead.
+        root._seedVolume();
         // Initial adapter probe (the Timer handles the follow-ups).
         probeProc.cmd = ["/run/current-system/sw/bin/genlc", "discover"];
         probeProc.start();
