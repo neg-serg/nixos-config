@@ -225,6 +225,16 @@ fi
 # also what makes the nine knobs drift, so the next push restores these too.
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.40 }, blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
+#   black_glass — the rmpc window (class music, the music scratchpad in
+#                hyprland.lua): smoked black glass. tint_color packs RRGGBBAA
+#                (GlassRenderer.cpp shifts R by 24, A is the low byte) and the
+#                shader ends with `color = mix(color, tintColor, tintAlpha)`, so
+#                0x000000cc mixes 80% black over the blurred backdrop. Vibrancy 0
+#                keeps it neutral instead of the global saturation lift, opacity 0.9
+#                makes the slab denser, and the blur is the same hardest setting the
+#                scratchpads use (the rmpc rule trades the scratch preset for this
+#                one, so a window still resolves a single preset).
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("black_glass", { dark = { tint_color = 0x000000cc }, glass_opacity = 0.9, vibrancy = 0, blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 
 # Record what the plugin reports now: the next check compares against this, so a
 # later drift is visible even in a session where the panel was never opened.

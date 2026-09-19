@@ -110,7 +110,12 @@ lib.mkIf quickshellEnabled (
           RestartSec = 5;
           Environment = [
             "QML_XHR_ALLOW_FILE_WRITE=1"
-            "PATH=/run/current-system/sw/bin:\${PATH}"
+            # ~/.local/bin first: the Genelec widget shells out to glm-vol, which
+            # owns the runtime volume file ($XDG_RUNTIME_DIR/genlc-volume) that
+            # genlc-media and glm-vol read back. Without it on PATH that call
+            # failed silently, the file stayed at whatever `touch` created, and
+            # every fresh session fell back to the hardcoded -40 dB.
+            "PATH=%h/.local/bin:/run/current-system/sw/bin:\${PATH}"
           ];
         };
       };
