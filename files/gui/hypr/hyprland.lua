@@ -162,11 +162,18 @@ hl.config({
     rounding = rounding, rounding_power = rounding_power,
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
     shadow = { enabled = false }, -- frameless: the compositor never draws a shadow here
-    -- xray: sample what is *behind* the surface and ignore whatever sits between
-    -- it and the wallpaper (the same idea as the xray layer rule further down).
-    -- Without it a stacked layer re-blurs an already blurred window underneath,
-    -- which is what made the bar/panel blur muddy against hyprglass windows.
-    blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = true },
+    -- Live backdrop: the blur samples the frame *behind* the surface, not the
+    -- wallpaper. With `xray` (or `new_optimizations`, which caches the same
+    -- render target) Hyprland blurs `m_blurFB` — a pre-rendered wallpaper blur
+    -- that ignores every window between the surface and the wallpaper, so a
+    -- translucent window showed a frozen picture of the desktop instead of the
+    -- desktop (IHyprRenderer::shouldUseNewBlurOptimizations() → ElementRenderer
+    -- picks m_blurFB over blurMainFramebuffer()). Cost: a stacked translucent
+    -- window now re-blurs an already blurred surface underneath, which is what
+    -- made the bar/panel read muddy against hyprglass windows; the shell opted
+    -- out of the wallpaper sample per namespace below (no-xray-* rules), so both
+    -- halves of the config say the same thing now.
+    blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
     -- motion blur: adds a smear while anything on screen is moving — the
     -- scrolling tape and dragged windows are where it reads. 24 samples is the
     -- tuning knob (higher = smoother, more GPU); `hyprctl eval 'hl.config({
