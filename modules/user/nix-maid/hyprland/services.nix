@@ -60,6 +60,20 @@ let
       [ "${lib.getExe' pkgs.hyprland "hyprctl"}" "${pkgs.hyprglass}/lib/hyprglass.so" ]
       (builtins.readFile ./hyprglass-apply.sh)
   );
+
+  # PATH for the units that run it (see the two hyprglass units below): the script
+  # needs jq to read the panel's JSON overrides, the usual text tools, and hyprctl
+  # — the only way to talk to the plugin. Both units share it: without it the drift
+  # watchdog could not even read the overrides and died with "jq is missing" on
+  # every timer tick, so nothing repaired the glass after a compositor reload.
+  hyprglassPath = lib.makeBinPath [
+    pkgs.coreutils # shell plumbing (mkdir, mv, tr, date)
+    pkgs.gnused # rewrites the generated lua's numbers
+    pkgs.gnugrep # scans the plugin list
+    pkgs.gawk # compares the reported values with the wanted ones
+    pkgs.jq # reads the Glass panel's JSON overrides
+    pkgs.hyprland # hyprctl, the only way to talk to the plugin
+  ];
 in
 {
   packages = [
@@ -232,6 +246,9 @@ in
       description = "Re-apply hyprglass settings if they drifted";
       serviceConfig = {
         Type = "oneshot";
+        # The same PATH as the apply below — see hyprglassPath. This unit was
+        # without one, so jq was missing and every tick ended in "jq is missing".
+        Environment = [ "PATH=${hyprglassPath}" ];
         ExecStart = "${hyprglassApply}/bin/hyprglass-apply --watch";
       };
     };
@@ -242,21 +259,9 @@ in
       description = "Push hyprglass settings into the running session";
       serviceConfig = {
         Type = "oneshot";
-        # systemd's user services get a minimal PATH, and the script needs jq to
-        # read the panel's JSON plus the usual text tools. Without this it silently
-        # pushed only the defaults and the Glass panel's values never landed.
-        Environment = [
-          "PATH=${
-            lib.makeBinPath [
-              pkgs.coreutils # shell plumbing (mkdir, mv, tr, date)
-              pkgs.gnused # rewrites the generated lua's numbers
-              pkgs.gnugrep # scans the plugin list
-              pkgs.gawk # compares the reported values with the wanted ones
-              pkgs.jq # reads the Glass panel's JSON overrides
-              pkgs.hyprland # hyprctl, the only way to talk to the plugin
-            ]
-          }"
-        ];
+        # Without this the script could not read the panel's JSON (jq) and
+        # silently pushed only the defaults, so the panel's values never landed.
+        Environment = [ "PATH=${hyprglassPath}" ];
         ExecStart = "${hyprglassApply}/bin/hyprglass-apply";
       };
       unitConfig = {
