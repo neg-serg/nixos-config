@@ -106,60 +106,6 @@ hl.monitor({ output = "DP-1", disabled = true })
 hl.monitor({ output = "DP-4", disabled = true })
 
 
-
-
--- ---------------------------------------------------------------------
--- VRR: games only
--- ---------------------------------------------------------------------
--- Adaptive sync lets the panel refresh follow the frame pacing, which is what
--- makes the rate visibly twitch during ordinary work, and it is the one thing
--- games genuinely want. The policy from the misc block therefore stays off and
--- is switched on only while a game window exists. Enabling it means flipping
--- `misc.vrr` at runtime (the Lua API's hl.config, which applies live) rather
--- than a static value, so nothing else needs to be toggled per game.
-local VRR_GAME_CLASSES = { "^steam_app_", "^osu!$", "^cs2$", "^gamescope" }
-
-local function isGameClass(class)
-  if not class then return false end
-  for _, pattern in ipairs(VRR_GAME_CLASSES) do
-    if class:match(pattern) then return true end
-  end
-  return false
-end
-
--- Counted from the live window list rather than with a counter: a window can
--- disappear without a `close` event (kill, crash), and a counter would then keep
--- VRR on for the rest of the session.
-local function gamesOpen()
-  local n = 0
-  for _, win in ipairs(hl.get_windows()) do
-    if isGameClass(win.class) then n = n + 1 end
-  end
-  return n
-end
-
-local vrrState = nil
-local function applyVrr()
-  local on = gamesOpen() > 0
-  if on == vrrState then return end -- no point pushing the same value again
-  vrrState = on
-  hl.config({ misc = { vrr = on and 1 or 0 } })
-end
-
--- A reload with a game already mapped must not lose VRR.
-applyVrr()
-
--- The window list settles a moment after the event (a closing window may still be
--- in it while the handler runs), so the recount is deferred as well as immediate.
-local function vrrOnWindowChange()
-  applyVrr()
-  hl.timer(applyVrr, { timeout = 300, type = "oneshot" })
-end
-
-for _, event in ipairs({ "window.open", "window.close", "window.destroy" }) do
-  hl.on(event, vrrOnWindowChange)
-end
-
 -- ---------------------------------------------------------------------
 -- hyprglass: put the settings back after anything that drops them
 -- ---------------------------------------------------------------------
@@ -238,10 +184,9 @@ hl.config({
   misc = {
     disable_hyprland_logo = false, enable_anr_dialog = false, force_default_wallpaper = 0,
     font_family = "Iosevka", splash_font_family = "Iosevka",
-    -- VRR is driven per game window, see the block after the monitor rules:
-    -- "fullscreen only" (2) still left the output in adaptive-sync mode for the
-    -- whole session, and the panel refresh then twitched along with the frame
-    -- pacing while working.
+    -- The DP-2 monitor rule drives VRR (vrr = 3, fullscreen game/video only);
+    -- this global switch stays off because a per-display value overrides it,
+    -- and an always-on output is what twitched the panel during work.
     vrr = 0, disable_autoreload = 1,
     -- Motion for actions Hyprland would otherwise snap: manual resizes and
     -- mouse window dragging both replay through the windowsMove spring.
