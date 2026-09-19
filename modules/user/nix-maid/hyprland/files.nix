@@ -7,6 +7,10 @@
 let
   lockDir = config.lib.neg.path "files/gui/hypr/hyprlock";
   lockNames = builtins.attrNames (builtins.readDir lockDir);
+  # Fragment shaders for HyprWindowShade: linked as a directory so the paths in
+  # hyprwindowshade.lua (~/.config/hypr/shaders/<name>.glsl) resolve.
+  shadeDir = config.lib.neg.path "files/gui/hypr/shaders";
+  shadeNames = builtins.attrNames (builtins.readDir shadeDir);
   ruHotkeys = config.features.input.ruHotkeys or { };
   ruHotkeysEnabled = ruHotkeys.enable or false;
   usClasses = ruHotkeys.usClasses or [ ];
@@ -31,6 +35,12 @@ in
         # reads them when they are pushed) and the Glass panel keeps its overrides
         # next to this file in hyprglass.json.
         ".config/hypr/hyprglass.lua".text = config.lib.neg.readFile "files/gui/hypr/hyprglass.lua";
+
+        # HyprWindowShade rules (per-window / per-layer fragment shaders). Pushed
+        # into the running session by hyprwindowshade-setup, same load-then-push
+        # pattern as hyprglass.lua.
+        ".config/hypr/hyprwindowshade.lua".text =
+          config.lib.neg.readFile "files/gui/hypr/hyprwindowshade.lua";
 
         ".config/hypr/hypridle.conf".text = ''
           # Hypridle — idle configuration
@@ -64,6 +74,7 @@ in
 ";
       }
       // (neg.mkDirLinks ".config/hypr/hyprlock" lockDir lockNames)
+      // (neg.mkDirLinks ".config/hypr/shaders" shadeDir shadeNames)
       // lib.optionalAttrs ruHotkeysEnabled {
         # Config of the layout daemon (features.input.ruHotkeys, see
         # hyprland/ru-layout.nix). `keyboards` stays unset on purpose: the daemon

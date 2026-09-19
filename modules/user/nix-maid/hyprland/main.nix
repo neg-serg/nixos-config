@@ -65,10 +65,29 @@ let
     "$hyprctl_bin" eval "
     $(cat ${pkgs.writeText "hyprexpo.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprexpo.lua"))})" || true
   '';
+
+  # HyprWindowShade: same load-then-push pattern as hyprglass/hyprexpo. Its actions
+  # are only surfaced through hl.plugin.HyprWindowShade.* after the .so is loaded,
+  # so the rules in files/gui/hypr/hyprwindowshade.lua are pushed with hyprctl eval.
+  hyprwindowshadeSetup = pkgs.writeShellScriptBin "hyprwindowshade-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+
+    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
+    "$hyprctl_bin" plugin load ${pkgs.hyprlandPlugins.hyprwindowshade}/lib/libHyprWindowShade.so || true
+
+    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
+    # comment) as a flag, hence the leading newline.
+    "$hyprctl_bin" eval "
+    $(cat ${pkgs.writeText "hyprwindowshade.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprwindowshade.lua"))})" || true
+  '';
   hyprlandLuaText =
     builtins.replaceStrings
-      [ "@hyprglass_setup@" "@hyprexpo_setup@" ]
-      [ "${hyprglassSetup}/bin/hyprglass-setup" "${hyprexpoSetup}/bin/hyprexpo-setup" ]
+      [ "@hyprglass_setup@" "@hyprexpo_setup@" "@hyprwindowshade_setup@" ]
+      [
+        "${hyprglassSetup}/bin/hyprglass-setup"
+        "${hyprexpoSetup}/bin/hyprexpo-setup"
+        "${hyprwindowshadeSetup}/bin/hyprwindowshade-setup"
+      ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
 {
@@ -82,7 +101,11 @@ in
       {
         # hyprglass-setup is in PATH as well, so the glass can be (re)applied in a
         # running session without logging out (the start hook only fires on start).
-        environment.systemPackages = services.packages ++ [ hyprglassSetup hyprexpoSetup ];
+        environment.systemPackages = services.packages ++ [
+          hyprglassSetup
+          hyprexpoSetup
+          hyprwindowshadeSetup
+        ];
 
         systemd.user.targets = services.systemdTargets;
         systemd.user.services = services.systemdServices;
