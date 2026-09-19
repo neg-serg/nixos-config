@@ -89,9 +89,13 @@ behind Hyprland.
   `hyprglass_disabled` tag.
 - **Presets** (custom, defined by `hyprglass-apply` — see below): `scratch` and `media-dark`.
   - `scratch` is attached by tag to every scratchpad window rule in `files/gui/hypr/hyprland.lua`
-    (`hyprglass_preset_scratch`): `blur_strength 16` with the maximum of 5 gaussian passes, against
-    the global pair (10.5/4 in the panel's JSON at the time of writing), so the desk behind a
-    scratchpad is frosted much harder.
+    (`hyprglass_preset_scratch`): `blur_strength 16` with the maximum of 5 gaussian passes and
+    `adaptive_dim = 0`, against the global pair (10.5/4 in the panel's JSON at the time of
+    writing), so the desk behind a scratchpad is frosted much harder — and, per the request that
+    the heavier frost must not darken the pad, without the adaptive dim that would otherwise ride
+    along: the shader scales the frosted colour by `1 - adaptiveDim * smoothstep(0.25, 0.55,
+    blurredLum)`, whose curve is tuned for the luminance range a normal-strength blur compresses
+    into.
   - `media-dark` is attached to the panel's now-playing card through
     `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
     `dark.brightness = 0.55`, i.e. 1.5x darker than the dark theme's 0.82. Note the pair separator
@@ -170,8 +174,10 @@ behind Hyprland.
 - **Shaders shipped**: `crt` (curved glass, scanlines, phosphor triads, chroma misalignment,
   vignette), `vhs` (tracking bands, chroma bleed, tape noise, rolling head-switching bar), `amber`
   (monochrome amber-phosphor monitor with glow), `noir` (hard B/W with animated film grain), plus
-  `pixelate` and `dim_unfocused` — the last two are the ones `hyprwindowshade.lua` attaches to
-  classes.
+  `pixelate` and `dim_unfocused`. `hyprwindowshade.lua` attaches `pixelate` to the Telegram window
+  while it is unfocused; `dim_unfocused` is *not* attached anywhere by default — it used to dim the
+  terminals whenever they lost focus, and losing focus happens every time a scratchpad is pulled up,
+  so the request was to drop that. It stays available per window via `shade on dim_unfocused`.
 - **Verified** in a nested 0.56.2 instance: `classshader` on a window drops its unique colour count
   292 → 1; the rule from `hyprwindowshade.lua` leaves an unfocused window at 0.1445 mean luminance /
   0.237 saturation against 0.2356 / 0.496 focused — exactly the shader's 0.62 and 0.55 constants;

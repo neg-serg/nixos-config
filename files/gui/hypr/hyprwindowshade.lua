@@ -14,15 +14,12 @@
 
 local SHADERS = (os.getenv("HOME") or "") .. "/.config/hypr/shaders/"
 
--- Terminals (kitty --class term / nwim) recede while they are not focused. The
--- shader stays attached and blends on is_active, so focusing one is a smooth
--- ramp rather than a cut.
-hl.window_rule({
-  name = "shade-dim-terminals",
-  match = { class = "^(term|nwim)$" },
-  tag = "+shader:" .. SHADERS .. "dim_unfocused.glsl",
-})
-
+-- No class gets a shader by default any more. The terminals used to carry
+-- `+shader:dim_unfocused.glsl`, which dimmed and desaturated them whenever they
+-- lost focus — including every time a scratchpad (telegram/music/…) was pulled
+-- up, which reads as the whole desk going dark. The shader itself is still in
+-- ~/.config/hypr/shaders, so `shade on dim_unfocused` brings it back for the
+-- focused window on demand.
 -- Telegram pixelates while unfocused: whatever is on screen stops being
 -- readable the moment you look elsewhere. Remove the rule to disable it.
 hl.window_rule({
