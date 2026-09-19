@@ -226,6 +226,19 @@ Singleton {
                     right: ["media", "mpdFlags", "sysmon", "pill", "systray", "microphone", "volume", "genelec"]
                 })
 
+            // Startup gate: at login the panel shows only the widgets listed in
+            // startupCleanWidgets and keeps everything else hidden until the first
+            // real window appears (see Bar/Bar.qml and Docs/Config.md). Hidden
+            // daemon windows and, with startupCleanIgnoreSpecial, windows on special
+            // workspaces (the scratchpads pre-launched at login) do not count; the
+            // clean look is held for at least startupCleanMinMs. The gate arms only
+            // when the panel starts together with the session, so a panel restart in
+            // the middle of work never strips the bar.
+            property bool startupCleanBar: true
+            property var startupCleanWidgets: ["clock", "weather"]
+            property int startupCleanMinMs: 10000
+            property bool startupCleanIgnoreSpecial: true
+
             // Panel side edge margin in logical px; matches Theme.panelSideMargin when absent
             property int panelSideMarginPx: 4
 

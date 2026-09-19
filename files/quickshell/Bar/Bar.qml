@@ -28,8 +28,58 @@ Scope {
     // built and blocks change notifications while doing so (JsonAdapter::
     // changesBlocked), so this binding reflects the layout as it is when the object
     // is created. Settings.json edits need a panel restart to take effect.
-    readonly property var panelWidgets: WidgetRegistry.visibleSetFor(
-        Settings.settings ? Settings.settings.panelLayout : undefined)
+    // While the startup gate is up (below) the set is narrowed to the widgets that
+    // should survive a login — everything else disappears, which is what makes the
+    // bar read as "clock and weather over the wallpaper".
+    readonly property var panelWidgets: BarLayout.startupKeepSet(
+        WidgetRegistry.visibleSetFor(Settings.settings ? Settings.settings.panelLayout : undefined),
+        rootScope.startupGateActive ? rootScope.startupCleanWidgets : null)
+
+
+    // ── Startup gate (the "clean login" bar) ─────────────────────────────────
+    // At login the panel shows only the widgets named in startupCleanWidgets
+    // (clock and weather by default) over the wallpaper. The first *real* window
+    // brings the rest back, and the bar then stays normal for the rest of the
+    // session.
+    //
+    // Rules, in the order they matter:
+    // - The gate arms only when this panel start *is* the session start: the login
+    //   marker ($QS_LOGIN_STATE_DIR/state, rewritten the moment the password is
+    //   accepted) has to be fresh. A panel restarted inside a live session —
+    //   `systemctl --user restart quickshell`, a Hyprland config reload, a crash —
+    //   arms nothing, because a bar that thins itself out mid-work is worse than a
+    //   missed pretty login.
+    // - The clean look is held for at least startupCleanMinMs, so the autostart
+    //   burst at login (kitty term, telegram, …) cannot cut it short; after that
+    //   the first window drops it immediately.
+    // - Windows that do not mean "the desktop is in use" are ignored: hidden ones
+    //   (`nicotine -s` and friends) and, with startupCleanIgnoreSpecial, those on
+    //   special workspaces — the scratchpads are pre-launched at login.
+    // - Env override for testing: QS_STARTUP_CLEAN=0 disables the gate,
+    //   QS_STARTUP_CLEAN=1 holds it up for as long as the panel runs (preview the
+    //   login look without logging out).
+    readonly property string _startupCleanEnv: String(Quickshell.env("QS_STARTUP_CLEAN") || "")
+    // Forced on: the gate cannot open, whatever the desktop does.
+    readonly property bool startupCleanHold: rootScope._startupCleanEnv === "1"
+    readonly property bool startupCleanEnabled: rootScope._startupCleanEnv === "0"
+        ? false
+        : (rootScope.startupCleanHold
+            || (Settings.settings ? Settings.settings.startupCleanBar !== false : true))
+    readonly property var startupCleanWidgets: BarLayout.stringList(
+        Settings.settings ? Settings.settings.startupCleanWidgets : undefined,
+        ["clock", "weather"])
+    readonly property int startupCleanMinMs: BarLayout.positiveNumber(
+        Settings.settings ? Settings.settings.startupCleanMinMs : undefined, 10000)
+    readonly property bool startupCleanIgnoreSpecial: Settings.settings
+        ? Settings.settings.startupCleanIgnoreSpecial !== false : true
+    // Gate state. `startupGateActive` is what the widget visibility above reads.
+    property bool startupGateActive: false
+    property bool startupGateWindowSeen: false
+    property bool startupGateDwellDone: false
+    // Window polling is quick while the gate is young and slow afterwards: the
+    // clean look can last arbitrarily long (a session nobody touches), and a
+    // hyprctl every 600 ms for hours would be waste.
+    property bool startupGateSlowPoll: false
 
     property real barHeight: 0 // Expose current bar height for other components (e.g. window mirroring)
     function vpnAccentColor() {
@@ -74,9 +124,69 @@ Scope {
         // Force WallpaperAccent singleton to instantiate
         var wa = WallpaperAccent;
         _recalcTerminalWs();
+        _initStartupGate();
+    }
+
+    // ── Startup gate plumbing ───────────────────────────────────────────────
+    // The login marker: rewritten the moment the password is accepted
+    // (greetd/session-wrapper.sh and the login layer both write it), so its age
+    // tells a login apart from a panel restart inside a running session.
+    readonly property string _loginStatePath: {
+        const dir = Quickshell.env("QS_LOGIN_STATE_DIR")
+            || ((Quickshell.env("XDG_RUNTIME_DIR") || ("/run/user/" + (Quickshell.env("UID") || ""))) + "/quickshell-login");
+        return dir + "/state";
+    }
+
+    // How old the marker may be and still count as "this is the login".
+    readonly property int _startupCleanLoginWindowMs: 120000
+
+    function _initStartupGate() {
+        rootScope.startupGateWindowSeen = false;
+        rootScope.startupGateDwellDone = false;
+        rootScope.startupGateSlowPoll = false;
+        if (!rootScope.startupCleanEnabled) {
+            rootScope.startupGateActive = false;
+            return;
+        }
+        // Up from the first frame: the panel slides in (Theme.panelSlideMs) while
+        // the marker probe below decides, so the decision is never seen as a jump.
+        rootScope.startupGateActive = true;
+        startupDwellTimer.restart();
+        startupSlowPollTimer.restart();
+        if (rootScope.startupCleanHold) return; // preview: nothing may open the gate
+        startupLoginProbe.start();
+    }
+
+    function _handleLoginMarkerAge(rawSeconds) {
+        const seconds = Number(rawSeconds);
+        const fresh = BarLayout.isFreshTimestamp(seconds, Date.now() / 1000, rootScope._startupCleanLoginWindowMs);
+        if (Settings.settings && Settings.settings.debugLogs)
+            console.debug('[Bar] startup gate: login marker',
+                isFinite(seconds) ? Math.round(Date.now() / 1000 - seconds) + 's old' : 'unreadable',
+                fresh ? '→ gate armed' : '→ gate dropped (panel started inside a running session)');
+        if (!fresh) rootScope.startupGateActive = false;
+    }
+
+    function _noteStartupWindows(clients) {
+        if (!rootScope.startupGateActive) return;
+        if (!BarLayout.hasRealWindow(clients, rootScope.startupCleanIgnoreSpecial)) return;
+        rootScope.startupGateWindowSeen = true;
+        rootScope._maybeOpenStartupGate();
+    }
+
+    function _maybeOpenStartupGate() {
+        if (!rootScope.startupGateActive || rootScope.startupCleanHold) return;
+        if (!rootScope.startupGateDwellDone || !rootScope.startupGateWindowSeen) return;
+        rootScope.startupGateActive = false;
+        if (Settings.settings && Settings.settings.debugLogs)
+            console.debug('[Bar] startup gate: first window is here, full panel back');
     }
 
 
+
+
+
+    // ── Startup gate timers ──────────────────────────────────────────────
     // Workaround: Hyprland skips wallpaper render behind transparent bar
     // on first workspace (term). Brief opacity toggle forces a full repaint.
     Timer {
@@ -87,6 +197,54 @@ Scope {
             barRootItem.opacity = 0.99
             Qt.callLater(function() { barRootItem.opacity = 1.0 })
         }
+    }
+    // The clean look is held for at least startupCleanMinMs: the autostart burst
+    // maps windows within a second of the panel, and without the dwell the bar
+    // would be back to normal before it had finished sliding in.
+    Timer {
+        id: startupDwellTimer
+        interval: rootScope.startupCleanMinMs
+        repeat: false
+        onTriggered: {
+            rootScope.startupGateDwellDone = true;
+            rootScope._maybeOpenStartupGate();
+        }
+    }
+
+    Timer {
+        id: startupSlowPollTimer
+        interval: 60000
+        repeat: false
+        onTriggered: rootScope.startupGateSlowPoll = true
+    }
+
+    // The login marker probe: one short-lived stat, run only while the gate is
+    // up. Its answer decides whether the gate stays (login) or is dropped at once
+    // (a panel restarted inside a running session).
+    ProcessRunner {
+        id: startupLoginProbe
+        cmd: ["stat", "-c", "%Y", rootScope._loginStatePath]
+        env: HyprlandWatcher.hyprEnvObject
+        autoStart: false
+        restartMode: "never"
+        onLine: line => rootScope._handleLoginMarkerAge(String(line).trim())
+        onExited: (code, status) => {
+            if (code !== 0) rootScope._handleLoginMarkerAge("");
+        }
+    }
+
+    // The window watcher. While the gate is up this polls `hyprctl -j clients`
+    // and stops the moment the gate opens (`autoStart` binding), so the extra
+    // process lives only for the length of a login.
+    ProcessRunner {
+        id: startupWindowPoll
+        cmd: ["hyprctl", "-j", "clients"]
+        env: HyprlandWatcher.hyprEnvObject
+        parseJson: true
+        intervalMs: rootScope.startupGateSlowPoll ? 2500 : 600
+        autoStart: rootScope.startupGateActive && !rootScope.startupCleanHold
+        restartMode: "never"
+        onJson: arr => rootScope._noteStartupWindows(arr)
     }
 
     Item {
@@ -895,7 +1053,10 @@ Scope {
                             }
                             GenelecWidget {
                                 id: widgetsGenelec
-                                visible: true
+                                // This widget deliberately ignores panelLayout (it hides
+                                // itself when Genelec is absent); it still has to obey the
+                                // startup gate, or the login bar is not "clock + weather".
+                                visible: !rootScope.startupGateActive
                                 Layout.alignment: Qt.AlignVCenter
                                 panelHovering: rightPanel.panelHovering
                             }
