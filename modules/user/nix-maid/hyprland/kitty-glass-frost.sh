@@ -14,6 +14,19 @@
 # to the output with `crop`: the pane's screen rect maps into the image the same
 # way, by covering the screen and cutting the rect out.
 #
+# The slice is rendered at 1/scale of the pane's physical rect (scale = the
+# largest power of two that leaves a canvas ~480 px wide) and kitty scales it back
+# up on the GPU: blurring 480x270 instead of 2688x864 is a fraction of the work for
+# the same picture. A gaussian of sigma 120/scale covers the same area as sigma
+# 120 at 1:1, and kitty's bilinear upscale of the result is indistinguishable
+# from the full-resolution pipeline (measured on the pane's slice: RMSE 0.0006,
+# ~0.16/255). The pane therefore has to be launched with a scaling
+# background_image_layout (cscaled, see hyprland/services.nix).
+#
+# The 1/scale canvas is cached per (wallpaper, mtime, scale, monitor) as
+# ~/.cache/kitty-glass-frost/canvas-*.png, so a wallpaper that has been shown
+# before costs a crop plus a 3 KB PNG instead of a full decode.
+#
 # Knobs without a rebuild:
 #   ~/.config/kitty/glass-frost-blur   gaussian sigma, physical px (120)
 #   ~/.config/kitty/glass-frost-dim    brightness multiplier (0.15)
@@ -78,10 +91,50 @@ frost() {
   wallpaper="$(head -n1 "$HOME/.cache/quickshell-wallpaper-path" 2> /dev/null | tr -d '[:space:]')"
   [ -n "$wallpaper" ] && [ -r "$wallpaper" ] || return 0
 
-  # Logical geometry -> physical pixels of the wallpaper canvas, clamped to the
-  # canvas: the scratchpad daemon may restore a pane that hangs over a screen edge,
-  # and a crop reaching outside the image would come out the wrong size.
-  read -r cx cy cw ch <<< "$(awk -v s="$mscale" -v x="$px" -v y="$py" -v w="$pw" -v h="$ph" -v mw="$mw" -v mh="$mh" '
+  # Render at 1/$scale and let kitty scale it back up (see the header): the
+  # canvas is ~480 px wide whatever the monitor, so the blur and the encode work
+  # on ~1/30 of the pixels of the pane rect.
+  scale=1
+  while [ "$((mw / (scale * 2)))" -ge 480 ]; do scale="$((scale * 2))"; done
+  cwp="$((mw / scale))"
+  chp="$((mh / scale))"
+  blur_scaled="$(awk -v b="$blur" -v k="$scale" 'BEGIN { printf "%.2f", b / k }')"
+
+  # Decoding and downscaling the wallpaper is what costs, so keep the canvas
+  # around: switching between wallpapers already seen is then a crop and a 3 KB
+  # PNG (~25 ms against ~0.7 s for the full decode-and-blur of a 4K file).
+  cache="$HOME/.cache/kitty-glass-frost"
+  mkdir -p "$cache" 2> /dev/null
+  stamp="$(stat -c '%Y-%s' "$wallpaper" 2> /dev/null || printf '0')"
+  key="$(printf '%s %s %s %sx%s' "$wallpaper" "$stamp" "$scale" "$cwp" "$chp" | cksum | cut -d' ' -f1)"
+  canvas="$cache/canvas-$scale-$key.png"
+  if [ ! -s "$canvas" ]; then
+    candidate="$cache/canvas-$scale-$key.$$.png"
+    # jpeg:size lets libjpeg decode at a fraction of the file's resolution
+    # instead of handing a 4K-8K bitmap to the resize.
+    if magick -define "jpeg:size=${cwp}x${chp}" "$wallpaper" \
+      -resize "${cwp}x${chp}^" -gravity center -extent "${cwp}x${chp}" \
+      -define png:compression-level=1 "$candidate" 2> /dev/null && [ -s "$candidate" ]; then
+      mv -f "$candidate" "$canvas" 2> /dev/null || canvas="$candidate"
+      # Keep the handful of canvases the session actually switches between, not
+      # the whole collection.
+      ls -t "$cache"/canvas-*.png 2> /dev/null | tail -n +9 | xargs -r rm -f 2> /dev/null
+    else
+      rm -f "$candidate" 2> /dev/null
+      return 0
+    fi
+  fi
+
+  # Logical geometry -> the pane's rect in canvas pixels, clamped to the canvas:
+  # the scratchpad daemon may restore a pane that hangs over a screen edge, and a
+  # crop reaching outside the image would come out the wrong size.
+  #
+  # The crop below must run without -gravity, which is why it happens in a second
+  # magick invocation: under a gravity, IM shifts a crop that carries +X+Y offsets
+  # by half the crop size, and that is how the slice used to land half a pane away
+  # from the pane's own rect (the frost showed the bottom-right of the wallpaper
+  # for a pane sitting in the middle of the screen).
+  read -r kx ky kw kh <<< "$(awk -v s="$mscale" -v x="$px" -v y="$py" -v w="$pw" -v h="$ph" -v mw="$mw" -v mh="$mh" -v k="$scale" '
   BEGIN {
     cx = x * s; cy = y * s; cw = w * s; ch = h * s;
     if (cx < 0) { cw += cx; cx = 0 }
@@ -89,14 +142,19 @@ frost() {
     if (cx + cw > mw) cw = mw - cx
     if (cy + ch > mh) ch = mh - cy
     if (cw < 1 || ch < 1) { cx = 0; cy = 0; cw = mw; ch = mh }
-    printf "%d %d %d %d", cx, cy, cw, ch
+    kw = int(cw / k + 0.5); kh = int(ch / k + 0.5)
+    kx = int(cx / k + 0.5); ky = int(cy / k + 0.5)
+    if (kx + kw > int(mw / k)) kx = int(mw / k) - kw
+    if (ky + kh > int(mh / k)) ky = int(mh / k) - kh
+    if (kx < 0) kx = 0
+    if (ky < 0) ky = 0
+    printf "%d %d %d %d", kx, ky, kw, kh
   }')"
 
   out="$HOME/.cache/kitty-glass-frost-$class.png"
-  magick "$wallpaper" \
-    -resize "${mw}x${mh}^" -gravity center -extent "${mw}x${mh}" \
-    -crop "${cw}x${ch}+${cx}+${cy}" +repage \
-    -blur "0x${blur}" -evaluate multiply "$dim" \
+  magick "$canvas" \
+    -crop "${kw}x${kh}+${kx}+${ky}" +repage \
+    -blur "0x${blur_scaled}" -evaluate multiply "$dim" \
     "$out" 2> /dev/null || return 0
   [ -s "$out" ] || return 0
 

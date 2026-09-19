@@ -204,7 +204,9 @@ in
       # A little inset so the TUI does not run into the glass edge; kitty's own
       # config keeps 0 for ordinary terminals.
       if [ "$class" = music ]; then
-        # cscaled keeps the slice covering the pane on any resize.
+        # cscaled keeps the slice covering the pane on any resize — and the
+        # frost helper renders its slice at 1/scale for speed, so the pane must
+        # keep a scaling layout (see the header of kitty-glass-frost.sh).
         exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
           -o background="$tint" -o window_padding_width=8 \
           -o background_image_layout=cscaled \
