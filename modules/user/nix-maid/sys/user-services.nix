@@ -302,6 +302,19 @@ lib.mkIf (cfg.enable or false) {
   # the shell BEFORE nix-maid activation updates the config symlinks, so the
   # running shell keeps the OLD code until manually restarted. Watching the
   # shell.qml symlink catches the flip and reloads the new config.
+  # Glass settings watchdog: the plugin drops its config on a compositor reload
+  # and nothing reports it, so a timer checks every 10 s and re-applies only when
+  # something drifted (the service is the check + conditional push).
+  systemd.user.timers.hyprglass-watch = {
+    description = "Check the hyprglass settings and repair them if needed";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "30s";
+      OnUnitActiveSec = "10s";
+      Unit = "hyprglass-watch.service";
+    };
+  };
+
   # Re-apply the hyprglass settings when they are (re)deployed or when the Glass
   # panel writes overrides: the plugin only reads its config when it is pushed, so
   # without this a switch would leave the running session on the old glass until
@@ -312,7 +325,7 @@ lib.mkIf (cfg.enable or false) {
     pathConfig = {
       PathChanged = [
         "/home/neg/.config/hypr/hyprglass.lua"
-        "/home/neg/.config/hypr/hyprglass-user.lua"
+        "/home/neg/.config/hypr/hyprglass.json"
       ];
       Unit = "hyprglass-apply.service";
     };

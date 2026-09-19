@@ -197,6 +197,18 @@ in
   };
 
   systemdServices = {
+    # Watchdog for the glass settings: the plugin drops its config when the
+    # compositor re-initialises it, and nothing else reports that. The timer in
+    # sys/user-services.nix runs this every 10 s; it checks first, so a healthy
+    # session costs nine `hyprctl getoption` reads and no writes.
+    hyprglass-watch = {
+      description = "Re-apply hyprglass settings if they drifted";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${hyprglassApply}/bin/hyprglass-apply --watch";
+      };
+    };
+
     # Triggered by hyprglass-config.path when the glass config is (re)deployed
     # or the panel writes overrides.
     hyprglass-apply = {
