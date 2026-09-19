@@ -17,8 +17,13 @@ let
   greeterCache = "/home/greeter/.cache";
   greeterWallpaperFallback = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
 
-  # When wl daemon changes its state (new wallpaper), write the path
-  # to quickshell-wallpaper-path, which triggers the greeter sync above.
+  # When wl daemon changes its state (new wallpaper), write the path to
+  # quickshell-wallpaper-path (triggers the greeter sync above) and keep a
+  # last-good copy. last-good is the fallback wl-wallpaper-resolve.sh falls back to
+  # when both wl sources name a file that is gone — wallpapers get deleted, renamed
+  # and moved, and on 2026-09-19 exactly that left the desktop with no wallpaper at
+  # all (wl restore exits 0 without painting anything) while the login screen fell
+  # back to a random image.
   wlStateSync = pkgs.writeShellScript "wl-state-sync" ''
     set -euo pipefail
     state_file="$HOME/.local/state/wl/state.json"
@@ -27,6 +32,7 @@ let
       wallpaper_path="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2>/dev/null || true)"
       if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
         echo "$wallpaper_path" > "$notify_file"
+        echo "$wallpaper_path" > "$HOME/.local/state/wl/last-good"
       fi
     fi
   '';
@@ -87,21 +93,57 @@ let
     mv -f "$tmp" "$dst"
   '';
 
-  # Retry `wl restore` after the daemon starts — its auto-restore can race
-  # the compositor becoming ready (see daemon/src/main.rs).
+  # Restore the session wallpaper right after the daemon starts. Two jobs:
+  #
+  #   * `wl restore` — the daemon's own auto-restore can race the compositor
+  #     becoming ready (see daemon/src/main.rs), hence the retries;
+  #   * a validity check on wl's state, because the image it names may be gone
+  #     (deleted, renamed or moved between sessions). `wl restore` exits 0 having
+  #     painted nothing in that case, so on 2026-09-19 the desktop came up black
+  #     while the login screen — which validates its candidate — showed a random
+  #     image. When the state is stale, whatever wl-wallpaper-resolve.sh considers
+  #     current is applied and recorded as last-good.
+
   wlRestoreRetry = pkgs.writeShellScript "wl-restore-retry" ''
     set -euo pipefail
     export PATH="${
       lib.makeBinPath [
-        pkgs.coreutils # sleep, head
+        pkgs.coreutils # sleep, head, printf
+        pkgs.findutils # find (wl-wallpaper-resolve.sh)
+        pkgs.gnused # sed (wl-wallpaper-resolve.sh)
+        pkgs.jq # state.json, here and in the resolver
         pkgs.wl # wallpaper daemon
       ]
     }"
+    state_file="$HOME/.local/state/wl/state.json"
+    current="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2> /dev/null || true)"
+
+    if [ -n "$current" ] && [ -r "$current" ]; then
+      for i in 1 2 3 4 5; do
+        wl restore && exit 0
+        sleep 1
+      done
+      exit 0
+    fi
+
+    # The state names a file that is not there: restoring it would leave the
+    # screen empty. Ask the resolver (the same script the login layer uses) what
+    # is actually on disk and apply that.
+    candidate="$(/etc/quickshell/scripts/wl-wallpaper-resolve.sh 2> /dev/null || true)"
+    if [ -z "$candidate" ]; then
+      echo "wl-restore-retry: no wallpaper to restore (state names '$current')" >&2
+      exit 0
+    fi
+    echo "wl-restore-retry: state names a missing wallpaper ('$current'); applying $candidate" >&2
     for i in 1 2 3 4 5; do
-      wl restore && break
+      if wl img "$candidate"; then
+        printf '%s\n' "$candidate" > "$HOME/.local/state/wl/last-good"
+        exit 0
+      fi
       sleep 1
     done
   '';
+
   # Watch hyprland events; when a monitor (re)connects, re-apply wallpapers.
   # A lost display signal (cable / DPMS) removes the output and can kill the
   # wl-daemon (see wl-daemon.service); on re-add the daemon's surfaces are
