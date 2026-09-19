@@ -44,12 +44,22 @@ let
       (pkgs.lib.makeBinPath [ pkgs.hyprland ])
     ];
   } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
+  # Push the hyprglass settings into a running session (see hyprglass-apply.sh).
+  # The runtime paths are substituted here because systemd user services and the
+  # session shell both run with a minimal PATH.
+  hyprglassApply = pkgs.writeShellScriptBin "hyprglass-apply" (
+    builtins.replaceStrings
+      [ "@hyprctl@" "@plugin@" ]
+      [ "${lib.getExe' pkgs.hyprland "hyprctl"}" "${pkgs.hyprglass}/lib/hyprglass.so" ]
+      (builtins.readFile ./hyprglass-apply.sh)
+  );
 in
 {
   packages = [
     pkgs.hypridle # idle daemon (locks to a fading black screen)
     # pkgs.hyprlock — temporarily removed (2026-08-31); re-add to restore the lock screen
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
+    hyprglassApply # pushes glass settings into the running session (panel, path unit)
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
     pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
@@ -168,6 +178,16 @@ in
   };
 
   systemdServices = {
+    # Triggered by hyprglass-config.path when the glass config is (re)deployed
+    # or the panel writes overrides.
+    hyprglass-apply = {
+      description = "Push hyprglass settings into the running session";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${hyprglassApply}/bin/hyprglass-apply";
+      };
+    };
+
     # Hyprscratch daemon (scratchpad manager)
     # bindsTo ensures hyprscratch stops when the session target stops.
     # After hyprland reload/suspend the IPC socket changes, so

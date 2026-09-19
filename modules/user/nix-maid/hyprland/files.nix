@@ -26,6 +26,12 @@ in
 
         ".config/hypr/hyprlock.conf".text = config.lib.neg.readFile "files/gui/hypr/hyprlock.conf";
 
+        # hyprglass defaults, also deployed as a file: `hyprglass-apply` re-reads
+        # them to push the settings into a *running* session (the plugin only
+        # reads them when they are pushed), and the Glass panel writes its
+        # overrides next to this file as hyprglass-user.lua.
+        ".config/hypr/hyprglass.lua".text = config.lib.neg.readFile "files/gui/hypr/hyprglass.lua";
+
         ".config/hypr/hypridle.conf".text = ''
           # Hypridle — idle configuration
           # Idle locking temporarily disabled (2026-08-31): hyprlock removed.
