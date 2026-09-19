@@ -615,6 +615,13 @@ hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratc
 -- must stay out of the `routes` table above and away from `no_blur`, or their
 -- glass disappears.
 
+-- Scratchpads get their own entrance: the workspace they live on already slides
+-- with `slidefadevert`, so matching it makes summoning one feel like the desk
+-- sliding in rather than a window popping over it.
+for _, sp in ipairs({ "teardown", "music", "torrment", "vpn", "mixer", "rebuild" }) do
+  hl.window_rule({ name = "anim-" .. sp, match = { class = "^(" .. sp .. ")$" }, animation = "slidefadevert 12%" })
+end
+
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
 hl.window_rule({ name = "steam-app-generic", match = { class = m.steam_app }, immediate = true, no_shadow = true, tag = "steam-app" })
