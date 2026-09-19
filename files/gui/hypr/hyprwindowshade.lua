@@ -27,3 +27,21 @@ hl.window_rule({
   match = { class = "^(org.telegram.desktop)$" },
   tag = "+shader_inactive:" .. SHADERS .. "pixelate.glsl",
 })
+
+-- Scratchpad windows: an ultraviolet shadow from inside the frame. The
+-- compositor draws no shadow here (decoration.shadow is off by design, see
+-- hyprland.lua) and a shader cannot paint outside the window box, so the depth
+-- is a violet rim lit from the top edge plus a contact shade along the edges.
+-- Classes mirror the scratchpad patterns in hyprland.lua's `m` table; the list
+-- is duplicated on purpose because this file is pushed standalone by
+-- hyprwindowshade-setup.
+local SCRATCHPAD_CLASSES = {
+  "org\\.telegram\\.desktop", "TelegramDesktop", "KotatogramDesktop", "Skype", "Slack", "zoom",
+  "music", "rmpc", "ncmpcpp", "mutterfox", "neomutt", "ncpamixer", "com\\.saivert\\.pwvucontrol",
+  "torrment", "rebuild", "teardown", "vpn",
+}
+hl.window_rule({
+  name = "shade-uv-shadow-scratchpads",
+  match = { class = "^(" .. table.concat(SCRATCHPAD_CLASSES, "|") .. ")$" },
+  tag = "+shader:" .. SHADERS .. "uv_shadow.glsl",
+})
