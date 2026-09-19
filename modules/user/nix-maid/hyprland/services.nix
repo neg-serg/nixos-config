@@ -44,10 +44,11 @@ let
       (pkgs.lib.makeBinPath [ pkgs.hyprland ])
     ];
   } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
-  # Frost for a glass scratchpad pane (see kitty-glass-frost.sh): a heavily blurred,
-  # darkened slice of the current wallpaper pushed into the pane as kitty's
-  # background image, because nothing on the compositor side moves that window's
-  # blur any more.
+  # Fallback frost for a scratchpad pane (see kitty-glass-frost.sh): a heavily
+  # blurred, darkened slice of the current wallpaper pushed into the pane as kitty's
+  # background image. The launcher no longer uses it — the rmpc pane is translucent
+  # enough these days for the plugin's own frost to carry it — but it stays
+  # installed: one line in the music branch of `kitty-glass` below brings it back.
   kittyGlassFrost = pkgs.writeShellScriptBin "kitty-glass-frost" (
     builtins.replaceStrings
       [ "@hyprctl@" "@kitten@" ]
@@ -85,7 +86,7 @@ in
     # pkgs.hyprlock — temporarily removed (2026-08-31); re-add to restore the lock screen
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     hyprglassApply # pushes glass settings into the running session (panel, path unit)
-    kittyGlassFrost # frosts a scratchpad pane with a blurred wallpaper slice
+    kittyGlassFrost # fallback pane frost (baked wallpaper slice; unused by the launcher)
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
     pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
@@ -126,16 +127,15 @@ in
     # keeps a hint of frost while staying decisively darker than the media card
     # (0.45) — a terminal that faint competes with its own text.
     #
-    # The music pane (rmpc) is the one exception: it has to read black, so it runs
-    # at 0.96 over a black background instead of 0.85 over the album tint. Measured
-    # on the pane itself: 0.60 gave (13.4, 16.2, 21.2) and 0.85 gave (10.6, 13.1,
-    # 15.4), where 0.96 keeps only ~1/255 of the wallpaper through.
-    #
-    # ...but 0.96 read as a sealed black window, so the pane sits at 0.92: just
-    # enough backdrop comes through to tell there is a desktop under it, and the
-    # black tint keeps the TUI readable. Measured over an opaque 200-grey window:
-    # 0.96 -> (6,6,6), 0.85 -> (24,24,24), 0.80 -> (32,32,32), 0.75 -> (40,40,41),
-    # 0.70 -> (49,49,49); 0.92 lands between the first two, around (11,11,11).
+    # The music pane (rmpc) is the exception in the other direction: its window is
+    # tagged with the plugin's `scratch` preset — blur_strength 16, i.e. a 192 px
+    # radius, all five gaussian passes and no adaptive dim (hyprglass-apply.sh) —
+    # so the strongest frost in the session is behind it and the pane only has to
+    # stay out of its way: 0.45 black over a black tint, the media card's
+    # transparency. It used to run at 0.96/0.92 and hid that frost completely, so
+    # the pane baked its own wallpaper slice instead (see kitty-glass-frost.sh,
+    # still installed as the fallback). Measured over an opaque 200-grey window:
+    # 0.96 -> (6,6,6), 0.92 -> (11,11,11), 0.85 -> (24,24,24), 0.70 -> (49,49,49).
     #
     # The opacity can be tuned without a rebuild: write a number into
     # ~/.config/kitty/glass-opacity and reopen the scratchpad (the file is picked
@@ -151,7 +151,7 @@ in
 
       # Per-class default; the override file below still wins over both.
       case "$class" in
-        music) opacity=0.92 ;; # rmpc: black first, a hint of the desktop through
+        music) opacity=0.45 ;; # rmpc: the hardest glass in the session, let it through
         *) opacity=0.85 ;;
       esac
       override="$HOME/.config/kitty/glass-opacity"
@@ -183,35 +183,8 @@ in
 
       [ "$tint_enabled" = 1 ] || tint="#000000"
 
-      # Split the command after -e off: the music pane runs it through the frost
-      # helper first (kitty-glass-frost.sh), so the pane draws its own blurred
-      # wallpaper slice — nothing on the compositor side moves this window's blur
-      # any more, and the slice has to be cropped to the window's screen rect,
-      # which only exists once the window is mapped. The watcher started next to
-      # the initial push keeps the slice in step with the wallpaper afterwards.
-      opts=()
-      payload=()
-      seen=0
-      for arg in "$@"; do
-        if [ "$seen" = 1 ]; then
-          payload+=("$arg")
-        else
-          opts+=("$arg")
-          [ "$arg" = "-e" ] || [ "$arg" = "--" ] && seen=1
-        fi
-      done
-
       # A little inset so the TUI does not run into the glass edge; kitty's own
       # config keeps 0 for ordinary terminals.
-      if [ "$class" = music ]; then
-        # cscaled keeps the slice covering the pane on any resize — and the
-        # frost helper renders its slice at 1/scale for speed, so the pane must
-        # keep a scaling layout (see the header of kitty-glass-frost.sh).
-        exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
-          -o background="$tint" -o window_padding_width=8 \
-          -o background_image_layout=cscaled \
-          "''${opts[@]}" sh -c 'kitty-glass-frost music; kitty-glass-frost --watch music & exec "$@"' sh "''${payload[@]}"
-      fi
       exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
         -o background="$tint" -o window_padding_width=8 "$@"
     '')
