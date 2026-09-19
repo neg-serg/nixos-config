@@ -139,13 +139,15 @@ Item {
                 const fallbackH = Math.round(Settings.settings.musicPopupHeight * wScale);
                 const contentH = (musicWidget && musicWidget.implicitHeight && musicWidget.implicitHeight > 0)
                     ? musicWidget.implicitHeight : fallbackH;
-                if (!isFinite(contentH) || contentH <= 0) return Math.round(pad + fallbackH);
+                // Two paddings: the content is inset on all four sides now, so the
+                // card has to reserve both.
+                if (!isFinite(contentH) || contentH <= 0) return Math.round(pad * 2 + fallbackH);
                 // Qt.application.screens does not exist in Qt 6, so this used to fall
                 // through to a hardcoded 1080 and computed the height cap for the wrong
                 // monitor; the toast's own PanelWindow knows its screen.
                 const screenH = (toast.screen && toast.screen.height) ? toast.screen.height : 1080;
                 const cap = Math.round(screenH * 0.95);
-                return Math.round(Utils.clamp(pad + contentH, 200, cap));
+                return Math.round(Utils.clamp(pad * 2 + contentH, 200, cap));
             } catch (e) {
                 return 300;
             }
@@ -272,9 +274,13 @@ Item {
 
                 ColumnLayout {
                     anchors.fill: parent
+                    // Inset on all four sides. Only left/top used to be set, so the
+                    // content ran into the card's right edge and the padding that
+                    // the height math reserved showed up as slack at the bottom.
                     anchors.leftMargin: toast.contentPaddingPx
-                    anchors.rightMargin: 0
+                    anchors.rightMargin: toast.contentPaddingPx
                     anchors.topMargin: toast.contentPaddingPx
+                    anchors.bottomMargin: toast.contentPaddingPx
                     spacing: Theme.sidePanelPopupSpacing
 
                     RowLayout {

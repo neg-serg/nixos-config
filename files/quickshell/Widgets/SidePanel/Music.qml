@@ -131,7 +131,9 @@ Rectangle {
             }
 
             RowLayout {
-                spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
+                // A little more air between the art and the text column than the
+                // tight token used to give.
+                spacing: Math.round(Theme.sidePanelSpacingMedium * Theme.scale(screen))
                 Layout.fillWidth: true
 
                 Item {
@@ -418,6 +420,10 @@ Rectangle {
                     // and the line both sit on the card's bottom.
                     ColumnLayout {
                         Layout.fillWidth: true
+                        // Same side padding as the metadata rows above, so the
+                        // spectrum and the seek line start where the text does.
+                        Layout.leftMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(musicCard.screen))
+                        Layout.rightMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(musicCard.screen))
                         spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
 
                         RowLayout {
