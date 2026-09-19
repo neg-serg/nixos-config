@@ -17,7 +17,9 @@
 #   incompatible-type         those same plugin types used as property values
 #   property-override         C++ base members shadowed on purpose (CursorShape on
 #                             WidgetCapsule, Item.state in the greeter's animations)
-#   signal-handler-parameters QProcess::ExitStatus has no qmltypes
+#   signal-handler-parameters QProcess::ExitStatus has no qmltypes; the sixth is
+#                             greeter/login.qml's Process.onExited, whose exit code
+#                             decides whether the login screen is handed over
 #   duplicate-property-binding  animated properties driven by a value source and a
 #                             binding at once — a QML idiom the checker dislikes
 #   missing-type              properties of our own QML components, which have no
@@ -32,6 +34,6 @@ import	6
 uncreatable-type	12
 incompatible-type	7
 property-override	6
-signal-handler-parameters	5
+signal-handler-parameters	6
 duplicate-property-binding	4
 missing-type	1
