@@ -5,6 +5,7 @@ ClockWidget 1.0 ClockWidget.qml
 CustomTrayMenu 1.0 CustomTrayMenu.qml
 KeyboardLayoutHypr 1.0 KeyboardLayoutHypr.qml
 Media 1.0 Media.qml
+MediaTransport 1.0 MediaTransport.qml
 Microphone 1.0 Microphone.qml
 MpdFlags 1.0 MpdFlags.qml
 NetClusterCapsule 1.0 NetClusterCapsule.qml

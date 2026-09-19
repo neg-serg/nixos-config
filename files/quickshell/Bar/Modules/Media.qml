@@ -126,6 +126,27 @@ Item {
     // that tracker (z:10000), so the panel-level signal is the reliable one.
     property bool panelHovering: false
 
+    // True while the transport strip is riding out next to the capsule: the
+    // wedge triangle on the capsule's left edge would be drawn over the strip,
+    // so it is dropped for as long as the strip is there.
+    property bool transportRevealed: false
+
+    // ── Cover hover ──────────────────────────────────────────────────────
+    // Reveals the transport strip next to the capsule. Hover cannot be watched
+    // from here: the panel-level tracker in Bar.qml (z: 10000) is the topmost
+    // hover-enabled item, so a handler of our own would either never fire or
+    // steal hover from it (taking the bar's analyser-on-hover with it). The
+    // tracker therefore hands us the cursor position (panelPointerPos) and the
+    // cover art rect is tested against it.
+    property point panelPointerPos: Qt.point(-1, -1)
+    readonly property bool coverHovered: (function() {
+        if (!panelHovering || panelPointerPos.x < 0 || panelPointerPos.y < 0) return false;
+        if (!albumArtContainer || albumArtContainer.width <= 0) return false;
+        var origin = albumArtContainer.mapToItem(mediaControl, 0, 0);
+        return panelPointerPos.x >= origin.x && panelPointerPos.x <= origin.x + albumArtContainer.width
+            && panelPointerPos.y >= origin.y && panelPointerPos.y <= origin.y + albumArtContainer.height;
+    })()
+
     // ── Small bar analyser: live copy of cava values (in-place mutation won't
     // trigger bindings, so copy on a timer) ──
     property var _barSpec: []
@@ -258,7 +279,7 @@ Item {
         backgroundKey: "media"
         centerContent: false
         borderVisible: !mediaControl.mediaBorderless
-        leftTriangleVisible: true
+        leftTriangleVisible: !mediaControl.transportRevealed
         triangleHighlightEnabled: true
         triangleHighlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(Theme.accentPrimary, 0.2), 0.3), 0.2), 0.3)
         triangleHighlightWidth: Math.max(2, Math.round(capsule.capsuleScale * 3))

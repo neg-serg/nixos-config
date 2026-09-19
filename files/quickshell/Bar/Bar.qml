@@ -767,6 +767,36 @@ Scope {
                             anchors.right: rightBarBackground.right
                             anchors.rightMargin: rightPanel.sideMargin
                             spacing: 0
+                            // Playback controls for the media widget: revealed to its
+                            // left while the cursor is on the cover art (or on the
+                            // strip itself) and collapsed when the cursor leaves.
+                            // SlideReveal slides the neighbouring widgets aside and
+                            // back — the same ride-out the pill capsule uses.
+                            SlideReveal {
+                                id: mediaTransportReveal
+                                Layout.alignment: Qt.AlignVCenter
+                                revealed: mediaTransportStrip.expanded
+                                contentWidthHint: mediaTransportStrip.implicitWidth
+                                // Softer than the shared defaults on the way
+                                // back: OutExpo (the default curve) stops dead
+                                // after a very fast start, which is what made
+                                // the collapse feel abrupt. OutCubic with a
+                                // longer close keeps it unhurried.
+                                openDurationMs: Theme.panelAnimFastMs
+                                closeDurationMs: Math.round(Theme.panelAnimStdMs * 1.25)
+                                openEasing: Theme.uiEasingQuick
+                                closeEasing: Theme.uiEasingQuick
+                                LocalMods.MediaTransport {
+                                    id: mediaTransportStrip
+                                    sourceHovered: mediaModule.coverHovered
+                                    // Cursor position handed down from the panel hover
+                                    // tracker, mapped into the strip's own coordinates.
+                                    pointerPos: mediaTransportStrip.mapFromItem(rightPanelContent,
+                                        barPointerTracker.point.position.x,
+                                        barPointerTracker.point.position.y)
+                                    pointerActive: rightPanel.panelHovering
+                                }
+                            }
                             Item {
                                 id: mediaRowSlot
                                 Layout.alignment: Qt.AlignVCenter
@@ -782,6 +812,17 @@ Scope {
                                     anchors.fill: parent
                                     sidePanelPopup: rootScope.sidebarPopup
                                     panelHovering: rightPanel.panelHovering
+                                    // Hover cannot be observed from inside the widget:
+                                    // the panel tracker below is the topmost hover-enabled
+                                    // item, so per-widget handlers are shadowed. The tracker
+                                    // hands the cursor position down instead and the capsule
+                                    // tests it against its own bounds.
+                                    panelPointerPos: mediaModule.mapFromItem(rightPanelContent,
+                                        barPointerTracker.point.position.x,
+                                        barPointerTracker.point.position.y)
+                                    // Keep the capsule's left wedge off while the
+                                    // strip occupies that side.
+                                    transportRevealed: mediaTransportStrip.expanded
                                 }
                             }
                             LocalMods.MpdFlags {
@@ -1056,6 +1097,12 @@ Scope {
                         }
                         cursorShape: Qt.ArrowCursor
                     }
+
+                    // Live cursor position for the panel (rightPanelContent coords).
+                    // MouseArea.mouseX does not track plain hover moves reliably here,
+                    // while a HoverHandler does — and unlike a MouseArea it never
+                    // swallows clicks.
+                    HoverHandler { id: barPointerTracker }
 
                     MouseArea {
                         id: barHoverTracker
