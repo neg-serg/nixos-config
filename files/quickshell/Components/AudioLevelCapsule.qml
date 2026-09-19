@@ -75,7 +75,19 @@ LocalComponents.WidgetCapsule {
     visible: false
     // Idle-hidden monitor capsules (Genelec) must also collapse their width,
     // otherwise the bar keeps an empty slot where the invisible capsule sits.
-    width: (visible && root._idleOpacity > 0) ? implicitWidth : 0
+    // Reveal progress: 0 while the capsule is idle-hidden (Genelec keeps its
+    // icon out of the way until the panel is hovered), 1 when it is on screen.
+    // The width used to switch between 0 and implicitWidth in a single frame,
+    // which yanked every widget after it in the bar row; the opacity was the
+    // only eased part. Both now follow this animated value.
+    readonly property real _revealTarget: (root.visible && root._idleOpacity > 0) ? 1 : 0
+    property real _reveal: root._revealTarget
+    Behavior on _reveal {
+        enabled: Theme.animationsEnabled
+        NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
+    }
+
+    width: Math.round(implicitWidth * root._reveal)
     height: visible ? implicitHeight : 0
     Layout.preferredWidth: width
     Layout.preferredHeight: height
@@ -83,8 +95,7 @@ LocalComponents.WidgetCapsule {
     Layout.minimumHeight: height
     Layout.maximumWidth: width
     // Ease the idle collapse so the capsule never vanishes/snaps abruptly.
-    opacity: root._idleOpacity
-    Behavior on opacity { NumberAnimation { duration: 260 } }
+    opacity: root._reveal
     // Hover-out grace: delay collapsing the pill after the cursor leaves.
     Timer {
         id: hoverOutTimer

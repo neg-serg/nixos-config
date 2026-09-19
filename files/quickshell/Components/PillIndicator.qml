@@ -76,7 +76,10 @@ Item {
     readonly property int maxPillWidth: Utils.clamp(textItem.implicitWidth + pillPaddingHorizontal * 2 + pillOverlap, 1, textItem.implicitWidth + pillPaddingHorizontal * 2 + pillOverlap)
 
 
-    width: iconSize + (showPill ? maxPillWidth - pillOverlap : 0)
+    // Follow the animated pill width instead of the showPill flag: the flag
+    // flips in one frame, so the capsule (and every widget after it in the bar
+    // row) used to jump while only the inner pill slid.
+    width: iconSize + Math.max(0, pill.width - pillOverlap)
     height: pillHeight
 
     Rectangle {

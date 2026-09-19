@@ -303,29 +303,36 @@ Item {
                 // Metrics: width = album-art extent (iconPreferredWidth), height =
                 // full capsule height so the mirrored bars fill the row — instead
                 // of a tiny square that reads as "too short".
-                IPhoneSpectrum {
-                    id: barMiniSpec
-                    Layout.preferredWidth: Math.round(mediaControl.iconPreferredWidth)
-                    Layout.minimumWidth: Math.round(mediaControl.iconPreferredWidth)
-                    Layout.preferredHeight: Math.round(mediaControl.baseHeight)
-                    Layout.fillHeight: true
+                // The analyser is hover-only. Toggling `visible` pulled the whole
+                // row sideways in a single frame (a hidden item takes no space in
+                // a RowLayout), so it rides out through SlideReveal instead, like
+                // the transport strip.
+                SlideReveal {
+                    id: barSpectrumReveal
                     Layout.alignment: Qt.AlignVCenter
-                    values: mediaControl._barSpec
-                    targetBars: Settings.settings.barAnalyserBars
-                    mirror: Settings.settings.barAnalyserMirror
-                    // Small preview keeps the classic flat cover-accent look;
-                    // the 3D neon treatment stays on the large toast analyser.
-                    accentColor: mediaControl.mediaAccent
-                    fillOpacity: 0.8
-                    barGap: 4
-                    minBarWidth: 1
-                    glow: false
-                    threeD: false
-                    animDurationMs: 80
-                    opacity: 0.95
-                    // Hover-only, gated on the bar panel hover signal.
-                    visible: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
+                    contentWidthHint: Math.round(mediaControl.iconPreferredWidth)
+                    contentHeightHint: Math.round(mediaControl.baseHeight)
+                    revealed: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
                         && mediaControl.panelHovering
+
+                    IPhoneSpectrum {
+                        id: barMiniSpec
+                        width: Math.round(mediaControl.iconPreferredWidth)
+                        height: Math.round(mediaControl.baseHeight)
+                        values: mediaControl._barSpec
+                        targetBars: Settings.settings.barAnalyserBars
+                        mirror: Settings.settings.barAnalyserMirror
+                        // Small preview keeps the classic flat cover-accent look;
+                        // the 3D neon treatment stays on the large toast analyser.
+                        accentColor: mediaControl.mediaAccent
+                        fillOpacity: 0.8
+                        barGap: 4
+                        minBarWidth: 1
+                        glow: false
+                        threeD: false
+                        animDurationMs: 80
+                        opacity: 0.95
+                    }
                 }
 
                 Item {
@@ -420,10 +427,20 @@ Item {
                 Item {
                     id: iphoneSpectrumHost
                     Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: iphoneSpectrum.visible ? iphoneSpectrum.implicitWidth : 0
                     Layout.fillHeight: true
-                    implicitWidth: iphoneSpectrum.visible ? iphoneSpectrum.implicitWidth : 0
                     implicitHeight: mediaControl.baseHeight
+                    // Same story as the analyser above: the slot used to jump
+                    // between 0 and the spectrum width when the visualiser came
+                    // and went, dragging the row with it.
+                    readonly property real _revealTarget: iphoneSpectrum.visible ? 1 : 0
+                    property real _reveal: iphoneSpectrumHost._revealTarget
+                    readonly property real revealWidth: Math.round(iphoneSpectrum.implicitWidth * _reveal)
+                    Layout.preferredWidth: revealWidth
+                    implicitWidth: revealWidth
+                    Behavior on _reveal {
+                        enabled: Theme.animationsEnabled
+                        NumberAnimation { duration: Theme.panelAnimFastMs; easing.type: Theme.uiEasingQuick }
+                    }
 
                     IPhoneSpectrum {
                         id: iphoneSpectrum
@@ -640,6 +657,7 @@ Item {
                                 z: 2
                             }
                         }
+
                     }
                 }
             }
