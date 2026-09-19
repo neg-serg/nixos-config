@@ -112,10 +112,29 @@ in
         [0-9]*|0.*|1) ;;
         *) opacity=0.85 ;;
       esac
+      # Colour code by purpose: each scratchpad gets its own dark tint, so the
+      # window says what it is before the title is read. Kept close to black —
+      # the tint sits under the compositor's glass, it does not replace it.
+      class=""
+      previous=""
+      for arg in "$@"; do
+        [ "$previous" = "--class" ] && class="$arg"
+        previous="$arg"
+      done
+      case "$class" in
+        rebuild)  tint="#171008" ;; # warm — the rebuilds it runs
+        torrment) tint="#08131a" ;; # cold blue — downloads
+        vpn)      tint="#08160f" ;; # green — the tunnel
+        music)    tint="#120a18" ;; # violet — next to the album art
+        mixer)    tint="#181207" ;; # amber — audio
+        teardown) tint="#0b0d11" ;; # neutral slate — system overview
+        *)        tint="#000000" ;;
+      esac
+
       # A little inset so the TUI does not run into the glass edge; kitty's own
       # config keeps 0 for ordinary terminals.
       exec ${lib.getExe pkgs.kitty} -o background_opacity="$opacity" \
-        -o window_padding_width=8 "$@"
+        -o background="$tint" -o window_padding_width=8 "$@"
     '')
     # hypr-fix script (Reload Hyprland config)
     (pkgs.writeShellScriptBin "hypr-fix" ''
