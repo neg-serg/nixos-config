@@ -321,6 +321,11 @@ in
       wantedBy = [ "hyprland-session.target" ];
       bindsTo = [ "hyprland-session.target" ];
       after = [ "hyprland-session.target" ];
+      # Same login-phase guard as quickshell.service: the idle daemon has no
+      # business running while the login screen is up (it locks/blank the screen),
+      # and nix-maid's sd-switch can start a changed unit without the session
+      # target. See modules/user/session/greetd/session-wrapper.sh.
+      unitConfig.ConditionPathExists = "!%t/quickshell-login/login-phase";
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.hypridle}";
         Restart = "on-failure";
