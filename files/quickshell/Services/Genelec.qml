@@ -72,11 +72,10 @@ RowLayout {
     // so it threw a TypeError into an empty catch. The volume was persisted by the
     // assignment all along; verified on a probe instance with XDG_CACHE_HOME
     // pointed at a scratch dir: assigning -33 wrote "genelecVolume": -33.
-    function _saveState() {
-        if (StateCache.state) {
-            StateCache.state.genelecVolume = _lastSetVolume;
-            StateCache.state.genelecPreMuteVolume = Math.round(preMuteVolume);
-        }
+    function _saveState(dB) {
+        if (!StateCache.state) return;
+        StateCache.state.genelecVolume = Math.round(dB);
+        StateCache.state.genelecPreMuteVolume = Math.round(preMuteVolume);
     }
 
     // ---- Normalized 0..1 for slider ----
@@ -264,6 +263,12 @@ RowLayout {
         volume = clamped;
         displayDb = clamped; // keep the slider in sync in midiMode too
         muted = false;
+        // Persist on the single path every volume change takes (user input in both
+        // adapter modes, and external writes to the runtime file). The old
+        // _saveState() was defined but never called, so the cache kept whatever it
+        // had and the next session restored that — which is why the volume came
+        // back to the same number after every restart.
+        _saveState(clamped);
         _lastSendMs = Date.now();
         _sendToHardware(clamped);
         // Persist the target so the state file is never stale after wheel
