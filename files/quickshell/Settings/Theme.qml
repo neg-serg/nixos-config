@@ -784,8 +784,12 @@ Singleton {
     // Fill of the now-playing card. It has to stay translucent: hyprglass
     // blurs and refracts what is *behind* the surface, so the old hard-coded
     // 0.92 black showed none of it (the popup stayed flat even though
-    // `qs-music` is in the plugin's layer namespace list).
-    property real sidePanelPopupGlassOpacity: val('sidePanel.popup.glassOpacity', 0.45)
+    // `qs-music` is in the plugin's layer namespace list). 0.75 is the dark end
+    // of that ranging: at 0.45 the fill let 55% of the blurred backdrop through,
+    // which read as barely darker than the panel it hangs over (measured against
+    // a flat backdrop: card fill ~(96,109,117) over (200,200,200)). A quarter of
+    // the frost is what is left now — still glass, decisively darker.
+    property real sidePanelPopupGlassOpacity: val('sidePanel.popup.glassOpacity', 0.75)
     // Hairline edge of the glass card; the plugin's fresnel pass lights it up.
     property real sidePanelPopupGlassBorderOpacity: val('sidePanel.popup.glassBorderOpacity', 0.1)
     // Media dominant-accent sampler/logic (extract hardcoded tuning)
