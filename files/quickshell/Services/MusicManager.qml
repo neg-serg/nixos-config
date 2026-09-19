@@ -118,9 +118,15 @@ Item {
     // because accentColor eases towards the new value.
     readonly property string glassTintPath: (Quickshell.env("XDG_CACHE_HOME")
         || (Quickshell.env("HOME") + "/.cache")) + "/quickshell-glass-tint"
+    // 0.93: the pane has to stay a terminal first, so only a hint of the record's
+    // colour survives the darkening (0.86 read as a coloured terminal, not a
+    // tinted one).
     readonly property string glassTint: accentReady
-        ? String(Color.towardsBlack(accentColor, 0.86))
+        ? String(Color.towardsBlack(accentColor, 0.93))
         : ""
+    // Off = the panes keep kitty's own background ("back to a plain colour"),
+    // which is what Settings.scratchpadTint and the panel's switch are for.
+    readonly property bool scratchpadTintEnabled: Settings.settings.scratchpadTint !== false
     FileView {
         id: glassTintFile
         path: manager.glassTintPath
@@ -131,12 +137,19 @@ Item {
         interval: 600
         repeat: false
         onTriggered: {
+            // The file is what a *newly launched* pane reads; the live push is what
+            // makes an already open one follow the record (kitty cannot change its
+            // background by itself).
             if (manager.glassTint.length > 0)
-                glassTintFile.setText(manager.glassTint + "\n");
+                glassTintFile.setText(manager.scratchpadTintColor + "\n");
+            Quickshell.execDetached(["kitty-glass-tint", manager.scratchpadTintColor]);
         }
     }
+    readonly property string scratchpadTintColor: (scratchpadTintEnabled && glassTint.length > 0)
+        ? glassTint : "#000000"
     onAccentReadyChanged: if (accentReady) glassTintDebounce.restart()
     onAccentColorChanged: if (accentReady) glassTintDebounce.restart()
+    onScratchpadTintEnabledChanged: glassTintDebounce.restart()
 
     property string _lastSampledUrl: ""
     property var _accentCache: ({})

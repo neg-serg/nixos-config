@@ -209,46 +209,18 @@ PanelWindow {
 
             // The frosted tint brightens whatever is behind the glass, which
             // washes the light theme out — hence a switch of its own.
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: Math.round(4 * Theme.scale(Screen))
-                spacing: Math.round(8 * Theme.scale(Screen))
-                Text {
-                    Layout.fillWidth: true
-                    text: "Мороз в светлой теме"
-                    color: Theme.textPrimary
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeSmall * Theme.scale(Screen)
-                }
-                Rectangle {
-                    id: lightSwitch
-                    readonly property bool on: Settings.settings.glassLightFrost
-                    implicitWidth: Math.round(34 * Theme.scale(Screen))
-                    implicitHeight: Math.round(18 * Theme.scale(Screen))
-                    radius: height / 2
-                    color: on
-                        ? Color.withAlpha(Theme.accentPrimary, 0.85)
-                        : Color.withAlpha(Theme.textPrimary, 0.14)
-                    Behavior on color { ColorAnimation { duration: 140 } }
+            GlassToggle {
+                label: "Мороз в светлой теме"
+                checked: Settings.settings.glassLightFrost
+                onToggled: (value) => Settings.settings.glassLightFrost = value
+            }
 
-                    Rectangle {
-                        width: parent.height - Math.round(4 * Theme.scale(Screen))
-                        height: width
-                        radius: width / 2
-                        y: Math.round(2 * Theme.scale(Screen))
-                        x: lightSwitch.on
-                            ? parent.width - width - Math.round(2 * Theme.scale(Screen))
-                            : Math.round(2 * Theme.scale(Screen))
-                        color: Theme.surface
-                        Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Settings.settings.glassLightFrost = !Settings.settings.glassLightFrost
-                    }
-                }
+            // Off = the scratchpad terminals keep kitty's own background: the way
+            // back to a plain colour when the album tint is not wanted.
+            GlassToggle {
+                label: "Тон скратчпадов по обложке"
+                checked: Settings.settings.scratchpadTint !== false
+                onToggled: (value) => Settings.settings.scratchpadTint = value
             }
 
             RowLayout {
