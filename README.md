@@ -216,7 +216,7 @@ flowchart LR
 <details>
 <summary><h3>🎵 Media Stack</h3></summary>
 
-- 🎵 **MPD** - Music Player Daemon + clients (rmpc, ncmpcpp)
+- 🎵 **MPD** - Music Player Daemon + clients (rmpc, ncmpcpp, euphonica)
 - ⬇️ **Transmission** - Torrent client + rustmission TUI
 - 🎨 **AI Upscaling** - Real-time video enhancement (optional)
 - 🔊 **PipeWire** - Modern audio server
