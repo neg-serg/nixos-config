@@ -45,6 +45,7 @@ in
     nixard = callPkg (packagesRoot + "/nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/lusty
     tgchat = callPkg (packagesRoot + "/tgchat") { }; # Telegram chat access via Telethon (read/send as the user)
+    topowall = callPkg (packagesRoot + "/topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
