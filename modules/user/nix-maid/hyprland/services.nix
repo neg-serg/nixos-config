@@ -125,7 +125,16 @@ in
         rebuild)  tint="#171008" ;; # warm — the rebuilds it runs
         torrment) tint="#08131a" ;; # cold blue — downloads
         vpn)      tint="#08160f" ;; # green — the tunnel
-        music)    tint="#120a18" ;; # violet — next to the album art
+        music)
+          # Follow the record: the shell publishes its darkened cover accent to
+          # ~/.cache/quickshell-glass-tint, so the pane is tinted like the album it
+          # is playing. Falls back to the static violet when there is no cover.
+          from_shell="$(head -n 1 "$HOME/.cache/quickshell-glass-tint" 2>/dev/null | tr -d '[:space:]')"
+          case "$from_shell" in
+            '#'[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) tint="$from_shell" ;;
+            *) tint="#120a18" ;;
+          esac
+          ;;
         mixer)    tint="#181207" ;; # amber — audio
         teardown) tint="#0b0d11" ;; # neutral slate — system overview
         *)        tint="#000000" ;;
