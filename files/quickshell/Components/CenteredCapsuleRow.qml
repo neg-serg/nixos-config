@@ -133,6 +133,10 @@ LocalComponents.CapsuleButton {
                 elide: Text.ElideRight
                 clip: true
                 maximumLineCount: 1
+                // The bar is translucent over the wallpaper, so its labels need the
+                // same help as the card's rows when that wallpaper is bright.
+                layer.enabled: Theme.textShadowEnabled && Theme.backdropIsLight
+                layer.effect: LocalComponents.GlyphShadow {}
             }
 
             FontMetrics {

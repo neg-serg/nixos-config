@@ -101,7 +101,7 @@ Item {
             textFormat: revealPill.colorizeUnit ? Text.RichText : Text.PlainText
             // The pill's own fill is semi-transparent, so its label needs the same
             // help as the card's rows when the wallpaper behind is bright.
-            layer.enabled: Theme.textShadowEnabled
+            layer.enabled: Theme.textShadowEnabled && Theme.backdropIsLight
             layer.effect: LocalComponents.GlyphShadow {}
             font.pixelSize: Theme.fontSizeSmall * Theme.scale(Screen)
             font.family: Theme.fontFamily
