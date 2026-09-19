@@ -144,10 +144,17 @@ behind Hyprland.
   with HyprShade's interface (`v_texcoord` / `tex` / `fragColor`) plus the plugin's per-frame
   uniforms (`is_active`, `surface_size`, `time`, `window_box`, …). Editing a shader takes effect on
   the next frame — no reload, no config change.
-- **Binds**: `SUPER+SHIFT+x` toggles `pixelate.glsl` on the focused window, `SUPER+SHIFT+u` strips
-  every shader from it. Plugin functions only exist under `hl.plugin.HyprWindowShade.*` *after* the
-  dlopen, so both binds look the table up inside a closure (the plugin README's pattern) and pop a
-  notification when the plugin is missing; `hl.bind` registers them as `__lua` dispatchers.
+- **Command**: `shade` (`packages/local-bin/bin/shade`, i.e. `~/.local/bin/shade`) drives the
+  plugin from the shell — `shade list`, `shade on [NAME]` (focused window; without NAME an fzf
+  picker over the shader directory), `shade off`, `shade class CLASS [NAME]`, `shade layer NS
+  [NAME]`, `shade reload`. It calls the plugin through `hyprctl eval` and swallows the spurious
+  "expected a dispatcher" failure the plugin cannot avoid. No keybinds are bound on purpose: the
+  effects are per-window and transitory, and the bar of SUPER+SHIFT is already full.
+- **Shaders shipped**: `crt` (curved glass, scanlines, phosphor triads, chroma misalignment,
+  vignette), `vhs` (tracking bands, chroma bleed, tape noise, rolling head-switching bar), `amber`
+  (monochrome amber-phosphor monitor with glow), `noir` (hard B/W with animated film grain), plus
+  `pixelate` and `dim_unfocused` — the last two are the ones `hyprwindowshade.lua` attaches to
+  classes.
 - **Verified** in a nested 0.56.2 instance: `classshader` on a window drops its unique colour count
   292 → 1; the rule from `hyprwindowshade.lua` leaves an unfocused window at 0.1445 mean luminance /
   0.237 saturation against 0.2356 / 0.496 focused — exactly the shader's 0.62 and 0.55 constants;
@@ -155,7 +162,9 @@ behind Hyprland.
   Keypresses themselves cannot be synthesised on this host: `wtype` delivers text to clients, but
   its virtual-keyboard modifier events do not match Hyprland binds (checked against a plain
   `exec_cmd` bind in a nested instance), so the binds are covered by registration
-  (`hyprctl binds -j`: modmask 65 = SUPER+SHIFT, dispatcher `__lua`) plus the action test above.
+  (`hyprctl binds -j`) is not applicable any more: the binds were dropped in favour of the `shade`
+  command, whose actions were measured the same way (`shade on crt` on a window changes its unique
+  colour count and mean luminance, `shade off` restores them).
 
 ## Testing a plugin without endangering the session
 
