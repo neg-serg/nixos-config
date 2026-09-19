@@ -34,14 +34,11 @@ let
     "$hyprctl_bin" eval "
     $(cat ${pkgs.writeText "hyprglass.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprglass.lua"))})" || true
 
-    # Local overrides written by the Glass panel, applied after the defaults so a
-    # session starts with whatever was tuned there. A plain file next to the
-    # deployed config, so nix-maid's symlink cleanup leaves it alone.
-    user_overrides="$HOME/.config/hypr/hyprglass-user.lua"
-    if [ -r "$user_overrides" ]; then
-      "$hyprctl_bin" eval "
-    $(cat "$user_overrides")" || true
-    fi
+    # Then the real thing: the deployed base plus the values the Glass panel keeps
+    # in ~/.config/hypr/hyprglass.json, and it checks that they landed. The eval
+    # above is the fallback for the case where the deployed file is not there yet
+    # (the activation order is not guaranteed).
+    hyprglass-apply >/dev/null 2>&1 || true
   '';
 
   # HyprExpo follows the same load-then-push pattern as hyprglass: the .so is

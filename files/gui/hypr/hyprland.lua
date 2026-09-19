@@ -154,6 +154,22 @@ for _, event in ipairs({ "window.open", "window.close", "window.destroy" }) do
 end
 
 -- ---------------------------------------------------------------------
+-- hyprglass: put the settings back after anything that drops them
+-- ---------------------------------------------------------------------
+-- The plugin holds its config only until something re-initialises its state: a
+-- `hyprctl reload` drops it back to the plugin defaults (blur_strength 2,
+-- vibrancy -1, glass_opacity 1) while the files still say otherwise.
+--
+-- `config.reloaded` sounds like the hook for that, but it does not fire for a
+-- compositor reload (measured: a file-writing handler stayed empty across
+-- `hyprctl reload`), so the repair lives in a timer instead — see
+-- hyprglass-watch in modules/user/nix-maid. The session start is still worth
+-- hooking here, and `hyprglass-apply` checks its work instead of assuming it.
+hl.on("hyprland.start", function()
+  hl.exec_cmd("hyprglass-apply >/dev/null 2>&1 || true")
+end)
+
+-- ---------------------------------------------------------------------
 -- Environment (from env.conf)
 -- ---------------------------------------------------------------------
 hl.env("CLUTTER_BACKEND", "wayland")
