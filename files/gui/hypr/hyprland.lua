@@ -858,6 +858,10 @@ hl.on("hyprland.start", function()
   -- HyprExpo: same load-then-push pattern (plugin .so + files/gui/hypr/hyprexpo.lua).
   -- Re-runnable in a live session: `hyprexpo-setup` (also in PATH).
   hl.exec_cmd("@hyprexpo_setup@")
+
+  -- HyprWindowShade: per-window/per-layer fragment shaders. Same load-then-push
+  -- pattern; re-runnable in a live session as `hyprwindowshade-setup`.
+  hl.exec_cmd("@hyprwindowshade_setup@")
   hl.exec_cmd("systemctl --user restart quickshell.service")
   hl.exec_cmd("systemctl --user restart hyprscratch.service")
   hl.exec_cmd("systemctl --user start wl-daemon.service")
