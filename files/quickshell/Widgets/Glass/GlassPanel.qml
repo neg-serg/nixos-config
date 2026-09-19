@@ -68,6 +68,79 @@ PanelWindow {
         for (var k in p.values) Settings.settings[k] = p.values[k];
     }
 
+    // ── Per-window overrides ────────────────────────────────────────────────
+    // One entry per window class. The panel only owns the *data*
+    // (Settings.json → hyprglass.json); hyprglass-apply turns each entry into a
+    // hyprglass preset and the hyprglass_preset_<slug> tag on that class. The
+    // plugin resolves preset values every frame, so re-tuning an entry retunes a
+    // window that is already open; the tag itself lands at map time only
+    // (Hyprland does not recompute tags for live windows), which is why a class
+    // picks up major changes on its next window.
+    property var tints: [
+        { label: "нет", value: "" },
+        { label: "чёрн", value: "000000cc" },
+        { label: "син", value: "0a1a2fcc" },
+        { label: "дым", value: "20242bcc" }
+    ]
+
+    function windowOverrides() { return Settings.settings.glassWindowOverrides || []; }
+
+    function _globalDefaults() {
+        var s = Settings.settings;
+        return {
+            blurStrength: Number(s.glassBlurStrength),
+            glassOpacity: Number(s.glassOpacity),
+            adaptiveDim: Number(s.glassAdaptiveDim),
+            tint: ""
+        };
+    }
+
+    function _storeOverrides(list) {
+        Settings.settings.glassWindowOverrides = list;
+        toast.scheduleWrite();
+    }
+
+    function upsertWindowOverride(spec) {
+        if (!spec || !spec.class) return false;
+        var list = windowOverrides().slice();
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].class === spec.class) {
+                list[i] = Object.assign({}, list[i], spec);
+                _storeOverrides(list);
+                return true;
+            }
+        }
+        list.push(Object.assign(_globalDefaults(), { enabled: true }, spec));
+        _storeOverrides(list);
+        return true;
+    }
+
+    function patchWindowOverride(index, patch) {
+        var list = windowOverrides().slice();
+        if (index < 0 || index >= list.length) return;
+        list[index] = Object.assign({}, list[index], patch);
+        _storeOverrides(list);
+    }
+
+    function removeWindowOverride(index) {
+        var list = windowOverrides().slice();
+        if (index < 0 || index >= list.length) return;
+        list.splice(index, 1);
+        _storeOverrides(list);
+    }
+
+    // "+ текущее окно": the class of the focused window, straight from hyprctl.
+    ProcessRunner {
+        id: focusedProbe
+        cmd: ["hyprctl", "-j", "activewindow"]
+        parseJson: true
+        autoStart: false
+        restartMode: "never"
+        onJson: (o) => {
+            if (o && o.class) toast.upsertWindowOverride({ class: String(o.class) });
+        }
+    }
+
     // ── Handing the values over ─────────────────────────────────────────────
     // The panel writes one JSON file and nothing else: hyprglass-apply reads it,
     // generates the plugin's config from it and then *checks* that the running
@@ -92,7 +165,8 @@ PanelWindow {
             fresnel: Number(s.glassFresnel),
             specular: Number(s.glassSpecular),
             adaptiveDim: Number(s.glassAdaptiveDim),
-            lightFrost: s.glassLightFrost === true
+            lightFrost: s.glassLightFrost === true,
+            windowOverrides: toast.windowOverrides()
         }, null, 2) + "\n";
     }
 
@@ -300,6 +374,142 @@ PanelWindow {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: toast.reapply()
                     }
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.topMargin: Math.round(8 * Theme.scale(Screen))
+                text: "Окна"
+                color: Theme.textPrimary
+                font.family: Theme.fontFamily
+                font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 1.05)
+                font.weight: Font.DemiBold
+            }
+
+            Repeater {
+                model: toast.windowOverrides()
+                delegate: ColumnLayout {
+                    id: overrideRow
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    spacing: Math.round(2 * Theme.scale(Screen))
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Math.round(4 * Theme.scale(Screen))
+
+                        GlassToggle {
+                            Layout.fillWidth: true
+                            label: (overrideRow.modelData.class || "?")
+                                + (overrideRow.modelData.enabled === false ? "  (выкл)" : "")
+                            checked: overrideRow.modelData.enabled !== false
+                            onToggled: (v) => toast.patchWindowOverride(overrideRow.index, { enabled: v })
+                        }
+
+                        Repeater {
+                            model: toast.tints
+                            delegate: Rectangle {
+                                required property var modelData
+                                readonly property bool active: (overrideRow.modelData.tint || "") === modelData.value
+                                implicitWidth: Math.round(30 * Theme.scale(Screen))
+                                implicitHeight: Math.round(20 * Theme.scale(Screen))
+                                radius: Math.round(Theme.cornerRadiusSmall * Theme.scale(Screen) * 0.6)
+                                color: active ? Color.withAlpha(Theme.accentPrimary, 0.35) : Theme.overlayWeak
+                                border.width: active ? Theme.uiBorderWidth : 0
+                                border.color: Color.withAlpha(Theme.accentPrimary, 0.6)
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: parent.modelData.label
+                                    color: Theme.textPrimary
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.7)
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: toast.patchWindowOverride(overrideRow.index, { tint: parent.modelData.value })
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            implicitWidth: Math.round(20 * Theme.scale(Screen))
+                            implicitHeight: Math.round(20 * Theme.scale(Screen))
+                            radius: Math.round(Theme.cornerRadiusSmall * Theme.scale(Screen) * 0.6)
+                            color: deleteHover.containsMouse ? Color.withAlpha(Theme.error, 0.35) : Theme.overlayWeak
+                            Text {
+                                anchors.centerIn: parent
+                                text: "×"
+                                color: Theme.textPrimary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.9)
+                            }
+                            MouseArea {
+                                id: deleteHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: toast.removeWindowOverride(overrideRow.index)
+                            }
+                        }
+                    }
+
+                    GlassSlider {
+                        Layout.fillWidth: true
+                        label: "Блюр"
+                        from: 1
+                        to: 16
+                        stepSize: 0.5
+                        decimals: 1
+                        value: overrideRow.modelData.blurStrength !== undefined
+                            ? overrideRow.modelData.blurStrength : Number(Settings.settings.glassBlurStrength)
+                        onMoved: (v) => toast.patchWindowOverride(overrideRow.index, { blurStrength: v })
+                    }
+                    GlassSlider {
+                        Layout.fillWidth: true
+                        label: "Плотность"
+                        from: 0
+                        to: 1
+                        stepSize: 0.05
+                        decimals: 2
+                        value: overrideRow.modelData.glassOpacity !== undefined
+                            ? overrideRow.modelData.glassOpacity : Number(Settings.settings.glassOpacity)
+                        onMoved: (v) => toast.patchWindowOverride(overrideRow.index, { glassOpacity: v })
+                    }
+                    GlassSlider {
+                        Layout.fillWidth: true
+                        label: "Адаптация"
+                        from: 0
+                        to: 1
+                        stepSize: 0.05
+                        decimals: 2
+                        value: overrideRow.modelData.adaptiveDim !== undefined
+                            ? overrideRow.modelData.adaptiveDim : Number(Settings.settings.glassAdaptiveDim)
+                        onMoved: (v) => toast.patchWindowOverride(overrideRow.index, { adaptiveDim: v })
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: Math.round(24 * Theme.scale(Screen))
+                radius: Math.round(Theme.cornerRadiusSmall * Theme.scale(Screen))
+                color: addHover.containsMouse ? Color.withAlpha(Theme.accentPrimary, 0.22) : Theme.overlayWeak
+                Text {
+                    anchors.centerIn: parent
+                    text: "+ текущее окно"
+                    color: Theme.textPrimary
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.8)
+                }
+                MouseArea {
+                    id: addHover
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: focusedProbe.start()
                 }
             }
 
