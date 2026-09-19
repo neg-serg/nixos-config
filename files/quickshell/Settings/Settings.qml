@@ -66,6 +66,10 @@ Singleton {
             property real glassAdaptiveDim: 0.5
             // Frosted tint against the light theme: the panel's switch for it.
             property bool glassLightFrost: false
+            // Tint the scratchpad terminals by the record that is playing (the
+            // music pane takes the darkened cover accent). Off = plain kitty
+            // background, which is what the Glass panel's switch flips.
+            property bool scratchpadTint: true
             property string weatherCity: "Saint Petersburg"
             property string userAgent: "NegPanel"
             // Unified logging toggle for low-importance debug logs
