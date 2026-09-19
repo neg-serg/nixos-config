@@ -127,19 +127,20 @@ in
     # keeps a hint of frost while staying decisively darker than the media card
     # (0.45) — a terminal that faint competes with its own text.
     #
-    # The music pane (rmpc) is the exception in the other direction: its window is
-    # tagged with the plugin's `scratch` preset — blur_strength 16, i.e. a 192 px
-    # radius, all five gaussian passes and no adaptive dim (hyprglass-apply.sh) —
-    # so the strongest frost in the session is behind it and the pane only has to
-    # stay out of its way: 0.45 black over a black tint, the media card's
-    # transparency. It used to run at 0.96/0.92 and hid that frost completely, so
-    # the pane baked its own wallpaper slice instead (see kitty-glass-frost.sh,
-    # still installed as the fallback). Measured over an opaque 200-grey window:
-    # 0.96 -> (6,6,6), 0.92 -> (11,11,11), 0.85 -> (24,24,24), 0.70 -> (49,49,49).
+    # The music pane (rmpc) used to sit at the opposite end: its window is tagged
+    # with the plugin's `scratch` preset — blur_strength 16, i.e. a 192 px radius,
+    # all five gaussian passes and no adaptive dim (hyprglass-apply.sh) — so the
+    # strongest frost in the session is behind it and 0.45 black was enough to let
+    # it through. That frost is the wallpaper itself (xray), so the pane read as a
+    # washed slice of whatever was on screen rather than as a terminal; 0.85 puts
+    # it on the same footing as every other scratchpad, where the text wins over
+    # the backdrop. Measured over an opaque 200-grey window: 0.96 -> (6,6,6),
+    # 0.92 -> (11,11,11), 0.85 -> (24,24,24), 0.70 -> (49,49,49).
     #
     # The opacity can be tuned without a rebuild: write a number into
-    # ~/.config/kitty/glass-opacity and reopen the scratchpad (the file is picked
-    # up per launch, so a switch is only needed to change the launcher itself).
+    # ~/.config/kitty/glass-opacity (all scratchpads) and reopen the pane — the
+    # file is picked up per launch, so a rebuild is only needed to change the
+    # per-class default here.
     # Used by the scratchpad binds in files/gui/hypr/hyprland.lua.
     (pkgs.writeShellScriptBin "kitty-glass" ''
       class=""
@@ -151,7 +152,7 @@ in
 
       # Per-class default; the override file below still wins over both.
       case "$class" in
-        music) opacity=0.45 ;; # rmpc: the hardest glass in the session, let it through
+        music) opacity=0.85 ;; # rmpc: same footing as the other scratchpads
         *) opacity=0.85 ;;
       esac
       override="$HOME/.config/kitty/glass-opacity"
