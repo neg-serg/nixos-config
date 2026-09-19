@@ -182,6 +182,7 @@ lib.mkMerge [
         # Audio
         pkgs.mpc # A minimalist command line interface to MPD
         pkgs.rmpc # Rust Music Player Client
+        pkgs.euphonica # GTK4/libadwaita MPD client (GUI counterpart to rmpc)
         pkgs.rescrobbled # MPRIS Scrobbler # MPRIS Scrobbler
         pkgs.ncpamixer # An ncurses mixer for PulseAudio
         pkgs.playerctl # Command-line controller for MPC-capable players
