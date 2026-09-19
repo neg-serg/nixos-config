@@ -36,15 +36,6 @@ Rectangle {
     // host that owns the surface says whether it is shown.
     property bool isOnScreen: false
 
-    // Edge insets of the popup window the card lives in, handed down by MusicPopup
-    // (see the frost below for why the card cannot read them itself).
-    property real edgeMarginRight: 0
-    property real edgeMarginBottom: 0
-
-    // file:// URI of the current wallpaper, for the frost below.
-    readonly property string wallpaperUri: WallpaperAccent.currentWallpaperPath.length > 0
-                                           ? "file://" + WallpaperAccent.currentWallpaperPath : ""
-
     function warnContrast(bg, fg, label) {
         try {
             if (!(Settings.settings && Settings.settings.debugLogs)) return;
@@ -54,105 +45,17 @@ Rectangle {
         } catch (e) { console.warn("[Music.warnContrast]", e) }
     }
 
-    // The card's own rect in wallpaper pixels, for the frost below.
-    //
-    // Nothing blurs this popup any more: measured against a checkerboard
-    // wallpaper the backdrop under the plate kept its full contrast (std 30 of
-    // the 32 an unblurred 25% fill can give), the `media-dark` hyprglass preset
-    // moved not a single pixel on this layer even with a fully opaque black tint,
-    // and a dedicated `qs-music` Hyprland layer rule changed nothing either. So
-    // the card frosts its slice of the wallpaper itself, and needs to know which
-    // slice: `wl` (the wallpaper daemon) fits the image to the output with `crop`
-    // — uniform scale, centred — so the card's screen rect maps back into the
-    // image by that same fit.
-    function wallpaperSlice(sourceSize, w, h) {
-        try {
-            const iw = sourceSize.width;
-            const ih = sourceSize.height;
-            if (iw <= 0 || ih <= 0 || w <= 0 || h <= 0 || !screen)
-                return Qt.rect(0, 0, 0, 0);
-            const dpr = screen.devicePixelRatio;
-            const sw = screen.width * dpr;
-            const sh = screen.height * dpr;
-            const scale = Math.max(sw / iw, sh / ih);
-            const ox = (iw * scale - sw) / 2;
-            const oy = (ih * scale - sh) / 2;
-            // No mapToItem/mapToGlobal here: inside the popup's PanelWindow the
-            // card's own coordinates resolve through a bottom-anchored root, so both
-            // land a full window height too high (measured y = -245/-250 for a card
-            // that sits at y = 810 on screen, and a garbage x, since a Wayland client
-            // does not know where its surface was placed). The window itself is
-            // anchored to the screen's right edge and ends at the top of the bar's
-            // reserved zone, so the card's screen rect follows from the insets the
-            // popup passes down plus its own size.
-            const winH = Window.window ? Window.window.height : screen.height;
-            const gx = screen.width - edgeMarginRight - w;
-            const gy = winH - edgeMarginBottom - h;
-            return Qt.rect((gx * dpr + ox) / scale, (gy * dpr + oy) / scale,
-                           (w * dpr) / scale, (h * dpr) / scale);
-        } catch (e) {
-            return Qt.rect(0, 0, 0, 0);
-        }
-    }
 
-        // The plate: heavy frost under the translucent fill, both clipped to the
-        // card's rounded rect by the mask on this wrapper.
-        //
-        // Two effects and not one: blur and mask in the *same* MultiEffect left the
-        // rounded corners unmasked, and the frost then stuck out around the fill as a
-        // sharp rectangle (caught on screen). Split, each pass does one thing — the
-        // frost blurs, the wrapper masks — which is also how the album art below
-        // masks itself.
+        // The card body. The shell draws no frost here any more: the backdrop
+        // is the compositor's job now (ext-background-effect-v1, see
+        // MusicPopup.BlurRegion), so this is just a translucent fill over
+        // whatever really is behind the surface. The block that used to live here
+        // blurred a slice of the wallpaper *image* — which is precisely why the
+        // card showed a cached backdrop: a picture of the desktop instead of the
+        // desktop, frozen at the moment the wallpaper was set.
         Item {
-            id: cardPlate
+            id: cardBody
             anchors.fill: parent
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                maskEnabled: true
-                maskSource: cardMask
-            }
-
-        // Heavy frost, drawn by the shell (see wallpaperSlice above for why the
-        // compositor cannot do it here): the card's wallpaper slice blown up by a
-        // 64px MultiEffect blur — 2.5x the compositor's 26px — under the same
-        // translucent fill as before, so the plate keeps its tonality and only
-        // loses the backdrop's detail (it does become opaque in the process: what
-        // used to show through was the *unblurred* backdrop).
-        Item {
-            id: cardFrost
-            anchors.fill: parent
-            visible: frostImage.status === Image.Ready
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                blurEnabled: true
-                blur: 1.0
-                blurMax: 64
-            }
-
-            // Intrinsic wallpaper size for the slice maths. Read from this plain
-            // Image and not from the frost itself: the frost's sourceSize reports
-            // the *clipped* rect (Qt derives it from sourceClipRect), so reading it
-            // inside the sourceClipRect binding is a binding loop.
-            Image {
-                id: wallpaperProbe
-                visible: false
-                source: frostImage.source
-            }
-
-            Image {
-                id: frostImage
-                anchors.fill: parent
-                // Stretch, not PreserveAspectCrop: sourceClipRect is already the
-                // card's rect in wallpaper pixels, and by construction it has the
-                // card's aspect ratio, so the stretched slice is not distorted.
-                fillMode: Image.Stretch
-                source: musicCard.wallpaperUri
-                // sourceClipRect, not sourceRect: Image got the clipping property in
-                // Qt 6.8 (sourceRect belongs to ShaderEffectSource), and 6.11 is
-                // what the shell runs.
-                sourceClipRect: musicCard.wallpaperSlice(wallpaperProbe.sourceSize, width, height)
-            }
-        }
 
         Rectangle {
             id: card
@@ -808,18 +711,4 @@ Rectangle {
     }
         }
 
-        // Mask for the wrapper above: rendered off-screen (visible: false) and only
-        // sampled for its alpha, exactly like the album art's own mask.
-        Item {
-            id: cardMask
-            anchors.fill: cardPlate
-            layer.enabled: true
-            visible: false
-
-            Rectangle {
-                anchors.fill: parent
-                // Same radius as the fill, so the mask and the card cannot drift apart.
-                radius: card.radius
-            }
-        }
 }

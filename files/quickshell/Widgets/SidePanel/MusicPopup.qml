@@ -57,6 +57,16 @@ Item {
             height: cardBox.height
         }
 
+        // The backdrop belongs to the compositor, not to the shell: through
+        // ext-background-effect-v1 Hyprland blurs whatever is really behind this
+        // surface — live, and only inside the card's rounded rect. The card used
+        // to frost its own slice of the wallpaper image instead, which is why it
+        // showed a cached picture of the desktop rather than the desktop.
+        BackgroundEffect.blurRegion: Region {
+            item: cardBox
+            radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(toast.screen))
+        }
+
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
         property int _autoHideRemainingMs: autoHideTotalMs
@@ -298,9 +308,6 @@ Item {
                             // Music.onScreen), so the surface's own visibility is
                             // passed down: this is what gates the cava feed.
                             isOnScreen: toast.visible
-                            // Screen insets of this surface, for the frost slice.
-                            edgeMarginRight: toast._marginRight
-                            edgeMarginBottom: toast._marginBottom
                         }
                     }
                 }
