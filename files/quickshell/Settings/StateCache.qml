@@ -11,6 +11,24 @@ Singleton {
     property string stateFile: (cacheDir + "state.json")
     property var state: stateAdapter
 
+    // True once state.json has been read (or its absence handled), so consumers can
+    // tell the stored values from the -40 defaults the adapter carries before the
+    // load lands. The Genelec widget gates its startup restore on this; reading the
+    // adapter during Component.onCompleted saw the defaults and pushed -40 dB to the
+    // monitors on every restart.
+    //
+    // Driven by the adapter's own change signal rather than by FileView.loaded or
+    // onAdapterUpdated: a preloaded adapter can be `loaded` before it is populated
+    // and does not emit onAdapterUpdated at all (measured with a headless probe),
+    // while the property change is exactly the moment the stored value becomes
+    // readable.
+    readonly property bool ready: stateFileView.adapterTouched
+
+    Connections {
+        target: stateAdapter
+        function onGenelecVolumeChanged() { stateFileView.adapterTouched = true; }
+    }
+
     Item {
         Component.onCompleted: {
             Quickshell.execDetached(["mkdir", "-p", cacheDir]);
@@ -20,6 +38,9 @@ Singleton {
     GuardedFileView {
         id: stateFileView
         path: stateFile
+        // Flipped by the adapter change signal above (qualified by the id: a
+        // singleton cannot reach its own root by name).
+        property bool adapterTouched: false
         onLoadFailed: function (error) {
             console.warn("[StateCache] load failed:", error, "— resetting to defaults");
             stateAdapter.lastActivePlayers = [];
