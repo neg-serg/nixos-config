@@ -36,6 +36,36 @@ Rectangle {
     // host that owns the surface says whether it is shown.
     property bool isOnScreen: false
 
+    // ── Colored "(current/total)" readout ────────────────────────────────
+    // Composed exactly like the bar capsule's time span (accent brackets and
+    // slash, digits in the card's text colour). The strings are cached and
+    // refreshed at 1 Hz for the same reason the bar caches them: re-rendering
+    // rich text on every currentPosition tick fed the QQuickText::setText
+    // crash cascade.
+    property string _timeCur: ""
+    property string _timeTot: ""
+    Timer {
+        id: playerTimeTimer
+        interval: 1000
+        repeat: true
+        running: musicCard.isOnScreen && MusicManager.hasPlayer
+        triggeredOnStart: true
+        onTriggered: {
+            musicCard._timeCur = Format.fmtTime(Math.max(0, MusicManager.currentPosition || 0));
+            musicCard._timeTot = Format.fmtTime(Math.max(0, Time.mprisToMs(MusicManager.trackLength || 0)));
+        }
+    }
+    readonly property string timeReadout: {
+        var bp = Rich.bracketPair(Settings.settings.timeBracketStyle || "square");
+        var accent = Format.colorCss(MusicManager.accentColor, 1);
+        var digits = Format.colorCss(playerUI.musicTextColor, 1);
+        return Rich.bracketSpan(accent, bp.l)
+             + Rich.timeSpan(digits, musicCard._timeCur)
+             + Rich.sepSpan(accent, "/")
+             + Rich.timeSpan(digits, musicCard._timeTot)
+             + Rich.bracketSpan(accent, bp.r);
+    }
+
     function warnContrast(bg, fg, label) {
         try {
             if (!(Settings.settings && Settings.settings.debugLogs)) return;
@@ -206,12 +236,6 @@ Rectangle {
                             Layout.fillWidth: true
                             spacing: Math.round(8 * Theme.scale(screen))
 
-                            Text {
-                                text: Format.fmtTime(Math.max(0, MusicManager.currentPosition || 0))
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Math.round(playerUI.musicTextPx * 0.8)
-                                color: playerUI.musicTextColor
-                            }
                             Item {
                                 id: progressBand
                                 Layout.fillWidth: true
@@ -301,52 +325,25 @@ Rectangle {
                                     onPositionChanged: (mouse) => { if (pressed) playerUI.seekFromX(mouse.x, width) }
                                 }
                             }
-                            Text {
-                                text: Format.fmtTime(Math.max(0, Time.mprisToMs(MusicManager.trackLength || 0)))
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Math.round(playerUI.musicTextPx * 0.8)
-                                color: playerUI.musicTextColor
-                            }
                         }
 
-                        // Track title underneath the scrub bar (regular weight,
-                        // 2pt smaller, centered).
+                        // Colored now-playing readout, composed the same way as the
+                        // bar capsule's time span: accent brackets and slash, digits
+                        // in the card's text colour. Replaces the two counters that
+                        // used to flank the spectrum.
                         Text {
                             Layout.fillWidth: true
-                            text: MusicManager.trackTitle || ""
+                            textFormat: Text.RichText
+                            text: musicCard.timeReadout
+                            horizontalAlignment: Text.AlignHCenter
                             color: playerUI.musicTextColor
                             font.family: Theme.fontFamily
-                            font.pixelSize: Math.max(8, Math.round(playerUI.musicTextPx * 1.15) - 2)
+                            font.pixelSize: Math.round(playerUI.musicTextPx * 0.9)
                             font.weight: Font.Normal
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
                         }
 
-                        // Transport: prev / play-pause / next (centered)
-                        RowLayout {
-                            Layout.fillWidth: false
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.topMargin: Math.round(2 * Theme.scale(screen))
-                            spacing: Math.round(14 * Theme.scale(screen))
-                            implicitWidth: Math.round(playerUI.musicTextPx * 1.1) * 3
-                                + Math.round(14 * Theme.scale(screen)) * 2
-
-                            TransportButton {
-                                enabled: MusicManager.canGoPrevious
-                                glyph: "skip_previous"
-                                onActivated: MusicManager.previous()
-                            }
-                            TransportButton {
-                                enabled: (MusicManager.canPlay || MusicManager.canPause)
-                                glyph: MusicManager.isPlaying ? "pause" : "play_arrow"
-                                onActivated: MusicManager.playPause()
-                            }
-                            TransportButton {
-                                enabled: MusicManager.canGoNext
-                                glyph: "skip_next"
-                                onActivated: MusicManager.next()
-                            }
-                        }
+                        // Track title removed on request: the card carries the
+                        // identity rows below and the bar keeps the title.
 
                     }
 
@@ -553,29 +550,4 @@ Rectangle {
             
         }
     }
-
-
-    // Transport control (prev / play-pause / next); all three share the same
-    // geometry, hover colour and disabled opacity. Set `enabled` at the use site.
-    component TransportButton: MouseArea {
-        property string glyph: ""
-        signal activated()
-
-        Layout.preferredWidth: Math.round(playerUI.musicTextPx * 1.1)
-        Layout.preferredHeight: Math.round(playerUI.musicTextPx * 1.1)
-        hoverEnabled: true
-        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: activated()
-
-        Text {
-            anchors.centerIn: parent
-            text: glyph
-            font.family: "Material Symbols Outlined"
-            font.pixelSize: Math.round(playerUI.musicTextPx * 1.1)
-            color: parent.containsMouse ? detailsCol.musicAccent : playerUI.musicTextColor
-            Behavior on color { ColorAnimation { duration: 180 } }
-            opacity: parent.enabled ? 1 : 0.35
-        }
-    }
-
 }
