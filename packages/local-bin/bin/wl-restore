@@ -1,28 +1,44 @@
 #!/bin/sh
-# Restore wallpaper via wl, fallback to random if no previous session.
+# Restore wallpaper via wl. Two fallbacks, because "nothing restored" is not an
+# error wl reports: a state naming a file that no longer exists makes `wl restore`
+# exit 0 having painted nothing (2026-09-19 — the desktop came up black), so the
+# state is validated here and a random pick is used when there is nothing to
+# restore at all.
 # The daemon must be owned by systemd (wl-daemon.service): a direct spawn
 # (wl init) orphans the process and makes the unit loop with
 # "wl-daemon уже запущен" at every restart. systemctl is the only spawner.
 set -euo pipefail
 
-systemctl --user start wl-daemon.service 2>/dev/null || true
+systemctl --user start wl-daemon.service 2> /dev/null || true
 
 # Wait for the daemon's IPC socket (the unit start is effectively async).
 i=0
-while [ "$i" -lt 10 ] && ! wl query >/dev/null 2>&1; do
+while [ "$i" -lt 10 ] && ! wl query > /dev/null 2>&1; do
   sleep 0.5
   i=$((i + 1))
 done
 
-if ! wl restore 2>/dev/null; then
-  wl random ~/pic/wl
+state_file="$HOME/.local/state/wl/state.json"
+current="$(jq -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2> /dev/null || true)"
+if [ -n "$current" ] && [ -r "$current" ]; then
+  wl restore 2> /dev/null || wl random ~/pic/wl
+else
+  # The state is stale (deleted/renamed image) or there is no previous session.
+  # wl-wallpaper-resolve.sh is the same resolver the login layer asks, so the
+  # desktop lands on the image the login screen was already showing.
+  candidate="$(/etc/quickshell/scripts/wl-wallpaper-resolve.sh 2> /dev/null || true)"
+  if [ -n "$candidate" ]; then
+    wl img "$candidate" 2> /dev/null || wl random ~/pic/wl
+  else
+    wl random ~/pic/wl
+  fi
 fi
 
 # Sync current wallpaper to greeter cache for smooth lock/login transitions
 notify_file="$HOME/.cache/quickshell-wallpaper-path"
 if [ -f "$notify_file" ]; then
-  wallpaper_path="$(head -1 "$notify_file" 2>/dev/null || true)"
+  wallpaper_path="$(head -1 "$notify_file" 2> /dev/null || true)"
   if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
-    install -Dm644 "$wallpaper_path" /home/greeter/.cache/greeter-wallpaper 2>/dev/null || true
+    install -Dm644 "$wallpaper_path" /home/greeter/.cache/greeter-wallpaper 2> /dev/null || true
   fi
 fi
