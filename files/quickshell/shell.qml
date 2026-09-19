@@ -24,7 +24,10 @@ Scope {
         sourceComponent: Bar { id: bar; shell: root; }
     }
     IdleInhibitor { id: idleInhibitor; }
-    IPCHandlers { idleInhibitor: root.idleInhibitor; }
+    IPCHandlers {
+        idleInhibitor: root.idleInhibitor
+        glassPanel: root.glassPanel
+    }
 
     // ── Notification system (quickshell — replaces dunst) ──────────────
 
@@ -42,6 +45,15 @@ Scope {
     // Public access for Bar.qml (QML ids don't leak into parent scope, so
     // expose the loaded popup item via an explicit property).
     readonly property var musicPopup: musicPopupLoader ? musicPopupLoader.item : null
+
+    // Glass panel: live tuning for the hyprglass settings. Loaded top-level for
+    // the same reason as the media popup — a PanelWindow nested in the bar does
+    // not map as a surface.
+    Loader {
+        id: glassPanelLoader
+        source: "Widgets/Glass/GlassPanel.qml"
+    }
+    readonly property var glassPanel: glassPanelLoader ? glassPanelLoader.item : null
 
     // IPC semaphores for notification bindings (touch to trigger)
     readonly property string _home: {

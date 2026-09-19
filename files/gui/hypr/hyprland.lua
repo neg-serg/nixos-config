@@ -350,6 +350,9 @@ hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 
 -- --- Notifications (quickshell notification center) ---
 hl.bind(M4 .. "+n", hl.dsp.exec_cmd("quickshell ipc call globalIPC toggleNotificationCenter"))
+-- Glass panel: live tuning for the hyprglass settings (see the panel module and
+-- hyprglass-apply). Next to the notification centre bind, same IPC shape.
+hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd("quickshell ipc call globalIPC toggleGlassPanel"))
 hl.bind(M4 .. "+space", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-close-all"), { locked = true })
 
 -- --- Overlay dismissal (quickshell widgets) ---
