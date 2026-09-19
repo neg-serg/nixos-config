@@ -96,6 +96,19 @@ behind Hyprland.
     along: the shader scales the frosted colour by `1 - adaptiveDim * smoothstep(0.25, 0.55,
     blurredLum)`, whose curve is tuned for the luminance range a normal-strength blur compresses
     into.
+  - **Per-window overrides** are edited in the Glass panel (win+shift+g, the section below the global sliders) and
+    stored in `Settings.json` (`glassWindowOverrides`) plus `~/.config/hypr/hyprglass.json`.
+    `hyprglass-apply` turns each entry into a custom preset (`win_<class-slug>`) and the
+    `hyprglass_preset_win_<slug>` window rule for that class; the Lua is generated from the JSON,
+    never typed by hand. Two mechanics decide what "live" means here: preset *values* are resolved by
+    the plugin every frame, so re-tuning an entry re-tunes open windows immediately, while a window's
+    *tags* are computed at map time, so the rule itself reaches windows of that class opened after
+    the push. A disabled entry gets an empty preset, which makes any leftover tag resolve to the
+    theme/global values instead of its old preset. Scriptable equivalent (same functions the panel's
+    buttons call): `quickshell ipc call globalIPC setGlassWindowOverride '{"class":"music",
+    "enabled":true,"blurStrength":16,"glassOpacity":0.9,"adaptiveDim":0,"tint":"000000cc"}'`,
+    `… removeGlassWindowOverride music`, `… listGlassWindowOverrides`. `tint` is RRGGBBAA (the
+    plugin's packing, see the shader's closing `mix`) and `""` means "inherit".
   - `media-dark` is attached to the panel's now-playing card through
     `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
     `dark.brightness = 0.40` — ~2x the dark theme's 0.82 — plus the hardest frost
