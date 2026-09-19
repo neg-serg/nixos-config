@@ -213,15 +213,28 @@ in
     # or the panel writes overrides.
     hyprglass-apply = {
       description = "Push hyprglass settings into the running session";
+      serviceConfig = {
+        Type = "oneshot";
+        # systemd's user services get a minimal PATH, and the script needs jq to
+        # read the panel's JSON plus the usual text tools. Without this it silently
+        # pushed only the defaults and the Glass panel's values never landed.
+        Environment = [
+          "PATH=${lib.makeBinPath [
+            pkgs.coreutils # shell plumbing (mkdir, mv, tr, date)
+            pkgs.gnused # rewrites the generated lua's numbers
+            pkgs.gnugrep # scans the plugin list
+            pkgs.gawk # compares the reported values with the wanted ones
+            pkgs.jq # reads the Glass panel's JSON overrides
+            pkgs.hyprland # hyprctl, the only way to talk to the plugin
+          ]}"
+        ];
+        ExecStart = "${hyprglassApply}/bin/hyprglass-apply";
+      };
       unitConfig = {
         # A slider drag rewrites the override file several times per second, and
         # the default StartLimitBurst (5 in 10 s) turned that into
         # "start-limit-hit": the applies stopped and the units went to failed.
         StartLimitIntervalSec = 0;
-      };
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${hyprglassApply}/bin/hyprglass-apply";
       };
     };
 

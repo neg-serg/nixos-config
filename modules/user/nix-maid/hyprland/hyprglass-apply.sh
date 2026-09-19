@@ -37,9 +37,11 @@ done
 # not fire for that path — measured), and nothing else notices. Run by a timer:
 # a cheap check, and a push only when something actually drifted.
 if [ "${watch:-0}" = 1 ]; then
-  if "$0" --check >/dev/null 2>&1; then
-    exit 0
-  fi
+  "$0" --check >/dev/null 2>&1
+  case "$?" in
+    0) exit 0 ;;                 # in sync
+    2) exit 2 ;;                 # cannot reach Hyprland: not our business here
+  esac
   echo "hyprglass: settings drifted, re-applying" >&2
   "$0" >/dev/null 2>&1 || true
   exit 0
@@ -61,7 +63,31 @@ keys=(
 state="$HOME/.cache/hyprglass-applied.json"
 
 have_json=0
-[ -r "$overrides" ] && command -v jq >/dev/null 2>&1 && have_json=1
+if [ -r "$overrides" ]; then
+  if command -v jq >/dev/null 2>&1; then
+    have_json=1
+  else
+    # Silently ignoring the panel's file is how the defaults got pushed over the
+    # user's values; say it out loud instead.
+    echo "hyprglass: jq is missing, the overrides in $overrides cannot be read" >&2
+    exit 3
+  fi
+fi
+
+# A user service does not inherit HYPRLAND_INSTANCE_SIGNATURE (systemd's user
+# environment is not the session's), and hyprctl then prints "Couldn't connect to
+# Hyprland". Treat that as its own condition: reading it as "drifted" made the
+# watchdog re-apply forever without ever reaching the compositor.
+reachable=1
+"$hyprctl_bin" version >/dev/null 2>&1 || reachable=0
+if [ "$reachable" = 0 ]; then
+  if [ "$as_json" = 1 ]; then
+    echo '{"reachable":false,"loaded":false,"inSync":false,"differences":[]}'
+  else
+    echo "hyprglass: cannot reach Hyprland (HYPRLAND_INSTANCE_SIGNATURE missing?)" >&2
+  fi
+  exit 2
+fi
 
 plugin_loaded() {
   "$hyprctl_bin" plugin list 2>/dev/null | grep -qi hyprglass
@@ -92,15 +118,15 @@ actual() {
 
 if [ "$check_only" = 1 ]; then
   diffs=()
-  # Reference: what the plugin reported after the last push. The JSON says what
-  # the panel *wants*, which is the same thing only as long as the push worked —
-  # comparing against the recorded state is what catches a plugin that lost its
-  # config on its own (a reload, with nobody having touched the panel).
-  if [ -r "$state" ]; then
-    reference="$state"
-    ref_keys_of() { printf '%s' "$1"; }
-  elif [ "$have_json" = 1 ]; then
+  # Reference, in order of authority: what the panel wants (the JSON), then what
+  # the plugin reported after the last push (the recorded state). The order
+  # matters — a recorded state that is newer than the user's intent would report
+  # "in sync" for a value the panel just changed, which is the false positive that
+  # made the earlier check worthless.
+  if [ "$have_json" = 1 ]; then
     reference="$overrides"
+  elif [ -r "$state" ]; then
+    reference="$state"
   else
     reference=""
   fi
