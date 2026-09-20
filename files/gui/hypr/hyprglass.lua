@@ -52,14 +52,19 @@ hl.config({
         -- whole bar read as the wallpaper's own colour (saturation 0.7-0.9, measured
         -- 2026-09-19) and went neutral the moment this entry was dropped. The bar
         -- keeps Hyprland's own blur (the no-xray-* layer rules) instead.
-        namespaces = "notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
-        -- The panel's now-playing card (Widgets/SidePanel/MusicPopup.qml) gets a
-        -- darker glass than the rest: `media-dark` is defined by hyprglass-apply
-        -- with dark.brightness = 0.55, i.e. 1.5x the dark theme's 0.82. Pair
-        -- separator is ':' on purpose — the plugin parses these with
-        -- parseKeyValuePairs(..., ':') (src/main.cpp), unlike the mask thresholds
-        -- which use '='.
-        namespace_presets = "qs-music:media-dark",
+        -- qs-music (the panel's now-playing card) is deliberately NOT here: the
+        -- plugin's layer pass frosts the wallpaper it re-samples instead of what
+        -- is really behind the surface (see the bar note above), so the card
+        -- showed a pseudo-backdrop. It takes the bar's route instead — Hyprland's
+        -- own layer blur (rule `blur-qs-.*`) samples the live framebuffer — plus
+        -- the card's own translucent fill and 1 px hairline.
+        namespaces = "notifications,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
+        -- namespace_presets is left empty: its only entry ever was
+        -- qs-music:media-dark, and that namespace is no longer glassed by the
+        -- plugin (the `media-dark` preset is gone from hyprglass-apply for the
+        -- same reason). Keep the ':' separator in mind if it comes back — the
+        -- plugin parses these with parseKeyValuePairs(..., ':'), unlike the mask
+        -- thresholds which use '='.
         -- Above the shadow alpha, otherwise shadows trigger glass on the whole surface
         namespace_mask_thresholds = "quickshell=0.3,notifications=0.3,qs-music=0.3",
         -- The layer pass re-samples the backdrop between frames and the result
