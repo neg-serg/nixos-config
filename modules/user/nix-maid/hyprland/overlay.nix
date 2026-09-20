@@ -22,6 +22,21 @@
           # instance before wiring it into the config again.
           pname = "hyprglass";
           version = "0.8.1";
+          # Layered backdrop freshness. Two defects in 0.8.1, both measured in a
+          # nested 0.56.2 (see the patch header): the layer namespace filters are
+          # parsed once at load, when the settings this session pushes (the keys
+          # only exist after the plugin registered them) are still absent — an
+          # empty whitelist means "glass every layer", so the shell's bar and
+          # media card were glassed with the plugin's *cached* backdrop instead of
+          # Hyprland's live layer blur, and stayed frozen on the wallpaper of the
+          # moment the sample was taken (only re-mapping the surface, with its
+          # slide animation, forced a re-sample); and that cache is invalidated
+          # only by window events, never by a commit below the glass — a wallpaper
+          # switch is exactly such a commit. The patch re-parses the filters when
+          # the raw values change and invalidates a layer's cache on any commit
+          # that touches its sample region (the re-sample itself stays rate
+          # limited by layers.live_resample_fps).
+          patches = [ ./hyprglass-layer-backdrop-live.patch ];
           src = final.fetchFromGitHub {
             owner = "hyprnux";
             repo = "hyprglass";
