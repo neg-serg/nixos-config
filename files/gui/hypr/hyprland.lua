@@ -285,6 +285,17 @@ hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 
 hl.bind(M4 .. "+grave", hl.dsp.exec_cmd("hypr-expo toggle"))
 
+-- Clicking a tile picks that workspace. The fork does not read mouse buttons on its
+-- own: it exposes a `select` action that looks at the tile under the pointer, and the
+-- user is expected to bind a button to it (upstream README: `bind = , mouse_down,
+-- hyprexpo:expo, select`). Without this bind a click inside the overview does nothing
+-- at all — only escape, the right button and the number/select keys do. `hypr-expo
+-- select` is a no-op while the overview is closed (the plugin ignores the action
+-- then), so binding the plain left button is safe: clicks keep working everywhere
+-- else. Tiles of empty workspaces are refused by the plugin itself ("selected
+-- workspace is empty") — that is its own behaviour, not this bind.
+hl.bind("mouse:272", hl.dsp.exec_cmd("hypr-expo select"))
+
 -- --- App launchers (ex-apps.conf; formerly ~/.config/hypr/bindings/apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
 hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch "kitty --class term"'))
