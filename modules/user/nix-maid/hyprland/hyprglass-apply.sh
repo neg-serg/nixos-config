@@ -222,19 +222,16 @@ fi
 #                pane. blur_strength is a plain scale (value * 12 px) with no
 #                clamp: 64, 128 and 256 are all accepted, so this number is the knob
 #                to turn if the frost is ever handed the pane back.
-#   media-dark — the panel's now-playing card (layers:namespace_presets maps
-#                qs-music to it): dark brightness 0.40 and the strongest frost the
-#                plugin offers (blur_strength 16, all 5 gaussian passes), with
-#                adaptive_dim 0 so the darkness is the tint and nothing else.
-#                0.40 is ~2x the dark theme's 0.82 — the first pass (0.55, exactly
-#                1.5x) read too light once the adaptive dim was taken off it, and
-#                the card is small enough that the hardest blur still reads as
-#                glass rather than a smear.
+#   media-dark — removed: qs-music is no longer glassed by the plugin, so the
+#                panel's now-playing card relies on Hyprland's own live layer
+#                blur instead (see files/gui/hypr/hyprglass.lua).
 #
 # A `hyprctl reload` drops them again (the plugin re-reads its config), which is
 # also what makes the nine knobs drift, so the next push restores these too.
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
-"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("media-dark", { dark = { brightness = 0.40 }, blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
+# The card's frame is the thin QML hairline (Music.qml, 1 px) — the plugin's own
+# thick glowing border around the plate, so it is zeroed here: the plate keeps
+# its frost and tint, the boundary is only the hairline.
 "$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("music_strong", { blur_strength = 64, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
 
 # ── per-window overrides ─────────────────────────────────────────────────────
