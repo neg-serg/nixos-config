@@ -68,6 +68,7 @@ OverlayToggleCapsule {
         }
 
         Text {
+            renderType: Text.NativeRendering
             id: tempLabel
             text: root.temperatureText
             layer.enabled: Theme.textShadowEnabled && Theme.backdropIsLight
@@ -88,6 +89,7 @@ OverlayToggleCapsule {
         }
 
         Text {
+            renderType: Text.NativeRendering
             id: humidityLabel
             visible: root.hasHumidity
             text: root.humidityText
@@ -110,6 +112,7 @@ OverlayToggleCapsule {
         }
 
         Text {
+            renderType: Text.NativeRendering
             id: windLabel
             visible: root.hasWind
             text: root.windSpeed
