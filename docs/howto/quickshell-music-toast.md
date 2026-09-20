@@ -66,6 +66,15 @@ pressed against the panel, and stable.
 - The bloom must not spread to the sides and must not depend on the length/width of the fill (when
   the card is stretched, the effect does not spread).
 
+## 7. Backdrop — real blur, not the plugin's pseudo-frost
+
+- The card is NOT in hyprglass's `layers.namespaces` any more: that pass frosts the wallpaper it
+  re-samples instead of the surface's real backdrop. `qs-music` uses Hyprland's own layer blur
+  (`blur-qs-.*`, `ignore_alpha 0.05`, live framebuffer) plus the card's translucent fill, so what
+  shows through is what is really behind the popup.
+- The frame is the thin 1 px hairline the card draws itself (`border.width: Theme.uiBorderWidth`,
+  colour `sidePanelPopupGlassBorderOpacity`). Plate darkness: `sidePanelPopupGlassOpacity`.
+
 ## Settings (Settings.json)
 
 - musicPopupWidth, musicPopupHeight (height is now only a fallback), musicPopupEdgeMargin,
