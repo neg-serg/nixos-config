@@ -258,6 +258,10 @@ hl.bind(M4 .. "+mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind(M4 .. "+" .. C .. "+mouse_up", hl.dsp.exec_cmd("kitty-font-zoom up"))
 hl.bind(M4 .. "+" .. C .. "+mouse_down", hl.dsp.exec_cmd("kitty-font-zoom down"))
 hl.bind(M4 .. "+" .. C .. "+mouse:274", hl.dsp.exec_cmd("kitty-font-zoom reset"))
+-- Pause/resume the font following for the focused kitty window: toggles the
+-- font_zoom user variable the watcher reads, so the window goes back to the plain
+-- configured font size that does not follow resizes ("how it was before").
+hl.bind(M4 .. "+" .. C .. "+z", hl.dsp.exec_cmd("kitty-font-zoom toggle"))
 
 -- --- Scratchpads (sashetophizika/hyprscratch with special workspace) ---
 hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty-glass --class teardown -e btop' special"))
