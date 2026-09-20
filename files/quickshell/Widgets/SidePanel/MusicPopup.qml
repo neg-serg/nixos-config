@@ -57,15 +57,13 @@ Item {
             height: cardBox.height
         }
 
-        // The backdrop belongs to the compositor, not to the shell: through
-        // ext-background-effect-v1 Hyprland blurs whatever is really behind this
-        // surface — live, and only inside the card's rounded rect. The card used
-        // to frost its own slice of the wallpaper image instead, which is why it
-        // showed a cached picture of the desktop rather than the desktop.
-        BackgroundEffect.blurRegion: Region {
-            item: cardBox
-            radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(toast.screen))
-        }
+        // No explicit BackgroundEffect.blurRegion here: the plate takes the same
+        // route as the bar — Hyprland's own layer blur (rule `blur-qs-.*`,
+        // ignore_alpha 0.05, xray off → the live framebuffer). Declaring the region
+        // as well stacked the blur twice (measured: a 24 px checkerboard behind
+        // the plate left 1.5% of its gradient energy with both paths, 9% with the
+        // rule alone) and that flat smear is what read as "not a real blur".
+        // The plate itself: translucent fill + 1 px hairline, see Music.qml.
 
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
@@ -143,7 +141,11 @@ Item {
                 // or made it jump size).
                 const wScale = (toast.cardWidthPx > 0 && Settings.settings.musicPopupWidth > 0)
                     ? toast.cardWidthPx / Settings.settings.musicPopupWidth : 1.15;
-                const pad = Math.max(0, Math.round(Settings.settings.musicPopupPadding * wScale)) || 12;
+                // MusicPopupPadding may legitimately be 0 (no frame band); only a
+                // missing/NaN setting falls back to the old 12 — `0 || 12` would
+                // silently re-add a 12px glass band around the content.
+                const padCfg = Number(Settings.settings.musicPopupPadding);
+                const pad = isFinite(padCfg) ? Math.max(0, Math.round(padCfg * wScale)) : 12;
                 // Height hugs the actual content; musicPopupHeight is only a
                 // fallback while the widget has not laid out yet.
                 const fallbackH = Math.round(Settings.settings.musicPopupHeight * wScale);
