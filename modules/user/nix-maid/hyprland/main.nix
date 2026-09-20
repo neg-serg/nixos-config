@@ -58,6 +58,12 @@ let
   # with no hyprexpo at all, which made the capsule click look wired while the
   # overview never appeared.
   #
+  # `hypr-expo select` is the third mode: the fork does not read mouse buttons on
+  # its own, it only inspects the tile under the pointer when the `select` action is
+  # invoked, so hyprland.lua binds the left button to it. That mode never loads the
+  # plugin (a plain click must not pull one in) — while the overview is closed the
+  # action is a no-op, which is what makes the bind safe.
+  #
   # hyprexpo-setup keeps its load-then-push semantics (the .so is dlopen'd first,
   # then files/gui/hypr/hyprexpo.lua is pushed through `hyprctl eval`; re-runnable
   # in a live session to re-apply the file) and is now a thin wrapper over the same
@@ -103,8 +109,16 @@ let
         "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || true
         push_config
         ;;
+      select)
+        # Bound to the left button in hyprland.lua: the fork does not read mouse
+        # buttons itself, it only looks at the pointer when this action is invoked.
+        # Deliberately no plugin load here — a plain click must not pull the plugin
+        # in (and the action is a no-op while the overview is closed, so the bind
+        # can sit on the plain button).
+        "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("select")'
+        ;;
       *)
-        echo "usage: hypr-expo [toggle|push]" >&2
+        echo "usage: hypr-expo [toggle|push|select]" >&2
         exit 2
         ;;
     esac
