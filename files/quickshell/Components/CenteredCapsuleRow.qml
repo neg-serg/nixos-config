@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import "." as LocalComponents
 import qs.Settings
@@ -112,7 +111,8 @@ LocalComponents.CapsuleButton {
                 Layout.maximumWidth: childrenRect.width
             }
 
-            Label {
+            Text {
+                renderType: Text.NativeRendering
                 id: label
                 visible: root.labelVisible
                 Layout.fillWidth: true
