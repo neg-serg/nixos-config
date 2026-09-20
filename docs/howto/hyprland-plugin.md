@@ -193,6 +193,20 @@ behind Hyprland.
   is a deprecated shorthand that rewrites the whole argument list into `hl.dispatch(hyprexpo:expo toggle)`
   and dies with "expected a dispatcher" (reproduced in a nested 0.56.2 instance); the runtime Lua
   namespace via `hyprctl eval` does.
+- **Mouse**: the fork does not read mouse buttons on its own — it exposes a `select` action that inspects
+  the tile under the pointer and expects a bind on the button (upstream README: `bind = , mouse_down,
+  hyprexpo:expo, select`). `files/gui/hypr/hyprland.lua` therefore binds the plain left button to `hypr-expo
+  select`. Without that bind a click inside the overview does nothing at all — measured on 0.56.2: the
+  overview stayed open, the workspace did not change, while `escape`, the right button, the number keys and
+  `hypr-expo select` all worked. `select` is a no-op while the overview is closed, which is what makes the
+  plain button safe to bind; it deliberately does not load the plugin (a click must not pull one in).
+  Tiles of *empty* workspaces are refused by the plugin itself (`selected workspace is empty`); with
+  `skip_empty = 0` they are visible but not selectable by click.
+- **Look**: `wallpaper_bg = 1` draws the monitor wallpaper behind the tiles. With the plugin's default
+  (`0`) the whole overview is the flat `bg_col`, and since the windows here are dark and the tiles have
+  `border_color` transparency, opening it read as a black screen with one thumbnail in it (measured: 79% of
+  the screen within 1/255 of `bg_col`). The wallpaper, `gaps_out = 24` and a visible navy border (instead of
+  `rgba(00000000)`) make the grid legible; `show_workspace_numbers = 1` labels each tile.
 - **Gesture**: 3-finger swipe with `gesture_direction = "vertical"`; the horizontal 3-finger swipe
   stays with `hl.gesture()` (the scrolling tape), since Hyprland keys gestures per finger count +
   direction and one would shadow the other.
