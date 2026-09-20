@@ -790,16 +790,8 @@ Singleton {
     // a flat backdrop: card fill ~(96,109,117) over (200,200,200)). A quarter of
     // the frost is what is left now — still glass, decisively darker.
     property real sidePanelPopupGlassOpacity: val('sidePanel.popup.glassOpacity', 0.75)
-    // Inner hairline of the glass card, under the rim: it keeps the edge crisp
-    // where the rim's gradient lands on a bright backdrop.
+    // Hairline edge of the glass card; the plugin's fresnel pass lights it up.
     property real sidePanelPopupGlassBorderOpacity: val('sidePanel.popup.glassBorderOpacity', 0.1)
-    // The rim: the plate carries a 1 px gradient edge instead of one flat
-    // hairline — light where the glass catches the viewer's side of the edge
-    // (textPrimary at this alpha), dark where it turns away (surface at this one).
-    property real sidePanelPopupGlassBorderTop: val('sidePanel.popup.glassBorderTop', 0.30)
-    property real sidePanelPopupGlassBorderBottom: val('sidePanel.popup.glassBorderBottom', 0.55)
-    // 1 px highlight along the top edge of the plate, fading out before the corners.
-    property real sidePanelPopupGlassLip: val('sidePanel.popup.glassLip', 0.34)
     // Media dominant-accent sampler/logic (extract hardcoded tuning)
     property int mediaArtDebounceMs: val('media.artDebounceMs', 60)
     property int mediaAccentRetryMs: val('media.accent.retryMs', 120)
