@@ -95,6 +95,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         Text {
+            renderType: Text.NativeRendering
             id: textItem
             anchors.centerIn: parent
             text: revealPill.colorizeUnit ? revealPill._unitRichText : revealPill.text
