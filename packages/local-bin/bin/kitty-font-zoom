@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# Zoom the font size of the focused kitty OS window: up | down | reset.
+# Control the font size of the focused kitty OS window.
+#
+#   up | down | reset   zoom step / back to the default size (the wheel bind)
+#   off | on | toggle   switch the font_zoom.py watcher off (font stops following
+#                       the window, back to the plain configured size) or on again
 #
 # kitty cannot map scroll events (scroll_event() in kitty/mouse.c bypasses
 # mouse_map completely), so the wheel bind lives in Hyprland and forwards here
@@ -8,15 +12,19 @@
 # in kitty/main.py), and the Hyprland window pid IS the kitty process pid, so the
 # focused window can be addressed without knowing the instance id. Non-kitty
 # windows have no such socket and are silently ignored.
-# Docs: docs/howto/kitty-font-zoom.md
+# The off/on/toggle modes set the `font_zoom` user variable, which the watcher
+# reads in its on_set_user_var hook (see docs/howto/kitty-font-zoom.md).
 set -euo pipefail
 
-case ${1:-} in
-    up) delta=+0.5 ;;
-    down) delta=-0.5 ;;
-    reset) delta=0 ;;
+verb=${1:-}
+case $verb in
+    up) run='delta'; arg='+0.5' ;;
+    down) run='delta'; arg='-0.5' ;;
+    reset) run='delta'; arg='0' ;;
+    off | on) run='var'; arg="font_zoom=$verb" ;;
+    toggle) run='toggle' ;;
     *)
-        printf 'Usage: %s up|down|reset\n' "${0##*/}" >&2
+        printf 'Usage: %s up|down|reset|off|on|toggle\n' "${0##*/}" >&2
         exit 2
         ;;
 esac
@@ -27,4 +35,20 @@ pid=$(printf '%s' "$win" | jq -r '.pid // empty')
 sock=/tmp/kitty-$pid
 [[ -S $sock ]] || exit 0
 
-kitten @ --to "unix:$sock" set-font-size -- "$delta" >/dev/null 2>&1 || true
+case $run in
+    delta)
+        kitten @ --to "unix:$sock" set-font-size -- "$arg" >/dev/null 2>&1 || true
+        ;;
+    var)
+        kitten @ --to "unix:$sock" set-user-vars "font_zoom=$arg" >/dev/null 2>&1 || true
+        ;;
+    toggle)
+        # `set-user-vars` without arguments prints the active window's variables.
+        current=$(kitten @ --to "unix:$sock" set-user-vars 2>/dev/null | sed -n 's/^font_zoom=//p' | head -n 1 || true)
+        if [[ ${current:-} == off ]]; then
+            kitten @ --to "unix:$sock" set-user-vars font_zoom=on >/dev/null 2>&1 || true
+        else
+            kitten @ --to "unix:$sock" set-user-vars font_zoom=off >/dev/null 2>&1 || true
+        fi
+        ;;
+esac
