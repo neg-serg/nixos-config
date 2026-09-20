@@ -208,6 +208,7 @@ in
       # deployed as-is from files/kitty/.
       ".config/kitty/key.conf".text = kittyKeyConf;
       ".config/kitty/font.conf".source = "${kittyConf}/font.conf";
+      ".config/kitty/font_zoom.py".source = "${kittyConf}/font_zoom.py";
 
       ".config/kitty/kitty.conf".source = "${kittyConf}/kitty.conf";
       ".config/kitty/mouse.conf".source = "${kittyConf}/mouse.conf";
