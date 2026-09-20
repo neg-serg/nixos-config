@@ -41,7 +41,11 @@
       url = "github:neg-serg/raise";
     };
     wl = {
-      url = "github:neg-serg/wl";
+      # Temporary: the layer-surface damage fix on top of main — a wallpaper that
+      # swaps from outside (Vulkan WSI present without damage) must not leave the
+      # compositor's cached copy of the surface behind panel popups. Switch back
+      # to "github:neg-serg/wl" once the branch is merged into main.
+      url = "git+ssh://git@github.com/neg-serg/wl?ref=fix/layer-backdrop-damage";
       flake = false;
     };
     # xdph used to follow the (now removed) hyprland input; pinned here to the
