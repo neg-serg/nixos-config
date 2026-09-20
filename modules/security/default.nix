@@ -125,10 +125,11 @@ in
             # hooks are run through `eval` as root. Removed; a real VPN up/down
             # needs the root-owned config under /etc/amnezia/amneziawg and can
             # ask for a password.
-            {
-              command = "/run/current-system/sw/bin/nixos-rebuild";
-              options = [ "NOPASSWD" ];
-            }
+            # nixos-rebuild used to be NOPASSWD for the agent rollout, but that is
+            # passwordless arbitrary root: `sudo -n nixos-rebuild switch --flake
+            # /etc/nixos#odin` activates whatever the (user-writable) flake evaluates
+            # to, so any process running as mainGroup can install a root unit without
+            # a prompt. Removed; rebuilds ask for a password like any other wheel command.
             {
               command = "/run/current-system/sw/bin/ryzenadj";
               options = [ "NOPASSWD" ];
@@ -149,8 +150,8 @@ in
             # `env * /run/current-system/sw/bin/nixos-rebuild *` also matches
             # `env sh -c '… nixos-rebuild'`. Removed: nh now asks for a
             # password like any other wheel command (wheelNeedsPassword).
-            # The agent rollout stays passwordless through the nixos-rebuild
-            # rule above (`sudo -n nixos-rebuild …`).
+            # The remaining entries below are narrow systemctl / CPU helpers that
+            # cannot be turned into arbitrary root.
             {
               command = "/run/current-system/sw/bin/systemctl stop xray.service";
               options = [ "NOPASSWD" ];
