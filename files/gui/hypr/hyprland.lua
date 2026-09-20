@@ -249,6 +249,15 @@ hl.bind(M4 .. "+mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(M4 .. "+mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(M4 .. "+mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(M4 .. "+mouse:273", hl.dsp.window.resize(), { mouse = true })
+-- Font zoom of the focused kitty OS window (ctrl+super+wheel / +middle click).
+-- kitty cannot map scroll events -- kitty/mouse.c scroll_event() bypasses
+-- mouse_map entirely -- so the wheel is caught here and forwarded to the kitty
+-- remote-control socket of that window by the local-bin script kitty-font-zoom
+-- (which in turn calls `kitten @ set-font-size`). Docs:
+-- docs/howto/kitty-font-zoom.md
+hl.bind(M4 .. "+" .. C .. "+mouse_up", hl.dsp.exec_cmd("kitty-font-zoom up"))
+hl.bind(M4 .. "+" .. C .. "+mouse_down", hl.dsp.exec_cmd("kitty-font-zoom down"))
+hl.bind(M4 .. "+" .. C .. "+mouse:274", hl.dsp.exec_cmd("kitty-font-zoom reset"))
 
 -- --- Scratchpads (sashetophizika/hyprscratch with special workspace) ---
 hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty-glass --class teardown -e btop' special"))
