@@ -16,13 +16,16 @@ lib.mkIf cfg.enable {
     description = "Xray local SOCKS5 proxy (127.0.0.1:10808)";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
-    # No autostart: xray's ExecStartPre kills the sing-box proxy on 10808
-    # every activation (nh os switch). User proxy is sing-box via ~/.local/bin/proxy.
+    # No autostart, and deliberately no ExecStartPre: it used to run
+    # `fuser -k 10808/tcp`, which killed the user's sing-box proxy (also on
+    # 10808) on every activation — each `nh os switch` took API access down
+    # with it, then the unit crash-looped until the next manual restart. The
+    # xray unit stays manual; picking a port that does not clash with the
+    # sing-box SOCKS inbound is the caller's job.
     wantedBy = lib.mkForce [ ];
     serviceConfig = {
       Type = "simple";
       User = "neg";
-      ExecStartPre = "${lib.getExe' pkgs.bash "bash"} -c '${lib.getExe' pkgs.psmisc "fuser"} -k 10808/tcp 2>/dev/null; true'";
       ExecStart = "${lib.getExe pkgs.xray} run -config /home/neg/.config/sing-box-tun/config.json";
     };
   };
