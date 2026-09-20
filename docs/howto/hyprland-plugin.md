@@ -115,13 +115,23 @@ behind Hyprland.
     baked slice any more), so the plugin's frost is the whole picture there, and 16 read as too weak.
     `blur_strength` is a plain scale (`value * 12` px) with no clamp: 64, 128 and 256 are all accepted
     by the config manager, so this is the knob to turn.
-  - `media-dark` is attached to the panel's now-playing card through
+  - `media-dark` (now removed) was attached to the panel's now-playing card through
     `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
     `dark.brightness = 0.40` — ~2x the dark theme's 0.82 — plus the hardest frost
     (`blur_strength 16`, all 5 gaussian passes) and `adaptive_dim = 0`, so the darkness is the tint
     and nothing else. The first pass was `0.55` (exactly 1.5x) with the adaptive dim still riding
     on top; taking that dim off (it multiplied by up to `1 - 0.4` more on a bright backdrop) made
-    the plate read too light, hence the lower tint and the extra blur now. Note the pair separator
+    the plate read too light, hence the lower tint and the extra blur now.
+    The whole namespace was taken out of the plugin's layer pass afterwards: that pass frosts the
+    wallpaper it re-samples instead of the real backdrop (the reason the bar's surfaces were removed
+    from it), i.e. exactly the pseudo-backdrop the card must not show. `qs-music` now uses
+    Hyprland's own layer blur (`blur-qs-.*`, `ignore_alpha 0.05` — live framebuffer) over the card's
+    translucent fill, and its frame is the thin 1 px hairline the card draws itself.
+    The preset also zeroes the plugin's own rim (`fresnel_strength`, `specular_strength`,
+    `edge_thickness`, `refraction_strength`): around a small plate that refractive band reads as a
+    thick glowing border, and the frame wanted there is the thin 1 px hairline the card draws
+    itself (`Widgets/SidePanel/Music.qml`, `border.width: Theme.uiBorderWidth`). Preset values are
+    resolved every frame, so this is a push-only knob (no remap of the layer surface). Note the pair separator
     is `:` (the plugin parses these with `parseKeyValuePairs(..., ':')`, `src/main.cpp`), unlike the
     mask thresholds which use `=`.
   - Both are pushed by `hyprglass-apply` with `hyprctl eval` + the plugin's
