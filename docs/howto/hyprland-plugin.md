@@ -167,23 +167,37 @@ behind Hyprland.
   maintained fork `sandwichfarm/hyprexpo` is built with nixpkgs' `mkHyprlandPlugin` helper. The rev
   is the fork's own 0.56.2 pin from its `hyprpm.toml` (`5891014c…`), i.e. the plugin and the
   compositor are guaranteed to be the same commit family.
-- **Load + configure**: same load-then-push pattern as hyprglass — the `hyprland.start` hook runs
-  `@hyprexpo_setup@`, which `hyprctl plugin load`s `libhyprexpo.so` and pushes
-  `files/gui/hypr/hyprexpo.lua` through `hyprctl eval`. The helper is in PATH, so the overview can
-  be reconfigured in a live session with `hyprexpo-setup`.
-- **Bind**: `SUPER+grave` → `hyprctl eval 'hl.plugin.hyprexpo.expo("toggle")'`. It goes through
-  `hyprctl` because the plugin is loaded *after* `hyprland.lua` is parsed, so `hl.plugin.hyprexpo` is
-  nil at parse time. In Lua config mode `hyprctl dispatch hyprexpo:expo toggle` does **not** work —
-  `dispatch` is a deprecated shorthand that rewrites the whole argument list into
-  `hl.dispatch(hyprexpo:expo toggle)` and dies with "expected a dispatcher" (reproduced in a nested
-  0.56.2 instance); the runtime Lua namespace via `hyprctl eval` does.
-  because the plugin is loaded *after* `hyprland.lua` is parsed, so `hl.plugin.hyprexpo` is nil at
-  parse time. `hl.plugin.hyprexpo.expo(...)` is only usable from `hyprctl eval`-pushed code.
+- **Load + configure**: the same load-then-push pattern as hyprglass, in one command: `hypr-expo`
+  (`modules/user/nix-maid/hyprland/main.nix`). `hypr-expo push` `hyprctl plugin load`s
+  `libhyprexpo.so` and pushes `files/gui/hypr/hyprexpo.lua` through `hyprctl eval`; `hypr-expo toggle`
+  loads and configures the plugin *only while it is not registered*, then evals the toggle. Both are
+  in PATH.
+- **Session start / live reconfiguration**: the `hyprland.start` hook runs `@hyprexpo_setup@`, a thin
+  wrapper over `hypr-expo push` (load, then push the keys even when the plugin was already there), so an
+  edited `hyprexpo.lua` is applied with `hyprexpo-setup` in a running session.
+  That load sits at the very top of the `hyprland.start` handler, *before* its login-phase branch: the
+  compositor parses this config once and the branch returns early, so a greetd login used to leave
+  hyprexpo unloaded for the whole session (nothing re-parses the config after the password — hypr-start
+  restarts units), and the capsule click therefore eval'd a nil namespace. HyprWindowShade is hoisted
+  with it; hyprglass deliberately stays in the session branch, where its own units load it after the
+  login layer is gone.
+- **Why the toggle loads the plugin itself**: `hyprctl eval` of `hl.plugin.hyprexpo.*` answers `ok`
+  when the plugin is *not* loaded — the namespace is simply nil — so a session that lost it (the start
+  hook never got it in, e.g. the deployed `hyprland.lua` was parsed while its baked-in `hyprexpo-setup`
+  store path was already gone) had a workspace capsule whose click did nothing at all: the eval printed
+  `ok` and the overview never appeared. The on-demand load is what keeps the capsule and
+  `SUPER+grave` working there.
+- **Bind**: `SUPER+grave` → `hypr-expo toggle` in `files/gui/hypr/hyprland.lua`. The toggle goes through
+  `hyprctl` because the plugin is loaded *after* `hyprland.lua` is parsed, so `hl.plugin.hyprexpo` is nil
+  at parse time. In Lua config mode `hyprctl dispatch hyprexpo:expo toggle` does **not** work — `dispatch`
+  is a deprecated shorthand that rewrites the whole argument list into `hl.dispatch(hyprexpo:expo toggle)`
+  and dies with "expected a dispatcher" (reproduced in a nested 0.56.2 instance); the runtime Lua
+  namespace via `hyprctl eval` does.
 - **Gesture**: 3-finger swipe with `gesture_direction = "vertical"`; the horizontal 3-finger swipe
   stays with `hl.gesture()` (the scrolling tape), since Hyprland keys gestures per finger count +
   direction and one would shadow the other.
 - **Panel entry points**: the workspace capsule in the bar and the IPC both funnel into
-  `Services/Expo.qml` (`Quickshell.execDetached` of the same eval command as the bind):
+  `Services/Expo.qml` (`Quickshell.execDetached` of `hypr-expo toggle`, the same command as the bind):
   `Bar/Modules/WsIndicator.qml` toggles on click, and `quickshell ipc call globalIPC
   toggleOverview` exposes it to scripts and extra binds. The capsule sets
   `activateOnPress: true` (`Components/CapsuleButton.qml`): hovering the left module row
