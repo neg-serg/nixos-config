@@ -200,6 +200,59 @@ lib.mkMerge [
       80
       443
     ];
+    # Security: ports that only ever need the LAN are pinned to the trusted
+    # interfaces. Several modules in this flake and in the neg-pkgs / upstream
+    # inputs still declare them for *every* interface (ollama 11434, mpd 6600,
+    # pipewire-pulse 4713, vane 3005, adguard/sola-mpd 3000, plus Steam Remote
+    # Play and mosh ranges pulled in by the games modules), so those globals are
+    # cleared here and re-added on net1 (home uplink, 192.168.2.0/24) only.
+    # net0 / wlan0 — the interfaces used on untrusted networks — keep nothing
+    # open but sshd (key-only) and the net1-scoped lists below.
+    networking.firewall = {
+      allowedTCPPorts = lib.mkForce [
+        22 # sshd (key-only auth)
+      ];
+      allowedUDPPorts = lib.mkForce [ ];
+      allowedTCPPortRanges = lib.mkForce [ ];
+      allowedUDPPortRanges = lib.mkForce [ ];
+
+      interfaces.net1 = {
+        allowedTCPPorts = lib.mkAfter [
+          3000 # adguardhome / sola-mpd web UI
+          3005 # vane web UI
+          4713 # pipewire-pulse TCP (LAN audio)
+          5000 # local service (see features below)
+          6600 # mpd
+          11434 # ollama (no auth — LAN only)
+          27015 # Steam
+          27036 # Steam Remote Play
+          27037 # Steam Remote Play
+          27040 # Steam Remote Play
+        ];
+        allowedUDPPorts = lib.mkAfter [
+          5353 # mDNS
+          10400
+          10401
+          27015 # Steam
+          27036 # Steam Remote Play
+          28729 # ceno-client
+        ];
+        allowedUDPPortRanges = lib.mkAfter [
+          {
+            from = 6001;
+            to = 6011;
+          }
+          {
+            from = 27031;
+            to = 27035;
+          }
+          {
+            from = 60000;
+            to = 61000; # mosh
+          }
+        ];
+      };
+    };
 
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
     environment.systemPackages = lib.mkAfter (
