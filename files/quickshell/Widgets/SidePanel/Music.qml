@@ -57,57 +57,21 @@ Rectangle {
             id: cardBody
             anchors.fill: parent
 
-        // The card's frame is three layers: a 1 px rim whose gradient runs from
-        // light at the top edge to dark at the bottom one (glass catches the light
-        // on the edge facing the viewer and thickens where it turns away), the
-        // plate itself with a faint inner hairline, and a 1 px highlight along the
-        // top edge that fades out before the corners. The single flat hairline
-        // this replaces had one alpha on all four sides, which had to stay faint
-        // enough not to glare and therefore read as a sticker edge, not glass.
-        // What frosts the backdrop is still the compositor: Hyprland's own layer
-        // blur (layer rule `blur-qs-.*`, the mechanism the bar's surfaces use) —
-        // hyprglass deliberately does not glass this namespace, and the card
-        // declares no blur region of its own, otherwise the two passes stacked and
-        // the plate read as a flat smear (files/gui/hypr/hyprglass.lua,
-        // Widgets/SidePanel/MusicPopup.qml).
-        Rectangle {
-            id: cardRim
-            anchors.fill: parent
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: Color.withAlpha(Theme.textPrimary, Theme.sidePanelPopupGlassBorderTop) }
-                GradientStop { position: 1.0; color: Color.withAlpha(Theme.surface, Theme.sidePanelPopupGlassBorderBottom) }
-            }
-            radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
-        }
-
         Rectangle {
             id: card
-            anchors.fill: cardRim
-            anchors.margins: Theme.uiBorderWidth
+            anchors.fill: parent
+            // Glass plate with a THIN frame: the fill below is the plate, the
+            // hairline right under it is the frame (1 logical px) — crisp and
+            // light, not a glassy rim. What frosts the backdrop is the compositor:
+            // Hyprland's own layer blur (layer rule `blur-qs-.*`, the mechanism the
+            // bar's surfaces use) — hyprglass deliberately does not glass this
+            // namespace, and the card declares no blur region of its own, otherwise
+            // the two passes stacked and the plate read as a flat smear
+            // (files/gui/hypr/hyprglass.lua, Widgets/SidePanel/MusicPopup.qml).
             color: Color.withAlpha(Theme.surface, Theme.sidePanelPopupGlassOpacity)
             border.color: Color.withAlpha(Theme.textPrimary, Theme.sidePanelPopupGlassBorderOpacity)
             border.width: Theme.uiBorderWidth
-            // Qt's clip is rectangular, so the lip below is kept inside the
-            // straight part of the top edge instead (see the margins).
-            readonly property int plateRadius: Math.max(0, Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen)) - Theme.uiBorderWidth)
-            radius: plateRadius
-
-            // The lip: 1 px of light along the top edge, gone before the corners.
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.leftMargin: Theme.uiBorderWidth + parent.plateRadius
-                anchors.rightMargin: Theme.uiBorderWidth + parent.plateRadius
-                height: Math.max(1, Theme.uiBorderWidth)
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: Color.withAlpha(Theme.textPrimary, 0.0) }
-                    GradientStop { position: 0.3; color: Color.withAlpha(Theme.textPrimary, Theme.sidePanelPopupGlassLip) }
-                    GradientStop { position: 0.7; color: Color.withAlpha(Theme.textPrimary, Theme.sidePanelPopupGlassLip) }
-                    GradientStop { position: 1.0; color: Color.withAlpha(Theme.textPrimary, 0.0) }
-                }
-            }
+            radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
 
         Item {
             width: parent.width
