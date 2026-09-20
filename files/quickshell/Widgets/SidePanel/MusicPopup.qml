@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts 1.15
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import qs.Settings
 import "../../Helpers/Utils.js" as Utils
@@ -116,6 +117,39 @@ Item {
             } else {
                 toast.cancelAutoHide();
             }
+        }
+
+
+        // ── Backdrop damage when the wallpaper changes ────────────────────────
+        // Only a mapped surface can be refreshed by the compositor: it samples the
+        // live framebuffer, but re-draws the plate's pixels only when the surface
+        // is damaged. While the card just sits there nothing damages it, which is
+        // why the glass used to follow the wallpaper only after re-opening it (a
+        // fresh surface is a full damage). A 2% dip of the content opacity for one
+        // frame changes every pixel of the card, so the commit carries a full-area
+        // damage and the compositor re-samples the backdrop right away — no move,
+        // no blink, nothing re-created.
+        property real _damagePulse: 0
+        function forceBackdropDamage() {
+            if (!toast.visible) return;
+            toast._damagePulse = 0.02;
+            damageResetTimer.restart();
+        }
+        Timer {
+            id: damageResetTimer
+            interval: 40
+            repeat: false
+            onTriggered: toast._damagePulse = 0
+        }
+        // Same file the wallpaper accent follows; wl-state-sync rewrites it on
+        // every wallpaper change.
+        FileView {
+            id: wallpaperPathFile
+            path: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache"))
+                  + "/quickshell-wallpaper-path"
+            watchChanges: true
+            blockLoading: false
+            onFileChanged: toast.forceBackdropDamage()
         }
 
         // --- Sizing (scaled by per-screen factor)
@@ -264,7 +298,7 @@ Item {
             anchors.bottomMargin: toast._marginBottom
             width: toast.cardWidthPx
             height: toast.cardHeightPx
-            opacity: toast._contentOpacity
+            opacity: Math.max(0, toast._contentOpacity - toast._damagePulse)
 
             FocusScope {
                 anchors.fill: parent
