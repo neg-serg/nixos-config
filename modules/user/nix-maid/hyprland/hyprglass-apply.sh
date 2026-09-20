@@ -151,6 +151,25 @@ if [ "$check_only" = 1 ]; then
       fi
     done
   fi
+  # The layer keys have no home in the panel's JSON — the deployed base lua is
+  # their only source — and a compositor reload resets them to the plugin's
+  # defaults. Those defaults are the dangerous part: an empty namespace list means
+  # "glass every layer", so the shell's bar and media card would land in the glass
+  # pass and show the plugin's cached backdrop instead of Hyprland's live layer
+  # blur. The nine numeric keys above stay in sync through such a reload, so this
+  # check is the only thing that notices, and the push below repairs it.
+  base_value() {
+    [ -r "$base" ] || return 1
+    sed -n "s/.*\b$1 *= *\"\([^\"]*\)\".*/\1/p" "$base" | head -1
+  }
+
+  for layer_key in namespaces exclude_namespaces; do
+    want="$(base_value "$layer_key" || true)"
+    [ -n "${want:-}" ] || continue
+    got="$("$hyprctl_bin" getoption "plugin:hyprglass:layers:$layer_key" 2>/dev/null | sed -n 's/^str: *//p' | head -1)"
+    [ "$want" = "$got" ] || diffs+=("layers:$layer_key=$got(want $want)")
+  done
+
   if [ "${#diffs[@]}" -eq 0 ]; then
     [ "$as_json" = 1 ] && echo '{"loaded":true,"inSync":true,"differences":[]}' || echo "in sync"
     exit 0
