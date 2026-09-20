@@ -1256,17 +1256,18 @@
     "wl": {
       "flake": false,
       "locked": {
-        "lastModified": 1789838195,
-        "narHash": "sha256-/S1jGCHv24xc8ICm9PL+zJ81SUN/s3xrqr1sXX//TvM=",
-        "owner": "neg-serg",
-        "repo": "wl",
-        "rev": "d198a380416d09556db0adf25048b66165f6f959",
-        "type": "github"
+        "lastModified": 1789903371,
+        "narHash": "sha256-zp6Y2YZ0cfhuEEOdKUv1nydb6IvziXmVZy+r0qzr/w8=",
+        "ref": "fix/layer-backdrop-damage",
+        "rev": "4e61aea7816614c84e7dcbac9e98817a32b86247",
+        "revCount": 77,
+        "type": "git",
+        "url": "ssh://git@github.com/neg-serg/wl"
       },
       "original": {
-        "owner": "neg-serg",
-        "repo": "wl",
-        "type": "github"
+        "ref": "fix/layer-backdrop-damage",
+        "type": "git",
+        "url": "ssh://git@github.com/neg-serg/wl"
       }
     },
     "xdg-desktop-portal-hyprland": {
