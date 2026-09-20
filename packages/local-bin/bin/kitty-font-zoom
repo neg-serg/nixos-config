@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Zoom the font size of the focused kitty OS window: up | down | reset.
+#
+# kitty cannot map scroll events (scroll_event() in kitty/mouse.c bypasses
+# mouse_map completely), so the wheel bind lives in Hyprland and forwards here
+# over kitty's remote-control socket. The socket is /tmp/kitty-<pid>: kitty
+# appends -{kitty_pid} to a config-file `listen_on` unix path (expand_listen_on()
+# in kitty/main.py), and the Hyprland window pid IS the kitty process pid, so the
+# focused window can be addressed without knowing the instance id. Non-kitty
+# windows have no such socket and are silently ignored.
+# Docs: docs/howto/kitty-font-zoom.md
+set -euo pipefail
+
+case ${1:-} in
+    up) delta=+0.5 ;;
+    down) delta=-0.5 ;;
+    reset) delta=0 ;;
+    *)
+        printf 'Usage: %s up|down|reset\n' "${0##*/}" >&2
+        exit 2
+        ;;
+esac
+
+win=$(hyprctl activewindow -j) || exit 0
+pid=$(printf '%s' "$win" | jq -r '.pid // empty')
+[[ -n $pid ]] || exit 0
+sock=/tmp/kitty-$pid
+[[ -S $sock ]] || exit 0
+
+kitten @ --to "unix:$sock" set-font-size -- "$delta" >/dev/null 2>&1 || true
