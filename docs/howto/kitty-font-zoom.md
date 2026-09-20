@@ -68,6 +68,30 @@ window's kitty socket:
   by `expand_listen_on()` (`kitty/main.py`), and the pid Hyprland reports for the window *is* the
   kitty process pid.
 
+## Pause: back to the fixed font
+
+In a running kitty process the watcher cannot be unloaded (`watcher` is read at window creation and
+`load_config_file` does not detach it), so the watcher itself has an off switch: the `font_zoom`
+user variable. Paused means the plain kitty behaviour — the font size goes back to the configured
+value and stops following the window. Three equivalent triggers:
+
+- `SUPER+CTRL+Z` → `kitty-font-zoom toggle` (the same script as the wheel);
+
+- explicit: `kitty-font-zoom off` / `kitty-font-zoom on` (also:
+  `kitten @ set-user-vars font_zoom=off`);
+
+- from inside the window, with no WM involved — kitty parses `OSC 1337` user variables:
+
+  ```sh
+  printf '\033]1337;SetUserVar=font_zoom=%s\007' "$(printf off | base64)"
+  printf '\033]1337;SetUserVar=font_zoom=%s\007' "$(printf on | base64)"
+  ```
+
+`off` is `change_font_size current 0` plus "no more following"; `on` re-anchors to "current size +
+current font", so following resumes from wherever the window is now. The state is per **OS window**
+(the granularity of the font size itself) and lives in the kitty process, so restarting kitty clears
+it — as does removing the `watcher` line from `kitty.conf` for good.
+
 ## Verification
 
 Reproduced on Hyprland 0.56.2 (DP-2, scale 2), kitty 0.48.2. Cell width `px / columns` is the
