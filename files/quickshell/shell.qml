@@ -41,6 +41,14 @@ Scope {
     Loader {
         id: musicPopupLoader
         source: "Widgets/SidePanel/MusicPopup.qml"
+        // A re-show after a recreation must wait for the new item: the Loader does
+        // not hand it over on the same tick, and while it is null the toast stayed
+        // hidden instead of coming back (that was what "he just hides the window"
+        // turned out to be). onLoaded is the reliable place for it.
+        onLoaded: if (root._musicPopupReshowPending) {
+            root._musicPopupReshowPending = false;
+            Qt.callLater(function() { if (root.musicPopup) root.musicPopup.showAt(); });
+        }
     }
     // Public access for Bar.qml (QML ids don't leak into parent scope, so
     // expose the loaded popup item via an explicit property).
@@ -63,15 +71,12 @@ Scope {
         blockLoading: false
         onFileChanged: root.recreateMusicPopup()
     }
+    property bool _musicPopupReshowPending: false
     function recreateMusicPopup() {
         if (!musicPopupLoader) return;
-        const wasVisible = root.musicPopup ? root.musicPopup.visible === true : false;
+        root._musicPopupReshowPending = root.musicPopup ? root.musicPopup.visible === true : false;
         musicPopupLoader.active = false;
-        Qt.callLater(function() {
-            musicPopupLoader.active = true;
-            if (wasVisible && root.musicPopup)
-                Qt.callLater(function() { root.musicPopup.showAt(); });
-        });
+        Qt.callLater(function() { musicPopupLoader.active = true; });
     }
 
     // Glass panel: live tuning for the hyprglass settings. Loaded top-level for
