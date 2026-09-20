@@ -48,22 +48,69 @@ let
     hyprglass-apply >/dev/null 2>&1 || true
   '';
 
-  # HyprExpo follows the same load-then-push pattern as hyprglass: the .so is
-  # dlopen'd first, then the plugin's registered config keys are pushed with
-  # `hyprctl eval` (files/gui/hypr/hyprexpo.lua). The bind in hyprland.lua uses
-  # `hyprctl dispatch hyprexpo:expo toggle` instead of hl.plugin.hyprexpo.* —
-  # the plugin is not loaded while hyprland.lua is parsed, so the Lua namespace
-  # is nil at that point.
-  hyprexpoSetup = pkgs.writeShellScriptBin "hyprexpo-setup" ''
+  # HyprExpo (workspace overview). `hypr-expo` is the one entry point for the panel
+  # capsule click, the panel IPC and the SUPER+grave bind: evaluating a plugin
+  # namespace that is not registered answers "ok" and does nothing, so the toggle
+  # loads (and configures) the plugin itself whenever it is missing. That case is
+  # real — the plugin is otherwise loaded only by the session-start hook, and a
+  # session that parsed the deployed hyprland.lua while its baked-in
+  # hyprexpo-setup path was already gone (an older generation, a GC run) comes up
+  # with no hyprexpo at all, which made the capsule click look wired while the
+  # overview never appeared.
+  #
+  # hyprexpo-setup keeps its load-then-push semantics (the .so is dlopen'd first,
+  # then files/gui/hypr/hyprexpo.lua is pushed through `hyprctl eval`; re-runnable
+  # in a live session to re-apply the file) and is now a thin wrapper over the same
+  # script. Both go through hyprctl eval rather than a dispatch for the same
+  # reason: the plugin is dlopen'd *after* hyprland.lua is parsed, so
+  # hl.plugin.hyprexpo is nil while that file is read, and in Lua config mode
+  # `hyprctl dispatch hyprexpo:expo toggle` only mangles the name into
+  # `hl.dispatch(hyprexpo:expo toggle)` and dies with "expected a dispatcher"
+  # (reproduced in a nested 0.56.2 instance; see docs/howto/hyprland-plugin.md).
+  hyprExpoLua = pkgs.writeText "hyprexpo.lua" (
+    builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprexpo.lua")
+  );
+  hyprExpo = pkgs.writeShellScriptBin "hypr-expo" ''
+    set -u
     hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+    plugin=${pkgs.hyprlandPlugins.hyprexpo}/lib/libhyprexpo.so
 
-    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
-    "$hyprctl_bin" plugin load ${pkgs.hyprlandPlugins.hyprexpo}/lib/libhyprexpo.so || true
+    plugin_loaded() {
+      "$hyprctl_bin" plugin list 2> /dev/null | grep -q "^Plugin hyprexpo "
+    }
 
     # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
     # comment) as a flag, hence the leading newline.
-    "$hyprctl_bin" eval "
-    $(cat ${pkgs.writeText "hyprexpo.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprexpo.lua"))})" || true
+    push_config() {
+      "$hyprctl_bin" eval "
+    $(cat ${hyprExpoLua})" || true
+    }
+
+    case "''${1:-toggle}" in
+      toggle)
+        # A missing plugin is loaded and configured here instead of being reported
+        # as a successful toggle: without the load the eval below is a no-op.
+        if ! plugin_loaded; then
+          "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || exit 1
+          push_config
+        fi
+        "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("toggle")'
+        ;;
+      push)
+        # Session start and live re-configuration: load (the load of an already
+        # loaded plugin fails, that is fine), then push the keys even when the
+        # plugin was already there, so an edited hyprexpo.lua takes effect.
+        "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || true
+        push_config
+        ;;
+      *)
+        echo "usage: hypr-expo [toggle|push]" >&2
+        exit 2
+        ;;
+    esac
+  '';
+  hyprexpoSetup = pkgs.writeShellScriptBin "hyprexpo-setup" ''
+    exec ${hyprExpo}/bin/hypr-expo push
   '';
 
   # HyprWindowShade: same load-then-push pattern as hyprglass/hyprexpo. Its actions
@@ -105,6 +152,7 @@ in
           hyprglassSetup
           hyprexpoSetup
           hyprwindowshadeSetup
+          hyprExpo # `hypr-expo toggle|push`: loads the overview plugin on demand
         ];
 
         systemd.user.targets = services.systemdTargets;

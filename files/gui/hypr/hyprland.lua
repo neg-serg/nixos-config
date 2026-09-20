@@ -272,14 +272,18 @@ hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty-glass --class vpn -e
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch mixer 'kitty-glass --class mixer -e ncpamixer' special"))
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 -- --- Overview (hyprexpo) ───────────────────────────────────────────────
--- The dispatcher goes through hyprctl eval on purpose: hyprexpo is dlopen'd by
--- the hyprexpo-setup helper at session start, i.e. after this file is parsed, so
--- hl.plugin.hyprexpo is still nil *here* (same constraint as hyprglass). In Lua
--- config mode `hyprctl dispatch X` is only a deprecated shorthand and mangles
--- plugin dispatchers ("expected a dispatcher"), so the runtime Lua namespace is
--- used instead — verified in a nested 0.56.2 instance.
+-- `hypr-expo` (modules/user/nix-maid/hyprland/main.nix) is the same command the
+-- panel's workspace capsule click runs. It evals the plugin's runtime Lua
+-- namespace on purpose: hyprexpo is dlopen'd by the hyprexpo-setup helper at
+-- session start, i.e. after this file is parsed, so hl.plugin.hyprexpo is still
+-- nil *here* (same constraint as hyprglass). In Lua config mode `hyprctl dispatch
+-- X` is only a deprecated shorthand and mangles plugin dispatchers ("expected a
+-- dispatcher"), so the runtime Lua namespace is used instead — verified in a
+-- nested 0.56.2 instance. The helper also loads the plugin when the session lost
+-- it (a config parsed against an older generation), which a bare eval silently does
+-- not: the namespace is nil and hyprctl still prints "ok".
 
-hl.bind(M4 .. "+grave", hl.dsp.exec_cmd([[hyprctl eval 'hl.plugin.hyprexpo.expo("toggle")']]))
+hl.bind(M4 .. "+grave", hl.dsp.exec_cmd("hypr-expo toggle"))
 
 -- --- App launchers (ex-apps.conf; formerly ~/.config/hypr/bindings/apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
@@ -865,6 +869,22 @@ local loginPhase = (function()
 end)()
 
 hl.on("hyprland.start", function()
+  -- Plugin loads come first, *before* the phase split below: the compositor parses
+  -- this file once, and the login branch returns before reaching anything that sits
+  -- in the session branch — a greetd login (the way this box normally starts) then
+  -- left hyprexpo unloaded for the whole session, because nothing re-parses the
+  -- config after the password (hypr-start restarts units, it does not reload).
+  -- The workspace capsule click then evaluated hl.plugin.hyprexpo.* on a nil
+  -- namespace: hyprctl answers "ok" and no overview ever appears. Both plugins are
+  -- passive (nothing is painted until they are asked to), so loading them while the
+  -- login layer is up is harmless. hyprglass deliberately stays in the session
+  -- branch: it has systemd units of its own (hyprglass-apply, hyprglass-watch) that
+  -- load and configure it after the login layer is gone, and the login screen must
+  -- not be glazed. Re-runnable in a live session: `hyprexpo-setup` /
+  -- `hyprwindowshade-setup` (also in PATH).
+  hl.exec_cmd("@hyprexpo_setup@")
+  hl.exec_cmd("@hyprwindowshade_setup@")
+
   if loginPhase then
     -- Login phase: start the login layer instead of the desktop. Nothing of the
     -- session (target, shell, autostart apps) is started yet; the layer writes
@@ -922,13 +942,9 @@ hl.on("hyprland.start", function()
   -- Liquid glass: loads the plugin and pushes files/gui/hypr/hyprglass.lua
   hl.exec_cmd("@hyprglass_setup@")
 
-  -- HyprExpo: same load-then-push pattern (plugin .so + files/gui/hypr/hyprexpo.lua).
-  -- Re-runnable in a live session: `hyprexpo-setup` (also in PATH).
-  hl.exec_cmd("@hyprexpo_setup@")
+  -- HyprExpo and HyprWindowShade are loaded above, before the login branch — they
+  -- must come up in the login phase too (see the comment at the top of this handler).
 
-  -- HyprWindowShade: per-window/per-layer fragment shaders. Same load-then-push
-  -- pattern; re-runnable in a live session as `hyprwindowshade-setup`.
-  hl.exec_cmd("@hyprwindowshade_setup@")
   hl.exec_cmd("systemctl --user restart quickshell.service")
   hl.exec_cmd("systemctl --user restart hyprscratch.service")
   hl.exec_cmd("systemctl --user start wl-daemon.service")
