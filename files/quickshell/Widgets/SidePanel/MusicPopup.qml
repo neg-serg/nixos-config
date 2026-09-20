@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Io
 import qs.Settings
 import "../../Helpers/Utils.js" as Utils
 
@@ -118,6 +119,39 @@ Item {
             }
         }
 
+
+        // ── Backdrop refresh on wallpaper change ──────────────────────────────
+        // The compositor rebuilds the blurred backdrop of this layer only when the
+        // layer's region is redrawn. Swapping the wallpaper from the outside (the
+        // wl daemon presents through Vulkan WSI, without damage) does not reliably
+        // wake that region: the glass then keeps the previous wallpaper until
+        // something else repaints underneath it — moving a window over the card is
+        // what used to fix it by hand. A half-logical-pixel nudge (exactly one
+        // device pixel at the usual 2x scale) for a single frame forces the
+        // repaint without a visible move.
+        property real _repaintNudgePx: 0
+        function forceBackdropRefresh() {
+            if (!toast.visible) return;
+            toast._repaintNudgePx = 0.5;
+            nudgeResetTimer.restart();
+        }
+        Timer {
+            id: nudgeResetTimer
+            interval: 40
+            repeat: false
+            onTriggered: toast._repaintNudgePx = 0
+        }
+        // Same file the wallpaper accent follows; wl-state-sync rewrites it on
+        // every wallpaper change.
+        FileView {
+            id: wallpaperPathFile
+            path: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache"))
+                  + "/quickshell-wallpaper-path"
+            watchChanges: true
+            blockLoading: false
+            onFileChanged: toast.forceBackdropRefresh()
+        }
+
         // --- Sizing (scaled by per-screen factor)
         property real cardWidthPx: Math.round(Settings.settings.musicPopupWidth * Theme.scale(Screen))
         // Fixed content height from settings. Do NOT derive it from the Music
@@ -228,6 +262,7 @@ Item {
             if (!toast.visible) {
                 toast.visible = true;
                 toast._contentOpacity = 1; // no fade: card is solid from frame one
+                Qt.callLater(function() { toast.forceBackdropRefresh(); });
             } else {
                 toast._contentOpacity = 1; // re-show is a no-op visually
             }
@@ -260,7 +295,7 @@ Item {
             id: cardBox
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.rightMargin: toast._marginRight
+            anchors.rightMargin: toast._marginRight + toast._repaintNudgePx
             anchors.bottomMargin: toast._marginBottom
             width: toast.cardWidthPx
             height: toast.cardHeightPx
