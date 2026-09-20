@@ -41,43 +41,10 @@ Scope {
     Loader {
         id: musicPopupLoader
         source: "Widgets/SidePanel/MusicPopup.qml"
-        // A re-show after a recreation must wait for the new item: the Loader does
-        // not hand it over on the same tick, and while it is null the toast stayed
-        // hidden instead of coming back (that was what "he just hides the window"
-        // turned out to be). onLoaded is the reliable place for it.
-        onLoaded: if (root._musicPopupReshowPending) {
-            root._musicPopupReshowPending = false;
-            Qt.callLater(function() { if (root.musicPopup) root.musicPopup.showAt(); });
-        }
     }
     // Public access for Bar.qml (QML ids don't leak into parent scope, so
     // expose the loaded popup item via an explicit property).
     readonly property var musicPopup: musicPopupLoader ? musicPopupLoader.item : null
-
-    // The compositor keeps the blurred backdrop it built for a layer surface
-    // until that surface goes away — a client-side repaint does not clear it.
-    // Measured on the live shell: after a wallpaper change the toast's glass kept
-    // the previous wallpaper (identical pixels over a magenta and a green
-    // wallpaper) while the rest of the screen followed, and a freshly created
-    // window showed the current one. Re-creating the window on every wallpaper
-    // change therefore gives the toast a fresh surface, which is the only thing
-    // that unfreezes its glass. The file is rewritten by wl-state-sync on each
-    // change, the same signal the wallpaper accent follows.
-    FileView {
-        id: wallpaperPathWatch
-        path: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache"))
-              + "/quickshell-wallpaper-path"
-        watchChanges: true
-        blockLoading: false
-        onFileChanged: root.recreateMusicPopup()
-    }
-    property bool _musicPopupReshowPending: false
-    function recreateMusicPopup() {
-        if (!musicPopupLoader) return;
-        root._musicPopupReshowPending = root.musicPopup ? root.musicPopup.visible === true : false;
-        musicPopupLoader.active = false;
-        Qt.callLater(function() { musicPopupLoader.active = true; });
-    }
 
     // Glass panel: live tuning for the hyprglass settings. Loaded top-level for
     // the same reason as the media popup — a PanelWindow nested in the bar does
