@@ -151,6 +151,7 @@ ConnectivityCapsule {
         spacing: -2
 
         Text {
+            renderType: Text.NativeRendering
             text: root._rxRichText
             textFormat: Text.RichText
             font.family: Theme.fontFamily
@@ -160,6 +161,7 @@ ConnectivityCapsule {
             color: Theme.textPrimary
         }
         Text {
+            renderType: Text.NativeRendering
             text: root._txRichText
             textFormat: Text.RichText
             font.family: Theme.fontFamily
