@@ -75,6 +75,17 @@ behind Hyprland.
 
 - **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — v0.8.1, the release pinned to Hyprland
   0.56.2 upstream (`hyprpm.toml` pin); the 0.55 `postPatch` is gone.
+  - The build carries one local patch, `hyprglass-layer-backdrop-live.patch`. v0.8.1 parses the
+    layer namespace filters only at load and on a config reload, so the keys this session pushes
+    *after* the load (they exist only once the plugin registered them) left the whitelist empty —
+    and an empty whitelist means "glass every layer", which put the bar and the media card into the
+    glass pass with the plugin's *cached* backdrop instead of Hyprland's live layer blur (frozen
+    frost until the surface was re-mapped, with its slide animation forcing the re-sample). The
+    patch re-parses the filters when the raw values change and invalidates a layer's cached backdrop
+    when a commit lands in its sample region — a wallpaper switch is exactly such a commit — while
+    the re-sample itself stays rate limited by `layers.live_resample_fps`. `hyprglass-apply --check`
+    now covers the layer keys too: a compositor reload resets them to the same dangerous defaults
+    while the nine panel keys stay in sync, so nothing else noticed.
 - **Load + configure**: the `hyprland.start` hook in `files/gui/hypr/hyprland.lua` runs the
   generated `hyprglass-setup` helper, which does `hyprctl plugin load` and then pushes
   `files/gui/hypr/hyprglass.lua` through `hyprctl eval`. The helper is in PATH, so the glass can be

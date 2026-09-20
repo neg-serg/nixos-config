@@ -1,0 +1,92 @@
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -110,7 +110,9 @@
+ using damageSurfaceFn = void (*)(Render::IHyprRenderer*, SP<CWLSurfaceResource>, double, double, double);
+ 
+ // Client commits are the only signal that content below a glassed layer changed
+-// (e.g. a playing video) — the scene-generation cache only sees window events.
++// (a playing video, a new wallpaper) — the scene-generation cache only sees
++// window events, so every commit that touches a layer's sample region has to
++// invalidate that layer's cached backdrop.
+ static void hkDamageSurface(Render::IHyprRenderer* thisptr, SP<CWLSurfaceResource> surface, double x, double y, double scale) {
+     ((damageSurfaceFn)g_pGlobalState->damageSurfaceHook->m_original)(thisptr, surface, x, y, scale);
+ 
+@@ -122,11 +124,13 @@
+         g_pGlobalState->layerSurfaces.empty())
+         return;
+ 
+-    // cheap skip when nothing can want a live resample
+-    const bool globalLive = config.layersLiveResample && **config.layersLiveResample;
+-    if (!globalLive && std::ranges::none_of(g_pGlobalState->layerNamespaceLiveResample, [](const auto& kv) { return kv.second; }))
+-        return;
+-
++    // A commit that overlaps a layer's sample region makes the cached backdrop
++    // stale — a wallpaper switch is exactly such a commit (the background layer
++    // commits its damage) — so the cache is invalidated here even when live
++    // resampling is off. The re-sample itself stays rate limited (see
++    // markBackgroundDirty / layers.live_resample_fps); skipping this when no layer
++    // asks for live resampling froze the frost on the backdrop of the moment the
++    // sample was taken.
+     const auto wlSurface = Desktop::View::CWLSurface::fromResource(surface);
+     if (!wlSurface)
+         return;
+@@ -145,9 +149,6 @@
+         if (!layer || !layer->m_mapped)
+             continue;
+ 
+-        if (!state->liveResampleEnabled())
+-            continue;
+-
+         // a layer's own content is not its background
+         if (surfaceInTree(surface, layer->wlSurface() ? layer->wlSurface()->resource() : nullptr))
+             continue;
+@@ -251,6 +252,40 @@
+     return include.contains(ns);
+ }
+ 
++// The layer namespace filters are parsed from the config values at load and on
++// config.reloaded — but a session that pushes its settings into a running plugin
++// (the config keys only exist once the plugin registered them) never triggers
++// that event. The filters then stay at their empty default, which
++// shouldGlassLayer() reads as "glass every layer". Compare the raw strings on the
++// layer path and re-parse as soon as one of them changed.
++static void refreshLayerNamespaceFilters() {
++    static std::string seenNamespaces, seenExclude, seenPresets, seenThresholds, seenLive, seenModes;
++
++    auto raw = [](StringConfigPtr ptr) { return std::string(readStringConfig(ptr)); };
++
++    const auto& config = g_pGlobalState->config;
++
++    const std::string namespaces = raw(config.layersNamespaces);
++    const std::string exclude    = raw(config.layersExcludeNamespaces);
++    const std::string presets    = raw(config.layersNamespacePresets);
++    const std::string thresholds = raw(config.layersNamespaceMaskThresholds);
++    const std::string live       = raw(config.layersNamespaceLiveResample);
++    const std::string modes      = raw(config.layersNamespaceMaskModes);
++
++    if (namespaces == seenNamespaces && exclude == seenExclude && presets == seenPresets && thresholds == seenThresholds && live == seenLive &&
++        modes == seenModes)
++        return;
++
++    seenNamespaces = namespaces;
++    seenExclude    = exclude;
++    seenPresets    = presets;
++    seenThresholds = thresholds;
++    seenLive       = live;
++    seenModes      = modes;
++
++    parseLayerNamespaceFilters();
++}
++
+ // Makes shouldBlur(PHLLS) return false for one renderLayer() call by mutating the
+ // surface state it reads; restored before any deferred pass element runs.
+ struct SLayerBlurSuppression {
+@@ -303,6 +338,8 @@
+         return !pair.second->getLayerSurface();
+     });
+ 
++    refreshLayerNamespaceFilters();
++
+     // Only inject glass on the main surface pass, not popups
+     if (!popups && config.layersEnabled && **config.layersEnabled && shouldGlassLayer(layerSurface)) {
+         // Lazy-create per-layer state, replacing stale entries whose weak ref died
