@@ -1,0 +1,23 @@
+diff -ruN a/Overview.cpp b/Overview.cpp
+--- a/Overview.cpp	2026-09-21 22:24:29.372649607 +0300
++++ b/Overview.cpp	2026-09-21 22:24:38.251581940 +0300
+@@ -1377,6 +1377,19 @@
+                 return;
+         }
+ 
++        // Packaged patch (modules/user/nix-maid/hyprland/hyprexpo-click-swallow.patch).
++        // The click that *opened* the overview leaves an orphan release behind: the
++        // panel capsule (and the panel IPC, and a touch) toggles the overview on the
++        // press, so the release arrives after the session was created — past the 5%
++        // entry guard above — with the pointer still over the bar. Read as a choice it
++        // selected the tile under the panel, which closed the overview in the same
++        // gesture ("it opens and returns back on its own"). A release inside this
++        // window belongs to a press from before the overview existed, so it cannot be
++        // a selection; a deliberate click on a tile always arrives later.
++        static constexpr auto OPEN_SWALLOW = std::chrono::milliseconds(400);
++        if (TARGET && std::chrono::steady_clock::now() - TARGET->createdAt < OPEN_SWALLOW)
++            return;
++
+         if (TARGET && TARGET->selectHoveredWorkspace())
+             closeOverviewsSelecting(TARGET);
+     };

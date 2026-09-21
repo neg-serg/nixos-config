@@ -102,7 +102,22 @@
             # workspace's columns, and everything else to `COverview`, the grid. The patch
             # adds `plugin:hyprexpo:grid_overview` (default 1) which forces the grid for
             # scrolling workspaces too; the layout itself stays untouched.
-            patches = [ ./hyprexpo-grid-overview.patch ];
+            #
+            # The second patch (hyprexpo-click-swallow.patch) drops the orphan mouse
+            # release of the click that *opened* the overview: the panel capsule
+            # toggles on the press, and the release (pointer still over the bar)
+            # arrived as a workspace choice — the overview opened and closed within
+            # one gesture. Releases in the first 400 ms of a session are ignored;
+            # the plugin's own 5% entry guard is too narrow to catch this.
+            #
+            # Order matters only in that both are plain unified diffs against the
+            # same upstream files (grid_overview touches IOverviewSession.cpp,
+            # HyprexpoConfig.hpp and PluginConfig.cpp; click-swallow touches
+            # Overview.cpp).
+            patches = [
+              ./hyprexpo-grid-overview.patch
+              ./hyprexpo-click-swallow.patch
+            ];
 
             src = final.fetchFromGitHub {
               owner = "sandwichfarm";
