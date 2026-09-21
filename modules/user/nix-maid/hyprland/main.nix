@@ -94,6 +94,20 @@ let
 
     case "''${1:-toggle}" in
       toggle)
+        # One physical click can arrive as two toggles (the capsule activates on
+        # press while its row also emits a tap): the overview then starts its entry
+        # animation and closes again in the same instant — "it starts and stops
+        # immediately". Swallow a second toggle that lands within 250 ms of the
+        # previous one; that covers the click, the panel IPC entry point and the
+        # compositor bind alike, since all three go through this script.
+        stamp="''${XDG_RUNTIME_DIR:-/tmp}/hypr-expo-last-toggle"
+        now_ms=$(date +%s%3N)
+        if [ -r "$stamp" ]; then
+          prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
+          [ "$((now_ms - prev_ms))" -lt 250 ] && exit 0
+        fi
+        printf '%s' "$now_ms" > "$stamp"
+
         # A missing plugin is loaded and configured here instead of being reported
         # as a successful toggle: without the load the eval below is a no-op.
         if ! plugin_loaded; then
