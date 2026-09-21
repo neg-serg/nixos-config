@@ -102,9 +102,21 @@ let
         # compositor bind alike, since all three go through this script.
         stamp="''${XDG_RUNTIME_DIR:-/tmp}/hypr-expo-last-toggle"
         now_ms=$(date +%s%3N)
+        # Who called us and when: the panel capsule, the IPC handler and the
+        # compositor bind all end up here, and the reported symptom ("it opens and
+        # comes back on its own") is exactly what a second toggle a few hundred
+        # milliseconds later looks like. Without this line the log cannot tell the
+        # two clicks of one gesture from two deliberate ones.
+        caller=$(tr '\0' ' ' < "/proc/$PPID/cmdline" 2> /dev/null || echo '?')
+        printf '%s toggle caller=%s\n' "$(date +%T.%3N)" "''${caller:-?}" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
         if [ -r "$stamp" ]; then
           prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
-          [ "$((now_ms - prev_ms))" -lt 250 ] && exit 0
+          # 600 ms, not 250: a human press-release pair on the capsule can be that
+          # long, and the release path toggles a second time.
+          if [ "$((now_ms - prev_ms))" -lt 600 ]; then
+            printf '%s toggle swallowed (%s ms after the previous one)\n' "$(date +%T.%3N)" "$((now_ms - prev_ms))" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
+            exit 0
+          fi
         fi
         printf '%s' "$now_ms" > "$stamp"
 
