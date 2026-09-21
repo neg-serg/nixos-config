@@ -30,13 +30,13 @@ hl.config({
       -- dynamic_grid sizes the grid from the workspaces that exist instead of
       -- counting columns, so the layout follows the desktop rather than a fixed 3x3.
       -- Packaged option (modules/user/nix-maid/hyprland/hyprexpo-grid-overview.patch):
-      -- 1 = draw the grid even for workspaces with the native scrolling layout.
-      -- Off for now: with the config read fixed the compositor no longer crashes
-      -- (nested repro, see the patch header), but the grid does not draw on a
-      -- scrolling workspace at all — measured 0% of the frame changed against 33%
-      -- for upstream's scrolling overview in the same setup. Until COverview is
-      -- taught that case, 0 keeps the overview working.
-      grid_overview = 0,
+      -- 1 = draw the grid even for workspaces with the native scrolling layout,
+      -- which upstream would open as its scrolling overview (a strip of columns).
+      -- On: with the config read fixed (see the patch header) the grid opens on a
+      -- scrolling workspace — verified in the live session (submap default ->
+      -- hyprexpo, 69% of the frame redrawn, no crash), and the nested run that
+      -- suggested otherwise had too few workspaces for a grid to have any tiles.
+      grid_overview = 1,
 
       dynamic_grid = 1,
       fill_gaps = 0,
