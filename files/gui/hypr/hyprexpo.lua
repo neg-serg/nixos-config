@@ -39,6 +39,13 @@ hl.config({
       grid_overview = 1,
 
       dynamic_grid = 1,
+      -- Empty workspaces are drawn as tiles and can be selected like any other
+      -- (upstream skips them): that is what makes the grid a place to *put* windows
+      -- rather than just a picture of the ones that exist.
+      skip_empty = 0,
+      -- Token labels on the tiles — the a s d f g / q w e r t / z x c v b keys in
+      -- the submap jump straight to a tile by its label.
+      selection_label_enable = 1,
       fill_gaps = 0,
       mru_sort = 0,
       show_workspace_names = 1,
@@ -55,12 +62,12 @@ hl.config({
       -- Keys the overview itself handles; the rest of its keybinds (arrows,
       -- return, escape, tile selection, the left button) live in the `hyprexpo`
       -- submap in hyprland.lua — the plugin enters it while the overview is open.
-      -- The fork handles the mouse itself (drag-drop window movement): a press in
-      -- the overview picks the tile under the cursor, so the very click that opens
-      -- the overview also jumped to whichever workspace sat under the pointer ("it
-      -- switches me to dev again"). Off: the overview is driven by the keyboard
-      -- (arrows/return/escape and the submap), clicks no longer move you anywhere.
-      drag_drop_enable = 0,
+      -- The fork handles the mouse itself: a press picks the tile under the cursor,
+      -- and that same press is what drags a window from one workspace tile to
+      -- another. On, by choice — the price is that a click on the panel capsule can
+      -- also pick the tile sitting under the bar and move you there, so the tilde
+      -- (SUPER+grave) stays the clean way into the overview. 0 = keyboard-only.
+      drag_drop_enable = 1,
       cancel_key = "escape",
       show_cursor = 1,
       keynav_enable = 1,
