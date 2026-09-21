@@ -144,6 +144,7 @@ let
         # bar — reported as "it switches me to dev again".
         cursor_y="$("$hyprctl_bin" cursorpos 2> /dev/null | cut -d, -f2 | tr -dc '0-9')"
         monitor_h="$("$hyprctl_bin" -j monitors 2> /dev/null | tr ',' '\n' | grep -m1 '"height"' | tr -dc '0-9')"
+        printf '%s select cursor_y=%s monitor_h=%s\n' "$(date +%T)" "''${cursor_y:-?}" "''${monitor_h:-?}" >> /tmp/hypr-expo-select.log 2> /dev/null || true
         if [ -n "''${cursor_y:-}" ] && [ -n "''${monitor_h:-}" ] && [ "$cursor_y" -ge "$((monitor_h - 40))" ]; then
           # Bar zone: never pick a tile here. The click belongs to the shell (the
           # workspace capsule toggles the overview); the plugin stays out of it.
