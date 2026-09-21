@@ -114,6 +114,13 @@ hl.config({
       -- also pick the tile sitting under the bar and move you there, so the tilde
       -- (SUPER+grave) stays the clean way into the overview. 0 = keyboard-only.
       drag_drop_enable = 1,
+      -- Packaged option (hyprexpo-click-swallow.patch): 1 = every mouse button the
+      -- overview sees is logged to the Hyprland log with the decision it made
+      -- (orphan release ignored / selection / nothing hovered). That is how the
+      -- "capsule click opens the overview and it comes right back" report was
+      -- traced: the click that opens the overview left an orphan release behind,
+      -- which the plugin read as "the user picked the tile under the panel".
+      -- click_debug = 1,
       cancel_key = "escape",
       show_cursor = 1,
       keynav_enable = 1,
