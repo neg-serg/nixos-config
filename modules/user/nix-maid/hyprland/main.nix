@@ -142,10 +142,58 @@ let
         # pointer is aiming at. Without this split the click both closed the
         # overview (through the capsule) and jumped to the tile sitting under the
         # bar — reported as "it switches me to dev again".
-        cursor_y="$("$hyprctl_bin" cursorpos 2> /dev/null | cut -d, -f2 | tr -dc '0-9')"
-        monitor_h="$("$hyprctl_bin" -j monitors 2> /dev/null | tr ',' '\n' | grep -m1 '"height"' | tr -dc '0-9')"
-        printf '%s select cursor_y=%s monitor_h=%s\n' "$(date +%T)" "''${cursor_y:-?}" "''${monitor_h:-?}" >> /tmp/hypr-expo-select.log 2> /dev/null || true
-        if [ -n "''${cursor_y:-}" ] && [ -n "''${monitor_h:-}" ] && [ "$cursor_y" -ge "$((monitor_h - 40))" ]; then
+        cursor_xy="$("$hyprctl_bin" cursorpos 2> /dev/null | tr -d ' ')"
+        cursor_x="''${cursor_xy%%,*}"
+        cursor_y="''${cursor_xy##*,}"
+        # Panel band, in the compositor's own logical coordinates. The old test
+        # compared cursorpos (LOGICAL: 1080 tall here) against hyprctl monitors
+        # .height (PHYSICAL: 2160) and therefore never fired — the capsule click
+        # kept selecting the tile under the bar. Take the shell's layer boxes
+        # instead: they are logical and correct for a top or a bottom bar.
+        panel_boxes="$("$hyprctl_bin" -j layers 2> /dev/null | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+for monitor in (data.values() if isinstance(data, dict) else []):
+    for level in (monitor.get("levels") or {}).values():
+        for layer in level:
+            ns = layer.get("namespace") or ""
+            if ns.startswith("qs-") or ns.startswith("quickshell"):
+                print(layer["x"], layer["y"], layer["x"] + layer["w"], layer["y"] + layer["h"])
+' 2> /dev/null || true)"
+        printf '%s select cursor=%s,%s panels=[%s]\n' "$(date +%T)" "''${cursor_x:-?}" "''${cursor_y:-?}" "$(printf '%s' "$panel_boxes" | tr '\n' ';')" >> /tmp/hypr-expo-select.log 2> /dev/null || true
+        in_panel=0
+        if [ -n "''${cursor_x:-}" ] && [ -n "''${cursor_y:-}" ]; then
+          while read -r x0 y0 x1 y1; do
+            [ -n "''${x0:-}" ] || continue
+            if [ "$cursor_x" -ge "$x0" ] && [ "$cursor_x" -le "$x1" ] && [ "$cursor_y" -ge "$y0" ] && [ "$cursor_y" -le "$y1" ]; then
+              in_panel=1
+              break
+            fi
+          done <<< "$panel_boxes"
+        fi
+        # Safety net for the case where the layer query came back empty: the bar is
+        # 25 logical pixels tall on a 1080-tall screen, so anything inside the last
+        # 40 logical pixels belongs to the shell. Derive that from physical height
+        # and scale when the boxes are missing.
+        if [ "$in_panel" -eq 0 ] && [ -z "$panel_boxes" ] && [ -n "''${cursor_y:-}" ]; then
+          monitor_logical_h="$("$hyprctl_bin" -j monitors 2> /dev/null | python3 -c '
+import json, sys
+try:
+    monitors = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+if monitors:
+    scale = monitors[0].get("scale") or 1
+    print(int(monitors[0]["height"] / scale))
+' 2> /dev/null || true)"
+          if [ -n "$monitor_logical_h" ] && [ "$cursor_y" -ge "$((monitor_logical_h - 40))" ]; then
+            in_panel=1
+          fi
+        fi
+        if [ "$in_panel" -eq 1 ]; then
           # Bar zone: never pick a tile here. The click belongs to the shell (the
           # workspace capsule toggles the overview); the plugin stays out of it.
           exit 0
