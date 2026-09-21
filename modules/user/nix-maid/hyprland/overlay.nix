@@ -95,13 +95,21 @@
             pluginName = "hyprexpo";
             version = "0-unstable-2026-09-18";
 
+            # The overview must be the workspace *grid* here, not upstream's scrolling
+            # overview: upstream picks by layout — `createOverviewSession()` sends every
+            # workspace whose layout is Hyprland's native `scrolling` (our workspace rules
+            # set it for most workspaces) to `CScrollingOverview`, a strip of that
+            # workspace's columns, and everything else to `COverview`, the grid. The patch
+            # adds `plugin:hyprexpo:grid_overview` (default 1) which forces the grid for
+            # scrolling workspaces too; the layout itself stays untouched.
+            patches = [ ./hyprexpo-grid-overview.patch ];
+
             src = final.fetchFromGitHub {
               owner = "sandwichfarm";
               repo = "hyprexpo";
               rev = "5891014c611e1bd56d0121143f0221d46b5c0967";
               hash = "sha256-86gJ8YixG+FeEcnkGHc0O3eCemoDLe9/cOa21VZKdQM=";
             };
-
             dontUseCmakeConfigure = true;
             # The Makefile links lua through pkg-config (lua5.4, falls back to lua).
             # pkg-config finds it only if the dev output is on PKG_CONFIG_PATH.
