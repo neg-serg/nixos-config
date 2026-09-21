@@ -1,0 +1,493 @@
+/* ==UserStyle==
+@name         GitHub - neg
+@namespace    neg/github
+@version      1.0.0
+@description  GitHub recoloured to the neg.nvim palette: pure-dark #000 canvas, Iosevka, and the neg syntax roles (ops1/ops2/ops3, lit1-3, lstr, iden, func, dlim, comm).
+@author       neg
+@homepageURL  https://github.com/neg-serg/neg.nvim
+@license      MIT
+==/UserStyle== */
+
+/* Palette source: https://github.com/neg-serg/neg.nvim (lua/neg/palette.lua).
+ * This style is written for the dark GitHub theme and forces it, because the
+ * palette is a "pure dark" one: canvas #000000, fg #6c7e96.
+ *
+ * neg.nvim roles -> GitHub roles
+ *   norm   #6c7e96  default fg                  -> --fgColor-default
+ *   dbng   #506a7d  dimmed/preproc dark         -> --fgColor-muted
+ *   comm   #363f4b  comments (darken(norm,50%)) -> --fgColor-subtle + syntax comment
+ *   whit   #d1e5ff  "lit" text                  -> --fgColor-onEmphasis
+ *   ops1   #367cb0  statement/conditional/number-> syntax constant (GitHub folds
+ *                                                  numbers, storage and conditionals into pl-c1/pl-smi)
+ *   ops2   #2b7694  keyword/type/operator       -> syntax keyword
+ *   ops3   #005faf  builtin types, selection    -> accents (links focus, primary buttons)
+ *   ops4   #395573  assignment/unary            -> hover/dim accents
+ *   lit2   #148787  constants, escapes          -> syntax string-regexp
+ *   lit3   #127a57  float/boolean, titles       -> syntax markup heading
+ *   lstr   #6e879f  strings                     -> syntax string
+ *   iden   #6289b3  identifiers, attributes     -> syntax storage-modifier-import
+ *   func   #7095b0  functions/methods           -> syntax entity
+ *   var    #7387a1  variables                   -> syntax variable
+ *   dlim   #4779b3  brackets/delimiters, links  -> syntax brackethighlighter-angle
+ *   otag   #357b63  markup tags                 -> syntax entity-tag
+ *   incl   #005f87  imports/includes, md urls   -> links in markdown/UI
+ *   dadd   #007a66  diff add                    -> additions
+ *   dchg   #1d4aaf  diff change                 -> changed lines
+ *   dred   #6b0f2a  diff delete (bg tint)       -> deletion backgrounds
+ *   dwarn  #c8a8ef  warnings (lilac)            -> attention
+ *   violet #3d005d  violet                       -> merged/done emphasis
+ *   blod   #5f0000  bloody red (bg tint)        -> deletion tints
+ *   dark   #121212 / dnorm #15181f / clin #131e30 / col8 #1c334e / drk2 #223f73
+ *          -> surface ladder and borders
+ *
+ * The neg red is a background tint (#6b0f2a / #5f0000), so the readable red for
+ * deletion text comes from the desktop theme token (quickshell colors.status.error
+ * #ff6b81) - the only red in the whole stack that is legible on #000.
+ */
+
+@-moz-document domain("github.com") {
+  /* ------------------------------------------------------------------ */
+  /* Force dark: the palette has no light variants                      */
+  /* ------------------------------------------------------------------ */
+  html {
+    color-scheme: dark !important;
+  }
+
+  :root,
+  html,
+  body,
+  html[data-color-mode],
+  html[data-color-mode="dark"],
+  html[data-color-mode="light"],
+  html[data-dark-theme],
+  html[data-light-theme] {
+    /* Surfaces: black canvas, then the neg shade ladder (col3/col5/col8) */
+    --color-canvas-default: #000000 !important;
+    --color-canvas-default-transparent: rgba(0, 0, 0, 0) !important;
+    --color-canvas-subtle: #080c12 !important;
+    --color-canvas-inset: #0d1824 !important;
+    --color-canvas-overlay: #131e30 !important;
+    --bgColor-default: #000000 !important;
+    --bgColor-muted: #080c12 !important;
+    --bgColor-inset: #0d1824 !important;
+    --bgColor-emphasis: #131e30 !important;
+
+    /* Text */
+    --color-fg-default: #6c7e96 !important;
+    --color-fg-muted: #506a7d !important;
+    --color-fg-subtle: #363f4b !important;
+    --color-fg-on-emphasis: #d1e5ff !important;
+    --fgColor-default: #6c7e96 !important;
+    --fgColor-muted: #506a7d !important;
+    --fgColor-subtle: #363f4b !important;
+    --fgColor-onEmphasis: #d1e5ff !important;
+
+    /* Borders and neutral fills */
+    --color-border-default: #1c334e !important;
+    --color-border-muted: #12202f !important;
+    --color-border-subtle: #0f1922 !important;
+    --color-neutral-muted: rgba(28, 51, 78, 0.4) !important;
+    --color-neutral-subtle: rgba(28, 51, 78, 0.2) !important;
+    --color-neutral-emphasis: #223f73 !important;
+    --color-neutral-emphasis-plus: #2b4462 !important;
+    --borderColor-default: #1c334e !important;
+    --borderColor-muted: #12202f !important;
+    --borderColor-subtle: #0f1922 !important;
+
+    /* Accent (neg "operations" family) */
+    --color-accent-fg: #4779b3 !important;
+    --color-accent-emphasis: #005faf !important;
+    --color-accent-muted: rgba(0, 95, 175, 0.4) !important;
+    --color-accent-subtle: rgba(0, 95, 175, 0.15) !important;
+    --fgColor-accent: #4779b3 !important;
+    --bgColor-accent-emphasis: #005faf !important;
+    --bgColor-accent-muted: rgba(0, 95, 175, 0.4) !important;
+    --bgColor-accent-subtle: rgba(0, 95, 175, 0.15) !important;
+    --borderColor-accent-emphasis: #005faf !important;
+    --borderColor-accent-muted: rgba(0, 95, 175, 0.4) !important;
+
+    /* Success (diff add spruce) */
+    --color-success-fg: #007a66 !important;
+    --color-success-emphasis: #007a66 !important;
+    --color-success-muted: rgba(0, 122, 102, 0.4) !important;
+    --color-success-subtle: rgba(0, 122, 102, 0.15) !important;
+    --fgColor-success: #007a66 !important;
+    --bgColor-success-emphasis: #007a66 !important;
+
+    /* Attention (warning lilac) */
+    --color-attention-fg: #c8a8ef !important;
+    --color-attention-emphasis: #c8a8ef !important;
+    --color-attention-muted: rgba(200, 168, 239, 0.4) !important;
+    --color-attention-subtle: rgba(200, 168, 239, 0.15) !important;
+    --fgColor-attention: #c8a8ef !important;
+    --bgColor-attention-emphasis: #c8a8ef !important;
+    --fgColor-onAttentionEmphasis: #000000 !important;
+
+    /* Danger (nvim delete tint + the legible desktop red) */
+    --color-danger-fg: #ff6b81 !important;
+    --color-danger-emphasis: #6b0f2a !important;
+    --color-danger-muted: rgba(107, 15, 42, 0.4) !important;
+    --color-danger-subtle: rgba(107, 15, 42, 0.15) !important;
+    --fgColor-danger: #ff6b81 !important;
+    --bgColor-danger-emphasis: #6b0f2a !important;
+
+    /* Done / merged (violet) */
+    --color-done-fg: #c8a8ef !important;
+    --color-done-emphasis: #3d005d !important;
+    --color-done-muted: rgba(61, 0, 93, 0.4) !important;
+    --color-done-subtle: rgba(61, 0, 93, 0.15) !important;
+    --fgColor-done: #c8a8ef !important;
+    --bgColor-done-emphasis: #3d005d !important;
+
+    /* Sponsors keep the same lilac */
+    --color-sponsors-fg: #c8a8ef !important;
+    --color-sponsors-emphasis: #3d005d !important;
+
+    /* Focus ring */
+    --focus-outlineColor: #005faf !important;
+    --color-primer-border-active: #367cb0 !important;
+    --color-primer-focus-ring: #005faf !important;
+
+    /* ------------------------------------------------------------------ */
+    /* Diff view: the nvim DiffAdd/DiffChange/DiffDelete values           */
+    /* ------------------------------------------------------------------ */
+    --color-diff-blob-addition-num-text: #007a66 !important;
+    --color-diff-blob-addition-fg: #d1e5ff !important;
+    --color-diff-blob-addition-num-bg: rgba(0, 122, 102, 0.25) !important;
+    --color-diff-blob-addition-line-bg: #123425 !important;
+    --color-diff-blob-addition-word-bg: rgba(0, 122, 102, 0.45) !important;
+    --color-diff-blob-deletion-num-text: #ff6b81 !important;
+    --color-diff-blob-deletion-fg: #d1e5ff !important;
+    --color-diff-blob-deletion-num-bg: rgba(95, 0, 0, 0.35) !important;
+    --color-diff-blob-deletion-line-bg: rgba(95, 0, 0, 0.35) !important;
+    --color-diff-blob-deletion-word-bg: rgba(107, 15, 42, 0.5) !important;
+    --color-diff-blob-hunk-num-bg: rgba(0, 95, 175, 0.25) !important;
+    --color-diff-blob-hunk-line-bg: rgba(0, 95, 175, 0.15) !important;
+    --color-diff-blob-empty-block-bg: #080c12 !important;
+    --color-diff-blob-expander-icon: #506a7d !important;
+    --color-diffblob-line-selected-bg: rgba(0, 95, 175, 0.15) !important;
+    --diffBlob-additionLine-bgColor: #123425 !important;
+    --diffBlob-deletionLine-bgColor: rgba(95, 0, 0, 0.35) !important;
+    --diffBlob-additionNum-bgColor: rgba(0, 122, 102, 0.25) !important;
+    --diffBlob-deletionNum-bgColor: rgba(95, 0, 0, 0.35) !important;
+
+    /* ------------------------------------------------------------------ */
+    /* Syntax: prettylights variables (new code view) ...                 */
+    /* ------------------------------------------------------------------ */
+    --color-prettylights-syntax-comment: #363f4b !important;
+    --color-prettylights-syntax-constant: #367cb0 !important;
+    --color-prettylights-syntax-entity: #7095b0 !important;
+    --color-prettylights-syntax-storage-modifier-import: #367cb0 !important;
+    --color-prettylights-syntax-entity-tag: #357b63 !important;
+    --color-prettylights-syntax-keyword: #2b7694 !important;
+    --color-prettylights-syntax-string: #6e879f !important;
+    --color-prettylights-syntax-variable: #7387a1 !important;
+    --color-prettylights-syntax-brackethighlighter-unmatched: #ff6b81 !important;
+    --color-prettylights-syntax-brackethighlighter-angle: #4779b3 !important;
+    --color-prettylights-syntax-invalid-illegal-text: #000000 !important;
+    --color-prettylights-syntax-invalid-illegal-bg: #6b0f2a !important;
+    --color-prettylights-syntax-carriage-return-text: #d1e5ff !important;
+    --color-prettylights-syntax-carriage-return-bg: #3d005d !important;
+    --color-prettylights-syntax-string-regexp: #148787 !important;
+    --color-prettylights-syntax-markup-list: #4779b3 !important;
+    --color-prettylights-syntax-markup-heading: #127a57 !important;
+    --color-prettylights-syntax-markup-italic: #d1e5ff !important;
+    --color-prettylights-syntax-markup-bold: #d1e5ff !important;
+    --color-prettylights-syntax-markup-deleted-text: #ff6b81 !important;
+    --color-prettylights-syntax-markup-deleted-bg: rgba(107, 15, 42, 0.25) !important;
+    --color-prettylights-syntax-markup-inserted-text: #007a66 !important;
+    --color-prettylights-syntax-markup-inserted-bg: rgba(0, 122, 102, 0.2) !important;
+    --color-prettylights-syntax-markup-changed-text: #1d4aaf !important;
+    --color-prettylights-syntax-markup-changed-bg: rgba(29, 74, 175, 0.2) !important;
+    --color-prettylights-syntax-markup-ignored-text: #363f4b !important;
+    --color-prettylights-syntax-markup-ignored-bg: rgba(28, 51, 78, 0.2) !important;
+    --color-prettylights-syntax-meta-diff-range: #367cb0 !important;
+    --color-prettylights-syntax-sublimelinter-gutter-mark: #363f4b !important;
+    --color-prettylights-syntax-constant-other-reference-link: #4779b3 !important;
+
+    /* Modern diff variables (React diff view on PRs) */
+    --diffBlob-additionLine-fgColor: #d1e5ff !important;
+    --diffBlob-deletionLine-fgColor: #d1e5ff !important;
+    --diffBlob-additionNum-fgColor: #007a66 !important;
+    --diffBlob-deletionNum-fgColor: #ff6b81 !important;
+    --diffBlob-additionWord-bgColor: rgba(0, 122, 102, 0.45) !important;
+    --diffBlob-deletionWord-bgColor: rgba(107, 15, 42, 0.5) !important;
+    --diffBlob-expander-iconColor: #506a7d !important;
+
+    /* Modern control tokens (buttons, menus, selects) */
+    --control-bgColor-rest: #0d1824 !important;
+    --control-bgColor-hover: #131e30 !important;
+    --control-bgColor-active: #1c334e !important;
+    --control-bgColor-disabled: #080c12 !important;
+    --control-borderColor-rest: #1c334e !important;
+    --control-borderColor-hover: #223f73 !important;
+    --control-fgColor-rest: #6c7e96 !important;
+    --control-fgColor-placeholder: #363f4b !important;
+    --button-default-bgColor-rest: #0d1824 !important;
+    --button-default-bgColor-hover: #131e30 !important;
+    --button-default-bgColor-active: #1c334e !important;
+    --button-default-fgColor-rest: #6c7e96 !important;
+    --button-default-borderColor-rest: #1c334e !important;
+    --button-primary-bgColor-rest: #005faf !important;
+    --button-primary-bgColor-hover: #367cb0 !important;
+    --button-primary-bgColor-active: #2b7694 !important;
+    --button-primary-fgColor-rest: #d1e5ff !important;
+    --button-primary-borderColor-rest: #005faf !important;
+    --button-danger-bgColor-rest: #6b0f2a !important;
+    --button-danger-bgColor-hover: #8f1436 !important;
+    --button-danger-fgColor-rest: #ff6b81 !important;
+    --overlay-bgColor: #131e30 !important;
+    --overlay-borderColor: #223f73 !important;
+    --overlay-backdrop-bgColor: rgba(0, 0, 0, 0.6) !important;
+    --menu-bgColor-active: #1c334e !important;
+    --selection-bgColor: #1c334e !important;
+    --focus-outline-color: #005faf !important;
+    /* The one colour not in the neg palette: danger hover needs a slightly
+       lighter burgundy, derived from dred #6b0f2a (see the note at the top). */
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Syntax: classic pl-* classes (blob view, blame, gists, code search) */
+  /* ------------------------------------------------------------------ */
+  .pl-c {
+    color: var(--color-prettylights-syntax-comment) !important;
+    font-style: italic !important;
+  }
+  .pl-c1,
+  .pl-s .pl-v {
+    color: var(--color-prettylights-syntax-constant) !important;
+  }
+  .pl-e,
+  .pl-en {
+    color: var(--color-prettylights-syntax-entity) !important;
+  }
+  .pl-smi {
+    color: var(--color-prettylights-syntax-storage-modifier-import) !important;
+  }
+  .pl-ent {
+    color: var(--color-prettylights-syntax-entity-tag) !important;
+  }
+  .pl-k {
+    color: var(--color-prettylights-syntax-keyword) !important;
+  }
+  .pl-s,
+  .pl-pds,
+  .pl-s .pl-pse .pl-s1,
+  .pl-sr,
+  .pl-sr .pl-cce,
+  .pl-sr .pl-sre,
+  .pl-sr .pl-sra {
+    color: var(--color-prettylights-syntax-string) !important;
+  }
+  .pl-sr .pl-cce {
+    color: var(--color-prettylights-syntax-string-regexp) !important;
+  }
+  .pl-v,
+  .pl-smw {
+    color: var(--color-prettylights-syntax-variable) !important;
+  }
+  .pl-bu {
+    color: var(--color-prettylights-syntax-brackethighlighter-unmatched) !important;
+  }
+  .pl-ba {
+    color: var(--color-prettylights-syntax-brackethighlighter-angle) !important;
+  }
+  .pl-ii {
+    color: var(--color-prettylights-syntax-invalid-illegal-text) !important;
+    background-color: var(--color-prettylights-syntax-invalid-illegal-bg) !important;
+  }
+  .pl-c2 {
+    color: var(--color-prettylights-syntax-carriage-return-text) !important;
+    background-color: var(--color-prettylights-syntax-carriage-return-bg) !important;
+  }
+  .pl-ml {
+    color: var(--color-prettylights-syntax-markup-list) !important;
+  }
+  .pl-mh,
+  .pl-mh .pl-en,
+  .pl-ms {
+    color: var(--color-prettylights-syntax-markup-heading) !important;
+    font-weight: bold !important;
+  }
+  .pl-mi {
+    color: var(--color-prettylights-syntax-markup-italic) !important;
+    font-style: italic !important;
+  }
+  .pl-mb {
+    color: var(--color-prettylights-syntax-markup-bold) !important;
+    font-weight: bold !important;
+  }
+  .pl-md {
+    color: var(--color-prettylights-syntax-markup-deleted-text) !important;
+    background-color: var(--color-prettylights-syntax-markup-deleted-bg) !important;
+  }
+  .pl-mc {
+    color: var(--color-prettylights-syntax-markup-changed-text) !important;
+    background-color: var(--color-prettylights-syntax-markup-changed-bg) !important;
+  }
+  .pl-mi1 {
+    color: var(--color-prettylights-syntax-markup-inserted-text) !important;
+    background-color: var(--color-prettylights-syntax-markup-inserted-bg) !important;
+  }
+  .pl-mdr {
+    color: var(--color-prettylights-syntax-meta-diff-range) !important;
+  }
+  .pl-sg {
+    color: var(--color-prettylights-syntax-sublimelinter-gutter-mark) !important;
+  }
+  .pl-corl {
+    color: var(--color-prettylights-syntax-constant-other-reference-link) !important;
+    text-decoration: underline !important;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Fonts and measure: Iosevka everywhere, like the terminal and the    */
+  /* Vivaldi chrome (files/vivaldi/*.css)                               */
+  /* ------------------------------------------------------------------ */
+  :root,
+  html {
+    --fontStack-monospace: "Iosevka", "Iosevka Nerd Font", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    --fontStack-sansSerif: "Iosevka Proportional", "Iosevka", system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  }
+
+  pre,
+  code,
+  kbd,
+  samp,
+  .blob-code-inner,
+  .markdown-body code,
+  .markdown-body pre,
+  .commit-message,
+  .diff-table,
+  textarea {
+    font-family: "Iosevka", "Iosevka Nerd Font", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  }
+
+  .blob-code-inner,
+  .blob-code,
+  .cm-content {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Line numbers: neg LineNr (#2c3641, italic) */
+  .blob-num,
+  .blob-num:hover,
+  .diff-line-num,
+  .react-line-number {
+    color: #2c3641 !important;
+    font-style: italic !important;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Interaction: selection, search highlight, hovered code line        */
+  /* ------------------------------------------------------------------ */
+  ::selection {
+    background-color: #1c334e !important;
+    color: #d1e5ff !important;
+  }
+
+  mark,
+  .highlighted-search-result,
+  .js-highlighted-search-result,
+  .search-match {
+    background-color: #005faf !important;
+    color: #d1e5ff !important;
+  }
+
+  /* neg "bg-highlight" (#0d1824) as the code-line hover */
+  .blob-wrapper tr:hover .blob-code,
+  .blob-wrapper tr:hover .blob-num,
+  .diff-table tr:hover .blob-code,
+  .diff-table tr:hover .blob-num {
+    background-color: #0d1824 !important;
+  }
+
+  a,
+  .Link--primary,
+  .markdown-body a {
+    color: #4779b3;
+  }
+  a:hover,
+  .markdown-body a:hover {
+    color: #a5c1e6;
+  }
+  /* Markdown urls use neg's Include colour (@markup.link.url) */
+  .markdown-body a:not(.anchor) {
+    color: #005f87;
+  }
+  .markdown-body a:not(.anchor):hover {
+    color: #367cb0;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Chrome details: buttons, inputs, focus rings, scrollbars           */
+  /* ------------------------------------------------------------------ */
+  .btn-primary,
+  .Button--primary,
+  [data-variant="primary"] {
+    background-color: #005faf !important;
+    border-color: #005faf !important;
+    color: #d1e5ff !important;
+  }
+  .btn-primary:hover,
+  .Button--primary:hover {
+    background-color: #367cb0 !important;
+    border-color: #367cb0 !important;
+  }
+  .btn,
+  .Button {
+    background-color: #0d1824 !important;
+    border-color: #1c334e !important;
+    color: #6c7e96 !important;
+  }
+  .btn:hover,
+  .Button:hover {
+    background-color: #131e30 !important;
+    border-color: #223f73 !important;
+    color: #d1e5ff !important;
+  }
+
+  input,
+  textarea,
+  select,
+  .form-control,
+  .form-select {
+    background-color: #000000 !important;
+    border-color: #1c334e !important;
+    color: #6c7e96 !important;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #363f4b !important;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid #005faf !important;
+    outline-offset: 1px !important;
+  }
+
+  * {
+    scrollbar-color: #223f73 #000000;
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1c334e;
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #223f73;
+  }
+}
