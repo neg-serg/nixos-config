@@ -98,8 +98,15 @@ let
         # as a successful toggle: without the load the eval below is a no-op.
         if ! plugin_loaded; then
           "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || exit 1
-          push_config
         fi
+        # ...and the config is pushed on *every* toggle, not only after a load.
+        # This helper is the only thing that configures the plugin, so a session
+        # that re-initialised it — a compositor reload, a build swapped in for
+        # testing — otherwise opens the overview with the plugin's defaults: the
+        # workspace capsule then looks nothing like the overview a manual
+        # `hypr-expo toggle` gives after a push (the reported "dull mess"). One
+        # eval of hyprexpo.lua is cheap enough to do per click.
+        push_config
         "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("toggle")'
         ;;
       push)
