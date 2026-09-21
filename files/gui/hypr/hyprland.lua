@@ -520,6 +520,8 @@ hl.define_submap("tiling", "reset", function()
   hl.bind(SH .. "+j", hl.dsp.window.move({ direction = "d" }))
   hl.bind(SH .. "+k", hl.dsp.window.move({ direction = "u" }))
   hl.bind(SH .. "+l", hl.dsp.window.move({ direction = "r" }))
+  binde_reset("i", hl.dsp.window.move({ into_group = "l" }))    -- neighbour on the left into the tab group (no-op if it is not a group)
+  binde_reset("o", hl.dsp.window.move({ out_of_group = true })) -- window out of the tab group, back into its own column
 end)
 
 -- Submap: music (MPD transport with ncmpcpp/rmpc letter bindings)
@@ -645,7 +647,7 @@ hl.bind(M4 .. "+s", L("inhibit_scroll"))
 hl.bind(M1 .. "+mouse_down", L("move +col", "cyclenext"), { repeating = true })
 hl.bind(M1 .. "+mouse_up",   L("move -col", "cycleprev"), { repeating = true })
 
--- --- Window, width, tape fine-scroll (M4+CTRL) ---
+-- --- Window, tabs, width, tape fine-scroll (M4+CTRL) ---
 -- Move the focused window: j/k inside its column/stack (moveTargetTo -> column->up()/down()),
 hl.bind(M4 .. "+" .. C .. "+j", hl.dsp.window.move({ direction = "d" }))
 hl.bind(M4 .. "+" .. C .. "+k", hl.dsp.window.move({ direction = "u" }))
@@ -667,6 +669,14 @@ hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+bracketright", L("move +0.05"), { repea
 hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+j", L("consume_or_expel prev"))
 hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+k", L("consume_or_expel next"))
 
+-- Tab groups on top of columns. M4+CTRL, not hjkl: that set stays vim focus (below),
+-- and g is the mnemonic for group. Jump to tab N with M4+CTRL+SHIFT+1..5 (group.active).
+hl.bind(M4 .. "+" .. C .. "+g", hl.dsp.group.toggle())  -- tab group in the current column
+hl.bind(M4 .. "+" .. C .. "+h", hl.dsp.group.prev())    -- previous tab
+hl.bind(M4 .. "+" .. C .. "+l", hl.dsp.group.next())    -- next tab
+for i = 1, 5 do
+  hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+" .. tostring(i), hl.dsp.group.active({ index = i }))
+end
 hl.bind(M4 .. "+left", hl.dsp.focus({ direction = "left" }))
 hl.bind(M4 .. "+right", hl.dsp.focus({ direction = "right" }))
 
