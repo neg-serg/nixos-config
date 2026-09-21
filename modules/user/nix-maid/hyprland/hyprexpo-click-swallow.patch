@@ -1,23 +1,84 @@
+diff -ruN a/HyprexpoConfig.hpp b/HyprexpoConfig.hpp
+--- a/HyprexpoConfig.hpp	2026-09-21 22:24:29.371649615 +0300
++++ b/HyprexpoConfig.hpp	2026-09-21 22:31:10.909585336 +0300
+@@ -54,6 +54,9 @@
+ inline constexpr const char* BORDER_COLOR_FOCUS_DEFAULT      = "rgb(ffcc66)";
+ inline constexpr const char* BORDER_COLOR_HOVER_DEFAULT      = "rgb(aabbcc)";
+ inline constexpr const char* BORDER_STYLE_DEFAULT            = "simple";
++// Packaged patch (hyprexpo-click-swallow.patch): log every mouse button the overview
++// sees together with the decision it made (orphan release / selection) to the log.
++inline constexpr int         CLICK_DEBUG_DEFAULT              = 0;
+ inline constexpr const char* BORDER_GRAD_CURRENT_DEFAULT     = "";
+ inline constexpr const char* BORDER_GRAD_FOCUS_DEFAULT       = "";
+ inline constexpr const char* BORDER_GRAD_HOVER_DEFAULT       = "";
 diff -ruN a/Overview.cpp b/Overview.cpp
 --- a/Overview.cpp	2026-09-21 22:24:29.372649607 +0300
-+++ b/Overview.cpp	2026-09-21 22:24:38.251581940 +0300
-@@ -1377,6 +1377,19 @@
++++ b/Overview.cpp	2026-09-21 22:31:10.909585336 +0300
+@@ -1365,7 +1365,20 @@
+             return;
+         }
+ 
++        const bool CLICKDEBUG = CompatHyprlandAPI::intValue("plugin:hyprexpo:click_debug") != 0;
++
+         if (event.state == WL_POINTER_BUTTON_STATE_PRESSED) {
++            // Packaged patch (hyprexpo-click-swallow.patch): remember that a press was
++            // seen while the overview was up. The click that *opened* the overview
++            // (panel capsule toggles on the press) leaves an orphan release behind:
++            // its press happened while the overview did not exist yet, so without this
++            // flag that release was read as "the user picked the tile under the panel"
++            // and the overview closed in the same gesture.
++            m_clickPressSeen = true;
++            if (CLICKDEBUG)
++                Log::logger->log(Log::ERR, "[hyprexpo] press seen at {},{} (target {}, hovered {}, kbFocus {})", (int)GLOBAL.x, (int)GLOBAL.y, TARGET ? 1 : 0,
++                                 TARGET ? TARGET->hoveredID : -1, TARGET ? TARGET->kbFocusID : -1);
++
+             if (**PDRAGDROPENABLE && TARGET)
+                 TARGET->beginWindowDrag();
+             return;
+@@ -1377,8 +1390,20 @@
                  return;
          }
  
-+        // Packaged patch (modules/user/nix-maid/hyprland/hyprexpo-click-swallow.patch).
-+        // The click that *opened* the overview leaves an orphan release behind: the
-+        // panel capsule (and the panel IPC, and a touch) toggles the overview on the
-+        // press, so the release arrives after the session was created — past the 5%
-+        // entry guard above — with the pointer still over the bar. Read as a choice it
-+        // selected the tile under the panel, which closed the overview in the same
-+        // gesture ("it opens and returns back on its own"). A release inside this
-+        // window belongs to a press from before the overview existed, so it cannot be
-+        // a selection; a deliberate click on a tile always arrives later.
-+        static constexpr auto OPEN_SWALLOW = std::chrono::milliseconds(400);
-+        if (TARGET && std::chrono::steady_clock::now() - TARGET->createdAt < OPEN_SWALLOW)
+-        if (TARGET && TARGET->selectHoveredWorkspace())
++        if (!m_clickPressSeen) {
++            if (CLICKDEBUG)
++                Log::logger->log(Log::ERR, "[hyprexpo] orphan release at {},{} ignored (no press while the overview was up)", (int)GLOBAL.x, (int)GLOBAL.y);
 +            return;
++        }
 +
-         if (TARGET && TARGET->selectHoveredWorkspace())
++        m_clickPressSeen = false;
++
++        if (TARGET && TARGET->selectHoveredWorkspace()) {
++            if (CLICKDEBUG)
++                Log::logger->log(Log::ERR, "[hyprexpo] release at {},{} selected the hovered tile", (int)GLOBAL.x, (int)GLOBAL.y);
              closeOverviewsSelecting(TARGET);
++        } else if (CLICKDEBUG)
++            Log::logger->log(Log::ERR, "[hyprexpo] release at {},{} - nothing hovered/selected", (int)GLOBAL.x, (int)GLOBAL.y);
      };
+ 
+     auto onTouchSelect = [this](Event::SCallbackInfo& info) {
+diff -ruN a/Overview.hpp b/Overview.hpp
+--- a/Overview.hpp	2026-09-21 22:24:29.372649607 +0300
++++ b/Overview.hpp	2026-09-21 22:31:10.909585336 +0300
+@@ -166,6 +166,10 @@
+     PHLANIMVAR<Vector2D>         pos;
+ 
+     bool                         closing = false;
++    // Packaged patch (hyprexpo-click-swallow.patch): set when a button press was seen
++    // while the overview was up, so an orphan release (its press happened before the
++    // overview existed) can be told apart from a deliberate click on a tile.
++    bool                         m_clickPressSeen = false;
+     bool                         m_closeCommitted = false;
+     uint64_t                     m_sessionGeneration = 0;
+     bool                         externalWorkspaceMoveDuringClose = false;
+diff -ruN a/PluginConfig.cpp b/PluginConfig.cpp
+--- a/PluginConfig.cpp	2026-09-21 22:24:29.372649607 +0300
++++ b/PluginConfig.cpp	2026-09-21 22:31:10.909585336 +0300
+@@ -61,6 +61,7 @@
+     addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:show_cursor", "show cursor during overview", HyprexpoConfig::SHOW_CURSOR_DEFAULT));
+     addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:show_pinned_windows", "show pinned windows in previews", HyprexpoConfig::SHOW_PINNED_WINDOWS_DEFAULT));
+     addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:drag_drop_enable", "enable drag/drop window movement", HyprexpoConfig::DRAG_DROP_ENABLE_DEFAULT));
++    addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:click_debug", "log overview mouse-button handling (orphan releases, selections)", HyprexpoConfig::CLICK_DEBUG_DEFAULT));
+     addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:scrolling_thumbnail_budget", "monitor-relative scrolling thumbnail pixel budget",
+                                                          HyprexpoConfig::SCROLLING_THUMBNAIL_BUDGET_DEFAULT,
+                                                          Config::Values::SIntValueOptions{.min = HyprexpoConfig::SCROLLING_THUMBNAIL_BUDGET_MIN,
