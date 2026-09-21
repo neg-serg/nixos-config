@@ -285,16 +285,36 @@ hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 
 hl.bind(M4 .. "+grave", hl.dsp.exec_cmd("hypr-expo toggle"))
 
--- Clicking a tile picks that workspace. The fork does not read mouse buttons on its
--- own: it exposes a `select` action that looks at the tile under the pointer, and the
--- user is expected to bind a button to it (upstream README: `bind = , mouse_down,
--- hyprexpo:expo, select`). Without this bind a click inside the overview does nothing
--- at all — only escape, the right button and the number/select keys do. `hypr-expo
--- select` is a no-op while the overview is closed (the plugin ignores the action
--- then), so binding the plain left button is safe: clicks keep working everywhere
--- else. Tiles of empty workspaces are refused by the plugin itself ("selected
--- workspace is empty") — that is its own behaviour, not this bind.
-hl.bind("mouse:272", hl.dsp.exec_cmd("hypr-expo select"))
+-- The overview is driven from its own submap: on open the plugin enters `hyprexpo`
+-- and resets it on close, exactly as upstream documents it (`hl.define_submap` for
+-- Lua configs, `submap = hyprexpo ... submap = reset` for hyprland.conf). The binds
+-- below are therefore live *only* while the overview is up, which is what makes the
+-- mouse bind safe: a globally registered `mouse:272` consumes every left click
+-- (Hyprland does not pass mouse binds through), and that killed all clicks on the
+-- quickshell bar while it was up. Inside the submap that same bind is what upstream
+-- uses to pick the tile under the cursor (docs/getting-started/quick-start); without
+-- the submap a click on a tile does nothing at all and only escape, the right button
+-- and the number keys work. Digits need no bind: number_key_mode = workspace already
+-- routes them, and they keep working inside the submap.
+hl.define_submap("hyprexpo", function()
+  -- Arrows move the keyboard focus, return confirms it, escape cancels.
+  hl.bind("left", function() hl.plugin.hyprexpo.kb_focus("left") end)
+  hl.bind("right", function() hl.plugin.hyprexpo.kb_focus("right") end)
+  hl.bind("up", function() hl.plugin.hyprexpo.kb_focus("up") end)
+  hl.bind("down", function() hl.plugin.hyprexpo.kb_focus("down") end)
+  hl.bind("return", function() hl.plugin.hyprexpo.kb_confirm() end)
+  hl.bind("escape", function() hl.plugin.hyprexpo.expo("cancel") end)
+
+  -- Left click selects the tile under the cursor (the reason this submap exists).
+  hl.bind("mouse:272", function() hl.plugin.hyprexpo.expo("select") end)
+
+  -- The token keys the tiles are labelled with (label_text_mode = token):
+  -- a, s, d, f, ... in reading order.
+  local tokens = { "a", "s", "d", "f", "g", "q", "w", "e", "r", "t", "z", "x", "c", "v", "b" }
+  for i, key in ipairs(tokens) do
+    hl.bind(key, function() hl.plugin.hyprexpo.kb_selecti(i) end)
+  end
+end)
 
 -- --- App launchers (ex-apps.conf; formerly ~/.config/hypr/bindings/apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
