@@ -55,8 +55,54 @@ hl.config({
 
       columns = 3, -- only bounds the grid when dynamic_grid is off
       gaps_in = 5,
-      gaps_out = 0,
-      bg_col = "rgb(111111)",
+      -- Outer inset: the grid floats a little away from the screen edges instead of
+      -- touching them (0 = edge to edge). Logical pixels — 16 reads as a calm margin
+      -- on the 4K panel at scale 2.
+      gaps_out = 16,
+      -- Backdrop behind the tiles when there is no wallpaper to show (wallpaper_bg = 1
+      -- paints the wallpaper itself): the neg canvas, not a flat grey.
+      bg_col = "rgb(000000)",
+
+      -- Frames. This fork only frames the tiles that carry state — the workspace you
+      -- came from, the keyboard-focused one and the hovered one; idle tiles stay bare
+      -- (border_color is unused by the renderer, kept only as documentation). Colours
+      -- are the neg roles, and the two loud states get a 45° two-stop gradient the
+      -- plugin accepts as "rgba(...) rgba(...) <deg>" (parseGradientSpec). Corners
+      -- stay square because the desktop itself runs border_size = 0, rounding = 0
+      -- (hyprland.lua); tile_rounding = 8 would make rounded cards instead.
+      -- 2px is 4 physical pixels at scale 2 — the same thin weight as the rest of the
+      -- desktop's hairlines.
+      border_width = 2,
+      border_color = "rgba(1c334eff)",     -- unused for idle tiles (see above)
+      border_color_hover = "rgba(367cb0ff)", -- ops1: quiet, the pointer is enough
+      border_color_current = "rgba(005fafff) rgba(367cb0ff) 45deg", -- ops3 -> ops1
+      border_color_focus = "rgba(d1e5ffff) rgba(a5c1e6ff) 45deg",   -- whit -> high
+      tile_rounding = 0,
+      tile_rounding_power = 2.0,
+
+      -- Drag/drop preview: upstream paints it flat green, which is the only green in
+      -- the whole rice. ops3 at 14% alpha, the active target a touch stronger, and the
+      -- dragged tile keeps the focus frame (drag_drop_source_border_color empty falls
+      -- back to border_color_focus).
+      drag_drop_proxy_color = "rgba(005faf24)",
+      drag_drop_proxy_active_color = "rgba(367cb03d)",
+      drag_drop_proxy_border_color = "rgba(005fafff)",
+      drag_drop_proxy_border_width = 2,
+      drag_drop_proxy_rounding = 0,
+
+      -- Labels: the terminal font, text in the palette's whites, selection tokens in
+      -- the accent colour instead of the upstream orange (they are the same tokens the
+      -- hyprexpo submap jumps by).
+      label_font_family = "Iosevka",
+      label_color = "rgba(d1e5ffff)", -- whit: the palette's light text
+      -- The per-state label colours default to upstream cyan/orange, which is the one
+      -- thing that visibly fights the palette; keep them inside it.
+      label_color_hover = "rgba(a5c1e6ff)",
+      label_color_focus = "rgba(d1e5ffff)",
+      label_color_current = "rgba(a5c1e6ff)",
+      workspace_number_color = "rgba(7387a1ff)", -- darkhigh: muted numbers
+      label_bg_color = "rgba(15181f88)", -- translucent dnorm, not pure black
+      selection_label_color = "rgba(a5c1e6ff)", -- tokens in the accent, not orange
       workspace_method = "center current",
 
       -- Keys the overview itself handles; the rest of its keybinds (arrows,
