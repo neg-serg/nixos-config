@@ -227,11 +227,35 @@ local SH = "SHIFT"
 local browser = "vivaldi"
 local menu    = "vicinae toggle"
 
+-- ---------------------------------------------------------------------
+-- Layout-agnostic binds
+-- ---------------------------------------------------------------------
+-- One key = one intent; the layoutmsg is picked from the ACTIVE workspace algorithm:
+-- hl.get_active_workspace().tiled_layout returns "scrolling" or "master" in a live
+-- session (verified on 0.56.2). One keymap therefore works both on the tape and on
+-- the master workspaces (4/6/7/10/12/18) instead of going silent on half of them.
+-- Where there is no counterpart cmd = nil: a silent no-op, not a "no such layoutmsg".
+local function layoutAlgo()
+  local ws = hl.get_active_workspace()
+  return ws and ws.tiled_layout or ""
+end
+
+-- L(tape, master, other) takes layoutmsg strings; the dispatcher is built at press
+-- time (like the hyprexpo bind) so no dispatcher objects outlive a reload.
+local function L(scrolling, master, other)
+  return function()
+    local algo = layoutAlgo()
+    local cmd  = algo == "scrolling" and scrolling or (algo == "master" and master or other)
+    if cmd then return hl.dispatch(hl.dsp.layout(cmd)) end
+  end
+end
+
 -- --- Top-level binds (bindings.conf) ---
 -- Use "all" (not "current"): kanata's virtual keyboard is the last active
 -- device, so "current" switches only it and the bar/typing layouts diverge.
 hl.bind(M4 .. "+S", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
+
 hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
 hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
@@ -395,9 +419,9 @@ hl.bind(M4 .. "+" .. SH .. "+d", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/
 
 
 
--- --- Split ratio helpers (tiling-helpers.conf) ---
-hl.bind(M4 .. "+" .. C .. "+d", hl.dsp.layout("splitratio -0.1"), { repeating = true })
-hl.bind(M4 .. "+" .. C .. "+f", hl.dsp.layout("splitratio +0.1"), { repeating = true })
+-- --- Width of the active target (master window / tape column / dwindle split) ---
+hl.bind(M4 .. "+" .. C .. "+d", L("colresize -0.05", "mfact -0.1", "splitratio -0.1"), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+f", L("colresize +0.05", "mfact +0.1", "splitratio +0.1"), { repeating = true })
 
 -- =====================================================================
 -- Emacs-style navigation (additive layer)
@@ -579,32 +603,96 @@ hl.config({
     direction = "right", -- new windows land to the right, the tape scrolls right
     wrap_focus = true,
     wrap_swapcol = true,
-    explicit_column_widths = "0.333, 0.5, 0.667, 1.0", -- cycled by colresize +conf/-conf
+    explicit_column_widths = "0.4, 0.5, 0.55, 0.6, 1.0", -- cycled by colresize +conf/-conf; matches the per-app widths below
+    fullscreen_on_one_column = true, -- 0.56 DEFAULTS this to true (hyprctl describes); kept explicit: a lone column fills the screen
   },
 })
 
 -- Trackpad: 3-finger swipe switches workspaces.
--- NOTE: only ONE horizontal gesture can exist — Hyprland keys the gesture table on
--- the direction alone, so a second horizontal entry (e.g. 4-finger scroll_move for
--- the scrolling tape) is silently shadowed by the first ("Gesture will be
--- overshadowed by a previous gesture"). The tape is scrolled with M4+[ / M4+].
+-- FACT (0.56): a gesture clashes only when direction, FINGER COUNT and mods all match
+-- (CTrackpadGestures::addGesture skips anything else), so a 4-finger horizontal gesture
+-- coexists with the 3-finger one. For the tape Hyprland also ships the action
+-- action = "scroll_move" (CScrollMoveTrackpadGesture): the tape follows the fingers 1:1,
+-- with momentum and snapping (gestures:scrolling:move_snap_to_grid / _cursor, both true).
+-- Deliberately left unbound; if wanted, hl.gesture({ fingers = 4, direction = "horizontal",
+-- action = "scroll_move" }) works next to the 3-finger one.
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 hl.gesture({ fingers = 3, direction = "down", mods = "ALT", action = "close" })
 
--- Scrolling binds — brackets (free keys; M4+comma/period are the player)
-hl.bind(M4 .. "+bracketright", hl.dsp.layout("move +col"), { repeating = true })
-hl.bind(M4 .. "+bracketleft", hl.dsp.layout("move -col"), { repeating = true })
-hl.bind(M4 .. "+" .. SH .. "+bracketright", hl.dsp.layout("swapcol r"))
-hl.bind(M4 .. "+" .. SH .. "+bracketleft", hl.dsp.layout("swapcol l"))
-hl.bind(M4 .. "+" .. C .. "+bracketright", hl.dsp.layout("colresize +conf"), { repeating = true })
-hl.bind(M4 .. "+" .. C .. "+bracketleft", hl.dsp.layout("colresize -conf"), { repeating = true })
-hl.bind(M4 .. "+" .. M1 .. "+bracketright", hl.dsp.layout("promote")) -- window into its own column
-hl.bind(M4 .. "+" .. M1 .. "+bracketleft", hl.dsp.layout("fit_into_view"))
+-- Tape/stack — layout-agnostic keys (M4+comma/period are the player).
+hl.bind(M4 .. "+bracketright", L("move +col", "cyclenext"), { repeating = true })
+hl.bind(M4 .. "+bracketleft",  L("move -col", "cycleprev"), { repeating = true })
+hl.bind(M4 .. "+" .. SH .. "+bracketright", L("swapcol r", "swapnext"))
+hl.bind(M4 .. "+" .. SH .. "+bracketleft",  L("swapcol l", "swapprev"))
+hl.bind(M4 .. "+" .. C .. "+bracketright", L("colresize +conf", "mfact +0.1"), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+bracketleft",  L("colresize -conf", "mfact -0.1"), { repeating = true })
+hl.bind(M4 .. "+" .. M1 .. "+bracketright", L("promote")) -- window into its own column
+hl.bind(M4 .. "+" .. M1 .. "+bracketleft",  L("fit_into_view"))
+
+-- Tape only (master has no counterpart, so this is a no-op there). Keys were free:
+-- M4+minus is the tiling submap, M4+y the wallpaper one, M4+C+z kitty font zoom.
+hl.bind(M4 .. "+equal", L("fit expand"))   -- the column soaks up the free space without pushing neighbours
+hl.bind(M4 .. "+a",     L("fit all"))      -- whole tape into view (all columns share the screen)
+hl.bind(M4 .. "+v",     L("fit visible"))  -- only the currently visible columns into view
+hl.bind(M4 .. "+i",     L("consume"))      -- pull the first window of the next column into this one (column stack)
+hl.bind(M4 .. "+o",     L("expel"))        -- push the column's last window out into a column of its own
+hl.bind(M4 .. "+z",     L("center"))       -- recentre the focused column
+-- scroll lock: the tape stays put while focus moves (pairs with follow_focus = true).
+hl.bind(M4 .. "+s", L("inhibit_scroll"))
+
+-- Wheel: tape +/- column, master stack. ALT because M4+wheel is workspaces and
+-- M4+C+wheel is kitty font zoom. mouse_down (wheel up) = next, like M4+wheel = e+1.
+hl.bind(M1 .. "+mouse_down", L("move +col", "cyclenext"), { repeating = true })
+hl.bind(M1 .. "+mouse_up",   L("move -col", "cycleprev"), { repeating = true })
+
+-- --- Window, width, tape fine-scroll (M4+CTRL) ---
+-- Move the focused window: j/k inside its column/stack (moveTargetTo -> column->up()/down()),
+hl.bind(M4 .. "+" .. C .. "+j", hl.dsp.window.move({ direction = "d" }))
+hl.bind(M4 .. "+" .. C .. "+k", hl.dsp.window.move({ direction = "u" }))
+-- left/right are covered by M4+o (expel: window into its own column) and M4+i (consume).
+
+-- Column width by digit = "how many columns per screen": 1 = full width, 2 = half,
+-- 3 = a third, 4 = a quarter. On master the same digit becomes the master share (mfact).
+local widthPresets = { "1.0", "0.5", "0.333", "0.25" }
+for i, w in ipairs(widthPresets) do
+  hl.bind(M4 .. "+" .. C .. "+" .. tostring(i), L("colresize " .. w, "mfact exact " .. w))
+end
+
+-- Fine tape scroll, 5% per step (repeating): peek at the far edge of a wide column.
+hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+bracketleft",  L("move -0.05"), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+bracketright", L("move +0.05"), { repeating = true })
+
+-- Column granularity: with >1 window, push the focused one into its own column;
+-- with a single window, merge it into the neighbouring column (prev/next).
+hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+j", L("consume_or_expel prev"))
+hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+k", L("consume_or_expel next"))
+
 hl.bind(M4 .. "+left", hl.dsp.focus({ direction = "left" }))
 hl.bind(M4 .. "+right", hl.dsp.focus({ direction = "right" }))
 
+-- Vim-style focus (hy3 era: M4+hjkl -> movefocus l/d/u/r; hy3 died with 0.56, the core
+-- does the same via hl.dsp.focus). On the tape left/right is the neighbouring column
+-- and up/down is a window inside the column.
+hl.bind(M4 .. "+h", hl.dsp.focus({ direction = "left" }))
+hl.bind(M4 .. "+j", hl.dsp.focus({ direction = "down" }))
+hl.bind(M4 .. "+k", hl.dsp.focus({ direction = "up" }))
+hl.bind(M4 .. "+l", hl.dsp.focus({ direction = "right" }))
+-- Arrows: the same focus for non-vim hands (previously only left/right existed)
+hl.bind(M4 .. "+up",   hl.dsp.focus({ direction = "up" }))
+hl.bind(M4 .. "+down", hl.dsp.focus({ direction = "down" }))
+
 -- Terminal columns start narrow (other windows use the 0.6 default)
 hl.window_rule({ name = "scrolling-term-width", match = { class = "^(term|nwim)$" }, scrolling_width = 0.5 })
+-- Per-app column widths: video/pictures/DAW/VDI only read well at full width, chats
+-- want a narrow strip and the browser a bit under the default. Matchers come from cls.
+hl.window_rule({ name = "scrolling-video-width",  match = { class = cls.vid },    scrolling_width = 1.0 })
+hl.window_rule({ name = "scrolling-pic-width",    match = { class = cls.pic },    scrolling_width = 1.0 })
+hl.window_rule({ name = "scrolling-doc-width",    match = { class = cls.doc },    scrolling_width = 1.0 })
+hl.window_rule({ name = "scrolling-daw-width",    match = { class = cls.daw },    scrolling_width = 1.0 })
+hl.window_rule({ name = "scrolling-vital-width",  match = { class = cls.vital },  scrolling_width = 1.0 })
+hl.window_rule({ name = "scrolling-remote-width", match = { class = cls.remote }, scrolling_width = 1.0 })
+hl.window_rule({ name = "scrolling-web-width",    match = { class = cls.web },    scrolling_width = 0.55 })
+hl.window_rule({ name = "scrolling-im-width",     match = { class = cls.im },     scrolling_width = 0.4 })
 
 -- =====================================================================
 -- Animations
