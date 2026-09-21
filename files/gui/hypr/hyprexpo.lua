@@ -70,9 +70,9 @@ hl.config({
       -- plugin accepts as "rgba(...) rgba(...) <deg>" (parseGradientSpec). Corners
       -- stay square because the desktop itself runs border_size = 0, rounding = 0
       -- (hyprland.lua); tile_rounding = 8 would make rounded cards instead.
-      -- 2px is 4 physical pixels at scale 2 — the same thin weight as the rest of the
-      -- desktop's hairlines.
-      border_width = 2,
+      -- 4px is 8 physical pixels at scale 2: a deliberate frame around the state tiles,
+      -- not a hairline (the desktop itself draws no borders at all).
+      border_width = 4,
       border_color = "rgba(1c334eff)",     -- unused for idle tiles (see above)
       border_color_hover = "rgba(367cb0ff)", -- ops1: quiet, the pointer is enough
       border_color_current = "rgba(005fafff) rgba(367cb0ff) 45deg", -- ops3 -> ops1
@@ -87,7 +87,7 @@ hl.config({
       drag_drop_proxy_color = "rgba(005faf24)",
       drag_drop_proxy_active_color = "rgba(367cb03d)",
       drag_drop_proxy_border_color = "rgba(005fafff)",
-      drag_drop_proxy_border_width = 2,
+      drag_drop_proxy_border_width = 4,
       drag_drop_proxy_rounding = 0,
 
       -- Labels: the terminal font, text in the palette's whites, selection tokens in
