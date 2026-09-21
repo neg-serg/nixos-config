@@ -24,12 +24,20 @@
 hl.config({
   plugin = {
     hyprexpo = {
-      -- Upstream quick-start values (docs/getting-started/quick-start), no look
-      -- overrides: the demo look *is* the default one. Earlier revisions of this
-      -- file reinvented it (near-black bg_col, transparent borders, zero rounding)
-      -- and the overview came out as a dark field where a tile was hard to tell
-      -- from the background; every knob below is deliberately the shipped default.
-      columns = 3,
+      -- The grid, with workspace names on the tiles and the wallpaper behind them:
+      -- the combination upstream documents for this ("For a dynamic grid with
+      -- workspace labels and a wallpaper background", docs/configuration/options).
+      -- dynamic_grid sizes the grid from the workspaces that exist instead of
+      -- counting columns, so the layout follows the desktop rather than a fixed 3x3.
+      dynamic_grid = 1,
+      fill_gaps = 0,
+      mru_sort = 0,
+      show_workspace_names = 1,
+      label_pos = "top_right",
+      label_size = 48,
+      wallpaper_bg = 1,
+
+      columns = 3, -- only bounds the grid when dynamic_grid is off
       gaps_in = 5,
       gaps_out = 0,
       bg_col = "rgb(111111)",
