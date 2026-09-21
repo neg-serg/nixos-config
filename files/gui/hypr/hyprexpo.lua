@@ -24,44 +24,30 @@
 hl.config({
   plugin = {
     hyprexpo = {
-      columns = 3, -- tiles per row
-      rows = 0, -- follow columns (square grid)
-      gaps_in = 8,
-      gaps_out = 24, -- keep the grid off the screen edges, or it reads as one field
-      bg_col = "rgb(0d0d0d)",
-      -- Draw the wallpaper behind the tiles. Off (the plugin's default) the whole
-      -- overview is the flat bg_col above, and since most of this desktop is dark
-      -- windows on a dark backdrop, opening it looked like a black screen with a
-      -- single thumbnail in it. With the wallpaper drawn the grid reads as the
-      -- desktop itself, and the window previews sit on top of it.
-      wallpaper_bg = 1,
+      -- Upstream quick-start values (docs/getting-started/quick-start), no look
+      -- overrides: the demo look *is* the default one. Earlier revisions of this
+      -- file reinvented it (near-black bg_col, transparent borders, zero rounding)
+      -- and the overview came out as a dark field where a tile was hard to tell
+      -- from the background; every knob below is deliberately the shipped default.
+      columns = 3,
+      gaps_in = 5,
+      gaps_out = 0,
+      bg_col = "rgb(111111)",
       workspace_method = "center current",
 
-      show_cursor = 1,
+      -- Keys the overview itself handles; the rest of its keybinds (arrows,
+      -- return, escape, tile selection, the left button) live in the `hyprexpo`
+      -- submap in hyprland.lua — the plugin enters it while the overview is open.
       cancel_key = "escape",
+      show_cursor = 1,
       keynav_enable = 1,
-      number_key_mode = "workspace", -- number keys pick global workspace IDs
-      skip_empty = 0, -- empty workspaces stay selectable (drag targets)
-      max_workspace = 0, -- 0 = Hyprland's own workspace selector
-      show_pinned_windows = 0, -- keep PiP out of the thumbnails only
-      -- Workspace number chip per tile. Without it the tiles are unlabelled and
-      -- an empty one is indistinguishable from a tile whose preview failed.
-      show_workspace_numbers = 1,
+      number_key_mode = "workspace", -- digits pick global workspace IDs
+      keynav_wrap_h = 1,
+      keynav_wrap_v = 1,
+      keynav_reading_order = 0,
 
-      -- Frameless/zero-rounding look, matching the compositor's own style. The
-      -- borders are no longer transparent: a tile edge has to be visible over the
-      -- wallpaper, otherwise the previews bleed into each other.
-
-      tile_rounding = 0,
-      tile_rounding_power = 2.0,
-      border_width = 2,
-      border_color = "rgba(00285999)",
-      border_color_current = "rgba(0074d9cc)",
-      border_color_focus = "rgba(0074d999)",
-      border_color_hover = "rgba(4da3ffb3)",
-
-      -- Follow-your-finger swipe. direction = vertical: the 3-finger
-      -- horizontal swipe is already an hl.gesture() workspace bind.
+      -- Follow-your-finger swipe. direction = vertical: the 3-finger horizontal
+      -- swipe is already an hl.gesture() workspace bind.
       gesture_fingers = 3,
       gesture_direction = "vertical",
       gesture_distance = 200,
