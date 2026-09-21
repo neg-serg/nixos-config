@@ -253,6 +253,10 @@ end
 -- --- Top-level binds (bindings.conf) ---
 -- Use "all" (not "current"): kanata's virtual keyboard is the last active
 -- device, so "current" switches only it and the bar/typing layouts diverge.
+-- Keyboard layout switch. "S" here == "s": the Lua parser calls xkb_keysym_from_name
+-- with XKB_KEYSYM_CASE_INSENSITIVE, so an uppercase letter does NOT add SHIFT.
+-- M4+s is therefore off limits (2026-09-21: an inhibit_scroll bind sat here and
+-- broke layout switching).
 hl.bind(M4 .. "+S", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
 
@@ -540,7 +544,9 @@ hl.define_submap("music", "reset", function()
   hl.bind("space", hl.dsp.exec_cmd("mpc toggle"))
   hl.bind("s", hl.dsp.exec_cmd("mpc stop"))
   hl.bind("n", hl.dsp.exec_cmd("mpc next"))
-  hl.bind("N", hl.dsp.exec_cmd("mpc prev"))
+  -- "N"/"R"/"U" used to be dead: keysyms resolve case-insensitively (parser and matcher),
+  -- i.e. "N" == "n" with no SHIFT in the modmask. Shift is explicit now.
+  hl.bind(SH .. "+n", hl.dsp.exec_cmd("mpc prev"))
   hl.bind("comma", hl.dsp.exec_cmd("mpc prev"))
   hl.bind("period", hl.dsp.exec_cmd("mpc next"))
   hl.bind("b", hl.dsp.exec_cmd("mpc seek -10"), { repeating = true })
@@ -552,9 +558,9 @@ hl.define_submap("music", "reset", function()
   hl.bind("z", hl.dsp.exec_cmd("mpc repeat"))
   hl.bind("r", hl.dsp.exec_cmd("mpc random"))
   hl.bind("y", hl.dsp.exec_cmd("mpc single"))
-  hl.bind("R", hl.dsp.exec_cmd("mpc consume"))
+  hl.bind(SH .. "+r", hl.dsp.exec_cmd("mpc consume"))
   hl.bind("u", hl.dsp.exec_cmd("mpc update"))
-  hl.bind("U", hl.dsp.exec_cmd("mpc rescan"))
+  hl.bind(SH .. "+u", hl.dsp.exec_cmd("mpc rescan"))
   hl.bind("e", hl.dsp.exec_cmd('raise --match "class:regex=^(euphonica|io\\.github\\.htkhiem\\.Euphonica)$" --launch "euphonica"'))
 end)
 
@@ -640,7 +646,10 @@ hl.bind(M4 .. "+i",     L("consume"))      -- pull the first window of the next 
 hl.bind(M4 .. "+o",     L("expel"))        -- push the column's last window out into a column of its own
 hl.bind(M4 .. "+z",     L("center"))       -- recentre the focused column
 -- scroll lock: the tape stays put while focus moves (pairs with follow_focus = true).
-hl.bind(M4 .. "+s", L("inhibit_scroll"))
+hl.bind(M4 .. "+" .. C .. "+s", L("inhibit_scroll"))
+-- IMPORTANT: M4+s belongs to the layout switch (M4+S in this file is the same keysym:
+-- xkb_keysym_from_name with XKB_KEYSYM_CASE_INSENSITIVE), so anything that could have
+-- landed there lives on the M4+CTRL layer instead.
 
 -- Wheel: tape +/- column, master stack. ALT because M4+wheel is workspaces and
 -- M4+C+wheel is kitty font zoom. mouse_down (wheel up) = next, like M4+wheel = e+1.
