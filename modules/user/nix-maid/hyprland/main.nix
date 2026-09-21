@@ -145,7 +145,9 @@ let
         cursor_y="$("$hyprctl_bin" cursorpos 2> /dev/null | cut -d, -f2 | tr -dc '0-9')"
         monitor_h="$("$hyprctl_bin" -j monitors 2> /dev/null | tr ',' '\n' | grep -m1 '"height"' | tr -dc '0-9')"
         if [ -n "''${cursor_y:-}" ] && [ -n "''${monitor_h:-}" ] && [ "$cursor_y" -ge "$((monitor_h - 40))" ]; then
-          exec "$0" toggle
+          # Bar zone: never pick a tile here. The click belongs to the shell (the
+          # workspace capsule toggles the overview); the plugin stays out of it.
+          exit 0
         fi
         "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("select")'
         ;;
