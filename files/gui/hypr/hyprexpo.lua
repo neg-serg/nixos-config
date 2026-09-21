@@ -55,6 +55,12 @@ hl.config({
       -- Keys the overview itself handles; the rest of its keybinds (arrows,
       -- return, escape, tile selection, the left button) live in the `hyprexpo`
       -- submap in hyprland.lua — the plugin enters it while the overview is open.
+      -- The fork handles the mouse itself (drag-drop window movement): a press in
+      -- the overview picks the tile under the cursor, so the very click that opens
+      -- the overview also jumped to whichever workspace sat under the pointer ("it
+      -- switches me to dev again"). Off: the overview is driven by the keyboard
+      -- (arrows/return/escape and the submap), clicks no longer move you anywhere.
+      drag_drop_enable = 0,
       cancel_key = "escape",
       show_cursor = 1,
       keynav_enable = 1,
