@@ -136,6 +136,17 @@ let
         # Deliberately no plugin load here — a plain click must not pull the plugin
         # in (and the action is a no-op while the overview is closed, so the bind
         # can sit on the plain button).
+        #
+        # A click that lands on the bar belongs to the shell: the workspace capsule
+        # toggles the overview, and a tile under the bar's position is not what the
+        # pointer is aiming at. Without this split the click both closed the
+        # overview (through the capsule) and jumped to the tile sitting under the
+        # bar — reported as "it switches me to dev again".
+        cursor_y="$("$hyprctl_bin" cursorpos 2> /dev/null | cut -d, -f2 | tr -dc '0-9')"
+        monitor_h="$("$hyprctl_bin" -j monitors 2> /dev/null | tr ',' '\n' | grep -m1 '"height"' | tr -dc '0-9')"
+        if [ -n "''${cursor_y:-}" ] && [ -n "''${monitor_h:-}" ] && [ "$cursor_y" -ge "$((monitor_h - 40))" ]; then
+          exec "$0" toggle
+        fi
         "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("select")'
         ;;
       *)
