@@ -1,0 +1,58 @@
+diff -ruN a/HyprexpoConfig.hpp b/HyprexpoConfig.hpp
+--- a/HyprexpoConfig.hpp	2026-09-21 13:24:15.543352756 +0300
++++ b/HyprexpoConfig.hpp	2026-09-21 13:24:15.549352691 +0300
+@@ -18,6 +18,9 @@
+ inline constexpr int         LEGACY_ENABLE_DRAG_MOVE_DEFAULT     = 0;
+ inline constexpr int         LEGACY_ANIMATE_ENTRY_DEFAULT        = 0;
+ inline constexpr int         WALLPAPER_BG_DEFAULT                = 0;
++// Packaged patch: 1 = always draw the workspace grid, even on workspaces that use
++// Hyprland's native scrolling layout (upstream sends those to its scrolling overview).
++inline constexpr int         GRID_OVERVIEW_DEFAULT            = 1;
+ inline constexpr std::size_t DYNAMIC_GRID_MAX_TILES              = 64;
+ 
+ inline constexpr int         COLUMNS_DEFAULT                 = 3;
+diff -ruN a/IOverviewSession.cpp b/IOverviewSession.cpp
+--- a/IOverviewSession.cpp	2026-09-21 13:24:15.543352756 +0300
++++ b/IOverviewSession.cpp	2026-09-21 13:24:15.562352550 +0300
+@@ -1,5 +1,7 @@
+ #include "IOverviewSession.hpp"
+ 
++#include "HyprlandConfigCompat.hpp"
++
+ #include "Overview.hpp"
+ #include "ScrollingLayoutAdapter.hpp"
+ #include "ScrollingOverview.hpp"
+@@ -27,7 +29,21 @@
+     static std::atomic<uint64_t> nextGeneration = 1;
+     const uint64_t generation = nextGeneration.fetch_add(1, std::memory_order_relaxed);
+ 
+-    const bool detectedScrolling = Hyprexpo::Scrolling::workspaceUsesScrollingLayout(startedOn);
++    // Packaged patch (modules/user/nix-maid/hyprland/hyprexpo-grid-overview.patch).
++    // Upstream routes workspaces that use Hyprland's native scrolling layout to its
++    // scrolling overview (a strip of columns) and everything else to the grid. With
++    // plugin:hyprexpo:grid_overview = 1 the grid is used for every workspace: the
++    // layout itself is untouched, only what the overview draws.
++    // The value has to be read through the fork's own accessor: this file does not
++    // alias HyprlandAPI to CompatHyprlandAPI (only Overview/OverviewRender/
++    // OverviewInteraction.cpp do), so HyprlandAPI::getConfigValue() here is the real
++    // Hyprlang one — and for the plugin's CIntValue registrations its
++    // getDataStaticPtr() returns a pointer to the *value*, not to a pointer. Reading
++    // it as (**ptr) took the compositor down with a SEGV in this very function
++    // (+0xc2) the moment the overview was opened; reproduced in a nested 0.56.2 with
++    // a scrolling-layout workspace and fixed by going through intValue() below.
++    const bool forceGrid         = CompatHyprlandAPI::intValue("plugin:hyprexpo:grid_overview") != 0;
++    const bool detectedScrolling = !forceGrid && Hyprexpo::Scrolling::workspaceUsesScrollingLayout(startedOn);
+     if (detectedScrolling) {
+         const auto snapshot = Hyprexpo::Scrolling::snapshotWorkspace(startedOn);
+         const bool emptyScrolling = startedOn && startedOn->getWindowCount() <= 0 && snapshot.failure == Hyprexpo::Scrolling::ESnapshotFailure::MissingScrollingData;
+diff -ruN a/PluginConfig.cpp b/PluginConfig.cpp
+--- a/PluginConfig.cpp	2026-09-21 13:24:15.544352745 +0300
++++ b/PluginConfig.cpp	2026-09-21 13:24:15.549352691 +0300
+@@ -28,6 +28,7 @@
+ 
+ void registerHyprexpoConfigValues() {
+     addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:dynamic_grid", "legacy dynamic grid toggle", HyprexpoConfig::LEGACY_DYNAMIC_GRID_DEFAULT));
++    addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:grid_overview", "draw the workspace grid even for scrolling-layout workspaces (0 = upstream scrolling overview)", HyprexpoConfig::GRID_OVERVIEW_DEFAULT));
+     addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:fill_gaps", "legacy gap filling toggle", HyprexpoConfig::LEGACY_FILL_GAPS_DEFAULT));
+     addConfigValue(makeShared<Config::Values::CIntValue>("plugin:hyprexpo:mru_sort", "legacy mru sorting toggle", HyprexpoConfig::LEGACY_MRU_SORT_DEFAULT));
+     addConfigValue(makeShared<Config::Values::CColorValue>("plugin:hyprexpo:active_highlight_col", "legacy active tile highlight color", HyprexpoConfig::LEGACY_ACTIVE_HIGHLIGHT_COL_DEFAULT));
