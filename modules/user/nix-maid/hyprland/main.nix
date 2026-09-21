@@ -111,8 +111,11 @@ let
         printf '%s toggle caller=%s\n' "$(date +%T.%3N)" "''${caller:-?}" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
         if [ -r "$stamp" ]; then
           prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
-          # 600 ms, not 250: a human press-release pair on the capsule can be that
-          # long, and the release path toggles a second time.
+          # 600 ms, not 250: the log showed one capsule click can arrive as two toggles
+          # (and the gap can be a few hundred milliseconds), so the window is a cheap
+          # safety margin. It is not the fix for the "opens and comes right back"
+          # report — that one came from the plugin's own mouse hook and is patched in
+          # hyprexpo-click-swallow.patch; the log line above is what told the two apart.
           if [ "$((now_ms - prev_ms))" -lt 600 ]; then
             printf '%s toggle swallowed (%s ms after the previous one)\n' "$(date +%T.%3N)" "$((now_ms - prev_ms))" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
             exit 0
