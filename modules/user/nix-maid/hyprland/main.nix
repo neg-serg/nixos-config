@@ -142,6 +142,21 @@ let
         # pointer is aiming at. Without this split the click both closed the
         # overview (through the capsule) and jumped to the tile sitting under the
         # bar — reported as "it switches me to dev again".
+        #
+        # Second half of the same story: the click that *opened* the overview comes
+        # back as a select a few milliseconds later (the release of the capsule click
+        # lands on the overview that is now covering the screen), which selects the
+        # tile under the pointer and closes the overview again — "it opens and returns
+        # back on its own". The toggle branch stamps every toggle in
+        # $XDG_RUNTIME_DIR/hypr-expo-last-toggle; reuse that stamp as a swallow window
+        # so the click that opened the overview can never be read back as a choice.
+        stamp="''${XDG_RUNTIME_DIR:-/tmp}/hypr-expo-last-toggle"
+        now_ms=$(date +%s%3N)
+        prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
+        if [ "$((now_ms - prev_ms))" -lt 350 ]; then
+          printf '%s select swallowed (toggle %s ms ago)\n' "$(date +%T)" "$((now_ms - prev_ms))" >> /tmp/hypr-expo-select.log 2> /dev/null || true
+          exit 0
+        fi
         cursor_xy="$("$hyprctl_bin" cursorpos 2> /dev/null | tr -d ' ')"
         cursor_x="''${cursor_xy%%,*}"
         cursor_y="''${cursor_xy##*,}"
