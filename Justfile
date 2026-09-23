@@ -236,6 +236,22 @@ systemd-status:
     echo "== recent user journal =="
     journalctl --user -b -n 120 --no-pager || true
 
+# AppArmor: what is loaded, in which mode, and what this boot denied.
+# Denials in "complain" mode are informational (the daemon was allowed);
+# they are the list of rules to add before flipping a daemon to enforce.
+# See docs/howto/apparmor.md.
+apparmor-status:
+    set -eu
+    systemctl status apparmor.service --no-pager | head -12 || true
+    aa-status || true
+
+# AppArmor denials for this boot, optionally filtered by daemon name
+# (`grep -i ""` matches everything — just forbids deeper indentation inside a
+# recipe). Complain-mode denials are the list of rules to add before enforcing.
+apparmor-denials daemon="":
+    set -eu
+    journalctl -b --no-pager --grep 'apparmor="DENIED"' | grep -i "{{daemon}}" || true
+
 clean-caches:
     set -eu
     repo=$(git rev-parse --show-toplevel)
