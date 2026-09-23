@@ -66,7 +66,11 @@ _exists nvim && {
 
 # Initialize zoxide (smarter cd) if available
 if (( $+commands[zoxide] )); then
-  eval "$(zoxide init zsh --no-cmd --hook prompt)"
+  # `--hook pwd`, not `prompt`: the prompt hook runs on every precmd and showed up
+  # as ~3 ms per command in zprof (2026-09-23). `pwd` puts __zoxide_hook into
+  # chpwd_functions instead — the directory is recorded when it changes, which is
+  # all the `z` ranking needs.
+  eval "$(zoxide init zsh --no-cmd --hook pwd)"
   alias z='__zoxide_z'
 fi
 
@@ -116,7 +120,11 @@ autoload -Uz chpwd
 autoload -Uz zcompare
 autoload -Uz h
 zle_highlight=(region:bg=228 paste:none)
-_zpcompinit_custom   # run compinit eagerly so completion/fuzzy matchers init before widgets
+# Deferred: completions are needed only once something actually completes, and this
+# task is queued before the 02-cmds… group (zsh-defer is loaded earlier in .zshrc),
+# so 03-completion.zsh still sources carapace when compdef exists. Nothing eager —
+# widgets, key bindings, the prompt — touches the completion system.
+zsh-defer _zpcompinit_custom
 zsh-defer dircolors_init
 
 # fastfetch: animated random-variant black-metal blizzard logo (kitty graphics protocol)
