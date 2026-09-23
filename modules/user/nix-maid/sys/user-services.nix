@@ -171,6 +171,16 @@ lib.mkIf (cfg.enable or false) {
         # The default NixOS user-service PATH has only coreutils/grep/sed —
         # the script also needs awk/podman/docker/genlc/lsusb/ss/sudo.
         ExecStart = "${lib.getExe pkgs.bash} %h/.local/bin/glm-adapter auto";
+        # The script starts the container itself (`podman start`), and rootless
+        # podman's transient libpod-*.scope is nested under *this* service's
+        # cgroup. With the default KillMode=control-group systemd reaps that
+        # whole subtree the moment the oneshot exits: the guest reached
+        # "Windows started successfully", then got SIGTERM 16 s after start and
+        # dockur logged "QEMU exited unexpectedly" — for hours, every 60 s.
+        # windows-vm.service survives the same start only because
+        # RemainAfterExit=yes keeps its cgroup alive, which is why the manual
+        # `systemctl --user restart windows-vm` path always worked.
+        KillMode = "process";
         Environment = [
           "PATH=/run/wrappers/bin:/run/current-system/sw/bin:/home/neg/.local/bin:/usr/bin:/bin"
         ];
