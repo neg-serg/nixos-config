@@ -192,6 +192,21 @@ while the MIDI bridge kept a dead connection) — rate-limited to three restarts
 restart. Placement check: `glm-adapter status` → `VM: adapter attached (1)`, which on the host means
 the adapter interface carries the `usbfs` driver.
 
+### Attached is not the same as working
+
+`glm-adapter status` can report `VM: adapter attached (1)` and `verify` can show the MIDI bridge
+connected while GLM inside the guest draws **OFFLINE** for every monitor — seen 2026-09-23 after an
+`attach` that had unbound `usbhid` under a running QEMU: the guest kept the adapter on its USB bus,
+but GLM never got the monitors back, so every volume/mute the bar sent went nowhere and the
+monitors stayed silent while PipeWire kept feeding AES. The OCR check is the only thing that sees
+this state — `glm-adapter status --glm` → `GLM in the VM shows OFFLINE` (it renders the guest screen
+at 2x for exactly this reason) — and `attach` declines it with "adapter already inside the VM".
+
+Cure: a fresh QEMU claim, i.e. the restart path above — `glm-adapter replug` (shares the lock, the
+hourly budget and the Telegram notify with `auto`). Once the guest is back, re-send the volume the
+bar displays (`glm-midi volume <dB>`): GLM boots with its own last value, which can differ from the
+widget's stored one, and the widget re-anchors only when the control path flips.
+
 The stop has to be *finished* before the start, not just returned: `podman stop` returns as soon as
 the container is dead, while its rootfs teardown (fuse-overlayfs unmount, conmon reap) is still
 running. A `start` landing in that window pulls the merged dir out from under the fresh QEMU and
