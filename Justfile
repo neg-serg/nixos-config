@@ -187,6 +187,10 @@ docs-guard:
       git diff --stat -I 'Generated: [0-9]' -- docs/codebase.md docs/howto/modules.md >&2
       exit 1
     fi
+    # The check above ignores the timestamp, but regenerating rewrites it, which
+    # would leave the tree dirty after a guard run that passed. Drop that one
+    # line's change; anything else would have failed the check already.
+    git checkout -- docs/codebase.md 2>/dev/null || true
     echo "generated docs are fresh"
 
 # Update the flake lock (all inputs)
