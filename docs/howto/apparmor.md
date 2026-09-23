@@ -125,7 +125,7 @@ test failed without them.
 ## VM test
 
 ```sh
-nix build --impure --file tests/apparmor-enforce.nix -L
+just apparmor-test
 ```
 
 Boots a throwaway VM with all eight profiles in `enforce` and asserts: every profile loaded and
@@ -135,3 +135,11 @@ an aria2 JSON-RPC call, an SSH login **and** session command, and no `DENIED` li
 session daemons run as a normal user in the test, the way they do on the host, so a capability they
 would only want as root cannot mask a real gap. This is the place to try a risky rule — a broken
 profile fails the test, not the host.
+
+The recipe carries the two flags the file needs and nothing else does:
+
+- `--offline` — the whole closure comes from the local store. Without it nix stops on the binary
+  caches' narinfo lookups, which answer with a TLS EOF from this network, so the run looks hung for
+  minutes per store path instead of failing.
+- `--no-link` — the run never touches `./result`, which is the *host* deployment link the switch
+  scripts read (`readlink -f result`).
