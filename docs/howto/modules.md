@@ -1417,6 +1417,44 @@ true
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.solaMpd.enable
+
+Whether to enable enable Sola MPD (browser MPD client: backend + web UI).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.solaMpd.port
+
+Loopback port the Sola MPD backend listens on.
+
+*Type:* 16 bit unsigned integer; between 0 and 65535 (both inclusive)
+
+*Default:*
+
+```nix
+3010
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.speech.enable
 
 Whether to enable enable local speech stack (Chatterbox TTS :8300, Piper TTS :8001, whisper.cpp STT
@@ -1785,6 +1823,221 @@ true
 *Declared by:*
 
 - [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
+
+## features.security.apparmor.enable
+
+Whether to enable AppArmor confinement for network-facing daemons (sshd, unbound, AdGuard Home,
+ntfy, avahi, sing-box, transmission, aria2).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.adguardhome
+
+AppArmor state for the adguardhome profile: disable (not loaded at all), complain (denials are
+logged but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this
+profile in complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.aria2
+
+AppArmor state for the aria2 profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.avahi
+
+AppArmor state for the avahi profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.ntfy
+
+AppArmor state for the ntfy profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.singbox
+
+AppArmor state for the sing-box profile: disable (not loaded at all), complain (denials are logged
+but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.sshd
+
+AppArmor state for the sshd profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.transmission
+
+AppArmor state for the transmission profile: disable (not loaded at all), complain (denials are
+logged but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this
+profile in complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
+## features.security.apparmor.unbound
+
+AppArmor state for the unbound profile: disable (not loaded at all), complain (denials are logged
+but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
+
+*Type:* one of “disable”, “complain”, “enforce”
+
+*Default:*
+
+```nix
+"complain"
+```
+
+*Example:*
+
+```nix
+"enforce"
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
 ## features.security.tpmSudo.enable
 

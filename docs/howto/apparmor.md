@@ -1,16 +1,30 @@
-# AppArmor — confining the LAN-facing daemons
+# AppArmor — confining the network-facing daemons
 
 AppArmor is enabled system-wide (`security.apparmor`), but nothing was confined: the shipped profile
 sets attach to `/usr/sbin/*` and never match a Nix store binary. `modules/security/apparmor.nix`
-closes that gap for four daemons, with profiles **generated from each daemon's own package closure**
-(`pkgs.apparmorRulesFromClosure`) so every file rule points at a real store path.
+closes that gap for eight daemons, with profiles **generated from each daemon's own package
+closure** (`pkgs.apparmorRulesFromClosure`) so every file rule points at a real store path.
 
-| Daemon       | Attaches to                       | State option                             | Default    |
-| ------------ | --------------------------------- | ---------------------------------------- | ---------- |
-| sshd         | `…-openssh-*/bin/sshd`            | `features.security.apparmor.sshd`        | `complain` |
-| unbound      | `…-unbound-*/bin/unbound`         | `features.security.apparmor.unbound`     | `complain` |
-| AdGuard Home | `…-adguardhome-*/bin/AdGuardHome` | `features.security.apparmor.adguardhome` | `complain` |
-| ntfy-sh      | `…-ntfy-sh-*/bin/ntfy`            | `features.security.apparmor.ntfy`        | `complain` |
+The first five are system units; the last three are session services (`user@1000`), which have no
+unit hardening of their own — for them the profile is the only boundary.
+
+| Daemon       | Attaches to                       | State option                              | Default    |
+| ------------ | --------------------------------- | ----------------------------------------- | ---------- |
+| sshd         | `…-openssh-*/bin/sshd`            | `features.security.apparmor.sshd`         | `complain` |
+| unbound      | `…-unbound-*/bin/unbound`         | `features.security.apparmor.unbound`      | `complain` |
+| AdGuard Home | `…-adguardhome-*/bin/AdGuardHome` | `features.security.apparmor.adguardhome`  | `complain` |
+| ntfy-sh      | `…-ntfy-sh-*/bin/ntfy`            | `features.security.apparmor.ntfy`         | `complain` |
+| avahi        | `…-avahi-*/bin/avahi-daemon`      | `features.security.apparmor.avahi`        | `complain` |
+| sing-box     | `…-sing-box-*/bin/sing-box`       | `features.security.apparmor.singbox`      | `complain` |
+| transmission | `…-transmission-*/bin/…-daemon`   | `features.security.apparmor.transmission` | `complain` |
+| aria2        | `…-aria2-*/bin/aria2c`            | `features.security.apparmor.aria2`        | `complain` |
+
+A profile attaches to the executable path, so a session service is confined exactly like a system
+one — but note that one binary can back two units: `sing-box` is both the user SOCKS proxy and the
+system `sing-box-tun` service, and a single profile covers both. The path in the profile is the
+*resolved* one: `avahi-daemon` is exec'd as `…-avahi-0.8/sbin/avahi-daemon`, but `sbin/` is a
+symlink to `bin/`, so the profile attaches to `…/bin/avahi-daemon` (same reason a rule for `/etc/x`
+needs the store target behind the symlink — see below).
 
 States are per daemon: `disable` (no profile at all), `complain` (denials are logged, nothing is
 blocked), `enforce` (denials are blocked). The flag itself is `features.security.apparmor.enable`,
@@ -38,7 +52,14 @@ Two details that bite on NixOS:
   `/etc/ssh/sshd_config` alone does not match `…-sshd.conf-final`. The module resolves those targets
   itself (the `etcFiles` field per daemon, mirroring nixpkgs'
   `nixos/modules/security/apparmor/includes.nix`); the shipped abstractions already do it for
-  `passwd`/`group`/`hosts`/`resolv.conf`/`pam.d/*`.
+  `passwd`/`group`/`hosts`/`resolv.conf`/`pam.d/*`. A name ending in `/` expands to every entry
+  below it (`avahi/services/`), since each service file is its own store path.
+- **The home directory is a symlink farm too.** nix-maid publishes managed files as store symlinks,
+  so a rule for `~/.config/aria2/aria2.conf` does not match the file the daemon actually opens. The
+  `homeFiles` field resolves those paths out of `users.users.<user>.maid.file.home` — again no
+  `/nix/store` wildcards, and the rule follows the generation on every switch. This is what makes
+  these two daemons enforceable: without it transmission would read no `settings.json` and fall back
+  to default dirs, ports and RPC port.
 - **The roddhjav profile set must stay off the include path.** Its `abstractions/crypto.d/complete`
   is pulled in by apparmor-profiles' `include if exists <abstractions/crypto.d>` and uses `@{lib}`,
   which Debian/Ubuntu provide in `tunables/multiarch.d/system` and NixOS does not. With it on the
