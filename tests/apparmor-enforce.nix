@@ -1,8 +1,11 @@
 # Standalone NixOS VM test for modules/security/apparmor.nix.
 #
 # Run (on-demand, not wired into flake checks — it boots a VM):
-#   nix build --impure --file tests/apparmor-enforce.nix
-#   nix build --impure --file tests/apparmor-enforce.nix -L   # live log
+#   just apparmor-test
+#
+# The recipe adds the two flags this file needs and nothing else does: --offline
+# (the closure is local; without it nix stalls on the caches' narinfo lookups)
+# and --no-link (never clobber the host's ./result).
 #
 # Documented in docs/howto/apparmor.md. All eight profiles run in "enforce"
 # here (the repo ships them in "complain"), so a profile that is too tight
