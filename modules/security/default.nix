@@ -109,6 +109,10 @@ in
       extraConfig = ''
         Defaults timestamp_timeout = 15 # makes sudo ask for password less often
         Defaults passprompt="🔐 "
+        # Run the command in a new pty: without it the command inherits the
+        # caller's terminal and can push input back into it (TIOCSTI) to fake
+        # keystrokes in the shell that comes back after sudo exits.
+        Defaults use_pty
       '';
       extraRules = [
         {
