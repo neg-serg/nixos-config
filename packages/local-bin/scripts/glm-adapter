@@ -340,7 +340,7 @@ vm_unhealthy() {
 vm_restart() {
   local now recent i why okmsg
   why="${1:-адаптер не в VM}"
-  okmsg="${2:-ok, адаптер в VM}"
+  okmsg="${2:-адаптер в VM}"
   mkdir -p "$STATE_DIR"
   # One restart at a time: the 60 s timer and a manual `glm-adapter attach` can
   # otherwise run two stop/start sequences on the same container — the very race
@@ -360,11 +360,11 @@ vm_restart() {
   fi
   if [ "$recent" -ge "$RESTART_MAX_PER_HOUR" ]; then
     warn "VM restart suppressed: $recent restarts within the last hour"
-    notify_once "suppressed" firing "$recent рестарта за час → не трогаю ($why)"
+    notify_once "suppressed" firing "авто-лечение на паузе: $recent рестартов за час (лимит $RESTART_MAX_PER_HOUR), ВМ сейчас НЕ поднимаю. Состояние: $why. Руками: systemctl --user restart windows-vm"
     return 1
   fi
   warn "restarting VM '$CT' ($why)"
-  notify firing "рестарт: $why"
+  notify firing "поднимаю ВМ: $why"
   echo "$now" >> "$RESTART_LOG"
   # stop + start, not `podman restart`: an automatic restart was followed by a
   # container with only `lo` inside and an empty route table (no pasta tap, no
@@ -377,7 +377,7 @@ vm_restart() {
     warn "VM did not come back up — retrying the restart once"
     if ! vm_cycle; then
       fail "container '$CT' is not up with the adapter attached after two restarts (podman logs windows)"
-      notify_once "failed" firing "рестарт не помог: $why"
+      notify_once "failed" firing "ВМ не поднялась после двух рестартов: $why. Смотреть: podman logs $CT"
       return 1
     fi
   fi
@@ -520,7 +520,7 @@ cmd_auto() {
       return 0
     fi
     warn "VM '$CT' is Up but 127.0.0.1:3389 does not answer — the host-side plumbing is gone"
-    if vm_restart "RDP мёртв → обвязка pasta умерла" "ok, pasta поднят, Windows грузится"; then
+    if vm_restart "гость Up, но 3389 не отвечает — обвязка pasta умерла" "ВМ поднята: pasta снова на месте"; then
       rm -f "$RDP_STRIKES_FILE"
       ok "VM restarted — the guest is booting, RDP answers within ~1-2 min"
     fi
@@ -553,7 +553,7 @@ cmd_auto() {
       notify_once "down" firing "VM '$CT' лежит, адаптера нет на USB"
       return 0
     fi
-    if vm_restart "контейнер '$CT' лежит (Exited) — поднимаю ВМ" "ok, ВМ поднята после падения"; then
+    if vm_restart "контейнер '$CT' лежит (Exited)" "ВМ поднята, адаптер в VM"; then
       ok "VM '$CT' is back up after the crash"
       verify_chain
     else
@@ -635,7 +635,7 @@ cmd_replug() {
     fail "VM '$CT' is not running — start it first: docker start windows"
     return 1
   fi
-  if ! vm_restart "адаптер в VM, но GLM без мониторов" "ok, свежий QEMU забрал адаптер"; then
+  if ! vm_restart "адаптер в VM, но GLM без мониторов" "свежий QEMU забрал адаптер"; then
     fail "no restart (another restart in progress, or the hourly budget) — see $RESTART_LOG"
     return 1
   fi
