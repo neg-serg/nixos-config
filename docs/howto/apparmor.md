@@ -103,15 +103,23 @@ just apparmor-denials sshd        # only one daemon
 A faster loop than editing the state in the repo: `sudo aa-complain <profile>` /
 `sudo aa-enforce <profile>` switch a loaded profile at runtime (`aa-status` shows the current mode).
 
+The VM test below is the faster loop of all, because an enforced run hits reads a complain run has
+not reached yet: it is where `/etc/machine-id`, avahi's dlopen'ed `libnss_systemd.so.2` and
+transmission's `/tmp/tr_session_id_*` came from — the profiles only have those rules because the
+test failed without them.
+
 ## Known limits
 
 - **sshd sessions run unconfined on purpose** (`/bin/sh Ux`, `…/bin/bash Ux`, `…`): after the fork
   sshd execs the user's login shell and an interactive session legitimately runs arbitrary code.
   Confining it would break every login. The daemon and its privilege-separated child stay confined,
   which is where the pre-auth attack surface is.
-- Only these four daemons are covered. User services (`mpd`, `transmission-daemon`, `sing-box`,
-  `openrgb`) and desktop apps are not — upstream desktop profiles (browsers, Steam) assume FHS paths
-  and would need the same closure treatment.
+- Everything that listens on a socket here is covered — the five system daemons plus the three
+  session services that parse network data. Not covered: `mpd`, `openrgb`, the desktop apps and the
+  Python services on `0.0.0.0`; upstream desktop profiles (browsers, Steam) assume FHS paths and
+  would need the same closure treatment.
+- A profile says which paths the *daemon* may touch, not that the daemon needs all of them: a
+  confined transmission still runs as `neg`, one rule away from that user's other files.
 - `apparmor-profiles` is installed for its abstractions, not for its profiles.
 
 ## VM test
@@ -120,7 +128,10 @@ A faster loop than editing the state in the repo: `sudo aa-complain <profile>` /
 nix build --impure --file tests/apparmor-enforce.nix -L
 ```
 
-Boots a throwaway VM with all four profiles in `enforce` and asserts: profiles loaded and enforcing,
-all four services up, DNS/UI/ntfy ports open, SSH login **and** session command work, and no
-`DENIED` lines for the confined daemons. This is the place to try a risky rule — a broken profile
-fails the test, not the host.
+Boots a throwaway VM with all eight profiles in `enforce` and asserts: every profile loaded and
+enforcing, all eight services up, the ports actually served (DNS, admin UI, ntfy, SOCKS, mDNS,
+transmission and aria2 RPC), a request through the SOCKS inbound, the transmission RPC handshake and
+an aria2 JSON-RPC call, an SSH login **and** session command, and no `DENIED` line at all. The three
+session daemons run as a normal user in the test, the way they do on the host, so a capability they
+would only want as root cannot mask a real gap. This is the place to try a risky rule — a broken
+profile fails the test, not the host.
