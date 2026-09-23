@@ -11,6 +11,10 @@
     # Kernel security
     "kernel.dmesg_restrict" = 1; # Restrict dmesg to root only
     "kernel.unprivileged_bpf_disabled" = 1; # Restrict eBPF to CAP_BPF
+    # No core dumps out of setuid/privileged binaries: they routinely hold
+    # secrets (sshd's keys, PAM buffers) and systemd-coredump would write them
+    # to /var/lib/systemd/coredump. Ordinary crashes still get a dump.
+    "fs.suid_dumpable" = 0;
     # Value 2 fully hardens eBPF JIT (JIT constification + blinding) against spraying attacks.
     # Trade-off: ~10-15% eBPF program throughput reduction. Acceptable for gaming/desktop;
     # only matters for high-throughput eBPF packet processing.

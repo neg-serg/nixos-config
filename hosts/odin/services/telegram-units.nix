@@ -183,6 +183,36 @@ in
             ExecStart = "${lib.getExe telegramBridgeScript}";
             Restart = "on-failure";
             RestartSec = 5;
+            # The bridge only reads the two SOPS secrets (root, 0400 under
+            # /run/secrets), answers on 127.0.0.1:9094 and shells out to curl;
+            # everything it writes goes to the journal. None of that needs a
+            # capability or a writable path, so the sandbox can be this tight.
+            NoNewPrivileges = true;
+            PrivateTmp = true;
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            ProtectKernelTunables = true;
+            ProtectKernelLogs = true;
+            ProtectKernelModules = true;
+            ProtectControlGroups = true;
+            ProtectClock = true;
+            ProtectHostname = true;
+            ProtectProc = "invisible";
+            RestrictSUIDSGID = true;
+            RestrictRealtime = true;
+            RestrictNamespaces = true;
+            LockPersonality = true;
+            RemoveIPC = true;
+            CapabilityBoundingSet = "";
+            AmbientCapabilities = [ ];
+            RestrictAddressFamilies = [
+              "AF_INET"
+              "AF_INET6"
+              "AF_UNIX"
+              "AF_NETLINK"
+            ];
+            SystemCallFilter = [ "@system-service" ];
+            SystemCallArchitectures = "native";
           };
         };
 
@@ -197,6 +227,40 @@ in
             Restart = "always";
             RestartSec = 5;
             StateDirectory = "telegram-pill-bot";
+            # Same sandbox as the bridge, except that this one legitimately
+            # writes into the panel: it rewrites the Quickshell pill state and
+            # the vdirsyncer .ics (read-only home plus those two paths). It
+            # runs as root and chown()s those files to neg, so the capability
+            # set is left at systemd's default here — narrowing it is the next
+            # step, once a real button press has been traced.
+            NoNewPrivileges = true;
+            PrivateTmp = true;
+            ProtectSystem = "strict";
+            ProtectHome = "read-only";
+            ReadWritePaths = [
+              "-${pillPanelStateFile}"
+              "-${pillPanelIcsDir}"
+            ];
+            ProtectKernelTunables = true;
+            ProtectKernelLogs = true;
+            ProtectKernelModules = true;
+            ProtectControlGroups = true;
+            ProtectClock = true;
+            ProtectHostname = true;
+            ProtectProc = "invisible";
+            RestrictSUIDSGID = true;
+            RestrictRealtime = true;
+            RestrictNamespaces = true;
+            LockPersonality = true;
+            RemoveIPC = true;
+            RestrictAddressFamilies = [
+              "AF_INET"
+              "AF_INET6"
+              "AF_UNIX"
+              "AF_NETLINK"
+            ];
+            SystemCallFilter = [ "@system-service" ];
+            SystemCallArchitectures = "native";
           };
         };
       }
