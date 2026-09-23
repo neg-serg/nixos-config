@@ -57,6 +57,9 @@
 - dsh voice input — why there is nothing to build (the local stack is switched off on purpose):
   [dsh-voice.md](./dsh-voice.md)
 
+- AppArmor — confining the LAN-facing daemons (profiles from package closures, complain → enforce):
+  [apparmor.md](./apparmor.md)
+
 - Options/modules reference: [modules.md](./modules.md)
 
 - Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I,):
