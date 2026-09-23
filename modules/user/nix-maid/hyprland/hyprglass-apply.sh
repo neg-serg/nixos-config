@@ -28,7 +28,10 @@ for arg in "$@"; do
     --check) check_only=1 ;;
     --json) as_json=1 ;;
     --watch) watch=1 ;;
-    *) echo "usage: hyprglass-apply [--check] [--json] [--watch]" >&2; exit 2 ;;
+    *)
+      echo "usage: hyprglass-apply [--check] [--json] [--watch]" >&2
+      exit 2
+      ;;
   esac
 done
 
@@ -45,13 +48,13 @@ if [ "${watch:-0}" = 1 ]; then
   # 127, which reads exactly like "drifted" and re-applies on every tick.
   self="$(readlink -f "${BASH_SOURCE[0]}")"
   status=0
-  "$self" --check >/dev/null 2>&1 || status=$?
+  "$self" --check > /dev/null 2>&1 || status=$?
   case "$status" in
-    0) exit 0 ;;                 # in sync
-    2) exit 0 ;;                 # cannot reach Hyprland: nothing to repair
+    0) exit 0 ;; # in sync
+    2) exit 0 ;; # cannot reach Hyprland: nothing to repair
   esac
   echo "hyprglass: settings drifted, re-applying" >&2
-  "$self" >/dev/null 2>&1 || true
+  "$self" > /dev/null 2>&1 || true
   exit 0
 fi
 
@@ -72,7 +75,7 @@ state="$HOME/.cache/hyprglass-applied.json"
 
 have_json=0
 if [ -r "$overrides" ]; then
-  if command -v jq >/dev/null 2>&1; then
+  if command -v jq > /dev/null 2>&1; then
     have_json=1
   else
     # Silently ignoring the panel's file is how the defaults got pushed over the
@@ -87,7 +90,7 @@ fi
 # Hyprland". Treat that as its own condition: reading it as "drifted" made the
 # watchdog re-apply forever without ever reaching the compositor.
 reachable=1
-"$hyprctl_bin" version >/dev/null 2>&1 || reachable=0
+"$hyprctl_bin" version > /dev/null 2>&1 || reachable=0
 if [ "$reachable" = 0 ]; then
   if [ "$as_json" = 1 ]; then
     echo '{"reachable":false,"loaded":false,"inSync":false,"differences":[]}'
@@ -98,7 +101,7 @@ if [ "$reachable" = 0 ]; then
 fi
 
 plugin_loaded() {
-  "$hyprctl_bin" plugin list 2>/dev/null | grep -qi hyprglass
+  "$hyprctl_bin" plugin list 2> /dev/null | grep -qi hyprglass
 }
 
 if ! plugin_loaded; then
@@ -106,7 +109,7 @@ if ! plugin_loaded; then
     [ "$as_json" = 1 ] && echo '{"loaded":false,"inSync":false,"differences":[]}' || echo "hyprglass is not loaded"
     exit 1
   fi
-  "$hyprctl_bin" plugin load "$plugin" >/dev/null 2>&1 || true
+  "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || true
 fi
 
 # Desired value for one plugin key, from the JSON when it is there.
@@ -120,7 +123,7 @@ desired() {
 # Actual value the plugin reports, numeric part only.
 actual() {
   local key="$1"
-  "$hyprctl_bin" getoption "plugin:hyprglass:$key" 2>/dev/null \
+  "$hyprctl_bin" getoption "plugin:hyprglass:$key" 2> /dev/null \
     | sed -n 's/.*: *//p' | head -1 | tr -dc '0-9.-'
 }
 
@@ -142,7 +145,7 @@ if [ "$check_only" = 1 ]; then
     for pair in "${keys[@]}"; do
       plugin_key="${pair%%:*}"
       json_key="${pair##*:}"
-      want="$(jq -r --arg k "$json_key" '.[$k] // empty' "$reference" 2>/dev/null)"
+      want="$(jq -r --arg k "$json_key" '.[$k] // empty' "$reference" 2> /dev/null)"
       [ -n "$want" ] || continue
       got="$(actual "$plugin_key")"
       # numeric compare with the file's precision
@@ -166,7 +169,7 @@ if [ "$check_only" = 1 ]; then
   for layer_key in namespaces exclude_namespaces; do
     want="$(base_value "$layer_key" || true)"
     [ -n "${want:-}" ] || continue
-    got="$("$hyprctl_bin" getoption "plugin:hyprglass:layers:$layer_key" 2>/dev/null | sed -n 's/^str: *//p' | head -1)"
+    got="$("$hyprctl_bin" getoption "plugin:hyprglass:layers:$layer_key" 2> /dev/null | sed -n 's/^str: *//p' | head -1)"
     [ "$want" = "$got" ] || diffs+=("layers:$layer_key=$got(want $want)")
   done
 
@@ -186,7 +189,7 @@ fi
 # The shipped defaults first: they are the baseline every override is relative to.
 if [ -r "$base" ]; then
   "$hyprctl_bin" eval "
-$(cat "$base")" >/dev/null 2>&1 || true
+$(cat "$base")" > /dev/null 2>&1 || true
 fi
 
 if [ "$have_json" = 1 ]; then
@@ -207,7 +210,7 @@ if [ "$have_json" = 1 ]; then
   # hyprctl eval reads a leading "--" as a flag: the leading newline keeps Lua
   # comments safe (the generated text has none, but the habit travels).
   "$hyprctl_bin" eval "
-$lua" >/dev/null 2>&1 || true
+$lua" > /dev/null 2>&1 || true
 fi
 
 # ── custom presets ───────────────────────────────────────────────────────────
@@ -247,11 +250,11 @@ fi
 #
 # A `hyprctl reload` drops them again (the plugin re-reads its config), which is
 # also what makes the nine knobs drift, so the next push restores these too.
-"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("scratch", { blur_strength = 16, blur_iterations = 5, adaptive_dim = 0 })' > /dev/null 2>&1 || true
 # The card's frame is the thin QML hairline (Music.qml, 1 px) — the plugin's own
 # thick glowing border around the plate, so it is zeroed here: the plate keeps
 # its frost and tint, the boundary is only the hairline.
-"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("music_strong", { blur_strength = 64, blur_iterations = 5, adaptive_dim = 0 })' >/dev/null 2>&1 || true
+"$hyprctl_bin" eval 'hl.plugin.hyprglass.preset("music_strong", { blur_strength = 64, blur_iterations = 5, adaptive_dim = 0 })' > /dev/null 2>&1 || true
 
 # ── per-window overrides ─────────────────────────────────────────────────────
 # The Glass panel keeps a list of { class, enabled, blurStrength, glassOpacity,
@@ -273,7 +276,7 @@ fi
 slug() { printf '%s' "$1" | tr -c 'A-Za-z0-9' '_'; }
 
 if [ "$have_json" = 1 ]; then
-  override_count="$(jq -r '(.windowOverrides // []) | length' "$overrides" 2>/dev/null || echo 0)"
+  override_count="$(jq -r '(.windowOverrides // []) | length' "$overrides" 2> /dev/null || echo 0)"
   i=0
   while [ "$i" -lt "$override_count" ]; do
     entry="$(jq -c --argjson i "$i" '(.windowOverrides // [])[$i]' "$overrides")"
@@ -295,16 +298,16 @@ if [ "$have_json" = 1 ]; then
       case "$out" in
         *error* | *expected*) echo "hyprglass: override $cls: $out" >&2 ;;
       esac
-      "$hyprctl_bin" eval "hl.window_rule({ name = \"hyprglass-override-$preset_name\", match = { class = \"^$cls\$\" }, tag = \"+hyprglass_preset_$preset_name\" })" >/dev/null 2>&1 || true
+      "$hyprctl_bin" eval "hl.window_rule({ name = \"hyprglass-override-$preset_name\", match = { class = \"^$cls\$\" }, tag = \"+hyprglass_preset_$preset_name\" })" > /dev/null 2>&1 || true
     else
-      "$hyprctl_bin" eval "hl.plugin.hyprglass.preset(\"$preset_name\", {})" >/dev/null 2>&1 || true
+      "$hyprctl_bin" eval "hl.plugin.hyprglass.preset(\"$preset_name\", {})" > /dev/null 2>&1 || true
     fi
   done
 fi
 
 # Record what the plugin reports now: the next check compares against this, so a
 # later drift is visible even in a session where the panel was never opened.
-if command -v jq >/dev/null 2>&1; then
+if command -v jq > /dev/null 2>&1; then
   mkdir -p "$(dirname "$state")"
   {
     printf '{\n'
