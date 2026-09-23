@@ -77,164 +77,164 @@ let
     builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprexpo.lua")
   );
   hyprExpo = pkgs.writeShellScriptBin "hypr-expo" ''
-    set -u
-    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
-    plugin=${pkgs.hyprlandPlugins.hyprexpo}/lib/libhyprexpo.so
+        set -u
+        hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+        plugin=${pkgs.hyprlandPlugins.hyprexpo}/lib/libhyprexpo.so
 
-    plugin_loaded() {
-      "$hyprctl_bin" plugin list 2> /dev/null | grep -q "^Plugin hyprexpo "
-    }
+        plugin_loaded() {
+          "$hyprctl_bin" plugin list 2> /dev/null | grep -q "^Plugin hyprexpo "
+        }
 
-    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
-    # comment) as a flag, hence the leading newline.
-    push_config() {
-      "$hyprctl_bin" eval "
-    $(cat ${hyprExpoLua})" || true
-    }
+        # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
+        # comment) as a flag, hence the leading newline.
+        push_config() {
+          "$hyprctl_bin" eval "
+        $(cat ${hyprExpoLua})" || true
+        }
 
-    case "''${1:-toggle}" in
-      toggle)
-        # One physical click can arrive as two toggles (the capsule activates on
-        # press while its row also emits a tap): the overview then starts its entry
-        # animation and closes again in the same instant — "it starts and stops
-        # immediately". Swallow a second toggle that lands within 250 ms of the
-        # previous one; that covers the click, the panel IPC entry point and the
-        # compositor bind alike, since all three go through this script.
-        stamp="''${XDG_RUNTIME_DIR:-/tmp}/hypr-expo-last-toggle"
-        now_ms=$(date +%s%3N)
-        # Who called us and when: the panel capsule, the IPC handler and the
-        # compositor bind all end up here, and the reported symptom ("it opens and
-        # comes back on its own") is exactly what a second toggle a few hundred
-        # milliseconds later looks like. Without this line the log cannot tell the
-        # two clicks of one gesture from two deliberate ones.
-        caller=$(tr '\0' ' ' < "/proc/$PPID/cmdline" 2> /dev/null || echo '?')
-        printf '%s toggle caller=%s\n' "$(date +%T.%3N)" "''${caller:-?}" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
-        if [ -r "$stamp" ]; then
-          prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
-          # 600 ms, not 250: the log showed one capsule click can arrive as two toggles
-          # (and the gap can be a few hundred milliseconds), so the window is a cheap
-          # safety margin. It is not the fix for the "opens and comes right back"
-          # report — that one came from the plugin's own mouse hook and is patched in
-          # hyprexpo-click-swallow.patch; the log line above is what told the two apart.
-          if [ "$((now_ms - prev_ms))" -lt 600 ]; then
-            printf '%s toggle swallowed (%s ms after the previous one)\n' "$(date +%T.%3N)" "$((now_ms - prev_ms))" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
-            exit 0
-          fi
-        fi
-        printf '%s' "$now_ms" > "$stamp"
-
-        # A missing plugin is loaded and configured here instead of being reported
-        # as a successful toggle: without the load the eval below is a no-op.
-        if ! plugin_loaded; then
-          "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || exit 1
-        fi
-        # ...and the config is pushed on *every* toggle, not only after a load.
-        # This helper is the only thing that configures the plugin, so a session
-        # that re-initialised it — a compositor reload, a build swapped in for
-        # testing — otherwise opens the overview with the plugin's defaults: the
-        # workspace capsule then looks nothing like the overview a manual
-        # `hypr-expo toggle` gives after a push (the reported "dull mess"). One
-        # eval of hyprexpo.lua is cheap enough to do per click.
-        push_config
-        "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("toggle")'
-        ;;
-      push)
-        # Session start and live re-configuration: load (the load of an already
-        # loaded plugin fails, that is fine), then push the keys even when the
-        # plugin was already there, so an edited hyprexpo.lua takes effect.
-        "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || true
-        push_config
-        ;;
-      select)
-        # Bound to the left button in hyprland.lua: the fork does not read mouse
-        # buttons itself, it only looks at the pointer when this action is invoked.
-        # Deliberately no plugin load here — a plain click must not pull the plugin
-        # in (and the action is a no-op while the overview is closed, so the bind
-        # can sit on the plain button).
-        #
-        # A click that lands on the bar belongs to the shell: the workspace capsule
-        # toggles the overview, and a tile under the bar's position is not what the
-        # pointer is aiming at. Without this split the click both closed the
-        # overview (through the capsule) and jumped to the tile sitting under the
-        # bar — reported as "it switches me to dev again".
-        #
-        # Second half of the same story: the click that *opened* the overview comes
-        # back as a select a few milliseconds later (the release of the capsule click
-        # lands on the overview that is now covering the screen), which selects the
-        # tile under the pointer and closes the overview again — "it opens and returns
-        # back on its own". The toggle branch stamps every toggle in
-        # $XDG_RUNTIME_DIR/hypr-expo-last-toggle; reuse that stamp as a swallow window
-        # so the click that opened the overview can never be read back as a choice.
-        stamp="''${XDG_RUNTIME_DIR:-/tmp}/hypr-expo-last-toggle"
-        now_ms=$(date +%s%3N)
-        prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
-        if [ "$((now_ms - prev_ms))" -lt 350 ]; then
-          printf '%s select swallowed (toggle %s ms ago)\n' "$(date +%T)" "$((now_ms - prev_ms))" >> /tmp/hypr-expo-select.log 2> /dev/null || true
-          exit 0
-        fi
-        cursor_xy="$("$hyprctl_bin" cursorpos 2> /dev/null | tr -d ' ')"
-        cursor_x="''${cursor_xy%%,*}"
-        cursor_y="''${cursor_xy##*,}"
-        # Panel band, in the compositor's own logical coordinates. The old test
-        # compared cursorpos (LOGICAL: 1080 tall here) against hyprctl monitors
-        # .height (PHYSICAL: 2160) and therefore never fired — the capsule click
-        # kept selecting the tile under the bar. Take the shell's layer boxes
-        # instead: they are logical and correct for a top or a bottom bar.
-        panel_boxes="$("$hyprctl_bin" -j layers 2> /dev/null | python3 -c '
-import json, sys
-try:
-    data = json.load(sys.stdin)
-except Exception:
-    sys.exit(0)
-for monitor in (data.values() if isinstance(data, dict) else []):
-    for level in (monitor.get("levels") or {}).values():
-        for layer in level:
-            ns = layer.get("namespace") or ""
-            if ns.startswith("qs-") or ns.startswith("quickshell"):
-                print(layer["x"], layer["y"], layer["x"] + layer["w"], layer["y"] + layer["h"])
-' 2> /dev/null || true)"
-        printf '%s select cursor=%s,%s panels=[%s]\n' "$(date +%T)" "''${cursor_x:-?}" "''${cursor_y:-?}" "$(printf '%s' "$panel_boxes" | tr '\n' ';')" >> /tmp/hypr-expo-select.log 2> /dev/null || true
-        in_panel=0
-        if [ -n "''${cursor_x:-}" ] && [ -n "''${cursor_y:-}" ]; then
-          while read -r x0 y0 x1 y1; do
-            [ -n "''${x0:-}" ] || continue
-            if [ "$cursor_x" -ge "$x0" ] && [ "$cursor_x" -le "$x1" ] && [ "$cursor_y" -ge "$y0" ] && [ "$cursor_y" -le "$y1" ]; then
-              in_panel=1
-              break
+        case "''${1:-toggle}" in
+          toggle)
+            # One physical click can arrive as two toggles (the capsule activates on
+            # press while its row also emits a tap): the overview then starts its entry
+            # animation and closes again in the same instant — "it starts and stops
+            # immediately". Swallow a second toggle that lands within 250 ms of the
+            # previous one; that covers the click, the panel IPC entry point and the
+            # compositor bind alike, since all three go through this script.
+            stamp="''${XDG_RUNTIME_DIR:-/tmp}/hypr-expo-last-toggle"
+            now_ms=$(date +%s%3N)
+            # Who called us and when: the panel capsule, the IPC handler and the
+            # compositor bind all end up here, and the reported symptom ("it opens and
+            # comes back on its own") is exactly what a second toggle a few hundred
+            # milliseconds later looks like. Without this line the log cannot tell the
+            # two clicks of one gesture from two deliberate ones.
+            caller=$(tr '\0' ' ' < "/proc/$PPID/cmdline" 2> /dev/null || echo '?')
+            printf '%s toggle caller=%s\n' "$(date +%T.%3N)" "''${caller:-?}" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
+            if [ -r "$stamp" ]; then
+              prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
+              # 600 ms, not 250: the log showed one capsule click can arrive as two toggles
+              # (and the gap can be a few hundred milliseconds), so the window is a cheap
+              # safety margin. It is not the fix for the "opens and comes right back"
+              # report — that one came from the plugin's own mouse hook and is patched in
+              # hyprexpo-click-swallow.patch; the log line above is what told the two apart.
+              if [ "$((now_ms - prev_ms))" -lt 600 ]; then
+                printf '%s toggle swallowed (%s ms after the previous one)\n' "$(date +%T.%3N)" "$((now_ms - prev_ms))" >> /tmp/hypr-expo-toggle.log 2> /dev/null || true
+                exit 0
+              fi
             fi
-          done <<< "$panel_boxes"
-        fi
-        # Safety net for the case where the layer query came back empty: the bar is
-        # 25 logical pixels tall on a 1080-tall screen, so anything inside the last
-        # 40 logical pixels belongs to the shell. Derive that from physical height
-        # and scale when the boxes are missing.
-        if [ "$in_panel" -eq 0 ] && [ -z "$panel_boxes" ] && [ -n "''${cursor_y:-}" ]; then
-          monitor_logical_h="$("$hyprctl_bin" -j monitors 2> /dev/null | python3 -c '
-import json, sys
-try:
-    monitors = json.load(sys.stdin)
-except Exception:
-    sys.exit(0)
-if monitors:
-    scale = monitors[0].get("scale") or 1
-    print(int(monitors[0]["height"] / scale))
-' 2> /dev/null || true)"
-          if [ -n "$monitor_logical_h" ] && [ "$cursor_y" -ge "$((monitor_logical_h - 40))" ]; then
-            in_panel=1
-          fi
-        fi
-        if [ "$in_panel" -eq 1 ]; then
-          # Bar zone: never pick a tile here. The click belongs to the shell (the
-          # workspace capsule toggles the overview); the plugin stays out of it.
-          exit 0
-        fi
-        "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("select")'
-        ;;
-      *)
-        echo "usage: hypr-expo [toggle|push|select]" >&2
-        exit 2
-        ;;
-    esac
+            printf '%s' "$now_ms" > "$stamp"
+
+            # A missing plugin is loaded and configured here instead of being reported
+            # as a successful toggle: without the load the eval below is a no-op.
+            if ! plugin_loaded; then
+              "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || exit 1
+            fi
+            # ...and the config is pushed on *every* toggle, not only after a load.
+            # This helper is the only thing that configures the plugin, so a session
+            # that re-initialised it — a compositor reload, a build swapped in for
+            # testing — otherwise opens the overview with the plugin's defaults: the
+            # workspace capsule then looks nothing like the overview a manual
+            # `hypr-expo toggle` gives after a push (the reported "dull mess"). One
+            # eval of hyprexpo.lua is cheap enough to do per click.
+            push_config
+            "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("toggle")'
+            ;;
+          push)
+            # Session start and live re-configuration: load (the load of an already
+            # loaded plugin fails, that is fine), then push the keys even when the
+            # plugin was already there, so an edited hyprexpo.lua takes effect.
+            "$hyprctl_bin" plugin load "$plugin" > /dev/null 2>&1 || true
+            push_config
+            ;;
+          select)
+            # Bound to the left button in hyprland.lua: the fork does not read mouse
+            # buttons itself, it only looks at the pointer when this action is invoked.
+            # Deliberately no plugin load here — a plain click must not pull the plugin
+            # in (and the action is a no-op while the overview is closed, so the bind
+            # can sit on the plain button).
+            #
+            # A click that lands on the bar belongs to the shell: the workspace capsule
+            # toggles the overview, and a tile under the bar's position is not what the
+            # pointer is aiming at. Without this split the click both closed the
+            # overview (through the capsule) and jumped to the tile sitting under the
+            # bar — reported as "it switches me to dev again".
+            #
+            # Second half of the same story: the click that *opened* the overview comes
+            # back as a select a few milliseconds later (the release of the capsule click
+            # lands on the overview that is now covering the screen), which selects the
+            # tile under the pointer and closes the overview again — "it opens and returns
+            # back on its own". The toggle branch stamps every toggle in
+            # $XDG_RUNTIME_DIR/hypr-expo-last-toggle; reuse that stamp as a swallow window
+            # so the click that opened the overview can never be read back as a choice.
+            stamp="''${XDG_RUNTIME_DIR:-/tmp}/hypr-expo-last-toggle"
+            now_ms=$(date +%s%3N)
+            prev_ms=$(cat "$stamp" 2> /dev/null || echo 0)
+            if [ "$((now_ms - prev_ms))" -lt 350 ]; then
+              printf '%s select swallowed (toggle %s ms ago)\n' "$(date +%T)" "$((now_ms - prev_ms))" >> /tmp/hypr-expo-select.log 2> /dev/null || true
+              exit 0
+            fi
+            cursor_xy="$("$hyprctl_bin" cursorpos 2> /dev/null | tr -d ' ')"
+            cursor_x="''${cursor_xy%%,*}"
+            cursor_y="''${cursor_xy##*,}"
+            # Panel band, in the compositor's own logical coordinates. The old test
+            # compared cursorpos (LOGICAL: 1080 tall here) against hyprctl monitors
+            # .height (PHYSICAL: 2160) and therefore never fired — the capsule click
+            # kept selecting the tile under the bar. Take the shell's layer boxes
+            # instead: they are logical and correct for a top or a bottom bar.
+            panel_boxes="$("$hyprctl_bin" -j layers 2> /dev/null | python3 -c '
+    import json, sys
+    try:
+        data = json.load(sys.stdin)
+    except Exception:
+        sys.exit(0)
+    for monitor in (data.values() if isinstance(data, dict) else []):
+        for level in (monitor.get("levels") or {}).values():
+            for layer in level:
+                ns = layer.get("namespace") or ""
+                if ns.startswith("qs-") or ns.startswith("quickshell"):
+                    print(layer["x"], layer["y"], layer["x"] + layer["w"], layer["y"] + layer["h"])
+    ' 2> /dev/null || true)"
+            printf '%s select cursor=%s,%s panels=[%s]\n' "$(date +%T)" "''${cursor_x:-?}" "''${cursor_y:-?}" "$(printf '%s' "$panel_boxes" | tr '\n' ';')" >> /tmp/hypr-expo-select.log 2> /dev/null || true
+            in_panel=0
+            if [ -n "''${cursor_x:-}" ] && [ -n "''${cursor_y:-}" ]; then
+              while read -r x0 y0 x1 y1; do
+                [ -n "''${x0:-}" ] || continue
+                if [ "$cursor_x" -ge "$x0" ] && [ "$cursor_x" -le "$x1" ] && [ "$cursor_y" -ge "$y0" ] && [ "$cursor_y" -le "$y1" ]; then
+                  in_panel=1
+                  break
+                fi
+              done <<< "$panel_boxes"
+            fi
+            # Safety net for the case where the layer query came back empty: the bar is
+            # 25 logical pixels tall on a 1080-tall screen, so anything inside the last
+            # 40 logical pixels belongs to the shell. Derive that from physical height
+            # and scale when the boxes are missing.
+            if [ "$in_panel" -eq 0 ] && [ -z "$panel_boxes" ] && [ -n "''${cursor_y:-}" ]; then
+              monitor_logical_h="$("$hyprctl_bin" -j monitors 2> /dev/null | python3 -c '
+    import json, sys
+    try:
+        monitors = json.load(sys.stdin)
+    except Exception:
+        sys.exit(0)
+    if monitors:
+        scale = monitors[0].get("scale") or 1
+        print(int(monitors[0]["height"] / scale))
+    ' 2> /dev/null || true)"
+              if [ -n "$monitor_logical_h" ] && [ "$cursor_y" -ge "$((monitor_logical_h - 40))" ]; then
+                in_panel=1
+              fi
+            fi
+            if [ "$in_panel" -eq 1 ]; then
+              # Bar zone: never pick a tile here. The click belongs to the shell (the
+              # workspace capsule toggles the overview); the plugin stays out of it.
+              exit 0
+            fi
+            "$hyprctl_bin" eval 'hl.plugin.hyprexpo.expo("select")'
+            ;;
+          *)
+            echo "usage: hypr-expo [toggle|push|select]" >&2
+            exit 2
+            ;;
+        esac
   '';
   hyprexpoSetup = pkgs.writeShellScriptBin "hyprexpo-setup" ''
     exec ${hyprExpo}/bin/hypr-expo push
