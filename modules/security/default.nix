@@ -25,7 +25,10 @@ let
   };
 in
 {
-  imports = [ ./tpm-sudo.nix ];
+  imports = [
+    ./tpm-sudo.nix
+    ./apparmor.nix
+  ];
   services.pcscd.enable = true; # pkcs support
   # nixpkgs' security.lockKernelModules (enabled below) auto-adds one kernel
   # module per fileSystem entry; our bind mounts use fsType = "none", which
@@ -46,7 +49,16 @@ in
       packages = [
         pkgs.apparmor-utils # user-space tools for apparmor
         pkgs.apparmor-profiles # standard profiles for various apps
-        pkgs.roddhjav-apparmor-rules # community profiles for browsers, etc.
+        # The roddhjav set is deliberately NOT on the include path: its
+        # abstractions/crypto.d/complete is picked up by apparmor-profiles'
+        # `include if exists <abstractions/crypto.d>` and references @{lib},
+        # while its tunables/multiarch.d/{programs,profiles} expect the
+        # distro-provided tunables (Debian/Ubuntu ship @{lib} in
+        # tunables/multiarch.d/system) that NixOS does not have. Result: every
+        # profile including <abstractions/base> fails to load with
+        # "Failed to find declaration for: @{lib}". Its profiles are
+        # FHS-based anyway (/usr/sbin/*), so they cannot attach on NixOS.
+        # Kept in systemPackages for reference; see docs/howto/apparmor.md.
       ];
     };
     pki.useCompatibleBundle = true;
@@ -176,4 +188,9 @@ in
       wheelNeedsPassword = true;
     };
   };
+
+  # AppArmor profile sets are useful for reference (aa-logprof, reading rule
+  # patterns) even when they are not on the include path — see the comment in
+  # security.apparmor.packages above.
+  environment.systemPackages = [ pkgs.roddhjav-apparmor-rules ];
 }
