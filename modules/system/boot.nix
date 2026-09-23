@@ -56,6 +56,8 @@
       })
     ];
   };
-  # kexec protection: available but gated behind CAP_SYS_BOOT (root-only)
-  boot.kernel.sysctl."kernel.kexec_load_disabled" = lib.mkDefault 0;
+  # kexec protection: disable kexec entirely. Nothing here uses it (boots go
+  # through limine), and it removes the "load a kernel, then reboot into it"
+  # primitive that bypasses the boot chain and measured boot.
+  boot.kernel.sysctl."kernel.kexec_load_disabled" = lib.mkDefault 1;
 }
