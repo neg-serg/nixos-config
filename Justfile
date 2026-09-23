@@ -247,10 +247,13 @@ apparmor-status:
 
 # AppArmor denials for this boot, optionally filtered by daemon name
 # (`grep -i ""` matches everything — just forbids deeper indentation inside a
-# recipe). Complain-mode denials are the list of rules to add before enforcing.
+# recipe). Two shapes to catch: a real denial is apparmor="DENIED", while a
+# complain-mode violation is audited as apparmor="ALLOWED" with a non-empty
+# denied_mask — grepping only "DENIED" silently reports nothing in complain.
+# The same event is logged twice (bare audit: record, then AVC), so sort -u.
 apparmor-denials daemon="":
     set -eu
-    journalctl -b --no-pager --grep 'apparmor="DENIED"' | grep -i "{{daemon}}" || true
+    { journalctl -b --no-pager -o cat --grep 'apparmor="DENIED"' || true; journalctl -b --no-pager -o cat --grep 'apparmor="ALLOWED"' | grep -E 'denied_mask="[^"]+"' || true; } | sed -E 's/^(audit: type=1400 audit\([^)]*\): |AVC )//' | sort -u | grep -i "{{daemon}}" || true
 
 clean-caches:
     set -eu
