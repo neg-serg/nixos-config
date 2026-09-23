@@ -47,8 +47,9 @@ let
   cfg = config.features.security.apparmor;
 
   # The primary user: owns the session services below and the nix-maid file
-  # tree their config files come from.
-  mainUser = config.lib.neg.mainUser;
+  # tree their config files come from. The fallback keeps the module evaluable
+  # in tests/apparmor-enforce.nix, which does not import the repo's option set.
+  mainUser = config.lib.neg.mainUser or "neg";
 
   # NixOS' /etc is a symlink farm into the store and AppArmor mediates the
   # *resolved* path, so a rule for /etc/<name> alone does not match the file
@@ -361,6 +362,11 @@ let
         /home/*/torrent/** rwlk,
         /home/*/dw/ rw,
         /home/*/dw/** rwlk,
+        # The RPC session id lives in a file it creates under /tmp (only when
+        # RPC is actually used — this is what an enforced run found that the
+        # host's complain log did not show yet).
+        /tmp/ r,
+        /tmp/tr_session_id_* rwk,
         network inet stream,
         network inet dgram,
         network inet6 stream,
@@ -417,6 +423,10 @@ let
         # The store targets of the service files come from etcFiles above; the
         # directory itself still needs a rule to be listed.
         /etc/avahi/services/ r,
+        # avahi asks systemd who this host is (a plain file on NixOS, not a
+        # store symlink) — the enforced VM run hit this, the host's complain log
+        # had not yet, because the read is conditional.
+        /etc/machine-id r,
         /run/avahi-daemon/ rw,
         # /run/avahi-daemon/pid is flock()ed, hence the `lk`.
         /run/avahi-daemon/** rwlk,
@@ -425,9 +435,12 @@ let
         /proc/*/mountinfo r,
         # dlopen'ed, so neither library is in the package closure: avahi links
         # against systemd's sd_notify and resolves mDNS names through the
-        # nss-mdns module (services.avahi.nssmdns4/6 in modules/servers/avahi).
+        # nss-mdns module (services.avahi.nssmdns4/6 in modules/servers/avahi),
+        # while glibc's NSS path pulls in systemd's own nss module the same way
+        # sshd does.
         ${pkgs.systemd}/lib/libsystemd.so.* mr,
         ${pkgs.nssmdns}/lib/libnss_mdns.so.2 mr,
+        ${config.systemd.package}/lib/libnss_systemd.so.2 mr,
         capability dac_override,
         capability net_bind_service,
         capability net_raw,
