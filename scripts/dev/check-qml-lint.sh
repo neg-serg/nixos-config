@@ -23,8 +23,14 @@ set -euo pipefail
 REPO_ROOT="$(repo_root "${1:-}")"
 QML_DIR="$REPO_ROOT/files/quickshell"
 
-[ -d "$QML_DIR" ] || { echo "Directory not found: $QML_DIR"; exit 1; }
-command -v qmllint >/dev/null 2>&1 || { echo "qmllint not found (qt6.qtdeclarative)"; exit 1; }
+[ -d "$QML_DIR" ] || {
+  echo "Directory not found: $QML_DIR"
+  exit 1
+}
+command -v qmllint > /dev/null 2>&1 || {
+  echo "qmllint not found (qt6.qtdeclarative)"
+  exit 1
+}
 
 # --- import paths ----------------------------------------------------------
 collect_paths() {
@@ -34,7 +40,7 @@ collect_paths() {
   # Both are scanned: whichever one carries the paths today, does tomorrow.
   for file in "$target" "$(dirname "$target")/.qs-wrapped"; do
     [ -f "$file" ] || continue
-    grep -oE "/nix/store/[a-z0-9]+-[A-Za-z0-9._+-]+/lib/qt-6/qml" "$file" 2>/dev/null || true
+    grep -oE "/nix/store/[a-z0-9]+-[A-Za-z0-9._+-]+/lib/qt-6/qml" "$file" 2> /dev/null || true
   done | sort -u
 }
 
@@ -109,7 +115,7 @@ if [ -f "$BASELINE_FILE" ]; then
   while IFS=$'\t' read -r category expected _rest; do
     expected=${expected:-0}
     [ "$category" = "__observed" ] && continue
-    case "$category" in ""|"#"*) continue ;; esac
+    case "$category" in "" | "#"*) continue ;; esac
     count=$(grep -c "\[$category\]" "$REPORT" || true)
     count=${count:-0}
     inherent=$((inherent + count))
@@ -152,7 +158,11 @@ fi
 if [ -f "$BASELINE_FILE" ]; then
   tmp="$(mktemp)"
   while IFS=$'\t' read -r category expected _rest; do
-    case "$category" in ""|"#"*) printf '%s\n' "$category" >> "$tmp"; continue ;; esac
+    case "$category" in "" | "#"*)
+      printf '%s\n' "$category" >> "$tmp"
+      continue
+      ;;
+    esac
     count=$(grep -c "\[$category\]" "$REPORT" || true)
     count=${count:-0}
     [ "$count" -lt "$expected" ] && expected="$count"
