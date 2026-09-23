@@ -210,7 +210,12 @@ lib.mkMerge [
     # open but sshd (key-only) and the net1-scoped lists below.
     networking.firewall = {
       allowedTCPPorts = lib.mkForce [
-        22 # sshd (key-only auth)
+        # sshd — deliberately accepted on EVERY interface (net0/wlan0 are the
+        # interfaces used on untrusted networks, see the comment above). The
+        # compensating control is services.fail2ban (modules/servers/openssh),
+        # not an interface restriction: narrow this to interfaces.net1 if SSH
+        # over untrusted networks is ever dropped.
+        22
       ];
       allowedUDPPorts = lib.mkForce [ ];
       allowedTCPPortRanges = lib.mkForce [ ];
