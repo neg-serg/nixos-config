@@ -31,6 +31,17 @@ case "$1" in
   *)
     SCLK="${1:?usage: gpu-oc <sclk-offset> <vddgfx-offset>|reset}"
     VDDG="${2:?usage: gpu-oc <sclk-offset> <vddgfx-offset>|reset}"
+    # Args go straight into a sysfs write as root (NOPASSWD rule): reject
+    # anything that is not a plain integer so the wrapper cannot be used to
+    # inject additional pp_od_clk_voltage commands.
+    [[ "$SCLK" =~ ^-?[0-9]+$ ]] || {
+      echo "gpu-oc: sclk-offset must be an integer (got: $SCLK)" >&2
+      exit 1
+    }
+    [[ "$VDDG" =~ ^-?[0-9]+$ ]] || {
+      echo "gpu-oc: vddgfx-offset must be an integer (got: $VDDG)" >&2
+      exit 1
+    }
     echo "s $SCLK" > "$DEV"
     echo "vo $VDDG" > "$DEV"
     echo "c" > "$DEV"

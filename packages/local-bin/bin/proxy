@@ -513,8 +513,14 @@ route = {"rules": [{"ip_is_private": True, "outbound": "direct"},
 cfg = {"log": {"level": "error"}, "dns": dns, "inbounds": inbounds,
        "outbounds": outbounds, "route": route}
 os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+# Config carries live node credentials: keep the directory (0700) and the
+# file (0600) private instead of relying on the caller's umask.
+os.chmod(os.path.dirname(cfg_path), 0o700)
 with open(cfg_path, "w") as f:
     json.dump(cfg, f, indent=2)
+os.chmod(cfg_path, 0o600)
+
+
 log("✓ Config: " + str(len(tags)) + " outbounds + urltest ("
     + str(len(tg_tags)) + " tg-capable)")
 PYEOF
@@ -626,7 +632,11 @@ elif lan_in.get("users") != want_users:
         changed = True
         log(":: Config: LAN inbound is passwordless (users removed)")
 if changed:
-    json.dump(cfg, open(cfg_path, "w"), indent=2)
+    with open(cfg_path, "w") as f:
+        json.dump(cfg, f, indent=2)
+    # Node credentials/LAN password live in this file: never world-readable.
+    os.chmod(cfg_path, 0o600)
+
     log(":: Config: patched")
 PYEOF
         return
@@ -1389,7 +1399,8 @@ start() {
         if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
             ok "Proxy on 127.0.0.1:10808 (systemd user service)"
             lan_msg
-            say "Dashboard: http://127.0.0.1:9090 (secret: neg)"
+            # No dashboard line: the generated config sets no clash_api
+            # section (and no hardcoded secret) — printing one was stale.
             return 0
         fi
     fi
@@ -1401,7 +1412,7 @@ start() {
     if pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
         ok "Proxy on 127.0.0.1:10808"
         lan_msg
-        say "Dashboard: http://127.0.0.1:9090 (secret: neg)"
+        # No dashboard line: see the note above (no clash_api in the config).
     else
         fail "proxy failed to start"
         tail -3 "$LOG" 2>/dev/null || true

@@ -58,7 +58,8 @@ configured nodes (vless/vmess/hysteria2/hysteria/tuic/ss/trojan/anytls).
   take precedence.
 - Uses the **same port 10808** — the `proxy on` command stops Xray first.
 - `proxy off` restarts Xray automatically.
-- Dashboard: `http://127.0.0.1:9090` (secret: `neg`).
+- Dashboard: not configured — the generated config has no `clash_api` section, so nothing listens on
+  `:9090` and no secret is set.
 - Logs: `/tmp/sing-box-trojan.log`.
 
 ### Why both exist
@@ -76,7 +77,7 @@ back, and it handles nix-daemon's proxy env on boot.
 | Port 10808   | `ExecStartPre` kills existing holder via `fuser -k` | `proxy on` stops Xray first                                                                  |
 | Off behavior | —                                                   | `proxy off` restarts Xray                                                                    |
 | Logs         | `journalctl -u xray.service`                        | `/tmp/sing-box-trojan.log`                                                                   |
-| Dashboard    | None                                                | `http://127.0.0.1:9090` (secret: `neg`)                                                      |
+| Dashboard    | None                                                | None (no `clash_api` in the generated config)                                                |
 | Purpose      | Boot-time proxy for nix-daemon                      | Flexible proxy with auto-refreshing nodes                                                    |
 
 ## proxy CLI
