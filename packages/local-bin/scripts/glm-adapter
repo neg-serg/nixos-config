@@ -13,6 +13,7 @@
 #   glm-adapter status             # where is the adapter + chain state
 #   glm-adapter auto               # keep the adapter in the VM (timer entry point)
 #   glm-adapter attach             # move the adapter into the VM (default)
+#   glm-adapter replug             # restart the VM for a fresh QEMU claim (attached but GLM OFFLINE)
 #   glm-adapter host               # move the adapter back to the host (manual reserve)
 #   glm-adapter verify             # check the control chain only
 #   glm-adapter <cmd> --glm        # also OCR-check the GLM window inside the VM
@@ -178,7 +179,12 @@ vm_screen_text() {
   podman exec "$CT" sh -c 'cat /dev/shm/glm-screen.ppm' >"$base.ppm" 2>/dev/null || return 1
   podman exec "$CT" sh -c 'rm -f /dev/shm/glm-screen.ppm' >/dev/null 2>&1 || true
   [ -s "$base.ppm" ] || return 1
-  magick "$base.ppm" -resize 1600x\> "$base.png" 2>/dev/null || return 1
+  # OCR needs a 2x render: at the guest's 1280x800 tesseract silently drops
+  # small UI text. On 2026-09-23 the GLM window showed its "OFFLINE" badge while
+  # the 100%-scale pass reported "no OFFLINE" — the same screen read at 200% (and
+  # only there) put the word at confidence 90. Grayscale + normalize is the
+  # recipe that was verified by hand, both online and offline.
+  magick "$base.ppm" -resize 200% -colorspace Gray -normalize "$base.png" 2>/dev/null || return 1
   tesseract "$base.png" "$base" -l eng >/dev/null 2>&1 || true
   [ -s "$base.txt" ] || return 1
   echo "$base.txt"
@@ -399,7 +405,7 @@ check_glm_vm() {
     return
   fi
   if grep -q -i 'offline' "$txt" 2>/dev/null; then
-    fail "GLM in the VM shows OFFLINE — click Reconnect in GLM (or replug the adapter)"
+    fail "GLM in the VM shows OFFLINE — click Reconnect in GLM, or run 'glm-adapter replug'"
   else
     ok "no OFFLINE detected on the VM screen (GLM online?)"
     grep -o -E '\-?[0-9]+(\.[0-9]+)? ?dB' "$txt" 2>/dev/null | head -3 | sed 's/^/       GLM dB: /' || true
@@ -456,6 +462,11 @@ cmd_attach() {
   echo "=== attaching adapter to the VM ==="
   if [ "$(qemu_usb)" -ge 1 ] && ! host_genlc_ok; then
     ok "adapter already inside the VM"
+    # Attached is not the same as working: on 2026-09-23 the guest had the
+    # adapter on its USB bus (and the bridge connected) while GLM drew OFFLINE
+    # for every monitor. Only a fresh QEMU claim heals that — `replug`, not this
+    # command, which deliberately does nothing in that state.
+    echo "       if GLM shows the monitors OFFLINE: glm-adapter replug"
     verify_chain
     return 0
   fi
@@ -612,12 +623,40 @@ cmd_health() {
   fi
 }
 
+# Heal "attached but not working": the guest lists the adapter on its USB bus and
+# the MIDI bridge is connected, yet GLM draws OFFLINE for every monitor (seen
+# 2026-09-23). Only a fresh QEMU claim brought the monitors back — the same
+# restart `auto` uses for a *missing* adapter, so it shares the restart lock, the
+# hourly budget and the Telegram notify. cmd_attach declines to act in this state
+# ("already inside the VM"), which is why the manual case needs its own entry point.
+cmd_replug() {
+  echo "=== replugging the GLM adapter (fresh QEMU claim) ==="
+  if [ "$(vm_running)" != 1 ]; then
+    fail "VM '$CT' is not running — start it first: docker start windows"
+    return 1
+  fi
+  if ! vm_restart "адаптер в VM, но GLM без мониторов" "ok, свежий QEMU забрал адаптер"; then
+    fail "no restart (another restart in progress, or the hourly budget) — see $RESTART_LOG"
+    return 1
+  fi
+  ok "VM restarted — the guest needs ~1-2 min; then: glm-adapter status --glm"
+  # GLM comes up with its own last volume, which can differ from the widget's
+  # (2026-09-23: -55.5 dB vs the stored -50), and the widget re-anchors only when
+  # the control path flips — a VM restart leaves it in MIDI mode. Name the value
+  # to re-send so the display and the monitors agree again.
+  if [ -f "$STATE" ]; then
+    echo "       once the guest is up, re-send the displayed volume: glm-midi volume $(cat "$STATE")dB"
+  fi
+  verify_chain
+}
+
 case "${1:-attach}" in
   status) cmd_status ;;
   auto) cmd_auto ;;
   attach) cmd_attach ;;
+  replug) cmd_replug ;;
   host|detach) cmd_host ;;
   verify) cmd_verify ;;
   health) cmd_health ;;
-  *) echo "usage: $0 {status|auto|attach|host|verify|health} [--glm]" >&2; exit 1 ;;
+  *) echo "usage: $0 {status|auto|attach|replug|host|verify|health} [--glm]" >&2; exit 1 ;;
 esac
