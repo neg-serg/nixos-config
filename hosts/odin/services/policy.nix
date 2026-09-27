@@ -367,13 +367,13 @@ lib.mkMerge [
 
         # Persistent journald logs with retention and rate limiting
         journald = {
-          storage = "persistent";
-          extraConfig = ''
-            SystemMaxUse=1G
-            MaxRetentionSec=1month
-            RateLimitIntervalSec=30s
-            RateLimitBurst=1000
-          '';
+          settings.Journal = {
+            Storage = "persistent";
+            SystemMaxUse = "1G";
+            MaxRetentionSec = "1month";
+            RateLimitIntervalSec = "30s";
+            RateLimitBurst = 1000;
+          };
         };
         # Keep X11 off for this host — the FVWM rice session is the only thing
         # that wants a real X server (services.xserver.enable in modules/user/session/fvwm.nix).

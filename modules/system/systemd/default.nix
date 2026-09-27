@@ -12,16 +12,17 @@ in
   inherit imports;
 
   # Journald: keep logs across reboots to inspect boot output
-  services.journald.extraConfig = ''
-    Storage=persistent
-    # Console forwarding is now handled by modules/system/log-ttys.nix (8 per-category TTY viewers)
+  services.journald.settings.Journal = {
+    # Console forwarding is handled by modules/system/log-ttys.nix (8 per-category TTY viewers).
+    # mkDefault: hosts/odin/services/policy.nix tightens rate limits / retention per host.
+    Storage = lib.mkDefault "persistent";
     # Limit log write bursts to reduce IO spikes
-    RateLimitIntervalSec=30s
-    RateLimitBurst=2000
+    RateLimitIntervalSec = lib.mkDefault "30s";
+    RateLimitBurst = lib.mkDefault 2000;
     # Keep total journal size reasonable
-    SystemMaxFileSize=300M
-    SystemMaxFiles=50
-  '';
+    SystemMaxFileSize = "300M";
+    SystemMaxFiles = 50;
+  };
 
   services.logind.settings.Login = {
     IdleAction = "ignore";
