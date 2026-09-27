@@ -38,16 +38,27 @@ zapret2_checks() {
   else
     rec zapret2-nft FAIL
   fi
-  if [ "$($CURL -4 -sS -o /dev/null -w '%{http_code}' --max-time 10 https://www.youtube.com/)" = "200" ]; then
+  # Обе пробы независимы, раньше шли последовательно с таймаутом 10 с каждая:
+  # при недоступном youtube проверка растягивалась до 20 с. Теперь запускаем
+  # их параллельно и с коротким таймаутом — худший случай ~5 с.
+  tcp_out="$RESULTS.tcp"
+  quic_out="$RESULTS.quic"
+  $CURL -4 -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 \
+    https://www.youtube.com/ > "$tcp_out" 2> /dev/null &
+  $CURL --http3 -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 \
+    https://www.youtube.com/ > "$quic_out" 2> /dev/null &
+  wait
+  if [ "$(< "$tcp_out")" = "200" ]; then
     rec zapret2-tcp PASS
   else
     rec zapret2-tcp FAIL
   fi
-  if [ "$($CURL --http3 -sS -o /dev/null -w '%{http_code}' --max-time 10 https://www.youtube.com/)" = "200" ]; then
+  if [ "$(< "$quic_out")" = "200" ]; then
     rec zapret2-quic PASS
   else
     rec zapret2-quic FAIL
   fi
+  rm -f "$tcp_out" "$quic_out"
 }
 
 : > "$RESULTS"

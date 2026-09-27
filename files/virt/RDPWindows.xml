@@ -34,12 +34,6 @@
     </disk>
     <disk type='file' device='cdrom'>
       <driver name='qemu' type='raw'/>
-      <source file='/var/lib/libvirt/iso/Windows.iso'/>
-      <target dev='sdb' bus='sata'/>
-      <readonly/>
-    </disk>
-    <disk type='file' device='cdrom'>
-      <driver name='qemu' type='raw'/>
       <source file='/var/lib/libvirt/iso/virtio-win.iso'/>
       <target dev='sdc' bus='sata'/>
       <readonly/>

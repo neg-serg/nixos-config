@@ -81,17 +81,25 @@ in
       wants = [ "network-online.target" ];
       wantedBy = [ "default.target" ];
       serviceConfig = {
-        # podman run stays in the foreground as long as the container lives;
-        # on exit systemd restarts and --replace re-creates the named container.
-        ExecStart = lib.concatStringsSep " " [
-          "${lib.getExe pkgs.podman} run"
-          "--name vane --replace --rm"
-          "-p ${toString cfg.port}:${toString cfg.containerPort}"
-          "-e OLLAMA_BASE_URL=${cfg.ollamaUrl}"
-          "-e OLLAMA_EMBEDDING_MODEL=${cfg.embeddingModel}"
-          "-v vane-data:/home/vane/data"
-          cfg.image
-        ];
+        # Переиспользуем уже созданный контейнер: `podman run --replace --rm`
+        # пересоздавал его на каждом логине (~10 с в blame). Контейнер живёт
+        # между сессиями (останавливается вместе с юнитом), поэтому обычно
+        # хватает `podman start -a`. Обновить образ: `podman rm -f vane` и
+        # перезапустить юнит.
+        ExecStart = "${pkgs.writeShellScript "vane-run" ''
+          set -euo pipefail
+          podman=${lib.getExe pkgs.podman}
+          if "$podman" container exists vane; then
+            "$podman" start vane > /dev/null 2>&1 || true
+            exec "$podman" attach vane
+          fi
+          exec "$podman" run --name vane \
+            -p ${toString cfg.port}:${toString cfg.containerPort} \
+            -e OLLAMA_BASE_URL=${cfg.ollamaUrl} \
+            -e OLLAMA_EMBEDDING_MODEL=${cfg.embeddingModel} \
+            -v vane-data:/home/vane/data \
+            ${cfg.image}
+        ''}";
         Restart = "on-failure";
         RestartSec = 10;
         TimeoutStartSec = 300;
