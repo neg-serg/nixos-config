@@ -1,11 +1,13 @@
 { inputs, ... }:
-# ROCm-enabled PyTorch 2.12 (gfx1201) python environment for GPU fine-tuning.
+# ROCm-enabled PyTorch (gfx1201) python environment for GPU fine-tuning.
 # Self-contained: imports the flake's nixpkgs with allowBroken/allowUnfree (ROCm
 # deps include a "broken" composable_kernel base) + doCheckByDefault=false (prunes
 # scipy/matplotlib test deps). gfx targets restricted to gfx1201 (RX 9070 XT);
 # doc/test deps pruned (rdc/rocdbgapi docs off, rccl without the rocprofiler profiler).
 let
-  nixpkgs = inputs.nixpkgs.outPath;
+  # Pinned rev: nixpkgs' torch 2.13.0 wants aotriton 0.12b, rocmPackages has
+  # 0.11.1b → the HIP build of 2.13.0 fails; 2.12.0 (this rev) builds fine.
+  nixpkgs = inputs.nixpkgs-torch.outPath;
   libcpp15patch = ./boost-libcpp15.patch;
   pkgs = import nixpkgs {
     system = "x86_64-linux";
