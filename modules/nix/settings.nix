@@ -1,6 +1,7 @@
 {
   lib,
   inputs,
+  pkgs,
   config,
   ...
 }:
@@ -25,6 +26,24 @@ in
   };
 
   nix = {
+
+    # Determinate's NixOS module sets nix.package to nix-src's `packages.<system>.nix`
+    # (= packaging/everything.nix — verified: its drvPath equals
+    # inputs.nix-src.packages.<system>.nix.drvPath, determinate-nix-3.21.7). That
+    # derivation gates the build on five `nix-*-tests-run` check inputs, and on this
+    # rev `nix-util-tests-run` fails 4 URL-parsing tests — all one feature, IPv6 hosts
+    # with a zone id (http://[fe80::…%25enp0s25]:8080/):
+    # parseURLRelative.resolvesRelativePathIpv6AddressWithZoneId plus the /5 case of
+    # ParseURLSuccess.parsesAsExpected / toStringRoundTrips / makeSureFixGitURLDoesNotModify.
+    # 706 of 710 pass; zone-id URLs appear in no flake ref on this box, so the tests are
+    # skipped the same way the nixpkgs `nix` package skips its own (disable-checks.nix):
+    # doCheck = false. Verified — the resulting drv lists no `*-tests-run` inputs at all,
+    # because nixpkgs' mkDerivation gates checkInputs on doCheck.
+    package = lib.mkForce (
+      inputs.nix-src.packages.${pkgs.stdenv.hostPlatform.system}.nix.overrideAttrs (_: {
+        doCheck = false;
+      })
+    );
 
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     settings = {
