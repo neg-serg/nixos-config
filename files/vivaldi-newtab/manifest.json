@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "neg newtab",
+  "version": "1.0.0",
+  "description": "Dark new tab page: clock, date, weather, search and quick links.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwMIejA/lZusU8Kw7/WO+2JzkFp8q71li0+KVZdhmcJPbR4MO9VrcqBp3gKqyMlPAzC0fMYZ9eqjZEVVM7J0DnblXLHZiwXwy7J56ep7Vj4MAmD5NXOp+hgEhF0Wamyn/NrdP0LhhkcY1ChfsovHeJgGcxRkt8vG8/YtHL8EIPWJx7/9sLaXYFWDZgSN7eTXDO/2hZoSTd2HBI4fKIejT/eo4XZFQXacUlrJHBnH8ammVjxpcvcl4DBZbWeemAg/H4+580gnIH+EngLddPLI6K7w1ioN4dkGCa9MjqPgGbaijt7zL1ccxa52EeaJ8zsviZIPCsT89y0DbnIoB9nSwvQIDAQAB",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": [
+    "storage",
+    "favicon"
+  ],
+  "host_permissions": [
+    "https://api.open-meteo.com/*"
+  ],
+  "icons": {
+    "128": "img/icon.svg"
+  }
+}
