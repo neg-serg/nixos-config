@@ -78,6 +78,10 @@ in
   # stack on python312, see packages/tmd-top/default.nix
   tmd-top = final.callPackage ./tmd-top { };
 
+  # lazytail: terminal log viewer (ratatui) with live filtering, follow mode and
+  # an MCP server — see packages/lazytail/default.nix
+  lazytail = final.callPackage ./lazytail { };
+
   # tewi: TUI client for Transmission/qBittorrent/Deluge daemons
   # (python app, deps from nixpkgs + local geoip2fast, see packages/tewi/default.nix)
   tewi = final.callPackage ./tewi { };
