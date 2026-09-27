@@ -3,15 +3,16 @@
 let
   baseKernel = pkgs.linuxPackages.kernel;
 
-  # Backported MediaTek MT6639 (MT7927) Bluetooth support: odin's adapter
-  # (13d3:3588, ASUS ROG STRIX X870E-E) reports CHIPID=0x0000 and 6.18.y
-  # otherwise drives it as MT7922, failing with "hci0: Opcode 0x0c03
-  # failed: -16". Backport of upstream 28b7c5a6db74 (+ 81f971c6abec,
-  # 59c3ee19ca88). Patch: files/patches/mt6639-btmtk-6.18.patch.
+  # MediaTek MT6639 (MT7927) Bluetooth for odin's adapter (13d3:3588, ASUS ROG
+  # STRIX X870E-E): the chip reports CHIPID=0x0000 and older 6.18.y drove it as
+  # MT7922, failing with "hci0: Opcode 0x0c03 failed: -16". The upstream MT6639
+  # backport (28b7c5a6db74, 81f971c6abec, 59c3ee19ca88) is in-tree since
+  # linux 6.18.53 (btmtk.c/btmtk.h/btmtksdio.c), but it does not add the USB ID,
+  # so this patch keeps only the missing btusb entry: mt6639-btusb-id.patch.
   kernelSrc = pkgs.applyPatches {
     name = "linux-${baseKernel.version}-mt6639";
     src = baseKernel.src;
-    patches = [ ../../../files/patches/mt6639-btmtk-6.18.patch ];
+    patches = [ ../../../files/patches/mt6639-btusb-id.patch ];
   };
 
   # Kernel config = generated base + deliberate manual overlay
