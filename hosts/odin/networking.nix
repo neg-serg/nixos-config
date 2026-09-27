@@ -8,7 +8,7 @@
     ];
 
     # NAT from the local bridge (br0, 192.168.122.0/24) to the main uplink
-    # so VMs/LXC containers on br0 have Internet access.
+    # so VMs on br0 have Internet access.
     nat = {
       enable = true;
       externalInterface = "net1";
