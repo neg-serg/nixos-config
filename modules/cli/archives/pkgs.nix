@@ -3,15 +3,12 @@
   environment.systemPackages = [
     pkgs.ouch # archive extractor/creator
     pkgs.patool # universal archive unpacker (python)
-    pkgs.pbzip2 # parallel bzip2 backend
     pkgs.pigz # parallel gzip backend
 
-    pkgs.lbzip2 # parallel bzip2
-    pkgs.p7zip # 7z x
+    pkgs._7zz # 7-Zip upstream (binary: 7zz) — replaces the unmaintained p7zip
     # pkgs.rapidgzip removed — fails on python 3.14 / setuptools 83
     # (nasmcompiler.py calls UnixCCompiler.__init__ with 4 positional args)
     pkgs.unar # archive extractor with broad format support
-    pkgs.unrar-wrapper # unrar
     pkgs.unzip # zip archive operations
     pkgs.xz # xz archiver
     pkgs.zip # zip archiver

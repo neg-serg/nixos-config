@@ -28,7 +28,7 @@ let
     pkgs.protobuf # protoplugin build dependency
     pkgs.grpc # gRPC headers/libs for remote control modules
     pkgs.unzip # unzip helper for marketplace archives
-    pkgs.p7zip # extract 7z-packed marketplace assets
+    pkgs._7zz # extract 7z-packed marketplace assets (binary: 7zz)
     pkgs.rsync # sync intermediate files to sandboxes
     pkgs.which # ensure /usr/bin/which exists during scripts
   ]

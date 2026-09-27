@@ -183,7 +183,6 @@ lib.mkMerge [
         pkgs.mpc # A minimalist command line interface to MPD
         pkgs.rmpc # Rust Music Player Client
         pkgs.euphonica # GTK4/libadwaita MPD client (GUI counterpart to rmpc)
-        pkgs.rescrobbled # MPRIS Scrobbler # MPRIS Scrobbler
         pkgs.ncpamixer # An ncurses mixer for PulseAudio
         pkgs.playerctl # Command-line controller for MPC-capable players
 
@@ -210,16 +209,6 @@ lib.mkMerge [
       };
     };
 
-    # Rescrobbled (MPRIS Scrobbler)
-    systemd.user.services.rescrobbled = {
-      description = "MPRIS music scrobbler daemon";
-      after = [ "network-online.target" ];
-      wantedBy = [ "default.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.rescrobbled}"; # MPRIS Scrobbler
-        Restart = "on-failure";
-      };
-    };
   }
 
   (neg.mkHomeFiles {
@@ -254,17 +243,8 @@ lib.mkMerge [
       text = lib.generators.toINI { } spiceSettings;
     };
 
-    # Rescrobbled Config (from SOPS)
-    ".config/rescrobbled/config.toml".source = config.sops.secrets."lastfm/rescrobbled".path;
-
   })
   {
-    sops.secrets."lastfm/rescrobbled" = {
-      sopsFile = config.lib.neg.path "secrets/home/lastfm-rescrobbled.sops";
-      format = "binary";
-      owner = "neg";
-    };
-    # Rescrobbled config sourced from SOPS above.
   }
   (lib.mkIf (config.lib.neg.pathExists "secrets/home/mpdas/neg.rc") {
     sops.secrets."mpdas_negrc" = {
