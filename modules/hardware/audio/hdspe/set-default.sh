@@ -10,16 +10,20 @@ for card in "RMEAIO" "HDSPeAIO" "HDSPe" "AIO" "RME_AIO" "HDSPe24048964"; do
 done
 [ -n "$found" ] || exit 0
 
-# Wait up to 20s for the RME sink: wireplumber recreates the ALSA node on
+# Wait up to ~25s for the RME sink: wireplumber recreates the ALSA node on
 # every restart, and the sink appears a moment after wireplumber is up.
 # Without this wait, the pw-link calls below fail and the loopback stream
 # stays auto-linked to the analog pair (AUX0/1) → no sound on AES monitors.
 # Pure bash matching (no grep) — the unit PATH only carries pipewire/coreutils.
-for _ in $(seq 1 40); do
+# Poll fast at first (50 ms, doubling to 500 ms): the sink normally shows up
+# right after wireplumber, so this turns the typical ~2 s wait into ~0.2 s.
+delay=50
+for _ in $(seq 1 50); do
   if [[ "$(wpctl status 2> /dev/null)" == *"RME AIO Pro"* ]]; then
     break
   fi
-  sleep 0.5
+  sleep "0.$(printf %03d "$delay")"
+  delay=$((delay * 2 < 500 ? delay * 2 : 500))
 done
 
 status="$(wpctl status 2> /dev/null || true)"
