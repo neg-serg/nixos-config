@@ -616,9 +616,7 @@
         "skwd": "skwd",
         "skwd-daemon": "skwd-daemon",
         "sqlit": "sqlit",
-        "talktype": [
-          "talktype"
-        ],
+        "talktype": "talktype",
         "wl": [
           "wl"
         ]
@@ -949,7 +947,6 @@
         "sops-nix": "sops-nix",
         "steam-config-nix": "steam-config-nix",
         "tailray": "tailray",
-        "talktype": "talktype",
         "waylandar": "waylandar",
         "wl": "wl",
         "xdg-desktop-portal-hyprland": "xdg-desktop-portal-hyprland"

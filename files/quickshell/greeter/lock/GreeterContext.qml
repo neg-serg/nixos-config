@@ -23,11 +23,9 @@ Scope {
 	}
 
 	// Map user → session types that user may start. Users not listed default to
-	// "wayland". Managed declaratively: add new users here when their sessions
-	// are known (neg starts either Hyprland or the FVWM X11 rice session).
+	// "wayland" — the only session type this host provides (no X sessions).
 	readonly property var userSessionTypes: ({
-		"neg": ["wayland", "x11"],
-		"xen": ["x11"],
+		"neg": ["wayland"],
 	})
 
 	readonly property string currentUser: users.length > 0 ? users[currentUserIndex] : "neg"
@@ -59,16 +57,12 @@ Scope {
 		}
 	}
 
-	// Read sessions from .desktop files, tagged by type (wayland/x11)
+	// Read the Wayland session .desktop files
 	Process {
 		id: sessionProc
 		command: ["sh", "-c",
 			"for f in /usr/share/wayland-sessions/*.desktop; do " +
 			"[ -f \"$f\" ] && printf 'wayland\\t%s\\t%s\\n' " +
-			"\"$(sed -n 's/^Name=//p' \"$f\" | head -1)\" " +
-			"\"$(sed -n 's/^Exec=//p' \"$f\" | head -1)\"; done; " +
-			"for f in /usr/share/xsessions/*.desktop; do " +
-			"[ -f \"$f\" ] && printf 'x11\\t%s\\t%s\\n' " +
 			"\"$(sed -n 's/^Name=//p' \"$f\" | head -1)\" " +
 			"\"$(sed -n 's/^Exec=//p' \"$f\" | head -1)\"; done"
 		]
