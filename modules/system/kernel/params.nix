@@ -187,6 +187,7 @@ in
           "snd_hdspm" # conflicts with DKMS snd-hdspe (RME HDSPe AIO Pro)
           "snd_aloop" # races with USB audio, PipeWire provides loopback
           "snd_hda_intel" # не используется — GPU аудио не нужно
+          "snd_usb_audio" # онбордный ASUS "USB Audio" (0b05:1b7c) не используется — его драйвер грузится ~11 с и держит udevadm settle до конца загрузки
         ]
         # TPM transport drivers stay blacklisted unless TPM-backed sudo is
         # enabled (features.security.tpmSudo) — see modules/security/tpm-sudo.nix.
