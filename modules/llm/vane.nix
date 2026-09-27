@@ -81,11 +81,11 @@ in
       wants = [ "network-online.target" ];
       wantedBy = [ "default.target" ];
       serviceConfig = {
-        # Переиспользуем уже созданный контейнер: `podman run --replace --rm`
-        # пересоздавал его на каждом логине (~10 с в blame). Контейнер живёт
-        # между сессиями (останавливается вместе с юнитом), поэтому обычно
-        # хватает `podman start -a`. Обновить образ: `podman rm -f vane` и
-        # перезапустить юнит.
+        # Reuse the container that already exists: `podman run --replace --rm`
+        # recreated it on every login (~10 s in blame). The container lives
+        # between sessions (it stops together with the unit), so usually
+        # `podman start -a` is enough. To refresh the image: `podman rm -f vane` and
+        # restart the unit.
         ExecStart = "${pkgs.writeShellScript "vane-run" ''
           set -euo pipefail
           podman=${lib.getExe pkgs.podman}

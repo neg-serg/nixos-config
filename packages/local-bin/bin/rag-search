@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-# rag-search: локальный векторный поиск по заметкам (~/notes) — RAG поверх
-# qwen3-embedding (ollama) + bge-reranker-v2-m3 (llama.cpp) + qwen3:8b (ответы).
+# rag-search: local vector search over the notes (~/notes) — RAG on top of
+# qwen3-embedding (ollama) + bge-reranker-v2-m3 (llama.cpp) + qwen3:8b (answers).
 #
-# Установка через nix-maid local-bin: packages/local-bin/bin → ~/.local/bin.
-# Данные индекса: ~/.local/share/rag-notes/ (sqlite + float32-векторы).
-# Ничего не уходит в сеть: ollama и llama.cpp работают локально.
+# Installed through nix-maid local-bin: packages/local-bin/bin → ~/.local/bin.
+# Index data: ~/.local/share/rag-notes/ (sqlite + float32 vectors).
+# Nothing leaves the machine: ollama and llama.cpp run locally.
 #
-# Команды:
-#   rag-search index              переиндексировать заметки (эмбеддинги батчами)
-#   rag-search search "запрос"    top-N результатов (косинус + реранкинг)
-#   rag-search search --llm "…"   ответ qwen3:8b по найденным фрагментам
-#   rag-search search -n 8 "…"    больше результатов
-#   rag-search status             состояние индекса и реранкера
-#   rag-search reranker stop      остановить фоновый реранкер
+# Commands:
+#   rag-search index              re-index the notes (embeddings in batches)
+#   rag-search search "query"     top-N results (cosine + reranking)
+#   rag-search search --llm "…"   a qwen3:8b answer over the retrieved chunks
+#   rag-search search -n 8 "…"    more results
+#   rag-search status             index and reranker state
+#   rag-search reranker stop      stop the background reranker
 #
-# Переменные окружения:
-#   RAG_NOTES_DIR    каталог заметок (по умолчанию ~/notes)
-#   RAG_INDEX_DIR    каталог индекса  (по умолчанию ~/.local/share/rag-notes)
-#   RAG_LLM_MODEL    модель для ответов (по умолчанию qwen3:8b)
-#   RAG_RERANK_MODEL путь к GGUF реранкера (по умолчанию /zero/ai/embeddings/...)
+# Environment variables:
+#   RAG_NOTES_DIR    notes directory (default ~/notes)
+#   RAG_INDEX_DIR    index directory  (default ~/.local/share/rag-notes)
+#   RAG_LLM_MODEL    model for the answers (default qwen3:8b)
+#   RAG_RERANK_MODEL reranker GGUF path (default /zero/ai/embeddings/...)
 
 import argparse
 import glob

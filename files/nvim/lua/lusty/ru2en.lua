@@ -1,4 +1,4 @@
--- RU (йцукен) to EN characters for the keymaps: under the Russian layout the
+-- RU (ЙЦУКЕН) to EN characters for the keymaps: under the Russian layout the
 -- physical keys produce Cyrillic, so mapping them back to the EN character
 -- keeps typing layout-free ('.' -> 'ю', 'b' -> 'и', '/' -> '.', ...).
 --

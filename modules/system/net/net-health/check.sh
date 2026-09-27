@@ -38,9 +38,9 @@ zapret2_checks() {
   else
     rec zapret2-nft FAIL
   fi
-  # Обе пробы независимы, раньше шли последовательно с таймаутом 10 с каждая:
-  # при недоступном youtube проверка растягивалась до 20 с. Теперь запускаем
-  # их параллельно и с коротким таймаутом — худший случай ~5 с.
+  # Both probes are independent; they used to run sequentially with a 10 s timeout each:
+  # with youtube unreachable the check stretched to 20 s. Now we run
+  # them in parallel with a short timeout — the worst case is ~5 s.
   tcp_out="$RESULTS.tcp"
   quic_out="$RESULTS.quic"
   $CURL -4 -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 \

@@ -186,8 +186,8 @@ in
           "sp5100_tco"
           "snd_hdspm" # conflicts with DKMS snd-hdspe (RME HDSPe AIO Pro)
           "snd_aloop" # races with USB audio, PipeWire provides loopback
-          "snd_hda_intel" # не используется — GPU аудио не нужно
-          "snd_usb_audio" # онбордный ASUS "USB Audio" (0b05:1b7c) не используется — его драйвер грузится ~11 с и держит udevadm settle до конца загрузки
+          "snd_hda_intel" # unused — GPU audio is not needed
+          "snd_usb_audio" # the onboard ASUS "USB Audio" (0b05:1b7c) is unused — its driver takes ~11 s to load and holds udevadm settle until the boot is over
         ]
         # TPM transport drivers stay blacklisted unless TPM-backed sudo is
         # enabled (features.security.tpmSudo) — see modules/security/tpm-sudo.nix.

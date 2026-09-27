@@ -19,8 +19,8 @@ case "$file" in
   *) printf 'pngoptim: not a PNG: %s\n' "$file" >&2; exit 1;;
 esac
 
-# -o max: перебрать все фильтры (вплоть до bruteforce), -z: Zopfli — то, что
-# раньше давали optipng -o7 + advpng/advdef -z4, но одним многопоточным
-# проходом (на 2.4 МБ PNG: 3.7 с против 21.9 с, файл при этом меньше).
+# -o max: try every filter (up to bruteforce), -z: Zopfli — what
+# optipng -o7 + advpng/advdef -z4 used to give, but in a single multithreaded
+# pass (on a 2.4 MB PNG: 3.7 s vs 21.9 s, and the file is smaller).
 need oxipng
 oxipng -o max -z --strip safe -- "$file"
