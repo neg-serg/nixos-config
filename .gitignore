@@ -1,7 +1,8 @@
 result
 nixos.qcow2
 # Accidental nix store dump (nix/store/*.drv, .patch) — never source
-nix/
+# ...repo-root only: modules/nix/ is real source and must stay trackable
+/nix/
 .direnv/
 __pycache__/
 .pi/
