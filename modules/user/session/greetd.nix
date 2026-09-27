@@ -101,18 +101,16 @@ in
     # (point default_session back at `${lib.getExe pkgs.hyprland} -c /etc/greetd/greetd-hyprland-config.lua`
     # with user = "greeter").
     environment.etc."greetd/greetd-hyprland-config.lua".source = greetdHyprlandConfig;
-    # Expose wayland/x11 session .desktop files so the greeter can list and
-    # switch sessions (Hyprland only).
+    # Expose the Wayland session .desktop files so the greeter can list and
+    # switch sessions (Hyprland only; this host has no X sessions).
     environment.pathsToLink = lib.mkAfter [
       "/share/wayland-sessions"
-      "/share/xsessions"
     ];
     systemd.tmpfiles.rules = lib.mkAfter [
       # Greeter reads session .desktop files from /usr/share/wayland-sessions;
       # point it at the system profile's merged share dir.
       "d /usr/share 0755 root root -"
       "L+ /usr/share/wayland-sessions - - - - /run/current-system/sw/share/wayland-sessions"
-      "L+ /usr/share/xsessions - - - - /run/current-system/sw/share/xsessions"
       "d /home/greeter 0710 greeter greeter -"
       "d /home/greeter/.cache 0775 greeter greeter -"
       "d /home/greeter/.config/quickshell 0755 greeter greeter -"

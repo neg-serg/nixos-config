@@ -197,10 +197,10 @@ the adapter interface carries the `usbfs` driver.
 `glm-adapter status` can report `VM: adapter attached (1)` and `verify` can show the MIDI bridge
 connected while GLM inside the guest draws **OFFLINE** for every monitor — seen 2026-09-23 after an
 `attach` that had unbound `usbhid` under a running QEMU: the guest kept the adapter on its USB bus,
-but GLM never got the monitors back, so every volume/mute the bar sent went nowhere and the
-monitors stayed silent while PipeWire kept feeding AES. The OCR check is the only thing that sees
-this state — `glm-adapter status --glm` → `GLM in the VM shows OFFLINE` (it renders the guest screen
-at 2x for exactly this reason) — and `attach` declines it with "adapter already inside the VM".
+but GLM never got the monitors back, so every volume/mute the bar sent went nowhere and the monitors
+stayed silent while PipeWire kept feeding AES. The OCR check is the only thing that sees this state
+— `glm-adapter status --glm` → `GLM in the VM shows OFFLINE` (it renders the guest screen at 2x for
+exactly this reason) — and `attach` declines it with "adapter already inside the VM".
 
 Cure: a fresh QEMU claim, i.e. the restart path above — `glm-adapter replug` (shares the lock, the
 hourly budget and the Telegram notify with `auto`). Once the guest is back, re-send the volume the
