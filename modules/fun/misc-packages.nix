@@ -26,7 +26,6 @@ let
     bucklespringFixed # keyboard click sound daemon
 
     pkgs.dotacat # colorful cat implementation in Rust
-    pkgs.figlet # program for making large letters out of ordinary text
     pkgs.fortune # program that displays a pseudorandom message from a database of quotations
 
     pkgs.neo-cowsay # cowsay and cowthink reboot for GNU/Linux

@@ -41,7 +41,6 @@ in
 
     # Diff tools
     pkgs.delta # better diff tool
-    pkgs.diff-so-fancy # human-friendly git diff pager
     pkgs.diffutils # classic diff utils
 
     # File management
@@ -50,8 +49,6 @@ in
     pkgs.fd # better find
     pkgs.file # detect file type by content
     pkgs.massren # massive rename utility
-    pkgs.nnn # CLI file manager
-    pkgs.superfile # fancy terminal file manager with TUI
     pkgs.stow # manage farms of symlinks
     pkgs.zoxide # smarter cd with ranking
 
