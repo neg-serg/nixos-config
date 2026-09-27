@@ -101,7 +101,7 @@ lib.mkIf cfg.enable {
   ];
 
   environment.systemPackages = [
-    rice # vendored rice dotfiles, shims (python/albert/parcellite/light) and the session entry point
+    rice # vendored rice dotfiles, shims (python/albert/parcellite/light/nitrogen) and the session entry point
     pkgs.decay-gtk-theme # GTK3 Decay theme (GTK_THEME=decay in the session)
     pkgs.fvwm3 # window manager (fvwm2 syntax; the config uses fvwm3 modifiers)
     pkgs.picom # compositor started by fvwm's InitFunction
@@ -109,7 +109,6 @@ lib.mkIf cfg.enable {
     pkgs.rofi # application menu, window switcher, screenshot menu
     pkgs.dockbarx # dock (dockx), Decay theme in ~/.local/share/dockbarx
     pkgs.jgmenu # desktop menu (jgmenu_run)
-    pkgs.nitrogen # wallpaper restore (nitrogen --restore)
     pkgs.conky # desktop widgets (Izar theme, started by fvwm)
     pkgs.i3lock-color # lock screen: ~/.scripts/lock uses i3lock-color flags
     pkgs.maim # screenshots in ~/.scripts/shot.sh
@@ -185,23 +184,8 @@ lib.mkIf cfg.enable {
       source = "${rice}/home/.icons/tmp";
     };
     ".config/xinit/xinitrc".text = xinitrc;
-    # Nitrogen's config is read-only here: `nitrogen --restore` (fvwm's
-    # StartFunction) only reads it; changing the wallpaper means editing the
-    # file list in ~/.wallpapers and the `file=` below.
-    ".config/nitrogen/nitrogen.cfg".text = ''
-      [nitrogen]
-      view=icon
-      recurse=true
-      sort=alpha
-      icon_caps=false
-      dirs=$HOME/.wallpapers;
-    '';
-    # Wallpaper of the rice; the lock screen uses ~/.wallpapers/lock.png.
-    ".config/nitrogen/bg-saved.cfg".text = ''
-      [xin_-1]
-      file=${rice}/home/.wallpapers/dark-decay-void.jpg
-      mode=5
-      bgcolor=#000000
-    '';
+    # The wallpaper itself (and the `nitrogen --restore` call fvwm's
+    # StartFunction makes) lives in the `nitrogen` shim of pkgs.decay-rice;
+    # the lock screen uses ~/.wallpapers/lock.png.
   };
 }
