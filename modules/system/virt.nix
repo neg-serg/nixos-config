@@ -68,10 +68,20 @@ in
         pkgs.qemu_kvm # KVM virtual machines
       ];
       script = ''
+        # Fast path: libvirt keeps the domain XML and the autostart link on
+        # disk. When both are there nothing has to happen — and skipping the
+        # `virsh` calls matters: the first one blocks on libvirtd's socket for
+        # ~1.5 s, and this oneshot sits in the boot critical chain
+        # (multi-user.target waits for it: 7.18s + 1.59s on the 2026-09-27
+        # boot). When either file is missing, fall back to virsh and repair.
+        if [[ -e /var/lib/libvirt/qemu/RDPWindows.xml \
+              && -e /var/lib/libvirt/qemu/autostart/RDPWindows.xml ]]; then
+          exit 0
+        fi
         if ! virsh dominfo RDPWindows >/dev/null 2>&1; then
           virsh define ${config.lib.neg.path "files/virt/RDPWindows.xml"}
-          virsh autostart RDPWindows
         fi
+        virsh autostart RDPWindows
       '';
     };
 

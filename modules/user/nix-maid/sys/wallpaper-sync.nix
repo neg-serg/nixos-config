@@ -121,7 +121,7 @@ let
     if [ -n "$current" ] && [ -r "$current" ]; then
       for i in 1 2 3 4 5; do
         wl restore && exit 0
-        sleep 1
+        sleep 0.3
       done
       exit 0
     fi
@@ -140,7 +140,7 @@ let
         printf '%s\n' "$candidate" > "$HOME/.local/state/wl/last-good"
         exit 0
       fi
-      sleep 1
+      sleep 0.3
     done
   '';
 
