@@ -70,13 +70,14 @@ rewrites below, because NixOS has no FHS tree.
 Commands upstream calls that nixpkgs does not carry are shimmed in `$out/bin` of `pkgs.decay-rice`,
 so the vendored scripts and the fvwm config need no edits:
 
-| Upstream command                           | Shim                                                                                                     |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `python` / `python3`                       | `python3.withPackages [praw requests dbus-python pygobject3 wand]` + `GI_TYPELIB_PATH` for Playerctl/GTK |
-| `albert`                                   | `rofi -show drun` (Albert is unpackaged)                                                                 |
-| `parcellite`                               | `clipmenud`                                                                                              |
-| `light`                                    | `brightnessctl` (the subset `backlight.sh` uses: `light`, `-A`, `-U`, `-S`)                              |
-| `firefox` (`Key b A 4`, dunst URL handler) | `vivaldi` — the rice's browser is not installed here; the fvwm config stays verbatim                     |
+| Upstream command                           | Shim                                                                                                           |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `python` / `python3`                       | `python3.withPackages [praw requests dbus-python pygobject3 wand]` + `GI_TYPELIB_PATH` for Playerctl/GTK       |
+| `albert`                                   | `rofi -show drun` (Albert is unpackaged)                                                                       |
+| `parcellite`                               | `clipmenud`                                                                                                    |
+| `light`                                    | `brightnessctl` (the subset `backlight.sh` uses: `light`, `-A`, `-U`, `-S`)                                    |
+| `nitrogen`                                 | `xwallpaper --zoom` on the rice wallpaper (nitrogen was dropped from nixpkgs; the rice only calls `--restore`) |
+| `firefox` (`Key b A 4`, dunst URL handler) | `vivaldi` — the rice's browser is not installed here; the fvwm config stays verbatim                           |
 
 Window manager version: the config is fvwm3, not fvwm 2.7.0 — a smoke test against both packages
 shows fvwm 2.7.0 rejecting the `HM` mouse modifiers of `Mouse 1 W HM drag-n-move` /

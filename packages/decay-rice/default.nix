@@ -4,7 +4,7 @@
 # The rice files are tracked verbatim in files/x11/rice/; this derivation only
 #   * rewrites the FHS paths NixOS cannot provide (list: files/x11/README.md),
 #   * ships shims for the commands the rice calls that nixpkgs does not carry
-#     (python, albert, parcellite, light),
+#     (python, albert, parcellite, light, nitrogen),
 #   * adds the session entry point (share/xsessions/fvwm-decay.desktop plus
 #     bin/start-fvwm-decay) read by the greetd greeter.
 #
@@ -32,6 +32,7 @@
   python3,
   rofi,
   xinit,
+  xwallpaper,
   yaru-theme,
 }:
 let
@@ -67,8 +68,9 @@ let
     ]
   );
 
-  # Upstream calls bare `python`, `albert`, `parcellite` and `light`. The shims
-  # below keep the vendored scripts and ~/.fvwm/config byte-identical.
+  # Upstream calls bare `python`, `albert`, `parcellite`, `light` and
+  # `nitrogen`. The shims below keep the vendored scripts and ~/.fvwm/config
+  # byte-identical.
   pythonShim = writeShellScriptBin "python" ''
     # GI typelibs the widgets import; playerctl/magick arrive through PATH.
     export GI_TYPELIB_PATH="${widgetTypelibs}''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
@@ -110,6 +112,22 @@ let
         ;;
       *)
         echo "light shim: unsupported argument: ''${1:--G}" >&2
+        exit 2
+        ;;
+    esac
+  '';
+
+  nitrogenShim = writeShellScriptBin "nitrogen" ''
+    # `nitrogen` was dropped from nixpkgs (upstream untouched since 2018). The
+    # rice only ever runs `nitrogen --restore` (fvwm's StartFunction), and the
+    # saved entry was mode=5 (fill the screen), hence xwallpaper --zoom.
+    set -eu
+    case "''${1:-}" in
+      --restore)
+        exec ${xwallpaper}/bin/xwallpaper --zoom ${rice}/home/.wallpapers/dark-decay-void.jpg
+        ;;
+      *)
+        echo "nitrogen shim: only --restore is implemented (got: ''${1:-none})" >&2
         exit 2
         ;;
     esac
@@ -171,6 +189,7 @@ runCommandLocal "decay-rice" { } ''
   cp ${albertShim}/bin/albert $out/bin/albert
   cp ${parcelliteShim}/bin/parcellite $out/bin/parcellite
   cp ${lightShim}/bin/light $out/bin/light
+  cp ${nitrogenShim}/bin/nitrogen $out/bin/nitrogen
   cp ${firefoxShim}/bin/firefox $out/bin/firefox
   PATH="$out/bin:$PATH" patchShebangs $out/home
 
@@ -228,7 +247,7 @@ runCommandLocal "decay-rice" { } ''
   export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
 
 
-  # shims (python/albert/parcellite/light) + the X tools the rice Execs.
+  # shims (python/albert/parcellite/light/nitrogen) + the X tools the rice Execs.
   export PATH="@out@/bin:$PATH"
 
   # $XINITRC ($XDG_CONFIG_HOME/xinit/xinitrc) merges ~/.Xresources and execs fvwm3.
