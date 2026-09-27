@@ -243,9 +243,9 @@ lib.mkMerge [
     # rmpc config: config.ron is GENERATED (RU duplicates spliced at the
     # rmpcRuBinds.* markers), themes deployed as-is.
     ".config/rmpc/config.ron".text = rmpcText;
-    ".config/rmpc/themes".source = config.lib.neg.path "files/rmpc/themes";
+    ".config/rmpc/themes".source = config.lib.neg.live "files/rmpc/themes";
 
-    ".config/swayimg".source = config.lib.neg.path "files/gui/swayimg";
+    ".config/swayimg".source = config.lib.neg.live "files/gui/swayimg";
 
     ".config/ncpamixer.conf".text = config.lib.neg.readFile "files/media/ncpamixer.conf";
 

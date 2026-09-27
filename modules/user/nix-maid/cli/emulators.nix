@@ -6,21 +6,21 @@
 }:
 let
   cfg = config.features;
-  filesRoot = config.lib.neg.path "files";
+  filesRootLive = config.lib.neg.live "files";
 in
 {
   config = lib.mkMerge [
     (lib.mkIf (cfg.games.dosemu.enable or false) (
       neg.mkHomeFiles {
-        ".dosemu/disclaimer".source = "${filesRoot}/dosemu/disclaimer";
-        ".dosemu/drive_c/autoexec.bat".source = "${filesRoot}/dosemu/drive_c/autoexec.bat";
-        ".dosemu/drive_c/config.sys".source = "${filesRoot}/dosemu/drive_c/config.sys";
+        ".dosemu/disclaimer".source = "${filesRootLive}/dosemu/disclaimer";
+        ".dosemu/drive_c/autoexec.bat".source = "${filesRootLive}/dosemu/drive_c/autoexec.bat";
+        ".dosemu/drive_c/config.sys".source = "${filesRootLive}/dosemu/drive_c/config.sys";
       }
     ))
 
     (neg.mkHomeFiles {
       # Dosbox Config
-      ".config/dosbox".source = config.lib.neg.path "files/config/dosbox";
+      ".config/dosbox".source = config.lib.neg.live "files/config/dosbox";
 
       # WezTerm Config (Synced with Kitty)
       ".config/wezterm/wezterm.lua".text = ''

@@ -13,7 +13,7 @@
 {
   config = lib.mkIf (config.features.input.kanata.enable or false) (
     neg.mkHomeFiles {
-      ".config/kanata/kanata.kbd".source = config.lib.neg.path "files/cli/kanata/kanata.kbd";
+      ".config/kanata/kanata.kbd".source = config.lib.neg.live "files/cli/kanata/kanata.kbd";
     }
   );
 }

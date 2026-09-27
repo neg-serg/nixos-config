@@ -141,13 +141,13 @@ in
       text = lib.generators.toGitINI gitSettings;
     };
     ".config/git/ignore" = {
-      source = config.lib.neg.path "files/git/ignore";
+      source = config.lib.neg.live "files/git/ignore";
     };
     ".config/git/hooks/pre-commit" = {
-      source = config.lib.neg.path "files/git/hooks/pre-commit.sh";
+      source = config.lib.neg.live "files/git/hooks/pre-commit.sh";
     };
     ".config/git/hooks/commit-msg" = {
-      source = config.lib.neg.path "files/git/hooks/commit-msg.sh";
+      source = config.lib.neg.live "files/git/hooks/commit-msg.sh";
     };
   };
 }
