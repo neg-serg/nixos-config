@@ -58,11 +58,6 @@ _: _: finalPrev: {
     doCheck = false;
   });
 
-  # Disable flaky rescrobbled test (test_filter_script: broken pipe on subprocess spawn)
-  rescrobbled = finalPrev.rescrobbled.overrideAttrs (_old: {
-    doCheck = false;
-  });
-
   # Disable flac tests (segfault on --threads 63, flaky threaded encoder test)
   flac = finalPrev.flac.overrideAttrs (_old: {
     doCheck = false;

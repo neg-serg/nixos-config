@@ -39,14 +39,11 @@ in
     pkgs.doggo # commandline dns client
 
     # -- Download --
-    pkgs.axel # Multi-threaded download accelerator
     pkgs.curl # Command line tool for transferring data with URLs
     pkgs.wget2 # Wget successor with multi-threading and HTTP/2 support
 
     # -- HTTP --
     pkgs.cacert # Bundle of CA certificates for SSL/TLS verification
-    pkgs.curlie # curl wrapper that adds HTTPie-like features
-    pkgs.httpie # Modern, user-friendly command-line HTTP client
     pkgs.xh # Friendly and fast tool to send HTTP requests
 
     # -- IP / Routing --

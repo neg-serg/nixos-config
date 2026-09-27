@@ -17,7 +17,7 @@ curl -L --fail -x socks5h://127.0.0.1:10808 -o "$TMP/models.7z" "$URL"
 
 mkdir -p "$DEST"
 cd "$TMP"
-7z x -y -o"$DEST" models.7z >/dev/null
+7zz x -y -o"$DEST" models.7z >/dev/null
 rm -rf "$TMP"
 
 echo "Models installed to $DEST"
