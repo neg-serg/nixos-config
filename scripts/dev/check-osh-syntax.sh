@@ -33,7 +33,7 @@ while IFS= read -r -d '' file; do
       fail=1
     fi
   fi
-done < <(git ls-files -z -- . ':!files/x11/**') # vendored FVWM rice: upstream shell does not parse under osh
+done < <(git ls-files -z -- .)
 
 echo "Checked $count shell script(s) with osh -n"
 if [[ $fail -ne 0 ]]; then

@@ -26,9 +26,9 @@
 # of them (including files/quickshell/scripts/login-wallpaper.sh) agree on one
 # path: hyprland.lua reads the marker, login.qml writes it.
 #
-# Only the Hyprland session can be started now: the greeter's session list (and
-# the X11/FVWM entries it offered) went away with the greeter — this compositor
-# *is* the session, and its config is the session's own.
+# Only the Hyprland session can be started now: the greeter's session list went
+# away with the greeter — this compositor *is* the session, and its config is
+# the session's own.
 #
 # Atomic KMS is required for HDR metadata (hdr_output_metadata only works through
 # atomic commits; the legacy interface has no HDR support). If atomic KMS

@@ -14,7 +14,6 @@
   nixard = pkgs.neg.nixard; # TUI for exploring NixOS package closures
 
   brrtfetch = pkgs.neg.brrtfetch;
-  talktype = pkgs.neg.talktype;
 
   omp = pkgs.neg.omp; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
 
@@ -27,8 +26,6 @@
   topowall = pkgs.neg.topowall; # Topographic contour wallpapers from real elevation data (GPU render)
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
 
-  decay-rice = pkgs.decay-rice; # FVWM "An essence of decay" session payload (dotfiles + shims)
-  decay-gtk-theme = pkgs.decay-gtk-theme; # GTK3 Decay theme of the same rice
   dsh = pkgs.neg.dsh;
 
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)

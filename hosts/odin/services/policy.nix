@@ -375,9 +375,9 @@ lib.mkMerge [
             RateLimitBurst = 1000;
           };
         };
-        # Keep X11 off for this host — the FVWM rice session is the only thing
-        # that wants a real X server (services.xserver.enable in modules/user/session/fvwm.nix).
-        xserver.enable = lib.mkForce config.features.gui.fvwm.enable;
+        # Keep X11 off for this host: X clients (Wine/VSTs, Steam) run through
+        # XWayland, which the compositor provides — no Xorg server needed.
+        xserver.enable = lib.mkForce false;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
         resilio = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml")) {

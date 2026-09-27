@@ -63,8 +63,6 @@ in
     # vstplugins prefix) and makes them fail in GUI hosts with "The Wine host
     # process has exited unexpectedly". wineapps sets WINEPREFIX per app itself.
     XAUTHORITY = "$XDG_RUNTIME_DIR/Xauthority";
-    XINITRC = "${configHome}/xinit/xinitrc";
-    XSERVERRC = "${configHome}/xinit/xserverrc";
     XZ_DEFAULTS = "-T 0";
     ZDOTDIR = lib.mkForce "${configHome}/zsh";
     # glib for native non-Nix VSTs (u-he Diva et al.) loaded by REAPER/Renoise:
