@@ -1,0 +1,12 @@
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -737,6 +737,9 @@
+ 						     BTUSB_WIDEBAND_SPEECH },
+ 
+ 	/* Additional MediaTek MT7925 Bluetooth devices */
++	/* MediaTek MT6639 (MT7927) Bluetooth devices */
++	{ USB_DEVICE(0x13d3, 0x3588), .driver_info = BTUSB_MEDIATEK |
++						     BTUSB_WIDEBAND_SPEECH },
+ 	{ USB_DEVICE(0x0489, 0xe111), .driver_info = BTUSB_MEDIATEK |
+ 						     BTUSB_WIDEBAND_SPEECH },
+ 	{ USB_DEVICE(0x0489, 0xe113), .driver_info = BTUSB_MEDIATEK |
