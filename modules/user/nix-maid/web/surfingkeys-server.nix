@@ -35,6 +35,10 @@ mkIf (config.lib.neg.enabled "web") {
     in
     {
       description = "Patch SurfingKeys extension to auto-load config from local server";
+      # The script logs every patch through `logger` (util-linux), which is not
+      # part of systemd's default service PATH — without it the unit died with
+      # status 127 on every login since at least 2026-09-19.
+      path = [ pkgs.util-linux ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = patchScript;
