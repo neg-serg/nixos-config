@@ -33,7 +33,16 @@
     # cache.nixos.org and must build from source (flaky). This rev is a
     # published channel release → packages substitute from cache. Later,
     # bump with `nix flake lock --update-input nixpkgs`.
-    nixpkgs.url = "github:NixOS/nixpkgs/9f160d09877b6203da7a04528b014469441e1bd9";
+    nixpkgs.url = "github:NixOS/nixpkgs/4975466d324710c576dc11ad614684e6bd8cad8e";
+
+    # ROCm/PyTorch env is pinned to the previous rev (packages/torch-rocm):
+    # the 2026-09 nixpkgs ships python3-torch 2.13.0, whose HIP build needs
+    # aotriton 0.12b while rocmPackages still provides 0.11.1b → it fails in
+    # aten/src/ATen/native/transformers/hip (aotriton_adapter.h 'cookie',
+    # VarlenType::StridedVarlen, attn_options.deterministic). The older rev
+    # has torch 2.12.0, which builds against aotriton 0.11.1b. Drop this input
+    # (and use inputs.nixpkgs in packages/torch-rocm) once they line up.
+    nixpkgs-torch.url = "github:NixOS/nixpkgs/9f160d09877b6203da7a04528b014469441e1bd9";
     nix-flatpak = {
       url = "github:gmodena/nix-flatpak";
     };
