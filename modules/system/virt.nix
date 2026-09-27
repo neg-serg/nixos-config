@@ -74,12 +74,14 @@ in
         # ~1.5 s, and this oneshot sits in the boot critical chain
         # (multi-user.target waits for it: 7.18s + 1.59s on the 2026-09-27
         # boot). When either file is missing, fall back to virsh and repair.
+        src=${config.lib.neg.path "files/virt/RDPWindows.xml"}
         if [[ -e /var/lib/libvirt/qemu/RDPWindows.xml \
-              && -e /var/lib/libvirt/qemu/autostart/RDPWindows.xml ]]; then
+              && -e /var/lib/libvirt/qemu/autostart/RDPWindows.xml ]] \
+           && cmp -s /var/lib/libvirt/qemu/RDPWindows.xml "$src"; then
           exit 0
         fi
         if ! virsh dominfo RDPWindows >/dev/null 2>&1; then
-          virsh define ${config.lib.neg.path "files/virt/RDPWindows.xml"}
+          virsh define "$src"
         fi
         virsh autostart RDPWindows
       '';
