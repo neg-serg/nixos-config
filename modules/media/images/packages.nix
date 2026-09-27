@@ -16,9 +16,8 @@ let
     pkgs.pastel # extract palettes / simulate colorblindness
 
     # -- Compression / Optimization --
-    pkgs.advancecomp # recompress ZIP/PNG aggressively
     pkgs.jpegoptim # lossy JPEG optimizer better than jpegtran
-    pkgs.optipng # lossless PNG optimizer
+    pkgs.oxipng # lossless PNG optimizer (Rust, multithreaded; pngoptim uses it)
     pkgs.pngquant # perceptual PNG quantizer for quicksharing
     pkgs.scour # SVG minifier to shrink UI assets
 
