@@ -21,7 +21,7 @@ local function dump(flag)
   return out
 end
 
--- RU (йцукен) key table.
+-- RU (ЙЦУКЕН) key table.
 local ru = require('lusty.ru2en')
 local got = {}
 for _, line in ipairs(dump('--ru-map')) do

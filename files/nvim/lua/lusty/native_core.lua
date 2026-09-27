@@ -11,7 +11,7 @@
 
 local api = vim.api
 
--- RU (йцукен) layout to EN chars, shared with the other pickers.
+-- RU (ЙЦУКЕН) layout to EN chars, shared with the other pickers.
 local RU2EN = require('lusty.ru2en')
 
 local M = {}

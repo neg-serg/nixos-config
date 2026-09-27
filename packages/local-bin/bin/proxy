@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# proxy — запуск/остановка/обновление прокси sing-box (vless/vmess/hysteria2/hysteria/tuic/ss/trojan/anytls)
+# proxy — start/stop/refresh the sing-box proxy (vless/vmess/hysteria2/hysteria/tuic/ss/trojan/anytls)
 # Usage: proxy [on|off|status|refresh|gen|run <cmd...>]
 # Credentials: from /run/secrets/proxy-fallback (SOPS-encrypted)
 # refresh validates candidates (TCP scan + e2e probe) before writing the config,
@@ -33,7 +33,7 @@ fail() { printf '%s✗%s %s\n' "$_c_red" "$_c_reset" "$*" >&2; }
 step() { printf '%s== %s%s ==%s\n' "$_c_bold" "$_c_cyan" "$*" "$_c_reset" >&2; }
 
 # ============================================================
-# load_fallback — прочитать fallback-ноды из sops
+# load_fallback — read the fallback nodes from sops
 # ============================================================
 load_fallback() {
     if [ -f "$SECRET" ]; then
@@ -77,8 +77,8 @@ lan_msg() {
 }
 
 # ============================================================
-# gen_cfg — единый python-генератор: парсит ноды из NODES_TEXT,
-# пишет конфиг (real-shape) в CFG_PATH. Поддерживает
+# gen_cfg — the single python generator: parses the nodes from NODES_TEXT,
+# writes the config (real-shape) into CFG_PATH. Supports
 # vless (tls/reality), vmess, hysteria2/hy2, hysteria (v1), tuic,
 # shadowsocks, trojan, anytls.
 # ============================================================
@@ -527,7 +527,7 @@ PYEOF
 }
 
 # ============================================================
-# bootstrap — создать конфиг с fallback-нодами если нет
+# bootstrap — create a config with fallback nodes if there is none
 # ============================================================
 bootstrap() {
     if [ -f "$CONFIG" ]; then
@@ -658,8 +658,8 @@ PYEOF
 }
 
 # ============================================================
-# validate_nodes — python: TCP-scan + e2e-тест кандидатов,
-# печатает рабочие строки в stdout. Env: NODES_FILE (path to node
+# validate_nodes — python: TCP scan + e2e test of the candidates,
+# prints the working entries to stdout. Env: NODES_FILE (path to node
 # list; preferred for big lists) or NODES_TEXT, E2E_CAP, MIN_WORKING,
 # MIN_SPEED/SPEED_BYTES/SPEED_TIMEOUT (throughput gate, default 100 KB/s
 # on 2 MB via speed.cloudflare.com), VALIDATE_TMP (temp dir for
@@ -1221,7 +1221,7 @@ PYEOF
 }
 
 # ============================================================
-# refresh — скачать свежие ноды, проверить их, обновить конфиг
+# refresh — download fresh nodes, test them, update the config
 # ============================================================
 # fetch_sub <url> — fetch a node list; decode base64 sources (v2ray-base64
 # subscriptions) and retry via the running proxy when a direct fetch is empty.

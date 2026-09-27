@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# set-surfingkeys-url — установить URL для конфига SurfingKeys в Vivaldi
-# Использует Chrome DevTools Protocol через remote debugging.
+# set-surfingkeys-url — set the URL for the SurfingKeys config in Vivaldi
+# Uses the Chrome DevTools Protocol over remote debugging.
 set -euo pipefail
 
 URL="${1:-http://localhost:18888/surfingkeys.js}"
@@ -17,7 +17,7 @@ vivaldi --remote-debugging-port="$PORT" --no-first-run --new-window about:blank 
 PID=$!
 sleep 2
 
-# Ждём пока откроется debugging endpoint
+# Wait for the debugging endpoint to open
 for i in $(seq 1 10); do
     if curl -s "http://localhost:$PORT/json" > /dev/null 2>&1; then
         break
@@ -25,13 +25,13 @@ for i in $(seq 1 10); do
     sleep 1
 done
 
-# Получаем target ID для любой открытой страницы
+# Get the target ID of any open page
 TARGETS=$(curl -s "http://localhost:$PORT/json")
 TARGET_ID=$(echo "$TARGETS" | python3 -c "
 import json, sys
 try:
     targets = json.load(sys.stdin)
-    # Ищем SurfingKeys options page или берём любой
+    # Look for the SurfingKeys options page, otherwise take any
     for t in targets:
         if 'surfingkeys' in t.get('url', '').lower() or 'options' in t.get('url', '').lower():
             print(t['id'])
@@ -49,7 +49,7 @@ fi
 echo "Target: $TARGET_ID"
 echo "Setting localPath to: $URL"
 
-# Устанавливаем storage через CDP
+# Set the storage over CDP
 WS_URL=$(echo "$TARGETS" | python3 -c "
 import json, sys
 targets = json.load(sys.stdin)
