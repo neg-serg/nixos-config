@@ -1,7 +1,7 @@
-diff --git a/src/server/src/qml/qml/SearchBar.qml b/src/server/src/qml/qml/SearchBar.qml
+diff --git a/src/server/src/ui/qml/launcher/SearchBar.qml b/src/server/src/ui/qml/launcher/SearchBar.qml
 index 3d9499b..dc1c34b 100644
---- a/src/server/src/qml/qml/SearchBar.qml
-+++ b/src/server/src/qml/qml/SearchBar.qml
+--- a/src/server/src/ui/qml/launcher/SearchBar.qml
++++ b/src/server/src/ui/qml/launcher/SearchBar.qml
 @@ -275,11 +275,33 @@ Item {
                      }
                  }

@@ -98,9 +98,9 @@ diff --git a/src/server/src/navigation-controller.hpp b/src/server/src/navigatio
    QWindow *m_window = nullptr;
    std::vector<std::unique_ptr<ViewState>> m_views;
    std::optional<PendingPopToRoot> m_pendingPopToRoot;
-diff --git a/src/server/src/ipc-command-server.cpp b/src/server/src/ipc-command-server.cpp
---- a/src/server/src/ipc-command-server.cpp
-+++ b/src/server/src/ipc-command-server.cpp
+diff --git a/src/server/src/ipc/ipc-command-server.cpp b/src/server/src/ipc/ipc-command-server.cpp
+--- a/src/server/src/ipc/ipc-command-server.cpp
++++ b/src/server/src/ipc/ipc-command-server.cpp
 @@ -270,10 +270,10 @@
    static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
    auto &nav = m_ctx.navigation;
