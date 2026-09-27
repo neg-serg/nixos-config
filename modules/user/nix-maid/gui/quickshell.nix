@@ -9,6 +9,8 @@
 let
   # Source path
   quickshellSrc = config.lib.neg.path "files/quickshell";
+  # live links for the deployed tree; the package build below keeps the store copy
+  quickshellSrcLive = config.lib.neg.live "files/quickshell";
 
   # Feature flags check (single source: config.lib.neg.quickshellEnabled)
   quickshellEnabled = config.lib.neg.quickshellEnabled;
@@ -74,7 +76,7 @@ let
     && name != "shaders"
   ) (builtins.attrNames quickshellSrcEntries);
 
-  quickshellHomeFiles = neg.mkDirLinks ".config/quickshell" quickshellSrc quickshellSrcNames;
+  quickshellHomeFiles = neg.mkDirLinks ".config/quickshell" quickshellSrcLive quickshellSrcNames;
 in
 lib.mkIf quickshellEnabled (
   lib.mkMerge [

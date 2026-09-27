@@ -11,6 +11,6 @@
 
 {
   config = neg.mkHomeFiles {
-    ".config/ghostty/config".source = config.lib.neg.path "files/cli/ghostty/config";
+    ".config/ghostty/config".source = config.lib.neg.live "files/cli/ghostty/config";
   };
 }

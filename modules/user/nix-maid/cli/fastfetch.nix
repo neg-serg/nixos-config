@@ -11,12 +11,12 @@
   config = lib.mkIf (config.lib.neg.enabled "cli") (
     neg.mkHomeFiles {
       ".local/share/fastfetch/make_blizzard.py".source =
-        config.lib.neg.path "files/fastfetch/make_blizzard.py";
-      ".local/share/fastfetch/blizzard.sh".source = config.lib.neg.path "files/fastfetch/blizzard.sh";
+        config.lib.neg.live "files/fastfetch/make_blizzard.py";
+      ".local/share/fastfetch/blizzard.sh".source = config.lib.neg.live "files/fastfetch/blizzard.sh";
       ".local/share/fastfetch/blizzard.sh".executable = true;
-      ".local/share/fastfetch/fetch".source = config.lib.neg.path "files/fastfetch/fetch";
+      ".local/share/fastfetch/fetch".source = config.lib.neg.live "files/fastfetch/fetch";
       ".local/share/fastfetch/fetch".executable = true;
-      ".local/bin/fetch".source = config.lib.neg.path "files/fastfetch/fetch";
+      ".local/bin/fetch".source = config.lib.neg.live "files/fastfetch/fetch";
       ".local/bin/fetch".executable = true;
     }
   );

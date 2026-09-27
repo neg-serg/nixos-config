@@ -48,13 +48,13 @@ in
       ".config/surfingkeys.js".text = skText;
       # Vivaldi CSS mod: compact address bar (dir is set via css_ui_mods_directory pref)
       ".config/vivaldi/css-mods/compact-addressbar.css".source =
-        config.lib.neg.path "files/vivaldi/compact-addressbar.css";
+        config.lib.neg.live "files/vivaldi/compact-addressbar.css";
       # Vivaldi CSS mod: hide tab bar + window control buttons (single-bar layout)
       ".config/vivaldi/css-mods/minimal-ui.css".source =
-        config.lib.neg.path "files/vivaldi/minimal-ui.css";
+        config.lib.neg.live "files/vivaldi/minimal-ui.css";
       # Vivaldi CSS mod: Iosevka Proportional across the whole browser chrome
       # (replaces the old /etc/vivaldi/custom-ui/ mechanism — see vivaldi.nix)
-      ".config/vivaldi/css-mods/ui-font.css".source = config.lib.neg.path "files/vivaldi/ui-font.css";
+      ".config/vivaldi/css-mods/ui-font.css".source = config.lib.neg.live "files/vivaldi/ui-font.css";
     })
   ];
 }

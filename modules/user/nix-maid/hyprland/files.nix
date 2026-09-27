@@ -10,6 +10,8 @@ let
   # Fragment shaders for HyprWindowShade: linked as a directory so the paths in
   # hyprwindowshade.lua (~/.config/hypr/shaders/<name>.glsl) resolve.
   shadeDir = config.lib.neg.path "files/gui/hypr/shaders";
+  lockDirLive = config.lib.neg.live "files/gui/hypr/hyprlock";
+  shadeDirLive = config.lib.neg.live "files/gui/hypr/shaders";
   shadeNames = builtins.attrNames (builtins.readDir shadeDir);
   ruHotkeys = config.features.input.ruHotkeys or { };
   ruHotkeysEnabled = ruHotkeys.enable or false;
@@ -73,8 +75,8 @@ in
 -- See ~/.config/hypr/hyprland.lua for reference
 ";
       }
-      // (neg.mkDirLinks ".config/hypr/hyprlock" lockDir lockNames)
-      // (neg.mkDirLinks ".config/hypr/shaders" shadeDir shadeNames)
+      // (neg.mkDirLinks ".config/hypr/hyprlock" lockDirLive lockNames)
+      // (neg.mkDirLinks ".config/hypr/shaders" shadeDirLive shadeNames)
       // lib.optionalAttrs ruHotkeysEnabled {
         # Config of the layout daemon (features.input.ruHotkeys, see
         # hyprland/ru-layout.nix). `keyboards` stays unset on purpose: the daemon
