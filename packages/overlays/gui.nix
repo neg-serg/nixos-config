@@ -43,15 +43,15 @@ in
       src = prev.fetchFromGitHub {
         owner = "vicinaehq";
         repo = "vicinae";
-        tag = "v0.23.2";
-        hash = "sha256-/5fGvMWlLlyd5ibK7y1dqIK1MTpLABj3v1M0r/VArww=";
+        tag = "v0.29.0";
+        hash = "sha256-+Ti1hcYdjgdAZWu5f6myDckjp7ox0mtux7q8U1t44jo=";
       };
     in
     prev.vicinae.overrideAttrs (old: {
-      version = "0.23.2";
+      version = "0.29.0";
       inherit src;
       # Tab/Shift+Tab navigate the item list (launcher-menu style) + Ctrl+C
-      # dismiss — QML SearchBar patch, ported to v0.23.2. The dmenu patch keeps
+      # dismiss — QML SearchBar patch, ported to v0.29.0. The dmenu patch keeps
       # the `vicinae dmenu` picker alive across focus changes and resolves the
       # CLI request when the window closes (upstream issue #1827). The lusty
       # patch ranks the root search with the lusty-fuzzy crate's matcher
