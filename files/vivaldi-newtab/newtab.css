@@ -1,0 +1,395 @@
+/* neg newtab — dark by construction.
+   Colours are hard-coded dark: the page must look the same no matter what the
+   browser/OS reports for prefers-color-scheme, so there is no light branch. */
+
+:root {
+  --bg: #0a0b0e;
+  --bg-soft: #12141a;
+  --fg: #e8eaf0;
+  --fg-dim: #969db0;
+  --fg-faint: #5d6478;
+  --line: #232734;
+  --accent: #7aa2f7;
+  --accent-2: #bb9af7;
+  --accent-3: #2ac3de;
+  --radius: 18px;
+  --font:
+    "Iosevka Proportional", "Iosevka", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 15px;
+  overflow: hidden;
+}
+
+/* --- backdrop: three soft glows over near-black, plus a faint grid -------- */
+
+.bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.glow-a {
+  width: 46vw;
+  height: 46vw;
+  left: -10vw;
+  top: -14vw;
+  background: color-mix(in oklab, var(--accent) 60%, transparent);
+  animation: drift-a 34s ease-in-out infinite alternate;
+}
+
+.glow-b {
+  width: 40vw;
+  height: 40vw;
+  right: -8vw;
+  top: 6vw;
+  background: color-mix(in oklab, var(--accent-2) 55%, transparent);
+  animation: drift-b 41s ease-in-out infinite alternate;
+}
+
+.glow-c {
+  width: 52vw;
+  height: 34vw;
+  left: 22vw;
+  bottom: -18vw;
+  background: color-mix(in oklab, var(--accent-3) 40%, transparent);
+  opacity: 0.35;
+  animation: drift-c 47s ease-in-out infinite alternate;
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 78%);
+}
+
+@keyframes drift-a {
+  to {
+    transform: translate3d(6vw, 5vw, 0) scale(1.12);
+  }
+}
+
+@keyframes drift-b {
+  to {
+    transform: translate3d(-5vw, 7vw, 0) scale(1.08);
+  }
+}
+
+@keyframes drift-c {
+  to {
+    transform: translate3d(3vw, -4vw, 0) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow {
+    animation: none;
+  }
+}
+
+/* --- layout ------------------------------------------------------------- */
+
+.page {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+  padding: clamp(28px, 8vh, 108px) 6vw 28px;
+}
+
+.hero {
+  text-align: center;
+}
+
+.clock {
+  font-size: clamp(58px, 11vw, 132px);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 60px rgba(122, 162, 247, 0.18);
+}
+
+.date {
+  margin-top: 10px;
+  font-size: clamp(14px, 1.5vw, 19px);
+  color: var(--fg-dim);
+  text-transform: capitalize;
+}
+
+.greeting {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--fg-faint);
+}
+
+/* --- search ------------------------------------------------------------- */
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(760px, 100%);
+  padding: 14px 20px;
+  background: rgba(20, 23, 31, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  backdrop-filter: blur(14px);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.search:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--line));
+  background: rgba(24, 28, 38, 0.85);
+  box-shadow: 0 0 0 4px rgba(122, 162, 247, 0.12);
+}
+
+.search-icon {
+  color: var(--fg-faint);
+  display: flex;
+}
+
+.search:focus-within .search-icon {
+  color: var(--accent);
+}
+
+#q {
+  flex: 1;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+}
+
+#q::placeholder {
+  color: var(--fg-faint);
+}
+
+/* --- quick links -------------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 14px;
+  width: min(760px, 100%);
+  margin-top: 4px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: var(--fg-dim);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tile:hover,
+.tile:focus-visible {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: var(--line);
+  color: var(--fg);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.tile-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0a0b0e;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  overflow: hidden;
+}
+
+.tile-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tile-title {
+  font-size: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- footer ------------------------------------------------------------- */
+
+.foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--fg-faint);
+  font-size: 12px;
+}
+
+.weather {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weather-temp {
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.hint:hover {
+  color: var(--fg-dim);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.kbd {
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 0 4px;
+  color: var(--fg-dim);
+}
+
+/* --- editor dialog ------------------------------------------------------ */
+
+.editor {
+  width: min(560px, 92vw);
+  background: var(--bg-soft);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 22px;
+  font-family: var(--font);
+}
+
+.editor::backdrop {
+  background: rgba(4, 5, 8, 0.66);
+  backdrop-filter: blur(3px);
+}
+
+.editor h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.muted {
+  margin: 0 0 12px;
+  color: var(--fg-faint);
+  font-size: 12px;
+}
+
+.editor code {
+  color: var(--fg-dim);
+}
+
+#editor-text {
+  width: 100%;
+  resize: vertical;
+  background: #0d0f14;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.6;
+  outline: none;
+}
+
+#editor-text:focus {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--line));
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.editor button {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--fg-dim);
+  cursor: pointer;
+}
+
+.editor button:hover {
+  color: var(--fg);
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--line));
+}
+
+.editor .primary {
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  color: #0a0b0e;
+  font-weight: 600;
+}

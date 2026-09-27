@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Новая вкладка</title>
+    <link rel="stylesheet" href="newtab.css" />
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true">
+      <span class="glow glow-a"></span>
+      <span class="glow glow-b"></span>
+      <span class="glow glow-c"></span>
+      <span class="grain"></span>
+    </div>
+
+    <main class="page">
+      <section class="hero">
+        <div class="clock" id="clock">--:--</div>
+        <div class="date" id="date"></div>
+        <div class="greeting" id="greeting"></div>
+      </section>
+
+      <form class="search" id="search" autocomplete="off">
+        <span class="search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </span>
+        <input
+          id="q"
+          name="q"
+          type="text"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="Поиск — или введи адрес и нажми Enter"
+        />
+      </form>
+
+      <section class="tiles" id="tiles" aria-label="Быстрые ссылки"></section>
+
+      <footer class="foot">
+        <div class="weather" id="weather" hidden>
+          <span class="weather-icon" id="wx-icon"></span>
+          <span class="weather-temp" id="wx-temp"></span>
+          <span class="weather-text" id="wx-text"></span>
+        </div>
+        <button class="hint" id="edit" type="button" title="Редактировать быстрые ссылки">
+          <span class="kbd">Ctrl</span> + <span class="kbd">E</span> — ссылки
+        </button>
+      </footer>
+    </main>
+
+    <dialog class="editor" id="editor">
+      <h2>Быстрые ссылки</h2>
+      <p class="muted">По одной на строку: <code>Название | https://адрес</code></p>
+      <textarea id="editor-text" spellcheck="false" rows="12"></textarea>
+      <div class="editor-actions">
+        <button id="editor-reset" type="button" class="ghost">Сбросить</button>
+        <span class="spacer"></span>
+        <button id="editor-cancel" type="button" class="ghost">Отмена</button>
+        <button id="editor-save" type="button" class="primary">Сохранить</button>
+      </div>
+    </dialog>
+
+    <script src="newtab.js"></script>
+  </body>
+</html>
