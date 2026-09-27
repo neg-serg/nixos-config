@@ -46,7 +46,16 @@ let
     # DOM (navbar/toolbars) while debugging usercss selectors. Loopback-only.
     # --remote-allow-origins=*: CDP rejects WebSocket handshakes from unknown
     # origins unless allowed; the debugger connects from a local script.
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222 --remote-allow-origins=*";
+    # --force-dark-mode: sets prefers-color-scheme to dark for web contents. The GTK
+    # side of this box is dark already (gtk-application-prefer-dark-theme=1), but that
+    # only reaches apps reading GTK settings — Vivaldi runs as pure Wayland/Ozone and
+    # still reported "light", so about:blank (a new tab, a target that has not painted
+    # yet) was painted white: the flash. With a dark preference Blink uses its dark
+    # base background for about:blank — the same #121212 headless Chromium paints
+    # (measured on chromium-151 with --headless=new --screenshot). This is NOT
+    # Vivaldi's "Force dark mode" (that one auto-inverts light pages); sites that ship
+    # a dark variant merely switch to it.
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --force-dark-mode --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222 --remote-allow-origins=*";
     proprietaryCodecs = false;
   };
 
