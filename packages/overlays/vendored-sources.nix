@@ -23,6 +23,25 @@ inputs: final: finalPrev: {
     '';
   });
 
+  # busybox: nixpkgs builds two of its CVE patches with fetchpatch from
+  # git.busybox.net, whose cgit is gone (404 for the whole host, so the URLs
+  # can never be fetched again). Vendor the exact bytes under files/patches/
+  # and swap them into the patch list by name — the local file replaces the
+  # fetchpatch derivation, so the entries keep their position (patch order
+  # matters) but no network fetch happens. The -2 patch (GitHub mirror) still
+  # resolves and stays as is.
+  busybox = finalPrev.busybox.overrideAttrs (old: {
+    patches = map (
+      p:
+      if (p.name or "") == "CVE-2023-39810.patch" then
+        ./../../files/patches/busybox-CVE-2023-39810.patch
+      else if (p.name or "") == "CVE-2026-26157_CVE-2026-26158.patch" then
+        ./../../files/patches/busybox-CVE-2026-26157_CVE-2026-26158.patch
+      else
+        p
+    ) old.patches;
+  });
+
   # dpkg: nixpkgs fetches the source from git.launchpad.net (unreachable from
   # this region); vendor the official Debian release tarball (has .dist-version,
   # which get-version needs) instead. dpkg is needed by ocenaudio and
