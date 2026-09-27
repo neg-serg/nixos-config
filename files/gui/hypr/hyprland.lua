@@ -156,7 +156,11 @@ hl.config({
       active_border = { colors = { col_border_active_base, col_border_active_base }, angle = 45 },
       inactive_border = col_border_inactive,
     },
-    resize_on_border = false, allow_tearing = true, layout = "master",
+    -- Mouse on the tape: drag a column edge to change its width (was false — with
+    -- frameless windows and gaps 0 the edge is the window edge). extend_border_grab_area
+    -- is 6 px instead of the 15 px default on purpose: the extra area reaches *inside*
+    -- the neighbouring column, where 15 px would swallow clicks near its edge.
+    resize_on_border = true, hover_icon_on_border = true, extend_border_grab_area = 6, allow_tearing = true, layout = "master",
   },
   decoration = {
     rounding = rounding, rounding_power = rounding_power,
@@ -615,6 +619,18 @@ hl.config({
     fullscreen_on_one_column = true, -- 0.56 DEFAULTS this to true (hyprctl describes); kept explicit: a lone column fills the screen
   },
 })
+-- Bind-level tape knob. 0.56 defaults are wrong for a mouse-driven tape:
+--   movefocus_cycles_fullscreen -> a fullscreen column (fullscreen_on_one_column) used
+--                               to block directional focus: CWindowQuery::inDirection
+--                               skips every other window unless this is on (checked
+--                               against 0.56.2 source; misc:on_focus_under_fullscreen=2)
+-- binds:scroll_event_delay deliberately stays at the 300 ms default: the wheel
+-- sends several raw axis events per physical notch, and CKeybindManager::onAxisEvent
+-- dispatches a bind per raw event, throttled only by that delay — at 60 ms a single
+-- notch moved the tape twice (reported live) and would double workspace jumps.
+hl.config({
+  binds = { movefocus_cycles_fullscreen = true },
+})
 
 -- Trackpad: 3-finger swipe switches workspaces.
 -- FACT (0.56): a gesture clashes only when direction, FINGER COUNT and mods all match
@@ -653,10 +669,106 @@ hl.bind(M4 .. "+" .. C .. "+s", L("inhibit_scroll"))
 
 -- Wheel: tape +/- column, master stack. ALT because M4+wheel is workspaces and
 -- M4+C+wheel is kitty font zoom. mouse_down (wheel up) = next, like M4+wheel = e+1.
-hl.bind(M1 .. "+mouse_down", L("move +col", "cyclenext"), { repeating = true })
-hl.bind(M1 .. "+mouse_up",   L("move -col", "cycleprev"), { repeating = true })
+-- NEVER put { repeating = true } on a WHEEL bind: a wheel sends no release event, so the
+-- keybind repeat timer keeps re-firing it (input:repeat_delay 250 ms, then every
+-- 1000/repeat_rate ms) — one notch moved the tape twice. Held-key binds
+-- (M4+bracketleft) and held BUTTON binds (mouse:275) repeat on purpose and keep it.
+hl.bind(M1 .. "+mouse_down", L("move +col", "cyclenext"))
+hl.bind(M1 .. "+mouse_up",   L("move -col", "cycleprev"))
 
--- --- Window, tabs, width, tape fine-scroll (M4+CTRL) ---
+-- Mouse on the tape: the thumb buttons (275 = back, 276 = forward) page a column at
+-- a time — the scrolling layout's natural gesture — and stay on M4 so the buttons keep
+-- working as back/forward inside apps. Both are free: only 272/273/274 are bound.
+hl.bind(M4 .. "+mouse:275", L("move -col", "cycleprev"), { repeating = true })
+hl.bind(M4 .. "+mouse:276", L("move +col", "cyclenext"), { repeating = true })
+-- No fine tape scroll: layoutmsg "move ±N" is in PIXELS (the handler calls
+-- controller->adjustOffset(∓N) and m_offset is a pixel offset — isStripVisible
+-- adds it to usablePrimary), so "move +0.05" was a 0.05 px nudge, i.e. a dead
+-- bind. 5 % of this 1920 px screen would be "move +96"; the column-width layer
+-- (M4+CTRL+wheel = colresize ±conf, M4+CTRL+digit = absolute fraction) is the
+-- supported way to adjust the tape.
+
+-- --- Tape policies on compositor events (hl.on) ---
+-- Two things the core leaves to the user:
+--   * per-workspace column widths — scrolling:column_width is ONE global value
+--     (verified in 0.56.2: CScrollingAlgorithm reads it per column, no workspace
+--     variant). The profile below is re-applied on every workspace change, so the
+--     width belongs to the workspace. Existing columns keep the width they got when
+--     they were created; a per-app scrolling_width window rule still wins for a
+--     window of that class.
+--   * recentring / edge slices — closing a window or landing on a workspace can
+--     leave the tape scrolled away from the focused column, and the core never snaps
+--     the camera to column edges: CScrollTapeController::centerStrip centres the
+--     focused column (and calculateCameraOffset centres the whole tape when it is
+--     narrower than the screen), so once the visible widths stop summing to the
+--     viewport, slices of the neighbours show at the edges. Only the fit* family
+--     fills the screen exactly — hence the auto-fit hooks below.
+local wsTapeWidths = {
+  [1] = 0.5,  -- 𐌰:term — terminals (matches the term/nwim window rule)
+  [2] = 0.55, -- 𐌱:web — browser a touch under the default (matches scrolling-web-width)
+  [3] = 0.66, -- 𐌲:dev — editors/logs read better a bit wider than the default
+  [5] = 1.0,  -- 𐌳:doc — documents only read well full width (scrolling-doc-width)
+  [8] = 1.0,  -- 𐌷:pic — image work (scrolling-pic-width)
+  [9] = 1.0,  -- 𐌺:vm — VMs, one guest per column
+  [13] = 1.0, -- 𐌾:dw — DataGrip-style / wide editors
+  [14] = 1.0, -- 𐌿:keyboard — QMK/VIA config windows
+  [15] = 0.4, -- 𐍀:im — chats stay a narrow strip (scrolling-im-width)
+  [16] = 1.0, -- 𐍁:remote — VDI/RDP at full width (scrolling-remote-width)
+  [17] = 0.6, -- Ⲣ:notes — Obsidian, default width
+  [19] = 1.0, -- 𐍇:rack — VCV Rack at full width
+}
+local tapeDefaultWidth = 0.6
+
+local function scrollingWorkspace(ws)
+  return ws ~= nil and ws.tiled_layout == "scrolling"
+end
+
+local function recenterTape()
+  local ws = hl.get_active_workspace()
+  if not scrollingWorkspace(ws) or (ws.windows or 0) == 0 then return end
+  hl.dispatch(hl.dsp.layout("center"))
+end
+
+-- Auto-fit on events. After the visible set changes (open/close) the tape is the only
+-- thing that can remove the edge slices: layoutmsg "fit expand" hands the focused
+-- column the leftover space without touching its neighbours (same as the M4+= bind),
+-- "fit visible" splits the screen evenly between the visible columns (M4+v). Both run
+-- on a timer: window.close fires before the column is removed, so an immediate fit
+-- would re-tile a layout that is about to change again. nil = leave the event alone
+-- (a new window then keeps the width from its per-app scrolling_width rule).
+-- The default target is "visible", NOT "expand": the expand branch in 0.56.2 does
+--   rem = clamp(1 - sum(widths of the other VISIBLE columns), 0, 1)
+-- and a partially visible neighbour already counts as visible (SScrollingData::visible
+-- with full=false), so expand can drive the focused column to width 0; "visible" always
+local autoFit = {
+  onOpen  = nil,        -- nil | "visible" | "expand" (expand: caveat above)
+  onClose = "visible",  -- the tape shrinks on close, which is where the edge slices appear
+}
+
+local function fitTape(mode)
+  local msg = mode == "visible" and "fit visible" or "fit expand"
+  hl.timer(function()
+    local ws = hl.get_active_workspace()
+    if not scrollingWorkspace(ws) or (ws.windows or 0) == 0 then return end
+    hl.dispatch(hl.dsp.layout(msg))
+  end, { timeout = 120, type = "oneshot" })
+end
+
+hl.on("workspace.active", function(ws)
+  if not scrollingWorkspace(ws) then return end
+  hl.config({ scrolling = { column_width = wsTapeWidths[ws.id] or tapeDefaultWidth } })
+  hl.timer(function() recenterTape() end, { timeout = 120, type = "oneshot" })
+end)
+
+hl.on("window.open", function()
+  if autoFit.onOpen then fitTape(autoFit.onOpen) end
+end)
+
+hl.on("window.close", function()
+  if autoFit.onClose then fitTape(autoFit.onClose) end
+end)
+
+-- --- Window, tabs, width, tape (M4+CTRL) ---
 -- Move the focused window: j/k inside its column/stack (moveTargetTo -> column->up()/down()),
 hl.bind(M4 .. "+" .. C .. "+j", hl.dsp.window.move({ direction = "d" }))
 hl.bind(M4 .. "+" .. C .. "+k", hl.dsp.window.move({ direction = "u" }))
@@ -668,10 +780,6 @@ local widthPresets = { "1.0", "0.5", "0.333", "0.25" }
 for i, w in ipairs(widthPresets) do
   hl.bind(M4 .. "+" .. C .. "+" .. tostring(i), L("colresize " .. w, "mfact exact " .. w))
 end
-
--- Fine tape scroll, 5% per step (repeating): peek at the far edge of a wide column.
-hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+bracketleft",  L("move -0.05"), { repeating = true })
-hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+bracketright", L("move +0.05"), { repeating = true })
 
 -- Column granularity: with >1 window, push the focused one into its own column;
 -- with a single window, merge it into the neighbouring column (prev/next).
