@@ -2,9 +2,9 @@ set -euo pipefail
 
 STATE_FILE="/var/lib/telegram-notify/windows-ready.sent"
 
-# Маркер проверяем ДО проб: таймер дёргает юнит каждые 30 с, а уведомление
-# отправляется один раз — в установившемся режиме выход мгновенный (было:
-# две пробы с паузой 5 с на каждом запуске, 10 с в blame).
+# The marker is checked BEFORE the probes: the timer fires the unit every 30 s and the notification
+# is sent once — in the steady state the exit is instant (it used to be:
+# two probes with a 5 s pause on every run, 10 s in blame).
 [ -e "$STATE_FILE" ] && exit 0
 
 ok=0

@@ -229,7 +229,7 @@ diff --git a/src/lib/fuzzy/include/fuzzy/lusty.hpp b/src/lib/fuzzy/include/fuzzy
 +  return std::isfinite(best) ? best : 0.0;
 +}
 +
-+// ── RU (йцукен) → EN, mirrored from layout.rs ────────────────────────────────
++// ── RU (ЙЦУКЕН) → EN, mirrored from layout.rs ────────────────────────────────
 +
 +/// The physical key a Cyrillic letter sits on, in EN: 'щ' → 'o' and so on.
 +inline std::optional<char> ruToEn(char32_t c) {
@@ -277,7 +277,7 @@ diff --git a/src/lib/fuzzy/include/fuzzy/lusty.hpp b/src/lib/fuzzy/include/fuzzy
 +  char32_t lower = c;
 +  if (c >= U'A' && c <= U'Z') {
 +    lower = c + 0x20;
-+  } else if (c >= U'А' && c <= U'Я') { // А-Я
++  } else if (c >= U'А' && c <= U'Я') { // Cyrillic А-Я
 +    lower = c + 0x20;
 +  } else if (c == U'Ё') {
 +    lower = U'ё';

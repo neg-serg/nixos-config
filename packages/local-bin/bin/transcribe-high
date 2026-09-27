@@ -1,11 +1,11 @@
 #!/bin/bash
-# transcribe-high: точная транскрипция трека в MIDI (цена — время).
-# Конвейер: [деноиз noisereduce] → [Demucs 2/4 стема] → basic-pitch по каждому
-# стему (ONNX, низкие пороги 0.2/0.25) → слияние MIDI → темп (madmom) → [опц. midi2tidal].
+# transcribe-high: accurate track-to-MIDI transcription (the price is time).
+# Pipeline: [noisereduce denoise] → [Demucs 2/4 stems] → basic-pitch per
+# stem (ONNX, low thresholds 0.2/0.25) → MIDI merge → tempo (madmom) → [optional midi2tidal].
 #
-# Проверено 2026-08-28 (Zinovia, фортепиано/эмбиент): для чистых записей
-# деноиз и стемы ВРЕДЯТ (685 → 170 нот) — используй --no-denoise --no-stems;
-# полная цепочка оправдана на плотных миксах с наложениями.
+# Verified 2026-08-28 (Zinovia, piano/ambient): on clean recordings
+# denoise and stems HURT (685 → 170 notes) — use --no-denoise --no-stems;
+# the full chain pays off on dense mixes with overlapping parts.
 #
 # Usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise] [--no-stems]
 set -euo pipefail

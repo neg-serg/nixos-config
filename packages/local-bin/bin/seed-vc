@@ -2,8 +2,8 @@
 # seed-vc: zero-shot voice conversion (ByteDance Seed-VC, SOTA 2025-2026).
 # venv-seedvc (torch 2.13+rocm7.1); checkpoints cached offline in @MUSIC_AI_BASE@/seed-vc/checkpoints.
 # Usage: seed-vc SOURCE.wav TARGET_REF.wav [OUTDIR] [--steps N] [--svc]
-#   SOURCE = твой голос/аудио, TARGET_REF = референс голоса (1-30s).
-#   --svc = режим пения (f0-condition, нужен rmvpe — качается отдельно).
+#   SOURCE = your voice/audio, TARGET_REF = the reference voice (1-30s).
+#   --svc = singing mode (f0-condition; needs rmvpe — downloaded separately).
 set -eu
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 export HF_HUB_OFFLINE=1
