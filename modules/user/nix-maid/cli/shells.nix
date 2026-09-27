@@ -9,8 +9,12 @@ let
   # --- Config Sources ---
   shellFiles = config.lib.neg.path "files/shell";
   kittyConf = config.lib.neg.path "files/kitty";
-  irisConfig = config.lib.neg.path "files/iris";
-  dircolorsConfig = config.lib.neg.path "files/shell/dircolors/dircolors";
+  # Writable, instantly-applied counterparts of the sources above (live links
+  # into the working copy — see lib/neg-helpers.nix `live`). Generated entries
+  # (kitty key.conf, zsh config) keep using the store copies above.
+  shellFilesLive = config.lib.neg.live "files/shell";
+  kittyConfLive = config.lib.neg.live "files/kitty";
+  irisConfigLive = config.lib.neg.live "files/iris";
 
   # Positional constructor for the table below: nixfmt keeps a three-name
   # `inherit` on one line, so each record costs one line instead of five.
@@ -195,29 +199,29 @@ in
       # --- General Shell Configs ---
       ".config/inputrc".text = inputrc;
       ".config/aliae/config.yaml".text = aliaeConfig;
-      ".config/dircolors/dircolors".source = dircolorsConfig;
+      ".config/dircolors/dircolors".source = config.lib.neg.live "files/shell/dircolors/dircolors";
       ".config/zsh".source = zshConfigSource;
-      ".config/iris/config.toml".source = "${irisConfig}/config.toml";
-      ".config/iris/theme.toml".source = "${irisConfig}/theme.toml";
-      ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
-      ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
+      ".config/iris/config.toml".source = "${irisConfigLive}/config.toml";
+      ".config/iris/theme.toml".source = "${irisConfigLive}/theme.toml";
+      ".config/bash/oh-my-posh.bash".source = "${shellFilesLive}/bash/oh-my-posh.bash";
+      ".config/f-sy-h".source = "${shellFilesLive}/f-sy-h";
       ".config/zsh-native-syntax".source = zshNativeSyntaxTheme;
       # --- Terminal & Specific Shell Configs ---
       # kitty dir deployed per-file: key.conf is GENERATED (latin binds from
       # files/kitty/key.conf + RU duplicates from lib/ru-keys.nix), the rest is
       # deployed as-is from files/kitty/.
       ".config/kitty/key.conf".text = kittyKeyConf;
-      ".config/kitty/font.conf".source = "${kittyConf}/font.conf";
-      ".config/kitty/font_zoom.py".source = "${kittyConf}/font_zoom.py";
+      ".config/kitty/font.conf".source = "${kittyConfLive}/font.conf";
+      ".config/kitty/font_zoom.py".source = "${kittyConfLive}/font_zoom.py";
 
-      ".config/kitty/kitty.conf".source = "${kittyConf}/kitty.conf";
-      ".config/kitty/mouse.conf".source = "${kittyConf}/mouse.conf";
-      ".config/kitty/range_select.py".source = "${kittyConf}/range_select.py";
-      ".config/kitty/scroll_mark.py".source = "${kittyConf}/scroll_mark.py";
-      ".config/kitty/search.py".source = "${kittyConf}/search.py";
-      ".config/kitty/tab_bar.py".source = "${kittyConf}/tab_bar.py";
-      ".config/kitty/tab.conf".source = "${kittyConf}/tab.conf";
-      ".config/kitty/theme.conf".source = "${kittyConf}/theme.conf";
+      ".config/kitty/kitty.conf".source = "${kittyConfLive}/kitty.conf";
+      ".config/kitty/mouse.conf".source = "${kittyConfLive}/mouse.conf";
+      ".config/kitty/range_select.py".source = "${kittyConfLive}/range_select.py";
+      ".config/kitty/scroll_mark.py".source = "${kittyConfLive}/scroll_mark.py";
+      ".config/kitty/search.py".source = "${kittyConfLive}/search.py";
+      ".config/kitty/tab_bar.py".source = "${kittyConfLive}/tab_bar.py";
+      ".config/kitty/tab.conf".source = "${kittyConfLive}/tab.conf";
+      ".config/kitty/theme.conf".source = "${kittyConfLive}/theme.conf";
     })
   ];
 }

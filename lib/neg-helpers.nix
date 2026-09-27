@@ -3,6 +3,17 @@
 # flake/checks.nix import this file instead of inlining or stubbing them.
 rec {
   # Home files for the primary user, applied via nix-maid (users.users.neg.maid)
+
+  # ── Live (writable, instantly-applied) sources ───────────────────────────
+  # Absolute path of the working copy. Pointing a home-file `source` here
+  # instead of at its /nix/store copy makes the deployed link writable AND
+  # turns "edit the repo" into "deployed": the symlink already points at the
+  # file you just edited, so no rebuild/switch is in the loop. Returned as a
+  # *string* on purpose — strings carry no path context, so the file is not
+  # copied into the store and stays editable.
+  liveRoot = "/etc/nixos";
+  live = p: "${liveRoot}/${p}";
+
   mkHomeFiles = files: {
     users.users.neg.maid.file.home = files;
   };
