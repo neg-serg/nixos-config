@@ -1,0 +1,22 @@
+# ghostty — imported from files/cli/ghostty/config (lazytail theme import)
+base: dark
+palette:
+  black: "#020202"
+  red: "#8a2f58"
+  green: "#287373"
+  yellow: "#914e89"
+  blue: "#395573"
+  magenta: "#5e468c"
+  cyan: "#31658c"
+  white: "#899ca1"
+  bright_black: "#3d3d3d"
+  bright_red: "#cf4f88"
+  bright_green: "#53a6a6"
+  bright_yellow: "#bf85cc"
+  bright_blue: "#477ab3"
+  bright_magenta: "#7e62b3"
+  bright_cyan: "#6096bf"
+  bright_white: "#617287"
+  foreground: "#6c7e96"
+  background: "#000000"
+  selection: "#0d1824"
