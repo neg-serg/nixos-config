@@ -653,11 +653,12 @@ hl.bind(M4 .. "+" .. C .. "+bracketleft",  L("colresize -conf", "mfact -0.1"), {
 hl.bind(M4 .. "+" .. M1 .. "+bracketright", L("promote")) -- window into its own column
 hl.bind(M4 .. "+" .. M1 .. "+bracketleft",  L("fit_into_view"))
 
--- Tape only (master has no counterpart, so this is a no-op there). Keys were free:
+-- Tape (M4+v also gets a master fallback: 0.56.2 spells an absolute split as
+-- "mfact exact <ratio>", a bare "mfact 0.5" would be a +0.5 delta). Keys were free:
 -- M4+minus is the tiling submap, M4+y the wallpaper one, M4+C+z kitty font zoom.
 hl.bind(M4 .. "+equal", L("fit expand"))   -- the column soaks up the free space without pushing neighbours
 hl.bind(M4 .. "+a",     L("fit all"))      -- whole tape into view (all columns share the screen)
-hl.bind(M4 .. "+v",     L("fit visible"))  -- only the currently visible columns into view
+hl.bind(M4 .. "+v",     L("fit visible", "mfact exact 0.5")) -- tape: fit the visible columns; master: split back to 50/50
 hl.bind(M4 .. "+i",     L("consume"))      -- pull the first window of the next column into this one (column stack)
 hl.bind(M4 .. "+o",     L("expel"))        -- push the column's last window out into a column of its own
 hl.bind(M4 .. "+z",     L("center"))       -- recentre the focused column
