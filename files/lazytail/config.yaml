@@ -1,0 +1,22 @@
+# Global LazyTail config, discovered when no project-local lazytail.yaml is
+# found (search order: walking up from CWD, then ~/.config/lazytail/config.yaml).
+# Upstream: https://github.com/raaymax/lazytail
+# Deployed by modules/user/nix-maid/cli/lazytail.nix; the theme below is
+# generated from the Ghostty palette in files/cli/ghostty/config.
+name: global
+theme: ghostty
+
+# Sources shown in discovery mode (a plain `lazytail` with no arguments).
+# Captured sources (`cmd | lazytail -n NAME`) land in ~/.config/lazytail/data/
+# and show up on their own, without an entry here.
+sources:
+  - name: hypr-errors
+    path: ~/.local/state/hypr-hang-monitor/errors.log
+  - name: hypr-monitor
+    path: ~/.local/state/hypr-hang-monitor/monitor.log
+  - name: vicinae
+    path: ~/.local/state/vicinae/vicinae.log
+  - name: nvim-lsp
+    path: ~/.local/state/nvim/lsp.log
+  - name: tidalctl
+    path: ~/.local/state/tidalctl/engine.log
