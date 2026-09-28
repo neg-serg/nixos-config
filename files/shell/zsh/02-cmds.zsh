@@ -70,6 +70,11 @@ _exists docker && {
 }
 
 _exists broot && autoload -Uz br
+
+_exists lazytail && {
+    alias lt=lazytail # TUI log viewer (sources from ~/.config/lazytail/config.yaml)
+    ltc(){ lazytail -n "$@" } # cmd | ltc NAME  ->  ~/.config/lazytail/data/NAME.log (tee-like)
+}
 autoload zc
 
 # vim: ft=zsh:nowrap
