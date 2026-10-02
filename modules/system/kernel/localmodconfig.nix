@@ -1,6 +1,11 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, neg, repoRoot, ... }:
 
 let
+  # Pure resolver: this file reads the repo in a top-level `let`, where
+  # config.lib.neg.* is not available yet (module args are forced while the
+  # module is being collected) — see lib/README.md → By name, not by path.
+  r = neg.rooted repoRoot;
+
   baseKernel = pkgs.linuxPackages.kernel;
 
   # MediaTek MT6639 (MT7927) Bluetooth for odin's adapter (13d3:3588, ASUS ROG
@@ -12,7 +17,7 @@ let
   kernelSrc = pkgs.applyPatches {
     name = "linux-${baseKernel.version}-mt6639";
     src = baseKernel.src;
-    patches = [ ../../../files/patches/mt6639-btusb-id.patch ];
+    patches = [ (r.path "files/patches/mt6639-btusb-id.patch") ];
   };
 
   # Kernel config = generated base + deliberate manual overlay

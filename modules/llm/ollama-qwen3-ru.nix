@@ -2,6 +2,8 @@
   config,
   lib,
   pkgs,
+  neg,
+  repoRoot,
   ...
 }:
 let
@@ -9,7 +11,8 @@ let
   base = "qwen3:8b";
   model = "qwen3:8b-ru";
   ollama = lib.getExe pkgs.ollama-rocm;
-  modelfile = ../../files/ai/Modelfile.qwen3-8b-ru;
+  r = neg.rooted repoRoot;
+  modelfile = r.path "files/ai/Modelfile.qwen3-8b-ru";
   modelfileOut = "/zero/ai/ollama/Modelfile.qwen3-8b-ru";
 
   # Tuned interactive Qwen3 8B: RU system prompt + sane sampler defaults,

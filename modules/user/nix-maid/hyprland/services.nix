@@ -2,9 +2,13 @@
   lib,
   pkgs,
   inputs,
+  neg,
+  repoRoot,
   ...
 }:
 let
+  r = neg.rooted repoRoot;
+
   # Hyprland window list via vicinae (moved here from the old user-session
   # Hyprland module)
   hyprWinList = pkgs.writeShellApplication {
@@ -234,7 +238,7 @@ in
         "E501"
         "W503"
       ];
-    } (builtins.readFile ../scripts/hypr/hypr-rearrange.py))
+    } (r.readFile "modules/user/nix-maid/scripts/hypr/hypr-rearrange.py"))
   ];
 
   systemdTargets = {

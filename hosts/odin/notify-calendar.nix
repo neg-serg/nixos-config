@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  neg,
   ...
 }:
 # Morning Telegram calendar reminder. Each day at 07:30 (Europe/Moscow) the
@@ -23,7 +24,7 @@ in
 {
   config = lib.mkIf (mailOn && config.odin.telegram.enable) (
     let
-      systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+      systemdUser = neg.systemdUser lib;
 
       # Extracted to ./notify/telegram-calendar-reminder.py (linted as Python);
       # the shared sender path is substituted at build time.

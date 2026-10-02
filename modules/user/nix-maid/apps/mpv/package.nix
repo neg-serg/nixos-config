@@ -2,9 +2,13 @@
   pkgs,
   lib,
   config,
+  neg,
+  repoRoot,
   ...
 }:
 let
+  r = neg.rooted repoRoot;
+
   # --- Scripts & Package ---
   scriptPkgs = [
     pkgs.mpvScripts.cutter # cut/extract video segments from mpv
@@ -16,7 +20,7 @@ let
     (pkgs.stdenv.mkDerivation {
       pname = "mpv-hdr-auto-switch";
       version = "0.1.0";
-      src = ../../../../../files/mpv/hdr-auto-switch.lua;
+      src = r.path "files/mpv/hdr-auto-switch.lua";
       scriptName = "hdr-auto-switch.lua"; # auto-switch Hyprland cm to HDR on HDR content
       dontUnpack = true;
       installPhase = ''
