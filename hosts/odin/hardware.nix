@@ -187,7 +187,11 @@
     # CoreCtrl needs it for UV/OC). "quiet" alone does not cover it.
 
     loader = {
-      timeout = 1; # seconds (1s to press any key, then boots immediately)
+      # 0 = boot the default entry immediately. The boot menu is then only
+      # reachable from the firmware/boot entry selection, which is the trade
+      # taken for the second: Limine's countdown was the whole loader phase
+      # (1.41s of a 20.6s boot), and the machine boots the same entry either way.
+      timeout = 0;
       limine = {
         enable = true;
         resolution = "3840x2160";
