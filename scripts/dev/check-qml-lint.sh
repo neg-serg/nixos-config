@@ -152,10 +152,15 @@ if [ "$baseline_violations" -gt 0 ]; then
 fi
 
 # Record what was observed, into the file the baseline lives in (the numbers stay
-# in the reviewed tree, not in a hidden cache). Only lowered automatically: a
-# category that grew would have failed above, and a human has to look at that
-# before the number moves.
-if [ -f "$BASELINE_FILE" ]; then
+# in the reviewed tree, not in a hidden cache). Only lowered, and only when
+# asked for: a category that grew fails above, and a *drop* is not proof either —
+# qmllint's counts depend on the import paths it finds in the deployed `qs`
+# wrapper, so a run against a different generation can report fewer findings
+# than a run against the current one. Auto-lowering turned that into a phantom
+# regression on the next run (the pre-commit hook also rewrote this tracked file
+# while linting). Opt in with QMLLINT_UPDATE_BASELINE=1 after looking at the
+# numbers.
+if [ "${QMLLINT_UPDATE_BASELINE:-0}" = "1" ] && [ -f "$BASELINE_FILE" ]; then
   tmp="$(mktemp)"
   while IFS=$'\t' read -r category expected _rest; do
     case "$category" in "" | "#"*)
@@ -169,5 +174,8 @@ if [ -f "$BASELINE_FILE" ]; then
     printf '%s\t%s\n' "$category" "$expected" >> "$tmp"
   done < "$BASELINE_FILE"
   mv "$tmp" "$BASELINE_FILE"
+  echo "baseline updated: $BASELINE_FILE"
+elif [ -f "$BASELINE_FILE" ]; then
+  echo "(baseline left as is — set QMLLINT_UPDATE_BASELINE=1 to record lower counts)"
 fi
 echo "OK: no defect-kind findings"
