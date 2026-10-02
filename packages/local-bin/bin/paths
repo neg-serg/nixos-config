@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+"""paths — the repo path resolver, from the shell.
+
+The Nix side of the story (lib/README.md → "Which resolver, where") makes code
+address files by name: `config.lib.neg.path "files/x"`, `r.path "files/x"`,
+`paths.path "files/x"`. This tool answers the questions that convention raises:
+
+  paths keys [DIR]      what do I write in Nix for a file under DIR (default
+                        files/)? Prints one dotted key per file, e.g.
+                        files.mpv."hdr-auto-switch" → files/mpv/hdr-auto-switch.lua
+  paths refs QUERY      every .nix line referencing QUERY (a path, a file name,
+                        a `neg.` helper) — "who uses this?"
+  paths find [QUERY]    fuzzy-pick a repo file (fzf when installed) and show its
+                        references; without QUERY it lists everything
+  paths resolve REF     resolve a relative REF (as written in a file) to an
+                        absolute path: `paths resolve ../../../lib/x.nix --from
+                        modules/core/neg.nix`
+
+Options: --root DIR (default: the git top level), --all also searches non-.nix
+files in `refs`, `find --no-fzf` never opens the picker.
+
+Exit status: 0 on success, 1 when nothing matched (so it composes in pipelines).
+"""
+
+import argparse
+import json
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+
+# `paths keys … | head` is normal usage; do not trace a BrokenPipeError for it.
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_'-]*$")
+
+
+def repo_root(explicit: str | None) -> str:
+    if explicit:
+        return os.path.abspath(explicit)
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return out.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return os.getcwd()
+
+
+def dotted(keys: list[str]) -> str:
+    return ".".join(k if IDENT.match(k) else f'"{k}"' for k in keys)
+
+
+def cmd_keys(root: str, args: argparse.Namespace) -> int:
+    target = args.dir or "files"
+    extensions = '"any"' if args.any else f'[ "{args.ext}" ]'
+    expr = f"""
+      let
+        neg = import {root}/lib/neg-helpers.nix;
+        paths = neg.rooted {root};
+        tree = paths.tree {{ dir = "{target}"; extensions = {extensions}; }};
+      in
+      map (l: {{ key = l.path; value = toString l.value; }}) (neg.leaves tree)
+    """
+    out = subprocess.run(
+        ["nix", "eval", "--impure", "--json", "--expr", expr],
+        capture_output=True,
+        text=True,
+    )
+    if out.returncode != 0:
+        sys.stderr.write(out.stderr)
+        return 1
+    leaves = json.loads(out.stdout)
+    if not leaves:
+        sys.stderr.write(f"paths: nothing addressable under {target}/\n")
+        return 1
+    width = max(len(dotted(leaf["key"])) for leaf in leaves)
+    for leaf in sorted(leaves, key=lambda item: item["key"]):
+        key = dotted(leaf["key"])
+        rel = os.path.relpath(leaf["value"], root)
+        print(f"{key.ljust(width)}  {rel}")
+    return 0
+
+
+def grep(root: str, query: str, all_files: bool) -> list[str]:
+    glob = ["--glob", "*"] if all_files else ["--glob", "*.nix"]
+    rg = shutil.which("rg")
+    if rg:
+        out = subprocess.run(
+            [
+                rg,
+                "--line-number",
+                "--no-heading",
+                "--color",
+                "never",
+                *glob,
+                "--",
+                query,
+                ".",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=root,
+        )
+    else:
+        pattern = ["--include=*.nix"] if not all_files else []
+        out = subprocess.run(
+            ["grep", "-rn", *pattern, "--", query, "."],
+            capture_output=True,
+            text=True,
+            cwd=root,
+        )
+    return [line for line in out.stdout.splitlines() if line.strip()]
+
+
+def cmd_refs(root: str, args: argparse.Namespace) -> int:
+    hits = grep(root, args.query, args.all)
+    if not hits:
+        sys.stderr.write(f"paths: no reference to {args.query!r}\n")
+        return 1
+    print("\n".join(hits))
+    return 0
+
+
+def cmd_find(root: str, args: argparse.Namespace) -> int:
+    files = subprocess.run(
+        ["git", "ls-files"],
+        capture_output=True,
+        text=True,
+        cwd=root,
+    ).stdout.splitlines()
+    query = args.query or ""
+    candidates = [f for f in files if query in f] if query else files
+    if not candidates:
+        sys.stderr.write(f"paths: no tracked file matches {query!r}\n")
+        return 1
+    if len(candidates) > 1 and not args.no_fzf and shutil.which("fzf"):
+        picked = subprocess.run(
+            [
+                "fzf",
+                "--prompt",
+                "path> ",
+                "--preview",
+                "git log -1 --format='%h %s' -- {}",
+            ],
+            input="\n".join(candidates),
+            capture_output=True,
+            text=True,
+            cwd=root,
+        )
+        if picked.returncode != 0:
+            return 1
+        chosen = picked.stdout.strip()
+    else:
+        chosen = candidates[0]
+    print(chosen)
+    basename = os.path.basename(chosen)
+    hits = grep(root, basename, False)
+    if hits:
+        print()
+        print(f"# referenced by ({len(hits)}):")
+        print("\n".join(hits[:20]))
+    return 0
+
+
+def cmd_resolve(root: str, args: argparse.Namespace) -> int:
+    base = root
+    if args.frm:
+        base = os.path.dirname(os.path.join(root, args.frm))
+    target = os.path.normpath(os.path.join(base, args.ref))
+    print(target)
+    if not target.startswith(root + os.sep):
+        # The whole point of the resolver: a `../..` chain that overshoots says
+        # nothing about what it points at — name the repo file instead.
+        sys.stderr.write(
+            f"paths: {args.ref!r} leaves the repository — write it as a "
+            f'root-relative name instead (config.lib.neg.path "…", '
+            f'r.path "…" or neg.rooted)\n',
+        )
+        return 1
+    return 0 if os.path.exists(target) else 1
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="paths",
+        description="The repo path resolver, from the shell.",
+    )
+    parser.add_argument(
+        "--root", help="repository root (default: git top level)"
+    )
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_keys = sub.add_parser("keys", help="by-name keys for a directory")
+    p_keys.add_argument(
+        "dir", nargs="?", help="repo-relative dir (default: files)"
+    )
+    p_keys.add_argument(
+        "--ext", default=".nix", help="extension to strip (default: .nix)"
+    )
+    p_keys.add_argument(
+        "--any",
+        action="store_true",
+        help="every file kind, strip last extension",
+    )
+
+    p_refs = sub.add_parser("refs", help="who references a path/file/helper")
+    p_refs.add_argument("query")
+    p_refs.add_argument(
+        "--all", action="store_true", help="search non-.nix files too"
+    )
+
+    p_find = sub.add_parser("find", help="fuzzy-find a tracked file")
+    p_find.add_argument("query", nargs="?")
+    p_find.add_argument(
+        "--no-fzf", action="store_true", help="never open a picker"
+    )
+
+    p_res = sub.add_parser("resolve", help="resolve a relative reference")
+    p_res.add_argument("ref")
+    p_res.add_argument(
+        "--from", dest="frm", help="file the reference is written in"
+    )
+
+    args = parser.parse_args()
+    root = repo_root(args.root)
+    return {
+        "keys": cmd_keys,
+        "refs": cmd_refs,
+        "find": cmd_find,
+        "resolve": cmd_resolve,
+    }[args.cmd](root, args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
