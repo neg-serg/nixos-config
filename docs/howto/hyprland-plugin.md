@@ -7,9 +7,11 @@ with the Hyprland compositor without hopping across multiple files.
 
 - The flake pins Hyprland to v0.55.4 while `hy3` is pinned via the flake inputs (`flake.nix`:12-39).
   The lock file pins the exact commits under that release.
-- Supporting inputs (`hyprland-protocols`, `xdg-desktop-portal-hyprland`) follow Hyprland's inputs,
-  so once the Hyprland pin is bumped the portal + protocol packages move in lockstep
-  (`flake.nix`:22-25).
+- The `hyprland-protocols` input follows Hyprland's inputs, so once the Hyprland pin is bumped the
+  protocol packages move in lockstep (`flake.nix`:22-25).
+- `xdg-desktop-portal-hyprland` used to be pinned alongside them but is now plain nixpkgs: the
+  1.4.0 pin (rev `08d99f72`) burned ~160% CPU until the service was restarted, and 1.4.1 carries the
+  event-loop fix (#417). The input was removed 2026-09-29.
 
 ## nixpkgs Overlay
 
@@ -17,10 +19,10 @@ with the Hyprland compositor without hopping across multiple files.
   `modules/nix/hyprland.nix`, now removed) adds the `hyprglass` decoration plugin to
   `pkgs.hyprlandPlugins`, gated behind `features.gui.enable` so headless hosts skip the
   `pkgs.hyprland` evaluation.
-- The flake-pinned builds are wired in `flake/lib.nix` `hyprlandOverlay`: it routes
-  `pkgs.xdg-desktop-portal-hyprland` (pinned input) so the rest of the configuration consumes it
-  without touching `inputs.*` directly. `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build — the `hy3`
-  flake input tracked Hyprland 0.56+, failed to load here and was removed (audit 2026-09-15).
+- `pkgs.xdg-desktop-portal-hyprland` is plain nixpkgs (>= 1.4.1, event-loop hangup fix); the
+  `hyprlandOverlay` pin that downgraded it to 1.4.0 was dropped from `flake/lib.nix`.
+  `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build — the `hy3` flake input tracked
+  Hyprland 0.56+, failed to load here and was removed (audit 2026-09-15).
 - Because everything flows through `pkgs`, Home-Manager modules just reference
   `pkgs.hyprlandPlugins.hy3` and stay agnostic of how the plugin was produced.
 
@@ -44,13 +46,12 @@ with the Hyprland compositor without hopping across multiple files.
 
 ## Updating Hyprland + hy3
 
-1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`); refresh the
-   companion pins with `nix flake update hy3 xdg-desktop-portal-hyprland` (the dedicated `hyprland`
-   flake input was removed).
+1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`); there are no
+   portal/protocol companion pins left (`hyprland`, `hy3` and `xdg-desktop-portal-hyprland` inputs
+   are all gone — the portal comes from nixpkgs since 2026-09-29).
 1. Rebuild with `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
-1. Optional: add `--update-input hy3 --update-input xdg-desktop-portal-hyprland` to
-   `system.autoUpgrade` if you want unattended bumps; otherwise keep the updates manual to review
-   ABI churn.
+1. Optional: add `--update-input nixpkgs` to `system.autoUpgrade` if you want unattended bumps;
+   otherwise keep the updates manual to review ABI churn.
 
 Because the overlay flows through `pkgs`, no Home-Manager changes are needed when updating; the new
 plugin propagates automatically once the system rebuild succeeds.

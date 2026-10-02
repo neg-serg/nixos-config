@@ -1,15 +1,10 @@
 { inputs, nixpkgs, ... }:
 let
-  hyprlandOverlay =
-    system:
-    (_final: _prev: {
-      inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
-      # NOTE: hy3 comes from nixpkgs 26.05 (0.55.0), built against the same
-      # Hyprland 0.55.4 the system ships. The github:outfoxxed/hy3 flake input
-      # tracked Hyprland 0.56+ and its .so failed to load here (undefined symbol
-      # IModeAlgorithm::getFSHandler); it was never used, so the input is gone
-      # (audit 2026-09-15) and hyprlandPlugins stays exactly as nixpkgs ships it.
-    });
+  # NOTE: hy3 comes from nixpkgs 26.05 (0.55.0), built against the same
+  # Hyprland 0.55.4 the system ships. The github:outfoxxed/hy3 flake input
+  # tracked Hyprland 0.56+ and its .so failed to load here (undefined symbol
+  # IModeAlgorithm::getFSHandler); it was never used, so the input is gone
+  # (audit 2026-09-15) and hyprlandPlugins stays exactly as nixpkgs ships it.
 
   bintoolsBootstrapFix = _: prev: {
     bintools = prev.bintools // {
@@ -35,7 +30,10 @@ let
         # rev (the pinned overlay would hijack the whole flake nixpkgs pin and
         # break the Hyprland 0.56.2 setup); kernels are exposed as pkgs.cachyosKernels.*.
         inputs.nix-cachyos-kernel.overlays.default
-        (hyprlandOverlay system)
+        # xdg-desktop-portal-hyprland deliberately comes from nixpkgs: since
+        # 1.4.1 it carries the event-loop busy-spin fix (upstream #417 "core:
+        # fix loop hangup detection"). The former flake pin (rev 08d99f72 =
+        # 1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU.
         # Local overlay first (for packages not yet migrated)
         ((import ../packages/overlay.nix) inputs)
         # External package flake (github:neg-serg/nixos-pkgs)

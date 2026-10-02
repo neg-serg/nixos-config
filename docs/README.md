@@ -247,15 +247,17 @@ Keep this manifest updated whenever vendored sources change so that licensing re
   system ships). The dedicated `hy3` flake input tracked Hyprland 0.56+ and its `.so` failed to load
   here (`undefined symbol IModeAlgorithm::getFSHandler`), so it was never used and has been removed
   (audit 2026-09-15).
-- `inputs.xdg-desktop-portal-hyprland` is pinned to the same rev the hyprland flake used to carry
-  (08d99f72); the overlay routes it as `pkgs.xdg-desktop-portal-hyprland`.
+- `xdg-desktop-portal-hyprland` is not pinned anymore: the former flake input (rev `08d99f72`,
+  i.e. 1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU (event-loop busy
+  spin, fixed upstream in 1.4.1 by #417 "core: fix loop hangup detection"). It now comes from
+  nixpkgs (>= 1.4.1); the input was removed (2026-09-29).
 - Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already
   provides the portal service when set as `portalPackage`.
 
 How to update Hyprland (and hy3):
 
 1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`).
-1. Refresh the companion pins: `nix flake update hy3 xdg-desktop-portal-hyprland`.
+1. `xdg-desktop-portal-hyprland` moves with nixpkgs — no companion pin to refresh.
 1. Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
 
 ## Profiles
