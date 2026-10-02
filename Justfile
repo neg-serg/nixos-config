@@ -103,6 +103,10 @@ paths *ARGS:
 lint-annotations:
     bash "{{repo_root}}/scripts/dev/check-package-annotations.sh" "{{repo_root}}"
 
+# Session-format regression gate for the dsh patches. Needs an installed dsh store path.
+check-dsh-sessions dsh-path:
+    bash "{{repo_root}}/scripts/dev/check-dsh-sessions.sh" {{dsh-path}}
+
 # Format Rust sources (edition-aware, via nearest Cargo.toml)
 rustfmt:
     bash "{{repo_root}}/scripts/dev/check-rustfmt.sh" "{{repo_root}}" fix
