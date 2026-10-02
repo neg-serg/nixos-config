@@ -13,7 +13,16 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   also re-exports `ruKeys` from `ru-keys.nix`.
 - `systemd-user.nix` — systemd unit helpers: `mkUnitFromPresets` plus the module-shaped
   `mkUserService` / `mkUserOneshot` / `mkUserActivation`, and the system-level oneshot+timer factory
-  `mkOneshotTimer` used by `hosts/odin`; the legacy `mkSimple*` helpers were removed.
+  `mkOneshotTimer` used by `hosts/odin`; the legacy `mkSimple*` helpers were removed. The `presets`
+  table holds both scheduling keys (`after`/`wants`/`requires`/`bindsTo`/`partOf`/`wantedBy`) and a
+  `service` attrset (`Restart`/`RestartSec`/`Type`): `defaultWanted`, `restartOnFailure`, `oneshot`,
+  `graphicalSession`, `graphicalWanted`. Preset service keys are merged under the caller's own
+  `serviceConfig` (caller wins per key), so `presets = [ "restartOnFailure" ]` + `RestartSec = 3`
+  keeps the shared policy while tuning the delay; a raw `Restart = "on-failure"` inside
+  `systemd.user.services` is rejected by the `restart-preset` rule in `scripts/dev/lint-guards.sh`.
+- `llama-server.nix` — `mkService { description, execStart, user }`, the systemd unit skeleton
+  shared by `modules/llm/llama-server.nix` and `llama-server-flash-next.nix` (manual-start-only
+  policy, `render`/`video` groups); exposed as `config.lib.neg.llamaServer` like `systemdUser`.
 - `aliae.nix` — shell alias definitions (`alias`-style helpers for the user's shell); imports
   `package-checks.nix` to skip aliases whose packages are missing.
 - `package-checks.nix` — package availability checks (`hasRg`, `hasNmap`, `hasCurl`, …) for the
@@ -28,6 +37,10 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   being skipped, a miss aborting evaluation); wired into `flake/checks.nix` as `neg-tree-guard`.
 - `ru-keys-tests.nix` — eval-only assertions over `ru-keys.nix` (neovim langmap golden, table
   parity); wired into `flake/checks.nix` as the `ru-keys` check.
+- `feature-flags-tests.nix` — scans `modules/` + `hosts/` for `lib.neg.enabled "<path>"` and asserts
+  every path resolves to a declared `features.<path>.enable` option (a typo or a missing `.enable`
+  silently reads false); wired into `flake/checks.nix` as the `feature-flags` check against the
+  feature option tree evaluated with `modules/core` + `modules/features`.
 - `caches.nix` — shared binary-cache `trusted-public-keys` (official cache plus community mirrors);
   imported by `modules/nix/settings.nix`.
 - `python-packages.nix` — shared Python package list; single source for the system Python env

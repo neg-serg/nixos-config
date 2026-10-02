@@ -60,8 +60,13 @@ configuration.
 
 ### Systemd (User) Services
 
-- Prefer `config.lib.neg.systemdUser.mkUnitFromPresets` to attach the correct targets; the
-  `defaultWanted` preset wires a unit into `default.target`.
+- Prefer `config.lib.neg.systemdUser.mkUserService` for module-shaped user units: it routes
+  scheduling through the `presets` table. Presets carry scheduling keys (`defaultWanted`,
+  `graphicalWanted`, `graphicalSession`) *and* service defaults (`restartOnFailure` =
+  `Restart=on-failure` + `RestartSec=10`, `oneshot` = `Type=oneshot`); the caller's own
+  `serviceConfig` key always wins, so a unit needing another delay just passes `RestartSec`.
+- `mkUnitFromPresets` stays the value-level half (returns `Unit`/`Install`/`Service`) for callers
+  that keep their own literal `systemd.user.services.<name>` key.
 - Manage services via `systemctl --user start|stop|status <unit>`, logs via
   `journalctl --user -u <unit>`.
 
@@ -149,7 +154,10 @@ Use the same expectations regardless of whether you work under `modules/` or
 - Always combine `lib.mkMerge` with `config.lib.neg.systemdUser.mkUnitFromPresets` for consistent
   `After=/WantedBy=` wiring; avoid the legacy `mkSimple*` helpers (they have recursion edge cases).
 - Examples:
-  - Service: preset `["defaultWanted"]`
+  - Service: presets `["defaultWanted" "restartOnFailure"]` (+ `RestartSec` if not 10)
+  - Graphical-session resident: presets `["graphicalSession" "restartOnFailure"]`
+    (`graphicalWanted` when the unit must be pulled in but not stopped with the session)
+  - Short-lived helper: preset `["oneshot"]`, add `wantedBy` only if something must pull it in
   - Timer: set `wantedBy = [ "timers.target" ]` directly.
 
 ### Editor Shim
