@@ -235,8 +235,8 @@ in
             {
               name = "enable-preempt-rt";
               patch = null;
-              structuredExtraConfig = with lib.kernel; {
-                PREEMPT_RT = yes;
+              structuredExtraConfig = {
+                PREEMPT_RT = lib.kernel.yes;
               };
             }
           ])

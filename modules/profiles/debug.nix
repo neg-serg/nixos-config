@@ -80,17 +80,15 @@ in
               {
                 name = "enable-mem-alloc-profiling";
                 patch = null; # config-only change
-                structuredExtraConfig =
-                  with lib.kernel;
-                  {
-                    MEM_ALLOC_PROFILING = yes;
-                  }
-                  // (lib.optionalAttrs (cfg.memAllocProfiling.enabledByDefault or false) (
-                    with lib.kernel; { MEM_ALLOC_PROFILING_ENABLED_BY_DEFAULT = yes; }
-                  ))
-                  // (lib.optionalAttrs (cfg.memAllocProfiling.debugChecks or false) (
-                    with lib.kernel; { MEM_ALLOC_PROFILING_DEBUG = yes; }
-                  ));
+                structuredExtraConfig = {
+                  MEM_ALLOC_PROFILING = lib.kernel.yes;
+                }
+                // (lib.optionalAttrs (cfg.memAllocProfiling.enabledByDefault or false) ({
+                  MEM_ALLOC_PROFILING_ENABLED_BY_DEFAULT = lib.kernel.yes;
+                }))
+                // (lib.optionalAttrs (cfg.memAllocProfiling.debugChecks or false) ({
+                  MEM_ALLOC_PROFILING_DEBUG = lib.kernel.yes;
+                }));
               }
             ];
           })
@@ -121,8 +119,8 @@ in
               {
                 name = "enable-kernel-btf";
                 patch = null;
-                structuredExtraConfig = with lib.kernel; {
-                  DEBUG_INFO_BTF = yes;
+                structuredExtraConfig = {
+                  DEBUG_INFO_BTF = lib.kernel.yes;
                 };
               }
             ];

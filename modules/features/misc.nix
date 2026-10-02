@@ -1,5 +1,4 @@
-{ lib, mkBool, ... }:
-with lib;
+{ mkBool, ... }:
 {
   options.features = {
     text = {

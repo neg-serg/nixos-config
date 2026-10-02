@@ -57,39 +57,10 @@ lint:
     set -eu
     statix check -- .
     deadnix --fail .
-    # Guard: discourage `with pkgs; [ ... ]` lists (prefer explicit pkgs.*)
-    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'with[[:space:]]+pkgs;[[:space:]]*\[' . | grep -q .; then \
-      echo 'Found discouraged pattern: use explicit pkgs.* items instead of `with pkgs; [...]`' >&2; \
-      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'with[[:space:]]+pkgs;[[:space:]]*\[' . || true; \
-      exit 1; \
-    fi; \
-    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs' . | grep -q .; then \
-      echo 'Found discouraged pattern in FHS targetPkgs: avoid `with pkgs`' >&2; \
-      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs' . || true; \
-      exit 1; \
-    fi
-    # Guard: avoid mkdir/touch/rm in ExecStartPre/ExecStart within systemd units —
-    # declare managed files (per-file `force = true`) or wrappers instead.
-    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
-         'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules | \
-       grep -q .; then \
-      echo 'Found ExecStartPre/ExecStart with mkdir/touch/rm. Declare managed files (force = true) or wrappers instead.' >&2; \
-      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
-        'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules || true; \
-      exit 1; \
-    fi
-    # Guard: avoid `with pkgs.lib` — use explicit pkgs.lib.*
-    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.lib\b' . | grep -q .; then \
-      echo "Found discouraged pattern: avoid 'with pkgs.lib'; use explicit pkgs.lib.*" >&2; \
-      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.lib\b' . || true; \
-      exit 1; \
-    fi
-    # Guard: avoid generic `with pkgs.<ns>` — prefer explicit pkgs.<ns>.<item>
-    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.[A-Za-z0-9_-]+' . | grep -v -E 'pkgs\.lib\b' | grep -q .; then \
-      echo "Found discouraged pattern: avoid 'with pkgs.<ns>'; reference explicit pkgs.<ns>.<item>" >&2; \
-      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.[A-Za-z0-9_-]+' . | grep -v -E 'pkgs\.lib\b' || true; \
-      exit 1; \
-    fi
+    # Guard: repo-wide Nix anti-patterns (with-pkgs forms, ExecStart file/dir
+    # mutations, bare `with lib`). Rule list and env gates:
+    #   bash scripts/dev/lint-guards.sh --list
+    bash "{{repo_root}}/scripts/dev/lint-guards.sh" "{{repo_root}}"
     # `&&` so a failing ruff fails this line: the recipe runs under `bash -cu`
     # (no -e) and a plain `;` would let black's success mask it.
     if git ls-files -- '*.py' >/dev/null 2>&1; then \
@@ -103,33 +74,8 @@ lint:
     if command -v taplo >/dev/null 2>&1; then git ls-files -z -- '*.toml' 2>/dev/null | RUST_LOG=warn xargs -0 -r taplo lint; else echo "taplo not found — skipping TOML lint"; fi
     # Rust formatting (edition-aware via nearest Cargo.toml)
     if command -v rustfmt >/dev/null 2>&1; then bash scripts/dev/check-rustfmt.sh; else echo "rustfmt not found — skipping Rust check"; fi
-    # Optional guard: prefer `let exe = lib.getExe' pkgs.pkg "bin"; in "${exe} …" over direct ${pkgs.*}/bin paths
     # Lua (non-nvim; nvim is a vendored config)
     if command -v selene >/dev/null 2>&1; then selene files/gui files/mpv; else echo "selene not found — skipping Lua lint"; fi
-    # Enable with: EXECSTART_GUARD=1 just lint
-    if [ "${EXECSTART_GUARD:-}" = "1" ]; then \
-      if grep -R -nE --include='*.nix' 'ExecStart\s*=\s*".*\$\{pkgs\.[^}]+\}/bin/' modules | grep -q .; then \
-        echo 'Found ExecStart using direct ${pkgs.*}/bin path. Prefer:' >&2; \
-        echo '  let exe = lib.getExe'"'"' pkgs.<pkg> "<bin>"; in "${exe} …"' >&2; \
-        grep -R -nE --include='*.nix' 'ExecStart\s*=\s*".*\$\{pkgs\.[^}]+\}/bin/' modules || true; \
-        exit 1; \
-      fi; \
-    fi
-    # Optional guard: if using the "let exe … in \"${exe} …\"" pattern, prefer lib.escapeShellArgs for args
-    # Enable with: ESCAPEARGS_GUARD=1 just lint
-    if [ "${ESCAPEARGS_GUARD:-}" = "1" ]; then \
-      tmp=$(mktemp); \
-      grep -R -nE --include='*.nix' 'ExecStart\s*=\s*let[^;]+in\s*"\$\{exe\}\s' modules \
-        | grep -v 'escapeShellArgs' \
-        > "$tmp" || true; \
-      if [ -s "$tmp" ]; then \
-        echo 'Found ExecStart pattern using ${exe} without lib.escapeShellArgs for args:' >&2; \
-        cat "$tmp" >&2; \
-        rm -f "$tmp"; \
-        exit 1; \
-      fi; \
-      rm -f "$tmp"; \
-    fi
     # Shellcheck opt-in: check only files that declare a POSIX/Bash shebang
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \

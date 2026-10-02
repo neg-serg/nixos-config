@@ -32,11 +32,11 @@ pkgs.stdenv.mkDerivation {
       ]
       (builtins.readFile ./install.sh);
 
-  meta = with lib; {
+  meta = {
     description = "MIDI to sheet music PDF: pitch-split piano into grand staff, engrave with headless MuseScore";
     homepage = "https://musescore.org";
-    license = licenses.mit; # split.py (own code); MuseScore runtime is GPL-3.0+
-    platforms = platforms.linux;
+    license = lib.licenses.mit; # split.py (own code); MuseScore runtime is GPL-3.0+
+    platforms = lib.platforms.linux;
     mainProgram = "midi2sheet";
   };
 }

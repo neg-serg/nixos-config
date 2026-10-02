@@ -19,11 +19,11 @@ stdenvNoCC.mkDerivation rec {
     cp -r Alkano-aio/ $out/share/icons
   '';
 
-  meta = with lib; {
+  meta = {
     description = "Mirror of Alkano-aio";
     homepage = "https://github.com/neg-serg/Alkano-aio";
-    license = licenses.gpl3;
-    platforms = platforms.all;
-    maintainers = with maintainers; [ neg-serg ];
+    license = lib.licenses.gpl3;
+    platforms = lib.platforms.all;
+    maintainers = [ lib.maintainers.neg-serg ];
   };
 }
