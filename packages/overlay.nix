@@ -97,11 +97,13 @@ in
   tewi = final.callPackage ./tewi { };
 
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
-  # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H)
-  ttf-code2000 = final.callPackage ./ttf-code2000 { };
-  ttf-code2001 = final.callPackage ./ttf-code2001 { };
-  ttf-code2002 = final.callPackage ./ttf-code2002 { };
-  ttf-code20x3 = final.callPackage ./ttf-code20x3 { };
+  # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H).
+  # One parameterized derivation (packages/ttf-code) with a per-variant table;
+  # the public attribute names below are unchanged.
+  ttf-code2000 = final.callPackage ./ttf-code { variant = "ttf-code2000"; };
+  ttf-code2001 = final.callPackage ./ttf-code { variant = "ttf-code2001"; };
+  ttf-code2002 = final.callPackage ./ttf-code { variant = "ttf-code2002"; };
+  ttf-code20x3 = final.callPackage ./ttf-code { variant = "ttf-code20x3"; };
 
   # Python with LTO optimizations
   python3-lto = finalPrev.python3.override {
