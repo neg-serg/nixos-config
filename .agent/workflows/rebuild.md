@@ -7,7 +7,7 @@ ______________________________________________________________________
 ## Quick Command
 
 ```bash
-sudo nixos-rebuild switch --flake .#odin
+sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null
 ```
 
 ## Steps
@@ -60,7 +60,26 @@ The build succeeds and nothing is applied, so retrying with stdin redirected fro
 whole fix:
 
 ```bash
-sudo -n nixos-rebuild switch --flake .#odin --option substitute false < /dev/null
+sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null
 ```
 
 Keep the redirect in any scripted rollout.
+
+## Who runs it
+
+`sudo` asks for a password: the `nixos-rebuild` NOPASSWD entry was removed on purpose
+(`modules/security/default.nix` — it was passwordless arbitrary root, since the activated flake is
+user-writable), and `features.security.tpmSudo` is off on this host. So an agent prepares the
+rollout and builds the closure, then the user runs the switch. Never add `-n` to the switch command:
+with no NOPASSWD rule `sudo -n` fails immediately instead of prompting.
+
+Agent-side preparation (everything that needs no root):
+
+```bash
+cd /etc/nixos
+git status                 # must be clean/intentional — the working tree is what gets activated
+just fmt && just lint
+nix build .#nixosConfigurations.odin.config.system.build.toplevel \
+  --out-link result --option substitute false
+ls -l result               # then grep the store paths it points at to verify the change landed
+```
