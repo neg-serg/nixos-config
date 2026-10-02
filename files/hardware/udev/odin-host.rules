@@ -29,3 +29,22 @@ ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme*n*
 # same rationale as the GLM USB 0666 rule above.
 KERNEL=="vfio", MODE="0666"
 SUBSYSTEM=="vfio", MODE="0666"
+
+# ASUS ALC4080 onboard "USB Audio" (0b05:1b7c). When snd-usb-audio is loaded
+# for real gear — the plugged-in Expressive E Osmose pulls it in — the kernel
+# also binds its seven audio interfaces (class 01) and probes each of them:
+# ~11 s of background work and a stray ALSA card (index 2) nothing uses. The
+# modprobe.d alias ("off") only blocks the modalias autoload, never the bind,
+# and 6.18 has no driver_override on USB interfaces (checked sound/usb and
+# drivers/usb/core), so the interfaces are detached right after the driver
+# takes them. The HID interface (class 03) keeps usbhid. By the time this
+# fires the probe has already run: the rule removes the card, not the time.
+# `test -e` covers both the "add after the bind" and the "bind" event orders.
+# The class has to be matched with ATTR{}, not ATTRS{}: the parent-chain search
+# does not find the interface's own bInterfaceClass, so the first version of
+# this rule queued nothing at all (`udevadm test -D <dir>` on 1-7:1.0 showed an
+# empty command list; with ATTR{} it queues, and the HID interface and the
+# AURA controller 0b05:1aa6 stay unmatched).
+ACTION=="add|bind", SUBSYSTEM=="usb", ATTRS{idVendor}=="0b05", ATTRS{idProduct}=="1b7c", \
+  ATTR{bInterfaceClass}=="01", \
+  RUN+="/bin/sh -c 'test -e /sys/bus/usb/drivers/snd-usb-audio/%k && echo %k > /sys/bus/usb/drivers/snd-usb-audio/unbind'"
