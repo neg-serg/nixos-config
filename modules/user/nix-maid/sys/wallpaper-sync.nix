@@ -190,6 +190,11 @@ lib.mkIf (cfg.enable or false) {
     ];
     partOf = [ "graphical-session.target" ];
     wantedBy = [ "graphical-session.target" ];
+    # Same cap as wl-daemon ([Unit] level): a persistent failure (e.g. every hypr
+    # socket dir is a stale leftover, see wl-monitor-watch.sh) must not respawn
+    # every 3s forever.
+    startLimitIntervalSec = 60;
+    startLimitBurst = 10;
     serviceConfig = {
       Type = "simple";
       Restart = "on-failure";
