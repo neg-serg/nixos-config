@@ -2,10 +2,11 @@
   lib,
   config,
   pkgs,
+  neg,
   ...
 }:
 let
-  systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = neg.systemdUser lib;
 
   # Crash-loop scanner: every 5 minutes walks running services, finds units
   # that auto-restart (Restart=always/on-failure/on-abnormal) and whose

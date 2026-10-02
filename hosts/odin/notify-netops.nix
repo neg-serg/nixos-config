@@ -14,12 +14,13 @@
   config,
   lib,
   pkgs,
+  neg,
   ...
 }:
 let
   inherit (lib) mkIf mkMerge;
 
-  systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = neg.systemdUser lib;
 
   # Shared facts: the telegram sender must egress via the user sing-box socks
   # proxy (127.0.0.1:10808), which starts at login, so keep retrying ~1 min.

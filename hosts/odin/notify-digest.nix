@@ -12,11 +12,12 @@
   config,
   lib,
   pkgs,
+  neg,
   ...
 }:
 
 let
-  systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = neg.systemdUser lib;
 
   telegramDigestScript = pkgs.writeShellApplication {
     name = "telegram-digest";

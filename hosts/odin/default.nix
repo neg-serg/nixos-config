@@ -12,7 +12,7 @@ let
   # generated chars. Latin binds live in files/gui/zellij/config.kdl with the
   # zellijRuBinds.* markers; the daemon ru-layout already forces us in the
   # terminal, so these duplicates only matter after a manual M4+S switch.
-  ruKeys = import ../../lib/ru-keys.nix;
+  ruKeys = neg.ruKeys;
 
   # Positional constructor for the table below: nixfmt keeps a three-name
   # `inherit` on one line, so each record costs one line instead of five.

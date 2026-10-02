@@ -1,10 +1,13 @@
 {
   pkgs,
   lib,
+  neg,
+  repoRoot,
   ...
 }:
 let
   podman = lib.getExe pkgs.podman;
+  r = neg.rooted repoRoot;
 
   # The dockur VM is the primary Genelec GLM control path (host-side genlc /
   # glm-osc stays a manual reserve), so it starts with the machine. QEMU opens a
@@ -38,7 +41,7 @@ let
   # each one (the same script glm-adapter runs after its own VM restarts).
   netfix = pkgs.writeShellScript "windows-vm-netfix" ''
     export PODMAN=${podman}
-    ${builtins.readFile ../../../packages/local-bin/scripts/glm-vm-netfix}
+    ${r.readFile "packages/local-bin/scripts/glm-vm-netfix"}
   '';
 
   # Guest shutdown for the ExecStop path. `podman stop` alone is not enough: it
@@ -52,7 +55,7 @@ let
   # whatever state podman is in.
   stopVm = pkgs.writeShellScript "windows-vm-stop" ''
     export PODMAN=${podman}
-    ${builtins.readFile ../../../packages/local-bin/scripts/windows-vm-stop}
+    ${r.readFile "packages/local-bin/scripts/windows-vm-stop"}
   '';
 
   startVm = pkgs.writeShellScript "windows-vm-start" ''
