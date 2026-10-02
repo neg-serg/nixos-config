@@ -95,6 +95,15 @@ in
 
   "fzf-opts-guard" = mkOkCheck "fzf-opts-guard" (import ../lib/fzf-opts-tests.nix);
 
+  # ── neg-helpers by-name resolver guard ─────────────────────────────
+  # neg.tree / neg.find back the "address a file by name" convention, and
+  # modules/default.nix no longer lists a single domain path (nameFilter does
+  # the domain selection). The guard pins the conventions: extension stripping,
+  # default.nix addressing its own directory, "_"-prefixed entries being
+  # private, find throwing on a miss, nameFilter dropping by name.
+
+  "neg-tree-guard" = mkOkCheck "neg-tree-guard" (import ../lib/neg-helpers-tests.nix);
+
   "fzf-opts" =
     let
       vars = self.nixosConfigurations.odin.config.environment.variables;

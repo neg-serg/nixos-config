@@ -6,9 +6,11 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 
 - `opts.nix` — option helpers (`mkOpt`, `mkBoolOpt`, `mkStrOpt`, …); consumed via `opts` specialArg
   (see `flake/nixos.nix`) and directly by modules.
-- `neg-helpers.nix` — structural helpers: the home-file helper (`mkHomeFiles`) and `importDir`
-  (directory auto-import for every module aggregator); single source for `specialArgs.neg`
-  (flake/nixos.nix) and `flake/checks.nix`; also re-exports `ruKeys` from `ru-keys.nix`.
+- `neg-helpers.nix` — structural helpers: the home-file helper (`mkHomeFiles`), `importDir`
+  (directory auto-import for every module aggregator, with `nameFilter` for dropping entries by
+  name) and the by-name resolver `tree` / `leaves` / `find`; `systemdUser` closes `systemd-user.nix`
+  over a given `lib`. Single source for `specialArgs.neg` (flake/nixos.nix) and `flake/checks.nix`;
+  also re-exports `ruKeys` from `ru-keys.nix`.
 - `systemd-user.nix` — systemd unit helpers: `mkUnitFromPresets` plus the module-shaped
   `mkUserService` / `mkUserOneshot` / `mkUserActivation`, and the system-level oneshot+timer factory
   `mkOneshotTimer` used by `hosts/odin`; the legacy `mkSimple*` helpers were removed.
@@ -21,6 +23,9 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 - `ru-keys.nix` — single source of truth for the RU-layout hotkey problem: latin key → the char the
   ru layout produces, and every per-app duplicate bind is generated from this table. Exposed as
   `neg.ruKeys`; mechanics in `docs/howto/hotkeys-ru-layout.md`.
+- `neg-helpers-tests.nix` — eval-only assertions over `tree` / `leaves` / `find` and `importDir`'s
+  `nameFilter` (extension stripping, `default.nix` addressing its own directory, `_`-prefixed entries
+  being skipped, a miss aborting evaluation); wired into `flake/checks.nix` as `neg-tree-guard`.
 - `ru-keys-tests.nix` — eval-only assertions over `ru-keys.nix` (neovim langmap golden, table
   parity); wired into `flake/checks.nix` as the `ru-keys` check.
 - `caches.nix` — shared binary-cache `trusted-public-keys` (official cache plus community mirrors);
@@ -60,3 +65,36 @@ To reference a file by its repo-root-relative path instead of fragile `../../../
   imports within one area (e.g. `../scripts/`) stay relative.
 - Derivation `src` in `mkDerivation` must remain a real path (string breaks input tracking); keep
   `src = ./relative/…` there.
+
+### By name, not by path
+
+`neg.tree` + `neg.find` take the counting out of references: a directory is exposed as an
+attribute set keyed by short names, so a file is addressed by its name alone.
+
+```nix
+{ config, neg, ... }:
+let
+  libTree = neg.tree { dir = config.lib.neg.path "lib"; };
+in
+{
+  systemdUser = import (neg.find libTree "systemd-user") { inherit lib; };
+}
+```
+
+Conventions, identical for every tree (borrowed from import-tree / haumea):
+
+- a directory recurses and its `default.nix` shows up as that directory's `.default` (not as the
+  whole value, so sibling modules stay reachable next to it);
+- entries starting with `_` or `.` are skipped (private data, hidden files);
+- the matching extension is stripped from the key (`systemd-user.nix` → `systemd-user`), so `find`
+  accepts the name with or without `.nix`. Nothing is camel-cased: a non-`.nix` file keeps its
+  dashes, so address it as `t."hdr-auto-switch"` (that is what makes the mapping predictable);
+- `find` throws on a missing or ambiguous name and prints the candidates, so a mistake is a
+  one-line fix instead of a grep.
+
+`importDir` gained `nameFilter` for the same purpose: `modules/default.nix` drops whole domains by
+name and no longer lists a single path.
+
+```nix
+imports = neg.importDir { dir = ./.; includeDirs = true; nameFilter = domainFilter; };
+```
