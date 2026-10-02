@@ -5,21 +5,24 @@
 }:
 let
   inherit (config.lib.neg) homeDir;
+  systemdUser = config.lib.neg.systemdUser;
 in
 {
   # OmniRouter — unified LLM API router, local mode.
   # Backend: ollama via OpenAI-compatible endpoint (OPENAI_BASE_URL).
   # Auth: OMNIROUTER_API_KEYS (default "omnirouter-local").
-  systemd.user.services.omnirouter = {
+  systemd.user.services.omnirouter = systemdUser.mkUserService {
     enable = true;
     description = "OmniRouter - unified LLM API router (local mode, ollama backend)";
+    presets = [
+      "defaultWanted"
+      "restartOnFailure"
+    ];
     after = [ "network.target" ];
-    wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "simple";
       WorkingDirectory = "${homeDir}/.local/share/omnirouter";
       ExecStart = "${homeDir}/.local/share/omnirouter/venv/bin/uvicorn serverRouter.router:app --host 127.0.0.1 --port 8000";
-      Restart = "on-failure";
       RestartSec = 3;
     };
     environment = {

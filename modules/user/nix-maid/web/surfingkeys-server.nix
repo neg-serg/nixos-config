@@ -4,27 +4,28 @@
   pkgs,
   ...
 }:
-with lib;
-mkIf (config.lib.neg.enabled "web") {
+lib.mkIf (config.lib.neg.enabled "web") {
   systemd.user.services.surfingkeys-server =
     let
       serverScript = pkgs.writeText "surfingkeys-server.py" (
         builtins.readFile (config.lib.neg.path "packages/local-bin/bin/surfingkeys-server")
       );
     in
-    {
+    config.lib.neg.systemdUser.mkUserService {
+      presets = [
+        "graphicalSession"
+        "restartOnFailure"
+      ];
       description = "HTTP server for Surfingkeys configuration (focus/close/addressbar/proxy)";
+      # The preset carries wantedBy+partOf; ordering (After=/Wants=) stays explicit.
+      after = [ "graphical-session.target" ];
+      wants = [ "graphical-session.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe' pkgs.python3 "python3"} -u ${serverScript}";
         Environment = "PATH=${pkgs.hyprland}/bin:$PATH";
-        Restart = "on-failure";
         RestartSec = "5";
         Slice = "background.slice";
       };
-      after = [ "graphical-session.target" ];
-      wants = [ "graphical-session.target" ];
-      partOf = [ "graphical-session.target" ];
-      wantedBy = [ "graphical-session.target" ];
     };
 
   systemd.user.services.surfingkeys-extension-patch =

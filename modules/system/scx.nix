@@ -12,6 +12,7 @@
 }:
 let
   cfg = config.features.optimization.scx;
+  systemdUser = config.lib.neg.systemdUser;
   schedBin = "${lib.getBin pkgs.scx.rustscheds}/bin/${cfg.scheduler}";
 in
 {
@@ -53,8 +54,8 @@ in
       {
         name = "sched-ext";
         patch = null;
-        structuredExtraConfig = with lib.kernel; {
-          SCHED_CLASS_EXT = yes;
+        structuredExtraConfig = {
+          SCHED_CLASS_EXT = lib.kernel.yes;
         };
       }
     ];
@@ -64,16 +65,16 @@ in
       "kernel.bpf_stats_enabled" = false;
     };
 
-    systemd.services.scx = {
+    systemd.services.scx = systemdUser.mkSystemService {
       description = "SCX BPF scheduler (${cfg.scheduler})";
       documentation = [ "https://github.com/sched-ext/scx" ];
+      presets = [ "restartOnFailure" ];
       after = [ "multi-user.target" ];
       wants = [ "multi-user.target" ];
 
       serviceConfig = {
         Type = "simple";
         ExecStart = schedBin;
-        Restart = "on-failure";
         RestartSec = "5s";
         # Needs CAP_SYS_ADMIN + CAP_BPF for BPF prog load,
         # CAP_SYS_NICE for scheduler ops.

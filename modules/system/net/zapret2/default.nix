@@ -15,6 +15,7 @@
 }:
 let
   inherit (lib) mkIf;
+  systemdUser = config.lib.neg.systemdUser;
   cfg = config.features.net.zapret2 or { };
 
   zapret2 = pkgs.zapret2;
@@ -102,10 +103,10 @@ in
       {
         name = "zapret2-nfqueue";
         patch = null;
-        structuredExtraConfig = with lib.kernel; {
-          NETFILTER_NETLINK_QUEUE = yes;
-          NFNETLINK_QUEUE = module;
-          NFT_QUEUE = module;
+        structuredExtraConfig = {
+          NETFILTER_NETLINK_QUEUE = lib.kernel.yes;
+          NFNETLINK_QUEUE = lib.kernel.module;
+          NFT_QUEUE = lib.kernel.module;
         };
       }
     ];
@@ -118,8 +119,9 @@ in
       "C /usr/local/libexec/zapret2-rollout 0755 root root - ${rolloutScript}"
     ];
 
-    systemd.services.zapret2 = {
+    systemd.services.zapret2 = systemdUser.mkSystemService {
       description = "Zapret2 DPI bypass (nfqws)";
+      presets = [ "restartOnFailure" ];
       after = [
         "network-online.target"
       ]
@@ -136,7 +138,6 @@ in
           "${pkgs.nftables}/bin/nft -f ${nftablesRules}"
         ];
         ExecStart = "${nfqws} ${builtins.concatStringsSep " " strategyFlags}";
-        Restart = "on-failure";
         RestartSec = 10;
         StateDirectory = "zapret2";
         ProtectSystem = "strict";

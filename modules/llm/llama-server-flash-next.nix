@@ -73,23 +73,10 @@ in
   };
 
   config = lib.mkIf (enabled && cfg.enable) {
-    systemd.services.llama-server-flash-next = {
+    systemd.services.llama-server-flash-next = config.lib.neg.llamaServer.mkService {
       description = "llama-server ROCm — Qwen3.8-Flash-Next UD-Q4_K_XL (qwen4exp, PR #27742)";
-      # Manual start only, same as the vision llama-server.
-      after = [ "network.target" ];
-
-      serviceConfig = {
-        Type = "simple";
-        User = config.users.main.name;
-        # GPU access for the ROCm (HIP) backend.
-        SupplementaryGroups = [
-          "render"
-          "video"
-        ];
-        ExecStart = serverCmd;
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
+      user = config.users.main.name;
+      execStart = serverCmd;
     };
 
     # Qwen3.8-Flash-Next (111 GB GGUF) depends on ZFS ARC to keep hot MoE

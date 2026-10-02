@@ -56,33 +56,20 @@ in
   };
 
   config = lib.mkIf (enabled && cfg.enable) {
-    systemd.services.llama-server = {
+    systemd.services.llama-server = config.lib.neg.llamaServer.mkService {
       description = "llama-server Vulkan (qwen3-vl vision, vision-review backend)";
-      # No wantedBy/requiredBy: manual start only (`systemctl start llama-server`).
-      after = [ "network.target" ];
-
-      serviceConfig = {
-        Type = "simple";
-        User = config.users.main.name;
-        # GPU access for the Vulkan (RADV) backend.
-        SupplementaryGroups = [
-          "render"
-          "video"
-        ];
-        ExecStart = ''
-          ${pkgs.llama-cpp-vulkan}/bin/llama-server \
-            --device Vulkan0 \
-            -m ${modelDir}/${modelFile} \
-            --mmproj ${modelDir}/${mmprojFile} \
-            --port ${toString cfg.port} \
-            --host 127.0.0.1 \
-            -c 8192 \
-            -np 1 \
-            --log-disable
-        '';
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
+      user = config.users.main.name;
+      execStart = ''
+        ${pkgs.llama-cpp-vulkan}/bin/llama-server \
+          --device Vulkan0 \
+          -m ${modelDir}/${modelFile} \
+          --mmproj ${modelDir}/${mmprojFile} \
+          --port ${toString cfg.port} \
+          --host 127.0.0.1 \
+          -c 8192 \
+          -np 1 \
+          --log-disable
+      '';
     };
   };
 }

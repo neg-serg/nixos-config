@@ -9,6 +9,11 @@
 let
   r = neg.rooted repoRoot;
 
+  # Module-shaped systemd user units (lib/systemd-user.nix). This file is a
+  # plain fragment imported by main.nix (no `config` in scope), so build the
+  # helper from the same specialArg neg.nix uses.
+  systemdUser = neg.systemdUser lib;
+
   # Hyprland window list via vicinae (moved here from the old user-session
   # Hyprland module)
   hyprWinList = pkgs.writeShellApplication {
@@ -320,8 +325,9 @@ in
     };
 
     # Hypridle — idle daemon (locks to a fading black screen after 2 min; no DPMS off)
-    hypridle = {
+    hypridle = systemdUser.mkUserService {
       description = "Hyprland idle daemon";
+      presets = [ "restartOnFailure" ];
       wantedBy = [ "hyprland-session.target" ];
       bindsTo = [ "hyprland-session.target" ];
       after = [ "hyprland-session.target" ];
@@ -332,7 +338,6 @@ in
       unitConfig.ConditionPathExists = "!%t/quickshell-login/login-phase";
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.hypridle}";
-        Restart = "on-failure";
         RestartSec = "2";
       };
     };
@@ -341,9 +346,12 @@ in
     # Restore together with the hyprlock package: oneshot ExecStart hyprlock --immediate on sleep.target.
 
     # Hyprland Polkit Agent
-    hyprpolkitagent = {
+    hyprpolkitagent = systemdUser.mkUserService {
+      presets = [
+        "graphicalWanted"
+        "restartOnFailure"
+      ];
       description = "Hyprland Polkit Agent";
-      wantedBy = [ "graphical-session.target" ];
       after = [ "graphical-session-pre.target" ];
       serviceConfig = {
         ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent"; # Polkit authentication agent written in QT/QML
@@ -352,7 +360,6 @@ in
           "XDG_SESSION_TYPE=wayland"
           "XDG_CURRENT_DESKTOP=Hyprland"
         ];
-        Restart = "on-failure";
         RestartSec = "2s";
       };
     };

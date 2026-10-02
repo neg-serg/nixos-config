@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.hardware.cooling or { };
+  systemdUser = config.lib.neg.systemdUser;
 in
 {
   options.hardware.cooling = {
@@ -61,7 +62,7 @@ in
       };
 
       minStartOverride = lib.mkOption {
-        type = with lib.types; nullOr int;
+        type = lib.types.nullOr lib.types.int;
         default = null;
         description = ''
           Optional absolute MINSTART value (0–255) used when allowStop = true
@@ -147,22 +148,24 @@ in
     };
 
     # Fancontrol service (runs the binary from lm_sensors)
-    systemd.services.fancontrol = lib.mkIf (cfg.autoFancontrol.enable or false) {
-      description = "Software fan speed control (fancontrol)";
-      requires = [ "fancontrol-setup.service" ];
-      after = [ "fancontrol-setup.service" ];
-      unitConfig = {
-        # Only start if config exists
-        ConditionPathExists = "/etc/fancontrol";
-      };
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.lm_sensors}/bin/fancontrol"; # Tools for reading hardware sensors - maintained fork
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-      wantedBy = [ "multi-user.target" ];
-    };
+    systemd.services.fancontrol = lib.mkIf (cfg.autoFancontrol.enable or false) (
+      systemdUser.mkSystemService {
+        description = "Software fan speed control (fancontrol)";
+        presets = [ "restartOnFailure" ];
+        requires = [ "fancontrol-setup.service" ];
+        after = [ "fancontrol-setup.service" ];
+        unitConfig = {
+          # Only start if config exists
+          ConditionPathExists = "/etc/fancontrol";
+        };
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${pkgs.lm_sensors}/bin/fancontrol"; # Tools for reading hardware sensors - maintained fork
+          RestartSec = 5;
+        };
+        wantedBy = [ "multi-user.target" ];
+      }
+    );
 
     # Re-apply manual PWM ownership after suspend/hibernate resume
     # (amdgpu and some motherboard controllers reset pwm*_enable to automatic)

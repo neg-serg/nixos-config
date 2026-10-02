@@ -74,7 +74,8 @@ in
     # Vital standalone synth — on-demand: systemctl --user start vital-standalone.
     # Runs under pw-jack (JACK via PipeWire); LIBGL_ALWAYS_SOFTWARE=1 avoids the
     # black window on Wayland/XWayland (JUCE/OpenGL rendering). Not autostarted.
-    systemd.user.services.vital-standalone = {
+    systemd.user.services.vital-standalone = config.lib.neg.systemdUser.mkUserService {
+      presets = [ "restartOnFailure" ];
       description = "Vital standalone synthesizer (pw-jack, software GL)";
       after = [
         "pipewire.service"
@@ -84,7 +85,6 @@ in
         Type = "simple";
         Environment = "WAYLAND_DISPLAY=wayland-1 LIBGL_ALWAYS_SOFTWARE=1";
         ExecStart = "${pkgs.pipewire.jack}/bin/pw-jack ${pkgs.vital}/bin/Vital";
-        Restart = "on-failure";
         RestartSec = 3;
       };
     };
@@ -93,7 +93,8 @@ in
     # Runs under pw-jack (JACK via PipeWire) so it joins the same audio graph
     # as SuperCollider/Vital and can be patched with helvum/pw-link.
     # Not autostarted; WAYLAND_DISPLAY is required for the GLFW window on Hyprland.
-    systemd.user.services.rack = {
+    systemd.user.services.rack = config.lib.neg.systemdUser.mkUserService {
+      presets = [ "restartOnFailure" ];
       description = "VCV Rack modular synthesizer (pw-jack)";
       after = [
         "pipewire.service"
@@ -103,24 +104,25 @@ in
         Type = "simple";
         Environment = "WAYLAND_DISPLAY=wayland-1";
         ExecStart = "${pkgs.pipewire.jack}/bin/pw-jack ${pkgs.vcv-rack}/bin/Rack";
-        Restart = "on-failure";
         RestartSec = 3;
       };
     };
     # virtual-midi — virtual ALSA seq MIDI ports for stable synth routing
     # slots (SuperCollider connects to these instead of the hardware ports,
     # avoiding loops through the Osmose and surviving unplugs).
-    systemd.user.services.virtual-midi = {
+    systemd.user.services.virtual-midi = config.lib.neg.systemdUser.mkUserService {
+      presets = [
+        "graphicalWanted"
+        "restartOnFailure"
+      ];
       description = "Virtual ALSA sequencer MIDI ports (synth routing slots)";
       after = [
         "pipewire.service"
         "wireplumber.service"
       ];
-      wantedBy = [ "graphical-session.target" ];
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.neg.virtual-midi}/bin/virtual-midi 4";
-        Restart = "on-failure";
         RestartSec = 3;
       };
     };
