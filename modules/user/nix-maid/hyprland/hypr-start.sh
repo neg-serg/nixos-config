@@ -77,6 +77,20 @@ fi
 log "resetting failed units"
 systemctl --user reset-failed || true
 
+# The target starts units that talk to the compositor: ru-layout asks hyprctl for
+# input:kb_layout ("Fatal error: You need to configure layouts on Hyprland" when
+# the socket is not up yet) and the portals need display :0. Starting it while
+# Hyprland was still coming up cost a burst of failures on every login
+# (2026-10-01 21:23:55: ru-layout x4, xdg-desktop-portal-gtk x3 "cannot open
+# display"). Wait for the compositor to answer — bounded, so a broken session
+# still reaches the target.
+HYPRCTL="/run/current-system/sw/bin/hyprctl"
+command -v hyprctl > /dev/null 2>&1 && HYPRCTL="$(command -v hyprctl)"
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  "$HYPRCTL" -j monitors > /dev/null 2>&1 && break
+  sleep 0.3
+done
+
 log "starting hyprland-session.target"
 systemctl --user start hyprland-session.target
 log "hyprland-session.target: $(systemctl --user is-active hyprland-session.target)"
