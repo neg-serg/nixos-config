@@ -1,5 +1,4 @@
 { lib, mkBool, ... }:
-with lib;
 {
   options.features.gui = {
     enable = mkBool "enable GUI stack (wayland/hyprland, quickshell, etc.)" true;
@@ -17,12 +16,12 @@ with lib;
       enable = mkBool "enable atrium (Wayland multiseat display manager)" false;
     };
     iconTheme = lib.mkOption {
-      type = types.str;
+      type = lib.types.str;
       default = "kora-pgrey";
       description = "Icon theme to apply system-wide (GTK + Qt).";
     };
     gtkTheme = lib.mkOption {
-      type = types.enum [
+      type = lib.types.enum [
         "neg-gtk"
         "Flight-Dark-GTK"
         "Andromeda"

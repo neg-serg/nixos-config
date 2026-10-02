@@ -4,7 +4,6 @@
   neg,
   ...
 }:
-with lib;
 let
   # --- SurfingKeys: Russian-layout ru2en table (ЙЦУКЕН) -----------------------
   # GENERATED from lib/ru-keys.nix (single source of truth) — do not edit the
@@ -23,11 +22,13 @@ let
 
   skRu2en =
     "const ru2en = { "
-    + concatStringsSep ", " (map skEntry (filter (k: k != "`") (attrNames ruKeys.latinToRu)))
+    + lib.concatStringsSep ", " (
+      lib.map skEntry (lib.filter (k: k != "`") (lib.attrNames ruKeys.latinToRu))
+    )
     + " };";
 
   skText =
-    replaceStrings
+    lib.replaceStrings
       [
         "// @GENERATED ru2en — see modules/user/nix-maid/web/browsing.nix (skRu2en)"
       ]

@@ -1,5 +1,4 @@
 { lib, mkBool, ... }:
-with lib;
 {
   options.features.dev = {
     enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
@@ -29,8 +28,8 @@ with lib;
 
     unreal = {
       enable = mkBool "enable Unreal Engine 5 tooling" false;
-      useSteamRun = mkOption {
-        type = types.bool;
+      useSteamRun = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries.";
       };

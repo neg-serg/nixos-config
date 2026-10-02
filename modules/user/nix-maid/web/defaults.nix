@@ -5,7 +5,6 @@
 
   ...
 }:
-with lib;
 let
   cfg = config.features.web;
 
@@ -22,13 +21,13 @@ in
 {
   config = {
     # Expose derived default browser under lib.neg for reuse
-    lib.neg.web = mkIf cfg.enable {
+    lib.neg.web = lib.mkIf cfg.enable {
       defaultBrowser = browser;
       inherit browsers;
     };
 
     # Provide sane defaults for BROWSER env var
-    environment.sessionVariables = mkIf cfg.enable (
+    environment.sessionVariables = lib.mkIf cfg.enable (
       let
         db = browser;
       in

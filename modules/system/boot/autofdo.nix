@@ -5,28 +5,27 @@
   pkgs,
   ...
 }:
-with lib;
 let
   cfg = config.boot.kernel.autofdo;
 in
 {
   options.boot.kernel.autofdo = {
-    enable = mkEnableOption "Kernel AutoFDO support (requires Clang-built kernel)";
+    enable = lib.mkEnableOption "Kernel AutoFDO support (requires Clang-built kernel)";
 
-    profile = mkOption {
-      type = types.nullOr types.path;
+    profile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to the AutoFDO profile (gcov format) to use for optimization.";
       example = "/root/autofdo.prof";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # AutoFDO requires the kernel to be built with LLVM/Clang.
     # We override the latest kernel to use clangStdenv.
     # Users can override this by setting boot.kernelPackages manually,
     # but they must ensure it uses Clang.
-    boot.kernelPackages = mkForce (
+    boot.kernelPackages = lib.mkForce (
       pkgs.linuxPackagesFor (
         # custom kernel packages
         (pkgs.linuxPackages_latest.kernel.override {

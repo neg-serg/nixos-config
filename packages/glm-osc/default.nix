@@ -66,9 +66,9 @@ stdenv.mkDerivation {
       --set-default GLM_OSC_STATE "$HOME/.local/state/glm-osc-state.json" \
       --add-flags "${./server.py}"
   '';
-  meta = with lib; {
+  meta = {
     description = "OSC bridge for Genelec SAM monitors (genlc-based, no official GLM)";
-    license = licenses.gpl3Plus;
-    platforms = platforms.linux;
+    license = lib.licenses.gpl3Plus;
+    platforms = lib.platforms.linux;
   };
 }

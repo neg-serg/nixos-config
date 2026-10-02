@@ -4,7 +4,6 @@
   config,
   ...
 }:
-with lib;
 let
   cfg = config.features.gui.vicinae;
   guiEnabled = config.lib.neg.enabled "gui";
@@ -213,64 +212,66 @@ let
   # Run once via ExecStartPre; after that, vicinae owns the file for GUI changes.
 in
 {
-  config = mkIf enabled (mkMerge [
-    {
-      environment.systemPackages = [
-        pkgs.vicinae # Wayland-native app runner + window switcher
-        pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
-        pkgs.wl-switcher # vicinae extension for wl wallpaper switching
-        pkgs.wallhaven # vicinae extension for wallhaven wallpaper browsing
-        pkgs.hyprwhspr # vicinae extension for hyprwhspr dictation control
-        pkgs.skate # key-value store CLI (vicinae skate extension dep)
-        # Wrapper: expose vicinae-browser-link from libexec to PATH
-        (pkgs.writeShellScriptBin "vicinae-browser-link" ''
-          exec ${pkgs.vicinae}/libexec/vicinae/vicinae-browser-link "$@"
-        '')
-      ];
+  config = lib.mkIf enabled (
+    lib.mkMerge [
+      {
+        environment.systemPackages = [
+          pkgs.vicinae # Wayland-native app runner + window switcher
+          pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
+          pkgs.wl-switcher # vicinae extension for wl wallpaper switching
+          pkgs.wallhaven # vicinae extension for wallhaven wallpaper browsing
+          pkgs.hyprwhspr # vicinae extension for hyprwhspr dictation control
+          pkgs.skate # key-value store CLI (vicinae skate extension dep)
+          # Wrapper: expose vicinae-browser-link from libexec to PATH
+          (pkgs.writeShellScriptBin "vicinae-browser-link" ''
+            exec ${pkgs.vicinae}/libexec/vicinae/vicinae-browser-link "$@"
+          '')
+        ];
 
-      environment.etc."chromium/native-messaging-hosts/com.vicinae.vicinae.json".text = builtins.toJSON {
-        name = "com.vicinae.vicinae";
-        description = "Vicinae Native Messaging Host";
-        path = "${pkgs.vicinae}/libexec/vicinae/vicinae-browser-link";
-        type = "stdio";
-        allowed_origins = [ "chrome-extension://chgfefjpcobfbnpmiokfjjaglahmnded/" ];
-      };
-
-      systemd.user.services.vicinae = {
-        enable = true;
-        description = "Vicinae - Wayland application runner and window switcher";
-        partOf = [ "graphical-session.target" ];
-        wantedBy = [ "graphical-session.target" ];
-        after = [ "graphical-session.target" ];
-        serviceConfig = {
-          ExecStart = "${lib.getExe pkgs.vicinae} server";
-          Restart = "always";
-          RestartSec = 2;
-          Environment = [
-            "QT_QPA_PLATFORM=wayland"
-            "WAYLAND_DISPLAY=wayland-1"
-            "PATH=/run/current-system/sw/bin"
-          ];
+        environment.etc."chromium/native-messaging-hosts/com.vicinae.vicinae.json".text = builtins.toJSON {
+          name = "com.vicinae.vicinae";
+          description = "Vicinae Native Messaging Host";
+          path = "${pkgs.vicinae}/libexec/vicinae/vicinae-browser-link";
+          type = "stdio";
+          allowed_origins = [ "chrome-extension://chgfefjpcobfbnpmiokfjjaglahmnded/" ];
         };
-      };
-    }
 
-    (mkIf cfg.manageConfig {
-      # Deploy config via tmpfiles to user home — pure NixOS, no nix-maid.
-      # Settings.json is NOT symlinked here — it's writable for vicinae GUI edits.
-      # Instead, nix-overrides.json (read-only) is imported by settings.json.
-      systemd.user.tmpfiles.rules = [
-        # Extension symlinks from Nix store to user vicinae extensions dir
-        "L+ %h/.local/share/vicinae/extensions/wallhaven - - - - ${pkgs.wallhaven}"
-        "L+ %h/.local/share/vicinae/extensions/hyprwhspr - - - - ${pkgs.hyprwhspr}"
-        "L+ %h/.local/share/vicinae/extensions/aura - - - - ${pkgs.aura}"
-        "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
-        # C (copy) for themes: writable copy (mode 0644) so "Open Theme File" works.
-        # Won't overwrite user edits (source has epoch mtime, dest is newer).
-        "C %h/.local/share/vicinae/themes/neg-dark.toml 0644 - - - ${themeFile}"
-        "C %h/.local/share/vicinae/themes/neg-kitty.toml 0644 - - - ${themeFileKitty}"
-        "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
-      ];
-    })
-  ]);
+        systemd.user.services.vicinae = {
+          enable = true;
+          description = "Vicinae - Wayland application runner and window switcher";
+          partOf = [ "graphical-session.target" ];
+          wantedBy = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          serviceConfig = {
+            ExecStart = "${lib.getExe pkgs.vicinae} server";
+            Restart = "always";
+            RestartSec = 2;
+            Environment = [
+              "QT_QPA_PLATFORM=wayland"
+              "WAYLAND_DISPLAY=wayland-1"
+              "PATH=/run/current-system/sw/bin"
+            ];
+          };
+        };
+      }
+
+      (lib.mkIf cfg.manageConfig {
+        # Deploy config via tmpfiles to user home — pure NixOS, no nix-maid.
+        # Settings.json is NOT symlinked here — it's writable for vicinae GUI edits.
+        # Instead, nix-overrides.json (read-only) is imported by settings.json.
+        systemd.user.tmpfiles.rules = [
+          # Extension symlinks from Nix store to user vicinae extensions dir
+          "L+ %h/.local/share/vicinae/extensions/wallhaven - - - - ${pkgs.wallhaven}"
+          "L+ %h/.local/share/vicinae/extensions/hyprwhspr - - - - ${pkgs.hyprwhspr}"
+          "L+ %h/.local/share/vicinae/extensions/aura - - - - ${pkgs.aura}"
+          "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
+          # C (copy) for themes: writable copy (mode 0644) so "Open Theme File" works.
+          # Won't overwrite user edits (source has epoch mtime, dest is newer).
+          "C %h/.local/share/vicinae/themes/neg-dark.toml 0644 - - - ${themeFile}"
+          "C %h/.local/share/vicinae/themes/neg-kitty.toml 0644 - - - ${themeFileKitty}"
+          "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
+        ];
+      })
+    ]
+  );
 }

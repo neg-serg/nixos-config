@@ -4,7 +4,6 @@
   config,
   ...
 }:
-with lib;
 let
   # Child feature requires parent feature
   assertParent = parentCond: childCond: msg: {
@@ -16,48 +15,48 @@ in
   imports = neg.importDir { dir = ./.; };
 
   # Apply profile defaults. Users can still override flags after this.
-  config = mkMerge [
+  config = lib.mkMerge [
     # When dev-speed is enabled, prefer lean defaults for heavy subfeatures
-    (mkIf (config.lib.neg.enabled "devSpeed") {
+    (lib.mkIf (config.lib.neg.enabled "devSpeed") {
       features = {
         web = {
-          tools.enable = mkDefault false;
+          tools.enable = lib.mkDefault false;
         };
-        gui.qt.enable = mkDefault false;
-        fun.enable = mkDefault false;
-        dev.ai.enable = mkDefault false;
-        torrent.enable = mkDefault false;
+        gui.qt.enable = lib.mkDefault false;
+        fun.enable = lib.mkDefault false;
+        dev.ai.enable = lib.mkDefault false;
+        torrent.enable = lib.mkDefault false;
       };
     })
     # If parent feature is disabled, default child toggles to false to avoid contradictions
-    (mkIf (!config.lib.neg.enabled "web") {
+    (lib.mkIf (!config.lib.neg.enabled "web") {
       # Parent off must force-disable children to avoid priority conflicts
       features.web = {
-        tools.enable = mkForce false;
+        tools.enable = lib.mkForce false;
       };
     })
     # When a parent feature is disabled, force-disable children to avoid priority conflicts
-    (mkIf (!config.lib.neg.enabled "dev") {
+    (lib.mkIf (!config.lib.neg.enabled "dev") {
       features = {
         dev = {
           ai = {
-            enable = mkForce false;
+            enable = lib.mkForce false;
           };
-          rust.enable = mkForce false;
-          cpp.enable = mkForce false;
+          rust.enable = lib.mkForce false;
+          cpp.enable = lib.mkForce false;
         };
       };
     })
-    (mkIf (!config.lib.neg.enabled "gui") {
+    (lib.mkIf (!config.lib.neg.enabled "gui") {
       features = {
         gui = {
-          qt.enable = mkForce false;
-          quickshell.enable = mkForce false;
+          qt.enable = lib.mkForce false;
+          quickshell.enable = lib.mkForce false;
         };
       };
     })
-    (mkIf (!config.lib.neg.enabled "mail") {
-      features.mail.vdirsyncer.enable = mkForce false;
+    (lib.mkIf (!config.lib.neg.enabled "mail") {
+      features.mail.vdirsyncer.enable = lib.mkForce false;
     })
     # Consistency assertions for nested flags. Only the pairs that are NOT
     # force-disabled above are asserted: when a parent is off, the merge chain

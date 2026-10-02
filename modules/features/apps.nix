@@ -1,5 +1,4 @@
 { lib, mkBool, ... }:
-with lib;
 {
   options.features.apps = {
     obsidian = {
@@ -9,7 +8,7 @@ with lib;
       enable = mkBool "enable Obsidian knowledge base app + vault" false;
     };
     winapps.enable = mkBool "enable WinApps integration (KVM/libvirt Windows VM, RDP bridge)" false;
-    winapps.desktopApps = mkOption {
+    winapps.desktopApps = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "WinApps to generate .desktop files for (e.g. [ \"excel\" \"word\" \"vscode\" ])";
