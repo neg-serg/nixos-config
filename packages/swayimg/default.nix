@@ -30,7 +30,6 @@
   vulkan-loader,
   shaderc,
   xxd,
-  paths,
 }:
 
 stdenv.mkDerivation (_finalAttrs: {
@@ -46,8 +45,8 @@ stdenv.mkDerivation (_finalAttrs: {
   };
 
   # upstream removed icon_128/256.png but kept the install rules —
-  # drop the dead install targets (packages/swayimg-meson-icons.patch)
-  patches = [ (paths.path "packages/swayimg-meson-icons.patch") ];
+  # drop the dead install targets (./swayimg-meson-icons.patch)
+  patches = [ ./swayimg-meson-icons.patch ];
 
   strictDeps = true;
 
