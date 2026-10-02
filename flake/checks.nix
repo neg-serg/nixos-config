@@ -221,12 +221,13 @@ in
       '';
 
   # ── Relative-path guard ────────────────────────────────────────────
-  # The config tree (modules/, hosts/) and packages/ reach repo files through
-  # config.lib.neg.*, neg.rooted or the injected `paths` resolver instead of
-  # counting `../..` segments — a relative chain breaks when the file *or* the
-  # caller moves, and says nothing about what it points at. The guard runs the
-  # same script `just lint` runs, on a copy of the trees, and accepts a
-  # deliberate exception only via a `# allow-relative: <reason>` marker.
+  # modules/, hosts/ and packages/ reach repo files through config.lib.neg.*,
+  # neg.rooted, the injected `paths` resolver or neg.functions.pkg — never by
+  # counting `../..` segments, which break when the file *or* the caller moves
+  # and say nothing about what they point at. The guard runs the same script
+  # `just lint` runs, on a copy of the three trees, and accepts a deliberate
+  # exception only via a `# allow-relative: <reason>` /
+  # `# allow-relative-file: <reason>` marker.
 
   "relative-paths-guard" =
     pkgs.runCommand "check-relative-paths"
