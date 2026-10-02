@@ -89,7 +89,10 @@ in
   # manager env, and a foreign runtime import-environment can clobber
   # environment.variables. glib.out holds libgio/libgobject needed by native
   # u-he VSTs (Diva.64.so etc.).
-  systemd.user.settings.Manager.Environment = [
+  # NOTE: [Manager] has no `Environment=` key — systemd used to log
+  # "Unknown key 'Environment' in section [Manager], ignoring" and the var never
+  # reached any unit; `DefaultEnvironment=` is the real directive.
+  systemd.user.settings.Manager.DefaultEnvironment = [
     "LD_LIBRARY_PATH=${pkgs.glib.out}/lib"
   ];
 
