@@ -32,7 +32,10 @@ in
     # exist once the lock is on has to be pre-loaded or built-in (=y).
     # Turned OFF on 2026-09-29 to test hotplug gear live (USB audio/MIDI,
     # gamepads) — set back to true once the testing is done.
-    lockKernelModules = mkBool "Lock kernel module loading after boot (kernel.modules_disabled=1); requires everything needed to be pre-loaded via boot.kernelModules or built-in" false;
+    # `.enable` matters: `lib.neg.enabled "security.lockKernelModules"` reads
+    # features.security.lockKernelModules.enable — without the suffix the gate
+    # above silently stays false forever (guard: flake/checks.nix feature-flags).
+    lockKernelModules.enable = mkBool "Lock kernel module loading after boot (kernel.modules_disabled=1); requires everything needed to be pre-loaded via boot.kernelModules or built-in" false;
     # AppArmor confinement for the network-facing daemons. Generated from each
     # daemon's package closure in modules/security/apparmor.nix; all of them
     # ship in "complain" so the first switch is log-only. The last four are

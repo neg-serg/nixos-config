@@ -104,6 +104,35 @@ in
 
   "neg-tree-guard" = mkOkCheck "neg-tree-guard" (import ../lib/neg-helpers-tests.nix);
 
+  # ── feature flag guard ─────────────────────────────────────────────
+  # `lib.neg.enabled "<path>"` reads features.<path>.enable; a path no module
+  # declares silently reads false, so the gate dies quietly instead of failing
+  # (regression: security.lockKernelModules was declared without `.enable`).
+  # The option tree comes from the real host config, the paths from a text scan
+  # of modules/ + hosts/ (lib/feature-flags-tests.nix).
+
+  "feature-flags" =
+    let
+      # Options of the full feature tree (not of one host: odin's domain set
+      # excludes some domains, e.g. `apps`, whose flags are still legitimate).
+      featuresOptions =
+        (lib.evalModules {
+          specialArgs = mkStubArgs (_: true);
+          modules = [
+            { _module.check = false; }
+            # core provides the module args the feature modules take (mkBool);
+            # features declares the option tree itself.
+            ../modules/core/default.nix
+            ../modules/features
+          ];
+        }).options.features;
+    in
+    mkOkCheck "feature-flags" (
+      import ../lib/feature-flags-tests.nix {
+        inherit lib featuresOptions;
+      }
+    );
+
   "fzf-opts" =
     let
       vars = self.nixosConfigurations.odin.config.environment.variables;
@@ -245,6 +274,43 @@ in
         cp -r ${../hosts} "$TMPDIR/repo/hosts"
         cp -r ${../packages} "$TMPDIR/repo/packages"
         bash ${../scripts/dev}/check-relative-paths.sh "$TMPDIR/repo"
+        touch $out
+      '';
+
+  # ── Text gates from `just lint`, promoted into the flake ────────────
+  # Same scripts the lint recipe runs; wired here so `nix flake check`
+  # (the CI entry point) covers them too instead of relying on just.
+  # Both cd into the root they are given and only need grep.
+
+  "package-annotations-guard" =
+    pkgs.runCommand "check-package-annotations"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+      }
+      ''
+        mkdir -p "$TMPDIR/repo"
+        cp -r ${../modules} "$TMPDIR/repo/modules"
+        bash ${../scripts/dev}/check-package-annotations.sh "$TMPDIR/repo"
+        touch $out
+      '';
+
+  "hyprland-vars-guard" =
+    pkgs.runCommand "check-hyprland-vars"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+      }
+      ''
+        mkdir -p "$TMPDIR/repo/files/gui"
+        cp -r ${../files/gui/hypr} "$TMPDIR/repo/files/gui/hypr"
+        bash ${../scripts/dev}/check-hyprland-vars.sh "$TMPDIR/repo"
         touch $out
       '';
 
