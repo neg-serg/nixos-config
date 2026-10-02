@@ -18,6 +18,12 @@
       autoStart = true;
       volumes = [ "ceno:/var/opt/ouinet" ]; # persistent node state (named volume)
       extraOptions = [ "--network=host" ]; # P2P + local proxy/frontend on host net
+      # ouinet-rs logs every metrics tick at DEBUG into the journal (~1.2k lines
+      # per boot, all of it its own bookkeeping). INFO keeps the useful lines
+      # (UPnP mapping, peer announcements).
+      environment = {
+        RUST_LOG = "info";
+      };
     };
 
     # Inbound UDP for P2P seeding/bridging; TCP proxy (8077) and admin
