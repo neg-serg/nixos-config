@@ -2,7 +2,6 @@ inputs: final: prev:
 let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
   pkg = final.neg.functions.pkg; # name → packages/<name>, no `../` counting
-  paths = final.neg.functions.paths; # repo-root resolver, for the patch files
 in
 {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
@@ -58,9 +57,9 @@ in
       # (ported to src/lib/fuzzy/include/fuzzy/lusty.hpp) instead of fzf's v2
       # scorer, so the pickers, the tray and the launcher rank identically.
       patches = (old.patches or [ ]) ++ [
-        (paths.path "packages/vicinae-tab-qml.patch")
-        (paths.path "packages/vicinae-dmenu-fix.patch")
-        (paths.path "packages/vicinae-lusty-search.patch")
+        ./vicinae-tab-qml.patch
+        ./vicinae-dmenu-fix.patch
+        ./vicinae-lusty-search.patch
       ];
       apiDeps = prev.fetchNpmDeps {
         src = "${src}/src/typescript/api";
