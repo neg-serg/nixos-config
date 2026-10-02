@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  neg,
   ...
 }:
 # ZFS pool health + scrub-completion Telegram watcher for odin.
@@ -16,7 +17,7 @@
 # Telegram delivery goes through the shared sender (hosts/odin/telegram.nix),
 # which owns the sing-box socks-proxy retry.
 let
-  systemdUser = import ../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = neg.systemdUser lib;
 
   # State keeps, per pool, the last observed health (ok/problems) and the last
   # completed scrub date+errors so the script only alerts on real changes.

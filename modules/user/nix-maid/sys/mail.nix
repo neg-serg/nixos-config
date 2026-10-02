@@ -117,7 +117,7 @@ in
         # MUTT / NEOMUTT
         # ========================================================================
         ".config/mutt" = {
-          source = ../mutt-conf;
+          source = config.lib.neg.path "modules/user/nix-maid/mutt-conf";
         };
 
         # ========================================================================

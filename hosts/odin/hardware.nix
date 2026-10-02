@@ -197,7 +197,9 @@
             helpColorBright = "55FF55";
           };
           # Bootloader wallpaper — real image copied from ~/pic/wl/wallhaven-xep2dz.jpg
-          wallpapers = [ ../../files/boot-splash.jpg ];
+          # NB: a list element must be parenthesised — `[ f x ]` is two
+          # elements (the function and the string), not one call.
+          wallpapers = [ (config.lib.neg.path "files/boot-splash.jpg") ];
           wallpaperStyle = "stretched";
           backdrop = "000000";
         };
@@ -321,7 +323,7 @@
       mkdir -p $out/lib/firmware/mediatek/mt7927
       # Explicit dest name: the imported store path keeps a hash prefix in its
       # basename, but the driver requests the plain filename.
-      cp ${../../files/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin} \
+      cp ${config.lib.neg.path "files/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin"} \
         $out/lib/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin
     '')
   ];

@@ -3,10 +3,13 @@
   config,
   pkgs,
   inputs,
+  neg,
+  repoRoot,
   ...
 }:
 let
-  unboundLocalData = import ../unbound-hosts.nix;
+  r = neg.rooted repoRoot;
+  unboundLocalData = import (r.path "hosts/odin/unbound-hosts.nix");
 
   # Positional constructor for adguardhome.filterLists below: nixfmt keeps a
   # three-name `inherit` on one line, so each record costs one line.
