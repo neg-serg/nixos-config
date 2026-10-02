@@ -84,7 +84,7 @@ in
 
       # Per-user systemd unit helpers (lib/systemd-user.nix). The module closes
       # over `lib` only, so callers no longer import it themselves.
-      systemdUser = import (path "lib/systemd-user.nix") { inherit lib; };
+      systemdUser = neg.systemdUser lib;
     };
   };
 }

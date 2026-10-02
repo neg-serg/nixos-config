@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 {
   networking.firewall = {
     enable = true;
@@ -9,7 +9,7 @@
     # switching the firewall backend to nftables would blacklist ip_tables and
     # risk podman/container networking — the iptables backend already runs on
     # the nf_tables kernel via iptables-nft.)
-    extraCommands = builtins.readFile ../../../files/net/firewall-extra.sh;
+    extraCommands = config.lib.neg.readFile "files/net/firewall-extra.sh";
   };
 
   boot.kernel.sysctl = {
