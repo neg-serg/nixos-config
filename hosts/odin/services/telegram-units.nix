@@ -1,11 +1,12 @@
 {
   lib,
+  neg,
   config,
   pkgs,
   ...
 }:
 let
-  systemdUser = import ../../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = neg.systemdUser lib;
 
   # Alertmanager Telegram webhook bridge: HTTPServer on 127.0.0.1:9094 that
   # forwards every Alertmanager webhook notification to a Telegram chat.
