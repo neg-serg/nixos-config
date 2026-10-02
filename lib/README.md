@@ -105,12 +105,15 @@ imports = neg.importDir { dir = ./.; includeDirs = true; nameFilter = domainFilt
 | --- | --- | --- |
 | a config body (option value, `config = …`) | `config.lib.neg.path` / `readFile` / `files.<…>` | `config` is already the module's own argument |
 | a top-level `let` of a module | `let r = neg.rooted repoRoot; in r.path "files/x"` | `config.lib.neg.*` there is an **infinite recursion**: module arguments are forced while the module is being collected (`hosts/odin/services/telegram-units.nix` hit it) |
-| a package file (`pkgs.stdenv.mkDerivation`) | `r.path` from `neg.rooted repoRoot`, or a sibling `callPackage ../name` | no `config` at all; `packages/` is the one tree where `../sibling` stays the norm |
+| a package file (`packages/<name>/default.nix`) | `paths.path "files/…"` — declare `paths` as a formal and `neg.functions.callPkg` fills it in (it sniffs formals exactly like `inputs`) | no `config` at all; the resolver is built once in `packages/overlay.nix` (`neg.rooted ../.`) and handed to every overlay through `importOvP` |
+| a package referring to a *sibling* package | `callPackage ../name { }` stays | one level inside `packages/` cannot drift out of the tree; the guard allows exactly this form and bans `../../` |
 
 `config.lib.neg.files` is the whole `files/` directory as one attribute set (built lazily, `extensions
 = "any"`, so keys drop their extension and colliding names keep the full one), for references whose
 target is data rather than a path string.
 
 The rule is enforced: `scripts/dev/check-relative-paths.sh` (run by `just lint` and as the
-`relative-paths-guard` flake check) fails on any `../` in `modules/` or `hosts/`. A line that truly
-must go up carries `# allow-relative: <reason>` on itself or the line before it.
+`relative-paths-guard` flake check) fails on any `../` in `modules/` and `hosts/`, and on any
+reference leaving the `packages/` tree (`../../`, `./../files`) — a single `../name` there is the
+sibling-package form and stays legal. A line that truly must go up carries
+`# allow-relative: <reason>` on itself or the line before it.

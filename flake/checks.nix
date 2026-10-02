@@ -221,11 +221,11 @@ in
       '';
 
   # ── Relative-path guard ────────────────────────────────────────────
-  # modules/ and hosts/ reach repo files through config.lib.neg.* or
-  # neg.rooted (lib/README.md → By name, not by path) instead of counting
-  # `../..` segments — a relative chain breaks when the file *or* the caller
-  # moves, and says nothing about what it points at. The guard runs the same
-  # script `just lint` runs, on a copy of the two trees, and accepts a
+  # The config tree (modules/, hosts/) and packages/ reach repo files through
+  # config.lib.neg.*, neg.rooted or the injected `paths` resolver instead of
+  # counting `../..` segments — a relative chain breaks when the file *or* the
+  # caller moves, and says nothing about what it points at. The guard runs the
+  # same script `just lint` runs, on a copy of the trees, and accepts a
   # deliberate exception only via a `# allow-relative: <reason>` marker.
 
   "relative-paths-guard" =
@@ -242,6 +242,7 @@ in
         mkdir -p "$TMPDIR/repo"
         cp -r ${../modules} "$TMPDIR/repo/modules"
         cp -r ${../hosts} "$TMPDIR/repo/hosts"
+        cp -r ${../packages} "$TMPDIR/repo/packages"
         bash ${../scripts/dev}/check-relative-paths.sh "$TMPDIR/repo"
         touch $out
       '';
