@@ -47,7 +47,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "Renoise Redux — sample/synth VST3 plugin";
     homepage = "https://www.renoise.com/products/redux";
-    sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
+    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     license = lib.licenses.unfree;
     platforms = [ "x86_64-linux" ];
   };

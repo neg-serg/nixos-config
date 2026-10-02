@@ -95,11 +95,11 @@ pkgs.stdenv.mkDerivation {
       ]
       (builtins.readFile ./install.sh);
 
-  meta = with lib; {
+  meta = {
     description = "Audio-to-MIDI transcription (CPU): RobustAMT default backend, Sony hFT-Transformer optional";
     homepage = "https://github.com/sony/hFT-Transformer";
-    license = licenses.mit; # hFT-Transformer repo (Sony Group Corp)
-    platforms = platforms.linux;
+    license = lib.licenses.mit; # hFT-Transformer repo (Sony Group Corp)
+    platforms = lib.platforms.linux;
     mainProgram = "midi-transcribe";
   };
 }

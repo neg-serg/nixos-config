@@ -3,16 +3,15 @@
   config,
   ...
 }:
-with lib;
-mkIf (builtins.elem "dev" (config.features.profiles or [ ])) {
+lib.mkIf (builtins.elem "dev" (config.features.profiles or [ ])) {
   features = {
     dev = {
-      enable = mkDefault true;
-      ai.enable = mkDefault true;
-      rust.enable = mkDefault true;
-      cpp.enable = mkDefault true;
-      java.enable = mkDefault true; # enable Java/JVM toolchain (JDK, Maven, PraxisLIVE)
-      pkgs.iac = mkDefault true; # enable Infrastructure as Code tools (terraform, opentofu)
+      enable = lib.mkDefault true;
+      ai.enable = lib.mkDefault true;
+      rust.enable = lib.mkDefault true;
+      cpp.enable = lib.mkDefault true;
+      java.enable = lib.mkDefault true; # enable Java/JVM toolchain (JDK, Maven, PraxisLIVE)
+      pkgs.iac = lib.mkDefault true; # enable Infrastructure as Code tools (terraform, opentofu)
     };
   };
 }

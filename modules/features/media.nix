@@ -1,5 +1,4 @@
 { lib, mkBool, ... }:
-with lib;
 {
   options.features.media = {
     aiUpscale = {

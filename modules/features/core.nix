@@ -1,5 +1,4 @@
-{ lib, mkBool, ... }:
-with lib;
+{ mkBool, ... }:
 {
   options.features = {
     # NOTE: `features.profile` (singular) removed — was dead code.

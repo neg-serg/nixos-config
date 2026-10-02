@@ -4,7 +4,6 @@
   pkgs,
   ...
 }:
-with lib;
 let
   cfg = config.features.web.vivaldi;
   webEnabled = config.lib.neg.enabled "web";
@@ -70,7 +69,7 @@ let
 
 in
 {
-  config = mkIf (webEnabled && guiEnabled && cfg.enable) {
+  config = lib.mkIf (webEnabled && guiEnabled && cfg.enable) {
 
     environment.systemPackages = [
       vivaldi-fixed # Vivaldi browser (Chromium-based, with Wayland flags, patched libffmpeg.so rpath)

@@ -57,9 +57,9 @@ stdenv.mkDerivation {
     cp ${paths.path "files/sources/scsynthsend.h"} $out/common/scsynthsend.h
   '';
 
-  meta = with lib; {
+  meta = {
     description = "SuperCollider header layout for building third-party UGens";
-    platforms = platforms.linux;
-    license = licenses.gpl3Plus;
+    platforms = lib.platforms.linux;
+    license = lib.licenses.gpl3Plus;
   };
 }

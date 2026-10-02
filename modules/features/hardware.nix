@@ -3,7 +3,6 @@
   mkBool,
   ...
 }:
-with lib;
 {
   options.features = {
     hardware = {
@@ -19,8 +18,8 @@ with lib;
       ruHotkeys = {
         enable = mkBool "enable per-window keyboard layout switching (us in hotkey-heavy apps)" false;
 
-        usClasses = mkOption {
-          type = types.listOf types.str;
+        usClasses = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
           # Terminal windows are launched with custom kitty classes (M4+* scratch
           # binds in files/gui/hypr/hyprland.lua) — keep this list in sync.
           default = [
@@ -44,8 +43,8 @@ with lib;
           '';
         };
 
-        usLayoutIndex = mkOption {
-          type = types.int;
+        usLayoutIndex = lib.mkOption {
+          type = lib.types.int;
           default = 0;
           description = "XKB group index of the us layout (kb_layout = us,ru invariant).";
         };

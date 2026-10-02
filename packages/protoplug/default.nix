@@ -85,7 +85,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "Protoplug — Lua live-coding VST2 plugins (Fx + Gen)";
     homepage = "https://www.osar.fr/protoplug/";
-    sourceProvenance = with lib.sourceTypes; [ sourceFromSource ];
+    sourceProvenance = [ lib.sourceTypes.sourceFromSource ];
     license = lib.licenses.mit;
     platforms = [ "x86_64-linux" ];
   };

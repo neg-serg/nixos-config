@@ -70,11 +70,11 @@ buildNpmPackage {
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
   npmDepsHash = "sha256-cqN2pdqnxEqJ/dPKW/cNSLICI4kB6qSJ7PqKqsQAMRo=";
 
-  meta = with lib; {
+  meta = {
     description = "DeepSeek Harness (dsh) — open-source agent harness, everything is a plugin";
     homepage = "https://github.com/deepseek-ai/deepseek-harness";
-    license = licenses.mit;
-    platforms = platforms.linux;
+    license = lib.licenses.mit;
+    platforms = lib.platforms.linux;
     mainProgram = "dsh";
     maintainers = [ ];
   };
