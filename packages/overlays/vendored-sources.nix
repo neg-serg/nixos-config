@@ -1,8 +1,8 @@
 # Vendored-source overrides: the upstream fetch is unreachable from this
 # host/region (RKN-blocked host, forced 403, re-pushed tag, unresolvable
 # mirror), so the tarball/patch is committed under files/sources/ (or
-# files/patches/) and referenced by a *relative path literal*
-# (`./../../files/sources/...`). Being a path, Nix copies it into the store and
+# files/patches/) and referenced through the root resolver
+# (`paths.path "files/sources/..."`, handed in by packages/overlay.nix). Being a path, Nix copies it into the store and
 # tracks it as a closure dependency — the same behavior as a remote fetch.
 # Exception: files >100 MB (the licensed Renoise installers) cannot be
 # committed (GitHub rejects them), and relocating them inside the tree does not
@@ -11,15 +11,15 @@
 # `renoise-src` path input (flake.nix); see the renoise block below.
 # Other overlays refer to this as "the vendored-tarball note in
 # overlays/vendored-sources.nix".
-inputs: final: finalPrev: {
+{ inputs, paths }: final: finalPrev: {
   # a2jmidid: nixpkgs fetches from gitea.ladish.org (unresolvable from the
   # build sandbox); vendor the GitHub mirror tarball (same tag 12) + the
   # siginfo submodule (needed by sigsegv.c/a2jmidid.c).
   a2jmidid = finalPrev.a2jmidid.overrideAttrs (old: {
-    src = ./../../files/sources/a2jmidid-12.tar.gz;
+    src = paths.path "files/sources/a2jmidid-12.tar.gz";
     postUnpack = (old.postUnpack or "") + ''
       mkdir -p "$sourceRoot/siginfo"
-      tar xzf ${./../../files/sources/a2jmidid-siginfo.tar.gz} -C "$sourceRoot/siginfo" --strip-components=1
+      tar xzf ${paths.path "files/sources/a2jmidid-siginfo.tar.gz"} -C "$sourceRoot/siginfo" --strip-components=1
     '';
   });
 
@@ -34,9 +34,9 @@ inputs: final: finalPrev: {
     patches = map (
       p:
       if (p.name or "") == "CVE-2023-39810.patch" then
-        ./../../files/patches/busybox-CVE-2023-39810.patch
+        paths.path "files/patches/busybox-CVE-2023-39810.patch"
       else if (p.name or "") == "CVE-2026-26157_CVE-2026-26158.patch" then
-        ./../../files/patches/busybox-CVE-2026-26157_CVE-2026-26158.patch
+        paths.path "files/patches/busybox-CVE-2026-26157_CVE-2026-26158.patch"
       else
         p
     ) old.patches;
@@ -47,7 +47,7 @@ inputs: final: finalPrev: {
   # which get-version needs) instead. dpkg is needed by ocenaudio and
   # cloudflare-warp to unpack .debs.
   dpkg = finalPrev.dpkg.overrideAttrs (_: {
-    src = ./../../files/sources/dpkg-1.23.7.tar.xz;
+    src = paths.path "files/sources/dpkg-1.23.7.tar.xz";
   });
 
   # renoise: full licensed release tarball (user's own Renoise 3.5.4 build,
@@ -150,7 +150,7 @@ inputs: final: finalPrev: {
   # (Tarballs are tracked in files/sources/ and referenced by relative path —
   # see the vendored-tarball note above.)
   pffft = finalPrev.pffft.overrideAttrs (_: {
-    src = ./../../files/sources/pffft-74d7261.tar.gz;
+    src = paths.path "files/sources/pffft-74d7261.tar.gz";
   });
 
   # vcv-rack vendors its dep/ libraries itself: its package.nix calls
@@ -163,8 +163,8 @@ inputs: final: finalPrev: {
     args:
     let
       vendored = {
-        "jpommier/pffft" = ./../../files/sources/pffft-74d7261.tar.gz;
-        "j_norberg/fuzzysearchdatabase" = ./../../files/sources/fuzzysearchdatabase-23122d1.tar.gz;
+        "jpommier/pffft" = paths.path "files/sources/pffft-74d7261.tar.gz";
+        "j_norberg/fuzzysearchdatabase" = paths.path "files/sources/fuzzysearchdatabase-23122d1.tar.gz";
       };
       key = "${args.owner or ""}/${args.repo or ""}";
     in
@@ -192,7 +192,7 @@ inputs: final: finalPrev: {
       |> builtins.map (
         p:
         if builtins.isAttrs p && (p.name or "") == "raw" then
-          ./../../files/patches/keyutils-fix-format-specifier.patch
+          paths.path "files/patches/keyutils-fix-format-specifier.patch"
         else
           p
       );
@@ -208,7 +208,7 @@ inputs: final: finalPrev: {
     # vendored copy - same content, same extraPrefix.
     patches = [
       (finalPrev.runCommand "gsl-fix-linking.diff" { } ''
-        cp ${../../files/sources/gsl-fix-linking.diff} $out
+        cp ${paths.path "files/sources/gsl-fix-linking.diff"} $out
       '')
     ];
   });

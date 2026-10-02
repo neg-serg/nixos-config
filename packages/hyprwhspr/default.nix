@@ -1,12 +1,13 @@
 {
   stdenv,
   lib,
+  paths,
 }:
 stdenv.mkDerivation {
   pname = "vicinae-hyprwhspr";
   version = "0.1.0";
 
-  src = ../../files/gui/vicinae-extensions/hyprwhspr;
+  src = paths.path "files/gui/vicinae-extensions/hyprwhspr";
 
   installPhase = ''
     mkdir -p $out

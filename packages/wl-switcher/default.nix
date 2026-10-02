@@ -1,12 +1,13 @@
 {
   stdenv,
   lib,
+  paths,
 }:
 stdenv.mkDerivation {
   pname = "vicinae-wl-switcher";
   version = "0.1.0";
 
-  src = ../../files/gui/vicinae-extensions/wl-switcher;
+  src = paths.path "files/gui/vicinae-extensions/wl-switcher";
 
   installPhase = ''
     mkdir -p $out

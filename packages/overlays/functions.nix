@@ -1,4 +1,4 @@
-inputs: _final: prev:
+{ inputs, paths }: _final: prev:
 let
   # mkMeta: shared `meta` builder for local packages — see packages/lib/mkMeta.nix.
   mkMeta = prev.callPackage ../lib/mkMeta.nix { };
@@ -21,10 +21,18 @@ in
         path: extraArgs:
         let
           f = import path;
-          wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
-          autoArgs = if wantsInputs then { inherit inputs; } else { };
+          formals = builtins.functionArgs f;
+          # Same sniffing as `inputs`: a package declares what it wants, the
+          # helper fills it in, so no call site grows a path argument by hand.
+          autoArgs =
+            (if builtins.hasAttr "inputs" formals then { inherit inputs; } else { })
+            // (if builtins.hasAttr "paths" formals then { inherit paths; } else { });
         in
         prev.callPackage path (autoArgs // extraArgs);
+
+      # The repo-root resolver itself, for overlays/packages that want it
+      # without declaring a formal (pkgs.neg.functions.paths).
+      inherit paths;
 
       # mkScQuark: shared builder for the pure-sclang SuperCollider quark
       # packages (no build step) — see packages/lib/mkScQuark.nix.
