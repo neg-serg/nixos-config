@@ -10,41 +10,21 @@
 #   Example: a headless server passes `domainFilter = n: n != "user" && n != "games"`
 #   and skips Hyprland, nix-maid, gaming modules (~90 files fewer to import).
 {
-  lib,
+  neg,
   domainFilter ? (_: true),
   ...
 }:
-let
-  # `domain`: if filter(name) passes, include one module path; otherwise nothing.
-  domain = name: elem: lib.optional (domainFilter name) elem;
-in
 {
-  imports =
-    domain "appimage" ./appimage/default.nix
-    ++ domain "apps" ./apps/default.nix
-    ++ domain "cli" ./cli/default.nix
-    ++ domain "core" ./core/default.nix
-    ++ domain "dev" ./dev/default.nix
-    ++ domain "documentation" ./documentation/default.nix
-    ++ domain "emulators" ./emulators/default.nix
-    ++ domain "features" ./features/default.nix
-    ++ domain "flatpak" ./flatpak/default.nix
-    ++ domain "fonts" ./fonts/default.nix
-    ++ domain "fun" ./fun/default.nix
-    ++ domain "games" ./games/default.nix
-    ++ domain "hardware" ./hardware/default.nix
-    ++ domain "llm" ./llm/default.nix
-    ++ domain "media" ./media/default.nix
-    ++ domain "monitoring" ./monitoring/default.nix
-    ++ domain "nix" ./nix/default.nix
-    ++ domain "profiles" ./profiles/default.nix
-    ++ domain "secrets" ./secrets/default.nix
-    ++ domain "security" ./security/default.nix
-    ++ domain "servers" ./servers/default.nix
-    ++ domain "shell" ./shell/default.nix
-    ++ domain "system" ./system/default.nix
-    ++ domain "text" ./text/default.nix
-    ++ domain "tools" ./tools/default.nix
-    ++ domain "torrent" ./torrent/default.nix
-    ++ domain "user" ./user/default.nix;
+  # The domain list is no longer written down here: one domain = one
+  # subdirectory, and the walk is neg.importDir's job. Adding a domain means
+  # creating the directory, naming it in flake/nixos.nix (allDomains) and
+  # nothing else — this file and the per-domain aggregators hold no paths.
+  #
+  # domainFilter arrives as the entry-name filter, so the names it receives are
+  # exactly the directory names it already knows.
+  imports = neg.importDir {
+    dir = ./.;
+    includeDirs = true;
+    nameFilter = domainFilter;
+  };
 }
