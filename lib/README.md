@@ -98,3 +98,19 @@ name and no longer lists a single path.
 ```nix
 imports = neg.importDir { dir = ./.; includeDirs = true; nameFilter = domainFilter; };
 ```
+
+### Which resolver, where
+
+| Where the reference sits | Use | Why |
+| --- | --- | --- |
+| a config body (option value, `config = …`) | `config.lib.neg.path` / `readFile` / `files.<…>` | `config` is already the module's own argument |
+| a top-level `let` of a module | `let r = neg.rooted repoRoot; in r.path "files/x"` | `config.lib.neg.*` there is an **infinite recursion**: module arguments are forced while the module is being collected (`hosts/odin/services/telegram-units.nix` hit it) |
+| a package file (`pkgs.stdenv.mkDerivation`) | `r.path` from `neg.rooted repoRoot`, or a sibling `callPackage ../name` | no `config` at all; `packages/` is the one tree where `../sibling` stays the norm |
+
+`config.lib.neg.files` is the whole `files/` directory as one attribute set (built lazily, `extensions
+= "any"`, so keys drop their extension and colliding names keep the full one), for references whose
+target is data rather than a path string.
+
+The rule is enforced: `scripts/dev/check-relative-paths.sh` (run by `just lint` and as the
+`relative-paths-guard` flake check) fails on any `../` in `modules/` or `hosts/`. A line that truly
+must go up carries `# allow-relative: <reason>` on itself or the line before it.

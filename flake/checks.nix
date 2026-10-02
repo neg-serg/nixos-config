@@ -220,6 +220,32 @@ in
         touch $out
       '';
 
+  # ── Relative-path guard ────────────────────────────────────────────
+  # modules/ and hosts/ reach repo files through config.lib.neg.* or
+  # neg.rooted (lib/README.md → By name, not by path) instead of counting
+  # `../..` segments — a relative chain breaks when the file *or* the caller
+  # moves, and says nothing about what it points at. The guard runs the same
+  # script `just lint` runs, on a copy of the two trees, and accepts a
+  # deliberate exception only via a `# allow-relative: <reason>` marker.
+
+  "relative-paths-guard" =
+    pkgs.runCommand "check-relative-paths"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.findutils
+          pkgs.gawk
+        ];
+      }
+      ''
+        mkdir -p "$TMPDIR/repo"
+        cp -r ${../modules} "$TMPDIR/repo/modules"
+        cp -r ${../hosts} "$TMPDIR/repo/hosts"
+        bash ${../scripts/dev}/check-relative-paths.sh "$TMPDIR/repo"
+        touch $out
+      '';
+
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
   # via mkTestHost (threaded from flake.nix; stripped from the
