@@ -1,14 +1,21 @@
 inputs: final: finalPrev:
 let
+  # Repo-root resolver (lib/neg-helpers.nix `rooted`): a package or overlay in
+  # this tree reaches a repo file as `paths.path "files/sources/x.tar.gz"`
+  # instead of counting `./../../` levels. Handed to every overlay that needs it
+  # through importOvP below, and to package files by neg.functions.callPkg.
+  paths = (import ../lib/neg-helpers.nix).rooted ../.;
+
   importOv = path: import path inputs final finalPrev;
-  functions = importOv ./overlays/functions.nix;
-  tools = importOv ./overlays/tools.nix;
+  importOvP = path: import path { inherit inputs paths; } final finalPrev;
+  functions = importOvP ./overlays/functions.nix;
+  tools = importOvP ./overlays/tools.nix;
   media = importOv ./overlays/media.nix;
   gui = importOv ./overlays/gui.nix;
   dev = importOv ./overlays/dev.nix;
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
   aurPorted = import ./overlays/aur-ported.nix final finalPrev;
-  vendored = importOv ./overlays/vendored-sources.nix;
+  vendored = importOvP ./overlays/vendored-sources.nix;
 
   # WARNING: disableChecks MUST be last in the merge chain (//) below.
   # It calls overrideAttrs which resets any prior overrides on the same package.
@@ -156,7 +163,7 @@ in
   python3 = finalPrev.python3.override {
     packageOverrides = _pfinal: pprev: {
       untangle = pprev.untangle.overrideAttrs (_: {
-        src = ./../files/sources/untangle-1.2.1.tar.gz;
+        src = paths.path "files/sources/untangle-1.2.1.tar.gz";
       });
       # distutils' own test suite fails under the nix builder with
       # "RuntimeError: can't start new thread" (concurrent-thread tests). The

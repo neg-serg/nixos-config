@@ -1,4 +1,4 @@
-inputs: final: prev:
+{ inputs, paths }: final: prev:
 let
   packagesRoot = inputs.self + "/packages";
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
@@ -11,7 +11,7 @@ in
   mprime = prev.mprime.overrideAttrs (old: {
     # The stock package uses fetchzip (which unpacks during fetch); with a
     # vendored zip the generic unpackPhase needs unzip in nativeBuildInputs.
-    src = ./../../files/sources/mprime-31.04b02.source.zip;
+    src = paths.path "files/sources/mprime-31.04b02.source.zip";
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.unzip ];
     # The zip has files at its root (no single top dir); build from the root.
     sourceRoot = ".";

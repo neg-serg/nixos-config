@@ -20,7 +20,7 @@ _inputs: final: prev:
   # VapourSynth NCNN (Vulkan) plugin: AI upscale/interp/denoise in VS (GPL-3)
   vsncnn = prev.callPackage ../vsncnn { };
   # SuperCollider third-party UGen plugins (server plugins + SC classes)
-  sc-plugin-farm = prev.callPackage ../sc-plugin-farm { }; # fake SC source root for building UGens
+  sc-plugin-farm = final.neg.functions.callPkg ../sc-plugin-farm { }; # fake SC source root for building UGens
   f0plugins = prev.callPackage ../f0plugins { scPluginFarm = final.sc-plugin-farm; }; # redFrik SC plugins: sound chips, rhythms, wavesets
   steroids-ugens = prev.callPackage ../steroids-ugens { scPluginFarm = final.sc-plugin-farm; }; # SC Steroids UGens (SSinOscFB, TDemand)
   super-bufrd = prev.callPackage ../super-bufrd { scPluginFarm = final.sc-plugin-farm; }; # subsample-accurate buffer-reading UGens
@@ -39,7 +39,7 @@ _inputs: final: prev:
   # -- analysis / spatial / VST hosting --
   scmir = prev.callPackage ../scmir { }; # SCMIR: music IR analysis library + CLI tools
   atk-sc3 = prev.callPackage ../atk-sc3 { inherit (final.neg.functions) mkScQuark; }; # Ambisonic Toolkit SC quark
-  vstplugin = prev.callPackage ../vstplugin { scPluginFarm = final.sc-plugin-farm; }; # host VST2/VST3 in scsynth
+  vstplugin = final.neg.functions.callPkg ../vstplugin { scPluginFarm = final.sc-plugin-farm; }; # host VST2/VST3 in scsynth
   flucoma = prev.callPackage ../flucoma { scPluginFarm = final.sc-plugin-farm; }; # FluCoMa: corpus manipulation UGens (57 plugins)
   # -- ATK dependency quarks --
   hilbert = prev.callPackage ../hilbert { inherit (final.neg.functions) mkScQuark; }; # Hilbert transform utilities (ATK dep)

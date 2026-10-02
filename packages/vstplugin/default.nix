@@ -14,6 +14,7 @@
   libx11,
   python3,
   scPluginFarm,
+  paths,
 }:
 stdenv.mkDerivation rec {
   pname = "vstplugin";
@@ -44,7 +45,7 @@ stdenv.mkDerivation rec {
     cp -r ${vst3Pluginterfaces} "$sourceRoot/vst/VST_SDK/VST3_SDK/pluginterfaces"
   '';
 
-  sdkZip = ../../files/sources/vst2sdk-3.6.10.zip;
+  sdkZip = paths.path "files/sources/vst2sdk-3.6.10.zip";
 
   nativeBuildInputs = [
     cmake
