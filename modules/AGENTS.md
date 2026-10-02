@@ -18,5 +18,13 @@ Guidelines
   `systemd.user.services.<name>` entries (it emits only the fields you pass and routes scheduling
   through the `presets`/`mkUnitFromPresets` table), and `mkUserOneshot` for the login-oneshot shape.
   Do not hand-roll the attrset — the module shape keeps scheduling in one place.
+- Presets carry scheduling (`after`/`wants`/`partOf`/`wantedBy`) *and* service defaults
+  (`Restart`/`RestartSec`/`Type`): `defaultWanted`, `restartOnFailure` (`Restart=on-failure`, no
+  `RestartSec` — pass your own when the unit had one), `oneshot`, `graphicalSession`,
+  `graphicalWanted`. Your own `serviceConfig` key wins over the preset, so
+  `presets = [ "restartOnFailure" ]; serviceConfig = { RestartSec = 3; }` keeps the shared policy
+  and tunes only the delay. A raw `Restart = "on-failure"` inside `systemd.user.services` is
+  rejected by the `restart-preset` rule of `scripts/dev/lint-guards.sh` (system-level
+  `systemd.services` are out of its scope).
 - Prefer feature flags for host-specific tweaks; keep secrets out of modules (source from `secrets/`
   imports instead).
