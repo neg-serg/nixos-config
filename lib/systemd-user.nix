@@ -66,11 +66,16 @@ in
     let
       runAsUser = lib.getExe' pkgs.util-linux "runuser";
     in
-    # Same evaluated text as the hand-written blocks this replaces
-    # ("<cmd> || true\n": Nix strips the common indent of an indented string),
-    # so the generated activation script is byte-identical.
+    # The initrd stage runs the activation scripts too (NixOS shares one activation
+    # tree), and a user-plane caretaker has no business there: /run/current-system is
+    # not mounted yet in that chroot, so a PATH lookup for jq/diffutils fails and the
+    # caretaker either dies mid-run (set -e) or — worse — takes the "changed" branch
+    # and rewrites files nobody reads yet. The root stage and the login services do
+    # the real work. Guarded here, once, for every caller.
+    # The runuser call keeps its `|| true`: a caretaker failing must not abort
+    # the activation.
     lib.stringAfter after ''
-      ${runAsUser} -u ${user} -- env HOME=${home} ${script} || true
+      [ -d /run/current-system ] && ${runAsUser} -u ${user} -- env HOME=${home} ${script} || true
     '';
 
   # Login half: oneshot wanted by default.target. Returns the unit definition
