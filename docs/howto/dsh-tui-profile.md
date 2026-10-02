@@ -71,3 +71,27 @@ profile:
   because logs are append-only); the entries already poisoned in the index have to be repaired in
   place (set the flag to true for the affected ids) — the patched store keeps the corrected value,
   since the cache-hit path reuses it verbatim.
+- **Session search is opt-in.** `@deepseek-ai/dsh-base` mounts `session-query-sqlite` with
+  `path: ':memory:'` + `openAt: never`, so every `ctx.sessionQuery` search fails with
+  `SESSION_QUERY_SEARCH_DISABLED` and the `recall` tool is dead weight. The roster row overrides it
+  with a durable `~/.dsh/session-search.db` and `openAt: first-search` (never `startup`: a cold
+  index rebuild would then run on every session start). The corpus is
+  `dsh-session-persistence-jsonl` (`~/.dsh/sessions`), so persisted history is searchable; the first
+  search builds the index and takes noticeably longer than the rest.
+
+## Verify
+
+```bash
+# composition only (no UI): no patch errors on stderr
+dsh --profile tui --dump-config > /tmp/tui.yml   # stderr must be empty
+rg -n "^- id: dsh-tui$|^- id: dsh-tui-agent-presets$" /tmp/tui.yml
+
+# boot through a pty and look at the banner
+timeout 30 script -qec 'stty rows 40 cols 120; dsh --profile tui' /tmp/tui.log
+```
+
+Manual install of a newer release (the caretaker keeps it if it is ≥ the floor):
+
+```bash
+cd ~/.dsh/profiles/tui && dsh plugin --profile tui add @deepseek-harness-tui/dsh-tui@latest
+```
