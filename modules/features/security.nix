@@ -26,6 +26,13 @@ in
     # AFTER enabling fTPM in UEFI/BIOS — otherwise boot stalls on the tpmrm
     # device wait. See modules/security/tpm-sudo.nix and docs/howto/tpm-sudo.md.
     tpmSudo.enable = mkBool "TPM-backed passwordless sudo (tpm2-pkcs11 + pam_ssh_agent_auth)" false;
+    # Lock runtime module loading at boot (nixpkgs security.lockKernelModules
+    # → kernel.modules_disabled=1 right after systemd-modules-load, i.e. after
+    # boot.kernelModules/initrd.kernelModules are in). Everything that must
+    # exist once the lock is on has to be pre-loaded or built-in (=y).
+    # Turned OFF on 2026-09-29 to test hotplug gear live (USB audio/MIDI,
+    # gamepads) — set back to true once the testing is done.
+    lockKernelModules = mkBool "Lock kernel module loading after boot (kernel.modules_disabled=1); requires everything needed to be pre-loaded via boot.kernelModules or built-in" false;
     # AppArmor confinement for the network-facing daemons. Generated from each
     # daemon's package closure in modules/security/apparmor.nix; all of them
     # ship in "complain" so the first switch is log-only. The last four are

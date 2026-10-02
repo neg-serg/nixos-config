@@ -62,7 +62,11 @@ in
       ];
     };
     pki.useCompatibleBundle = true;
-    lockKernelModules = true;
+    # Gated by features.security.lockKernelModules (default false since
+    # 2026-09-29: runtime module loading is unlocked for hotplug testing —
+    # flip the feature back on to re-lock). With the lock off, autoload via
+    # modalias works again, so nothing needs pre-loading to stay resident.
+    lockKernelModules = config.lib.neg.enabled "security.lockKernelModules";
     polkit = {
       enable = true;
     };
