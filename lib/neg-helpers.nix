@@ -102,24 +102,39 @@ rec {
   #
   #   (tree { dir = ./modules; }).core.default      → …/modules/core/default.nix
   #   (tree { dir = ./modules; }).core.neg          → …/modules/core/neg.nix
-  #   (tree { dir = ./files; extensions = [ ".lua" ]; }).mpv."hdr-auto-switch"
+  #   (tree { dir = ./files; extensions = "any"; }).mpv."hdr-auto-switch"
   #
   # Conventions (import-tree/haumea rules, applied to every tree):
   #   - a directory recurses; its default.nix is exposed as that directory's
   #     `.default` (not as the whole value, so siblings stay reachable);
   #   - entries starting with "_" or "." are skipped (private data, hidden files);
-  #   - the matching extension is stripped from the key, any other name is kept
-  #     verbatim (so non-.nix data files stay addressable via `t."name.ext"`).
+  #   - the matching extension is stripped from the key (with extensions =
+  #     "any" that is simply the last extension: "config.kdl" → "config"); a
+  #     name whose extension is not in the list is kept verbatim, so
+  #     `t."name.ext"` always works too;
+  #   - if two entries would end up under the same key, both keep their full
+  #     names (nothing is silently shadowed).
   tree =
     {
       dir,
+      # [ ".nix" ] by default; "any" takes every regular file (data trees:
+      # files/, secrets/) and strips whatever extension the name carries.
       extensions ? [ ".nix" ],
     }:
     let
       entries = builtins.readDir dir;
+      anyExt = extensions == "any";
       private = name: builtins.substring 0 1 name == "_" || builtins.substring 0 1 name == ".";
+      # Everything before the last dot: "config.kdl" → "config",
+      # "untangle-1.2.1.tar.gz" → "untangle-1.2.1.tar", "Modelfile" → unchanged.
+      stripLastExt =
+        name:
+        let
+          hit = builtins.match "(.*)\\.[^.]*" name;
+        in
+        if hit == null then name else builtins.head hit;
       # Longest matching extension wins, so [ ".nix" ".tar.gz" ] stays sane.
-      stripExt =
+      stripMatchingExt =
         name:
         let
           hits = builtins.filter (ext: hasSuffix ext name) extensions;
@@ -133,6 +148,7 @@ rec {
             ) (builtins.head hits) hits;
           in
           builtins.substring 0 (builtins.stringLength name - builtins.stringLength ext) name;
+      stripExt = if anyExt then stripLastExt else stripMatchingExt;
       node =
         name:
         let
@@ -156,14 +172,27 @@ rec {
         name:
         !(private name)
         && name != "default.nix"
-        && (entries.${name} == "directory" || builtins.any (ext: hasSuffix ext name) extensions);
+        && (
+          entries.${name} == "directory"
+          || (if anyExt then true else builtins.any (ext: hasSuffix ext name) extensions)
+        );
+      keyed = builtins.map (name: {
+        inherit name;
+        key = stripExt name;
+        value = node name;
+      }) (builtins.filter keep (builtins.attrNames entries));
+      # Two entries may want the same key (x.nix + x.sh with extensions =
+      # "any", or a file next to a directory of the same name). Both sides then
+      # keep their full names instead: nothing is dropped, nothing is shadowed,
+      # and the caller gets "nothing named 'x'" plus the real keys in the error.
+      duplicated = key: builtins.length (builtins.filter (e: e.key == key) keyed) > 1;
     in
     builtins.listToAttrs (
       builtins.filter (entry: entry.value != null) (
-        builtins.map (name: {
-          name = stripExt name;
-          value = node name;
-        }) (builtins.filter keep (builtins.attrNames entries))
+        builtins.map (e: {
+          name = if duplicated e.key then e.name else e.key;
+          inherit (e) value;
+        }) keyed
       )
     );
 
@@ -173,6 +202,34 @@ rec {
   # does not exist yet while a module is being collected (using
   # config.lib.neg.systemdUser there is an infinite recursion).
   systemdUser = lib: import ./systemd-user.nix { inherit lib; };
+
+  # rooted ROOT — the root-anchored resolver for call sites that have no
+  # `config`: a top-level `let`, a host module, a package. `rooted repoRoot`
+  # (or any other root path) answers with the same vocabulary as
+  # config.lib.neg, but needs nothing from the module system:
+  #
+  #   { neg, repoRoot, ... }:
+  #   let r = neg.rooted repoRoot; in
+  #   { … = r.readFile "files/net/firewall-extra.sh"; }
+  #
+  # `tree` / `find` take a repo-relative *string* here (`r.tree { dir = "files";
+  # extensions = "any"; }`), or a path, as everywhere else.
+  rooted =
+    root:
+    let
+      path = p: root + ("/" + p);
+      # A path is used as-is; a string is resolved against the root.
+      asDir = dir: if builtins.isPath dir then dir else path dir;
+      treeOf = { dir, extensions ? [ ".nix" ] }: tree { dir = asDir dir; inherit extensions; };
+      findIn = find; # alias: a local `find` would shadow the rec-set one
+    in
+    {
+      inherit path treeOf;
+      tree = treeOf;
+      pathExists = p: builtins.pathExists (path p);
+      readFile = p: builtins.readFile (path p);
+      find = dir: name: findIn (treeOf { inherit dir; }) name;
+    };
 
   # leaves TREE — flatten it to [{ name = <last key>; path = [ <keys> … ]; value = <path>; }],
   # the index `find` searches. `name` is the final key segment, `path` the full
