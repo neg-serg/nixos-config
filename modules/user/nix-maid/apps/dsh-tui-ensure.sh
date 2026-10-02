@@ -57,6 +57,19 @@ if ! fs_ok || [ "$(printf '%s\n%s\n' "$FS_WANT" "$FS_HAVE" | sort -V | head -1)"
     || echo "dsh-tui-ensure: dsh-free-search install failed — will retry on next login" >&2
 fi
 
+# dsh-TUI session visibility: a session indexed while its log was still a stub
+# is stored with hasPrompt = false and the append-only carry-forward keeps that
+# stale flag once the log grows, so the cache-hit path hides the session from
+# the conversations list forever (the "session disappeared" defect). Session
+# logs are append-only, so the patcher makes the flag monotonic. Re-applied on
+# every login because a pnpm install replaces the file; see the script's header
+# for the upstream line it rewrites.
+TUI_LIST="$PROFILE_DIR/node_modules/@deepseek-harness-tui/dsh-tui/lib/types/dsh-adapter/sessions/list.js"
+if [ -f "$TUI_LIST" ]; then
+  python3 @visibilityPatch@ "$TUI_LIST" \
+    || echo "dsh-tui-ensure: session-visibility patch failed — sessions may hide again" >&2
+fi
+
 PATCH="$PROFILE_DIR/cordis.patch.yml"
 if [ -f "$PATCH" ]; then
   ROWS="$(mktemp)"

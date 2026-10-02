@@ -32,6 +32,11 @@ let
   # heals on the next run.
   presetPatch = ./dsh-tui-preset-patch.py;
 
+  # dsh-TUI 0.10.x session-visibility defect: see the script's header. Separate
+  # from presetPatch because it rewrites a file inside the installed TUI package,
+  # not the profile layer.
+  visibilityPatch = ./dsh-tui-session-visibility-patch.py;
+
   ensureTui = pkgs.writeShellScript "dsh-tui-ensure" (
     builtins.readFile (
       pkgs.replaceVars ./dsh-tui-ensure.sh {
@@ -39,6 +44,7 @@ let
         categoryPlugin = pkgs.copyPathToStore ./dsh-category-skill-reminder;
         ttsr = pkgs.copyPathToStore ./dsh-ttsr;
         presetPatch = pkgs.copyPathToStore presetPatch;
+        visibilityPatch = pkgs.copyPathToStore visibilityPatch;
         themeJson = pkgs.copyPathToStore themeJson;
         inherit homeDir;
         pluginSeeds = roster.seeds;
