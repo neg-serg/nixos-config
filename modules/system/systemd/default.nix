@@ -39,7 +39,21 @@ in
   # Replace ad-hoc nixindex units with native module
 
   systemd = {
-    coredump.enable = true;
+    coredump = {
+      enable = true;
+      # Bound the on-disk core store. It had grown to 3.7 GiB, and the growth is not
+      # where the entry count suggests: of 715 entries only 36 stored a file at all
+      # (the rest are metadata-only records of build-time aborts in /build sandboxes),
+      # and those 36 are all session-teardown aborts — steam (11), Hyprland (10),
+      # hypridle (4), kitty (3) — at ~100-250 MiB each, i.e. ~450 MiB per logout.
+      # MaxUse trims the store on every store operation; KeepFree is the floor left to
+      # the filesystem. Age-based cleanup needs nothing here: systemd's own tmpfiles
+      # rule already drops cores older than two weeks.
+      settings.Coredump = {
+        MaxUse = "1G";
+        KeepFree = "5G";
+      };
+    };
     settings = {
       Manager = {
         RebootWatchdogSec = "10s";
