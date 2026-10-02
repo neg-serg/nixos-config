@@ -93,11 +93,25 @@ rec {
   # Loader rows for the plugins above, mirroring the web profile's patch layer
   # (the row id is the package name; only memory-extractor carries config, which
   # is appended as its own row below).
-  rows = lib.concatMapStrings (name: ''
-    - insert:
-        - id: ${name}
-          name: ${name}
-  '') (map (p: p.name) (lib.filter (p: p.name != "dsh-memory-extractor") plugins));
+  rows =
+    lib.concatMapStrings (name: ''
+      - insert:
+          - id: ${name}
+            name: ${name}
+    '') (map (p: p.name) (lib.filter (p: p.name != "dsh-memory-extractor") plugins))
+    + ''
+      # Cross-session full-text search (the `recall` tool): the shipped base row
+      # pins `path: ':memory:'` + `openAt: never`, so every ctx.sessionQuery search
+      # fails with SESSION_QUERY_SEARCH_DISABLED. An id-targeted override points it
+      # at a durable derived index and defers the SQLite open to the first search
+      # (never `startup`: a cold index would rebuild on every session start).
+      # Patch semantics replace the whole row config — the plugin's own schema
+      # defaults fill in everything else.
+      - id: session-query-sqlite
+        config:
+          path: /home/neg/.dsh/session-search.db
+          openAt: first-search
+    '';
 
   # `seed_pkg <name> <path>` lines for the caretaker scripts. Path interpolation
   # (not toString) registers each plugin directory as a build input, so the store
