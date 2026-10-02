@@ -38,6 +38,16 @@ rec {
       source = "${sourceDir}/${name}";
     });
 
+  # Suffix test — shared by importDir and tree (it used to live inside
+  # importDir only).
+  hasSuffix =
+    suf: s:
+    let
+      sLen = builtins.stringLength s;
+      sufLen = builtins.stringLength suf;
+    in
+    sLen >= sufLen && builtins.substring (sLen - sufLen) sufLen s == suf;
+
   # Import modules from a directory — single replacement for the
   # `builtins.readDir ./. |> attrNames |> filter |> map` pipeline copied into
   # every auto-importing default.nix.
@@ -45,6 +55,7 @@ rec {
   #   importDir { dir = ./.; }                      # flat *.nix files
   #   importDir { dir = ./.; includeDirs = true; }  # + module subdirectories
   #   importDir { dir = ./.; exclude = [ "x.nix" ]; }
+  #   importDir { dir = ./.; nameFilter = n: n != "games"; }  # drop by name
   #
   # default.nix is always dropped (it is the importer itself). With
   # includeDirs, a subdirectory is imported only when it carries its own
@@ -55,16 +66,13 @@ rec {
       dir,
       includeDirs ? false,
       exclude ? [ ],
+      # Entry name -> bool (directories by their plain name, files with the
+      # extension). modules/default.nix passes domainFilter here, so a domain
+      # is dropped by NAME and the caller holds no path list.
+      nameFilter ? (_: true),
     }:
     let
       entries = builtins.readDir dir;
-      hasSuffix =
-        suf: s:
-        let
-          sLen = builtins.stringLength s;
-          sufLen = builtins.stringLength suf;
-        in
-        sLen >= sufLen && builtins.substring (sLen - sufLen) sufLen s == suf;
       isModuleDir =
         name: entries.${name} == "directory" && builtins.pathExists (dir + "/${name}/default.nix");
       isModuleFile = name: entries.${name} != "directory" && hasSuffix ".nix" name;
@@ -72,6 +80,7 @@ rec {
         name:
         name != "default.nix"
         && !(builtins.elem name exclude)
+        && nameFilter name
         && (if includeDirs then isModuleDir name || isModuleFile name else isModuleFile name);
     in
     builtins.map (name: dir + "/${name}") (builtins.filter keep (builtins.attrNames entries));
@@ -85,6 +94,132 @@ rec {
       includeDirs = true;
     };
   };
+
+  # tree { dir, extensions ? [ ".nix" ] } — the same directory as an attribute
+  # set keyed by short names: the by-name half of the path story (importDir
+  # above is the import-list half). Callers address a file by name instead of
+  # counting `../..` segments:
+  #
+  #   (tree { dir = ./modules; }).core.default      → …/modules/core/default.nix
+  #   (tree { dir = ./modules; }).core.neg          → …/modules/core/neg.nix
+  #   (tree { dir = ./files; extensions = [ ".lua" ]; }).mpv."hdr-auto-switch"
+  #
+  # Conventions (import-tree/haumea rules, applied to every tree):
+  #   - a directory recurses; its default.nix is exposed as that directory's
+  #     `.default` (not as the whole value, so siblings stay reachable);
+  #   - entries starting with "_" or "." are skipped (private data, hidden files);
+  #   - the matching extension is stripped from the key, any other name is kept
+  #     verbatim (so non-.nix data files stay addressable via `t."name.ext"`).
+  tree =
+    {
+      dir,
+      extensions ? [ ".nix" ],
+    }:
+    let
+      entries = builtins.readDir dir;
+      private = name: builtins.substring 0 1 name == "_" || builtins.substring 0 1 name == ".";
+      # Longest matching extension wins, so [ ".nix" ".tar.gz" ] stays sane.
+      stripExt =
+        name:
+        let
+          hits = builtins.filter (ext: hasSuffix ext name) extensions;
+        in
+        if hits == [ ] then
+          name
+        else
+          let
+            ext = builtins.foldl' (
+              a: b: if builtins.stringLength b > builtins.stringLength a then b else a
+            ) (builtins.head hits) hits;
+          in
+          builtins.substring 0 (builtins.stringLength name - builtins.stringLength ext) name;
+      node =
+        name:
+        let
+          path = dir + "/${name}";
+        in
+        if entries.${name} != "directory" then
+          path
+        else
+          let
+            # A directory that carries default.nix keeps BOTH: the entry itself
+            # (`.foo.default`) and its children (`.foo.bar`). Making the default
+            # the whole value of `foo` would hide every sibling module behind it.
+            hasDefault = builtins.pathExists (path + "/default.nix");
+            sub = tree { dir = path; inherit extensions; };
+          in
+          if sub == { } && !hasDefault then
+            null
+          else
+            (if hasDefault then { default = path + "/default.nix"; } else { }) // sub;
+      keep =
+        name:
+        !(private name)
+        && name != "default.nix"
+        && (entries.${name} == "directory" || builtins.any (ext: hasSuffix ext name) extensions);
+    in
+    builtins.listToAttrs (
+      builtins.filter (entry: entry.value != null) (
+        builtins.map (name: {
+          name = stripExt name;
+          value = node name;
+        }) (builtins.filter keep (builtins.attrNames entries))
+      )
+    );
+
+  # systemdUser LIB — the per-user systemd unit helpers (lib/systemd-user.nix)
+  # as a factory. Sibling file, resolved here so callers in a top-level `let`
+  # can build it without a relative import and without touching `config`, which
+  # does not exist yet while a module is being collected (using
+  # config.lib.neg.systemdUser there is an infinite recursion).
+  systemdUser = lib: import ./systemd-user.nix { inherit lib; };
+
+  # leaves TREE — flatten it to [{ name = <last key>; path = [ <keys> … ]; value = <path>; }],
+  # the index `find` searches. `name` is the final key segment, `path` the full
+  # key chain, so an error message can say exactly where the match was.
+  leaves =
+    t:
+    builtins.concatLists (
+      builtins.map (
+        name:
+        let
+          value = t.${name};
+        in
+        if builtins.isAttrs value then
+          builtins.map (leaf: leaf // { path = [ name ] ++ leaf.path; }) (leaves value)
+        else
+          [
+            {
+              inherit name value;
+              path = [ name ];
+            }
+          ]
+      ) (builtins.attrNames t)
+    );
+
+  # find TREE "name" — resolve a short name (last key segment, with or without
+  # the ".nix" suffix) to its path. A miss and an ambiguity are both eval errors
+  # that print the candidates, so the fix is a one-line edit:
+  #
+  #   import (find libTree "systemd-user") { inherit lib; }
+  find =
+    t: name:
+    let
+      # "systemd-user", "systemd-user.nix" and "caches.nix" all resolve: the
+      # key drops ".nix", the caller usually types the file name.
+      hits = builtins.filter (
+        leaf: leaf.name == name || leaf.name == "${name}.nix" || "${leaf.name}.nix" == name
+      ) (leaves t);
+      at =
+        leaf:
+        "${builtins.concatStringsSep "." leaf.path} → ${toString leaf.value}";
+    in
+    if builtins.length hits == 1 then
+      (builtins.head hits).value
+    else if hits == [ ] then
+      throw "neg.find: nothing named '${name}' here (top level: ${builtins.concatStringsSep ", " (builtins.attrNames t)})"
+    else
+      throw "neg.find: '${name}' matches ${toString (builtins.length hits)} entries — ${builtins.concatStringsSep ", " (map at hits)}";
 
   # fzf parses FZF_*_OPTS values as its own CLI options and treats a '#' at
   # the start of a token (after whitespace, outside quotes) as a comment that
