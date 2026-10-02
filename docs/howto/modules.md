@@ -2017,6 +2017,29 @@ complain has been reviewed.
 
 - [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.lockKernelModules.enable
+
+Whether to enable Lock kernel module loading after boot (kernel.modules_disabled=1); requires
+everything needed to be pre-loaded via boot.kernelModules or built-in.
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
 ## features.security.tpmSudo.enable
 
 Whether to enable TPM-backed passwordless sudo (tpm2-pkcs11 + pam_ssh_agent_auth).
