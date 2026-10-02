@@ -104,9 +104,11 @@ in
       };
     };
 
-    systemd.tmpfiles.rules = lib.mkAfter [
-      "d /var/lib/alertmanager 0750 alertmanager alertmanager - -"
-    ];
+    # No tmpfiles rule for /var/lib/alertmanager: the service is DynamicUser, so
+    # there is no `alertmanager` passwd entry to own a directory — the rule only
+    # produced "/etc/tmpfiles.d/00-nixos.conf:52: Failed to resolve user
+    # 'alertmanager': Unknown user" on every boot, and StateDirectory already
+    # creates the directory with the dynamic user's ownership.
 
     networking.firewall.interfaces = mkIf cfg.openFirewall (
       lib.genAttrs cfg.firewallInterfaces (_iface: {
