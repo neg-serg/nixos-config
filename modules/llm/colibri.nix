@@ -8,6 +8,7 @@
 let
   enabled = config.lib.neg.enabled "llm";
   cfg = config.services.colibri;
+  systemdUser = config.lib.neg.systemdUser;
 
   pythonEnv = pkgs.python3.withPackages (
     ps: with ps; [
@@ -211,8 +212,9 @@ in
               cfg.serve.apiKeyFile != null
             ) "--api-key-file ${cfg.serve.apiKeyFile}";
           in
-          {
+          systemdUser.mkSystemService {
             description = "colibrì OpenAI-compatible API server";
+            presets = [ "restartOnFailure" ];
             wantedBy = [ "multi-user.target" ];
             after = [ "network.target" ];
             environment =
@@ -227,7 +229,6 @@ in
                 + " --port ${toString cfg.serve.port}"
                 + " --model-id ${cfg.serve.modelId}"
                 + " ${apiKeyArgs}";
-              Restart = "on-failure";
               RestartSec = "10";
               DynamicUser = true;
               StateDirectory = "colibri";

@@ -169,11 +169,12 @@ in
       })
 
       {
-        systemd.services."telegram-alert-bridge" = {
+        systemd.services."telegram-alert-bridge" = systemdUser.mkSystemService {
           description = "Alertmanager Telegram webhook bridge";
           documentation = [
             "https://prometheus.io/docs/alerting/latest/configuration/#webhook_config"
           ];
+          presets = [ "restartOnFailure" ];
           after = [
             "network-online.target"
             "alertmanager.service"
@@ -182,7 +183,6 @@ in
           wantedBy = [ "multi-user.target" ];
           serviceConfig = {
             ExecStart = "${lib.getExe telegramBridgeScript}";
-            Restart = "on-failure";
             RestartSec = 5;
             # The bridge only reads the two SOPS secrets (root, 0400 under
             # /run/secrets), answers on 127.0.0.1:9094 and shells out to curl;

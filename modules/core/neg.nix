@@ -92,6 +92,9 @@ in
       # Per-user systemd unit helpers (lib/systemd-user.nix). The module closes
       # over `lib` only, so callers no longer import it themselves.
       systemdUser = neg.systemdUser lib;
+
+      # Shared llama-server systemd unit skeleton (lib/llama-server.nix).
+      llamaServer = neg.llamaServer lib;
     };
   };
 }

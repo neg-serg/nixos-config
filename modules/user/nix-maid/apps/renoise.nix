@@ -13,6 +13,9 @@ let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
 
+  # Module-shaped systemd user units (lib/systemd-user.nix)
+  systemdUser = config.lib.neg.systemdUser;
+
   # Renoise's JACK client name is "renoise" (PipeWire appends -N on name
   # collisions), and its stereo output ports are output_01_left/right. Link
   # them to the game-stereo virtual sink (routed to the RME AES pair by the
@@ -32,16 +35,18 @@ let
 in
 {
   config = lib.mkIf enabled {
-    systemd.user.services."renoise-link" = {
+    systemd.user.services."renoise-link" = systemdUser.mkUserService {
       description = "Link Renoise JACK out ports to game-stereo";
+      presets = [
+        "graphicalWanted"
+        "restartOnFailure"
+      ];
       after = [
         "pipewire.service"
         "wireplumber.service"
       ];
-      wantedBy = [ "graphical-session.target" ];
       serviceConfig = {
         Type = "simple";
-        Restart = "on-failure";
         ExecStart = "${renoiseLinkScript}";
         Environment = "PATH=${
           lib.makeBinPath [

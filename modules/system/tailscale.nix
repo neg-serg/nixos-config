@@ -54,8 +54,13 @@ in
 
     # Override start ordering for Tailray systemd user service
     # so it waits for graphical session (tray icon requirement)
-    systemd.user.services.tailray = {
-      wantedBy = [ "graphical-session.target" ];
+    systemd.user.services.tailray = config.lib.neg.systemdUser.mkUserService {
+      presets = [
+        "graphicalWanted"
+        "restartOnFailure"
+      ];
+      # mkForce: this ordering must win over the unit's own After= (the
+      # constructor passes a priority wrapper through untouched).
       after = lib.mkForce [
         "graphical-session.target"
         "tailscaled.service"
@@ -63,7 +68,6 @@ in
       ];
       serviceConfig = {
         ExecStart = "${lib.getExe' tailrayWrapped "tailray-wrapped"}";
-        Restart = "on-failure";
       };
     };
   };

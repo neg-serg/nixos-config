@@ -203,6 +203,10 @@ rec {
   # config.lib.neg.systemdUser there is an infinite recursion).
   systemdUser = lib: import ./systemd-user.nix { inherit lib; };
 
+  # llamaServer LIB — the shared llama-server systemd unit skeleton
+  # (lib/llama-server.nix) as a factory, wired exactly like systemdUser.
+  llamaServer = lib: import ./llama-server.nix { inherit lib; };
+
   # rooted ROOT — the root-anchored resolver for call sites that have no
   # `config`: a top-level `let`, a host module, a package. `rooted repoRoot`
   # (or any other root path) answers with the same vocabulary as

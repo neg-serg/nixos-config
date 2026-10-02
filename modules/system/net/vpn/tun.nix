@@ -12,10 +12,12 @@
 # direct (main), pref 200 → table 200 → default dev sb0; DNS via resolvectl.
 let
   cfg = config.features.net.proxy or { };
+  systemdUser = config.lib.neg.systemdUser;
 in
 lib.mkIf cfg.enable {
-  systemd.services.sing-box-tun = {
+  systemd.services.sing-box-tun = systemdUser.mkSystemService {
     description = "sing-box full-TUN proxy (all traffic via sb0)";
+    presets = [ "restartOnFailure" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     # Manual toggle only — no autostart (would hijack all traffic at boot)
@@ -33,7 +35,6 @@ lib.mkIf cfg.enable {
       ExecStart = "${lib.getExe pkgs.sing-box} run -c /run/sing-box-tun/config.json";
       ExecStartPost = "${./sing-box-tun-post.sh}";
       ExecStopPost = "${./sing-box-tun-down.sh}";
-      Restart = "on-failure";
       RestartSec = 5;
     };
   };

@@ -33,39 +33,47 @@ lib.mkIf (cfg.enable or false) {
         (
           (config.lib.neg.enabled "media.audio.mpd") && config.lib.neg.pathExists "secrets/home/mpdas/neg.rc"
         )
-        {
-          description = "MPD AudioScrobbler (Last.fm)";
-          # NOTE: deliberately NO after/wants on mpd.service here. In the user
-          # session that name resolves to the mpd package's config-less unit
-          # (`mpd --systemd`, no config file → "No configuration file found"),
-          # NOT the real system MPD (modules/servers/mpd). mpdas connects to the
-          # system MPD over TCP itself and reconnects on failure via
-          # Restart=on-failure below, so pulling in the user unit only produces
-          # failed-start noise on every mpdas restart.
-          after = [
-            "network-online.target"
-            "sing-box-proxy.service"
-          ];
-          wants = [ "sing-box-proxy.service" ];
-          serviceConfig = {
-            ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
-            Environment = [
-              "MPD_HOST=127.0.0.1"
-              "MPD_PORT=6600"
-              # Last.fm API is geo-blocked from RU IPs — route HTTPS via sing-box.
-              "HTTPS_PROXY=socks5h://127.0.0.1:10808"
-              "ALL_PROXY=socks5h://127.0.0.1:10808"
-              "NO_PROXY=127.0.0.1,localhost"
+        (
+          systemdUser.mkUserService {
+            presets = [
+              "defaultWanted"
+              "restartOnFailure"
             ];
-            Restart = "on-failure";
-            RestartSec = 10;
-          };
-          wantedBy = [ "default.target" ];
-        };
+            description = "MPD AudioScrobbler (Last.fm)";
+            # NOTE: deliberately NO after/wants on mpd.service here. In the user
+            # session that name resolves to the mpd package's config-less unit
+            # (`mpd --systemd`, no config file → "No configuration file found"),
+            # NOT the real system MPD (modules/servers/mpd). mpdas connects to the
+            # system MPD over TCP itself and reconnects on failure via the
+            # restartOnFailure preset, so pulling in the user unit only produces
+            # failed-start noise on every mpdas restart.
+            after = [
+              "network-online.target"
+              "sing-box-proxy.service"
+            ];
+            wants = [ "sing-box-proxy.service" ];
+            serviceConfig = {
+              ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
+              Environment = [
+                "MPD_HOST=127.0.0.1"
+                "MPD_PORT=6600"
+                # Last.fm API is geo-blocked from RU IPs — route HTTPS via sing-box.
+                "HTTPS_PROXY=socks5h://127.0.0.1:10808"
+                "ALL_PROXY=socks5h://127.0.0.1:10808"
+                "NO_PROXY=127.0.0.1,localhost"
+              ];
+              # 10 s: the delay this unit has always used.
+              RestartSec = 10;
+            };
+          }
+        );
 
     # Pic dirs notifier
     "pic-dirs" = systemdUser.mkUserService {
-      presets = [ "defaultWanted" ];
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       description = "Pic dirs notification";
       unitConfig = {
         ConditionUser = "!greeter";
@@ -80,7 +88,6 @@ lib.mkIf (cfg.enable or false) {
           "XDG_PICTURES_DIR"
           "XDG_DATA_HOME"
         ];
-        Restart = "on-failure";
         RestartSec = "1";
       };
     };
@@ -91,7 +98,11 @@ lib.mkIf (cfg.enable or false) {
     # ExecStartPre regenerates the config from the SOPS secret on first run.
     # Manual control stays in ~/.local/bin/proxy (on|off|refresh|status|gen).
     # Independent of features.net.proxy.enable (legacy Xray system service).
-    sing-box-proxy = {
+    sing-box-proxy = systemdUser.mkUserService {
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       description = "sing-box SOCKS5 proxy (127.0.0.1:10808)";
       after = [ "network-online.target" ];
       serviceConfig = {
@@ -103,36 +114,38 @@ lib.mkIf (cfg.enable or false) {
           "PATH=/run/current-system/sw/bin:/run/current-system/sw/sbin"
         ];
         ExecStart = "${lib.getExe pkgs.sing-box} run -c %h/.config/sing-box-trojan/config.json";
-        Restart = "on-failure";
         RestartSec = 5;
       };
-      wantedBy = [ "default.target" ];
     };
 
     # rtpmidid — RTP-MIDI (AppleMIDI) daemon: exposes ALSA sequencer ports over
     # the network. Linux MIDI (SC/glm-midi) reaches the dockur Windows VM's
     # rtpMIDI -> Genelec GLM MIDI control (see docs/howto/windows-vm-dockur.md).
-    rtpmidid = {
+    rtpmidid = systemdUser.mkUserService {
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       description = "RTP MIDI (AppleMIDI) daemon";
       after = [ "pipewire.service" ];
       wants = [ "pipewire.service" ];
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.neg.rtpmidid} --ini ${config.lib.neg.path "files/rtpmidid/config.ini"}";
-        Restart = "on-failure";
         RestartSec = 3;
       };
-      wantedBy = [ "default.target" ];
     };
 
     # glm-osc — OSC bridge for Genelec SAM monitors (volume/mute/power/status
     # via Python genlc over the GLM USB adapter, no official GLM required).
     # Listen: UDP 127.0.0.1:9000; map in docs/howto/windows-vm-dockur.md.
     glm-osc = systemdUser.mkUserService {
-      presets = [ "defaultWanted" ];
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       description = "OSC bridge for Genelec SAM monitors";
       serviceConfig = {
         ExecStart = "${pkgs.glm-osc}/bin/glm-osc-server";
-        Restart = "on-failure";
         RestartSec = 5;
       };
     };
@@ -142,13 +155,15 @@ lib.mkIf (cfg.enable or false) {
     # is the only bidirectional host<->VM channel under the same-IP pasta
     # topology, unlike RTP-MIDI UDP); local glm-midi feeds 127.0.0.1:9004.
     glm-midi-relay = systemdUser.mkUserService {
-      presets = [ "defaultWanted" ];
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       description = "MIDI relay to the dockur Windows VM";
       serviceConfig = {
         # Script shebang is /usr/bin/env python3, which is not in the minimal
         # user-service PATH — call the interpreter explicitly.
         ExecStart = "${lib.getExe pkgs.python3} %h/.local/bin/glm-midi-relay";
-        Restart = "on-failure";
         RestartSec = 3;
         # Log every forwarded packet (what the wheel sends) to /tmp/glm-relay.log.
         Environment = [ "GLM_RELAY_LOG=/tmp/glm-relay.log" ];
@@ -162,10 +177,10 @@ lib.mkIf (cfg.enable or false) {
     # Never moves the adapter back to the host; rate-limited inside the script.
     # Idempotent no-op when the adapter is already inside the VM or the VM is
     # stopped.
-    glm-adapter-auto = {
+    glm-adapter-auto = systemdUser.mkUserService {
+      presets = [ "oneshot" ];
       description = "Auto-attach the GLM adapter to the dockur VM when needed";
       serviceConfig = {
-        Type = "oneshot";
         # bash explicitly: the user-service environment has no PATH, so the
         # script's #!/usr/bin/env bash shebang would fail (status 127).
         # The default NixOS user-service PATH has only coreutils/grep/sed —
@@ -192,10 +207,10 @@ lib.mkIf (cfg.enable or false) {
     # container netns, shadowing it, so the VM's proxy (.88:10812) dies inside
     # the container. Re-applied on a short timer (container is started
     # manually, not as a systemd unit).
-    ensure-vm-proxy-alias = {
+    ensure-vm-proxy-alias = systemdUser.mkUserService {
+      presets = [ "oneshot" ];
       description = "Remove host .88 alias from dockur container netns";
       serviceConfig = {
-        Type = "oneshot";
         ExecStart = ensureVmProxyAlias;
       };
     };
@@ -203,15 +218,16 @@ lib.mkIf (cfg.enable or false) {
     # OpenRGB daemon — starts the SDK server so clients (profile service, GUI) can connect.
     # The profile is NOT loaded on daemon startup (it may not exist yet); the
     # openrgb-profile oneshot applies the saved "neg" profile after the server is ready.
-    openrgb = {
+    openrgb = systemdUser.mkUserService {
+      presets = [
+        "graphicalSession"
+        "restartOnFailure"
+      ];
       description = "OpenRGB SDK server";
-      partOf = [ "graphical-session.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.openrgb} --server"; # SDK server for RGB control
-        Restart = "on-failure";
         RestartSec = "30";
       };
-      wantedBy = [ "graphical-session.target" ];
     };
 
     # OpenRGB profile — applies saved "neg" profile after daemon starts.
@@ -231,20 +247,27 @@ lib.mkIf (cfg.enable or false) {
     # all dispatched 10.4 s after the password, for a delay nothing on screen asked
     # for. Type=exec marks the unit started as soon as the process is spawned; the
     # profile still lands ~10 s in, just no longer on the session's critical path.
-    openrgb-profile = {
+    openrgb-profile = systemdUser.mkUserService {
+      presets = [
+        "graphicalWanted"
+        "restartOnFailure"
+      ];
       description = "Apply OpenRGB neg profile";
       after = [ "openrgb.service" ];
       requires = [ "openrgb.service" ];
-      startLimitIntervalSec = 120;
-      startLimitBurst = 6;
+      # startLimit* are unit-level options: expressed through unitConfig so the
+      # rest of the unit still goes through the shared constructor.
+      unitConfig = {
+        StartLimitIntervalSec = 120;
+        StartLimitBurst = 6;
+      };
       serviceConfig = {
         Type = "exec";
         ExecStart = "${pkgs.runtimeShell} -c 'sleep 10; exec ${lib.getExe pkgs.openrgb} -p %h/.config/openrgb/neg.orp'";
         RemainAfterExit = false;
-        Restart = "on-failure";
+        # 10 s: the delay this unit has always used.
         RestartSec = 10;
       };
-      wantedBy = [ "graphical-session.target" ];
     };
 
     # Local AI (Ollama) — user-level fallback for hosts WITHOUT the system
@@ -252,25 +275,33 @@ lib.mkIf (cfg.enable or false) {
     # store). Models live on the zero pool, never on the system disk.
     "local-ai" =
       lib.mkIf ((config.lib.neg.enabled "llm") && !(config.services.ollama.enable or false))
-        {
-          description = "Local AI (Ollama)";
-          serviceConfig = {
-            ExecStart = "${lib.getExe pkgs.ollama} serve"; # Get up and running with large language models locally
-            Environment = [
-              # For LocalAI compatibility
-              "MODELS_PATH=/zero/ai/localai"
-              # Effective for Ollama
-              "OLLAMA_MODELS=/zero/ai/ollama"
-              "OLLAMA_HOST=127.0.0.1:11434"
+        (
+          systemdUser.mkUserService {
+            presets = [
+              "defaultWanted"
+              "restartOnFailure"
             ];
-            Restart = "on-failure";
-            RestartSec = "2s";
-          };
-          wantedBy = [ "default.target" ];
-        };
+            description = "Local AI (Ollama)";
+            serviceConfig = {
+              ExecStart = "${lib.getExe pkgs.ollama} serve"; # Get up and running with large language models locally
+              Environment = [
+                # For LocalAI compatibility
+                "MODELS_PATH=/zero/ai/localai"
+                # Effective for Ollama
+                "OLLAMA_MODELS=/zero/ai/ollama"
+                "OLLAMA_HOST=127.0.0.1:11434"
+              ];
+              RestartSec = "2s";
+            };
+          }
+        );
 
     # Udiskie (Automounter)
-    udiskie = {
+    udiskie = systemdUser.mkUserService {
+      presets = [
+        "graphicalWanted"
+        "restartOnFailure"
+      ];
       description = "Udiskie automounter";
       serviceConfig = {
         ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --no-tray"; # Removable disk automounter for udisks
@@ -279,10 +310,8 @@ lib.mkIf (cfg.enable or false) {
           "QT_QPA_PLATFORM=wayland"
           "XDG_SESSION_TYPE=wayland"
         ];
-        Restart = "on-failure";
         RestartSec = "2";
       };
-      wantedBy = [ "graphical-session.target" ];
     };
 
   };

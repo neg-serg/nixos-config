@@ -9,6 +9,8 @@ let
   inherit (config.users.users.neg) home;
   webEnabled = config.lib.neg.enabled "web";
   mediaEnabled = config.lib.neg.enabled "media.audio.apps";
+  # Module-shaped systemd user units (lib/systemd-user.nix)
+  systemdUser = config.lib.neg.systemdUser;
 
   # Helper to generate INI (Flameshot, Aria2 often uses similar key=val)
 
@@ -59,13 +61,15 @@ in
     ))
 
     (lib.mkIf mediaEnabled {
-      systemd.user.services.playerctld = {
+      systemd.user.services.playerctld = systemdUser.mkUserService {
+        presets = [
+          "defaultWanted"
+          "restartOnFailure"
+        ];
         description = "Keep track of media player activity";
-        wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "simple";
           ExecStart = "${lib.getExe' pkgs.playerctl "playerctld"} daemon"; # Command-line utility and library for controlling media players
-          Restart = "on-failure";
           RestartSec = "2";
         };
       };

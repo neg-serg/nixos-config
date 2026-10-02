@@ -75,11 +75,14 @@ in
 
   config = lib.mkIf (cfg.enable && config.lib.neg.enabled "llm") {
     # Vane as a rootless podman container in the neg user session.
-    systemd.user.services.vane = {
+    systemd.user.services.vane = config.lib.neg.systemdUser.mkUserService {
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       description = "Vane (Perplexica) self-hosted AI search engine";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      wantedBy = [ "default.target" ];
       serviceConfig = {
         # Reuse the container that already exists: `podman run --replace --rm`
         # recreated it on every login (~10 s in blame). The container lives
@@ -100,7 +103,6 @@ in
             -v vane-data:/home/vane/data \
             ${cfg.image}
         ''}";
-        Restart = "on-failure";
         RestartSec = 10;
         TimeoutStartSec = 300;
       };

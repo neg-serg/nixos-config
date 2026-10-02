@@ -14,15 +14,17 @@ let
   cfg = config.features.input.kanata or { };
 in
 lib.mkIf cfg.enable {
-  systemd.user.services.kanata = {
+  systemd.user.services.kanata = config.lib.neg.systemdUser.mkUserService {
+    presets = [
+      "graphicalSession"
+      "restartOnFailure"
+    ];
     description = "Kanata keyboard remapper";
+    # The preset carries wantedBy+partOf; the ordering (After=) stays explicit.
     after = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.kanata} --cfg %h/.config/kanata/kanata.kbd";
-      Restart = "on-failure";
       RestartSec = 2;
     };
   };

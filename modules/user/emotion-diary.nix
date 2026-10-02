@@ -23,10 +23,12 @@ in
   # The address is part of the data contract, so the port is fixed here.
   systemd.user.services.aura-diary = systemdUser.mkUserService {
     description = "Aura — local emotion/CBT diary (static file server)";
-    presets = [ "defaultWanted" ];
+    presets = [
+      "defaultWanted"
+      "restartOnFailure"
+    ];
     serviceConfig = {
       ExecStart = serve;
-      Restart = "on-failure";
     };
   };
 }
