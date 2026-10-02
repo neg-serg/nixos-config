@@ -39,7 +39,8 @@ in
       description = ''
         `telegram-send <msg> [detail] [attempts]` wrapper: posts to the chat
         from the SOPS secrets through the local sing-box socks proxy, retrying
-        up to <attempts> (default 12) times with 5s pauses.
+        up to <attempts> (default 6) times with 5s pauses and a 5s connect /
+        15s total timeout per attempt.
       '';
     };
 
