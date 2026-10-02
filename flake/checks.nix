@@ -314,6 +314,32 @@ in
         touch $out
       '';
 
+  # ── More `just lint` gates, promoted into the flake ─────────────────
+  # Same scripts the lint recipe runs; wired here so `nix flake check`
+  # (the CI entry point) covers them too instead of relying on just.
+
+  # files/quickshell is the panel tree; check-qml-syntax.sh parses every .qml
+  # with `qmlformat --dry-run` (a parser — no module/import resolution), over a
+  # copy of files/quickshell. qmlformat comes from qt6.qtdeclarative; the gate
+  # enumerates the tree with find.
+
+  "qml-syntax-guard" =
+    pkgs.runCommand "check-qml-syntax"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.findutils
+          pkgs.qt6.qtdeclarative
+        ];
+      }
+      ''
+        mkdir -p "$TMPDIR/repo/files"
+        cp -r ${../files/quickshell} "$TMPDIR/repo/files/quickshell"
+        bash ${../scripts/dev}/check-qml-syntax.sh "$TMPDIR/repo"
+        touch $out
+      '';
+
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
   # via mkTestHost (threaded from flake.nix; stripped from the
