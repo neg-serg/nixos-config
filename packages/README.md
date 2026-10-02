@@ -40,5 +40,15 @@ stdenv.mkDerivation {
 ```
 
 `paths` also answers by name — `paths.tree { dir = "files"; extensions = "any"; }` — and
-`paths.find "files" "foo-1.0"` resolves a short name. A sibling package stays
-`callPackage ../sibling { }`: one level up inside this tree cannot drift out of it.
+`paths.find "files" "foo-1.0"` resolves a short name.
+
+Overlay entries reach a package by its directory name through `neg.functions.pkg`, so no call site
+counts levels:
+
+```nix
+swayimg = callPkg (pkg "swayimg") { };
+flucoma = callPkg (pkg "flucoma") { inherit scPluginFarm; };
+```
+
+A missing directory is an eval error listing the names that do exist. Patch files that live beside
+the packages use `paths.path "packages/<file>"`.

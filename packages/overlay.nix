@@ -4,6 +4,9 @@ let
   # this tree reaches a repo file as `paths.path "files/sources/x.tar.gz"`
   # instead of counting `./../../` levels. Handed to every overlay that needs it
   # through importOvP below, and to package files by neg.functions.callPkg.
+  # The resolver itself needs the root, so this is the one place in packages/
+  # that spells it out.
+  # allow-relative: the bootstrap line.
   paths = (import ../lib/neg-helpers.nix).rooted ../.;
 
   importOv = path: import path inputs final finalPrev;

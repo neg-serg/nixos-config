@@ -106,6 +106,7 @@ stdenv.mkDerivation rec {
     "-DDOCS=OFF"
     "-DSYSTEM_BOOST=ON"
     # Vendored deps - stop FetchContent from hitting the network
+    # allow-relative: a cmake flag resolved inside the unpacked source tree.
     "-DFLUID_PATH=../vendored/flucoma-core"
     "-DFETCHCONTENT_SOURCE_DIR_HISSTOOLS=${hisstools}"
     "-DFETCHCONTENT_SOURCE_DIR_EIGEN=${eigen}"
