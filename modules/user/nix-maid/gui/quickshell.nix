@@ -7,6 +7,9 @@
   ...
 }:
 let
+  # Module-shaped systemd user units (lib/systemd-user.nix)
+  systemdUser = config.lib.neg.systemdUser;
+
   # Source path
   quickshellSrc = config.lib.neg.path "files/quickshell";
   # live links for the deployed tree; the package build below keeps the store copy
@@ -87,10 +90,11 @@ lib.mkIf quickshellEnabled (
       ];
 
       # Quickshell panel service — ExecStartPre deploys writable config before start
-      systemd.user.services.quickshell = {
+      systemd.user.services.quickshell = systemdUser.mkUserService {
         enable = true;
         description = "Quickshell - QtQuick based shell for Wayland";
         documentation = [ "https://github.com/outfoxxed/quickshell" ];
+        presets = [ "restartOnFailure" ];
         partOf = [ "hyprland-session.target" ];
         unitConfig = {
           StartLimitIntervalSec = 30;
@@ -117,7 +121,6 @@ lib.mkIf quickshellEnabled (
         serviceConfig = {
           ExecStartPre = "${quickshellPreStart}";
           ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
-          Restart = "on-failure";
           # A startup crash (~1-3 s cycle) previously looped forever: the default
           # StartLimitBurst=5/10s never trips at this cadence (NRestarts hit 198).
           # Back off and stop after 5 quick failures in 30 s.

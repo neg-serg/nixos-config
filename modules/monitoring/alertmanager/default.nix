@@ -16,6 +16,7 @@ let
     types
     ;
   cfg = config.monitoring.alertmanager or { };
+  systemdUser = config.lib.neg.systemdUser;
 
   alertmanagerConfig = {
     global = { };
@@ -77,9 +78,10 @@ in
   config = mkIf cfg.enable {
     environment.systemPackages = [ pkgs.prometheus-alertmanager ]; # nixpkgs renamed alertmanager
 
-    systemd.services.alertmanager = {
+    systemd.services.alertmanager = systemdUser.mkSystemService {
       description = "Prometheus Alertmanager";
       documentation = [ "https://prometheus.io/docs/alerting/latest/alertmanager/" ];
+      presets = [ "restartOnFailure" ];
       wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
@@ -87,7 +89,6 @@ in
         # Single instance: the HA cluster port (default 0.0.0.0:9094) would clash
         # with the Telegram webhook bridge on 127.0.0.1:9094 — disable it.
         ExecStart = "${lib.getExe pkgs.prometheus-alertmanager} --config.file=${configFile} --web.listen-address=${cfg.listenAddress}:${toString cfg.port} --storage.path=/var/lib/alertmanager --data.retention=120h --cluster.listen-address=";
-        Restart = "on-failure";
         RestartSec = 5;
         StateDirectory = "alertmanager";
         DynamicUser = true;

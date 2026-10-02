@@ -163,41 +163,49 @@ let
 in
 lib.mkIf (cfg.enable or false) {
   # wl-daemon: auto-restart on crash (DPMS output removal kills it)
-  systemd.user.services."wl-daemon" = {
+  systemd.user.services."wl-daemon" = systemdUser.mkUserService {
     description = "wl wallpaper daemon (Vulkan)";
+    presets = [
+      "graphicalSession"
+      "restartOnFailure"
+    ];
     after = [ "graphical-session-pre.target" ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "graphical-session.target" ];
     # Cap restarts: systemd >= 254 defaults to unlimited retries, so a
     # persistent start failure (e.g. single-instance lock held elsewhere)
     # spams the journal forever. 10 tries / 60s then the unit goes failed.
-    startLimitIntervalSec = 60;
-    startLimitBurst = 10;
+    # Strings: nixpkgs folds the former top-level startLimit* options into
+    # unitConfig as strings, so keep that form for a byte-identical evaluation.
+    unitConfig = {
+      StartLimitIntervalSec = "60";
+      StartLimitBurst = "10";
+    };
     serviceConfig = {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.wl}-daemon";
       ExecStartPost = "${wlRestoreRetry}";
-      Restart = "on-failure";
       RestartSec = 2;
     };
   };
 
-  systemd.user.services."wl-monitor-watch" = {
+  systemd.user.services."wl-monitor-watch" = systemdUser.mkUserService {
     description = "Re-apply wallpapers when a monitor (re)connects";
+    presets = [
+      "graphicalSession"
+      "restartOnFailure"
+    ];
     after = [
       "wl-daemon.service"
       "graphical-session-pre.target"
     ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "graphical-session.target" ];
     # Same cap as wl-daemon ([Unit] level): a persistent failure (e.g. every hypr
     # socket dir is a stale leftover, see wl-monitor-watch.sh) must not respawn
-    # every 3s forever.
-    startLimitIntervalSec = 60;
-    startLimitBurst = 10;
+    # every 3s forever. Strings: see the note on wl-daemon above.
+    unitConfig = {
+      StartLimitIntervalSec = "60";
+      StartLimitBurst = "10";
+    };
     serviceConfig = {
       Type = "simple";
-      Restart = "on-failure";
       RestartSec = 3;
       ExecStart = "${wlMonitorWatch}";
     };

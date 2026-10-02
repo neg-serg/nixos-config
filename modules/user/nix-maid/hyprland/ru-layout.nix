@@ -32,6 +32,7 @@ lib.mkIf enabled {
   # hyprctl is injected through the unit's own `path`.
   systemd.user.services.ru-layout = systemdUser.mkUserService {
     description = "Per-window keyboard layout switching (hyprland-per-window-layout)";
+    presets = [ "restartOnFailure" ];
     partOf = [ "hyprland-session.target" ];
     after = [ "graphical-session-pre.target" ];
     wantedBy = [ "hyprland-session.target" ];
@@ -39,7 +40,6 @@ lib.mkIf enabled {
     serviceConfig = {
       Type = "simple";
       ExecStart = lib.getExe pkgs.hyprland-per-window-layout;
-      Restart = "on-failure";
       RestartSec = 2;
     };
   };

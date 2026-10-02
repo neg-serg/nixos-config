@@ -11,6 +11,9 @@ let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
 
+  # Module-shaped systemd user units (lib/systemd-user.nix)
+  systemdUser = config.lib.neg.systemdUser;
+
   # SuperDirt and Vowel now come from nix packages (packages/superdirt,
   # packages/vowel) symlinked into SC's default extension dir below — the
   # manual `install-superdirt-quark` step is gone.
@@ -89,16 +92,18 @@ in
     };
 
     # Keep scsynth's JACK out ports linked to the game-stereo virtual sink.
-    systemd.user.services."supercollider-link" = {
+    systemd.user.services."supercollider-link" = systemdUser.mkUserService {
       description = "Link SuperCollider JACK out ports to game-stereo";
+      presets = [
+        "graphicalWanted"
+        "restartOnFailure"
+      ];
       after = [
         "pipewire.service"
         "wireplumber.service"
       ];
-      wantedBy = [ "graphical-session.target" ];
       serviceConfig = {
         Type = "simple";
-        Restart = "on-failure";
         ExecStart = "${supercolliderLinkScript}";
         Environment = "PATH=${
           lib.makeBinPath [

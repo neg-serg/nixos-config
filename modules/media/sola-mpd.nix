@@ -21,7 +21,10 @@ in
 
     systemd.user.services.sola-mpd = systemdUser.mkUserService {
       description = "Sola MPD — browser MPD client (backend + web UI)";
-      presets = [ "defaultWanted" ];
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.sola-mpd}";
         # The app is an MPD remote control with no authentication, so it is
@@ -33,7 +36,6 @@ in
           "PORT=${toString port}"
           "HOST=127.0.0.1"
         ];
-        Restart = "on-failure";
         RestartSec = "2";
       };
     };

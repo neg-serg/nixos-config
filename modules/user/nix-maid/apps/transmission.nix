@@ -8,6 +8,8 @@
 let
   cfg = config.features.torrent;
   filesRoot = config.lib.neg.path "files";
+  # Module-shaped systemd user units (lib/systemd-user.nix)
+  systemdUser = config.lib.neg.systemdUser;
 
   transmissionPkg = pkgs.transmission_4; # Fast, easy and free BitTorrent client
   confDirNew = "${config.users.users.neg.home}/.config/transmission-daemon";
@@ -41,16 +43,18 @@ lib.mkIf (cfg.enable or false) (
       # Replicate user services
       systemd.user.services = {
         # Transmission
-        transmission-daemon = {
+        transmission-daemon = systemdUser.mkUserService {
+          presets = [
+            "defaultWanted"
+            "restartOnFailure"
+          ];
           description = "transmission service";
           serviceConfig = {
             Type = "simple";
             ExecStart = "${lib.getExe' transmissionPkg "transmission-daemon"} -g ${confDirNew} -f --log-level=error";
-            Restart = "on-failure";
             RestartSec = "30";
             ExecReload = "${lib.getExe' pkgs.util-linux "kill"} -s HUP $MAINPID"; # Set of system utilities for Linux
           };
-          wantedBy = [ "default.target" ];
         };
 
         # Trackers update

@@ -8,6 +8,9 @@
 let
   inherit (config.users.users.neg) home;
 
+  # Module-shaped systemd user units (lib/systemd-user.nix)
+  systemdUser = config.lib.neg.systemdUser;
+
   # --- rmpc: Russian-layout duplicate binds (ЙЦУКЕН) --------------------------
   # GENERATED from lib/ru-keys.nix (neg.ruKeys) — single source of truth, do not
   # edit the generated chars. Bind data lives below (rmpcRuBinds), the latin
@@ -200,12 +203,14 @@ lib.mkMerge [
     # systemd.user.services.mpd is removed to avoid conflicts.
 
     # MPD RIS2 (MPRIS support)
-    systemd.user.services.mpdris2 = {
+    systemd.user.services.mpdris2 = systemdUser.mkUserService {
       description = "MPD MPRIS2 Bridge";
-      wantedBy = [ "default.target" ];
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       serviceConfig = {
         ExecStart = "${lib.getExe' pkgs.mpdris2 "mpDris2"}"; # Start MPD MPRIS2 bridge
-        Restart = "on-failure";
       };
     };
 

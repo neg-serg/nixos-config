@@ -1,13 +1,67 @@
 { lib }:
 let
+  # A preset carries two kinds of defaults:
+  #   - scheduling: after / wants / partOf / wantedBy (accumulated, unique);
+  #   - service:    serviceConfig keys (Restart/RestartSec/Type/…), merged
+  #                 left to right, the caller's own serviceConfig wins last.
+  # Keep every list key present (empty when unused) — the other kind is `or [ ]`-safe.
   presets = {
+    # Autostart in the user manager's default target — the common case.
     defaultWanted = {
       after = [ ];
       wants = [ ];
       wantedBy = [ "default.target" ];
       partOf = [ ];
     };
+    # Long-running unit policy: the repo-wide "restart unless it exited cleanly".
+    # Deliberately NO RestartSec: the delay varies per unit (1…30 s), so a unit
+    # that wants one passes it in its own serviceConfig (the call site keeps the
+    # number, the preset keeps the policy).
+    restartOnFailure = {
+      after = [ ];
+      wants = [ ];
+      wantedBy = [ ];
+      partOf = [ ];
+      service = {
+        Restart = "on-failure";
+      };
+    };
+    # Short-lived helper: no restart policy of its own and no target — the
+    # caller says whether it is wanted by default.target, a timer, or nothing.
+    oneshot = {
+      after = [ ];
+      wants = [ ];
+      wantedBy = [ ];
+      partOf = [ ];
+      service = {
+        Type = "oneshot";
+      };
+    };
+    # Resident in the graphical session (bar/portal/theme helpers).
+    # PartOf: the unit follows the session down. Use `graphicalWanted` when the
+    # unit only needs to be pulled in by the session, not stopped with it.
+    graphicalSession = {
+      after = [ ];
+      wants = [ ];
+      wantedBy = [ "graphical-session.target" ];
+      partOf = [ "graphical-session.target" ];
+    };
+    graphicalWanted = {
+      after = [ ];
+      wants = [ ];
+      wantedBy = [ "graphical-session.target" ];
+      partOf = [ ];
+    };
   };
+
+  # mergeList — preset/argument list merge that a caller can escape.
+  mergeList =
+    accumulated: extra:
+    # `lib.mkForce`/`mkOverride` value (a priority wrapper, not a list): pass it
+    # through untouched — the caller is deliberately overriding another module's
+    # ordering (e.g. tailray after = mkForce [ … ]), so merging would either
+    # crash lib.unique or silently demote the override.
+    if lib.isAttrs extra && (extra ? _type) then extra else lib.unique (accumulated ++ extra);
 
   mkUnitFromPresets =
     args:
@@ -18,32 +72,47 @@ let
           (acc: n: {
             after = acc.after ++ (presets.${n}.after or [ ]);
             wants = acc.wants ++ (presets.${n}.wants or [ ]);
+            requires = acc.requires ++ (presets.${n}.requires or [ ]);
+            bindsTo = acc.bindsTo ++ (presets.${n}.bindsTo or [ ]);
             partOf = acc.partOf ++ (presets.${n}.partOf or [ ]);
             wantedBy = acc.wantedBy ++ (presets.${n}.wantedBy or [ ]);
+            service = acc.service // (presets.${n}.service or { });
           })
           {
             after = [ ];
             wants = [ ];
+            requires = [ ];
+            bindsTo = [ ];
             partOf = [ ];
             wantedBy = [ ];
+            service = { };
           }
           names;
       merged = {
-        after = lib.unique (accum.after ++ (args.after or [ ]));
-        wants = lib.unique (accum.wants ++ (args.wants or [ ]));
-        partOf = lib.unique (accum.partOf ++ (args.partOf or [ ]));
-        wantedBy = lib.unique (accum.wantedBy ++ (args.wantedBy or [ ]));
+        after = mergeList accum.after (args.after or [ ]);
+        wants = mergeList accum.wants (args.wants or [ ]);
+        requires = mergeList accum.requires (args.requires or [ ]);
+        bindsTo = mergeList accum.bindsTo (args.bindsTo or [ ]);
+        partOf = mergeList accum.partOf (args.partOf or [ ]);
+        wantedBy = mergeList accum.wantedBy (args.wantedBy or [ ]);
       };
     in
     {
       Unit =
         lib.optionalAttrs (merged.after != [ ]) { After = merged.after; }
         // lib.optionalAttrs (merged.wants != [ ]) { Wants = merged.wants; }
+        // lib.optionalAttrs (merged.requires != [ ]) { Requires = merged.requires; }
+        // lib.optionalAttrs (merged.bindsTo != [ ]) { BindsTo = merged.bindsTo; }
         // lib.optionalAttrs (merged.partOf != [ ]) { PartOf = merged.partOf; };
       Install = lib.optionalAttrs (merged.wantedBy != [ ]) { WantedBy = merged.wantedBy; };
+      # serviceConfig defaults from the presets; mkUserService merges the
+      # caller's own serviceConfig on top (caller wins per key).
+      Service = accum.service;
     };
 in
-{
+# rec: mkUserOneshot is a thin wrapper over mkUserService (the presets table
+# owns the unit policy), so the two sibling attributes must see each other.
+rec {
   inherit presets mkUnitFromPresets;
 
   # Per-user caretaker pattern, in two value-returning halves (callers keep
@@ -79,23 +148,24 @@ in
     '';
 
   # Login half: oneshot wanted by default.target. Returns the unit definition
-  # (without the attribute name).
+  # (without the attribute name). Thin wrapper over the "oneshot" + "defaultWanted"
+  # presets — the unit policy lives in the preset table above, not here.
   mkUserOneshot =
     {
       description,
       script,
       after ? [ ],
     }:
-    {
-      enable = true;
-      inherit description;
-      wantedBy = [ "default.target" ];
+    mkUserService {
+      presets = [
+        "defaultWanted"
+        "oneshot"
+      ];
+      inherit description after;
       serviceConfig = {
-        Type = "oneshot";
         ExecStart = script;
       };
-    }
-    // lib.optionalAttrs (after != [ ]) { inherit after; };
+    };
 
   # Module-shaped user unit for `systemd.user.services.<name>` — the shape the
   # hand-rolled units in this repo use (description / unitConfig / serviceConfig
@@ -106,24 +176,31 @@ in
   #
   #   systemd.user.services.foo = systemdUser.mkUserService {
   #     description = "…";
-  #     presets = [ "defaultWanted" ];                  # scheduling presets
-  #     serviceConfig = { ExecStart = "…"; Restart = "on-failure"; };
+  #     presets = [ "defaultWanted" "restartOnFailure" ];   # scheduling + service policy
+  #     serviceConfig = { ExecStart = "…"; RestartSec = 3; };  # wins over the preset
   #     unitConfig = { ConditionUser = "!greeter"; };   # optional
   #     path = [ pkgs.inotify-tools ];                  # optional
   #   };
   #
   # Only the fields the caller provides end up in the unit, so a migrated unit
-  # evaluates to exactly the same attrset as the hand-written one.
+  # evaluates to exactly the same attrset as the hand-written one — except for
+  # the keys a preset contributes (a preset adds, the caller's value still wins).
   mkUserService =
     {
       description ? null,
       presets ? [ ],
       after ? [ ],
       wants ? [ ],
+      requires ? [ ],
+      bindsTo ? [ ],
       partOf ? [ ],
       wantedBy ? [ ],
       serviceConfig ? { },
       unitConfig ? { },
+      # Unit-level fields the module shape carries outside unitConfig; emitted
+      # only when non-empty, so a caller that omits them gets the bare shape.
+      documentation ? [ ],
+      environment ? { },
       path ? [ ],
       enable ? true,
     }:
@@ -133,11 +210,15 @@ in
           presets
           after
           wants
+          requires
+          bindsTo
           partOf
           wantedBy
           ;
       };
       unit = schedule.Unit or { };
+      # Preset-provided service keys first, the caller's overrides last.
+      service = (schedule.Service or { }) // serviceConfig;
     in
     {
       inherit enable;
@@ -145,9 +226,74 @@ in
     // lib.optionalAttrs (description != null) { inherit description; }
     // lib.optionalAttrs (path != [ ]) { inherit path; }
     // lib.optionalAttrs (unitConfig != { }) { inherit unitConfig; }
-    // lib.optionalAttrs (serviceConfig != { }) { inherit serviceConfig; }
+    // lib.optionalAttrs (service != { }) { serviceConfig = service; }
+    // lib.optionalAttrs (documentation != [ ]) { inherit documentation; }
+    // lib.optionalAttrs (environment != { }) { inherit environment; }
     // lib.optionalAttrs ((unit.After or [ ]) != [ ]) { after = unit.After; }
     // lib.optionalAttrs ((unit.Wants or [ ]) != [ ]) { wants = unit.Wants; }
+    // lib.optionalAttrs ((unit.Requires or [ ]) != [ ]) { requires = unit.Requires; }
+    // lib.optionalAttrs ((unit.BindsTo or [ ]) != [ ]) { bindsTo = unit.BindsTo; }
+    // lib.optionalAttrs ((unit.PartOf or [ ]) != [ ]) { partOf = unit.PartOf; }
+    // lib.optionalAttrs (((schedule.Install or { }).WantedBy or [ ]) != [ ]) {
+      wantedBy = schedule.Install.WantedBy;
+    };
+
+  # System-level twin of mkUserService for `systemd.services.<name>` — same
+  # presets and merge order, so the system and user sides share one policy
+  # table. The only shape difference is `enable`: the system option already
+  # defaults to true, so the key is emitted only when a caller overrides it
+  # (the user shape always carries it).
+  #
+  #   systemd.services.foo = systemdUser.mkSystemService {
+  #     description = "…";
+  #     presets = [ "restartOnFailure" ];                    # Restart=on-failure
+  #     serviceConfig = { ExecStart = "…"; RestartSec = 5; };  # delay stays here
+  #     wantedBy = [ "multi-user.target" ];
+  #   };
+  mkSystemService =
+    {
+      description ? null,
+      presets ? [ ],
+      after ? [ ],
+      wants ? [ ],
+      requires ? [ ],
+      bindsTo ? [ ],
+      partOf ? [ ],
+      wantedBy ? [ ],
+      serviceConfig ? { },
+      unitConfig ? { },
+      documentation ? [ ],
+      environment ? { },
+      path ? [ ],
+      enable ? null,
+    }:
+    let
+      schedule = mkUnitFromPresets {
+        inherit
+          presets
+          after
+          wants
+          requires
+          bindsTo
+          partOf
+          wantedBy
+          ;
+      };
+      unit = schedule.Unit or { };
+      # Preset-provided service keys first, the caller's overrides last.
+      service = (schedule.Service or { }) // serviceConfig;
+    in
+    lib.optionalAttrs (enable != null) { inherit enable; }
+    // lib.optionalAttrs (description != null) { inherit description; }
+    // lib.optionalAttrs (path != [ ]) { inherit path; }
+    // lib.optionalAttrs (unitConfig != { }) { inherit unitConfig; }
+    // lib.optionalAttrs (service != { }) { serviceConfig = service; }
+    // lib.optionalAttrs (documentation != [ ]) { inherit documentation; }
+    // lib.optionalAttrs (environment != { }) { inherit environment; }
+    // lib.optionalAttrs ((unit.After or [ ]) != [ ]) { after = unit.After; }
+    // lib.optionalAttrs ((unit.Wants or [ ]) != [ ]) { wants = unit.Wants; }
+    // lib.optionalAttrs ((unit.Requires or [ ]) != [ ]) { requires = unit.Requires; }
+    // lib.optionalAttrs ((unit.BindsTo or [ ]) != [ ]) { bindsTo = unit.BindsTo; }
     // lib.optionalAttrs ((unit.PartOf or [ ]) != [ ]) { partOf = unit.PartOf; }
     // lib.optionalAttrs (((schedule.Install or { }).WantedBy or [ ]) != [ ]) {
       wantedBy = schedule.Install.WantedBy;
