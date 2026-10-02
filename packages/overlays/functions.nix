@@ -1,4 +1,5 @@
-{ inputs, paths }: _final: prev:
+{ inputs, paths }:
+_final: prev:
 let
   # mkMeta: shared `meta` builder for local packages — see packages/lib/mkMeta.nix.
   mkMeta = prev.callPackage (paths.path "packages/lib/mkMeta.nix") { };
@@ -14,7 +15,11 @@ let
     if packagesTree ? ${name} && packagesTree.${name} ? default then
       packagesTree.${name}.default
     else
-      throw "neg.functions.pkg: no packages/${name}/default.nix (have: ${builtins.concatStringsSep ", " (builtins.filter (n: packagesTree.${n} ? default) (builtins.attrNames packagesTree))})";
+      throw "neg.functions.pkg: no packages/${name}/default.nix (have: ${
+        builtins.concatStringsSep ", " (
+          builtins.filter (n: packagesTree.${n} ? default) (builtins.attrNames packagesTree)
+        )
+      })";
 in
 {
   # Reach every package as `lib.mkMeta`: callPackage hands pkgs.lib to the

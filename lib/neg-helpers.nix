@@ -162,7 +162,10 @@ rec {
             # (`.foo.default`) and its children (`.foo.bar`). Making the default
             # the whole value of `foo` would hide every sibling module behind it.
             hasDefault = builtins.pathExists (path + "/default.nix");
-            sub = tree { dir = path; inherit extensions; };
+            sub = tree {
+              dir = path;
+              inherit extensions;
+            };
           in
           if sub == { } && !hasDefault then
             null
@@ -224,7 +227,15 @@ rec {
       path = p: root + ("/" + p);
       # A path is used as-is; a string is resolved against the root.
       asDir = dir: if builtins.isPath dir then dir else path dir;
-      treeOf = { dir, extensions ? [ ".nix" ] }: tree { dir = asDir dir; inherit extensions; };
+      treeOf =
+        {
+          dir,
+          extensions ? [ ".nix" ],
+        }:
+        tree {
+          dir = asDir dir;
+          inherit extensions;
+        };
       findIn = find; # alias: a local `find` would shadow the rec-set one
     in
     {
@@ -271,9 +282,7 @@ rec {
       hits = builtins.filter (
         leaf: leaf.name == name || leaf.name == "${name}.nix" || "${leaf.name}.nix" == name
       ) (leaves t);
-      at =
-        leaf:
-        "${builtins.concatStringsSep "." leaf.path} → ${toString leaf.value}";
+      at = leaf: "${builtins.concatStringsSep "." leaf.path} → ${toString leaf.value}";
     in
     if builtins.length hits == 1 then
       (builtins.head hits).value

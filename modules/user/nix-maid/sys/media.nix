@@ -270,7 +270,8 @@ lib.mkMerge [
         text = config.lib.neg.readFile "modules/user/nix-maid/scripts/upscale-image.sh";
       };
       # VapourSynth script for the Alt+I vf toggle (~~/vs/ai/realesrgan.vpy). NOT in scripts/: mpv would load it as a Lua script.
-      ".config/mpv/vs/ai/realesrgan.vpy".text = config.lib.neg.readFile "modules/user/nix-maid/scripts/realesrgan.vpy";
+      ".config/mpv/vs/ai/realesrgan.vpy".text =
+        config.lib.neg.readFile "modules/user/nix-maid/scripts/realesrgan.vpy";
     }
   ))
 ]
