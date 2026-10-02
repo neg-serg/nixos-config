@@ -187,7 +187,10 @@ in
           "snd_hdspm" # conflicts with DKMS snd-hdspe (RME HDSPe AIO Pro)
           "snd_aloop" # races with USB audio, PipeWire provides loopback
           "snd_hda_intel" # unused — GPU audio is not needed
-          "snd_usb_audio" # the onboard ASUS "USB Audio" (0b05:1b7c) is unused — its driver takes ~11 s to load and holds udevadm settle until the boot is over
+          # NB: snd_usb_audio is NOT blacklisted — the Expressive E Osmose (USB MIDI)
+          # needs it. The ASUS "USB Audio" (0b05:1b7c) is instead blocked by a
+          # modalias alias in extraModprobeConfig below: same boot-time win, no
+          # collateral damage to real USB audio/MIDI gear.
         ]
         # TPM transport drivers stay blacklisted unless TPM-backed sudo is
         # enabled (features.security.tpmSudo) — see modules/security/tpm-sudo.nix.
@@ -198,6 +201,17 @@ in
         ]
         ++ obscure_network_protocols
         ++ old_rare_insufficiently_audited_fs;
+
+        # Pin the ASUS onboard "USB Audio" (0b05:1b7c) out of the autoload path:
+        # probing it costs ~11 s and holds udevadm settle until the boot is over.
+        # A modalias alias is used instead of blacklisting the driver, because
+        # snd_usb_audio must stay available for real gear (Expressive E Osmose,
+        # USB MIDI): "off" only kills the modalias lookup for that one VID:PID.
+        # Only the audio interfaces are matched (ic01) — the device's HID
+        # interface (ic03) keeps its usbhid binding.
+        extraModprobeConfig = ''
+          alias usb:v0B05p1B7Cd0016dc*dsc*dp*ic01isc*ip* off
+        '';
 
         kernelParams = lib.mkBefore base_params;
 

@@ -137,6 +137,7 @@
       "hidp" # Bluetooth classic HID profile (BT mice/keyboards/gamepads)
       "uhid" # Userspace HID — HID over GATT via bluez (modern BT gamepads)
       "uvcvideo" # USB webcams (UVC) — module pre-loaded before lockKernelModules; media core is modular so this cannot be built-in
+      "snd-usb-audio" # USB audio class / USB MIDI (Osmose) — pre-loaded before lockKernelModules; sound core is modular (=m) so this cannot be built-in. NB: the ASUS onboard USB Audio (0b05:1b7c) binds again, so its ~11 s probe is back.
     ];
     # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
     # Plain list (no mkForce): lets the mt7927 module append its out-of-tree
