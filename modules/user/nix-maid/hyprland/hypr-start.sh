@@ -43,6 +43,20 @@ systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND
 # this script at all means the session is allowed to start.
 rm -f "${QS_LOGIN_STATE_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell-login}/login-phase"
 
+# A compositor that died leaves its /run/user/$UID/hypr/<signature>/ behind, complete
+# with cold sockets. Anything globbing hypr/*/.socket2.sock can then pick the dead
+# instance: on 2026-09-29 wl-monitor-watch did (alphabetically the older dir came
+# first) and restart-looped 3074 times against a socket nobody listened on. Only the
+# live signature is real — everything else is garbage from a previous compositor.
+if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  log "cleaning stale hypr instance dirs"
+  for d in "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/hypr/*/; do
+    [ -e "$d" ] || continue # unmatched glob
+    [ "$(basename "$d")" = "$HYPRLAND_INSTANCE_SIGNATURE" ] && continue
+    rm -rf -- "$d"
+  done
+fi
+
 if [ "$mode" = "--login" ]; then
   log "login mode: keeping the running session units"
 
