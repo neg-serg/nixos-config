@@ -1,5 +1,6 @@
 {
   lib,
+  paths,
   stdenv,
   glibc,
   libGL,
@@ -17,7 +18,7 @@ stdenv.mkDerivation rec {
   # (direct git pack download hangs, cgit snapshots disabled), same pattern as
   # mprime below. License CC BY-NC-ND 4.0 — binaries shipped unmodified;
   # only the ELF interpreter/rpath are rewritten for the Nix store.
-  src = ./../../files/sources/lsfg-vk-2.0.0-rc1.tar;
+  src = paths.path "files/sources/lsfg-vk-2.0.0-rc1.tar";
 
   nativeBuildInputs = [
     patchelf

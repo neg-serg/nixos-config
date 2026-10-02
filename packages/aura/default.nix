@@ -1,12 +1,13 @@
 {
   stdenv,
   lib,
+  paths,
 }:
 stdenv.mkDerivation {
   pname = "vicinae-aura";
   version = "0.1.0";
 
-  src = ../../files/gui/vicinae-extensions/aura;
+  src = paths.path "files/gui/vicinae-extensions/aura";
 
   installPhase = ''
     mkdir -p $out

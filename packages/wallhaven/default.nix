@@ -1,12 +1,13 @@
 {
   stdenv,
   lib,
+  paths,
 }:
 stdenv.mkDerivation {
   pname = "vicinae-wallhaven";
   version = "0.1.0";
 
-  src = ../../files/gui/vicinae-extensions/wallhaven;
+  src = paths.path "files/gui/vicinae-extensions/wallhaven";
 
   installPhase = ''
     mkdir -p $out

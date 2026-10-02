@@ -17,10 +17,10 @@ in
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
   wl = callPkg (inputs.self + "/packages/wl") { };
-  wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
-  wallhaven = prev.callPackage (inputs.self + "/packages/wallhaven") { };
-  hyprwhspr = prev.callPackage (inputs.self + "/packages/hyprwhspr") { };
-  aura = prev.callPackage (inputs.self + "/packages/aura") { }; # the emotion/CBT diary: record a note from the launcher
+  wl-switcher = callPkg (inputs.self + "/packages/wl-switcher") { };
+  wallhaven = callPkg (inputs.self + "/packages/wallhaven") { };
+  hyprwhspr = callPkg (inputs.self + "/packages/hyprwhspr") { };
+  aura = callPkg (inputs.self + "/packages/aura") { }; # the emotion/CBT diary: record a note from the launcher
   camillagui = callPkg (inputs.self + "/packages/camillagui") { }; # web GUI for CamillaDSP
   atrium = callPkg (inputs.self + "/packages/atrium") { }; # Wayland multiseat display manager
 

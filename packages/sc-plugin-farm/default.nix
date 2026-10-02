@@ -12,6 +12,7 @@
   stdenv,
   supercollider,
   fetchFromGitHub,
+  paths,
 }:
 let
   # nova-simd (SC's SIMD helper headers) — needed by MyUGens / DWGReverb via
@@ -49,11 +50,11 @@ stdenv.mkDerivation {
     ln -s ${novaTt} $out/external_libraries/nova-tt
     # SC_Reply.cpp - needed by flucoma's FLUID_SC_COPYREPLYADDR (compiles
     # this SC source against the plugin headers)
-    cp ${../../files/sources/SC_Reply.cpp} $out/common/SC_Reply.cpp
-    cp ${../../files/sources/SC_ReplyImpl.hpp} $out/common/SC_ReplyImpl.hpp
-    cp ${../../files/sources/SC_Win32Utils.h} $out/common/SC_Win32Utils.h
-    cp ${../../files/sources/SC_Errors.h} $out/common/SC_Errors.h
-    cp ${../../files/sources/scsynthsend.h} $out/common/scsynthsend.h
+    cp ${paths.path "files/sources/SC_Reply.cpp"} $out/common/SC_Reply.cpp
+    cp ${paths.path "files/sources/SC_ReplyImpl.hpp"} $out/common/SC_ReplyImpl.hpp
+    cp ${paths.path "files/sources/SC_Win32Utils.h"} $out/common/SC_Win32Utils.h
+    cp ${paths.path "files/sources/SC_Errors.h"} $out/common/SC_Errors.h
+    cp ${paths.path "files/sources/scsynthsend.h"} $out/common/scsynthsend.h
   '';
 
   meta = with lib; {
