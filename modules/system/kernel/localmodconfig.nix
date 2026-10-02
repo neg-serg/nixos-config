@@ -1,4 +1,10 @@
-{ lib, pkgs, neg, repoRoot, ... }:
+{
+  lib,
+  pkgs,
+  neg,
+  repoRoot,
+  ...
+}:
 
 let
   # Pure resolver: this file reads the repo in a top-level `let`, where

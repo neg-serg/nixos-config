@@ -11,7 +11,15 @@ let
   guiEnabled = config.lib.neg.enabled "gui";
 
   environment = import ./environment.nix { inherit lib pkgs; };
-  services = import ./services.nix { inherit lib pkgs inputs neg repoRoot; };
+  services = import ./services.nix {
+    inherit
+      lib
+      pkgs
+      inputs
+      neg
+      repoRoot
+      ;
+  };
   files = import ./files.nix { inherit lib neg config; };
 
   # hy3 and hyprspace were removed for the nixos-unstable (Hyprland 0.56)

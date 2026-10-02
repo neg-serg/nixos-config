@@ -10,16 +10,26 @@ let
 
   libTree = neg.tree { dir = ./.; };
   modules = neg.tree { dir = ../modules; };
-  luaTree = neg.tree { dir = ../files/mpv; extensions = [ ".lua" ]; };
-  binTree = neg.tree { dir = ../packages/local-bin/bin; extensions = [ ".sh" ]; };
-  anyTree = neg.tree { dir = ../files/mpv; extensions = "any"; };
-  artTree = neg.tree { dir = ../files/art/fun-art; extensions = "any"; };
+  luaTree = neg.tree {
+    dir = ../files/mpv;
+    extensions = [ ".lua" ];
+  };
+  binTree = neg.tree {
+    dir = ../packages/local-bin/bin;
+    extensions = [ ".sh" ];
+  };
+  anyTree = neg.tree {
+    dir = ../files/mpv;
+    extensions = "any";
+  };
+  artTree = neg.tree {
+    dir = ../files/art/fun-art;
+    extensions = "any";
+  };
   rooted = neg.rooted ../.;
 
   missing = builtins.tryEval (neg.find libTree "definitely-not-a-file");
-  leaf =
-    name: t:
-    builtins.head (builtins.filter (l: l.name == name) (neg.leaves t));
+  leaf = name: t: builtins.head (builtins.filter (l: l.name == name) (neg.leaves t));
 
   check = cond: msg: {
     inherit msg;
@@ -29,7 +39,9 @@ let
   checks = [
     # tree: names instead of paths; default.nix addresses its own directory
     (check (modules ? core) "a directory becomes a key")
-    (check (modules.core.default == ../modules/core/default.nix) "default.nix is exposed as <dir>.default")
+    (check (
+      modules.core.default == ../modules/core/default.nix
+    ) "default.nix is exposed as <dir>.default")
     (check (modules.core.neg == ../modules/core/neg.nix) "siblings stay addressable next to it")
     (check (
       neg.tree { dir = ../packages/local-bin/bin; } == { }
@@ -71,7 +83,12 @@ let
 
     # leaves: the flat index find searches (name + full key path)
     (check ((leaf "systemd-user" libTree).path == [ "systemd-user" ]) "leaves carry the key path")
-    (check ((leaf "neg" modules).path == [ "core" "neg" ]) "leaves carry the nested key path")
+    (check (
+      (leaf "neg" modules).path == [
+        "core"
+        "neg"
+      ]
+    ) "leaves carry the nested key path")
 
     # importDir nameFilter: the hook modules/default.nix uses for domainFilter
     (check (
