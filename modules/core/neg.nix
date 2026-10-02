@@ -13,6 +13,13 @@ let
   # Effective passwd entry for the primary user (may be absent in trimmed
   # evals; each field below falls back individually).
   mainUserEntry = lib.attrByPath [ "users" "users" mainUser ] { } config;
+
+  # Repo-root resolver (lib/neg-helpers.nix `rooted`): path / pathExists /
+  # readFile / tree / find. Spread into lib.neg below, so
+  # `config.lib.neg.path "files/x"` and `config.lib.neg.repo.find …` are the
+  # same thing, and every call site outside a module context can build the very
+  # same object from its own repoRoot.
+  repo = neg.rooted repoRoot;
 in
 {
   options.neg = {
@@ -33,7 +40,7 @@ in
     # Expose helpers under config.lib.neg: the pure neg-helpers from
     # specialArgs (mkHomeFiles, importDir, ...) extended with helpers that
     # close over config.
-    lib.neg = neg // rec {
+    lib.neg = neg // repo // rec {
       # Primary user identity — single source for the preamble
       # (`user = config.users.main.name or "neg"` plus the attrByPath lookups
       # for home/group) that modules used to repeat.
@@ -63,24 +70,24 @@ in
       quickshellEnabled =
         enabled "gui" && enabled "gui.qt" && enabled "gui.quickshell" && !(enabled "devSpeed");
 
-      # Resolve a repo-root-relative path (e.g. "files/gui/vicinae-theme.toml") to an
-      # absolute path. repoRoot is a real path (not a string), so the result
-      # carries Nix path context: when used in a derivation or home file it is
-      # copied into the store and tracked as a closure dependency — the same
-      # behavior as old relative `./../../` references. Do NOT return a plain
-      # string here: strings are not added to derivation closures and their
-      # files can be garbage-collected away.
-      #
-      # NB: keep the leading slash inside the same string operand —
-      # `path + "/"` normalizes the trailing slash away and the join breaks.
-      path = p: config.neg.repoRoot + ("/" + p);
+      # Repo-root resolver (`path`, `pathExists`, `readFile`, `tree`, `find`) is
+      # spread in above from the top-level `repo` binding: repoRoot is a real
+      # path, so `repo.path "files/x"` carries Nix path context — used in a
+      # derivation or a home file the target is copied into the store and tracked
+      # as a closure dependency, exactly like the old relative `./../../`
+      # references. It must never become a plain string: strings are not added to
+      # derivation closures and their files can be garbage-collected away.
+      # NB: the leading slash stays inside the same string operand — `path + "/"`
+      # normalizes the trailing slash away and the join breaks.
 
-      # Existence check for optional repo files (no eval error when missing).
-      pathExists = p: builtins.pathExists (config.neg.repoRoot + ("/" + p));
-
-      # Read a repo-root-relative file: the one-line form of
-      # `builtins.readFile (path "…")`.
-      readFile = p: builtins.readFile (path p);
+      # Data index of files/ — the by-name alternative to string literals:
+      # `config.lib.neg.files.mpv."hdr-auto-switch"` instead of
+      # `path "files/mpv/hdr-auto-switch.lua"`, so a typo lists the real keys.
+      # Lazily built: nothing walks files/ unless something reads this.
+      files = repo.tree {
+        dir = "files";
+        extensions = "any";
+      };
 
       # Per-user systemd unit helpers (lib/systemd-user.nix). The module closes
       # over `lib` only, so callers no longer import it themselves.
