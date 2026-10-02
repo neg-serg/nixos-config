@@ -1,4 +1,10 @@
-inputs: _final: prev: {
+inputs: final: prev:
+let
+  call = final.neg.functions.callPkg;
+  pkg = final.neg.functions.pkg;
+  paths = final.neg.functions.paths;
+in
+{
   # bpftrace 0.25+ works with LLVM 22; use same version as the rest of the config
   bpftrace = prev.bpftrace.override { llvmPackages = prev.llvmPackages_22; };
   # Security: avoid insecure Mbed TLS 2 by aliasing to v3
@@ -10,7 +16,7 @@ inputs: _final: prev: {
   });
 
   # Reserved for development/toolchain overlays
-  mojo = prev.callPackage ../mojo { }; # Mojo programming language (PyPI wheels repackaged)
+  mojo = call (pkg "mojo") { }; # Mojo programming language (PyPI wheels repackaged)
 
   # Patch pre-commit to add a space before "Skipped" message
   pre-commit = prev.pre-commit.overrideAttrs (old: {
@@ -24,10 +30,10 @@ inputs: _final: prev: {
   boost179 = prev.boost179.overrideAttrs (old: {
     patches =
       builtins.filter (p: (builtins.match ".*libcpp15.*" (p.name or "")) == null) (old.patches or [ ])
-      ++ [ ./../torch-rocm/boost-libcpp15.patch ];
+      ++ [ (paths.path "packages/torch-rocm/boost-libcpp15.patch") ];
   });
 
   # ROCm PyTorch env (gfx1201). See packages/torch-rocm/default.nix.
-  torchRocmEnv = import ../torch-rocm { inherit inputs; };
+  torchRocmEnv = import (pkg "torch-rocm") { inherit inputs; };
 
 }

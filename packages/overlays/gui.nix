@@ -1,6 +1,8 @@
 inputs: final: prev:
 let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
+  pkg = final.neg.functions.pkg; # name → packages/<name>, no `../` counting
+  paths = final.neg.functions.paths; # repo-root resolver, for the patch files
 in
 {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
@@ -13,16 +15,16 @@ in
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
   hyprland = prev.hyprland.override { wrapRuntimeDeps = false; };
-  andromeda-gtk-theme = callPkg (inputs.self + "/packages/andromeda-gtk-theme") { };
-  flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
-  matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
-  wl = callPkg (inputs.self + "/packages/wl") { };
-  wl-switcher = callPkg (inputs.self + "/packages/wl-switcher") { };
-  wallhaven = callPkg (inputs.self + "/packages/wallhaven") { };
-  hyprwhspr = callPkg (inputs.self + "/packages/hyprwhspr") { };
-  aura = callPkg (inputs.self + "/packages/aura") { }; # the emotion/CBT diary: record a note from the launcher
-  camillagui = callPkg (inputs.self + "/packages/camillagui") { }; # web GUI for CamillaDSP
-  atrium = callPkg (inputs.self + "/packages/atrium") { }; # Wayland multiseat display manager
+  andromeda-gtk-theme = callPkg (pkg "andromeda-gtk-theme") { };
+  flight-gtk-theme = callPkg (pkg "flight-gtk-theme") { };
+  matugen-themes = callPkg (pkg "matugen-themes") { };
+  wl = callPkg (pkg "wl") { };
+  wl-switcher = callPkg (pkg "wl-switcher") { };
+  wallhaven = callPkg (pkg "wallhaven") { };
+  hyprwhspr = callPkg (pkg "hyprwhspr") { };
+  aura = callPkg (pkg "aura") { }; # the emotion/CBT diary: record a note from the launcher
+  camillagui = callPkg (pkg "camillagui") { }; # web GUI for CamillaDSP
+  atrium = callPkg (pkg "atrium") { }; # Wayland multiseat display manager
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
@@ -56,9 +58,9 @@ in
       # (ported to src/lib/fuzzy/include/fuzzy/lusty.hpp) instead of fzf's v2
       # scorer, so the pickers, the tray and the launcher rank identically.
       patches = (old.patches or [ ]) ++ [
-        ./../vicinae-tab-qml.patch
-        ./../vicinae-dmenu-fix.patch
-        ./../vicinae-lusty-search.patch
+        (paths.path "packages/vicinae-tab-qml.patch")
+        (paths.path "packages/vicinae-dmenu-fix.patch")
+        (paths.path "packages/vicinae-lusty-search.patch")
       ];
       apiDeps = prev.fetchNpmDeps {
         src = "${src}/src/typescript/api";

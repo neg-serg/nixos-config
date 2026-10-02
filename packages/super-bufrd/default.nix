@@ -6,6 +6,8 @@
 #   copied into the standard SC layout here.
 # Source: https://github.com/elgiano/super-bufrd
 {
+  # allow-relative-file: every `../` in this file is the unpacked source tree's
+  # own layout (../SuperBufRd.sc, ../HelpSource in installPhase), not a repo path.
   lib,
   stdenv,
   cmake,
