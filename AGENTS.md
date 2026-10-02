@@ -31,7 +31,8 @@ Scope
 
 Quick Commands
 - Quick switch (user, primary): `nh os switch /etc/nixos#odin --option substitute false`
-- Agent rollout (passwordless, preferred for the agent): `sudo -n nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`
+- Rollout (build+switch) asks for a password — the NOPASSWD entry was removed on purpose
+  (`modules/security/default.nix`): `sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`
 - Build & switch (alternative): `sudo nixos-rebuild switch --flake .#odin --option substitute false`
 - Build only: `nixos-rebuild build --flake .#odin --option substitute false`
 - Format all: `just fmt`
@@ -194,24 +195,29 @@ Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
   `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
-- Rollouts (rebuild+switch) are agent-run, not user-run. Never ask the user to run
-  one, and never ask for a password: `sudo -n nixos-rebuild` is whitelisted through
-  sudoers NOPASSWD (see docs/howto/tpm-sudo.md), so `-n` cannot prompt — run it
-  directly. The `sudo` itself is not interchangeable with a bare command, though:
-  the agent is uid 1000, and the activation step writes the root-owned
-  `/nix/var/nix/profiles` (`drwxr-xr-x root root`, verified not writable by `neg`;
-  nixos-rebuild does not escalate on its own). A bare `nixos-rebuild switch` builds
-  the whole system and only then fails at activation, so it wastes a full
-  source-build. Preferred form (redirect stdin when it is a socket — agent/CI
-  shells; see `.agent/workflows/rebuild.md`):
-  `sudo -n nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`.
-  The user's `nh os switch` binding uses the same flag
-  (`nh os switch /etc/nixos#odin --option substitute false`); keep that
-  convention in any new bindings/scripts. NOTE: arbitrary `sudo` is NOT
-  passwordless — only the whitelisted commands (nixos-rebuild, reboot,
-  poweroff, suspend, dmesg, systemctl xray/sing-box, ...). Before rolling
-  out, `git status` must be clean/intentional: nixos-rebuild consumes the
-  working tree, so concurrent foreign commits/edits would be baked in.
+- Rollout (rebuild+switch) needs root and **asks for a password**, so the agent takes it as far as
+  it goes without root and then hands the switch over. The `nixos-rebuild` NOPASSWD entry was
+  deliberately removed (`modules/security/default.nix`): it was passwordless arbitrary root, because
+  the flake it activates lives in the user-writable `/etc/nixos`. `features.security.tpmSudo` is off
+  (`hosts/odin/default.nix`, and there is no `/dev/tpmrm0` on this host), so nothing short of the
+  password unlocks `sudo`. Never ask for the password and never re-add the whitelist.
+- Agent-side rollout, in order: `git status` clean/intentional (nixos-rebuild consumes the working
+  tree, so foreign edits would be baked in) → `just fmt` → `just lint` → build the closure
+  (`nix build .#nixosConfigurations.odin.config.system.build.toplevel --out-link result
+  --option substitute false`) → verify what the build actually contains (grep the store paths
+  `result` points at). Then hand the user the switch command:
+  `sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`.
+  The stdin redirect matters when the caller's stdin is a socket (agent/CI shells): `systemd-run
+  --pipe` refuses that, so the build succeeds and nothing is applied — see
+  `.agent/workflows/rebuild.md`.
+- A bare `nixos-rebuild switch` is not interchangeable with the `sudo` form: the activation step
+  writes the root-owned `/nix/var/nix/profiles` (`drwxr-xr-x root root`, not writable by `neg`), and
+  nixos-rebuild does not escalate by itself — it would build the whole system and only then fail.
+- Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
+  (`systemctl start/stop xray|sing-box-tun`, `reboot`, `poweroff`, `suspend`, `dmesg`, `ryzenadj`,
+  `gpu-oc`, `glm-adapter-priv`); everything else, `sudo -n` included, prompts.
+- The user's own switch binding is `nh os switch /etc/nixos#odin --option substitute false` — keep
+  that flag convention in any new bindings/scripts.
 - The repo's own targets already pass this flag: `just deploy*`, `just check`,
   `just docs-modules`, `just flag`. Do not introduce nix invocations without it.
 
