@@ -1,3 +1,4 @@
+{ config, ... }:
 {
-  services.udev.extraRules = builtins.readFile ../../../files/hardware/udev/default.rules;
+  services.udev.extraRules = config.lib.neg.readFile "files/hardware/udev/default.rules";
 }
