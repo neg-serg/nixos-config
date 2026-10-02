@@ -25,11 +25,16 @@ profile:
 1. Removes a leftover `node_modules/@deepseek-ai` store link (see below).
 1. Installs/upgrades `@deepseek-harness-tui/dsh-tui` — the floor is `0.10.1`; a newer version
    installed by hand is left alone.
+1. Re-applies the session-visibility patch to the installed TUI package
+   (`dsh-tui-session-visibility-patch.py`; a pnpm install replaces the file, so it cannot be a
+   one-off edit).
 1. Keeps `dsh-free-search` on the 0.1.5 settings API (`FS_WANT`).
 1. Rewrites `cordis.patch.yml` through `dsh-tui-preset-patch.py`: the fallback preset row, the
    plugin roster, the free-search rows.
 1. Seeds the repo-local plugins the neg preset mounts (`dsh-advisor`, `dsh-category-skill-reminder`,
    `dsh-ttsr`, plus the roster seeds).
+1. Mounts the roster rows, including the `session-query-sqlite` override that turns the shipped
+   `openAt: never` back into a durable search index.
 1. Copies the neg theme and seeds `theme.json` / `lang.json` while unset.
 
 ## Facts that cost a boot each
@@ -53,19 +58,16 @@ profile:
   `~/.dsh-tui/theme.json`. `neg.json` uses that schema and the palette the rest of the system uses
   (kitty `theme.conf`, `neg.omp.json`).
 
-## Verify
+## Sessions and search
 
-```bash
-# composition only (no UI): no patch errors on stderr
-dsh --profile tui --dump-config > /tmp/tui.yml   # stderr must be empty
-rg -n "^- id: dsh-tui$|^- id: dsh-tui-agent-presets$" /tmp/tui.yml
-
-# boot through a pty and look at the banner
-timeout 30 script -qec 'stty rows 40 cols 120; dsh --profile tui' /tmp/tui.log
-```
-
-Manual install of a newer release (the caretaker keeps it if it is ≥ the floor):
-
-```bash
-cd ~/.dsh/profiles/tui && dsh plugin --profile tui add @deepseek-harness-tui/dsh-tui@latest
-```
+- **A hidden session is a bug in the index, not a lost log.** dsh-TUI keeps
+  `~/.dsh-tui/session-index.json` (titles, `hasPrompt`, per-file revision) and `/resume` lists only
+  entries whose `hasPrompt` is true. The 0.10.x store derives that flag from the log's head window
+  and, across an append-only revision, copies it from the previous entry verbatim (`list.js`:
+  `hasPrompt = previous.hasPrompt;`). A session first indexed while its log was still a sub-64-KiB
+  stub is therefore stored as `hasPrompt: false` and stays hidden even after it grows — including
+  after a crash mid-turn, which is exactly when the user goes looking for it. The caretaker patches
+  both carry-forward sites to `hasPrompt = hasPrompt || previous.hasPrompt;` (monotonic, safe
+  because logs are append-only); the entries already poisoned in the index have to be repaired in
+  place (set the flag to true for the affected ids) — the patched store keeps the corrected value,
+  since the cache-hit path reuses it verbatim.
