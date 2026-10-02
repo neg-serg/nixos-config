@@ -57,12 +57,6 @@
       url = "git+ssh://git@github.com/neg-serg/wl?ref=fix/layer-backdrop-damage";
       flake = false;
     };
-    # xdph used to follow the (now removed) hyprland input; pinned here to the
-    # same rev the hyprland flake carried, so the portal version is unchanged.
-    xdg-desktop-portal-hyprland = {
-      url = "github:hyprwm/xdg-desktop-portal-hyprland/08d99f727944dd15e4740090305e31c5fb92a50a";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     iosevka-neg = {
       url = "github:neg-serg/iosevka-neg";
