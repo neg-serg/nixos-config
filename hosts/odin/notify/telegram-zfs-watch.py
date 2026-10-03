@@ -1,3 +1,4 @@
+import glob
 import json
 import pathlib
 import re
@@ -10,6 +11,21 @@ STATE_DIR = pathlib.Path("@stateDir@")
 ZPOOL = "/run/current-system/sw/bin/zpool"
 ZFS = "/run/current-system/sw/bin/zfs"
 SENDER = "@sender@/bin/telegram-send"
+NVME = "@nvmeCli@"
+
+# NVMe health comes straight from the drives' SMART log (the host runs with
+# services.smartd disabled, and these pools sit on single disks: tank and zero
+# have no mirror at all). Devices are discovered by glob, so a new drive shows
+# up without touching the unit.
+NVME_GLOB = "@nvmeGlob@"
+# Controller-reported temperature ceiling before the alert (drives throttle
+# around 80°C and the spec's critical trip is usually 85°C).
+NVME_MAX_TEMP_C = float("@nvmeMaxTempC@")
+# Spare blocks below this share, or below the drive's own threshold, mean the
+# wear-out reserve is being consumed.
+NVME_MIN_SPARE_PERCENT = float("@nvmeMinSpare@")
+# Percentage of rated endurance already written.
+NVME_MAX_USED_PERCENT = float("@nvmeMaxUsed@")
 
 # Datasets covered by the sanoid policy (modules/system/zfs-snapshots.nix);
 # empty when the feature is off, which skips the snapshot checks entirely.
@@ -206,6 +222,40 @@ def dataset_problems(dataset, now):
     return problems
 
 
+def nvme_problems(device):
+    # Read the drive's own SMART log. Reasons are human-readable so the alert
+    # says what to replace and why.
+    try:
+        out = run_cmd([NVME, "smart-log", "--output-format=json", device])
+    except subprocess.CalledProcessError:
+        return ["smart-log не читается"]
+    try:
+        log = json.loads(out)
+    except ValueError:
+        return ["smart-log вернул не JSON"]
+    problems = []
+    critical = int(log.get("critical_warning", 0))
+    if critical:
+        problems.append("critical_warning=0x{0:x}".format(critical))
+    temp = log.get("temperature")
+    if temp is not None and temp >= NVME_MAX_TEMP_C:
+        problems.append("температура {0:g}°C".format(temp))
+    spare = log.get("available_spare")
+    threshold = log.get("available_spare_threshold")
+    if spare is not None and (
+        spare < NVME_MIN_SPARE_PERCENT
+        or (threshold is not None and spare < threshold)
+    ):
+        problems.append("available_spare {0:g}%".format(spare))
+    used = log.get("percentage_used")
+    if used is not None and used >= NVME_MAX_USED_PERCENT:
+        problems.append("износ {0:g}%".format(used))
+    media_errors = int(log.get("media_errors", 0))
+    if media_errors:
+        problems.append("media_errors={0}".format(media_errors))
+    return problems
+
+
 def load_state():
     try:
         return json.loads(STATE_FILE.read_text())
@@ -320,6 +370,35 @@ def main():
                 had_pending = True
         new_datasets[dataset] = {"ok": cur_ok, "problems": problems}
 
+    nvmes = data.get("nvme", {})
+    new_nvmes = {}
+    for device in sorted(glob.glob(NVME_GLOB)):
+        name = device.rsplit("/", 1)[-1]
+        try:
+            problems = nvme_problems(device)
+        except Exception as exc:  # defensive: never crash on nvme trouble
+            print(
+                "zfs-watch: nvme check {0} failed: {1}".format(name, exc),
+                file=sys.stderr,
+            )
+            continue
+        cur_ok = not problems
+        prev = nvmes.get(name)
+        if prev is not None:
+            # Same transition-only rule as the pools: baseline on first run.
+            prev_ok = bool(prev.get("ok", True))
+            if prev_ok and not cur_ok:
+                messages.append(
+                    "\u26a0\ufe0f NVMe {0}: {1}".format(
+                        name, "; ".join(problems)
+                    )
+                )
+                had_pending = True
+            elif (not prev_ok) and cur_ok:
+                messages.append("\u2705 NVMe {0}: recovered".format(name))
+                had_pending = True
+        new_nvmes[name] = {"ok": cur_ok, "problems": problems}
+
     # Deliver everything. If any transition/scrub message cannot be
     # delivered, keep the previous state so the same transition is retried
     # next run (no loss, still no spam) instead of being swallowed.
@@ -327,6 +406,7 @@ def main():
     if not had_pending or delivered:
         data["pools"] = new_pools
         data["datasets"] = new_datasets
+        data["nvme"] = new_nvmes
         STATE_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2))
 
 
