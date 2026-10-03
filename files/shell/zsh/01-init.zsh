@@ -1,4 +1,5 @@
-export PATH="$HOME/.local/bin:$PATH"   # user-local bin (fetch wrapper)
+typeset -U path # PATH/path duplicate-free (path is tied to PATH)
+path=("$HOME/bin" /bin "$HOME/.local/bin" $path) # user bins ahead of the session PATH
 
 setopt always_to_end # When completing from the middle of a word, move the cursor to the end of the word
 setopt auto_cd # if a command is issued that can't be executed as a normal command, and the command is the name of a directory, perform the cd command to that directory.
@@ -56,7 +57,6 @@ setopt rc_quotes # quotes with ''
 _exists() { (( $+commands[$1] )) }
 watch=(notme root) # watch for everyone but me and root
 typeset -U path cdpath fpath manpath # automatically remove duplicates from these arrays
-typeset -gx PATH=$HOME/bin:/bin:$PATH
 _exists nvim && {
     typeset -gx EDITOR="nvim"
     typeset -gx VISUAL="${EDITOR}"
