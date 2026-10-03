@@ -22,5 +22,8 @@
     secrets = {
       enable = mkBool "enable secrets tooling (pass, YubiKey helpers)" true;
     };
+
+    # Freedesktop Trash: entries older than 30 days go away on their own.
+    trashCleanup.enable = mkBool "auto-empty Trash entries older than 30 days" true;
   };
 }
