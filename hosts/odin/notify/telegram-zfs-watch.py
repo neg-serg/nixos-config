@@ -3,11 +3,24 @@ import pathlib
 import re
 import subprocess
 import sys
+import time
 
 STATE_FILE = pathlib.Path("@stateFile@")
 STATE_DIR = pathlib.Path("@stateDir@")
 ZPOOL = "/run/current-system/sw/bin/zpool"
+ZFS = "/run/current-system/sw/bin/zfs"
 SENDER = "@sender@/bin/telegram-send"
+
+# Datasets covered by the sanoid policy (modules/system/zfs-snapshots.nix);
+# empty when the feature is off, which skips the snapshot checks entirely.
+SNAPSHOT_DATASETS = "@snapshotDatasets@".split()
+# The policy snapshots hourly, so three hours without a fresh snapshot means
+# the timer, the pool import or sanoid itself is broken.
+SNAPSHOT_MAX_AGE_HOURS = float("@snapshotMaxAgeHours@")
+# Snapshots pin every block that was changed or deleted since they were taken;
+# warn when that holding exceeds a share of the pool's free space, so a pool
+# cannot fill up unnoticed (gamez/main@migrate-20260708 held 202G at one point).
+USEDSNAP_ALERT_PERCENT = float("@snapshotUsedSnapPercent@")
 
 # vdev states that indicate a fault even when the error counters are 0.
 FAULT_STATES = {"DEGRADED", "FAULTED", "OFFLINE", "UNAVAIL", "REMOVED"}
@@ -119,6 +132,80 @@ def parse_status(text):
     return state, problems, scrub
 
 
+def human_bytes(size):
+    value = float(size)
+    for unit in ("B", "K", "M", "G", "T"):
+        if value < 1024 or unit == "T":
+            return "{0:.1f}{1}".format(value, unit)
+        value /= 1024
+    return "{0:.1f}T".format(value)
+
+
+def dataset_problems(dataset, now):
+    # Read-only facts about one dataset: is it there, how old is its newest
+    # snapshot, how much space do snapshots pin, how much free space is left
+    # in its pool. Returns human-readable problems; empty list = healthy.
+    exists = (
+        subprocess.run(
+            [ZFS, "list", "-H", "-o", "name", dataset],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode
+        == 0
+    )
+    if not exists:
+        return [
+            "\u0434\u0430\u0442\u0430\u0441\u0435\u0442 \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442"
+        ]
+    out = run_cmd(
+        [
+            ZFS,
+            "list",
+            "-H",
+            "-p",
+            "-d",
+            "1",
+            "-t",
+            "snapshot",
+            "-o",
+            "creation",
+            "-s",
+            "creation",
+            dataset,
+        ]
+    )
+    stamps = [int(line) for line in out.split() if line.isdigit()]
+    problems = []
+    if not stamps:
+        problems.append(
+            "\u043d\u0435\u0442 \u0441\u043d\u0430\u043f\u0448\u043e\u0442\u043e\u0432"
+        )
+    else:
+        age = (now - max(stamps)) / 3600.0
+        if age > SNAPSHOT_MAX_AGE_HOURS:
+            problems.append(
+                "\u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u0441\u043d\u0430\u043f\u0448\u043e\u0442 {0:.1f} \u0447 \u043d\u0430\u0437\u0430\u0434".format(
+                    age
+                )
+            )
+    pool = dataset.split("/")[0]
+    free = int(
+        run_cmd([ZPOOL, "list", "-H", "-p", "-o", "free", pool]).strip()
+    )
+    usedsnap = int(
+        run_cmd([ZFS, "list", "-H", "-p", "-o", "usedsnap", dataset]).strip()
+    )
+    if free > 0 and usedsnap > free * USEDSNAP_ALERT_PERCENT / 100.0:
+        problems.append(
+            "USEDSNAP {0} > {1:g}% \u0441\u0432\u043e\u0431\u043e\u0434\u043d\u043e\u0433\u043e \u043c\u0435\u0441\u0442\u0430 ({2})".format(
+                human_bytes(usedsnap),
+                USEDSNAP_ALERT_PERCENT,
+                human_bytes(free),
+            )
+        )
+    return problems
+
+
 def load_state():
     try:
         return json.loads(STATE_FILE.read_text())
@@ -201,12 +288,45 @@ def main():
                     had_pending = True
         new_pools[pool] = entry
 
+    datasets = data.get("datasets", {})
+    new_datasets = {}
+    for dataset in SNAPSHOT_DATASETS:
+        try:
+            problems = dataset_problems(dataset, time.time())
+        except Exception as exc:  # defensive: never crash on zfs trouble
+            print(
+                "zfs-watch: snapshot check {0} failed: {1}".format(
+                    dataset, exc
+                ),
+                file=sys.stderr,
+            )
+            continue
+        cur_ok = not problems
+        prev = datasets.get(dataset)
+        if prev is not None:
+            # Same transition-only rule as the pools: baseline on first run.
+            prev_ok = bool(prev.get("ok", True))
+            if prev_ok and not cur_ok:
+                messages.append(
+                    "\u26a0\ufe0f ZFS snapshots {0}: {1}".format(
+                        dataset, "; ".join(problems)
+                    )
+                )
+                had_pending = True
+            elif (not prev_ok) and cur_ok:
+                messages.append(
+                    "\u2705 ZFS snapshots {0}: recovered".format(dataset)
+                )
+                had_pending = True
+        new_datasets[dataset] = {"ok": cur_ok, "problems": problems}
+
     # Deliver everything. If any transition/scrub message cannot be
     # delivered, keep the previous state so the same transition is retried
     # next run (no loss, still no spam) instead of being swallowed.
     delivered = all(send_telegram(m) for m in messages) if messages else True
     if not had_pending or delivered:
         data["pools"] = new_pools
+        data["datasets"] = new_datasets
         STATE_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2))
 
 

@@ -24,10 +24,22 @@ let
   stateDir = "/var/lib/telegram-zfs-watch";
   stateFile = "${stateDir}/state.json";
 
+  # Snapshot checks follow the sanoid policy itself (single source of truth:
+  # services.sanoid.datasets), so the watcher never audits a dataset that
+  # modules/system/zfs-snapshots.nix does not snapshot.
+  snapshotDatasets = lib.optionals config.features.system.zfsSnapshots.enable (
+    lib.attrNames config.services.sanoid.datasets
+  );
+
   watchScript = pkgs.replaceVars ./notify/telegram-zfs-watch.py {
     sender = config.odin.telegram.sender;
     inherit stateDir stateFile;
+    # Hourly cadence + slack for one missed run.
+    snapshotDatasets = lib.concatStringsSep " " snapshotDatasets;
+    snapshotMaxAgeHours = "3";
+    snapshotUsedSnapPercent = "20";
   };
+
 in
 # Telegram is gated on config.odin.telegram.enable (see hosts/odin/telegram.nix).
 (lib.mkIf config.odin.telegram.enable (
