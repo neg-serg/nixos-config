@@ -10,7 +10,7 @@ return {
           bash = {'shellcheck'},
           zsh = {'shellcheck'},
           yaml = {'yamllint'},
-          python = {'ruff'},
+          python = {'ruff', 'mypy'},
           lua = {'selene'},
           dockerfile = {'hadolint'},
           markdown = {'vale'},
