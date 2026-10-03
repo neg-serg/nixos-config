@@ -228,6 +228,16 @@ def dataset_problems(dataset, now):
     return problems
 
 
+def nvme_field(log, *names):
+    # nvme-cli renamed SMART fields between versions (`avail_spare` vs
+    # `available_spare`, `percent_used` vs `percentage_used`); take the first
+    # spelling the drive's JSON actually carries.
+    for name in names:
+        if name in log:
+            return log[name]
+    return None
+
+
 def nvme_facts(device):
     # Read the drive's own SMART log. Returns (problems, info): a human-readable
     # reason list for the alerts, plus the raw readings for the state file, so
@@ -242,10 +252,10 @@ def nvme_facts(device):
         return ["smart-log вернул не JSON"], {}
     problems = []
     info = {}
-    critical = int(log.get("critical_warning", 0))
+    critical = int(nvme_field(log, "critical_warning") or 0)
     if critical:
         problems.append("critical_warning=0x{0:x}".format(critical))
-    temp = log.get("temperature")
+    temp = nvme_field(log, "temperature")
     if temp is not None:
         # The NVMe spec stores the temperature field in Kelvins and nvme-cli
         # passes it through (a healthy idle drive reads ~305 = 32°C). Some
@@ -254,8 +264,13 @@ def nvme_facts(device):
         info["temp_c"] = round(temp_c, 1)
         if temp_c >= NVME_MAX_TEMP_C:
             problems.append("температура {0:.0f}°C".format(temp_c))
-    spare = log.get("available_spare")
-    threshold = log.get("available_spare_threshold")
+    spare = nvme_field(log, "available_spare", "avail_spare")
+    threshold = nvme_field(
+        log,
+        "available_spare_threshold",
+        "spare_thresh",
+        "avl_spare_threshold",
+    )
     if spare is not None:
         info["spare_percent"] = spare
     if spare is not None and (
@@ -263,12 +278,12 @@ def nvme_facts(device):
         or (threshold is not None and spare < threshold)
     ):
         problems.append("available_spare {0:g}%".format(spare))
-    used = log.get("percentage_used")
+    used = nvme_field(log, "percentage_used", "percent_used")
     if used is not None:
         info["used_percent"] = used
         if used >= NVME_MAX_USED_PERCENT:
             problems.append("износ {0:g}%".format(used))
-    media_errors = int(log.get("media_errors", 0))
+    media_errors = int(nvme_field(log, "media_errors") or 0)
     info["media_errors"] = media_errors
     if media_errors:
         problems.append("media_errors={0}".format(media_errors))
