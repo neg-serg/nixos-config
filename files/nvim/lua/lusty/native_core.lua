@@ -99,13 +99,13 @@ function M.open_window(self)
     style = 'minimal',
     border = 'rounded',
   })
-  api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-  api.nvim_buf_set_option(buf, 'swapfile', false)
-  api.nvim_buf_set_option(buf, 'modifiable', true)
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_win_set_option(win, 'wrap', false)
-  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder')
-  api.nvim_win_set_option(win, 'winblend', 0)
+  vim.bo[buf].buftype = 'nofile'
+  vim.bo[buf].swapfile = false
+  vim.bo[buf].modifiable = true
+  vim.bo[buf].bufhidden = 'wipe'
+  vim.wo[win].wrap = false
+  vim.wo[win].winhighlight = 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder'
+  vim.wo[win].winblend = 0
   api.nvim_buf_set_lines(buf, 0, -1, false, {})
   self.buf = buf
   self.win = win

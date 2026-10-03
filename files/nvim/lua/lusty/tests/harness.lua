@@ -47,9 +47,9 @@ end
 --- Wait until cond() is true, or fail after `ms` (default 5s).
 function M.wait_until(cond, what, ms)
   ms = ms or 5000
-  local t0 = vim.loop.hrtime()
+  local t0 = vim.uv.hrtime()
   while not cond() do
-    if (vim.loop.hrtime() - t0) / 1e6 > ms then
+    if (vim.uv.hrtime() - t0) / 1e6 > ms then
       error('timeout waiting for ' .. what)
     end
     vim.wait(10)
