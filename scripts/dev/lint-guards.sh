@@ -21,7 +21,7 @@ set -uo pipefail
 #     stream  where hits go: `out` (stdout) or `err` (stderr)
 # `@` never appears in a field, so it is safe as the separator.
 lint_rules() {
-  cat <<'RULES'
+  cat << 'RULES'
 with-pkgs-list@@.@with[[:space:]]+pkgs;[[:space:]]*\[@@out@Found discouraged pattern: use explicit pkgs.* items instead of `with pkgs; [...]`
 target-pkgs-with-pkgs@@.@targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs@@out@Found discouraged pattern in FHS targetPkgs: avoid `with pkgs`
 execstart-mkdir-touch-rm@@modules@Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)@@out@Found ExecStartPre/ExecStart with mkdir/touch/rm. Declare managed files (force = true) or wrappers instead.
@@ -61,8 +61,8 @@ scan_restart_preset() {
   local hits
   hits=$(
     grep -R -lE --exclude-dir=.direnv --exclude-dir=result --exclude-dir=.git \
-      --include='*.nix' 'systemd\.user\.services' modules hosts 2> /dev/null |
-      xargs -r awk '
+      --include='*.nix' 'systemd\.user\.services' modules hosts 2> /dev/null \
+      | xargs -r awk '
         /systemd\.user\.services/ { inblk = 1 }
         inblk {
           opens = gsub(/\{/, "{")
@@ -89,8 +89,8 @@ scan_restart_preset_system() {
   local hits
   hits=$(
     grep -R -lE --exclude-dir=.direnv --exclude-dir=result --exclude-dir=.git \
-      --include='*.nix' 'systemd\.services' modules hosts 2> /dev/null |
-      xargs -r awk '
+      --include='*.nix' 'systemd\.services' modules hosts 2> /dev/null \
+      | xargs -r awk '
         /systemd\.services/ { inblk = 1 }
         inblk {
           opens = gsub(/\{/, "{")
