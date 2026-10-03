@@ -154,3 +154,20 @@ do
   local _, diag = pcall(require, 'scripts.diagnostics')
   if diag then diag.setup() end
 end
+
+-- ── LSP log hygiene ─────────────────────────────────────────────────
+-- vim.lsp.log never rotates on its own (it had grown to ~666 KiB here), so
+-- drop the file once it passes a sane cap. Deferred to VeryLazy to keep
+-- startup free of filesystem stats; clients that already hold the old fd
+-- simply keep writing to the unlinked inode until they restart.
+au('User', {
+  pattern = 'VeryLazy', once = true,
+  callback = function()
+    local path = vim.lsp.log.get_filename()
+    local st = vim.uv.fs_stat(path)
+    if not (st and st.size > 4 * 1024 * 1024) then return end
+    vim.uv.fs_unlink(path)
+    vim.notify(('lsp.log was %.1f MiB, starting a fresh one'):format(st.size / 1048576), vim.log.levels.INFO)
+  end,
+  desc = 'Truncate lsp.log past 4 MiB',
+})
