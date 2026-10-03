@@ -1,21 +1,14 @@
-## features\.apps\.obsidian\.enable
+## features.apps.obsidian.enable
 
-Whether to enable enable Obsidian knowledge base app + vault\.
+Whether to enable enable Obsidian knowledge base app + vault.
 
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 false
 ```
-
-
 
 *Example:*
 
@@ -24,30 +17,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/apps\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+- [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.apps.throne.enable
 
-## features\.apps\.throne\.enable
+Whether to enable enable Throne GUI proxy configuration manager.
 
-
-
-Whether to enable enable Throne GUI proxy configuration manager\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 false
 ```
-
-
 
 *Example:*
 
@@ -56,30 +39,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/apps\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+- [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.apps.winapps.enable
 
-## features\.apps\.winapps\.enable
+Whether to enable enable WinApps integration (KVM/libvirt Windows VM, RDP bridge).
 
-
-
-Whether to enable enable WinApps integration (KVM/libvirt Windows VM, RDP bridge)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 false
 ```
-
-
 
 *Example:*
 
@@ -88,22 +61,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/apps\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+- [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.apps.winapps.desktopApps
 
-## features\.apps\.winapps\.desktopApps
+WinApps to generate .desktop files for (e.g. [ “excel” “word” “vscode” ])
 
-
-
-WinApps to generate \.desktop files for (e\.g\. \[ “excel” “word” “vscode” ])
-
-
-
-*Type:*
-list of string
-
-
+*Type:* list of string
 
 *Default:*
 
@@ -112,30 +77,20 @@ list of string
 ```
 
 *Declared by:*
- - [/modules/features/apps\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+- [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.cli.enable
 
-## features\.cli\.enable
+Whether to enable enable CLI tooling (fastfetch blizzard wrappers and helpers).
 
-
-
-Whether to enable enable CLI tooling (fastfetch blizzard wrappers and helpers)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -144,22 +99,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.broot.enable
 
-## features\.cli\.broot\.enable
+Whether to enable enable broot file manager and shell integration.
 
-
-
-Whether to enable enable broot file manager and shell integration\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -167,8 +114,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -176,22 +121,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.yazi.enable
 
-## features\.cli\.yazi\.enable
+Whether to enable enable yazi terminal file manager.
 
-
-
-Whether to enable enable yazi terminal file manager\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -199,8 +136,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -208,22 +143,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.dev.enable
 
-## features\.dev\.enable
+Whether to enable enable Dev stack (toolchains, editors, hack tooling).
 
-
-
-Whether to enable enable Dev stack (toolchains, editors, hack tooling)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -231,8 +158,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -240,22 +165,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.ai.enable
 
-## features\.dev\.ai\.enable
+Whether to enable enable AI tools (e.g., LM Studio).
 
-
-
-Whether to enable enable AI tools (e\.g\., LM Studio)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -263,8 +180,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -272,22 +187,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.ai.omp.enable
 
-## features\.dev\.ai\.omp\.enable
+Whether to enable install Oh My Pi (omp) AI coding agent (fork of Pi).
 
-
-
-Whether to enable install Oh My Pi (omp) AI coding agent (fork of Pi)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -295,8 +202,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -304,22 +209,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.ai.rocm.enable
 
-## features\.dev\.ai\.rocm\.enable
+Whether to enable install PyTorch with ROCm (gfx1201) + torch-rocm CLI for GPU fine-tuning.
 
-
-
-Whether to enable install PyTorch with ROCm (gfx1201) + torch-rocm CLI for GPU fine-tuning\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -327,8 +224,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -336,22 +231,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.bpf.enable
 
-## features\.dev\.bpf\.enable
+Whether to enable enable BPF tracing tools (bpftrace, below).
 
-
-
-Whether to enable enable BPF tracing tools (bpftrace, below)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -359,8 +246,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -368,22 +253,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.cpp.enable
 
-## features\.dev\.cpp\.enable
+Whether to enable enable C/C++ tooling (gcc/clang, cmake, ninja, lldb).
 
-
-
-Whether to enable enable C/C++ tooling (gcc/clang, cmake, ninja, lldb)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -391,8 +268,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -400,22 +275,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.java.enable
 
-## features\.dev\.java\.enable
+Whether to enable enable Java/JVM development tooling (JDK, Maven).
 
-
-
-Whether to enable enable Java/JVM development tooling (JDK, Maven)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -423,8 +290,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -432,22 +297,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.java.maven
 
-## features\.dev\.java\.maven
+Whether to enable enable Apache Maven build tool.
 
-
-
-Whether to enable enable Apache Maven build tool\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -455,8 +312,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -464,22 +319,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.iac
 
-## features\.dev\.pkgs\.iac
+Whether to enable enable infrastructure-as-code tooling (Terraform, etc.).
 
-
-
-Whether to enable enable infrastructure-as-code tooling (Terraform, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -487,8 +334,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -496,22 +341,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.joern
 
-## features\.dev\.pkgs\.joern
+Whether to enable enable Joern code analysis platform.
 
-
-
-Whether to enable enable Joern code analysis platform\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -519,8 +356,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -528,22 +363,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.python.core
 
-## features\.dev\.python\.core
+Whether to enable enable core Python development packages.
 
-
-
-Whether to enable enable core Python development packages\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -551,8 +378,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -560,22 +385,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.python.tools
 
-## features\.dev\.python\.tools
+Whether to enable enable Python tooling (LSP, utilities).
 
-
-
-Whether to enable enable Python tooling (LSP, utilities)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -583,8 +400,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -592,22 +407,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.rust.enable
 
-## features\.dev\.rust\.enable
+Whether to enable enable Rust tooling (rustup, rust-analyzer).
 
-
-
-Whether to enable enable Rust tooling (rustup, rust-analyzer)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -615,8 +422,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -624,22 +429,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.unreal.enable
 
-## features\.dev\.unreal\.enable
+Whether to enable enable Unreal Engine 5 tooling.
 
-
-
-Whether to enable enable Unreal Engine 5 tooling\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -647,8 +444,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -656,22 +451,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.unreal.useSteamRun
 
-## features\.dev\.unreal\.useSteamRun
+Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries.
 
-
-
-Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -680,22 +467,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.devSpeed.enable
 
-## features\.devSpeed\.enable
+Whether to enable enable dev-speed mode (trim heavy features for faster eval).
 
-
-
-Whether to enable enable dev-speed mode (trim heavy features for faster eval)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -703,8 +482,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -712,22 +489,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/core\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+## features.emulators.extra.enable
 
-## features\.emulators\.extra\.enable
+Whether to enable enable Extra Emulators (PCSX2, DOSBox, etc.).
 
-
-
-Whether to enable enable Extra Emulators (PCSX2, DOSBox, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -735,8 +504,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -744,22 +511,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.emulators.retroarch.enable
 
-## features\.emulators\.retroarch\.enable
+Whether to enable enable RetroArch emulator.
 
-
-
-Whether to enable enable RetroArch emulator\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -767,8 +526,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -776,22 +533,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.emulators.retroarch.full
 
-## features\.emulators\.retroarch\.full
+Whether to enable use retroarchFull with extended (unfree) cores.
 
-
-
-Whether to enable use retroarchFull with extended (unfree) cores\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -799,8 +548,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -808,22 +555,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.flatpak.builder.enable
 
-## features\.flatpak\.builder\.enable
+Whether to enable enable flatpak-builder.
 
-
-
-Whether to enable enable flatpak-builder\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -831,8 +570,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -840,22 +577,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.fun.enable
 
-## features\.fun\.enable
+Whether to enable enable fun extras (art collections, etc.).
 
-
-
-Whether to enable enable fun extras (art collections, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -863,8 +592,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -872,22 +599,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.games.dosemu.enable
 
-## features\.games\.dosemu\.enable
+Whether to enable enable Dosemu.
 
-
-
-Whether to enable enable Dosemu\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -895,8 +614,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -904,22 +621,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.games.nethack.enable
 
-## features\.games\.nethack\.enable
+Whether to enable enable Nethack.
 
-
-
-Whether to enable enable Nethack\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -927,8 +636,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -936,22 +643,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.games.openmw.enable
 
-## features\.games\.openmw\.enable
+Whether to enable enable OpenMW (Morrowind Engine).
 
-
-
-Whether to enable enable OpenMW (Morrowind Engine)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -959,8 +658,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -968,22 +665,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.games.oss.enable
 
-## features\.games\.oss\.enable
+Whether to enable enable OSS Games (SuperTux, Wesnoth, etc.).
 
-
-
-Whether to enable enable OSS Games (SuperTux, Wesnoth, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -991,8 +680,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1000,22 +687,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.games.steamProxy.enable
 
-## features\.games\.steamProxy\.enable
+Whether to enable route Steam traffic through local SOCKS5 proxy (proxychains LD_PRELOAD).
 
-
-
-Whether to enable route Steam traffic through local SOCKS5 proxy (proxychains LD_PRELOAD)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1023,8 +702,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1032,22 +709,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.gpg.enable
 
-## features\.gpg\.enable
+Whether to enable enable GPG and gpg-agent (creates ~/.gnupg).
 
-
-
-Whether to enable enable GPG and gpg-agent (creates ~/\.gnupg)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1055,8 +724,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1064,22 +731,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.gui.enable
 
-## features\.gui\.enable
+Whether to enable enable GUI stack (wayland/hyprland, quickshell, etc.).
 
-
-
-Whether to enable enable GUI stack (wayland/hyprland, quickshell, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1087,8 +746,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1096,22 +753,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.atrium.enable
 
-## features\.gui\.atrium\.enable
+Whether to enable enable atrium (Wayland multiseat display manager).
 
-
-
-Whether to enable enable atrium (Wayland multiseat display manager)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1119,8 +768,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1128,22 +775,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.gtkTheme
 
-## features\.gui\.gtkTheme
+GTK theme to apply system-wide.
 
-
-
-GTK theme to apply system-wide\.
-
-
-
-*Type:*
-one of “neg-gtk”, “Flight-Dark-GTK”, “Andromeda”, “Flat-Remix-GTK-Blue-Darkest”
-
-
+*Type:* one of “neg-gtk”, “Flight-Dark-GTK”, “Andromeda”, “Flat-Remix-GTK-Blue-Darkest”
 
 *Default:*
 
@@ -1152,30 +791,20 @@ one of “neg-gtk”, “Flight-Dark-GTK”, “Andromeda”, “Flat-Remix-GTK-
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.hdr.enable
 
-## features\.gui\.hdr\.enable
+Whether to enable enable HDR support (env vars for DXVK, Gamescope, Wine).
 
-
-
-Whether to enable enable HDR support (env vars for DXVK, Gamescope, Wine)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 false
 ```
-
-
 
 *Example:*
 
@@ -1184,30 +813,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.hyprwhspr.enable
 
-## features\.gui\.hyprwhspr\.enable
+Whether to enable enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland).
 
-
-
-Whether to enable enable hyprwhspr-rs (local whisper\.cpp voice dictation for Hyprland)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 false
 ```
-
-
 
 *Example:*
 
@@ -1216,22 +835,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.iconTheme
 
-## features\.gui\.iconTheme
+Icon theme to apply system-wide (GTK + Qt).
 
-
-
-Icon theme to apply system-wide (GTK + Qt)\.
-
-
-
-*Type:*
-string
-
-
+*Type:* string
 
 *Default:*
 
@@ -1240,30 +851,20 @@ string
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.qt.enable
 
-## features\.gui\.qt\.enable
+Whether to enable enable Qt integrations for GUI (qt6ct, hyprland-qt-\*).
 
-
-
-Whether to enable enable Qt integrations for GUI (qt6ct, hyprland-qt-\*)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -1272,30 +873,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.quickshell.enable
 
-## features\.gui\.quickshell\.enable
+Whether to enable enable Quickshell (panel) at login.
 
-
-
-Whether to enable enable Quickshell (panel) at login\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -1304,22 +895,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.vicinae.enable
 
-## features\.gui\.vicinae\.enable
+Whether to enable enable Vicinae (Wayland app runner + window switcher).
 
-
-
-Whether to enable enable Vicinae (Wayland app runner + window switcher)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1327,8 +910,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1336,22 +917,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.vicinae.manageConfig
 
-## features\.gui\.vicinae\.manageConfig
+Whether to enable let Nix manage vicinae theme/settings (disable for interactive config).
 
-
-
-Whether to enable let Nix manage vicinae theme/settings (disable for interactive config)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1359,8 +932,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1368,22 +939,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.hardware.amdgpu.rocm.enable
 
-## features\.hardware\.amdgpu\.rocm\.enable
+Whether to enable enable AMDGPU ROCm support.
 
-
-
-Whether to enable enable AMDGPU ROCm support\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1391,8 +954,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1400,22 +961,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.hardware.bluetooth.enable
 
-## features\.hardware\.bluetooth\.enable
+Whether to enable enable Bluetooth support.
 
-
-
-Whether to enable enable Bluetooth support\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1423,8 +976,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1432,23 +983,15 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/hardware\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+## features.hardware.usbAutomount.enable
 
-## features\.hardware\.usbAutomount\.enable
+Whether to enable Enable udev-driven USB storage auto-mount via systemd service (mounts under
+/mnt/\<label>). .
 
-
-
-Whether to enable Enable udev-driven USB storage auto-mount via systemd service (mounts under /mnt/\<label>)\.
-\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1456,8 +999,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1465,22 +1006,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/hardware\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+## features.input.kanata.enable
 
-## features\.input\.kanata\.enable
+Whether to enable enable Kanata keyboard remapper (requires uinput module).
 
-
-
-Whether to enable enable Kanata keyboard remapper (requires uinput module)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1488,8 +1021,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1497,22 +1028,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/hardware\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+## features.input.ruHotkeys.enable
 
-## features\.input\.ruHotkeys\.enable
+Whether to enable enable per-window keyboard layout switching (us in hotkey-heavy apps).
 
-
-
-Whether to enable enable per-window keyboard layout switching (us in hotkey-heavy apps)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1520,8 +1043,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1529,27 +1050,18 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/hardware\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+## features.input.ruHotkeys.usClasses
 
-## features\.input\.ruHotkeys\.usClasses
+Hyprland window classes pinned to the us layout on focus. The list is exported to the layout daemon
+as `default_layouts` in ~/.config/hyprland-per-window-layout/options.toml (generated by
+hyprland/files.nix). Any other window starts on `usLayoutIndex` too (that is us under kb_layout =
+“us,ru”) and then keeps whatever layout it was switched to — the daemon remembers the choice per
+window.
 
-
-
-Hyprland window classes pinned to the us layout on focus\. The list is
-exported to the layout daemon as ` default_layouts ` in
-~/\.config/hyprland-per-window-layout/options\.toml (generated by
-hyprland/files\.nix)\. Any other window starts on ` usLayoutIndex ` too
-(that is us under kb_layout = “us,ru”) and then keeps whatever layout
-it was switched to — the daemon remembers the choice per window\.
-
-
-
-*Type:*
-list of string
-
-
+*Type:* list of string
 
 *Default:*
 
@@ -1568,22 +1080,14 @@ list of string
 ```
 
 *Declared by:*
- - [/modules/features/hardware\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+## features.input.ruHotkeys.usLayoutIndex
 
-## features\.input\.ruHotkeys\.usLayoutIndex
+XKB group index of the us layout (kb_layout = us,ru invariant).
 
-
-
-XKB group index of the us layout (kb_layout = us,ru invariant)\.
-
-
-
-*Type:*
-signed integer
-
-
+*Type:* signed integer
 
 *Default:*
 
@@ -1592,22 +1096,14 @@ signed integer
 ```
 
 *Declared by:*
- - [/modules/features/hardware\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+## features.llm.enable
 
-## features\.llm\.enable
+Whether to enable enable local LLM stack (Ollama, local-ai).
 
-
-
-Whether to enable enable local LLM stack (Ollama, local-ai)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1615,8 +1111,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1624,22 +1118,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.mail.enable
 
-## features\.mail\.enable
+Whether to enable enable Mail stack (notmuch, isync, vdirsyncer, etc.).
 
-
-
-Whether to enable enable Mail stack (notmuch, isync, vdirsyncer, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1647,8 +1133,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1656,22 +1140,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.mail.mbsync.enable
 
-## features\.mail\.mbsync\.enable
+Whether to enable enable mbsync IMAP sync service/timer.
 
-
-
-Whether to enable enable mbsync IMAP sync service/timer\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1679,8 +1155,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1688,22 +1162,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.mail.vdirsyncer.enable
 
-## features\.mail\.vdirsyncer\.enable
+Whether to enable enable Vdirsyncer sync service/timer.
 
-
-
-Whether to enable enable Vdirsyncer sync service/timer\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1711,8 +1177,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1720,22 +1184,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.media.aiUpscale.enable
 
-## features\.media\.aiUpscale\.enable
+Whether to enable enable AI upscaling integration for video (mpv).
 
-
-
-Whether to enable enable AI upscaling integration for video (mpv)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1743,8 +1199,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1752,22 +1206,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.apps.enable
 
-## features\.media\.audio\.apps\.enable
+Whether to enable enable audio apps (players, tools).
 
-
-
-Whether to enable enable audio apps (players, tools)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1775,8 +1221,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1784,22 +1228,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.beets.enable
 
-## features\.media\.audio\.beets\.enable
+Whether to enable enable Beets music library manager.
 
-
-
-Whether to enable enable Beets music library manager\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1807,8 +1243,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1816,22 +1250,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
-
-## features\.media\.audio\.beets\.mode
-
-
+## features.media.audio.beets.mode
 
 Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)
 
-
-
-*Type:*
-one of “native”, “distrobox”
-
-
+*Type:* one of “native”, “distrobox”
 
 *Default:*
 
@@ -1840,22 +1266,14 @@ one of “native”, “distrobox”
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.cider.enable
 
-## features\.media\.audio\.cider\.enable
+Whether to enable enable Cider (Apple Music client).
 
-
-
-Whether to enable enable Cider (Apple Music client)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1863,8 +1281,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1872,22 +1288,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.core.enable
 
-## features\.media\.audio\.core\.enable
+Whether to enable enable audio core (PipeWire routing tools).
 
-
-
-Whether to enable enable audio core (PipeWire routing tools)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1895,8 +1303,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1904,22 +1310,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.creation.enable
 
-## features\.media\.audio\.creation\.enable
+Whether to enable enable audio creation stack (DAW, synths).
 
-
-
-Whether to enable enable audio creation stack (DAW, synths)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1927,8 +1325,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1936,22 +1332,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.lanAccess.enable
 
-## features\.media\.audio\.lanAccess\.enable
+Whether to enable LAN audio access (MPD on all interfaces, PipeWire Pulse TCP 4713, RTP sink).
 
-
-
-Whether to enable LAN audio access (MPD on all interfaces, PipeWire Pulse TCP 4713, RTP sink)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -1959,8 +1347,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -1968,22 +1354,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.lanAccess.rtp.interface
 
-## features\.media\.audio\.lanAccess\.rtp\.interface
+Network interface used by the PipeWire RTP sink for multicast output.
 
-
-
-Network interface used by the PipeWire RTP sink for multicast output\.
-
-
-
-*Type:*
-string
-
-
+*Type:* string
 
 *Default:*
 
@@ -1992,30 +1370,20 @@ string
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.mpd.enable
 
-## features\.media\.audio\.mpd\.enable
+Whether to enable enable MPD stack (mpd, clients, mpdris2).
 
-
-
-Whether to enable enable MPD stack (mpd, clients, mpdris2)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -2024,22 +1392,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.solaMpd.enable
 
-## features\.media\.audio\.solaMpd\.enable
+Whether to enable enable Sola MPD (browser MPD client: backend + web UI).
 
-
-
-Whether to enable enable Sola MPD (browser MPD client: backend + web UI)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2047,8 +1407,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2056,22 +1414,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.solaMpd.port
 
-## features\.media\.audio\.solaMpd\.port
+Loopback port the Sola MPD backend listens on.
 
-
-
-Loopback port the Sola MPD backend listens on\.
-
-
-
-*Type:*
-16 bit unsigned integer; between 0 and 65535 (both inclusive)
-
-
+*Type:* 16 bit unsigned integer; between 0 and 65535 (both inclusive)
 
 *Default:*
 
@@ -2080,22 +1430,15 @@ Loopback port the Sola MPD backend listens on\.
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.speech.enable
 
-## features\.media\.audio\.speech\.enable
+Whether to enable enable local speech stack (Chatterbox TTS :8300, Piper TTS :8001, whisper.cpp STT
+:8002).
 
-
-
-Whether to enable enable local speech stack (Chatterbox TTS :8300, Piper TTS :8001, whisper\.cpp STT :8002)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2103,8 +1446,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2112,22 +1453,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.spicetify.enable
 
-## features\.media\.audio\.spicetify\.enable
+Whether to enable enable Spicetify (Spotify customization).
 
-
-
-Whether to enable enable Spicetify (Spotify customization)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2135,8 +1468,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2144,22 +1475,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.photo.enable
 
-## features\.media\.photo\.enable
+Whether to enable enable photography workflow (darktable, rawtherapee, testdisk).
 
-
-
-Whether to enable enable photography workflow (darktable, rawtherapee, testdisk)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2167,8 +1490,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2176,22 +1497,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.webcam.enable
 
-## features\.media\.webcam\.enable
+Whether to enable enable virtual webcam support (v4l2loopback).
 
-
-
-Whether to enable enable virtual webcam support (v4l2loopback)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2199,8 +1512,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2208,22 +1519,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.net.bbrv3.enable
 
-## features\.net\.bbrv3\.enable
+Whether to enable enable TCP BBRv3 congestion control (kernel >= 6.18).
 
-
-
-Whether to enable enable TCP BBRv3 congestion control (kernel >= 6\.18)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2231,8 +1534,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2240,22 +1541,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.net.ceno.enable
 
-## features\.net\.ceno\.enable
+Whether to enable enable Ceno/Ouinet P2P client (censorship-circumvention node, podman container).
 
-
-
-Whether to enable enable Ceno/Ouinet P2P client (censorship-circumvention node, podman container)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2263,8 +1556,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2272,22 +1563,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.net.netHealth.enable
 
-## features\.net\.netHealth\.enable
+Whether to enable enable periodic network/DNS/zapret2 health check with self-heal and ntfy push.
 
-
-
-Whether to enable enable periodic network/DNS/zapret2 health check with self-heal and ntfy push\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2295,8 +1578,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2304,22 +1585,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.net.proxy.enable
 
-## features\.net\.proxy\.enable
+Whether to enable enable Xray SOCKS5 proxy (127.0.0.1:10808).
 
-
-
-Whether to enable enable Xray SOCKS5 proxy (127\.0\.0\.1:10808)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2327,8 +1600,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2336,22 +1607,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.net.rknDomains.enable
 
-## features\.net\.rknDomains\.enable
+Whether to enable enable RKN domain blocklist fetcher with daily timer.
 
-
-
-Whether to enable enable RKN domain blocklist fetcher with daily timer\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2359,8 +1622,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2368,22 +1629,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.net.tailscale.enable
 
-## features\.net\.tailscale\.enable
+Whether to enable enable Tailscale mesh VPN and Tailray GUI.
 
-
-
-Whether to enable enable Tailscale mesh VPN and Tailray GUI\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2391,8 +1644,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2400,22 +1651,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.net.wifi.enable
 
-## features\.net\.wifi\.enable
+Whether to enable enable Wi-Fi stack and management tools (iwd, wavemon, etc.).
 
-
-
-Whether to enable enable Wi-Fi stack and management tools (iwd, wavemon, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2423,8 +1666,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2432,22 +1673,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.net.zapret2.enable
 
-## features\.net\.zapret2\.enable
+Whether to enable enable Zapret2 DPI bypass via nfqueue (requires zapret2 package).
 
-
-
-Whether to enable enable Zapret2 DPI bypass via nfqueue (requires zapret2 package)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2455,8 +1688,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2464,22 +1695,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.optimization.enable
 
-## features\.optimization\.enable
+Whether to enable Global system optimizations.
 
-
-
-Whether to enable Global system optimizations\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2487,8 +1710,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2496,22 +1717,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/optimization\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/optimization.nix)
 
+- [/modules/features/optimization.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/optimization.nix)
 
+## features.optimization.scx.enable
 
-## features\.optimization\.scx\.enable
+Whether to enable SCX BPF scheduler (replaces CFS).
 
-
-
-Whether to enable SCX BPF scheduler (replaces CFS)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2519,8 +1732,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2528,24 +1739,17 @@ true
 ```
 
 *Declared by:*
- - [/modules/system/scx\.nix](https://github.com/neg-serg/nixos/blob/master/modules/system/scx.nix)
 
+- [/modules/system/scx.nix](https://github.com/neg-serg/nixos/blob/master/modules/system/scx.nix)
 
+## features.optimization.scx.scheduler
 
-## features\.optimization\.scx\.scheduler
+SCX scheduler to run. scx_lavd is recommended for X3D gaming: it detects dual-CCD topology and
+favours the V-Cache CCD for latency-sensitive tasks.
 
-
-
-SCX scheduler to run\. scx_lavd is recommended for X3D gaming:
-it detects dual-CCD topology and favours the V-Cache CCD for
-latency-sensitive tasks\.
-
-
-
-*Type:*
-one of “scx_beerland”, “scx_bpfland”, “scx_cake”, “scx_chaos”, “scx_cosmos”, “scx_flash”, “scx_flow”, “scx_lavd”, “scx_layered”, “scx_mitosis”, “scx_p2dq”, “scx_pandemonium”, “scx_rlfifo”, “scx_rustland”, “scx_rusty”, “scx_tickless”
-
-
+*Type:* one of “scx_beerland”, “scx_bpfland”, “scx_cake”, “scx_chaos”, “scx_cosmos”, “scx_flash”,
+“scx_flow”, “scx_lavd”, “scx_layered”, “scx_mitosis”, “scx_p2dq”, “scx_pandemonium”, “scx_rlfifo”,
+“scx_rustland”, “scx_rusty”, “scx_tickless”
 
 *Default:*
 
@@ -2554,24 +1758,15 @@ one of “scx_beerland”, “scx_bpfland”, “scx_cake”, “scx_chaos”, �
 ```
 
 *Declared by:*
- - [/modules/system/scx\.nix](https://github.com/neg-serg/nixos/blob/master/modules/system/scx.nix)
 
+- [/modules/system/scx.nix](https://github.com/neg-serg/nixos/blob/master/modules/system/scx.nix)
 
+## features.profiles
 
-## features\.profiles
+List of enabled system profiles. Each profile sets a bundle of feature-flag defaults via mkDefault.
+Order matters — profiles listed later override earlier ones. Available: desktop, gaming, dev.
 
-
-
-List of enabled system profiles\. Each profile sets a bundle of feature-flag defaults
-via mkDefault\. Order matters — profiles listed later override earlier ones\.
-Available: desktop, gaming, dev\.
-
-
-
-*Type:*
-list of string
-
-
+*Type:* list of string
 
 *Default:*
 
@@ -2582,30 +1777,20 @@ list of string
 ```
 
 *Declared by:*
- - [/modules/profiles/default\.nix](https://github.com/neg-serg/nixos/blob/master/modules/profiles/default.nix)
 
+- [/modules/profiles/default.nix](https://github.com/neg-serg/nixos/blob/master/modules/profiles/default.nix)
 
+## features.secrets.enable
 
-## features\.secrets\.enable
+Whether to enable enable secrets tooling (pass, YubiKey helpers).
 
-
-
-Whether to enable enable secrets tooling (pass, YubiKey helpers)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -2614,22 +1799,15 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.security.apparmor.enable
 
-## features\.security\.apparmor\.enable
+Whether to enable AppArmor confinement for network-facing daemons (sshd, unbound, AdGuard Home,
+ntfy, avahi, sing-box, transmission, aria2).
 
-
-
-Whether to enable AppArmor confinement for network-facing daemons (sshd, unbound, AdGuard Home, ntfy, avahi, sing-box, transmission, aria2)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2637,8 +1815,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2646,30 +1822,22 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.adguardhome
 
-## features\.security\.apparmor\.adguardhome
+AppArmor state for the adguardhome profile: disable (not loaded at all), complain (denials are
+logged but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this
+profile in complain has been reviewed.
 
-
-
-AppArmor state for the adguardhome profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2678,30 +1846,22 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.aria2
 
-## features\.security\.apparmor\.aria2
+AppArmor state for the aria2 profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
 
-
-
-AppArmor state for the aria2 profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2710,30 +1870,22 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.avahi
 
-## features\.security\.apparmor\.avahi
+AppArmor state for the avahi profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
 
-
-
-AppArmor state for the avahi profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2742,30 +1894,22 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.ntfy
 
-## features\.security\.apparmor\.ntfy
+AppArmor state for the ntfy profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
 
-
-
-AppArmor state for the ntfy profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2774,30 +1918,22 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.singbox
 
-## features\.security\.apparmor\.singbox
+AppArmor state for the sing-box profile: disable (not loaded at all), complain (denials are logged
+but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
 
-
-
-AppArmor state for the sing-box profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2806,30 +1942,22 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.sshd
 
-## features\.security\.apparmor\.sshd
+AppArmor state for the sshd profile: disable (not loaded at all), complain (denials are logged but
+allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
 
-
-
-AppArmor state for the sshd profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2838,30 +1966,22 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.transmission
 
-## features\.security\.apparmor\.transmission
+AppArmor state for the transmission profile: disable (not loaded at all), complain (denials are
+logged but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this
+profile in complain has been reviewed.
 
-
-
-AppArmor state for the transmission profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2870,30 +1990,22 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.apparmor.unbound
 
-## features\.security\.apparmor\.unbound
+AppArmor state for the unbound profile: disable (not loaded at all), complain (denials are logged
+but allowed), enforce (denials are blocked). Flip to enforce only after a boot with this profile in
+complain has been reviewed.
 
-
-
-AppArmor state for the unbound profile: disable (not loaded at all), complain (denials are logged but allowed), enforce (denials are blocked)\. Flip to enforce only after a boot with this profile in complain has been reviewed\.
-
-
-
-*Type:*
-one of “disable”, “complain”, “enforce”
-
-
+*Type:* one of “disable”, “complain”, “enforce”
 
 *Default:*
 
 ```nix
 "complain"
 ```
-
-
 
 *Example:*
 
@@ -2902,22 +2014,15 @@ one of “disable”, “complain”, “enforce”
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.lockKernelModules.enable
 
-## features\.security\.lockKernelModules\.enable
+Whether to enable Lock kernel module loading after boot (kernel.modules_disabled=1); requires
+everything needed to be pre-loaded via boot.kernelModules or built-in.
 
-
-
-Whether to enable Lock kernel module loading after boot (kernel\.modules_disabled=1); requires everything needed to be pre-loaded via boot\.kernelModules or built-in\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2925,8 +2030,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2934,22 +2037,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.security.tpmSudo.enable
 
-## features\.security\.tpmSudo\.enable
+Whether to enable TPM-backed passwordless sudo (tpm2-pkcs11 + pam_ssh_agent_auth).
 
-
-
-Whether to enable TPM-backed passwordless sudo (tpm2-pkcs11 + pam_ssh_agent_auth)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2957,8 +2052,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2966,22 +2059,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/security\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.system.logTtys.enable
 
-## features\.system\.logTtys\.enable
+Whether to enable Per-TTY log classification (journalctl viewers on tty8,tty10-tty16).
 
-
-
-Whether to enable Per-TTY log classification (journalctl viewers on tty8,tty10-tty16)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -2989,8 +2074,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -2998,22 +2081,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.auth.enable
 
-## features\.system\.logTtys\.auth\.enable
+Whether to enable AUTH log viewer on tty13 (auth messages).
 
-
-
-Whether to enable AUTH log viewer on tty13 (auth messages)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3021,8 +2096,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3030,22 +2103,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.crit.enable
 
-## features\.system\.logTtys\.crit\.enable
+Whether to enable CRIT log viewer on tty8 (emerg…crit).
 
-
-
-Whether to enable CRIT log viewer on tty8 (emerg…crit)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3053,8 +2118,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3062,22 +2125,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.err.enable
 
-## features\.system\.logTtys\.err\.enable
+Whether to enable ERR log viewer on tty10 (errors).
 
-
-
-Whether to enable ERR log viewer on tty10 (errors)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3085,8 +2140,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3094,22 +2147,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.full.enable
 
-## features\.system\.logTtys\.full\.enable
+Whether to enable FULL log viewer on tty16 (all messages).
 
-
-
-Whether to enable FULL log viewer on tty16 (all messages)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3117,8 +2162,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3126,20 +2169,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.kernel.enable
 
-## features\.system\.logTtys\.kernel\.enable
+Whether to enable KERNEL log viewer on tty12 (kernel messages).
 
-Whether to enable KERNEL log viewer on tty12 (kernel messages)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3147,8 +2184,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3156,22 +2191,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.network.enable
 
-## features\.system\.logTtys\.network\.enable
+Whether to enable NETWORK log viewer on tty15 (network daemons).
 
-
-
-Whether to enable NETWORK log viewer on tty15 (network daemons)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3179,8 +2206,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3188,22 +2213,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.networkUnits
 
-## features\.system\.logTtys\.networkUnits
+Systemd units to monitor on tty15 (network TTY). Override per-host.
 
-
-
-Systemd units to monitor on tty15 (network TTY)\. Override per-host\.
-
-
-
-*Type:*
-list of string
-
-
+*Type:* list of string
 
 *Default:*
 
@@ -3216,30 +2233,20 @@ list of string
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.systemd.enable
 
-## features\.system\.logTtys\.systemd\.enable
+Whether to enable SYSTEMD log viewer on tty14 (systemd messages).
 
-
-
-Whether to enable SYSTEMD log viewer on tty14 (systemd messages)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3248,30 +2255,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.logTtys.warn.enable
 
-## features\.system\.logTtys\.warn\.enable
+Whether to enable WARN log viewer on tty11 (warnings).
 
-
-
-Whether to enable WARN log viewer on tty11 (warnings)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3280,30 +2277,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.nixLd.enable
 
-## features\.system\.nixLd\.enable
+Whether to enable run foreign dynamically linked binaries via nix-ld.
 
-
-
-Whether to enable run foreign dynamically linked binaries via nix-ld\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3312,30 +2299,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.zfsSnapshots.enable
 
-## features\.system\.zfsSnapshots\.enable
+Whether to enable periodic sanoid snapshots for the user-data ZFS datasets.
 
-
-
-Whether to enable periodic sanoid snapshots for the user-data ZFS datasets\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3344,30 +2321,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.text.manipulate.enable
 
-## features\.text\.manipulate\.enable
+Whether to enable enable text/markup manipulation CLI tools (jq/yq/htmlq).
 
-
-
-Whether to enable enable text/markup manipulation CLI tools (jq/yq/htmlq)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3376,30 +2343,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.text.notes.enable
 
-## features\.text\.notes\.enable
+Whether to enable enable notes tooling (zk CLI).
 
-
-
-Whether to enable enable notes tooling (zk CLI)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3408,30 +2365,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.text.read.enable
 
-## features\.text\.read\.enable
+Whether to enable enable reading stack (CLI/GUI viewers, OCR, Recoll).
 
-
-
-Whether to enable enable reading stack (CLI/GUI viewers, OCR, Recoll)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3440,30 +2387,20 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.torrent.enable
 
-## features\.torrent\.enable
+Whether to enable enable Torrent stack (Transmission, tools, services).
 
-
-
-Whether to enable enable Torrent stack (Transmission, tools, services)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3472,22 +2409,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
+## features.virt.docker.enable
 
-## features\.virt\.docker\.enable
+Whether to enable enable docker/podman virtualization.
 
-
-
-Whether to enable enable docker/podman virtualization\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3495,8 +2424,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3504,22 +2431,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.virt.libvirtd.enable
 
-## features\.virt\.libvirtd\.enable
+Whether to enable enable libvirtd (KVM/QEMU) virtualization.
 
-
-
-Whether to enable enable libvirtd (KVM/QEMU) virtualization\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3527,8 +2446,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3536,22 +2453,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.web.enable
 
-## features\.web\.enable
+Whether to enable enable Web stack (browsers + tools).
 
-
-
-Whether to enable enable Web stack (browsers + tools)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3559,8 +2468,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3568,22 +2475,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.chat.enable
 
-## features\.web\.chat\.enable
+Whether to enable enable Telegram chat client (static binary, GTK-free).
 
-
-
-Whether to enable enable Telegram chat client (static binary, GTK-free)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3591,8 +2490,6 @@ boolean
 true
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3600,22 +2497,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.default
 
-## features\.web\.default
+Default browser used for XDG handlers, $BROWSER, and integrations.
 
-
-
-Default browser used for XDG handlers, $BROWSER, and integrations\.
-
-
-
-*Type:*
-null or string
-
-
+*Type:* null or string
 
 *Default:*
 
@@ -3624,30 +2513,20 @@ null
 ```
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.tools.enable
 
-## features\.web\.tools\.enable
+Whether to enable enable web tools (aria2, yt-dlp, misc).
 
-
-
-Whether to enable enable web tools (aria2, yt-dlp, misc)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
 ```nix
 true
 ```
-
-
 
 *Example:*
 
@@ -3656,22 +2535,14 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.vivaldi.enable
 
-## features\.web\.vivaldi\.enable
+Whether to enable enable Vivaldi browser.
 
-
-
-Whether to enable enable Vivaldi browser\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3679,8 +2550,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3688,22 +2557,15 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.wine.enable
 
-## features\.wine\.enable
+Whether to enable enable Wine runtime (wineWow64Packages.stable + winetricks) and the declarative
+wine-app manager (wineapps CLI).
 
-
-
-Whether to enable enable Wine runtime (wineWow64Packages\.stable + winetricks) and the declarative wine-app manager (wineapps CLI)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3711,8 +2573,6 @@ boolean
 false
 ```
 
-
-
 *Example:*
 
 ```nix
@@ -3720,22 +2580,15 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps
 
-## features\.wine\.apps
+Declaratively managed Wine apps. Each attribute name is the app id; add an entry to install it,
+remove it to uninstall.
 
-
-
-Declaratively managed Wine apps\. Each attribute name is the app id; add an entry to install it, remove it to uninstall\.
-
-
-
-*Type:*
-attribute set of (submodule)
-
-
+*Type:* attribute set of (submodule)
 
 *Default:*
 
@@ -3744,22 +2597,14 @@ attribute set of (submodule)
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.arch
 
-## features\.wine\.apps\.\<name>\.arch
+Wine architecture for the prefix (WINEARCH). Use win32 only for legacy 32-bit apps.
 
-
-
-Wine architecture for the prefix (WINEARCH)\. Use win32 only for legacy 32-bit apps\.
-
-
-
-*Type:*
-one of “win64”, “win32”
-
-
+*Type:* one of “win64”, “win32”
 
 *Default:*
 
@@ -3768,22 +2613,14 @@ one of “win64”, “win32”
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.comment
 
-## features\.wine\.apps\.\<name>\.comment
+Short human-readable description (shown in ‘wineapps list’ and desktop entries).
 
-
-
-Short human-readable description (shown in ‘wineapps list’ and desktop entries)\.
-
-
-
-*Type:*
-string
-
-
+*Type:* string
 
 *Default:*
 
@@ -3792,22 +2629,14 @@ string
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.desktop
 
-## features\.wine\.apps\.\<name>\.desktop
+Generate a .desktop launcher for the app (requires ‘executable’).
 
-
-
-Generate a \.desktop launcher for the app (requires ‘executable’)\.
-
-
-
-*Type:*
-boolean
-
-
+*Type:* boolean
 
 *Default:*
 
@@ -3816,22 +2645,15 @@ true
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.executable
 
-## features\.wine\.apps\.\<name>\.executable
+Path to the app’s main executable relative to the prefix root (e.g. “drive_c/Program
+Files/App/app.exe”). Used by ‘wineapps run’ and desktop launchers.
 
-
-
-Path to the app’s main executable relative to the prefix root (e\.g\. “drive_c/Program Files/App/app\.exe”)\. Used by ‘wineapps run’ and desktop launchers\.
-
-
-
-*Type:*
-null or string
-
-
+*Type:* null or string
 
 *Default:*
 
@@ -3840,22 +2662,14 @@ null
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.installArgs
 
-## features\.wine\.apps\.\<name>\.installArgs
+Arguments passed to the installer (InnoSetup silent default: /S).
 
-
-
-Arguments passed to the installer (InnoSetup silent default: /S)\.
-
-
-
-*Type:*
-string
-
-
+*Type:* string
 
 *Default:*
 
@@ -3864,22 +2678,15 @@ string
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.installer
 
-## features\.wine\.apps\.\<name>\.installer
+Installer for the app: absolute path to an .exe/.msi on disk, or an http(s) URL. null = app was
+installed manually (wineapps only manages run/desktop).
 
-
-
-Installer for the app: absolute path to an \.exe/\.msi on disk, or an http(s) URL\. null = app was installed manually (wineapps only manages run/desktop)\.
-
-
-
-*Type:*
-null or string
-
-
+*Type:* null or string
 
 *Default:*
 
@@ -3888,22 +2695,14 @@ null
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.prefix
 
-## features\.wine\.apps\.\<name>\.prefix
+Prefix name (directory under ~/.local/share/wineprefixes). Empty = use the app attribute name.
 
-
-
-Prefix name (directory under ~/\.local/share/wineprefixes)\. Empty = use the app attribute name\.
-
-
-
-*Type:*
-string
-
-
+*Type:* string
 
 *Default:*
 
@@ -3912,22 +2711,14 @@ string
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
+## features.wine.apps.\<name>.winetricks
 
-## features\.wine\.apps\.\<name>\.winetricks
+winetricks verbs applied before running the installer, e.g. [ “corefonts” “vcrun2022” ].
 
-
-
-winetricks verbs applied before running the installer, e\.g\. \[ “corefonts” “vcrun2022” ]\.
-
-
-
-*Type:*
-list of string
-
-
+*Type:* list of string
 
 *Default:*
 
@@ -3936,6 +2727,5 @@ list of string
 ```
 
 *Declared by:*
- - [/modules/features/wine\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
