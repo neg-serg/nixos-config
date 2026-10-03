@@ -29,4 +29,8 @@
   # AppImage payloads, vendored toolchains — instead of patchelf'ing each one.
   options.features.system.nixLd.enable =
     mkBool "run foreign dynamically linked binaries via nix-ld" true;
+
+  # sanoid snapshot policy for the datasets holding unrecoverable data.
+  options.features.system.zfsSnapshots.enable =
+    mkBool "periodic sanoid snapshots for the user-data ZFS datasets" true;
 }

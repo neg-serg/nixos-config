@@ -3316,6 +3316,38 @@ true
 
 
 
+## features\.system\.zfsSnapshots\.enable
+
+
+
+Whether to enable periodic sanoid snapshots for the user-data ZFS datasets\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [/modules/features/system\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
+
+
+
 ## features\.text\.manipulate\.enable
 
 
