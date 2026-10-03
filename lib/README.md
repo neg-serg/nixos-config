@@ -33,8 +33,9 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   ru layout produces, and every per-app duplicate bind is generated from this table. Exposed as
   `neg.ruKeys`; mechanics in `docs/howto/hotkeys-ru-layout.md`.
 - `neg-helpers-tests.nix` — eval-only assertions over `tree` / `leaves` / `find` and `importDir`'s
-  `nameFilter` (extension stripping, `default.nix` addressing its own directory, `_`-prefixed entries
-  being skipped, a miss aborting evaluation); wired into `flake/checks.nix` as `neg-tree-guard`.
+  `nameFilter` (extension stripping, `default.nix` addressing its own directory, `_`-prefixed
+  entries being skipped, a miss aborting evaluation); wired into `flake/checks.nix` as
+  `neg-tree-guard`.
 - `ru-keys-tests.nix` — eval-only assertions over `ru-keys.nix` (neovim langmap golden, table
   parity); wired into `flake/checks.nix` as the `ru-keys` check.
 - `feature-flags-tests.nix` — scans `modules/` + `hosts/` for `lib.neg.enabled "<path>"` and asserts
@@ -81,8 +82,8 @@ To reference a file by its repo-root-relative path instead of fragile `../../../
 
 ### By name, not by path
 
-`neg.tree` + `neg.find` take the counting out of references: a directory is exposed as an
-attribute set keyed by short names, so a file is addressed by its name alone.
+`neg.tree` + `neg.find` take the counting out of references: a directory is exposed as an attribute
+set keyed by short names, so a file is addressed by its name alone.
 
 ```nix
 { config, neg, ... }:
@@ -102,8 +103,8 @@ Conventions, identical for every tree (borrowed from import-tree / haumea):
 - the matching extension is stripped from the key (`systemd-user.nix` → `systemd-user`), so `find`
   accepts the name with or without `.nix`. Nothing is camel-cased: a non-`.nix` file keeps its
   dashes, so address it as `t."hdr-auto-switch"` (that is what makes the mapping predictable);
-- `find` throws on a missing or ambiguous name and prints the candidates, so a mistake is a
-  one-line fix instead of a grep.
+- `find` throws on a missing or ambiguous name and prints the candidates, so a mistake is a one-line
+  fix instead of a grep.
 
 `importDir` gained `nameFilter` for the same purpose: `modules/default.nix` drops whole domains by
 name and no longer lists a single path.
@@ -114,22 +115,23 @@ imports = neg.importDir { dir = ./.; includeDirs = true; nameFilter = domainFilt
 
 ### Which resolver, where
 
-| Where the reference sits | Use | Why |
-| --- | --- | --- |
-| a config body (option value, `config = …`) | `config.lib.neg.path` / `readFile` / `files.<…>` | `config` is already the module's own argument |
-| a top-level `let` of a module | `let r = neg.rooted repoRoot; in r.path "files/x"` | `config.lib.neg.*` there is an **infinite recursion**: module arguments are forced while the module is being collected (`hosts/odin/services/telegram-units.nix` hit it) |
-| a package file (`packages/<name>/default.nix`) | `paths.path "files/…"` — declare `paths` as a formal and `neg.functions.callPkg` fills it in (it sniffs formals exactly like `inputs`) | no `config` at all; the resolver is built once in `packages/overlay.nix` (`neg.rooted ../.`) and handed to every overlay through `importOvP` |
-| a package referring to a *sibling* package | `call (pkg "name") { }` — `neg.functions.pkg` maps the directory name to its `default.nix` | no path arithmetic anywhere in `packages/`, and a typo lists the names that exist instead of pointing at a missing file |
+| Where the reference sits                       | Use                                                                                                                                    | Why                                                                                                                                                                      |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| a config body (option value, `config = …`)     | `config.lib.neg.path` / `readFile` / `files.<…>`                                                                                       | `config` is already the module's own argument                                                                                                                            |
+| a top-level `let` of a module                  | `let r = neg.rooted repoRoot; in r.path "files/x"`                                                                                     | `config.lib.neg.*` there is an **infinite recursion**: module arguments are forced while the module is being collected (`hosts/odin/services/telegram-units.nix` hit it) |
+| a package file (`packages/<name>/default.nix`) | `paths.path "files/…"` — declare `paths` as a formal and `neg.functions.callPkg` fills it in (it sniffs formals exactly like `inputs`) | no `config` at all; the resolver is built once in `packages/overlay.nix` (`neg.rooted ../.`) and handed to every overlay through `importOvP`                             |
+| a package referring to a *sibling* package     | `call (pkg "name") { }` — `neg.functions.pkg` maps the directory name to its `default.nix`                                             | no path arithmetic anywhere in `packages/`, and a typo lists the names that exist instead of pointing at a missing file                                                  |
 
-`config.lib.neg.files` is the whole `files/` directory as one attribute set (built lazily, `extensions
-= "any"`, so keys drop their extension and colliding names keep the full one), for references whose
-target is data rather than a path string.
+`config.lib.neg.files` is the whole `files/` directory as one attribute set (built lazily,
+`extensions = "any"`, so keys drop their extension and colliding names keep the full one), for
+references whose target is data rather than a path string.
 
 From the shell, `paths` (a `~/.local/bin` tool, wrapped as `just paths`) answers the same questions:
 `paths keys files` prints what to write for `files/…`, `paths keys modules --any` does the same for
 the module tree, `paths refs systemd-user` shows every reference to a name, `paths find wl-monitor`
-picks a file with fzf and lists who uses it, and `paths resolve ../../../lib/x.nix --from
-hosts/odin/services/y.nix` resolves a relative reference (and warns when it leaves the repo).
+picks a file with fzf and lists who uses it, and
+`paths resolve ../../../lib/x.nix --from hosts/odin/services/y.nix` resolves a relative reference
+(and warns when it leaves the repo).
 
 The rule is enforced: `scripts/dev/check-relative-paths.sh` (run by `just lint` and as the
 `relative-paths-guard` flake check) fails on **any** `../` in `modules/`, `hosts/` and `packages/` —
