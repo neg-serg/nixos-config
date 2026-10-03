@@ -24,4 +24,9 @@
     docker.enable = mkBool "enable docker/podman virtualization" false;
     libvirtd.enable = mkBool "enable libvirtd (KVM/QEMU) virtualization" false;
   };
+
+  # nix-ld: run prebuilt (non-Nix) glibc binaries — GitHub release tarballs,
+  # AppImage payloads, vendored toolchains — instead of patchelf'ing each one.
+  options.features.system.nixLd.enable =
+    mkBool "run foreign dynamically linked binaries via nix-ld" true;
 }
