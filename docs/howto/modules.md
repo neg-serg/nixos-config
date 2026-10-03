@@ -2062,6 +2062,28 @@ true
 
 - [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
+## features.system.generationPrune.enable
+
+Whether to enable prune system generations beyond the newest 25.
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
+
 ## features.system.logTtys.enable
 
 Whether to enable Per-TTY log classification (journalctl viewers on tty8,tty10-tty16).
@@ -2411,6 +2433,28 @@ true
 *Declared by:*
 
 - [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
+
+## features.trashCleanup.enable
+
+Whether to enable auto-empty Trash entries older than 30 days.
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
 ## features.virt.docker.enable
 
