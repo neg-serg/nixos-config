@@ -11,6 +11,12 @@ STATE_DIR = pathlib.Path("@stateDir@")
 ZPOOL = "/run/current-system/sw/bin/zpool"
 ZFS = "/run/current-system/sw/bin/zfs"
 SENDER = "@sender@/bin/telegram-send"
+
+# Bump when a check changes meaning: the first run after an upgrade only
+# re-baselines (no messages), so a fixed false positive cannot turn into a
+# fake "recovered" notice, and a new check does not report stale history.
+CHECK_VERSION = 2
+
 NVME = "@nvmeCli@"
 
 # NVMe health comes straight from the drives' SMART log (the host runs with
@@ -238,8 +244,13 @@ def nvme_problems(device):
     if critical:
         problems.append("critical_warning=0x{0:x}".format(critical))
     temp = log.get("temperature")
-    if temp is not None and temp >= NVME_MAX_TEMP_C:
-        problems.append("температура {0:g}°C".format(temp))
+    if temp is not None:
+        # The NVMe spec stores the temperature field in Kelvins and nvme-cli
+        # passes it through (a healthy idle drive reads ~305 = 32°C). Some
+        # builds already convert, so treat only large values as Kelvin.
+        temp_c = temp - 273.15 if temp > 200 else temp
+        if temp_c >= NVME_MAX_TEMP_C:
+            problems.append("температура {0:.0f}°C".format(temp_c))
     spare = log.get("available_spare")
     threshold = log.get("available_spare_threshold")
     if spare is not None and (
@@ -282,6 +293,7 @@ def main():
     new_pools = {}
     messages = []
     had_pending = False
+    rebaseline = data.get("version", 0) != CHECK_VERSION
     for pool in list_pools():
         try:
             status = run_cmd([ZPOOL, "status", pool])
@@ -307,7 +319,7 @@ def main():
             "scrub": scrub,
         }
         prev = pools.get(pool)
-        if prev is not None:
+        if prev is not None and not rebaseline:
             # Problem-appeared / recovered transitions (skip on first run =
             # baseline so a fresh install does not dump the whole history).
             prev_ok = bool(prev.get("ok", True))
@@ -353,7 +365,7 @@ def main():
             continue
         cur_ok = not problems
         prev = datasets.get(dataset)
-        if prev is not None:
+        if prev is not None and not rebaseline:
             # Same transition-only rule as the pools: baseline on first run.
             prev_ok = bool(prev.get("ok", True))
             if prev_ok and not cur_ok:
@@ -384,7 +396,7 @@ def main():
             continue
         cur_ok = not problems
         prev = nvmes.get(name)
-        if prev is not None:
+        if prev is not None and not rebaseline:
             # Same transition-only rule as the pools: baseline on first run.
             prev_ok = bool(prev.get("ok", True))
             if prev_ok and not cur_ok:
@@ -404,6 +416,7 @@ def main():
     # next run (no loss, still no spam) instead of being swallowed.
     delivered = all(send_telegram(m) for m in messages) if messages else True
     if not had_pending or delivered:
+        data["version"] = CHECK_VERSION
         data["pools"] = new_pools
         data["datasets"] = new_datasets
         data["nvme"] = new_nvmes
