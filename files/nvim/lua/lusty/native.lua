@@ -43,11 +43,11 @@ local function pf(tag)
     return
   end
   if not prof_t0 then
-    prof_t0 = vim.loop.hrtime()
+    prof_t0 = vim.uv.hrtime()
   end
   local f = io.open(prof_path, 'a')
   if f then
-    f:write(string.format('%.2f %s\n', (vim.loop.hrtime() - prof_t0) / 1e6, tag))
+    f:write(string.format('%.2f %s\n', (vim.uv.hrtime() - prof_t0) / 1e6, tag))
     f:close()
   end
 end
@@ -498,12 +498,12 @@ function Picker:open_preview()
     style = 'minimal',
     border = 'rounded',
   })
-  api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-  api.nvim_buf_set_option(buf, 'swapfile', false)
-  api.nvim_buf_set_option(buf, 'modifiable', true)
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_win_set_option(win, 'wrap', false)
-  api.nvim_win_set_option(win, 'winhighlight', 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder')
+  vim.bo[buf].buftype = 'nofile'
+  vim.bo[buf].swapfile = false
+  vim.bo[buf].modifiable = true
+  vim.bo[buf].bufhidden = 'wipe'
+  vim.wo[win].wrap = false
+  vim.wo[win].winhighlight = 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder'
   self.preview_buf = buf
   self.preview_win = win
   self.preview_key = nil

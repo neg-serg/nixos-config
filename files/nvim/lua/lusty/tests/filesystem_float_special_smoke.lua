@@ -52,8 +52,8 @@ local function backend_escapes()
     return false
   end
   vim.fn.chansend(job, 'Q\t0\t50\t\n')
-  local t0 = vim.loop.hrtime()
-  while not acc:match('\nE\n?$') and (vim.loop.hrtime() - t0) / 1e6 < 3000 do
+  local t0 = vim.uv.hrtime()
+  while not acc:match('\nE\n?$') and (vim.uv.hrtime() - t0) / 1e6 < 3000 do
     vim.wait(10)
   end
   vim.fn.jobstop(job)

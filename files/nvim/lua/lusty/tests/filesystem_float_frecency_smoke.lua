@@ -35,14 +35,14 @@ local function backend_orders_by_frecency()
   if job <= 0 then
     return false
   end
-  local t0 = vim.loop.hrtime()
-  while not acc:find('^C %d+') and (vim.loop.hrtime() - t0) / 1e6 < 3000 do
+  local t0 = vim.uv.hrtime()
+  while not acc:find('^C %d+') and (vim.uv.hrtime() - t0) / 1e6 < 3000 do
     vim.wait(10)
   end
   vim.fn.chansend(job, 'F\t100\t' .. tmp .. '/zzz.txt\n')
   vim.fn.chansend(job, 'Q\t0\t10\t\n')
-  t0 = vim.loop.hrtime()
-  while not acc:match('\nE\n?$') and (vim.loop.hrtime() - t0) / 1e6 < 3000 do
+  t0 = vim.uv.hrtime()
+  while not acc:match('\nE\n?$') and (vim.uv.hrtime() - t0) / 1e6 < 3000 do
     vim.wait(10)
   end
   vim.fn.jobstop(job)
