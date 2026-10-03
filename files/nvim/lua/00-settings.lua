@@ -177,3 +177,12 @@ do
     escape(ru) .. ';' .. escape(en),
   }, ',')
 end
+
+-- Neovim 0.12 ships an experimental replacement for the builtin cmdline and
+-- message layer. It overlaps with noice.nvim, so it stays opt-in:
+--   NVIM_UI2=1 nvim
+-- turns ui2 on and noice off (see plugins/completion/noice.lua), which makes
+-- the two presentations comparable without touching the daily config.
+if vim.env.NVIM_UI2 == '1' then
+  require('vim._core.ui2').enable()
+end
