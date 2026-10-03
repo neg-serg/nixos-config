@@ -33,4 +33,9 @@
   # sanoid snapshot policy for the datasets holding unrecoverable data.
   options.features.system.zfsSnapshots.enable =
     mkBool "periodic sanoid snapshots for the user-data ZFS datasets" true;
+
+  # Daily cap on the number of system generations (each one pins its whole
+  # closure in the store until nix.gc runs).
+  options.features.system.generationPrune.enable =
+    mkBool "prune system generations beyond the newest 25" true;
 }
