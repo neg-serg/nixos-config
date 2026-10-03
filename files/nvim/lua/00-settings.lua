@@ -19,7 +19,6 @@ local disabled_built_ins={
     'matchparen',
 
     'optwin',
-    'rplugin',
     'rrhelper',
     'spellfile_plugin',
     'synmenu',
@@ -35,6 +34,11 @@ local disabled_built_ins={
 for _, plugin in pairs(disabled_built_ins) do
     vim.g['loaded_'..plugin]=1
 end
+
+-- plugin/rplugin.vim gates on g:loaded_remote_plugins (not g:loaded_rplugin), so
+-- the loop above cannot switch it off. Left enabled, every start re-reads the
+-- stale manifest in ~/.local/share/nvim/rplugin.vim (~3.5 ms of a ~20 ms start).
+vim.g.loaded_remote_plugins = 1
 vim.g.loaded_node_provider=0
 vim.g.loaded_perl_provider=0
 vim.g.loaded_ruby_provider=0
