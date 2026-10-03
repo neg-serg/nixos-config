@@ -2,6 +2,7 @@
 -- │ █▓▒░ folke/noice.nvim                                                             │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'folke/noice.nvim', -- better UX
+    enabled = function() return vim.env.NVIM_UI2 ~= '1' end, -- ui2 experiment replaces it, see 00-settings.lua
     event={'VeryLazy'},
     config=function()
         local noice = require('noice')
