@@ -100,7 +100,7 @@ local function paint(buf)
 	end
 end
 
-local debounce = vim.uv or vim.loop
+local debounce = vim.uv
 local timer
 
 function M.setup()
