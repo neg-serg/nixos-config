@@ -22,6 +22,7 @@ return {
 				javascript = { "prettierd", "prettier" }, -- Use a sub-list to run only the first available formatter
 				json = prettier,
 				lua = { "stylua" },
+				nix = { "nixfmt" },
 				python = { "ruff_fix", "ruff_format" }, -- Use Ruff for fixing imports and formatting (faster than isort+black)
 				rust = { "rustfmt", lsp_format = "fallback" }, -- You can also customize some of the format options for the filetype
 				sh = { "shfmt" },
@@ -34,6 +35,7 @@ return {
 				astyle = { command = "astyle", prepend_args = { "-s2", "-c", "-J", "-n", "-q", "-z2", "-xC80" } },
 				["clang-format"] = { command = "clang-format", prepend_args = { "--style=file", "-i" } },
 				["cmake-format"] = { command = "cmake-format", prepend_args = { "-i" } },
+				nixfmt = { command = "nixfmt", args = { "-" } }, -- bare "nixfmt" reads stdin only with "-" since 1.5
 				prettier = { command = "prettier" },
 				prettierd = { command = "prettierd" },
 				shfmt = { command = "shfmt", prepend_args = { "-i", "0", "-sr", "-kp" } },
