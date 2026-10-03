@@ -228,18 +228,20 @@ def dataset_problems(dataset, now):
     return problems
 
 
-def nvme_problems(device):
-    # Read the drive's own SMART log. Reasons are human-readable so the alert
-    # says what to replace and why.
+def nvme_facts(device):
+    # Read the drive's own SMART log. Returns (problems, info): a human-readable
+    # reason list for the alerts, plus the raw readings for the state file, so
+    # the numbers behind a clean run can be inspected without root.
     try:
         out = run_cmd([NVME, "smart-log", "--output-format=json", device])
     except subprocess.CalledProcessError:
-        return ["smart-log не читается"]
+        return ["smart-log не читается"], {}
     try:
         log = json.loads(out)
     except ValueError:
-        return ["smart-log вернул не JSON"]
+        return ["smart-log вернул не JSON"], {}
     problems = []
+    info = {}
     critical = int(log.get("critical_warning", 0))
     if critical:
         problems.append("critical_warning=0x{0:x}".format(critical))
@@ -249,22 +251,28 @@ def nvme_problems(device):
         # passes it through (a healthy idle drive reads ~305 = 32°C). Some
         # builds already convert, so treat only large values as Kelvin.
         temp_c = temp - 273.15 if temp > 200 else temp
+        info["temp_c"] = round(temp_c, 1)
         if temp_c >= NVME_MAX_TEMP_C:
             problems.append("температура {0:.0f}°C".format(temp_c))
     spare = log.get("available_spare")
     threshold = log.get("available_spare_threshold")
+    if spare is not None:
+        info["spare_percent"] = spare
     if spare is not None and (
         spare < NVME_MIN_SPARE_PERCENT
         or (threshold is not None and spare < threshold)
     ):
         problems.append("available_spare {0:g}%".format(spare))
     used = log.get("percentage_used")
-    if used is not None and used >= NVME_MAX_USED_PERCENT:
-        problems.append("износ {0:g}%".format(used))
+    if used is not None:
+        info["used_percent"] = used
+        if used >= NVME_MAX_USED_PERCENT:
+            problems.append("износ {0:g}%".format(used))
     media_errors = int(log.get("media_errors", 0))
+    info["media_errors"] = media_errors
     if media_errors:
         problems.append("media_errors={0}".format(media_errors))
-    return problems
+    return problems, info
 
 
 def load_state():
@@ -387,7 +395,7 @@ def main():
     for device in sorted(glob.glob(NVME_GLOB)):
         name = device.rsplit("/", 1)[-1]
         try:
-            problems = nvme_problems(device)
+            problems, info = nvme_facts(device)
         except Exception as exc:  # defensive: never crash on nvme trouble
             print(
                 "zfs-watch: nvme check {0} failed: {1}".format(name, exc),
@@ -409,7 +417,7 @@ def main():
             elif (not prev_ok) and cur_ok:
                 messages.append("\u2705 NVMe {0}: recovered".format(name))
                 had_pending = True
-        new_nvmes[name] = {"ok": cur_ok, "problems": problems}
+        new_nvmes[name] = {"ok": cur_ok, "problems": problems, "info": info}
 
     # Deliver everything. If any transition/scrub message cannot be
     # delivered, keep the previous state so the same transition is retried
