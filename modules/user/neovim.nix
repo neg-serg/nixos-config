@@ -91,6 +91,11 @@ lib.mkIf devEnabled (
         pkgs.systemd-lsp # Systemd unit LSP
         pkgs.rust-analyzer # Rust LSP (for rustaceanvim)
 
+        # Treesitter: the main branch of nvim-treesitter builds parsers with the
+        # CLI (`require('nvim-treesitter').install{...}`); without it no parser
+        # is ever installed
+        pkgs.tree-sitter # tree-sitter-cli equivalent in nixpkgs (0.26.11)
+
         # Formatters/linters (for conform.nvim and nvim-lint)
         pkgs.prettierd # Multi-language formatter (JS/TS/CSS/HTML)
         pkgs.ruff # Python formatter + linter
