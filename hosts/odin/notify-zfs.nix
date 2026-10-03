@@ -14,6 +14,10 @@
 #   - problems appeared           -> "⚠️ ZFS <pool>: <problems>"
 #   - problems cleared            -> "✅ ZFS <pool>: recovered"
 #   - a NEW monthly scrub finish  -> "🧹 ZFS scrub <pool> закончен: <N> ..."
+#   - snapshot staleness / USEDSNAP pressure / missing datasets (see
+#     modules/system/zfs-snapshots.nix for the policy it audits)
+#   - NVMe SMART problems (critical_warning, temperature, spare, wear,
+#     media errors) per /dev/nvme*n1 — services.smartd is off on this host
 # Telegram delivery goes through the shared sender (hosts/odin/telegram.nix),
 # which owns the sing-box socks-proxy retry.
 let
@@ -38,6 +42,13 @@ let
     snapshotDatasets = lib.concatStringsSep " " snapshotDatasets;
     snapshotMaxAgeHours = "3";
     snapshotUsedSnapPercent = "20";
+    # NVMe health: smartd stays off on this host, so the watcher reads the
+    # drives' SMART log itself. Thresholds are deliberately drive-agnostic.
+    nvmeCli = lib.getExe pkgs.nvme-cli;
+    nvmeGlob = "/dev/nvme*n1";
+    nvmeMaxTempC = "75";
+    nvmeMinSpare = "10";
+    nvmeMaxUsed = "90";
   };
 
 in
@@ -45,8 +56,8 @@ in
 (lib.mkIf config.odin.telegram.enable (
   systemdUser.mkOneshotTimer {
     name = "telegram-zfs-watch";
-    description = "Watch ZFS pool health and scrub completions, alert to Telegram";
-    timerDescription = "Check ZFS pool health and scrubs every 10 minutes";
+    description = "Watch ZFS pools, snapshots and NVMe SMART, alert to Telegram";
+    timerDescription = "Check ZFS pools, snapshots and NVMe health every 10 minutes";
     script = "${pkgs.python3}/bin/python3 ${watchScript}";
     onCalendar = "*-*-* *:0/10:00";
     restartSec = 30;
