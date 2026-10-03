@@ -73,6 +73,7 @@ lib.mkIf devEnabled (
         # LSP servers — via nixpkgs, not Mason (Mason binaries break on NixOS:
         # ELF binaries lack /lib64/ld-linux, npm shebangs lack /usr/bin/env)
         pkgs.marksman # Markdown
+        pkgs.texlab # LaTeX (VimTeX); the toolchain itself lives in the `latex` devshell
         pkgs.lua-language-server # Lua
         pkgs.clang-tools # C/C++ (provides clangd + clang-format)
         pkgs.lemminx # XML

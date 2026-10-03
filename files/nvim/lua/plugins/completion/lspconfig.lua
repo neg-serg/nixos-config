@@ -68,6 +68,9 @@ return {
 
     configure('marksman', {})
 
+    -- LaTeX: binary ships with the nixpkgs package (see modules/user/neovim.nix)
+    configure('texlab', {})
+
     configure('bashls', {})
     configure('pyright', {
       settings = {
