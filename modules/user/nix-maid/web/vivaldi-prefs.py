@@ -134,6 +134,18 @@ def main():
             changed.append("find-next=" + ",".join(find_next["shortcuts"]))
     if changed:
         reports.append("Ctrl+G closes the tab: " + "; ".join(changed))
+    # 1e. New tab = the dark newtab extension (files/vivaldi-newtab, loaded by
+    # --load-extension in vivaldi.nix) instead of Vivaldi's start page: the start
+    # page paints a white frame while its target renders, the extension page is
+    # dark by construction. NEW_PAGE_TYPE.extension = 3; Vivaldi falls back to
+    # the start page on its own if no active newtab override exists.
+    tabs = p.setdefault("vivaldi", {}).setdefault("tabs", {})
+    new_page = tabs.setdefault("new_page", {})
+    if new_page.get("link") != 3:
+        new_page["link"] = 3
+        reports.append(
+            "new tab opens the dark newtab extension (link = extension)"
+        )
 
     if reports:
         dump_prefs(p)

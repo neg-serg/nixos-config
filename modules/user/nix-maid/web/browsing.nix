@@ -56,6 +56,12 @@ in
       # Vivaldi CSS mod: Iosevka Proportional across the whole browser chrome
       # (replaces the old /etc/vivaldi/custom-ui/ mechanism — see vivaldi.nix)
       ".config/vivaldi/css-mods/ui-font.css".source = config.lib.neg.live "files/vivaldi/ui-font.css";
+      # Vivaldi new-tab page: MV3 extension (files/vivaldi-newtab) whose colours
+      # are hard-coded dark, so a new tab never paints the start page's white
+      # frame. Loaded with --load-extension (see vivaldi.nix); Vivaldi's tab type
+      # is set to "extension" in vivaldi-prefs.py, otherwise Ctrl+T keeps opening
+      # the start page and the override is never consulted.
+      ".config/vivaldi/extensions/neg-newtab".source = config.lib.neg.live "files/vivaldi-newtab";
     })
   ];
 }
