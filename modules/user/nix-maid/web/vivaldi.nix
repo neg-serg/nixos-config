@@ -54,7 +54,19 @@ let
     # (measured on chromium-151 with --headless=new --screenshot). This is NOT
     # Vivaldi's "Force dark mode" (that one auto-inverts light pages); sites that ship
     # a dark variant merely switch to it.
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --force-dark-mode --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222 --remote-allow-origins=*";
+    # --load-extension=.../neg-newtab: the dark new-tab page lives in
+    # files/vivaldi-newtab as an unpacked MV3 extension (chrome_url_overrides
+    # .newtab). It is not on the Web Store, so ExtensionInstallForcelist cannot
+    # carry it (the store force-installs above stay untouched). The path is the
+    # stable home symlink deployed by browsing.nix — a /nix/store path changes on
+    # every rebuild and Vivaldi then drops the extension as orphaned. Vivaldi
+    # additionally has its own "New Tab Page" setting, default = start page:
+    # there a new tab paints white until its target renders, and
+    # --force-dark-mode does not cover that frame. vivaldi-prefs.py therefore
+    # sets vivaldi.tabs.new_page.link = 3 (NEW_PAGE_TYPE.extension), so Ctrl+T
+    # lands in this extension. Verified: Manifest::Location COMMAND_LINE, no
+    # disable_reasons, body background #0a0b0e.
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --force-dark-mode --load-extension=${config.users.users.neg.home}/.config/vivaldi/extensions/neg-newtab --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222 --remote-allow-origins=*";
     proprietaryCodecs = false;
   };
 
@@ -180,7 +192,7 @@ in
     # Vivaldi Preferences surgery, re-applied at login: a running Vivaldi
     # rewrites Preferences from memory on exit, so the oneshot below must run
     # before the browser starts. One script (vivaldi-prefs.py) loads and dumps
-    # the profile once and performs all four fixes in order:
+    # the profile once and performs all five fixes in order:
     #   1. point the CSS mods dir at the profile mods folder so the compact
     #      address-bar mod loads (css_ui_mods_directory is empty by default and
     #      "Allow for using CSS modifications" must be on); also re-assert the Neg
@@ -192,13 +204,16 @@ in
     #   3. unbind Ctrl+W from close-tab so the emacs keys reach web pages (dsh web
     #      composer/terminal; xterm forwards it to zsh as C-w);
     #   4. bind Ctrl+G to close-tab. Vivaldi ships Ctrl+G as "Find Next in Page",
-    #      so the script frees that key; Ctrl+F4 keeps working too.
+    #      so the script frees that key; Ctrl+F4 keeps working too;
+    #   5. set the new tab to the dark newtab extension (vivaldi.tabs.new_page.link
+    #      = extension), so Ctrl+T no longer opens the start page and its white
+    #      first frame (files/vivaldi-newtab, loaded via --load-extension).
     systemd.user.services.vivaldi-prefs =
       let
         python = lib.getExe' pkgs.python3 "python3";
       in
       {
-        description = "Re-assert Vivaldi preferences (CSS mods dir, UI auto-hide, Ctrl+W free, Ctrl+G closes the tab)";
+        description = "Re-assert Vivaldi preferences (CSS mods dir, UI auto-hide, Ctrl+W free, Ctrl+G closes the tab, dark new tab)";
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${python} ${./vivaldi-prefs.py}";
