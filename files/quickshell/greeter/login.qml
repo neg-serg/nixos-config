@@ -37,7 +37,7 @@ ShellRoot {
 	readonly property string stateDir: {
 		const env = Quickshell.env("QS_LOGIN_STATE_DIR");
 		if (env && env !== "")
-			return env;
+		return env;
 		const rt = Quickshell.env("XDG_RUNTIME_DIR");
 		return (rt && rt !== "" ? rt : ("/run/user/" + (Quickshell.env("UID") || ""))) + "/quickshell-login";
 	}
@@ -152,9 +152,9 @@ ShellRoot {
 		// changed unit directly (see session-wrapper.sh). Removing it — after the
 		// state file is written and verified — is what lets the desktop start.
 		stateWriter.command = [
-			"sh", "-c",
-			"mkdir -p \"$(dirname \"$2\")\" 2> /dev/null; printf '%s\\n' \"$1\" > \"$2\" && [ \"$(cat \"$2\")\" = \"$1\" ] && rm -f \"$(dirname \"$2\")/login-phase\"",
-			"login-state", value, root.statePath,
+		"sh", "-c",
+		"mkdir -p \"$(dirname \"$2\")\" 2> /dev/null; printf '%s\\n' \"$1\" > \"$2\" && [ \"$(cat \"$2\")\" = \"$1\" ] && rm -f \"$(dirname \"$2\")/login-phase\"",
+		"login-state", value, root.statePath,
 		];
 		stateWriter.running = true;
 	}
@@ -203,6 +203,7 @@ ShellRoot {
 			color: "#0a0a0c"
 
 			BackgroundImage {
+				id: loginBackdrop
 				anchors.fill: parent
 				screen: lockSurface.screen
 				slideAmount: 0
@@ -214,6 +215,7 @@ ShellRoot {
 				anchors.fill: parent
 				state: state
 				context: null
+				backdrop: loginBackdrop
 				// The chip inside the card switches the layout: no compositor
 				// bind fires while the session lock is up.
 				layoutName: root.layoutName
