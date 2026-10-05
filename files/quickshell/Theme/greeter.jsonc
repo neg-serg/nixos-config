@@ -15,6 +15,16 @@
     "widgetActiveColor": "#80ceffff",
     "widgetOutline": "#40ffffff",
     "widgetOutlineSeparate": "#20ffffff",
-    "separatorColor": "#60ffffff"
+    "separatorColor": "#60ffffff",
+
+    // Login card (files/quickshell/greeter/lock/LockContent.qml)
+    "cardColor": "#8c0f141c",
+    "cardOutline": "#3dffffff",
+    "accentColor": "#7fd6ff",
+    "dangerColor": "#ff9b9b",
+    "textColor": "#f2f6fa",
+    "textMutedColor": "#9db0c2",
+    "avatarColor": "#3d7fd6ff",
+    "appearMs": 420
   }
 }
