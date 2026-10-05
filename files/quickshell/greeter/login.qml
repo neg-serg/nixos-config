@@ -108,7 +108,7 @@ ShellRoot {
 			if (pam.responseRequired) {
 				pam.respond(state.currentText);
 			} else if (pam.messageIsError) {
-				root.failLogin(pam.message + " — keymap " + root.layoutName);
+				root.failLogin(pam.message + " — раскладка " + root.layoutName);
 			}
 		}
 
@@ -122,8 +122,8 @@ ShellRoot {
 		state.isUnlocking = false;
 		if (!success) {
 			// The layout is the one failure mode the UI cannot show on its own, so
-			// it goes into the message (see the layout chip below).
-			root.failLogin("Invalid password — keymap " + root.layoutName);
+			// it goes into the message (see the layout chip in the card).
+			root.failLogin("Неверный пароль — раскладка " + root.layoutName);
 			return;
 		}
 		state.failed = false;
@@ -167,7 +167,7 @@ ShellRoot {
 				// Nothing was recorded: keep the lock and say so instead of quitting
 				// into a compositor whose config would decide on a marker that never
 				// arrived (it would put the layer back up, or start no session at all).
-				root.failLogin("Could not record the login");
+				root.failLogin("Не удалось записать состояние входа");
 				return;
 			}
 			// Unlock *before* quitting. Destroying a session-lock object while it is
@@ -200,7 +200,7 @@ ShellRoot {
 
 		WlSessionLockSurface {
 			id: lockSurface
-			color: "black"
+			color: "#0a0a0c"
 
 			BackgroundImage {
 				anchors.fill: parent
@@ -214,47 +214,12 @@ ShellRoot {
 				anchors.fill: parent
 				state: state
 				context: null
+				// The chip inside the card switches the layout: no compositor
+				// bind fires while the session lock is up.
+				layoutName: root.layoutName
+				onToggleLayout: root.setLayout(root.layoutIndex === 0 ? 1 : 0)
 			}
 
-			// Keyboard-layout button: shows which layout the password is being typed
-			// in and switches it on click (see the layout note further up). A button
-			// and not a hint, because a wrong layout is exactly the failure the rest
-			// of the login screen cannot show: the password just comes back rejected.
-			// Styled like the greeter's own lock buttons (ShellGlobals colours, same
-			// hover interpolation, same 5 px radius).
-			Rectangle {
-				id: layoutButton
-
-				anchors.right: parent.right
-				anchors.bottom: parent.bottom
-				anchors.margins: 40
-				implicitWidth: layoutLabel.implicitWidth + 44
-				implicitHeight: 48
-				radius: 5
-				border.width: 1
-				border.color: ShellGlobals.colors.widgetOutline
-				color: ShellGlobals.interpolateColors(
-					layoutMouse.containsMouse || layoutMouse.pressed ? 1000 : 0,
-					ShellGlobals.colors.widget,
-					ShellGlobals.colors.widgetActive
-				)
-
-				Text {
-					id: layoutLabel
-					anchors.centerIn: parent
-					text: "layout: " + root.layoutName
-					color: "white"
-					font.pixelSize: 20
-				}
-
-				MouseArea {
-					id: layoutMouse
-					anchors.fill: parent
-					hoverEnabled: true
-					cursorShape: Qt.PointingHandCursor
-					onClicked: root.setLayout(root.layoutIndex === 0 ? 1 : 0)
-				}
-			}
 		}
 	}
 }
