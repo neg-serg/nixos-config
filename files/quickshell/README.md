@@ -6,7 +6,8 @@ User setup for the Quickshell status bar and greeter.
 
 - `Docs/SHADERS.md` — shader wedge clipping, build/debug
 - `Docs/PANELS.md` — panel background transparency
-- `scripts/compile_shaders.sh` — builds `.frag` → `.qsb`
+- `scripts/compile_shaders.sh` — builds `.frag` → `.qsb` (main tree and `greeter/shaders/`)
+- `scripts/gen_blue_noise.py` — regenerates the greeter's dither mask (`greeter/assets/blue_noise.png`)
 
 Wedge Shader Quick Checklist
 
