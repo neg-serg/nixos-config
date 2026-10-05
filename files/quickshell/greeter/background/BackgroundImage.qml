@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import qs
 import qs.lock as Lock
 
 Item {
@@ -17,7 +18,6 @@ Item {
 	// Fallback when wallpaper is missing — black with a subtle dot grid
 	Canvas {
 		anchors.fill: parent
-		visible: image.status === Image.Error || image.status === Image.Null
 
 		onPaint: {
 			const ctx = getContext("2d");
@@ -47,6 +47,15 @@ Item {
 		id: image
 		asynchronous: root.asynchronous
 		source: root.wallpaperPath
+
+		// Cross-fade in once decoded, so the screen appears rather than snaps.
+		opacity: image.status === Image.Ready ? 1.0 : 0.0
+		Behavior on opacity {
+			NumberAnimation {
+				duration: GreeterTheme.animMediumMs
+				easing.type: Easing.OutCubic
+			}
+		}
 
 		// Cover the full screen while preserving aspect ratio,
 		// matching swayimg's default scale behaviour.

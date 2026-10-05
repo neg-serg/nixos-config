@@ -66,6 +66,15 @@ Singleton {
     readonly property color widgetOutlineSeparate: _val('greeter.widgetOutlineSeparate', "#20ffffff")
     readonly property color separatorColor: _val('greeter.separatorColor', "#60ffffff")
 
+    // Login card tokens (lock/LockContent.qml)
+    readonly property color cardColor: _val('greeter.cardColor', "#8c0f141c")
+    readonly property color cardOutline: _val('greeter.cardOutline', "#3dffffff")
+    readonly property color accentColor: _val('greeter.accentColor', "#7fd6ff")
+    readonly property color dangerColor: _val('greeter.dangerColor', "#ff9b9b")
+    readonly property color textColor: _val('greeter.textColor', "#f2f6fa")
+    readonly property color textMutedColor: _val('greeter.textMutedColor', "#9db0c2")
+    readonly property color avatarColor: _val('greeter.avatarColor', "#3d7fd6ff")
+
     // Timing tokens
     readonly property int lockAnimationMs: _val('greeter.lockAnimationMs', 500)
     readonly property int slideshowDurationMs: _val('greeter.slideshowDurationMs', 3000)
@@ -73,4 +82,5 @@ Singleton {
     readonly property int animFastMs: _val('greeter.animFastMs', 150)
     readonly property int animMediumMs: _val('greeter.animMediumMs', 250)
     readonly property int animSlowMs: _val('greeter.animSlowMs', 500)
+    readonly property int appearMs: _val('greeter.appearMs', 420)
 }
