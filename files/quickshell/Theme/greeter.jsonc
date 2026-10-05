@@ -18,7 +18,47 @@
     "separatorColor": "#60ffffff",
 
     // Login card (files/quickshell/greeter/lock/LockContent.qml)
-    "cardColor": "#8c0f141c",
+    "cardColor": "#7a0f141c",
+    "avatarPath": "assets/avatar.jpg",
+
+    // Frosted glass card (greeter/shaders/glass_card.frag)
+    "glassBlur": 9,
+    "glassTint": "#33101820",
+    "glassHighlight": 0.045,
+    "glassRefract": 10,
+    "glassShadow": 26,
+    "glassGrain": 0.02,
+
+    // Avatar disc (greeter/shaders/avatar_round.frag)
+    "avatarRingWidth": 0.06,
+    "avatarGlow": 0.55,
+
+    // Wallpaper posterisation (greeter/shaders/posterize_dither.frag): four
+    // colours, Bayer dithering, tinted with the image's own dominant colour.
+    "posterizeEnabled": true,
+    // "bayer" | "blueNoise" | "yliluoma" (see shaders/posterize_dither.frag)
+    "posterizeMode": "yliluoma",
+    "posterizeMaskScale": 1.0,
+    // Palette chroma boost in Oklab (1.0 = the image's own colours, verbatim)
+    "posterizeChroma": 1.35,
+    "posterizeDither": 0.85,
+    "posterizeCell": 2,
+    "posterizeGamma": 1.0,
+    "posterizeMix": 0.15,
+    "posterizeTint": "",
+
+    // CRT pass over the whole screen (greeter/shaders/crt_screen.frag);
+    "crtEnabled": true,
+    "crtLineSpacing": 3,
+    "crtScanStrength": 0.18,
+    "crtMaskStrength": 0.05,
+    "crtAberration": 1.0,
+    "crtBarrel": 0.012,
+    "crtBloom": 0.35,
+    "crtVignette": 0.35,
+    "crtRollStrength": 0.035,
+    "crtRollMs": 9000,
+
     "cardOutline": "#3dffffff",
     "accentColor": "#7fd6ff",
     "dangerColor": "#ff9b9b",

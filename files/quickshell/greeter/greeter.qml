@@ -27,7 +27,7 @@ ShellRoot {
 				// environment.d are sourced (greetd/PAM gives a bare env).
 				const args = ["/etc/greetd/session-wrapper"];
 				if (context.currentSessionExec)
-					args.push(...context.currentSessionExec.split(" "));
+				args.push(...context.currentSessionExec.split(" "));
 				Greetd.launch(args);
 			}
 		}
@@ -43,6 +43,7 @@ ShellRoot {
 			color: "#000000"
 
 			BackgroundImage {
+				id: lockBackdrop
 				id: backgroundImage
 				anchors.fill: parent
 				screen: lockSurface.screen
@@ -53,6 +54,7 @@ ShellRoot {
 				anchors.fill: parent
 				state: context.state
 				context: context
+				backdrop: lockBackdrop
 			}
 		}
 	}
@@ -66,6 +68,7 @@ ShellRoot {
 		color: "#000000"
 
 		BackgroundImage {
+			id: cageBackdrop
 			anchors.fill: parent
 			screen: cageWindow.screen
 			slideAmount: 0
@@ -75,6 +78,7 @@ ShellRoot {
 			anchors.fill: parent
 			state: context.state
 			context: context
+			backdrop: cageBackdrop
 		}
 	}
 }
