@@ -38,7 +38,6 @@ model: 11
 NixieTube {
 required property int index
 
-backdrop: backdrop
 tubeIndex: index
 numeralSize: 110
 digit: index < 10 ? index : -1

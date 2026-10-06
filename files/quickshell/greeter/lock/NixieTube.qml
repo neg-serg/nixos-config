@@ -15,10 +15,6 @@ import qs
 Item {
 id: root
 
-// The wallpaper item (login.qml/preview.qml). Null on a host without one: the
-// shader then draws the tube over nothing, which is what cage mode needs.
-property Item backdrop: null
-
 // The lit cathode, 0..9. -1 leaves the tube dark: a real clock has no cathode
 // for the tens of hours before 10:00.
 property int digit: -1
@@ -64,7 +60,6 @@ interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + ((root.tub
 onTriggered: {
 if (root.strikesLeft <= 0) {
 root.ignition = 1.0;
-numeralTexture.scheduleUpdate();
 return;
 }
 root.strikesLeft -= 1;
@@ -77,38 +72,13 @@ strikeTimer.restart();
 onDigitChanged: root.strike()
 Component.onCompleted: root.strike()
 
-// The tube's own rect, plus the room the bloom needs, in the backdrop's
-// coordinates. root.width/height are read on purpose: they are the dependency
-// that re-evaluates the origin when the surface (or the clock) resizes.
-readonly property point sampleOrigin: {
-const w = root.width;
-const h = root.height;
-if (root.backdrop === null || w <= 0 || h <= 0)
-return Qt.point(0, 0);
-return root.mapToItem(root.backdrop, -root.pad, -root.pad);
-}
 
-ShaderEffectSource {
-id: numeralTexture
-// Sampler for the shader must be called `source`.
-sourceItem: root.backdrop
-visible: false
-// The patch the glass will bend: the tube's rect, one pad wider on every
-// side. live only while the tube is striking — that is also when the layout
-// settles at startup, so the patch is taken again exactly when it has to be.
-live: root.ignition < 0.999
-smooth: true
-sourceRect: Qt.rect(root.sampleOrigin.x, root.sampleOrigin.y,
-root.width + 2 * root.pad, root.height + 2 * root.pad)
-}
 
 ShaderEffect {
 id: tube
 anchors.fill: parent
 
-property Item source: numeralTexture
 property vector2d pSize: Qt.vector2d(tube.width, tube.height)
-property vector2d pBackdrop: Qt.vector2d(tube.width + 2 * root.pad, tube.height + 2 * root.pad)
 property real pInset: root.pad
 property real pRadius: root.glassWidth * 0.5
 property real pBase: root.bulb ? 0 : Math.round(root.glassHeight * 0.17)
