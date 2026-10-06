@@ -50,6 +50,12 @@ ShellRoot {
 				slideAmount: 0
 			}
 
+			CrtBackdrop {
+				anchors.fill: parent
+				visible: GreeterTheme.crtEnabled
+				backdrop: lockBackdrop
+			}
+
 			LockContent {
 				anchors.fill: parent
 				state: context.state
@@ -72,6 +78,12 @@ ShellRoot {
 			anchors.fill: parent
 			screen: cageWindow.screen
 			slideAmount: 0
+		}
+
+		CrtBackdrop {
+			anchors.fill: parent
+			visible: GreeterTheme.crtEnabled
+			backdrop: cageBackdrop
 		}
 
 		LockContent {

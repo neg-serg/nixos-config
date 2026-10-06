@@ -211,6 +211,14 @@ ShellRoot {
 				wallpaperPath: root.wallpaperFile
 			}
 
+			// The tube look lives on the picture: the card and its text are drawn above
+			// this, unwarped, so glyphs stay crisp.
+			CrtBackdrop {
+				anchors.fill: parent
+				visible: GreeterTheme.crtEnabled
+				backdrop: loginBackdrop
+			}
+
 			LockContent {
 				anchors.fill: parent
 				state: state
