@@ -190,23 +190,39 @@ def main(beauty, out, exposure=0.55):
     # Bloom: a discharge in gas glows far past the wire it burns on, and without
     # that halo the numerals read as printed lines instead of a discharge. The
     # veins are the ones that bleed, and the core keeps its own brightness.
-    vein = np.clip((lum - 0.35) / 0.40, 0.0, 1.0) ** 1.6
-    core = np.clip((lum - 0.55) / 0.45, 0.0, 1.0)
-    vein = vein * (1.0 - 0.60 * core)
+    vein = np.clip((lum - 0.30) / 0.40, 0.0, 1.0) ** 1.4
+    core = np.clip((lum - 0.60) / 0.40, 0.0, 1.0)
+    vein = vein * (1.0 - 0.35 * core)
+
+    # Two scales of it: a tight one that stays on the wire and gives the numeral
+    # its body, and a wide faint one that is the gas itself. One radius alone
+    # reads either as a printed line or as a fog, never as a discharge.
     if vein.max() > 0.01:
-        halo = (
-            np.asarray(
-                Image.fromarray((vein * 255).astype("uint8"), "L").filter(
-                    ImageFilter.GaussianBlur(2.6)
-                ),
-                np.float32,
+        rgb = np.clip(rgb, 0.0, 1.0)
+        # the discharge of neon in a nixie is a deep orange, not a pale amber
+        tint = np.array([1.00, 0.52, 0.22], np.float32)
+        for radius, strength in ((1.4, 0.40), (22.0, 0.70)):
+            halo = (
+                np.asarray(
+                    Image.fromarray((vein * 255).astype("uint8"), "L").filter(
+                        ImageFilter.GaussianBlur(radius)
+                    ),
+                    np.float32,
+                )
+                / 255.0
             )
-            / 255.0
-        )
-        tint = np.array([1.00, 0.62, 0.32], np.float32)
-        rgb = 1.0 - (1.0 - rgb) * (
-            1.0 - np.clip(halo, 0, 1)[..., None] * tint * 0.45
-        )
+            rgb = 1.0 - (1.0 - rgb) * (
+                1.0 - np.clip(halo, 0, 1)[..., None] * tint * strength
+            )
+            rgb = np.clip(rgb, 0.0, 1.0)
+
+    # The collar sits in the shade of the envelope it carries: the glass ends right
+    # above it and takes the studio light with it, so the metal is darkest at the
+    # line where the two meet and comes back to full light lower down. Without it
+    # the collar is lit edge to edge and floats above the tube like a sticker.
+    contact = np.clip((-Y - (-H / 2.0 + BASE * 0.62 + 1.2)) / 2.4, 0.0, 1.0)
+    contact = 1.0 - 0.38 * (1.0 - contact) ** 1.15
+    rgb = rgb * contact[..., None]
 
     # The alpha is per material, from two flat coverage passes: the metal (wires,
     # cage, collar) is opaque, the glass is not. Modulating the glass by its own
