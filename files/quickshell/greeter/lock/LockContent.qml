@@ -34,6 +34,15 @@ Item {
 	// behind the card. Null in a host without one — the card stays translucent.
 	property Item backdrop: null
 
+	// Pointer position over the card and over the field (0..1 of each item): the
+	// glass shader puts its highlight there, which is what makes the material feel
+	// liquid instead of printed.
+	property vector2d cardPointer: Qt.vector2d(0.5, 0.5)
+	property vector2d fieldPointer: Qt.vector2d(0.5, 0.5)
+
+	// One number scales every font size and the geometry around it.
+	readonly property real uiScale: GreeterTheme.uiScale
+
 	// Whose session this is: the greeter context in greeter mode, $USER in the
 	// single-compositor login (this process runs as the main user already).
 	readonly property string userName: {
@@ -61,6 +70,7 @@ Item {
 	}
 
 	Component.onCompleted: {
+		root.appearProgress = 1;
 		const home = Quickshell.env("HOME") || "";
 		root.avatarQueue = [
 		Qt.resolvedUrl("../" + GreeterTheme.avatarPath),
@@ -286,9 +296,9 @@ Item {
 					Layout.alignment: Qt.AlignHCenter
 
 					font {
-						pixelSize: 122
+						pixelSize: Math.round(122 * root.uiScale)
 						hintingPreference: Font.PreferFullHinting
-						family: "Iosevka"
+						family: GreeterTheme.uiFont
 					}
 
 					color: GreeterTheme.textColor
@@ -308,9 +318,9 @@ Item {
 					Layout.alignment: Qt.AlignHCenter
 
 					font {
-						pixelSize: 20
+						pixelSize: Math.round(20 * root.uiScale)
 						hintingPreference: Font.PreferFullHinting
-						family: "Iosevka"
+						family: GreeterTheme.uiFont
 					}
 
 					color: GreeterTheme.textMutedColor
@@ -325,9 +335,9 @@ Item {
 					Layout.topMargin: 6
 
 					font {
-						pixelSize: 19
+						pixelSize: Math.round(19 * root.uiScale)
 						hintingPreference: Font.PreferFullHinting
-						family: "Iosevka"
+						family: GreeterTheme.uiFont
 					}
 
 					color: GreeterTheme.textColor
@@ -366,6 +376,16 @@ Item {
 				implicitHeight: card.implicitHeight
 				opacity: root.appearProgress
 
+				// Hover-only: no button, so the field and the buttons above keep their clicks;
+				// it only tells the glass where the light should be.
+				MouseArea {
+					id: cardPointerArea
+					anchors.fill: parent
+					hoverEnabled: true
+					acceptedButtons: Qt.NoButton
+					onPositionChanged: root.cardPointer = Qt.vector2d(x / width, y / height)
+				}
+
 				// Frosted glass, drawn by shaders/glass_card.frag: the shader samples the
 				// wallpaper behind the card (glassSource), blurs it, tints it, adds the sheen,
 				// the grain and the drop shadow. Without a wallpaper item to sample (cage
@@ -385,20 +405,25 @@ Item {
 					property real pRefract: GreeterTheme.glassRefract
 					property real pShadow: GreeterTheme.glassShadow
 					property real pGrain: GreeterTheme.glassGrain
+					property real pLens: GreeterTheme.glassLens
+					property real pChroma: GreeterTheme.glassChroma
+					property real pSpecular: GreeterTheme.glassSpecular
+					property real pPointerStrength: GreeterTheme.glassPointer
+					property vector2d pPointer: root.cardPointer
 
 					fragmentShader: Qt.resolvedUrl("../shaders/glass_card.frag.qsb")
 				}
 
 				// The padded wallpaper region the glass samples. The padding must match
 				// the shader's own: pad = pBlur * 1.6 + 2.
-			// A 1x1 stand-in keeps ShaderEffectSource happy when no wallpaper item was
-			// handed in (cage mode) — the effect is hidden then anyway.
-			Item {
-				id: glassPlaceholder
-				width: 1
-				height: 1
-				visible: false
-			}
+				// A 1x1 stand-in keeps ShaderEffectSource happy when no wallpaper item was
+				// handed in (cage mode) — the effect is hidden then anyway.
+				Item {
+					id: glassPlaceholder
+					width: 1
+					height: 1
+					visible: false
+				}
 
 				ShaderEffectSource {
 					id: glassSource
@@ -418,7 +443,7 @@ Item {
 				Rectangle {
 					id: card
 					anchors.fill: parent
-					implicitWidth: 470
+					implicitWidth: Math.round(470 * root.uiScale)
 					implicitHeight: cardLayout.implicitHeight + 64
 					radius: 20
 					color: root.backdrop !== null ? "transparent" : GreeterTheme.cardColor
@@ -449,15 +474,15 @@ Item {
 					ColumnLayout {
 						id: cardLayout
 						anchors.fill: parent
-						anchors.margins: 34
+						anchors.margins: Math.round(34 * root.uiScale)
 						spacing: 0
 
 						Item {
 							id: avatarBlock
 							Layout.alignment: Qt.AlignHCenter
 							Layout.bottomMargin: 18
-							implicitWidth: 108
-							implicitHeight: 108
+							implicitWidth: Math.round(108 * root.uiScale)
+							implicitHeight: Math.round(108 * root.uiScale)
 
 							// The photo: a plain square image, cut into a disc by
 							// shaders/avatar_round.frag (smooth rim, ring, halo). Hidden — the
@@ -523,8 +548,8 @@ Item {
 									anchors.centerIn: parent
 									text: root.monogram
 									color: GreeterTheme.textColor
-									font.family: "Iosevka"
-									font.pixelSize: 46
+									font.family: GreeterTheme.uiFont
+									font.pixelSize: Math.round(46 * root.uiScale)
 								}
 							}
 
@@ -568,8 +593,8 @@ Item {
 							Layout.alignment: Qt.AlignHCenter
 							text: root.userName
 							color: GreeterTheme.textColor
-							font.family: "Iosevka"
-							font.pixelSize: 26
+							font.family: GreeterTheme.uiFont
+							font.pixelSize: Math.round(26 * root.uiScale)
 						}
 
 						Text {
@@ -578,8 +603,8 @@ Item {
 							Layout.topMargin: 2
 							text: root.hostName
 							color: GreeterTheme.textMutedColor
-							font.family: "Iosevka"
-							font.pixelSize: 16
+							font.family: GreeterTheme.uiFont
+							font.pixelSize: Math.round(16 * root.uiScale)
 							visible: text.length > 0
 						}
 
@@ -587,8 +612,8 @@ Item {
 							id: field
 							Layout.alignment: Qt.AlignHCenter
 							Layout.topMargin: 26
-							implicitWidth: 384
-							implicitHeight: 58
+							implicitWidth: Math.round(384 * root.uiScale)
+							implicitHeight: Math.round(58 * root.uiScale)
 							radius: 13
 
 							// Focus halo: a second outline a few pixels out, so the field
@@ -609,10 +634,59 @@ Item {
 									}
 								}
 							}
-							color: ShellGlobals.interpolateColors(0.55, "#00000000", ShellGlobals.colors.widget)
+							color: root.backdrop !== null ? "transparent"
+							: ShellGlobals.interpolateColors(0.55, "#00000000", ShellGlobals.colors.widget)
 							border.width: 1
 							border.color: root.state.failed ? GreeterTheme.dangerColor
 							: (textBox.activeFocus ? GreeterTheme.accentColor : ShellGlobals.colors.widgetOutline)
+
+							// The field is the same liquid glass as the card, denser and with a
+							// brighter rim, so it reads as an input at a glance.
+							ShaderEffect {
+								id: fieldGlass
+								anchors.fill: parent
+								visible: root.backdrop !== null
+
+								property Item source: fieldGlassSource
+								property vector2d pCardSize: Qt.vector2d(fieldGlass.width, fieldGlass.height)
+								property real pRadius: field.radius
+								property real pBlur: GreeterTheme.fieldBlur
+								property color pTint: GreeterTheme.fieldTint
+								property real pHighlight: 0.03
+								property real pRefract: 5
+								property real pShadow: 0
+								property real pGrain: 0.012
+								property real pLens: GreeterTheme.glassLens * 0.5
+								property real pChroma: GreeterTheme.glassChroma
+								property real pSpecular: GreeterTheme.glassSpecular * 0.8
+								property real pPointerStrength: textBox.activeFocus ? GreeterTheme.glassPointer : 0.0
+								property vector2d pPointer: root.fieldPointer
+
+								fragmentShader: Qt.resolvedUrl("../shaders/glass_card.frag.qsb")
+							}
+
+							ShaderEffectSource {
+								id: fieldGlassSource
+								sourceItem: root.backdrop !== null ? root.backdrop : glassPlaceholder
+								hideSource: false
+								live: true
+								smooth: true
+								sourceRect: {
+									if (root.backdrop === null)
+									return Qt.rect(0, 0, 1, 1);
+									const pad = GreeterTheme.fieldBlur * 1.6 + 2;
+									const topLeft = fieldGlass.mapToItem(root.backdrop, -pad, -pad);
+									return Qt.rect(topLeft.x, topLeft.y, fieldGlass.width + 2 * pad, fieldGlass.height + 2 * pad);
+								}
+							}
+
+							MouseArea {
+								id: fieldPointerArea
+								anchors.fill: parent
+								hoverEnabled: true
+								acceptedButtons: Qt.NoButton
+								onPositionChanged: root.fieldPointer = Qt.vector2d(x / width, y / height)
+							}
 
 							TextInput {
 								id: textBox
@@ -627,8 +701,8 @@ Item {
 									return root.state.failed ? GreeterTheme.dangerColor : GreeterTheme.textColor;
 								}
 
-								font.pixelSize: 24
-								font.family: "Iosevka"
+								font.pixelSize: Math.round(24 * root.uiScale)
+								font.family: GreeterTheme.uiFont
 								horizontalAlignment: TextInput.AlignHCenter
 								verticalAlignment: TextInput.AlignVCenter
 								echoMode: TextInput.Password
@@ -729,8 +803,8 @@ Item {
 							Layout.topMargin: 10
 							text: "Caps Lock включён"
 							color: GreeterTheme.dangerColor
-							font.family: "Iosevka"
-							font.pixelSize: 17
+							font.family: GreeterTheme.uiFont
+							font.pixelSize: Math.round(17 * root.uiScale)
 							visible: root.capsKnown && root.capsLock
 						}
 
@@ -740,8 +814,8 @@ Item {
 							Layout.topMargin: 12
 							text: root.state.error
 							color: GreeterTheme.dangerColor
-							font.family: "Iosevka"
-							font.pixelSize: 16
+							font.family: GreeterTheme.uiFont
+							font.pixelSize: Math.round(16 * root.uiScale)
 							horizontalAlignment: Text.AlignHCenter
 							visible: root.state.failed && text.length > 0
 						}
@@ -771,8 +845,8 @@ Item {
 									anchors.centerIn: parent
 									text: "раскладка: " + root.layoutName
 									color: GreeterTheme.textMutedColor
-									font.family: "Iosevka"
-									font.pixelSize: 15
+									font.family: GreeterTheme.uiFont
+									font.pixelSize: Math.round(15 * root.uiScale)
 								}
 
 								MouseArea {
@@ -835,8 +909,8 @@ Item {
 							Text {
 								id: userLabel
 								color: GreeterTheme.textMutedColor
-								font.pixelSize: 16
-								font.family: "Iosevka"
+								font.pixelSize: Math.round(16 * root.uiScale)
+								font.family: GreeterTheme.uiFont
 								text: root.context ? root.context.currentUser : ""
 								renderType: Text.NativeRendering
 
@@ -853,8 +927,8 @@ Item {
 							Text {
 								color: GreeterTheme.textMutedColor
 								opacity: 0.4
-								font.pixelSize: 16
-								font.family: "Iosevka"
+								font.pixelSize: Math.round(16 * root.uiScale)
+								font.family: GreeterTheme.uiFont
 								text: "|"
 								renderType: Text.NativeRendering
 							}
@@ -862,8 +936,8 @@ Item {
 							Text {
 								id: sessionLabel
 								color: GreeterTheme.textMutedColor
-								font.pixelSize: 16
-								font.family: "Iosevka"
+								font.pixelSize: Math.round(16 * root.uiScale)
+								font.family: GreeterTheme.uiFont
 								text: root.context ? root.context.currentSessionName : ""
 								renderType: Text.NativeRendering
 
@@ -884,7 +958,7 @@ Item {
 
 		Rectangle {
 			id: darkenOverlay
-			anchors.fill: root
+			anchors.fill: parent
 			color: "black"
 			opacity: root.state.fadeOutMul
 			visible: darkenOverlay.opacity != 0
@@ -917,6 +991,7 @@ Item {
 		property real pRollOffset: 0
 		property real pRollStrength: GreeterTheme.crtRollStrength
 		property real pFlicker: 1.0
+		property real pLinesOnly: 0
 
 		fragmentShader: Qt.resolvedUrl("../shaders/crt_screen.frag.qsb")
 

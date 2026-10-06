@@ -17,6 +17,7 @@ float pVignette;
 float pRollOffset;
 float pRollStrength;
 float pFlicker;
+float pLinesOnly;
 };
 
 // Full-screen CRT pass over the rendered login screen: the tube's barrel curve,
@@ -27,6 +28,25 @@ void main() {
 const float PI = 3.14159265;
 
 vec2 uv = qt_TexCoord0;
+
+// pLinesOnly: the pass drawn over the UI. Scanlines, grille, sweep and
+// vignette still apply, but nothing is warped and nothing is bloomed, so text
+// keeps its shapes. Lines darken, the sweep brightens, and the sign decides
+// which of the two this pixel is.
+if (pLinesOnly > 0.5) {
+float uiScan = 0.5 - 0.5 * sin(uv.y * pScanCount * PI);
+float uiGrille = 0.5 - 0.5 * sin(uv.x * pScanCount * PI * 0.85);
+float uiLines = clamp(pScanStrength * uiScan + pMaskStrength * uiGrille, 0.0, 1.0);
+float uiBand = pRollStrength * exp(-pow(fract(uv.y + pRollOffset) - 0.5, 2.0) * 160.0);
+vec2 uiCentre = uv * 2.0 - 1.0;
+float uiVignette = pVignette * smoothstep(0.5, 1.35, length(uiCentre));
+
+float luminance = uiBand - uiLines - uiVignette * 0.35;
+float alpha = clamp(abs(luminance) * pFlicker, 0.0, 1.0);
+vec3 colour = luminance > 0.0 ? vec3(1.0) : vec3(0.0);
+fragColor = vec4(colour, alpha * qt_Opacity);
+return;
+}
 
 // Barrel distortion, with the tube's black border where the surface ends.
 vec2 c = uv * 2.0 - 1.0;
