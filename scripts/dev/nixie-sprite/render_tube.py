@@ -203,14 +203,14 @@ def build():
     shapes["glass"] = (verts, faces)
     # 2. the anode cage: 24 vertical wires + 12 rings
     wires = []
-    for k in range(32):
-        a = 2 * math.pi * k / 32
+    for k in range(16):
+        a = 2 * math.pi * k / 16
         x, z = RT * math.sin(a), RT * math.cos(a)
         wires.append(
             ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.22)
         )
-    for k in range(18):
-        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 17
+    for k in range(9):
+        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 8
         ring = [
             (
                 RT * math.sin(2 * math.pi * t / 64),
@@ -244,6 +244,36 @@ def build():
                 0.35,
             )
         )
+    # 4b. the mica spacers: thin translucent discs the stack hangs from
+    for y in (H / 2 - 4.6, -H / 2 + BASE * 0.62 + 1.2):
+        disc = []
+        for k in range(49):
+            aa = 2 * math.pi * k / 48
+            disc.append(
+                (RT * 0.94 * math.cos(aa), y, RT * 0.94 * math.sin(aa))
+            )
+        verts, faces = [], []
+        for k, (dx, dy, dz) in enumerate(disc):
+            verts.append((dx, dy - 0.12, dz))
+            verts.append((dx, dy + 0.12, dz))
+        for k in range(48):
+            a0, b0 = 2 * k, 2 * k + 1
+            a1, b1 = 2 * k + 2, 2 * k + 3
+            faces += [(a0, b0, b1), (a0, b1, a1)]
+        shapes[f"mica{int(y)}"] = (verts, faces)
+    # 4c. the stem: the pinched glass foot inside the collar
+    stem = []
+    for k in range(33):
+        aa = -1.0 + 2.0 * k / 32
+        r = 2.6 * math.sqrt(max(0.0, 1.0 - (aa * 0.9) ** 2))
+        stem.append((r, -H / 2 + BASE * 0.05 + 2.2 * abs(aa), 0.0))
+    sverts, sfaces = revolve(
+        [(0.0, -H / 2 + BASE * 0.7), (2.5, -H / 2 + BASE * 0.55)]
+        + [(r, y) for (r, y, _) in stem]
+        + [(0.0, -H / 2 + BASE * 0.05)],
+        48,
+    )
+    shapes["stem"] = (sverts, sfaces)
     # 5. the collar: crimped metal with flutes, closed at the bottom
     cprof = [
         (R, -H / 2),
@@ -305,7 +335,23 @@ def build_scene(
     os.makedirs("/tmp/ms/mesh", exist_ok=True)
     for name, (v, f) in shapes.items():
         ply = emit_ply(v, f, f"/tmp/ms/mesh/{name}.ply")
-        bsdf = {"glass": scene["glass"], "collar": scene["collarM"]}[name]
+        if name == "glass":
+            bsdf = {"type": "dielectric", "int_ior": 1.52, "ext_ior": 1.0}
+        elif name == "collar":
+            bsdf = {
+                "type": "roughconductor",
+                "alpha": 0.14,
+                "distribution": "ggx",
+                "eta": {"type": "rgb", "value": [2.2, 2.1, 2.0]},
+                "k": {"type": "rgb", "value": [3.3, 3.1, 2.9]},
+            }
+        elif name == "stem":
+            bsdf = {"type": "dielectric", "int_ior": 1.52, "ext_ior": 1.0}
+        else:  # the mica spacers
+            bsdf = {
+                "type": "diffuse",
+                "reflectance": {"type": "rgb", "value": [0.82, 0.80, 0.72]},
+            }
         scene[name] = {
             "type": "ply",
             "filename": ply,
