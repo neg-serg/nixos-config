@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """questyle-ctl - inspect & talk to the Questyle QCC Dongle Pro2 (USB 0a12:4007).
 
 The dongle is a Bluetooth audio transmitter (QCC/CSR chip, vendor id 0a12).
