@@ -8,20 +8,15 @@ float qt_Opacity;
 
 vec2 pSize;        // the item: the envelope plus the room the bloom needs
 float pInset;      // how much of pSize is the bloom's room
-float pRadius;     // corner radius of the envelope; half the width makes a disc
 float pBase;       // height of the metal base band, px (0 = a plain envelope)
 float pGlow;       // discharge strength (0 = the tube is on but shows nothing)
 float pDigit;      // the lit cathode, 0..9; -1 = nothing is lit
 float pBulb;       // 1 = the colon separator: one filled bulb, no numerals
 float pWire;       // the cathode wire, as a fraction of the numeral's height
-float pStack;      // how visible the unlit cathodes behind the lit one are
-float pHighlight;  // light the glass catches
 float pWarmth;     // how much of the discharge lands on the glass itself
 float pFlicker;    // ignition progress, 1 = struck and steady
 vec4 pCore;        // colour of the lit cathode
 vec4 pHalo;        // colour of the gas around it
-vec4 pGlass;       // the envelope's own tint
-vec4 pCathode;     // the unlit wire, seen through the glass
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.

@@ -74,6 +74,17 @@ Component.onCompleted: root.strike()
 
 
 
+// The hardware — the glass envelope with its two surfaces, the anode cage, the
+// cathode stack and the crimped collar — is a pre-rendered sprite: none of it
+// changes between minutes, and offline there is room for real optics. It is
+// drawn over the discharge, so its alpha also hides the glow behind the metal.
+Image {
+anchors.fill: parent
+source: "../assets/nixie-tube.png"
+smooth: true
+visible: !root.bulb
+}
+
 ShaderEffect {
 id: tube
 anchors.fill: parent
@@ -94,17 +105,6 @@ fragmentShader: Qt.resolvedUrl("../shaders/nixie.frag.qsb")
 }
 
 
-// The hardware — the glass envelope with its two surfaces, the anode cage, the
-// cathode stack and the crimped collar — is a pre-rendered sprite: none of it
-// changes between minutes, and offline there is room for real optics. It is
-// drawn over the discharge, so its alpha also hides the glow behind the metal.
-Image {
-anchors.fill: parent
-source: "../assets/nixie-tube.png"
-smooth: true
-visible: !root.bulb
-}
-
 // The glass goes on top of the metal, additively: its reflections are light on
 // the pane, and light does not hide the numeral behind it the way an opaque
 // sprite would. (The sprite's alpha carries the metal only.)
@@ -112,7 +112,7 @@ ShaderEffect {
 anchors.fill: parent
 visible: !root.bulb
 property Item source: glassLayer
-property real pStrength: 1.0
+property real pStrength: 0.75
 fragmentShader: Qt.resolvedUrl("../shaders/nixie_glass.frag.qsb")
 }
 
