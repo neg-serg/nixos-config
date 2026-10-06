@@ -21,3 +21,18 @@ SUBSYSTEMS=="usb", ATTRS{idVendor}=="35ef", ATTRS{idProduct}=="2200", GROUP="use
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="31e3", ATTRS{idProduct}=="1322", GROUP="users", MODE="0666"
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="31e3", ATTRS{idProduct}=="132f", GROUP="users", MODE="0666"
 
+
+# Questyle QCC Dongle Pro2 - USB-C Bluetooth audio transmitter (0a12:4007).
+# 0a12 is the CSR/Qualcomm vendor id, so udev's usb.ids database labels this
+# device "Mpow HC5 Headset in charging mode - HID / Mass Storage"; that string
+# is what PipeWire shows as the card/port name. The kernel and the USB strings
+# say "Questyle QCC Dongle Pro2" - put the database back in line.
+# (Runs from 99-local.rules, i.e. after the usb_id builtin has filled the
+# ID_*_FROM_DATABASE properties, so the assignment wins.)
+SUBSYSTEM=="sound", ATTRS{idVendor}=="0a12", ATTRS{idProduct}=="4007", \
+    ENV{ID_VENDOR_FROM_DATABASE}="Questyle", ENV{ID_MODEL_FROM_DATABASE}="QCC Dongle Pro2"
+
+# The vendor control channel (hidraw, usage page 0xFF00) must be readable for
+# questyle-ctl: uaccess for the local session + plugdev for everything else.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0a12", ATTRS{idProduct}=="4007", \
+    MODE="0660", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl"
