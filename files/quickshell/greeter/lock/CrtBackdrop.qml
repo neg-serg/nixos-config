@@ -3,8 +3,11 @@ import QtQuick
 import qs
 
 // The CRT pass over a wallpaper item: barrel curve, chromatic aberration,
-// scanlines, aperture grille, bloom, brightness sweep and vignette
-// (shaders/crt_screen.frag).
+// scanlines, aperture grille, bloom and vignette (shaders/crt_screen.frag).
+//
+// The pass is still: the brightness sweep and the flicker are off unless the
+// theme turns them on. Everything else here is a function of the pixel, so a
+// screen with nothing to say does not repaint itself.
 //
 // It is deliberately *not* applied to the login card. Warping and resampling the
 // scene costs more legibility than the effect is worth, so the card and its text
@@ -42,19 +45,15 @@ ShaderEffect {
 		visible: false
 	}
 
+	// The brightness sweep is off unless the theme asks for it (crtRollStrength).
+	// It is the only thing here that redraws the screen by itself, and a full-screen
+	// pass that repaints every frame is exactly what makes a still login screen
+	// look like it is shivering. With the roll at 0 the tube is a still picture.
 	NumberAnimation on pRollOffset {
 		from: 0
 		to: 1
 		duration: Math.max(1500, GreeterTheme.crtRollMs)
 		loops: Animation.Infinite
-		running: root.visible
-	}
-
-	// Irregular, small dips — a periodic flicker reads as a pulsing overlay.
-	Timer {
-		interval: 120
-		running: root.visible
-		repeat: true
-		onTriggered: root.pFlicker = 0.9 + (Math.random() * 0.1)
+		running: root.visible && root.pRollStrength > 0.001
 	}
 }
