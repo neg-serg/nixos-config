@@ -80,21 +80,28 @@ anchors.fill: parent
 
 property vector2d pSize: Qt.vector2d(tube.width, tube.height)
 property real pInset: root.pad
-property real pRadius: root.glassWidth * 0.5
 property real pBase: root.bulb ? 0 : Math.round(root.glassHeight * 0.17)
 property real pGlow: (root.bulb || root.digit >= 0) ? GreeterTheme.nixieGlow : 0.0
 property real pDigit: root.bulb ? -1 : root.digit
 property real pBulb: root.bulb ? 1 : 0
 property real pWire: GreeterTheme.nixieWire
-property real pStack: root.bulb ? 0 : GreeterTheme.nixieStack
-property real pHighlight: GreeterTheme.nixieHighlight
 property real pWarmth: GreeterTheme.nixieWarmth
 property real pFlicker: root.ignition
 property color pCore: GreeterTheme.nixieCoreColor
 property color pHalo: GreeterTheme.nixieGlowColor
-property color pGlass: GreeterTheme.nixieGlassColor
-property color pCathode: GreeterTheme.nixieCathodeColor
 
 fragmentShader: Qt.resolvedUrl("../shaders/nixie.frag.qsb")
+}
+
+
+// The hardware — the glass envelope with its two surfaces, the anode cage, the
+// cathode stack and the crimped collar — is a pre-rendered sprite: none of it
+// changes between minutes, and offline there is room for real optics. It is
+// drawn over the discharge, so its alpha also hides the glow behind the metal.
+Image {
+anchors.fill: parent
+source: "../assets/nixie-tube.png"
+smooth: true
+visible: !root.bulb
 }
 }
