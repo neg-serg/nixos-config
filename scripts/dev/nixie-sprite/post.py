@@ -105,7 +105,7 @@ def digit_sdf(d, P):
 
 
 def main(beauty, out, exposure=0.55):
-    a = np.load(beauty + ".npy")
+    a = np.load(os.environ.get("SPRITE_BEAUTY", beauty + ".npy"))
     xmm = (np.arange(W) + 0.5) / W * MM_W - MM_W / 2.0
     ymm = -((np.arange(HH) + 0.5) / HH * MM_H - MM_H / 2.0)
     X, Y = np.meshgrid(xmm, ymm)
@@ -228,11 +228,13 @@ def main(beauty, out, exposure=0.55):
     # cage, collar) is opaque, the glass is not. Modulating the glass by its own
     # brightness keeps its reflections readable while its body stays clear — a
     # brightness-based alpha alone turned the glass into more metal.
-    hw = (
-        np.load(beauty + "_hw.npy")
-        if os.path.exists(beauty + "_hw.npy")
-        else np.zeros_like(lum)
-    )
+    hw_path = os.environ.get("SPRITE_MASK", beauty + "_hw.npy")
+    if os.path.exists(hw_path):
+        hw = np.load(hw_path)
+        # both renderers hand over the flat coverage; Cycles gives it as colour
+        hw = hw if hw.ndim == 2 else hw.mean(axis=2)
+    else:
+        hw = np.zeros_like(lum)
     # The metal: an ordinary overlay, opaque where it is.
     al = np.where(hw > 0.5, 0.97, 0.0).astype(np.float32)
     img = np.clip(rgb, 0, 1)
@@ -242,7 +244,7 @@ def main(beauty, out, exposure=0.55):
     ).save(out)
     # The glass, additive: a reflection adds light, it does not hide the numeral
     # behind it. Treating it as opacity is exactly what made the tube read as metal.
-    gp = np.load("/tmp/ms/glass.npy")
+    gp = np.load(os.environ.get("SPRITE_GLASS", "/tmp/ms/glass.npy"))
     gp = np.maximum(gp, 0.0)
     g = aces(gp * exposure)
     g = np.where(
