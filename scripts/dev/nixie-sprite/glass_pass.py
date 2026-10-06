@@ -47,13 +47,13 @@ def main(out, spp=512):
             },
         }
 
-    scene["key"] = softbox(
+    _unused_key = softbox(
         [-120, 150, 210], [0, 0, 0], [90, 130], [7.0, 7.3, 7.8]
     )
-    scene["fill"] = softbox(
+    _unused_fill = softbox(
         [190, 40, 120], [0, 0, 0], [70, 110], [2.0, 2.1, 2.4]
     )
-    scene["rim"] = softbox(
+    _unused_rim = softbox(
         [-60, -40, -170], [0, 0, 0], [80, 120], [1.8, 1.9, 2.2]
     )
     scene["sensor"] = {
