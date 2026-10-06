@@ -20,7 +20,7 @@
     // Login card (files/quickshell/greeter/lock/LockContent.qml)
     // Login card: one scale for every font size and the geometry around it
     "uiScale": 1.2,
-    "uiFont": "Inter",
+    "uiFont": "Iosevka",
     "displayFont": "Iosevka",
     "cardColor": "#a60f141c",
     "avatarPath": "assets/avatar.jpg",
@@ -43,8 +43,27 @@
     "fieldTint": "#2effffff",
 
     // Avatar disc (greeter/shaders/avatar_round.frag)
-    "avatarRingWidth": 0.06,
-    "avatarGlow": 0.55,
+    "avatarRingWidth": 0.05,
+    "avatarGlow": 0.5,
+
+    // No rounding by default: the login screen is meant to read as a terminal.
+    // Raise these if a softer look is wanted; 0 is entirely square.
+    "cardRadius": 0,
+    "fieldRadius": 0,
+    "chipRadius": 0,
+    "buttonRadius": 0,
+    "avatarRadius": 0,
+
+    // Text halo: an accent glow plus a dark, slightly offset shadow behind the
+    // glyphs — the glow carries them over a busy picture, the shadow keeps the
+    // edges readable.
+    "textGlow": 0.18,
+    "textGlowColour": "#7fd6ff",
+    "textGlowRadius": 4,
+    "textShadow": 0.8,
+    "textShadowColour": "#e6000000",
+    "textShadowRadius": 2.5,
+    "textShadowOffset": 2,
 
     // Wallpaper posterisation (greeter/shaders/posterize_dither.frag): four
     // colours, Bayer dithering, tinted with the image's own dominant colour.
@@ -64,6 +83,8 @@
     "crtEnabled": true,
     "crtLineSpacing": 3,
     "crtScanStrength": 0.13,
+    "crtUiLines": 0,
+    // Scanlines over the card as well (0 turns the UI overlay off)
     "crtMaskStrength": 0.05,
     "crtAberration": 0.6,
     "crtBarrel": 0.008,
