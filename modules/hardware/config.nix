@@ -45,7 +45,10 @@ in
     (lib.mkIf (config.lib.neg.enabled "hardware.bluetooth") {
       hardware.bluetooth = {
         enable = true; # enable bluetooth
-        powerOnBoot = false;
+        # hci0 (MediaTek) must come up powered: nothing scans or pairs while
+        # BlueZ leaves the controller in PowerState: off (was false, so the
+        # adapter sat powered down and `bluetoothctl devices` stayed empty).
+        powerOnBoot = true;
         settings = {
           General.Enable = "Source,Sink,Media,Socket";
         };
