@@ -78,6 +78,8 @@ wsum += w;
 }
 
 vec3 blurred = acc / wsum;
+// The pane is a plain, uniform darkening of what is behind it: no local tone
+// mapping, nothing that could read as an inverted copy of the picture.
 vec3 glass = mix(blurred, pTint.rgb, pTint.a);
 
 // Sheen: light from above, only inside the pane.
