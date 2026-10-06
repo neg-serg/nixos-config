@@ -151,30 +151,49 @@ def main(beauty, out, exposure=0.55):
         & (Y < H / 2.0 - 1.5)
         & (Y > -H / 2.0 + BASE * 0.5 + 0.8)
     )
-    collar = (
-        (Y < -H / 2.0 + BASE * 0.5)
-        & (Y > -MM_H / 2.0 + 0.2)
-        & (np.abs(X) < RB)
-    )
-    lineW = np.clip(1.0 - np.abs(np.abs(X) - R) / 0.45, 0, 1)
-    innerW = np.clip(1.0 - np.abs(np.abs(X) - (R - WALL)) / 0.50, 0, 1)
-    fres = 0.045 + 0.955 * (1 - np.sqrt(np.maximum(0, 1 - xr**2))) ** 5
 
     a = np.maximum(a, 0.0)
+
+    # Denoise where a path tracer is noisiest: the dark glass, whose refractions and
+    # caustics need far more samples than the metals. A small bilateral keeps the
+    # edges of the wires while it smooths the grain — grain is what reads as dirt.
+    lum0 = a.mean(axis=2)
+    soft = np.clip((0.22 - lum0) / 0.22, 0.0, 1.0)
+    if soft.max() > 0.01:
+        sig_c, sig_s = 0.060, 2.8
+        acc = np.zeros_like(a)
+        wsum = np.zeros_like(lum0)
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                sh = np.roll(np.roll(a, dy, axis=0), dx, axis=1)
+                lsh = np.roll(np.roll(lum0, dy, axis=0), dx, axis=1)
+                w = np.exp(-((lsh - lum0) ** 2) / (2 * sig_c**2)) * math.exp(
+                    -(dx * dx + dy * dy) / (2 * sig_s**2)
+                )
+                acc += sh * w[..., None]
+                wsum += w
+        a = (
+            a * (1 - soft[..., None])
+            + (acc / np.maximum(wsum, 1e-6)[..., None]) * soft[..., None]
+        )
+
     rgb = aces(a * exposure)
     rgb = np.where(
         rgb <= 0.0031308,
         rgb * 12.92,
         1.055 * np.power(np.maximum(rgb, 1e-6), 1 / 2.4) - 0.055,
     )
-    al = np.zeros_like(X)
-    al = np.maximum(al, wire * 0.62)
-    al = np.maximum(al, cage * 0.40)
-    al = np.maximum(al, collar * 0.97)
-    al = np.maximum(al, glass * (lineW * 0.60 + innerW * 0.18 + fres * 0.22))
-    al = np.maximum(al, glass * 0.05)
-    # the sprite is premultiplied-safe: keep the colour where alpha is, and never
-    # brighter than what a glow behind it would have to fight
+    lum = 0.3 * rgb[..., 0] + 0.6 * rgb[..., 1] + 0.1 * rgb[..., 2]
+
+    # The alpha comes from what the render actually shows: a pixel the tube adds
+    # light to is a pixel that hides what is behind it. That is smooth by
+    # construction — no analytic bands to cut through the picture — and it keeps
+    # the sprite's one job: the bright metal and the glass's rim are opaque, the
+    # dark glass is not, so the discharge behind it reads through.
+    al = np.clip(1.0 - np.exp(-3.0 * lum), 0.0, 0.95)
+    # the envelope itself is a little opaque even where it is dark: glass is
+    # something you see, not nothing
+    al = np.maximum(al, glass * 0.07)
     img = np.clip(rgb, 0, 1)
     Image.fromarray(
         (np.concatenate([img, al[..., None]], -1) * 255).astype("uint8"),
@@ -183,12 +202,17 @@ def main(beauty, out, exposure=0.55):
     print(
         "saved",
         out,
-        "| alpha max %.2f mean %.3f | яркость max %.2f mean %.3f"
+        "| alpha max %.2f mean %.3f | яркость max %.2f mean %.3f | шум в стекле %.3f"
         % (
             al.max(),
             al.mean(),
-            (0.3 * img[..., 0] + 0.6 * img[..., 1] + 0.1 * img[..., 2]).max(),
-            (0.3 * img[..., 0] + 0.6 * img[..., 1] + 0.1 * img[..., 2]).mean(),
+            lum.max(),
+            lum.mean(),
+            (
+                float(lum[glass & (lum < 0.2)].std())
+                if (glass & (lum < 0.2)).any()
+                else 0.0
+            ),
         ),
     )
 
