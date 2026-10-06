@@ -170,9 +170,9 @@ vec3 refract = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb * 0.95 +
 // the pip the tube was sealed by. Everything else is the picture behind it.
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
-float alpha = inside * (0.02 + 0.10 * pow(grazing, 2.0));
-	// the room: enough of it that the vessel reads as glass over a dark picture
-	colour += vec3(0.55, 0.62, 0.78) * inside * (0.010 + 0.075 * pow(grazing, 1.5));
+float alpha = inside * (0.12 + 0.24 * pow(grazing, 2.0));
+	// The body: cold, and a little darker than the picture behind it — in a photo a
+	colour += vec3(0.020, 0.030, 0.055) * inside * (0.35 + 0.65 * grazing);
 
 // the wall edge-on: two surfaces with a dark gap between them
 float rim = exp(-max(d, 0.0) / 0.8) * inside;
@@ -183,7 +183,7 @@ colour += vec3(0.03, 0.04, 0.06) * (rimInner * 0.5);
 
 // two narrow reflections, and they stop before the dome and the collar
 float fade = clamp(1.0 - pow((v - 0.25) / 0.90, 2.0), 0.0, 1.0) * clamp((v + 0.95) / 0.45, 0.2, 1.0);
-glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.11, 2.0)) * inside * fade * 0.55;
+glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.085, 2.0)) * inside * fade * 0.62;
 glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.26, 2.0)) * inside * fade * 0.12;
 
 // the dome, and the pip on top of it
