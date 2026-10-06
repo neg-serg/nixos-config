@@ -6,3 +6,5 @@ PowerButton 1.0 PowerButton.qml
 LockContent 1.0 LockContent.qml
 LockState 1.0 LockState.qml
 SessionLockContext 1.0 SessionLockContext.qml
+NixieClock 1.0 NixieClock.qml
+NixieTube 1.0 NixieTube.qml
