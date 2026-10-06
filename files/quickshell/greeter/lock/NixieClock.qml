@@ -12,8 +12,6 @@ import qs
 Item {
 id: root
 
-// The wallpaper the tubes refract (see NixieTube.backdrop).
-property Item backdrop: null
 property int hours: 0
 property int minutes: 0
 readonly property real uiScale: GreeterTheme.uiScale
@@ -48,14 +46,12 @@ spacing: root.tubeGap
 NixieTube {
 id: hourTens
 tubeIndex: 0
-backdrop: root.backdrop
 numeralSize: root.numeralSize
 digit: root.hourDigit(0)
 }
 
 NixieTube {
 tubeIndex: 1
-backdrop: root.backdrop
 numeralSize: root.numeralSize
 digit: root.hourDigit(1)
 }
@@ -73,7 +69,6 @@ NixieTube {
 required property int index
 
 bulb: true
-backdrop: root.backdrop
 tubeIndex: 4 + index
 numeralSize: root.numeralSize
 x: Math.round((colon.width - width) / 2)
@@ -84,14 +79,12 @@ y: Math.round((colon.height / 2) + (index === 0 ? -root.bulbOffset : root.bulbOf
 
 NixieTube {
 tubeIndex: 2
-backdrop: root.backdrop
 numeralSize: root.numeralSize
 digit: root.minuteDigit(0)
 }
 
 NixieTube {
 tubeIndex: 3
-backdrop: root.backdrop
 numeralSize: root.numeralSize
 digit: root.minuteDigit(1)
 }

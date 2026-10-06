@@ -370,7 +370,6 @@ Item {
 				NixieClock {
 					id: clockFace
 					Layout.alignment: Qt.AlignHCenter
-					backdrop: root.backdrop
 					hours: clock.hours
 					minutes: clock.minutes
 				}
