@@ -364,44 +364,15 @@ Item {
 				anchors.topMargin: root.height * 0.11
 				spacing: 4
 
-				// The time is drawn twice: a dark copy a couple of pixels down
-				// carries it over the photo, the sharp copy stays exactly where it
-				// belongs. No shader, no halo — nothing is resampled.
-				Item {
+				// The time is four gas-discharge tubes (lock/NixieClock.qml): glass that
+				// refracts the wallpaper behind it, a wire cathode for every numeral and
+				// a discharge that lights the tube it burns in.
+				NixieClock {
+					id: clockFace
 					Layout.alignment: Qt.AlignHCenter
-					implicitWidth: timeText.implicitWidth
-					implicitHeight: timeText.implicitHeight
-
-					Text {
-						id: timeShadow
-						anchors.centerIn: parent
-						anchors.verticalCenterOffset: 3
-
-						font: timeText.font
-						color: "#a6000000"
-						renderType: Text.NativeRendering
-						text: timeText.text
-					}
-
-					Text {
-						id: timeText
-						anchors.centerIn: parent
-
-						font {
-							pixelSize: Math.round(122 * root.uiScale)
-							hintingPreference: Font.PreferFullHinting
-							family: GreeterTheme.uiFont
-						}
-
-						color: GreeterTheme.textColor
-						renderType: Text.NativeRendering
-
-						text: {
-							const hours = clock.hours.toString().padStart(2, '0');
-							const minutes = clock.minutes.toString().padStart(2, '0');
-							return `${hours}:${minutes}`;
-						}
-					}
+					backdrop: root.backdrop
+					hours: clock.hours
+					minutes: clock.minutes
 				}
 
 				Text {
@@ -449,7 +420,7 @@ Item {
 
 			NumberAnimation {
 				id: minuteFlash
-				target: timeText
+				target: clockFace
 				property: "opacity"
 				from: 0.4
 				to: 1.0
@@ -788,13 +759,61 @@ Item {
 								passwordCharacter: "•"
 								inputMethodHints: Qt.ImhSensitiveData
 
-								// Solid block caret: an input that blinks at the login
-								// screen is one more thing moving on it.
-								cursorDelegate: Rectangle {
-									width: Math.round(2 * root.uiScale)
-									height: Math.round(20 * root.uiScale)
-									radius: width / 2
-									color: GreeterTheme.accentColor
+								// The caret is the block cursor of a terminal (kitty runs a block with no
+								// blink — files/kitty/kitty.conf), not a hairline: one cell wide, filled
+								// with the accent, with the character it covers drawn *inside* it in the
+								// colour of the field. A terminal inverts the cell the cursor sits on, and
+								// on a password that is not a detail — a plain block over a dot hides one
+								// character and the dots stop counting.
+								cursorDelegate: Item {
+									id: caret
+
+									width: Math.round(caretMetrics.advanceWidth)
+									height: Math.round(24 * root.uiScale)
+									// The field shows its hint while it is empty, and the block would sit on
+									// the first letter of it: the cursor arrives with the first character
+									// typed. Qt turns cursorVisible back on by itself when the window is
+									// activated, so the delegate is what decides.
+									opacity: textBox.text.length > 0 ? 1.0 : 0.0
+
+									// The same font as the field, so the block is exactly as wide as the
+									// character it sits on.
+									TextMetrics {
+										id: caretMetrics
+										font: textBox.font
+										text: textBox.passwordCharacter
+									}
+
+									// The block lights the glass around it, the way the tubes above light
+									// theirs.
+									Rectangle {
+										anchors.centerIn: parent
+										width: parent.width + Math.round(7 * root.uiScale)
+										height: parent.height + Math.round(5 * root.uiScale)
+										radius: Math.round(4 * root.uiScale)
+										color: GreeterTheme.accentColor
+										opacity: 0.16
+									}
+
+									Rectangle {
+										anchors.fill: parent
+										radius: Math.round(2 * root.uiScale)
+										color: GreeterTheme.accentColor
+									}
+
+									Text {
+										anchors.centerIn: parent
+
+										// The character the cursor sits on, drawn inside the block. At the
+										// end of the line there is none — the cursor is past the last dot,
+										// and a block that invented one would add a character to the
+										// password.
+										visible: textBox.cursorPosition < textBox.text.length
+										text: textBox.passwordCharacter
+										color: GreeterTheme.fieldTint
+										renderType: Text.NativeRendering
+										font: textBox.font
+									}
 								}
 								cursorVisible: textBox.text != ""
 								onCursorVisibleChanged: textBox.cursorVisible = (textBox.text != "")
@@ -841,6 +860,10 @@ Item {
 								font.family: GreeterTheme.uiFont
 								font.hintingPreference: Font.PreferFullHinting
 								font.pixelSize: Math.round(17 * root.uiScale)
+								// Caps, and a step up in weight: this is an instruction, not a
+								// caption, and it has to read at a glance over any wallpaper.
+								font.weight: Font.Medium
+								font.capitalization: Font.AllUppercase
 								color: GreeterTheme.textMutedColor
 								opacity: 0.7
 								visible: textBox.text === ""

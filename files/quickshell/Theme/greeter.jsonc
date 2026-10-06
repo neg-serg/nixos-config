@@ -55,10 +55,32 @@
     "avatarRingWidth": 0.05,
     "avatarGlow": 0.5,
 
-    // Soft, modern shapes: the glass does the work, and no edge is drawn as a
-    // line anywhere. 0 gives the old hard-edged terminal look back.
-    "cardRadius": 12,
-    "fieldRadius": 14,
+    // Clock (greeter/lock/NixieClock.qml, shaders/nixie.frag): four gas-discharge
+    // tubes. The colour of a real tube is not one colour — the lit cathode is
+    // almost white while the gas around it is pure orange, and the glass it
+    // burns in is a very dark, warm tint. "nixieDigitSize" is the numeral in px
+    // before uiScale; the tubes, the gaps and the colon are built from it.
+    "nixieDigitSize": 92,
+    "nixieGlow": 1.0,
+    "nixieCoreColor": "#ffca7a",
+    "nixieGlowColor": "#ff6a1e",
+    "nixieGlassColor": "#4d120b06",
+    "nixieCathodeColor": "#aab6c4",
+    // The cathode wire, as a fraction of the numeral's width, and how visible
+    // the nine unlit cathodes behind the lit one are.
+    "nixieWire": 0.026,
+    "nixieStack": 0.5,
+    "nixieHighlight": 0.5,
+    "nixieWarmth": 0.45,
+    // Restrike time on a digit change — long enough to be seen, short enough
+    // that a minute never waits for it. 0 leaves the tubes steady.
+    "nixieFlickerMs": 320,
+
+    // Rounded corners, held back on purpose: the glass and the light are what
+    // shape these surfaces, and a wide radius reads as a capsule fighting them.
+    // 0 gives the old hard-edged terminal look back.
+    "cardRadius": 6,
+    "fieldRadius": 8,
     // Clamped to half the height, so 999 is a pill / a disc.
     "chipRadius": 999,
     "buttonRadius": 999,
