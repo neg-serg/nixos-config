@@ -2,7 +2,7 @@
 # Module: user/nix-maid/sys/user-services/trash-cleanup
 # Purpose: keep the freedesktop Trash from growing forever. Files land there
 # from `gio trash`, file managers and cleanup scripts; nothing ever removes
-# them, so odin carried 4.3G of debris (oldest entry: April). Entries older
+# them, so trantor carried 4.3G of debris (oldest entry: April). Entries older
 # than 30 days are dropped daily; the rest is left alone so a recent "oops"
 # is still recoverable.
 # Key options: features.trashCleanup.enable (default true).

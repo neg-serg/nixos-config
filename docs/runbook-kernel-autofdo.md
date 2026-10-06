@@ -5,7 +5,7 @@ Optimization). This technique allows building a kernel optimized for your specif
 production-collected profiles.
 
 > **Status note (this host):** the `boot.kernel.autofdo` NixOS module
-> (`modules/system/boot/autofdo.nix`) exists but is **not yet functional**. Odin builds its kernel
+> (`modules/system/boot/autofdo.nix`) exists but is **not yet functional**. Trantor builds its kernel
 > through `modules/system/kernel/localmodconfig.nix`, whose
 > `boot.kernelPackages = lib.mkOverride 40 …` outranks the module's `lib.mkForce` (priority 50), so
 > enabling `boot.kernel.autofdo.enable` does **not** currently switch the kernel to Clang — its
@@ -32,7 +32,7 @@ production-collected profiles.
 ### 1. Preparation (Instrumented Build)
 
 Build the kernel with AutoFDO enabled but **without** a profile, so the build flags match the future
-profile. In your host configuration (e.g. `hosts/odin/hardware.nix`):
+profile. In your host configuration (e.g. `hosts/trantor/hardware.nix`):
 
 ```nix
 boot.kernel.autofdo.enable = true;
@@ -51,7 +51,7 @@ Record the representative workload with `perf`. The `-c` (sample period) should 
 
 ```bash
 # cpu/event=0xc4 = "Retired Taken Branch Instructions" on Zen 4/5.
-# No libpfm/--pfm-events needed (odin's perf has no libpfm).
+# No libpfm/--pfm-events needed (trantor's perf has no libpfm).
 sudo perf record -b -e cpu/event=0xc4/k -a -N -c 500009 -o perf.data -- <workload>
 ```
 
@@ -73,7 +73,7 @@ On NixOS it is **not** at `/run/current-system/kernel/vmlinux` (that is `bzImage
 kernel package's `dev` output in the store:
 
 ```bash
-nix build .#nixosConfigurations.odin.config.boot.kernelPackages.kernel.dev \
+nix build .#nixosConfigurations.trantor.config.boot.kernelPackages.kernel.dev \
   --print-out-paths --no-link --option substitute false
 # example output: /nix/store/<hash>-linux-6.18.40-dev
 ```
@@ -103,7 +103,7 @@ boot.kernel.autofdo.profile = ../../files/profiles/kernel.afdo;
 Rebuild and reboot:
 
 ```bash
-sudo nixos-rebuild switch --flake .#odin --option substitute false
+sudo nixos-rebuild switch --flake .#trantor --option substitute false
 ```
 
 The new kernel is PGO-optimized for the recorded workload.

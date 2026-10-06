@@ -28,7 +28,7 @@ needs the store target behind the symlink — see below).
 
 States are per daemon: `disable` (no profile at all), `complain` (denials are logged, nothing is
 blocked), `enforce` (denials are blocked). The flag itself is `features.security.apparmor.enable`,
-enabled in `hosts/odin/default.nix`.
+enabled in `hosts/trantor/default.nix`.
 
 ## How a profile is built
 

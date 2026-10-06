@@ -9,7 +9,7 @@
   },
   {
     "id": "nh",
-    "prompt": "Что делает команда: nh os switch /etc/nixos#odin --option substitute false? Ответь коротко."
+    "prompt": "Что делает команда: nh os switch /etc/nixos#trantor --option substitute false? Ответь коротко."
   },
   {
     "id": "bugfix",

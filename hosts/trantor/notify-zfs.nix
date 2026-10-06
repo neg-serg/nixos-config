@@ -5,7 +5,7 @@
   neg,
   ...
 }:
-# ZFS pool health + scrub-completion Telegram watcher for odin.
+# ZFS pool health + scrub-completion Telegram watcher for trantor.
 #
 # Every 10 minutes enumerates the ZFS pools, parses `zpool status` for the
 # pool state, per-vdev READ/WRITE/CKSUM error counts and the last completed
@@ -18,7 +18,7 @@
 #     modules/system/zfs-snapshots.nix for the policy it audits)
 #   - NVMe SMART problems (critical_warning, temperature, spare, wear,
 #     media errors) per /dev/nvme*n1 — services.smartd is off on this host
-# Telegram delivery goes through the shared sender (hosts/odin/telegram.nix),
+# Telegram delivery goes through the shared sender (hosts/trantor/telegram.nix),
 # which owns the sing-box socks-proxy retry.
 let
   systemdUser = neg.systemdUser lib;
@@ -36,7 +36,7 @@ let
   );
 
   watchScript = pkgs.replaceVars ./notify/telegram-zfs-watch.py {
-    sender = config.odin.telegram.sender;
+    sender = config.trantor.telegram.sender;
     inherit stateDir stateFile;
     # Hourly cadence + slack for one missed run.
     snapshotDatasets = lib.concatStringsSep " " snapshotDatasets;
@@ -52,8 +52,8 @@ let
   };
 
 in
-# Telegram is gated on config.odin.telegram.enable (see hosts/odin/telegram.nix).
-(lib.mkIf config.odin.telegram.enable (
+# Telegram is gated on config.trantor.telegram.enable (see hosts/trantor/telegram.nix).
+(lib.mkIf config.trantor.telegram.enable (
   systemdUser.mkOneshotTimer {
     name = "telegram-zfs-watch";
     description = "Watch ZFS pools, snapshots and NVMe SMART, alert to Telegram";

@@ -36,7 +36,7 @@ configuration.
 
 ### Profiles & Feature Flags
 
-- Primary toggle: `features.profiles` (list of active profiles; odin: `["desktop" "dev" "gaming"]`).
+- Primary toggle: `features.profiles` (list of active profiles; trantor: `["desktop" "dev" "gaming"]`).
   Each profile sets feature-flag defaults via `modules/profiles/`.
 - Feature definitions live in `modules/features/`; documentation: `OPTIONS.md`.
 - Key flags:
@@ -430,7 +430,7 @@ Example:
   # Globally (module default is true)
   hardware.audio.rnnoise.enable = true;
 
-  # Per-host override (e.g., hosts/odin/services/policy.nix)
+  # Per-host override (e.g., hosts/trantor/services/policy.nix)
   hardware.audio.rnnoise.enable = false;
 }
 ```
@@ -448,7 +448,7 @@ Docs are English-only (hard rule). SuperCollider live-coding docs live in the pr
 Expose the audio stack to the local network via `features.media.audio.lanAccess.enable`:
 
 - **MPD** — `bind_to_address` becomes `any`, so MPD (port 6600) is reachable from LAN clients
-  (`mpc -h odin`, mobile MPD apps, etc.). No password — anyone on the LAN can control playback.
+  (`mpc -h trantor`, mobile MPD apps, etc.). No password — anyone on the LAN can control playback.
   Firewall port 6600 was already open.
 - **PipeWire, receive** — Pulse-compatible TCP server on port 4713
   (`pipewire-pulse.conf.d/20-network.conf`). Other devices can play audio through this machine, e.g.
@@ -541,7 +541,7 @@ Additionally, a Markdown language policy is enforced:
   **SCX `scx_lavd`** (dual-CCD X3D-aware BPF scheduler) plus **cgroup cpuset**
   (`systemd-run -p AllowedCPUs=…`) to pin games to the V-Cache CCD.
 
-- Host `odin` pins games to V-Cache CCD cores `1-3,16-19` (96MB L3) via `systemd-run`. Kernel
+- Host `trantor` pins games to V-Cache CCD cores `1-3,16-19` (96MB L3) via `systemd-run`. Kernel
   threads and IRQs stay on the housekeeping CCD `4-15,20-31` (32MB L3) via `irqaffinity=` and
   `kthread_cpus=` boot params.
 
@@ -588,7 +588,7 @@ Notes:
 - Do not wrap the entire Steam client; prefer per‑game Launch Options to keep downloads/tooling on
   housekeeping CPUs.
 - To change the default gaming cores system‑wide, adjust `gamingCpuSet` in
-  `hosts/odin/hardware.nix`.
+  `hosts/trantor/hardware.nix`.
 
 ## Gaming Recommendations
 
@@ -689,7 +689,7 @@ Tuning tips:
 
 - Netdata (local, very light):
 
-  - Enable per-host: set `monitoring.netdata.enable = true;` (see hosts/odin/services/policy.nix).
+  - Enable per-host: set `monitoring.netdata.enable = true;` (see hosts/trantor/services/policy.nix).
   - Opens a local UI at `http://127.0.0.1:19999` with CPU/GPU/sensors/disks/net.
   - Service is de‑prioritized (nice/CPU/IO weights) to minimize impact.
   - Extend via `services.netdata.config` if you need extra collectors.

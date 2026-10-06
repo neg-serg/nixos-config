@@ -1,6 +1,6 @@
 # Quickshell media toast: how to do it right
 
-Hard-won on odin. The rules below cover what not to repeat and how to make the toast compact,
+Hard-won on trantor. The rules below cover what not to repeat and how to make the toast compact,
 pressed against the panel, and stable.
 
 ## Files

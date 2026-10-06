@@ -15,7 +15,7 @@ set -euo pipefail
 
 # ---- configuration ----
 
-HOST="${1:-odin}"
+HOST="${1:-trantor}"
 NIXPKGS_PATH="${NIXPKGS_SLIM_PATH:-/tmp/nixpkgs-slim}"
 TS=$(date +%Y-%m-%d_%H-%M-%S)
 OUT_DIR="benchmarks/${TS}_${HOST}"

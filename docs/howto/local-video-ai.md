@@ -1,4 +1,4 @@
-# Local video-AI stack (odin, ComfyUI)
+# Local video-AI stack (trantor, ComfyUI)
 
 Image/video/3D generation through ComfyUI on RX 9070 XT (gfx1201).
 

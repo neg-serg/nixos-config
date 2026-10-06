@@ -15,7 +15,7 @@ send() { # $1 = message text
 
 # 1. Down (stopped manually / inactive) is a normal action here — record
 #    the down edge and stay silent (no Telegram spam).
-if ! $SYSCTL is-active --quiet wg-quick-vpn-odin; then
+if ! $SYSCTL is-active --quiet wg-quick-vpn-trantor; then
   touch "$DOWN_MARKER"
   exit 0
 fi

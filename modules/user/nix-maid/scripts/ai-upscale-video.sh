@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ai-upscale-video — AI video upscaler on odin (AMD RX 9070 XT).
+# ai-upscale-video — AI video upscaler on trantor (AMD RX 9070 XT).
 #
 # Pipeline: VapourSynth (BestSource) -> vsncnn (ncnn Vulkan, ONNX models)
 #           -> ffmpeg encode. Single pass, no intermediate PNGs.

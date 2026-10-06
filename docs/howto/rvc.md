@@ -14,7 +14,7 @@ a target voice — not done** (a dataset/model is needed).
 - Russian: works with Russian training data (RVC itself is language-independent — quality depends on
   the dataset).
 
-## Status on odin
+## Status on trantor
 
 | Component     | Path                                                       | Status                       |
 | ------------- | ---------------------------------------------------------- | ---------------------------- |

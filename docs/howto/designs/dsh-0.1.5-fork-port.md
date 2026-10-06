@@ -199,7 +199,7 @@ verification in the progress log.
   `rm -rf ~/.dsh/profiles/web/node_modules/<pkg>` and let the module's ensure script (or the next
   rebuild/login) re-create it; then `systemctl --user restart dsh.service`. Fork packages are
   symlinked into the fork checkout, so a rebuilt `lib/` is picked up on reload.
-- **C3.** Roll out (`sudo -n nixos-rebuild switch --flake .#odin --option substitute false`) and run
+- **C3.** Roll out (`sudo -n nixos-rebuild switch --flake .#trantor --option substitute false`) and run
   the verification protocol below.
 
 ## Workstream D — external

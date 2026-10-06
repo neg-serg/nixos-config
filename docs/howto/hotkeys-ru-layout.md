@@ -367,7 +367,7 @@ layout is already us. Nothing is rolled back while the focus stays in a window.
 Group index of `us` (`usLayoutIndex`) follows the `kb_layout = us,ru` invariant — the layout order
 cannot be flipped, or Hyprland binds (matched against the **first** layout) would break.
 
-Enable: `features.input.ruHotkeys.enable = true` (enabled on odin). Check:
+Enable: `features.input.ruHotkeys.enable = true` (enabled on trantor). Check:
 `systemctl --user status ru-layout`; in kitty the layout is us, press `M4+S` in a browser window →
 ru, switch to another window and back → that browser window is ru again.
 
@@ -389,7 +389,7 @@ The `nix eval .#checks.x86_64-linux.ru-keys` check (and `nix flake check`) catch
 Migration state (handwritten duplicates → generators):
 
 - **done**: kitty (`kittyRuBinds` in `shells.nix`), yazi (`mkRuKeys`), mpv (`mpvRuBinds`), zellij
-  (`zellijRuBinds` in `hosts/odin/default.nix`), rmpc (`rmpcRuBinds` in `sys/media.nix`),
+  (`zellijRuBinds` in `hosts/trantor/default.nix`), rmpc (`rmpcRuBinds` in `sys/media.nix`),
   SurfingKeys (`skRu2en` in `web/browsing.nix`); neovim langmap cross-checked against the
   `mkLangmap` golden test.
 - **still manual**: swayimg `init.lua` — its binds are inline-lua closures; generation would only

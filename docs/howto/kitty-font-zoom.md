@@ -130,5 +130,5 @@ instead of being reverted by the next resize.
 
 Constants live at the top of `files/kitty/font_zoom.py`: `MIN_FONT_SIZE`, `MAX_FONT_FACTOR`,
 `DEADZONE`, `SELF_CHANGE_GRACE`, `STARTUP_SETTLE`, `SIZE_SLOP`. Changing them requires a rebuild
-(`nh os switch /etc/nixos#odin`) plus a **kitty restart**: watchers are loaded per process, and
+(`nh os switch /etc/nixos#trantor`) plus a **kitty restart**: watchers are loaded per process, and
 `load_config_file` only affects windows created afterwards.

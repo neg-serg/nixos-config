@@ -74,7 +74,7 @@ in
   # ── Domain filter checks ─────────────────────────────────────────
   # Validate that modules/default.nix (the actual filter consumer) works
   # with both the all-domains and a restrictive filter (mirrors the
-  # odinDomains path in flake/nixos.nix).
+  # trantorDomains path in flake/nixos.nix).
 
   "dom-all" = mkModuleCheck "dom-all" [ ../modules/default.nix ] (_: true);
 
@@ -91,7 +91,7 @@ in
   # fzf parses FZF_*_OPTS values as its own CLI options; a standalone '#'
   # token silently truncates them (regression: commit 5cd4942a dropped all
   # colors/binds). fzf-opts-guard pins the predicate, fzf-opts parses the
-  # real odin values with fzf itself.
+  # real trantor values with fzf itself.
 
   "fzf-opts-guard" = mkOkCheck "fzf-opts-guard" (import ../lib/fzf-opts-tests.nix);
 
@@ -113,7 +113,7 @@ in
 
   "feature-flags" =
     let
-      # Options of the full feature tree (not of one host: odin's domain set
+      # Options of the full feature tree (not of one host: trantor's domain set
       # excludes some domains, e.g. `apps`, whose flags are still legitimate).
       featuresOptions =
         (lib.evalModules {
@@ -135,7 +135,7 @@ in
 
   "fzf-opts" =
     let
-      vars = self.nixosConfigurations.odin.config.environment.variables;
+      vars = self.nixosConfigurations.trantor.config.environment.variables;
       fzfOpts = [
         {
           name = "FZF_DEFAULT_OPTS";
@@ -341,24 +341,24 @@ in
       '';
 
   # ── NixOS test config checks ───────────────────────────────────────
-  # Each evaluates a profile-specific NixOS configuration for "odin"
+  # Each evaluates a profile-specific NixOS configuration for "trantor"
   # via mkTestHost (threaded from flake.nix; stripped from the
   # nixosConfigurations output so flake-schemas sees a pure machine set).
   # These ensure the A/B test configurations evaluate without errors.
 
-  # test-odin-gaming evaluates a profile-specific NixOS configuration for odin
+  # test-trantor-gaming evaluates a profile-specific NixOS configuration for trantor
   # (via mkTestHost, threaded from flake.nix) and forces its whole build graph:
   # counting option names never evaluated the configuration, so a module body
   # that throws passed this check.
   #
   # It also pins the domain filter: the test host must import the same domains
-  # as the real host (mkHost → odinDomains, which excludes appimage/apps),
-  # otherwise it validates a configuration odin never runs.
+  # as the real host (mkHost → trantorDomains, which excludes appimage/apps),
+  # otherwise it validates a configuration trantor never runs.
   # modules/appimage/default.nix is the probe — it registers the appimage binfmt
   # format, so the registration is present exactly when that domain is imported.
-  "test-odin-gaming" =
+  "test-trantor-gaming" =
     let
-      cfg = mkTestHost "odin" "gaming";
+      cfg = mkTestHost "trantor" "gaming";
       appimageImported = cfg.config.boot.binfmt.registrations ? appimage;
       # Force the full system evaluation: `builtins.seq` on the derivation
       # itself, never on a `.drvPath`/`outPath` string — those carry store
@@ -367,15 +367,15 @@ in
       # now fails the check.
       forced = builtins.seq cfg.config.system.build.toplevel 0;
     in
-    pkgs.runCommand "check-test-odin-gaming" { } ''
+    pkgs.runCommand "check-test-trantor-gaming" { } ''
       ${lib.optionalString appimageImported ''
         echo "FAIL: the test host imported the appimage domain (domainFilter diverged from mkHost)" >&2
         exit 1
       ''}
-      echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options, appimage domain: ${
+      echo "check: test-trantor-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options, appimage domain: ${
         if appimageImported then "imported" else "excluded"
       })"
-      echo "check: test-odin-gaming config fully evaluated (${toString forced} errors)"
+      echo "check: test-trantor-gaming config fully evaluated (${toString forced} errors)"
       touch $out
     '';
 }

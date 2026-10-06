@@ -30,7 +30,7 @@
 
 ## Hosts
 
-### odin
+### trantor
 
 - profiles: desktop, dev, gaming
 - `features.apps.winapps.enable = true`

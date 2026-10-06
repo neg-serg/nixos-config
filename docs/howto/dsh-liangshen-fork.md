@@ -42,7 +42,7 @@ the picker, sessions and the default reference `neg`.
 ## Changing the behavior
 
 Edit `modules/user/nix-maid/apps/dsh-liangshen-fork/agent.cordis.yml`, then
-`sudo nixos-rebuild switch --flake .#odin --option substitute false` (or wait for the login) — the
+`sudo nixos-rebuild switch --flake .#trantor --option substitute false` (or wait for the login) — the
 activation script re-syncs the preset. The picker default is changed via the GUI (roster → "Set as
 default") or by editing `settings.yaml`.
 

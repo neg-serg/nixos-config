@@ -47,7 +47,7 @@ Legend: ✅ — already on the system; ⏳ — being added in `modules/cli/tools
 - **rg**: `~/.config/ripgrep/ripgreprc` — `--no-heading --smart-case --follow --hidden` + exclusions
   of `.git/`, `node_modules/`, etc. (nix-maid `cli/search.nix`). For agents, `--no-heading` gives
   compact `path:line:match` lines. Threads: `--threads=32` (by default ripgrep uses only 12 workers;
-  on odin's 16C/32T all 32 are used).
+  on trantor's 16C/32T all 32 are used).
 - **bat**: `~/.config/bat/config` — the `ansi` theme, no paging or frames (handy in pipes).
 - **fzf**: `FZF_DEFAULT_COMMAND` is already built on `fd` (`fd --type=f --hidden --exclude=.git`);
   file previews via `bat`, directory previews via `eza --tree`.
@@ -118,5 +118,5 @@ hyperfine 'grep -r foo .' 'rg foo .' # compare legacy vs golden
 Verify the installation:
 `command -v rg fd bat eza delta jq zoxide duf dust ncdu btop procs sd hyperfine`.
 
-Package changes require a system rebuild (`nh os switch /etc/nixos#odin --option substitute false`);
+Package changes require a system rebuild (`nh os switch /etc/nixos#trantor --option substitute false`);
 changes under `~/.dsh/skills/` are picked up by a new dsh session without a rebuild.

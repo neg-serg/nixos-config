@@ -58,7 +58,7 @@ in
 {
   config = mkIf cfg.enable {
     # Self-hosted ntfy server: LAN subscribers (e.g. phone) read topic
-    # `net-health` at http://<odin-LAN-ip>:2586/net-health. No auth (LAN
+    # `net-health` at http://<trantor-LAN-ip>:2586/net-health. No auth (LAN
     # only).
     services.ntfy-sh = {
       enable = true;

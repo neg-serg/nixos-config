@@ -13,7 +13,7 @@ structure — feature flags, module domains, packages, overlay wiring.
 - Add an inline `# comment` after every `pkgs.*` entry in package lists — enforced by `just lint`
   (`scripts/dev/check-package-annotations.sh`).
 - Commit subject: `[scope] imperative short summary` — ASCII only, no trailing period (enforced by
-  the `commit-msg` hook; scope examples: `[dev/pkgs]`, `[hosts/odin]`, `[docs]`).
+  the `commit-msg` hook; scope examples: `[dev/pkgs]`, `[hosts/trantor]`, `[docs]`).
 - The `pre-commit` hook runs the **full lint suite** inside `nix develop .#lint --command just lint`
   — slow on first run (builds the devshell). Run `just lint` locally before committing.
 - Shell syntax is guarded with `osh -n` (`scripts/dev/check-osh-syntax.sh`): every tracked shell
@@ -59,7 +59,7 @@ structure — feature flags, module domains, packages, overlay wiring.
 installs via `environment.systemPackages`.
 
 **Verify:** `just check` (`nix flake check -L`), or dry-build the host closure:
-`nix build .#nixosConfigurations.odin.config.system.build.toplevel`.
+`nix build .#nixosConfigurations.trantor.config.system.build.toplevel`.
 
 **Gotchas:** `lib` must be in the function args for `mkIf`; never write `with pkgs; [...]` (lint
 guard); scripts needed by systemd units should not `mkdir`/`touch`/`rm` in `ExecStart*` — prefer a
@@ -94,7 +94,7 @@ declaratively managed file (`force = true`) or a `writeShellScriptBin` wrapper (
    (string breaks store-input tracking). Keep `src = ./relative/…` there.
 
 **Verify:**
-`nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
+`nix build .#nixosConfigurations.trantor.config.system.build.toplevel --dry-run --option substitute false`
 (a bad path fails evaluation).
 
 ## 3. Add a feature flag
@@ -141,7 +141,7 @@ declaratively managed file (`force = true`) or a `writeShellScriptBin` wrapper (
 
 **Example:**
 `features.dev.ai.omp.enable = mkBool "install Oh My Pi (omp) AI coding agent (fork of Pi)" false;`
-in `modules/features/dev.nix`, enabled in `hosts/odin/default.nix`.
+in `modules/features/dev.nix`, enabled in `hosts/trantor/default.nix`.
 
 **Verify:** `rg "features.<domain>.<feature>" modules/ hosts/` shows definition, host/profile
 enablement, and consumer; `just codebase` lists the flag with its default and description.
@@ -201,7 +201,7 @@ entry needs a `# comment`.
 **Steps:**
 
 1. Create `hosts/<name>/`; `default.nix` imports the host files and sets `features.profiles` (order
-   matters — later profiles win). See `hosts/odin/default.nix` as the reference.
+   matters — later profiles win). See `hosts/trantor/default.nix` as the reference.
 
 1. Register in `flake/nixos.nix`:
 
@@ -209,7 +209,7 @@ entry needs a `# comment`.
    "<name>" = mkHost "<name>";
    ```
 
-   (`hostsDir = ../hosts`; `mkHost` imports `hosts/<name>`; non-odin hosts get the `allDomains`
+   (`hostsDir = ../hosts`; `mkHost` imports `hosts/<name>`; non-trantor hosts get the `allDomains`
    domain filter automatically.)
 
 1. Add the host to `hosts/README.md` table.
@@ -289,7 +289,7 @@ instead; scripts meant for the system (not the user) belong in a package, not lo
 
 1. Runtime path: `config.sops.secrets.<key>.path` → `/run/secrets/<key>`.
 
-**Example:** `hosts/odin/default.nix` →
+**Example:** `hosts/trantor/default.nix` →
 `users.main.hashedPasswordFile = config.sops.secrets."user-password-hash".path;` backed by
 `secrets/home/user-password-hash.sops.yaml` (yaml+key); raw pattern:
 `modules/user/nix-maid/sys/media.nix` → `lastfm/rescrobbled` from
@@ -319,9 +319,9 @@ instead; scripts meant for the system (not the user) belong in a package, not lo
   QML/Hyprland/markdown/syntax checks, package annotations)
 - `just check` — `nix flake check -L`
 - `just docs-guard` / `just unbound-hosts-guard` — freshness gates for generated artifacts
-  (`docs/codebase.md`, `docs/howto/modules.md`, `hosts/odin/unbound-hosts.nix`); they rerun the
+  (`docs/codebase.md`, `docs/howto/modules.md`, `hosts/trantor/unbound-hosts.nix`); they rerun the
   generators and diff, and are not part of `just lint`
-- `just deploy [host]` — build + switch (default `odin`); `just deploy-nh` — nh-based alternative;
+- `just deploy [host]` — build + switch (default `trantor`); `just deploy-nh` — nh-based alternative;
   `just deploy-debug` — verbose
 - dry-run before touching the system:
   `nix build .#nixosConfigurations.<host>.config.system.build.toplevel`
@@ -401,7 +401,7 @@ substituted value has to be reachable at build time:
   `nix eval` value. Byte-exact for config/rule/Lua files, `shfmt -i 2 -ci -bn -sr`-normalised for
   `.sh` files (treefmt reformats those, that is the only accepted difference);
 - A/B the evaluation: `git stash push` the touched files, capture the old values
-  (`nix eval --json --apply '...' .#nixosConfigurations.odin.config`), `git stash pop`, then diff.
+  (`nix eval --json --apply '...' .#nixosConfigurations.trantor.config`), `git stash pop`, then diff.
   For home files compare `config.users.users.neg.maid.file.home` (all ~340 entries) — this catches
   stray whitespace and wrong substitutions;
 - an unchanged derivation is the strongest signal: the same `drvPath` (or the same output store path

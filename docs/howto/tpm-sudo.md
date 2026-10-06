@@ -17,18 +17,18 @@ sudo → pam_ssh_agent_auth → ssh-agent → PKCS#11 (tpm2-pkcs11) → TPM sign
 
 ## Flag
 
-`features.security.tpmSudo.enable` (default `false`). Enable it in `hosts/odin/default.nix`. When
+`features.security.tpmSudo.enable` (default `false`). Enable it in `hosts/trantor/default.nix`. When
 enabled, the module `modules/security/tpm-sudo.nix`:
 
 - enables `security.tpm2` + `security.tpm2.pkcs11` + `tctiEnvironment`;
 - enables `security.pam.sshAgentAuth` + `sudo.sshAgentAuth`;
-- unlocks the kernel TPM modules (`kernel/params.nix`, `hosts/odin/hardware.nix`);
+- unlocks the kernel TPM modules (`kernel/params.nix`, `hosts/trantor/hardware.nix`);
 - adds `tpm2-pkcs11` to `agentPKCS11Whitelist` (`system/net/ssh.nix`);
 - creates the `tpm2-ssh-add.service` unit — auto-loads the key into the agent at login.
 
 ## Step 1 — enable fTPM in UEFI/BIOS
 
-`odin` (Ryzen) has "AMD fTPM" / "PSP fTPM". In the BIOS: **Advanced → AMD fTPM configuration → TPM
+`trantor` (Ryzen) has "AMD fTPM" / "PSP fTPM". In the BIOS: **Advanced → AMD fTPM configuration → TPM
 Device Selection → Firmware TPM** → Enabled.
 
 > Without this step the flag must not be enabled: the system will wait for the `tpmrm` device at
@@ -37,7 +37,7 @@ Device Selection → Firmware TPM** → Enabled.
 ## Step 2 — enable the flag
 
 ```nix
-# hosts/odin/default.nix
+# hosts/trantor/default.nix
 features.security.tpmSudo.enable = true;
 ```
 
@@ -45,7 +45,7 @@ features.security.tpmSudo.enable = true;
 
 ```bash
 just fmt && just check
-nh os switch /etc/nixos#odin --option substitute false
+nh os switch /etc/nixos#trantor --option substitute false
 ```
 
 ## Step 4 — verify the TPM
@@ -99,7 +99,7 @@ features.security.tpmSudo.enable = false;
 ```
 
 ```bash
-nh os switch /etc/nixos#odin --option substitute false
+nh os switch /etc/nixos#trantor --option substitute false
 ```
 
 TPM is disabled again: the modules are blacklisted, `/dev/tpmrm0` is not created, and `sudo` works

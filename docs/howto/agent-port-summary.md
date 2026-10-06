@@ -57,7 +57,7 @@ web GUI in 2026-09 — see §1; the results below are from this check, not from 
   rules-injector logic (inject+dedup ✅), compaction-todo-preserver (re-append ✅), memory-extractor
   (draft ✅).
 - Fired live: boulder (todo continuations), category-skill-reminder, TTSR injections.
-- LLM bench for memory-extractor (odin, RX 9070 XT 16GB): qwen3:8b-q8_0 26s/52 tok/s — the default;
+- LLM bench for memory-extractor (trantor, RX 9070 XT 16GB): qwen3:8b-q8_0 26s/52 tok/s — the default;
   gemma4:12b 47s; deepseek-r1:14b 48s; qwen3dot5 loops; qwen3.5:27b does not fit.
 - Real usage (2026-08-20): desktop screenshot→vision (real windows recognized) ✅; browser
   (dsh-browser / headless chromium) removed in 2026-08 — CDP is not used (AGENTS.md hard rule);

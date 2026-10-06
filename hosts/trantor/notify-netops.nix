@@ -1,10 +1,10 @@
-# notify-netops.nix — two small operational notifiers for host "odin".
+# notify-netops.nix — two small operational notifiers for host "trantor".
 #
 # (A) telegram-vpn-watch (oneshot + timer, every 10 min): watches the on-demand
-#     WireGuard tunnel (wg-quick-vpn-odin) and the public egress IP. Sends a
+#     WireGuard tunnel (wg-quick-vpn-trantor) and the public egress IP. Sends a
 #     Telegram message on a down->up transition ("VPN поднят") and on a public
-#     IP change while the tunnel stays up. Gated on config.odin.telegram.enable
-#     (see hosts/odin/telegram.nix).
+#     IP change while the tunnel stays up. Gated on config.trantor.telegram.enable
+#     (see hosts/trantor/telegram.nix).
 # (B) ntfy-system-stale (oneshot + timer, weekly Monday 10:00): reminds to run
 #     `nix flake update` when the last commit that touched flake.lock is older
 #     than 14 days. Posts an info/low ntfy message to the local server topic
@@ -37,7 +37,7 @@ let
     ];
     text = builtins.readFile (
       pkgs.replaceVars ./notify/netops-vpn-watch.sh {
-        sender = config.odin.telegram.sender;
+        sender = config.trantor.telegram.sender;
         curl = pkgs.curl;
         systemd = pkgs.systemd;
         inherit socksProxy;
@@ -62,7 +62,7 @@ let
 in
 mkMerge [
   # ---- Part A: telegram-vpn-watch (gated on the telegram sops file) ----
-  (mkIf config.odin.telegram.enable (
+  (mkIf config.trantor.telegram.enable (
     systemdUser.mkOneshotTimer {
       name = "telegram-vpn-watch";
       description = "Notify Telegram on WireGuard up/public-IP changes";

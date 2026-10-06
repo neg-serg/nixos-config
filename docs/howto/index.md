@@ -30,7 +30,7 @@
 - Hyprland plugins: what nixpkgs ships, what the flake pins, how to add one:
   [hyprland-plugin.md](./hyprland-plugin.md)
 
-- Local video AI on odin (VRAM budget, models, what actually runs):
+- Local video AI on trantor (VRAM budget, models, what actually runs):
   [local-video-ai.md](./local-video-ai.md)
 
 - Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits:
@@ -65,13 +65,13 @@
 - Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I,):
   [local-llm.md](./local-llm.md)
 
-- Local music AI stack on odin (RAVE, demucs, NAM, XTTS venvs, wrappers and how to recreate):
+- Local music AI stack on trantor (RAVE, demucs, NAM, XTTS venvs, wrappers and how to recreate):
   [local-music-ai.md](./local-music-ai.md)
 
 - RVC — voice conversion with training on a target voice (venv/assets ready, training pending):
   [rvc.md](./rvc.md)
 
-- Neural tools test report on odin (whisperx/mt3/amt-generate/basic-pitch/rembg/triposr — status,
+- Neural tools test report on trantor (whisperx/mt3/amt-generate/basic-pitch/rembg/triposr — status,
   fixes, model paths): [neural-stack-report.md](./neural-stack-report.md)
 
 - midi2sheet — MIDI to piano PDF via headless MuseScore (package `pkgs.neg.midi2sheet`):
@@ -135,7 +135,7 @@
 - Quickshell: media toast — how to do it right (position/height/style):
   [quickshell-music-toast.md](./quickshell-music-toast.md)
 
-- Dockur Windows VM on odin: GLM USB passthrough, host alias, VM proxy chain:
+- Dockur Windows VM on trantor: GLM USB passthrough, host alias, VM proxy chain:
   [windows-vm-dockur.md](./windows-vm-dockur.md)
 
 - Lusty pickers: commands, keys, options and behaviour (native float backend):

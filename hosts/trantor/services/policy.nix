@@ -9,7 +9,7 @@
 }:
 let
   r = neg.rooted repoRoot;
-  unboundLocalData = import (r.path "hosts/odin/unbound-hosts.nix");
+  unboundLocalData = import (r.path "hosts/trantor/unbound-hosts.nix");
 
   # AdGuardHome rewrites + filter lists and the fan curves are data files in
   # policy/ (same directory, no default.nix so importDir leaves them alone).
@@ -231,7 +231,7 @@ lib.mkMerge [
       {
         # Vane (Perplexica): self-hosted Perplexity-style AI search on the local
         # ollama (modules/llm/vane.nix). LAN-only, no auth; needs llm domain
-        # (active on odin). Image/port unverified — first boot pulls the OCI
+        # (active on trantor). Image/port unverified — first boot pulls the OCI
         # image and shows the one-time setup wizard (see modules/llm/vane.nix).
         vane.enable = true;
         # dsh-ssh ssh_tunnel: with allowTcpForwarding enabled in
@@ -261,7 +261,7 @@ lib.mkMerge [
           enable = true;
           openFirewall = true;
           settings.general = {
-            name = "Odin AirPlay";
+            name = "Trantor AirPlay";
             output_backend = "pipewire";
           };
         };

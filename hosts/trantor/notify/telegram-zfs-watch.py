@@ -298,7 +298,7 @@ def load_state():
 
 
 def send_telegram(text):
-    # The shared sender (hosts/odin/telegram.nix) owns the socks-proxy retry.
+    # The shared sender (hosts/trantor/telegram.nix) owns the socks-proxy retry.
     proc = subprocess.run([SENDER, text], check=False)
     if proc.returncode != 0:
         print(

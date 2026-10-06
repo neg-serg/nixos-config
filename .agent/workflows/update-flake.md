@@ -24,7 +24,7 @@ nix flake lock --update-input nixpkgs
 ## Rebuild After Update
 
 ```bash
-sudo nixos-rebuild switch --flake .#odin
+sudo nixos-rebuild switch --flake .#trantor
 ```
 
 ## Rollback

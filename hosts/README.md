@@ -6,7 +6,7 @@ Machine-specific configurations.
 
 | Host   | Description         |
 | ------ | ------------------- |
-| `odin` | Primary workstation |
+| `trantor` | Primary workstation |
 
 ## Structure
 

@@ -19,7 +19,7 @@ required.
 ## Enabling (NixOS snippets)
 
 Unbound is enabled via `servicesProfiles.unbound.enable = true` (set in
-`hosts/odin/services/policy.nix`).
+`hosts/trantor/services/policy.nix`).
 
 ### Using Comss.one DNS (optional)
 

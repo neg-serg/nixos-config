@@ -24,7 +24,7 @@
 
 ## Do not bridge (native Linux builds exist)
 
-Vital, Surge XT, Dexed, OB-Xd, Odin 2, TAL-NoiseMaker, TAL-U-NO-LX, Tyrell N6, Graillon 3 (free),
+Vital, Surge XT, Dexed, OB-Xd, Trantor 2, TAL-NoiseMaker, TAL-U-NO-LX, Tyrell N6, Graillon 3 (free),
 Rough Rider 3 — all have Linux versions and are installed as packages (Vital/Surge/Dexed/OB-Xd are
 already in nixpkgs).
 

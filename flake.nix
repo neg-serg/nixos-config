@@ -77,7 +77,7 @@
     # live in this repo — GitHub rejects files >100 MB — and moving them inside
     # the tree does not help: the flake source contains tracked files only,
     # while absolute paths are forbidden in pure evaluation. Keep them in
-    # /home/neg/nixos-src/renoise on odin; they arrive as a path input.
+    # /home/neg/nixos-src/renoise on trantor; they arrive as a path input.
     renoise-src = {
       url = "path:/home/neg/nixos-src/renoise";
       flake = false;

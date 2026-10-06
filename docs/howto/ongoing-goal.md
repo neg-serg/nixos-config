@@ -56,5 +56,5 @@ After a session resume/fork, an active goal arrives disarmed — re-arm it with 
   `update_goal complete`.
 - Editing changes only the objective; `maxGoalRounds` is not changed by `update_goal edit`.
 - Rounds run within a single session; the goal is not carried across sessions (disarmed).
-- Verified on odin 2026-08-20: `get_goal` responds, the service is alive; no plugin is needed for
+- Verified on trantor 2026-08-20: `get_goal` responds, the service is alive; no plugin is needed for
   this.

@@ -20,14 +20,14 @@ let
     ]; # curl: Telegram API is only reachable via the sing-box socks proxy
     text = builtins.readFile (
       pkgs.replaceVars ./telegram/bridge.sh {
-        botTokenPath = config.odin.telegram.botTokenPath;
-        chatIdPath = config.odin.telegram.chatIdPath;
+        botTokenPath = config.trantor.telegram.botTokenPath;
+        chatIdPath = config.trantor.telegram.chatIdPath;
       }
     );
 
   };
 
-  # Sends the "odin booted" notice exactly once per real boot. The unit is
+  # Sends the "trantor booted" notice exactly once per real boot. The unit is
   # wanted by multi-user.target, and nixos-rebuild switch re-runs it every
   # time, so a marker in /run (tmpfs, cleared on reboot) guards the send.
   telegramBootNotifyScript = pkgs.writeShellApplication {
@@ -39,7 +39,7 @@ let
       MARKER="/run/telegram-notify-boot.sent"
       [ -e "$MARKER" ] && exit 0
 
-      ${lib.getExe config.odin.telegram.sender} "🚀 odin: загрузился"
+      ${lib.getExe config.trantor.telegram.sender} "🚀 trantor: загрузился"
       touch "$MARKER"
     '';
   };
@@ -53,7 +53,7 @@ let
     runtimeInputs = [ pkgs.coreutils ]; # rm/touch of the state marker
     text = builtins.readFile (
       pkgs.replaceVars ./telegram/windows-ready.sh {
-        sender = lib.getExe config.odin.telegram.sender;
+        sender = lib.getExe config.trantor.telegram.sender;
       }
     );
 
@@ -73,8 +73,8 @@ let
   # when the dose gets marked (or unmarked) from the panel.
   pillReminderScript = pkgs.replaceVars ./telegram/telegram-pill-reminder.py {
     panelStateFile = pillPanelStateFile;
-    botTokenPath = config.odin.telegram.botTokenPath;
-    chatIdPath = config.odin.telegram.chatIdPath;
+    botTokenPath = config.trantor.telegram.botTokenPath;
+    chatIdPath = config.trantor.telegram.chatIdPath;
   };
 
   # Pill bot: long-polls getUpdates and turns presses of the "pill_taken"
@@ -84,8 +84,8 @@ let
   # panel-side mark/unmark edits the same Telegram reminder message, so
   # the pill can be confirmed from either source.
   pillBotScript = pkgs.replaceVars ./telegram/telegram-pill-bot.py {
-    botTokenPath = config.odin.telegram.botTokenPath;
-    chatIdPath = config.odin.telegram.chatIdPath;
+    botTokenPath = config.trantor.telegram.botTokenPath;
+    chatIdPath = config.trantor.telegram.chatIdPath;
     panelStateFile = pillPanelStateFile;
     panelIcsDir = pillPanelIcsDir;
     panelUser = pillPanelUser;
@@ -100,7 +100,7 @@ let
   telegramAlertScannerScript = ./telegram/telegram-alert-scanner.py;
 in
 {
-  config = lib.mkIf config.odin.telegram.enable (
+  config = lib.mkIf config.trantor.telegram.enable (
     lib.mkMerge [
       { monitoring.alertmanager.enable = true; }
 
@@ -119,7 +119,7 @@ in
         stateDirectory = "telegram-alert-scanner";
       })
 
-      # Telegram "odin booted" notice. The socks proxy is a user unit that
+      # Telegram "trantor booted" notice. The socks proxy is a user unit that
       # starts at login, so keep retrying for a while after network is up.
       # The /run marker (see telegramBootNotifyScript) makes it fire once per
       # real boot instead of on every nixos-rebuild switch.
@@ -133,7 +133,7 @@ in
       # the proxy coming up after login.
       (systemdUser.mkOneshotTimer {
         name = "telegram-notify-boot";
-        description = "Send a Telegram message that odin has booted";
+        description = "Send a Telegram message that trantor has booted";
         timerDescription = "Fire the boot notice shortly after boot, off the boot critical path";
         script = lib.getExe telegramBootNotifyScript;
         onBootSec = "20s";

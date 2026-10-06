@@ -6,7 +6,7 @@ src = video_in
 
 # Alt+I AI-upscale toggle via vsncnn (ncnn Vulkan on the RX 9070 XT).
 # Previous chain (vsrealesrgan / core.realesrgan / vsmlrt) is unavailable on
-# odin, so it always fell back to Spline36. Model dir from vsmlrt-models.
+# trantor, so it always fell back to Spline36. Model dir from vsmlrt-models.
 #
 # Default: RealESRGAN-x4plus (general-purpose 4x, 23 RRDB blocks) — best
 # quality for photos/live-action, exported from the official .pth. Heavy:

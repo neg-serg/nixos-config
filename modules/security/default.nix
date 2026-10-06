@@ -138,7 +138,7 @@ in
               options = [ "NOPASSWD" ];
             }
             # amneziawg is off on this host (the out-of-tree module is
-            # incompatible with the boot kernel — hosts/odin/hardware.nix) and
+            # incompatible with the boot kernel — hosts/trantor/hardware.nix) and
             # nothing in the repo calls awg-quick. Its NOPASSWD entry was
             # passwordless arbitrary root: the config path is taken verbatim
             # (CONFIG_FILE="$1", any *.conf) and the file's PostUp/PostDown
@@ -147,7 +147,7 @@ in
             # ask for a password.
             # nixos-rebuild used to be NOPASSWD for the agent rollout, but that is
             # passwordless arbitrary root: `sudo -n nixos-rebuild switch --flake
-            # /etc/nixos#odin` activates whatever the (user-writable) flake evaluates
+            # /etc/nixos#trantor` activates whatever the (user-writable) flake evaluates
             # to, so any process running as mainGroup can install a root unit without
             # a prompt. Removed; rebuilds ask for a password like any other wheel command.
             {

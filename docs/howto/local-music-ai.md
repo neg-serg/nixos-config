@@ -1,4 +1,4 @@
-# Local music AI stack (odin)
+# Local music AI stack (trantor)
 
 Everything about neural networks for music/audio on this machine: where it lives, how it is called,
 how to recreate it. Complements `wine-vst-bridge.md` (Windows VSTs via yabridge in Renoise) and

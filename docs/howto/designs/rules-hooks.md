@@ -257,7 +257,7 @@ ______________________________________________________________________
 1. **category-skill-reminder** — M; a docs-only v0 (a line in the system prompt) can be shipped
    right away, the runtime hook later.
 
-The common deployment step on odin for each plugin: a package in
+The common deployment step on trantor for each plugin: a package in
 `modules/user/nix-maid/apps/<name>/` (`package.json` + `lib/index.js`), an ensure script modeled on
 `dsh-mode.nix` copies it to `~/.dsh/profiles/web/node_modules/<name>`; the row is added **not** to
 the profile `cordis.patch.yml`, but to `~/.dsh/.agent-presets/neg/agent.cordis.yml` (or to

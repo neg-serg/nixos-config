@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# upscale-image — AI image upscaler on odin (real-ESRGAN via Vulkan ncnn).
+# upscale-image — AI image upscaler on trantor (real-ESRGAN via Vulkan ncnn).
 #
 # Thin wrapper around realesrgan-ncnn-vulkan (GPU, RX 9070 XT) with the
 # model naming used elsewhere on this host:

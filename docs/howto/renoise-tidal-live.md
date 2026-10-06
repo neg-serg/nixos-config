@@ -1,4 +1,4 @@
-# Renoise + TidalCycles: daily live-coding workflow on odin
+# Renoise + TidalCycles: daily live-coding workflow on trantor
 
 A short cheat sheet for music sessions. Both stacks live in the system declaratively (NixOS +
 nix-maid); below are the commands, ports and gotchas you hit in practice.
@@ -106,7 +106,7 @@ playback.game-stereo.
 ## Gotchas (verified)
 
 1. tidalctl/tidal-ghci not found → previous system generations were GC'd: run nh os switch
-   /etc/nixos#odin --option substitute false (packages are in systemPackages). Do not keep store
+   /etc/nixos#trantor --option substitute false (packages are in systemPackages). Do not keep store
    paths in hand-written scripts — PATH only.
 1. Renoise OSC is silent → Config.xml is corrupted (for example after editing it in the GUI): close
    Renoise and run renoise-osc-config; then check renoise-osc status.

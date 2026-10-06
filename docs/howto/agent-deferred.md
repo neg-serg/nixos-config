@@ -244,7 +244,7 @@ Each feature is a separate commit `[dev/ai] Add dsh-<name> ...` with a functiona
   (`http://127.0.0.1:11434/api/chat`) on session/end-seed/compaction/end; JSON per memory-extract.md
   is written as `[extract]`, on failure/no signal it falls back to `[draft-extract]`. Config
   `{endpoint, model, timeoutMs, enabled}`; the model is switched in the plugin's patch-row config
-  (`cordis.patch.yml` → `config.model`). **Bench 2026-08-20 (odin, RX 9070 XT 16GB)**:
+  (`cordis.patch.yml` → `config.model`). **Bench 2026-08-20 (trantor, RX 9070 XT 16GB)**:
   `qwen3:8b-q8_0` 26s/52 tok/s — default; `gemma4:12b` 47s; `deepseek-r1-distill-qwen:14b` 48s;
   `qwen3dot5:latest` 6s, but loops/does not produce JSON — removed from the default; `qwen3.5:27b`
   does not fit into 16GB VRAM (>300s).
@@ -253,7 +253,7 @@ Each feature is a separate commit `[dev/ai] Add dsh-<name> ...` with a functiona
   small; computer is medium; browser removed (2026-08, CDP not used); collab — do not start).
   hub-peer- IRC — backlog (scope/security).
 
-## Non-plugin deferred problems (odin config)
+## Non-plugin deferred problems (trantor config)
 
 - ~~**fastfetch: the animated WebP logo (blizzard) is rendered TOO SMALL**~~ — **CLOSED
   (2026-09-15)**: the wrapper `files/fastfetch/fetch` no longer passes a fixed 29x45 box (29 columns

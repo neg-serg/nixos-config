@@ -1,12 +1,12 @@
 # Backlog (collab / browser / computer / vibe / autoresearch): "how to do it" research
 
-Date: 2026-08-20. Research of primary sources + local DSH infrastructure on odin. Five directions
+Date: 2026-08-20. Research of primary sources + local DSH infrastructure on trantor. Five directions
 from agent-deferred §11-13; for each — facts, the "how it should be done" pattern, the DSH
 implementation, risks, estimate. Conclusions: what to close as covered, what to do next.
 
 ## 0. Local baseline (what already exists)
 
-- Local Ollama on odin (ROCm): qwen3:8b-q8_0 (fast), gemma4:12b, qwen3-coder:30b,
+- Local Ollama on trantor (ROCm): qwen3:8b-q8_0 (fast), gemma4:12b, qwen3-coder:30b,
   **qwen2.5vl:7b-q8_0 (vision!)** — for understanding screenshots; data never leaves the host.
 - DSH: persistent subagents + `send_message` (worker addressability), `dsh-tool-web` (web_search
   only; `fetch: false` on the host — policy), `tools.restrict()` in dsh-tools (narrowing the tool
@@ -68,7 +68,7 @@ medium complexity; the next candidate after vibe/autoresearch.
 
 **Facts**
 
-- odin: Wayland + Hyprland. No desktop primitives in DSH.
+- trantor: Wayland + Hyprland. No desktop primitives in DSH.
 
 **"How it should be done" pattern** — `computer-use-linux` (Rust MCP server/CLI, crates.io + npm
 wrapper `@agent-sh/computer-use-linux`, prebuilt binaries; extracted from Codex Desktop Linux):

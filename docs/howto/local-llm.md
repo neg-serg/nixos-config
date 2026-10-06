@@ -1,6 +1,6 @@
 # Local LLM stack
 
-How the local neural-network stack on the `odin` host works, what is enabled, and how to operate it.
+How the local neural-network stack on the `trantor` host works, what is enabled, and how to operate it.
 
 Everything below is gated on a single feature flag:
 
@@ -8,8 +8,8 @@ Everything below is gated on a single feature flag:
 features.llm.enable = true;
 ```
 
-defined in `modules/features/misc.nix` (default `false`) and enabled for `odin` in
-`hosts/odin/default.nix`.
+defined in `modules/features/misc.nix` (default `false`) and enabled for `trantor` in
+`hosts/trantor/default.nix`.
 
 ## Components
 
@@ -109,7 +109,7 @@ services.colibri = {
 ### local-ai user service (fallback)
 
 - `modules/user/nix-maid/sys/user-services.nix` — user-level Ollama fallback for hosts **without**
-  the system `services.ollama` (it would conflict on port 11434). On `odin` the system service is
+  the system `services.ollama` (it would conflict on port 11434). On `trantor` the system service is
   enabled, so the user service stays off. Models also on `/zero/ai/ollama` / `/zero/ai/localai`.
 
 ### stable-diffusion.cpp (text-to-image, Vulkan)
@@ -202,7 +202,7 @@ rag-search status                   # index and reranker state
 - `/zero/ai/glm52_i4` — colibrì int4 model (~384 GB, 144 shards: out-00000..3.safetensors +
   config.json; moved here 2026-08-20, staging dir is empty)
 
-## Status on odin
+## Status on trantor
 
 - `features.llm.enable = true` (colibri CLI via `modules/llm/colibri.nix`; serve unit off by
   default)

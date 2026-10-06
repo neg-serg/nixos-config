@@ -1,4 +1,4 @@
-# Dockur Windows VM on odin: GLM USB passthrough and proxy
+# Dockur Windows VM on trantor: GLM USB passthrough and proxy
 
 Windows 11 runs in a **dockur/windows** container (QEMU/KVM); the disk lives in a podman volume
 (survives container re-creation). Access: RDP `127.0.0.1:3389` (user from `USERNAME`, password from
@@ -92,7 +92,7 @@ default, sessions from pam). Check: `grep -i locked /proc/<pid qemu>/limits` →
 
 ## Resource footprint and tuning
 
-Measured on odin (host: 60 GiB RAM, Ryzen 9 9950X3D, 32 threads; numbers from `docker stats` and
+Measured on trantor (host: 60 GiB RAM, Ryzen 9 9950X3D, 32 threads; numbers from `docker stats` and
 `/proc/<qemu pid>/status`):
 
 | Metric                            | `RAM_SIZE=16G` (old) | `RAM_SIZE=6G` (current) |
@@ -163,7 +163,7 @@ when unused: a connected client keeps the VNC encoder busy.
 ### Autostart: the VM owns the adapter
 
 The VM is the primary control path, so it starts with the machine: user unit `windows-vm`
-(`hosts/odin/services/windows-vm.nix`) waits for the GLM adapter to appear on the bus and then runs
+(`hosts/trantor/services/windows-vm.nix`) waits for the GLM adapter to appear on the bus and then runs
 `podman start windows`. Host-side control (`glm-osc` + `glm-adapter host`) is a manual reserve —
 nothing moves the adapter back to the host on its own.
 
@@ -318,7 +318,7 @@ Device: `1781:0e39` (Bus 009). Gotchas without which the “passthrough is not v
 1. **Container user namespace**: root inside = `nobody` on the host. udev creates USB nodes with
    `0664 root:root` permissions → the container gets `EPERM` and cannot open the device (QEMU shows
    a fake `USB Host Device` at 1.5 Mb/s instead of `Gnet Adapter` at 12 Mb/s). Fixed by a udev rule
-   (in `hosts/odin/hardware.nix`):
+   (in `hosts/trantor/hardware.nix`):
    ```
    SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0e39", MODE="0666"
    ```
@@ -327,7 +327,7 @@ Device: `1781:0e39` (Bus 009). Gotchas without which the “passthrough is not v
    bind-mount `-v /dev/bus/usb:/dev/bus/usb` (see the command above).
 1. **udev may not create a node** for unusual HID devices: sysfs exists, `/dev/bus/usb` does not.
    Trigger: `sudo udevadm trigger --attr-match=idVendor=1781`.
-1. **udev binds `usbhid` on add** (`files/hardware/udev/odin-host.rules`, node `0666`): every
+1. **udev binds `usbhid` on add** (`files/hardware/udev/trantor-host.rules`, node `0666`): every
    replug/enumeration gives the host a `/dev/hidraw` immediately. The VM path does not need it —
    QEMU detaches the kernel driver when it opens the device at VM start — but a device that arrives
    while the VM already runs stays on the host, because QEMU never re-claims it (see “A lost adapter
@@ -350,7 +350,7 @@ clients pile up inside the container until the monitor stops answering at all (v
 
 pasta/passt give the VM **the same IP as the host** (`192.168.2.87`) — the VM physically cannot
 reach the host on its main address. Therefore an **alias `192.168.2.88`** was added on net1
-(declaratively in `hosts/odin/networking.nix` — Address as a list):
+(declaratively in `hosts/trantor/networking.nix` — Address as a list):
 
 ```nix
 Address = [
@@ -428,7 +428,7 @@ not used). The only bidirectional host↔VM channel is a TCP connection initiate
 outbound traffic via passt works; replies come back — like through the .88:10812 proxy). Hence the
 bridge in the VM connects to the host on its own.
 
-### Linux (odin)
+### Linux (trantor)
 
 - `packages/local-bin/bin/glm-midi-relay` — Python daemon: listens on `0.0.0.0:9003` (the bridge
   from the VM connects here) and `127.0.0.1:9004` (where `glm-midi` sends), forwarding packets into
@@ -480,16 +480,16 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 
 ## Affected files
 
-- `hosts/odin/default.nix` — flag `features.net.proxy.enable`
-- `hosts/odin/networking.nix` — alias `192.168.2.88/24`
-- `hosts/odin/hardware.nix` — Genelec GLM udev rule (0666)
+- `hosts/trantor/default.nix` — flag `features.net.proxy.enable`
+- `hosts/trantor/networking.nix` — alias `192.168.2.88/24`
+- `hosts/trantor/hardware.nix` — Genelec GLM udev rule (0666)
 - `modules/system/net/firewall.nix` — ports 10811/10812, 5010/5011 (RTP-MIDI, fallback), 9003 (MIDI
   bridge)
 - `packages/local-bin/bin/glm-midi-relay` + `glm-midi` — MIDI bridge (relay) and CLI
 - `packages/dockur-windows/oem/glm-midi-bridge.ps1` — bridge in the VM
 - `packages/local-bin/bin/proxy` — the inbounds `in-lan-vm` (SOCKS 10811) and `in-lan-vm-http` (HTTP
   10812\)
-- `hosts/odin/services/windows-vm.nix` — VM start unit (`ExecStartPost` runs `glm-vm-netfix`)
+- `hosts/trantor/services/windows-vm.nix` — VM start unit (`ExecStartPost` runs `glm-vm-netfix`)
 - `packages/local-bin/scripts/glm-adapter` — adapter placement + VM liveness (`health`/`auto`; the
   probe is the guest's RDP reply, and a WinRE screen pages instead of restarting)
 - `packages/local-bin/scripts/windows-vm-stop` — ACPI shutdown of the guest for the unit's
@@ -527,6 +527,6 @@ Important:
 - Calibration and input selection: start the VM (the adapter goes into passthrough), do it in GLM,
   Store settings (calibration is stored ON THE MONITORS), shut down the VM — the adapter returns to
   the host, control goes through glm-osc again.
-- udev: `files/hardware/udev/odin-host.rules` binds usbhid to the adapter and sets the node to
+- udev: `files/hardware/udev/trantor-host.rules` binds usbhid to the adapter and sets the node to
   `0666` (otherwise there is no `/dev/hidraw` and genlc does not see the device) — required by this
   host path only; the VM path relies on QEMU detaching the kernel driver itself.
