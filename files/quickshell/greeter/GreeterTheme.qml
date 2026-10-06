@@ -86,10 +86,26 @@ Singleton {
 
     // Type scale and families: one number makes the whole card bigger
     readonly property real uiScale: _val('greeter.uiScale', 1.2)
-    readonly property string uiFont: _val('greeter.uiFont', "Inter")
+    readonly property string uiFont: _val('greeter.uiFont', "Iosevka")
     readonly property string displayFont: _val('greeter.displayFont', "Iosevka")
-    readonly property real avatarRingWidth: _val('greeter.avatarRingWidth', 0.06)
-    readonly property real avatarGlow: _val('greeter.avatarGlow', 0.55)
+    readonly property real avatarRingWidth: _val('greeter.avatarRingWidth', 0.05)
+    readonly property real avatarGlow: _val('greeter.avatarGlow', 0.5)
+
+    // Square by default (see the theme file)
+    readonly property real cardRadius: _val('greeter.cardRadius', 0)
+    readonly property real fieldRadius: _val('greeter.fieldRadius', 0)
+    readonly property real chipRadius: _val('greeter.chipRadius', 0)
+    readonly property real buttonRadius: _val('greeter.buttonRadius', 0)
+    readonly property real avatarRadius: _val('greeter.avatarRadius', 0)
+
+    // Text halo (lock/TextGlow.qml)
+    readonly property real textGlow: _val('greeter.textGlow', 0.18)
+    readonly property color textGlowColour: _val('greeter.textGlowColour', "#7fd6ff")
+    readonly property real textGlowRadius: _val('greeter.textGlowRadius', 4)
+    readonly property real textShadow: _val('greeter.textShadow', 0.8)
+    readonly property color textShadowColour: _val('greeter.textShadowColour', "#e6000000")
+    readonly property real textShadowRadius: _val('greeter.textShadowRadius', 2.5)
+    readonly property real textShadowOffset: _val('greeter.textShadowOffset', 2)
 
     // Wallpaper posterisation
     readonly property bool posterizeEnabled: _val('greeter.posterizeEnabled', true)
@@ -108,6 +124,7 @@ Singleton {
     readonly property bool crtEnabled: _val('greeter.crtEnabled', true)
     readonly property real crtLineSpacing: _val('greeter.crtLineSpacing', 3)
     readonly property real crtScanStrength: _val('greeter.crtScanStrength', 0.13)
+    readonly property real crtUiLines: _val('greeter.crtUiLines', 0)
     readonly property real crtMaskStrength: _val('greeter.crtMaskStrength', 0.05)
     readonly property real crtAberration: _val('greeter.crtAberration', 0.6)
     readonly property real crtBarrel: _val('greeter.crtBarrel', 0.008)

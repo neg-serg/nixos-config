@@ -368,10 +368,10 @@ Item {
 
 			Item {
 				id: cardWrapper
-				anchors.horizontalCenter: parent.horizontalCenter
-				anchors.verticalCenter: parent.verticalCenter
-				anchors.horizontalCenterOffset: root.shakeOffset
-				anchors.verticalCenterOffset: (1.0 - root.appearProgress) * 18
+				x: Math.round((parent.width - implicitWidth) / 2) + Math.round(root.shakeOffset)
+				y: Math.round((parent.height - implicitHeight) / 2) + Math.round((1.0 - root.appearProgress) * 18)
+
+
 				implicitWidth: card.implicitWidth
 				implicitHeight: card.implicitHeight
 				opacity: root.appearProgress
@@ -445,7 +445,7 @@ Item {
 					anchors.fill: parent
 					implicitWidth: Math.round(470 * root.uiScale)
 					implicitHeight: cardLayout.implicitHeight + 64
-					radius: 20
+					radius: GreeterTheme.cardRadius
 					color: root.backdrop !== null ? "transparent" : GreeterTheme.cardColor
 					border.width: 1
 					border.color: root.state.failed ? GreeterTheme.dangerColor
@@ -475,8 +475,6 @@ Item {
 						id: cardLayout
 						anchors.fill: parent
 						anchors.margins: Math.round(34 * root.uiScale)
-						spacing: 0
-
 						Item {
 							id: avatarBlock
 							Layout.alignment: Qt.AlignHCenter
@@ -484,8 +482,8 @@ Item {
 							implicitWidth: Math.round(108 * root.uiScale)
 							implicitHeight: Math.round(108 * root.uiScale)
 
-							// The photo: a plain square image, cut into a disc by
-							// shaders/avatar_round.frag (smooth rim, ring, halo). Hidden — the
+							// The photo: a plain square image, framed by
+							// shaders/avatar_frame.frag (square by default, ring, halo). Hidden — the
 							// shader draws it.
 							Image {
 								id: avatarPhoto
@@ -517,6 +515,7 @@ Item {
 								visible: avatarPhoto.status === Image.Ready
 
 								property Item source: avatarTexture
+								property real pRadius: GreeterTheme.avatarRadius
 								property real pRingWidth: GreeterTheme.avatarRingWidth
 								property color pRingColour: {
 									const base = root.state.failed ? GreeterTheme.dangerColor
@@ -525,7 +524,7 @@ Item {
 								}
 								property real pGlow: root.state.failed ? 0.0 : GreeterTheme.avatarGlow
 
-								fragmentShader: Qt.resolvedUrl("../shaders/avatar_round.frag.qsb")
+								fragmentShader: Qt.resolvedUrl("../shaders/avatar_frame.frag.qsb")
 
 								Behavior on pGlow {
 									NumberAnimation {
@@ -538,72 +537,45 @@ Item {
 							Rectangle {
 								id: monogram
 								anchors.fill: parent
-								radius: width / 2
+								radius: GreeterTheme.avatarRadius
 								visible: avatarPhoto.status !== Image.Ready
 								color: GreeterTheme.avatarColor
 								border.width: 2
 								border.color: root.state.failed ? GreeterTheme.dangerColor : GreeterTheme.cardOutline
 
 								Text {
+									renderType: Text.NativeRendering
 									anchors.centerIn: parent
 									text: root.monogram
 									color: GreeterTheme.textColor
 									font.family: GreeterTheme.uiFont
+									font.hintingPreference: Font.PreferFullHinting
 									font.pixelSize: Math.round(46 * root.uiScale)
 								}
 							}
 
-							Item {
-								id: spinner
-								anchors.fill: parent
-								visible: root.state.isUnlocking
-
-								RotationAnimation on rotation {
-									running: spinner.visible
-									loops: Animation.Infinite
-									from: 0
-									to: 360
-									duration: 1100
-								}
-
-								Shape {
-									anchors.fill: parent
-
-									ShapePath {
-										strokeColor: GreeterTheme.accentColor
-										strokeWidth: 3
-										fillColor: "transparent"
-										capStyle: ShapePath.RoundCap
-
-										PathAngleArc {
-											centerX: spinner.width / 2
-											centerY: spinner.height / 2
-											radiusX: (spinner.width / 2) - 2
-											radiusY: (spinner.height / 2) - 2
-											startAngle: -90
-											sweepAngle: 280
-										}
-									}
-								}
-							}
 						}
 
 						Text {
+							renderType: Text.NativeRendering
 							id: nameText
 							Layout.alignment: Qt.AlignHCenter
 							text: root.userName
 							color: GreeterTheme.textColor
 							font.family: GreeterTheme.uiFont
+							font.hintingPreference: Font.PreferFullHinting
 							font.pixelSize: Math.round(26 * root.uiScale)
 						}
 
 						Text {
+							renderType: Text.NativeRendering
 							id: hostText
 							Layout.alignment: Qt.AlignHCenter
 							Layout.topMargin: 2
 							text: root.hostName
 							color: GreeterTheme.textMutedColor
 							font.family: GreeterTheme.uiFont
+							font.hintingPreference: Font.PreferFullHinting
 							font.pixelSize: Math.round(16 * root.uiScale)
 							visible: text.length > 0
 						}
@@ -614,7 +586,7 @@ Item {
 							Layout.topMargin: 26
 							implicitWidth: Math.round(384 * root.uiScale)
 							implicitHeight: Math.round(58 * root.uiScale)
-							radius: 13
+							radius: GreeterTheme.fieldRadius
 
 							// Focus halo: a second outline a few pixels out, so the field
 							// reads as active without a hard double border.
@@ -703,6 +675,7 @@ Item {
 
 								font.pixelSize: Math.round(24 * root.uiScale)
 								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
 								horizontalAlignment: TextInput.AlignHCenter
 								verticalAlignment: TextInput.AlignVCenter
 								echoMode: TextInput.Password
@@ -739,6 +712,7 @@ Item {
 							}
 
 							Text {
+								renderType: Text.NativeRendering
 								id: placeholderText
 								anchors.fill: textBox
 								font: textBox.font
@@ -798,23 +772,27 @@ Item {
 						}
 
 						Text {
+							renderType: Text.NativeRendering
 							id: capsHint
 							Layout.alignment: Qt.AlignHCenter
 							Layout.topMargin: 10
 							text: "Caps Lock включён"
 							color: GreeterTheme.dangerColor
 							font.family: GreeterTheme.uiFont
+							font.hintingPreference: Font.PreferFullHinting
 							font.pixelSize: Math.round(17 * root.uiScale)
 							visible: root.capsKnown && root.capsLock
 						}
 
 						Text {
+							renderType: Text.NativeRendering
 							id: errorText
 							Layout.alignment: Qt.AlignHCenter
 							Layout.topMargin: 12
 							text: root.state.error
 							color: GreeterTheme.dangerColor
 							font.family: GreeterTheme.uiFont
+							font.hintingPreference: Font.PreferFullHinting
 							font.pixelSize: Math.round(16 * root.uiScale)
 							horizontalAlignment: Text.AlignHCenter
 							visible: root.state.failed && text.length > 0
@@ -832,7 +810,7 @@ Item {
 								visible: root.layoutName.length > 0
 								implicitWidth: layoutChipLabel.implicitWidth + 24
 								implicitHeight: 40
-								radius: 10
+								radius: GreeterTheme.chipRadius
 								color: ShellGlobals.interpolateColors(chipHover * 0.001, ShellGlobals.colors.widget, ShellGlobals.colors.widgetActive)
 								border.width: 1
 								border.color: ShellGlobals.colors.widgetOutline
@@ -841,11 +819,13 @@ Item {
 								Behavior on chipHover { SmoothedAnimation { velocity: 10000 } }
 
 								Text {
+									renderType: Text.NativeRendering
 									id: layoutChipLabel
 									anchors.centerIn: parent
 									text: "раскладка: " + root.layoutName
 									color: GreeterTheme.textMutedColor
 									font.family: GreeterTheme.uiFont
+									font.hintingPreference: Font.PreferFullHinting
 									font.pixelSize: Math.round(15 * root.uiScale)
 								}
 
@@ -859,95 +839,98 @@ Item {
 							}
 
 							Item { Layout.fillWidth: true }
+						}
 
-							PowerButton {
-								id: monitorButton
-								icon: "root:icons/monitor.svg"
-								text: "Погасить экран"
-								onClicked: root.state.fadeOut()
-							}
+						PowerButton {
+							id: monitorButton
+							glyph: "_"
+							text: "Погасить экран"
+							onClicked: root.state.fadeOut()
+						}
 
-							PowerButton {
-								id: mediaPauseButton
-								icon: "root:icons/pause.svg"
-								text: "Пауза"
-								visible: root.state.mediaPlaying
-								onClicked: root.state.pauseMedia()
-							}
+						PowerButton {
+							id: mediaPauseButton
+							glyph: "||"
+							text: "Пауза"
+							visible: root.state.mediaPlaying
+							onClicked: root.state.pauseMedia()
+						}
 
-							PowerButton {
-								id: sleepButton
-								icon: "root:icons/sleep.svg"
-								text: "Спящий режим"
-								onClicked: root.powerAction("suspend")
-							}
+						PowerButton {
+							id: sleepButton
+							glyph: "z"
+							text: "Спящий режим"
+							onClicked: root.powerAction("suspend")
+						}
 
-							PowerButton {
-								id: restartButton
-								icon: "root:icons/restart.svg"
-								text: "Перезагрузить"
-								onClicked: root.powerAction("reboot")
-							}
+						PowerButton {
+							id: restartButton
+							glyph: "r"
+							text: "Перезагрузить"
+							onClicked: root.powerAction("reboot")
+						}
 
-							PowerButton {
-								id: powerButton
-								icon: "root:icons/power.svg"
-								text: "Выключить"
-								onClicked: root.powerAction("poweroff")
+						PowerButton {
+							id: powerButton
+							glyph: "x"
+							text: "Выключить"
+							onClicked: root.powerAction("poweroff")
+						}
+					}
+
+					// User and session selector — the old greeter session only
+					// (context is null in the single-compositor login).
+					RowLayout {
+						id: selectorRow
+						Layout.alignment: Qt.AlignHCenter
+						Layout.topMargin: 16
+						spacing: 18
+						visible: root.context !== null
+
+						Text {
+							id: userLabel
+							color: GreeterTheme.textMutedColor
+							font.pixelSize: Math.round(16 * root.uiScale)
+							font.family: GreeterTheme.uiFont
+							font.hintingPreference: Font.PreferFullHinting
+							text: root.context ? root.context.currentUser : ""
+							renderType: Text.NativeRendering
+
+							MouseArea {
+								anchors.fill: parent
+								cursorShape: root.context && root.context.users.length > 1
+								? Qt.PointingHandCursor : Qt.ArrowCursor
+								onClicked: {
+									if (root.context) root.context.cycleUser();
+								}
 							}
 						}
 
-						// User and session selector — the old greeter session only
-						// (context is null in the single-compositor login).
-						RowLayout {
-							id: selectorRow
-							Layout.alignment: Qt.AlignHCenter
-							Layout.topMargin: 16
-							spacing: 18
-							visible: root.context !== null
+						Text {
+							color: GreeterTheme.textMutedColor
+							opacity: 0.4
+							font.pixelSize: Math.round(16 * root.uiScale)
+							font.family: GreeterTheme.uiFont
+							font.hintingPreference: Font.PreferFullHinting
+							text: "|"
+							renderType: Text.NativeRendering
+						}
 
-							Text {
-								id: userLabel
-								color: GreeterTheme.textMutedColor
-								font.pixelSize: Math.round(16 * root.uiScale)
-								font.family: GreeterTheme.uiFont
-								text: root.context ? root.context.currentUser : ""
-								renderType: Text.NativeRendering
+						Text {
+							id: sessionLabel
+							color: GreeterTheme.textMutedColor
+							font.pixelSize: Math.round(16 * root.uiScale)
+							font.family: GreeterTheme.uiFont
+							font.hintingPreference: Font.PreferFullHinting
+							text: root.context ? root.context.currentSessionName : ""
+							renderType: Text.NativeRendering
 
-								MouseArea {
-									anchors.fill: parent
-									cursorShape: root.context && root.context.users.length > 1
-									? Qt.PointingHandCursor : Qt.ArrowCursor
-									onClicked: {
-										if (root.context) root.context.cycleUser();
-									}
-								}
-							}
-
-							Text {
-								color: GreeterTheme.textMutedColor
-								opacity: 0.4
-								font.pixelSize: Math.round(16 * root.uiScale)
-								font.family: GreeterTheme.uiFont
-								text: "|"
-								renderType: Text.NativeRendering
-							}
-
-							Text {
-								id: sessionLabel
-								color: GreeterTheme.textMutedColor
-								font.pixelSize: Math.round(16 * root.uiScale)
-								font.family: GreeterTheme.uiFont
-								text: root.context ? root.context.currentSessionName : ""
-								renderType: Text.NativeRendering
-
-								MouseArea {
-									anchors.fill: parent
-									cursorShape: root.context && root.context.sessions.length > 1
-									? Qt.PointingHandCursor : Qt.ArrowCursor
-									onClicked: {
-										if (root.context) root.context.cycleSession();
-									}
+							MouseArea {
+								anchors.fill: parent
+								cursorShape: root.context && root.context.sessions.length > 1
+								? Qt.PointingHandCursor : Qt.ArrowCursor
+								onClicked: {
+									if (root.context) root.context.cycleSession();
 								}
 							}
 						}
@@ -965,50 +948,16 @@ Item {
 		}
 	}
 
-	// The CRT pass: barrel curve, chromatic aberration, scanlines, phosphor mask,
-	// bloom, sweep and vignette — all in shaders/crt_screen.frag. crtEnabled=false
-	// in the theme leaves the scene rendered directly.
-	ShaderEffectSource {
-		id: sceneTexture
-		sourceItem: scene
-		hideSource: GreeterTheme.crtEnabled
-		live: true
-	}
-
-	ShaderEffect {
-		id: crt
+	// Scanlines over the UI too, but nothing else: no warp, no bloom, no resample,
+	// so the card and its text stay exact while the screen still reads as a tube.
+	CrtBackdrop {
 		anchors.fill: parent
-		visible: GreeterTheme.crtEnabled
-
-		property Item source: sceneTexture
-		property real pScanCount: Math.max(80, crt.height / Math.max(GreeterTheme.crtLineSpacing, 1))
-		property real pScanStrength: GreeterTheme.crtScanStrength
-		property real pMaskStrength: GreeterTheme.crtMaskStrength
-		property real pAberration: GreeterTheme.crtAberration
-		property real pBarrel: GreeterTheme.crtBarrel
-		property real pBloom: GreeterTheme.crtBloom
-		property real pVignette: GreeterTheme.crtVignette
-		property real pRollOffset: 0
-		property real pRollStrength: GreeterTheme.crtRollStrength
-		property real pFlicker: 1.0
-		property real pLinesOnly: 0
-
-		fragmentShader: Qt.resolvedUrl("../shaders/crt_screen.frag.qsb")
-
-		NumberAnimation on pRollOffset {
-			from: 0
-			to: 1
-			duration: Math.max(1500, GreeterTheme.crtRollMs)
-			loops: Animation.Infinite
-			running: crt.visible
-		}
-
-		// Irregular, small dips — a periodic flicker reads as a pulsing overlay.
-		Timer {
-			interval: 120
-			running: crt.visible
-			repeat: true
-			onTriggered: crt.pFlicker = 0.9 + (Math.random() * 0.1)
-		}
+		visible: GreeterTheme.crtEnabled && GreeterTheme.crtUiLines > 0.001
+		pScanStrength: GreeterTheme.crtUiLines
+		pMaskStrength: 0
+		pVignette: 0
+		pRollStrength: 0
+		pLinesOnly: 1
 	}
+
 }
