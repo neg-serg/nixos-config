@@ -51,6 +51,13 @@ in
         powerOnBoot = true;
         settings = {
           General.Enable = "Source,Sink,Media,Socket";
+          # LE Audio (LC3) lives behind two runtime gates in BlueZ, neither
+          # needs a kernel rebuild: the BAP profile is only registered when
+          # bluetoothd runs with experimental D-Bus interfaces on, and it
+          # additionally requires the kernel-experimental ISO socket UUID
+          # (profiles/audio/bap.c: btd_kernel_experimental_enabled).
+          General.Experimental = true;
+          General.KernelExperimental = "6fbaf188-05e0-496a-9885-d6ddfdb4e03e";
         };
       };
 

@@ -163,6 +163,26 @@ in
             "11-no-stream-restore" = {
               "wireplumber.settings"."node.stream.restore-target" = false;
             };
+            # LE Audio (LC3): the BAP roles are what BlueZ's experimental
+            # profile needs to expose; bap_source makes this host the unicast
+            # source (music to the buds), bap_sink the reverse. Classic roles
+            # stay on: GalaxyBudsClient's SPP runs over BR/EDR and the buds
+            # fall back to A2DP when LE Audio is not negotiated.
+            "12-le-audio" = {
+              "monitor.bluez.properties"."bluez5.roles" = [
+                "a2dp_sink"
+                "a2dp_source"
+                "bap_sink"
+                "bap_source"
+                "hfp_hf"
+                "hfp_ag"
+              ];
+              # NOTE: bluez5.bap.preset is intentionally NOT set here. With
+              # "32_1_1" forced globally, WirePlumber 0.5.17 + PipeWire 1.6.8
+              # segfaulted in libspa-bluez5.so impl_init while initialising the
+              # second (bap-sink) member of the Buds4 set. Re-add per device
+              # only if mixed presets actually crackle.
+            };
           };
         };
       };

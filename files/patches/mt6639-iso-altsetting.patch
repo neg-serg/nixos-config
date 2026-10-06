@@ -1,0 +1,30 @@
+MediaTek MT6639 (MT7927) LE Audio: pick the ISO interface alt setting
+that actually exists.
+
+MTK_ISO_IFNUM (interface 2) exposes a single alt setting (0) on 13d3:3588,
+but __set_mtk_intr_interface() hardcoded alt setting 1, so USB rejected it
+with EINVAL and the ISO data path never came up:
+
+    Bluetooth: hci0: setting interface failed (22)
+    Bluetooth: hci0: ISO intf not support (-19)
+    Bluetooth: hci0: Opcode 0x2062 failed: -110   (LE Set CIG Parameters)
+
+Without ISO there is no LE Audio: BlueZ's BAP transport acquisition fails
+(org.bluez.Error.Failed) and LC3 can never be negotiated.
+
+Taken from upstream ("Bluetooth: btmtk: ..." in v7.2, which additionally
+uses usb_find_common_endpoints(); that refactor is equivalent to the open-
+coded endpoint loop here, so only the alt-setting choice is backported).
+
+--- a/drivers/bluetooth/btmtk.c
++++ b/drivers/bluetooth/btmtk.c
+@@ -1023,7 +1023,8 @@
+ 	if (!btmtk_data->isopkt_intf)
+ 		return -ENODEV;
+ 
+-	err = usb_set_interface(btmtk_data->udev, MTK_ISO_IFNUM, 1);
++	err = usb_set_interface(btmtk_data->udev, MTK_ISO_IFNUM,
++			       (intf->num_altsetting > 1) ? 1 : 0);
+ 	if (err < 0) {
+ 		bt_dev_err(hdev, "setting interface failed (%d)", -err);
+ 		return err;
