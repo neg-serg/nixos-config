@@ -31,7 +31,7 @@ mi.set_variant("llvm_ad_rgb")
 #      at 0.2803 mm/px = 29.15 x 60.0 mm) ---------------------------------------
 MM_W, MM_H = 29.15, 60.0
 R, H, WALL = 9.25, 49.34, 1.1
-RT, RW = 6.6, 0.22
+RT, RW = 6.6, 0.30
 BASE = 10.6
 RB = 9.7
 DIG_H, DIG_W = 21.0, 11.5
@@ -282,7 +282,7 @@ def build():
             glow.append(
                 (
                     [(x - 0.06, y - 0.06, z + 0.16) for (x, y, z) in pts],
-                    RW * 0.5,
+                    RW * 0.75,
                 )
             )
     # 4. the rods the stack hangs on
@@ -370,26 +370,39 @@ def build_scene(
     shapes, wires, glow = build()
     scene = {}
     scene["type"] = "scene"
-    # glass: a dielectric shell with a smooth surface
-    scene["glass"] = {"type": "dielectric", "int_ior": 1.52, "ext_ior": 1.0}
-    # tungsten cathodes and a nickel-plated anode: the metals of a real tube
+    # glass: a dielectric shell. Real envelope glass is not optically polished —
+    # the draw leaves a faint waviness that smears the highlights and softens
+    # whatever is seen through it. A mirror-smooth surface renders the reflections
+    # as crisp cut-outs, which is what read as a "flat plate".
+    scene["glass"] = {
+        "type": "roughdielectric",
+        "distribution": "ggx",
+        "alpha": 0.05,
+        "int_ior": 1.52,
+        "ext_ior": 1.0,
+    }
+    # tungsten cathodes: dark and matte. The numeral is read from its glow, not
+    # from the metal — a shiny cathode turns the whole stack into a bright sign.
     # explicit IORs: the pip wheel ships no material tables (Cr, Ni, W)
     scene["cathode"] = {
         "type": "roughconductor",
-        "alpha": 0.32,
+        "alpha": 0.60,
         "distribution": "ggx",
-        "eta": {"type": "rgb", "value": [3.2, 3.0, 2.8]},
-        "k": {"type": "rgb", "value": [2.9, 2.7, 2.5]},
+        "eta": {"type": "rgb", "value": [1.5, 1.4, 1.3]},
+        "k": {"type": "rgb", "value": [2.2, 2.0, 1.8]},
     }
     # the cage is what is seen THROUGH the glass: matte, dark and thin. A glossy
     # conductor turns every wire into a bright line, and the numerals drown in the
     # lattice — the cage should read as a dim screen, not as chrome.
+    # the cage is scenery: in a real tube the anode screen is a barely visible
+    # grey haze, and only the numeral reads. Matte and dark, so it stops catching
+    # the softboxes and turning into a bright lattice.
     scene["anode"] = {
         "type": "roughconductor",
-        "alpha": 0.55,
+        "alpha": 0.75,
         "distribution": "ggx",
-        "eta": {"type": "rgb", "value": [1.4, 1.35, 1.30]},
-        "k": {"type": "rgb", "value": [2.2, 2.1, 2.0]},
+        "eta": {"type": "rgb", "value": [1.3, 1.30, 1.30]},
+        "k": {"type": "rgb", "value": [1.6, 1.6, 1.6]},
     }
 
     # the neon threads: thin emissive tubes laid over the glyphs — the tube's
@@ -400,7 +413,7 @@ def build_scene(
     }
     scene["neonEmitter"] = {
         "type": "area",
-        "radiance": {"type": "rgb", "value": [16.0, 7.5, 2.6]},
+        "radiance": {"type": "rgb", "value": [22.0, 10.0, 3.4]},
     }
     # the collar is painted metal: a plain dielectric cyan coat over it, glossy
     # the collar's cyan: dim enough that the tone reads as paint and not as a
@@ -425,7 +438,7 @@ def build_scene(
             continue
         ply = emit_ply(v, f, f"/tmp/ms/mesh/{name}.ply")
         if name == "glass":
-            bsdf = {"type": "dielectric", "int_ior": 1.52, "ext_ior": 1.0}
+            bsdf = scene["glass"]
         elif name == "collar":
             bsdf = scene["collarM"]
 

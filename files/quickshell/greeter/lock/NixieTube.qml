@@ -63,8 +63,10 @@ root.ignition = 1.0;
 return;
 }
 root.strikesLeft -= 1;
-// The gas strikes unevenly: some frames almost full, some almost out.
-root.ignition = 0.20 + 0.80 * Math.random();
+// The gas strikes unevenly: some frames almost out, the last ones all but
+// settled. The floor used to sit at a fifth of full, and the strike read as a
+// dim instead of a stutter.
+root.ignition = 0.08 + 0.92 * Math.random() * Math.random();
 strikeTimer.restart();
 }
 }
