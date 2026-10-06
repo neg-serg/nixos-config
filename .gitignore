@@ -50,3 +50,6 @@ viz/
 !files/sources/**
 # ...and the MediaTek MT6639 BT firmware blob (needed by backported btmtk driver)
 !files/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin
+
+# uv lockfile from ad-hoc `uv run` in the repo root — resolve deps on the fly
+uv.lock
