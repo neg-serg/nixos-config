@@ -203,14 +203,14 @@ def build():
     shapes["glass"] = (verts, faces)
     # 2. the anode cage: 24 vertical wires + 12 rings
     wires = []
-    for k in range(24):
-        a = 2 * math.pi * k / 24
+    for k in range(16):
+        a = 2 * math.pi * k / 16
         x, z = RT * math.sin(a), RT * math.cos(a)
         wires.append(
             ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.22)
         )
-    for k in range(12):
-        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 11
+    for k in range(8):
+        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 7
         ring = [
             (
                 RT * math.sin(2 * math.pi * t / 64),
@@ -264,7 +264,7 @@ def build():
     return shapes, wires
 
 
-def main(out, spp=192, W=560, HH=1152):
+def main(out, spp=1024, W=560, HH=1152):
     shapes, wires = build()
     scene = {}
     scene["type"] = "scene"
