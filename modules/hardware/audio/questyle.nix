@@ -9,14 +9,25 @@
 # questyle-ctl keeps that channel reachable from Linux: `info` (state of USB /
 # ALSA / PipeWire), `watch` (record the reports the dongle sends - read-only,
 # used to decode the protocol), `raw`/`feature` (manual frames).
+#
+# writers.writePython3Bin runs flake8 over the script, and flake8's stock rules
+# disagree with the formatter this repo uses (black at 79 columns): black writes
+# slices as `b[4 : 4 + size]` (E203: whitespace before ':'), and a docstring line
+# that cannot be split stays 80 characters (E501). Both are silenced here rather
+# than by uglifying the script; ruff+black (scripts/dev lint) already gate the
+# source itself.
 {
   pkgs,
   ...
 }:
 {
   environment.systemPackages = [
-    (pkgs.writers.writePython3Bin "questyle-ctl" { } (
-      builtins.readFile ./questyle/questyle-ctl.py
-    ))
+    (pkgs.writers.writePython3Bin "questyle-ctl" {
+      flakeIgnore = [
+        "E203" # black's slice spacing (b[4 : 4 + size])
+        "E501" # line length: unsplittable docstring lines
+        "W503" # line break before a binary operator (black)
+      ];
+    } (builtins.readFile ./questyle/questyle-ctl.py)) # USB/ALSA/PipeWire + HID channel of the dongle
   ];
 }
