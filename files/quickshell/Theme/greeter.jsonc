@@ -90,7 +90,9 @@
     "crtBarrel": 0.008,
     "crtBloom": 0.35,
     "crtVignette": 0.35,
-    "crtRollStrength": 0.035,
+    // Off: the sweep repaints the whole screen every frame, which reads as
+    // shivering on a screen that has nothing else to animate.
+    "crtRollStrength": 0,
     "crtRollMs": 9000,
 
     "cardOutline": "#3dffffff",

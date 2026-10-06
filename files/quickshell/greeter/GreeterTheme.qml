@@ -130,7 +130,7 @@ Singleton {
     readonly property real crtBarrel: _val('greeter.crtBarrel', 0.008)
     readonly property real crtBloom: _val('greeter.crtBloom', 0.35)
     readonly property real crtVignette: _val('greeter.crtVignette', 0.35)
-    readonly property real crtRollStrength: _val('greeter.crtRollStrength', 0.035)
+    readonly property real crtRollStrength: _val('greeter.crtRollStrength', 0)
     readonly property int crtRollMs: _val('greeter.crtRollMs', 9000)
     readonly property color cardOutline: _val('greeter.cardOutline', "#3dffffff")
     readonly property color accentColor: _val('greeter.accentColor', "#7fd6ff")
