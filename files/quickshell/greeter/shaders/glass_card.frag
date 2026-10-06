@@ -15,14 +15,24 @@ float pHighlight;
 float pRefract;
 float pShadow;
 float pGrain;
+float pLens;
+float pChroma;
+float pSpecular;
+float pPointerStrength;
+vec2 pPointer;
 };
 
 // Frosted-glass card, drawn in one pass over a padded sample of the wallpaper.
 // It paints both the pane and its soft drop shadow, so no second layer is needed:
 //   * the backdrop is blurred with two rings of taps,
-//   * the sampling point is pushed along the rounded-box gradient (refraction),
-//   * a top-down sheen and a grain pass over the tint,
-//   * outside the pane the same SDF feeds a soft shadow.
+//   * "liquid glass": the sampling point is pushed along the rounded-box gradient
+//     with the strength rising towards the rim, so the edge lenses the backdrop
+//     like a thick slab — and the three colour channels are pushed by slightly
+//     different amounts, which is what makes the rim read as glass and not as a
+//     blurred copy,
+//   * a rim specular (top-left light) plus a highlight that follows the pointer,
+//   * a top-down sheen and grain over the tint, a soft inner shadow at the bottom,
+//   * outside the pane the same SDF feeds a soft drop shadow.
 float hash(vec2 p) {
 return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -73,6 +83,19 @@ vec3 glass = mix(blurred, pTint.rgb, pTint.a);
 // Sheen: light from above, only inside the pane.
 float sheen = pHighlight * smoothstep(0.35, -0.55, p.y / max(halfSize.y, 1.0)) * inside;
 glass += sheen;
+
+// Rim specular on the lit (top-left) half, and a soft inner shadow where the
+// slab ends at the bottom — the two edges that make the rim read as a bevel.
+vec2 rimNormal = normalize(p / halfSize + vec2(1e-5));
+float lit = clamp(0.5 - 0.5 * (rimNormal.x + rimNormal.y) * 0.7071, 0.0, 1.0);
+float rim = smoothstep(-6.0, -0.5, sd) * smoothstep(-1.0, -0.2, sd);
+glass += pSpecular * rim * lit * 2.0;
+glass *= 1.0 - 0.25 * smoothstep(-1.0, -0.2, sd) * smoothstep(0.25, 0.75, (p.y / halfSize.y));
+
+// Pointer highlight: a soft light that follows the cursor over the pane.
+vec2 pointer = (pPointer - 0.5) * pCardSize;
+float pointerFalloff = 1.0 - smoothstep(0.0, 0.55 * length(pCardSize), length(p - pointer));
+glass += pPointerStrength * pointerFalloff * pointerFalloff;
 
 // Grain: without it the tint reads as a flat rectangle over a photo.
 glass += (hash(px * 0.5) - 0.5) * pGrain;

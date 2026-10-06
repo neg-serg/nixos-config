@@ -18,7 +18,11 @@
     "separatorColor": "#60ffffff",
 
     // Login card (files/quickshell/greeter/lock/LockContent.qml)
-    "cardColor": "#7a0f141c",
+    // Login card: one scale for every font size and the geometry around it
+    "uiScale": 1.2,
+    "uiFont": "Inter",
+    "displayFont": "Iosevka",
+    "cardColor": "#a60f141c",
     "avatarPath": "assets/avatar.jpg",
 
     // Frosted glass card (greeter/shaders/glass_card.frag)
@@ -28,6 +32,15 @@
     "glassRefract": 10,
     "glassShadow": 26,
     "glassGrain": 0.02,
+    // Liquid glass: edge lensing (with a chromatic split), rim specular and a
+    // highlight that follows the pointer
+    "glassLens": 16,
+    "glassChroma": 0.5,
+    "glassSpecular": 0.1,
+    "glassPointer": 0.12,
+    // The password field is the same material, denser and with a brighter rim
+    "fieldBlur": 6,
+    "fieldTint": "#2effffff",
 
     // Avatar disc (greeter/shaders/avatar_round.frag)
     "avatarRingWidth": 0.06,
@@ -50,10 +63,10 @@
     // CRT pass over the whole screen (greeter/shaders/crt_screen.frag);
     "crtEnabled": true,
     "crtLineSpacing": 3,
-    "crtScanStrength": 0.18,
+    "crtScanStrength": 0.13,
     "crtMaskStrength": 0.05,
-    "crtAberration": 1.0,
-    "crtBarrel": 0.012,
+    "crtAberration": 0.6,
+    "crtBarrel": 0.008,
     "crtBloom": 0.35,
     "crtVignette": 0.35,
     "crtRollStrength": 0.035,
@@ -63,7 +76,7 @@
     "accentColor": "#7fd6ff",
     "dangerColor": "#ff9b9b",
     "textColor": "#f2f6fa",
-    "textMutedColor": "#9db0c2",
+    "textMutedColor": "#c3d2e0",
     "avatarColor": "#3d7fd6ff",
     "appearMs": 420
   }

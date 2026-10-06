@@ -67,7 +67,7 @@ Singleton {
     readonly property color separatorColor: _val('greeter.separatorColor', "#60ffffff")
 
     // Login card tokens (lock/LockContent.qml)
-    readonly property color cardColor: _val('greeter.cardColor', "#7a0f141c")
+    readonly property color cardColor: _val('greeter.cardColor', "#a60f141c")
     readonly property string avatarPath: _val('greeter.avatarPath', "assets/avatar.jpg")
 
     // Frosted glass card and the avatar disc (see the shaders)
@@ -77,6 +77,17 @@ Singleton {
     readonly property real glassRefract: _val('greeter.glassRefract', 10)
     readonly property real glassShadow: _val('greeter.glassShadow', 26)
     readonly property real glassGrain: _val('greeter.glassGrain', 0.02)
+    readonly property real glassLens: _val('greeter.glassLens', 16)
+    readonly property real glassChroma: _val('greeter.glassChroma', 0.5)
+    readonly property real glassSpecular: _val('greeter.glassSpecular', 0.1)
+    readonly property real glassPointer: _val('greeter.glassPointer', 0.12)
+    readonly property real fieldBlur: _val('greeter.fieldBlur', 6)
+    readonly property color fieldTint: _val('greeter.fieldTint', "#2effffff")
+
+    // Type scale and families: one number makes the whole card bigger
+    readonly property real uiScale: _val('greeter.uiScale', 1.2)
+    readonly property string uiFont: _val('greeter.uiFont', "Inter")
+    readonly property string displayFont: _val('greeter.displayFont', "Iosevka")
     readonly property real avatarRingWidth: _val('greeter.avatarRingWidth', 0.06)
     readonly property real avatarGlow: _val('greeter.avatarGlow', 0.55)
 
@@ -96,10 +107,10 @@ Singleton {
     // CRT pass over the whole screen
     readonly property bool crtEnabled: _val('greeter.crtEnabled', true)
     readonly property real crtLineSpacing: _val('greeter.crtLineSpacing', 3)
-    readonly property real crtScanStrength: _val('greeter.crtScanStrength', 0.18)
+    readonly property real crtScanStrength: _val('greeter.crtScanStrength', 0.13)
     readonly property real crtMaskStrength: _val('greeter.crtMaskStrength', 0.05)
-    readonly property real crtAberration: _val('greeter.crtAberration', 1.0)
-    readonly property real crtBarrel: _val('greeter.crtBarrel', 0.012)
+    readonly property real crtAberration: _val('greeter.crtAberration', 0.6)
+    readonly property real crtBarrel: _val('greeter.crtBarrel', 0.008)
     readonly property real crtBloom: _val('greeter.crtBloom', 0.35)
     readonly property real crtVignette: _val('greeter.crtVignette', 0.35)
     readonly property real crtRollStrength: _val('greeter.crtRollStrength', 0.035)
@@ -108,7 +119,7 @@ Singleton {
     readonly property color accentColor: _val('greeter.accentColor', "#7fd6ff")
     readonly property color dangerColor: _val('greeter.dangerColor', "#ff9b9b")
     readonly property color textColor: _val('greeter.textColor', "#f2f6fa")
-    readonly property color textMutedColor: _val('greeter.textMutedColor', "#9db0c2")
+    readonly property color textMutedColor: _val('greeter.textMutedColor', "#c3d2e0")
     readonly property color avatarColor: _val('greeter.avatarColor', "#3d7fd6ff")
 
     // Timing tokens
