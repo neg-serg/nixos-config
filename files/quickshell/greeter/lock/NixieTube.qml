@@ -38,7 +38,7 @@ readonly property real glassWidth: root.bulb ? Math.round(root.numeralSize * 0.2
 readonly property real glassHeight: root.bulb ? root.glassWidth : Math.round(root.numeralSize * 1.60)
 // Room around the envelope for the bloom and for the refracted wallpaper, which
 // the lens pulls in by a good part of the radius.
-readonly property real pad: Math.round(12 * root.uiScale)
+readonly property real pad: Math.round(16 * root.uiScale)
 
 implicitWidth: root.glassWidth + root.pad * 2
 implicitHeight: root.glassHeight + root.pad * 2
