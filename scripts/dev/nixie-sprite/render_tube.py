@@ -23,9 +23,23 @@ import math
 import os
 import sys
 import numpy as np
-import mitsuba as mi
 
-mi.set_variant("llvm_ad_rgb")
+# Mitsuba is imported where it is used, not at the top: the geometry in this
+# module (build, digit_paths, sweep, revolve) is shared with the Cycles renderer
+# (render_cycles.py), which must not drag a path tracer into its process.
+mi = None
+
+
+def mitsuba():
+    """The path tracer, loaded on first use."""
+    global mi
+    if mi is None:
+        import mitsuba
+
+        mitsuba.set_variant("llvm_ad_rgb")
+        mi = mitsuba
+    return mi
+
 
 # ---- geometry, mm (the sprite's window is the shader's item: 104 x 214 logical px
 #      at 0.2803 mm/px = 29.15 x 60.0 mm) ---------------------------------------
@@ -367,6 +381,7 @@ def build_scene(
     glass=True renders the envelope on its own, in a room dim enough that its
     reflections stay a thin additive layer over the numerals (see the glass).
     """
+    mi = mitsuba()
     shapes, wires, glow = build()
     scene = {}
     scene["type"] = "scene"
