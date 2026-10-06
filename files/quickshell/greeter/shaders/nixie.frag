@@ -163,7 +163,7 @@ float grazing = 1.0 - sqrt(max(0.0, 1.0 - xr * xr));
 // 0.30 at the very edge: inside the room the caller captures (2 * pInset), so the
 	// picture never runs off the patch and turns into a flat grey slab
 	float lens = 0.18 * xr / (1.0 - 0.72 * xr * xr);
-vec2 uv = (px + pInset + vec2(lens * hs.x, 0.0)) / pBackdrop;
+vec2 uv = (px + pInset + vec2(lens * hs.x * inside, 0.0)) / pBackdrop;
 vec3 refract = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb * 0.95 + 0.004;
 
 // --- the glass: as little as it takes ----------------------------------
@@ -243,6 +243,7 @@ colour += vec3(0.62, 0.66, 0.76) * clamp(stack - 0.35, 0.0, 1.0) * 0.18;
 // the numerals and the glass. It glows where the discharge touches it.
 float cageR = 0.74 * hs.x;
 float cageTop = -0.52 * hs.y;
+	float cageFade = 0.0;
 float cageBottom = baseTop - 0.9 * hs.x;
 vec3 cageGlow = vec3(0.0);
 float grid = 0.0;
@@ -253,9 +254,13 @@ float wireH = exp(-pow(abs(fract(p.y / 4.0) - 0.5) * 2.0 / 0.28, 2.0));
 float rails = exp(-pow((abs(p.x) - cageR) / 1.0, 2.0));
 grid = max(max(wireV, wireH * 0.65), rails);
 grid *= step(abs(p.x), cageR);
+		// no seam where the cage ends: the wires fade over the last few px
+		cageFade = clamp((p.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - p.y) / 8.0, 0.0, 1.0)
+		         * clamp((cageR - abs(p.x)) / 6.0, 0.0, 1.0);
+		grid *= cageFade;
 // the discharge lives inside the cage: the mesh glows where it is touched
-float near = exp(-max(digitWire(int(max(pDigit, 0.0) + 0.5), dp) - wireR, 0.0) / 0.08) * step(-0.5, pDigit);
-cageGlow = pHalo.rgb * near * pGlow * 0.30;
+float near = exp(-max(digitWire(int(max(pDigit, 0.0) + 0.5), dp) - wireR, 0.0) / 0.20) * step(-0.5, pDigit);
+cageGlow = pHalo.rgb * near * pGlow * 0.55;
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
 colour = mix(colour, vec3(0.020, 0.022, 0.030) + cageGlow, grid * 0.45);
@@ -280,11 +285,11 @@ float wireDist = digitWire(int(pDigit + 0.5), dp) - wireR;
 float dist = max(wireDist, 0.0);
 float core = 1.0 - clamp((wireDist + 0.0022) / 0.0044, 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
-float gas = exp(-dist / 0.014) * 1.00 + exp(-dist / 0.038) * 0.26 + exp(-dist / 0.10) * 0.030;
+float gas = exp(-dist / 0.050) * 1.00 + exp(-dist / 0.16) * 0.45 + exp(-dist / 0.42) * 0.15;
 gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
-vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.96, 0.88), pow(core, 6.0) * 0.45);
+vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.96, 0.88), pow(core, 8.0) * 0.25);
 		add += wireColour * core * 0.78 * coreLit;
 
 add += pHalo.rgb * gas * 0.70 * haloLit;
@@ -323,8 +328,9 @@ colour += vec3(1.0) * exp(-pow((p.y - hs.y + 1.2) / 1.2, 2.0)) * inside * 0.09;
 
 	// ==== END SECTION COLLAR (L5) | SECTION COMPOSITE (L6) ====
 // the glass lights land on the front surface, in front of everything inside
-colour += glassLight;
+colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.85));
 
-fragColor = vec4(colour + add + refract * clamp(1.0 - alpha, 0.0, 1.0), clamp(alpha, 0.0, 0.98)) * qt_Opacity;
+fragColor = vec4(colour + add + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
+		clamp(alpha, 0.0, 0.98)) * qt_Opacity;
 }
 // ==== END SECTION COMPOSITE (L6) ====
