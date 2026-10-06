@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  План работ: газоразрядные лампы (ниkси) на логин-экране quickshell.
+  Каждый <task> самодостаточен: субагент НЕ видит этот чат, поэтому brief внутри
+  задачи содержит всё (файлы, команды, ограничения, критерии). Задачи L1..L5
+  правят РАЗНЫЕ секции одного файла (маркеры в коде), L6 + тесты можно вести
+  параллельно, L7 — сборочная, делается одним агентом после остальных.
+-->
+
+<plan id="nixie-lamps" version="1" revised="2026-10-06">
+
+  <goal>
+    Лампы (колбы) на экране входа должны читаться как настоящие газоразрядные
+    индикаторы (IN-12/IN-14): почти невидимое стекло с тонким кантом и двумя
+    узкими бликами, внутри — анодная сетка, стек катодов и держатели, тонкая
+    яркая жила разряда с тугим ореолом внутри сетки, обжимной цоколь.
+    Сейчас: стекло мутное и полосатое, «нутра» не видно, свечение — размытое
+    пятно, пропорции и форма сосуда не как у настоящей лампы.
+  </goal>
+
+  <state>
+    Изменения НЕ закоммичены (ветка main, рабочее дерево грязное). Что уже есть:
+    <item>files/quickshell/greeter/shaders/nixie.frag — лампа целиком в одном шейдере (SDF-проволока цифр, стекло, цоколь, разряд); .qsb собран.</item>
+    <item>files/quickshell/greeter/lock/NixieTube.qml — обёртка (униформы + поджиг + захват обоев для рефракции).</item>
+    <item>files/quickshell/greeter/lock/NixieClock.qml — ряд из 4 трубок + двоеточие.</item>
+    <item>files/quickshell/greeter/digits.qml — стенд «все 10 цифр в ряд» (qs -p).</item>
+    <item>files/quickshell/greeter/preview.qml — стенд логин-экрана (был и раньше).</item>
+    <item>Токены nixie* в Theme/greeter.jsonc + GreeterTheme.qml.</item>
+  </state>
+
+  <reference-config>
+    Всё в логических px при numeralSize=110, uiScale=1.2 (эталон для замеров);
+    скриншот делается при scale=2, т.е. в device px всё умножается на 2.
+    <numbers>
+      glassWidth  = round(0.60 * numeralSize * uiScale) = 79
+      glassHeight = round(1.60 * numeralSize * uiScale) = 211
+      pad (вокруг колбы, юниформ pInset) = round(12 * uiScale) = 14
+      item = (79 + 2*14) x (211 + 2*14) = 107 x 239
+      pBase (высота цоколя) = round(0.17 * glassHeight) = 36
+      unit (ширина цифры, юниформ внутри шейдера) = 0.46 * (glassHeight/2) = 48.5
+      цифра: ширина 48.5 (61% ширины стекла), высота 2.04*unit = 99 (47% высоты стекла)
+      pWire = 0.042 (радиус проволоки в единицах цифры) = 2.0 px -> диаметр 4 px
+      анодная сетка: радиус 0.74 * (glassWidth/2) = 29 px
+    </numbers>
+  </reference-config>
+
+  <invariants>
+    <inv id="I1">Экран стоит: в покое ничего не перерисовывается. ShaderEffectSource.live истинно только во время поджига (ignition &lt; 0.999); после поджига — scheduleUpdate() один раз. Никаких бесконечных анимаций в NixieTube/NixieClock.</inv>
+    <inv id="I2">Шейдер собирается только так: QSB=$(ls -d /nix/store/*qtshadertools-6.11.2/bin/qsb | head -1); "$QSB" --glsl "100es,120,150" -o nixie.frag.qsb nixie.frag — цель GLSL ES 100: нет динамических границ циклов, half зарезервировано, нет массивов с неконстантным индексом.</inv>
+    <inv id="I3">Публичный интерфейс NixieTube (digit:int, bulb:bool, backdrop:Item, numeralSize:real, tubeIndex:int, ignition:real) и имена униформов шейдера не меняются без согласования с L7.</inv>
+    <inv id="I4">Комментарии в коде — английские, отступы табами, стиль соседних файлов. Никакого китайского нигде.</inv>
+    <inv id="I5">Гейт: bash scripts/dev/check-qml-lint.sh -> 0 defect-kind findings.</inv>
+    <inv id="I6">Правки только в файлах своей задачи (см. &lt;owns&gt;), чужие секции nixie.frag не трогать (между маркерами SECTION).</inv>
+    <inv id="I7">Цифры рисуются в СВОЁМ пространстве y-вверх: vec2 dp = vec2(p.x - centre.x, centre.y - p.y)/unit. Любая правка, задевающая dp/mirror, обязана сохранить это (иначе цифры переворачиваются — уже было).</inv>
+  </invariants>
+
+  <environment>
+    <cmd purpose="сборка шейдера">QSB=$(ls -d /nix/store/*qtshadertools-6.11.2/bin/qsb | head -1); "$QSB" --glsl "100es,120,150" -o files/quickshell/greeter/shaders/nixie.frag.qsb files/quickshell/greeter/shaders/nixie.frag</cmd>
+    <cmd purpose="стенд логин-экрана">qs -p /etc/nixos/files/quickshell/greeter/preview.qml</cmd>
+    <cmd purpose="стенд десяти цифр">qs -p /etc/nixos/files/quickshell/greeter/digits.qml</cmd>
+    <cmd purpose="линт QML">bash scripts/dev/check-qml-lint.sh</cmd>
+    <cmd purpose="тема (обязательно после правки Theme/greeter.jsonc)">cp -f files/quickshell/Theme/greeter.jsonc ~/.config/quickshell/Theme/greeter.jsonc &amp;&amp; touch ~/.config/quickshell/Theme/greeter.jsonc</cmd>
+    <note>Trees are live-linked: /etc/nixos/files/quickshell/greeter -> ~/.config/quickshell/greeter, правки QML/шейдеров видны сразу после перезапуска qs -p. А Theme/ — copy-once в ~/.config; без копирования+touch токены не доедут, а .theme.json перегенерирует работающий шелл (проверить: python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/quickshell/Theme/.theme.json')))['greeter'].get('nixieWire'))").</note>
+    <note>hyprctl в этой сессии — это Lua: hyprctl dispatch 'hl.dsp.window.move({workspace=1})'; есть hyprctl eval '&lt;lua&gt;' (доступны io/os). Переключение рабочего стола — hl.dsp.focus({workspace="special:shot"}) / hl.dsp.workspace.toggle_special({name="shot"}).</note>
+    <note>Агент НЕ видит картинку: судить по числам (ширины, контраст, профили), ASCII — только для грубых ошибок формы.</note>
+  </environment>
+
+  <interfaces>
+    <uniforms file="files/quickshell/greeter/shaders/nixie.frag">
+      vec2 pSize; vec2 pBackdrop; float pInset; float pRadius; float pBase; float pGlow;
+      float pDigit; float pBulb; float pWire; float pStack; float pHighlight; float pWarmth;
+      float pFlicker; vec4 pCore; vec4 pHalo; vec4 pGlass; vec4 pCathode;
+      sampler2D source = обои за трубкой (рефракция + блум)
+    </uniforms>
+    <sections file="files/quickshell/greeter/shaders/nixie.frag">
+      L1 GEOMETRY  (140..158)  форма сосуда: цилиндр+плечо+купол, сужение к цоколю
+      L2 GLASS-OPTICS (159..195) линза/рефракция, Френель, толщина стенки, блики, купол, пип
+      L3 INTERNALS (196..260) стержни, слюдяные шайбы, стек катодов, анодная сетка
+      L4 DISCHARGE (261..300) жила, ореол, кайма, отражение в дальней стенке
+      L5 COLLAR (301..317) обжимной цоколь
+      L6 COMPOSITE (318..325) экспозиция, блум, порядок слоёв
+    </sections>
+    <tokens file="files/quickshell/Theme/greeter.jsonc">nixieDigitSize, nixieGlow, nixieCoreColor, nixieGlowColor, nixieGlassColor, nixieCathodeColor, nixieWire, nixieStack, nixieHighlight, nixieWarmth, nixieFlickerMs (зеркалятся в GreeterTheme.qml)</tokens>
+  </interfaces>
+
+  <problems>
+    <problem id="P1" owner="L1" severity="high">Стекло мутное/полосатое/«пластиковое»: широкие вертикальные полосы-блики (было 0.40 яркости при ширине 0.09 по u), сплошной туман по внутренней поверхности, кромка-линия по всему силуэту. Улика: скриншот логина — внутренность трубки светлее обоев, две рейки по краям.</problem>
+    <problem id="P2" owner="L1/L2" severity="high">Пропорции не как у настоящей: колба 1:2.0 (было), нужно 1:2.6..2.9 как IN-12; цоколь занимает 17%, у настоящей ~15%; цифра по высоте 47% стекла (норма), по ширине 61% (норма).</problem>
+    <problem id="P3" owner="L3" severity="high">Нет «нутра»: не видно анодной сетки (главная деталь настоящей лампы), стек катодов слишком бледный, слюдяные шайбы — еле заметные линии, нет штенгеля и выводов в цоколе.</problem>
+    <problem id="P4" owner="L4" severity="high">Разряд — размытое пятно: горячая зона шириной ~30 device px (13-16 логических) вместо жилы 2-4 px; нет тонкой белой середины штриха; ореол почти не спадает; кайма (фиолетовый край) не читается.</problem>
+    <problem id="P5" owner="L1" severity="medium">Форма сосуда: плечо/купол/пип-отвод/цоколь не читаются как у лампы; нет выраженной галтели между цилиндром и куполом.</problem>
+    <problem id="P6" owner="L2" severity="medium">Рефракция: линза есть, но каустика у края (второе, почти перевёрнутое изображение) не проверена численно; контраст картинки внутри стекла не проверен.</problem>
+    <problem id="P7" owner="L6" severity="medium">Порядок слоёв: блики стекла должны ложиться ПОВЕРХ содержимого (внутренности физически за стеклом). Проверить, что glassLight добавляется в конце и что блум не «съедает» кант.</problem>
+    <problem id="P8" owner="L7" severity="high">Масштаб цифры был вдвое больше колбы (unit = 0.88*hs.y) — из-за этого жила расплывалась в полосу. Исправлено на unit = 0.46*hs.y; закрепить формулой и тестом.</problem>
+    <problem id="P9" owner="L7" severity="critical">Ориентация: цифры уже один раз были перевёрнуты (пространство цифры было y-вниз). Инвариант I7 + автотест на стенде цифр.</problem>
+    <problem id="P10" owner="T-L6/T-TEST" severity="high">Нет тестов и стенда замеров: нет офлайн-двойника шейдера, нет числовых проверок, нет безопасного захвата скриншота (без кражи фокуса у терминала).</problem>
+    <problem id="P11" owner="L6" severity="medium">Процессные грабли: qsb только из nix-store по абсолютному пути; GLSL ES 100 (half зарезервировано, циклы с константными границами); Theme/ — copy-once; hyprctl dispatch — Lua (hl.dsp.*); переключение рабочих столов только через фокус-диспетчеры.</problem>
+    <problem id="P12" owner="user" severity="low">Открытый пункт чеклиста «Сделать так чтобы кружок был под рамками, но над фоном» — не расшифрован: о каком кружке речь (аватар? монограмма?) и какие рамки. Спросить пользователя до реализации.</problem>
+  </problems>
+
+  <acceptance>
+    <criterion id="A1">Пропорции колбы: glassHeight/glassWidth в диапазоне 2.6..2.9; цоколь 15..18% высоты.</criterion>
+    <criterion id="A2">Жила: белая зона (R&gt;240) ≤ 8 device px по ширине; зона R&gt;200 ≤ 16 device px; спад ореола: R падает в 2 раза на 6..14 device px от жилы.</criterion>
+    <criterion id="A3">Стекло почти невидимо: в середине трубки по горизонтали средняя яркость = яркости обоев снаружи ±15%; собственный свет стекла в середине ≤ 8% от яркости жилы.</criterion>
+    <criterion id="A4">Блики: две вертикальные полосы шириной ≤ 10 device px (по полувысоте) на |x| ≈ 0.76*R и слабая широкая на 0.40*R; между ними вклад стекла ≈ 0.</criterion>
+    <criterion id="A5">Сетка анода: рёбра на |x| = 0.74*R видны (контраст ≥ 3% к соседнему фону); сетка даёт модуляцию ≥ 2% в середине; вблизи горящей цифры сетка подсвечена (R/B &gt; 1.5).</criterion>
+    <criterion id="A6">Стек катодов: не менее 5 из 9 незажжённых цифр дают видимые пиксели проволоки (контраст ≥ 2%) вне зоны ореола; слюдяные шайбы читаются как диски.</criterion>
+    <criterion id="A7">Ориентация (стенд digits.qml): для цифры 7 центр яркости в верхней половине её bbox; для цифры 2 есть горизонтальный пробег ≥ 60% ширины цифры в нижних 20% bbox.</criterion>
+    <criterion id="A8">Покой: при неизменной минуте нет анимаций и live-захватов (код + CPU процесса qs &lt; 1% за 10 с).</criterion>
+    <criterion id="A9">Гейты: qsb собирает 3 цели; check-qml-lint.sh — 0 defect findings.</criterion>
+    <criterion id="A10">Все константы, введённые задачами, вынесены в токены (L6) и перечислены в docs/howto/nixie-tube.md.</criterion>
+  </acceptance>
+
+  <tasks>
+
+    <task id="L0" owner="parent" order="first" parallel="no">
+      <title>Заморозка интерфейсов и эталона</title>
+      <status>done</status>
+      <brief>
+        <TASK>Зафиксировать интерфейсы перед параллельной работой: маркеры секций в nixie.frag, список униформов, эталонная конфигурация и честный базовый скриншот.</TASK>
+        <EXPECTED_OUTCOME>Маркеры SECTION в nixie.frag; nixie.frag.qsb собран; эталонные скриншоты /tmp/base-login.png и /tmp/base-digits.png; записанные числа базовых замеров.</EXPECTED_OUTCOME>
+        <MUST_DO>Собирать шейдер после каждой правки; держать I1-I7; положить скриншоты в /tmp и записать замеры в отчёт.</MUST_DO>
+        <MUST_NOT_DO>Не менять имена униформов и публичные свойства NixieTube.</MUST_NOT_DO>
+        <CONTEXT>Секции: L1 GEOMETRY, L2 GLASS-OPTICS, L3 INTERNALS, L4 DISCHARGE, L5 COLLAR, L6 COMPOSITE.</CONTEXT>
+      </brief>
+    </task>
+
+    <task id="L1" owner="subagent" depends_on="L0" parallel="yes" section="GEOMETRY">
+      <title>Форма сосуда и пропорции</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag (только секция SECTION GEOMETRY), files/quickshell/greeter/lock/NixieTube.qml (только glassWidth/glassHeight/pad)</owns>
+      <brief>
+        <TASK>Сделать силуэт настоящей лампы: прямой цилиндр + галтель-плечо + полусферический купол + пип-отвод сверху; у ног — сужение в обжимной цоколь. Пропорции IN-12: высота/ширина 2.6..2.9, цоколь 15..18% высоты, цифра по ширине ≈61% стекла и по высоте ≈47%.</TASK>
+        <EXPECTED_OUTCOME>Правки в секции SECTION GEOMETRY и в двух константах NixieTube.qml; собранный nixie.frag.qsb; числовой отчёт: H/W, доля цоколя, ширина/высота цифры в px.</EXPECTED_OUTCOME>
+        <REQUIRED_TOOLS>bash, read_hashline, hashline_edit, str_replace_editor, hub (для запуска qs -p)</REQUIRED_TOOLS>
+        <MUST_DO>Галтель плеча — smooth-min с радиусом ~10 px; купол — окружность радиуса стекла с центром на высоте -hs.y+hs.x; профиль можно слегка «дышать» (медленная неоднородность радиуса ~0.4%); после правки собрать qsb и запустить стенд цифр; замерить H/W и доли цифры.</MUST_DO>
+        <MUST_NOT_DO>Не трогать секции L2-L6; не менять dp/centre (инвариант I7); не добавлять бесконечных анимаций.</MUST_NOT_DO>
+        <CONTEXT>Эталон: numeralSize=110, uiScale=1.2, glassWidth=79, glassHeight=211, pad=14. Стенды: qs -p files/quickshell/greeter/digits.qml и preview.qml. Захват — scripts/dev/capture-window.sh (L6-тест) или приём из &lt;appendix&gt;. Границы: критерии A1, A7.</CONTEXT>
+      </brief>
+      <verification>A1 (H/W в 2.6..2.9; цоколь 15..18%), A7 (ориентация), qsb exit=0, qmllint 0.</verification>
+    </task>
+
+    <task id="L2" owner="subagent" depends_on="L0" parallel="yes" section="GLASS-OPTICS">
+      <title>Оптика стекла: почти невидимое стекло</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag (только секция SECTION GLASS-OPTICS)</owns>
+      <brief>
+        <TASK>Сделать стекло визуально почти невидимым, но физичным: прозрачность по Френелю (в середине ~96-98% пропускания), тонкий кант из двух поверхностей с тёмным зазором 1.5-2 px, две узкие вертикальные блики (2-4 px) + одна широкая очень слабая, отражение комнаты в куполе, пип-отвод, линза-рефракция обоев с каустикой у края.</TASK>
+        <EXPECTED_OUTCOME>Правки секции GLASS-OPTICS; собранный qsb; отчёт с числами: ширина блика по полувысоте, вклад стекла в центре (%), глубина каустики у края (px смещения).</EXPECTED_OUTCOME>
+        <REQUIRED_TOOLS>bash, read_hashline, hashline_edit, hub</REQUIRED_TOOLS>
+        <MUST_DO>Собственный свет стекла в середине ≤ 8% от яркости жилы (A3); блики — по A4; рефракция: смещение сэмпла = lens*xr/(1-0.72*xr^2), т.е. у края 25-35% радиуса; картинка внутри теряет контраст не более 10%.</MUST_DO>
+        <MUST_NOT_DO>Не рисовать сплошную линию по силуэту; не добавлять широкие «рейки»-полосы; не менять экспозицию/порядок слоёв (секция L6); не трогать L1/L3/L4/L5.</MUST_NOT_DO>
+        <CONTEXT>Критерии A3, A4, A6. Пример «как надо»: у настоящей лампы над тёмным фоном стекло даёт только кант и пару бликов, всё остальное — картинка за ним. Замеры делать на скриншоте (scale=2).</CONTEXT>
+      </brief>
+      <verification>A3, A4, qsb exit=0, qmllint 0.</verification>
+    </task>
+
+    <task id="L3" owner="subagent" depends_on="L0" parallel="yes" section="INTERNALS">
+      <title>Нутро: анодная сетка, стек катодов, держатели</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag (только секция SECTION INTERNALS; блок сетки живёт там же и помечен комментарием)</owns>
+      <brief>
+        <TASK>Показать нутро настоящего никси: цилиндрическая анодная сетка (рёбра по краям + частое плетение, в проекции по u через asin), стек из 9 незажжённых катодов как серый металл, две вертикальные штанги-держателя, две слюдяные шайбы-диска, стеклянный штенгель и два вывода в цоколе. Сетка должна подсвечиваться разрядом вблизи горящей цифры.</TASK>
+        <EXPECTED_OUTCOME>Правки секции INTERNALS; собранный qsb; отчёт: контраст сетки (%) в середине, ширина рёбер (px), число видимых катодов (≥5), контраст шайб.</EXPECTED_OUTCOME>
+        <REQUIRED_TOOLS>bash, read_hashline, hashline_edit, hub</REQUIRED_TOOLS>
+        <MUST_DO>Радиус сетки 0.74*R_стекла, шаг плетения 4-5 px по вертикали и ~6-8 px по горизонтали в середине; металл тёмный (alpha 0.25-0.35), подсветка от разряда — цветом pHalo; передняя половина сетки на ~20% сильнее задней; узлы увязать с униформами pStack/pCathode/pGlow.</MUST_DO>
+        <MUST_NOT_DO>Не превращать сетку в «марлю» (контраст &gt; 8% — уже перебор); не выходить за границы секции; не менять dp (I7).</MUST_NOT_DO>
+        <CONTEXT>Критерии A5, A6. Фото-ориентир: сетка читается как тонкая частая решётка, поверх светящейся цифры; рёбра — две вертикальные линии внутри стекла.</CONTEXT>
+      </brief>
+      <verification>A5, A6, qsb exit=0, qmllint 0.</verification>
+    </task>
+
+    <task id="L4" owner="subagent" depends_on="L0" parallel="yes" section="DISCHARGE">
+      <title>Разряд: тонкая жила вместо пятна</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag (только секция SECTION DISCHARGE)</owns>
+      <brief>
+        <TASK>Сделать разряд настоящим: тонкая (2-4 px) яркая жила с белой серединой штриха, тугой оранжевый ореол (спад в 2 раза на 6..14 device px), фиолетовая кайма на краю затухания, слабая засветка внутри сетки, отражение жилы в дальней стенке, блум наружу.</TASK>
+        <EXPECTED_OUTCOME>Правки секции DISCHARGE; собранный qsb; отчёт-профиль: ширина белой зоны, ширина R&gt;200, расстояния спада ореола, пиковое значение до экспозиции.</EXPECTED_OUTCOME>
+        <REQUIRED_TOOLS>bash, read_hashline, hashline_edit, hub</REQUIRED_TOOLS>
+        <MUST_DO>sigma ореола задавать в единицах цифры (unit = 0.46*hs.y): 0.020/0.055/0.16 с весами 1.0/0.30/0.045; экспозицию (1-exp(-x*1.25)) не трогать; белая середина — pow(core, 8)*0.55.</MUST_DO>
+        <MUST_NOT_DO>Не раздувать пятно; не делать яркость выше такой, что зона R&gt;200 шире 16 device px; не менять секции L1-L3/L5/L6.</MUST_NOT_DO>
+        <CONTEXT>Критерий A2. Разряд живёт ВНУТРИ сетки (радиус 0.74*R): за сеткой засветка должна падать.</CONTEXT>
+      </brief>
+      <verification>A2, qsb exit=0, qmllint 0.</verification>
+    </task>
+
+    <task id="L5" owner="subagent" depends_on="L0" parallel="yes" section="COLLAR">
+      <title>Цоколь: обжимной металл и пятка</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag (только секция SECTION COLLAR)</owns>
+      <brief>
+        <TASK>Довести цоколь до вида настоящего обжима: фальцевая кромка сверху (яркая, подогретая разрядом), вертикальные фланцы с неравномерностью по окружности, металл светлее слева, тень под кромкой, подсвеченная пятка, тёмный зазор между стеклом и металлом.</TASK>
+        <EXPECTED_OUTCOME>Правки секции COLLAR; собранный qsb; отчёт: высота цоколя (%), яркость кромки относительно жилы, контраст фланцев.</EXPECTED_OUTCOME>
+        <REQUIRED_TOOLS>bash, read_hashline, hashline_edit, hub</REQUIRED_TOOLS>
+        <MUST_DO>Кромка — не ярче 25% от жилы; фланцы — модуляция 5-10%; тень между стеклом и цоколем обязательна (иначе металл «плавает»).</MUST_DO>
+        <MUST_NOT_DO>Не менять pBase (его задаёт L1 по критерию A1); не трогать другие секции.</MUST_NOT_DO>
+        <CONTEXT>Критерий A1 (доля цоколя), A3. Пятка у настоящей лампы чуть светлее корпуса цоколя — свет от стола.</CONTEXT>
+      </brief>
+      <verification>A1 (доля цоколя), qsb exit=0, qmllint 0.</verification>
+    </task>
+
+    <task id="L6" owner="subagent" depends_on="L0" parallel="yes">
+      <title>Токены-ручки и документация</title>
+      <owns>files/quickshell/Theme/greeter.jsonc, files/quickshell/greeter/GreeterTheme.qml, docs/howto/nixie-tube.md</owns>
+      <brief>
+        <TASK>Вынести все константы, которые вводят L1-L5 (толщина стенки, радиус и шаг сетки, радиус проволоки, шкалы ореола, масштаб цифры, доля цоколя), в токены темы nixie*; описать в docs/howto/nixie-tube.md, что чем управляется и какие значения эталонные.</TASK>
+        <EXPECTED_OUTCOME>Токены в Theme/greeter.jsonc + зеркальные readonly-свойства в GreeterTheme.qml (fallback = значение из jsonc); документ docs/howto/nixie-tube.md со списком токенов, эталонными числами и разделом «как смотреть» (preview.qml, digits.qml, capture-window.sh).</EXPECTED_OUTCOME>
+        <REQUIRED_TOOLS>bash, read_hashline, hashline_edit, str_replace_editor</REQUIRED_TOOLS>
+        <MUST_DO>Правила именования: nixie + CamelCase; после правки jsonc — скопировать в ~/.config/quickshell/Theme/ и touch (иначе не доедет); проверить, что .theme.json перегенерировался и значения видны.</MUST_DO>
+        <MUST_NOT_DO>Не переименовывать существующие токены; не трогать QML логики трубок; не вводить токен без потребителя в шейдере/компоненте.</MUST_NOT_DO>
+        <CONTEXT>Уже есть: nixieDigitSize, nixieGlow, nixieCoreColor, nixieGlowColor, nixieGlassColor, nixieCathodeColor, nixieWire, nixieStack, nixieHighlight, nixieWarmth, nixieFlickerMs.</CONTEXT>
+      </brief>
+      <verification>A10, .theme.json содержит все новые токены, qmllint 0.</verification>
+    </task>
+
+    <task id="L7" owner="subagent (один, после L5)" depends_on="L1,L2,L3,L4,L5" parallel="no" section="COMPOSITE">
+      <title>Композит, экспозиция, порядок слоёв, интеграция</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag (только секция SECTION COMPOSITE), files/quickshell/greeter/lock/NixieClock.qml, files/quickshell/greeter/lock/LockContent.qml (только блок NixieClock)</owns>
+      <brief>
+        <TASK>Свести слои: обои (рефракция) -> внутренности (стек, сетка) -> разряд -> блики стекла ПОВЕРХ -> цоколь; выставить экспозицию так, чтобы газ не выбеливался, а жила всегда; проверить блум наружу и что он не съедает кант; свести интеграцию после L1-L5 и прогнать приёмку A1-A9.</TASK>
+        <EXPECTED_OUTCOME>Собранный qsb; отчёт по A1-A9 с числами; скриншоты /tmp/final-login.png и /tmp/final-digits.png; список известных отклонений с обоснованием.</EXPECTED_OUTCOME>
+        <MUST_DO>Порядок: внутри -> блики сверху; экспозиция 1-exp(-x*1.25); после сведения — прогнать скрипт замеров L-TEST и линт; закоммитить с английским subject вида "[greeter] ...".</MUST_DO>
+        <MUST_NOT_DO>Не переписывать чужие секции ради «улучшения»; не коммитить незавершённые отклонения без записи в отчёте.</MUST_NOT_DO>
+        <CONTEXT>Критерии A1-A9; инварианты I1-I7.</CONTEXT>
+      </brief>
+      <verification>A1-A9, qsb 3 цели, qmllint 0, скриншоты.</verification>
+    </task>
+
+    <task id="L8" owner="subagent" depends_on="L0" parallel="yes" section="TESTS">
+      <title>Тестовый стенд: офлайн-двойник, замеры, безопасный захват</title>
+      <owns>scripts/dev/nixie_sim.py, scripts/dev/nixie-check.sh, scripts/dev/capture-window.sh (новые файлы; правок шейдера НЕТ)</owns>
+      <brief>
+        <TASK>Дать агентам «глаза в цифрах»: (1) scripts/dev/nixie_sim.py — NumPy-двойник nixie.frag (секция в секцию), рендерит одну трубку в PNG и печатает метрики; (2) scripts/dev/nixie-check.sh — собирает шейдер, поднимает стенд цифр, захватывает скриншот, меряет A1-A7 и возвращает ненулевой код при провале; (3) scripts/dev/capture-window.sh — захват окна без кражи фокуса (уводит терминал, показывает цель, grim, возвращает).</TASK>
+        <EXPECTED_OUTCOME>Три скрипта; на текущем состоянии nixie-check.sh печатает таблицу метрик и падает (или проходит) по порогам A1-A7; в отчёте — вывод проверки и тайминги.</EXPECTED_OUTCOME>
+        <REQUIRED_TOOLS>bash, eval (NumPy), read_hashline, str_replace_editor</REQUIRED_TOOLS>
+        <MUST_DO>Метрики считать по device px скриншота при scale=2: ширина зоны R&gt;200 и R&gt;240, расстояния спада ореола в 2 раза, яркость внутри против обоев снаружи, ширина блик по полувысоте, контраст сетки, число видимых катодов, ориентация 7 и 2; двойник должен повторять формулы 1:1 (включая y-вверх в dp) и печатать те же метрики; расхождение двойник/скриншот ≤ 15%.</MUST_DO>
+        <MUST_NOT_DO>Не менять nixie.frag (только читать); не трогать QML; не требовать интерактива (скрипт должен работать из bash без подтверждений).</MUST_NOT_DO>
+        <CONTEXT>Приём захвата и хелперы — в &lt;appendix&gt;. Токены темы читаются из ~/.config/quickshell/Theme/.theme.json. Пороговые значения — в &lt;acceptance&gt;.</CONTEXT>
+      </brief>
+      <verification>Скрипты запускаются; на эталоне (после L1-L5) все пороги A1-A7 выполнены; на «плохом» состоянии (текущий nixie.frag) — хотя бы один порог нарушен (проверка, что тест не всепрощающий).</verification>
+    </task>
+
+    <task id="L9" owner="user" order="any" parallel="yes">
+      <title>Уточнить открытый пункт чеклиста</title>
+      <brief>
+        <TASK>Спросить пользователя, что значит «Сделать так чтобы кружок был под рамками, но над фоном»: о каком кружке речь (аватар/монограмма/точка обоев) и какие рамки (карточка-стекло, поле пароля, рамки скриншота).</TASK>
+        <EXPECTED_OUTCOME>Ответ пользователя, зафиксированный в отчёте; при ясности — отдельная задача с точными критериями.</EXPECTED_OUTCOME>
+        <MUST_DO>Спросить коротко и предложить варианты.</MUST_DO>
+        <MUST_NOT_DO>Не додумывать и не менять z-порядок слоёв логин-экрана без ответа.</MUST_NOT_DO>
+        <CONTEXT>P12.</CONTEXT>
+      </brief>
+    </task>
+  </tasks>
+
+  <test_plan>
+    <harness id="H1" file="scripts/dev/nixie_sim.py">Офлайн-двойник: NumPy-рендер одной трубки (bдigit, glow, wire) + печать метрик: ширина жилы, профиль ореола, вклад стекла, контраст сетки, видимость стека, bbox цифры. Быстро (секунды), без композитора.</harness>
+    <harness id="H2" file="scripts/dev/nixie-check.sh">Сборка qsb -> стенд digits.qml -> capture-window.sh -> Python-замеры по A1-A7 -> exit 1 при провале. Плюс проверка линта.</harness>
+    <harness id="H3" file="scripts/dev/capture-window.sh">Захват окна: увести терминал (hl.dsp.window.move({workspace=5})), сфокусировать цель (hl.dsp.focus({window="class:org.quickshell"})), grim, вернуть терминал на рабочий стол 1.</harness>
+    <manual>
+      <check id="M1">Живой логин: qs -p preview.qml, глазами — стекло прозрачное, внутри видна сетка, цифра — тонкая яркая проволока, цоколь металлический.</check>
+      <check id="M2">Покой: 10 с наблюдения, CPU процесса qs &lt; 1% (pidstat -p $(pgrep -f preview.qml) 1 10).</check>
+      <check id="M3">Поджиг: при смене минуты трубка мерцает 5-8 кадров и замирает.</check>
+      <check id="M4">Стенд цифр: 0..9 читаются, ориентация верная, толщина штриха одинаковая у всех.</check>
+    </manual>
+    <regression>
+      <item>Не сломать CRT/posterize/стеклянную карточку (LockContent.qml вне блока NixieClock не трогать).</item>
+      <item>Режим cage (backdrop === null) не должен падать: рефракция отсутствует, tube всё равно рисуется.</item>
+      <item>Ведущий ноль часов: digit = -1 (тёмная трубка со всеми катодами).</item>
+      <item>Двоеточие: bulb = true, цифр нет, цоколя нет.</item>
+    </regression>
+  </test_plan>
+
+  <risks>
+    <risk id="R1" prob="high">Агент не видит картинку и «улучшает» по ASCII. Митигация: судить по числам H1/H2, ASCII только для грубых ошибок формы.</risk>
+    <risk id="R2" prob="medium">Параллельные правки одного nixie.frag конфликтуют. Митигация: жёсткое владение секциями (I6) и merge-задача L7.</risk>
+    <risk id="R3" prob="medium">Токены не доезжают (Theme/ copy-once). Митигация: обязательный cp+touch и проверка .theme.json в конце задачи.</risk>
+    <risk id="R4" prob="medium">Перерисовка в покое возвращается (live/animation). Митигация: I1 + M2.</risk>
+    <risk id="R5" prob="low">GLSL ES 100 ограничения (half, динамические границы циклов). Митигация: I2, собирать каждую правку.</risk>
+    <risk id="R6" prob="medium">Стекло «поплывёт» в мутное при добавлении сетки и свечения. Митигация: A3/A4 как жёсткие пороги, L7 проверяет после сведения.</risk>
+  </risks>
+
+  <handoff>
+    <order>L0 (готово) -> параллельно [L1, L2, L3, L4, L5, L6, L8] -> L7 (сведение и приёмка). L9 — вопрос пользователю в любой момент.</order>
+    <coop>Перед правкой файла, который может быть занят соседом, спросить владельца; сообщения короткие. nixie.frag правится только в границах своих SECTION-маркеров.</coop>
+    <yield>Без наративного прогресса по ходу; результат — в финальном yield: изменённые файлы, числа метрик, что проверено, что осталось.</yield>
+    <commit_style>Subject по-английски в императиве, тело можно по-русски; формат как в истории: "[greeter] ..."; перед коммитом just fmt и just check.</commit_style>
+  </handoff>
+
+  <appendix>
+    <capture-helper><![CDATA[
+#!/bin/sh
+# capture-window.sh OUT.png [TYPED-TEXT]  — захват превью логина без кражи фокуса
+out=${1:-/tmp/cap.png}; typed=$2
+cat >/tmp/_on.lua <<'LUA'
+hl.dispatch(hl.dsp.focus({ window = "class:org.quickshell" }))
+hl.dispatch(hl.dsp.window.move({ workspace = 1 }))
+hl.dispatch(hl.dsp.focus({ window = "class:term" }))
+hl.dispatch(hl.dsp.window.move({ workspace = 5 }))
+hl.dispatch(hl.dsp.focus({ window = "class:org.quickshell" }))
+LUA
+cat >/tmp/_off.lua <<'LUA'
+hl.dispatch(hl.dsp.focus({ window = "class:term" }))
+hl.dispatch(hl.dsp.window.move({ workspace = 1 }))
+LUA
+hyprctl eval "$(cat /tmp/_on.lua)" >/dev/null
+sleep 1
+[ -n "$typed" ] && { wtype -d 35 "$typed"; sleep 0.6; }
+grim "$out"
+hyprctl eval "$(cat /tmp/_off.lua)" >/dev/null
+    ]]></capture-helper>
+    <metric-snippet><![CDATA[
+# ширина жилы и профиль ореола по скриншоту (device px)
+python3 - <<'PY'
+from PIL import Image; import numpy as np
+a=np.asarray(Image.open('/tmp/cap.png').convert('RGB')).astype(np.int16)
+r,b=a[...,0],a[...,2]; hot=(r>140)&(r-b>50); hot[700:,:]=False
+ys,xs=np.nonzero(hot); row=int((ys.min()+ys.max())/2)
+line=r[row, xs.min()-20:xs.max()+20]
+def runs(m):
+    out=[];i=0
+    while i<len(m):
+        if m[i]:
+            j=i
+            while j+1<len(m) and m[j+1]: j+=1
+            out.append(j-i+1); i=j+1
+        else: i+=1
+    return out
+print("R>240:",runs(line>240),"R>200:",runs(line>200))
+PY
+    ]]></metric-snippet>
+    <digits-harness>files/quickshell/greeter/digits.qml — 10 трубок 0..9 в ряд; qs -p files/quickshell/greeter/digits.qml</digits-harness>
+    <qsb>QSB=$(ls -d /nix/store/*qtshadertools-6.11.2/bin/qsb | head -1); "$QSB" --glsl "100es,120,150" -o nixie.frag.qsb nixie.frag</qsb>
+  </appendix>
+</plan>
