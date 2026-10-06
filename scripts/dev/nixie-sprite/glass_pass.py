@@ -16,7 +16,7 @@ mi.set_variant("llvm_ad_rgb")
 
 
 def main(out, spp=512):
-    shapes, _ = R.build()
+    shapes, _, _ = R.build()
     scene = {
         "type": "scene",
         "env": {
