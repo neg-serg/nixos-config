@@ -23,7 +23,13 @@ let
   kernelSrc = pkgs.applyPatches {
     name = "linux-${baseKernel.version}-mt6639";
     src = baseKernel.src;
-    patches = [ (r.path "files/patches/mt6639-btusb-id.patch") ];
+    patches = [
+      (r.path "files/patches/mt6639-btusb-id.patch")
+      # LE Audio needs the ISO (isochronous) data path; the 6.18 driver
+      # hardcoded an alt setting that does not exist on this chip, so the
+      # path stayed down and BAP/LC3 could never be negotiated.
+      (r.path "files/patches/mt6639-iso-altsetting.patch")
+    ];
   };
 
   # Kernel config = generated base + deliberate manual overlay
