@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Shapes
 import Quickshell
@@ -12,9 +11,17 @@ import qs
 // surface and feeds the keyboard layout through layoutName/toggleLayout; the old
 // greeter session (greeter.qml) reuses it with a GreeterContext instead.
 //
-// Screen layout: wallpaper → scrim → clock (upper third) → glass card with the
-// avatar, the user name, the password field and the action row (layout chip on
-// the left, screen-off / media / power on the right).
+// Screen layout: wallpaper → scrim → clock (upper third) → card with the avatar,
+// the `user@host` line, the password field, one status line and the action row
+// (layout pill on the left, glyph buttons on the right).
+//
+// Look. The card is frosted glass (shaders/glass_card.frag) and draws no frame
+// at all: no border, no second outline, no tooltip boxes. State is carried by
+// the material and by type — the tint warms on a failure, the sheen lifts while
+// the field has focus, the caret and the prompt glyph carry the accent. Nothing
+// is ever drawn on top of the field, and the one line under it (statusLine)
+// keeps its height whether or not it has something to say, so the card never
+// changes size and never jumps.
 //
 // Everything this file changes about the login phase is cosmetic: the state
 // machine (LockState, the marker the layer writes, the fade-out to dpms off,
@@ -173,7 +180,8 @@ Item {
 	property int focusAnimInternal: Window.active ? 1000 : 0
 	Behavior on focusAnimInternal { SmoothedAnimation { velocity: 5000 } }
 
-	// Entrance and failure feedback for the card.
+	// Entrance and failure feedback for the card. The shake is a nudge, not a
+	// throw: it has to say "rejected" without moving the field under the cursor.
 	property real appearProgress: 0
 	property real shakeOffset: 0
 	Behavior on appearProgress {
@@ -184,11 +192,11 @@ Item {
 	}
 	SequentialAnimation {
 		id: shake
-		NumberAnimation { target: root; property: "shakeOffset"; to: -12; duration: 60 }
-		NumberAnimation { target: root; property: "shakeOffset"; to: 12; duration: 90 }
-		NumberAnimation { target: root; property: "shakeOffset"; to: -8; duration: 80 }
-		NumberAnimation { target: root; property: "shakeOffset"; to: 8; duration: 80 }
-		NumberAnimation { target: root; property: "shakeOffset"; to: 0; duration: 70 }
+		NumberAnimation { target: root; property: "shakeOffset"; to: -5; duration: 55 }
+		NumberAnimation { target: root; property: "shakeOffset"; to: 5; duration: 70 }
+		NumberAnimation { target: root; property: "shakeOffset"; to: -3; duration: 60 }
+		NumberAnimation { target: root; property: "shakeOffset"; to: 3; duration: 60 }
+		NumberAnimation { target: root; property: "shakeOffset"; to: 0; duration: 55 }
 	}
 	Connections {
 		target: root.state
@@ -197,6 +205,28 @@ Item {
 			shake.restart();
 		}
 	}
+
+	// Hovered action button, named by the card's status line (PowerButton draws
+	// no tooltip of its own, so nothing can end up on top of the field).
+	property string hoveredAction: ""
+
+	function noteHover(button, on) {
+		if (on) {
+			root.hoveredAction = button.text;
+			return;
+		}
+		if (root.hoveredAction === button.text)
+		root.hoveredAction = "";
+	}
+
+	// The five actions, in the order they sit on the right of the action row.
+	readonly property var actionButtons: [
+		{ glyph: "_", label: "Погасить экран", run: () => root.state.fadeOut() },
+		{ glyph: "||", label: "Пауза", run: () => root.state.pauseMedia(), when: root.state.mediaPlaying },
+		{ glyph: "z", label: "Спящий режим", run: () => root.powerAction("suspend") },
+		{ glyph: "r", label: "Перезагрузить", run: () => root.powerAction("reboot") },
+		{ glyph: "x", label: "Выключить", run: () => root.powerAction("poweroff") },
+	]
 
 	function powerAction(action) {
 		power.run(action);
@@ -210,6 +240,23 @@ Item {
 		}
 	}
 
+	// The card's one line under the field: the failure first (it is why the
+	// screen is still up), then Caps Lock, then whatever the pointer is over.
+	readonly property string statusText: {
+		if (root.state.failed && root.state.error.length > 0)
+		return root.state.error;
+		if (root.capsKnown && root.capsLock)
+		return "Caps Lock включён";
+		return root.hoveredAction;
+	}
+	readonly property color statusColour: (root.state.failed || (root.capsKnown && root.capsLock))
+	? GreeterTheme.dangerColor : GreeterTheme.textMutedColor
+
+	// The card's tint: plain glass, warm on a failure. Deriving it here keeps the
+	// shader free of state and the card free of a red frame.
+	readonly property color cardTint: root.state.failed
+	? Qt.rgba(0.32, 0.11, 0.13, 0.44)
+	: GreeterTheme.glassTint
 	// Where the glass panes sample the wallpaper. The hosts hand in a backdrop
 	// that fills the same surface as this item, so a pane's position inside it is
 	// arithmetic — and it has to be arithmetic: QML does not track the property
@@ -240,8 +287,6 @@ Item {
 
 	// Wake-up on mouse movement while the screen is dark (dpms off), exactly as
 	// before: the old behaviour is part of what the compositor does at login.
-	// Everything visual lives inside `scene`: it is rendered once into a texture
-	// and drawn through the CRT shader (below) instead of directly.
 	Item {
 		id: scene
 		anchors.fill: parent
@@ -273,7 +318,7 @@ Item {
 			id: scrim
 			anchors.fill: parent
 			color: "black"
-			opacity: 0.24 + (0.26 * (1.0 - root.focusAnim))
+			opacity: 0.18 + (0.22 * (1.0 - root.focusAnim))
 		}
 
 		// Vignette: the wallpaper darkens towards the corners, so the eye lands on the
@@ -295,7 +340,7 @@ Item {
 					focalY: centerY
 
 					GradientStop { position: 0.4; color: "transparent" }
-					GradientStop { position: 1.0; color: "#96000000" }
+					GradientStop { position: 1.0; color: "#78000000" }
 				}
 
 				PathRectangle {
@@ -319,25 +364,43 @@ Item {
 				anchors.topMargin: root.height * 0.11
 				spacing: 4
 
-				Text {
-					id: timeText
+				// The time is drawn twice: a dark copy a couple of pixels down
+				// carries it over the photo, the sharp copy stays exactly where it
+				// belongs. No shader, no halo — nothing is resampled.
+				Item {
 					Layout.alignment: Qt.AlignHCenter
+					implicitWidth: timeText.implicitWidth
+					implicitHeight: timeText.implicitHeight
 
-					font {
-						pixelSize: Math.round(122 * root.uiScale)
-						hintingPreference: Font.PreferFullHinting
-						family: GreeterTheme.uiFont
+					Text {
+						id: timeShadow
+						anchors.centerIn: parent
+						anchors.verticalCenterOffset: 3
+
+						font: timeText.font
+						color: "#a6000000"
+						renderType: Text.NativeRendering
+						text: timeText.text
 					}
 
-					color: GreeterTheme.textColor
-					renderType: Text.NativeRendering
-					style: Text.Outline
-					styleColor: "#40000000"
+					Text {
+						id: timeText
+						anchors.centerIn: parent
 
-					text: {
-						const hours = clock.hours.toString().padStart(2, '0');
-						const minutes = clock.minutes.toString().padStart(2, '0');
-						return `${hours}:${minutes}`;
+						font {
+							pixelSize: Math.round(122 * root.uiScale)
+							hintingPreference: Font.PreferFullHinting
+							family: GreeterTheme.uiFont
+						}
+
+						color: GreeterTheme.textColor
+						renderType: Text.NativeRendering
+
+						text: {
+							const hours = clock.hours.toString().padStart(2, '0');
+							const minutes = clock.minutes.toString().padStart(2, '0');
+							return `${hours}:${minutes}`;
+						}
 					}
 				}
 
@@ -397,7 +460,10 @@ Item {
 			Item {
 				id: cardWrapper
 				x: Math.round((parent.width - implicitWidth) / 2) + Math.round(root.shakeOffset)
-				y: Math.round((parent.height - implicitHeight) / 2) + Math.round((1.0 - root.appearProgress) * 18)
+				// Below the middle of the screen: the clock owns the upper third, the
+				// card sits under it, and the gap that is left stays at the bottom
+				// instead of being split evenly around a centred pane.
+				y: Math.round((parent.height * 0.62) - (implicitHeight / 2)) + Math.round((1.0 - root.appearProgress) * 18)
 
 
 				implicitWidth: card.implicitWidth
@@ -416,7 +482,8 @@ Item {
 
 				// Frosted glass, drawn by shaders/glass_card.frag: the shader samples the
 				// wallpaper behind the card (glassSource), blurs it, tints it, adds the sheen,
-				// the grain and the drop shadow. Without a wallpaper item to sample (cage
+				// the grain and the drop shadow. It also paints the pane's own edge, which is
+				// why the card needs no border. Without a wallpaper item to sample (cage
 				// mode) the plain translucent card below is what shows.
 				ShaderEffect {
 					id: glass
@@ -428,18 +495,24 @@ Item {
 					property vector2d pCardSize: Qt.vector2d(glass.width, glass.height)
 					property real pRadius: card.radius
 					property real pBlur: GreeterTheme.glassBlur
-					property color pTint: GreeterTheme.glassTint
-					property real pHighlight: GreeterTheme.glassHighlight
+					property color pTint: root.cardTint
+					property real pHighlight: GreeterTheme.glassHighlight * (textBox.activeFocus ? 1.5 : 1.0)
 					property real pRefract: GreeterTheme.glassRefract
 					property real pShadow: GreeterTheme.glassShadow
 					property real pGrain: GreeterTheme.glassGrain
 					property real pLens: GreeterTheme.glassLens
 					property real pChroma: GreeterTheme.glassChroma
-					property real pSpecular: GreeterTheme.glassSpecular
+					property real pSpecular: GreeterTheme.glassSpecular * (textBox.activeFocus ? 1.3 : 1.0)
 					property real pPointerStrength: GreeterTheme.glassPointer
 					property vector2d pPointer: root.cardPointer
 
 					fragmentShader: Qt.resolvedUrl("../shaders/glass_card.frag.qsb")
+
+					Behavior on pTint {
+						ColorAnimation {
+							duration: GreeterTheme.animMediumMs
+						}
+					}
 				}
 
 				// The padded wallpaper region the glass samples. The padding must match
@@ -457,7 +530,15 @@ Item {
 					id: glassSource
 					sourceItem: root.backdrop !== null ? root.backdrop : glassPlaceholder
 					hideSource: false
+					// live: the wallpaper is decoded asynchronously — the login layer
+					// hands the pane a backdrop that is still empty when the card is
+					// already on screen, and a cached sample would keep that emptiness.
+					// The region is the pane's own, so this is a small capture, not the
+					// whole screen.
 					live: true
+
+
+
 					smooth: true
 					sourceRect: {
 						if (root.backdrop === null)
@@ -471,47 +552,29 @@ Item {
 				Rectangle {
 					id: card
 					anchors.fill: parent
-					implicitWidth: Math.round(470 * root.uiScale)
-					implicitHeight: cardLayout.implicitHeight + 64
+					implicitWidth: Math.round(480 * root.uiScale)
+					implicitHeight: cardLayout.implicitHeight + Math.round(64 * root.uiScale)
 					radius: GreeterTheme.cardRadius
+					// No border: the glass shader paints the rim, and on a failure the
+					// tint above says what happened. A 1px frame over a photo only adds
+					// a second edge for the eye to trip over.
 					color: root.backdrop !== null ? "transparent" : GreeterTheme.cardColor
-					border.width: 1
-					border.color: root.state.failed ? GreeterTheme.dangerColor
-					: (textBox.activeFocus ? GreeterTheme.accentColor : GreeterTheme.cardOutline)
-
-					Behavior on border.color {
-						ColorAnimation {
-							duration: GreeterTheme.animMediumMs
-						}
-					}
-
-					// Soft top highlight — the sheen that reads as glass over a photo.
-					Rectangle {
-						anchors.top: parent.top
-						anchors.left: parent.left
-						anchors.right: parent.right
-						anchors.margins: 1
-						height: parent.radius
-						radius: parent.radius - 1
-						gradient: Gradient {
-							GradientStop { position: 0.0; color: "#1affffff" }
-							GradientStop { position: 1.0; color: "#00ffffff" }
-						}
-					}
 
 					ColumnLayout {
 						id: cardLayout
 						anchors.fill: parent
-						anchors.margins: Math.round(34 * root.uiScale)
+						anchors.margins: Math.round(30 * root.uiScale)
+						spacing: 0
+
 						Item {
 							id: avatarBlock
 							Layout.alignment: Qt.AlignHCenter
-							Layout.bottomMargin: 18
-							implicitWidth: Math.round(108 * root.uiScale)
-							implicitHeight: Math.round(108 * root.uiScale)
+							Layout.bottomMargin: Math.round(16 * root.uiScale)
+							implicitWidth: Math.round(104 * root.uiScale)
+							implicitHeight: Math.round(104 * root.uiScale)
 
-							// The photo: a plain square image, framed by
-							// shaders/avatar_frame.frag (square by default, ring, halo). Hidden — the
+							// The photo: a plain image, framed by
+							// shaders/avatar_frame.frag (rounded square, ring, halo). Hidden — the
 							// shader draws it.
 							Image {
 								id: avatarPhoto
@@ -533,7 +596,7 @@ Item {
 								id: avatarTexture
 								sourceItem: avatarPhoto
 								hideSource: true
-								live: true
+								live: false
 								smooth: true
 							}
 
@@ -548,7 +611,7 @@ Item {
 								property color pRingColour: {
 									const base = root.state.failed ? GreeterTheme.dangerColor
 									: (root.state.isUnlocking ? GreeterTheme.accentColor : GreeterTheme.cardOutline);
-									return Qt.rgba(base.r, base.g, base.b, root.state.isUnlocking ? 1.0 : 0.7);
+									return Qt.rgba(base.r, base.g, base.b, root.state.isUnlocking ? 1.0 : 0.55);
 								}
 								property real pGlow: root.state.failed ? 0.0 : GreeterTheme.avatarGlow
 
@@ -568,8 +631,6 @@ Item {
 								radius: GreeterTheme.avatarRadius
 								visible: avatarPhoto.status !== Image.Ready
 								color: GreeterTheme.avatarColor
-								border.width: 2
-								border.color: root.state.failed ? GreeterTheme.dangerColor : GreeterTheme.cardOutline
 
 								Text {
 									renderType: Text.NativeRendering
@@ -584,64 +645,55 @@ Item {
 
 						}
 
-						Text {
-							renderType: Text.NativeRendering
-							id: nameText
+						// `user@host`, the way a prompt writes it. One line: the name
+						// and the machine belong together, and two centred lines under
+						// the avatar only made the card taller.
+						RowLayout {
+							id: identityRow
 							Layout.alignment: Qt.AlignHCenter
-							text: root.userName
-							color: GreeterTheme.textColor
-							font.family: GreeterTheme.uiFont
-							font.hintingPreference: Font.PreferFullHinting
-							font.pixelSize: Math.round(26 * root.uiScale)
+							spacing: 0
+
+							Text {
+								renderType: Text.NativeRendering
+								id: nameText
+								text: root.userName
+								color: GreeterTheme.textColor
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								font.pixelSize: Math.round(22 * root.uiScale)
+							}
+
+							Text {
+								renderType: Text.NativeRendering
+								id: hostText
+								text: root.hostName.length > 0 ? "@" + root.hostName : ""
+								color: GreeterTheme.textMutedColor
+								opacity: 0.6
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								font.pixelSize: Math.round(22 * root.uiScale)
+								visible: text.length > 0
+							}
 						}
 
-						Text {
-							renderType: Text.NativeRendering
-							id: hostText
-							Layout.alignment: Qt.AlignHCenter
-							Layout.topMargin: 2
-							text: root.hostName
-							color: GreeterTheme.textMutedColor
-							font.family: GreeterTheme.uiFont
-							font.hintingPreference: Font.PreferFullHinting
-							font.pixelSize: Math.round(16 * root.uiScale)
-							visible: text.length > 0
-						}
-
-						Rectangle {
+						// The field. A dark glass slab with no frame of its own: the
+						// prompt glyph, the caret and the placeholder say "type here",
+						// and the shader's rim does the rest.
+						Item {
 							id: field
 							Layout.alignment: Qt.AlignHCenter
-							Layout.topMargin: 26
+							Layout.topMargin: Math.round(22 * root.uiScale)
 							implicitWidth: Math.round(384 * root.uiScale)
 							implicitHeight: Math.round(58 * root.uiScale)
-							radius: GreeterTheme.fieldRadius
 
-							// Focus halo: a second outline a few pixels out, so the field
-							// reads as active without a hard double border.
+							// Flat fallback for a host with no wallpaper to sample.
 							Rectangle {
-								id: fieldHalo
 								anchors.fill: parent
-								anchors.margins: -4
-								radius: field.radius + 4
-								color: "transparent"
-								border.width: 2
-								border.color: GreeterTheme.accentColor
-								opacity: (textBox.activeFocus && !root.state.failed) ? 0.3 : 0.0
-
-								Behavior on opacity {
-									NumberAnimation {
-										duration: GreeterTheme.animMediumMs
-									}
-								}
+								radius: GreeterTheme.fieldRadius
+								color: ShellGlobals.interpolateColors(0.55, "#00000000", ShellGlobals.colors.widget)
+								visible: root.backdrop === null
 							}
-							color: root.backdrop !== null ? "transparent"
-							: ShellGlobals.interpolateColors(0.55, "#00000000", ShellGlobals.colors.widget)
-							border.width: 1
-							border.color: root.state.failed ? GreeterTheme.dangerColor
-							: (textBox.activeFocus ? GreeterTheme.accentColor : ShellGlobals.colors.widgetOutline)
 
-							// The field is the same liquid glass as the card, denser and with a
-							// brighter rim, so it reads as an input at a glance.
 							ShaderEffect {
 								id: fieldGlass
 								anchors.fill: parent
@@ -649,16 +701,16 @@ Item {
 
 								property Item source: fieldGlassSource
 								property vector2d pCardSize: Qt.vector2d(fieldGlass.width, fieldGlass.height)
-								property real pRadius: field.radius
+								property real pRadius: GreeterTheme.fieldRadius
 								property real pBlur: GreeterTheme.fieldBlur
 								property color pTint: GreeterTheme.fieldTint
-								property real pHighlight: 0.03
-								property real pRefract: 5
+								property real pHighlight: 0.035
+								property real pRefract: 4
 								property real pShadow: 0
 								property real pGrain: 0.012
-								property real pLens: GreeterTheme.glassLens * 0.5
+								property real pLens: GreeterTheme.glassLens * 0.4
 								property real pChroma: GreeterTheme.glassChroma
-								property real pSpecular: GreeterTheme.glassSpecular * 0.8
+								property real pSpecular: GreeterTheme.glassSpecular * (textBox.activeFocus ? 1.6 : 0.8)
 								property real pPointerStrength: textBox.activeFocus ? GreeterTheme.glassPointer : 0.0
 								property vector2d pPointer: root.fieldPointer
 
@@ -669,6 +721,8 @@ Item {
 								id: fieldGlassSource
 								sourceItem: root.backdrop !== null ? root.backdrop : glassPlaceholder
 								hideSource: false
+								// live for the same reason as the card's pane: the sample has to
+								// follow a wallpaper that is still decoding.
 								live: true
 								smooth: true
 								sourceRect: {
@@ -688,11 +742,32 @@ Item {
 								onPositionChanged: root.fieldPointer = Qt.vector2d(x / width, y / height)
 							}
 
+							// The prompt: a terminal hands the line over with one of these.
+							Text {
+								id: promptText
+								anchors.left: parent.left
+								anchors.leftMargin: Math.round(18 * root.uiScale)
+								anchors.verticalCenter: parent.verticalCenter
+								renderType: Text.NativeRendering
+								text: ">"
+								color: GreeterTheme.accentColor
+								opacity: textBox.activeFocus ? 0.9 : 0.35
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								font.pixelSize: Math.round(20 * root.uiScale)
+
+								Behavior on opacity {
+									NumberAnimation {
+										duration: GreeterTheme.animMediumMs
+									}
+								}
+							}
+
 							TextInput {
 								id: textBox
 								anchors.fill: parent
-								anchors.leftMargin: field.radius + 12
-								anchors.rightMargin: field.radius + 12
+								anchors.leftMargin: Math.round(42 * root.uiScale)
+								anchors.rightMargin: fingerprintIcon.visible ? Math.round(46 * root.uiScale) : Math.round(18 * root.uiScale)
 								focus: true
 
 								color: {
@@ -701,14 +776,26 @@ Item {
 									return root.state.failed ? GreeterTheme.dangerColor : GreeterTheme.textColor;
 								}
 
-								font.pixelSize: Math.round(24 * root.uiScale)
+								font.pixelSize: Math.round(22 * root.uiScale)
 								font.family: GreeterTheme.uiFont
 								font.hintingPreference: Font.PreferFullHinting
-								horizontalAlignment: TextInput.AlignHCenter
+								font.letterSpacing: 2
 								verticalAlignment: TextInput.AlignVCenter
+								// Left-aligned, the way a line of input is read; the dots
+								// get room to breathe instead of running into each other.
+								horizontalAlignment: TextInput.AlignLeft
 								echoMode: TextInput.Password
+								passwordCharacter: "•"
 								inputMethodHints: Qt.ImhSensitiveData
 
+								// Solid block caret: an input that blinks at the login
+								// screen is one more thing moving on it.
+								cursorDelegate: Rectangle {
+									width: Math.round(2 * root.uiScale)
+									height: Math.round(20 * root.uiScale)
+									radius: width / 2
+									color: GreeterTheme.accentColor
+								}
 								cursorVisible: textBox.text != ""
 								onCursorVisibleChanged: textBox.cursorVisible = (textBox.text != "")
 
@@ -739,39 +826,47 @@ Item {
 								enabled: !root.state.isUnlocking
 							}
 
+							// The placeholder sits where the text will be, in the body
+							// font and a size below it: it used to be a full line of
+							// 29px monospace, wider than the field it was drawn in.
 							Text {
 								renderType: Text.NativeRendering
 								id: placeholderText
-								anchors.fill: textBox
-								font: textBox.font
+								anchors.left: promptText.right
+								anchors.leftMargin: Math.round(12 * root.uiScale)
+								anchors.right: fingerprintIcon.visible ? fingerprintIcon.left : parent.right
+								anchors.rightMargin: Math.round(14 * root.uiScale)
+								anchors.verticalCenter: parent.verticalCenter
+								elide: Text.ElideRight
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								font.pixelSize: Math.round(17 * root.uiScale)
 								color: GreeterTheme.textMutedColor
-								horizontalAlignment: Text.AlignHCenter
-								verticalAlignment: Text.AlignVCenter
-								visible: !textBox.cursorVisible
+								opacity: 0.7
+								visible: textBox.text === ""
 								text: textBox.enabled
-								? (root.state.fprintAvailable ? "Коснитесь сенсора или введите пароль" : "Введите пароль")
-								: "Проверка пароля…"
+								? (root.state.fprintAvailable ? "коснитесь сенсора или введите пароль" : "введите пароль")
+								: "проверка пароля…"
 							}
 
-							// PAM is running: a sweeping line along the field's bottom edge.
-							Rectangle {
+							// PAM is running: a lone accent line sweeping along the bottom
+							// edge of the field. No track, no box.
+							Item {
 								id: fieldProgress
 								anchors.left: parent.left
 								anchors.right: parent.right
 								anchors.bottom: parent.bottom
-								anchors.leftMargin: 14
-								anchors.rightMargin: 14
-								anchors.bottomMargin: 4
+								anchors.leftMargin: Math.round(14 * root.uiScale)
+								anchors.rightMargin: Math.round(14 * root.uiScale)
+								anchors.bottomMargin: Math.round(8 * root.uiScale)
 								height: 2
-								radius: 1
-								color: "#26ffffff"
 								visible: root.state.isUnlocking
 
 								Rectangle {
 									id: fieldProgressBar
-									width: Math.max(28, fieldProgress.width * 0.3)
+									width: Math.max(24, fieldProgress.width * 0.35)
 									height: parent.height
-									radius: parent.radius
+									radius: height / 2
 									color: GreeterTheme.accentColor
 
 									NumberAnimation on x {
@@ -786,62 +881,70 @@ Item {
 
 							// Fingerprint hint: the icon is the one the old field used.
 							Image {
+								id: fingerprintIcon
 								anchors.right: parent.right
 								anchors.verticalCenter: parent.verticalCenter
-								anchors.rightMargin: 12
-								width: 22
-								height: 22
+								anchors.rightMargin: Math.round(16 * root.uiScale)
+								width: Math.round(22 * root.uiScale)
+								height: width
 								visible: root.state.fprintAvailable
 								source: "root:icons/fingerprint.svg"
 								sourceSize.width: width
 								sourceSize.height: height
-								opacity: 0.6
+								opacity: 0.45
 							}
 						}
 
-						Text {
-							renderType: Text.NativeRendering
-							id: capsHint
-							Layout.alignment: Qt.AlignHCenter
-							Layout.topMargin: 10
-							text: "Caps Lock включён"
-							color: GreeterTheme.dangerColor
-							font.family: GreeterTheme.uiFont
-							font.hintingPreference: Font.PreferFullHinting
-							font.pixelSize: Math.round(17 * root.uiScale)
-							visible: root.capsKnown && root.capsLock
+						// One line for everything the card has to say, and it keeps its
+						// height when it says nothing: a card that grows a row on a typo
+						// moves the field out from under the pointer.
+						Item {
+							id: statusLine
+							Layout.fillWidth: true
+							Layout.topMargin: Math.round(10 * root.uiScale)
+							implicitHeight: Math.round(24 * root.uiScale)
+
+							Text {
+								renderType: Text.NativeRendering
+								id: statusLabel
+								anchors.fill: parent
+								text: root.statusText
+								color: root.statusColour
+								opacity: text.length > 0 ? 1.0 : 0.0
+								elide: Text.ElideRight
+								horizontalAlignment: Text.AlignHCenter
+								verticalAlignment: Text.AlignVCenter
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								font.pixelSize: Math.round(16 * root.uiScale)
+
+								Behavior on opacity {
+									NumberAnimation {
+										duration: GreeterTheme.animFastMs
+									}
+								}
+							}
 						}
 
-						Text {
-							renderType: Text.NativeRendering
-							id: errorText
-							Layout.alignment: Qt.AlignHCenter
-							Layout.topMargin: 12
-							text: root.state.error
-							color: GreeterTheme.dangerColor
-							font.family: GreeterTheme.uiFont
-							font.hintingPreference: Font.PreferFullHinting
-							font.pixelSize: Math.round(16 * root.uiScale)
-							horizontalAlignment: Text.AlignHCenter
-							visible: root.state.failed && text.length > 0
-						}
-
+						// Layout pill on the left, the action glyphs on the right. The
+						// buttons are a row — inside the column layout each one used to
+						// become a row of its own and stack down the card.
 						RowLayout {
 							id: actionRow
 							Layout.alignment: Qt.AlignHCenter
-							Layout.topMargin: 22
 							Layout.fillWidth: true
-							spacing: 8
+							Layout.topMargin: Math.round(14 * root.uiScale)
+							spacing: Math.round(6 * root.uiScale)
 
 							Rectangle {
 								id: layoutChip
+								Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
 								visible: root.layoutName.length > 0
-								implicitWidth: layoutChipLabel.implicitWidth + 24
-								implicitHeight: 40
-								radius: GreeterTheme.chipRadius
-								color: ShellGlobals.interpolateColors(chipHover * 0.001, ShellGlobals.colors.widget, ShellGlobals.colors.widgetActive)
-								border.width: 1
-								border.color: ShellGlobals.colors.widgetOutline
+								implicitWidth: layoutChipLabel.implicitWidth + Math.round(26 * root.uiScale)
+								implicitHeight: Math.round(32 * root.uiScale)
+								// A pill, and no border: hover only deepens the fill.
+								radius: height / 2
+								color: ShellGlobals.interpolateColors(chipHover * 0.001, "#14ffffff", ShellGlobals.colors.widgetActive)
 
 								property int chipHover: chipMouse.containsMouse || chipMouse.pressed ? 1000 : 0
 								Behavior on chipHover { SmoothedAnimation { velocity: 10000 } }
@@ -867,98 +970,77 @@ Item {
 							}
 
 							Item { Layout.fillWidth: true }
-						}
 
-						PowerButton {
-							id: monitorButton
-							glyph: "_"
-							text: "Погасить экран"
-							onClicked: root.state.fadeOut()
-						}
+							Repeater {
+								model: root.actionButtons
 
-						PowerButton {
-							id: mediaPauseButton
-							glyph: "||"
-							text: "Пауза"
-							visible: root.state.mediaPlaying
-							onClicked: root.state.pauseMedia()
-						}
+								PowerButton {
+									required property var modelData
 
-						PowerButton {
-							id: sleepButton
-							glyph: "z"
-							text: "Спящий режим"
-							onClicked: root.powerAction("suspend")
-						}
-
-						PowerButton {
-							id: restartButton
-							glyph: "r"
-							text: "Перезагрузить"
-							onClicked: root.powerAction("reboot")
-						}
-
-						PowerButton {
-							id: powerButton
-							glyph: "x"
-							text: "Выключить"
-							onClicked: root.powerAction("poweroff")
-						}
-					}
-
-					// User and session selector — the old greeter session only
-					// (context is null in the single-compositor login).
-					RowLayout {
-						id: selectorRow
-						Layout.alignment: Qt.AlignHCenter
-						Layout.topMargin: 16
-						spacing: 18
-						visible: root.context !== null
-
-						Text {
-							id: userLabel
-							color: GreeterTheme.textMutedColor
-							font.pixelSize: Math.round(16 * root.uiScale)
-							font.family: GreeterTheme.uiFont
-							font.hintingPreference: Font.PreferFullHinting
-							text: root.context ? root.context.currentUser : ""
-							renderType: Text.NativeRendering
-
-							MouseArea {
-								anchors.fill: parent
-								cursorShape: root.context && root.context.users.length > 1
-								? Qt.PointingHandCursor : Qt.ArrowCursor
-								onClicked: {
-									if (root.context) root.context.cycleUser();
+									Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+									glyph: modelData.glyph
+									text: modelData.label
+									visible: modelData.when === undefined || modelData.when
+									onClicked: modelData.run()
+									onHoveredChanged: root.noteHover(this, hovered)
 								}
 							}
 						}
 
-						Text {
-							color: GreeterTheme.textMutedColor
-							opacity: 0.4
-							font.pixelSize: Math.round(16 * root.uiScale)
-							font.family: GreeterTheme.uiFont
-							font.hintingPreference: Font.PreferFullHinting
-							text: "|"
-							renderType: Text.NativeRendering
-						}
+						// User and session selector — the old greeter session only
+						// (context is null in the single-compositor login).
+						RowLayout {
+							id: selectorRow
+							Layout.alignment: Qt.AlignHCenter
+							Layout.topMargin: Math.round(10 * root.uiScale)
+							spacing: 18
+							visible: root.context !== null
 
-						Text {
-							id: sessionLabel
-							color: GreeterTheme.textMutedColor
-							font.pixelSize: Math.round(16 * root.uiScale)
-							font.family: GreeterTheme.uiFont
-							font.hintingPreference: Font.PreferFullHinting
-							text: root.context ? root.context.currentSessionName : ""
-							renderType: Text.NativeRendering
+							Text {
+								renderType: Text.NativeRendering
+								id: userLabel
+								color: GreeterTheme.textMutedColor
+								font.pixelSize: Math.round(16 * root.uiScale)
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								text: root.context ? root.context.currentUser : ""
 
-							MouseArea {
-								anchors.fill: parent
-								cursorShape: root.context && root.context.sessions.length > 1
-								? Qt.PointingHandCursor : Qt.ArrowCursor
-								onClicked: {
-									if (root.context) root.context.cycleSession();
+								MouseArea {
+									anchors.fill: parent
+									cursorShape: root.context && root.context.users.length > 1
+									? Qt.PointingHandCursor : Qt.ArrowCursor
+									onClicked: {
+										if (root.context) root.context.cycleUser();
+									}
+								}
+							}
+
+							Text {
+								renderType: Text.NativeRendering
+								color: GreeterTheme.textMutedColor
+								opacity: 0.4
+								font.pixelSize: Math.round(16 * root.uiScale)
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								text: "|"
+							}
+
+							Text {
+								renderType: Text.NativeRendering
+								id: sessionLabel
+								color: GreeterTheme.textMutedColor
+								font.pixelSize: Math.round(16 * root.uiScale)
+								font.family: GreeterTheme.uiFont
+								font.hintingPreference: Font.PreferFullHinting
+								text: root.context ? root.context.currentSessionName : ""
+
+								MouseArea {
+									anchors.fill: parent
+									cursorShape: root.context && root.context.sessions.length > 1
+									? Qt.PointingHandCursor : Qt.ArrowCursor
+									onClicked: {
+										if (root.context) root.context.cycleSession();
+									}
 								}
 							}
 						}
