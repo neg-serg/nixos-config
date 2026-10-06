@@ -71,6 +71,7 @@ in
     "hid-sony" # Sony PS3 pads (Sixaxis/DS3) + PS Move
     "hidp" # Bluetooth classic HID profile (BT mice/keyboards/gamepads)
     "uhid" # Userspace HID — HID over GATT via bluez (modern BT gamepads)
+    "rfcomm" # Bluetooth SPP (RFCOMM) — GalaxyBudsClient talks to the Buds over SPP; pre-loaded before lockKernelModules
     "uvcvideo" # USB webcams (UVC) — module pre-loaded before lockKernelModules; media core is modular so this cannot be built-in
     # snd-usb-audio is NOT pre-loaded: with features.security.lockKernelModules
     # off, modalias autoload brings it in for real gear (the Osmose), while a
