@@ -70,14 +70,45 @@ Canvas {
 id: paletteProbe
 width: 32
 height: 32
-visible: false
+// Not `visible: false`: a hidden Canvas has no 2d context, and the probe
+// needs getImageData. Transparent and behind everything instead.
+// Behind the wallpaper: it still renders (a hidden Canvas has no context)
+opacity: 1
+z: -100
 
-Component.onCompleted: {
-const ctx = getContext("2d");
-ctx.loadImage(root.wallpaperPath);
+// The 2d context is not available until the canvas is renderable, and it is
+// not renderable while it is hidden — hence the retry timer instead of a
+// one-shot call in Component.onCompleted (which silently did nothing).
+property bool imageLoaded: false
+property bool paletteDone: false
+
+Timer {
+id: probeRetry
+interval: 120
+repeat: false
+onTriggered: paletteProbe.requestPaint()
 }
 
-onImageLoaded: requestPaint()
+onImageLoaded: {
+imageLoaded = true;
+requestPaint();
+}
+
+onPaint: {
+const ctx2 = getContext("2d");
+
+if (!ctx2) {
+probeRetry.start();
+return;
+}
+
+if (!imageLoaded) {
+paletteProbe.loadImage(root.wallpaperPath);
+return;
+}
+
+paintPalette();
+}
 
 function srgbToLinear(c) {
 return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -113,7 +144,7 @@ clamp(linearToSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s))
 ];
 }
 
-onPaint: {
+function paintPalette() {
 const ctx = getContext("2d");
 ctx.clearRect(0, 0, width, height);
 ctx.drawImage(root.wallpaperPath, 0, 0, width, height);
