@@ -20,7 +20,7 @@ buildGoModule rec {
   # Go module dependencies (charmbracelet lipgloss/glamour, cobra, modernc sqlite, ...).
   vendorHash = "sha256-9GZn8xxdWGeAfTjJXj7VF4gyFpsyrNUDHlM+oCxiUAs=";
 
-  # [odin] The accept key (Ctrl+E / Tab) inserts the menu's current suggestion
+  # [trantor] The accept key (Ctrl+E / Tab) inserts the menu's current suggestion
   # when the menu is visible, otherwise falls through to the shell so the key
   # keeps its normal meaning (Ctrl+E: end-of-line, Tab: fzf-on-tab / ~/m/new
   # expansion). Upstream always consumes the key, even with a hidden menu.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# audio-diag - check audio routing health and unity (0 dB) on odin.
+# audio-diag - check audio routing health and unity (0 dB) on trantor.
 #
 # Covers the problems that used to bite (and the 0 dB / unity state of the
 # chain):

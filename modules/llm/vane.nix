@@ -9,14 +9,14 @@
 #              same master switch that already gates modules/llm/ollama.nix.
 #
 # Runtime model: Vane has no nixpkgs package, so it is deployed as a container.
-# odin runs containers rootless under the `neg` user session (see the dockur
-# windows VM: hosts/odin/virtualisation + libpod scopes), NOT as root systemd
+# trantor runs containers rootless under the `neg` user session (see the dockur
+# windows VM: hosts/trantor/virtualisation + libpod scopes), NOT as root systemd
 # services. ollama is the exception because nixpkgs ships it natively. To stay
 # inside the repo's existing container runtime, Vane is a neg *user* systemd
 # unit that drives `podman run` — it starts with the neg session, like the VM.
 #
 # Unverified / needs a live pull-test before enabling (see rollout notes in the
-# module header of hosts/odin or docs):
+# module header of hosts/trantor or docs):
 #   1. image name/tag  : "itzcrazykns1337/vane:latest" — the 2026 rebrand of
 #      ItzCrazyKns/Perplexica is claimed to be a single container bundling the
 #      UI + API + a private SearXNG (no separate searxng service needed).
@@ -43,7 +43,7 @@ in
     image = lib.mkOption {
       type = lib.types.str;
       # Fully-qualified: no unqualified-search registries are configured on
-      # odin (see /etc/containers/registries.conf), so a bare short-name fails
+      # trantor (see /etc/containers/registries.conf), so a bare short-name fails
       # with "did not resolve to an alias". Same docker.io/ prefix the dockur
       # windows image uses on this host.
       default = "docker.io/itzcrazykns1337/vane:latest";

@@ -9,7 +9,7 @@ let
   # Plain "/home/<name>": this module feeds the users/filesystems fixpoint, so
   # config.lib.neg.homeDir (which dereferences users.users.<name>.home) recurses.
   homeDir = "/home/${mainUser}";
-  isOdin = config.networking.hostName == "odin";
+  isTrantor = config.networking.hostName == "trantor";
 in
 {
   boot.supportedFilesystems = [
@@ -31,7 +31,7 @@ in
   # while by-id symlinks need udev — which isn't ready yet when the import script runs.
   boot.zfs.devNodes = "/dev";
 
-  fileSystems = lib.mkIf isOdin {
+  fileSystems = lib.mkIf isTrantor {
     "/" = {
       device = "tank/nixos";
       fsType = "zfs";
@@ -198,7 +198,7 @@ in
 
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
-  services.fstrim = lib.mkIf isOdin { enable = true; };
+  services.fstrim = lib.mkIf isTrantor { enable = true; };
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"

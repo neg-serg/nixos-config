@@ -214,7 +214,7 @@ in
     (lib.mkIf (lan.enable or false) {
       services.pipewire.extraConfig = {
         # Pulse-compatible TCP server: other devices can play audio through
-        # this machine (PULSE_SERVER=odin:4713 or PulseAudio-over-network).
+        # this machine (PULSE_SERVER=trantor:4713 or PulseAudio-over-network).
         # Keep the unix socket — it is the local default.
         pipewire-pulse."20-network" = {
           "pulse.properties"."server.address" = [
@@ -236,7 +236,7 @@ in
                 "destination.port" = 46000;
                 "net.ttl" = 1; # local subnet only
                 "net.loop" = true; # also deliver to this machine (local testing)
-                "sess.name" = "Odin RTP stream";
+                "sess.name" = "Trantor RTP stream";
                 "audio.format" = "S16BE";
                 "audio.rate" = 48000;
                 "audio.channels" = 2;

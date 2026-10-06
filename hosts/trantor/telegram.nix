@@ -5,11 +5,11 @@
   inputs,
   ...
 }:
-# Shared Telegram notification stack for odin.
+# Shared Telegram notification stack for trantor.
 #
 # The two SOPS secrets and the `telegram-send` wrapper live here exactly once;
 # the alert/notify units and scripts (services/telegram-units.nix, notify-*.nix,
-# the pill stack) consume config.odin.telegram.{sender,botTokenPath,chatIdPath} instead
+# the pill stack) consume config.trantor.telegram.{sender,botTokenPath,chatIdPath} instead
 # of redeclaring the secrets and re-implementing the socks-proxy curl retry.
 #
 # api.telegram.org is only reachable through the user sing-box socks proxy
@@ -22,13 +22,13 @@ let
   chatId = config.sops.secrets."telegram/chat-id".path;
 in
 {
-  options.odin.telegram = {
+  options.trantor.telegram = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = secretsPresent;
       defaultText = lib.literalExpression ''builtins.pathExists (inputs.self + "/secrets/telegram.sops.yaml")'';
       description = ''
-        Enable the odin Telegram notification stack (secrets + shared sender).
+        Enable the trantor Telegram notification stack (secrets + shared sender).
         Defaults to whether secrets/telegram.sops.yaml exists, so a checkout
         without the SOPS secrets stays inert instead of failing activation.
       '';
@@ -55,7 +55,7 @@ in
     };
   };
 
-  config = lib.mkIf config.odin.telegram.enable {
+  config = lib.mkIf config.trantor.telegram.enable {
     sops.secrets."telegram/bot-token" = {
       sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
       key = "bot-token";
@@ -69,10 +69,10 @@ in
       mode = "0400";
     };
 
-    odin.telegram.botTokenPath = botToken;
-    odin.telegram.chatIdPath = chatId;
+    trantor.telegram.botTokenPath = botToken;
+    trantor.telegram.chatIdPath = chatId;
 
-    odin.telegram.sender = pkgs.writeShellApplication {
+    trantor.telegram.sender = pkgs.writeShellApplication {
       name = "telegram-send";
       runtimeInputs = [
         pkgs.curl # HTTP(S) client for the Telegram Bot API

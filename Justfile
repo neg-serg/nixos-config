@@ -9,7 +9,7 @@ repo_root := `git rev-parse --show-toplevel 2>/dev/null || pwd`
 
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
-deploy host="odin":
+deploy host="trantor":
     # Build system closure with network tuning
     nix build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
       --out-link result \
@@ -24,15 +24,15 @@ deploy host="odin":
     sudo ./result/bin/switch-to-configuration switch
 
 # Deploy (Legacy/Slow) - keeps nh features like pretty print
-deploy-nh host="odin":
+deploy-nh host="trantor":
     nh os switch . --hostname {{ host }} --option substitute false
 
 # Deploy with maximum verbosity (logs + trace + verbose)
-deploy-debug host="odin":
+deploy-debug host="trantor":
     nh os switch . --hostname {{ host }} -L -t -v --option substitute false
 
 # Alias for deploy
-switch host="odin":
+switch host="trantor":
     just deploy {{ host }}
 
 # Show diff between last two generations
@@ -95,7 +95,7 @@ lint:
 #   just paths keys modules --any
 #   just paths refs systemd-user who references it
 #   just paths find wl-monitor   fuzzy-pick a file and list its references
-#   just paths resolve ../../../lib/x.nix --from hosts/odin/services/y.nix
+#   just paths resolve ../../../lib/x.nix --from hosts/trantor/services/y.nix
 paths *ARGS:
     "{{repo_root}}/packages/local-bin/bin/paths" --root "{{repo_root}}" {{ARGS}}
 
@@ -155,11 +155,11 @@ docs-guard:
 update:
     nix flake update
 
-# Eval one odin feature flag: just flag features.dev.ai.omp.enable
+# Eval one trantor feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
-    nix eval .#nixosConfigurations.odin.config.{{ flag-path }} --option substitute false
+    nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
 
-# Regenerate hosts/odin/unbound-hosts.nix from its sources
+# Regenerate hosts/trantor/unbound-hosts.nix from its sources
 # (unbound-local.txt + files/sources/malw-hosts.txt)
 unbound-hosts:
     "{{repo_root}}/packages/local-bin/scripts/gen-unbound-hosts" "{{repo_root}}"; \
@@ -176,13 +176,13 @@ unbound-hosts-guard:
     set -euo pipefail
     tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"' EXIT
-    mkdir -p "$tmp/hosts/odin" "$tmp/files/sources"
-    cp "{{repo_root}}/hosts/odin/unbound-local.txt" "$tmp/hosts/odin/"
+    mkdir -p "$tmp/hosts/trantor" "$tmp/files/sources"
+    cp "{{repo_root}}/hosts/trantor/unbound-local.txt" "$tmp/hosts/trantor/"
     cp "{{repo_root}}/files/sources/malw-hosts.txt" "$tmp/files/sources/"
     "{{repo_root}}/packages/local-bin/scripts/gen-unbound-hosts" "$tmp"
-    if ! diff -q "{{repo_root}}/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" >/dev/null; then
-      echo "hosts/odin/unbound-hosts.nix is stale — run 'just unbound-hosts' and commit it:" >&2
-      diff -u "{{repo_root}}/hosts/odin/unbound-hosts.nix" "$tmp/hosts/odin/unbound-hosts.nix" | head -40 >&2
+    if ! diff -q "{{repo_root}}/hosts/trantor/unbound-hosts.nix" "$tmp/hosts/trantor/unbound-hosts.nix" >/dev/null; then
+      echo "hosts/trantor/unbound-hosts.nix is stale — run 'just unbound-hosts' and commit it:" >&2
+      diff -u "{{repo_root}}/hosts/trantor/unbound-hosts.nix" "$tmp/hosts/trantor/unbound-hosts.nix" | head -40 >&2
       exit 1
     fi
     echo "unbound-hosts.nix is fresh"
@@ -261,7 +261,7 @@ subtree-pull-packages:
 # --- Profiling / Benchmarking -------------------------------------------------
 
 # Generate perf+Inferno flamegraph SVG for nix eval
-flamegraph-eval host="odin":
+flamegraph-eval host="trantor":
     bash scripts/dev/nix-flamegraph.sh {{ host }}
 
 # Generate perf+Inferno flamegraph SVG for nix eval

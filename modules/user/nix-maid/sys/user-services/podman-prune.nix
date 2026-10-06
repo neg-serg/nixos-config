@@ -1,7 +1,7 @@
 ##
 # Module: user/nix-maid/sys/user-services/podman-prune
 # Purpose: keep rootless podman storage bounded. Stopped containers keep their
-# writable layers (odin held 3.5G in two containers stopped weeks earlier) and
+# writable layers (trantor held 3.5G in two containers stopped weeks earlier) and
 # rebuilds leave untagged layers behind. A daily prune drops stopped
 # containers older than a week and untagged images; running containers and
 # tagged images are never touched — `-a` is deliberately absent, so base

@@ -14,7 +14,7 @@ in
   # Journald: keep logs across reboots to inspect boot output
   services.journald.settings.Journal = {
     # Console forwarding is handled by modules/system/log-ttys.nix (8 per-category TTY viewers).
-    # mkDefault: hosts/odin/services/policy.nix tightens rate limits / retention per host.
+    # mkDefault: hosts/trantor/services/policy.nix tightens rate limits / retention per host.
     Storage = lib.mkDefault "persistent";
     # Limit log write bursts to reduce IO spikes
     RateLimitIntervalSec = lib.mkDefault "30s";

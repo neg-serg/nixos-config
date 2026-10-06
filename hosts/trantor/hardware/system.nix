@@ -1,4 +1,4 @@
-# Literal host-system data for host 'odin', kept out of the module body so
+# Literal host-system data for host 'trantor', kept out of the module body so
 # hardware.nix stays wiring: bootloader style, stable NIC link names, the
 # kexec helper scripts and the out-of-tree MT6639 Bluetooth firmware blob.
 # Comments travel with the data — they document the hardware quirks.

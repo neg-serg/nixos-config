@@ -17,7 +17,7 @@ let
   mainDesc = cfg.description or "Neg";
   mainAuthorizedKeys =
     cfg.opensshAuthorizedKeys or [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPKg+t07fFxKPqtDR3rRpvS6Tc9Rrh5yv7fC5GFrBtyK neg@odin"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPKg+t07fFxKPqtDR3rRpvS6Tc9Rrh5yv7fC5GFrBtyK neg@trantor"
     ];
   mainHashedPasswordFile = cfg.hashedPasswordFile;
 in
@@ -60,7 +60,7 @@ with rec {
     opensshAuthorizedKeys = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPKg+t07fFxKPqtDR3rRpvS6Tc9Rrh5yv7fC5GFrBtyK neg@odin"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPKg+t07fFxKPqtDR3rRpvS6Tc9Rrh5yv7fC5GFrBtyK neg@trantor"
       ];
       description = "Authorized SSH public keys for the primary user.";
     };

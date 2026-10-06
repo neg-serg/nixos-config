@@ -1,12 +1,12 @@
-# Daily 08:00 Telegram morning digest for odin (auto-imported from hosts/odin/).
+# Daily 08:00 Telegram morning digest for trantor (auto-imported from hosts/trantor/).
 #
 # Composes ONE compact Russian message (weekday header, ZFS pool fill, disk
 # usage for / and /zero, failed units) and posts it to the Telegram chat from
 # secrets/telegram.sops.yaml. api.telegram.org is only reachable through the
 # user sing-box socks proxy (127.0.0.1:10808), so the send retries a few times.
 #
-# Everything is gated on config.odin.telegram.enable (see
-# hosts/odin/telegram.nix); without the secret file the whole unit stays
+# Everything is gated on config.trantor.telegram.enable (see
+# hosts/trantor/telegram.nix); without the secret file the whole unit stays
 # disabled.
 {
   config,
@@ -29,12 +29,12 @@ let
     ];
     text = builtins.readFile (
       pkgs.replaceVars ./notify/digest.sh {
-        sender = config.odin.telegram.sender;
+        sender = config.trantor.telegram.sender;
       }
     );
   };
 in
-lib.mkIf config.odin.telegram.enable (
+lib.mkIf config.trantor.telegram.enable (
   systemdUser.mkOneshotTimer {
     name = "telegram-digest";
     description = "Send the daily 08:00 Telegram morning digest";

@@ -94,7 +94,7 @@ in
     };
     programs.mosh.enable = true; # Opens the relevant UDP ports.
     # Scan/brute-force mitigation. The port-22 firewall rule in
-    # hosts/odin/services/policy.nix is deliberately global (sshd must stay
+    # hosts/trantor/services/policy.nix is deliberately global (sshd must stay
     # reachable on net0/wlan0, the interfaces used on untrusted networks), so
     # this is the compensating control instead of narrowing that rule.
     # nixpkgs ships a systemd-backend sshd jail and mkDefaults LogLevel=VERBOSE

@@ -9,27 +9,27 @@
 # oneshot unit lists the local user (neg) khal calendar events for "today";
 # if there are any, it posts a single "📅 Сегодня:" message to the Telegram
 # chat from secrets/telegram.sops.yaml via the shared sender in
-# hosts/odin/telegram.nix, otherwise it exits silently.
+# hosts/trantor/telegram.nix, otherwise it exits silently.
 #
-# Auto-imported from hosts/odin/*.nix.
+# Auto-imported from hosts/trantor/*.nix.
 #
 # Gating:
 #   - khal is only present when features.mail.enable is set (see
 #     modules/user/nix-maid/sys/khal.nix);
 #   - the whole stack is inert without secrets/telegram.sops.yaml
-#     (config.odin.telegram.enable).
+#     (config.trantor.telegram.enable).
 let
   mailOn = config.features.mail.enable or false;
 in
 {
-  config = lib.mkIf (mailOn && config.odin.telegram.enable) (
+  config = lib.mkIf (mailOn && config.trantor.telegram.enable) (
     let
       systemdUser = neg.systemdUser lib;
 
       # Extracted to ./notify/telegram-calendar-reminder.py (linted as Python);
       # the shared sender path is substituted at build time.
       calendarScript = pkgs.replaceVars ./notify/telegram-calendar-reminder.py {
-        sender = config.odin.telegram.sender;
+        sender = config.trantor.telegram.sender;
       };
 
       # Runs khal as the user that owns the calendars (neg) and posts a

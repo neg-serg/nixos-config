@@ -1,10 +1,10 @@
 { config, ... }: {
   networking = {
-    hostName = "odin";
+    hostName = "trantor";
     hostId = config.networking.hostName |> builtins.hashString "sha1" |> builtins.substring 0 8; # Required for ZFS pool import
     hosts."10.0.2.140" = [
-      "odin"
-      "odin.local"
+      "trantor"
+      "trantor.local"
     ];
 
     # NAT from the local bridge (br0, 192.168.122.0/24) to the main uplink

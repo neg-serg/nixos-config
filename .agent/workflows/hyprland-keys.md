@@ -72,7 +72,7 @@ submap); submaps are declared with `hl.define_submap(name, reset_key, function()
 The file is linked from the Nix store, so a repo edit needs a rebuild first:
 
 ```bash
-nh os switch /etc/nixos#odin --option substitute false
+nh os switch /etc/nixos#trantor --option substitute false
 ```
 
 Then reload the running compositor:

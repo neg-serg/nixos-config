@@ -6,14 +6,14 @@
 }:
 let
   # Literal data tables live next to the consumer in hardware/ (no default.nix,
-  # so hosts/odin's importDir { includeDirs = true; } leaves the directory alone).
+  # so hosts/trantor's importDir { includeDirs = true; } leaves the directory alone).
   kernelData = import ./hardware/kernel.nix { inherit lib config pkgs; };
   systemData = import ./hardware/system.nix { inherit pkgs config; };
 in
 {
   # Zen 5: disable idle=nomwait — MWAIT C-states are optimal for Ryzen 9000
   profiles.performance.idleNoMwait = lib.mkForce false;
-  # Hardware and performance tuning specific to host 'odin'
+  # Hardware and performance tuning specific to host 'trantor'
   hardware.graphics = {
     enable = true;
     enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
@@ -158,7 +158,7 @@ in
 
   # Host-specific hardware tools
   # Bakecore udev rules for Dygma keyboards
-  services.udev.extraRules = config.lib.neg.readFile "files/hardware/udev/odin-host.rules";
+  services.udev.extraRules = config.lib.neg.readFile "files/hardware/udev/trantor-host.rules";
   environment.systemPackages = [ systemData.kexecRebuild ];
 
   # Skip unnecessary boot-time services (~1s saved)

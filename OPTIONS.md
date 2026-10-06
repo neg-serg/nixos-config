@@ -34,7 +34,7 @@ ever read it into a curated list, and the `config.lib.neg.pkgsList` helper its c
 never implemented. Dev tooling is gated where it is installed instead — `features.dev.cpp` /
 `features.dev.java` control their package lists (`modules/user/nix-maid/sys/dev.nix`,
 `modules/dev/java/`), `features.dev.rust` gates the host list in
-`hosts/odin/services/policy.nix`, and `flake/devshells/*` stay static by design.
+`hosts/trantor/services/policy.nix`, and `flake/devshells/*` stay static by design.
 
 ## Notable Behaviors
 
@@ -62,11 +62,11 @@ These are passed from `flake/nixos.nix` (`mkSpecialArgs`) into modules for conve
 
 ## Ready-Made Configurations
 
-- Full: `nix build .#nixosConfigurations.odin.config.system.build.toplevel`
+- Full: `nix build .#nixosConfigurations.trantor.config.system.build.toplevel`
 
 Switch examples:
 
-- `sudo nixos-rebuild switch --flake .#odin`
+- `sudo nixos-rebuild switch --flake .#trantor`
 
 ## Developer Notes
 

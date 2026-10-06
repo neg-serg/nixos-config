@@ -69,11 +69,11 @@ let
     "user"
   ];
 
-  # Odin: full desktop minus domains with zero odin references.
-  # Excluded: appimage (no odin usage), apps (obsidian via flatpak).
+  # Trantor: full desktop minus domains with zero trantor references.
+  # Excluded: appimage (no trantor usage), apps (obsidian via flatpak).
   # Derived from allDomains so a domain added above is never silently missing
   # here (the previous hand-written copy repeated the same tail).
-  odinDomains = builtins.filter (d: d != "appimage" && d != "apps") allDomains;
+  trantorDomains = builtins.filter (d: d != "appimage" && d != "apps") allDomains;
 
   mkDomainFilter = domains: name: builtins.elem name domains;
 
@@ -107,7 +107,7 @@ let
     lib.nixosSystem {
       inherit pkgs;
       specialArgs = mkSpecialArgs // {
-        domainFilter = mkDomainFilter (if name == "odin" then odinDomains else allDomains);
+        domainFilter = mkDomainFilter (if name == "trantor" then trantorDomains else allDomains);
       };
       modules = commonModules ++ [ (import ((builtins.toString hostsDir) + "/" + name)) ];
     };
@@ -116,17 +116,17 @@ let
   # This replaces the base profiles entirely (via mkForce) so the comparison is clean:
   # base config vs single-profile test config, no priority conflicts.
   #
-  # NEVER evaluated during normal `nixos-rebuild switch --flake .#odin`.
-  # Evaluated by flake/checks.nix (test-odin-*) via the exported mkTestHost.
+  # NEVER evaluated during normal `nixos-rebuild switch --flake .#trantor`.
+  # Evaluated by flake/checks.nix (test-trantor-*) via the exported mkTestHost.
   mkTestHost =
     baseName: testProfile:
     lib.nixosSystem {
       inherit pkgs;
       # Same domain filter as mkHost: a test host must evaluate the configuration
-      # the real host runs, not the all-domains superset (odin excludes
+      # the real host runs, not the all-domains superset (trantor excludes
       # appimage/apps, so importing them here hid real eval breakage).
       specialArgs = mkSpecialArgs // {
-        domainFilter = mkDomainFilter (if baseName == "odin" then odinDomains else allDomains);
+        domainFilter = mkDomainFilter (if baseName == "trantor" then trantorDomains else allDomains);
       };
       modules =
         commonModules
@@ -142,7 +142,7 @@ in
   # Explicit contract: `configurations` is the pure machine set (flake-schemas
   # friendly), `mkTestHost` is the A/B test builder consumed by flake/checks.nix.
   configurations = {
-    odin = mkHost "odin";
+    trantor = mkHost "trantor";
   };
   # `mkSpecialArgs` is exported so flake/checks.nix builds its evalModules stub
   # from the same arguments the real hosts use (it used to keep a drifting copy).
