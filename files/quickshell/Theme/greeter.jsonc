@@ -62,8 +62,8 @@
     // before uiScale; the tubes, the gaps and the colon are built from it.
     "nixieDigitSize": 92,
     "nixieGlow": 1.0,
-    "nixieCoreColor": "#ffca7a",
-    "nixieGlowColor": "#ff6a1e",
+    "nixieCoreColor": "#ff9636",
+    "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
     // The cathode wire, as a fraction of the numeral's width, and how visible

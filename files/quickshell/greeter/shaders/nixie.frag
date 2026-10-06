@@ -160,7 +160,9 @@ float grazing = 1.0 - sqrt(max(0.0, 1.0 - xr * xr));
 // --- the picture behind the tube ---------------------------------------
 // A thick-walled cylinder is a lens: the picture is squeezed towards the axis,
 // and near the silhouette it is pulled hard enough to nearly invert.
-float lens = 0.34 * xr / (1.0 - 0.72 * xr * xr);
+// 0.30 at the very edge: inside the room the caller captures (2 * pInset), so the
+	// picture never runs off the patch and turns into a flat grey slab
+	float lens = 0.18 * xr / (1.0 - 0.72 * xr * xr);
 vec2 uv = (px + pInset + vec2(lens * hs.x, 0.0)) / pBackdrop;
 vec3 refract = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb * 0.95 + 0.004;
 
@@ -282,9 +284,10 @@ float gas = exp(-dist / 0.014) * 1.00 + exp(-dist / 0.038) * 0.26 + exp(-dist / 
 gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
-add += pCore.rgb * core * 1.10 * coreLit;
-add += vec3(1.0, 0.94, 0.82) * pow(core, 10.0) * 0.12 * coreLit;
-add += pHalo.rgb * gas * 1.10 * haloLit;
+vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.96, 0.88), pow(core, 6.0) * 0.45);
+		add += wireColour * core * 0.78 * coreLit;
+
+add += pHalo.rgb * gas * 0.70 * haloLit;
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.17) / 0.09) * 0.10 * step(0.06, dist) * haloLit;
 // the far wall of the glass catches a squeezed, dim image of the wire
