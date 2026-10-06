@@ -14,7 +14,7 @@ import render_tube as R
 mi.set_variant("llvm_ad_rgb")
 
 
-def coverage(only, out, spp=64, W=560, HH=1152):
+def coverage(only, out, spp=64, W=1120, HH=2304):
     shapes, wires, glow = R.build()
     white = {
         "type": "diffuse",

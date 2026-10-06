@@ -7,9 +7,9 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
-W, HH = 560, 1152
+W, HH = 1120, 2304
 MM_W, MM_H = 29.15, 60.0
 R, H, WALL = 9.25, 49.34, 1.1
 RT, RW = 6.6, 0.30
@@ -187,6 +187,27 @@ def main(beauty, out, exposure=0.55):
     )
     lum = 0.3 * rgb[..., 0] + 0.6 * rgb[..., 1] + 0.1 * rgb[..., 2]
 
+    # Bloom: a discharge in gas glows far past the wire it burns on, and without
+    # that halo the numerals read as printed lines instead of a discharge. The
+    # veins are the ones that bleed, and the core keeps its own brightness.
+    vein = np.clip((lum - 0.35) / 0.40, 0.0, 1.0) ** 1.6
+    core = np.clip((lum - 0.55) / 0.45, 0.0, 1.0)
+    vein = vein * (1.0 - 0.60 * core)
+    if vein.max() > 0.01:
+        halo = (
+            np.asarray(
+                Image.fromarray((vein * 255).astype("uint8"), "L").filter(
+                    ImageFilter.GaussianBlur(2.6)
+                ),
+                np.float32,
+            )
+            / 255.0
+        )
+        tint = np.array([1.00, 0.62, 0.32], np.float32)
+        rgb = 1.0 - (1.0 - rgb) * (
+            1.0 - np.clip(halo, 0, 1)[..., None] * tint * 0.45
+        )
+
     # The alpha is per material, from two flat coverage passes: the metal (wires,
     # cage, collar) is opaque, the glass is not. Modulating the glass by its own
     # brightness keeps its reflections readable while its body stays clear — a
@@ -197,7 +218,7 @@ def main(beauty, out, exposure=0.55):
         else np.zeros_like(lum)
     )
     # The metal: an ordinary overlay, opaque where it is.
-    al = np.clip(hw, 0.0, 0.97)
+    al = np.where(hw > 0.5, 0.97, 0.0).astype(np.float32)
     img = np.clip(rgb, 0, 1)
     Image.fromarray(
         (np.concatenate([img, al[..., None]], -1) * 255).astype("uint8"),
@@ -216,7 +237,9 @@ def main(beauty, out, exposure=0.55):
     g = np.clip(g, 0, 1)
     Image.fromarray(
         (
-            np.concatenate([g, np.ones(g.shape[:2] + (1,), np.float32)], -1)
+            np.concatenate(
+                [g, np.clip(g.max(axis=2) * 1.25, 0.0, 1.0)[..., None]], -1
+            )
             * 255
         ).astype("uint8"),
         "RGBA",

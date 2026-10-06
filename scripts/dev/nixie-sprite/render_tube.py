@@ -12,7 +12,12 @@ files/quickshell/greeter/assets/nixie-tube.png comes from.
 The sprite's window is the shader's item (104 x 214 logical px at 0.2803 mm/px =
 29.15 x 60.0 mm), so it lands 1:1 on the tube; the alpha is computed from the same
 geometry rather than from the render, because the sprite is an overlay: its interior
-has to stay transparent enough for the discharge behind it to read."""
+has to stay transparent enough for the discharge behind it to read.
+
+The render is 1120 x 2304 — sixteen texels per logical pixel. The tube carries a
+0.17 mm anode wire and a 0.39 mm cathode numeral: at 560 x 1152 a wire was one
+texel wide, the sprite's own filtering ate it, and the cage turned into a moire of
+grey. The size is a power of two on purpose: Qt then mips it cleanly."""
 
 import math
 import os
@@ -26,7 +31,7 @@ mi.set_variant("llvm_ad_rgb")
 #      at 0.2803 mm/px = 29.15 x 60.0 mm) ---------------------------------------
 MM_W, MM_H = 29.15, 60.0
 R, H, WALL = 9.25, 49.34, 1.1
-RT, RW = 6.6, 0.30
+RT, RW = 6.6, 0.22
 BASE = 10.6
 RB = 9.7
 DIG_H, DIG_W = 21.0, 11.5
@@ -245,7 +250,7 @@ def build():
         a = 2 * math.pi * k / 16
         x, z = RT * math.sin(a), RT * math.cos(a)
         wires.append(
-            ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.22)
+            ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.085)
         )
     for k in range(9):
         y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 8
@@ -257,7 +262,7 @@ def build():
             )
             for t in range(65)
         ]
-        wires.append((ring, 0.20))
+        wires.append((ring, 0.075))
     # 3. the cathode stack: ten numerals in a tungsten wire frame
     for i, zc in enumerate(STACK_Z):
         depth = (i - 4.5) * 0.05
@@ -277,7 +282,7 @@ def build():
             glow.append(
                 (
                     [(x - 0.06, y - 0.06, z + 0.16) for (x, y, z) in pts],
-                    RW * 0.55,
+                    RW * 0.5,
                 )
             )
     # 4. the rods the stack hangs on
@@ -342,14 +347,25 @@ def build():
 
 
 def build_scene(
-    only=None, flat=False, W=560, HH=1152, spp=1024, out="/tmp/ms/beauty"
+    only=None,
+    flat=False,
+    W=1120,
+    HH=2304,
+    spp=1024,
+    out="/tmp/ms/beauty",
+    glass=False,
+    glass_gain=0.30,
 ):
     """Render the tube.
+
 
     only=None renders the full beauty pass; "hardware" and "glass" keep just that
     part of the scene, and with flat=True every material is a white diffuse lit by
     a uniform environment — those two passes are the coverage masks the sprite's
     alpha is assembled from (see masks.py).
+
+    glass=True renders the envelope on its own, in a room dim enough that its
+    reflections stay a thin additive layer over the numerals (see the glass).
     """
     shapes, wires, glow = build()
     scene = {}
@@ -365,9 +381,15 @@ def build_scene(
         "eta": {"type": "rgb", "value": [3.2, 3.0, 2.8]},
         "k": {"type": "rgb", "value": [2.9, 2.7, 2.5]},
     }
+    # the cage is what is seen THROUGH the glass: matte, dark and thin. A glossy
+    # conductor turns every wire into a bright line, and the numerals drown in the
+    # lattice — the cage should read as a dim screen, not as chrome.
     scene["anode"] = {
-        "type": "diffuse",
-        "reflectance": {"type": "rgb", "value": [0.030, 0.030, 0.034]},
+        "type": "roughconductor",
+        "alpha": 0.55,
+        "distribution": "ggx",
+        "eta": {"type": "rgb", "value": [1.4, 1.35, 1.30]},
+        "k": {"type": "rgb", "value": [2.2, 2.1, 2.0]},
     }
 
     # the neon threads: thin emissive tubes laid over the glyphs — the tube's
@@ -378,19 +400,29 @@ def build_scene(
     }
     scene["neonEmitter"] = {
         "type": "area",
-        "radiance": {"type": "rgb", "value": [9.0, 4.2, 1.5]},
+        "radiance": {"type": "rgb", "value": [16.0, 7.5, 2.6]},
     }
     # the collar is painted metal: a plain dielectric cyan coat over it, glossy
+    # the collar's cyan: dim enough that the tone reads as paint and not as a
+    # blown-out white block. A bright coat under this studio turns cream.
     scene["collarM"] = {
         "type": "roughplastic",
         "distribution": "ggx",
         "alpha": 0.14,
-        "diffuse_reflectance": {"type": "rgb", "value": [0.16, 0.72, 0.86]},
-        "specular_reflectance": {"type": "rgb", "value": [0.35, 0.45, 0.50]},
+        "diffuse_reflectance": {"type": "rgb", "value": [0.10, 0.52, 0.68]},
+        "specular_reflectance": {"type": "rgb", "value": [0.22, 0.26, 0.28]},
     }
     os.makedirs("/tmp/ms/mesh", exist_ok=True)
+    if glass:
+        # the envelope alone: the metal would occlude it and its own highlights
+        # are a separate layer of the sprite
+        keep = {"glass"}
+    else:
+        keep = set(shapes)
 
     for name, (v, f) in shapes.items():
+        if name not in keep:
+            continue
         ply = emit_ply(v, f, f"/tmp/ms/mesh/{name}.ply")
         if name == "glass":
             bsdf = {"type": "dielectric", "int_ior": 1.52, "ext_ior": 1.0}
@@ -410,7 +442,7 @@ def build_scene(
             "face_normals": False,
             "bsdf": bsdf,
         }
-    for i, (path, r) in enumerate(wires):
+    for i, (path, r) in enumerate([] if glass else wires):
         v, f = sweep(path, r)
         ply = emit_ply(v, f, f"/tmp/ms/mesh/wire{i}.ply")
         mat = "cathode" if r <= RW + 1e-6 else "anode"
@@ -421,7 +453,7 @@ def build_scene(
             "bsdf": scene[mat],
         }
     # the discharge: the same glyphs again, as emissive threads
-    for i, (path, r) in enumerate(glow):
+    for i, (path, r) in enumerate([] if glass else glow):
         v, f = sweep(path, r)
         ply = emit_ply(v, f, f"/tmp/ms/mesh/glow{i}.ply")
         scene[f"glow{i}"] = {
@@ -467,14 +499,27 @@ def build_scene(
             },
         }
 
+    # the glass pass wants a room, not a studio: its highlights read as the
+    # envelope's own reflections only while they stay a thin layer over the digits
+    gain = glass_gain if glass else 1.0
+
     scene["key"] = softbox(
-        [-120, 150, 210], [0, 0, 0], [90, 130], [7.0, 7.3, 7.8]
+        [-120, 150, 210],
+        [0, 0, 0],
+        [90, 130],
+        [7.0 * gain, 7.3 * gain, 7.8 * gain],
     )
     scene["fill"] = softbox(
-        [190, 40, 120], [0, 0, 0], [70, 110], [2.0, 2.1, 2.4]
+        [190, 40, 120],
+        [0, 0, 0],
+        [70, 110],
+        [2.0 * gain, 2.1 * gain, 2.4 * gain],
     )
     scene["rim"] = softbox(
-        [-50, -30, -190], [0, 0, 0], [60, 100], [1.1, 1.2, 1.4]
+        [-50, -30, -190],
+        [0, 0, 0],
+        [60, 100],
+        [1.1 * gain, 1.2 * gain, 1.4 * gain],
     )
     scene["env"] = {
         "type": "constant",
@@ -489,7 +534,7 @@ def build_scene(
     sc = mi.load_dict(scene)
     img = mi.render(sc, spp=spp, seed=7)
     a = np.array(img)
-    np.save(out + ".npy", a)
+    np.save("/tmp/ms/glass.npy" if glass else out + ".npy", a)
     print(
         "rendered",
         a.shape,
@@ -499,9 +544,16 @@ def build_scene(
     return a
 
 
-def main(out="/tmp/ms/beauty"):
+def main(out="/tmp/ms/beauty", glass=False):
+    build_scene(out=out, glass=glass)
     build_scene(out=out)
 
 
+if __name__ == "__main__":
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    main(
+        args[0] if args else "/tmp/ms/beauty",
+        glass="--glass" in sys.argv,
+    )
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else "/tmp/ms/beauty")
