@@ -45,10 +45,18 @@ Greeter tree is a fork, not a copy (`greeter/`)
 - The greeter is linted by the same qmllint gate (`scripts/dev/check-qml-lint.sh` covers
   `files/quickshell` in full, greeter included).
 
+Login screen preview
+
+- `qs -p files/quickshell/greeter/preview.qml` renders the real login card
+  (`lock/LockContent.qml`) in a floating window — no session lock, no greetd — so the look can be
+  checked and screenshotted while the desktop is running. `PREVIEW_WALLPAPER` picks the backdrop
+  (default `~/.cache/greeter-wallpaper`, the file the login layer itself shows). It needs
+  `XDG_CONFIG_HOME/quickshell/Theme/.theme.json`, i.e. a logged-in session.
+
 Shaders in the greeter tree
 
 - `greeter/shaders/` holds the login screen's own shaders: `glass_card.frag` (frosted card and its
-  shadow), `avatar_round.frag` (the circular avatar), `crt_screen.frag` (the full-screen CRT pass)
+  shadow), `avatar_frame.frag` (the avatar frame), `crt_screen.frag` (the full-screen CRT pass)
   and `posterize_dither.frag` (the four-colour wallpaper). The palette is k-means in Oklab, computed
   in `greeter/background/BackgroundImage.qml`; the dither mask is `greeter/assets/blue_noise.png`.
 - They are compiled by the same `scripts/compile_shaders.sh` and committed as `.qsb` next to their
