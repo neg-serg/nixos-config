@@ -57,7 +57,7 @@
 
     // Soft, modern shapes: the glass does the work, and no edge is drawn as a
     // line anywhere. 0 gives the old hard-edged terminal look back.
-    "cardRadius": 22,
+    "cardRadius": 12,
     "fieldRadius": 14,
     // Clamped to half the height, so 999 is a pill / a disc.
     "chipRadius": 999,
