@@ -52,7 +52,29 @@ def revolve(profile, segs=96, rfun=None):
             d = i2 * segs + k
             faces.append((a, b, c))
             faces.append((a, c, d))
-    return verts, faces
+    return verts, outward(verts, faces)
+
+
+def outward(verts, faces):
+    """Faces wound so the shell's normals face out.
+
+    A revolve's winding depends on the direction its profile was written in, so
+    half the parts (the collar, the stem) came out inside-out: Mitsuba culled
+    their outward surface and they vanished from the render. The signed volume
+    of the closed shell is what decides; it is invariant to the origin.
+    """
+    V = np.asarray(verts, float)
+    F = np.asarray(faces, int)
+    g = V[F].mean(axis=1)
+    signed = np.einsum(
+        "ij,ij->i",
+        g,
+        np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]]),
+    ).sum()
+    if signed < 0:
+        F = F[:, ::-1]
+        return [tuple(int(i) for i in f) for f in F]
+    return [tuple(int(i) for i in f) for f in F]
 
 
 def sweep(path, r, segs=10):
@@ -87,7 +109,7 @@ def sweep(path, r, segs=10):
             d = (i + 1) * segs + k
             faces.append((a, b, c))
             faces.append((a, c, d))
-    return verts, faces
+    return verts, outward(verts, faces)
 
 
 # ---- the numerals as poly-lines (the same skeletons the shader draws) ---------
@@ -162,7 +184,22 @@ def emit_ply(verts, faces, path):
     """Smooth-shaded PLY: the glass must not look faceted."""
     V = np.asarray(verts, np.float64)
     F = np.asarray(faces, np.int64)
+    # the winding of a revolve() shell follows the direction of its profile, so
+    # half of the parts came out inside-out: their outward normals faced the
+    # core, Mitsuba culled them, and the collar simply vanished from the render.
+    # A closed shell's signed volume settles the question for good.
+    G = V[F].mean(axis=1)
+    signed = np.einsum(
+        "ij,ij->i",
+        G,
+        np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]]),
+    ).sum()
+    if signed < 0:
+        F = F[:, ::-1]
+        faces = [tuple(int(i) for i in f) for f in F]
+    F = np.asarray(faces, np.int64)
     N = np.zeros_like(V)
+    # normals, for the smooth shading
     for a, b, c in F:
         n = np.cross(V[b] - V[a], V[c] - V[a])
         N[a] += n
@@ -203,6 +240,7 @@ def build():
     shapes["glass"] = (verts, faces)
     # 2. the anode cage: 24 vertical wires + 12 rings
     wires = []
+    glow = []  # the neon threads: emissive, they are the discharge's core
     for k in range(16):
         a = 2 * math.pi * k / 16
         x, z = RT * math.sin(a), RT * math.cos(a)
@@ -233,6 +271,15 @@ def build():
                 for (x, y) in path
             ]
             wires.append((pts, RW))
+            # the discharge itself: the same glyph, drawn once more as a thin
+            # emissive thread a little nearer the viewer. It is the glow's
+            # source, and the only part of the tube that is not a solid.
+            glow.append(
+                (
+                    [(x - 0.06, y - 0.06, z + 0.16) for (x, y, z) in pts],
+                    RW * 0.55,
+                )
+            )
     # 4. the rods the stack hangs on
     for sx in (-1, 1):
         wires.append(
@@ -291,7 +338,7 @@ def build():
         ),
     )
     shapes["collar"] = (verts, faces)
-    return shapes, wires
+    return shapes, wires, glow
 
 
 def build_scene(
@@ -304,7 +351,7 @@ def build_scene(
     a uniform environment — those two passes are the coverage masks the sprite's
     alpha is assembled from (see masks.py).
     """
-    shapes, wires = build()
+    shapes, wires, glow = build()
     scene = {}
     scene["type"] = "scene"
     # glass: a dielectric shell with a smooth surface
@@ -319,32 +366,37 @@ def build_scene(
         "k": {"type": "rgb", "value": [2.9, 2.7, 2.5]},
     }
     scene["anode"] = {
-        "type": "roughconductor",
-        "alpha": 0.22,
-        "distribution": "ggx",
-        "eta": {"type": "rgb", "value": [1.9, 1.8, 1.7]},
-        "k": {"type": "rgb", "value": [3.4, 3.2, 3.0]},
+        "type": "diffuse",
+        "reflectance": {"type": "rgb", "value": [0.030, 0.030, 0.034]},
     }
+
+    # the neon threads: thin emissive tubes laid over the glyphs — the tube's
+    # discharge, and the only light source inside the glass
+    scene["neon"] = {
+        "type": "diffuse",
+        "reflectance": {"type": "rgb", "value": [0.02, 0.02, 0.02]},
+    }
+    scene["neonEmitter"] = {
+        "type": "area",
+        "radiance": {"type": "rgb", "value": [9.0, 4.2, 1.5]},
+    }
+    # the collar is painted metal: a plain dielectric cyan coat over it, glossy
     scene["collarM"] = {
-        "type": "roughconductor",
-        "alpha": 0.14,
+        "type": "roughplastic",
         "distribution": "ggx",
-        "eta": {"type": "rgb", "value": [2.2, 2.1, 2.0]},
-        "k": {"type": "rgb", "value": [3.3, 3.1, 2.9]},
+        "alpha": 0.14,
+        "diffuse_reflectance": {"type": "rgb", "value": [0.16, 0.72, 0.86]},
+        "specular_reflectance": {"type": "rgb", "value": [0.35, 0.45, 0.50]},
     }
     os.makedirs("/tmp/ms/mesh", exist_ok=True)
+
     for name, (v, f) in shapes.items():
         ply = emit_ply(v, f, f"/tmp/ms/mesh/{name}.ply")
         if name == "glass":
             bsdf = {"type": "dielectric", "int_ior": 1.52, "ext_ior": 1.0}
         elif name == "collar":
-            bsdf = {
-                "type": "roughconductor",
-                "alpha": 0.14,
-                "distribution": "ggx",
-                "eta": {"type": "rgb", "value": [2.2, 2.1, 2.0]},
-                "k": {"type": "rgb", "value": [3.3, 3.1, 2.9]},
-            }
+            bsdf = scene["collarM"]
+
         elif name == "stem":
             bsdf = {"type": "dielectric", "int_ior": 1.52, "ext_ior": 1.0}
         else:  # the mica spacers
@@ -367,6 +419,17 @@ def build_scene(
             "filename": ply,
             "face_normals": False,
             "bsdf": scene[mat],
+        }
+    # the discharge: the same glyphs again, as emissive threads
+    for i, (path, r) in enumerate(glow):
+        v, f = sweep(path, r)
+        ply = emit_ply(v, f, f"/tmp/ms/mesh/glow{i}.ply")
+        scene[f"glow{i}"] = {
+            "type": "ply",
+            "filename": ply,
+            "face_normals": False,
+            "bsdf": scene["neon"],
+            "emitter": scene["neonEmitter"],
         }
     # camera: a long lens, effectively orthographic over the window
     dist = 300.0

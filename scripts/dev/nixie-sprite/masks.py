@@ -15,7 +15,7 @@ mi.set_variant("llvm_ad_rgb")
 
 
 def coverage(only, out, spp=64, W=560, HH=1152):
-    shapes, wires = R.build()
+    shapes, wires, glow = R.build()
     white = {
         "type": "diffuse",
         "reflectance": {"type": "rgb", "value": [1.0, 1.0, 1.0]},
@@ -43,6 +43,17 @@ def coverage(only, out, spp=64, W=560, HH=1152):
         v, f = R.sweep(path, r)
         ply = R.emit_ply(v, f, f"/tmp/ms/mesh/mask_wire{i}.ply")
         scene[f"wire{i}"] = {
+            "type": "ply",
+            "filename": ply,
+            "face_normals": False,
+            "bsdf": white,
+        }
+    for i, (path, r) in enumerate(glow):
+        if only == "glass":
+            continue
+        v, f = R.sweep(path, r)
+        ply = R.emit_ply(v, f, f"/tmp/ms/mesh/mask_glow{i}.ply")
+        scene[f"glow{i}"] = {
             "type": "ply",
             "filename": ply,
             "face_normals": False,
