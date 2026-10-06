@@ -92,6 +92,7 @@ local cls = {
   im          = "^(im.riot.Riot)$",
   remote      = "^(Vmware-view|xfreerdp|remmina|org.remmina.Remmina)$",
   notes       = "^(Obsidian)$",
+  photo       = "^(ai\\.storyteller\\.photocraft)$",
 }
 
 -- ---------------------------------------------------------------------
@@ -452,6 +453,7 @@ hl.bind(E .. "+f", hl.dsp.focus({ direction = "right" }))
 hl.bind(E .. "+b", hl.dsp.focus({ direction = "left" }))
 hl.bind(E .. "+a", hl.dsp.focus({ workspace = "1" }))
 hl.bind(E .. "+e", hl.dsp.focus({ workspace = "19" }))
+hl.bind(E .. "+0", hl.dsp.focus({ workspace = "20" }))
 hl.bind(E .. "+o", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(E .. "+Tab", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
 hl.bind(E .. "+x", hl.dsp.exec_cmd(menu))
@@ -590,6 +592,7 @@ local workspaces = {
   { id = 17, name = "Ⲣ:notes",   layout = "scrolling" },
   { id = 18, name = "𐍆:vital" }, -- Vital standalone synth
   { id = 19, name = "𐍇:rack", layout = "scrolling" }, -- VCV Rack modular synth (GLFW)
+  { id = 20, name = "𐍈:photo" }, -- PhotoCraft image editor (own desktop, off the working ones)
 }
 
 for _, w in ipairs(workspaces) do
@@ -1016,11 +1019,13 @@ local routes = {
   { class = cls.remote,      id = 16 },
   { class = cls.notes,       id = 17 },
   { class = cls.vital,       id = 18 },
+  { class = cls.photo,       id = 20, no_initial_focus = true },
 }
 
 for _, r in ipairs(routes) do
   local rule = { name = "route-" .. r.id, match = { class = r.class }, no_blur = true, workspace = tostring(r.id) }
   if r.float then rule.float = true end
+  if r.no_initial_focus then rule.no_initial_focus = true end
   hl.window_rule(rule)
 end
 
