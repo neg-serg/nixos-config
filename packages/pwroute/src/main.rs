@@ -9,8 +9,11 @@
 //
 
 // Also monitors hardware inputs through PipeWire (`pwroute in <src>`): an
-// `pw-loopback` instance captures AUX0/1 (analog), AUX2/3 (AES) or AUX4/5
-// (SPDIF) and plays it back into the RME sink's currently active output pair.
+// `pw-loopback` instance captures the input pair and plays it back into the RME
+// sink's currently active output pair. Analog and SPDIF arrive on AUX0/1 and
+// AUX4/5; AES/EBU does not — the card exposes it on capture_AUX0 and
+// capture_AUX2, so that pair had to be spelled out per input instead of being
+// derived from the output route.
 //
 // Replicates the logic of the original pw-route.sh script in Rust.
 
@@ -76,28 +79,31 @@ fn find_route(key: &str) -> Option<&'static Route> {
 struct InputRoute {
     key: &'static str,
     label: &'static str,
-    left_aux: u8,
-    right_aux: u8,
+    /// Capture ports to monitor, as (left, right). These are the card's own
+    /// indices and do not have to match the output route's pair: AES/EBU in is
+    /// capture_AUX0 / capture_AUX2 while its output is playback_AUX2/AUX3.
+    capture_left: u8,
+    capture_right: u8,
 }
 
 const INPUTS: [InputRoute; 3] = [
     InputRoute {
         key: "an",
         label: "Analog in",
-        left_aux: 0,
-        right_aux: 1,
+        capture_left: 0,
+        capture_right: 1,
     },
     InputRoute {
         key: "aes",
         label: "AES/EBU in",
-        left_aux: 2,
-        right_aux: 3,
+        capture_left: 0,
+        capture_right: 2,
     },
     InputRoute {
         key: "spdif",
         label: "SPDIF in",
-        left_aux: 4,
-        right_aux: 5,
+        capture_left: 4,
+        capture_right: 5,
     },
 ];
 
@@ -455,8 +461,8 @@ fn ensure_input_links(node: &str, source: &str, input: &InputRoute) -> Result<()
     drop_port_links(&links, &cap_l);
     drop_port_links(&links, &cap_r);
 
-    let src_l = format!("{source}:capture_AUX{}", input.left_aux);
-    let src_r = format!("{source}:capture_AUX{}", input.right_aux);
+    let src_l = format!("{source}:capture_AUX{}", input.capture_left);
+    let src_r = format!("{source}:capture_AUX{}", input.capture_right);
     run_cmd("pw-link", &[&src_l, &cap_l])
         .with_context(|| format!("failed to connect {src_l} -> {cap_l}"))?;
     run_cmd("pw-link", &[&src_r, &cap_r])
@@ -582,8 +588,8 @@ fn cmd_in(source_key: &str, out_key: &str, sink: &str) -> Result<()> {
         input.key,
         input.label,
         node,
-        input.left_aux,
-        input.right_aux,
+        input.capture_left,
+        input.capture_right,
         route.left_aux,
         route.right_aux,
         route_note
