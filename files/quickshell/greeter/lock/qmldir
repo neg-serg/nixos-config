@@ -1,6 +1,5 @@
 module qs.lock
 CrtBackdrop 1.0 CrtBackdrop.qml
-TextGlow 1.0 TextGlow.qml
 singleton Controller 1.0 Controller.qml
 GreeterContext 1.0 GreeterContext.qml
 PowerButton 1.0 PowerButton.qml
