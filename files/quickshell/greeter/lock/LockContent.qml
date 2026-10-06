@@ -210,6 +210,34 @@ Item {
 		}
 	}
 
+	// Where the glass panes sample the wallpaper. The hosts hand in a backdrop
+	// that fills the same surface as this item, so a pane's position inside it is
+	// arithmetic — and it has to be arithmetic: QML does not track the property
+	// reads a C++ call such as mapToItem() makes, so a sourceRect built around one
+	// keeps the value it computed while the window was still 0x0 (the card sits at
+	// (parent.width - width) / 2, i.e. at -width / 2 before the first layout, and
+	// the field inside it). The panes then sampled a region a few hundred pixels
+	// up and to the left — outside the wallpaper, where the texture is
+	// transparent, and over its brightest part, which is the pale block that used
+	// to sit on the right of the card. root.width/height are read on purpose: they
+	// are the dependency that re-evaluates the origin when the surface resizes.
+	readonly property point sampleOrigin: {
+		const w = root.width;
+		const h = root.height;
+		if (root.backdrop === null || w <= 0 || h <= 0)
+		return Qt.point(0, 0);
+		return root.mapToItem(root.backdrop, 0, 0);
+	}
+
+	// The card's top-left in the backdrop's coordinates.
+	readonly property real cardSampleX: root.sampleOrigin.x + content.x + cardWrapper.x
+	readonly property real cardSampleY: root.sampleOrigin.y + content.y + cardWrapper.y
+
+	// The field's top-left in the backdrop's coordinates: the card's, plus the
+	// field's offset inside the card's layout.
+	readonly property real fieldSampleX: root.cardSampleX + field.x
+	readonly property real fieldSampleY: root.cardSampleY + field.y
+
 	// Wake-up on mouse movement while the screen is dark (dpms off), exactly as
 	// before: the old behaviour is part of what the compositor does at login.
 	// Everything visual lives inside `scene`: it is rendered once into a texture
@@ -435,8 +463,8 @@ Item {
 						if (root.backdrop === null)
 						return Qt.rect(0, 0, 1, 1);
 						const pad = glass.pBlur * 1.6 + 2;
-						const topLeft = glass.mapToItem(root.backdrop, -pad, -pad);
-						return Qt.rect(topLeft.x, topLeft.y, glass.width + 2 * pad, glass.height + 2 * pad);
+						return Qt.rect(root.cardSampleX - pad, root.cardSampleY - pad,
+						glass.width + 2 * pad, glass.height + 2 * pad);
 					}
 				}
 
@@ -647,8 +675,8 @@ Item {
 									if (root.backdrop === null)
 									return Qt.rect(0, 0, 1, 1);
 									const pad = GreeterTheme.fieldBlur * 1.6 + 2;
-									const topLeft = fieldGlass.mapToItem(root.backdrop, -pad, -pad);
-									return Qt.rect(topLeft.x, topLeft.y, fieldGlass.width + 2 * pad, fieldGlass.height + 2 * pad);
+									return Qt.rect(root.fieldSampleX - pad, root.fieldSampleY - pad,
+									fieldGlass.width + 2 * pad, fieldGlass.height + 2 * pad);
 								}
 							}
 
