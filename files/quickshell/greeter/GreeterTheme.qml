@@ -100,7 +100,7 @@ Singleton {
     readonly property color nixieCathodeColor: _val('greeter.nixieCathodeColor', "#aab6c4")
     readonly property real nixieWire: _val('greeter.nixieWire', 0.026)
     readonly property real nixieStack: _val('greeter.nixieStack', 0.5)
-    readonly property real nixieHighlight: _val('greeter.nixieHighlight', 0.5)
+    readonly property real nixieHighlight: _val('greeter.nixieHighlight', 0.8)
     readonly property real nixieWarmth: _val('greeter.nixieWarmth', 0.45)
     readonly property int nixieFlickerMs: _val('greeter.nixieFlickerMs', 320)
 

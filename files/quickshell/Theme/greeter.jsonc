@@ -70,7 +70,7 @@
     // the nine unlit cathodes behind the lit one are.
     "nixieWire": 0.026,
     "nixieStack": 0.5,
-    "nixieHighlight": 0.5,
+    "nixieHighlight": 0.8,
     "nixieWarmth": 0.45,
     // Restrike time on a digit change — long enough to be seen, short enough
     // that a minute never waits for it. 0 leaves the tubes steady.

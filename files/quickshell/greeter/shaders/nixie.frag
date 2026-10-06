@@ -171,23 +171,25 @@ vec3 refract = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb * 0.95 +
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
 float alpha = inside * (0.02 + 0.10 * pow(grazing, 2.0));
+	// the room: enough of it that the vessel reads as glass over a dark picture
+	colour += vec3(0.55, 0.62, 0.78) * inside * (0.010 + 0.075 * pow(grazing, 1.5));
 
 // the wall edge-on: two surfaces with a dark gap between them
 float rim = exp(-max(d, 0.0) / 0.8) * inside;
 float rimInner = exp(-pow((d - 1.6) / 1.0, 2.0)) * inside;
-glassLight += vec3(1.0) * rim * (0.10 + 0.32 * pow(grazing, 2.0));
-alpha += rim * 0.16 + rimInner * 0.10;
+glassLight += vec3(1.0) * rim * (0.30 + 0.70 * pow(grazing, 2.0));
+alpha += rim * 0.22 + rimInner * 0.14;
 colour += vec3(0.03, 0.04, 0.06) * (rimInner * 0.5);
 
 // two narrow reflections, and they stop before the dome and the collar
 float fade = clamp(1.0 - pow((v - 0.25) / 0.90, 2.0), 0.0, 1.0) * clamp((v + 0.95) / 0.45, 0.2, 1.0);
-glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.10, 2.0)) * inside * fade * 0.30;
-glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.26, 2.0)) * inside * fade * 0.06;
+glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.11, 2.0)) * inside * fade * 0.55;
+glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.26, 2.0)) * inside * fade * 0.12;
 
 // the dome, and the pip on top of it
 float dome = exp(-pow(length((p - vec2(0.0, -hs.y + 0.62 * hs.x)) * vec2(1.0, 1.35)) / (0.62 * hs.x), 2.0));
 dome *= clamp(-p.y / hs.y - 0.42, 0.0, 1.0);
-glassLight += vec3(0.86, 0.92, 1.0) * dome * 0.18;
+glassLight += vec3(0.86, 0.92, 1.0) * dome * 0.30;
 alpha += dome * 0.05;
 float tip = exp(-pow(length(p - vec2(0.0, -hs.y + 0.09 * hs.x)) / (0.11 * hs.x), 2.0));
 glassLight += vec3(0.90, 0.95, 1.0) * tip * 0.25;
@@ -234,7 +236,7 @@ colour = mix(colour, pCathode.rgb * 0.16, stem);
 alpha = mix(alpha, 0.34, stem * 0.9);
 // the lit edge of each wire: a cathode in a lamp is metal, and metal always
 // catches some of the room, so the stack reads even over a dark picture
-colour += vec3(0.62, 0.66, 0.76) * clamp(stack - 0.35, 0.0, 1.0) * 0.10;
+colour += vec3(0.62, 0.66, 0.76) * clamp(stack - 0.35, 0.0, 1.0) * 0.18;
 }
 
 	// ==== END SECTION INTERNALS (L3) | SECTION DISCHARGE (L4) ====
@@ -260,7 +262,7 @@ cageGlow = pHalo.rgb * near * pGlow * 0.30;
 // behind it and catches one lit edge from the left.
 colour = mix(colour, vec3(0.020, 0.022, 0.030) + cageGlow, grid * 0.45);
 alpha = mix(alpha, 0.45, grid * 0.45);
-colour += vec3(0.60, 0.64, 0.72) * clamp(grid - 0.45, 0.0, 1.0) * 0.07;
+colour += vec3(0.60, 0.64, 0.72) * clamp(grid - 0.45, 0.0, 1.0) * 0.16;
 }
 
 	// ==== END SECTION (cage is L3 too) | SECTION DISCHARGE (L4) ====
