@@ -152,40 +152,48 @@ float v = clamp(-p.y / max(hs.y, 1.0), -1.0, 1.0);
 float grazing = 1.0 - sqrt(max(0.0, 1.0 - xr * xr));
 
 	// ==== END SECTION GEOMETRY (L1) | SECTION GLASS-OPTICS (L2) ====
-// ==== END SECTION GEOMETRY (L1) | SECTION GLASS-OPTICS (L2) ====
-// --- the glass ----------------------------------------------------------
-// No refraction and no captured wallpaper. At this size a simulated pane is a
+// ==== SECTION GLASS-OPTICS (L2) ====
+// --- the glass: a volume, shaded ----------------------------------------
+// No refraction and no captured wallpaper (a simulated pane at this size is a
 // coin toss between invisible and a milky slab, and it drags the rectangle of
-// its item over the picture. What the eye uses to recognise a lamp is the
-// silhouette line and what is inside it, so the glass is five deliberate marks
-// and the wallpaper behind stays untouched.
+// its item over the picture). Volume is read from shading instead: a wide
+// gradient across the cylinder, a denser wall at the silhouette, a rim light
+// from the upper left, the dome's falloff, and the shadow the tube throws.
+// All of it analytic: nothing can clamp, tile or leak outside the envelope.
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
 float alpha = 0.0;
 
-// the wall seen edge-on: one thin line, brighter where the room's light comes
-// from (up and to the left), dimming towards the collar
-float line = exp(-max(d, 0.0) / 1.0) * inside;
-float env = clamp(0.80 - 0.35 * xr - 0.30 * (-p.y / hs.y), 0.25, 1.20);
-glassLight += vec3(0.86, 0.91, 1.0) * line * env * 1.05;
-alpha += line * 0.55;
+// 1. the body: clear on the axis, denser where the wall is seen edge-on
+float bodyAlpha = inside * (0.05 + 0.34 * pow(grazing, 2.4));
+alpha += bodyAlpha;
+colour += vec3(0.030, 0.045, 0.080) * bodyAlpha;
 
-// the thickness of the wall: a soft dark band just inside the line, which is
-// what makes the line read as glass and not as an outline
-alpha += inside * clamp(1.0 - smoothstep(0.5, 7.0, d), 0.0, 1.0) * 0.22;
+// 2. the room's light down the round of the cylinder: one wide, soft specular
+float spec = exp(-pow((xr + 0.42) / 0.34, 2.0)) * clamp(0.35 + 0.75 * (-p.y / hs.y), 0.1, 1.1);
+glassLight += vec3(0.80, 0.87, 1.00) * spec * inside * 0.14;
+alpha += spec * inside * 0.05;
 
-// two short specular dashes near the top, where a lamp catches the ceiling
-float dash = exp(-pow((abs(u) - 0.62) / 0.09, 2.0)) * exp(-pow((v - 0.55) / 0.34, 2.0));
-glassLight += vec3(0.92, 0.96, 1.0) * dash * inside * 0.55;
-alpha += dash * inside * 0.10;
+// 3. the rim: the wall turning away from the viewer, brighter where the light
+//    comes from, with its own dark edge just inside
+float rim = exp(-max(d, 0.0) / 1.2) * inside;
+float rimLight = clamp(0.45 - 0.55 * xr - 0.25 * (-p.y / hs.y), 0.12, 1.25);
+glassLight += vec3(0.95, 0.97, 1.0) * rim * rimLight * 0.85;
+alpha += rim * 0.42;
+alpha += inside * clamp(1.0 - smoothstep(1.0, 9.0, d), 0.0, 1.0) * 0.10;
 
-// the dome: an arc of light over the cap, and the pip the tube was sealed by
-float domeArc = exp(-pow((v - 0.86) / 0.045, 2.0)) * step(abs(xr), 0.92) * inside;
-glassLight += vec3(0.90, 0.94, 1.0) * domeArc * 0.45;
-alpha += domeArc * 0.12;
+// 4. the dome: the cap catches more light than the body, and the shoulder
+//    between them is where a cylinder becomes a tube
+float cap = smoothstep(-0.15, 0.98, -p.y / hs.y) * inside;
+glassLight += vec3(0.72, 0.80, 0.98) * cap * 0.16;
+float shoulderBand = exp(-pow((v - 0.62) / 0.09, 2.0)) * inside;
+glassLight += vec3(0.80, 0.86, 1.0) * shoulderBand * 0.10;
+alpha += shoulderBand * 0.04;
+
+// 5. the pip the tube was sealed by
 float tip = exp(-pow(length(p - vec2(0.0, -hs.y + 0.10 * hs.x)) / (0.10 * hs.x), 2.0));
-glassLight += vec3(0.92, 0.96, 1.0) * tip * 0.35;
-alpha += tip * 0.10;
+glassLight += vec3(0.92, 0.96, 1.0) * tip * 0.28;
+alpha += tip * 0.08;
 
 // ==== END SECTION GLASS-OPTICS (L2) ====
 
@@ -324,6 +332,13 @@ colour += vec3(1.0) * exp(-pow((p.y - hs.y + 1.2) / 1.2, 2.0)) * inside * 0.09;
 	// ==== END SECTION COLLAR (L5) | SECTION COMPOSITE (L6) ====
 // the glass lights land on the front surface, in front of everything inside
 colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.85));
+
+// The shadow the tube throws on the wallpaper: a lamp is a thing in front of a
+// wall, and without this it floats. Analytic, like everything else here.
+float shadow = exp(-max(sd, 0.0) / 9.0) * clamp(0.35 + 0.65 * (-p.y / hs.y), 0.25, 1.0);
+float outside = clamp(1.0 - inside, 0.0, 1.0);
+	alpha = min(alpha + shadow * 0.30 * outside, 1.0);
+	colour *= 1.0 - shadow * 0.25 * outside;
 
 fragColor = vec4(colour + glassLight + add, clamp(alpha, 0.0, 0.98)) * qt_Opacity;
 }
