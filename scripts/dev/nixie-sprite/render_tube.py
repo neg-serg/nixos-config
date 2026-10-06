@@ -546,7 +546,6 @@ def build_scene(
 
 def main(out="/tmp/ms/beauty", glass=False):
     build_scene(out=out, glass=glass)
-    build_scene(out=out)
 
 
 if __name__ == "__main__":
