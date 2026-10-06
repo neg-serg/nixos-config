@@ -2,9 +2,11 @@
 render, the alpha from the geometry (the sprite is an overlay, so its interior has
 to stay transparent enough for the discharge behind it to read)."""
 
-import numpy as np
 import math
+import os
 import sys
+
+import numpy as np
 from PIL import Image
 
 W, HH = 560, 1152
@@ -185,20 +187,45 @@ def main(beauty, out, exposure=0.55):
     )
     lum = 0.3 * rgb[..., 0] + 0.6 * rgb[..., 1] + 0.1 * rgb[..., 2]
 
-    # The alpha comes from what the render actually shows: a pixel the tube adds
-    # light to is a pixel that hides what is behind it. That is smooth by
-    # construction — no analytic bands to cut through the picture — and it keeps
-    # the sprite's one job: the bright metal and the glass's rim are opaque, the
-    # dark glass is not, so the discharge behind it reads through.
-    al = np.clip(1.0 - np.exp(-3.0 * lum), 0.0, 0.95)
-    # the envelope itself is a little opaque even where it is dark: glass is
-    # something you see, not nothing
-    al = np.maximum(al, glass * 0.07)
+    # The alpha is per material, from two flat coverage passes: the metal (wires,
+    # cage, collar) is opaque, the glass is not. Modulating the glass by its own
+    # brightness keeps its reflections readable while its body stays clear — a
+    # brightness-based alpha alone turned the glass into more metal.
+    hw = (
+        np.load(beauty + "_hw.npy")
+        if os.path.exists(beauty + "_hw.npy")
+        else np.zeros_like(lum)
+    )
+    # The metal: an ordinary overlay, opaque where it is.
+    al = np.clip(hw, 0.0, 0.97)
     img = np.clip(rgb, 0, 1)
     Image.fromarray(
         (np.concatenate([img, al[..., None]], -1) * 255).astype("uint8"),
         "RGBA",
     ).save(out)
+    # The glass, additive: a reflection adds light, it does not hide the numeral
+    # behind it. Treating it as opacity is exactly what made the tube read as metal.
+    gp = np.load("/tmp/ms/glass.npy")
+    gp = np.maximum(gp, 0.0)
+    g = aces(gp * exposure)
+    g = np.where(
+        g <= 0.0031308,
+        g * 12.92,
+        1.055 * np.power(np.maximum(g, 1e-6), 1 / 2.4) - 0.055,
+    )
+    g = np.clip(g, 0, 1)
+    Image.fromarray(
+        (
+            np.concatenate([g, np.ones(g.shape[:2] + (1,), np.float32)], -1)
+            * 255
+        ).astype("uint8"),
+        "RGBA",
+    ).save(out.replace("nixie-tube", "nixie-glass"))
+    print(
+        "saved",
+        out.replace("nixie-tube", "nixie-glass"),
+        "| стекло: max %.2f mean %.3f" % (g.max(), g.mean()),
+    )
     print(
         "saved",
         out,

@@ -104,4 +104,24 @@ source: "../assets/nixie-tube.png"
 smooth: true
 visible: !root.bulb
 }
+
+// The glass goes on top of the metal, additively: its reflections are light on
+// the pane, and light does not hide the numeral behind it the way an opaque
+// sprite would. (The sprite's alpha carries the metal only.)
+ShaderEffect {
+anchors.fill: parent
+visible: !root.bulb
+property Item source: glassLayer
+property real pStrength: 1.0
+fragmentShader: Qt.resolvedUrl("../shaders/nixie_glass.frag.qsb")
+}
+
+Image {
+id: glassLayer
+visible: false
+width: parent.width
+height: parent.height
+source: "../assets/nixie-glass.png"
+smooth: true
+}
 }
