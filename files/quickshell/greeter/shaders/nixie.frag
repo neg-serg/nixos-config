@@ -201,8 +201,20 @@ gasMap = gas;
 
 // exposure: the gas never reaches white, the wire always does
 add = vec3(1.0) - exp(-add * 1.25);
-float spill = exp(-max(sd, 0.0) / (0.9 * hs.x)) * 0.22 + exp(-max(sd, 0.0) / (3.5 * hs.x)) * 0.04;
-colour += add * (inside + spill);
+// The discharge does not stop at the glass. A lamp burning in a dark room lays a
+// warm wash on everything it can see: the wall behind it, the panel under it, the
+// tube beside it. Without that wash the tube reads as a picture of a tube — the
+// reviews called the result "stickers pasted on the wallpaper". The wash reaches
+// far and falls off slowly; the tight term keeps the glass edge itself bright.
+float spill = exp(-max(sd, 0.0) / (0.9 * hs.x)) * 0.55
+            + exp(-max(sd, 0.0) / (3.0 * hs.x)) * 0.60
+            + exp(-max(sd, 0.0) / (9.0 * hs.x)) * 0.30;
+// The wash carries the discharge's own colour: the gas between the numerals is
+// violet, but what a lamp throws on a wall is the warm end of it. The halo
+// colour alone is too pale to read against the foliage, so the wash is mixed
+// towards the core's orange before it lands.
+vec3 wash = mix(pHalo.rgb, pCore.rgb, 0.65);
+colour += add * inside + wash * add * spill;
 alpha += clamp(gasMap * pGlow * 0.10, 0.0, 0.30) * inside;
 
 	// ==== END SECTION COLLAR (L5) | SECTION COMPOSITE (L6) ====
@@ -211,10 +223,14 @@ colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.
 
 // The shadow the tube throws on the wallpaper: a lamp is a thing in front of a
 // wall, and without this it floats. Analytic, like everything else here.
-float shadow = exp(-max(sd, 0.0) / 9.0) * clamp(0.35 + 0.65 * (-p.y / hs.y), 0.25, 1.0);
+// Two widths: a core right at the silhouette and a wide soft one. A single
+// radius read as a halo around the tube rather than as shade under it.
+float shadow = exp(-max(sd, 0.0) / 7.0) * 0.55
+             + exp(-max(sd, 0.0) / 26.0) * 0.45;
+shadow *= clamp(0.35 + 0.65 * (-p.y / hs.y), 0.25, 1.0);
 float outside = clamp(1.0 - inside, 0.0, 1.0);
-	alpha = min(alpha + shadow * 0.30 * outside, 1.0);
-	colour *= 1.0 - shadow * 0.25 * outside;
+	alpha = min(alpha + shadow * 0.52 * outside, 1.0);
+	colour *= 1.0 - shadow * 0.46 * outside;
 
 fragColor = vec4(colour + glassLight + add, clamp(alpha, 0.0, 0.98)) * qt_Opacity;
 }
