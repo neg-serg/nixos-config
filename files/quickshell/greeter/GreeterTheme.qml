@@ -98,15 +98,6 @@ Singleton {
     readonly property real buttonRadius: _val('greeter.buttonRadius', 999)
     readonly property real avatarRadius: _val('greeter.avatarRadius', 16)
 
-    // Text halo (lock/TextGlow.qml)
-    readonly property real textGlow: _val('greeter.textGlow', 0.18)
-    readonly property color textGlowColour: _val('greeter.textGlowColour', "#7fd6ff")
-    readonly property real textGlowRadius: _val('greeter.textGlowRadius', 4)
-    readonly property real textShadow: _val('greeter.textShadow', 0.8)
-    readonly property color textShadowColour: _val('greeter.textShadowColour', "#e6000000")
-    readonly property real textShadowRadius: _val('greeter.textShadowRadius', 2.5)
-    readonly property real textShadowOffset: _val('greeter.textShadowOffset', 2)
-
     // Wallpaper posterisation
     readonly property bool posterizeEnabled: _val('greeter.posterizeEnabled', true)
     // Dithering strategy: "bayer" | "blueNoise" | "yliluoma"

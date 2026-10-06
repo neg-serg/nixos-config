@@ -64,17 +64,6 @@
     "buttonRadius": 999,
     "avatarRadius": 16,
 
-    // Text halo: an accent glow plus a dark, slightly offset shadow behind the
-    // glyphs — the glow carries them over a busy picture, the shadow keeps the
-    // edges readable.
-    "textGlow": 0.18,
-    "textGlowColour": "#7fd6ff",
-    "textGlowRadius": 4,
-    "textShadow": 0.8,
-    "textShadowColour": "#e6000000",
-    "textShadowRadius": 2.5,
-    "textShadowOffset": 2,
-
     // Wallpaper posterisation (greeter/shaders/posterize_dither.frag): four
     // colours, Bayer dithering, tinted with the image's own dominant colour.
     "posterizeEnabled": true,
