@@ -64,14 +64,14 @@ git clone https://github.com/neg-serg/nixos-config /etc/nixos
 cd /etc/nixos
 
 # 2️⃣ Build and switch (with flakes)
-sudo nixos-rebuild switch --flake .#odin
+sudo nixos-rebuild switch --flake .#trantor
 
 # 3️⃣ Or use the helper (if zcli is enabled)
 nh os switch
 ```
 
 > [!NOTE]
-> Replace `odin` with your hostname if you're setting up a different machine.
+> Replace `trantor` with your hostname if you're setting up a different machine.
 
 ---
 
@@ -103,7 +103,7 @@ graph TB
     end
     
     subgraph "🖥️ Host Configuration"
-        B[hosts/odin]
+        B[hosts/trantor]
     end
     
     subgraph "📦 System Modules"
@@ -231,7 +231,7 @@ flowchart LR
 📦 nixos-config/
 ├── 📄 flake.nix                      # 🎯 Flake entry point
 ├── 📂 hosts/                         # 🖥️ Host configurations
-│   └── 📁 odin/                    # Primary workstation
+│   └── 📁 trantor/                    # Primary workstation
 │       ├── hardware.nix
 │       ├── networking.nix
 │       └── services/                # policy.nix, vpn.nix, telegram-units.nix, telegram/*.py
@@ -373,7 +373,7 @@ just fmt
 just check
 
 # 🏗️ Build without switching
-nixos-rebuild build --flake .#odin
+nixos-rebuild build --flake .#trantor
 
 # 🚀 Rebuild and switch
 just deploy

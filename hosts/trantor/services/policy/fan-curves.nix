@@ -1,4 +1,4 @@
-# Quiet fan profile data for hosts/odin/services/policy.nix: the CPU and GPU
+# Quiet fan profile data for hosts/trantor/services/policy.nix: the CPU and GPU
 # curves the nct6775/amdgpu fancontrol units are generated from.
 {
   autoFancontrol = {

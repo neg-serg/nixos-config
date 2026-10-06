@@ -1,4 +1,4 @@
-# iris theme matching odin's UI palette (quickshell accent #006FCC,
+# iris theme matching trantor's UI palette (quickshell accent #006FCC,
 # kitty/p10k blue family). Fallback per-field to iris defaults for anything
 # not listed here.
 border = "#006FCC"

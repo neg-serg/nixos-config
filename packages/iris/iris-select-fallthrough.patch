@@ -4,7 +4,7 @@
  				}
  
  				if matched, consumed := config.MatchKey(inputSlice[i:], config.Get().Keybindings.SelectSuggestion); matched && config.Get().Keybindings.SelectSuggestion != "" {
-+					// [odin] Accept when the menu has a suggestion; with no suggestion
++					// [trantor] Accept when the menu has a suggestion; with no suggestion
 +					// the key falls through to the shell, keeping its normal meaning
 +					// (Tab: completion / fzf-on-tab ~/m/new, Ctrl+E: end-of-line).
 +					// Menu visibility is the source of truth — ghost-text = 0 has no

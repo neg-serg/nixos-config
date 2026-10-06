@@ -53,7 +53,7 @@ let
 
   # amdgpu prints "Overdrive is enabled, please disable it..." at KERN_CRIT on
   # every boot while the overdrive bit (0x4000) is set in amdgpu.ppfeaturemask
-  # (hosts/odin/hardware.nix). That bit must stay enabled for CoreCtrl UV/OC,
+  # (hosts/trantor/hardware.nix). That bit must stay enabled for CoreCtrl UV/OC,
   # the kernel cannot suppress a single message, and journald's LogFilterPatterns
   # only applies to unit messages — so drop the line from the TTY viewers here.
   # journalctl --grep is PCRE2 (negative lookahead); "^..." anchoring keeps all

@@ -11,7 +11,7 @@
  *
  * Config (cordis patch row): { endpoint?, model?, interval?, timeoutMs?,
  * enabled? } — endpoint default http://127.0.0.1:11434/api/chat,
- * model default qwen3:8b-q8_0 (benchmarked on odin).
+ * model default qwen3:8b-q8_0 (benchmarked on trantor).
  */
 
 import { createUserMessage } from '@deepseek-ai/dsh-llm'

@@ -1,4 +1,4 @@
-# Literal kernel/initrd data for host 'odin', kept out of the module body so
+# Literal kernel/initrd data for host 'trantor', kept out of the module body so
 # hardware.nix stays wiring. Data only: kernel parameters, module-name lists
 # and the extra module packages. Comments travel with the data — they document
 # the hardware quirks behind each entry.

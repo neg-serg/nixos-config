@@ -15,7 +15,7 @@
         enable = mkBool "enable Sola MPD (browser MPD client: backend + web UI)" false;
         port = lib.mkOption {
           type = lib.types.port;
-          default = 3010; # 3000 is taken by another local service on odin
+          default = 3010; # 3000 is taken by another local service on trantor
           description = "Loopback port the Sola MPD backend listens on.";
         };
       };

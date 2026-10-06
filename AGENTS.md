@@ -30,11 +30,11 @@ Scope
   where they conflict with this file.
 
 Quick Commands
-- Quick switch (user, primary): `nh os switch /etc/nixos#odin --option substitute false`
+- Quick switch (user, primary): `nh os switch /etc/nixos#trantor --option substitute false`
 - Rollout (build+switch) asks for a password — the NOPASSWD entry was removed on purpose
-  (`modules/security/default.nix`): `sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`
-- Build & switch (alternative): `sudo nixos-rebuild switch --flake .#odin --option substitute false`
-- Build only: `nixos-rebuild build --flake .#odin --option substitute false`
+  (`modules/security/default.nix`): `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
+- Build & switch (alternative): `sudo nixos-rebuild switch --flake .#trantor --option substitute false`
+- Build only: `nixos-rebuild build --flake .#trantor --option substitute false`
 - Format all: `just fmt`
 - Full check: `just check` (runs `nix flake check -L --option substitute false`)
 - Update flake: `just update`
@@ -42,9 +42,9 @@ Quick Commands
 
 Project Structure
 - `flake.nix` — entry point (NixOS + home-manager)
-- `flake/` — flake helpers (`nixos.nix` with `odinDomains`, `checks.nix`, ...)
+- `flake/` — flake helpers (`nixos.nix` with `trantorDomains`, `checks.nix`, ...)
 - `modules/` — system modules (features/, cli/, dev/, servers/, ...)
-- `hosts/odin/` — host-specific config (services.nix, hardware.nix, networking.nix...)
+- `hosts/trantor/` — host-specific config (services.nix, hardware.nix, networking.nix...)
 - `packages/` — custom overlays and packages
 - `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
@@ -63,10 +63,10 @@ Feature Flags
   features.cli.broot.enable = true;
   ```
 - Check a flag's current value: `just flag <flag-path>`, e.g.
-  `just flag features.dev.ai.omp.enable` (or `nix eval .#nixosConfigurations.odin.config.<flag-path>`).
-- odin uses a restricted domain set (`odinDomains` in `flake/nixos.nix`); changes in excluded
-  domains (`appimage`, `apps`) do not take effect on odin — warn the user before touching them.
-  (`llm` IS active on odin.)
+  `just flag features.dev.ai.omp.enable` (or `nix eval .#nixosConfigurations.trantor.config.<flag-path>`).
+- trantor uses a restricted domain set (`trantorDomains` in `flake/nixos.nix`); changes in excluded
+  domains (`appimage`, `apps`) do not take effect on trantor — warn the user before touching them.
+  (`llm` IS active on trantor.)
 
 Nix style: `pkgs.*` lists
 - When adding items like `pkgs.<name>` to `environment.systemPackages` or other package lists, add a short comment after each entry describing what the package is/does, whenever it is not completely obvious.
@@ -194,19 +194,19 @@ Automation: desktop only, CDP is not used (hard rule)
 Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
-  `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
+  `nix build .#nixosConfigurations.trantor.config.system.build.toplevel --dry-run --option substitute false`
 - Rollout (rebuild+switch) needs root and **asks for a password**, so the agent takes it as far as
   it goes without root and then hands the switch over. The `nixos-rebuild` NOPASSWD entry was
   deliberately removed (`modules/security/default.nix`): it was passwordless arbitrary root, because
   the flake it activates lives in the user-writable `/etc/nixos`. `features.security.tpmSudo` is off
-  (`hosts/odin/default.nix`, and there is no `/dev/tpmrm0` on this host), so nothing short of the
+  (`hosts/trantor/default.nix`, and there is no `/dev/tpmrm0` on this host), so nothing short of the
   password unlocks `sudo`. Never ask for the password and never re-add the whitelist.
 - Agent-side rollout, in order: `git status` clean/intentional (nixos-rebuild consumes the working
   tree, so foreign edits would be baked in) → `just fmt` → `just lint` → build the closure
-  (`nix build .#nixosConfigurations.odin.config.system.build.toplevel --out-link result
+  (`nix build .#nixosConfigurations.trantor.config.system.build.toplevel --out-link result
   --option substitute false`) → verify what the build actually contains (grep the store paths
   `result` points at). Then hand the user the switch command:
-  `sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null`.
+  `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`.
   The stdin redirect matters when the caller's stdin is a socket (agent/CI shells): `systemd-run
   --pipe` refuses that, so the build succeeds and nothing is applied — see
   `.agent/workflows/rebuild.md`.
@@ -216,16 +216,16 @@ Builds: substitute = false
 - Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
   (`systemctl start/stop xray|sing-box-tun`, `reboot`, `poweroff`, `suspend`, `dmesg`, `ryzenadj`,
   `gpu-oc`, `glm-adapter-priv`); everything else, `sudo -n` included, prompts.
-- The user's own switch binding is `nh os switch /etc/nixos#odin --option substitute false` — keep
+- The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false` — keep
   that flag convention in any new bindings/scripts.
 - The repo's own targets already pass this flag: `just deploy*`, `just check`,
   `just docs-modules`, `just flag`. Do not introduce nix invocations without it.
 
 Commit style
-- Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/odin] …`, `[dev/pkgs] …`, `[docs] …`.
+- Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/trantor] …`, `[dev/pkgs] …`, `[docs] …`.
 - Common scopes: nixpkgs, flake/*, core/*, hosts/<hostname>, dev/*, cli/*, hardware/*, media/*, servers/*, modules/*, packages/*, docs, ci, refactor.
 - Subjects must be in imperative mood, short and specific, without a trailing period.
 - Examples:
   - `[media/audio] Add SuperCollider live-coding stack`
-  - `[hosts/odin] Tune cooling profile`
+  - `[hosts/trantor] Tune cooling profile`
   - `[docs] Document audio creation stack`

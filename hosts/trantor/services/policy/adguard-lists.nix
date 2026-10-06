@@ -1,4 +1,4 @@
-# AdGuardHome data for hosts/odin/services/policy.nix: the LAN rewrites and
+# AdGuardHome data for hosts/trantor/services/policy.nix: the LAN rewrites and
 # the curated upstream filter lists. Data, not policy — the lists are URLs
 # with an on/off flag, and keeping them out of the module body is what makes
 # the module readable.
@@ -10,11 +10,11 @@ in
 {
   rewrites = [
     {
-      domain = "odin";
+      domain = "trantor";
       answer = "10.0.2.140";
     }
     {
-      domain = "odin.local";
+      domain = "trantor.local";
       answer = "10.0.2.140";
     }
   ];

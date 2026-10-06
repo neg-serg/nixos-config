@@ -1,7 +1,7 @@
-# iris — compatibility config for odin's shell stack.
+# iris — compatibility config for trantor's shell stack.
 #
 # What is rebinding and why:
-# - select = "ctrl+e" + [odin] patch: accepts the pending iris suggestion
+# - select = "ctrl+e" + [trantor] patch: accepts the pending iris suggestion
 #   (Ctrl+E). With no suggestion pending it falls through to zsh, so Ctrl+E
 #   stays end-of-line. Tab is fully zsh's: fzf-on-tab completion + ~/m/new
 #   fuzzy expansion.

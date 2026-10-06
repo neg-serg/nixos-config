@@ -100,7 +100,7 @@ keybinds {
         bind "Alt f" { MoveFocus "right"; }
         bind "Alt b" { MoveFocus "left"; }
 
-        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/odin/default.nix
+        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/trantor/default.nix
 
         // --- Mouse ---
         mouse {
@@ -123,7 +123,7 @@ keybinds {
         bind "l" { Resize "right"; }
         bind "Enter" { SwitchToMode "normal"; }
         bind "Escape" { SwitchToMode "normal"; }
-        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/odin/default.nix
+        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/trantor/default.nix
     }
 
     // --- Tab mode ---
@@ -137,7 +137,7 @@ keybinds {
         bind "Tab" { GoToNextTab; }
         bind "Left" { GoToPreviousTab; }
         bind "Right" { GoToNextTab; }
-        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/odin/default.nix
+        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/trantor/default.nix
     }
 
     // --- Scroll mode ---
@@ -151,7 +151,7 @@ keybinds {
         bind "p" { ScrollUp; }
         bind "Escape" { SwitchToMode "normal"; }
         bind "Enter" { SwitchToMode "normal"; }
-        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/odin/default.nix
+        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/trantor/default.nix
     }
 
     // --- Session mode ---

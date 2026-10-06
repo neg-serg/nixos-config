@@ -13,7 +13,7 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   also re-exports `ruKeys` from `ru-keys.nix`.
 - `systemd-user.nix` — systemd unit helpers: `mkUnitFromPresets` plus the module-shaped
   `mkUserService` / `mkUserOneshot` / `mkUserActivation`, and the system-level oneshot+timer factory
-  `mkOneshotTimer` used by `hosts/odin`; the legacy `mkSimple*` helpers were removed. The `presets`
+  `mkOneshotTimer` used by `hosts/trantor`; the legacy `mkSimple*` helpers were removed. The `presets`
   table holds both scheduling keys (`after`/`wants`/`requires`/`bindsTo`/`partOf`/`wantedBy`) and a
   `service` attrset (`Restart`/`RestartSec`/`Type`): `defaultWanted`, `restartOnFailure`, `oneshot`,
   `graphicalSession`, `graphicalWanted`. Preset service keys are merged under the caller's own
@@ -118,7 +118,7 @@ imports = neg.importDir { dir = ./.; includeDirs = true; nameFilter = domainFilt
 | Where the reference sits                       | Use                                                                                                                                    | Why                                                                                                                                                                      |
 | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | a config body (option value, `config = …`)     | `config.lib.neg.path` / `readFile` / `files.<…>`                                                                                       | `config` is already the module's own argument                                                                                                                            |
-| a top-level `let` of a module                  | `let r = neg.rooted repoRoot; in r.path "files/x"`                                                                                     | `config.lib.neg.*` there is an **infinite recursion**: module arguments are forced while the module is being collected (`hosts/odin/services/telegram-units.nix` hit it) |
+| a top-level `let` of a module                  | `let r = neg.rooted repoRoot; in r.path "files/x"`                                                                                     | `config.lib.neg.*` there is an **infinite recursion**: module arguments are forced while the module is being collected (`hosts/trantor/services/telegram-units.nix` hit it) |
 | a package file (`packages/<name>/default.nix`) | `paths.path "files/…"` — declare `paths` as a formal and `neg.functions.callPkg` fills it in (it sniffs formals exactly like `inputs`) | no `config` at all; the resolver is built once in `packages/overlay.nix` (`neg.rooted ../.`) and handed to every overlay through `importOvP`                             |
 | a package referring to a *sibling* package     | `call (pkg "name") { }` — `neg.functions.pkg` maps the directory name to its `default.nix`                                             | no path arithmetic anywhere in `packages/`, and a typo lists the names that exist instead of pointing at a missing file                                                  |
 
@@ -130,7 +130,7 @@ From the shell, `paths` (a `~/.local/bin` tool, wrapped as `just paths`) answers
 `paths keys files` prints what to write for `files/…`, `paths keys modules --any` does the same for
 the module tree, `paths refs systemd-user` shows every reference to a name, `paths find wl-monitor`
 picks a file with fzf and lists who uses it, and
-`paths resolve ../../../lib/x.nix --from hosts/odin/services/y.nix` resolves a relative reference
+`paths resolve ../../../lib/x.nix --from hosts/trantor/services/y.nix` resolves a relative reference
 (and warns when it leaves the repo).
 
 The rule is enforced: `scripts/dev/check-relative-paths.sh` (run by `just lint` and as the

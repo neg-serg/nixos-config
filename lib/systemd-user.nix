@@ -300,7 +300,7 @@ rec {
     };
 
   # System-level oneshot service + matching timer (emits `systemd.services` /
-  # `systemd.timers`, not user units) — the shape hosts/odin repeats. Returns a
+  # `systemd.timers`, not user units) — the shape hosts/trantor repeats. Returns a
   # fragment keyed by `name`, so the caller keeps its own gating and `config =` key:
   #
   #   config = lib.mkIf cond (systemdUser.mkOneshotTimer {

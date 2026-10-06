@@ -2,7 +2,7 @@
 # Module: nix/prune-generations
 # Purpose: cap the number of system generations. Every `nixos-rebuild switch`
 # adds one, and every generation is a GC root for its whole system closure, so
-# an uncapped profile grows the store by tens of gigabytes (odin reached 483
+# an uncapped profile grows the store by tens of gigabytes (trantor reached 483
 # generations before a manual trim, Oct 2026). nix.gc's `--delete-older-than
 # 21d` cannot help there: on a machine that rebuilds several times a day every
 # generation is younger than the window.

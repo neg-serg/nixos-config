@@ -87,7 +87,7 @@ def load_state():
 
 
 def send_alert(text):
-    # The shared sender (hosts/odin/telegram.nix) owns the socks-proxy
+    # The shared sender (hosts/trantor/telegram.nix) owns the socks-proxy
     # retry; return True only on an actual successful delivery.
     try:
         proc = subprocess.run([SENDER, text], check=False)

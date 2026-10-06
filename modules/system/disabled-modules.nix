@@ -1,13 +1,13 @@
 { ... }: {
   disabledModules = [
-    # Web servers — not used on odin (no web serving from this machine)
+    # Web servers — not used on trantor (no web serving from this machine)
     "services/web-servers/nginx.nix"
     # "services/web-servers/apache-httpd/default.nix"  # referenced by zabbix web frontend
     # "services/web-servers/caddy/default.nix"  # referenced by wordpress.nix
     # "services/web-servers/traefik.nix"  # referenced by pangolin.nix
     "services/web-servers/haproxy.nix"
 
-    # Databases — not used on odin
+    # Databases — not used on trantor
     # "services/databases/postgresql.nix"  # referenced by too many modules (taler, peertube, plausible, etc.)
     # "services/databases/mysql.nix"  # referenced by writefreely.nix
     "services/databases/mariadb.nix"
@@ -29,7 +29,7 @@
     "services/mail/rspamd.nix"
     "services/mail/opensmtpd.nix"
 
-    # Printing — no printer on odin
+    # Printing — no printer on trantor
     # "services/printing/cupsd.nix"  # referenced by vmware-host.nix
     "services/printing/ipp-usb.nix"
 
@@ -60,7 +60,7 @@
     # Desktop managers — plasma6 disabled because SDDM module was removed from nixpkgs-unstable
     "services/desktop-managers/plasma6.nix"
 
-    # Display managers — odin uses greetd with autologin
+    # Display managers — trantor uses greetd with autologin
     "services/display-managers/gdm.nix"
     "services/display-managers/ly.nix"
     "services/display-managers/lemurs.nix"
@@ -69,7 +69,7 @@
     "services/display-managers/plasma-login-manager.nix"
 
     # Auto-detection (facter) — disabled because nixpkgs-slim removed hyperv-guest.nix
-    # which facter's virtualisation module references. Odin is bare metal; no auto-detection needed.
+    # which facter's virtualisation module references. Trantor is bare metal; no auto-detection needed.
     "hardware/facter"
   ];
 

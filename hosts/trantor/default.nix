@@ -67,7 +67,7 @@ let
       s:
       builtins.replaceStrings
         [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/odin/default.nix"
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/trantor/default.nix"
         ]
         [ (zellijRuBlock zellijRuBinds.focus) ]
         s
@@ -76,7 +76,7 @@ let
       s:
       builtins.replaceStrings
         [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/odin/default.nix"
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/trantor/default.nix"
         ]
         [ (zellijRuBlock zellijRuBinds.resize) ]
         s
@@ -84,7 +84,7 @@ let
     (
       s:
       builtins.replaceStrings
-        [ "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/odin/default.nix" ]
+        [ "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/trantor/default.nix" ]
         [ (zellijRuBlock zellijRuBinds.tab) ]
         s
     )
@@ -92,7 +92,7 @@ let
       s:
       builtins.replaceStrings
         [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/odin/default.nix"
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/trantor/default.nix"
         ]
         [ (zellijRuBlock zellijRuBinds.scroll) ]
         s
@@ -163,7 +163,7 @@ in
   features.wine.apps = { }; # Windows apps for the wineapps CLI; add only what you need
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   hardware.gpu.corectrl.enable = true;
-  # Override default networkUnits: odin uses systemd-networkd, not NetworkManager
+  # Override default networkUnits: trantor uses systemd-networkd, not NetworkManager
   features.system.logTtys.networkUnits = [
     "systemd-networkd.service" # Primary network configuration
     "sshd.service" # SSH daemon

@@ -14,7 +14,7 @@ let
 
   baseKernel = pkgs.linuxPackages.kernel;
 
-  # MediaTek MT6639 (MT7927) Bluetooth for odin's adapter (13d3:3588, ASUS ROG
+  # MediaTek MT6639 (MT7927) Bluetooth for trantor's adapter (13d3:3588, ASUS ROG
   # STRIX X870E-E): the chip reports CHIPID=0x0000 and older 6.18.y drove it as
   # MT7922, failing with "hci0: Opcode 0x0c03 failed: -16". The upstream MT6639
   # backport (28b7c5a6db74, 81f971c6abec, 59c3ee19ca88) is in-tree since
@@ -112,7 +112,7 @@ let
 in
 {
   # Use mkOverride 40 to beat hardware.nix's lib.mkForce (priority 50)
-  # This ensures our minimized kernel is used even when hosts/odin
+  # This ensures our minimized kernel is used even when hosts/trantor
   # forces LTS kernel via lib.mkForce
   boot.kernelPackages = lib.mkOverride 40 (pkgs.linuxKernel.packagesFor minimalKernel);
 }

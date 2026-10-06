@@ -7,7 +7,7 @@ ______________________________________________________________________
 ## Quick Command
 
 ```bash
-sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null
+sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null
 ```
 
 ## Steps
@@ -21,13 +21,13 @@ sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null
 1. **Build without switching**:
 
    ```bash
-   nixos-rebuild build --flake .#odin
+   nixos-rebuild build --flake .#trantor
    ```
 
 1. **Switch to new generation**:
 
    ```bash
-   sudo nixos-rebuild switch --flake .#odin
+   sudo nixos-rebuild switch --flake .#trantor
    ```
 
 ## Options
@@ -60,7 +60,7 @@ The build succeeds and nothing is applied, so retrying with stdin redirected fro
 whole fix:
 
 ```bash
-sudo nixos-rebuild switch --flake .#odin --option substitute false < /dev/null
+sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null
 ```
 
 Keep the redirect in any scripted rollout.
@@ -79,7 +79,7 @@ Agent-side preparation (everything that needs no root):
 cd /etc/nixos
 git status                 # must be clean/intentional — the working tree is what gets activated
 just fmt && just lint
-nix build .#nixosConfigurations.odin.config.system.build.toplevel \
+nix build .#nixosConfigurations.trantor.config.system.build.toplevel \
   --out-link result --option substitute false
 ls -l result               # then grep the store paths it points at to verify the change landed
 ```

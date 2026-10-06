@@ -3,7 +3,7 @@
 # Purpose: Declarative Wine app management. features.wine.apps.<id> declares
 #   Windows apps installed into per-app Wine prefixes under
 #   ~/.local/share/wineprefixes (bind-mounted to /gamez/main/wineprefixes on
-#   odin). The wineapps CLI (list/install/uninstall/run) consumes the generated
+#   trantor). The wineapps CLI (list/install/uninstall/run) consumes the generated
 #   registry at /etc/wineapps/apps.json.
 {
   lib,

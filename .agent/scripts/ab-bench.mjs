@@ -23,7 +23,7 @@ const DEFAULT_JUDGE = 'qwen3:8b-q8_0'
 const DEMO_TASKS = [
   { id: 'freq', prompt: 'Напиши функцию на Python, которая считает частоту слов в тексте.' },
   { id: 'mixin', prompt: 'Объясни разницу между миксинами и композицией в Python за 2-3 предложения.' },
-  { id: 'nh', prompt: 'Что делает команда: nh os switch /etc/nixos#odin --option substitute false? Ответь коротко.' },
+  { id: 'nh', prompt: 'Что делает команда: nh os switch /etc/nixos#trantor --option substitute false? Ответь коротко.' },
 ]
 
 const DEMO_PRESETS = [

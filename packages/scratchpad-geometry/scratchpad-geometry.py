@@ -1,4 +1,4 @@
-"""Persist Hyprland scratchpad geometry across show/hide cycles (host odin).
+"""Persist Hyprland scratchpad geometry across show/hide cycles (host trantor).
 
 Hyprland 0.56.2 (Lua config mode) specifics, verified against the running
 instance and the v0.56.2 source:
