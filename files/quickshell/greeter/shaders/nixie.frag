@@ -186,16 +186,12 @@ float fade = clamp(1.0 - pow((v - 0.25) / 0.90, 2.0), 0.0, 1.0) * clamp((v + 0.9
 glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.085, 2.0)) * inside * fade * 0.62;
 glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.26, 2.0)) * inside * fade * 0.12;
 
-// the dome, and the pip on top of it
-float dome = exp(-pow(length((p - vec2(0.0, -hs.y + 0.62 * hs.x)) * vec2(1.0, 1.35)) / (0.62 * hs.x), 2.0));
-dome *= clamp(-p.y / hs.y - 0.42, 0.0, 1.0);
-glassLight += vec3(0.86, 0.92, 1.0) * dome * 0.30;
-alpha += dome * 0.05;
-float tip = exp(-pow(length(p - vec2(0.0, -hs.y + 0.09 * hs.x)) / (0.11 * hs.x), 2.0));
-glassLight += vec3(0.90, 0.95, 1.0) * tip * 0.25;
-alpha += tip * 0.07;
+// The pip the tube was sealed by — the one mark every nixie has on top of its
+// dome. The dome itself is carried by the rim, which follows its arc.
+float tip = exp(-pow(length(p - vec2(0.0, -hs.y + 0.10 * hs.x)) / (0.10 * hs.x), 2.0));
+glassLight += vec3(0.90, 0.95, 1.0) * tip * 0.22;
+alpha += tip * 0.06;
 
-	// ==== END SECTION GLASS-OPTICS (L2) | SECTION INTERNALS (L3) ====
 // --- what is inside -----------------------------------------------------
 // The numerals' own space: y-up (the tube's y runs down the screen), the width
 // of a numeral as the unit on both axes so a round wire stays round. The stack
@@ -214,7 +210,7 @@ alpha += rodMask * 0.42;
 
 // the mica washers that hold the stack together: discs, seen edge-on
 for (int w = 0; w < 2; w++) {
-float wv = (w == 0) ? 0.60 : -0.66;
+float wv = (w == 0) ? 0.86 : -0.62;
 float line = exp(-pow((v - wv) / 0.022, 2.0)) * inside * step(abs(xr), 0.80);
 colour = mix(colour, vec3(0.26, 0.26, 0.29), line * 0.65);
 alpha += line * 0.30;
@@ -287,7 +283,7 @@ gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 add += pCore.rgb * core * 1.10 * coreLit;
-add += vec3(1.0, 0.96, 0.88) * pow(core, 8.0) * 0.26 * coreLit;
+add += vec3(1.0, 0.94, 0.82) * pow(core, 10.0) * 0.12 * coreLit;
 add += pHalo.rgb * gas * 1.10 * haloLit;
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.17) / 0.09) * 0.10 * step(0.06, dist) * haloLit;
