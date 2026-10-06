@@ -264,7 +264,16 @@ def build():
     return shapes, wires
 
 
-def main(out, spp=1024, W=560, HH=1152):
+def build_scene(
+    only=None, flat=False, W=560, HH=1152, spp=1024, out="/tmp/ms/beauty"
+):
+    """Render the tube.
+
+    only=None renders the full beauty pass; "hardware" and "glass" keep just that
+    part of the scene, and with flat=True every material is a white diffuse lit by
+    a uniform environment — those two passes are the coverage masks the sprite's
+    alpha is assembled from (see masks.py).
+    """
     shapes, wires = build()
     scene = {}
     scene["type"] = "scene"
@@ -379,6 +388,10 @@ def main(out, spp=1024, W=560, HH=1152):
         float(np.median(a[a.shape[0] // 2])),
     )
     return a
+
+
+def main(out="/tmp/ms/beauty"):
+    build_scene(out=out)
 
 
 if __name__ == "__main__":
