@@ -246,12 +246,12 @@ vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
 float alpha = inside * (0.07 + 0.26 * pow(grazing, 2.0));
 // the body: cold, and a little darker than the picture behind it
-colour += vec3(0.020, 0.030, 0.055) * inside * (0.35 + 0.65 * grazing);
+colour += vec3(0.008, 0.012, 0.022) * inside * (0.35 + 0.65 * grazing);
 
 // the wall edge-on: two surfaces with a dark gap between them
-float rim = exp(-max(d, 0.0) / 0.8) * inside;
+float rim = exp(-max(d, 0.0) / 0.35) * inside;   // the wall seen edge-on: a hairline
 float rimInner = exp(-pow((d - 1.6) / 1.0, 2.0)) * inside;
-glassLight += vec3(1.0) * rim * (0.30 + 0.70 * pow(grazing, 2.0));
+glassLight += vec3(1.0) * rim * (0.10 + 0.55 * pow(grazing, 3.0));
 alpha += rim * 0.22 + rimInner * 0.14;
 colour += vec3(0.03, 0.04, 0.06) * (rimInner * 0.5);
 
@@ -262,10 +262,10 @@ vec2 mir = vec2(rayIn.x, rayIn.y) / max(-rayIn.z, 0.06) * roomDist;
 mir = clamp(mir, vec2(-0.20 * R), vec2(0.20 * R));
 vec2 uvR = (px + pInset + mir) / pBackdrop;
 vec3 room = texture(source, clamp(uvR, vec2(0.001), vec2(0.999))).rgb;
-glassLight += (room * 0.90 + 0.004) * min(F, 0.55) * 0.45 * pHighlight;
+glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight;
 // two narrow lights the tube always catches, and they stop before the collar
-glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.085, 2.0)) * inside * fade * 0.62 * pHighlight;
-glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.26, 2.0)) * inside * fade * 0.12 * pHighlight;
+glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.070, 2.0)) * inside * fade * 0.20 * pHighlight;
+glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.045 * pHighlight;
 
 // The pip the tube was sealed by — the one mark every nixie has on top of its
 // dome. The dome itself is carried by the rim, which follows its arc.

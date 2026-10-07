@@ -58,6 +58,10 @@ enum Command {
         /// How many pixels of device scale the picture is drawn at.
         #[arg(long, default_value_t = 2)]
         scale: u32,
+        /// The discharge's strength, as the workbench's glow handle: 0 draws
+        /// the lamp dark, which is how the glass alone is measured.
+        #[arg(long, default_value_t = 1.0)]
+        glow: f32,
     },
 }
 
@@ -69,6 +73,7 @@ fn render(
     out: &std::path::Path,
     digit: i32,
     scale: u32,
+    glow: f32,
 ) -> Result<()> {
     // The frame is the drawing's own box plus the tube's pads, at `scale` device
     // pixels per logical pixel.
@@ -236,7 +241,12 @@ fn main() -> Result<()> {
             print!("{}", report.text());
             std::process::exit(if report.failed() == 0 { 0 } else { 1 });
         }
-        Command::Render { out, digit, scale } => render(&src, &drawing, &out, digit, scale)?,
+        Command::Render {
+            out,
+            digit,
+            scale,
+            glow,
+        } => render(&src, &drawing, &out, digit, scale, glow)?,
         Command::Sweep { out, scale, check } => sweep(&src, &drawing, &out, scale, check)?,
     }
     Ok(())
