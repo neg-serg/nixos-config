@@ -452,8 +452,14 @@ float near = exp(-max(digitWire(int(pDigit + 0.5), dp) * gm - wirePx, 0.0) / (1.
 cageGlow = pHalo.rgb * near * pGlow * 0.60;
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
-colour = mix(colour, vec3(0.030, 0.034, 0.042) + cageGlow, grid * 0.55);
-alpha = mix(alpha, 0.42, grid * 0.40);
+colour = mix(colour, vec3(0.030, 0.034, 0.042) + cageGlow, grid * 0.72);
+alpha = mix(alpha, 0.55, grid * 0.55);
+// the far half of the same mesh, seen through the tube behind the numeral
+float gridBack = max(exp(-pow(abs(fract(uu * 12.0 + 0.5) - 0.5) * 2.0 / 0.16, 2.0)),
+                     exp(-pow(abs(fract(p.y / (1.0 * mm) + 0.5) - 0.5) * 2.0 / 0.18, 2.0)) * 0.65);
+gridBack *= step(abs(p.x), cageR) * cageFade;
+colour = mix(colour, vec3(0.020, 0.022, 0.028), gridBack * 0.34);
+alpha = mix(alpha, 0.34, gridBack * 0.30);
 colour += metal_hit(px, Ncyl, VIEW, vec3(0.56, 0.55, 0.52), 0.35) * clamp(grid - 0.45, 0.0, 1.0) * 0.55;
 }
 
