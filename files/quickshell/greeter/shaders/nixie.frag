@@ -386,7 +386,7 @@ gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.96, 0.88), pow(core, 8.0) * 0.25);
-		add += wireColour * core * 2.60 * coreLit;
+		add += wireColour * core * 2.30 * coreLit;   // white-hot, and no wider than the wire itself
 
 add += pHalo.rgb * gas * 0.30 * haloLit;
 // the fringe where the discharge dies out drifts violet
