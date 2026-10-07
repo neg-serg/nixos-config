@@ -62,6 +62,11 @@ enum Command {
         /// the lamp dark, which is how the glass alone is measured.
         #[arg(long, default_value_t = 1.0)]
         glow: f32,
+        /// How bright the room behind the tube is drawn: the login screen shows
+        /// it through the card's dimmer (0.45), a photo of a lamp on a desk shows
+        /// it as it is (1.0).
+        #[arg(long, default_value_t = 1.0)]
+        room: f32,
     },
 }
 
@@ -74,6 +79,7 @@ fn render(
     digit: i32,
     scale: u32,
     glow: f32,
+    room: f32,
 ) -> Result<()> {
     // The frame is the drawing's own box plus the tube's pads, at `scale` device
     // pixels per logical pixel.
@@ -86,7 +92,7 @@ fn render(
     let spv = std::path::Path::new("/tmp/nixie-glsl/nixie.comp.spv");
     shader::compile(&compute, spv)?;
 
-    let wallpaper = wallpaper(width, height)?;
+    let wallpaper = wallpaper(width, height, room)?;
     let mut uniforms =
         uniforms::Uniforms::from_drawing(drawing, mm, [width as f32, height as f32], digit);
     uniforms.glow = glow;
@@ -122,7 +128,7 @@ fn sweep(
     let compute = shader::to_compute(src)?;
     let spv = std::path::Path::new("/tmp/nixie-glsl/nixie.comp.spv");
     shader::compile(&compute, spv)?;
-    let wall = wallpaper(width, height)?;
+    let wall = wallpaper(width, height, 1.0)?;
 
     let mut sheet = image::RgbaImage::new(width * 10, height);
     let limits = measure::Limits::default();
@@ -213,7 +219,7 @@ fn sweep(
 /// What stands behind the tube. The login screen hands the tube the wallpaper
 /// with the card's dimmer on it; the workbench uses the same file when it is
 /// there, and a plain gradient when it is not.
-fn wallpaper(width: u32, height: u32) -> Result<image::RgbaImage> {
+fn wallpaper(width: u32, height: u32, room: f32) -> Result<image::RgbaImage> {
     let home = std::env::var("HOME").unwrap_or_else(|_| "/root".into());
     let path = std::path::PathBuf::from(home).join(".cache/greeter-wallpaper");
     if path.exists() {
@@ -224,7 +230,7 @@ fn wallpaper(width: u32, height: u32) -> Result<image::RgbaImage> {
                 "nixie: cannot decode {} — drawing over a gradient",
                 path.display()
             );
-            return Ok(gradient(width, height));
+            return Ok(gradient(width, height, room));
         };
         let src = decoded.to_rgba8();
         let mut out = image::RgbaImage::new(width, height);
@@ -241,25 +247,25 @@ fn wallpaper(width: u32, height: u32) -> Result<image::RgbaImage> {
                 let mut p = *cropped.get_pixel(x + ox, y + oy);
                 // the card's dimmer: the login screen never shows it raw
                 for c in 0..3 {
-                    p[c] = (p[c] as f32 * 0.45) as u8;
+                    p[c] = (p[c] as f32 * room).min(255.0) as u8;
                 }
                 out.put_pixel(x, y, p);
             }
         }
         return Ok(out);
     }
-    Ok(gradient(width, height))
+    Ok(gradient(width, height, room))
 }
 
 /// The plain backdrop: a soft vertical wash, enough for the glass to have
 /// something to bend when the wallpaper is not available.
-fn gradient(width: u32, height: u32) -> image::RgbaImage {
+fn gradient(width: u32, height: u32, room: f32) -> image::RgbaImage {
     let mut out = image::RgbaImage::new(width, height);
     for y in 0..height {
         for x in 0..width {
             let u = x as f32 / width as f32;
             let v = y as f32 / height as f32;
-            let grey = (30.0 + 40.0 * (1.0 - v) + 12.0 * u) as u8;
+            let grey = ((30.0 + 40.0 * (1.0 - v) + 12.0 * u) * room) as u8;
             out.put_pixel(
                 x,
                 y,
@@ -285,7 +291,8 @@ fn main() -> Result<()> {
             digit,
             scale,
             glow,
-        } => render(&src, &drawing, &out, digit, scale, glow)?,
+            room,
+        } => render(&src, &drawing, &out, digit, scale, glow, room)?,
         Command::Sweep { out, scale, check } => sweep(&src, &drawing, &out, scale, check)?,
     }
     Ok(())
