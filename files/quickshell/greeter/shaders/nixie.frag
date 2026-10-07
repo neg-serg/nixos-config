@@ -388,7 +388,7 @@ float gm = sqrt(gx * gy);
 float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
-float wirePx = 0.30 * mm;   // a nixie's stroke reads fat, like a sausage
+float wirePx = 0.38 * mm;   // a nixie's stroke reads fat, like a sausage
 float baseTop = footY;
 
 // the two rods the stack is welded to
@@ -482,9 +482,9 @@ gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60);   // directly heated: the metal is the light
-		add += wireColour * core * 4.60 * coreLit;   // white-hot, and no wider than the wire itself
+		add += wireColour * core * 5.60 * coreLit;   // white-hot, and no wider than the wire itself
 
-add += pHalo.rgb * gas * 0.45 * haloLit;
+add += pHalo.rgb * gas * 0.58 * haloLit;
 add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.10 * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
