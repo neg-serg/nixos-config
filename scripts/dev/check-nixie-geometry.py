@@ -46,16 +46,16 @@ def main():
     )[0]
     digit_h = numbers(src, r"float gy = \(([\d.]+) / ([\d.]+)\) \* mm;")
     digit_h = digit_h[0] / digit_h[1]
-    glyph_h = 1.56  # the glyph the numerals are drawn in, in its own units
-    glyph_w = 0.6
+    # the glyphs in digitWire() run -1.02..+1.02 across 0.7 units, and the
+    # shader centres that box on the glass's middle
+    glyph_lo, glyph_hi = -1.02, 1.02
+    glyph_h = glyph_hi - glyph_lo
+    glyph_w = 0.7
     gx_ratio = numbers(src, r"float gx = ([\d.]+) \* gy;")[0]
     wire_r = numbers(src, r"float wirePx = ([\d.]+) \* mm;")[0]
     mesh_r = numbers(src, r"float cageR = ([\d.]+) \* mm;")[0]
     rod_x = numbers(src, r"abs\(p\.x\) - ([\d.]+) \* mm\)")[0]
     wall_mm = 0.9  # NixieTube.pThick: the glass wall, 0.9 mm
-    digit_centre_frac = numbers(
-        src, r"centre = vec2\(0\.0, digitMid - ([\d.]+) \* gy\);"
-    )[0]
 
     # the frame: the box is centred in the item, y runs down
     box_mid = box_h / 2.0
@@ -67,10 +67,9 @@ def main():
     digit_h_mm = digit_h * glyph_h  # the numerals, 18 mm
     digit_w_mm = digit_h * gx_ratio * glyph_w
     digit_mid = (apex_y + foot_y) / 2.0  # the glass's middle
-    glyph_origin = digit_mid - digit_centre_frac * digit_h
-    # the numerals span +0.54 .. -1.02 of the glyph, i.e. their own box
-    digit_top = glyph_origin - 0.54 * digit_h
-    digit_bottom = glyph_origin + 1.02 * digit_h
+    glyph_origin = digit_mid
+    digit_top = glyph_origin + glyph_lo * digit_h
+    digit_bottom = glyph_origin + glyph_hi * digit_h
     digit_centre = (digit_top + digit_bottom) / 2.0
     inner_r = bulb_r - wall_mm
 
