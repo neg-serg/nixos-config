@@ -29,6 +29,14 @@ property int tubeIndex: 0
 // is null the tube still draws, it just has nothing to refract.
 property Item backdrop: null
 
+// The workbench's handles (greeter/tube-lab.qml). They are multipliers on what
+// the theme says, so 1.0 is the clock's own look and nothing here can drift from
+// it: the lab turns these, the login screen never touches them.
+property real glowScale: 1.0        // how hard the discharge burns
+property real glassLightScale: 1.0  // how much light the envelope catches
+property real warmthScale: 1.0      // how much of the discharge lands on the glass
+property real metalScale: 1.0       // how present the sprite's metal is
+
 // The numeral's size in px — the clock scales it by the theme's uiScale.
 property real numeralSize: 92
 readonly property real uiScale: GreeterTheme.uiScale
@@ -102,13 +110,13 @@ property vector2d pBackdrop: Qt.vector2d(tube.width + 2 * root.pad, tube.height 
 property real pInset: root.pad
 property real pRadius: root.glassWidth * 0.5
 property real pBase: root.bulb ? 0 : Math.round(root.glassHeight * 0.17)
-property real pGlow: (root.bulb || root.digit >= 0) ? GreeterTheme.nixieGlow : 0.0
+property real pGlow: (root.bulb || root.digit >= 0) ? GreeterTheme.nixieGlow * root.glowScale : 0.0
 property real pDigit: root.bulb ? -1 : root.digit
 property real pBulb: root.bulb ? 1 : 0
 property real pWire: GreeterTheme.nixieWire
 property real pStack: root.bulb ? 0 : GreeterTheme.nixieStack
-property real pHighlight: GreeterTheme.nixieHighlight
-property real pWarmth: GreeterTheme.nixieWarmth
+property real pHighlight: GreeterTheme.nixieHighlight * root.glassLightScale
+property real pWarmth: GreeterTheme.nixieWarmth * root.warmthScale
 property real pFlicker: root.ignition
 property color pCore: GreeterTheme.nixieCoreColor
 property color pHalo: GreeterTheme.nixieGlowColor
@@ -147,6 +155,6 @@ anchors.fill: parent
 source: "../assets/nixie-tube.png"
 smooth: true
 visible: !root.bulb
-opacity: 0.35 + 0.65 * root.ignition
+opacity: (0.35 + 0.65 * root.ignition) * root.metalScale
 }
 }

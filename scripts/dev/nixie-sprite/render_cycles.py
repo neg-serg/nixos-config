@@ -81,7 +81,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render_tube as R  # noqa: E402  (geometry only; it imports Mitsuba lazily)
 
 W, HH = 1120, 2304
-SAMPLES = int(os.environ.get("CYCLES_SAMPLES", 2048))
+SAMPLES = int(os.environ.get("CYCLES_SAMPLES", 4096))
 GLASS_SAMPLES = int(os.environ.get("CYCLES_GLASS_SAMPLES", 1024))
 DENOISE = os.environ.get("CYCLES_DENOISE", "1") not in ("0", "", "false")
 LIT = os.environ.get("CYCLES_LIT", "8")
@@ -172,7 +172,16 @@ def material_glass():
     # a slight draw waviness that spreads them.
     bsdf.inputs["Roughness"].default_value = 0.22
     bsdf.inputs["Transmission Weight"].default_value = 1.0
-    bsdf.inputs["IOR"].default_value = 1.52
+    bsdf.inputs["IOR"].default_value = 1.55
+    # What makes glass read as glass and not as a hole with a rim: the light that
+    # goes through it loses a little, and loses it unevenly — iron in the melt
+    # eats the red end, so a thick edge turns green while a thin wall stays clear.
+    # Beer-Lambert, on the shell's own 1.1 mm.
+    out = nt.nodes["Material Output"]
+    absorb = nt.nodes.new("ShaderNodeVolumeAbsorption")
+    absorb.inputs["Color"].default_value = (0.62, 0.86, 0.72, 1.0)
+    absorb.inputs["Density"].default_value = 0.16
+    nt.links.new(absorb.outputs["Volume"], out.inputs["Volume"])
     return mat
 
 
@@ -252,11 +261,12 @@ def render_settings(samples, out_path):
     sc.cycles.samples = samples
     sc.cycles.use_denoising = DENOISE
     sc.cycles.denoiser = "OPENIMAGEDENOISE"
+    sc.cycles.denoising_prefilter = "ACCURATE"
     # OIDN on the CPU: the GPU denoiser allocates its own buffers next to the
     # render's, and at 1120x2304 that is what ran the card out of memory.
     sc.cycles.denoising_use_gpu = False
     sc.cycles.use_adaptive_sampling = True
-    sc.cycles.adaptive_threshold = 0.005
+    sc.cycles.adaptive_threshold = 0.002
     sc.cycles.max_bounces = 8
     sc.cycles.transmission_bounces = 8
     sc.cycles.transparent_max_bounces = 8
@@ -289,11 +299,25 @@ def world(radiance):
     w = bpy.data.worlds.new("env")
     w.use_nodes = True
     bg = w.node_tree.nodes["Background"]
+    # A room, not a constant: the wall behind the tube is darker at the floor
+    # and lighter towards the ceiling, and a gradient is what the glass can
+    # actually reflect — a flat colour reflects as flat colour and the envelope
+    # looks like it was painted on.
     bg.inputs["Color"].default_value = (
         *[c * WORLD_GAIN for c in radiance],
         1.0,
     )
     bg.inputs["Strength"].default_value = 1.0
+    grad = w.node_tree.nodes.new("ShaderNodeTexGradient")
+    grad.gradient_type = "SPHERICAL"
+    ramp = w.node_tree.nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].position = 0.30
+    ramp.color_ramp.elements[1].position = 0.85
+    base = [c * WORLD_GAIN for c in radiance]
+    ramp.color_ramp.elements[0].color = (*[c * 0.35 for c in base], 1.0)
+    ramp.color_ramp.elements[1].color = (*[c * 2.2 for c in base], 1.0)
+    w.node_tree.links.new(grad.outputs["Color"], ramp.inputs["Fac"])
+    w.node_tree.links.new(ramp.outputs["Color"], bg.inputs["Color"])
     bpy.context.scene.world = w
 
 
@@ -412,8 +436,12 @@ def digits(out, digits=range(10)):
         print("digit", d, "->", path + ".npy")
 
 
-def metal_mask(out):
+def metal_mask(out, scale=2):
     """Flat coverage of the hardware, glass hidden: the sprite's alpha.
+
+    Rendered at twice the sprite's resolution and box-filtered down, because the
+    alpha is the tube's silhouette: at one sample per output pixel its edge is a
+    staircase, and 0/1 stairs are what makes a sprite look cut out.
 
     The parts are emissive, not white-lit: with a white environment the camera
     sees the environment through every gap and the coverage it measures is the
@@ -421,6 +449,8 @@ def metal_mask(out):
     """
     clear()
     device()
+    global W, HH
+    W, HH = W * scale, HH * scale
     render_settings(64, out + "_hw.exr")
     shapes, wires, glow = scene_geometry()
     white = material_emission("coverage", (1.0, 1.0, 1.0), 1.0)
@@ -434,7 +464,9 @@ def metal_mask(out):
     world((0.0, 0.0, 0.0))
     sensor()
     save_render(out + "_hw.exr")
-    print("metal mask:", out + "_hw.exr")
+    exr_to_npy(out + "_hw.exr", out + "_hw.npy", downsample=scale)
+    W, HH = W // scale, HH // scale
+    print("metal mask:", out + "_hw.npy")
 
 
 def glass_layer(out, gain=0.30):
@@ -457,7 +489,7 @@ def glass_layer(out, gain=0.30):
     print("glass:", out + "_glass.exr")
 
 
-def exr_to_npy(path, npy_path):
+def exr_to_npy(path, npy_path, downsample=1):
     """An EXR from Cycles -> the float array the old passes fed to post.py.
 
     Three channels, top row first: Blender writes bottom-up and post.py reads the
@@ -468,6 +500,11 @@ def exr_to_npy(path, npy_path):
         img.size[1], img.size[0], 4
     )
     rgb = px[::-1, :, :3]
+    if downsample > 1:
+        h, w = rgb.shape[:2]
+        rgb = rgb.reshape(
+            h // downsample, downsample, w // downsample, downsample, 3
+        ).mean(axis=(1, 3))
     np.save(npy_path, rgb)
     bpy.data.images.remove(img)
     print("saved", npy_path, rgb.shape)
@@ -509,7 +546,6 @@ def main():
         exr_to_npy(out + ".exr", out + ".npy")
     if "metal" in what:
         metal_mask(out)
-        exr_to_npy(out + "_hw.exr", out + "_hw.npy")
     if "glass" in what:
         glass_layer(out)
         exr_to_npy(out + "_glass.exr", out + "_glass.npy")

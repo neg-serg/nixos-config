@@ -262,8 +262,12 @@ def main(beauty, out, exposure=0.55):
         hw = hw if hw.ndim == 2 else hw.mean(axis=2)
     else:
         hw = np.zeros_like(lum)
-    # The metal: an ordinary overlay, opaque where it is.
-    al = np.where(hw > 0.5, 0.97, 0.0).astype(np.float32)
+    # The metal: an ordinary overlay, and its alpha is the coverage the mask
+    # measured, not a threshold on it. A threshold puts 0 and 1 next to each
+    # other along every edge of every wire — the sprite is then a cut-out, and
+    # downscaling it can only smear the stairs. The mask is rendered at twice
+    # the resolution and box-filtered, so its values are a real coverage.
+    al = np.clip(hw * 0.97, 0.0, 0.97).astype(np.float32)
     img = np.clip(rgb, 0, 1)
     Image.fromarray(
         (np.concatenate([img, al[..., None]], -1) * 255).astype("uint8"),
