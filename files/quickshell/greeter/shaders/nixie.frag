@@ -371,7 +371,7 @@ colour = mix(colour, pCathode.rgb * 0.16, stem);
 alpha = mix(alpha, 0.34, stem * 0.9);
 // the lit edge of each wire: a cathode in a lamp is metal, and metal always
 // catches some of the room, so the stack reads even over a dark picture
-colour += vec3(0.62, 0.66, 0.76) * clamp(stack - 0.35, 0.0, 1.0) * 0.18;
+colour += metal_hit(px, Ncyl, VIEW, vec3(0.50, 0.50, 0.53), 0.40) * clamp(stack - 0.35, 0.0, 1.0) * 0.75;
 }
 
 // --- the anode: the wire-mesh cage around the stack ----------------------
@@ -401,7 +401,7 @@ cageGlow = pHalo.rgb * near * pGlow * 0.22;
 // behind it and catches one lit edge from the left.
 colour = mix(colour, vec3(0.030, 0.034, 0.042) + cageGlow, grid * 0.55);
 alpha = mix(alpha, 0.42, grid * 0.40);
-colour += vec3(0.55, 0.58, 0.64) * clamp(grid - 0.45, 0.0, 1.0) * 0.10;
+colour += metal_hit(px, Ncyl, VIEW, vec3(0.56, 0.55, 0.52), 0.35) * clamp(grid - 0.45, 0.0, 1.0) * 0.55;
 }
 
 // --- the discharge --------------------------------------------------------
