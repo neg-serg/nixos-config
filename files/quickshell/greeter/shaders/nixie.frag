@@ -381,12 +381,12 @@ float dist = max(wireDist, 0.0);
 float axis = digitWire(int(pDigit + 0.5), dp) * gm;
 float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
-float gas = exp(-dist / (0.30 * mm)) * 0.55 + exp(-dist / (0.70 * mm)) * 0.10;
+float gas = exp(-dist / (0.26 * mm)) * 0.45 + exp(-dist / (0.70 * mm)) * 0.09;
 gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.96, 0.88), pow(core, 8.0) * 0.25);
-		add += wireColour * core * 3.00 * coreLit;
+		add += wireColour * core * 2.60 * coreLit;
 
 add += pHalo.rgb * gas * 0.30 * haloLit;
 // the fringe where the discharge dies out drifts violet
