@@ -240,13 +240,13 @@ vec2 hv = vec2(rayOut.x, rayOut.y) / max(-rayOut.z, 0.06) * planeDist * 0.45 * p
 vec2 off = plane * pRefract + hv;
 off = clamp(off, vec2(-0.75 * R), vec2(0.75 * R));
 vec2 uv = (px + pInset + off) / pBackdrop;
-vec3 refract = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb * absorb * 1.08 + 0.004;
+vec3 refract = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb * absorb;
 
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
-float alpha = inside * (0.07 + 0.26 * pow(grazing, 2.0));
+float alpha = inside * 0.22 * pow(grazing, 3.0);   // only the silhouette hides the picture
 // the body: cold, and a little darker than the picture behind it
-colour += vec3(0.008, 0.012, 0.022) * inside * (0.35 + 0.65 * grazing);
+colour += vec3(0.003, 0.004, 0.008) * inside * grazing;   // the body is not a filter
 
 // the wall edge-on: two surfaces with a dark gap between them
 float rim = exp(-max(d, 0.0) / 0.35) * inside;   // the wall seen edge-on: a hairline
@@ -381,7 +381,7 @@ float dist = max(wireDist, 0.0);
 float axis = digitWire(int(pDigit + 0.5), dp) * gm;
 float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
-float gas = exp(-dist / (0.26 * mm)) * 0.45 + exp(-dist / (0.70 * mm)) * 0.09;
+float gas = exp(-dist / (0.20 * mm)) * 0.34 + exp(-dist / (0.45 * mm)) * 0.05;
 gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
@@ -424,11 +424,15 @@ float bm = insideCollar * clamp((p.y - (baseTop - 1.5)) / 3.0, 0.0, 1.0);
 float side = clamp(p.x / max(10.5 * mm, 1.0), -1.0, 1.0);   // the collar, Ø21
 float uu = asin(clamp(side, -0.999, 0.999)) / (PI * 0.5);
 // crimped metal: flutes, lit from the left, its foot going dark
-colour = mix(colour, vec3(0.055, 0.30, 0.42) * (0.55 + 0.45 * side), bm);
+vec3 ceramic = vec3(0.032, 0.031, 0.033) * (0.30 + 0.70 * sqrt(max(0.0, 1.0 - side * side)));
+ceramic += vec3(0.085, 0.082, 0.086) * pow(max(0.0, 0.5 + 0.5 * side), 3.0);   // a sheen, not a colour
+ceramic *= 1.0 - 0.20 * exp(-pow((fract(uu * 14.0) - 0.5) * 2.0 / 0.55, 2.0)); // the moulding's crimps
+ceramic += vec3(0.045) * exp(-pow((fract(uu * 14.0) - 0.5) * 2.0 / 0.30 + 1.2, 2.0)) * max(0.0, side + 0.4);
+colour = mix(colour, ceramic, bm);
 alpha = mix(alpha, 0.96, bm);
-colour += exp(-pow(abs(fract(uu * 14.0) - 0.5) * 2.0 / 0.38, 2.0)) * bm * (0.030 + 0.055 * (0.5 + 0.5 * side));
+colour += vec3(0.030) * exp(-pow(abs(fract(uu * 14.0) - 0.5) * 2.0 / 0.30, 2.0)) * bm * (0.5 + 0.5 * side);
 float edge = exp(-pow((p.y - baseTop) / 1.1, 2.0)) * insideCollar;
-colour += vec3(0.72, 0.74, 0.80) * edge * (0.40 + 0.60 * min(pGlow, 1.0));
+colour += vec3(0.20, 0.20, 0.21) * edge * (0.35 + 0.65 * min(pGlow, 1.0));   // the flange, moulded and matte
 alpha += edge * 0.35;
 colour *= 1.0 - 0.35 * exp(-pow((p.y - (baseTop - 2.2)) / 1.6, 2.0)) * insideCollar;
 colour += vec3(1.0) * exp(-pow((p.y - (boxMid + 0.5 * collarH) + 1.2) / 1.2, 2.0)) * insideCollar * 0.09;
