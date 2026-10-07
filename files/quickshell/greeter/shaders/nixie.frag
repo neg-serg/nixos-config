@@ -154,6 +154,20 @@ vec3 f = f0 + (vec3(1.0) - f0) * pow(1.0 - c, 5.0);
 return env * f;
 }
 
+
+// A reflection off glass or metal is never a mirror image: the surface scatters
+// it, and the room behind a lamp is seen smeared. Five taps in a cross spread
+// over the radius give that — a sharp single sample is what made the reflection
+// read as a pasted image.
+vec3 blurred_room(vec2 uv, vec2 radius) {
+vec3 acc = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb;
+acc += texture(source, clamp(uv + vec2(radius.x, 0.0), vec2(0.001), vec2(0.999))).rgb;
+acc += texture(source, clamp(uv - vec2(radius.x, 0.0), vec2(0.001), vec2(0.999))).rgb;
+acc += texture(source, clamp(uv + vec2(0.0, radius.y), vec2(0.001), vec2(0.999))).rgb;
+acc += texture(source, clamp(uv - vec2(0.0, radius.y), vec2(0.001), vec2(0.999))).rgb;
+return acc * 0.2;
+}
+
 void main() {
 const float PI = 3.14159265;
 
@@ -302,7 +316,7 @@ float fade = clamp(1.0 - pow((v - 0.25) / 0.90, 2.0), 0.0, 1.0) * clamp((v + 0.9
 vec2 mir = vec2(rayIn.x, rayIn.y) / max(-rayIn.z, 0.06) * roomDist;
 mir = clamp(mir, vec2(-0.20 * R), vec2(0.20 * R));
 vec2 uvR = (px + pInset + mir) / pBackdrop;
-vec3 room = texture(source, clamp(uvR, vec2(0.001), vec2(0.999))).rgb;
+vec3 room = blurred_room(uvR, vec2(0.035, 0.030) * pRefract);   // the room, smeared
 glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight;
 // two narrow lights the tube always catches, and they stop before the collar
 glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.14 * pHighlight;
