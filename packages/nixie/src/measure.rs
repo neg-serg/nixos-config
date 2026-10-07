@@ -171,32 +171,39 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     }
     out.halo_half_px = reach;
 
-    // the glass's own light: the tube's body above the numeral against the
-    // picture the glass covers — the box's corner is outside the tube
-    let band_y = y0 + (by0 - y0) / 2;
-    let mut inside = 0f32;
-    let mut outside = 0f32;
-    let mut n_in = 0f32;
-    let mut n_out = 0f32;
+    // The glass's own light: what the wall adds to what it covers. The band is
+    // fixed by the drawing (a fifth of the box under the dome) so it does not
+    // move with the numeral, and the room is measured on the same rows outside
+    // the glass — a clear wall shows the room, it does not light up.
+    let (x0, y0, x1, y1) = box_;
+    let band_top = y0 + (y1 - y0) / 10;
+    let band_bottom = y0 + 3 * (y1 - y0) / 10;
     let cx = (x0 + x1) / 2;
-    for y in y0..band_y.max(y0 + 1) {
-        for x in x0..x1 {
-            let l = at(x, y).0 as f32;
-            if x > cx - 20 && x < cx + 20 {
-                inside += l;
-                n_in += 1.0;
-            } else if x < x0 + 20 || x > x1 - 20 {
-                outside += l;
-                n_out += 1.0;
-            }
+    let inner = (x1 - x0) / 10;
+    // Medians, not means: the pip's mark and the two highlights are small and
+    // bright, and a mean would make the glass look like a lamp.
+    let mut inside = Vec::new();
+    let mut outside = Vec::new();
+    for y in band_top..band_bottom {
+        for x in (cx - inner)..(cx + inner) {
+            inside.push(at(x, y).0 as f32);
+        }
+        for x in x0..(x0 + (x1 - x0) / 20) {
+            outside.push(at(x, y).0 as f32);
         }
     }
-    let peak_f = peak.max(1) as f32;
-    out.glass_own_light = if n_in > 0.0 {
-        (inside / n_in) / peak_f
-    } else {
-        0.0
+    let median = |mut v: Vec<f32>| {
+        if v.is_empty() {
+            return 0.0;
+        }
+        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        v[v.len() / 2]
     };
+    let peak_f = peak.max(1) as f32;
+    let in_med = median(inside);
+    let out_med = median(outside);
+    let seen = in_med - out_med; // what the wall adds to the room
+    out.glass_own_light = seen.max(0.0) / peak_f;
 
     // the mesh: how much high-frequency structure the tube's body carries — a
     // lamp without an anode looks like flat glass, one with it does not
@@ -215,6 +222,6 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     if n > 0.0 {
         out.cage_contrast = (diff / n) / (mean / n).max(1.0);
     }
-    let _ = (reds.len(), outside);
+    let _ = reds.len();
     out
 }
