@@ -44,11 +44,11 @@ impl Drawing {
     pub fn read(src: &str) -> Result<Self> {
         let box_w = number_after(src, "float boxW = ")?;
         let box_h = number_after(src, ", boxH = ")?;
-        let bulb_r = number_after(src, "float bulbR = ")?;
-        let bulb_h = number_after(src, "float bulbH = ")?;
+        let bulb_r = number_after(src, "const float BULB_R_MM = ")?;
+        let bulb_h = number_after(src, "const float BULB_H_MM = ")?;
         let pip_r = number_after(src, "float pipR = ")?;
-        let collar_r = number_after(src, "float side = clamp(p.x / max(")?;
-        let collar_h = number_after(src, "float collarH = (pBase > 0.5) ? ")?;
+        let collar_r = number_after(src, "const float BULB_R_MM = ")?;
+        let collar_h = number_after(src, "const float COLLAR_H_MM = ")?;
         let digit_h = number_after(src, "const float DIGIT_H = ")?;
         let digit_w = number_after(src, "const float DIGIT_W = ")?;
         let wire_r = number_after(src, "float wirePx = ")?;
