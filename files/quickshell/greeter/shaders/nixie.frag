@@ -98,6 +98,30 @@ return mix(b, a, h) - k * h * (1.0 - h);
 // A wire is bent, not assembled: the numerals have to read as smooth curves.
 // This is the distance to a quadratic Bezier, sampled finely enough that the
 // chords are invisible (the wire is 0.3 units thick, the chords err by 1e-3).
+
+// A Catmull-Rom spline through the given points: the curve passes through every
+// point and its tangents are continuous, so a chain of them is one smooth wire
+// with no kink at the joins — which is what a bent filament is.
+float sdCatmull(vec2 p, vec2 p0, vec2 p1, vec2 p2, vec2 p3) {
+float d = 1e5;
+vec2 prev = p1;
+for (int i = 1; i <= 12; i++) {
+float t = float(i) / 12.0;
+float t2 = t * t;
+float t3 = t2 * t;
+vec2 q = 0.5 * ((2.0 * p1) + (-p0 + p2) * t
++ (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2
++ (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3);
+d = min(d, sdSegment(p, prev, q));
+prev = q;
+}
+return d;
+}
+float sdSpline6(vec2 p, vec2 a, vec2 b, vec2 c, vec2 d, vec2 e, vec2 f) {
+return min(min(sdCatmull(p, a, a, b, c), sdCatmull(p, a, b, c, d)),
+           min(sdCatmull(p, b, c, d, e), sdCatmull(p, c, d, e, f)));
+}
+
 float sdBezier(vec2 p, vec2 a, vec2 b, vec2 c) {
 float d = 1e5;
 vec2 prev = a;
@@ -122,21 +146,19 @@ return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
                  sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.10),
             sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.10);
 if (digit == 3)
-// two Bezier arcs with matching tangents at the waist, so the wire flows:
-// the upper belly curls right, the lower one answers it, both open to the left
-return smin(sdBezier(p, vec2(-0.10, 0.95), vec2(0.62, 0.95), vec2(0.04, 0.06)),
-            sdBezier(p, vec2(0.04, 0.06), vec2(-0.54, -0.83), vec2(-0.12, -0.95)), 0.06);
+// one smooth spline: the top curls right, the waist pinches, the belly answers,
+// and the ends stay open to the left
+return sdSpline6(p, vec2(-0.14, 0.92), vec2(0.34, 1.00), vec2(0.44, 0.42),
+                    vec2(0.06, 0.04), vec2(0.46, -0.34), vec2(0.30, -0.94));
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.10);
 if (digit == 5)
-// a bar across the top, a shoulder down the left, and a belly that closes at
-// the foot: three Beziers, tangent to each other, one flowing wire
-return smin(smin(
-            sdBezier(p, vec2(0.34, 1.00), vec2(-0.32, 1.00), vec2(-0.32, 0.30)),
-            sdBezier(p, vec2(-0.32, 0.30), vec2(-0.32, -0.20), vec2(0.10, -0.10)), 0.06),
-            sdBezier(p, vec2(0.10, -0.10), vec2(0.62, 0.02), vec2(0.26, -0.95)), 0.06);
+// one smooth spline: the bar across the top, the shoulder down the left, and a
+// belly that closes to the left at the foot
+return sdSpline6(p, vec2(0.36, 0.98), vec2(-0.22, 1.02), vec2(-0.34, 0.42),
+                    vec2(-0.30, -0.06), vec2(0.42, -0.30), vec2(-0.20, -0.96));
 if (digit == 8)
 return smin(sdEllipse(p, vec2(0.0, 0.50), vec2(0.27, 0.50)),
             sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)), 0.12);
