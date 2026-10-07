@@ -159,8 +159,15 @@ vec3 glassLight = vec3(0.0);
 float alpha = 0.0;
 
 // the numeral's own space: y-up, the width as the unit on both axes
+// The numeral's half-height, in the same units: the stack is 25 mm tall inside a
+// 31.5 mm envelope, and the shader's item is that envelope plus the bloom's room.
+// The numeral's half-height as a fraction of the envelope's: the sprite carries
+// the hardware alone now, so this number is the numeral's whole size.
 float unit = 0.46 * hs.y;
 vec2 centre = vec2(0.0, -0.075 * hs.y * 2.0);
+// the ten cathodes now sit 0.5 mm apart, not 0.24: the stack is deeper, and the
+// grey numerals behind the lit one have to spread with it
+const float STACK_PITCH = 0.5;
 vec2 dp = vec2(p.x - centre.x, centre.y - p.y) / unit;
 float wireR = pWire;
 float baseTop = hs.y - pBase;

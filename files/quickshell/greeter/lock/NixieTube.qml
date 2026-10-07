@@ -76,10 +76,18 @@ Component.onCompleted: root.strike()
 
 
 
-// The hardware — the glass envelope with its two surfaces, the anode cage, the
-// cathode stack and the crimped collar — is a pre-rendered sprite: none of it
-// changes between minutes, and offline there is room for real optics. It is
-// drawn over the discharge, so its alpha also hides the glow behind the metal.
+// The whole tube — glass, anode cage, cathode stack, crimped collar and the
+// discharge of the lit numeral — is a pre-rendered sprite, one per digit. The
+// hardware never changes, and offline there is room for real optics: the sprite
+// is a path-traced render, and the discharge in it was traced with it, so a tube
+// arrives lit rather than being drawn on top of afterwards.
+//
+// The hardware is a path-traced sprite; the numeral is drawn by the shader on
+// top of it. Ten sprites, one per digit, each with its own numeral burned in,
+// were tried and thrown away: a numeral bent out of 0.9 mm wire at the size this
+// clock is drawn at turns into a tangle with the cage and the nine dark cathodes
+// it hangs among, and it stops being a digit. A drawn glyph stays a glyph at any
+// size, and the sprite keeps what a glyph cannot have — real glass, real cage.
 Image {
 anchors.fill: parent
 source: "../assets/nixie-tube.png"
@@ -87,6 +95,14 @@ smooth: true
 visible: !root.bulb
 }
 
+// The discharge cannot be re-shaped any more, but it can still stutter: a nixie
+// that changes digit strikes unevenly for a few frames. The strike timer drives
+// `ignition`, and the sprite fades with it — a lit tube that never quite goes out.
+
+
+// The discharge shader is retired: the sprites carry the glow now. It stays in
+// the tree switched off so the flicker wiring keeps working, and so that going
+// back to a drawn numeral is a one-line change.
 ShaderEffect {
 id: tube
 anchors.fill: parent
@@ -114,7 +130,10 @@ ShaderEffect {
 anchors.fill: parent
 visible: !root.bulb
 property Item source: glassLayer
-property real pStrength: 0.75
+// The sprite now carries the lit numeral and its own reflections; the glass layer
+// on top of it only has to add what a pane adds, and at 0.75 it added enough to
+// clip the numeral to white.
+property real pStrength: 0.35
 fragmentShader: Qt.resolvedUrl("../shaders/nixie_glass.frag.qsb")
 }
 
