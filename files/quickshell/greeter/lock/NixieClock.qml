@@ -69,16 +69,6 @@ implicitHeight: hourTens.implicitHeight
 Repeater {
 model: 2
 
-NixieTube {
-required property int index
-				backdrop: root.backdrop
-
-bulb: true
-tubeIndex: 4 + index
-numeralSize: root.numeralSize
-x: Math.round((colon.width - width) / 2)
-y: Math.round((colon.height / 2) + (index === 0 ? -root.bulbOffset : root.bulbOffset) - (height / 2))
-}
 }
 }
 
