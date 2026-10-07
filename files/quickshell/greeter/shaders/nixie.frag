@@ -148,8 +148,8 @@ return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
 if (digit == 3)
 // one smooth spline: the top curls right, the waist pinches, the belly answers,
 // and the ends stay open to the left
-return sdSpline6(p, vec2(-0.14, 0.92), vec2(0.34, 1.00), vec2(0.44, 0.42),
-                    vec2(0.06, 0.04), vec2(0.46, -0.34), vec2(0.30, -0.94));
+return sdSpline6(p, vec2(-0.14, 1.003), vec2(0.34, 1.090), vec2(0.44, 0.458),
+                    vec2(0.06, 0.044), vec2(0.46, -0.371), vec2(0.30, -1.025));
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
@@ -157,8 +157,8 @@ return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
 if (digit == 5)
 // one smooth spline: the bar across the top, the shoulder down the left, and a
 // belly that closes to the left at the foot
-return sdSpline6(p, vec2(0.36, 0.98), vec2(-0.22, 1.02), vec2(-0.34, 0.42),
-                    vec2(-0.30, -0.06), vec2(0.42, -0.30), vec2(-0.20, -0.96));
+return sdSpline6(p, vec2(0.36, 1.098), vec2(-0.22, 1.142), vec2(-0.34, 0.470),
+                    vec2(-0.30, -0.067), vec2(0.42, -0.336), vec2(-0.20, -1.075));
 if (digit == 8)
 return smin(sdEllipse(p, vec2(0.0, 0.50), vec2(0.27, 0.50)),
             sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)), 0.12);
