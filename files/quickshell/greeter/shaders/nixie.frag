@@ -204,11 +204,18 @@ float grazing = 1.0 - sqrt(max(0.0, 1.0 - xr * xr));
 // optics solvable here instead of raymarched — the normal is exact, and so is
 // the distance a ray travels through the glass.
 float R = max(bulbR, 1.0);
-float capZ = sqrt(max(0.0, R * R - p.x * p.x - (p.y - capY) * (p.y - capY)));
-vec3 Ncap = normalize(vec3(p.x, p.y - capY, -capZ));
+// The envelope in profile is a rectangle closed by two semicircles, so the
+// surface below has TWO caps, one at each end, and the cylinder between them.
+// Normals taken from a single cap turned the two hemispheres into two spheres,
+// which is what the picture showed.
+float capOffset = max(0.5 * bulbH - bulbR, 0.0);          // the cylinder's half length
+float capCentre = sign(p.y) * capOffset;                  // the nearest cap's centre
+float capDist = max(abs(p.y) - capOffset, 0.0);           // how far into that cap
+float capZ = sqrt(max(0.0, R * R - p.x * p.x - capDist * capDist));
+vec3 Ncap = normalize(vec3(p.x, capDist * sign(p.y), -capZ));
 vec3 Ncyl = normalize(vec3(p.x, 0.0, -sqrt(max(0.0, R * R - p.x * p.x))));
-float blend = clamp(0.5 + 0.5 * (p.y - capY) / max(bulbH - bulbR, 1.0), 0.0, 1.0);
-vec3 N3 = normalize(mix(Ncap, Ncyl, blend));
+float blend = clamp(capDist / max(0.5 * mm, 1.0), 0.0, 1.0);   // 0 in the cylinder, 1 in a cap
+vec3 N3 = normalize(mix(Ncyl, Ncap, blend));
 const vec3 VIEW = vec3(0.0, 0.0, -1.0);   // the eye looks along -z, orthographic
 // --- the glass ---------------------------------------------------------
 // Clear glass over a dark room shows almost nothing: the rim, where the wall is
