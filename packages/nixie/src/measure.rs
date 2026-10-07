@@ -43,6 +43,8 @@ pub struct Measured {
     /// carries its ink in the upper half, a `2` has a bar across the bottom.
     pub ink_top_share: f32,
     pub ink_bbox: (u32, u32, u32, u32),
+    /// The red peak of the frame: on a lit lamp that is the wire (255).
+    pub peak: i32,
 }
 
 impl Measured {
@@ -220,6 +222,7 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
         v.sort_by(|a, b| a.partial_cmp(b).unwrap());
         v[v.len() / 2]
     };
+    out.peak = peak;
     let peak_f = peak.max(1) as f32;
     let in_med = median(inside);
     let out_med = median(outside);
