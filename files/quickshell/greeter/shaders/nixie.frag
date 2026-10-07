@@ -155,7 +155,7 @@ vec2 p = px - pSize * 0.5;
 // item's centre — one frame for the glass, the stack, the mesh and the collar.
 float boxW = 21.0, boxH = 35.0;
 // the bulb is a cylinder with a hemisphere at each end, both bulging outward
-const float BULB_R_MM = 7.0;    // the glass, Ø14: the cylinder dominates
+const float BULB_R_MM = 9.5;    // the glass, Ø19 as on the sheet; the cylinder is 16 mm
 const float BULB_H_MM = 35.0;   // the whole height
 const float COLLAR_H_MM = 0.0;  // there is no base on this lamp
 float mm = min((pSize.x - 2.0 * pInset) / boxW, (pSize.y - 2.0 * pInset) / boxH);
