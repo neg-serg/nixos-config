@@ -183,7 +183,10 @@ float capY = apexY + bulbR;             // the centre of the dome's cap
 // backwards puts the dome inside the base and draws the glass as a pane.
 // A capsule: hemispheres at both ends, so the top and the bottom of the glass
 // are the same shape. That is what a symmetric bulb is.
-float sdBulb = length(vec2(p.x, abs(p.y - boxMid) - (0.5 * bulbH - bulbR))) - bulbR;
+// p.y = 0 is the middle of the item, and the box is centred on it, so the glass
+// is centred on 0. Centring it on boxMid (the box's half height) dropped the
+// glass half a box below the numerals, which is what the picture showed.
+float sdBulb = length(vec2(p.x, abs(p.y) - (0.5 * bulbH - bulbR))) - bulbR;
 float sdPip = sdPipUnused;   // no pip on a symmetric bulb
 float sd = sdBulb;
 float inside = 1.0 - smoothstep(-0.7, 0.7, sd);
