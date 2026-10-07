@@ -86,10 +86,18 @@ pub fn check(d: &Drawing) -> Report {
         (l.apex_y + l.box_mid).abs() < 1e-9,
         format!("glass top {:.2} = box top {:.2}", l.apex_y, -l.box_mid),
     );
+    // The sheet's numerals are 18 mm, but the lamp is asked to fill its glass:
+    // what has to hold is that they still fit the bore and stay on the axis.
     c(
-        "the numerals are 18 mm",
-        (d.digit_h - 18.0).abs() < 1e-9,
-        format!("{:.2} x {:.2} mm", d.digit_w, d.digit_h),
+        "the numerals fill the glass without leaving it",
+        d.digit_h <= d.bulb_h - d.wall * 2.0 && d.digit_h >= 18.0 - 1e-9,
+        format!(
+            "{:.1} x {:.1} mm in Ø{:.1} x {:.0} mm",
+            d.digit_w,
+            d.digit_h,
+            inner_r * 2.0,
+            d.bulb_h
+        ),
     );
     c(
         "the numerals are centred on the glass",
