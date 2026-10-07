@@ -90,9 +90,19 @@ impl Measured {
 
 /// Measure the lamp inside `box` (x0, y0, x1, y1) of an RGBA frame.
 pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured {
-    let (x0, y0, x1, y1) = box_;
+    // The frame is the truth about how far the box may reach: a caller that
+    // computes it from floats can be a pixel out, and a measurement tool that
+    // panics instead of clamping is worse than useless.
+    let height = (rgba.len() / 4 / width.max(1) as usize) as u32;
+    let (x0, y0) = (
+        box_.0.min(width.saturating_sub(1)),
+        box_.1.min(height.saturating_sub(1)),
+    );
+    let (mut x1, mut y1) = (box_.2.min(width), box_.3.min(height));
+    x1 = x1.max(x0 + 1);
+    y1 = y1.max(y0 + 1);
     let at = |x: u32, y: u32| -> (i32, i32, i32) {
-        let i = ((y * width + x) * 4) as usize;
+        let i = (y as usize * width as usize + x as usize) * 4;
         (rgba[i] as i32, rgba[i + 1] as i32, rgba[i + 2] as i32)
     };
     let mut out = Measured::default();
@@ -150,8 +160,15 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     out.ink_top_share = if ink > 0.0 { ink_top as f32 / ink } else { 0.0 };
 
     // the gas: how far the red channel takes to fall to half its peak, measured
-    // off the wire on the row through the middle of the numeral
-    let mid_y = (by0 + by1) / 2;
+    // off the wire on the row through the middle of the numeral. An unlit lamp
+    // has no ink at all, and then there is no wire to measure against: the glass
+    // and the mesh are what an unlit lamp is asked about.
+    let has_ink = bx0 <= bx1 && by0 <= by1 && by0 < y1;
+    let mid_y = if has_ink {
+        (by0 + by1) / 2
+    } else {
+        (y0 + y1) / 2
+    };
     let mut peak = 0i32;
     let mut peak_x = x0;
     for x in x0..x1 {
@@ -214,7 +231,15 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     let mut diff = 0f32;
     let mut mean = 0f32;
     let mut n = 0f32;
-    for y in (by0 + 4)..by1.saturating_sub(4) {
+    // On a lit lamp the mesh is looked at behind the numeral; on an unlit one
+    // there is no numeral, and the mesh is measured where it hangs — the middle
+    // of the glass.
+    let (mesh_top, mesh_bottom) = if has_ink {
+        (by0 + 4, by1.saturating_sub(4))
+    } else {
+        (y0 + (y1 - y0) / 3, y1 - (y1 - y0) / 3)
+    };
+    for y in mesh_top..mesh_bottom {
         for x in (cx - 18)..(cx + 18) {
             let a = at(x, y).0 as f32;
             let b = at(x + 1, y).0 as f32;
