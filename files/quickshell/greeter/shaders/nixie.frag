@@ -186,7 +186,10 @@ float capY = apexY + bulbR;             // the centre of the dome's cap
 // p.y = 0 is the middle of the item, and the box is centred on it, so the glass
 // is centred on 0. Centring it on boxMid (the box's half height) dropped the
 // glass half a box below the numerals, which is what the picture showed.
-float sdBulb = length(vec2(p.x, abs(p.y) - (0.5 * bulbH - bulbR))) - bulbR;
+// The capsule: a rectangle closed by two semicircles. The max(..., 0) is what
+// makes the middle a straight-sided body — without it the profile pinches in
+// and the lamp reads as two spheres with a waist between them.
+float sdBulb = length(vec2(p.x, max(abs(p.y) - (0.5 * bulbH - bulbR), 0.0))) - bulbR;
 float sdPip = sdPipUnused;   // no pip on a symmetric bulb
 float sd = sdBulb;
 float inside = 1.0 - smoothstep(-0.7, 0.7, sd);
