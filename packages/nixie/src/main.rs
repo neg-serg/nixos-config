@@ -87,8 +87,9 @@ fn render(
     shader::compile(&compute, spv)?;
 
     let wallpaper = wallpaper(width, height)?;
-    let uniforms =
+    let mut uniforms =
         uniforms::Uniforms::from_drawing(drawing, mm, [width as f32, height as f32], digit);
+    uniforms.glow = glow;
     let frame = vulkan::render(spv, &uniforms, &wallpaper, width, height)?;
 
     let image = image::RgbaImage::from_raw(frame.width, frame.height, frame.rgba)
