@@ -8,6 +8,7 @@
 
 mod drawing;
 mod geometry;
+mod measure;
 mod shader;
 mod uniforms;
 mod vulkan;
@@ -34,6 +35,18 @@ struct Cli {
 enum Command {
     /// Check the geometry: one axis, no gaps, no overlaps, real proportions.
     Validate,
+    /// Draw every numeral and write a contact sheet plus the measurements.
+    Sweep {
+        /// Where the sheet goes.
+        #[arg(default_value = "/tmp/nixie-sweep.png")]
+        out: PathBuf,
+        /// How many pixels of device scale each lamp is drawn at.
+        #[arg(long, default_value_t = 2)]
+        scale: u32,
+        /// Fail when a measurement is outside the plan's limits.
+        #[arg(long)]
+        check: bool,
+    },
     /// Draw the tube off-screen and write a PNG.
     Render {
         /// Where the picture goes.
@@ -82,6 +95,74 @@ fn render(
         frame.width,
         frame.height
     );
+    Ok(())
+}
+
+/// Every numeral, drawn on the same GPU pass, measured as it comes out, and
+/// laid out as one sheet: any configuration of the lamp can be looked at and
+/// judged in one run.
+fn sweep(
+    src: &str,
+    drawing: &drawing::Drawing,
+    out: &std::path::Path,
+    scale: u32,
+    check: bool,
+) -> Result<()> {
+    let mm = 12.0 * scale as f32;
+    let pad = 16.0 * scale as f32;
+    let width = (drawing.box_w as f32 * mm + 2.0 * pad).round() as u32;
+    let height = (drawing.box_h as f32 * mm + 2.0 * pad).round() as u32;
+
+    let compute = shader::to_compute(src)?;
+    let spv = std::path::Path::new("/tmp/nixie-glsl/nixie.comp.spv");
+    shader::compile(&compute, spv)?;
+    let wall = wallpaper(width, height)?;
+
+    let mut sheet = image::RgbaImage::new(width * 10, height);
+    let limits = measure::Limits::default();
+    let mut failures = 0usize;
+    println!("digit  wire white/hot   halo half   glass light   mesh contrast   ink top",);
+    for digit in 0..10i32 {
+        let uniforms =
+            uniforms::Uniforms::from_drawing(drawing, mm, [width as f32, height as f32], digit);
+        let frame = vulkan::render(spv, &uniforms, &wall, width, height)?;
+        let measured = measure::measure(
+            &frame.rgba,
+            frame.width,
+            (
+                pad as u32,
+                pad as u32,
+                width - pad as u32,
+                height - pad as u32,
+            ),
+        );
+        println!(
+            "  {}    {:>4} / {:<4}   {:>4} px    {:>6.1}%        {:>6.1}%      {:.0}%",
+            digit,
+            measured.wire_white_px,
+            measured.wire_hot_px,
+            measured.halo_half_px,
+            measured.glass_own_light * 100.0,
+            measured.cage_contrast * 100.0,
+            measured.ink_top_share * 100.0
+        );
+        if check {
+            for (name, ok, detail) in measured.checks(&limits) {
+                if !ok {
+                    println!("       FAIL {name}: {detail}");
+                    failures += 1;
+                }
+            }
+        }
+        let tile = image::RgbaImage::from_raw(frame.width, frame.height, frame.rgba)
+            .ok_or_else(|| anyhow!("the readback is not an image"))?;
+        image::imageops::replace(&mut sheet, &tile, (digit as i64) * width as i64, 0);
+    }
+    sheet.save(out)?;
+    println!("{}: {}x{}", out.display(), sheet.width(), sheet.height());
+    if failures > 0 {
+        std::process::exit(1);
+    }
     Ok(())
 }
 
@@ -156,6 +237,7 @@ fn main() -> Result<()> {
             std::process::exit(if report.failed() == 0 { 0 } else { 1 });
         }
         Command::Render { out, digit, scale } => render(&src, &drawing, &out, digit, scale)?,
+        Command::Sweep { out, scale, check } => sweep(&src, &drawing, &out, scale, check)?,
     }
     Ok(())
 }
