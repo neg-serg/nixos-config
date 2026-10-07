@@ -4,10 +4,11 @@ import qs
 
 // One gas-discharge tube of the login clock (lock/NixieClock.qml).
 //
-// The tube is a single shader pass and nothing else: the glass, the numerals, the
-// cathode stack, the metal base and the discharge all live in
-// shaders/nixie.frag. There is no font, no texture of its own and no second layer
-// — a digit change is one uniform, and a struck tube has nothing to redraw.
+// The glass and the discharge are drawn by shaders/nixie.frag; the metal — the
+// cage, the cathode stack, the washers, the stem and the collar — is a
+// path-traced sprite underneath the glass. Two layers, one tube: the glass needs
+// the wallpaper behind it and the metal needs real optics, and neither can do the
+// other's job.
 //
 // What it does take from the screen is the wallpaper patch behind it: the glass
 // refracts the picture and the glow lands on it, so the tube is a surface in the
@@ -23,6 +24,10 @@ property bool bulb: false
 // Four tubes striking in lockstep read as an animation; the index keeps their
 // flicker apart.
 property int tubeIndex: 0
+
+// The wallpaper the glass bends. The host hands it in (LockContent.qml); when it
+// is null the tube still draws, it just has nothing to refract.
+property Item backdrop: null
 
 // The numeral's size in px — the clock scales it by the theme's uiScale.
 property real numeralSize: 92
@@ -76,73 +81,72 @@ Component.onCompleted: root.strike()
 
 
 
-// The whole tube — glass, anode cage, cathode stack, crimped collar and the
-// discharge of the lit numeral — is a pre-rendered sprite, one per digit. The
-// hardware never changes, and offline there is room for real optics: the sprite
-// is a path-traced render, and the discharge in it was traced with it, so a tube
-// arrives lit rather than being drawn on top of afterwards.
+// The tube is two layers now, and the split is what each is good at.
 //
-// The hardware is a path-traced sprite; the numeral is drawn by the shader on
-// top of it. Ten sprites, one per digit, each with its own numeral burned in,
-// were tried and thrown away: a numeral bent out of 0.9 mm wire at the size this
-// clock is drawn at turns into a tangle with the cage and the nine dark cathodes
-// it hangs among, and it stops being a digit. A drawn glyph stays a glyph at any
-// size, and the sprite keeps what a glyph cannot have — real glass, real cage.
-Image {
-anchors.fill: parent
-source: "../assets/nixie-tube.png"
-smooth: true
-visible: !root.bulb
-}
-
-// The discharge cannot be re-shaped any more, but it can still stutter: a nixie
-// that changes digit strikes unevenly for a few frames. The strike timer drives
-// `ignition`, and the sprite fades with it — a lit tube that never quite goes out.
-
-
-// The discharge shader is retired: the sprites carry the glow now. It stays in
-// the tree switched off so the flicker wiring keeps working, and so that going
-// back to a drawn numeral is a one-line change.
+// The glass is drawn here, live: it is a lens over the wallpaper patch behind it
+// (ShaderEffectSource below), and what makes a tube sit in a picture instead of
+// being pasted on it is that the picture bends through it. It also carries the
+// discharge — a numeral is a curve, and a curve stays sharp at any size.
+//
+// The metal is a path-traced sprite: the anode cage, the cathode stack, the mica
+// washers, the stem and the crimped collar, with real optics and a real room,
+// which is far too much to fake per frame. Its alpha covers the metal only, so
+// the glass in this shader is what shows through everywhere else.
 ShaderEffect {
 id: tube
 anchors.fill: parent
 
+property Item source: wallpaperPatch
 property vector2d pSize: Qt.vector2d(tube.width, tube.height)
+property vector2d pBackdrop: Qt.vector2d(tube.width + 2 * root.pad, tube.height + 2 * root.pad)
 property real pInset: root.pad
+property real pRadius: root.glassWidth * 0.5
 property real pBase: root.bulb ? 0 : Math.round(root.glassHeight * 0.17)
 property real pGlow: (root.bulb || root.digit >= 0) ? GreeterTheme.nixieGlow : 0.0
 property real pDigit: root.bulb ? -1 : root.digit
 property real pBulb: root.bulb ? 1 : 0
 property real pWire: GreeterTheme.nixieWire
+property real pStack: root.bulb ? 0 : GreeterTheme.nixieStack
+property real pHighlight: GreeterTheme.nixieHighlight
 property real pWarmth: GreeterTheme.nixieWarmth
 property real pFlicker: root.ignition
 property color pCore: GreeterTheme.nixieCoreColor
 property color pHalo: GreeterTheme.nixieGlowColor
+property color pGlass: GreeterTheme.nixieGlassColor
+property color pCathode: GreeterTheme.nixieCathodeColor
 
 fragmentShader: Qt.resolvedUrl("../shaders/nixie.frag.qsb")
 }
 
-
-// The glass goes on top of the metal, additively: its reflections are light on
-// the pane, and light does not hide the numeral behind it the way an opaque
-// sprite would. (The sprite's alpha carries the metal only.)
-ShaderEffect {
-anchors.fill: parent
-visible: !root.bulb
-property Item source: glassLayer
-// The sprite now carries the lit numeral and its own reflections; the glass layer
-// on top of it only has to add what a pane adds, and at 0.75 it added enough to
-// clip the numeral to white.
-property real pStrength: 0.35
-fragmentShader: Qt.resolvedUrl("../shaders/nixie_glass.frag.qsb")
+// The wallpaper the glass bends: the tube's rect, one pad wider on every side,
+// captured from the backdrop the host handed in. Live only while the tube is
+// striking — that is also when the layout settles at startup, so the patch is
+// taken again exactly when it has to be.
+readonly property point sampleOrigin: {
+const w = root.width;
+const h = root.height;
+if (root.backdrop === null || w <= 0 || h <= 0)
+return Qt.point(0, 0);
+return root.mapToItem(root.backdrop, -root.pad, -root.pad);
 }
 
-Image {
-id: glassLayer
+ShaderEffectSource {
+id: wallpaperPatch
+sourceItem: root.backdrop
 visible: false
-width: parent.width
-height: parent.height
-source: "../assets/nixie-glass.png"
+live: root.ignition < 0.999
 smooth: true
+sourceRect: Qt.rect(root.sampleOrigin.x, root.sampleOrigin.y,
+root.width + 2 * root.pad, root.height + 2 * root.pad)
+}
+
+// The metal, over the glass: the cage stands between the eye and the cathode
+// stack, and the collar sits on the outside of the envelope.
+Image {
+anchors.fill: parent
+source: "../assets/nixie-tube.png"
+smooth: true
+visible: !root.bulb
+opacity: 0.35 + 0.65 * root.ignition
 }
 }
