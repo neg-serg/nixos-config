@@ -4,11 +4,13 @@ import qs
 
 // One gas-discharge tube of the login clock (lock/NixieClock.qml).
 //
-// The glass and the discharge are drawn by shaders/nixie.frag; the metal — the
-// cage, the cathode stack, the washers, the stem and the collar — is a
-// path-traced sprite underneath the glass. Two layers, one tube: the glass needs
-// the wallpaper behind it and the metal needs real optics, and neither can do the
-// other's job.
+// The tube is one fragment shader and nothing else: the glass, the picture bent
+// through it, the cathode stack, the anode cage, the crimped collar and the
+// discharge of the lit numeral all live in shaders/nixie.frag. Nothing here is
+// pre-rendered — a digit change is one uniform, and every part of the tube is a
+// number the workbench can turn while it draws. It costs quality against a path
+// tracer: no real caustics, no dispersion, one bounce of the picture. It buys
+// being able to see the change now.
 //
 // What it does take from the screen is the wallpaper patch behind it: the glass
 // refracts the picture and the glow lands on it, so the tube is a surface in the
@@ -35,16 +37,22 @@ property Item backdrop: null
 property real glowScale: 1.0        // how hard the discharge burns
 property real glassLightScale: 1.0  // how much light the envelope catches
 property real warmthScale: 1.0      // how much of the discharge lands on the glass
-property real metalScale: 1.0       // how present the sprite's metal is
+property real metalScale: 1.0       // how present the drawn metal is
+property real glassThickness: 1.0   // the wall of the envelope, 1 = a nixie's own
+property real glassRefraction: 1.0  // how hard the glass bends the picture behind it
 
 // The numeral's size in px — the clock scales it by the theme's uiScale.
 property real numeralSize: 92
 readonly property real uiScale: GreeterTheme.uiScale
 
-// The envelope. Thin and tall, as a nixie is: a cylinder with a domed top,
-// with the metal base covering its foot.
-readonly property real glassWidth: root.bulb ? Math.round(root.numeralSize * 0.24) : Math.round(root.numeralSize * 0.60)
-readonly property real glassHeight: root.bulb ? root.glassWidth : Math.round(root.numeralSize * 1.60)
+// The envelope, in the drawing's own millimetres. Reflector's IN-12A/B data
+// sheet (1988) gives: bulb 19 x 28 mm, base 21 x 7 mm — 35 mm with the base and
+// without the pins — pins 1 mm on an 11.5 mm circle, 7 mm long, the pip 3.5 mm,
+// and the numerals 18 mm high. The numeral is the scale: everything else is a
+// ratio of it, so the tube stays IN-12 at any size the clock asks for.
+readonly property real mmPerPx: root.numeralSize / 18.0   // px per millimetre
+readonly property real glassWidth: Math.max(2, Math.round(21.0 * root.mmPerPx))
+readonly property real glassHeight: Math.max(2, Math.round(35.0 * root.mmPerPx))
 // Room around the envelope for the bloom and for the refracted wallpaper, which
 // the lens pulls in by a good part of the radius.
 readonly property real pad: Math.round(16 * root.uiScale)
@@ -53,7 +61,9 @@ implicitWidth: root.glassWidth + root.pad * 2
 implicitHeight: root.glassHeight + root.pad * 2
 
 // Discharge of the current digit: 1 while it burns steadily, and a stutter
-// between 0 and 1 for the frames after it changed.
+// between 0 and 1 for the frames after it changed. steady = true holds it at 1
+// from the first frame: the workbench screenshots a tube that is not stuttering.
+property bool steady: false
 property real ignition: 1.0
 property int strikesLeft: 0
 
@@ -85,7 +95,11 @@ strikeTimer.restart();
 }
 
 onDigitChanged: root.strike()
-Component.onCompleted: root.strike()
+Component.onCompleted: {
+root.ignition = 1.0
+if (!root.steady)
+root.strike()
+}
 
 
 
@@ -96,10 +110,9 @@ Component.onCompleted: root.strike()
 // being pasted on it is that the picture bends through it. It also carries the
 // discharge — a numeral is a curve, and a curve stays sharp at any size.
 //
-// The metal is a path-traced sprite: the anode cage, the cathode stack, the mica
-// washers, the stem and the crimped collar, with real optics and a real room,
-// which is far too much to fake per frame. Its alpha covers the metal only, so
-// the glass in this shader is what shows through everywhere else.
+// Everything is analytic: the metal is distance fields of wire, the glass is a
+// lens over the wallpaper patch, the discharge is the numeral's own curve. The
+// whole tube is a handful of uniforms, which is what makes it tunable in place.
 ShaderEffect {
 id: tube
 anchors.fill: parent
@@ -108,16 +121,19 @@ property Item source: wallpaperPatch
 property vector2d pSize: Qt.vector2d(tube.width, tube.height)
 property vector2d pBackdrop: Qt.vector2d(tube.width + 2 * root.pad, tube.height + 2 * root.pad)
 property real pInset: root.pad
-property real pRadius: root.glassWidth * 0.5
-property real pBase: root.bulb ? 0 : Math.round(root.glassHeight * 0.17)
+property real pRadius: root.bulb ? root.glassWidth * 0.42 : 9.5 * root.mmPerPx   // the bulb, Ø19 mm
+property real pBase: root.bulb ? 0 : Math.round(7.0 * root.mmPerPx)          // the collar, 7 mm
 property real pGlow: (root.bulb || root.digit >= 0) ? GreeterTheme.nixieGlow * root.glowScale : 0.0
 property real pDigit: root.bulb ? -1 : root.digit
 property real pBulb: root.bulb ? 1 : 0
 property real pWire: GreeterTheme.nixieWire
-property real pStack: root.bulb ? 0 : GreeterTheme.nixieStack
+property real pStack: (root.bulb ? 0 : GreeterTheme.nixieStack) * root.metalScale
 property real pHighlight: GreeterTheme.nixieHighlight * root.glassLightScale
 property real pWarmth: GreeterTheme.nixieWarmth * root.warmthScale
 property real pFlicker: root.ignition
+property real pMm: root.numeralSize / 18.0   // px per millimetre, the drawing's scale
+property real pThick: Math.max(0.8, 0.9 * root.mmPerPx) * root.glassThickness  // the wall, ~0.9 mm
+property real pRefract: root.glassRefraction
 property color pCore: GreeterTheme.nixieCoreColor
 property color pHalo: GreeterTheme.nixieGlowColor
 property color pGlass: GreeterTheme.nixieGlassColor
@@ -142,19 +158,9 @@ ShaderEffectSource {
 id: wallpaperPatch
 sourceItem: root.backdrop
 visible: false
-live: root.ignition < 0.999
+live: root.steady || root.ignition < 0.999
 smooth: true
 sourceRect: Qt.rect(root.sampleOrigin.x, root.sampleOrigin.y,
 root.width + 2 * root.pad, root.height + 2 * root.pad)
-}
-
-// The metal, over the glass: the cage stands between the eye and the cathode
-// stack, and the collar sits on the outside of the envelope.
-Image {
-anchors.fill: parent
-source: "../assets/nixie-tube.png"
-smooth: true
-visible: !root.bulb
-opacity: (0.35 + 0.65 * root.ignition) * root.metalScale
 }
 }
