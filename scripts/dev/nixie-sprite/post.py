@@ -232,6 +232,17 @@ def main(beauty, out, exposure=0.55):
             )
             rgb = np.clip(rgb, 0.0, 1.0)
 
+    # The collar is a cylinder, and it has to be shaded like one. The studio is a
+    # wall of light: it lit the paint evenly from edge to edge and the base came
+    # out as a bright rectangle sitting under a round tube. A cylinder's own
+    # shading is the cosine of the angle across its face — the edges turn away
+    # from the light and go dark, the middle stays — and that alone is what makes
+    # it read as turned metal instead of a flat block.
+    xr_c = np.clip(X / RB, -1.0, 1.0)
+    cylinder = 0.52 + 0.48 * np.sqrt(np.maximum(0.0, 1.0 - xr_c**2))
+    collar_zone = np.clip((-Y - (H / 2.0 - BASE * 0.6)) / 1.6, 0.0, 1.0)
+    rgb = rgb * (1.0 - collar_zone * (1.0 - cylinder))[..., None]
+
     # The collar sits in the shade of the envelope it carries: the glass ends right
     # above it and takes the studio light with it, so the metal is darkest at the
     # line where the two meet and comes back to full light lower down. Without it
