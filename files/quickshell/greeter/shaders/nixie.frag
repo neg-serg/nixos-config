@@ -172,7 +172,10 @@ float capY = apexY + bulbR;             // the centre of the dome's cap
 
 // The bulb: a cylinder closed by a hemispherical dome. The shoulder is the
 // tangent between them, which is how the drawing's fillet reads at any size.
-float sdBulb = length(vec2(p.x, max(p.y - capY, 0.0))) - bulbR;
+// y runs down: the dome is where p.y is above the cap's centre, so the flat side
+// of the capsule (a cylinder) is below it and the sphere above. Getting this
+// backwards puts the dome inside the base and draws the glass as a pane.
+float sdBulb = length(vec2(p.x, min(p.y - capY, 0.0))) - bulbR;
 float sdPip = length(p - vec2(0.0, pipTop + 0.5 * pipR)) - 0.5 * pipR;  // the nub on the dome
 float sd = smin(sdBulb, sdPip, 0.55 * pipR);
 float inside = 1.0 - smoothstep(-0.7, 0.7, sd);
@@ -275,15 +278,16 @@ alpha += tip * 0.06;
 // The numerals' own space: y-up (the tube's y runs down the screen), the width
 // of a numeral as the unit on both axes so a round wire stays round. The stack
 // lives in the cylinder above the collar, which is where a nixie keeps it.
-// The numerals are 18 mm high on the sheet, and the glyph they are drawn in
-// stands 1.56 units tall, so one unit is 18/1.56 mm. Across, the glyph is 0.6
-// units to a numeral's 9.6 mm — the width an IN-12 numeral has. The wire is a
-// real cathode: 0.24 mm across.
-float gy = (18.0 / 1.56) * mm;
-float gx = 1.39 * gy;
+// The numerals are 18 mm high on the sheet, and the glyphs in digitWire() run
+// from -1.02 to +1.02, i.e. 2.04 units tall, so one unit is 18/2.04 mm. Across
+// they run -0.35..+0.35, and an IN-12 numeral is about 10 mm wide, so the same
+// unit is a little wider across the glyph than up it. The wire is a real
+// cathode: 0.24 mm across.
+float gy = (18.0 / 2.04) * mm;
+float gx = 1.62 * gy;
 float gm = sqrt(gx * gy);
-float digitMid = 0.5 * (apexY + footY);          // the glass's middle
-vec2 centre = vec2(0.0, digitMid - 0.24 * gy);   // the glyph's own origin
+float digitMid = 0.5 * (apexY + footY);   // the glass's middle
+vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
 float wirePx = 0.12 * mm;
 float baseTop = footY;
@@ -334,8 +338,8 @@ vec3 cageGlow = vec3(0.0);
 float grid = 0.0;
 if (p.y > cageTop && p.y < cageBottom) {
 float uu = asin(clamp(p.x / cageR, -0.999, 0.999)) / (PI * 0.5);
-float wireV = exp(-pow(abs(fract(uu * 8.0) - 0.5) * 2.0 / 0.16, 2.0));
-float wireH = exp(-pow(abs(fract(p.y / 6.0) - 0.5) * 2.0 / 0.18, 2.0));
+float wireV = exp(-pow(abs(fract(uu * 12.0) - 0.5) * 2.0 / 0.16, 2.0));
+float wireH = exp(-pow(abs(fract(p.y / (1.0 * mm)) - 0.5) * 2.0 / 0.18, 2.0));
 float rails = exp(-pow((abs(p.x) - cageR) / 1.0, 2.0));
 grid = max(max(wireV, wireH * 0.65), rails);
 grid *= step(abs(p.x), cageR);
@@ -344,7 +348,7 @@ cageFade = clamp((p.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - p.y) / 8
 		 * clamp((cageR - abs(p.x)) / 6.0, 0.0, 1.0);
 grid *= cageFade;
 // the discharge lives inside the cage: the mesh glows where it is touched
-float near = exp(-max(digitWire(int(max(pDigit, 0.0) + 0.5), dp) * gm - wirePx, 0.0) / (0.20 * gm)) * step(-0.5, pDigit);
+float near = exp(-max(digitWire(int(max(pDigit, 0.0) + 0.5), dp) * gm - wirePx, 0.0) / (2.0 * mm)) * step(-0.5, pDigit);
 cageGlow = pHalo.rgb * near * pGlow * 0.55;
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
@@ -371,9 +375,9 @@ float dist = max(wireDist, 0.0);
 // its surface. It is a width in millimetres (the cathode is 0.24 mm across),
 // not a fraction of a pixel, which is what a white-hot filament is.
 float axis = digitWire(int(pDigit + 0.5), dp) * gm;
-float core = 1.0 - clamp(axis / max(wirePx, 0.35), 0.0, 1.0);
+float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
-float gas = exp(-dist / (0.020 * gm)) * 0.46 + exp(-dist / (0.070 * gm)) * 0.15;
+float gas = exp(-dist / (0.35 * mm)) * 0.46 + exp(-dist / (1.10 * mm)) * 0.15;
 gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
@@ -386,7 +390,7 @@ add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.17 * gm) / (0.09 * gm)) * 0.09
 // the far wall of the glass catches a squeezed, dim image of the wire
 vec2 mp = vec2(-p.x * 0.86, p.y);
 vec2 mirror = vec2((mp.x - centre.x) / gx, (centre.y - mp.y) / gy);
-add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (0.22 * gm)) * 0.10 * abs(xr) * haloLit;
+add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (2.2 * mm)) * 0.10 * abs(xr) * haloLit;
 gasMap = gas;
 colour += cageGlow * 0.25;
 }
