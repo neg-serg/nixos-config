@@ -352,8 +352,8 @@ cageFade = clamp((p.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - p.y) / 8
 		 * clamp((cageR - abs(p.x)) / 6.0, 0.0, 1.0);
 grid *= cageFade;
 // the discharge lives inside the cage: the mesh glows where it is touched
-float near = exp(-max(digitWire(int(max(pDigit, 0.0) + 0.5), dp) * gm - wirePx, 0.0) / (2.0 * mm)) * step(-0.5, pDigit);
-cageGlow = pHalo.rgb * near * pGlow * 0.55;
+float near = exp(-max(digitWire(int(max(pDigit, 0.0) + 0.5), dp) * gm - wirePx, 0.0) / (0.5 * mm)) * step(-0.5, pDigit);
+cageGlow = pHalo.rgb * near * pGlow * 0.22;
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
 colour = mix(colour, vec3(0.030, 0.034, 0.042) + cageGlow, grid * 0.55);
@@ -381,20 +381,20 @@ float dist = max(wireDist, 0.0);
 float axis = digitWire(int(pDigit + 0.5), dp) * gm;
 float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
-float gas = exp(-dist / (0.35 * mm)) * 0.46 + exp(-dist / (1.10 * mm)) * 0.15;
+float gas = exp(-dist / (0.30 * mm)) * 0.55 + exp(-dist / (0.70 * mm)) * 0.10;
 gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.96, 0.88), pow(core, 8.0) * 0.25);
 		add += wireColour * core * 3.00 * coreLit;
 
-add += pHalo.rgb * gas * 0.48 * haloLit;
+add += pHalo.rgb * gas * 0.30 * haloLit;
 // the fringe where the discharge dies out drifts violet
-add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.17 * gm) / (0.09 * gm)) * 0.09 * step(0.06 * gm, dist) * haloLit;
+add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
 // the far wall of the glass catches a squeezed, dim image of the wire
 vec2 mp = vec2(-p.x * 0.86, p.y);
 vec2 mirror = vec2((mp.x - centre.x) / gx, (centre.y - mp.y) / gy);
-add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (2.2 * mm)) * 0.10 * abs(xr) * haloLit;
+add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (0.6 * mm)) * 0.035 * abs(xr) * haloLit;
 gasMap = gas;
 colour += cageGlow * 0.25;
 }
