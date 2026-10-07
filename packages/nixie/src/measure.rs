@@ -115,6 +115,7 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     let mut hot = Vec::new();
     let mut white_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
     let mut hot_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
+    let mut half_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
     let mut ink_top = 0u64;
     let mut ink_bottom = 0u64;
     let (mut bx0, mut by0, mut bx1, mut by1) = (u32::MAX, u32::MAX, 0u32, 0u32);
@@ -214,6 +215,41 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
             peak_x = x;
         }
     }
+    // the gas: the sheath around the wire, measured across it. The area a level
+    // covers, divided by the length of the wire it wraps, is its thickness —
+    // which does not care whether the stroke is upright or slanted. A run along
+    // a row would, and then the number describes the numeral, not the gas.
+    for y in y0..y1 {
+        for x in x0..x1 {
+            let i = ((y - y0) as usize) * ((x1 - x0) as usize) + (x - x0) as usize;
+            half_mask[i] = (at(x, y).0 > peak / 2) as u8;
+        }
+    }
+    let stats = |mask: &Vec<u8>| -> (u32, u32) {
+        let wd = (x1 - x0) as usize;
+        let ht = (y1 - y0) as usize;
+        let (mut area, mut edge) = (0u32, 0u32);
+        for y in 0..ht {
+            for x in 0..wd {
+                if mask[y * wd + x] == 0 {
+                    continue;
+                }
+                area += 1;
+                let up = y == 0 || mask[(y - 1) * wd + x] == 0;
+                let down = y + 1 == ht || mask[(y + 1) * wd + x] == 0;
+                let left = x == 0 || mask[y * wd + x - 1] == 0;
+                let right = x + 1 == wd || mask[y * wd + x + 1] == 0;
+                if up || down || left || right {
+                    edge += 1;
+                }
+            }
+        }
+        (area, edge)
+    };
+    let (hot_area, hot_edge) = stats(&hot_mask);
+    let (half_area, _) = stats(&half_mask);
+    let length = (hot_edge as f32 / 2.0).max(1.0);
+    out.halo_half_px = (((half_area as f32 - hot_area as f32) / length) / 2.0).round() as u32;
     let half = peak / 2;
     let mut reach = 0;
     for x in (x0..peak_x).rev() {
