@@ -1,0 +1,12 @@
+[package]
+name = "nixie"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+
+[[bin]]
+name = "nixie"
+path = "src/main.rs"
