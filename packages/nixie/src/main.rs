@@ -164,6 +164,40 @@ fn sweep(
             .ok_or_else(|| anyhow!("the readback is not an image"))?;
         image::imageops::replace(&mut sheet, &tile, (digit as i64) * width as i64, 0);
     }
+    // The glass itself: measured on the lamp with nothing lit, which is where
+    // the plan's A3 measures it too — the discharge drowns everything else.
+    let dark = uniforms::Uniforms::from_drawing(drawing, mm, [width as f32, height as f32], -1);
+    let frame = vulkan::render(spv, &dark, &wall, width, height)?;
+    let glass = measure::measure(
+        &frame.rgba,
+        frame.width,
+        (
+            pad as u32,
+            pad as u32,
+            width - pad as u32,
+            height - pad as u32,
+        ),
+    );
+    println!(
+        "unlit lamp: glass adds {:.1}% of a lit wire (limit 8%), mesh contrast {:.1}%",
+        glass.glass_own_light * 100.0,
+        glass.cage_contrast * 100.0
+    );
+    if check && glass.cage_contrast < limits.cage_contrast {
+        println!(
+            "       FAIL the mesh is there: mesh contrast {:.1}%",
+            glass.cage_contrast * 100.0
+        );
+        failures += 1;
+    }
+    if check && glass.glass_own_light > limits.glass_own_light * 8.0 {
+        println!(
+            "       FAIL the glass adds little of its own: {:.1}%",
+            glass.glass_own_light * 100.0
+        );
+        failures += 1;
+    }
+
     sheet.save(out)?;
     println!("{}: {}x{}", out.display(), sheet.width(), sheet.height());
     if failures > 0 {

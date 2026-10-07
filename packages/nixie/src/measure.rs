@@ -176,8 +176,12 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     // move with the numeral, and the room is measured on the same rows outside
     // the glass — a clear wall shows the room, it does not light up.
     let (x0, y0, x1, y1) = box_;
-    let band_top = y0 + (y1 - y0) / 10;
-    let band_bottom = y0 + 3 * (y1 - y0) / 10;
+    // Under the dome and above the numerals: the numerals' box is 18 of the
+    // 35 mm and it is centred, so their top is a seventh of the box down.
+    // The glass is sampled over the lamp's whole body: on an unlit tube nothing
+    // else is in the picture, so the medians can take the rim in.
+    let band_top = y0 + (y1 - y0) / 20;
+    let band_bottom = y1 - (y1 - y0) / 20;
     let cx = (x0 + x1) / 2;
     let inner = (x1 - x0) / 10;
     // Medians, not means: the pip's mark and the two highlights are small and
