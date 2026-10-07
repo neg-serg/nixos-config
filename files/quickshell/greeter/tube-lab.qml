@@ -18,14 +18,6 @@ import qs
 import qs.lock
 
 ShellRoot {
-// A number from the shell, with a default: `Number(Quickshell.env(x) || d)`
-// is wrong here — in JavaScript 0 is falsy, so a handle deliberately set to
-// zero came back as the default and the knob did nothing.
-function envNum(name, dflt) {
-const raw = Quickshell.env(name);
-return (raw === undefined || raw === null || raw === "") ? dflt : Number(raw);
-}
-
 // A labelled slider: the value it is given, the value it is dragged to, and
 // the handle's name in plain words. Inline so the file stays self-contained —
 // a neighbouring .qml is not a type until the directory is a module.
@@ -88,6 +80,16 @@ implicitWidth: 660
 implicitHeight: 980
 color: "#14161c"
 
+// A number from the shell, with a default. `Number(Quickshell.env(x) || d)`
+// is wrong: in JavaScript 0 is falsy, so a handle set to zero came back as
+// the default and the knob did nothing. The helper lives in the window
+// because a function on the root is not in a nested window's scope — it
+// resolved to undefined, the handles became NaN, and the tube drew nothing.
+function envNum(name, dflt) {
+const raw = Quickshell.env(name);
+return (raw === undefined || raw === null || raw === "") ? dflt : Number(raw);
+}
+
 // Every handle can be set from the shell as well as dragged, which is
 // what lets a sweep be scripted: `LAB_GLOW=2 LAB_METAL=0 qs -p ...`.
 property int digit: envNum("LAB_DIGIT", 6)
@@ -96,6 +98,9 @@ property real glow: envNum("LAB_GLOW", 1.0)
 property real glassLight: envNum("LAB_GLASSLIGHT", 1.0)
 property real warmth: envNum("LAB_WARMTH", 1.0)
 property real metal: envNum("LAB_METAL", 1.0)
+// The workbench never wants the strike stutter: a screenshot has to be the
+// same picture twice, and a hand on a knob wants to see one change at a time.
+property bool steady: envNum("LAB_STEADY", 1) !== 0
 
 // The tube refracts what stands behind it, and the glass in the shader
 // samples the back wall. Without one the workbench drew a tube over black
@@ -121,10 +126,13 @@ opacity: 0.55
 
 Item {
 id: stage
+// Anchored to `parent`, not to the window: a Window is not an item
+// to anchor against in this build, and anchoring to it silently gave
+// the stage a size of zero — the whole workbench drew nothing.
 anchors {
-top: win.top
-left: win.left
-right: win.right
+top: parent.top
+left: parent.left
+right: parent.right
 bottom: controls.top
 bottomMargin: 18
 }
@@ -133,7 +141,13 @@ Item {
 id: tubeHolder
 anchors.centerIn: parent
 width: Math.min(stage.width * 0.52, stage.height * 0.42) * win.tubeScale
-height: tubeHolder.width * 2304 / 1120
+// The numeral that fits that width: the drawing's collar is 21 mm across and
+// the pads are the tube's own room, so the digit follows from the box.
+readonly property real pad: Math.round(16 * GreeterTheme.uiScale)
+readonly property real numeral: Math.round((tubeHolder.width - 2 * tubeHolder.pad) * 18.0 / 21.0)
+// And the box is the tube's own 35 x 21 mm plus the pads: what the clock shows.
+height: tubeHolder.width * (35.0 * tubeHolder.numeral / 18.0 + 2 * tubeHolder.pad)
+        / (21.0 * tubeHolder.numeral / 18.0 + 2 * tubeHolder.pad)
 
 NixieTube {
 anchors.fill: tubeHolder
@@ -141,24 +155,41 @@ digit: win.digit
 // The tube's own arithmetic, inverted: the item it wants to
 // be is the envelope (0.60 of the numeral) plus its two pads,
 // so the numeral's size follows from the room we give it.
-numeralSize: Math.round(
-(tubeHolder.width - 2 * 16 * GreeterTheme.uiScale) / 0.60)
+// The holder is the tube's own width: the drawing's 21 mm collar plus
+// the pads, so the numeral follows from the room given it.
+numeralSize: tubeHolder.numeral
 tubeIndex: 0
 backdrop: backwall
 glowScale: win.glow
 glassLightScale: win.glassLight
 warmthScale: win.warmth
 metalScale: win.metal
+steady: win.steady
 }
+}
+}
+
+// A picture of the tube, on demand. The workbench runs on an invisible monitor
+// while it is being tuned, so the screen is not the only way to see it:
+// `LAB_DUMP=/tmp/tube.png qs -p ...` writes the tube itself out after the
+// handles have settled, at its own resolution, whatever the monitor does.
+Item {
+id: dumper
+readonly property string path: Quickshell.env("LAB_DUMP") || ""
+
+Timer {
+interval: 1200
+running: dumper.path !== ""
+onTriggered: tubeHolder.grabToImage(result => result.saveToFile(dumper.path))
 }
 }
 
 Column {
 id: controls
 anchors {
-left: win.left
-right: win.right
-bottom: win.bottom
+left: parent.left
+right: parent.right
+bottom: parent.bottom
 margins: 22
 }
 spacing: 8
