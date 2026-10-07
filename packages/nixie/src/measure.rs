@@ -113,6 +113,8 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     // numeral, and where the ink is
     let mut white = Vec::new();
     let mut hot = Vec::new();
+    let mut white_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
+    let mut hot_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
     let mut ink_top = 0u64;
     let mut ink_bottom = 0u64;
     let (mut bx0, mut by0, mut bx1, mut by1) = (u32::MAX, u32::MAX, 0u32, 0u32);
@@ -137,6 +139,9 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
                     ink_bottom += 1;
                 }
             }
+            let mi = ((y - y0) as usize) * ((x1 - x0) as usize) + (x - x0) as usize;
+            white_mask[mi] = (r > 240) as u8;
+            hot_mask[mi] = (r > 200) as u8;
             if r > 240 {
                 run_w += 1;
                 best_w = best_w.max(run_w);
@@ -155,8 +160,37 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     }
     white.sort_unstable();
     hot.sort_unstable();
-    out.wire_white_px = white.get(white.len() / 2).copied().unwrap_or(0);
-    out.wire_hot_px = hot.get(hot.len() / 2).copied().unwrap_or(0);
+    // The width of a stroke, whatever its angle: a stroke of width w and length
+    // L covers w*L pixels and has a perimeter of about 2*L, so w = 2*area/perimeter.
+    // A run along a row would be long for a slanted stroke and short for a
+    // vertical one, which is a property of the numeral and not of the wire.
+    let width_of = |mask: &Vec<u8>| -> u32 {
+        let wd = (x1 - x0) as usize;
+        let ht = (y1 - y0) as usize;
+        let (mut area, mut edge) = (0u32, 0u32);
+        for y in 0..ht {
+            for x in 0..wd {
+                if mask[y * wd + x] == 0 {
+                    continue;
+                }
+                area += 1;
+                let up = y == 0 || mask[(y - 1) * wd + x] == 0;
+                let down = y + 1 == ht || mask[(y + 1) * wd + x] == 0;
+                let left = x == 0 || mask[y * wd + x - 1] == 0;
+                let right = x + 1 == wd || mask[y * wd + x + 1] == 0;
+                if up || down || left || right {
+                    edge += 1;
+                }
+            }
+        }
+        if edge == 0 {
+            0
+        } else {
+            (2 * area) / edge
+        }
+    };
+    out.wire_white_px = width_of(&white_mask);
+    out.wire_hot_px = width_of(&hot_mask);
     out.ink_bbox = (bx0, by0, bx1, by1);
     let ink = (ink_top + ink_bottom) as f32;
     out.ink_top_share = if ink > 0.0 { ink_top as f32 / ink } else { 0.0 };

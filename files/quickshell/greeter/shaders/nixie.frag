@@ -405,7 +405,11 @@ float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.55
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 0.60
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.30;
 vec3 wash = mix(pHalo.rgb, pCore.rgb, 0.65);
-colour += add * inside + wash * add * spill;
+// The discharge's light lands on the wallpaper (the spill) — and inside the
+// glass it is the light itself, which the composite adds. Adding it here as well
+// counted every ray of it twice, which is what fattened the white core to two
+// and a half times the wire's own width.
+colour += wash * add * spill;
 alpha += clamp(gasMap * pGlow * 0.10, 0.0, 0.30) * inside;
 
 // --- the collar the tube is plugged in by ---------------------------------
