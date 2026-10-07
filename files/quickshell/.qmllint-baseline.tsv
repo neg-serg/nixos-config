@@ -5,6 +5,10 @@
 # with the reason in the commit message).
 #
 # Why each of them is inherent:
+#   unqualified               722: the tube workbench (greeter/tube-lab.qml) is a
+#                             new file whose inline Knob and digit buttons read
+#                             their enclosing window — the same inherent kind as
+#                             the rest of this category
 #   unqualified               delegates and inline components reaching for their
 #                             enclosing scope (modelData, an id defined above). One
 #                             of the 719 is new: the genelec capsule reads the startup
@@ -16,7 +20,11 @@
 #                             analyzer cannot resolve through the attached-property
 #                             type that is itself unresolved (see unresolved-type).
 #   missing-property          a property reached through `parent.`/scope, where the
-#                             analyzer only knows the C++ base type
+#                             analyzer only knows the C++ base type. 51 → 57: the
+#                             tube's QML now talks to its own shader
+#                             (Qt.vector2d / Qt.point / Qt.rect / Qt.resolvedUrl for
+#                             the uniforms and the wallpaper patch), and qmllint
+#                             does not know Qt's members either — same inherent kind
 #   unresolved-type           Quickshell's plugin types ship no qmltypes
 #                             (QsMenuEntry, PopupAnchor, BluetoothDeviceState, …)
 #                             BackgroundEffect.blurRegion is typed PendingRegion and
@@ -37,8 +45,8 @@
 #
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
-unqualified	716
-missing-property	51
+unqualified	722
+missing-property	57
 unresolved-type	34
 import	6
 uncreatable-type	12
