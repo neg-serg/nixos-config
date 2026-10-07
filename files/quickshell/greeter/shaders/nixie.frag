@@ -382,7 +382,7 @@ float axis = digitWire(int(pDigit + 0.5), dp) * gm;
 float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
 float gas = exp(-dist / (0.20 * mm)) * 0.34 + exp(-dist / (0.45 * mm)) * 0.05;
-gas *= 0.90 + 0.22 * hash(floor(px / 2.0));
+gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.96, 0.88), pow(core, 8.0) * 0.25);
@@ -394,16 +394,16 @@ add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.04
 // the far wall of the glass catches a squeezed, dim image of the wire
 vec2 mp = vec2(-p.x * 0.86, p.y);
 vec2 mirror = vec2((mp.x - centre.x) / gx, (centre.y - mp.y) / gy);
-add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (0.6 * mm)) * 0.035 * abs(xr) * haloLit;
+add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (1.30 * mm)) * 0.11 * abs(xr) * haloLit;
 gasMap = gas;
 colour += cageGlow * 0.25;
 }
 
 // exposure: the gas never reaches white, the wire always does
 add = vec3(1.0) - exp(-add * 1.55);
-float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.55
-            + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 0.60
-            + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.30;
+float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
+            + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
+            + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
 vec3 wash = mix(pHalo.rgb, pCore.rgb, 0.65);
 // The discharge's light lands on the wallpaper (the spill) — and inside the
 // glass it is the light itself, which the composite adds. Adding it here as well
