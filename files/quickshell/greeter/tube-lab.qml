@@ -13,6 +13,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import qs
 import qs.lock
 
 ShellRoot {
@@ -78,7 +79,9 @@ implicitHeight: 900
 color: "#14161c"
 
 // ---- the handles -------------------------------------------------
-property int digit: 6
+// The digit can be given on the command line, which is what makes this
+// usable from a script: `LAB_DIGIT=7 qs -p .../tube-lab.qml`.
+property int digit: Number(Quickshell.env("LAB_DIGIT") || 6)
 property real tubeScale: 1.0      // the whole tube, in the frame
 property real glassGloss: 0.35    // the additive glass layer's strength
 property real warm: 1.0           // how much the discharge warms its halo
@@ -106,7 +109,11 @@ height: width * 2304 / 1120
 NixieTube {
 anchors.fill: parent
 digit: win.digit
-numeralSize: Math.round(parent.width * 3.55)
+// The tube's own arithmetic, inverted: the item it wants to
+// be is the envelope (0.60 of the numeral) plus its two pads,
+// so the numeral's size follows from the room we give it.
+numeralSize: Math.round(
+(parent.width - 2 * 16 * GreeterTheme.uiScale) / 0.60)
 tubeIndex: 0
 }
 }

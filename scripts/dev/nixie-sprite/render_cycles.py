@@ -163,11 +163,14 @@ def material_glass():
     mat.use_nodes = True
     nt = mat.node_tree
     bsdf = nt.nodes["Principled BSDF"]
-    bsdf.inputs["Base Color"].default_value = (1.0, 1.0, 1.0, 1.0)
+    # Real envelope glass is not colourless: iron in the melt leaves a green cast
+    # that shows along the wall, where the path through the glass is longest. It
+    # is what separates glass from a hole in the frame.
+    bsdf.inputs["Base Color"].default_value = (0.93, 0.99, 0.955, 1.0)
     # Not a mirror: the polished surface put a sharp image of the softboxes on the
     # glass, and those highlights outshone the discharge. Real envelope glass has
     # a slight draw waviness that spreads them.
-    bsdf.inputs["Roughness"].default_value = 0.18
+    bsdf.inputs["Roughness"].default_value = 0.22
     bsdf.inputs["Transmission Weight"].default_value = 1.0
     bsdf.inputs["IOR"].default_value = 1.52
     return mat
@@ -193,9 +196,13 @@ def assign(ob, mat):
 def area_light(name, origin, size, radiance):
     """A studio softbox: same corners, same radiance as the Mitsuba scene."""
     light = bpy.data.lights.new(name, "AREA")
-    light.shape = "RECTANGLE"
-    light.size = float(size[0])
-    light.size_y = float(size[1])
+    # Round, not rectangular: a rectangle puts a rectangle of light on every
+    # curved surface it can see — the collar came out as a bright square block
+    # and the glass as a band with square corners. A disc reflects as a highlight,
+    # which is what a real lamp shows.
+    light.shape = "DISK"
+    light.size = float(max(size))
+    light.size_y = float(max(size))
     light.energy = float(np.mean(radiance)) * EXPOSURE_GAIN
     light.color = np.array(radiance, float) / max(np.mean(radiance), 1e-6)
     ob = bpy.data.objects.new(name, light)
@@ -266,6 +273,10 @@ def render_settings(samples, out_path):
     sc.render.image_settings.color_depth = "32"
     sc.render.filepath = out_path
     sc.render.film_transparent = False
+    print(
+        "cycles: %d spp, denoise=%s (%s), glass pass %d spp, %dx%d"
+        % (samples, DENOISE, sc.cycles.denoiser, GLASS_SAMPLES, W, HH)
+    )
 
 
 def world(radiance):
@@ -317,6 +328,20 @@ def build_common(room_radiance, with_lights, lit=None):
     collar = principled(
         "collar", (0.055, 0.30, 0.42), metallic=0.0, rough=0.30, spec=0.06
     )
+    # Paint has a tooth: a slow noise on its roughness, so the coat catches the
+    # light unevenly instead of reading as a moulded plastic part.
+    _nt = collar.node_tree
+    _bsdf = _nt.nodes["Principled BSDF"]
+    _noise = _nt.nodes.new("ShaderNodeTexNoise")
+    _noise.inputs["Scale"].default_value = 48.0
+    _noise.inputs["Detail"].default_value = 4.0
+    _ramp = _nt.nodes.new("ShaderNodeValToRGB")
+    _ramp.color_ramp.elements[0].position = 0.35
+    _ramp.color_ramp.elements[1].position = 0.75
+    _ramp.color_ramp.elements[0].color = (0.34, 0.34, 0.34, 1.0)
+    _ramp.color_ramp.elements[1].color = (0.62, 0.62, 0.62, 1.0)
+    _nt.links.new(_noise.outputs["Fac"], _ramp.inputs["Fac"])
+    _nt.links.new(_ramp.outputs["Color"], _bsdf.inputs["Roughness"])
     mica = principled("mica", (0.82, 0.80, 0.72), metallic=0.0, rough=0.5)
     # The discharge, in Cycles' units. The emitter is a solid: its radiance IS the
     # number. Past ~8 the tone map turns the core into the pale cream of an

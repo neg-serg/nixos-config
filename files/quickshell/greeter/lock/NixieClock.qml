@@ -14,6 +14,8 @@ id: root
 
 property int hours: 0
 property int minutes: 0
+// The wallpaper the glass bends: handed straight down to every tube.
+property Item backdrop: null
 readonly property real uiScale: GreeterTheme.uiScale
 
 // The numeral size: the tubes and every gap between them are built from it.
@@ -45,12 +47,14 @@ spacing: root.tubeGap
 
 NixieTube {
 id: hourTens
+backdrop: root.backdrop
 tubeIndex: 0
 numeralSize: root.numeralSize
 digit: root.hourDigit(0)
 }
 
 NixieTube {
+				backdrop: root.backdrop
 tubeIndex: 1
 numeralSize: root.numeralSize
 digit: root.hourDigit(1)
@@ -67,6 +71,7 @@ model: 2
 
 NixieTube {
 required property int index
+				backdrop: root.backdrop
 
 bulb: true
 tubeIndex: 4 + index
@@ -78,12 +83,14 @@ y: Math.round((colon.height / 2) + (index === 0 ? -root.bulbOffset : root.bulbOf
 }
 
 NixieTube {
+				backdrop: root.backdrop
 tubeIndex: 2
 numeralSize: root.numeralSize
 digit: root.minuteDigit(0)
 }
 
 NixieTube {
+				backdrop: root.backdrop
 tubeIndex: 3
 numeralSize: root.numeralSize
 digit: root.minuteDigit(1)
