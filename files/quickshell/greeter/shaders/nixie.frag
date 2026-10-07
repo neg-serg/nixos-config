@@ -106,23 +106,18 @@ return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
                  sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.10),
             sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.10);
 if (digit == 3)
-return smin(sdArc(p, vec2(0.0, 0.52), 0.52, -1.05, 2.53),
-            sdArc(p, vec2(0.0, -0.52), 0.52, -2.09, 1.05), 0.12);
+// two right-hand arcs meeting in the middle: the upper and the lower belly
+return smin(sdArc(p, vec2(0.0, 0.50), 0.46, -1.35, 1.35),
+            sdArc(p, vec2(0.0, -0.50), 0.46, -1.35, 1.35), 0.14);
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.10);
 if (digit == 5)
-return smin(smin(sdSegment(p, vec2(-0.30, 1.02), vec2(0.30, 1.02)),
-                 sdSegment(p, vec2(-0.30, 1.02), vec2(-0.27, 0.01)), 0.10),
-            sdArc(p, vec2(0.0, -0.30), 0.41, -1.25, 2.28), 0.10);
-if (digit == 6)
-return smin(smin(sdArc(p, vec2(0.0, 0.50), 0.30, 0.0, PI),
-                 sdSegment(p, vec2(-0.30, 0.50), vec2(-0.30, -0.52)), 0.10),
-            sdEllipse(p, vec2(0.0, -0.52), vec2(0.30, 0.44)), 0.10);
-if (digit == 7)
-return smin(sdSegment(p, vec2(-0.32, 1.02), vec2(0.32, 1.02)),
-            sdSegment(p, vec2(0.28, 1.02), vec2(-0.09, -1.02)), 0.10);
+// the bar across the top, the left shoulder down, and the bowl below it
+return smin(smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.34, 1.00)),
+                 sdSegment(p, vec2(-0.30, 1.00), vec2(-0.30, 0.10)), 0.12),
+            sdArc(p, vec2(0.02, -0.42), 0.48, -1.55, 1.10), 0.14);
 if (digit == 8)
 return smin(sdEllipse(p, vec2(0.0, 0.50), vec2(0.27, 0.50)),
             sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)), 0.12);
@@ -349,7 +344,7 @@ float gm = sqrt(gx * gy);
 float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
-float wirePx = 0.12 * mm;
+float wirePx = 0.30 * mm;   // a nixie's stroke reads fat, like a sausage
 float baseTop = footY;
 
 // the two rods the stack is welded to
@@ -443,9 +438,9 @@ gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60);   // directly heated: the metal is the light
-		add += wireColour * core * 3.40 * coreLit;   // white-hot, and no wider than the wire itself
+		add += wireColour * core * 4.60 * coreLit;   // white-hot, and no wider than the wire itself
 
-add += pHalo.rgb * gas * 0.30 * haloLit;
+add += pHalo.rgb * gas * 0.45 * haloLit;
 add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.10 * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
