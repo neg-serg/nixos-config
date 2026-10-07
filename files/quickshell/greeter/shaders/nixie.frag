@@ -114,7 +114,7 @@ return smin(smin(smin(smin(smin(
     sdSegment(p, vec2(0.42, 0.52), vec2(0.02, 0.10)), 0.12),
     sdSegment(p, vec2(0.02, 0.10), vec2(0.44, -0.42)), 0.12),
     sdSegment(p, vec2(0.44, -0.42), vec2(0.26, -0.95)), 0.12),
-    sdSegment(p, vec2(0.26, -0.95), vec2(-0.14, -0.95)), 0.12))));
+    sdSegment(p, vec2(0.26, -0.95), vec2(-0.14, -0.95)), 0.12);
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
@@ -128,7 +128,7 @@ return smin(smin(smin(smin(smin(
     sdSegment(p, vec2(-0.32, 0.16), vec2(0.18, 0.04)), 0.12),
     sdSegment(p, vec2(0.18, 0.04), vec2(0.42, -0.44)), 0.12),
     sdSegment(p, vec2(0.42, -0.44), vec2(0.10, -0.95)), 0.12),
-    sdSegment(p, vec2(0.10, -0.95), vec2(-0.32, -0.78)), 0.12))));
+    sdSegment(p, vec2(0.10, -0.95), vec2(-0.32, -0.78)), 0.12);
 if (digit == 8)
 return smin(sdEllipse(p, vec2(0.0, 0.50), vec2(0.27, 0.50)),
             sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)), 0.12);
