@@ -94,18 +94,6 @@ return mix(b, a, h) - k * h * (1.0 - h);
 // 3 two bowls, 4 a diagonal over a bar, 5 a lid and a bowl, 6 and 9 a bowl and a
 // sweep, 7 a lid and a leg, 8 two bowls, 0 an oval.
 
-// A directly heated filament: one wire stretched between two posts, kinked twice
-// so it can expand. This is what glows — the metal itself, not a gas around a
-// cathode shaped like a numeral.
-float filament(vec2 q) {
-// straight, with the sag a hot wire takes: three segments, the middle one a
-// hair wider than the ends
-float a = sdSegment(q, vec2(0.0, 0.88), vec2(0.035, 0.30));
-float b = sdSegment(q, vec2(0.035, 0.30), vec2(0.035, -0.30));
-float c = sdSegment(q, vec2(0.035, -0.30), vec2(0.0, -0.88));
-return smin(smin(a, b, 0.06), c, 0.06);
-}
-
 float digitWire(int digit, vec2 p) {
 const float PI = 3.14159265;
 if (digit == 0)
@@ -166,15 +154,19 @@ vec2 p = px - pSize * 0.5;
 // the largest one that fits the box inside the item, and the box's centre is the
 // item's centre — one frame for the glass, the stack, the mesh and the collar.
 float boxW = 21.0, boxH = 35.0;
+// the bulb is a cylinder with a hemisphere at each end, both bulging outward
+const float BULB_R_MM = 7.0;    // the glass, Ø14: the cylinder dominates
+const float BULB_H_MM = 35.0;   // the whole height
+const float COLLAR_H_MM = 0.0;  // there is no base on this lamp
 float mm = min((pSize.x - 2.0 * pInset) / boxW, (pSize.y - 2.0 * pInset) / boxH);
 mm = max(mm, 0.01);
-float bulbR = 9.5 * mm;                 // the glass, Ø19
-float bulbH = 28.0 * mm;                // glass, foot to the top of the dome
+float bulbR = BULB_R_MM * mm;           // the glass is as wide as the box, Ø21
+float bulbH = BULB_H_MM * mm;           // and as tall: cylinder + two hemispheres
 // The collar is the sheet's 7 mm, full stop. pBase is only the caller saying
 // whether this envelope has one at all (the colon has not), because a caller
 // working in its own pixels must not be able to put the base somewhere the
 // drawing does not.
-float collarH = 0.0;                  // no base: the bulb is the whole lamp
+float collarH = COLLAR_H_MM * mm;     // no base: the bulb is the whole lamp
 float pipR = 1.75 * mm;                 // the seal's pip, Ø3.5 (unused now)
 float sdPipUnused = 1e5;
 
@@ -368,7 +360,7 @@ cageFade = clamp((p.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - p.y) / 8
 		 * clamp((cageR - abs(p.x)) / 6.0, 0.0, 1.0);
 grid *= cageFade;
 // the discharge lives inside the cage: the mesh glows where it is touched
-float near = exp(-max(filament(dp) * gm - wirePx, 0.0) / (0.5 * mm)) * step(-0.5, pDigit);
+float near = exp(-max(digitWire(int(pDigit + 0.5), dp) * gm - wirePx, 0.0) / (0.5 * mm)) * step(-0.5, pDigit);
 cageGlow = pHalo.rgb * near * pGlow * 0.22;
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
@@ -389,12 +381,12 @@ gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) /
 add += pCore.rgb * lit * 1.20 * pGlow * pFlicker;
 add += pHalo.rgb * gasMap * 0.60 * pGlow * pow(pFlicker, 1.4);
 } else if (pDigit >= -0.5) {
-float wireDist = filament(dp) * gm - wirePx;
+float wireDist = digitWire(int(pDigit + 0.5), dp) * gm - wirePx;
 float dist = max(wireDist, 0.0);
 // The core is the metal itself: full where the wire's own axis is, nothing at
 // its surface. It is a width in millimetres (the cathode is 0.24 mm across),
 // not a fraction of a pixel, which is what a white-hot filament is.
-float axis = filament(dp) * gm;
+float axis = digitWire(int(pDigit + 0.5), dp) * gm;
 float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
 float gas = exp(-dist / (0.11 * mm)) * 0.14 + exp(-dist / (0.30 * mm)) * 0.02;   // a filament, not a gas tube
@@ -410,7 +402,7 @@ add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.04
 // the far wall of the glass catches a squeezed, dim image of the wire
 vec2 mp = vec2(-p.x * 0.86, p.y);
 vec2 mirror = vec2((mp.x - centre.x) / gx, (centre.y - mp.y) / gy);
-add += pHalo.rgb * exp(-max(filament(mirror) * gm - wirePx, 0.0) / (1.30 * mm)) * 0.11 * abs(xr) * haloLit;
+add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (1.30 * mm)) * 0.11 * abs(xr) * haloLit;
 gasMap = gas;
 colour += cageGlow * 0.25;
 }
