@@ -395,8 +395,8 @@ cageFade = clamp((p.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - p.y) / 8
 		 * clamp((cageR - abs(p.x)) / 6.0, 0.0, 1.0);
 grid *= cageFade;
 // the discharge lives inside the cage: the mesh glows where it is touched
-float near = exp(-max(digitWire(int(pDigit + 0.5), dp) * gm - wirePx, 0.0) / (0.5 * mm)) * step(-0.5, pDigit);
-cageGlow = pHalo.rgb * near * pGlow * 0.22;
+float near = exp(-max(digitWire(int(pDigit + 0.5), dp) * gm - wirePx, 0.0) / (1.3 * mm)) * step(-0.5, pDigit);
+cageGlow = pHalo.rgb * near * pGlow * 0.60;
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
 colour = mix(colour, vec3(0.030, 0.034, 0.042) + cageGlow, grid * 0.55);
@@ -429,9 +429,10 @@ gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
 vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60);   // directly heated: the metal is the light
-		add += wireColour * core * 2.60 * coreLit;   // white-hot, and no wider than the wire itself
+		add += wireColour * core * 3.40 * coreLit;   // white-hot, and no wider than the wire itself
 
 add += pHalo.rgb * gas * 0.30 * haloLit;
+add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.10 * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
 // the far wall of the glass catches a squeezed, dim image of the wire
