@@ -134,6 +134,26 @@ float hash(vec2 p) {
 return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+
+// --- metal, with a real reflection -------------------------------------
+// A metal is a mirror with a tint: what it looks like is the room it stands in,
+// seen along the mirror direction and tinted by the metal's own F0. Nickel is
+// (0.56, 0.55, 0.52), steel a shade cooler, and the roughness spreads the
+// reflection out. This is what the mesh, the rods and the collar were faking
+// with constant colours.
+vec3 metal_hit(vec2 px, vec3 n, vec3 v, vec3 f0, float rough) {
+vec3 r = reflect(-v, n);
+// where that ray lands on the room behind the lamp
+float spread = 1.0 + 3.0 * rough;
+vec2 off = vec2(r.x, r.y) / max(-r.z, 0.05) * (0.55 * pSize.x) * spread;
+vec2 uv = (px + pInset + off) / pBackdrop;
+vec3 env = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb;
+// a metal darkens what it does not reflect, and Fresnel takes the edge
+float c = clamp(dot(n, v), 0.0, 1.0);
+vec3 f = f0 + (vec3(1.0) - f0) * pow(1.0 - c, 5.0);
+return env * f;
+}
+
 void main() {
 const float PI = 3.14159265;
 
@@ -321,7 +341,8 @@ float baseTop = footY;
 // the two rods the stack is welded to
 float rods = min(abs(abs(p.x) - 7.4 * mm), 1e5);      // the stack's rods, clear of the wider numerals
 float rodMask = exp(-pow(rods / max(0.8, 0.10 * mm), 2.0)) * step(p.y, apexY + 0.22 * bulbH) * step(baseTop, p.y);
-colour += vec3(0.05, 0.055, 0.07) * rodMask * 1.6;
+vec3 rodMetal = metal_hit(px, Ncyl, VIEW, vec3(0.56, 0.55, 0.52), 0.25);
+colour += rodMetal * rodMask * 1.6;
 alpha += rodMask * 0.42;
 
 // the mica washers that hold the stack together: discs, seen edge-on
@@ -447,7 +468,7 @@ float side = clamp(p.x / max(10.5 * mm, 1.0), -1.0, 1.0);   // the collar, Ø21
 float uu = asin(clamp(side, -0.999, 0.999)) / (PI * 0.5);
 // crimped metal: flutes, lit from the left, its foot going dark
 vec3 ceramic = vec3(0.032, 0.031, 0.033) * (0.30 + 0.70 * sqrt(max(0.0, 1.0 - side * side)));
-ceramic += vec3(0.085, 0.082, 0.086) * pow(max(0.0, 0.5 + 0.5 * side), 3.0);   // a sheen, not a colour
+ceramic += metal_hit(px, Ncyl, VIEW, vec3(0.29, 0.30, 0.33), 0.45) * 0.55;   // steel: the room, dimmed
 ceramic *= 1.0 - 0.20 * exp(-pow((fract(uu * 14.0) - 0.5) * 2.0 / 0.55, 2.0)); // the moulding's crimps
 ceramic += vec3(0.045) * exp(-pow((fract(uu * 14.0) - 0.5) * 2.0 / 0.30 + 1.2, 2.0)) * max(0.0, side + 0.4);
 colour = mix(colour, ceramic, bm);
