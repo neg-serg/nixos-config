@@ -299,8 +299,8 @@ alpha += tip * 0.06;
 // The numerals' own space: y-up (the tube's y runs down the screen), the width
 // of a numeral as the unit on both axes so a round wire stays round. The stack
 // lives in the cylinder above the collar, which is where a nixie keeps it.
-const float DIGIT_H = 18.0;   // the numerals, mm, off the sheet
-const float DIGIT_W = 10.0;   // and across, mm
+const float DIGIT_H = 30.0;   // the numerals, mm: almost the whole bulb, as asked
+const float DIGIT_W = 14.0;   // and across: the bore is Ø17.2, so this nearly fills it
 const float GLYPH_H = 2.04;   // how tall the glyphs in digitWire() are
 const float GLYPH_W = 0.85;   // and how wide: measured, not assumed — the arcs
                               // of 0, 2, 3, 6, 8, 9 reach further than 0.7
@@ -319,7 +319,7 @@ float wirePx = 0.12 * mm;
 float baseTop = footY;
 
 // the two rods the stack is welded to
-float rods = min(abs(abs(p.x) - 6.0 * mm), 1e5);      // the stack's rods, 6 mm off the axis
+float rods = min(abs(abs(p.x) - 7.4 * mm), 1e5);      // the stack's rods, clear of the wider numerals
 float rodMask = exp(-pow(rods / max(0.8, 0.10 * mm), 2.0)) * step(p.y, apexY + 0.22 * bulbH) * step(baseTop, p.y);
 colour += vec3(0.05, 0.055, 0.07) * rodMask * 1.6;
 alpha += rodMask * 0.42;
