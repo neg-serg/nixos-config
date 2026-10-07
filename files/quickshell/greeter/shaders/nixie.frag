@@ -94,6 +94,22 @@ return mix(b, a, h) - k * h * (1.0 - h);
 // 3 two bowls, 4 a diagonal over a bar, 5 a lid and a bowl, 6 and 9 a bowl and a
 // sweep, 7 a lid and a leg, 8 two bowls, 0 an oval.
 
+
+// A wire is bent, not assembled: the numerals have to read as smooth curves.
+// This is the distance to a quadratic Bezier, sampled finely enough that the
+// chords are invisible (the wire is 0.3 units thick, the chords err by 1e-3).
+float sdBezier(vec2 p, vec2 a, vec2 b, vec2 c) {
+float d = 1e5;
+vec2 prev = a;
+for (int i = 1; i <= 12; i++) {
+float t = float(i) / 12.0;
+vec2 q = mix(mix(a, b, t), mix(b, c, t), t);
+d = min(d, sdSegment(p, prev, q));
+prev = q;
+}
+return d;
+}
+
 float digitWire(int digit, vec2 p) {
 const float PI = 3.14159265;
 if (digit == 0)
@@ -106,29 +122,21 @@ return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
                  sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.10),
             sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.10);
 if (digit == 3)
-// one wire, bent: a bar across the top curling right, a waist in the middle, a
-// lower belly, and both ends open to the left — a real 3 is a single curve
-return smin(smin(smin(smin(smin(
-    sdSegment(p, vec2(-0.10, 0.95), vec2(0.30, 0.95)),
-    sdSegment(p, vec2(0.30, 0.95), vec2(0.42, 0.52)), 0.12),
-    sdSegment(p, vec2(0.42, 0.52), vec2(0.02, 0.10)), 0.12),
-    sdSegment(p, vec2(0.02, 0.10), vec2(0.44, -0.42)), 0.12),
-    sdSegment(p, vec2(0.44, -0.42), vec2(0.26, -0.95)), 0.12),
-    sdSegment(p, vec2(0.26, -0.95), vec2(-0.14, -0.95)), 0.12);
+// two Bezier arcs with matching tangents at the waist, so the wire flows:
+// the upper belly curls right, the lower one answers it, both open to the left
+return smin(sdBezier(p, vec2(-0.10, 0.95), vec2(0.62, 0.95), vec2(0.04, 0.06)),
+            sdBezier(p, vec2(0.04, 0.06), vec2(-0.54, -0.83), vec2(-0.12, -0.95)), 0.06);
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.10);
 if (digit == 5)
-// one wire: a bar across the top, a shoulder down the left side, then a bowl
-// that closes to the left at the foot
-return smin(smin(smin(smin(smin(
-    sdSegment(p, vec2(0.34, 1.00), vec2(-0.30, 1.00)),
-    sdSegment(p, vec2(-0.30, 1.00), vec2(-0.32, 0.16)), 0.12),
-    sdSegment(p, vec2(-0.32, 0.16), vec2(0.18, 0.04)), 0.12),
-    sdSegment(p, vec2(0.18, 0.04), vec2(0.42, -0.44)), 0.12),
-    sdSegment(p, vec2(0.42, -0.44), vec2(0.10, -0.95)), 0.12),
-    sdSegment(p, vec2(0.10, -0.95), vec2(-0.32, -0.78)), 0.12);
+// a bar across the top, a shoulder down the left, and a belly that closes at
+// the foot: three Beziers, tangent to each other, one flowing wire
+return smin(smin(
+            sdBezier(p, vec2(0.34, 1.00), vec2(-0.32, 1.00), vec2(-0.32, 0.30)),
+            sdBezier(p, vec2(-0.32, 0.30), vec2(-0.32, -0.20), vec2(0.10, -0.10)), 0.06),
+            sdBezier(p, vec2(0.10, -0.10), vec2(0.62, 0.02), vec2(0.26, -0.95)), 0.06);
 if (digit == 8)
 return smin(sdEllipse(p, vec2(0.0, 0.50), vec2(0.27, 0.50)),
             sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)), 0.12);
