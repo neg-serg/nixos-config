@@ -289,7 +289,8 @@ alpha += tip * 0.06;
 const float DIGIT_H = 18.0;   // the numerals, mm, off the sheet
 const float DIGIT_W = 10.0;   // and across, mm
 const float GLYPH_H = 2.04;   // how tall the glyphs in digitWire() are
-const float GLYPH_W = 0.70;   // and how wide
+const float GLYPH_W = 0.85;   // and how wide: measured, not assumed — the arcs
+                              // of 0, 2, 3, 6, 8, 9 reach further than 0.7
 // The numerals are 18 mm high on the sheet, and the glyphs in digitWire() run
 // from -1.02 to +1.02, i.e. 2.04 units tall, so one unit is 18/2.04 mm. Across
 // they run -0.35..+0.35, and an IN-12 numeral is about 10 mm wide, so the same
