@@ -208,7 +208,7 @@ alpha += tip * 0.06;
 // height: 23 mm across is 0.932 * hs.y, 11.04 mm down is 0.447 * hs.y, and the
 // 0.8 mm drop is 0.032 * hs.y.
 float gx = 0.932 * hs.y;   // px per glyph unit, across
-float gy = 0.559 * hs.y;   // px per glyph unit, down
+float gy = 0.671 * hs.y;   // px per glyph unit, down
 float gm = sqrt(gx * gy);  // the middle scale: the SDF is isotropic in glyph
                            // space, and the wire has to stay a round wire
 vec2 centre = vec2(0.0, 0.032 * hs.y);

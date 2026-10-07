@@ -70,7 +70,7 @@ STACK_PITCH = 0.5
 STACK_Z = np.linspace(-4.5 * STACK_PITCH, 4.5 * STACK_PITCH, 10)
 
 
-def revolve(profile, segs=96, rfun=None):
+def revolve(profile, segs=384, rfun=None):
     """Mesh of revolution from a closed 2D profile (radius, height, y up)."""
     verts, faces = [], []
     n = len(profile)
@@ -114,7 +114,7 @@ def outward(verts, faces):
     return [tuple(int(i) for i in f) for f in F]
 
 
-def sweep(path, r, segs=10):
+def sweep(path, r, segs=16):
     """A tube along a 3D poly-line."""
     verts, faces = [], []
     P = np.asarray(path, float)
@@ -279,23 +279,23 @@ def build(lit=8):
     # 2. the anode cage: 24 vertical wires + 12 rings
     wires = []
     glow = []  # the neon threads: emissive, they are the discharge's core
-    for k in range(8):
-        a = 2 * math.pi * k / 8
+    for k in range(16):
+        a = 2 * math.pi * k / 16
         x, z = RT * math.sin(a), RT * math.cos(a)
         wires.append(
-            ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.055)
+            ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.04)
         )
-    for k in range(4):
-        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 3
+    for k in range(6):
+        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 5
         ring = [
             (
-                RT * math.sin(2 * math.pi * t / 64),
+                RT * math.sin(2 * math.pi * t / 128),
                 y,
-                RT * math.cos(2 * math.pi * t / 64),
+                RT * math.cos(2 * math.pi * t / 128),
             )
-            for t in range(65)
+            for t in range(129)
         ]
-        wires.append((ring, 0.05))
+        wires.append((ring, 0.04))
     # 3. the cathode stack: ten numerals in a tungsten wire frame
     for i, zc in enumerate(STACK_Z):
         depth = (i - 4.5) * 0.05
@@ -336,8 +336,8 @@ def build(lit=8):
     # 4b. the mica spacers: thin translucent discs the stack hangs from
     for y in (H / 2 - 4.6, -H / 2 + BASE * 0.62 + 1.2):
         disc = []
-        for k in range(49):
-            aa = 2 * math.pi * k / 48
+        for k in range(129):
+            aa = 2 * math.pi * k / 128
             disc.append(
                 (RT * 0.94 * math.cos(aa), y, RT * 0.94 * math.sin(aa))
             )
