@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
+ash = "0.38"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 clap = { version = "4", features = ["derive"] }
 
 [[bin]]
