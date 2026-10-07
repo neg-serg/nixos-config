@@ -118,8 +118,11 @@ prev = q;
 return d;
 }
 float sdSpline6(vec2 p, vec2 a, vec2 b, vec2 c, vec2 d, vec2 e, vec2 f) {
-return min(min(sdCatmull(p, a, a, b, c), sdCatmull(p, a, b, c, d)),
-           min(sdCatmull(p, b, c, d, e), sdCatmull(p, c, d, e, f)));
+// five segments: a->b, b->c, c->d, d->e and e->f. Without the last one the
+// curve stops a point short, which is what made the 3 and the 5 read short.
+return min(min(min(sdCatmull(p, a, a, b, c), sdCatmull(p, a, b, c, d)),
+               min(sdCatmull(p, b, c, d, e), sdCatmull(p, c, d, e, f))),
+           sdCatmull(p, d, e, f, f));
 }
 
 float sdBezier(vec2 p, vec2 a, vec2 b, vec2 c) {
