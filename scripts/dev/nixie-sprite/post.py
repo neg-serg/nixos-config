@@ -201,7 +201,23 @@ def main(beauty, out, exposure=0.55):
         rgb = np.clip(rgb, 0.0, 1.0)
         # the discharge of neon in a nixie is a deep orange, not a pale amber
         tint = np.array([1.00, 0.52, 0.22], np.float32)
-        for radius, strength in ((1.4, 0.40), (22.0, 0.70)):
+        # Three scales, because a baked sprite has to look lit on its own: the
+        # core on the wire, the gas that hugs it, and the wide haze that reaches
+        # the glass. The shader draws the digit on top when the clock shows a
+        # different one, so this must be bright enough to read as a discharge and
+        # dim enough not to fight the live one.
+        # The ember of the discharge is white-hot at its core and orange as it
+        # dies out; the sprite has to read as a burning lamp on its own, so the
+        # halo is warm and there is more of it than a bare render would show.
+        # The haze has to reach the cage: on a real tube the wires around the lit
+        # numeral are lit by it, and that is most of what says "burning" at a
+        # glance. The tight term keeps the wire crisp, the wide one carries.
+        # The halo has to stay on the numeral. At a 22 px radius it reached the
+        # neighbouring cathodes (they sit 0.5 mm apart, 19 px here), lit them, and
+        # the lit numeral drowned in a tangle of glowing wire — the sprites were
+        # legible nowhere. Tight now: the wire keeps a coherent brightness and the
+        # haze only softens its edge.
+        for radius, strength in ((1.0, 0.28), (5.0, 0.22), (13.0, 0.14)):
             halo = (
                 np.asarray(
                     Image.fromarray((vein * 255).astype("uint8"), "L").filter(
@@ -246,6 +262,25 @@ def main(beauty, out, exposure=0.55):
     # behind it. Treating it as opacity is exactly what made the tube read as metal.
     gp = np.load(os.environ.get("SPRITE_GLASS", "/tmp/ms/glass.npy"))
     gp = np.maximum(gp, 0.0)
+    # The glass layer is added on top of the tube, and the tube now arrives lit:
+    # its own reflections land on a numeral that is already bright and the sum
+    # clips to white — the whole tube read as blown out on screen. A soft knee
+    # keeps the shape of the highlight without the last stop of it, and a small
+    # blur turns the sharpest reflections into the glow they are in glass.
+    knee = 0.06
+    gp = np.where(
+        gp > knee, knee + (gp - knee) / (1.0 + (gp - knee) / 0.22), gp
+    )
+    gp = (
+        np.asarray(
+            Image.fromarray(
+                (np.clip(gp, 0, 2) / 2 * 255).astype("uint8")
+            ).filter(ImageFilter.GaussianBlur(0.8)),
+            np.float32,
+        )
+        / 255.0
+        * 2.0
+    )
     g = aces(gp * exposure)
     g = np.where(
         g <= 0.0031308,

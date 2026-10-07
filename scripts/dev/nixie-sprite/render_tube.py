@@ -45,11 +45,29 @@ def mitsuba():
 #      at 0.2803 mm/px = 29.15 x 60.0 mm) ---------------------------------------
 MM_W, MM_H = 29.15, 60.0
 R, H, WALL = 9.25, 49.34, 1.1
-RT, RW = 6.6, 0.30
+# The stack: in a real tube the numerals take most of the envelope — on a photo
+# of an IN-14 the lit digit is about 70-80% of the glass's inner width and nearly
+# as much of its height, while the ten cathodes sit only a few tenths of a
+# millimetre apart. The first version had a 11.5 mm numeral in an 18.5 mm tube
+# (43% of the height), which read as a small number lost in a lattice.
+RT, RW = 8.05, 0.30
 BASE = 10.6
 RB = 9.7
-DIG_H, DIG_W = 21.0, 11.5
-STACK_Z = np.linspace(-1.1, 1.1, 10)
+# The glyphs are defined in a unit space about 0.6 wide and 2.0 tall, so the
+# millimetre scale is ONE number, not a width and a height. Reading DIG_W/2 as
+# the x scale (and DIG_H/1.9 as the y scale) made every numeral 4.4 mm wide and
+# 26 mm tall — a 1:6 sliver that no one can read, and the reason "8" looked like
+# two bars. A real numeral is about 1:1.6.
+DIG_SCALE = 23.0  # mm per unit of the glyph space
+DIG_SQUASH = 0.48  # the glyph space is 0.6 x 2.0, a numeral is about 1:1.6
+DIG_H, DIG_W = 22.0, 14.0
+UNLIT_SCALE = (
+    0.5  # the nine dark cathodes: hair-thin, they are not the subject
+)
+LIT_WIRE = 0.55  # the lit cathode, mm of radius: a numeral with a body
+LIT_GLOW = 0.85  # the discharge around it, mm of radius: 1.7 mm of glow
+STACK_PITCH = 0.5
+STACK_Z = np.linspace(-4.5 * STACK_PITCH, 4.5 * STACK_PITCH, 10)
 
 
 def revolve(profile, segs=96, rfun=None):
@@ -245,7 +263,8 @@ def emit_ply(verts, faces, path):
     return path
 
 
-def build():
+def build(lit=8):
+    """`lit=None` renders the hardware alone: no numeral burns in it."""
     shapes = {}
     # 1. the glass: a shell of revolution — outer wall, dome, inner wall, foot ring
     prof = [(R, -H / 2)]
@@ -260,14 +279,14 @@ def build():
     # 2. the anode cage: 24 vertical wires + 12 rings
     wires = []
     glow = []  # the neon threads: emissive, they are the discharge's core
-    for k in range(16):
-        a = 2 * math.pi * k / 16
+    for k in range(8):
+        a = 2 * math.pi * k / 8
         x, z = RT * math.sin(a), RT * math.cos(a)
         wires.append(
-            ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.085)
+            ([(x, -H / 2 + BASE * 0.55, z), (x, H / 2 - 3.0, z)], 0.055)
         )
-    for k in range(9):
-        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 8
+    for k in range(4):
+        y = -H / 2 + BASE * 0.6 + (H - BASE * 0.6 - 4.5) * k / 3
         ring = [
             (
                 RT * math.sin(2 * math.pi * t / 64),
@@ -276,29 +295,33 @@ def build():
             )
             for t in range(65)
         ]
-        wires.append((ring, 0.075))
+        wires.append((ring, 0.05))
     # 3. the cathode stack: ten numerals in a tungsten wire frame
     for i, zc in enumerate(STACK_Z):
         depth = (i - 4.5) * 0.05
         for path in digit_paths(i):
             pts = [
                 (
-                    x * DIG_W / 2.0 + depth,
-                    y * DIG_H / 2.3 - 0.8 - depth * 0.8,
+                    x * DIG_SCALE + depth,
+                    y * DIG_SCALE * DIG_SQUASH - 0.8 - depth * 0.8,
                     zc,
                 )
                 for (x, y) in path
             ]
-            wires.append((pts, RW))
-            # the discharge itself: the same glyph, drawn once more as a thin
-            # emissive thread a little nearer the viewer. It is the glow's
-            # source, and the only part of the tube that is not a solid.
-            glow.append(
-                (
-                    [(x - 0.06, y - 0.06, z + 0.16) for (x, y, z) in pts],
-                    RW * 0.75,
+            # The unlit cathodes are thin dark wire: they are what the tube
+            # contains, not what it shows.
+            wires.append((pts, RW * UNLIT_SCALE))
+            # The lit one is a different animal: a fat, unmistakable numeral. A
+            # nixie reads at a glance or it is useless as a clock, and a 0.33 mm
+            # thread fifteen millimetres up a glass tube does not read at a
+            # glance. The core is a 0.9 mm wire and the discharge around it is
+            # thicker still, so the numeral has body at any size the clock is
+            # drawn at.
+            if i == lit and lit is not None:
+                wires.append((pts, LIT_WIRE))
+                glow.append(
+                    ([(x, y, z + 0.16) for (x, y, z) in pts], LIT_GLOW)
                 )
-            )
     # 4. the rods the stack hangs on
     for sx in (-1, 1):
         wires.append(
@@ -369,6 +392,7 @@ def build_scene(
     out="/tmp/ms/beauty",
     glass=False,
     glass_gain=0.30,
+    lit=8,
 ):
     """Render the tube.
 
@@ -382,7 +406,7 @@ def build_scene(
     reflections stay a thin additive layer over the numerals (see the glass).
     """
     mi = mitsuba()
-    shapes, wires, glow = build()
+    shapes, wires, glow = build(lit=lit)
     scene = {}
     scene["type"] = "scene"
     # glass: a dielectric shell. Real envelope glass is not optically polished —
@@ -392,7 +416,7 @@ def build_scene(
     scene["glass"] = {
         "type": "roughdielectric",
         "distribution": "ggx",
-        "alpha": 0.05,
+        "alpha": 0.15,
         "int_ior": 1.52,
         "ext_ior": 1.0,
     }
@@ -428,7 +452,7 @@ def build_scene(
     }
     scene["neonEmitter"] = {
         "type": "area",
-        "radiance": {"type": "rgb", "value": [22.0, 10.0, 3.4]},
+        "radiance": {"type": "rgb", "value": [5.0, 2.0, 0.6]},
     }
     # the collar is painted metal: a plain dielectric cyan coat over it, glossy
     # the collar's cyan: dim enough that the tone reads as paint and not as a
@@ -437,8 +461,8 @@ def build_scene(
         "type": "roughplastic",
         "distribution": "ggx",
         "alpha": 0.14,
-        "diffuse_reflectance": {"type": "rgb", "value": [0.10, 0.52, 0.68]},
-        "specular_reflectance": {"type": "rgb", "value": [0.22, 0.26, 0.28]},
+        "diffuse_reflectance": {"type": "rgb", "value": [0.055, 0.30, 0.42]},
+        "specular_reflectance": {"type": "rgb", "value": [0.10, 0.13, 0.15]},
     }
     os.makedirs("/tmp/ms/mesh", exist_ok=True)
     if glass:
@@ -534,20 +558,20 @@ def build_scene(
     scene["key"] = softbox(
         [-120, 150, 210],
         [0, 0, 0],
-        [90, 130],
-        [7.0 * gain, 7.3 * gain, 7.8 * gain],
+        [225, 325],
+        [0.56 * gain, 0.58 * gain, 0.62 * gain],
     )
     scene["fill"] = softbox(
         [190, 40, 120],
         [0, 0, 0],
-        [70, 110],
-        [2.0 * gain, 2.1 * gain, 2.4 * gain],
+        [175, 275],
+        [0.16 * gain, 0.17 * gain, 0.19 * gain],
     )
     scene["rim"] = softbox(
         [-50, -30, -190],
         [0, 0, 0],
-        [60, 100],
-        [1.1 * gain, 1.2 * gain, 1.4 * gain],
+        [150, 250],
+        [0.088 * gain, 0.096 * gain, 0.112 * gain],
     )
     scene["env"] = {
         "type": "constant",
@@ -563,6 +587,9 @@ def build_scene(
     img = mi.render(sc, spp=spp, seed=7)
     a = np.array(img)
     np.save("/tmp/ms/glass.npy" if glass else out + ".npy", a)
+    if not glass:
+        with open(out + ".lit", "w") as fh:
+            fh.write(str(lit))
     print(
         "rendered",
         a.shape,
@@ -572,15 +599,20 @@ def build_scene(
     return a
 
 
-def main(out="/tmp/ms/beauty", glass=False):
-    build_scene(out=out, glass=glass)
+def main(out="/tmp/ms/beauty", glass=False, lit=8):
+    build_scene(out=out, glass=glass, lit=lit)
 
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    lit = 8
+    for a in sys.argv[1:]:
+        if a.startswith("--lit="):
+            lit = int(a.split("=", 1)[1])
     main(
         args[0] if args else "/tmp/ms/beauty",
         glass="--glass" in sys.argv,
+        lit=lit,
     )
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else "/tmp/ms/beauty")

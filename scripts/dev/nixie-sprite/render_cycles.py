@@ -84,11 +84,20 @@ W, HH = 1120, 2304
 SAMPLES = int(os.environ.get("CYCLES_SAMPLES", 2048))
 GLASS_SAMPLES = int(os.environ.get("CYCLES_GLASS_SAMPLES", 1024))
 DENOISE = os.environ.get("CYCLES_DENOISE", "1") not in ("0", "", "false")
-# The gain from Mitsuba's radiance units to Cycles' watts. Cycles spreads a
-# lamp's power over its area in METRES while this scene is in millimetres, so the
-# same studio reads about a million times weaker here; 4.5e6 was measured by
-# matching the cage's brightness against the Mitsuba render, not guessed.
-EXPOSURE_GAIN = float(os.environ.get("CYCLES_GAIN", 4.5e6))
+LIT = os.environ.get("CYCLES_LIT", "8")
+LIT = None if LIT.lower() in ("none", "off", "") else int(LIT)
+# The gain from Mitsuba's radiance units to Cycles' watts. Cycles spreads a lamp's
+# power over its area in METRES while this scene is in millimetres, so the same
+# studio reads far weaker here.
+#
+# The number was first measured against the anode cage — and the cage is thin
+# wires, whose brightness barely moves with the gain, so 4.5e6 came out. It is the
+# collar and the glass that carry the studio's actual exposure, and at 4.5e6 they
+# arrived at a linear 2.1/2.9 where Mitsuba's are 0.16/0.22: a hundred times too
+# hot, straight to white through the tone map. 3.2e5 puts the collar's linear
+# value where Mitsuba has it (and the cage a little darker, which is fine — the
+# numeral is the only thing in the tube that should be bright).
+EXPOSURE_GAIN = float(os.environ.get("CYCLES_GAIN", 4.2e5))
 WORLD_GAIN = float(os.environ.get("CYCLES_WORLD_GAIN", 1.0))
 CAM_DIST = 300.0
 
@@ -155,7 +164,10 @@ def material_glass():
     nt = mat.node_tree
     bsdf = nt.nodes["Principled BSDF"]
     bsdf.inputs["Base Color"].default_value = (1.0, 1.0, 1.0, 1.0)
-    bsdf.inputs["Roughness"].default_value = 0.05
+    # Not a mirror: the polished surface put a sharp image of the softboxes on the
+    # glass, and those highlights outshone the discharge. Real envelope glass has
+    # a slight draw waviness that spreads them.
+    bsdf.inputs["Roughness"].default_value = 0.18
     bsdf.inputs["Transmission Weight"].default_value = 1.0
     bsdf.inputs["IOR"].default_value = 1.52
     return mat
@@ -282,26 +294,35 @@ def save_render(path):
 # ---- the passes -------------------------------------------------------------
 
 
-def scene_geometry():
-    shapes, wires, glow = R.build()
+def scene_geometry(lit=None):
+    shapes, wires, glow = R.build(lit=LIT if lit is None else lit)
     return shapes, wires, glow
 
 
-def build_common(room_radiance, with_lights, with_world_only=False):
-    shapes, wires, glow = scene_geometry()
+def build_common(room_radiance, with_lights, lit=None):
+    shapes, wires, glow = scene_geometry(lit)
     glass = material_glass()
     # Base colour on a metal in Cycles IS its reflectance, and that is what the
     # eta/k pair in Mitsuba works out to: (1.5, 2.2) -> 0.46, (1.3, 1.6) -> 0.36.
     # The 0.02 that stood here first turned every part into a black silhouette.
+    # The nine cathodes that are NOT lit have to disappear: in a real tube you see
+    # the lit numeral and barely the dark wires of the others. At 0.46 reflectance
+    # the studio lit all ten and the numeral drowned in a tangle of bright wire.
     cathode = principled(
-        "cathode", (0.46, 0.43, 0.40), metallic=1.0, rough=0.60
+        "cathode", (0.09, 0.085, 0.08), metallic=1.0, rough=0.70
     )
     anode = principled("anode", (0.36, 0.36, 0.36), metallic=1.0, rough=0.75)
+    # The cyan coat, dim enough to stay cyan: at a full dielectric specular the
+    # studio's reflection alone pushed the collar to a light grey.
     collar = principled(
-        "collar", (0.10, 0.52, 0.68), metallic=0.0, rough=0.28, spec=0.25
+        "collar", (0.055, 0.30, 0.42), metallic=0.0, rough=0.30, spec=0.06
     )
     mica = principled("mica", (0.82, 0.80, 0.72), metallic=0.0, rough=0.5)
-    neon = material_emission("neon", (1.0, 0.455, 0.155), 22.0)
+    # The discharge, in Cycles' units. The emitter is a solid: its radiance IS the
+    # number. Past ~8 the tone map turns the core into the pale cream of an
+    # overdriven filament, and below ~2 it does not read as burning at all: 4.5
+    # lands on the hot orange a nixie has, with the bloom carrying the rest.
+    neon = material_emission("neon", (1.0, 0.455, 0.155), 18.0)
 
     mats = {
         "glass": glass,
@@ -323,23 +344,47 @@ def build_common(room_radiance, with_lights, with_world_only=False):
 
     world(room_radiance)
     if with_lights:
+        # Large and soft, not small and bright: a lamp's wall of light. A small
+        # source of the same power puts a mirror image of itself on the glass, and
+        # those highlights came out several times brighter than the discharge — the
+        # sprite's brightest pixels were the softboxes, not the numeral. Size does
+        # not change a Blender area light's power, so the reflections soften and
+        # the lighting stays where it was.
         for name, origin, size, rad in (
-            ("key", (-120, 150, 210), (90, 130), (7.0, 7.3, 7.8)),
-            ("fill", (190, 40, 120), (70, 110), (2.0, 2.1, 2.4)),
-            ("rim", (-50, -30, -190), (60, 100), (1.1, 1.2, 1.4)),
+            ("key", (-120, 150, 210), (225, 325), (7.0, 7.3, 7.8)),
+            ("fill", (190, 40, 120), (175, 275), (2.0, 2.1, 2.4)),
+            ("rim", (-50, -30, -190), (150, 250), (1.1, 1.2, 1.4)),
         ):
             area_light(name, origin, size, rad)
     return shapes
 
 
-def beauty(out):
+def beauty(out, lit=None):
     clear()
     device()
     render_settings(SAMPLES, out + ".exr")
-    build_common((0.012, 0.013, 0.017), with_lights=True)
+    build_common((0.012, 0.013, 0.017), with_lights=True, lit=lit)
     sensor()
     save_render(out + ".exr")
     print("beauty:", out + ".exr")
+
+
+def digits(out, digits=range(10)):
+    """One beauty pass per numeral: the clock reads a sprite per digit.
+
+    The hardware is the same in all ten, so the metal and glass passes are shared;
+    only the discharge moves to the numeral that is lit.
+    """
+    for d in digits:
+        path = "%s_m%d" % (out, d)
+        clear()
+        device()
+        render_settings(SAMPLES, path + ".exr")
+        build_common((0.012, 0.013, 0.017), with_lights=True, lit=d)
+        sensor()
+        save_render(path + ".exr")
+        exr_to_npy(path + ".exr", path + ".npy")
+        print("digit", d, "->", path + ".npy")
 
 
 def metal_mask(out):
@@ -430,6 +475,10 @@ def main():
         print("CYCLES_DONE", out)
         return
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
+    if "digits" in what:
+        digits(out)
+        print("CYCLES_DONE", out)
+        return
     if "beauty" in what:
         beauty(out)
         exr_to_npy(out + ".exr", out + ".npy")
