@@ -264,7 +264,7 @@ vec2 uvR = (px + pInset + mir) / pBackdrop;
 vec3 room = texture(source, clamp(uvR, vec2(0.001), vec2(0.999))).rgb;
 glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight;
 // two narrow lights the tube always catches, and they stop before the collar
-glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.070, 2.0)) * inside * fade * 0.20 * pHighlight;
+glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.14 * pHighlight;
 glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.045 * pHighlight;
 
 // The pip the tube was sealed by — the one mark every nixie has on top of its
