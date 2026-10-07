@@ -178,9 +178,13 @@ fn sweep(
             height - pad as u32,
         ),
     );
+    // Against a lit wire, not against this frame's own peak: on an unlit lamp
+    // the peak is the glass itself, and dividing by it makes the glass look
+    // worse the cleaner it gets. The wire's peak is 255 by construction.
+    let own = glass.glass_own_light * glass.peak as f32 / 255.0;
     println!(
         "unlit lamp: glass adds {:.1}% of a lit wire (limit 8%), mesh contrast {:.1}%",
-        glass.glass_own_light * 100.0,
+        own * 100.0,
         glass.cage_contrast * 100.0
     );
     if check && glass.cage_contrast < limits.cage_contrast {
@@ -190,10 +194,10 @@ fn sweep(
         );
         failures += 1;
     }
-    if check && glass.glass_own_light > limits.glass_own_light * 8.0 {
+    if check && own > limits.glass_own_light {
         println!(
             "       FAIL the glass adds little of its own: {:.1}%",
-            glass.glass_own_light * 100.0
+            own * 100.0
         );
         failures += 1;
     }
