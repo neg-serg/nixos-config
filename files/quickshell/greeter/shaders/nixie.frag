@@ -278,13 +278,17 @@ alpha += tip * 0.06;
 // The numerals' own space: y-up (the tube's y runs down the screen), the width
 // of a numeral as the unit on both axes so a round wire stays round. The stack
 // lives in the cylinder above the collar, which is where a nixie keeps it.
+const float DIGIT_H = 18.0;   // the numerals, mm, off the sheet
+const float DIGIT_W = 10.0;   // and across, mm
+const float GLYPH_H = 2.04;   // how tall the glyphs in digitWire() are
+const float GLYPH_W = 0.70;   // and how wide
 // The numerals are 18 mm high on the sheet, and the glyphs in digitWire() run
 // from -1.02 to +1.02, i.e. 2.04 units tall, so one unit is 18/2.04 mm. Across
 // they run -0.35..+0.35, and an IN-12 numeral is about 10 mm wide, so the same
 // unit is a little wider across the glyph than up it. The wire is a real
 // cathode: 0.24 mm across.
-float gy = (18.0 / 2.04) * mm;
-float gx = 1.62 * gy;
+float gy = (DIGIT_H / GLYPH_H) * mm;
+float gx = (DIGIT_W / GLYPH_W) * mm;
 float gm = sqrt(gx * gy);
 float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
