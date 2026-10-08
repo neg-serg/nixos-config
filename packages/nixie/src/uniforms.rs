@@ -39,7 +39,7 @@ pub struct Uniforms {
     // take: std140 rounds a vec4 up to 16 bytes, so the shader pads it with
     // three floats and this struct has to do the same
     pub temp: f32,
-    pub pad2: f32,
+    pub exposure: f32, // the discharge's stops above white, from the theme
     pub pad3: f32,
     pub pad4: f32,
     pub halo: [f32; 4],
@@ -58,6 +58,7 @@ pub struct Uniforms {
 pub struct Tokens {
     pub wire: f32,
     pub temp: f32,
+    pub exposure: f32,
     pub stack: f32,
     pub highlight: f32,
     pub warmth: f32,
@@ -68,6 +69,7 @@ impl Tokens {
         Ok(Self {
             wire: number_after(theme, "\"nixieWire\": ")? as f32,
             temp: number_after(theme, "\"nixieTempK\": ")? as f32,
+            exposure: number_after(theme, "\"nixieExposure\": ")? as f32,
             stack: number_after(theme, "\"nixieStack\": ")? as f32,
             highlight: number_after(theme, "\"nixieHighlight\": ")? as f32,
             warmth: number_after(theme, "\"nixieWarmth\": ")? as f32,
@@ -96,7 +98,7 @@ impl Uniforms {
             flicker: 1.0,
             pad0: 0.0,
             temp: t.temp,
-            pad2: 0.0,
+            exposure: t.exposure,
             pad3: 0.0,
             pad4: 0.0,
 
@@ -142,7 +144,7 @@ mod tests {
             flicker: 0.0,
             pad0: 0.0,
             temp: 0.0,
-            pad2: 0.0,
+            exposure: 1.5,
             pad3: 0.0,
             pad4: 0.0,
             halo: [0.0; 4],
@@ -164,5 +166,10 @@ mod tests {
         assert_eq!(offset(base.cathode.as_ptr()), 112);
         assert_eq!(offset(&base.thick as *const f32), 128);
         assert_eq!(offset(&base.time as *const f32), 140);
+        assert_eq!(
+            offset(&base.exposure as *const f32),
+            68,
+            "pExposure takes the vec4 slot's second pad: it must sit at 68"
+        );
     }
 }

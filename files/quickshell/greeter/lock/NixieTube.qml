@@ -146,6 +146,7 @@ property real pHighlight: GreeterTheme.nixieHighlight * root.glassLightScale
 property real pWarmth: GreeterTheme.nixieWarmth * root.warmthScale
 property real pFlicker: root.ignition
 property real pTime: root.clock
+property real pExposure: GreeterTheme.nixieExposure
 property real pMm: root.numeralSize / 18.0   // px per millimetre, the drawing's scale
 property real pThick: Math.max(0.8, 0.9 * root.mmPerPx) * root.glassThickness  // the wall, ~0.9 mm
 property real pRefract: root.glassRefraction
