@@ -90,52 +90,13 @@ float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
 return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-// The centre line of one numeral: 1 a mast with a flag, 2 a shoulder and a foot,
-// 3 two bowls, 4 a diagonal over a bar, 5 a lid and a bowl, 6 and 9 a bowl and a
-// sweep, 7 a lid and a leg, 8 two bowls, 0 an oval.
-
-
-// A wire is bent, not assembled: the numerals have to read as smooth curves.
-// This is the distance to a quadratic Bezier, sampled finely enough that the
-// chords are invisible (the wire is 0.3 units thick, the chords err by 1e-3).
-
-// A Catmull-Rom spline through the given points: the curve passes through every
-// point and its tangents are continuous, so a chain of them is one smooth wire
-// with no kink at the joins — which is what a bent filament is.
-float sdCatmull(vec2 p, vec2 p0, vec2 p1, vec2 p2, vec2 p3) {
-float d = 1e5;
-vec2 prev = p1;
-for (int i = 1; i <= 12; i++) {
-float t = float(i) / 12.0;
-float t2 = t * t;
-float t3 = t2 * t;
-vec2 q = 0.5 * ((2.0 * p1) + (-p0 + p2) * t
-+ (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2
-+ (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3);
-d = min(d, sdSegment(p, prev, q));
-prev = q;
-}
-return d;
-}
-float sdSpline6(vec2 p, vec2 a, vec2 b, vec2 c, vec2 d, vec2 e, vec2 f) {
-// five segments: a->b, b->c, c->d, d->e and e->f. Without the last one the
-// curve stops a point short, which is what made the 3 and the 5 read short.
-return min(min(min(sdCatmull(p, a, a, b, c), sdCatmull(p, a, b, c, d)),
-               min(sdCatmull(p, b, c, d, e), sdCatmull(p, c, d, e, f))),
-           sdCatmull(p, d, e, f, f));
-}
-
-float sdBezier(vec2 p, vec2 a, vec2 b, vec2 c) {
-float d = 1e5;
-vec2 prev = a;
-for (int i = 1; i <= 12; i++) {
-float t = float(i) / 12.0;
-vec2 q = mix(mix(a, b, t), mix(b, c, t), t);
-d = min(d, sdSegment(p, prev, q));
-prev = q;
-}
-return d;
-}
+// The centre line of one numeral, all of them bent from straight wire: 1 a
+// mast with a flag, 2 a shoulder and a foot, 3 five strokes (the lid, the two
+// right-hand sides, the waist, the foot), 4 a diagonal over a bar, 5 a lid and
+// a bowl that very nearly closes, 6 a hook and one closed loop, 7 a lid and a
+// leg, 8 two loops, 9 a bowl and a leg, 0 an oval. Every bend is a rounded
+// corner (smin), never a mitre, and no numeral is a written glyph: a cathode
+// is a piece of wire that was bent, and the angles are where it was bent.
 
 float digitWire(int digit, vec2 p) {
 const float PI = 3.14159265;
@@ -149,24 +110,55 @@ return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
                  sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.10),
             sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.10);
 if (digit == 3)
-// one smooth spline: the top curls right, the waist pinches, the belly answers,
-// and the ends stay open to the left
-return sdSpline6(p, vec2(-0.14, 1.003), vec2(0.34, 1.090), vec2(0.44, 0.458),
-                    vec2(0.06, 0.044), vec2(0.46, -0.371), vec2(0.30, -1.025));
+// Five strokes with every bend rounded by about the wire's own thickness: the
+// lid, the upper right side, the waist, the lower right side, the foot. A
+// nixie's 3 is flat bars and straight right-hand sides, not two bowls of arcs.
+return smin(smin(smin(smin(
+            sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
+            sdSegment(p, vec2(0.30, 1.00), vec2(0.30, 0.02)), 0.10),
+            sdSegment(p, vec2(-0.12, 0.02), vec2(0.30, 0.02)), 0.10),
+            sdSegment(p, vec2(0.30, 0.02), vec2(0.30, -1.00)), 0.10),
+            sdSegment(p, vec2(0.30, -1.00), vec2(-0.30, -1.00)), 0.10);
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.10);
 if (digit == 5)
-// one smooth spline: the bar across the top, the shoulder down the left, and a
-// belly that closes to the left at the foot
-return sdSpline6(p, vec2(0.36, 1.098), vec2(-0.22, 1.142), vec2(-0.34, 0.470),
-                    vec2(-0.30, -0.067), vec2(0.42, -0.336), vec2(-0.20, -1.075));
+// The lid is short and the bowl under it is the big element, as on the real
+// tube: the wire leaves the lid's left end straight down, turns right along
+// the waist, down the right side, back along the foot and a little way up
+// again — the bowl very nearly closes, and that is what makes a 5.
+return smin(smin(smin(smin(smin(
+            sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
+            sdSegment(p, vec2(-0.30, 1.00), vec2(-0.30, 0.02)), 0.10),
+            sdSegment(p, vec2(-0.30, 0.02), vec2(0.30, 0.02)), 0.10),
+            sdSegment(p, vec2(0.30, 0.02), vec2(0.30, -1.00)), 0.10),
+            sdSegment(p, vec2(0.30, -1.00), vec2(-0.30, -1.00)), 0.10),
+            sdSegment(p, vec2(-0.30, -1.00), vec2(-0.30, -0.62)), 0.10);
+if (digit == 6)
+// The hook and the one closed loop: the left side runs the whole height, the
+// lid meets it at the top and stops there — there is no right-hand side above
+// the waist, and that is the whole difference between a 6 and an 8.
+return smin(smin(smin(smin(
+            sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
+            sdSegment(p, vec2(-0.30, 1.00), vec2(-0.30, -1.00)), 0.10),
+            sdSegment(p, vec2(-0.30, 0.02), vec2(0.30, 0.02)), 0.10),
+            sdSegment(p, vec2(0.30, 0.02), vec2(0.30, -1.00)), 0.10),
+            sdSegment(p, vec2(0.30, -1.00), vec2(-0.30, -1.00)), 0.10);
+if (digit == 7)
+// A lid and a leg and nothing else: a nixie's 7 is not a bowl with a side.
+return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
+            sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.10);
 if (digit == 8)
 return smin(sdEllipse(p, vec2(0.0, 0.50), vec2(0.27, 0.50)),
             sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)), 0.12);
-return smin(sdEllipse(p, vec2(0.0, 0.54), vec2(0.30, 0.44)),
-            sdSegment(p, vec2(0.30, 0.48), vec2(0.28, -1.02)), 0.10);
+if (digit == 9)
+// The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
+// over, and what tells them apart is which end carries the loop.
+return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
+            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.10);
+return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
+            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.10);
 }
 
 float hash(vec2 p) {
@@ -375,13 +367,12 @@ alpha += tip * 0.06;
 const float DIGIT_H = 30.0;   // the numerals, mm: almost the whole bulb, as asked
 const float DIGIT_W = 14.0;   // and across: the bore is Ø17.2, so this nearly fills it
 const float GLYPH_H = 2.04;   // how tall the glyphs in digitWire() are
-const float GLYPH_W = 0.85;   // and how wide: measured, not assumed — the arcs
-                              // of 0, 2, 3, 6, 8, 9 reach further than 0.7
+const float GLYPH_W = 0.85;   // and how wide the box a numeral is drawn in is
 // The numerals are 18 mm high on the sheet, and the glyphs in digitWire() run
-// from -1.02 to +1.02, i.e. 2.04 units tall, so one unit is 18/2.04 mm. Across
-// they run -0.35..+0.35, and an IN-12 numeral is about 10 mm wide, so the same
-// unit is a little wider across the glyph than up it. The wire is a real
-// cathode: 0.24 mm across.
+// from -1.02 to +1.02, i.e. 2.04 units tall, so one unit is 18/2.04 mm. The box
+// across is 0.85 units, and the numerals inside it run to about ±0.33, which is
+// the 10 mm an IN-12's numeral measures. The wire is a real cathode, and a fat
+// one: 0.38 mm to its edge, so 0.76 mm across.
 float gy = (DIGIT_H / GLYPH_H) * mm;
 float gx = (DIGIT_W / GLYPH_W) * mm;
 float gm = sqrt(gx * gy);
