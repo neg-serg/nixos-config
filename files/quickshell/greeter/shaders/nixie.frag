@@ -476,7 +476,13 @@ if (tir > 0.5) rayOut = reflect(rayT, exitN);  // trapped, and the wall goes bri
 float fres = pow(1.0 - clamp(dot(-VIEW, N3), 0.0, 1.0), 5.0);
 float F = fres + (1.0 - fres) * (tir + (1.0 - tir) * pow(1.0 - clamp(cosI, 0.0, 1.0), 5.0));
 float pathIn = wall / max(max(abs(rayT.x), abs(rayT.y)), 0.02);
-vec3 absorb = exp(-(1.0 - pGlass.rgb) * 1.20 * pathIn / R);
+// Beer's law is per wavelength: the absorption coefficient of iron-bearing
+// soda-lime glass climbs towards the red, so a long path loses red first and a
+// thick wall reads green-turquoise. The weights are red, green and blue against
+// the tube's own tint: red is absorbed 1.35 / 0.85 ~ 1.6x as fast as blue,
+// green between them.
+const vec3 ABSORB_DISP = vec3(1.35, 1.05, 0.85);
+vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 1.20 * pathIn / R);
 
 // The picture, as the ray for this pixel finds it on the wall behind the tube.
 // The patch the caller lends us is the only picture we have, so the wall sits
@@ -510,6 +516,14 @@ disp.r = texture(source, clamp((px + pInset + offR) / pBackdrop, vec2(0.001), ve
 disp.g = texture(source, clamp((px + pInset + off)  / pBackdrop, vec2(0.001), vec2(0.999))).g;
 disp.b = texture(source, clamp((px + pInset + offB) / pBackdrop, vec2(0.001), vec2(0.999))).b;
 vec3 refract = disp * absorb;
+// A caustic rings the wall: where the glass turns edge-on the lens's mapping
+// folds over instead of stretching further, and the picture returns to the eye
+// inverted — a second, almost mirrored image along the rim. One more tap at the
+// folded offset, carried by grazing so the middle of the tube is untouched.
+float caustic = pow(grazing, 3.0) * pRefract * inside;
+vec2 offC = -off * 1.10;
+vec3 causticImg = texture(source, clamp((px + pInset + offC) / pBackdrop, vec2(0.001), vec2(0.999))).rgb;
+refract = mix(refract, causticImg * absorb, caustic * 0.70);
 
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
@@ -532,6 +546,17 @@ mir = clamp(mir, vec2(-0.20 * R), vec2(0.20 * R));
 vec2 uvR = (px + pInset + mir) / pBackdrop;
 vec3 room = blurred_room(uvR, vec2(0.035, 0.030) * pRefract);   // the room, smeared
 glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight;
+// The inner wall is the second mirror in the tube: light crosses the bore,
+// reflects off the far wall and leaves through the near one, so the room the
+// glass carries arrives twice, displaced by that extra crossing — the weak
+// doubled echo a real tube throws beside its bright core. Only the lateral
+// direction flips (the wall that reflects is the far side of the cylinder), and
+// the second wall plus the longer path take their share through absorb2.
+vec2 mir2 = vec2(-rayIn.x, rayIn.y) * 0.55 * roomDist / max(-rayIn.z, 0.06);
+mir2 = clamp(mir2, vec2(-0.20 * R), vec2(0.20 * R));
+vec3 room2 = blurred_room((px + pInset + mir2) / pBackdrop, vec2(0.050, 0.040) * pRefract);
+vec3 absorb2 = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 1.20 * 2.0 * pathIn / R);
+glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb2 * 0.55;
 // two narrow lights the tube always catches, and they stop before the collar
 glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.14 * pHighlight;
 glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.045 * pHighlight;

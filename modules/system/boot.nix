@@ -32,6 +32,14 @@
           "xhci_hcd"
           "xhci_pci"
         ]
+        # 7.2 defers AMD 800-series chipset controllers (Promontory 21, this
+        # board's chipset) from xhci_pci to this driver, and lockKernelModules
+        # forbids loading it after boot — so preload it in initrd. Gated on the
+        # kernel version: a rollback of baseKernel to 6.18 (no such module)
+        # must not break the initrd module closure.
+        ++ lib.optionals (lib.versionAtLeast config.boot.kernelPackages.kernel.version "7.2") [
+          "xhci_pci_prom21"
+        ]
         # Load TPM modules in initrd only when TPM2 support is enabled
         ++ lib.optionals (config.security.tpm2.enable or false) [
           "tpm"
@@ -42,6 +50,9 @@
           "usbhid"
           "xhci_hcd"
           "xhci_pci"
+        ]
+        ++ lib.optionals (lib.versionAtLeast config.boot.kernelPackages.kernel.version "7.2") [
+          "xhci_pci_prom21" # AMD 800-series chipset USB (see above)
         ];
       }
       (lib.mkIf (config.profiles.performance.optimizeInitrdCompression or false) {
