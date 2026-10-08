@@ -47,6 +47,10 @@ The primitives, all in `nixie.frag`:
 - `sdEllipse` / `sdEllipseArc` — the same for a circle stretched to the numeral's proportions;
 - `sdBentRect` — the outline of a rectangle whose four corners are quadrants of a circle of radius r:
   straight sides, bends of one radius, which is how a drawing font bends a wire;
+- `sdRoundQuad` — a quadrilateral whose four corners are each replaced by an arc of one radius r,
+  tangent to both of its edges: the sides run between the tangent points, not as chords across the
+  corners. It is the loop that is wide at its crown and pinched at the waist, which is the 8's own
+  shape;
 - `smin` — a smooth union. It is still used where two strokes of different direction meet without a
   common tangent, but a bend with a known radius is built from quadrants, not from a softened corner.
 
@@ -60,15 +64,22 @@ The figures:
 | 3 | two ellipse arcs pinched together at the waist |
 | 4 | a diagonal over a bar, with a mast |
 | 5 | the drawing font's: a bar across the top, the stem off its left end, the waist and a shallow bowl — quadrants of r = 0.20 at every turn |
-| 6 | the drawing font's: one straight stroke off the top into a closed bowl, `sdBentRect` with r = 0.20 |
+| 6 | Iosevka's (Iosevkaneg): a closed bowl and a cap over it whose right-hand side stops short, `sdBentRect` with r = 0.24 |
 | 7 | a lid and a leg |
-| 8 | the drawing font's: two closed loops, the lower wider than the upper, `sdBentRect` with r = 0.24 |
+| 8 | Iosevka's (Iosevkaneg): two loops, wide at their crowns and pinched at a shared waist, the lower a little wider, `sdRoundQuad` with r = 0.22 |
 | 9 | a bowl and a leg |
 
-The 5, the 6 and the 8 were measured off a drawing-font reference (GOST 2.304, the drawing font): the
-reference raster was read into the numeral's own space and its ink profiled by height, which is where
-the proportions and the bend radius come from. A bend there turns over about a tenth of the numeral's
-height, i.e. r ≈ 0.20 of the glyph's own units.
+The 5 was measured off a drawing-font reference (GOST 2.304, the drawing font): the reference raster
+was read into the numeral's own space and its ink profiled by height, which is where the proportions
+and the bend radius come from. A bend there turns over about a tenth of the numeral's height, i.e.
+r ≈ 0.20 of the glyph's own units.
+
+The 6 and the 8 are not the drawing font's: they were measured off the user's own cut of Iosevka
+(Iosevkaneg-Regular). The glyph raster gives the aspect, ~0.51, and a stroke about 11% of the height;
+the profile gives the two shapes. The 6 is a closed bowl with a cap over it whose right-hand side
+stops short — that gap is what makes it a 6 and not an 8 — and every bend is a quadrant of r = 0.24.
+The 8 is two loops, wide at their crowns and pinched at a shared waist, the lower a little wider than
+the upper, with r = 0.22.
 
 ## What the parts are made of
 
@@ -121,6 +132,41 @@ crisp flipped copy of the numeral inside the tube would read as a second, broken
 
 The theme is copy-once: `Theme/` is copied into `~/.config/quickshell/Theme/`, so after an edit it has
 to be copied and touched again, or the login screen keeps the old numbers.
+
+## What is still simulation, not physics
+
+The parts above are measured or modelled. These ten are still drawn to look right, and each one is a
+place where the render is a look-alike rather than the thing:
+
+1. The lit wire's colour is the theme's `nixieCoreColor` (`pCore`), not a temperature: the wire is
+   tinted, not heated. It needs a `pTempK` uniform and Planck's law with a Stefan-Boltzmann power,
+   as `blackbody`/`heat_power` already drive the mesh.
+2. `nixieWarmth` is bound (`pWarmth`, `NixieTube.qml`) and never read in the shader: the discharge's
+   landing on the glass is a fixed weight. It needs the glass-deposition term scaled by `pWarmth`.
+3. Rough metal is five taps in a cross (`metal_hit`, `blurred_room`), a stencil blur. It needs a
+   microfacet model (GGX) or a pre-filtered mip chain, so `rough` is a BRDF lobe and not a sample
+   radius.
+4. The glass traces one path — in, across the bore, out (`rayTr`/`rayTg`/`rayTb`, `rayOut`) — and the
+   far wall's catch (`wallRefl`) is painted, not traced: the discharge is never reflected off the
+   inner wall. It needs a second ray inside the bore, with its own Fresnel.
+5. Beer's law has no dispersion of its own: `absorb` takes the glass tint as a per-channel
+   coefficient and the green ray's path length for all three channels. It needs the attenuation
+   carried per wavelength along each of the three dispersed rays.
+6. The discharge is one colour per token (`pCore`, `pHalo`) plus a fixed violet fringe. A neon
+   discharge is a line spectrum; it needs a small set of emission lines weighted by the gas model.
+7. The cathode heats uniformly along its length (`core`, `pGlow`). In life the middle of a stroke runs
+   hotter than its ends; it needs the heating, and with it the colour, to fall off along the wire.
+8. Nothing ages. There is no cathode sputtering and no getter deposit, the two things that darken a
+   real tube's glass over its life. It needs a usage term that thins the wire and films the envelope.
+9. The base is a crimped moulding (the `collarH` path, and `COLLAR_H_MM = 0` disables even that). It
+   has no pins on the sheet's 11.5 mm circle and no lugs, so the lamp cannot be shown plugged in. It
+   needs the sheet's leads added and the base switched on.
+10. The shader compresses into 0..1 (`add = 1 - exp(-add * 1.55)`, `fragColor` clamped), so there is
+    no HDR headroom, while the session outputs 10-bit with colour management and an HDR path
+    (`bitdepth = 10`, `cm = "auto"` in `files/gui/hypr/greetd.lua`; `hdr_output_metadata` needs
+    atomic KMS per `modules/user/session/greetd/session-wrapper.sh`). It needs an HDR path that keeps
+    the highlights above 1.0 and declares the output transfer and primaries instead of compressing
+    them away.
 
 ## The workbench
 
