@@ -19,24 +19,40 @@ if [ -L "$PROFILE_AI" ]; then
   echo "dsh-tui-ensure: removed the legacy @deepseek-ai store link (dsh owns the module fallback now)"
 fi
 
+# The retired preset root. Until dsh 0.1.6 the harness discovered presets as
+# $DSH_HOME/.agent-presets/<id>/{preset.yml,agent.cordis.yml} and the two preset
+# modules (dsh-fast.nix, dsh-liangshen-fork.nix — both retired with the 0.2.0
+# upgrade) synced `neg` and `fast` there. The 0.2.0 registry reads declaration
+# rows only (see dsh-presets.nix), so the directory is dead weight: drop it once
+# and say so; the repo directories stay the source of truth for the declarations.
+LEGACY_PRESETS="@homeDir@/.dsh/.agent-presets"
+if [ -d "$LEGACY_PRESETS" ]; then
+  rm -rf "$LEGACY_PRESETS"
+  echo "dsh-tui-ensure: removed the retired $LEGACY_PRESETS (0.2.0 reads preset declarations, not directories)"
+fi
+
 PKG="$PROFILE_DIR/node_modules/@deepseek-harness-tui/dsh-tui/package.json"
 VER=""
 if [ -f "$PKG" ]; then
   VER="$(jq -r '.version // "0.0.0"' "$PKG")"
 fi
-if [ -z "$VER" ] || [ "$(printf '%s\n%s\n' 0.10.1 "$VER" | sort -V | head -1)" != "0.10.1" ]; then
-  echo "dsh-tui-ensure: installing @deepseek-harness-tui/dsh-tui ^0.10.1 (current: ${VER:-missing})..."
-  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add '@deepseek-harness-tui/dsh-tui@^0.10.1' -w) \
+# 0.14.0 is the first dsh-TUI line whose peer set names the 0.2.0 harness
+# (dsh-agent-preset-registry 0.2.0-rc.1 || 0.2.0-rc.2); earlier lines pin the
+# 0.1.x services that 0.2.0 no longer ships.
+if [ -z "$VER" ] || [ "$(printf '%s\n%s\n' 0.14.0 "$VER" | sort -V | head -1)" != "0.14.0" ]; then
+  echo "dsh-tui-ensure: installing @deepseek-harness-tui/dsh-tui ^0.14.0 (current: ${VER:-missing})..."
+  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add '@deepseek-harness-tui/dsh-tui@^0.14.0' -w) \
     || echo "dsh-tui-ensure: install failed — will retry on next login" >&2
 fi
 
 # dsh-free-search: keyless search engines (ddg/bing/...), platform search,
 # `web_fetch`. The shipped `deepseek-official` provider answers with an empty
-# body from this region, so the profile rows below point the harness `web`
-# row at this plugin's `ddg` provider. 0.4.24 is the first release on the
-# 0.1.5 settings API.
+# body from this region, so the profile rows below ask for this plugin's `ddg`
+# engine. 0.8.1 is the first release whose peers cover the 0.2.0 harness
+# (`^0.1.7-rc.1 || ^0.2.0-rc.1`) and it drops the `web.searchProvider` override
+# the profile used to write — see the searchRows commentary.
 FS_PKG="$PROFILE_DIR/node_modules/dsh-free-search/package.json"
-FS_WANT=0.4.24
+FS_WANT=0.8.1
 # Registered means: the package is a profile dependency and its files are
 # there. A leftover directory from a half-finished pnpm run is deliberately
 # not "installed" — and note that `dsh plugin add` writes the dependency but
@@ -57,18 +73,13 @@ if ! fs_ok || [ "$(printf '%s\n%s\n' "$FS_WANT" "$FS_HAVE" | sort -V | head -1)"
     || echo "dsh-tui-ensure: dsh-free-search install failed — will retry on next login" >&2
 fi
 
-# dsh-TUI session visibility: a session indexed while its log was still a stub
-# is stored with hasPrompt = false and the append-only carry-forward keeps that
-# stale flag once the log grows, so the cache-hit path hides the session from
-# the conversations list forever (the "session disappeared" defect). Session
-# logs are append-only, so the patcher makes the flag monotonic. Re-applied on
-# every login because a pnpm install replaces the file; see the script's header
-# for the upstream line it rewrites.
-TUI_LIST="$PROFILE_DIR/node_modules/@deepseek-harness-tui/dsh-tui/lib/types/dsh-adapter/sessions/list.js"
-if [ -f "$TUI_LIST" ]; then
-  python3 @visibilityPatch@ "$TUI_LIST" \
-    || echo "dsh-tui-ensure: session-visibility patch failed — sessions may hide again" >&2
-fi
+# dsh-TUI session visibility: the 0.10.x hasPrompt carry-forward defect (a
+# session indexed while its log was a stub stayed hasPrompt = false forever and
+# disappeared from the conversations list) is fixed upstream in 0.14.0 — the
+# append-growth path now derives the flag from the log suffix and ORs it with
+# the carried one (`hasPrompt: previous.hasPrompt || suffix.hasHumanPrompt`),
+# and an unreadable log is listed (`derived?.hasPrompt ?? true`). The patcher
+# that rewrote the installed list.js is retired with it.
 
 PATCH="$PROFILE_DIR/cordis.patch.yml"
 if [ -f "$PATCH" ]; then
@@ -77,10 +88,18 @@ if [ -f "$PATCH" ]; then
   if fs_ok; then
     printf '%s\n' @searchRows@ >> "$ROWS"
   fi
+  # Files the preset declarations reference by a *relative* path: inserted rows
+  # anchor relative paths beside their patch file, i.e. this profile directory.
+  # Today that is the neg preset's tool-bootstrap.mjs; the repo copy is the
+  # source of truth, so it is refreshed on every login like the theme.
+  while IFS=$'\t' read -r src name; do
+    [ -n "$src" ] || continue
+    cp -f "$src" "$PROFILE_DIR/$name"
+  done < <(jq -r '.presets[].sidecars[] | "\(.src)\t\(.name)"' @presetData@ 2> /dev/null)
   # The rewriter owns the fallback-preset row (the scoped id dsh-TUI's bundle
-  # exposes) and the plugin rows; see its header for the retired code-runtime
-  # block it also consumes.
-  python3 @presetPatch@ "$PATCH" "$ROWS" dsh-tui-ensure \
+  # exposes), the agent-preset declarations and the plugin rows; see its header
+  # for the retired code-runtime block it also consumes.
+  python3 @presetPatch@ "$PATCH" "$ROWS" @presetData@ dsh-tui-ensure \
     || echo "dsh-tui-ensure: preset patch failed" >&2
   rm -f "$ROWS"
 fi
