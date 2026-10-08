@@ -107,12 +107,31 @@ over from the room's reflection. `blackbody()` is Planck's colour (Bartlett's sR
 (2550 K), capped so a knob turned all the way up cannot blow the frame out. Measured on the render:
 with the discharge on, the mesh's own region gains light with R/B ≈ 5 — dull red, as it should be.
 
-**The discharge is exposed and tone-mapped, not clipped.** the wire and its gas are summed as light and
-mapped once through Khronos' PBR-neutral curve (`tone_map`, `DISCHARGE_EXPOSURE` = 2.5): the wire
-stands two and a half times above white, the curve's shoulder turns that into a warm white core, and
-the metal's own colour survives under it. The theme's colours are code values, so they are squared
-into linear light before the sum and the result is square-rooted back into the display encoding the
-rest of the pass uses.
+**The discharge is exposed and tone-mapped, not clipped.** The wire and its gas are summed as light —
+the wire's colour from the measured Planck fit below, the gas's linearised from the theme's own
+colour — and mapped once through Khronos' PBR-neutral curve (`tone_map`, `DISCHARGE_EXPOSURE` = 1.5):
+the wire stands a stop and a half above white, the curve's shoulder turns that into a white core, and
+the metal's own colour survives under it. The result is encoded back into the display values the rest
+of the pass and the compositor work in. Nothing is clipped, and nothing is added after the curve:
+what the old code called "HDR headroom" was a fixed fraction of the wire's excess added on top of the
+display value, which an 8-bit sRGB surface simply throws away.
+
+**Where the wire's colour and its brightness come from.** Both are measured, not fitted by eye, by a
+spectral path trace of the Planck spectrum itself (`scripts/dev/nixie-calibrate.py`, Mitsuba's
+`blackbody` emitter, one flat rectangle per temperature, read back as D65-normalised linear sRGB):
+
+| | physics | the shader |
+| --- | --- | --- |
+| colour at 2400 K | (1, 0.406, 0.086) | quartic in 1000/T over 1600..5200 K, error 0.001 / 0.003 |
+| colour at 3200 K | (1, 0.570, 0.285) | same fit |
+| visible radiance at 1850 K, against 2550 K | 0.023 | quartic in ln(T/2550), error 0.1% |
+| visible radiance at 2400 K | 0.560 | same fit |
+| visible radiance at 3200 K | 6.22 | same fit |
+
+The radiance column is the one that changed a look. Stefan-Boltzmann's fourth power is the
+*bolometric* power; a camera sees the visible band, and as the Planck peak walks into it that band's
+share grows fast — the local exponent is 11 near 2000 K and 9 near 3000 K. `HEAT_END_DROP` is 150 K
+for that reason: the 550 K this used to lose at the ends would have put them out thirty times over.
 
 **The metal's own colour is dull orange.** The theme draws it at 2400 K — a nixie's cathode is
 nowhere near a tungsten filament, and the white in photographs of one is the camera, not the metal;
