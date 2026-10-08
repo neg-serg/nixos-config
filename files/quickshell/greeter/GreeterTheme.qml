@@ -93,6 +93,7 @@ Singleton {
 
     // The clock: four gas-discharge tubes (lock/NixieClock.qml, shaders/nixie.frag)
     readonly property real nixieDigitSize: _val('greeter.nixieDigitSize', 92)
+    readonly property real nixieTubeMargin: _val('greeter.nixieTubeMargin', 16)
     readonly property real nixieGlow: _val('greeter.nixieGlow', 1.0)
     readonly property real nixieTempK: _val('greeter.nixieTempK', 2400)
 readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)

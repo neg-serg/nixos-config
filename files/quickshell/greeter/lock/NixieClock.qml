@@ -20,11 +20,18 @@ readonly property real uiScale: GreeterTheme.uiScale
 
 // The numeral size: the tubes and every gap between them are built from it.
 readonly property real numeralSize: Math.round(GreeterTheme.nixieDigitSize * root.uiScale)
-readonly property real tubeGap: Math.round(root.numeralSize * 0.09)
+// The tubes are one row of glass, not four islands: each item is wider than its
+// glass by the margin the discharge's bloom needs (GreeterTheme.nixieTubeMargin,
+// which NixieTube pads itself by), so the row's spacing goes negative by two of
+// those margins and what is left between the glass edges is "tubeGap".
+readonly property real tubeMargin: Math.round(GreeterTheme.nixieTubeMargin * root.uiScale)
+readonly property real tubeGap: Math.round(root.numeralSize * 0.055)
 // The break between the two pairs. The colon is not drawn — the clock is four
 // tubes — so this item is only the space the hours and the minutes are held
-// apart by, and it is kept narrow so the two pairs read as two.
-readonly property real colonWidth: Math.round(root.numeralSize * 0.05)
+// apart by: "pairGap" is what that break comes to between the glass edges, and
+// the item is the rest of the arithmetic.
+readonly property real pairGap: Math.round(root.numeralSize * 0.20)
+readonly property real colonWidth: Math.max(0, root.pairGap - 2 * root.tubeGap + 2 * root.tubeMargin)
 // The two bulbs sit where the tops and the bottoms of the digits are, not in
 // the middle of the row.
 readonly property real bulbOffset: Math.round(root.numeralSize * 0.25)
@@ -46,7 +53,7 @@ implicitHeight: row.implicitHeight
 Row {
 id: row
 anchors.centerIn: parent
-spacing: root.tubeGap
+spacing: root.tubeGap - 2 * root.tubeMargin
 
 NixieTube {
 id: hourTens
