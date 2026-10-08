@@ -40,7 +40,9 @@ function* artifacts(dir) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = `${dir}/${entry.name}`
     if (entry.isDirectory()) yield* artifacts(path)
-    else if (entry.name === 'session.jsonl.zstd' || entry.name === 'session.jsonl') yield path
+    // 0.2.0 version-stamps the artifact name (`session.v3.jsonl.zstd`);
+    // 0.1.x wrote `session.jsonl[.zstd]`. Both decode through the catalog.
+    else if (/^session(\.v\d+)?\.jsonl(\.zstd)?$/.test(entry.name)) yield path
   }
 }
 

@@ -318,8 +318,11 @@
         backgroundMode: one-shot
         maxDepth: provider-managed
 
-    - id: workflow-worker-thread
-      name: '@deepseek-ai/dsh-workflow-worker-thread'
+    # 0.2.0-rc.2 renamed the workflow provider package: the worker-thread row
+    # is gone and `dsh-workflow-ptc` (same `provider: spawn` config) takes its
+    # place — the shipped standard/ptc/cordis presets mount it the same way.
+    - id: workflow-ptc
+      name: '@deepseek-ai/dsh-workflow-ptc'
       config:
         provider: spawn
 

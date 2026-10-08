@@ -22,31 +22,44 @@ the picker, sessions and the default reference `neg`.
 ## How it is arranged
 
 - Preset files: `modules/user/nix-maid/apps/dsh-liangshen-fork/` (`preset.yml` — name/description/
-  order in the picker, `agent.cordis.yml` — composition, `tool-bootstrap.mjs` — two-phase bootstrap,
-  `NOTICE` — origin and licenses). The behavior is identical to upstream; it is edited here.
-- The `modules/user/nix-maid/apps/dsh-liangshen-fork.nix` module syncs the files into
-  `~/.dsh/.agent-presets/neg/` (the roster's discovery root; the preset id — `neg`) on every rebuild
-  and login. The sync is always forced — local edits in `~/.dsh/.agent-presets/` are overwritten;
-  the repository is the source of truth. The directory is excluded from the module auto-import in
-  `apps/default.nix`.
-- The default preset: `agent-presets.default: neg` in `~/.dsh/settings.yaml` (read with hot-reload,
-  applies to **new** sessions; no dsh restart is needed). A duplicate fallback in the roster config
-  (`- id: dsh-tui-agent-presets / config.default` in `~/.dsh/profiles/tui/cordis.patch.yml`, written
-  by `dsh-tui-preset-patch.py`) guards against a settings.yaml reset.
-- The built-in `standard` preset is removed from the dsh package build (`packages/dsh/default.nix` —
-  postInstall cuts out `config/agent-presets/standard`), so it is absent from the picker.
-- The original upstream `liangshen` preset (from the unmounted `@linxin666/dsh-liangshen` plugin) is
-  removed declaratively by the fork's ensure-script; the plugin leftover was cleaned from
-  `~/.dsh/profiles/node_modules`.
+  order, `agent.cordis.yml` — composition, `tool-bootstrap.mjs` — two-phase bootstrap, `NOTICE` —
+  origin and licenses). The behavior is identical to upstream; it is edited here. The sibling
+  `dsh-fast/` directory is the same shape for the `fast` preset.
+- **Declarations, not directories** (dsh ≥ 0.1.7 / 0.2.0): the harness composes a preset from a
+  declaration row (`@deepseek-ai/dsh-agent-preset`) carried by a patch layer, and the old
+  `~/.dsh/.agent-presets/<id>/` discovery root is dead — nothing reads it. The deployment declares
+  both presets itself, because the tui profile mounts neither the web-app bundle (which carries the
+  shipped `standard`/`ptc`/`minimal`/`cordis`) nor any other preset source:
+  - `dsh-presets.nix` holds the data (`id`, `name`, `order`, `description`, the `plugins` file, the
+    sidecar files) and the JSON handed to the writer;
+  - `dsh-tui-preset-patch.py` writes the owned blocks of the profile's `cordis.patch.yml` on every
+    rebuild and login: the two `- insert: [{id: preset-<id>, …}]` declarations, the registry default
+    (`dsh-tui-agent-preset-registry.config.default`), and the plugin rows;
+  - `dsh-tui-ensure.sh` copies each declaration's sidecars next to the patch file, because relative
+    names inside a patch anchor to the file that carries it (`./tool-bootstrap.mjs` → the profile
+    directory). A store path's file name carries its hash, so the JSON gives the destination name.
+  - The retired `~/.dsh/.agent-presets/` root is removed once by the same caretaker.
+- The `standard` preset is **not** removed from the package any more: it ships inside the
+  `@deepseek-ai/dsh-web-app` bundle, which the terminal profile does not mount, so the picker there
+  shows exactly the declared presets. The web profile does mount that bundle; hiding `standard`
+  there is a profile-layer patch (`- id: preset-standard` + `disabled: true`) rather than a package
+  edit.
+- The default for new sessions is the registry row's `config.default` (`neg`, written by the
+  caretaker). `~/.dsh/settings.yaml` used to hold `agent-presets.default` — that is the retired
+  0.1.x namespace and is ignored by 0.2.0; the live override is the registry's settings-backed
+  `selectedDefault`, set from the picker ("Set as default") or the settings UI.
 
 ## Changing the behavior
 
-Edit `modules/user/nix-maid/apps/dsh-liangshen-fork/agent.cordis.yml`, then
-`sudo nixos-rebuild switch --flake .#trantor --option substitute false` (or wait for the login) — the
-activation script re-syncs the preset. The picker default is changed via the GUI (roster → "Set as
-default") or by editing `settings.yaml`.
+Edit `modules/user/nix-maid/apps/dsh-liangshen-fork/agent.cordis.yml` (or `dsh-fast/`), then
+`sudo nixos-rebuild switch --flake .#trantor --option substitute false` — or just log in: the
+caretaker regenerates the profile patch layer. Plugin names must still exist in the installed
+harness (`cordis-composition-reference`); 0.2.0-rc.2 renamed `@deepseek-ai/dsh-workflow-worker-thread`
+to `@deepseek-ai/dsh-workflow-ptc`, which that file already carries.
 
 ## Removal
 
-Remove the module and the directory, restore the exclusion in `apps/default.nix`, delete
-`~/.dsh/.agent-presets/neg/` and the `agent-presets.default` key from `settings.yaml`.
+Delete the preset's entry from `modules/user/nix-maid/apps/dsh-presets.nix` (or the whole file plus
+the `presets` import in `dsh-tui.nix` and the exclusion in `apps/default.nix`), then drop the
+`dsh-<id>/` directory. The caretaker writes a layer without that declaration on the next rebuild or
+login; nothing lives in `~/.dsh` to clean up.

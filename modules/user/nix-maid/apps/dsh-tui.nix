@@ -23,19 +23,16 @@ let
   # theme plus the `en` default language. The profile itself is created by hand
   # once (see the `[ -d "$PROFILE_DIR" ] || exit 0` guard).
   # The plugin roster, its loader rows, the seed list and the search rows live
-  # in dsh-terminal-plugins.nix.
+  # in dsh-terminal-plugins.nix; the agent-preset declarations (0.2.0 registry
+  # rows: .agent-presets directories are dead) live in dsh-presets.nix.
   roster = import ./dsh-terminal-plugins.nix { inherit lib; };
+  presets = import ./dsh-presets.nix { inherit pkgs; };
 
   # The profile ships `cordis.patch.yml` as an empty list; rows must replace
   # that `[]` (a second YAML root node is a parse error). The caretaker rewrites
   # the header comments plus its own rows, so a hand-edited or half-written file
   # heals on the next run.
   presetPatch = ./dsh-tui-preset-patch.py;
-
-  # dsh-TUI 0.10.x session-visibility defect: see the script's header. Separate
-  # from presetPatch because it rewrites a file inside the installed TUI package,
-  # not the profile layer.
-  visibilityPatch = ./dsh-tui-session-visibility-patch.py;
 
   ensureTui = pkgs.writeShellScript "dsh-tui-ensure" (
     builtins.readFile (
@@ -44,12 +41,12 @@ let
         categoryPlugin = pkgs.copyPathToStore ./dsh-category-skill-reminder;
         ttsr = pkgs.copyPathToStore ./dsh-ttsr;
         presetPatch = pkgs.copyPathToStore presetPatch;
-        visibilityPatch = pkgs.copyPathToStore visibilityPatch;
         themeJson = pkgs.copyPathToStore themeJson;
         inherit homeDir;
         pluginSeeds = roster.seeds;
         pluginRows = lib.escapeShellArg roster.rows;
         searchRows = lib.escapeShellArg roster.searchRows;
+        presetData = presets.json;
       }
     )
   );

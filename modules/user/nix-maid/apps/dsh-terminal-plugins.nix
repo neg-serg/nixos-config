@@ -127,8 +127,17 @@ rec {
   # and the whole plugin tree fails to load (the tui profile was down on exactly
   # this until 2026-09-16).
   # Patch semantics replace the whole row config, so the keys the package's layer
-  # sets are repeated here, and the `web` override keeps `fetchProvider` —
-  # dropping it re-registers web-fetch-http as a duplicate loader entry.
+  # sets are repeated here. 0.8.1 (the 0.2.0-era release) repeats `provider`,
+  # `disabledEngines`, `lang` and `bingMarket`, and the plugin no longer needs a
+  # `web` override at all: upstream removed the static
+  # `- id: web  config: searchProvider: ddg` row (its commentary: a wholesale
+  # config replacement from a bundle that can be disabled or skipped leaves a
+  # dangling `searchProvider: ddg` with nothing registering `ddg` — "every web
+  # search then failed with `configured web provider "ddg" is not registered`").
+  # The plugin now takes `web.searchProvider` over at runtime when the field is
+  # unset or still the shipped default, which is exactly the outcome this
+  # override used to force, so the override (and its `fetchProvider` key) is
+  # dropped with it.
   # Appended only when the package is actually installed: a row without its
   # plugin is what makes the next terminal start fail.
   searchRows = ''
@@ -136,11 +145,8 @@ rec {
     - id: web-search-free
       config:
         provider: ddg
+        disabledEngines: []
         lang: en
         bingMarket: en-US
-    - id: web
-      config:
-        searchProvider: ddg
-        fetchProvider: http
   '';
 }
