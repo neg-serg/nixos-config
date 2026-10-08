@@ -53,6 +53,8 @@ The primitives, all in `nixie.frag`:
   shape;
 - `smin` — a smooth union. It is still used where two strokes of different direction meet without a
   common tangent, but a bend with a known radius is built from quadrants, not from a softened corner.
+  At an elbow the softening is the wire's own radius (0.03 of the glyph's height, about 0.54 mm):
+  a wire that was bent has the thickness of the wire it was bent from, no more.
 
 The figures:
 
@@ -115,6 +117,12 @@ with it — a cooler stretch of cathode carries a dimmer glow. The ends are the 
 drawn from, and a closed loop carries its seam twice; the distance to the nearer end is the stand-in
 for the position along the run — exact along a straight stroke, an overestimate around a bend.
 
+**The wire is hot in the middle of its own section, too.** The discharge is drawn on the metal, and
+the metal's axis is hotter than its surface, so the radiance ramps across the wire's radius
+(`core * (0.55 + 0.80 * core)`): a white-hot core inside an orange body, with the gas sheath around
+both. That gradient is what keeps a stroke from reading as a rod of neon — a flat profile, however
+thin, is a tube of light, not a filament.
+
 **The glass is a lens, not a window.** A cylinder has power across its axis and none along it, so the
 picture inside is magnified sideways — most of all on the axis (up to 0.30) and not at all at the
 wall, where the glass is edge-on. The glass also disperses: three indices (1.5155, 1.5200, 1.5280 for
@@ -132,7 +140,7 @@ crisp flipped copy of the numeral inside the tube would read as a second, broken
 | `nixieGlow` | how hard the discharge burns |
 | `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: Planck gives the metal's colour, Stefan-Boltzmann its power |
 | `nixieGlassColor`, `nixieCathodeColor` | the envelope's tint and the unlit wire behind the lit one |
-| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0180 of 30 mm = 0.54 mm) |
+| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0180 of 30 mm = 0.54 mm, so the wire is 1.08 mm across) |
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
 | `nixieHighlight` | how much light the glass catches |
 | `nixieWarmth` | how much of the discharge's light lands on the glass (0.45 is the tube's own look) |
@@ -184,9 +192,20 @@ nixie sweep out.png --check          # all ten numerals, measured, as one sheet
 white core, the halo's fall-off, the glass's own light and the mesh's contrast and prints them per
 digit; `--check` fails when a measurement is outside the limits in `src/measure.rs`.
 
-Two known gaps, both honest:
+The sweep measures the picture as the screen shows it: every frame is composited over the wallpaper
+the way the compositor lays it down, the halo is measured against the room the tube burns in, and
+the glass's own light is sampled where the numeral is *not* — the lit wire is the lamp's source, not
+its glass, and a median that took its glow in would judge the discharge instead of the wall.
+
+Three known gaps, all honest:
 
 - the render is not reproducible from run to run — two identical invocations differ by ~9/255 on
   average over the frame, so the sweep's own numbers carry that noise;
-- the wire is drawn fatter than a real cathode (0.76 mm across against the sheet's 0.24 mm) on
-  purpose: a hairline disappears on a login screen. `validate`'s limit is 0.8 mm for that reason.
+- the wire is drawn fatter than a real cathode (1.08 mm across against the sheet's 0.24 mm) on
+  purpose: a hairline disappears on a login screen, and what the eye reads is the glowing filament.
+  `validate`'s limit is 1.2 mm for that reason, and the plan's A2 widths (white ≤ 8 px, hot ≤ 16 px)
+  were written for a hairline — the accepted lamp is wider than those numbers, so `sweep --check`
+  reports the wire as thick;
+- the sweep draws the room at full brightness (`room = 1.0`), while the login screen samples the
+  wallpaper through its own dimming — a glass-light number is therefore taken on a brighter room
+  than the one the login shows.
