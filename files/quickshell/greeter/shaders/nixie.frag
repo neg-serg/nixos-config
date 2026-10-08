@@ -193,19 +193,23 @@ if (digit == 7)
 return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
             sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.14);
 if (digit == 8)
-// The 8 as a twisted ribbon — the sign of infinity stood on end. Each loop is
-// the oval Iosevka draws, but the two are twisted about the waist: the upper
-// leans one way and the lower the other, so the wire CROSSES ITSELF in the
-// middle instead of two rings being set one above the other. That crossing is
-// the whole difference between an 8 and two ovals, and it is what the eye reads
-// the twist from.
+// The 8 as the sign of infinity stood on end: one curve, and the crossing is a
+// single point — not two rings set one over the other. The wire goes round the
+// top, through the middle and round the bottom, which is what a lemniscate is
+// (Gerono's, and the numerals' own space makes it as tall and as narrow as the
+// others). Sampled as chords: a hundred and sixty of them put the joints about
+// half a millimetre apart, which is under the wire's own width even on the
+// login screen at 1x, so nothing of the polygon survives the glow.
 {
-float tilt = 0.24;                                  // ~14 degrees either way
-float s1 = sin(tilt), c1 = cos(tilt);
-vec2 pu = vec2(c1 * p.x - s1 * p.y, s1 * p.x + c1 * p.y);
-vec2 pl = vec2(c1 * p.x + s1 * p.y, -s1 * p.x + c1 * p.y);
-return min(sdEllipse(pu, vec2(0.0, 0.500), vec2(0.300, 0.470)),
-           sdEllipse(pl, vec2(0.0, -0.500), vec2(0.330, 0.470)));
+float d = 1e5;
+vec2 prev = vec2(0.0, 1.02);
+for (int i = 1; i <= 160; i++) {
+float t = float(i) / 160.0 * 6.2831853072;
+vec2 q = vec2(0.420 * sin(2.0 * t), 1.020 * cos(t));
+d = min(d, sdSegment(p, prev, q));
+prev = q;
+}
+return d;
 }
 if (digit == 9)
 // The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
