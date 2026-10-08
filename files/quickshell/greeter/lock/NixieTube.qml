@@ -134,7 +134,7 @@ property real pFlicker: root.ignition
 property real pMm: root.numeralSize / 18.0   // px per millimetre, the drawing's scale
 property real pThick: Math.max(0.8, 0.9 * root.mmPerPx) * root.glassThickness  // the wall, ~0.9 mm
 property real pRefract: root.glassRefraction
-property color pCore: GreeterTheme.nixieCoreColor
+property real pTempK: GreeterTheme.nixieTempK
 property color pHalo: GreeterTheme.nixieGlowColor
 property color pGlass: GreeterTheme.nixieGlassColor
 property color pCathode: GreeterTheme.nixieCathodeColor
