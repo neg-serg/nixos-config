@@ -66,23 +66,20 @@ The figures:
 | 2 | a shoulder (an arc), a diagonal and the foot |
 | 3 | two ellipse arcs pinched together at the waist |
 | 4 | a diagonal over a bar, with a mast |
-| 5 | the drawing font's: a bar across the top, the stem off its left end, the waist and a shallow bowl — quadrants of r = 0.20 at every turn |
+| 5 | Iosevka's (Iosevkaneg): the bar with a short stub at its right end, the stem leaning left, and a bowl half a unit wide whose corners are quarters of a 0.25 circle |
 | 6 | Iosevka's (Iosevkaneg): a closed bowl and a cap over it whose right-hand side stops short, `sdBentRect` with r = 0.24 |
 | 7 | a lid and a leg |
 | 8 | Iosevka's (Iosevkaneg): two loops, wide at their crowns and pinched at a shared waist, the lower a little wider, `sdRoundQuad` with r = 0.22 |
 | 9 | a bowl and a leg |
 
-The 5 was measured off a drawing-font reference (GOST 2.304, the drawing font): the reference raster
-was read into the numeral's own space and its ink profiled by height, which is where the proportions
-and the bend radius come from. A bend there turns over about a tenth of the numeral's height, i.e.
-r ≈ 0.20 of the glyph's own units.
-
-The 6 and the 8 are not the drawing font's: they were measured off the user's own cut of Iosevka
-(Iosevkaneg-Regular). The glyph raster gives the aspect, ~0.51, and a stroke about 11% of the height;
-the profile gives the two shapes. The 6 is a closed bowl with a cap over it whose right-hand side
-stops short — that gap is what makes it a 6 and not an 8 — and every bend is a quadrant of r = 0.24.
-The 8 is two loops, wide at their crowns and pinched at a shared waist, the lower a little wider than
-the upper, with r = 0.22.
+The 5, the 6 and the 8 are not the drawing font's: they were measured off the user's own cut of
+Iosevka (Iosevkaneg-Regular). The glyph raster gives the aspect, ~0.51, and a stroke about 11% of
+the height; the profile gives the shapes — for the 5 a centre line taken off the glyph's own
+skeleton: the bar at 0.835 with its stub down to 0.58, the stem's foot at −0.225/0.19, the waist at
+0.0/0.23 and the bowl's sides at x = ±0.25 with its bottom at −0.83. The 6 is a closed bowl with a
+cap over it whose right-hand side stops short — that gap is what makes it a 6 and not an 8 — and
+every bend is a quadrant of r = 0.24. The 8 is two loops, wide at their crowns and pinched at a
+shared waist, the lower a little wider than the upper, with r = 0.22.
 
 ## What the parts are made of
 
@@ -108,6 +105,10 @@ over from the room's reflection. `blackbody()` is Planck's colour (Bartlett's sR
 `heat_power()` is Stefan-Boltzmann's fourth power against the temperature the tube is drawn at
 (2550 K), capped so a knob turned all the way up cannot blow the frame out. Measured on the render:
 with the discharge on, the mesh's own region gains light with R/B ≈ 5 — dull red, as it should be.
+
+**The metal's own colour is dull orange.** The theme draws it at 2400 K — a nixie's cathode is
+nowhere near a tungsten filament, and the white in photographs of one is the camera, not the metal;
+the gas around the wire is what carries the orange.
 
 **The wire is hottest in the middle of a run.** A cathode is held at both ends by the stack's rods,
 and heat conducts out through them, so the shader carries the two ends of every numeral's wire
