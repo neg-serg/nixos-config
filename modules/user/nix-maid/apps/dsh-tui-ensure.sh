@@ -68,6 +68,28 @@ if [ -z "$VER" ] || { [ -n "$TUI_WANT" ] && newer "$VER" "$TUI_WANT"; }; then
     || echo "dsh-tui-ensure: install failed — will retry on next login" >&2
 fi
 
+# The dsh-TUI bundle's liangshen preset still carries the 0.1.x
+# `@deepseek-ai/dsh-workflow-worker-thread` row beside its 0.2.0 replacement
+# `@deepseek-ai/dsh-workflow-ptc`, guarded by an unevaluated `disabled: !!js`
+# expression. The harness's compatibility preflight reads the declaration
+# statically — an expression never equals `true` — so it denies that row and
+# then the whole `liangshen-plugins` Include that reaches it: the bundled
+# preset cannot mount and every boot prints two ~700-character warnings. On a
+# runtime that ships the replacement the guarded row is dead either way, so it
+# is pruned from the installed copy; the install above is what puts it back.
+# A pre-rename runtime keeps it — there the fallback is the live provider.
+LIANGSHEN_PRESET="$PROFILE_DIR/node_modules/@deepseek-harness-tui/dsh-tui/presets/liangshen/agent.cordis.yml"
+DSH_RUNTIME="$(dsh --version 2> /dev/null | head -1 || true)"
+case "$DSH_RUNTIME" in
+  "" | 0.0.* | 0.1.*) ;;
+  *)
+    if [ -f "$LIANGSHEN_PRESET" ]; then
+      python3 @liangshenPrune@ "$LIANGSHEN_PRESET" \
+        || echo "dsh-tui-ensure: liangshen row prune failed" >&2
+    fi
+    ;;
+esac
+
 # dsh-free-search: keyless search engines (ddg/bing/...), platform search,
 # `web_fetch`. The shipped `deepseek-official` provider answers with an empty
 # body from this region, so the profile rows below ask for this plugin's `ddg`
