@@ -132,6 +132,11 @@ d = min(d, sdArc(p, vec2(hi.x - r, lo.y + r), r, 4.7123889804, 6.2831853072));
 return d;
 }
 
+// Which strand of a ribbon-shaped numeral the nearest piece of wire belongs to:
+// +1 the one that passes over, -1 the one that goes under, 0 an ordinary piece.
+// Only the 8 sets it, and only its own wire reads it.
+float wirePass = 0.0;
+
 float digitWire(int digit, vec2 p) {
 const float PI = 3.14159265;
 const float DEG = 0.01745329252;
@@ -200,15 +205,29 @@ if (digit == 8)
 // others). Sampled as chords: a hundred and sixty of them put the joints about
 // half a millimetre apart, which is under the wire's own width even on the
 // login screen at 1x, so nothing of the polygon survives the glow.
+//
+// The curve passes through the waist twice — once at t = pi/2, once at
+// t = 3pi/2 — and a ribbon is what those two passes make. Which of them runs
+// over the other is not in a flat drawing, so it is carried by the wire itself:
+// the near strand is flagged here and runs a little hotter further down.
 {
 float d = 1e5;
+float best = 0.0;
 vec2 prev = vec2(0.0, 1.02);
 for (int i = 1; i <= 160; i++) {
 float t = float(i) / 160.0 * 6.2831853072;
 vec2 q = vec2(0.420 * sin(2.0 * t), 1.020 * cos(t));
-d = min(d, sdSegment(p, prev, q));
+float piece = sdSegment(p, prev, q);
+if (piece < d) {
+d = piece;
+best = float(i);
+}
 prev = q;
 }
+// 40 is t = pi/2, 120 is t = 3pi/2; the windows are wide enough to cover the
+// crossing and smooth enough that the flag reads as a twist, not as a step.
+wirePass = 1.0 - smoothstep(6.0, 30.0, abs(best - 40.0))
+         - (1.0 - smoothstep(6.0, 30.0, abs(best - 120.0)));
 return d;
 }
 if (digit == 9)
@@ -789,7 +808,7 @@ float wireHeat = heat_power(pTempK, 1.0);
 // than as a drawn line. Slow (a hash on the numeral's own millimetres), so it
 // reads as a gradient and not as noise.
 float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
-wireRadiance = core * 6.40 * coreLit * wireHeat * filament;
+wireRadiance = core * 6.40 * coreLit * wireHeat * filament * (1.0 + 0.11 * wirePass);
 add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
 
 add += pHalo.rgb * gas * 0.58 * haloLit;
