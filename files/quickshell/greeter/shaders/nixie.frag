@@ -201,16 +201,23 @@ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 vec3 metal_hit(vec2 px, vec3 n, vec3 v, vec3 f0, float rough) {
 vec3 r = reflect(-v, n);
 // where that ray lands on the room behind the lamp
-float spread = 1.0 + 3.0 * rough;
-vec2 off = vec2(r.x, r.y) / max(-r.z, 0.05) * (0.55 * pSize.x) * spread;
+vec2 off = vec2(r.x, r.y) / max(-r.z, 0.05) * (0.55 * pSize.x);
 vec2 uv = (px + pInset + off) / pBackdrop;
+// A metal is a mirror, and a rough one smears the room it reflects. The radius
+// below is the roughness's own, so the collar's polish and the mesh's wire do
+// not reflect with the same sharpness: five taps in a cross, as the glass does.
+vec2 blur = (0.0035 + 0.030 * rough) * vec2(1.0, 0.85);
 vec3 env = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb;
+env += texture(source, clamp(uv + vec2(blur.x, 0.0), vec2(0.001), vec2(0.999))).rgb;
+env += texture(source, clamp(uv - vec2(blur.x, 0.0), vec2(0.001), vec2(0.999))).rgb;
+env += texture(source, clamp(uv + vec2(0.0, blur.y), vec2(0.001), vec2(0.999))).rgb;
+env += texture(source, clamp(uv - vec2(0.0, blur.y), vec2(0.001), vec2(0.999))).rgb;
+env *= 0.2;
 // a metal darkens what it does not reflect, and Fresnel takes the edge
 float c = clamp(dot(n, v), 0.0, 1.0);
 vec3 f = f0 + (vec3(1.0) - f0) * pow(1.0 - c, 5.0);
 return env * f;
 }
-
 
 // A reflection off glass or metal is never a mirror image: the surface scatters
 // it, and the room behind a lamp is seen smeared. Five taps in a cross spread
@@ -223,6 +230,20 @@ acc += texture(source, clamp(uv - vec2(radius.x, 0.0), vec2(0.001), vec2(0.999))
 acc += texture(source, clamp(uv + vec2(0.0, radius.y), vec2(0.001), vec2(0.999))).rgb;
 acc += texture(source, clamp(uv - vec2(0.0, radius.y), vec2(0.001), vec2(0.999))).rgb;
 return acc * 0.2;
+}
+
+// Where a ray finds the picture behind the tube. The patch the caller lends is
+// the only picture there is, so the wall sits exactly one patch behind the
+// glass: a ray that slides sideways by so much of the tube's radius lands on
+// the part of the room the eye would see bent there, and nothing has to be
+// invented outside the patch. Two distances, because the room has depth and the
+// wall does not. At the silhouette the surface turns away from the eye and
+// -t.z goes to zero, which would send the offset to infinity and smear the
+// picture into a flat band; capping it keeps the edge looking at what it sees.
+vec2 glass_offset(vec2 pt, vec3 t, vec3 o, float planeDist) {
+vec2 plane = pt - vec2(t.x, t.y) / max(-t.z, 0.06) * planeDist;
+vec2 bend = vec2(o.x, o.y) / max(-o.z, 0.06) * planeDist * 0.45 * pRefract;
+return plane * pRefract + bend;
 }
 
 void main() {
@@ -319,16 +340,28 @@ const vec3 VIEW = vec3(0.0, 0.0, -1.0);   // the eye looks along -z, orthographi
 // wall, crosses the bore, bends again where it leaves the glass, and lands
 // somewhere else in the room. What it loses on the way is Fresnel's share plus
 // Beer's law through the glass, which is why a thick rim goes green and dark.
-const float ETA = 1.0 / 1.52;             // air into glass
+// Glass disperses: its index is not one number. Blue bends harder than red by
+// about a part in seventy for soda-lime, which is what puts a chromatic fringe
+// on the wall of a real tube and a colour on the edge of a thick lens. Three
+// rays, one per channel, and the sampling below keeps only the channel its own
+// ray carried.
+const vec3 GLASS_N = vec3(1.5155, 1.5200, 1.5280);   // red, green, blue
 float wall = clamp(pThick, 0.4, 0.9 * R);
 vec3 rayIn = reflect(VIEW, N3);
-vec3 rayT = refract(VIEW, N3, ETA);
-if (dot(rayT, rayT) < 1e-8) rayT = rayIn; // the wall at the critical angle
-// leaving the glass, in the plane that holds the normal
+vec3 rayTr = refract(VIEW, N3, 1.0 / GLASS_N.r);
+vec3 rayTg = refract(VIEW, N3, 1.0 / GLASS_N.g);
+vec3 rayTb = refract(VIEW, N3, 1.0 / GLASS_N.b);
+if (dot(rayTr, rayTr) < 1e-8) rayTr = rayIn;   // the wall at the critical angle
+if (dot(rayTg, rayTg) < 1e-8) rayTg = rayIn;
+if (dot(rayTb, rayTb) < 1e-8) rayTb = rayIn;
+vec3 rayT = rayTg;                             // the green ray carries the geometry
+// Out of the far wall: it is flat along the axis, so its normal is the axis's
+// own, and what leaves is one more refraction — or a total internal reflection,
+// which is what makes the wall go bright where the glass is edge-on.
 vec3 exitN = (abs(rayT.y) > abs(rayT.x)) ? vec3(0.0, sign(rayT.y), 0.0)
                                          : vec3(sign(rayT.x), 0.0, 0.0);
 float cosI = dot(rayT, exitN);
-vec3 rayOut = refract(rayT, exitN, 1.0 / ETA);
+vec3 rayOut = refract(rayT, exitN, GLASS_N.g);
 float tir = (dot(rayOut, rayOut) < 1e-8) ? 1.0 : 0.0;
 if (tir > 0.5) rayOut = reflect(rayT, exitN);  // trapped, and the wall goes bright
 float fres = pow(1.0 - clamp(dot(-VIEW, N3), 0.0, 1.0), 5.0);
@@ -347,12 +380,27 @@ vec3 absorb = exp(-(1.0 - pGlass.rgb) * 1.20 * pathIn / R);
 // flat band. Capping it keeps the edge looking at the wall it can see.
 float planeDist = 0.30 * pBackdrop.x;     // where the picture the glass bends hangs
 float roomDist = 0.16 * pSize.x;          // where the reflections come from
-vec2 plane = p - vec2(rayT.x, rayT.y) / max(-rayT.z, 0.06) * planeDist;
-vec2 hv = vec2(rayOut.x, rayOut.y) / max(-rayOut.z, 0.06) * planeDist * 0.45 * pRefract;
-vec2 off = plane * pRefract + hv;
-off = clamp(off, vec2(-0.75 * R), vec2(0.75 * R));
-vec2 uv = (px + pInset + off) / pBackdrop;
-vec3 refract = texture(source, clamp(uv, vec2(0.001), vec2(0.999))).rgb * absorb;
+vec2 off = glass_offset(p, rayT, rayOut, planeDist);
+vec2 offR = glass_offset(p, rayTr, rayOut, planeDist);
+vec2 offB = glass_offset(p, rayTb, rayOut, planeDist);
+// A cylinder of glass is a lens, not a window: it has power across its axis and
+// none along it, so the picture inside is magnified sideways — most of all on
+// the axis, and not at all at the wall, where the glass is edge-on. That is the
+// magnifying-glass bend, and it is why a nixie's numerals read taller in the
+// middle of the tube than they measure on the bench.
+float lensK = 1.0 - 0.30 * pRefract * (1.0 - pow(clamp(abs(u), 0.0, 1.0), 2.0));
+off  = vec2(off.x  * lensK, off.y);
+offR = vec2(offR.x * lensK, offR.y);
+offB = vec2(offB.x * lensK, offB.y);
+off  = clamp(off,  vec2(-0.75 * R), vec2(0.75 * R));
+offR = clamp(offR, vec2(-0.75 * R), vec2(0.75 * R));
+offB = clamp(offB, vec2(-0.75 * R), vec2(0.75 * R));
+// One channel per ray: that is the dispersion, and it costs two more taps.
+vec3 disp;
+disp.r = texture(source, clamp((px + pInset + offR) / pBackdrop, vec2(0.001), vec2(0.999))).r;
+disp.g = texture(source, clamp((px + pInset + off)  / pBackdrop, vec2(0.001), vec2(0.999))).g;
+disp.b = texture(source, clamp((px + pInset + offB) / pBackdrop, vec2(0.001), vec2(0.999))).b;
+vec3 refract = disp * absorb;
 
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
