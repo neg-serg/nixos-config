@@ -63,10 +63,11 @@
     "nixieDigitSize": 92,
     "nixieGlow": 1.0,
     // The lit cathode's temperature in kelvin: a metal that hot is its own
-    // light, and the shader turns it into a colour with Planck's law. 2550 K is
-    // the #ffa04b this was drawn at before it became a temperature; raise it for
-    // a whiter, hotter wire (5000 K is a warm white), lower it for a dull one.
-    "nixieTempK": 2550,
+    // light, and the shader turns it into a colour with Planck's law, with the
+    // power following Stefan-Boltzmann against the 2550 K the tube was drawn at.
+    // 3200 K is a white-hot heavy-duty cathode — 1.4x the 2550 K look, and what
+    // sits above white travels to the output as HDR headroom.
+    "nixieTempK": 3200,
     "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
