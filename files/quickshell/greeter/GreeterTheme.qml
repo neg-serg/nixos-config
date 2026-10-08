@@ -101,7 +101,7 @@ Singleton {
     // The lit cathode's radius as a share of a numeral's height. The fallback
     // mirrors Theme/greeter.jsonc, so a login screen that cannot read the user's
     // theme draws the same wire the desktop shows.
-    readonly property real nixieWire: _val('greeter.nixieWire', 0.0360)
+    readonly property real nixieWire: _val('greeter.nixieWire', 0.0440)
     readonly property real nixieStack: _val('greeter.nixieStack', 0.5)
     readonly property real nixieHighlight: _val('greeter.nixieHighlight', 0.8)
     readonly property real nixieWarmth: _val('greeter.nixieWarmth', 0.45)
