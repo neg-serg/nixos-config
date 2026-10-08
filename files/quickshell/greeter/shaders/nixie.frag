@@ -270,6 +270,20 @@ float hash(vec2 p) {
 return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+// Smooth value noise: a hash on the lattice, smoothed between its corners.
+// The glass below is worked by hand, and a hand leaves ripples and bubbles;
+// the noise is what its wall has instead of being a machined cylinder.
+float vnoise(vec2 q) {
+vec2 i = floor(q);
+vec2 f = fract(q);
+vec2 s = f * f * (3.0 - 2.0 * f);
+float a = hash(i);
+float b = hash(i + vec2(1.0, 0.0));
+float c = hash(i + vec2(0.0, 1.0));
+float d = hash(i + vec2(1.0, 1.0));
+return mix(mix(a, b, s.x), mix(c, d, s.x), s.y);
+}
+
 
 // --- metal, with a real reflection -------------------------------------
 // A metal is a mirror with a tint: what it looks like is the room it stands in,
@@ -449,6 +463,23 @@ vec3 Ncap = normalize(vec3(p.x, capDist * sign(p.y), -capZ));
 vec3 Ncyl = normalize(vec3(p.x, 0.0, -sqrt(max(0.0, R * R - p.x * p.x))));
 float blend = clamp(capDist / max(0.5 * mm, 1.0), 0.0, 1.0);   // 0 in the cylinder, 1 in a cap
 vec3 N3 = normalize(mix(Ncyl, Ncap, blend));
+// Bubbles in the glass and the ripple the blower left: two scales of noise,
+// each taken as its own gradient, added to the wall's normal. A few degrees of
+// tilt is all it is — enough that the room the wall reflects breaks into
+// glints and the picture it passes ripples a little, which is what glass that
+// was worked by a hand does and a cylinder does not.
+float wStep = 1.0 / (0.55 * mm);
+float w0 = vnoise(p * wStep);
+float wu = vnoise(p * wStep + vec2(1.0, 0.0));
+float wv = vnoise(p * wStep + vec2(0.0, 1.0));
+float bStep = 1.0 / (0.18 * mm);
+vec2 bq = p * bStep + vec2(31.7, 11.3);
+float b0 = vnoise(bq);
+float bu = vnoise(bq + vec2(1.0, 0.0));
+float bv = vnoise(bq + vec2(0.0, 1.0));
+vec3 bump = vec3((wu - w0) * 0.05 + (bu - b0) * 0.13,
+                 (wv - w0) * 0.05 + (bv - b0) * 0.13, 0.0);
+N3 = normalize(N3 + bump);
 const vec3 VIEW = vec3(0.0, 0.0, -1.0);   // the eye looks along -z, orthographic
 // --- the glass ---------------------------------------------------------
 // Clear glass over a dark room shows almost nothing: the rim, where the wall is
@@ -614,8 +645,11 @@ vec3 room2 = blurred_room((px + pInset + mir2) / pBackdrop, vec2(0.050, 0.040) *
 vec3 absorb2 = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.00 * 2.0 * pathIn / R);
 glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb2 * 0.55;
 // two narrow lights the tube always catches, and they stop before the collar
-glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.17 * pHighlight;
-glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.055 * pHighlight;
+// where the wall is uneven the reflection is not one clean line: the noise
+// breaks the two highlights the tube always catches into soft dashes
+float broke = 0.80 + 0.40 * w0;
+glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.17 * pHighlight * broke;
+glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.055 * pHighlight * broke;
 // what was wiped on the glass, what settled on it, and the scratches: each
 // catches the light a little differently, which is all the eye needs to read a
 // surface as a surface and not as a window
