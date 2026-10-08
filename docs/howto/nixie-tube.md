@@ -70,6 +70,38 @@ reference raster was read into the numeral's own space and its ink profiled by h
 the proportions and the bend radius come from. A bend there turns over about a tenth of the numeral's
 height, i.e. r ≈ 0.20 of the glyph's own units.
 
+## What the parts are made of
+
+A metal is a mirror tinted by its own F0, and F0 is not a taste — it falls out of the metal's n and
+k. The parts that have to survive a discharge and still read as jewellery are plated:
+
+| part | material | F0 (550 nm) |
+| --- | --- | --- |
+| anode mesh | rhodium (n 2.06, k 5.31) | 0.79, 0.79, 0.80 |
+| collector ring at the top of the cage | gold (n 0.47, k 2.40) | 1.00, 0.77, 0.34 |
+| sleeve the stack is welded into | rhodium | 0.79, 0.79, 0.80 |
+| rods and the unlit stack | nickel (n 1.90, k 3.90) | 0.56, 0.55, 0.52 |
+| crimped collar | steel, matte | 0.29, 0.30, 0.33 |
+
+Rhodium goes on the mesh and the sleeve: it does not tarnish, it survives the gas, and it keeps its
+own colour neutral, so the only colour on it is the discharge. Gold goes where the eye looks for it.
+The mesh's reflection is smeared by its own roughness (five taps in a cross, the radius from `rough`),
+so the collar's polish and the wire do not reflect the room with the same sharpness.
+
+**The mesh is hot.** A wire in a discharge is not a mirror, it is a heater: the fit below takes it
+from the room's 320 K to about 1100 K where the arc touches it, which is where its own emission takes
+over from the room's reflection. `blackbody()` is Planck's colour (Bartlett's sRGB fit) and
+`heat_power()` is Stefan-Boltzmann's fourth power against the temperature the tube is drawn at
+(2550 K), capped so a knob turned all the way up cannot blow the frame out. Measured on the render:
+with the discharge on, the mesh's own region gains light with R/B ≈ 5 — dull red, as it should be.
+
+**The glass is a lens, not a window.** A cylinder has power across its axis and none along it, so the
+picture inside is magnified sideways — most of all on the axis (up to 0.30) and not at all at the
+wall, where the glass is edge-on. The glass also disperses: three indices (1.5155, 1.5200, 1.5280 for
+red, green and blue), three rays, three taps of the picture, one channel from each. The far wall does
+catch the wire, but it is a wall and not a mirror: the image is squeezed, dimmed and defocused, and a
+crisp flipped copy of the numeral inside the tube would read as a second, broken digit.
+
 ## What the theme can turn
 
 `files/quickshell/Theme/greeter.jsonc` (mirrored in `GreeterTheme.qml`):
@@ -84,6 +116,7 @@ height, i.e. r ≈ 0.20 of the glyph's own units.
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
 | `nixieHighlight` | how much light the glass catches |
 | `nixieWarmth` | declared and passed to the shader, **not used yet** — the discharge's landing on the glass is drawn at a fixed weight |
+| — | the wire's own colour is still the theme's `nixieCoreColor`, not a temperature; the mesh is the first part that emits by Planck's law |
 | `nixieFlickerMs` | restrike time on a digit change; 0 leaves the tubes steady |
 
 The theme is copy-once: `Theme/` is copied into `~/.config/quickshell/Theme/`, so after an edit it has

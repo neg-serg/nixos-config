@@ -246,6 +246,45 @@ vec2 bend = vec2(o.x, o.y) / max(-o.z, 0.06) * planeDist * 0.45 * pRefract;
 return plane * pRefract + bend;
 }
 
+// --- what the parts are made of ----------------------------------------
+// A metal is a mirror tinted by its own F0, and F0 is not a taste: it falls out
+// of the metal's n and k at the wavelength you look at it. The parts of a lamp
+// that has to survive a discharge and still look like jewellery are plated:
+//
+//   gold (Au, 550 nm):  n 0.47, k 2.40  ->  F0 (1.00, 0.77, 0.34)
+//   rhodium (Rh):       n 2.06, k 5.31  ->  F0 (0.79, 0.79, 0.80)
+//   nickel (Ni):        n 1.90, k 3.90  ->  F0 (0.56, 0.55, 0.52)
+//
+// Rhodium is what a jeweller would put on the anode: it does not tarnish, it
+// survives the gas, and it keeps the mesh's own colour neutral, so the only
+// colour on it is the discharge. Gold goes where the eye looks for it — the
+// collector ring the anode cage hangs from — and nickel stays underneath.
+const vec3 F0_GOLD = vec3(1.00, 0.77, 0.34);
+const vec3 F0_RHODIUM = vec3(0.79, 0.79, 0.80);
+const vec3 F0_NICKEL = vec3(0.56, 0.55, 0.52);
+
+// A hot metal is its own light: Planck's law for the colour, Stefan-Boltzmann
+// for the power. Bartlett's fit is the colour of a blackbody in sRGB — close
+// enough that a wire at 2550 K comes out at the theme's own #ffa04b, while the
+// mesh the discharge heats sits at 900..1100 K and reads as dull red.
+vec3 blackbody(float kelvin) {
+float t = clamp(kelvin, 1000.0, 40000.0) / 100.0;
+float r = (t <= 66.0) ? 255.0 : 329.698727446 * pow(t - 60.0, -0.1332047592);
+float g = (t <= 66.0) ? 99.4708025861 * log(t) - 161.1195681661
+                      : 288.1221695283 * pow(t - 60.0, -0.0755148492);
+float b = (t >= 66.0) ? 255.0
+        : (t <= 19.0) ? 0.0
+        : 138.5177312231 * log(t - 10.0) - 305.0447927307;
+return clamp(vec3(r, g, b) / 255.0, 0.0, 1.0);
+}
+
+// How much a surface at this temperature throws, against the temperature the
+// tube is drawn at (2550 K, the wire). The fourth power is the physics; the cap
+// is exposure — a knob turned all the way up must not blow the frame out.
+float heat_power(float kelvin, float gain) {
+return min(pow(clamp(kelvin, 300.0, 6000.0) / 2550.0, 4.0) * gain, 6.0);
+}
+
 void main() {
 const float PI = 3.14159265;
 
@@ -519,6 +558,12 @@ grid *= cageFade;
 // the discharge lives inside the cage: the mesh glows where it is touched
 float near = exp(-max(digitWire(int(pDigit + 0.5), dp) * gm - wirePx, 0.0) / (1.3 * mm)) * step(-0.5, pDigit);
 cageGlow = pHalo.rgb * near * pGlow * 0.60;
+// The mesh is a wire in the discharge, so it is hot: 320 K where the gas is
+// cold, up to ~1100 K where the arc touches it. At that temperature it is not
+// reflecting the room any more, it is making its own light — dull red, and
+// strongest right where the numeral it surrounds is lit.
+float meshTemp = 320.0 + 780.0 * near * pGlow;
+vec3 meshEmit = blackbody(meshTemp) * heat_power(meshTemp, 3.4) * (0.12 + 0.88 * near);
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
 colour = mix(colour, vec3(0.030, 0.034, 0.042) + cageGlow, grid * 0.72);
@@ -529,7 +574,39 @@ float gridBack = max(exp(-pow(abs(fract(uu * 12.0 + 0.5) - 0.5) * 2.0 / 0.16, 2.
 gridBack *= step(abs(p.x), cageR) * cageFade;
 colour = mix(colour, vec3(0.020, 0.022, 0.028), gridBack * 0.34);
 alpha = mix(alpha, 0.34, gridBack * 0.30);
-colour += metal_hit(px, Ncyl, VIEW, vec3(0.56, 0.55, 0.52), 0.35) * clamp(grid - 0.45, 0.0, 1.0) * 0.55;
+colour += metal_hit(px, Ncyl, VIEW, F0_RHODIUM, 0.35) * clamp(grid - 0.45, 0.0, 1.0) * 0.60;
+// the mesh's own emission: it lands on the wires and on the gas around them
+colour += meshEmit * grid * (0.55 + 0.45 * min(pGlow, 1.0));
+
+// --- the metal insert ---------------------------------------------------
+// Two pieces of plated metal that a real lamp has and a drawing does not: the
+// ring the anode cage hangs from at the top, and the sleeve the stack is
+// welded into at the foot. Both are inside the glass, both are machined, and
+// they are what the eye reads as "this thing was made", not printed.
+float ringY = cageTop - 0.6 * mm;
+float ringMask = exp(-pow((p.y - ringY) / max(0.5, 0.45 * mm), 2.0))
+               * step(abs(p.x), cageR + 0.9 * mm) * inside;
+if (ringMask > 0.002) {
+// a torus seen edge-on: the tube of the ring itself, lit along its own axis
+float ringTube = exp(-pow((abs(abs(p.x) - cageR) - 0.0) / max(0.5, 0.45 * mm), 2.0));
+vec3 ringMetal = metal_hit(px, Ncyl, VIEW, F0_GOLD, 0.22);
+colour = mix(colour, ringMetal * 1.25, ringMask * (0.35 + 0.65 * ringTube));
+alpha = mix(alpha, 0.68, ringMask * 0.55);
+glassLight += ringMetal * ringMask * ringTube * 0.35 * pHighlight;
+colour += blackbody(360.0 + 240.0 * pGlow) * heat_power(360.0 + 240.0 * pGlow, 2.0) * ringMask * 0.12;
+}
+float sleeveTop = footY + 2.6 * mm;
+float sleeve = exp(-pow((p.y - sleeveTop) / max(0.6, 0.5 * mm), 2.0))
+             * step(abs(p.x), 5.6 * mm) * inside;
+if (sleeve > 0.002) {
+// the sleeve is a rhodium-plated cylinder around the stem, and it is the one
+// part of the inside that the numerals never cover
+float sleeveSide = exp(-pow((abs(p.x) - 5.6 * mm) / max(0.5, 0.45 * mm), 2.0));
+vec3 sleeveMetal = metal_hit(px, Ncyl, VIEW, F0_RHODIUM, 0.30);
+colour = mix(colour, sleeveMetal * 0.95, sleeve * (0.40 + 0.60 * sleeveSide));
+alpha = mix(alpha, 0.72, sleeve * 0.5);
+colour += sleeveMetal * sleeve * sleeveSide * min(pGlow, 1.0) * 0.25;
+}
 }
 
 // --- the discharge --------------------------------------------------------
@@ -563,10 +640,15 @@ add += pHalo.rgb * gas * 0.58 * haloLit;
 add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.10 * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
-// the far wall of the glass catches a squeezed, dim image of the wire
+// The far wall of the glass does catch the wire, but it is a wall and not a
+// mirror: the cylinder squeezes the image sideways, two Fresnel passes dim it,
+// and the curvature of the far side defocuses it. A crisp flipped copy of the
+// numeral inside the tube (which is what this used to be) reads as a second,
+// broken digit — the reflection has to be soft enough to be a glow.
 vec2 mp = vec2(-p.x * 0.86, p.y);
 vec2 mirror = vec2((mp.x - centre.x) / gx, (centre.y - mp.y) / gy);
-add += pHalo.rgb * exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (1.30 * mm)) * 0.11 * abs(xr) * haloLit;
+float wallRefl = exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (2.7 * mm));
+add += pHalo.rgb * wallRefl * 0.055 * pow(abs(xr), 1.5) * inside * haloLit;
 gasMap = gas;
 colour += cageGlow * 0.25;
 }
