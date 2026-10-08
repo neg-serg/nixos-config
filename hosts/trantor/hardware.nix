@@ -77,7 +77,11 @@ in
 
   # Host-specific kernel parameters and boot tuning
   boot = {
-    # Use LTS kernel (ZFS doesn't build with latest 7.x)
+    # Note: this is a fallback only — modules/system/kernel/localmodconfig.nix
+    # overrides boot.kernelPackages (mkOverride 40) with the minimized kernel
+    # built from pkgs.linuxPackages_latest (7.2.x since 2026-10; the "ZFS does
+    # not build with latest 7.x" caveat is gone: nixpkgs ships zfs_2_4 = 2.4.4,
+    # which upstream declares compatible with 6.18 through 7.2).
     kernelPackages = lib.mkDefault pkgs.linuxPackages;
 
     # Removed the amdgpu-hmm-userptr-vm-bo-null backport (patch file kept at
