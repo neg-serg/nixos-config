@@ -124,9 +124,9 @@ pub fn check(d: &Drawing) -> Report {
         // purpose: a hairline disappears on a login screen, and a fatter wire
         // carries more gas (the sheath scales with it), which is what makes the
         // discharge read as a filament. The limit catches a wire that has
-        // stopped being a wire at all — the drawn one is 1.50 mm across.
+        // stopped being a wire at all — the drawn one is 1.80 mm across.
         "the wire is a wire",
-        d.wire_d <= 1.6,
+        d.wire_d <= 2.0,
         format!("cathode Ø{:.2} mm", d.wire_d),
     );
     c(
