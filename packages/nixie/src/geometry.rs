@@ -121,10 +121,12 @@ pub fn check(d: &Drawing) -> Report {
     );
     c(
         // A real cathode is 0.24 mm, but the tube is drawn with a fat one on
-        // purpose: a hairline disappears on a login screen. The limit catches a
-        // wire that has stopped being a wire at all.
+        // purpose: a hairline disappears on a login screen, and a fatter wire
+        // carries more gas (the sheath scales with it), which is what makes the
+        // discharge read as a filament. The limit catches a wire that has
+        // stopped being a wire at all — the drawn one is 1.08 mm across.
         "the wire is a wire",
-        d.wire_d <= 0.8,
+        d.wire_d <= 1.2,
         format!("cathode Ø{:.2} mm", d.wire_d),
     );
     c(

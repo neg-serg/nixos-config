@@ -8,22 +8,24 @@
   runCommand,
 }:
 let
-  version = "0.1.5-rc.1";
+  version = "0.2.0-rc.2";
 
   tarball = fetchurl {
     url = "https://registry.npmjs.org/@deepseek-ai/dsh/-/dsh-${version}.tgz";
-    hash = "sha256-Gnlxnxx2ORisMOgZTfeDqTMMaxLV8EyVBzGj+KHD2dA=";
+    hash = "sha256-vSeEfERc1opWWsH5HAa7vMdjnvkwcfZ4u1nF66/ziFk=";
   };
 
   # Registry tarballs ship no lockfile; npm ci needs one.
   #
-  # The published package.json declares devDependencies on internal
-  # prereleases that are not on the registry at all
-  # (@deepseek-ai/dsh-experimental-code-runtime-python@^0.1.5-rc.1 -> 404),
-  # and npm resolves devDependencies before honouring --omit=dev, so `npm ci`
-  # cannot run against the shipped package.json. dsh ships prebuilt lib/ and
-  # never runs its dev tooling in this build, so devDependencies are dropped
-  # here and in the lockfile (generated the same way).
+  # The published package.json declares a 47-package devDependency tree (mostly
+  # internal @deepseek-ai prereleases, plus types/ajv/execa/ws) that this build
+  # never touches — dsh ships prebuilt lib/ and has no build script — so
+  # devDependencies are dropped here and in the lockfile (generated the same
+  # way). The 0.1.x-era failure that forced this (npm ci refusing the tree
+  # because @deepseek-ai/dsh-experimental-code-runtime-python@^0.1.5-rc.1 was
+  # not on the registry, 404) does not reproduce on 0.2.0-rc.2: every devDep
+  # resolves now. Dropping them keeps the closure and the npmDepsHash fetch
+  # small; re-check this note if npm ci ever fails again.
   src = runCommand "dsh-src" { nativeBuildInputs = [ python3 ]; } ''
         mkdir -p $out
         tar xzf ${tarball} -C $out --strip-components=1
@@ -68,7 +70,7 @@ buildNpmPackage {
       (builtins.readFile ./post-install.sh);
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
-  npmDepsHash = "sha256-cqN2pdqnxEqJ/dPKW/cNSLICI4kB6qSJ7PqKqsQAMRo=";
+  npmDepsHash = "sha256-wVrtqlBxrRVQdMASCP4ObuUT0yBR3QOIH7/Qoqb6uoc=";
 
   meta = {
     description = "DeepSeek Harness (dsh) — open-source agent harness, everything is a plugin";

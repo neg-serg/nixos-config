@@ -414,7 +414,7 @@ const vec3 GLASS_N = vec3(1.5155, 1.5200, 1.5280);   // red, green, blue
 // the picture further (the lens), splits the colours wider (dispersion) and
 // shows its two surfaces further apart (the rim), which is what makes the glass
 // read as glass instead of as a tinted pane.
-const float WALL_MM = 1.7;
+const float WALL_MM = 2.3;
 float wall = clamp(pThick * (WALL_MM / 0.9), 0.4, 0.9 * R);
 float wallGain = wall / max(pThick, 0.4);
 // A thicker wall bends the picture further and folds its rim deeper, but not in
@@ -450,7 +450,7 @@ float pathIn = wall / max(max(abs(rayT.x), abs(rayT.y)), 0.02);
 // and the spread between them is what a thick wall shows as a green-turquoise
 // core with a warm outer edge.
 const vec3 ABSORB_DISP = vec3(1.55, 1.00, 0.70);
-vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.00 * pathIn / R);
+vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.30 * pathIn / R);
 
 // The picture, as the ray for this pixel finds it on the wall behind the tube.
 // The patch the caller lends us is the only picture we have, so the wall sits
@@ -502,9 +502,16 @@ colour += vec3(0.003, 0.004, 0.008) * inside * grazing;   // the body is not a f
 // the wall edge-on: two surfaces with a dark gap between them
 float rim = exp(-max(d, 0.0) / 0.35) * inside;   // the wall seen edge-on: a hairline
 float rimInner = exp(-pow((d - wall) / max(0.8, 0.20 * wall), 2.0)) * inside;
+// The body of the wall, seen edge-on: on a thick-walled tube the silhouette is
+// not two hairlines but a band of glass, and that band is where Beer has the
+// longest path — it is the green-teal depth of a real envelope.
+float wallBody = smoothstep(0.0, 0.45, d) * (1.0 - smoothstep(wall - 0.45, wall, d)) * inside;
 glassLight += vec3(1.0) * rim * (0.12 + 0.75 * pow(grazing, 3.0));
 alpha += rim * 0.26 + rimInner * 0.16;
 colour += vec3(0.02, 0.05, 0.06) * (rimInner * 0.6);
+// the wall's own body: the glass colour, taken through its own absorption
+colour = mix(colour, vec3(0.010, 0.030, 0.032) * (0.6 + 0.8 * pow(grazing, 2.0)), wallBody * 0.55);
+alpha = max(alpha, wallBody * 0.42);
 
 // what the glass reflects: the room along the mirror direction, weighted by
 // Fresnel — the reason the middle of a tube is clear and its edges are not
@@ -748,7 +755,10 @@ float dist = max(wireDist, 0.0);
 float axis = digitWire(int(pDigit + 0.5), dp) * gm;
 float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // dense at the wire, tight around it, a faint wash inside the cage
-float gas = exp(-dist / (0.11 * mm)) * 0.14 + exp(-dist / (0.30 * mm)) * 0.02;   // a filament, not a gas tube
+// The sheath around the wire: the gas hugs a hot filament and falls away fast.
+// A thicker cathode carries more of it, so the sheath is wider and denser than
+// the hairline one a thin wire would have.
+float gas = exp(-dist / (0.16 * mm)) * 0.20 + exp(-dist / (0.42 * mm)) * 0.035;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
@@ -758,11 +768,16 @@ float haloLit = pGlow * pow(pFlicker, 1.4);
 // the picture exactly where it was and turning it up makes the discharge hotter.
 vec3 wireColour = mix(blackbody(pTempK), vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60);
 float wireHeat = heat_power(pTempK, 1.0);
-		wireRadiance = core * 5.60 * coreLit * wireHeat;
+		// A real filament is not uniformly hot along its length: the gas concentrates
+// where the wire runs hottest, and the eye reads that unevenness as heat rather
+// than as a drawn line. Slow (a hash on the numeral's own millimetres), so it
+// reads as a gradient and not as noise.
+float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
+wireRadiance = core * 6.40 * coreLit * wireHeat * filament;
 add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
 
 add += pHalo.rgb * gas * 0.58 * haloLit;
-add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.10 * haloLit;   // the soft bloom a hot wire casts
+add += pHalo.rgb * exp(-dist / (2.9 * mm)) * 0.13 * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
 // The far wall of the glass does catch the wire, but it is a wall and not a
@@ -772,7 +787,7 @@ add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.04
 // broken digit — the reflection has to be soft enough to be a glow.
 vec2 mp = vec2(-p.x * 0.86, p.y);
 vec2 mirror = vec2((mp.x - centre.x) / gx, (centre.y - mp.y) / gy);
-float wallRefl = exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (2.7 * mm));
+float wallRefl = exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (3.1 * mm));
 add += pHalo.rgb * wallRefl * 0.055 * pow(abs(xr), 1.5) * inside * haloLit;
 gasMap = gas;
 colour += cageGlow * 0.25;
