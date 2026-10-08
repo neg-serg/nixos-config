@@ -41,6 +41,15 @@ float pThick;      // wall thickness of the envelope, px (0 = a shell, no glass)
 float pMm;         // px per millimetre: the scale the drawing below is drawn at
 float pRefract;    // how hard the envelope bends the picture behind it (1 = the glass's own)
 float pTime;       // seconds of session time: the tube is alive, but slowly
+// The row: the login clock draws its four tubes in one pass, because a tube's
+// item is finite and its light is not — four passes put four rectangles of
+// lamp-lit wallpaper around the clock. pTile.w says whether this item is a row
+// (1) or a single tube (0, which is what the workbench and the tube lab draw);
+// a single tube then reads its own size and margin from pSize and pInset.
+vec4 pRowX;        // the four tubes' centres, px from the item's centre
+vec4 pRowDigit;    // the four digits, -1 for a tube with nothing to light
+vec4 pRowFlicker;  // the four ignitions: a nixie's tubes never strike together
+vec4 pTile;        // the tube's own item (width, height, margin), and the mode
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.
@@ -305,7 +314,7 @@ return mix(mix(a, b, s.x), mix(c, d, s.x), s.y);
 vec3 metal_hit(vec2 px, vec3 n, vec3 v, vec3 f0, float rough) {
 vec3 r = reflect(-v, n);
 // where that ray lands on the room behind the lamp
-vec2 off = vec2(r.x, r.y) / max(-r.z, 0.05) * (0.55 * pSize.x);
+vec2 off = vec2(r.x, r.y) / max(-r.z, 0.05) * (0.55 * pTile.x);
 vec2 uv = (px + pInset + off) / pBackdrop;
 // A metal is a mirror, and a rough one smears the room it reflects. The radius
 // below is the roughness's own, so the collar's polish and the mesh's wire do
@@ -422,12 +431,9 @@ float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
 return mix(c, newPeak * vec3(1.0), g);
 }
 
-void main() {
+vec4 nixie_tube(vec2 px, vec2 p, vec2 tile, float pad,
+                float digit, float flicker, float bulb, float edgeFade) {
 const float PI = 3.14159265;
-
-vec2 px = qt_TexCoord0 * pSize;
-vec2 hs = pSize * 0.5 - vec2(pInset);
-vec2 p = px - pSize * 0.5;
 
 // --- the envelope, from the drawing ------------------------------------
 // Every number here is off Reflector's IN-12A/B data sheet (1988), in its own
@@ -446,7 +452,7 @@ float boxW = 21.0, boxH = 35.0;
 const float BULB_R_MM = 9.5;    // the glass, Ø19 as on the sheet; the cylinder is 16 mm
 const float BULB_H_MM = 35.0;   // the whole height
 const float COLLAR_H_MM = 0.0;  // there is no base on this lamp
-float mm = min((pSize.x - 2.0 * pInset) / boxW, (pSize.y - 2.0 * pInset) / boxH);
+float mm = min((tile.x - 2.0 * pad) / boxW, (tile.y - 2.0 * pad) / boxH);
 mm = max(mm, 0.01);
 float bulbR = BULB_R_MM * mm;           // the glass is as wide as the box, Ø21
 float bulbH = BULB_H_MM * mm;           // and as tall: cylinder + two hemispheres
@@ -599,7 +605,7 @@ vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.30 * pathIn / R);
 // zero, which would send the offset to infinity and smear the picture into a
 // flat band. Capping it keeps the edge looking at the wall it can see.
 float planeDist = 0.30 * pBackdrop.x;     // where the picture the glass bends hangs
-float roomDist = 0.16 * pSize.x;          // where the reflections come from
+float roomDist = 0.16 * tile.x;           // where the reflections come from
 vec2 off = glass_offset(p, rayT, rayOut, planeDist, wallLens);
 vec2 offR = glass_offset(p, rayTr, rayOut, planeDist, wallLens);
 vec2 offB = glass_offset(p, rayTb, rayOut, planeDist, wallLens);
@@ -756,9 +762,9 @@ glassLight += vec3(0.9, 0.92, 1.0) * exp(-pow((p.y - wY + 0.4) / max(0.5, 0.02 *
 
 // the unlit cathodes: nine wires in the stack, drawn as the grey metal they are
 float stack = 0.0;
-if (pBulb < 0.5) {
+if (bulb < 0.5) {
 for (int i = 0; i < 10; i++) {
-if (abs(float(i) - pDigit) < 0.5) continue;
+if (abs(float(i) - digit) < 0.5) continue;
 float depth = float(i) - 4.5;
 vec2 q = (dp - vec2(depth * 0.010, depth * -0.007)) / (1.0 - 0.012 * abs(depth));
 stack = max(stack, (1.0 - smoothstep(-0.003, 0.003, digitWire(i, q) * gm - wirePx)) * (1.0 - 0.05 * abs(depth)));
@@ -793,7 +799,7 @@ cageFade = clamp((p.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - p.y) / 8
 		 * clamp((cageR - abs(p.x)) / 6.0, 0.0, 1.0);
 grid *= cageFade;
 // the discharge lives inside the cage: the mesh glows where it is touched
-float near = exp(-max(digitWire(int(pDigit + 0.5), dp) * gm - wirePx, 0.0) / (1.3 * mm)) * step(-0.5, pDigit);
+float near = exp(-max(digitWire(int(digit + 0.5), dp) * gm - wirePx, 0.0) / (1.3 * mm)) * step(-0.5, digit);
 cageGlow = pHalo.rgb * near * pGlow * 0.60;
 // The mesh is a wire in the discharge, so it is hot: 320 K where the gas is
 // cold, up to ~1100 K where the arc touches it. At that temperature it is not
@@ -914,21 +920,21 @@ float wireRadiance = 0.0;
 // The colour of the wire's own surface, kept with the radiance: it is Planck's
 // for the metal's temperature, not a fixed tint.
 vec3 wireGlowColour = vec3(0.0);
-if (pBulb > 0.5) {
+if (bulb > 0.5) {
 float bulb = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
 float lit = 1.0 - clamp((bulb + 0.4) / 0.8, 0.0, 1.0);
 gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) / (1.4 * 5.0 * mm)) * 0.25;
 wireGlowColour = blackbody(pTempK);
-wireRadiance = lit * 1.20 * pGlow * pFlicker * heat_power(pTempK, 1.0);
+wireRadiance = lit * 1.20 * pGlow * flicker * heat_power(pTempK, 1.0);
 add += wireGlowColour * wireRadiance;
-add += gasColour * gasMap * 0.15 * pGlow * pow(pFlicker, 1.4);
-} else if (pDigit >= -0.5) {
-float wireDist = digitWire(int(pDigit + 0.5), dp) * gm - wirePx;
+add += gasColour * gasMap * 0.15 * pGlow * pow(flicker, 1.4);
+} else if (digit >= -0.5) {
+float wireDist = digitWire(int(digit + 0.5), dp) * gm - wirePx;
 float dist = max(wireDist, 0.0);
 // The core is the metal itself: full where the wire's own axis is, nothing at
 // its surface. It is a width in millimetres (the cathode is 0.24 mm across),
 // not a fraction of a pixel, which is what a white-hot filament is.
-float axis = digitWire(int(pDigit + 0.5), dp) * gm;
+float axis = digitWire(int(digit + 0.5), dp) * gm;
 // A heated wire is a surface, and a surface at one temperature has one
 // radiance: the section is flat, not a ramp. What makes a real filament read
 // as a bright core is exposure — it stands several times above white, so the
@@ -947,14 +953,14 @@ gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 // for the hum; per cent, not per ten — a login screen that strobes is a bug.
 float breathe = 1.0 + 0.035 * sin(pTime * 2.1 + p.y * 0.013) * sin(pTime * 0.7 + 1.3);
 float hum = 1.0 + 0.015 * sin(pTime * 8.0 + dp.y * 2.0);
-float coreLit = pGlow * pow(pFlicker, 0.5);
-float haloLit = pGlow * pow(pFlicker, 1.4) * breathe;
+float coreLit = pGlow * pow(flicker, 0.5);
+float haloLit = pGlow * pow(flicker, 1.4) * breathe;
 // The wire is held at its two ends by the stack's rods, and heat conducts out
 // through them: the run sits at pTempK where it is far from both ends and loses
 // HEAT_END_DROP kelvin at the ends themselves. The distance to the nearer end
 // is the cheap stand-in for the position along the run — exact along a straight
 // stroke, an overestimate around a bend, which is enough for a glow.
-vec4 ends = digitEnds(int(pDigit + 0.5));
+vec4 ends = digitEnds(int(digit + 0.5));
 float endDist = min(length(dp - ends.xy), length(dp - ends.zw));
 float heatProfile = clamp(endDist / HEAT_FALLOFF, 0.0, 1.0);
 float wireTemp = pTempK - HEAT_END_DROP * (1.0 - heatProfile);
@@ -994,8 +1000,8 @@ float sheath = 0.90 + 0.20 * hash(floor(dp * 6.0) + 41.0);
 // Glass and a lens split a bright line, blue on one flank and red on the
 // other. Two more taps of the numeral's own field, a pixel to either side,
 // carry that fringe; the green channel keeps the undistorted sheath.
-float axisR = digitWire(int(pDigit + 0.5), dp + vec2(1.4 / gm, 0.0)) * gm;
-float axisB = digitWire(int(pDigit + 0.5), dp - vec2(1.4 / gm, 0.0)) * gm;
+float axisR = digitWire(int(digit + 0.5), dp + vec2(1.4 / gm, 0.0)) * gm;
+float axisB = digitWire(int(digit + 0.5), dp - vec2(1.4 / gm, 0.0)) * gm;
 float distR = max(axisR - wirePx, 0.0);
 float distB = max(axisB - wirePx, 0.0);
 float gasR = exp(-distR / (0.23 * mm)) * 0.17 + exp(-distR / (0.56 * mm)) * 0.040;
@@ -1022,7 +1028,7 @@ vec3 rFar = reflect(rayT, nFar);
 float tPlane = -Pw.z / max(rFar.z, 0.05);
 vec2 Q = Pw.xy + tPlane * rFar.xy;
 vec2 rMirror = vec2((Q.x - centre.x) / gx, (centre.y - Q.y) / gy);
-float wallRefl = exp(-max(digitWire(int(pDigit + 0.5), rMirror) * gm - wirePx, 0.0) / (2.2 * mm));
+float wallRefl = exp(-max(digitWire(int(digit + 0.5), rMirror) * gm - wirePx, 0.0) / (2.2 * mm));
 // the light the wire throws on the far wall drifts with the gas itself
 add += mix(gasColour, wireGlowColour, 0.5) * wallRefl * 0.025 * pow(abs(xr), 1.5) * inside * haloLit * breathe;
 gasMap = gas;
@@ -1061,8 +1067,6 @@ float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // tubes sit against each other. `edge` is the distance to that border, and the
 // spill fades to nothing over the last two margins of it, so the lamp lights the
 // desk without drawing its own box.
-float edge = min(pSize.x * 0.5 - abs(p.x), pSize.y * 0.5 - abs(p.y));
-float edgeFade = smoothstep(0.0, 1.0, clamp(edge / max(2.0 * pInset, 1.0), 0.0, 1.0));
 colour += wash * add * spill * warmth * 0.12 * edgeFade;
 alpha += clamp(gasMap * pGlow * 0.10, 0.0, 0.30) * inside;
 
@@ -1100,7 +1104,7 @@ float pinCircle = 5.75 * mm;      // the sheet's 11.5 mm circle, as a radius
 float pinR = 0.5 * mm;            // Ø1 mm
 float pinLen = 7.0 * mm;          // and 7 mm long, as the sheet has them
 // the item's own edge cuts the pins: fade them instead of clipping them hard
-float pinEdge = clamp((0.5 * pSize.y - p.y) / max(1.0, 0.75 * mm), 0.0, 1.0);
+float pinEdge = clamp((0.5 * tile.y - p.y) / max(1.0, 0.75 * mm), 0.0, 1.0);
 for (int i = 0; i < 12; i++) {
 	float a = float(i) * 0.5235987756;   // twelve pins, 30 degrees apart
 	float pinX = pinCircle * cos(a);     // the circle, seen from the front
@@ -1136,6 +1140,37 @@ colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.
 // transparent pixels are the wallpaper's, and grain there would tint it.
 colour += vec3(hash(px * 1.31 + 0.5) - 0.5) * 0.012 * inside;
 
-fragColor = vec4(colour + add + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
-		clamp(alpha, 0.0, 0.98)) * qt_Opacity;
+return vec4(colour + add + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
+		clamp(alpha, 0.0, 0.98));
+}
+
+void main() {
+const float PI = 3.14159265;
+
+vec2 px = qt_TexCoord0 * pSize;
+// the item's own border, and the fade the lamp's light dies by towards it
+float edge = min(pSize.x * 0.5 - abs(px.x - pSize.x * 0.5),
+                 pSize.y * 0.5 - abs(px.y - pSize.y * 0.5));
+float edgeFade = smoothstep(0.0, 1.0, clamp(edge / max(2.0 * pInset, 1.0), 0.0, 1.0));
+vec4 out_colour;
+if (pTile.w < 0.5) {
+out_colour = nixie_tube(px, px - pSize * 0.5, pSize, pInset,
+                        pDigit, pFlicker, pBulb, edgeFade);
+} else {
+// The row: four tubes in one pass, which is the only way their light adds up
+// into one lamp instead of four lit rectangles. The light is additive (the
+// compositor treats what a ShaderEffect writes as premultiplied), so the tubes'
+// contributions are summed; the alpha is coverage, and the glasses do not
+// overlap, so the largest wins.
+vec4 acc = vec4(0.0);
+for (int i = 0; i < 4; i++) {
+vec2 centre = pSize * 0.5 + vec2(pRowX[i], 0.0);
+vec4 tube = nixie_tube(px, px - centre, pTile.xy, pTile.z,
+                       pRowDigit[i], pRowFlicker[i], 0.0, edgeFade);
+acc.rgb += tube.rgb;
+acc.a = max(acc.a, tube.a);
+}
+out_colour = acc;
+}
+fragColor = vec4(out_colour.rgb, out_colour.a) * qt_Opacity;
 }

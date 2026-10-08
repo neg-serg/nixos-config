@@ -372,6 +372,9 @@ Item {
 					Layout.alignment: Qt.AlignHCenter
 					hours: clock.hours
 					minutes: clock.minutes
+					// The wallpaper the glass bends. It used to be left null, so the tubes
+					// drew their glass over an empty patch and nothing behind them ever bent.
+					backdrop: root.backdrop
 				}
 
 				Text {
