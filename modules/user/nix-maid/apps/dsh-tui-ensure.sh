@@ -25,6 +25,30 @@ fi
 # upgrade) synced `neg` and `fast` there. The 0.2.0 registry reads declaration
 # rows only (see dsh-presets.nix), so the directory is dead weight: drop it once
 # and say so; the repo directories stay the source of truth for the declarations.
+# Version policy for the two profile plugins: follow the registry's `latest`
+# dist-tag instead of a floor written here. The floor form (">= 0.14.0") only
+# ever moved the profile once: `^0.14.0` caps below 0.15, so a 0.15 release
+# would sit unused forever, and pnpm's minimumReleaseAge holds fresh releases
+# unless the package is excluded (pnpm writes that exclusion itself when it
+# installs). `latest` is upstream's own channel, so withdrawn releases stay out
+# of the way: 0.14.1 is published but deprecated ("please use 0.14.0") and
+# untagged, which is exactly what asking for `latest` rather than the highest
+# published version gives us. No downgrades — only a strictly newer version
+# replaces what is installed. The registry answers directly on this host; the
+# SOCKS proxy is the fallback (same shape as dsh-desktop.nix).
+registry_version() {
+  pkg="$1"
+  out="$(curl -fsSL --max-time 20 "https://registry.npmjs.org/$pkg/latest" 2> /dev/null || true)"
+  if [ -z "$out" ]; then
+    out="$(curl -fsSL --max-time 20 --proxy socks5h://127.0.0.1:10808 "https://registry.npmjs.org/$pkg/latest" 2> /dev/null || true)"
+  fi
+  printf '%s' "$out" | jq -r '.version // empty' 2> /dev/null || true
+}
+newer() {
+  [ "$1" != "$2" ] || return 1
+  [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" = "$1" ]
+}
+
 LEGACY_PRESETS="@homeDir@/.dsh/.agent-presets"
 if [ -d "$LEGACY_PRESETS" ]; then
   rm -rf "$LEGACY_PRESETS"
@@ -36,23 +60,22 @@ VER=""
 if [ -f "$PKG" ]; then
   VER="$(jq -r '.version // "0.0.0"' "$PKG")"
 fi
-# 0.14.0 is the first dsh-TUI line whose peer set names the 0.2.0 harness
-# (dsh-agent-preset-registry 0.2.0-rc.1 || 0.2.0-rc.2); earlier lines pin the
-# 0.1.x services that 0.2.0 no longer ships.
-if [ -z "$VER" ] || [ "$(printf '%s\n%s\n' 0.14.0 "$VER" | sort -V | head -1)" != "0.14.0" ]; then
-  echo "dsh-tui-ensure: installing @deepseek-harness-tui/dsh-tui ^0.14.0 (current: ${VER:-missing})..."
-  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add '@deepseek-harness-tui/dsh-tui@^0.14.0' -w) \
+TUI_WANT="$(registry_version '@deepseek-harness-tui%2Fdsh-tui')"
+if [ -z "$VER" ] || { [ -n "$TUI_WANT" ] && newer "$VER" "$TUI_WANT"; }; then
+  want="${TUI_WANT:-latest}"
+  echo "dsh-tui-ensure: installing @deepseek-harness-tui/dsh-tui ^$want (current: ${VER:-missing})..."
+  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "@deepseek-harness-tui/dsh-tui@^$want" -w) \
     || echo "dsh-tui-ensure: install failed — will retry on next login" >&2
 fi
 
 # dsh-free-search: keyless search engines (ddg/bing/...), platform search,
 # `web_fetch`. The shipped `deepseek-official` provider answers with an empty
 # body from this region, so the profile rows below ask for this plugin's `ddg`
-# engine. 0.8.1 is the first release whose peers cover the 0.2.0 harness
-# (`^0.1.7-rc.1 || ^0.2.0-rc.1`) and it drops the `web.searchProvider` override
-# the profile used to write — see the searchRows commentary.
+# engine. 0.8.1 was the first release whose peers cover the 0.2.0 harness; the
+# version now follows the registry like the TUI does, and 0.8.1+ dropped the
+# `web.searchProvider` override this profile used to write — see the searchRows
+# commentary.
 FS_PKG="$PROFILE_DIR/node_modules/dsh-free-search/package.json"
-FS_WANT=0.8.1
 # Registered means: the package is a profile dependency and its files are
 # there. A leftover directory from a half-finished pnpm run is deliberately
 # not "installed" — and note that `dsh plugin add` writes the dependency but
@@ -67,9 +90,11 @@ FS_HAVE=""
 if [ -f "$FS_PKG" ]; then
   FS_HAVE="$(jq -r '.version // ""' "$FS_PKG")"
 fi
-if ! fs_ok || [ "$(printf '%s\n%s\n' "$FS_WANT" "$FS_HAVE" | sort -V | head -1)" != "$FS_WANT" ]; then
-  echo "dsh-tui-ensure: installing dsh-free-search ^$FS_WANT (keyless web search)..."
-  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "dsh-free-search@^$FS_WANT" -w) \
+FS_WANT="$(registry_version dsh-free-search)"
+if ! fs_ok || { [ -n "$FS_WANT" ] && newer "$FS_HAVE" "$FS_WANT"; }; then
+  want="${FS_WANT:-latest}"
+  echo "dsh-tui-ensure: installing dsh-free-search ^$want (keyless web search)..."
+  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "dsh-free-search@^$want" -w) \
     || echo "dsh-tui-ensure: dsh-free-search install failed — will retry on next login" >&2
 fi
 

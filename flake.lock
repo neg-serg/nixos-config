@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789972347,
-        "narHash": "sha256-FY3EA6PULupN9RKi7HNVHP7xpEX/cvH6K5Keuk4H3oY=",
+        "lastModified": 1791316944,
+        "narHash": "sha256-VCrRKi0Dn7S+y/48ZlPaHckZpRx59urYQwbeSyfAJBM=",
         "owner": "JustVugg",
         "repo": "colibri",
-        "rev": "9d5d05de7f4ccf39840224ed295f292ab8aeb598",
+        "rev": "bf2442915d6e3dd4cdfd2eb9c2a3d2aa44a25850",
         "type": "github"
       },
       "original": {
@@ -411,11 +411,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1789353477,
-        "narHash": "sha256-eFYnv9sLd36pwm1bv5TZE/y6db4XfHihyTMt5YoVCac=",
+        "lastModified": 1789703973,
+        "narHash": "sha256-HDh43luR7Lpk6lk8Y5xYQxtFWf/58lDD6rzzZDWuNRw=",
         "owner": "neg-serg",
         "repo": "lusty",
-        "rev": "19b3a11a7057e916e16dafd29f1cbcbc5c7f3e21",
+        "rev": "c0088d39cbc29cd5600ea7558b5084af53285d7b",
         "type": "github"
       },
       "original": {
@@ -554,11 +554,11 @@
     },
     "nix-flatpak": {
       "locked": {
-        "lastModified": 1783368811,
-        "narHash": "sha256-0H8jDwR4Kegb3heaTrH1ftbgKfZVDT8JE+46uXxDy/Q=",
+        "lastModified": 1790428548,
+        "narHash": "sha256-OsZ/I7v3ArCrk0XOUvkiU1dFtGtE1qZTHRGjvBXIKUU=",
         "owner": "gmodena",
         "repo": "nix-flatpak",
-        "rev": "20d42f0ee98c9fe9f85e8d1de474f1409ed10d05",
+        "rev": "f1f045fc8b35ff59f88982c1752d3f3a42ca6a61",
         "type": "github"
       },
       "original": {
@@ -569,11 +569,11 @@
     },
     "nix-maid": {
       "locked": {
-        "lastModified": 1788344127,
-        "narHash": "sha256-8fVrR6SZPp5Mol8KY6UwqeNAoWhqIWm/X/CbBZuTh70=",
+        "lastModified": 1790770868,
+        "narHash": "sha256-9OEVMURNKXNBqXxlCXmJ0jv0QHR8CR7A0n7pJKRbOik=",
         "ref": "refs/heads/master",
-        "rev": "cdb2642fc53479be55013f0d7728cfabc01f0d19",
-        "revCount": 133,
+        "rev": "13d29cdde641216c0bb7ee8ec3229f865c7dc51a",
+        "revCount": 134,
         "type": "git",
         "url": "https://codeberg.org/viperML/nix-maid"
       },
@@ -888,11 +888,11 @@
     "skwd": {
       "flake": false,
       "locked": {
-        "lastModified": 1786908212,
-        "narHash": "sha256-lWknsjBkE5dfDxTfByPyvsOhwBlWUdelMUoVj+0Q/ng=",
+        "lastModified": 1790792497,
+        "narHash": "sha256-zTKWUNdmg3LCfMnAFvu3/P9irlKK4w9e7n7khFpVRcA=",
         "owner": "liixini",
         "repo": "skwd",
-        "rev": "771621de4278ea68df5942c7bfc11fd57d82d4e5",
+        "rev": "94a2e80badfb8e0d840ed5e3c207f61601997586",
         "type": "github"
       },
       "original": {
@@ -929,11 +929,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790247521,
-        "narHash": "sha256-TNfgoHsqsYYvaJImlWctfRkh4PseTagzegU1Dgdbehw=",
+        "lastModified": 1791103873,
+        "narHash": "sha256-nFxM+pKoZ8LJAEnUXARyCaOAloWgaW9kZQOSjWzKcTE=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "2bd00bd9bb35fe6d114888c8f1c2e946c541dd8f",
+        "rev": "dcd241ba97088c22569d1573286e1b9daad340c0",
         "type": "github"
       },
       "original": {
