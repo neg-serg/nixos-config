@@ -129,19 +129,19 @@ return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.10);
 if (digit == 5)
-// A lid, the left side the wire falls down, and one big bowl bent round: it
-// runs from the foot of that side, around the bottom and back up the right,
-// and its free end curls in at the waist. The bowl is the numeral — a box with
-// the corners knocked off is not one.
-return smin(smin(sdSegment(p, vec2(-0.26, 1.00), vec2(0.30, 1.00)),
-                 sdSegment(p, vec2(-0.30, 0.92), vec2(-0.30, -0.42)), 0.14),
-            sdEllipseArc(p, vec2(0.0, -0.42), vec2(0.30, 0.60), 180.0 * DEG, 430.0 * DEG), 0.14);
+// A bar, the stem the wire falls down, and one big bowl bent round: it comes
+// off the foot of the stem, sweeps the bottom and the right-hand side, and
+// curls back up to the waist. Closed like that it reads as a 5; the same bowl
+// left open at the top reads as a bracket.
+return smin(smin(sdSegment(p, vec2(-0.22, 1.00), vec2(0.30, 1.00)),
+                 sdSegment(p, vec2(-0.30, 0.98), vec2(-0.30, -0.30)), 0.14),
+            sdEllipseArc(p, vec2(0.0, -0.30), vec2(0.32, 0.72), 180.0 * DEG, 450.0 * DEG), 0.14);
 if (digit == 6)
-// The lower loop closed, the upper one an 8's top with its right-hand side
-// gone: the wire comes over the top, down the left and stops above the waist.
-// That missing right-hand side is the whole of a 6.
+// The lower loop closed, and the hook over the top coming down the right-hand
+// side to stop just above it. A hook left hanging high up looks like a broken
+// numeral; this one nearly touches the loop, which is what a 6 looks like.
 return smin(sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)),
-            sdEllipseArc(p, vec2(0.0, 0.50), vec2(0.30, 0.50), 45.0 * DEG, 270.0 * DEG), 0.12);
+            sdEllipseArc(p, vec2(0.0, 0.50), vec2(0.30, 0.50), -40.0 * DEG, 270.0 * DEG), 0.12);
 if (digit == 7)
 // A lid and a leg and nothing else — a nixie's 7 is not a bowl with a side —
 // with the one corner it has rounded off by a good part of the wire.
