@@ -626,8 +626,8 @@ float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
 // The cathode's radius: the theme says what share of a numeral's height it
-// takes (nixieWire), and the numeral is 30 mm on the sheet — 0.025 of it is the
-// 0.75 mm this is drawn at, so the wire is 1.50 mm across. A real cathode is
+// takes (nixieWire), and the numeral is 30 mm on the sheet — 0.030 of it is the
+// 0.90 mm this is drawn at, so the wire is 1.80 mm across. A real cathode is
 // 0.24 mm; this one is heavy on purpose, because what the eye reads at the
 // login's size is the glowing filament, and a hairline reads as nothing.
 float wirePx = pWire * DIGIT_H * mm;
@@ -827,7 +827,7 @@ float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // The sheath around the wire: the gas hugs a hot filament and falls away fast.
 // A thicker cathode carries more of it, so the sheath is wider and denser than
 // the hairline one a thin wire would have.
-float gas = exp(-dist / (0.20 * mm)) * 0.17 + exp(-dist / (0.50 * mm)) * 0.040;
+float gas = exp(-dist / (0.23 * mm)) * 0.17 + exp(-dist / (0.56 * mm)) * 0.040;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
@@ -864,7 +864,7 @@ add += wireColour * wireRadiance;   // white-hot, and no wider than the wire its
 // with the wire itself: a cooler stretch of cathode carries a dimmer glow.
 float gasHeat = 0.60 + 0.40 * heatProfile;
 add += pHalo.rgb * gas * gasHeat * 0.58 * haloLit;
-add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
+add += pHalo.rgb * exp(-dist / (2.7 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.28 * mm) / (0.13 * mm)) * 0.032 * step(0.06 * mm, dist) * haloLit;
 // The far wall of the glass does catch the wire, but it is a wall and not a

@@ -94,13 +94,14 @@ Singleton {
     // The clock: four gas-discharge tubes (lock/NixieClock.qml, shaders/nixie.frag)
     readonly property real nixieDigitSize: _val('greeter.nixieDigitSize', 92)
     readonly property real nixieGlow: _val('greeter.nixieGlow', 1.0)
-    readonly property real nixieTempK: _val('greeter.nixieTempK', 2550)
+    readonly property real nixieTempK: _val('greeter.nixieTempK', 3200)
     readonly property color nixieGlowColor: _val('greeter.nixieGlowColor', "#ff5a10")
     readonly property color nixieGlassColor: _val('greeter.nixieGlassColor', "#4d120b06")
     readonly property color nixieCathodeColor: _val('greeter.nixieCathodeColor', "#aab6c4")
-    // The lit cathode's radius in glyph units: the sprite's is 0.55 mm of a 23 mm
-    // glyph, and the drawn numeral has to be the same wire or the two disagree.
-    readonly property real nixieWire: _val('greeter.nixieWire', 0.0127)
+    // The lit cathode's radius as a share of a numeral's height. The fallback
+    // mirrors Theme/greeter.jsonc, so a login screen that cannot read the user's
+    // theme draws the same wire the desktop shows.
+    readonly property real nixieWire: _val('greeter.nixieWire', 0.0300)
     readonly property real nixieStack: _val('greeter.nixieStack', 0.5)
     readonly property real nixieHighlight: _val('greeter.nixieHighlight', 0.8)
     readonly property real nixieWarmth: _val('greeter.nixieWarmth', 0.45)
