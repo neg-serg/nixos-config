@@ -83,6 +83,14 @@
     "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
+    // Coloured glass. The tube's own light — the hot metal and the gas around it
+    // — takes this hue at the brightness it already had: the colour is written
+    // the way Qt writes colours, #aarrggbb, so the alpha is how much of it.
+    // "#00000000" is off (the metal's own Planck colour, the default) and
+    // "#cc66e0ff" makes the lamp read as a cyan tube. It is a look, not a filter:
+    // an orange light through cyan glass would simply be dark, and this is the
+    // knob for a tube that was blown in coloured glass.
+    "nixieTint": "#00000000",
     // The cathode wire's radius as a fraction of the numeral's height: 0.044 of
     // 25 mm is 1.10 mm, so the wire measures 2.20 mm across — a heavy-duty
     // cathode, and what the discharge around it is drawn on. The real IN-12

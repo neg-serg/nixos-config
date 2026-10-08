@@ -161,6 +161,7 @@ property real pTempK: GreeterTheme.nixieTempK
 property color pHalo: GreeterTheme.nixieGlowColor
 property color pGlass: GreeterTheme.nixieGlassColor
 property color pCathode: GreeterTheme.nixieCathodeColor
+property color pTint: GreeterTheme.nixieTint
 
 fragmentShader: Qt.resolvedUrl("../shaders/nixie.frag.qsb")
 }

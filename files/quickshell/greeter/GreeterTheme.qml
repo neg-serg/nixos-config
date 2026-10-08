@@ -100,6 +100,8 @@ readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)
     readonly property color nixieGlowColor: _val('greeter.nixieGlowColor', "#ff5a10")
     readonly property color nixieGlassColor: _val('greeter.nixieGlassColor', "#4d120b06")
     readonly property color nixieCathodeColor: _val('greeter.nixieCathodeColor', "#aab6c4")
+    // Coloured glass: the hue the tube's own light takes (alpha = how much).
+    readonly property color nixieTint: _val('greeter.nixieTint', "#00000000")
     // The lit cathode's radius as a share of a numeral's height. The fallback
     // mirrors Theme/greeter.jsonc, so a login screen that cannot read the user's
     // theme draws the same wire the desktop shows.
