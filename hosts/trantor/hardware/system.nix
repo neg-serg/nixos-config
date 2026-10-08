@@ -16,11 +16,9 @@
       helpColor = "00AAAA";
       helpColorBright = "55FF55";
     };
-    # Bootloader wallpaper — real image copied from ~/pic/wl/wallhaven-xep2dz.jpg
-    # NB: a list element must be parenthesised — `[ f x ]` is two
-    # elements (the function and the string), not one call.
-    wallpapers = [ (config.lib.neg.path "files/boot-splash.jpg") ];
-    wallpaperStyle = "stretched";
+    # No wallpaper image — an explicit empty list overrides the nixpkgs default
+    # (nixos-artwork simple-dark-gray); the loader draws on the backdrop below.
+    wallpapers = [ ];
     backdrop = "000000";
   };
 
