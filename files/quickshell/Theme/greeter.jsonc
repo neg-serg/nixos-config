@@ -70,10 +70,11 @@
     "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
-    // The cathode wire's radius as a fraction of the numeral's height (0.0127
-    // of 30 mm is the 0.38 mm the tube is drawn at), and how visible the nine
-    // unlit cathodes behind the lit one are.
-    "nixieWire": 0.0127,
+    // The cathode wire's radius as a fraction of the numeral's height: 0.018 of
+    // 30 mm is 0.54 mm, a heavy-duty cathode — it carries more gas, so it reads
+    // as a filament rather than as a line. The real IN-12 cathode is 0.24 mm;
+    // this one is drawn fat on purpose.
+    "nixieWire": 0.0180,
     "nixieStack": 0.5,
     "nixieHighlight": 0.8,
     "nixieWarmth": 0.45,
