@@ -145,7 +145,7 @@ export function apply(ctx, config = {}) {
         // shape yields content: null and crashes the LLM serializer).
         additions.push(createUserMessage({
           content: [{ type: 'text', text: readFileSync(rulePath, 'utf8') }],
-          source: { kind: 'plugin', plugin: 'rules-injector', form: 'instructions' },
+          source: { kind: 'plugin:rules-injector', form: 'instructions' },
         }))
       } catch { /* unreadable rule — skip */ }
     }

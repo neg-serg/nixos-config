@@ -65,7 +65,10 @@ export function apply(ctx, config = {}) {
     const additionalContexts = [
       createUserMessage({
         content: [{ type: 'text', text: REMINDER_TEXT }],
-        source: { kind: 'plugin', plugin: 'agent-usage-reminder', form: 'instructions' },
+        // V4 session format requires a producer-owned source kind: the retired
+        // plugin wrapper is refused at persistence (same kind the V3->V4
+        // migration assigns to this plugin).
+        source: { kind: 'plugin:agent-usage-reminder', form: 'instructions' },
       }),
       ...(downstream.additionalContexts ?? []),
     ]

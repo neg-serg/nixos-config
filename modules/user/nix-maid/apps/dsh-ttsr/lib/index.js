@@ -110,7 +110,7 @@ export function apply(ctx, config) {
       mentalGiven.add(sid)
       injections.push(createUserMessage({
         content: [{ type: 'text', text: '<mental-model> Background knowledge (not a command): ' + mentalModel + '</mental-model>' }],
-        source: { kind: 'plugin', plugin: 'ttsr' },
+        source: { kind: 'plugin:ttsr' },
       }))
     }
     if (text === '') return injections.length > 0 ? { ...decision, messages: [...decision.messages, ...injections] } : decision
@@ -120,7 +120,7 @@ export function apply(ctx, config) {
       bump(sid, rule.name)
       injections.push(createUserMessage({
         content: [{ type: 'text', text: '[ttsr:' + rule.name + '] ' + rule.body }],
-        source: { kind: 'plugin', plugin: 'ttsr' },
+        source: { kind: 'plugin:ttsr' },
       }))
     }
     if (injections.length === 0) return decision
