@@ -27,6 +27,11 @@ struct Cli {
     #[arg(long, global = true, default_value = SHADER)]
     shader: PathBuf,
 
+    /// The theme the tube's tokens are read from — the wire's thickness lives
+    /// there, not in the shader.
+    #[arg(long, global = true, default_value = drawing::THEME)]
+    theme: PathBuf,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -75,6 +80,7 @@ enum Command {
 fn render(
     src: &str,
     drawing: &drawing::Drawing,
+    tokens: &uniforms::Tokens,
     out: &std::path::Path,
     digit: i32,
     scale: u32,
@@ -94,7 +100,7 @@ fn render(
 
     let wallpaper = wallpaper(width, height, room)?;
     let mut uniforms =
-        uniforms::Uniforms::from_drawing(drawing, mm, [width as f32, height as f32], digit);
+        uniforms::Uniforms::from_drawing(drawing, tokens, mm, [width as f32, height as f32], digit);
     uniforms.glow = glow;
     let frame = vulkan::render(spv, &uniforms, &wallpaper, width, height)?;
 
@@ -116,6 +122,7 @@ fn render(
 fn sweep(
     src: &str,
     drawing: &drawing::Drawing,
+    tokens: &uniforms::Tokens,
     out: &std::path::Path,
     scale: u32,
     check: bool,
@@ -135,8 +142,13 @@ fn sweep(
     let mut failures = 0usize;
     println!("digit  wire white/hot   halo half   glass light   mesh contrast   ink top",);
     for digit in 0..10i32 {
-        let uniforms =
-            uniforms::Uniforms::from_drawing(drawing, mm, [width as f32, height as f32], digit);
+        let uniforms = uniforms::Uniforms::from_drawing(
+            drawing,
+            tokens,
+            mm,
+            [width as f32, height as f32],
+            digit,
+        );
         let frame = vulkan::render(spv, &uniforms, &wall, width, height)?;
         let measured = measure::measure(
             &frame.rgba,
@@ -172,7 +184,8 @@ fn sweep(
     }
     // The glass itself: measured on the lamp with nothing lit, which is where
     // the plan's A3 measures it too — the discharge drowns everything else.
-    let dark = uniforms::Uniforms::from_drawing(drawing, mm, [width as f32, height as f32], -1);
+    let dark =
+        uniforms::Uniforms::from_drawing(drawing, tokens, mm, [width as f32, height as f32], -1);
     let frame = vulkan::render(spv, &dark, &wall, width, height)?;
     let glass = measure::measure(
         &frame.rgba,
@@ -279,7 +292,9 @@ fn gradient(width: u32, height: u32, room: f32) -> image::RgbaImage {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let src = std::fs::read_to_string(&cli.shader)?;
-    let drawing = drawing::Drawing::read(&src)?;
+    let theme = std::fs::read_to_string(&cli.theme)?;
+    let drawing = drawing::Drawing::read(&src, &theme)?;
+    let tokens = uniforms::Tokens::read(&theme)?;
     match cli.command {
         Command::Validate => {
             let report = geometry::check(&drawing);
@@ -292,8 +307,8 @@ fn main() -> Result<()> {
             scale,
             glow,
             room,
-        } => render(&src, &drawing, &out, digit, scale, glow, room)?,
-        Command::Sweep { out, scale, check } => sweep(&src, &drawing, &out, scale, check)?,
+        } => render(&src, &drawing, &tokens, &out, digit, scale, glow, room)?,
+        Command::Sweep { out, scale, check } => sweep(&src, &drawing, &tokens, &out, scale, check)?,
     }
     Ok(())
 }
