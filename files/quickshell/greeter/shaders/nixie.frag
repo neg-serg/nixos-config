@@ -138,6 +138,9 @@ return d;
 // +1 the one that passes over, -1 the one that goes under, 0 an ordinary piece.
 // Only the 8 sets it, and only its own wire reads it.
 float wirePass = 0.0;
+// The wire's own radius in the numeral's space, filled in by main() from the
+// nixieWire token: an elbow of bent wire is as thick as the wire (see digitWire).
+float bendK = 0.0;
 
 float digitWire(int digit, vec2 p) {
 const float PI = 3.14159265;
@@ -146,11 +149,11 @@ if (digit == 0)
 return sdEllipse(p, vec2(0.0), vec2(0.30, 0.88));
 if (digit == 1)
 return smin(sdSegment(p, vec2(0.0, -1.02), vec2(0.0, 1.02)),
-            sdSegment(p, vec2(-0.24, 0.55), vec2(0.0, 1.02)), 0.03);
+            sdSegment(p, vec2(-0.24, 0.55), vec2(0.0, 1.02)), bendK);
 if (digit == 2)
 return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
-                 sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.03),
-            sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.03);
+                 sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), bendK),
+            sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), bendK);
 if (digit == 3)
 // Two round bowls, one over the other, meeting at the waist: the upper runs
 // from its foot counter-clockwise over the right, the top and into the upper
@@ -158,11 +161,11 @@ if (digit == 3)
 // circles pinched together are what a 3 of wire is; five straight strokes read
 // as a digital font, which is what this was and what it must not be.
 return smin(sdEllipseArc(p, vec2(0.0, 0.52), vec2(0.32, 0.50), 270.0 * DEG, 495.0 * DEG),
-            sdEllipseArc(p, vec2(0.0, -0.52), vec2(0.32, 0.50), 225.0 * DEG, 450.0 * DEG), 0.03);
+            sdEllipseArc(p, vec2(0.0, -0.52), vec2(0.32, 0.50), 225.0 * DEG, 450.0 * DEG), bendK);
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
-                 sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.03),
-            sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.03);
+                 sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), bendK),
+            sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), bendK);
 if (digit == 5)
 // The drawing font's 5, bent from one wire: the bar across the top, the stem
 // down its left end, the waist, the bowl's right side and the foot, with a
@@ -198,7 +201,7 @@ if (digit == 7)
 // A lid and a leg and nothing else — a nixie's 7 is not a bowl with a side —
 // with the one corner it has rounded off by a good part of the wire.
 return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
-            sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.04);
+            sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), bendK);
 if (digit == 8)
 // The 8 as the sign of infinity stood on end: one curve, and the crossing is a
 // single point — not two rings set one over the other. The wire goes round the
@@ -236,9 +239,9 @@ if (digit == 9)
 // The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
 // over, and what tells them apart is which end carries the loop.
 return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
-            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.03);
+            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), bendK);
 return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
-            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.03);
+            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), bendK);
 }
 
 // The wire's two ends, in the numeral's own space: where it leaves the figure
@@ -623,10 +626,12 @@ float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
 // The cathode's radius: the theme says what share of a numeral's height it
-// takes (nixieWire), and the numeral is 30 mm on the sheet — 0.0127 of it is
-// the 0.38 mm this is drawn at. A real cathode is 0.24 mm; this one is fat on
-// purpose, because a stroke that thin reads as a hairline at the login's size.
+// takes (nixieWire), and the numeral is 30 mm on the sheet — 0.025 of it is the
+// 0.75 mm this is drawn at, so the wire is 1.50 mm across. A real cathode is
+// 0.24 mm; this one is heavy on purpose, because what the eye reads at the
+// login's size is the glowing filament, and a hairline reads as nothing.
 float wirePx = pWire * DIGIT_H * mm;
+bendK = wirePx / gm;   // the bend of a bent wire is its own radius
 float baseTop = footY;
 
 // the two rods the stack is welded to
@@ -822,7 +827,7 @@ float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // The sheath around the wire: the gas hugs a hot filament and falls away fast.
 // A thicker cathode carries more of it, so the sheath is wider and denser than
 // the hairline one a thin wire would have.
-float gas = exp(-dist / (0.16 * mm)) * 0.17 + exp(-dist / (0.40 * mm)) * 0.040;
+float gas = exp(-dist / (0.20 * mm)) * 0.17 + exp(-dist / (0.50 * mm)) * 0.040;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
@@ -859,7 +864,7 @@ add += wireColour * wireRadiance;   // white-hot, and no wider than the wire its
 // with the wire itself: a cooler stretch of cathode carries a dimmer glow.
 float gasHeat = 0.60 + 0.40 * heatProfile;
 add += pHalo.rgb * gas * gasHeat * 0.58 * haloLit;
-add += pHalo.rgb * exp(-dist / (1.9 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
+add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.28 * mm) / (0.13 * mm)) * 0.032 * step(0.06 * mm, dist) * haloLit;
 // The far wall of the glass does catch the wire, but it is a wall and not a
