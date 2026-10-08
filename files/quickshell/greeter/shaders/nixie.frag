@@ -385,6 +385,32 @@ float heat_power(float kelvin, float gain) {
 return min(pow(clamp(kelvin, 300.0, 6000.0) / 2550.0, 4.0) * gain, 6.0);
 }
 
+// Stops above white the discharge is exposed at: the wire is this many times
+// brighter than a white surface, and the curve below is what turns that into a
+// white core. The old pipeline hid this number in three places at once — a
+// gain, an exposure constant and a "headroom" term — and then clipped it.
+const float DISCHARGE_EXPOSURE = 2.5;
+
+// The tone map: Khronos' PBR-neutral curve, built for exactly this job — an
+// object whose colour has to stay true while its highlights roll off. It takes
+// light in linear units and returns display units: the shoulder turns a wire
+// several times brighter than white into a warm white core instead of clipping
+// it into cardboard, and only the very top of it desaturates.
+vec3 tone_map(vec3 c) {
+const float startCompression = 0.8 - 0.04;
+const float desaturation = 0.15;
+float x = min(c.r, min(c.g, c.b));
+float offset = (x < 0.08) ? x - 6.25 * x * x : 0.04;
+c -= offset;
+float peak = max(c.r, max(c.g, c.b));
+if (peak < startCompression) return c;
+float d = 1.0 - startCompression;
+float newPeak = 1.0 - d * d / (peak + d - startCompression);
+c *= newPeak / peak;
+float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
+return mix(c, newPeak * vec3(1.0), g);
+}
+
 void main() {
 const float PI = 3.14159265;
 
@@ -861,16 +887,18 @@ colour += metal_hit(px, N3, VIEW, vec3(0.60, 0.61, 0.64), 0.30) * getter * 0.80;
 colour += metal_hit(px, N3, VIEW, vec3(0.19, 0.17, 0.15), 0.55) * sputter * 0.35;
 
 // --- the discharge --------------------------------------------------------
-// The lit cathode is a wire: a thin, saturated, almost white-hot line, and the
-// gas around it. Nothing else on the tube is this bright.
+// The lit cathode is a wire with a gas sheath around it, and nothing else on
+// the tube is anywhere near this bright: the metal's own radiance is a black
+// body's at its temperature, and the exposure below is what makes its core
+// read as white.
 vec3 add = vec3(0.0);
 float gasMap = 0.0;
 // The wire's own radiance, kept apart from everything else the discharge adds:
-// it is the only thing in the tube that goes past white, and the HDR headroom
-// at the end of main() is built from it alone.
+// it is the only thing in the tube that stands above white, and it is what the
+// exposure at the end of main() is scaled for.
 float wireRadiance = 0.0;
-// The colour of the wire's own surface, kept with the radiance: the HDR excess
-// at the end of main() is the light the wire itself throws, not a fixed tint.
+// The colour of the wire's own surface, kept with the radiance: it is Planck's
+// for the metal's temperature, not a fixed tint.
 vec3 wireGlowColour = vec3(0.0);
 if (pBulb > 0.5) {
 float bulb = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
@@ -887,7 +915,12 @@ float dist = max(wireDist, 0.0);
 // its surface. It is a width in millimetres (the cathode is 0.24 mm across),
 // not a fraction of a pixel, which is what a white-hot filament is.
 float axis = digitWire(int(pDigit + 0.5), dp) * gm;
-float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
+// A heated wire is a surface, and a surface at one temperature has one
+// radiance: the section is flat, not a ramp. What makes a real filament read
+// as a bright core is exposure — it stands several times above white, so the
+// tone curve whitens it — and the optics, which soften its two edges. The soft
+// edge below is that: about a pixel of defocus, not a painted gradient.
+float core = smoothstep(wirePx + 0.5, wirePx - 0.5, axis);
 // dense at the wire, tight around it, a faint wash inside the cage
 // The sheath around the wire: the gas hugs a hot filament and falls away fast.
 // A thicker cathode carries more of it, so the sheath is wider and denser than
@@ -918,17 +951,19 @@ wireGlowColour = blackbody(wireTemp);
 // the picture exactly where it was and turning it up makes the discharge hotter.
 // The white core is what a wire at pTempK looks like; where the wire runs
 // cooler the metal keeps its own blackbody colour instead of burning white.
-vec3 wireColour = mix(wireGlowColour, vec3(1.0, 0.97, 0.92), pow(core, 8.0) * 0.30 * heatProfile);
+vec3 wireColour = wireGlowColour;   // the metal's own colour, everywhere on the wire
 float wireHeat = heat_power(wireTemp, 1.0);
 // A real filament is not uniformly hot along its length either: a slow hash on
 // the numeral's own millimetres keeps the run from reading as a drawn line.
 float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
-// The wire is metal, not a tube of light: the heat piles up on the axis and
-// falls off towards the surface, so the stroke is a white-hot core inside a
-// body that is merely hot — a glow with a gradient, not a flat rod. The ramp
-// is linear in the metal's own radius, which is what a heated wire's cross
-// section looks like, and nothing of it is drawn outside the wire.
-wireRadiance = core * (0.55 + 0.80 * core) * coreLit * wireHeat * filament * hum * (1.0 + 0.11 * wirePass);
+// Emission of the metal itself: emissivity times Stefan-Boltzmann, and a metal
+// cylinder is darker towards its limbs — Kirchhoff's law again: the emissivity
+// at a grazing angle is one minus a reflectance that is rising there. The
+// cosine below is the surface's own angle to the eye across the wire, so the
+// stroke keeps a soft edge without a painted ramp.
+float cosv = sqrt(max(0.0, 1.0 - pow(clamp(axis / max(wirePx, 0.5), 0.0, 1.0), 2.0)));
+float limb = 1.0 - 0.45 * pow(1.0 - cosv, 2.0);
+wireRadiance = core * limb * coreLit * wireHeat * filament * hum * (1.0 + 0.11 * wirePass);
 add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
 
 // The gas hugs the wire where it is hot, so the sheath thins towards the ends
@@ -975,17 +1010,19 @@ gasMap = gas;
 colour += cageGlow * 0.25;
 }
 
-// Exposure: the gas never reaches white, the wire always does. What the wire's
-// core has beyond the white point is kept apart as headroom for an HDR output:
-// added to the final pixel, not to `add`, because `add` is also what the
-// discharge's light on the glass is drawn from — folding the headroom into it
-// lit the whole tube three times over.
-add = vec3(1.0) - exp(-add * 1.55);
-// The wire's own radiance above the white point: a real wire is far brighter
-// than a screen's white, and the compositor passes HDR metadata through, so the
-// excess is carried to the output instead of being flattened. It is taken from
-// the wire alone — from `add` it would smear a halo around every bright pixel.
-vec3 headroom = wireGlowColour * max(wireRadiance - 1.5, 0.0) * 0.10;
+// Exposure and tone mapping. The discharge is summed as light and mapped once,
+// at the end: the theme's colours are sRGB code values, so they are squared
+// into linear light first (the glass and the room around them stay where they
+// were — a full linear workflow is a bigger change than this fix), the curve
+// rolls the top off, and the square root puts the result back into the display
+// encoding the rest of the pass and the compositor work in.
+//
+// What the old code did: mapped `add` with 1-exp(-1.55x), a saturation curve
+// with no shoulder, which cannot express "brighter than white" at all — and
+// then added a "headroom" of the wire's excess on top of the *display* value,
+// where an 8-bit sRGB surface simply clips it. The excess was a fixed 0.10 of
+// a number that already had a gain and an exposure folded into it.
+add = sqrt(tone_map(add * add * DISCHARGE_EXPOSURE));
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
@@ -1072,6 +1109,6 @@ colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.
 // transparent pixels are the wallpaper's, and grain there would tint it.
 colour += vec3(hash(px * 1.31 + 0.5) - 0.5) * 0.012 * inside;
 
-fragColor = vec4(colour + add + headroom + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
+fragColor = vec4(colour + add + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
 		clamp(alpha, 0.0, 0.98)) * qt_Opacity;
 }

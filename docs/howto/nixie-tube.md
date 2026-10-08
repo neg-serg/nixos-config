@@ -107,6 +107,13 @@ over from the room's reflection. `blackbody()` is Planck's colour (Bartlett's sR
 (2550 K), capped so a knob turned all the way up cannot blow the frame out. Measured on the render:
 with the discharge on, the mesh's own region gains light with R/B ≈ 5 — dull red, as it should be.
 
+**The discharge is exposed and tone-mapped, not clipped.** the wire and its gas are summed as light and
+mapped once through Khronos' PBR-neutral curve (`tone_map`, `DISCHARGE_EXPOSURE` = 2.5): the wire
+stands two and a half times above white, the curve's shoulder turns that into a warm white core, and
+the metal's own colour survives under it. The theme's colours are code values, so they are squared
+into linear light before the sum and the result is square-rooted back into the display encoding the
+rest of the pass uses.
+
 **The metal's own colour is dull orange.** The theme draws it at 2400 K — a nixie's cathode is
 nowhere near a tungsten filament, and the white in photographs of one is the camera, not the metal;
 the gas around the wire is what carries the orange.
@@ -168,7 +175,7 @@ to be copied and touched again, or the login screen keeps the old numbers.
 
 ## What is still simulation, not physics
 
-The parts above are measured or modelled. These seven are still drawn to look right, and each one is a
+The parts above are measured or modelled. These are still drawn to look right, and each one is a
 place where the render is a look-alike rather than the thing:
 
 1. Rough metal is five taps in a cross (`metal_hit`, `blurred_room`), a stencil blur. It needs a
@@ -177,7 +184,12 @@ place where the render is a look-alike rather than the thing:
 2. The glass traces one path in and out (`rayTr`/`rayTg`/`rayTb`, `rayOut`), and the far wall's catch
    is traced off the cylinder — but the returning ray carries one tuned weight, not Fresnel at the
    wall it reflects from and absorption along the way back out. It needs the same optics twice.
-3. Beer's law has no dispersion of its own: `absorb` takes the glass tint as a per-channel
+3. Only the discharge is linearised and tone-mapped: the glass, the metals and the room behind them
+   are still summed in the display's own encoding, and the light the wire throws on the glass is
+   taken from the *tone-mapped* value rather than from the light that made it. A full linear
+   workflow — sample the room and the theme in linear, sum everything once, tone map once, encode at
+   the end — is the next step, and it will move the whole picture, not just the wire.
+4. Beer's law has no dispersion of its own: `absorb` takes the glass tint as a per-channel
    coefficient and the green ray's path length for all three channels. It needs the attenuation
    carried per wavelength along each of the three dispersed rays.
 4. The gas is one colour per token (`pHalo`) plus a fixed violet fringe. A neon discharge is a line
