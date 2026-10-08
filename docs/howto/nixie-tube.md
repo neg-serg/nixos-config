@@ -106,6 +106,15 @@ over from the room's reflection. `blackbody()` is Planck's colour (Bartlett's sR
 (2550 K), capped so a knob turned all the way up cannot blow the frame out. Measured on the render:
 with the discharge on, the mesh's own region gains light with R/B ≈ 5 — dull red, as it should be.
 
+**The wire is hottest in the middle of a run.** A cathode is held at both ends by the stack's rods,
+and heat conducts out through them, so the shader carries the two ends of every numeral's wire
+(`digitEnds`) and lets the temperature fall by `HEAT_END_DROP` = 550 K over the last `HEAT_FALLOFF` =
+0.30 of a numeral unit (about 4.4 mm) at either end. The colour is Planck's at the local temperature,
+the power Stefan-Boltzmann's, the white core fades out as the metal cools, and the gas sheath thins
+with it — a cooler stretch of cathode carries a dimmer glow. The ends are the tips the numerals are
+drawn from, and a closed loop carries its seam twice; the distance to the nearer end is the stand-in
+for the position along the run — exact along a straight stroke, an overestimate around a bend.
+
 **The glass is a lens, not a window.** A cylinder has power across its axis and none along it, so the
 picture inside is magnified sideways — most of all on the axis (up to 0.30) and not at all at the
 wall, where the glass is edge-on. The glass also disperses: three indices (1.5155, 1.5200, 1.5280 for
@@ -121,13 +130,12 @@ crisp flipped copy of the numeral inside the tube would read as a second, broken
 | --- | --- |
 | `nixieDigitSize` | the numeral in px before `uiScale`; the tubes, the gaps and the colon are built from it |
 | `nixieGlow` | how hard the discharge burns |
-| `nixieCoreColor`, `nixieGlowColor` | the lit cathode and the gas around it |
+| `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: Planck gives the metal's colour, Stefan-Boltzmann its power |
 | `nixieGlassColor`, `nixieCathodeColor` | the envelope's tint and the unlit wire behind the lit one |
-| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0127 of 30 mm = 0.38 mm) |
+| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0180 of 30 mm = 0.54 mm) |
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
 | `nixieHighlight` | how much light the glass catches |
-| `nixieWarmth` | declared and passed to the shader, **not used yet** — the discharge's landing on the glass is drawn at a fixed weight |
-| — | the wire's own colour is still the theme's `nixieCoreColor`, not a temperature; the mesh is the first part that emits by Planck's law |
+| `nixieWarmth` | how much of the discharge's light lands on the glass (0.45 is the tube's own look) |
 | `nixieFlickerMs` | restrike time on a digit change; 0 leaves the tubes steady |
 
 The theme is copy-once: `Theme/` is copied into `~/.config/quickshell/Theme/`, so after an edit it has
@@ -135,38 +143,31 @@ to be copied and touched again, or the login screen keeps the old numbers.
 
 ## What is still simulation, not physics
 
-The parts above are measured or modelled. These ten are still drawn to look right, and each one is a
+The parts above are measured or modelled. These seven are still drawn to look right, and each one is a
 place where the render is a look-alike rather than the thing:
 
-1. The lit wire's colour is the theme's `nixieCoreColor` (`pCore`), not a temperature: the wire is
-   tinted, not heated. It needs a `pTempK` uniform and Planck's law with a Stefan-Boltzmann power,
-   as `blackbody`/`heat_power` already drive the mesh.
-2. `nixieWarmth` is bound (`pWarmth`, `NixieTube.qml`) and never read in the shader: the discharge's
-   landing on the glass is a fixed weight. It needs the glass-deposition term scaled by `pWarmth`.
-3. Rough metal is five taps in a cross (`metal_hit`, `blurred_room`), a stencil blur. It needs a
+1. Rough metal is five taps in a cross (`metal_hit`, `blurred_room`), a stencil blur. It needs a
    microfacet model (GGX) or a pre-filtered mip chain, so `rough` is a BRDF lobe and not a sample
    radius.
-4. The glass traces one path — in, across the bore, out (`rayTr`/`rayTg`/`rayTb`, `rayOut`) — and the
+2. The glass traces one path — in, across the bore, out (`rayTr`/`rayTg`/`rayTb`, `rayOut`) — and the
    far wall's catch (`wallRefl`) is painted, not traced: the discharge is never reflected off the
    inner wall. It needs a second ray inside the bore, with its own Fresnel.
-5. Beer's law has no dispersion of its own: `absorb` takes the glass tint as a per-channel
+3. Beer's law has no dispersion of its own: `absorb` takes the glass tint as a per-channel
    coefficient and the green ray's path length for all three channels. It needs the attenuation
    carried per wavelength along each of the three dispersed rays.
-6. The discharge is one colour per token (`pCore`, `pHalo`) plus a fixed violet fringe. A neon
-   discharge is a line spectrum; it needs a small set of emission lines weighted by the gas model.
-7. The cathode heats uniformly along its length (`core`, `pGlow`). In life the middle of a stroke runs
-   hotter than its ends; it needs the heating, and with it the colour, to fall off along the wire.
-8. Nothing ages. There is no cathode sputtering and no getter deposit, the two things that darken a
-   real tube's glass over its life. It needs a usage term that thins the wire and films the envelope.
-9. The base is a crimped moulding (the `collarH` path, and `COLLAR_H_MM = 0` disables even that). It
-   has no pins on the sheet's 11.5 mm circle and no lugs, so the lamp cannot be shown plugged in. It
-   needs the sheet's leads added and the base switched on.
-10. The shader compresses into 0..1 (`add = 1 - exp(-add * 1.55)`, `fragColor` clamped), so there is
-    no HDR headroom, while the session outputs 10-bit with colour management and an HDR path
-    (`bitdepth = 10`, `cm = "auto"` in `files/gui/hypr/greetd.lua`; `hdr_output_metadata` needs
-    atomic KMS per `modules/user/session/greetd/session-wrapper.sh`). It needs an HDR path that keeps
-    the highlights above 1.0 and declares the output transfer and primaries instead of compressing
-    them away.
+4. The gas is one colour per token (`pHalo`) plus a fixed violet fringe. A neon discharge is a line
+   spectrum; it needs a small set of emission lines weighted by the gas model.
+5. Nothing ages over time. The getter mirror and the sputter film are drawn at fixed weights, not
+   grown by a usage term, and the cathode is never thinned by the metal it throws off. It needs the
+   tube's hours of life to drive both.
+6. The base is drawn but switched off: `COLLAR_H_MM = 0` keeps the crimped collar, its twelve pins on
+   the sheet's 11.5 mm circle and the two gold terminals out of the picture, because the bulb is
+   drawn as the whole lamp. Switching the base on would show the lamp plugged in.
+7. The wire's excess above white is carried past 1.0 (`headroom`), but the shader declares no output
+   transfer function or primaries, so what the surface does with that excess is the surface's
+   decision: the session's 10-bit output path (`bitdepth = 10`, `cm = "auto"` in
+   `files/gui/hypr/greetd.lua`; `hdr_output_metadata` needs atomic KMS per
+   `modules/user/session/greetd/session-wrapper.sh`) is where it has to be told.
 
 ## The workbench
 
