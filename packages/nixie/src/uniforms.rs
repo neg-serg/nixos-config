@@ -1,7 +1,7 @@
 //! What the shader is told: the lamp's handles, laid out the way std140 wants.
 
 use crate::drawing::{number_after, Drawing};
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 /// A colour as the theme stores it: #AARRGGBB.
 pub fn colour(token: &str) -> [f32; 4] {
@@ -13,6 +13,23 @@ pub fn colour(token: &str) -> [f32; 4] {
     };
     let v = |s: &str| u8::from_str_radix(s, 16).unwrap_or(0) as f32 / 255.0;
     [v(r), v(g), v(b), v(a)]
+}
+
+/// The first hex colour after `needle` in the theme, e.g. `nixieTint`:
+/// `colour_after(theme, "\"nixieTint\": ")?`. The theme writes them the way Qt
+/// does — `#rrggbb` or `#aarrggbb` — and `colour()` reads either.
+pub fn colour_after(src: &str, needle: &str) -> Result<[f32; 4]> {
+    let at = src
+        .find(needle)
+        .with_context(|| format!("the theme does not contain {needle:?}"))?
+        + needle.len();
+    let token: String = src[at..]
+        .trim_start()
+        .trim_start_matches('"')
+        .chars()
+        .take_while(|c| c.is_ascii_hexdigit() || *c == '#')
+        .collect();
+    Ok(colour(&token))
 }
 
 /// The block declared in nixie.frag, minus Qt's two members.
@@ -56,6 +73,7 @@ pub struct Uniforms {
     pub row_digit: [f32; 4],
     pub row_flicker: [f32; 4],
     pub tile: [f32; 4], // width, height, the tube's margin, 1 = the row pass
+    pub tint: [f32; 4], // coloured glass: the hue, and how much of it
 }
 
 /// The knobs in Theme/greeter.jsonc that are numbers. They are read from the
@@ -66,6 +84,7 @@ pub struct Tokens {
     pub wire: f32,
     pub temp: f32,
     pub exposure: f32,
+    pub tint: [f32; 4],
     pub stack: f32,
     pub highlight: f32,
     pub warmth: f32,
@@ -77,6 +96,7 @@ impl Tokens {
             wire: number_after(theme, "\"nixieWire\": ")? as f32,
             temp: number_after(theme, "\"nixieTempK\": ")? as f32,
             exposure: number_after(theme, "\"nixieExposure\": ")? as f32,
+            tint: colour_after(theme, "\"nixieTint\": ")?,
             stack: number_after(theme, "\"nixieStack\": ")? as f32,
             highlight: number_after(theme, "\"nixieHighlight\": ")? as f32,
             warmth: number_after(theme, "\"nixieWarmth\": ")? as f32,
@@ -121,6 +141,7 @@ impl Uniforms {
             row_digit: [-1.0; 4],
             row_flicker: [1.0; 4],
             tile: [size[0], size[1], 16.0, 0.0],
+            tint: t.tint,
         }
     }
 }
@@ -170,6 +191,7 @@ mod tests {
             row_digit: [0.0; 4],
             row_flicker: [0.0; 4],
             tile: [0.0; 4],
+            tint: [0.0; 4],
         };
         let offset = |field: *const f32| field as usize - &base as *const _ as usize;
         assert_eq!(
@@ -186,7 +208,8 @@ mod tests {
         assert_eq!(offset(base.row_digit.as_ptr()), 160);
         assert_eq!(offset(base.row_flicker.as_ptr()), 176);
         assert_eq!(offset(base.tile.as_ptr()), 192);
-        assert_eq!(size_of::<Uniforms>(), 208);
+        assert_eq!(offset(base.tint.as_ptr()), 208);
+        assert_eq!(size_of::<Uniforms>(), 224);
         assert_eq!(
             offset(&base.exposure as *const f32),
             68,

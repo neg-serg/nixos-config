@@ -187,6 +187,7 @@ wall does the softening.
 | `nixieGlow` | how hard the discharge burns |
 | `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: the metal's colour and its power are measured off the Planck spectrum (see the calibration below) |
 | `nixieExposure` | how many times brighter than white the wire is exposed at — what turns its colour into a white core through the tone curve. 2100 K at 2.5 is the vintage lamp, 2400 K at 1.5 is the calibrated modern one |
+| `nixieTint` | coloured glass: the hue the tube's own light takes, with the alpha as how much of it (`#cc66e0ff` is a cyan lamp, `#00000000` is off). Peak for peak, so the exposure means the same thing at any hue |
 | `nixieGlassColor`, `nixieCathodeColor` | the envelope's tint and the unlit wire behind the lit one |
 | `nixieWire` | the cathode's radius as a share of the numeral's height (0.0440 of 25 mm = 1.10 mm, so the wire is 2.20 mm across, and every bend is that radius) |
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
