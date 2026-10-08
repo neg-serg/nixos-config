@@ -152,7 +152,7 @@ float wirePass = 0.0;
 // nixieWire token: an elbow of bent wire is as thick as the wire (see digitWire).
 float bendK = 0.0;
 
-float digitWire(int digit, vec2 p) {
+float digit_shape(int digit, vec2 p) {
 const float PI = 3.14159265;
 const float DEG = 0.01745329252;
 if (digit == 0)
@@ -263,18 +263,50 @@ return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
 // for the stack's rods, which is where it is held, and so where heat conducts
 // out of it. A closed loop carries its seam twice — that one point is both
 // ends, and the wire is coldest there and hottest half a run away from it.
+// How much a numeral is scaled about the centre of the glyph's space. The five
+// is the one the user measured off his own Iosevka, and its centreline reaches
+// +-0.835 there, so its ink reaches +-0.904 once the wire's own radius is on it.
+// Every other figure is brought to that same height: a font's figures share one
+// cap height, and four tubes only read as one clock if their digits do too.
+// These are those heights, divided one into the other — the numbers are the
+// shapes' own extents (0.88 for the ellipse of the nought, 1.02 for the strokes
+// that fill the space, 0.92 and 1.00 for the six and the nine).
+float glyph_scale(int digit) {
+if (digit == 0) return 0.949;
+if (digit == 1) return 0.819;
+if (digit == 2) return 0.819;
+if (digit == 3) return 0.819;
+if (digit == 4) return 0.819;
+if (digit == 5) return 1.000;
+if (digit == 6) return 0.908;
+if (digit == 7) return 0.819;
+if (digit == 8) return 0.819;
+if (digit == 9) return 0.835;
+return 1.0;
+}
+
+// The wire's path, at the height the row's other digits are drawn at. Uniform in
+// both directions on purpose: the wire's thickness is a screen-space radius that
+// is taken off after this, so a scale that stretched only y would leave the
+// stroke fatter where it runs across than where it runs down.
+float digitWire(int digit, vec2 p) {
+float k = glyph_scale(digit);
+return digit_shape(digit, p / k) * k;
+}
+
 vec4 digitEnds(int digit) {
-if (digit == 0) return vec4(0.0, -0.88, 0.0, -0.88);
-if (digit == 1) return vec4(0.0, -1.02, -0.24, 0.55);
-if (digit == 2) return vec4(-0.31, 0.60, 0.35, -1.02);
-if (digit == 3) return vec4(-0.226, 0.874, -0.226, -0.874);
-if (digit == 4) return vec4(0.32, -0.10, 0.26, -1.02);
-if (digit == 5) return vec4(0.22, 0.58, -0.25, -0.50);
-if (digit == 6) return vec4(-0.33, -0.14, 0.33, 0.55);
-if (digit == 7) return vec4(-0.30, 1.00, -0.10, -1.02);
-if (digit == 8) return vec4(0.0, 1.02, 0.0, 1.02);
-if (digit == 9) return vec4(0.30, 0.52, 0.29, -0.98);
-return vec4(0.0, 1.02, 0.0, -1.02);
+float k = glyph_scale(digit);
+if (digit == 0) return k * vec4(0.0, -0.88, 0.0, -0.88);
+if (digit == 1) return k * vec4(0.0, -1.02, -0.24, 0.55);
+if (digit == 2) return k * vec4(-0.31, 0.60, 0.35, -1.02);
+if (digit == 3) return k * vec4(-0.226, 0.874, -0.226, -0.874);
+if (digit == 4) return k * vec4(0.32, -0.10, 0.26, -1.02);
+if (digit == 5) return k * vec4(0.22, 0.58, -0.25, -0.50);
+if (digit == 6) return k * vec4(-0.33, -0.14, 0.33, 0.55);
+if (digit == 7) return k * vec4(-0.30, 1.00, -0.10, -1.02);
+if (digit == 8) return k * vec4(0.0, 1.02, 0.0, 1.02);
+if (digit == 9) return k * vec4(0.30, 0.52, 0.29, -0.98);
+return k * vec4(0.0, 1.02, 0.0, -1.02);
 }
 
 // The wire cools towards its ends: how much of its temperature it loses where
