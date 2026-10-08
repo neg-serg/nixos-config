@@ -239,6 +239,29 @@ return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
             sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.10);
 }
 
+// The wire's two ends, in the numeral's own space: where it leaves the figure
+// for the stack's rods, which is where it is held, and so where heat conducts
+// out of it. A closed loop carries its seam twice — that one point is both
+// ends, and the wire is coldest there and hottest half a run away from it.
+vec4 digitEnds(int digit) {
+if (digit == 0) return vec4(0.0, -0.88, 0.0, -0.88);
+if (digit == 1) return vec4(0.0, -1.02, -0.24, 0.55);
+if (digit == 2) return vec4(-0.31, 0.60, 0.35, -1.02);
+if (digit == 3) return vec4(-0.226, 0.874, -0.226, -0.874);
+if (digit == 4) return vec4(0.32, -0.10, 0.26, -1.02);
+if (digit == 5) return vec4(0.339, 0.974, -0.359, -0.923);
+if (digit == 6) return vec4(-0.33, -0.14, 0.33, 0.55);
+if (digit == 7) return vec4(-0.30, 1.00, -0.10, -1.02);
+if (digit == 8) return vec4(0.0, 1.02, 0.0, 1.02);
+if (digit == 9) return vec4(0.30, 0.52, 0.29, -0.98);
+return vec4(0.0, 1.02, 0.0, -1.02);
+}
+
+// The wire cools towards its ends: how much of its temperature it loses where
+// it is held, and over what distance (in the numeral's own units) it recovers.
+const float HEAT_END_DROP = 550.0;
+const float HEAT_FALLOFF = 0.30;
+
 float hash(vec2 p) {
 return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -774,12 +797,16 @@ float gasMap = 0.0;
 // it is the only thing in the tube that goes past white, and the HDR headroom
 // at the end of main() is built from it alone.
 float wireRadiance = 0.0;
+// The colour of the wire's own surface, kept with the radiance: the HDR excess
+// at the end of main() is the light the wire itself throws, not a fixed tint.
+vec3 wireGlowColour = vec3(0.0);
 if (pBulb > 0.5) {
 float bulb = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
 float lit = 1.0 - clamp((bulb + 0.4) / 0.8, 0.0, 1.0);
 gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) / (1.4 * 5.0 * mm)) * 0.25;
+wireGlowColour = blackbody(pTempK);
 wireRadiance = lit * 1.20 * pGlow * pFlicker * heat_power(pTempK, 1.0);
-add += blackbody(pTempK) * wireRadiance;
+add += wireGlowColour * wireRadiance;
 add += pHalo.rgb * gasMap * 0.60 * pGlow * pow(pFlicker, 1.4);
 } else if (pDigit >= -0.5) {
 float wireDist = digitWire(int(pDigit + 0.5), dp) * gm - wirePx;
@@ -797,22 +824,35 @@ float gas = exp(-dist / (0.16 * mm)) * 0.20 + exp(-dist / (0.42 * mm)) * 0.035;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
+// The wire is held at its two ends by the stack's rods, and heat conducts out
+// through them: the run sits at pTempK where it is far from both ends and loses
+// HEAT_END_DROP kelvin at the ends themselves. The distance to the nearer end
+// is the cheap stand-in for the position along the run — exact along a straight
+// stroke, an overestimate around a bend, which is enough for a glow.
+vec4 ends = digitEnds(int(pDigit + 0.5));
+float endDist = min(length(dp - ends.xy), length(dp - ends.zw));
+float heatProfile = clamp(endDist / HEAT_FALLOFF, 0.0, 1.0);
+float wireTemp = pTempK - HEAT_END_DROP * (1.0 - heatProfile);
+wireGlowColour = blackbody(wireTemp);
 // A wire that hot is its own light: Planck's colour for the colour, and
 // Stefan-Boltzmann's fourth power for the power. heat_power() is measured
 // against the 2550 K the theme is drawn at, so the knob at its default leaves
 // the picture exactly where it was and turning it up makes the discharge hotter.
-vec3 wireColour = mix(blackbody(pTempK), vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60);
-float wireHeat = heat_power(pTempK, 1.0);
-		// A real filament is not uniformly hot along its length: the gas concentrates
-// where the wire runs hottest, and the eye reads that unevenness as heat rather
-// than as a drawn line. Slow (a hash on the numeral's own millimetres), so it
-// reads as a gradient and not as noise.
+// The white core is what a wire at pTempK looks like; where the wire runs
+// cooler the metal keeps its own blackbody colour instead of burning white.
+vec3 wireColour = mix(wireGlowColour, vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60 * heatProfile);
+float wireHeat = heat_power(wireTemp, 1.0);
+// A real filament is not uniformly hot along its length either: a slow hash on
+// the numeral's own millimetres keeps the run from reading as a drawn line.
 float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
 wireRadiance = core * 6.40 * coreLit * wireHeat * filament * (1.0 + 0.11 * wirePass);
 add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
 
-add += pHalo.rgb * gas * 0.58 * haloLit;
-add += pHalo.rgb * exp(-dist / (2.9 * mm)) * 0.13 * haloLit;   // the soft bloom a hot wire casts
+// The gas hugs the wire where it is hot, so the sheath thins towards the ends
+// with the wire itself: a cooler stretch of cathode carries a dimmer glow.
+float gasHeat = 0.60 + 0.40 * heatProfile;
+add += pHalo.rgb * gas * gasHeat * 0.58 * haloLit;
+add += pHalo.rgb * exp(-dist / (2.9 * mm)) * 0.13 * gasHeat * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
 // The far wall of the glass does catch the wire, but it is a wall and not a
@@ -838,7 +878,7 @@ add = vec3(1.0) - exp(-add * 1.55);
 // than a screen's white, and the compositor passes HDR metadata through, so the
 // excess is carried to the output instead of being flattened. It is taken from
 // the wire alone — from `add` it would smear a halo around every bright pixel.
-vec3 headroom = blackbody(pTempK) * max(wireRadiance - 1.2, 0.0) * 0.5;
+vec3 headroom = wireGlowColour * max(wireRadiance - 1.2, 0.0) * 0.5;
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
