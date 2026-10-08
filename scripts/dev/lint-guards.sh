@@ -110,6 +110,26 @@ scan_restart_preset_system() {
   fi
 }
 
+# dsh session format V4 requires every durable message source to carry a
+# producer-owned kind: the retired `{ kind: 'plugin', plugin: <name> }` wrapper
+# is refused by persistence ("format v4 message requires a producer-owned source
+# kind"), which fails the turn that appended the message. Repo plugins write
+# `{ kind: 'plugin:<name>' }` — the same kind the V3->V4 session migration
+# assigns to an unknown released plugin string.
+scan_dsh_plugin_source_kind() {
+  local hits
+  hits=$(
+    grep -R -nE --exclude-dir=node_modules --exclude-dir=result \
+      --include='*.js' "source:[[:space:]]*\{[^}]*kind:[[:space:]]*['\"]plugin['\"]" \
+      modules/user/nix-maid/apps 2> /dev/null || true
+  )
+  if [ -n "$hits" ]; then
+    printf '%s\n' "Found a retired dsh message source kind in a plugin: write { kind: 'plugin:<name>' }; V4 persistence refuses the { kind: 'plugin', plugin: <name> } wrapper." >&2
+    printf '%s\n' "$hits" >&2
+    exit 1
+  fi
+}
+
 list_only=0
 repo_arg=""
 for arg in "$@"; do
@@ -125,6 +145,7 @@ if [ "$list_only" -eq 1 ]; then
   done < <(lint_rules)
   printf 'restart-preset\n'
   printf 'restart-preset-system\n'
+  printf 'dsh-plugin-source-kind\n'
   exit 0
 fi
 
@@ -149,5 +170,6 @@ done < <(lint_rules)
 
 scan_restart_preset
 scan_restart_preset_system
+scan_dsh_plugin_source_kind
 
 exit 0
