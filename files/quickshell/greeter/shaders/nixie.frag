@@ -545,6 +545,11 @@ const float COLLAR_H_MM = 0.0;  // there is no base on this lamp
 float mm = min((tile.x - 2.0 * pad) / boxW, (tile.y - 2.0 * pad) / boxH);
 mm = max(mm, 0.01);
 float bulbR = BULB_R_MM * mm;           // the glass is as wide as the box, Ø21
+// The camera's yaw off the tube's axis, and where the numerals sit inside: a
+// cathode stands in front of the axis, so the angle moves it (see below) and
+// tilts every ray the glass bends.
+float pYaw = radians(clamp(pView.x, -30.0, 30.0));
+const float CATHODE_Z = 0.72;   // where the numerals sit, in bulb radii in front of the axis
 float bulbH = BULB_H_MM * mm;           // and as tall: cylinder + two hemispheres
 // The collar is the sheet's 7 mm, full stop. pBase is only the caller saying
 // whether this envelope has one at all (the colon has not), because a caller
@@ -620,7 +625,11 @@ float bv = vnoise(bq + vec2(0.0, 1.0));
 vec3 bump = vec3((wu - w0) * 0.05 + (bu - b0) * 0.13,
                  (wv - w0) * 0.05 + (bv - b0) * 0.13, 0.0);
 N3 = normalize(N3 + bump);
-const vec3 VIEW = vec3(0.0, 0.0, -1.0);   // the eye looks along -z, orthographic
+// The eye looks along -z when the camera is dead ahead, and off to one side when
+// the theme turns it: the refraction into the glass, the room it reflects and the
+// Fresnel at its walls all follow this one direction, which is what makes the
+// picture inside the tube slide sideways instead of sitting still.
+vec3 VIEW = vec3(sin(pYaw), 0.0, -cos(pYaw));
 // --- the glass ---------------------------------------------------------
 // Clear glass over a dark room shows almost nothing: the rim, where the wall is
 // seen edge-on, the reflections it catches, the dome and the pip the tube was
@@ -838,10 +847,8 @@ vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 // is the whole depth cue: the numerals move inside the tube while the tube
 // stays where it was. pView.x is the angle in degrees; zero leaves the
 // drawing exactly as the workbench measures it.
-const float CATHODE_Z = 0.72;   // where the numerals sit, in bulb radii in front of the axis
-float yaw = radians(clamp(pView.x, -30.0, 30.0));
-float camShift = CATHODE_Z * bulbR * sin(yaw);
-float camCos = max(cos(yaw), 0.5);
+float camShift = CATHODE_Z * bulbR * sin(pYaw);
+float camCos = max(cos(pYaw), 0.5);
 vec2 dp = vec2((p.x - camShift - centre.x) / (gx * camCos), (centre.y - p.y) / gy);
 // The cathode's radius: the theme says what share of a numeral's height it
 // takes (nixieWire), and the numeral is 25 mm here — 0.044 of it is the 1.10 mm
