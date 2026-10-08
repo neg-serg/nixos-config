@@ -72,6 +72,11 @@ enum Command {
         /// it as it is (1.0).
         #[arg(long, default_value_t = 1.0)]
         room: f32,
+        /// Draw the same frame twice and fail if the two pictures differ in even
+        /// one byte: an off-screen pass has to be bit-for-bit reproducible, or
+        /// every number `sweep --check` prints is noise.
+        #[arg(long)]
+        verify: bool,
     },
 }
 
@@ -86,6 +91,7 @@ fn render(
     scale: u32,
     glow: f32,
     room: f32,
+    verify: bool,
 ) -> Result<()> {
     // The frame is the drawing's own box plus the tube's pads, at `scale` device
     // pixels per logical pixel.
@@ -103,6 +109,44 @@ fn render(
         uniforms::Uniforms::from_drawing(drawing, tokens, mm, [width as f32, height as f32], digit);
     uniforms.glow = glow;
     let frame = vulkan::render(spv, &uniforms, &wallpaper, width, height)?;
+
+    // The stand's own reproducibility gate: the same uniforms, the same
+    // wallpaper, the same pass — twice, each on its own device and its own
+    // images. A single byte of drift means a missing barrier or an uninitialised
+    // buffer, and every measurement `sweep --check` takes is then untrustworthy.
+    // The threshold is zero on purpose: there is no "close enough" here.
+    if verify {
+        let again = vulkan::render(spv, &uniforms, &wallpaper, width, height)?;
+        if again.rgba.len() != frame.rgba.len() {
+            return Err(anyhow!(
+                "the two renders are not even the same size: {} vs {} bytes",
+                frame.rgba.len(),
+                again.rgba.len()
+            ));
+        }
+        let mut differing = 0usize;
+        let mut worst = 0u8;
+        for (a, b) in frame.rgba.iter().zip(again.rgba.iter()) {
+            let d = a.abs_diff(*b);
+            if d != 0 {
+                differing += 1;
+                worst = worst.max(d);
+            }
+        }
+        if differing != 0 {
+            return Err(anyhow!(
+                "the render is not reproducible: {differing} of {} channels differ, worst {worst}/255 — \
+                 the off-screen pass is racing (see the barriers in vulkan.rs)",
+                frame.rgba.len()
+            ));
+        }
+        println!(
+            "verify: two renders are identical ({}x{} device px, {} channels, threshold 0)",
+            frame.width,
+            frame.height,
+            frame.rgba.len()
+        );
+    }
 
     let image = image::RgbaImage::from_raw(frame.width, frame.height, frame.rgba)
         .ok_or_else(|| anyhow::anyhow!("the readback is not an image"))?;
@@ -307,7 +351,10 @@ fn main() -> Result<()> {
             scale,
             glow,
             room,
-        } => render(&src, &drawing, &tokens, &out, digit, scale, glow, room)?,
+            verify,
+        } => render(
+            &src, &drawing, &tokens, &out, digit, scale, glow, room, verify,
+        )?,
         Command::Sweep { out, scale, check } => sweep(&src, &drawing, &tokens, &out, scale, check)?,
     }
     Ok(())
