@@ -35,7 +35,13 @@ pub struct Uniforms {
     // std140 puts the vec4s on a 16-byte boundary: eleven floats take 44 bytes,
     // so four bytes of padding keep Rust and the shader reading the same block
     pub pad0: f32,
-    pub core: [f32; 4],
+    // the lit cathode's temperature, in the vec4 slot the core colour used to
+    // take: std140 rounds a vec4 up to 16 bytes, so the shader pads it with
+    // three floats and this struct has to do the same
+    pub temp: f32,
+    pub pad2: f32,
+    pub pad3: f32,
+    pub pad4: f32,
     pub halo: [f32; 4],
     pub glass: [f32; 4],
     pub cathode: [f32; 4],
@@ -51,6 +57,7 @@ pub struct Uniforms {
 #[derive(Debug, Clone, Copy)]
 pub struct Tokens {
     pub wire: f32,
+    pub temp: f32,
     pub stack: f32,
     pub highlight: f32,
     pub warmth: f32,
@@ -60,6 +67,7 @@ impl Tokens {
     pub fn read(theme: &str) -> Result<Self> {
         Ok(Self {
             wire: number_after(theme, "\"nixieWire\": ")? as f32,
+            temp: number_after(theme, "\"nixieTempK\": ")? as f32,
             stack: number_after(theme, "\"nixieStack\": ")? as f32,
             highlight: number_after(theme, "\"nixieHighlight\": ")? as f32,
             warmth: number_after(theme, "\"nixieWarmth\": ")? as f32,
@@ -87,7 +95,11 @@ impl Uniforms {
             warmth: t.warmth,
             flicker: 1.0,
             pad0: 0.0,
-            core: colour("#ffa04b"),
+            temp: t.temp,
+            pad2: 0.0,
+            pad3: 0.0,
+            pad4: 0.0,
+
             halo: colour("#ff5a10"),
             glass: colour("#4d120b06"),
             cathode: colour("#aab6c4"),
@@ -129,7 +141,10 @@ mod tests {
             warmth: 0.0,
             flicker: 0.0,
             pad0: 0.0,
-            core: [0.0; 4],
+            temp: 0.0,
+            pad2: 0.0,
+            pad3: 0.0,
+            pad4: 0.0,
             halo: [0.0; 4],
             glass: [0.0; 4],
             cathode: [0.0; 4],
@@ -139,7 +154,11 @@ mod tests {
             pad1: 0.0,
         };
         let offset = |field: *const f32| field as usize - &base as *const _ as usize;
-        assert_eq!(offset(base.core.as_ptr()), 64, "pCore must sit at 64");
+        assert_eq!(
+            offset(&base.temp as *const f32),
+            64,
+            "pTempK takes the vec4 slot: it must sit at 64"
+        );
         assert_eq!(offset(base.halo.as_ptr()), 80);
         assert_eq!(offset(base.glass.as_ptr()), 96);
         assert_eq!(offset(base.cathode.as_ptr()), 112);
