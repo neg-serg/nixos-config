@@ -124,6 +124,11 @@ cent at a fraction of a hertz, driven by `pTime`. `NixieTube.qml` advances its `
 second so the shimmer has something to move with; the still login screen the plan asked for is a
 deliberate casualty of the owner asking for life, and the cost is one small repaint per tick.
 
+**The wall is not a cylinder.** Two scales of value noise — bubbles in the glass and the ripple the
+blower left — are read as their own gradient and added to the wall's normal, a few degrees at most.
+That is what breaks the room the wall reflects into glints, ripples the picture it passes, and stops
+the two lights the tube catches from being two perfect lines (`vnoise`, `bump`, `broke`).
+
 **The wire is hot in the middle of its own section, too.** The discharge is drawn on the metal, and
 the metal's axis is hotter than its surface, so the radiance ramps across the wire's radius
 (`core * (0.55 + 0.80 * core)`): a white-hot core inside an orange body, with the gas sheath around
