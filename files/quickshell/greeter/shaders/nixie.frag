@@ -264,9 +264,9 @@ return acc * 0.2;
 // wall does not. At the silhouette the surface turns away from the eye and
 // -t.z goes to zero, which would send the offset to infinity and smear the
 // picture into a flat band; capping it keeps the edge looking at what it sees.
-vec2 glass_offset(vec2 pt, vec3 t, vec3 o, float planeDist) {
+vec2 glass_offset(vec2 pt, vec3 t, vec3 o, float planeDist, float wallGain) {
 vec2 plane = pt - vec2(t.x, t.y) / max(-t.z, 0.06) * planeDist;
-vec2 bend = vec2(o.x, o.y) / max(-o.z, 0.06) * planeDist * 0.45 * pRefract;
+vec2 bend = vec2(o.x, o.y) / max(-o.z, 0.06) * planeDist * 0.45 * pRefract * wallGain;
 return plane * pRefract + bend;
 }
 
@@ -409,7 +409,18 @@ const vec3 VIEW = vec3(0.0, 0.0, -1.0);   // the eye looks along -z, orthographi
 // rays, one per channel, and the sampling below keeps only the channel its own
 // ray carried.
 const vec3 GLASS_N = vec3(1.5155, 1.5200, 1.5280);   // red, green, blue
-float wall = clamp(pThick, 0.4, 0.9 * R);
+// The wall is thick now: a hand-blown envelope, not a laboratory bulb. Every
+// optical term below is fed by it — a thicker wall absorbs more (Beer), bends
+// the picture further (the lens), splits the colours wider (dispersion) and
+// shows its two surfaces further apart (the rim), which is what makes the glass
+// read as glass instead of as a tinted pane.
+const float WALL_MM = 1.7;
+float wall = clamp(pThick * (WALL_MM / 0.9), 0.4, 0.9 * R);
+float wallGain = wall / max(pThick, 0.4);
+// A thicker wall bends the picture further and folds its rim deeper, but not in
+// full proportion: the square root of the gain keeps the room behind the tube
+// recognisable instead of smearing it into the bore.
+float wallLens = clamp(pow(wallGain, 0.7), 0.5, 2.2);
 vec3 rayIn = reflect(VIEW, N3);
 vec3 rayTr = refract(VIEW, N3, 1.0 / GLASS_N.r);
 vec3 rayTg = refract(VIEW, N3, 1.0 / GLASS_N.g);
@@ -435,8 +446,11 @@ float pathIn = wall / max(max(abs(rayT.x), abs(rayT.y)), 0.02);
 // thick wall reads green-turquoise. The weights are red, green and blue against
 // the tube's own tint: red is absorbed 1.35 / 0.85 ~ 1.6x as fast as blue,
 // green between them.
-const vec3 ABSORB_DISP = vec3(1.35, 1.05, 0.85);
-vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 1.20 * pathIn / R);
+// The absorption edge of soda-lime glass proper: red goes first, blue last,
+// and the spread between them is what a thick wall shows as a green-turquoise
+// core with a warm outer edge.
+const vec3 ABSORB_DISP = vec3(1.55, 1.00, 0.70);
+vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.00 * pathIn / R);
 
 // The picture, as the ray for this pixel finds it on the wall behind the tube.
 // The patch the caller lends us is the only picture we have, so the wall sits
@@ -449,9 +463,9 @@ vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 1.20 * pathIn / R);
 // flat band. Capping it keeps the edge looking at the wall it can see.
 float planeDist = 0.30 * pBackdrop.x;     // where the picture the glass bends hangs
 float roomDist = 0.16 * pSize.x;          // where the reflections come from
-vec2 off = glass_offset(p, rayT, rayOut, planeDist);
-vec2 offR = glass_offset(p, rayTr, rayOut, planeDist);
-vec2 offB = glass_offset(p, rayTb, rayOut, planeDist);
+vec2 off = glass_offset(p, rayT, rayOut, planeDist, wallLens);
+vec2 offR = glass_offset(p, rayTr, rayOut, planeDist, wallLens);
+vec2 offB = glass_offset(p, rayTb, rayOut, planeDist, wallLens);
 // A cylinder of glass is a lens, not a window: it has power across its axis and
 // none along it, so the picture inside is magnified sideways — most of all on
 // the axis, and not at all at the wall, where the glass is edge-on. That is the
@@ -474,7 +488,7 @@ vec3 refract = disp * absorb;
 // folds over instead of stretching further, and the picture returns to the eye
 // inverted — a second, almost mirrored image along the rim. One more tap at the
 // folded offset, carried by grazing so the middle of the tube is untouched.
-float caustic = pow(grazing, 3.0) * pRefract * inside;
+float caustic = pow(grazing, 3.0) * pRefract * inside * wallLens;
 vec2 offC = -off * 1.10;
 vec3 causticImg = texture(source, clamp((px + pInset + offC) / pBackdrop, vec2(0.001), vec2(0.999))).rgb;
 refract = mix(refract, causticImg * absorb, caustic * 0.70);
@@ -487,10 +501,10 @@ colour += vec3(0.003, 0.004, 0.008) * inside * grazing;   // the body is not a f
 
 // the wall edge-on: two surfaces with a dark gap between them
 float rim = exp(-max(d, 0.0) / 0.35) * inside;   // the wall seen edge-on: a hairline
-float rimInner = exp(-pow((d - 1.6) / 1.0, 2.0)) * inside;
-glassLight += vec3(1.0) * rim * (0.10 + 0.55 * pow(grazing, 3.0));
-alpha += rim * 0.22 + rimInner * 0.14;
-colour += vec3(0.03, 0.04, 0.06) * (rimInner * 0.5);
+float rimInner = exp(-pow((d - wall) / max(0.8, 0.20 * wall), 2.0)) * inside;
+glassLight += vec3(1.0) * rim * (0.12 + 0.75 * pow(grazing, 3.0));
+alpha += rim * 0.26 + rimInner * 0.16;
+colour += vec3(0.02, 0.05, 0.06) * (rimInner * 0.6);
 
 // what the glass reflects: the room along the mirror direction, weighted by
 // Fresnel — the reason the middle of a tube is clear and its edges are not
@@ -509,7 +523,7 @@ glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight;
 vec2 mir2 = vec2(-rayIn.x, rayIn.y) * 0.55 * roomDist / max(-rayIn.z, 0.06);
 mir2 = clamp(mir2, vec2(-0.20 * R), vec2(0.20 * R));
 vec3 room2 = blurred_room((px + pInset + mir2) / pBackdrop, vec2(0.050, 0.040) * pRefract);
-vec3 absorb2 = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 1.20 * 2.0 * pathIn / R);
+vec3 absorb2 = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.00 * 2.0 * pathIn / R);
 glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb2 * 0.55;
 // two narrow lights the tube always catches, and they stop before the collar
 glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.14 * pHighlight;
