@@ -52,6 +52,7 @@ vec4 pRowFlicker;  // the four ignitions: a nixie's tubes never strike together
 vec4 pTile;        // the tube's own item (width, height, margin), and the mode
 vec4 pTint;        // the colour of coloured glass: hue in rgb, strength in a
 vec4 pWallpaper;   // x: tint the lamp with the wallpaper's own accent instead
+vec4 pView;        // x: the camera's yaw off the tube's axis, in degrees
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.
@@ -828,7 +829,20 @@ float gx = (DIGIT_W / GLYPH_W) * mm;
 float gm = sqrt(gx * gy);
 float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
-vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
+
+// The camera sits a little off the tube's axis, so what is inside the glass
+// lands where the glass puts it: a cathode that stands in front of the axis
+// (z > 0) projects to x·cos(yaw) + z·sin(yaw) — shifted towards the viewer's
+// side and narrowed by the cosine. The envelope itself keeps its silhouette,
+// because a cylinder seen at an angle is exactly as wide, and that difference
+// is the whole depth cue: the numerals move inside the tube while the tube
+// stays where it was. pView.x is the angle in degrees; zero leaves the
+// drawing exactly as the workbench measures it.
+const float CATHODE_Z = 0.72;   // where the numerals sit, in bulb radii in front of the axis
+float yaw = radians(clamp(pView.x, -30.0, 30.0));
+float camShift = CATHODE_Z * bulbR * sin(yaw);
+float camCos = max(cos(yaw), 0.5);
+vec2 dp = vec2((p.x - camShift - centre.x) / (gx * camCos), (centre.y - p.y) / gy);
 // The cathode's radius: the theme says what share of a numeral's height it
 // takes (nixieWire), and the numeral is 25 mm here — 0.044 of it is the 1.10 mm
 // this is drawn at, so the wire is 2.20 mm across. A real cathode is

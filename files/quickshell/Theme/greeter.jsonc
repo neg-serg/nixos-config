@@ -96,6 +96,13 @@
     // it — instead of nixieTint's, and this is how much of it. A grey wallpaper
     // has no accent to take and the metal keeps its own colour.
     "nixieTintWallpaper": 0.0,
+    // The camera is a little off the tube's axis: the numerals inside the glass
+    // shift towards the viewer's side and narrow by the cosine, while the
+    // envelope keeps its silhouette — a cylinder is as wide at an angle as it is
+    // head-on, and that difference is what reads as depth. 14 degrees is a
+    // three-quarter view that costs the numerals cos(14) = 3% of their width;
+    // 0 puts the camera dead ahead again.
+    "nixieViewAngle": 14.0,
     // The cathode wire's radius as a fraction of the numeral's height: 0.044 of
     // 25 mm is 1.10 mm, so the wire measures 2.20 mm across — a heavy-duty
     // cathode, and what the discharge around it is drawn on. The real IN-12
