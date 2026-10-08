@@ -704,6 +704,57 @@ colour += sleeveMetal * sleeve * sleeveSide * min(pGlow, 1.0) * 0.25;
 }
 }
 
+// The stack's own terminals: the two rods end in the eyes the cathode wires are
+// welded to, and a lead runs from each eye down the side of the sleeve to the
+// press in the glass's foot. A real lamp's whole stack hangs off these two
+// joints, and below the mesh there is no other bright metal to read them by.
+float leadY = footY - 5.0 * mm;
+for (int e = 0; e < 2; e++) {
+	// the rods run 7.4 mm either side of the axis, clear of the widest numeral
+	float lx = (e == 0) ? -7.4 * mm : 7.4 * mm;
+	vec2 lc = vec2(lx, leadY);
+	// the eye is a squashed ring, open: the wire is welded through it
+	float eyeRing = abs(length((p - lc) / vec2(1.0, 0.78)) - 0.72 * mm) - 0.26 * mm;
+	float eyeMask = (1.0 - smoothstep(-0.5, 0.5, eyeRing)) * inside;
+	// the lead, from the eye to the foot; inside cuts it where the glass tapers
+	float eyeLead = exp(-pow((p.x - lx) / max(0.20 * mm, 0.5), 2.0))
+	              * smoothstep(leadY - 0.5 * mm, leadY + 0.5 * mm, p.y) * step(p.y, footY) * inside;
+	vec3 eyeMetal = metal_hit(px, Ncyl, VIEW, F0_RHODIUM, 0.24);
+	colour = mix(colour, eyeMetal * 1.05, eyeMask + eyeLead * 0.65);
+	alpha = mix(alpha, 0.62, eyeMask * 0.85 + eyeLead * 0.45);
+	// lit from the left, as the rest of the metal in the tube is
+	colour += vec3(0.15, 0.15, 0.16) * (eyeMask + eyeLead * 0.45) * ((e == 0) ? 1.0 : 0.35);
+}
+
+// --- what the years put on the glass -------------------------------------
+// Two films, both thin and both uneven, because neither was painted on. The
+// getter the tube was flashed with condenses on the inside of the dome as a
+// silvery mirror; the cathode it has burnt off lands on the glass around the
+// foot as a dark, warm film. There is no token for age, so the weights are
+// constants here, and a coarse hash makes each film patchy. Both absorb first
+// — the picture behind the glass dims through them — and reflect second:
+// metal_hit() throws back the same room the rods and the collar reflect.
+//
+// The getter: a mirror over the top cap, thinning down the cylinder. The cap's
+// own sphere is the natural mask; 0.62 is where the film is judged to stop, and
+// 0.50 is how much of the picture it hides at its thickest. The sputter is the
+// weaker film (0.38) and shorter (about 6.5 mm above the foot).
+float domeT = clamp((-(p.y) - capOffset) / max(bulbR, 1.0), 0.0, 1.0);
+float getterFilm = smoothstep(0.02, 0.62, domeT) * (0.52 + 0.48 * hash(floor(p / max(1.0, 1.7 * mm))));
+float getter = getterFilm * inside;
+// the sputter: heaviest in the last few millimetres above the foot, where the
+// cathode's own metal lands, and thinning up the tube over about 6 mm
+float footT = exp(-max(footY - p.y, 0.0) / (6.5 * mm));
+float sputterFilm = footT * (0.45 + 0.55 * hash(floor(p / max(1.0, 1.1 * mm)) + 37.0));
+float sputter = sputterFilm * inside;
+// absorption and reflection of each film: the getter is cold silver, barium's
+// own n and k, the sputter is nearly black and warm, as burnt tungsten is
+refract *= 1.0 - clamp(0.50 * getter + 0.38 * sputter, 0.0, 0.90);
+alpha = mix(alpha, 0.55, getter * 0.55);
+alpha = mix(alpha, 0.45, sputter * 0.50);
+colour += metal_hit(px, N3, VIEW, vec3(0.60, 0.61, 0.64), 0.30) * getter * 0.80;
+colour += metal_hit(px, N3, VIEW, vec3(0.19, 0.17, 0.15), 0.55) * sputter * 0.35;
+
 // --- the discharge --------------------------------------------------------
 // The lit cathode is a wire: a thin, saturated, almost white-hot line, and the
 // gas around it. Nothing else on the tube is this bright.
@@ -809,6 +860,43 @@ colour += vec3(0.20, 0.20, 0.21) * edge * (0.35 + 0.65 * min(pGlow, 1.0));   // 
 alpha += edge * 0.35;
 colour *= 1.0 - 0.35 * exp(-pow((p.y - (baseTop - 2.2)) / 1.6, 2.0)) * insideCollar;
 colour += vec3(1.0) * exp(-pow((p.y - (boxMid + 0.5 * collarH) + 1.2) / 1.2, 2.0)) * insideCollar * 0.09;
+
+// The pins: Ø1 mm, twelve of them, on the sheet's 11.5 mm circle. They are what
+// the lamp is plugged in by and nothing else, and a base that stops at its own
+// rim reads as a cap. In this front view each pin projects to x = 5.75 mm times
+// the cosine of its own angle, and they are the same nickel the rods are.
+float collarBottom = footY + collarH;
+float pinCircle = 5.75 * mm;      // the sheet's 11.5 mm circle, as a radius
+float pinR = 0.5 * mm;            // Ø1 mm
+float pinLen = 7.0 * mm;          // and 7 mm long, as the sheet has them
+// the item's own edge cuts the pins: fade them instead of clipping them hard
+float pinEdge = clamp((0.5 * pSize.y - p.y) / max(1.0, 0.75 * mm), 0.0, 1.0);
+for (int i = 0; i < 12; i++) {
+	float a = float(i) * 0.5235987756;   // twelve pins, 30 degrees apart
+	float pinX = pinCircle * cos(a);     // the circle, seen from the front
+	float shaft = exp(-pow((p.x - pinX) / max(pinR, 0.6), 2.0));
+	float tip = 1.0 - smoothstep(collarBottom + 0.60 * pinLen, collarBottom + pinLen, p.y);
+	float pinMask = shaft * tip * pinEdge * smoothstep(collarBottom - 0.5 * mm, collarBottom, p.y);
+	vec3 pinMetal = metal_hit(px, Ncyl, VIEW, F0_NICKEL, 0.32);
+	colour = mix(colour, pinMetal * 1.10, pinMask);
+	alpha = mix(alpha, 0.95, pinMask);
+	// the pin's own roundness catches the left light the rest of the metal gets
+	colour += vec3(0.13, 0.13, 0.14) * pinMask * exp(-pow((p.x - pinX + 0.40 * pinR) / max(0.40 * pinR, 0.4), 2.0));
+}
+
+// The collar's own terminals: the two eyelets on its top face, where the glass's
+// leads come through and are soldered. They are gold, like the collector ring,
+// and they are what ties the base to the stack above it.
+for (int e = 0; e < 2; e++) {
+	float tx = (e == 0) ? -7.4 * mm : 7.4 * mm;
+	vec2 tc = vec2(tx, footY + 0.9 * mm);
+	float termRing = abs(length((p - tc) / vec2(1.0, 0.72)) - 0.68 * mm) - 0.26 * mm;
+	float termMask = (1.0 - smoothstep(-0.5, 0.5, termRing)) * insideCollar;
+	vec3 termMetal = metal_hit(px, Ncyl, VIEW, F0_GOLD, 0.26);
+	colour = mix(colour, termMetal * 1.20, termMask);
+	alpha = mix(alpha, 0.88, termMask * 0.85);
+	colour += vec3(0.16, 0.14, 0.08) * termMask * ((e == 0) ? 1.0 : 0.40);
+}
 }
 
 // the glass lands on the front surface, in front of everything inside
