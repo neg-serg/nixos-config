@@ -131,41 +131,34 @@ return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
 if (digit == 5)
 // The drawing font's 5: a bar across the top, the stem falling from its left
 // end, a waist at the numeral's own middle and a shallow bowl under it. The
-// bowl is narrower than the bar — that is what makes it a 5 and not a box.
+// bowl is narrower than the bar, and every bend is rounded by a good part of
+// the wire — a mitre is not how a cathode was bent.
 return smin(smin(smin(smin(
-            sdSegment(p, vec2(-0.359, 0.974), vec2(0.320, 0.974)),
-            sdSegment(p, vec2(-0.359, 0.974), vec2(-0.359, 0.115)), 0.10),
-            sdSegment(p, vec2(-0.359, 0.115), vec2(0.290, 0.115)), 0.10),
-            sdSegment(p, vec2(0.290, 0.115), vec2(0.290, -0.923)), 0.10),
-            sdSegment(p, vec2(0.290, -0.923), vec2(-0.359, -0.923)), 0.10);
+            sdSegment(p, vec2(-0.359, 0.974), vec2(0.339, 0.974)),
+            sdSegment(p, vec2(-0.359, 0.974), vec2(-0.359, 0.115)), 0.14),
+            sdSegment(p, vec2(-0.359, 0.115), vec2(0.269, 0.115)), 0.14),
+            sdSegment(p, vec2(0.269, 0.115), vec2(0.269, -0.923)), 0.14),
+            sdSegment(p, vec2(0.269, -0.923), vec2(-0.359, -0.923)), 0.14);
 if (digit == 6)
-// The drawing font's 6: one straight stroke off the top and a closed bowl, the
-// bowl as wide as the numeral — a roll of wire, not a hook hanging in the air.
+// The drawing font's 6: one straight stroke off the top into a closed bowl.
+// The bowl is the numeral, its corners rounded by the same radius as the 5's.
 return smin(smin(smin(smin(
-            sdSegment(p, vec2(0.155, 0.990), vec2(-0.300, 0.310)),
-            sdSegment(p, vec2(-0.359, 0.107), vec2(0.318, 0.107)), 0.10),
-            sdSegment(p, vec2(0.318, 0.107), vec2(0.318, -0.923)), 0.10),
-            sdSegment(p, vec2(0.318, -0.923), vec2(-0.359, -0.923)), 0.10),
-            sdSegment(p, vec2(-0.359, -0.923), vec2(-0.359, 0.107)), 0.10);
+            sdSegment(p, vec2(0.155, 0.990), vec2(-0.310, 0.290)),
+            sdSegment(p, vec2(-0.359, 0.107), vec2(0.330, 0.107)), 0.14),
+            sdSegment(p, vec2(0.330, 0.107), vec2(0.330, -0.923)), 0.14),
+            sdSegment(p, vec2(0.330, -0.923), vec2(-0.359, -0.923)), 0.14),
+            sdSegment(p, vec2(-0.359, -0.923), vec2(-0.359, 0.107)), 0.14);
 if (digit == 7)
 // A lid and a leg and nothing else — a nixie's 7 is not a bowl with a side —
 // with the one corner it has rounded off by a good part of the wire.
 return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
             sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.14);
 if (digit == 8)
-// The drawing font's 8: two closed loops, the lower one wider than the upper,
-// meeting at a waist across the middle.
-return smin(
-            smin(smin(smin(
-            sdSegment(p, vec2(-0.300, 0.995), vec2(0.300, 0.995)),
-            sdSegment(p, vec2(0.300, 0.995), vec2(0.300, 0.112)), 0.13),
-            sdSegment(p, vec2(0.300, 0.112), vec2(-0.300, 0.112)), 0.13),
-            sdSegment(p, vec2(-0.300, 0.112), vec2(-0.300, 0.995)), 0.13),
-            smin(smin(smin(
-            sdSegment(p, vec2(-0.350, 0.112), vec2(0.350, 0.112)),
-            sdSegment(p, vec2(0.350, 0.112), vec2(0.350, -0.995)), 0.13),
-            sdSegment(p, vec2(0.350, -0.995), vec2(-0.350, -0.995)), 0.13),
-            sdSegment(p, vec2(-0.350, -0.995), vec2(-0.350, 0.112)), 0.13), 0.13);
+// The drawing font's 8: two closed loops of an oval each, the lower one wider
+// than the upper, meeting across the middle. Loops, not boxes with their
+// corners knocked off: the wire was bent round a mandrel.
+return smin(sdEllipse(p, vec2(0.0, 0.546), vec2(0.254, 0.450)),
+            sdEllipse(p, vec2(0.0, -0.427), vec2(0.357, 0.569)), 0.12);
 if (digit == 9)
 // The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
 // over, and what tells them apart is which end carries the loop.
