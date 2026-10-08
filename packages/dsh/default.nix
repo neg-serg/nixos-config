@@ -3,12 +3,17 @@
   fetchurl,
   python3,
   makeWrapper,
-  nodejs,
   buildNpmPackage,
   runCommand,
+  callPackage,
 }:
 let
   version = "0.2.0-rc.2";
+
+  # The launcher runs on the official Node build, not nixpkgs' — see
+  # nodejs-official.nix for why (the harness's native loader cannot locate its
+  # getter in any nixpkgs Node). npm/build phases still use nixpkgs' nodejs.
+  nodejsRuntime = callPackage ./nodejs-official.nix { };
 
   tarball = fetchurl {
     url = "https://registry.npmjs.org/@deepseek-ai/dsh/-/dsh-${version}.tgz";
@@ -61,9 +66,10 @@ buildNpmPackage {
   # localized upstream now — see post-install.sh.)
   postInstall =
     builtins.replaceStrings
-      [ "@NODEJS@" "@PY@" "@PY_V2@" "@PATCHLIB_DIR@" ]
+      [ "@NODEJS@" "@NODELIB@" "@PY@" "@PY_V2@" "@PATCHLIB_DIR@" ]
       [
-        (lib.getExe nodejs)
+        (lib.getExe nodejsRuntime)
+        nodejsRuntime.libraryPath
         "${./patch-widgets.py}"
         "${./patch-session-format.py}"
         "${./lib}"
