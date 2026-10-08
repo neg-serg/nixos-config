@@ -66,7 +66,7 @@ export function apply(ctx) {
       ...decision,
       messages: [...decision.messages, createUserMessage({
         content: [{ type: 'text', text: hint }],
-        source: { kind: 'plugin', plugin: 'json-error-recovery' },
+        source: { kind: 'plugin:json-error-recovery' },
       })],
     }
   })

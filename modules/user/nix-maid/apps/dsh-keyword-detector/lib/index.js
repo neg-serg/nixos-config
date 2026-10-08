@@ -65,7 +65,7 @@ export function apply(ctx, config) {
       if (fired.get(sid) === count && injections.length > 0) continue // one hint per message
       injections.push(createUserMessage({
         content: [{ type: 'text', text: '[keyword:' + String(rule.pattern) + '] ' + rule.hint }],
-        source: { kind: 'plugin', plugin: 'keyword-detector' },
+        source: { kind: 'plugin:keyword-detector' },
       }))
     }
     if (injections.length === 0) return decision

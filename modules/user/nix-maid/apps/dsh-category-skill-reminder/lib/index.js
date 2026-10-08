@@ -148,7 +148,7 @@ export function apply(ctx, config) {
         ...decision.messages,
         createUserMessage({
           content: [{ type: 'text', text }],
-          source: { kind: 'plugin', plugin: 'category-skill-reminder' },
+          source: { kind: 'plugin:category-skill-reminder' },
         }),
       ],
     }
