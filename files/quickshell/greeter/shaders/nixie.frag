@@ -167,20 +167,18 @@ return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), bendK),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), bendK);
 if (digit == 5)
-// The drawing font's 5, bent from one wire: the bar across the top, the stem
-// down its left end, the waist, the bowl's right side and the foot, with a
-// quadrant of a circle at every turn — one radius, r = 0.20, which is the tenth
-// of the numeral's height the reference turns its wire by.
+// The user's own Iosevka (Iosevkaneg), measured off the glyph: the bar with
+// its short stub at the right end, the stem that leans a little to the left
+// down to the waist, and the bowl — open at its upper left — from the stem
+// round the right, the bottom and up the left to its terminal below the waist.
+// The numbers are the glyph's own: the bar at 0.835 from -0.20 to 0.22, the
+// stub down to 0.58, the stem's foot at -0.225/0.19, and the bowl an ellipse
+// centred on 0.0/-0.30 with radii 0.26/0.54, run from 205 to 483 degrees.
 {
-float d = sdSegment(p, vec2(-0.159, 0.974), vec2(0.339, 0.974));
-d = min(d, sdArc(p, vec2(-0.159, 0.774), 0.20, 1.5707963268, 3.1415926536));
-d = min(d, sdSegment(p, vec2(-0.359, 0.774), vec2(-0.359, 0.315)));
-d = min(d, sdArc(p, vec2(-0.159, 0.315), 0.20, 3.1415926536, 4.7123889804));
-d = min(d, sdSegment(p, vec2(-0.159, 0.115), vec2(0.069, 0.115)));
-d = min(d, sdArc(p, vec2(0.069, -0.085), 0.20, 0.0, 1.5707963268));
-d = min(d, sdSegment(p, vec2(0.269, -0.085), vec2(0.269, -0.723)));
-d = min(d, sdArc(p, vec2(0.069, -0.723), 0.20, 4.7123889804, 6.2831853072));
-d = min(d, sdSegment(p, vec2(0.069, -0.923), vec2(-0.359, -0.923)));
+float d = sdSegment(p, vec2(0.22, 0.835), vec2(-0.20, 0.835));       // the bar
+d = min(d, sdSegment(p, vec2(0.22, 0.835), vec2(0.22, 0.58)));       // its stub
+d = min(d, sdSegment(p, vec2(-0.20, 0.835), vec2(-0.225, 0.19)));    // the stem
+d = min(d, sdEllipseArc(p, vec2(0.0, -0.30), vec2(0.26, 0.54), 205.0 * DEG, 483.0 * DEG));
 return d;
 }
 if (digit == 6)
@@ -254,7 +252,7 @@ if (digit == 1) return vec4(0.0, -1.02, -0.24, 0.55);
 if (digit == 2) return vec4(-0.31, 0.60, 0.35, -1.02);
 if (digit == 3) return vec4(-0.226, 0.874, -0.226, -0.874);
 if (digit == 4) return vec4(0.32, -0.10, 0.26, -1.02);
-if (digit == 5) return vec4(0.339, 0.974, -0.359, -0.923);
+if (digit == 5) return vec4(0.22, 0.58, -0.236, -0.50);
 if (digit == 6) return vec4(-0.33, -0.14, 0.33, 0.55);
 if (digit == 7) return vec4(-0.30, 1.00, -0.10, -1.02);
 if (digit == 8) return vec4(0.0, 1.02, 0.0, 1.02);
@@ -541,12 +539,31 @@ offB = vec2(offB.x * lensK, offB.y);
 off  = clamp(off,  vec2(-0.75 * R), vec2(0.75 * R));
 offR = clamp(offR, vec2(-0.75 * R), vec2(0.75 * R));
 offB = clamp(offB, vec2(-0.75 * R), vec2(0.75 * R));
+// Real glass is never clean. It was wiped with something, it has settled dust,
+// it carries a hairline scratch or two, and its walls are not a perfect
+// cylinder. All of it is faint, and — invariant I1 — all of it is a hash of the
+// pixel and not of the clock, so the login screen still draws the same still.
+float smudge = hash(floor(p / (1.4 * mm)) + 17.0);
+float dustFine = hash(floor(p / (0.55 * mm)) + 91.0);
+// A scratch is one family of hairlines at a shallow angle; the hash decides
+// where along them a scratch was actually left.
+float scratchU = p.x * 0.28 + p.y;
+float scratch = exp(-pow(fract(scratchU / (19.0 * mm)) - 0.5, 2.0) / 0.0007)
+              * step(0.80, hash(vec2(floor(scratchU / (19.0 * mm)), 5.0)));
+float dust = step(0.9968, dustFine);
+// The wall wanders: what the glass shows of the room drifts a pixel with it.
+vec2 wobble = vec2(smudge - 0.5, dustFine - 0.5) * 1.2;
+off  += wobble;
+offR += wobble;
+offB += wobble;
 // One channel per ray: that is the dispersion, and it costs two more taps.
 vec3 disp;
 disp.r = texture(source, clamp((px + pInset + offR) / pBackdrop, vec2(0.001), vec2(0.999))).r;
 disp.g = texture(source, clamp((px + pInset + off)  / pBackdrop, vec2(0.001), vec2(0.999))).g;
 disp.b = texture(source, clamp((px + pInset + offB) / pBackdrop, vec2(0.001), vec2(0.999))).b;
 vec3 refract = disp * absorb;
+// the smear keeps a little of the room to itself
+refract *= 1.0 - 0.06 * smudge;
 // A caustic rings the wall: where the glass turns edge-on the lens's mapping
 // folds over instead of stretching further, and the picture returns to the eye
 // inverted — a second, almost mirrored image along the rim. One more tap at the
@@ -598,6 +615,12 @@ glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb
 // two narrow lights the tube always catches, and they stop before the collar
 glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.17 * pHighlight;
 glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.055 * pHighlight;
+// what was wiped on the glass, what settled on it, and the scratches: each
+// catches the light a little differently, which is all the eye needs to read a
+// surface as a surface and not as a window
+glassLight += vec3(0.90, 0.94, 1.00) * smudge * 0.014 * inside;
+glassLight += vec3(1.00, 0.97, 0.88) * dust * 0.050 * inside;
+glassLight += vec3(0.86, 0.90, 1.00) * scratch * 0.045 * inside;
 
 // The pip the tube was sealed by — the one mark every nixie has on top of its
 // dome. The dome itself is carried by the rim, which follows its arc.
@@ -863,7 +886,19 @@ add += wireColour * wireRadiance;   // white-hot, and no wider than the wire its
 // The gas hugs the wire where it is hot, so the sheath thins towards the ends
 // with the wire itself: a cooler stretch of cathode carries a dimmer glow.
 float gasHeat = 0.60 + 0.40 * heatProfile;
-add += pHalo.rgb * gas * gasHeat * 0.58 * haloLit;
+// A hot run gives off more gas in places: the sheath breathes along the wire
+// instead of being drawn at one width.
+float sheath = 0.90 + 0.20 * hash(floor(dp * 6.0) + 41.0);
+// Glass and a lens split a bright line, blue on one flank and red on the
+// other. Two more taps of the numeral's own field, a pixel to either side,
+// carry that fringe; the green channel keeps the undistorted sheath.
+float axisR = digitWire(int(pDigit + 0.5), dp + vec2(1.4 / gm, 0.0)) * gm;
+float axisB = digitWire(int(pDigit + 0.5), dp - vec2(1.4 / gm, 0.0)) * gm;
+float distR = max(axisR - wirePx, 0.0);
+float distB = max(axisB - wirePx, 0.0);
+float gasR = exp(-distR / (0.23 * mm)) * 0.17 + exp(-distR / (0.56 * mm)) * 0.040;
+float gasB = exp(-distB / (0.23 * mm)) * 0.17 + exp(-distB / (0.56 * mm)) * 0.040;
+add += vec3(gasR * pHalo.r, gas * pHalo.g, gasB * pHalo.b) * gasHeat * sheath * 0.58 * haloLit;
 add += pHalo.rgb * exp(-dist / (2.7 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.28 * mm) / (0.13 * mm)) * 0.032 * step(0.06 * mm, dist) * haloLit;
@@ -972,6 +1007,10 @@ for (int e = 0; e < 2; e++) {
 
 // the glass lands on the front surface, in front of everything inside
 colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.85));
+// Film grain: the tube is a photograph of a lamp in a photograph of a room.
+// Static (invariant I1), faint, and masked to the glass — the frame's
+// transparent pixels are the wallpaper's, and grain there would tint it.
+colour += vec3(hash(px * 1.31 + 0.5) - 0.5) * 0.012 * inside;
 
 fragColor = vec4(colour + add + headroom + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
 		clamp(alpha, 0.0, 0.98)) * qt_Opacity;
