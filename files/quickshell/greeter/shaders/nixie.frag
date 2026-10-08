@@ -676,7 +676,7 @@ alpha += tip * 0.06;
 // of a numeral as the unit on both axes so a round wire stays round. The stack
 // lives in the cylinder above the collar, which is where a nixie keeps it.
 const float DIGIT_H = 25.0;   // the numerals, mm: a margin at each end of the 35 mm bulb
-const float DIGIT_W = 11.7;   // and across, in the sheet's own 18:10 proportions
+const float DIGIT_W = 14.0;   // and across: the ink now keeps Iosevka's own aspect, 0.51
 const float GLYPH_H = 2.04;   // how tall the glyphs in digitWire() are
 const float GLYPH_W = 0.85;   // and how wide the box a numeral is drawn in is
 // The numerals are 18 mm high on the sheet, and the glyphs in digitWire() run
@@ -691,8 +691,8 @@ float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
 // The cathode's radius: the theme says what share of a numeral's height it
-// takes (nixieWire), and the numeral is 25 mm here — 0.036 of it is the 0.90 mm
-// this is drawn at, so the wire is 1.80 mm across. A real cathode is
+// takes (nixieWire), and the numeral is 25 mm here — 0.044 of it is the 1.10 mm
+// this is drawn at, so the wire is 2.20 mm across. A real cathode is
 // 0.24 mm; this one is heavy on purpose, because what the eye reads at the
 // login's size is the glowing filament, and a hairline reads as nothing.
 float wirePx = pWire * DIGIT_H * mm;
@@ -892,7 +892,7 @@ float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // The sheath around the wire: the gas hugs a hot filament and falls away fast.
 // A thicker cathode carries more of it, so the sheath is wider and denser than
 // the hairline one a thin wire would have.
-float gas = exp(-dist / (0.23 * mm)) * 0.17 + exp(-dist / (0.56 * mm)) * 0.040;
+float gas = exp(-dist / (0.27 * mm)) * 0.17 + exp(-dist / (0.66 * mm)) * 0.040;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 // A discharge is never perfectly still: the glow wanders, the wire hums with
 // the mains, and the eye reads that slow irregular drift as a lamp that is on.
@@ -947,7 +947,7 @@ float distB = max(axisB - wirePx, 0.0);
 float gasR = exp(-distR / (0.23 * mm)) * 0.17 + exp(-distR / (0.56 * mm)) * 0.040;
 float gasB = exp(-distB / (0.23 * mm)) * 0.17 + exp(-distB / (0.56 * mm)) * 0.040;
 add += vec3(gasR * pHalo.r, gas * pHalo.g, gasB * pHalo.b) * gasHeat * sheath * 0.58 * haloLit;
-add += pHalo.rgb * exp(-dist / (2.7 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
+add += pHalo.rgb * exp(-dist / (3.1 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.28 * mm) / (0.13 * mm)) * 0.032 * step(0.06 * mm, dist) * haloLit;
 // The far wall of the glass does catch the wire, but it is a wall and not a

@@ -28,7 +28,8 @@ Every number in the drawing comes from Reflector's IN-12A/B data sheet (1988): b
 Ø21 × 7 mm, pins Ø1 mm on an 11.5 mm circle, the pip Ø3.5 mm, the numerals 18 mm high, the whole lamp
 35 mm without its pins. The drawing's box is 21 × 35 mm and it is the item that agrees with the sheet,
 not a uniform: an item stretched by its parent would put the millimetre somewhere else. `pMm` is the
-scale (px per millimetre) and the numerals are 25 mm high in it.
+scale (px per millimetre), the numerals are 25 mm high in it and their box is 14 mm across, which
+keeps the ink at Iosevka's own aspect — 0.51 of the height, as the glyph raster measures it.
 
 `nixie validate` checks that arithmetic: one axis, no gaps, the dome a real hemisphere on the
 cylinder, the numerals inside the bore, the collar where the sheet puts it.
@@ -54,7 +55,7 @@ The primitives, all in `nixie.frag`:
 - `smin` — a smooth union. It is still used where two strokes of different direction meet without a
   common tangent, but a bend with a known radius is built from quadrants, not from a softened corner.
   At an elbow the softening is the wire's own radius, taken from the `nixieWire` token (about
-  0.90 mm at the heavy-duty default): a wire that was bent has the thickness of the wire it was bent
+  1.10 mm at the heavy-duty default): a wire that was bent has the thickness of the wire it was bent
   from, no more.
 
 The figures:
@@ -156,7 +157,7 @@ wall does the softening.
 | `nixieGlow` | how hard the discharge burns |
 | `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: Planck gives the metal's colour, Stefan-Boltzmann its power |
 | `nixieGlassColor`, `nixieCathodeColor` | the envelope's tint and the unlit wire behind the lit one |
-| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0360 of 25 mm = 0.90 mm, so the wire is 1.80 mm across, and every bend is that radius) |
+| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0440 of 25 mm = 1.10 mm, so the wire is 2.20 mm across, and every bend is that radius) |
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
 | `nixieHighlight` | how much light the glass catches |
 | `nixieWarmth` | how much of the discharge's light lands on the glass (0.45 is the tube's own look) |
@@ -217,9 +218,9 @@ Three known gaps, all honest:
 
 - the render is not reproducible from run to run — two identical invocations differ by ~9/255 on
   average over the frame, so the sweep's own numbers carry that noise;
-- the wire is drawn fatter than a real cathode (1.80 mm across against the sheet's 0.24 mm) on
+- the wire is drawn fatter than a real cathode (2.20 mm across against the sheet's 0.24 mm) on
   purpose: a hairline disappears on a login screen, and what the eye reads is the glowing filament.
-  `validate`'s limit is 2.0 mm for that reason, and the plan's A2 widths (white ≤ 8 px, hot ≤ 16 px)
+  `validate`'s limit is 2.6 mm for that reason, and the plan's A2 widths (white ≤ 8 px, hot ≤ 16 px)
   were written for a hairline — the accepted lamp is wider than those numbers, so `sweep --check`
   reports the wire as thick;
 - the sweep draws the room at full brightness (`room = 1.0`), while the login screen samples the
