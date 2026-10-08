@@ -23,7 +23,17 @@ float pStack;      // how visible the unlit cathodes behind the lit one are
 float pHighlight;  // light the glass catches
 float pWarmth;     // how much of the discharge lands on the glass itself
 float pFlicker;    // ignition progress, 1 = struck and steady
-vec4 pCore;        // colour of the lit cathode
+// The lit cathode's temperature, in kelvin: a metal that hot is its own light,
+// and blackbody() below turns it into the colour. It takes the vec4 slot the
+// old core colour had, padded, because std140 rounds vec4s to 16 bytes and the
+// workbench mirrors this block field by field.
+// std140: the slot below is 16-byte aligned in the block (it was a vec4, and
+// the workbench's struct still reserves the same room), so a bare float here
+// would land one slot earlier and read the field before it.
+float padCore0;
+float pTempK;
+float padCore2;
+float padCore3;
 vec4 pHalo;        // colour of the gas around it
 vec4 pGlass;       // the envelope's own tint
 vec4 pCathode;     // the unlit wire, seen through the glass
@@ -674,11 +684,16 @@ colour += sleeveMetal * sleeve * sleeveSide * min(pGlow, 1.0) * 0.25;
 // gas around it. Nothing else on the tube is this bright.
 vec3 add = vec3(0.0);
 float gasMap = 0.0;
+// The wire's own radiance, kept apart from everything else the discharge adds:
+// it is the only thing in the tube that goes past white, and the HDR headroom
+// at the end of main() is built from it alone.
+float wireRadiance = 0.0;
 if (pBulb > 0.5) {
 float bulb = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
 float lit = 1.0 - clamp((bulb + 0.4) / 0.8, 0.0, 1.0);
 gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) / (1.4 * 5.0 * mm)) * 0.25;
-add += pCore.rgb * lit * 1.20 * pGlow * pFlicker;
+wireRadiance = lit * 1.20 * pGlow * pFlicker * heat_power(pTempK, 1.0);
+add += blackbody(pTempK) * wireRadiance;
 add += pHalo.rgb * gasMap * 0.60 * pGlow * pow(pFlicker, 1.4);
 } else if (pDigit >= -0.5) {
 float wireDist = digitWire(int(pDigit + 0.5), dp) * gm - wirePx;
@@ -693,8 +708,14 @@ float gas = exp(-dist / (0.11 * mm)) * 0.14 + exp(-dist / (0.30 * mm)) * 0.02;  
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
-vec3 wireColour = mix(pCore.rgb, vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60);   // directly heated: the metal is the light
-		add += wireColour * core * 5.60 * coreLit;   // white-hot, and no wider than the wire itself
+// A wire that hot is its own light: Planck's colour for the colour, and
+// Stefan-Boltzmann's fourth power for the power. heat_power() is measured
+// against the 2550 K the theme is drawn at, so the knob at its default leaves
+// the picture exactly where it was and turning it up makes the discharge hotter.
+vec3 wireColour = mix(blackbody(pTempK), vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60);
+float wireHeat = heat_power(pTempK, 1.0);
+		wireRadiance = core * 5.60 * coreLit * wireHeat;
+add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
 
 add += pHalo.rgb * gas * 0.58 * haloLit;
 add += pHalo.rgb * exp(-dist / (2.4 * mm)) * 0.10 * haloLit;   // the soft bloom a hot wire casts
@@ -713,17 +734,30 @@ gasMap = gas;
 colour += cageGlow * 0.25;
 }
 
-// exposure: the gas never reaches white, the wire always does
+// Exposure: the gas never reaches white, the wire always does. What the wire's
+// core has beyond the white point is kept apart as headroom for an HDR output:
+// added to the final pixel, not to `add`, because `add` is also what the
+// discharge's light on the glass is drawn from — folding the headroom into it
+// lit the whole tube three times over.
 add = vec3(1.0) - exp(-add * 1.55);
+// The wire's own radiance above the white point: a real wire is far brighter
+// than a screen's white, and the compositor passes HDR metadata through, so the
+// excess is carried to the output instead of being flattened. It is taken from
+// the wire alone — from `add` it would smear a halo around every bright pixel.
+vec3 headroom = blackbody(pTempK) * max(wireRadiance - 1.2, 0.0) * 0.5;
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
-vec3 wash = mix(pHalo.rgb, pCore.rgb, 0.65);
+// The light the discharge throws: its own colour, and how much of it lands on
+// the glass is the theme's nixieWarmth — 0.45 is the tube's own look, so the
+// token multiplies it instead of repainting the picture.
+vec3 wash = mix(pHalo.rgb, blackbody(pTempK), 0.65);
+float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // The discharge's light lands on the wallpaper (the spill) — and inside the
 // glass it is the light itself, which the composite adds. Adding it here as well
 // counted every ray of it twice, which is what fattened the white core to two
 // and a half times the wire's own width.
-colour += wash * add * spill;
+colour += wash * add * spill * warmth;
 alpha += clamp(gasMap * pGlow * 0.10, 0.0, 0.30) * inside;
 
 // --- the collar the tube is plugged in by ---------------------------------
@@ -755,6 +789,6 @@ colour += vec3(1.0) * exp(-pow((p.y - (boxMid + 0.5 * collarH) + 1.2) / 1.2, 2.0
 // the glass lands on the front surface, in front of everything inside
 colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.85));
 
-fragColor = vec4(colour + add + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
+fragColor = vec4(colour + add + headroom + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
 		clamp(alpha, 0.0, 0.98)) * qt_Opacity;
 }

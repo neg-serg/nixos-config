@@ -62,7 +62,11 @@
     // before uiScale; the tubes, the gaps and the colon are built from it.
     "nixieDigitSize": 92,
     "nixieGlow": 1.0,
-    "nixieCoreColor": "#ffa04b",
+    // The lit cathode's temperature in kelvin: a metal that hot is its own
+    // light, and the shader turns it into a colour with Planck's law. 2550 K is
+    // the #ffa04b this was drawn at before it became a temperature; raise it for
+    // a whiter, hotter wire (5000 K is a warm white), lower it for a dull one.
+    "nixieTempK": 2550,
     "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
