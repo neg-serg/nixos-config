@@ -191,6 +191,7 @@ property real pRefract: 1.0
 property color pHalo: GreeterTheme.nixieGlowColor
 property color pGlass: GreeterTheme.nixieGlassColor
 property color pCathode: GreeterTheme.nixieCathodeColor
+property color pTint: GreeterTheme.nixieTint
 // The single tube's own handles: the row does not read them, but they are
 // in the block, and Qt warns about every uniform with no property.
 property real pDigit: -1

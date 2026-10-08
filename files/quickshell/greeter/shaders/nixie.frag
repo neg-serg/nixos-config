@@ -50,6 +50,7 @@ vec4 pRowX;        // the four tubes' centres, px from the item's centre
 vec4 pRowDigit;    // the four digits, -1 for a tube with nothing to light
 vec4 pRowFlicker;  // the four ignitions: a nixie's tubes never strike together
 vec4 pTile;        // the tube's own item (width, height, margin), and the mode
+vec4 pTint;        // the colour of coloured glass: hue in rgb, strength in a
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.
@@ -448,6 +449,22 @@ return min(exp(l) * gain, 30.0);
 // light in linear units and returns display units: the shoulder turns a wire
 // several times brighter than white into a warm white core instead of clipping
 // it into cardboard, and only the very top of it desaturates.
+// A tube with coloured glass, the theme's nixieTint: the light it makes takes
+// the tint's hue at the brightness it already had, so a cyan envelope reads as a
+// cyan lamp rather than an orange one behind a filter — an orange light through
+// cyan glass would simply be dark, which is physics and not what the knob is
+// for. The alpha is the strength: a transparent tint leaves the metal's own
+// Planck colour alone, which is the default.
+vec3 tinted(vec3 c) {
+// Peak for peak, not luminance for luminance: a cyan whose luminance matched a
+// hot wire's would be a washed pale thing, and the knob is for a lamp that is
+// plainly cyan. Keeping the brightest channel where it was keeps the exposure
+// meaning the same thing whatever the hue.
+float peak = max(c.r, max(c.g, c.b));
+float tintPeak = max(pTint.r, max(pTint.g, pTint.b));
+return mix(c, pTint.rgb * (peak / max(tintPeak, 1e-3)), pTint.a);
+}
+
 vec3 tone_map(vec3 c) {
 const float startCompression = 0.8 - 0.04;
 const float desaturation = 0.15;
@@ -950,7 +967,7 @@ colour += metal_hit(px, N3, VIEW, vec3(0.19, 0.17, 0.15), 0.55) * sputter * 0.35
 vec3 add = vec3(0.0);
 // The theme hands the gas colour as a display value; the discharge is summed as
 // light, so it is linearised once here rather than carried as a code value.
-vec3 gasColour = pow(pHalo.rgb, vec3(2.2));
+vec3 gasColour = tinted(pow(pHalo.rgb, vec3(2.2)));
 float gasMap = 0.0;
 // The wire's own radiance, kept apart from everything else the discharge adds:
 // it is the only thing in the tube that stands above white, and it is what the
@@ -963,7 +980,7 @@ if (bulb > 0.5) {
 float bulb = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
 float lit = 1.0 - clamp((bulb + 0.4) / 0.8, 0.0, 1.0);
 gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) / (1.4 * 5.0 * mm)) * 0.25;
-wireGlowColour = blackbody(pTempK);
+wireGlowColour = tinted(blackbody(pTempK));
 wireRadiance = lit * 1.20 * pGlow * flicker * heat_power(pTempK, 1.0);
 add += wireGlowColour * wireRadiance;
 add += gasColour * gasMap * 0.15 * pGlow * pow(flicker, 1.4);
@@ -1003,7 +1020,7 @@ vec4 ends = digitEnds(int(digit + 0.5));
 float endDist = min(length(dp - ends.xy), length(dp - ends.zw));
 float heatProfile = clamp(endDist / HEAT_FALLOFF, 0.0, 1.0);
 float wireTemp = pTempK - HEAT_END_DROP * (1.0 - heatProfile);
-wireGlowColour = blackbody(wireTemp);
+wireGlowColour = tinted(blackbody(wireTemp));
 // A wire that hot is its own light: Planck's colour for the colour, and
 // Stefan-Boltzmann's fourth power for the power. heat_power() is measured
 // against the 2550 K the theme is drawn at, so the knob at its default leaves
@@ -1092,7 +1109,7 @@ float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
 // The light the discharge throws: its own colour, and how much of it lands on
 // the glass is the theme's nixieWarmth — 0.45 is the tube's own look, so the
 // token multiplies it instead of repainting the picture.
-vec3 wash = mix(pHalo.rgb, pow(blackbody(pTempK), vec3(0.4545)), 0.65);
+vec3 wash = mix(pHalo.rgb, pow(tinted(blackbody(pTempK)), vec3(0.4545)), 0.65);
 float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // The discharge's light lands on the wallpaper (the spill) — and inside the
 // glass it is the light itself, which the composite adds. Adding it here as well
