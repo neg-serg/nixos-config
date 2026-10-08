@@ -197,6 +197,22 @@ wall does the softening.
 The theme is copy-once: `Theme/` is copied into `~/.config/quickshell/Theme/`, so after an edit it has
 to be copied and touched again, or the login screen keeps the old numbers.
 
+## The clock is one object, not four
+
+Four tubes are drawn in one pass over one item (`NixieClock.qml` hands the shader the row:
+`pTile.w` = 1, the four centres in `pRowX`, their digits in `pRowDigit` and their ignitions in
+`pRowFlicker`; the shader loops over them and sums what each contributes, because light adds). The
+item is the whole row plus one `nixieTubeMargin`, and every tube inside it keeps its own margin for
+the bloom — which is why the glasses can sit six pixels apart while each still has room to glow into.
+
+Four items instead put four rectangles of lamp-lit wallpaper around the clock and left a step where
+one met the next: a tube's item is finite and its light is not. With one item there is no border
+between the tubes to see, and the light pools the way it does around a row of lamps on a desk.
+
+`nixie --row 1750` draws the same row off-screen — it is how that seam was measured, and the
+single-tube mode (`pTile.w` = 0, what `nixie render` and the tube lab draw) is the same shader with
+one tube in the loop's place.
+
 ## What is still simulation, not physics
 
 The parts above are measured or modelled. These are still drawn to look right, and each one is a

@@ -72,6 +72,12 @@ enum Command {
         /// it as it is (1.0).
         #[arg(long, default_value_t = 1.0)]
         room: f32,
+        /// Draw four tubes in one pass the way the login clock does, with these
+        /// digits (e.g. --row 1750). One pass is what makes their light add up
+        /// into one lamp instead of four lit rectangles, so this is also how the
+        /// seam between two tubes is measured.
+        #[arg(long, default_value = "")]
+        row: String,
         /// Draw the same frame twice and fail if the two pictures differ in even
         /// one byte: an off-screen pass has to be bit-for-bit reproducible, or
         /// every number `sweep --check` prints is noise.
@@ -91,14 +97,23 @@ fn render(
     scale: u32,
     glow: f32,
     room: f32,
+    row: &str,
     verify: bool,
 ) -> Result<()> {
     // The frame is the drawing's own box plus the tube's pads, at `scale` device
     // pixels per logical pixel.
     let mm = 12.0 * scale as f32; // the scale a 21 mm lamp is drawn at
     let pad = 16.0 * scale as f32;
-    let width = (drawing.box_w as f32 * mm + 2.0 * pad).round() as u32;
-    let height = (drawing.box_h as f32 * mm + 2.0 * pad).round() as u32;
+    let tile_w = (drawing.box_w as f32 * mm + 2.0 * pad).round();
+    let tile_h = (drawing.box_h as f32 * mm + 2.0 * pad).round();
+    // The row's own gap: the clock's glass-to-glass distance (NixieClock.qml).
+    let gap = 6.0 * scale as f32;
+    let (width, height) = if row.len() == 4 {
+        let w = 4.0 * tile_w + 3.0 * gap;
+        (w.round() as u32, tile_h.round() as u32)
+    } else {
+        (tile_w.round() as u32, tile_h.round() as u32)
+    };
 
     let compute = shader::to_compute(src)?;
     let spv = std::path::Path::new("/tmp/nixie-glsl/nixie.comp.spv");
@@ -106,8 +121,18 @@ fn render(
 
     let wallpaper = wallpaper(width, height, room)?;
     let mut uniforms =
-        uniforms::Uniforms::from_drawing(drawing, tokens, mm, [width as f32, height as f32], digit);
+        uniforms::Uniforms::from_drawing(drawing, tokens, mm, [tile_w, tile_h], digit);
     uniforms.glow = glow;
+    if row.len() == 4 {
+        // The row: the item is the whole row, each tube keeps its own item, and
+        // the shader loops over the four. The digits are read left to right.
+        uniforms.tile = [tile_w, tile_h, pad, 1.0];
+        for (i, c) in row.chars().enumerate() {
+            uniforms.row_x[i] = (i as f32 - 1.5) * (tile_w + gap);
+            uniforms.row_digit[i] = c.to_digit(10).map(|d| d as f32).unwrap_or(-1.0);
+            uniforms.row_flicker[i] = 1.0;
+        }
+    }
     let frame = vulkan::render(spv, &uniforms, &wallpaper, width, height)?;
 
     // The stand's own reproducibility gate: the same uniforms, the same
@@ -388,9 +413,10 @@ fn main() -> Result<()> {
             scale,
             glow,
             room,
+            row,
             verify,
         } => render(
-            &src, &drawing, &tokens, &out, digit, scale, glow, room, verify,
+            &src, &drawing, &tokens, &out, digit, scale, glow, room, &row, verify,
         )?,
         Command::Sweep { out, scale, check } => sweep(&src, &drawing, &tokens, &out, scale, check)?,
     }
