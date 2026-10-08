@@ -187,6 +187,32 @@ def _media_label(msg) -> str:
     return "[service]" if msg.action else "[no text]"
 
 
+def name_of(me) -> str:
+    """Who the session belongs to, without assuming the answer is complete.
+
+    A sign-in that still waits for the two-step password has no full user yet,
+    and printing `me.first_name` there threw an AttributeError right after a
+    successful login — the one moment the message matters most.
+    """
+    if me is None:
+        return "the account (Telegram did not return its profile)"
+    who = " ".join(
+        x
+        for x in (
+            getattr(me, "first_name", None),
+            getattr(me, "last_name", None),
+        )
+        if x
+    )
+    handle = getattr(me, "username", None)
+    ident = getattr(me, "id", "?")
+    return (
+        (who or "the account")
+        + (f" (@{handle})" if handle else "")
+        + f" id={ident}"
+    )
+
+
 def set_aside_session(reason: str) -> None:
     """Move a session file Telegram no longer accepts out of the way.
 
@@ -221,7 +247,7 @@ async def cmd_login(args) -> int:
         authorized = False
     if authorized:
         me = await cli.get_me()
-        print(f"already authorized as {me.first_name} (id={me.id})")
+        print(f"already authorized as {name_of(me)}")
         await cli.disconnect()
         return 0
     if args.phone and args.code:
@@ -246,7 +272,7 @@ async def cmd_login(args) -> int:
             else:
                 die(f"sign-in failed: {exc}")
         me = await cli.get_me()
-        print(f"authorized as {me.first_name} (id={me.id})")
+        print(f"authorized as {name_of(me)}")
         LOGIN_STATE.unlink(missing_ok=True)
         await cli.disconnect()
         return 0
@@ -332,7 +358,7 @@ async def qr_login(cli, args) -> int:
             await cli.sign_in(password=two_factor_password(args))
             break
     me = await cli.get_me()
-    print(f"authorized as {me.first_name} (id={me.id})")
+    print(f"authorized as {name_of(me)}")
     QR_PNG.unlink(missing_ok=True)
     await cli.disconnect()
     return 0
