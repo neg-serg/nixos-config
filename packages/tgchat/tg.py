@@ -8,7 +8,12 @@ survives rebuilds. Telegram is reached through the local sing-box socks
 proxy by default (the MTProto endpoints are not reachable from this host
 without it); override with TELEGRAM_PROXY, disable with TELEGRAM_PROXY=off.
 
-Commands: login (QR by default), whoami, dialogs, tail, search, send.
+Commands: login (QR by default), whoami, dialogs, tail, search, send, export.
+
+`export` is the one that answers "look through my whole history" without a
+terminal full of it: it writes every message it can reach to a JSONL file and
+prints only the count. Secrets stay in gopass — the tool reads them, nothing
+here prints them.
 """
 
 from __future__ import annotations
@@ -363,6 +368,53 @@ async def cmd_search(cli, args) -> int:
     return 0
 
 
+async def cmd_export(cli, args) -> int:
+    """One JSON object per line, every chat it can reach.
+
+    The file is the export; the terminal gets the count and nothing else. A chat
+    log belongs in a file the user asked for, not in a scrollback — and the one
+    thing this must never do is print somebody's private messages because it
+    happened to be run.
+    """
+    out = Path(args.out).expanduser()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if args.chat:
+        entity = await resolve(cli, args.chat)
+        if entity is None:
+            die(f"no chat matches {args.chat!r}")
+        chats = [entity]
+    else:
+        chats = [
+            d.entity
+            async for d in cli.iter_dialogs(limit=args.dialogs or None)
+        ]
+    written = 0
+    failed = 0
+    with out.open("w", encoding="utf-8") as fh:
+        for chat in chats:
+            title = (
+                getattr(chat, "title", None)
+                or getattr(chat, "username", None)
+                or str(getattr(chat, "id", "?"))
+            )
+            try:
+                async for msg in cli.iter_messages(
+                    chat, limit=args.per_chat or None
+                ):
+                    row = await render_message(cli, msg)
+                    row["chat"] = title
+                    row["chat_id"] = getattr(chat, "id", None)
+                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+                    written += 1
+            except Exception as e:  # noqa: BLE001 - a chat may refuse history
+                failed += 1
+                print(f"skip {title}: {e}", file=sys.stderr)
+    print(
+        f"wrote {written} messages from {len(chats) - failed} chats to {out}"
+    )
+    return 0
+
+
 async def cmd_send(cli, args) -> int:
     entity = await resolve(cli, args.chat)
     if entity is None:
@@ -410,6 +462,29 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-n", "--number", type=int, default=20)
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_search)
+
+    p = sub.add_parser("export", help="write messages to a JSONL file")
+    p.add_argument(
+        "--chat", help="only this chat (id, @username, t.me link, title)"
+    )
+    p.add_argument(
+        "--out",
+        default="~/telegram-export.jsonl",
+        help="where the JSONL goes (default ~/telegram-export.jsonl)",
+    )
+    p.add_argument(
+        "--dialogs",
+        type=int,
+        default=0,
+        help="how many recent chats to walk, 0 = every one",
+    )
+    p.add_argument(
+        "--per-chat",
+        type=int,
+        default=0,
+        help="messages per chat, 0 = the whole history",
+    )
+    p.set_defaults(func=cmd_export)
 
     p = sub.add_parser("send", help="send a message")
     p.add_argument("chat")
