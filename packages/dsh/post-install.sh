@@ -1,6 +1,10 @@
 rm -f $out/bin/dsh
+# @NODEJS@ is the official Node build (nodejs-official.nix); it needs the store
+# libstdc++/glibc on LD_LIBRARY_PATH, and every child the harness spawns through
+# process.execPath inherits it from here.
 makeWrapper @NODEJS@ $out/bin/dsh \
-  --add-flags "--expose-internals $out/lib/node_modules/@deepseek-ai/dsh/lib/bin.js"
+  --add-flags "--expose-internals $out/lib/node_modules/@deepseek-ai/dsh/lib/bin.js" \
+  --prefix LD_LIBRARY_PATH : @NODELIB@
 
 # The model-facing file-search tool is backed by the packaged
 # @vscode/ripgrep binary (never GNU grep), but upstream exposes it under

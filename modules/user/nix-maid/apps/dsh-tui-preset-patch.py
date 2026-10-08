@@ -31,6 +31,7 @@ MARKER_PRESETS = f"# {PREFIX}: agent presets"
 MARKER_PRESET = f"# {PREFIX}: default preset"
 MARKER_RUNTIME = f"# {PREFIX}: code runtime"
 MARKER_PLUGINS = f"# {PREFIX}: plugin rows"
+MARKER_LEGACY = f"# {PREFIX}: retired TUI rows"
 plugin_rows = []
 if rows_path is not None:
     with open(rows_path, encoding="utf-8") as f:
@@ -86,6 +87,34 @@ def preset_block(spec):
     return lines
 
 
+# Rows the dsh-TUI 0.14 bundle still carries from the 0.1.5 generation: they
+# name plugin packages whose peer ranges are ^0.1.5-rc.1, so dsh 0.2.0 refuses
+# them at boot and disables each one with a ~700-character warning (the
+# presets they used to serve are declared by this profile now — see
+# dsh-presets.nix). Disabling them here produces the same outcome without the
+# noise, and keeps the profile layer the single place that decides.
+# `liangshen-plugins` and `workflow-worker-thread` warn the same way but are not
+# addressable by id (they sit inside the TUI bundle's own nested lists, and an
+# id-targeted patch for them is reported as "entry not found" — noise of our
+# own), so the harness's own disable stays the only handling for those two.
+LEGACY_ROWS = [
+    "dsh-tui-agent-presets",
+    "dsh-tui-code-runtime",
+]
+MARKER_LEGACY_BLOCK = (
+    MARKER_LEGACY,
+    [
+        MARKER_LEGACY
+        + " — 0.1.5-era plugin packages this harness generation rejects;",
+        "# disabled here instead of letting the boot warn about each one.",
+    ]
+    + [
+        line
+        for row in LEGACY_ROWS
+        for line in (f"- id: {row}", "  disabled: true")
+    ],
+)
+
 BLOCKS = [
     (
         MARKER_PRESET,
@@ -107,10 +136,17 @@ BLOCKS = [
 ]
 if spec is not None:
     BLOCKS.insert(0, (MARKER_PRESETS, preset_block(spec)))
+BLOCKS.append(MARKER_LEGACY_BLOCK)
 # Markers we own even though we no longer emit their block: the retired
 # code-runtime insert must be consumed, not re-read as a user row (that would
 # keep the duplicate this script exists to avoid).
-OWNED_MARKERS = [MARKER_PRESETS, MARKER_PRESET, MARKER_RUNTIME, MARKER_PLUGINS]
+OWNED_MARKERS = [
+    MARKER_PRESETS,
+    MARKER_PRESET,
+    MARKER_RUNTIME,
+    MARKER_PLUGINS,
+    MARKER_LEGACY,
+]
 
 with open(path, encoding="utf-8") as f:
     src = f.read()
