@@ -28,7 +28,7 @@ Every number in the drawing comes from Reflector's IN-12A/B data sheet (1988): b
 Ø21 × 7 mm, pins Ø1 mm on an 11.5 mm circle, the pip Ø3.5 mm, the numerals 18 mm high, the whole lamp
 35 mm without its pins. The drawing's box is 21 × 35 mm and it is the item that agrees with the sheet,
 not a uniform: an item stretched by its parent would put the millimetre somewhere else. `pMm` is the
-scale (px per millimetre) and the numerals are 30 mm high in it.
+scale (px per millimetre) and the numerals are 25 mm high in it.
 
 `nixie validate` checks that arithmetic: one axis, no gaps, the dome a real hemisphere on the
 cylinder, the numerals inside the bore, the collar where the sheet puts it.
@@ -141,7 +141,7 @@ crisp flipped copy of the numeral inside the tube would read as a second, broken
 | `nixieGlow` | how hard the discharge burns |
 | `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: Planck gives the metal's colour, Stefan-Boltzmann its power |
 | `nixieGlassColor`, `nixieCathodeColor` | the envelope's tint and the unlit wire behind the lit one |
-| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0300 of 30 mm = 0.90 mm, so the wire is 1.80 mm across, and every bend is that radius) |
+| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0360 of 25 mm = 0.90 mm, so the wire is 1.80 mm across, and every bend is that radius) |
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
 | `nixieHighlight` | how much light the glass catches |
 | `nixieWarmth` | how much of the discharge's light lands on the glass (0.45 is the tube's own look) |
