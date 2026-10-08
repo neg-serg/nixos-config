@@ -82,6 +82,13 @@ float sdEllipse(vec2 p, vec2 c, vec2 rad) {
 vec2 q = (p - c) / rad;
 return abs((length(q) - 1.0) * min(rad.x, rad.y));
 }
+// Distance to an arc of that ellipse, running counter-clockwise from a0 to a1
+// (radians). A bowl of a numeral is a circle stretched to the numeral's own
+// proportions, so the arc is measured in the stretched space and scaled back.
+float sdEllipseArc(vec2 p, vec2 c, vec2 rad, float a0, float a1) {
+vec2 q = (p - c) / rad;
+return sdArc(q, vec2(0.0), 1.0, a0, a1) * min(rad.x, rad.y);
+}
 
 // Wire that was bent keeps a radius at the corner: the joints are rounded by
 // about the thickness of the wire, never mitred.
@@ -90,16 +97,16 @@ float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
 return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-// The centre line of one numeral, all of them bent from straight wire: 1 a
-// mast with a flag, 2 a shoulder and a foot, 3 five strokes (the lid, the two
-// right-hand sides, the waist, the foot), 4 a diagonal over a bar, 5 a lid and
-// a bowl that very nearly closes, 6 a hook and one closed loop, 7 a lid and a
-// leg, 8 two loops, 9 a bowl and a leg, 0 an oval. Every bend is a rounded
-// corner (smin), never a mitre, and no numeral is a written glyph: a cathode
-// is a piece of wire that was bent, and the angles are where it was bent.
+// The centre line of one numeral, all of them bent wire: 1 a mast with a flag,
+// 2 a shoulder and a foot, 3 two round bowls, 4 a diagonal over a bar, 5 a lid
+// and a round bowl, 6 a hook and one closed loop, 7 a lid and a leg, 8 two
+// loops, 9 a bowl and a leg, 0 an oval. The bowls are arcs of circles stretched
+// to the numeral's proportions, and every joint is an smin — a cathode was bent
+// once, and what it has is radii, not corners.
 
 float digitWire(int digit, vec2 p) {
 const float PI = 3.14159265;
+const float DEG = 0.01745329252;
 if (digit == 0)
 return sdEllipse(p, vec2(0.0), vec2(0.30, 0.88));
 if (digit == 1)
@@ -110,45 +117,36 @@ return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
                  sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.10),
             sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.10);
 if (digit == 3)
-// Five strokes with every bend rounded by about the wire's own thickness: the
-// lid, the upper right side, the waist, the lower right side, the foot. A
-// nixie's 3 is flat bars and straight right-hand sides, not two bowls of arcs.
-return smin(smin(smin(smin(
-            sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
-            sdSegment(p, vec2(0.30, 1.00), vec2(0.30, 0.02)), 0.10),
-            sdSegment(p, vec2(-0.12, 0.02), vec2(0.30, 0.02)), 0.10),
-            sdSegment(p, vec2(0.30, 0.02), vec2(0.30, -1.00)), 0.10),
-            sdSegment(p, vec2(0.30, -1.00), vec2(-0.30, -1.00)), 0.10);
+// Two round bowls, one over the other, meeting at the waist: the upper runs
+// from its foot counter-clockwise over the right, the top and into the upper
+// left, the lower one from the lower left over the right into its own top. Two
+// circles pinched together are what a 3 of wire is; five straight strokes read
+// as a digital font, which is what this was and what it must not be.
+return smin(sdEllipseArc(p, vec2(0.0, 0.52), vec2(0.32, 0.50), 270.0 * DEG, 495.0 * DEG),
+            sdEllipseArc(p, vec2(0.0, -0.52), vec2(0.32, 0.50), 225.0 * DEG, 450.0 * DEG), 0.10);
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.10);
 if (digit == 5)
-// The lid is short and the bowl under it is the big element, as on the real
-// tube: the wire leaves the lid's left end straight down, turns right along
-// the waist, down the right side, back along the foot and a little way up
-// again — the bowl very nearly closes, and that is what makes a 5.
-return smin(smin(smin(smin(smin(
-            sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
-            sdSegment(p, vec2(-0.30, 1.00), vec2(-0.30, 0.02)), 0.10),
-            sdSegment(p, vec2(-0.30, 0.02), vec2(0.30, 0.02)), 0.10),
-            sdSegment(p, vec2(0.30, 0.02), vec2(0.30, -1.00)), 0.10),
-            sdSegment(p, vec2(0.30, -1.00), vec2(-0.30, -1.00)), 0.10),
-            sdSegment(p, vec2(-0.30, -1.00), vec2(-0.30, -0.62)), 0.10);
+// A lid, the left side the wire falls down, and one big bowl bent round: it
+// runs from the foot of that side, around the bottom and back up the right,
+// and its free end curls in at the waist. The bowl is the numeral — a box with
+// the corners knocked off is not one.
+return smin(smin(sdSegment(p, vec2(-0.26, 1.00), vec2(0.30, 1.00)),
+                 sdSegment(p, vec2(-0.30, 0.92), vec2(-0.30, -0.42)), 0.14),
+            sdEllipseArc(p, vec2(0.0, -0.42), vec2(0.30, 0.60), 180.0 * DEG, 430.0 * DEG), 0.14);
 if (digit == 6)
-// The hook and the one closed loop: the left side runs the whole height, the
-// lid meets it at the top and stops there — there is no right-hand side above
-// the waist, and that is the whole difference between a 6 and an 8.
-return smin(smin(smin(smin(
-            sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
-            sdSegment(p, vec2(-0.30, 1.00), vec2(-0.30, -1.00)), 0.10),
-            sdSegment(p, vec2(-0.30, 0.02), vec2(0.30, 0.02)), 0.10),
-            sdSegment(p, vec2(0.30, 0.02), vec2(0.30, -1.00)), 0.10),
-            sdSegment(p, vec2(0.30, -1.00), vec2(-0.30, -1.00)), 0.10);
+// The lower loop closed, the upper one an 8's top with its right-hand side
+// gone: the wire comes over the top, down the left and stops above the waist.
+// That missing right-hand side is the whole of a 6.
+return smin(sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)),
+            sdEllipseArc(p, vec2(0.0, 0.50), vec2(0.30, 0.50), 45.0 * DEG, 270.0 * DEG), 0.12);
 if (digit == 7)
-// A lid and a leg and nothing else: a nixie's 7 is not a bowl with a side.
+// A lid and a leg and nothing else — a nixie's 7 is not a bowl with a side —
+// with the one corner it has rounded off by a good part of the wire.
 return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
-            sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.10);
+            sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.14);
 if (digit == 8)
 return smin(sdEllipse(p, vec2(0.0, 0.50), vec2(0.27, 0.50)),
             sdEllipse(p, vec2(0.0, -0.50), vec2(0.30, 0.50)), 0.12);
