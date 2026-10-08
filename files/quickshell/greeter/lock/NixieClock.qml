@@ -149,12 +149,15 @@ running: true
 onTriggered: root.time += interval / 1000.0
 }
 
-onDigitsChanged: {
+// Every tube strikes when its own digit changes; at startup they all do.
+function strikeAll() {
 for (let i = 0; i < 4; i++)
 root.strike(i);
 }
 
-Component.onCompleted: root.onDigitsChanged()
+onDigitsChanged: root.strikeAll()
+
+Component.onCompleted: root.strikeAll()
 
 // The row itself: one pass, four tubes, one light.
 ShaderEffect {
