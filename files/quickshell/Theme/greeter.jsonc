@@ -71,14 +71,14 @@
     "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
-    // The cathode wire's radius as a fraction of the numeral's height: 0.030 of
-    // 30 mm is 0.90 mm, so the wire measures 1.80 mm across — a heavy-duty
+    // The cathode wire's radius as a fraction of the numeral's height: 0.036 of
+    // 25 mm is 0.90 mm, so the wire measures 1.80 mm across — a heavy-duty
     // cathode, and what the discharge around it is drawn on. The real IN-12
     // cathode is 0.24 mm; this one is thickened on purpose, because what the eye
     // reads on the login screen is the glowing filament, and a hairline
     // vanishes there. The digit's bends are the same radius (the shader takes
     // it from this token), so turning the knob keeps elbows as thick as the wire.
-    "nixieWire": 0.0300,
+    "nixieWire": 0.0360,
     "nixieStack": 0.5,
     "nixieHighlight": 0.8,
     "nixieWarmth": 0.45,
