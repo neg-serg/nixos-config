@@ -270,7 +270,11 @@ return vec4(0.0, 1.02, 0.0, -1.02);
 
 // The wire cools towards its ends: how much of its temperature it loses where
 // it is held, and over what distance (in the numeral's own units) it recovers.
-const float HEAT_END_DROP = 550.0;
+// The drop is small because incandescence is steep: the visible band runs as
+// T^11 near 2000 K, so the 550 K this used to lose where the rods hold the wire
+// would have put the ends out thirty times over. 150 K leaves the ends at about
+// half the run's light, which is what a photograph of a heated wire shows.
+const float HEAT_END_DROP = 150.0;
 const float HEAT_FALLOFF = 0.30;
 
 float hash(vec2 p) {
@@ -368,28 +372,36 @@ const vec3 F0_NICKEL = vec3(0.56, 0.55, 0.52);
 // enough that a wire at 2550 K comes out at the theme's own #ffa04b, while the
 // mesh the discharge heats sits at 900..1100 K and reads as dull red.
 vec3 blackbody(float kelvin) {
-float t = clamp(kelvin, 1000.0, 40000.0) / 100.0;
-float r = (t <= 66.0) ? 255.0 : 329.698727446 * pow(t - 60.0, -0.1332047592);
-float g = (t <= 66.0) ? 99.4708025861 * log(t) - 161.1195681661
-                      : 288.1221695283 * pow(t - 60.0, -0.0755148492);
-float b = (t >= 66.0) ? 255.0
-        : (t <= 19.0) ? 0.0
-        : 138.5177312231 * log(t - 10.0) - 305.0447927307;
-return clamp(vec3(r, g, b) / 255.0, 0.0, 1.0);
+// The metal's own colour, in linear light with red at one. Fitted from a
+// spectral path trace of the Planck spectrum itself (Mitsuba, D65 white) over
+// 1600..5200 K: the previous fit was a code-value approximation of the
+// Planckian locus, and at 2400 K it read (1, 0.33, 0.05) where the physics
+// says (1, 0.41, 0.09) — half the blue, a visibly redder wire.
+float x = 1000.0 / clamp(kelvin, 1000.0, 20000.0);
+float g = (((-1.302702 * x - 0.156449) * x + 3.789388) * x - 4.019890) * x + 1.473130;
+float b = (((52.731460 * x - 108.810925) * x + 86.086908) * x - 31.418177) * x + 4.514340;
+return vec3(1.0, max(g, 0.0), max(b, 0.0));
 }
 
-// How much a surface at this temperature throws, against the temperature the
-// tube is drawn at (2550 K, the wire). The fourth power is the physics; the cap
+// How much a surface at this temperature throws where the eye can see it,
+// against the temperature the tube is drawn at (2550 K, the wire). Stefan-
+// Boltzmann's fourth power is the *bolometric* power: a camera sees the visible
+// band, and as the Planck peak walks into it that band's share grows fast —
+// measured off the same spectral renders, the local exponent is 11 near 2000 K
+// and 9 near 3000 K, so a wire's cooler ends fall away far harder than T^4
+// ever did. The quartic is that measurement (0.1% over 1600..3600 K); the cap
 // is exposure — a knob turned all the way up must not blow the frame out.
 float heat_power(float kelvin, float gain) {
-return min(pow(clamp(kelvin, 300.0, 6000.0) / 2550.0, 4.0) * gain, 6.0);
+float u = log(clamp(kelvin, 1000.0, 12000.0) / 2550.0);
+float l = (((-0.291099 * u + 1.519672) * u - 4.580079) * u + 9.070077) * u - 0.012245;
+return min(exp(l) * gain, 30.0);
 }
 
 // Stops above white the discharge is exposed at: the wire is this many times
 // brighter than a white surface, and the curve below is what turns that into a
 // white core. The old pipeline hid this number in three places at once — a
 // gain, an exposure constant and a "headroom" term — and then clipped it.
-const float DISCHARGE_EXPOSURE = 2.5;
+const float DISCHARGE_EXPOSURE = 1.5;
 
 // The tone map: Khronos' PBR-neutral curve, built for exactly this job — an
 // object whose colour has to stay true while its highlights roll off. It takes
@@ -892,6 +904,9 @@ colour += metal_hit(px, N3, VIEW, vec3(0.19, 0.17, 0.15), 0.55) * sputter * 0.35
 // body's at its temperature, and the exposure below is what makes its core
 // read as white.
 vec3 add = vec3(0.0);
+// The theme hands the gas colour as a display value; the discharge is summed as
+// light, so it is linearised once here rather than carried as a code value.
+vec3 gasColour = pow(pHalo.rgb, vec3(2.2));
 float gasMap = 0.0;
 // The wire's own radiance, kept apart from everything else the discharge adds:
 // it is the only thing in the tube that stands above white, and it is what the
@@ -907,7 +922,7 @@ gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) /
 wireGlowColour = blackbody(pTempK);
 wireRadiance = lit * 1.20 * pGlow * pFlicker * heat_power(pTempK, 1.0);
 add += wireGlowColour * wireRadiance;
-add += pHalo.rgb * gasMap * 0.60 * pGlow * pow(pFlicker, 1.4);
+add += gasColour * gasMap * 0.15 * pGlow * pow(pFlicker, 1.4);
 } else if (pDigit >= -0.5) {
 float wireDist = digitWire(int(pDigit + 0.5), dp) * gm - wirePx;
 float dist = max(wireDist, 0.0);
@@ -925,7 +940,7 @@ float core = smoothstep(wirePx + 0.5, wirePx - 0.5, axis);
 // The sheath around the wire: the gas hugs a hot filament and falls away fast.
 // A thicker cathode carries more of it, so the sheath is wider and denser than
 // the hairline one a thin wire would have.
-float gas = exp(-dist / (0.27 * mm)) * 0.17 + exp(-dist / (0.66 * mm)) * 0.040;
+float gas = exp(-dist / (0.27 * mm)) * 0.070 + exp(-dist / (0.66 * mm)) * 0.016;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 // A discharge is never perfectly still: the glow wanders, the wire hums with
 // the mains, and the eye reads that slow irregular drift as a lamp that is on.
@@ -962,9 +977,14 @@ float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
 // cosine below is the surface's own angle to the eye across the wire, so the
 // stroke keeps a soft edge without a painted ramp.
 float cosv = sqrt(max(0.0, 1.0 - pow(clamp(axis / max(wirePx, 0.5), 0.0, 1.0), 2.0)));
-float limb = 1.0 - 0.45 * pow(1.0 - cosv, 2.0);
+float limb = 1.0 - 0.55 * pow(1.0 - cosv, 2.0);
 wireRadiance = core * limb * coreLit * wireHeat * filament * hum * (1.0 + 0.11 * wirePass);
-add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
+add += wireColour * wireRadiance;   // the metal itself, and no wider than the wire
+// The wire's own light scattered in the gas right at its surface: a thin warm
+// skin, no wider than half a millimetre. Without it the unlit cathodes of the
+// stack — which are cool metal, and the theme's bluish cathode colour — showed
+// through as a blue rim around every lit stroke.
+add += wireGlowColour * exp(-max(axis - wirePx, 0.0) / (0.35 * mm)) * 0.05 * coreLit * wireHeat;
 
 // The gas hugs the wire where it is hot, so the sheath thins towards the ends
 // with the wire itself: a cooler stretch of cathode carries a dimmer glow.
@@ -981,8 +1001,8 @@ float distR = max(axisR - wirePx, 0.0);
 float distB = max(axisB - wirePx, 0.0);
 float gasR = exp(-distR / (0.23 * mm)) * 0.17 + exp(-distR / (0.56 * mm)) * 0.040;
 float gasB = exp(-distB / (0.23 * mm)) * 0.17 + exp(-distB / (0.56 * mm)) * 0.040;
-add += vec3(gasR * pHalo.r, gas * pHalo.g, gasB * pHalo.b) * gasHeat * sheath * 0.58 * haloLit;
-add += pHalo.rgb * exp(-dist / (3.1 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
+add += vec3(gasR * gasColour.r, gas * gasColour.g, gasB * gasColour.b) * gasHeat * sheath * 0.20 * haloLit;
+add += gasColour * exp(-dist / (3.1 * mm)) * 0.025 * gasHeat * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
 add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.28 * mm) / (0.13 * mm)) * 0.032 * step(0.06 * mm, dist) * haloLit;
 // The far wall of the glass does catch the wire, but it is a wall and not a
@@ -1005,31 +1025,30 @@ vec2 Q = Pw.xy + tPlane * rFar.xy;
 vec2 rMirror = vec2((Q.x - centre.x) / gx, (centre.y - Q.y) / gy);
 float wallRefl = exp(-max(digitWire(int(pDigit + 0.5), rMirror) * gm - wirePx, 0.0) / (2.2 * mm));
 // the light the wire throws on the far wall drifts with the gas itself
-add += mix(pHalo.rgb, wireGlowColour, 0.5) * wallRefl * 0.075 * pow(abs(xr), 1.5) * inside * haloLit * breathe;
+add += mix(gasColour, wireGlowColour, 0.5) * wallRefl * 0.025 * pow(abs(xr), 1.5) * inside * haloLit * breathe;
 gasMap = gas;
 colour += cageGlow * 0.25;
 }
 
-// Exposure and tone mapping. The discharge is summed as light and mapped once,
-// at the end: the theme's colours are sRGB code values, so they are squared
-// into linear light first (the glass and the room around them stay where they
-// were — a full linear workflow is a bigger change than this fix), the curve
-// rolls the top off, and the square root puts the result back into the display
-// encoding the rest of the pass and the compositor work in.
+// Exposure and tone mapping. The discharge is summed as light — the wire's
+// colour comes from the measured Planck fit, the gas's is linearised above —
+// and mapped once, at the end: the curve rolls the top off and the result is
+// encoded back into the display values the rest of the pass (and the
+// compositor) work in.
 //
 // What the old code did: mapped `add` with 1-exp(-1.55x), a saturation curve
 // with no shoulder, which cannot express "brighter than white" at all — and
 // then added a "headroom" of the wire's excess on top of the *display* value,
 // where an 8-bit sRGB surface simply clips it. The excess was a fixed 0.10 of
 // a number that already had a gain and an exposure folded into it.
-add = sqrt(tone_map(add * add * DISCHARGE_EXPOSURE));
+add = pow(tone_map(add * DISCHARGE_EXPOSURE), vec3(0.4545));
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
 // The light the discharge throws: its own colour, and how much of it lands on
 // the glass is the theme's nixieWarmth — 0.45 is the tube's own look, so the
 // token multiplies it instead of repainting the picture.
-vec3 wash = mix(pHalo.rgb, blackbody(pTempK), 0.65);
+vec3 wash = mix(pHalo.rgb, pow(blackbody(pTempK), vec3(0.4545)), 0.65);
 float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // The discharge's light lands on the wallpaper (the spill) — and inside the
 // glass it is the light itself, which the composite adds. Adding it here as well
