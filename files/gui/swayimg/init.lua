@@ -137,6 +137,10 @@ swayimg.viewer.on_key("g", function() swayimg.viewer.open("first") end)
 swayimg.viewer.on_key("Shift-g", function() swayimg.viewer.open("last") end)
 swayimg.viewer.on_key("n", function() swayimg.viewer.open("next") end)
 swayimg.viewer.on_key("p", function() swayimg.viewer.open("prev") end)
+-- The key a viewer is expected to answer to for "back". The slideshow has had
+-- it all along (see docs/howto/swayimg-hotkeys.md); the viewer had not, so it
+-- did nothing there.
+swayimg.viewer.on_key("BackSpace", function() swayimg.viewer.open("prev") end)
 
 -- Zoom
 swayimg.viewer.on_key("0", function() swayimg.viewer.set_fix_scale("real") end)
@@ -224,7 +228,10 @@ key2({"Ctrl-ц"}, act("viewer", "wall-cover"))
 -- Zoom and reset (restored after bind_reset())
 swayimg.viewer.on_key("Equal", function() local s = swayimg.viewer.get_scale() swayimg.viewer.set_abs_scale(s + s/10) end)
 swayimg.viewer.on_key("Minus", function() local s = swayimg.viewer.get_scale() swayimg.viewer.set_abs_scale(s - s/10) end)
-swayimg.viewer.on_key("BackSpace", function() swayimg.viewer.reset_scale() end)
+-- The reset sits on Shift+BackSpace now: plain BackSpace is the viewer's
+-- "previous image" (see the navigation block above), which is what a viewer is
+-- expected to answer to.
+swayimg.viewer.on_key("Shift+BackSpace", function() swayimg.viewer.reset_scale() end)
 
 -- ── Gallery ──────────────────────────────────────────────────────────────
 swayimg.gallery.set_thumb_size(200)
