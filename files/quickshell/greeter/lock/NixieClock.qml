@@ -21,7 +21,10 @@ readonly property real uiScale: GreeterTheme.uiScale
 // The numeral size: the tubes and every gap between them are built from it.
 readonly property real numeralSize: Math.round(GreeterTheme.nixieDigitSize * root.uiScale)
 readonly property real tubeGap: Math.round(root.numeralSize * 0.09)
-readonly property real colonWidth: Math.round(root.numeralSize * 0.30)
+// The break between the two pairs. The colon is not drawn — the clock is four
+// tubes — so this item is only the space the hours and the minutes are held
+// apart by, and it is kept narrow so the two pairs read as two.
+readonly property real colonWidth: Math.round(root.numeralSize * 0.05)
 // The two bulbs sit where the tops and the bottoms of the digits are, not in
 // the middle of the row.
 readonly property real bulbOffset: Math.round(root.numeralSize * 0.25)
@@ -60,16 +63,12 @@ numeralSize: root.numeralSize
 digit: root.hourDigit(1)
 }
 
-// The colon: two small round tubes that burn steadily, centred on the row.
+// The space between the two pairs: the colon used to be drawn here (two bulbs
+// of the same tube), and this item is what holds the break now.
 Item {
 id: colon
 implicitWidth: root.colonWidth
 implicitHeight: hourTens.implicitHeight
-
-Repeater {
-model: 2
-
-}
 }
 
 NixieTube {
