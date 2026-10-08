@@ -48,7 +48,7 @@ pub struct Uniforms {
     pub thick: f32,
     pub mm: f32,
     pub refract: f32,
-    pub pad1: f32, // std140: the block's size is a multiple of 16
+    pub time: f32, // seconds of session time: the tube's idle shimmer
 }
 
 /// The knobs in Theme/greeter.jsonc that are numbers. They are read from the
@@ -106,7 +106,7 @@ impl Uniforms {
             thick: 0.9 * mm,
             mm,
             refract: 1.0,
-            pad1: 0.0,
+            time: 0.0,
         }
     }
 }
@@ -151,7 +151,7 @@ mod tests {
             thick: 0.0,
             mm: 0.0,
             refract: 0.0,
-            pad1: 0.0,
+            time: 0.0,
         };
         let offset = |field: *const f32| field as usize - &base as *const _ as usize;
         assert_eq!(
@@ -163,5 +163,6 @@ mod tests {
         assert_eq!(offset(base.glass.as_ptr()), 96);
         assert_eq!(offset(base.cathode.as_ptr()), 112);
         assert_eq!(offset(&base.thick as *const f32), 128);
+        assert_eq!(offset(&base.time as *const f32), 140);
     }
 }

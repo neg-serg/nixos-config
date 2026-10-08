@@ -40,6 +40,7 @@ vec4 pCathode;     // the unlit wire, seen through the glass
 float pThick;      // wall thickness of the envelope, px (0 = a shell, no glass)
 float pMm;         // px per millimetre: the scale the drawing below is drawn at
 float pRefract;    // how hard the envelope bends the picture behind it (1 = the glass's own)
+float pTime;       // seconds of session time: the tube is alive, but slowly
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.
@@ -852,8 +853,14 @@ float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // the hairline one a thin wire would have.
 float gas = exp(-dist / (0.23 * mm)) * 0.17 + exp(-dist / (0.56 * mm)) * 0.040;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
+// A discharge is never perfectly still: the glow wanders, the wire hums with
+// the mains, and the eye reads that slow irregular drift as a lamp that is on.
+// Two sines for the breathing (so its period never reads as a beat) and one
+// for the hum; per cent, not per ten — a login screen that strobes is a bug.
+float breathe = 1.0 + 0.035 * sin(pTime * 2.1 + p.y * 0.013) * sin(pTime * 0.7 + 1.3);
+float hum = 1.0 + 0.015 * sin(pTime * 8.0 + dp.y * 2.0);
 float coreLit = pGlow * pow(pFlicker, 0.5);
-float haloLit = pGlow * pow(pFlicker, 1.4);
+float haloLit = pGlow * pow(pFlicker, 1.4) * breathe;
 // The wire is held at its two ends by the stack's rods, and heat conducts out
 // through them: the run sits at pTempK where it is far from both ends and loses
 // HEAT_END_DROP kelvin at the ends themselves. The distance to the nearer end
@@ -880,7 +887,7 @@ float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
 // body that is merely hot — a glow with a gradient, not a flat rod. The ramp
 // is linear in the metal's own radius, which is what a heated wire's cross
 // section looks like, and nothing of it is drawn outside the wire.
-wireRadiance = core * (0.55 + 0.80 * core) * coreLit * wireHeat * filament * (1.0 + 0.11 * wirePass);
+wireRadiance = core * (0.55 + 0.80 * core) * coreLit * wireHeat * filament * hum * (1.0 + 0.11 * wirePass);
 add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
 
 // The gas hugs the wire where it is hot, so the sheath thins towards the ends
@@ -907,10 +914,22 @@ add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.28 * mm) / (0.13 * mm)) * 0.03
 // and the curvature of the far side defocuses it. A crisp flipped copy of the
 // numeral inside the tube (which is what this used to be) reads as a second,
 // broken digit — the reflection has to be soft enough to be a glow.
-vec2 mp = vec2(-p.x * 0.86, p.y);
-vec2 mirror = vec2((mp.x - centre.x) / gx, (centre.y - mp.y) / gy);
-float wallRefl = exp(-max(digitWire(int(pDigit + 0.5), mirror) * gm - wirePx, 0.0) / (3.1 * mm));
-add += pHalo.rgb * wallRefl * 0.055 * pow(abs(xr), 1.5) * inside * haloLit;
+// The far wall is a mirror, and this second image is traced, not painted: the
+// eye's own ray, after the first refraction, reflects off the cylinder and is
+// asked where it would land on the cathode's plane. The reflection sits where
+// the glass puts it — a fixed flip of the picture put a copy of the digit in
+// the wrong place — and the wall's curvature softens what it finds.
+vec3 A = vec3(p.x, p.y, sqrt(max(0.0, R * R - p.x * p.x)));
+float tFar = -2.0 * (A.x * rayT.x + A.z * rayT.z) / max(dot(rayT.xz, rayT.xz), 1e-4);
+vec3 Pw = A + tFar * rayT;
+vec3 nFar = -normalize(vec3(Pw.x, 0.0, Pw.z));
+vec3 rFar = reflect(rayT, nFar);
+float tPlane = -Pw.z / max(rFar.z, 0.05);
+vec2 Q = Pw.xy + tPlane * rFar.xy;
+vec2 rMirror = vec2((Q.x - centre.x) / gx, (centre.y - Q.y) / gy);
+float wallRefl = exp(-max(digitWire(int(pDigit + 0.5), rMirror) * gm - wirePx, 0.0) / (2.2 * mm));
+// the light the wire throws on the far wall drifts with the gas itself
+add += mix(pHalo.rgb, wireGlowColour, 0.5) * wallRefl * 0.075 * pow(abs(xr), 1.5) * inside * haloLit * breathe;
 gasMap = gas;
 colour += cageGlow * 0.25;
 }
