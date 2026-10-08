@@ -446,6 +446,23 @@ unsafe fn dispatch(
                 depth: 1,
             })],
     );
+    // The copy above wrote the wallpaper through the transfer path; the shader
+    // reads it through the texture path. Without a memory dependency here the
+    // readback can catch the image half-written — same input, different frame.
+    let wall_ready = vk::ImageMemoryBarrier::default()
+        .old_layout(vk::ImageLayout::GENERAL)
+        .new_layout(vk::ImageLayout::GENERAL)
+        .src_access_mask(vk::AccessFlags::TRANSFER_WRITE)
+        .dst_access_mask(vk::AccessFlags::SHADER_READ)
+        .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+        .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+        .image(wall_image)
+        .subresource_range(vk::ImageSubresourceRange {
+            aspect_mask: vk::ImageAspectFlags::COLOR,
+            level_count: 1,
+            layer_count: 1,
+            ..Default::default()
+        });
     device.cmd_pipeline_barrier(
         cmd,
         vk::PipelineStageFlags::TRANSFER,
@@ -453,7 +470,7 @@ unsafe fn dispatch(
         vk::DependencyFlags::empty(),
         &[],
         &[],
-        &[],
+        &[wall_ready],
     );
 
     device.cmd_bind_pipeline(cmd, vk::PipelineBindPoint::COMPUTE, pipeline);
