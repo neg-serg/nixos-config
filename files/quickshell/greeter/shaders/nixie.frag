@@ -132,52 +132,6 @@ d = min(d, sdArc(p, vec2(hi.x - r, lo.y + r), r, 4.7123889804, 6.2831853072));
 return d;
 }
 
-// The distance to a quadrilateral whose four corners are bent round by r: at
-// every corner the wire turns along an arc tangent to both of its edges. A loop
-// of a geometric font is exactly that — wide at its crown, narrower where it
-// meets the other one — and the bends are arcs of one radius, not a polygon
-// smoothed afterwards.
-float sdRoundQuad(vec2 p, vec2 a, vec2 b, vec2 c, vec2 d, float r) {
-vec2 v[4] = vec2[4](a, b, c, d);
-float dist = 1e5;
-for (int i = 0; i < 4; i++) {
-vec2 prev = v[(i + 3) % 4], cur = v[i], next = v[(i + 1) % 4];
-vec2 e1 = normalize(prev - cur), e2 = normalize(next - cur);
-vec2 bis = normalize(e1 + e2);
-float cosHalf = clamp(dot(e1, bis), -1.0, 1.0);
-float sinHalf = sqrt(max(1.0 - cosHalf * cosHalf, 1e-4));
-vec2 centre = cur + bis * (r / sinHalf);
-float tl = r * cosHalf / max(sinHalf, 1e-4);
-vec2 t1 = cur + e1 * tl, t2 = cur + e2 * tl;
-float a1 = atan(t1.y - centre.y, t1.x - centre.x);
-float a2 = atan(t2.y - centre.y, t2.x - centre.x);
-float sweep = a2 - a1;
-sweep = sweep - 6.2831853072 * floor(sweep / 6.2831853072);
-float start = a1;
-if (sweep > 3.1415926536) {
-start = a2;
-sweep = 6.2831853072 - sweep;
-}
-dist = min(dist, sdArc(p, centre, r, start, start + sweep));
-}
-// the straight sides: from this corner's tangent point on the edge to the next
-// corner's tangent point on the same edge — not the chord across the corner,
-// which is what a rounded quad drawn in one pass gets wrong
-for (int i = 0; i < 4; i++) {
-vec2 prev = v[(i + 3) % 4], cur = v[i], next = v[(i + 1) % 4];
-vec2 e1 = normalize(prev - cur), e2 = normalize(next - cur);
-float cosHalf = clamp(dot(e1, normalize(e1 + e2)), -1.0, 1.0);
-float sinHalf = sqrt(max(1.0 - cosHalf * cosHalf, 1e-4));
-vec2 tA = cur + e2 * (r * cosHalf / max(sinHalf, 1e-4));
-vec2 e1n = normalize(cur - next);
-float cosHalfN = clamp(dot(e1n, normalize(e1n + normalize(v[(i + 2) % 4] - next))), -1.0, 1.0);
-float sinHalfN = sqrt(max(1.0 - cosHalfN * cosHalfN, 1e-4));
-vec2 tB = next + e1n * (r * cosHalfN / max(sinHalfN, 1e-4));
-dist = min(dist, sdSegment(p, tA, tB));
-}
-return dist;
-}
-
 float digitWire(int digit, vec2 p) {
 const float PI = 3.14159265;
 const float DEG = 0.01745329252;
@@ -239,15 +193,15 @@ if (digit == 7)
 return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
             sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.14);
 if (digit == 8)
-// The 8 of Iosevka — the user's own cut of it, Iosevkaneg — measured off the
-// glyph: two loops, each wide at its crown and pinched where it meets the other
-// one, the lower a little wider than the upper. Both are quadrilaterals with
-// their corners bent round by r = 0.22, and they meet at a shared waist, so the
-// numeral stays one piece of wire.
-return min(sdRoundQuad(p, vec2(-0.360, 0.876), vec2(0.360, 0.876),
-                          vec2(0.198, 0.060), vec2(-0.198, 0.060), 0.22),
-           sdRoundQuad(p, vec2(-0.198, 0.060), vec2(0.198, 0.060),
-                          vec2(0.410, -0.876), vec2(-0.410, -0.876), 0.22));
+// The 8 of Iosevka — the user's own cut of it, Iosevkaneg — fitted to the
+// glyph's own outer contour band by band. Each loop is an OVAL whose half-width
+// peaks in that loop's middle (0.92 of the glyph's half-width up, 1.00 down)
+// and falls away to the crown and to the waist; the two loop outlines do not
+// meet on their own, so a short bar across the waist closes the wire, which is
+// also what the glyph shows there — a broad neck, not a pinch.
+return smin(smin(sdEllipse(p, vec2(0.0, 0.520), vec2(0.321, 0.430)),
+                 sdEllipse(p, vec2(0.0, -0.520), vec2(0.353, 0.430)), 0.10),
+            sdSegment(p, vec2(-0.130, 0.0), vec2(0.130, 0.0)), 0.10);
 if (digit == 9)
 // The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
 // over, and what tells them apart is which end carries the loop.
