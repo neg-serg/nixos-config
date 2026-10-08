@@ -187,10 +187,39 @@ def _media_label(msg) -> str:
     return "[service]" if msg.action else "[no text]"
 
 
+def set_aside_session(reason: str) -> None:
+    """Move a session file Telegram no longer accepts out of the way.
+
+    A revoked auth key cannot be signed in again and it is the first thing the
+    client connects with, so a stale file turns every login attempt into the
+    same error. Renaming it keeps it for the record and lets the login write a
+    new one.
+    """
+    path = Path(str(SESSION) + ".session")
+    if not path.exists():
+        return
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    moved = path.with_suffix(f".session.stale-{stamp}")
+    path.rename(moved)
+    print(f"{reason}: moved {path.name} to {moved.name}")
+
+
 async def cmd_login(args) -> int:
     cli = client()
-    await cli.connect()
-    if await cli.is_user_authorized():
+    try:
+        await cli.connect()
+        authorized = await cli.is_user_authorized()
+    except Exception as exc:  # noqa: BLE001 - a dead key lands here
+        from telethon.errors import AuthKeyUnregisteredError
+
+        if not isinstance(exc, AuthKeyUnregisteredError):
+            raise
+        await cli.disconnect()
+        set_aside_session("the stored session was withdrawn by Telegram")
+        cli = client()
+        await cli.connect()
+        authorized = False
+    if authorized:
         me = await cli.get_me()
         print(f"already authorized as {me.first_name} (id={me.id})")
         await cli.disconnect()
@@ -252,8 +281,27 @@ def needs_two_factor(exc: Exception) -> bool:
     return isinstance(exc, SessionPasswordNeededError)
 
 
+def draw_qr(url: str, where: str) -> None:
+    """The QR, in the terminal when there is one, and always as a file.
+
+    The file is what failed before: a viewer shows `qr.png` once and never
+    reloads it, so every refreshed token was scanned from a stale picture and
+    the login could not go through. The terminal copy cannot go stale — it is
+    drawn again for each token — and the link is printed as well, because a
+    phone can open it directly.
+    """
+    args = ["qrencode", "-s", "6", "-m", "2", "-o", where, url]
+    out = subprocess.run(args, capture_output=True, text=True)
+    if out.returncode != 0:
+        die(f"qrencode failed: {out.stderr.strip() or 'not installed'}")
+    print(f"QR file: {where}", flush=True)
+    if sys.stdout.isatty():
+        subprocess.run(["qrencode", "-t", "ANSIUTF8", "-m", "1", url])
+    print(f"open this on the phone: {url}", flush=True)
+
+
 async def qr_login(cli, args) -> int:
-    """QR flow: write a PNG the user scans in Telegram -> Devices.
+    """QR flow: the code is scanned in Telegram -> Settings -> Devices.
 
     With two-step verification enabled the approved token still needs the
     account password (Telegram requires it before exporting the login token),
@@ -261,16 +309,13 @@ async def qr_login(cli, args) -> int:
     """
     qr = await cli.qr_login()
     print("scan the QR in Telegram: Settings -> Devices -> Link Desktop")
+    first = True
     while not await cli.is_user_authorized():
         STATE_DIR.mkdir(parents=True, exist_ok=True)
-        out = subprocess.run(
-            ["qrencode", "-o", str(QR_PNG), "-s", "6", "-m", "2", qr.url],
-            capture_output=True,
-            text=True,
-        )
-        if out.returncode != 0:
-            die(f"qrencode failed: {out.stderr.strip() or 'not installed'}")
-        print(f"QR file: {QR_PNG}", flush=True)
+        if not first:
+            print("the token expired — here is a fresh QR", flush=True)
+        first = False
+        draw_qr(qr.url, str(QR_PNG))
         try:
             await qr.wait(timeout=25)
         except asyncio.TimeoutError:
