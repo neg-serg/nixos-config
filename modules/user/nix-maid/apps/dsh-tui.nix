@@ -18,10 +18,11 @@ let
   # The tui profile's caretaker. It keeps the profile on the installed harness:
   # installs/upgrades the dsh-TUI plugin, keeps dsh-free-search, removes a
   # leftover @deepseek-ai store link (dsh's own profile module fallback owns
-  # that tree and cannot write through the read-only link), rewrites the
-  # profile's patch layer, seeds the repo-local plugin copies, and seeds the neg
-  # theme plus the `en` default language. The profile itself is created by hand
-  # once (see the `[ -d "$PROFILE_DIR" ] || exit 0` guard).
+  # that tree and cannot write through the read-only link), prunes the retired
+  # workflow row from the installed liangshen preset, rewrites the profile's
+  # patch layer, seeds the repo-local plugin copies, and seeds the neg theme
+  # plus the `en` default language. The profile itself is created by hand once
+  # (see the `[ -d "$PROFILE_DIR" ] || exit 0` guard).
   # The plugin roster, its loader rows, the seed list and the search rows live
   # in dsh-terminal-plugins.nix; the agent-preset declarations (0.2.0 registry
   # rows: .agent-presets directories are dead) live in dsh-presets.nix.
@@ -34,6 +35,12 @@ let
   # heals on the next run.
   presetPatch = ./dsh-tui-preset-patch.py;
 
+  # The dsh-TUI bundle's own liangshen preset still carries the 0.1.x
+  # workflow-provider row next to its 0.2.0 replacement; the harness's static
+  # compatibility preflight denies it and with it the whole preset. The pruner
+  # drops that dead row from the installed copy (see its header).
+  liangshenPrune = ./dsh-tui-liangshen-prune.py;
+
   ensureTui = pkgs.writeShellScript "dsh-tui-ensure" (
     builtins.readFile (
       pkgs.replaceVars ./dsh-tui-ensure.sh {
@@ -41,6 +48,7 @@ let
         categoryPlugin = pkgs.copyPathToStore ./dsh-category-skill-reminder;
         ttsr = pkgs.copyPathToStore ./dsh-ttsr;
         presetPatch = pkgs.copyPathToStore presetPatch;
+        liangshenPrune = pkgs.copyPathToStore liangshenPrune;
         themeJson = pkgs.copyPathToStore themeJson;
         inherit homeDir;
         pluginSeeds = roster.seeds;
