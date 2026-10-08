@@ -163,6 +163,7 @@ property color pGlass: GreeterTheme.nixieGlassColor
 property color pCathode: GreeterTheme.nixieCathodeColor
 property color pTint: GreeterTheme.nixieTint
 property vector4d pWallpaper: Qt.vector4d(GreeterTheme.nixieTintWallpaper, 0, 0, 0)
+property vector4d pView: Qt.vector4d(GreeterTheme.nixieViewAngle, 0, 0, 0)
 
 fragmentShader: Qt.resolvedUrl("../shaders/nixie.frag.qsb")
 }

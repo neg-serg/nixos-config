@@ -193,6 +193,7 @@ property color pGlass: GreeterTheme.nixieGlassColor
 property color pCathode: GreeterTheme.nixieCathodeColor
 property color pTint: GreeterTheme.nixieTint
 property vector4d pWallpaper: Qt.vector4d(GreeterTheme.nixieTintWallpaper, 0, 0, 0)
+property vector4d pView: Qt.vector4d(GreeterTheme.nixieViewAngle, 0, 0, 0)
 // The single tube's own handles: the row does not read them, but they are
 // in the block, and Qt warns about every uniform with no property.
 property real pDigit: -1
