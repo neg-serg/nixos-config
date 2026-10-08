@@ -168,18 +168,25 @@ return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
                  sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), bendK),
             sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), bendK);
 if (digit == 5)
-// The user's own Iosevka (Iosevkaneg), measured off the glyph: the bar with
-// its short stub at the right end, the stem that leans a little to the left
-// down to the waist, and the bowl — open at its upper left — from the stem
-// round the right, the bottom and up the left to its terminal below the waist.
-// The numbers are the glyph's own: the bar at 0.835 from -0.20 to 0.22, the
-// stub down to 0.58, the stem's foot at -0.225/0.19, and the bowl an ellipse
-// centred on 0.0/-0.30 with radii 0.26/0.54, run from 205 to 483 degrees.
+// The user's own Iosevka (Iosevkaneg), measured off the glyph. The bar carries
+// a short stub at its right end; the stem leans a little to the left and its
+// foot turns straight into the waist; the bowl is a rounded rectangle half a
+// unit wide whose corners are quarters of a 0.25 circle — that is what the
+// glyph's own bends measure — run from the waist round the right, the bottom
+// and up the left to the terminal below the waist. The numbers are the glyph's
+// own: bar at 0.835 (x -0.20..0.22), stub to 0.58, stem foot -0.225/0.19,
+// waist to 0.0/0.23, bowl sides at x = +-0.25 between -0.58 and -0.02, bottom
+// at -0.83, terminal at -0.50.
 {
 float d = sdSegment(p, vec2(0.22, 0.835), vec2(-0.20, 0.835));       // the bar
 d = min(d, sdSegment(p, vec2(0.22, 0.835), vec2(0.22, 0.58)));       // its stub
 d = min(d, sdSegment(p, vec2(-0.20, 0.835), vec2(-0.225, 0.19)));    // the stem
-d = min(d, sdEllipseArc(p, vec2(0.0, -0.30), vec2(0.26, 0.54), 205.0 * DEG, 483.0 * DEG));
+d = smin(d, sdSegment(p, vec2(-0.225, 0.19), vec2(0.0, 0.23)), bendK);  // its foot turns into the waist
+d = min(d, sdArc(p, vec2(0.0, -0.02), 0.25, 0.0, 1.5707963268));        // the bowl's top right
+d = min(d, sdSegment(p, vec2(0.25, -0.02), vec2(0.25, -0.58)));         // its right side
+d = min(d, sdArc(p, vec2(0.0, -0.58), 0.25, 4.7123889804, 6.2831853072));  // bottom right
+d = min(d, sdArc(p, vec2(0.0, -0.58), 0.25, 3.1415926536, 4.7123889804));  // bottom left
+d = min(d, sdSegment(p, vec2(-0.25, -0.58), vec2(-0.25, -0.50)));       // left side, to the terminal
 return d;
 }
 if (digit == 6)
@@ -253,7 +260,7 @@ if (digit == 1) return vec4(0.0, -1.02, -0.24, 0.55);
 if (digit == 2) return vec4(-0.31, 0.60, 0.35, -1.02);
 if (digit == 3) return vec4(-0.226, 0.874, -0.226, -0.874);
 if (digit == 4) return vec4(0.32, -0.10, 0.26, -1.02);
-if (digit == 5) return vec4(0.22, 0.58, -0.236, -0.50);
+if (digit == 5) return vec4(0.22, 0.58, -0.25, -0.50);
 if (digit == 6) return vec4(-0.33, -0.14, 0.33, 0.55);
 if (digit == 7) return vec4(-0.30, 1.00, -0.10, -1.02);
 if (digit == 8) return vec4(0.0, 1.02, 0.0, 1.02);
@@ -911,7 +918,7 @@ wireGlowColour = blackbody(wireTemp);
 // the picture exactly where it was and turning it up makes the discharge hotter.
 // The white core is what a wire at pTempK looks like; where the wire runs
 // cooler the metal keeps its own blackbody colour instead of burning white.
-vec3 wireColour = mix(wireGlowColour, vec3(1.0, 0.97, 0.92), pow(core, 6.0) * 0.55 * heatProfile);
+vec3 wireColour = mix(wireGlowColour, vec3(1.0, 0.97, 0.92), pow(core, 8.0) * 0.30 * heatProfile);
 float wireHeat = heat_power(wireTemp, 1.0);
 // A real filament is not uniformly hot along its length either: a slow hash on
 // the numeral's own millimetres keeps the run from reading as a drawn line.
@@ -978,7 +985,7 @@ add = vec3(1.0) - exp(-add * 1.55);
 // than a screen's white, and the compositor passes HDR metadata through, so the
 // excess is carried to the output instead of being flattened. It is taken from
 // the wire alone — from `add` it would smear a halo around every bright pixel.
-vec3 headroom = wireGlowColour * max(wireRadiance - 1.5, 0.0) * 0.12;
+vec3 headroom = wireGlowColour * max(wireRadiance - 1.5, 0.0) * 0.10;
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
