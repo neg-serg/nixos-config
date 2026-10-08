@@ -112,7 +112,9 @@ return mix(b, a, h) - k * h * (1.0 - h);
 // and a round bowl, 6 a hook and one closed loop, 7 a lid and a leg, 8 two
 // loops, 9 a bowl and a leg, 0 an oval. The bowls are arcs of circles stretched
 // to the numeral's proportions, and every joint is an smin — a cathode was bent
-// once, and what it has is radii, not corners.
+// once, and what it has is radii, not corners. The softened radius is the wire's
+// own (0.03..0.04 of the glyph's height): an elbow of a bent wire is as thick as
+// the wire, and a wider soften swells the joint into a bead.
 
 // The outline of a rectangle whose corners are bent by the radius r: the top,
 // the right, the bottom and the left joined by four quadrants of a circle. A
@@ -144,11 +146,11 @@ if (digit == 0)
 return sdEllipse(p, vec2(0.0), vec2(0.30, 0.88));
 if (digit == 1)
 return smin(sdSegment(p, vec2(0.0, -1.02), vec2(0.0, 1.02)),
-            sdSegment(p, vec2(-0.24, 0.55), vec2(0.0, 1.02)), 0.10);
+            sdSegment(p, vec2(-0.24, 0.55), vec2(0.0, 1.02)), 0.03);
 if (digit == 2)
 return smin(smin(sdArc(p, vec2(0.0, 0.60), 0.31, 0.0, PI),
-                 sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.10),
-            sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.10);
+                 sdSegment(p, vec2(0.31, 0.60), vec2(-0.32, -1.00)), 0.03),
+            sdSegment(p, vec2(-0.35, -1.02), vec2(0.35, -1.02)), 0.03);
 if (digit == 3)
 // Two round bowls, one over the other, meeting at the waist: the upper runs
 // from its foot counter-clockwise over the right, the top and into the upper
@@ -156,11 +158,11 @@ if (digit == 3)
 // circles pinched together are what a 3 of wire is; five straight strokes read
 // as a digital font, which is what this was and what it must not be.
 return smin(sdEllipseArc(p, vec2(0.0, 0.52), vec2(0.32, 0.50), 270.0 * DEG, 495.0 * DEG),
-            sdEllipseArc(p, vec2(0.0, -0.52), vec2(0.32, 0.50), 225.0 * DEG, 450.0 * DEG), 0.10);
+            sdEllipseArc(p, vec2(0.0, -0.52), vec2(0.32, 0.50), 225.0 * DEG, 450.0 * DEG), 0.03);
 if (digit == 4)
 return smin(smin(sdSegment(p, vec2(0.26, 0.95), vec2(-0.31, -0.10)),
-                 sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.10),
-            sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.10);
+                 sdSegment(p, vec2(-0.31, -0.10), vec2(0.32, -0.10)), 0.03),
+            sdSegment(p, vec2(0.26, 0.95), vec2(0.26, -1.02)), 0.03);
 if (digit == 5)
 // The drawing font's 5, bent from one wire: the bar across the top, the stem
 // down its left end, the waist, the bowl's right side and the foot, with a
@@ -196,7 +198,7 @@ if (digit == 7)
 // A lid and a leg and nothing else — a nixie's 7 is not a bowl with a side —
 // with the one corner it has rounded off by a good part of the wire.
 return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
-            sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.14);
+            sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.04);
 if (digit == 8)
 // The 8 as the sign of infinity stood on end: one curve, and the crossing is a
 // single point — not two rings set one over the other. The wire goes round the
@@ -234,9 +236,9 @@ if (digit == 9)
 // The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
 // over, and what tells them apart is which end carries the loop.
 return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
-            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.10);
+            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.03);
 return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
-            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.10);
+            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), 0.03);
 }
 
 // The wire's two ends, in the numeral's own space: where it leaves the figure
@@ -553,7 +555,7 @@ refract = mix(refract, causticImg * absorb, caustic * 0.70);
 
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
-float alpha = inside * 0.22 * pow(grazing, 3.0);   // only the silhouette hides the picture
+float alpha = inside * 0.18 * pow(grazing, 3.0);   // only the silhouette hides the picture
 // the body: cold, and a little darker than the picture behind it
 colour += vec3(0.003, 0.004, 0.008) * inside * grazing;   // the body is not a filter
 
@@ -564,12 +566,12 @@ float rimInner = exp(-pow((d - wall) / max(0.8, 0.20 * wall), 2.0)) * inside;
 // not two hairlines but a band of glass, and that band is where Beer has the
 // longest path — it is the green-teal depth of a real envelope.
 float wallBody = smoothstep(0.0, 0.45, d) * (1.0 - smoothstep(wall - 0.45, wall, d)) * inside;
-glassLight += vec3(1.0) * rim * (0.12 + 0.75 * pow(grazing, 3.0));
+glassLight += vec3(1.0) * rim * (0.20 + 0.85 * pow(grazing, 3.0));
 alpha += rim * 0.26 + rimInner * 0.16;
 colour += vec3(0.02, 0.05, 0.06) * (rimInner * 0.6);
 // the wall's own body: the glass colour, taken through its own absorption
 colour = mix(colour, vec3(0.010, 0.030, 0.032) * (0.6 + 0.8 * pow(grazing, 2.0)), wallBody * 0.55);
-alpha = max(alpha, wallBody * 0.42);
+alpha = max(alpha, wallBody * 0.36);
 
 // what the glass reflects: the room along the mirror direction, weighted by
 // Fresnel — the reason the middle of a tube is clear and its edges are not
@@ -591,8 +593,8 @@ vec3 room2 = blurred_room((px + pInset + mir2) / pBackdrop, vec2(0.050, 0.040) *
 vec3 absorb2 = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.00 * 2.0 * pathIn / R);
 glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb2 * 0.55;
 // two narrow lights the tube always catches, and they stop before the collar
-glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.14 * pHighlight;
-glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.045 * pHighlight;
+glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.17 * pHighlight;
+glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.055 * pHighlight;
 
 // The pip the tube was sealed by — the one mark every nixie has on top of its
 // dome. The dome itself is carried by the rim, which follows its arc.
@@ -820,7 +822,7 @@ float core = 1.0 - clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
 // The sheath around the wire: the gas hugs a hot filament and falls away fast.
 // A thicker cathode carries more of it, so the sheath is wider and denser than
 // the hairline one a thin wire would have.
-float gas = exp(-dist / (0.16 * mm)) * 0.20 + exp(-dist / (0.42 * mm)) * 0.035;
+float gas = exp(-dist / (0.16 * mm)) * 0.17 + exp(-dist / (0.40 * mm)) * 0.040;
 gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 float coreLit = pGlow * pow(pFlicker, 0.5);
 float haloLit = pGlow * pow(pFlicker, 1.4);
@@ -840,21 +842,26 @@ wireGlowColour = blackbody(wireTemp);
 // the picture exactly where it was and turning it up makes the discharge hotter.
 // The white core is what a wire at pTempK looks like; where the wire runs
 // cooler the metal keeps its own blackbody colour instead of burning white.
-vec3 wireColour = mix(wireGlowColour, vec3(1.0, 0.97, 0.92), pow(core, 4.0) * 0.60 * heatProfile);
+vec3 wireColour = mix(wireGlowColour, vec3(1.0, 0.97, 0.92), pow(core, 6.0) * 0.55 * heatProfile);
 float wireHeat = heat_power(wireTemp, 1.0);
 // A real filament is not uniformly hot along its length either: a slow hash on
 // the numeral's own millimetres keeps the run from reading as a drawn line.
 float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
-wireRadiance = core * 6.40 * coreLit * wireHeat * filament * (1.0 + 0.11 * wirePass);
+// The wire is metal, not a tube of light: the heat piles up on the axis and
+// falls off towards the surface, so the stroke is a white-hot core inside a
+// body that is merely hot — a glow with a gradient, not a flat rod. The ramp
+// is linear in the metal's own radius, which is what a heated wire's cross
+// section looks like, and nothing of it is drawn outside the wire.
+wireRadiance = core * (0.55 + 0.80 * core) * coreLit * wireHeat * filament * (1.0 + 0.11 * wirePass);
 add += wireColour * wireRadiance;   // white-hot, and no wider than the wire itself
 
 // The gas hugs the wire where it is hot, so the sheath thins towards the ends
 // with the wire itself: a cooler stretch of cathode carries a dimmer glow.
 float gasHeat = 0.60 + 0.40 * heatProfile;
 add += pHalo.rgb * gas * gasHeat * 0.58 * haloLit;
-add += pHalo.rgb * exp(-dist / (2.9 * mm)) * 0.13 * gasHeat * haloLit;   // the soft bloom a hot wire casts
+add += pHalo.rgb * exp(-dist / (1.9 * mm)) * 0.08 * gasHeat * haloLit;   // the soft bloom a hot wire casts
 // the fringe where the discharge dies out drifts violet
-add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.35 * mm) / (0.18 * mm)) * 0.045 * step(0.08 * mm, dist) * haloLit;
+add += vec3(0.78, 0.24, 0.72) * exp(-abs(dist - 0.28 * mm) / (0.13 * mm)) * 0.032 * step(0.06 * mm, dist) * haloLit;
 // The far wall of the glass does catch the wire, but it is a wall and not a
 // mirror: the cylinder squeezes the image sideways, two Fresnel passes dim it,
 // and the curvature of the far side defocuses it. A crisp flipped copy of the
@@ -878,7 +885,7 @@ add = vec3(1.0) - exp(-add * 1.55);
 // than a screen's white, and the compositor passes HDR metadata through, so the
 // excess is carried to the output instead of being flattened. It is taken from
 // the wire alone — from `add` it would smear a halo around every bright pixel.
-vec3 headroom = wireGlowColour * max(wireRadiance - 1.2, 0.0) * 0.5;
+vec3 headroom = wireGlowColour * max(wireRadiance - 1.5, 0.0) * 0.12;
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
@@ -890,8 +897,9 @@ float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // The discharge's light lands on the wallpaper (the spill) — and inside the
 // glass it is the light itself, which the composite adds. Adding it here as well
 // counted every ray of it twice, which is what fattened the white core to two
-// and a half times the wire's own width.
-colour += wash * add * spill * warmth;
+// and a half times the wire's own width. It is light, not the discharge: a
+// twelfth of the wire's own radiance, spread wide, is what a hot wire throws.
+colour += wash * add * spill * warmth * 0.12;
 alpha += clamp(gasMap * pGlow * 0.10, 0.0, 0.30) * inside;
 
 // --- the collar the tube is plugged in by ---------------------------------
