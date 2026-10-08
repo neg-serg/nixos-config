@@ -610,8 +610,8 @@ alpha += tip * 0.06;
 // The numerals' own space: y-up (the tube's y runs down the screen), the width
 // of a numeral as the unit on both axes so a round wire stays round. The stack
 // lives in the cylinder above the collar, which is where a nixie keeps it.
-const float DIGIT_H = 30.0;   // the numerals, mm: almost the whole bulb, as asked
-const float DIGIT_W = 14.0;   // and across: the bore is Ø17.2, so this nearly fills it
+const float DIGIT_H = 25.0;   // the numerals, mm: a margin at each end of the 35 mm bulb
+const float DIGIT_W = 11.7;   // and across, in the sheet's own 18:10 proportions
 const float GLYPH_H = 2.04;   // how tall the glyphs in digitWire() are
 const float GLYPH_W = 0.85;   // and how wide the box a numeral is drawn in is
 // The numerals are 18 mm high on the sheet, and the glyphs in digitWire() run
@@ -626,8 +626,8 @@ float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
 // The cathode's radius: the theme says what share of a numeral's height it
-// takes (nixieWire), and the numeral is 30 mm on the sheet — 0.030 of it is the
-// 0.90 mm this is drawn at, so the wire is 1.80 mm across. A real cathode is
+// takes (nixieWire), and the numeral is 25 mm here — 0.036 of it is the 0.90 mm
+// this is drawn at, so the wire is 1.80 mm across. A real cathode is
 // 0.24 mm; this one is heavy on purpose, because what the eye reads at the
 // login's size is the glowing filament, and a hairline reads as nothing.
 float wirePx = pWire * DIGIT_H * mm;
