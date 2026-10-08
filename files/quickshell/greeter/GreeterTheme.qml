@@ -100,7 +100,7 @@ Singleton {
     readonly property color nixieCathodeColor: _val('greeter.nixieCathodeColor', "#aab6c4")
     // The lit cathode's radius in glyph units: the sprite's is 0.55 mm of a 23 mm
     // glyph, and the drawn numeral has to be the same wire or the two disagree.
-    readonly property real nixieWire: _val('greeter.nixieWire', 0.024)
+    readonly property real nixieWire: _val('greeter.nixieWire', 0.0127)
     readonly property real nixieStack: _val('greeter.nixieStack', 0.5)
     readonly property real nixieHighlight: _val('greeter.nixieHighlight', 0.8)
     readonly property real nixieWarmth: _val('greeter.nixieWarmth', 0.45)

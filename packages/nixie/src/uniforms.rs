@@ -1,6 +1,7 @@
 //! What the shader is told: the lamp's handles, laid out the way std140 wants.
 
-use crate::drawing::Drawing;
+use crate::drawing::{number_after, Drawing};
+use anyhow::Result;
 
 /// A colour as the theme stores it: #AARRGGBB.
 pub fn colour(token: &str) -> [f32; 4] {
@@ -44,11 +45,33 @@ pub struct Uniforms {
     pub pad1: f32, // std140: the block's size is a multiple of 16
 }
 
+/// The knobs in Theme/greeter.jsonc that are numbers. They are read from the
+/// theme and not written into this file twice: the login screen turns them, and
+/// a copy here would quietly disagree with what it shows.
+#[derive(Debug, Clone, Copy)]
+pub struct Tokens {
+    pub wire: f32,
+    pub stack: f32,
+    pub highlight: f32,
+    pub warmth: f32,
+}
+
+impl Tokens {
+    pub fn read(theme: &str) -> Result<Self> {
+        Ok(Self {
+            wire: number_after(theme, "\"nixieWire\": ")? as f32,
+            stack: number_after(theme, "\"nixieStack\": ")? as f32,
+            highlight: number_after(theme, "\"nixieHighlight\": ")? as f32,
+            warmth: number_after(theme, "\"nixieWarmth\": ")? as f32,
+        })
+    }
+}
+
 impl Uniforms {
     /// The values the login screen's theme hands the tube, unless a handle says
     /// otherwise: `nixieGlow`, `nixieHighlight`, `nixieWarmth` and the four
     /// colours in Theme/greeter.jsonc.
-    pub fn from_drawing(d: &Drawing, mm: f32, size: [f32; 2], digit: i32) -> Self {
+    pub fn from_drawing(d: &Drawing, t: &Tokens, mm: f32, size: [f32; 2], digit: i32) -> Self {
         Self {
             size,
             backdrop: size,
@@ -58,10 +81,10 @@ impl Uniforms {
             glow: 1.0,
             digit: digit as f32,
             bulb: 0.0,
-            wire: 0.034,
-            stack: 0.5,
-            highlight: 0.8,
-            warmth: 0.45,
+            wire: t.wire,
+            stack: t.stack,
+            highlight: t.highlight,
+            warmth: t.warmth,
             flicker: 1.0,
             pad0: 0.0,
             core: colour("#ffa04b"),

@@ -66,9 +66,10 @@
     "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
-    // The cathode wire, as a fraction of the numeral's width, and how visible
-    // the nine unlit cathodes behind the lit one are.
-    "nixieWire": 0.034,
+    // The cathode wire's radius as a fraction of the numeral's height (0.0127
+    // of 30 mm is the 0.38 mm the tube is drawn at), and how visible the nine
+    // unlit cathodes behind the lit one are.
+    "nixieWire": 0.0127,
     "nixieStack": 0.5,
     "nixieHighlight": 0.8,
     "nixieWarmth": 0.45,

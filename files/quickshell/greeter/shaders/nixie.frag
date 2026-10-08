@@ -379,7 +379,11 @@ float gm = sqrt(gx * gy);
 float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 vec2 dp = vec2((p.x - centre.x) / gx, (centre.y - p.y) / gy);
-float wirePx = 0.38 * mm;   // a nixie's stroke reads fat, like a sausage
+// The cathode's radius: the theme says what share of a numeral's height it
+// takes (nixieWire), and the numeral is 30 mm on the sheet — 0.0127 of it is
+// the 0.38 mm this is drawn at. A real cathode is 0.24 mm; this one is fat on
+// purpose, because a stroke that thin reads as a hairline at the login's size.
+float wirePx = pWire * DIGIT_H * mm;
 float baseTop = footY;
 
 // the two rods the stack is welded to
