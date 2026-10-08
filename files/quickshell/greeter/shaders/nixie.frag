@@ -193,15 +193,20 @@ if (digit == 7)
 return smin(sdSegment(p, vec2(-0.30, 1.00), vec2(0.30, 1.00)),
             sdSegment(p, vec2(0.30, 1.00), vec2(-0.10, -1.02)), 0.14);
 if (digit == 8)
-// The 8 of Iosevka — the user's own cut of it, Iosevkaneg — fitted to the
-// glyph's own outer contour band by band. Each loop is an OVAL whose half-width
-// peaks in that loop's middle (0.92 of the glyph's half-width up, 1.00 down)
-// and falls away to the crown and to the waist; the two loop outlines do not
-// meet on their own, so a short bar across the waist closes the wire, which is
-// also what the glyph shows there — a broad neck, not a pinch.
-return smin(smin(sdEllipse(p, vec2(0.0, 0.520), vec2(0.321, 0.430)),
-                 sdEllipse(p, vec2(0.0, -0.520), vec2(0.353, 0.430)), 0.10),
-            sdSegment(p, vec2(-0.130, 0.0), vec2(0.130, 0.0)), 0.10);
+// The 8 as a twisted ribbon — the sign of infinity stood on end. Each loop is
+// the oval Iosevka draws, but the two are twisted about the waist: the upper
+// leans one way and the lower the other, so the wire CROSSES ITSELF in the
+// middle instead of two rings being set one above the other. That crossing is
+// the whole difference between an 8 and two ovals, and it is what the eye reads
+// the twist from.
+{
+float tilt = 0.24;                                  // ~14 degrees either way
+float s1 = sin(tilt), c1 = cos(tilt);
+vec2 pu = vec2(c1 * p.x - s1 * p.y, s1 * p.x + c1 * p.y);
+vec2 pl = vec2(c1 * p.x + s1 * p.y, -s1 * p.x + c1 * p.y);
+return min(sdEllipse(pu, vec2(0.0, 0.500), vec2(0.300, 0.470)),
+           sdEllipse(pl, vec2(0.0, -0.500), vec2(0.330, 0.470)));
+}
 if (digit == 9)
 // The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
 // over, and what tells them apart is which end carries the loop.
