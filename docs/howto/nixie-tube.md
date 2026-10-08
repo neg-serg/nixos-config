@@ -118,6 +118,12 @@ with it — a cooler stretch of cathode carries a dimmer glow. The ends are the 
 drawn from, and a closed loop carries its seam twice; the distance to the nearer end is the stand-in
 for the position along the run — exact along a straight stroke, an overestimate around a bend.
 
+**The tube breathes.** A discharge is never perfectly still: the gas wanders, the wire hums with the
+mains, and the eye reads that as a lamp that is on — `breathe` and `hum` in `nixie.frag`, a few per
+cent at a fraction of a hertz, driven by `pTime`. `NixieTube.qml` advances its `clock` fifteen times a
+second so the shimmer has something to move with; the still login screen the plan asked for is a
+deliberate casualty of the owner asking for life, and the cost is one small repaint per tick.
+
 **The wire is hot in the middle of its own section, too.** The discharge is drawn on the metal, and
 the metal's axis is hotter than its surface, so the radiance ramps across the wire's radius
 (`core * (0.55 + 0.80 * core)`): a white-hot core inside an orange body, with the gas sheath around
@@ -129,7 +135,10 @@ picture inside is magnified sideways — most of all on the axis (up to 0.30) an
 wall, where the glass is edge-on. The glass also disperses: three indices (1.5155, 1.5200, 1.5280 for
 red, green and blue), three rays, three taps of the picture, one channel from each. The far wall does
 catch the wire, but it is a wall and not a mirror: the image is squeezed, dimmed and defocused, and a
-crisp flipped copy of the numeral inside the tube would read as a second, broken digit.
+crisp flipped copy of the numeral inside the tube would read as a second, broken digit. That second
+image is traced, not painted: the eye's own ray, reflecting off the cylinder, is intersected with the
+cathode's plane (`wallRefl`), so the reflection sits where the glass puts it and the curvature of the
+wall does the softening.
 
 ## What the theme can turn
 
@@ -145,7 +154,7 @@ crisp flipped copy of the numeral inside the tube would read as a second, broken
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
 | `nixieHighlight` | how much light the glass catches |
 | `nixieWarmth` | how much of the discharge's light lands on the glass (0.45 is the tube's own look) |
-| `nixieFlickerMs` | restrike time on a digit change; 0 leaves the tubes steady |
+| `nixieFlickerMs` | restrike time on a digit change; 0 leaves the restrike out, the idle shimmer below stays |
 
 The theme is copy-once: `Theme/` is copied into `~/.config/quickshell/Theme/`, so after an edit it has
 to be copied and touched again, or the login screen keeps the old numbers.
@@ -158,9 +167,9 @@ place where the render is a look-alike rather than the thing:
 1. Rough metal is five taps in a cross (`metal_hit`, `blurred_room`), a stencil blur. It needs a
    microfacet model (GGX) or a pre-filtered mip chain, so `rough` is a BRDF lobe and not a sample
    radius.
-2. The glass traces one path — in, across the bore, out (`rayTr`/`rayTg`/`rayTb`, `rayOut`) — and the
-   far wall's catch (`wallRefl`) is painted, not traced: the discharge is never reflected off the
-   inner wall. It needs a second ray inside the bore, with its own Fresnel.
+2. The glass traces one path in and out (`rayTr`/`rayTg`/`rayTb`, `rayOut`), and the far wall's catch
+   is traced off the cylinder — but the returning ray carries one tuned weight, not Fresnel at the
+   wall it reflects from and absorption along the way back out. It needs the same optics twice.
 3. Beer's law has no dispersion of its own: `absorb` takes the glass tint as a per-channel
    coefficient and the green ray's path length for all three channels. It needs the attenuation
    carried per wavelength along each of the three dispersed rays.

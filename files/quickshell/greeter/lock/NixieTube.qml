@@ -66,14 +66,28 @@ implicitHeight: root.glassHeight + root.pad * 2
 property bool steady: false
 property real ignition: 1.0
 property int strikesLeft: 0
+// Seconds of idle time, advanced in small steps so the shader's shimmer has
+// something to move with (pTime). The interval is the price of the life: 15
+// repaints a second over one small item, and nothing else on the screen moves.
+property real clock: 0
 
 // A nixie does not cross-fade. On a digit change it stutters for a few frames
-// and then holds — and nothing animates at all once it has struck, which is
-// what keeps a still login screen still.
+// and then holds. It is never perfectly still, though: the discharge breathes
+// and the wire hums a few per cent (see nixie.frag). The screen was built to
+// stand still once, and the owner has since asked it to live, so the motion is
+// slow and small — a strobing login screen would be a bug, not a lamp.
 function strike() {
 root.strikesLeft = 5 + (root.tubeIndex % 3);
 root.ignition = 0.0;
 strikeTimer.restart();
+}
+
+Timer {
+	id: clockTimer
+	interval: 66
+	repeat: true
+	running: true
+	onTriggered: root.clock += interval / 1000.0
 }
 
 Timer {
@@ -131,6 +145,7 @@ property real pStack: (root.bulb ? 0 : GreeterTheme.nixieStack) * root.metalScal
 property real pHighlight: GreeterTheme.nixieHighlight * root.glassLightScale
 property real pWarmth: GreeterTheme.nixieWarmth * root.warmthScale
 property real pFlicker: root.ignition
+property real pTime: root.clock
 property real pMm: root.numeralSize / 18.0   // px per millimetre, the drawing's scale
 property real pThick: Math.max(0.8, 0.9 * root.mmPerPx) * root.glassThickness  // the wall, ~0.9 mm
 property real pRefract: root.glassRefraction
