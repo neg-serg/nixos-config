@@ -75,6 +75,7 @@ pub struct Uniforms {
     pub tile: [f32; 4],      // width, height, the tube's margin, 1 = the row pass
     pub tint: [f32; 4],      // coloured glass: the hue, and how much of it
     pub wallpaper: [f32; 4], // x: tint with the wallpaper's accent instead
+    pub view: [f32; 4],      // x: the camera's yaw off the tube's axis, in degrees
 }
 
 /// The knobs in Theme/greeter.jsonc that are numbers. They are read from the
@@ -87,6 +88,7 @@ pub struct Tokens {
     pub exposure: f32,
     pub tint: [f32; 4],
     pub tint_wallpaper: f32,
+    pub view_angle: f32,
     pub stack: f32,
     pub highlight: f32,
     pub warmth: f32,
@@ -100,6 +102,7 @@ impl Tokens {
             exposure: number_after(theme, "\"nixieExposure\": ")? as f32,
             tint: colour_after(theme, "\"nixieTint\": ")?,
             tint_wallpaper: number_after(theme, "\"nixieTintWallpaper\": ")? as f32,
+            view_angle: number_after(theme, "\"nixieViewAngle\": ")? as f32,
             stack: number_after(theme, "\"nixieStack\": ")? as f32,
             highlight: number_after(theme, "\"nixieHighlight\": ")? as f32,
             warmth: number_after(theme, "\"nixieWarmth\": ")? as f32,
@@ -146,6 +149,7 @@ impl Uniforms {
             tile: [size[0], size[1], 16.0, 0.0],
             tint: t.tint,
             wallpaper: [t.tint_wallpaper, 0.0, 0.0, 0.0],
+            view: [t.view_angle, 0.0, 0.0, 0.0],
         }
     }
 }
@@ -197,6 +201,7 @@ mod tests {
             tile: [0.0; 4],
             tint: [0.0; 4],
             wallpaper: [0.0; 4],
+            view: [0.0; 4],
         };
         let offset = |field: *const f32| field as usize - &base as *const _ as usize;
         assert_eq!(
@@ -215,7 +220,8 @@ mod tests {
         assert_eq!(offset(base.tile.as_ptr()), 192);
         assert_eq!(offset(base.tint.as_ptr()), 208);
         assert_eq!(offset(base.wallpaper.as_ptr()), 224);
-        assert_eq!(size_of::<Uniforms>(), 240);
+        assert_eq!(offset(base.view.as_ptr()), 240);
+        assert_eq!(size_of::<Uniforms>(), 256);
         assert_eq!(
             offset(&base.exposure as *const f32),
             68,
