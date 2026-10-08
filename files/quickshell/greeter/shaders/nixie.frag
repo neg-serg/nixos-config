@@ -604,7 +604,7 @@ vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.30 * pathIn / R);
 // At the silhouette the surface turns away from the eye and -ray.z goes to
 // zero, which would send the offset to infinity and smear the picture into a
 // flat band. Capping it keeps the edge looking at the wall it can see.
-float planeDist = 0.30 * pBackdrop.x;     // where the picture the glass bends hangs
+float planeDist = 0.30 * tile.x;          // where the picture the glass bends hangs
 float roomDist = 0.16 * tile.x;           // where the reflections come from
 vec2 off = glass_offset(p, rayT, rayOut, planeDist, wallLens);
 vec2 offR = glass_offset(p, rayTr, rayOut, planeDist, wallLens);
@@ -657,7 +657,11 @@ refract = mix(refract, causticImg * absorb, caustic * 0.70);
 
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
-float alpha = inside * 0.18 * pow(grazing, 3.0);   // only the silhouette hides the picture
+// What of the tube's body stands in front of the wallpaper. The wall itself
+// covers the picture behind it — that is the whole difference between a glass
+// tube and a hole in the picture — and the metal inside it covers more; the
+// number only grows from here.
+float alpha = inside * 0.18 * pow(grazing, 3.0);
 // the body: cold, and a little darker than the picture behind it
 colour += vec3(0.003, 0.004, 0.008) * inside * grazing;   // the body is not a filter
 
@@ -682,7 +686,10 @@ vec2 mir = vec2(rayIn.x, rayIn.y) / max(-rayIn.z, 0.06) * roomDist;
 mir = clamp(mir, vec2(-0.20 * R), vec2(0.20 * R));
 vec2 uvR = (px + pInset + mir) / pBackdrop;
 vec3 room = blurred_room(uvR, vec2(0.035, 0.030) * pRefract);   // the room, smeared
-glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight;
+// Masked by the glass: outside the envelope there is no front surface to
+// reflect the room, and the terms below used to be summed over the whole item —
+// which is what put a lit rectangle of wallpaper around every tube.
+glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * inside;
 // The inner wall is the second mirror in the tube: light crosses the bore,
 // reflects off the far wall and leaves through the near one, so the room the
 // glass carries arrives twice, displaced by that extra crossing — the weak
@@ -693,7 +700,7 @@ vec2 mir2 = vec2(-rayIn.x, rayIn.y) * 0.55 * roomDist / max(-rayIn.z, 0.06);
 mir2 = clamp(mir2, vec2(-0.20 * R), vec2(0.20 * R));
 vec3 room2 = blurred_room((px + pInset + mir2) / pBackdrop, vec2(0.050, 0.040) * pRefract);
 vec3 absorb2 = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.00 * 2.0 * pathIn / R);
-glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb2 * 0.55;
+glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb2 * 0.55 * inside;
 // two narrow lights the tube always catches, and they stop before the collar
 // where the wall is uneven the reflection is not one clean line: the noise
 // breaks the two highlights the tube always catches into soft dashes
@@ -1140,8 +1147,14 @@ colour += glassLight * (1.0 - clamp(max(add.r, max(add.g, add.b)) * 0.9, 0.0, 0.
 // transparent pixels are the wallpaper's, and grain there would tint it.
 colour += vec3(hash(px * 1.31 + 0.5) - 0.5) * 0.012 * inside;
 
+// The glass passes the picture it bends (refract, absorbed, and thinned where
+// the metal inside it stands), the tube's own light and the discharge add on top
+// of it, and the cover is what the body hides: the wallpaper the compositor drew
+// under this item is hidden wherever the tube stands in front of it. Before the
+// clock was one item the patch was never handed in, so the cover only mattered
+// at the silhouette and the wallpaper showed straight through the glass.
 return vec4(colour + add + refract * clamp(1.0 - alpha, 0.0, 1.0) * inside,
-		clamp(alpha, 0.0, 0.98));
+		clamp(max(alpha, inside), 0.0, 0.98));
 }
 
 void main() {
