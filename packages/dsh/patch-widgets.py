@@ -69,16 +69,19 @@ WORKFLOW = "dsh-tool-workflow/lib/index.js"
 patch(
     WORKFLOW,
     [
-        # 2b. workflow presentationMeta.
+        # 2b. workflow presentationMeta. 0.2.0-rc.2 turned the render line into
+        # a background/foreground ternary, so the anchor starts at
+        # `renderResult(` instead of the old `text: ` prefix; the tail
+        # (`}]` / `},` / `async execute`) is unchanged and unique in the file.
         (
             (
-                "text: renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
+                "renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
                 "\t\t\t}]\n"
                 "\t\t},\n"
                 "\t\tasync execute(args, exec) {"
             ),
             (
-                "text: renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
+                "renderResult(args.meta.name, value.agentsStarted, value.result, maxResultChars)\n"
                 "\t\t\t}],\n"
                 "\t\t\tpresentationMeta: (args, value) => ({\n"
                 '\t\t\t\tkind: "workflow",\n'

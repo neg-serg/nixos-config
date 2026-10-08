@@ -7,6 +7,13 @@ makeWrapper @NODEJS@ $out/bin/dsh \
 # the name "grep". Rename it to "rg" so the toolset advertises what it
 # actually runs. The client bundles key their search-card rendering off
 # the same name, so patch them in lockstep. Drop once upstream renames it.
+#
+# 0.2.0-rc.2 moved the client half from dsh-client-connection (the old
+# `case "grep":` / `toolTurn(67, "grep",` / `title: \`Grep ` anchors are all
+# gone there) into dsh-client-ui-tool: same literals, but as tool-name
+# comparisons, the SEARCH_TITLE_KEYS map and the toolview slot key. The
+# displayed title is localized now (tool.title.grep), so the English locale
+# value in dsh-client-ui-conversation carries the old Grep -> Search rename.
 search_pkg="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai"
 sed -i \
   -e 's/name: "grep"/name: "rg"/' \
@@ -15,14 +22,19 @@ sed -i \
   -e 's/runRipgrep(ctx, exec, "grep"/runRipgrep(ctx, exec, "rg"/' \
   -e 's/"grep-results.txt"/"rg-results.txt"/' \
   "$search_pkg/dsh-tool-fs-search/lib/index.js"
-sed -i 's/key: "grep"/key: "rg"/' \
-  "$search_pkg/dsh-client-ui-tool/lib/client.js"
 sed -i \
-  -e 's/case "grep":/case "rg":/' \
-  -e 's/if (name === "grep")/if (name === "rg")/' \
-  -e 's/toolTurn(67, "grep",/toolTurn(67, "rg",/' \
-  -e 's/title: `Grep /title: `Search /' \
-  "$search_pkg/dsh-client-connection/lib/client.js"
+  -e 's/call\.name === "grep"/call.name === "rg"/g' \
+  -e 's/call\.name !== "grep"/call.name !== "rg"/g' \
+  -e 's/tool === "grep"/tool === "rg"/' \
+  -e 's/toolName === "grep"/toolName === "rg"/' \
+  -e 's/SEARCH_TITLE_KEYS\.grep/SEARCH_TITLE_KEYS.rg/' \
+  -e 's/grep: "tool\.title\.grep"/rg: "tool.title.grep"/' \
+  -e 's/key: "grep"/key: "rg"/' \
+  "$search_pkg/dsh-client-ui-tool/lib/client.js"
+sed -i 's/name === "grep"/name === "rg"/' \
+  "$search_pkg/dsh-client-ui-chat/lib/client.js"
+sed -i 's/"tool\.title\.grep": "Grep"/"tool.title.grep": "Search"/' \
+  "$search_pkg/dsh-client-ui-conversation/lib/client.js"
 
 # Row-id collision with the third-party dsh-file-upload plugin. Upstream
 # 0.1.5-rc.1 added its own attachment row `file-upload` to the web-app
@@ -60,17 +72,20 @@ PYTHONPATH=@PATCHLIB_DIR@ python3 @PY@ "$search_pkg"
 # (exact-string + count-asserted, see packages/dsh/patch-session-format.py).
 PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V2@ "$search_pkg"
 
-# Drop the shipped `standard` agent preset from the roster: the user runs
-# the neg preset (liangshen fork) by default (see
-# modules/user/nix-maid/apps/dsh-liangshen-fork.nix) and asked for the
-# standard entry to be removed from the picker. 0.1.5-rc.1 moved the
-# presets out of dsh's own config/ into the @deepseek-ai/dsh-agent-presets
-# dependency, whose `presets/` dir is the shipped preset root; removing the
-# subdir hides the preset at discovery.
-presets="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-agent-presets/presets"
-rm -rf "$presets/standard"
-
-# The shipped preset.yml names/descriptions are Chinese (PTC 模式 / 极简模式
-# / 创造模式); the user's de-Chinese rule covers UI copy, and the picker and
-# /mode render these. Exact-match + count-asserted (see patch-preset-names.py).
-PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V3@ "$presets"
+# Agent presets are declarative rows in 0.2.0-rc.2 (and since 0.1.7): the
+# shipped ones are `presets/<id>.patch.yml` files of the dsh-web-app bundle,
+# listed in that package's `dsh.bundle.patch`, and a preset is created or
+# changed by a patch that declares its row (`- insert: [{id: preset-<id>,
+# name: '@deepseek-ai/dsh-agent-preset', config: {...}}]`). The old
+# `$DSH_HOME/.agent-presets/<id>/` directories — where this deployment kept
+# `neg` and `fast` — are dead: nothing reads them. The two former post-install
+# steps are gone with them:
+#   * `rm -rf presets/standard` — hiding a shipped preset is now a profile
+#     patch (`- id: preset-standard` + `disabled: true`), and the tui profile
+#     declares its own presets instead of inheriting the web-app ones;
+#   * patch-preset-names.py — the client ships an English copy of the preset
+#     names/descriptions (`en` next to `zh` in dsh-client-ui-agent-preset), so
+#     there is no Chinese UI copy left to rewrite.
+#
+# The `neg`/`fast` declarations live in the repo's profile patch layers — see
+# modules/user/nix-maid/apps/dsh-tui-preset-patch.py and dsh.nix.
