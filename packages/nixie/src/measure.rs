@@ -250,7 +250,13 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     let (half_area, _) = stats(&half_mask);
     let length = (hot_edge as f32 / 2.0).max(1.0);
     out.halo_half_px = (((half_area as f32 - hot_area as f32) / length) / 2.0).round() as u32;
-    let half = peak / 2;
+    // Half of the way down from the wire to the room it burns in: a sheath is
+    // measured against what it covers, so a bright wallpaper does not make the
+    // glow look wider than it is.
+    let mut room: Vec<i32> = (x0..x0 + (x1 - x0) / 20).map(|x| at(x, mid_y).0).collect();
+    room.sort_unstable();
+    let base = room.get(room.len() / 2).copied().unwrap_or(0);
+    let half = (peak + base) / 2;
     let mut reach = 0;
     for x in (x0..peak_x).rev() {
         if at(x, mid_y).0 < half {
@@ -260,25 +266,34 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     }
     out.halo_half_px = reach;
 
-    // The glass's own light: what the wall adds to what it covers. The band is
-    // fixed by the drawing (a fifth of the box under the dome) so it does not
-    // move with the numeral, and the room is measured on the same rows outside
-    // the glass — a clear wall shows the room, it does not light up.
+    // The glass's own light: what the wall adds to what it covers. The room is
+    // measured on the same rows outside the glass — a clear wall shows the room,
+    // it does not light up. Samples that sit on the numeral are dropped: the lit
+    // wire is the lamp's source, not its glass, and a median that takes its glow
+    // in would judge the discharge instead of the wall. The margin is about a
+    // millimetre at the reference scale, which clears the wire's own halo; on an
+    // unlit tube there is no warm pixel at all and every sample is clean.
     let (x0, y0, x1, y1) = box_;
-    // Under the dome and above the numerals: the numerals' box is 18 of the
-    // 35 mm and it is centred, so their top is a seventh of the box down.
-    // The glass is sampled over the lamp's whole body: on an unlit tube nothing
-    // else is in the picture, so the medians can take the rim in.
     let band_top = y0 + (y1 - y0) / 20;
     let band_bottom = y1 - (y1 - y0) / 20;
     let cx = (x0 + x1) / 2;
     let inner = (x1 - x0) / 10;
+    let margin = ((x1 - x0) / 20).max(6);
     // Medians, not means: the pip's mark and the two highlights are small and
     // bright, and a mean would make the glass look like a lamp.
     let mut inside = Vec::new();
     let mut outside = Vec::new();
     for y in band_top..band_bottom {
+        let warm: Vec<u32> = (x0..x1)
+            .filter(|&x| {
+                let (r, _g, b) = at(x, y);
+                r > 150 && r - b > 45
+            })
+            .collect();
         for x in (cx - inner)..(cx + inner) {
+            if warm.iter().any(|w| x.abs_diff(*w) < margin) {
+                continue;
+            }
             inside.push(at(x, y).0 as f32);
         }
         for x in x0..(x0 + (x1 - x0) / 20) {
