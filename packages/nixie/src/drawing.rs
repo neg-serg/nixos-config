@@ -3,9 +3,14 @@
 //! The numbers are Reflector's IN-12A/B data sheet (1988): bulb Ø19 x 28, base
 //! Ø21 x 7, the whole lamp 35 without its pins, the pins Ø1 on an 11.5 mm
 //! circle, the pip Ø3.5, the numerals 18 mm. They live in the fragment shader,
-//! and this reads them from there — a second copy of them would drift.
+//! and this reads them from there — a second copy of them would drift. The one
+//! exception is the cathode: its thickness is a theme token the login screen can
+//! turn (Theme/greeter.jsonc, nixieWire), so it is read from there.
 
 use anyhow::{anyhow, Context, Result};
+
+/// Where the tube's tokens live when nothing else is said.
+pub const THEME: &str = "/etc/nixos/files/quickshell/Theme/greeter.jsonc";
 
 /// The first number after `needle`, e.g. `number_after(src, "float bulbR = ")`.
 pub fn number_after(src: &str, needle: &str) -> Result<f64> {
@@ -41,7 +46,9 @@ pub struct Drawing {
 }
 
 impl Drawing {
-    pub fn read(src: &str) -> Result<Self> {
+    /// `src` is the fragment shader, `theme` the token file the wire's own
+    /// thickness comes from.
+    pub fn read(src: &str, theme: &str) -> Result<Self> {
         let box_w = number_after(src, "float boxW = ")?;
         let box_h = number_after(src, ", boxH = ")?;
         let bulb_r = number_after(src, "const float BULB_R_MM = ")?;
@@ -51,7 +58,8 @@ impl Drawing {
         let collar_h = number_after(src, "const float COLLAR_H_MM = ")?;
         let digit_h = number_after(src, "const float DIGIT_H = ")?;
         let digit_w = number_after(src, "const float DIGIT_W = ")?;
-        let wire_r = number_after(src, "float wirePx = ")?;
+        // the wire's radius is the theme's share of the numeral's height
+        let wire_r = number_after(theme, "\"nixieWire\": ")? * digit_h;
         let mesh_r = number_after(src, "float cageR = ")?;
         let rod_x = number_after(src, "float rods = min(abs(abs(p.x) - ")?;
         Ok(Drawing {
