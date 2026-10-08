@@ -51,6 +51,7 @@ vec4 pRowDigit;    // the four digits, -1 for a tube with nothing to light
 vec4 pRowFlicker;  // the four ignitions: a nixie's tubes never strike together
 vec4 pTile;        // the tube's own item (width, height, margin), and the mode
 vec4 pTint;        // the colour of coloured glass: hue in rgb, strength in a
+vec4 pWallpaper;   // x: tint the lamp with the wallpaper's own accent instead
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.
@@ -455,14 +456,53 @@ return min(exp(l) * gain, 30.0);
 // cyan glass would simply be dark, which is physics and not what the knob is
 // for. The alpha is the strength: a transparent tint leaves the metal's own
 // Planck colour alone, which is the default.
-vec3 tinted(vec3 c) {
+vec3 tinted(vec3 c, vec4 tint) {
 // Peak for peak, not luminance for luminance: a cyan whose luminance matched a
 // hot wire's would be a washed pale thing, and the knob is for a lamp that is
 // plainly cyan. Keeping the brightest channel where it was keeps the exposure
 // meaning the same thing whatever the hue.
 float peak = max(c.r, max(c.g, c.b));
-float tintPeak = max(pTint.r, max(pTint.g, pTint.b));
-return mix(c, pTint.rgb * (peak / max(tintPeak, 1e-3)), pTint.a);
+float tintPeak = max(tint.r, max(tint.g, tint.b));
+return mix(c, tint.rgb * (peak / max(tintPeak, 1e-3)), tint.a);
+}
+
+// The room's own colour, read from the picture the glass already samples: a
+// fixed grid over the patch behind the lamp, and the most saturated of those
+// readings kept. Fixed, so every tube and every pixel of them takes the same
+// colour — a lamp under a wallpaper is lit by the wallpaper, not by the square
+// millimetre under one of its pixels.
+vec3 wallpaper_accent() {
+vec3 best = vec3(0.0);
+float bestSat = 0.0;
+for (int iy = 0; iy < 3; iy++) {
+for (int ix = 0; ix < 4; ix++) {
+vec2 uv = vec2(0.20 + 0.20 * float(ix), 0.25 + 0.25 * float(iy));
+vec3 c = texture(source, uv).rgb;
+float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
+if (sat > bestSat) {
+bestSat = sat;
+best = c;
+}
+}
+}
+// A grey room has no accent to take: leave the metal its own colour. What is
+// taken is the hue with its saturation pushed up a little — a wallpaper's own
+// colour is mostly room, and a lamp lit by it should read as that colour rather
+// than as a slightly tinted grey.
+if (bestSat <= 0.008)
+return vec3(0.0);
+float l = dot(best, vec3(0.2126, 0.7152, 0.0722));
+return clamp(mix(vec3(l), best, 1.45), 0.0, 1.0);
+}
+
+// The tint the tube's light actually takes: the theme's own colour, or the
+// wallpaper's own when the theme asks for that (nixieTintWallpaper).
+vec4 effective_tint(vec3 accent) {
+if (pWallpaper.x <= 0.0)
+return pTint;
+if (dot(accent, accent) < 1e-5)
+return pTint;
+return vec4(accent, pWallpaper.x);
 }
 
 vec3 tone_map(vec3 c) {
@@ -480,7 +520,7 @@ float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
 return mix(c, newPeak * vec3(1.0), g);
 }
 
-vec4 nixie_tube(vec2 px, vec2 p, vec2 tile, float pad,
+vec4 nixie_tube(vec2 px, vec2 p, vec2 tile, float pad, vec3 accent,
                 float digit, float flicker, float bulb, float edgeFade) {
 const float PI = 3.14159265;
 
@@ -967,7 +1007,11 @@ colour += metal_hit(px, N3, VIEW, vec3(0.19, 0.17, 0.15), 0.55) * sputter * 0.35
 vec3 add = vec3(0.0);
 // The theme hands the gas colour as a display value; the discharge is summed as
 // light, so it is linearised once here rather than carried as a code value.
-vec3 gasColour = tinted(pow(pHalo.rgb, vec3(2.2)));
+// The hue the tube's own light takes: the theme's coloured glass, or the
+// wallpaper's accent when the theme asks for that. One reading per tube, so the
+// whole discharge of a numeral is one colour.
+vec4 tint = effective_tint(accent);
+vec3 gasColour = tinted(pow(pHalo.rgb, vec3(2.2)), tint);
 float gasMap = 0.0;
 // The wire's own radiance, kept apart from everything else the discharge adds:
 // it is the only thing in the tube that stands above white, and it is what the
@@ -980,7 +1024,7 @@ if (bulb > 0.5) {
 float bulb = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
 float lit = 1.0 - clamp((bulb + 0.4) / 0.8, 0.0, 1.0);
 gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) / (1.4 * 5.0 * mm)) * 0.25;
-wireGlowColour = tinted(blackbody(pTempK));
+wireGlowColour = tinted(blackbody(pTempK), tint);
 wireRadiance = lit * 1.20 * pGlow * flicker * heat_power(pTempK, 1.0);
 add += wireGlowColour * wireRadiance;
 add += gasColour * gasMap * 0.15 * pGlow * pow(flicker, 1.4);
@@ -1020,7 +1064,7 @@ vec4 ends = digitEnds(int(digit + 0.5));
 float endDist = min(length(dp - ends.xy), length(dp - ends.zw));
 float heatProfile = clamp(endDist / HEAT_FALLOFF, 0.0, 1.0);
 float wireTemp = pTempK - HEAT_END_DROP * (1.0 - heatProfile);
-wireGlowColour = tinted(blackbody(wireTemp));
+wireGlowColour = tinted(blackbody(wireTemp), tint);
 // A wire that hot is its own light: Planck's colour for the colour, and
 // Stefan-Boltzmann's fourth power for the power. heat_power() is measured
 // against the 2550 K the theme is drawn at, so the knob at its default leaves
@@ -1109,7 +1153,7 @@ float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
 // The light the discharge throws: its own colour, and how much of it lands on
 // the glass is the theme's nixieWarmth — 0.45 is the tube's own look, so the
 // token multiplies it instead of repainting the picture.
-vec3 wash = mix(pHalo.rgb, pow(tinted(blackbody(pTempK)), vec3(0.4545)), 0.65);
+vec3 wash = mix(pHalo.rgb, pow(tinted(blackbody(pTempK), tint), vec3(0.4545)), 0.65);
 float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // The discharge's light lands on the wallpaper (the spill) — and inside the
 // glass it is the light itself, which the composite adds. Adding it here as well
@@ -1214,9 +1258,11 @@ vec2 px = qt_TexCoord0 * pSize;
 float edge = min(pSize.x * 0.5 - abs(px.x - pSize.x * 0.5),
                  pSize.y * 0.5 - abs(px.y - pSize.y * 0.5));
 float edgeFade = smoothstep(0.0, 1.0, clamp(edge / max(2.0 * pInset, 1.0), 0.0, 1.0));
+// Read once for the whole item: one lamp, one room, one colour.
+vec3 accent = (pWallpaper.x > 0.0) ? wallpaper_accent() : vec3(0.0);
 vec4 out_colour;
 if (pTile.w < 0.5) {
-out_colour = nixie_tube(px, px - pSize * 0.5, pSize, pInset,
+out_colour = nixie_tube(px, px - pSize * 0.5, pSize, pInset, accent,
                         pDigit, pFlicker, pBulb, edgeFade);
 } else {
 // The row: four tubes in one pass, which is the only way their light adds up
@@ -1227,7 +1273,7 @@ out_colour = nixie_tube(px, px - pSize * 0.5, pSize, pInset,
 vec4 acc = vec4(0.0);
 for (int i = 0; i < 4; i++) {
 vec2 centre = pSize * 0.5 + vec2(pRowX[i], 0.0);
-vec4 tube = nixie_tube(px, px - centre, pTile.xy, pTile.z,
+vec4 tube = nixie_tube(px, px - centre, pTile.xy, pTile.z, accent,
                        pRowDigit[i], pRowFlicker[i], 0.0, edgeFade);
 acc.rgb += tube.rgb;
 acc.a = max(acc.a, tube.a);
