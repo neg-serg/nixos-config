@@ -32,7 +32,7 @@ float pFlicker;    // ignition progress, 1 = struck and steady
 // would land one slot earlier and read the field before it.
 float padCore0;
 float pTempK;
-float padCore2;
+float pExposure;   // stops above white the discharge is exposed at
 float padCore3;
 vec4 pHalo;        // colour of the gas around it
 vec4 pGlass;       // the envelope's own tint
@@ -397,11 +397,10 @@ float l = (((-0.291099 * u + 1.519672) * u - 4.580079) * u + 9.070077) * u - 0.0
 return min(exp(l) * gain, 30.0);
 }
 
-// Stops above white the discharge is exposed at: the wire is this many times
-// brighter than a white surface, and the curve below is what turns that into a
-// white core. The old pipeline hid this number in three places at once — a
-// gain, an exposure constant and a "headroom" term — and then clipped it.
-const float DISCHARGE_EXPOSURE = 1.5;
+// The exposure itself is the theme's nixieExposure (pExposure): the wire stands
+// that many times above a white surface, and the curve below is what turns that
+// into a white core. The old pipeline hid this number in three places at once —
+// a gain, an exposure constant and a "headroom" term — and then clipped it.
 
 // The tone map: Khronos' PBR-neutral curve, built for exactly this job — an
 // object whose colour has to stay true while its highlights roll off. It takes
@@ -1041,7 +1040,7 @@ colour += cageGlow * 0.25;
 // then added a "headroom" of the wire's excess on top of the *display* value,
 // where an 8-bit sRGB surface simply clips it. The excess was a fixed 0.10 of
 // a number that already had a gain and an exposure folded into it.
-add = pow(tone_map(add * DISCHARGE_EXPOSURE), vec3(0.4545));
+add = pow(tone_map(add * pExposure), vec3(0.4545));
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;

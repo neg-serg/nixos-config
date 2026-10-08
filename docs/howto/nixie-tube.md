@@ -109,7 +109,7 @@ with the discharge on, the mesh's own region gains light with R/B ≈ 5 — dull
 
 **The discharge is exposed and tone-mapped, not clipped.** The wire and its gas are summed as light —
 the wire's colour from the measured Planck fit below, the gas's linearised from the theme's own
-colour — and mapped once through Khronos' PBR-neutral curve (`tone_map`, `DISCHARGE_EXPOSURE` = 1.5):
+colour — and mapped once through Khronos' PBR-neutral curve (`tone_map`, the theme's `nixieExposure`):
 the wire stands a stop and a half above white, the curve's shoulder turns that into a white core, and
 the metal's own colour survives under it. The result is encoded back into the display values the rest
 of the pass and the compositor work in. Nothing is clipped, and nothing is added after the curve:
@@ -133,9 +133,12 @@ The radiance column is the one that changed a look. Stefan-Boltzmann's fourth po
 share grows fast — the local exponent is 11 near 2000 K and 9 near 3000 K. `HEAT_END_DROP` is 150 K
 for that reason: the 550 K this used to lose at the ends would have put them out thirty times over.
 
-**The metal's own colour is dull orange.** The theme draws it at 2400 K — a nixie's cathode is
-nowhere near a tungsten filament, and the white in photographs of one is the camera, not the metal;
-the gas around the wire is what carries the orange.
+**The metal's own colour is dull orange.** The theme draws it at 2100 K by default — the vintage
+lamp, a deep orange close to the glow of a cathode in an old photograph. 2400 K, the temperature the
+calibration was taken at, is one token away and reads as a modern amber wire; the two looks are the
+same physics with `nixieTempK` and `nixieExposure` moved together (2100/2.5 and 2400/1.5). A nixie's
+cathode is nowhere near a tungsten filament, and the white in photographs of one is the camera, not
+the metal; the gas around the wire is what carries the orange.
 
 **The wire is hottest in the middle of a run.** A cathode is held at both ends by the stack's rods,
 and heat conducts out through them, so the shader carries the two ends of every numeral's wire
@@ -181,7 +184,8 @@ wall does the softening.
 | --- | --- |
 | `nixieDigitSize` | the numeral in px before `uiScale`; the tubes, the gaps and the colon are built from it |
 | `nixieGlow` | how hard the discharge burns |
-| `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: Planck gives the metal's colour, Stefan-Boltzmann its power |
+| `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: the metal's colour and its power are measured off the Planck spectrum (see the calibration below) |
+| `nixieExposure` | how many times brighter than white the wire is exposed at — what turns its colour into a white core through the tone curve. 2100 K at 2.5 is the vintage lamp, 2400 K at 1.5 is the calibrated modern one |
 | `nixieGlassColor`, `nixieCathodeColor` | the envelope's tint and the unlit wire behind the lit one |
 | `nixieWire` | the cathode's radius as a share of the numeral's height (0.0440 of 25 mm = 1.10 mm, so the wire is 2.20 mm across, and every bend is that radius) |
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
