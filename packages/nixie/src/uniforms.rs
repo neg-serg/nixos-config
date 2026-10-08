@@ -49,6 +49,13 @@ pub struct Uniforms {
     pub mm: f32,
     pub refract: f32,
     pub time: f32, // seconds of session time: the tube's idle shimmer
+    // The row: the greeter draws four tubes in one pass (see nixie.frag). The
+    // workbench draws one tube, so it leaves `tile[3]` at zero and the shader
+    // takes the single-tube path with pSize and pInset as the tube's own item.
+    pub row_x: [f32; 4],
+    pub row_digit: [f32; 4],
+    pub row_flicker: [f32; 4],
+    pub tile: [f32; 4], // width, height, the tube's margin, 1 = the row pass
 }
 
 /// The knobs in Theme/greeter.jsonc that are numbers. They are read from the
@@ -109,6 +116,11 @@ impl Uniforms {
             mm,
             refract: 1.0,
             time: 0.0,
+
+            row_x: [0.0; 4],
+            row_digit: [-1.0; 4],
+            row_flicker: [1.0; 4],
+            tile: [size[0], size[1], 16.0, 0.0],
         }
     }
 }
@@ -154,6 +166,10 @@ mod tests {
             mm: 0.0,
             refract: 0.0,
             time: 0.0,
+            row_x: [0.0; 4],
+            row_digit: [0.0; 4],
+            row_flicker: [0.0; 4],
+            tile: [0.0; 4],
         };
         let offset = |field: *const f32| field as usize - &base as *const _ as usize;
         assert_eq!(
@@ -166,6 +182,11 @@ mod tests {
         assert_eq!(offset(base.cathode.as_ptr()), 112);
         assert_eq!(offset(&base.thick as *const f32), 128);
         assert_eq!(offset(&base.time as *const f32), 140);
+        assert_eq!(offset(base.row_x.as_ptr()), 144);
+        assert_eq!(offset(base.row_digit.as_ptr()), 160);
+        assert_eq!(offset(base.row_flicker.as_ptr()), 176);
+        assert_eq!(offset(base.tile.as_ptr()), 192);
+        assert_eq!(size_of::<Uniforms>(), 208);
         assert_eq!(
             offset(&base.exposure as *const f32),
             68,
