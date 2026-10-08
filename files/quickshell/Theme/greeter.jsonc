@@ -63,12 +63,19 @@
     "nixieDigitSize": 92,
     "nixieGlow": 1.0,
     // The lit cathode's temperature in kelvin: a metal that hot is its own
-    // light, and the shader turns it into a colour with Planck's law, with the
-    // power following Stefan-Boltzmann against the 2550 K the tube was drawn at.
+    // light, and the shader draws it with a colour and a power measured off the
+    // Planck spectrum itself (see nixie.frag and scripts/dev/nixie-calibrate.py).
     // A nixie's cathode is not a tungsten filament: the discharge heats it to a
     // dull orange, and the white in photographs of one is the camera, not the
-    // metal. 2400 K is that glow's own colour — the gas around it stays orange.
-    "nixieTempK": 2400,
+    // metal. 2100 K is the vintage lamp — a deep orange, close to the glow of a
+    // cathode in an old photograph; 2400 K is the same physics, one knob apart,
+    // and reads as a modern amber wire.
+    "nixieTempK": 2100,
+    // How many times brighter than white the wire is exposed at. This is what
+    // makes a core white through the tone curve instead of painting it white:
+    // 1.5 is the calibrated pair for 2400 K, 2.5 keeps the vintage 2100 K wire
+    // glowing. Higher is a hotter lamp, lower is a dimmer one.
+    "nixieExposure": 2.5,
     "nixieGlowColor": "#ff5a10",
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",

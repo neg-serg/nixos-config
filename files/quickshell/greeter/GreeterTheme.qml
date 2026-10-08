@@ -95,6 +95,7 @@ Singleton {
     readonly property real nixieDigitSize: _val('greeter.nixieDigitSize', 92)
     readonly property real nixieGlow: _val('greeter.nixieGlow', 1.0)
     readonly property real nixieTempK: _val('greeter.nixieTempK', 2400)
+readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)
     readonly property color nixieGlowColor: _val('greeter.nixieGlowColor', "#ff5a10")
     readonly property color nixieGlassColor: _val('greeter.nixieGlassColor', "#4d120b06")
     readonly property color nixieCathodeColor: _val('greeter.nixieCathodeColor', "#aab6c4")
