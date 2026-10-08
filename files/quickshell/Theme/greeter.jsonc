@@ -91,6 +91,11 @@
     // an orange light through cyan glass would simply be dark, and this is the
     // knob for a tube that was blown in coloured glass.
     "nixieTint": "#00000000",
+    // Or let the room colour the lamp: above zero, the tube's light takes the
+    // wallpaper's own accent — the most saturated colour found on a ring around
+    // it — instead of nixieTint's, and this is how much of it. A grey wallpaper
+    // has no accent to take and the metal keeps its own colour.
+    "nixieTintWallpaper": 0.0,
     // The cathode wire's radius as a fraction of the numeral's height: 0.044 of
     // 25 mm is 1.10 mm, so the wire measures 2.20 mm across — a heavy-duty
     // cathode, and what the discharge around it is drawn on. The real IN-12
