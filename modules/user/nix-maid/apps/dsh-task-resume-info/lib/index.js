@@ -74,7 +74,7 @@ export function apply(ctx) {
       ...decision,
       messages: [...decision.messages, createUserMessage({
         content: [{ type: 'text', text: lines.join('\n') }],
-        source: { kind: 'plugin', plugin: 'task-resume-info' },
+        source: { kind: 'plugin:task-resume-info' },
       })],
     }
   })

@@ -113,7 +113,7 @@ export function apply(ctx, config = {}) {
         ...(decision.messages ?? []),
         createUserMessage({
           content: [{ type: 'text', text: note }],
-          source: { kind: 'plugin', plugin: 'snapcompact' },
+          source: { kind: 'plugin:snapcompact' },
         }),
       ],
     }

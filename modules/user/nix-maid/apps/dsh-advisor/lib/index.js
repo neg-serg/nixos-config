@@ -109,7 +109,7 @@ export function apply(ctx, config) {
         ...decision,
         messages: [...decision.messages, createUserMessage({
           content: [{ type: 'text', text: '[advisor] ' + advice }],
-          source: { kind: 'plugin', plugin: 'advisor' },
+          source: { kind: 'plugin:advisor' },
         })],
       }
     }

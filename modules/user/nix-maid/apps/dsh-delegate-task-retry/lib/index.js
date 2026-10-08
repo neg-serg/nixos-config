@@ -77,7 +77,7 @@ export function apply(ctx) {
       ...decision,
       messages: [...decision.messages, createUserMessage({
         content: [{ type: 'text', text: hint }],
-        source: { kind: 'plugin', plugin: 'delegate-task-retry' },
+        source: { kind: 'plugin:delegate-task-retry' },
       })],
     }
   })
