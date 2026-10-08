@@ -16,6 +16,12 @@ Geometry is applied with the Lua dispatchers:
     hl.dsp.window.move({window="address:0x...", x=.., y=..})
     hl.dsp.window.resize({window="address:0x...", x=.., y=..})
 NOTE: resize keeps the window center fixed, so apply resize BEFORE move.
+
+Saved geometry is layout-dependent: monitor resolutions/scales change between
+sessions, so a rect recorded on one layout can be fully off-screen on another
+(Telegram was saved on a 3840-wide layout and reappeared at x=3256). A rect
+that is less than half visible is clamped onto the focused monitor before it
+is applied; the poll then persists the healed rect.
 """
 
 import json
@@ -51,6 +57,8 @@ POLL_INTERVAL = 1.0  # seconds between geometry polls (captures drags/resizes)
 WRITE_THROTTLE = 0.5  # minimum seconds between geometry.json writes
 HYPCTL_TIMEOUT = 2.0  # guard for every hyprctl call
 APPLY_DELAY = 0.25  # delay after a special workspace becomes active
+MONITOR_MARGIN = 8  # clamp margin kept when a saved rect is off-screen
+VISIBLE_MIN = 0.5  # below this visible fraction the saved rect is clamped
 
 _sig = ""
 _geometry: dict = {}
@@ -133,6 +141,61 @@ def clients_json():
         return []
 
 
+def monitors_json() -> list:
+    out = hyprctl(["-j", "monitors"])
+    if out is None:
+        return []
+    try:
+        data = json.loads(out)
+        return data if isinstance(data, list) else []
+    except json.JSONDecodeError:
+        return []
+
+
+def monitor_logical_rect(m: dict) -> list:
+    """Monitor rect in layout coordinates (hyprctl reports physical w/h + scale)."""
+    scale = float(m.get("scale") or 1.0) or 1.0
+    w = int(round((m.get("width") or 0) / scale))
+    h = int(round((m.get("height") or 0) / scale))
+    return [int(m.get("x") or 0), int(m.get("y") or 0), w, h]
+
+
+def visible_fraction(at, size, monitors) -> float:
+    """Fraction of the window rect that lands on at least one monitor."""
+    total = size[0] * size[1]
+    if total <= 0:
+        return 0.0
+    visible = 0
+    for m in monitors:
+        mx, my, mw, mh = monitor_logical_rect(m)
+        x1 = max(at[0], mx)
+        y1 = max(at[1], my)
+        x2 = min(at[0] + size[0], mx + mw)
+        y2 = min(at[1] + size[1], my + mh)
+        if x2 > x1 and y2 > y1:
+            visible += (x2 - x1) * (y2 - y1)
+    return visible / total
+
+
+def clamp_geometry(at, size, monitors):
+    """Pull an off-screen saved rect back onto the focused monitor.
+
+    The rect is returned untouched while it is at least half visible (user
+    placement on/between monitors is preserved). Otherwise size and position
+    are clamped into the focused monitor, which is where a special workspace
+    is shown.
+    """
+    if not monitors or visible_fraction(at, size, monitors) >= VISIBLE_MIN:
+        return at, size
+    m = next((x for x in monitors if x.get("focused")), None) or monitors[0]
+    mx, my, mw, mh = monitor_logical_rect(m)
+    w = max(1, min(size[0], mw - 2 * MONITOR_MARGIN))
+    h = max(1, min(size[1], mh - 2 * MONITOR_MARGIN))
+    x = min(max(at[0], mx + MONITOR_MARGIN), mx + mw - w - MONITOR_MARGIN)
+    y = min(max(at[1], my + MONITOR_MARGIN), my + mh - h - MONITOR_MARGIN)
+    return [x, y], [w, h]
+
+
 def norm_addr(a: str) -> str:
     return a.strip().lower().removeprefix("0x")
 
@@ -202,7 +265,9 @@ def dispatch_lua(expr: str) -> bool:
 
 
 def apply_geometry_for_workspace(ws_name: str) -> None:
+    global _dirty
     time.sleep(APPLY_DELAY)
+    monitors = monitors_json()
     for cl in clients_json():
         if not cl.get("mapped"):
             continue
@@ -216,8 +281,11 @@ def apply_geometry_for_workspace(ws_name: str) -> None:
         addr = norm_addr(cl.get("address", ""))
         if not addr:
             continue
-        size = entry["size"]
-        at = entry["at"]
+        at, size = clamp_geometry(entry["at"], entry["size"], monitors)
+        healed = {"at": at, "size": size}
+        if _geometry.get(cls) != healed:
+            _geometry[cls] = healed
+            _dirty = True  # persisted on the next flush
         # resize first: resize keeps the window center fixed, move sets position exactly
         dispatch_lua(
             f'hl.dsp.window.resize({{window="address:0x{addr}", x={size[0]}, y={size[1]}}})'
