@@ -147,6 +147,13 @@ property real pWarmth: GreeterTheme.nixieWarmth * root.warmthScale
 property real pFlicker: root.ignition
 property real pTime: root.clock
 property real pExposure: GreeterTheme.nixieExposure
+// The block's two pure std140 paddings. A vec4 of the shader's own floats has
+// to start on a 16-byte boundary, so the slots carrying the temperature and the
+// highlight have a spare float each; nothing reads them, but Qt warns about
+// every uniform with no property behind it — a warning per tube per frame is
+// noise in the greeter's log.
+property real padCore0: 0
+property real padCore3: 0
 property real pMm: root.numeralSize / 18.0   // px per millimetre, the drawing's scale
 property real pThick: Math.max(0.8, 0.9 * root.mmPerPx) * root.glassThickness  // the wall, ~0.9 mm
 property real pRefract: root.glassRefraction
