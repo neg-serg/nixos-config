@@ -150,7 +150,11 @@ fn render(
 
     let image = image::RgbaImage::from_raw(frame.width, frame.height, frame.rgba)
         .ok_or_else(|| anyhow::anyhow!("the readback is not an image"))?;
-    image.save(out)?;
+    // As the screen shows it: the shader writes its own light and what it lets
+    // through, and the compositor lays that over the room. A picture saved
+    // without that step reads as a lamp on black.
+    let shown = compose(&image, &wallpaper);
+    shown.save(out)?;
     println!(
         "{}: {}x{} device px",
         out.display(),
@@ -158,6 +162,32 @@ fn render(
         frame.height
     );
     Ok(())
+}
+
+/// The frame as the screen shows it: the tube's own light and the picture it
+/// transmits, over the room behind it — the compositor's blend, so a
+/// measurement sees what the eye would. The tube writes its picture already
+/// multiplied by what it lets through, so the backdrop is added once.
+fn compose(frame: &image::RgbaImage, bg: &image::RgbaImage) -> image::RgbaImage {
+    let (w, h) = (
+        frame.width().min(bg.width()),
+        frame.height().min(bg.height()),
+    );
+    let mut out = image::RgbaImage::new(frame.width(), frame.height());
+    for y in 0..h {
+        for x in 0..w {
+            let p = frame.get_pixel(x, y);
+            let b = bg.get_pixel(x, y);
+            let a = p[3] as f32 / 255.0;
+            let mut q = [0u8; 4];
+            for c in 0..3 {
+                q[c] = (p[c] as f32 + (1.0 - a) * b[c] as f32).min(255.0) as u8;
+            }
+            q[3] = 255;
+            out.put_pixel(x, y, image::Rgba(q));
+        }
+    }
+    out
 }
 
 /// Every numeral, drawn on the same GPU pass, measured as it comes out, and
@@ -194,9 +224,15 @@ fn sweep(
             digit,
         );
         let frame = vulkan::render(spv, &uniforms, &wall, width, height)?;
+        let tile = image::RgbaImage::from_raw(frame.width, frame.height, frame.rgba)
+            .ok_or_else(|| anyhow!("the readback is not an image"))?;
+        // The measurements are taken on the picture as it is shown, not on the
+        // raw pass: the tube's transparent pixels are the room, and a median
+        // taken over raw alpha would count them as black.
+        let shown = compose(&tile, &wall);
         let measured = measure::measure(
-            &frame.rgba,
-            frame.width,
+            shown.as_raw(),
+            shown.width(),
             (
                 pad as u32,
                 pad as u32,
@@ -222,18 +258,19 @@ fn sweep(
                 }
             }
         }
-        let tile = image::RgbaImage::from_raw(frame.width, frame.height, frame.rgba)
-            .ok_or_else(|| anyhow!("the readback is not an image"))?;
-        image::imageops::replace(&mut sheet, &tile, (digit as i64) * width as i64, 0);
+        image::imageops::replace(&mut sheet, &shown, (digit as i64) * width as i64, 0);
     }
     // The glass itself: measured on the lamp with nothing lit, which is where
     // the plan's A3 measures it too — the discharge drowns everything else.
     let dark =
         uniforms::Uniforms::from_drawing(drawing, tokens, mm, [width as f32, height as f32], -1);
     let frame = vulkan::render(spv, &dark, &wall, width, height)?;
+    let dark_tile = image::RgbaImage::from_raw(frame.width, frame.height, frame.rgba)
+        .ok_or_else(|| anyhow!("the readback is not an image"))?;
+    let dark_shown = compose(&dark_tile, &wall);
     let glass = measure::measure(
-        &frame.rgba,
-        frame.width,
+        dark_shown.as_raw(),
+        dark_shown.width(),
         (
             pad as u32,
             pad as u32,
