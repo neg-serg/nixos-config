@@ -183,6 +183,7 @@ wall does the softening.
 | token | what it does |
 | --- | --- |
 | `nixieDigitSize` | the numeral in px before `uiScale`; the tubes, the gaps and the colon are built from it |
+| `nixieTubeMargin` | the room a tube's item keeps around its glass for the bloom. The clock's row is spaced negative by two of these, so the glass edges can sit a few pixels apart while every tube still has its own margin to glow into. It is also the border the discharge's light no longer stops dead at: the light on the wallpaper fades over the last two margins instead of drawing a rectangle around the tube |
 | `nixieGlow` | how hard the discharge burns |
 | `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: the metal's colour and its power are measured off the Planck spectrum (see the calibration below) |
 | `nixieExposure` | how many times brighter than white the wire is exposed at — what turns its colour into a white core through the tone curve. 2100 K at 2.5 is the vintage lamp, 2400 K at 1.5 is the calibrated modern one |

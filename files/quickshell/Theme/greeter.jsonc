@@ -60,7 +60,11 @@
     // almost white while the gas around it is pure orange, and the glass it
     // burns in is a very dark, warm tint. "nixieDigitSize" is the numeral in px
     // before uiScale; the tubes, the gaps and the colon are built from it.
+    // "nixieTubeMargin" is the room each tube's item keeps around its glass for
+    // the discharge's bloom: the clock's row is spaced negative by two of them,
+    // so the glass edges can sit as close as the clock's own two gaps say.
     "nixieDigitSize": 92,
+    "nixieTubeMargin": 16,
     "nixieGlow": 1.0,
     // The lit cathode's temperature in kelvin: a metal that hot is its own
     // light, and the shader draws it with a colour and a power measured off the

@@ -1054,7 +1054,16 @@ float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // counted every ray of it twice, which is what fattened the white core to two
 // and a half times the wire's own width. It is light, not the discharge: a
 // twelfth of the wire's own radiance, spread wide, is what a hot wire throws.
-colour += wash * add * spill * warmth * 0.12;
+//
+// The spill is the one thing here that reaches past the glass, and the item it
+// is drawn in is finite: at its border the light used to stop dead, which put a
+// rectangle of lamp-lit wallpaper around every tube — plain to see once the
+// tubes sit against each other. `edge` is the distance to that border, and the
+// spill fades to nothing over the last two margins of it, so the lamp lights the
+// desk without drawing its own box.
+float edge = min(pSize.x * 0.5 - abs(p.x), pSize.y * 0.5 - abs(p.y));
+float edgeFade = smoothstep(0.0, 1.0, clamp(edge / max(2.0 * pInset, 1.0), 0.0, 1.0));
+colour += wash * add * spill * warmth * 0.12 * edgeFade;
 alpha += clamp(gasMap * pGlow * 0.10, 0.0, 0.30) * inside;
 
 // --- the collar the tube is plugged in by ---------------------------------

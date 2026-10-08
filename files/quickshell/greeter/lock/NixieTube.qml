@@ -55,7 +55,7 @@ readonly property real glassWidth: Math.max(2, Math.round(21.0 * root.mmPerPx))
 readonly property real glassHeight: Math.max(2, Math.round(35.0 * root.mmPerPx))
 // Room around the envelope for the bloom and for the refracted wallpaper, which
 // the lens pulls in by a good part of the radius.
-readonly property real pad: Math.round(16 * root.uiScale)
+readonly property real pad: Math.round(GreeterTheme.nixieTubeMargin * root.uiScale)
 
 implicitWidth: root.glassWidth + root.pad * 2
 implicitHeight: root.glassHeight + root.pad * 2
