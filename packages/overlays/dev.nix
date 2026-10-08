@@ -15,6 +15,11 @@ in
     checkPhase = ":";
   });
 
+  # The nixie workbench: the login clock's tubes drawn off-screen on the GPU
+  # (packages/nixie/, run as `nixie validate|render|sweep`), so their geometry
+  # and their discharge can be checked without a compositor in the way.
+  nixie = call (pkg "nixie") { };
+
   # Reserved for development/toolchain overlays
   mojo = call (pkg "mojo") { }; # Mojo programming language (PyPI wheels repackaged)
 
