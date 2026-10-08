@@ -416,6 +416,13 @@ const vec3 GLASS_N = vec3(1.5155, 1.5200, 1.5280);   // red, green, blue
 // read as glass instead of as a tinted pane.
 const float WALL_MM = 2.3;
 float wall = clamp(pThick * (WALL_MM / 0.9), 0.4, 0.9 * R);
+// Hand-blown glass is not a machined shell: the wall wanders by a few tenths of
+// a millimetre from the shoulder to the foot, and the rim shows it as living
+// streaks. Two sines of different periods, so no repeat is visible over the
+// tube's height — the eye reads a hand, not a period.
+float blown = 1.0 + 0.10 * (0.6 * sin(p.y / (3.1 * mm) + 0.7)
+                          + 0.4 * sin(p.y / (1.3 * mm) + 2.4));
+wall *= blown;
 float wallGain = wall / max(pThick, 0.4);
 // A thicker wall bends the picture further and folds its rim deeper, but not in
 // full proportion: the square root of the gain keeps the room behind the tube
