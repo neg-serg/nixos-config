@@ -72,9 +72,11 @@
     "nixieGlassColor": "#4d120b06",
     "nixieCathodeColor": "#aab6c4",
     // The cathode wire's radius as a fraction of the numeral's height: 0.018 of
-    // 30 mm is 0.54 mm, a heavy-duty cathode — it carries more gas, so it reads
-    // as a filament rather than as a line. The real IN-12 cathode is 0.24 mm;
-    // this one is drawn fat on purpose.
+    // 30 mm is 0.54 mm, so the wire measures 1.08 mm across — a heavy-duty
+    // cathode, and what the discharge around it is drawn on. The real IN-12
+    // cathode is 0.24 mm; this one is thicker on purpose, because what the eye
+    // reads on the login screen is the glowing filament, and a hairline
+    // vanishes there.
     "nixieWire": 0.0180,
     "nixieStack": 0.5,
     "nixieHighlight": 0.8,
