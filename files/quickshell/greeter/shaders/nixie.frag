@@ -164,10 +164,19 @@ d = min(d, sdSegment(p, vec2(0.069, -0.923), vec2(-0.359, -0.923)));
 return d;
 }
 if (digit == 6)
-// The drawing font's 6: one straight stroke off the top, and the bowl a closed
-// loop of four straight sides and four quadrant bends.
-return min(sdBentRect(p, vec2(-0.359, -0.923), vec2(0.330, 0.107), 0.20),
-           sdSegment(p, vec2(0.155, 0.990), vec2(-0.159, 0.107)));
+// The 6 of Iosevka — the user's own cut of it, Iosevkaneg — measured off the
+// glyph itself: a closed bowl, and a cap over it whose right-hand side stops
+// short of the bowl. That gap in the right side is what makes it a 6 and not an
+// 8, and every bend here is a quadrant of one radius, r = 0.24.
+{
+float bowl = sdBentRect(p, vec2(-0.330, -0.920), vec2(0.330, 0.100), 0.24);
+float cap = sdSegment(p, vec2(-0.330, -0.140), vec2(-0.330, 0.680));
+cap = min(cap, sdArc(p, vec2(-0.090, 0.680), 0.24, 1.5707963268, 3.1415926536));
+cap = min(cap, sdSegment(p, vec2(-0.090, 0.920), vec2(0.090, 0.920)));
+cap = min(cap, sdArc(p, vec2(0.090, 0.680), 0.24, 0.0, 1.5707963268));
+cap = min(cap, sdSegment(p, vec2(0.330, 0.680), vec2(0.330, 0.550)));
+return min(bowl, cap);
+}
 if (digit == 7)
 // A lid and a leg and nothing else — a nixie's 7 is not a bowl with a side —
 // with the one corner it has rounded off by a good part of the wire.
