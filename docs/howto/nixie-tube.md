@@ -54,7 +54,7 @@ The primitives, all in `nixie.frag`:
 - `smin` — a smooth union. It is still used where two strokes of different direction meet without a
   common tangent, but a bend with a known radius is built from quadrants, not from a softened corner.
   At an elbow the softening is the wire's own radius, taken from the `nixieWire` token (about
-  0.75 mm at the heavy-duty default): a wire that was bent has the thickness of the wire it was bent
+  0.90 mm at the heavy-duty default): a wire that was bent has the thickness of the wire it was bent
   from, no more.
 
 The figures:
@@ -141,7 +141,7 @@ crisp flipped copy of the numeral inside the tube would read as a second, broken
 | `nixieGlow` | how hard the discharge burns |
 | `nixieTempK`, `nixieGlowColor` | the cathode's temperature in kelvin and the gas around it: Planck gives the metal's colour, Stefan-Boltzmann its power |
 | `nixieGlassColor`, `nixieCathodeColor` | the envelope's tint and the unlit wire behind the lit one |
-| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0250 of 30 mm = 0.75 mm, so the wire is 1.50 mm across, and every bend is that radius) |
+| `nixieWire` | the cathode's radius as a share of the numeral's height (0.0300 of 30 mm = 0.90 mm, so the wire is 1.80 mm across, and every bend is that radius) |
 | `nixieStack` | how visible the nine unlit cathodes behind the lit one are |
 | `nixieHighlight` | how much light the glass catches |
 | `nixieWarmth` | how much of the discharge's light lands on the glass (0.45 is the tube's own look) |
@@ -202,9 +202,9 @@ Three known gaps, all honest:
 
 - the render is not reproducible from run to run — two identical invocations differ by ~9/255 on
   average over the frame, so the sweep's own numbers carry that noise;
-- the wire is drawn fatter than a real cathode (1.50 mm across against the sheet's 0.24 mm) on
+- the wire is drawn fatter than a real cathode (1.80 mm across against the sheet's 0.24 mm) on
   purpose: a hairline disappears on a login screen, and what the eye reads is the glowing filament.
-  `validate`'s limit is 1.6 mm for that reason, and the plan's A2 widths (white ≤ 8 px, hot ≤ 16 px)
+  `validate`'s limit is 2.0 mm for that reason, and the plan's A2 widths (white ≤ 8 px, hot ≤ 16 px)
   were written for a hairline — the accepted lamp is wider than those numbers, so `sweep --check`
   reports the wire as thick;
 - the sweep draws the room at full brightness (`room = 1.0`), while the login screen samples the
