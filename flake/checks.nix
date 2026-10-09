@@ -86,6 +86,11 @@ in
   # lib/ru-keys.nix is the single source of truth for ЙЦУКЕН hotkey
   # duplicates; these assertions pin the table and every generator.
   "ru-keys" = mkOkCheck "ru-keys" (import ../lib/ru-keys-tests.nix { lib = nixpkgs.lib; });
+  # kitty action lines must keep their comments on their own lines: kitty has no
+  # inline comments (everything after the action is passed to it as arguments).
+  "kitty-config" = mkOkCheck "kitty-config" (
+    import ../lib/kitty-config-tests.nix { lib = nixpkgs.lib; }
+  );
 
   # ── fzf opts guards ────────────────────────────────────────────────
   # fzf parses FZF_*_OPTS values as its own CLI options; a standalone '#'
