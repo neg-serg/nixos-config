@@ -4,7 +4,9 @@
 > and rustmission are **not fixable via config** (confirmed from the source — see "Validation");
 > btop/ghostty are known issues. The RU duplicates are additive (the US layout is unaffected);
 > exception — kitty's Emacs scroll layer was moved from Ctrl+Shift to Ctrl+Alt to remove a conflict
-> with `kitty_mod+b/f/p`.
+> with `kitty_mod+b/f/p`. 2026-10: kitty's generated duplicates carried inline comments, which kitty
+> passes to the action as arguments (`alt+т` opened a tab that tried to run the command `#`) — the
+> comments now sit on their own lines, and `ru-keys-tests.nix` guards against their return.
 
 ## TL;DR
 
@@ -109,6 +111,16 @@ change position under RU (`,` → `б`, `.` → `ю`, `` ` `` → `ё`, `[` → 
   **Ctrl+Alt+n/p/f/b** so it does not conflict with `kitty_mod+b/f/p` (Ctrl+Shift)
 - `mouse_map ctrl+shift+right` — layout-independent (modifiers+button) ✅
 
+**Inline comments are arguments.** kitty's config has no inline comment syntax: the parser splits a
+`map` line into the key and *everything else*, and the rest is the action's argument string
+(`conf/utils.py` — `key_pat`, `val.split(maxsplit=1)`). A trailing `# n→т` therefore does not
+comment anything out; it is passed to the action, and for actions that take a command —
+`new_tab`, `launch`, the `action_alias` kittens — it is a real, visible bug: the generated
+`map alt+т new_tab  # n→т` made `alt+т` open a tab that tried to run the command `#` and died with
+*Failed to launch child: #* (same for `ctrl+shift+е`, the RU `kitty_mod+t`). Generated and
+hand-written binds keep their comments on their own lines; `ru-keys-tests.nix` fails the build if a
+generated `map` line ever carries a `#` after the action.
+
 Not broken: `insert`, `delete`, `escape`, `f2`, `backspace`, `equal/minus`, `ctrl+left/right`,
 `kitty_mod+backspace`.
 
@@ -212,8 +224,15 @@ map ctrl+shift+CYRILLIC_EF>Cyrillic_SOFTSIGN set_background_opacity +0.1  # >m (
 If the block feels bulky — the minimum: paste, close_tab/close_window, tab/window switching,
 scroll_to_prompt, `kitty_mod+grave` (move_window_to_top).
 
+Also fixed (2026-10): kitty has no inline comments, so the generated block's trailing `# char→char`
+notes were being passed to the actions as arguments — `alt+т` ran `new_tab #`, opened a tab and the
+tab died with *Failed to launch child: #*; the comments now sit on their own lines (see "Inline
+comments are arguments" above). The same cleanup removed the inline comments from the hand-written
+`kitty_scrollback_nvim` binds, whose kittens were receiving them as arguments.
+
 **Check:** `kitty +kitten debug_keyboard` under RU (compare the keysym names), then walk through the
-duplicates one by one.
+duplicates one by one; `alt+т` and `ctrl+shift+е` must open a working tab (a prompt, not *Failed to
+launch child*).
 
 ### P1 — mpv
 
