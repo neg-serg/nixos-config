@@ -121,8 +121,11 @@ let
 
   # kitty map lines for the Russian-layout duplicates of existing binds.
   # Each spec: { mod = "ctrl+shift"; keys = [ "s" "f" ]; action = "…"; }
+  # NB: kitty has no inline comments — everything after the action is passed to
+  # it as arguments (`new_tab  # n→т` runs the command "#"). The comment showing
+  # the char mapping therefore goes on its own line above the bind.
   mkKittyLines =
-    specs: map (s: "map ${s.mod}+${kittySeq s.keys} ${s.action}  # ${kittyComment s.keys}") specs;
+    specs: map (s: "# ${kittyComment s.keys}\nmap ${s.mod}+${kittySeq s.keys} ${s.action}") specs;
 
   kittyComment =
     keys: builtins.concatStringsSep ", " (map (k: if toRu k != null then "${k}→${toRu k}" else k) keys);
