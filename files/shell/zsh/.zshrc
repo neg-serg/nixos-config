@@ -1,3 +1,7 @@
+# iris wraps the interactive shell (it execs it) — sourced first, so the outer
+# shell does not pay for zinit/p10k; the child shell runs the rest of this file.
+source "${ZDOTDIR}/iris.zsh"
+
 source @zinit@/share/zinit/zinit.zsh
 [[ -f /etc/NIXOS ]] && fpath=(${ZDOTDIR}/lazyfuncs ${XDG_CONFIG_HOME}/zsh-nix $fpath)
 zi ice depth'1' lucid
