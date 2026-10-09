@@ -5,16 +5,17 @@
 }:
 buildGoModule rec {
   pname = "iris";
-  # main (c86c0244): adds ghost-text = 2 (ghost text only, no suggestion menu)
-  # which v0.6.3 cannot do (its ghost-text is a plain bool and the menu always
-  # renders). Unreleased upstream; pinned for reproducibility.
-  version = "0.6.3-unstable-2026-08-27";
+  # Tagged release (2026-10-09). Before this the pin was unreleased main
+  # c86c0244 (pre-v0.7.0), taken just for ghost-text = 2 — v0.7.0 shipped
+  # that as a documented 3-mode option (0 = off, 1 = menu + ghost, 2 = ghost
+  # only), along with the arrow-key, atuin/menu and history fixes.
+  version = "0.7.3";
 
   src = fetchFromGitHub {
     owner = "versenilvis";
     repo = "iris";
-    rev = "c86c0244cf6b02eb8f27482313aaf946c175366e";
-    hash = "sha256-3WDH2nunFznhvw8P+UBxcuxGOcSerdyNDen/5seViQA=";
+    rev = "v0.7.3";
+    hash = "sha256-7JdwXpt+EDU6fRjBf0kzHwCeB2NFwYk1rSZY790QIag=";
   };
 
   # Go module dependencies (charmbracelet lipgloss/glamour, cobra, modernc sqlite, ...).
@@ -23,7 +24,9 @@ buildGoModule rec {
   # [trantor] The accept key (Ctrl+E / Tab) inserts the menu's current suggestion
   # when the menu is visible, otherwise falls through to the shell so the key
   # keeps its normal meaning (Ctrl+E: end-of-line, Tab: fzf-on-tab / ~/m/new
-  # expansion). Upstream always consumes the key, even with a hidden menu.
+  # expansion). Upstream always consumes the key, even with a hidden menu —
+  # re-checked on v0.7.3: root/wrapper.go still says "always consume the full
+  # binding atomically, even when the overlay is hidden".
   patches = [ ./iris-select-fallthrough.patch ];
 
   # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
