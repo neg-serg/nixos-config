@@ -1,19 +1,15 @@
 source @zinit@/share/zinit/zinit.zsh
-FAST_WORK_DIR=~/.config/f-sy-h
-source ~/.config/zsh/00-fsyh-parser.zsh
 [[ -f /etc/NIXOS ]] && fpath=(${ZDOTDIR}/lazyfuncs ${XDG_CONFIG_HOME}/zsh-nix $fpath)
 zi ice depth'1' lucid
 zi light romkatv/zsh-defer
 typeset -f zsh-defer >/dev/null || zsh-defer() { "$@"; }
-# Native Rust syntax highlighting module (primary)
+# Syntax highlighting: the Rust engine (zsh-native-syntax). Its theme.ini is
+# built from files/shell/zsh-native-syntax/neg.ini by shells.nix, so nothing
+# here reads a theme at runtime. F-Sy-H was dropped (2026-10): it needed its
+# own theme files plus 00-fsyh-parser.zsh glue, and it only ever loaded as a
+# fallback when the Rust module was unavailable.
 module_path+=("@native-syntax@/lib/zsh")
 source @native-syntax@/lib/zsh/zsh-native-syntax.plugin.zsh
-# F-Sy-H (deferred, secondary — provides file-ext styles)
-# Only load if zsh-native-syntax (primary) is not available, to avoid widget conflicts
-if [[ -z "$DISTROBOX_ENTER_PATH" ]] && ! zmodload -F zsh_native_syntax 2>/dev/null && [[ ! -r "${module_path[-1]}/zsh_native_syntax.so" ]]; then
-  zi ice depth'1' lucid atinit'typeset -gA FAST_HIGHLIGHT; FAST_HIGHLIGHT[use_async]=1 FAST_HIGHLIGHT[BIND_VI_WIDGETS]=0 FAST_HIGHLIGHT[WIDGETS_MODE]=minimal' wait'0'
-  zi load neg-serg/F-Sy-H
-fi
 # Powerlevel10k prompt (via zinit)
 zi ice depth'1' lucid atload'source ${ZDOTDIR}/.p10k.zsh'
 zi load romkatv/powerlevel10k

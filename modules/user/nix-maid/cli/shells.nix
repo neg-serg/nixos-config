@@ -34,9 +34,9 @@ let
       (builtins.readFile ./zsh-config-source.sh)
   );
 
-  # --- zsh-native-syntax theme, derived from the f-sy-h theme ---
-  # files/shell/f-sy-h/neg.ini is the single source for both themes: the Rust
-  # engine reads ~/.config/zsh-native-syntax/theme.ini, which differs from
+  # --- zsh-native-syntax theme ----------------------------------------------
+  # files/shell/zsh-native-syntax/neg.ini is the single source of the theme: the
+  # Rust engine reads ~/.config/zsh-native-syntax/theme.ini, which differs from
   # neg.ini only in the [paths] values (plus path-tilde) and the extra
   # [param-expansion] section. Materialised in the Nix store so ~/.config stays
   # the same read-only symlink it was when theme.ini was a second checked-in copy.
@@ -54,7 +54,7 @@ let
         "path-to-dir   = white\npath-tilde    = green,bold"
         "history-expansion    = blue,bold\n\n[param-expansion]\nparamvar     = 63\nparamoper    = 141\nparamdefault = 249"
       ]
-      (builtins.readFile (shellFiles + "/f-sy-h/neg.ini"))
+      (builtins.readFile (shellFiles + "/zsh-native-syntax/neg.ini"))
   );
 
   zshNativeSyntaxTheme = pkgs.runCommandLocal "neg-zsh-native-syntax" { } ''
@@ -129,7 +129,6 @@ in
       ".config/iris/config.toml".source = "${irisConfigLive}/config.toml";
       ".config/iris/theme.toml".source = "${irisConfigLive}/theme.toml";
       ".config/bash/oh-my-posh.bash".source = "${shellFilesLive}/bash/oh-my-posh.bash";
-      ".config/f-sy-h".source = "${shellFilesLive}/f-sy-h";
       ".config/zsh-native-syntax".source = zshNativeSyntaxTheme;
       # --- Terminal & Specific Shell Configs ---
       # kitty dir deployed as-is from files/kitty/ (live links: an edit lands
