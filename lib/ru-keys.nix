@@ -7,6 +7,10 @@
 # duplicate blocks MUST be generated from this table — hand-written duplicates
 # are a bug, because they silently desync from the latin binds.
 #
+# kitty is the exception: its own `map --allow-fallback=shifted,ascii` matches
+# the base-layout key for non-ASCII events (see files/kitty/key.conf), so it
+# carries no duplicates and no generator here.
+#
 # Mechanics and the per-app coverage matrix:
 # docs/howto/hotkeys-ru-layout.md
 #
@@ -95,40 +99,8 @@ let
   toRu = k: latinToRu.${k} or latinToRuUpper.${k} or null;
 
   # Map a list of single-char keys (yazi on=[...], zellij Char, rmpc key lists)
-  # to their ru counterparts. Keys without a counterpart are dropped — for
-  # sequences that keep digits, see kittySeq.
+  # to their ru counterparts. Keys without a counterpart (digits) are dropped.
   mkRuKeys = keys: builtins.filter (k: k != null) (map toRu keys);
-
-  # kitty key-sequence: every latin key becomes its LITERAL Cyrillic char —
-  # kitty matches by character (all its latin binds are literal chars too, e.g.
-  # `map kitty_mod+v`), so under ru the physical key produces the Cyrillic char
-  # and the dup binds match. Keys without a counterpart (digits) stay literal.
-  # Multi-key sequences join with ">".
-  # NB: keysym NAMES (Cyrillic_em) are NOT used: kitty resolves them via
-  # xkb_keysym_from_name, which on this system can't load libxkbcommon (no
-  # ld.so.cache) and the names are silently dropped as "unknown key".
-  kittySeq =
-    keys:
-    builtins.concatStringsSep ">" (
-      map (
-        k:
-        let
-          r = toRu k;
-        in
-        if r == null then k else r
-      ) keys
-    );
-
-  # kitty map lines for the Russian-layout duplicates of existing binds.
-  # Each spec: { mod = "ctrl+shift"; keys = [ "s" "f" ]; action = "…"; }
-  # NB: kitty has no inline comments — everything after the action is passed to
-  # it as arguments (`new_tab  # n→т` runs the command "#"). The comment showing
-  # the char mapping therefore goes on its own line above the bind.
-  mkKittyLines =
-    specs: map (s: "# ${kittyComment s.keys}\nmap ${s.mod}+${kittySeq s.keys} ${s.action}") specs;
-
-  kittyComment =
-    keys: builtins.concatStringsSep ", " (map (k: if toRu k != null then "${k}→${toRu k}" else k) keys);
 
   # vim/neovim langmap: "ru;latin" pairs, ru side first (typing ru chars acts
   # as latin keys). Order and escaping match files/nvim/lua/00-settings.lua,
@@ -218,8 +190,6 @@ in
     latinToRuUpper
     toRu
     mkRuKeys
-    kittySeq
-    mkKittyLines
     mkLangmap
     ;
 }

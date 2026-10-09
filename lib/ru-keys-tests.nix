@@ -82,77 +82,9 @@ let
       ] == [ "о" ]
     ) "mkRuKeys drops keys without counterpart")
 
-    # kittySeq: LITERAL Cyrillic chars (kitty matches by char — keysym names
-    # need libxkbcommon which isn't loadable on this system), digits literal,
-    # sequences joined with >.
-    (check (ru.kittySeq [ "v" ] == "м") "kittySeq letter")
-    (check (
-      ru.kittySeq [
-        "s"
-        "f"
-      ] == "ы>а"
-    ) "kittySeq sequence")
-    (check (
-      ru.kittySeq [
-        "a"
-        "1"
-      ] == "ф>1"
-    ) "kittySeq digit stays literal")
-    (check (
-      ru.kittySeq [ "[" ] == "х" && ru.kittySeq [ "," ] == "б" && ru.kittySeq [ "`" ] == "ё"
-    ) "kittySeq punctuation")
-
-    # mkKittyLines: exact line shape used in files/kitty/key.conf. The
-    # provenance comment sits on its OWN line above the bind — kitty has no
-    # inline comments (everything after the action is passed to it as
-    # arguments, so `new_tab  # n→т` made alt+т run the command "#").
-    (check (
-      ru.mkKittyLines [
-        {
-          mod = "ctrl+shift";
-          keys = [ "v" ];
-          action = "paste_from_clipboard";
-        }
-      ] == [ "# v→м\nmap ctrl+shift+м paste_from_clipboard" ]
-    ) "mkKittyLines single-key line")
-    (check (
-      ru.mkKittyLines [
-        {
-          mod = "ctrl+shift";
-          keys = [
-            "s"
-            "f"
-          ];
-          action = "neghints --program @";
-        }
-      ] == [ "# s→ы, f→а\nmap ctrl+shift+ы>а neghints --program @" ]
-    ) "mkKittyLines sequence line")
-    (check
-      (builtins.all
-        (
-          line:
-          builtins.all (l: !(lib.hasPrefix "map " l) || !(lib.hasInfix "#" l)) (lib.splitString "\n" line)
-        )
-        (
-          ru.mkKittyLines [
-            {
-              mod = "alt";
-              keys = [ "n" ];
-              action = "new_tab";
-            }
-            {
-              mod = "ctrl+shift";
-              keys = [
-                "s"
-                "f"
-              ];
-              action = "neghints --program @";
-            }
-          ]
-        )
-      )
-      "generated kitty binds must carry no inline comments (kitty passes them to the action as arguments)"
-    )
+    # kitty is deliberately absent: its own --allow-fallback=shifted,ascii
+    # matches the base-layout key, so it carries no generated duplicates. The
+    # kitty configs are guarded by lib/kitty-config-tests.nix instead.
 
     # mkLangmap: byte-identical to the neovim langmapper.nvim output.
     (check (ru.mkLangmap == langmapGolden) "mkLangmap must match neovim langmapper output exactly")

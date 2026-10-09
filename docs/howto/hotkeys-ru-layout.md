@@ -4,9 +4,10 @@
 > and rustmission are **not fixable via config** (confirmed from the source — see "Validation");
 > btop/ghostty are known issues. The RU duplicates are additive (the US layout is unaffected);
 > exception — kitty's Emacs scroll layer was moved from Ctrl+Shift to Ctrl+Alt to remove a conflict
-> with `kitty_mod+b/f/p`. 2026-10: kitty's generated duplicates carried inline comments, which kitty
-> passes to the action as arguments (`alt+т` opened a tab that tried to run the command `#`) — the
-> comments now sit on their own lines, and `ru-keys-tests.nix` guards against their return.
+> with `kitty_mod+b/f/p`. 2026-10: kitty moved from generated ЙЦУКЕН duplicates to its own
+> `map --allow-fallback=shifted,ascii` (the duplicates also fed their trailing comments to the
+> actions — `alt+т` opened a tab that tried to run the command `#`); `lib/kitty-config-tests.nix`
+> guards the configs.
 
 ## TL;DR
 
@@ -17,7 +18,7 @@
 - **Main victims of the RU layout** are programs that match hotkeys against the active layout's
   keysym with no fallback:
   - `kitty` — every `kitty_mod` (Ctrl+Shift+letter) and `Ctrl+letter` shortcut from
-    `files/kitty/key.conf`;
+    `files/kitty/key.conf` — **fixed** by `--allow-fallback=shifted,ascii` on each map;
   - `mpv` — letter keys (`p i r t v f l h L H m j s`, etc.);
   - SurfingKeys in Vivaldi — vim navigation (`j k h l t d u w o e b v s H L F`, etc.);
   - TUI programs in the terminal (zellij, mutt, yazi, rustmission, rmpc, khal, broot, tig) — "bare"
@@ -42,7 +43,7 @@ Cyrillic and the match fails. What happens next depends on the layer:
 | **Qt apps**                                        | ✅ `Ctrl+letter` works (Qt takes the Latin key from group 0 while a modifier is pressed). ❌ Bare letters and `Alt+letter` are matched by the actual character.                                                                                             |
 | **GTK apps**                                       | ✅ `Ctrl+letter` mostly works (falls back to the keyval of group 0). ❌ Bare letters break.                                                                                                                                                                 |
 | **Electron/Chromium** (Vivaldi, Obsidian, VS Code) | ✅ `Ctrl+letter` works (Chromium accelerators are derived from the physical key/US keycode). ❌ Modifier-free binds (vim style) match `event.key` → Cyrillic.                                                                                               |
-| **kitty**                                          | ❌ Own shortcuts are matched against the **active** layout's keysym (see kovidgoyal/kitty#2000 — official workaround: duplicates like `map ctrl+CYRILLIC_ES ...`).                                                                                          |
+| **kitty**                                          | ✅ Own shortcuts are matched against the active layout, but `map --allow-fallback=shifted,ascii` falls back to the **base-layout (US) key** for non-ASCII events (the pair kitty's own default shortcuts use). ❌ Without the option a custom Latin bind only gets the `shifted` fallback and stops matching under ru. |
 | **ghostty**                                        | ⚠️ Known bugs even with `Ctrl+letter` under RU (ghostty-org/ghostty#3513, #3584); fixed in newer versions by moving to W3C key-code binds (#7320).                                                                                                          |
 | **TUIs in the terminal**                           | ✅ `Ctrl+letter` — the terminal turns it into a control byte (0x00–0x1F) from the physical key. ❌ A letter without a modifier / `Alt+letter` — the app receives a Cyrillic character.                                                                      |
 | **Games (SDL)**                                    | ✅ Physical key scan codes — the layout has no effect.                                                                                                                                                                                                      |
@@ -52,7 +53,7 @@ Cyrillic and the match fails. What happens next depends on the layer:
 | Claim                                                                                        | How it was verified                                                                                                                                                                                                                                                                        | Result           |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
 | Hyprland binds resolve against the **first** layout                                          | Source at the pinned revision `36b2e0cf`: `KeybindManager.cpp` — `xkb_state_key_get_one_sym(m_resolveBindsBySym ? m_xkbSymState : m_xkbTranslationState, KEYCODE)`; `m_xkbTranslationState = xkb_state_new(keymap)` (group 0); `ConfigValues.cpp` — `resolve_binds_by_sym` default `false` | ✅               |
-| kitty matches shortcuts against the **active** layout's keysym; `CYRILLIC_*` names are valid | `kitty/key_names.py` (names parsed through `xkb_keysym_from_name`); the maintainer's official workaround in kovidgoyal/kitty#2000 (`map ctrl+CYRILLIC_ES send_text all \x03`)                                                                                                              | ✅               |
+| kitty matches shortcuts against the active layout, and `--allow-fallback=shifted,ascii` matches the base-layout key for non-ASCII events | kitty docs shipped with 0.49 (`share/doc/kitty/html/mapping.html`, "Non-Latin keyboard layout support": *"All default kitty shortcuts use `--allow-fallback=shifted,ascii`, so they work out of the box with non-Latin layouts"*); `options/utils.py` — `_convert_allow_fallback`, default `(shifted,)`; verified live with real keycodes under `us,ru` | ✅               |
 | mpv matches the "translated" text of the active layout; literal Unicode keys in input.conf   | mpv `DOCS/man/input.rst`: "`<key>` is either the literal character … (ASCII or Unicode)", "mpv uses input translated by the current OS keyboard layout, rather than physical scan codes"                                                                                                   | ✅               |
 | zellij accepts Cyrillic keys in its config                                                   | `zellij-utils/src/data.rs` — `BareKey::from_str`: any single char; matching via `KeyCode::Char(c)` (`input/mod.rs`)                                                                                                                                                                        | ✅               |
 | In the terminal `Ctrl+letter` = a control byte from the physical key                         | Standard terminal behavior (kitty without the keyboard protocol sends the control byte from the keycode)                                                                                                                                                                                   | ✅               |
@@ -74,7 +75,7 @@ Legend: ✅ works / ❌ breaks / ⚠️ partial or needs checking.
 | neovim                        | langmap + langmapper.nvim                                                                     | ✅ (fixed)            | `files/nvim/lua/00-settings.lua`, `files/nvim/lua/plugins/keymap/langmap.lua` |
 | espanso                       | `ALT+SPACE` — no letters; `:date` triggers are text                                           | ✅                    | `modules/user/nix-maid/cli/espanso.nix`                                       |
 | vicinae                       | `Ctrl+letter` binds (Qt fallback)                                                             | ✅ (check manually)   | `modules/user/nix-maid/apps/vicinae.nix`                                      |
-| kitty                         | `kitty_mod+letter` (Ctrl+Shift), `Ctrl+s>l/p/h`, `kitty_mod+,/.`/grave/`[`/`]`, `Alt+n`, etc. | ❌                    | `files/kitty/key.conf`                                                        |
+| kitty                         | `kitty_mod+letter` (Ctrl+Shift), `Ctrl+s>l/p/h`, `kitty_mod+,/.`/grave/`[`/`]`, `Alt+n`, etc. | ✅ (fixed)            | `files/kitty/key.conf`                                                        |
 | mpv                           | `p i r t v f l h L H m j s A`, `Ctrl+h/l/H`, `Alt+I/U`, `>`/`<` (RU duplicates `Ю`/`Б`)       | ✅ (fixed)            | `modules/user/nix-maid/apps/mpv/input.nix`                                    |
 | SurfingKeys (Vivaldi)         | vim keys `j k h l t d u w o e b v s H L F J+,`; the **hint letter set** (`asdfghjkl`) too     | ❌                    | `files/surfingkeys.js`                                                        |
 | zellij                        | `Alt+h/j/k/l`; in resize/tab/scroll modes: `h j k l n r`                                      | ✅ (fixed)            | `files/gui/zellij/config.kdl`                                                 |
@@ -93,33 +94,43 @@ Legend: ✅ works / ❌ breaks / ⚠️ partial or needs checking.
 
 ### kitty specifics (`files/kitty/key.conf`)
 
-`kitty_mod = ctrl+shift`. Under RU all maps containing Latin letters break, as do the symbols that
-change position under RU (`,` → `б`, `.` → `ю`, `` ` `` → `ё`, `[` → `х`, `]` → `ъ`):
+`kitty_mod = ctrl+shift`, and every `map` in the file carries
+**`--allow-fallback=shifted,ascii`**. A custom mapping otherwise gets the `shifted` fallback only,
+and a bind written in Latin stops matching once the active layout produces a non-Latin character;
+with `ascii` allowed, kitty falls back to the **base-layout (US) key** of the physical position —
+the pair kitty's own default shortcuts use. So `kitty_mod+v` (paste), `kitty_mod+q` (close_tab),
+`alt+n` (new_tab), the `kitty_mod+s>…` sequences, the opacity/tab/window maps and the rest all work
+under `ru` with **no duplicate mappings**: the file is plain ASCII, and the ru layout needs nothing
+from it. Verification (real keycodes, isolated kitty on a headless output, live `us,ru` with RU
+active — the compositor's own translation, exactly what a physical keyboard produces):
 
-- `kitty_mod+v` (paste), `kitty_mod+z/x` (scroll_to_prompt)
-- `kitty_mod+q` (close_tab), `kitty_mod+w` (close_window)
-- `kitty_mod+b/f/]/[` (window movement), `kitty_mod+comma/period` (tabs)
-- `kitty_mod+grave` (move_window_to_top), `kitty_mod+l` (next_layout)
-- `kitty_mod+p/u/e/h/o` (hints / scrollback), `kitty_mod+s>f/w/l/p/h` (neghints)
-- `Ctrl+s>w/l/p/h` (neghints to stdout), `Ctrl+alt+s` (screen scrollback), `alt+n` (new_tab)
-- `kitty_mod+t` (new_tab — restored, the standard ctrl+shift+t), `kitty_mod+alt+t` (set_tab_title —
-  the RU duplicate is generated with `alt`, i.e. `ctrl+shift+alt+т`)
-- `kitty_mod+r>r` / `r>e` / `r>w`, `kitty_mod+a>1/d/l/m` (opacity)
-- `kitty_mod+/` (search) — **US-only**: under RU `/`→`.` and it conflicts with `kitty_mod+.`
-  (move_tab_forward), unreachable as a standalone hotkey (same for `>`/`<`)
-- The Emacs scroll layer (`scroll_line_down/up`, `scroll_page_down/up`) was remapped to
-  **Ctrl+Alt+n/p/f/b** so it does not conflict with `kitty_mod+b/f/p` (Ctrl+Shift)
-- `mouse_map ctrl+shift+right` — layout-independent (modifiers+button) ✅
+| injected keycode | produced under ru | bind | result |
+| --- | --- | --- | --- |
+| `Ctrl+Shift+t` | `Ctrl+Shift+Е` | `kitty_mod+t` new_tab | ✅ tab opened |
+| `Ctrl+Shift+q` | `Ctrl+Shift+Й` | `kitty_mod+q` close_tab | ✅ tab closed |
+| `Alt+n` | `Alt+т` | `alt+n` new_tab | ✅ tab opened |
+
+Kitty itself is the only tool tested this way: its own docs say the default shortcuts rely on this
+option, and `options/utils.py` (`_convert_allow_fallback`, default `(shifted,)`) confirms that an
+explicit option is needed for custom maps. Keysym-level synthetic events (`wtype`) do **not**
+exercise this path — the virtual keyboard uploads a single-layout keymap, so the event carries no
+base-layout key and the `ascii` fallback has nothing to fall back to; use real keycodes (or the
+keyboard itself) when checking.
+
+Layout quirks that stay: `kitty_mod+/` (search) is unreachable under RU (`/` → `.`, which is already
+`kitty_mod+.` = move_tab_forward); `mouse_map ctrl+shift+right` is modifier+button, layout-free ✅.
+The Emacs scroll layer (`scroll_line_down/up`, `scroll_page_down/up`) is on **Ctrl+Alt+n/p/f/b** so
+it does not collide with `kitty_mod+b/f/p`.
 
 **Inline comments are arguments.** kitty's config has no inline comment syntax: the parser splits a
 `map` line into the key and *everything else*, and the rest is the action's argument string
 (`conf/utils.py` — `key_pat`, `val.split(maxsplit=1)`). A trailing `# n→т` therefore does not
 comment anything out; it is passed to the action, and for actions that take a command —
-`new_tab`, `launch`, the `action_alias` kittens — it is a real, visible bug: the generated
-`map alt+т new_tab  # n→т` made `alt+т` open a tab that tried to run the command `#` and died with
-*Failed to launch child: #* (same for `ctrl+shift+е`, the RU `kitty_mod+t`). Generated and
-hand-written binds keep their comments on their own lines; `ru-keys-tests.nix` fails the build if a
-generated `map` line ever carries a `#` after the action.
+`new_tab`, `launch`, the `action_alias` kittens — it is a real, visible bug: the old duplicates era
+generated `map alt+т new_tab  # n→т`, so `alt+т` opened a tab that tried to run the command `#` and
+died with *Failed to launch child: #* (same for `ctrl+shift+е`, the RU `kitty_mod+t`). Comments go
+on their own lines; `lib/kitty-config-tests.nix` fails the build if an action line carries a `#`
+after the action.
 
 The same trap was audited across the other configs — every line below was checked, not assumed:
 
@@ -134,17 +145,9 @@ The same trap was audited across the other configs — every line below was chec
 | TOML / YAML / KDL / RON / Lua / JS / shell | comment by design | format specs |
 | JSONC | `//` and `/* */` only | no `#` comments in the repo's JSONC files |
 
-`lib/kitty-config-tests.nix` (check `kitty-config`) keeps the hand-written `map` / `mouse_map` /
-`action_alias` lines comment-free, `ru-keys-tests.nix` keeps the generated ones clean.
-
-**The upstream mechanism.** kitty ≥ 0.44 also has `map --allow-fallback=shifted,ascii`: the `ascii`
-fallback matches the *base layout* (US) key when the active layout produces a non-ASCII character,
-so one Latin bind can serve a non-Latin layout without duplicates (kitty's own default shortcuts use
-it). Checked on 0.49 by driving an isolated kitty on a headless output with keys pushed through the
-Wayland virtual keyboard: the `ascii` fallback did **not** fire there — the synthetic event carries
-no alternate key — while the literal-Cyrillic duplicates matched both the plain and the Shift-ed
-(uppercase) Cyrillic events. The duplicates therefore stay; the option is noted for a future
-revisit with a physical keyboard.
+`lib/kitty-config-tests.nix` (check `kitty-config`) keeps every `map` carrying
+`--allow-fallback=shifted,ascii`, the action lines comment-free and ASCII-only — the ru layout must
+not come back as literal Cyrillic keys.
 
 Not broken: `insert`, `delete`, `escape`, `f2`, `backspace`, `equal/minus`, `ctrl+left/right`,
 `kitty_mod+backspace`.
@@ -194,70 +197,31 @@ resolve_binds_by_sym = false,
 
 ### P1 — kitty (the main terminal, the most frequent scenario)
 
-**File:** `files/kitty/key.conf` — the `Russian layout duplicates (ЙЦУКЕН)` block is **generated**
-from `lib/ru-keys.nix` (`kittyRuBinds` in `shells.nix`) and uses **literal Cyrillic characters**
-(`map ctrl+shift+м …`) — exactly like kitty's Latin binds.
+**File:** `files/kitty/key.conf` — every `map` carries
+`--allow-fallback=shifted,ascii`, kitty falls back to the base-layout key, and the file stays plain
+ASCII; it is deployed as a live link (`kittyConfLive`), there is no generated block any more.
 
-> ⚠️ Fix (2026-08): the original plan used `CYRILLIC_*` keysym names — on this system they **do not
-> work**: kitty resolves them via `xkb_keysym_from_name`, and `libxkbcommon` fails to load (no ld
-> cache), so the names are silently dropped as "unknown key" (case matters too: `Cyrillic_em`, not
-> `CYRILLIC_EM`). Literal characters are parsed without the library and matched by the same
-> mechanism as Latin binds: a Cyrillic keysym event carries the character itself (confirmed by kitty
-> tests, `kitty_tests/keys.py`).
+History, in the order it happened (all three states are gone from the config):
 
-Below is a historical example (do not apply as is):
+1. **2026-08 — `CYRILLIC_*` keysym names do not work here.** kitty resolves them via
+   `xkb_keysym_from_name`, and `libxkbcommon` fails to load on this system (no ld cache), so the
+   names are silently dropped as "unknown key" (case matters too: `Cyrillic_em`, not
+   `CYRILLIC_EM`).
+2. **2026-08/10 — literal Cyrillic duplicates.** Built by the generator in `lib/ru-keys.nix`
+   (`map ctrl+shift+м …`). They matched, but doubled every bind, and the generator's trailing
+   `# n→т` notes became the actions' arguments (kitty has no inline comments) — `alt+т` ran
+   `new_tab #` and opened a broken tab. Both the duplicates and the generator are gone.
+3. **2026-10 — `--allow-fallback=shifted,ascii`.** kitty's own mechanism for non-Latin layouts; a
+   custom map otherwise defaults to `shifted` only, hence the explicit option. Verified with real
+   keycodes under `us,ru` (RU active) in an isolated kitty — the table is in "kitty specifics"
+   above: `Ctrl+Shift+t`, `Ctrl+Shift+q` and `Alt+n` all fire their Latin binds.
 
-```
-# --- Russian layout duplicates (ЙЦУКЕН) ---
-map ctrl+shift+CYRILLIC_EM      paste_from_clipboard        # kitty_mod+v  (v→м)
-map ctrl+shift+CYRILLIC_YA      scroll_to_prompt -1         # kitty_mod+z  (z→я)
-map ctrl+shift+CYRILLIC_CHE     scroll_to_prompt 1          # kitty_mod+x  (x→ч)
-map ctrl+shift+CYRILLIC_SHORTI  close_tab                   # kitty_mod+q  (q→й)
-map ctrl+shift+CYRILLIC_TSE     close_window                # kitty_mod+w  (w→ц)
-map ctrl+shift+CYRILLIC_BE      move_tab_backward           # kitty_mod+,  (,→б)
-map ctrl+shift+CYRILLIC_YU      move_tab_forward            # kitty_mod+.  (.→ю)
-map ctrl+shift+CYRILLIC_I       move_window_backward        # kitty_mod+b  (b→и)
-map ctrl+shift+CYRILLIC_A       move_window_forward         # kitty_mod+f  (f→а)
-map ctrl+shift+CYRILLIC_IO      move_window_to_top          # kitty_mod+`  (`→ё)
-map ctrl+shift+CYRILLIC_HARDSIGN next_window                # kitty_mod+]  (]→ъ)
-map ctrl+shift+CYRILLIC_HA      previous_window             # kitty_mod+[  ([→х)
-map ctrl+shift+CYRILLIC_DE      next_layout                 # kitty_mod+l  (l→д)
-map ctrl+shift+CYRILLIC_GHE     kitten unicode_input        # kitty_mod+u  (u→г)
-map ctrl+shift+CYRILLIC_U       neghints --type=url         # kitty_mod+e  (e→у)
-map ctrl+shift+CYRILLIC_ER      kitty_scrollback_nvim       # kitty_mod+h  (h→р)
-map ctrl+shift+CYRILLIC_SHCHA   kitty_scrollback_nvim --env KSB_OPEN_GF=1 # kitty_mod+o (o→щ)
-map ctrl+shift+CYRILLIC_IE      set_tab_title               # kitty_mod+t  (t→е)
-map ctrl+shift+CYRILLIC_YERU>Cyrillic_A       neghints --program @        # kitty_mod+s>f (s→ы, f→а)
-map ctrl+shift+CYRILLIC_YERU>Cyrillic_TSE    neghints --type word --program @   # >w (w→ц)
-map ctrl+shift+CYRILLIC_YERU>Cyrillic_DE     neghints --type line --program @   # >l (l→д)
-map ctrl+shift+CYRILLIC_YERU>Cyrillic_ZE     neghints --type path --program @   # >p (p→з)
-map ctrl+shift+CYRILLIC_YERU>Cyrillic_ER     neghints --type hash --program @   # >h (h→р)
-map Ctrl+CYRILLIC_YERU>Cyrillic_TSE          neghints --type word --program -   # Ctrl+s>w
-map Ctrl+CYRILLIC_YERU>Cyrillic_DE           neghints --type line --program -
-map Ctrl+CYRILLIC_YERU>Cyrillic_ZE           neghints --type path --program -
-map Ctrl+CYRILLIC_YERU>Cyrillic_ER           neghints --type hash --program -
-map Ctrl+alt+CYRILLIC_YERU      kitty_scrollback_nvim --config screen  # Ctrl+alt+s
-map alt+CYRILLIC_TE             new_tab                     # alt+n  (n→т)
-map ctrl+shift+CYRILLIC_KA>Cyrillic_KA   load_config_file            # kitty_mod+r>r (r→к)
-map ctrl+shift+CYRILLIC_KA>Cyrillic_U    debug_config                # kitty_mod+r>e (e→у)
-map ctrl+shift+CYRILLIC_EF>1    set_background_opacity 1    # kitty_mod+a>1 (a→ф)
-map ctrl+shift+CYRILLIC_EF>Cyrillic_VE   set_background_opacity default   # >d (d→в)
-map ctrl+shift+CYRILLIC_EF>Cyrillic_DE   set_background_opacity -0.1      # >l (l→д)
-map ctrl+shift+CYRILLIC_EF>Cyrillic_SOFTSIGN set_background_opacity +0.1  # >m (m→ь)
-```
+**Check:** after a rebuild, in kitty under RU: `Ctrl+Shift+м` (paste), `Alt+т` (new tab),
+`Ctrl+Shift+й` (close tab). To check without a keyboard, inject real keycodes into a test window
+(`ydotool key 29:1 42:1 20:1 20:0 42:0 29:0`) — keysym-level `wtype` events cannot exercise the
+fallback.
 
-If the block feels bulky — the minimum: paste, close_tab/close_window, tab/window switching,
-scroll_to_prompt, `kitty_mod+grave` (move_window_to_top).
 
-Also fixed (2026-10): kitty has no inline comments, so the generated block's trailing `# char→char`
-notes were being passed to the actions as arguments — `alt+т` ran `new_tab #`, opened a tab and the
-tab died with *Failed to launch child: #*; the comments now sit on their own lines (see "Inline
-comments are arguments" above). The same cleanup removed the inline comments from the hand-written
-`kitty_scrollback_nvim` binds, whose kittens were receiving them as arguments.
-
-**Check:** `kitty +kitten debug_keyboard` under RU (compare the keysym names), then walk through the
-duplicates one by one; `alt+т` and `ctrl+shift+е` must open a working tab (a prompt, not *Failed to
-launch child*).
 
 ### P1 — mpv
 
