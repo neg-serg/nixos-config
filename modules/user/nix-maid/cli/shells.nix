@@ -141,7 +141,6 @@ in
 
       ".config/kitty/kitty.conf".source = "${kittyConfLive}/kitty.conf";
       ".config/kitty/mouse.conf".source = "${kittyConfLive}/mouse.conf";
-      ".config/kitty/range_select.py".source = "${kittyConfLive}/range_select.py";
       ".config/kitty/scroll_mark.py".source = "${kittyConfLive}/scroll_mark.py";
       ".config/kitty/search.py".source = "${kittyConfLive}/search.py";
       ".config/kitty/tab_bar.py".source = "${kittyConfLive}/tab_bar.py";

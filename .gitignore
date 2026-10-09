@@ -1,4 +1,4 @@
-result
+/result*
 nixos.qcow2
 # Accidental nix store dump (nix/store/*.drv, .patch) — never source
 # ...repo-root only: modules/nix/ is real source and must stay trackable
@@ -10,6 +10,7 @@ packages/target/
 .omo/
 # DSH web runtime uploads (voice recordings, images from chat)
 .dsh-uploads/
+nvim.log
 # Accidental curl cookie jar (curl -c in repo root)
 .cookie
 files/shell/zsh/.zcompdump
