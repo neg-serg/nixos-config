@@ -45,6 +45,7 @@ in
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/lusty
     tgchat = callPkg (pkg "tgchat") { }; # Telegram chat access via Telethon (read/send as the user)
     topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
+    neru = callPkg (pkg "neru") { }; # Desktop keyboard navigation — hints, grids, vim-style modes (prebuilt binary)
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
