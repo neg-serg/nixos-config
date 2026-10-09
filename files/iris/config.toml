@@ -7,31 +7,37 @@
 #   fuzzy expansion.
 # - mode = "spec" — suggest from command specs + filegen + AI only; shell
 #   history junk (dsh persistent-bash entries) never becomes a ghost.
-# - toggle-mode = "ctrl+r" — Ctrl+R toggles iris into history mode, i.e. the
-#   history picker (zhist removed; fzf's own ^R is shadowed while iris runs).
+# - toggle-mode = "" — Ctrl+R belongs to the shell: hishtory owns the history
+#   picker (07-hishtory.zsh) and fzf has its own binding, so iris's spec/history
+#   toggle is off instead of fighting them. To try it: toggle-mode = "ctrl+r".
 # - navigate-up/down = "ctrl+p"/"ctrl+n" — emacs-style; with the menu closed
 #   they are forwarded to zsh, so the existing ^P/^N history-search bindings
 #   keep working (menu open -> cycle iris ghost suggestion).
-# - navigate-right = "right" — right arrow also accepts ghost text (upstream
-#   only fires navigate-right on the arrow escape sequence; ctrl+f dead).
+# - navigate-right = "right" — inert while ghost-text = 0 (there is nothing to
+#   accept): the right arrow is forwarded to zsh and just moves the cursor.
+#   If ghost text is ever turned on, set this to "" so the arrow keeps moving
+#   the cursor and suggestions are accepted with Ctrl+E only.
 # - navigate-closed = "shell" — nav keys with the menu closed go to zsh, so
 #   up-line-or-beginning-search / down-line-or-beginning-search keep working.
 
 [core]
 version = 1
 shell = "zsh"
+# kitty starts the shell as a login shell (kitty.conf: `shell .`); the child
+# shell iris spawns keeps that, so /etc/zprofile and ~/.zprofile still run.
+shell-login = true
 mode = "spec"
 navigate-closed = "shell"
 
-# Menu without ghost text (mode 0): the Ctrl+R history picker needs the
-# visible menu, but no gray ghost after the cursor while typing (mode 2 hides
-# the menu, which makes Ctrl+R look dead). Selection: Ctrl+P/N + Enter;
-# Tab stays with fzf-on-tab (completion + ~/m/new).
+# Menu only, no ghost text (mode 0): iris draws its menu below the line and
+# nothing after the cursor, so zsh-native-syntax keeps the line to itself and
+# there is no ghost for the right arrow to accept. Selection: Ctrl+P/N + Enter,
+# accept with Ctrl+E; Tab stays with fzf-on-tab (completion + ~/m/new).
 [ui]
 ghost-text = 0
 
 [keybindings]
-toggle-mode = "ctrl+r"
+toggle-mode = ""         # ^R is hishtory's (see the header)
 toggle-menu = "shift+tab"
 select = "ctrl+e"
 navigate-up = "ctrl+p"
