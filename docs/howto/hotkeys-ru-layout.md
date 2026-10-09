@@ -121,6 +121,31 @@ comment anything out; it is passed to the action, and for actions that take a co
 hand-written binds keep their comments on their own lines; `ru-keys-tests.nix` fails the build if a
 generated `map` line ever carries a `#` after the action.
 
+The same trap was audited across the other configs — every line below was checked, not assumed:
+
+| parser | inline `#` after a value | checked how |
+| --- | --- | --- |
+| kitty (`map`, `action_alias`) | **argument, not a comment** | live repro: the tab ran `#` |
+| mpv `input.conf` / `mpv.conf` | comment | `man mpv`: “# starts a comment (outside of quoted string arguments)” |
+| tigrc | comment | `man tigrc`: “All text after the comment character … is ignored” |
+| Hyprland / hyprlock `.conf` (hyprlang) | comment; `##` writes a literal `#` | test program against `libhyprlang` 0.6.8 |
+| pipewire / wireplumber `.conf` (spa-json) | comment | `spa-json-dump` on a config with inline comments |
+| readline `inputrc` | comment (indented comments too) | `INPUTRC=… bash -ic 'bind -v'` |
+| TOML / YAML / KDL / RON / Lua / JS / shell | comment by design | format specs |
+| JSONC | `//` and `/* */` only | no `#` comments in the repo's JSONC files |
+
+`lib/kitty-config-tests.nix` (check `kitty-config`) keeps the hand-written `map` / `mouse_map` /
+`action_alias` lines comment-free, `ru-keys-tests.nix` keeps the generated ones clean.
+
+**The upstream mechanism.** kitty ≥ 0.44 also has `map --allow-fallback=shifted,ascii`: the `ascii`
+fallback matches the *base layout* (US) key when the active layout produces a non-ASCII character,
+so one Latin bind can serve a non-Latin layout without duplicates (kitty's own default shortcuts use
+it). Checked on 0.49 by driving an isolated kitty on a headless output with keys pushed through the
+Wayland virtual keyboard: the `ascii` fallback did **not** fire there — the synthetic event carries
+no alternate key — while the literal-Cyrillic duplicates matched both the plain and the Shift-ed
+(uppercase) Cyrillic events. The duplicates therefore stay; the option is noted for a future
+revisit with a physical keyboard.
+
 Not broken: `insert`, `delete`, `escape`, `f2`, `backspace`, `equal/minus`, `ctrl+left/right`,
 `kitty_mod+backspace`.
 
