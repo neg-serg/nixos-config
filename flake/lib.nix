@@ -20,10 +20,14 @@ let
     system:
     import nixpkgs {
       inherit system;
-      # Allow only the proprietary VST2 SDK (needed by vstplugin, the
-      # SuperCollider VST host) — everything else stays unfree-blocked.
+      # Allow only the few proprietary packages the user asked for —
+      # everything else stays unfree-blocked: VST2 SDK (needed by vstplugin,
+      # the SuperCollider VST host), lsfg-vk, and Geekbench AI.
       config.allowUnfreePredicate =
-        pkg: (pkg.pname or "") == "vst2-sdk" || (pkg.pname or "") == "lsfg-vk"; # lsfg-vk is CC BY-NC-ND 4.0 (user-approved install)
+        pkg:
+        (pkg.pname or "") == "vst2-sdk"
+        || (pkg.pname or "") == "lsfg-vk" # CC BY-NC-ND 4.0 (user-approved install)
+        || (pkg.pname or "") == "geekbench-ai"; # proprietary AI benchmark (user-requested install)
       overlays = [
         bintoolsBootstrapFix
         # CachyOS kernel packages — overlays.default builds against OUR nixpkgs

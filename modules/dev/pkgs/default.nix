@@ -6,6 +6,7 @@
 {
   environment.systemPackages = lib.unique ([
     pkgs.hyperfine # benchmarking tool
+    pkgs.neg.geekbench-ai # Geekbench AI — on-device inference benchmark (CPU/GPU; unfree binary)
     pkgs.just # command runner for project tasks
     pkgs.pkgconf # pkg-config wrapper
     pkgs.scc # parallel code counter
