@@ -12,7 +12,9 @@ function read(p) { return fs.readFileSync(p, 'utf8'); }
 
 function walkFiles(dir, exts, acc = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (ent.name === 'vendor' || ent.name === 'node_modules' || ent.name === '.git') continue;
+    // Tools/ holds the linters themselves (their usage strings name other tools:
+    // "validate-settings.mjs" would otherwise read as a settings key).
+    if (ent.name === 'vendor' || ent.name === 'node_modules' || ent.name === '.git' || ent.name === 'Tools') continue;
     const p = path.join(dir, ent.name);
     if (ent.isDirectory()) walkFiles(p, exts, acc); else {
       const ext = path.extname(ent.name).toLowerCase();
@@ -41,12 +43,27 @@ function parseDefinedSettingsKeys(qmlSource) {
   return Array.from(keys);
 }
 
+// A settings key counts as used when any of these forms appears:
+//   Settings.settings.<key>          the usual read
+//   <obj>.settings.<key>             a renamed alias of the singleton
+//   <any>.settings.<key>             `settings` passed as a parameter (helpers)
+//   key: "<key>"                     table-driven panels (GlassPanel presets)
+// Deliberately not "any string equal to the key": a stale name mentioned only
+// in a comment must still be reported.
+const usedPatterns = [
+  /\bSettings\.settings\.([A-Za-z0-9_]+)/g,
+  /(?<![\w-])settings\.([A-Za-z0-9_]+)/g,
+  /\bkey:\s*["']([A-Za-z0-9_]+)["']/g,
+];
+
 function parseUsedSettingsKeys(files) {
-  const re = /Settings\.settings\.([A-Za-z0-9_]+)/g;
   const keys = new Set();
   for (const f of files) {
     const s = read(f);
-    let m; while ((m = re.exec(s)) !== null) keys.add(m[1]);
+    for (const re of usedPatterns) {
+      re.lastIndex = 0;
+      let m; while ((m = re.exec(s)) !== null) keys.add(m[1]);
+    }
   }
   return Array.from(keys);
 }
