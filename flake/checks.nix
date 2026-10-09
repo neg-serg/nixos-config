@@ -86,8 +86,9 @@ in
   # lib/ru-keys.nix is the single source of truth for ЙЦУКЕН hotkey
   # duplicates; these assertions pin the table and every generator.
   "ru-keys" = mkOkCheck "ru-keys" (import ../lib/ru-keys-tests.nix { lib = nixpkgs.lib; });
-  # kitty action lines must keep their comments on their own lines: kitty has no
-  # inline comments (everything after the action is passed to it as arguments).
+  # kitty configs: every map carries --allow-fallback=shifted,ascii (that is what
+  # serves the ru layout), action lines have no inline comments (kitty passes
+  # everything after the action to it as arguments) and stay ASCII-only.
   "kitty-config" = mkOkCheck "kitty-config" (
     import ../lib/kitty-config-tests.nix { lib = nixpkgs.lib; }
   );
