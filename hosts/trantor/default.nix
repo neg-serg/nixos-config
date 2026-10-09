@@ -196,6 +196,7 @@ in
   };
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.ruHotkeys.enable = true; # us layout in kitty/mpv on focus (RU hotkey fix)
+  features.input.neru.enable = true; # Ctrl+Alt+… hints/grids/vim-keys navigation (neru daemon)
   # features.security.tpmSudo.enable = true; # TPM-backed passwordless sudo — flip AFTER enabling fTPM in UEFI/BIOS
   # AppArmor confinement for the network-facing daemons: the system ones
   # (sshd, unbound, AdGuard Home, ntfy, avahi) and the session ones that parse

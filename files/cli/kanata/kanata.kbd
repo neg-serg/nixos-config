@@ -6,6 +6,8 @@
 
 (defcfg
   process-unmapped-keys yes
+  ;; Never remap neru's virtual devices (its uinput keyboard/pointer proxies).
+  linux-dev-names-exclude ("neru-keyboard-proxy" "neru-pointer-proxy" "neru-keyboard")
 )
 
 (defsrc
