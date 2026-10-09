@@ -52,7 +52,8 @@ vec4 pRowFlicker;  // the four ignitions: a nixie's tubes never strike together
 vec4 pTile;        // the tube's own item (width, height, margin), and the mode
 vec4 pTint;        // the colour of coloured glass: hue in rgb, strength in a
 vec4 pWallpaper;   // x: tint the lamp with the wallpaper's own accent instead
-vec4 pView;        // x: the camera's yaw off the tube's axis, in degrees
+vec4 pView;        // the camera: x is its yaw off the tube's axis, in degrees,
+                   // and y how far it stands, in tube widths (0: the default)
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.
@@ -1291,13 +1292,33 @@ out_colour = nixie_tube(px, px - pSize * 0.5, pSize, pInset, accent,
 // compositor treats what a ShaderEffect writes as premultiplied), so the tubes'
 // contributions are summed; the alpha is coverage, and the glasses do not
 // overlap, so the largest wins.
+// The camera the row is photographed by. pView.x is its yaw off the clock's
+// axis and pView.y how far it stands (in tube widths): the two ends of the
+// row are then not the same size and the glasses are not the same distance
+// apart — the near end is the larger one. That perspective of the row, not
+// the numerals' shift alone, is what the eye reads as a camera that is not
+// dead ahead; the numerals keep their own shift inside each tube (the digit
+// block below), so the two agree. 0 stands the camera at the default distance.
+float rowYaw = radians(clamp(pView.x, -30.0, 30.0));
+float rowSin = sin(rowYaw);
+float rowCos = cos(rowYaw);
+float tubeW = max(pTile.x - 2.0 * pTile.z, 1.0);   // the glass, 21 mm
+// Where the camera stands when the theme asks for no particular distance,
+// in tube widths: 12 is a photo taken from about an arm's length away.
+const float CAM_TUBES = 12.0;
+float cam = ((pView.y > 0.0) ? pView.y : CAM_TUBES) * tubeW;
 vec4 acc = vec4(0.0);
 for (int i = 0; i < 4; i++) {
-vec2 centre = pSize * 0.5 + vec2(pRowX[i], 0.0);
-vec4 tube = nixie_tube(px, px - centre, pTile.xy, pTile.z, accent,
+// The tube's own centre, as the camera puts it: x·cos(yaw) at the depth
+// its own x puts it at. A tube nearer the camera is drawn larger whole —
+// glass, digits, light — which is the row's perspective.
+float depth = cam + pRowX[i] * rowSin;
+float grow = cam / max(depth, 1.0);   // how much larger this tube is drawn
+vec2 centre = pSize * 0.5 + vec2(pRowX[i] * rowCos * grow, 0.0);
+vec4 tube = nixie_tube(px, (px - centre) / grow, pTile.xy, pTile.z, accent,
                        pRowDigit[i], pRowFlicker[i], 0.0, edgeFade);
-acc.rgb += tube.rgb;
-acc.a = max(acc.a, tube.a);
+	acc.rgb += tube.rgb;
+	acc.a = max(acc.a, tube.a);
 }
 out_colour = acc;
 }

@@ -96,13 +96,21 @@
     // it — instead of nixieTint's, and this is how much of it. A grey wallpaper
     // has no accent to take and the metal keeps its own colour.
     "nixieTintWallpaper": 0.0,
-    // The camera is a little off the tube's axis: the numerals inside the glass
-    // shift towards the viewer's side and narrow by the cosine, while the
-    // envelope keeps its silhouette — a cylinder is as wide at an angle as it is
-    // head-on, and that difference is what reads as depth. 14 degrees is a
-    // three-quarter view that costs the numerals cos(14) = 3% of their width;
-    // 0 puts the camera dead ahead again.
-    "nixieViewAngle": 14.0,
+    // The camera. It stands a little off the clock's axis and a finite distance
+    // away, which together are what makes the clock read as photographed and
+    // not drawn: the numerals inside each glass shift towards the viewer's side
+    // and narrow by the cosine (the envelope keeps its silhouette — a cylinder
+    // is as wide at an angle as it is head-on), and the two ends of the row are
+    // not the same size. 16 degrees costs the numerals cos(16) = 4% of their
+    // width and leaves them clear of the glass; 0 puts the camera dead ahead.
+    "nixieViewAngle": 16.0,
+    // How far the camera stands from the clock, in tube widths (21 mm): the
+    // nearer half of the row is drawn a little larger and the farther half a
+    // little smaller — about a tenth between the nearest and the farthest
+    // glass at 8, and that is what reads as a row seen from the side. Larger
+    // is a flatter picture, the perspective goes as 1/distance, and 0 leaves
+    // it to the shader's own default.
+    "nixieViewDistance": 8.0,
     // The cathode wire's radius as a fraction of the numeral's height: 0.044 of
     // 25 mm is 1.10 mm, so the wire measures 2.20 mm across — a heavy-duty
     // cathode, and what the discharge around it is drawn on. The real IN-12
