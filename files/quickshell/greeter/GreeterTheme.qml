@@ -104,8 +104,13 @@ readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)
     readonly property color nixieTint: _val('greeter.nixieTint', "#00000000")
     // 0 = off; above that, the lamp takes the wallpaper's own accent.
     readonly property real nixieTintWallpaper: _val('greeter.nixieTintWallpaper', 0.0)
-    // The camera's yaw off the tube's axis, in degrees: 0 is dead ahead.
-    readonly property real nixieViewAngle: _val('greeter.nixieViewAngle', 14.0)
+    // The camera drawing the clock: its yaw off the tube's axis in degrees (0 is
+    // dead ahead) and how far it stands from the row in tube widths — the nearer
+    // tubes are drawn larger, which is the row's perspective. Both mirror
+    // Theme/greeter.jsonc, so a login screen that cannot read the user's theme
+    // draws the same camera.
+    readonly property real nixieViewAngle: _val('greeter.nixieViewAngle', 16.0)
+    readonly property real nixieViewDistance: _val('greeter.nixieViewDistance', 8.0)
     // The lit cathode's radius as a share of a numeral's height. The fallback
     // mirrors Theme/greeter.jsonc, so a login screen that cannot read the user's
     // theme draws the same wire the desktop shows.
