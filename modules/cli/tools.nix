@@ -57,6 +57,7 @@ in
     pkgs.dust # better du
     pkgs.erdtree # modern tree
     pkgs.eza # modern 'ls' replacement
+    pkgs.fsel # fast TUI app launcher and fuzzy finder (dmenu pipe, clipboard history)
     pkgs.lazytail # TUI log viewer: live filtering, follow mode, multi-tab; also runs as an MCP server (lazytail --mcp)
     pkgs.libnotify # notify-send helper used by CLI scripts
     pkgs.moreutils # assorted unix utils (sponge, etc.)
