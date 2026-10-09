@@ -79,5 +79,5 @@ pressed against the panel, and stable.
 
 - musicPopupWidth, musicPopupHeight (height is now only a fallback), musicPopupEdgeMargin,
   musicPopupProgressHeight.
-- spectrumMode, spectrumColor, toastAnalyserStyle, barAnalyserStyle, mediaTitleSeparator.
+- spectrumMode, spectrumColor, toastAnalyserStyle, mediaTitleSeparator.
 - spectrumMinHz/MaxHz/ColorMinHz/ColorMaxHz — the frequency band and highlighting.

@@ -89,9 +89,6 @@ iPhone-style analyser (shared component; bar and toast are configured separately
 
 - barAnalyserMirror: boolean, default false. Mirror the small bar analyser; false = one-sided.
 - barAnalyserBars: integer, default 5. Bar count for the small bar analyser.
-- barAnalyserStyle: string, default "neon-cyan". Visual preset for the small bar analyser: neon-cyan
-  | neon-violet | neon-lime | neon-orange | holographic | aurora | sunset | synthwave | ember |
-  matrix | analog-amber | analog-rose | analog-vu.
 - toastAnalyserMirror: boolean, default false. Mirror the large toast analyser; false = one-sided.
 - toastAnalyserBars: integer, default 64. Bar count for the large toast analyser.
 - toastAnalyserStyle: string, default "neon-cyan". Visual preset for the large toast analyser:
@@ -193,6 +190,11 @@ Tools
   `Docs/ThemeHierarchical.json` from the merged theme parts).
 - Validate settings:
   `node Tools/validate-settings.mjs [--settings ~/.config/quickshell/Settings.json] [--schema Docs/SettingsSchema.json]`.
+- Find settings keys that drifted apart: `node Tools/lint-settings.mjs` — lists keys declared in
+  `Settings/Settings.qml` that no code reads (dead tokens) and keys read but never declared
+  (typos; non-zero exit). A key counts as used when it appears as `settings.<key>` (the singleton,
+  a helper parameter, a re-aliased object) or as a table entry `key: "<key>"` (GlassPanel presets);
+  `Tools/` is skipped, while a name mentioned only in a comment still counts as dead.
 
 Settings.json schema and samples
 
