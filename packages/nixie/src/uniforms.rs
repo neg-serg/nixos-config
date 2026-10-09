@@ -75,7 +75,7 @@ pub struct Uniforms {
     pub tile: [f32; 4],      // width, height, the tube's margin, 1 = the row pass
     pub tint: [f32; 4],      // coloured glass: the hue, and how much of it
     pub wallpaper: [f32; 4], // x: tint with the wallpaper's accent instead
-    pub view: [f32; 4],      // x: the camera's yaw off the tube's axis, in degrees
+    pub view: [f32; 4],      // x: the camera's yaw, degrees; y: its distance, tube widths
 }
 
 /// The knobs in Theme/greeter.jsonc that are numbers. They are read from the
@@ -89,6 +89,7 @@ pub struct Tokens {
     pub tint: [f32; 4],
     pub tint_wallpaper: f32,
     pub view_angle: f32,
+    pub view_distance: f32,
     pub stack: f32,
     pub highlight: f32,
     pub warmth: f32,
@@ -103,6 +104,7 @@ impl Tokens {
             tint: colour_after(theme, "\"nixieTint\": ")?,
             tint_wallpaper: number_after(theme, "\"nixieTintWallpaper\": ")? as f32,
             view_angle: number_after(theme, "\"nixieViewAngle\": ")? as f32,
+            view_distance: number_after(theme, "\"nixieViewDistance\": ")? as f32,
             stack: number_after(theme, "\"nixieStack\": ")? as f32,
             highlight: number_after(theme, "\"nixieHighlight\": ")? as f32,
             warmth: number_after(theme, "\"nixieWarmth\": ")? as f32,
@@ -149,7 +151,7 @@ impl Uniforms {
             tile: [size[0], size[1], 16.0, 0.0],
             tint: t.tint,
             wallpaper: [t.tint_wallpaper, 0.0, 0.0, 0.0],
-            view: [t.view_angle, 0.0, 0.0, 0.0],
+            view: [t.view_angle, t.view_distance, 0.0, 0.0],
         }
     }
 }
