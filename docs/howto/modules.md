@@ -1031,6 +1031,28 @@ true
 
 - [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
+## features.input.neru.enable
+
+Whether to enable enable Neru keyboard navigation (hints, grids, vim keys; Wayland/X11).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
+
 ## features.input.ruHotkeys.enable
 
 Whether to enable enable per-window keyboard layout switching (us in hotkey-heavy apps).

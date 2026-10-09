@@ -14,6 +14,7 @@
     };
     input = {
       kanata.enable = mkBool "enable Kanata keyboard remapper (requires uinput module)" false;
+      neru.enable = mkBool "enable Neru keyboard navigation (hints, grids, vim keys; Wayland/X11)" false;
 
       ruHotkeys = {
         enable = mkBool "enable per-window keyboard layout switching (us in hotkey-heavy apps)" false;
