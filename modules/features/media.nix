@@ -45,6 +45,66 @@
         };
       };
       speech.enable = mkBool "enable local speech stack (Chatterbox TTS :8300, Piper TTS :8001, whisper.cpp STT :8002)" false;
+      # MPD voice client (mpd-voice): one utterance -> local speech recognition
+      # -> MPD command -> spoken confirmation. Installing it starts nothing and
+      # touches no microphone: the CLI is inert until it is run (or bound to a
+      # key), and it also has a text mode that needs no audio at all.
+      mpdVoice = {
+        enable = mkBool "enable MPD voice client (mpd-voice CLI + its config file)" true;
+        language = lib.mkOption {
+          type = lib.types.enum [
+            "ru"
+            "en"
+          ];
+          default = "ru";
+          description = "Reply language and default speech recognition language.";
+        };
+        wakeWord = lib.mkOption {
+          type = lib.types.str;
+          default = "";
+          description = ''
+            Keyword required by `mpd-voice listen` (empty = every utterance is
+            executed, which is what push-to-talk wants).
+          '';
+        };
+        stt = lib.mkOption {
+          type = lib.types.enum [
+            "auto"
+            "http"
+            "cli"
+            "cmd"
+            "none"
+          ];
+          default = "auto";
+          description = ''
+            Speech recognition backend: auto probes the HTTP server below,
+            then falls back to whisper-cli.
+          '';
+        };
+        sttUrl = lib.mkOption {
+          type = lib.types.str;
+          default = "http://127.0.0.1:8002";
+          description = "Base URL of an OpenAI-compatible STT server (/v1/audio/transcriptions).";
+        };
+        tts = lib.mkOption {
+          type = lib.types.enum [
+            "auto"
+            "http"
+            "cmd"
+            "none"
+          ];
+          default = "auto";
+          description = ''
+            Speech synthesis backend: auto probes the HTTP server below, then
+            falls back to spd-say / espeak-ng.
+          '';
+        };
+        ttsUrl = lib.mkOption {
+          type = lib.types.str;
+          default = "http://127.0.0.1:8001";
+          description = "Base URL of an OpenAI-compatible TTS server (/v1/audio/speech).";
+        };
+      };
     };
     photo.enable = mkBool "enable photography workflow (darktable, rawtherapee, testdisk)" false;
     webcam.enable = mkBool "enable virtual webcam support (v4l2loopback)" false;
