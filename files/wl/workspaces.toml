@@ -1,0 +1,45 @@
+# wl-workspaces — one wallpaper per Hyprland workspace.
+#
+# Deployed as ~/.config/wl/workspaces.toml (live link: edits apply on the next
+# workspace change, no rebuild). The helper itself lives in
+# packages/local-bin/bin/wl-workspaces.py and runs as the user service
+# wl-workspaces.service; `wl-workspaces show` prints the current mapping.
+#
+# What it does: on every workspace change it paints the output with
+# `wl img <image> --no-notify`, so the greeter keeps the wallpaper *you* picked
+# and only the desktop changes. The wallpaper keybind (Super+Shift+C) runs
+# `wl-workspaces shuffle`: a new seed, a fresh set of images for the session.
+#
+# [general]
+#   pool        directory scanned recursively for images
+#               (jpg/jpeg/png/webp/gif/bmp/tif/tiff/pnm/tga/svg/avif)
+#   transition  one of wl's own transitions: wipe, wave, outer, pixelate, burn,
+#               glitch, disintegrate, dreamy, glitch-memories, morph,
+#               hexagonalize, cross-zoom, fluid-distortion, fluid-drain,
+#               fluid-ripple, fluid-vortex, fluid-wave, ink-bleed, lava-lamp,
+#               chromatic-aberration, lens-distortion, crt-shutdown,
+#               perlin-wipe, radial-blur, random, none
+#               (a name this wl build does not know is logged and retried
+#               without the flag, so a typo never costs the wallpaper)
+#   duration    transition length in seconds
+#
+# [workspaces] — per-workspace pins, matched by name first (the part after ":"
+# in the workspace name, e.g. `𐌲:dev` → `dev`), then by id, then `*`:
+#   "<file>"  pin that image
+#   "<dir>"   pick deterministically from that directory
+#   "keep"    leave whatever is painted (special:* workspaces are always kept)
+#
+# Without pins every workspace draws its own image from the pool: the pick is
+# seeded (stable for the session, new each day, re-rolled by `shuffle`) and
+# persisted, so the watcher and a manual `wl-workspaces apply` agree.
+
+[general]
+pool = "~/pic/wl"
+transition = "wipe"
+duration = 0.35
+
+[workspaces]
+# Examples — uncomment to pin a workspace:
+# dev   = "~/pic/wl/dev"          # a directory of its own
+# games = "keep"                  # nothing repaints under games
+# 8     = "~/pic/wl/topo/contour.png"

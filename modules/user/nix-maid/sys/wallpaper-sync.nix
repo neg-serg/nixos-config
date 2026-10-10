@@ -10,10 +10,14 @@ let
   systemdUser = config.lib.neg.systemdUser;
   mainHome = config.lib.neg.homeDir;
 
+  # wl-state-sync asks the per-workspace helper whether a state change was one
+  # of its own swaps; the interpreter is explicit so the unit needs no PATH.
+
   # The greeter session runs as its own user and cannot read the main user's
   # home, so the wallpaper is copied into the greeter's cache. Keep these two
   # paths in step with modules/user/session/greetd.nix (greeterCache /
   # greeterWallpaperFallback).
+  python3 = lib.getExe pkgs.python3;
   greeterCache = "/home/greeter/.cache";
   greeterWallpaperFallback = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
 
@@ -28,9 +32,20 @@ let
     set -euo pipefail
     state_file="$HOME/.local/state/wl/state.json"
     notify_file="$HOME/.cache/quickshell-wallpaper-path"
+    guard="$HOME/.local/bin/wl-workspaces"
     if [ -f "$state_file" ]; then
       wallpaper_path="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2>/dev/null || true)"
       if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
+        # wl-workspaces repaints per workspace; those paints rewrite wl's state
+        # but they are not "the user changed the wallpaper". The helper drops a
+        # marker before each swap and answers for the rest
+        # (`wl-workspaces should-skip <path>`, covered by its selftest).
+        # Without this the greeter would copy a different image into its cache
+        # on every workspace switch. A missing helper means "not ours", i.e.
+        # the behaviour from before per-workspace wallpapers existed.
+        if [ -x "$guard" ] && "${python3}" "$guard" should-skip "$wallpaper_path"; then
+          exit 0
+        fi
         echo "$wallpaper_path" > "$notify_file"
         echo "$wallpaper_path" > "$HOME/.local/state/wl/last-good"
       fi
