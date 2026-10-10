@@ -76,6 +76,9 @@ lint:
     if command -v rustfmt >/dev/null 2>&1; then bash scripts/dev/check-rustfmt.sh; else echo "rustfmt not found — skipping Rust check"; fi
     # Lua (non-nvim; nvim is a vendored config)
     if command -v selene >/dev/null 2>&1; then selene files/gui files/mpv; else echo "selene not found — skipping Lua lint"; fi
+    # Per-workspace wallpaper helper: mapping/apply/skip logic against fakes
+    # (fake wl + hyprctl + a temp pool; no session, no compositor).
+    python3 "{{repo_root}}/packages/local-bin/bin/wl-workspaces.py" selftest
     # Shellcheck opt-in: check only files that declare a POSIX/Bash shebang
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
