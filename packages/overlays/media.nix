@@ -21,6 +21,11 @@ in
   glm-osc = call (pkg "glm-osc") { };
   # MPD client for large libraries: Node backend + React UI, served on loopback.
   sola-mpd = call (pkg "sola-mpd") { };
+  # Voice control for MPD: microphone -> local speech recognition -> player
+  # commands. Standard library only (protocol client, capture, HTTP speech
+  # clients), so the closure is Python plus whatever speech stack the host
+  # enables separately.
+  mpd-voice = call (pkg "mpd-voice") { };
   # Kernel module (RME HDSPe ALSA driver) — takes `kernel`; the default kernel
   # set is a placeholder, the host overrides it with the actual boot kernel.
   snd-hdspe = call (pkg "snd-hdspe") { kernel = prev.linuxPackages.kernel; };

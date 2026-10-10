@@ -21,6 +21,8 @@
 
   sola-mpd = pkgs.sola-mpd; # browser MPD client (Node backend + React UI)
 
+  mpd-voice = pkgs.mpd-voice; # voice control for MPD: local STT -> player commands
+
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
   lusty = pkgs.neg.lusty; # Native file/buffer picker for Neovim (Lusty successor)
   oryx = pkgs.neg.oryx; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
