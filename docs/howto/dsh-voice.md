@@ -37,6 +37,10 @@ No dsh-side integration is required either way, and none should be added:
 A dsh-side `/voice` would therefore duplicate a working system facility, and would have to keep
 working while the flags stay off.
 
+The same infrastructure, aimed at the player instead of the editor, is wrapped by the MPD voice
+client — see [mpd-voice.md](./mpd-voice.md); it keeps the speech backends pluggable precisely
+because this host parks them.
+
 ## What is *not* affected
 
 Audio **input into the model** is a separate concern and already works: the TUI attaches images from

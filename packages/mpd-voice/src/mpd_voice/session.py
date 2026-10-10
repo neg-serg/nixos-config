@@ -1,0 +1,533 @@
+"""Execute recognised intents against MPD and phrase the spoken reply."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+from .config import Config
+from .intents import Intent, parse
+from .mpd import (
+    MPDClient,
+    MPDConnectionError,
+    MPDError,
+    SEARCH_TAGS,
+)
+
+RU = {
+    "nothing": "Сейчас ничего не играет.",
+    "paused_state": "На паузе: {what}.",
+    "stopped_state": "Воспроизведение остановлено.",
+    "started": "Играю.",
+    "paused": "Пауза.",
+    "resumed": "Продолжаю.",
+    "stopped": "Остановил.",
+    "volume": "Громкость {value} процентов.",
+    "volume_unsupported": "Устройство не поддерживает регулировку громкости.",
+    "muted": "Звук выключен.",
+    "unmuted": "Вернул громкость {value} процентов.",
+    "seek_forward": "Перемотал вперёд на {seconds} секунд.",
+    "seek_back": "Перемотал назад на {seconds} секунд.",
+    "seek_to": "Перемотал на {position}.",
+    "playing_album": "Играю альбом {name}, треков: {count}.",
+    "playing_artist": "Играю {name}, треков: {count}.",
+    "playing_track": "Играю {name}.",
+    "playing_many": "Играю {count} треков по запросу {name}.",
+    "not_found": "Не нашёл: {name}.",
+    "added": "Добавил в очередь треков: {count}.",
+    "queue_cleared": "Очередь очищена.",
+    "playlists": "Плейлисты: {names}.",
+    "playlists_empty": "Плейлистов нет.",
+    "playlist_loaded": "Загрузил плейлист {name}, треков: {count}.",
+    "playlist_saved": "Сохранил очередь как плейлист {name}.",
+    "mode_on": "{what} включено.",
+    "mode_off": "{what} выключено.",
+    "crossfade": "Кроссфейд {value} секунд.",
+    "updating": "Обновляю библиотеку.",
+    "help": "Скажите: громче, тише, следующий, пауза, продолжи, "
+    "что играет, включи альбом или исполнителя.",
+    "bye": "Выключаюсь.",
+    "unknown": "Не понял: {text}.",
+    "error": "MPD вернул ошибку: {message}.",
+    "offline": "Нет связи с MPD.",
+}
+
+EN = {
+    "nothing": "Nothing is playing right now.",
+    "paused_state": "Paused: {what}.",
+    "stopped_state": "Playback is stopped.",
+    "started": "Playing.",
+    "paused": "Paused.",
+    "resumed": "Resuming.",
+    "stopped": "Stopped.",
+    "volume": "Volume {value} percent.",
+    "volume_unsupported": "This output does not support volume control.",
+    "muted": "Muted.",
+    "unmuted": "Volume back to {value} percent.",
+    "seek_forward": "Skipped forward {seconds} seconds.",
+    "seek_back": "Skipped back {seconds} seconds.",
+    "seek_to": "Jumped to {position}.",
+    "playing_album": "Playing album {name}, {count} tracks.",
+    "playing_artist": "Playing {name}, {count} tracks.",
+    "playing_track": "Playing {name}.",
+    "playing_many": "Playing {count} tracks matching {name}.",
+    "not_found": "Nothing found for: {name}.",
+    "added": "Added {count} tracks to the queue.",
+    "queue_cleared": "Queue cleared.",
+    "playlists": "Playlists: {names}.",
+    "playlists_empty": "There are no playlists.",
+    "playlist_loaded": "Loaded playlist {name}, {count} tracks.",
+    "playlist_saved": "Saved the queue as playlist {name}.",
+    "mode_on": "{what} on.",
+    "mode_off": "{what} off.",
+    "crossfade": "Crossfade {value} seconds.",
+    "updating": "Updating the library.",
+    "help": "Try: louder, quieter, next, pause, resume, what is playing, "
+    "play album or artist.",
+    "bye": "Shutting down.",
+    "unknown": "I did not understand: {text}.",
+    "error": "MPD reported an error: {message}.",
+    "offline": "MPD is unreachable.",
+}
+
+PHRASES = {"ru": RU, "en": EN}
+MODE_NAMES = {
+    "ru": {
+        "random": "Перемешивание",
+        "repeat": "Повтор",
+        "single": "Повтор одного трека",
+        "consume": "Удаление проигранного",
+    },
+    "en": {
+        "random": "Shuffle",
+        "repeat": "Repeat",
+        "single": "Single track repeat",
+        "consume": "Consume",
+    },
+}
+
+
+@dataclass
+class Reply:
+    """What the client says back and how the session should continue."""
+
+    text: str
+    ok: bool = True
+    should_exit: bool = False
+
+
+def song_title(song: dict[str, str]) -> str:
+    if song.get("title"):
+        return song["title"]
+    if song.get("name"):
+        return song["name"]
+    path = song.get("file") or song.get("playlist") or ""
+    return Path(path).stem if path else "?"
+
+
+def song_artist(song: dict[str, str]) -> str:
+    return (
+        song.get("artist")
+        or song.get("albumartist")
+        or song.get("performer")
+        or ""
+    )
+
+
+def duration_to_clock(seconds: float) -> str:
+    total = max(0, int(round(seconds)))
+    return f"{total // 60}:{total % 60:02d}"
+
+
+def song_duration(song: dict[str, str]) -> float:
+    raw = song.get("duration") or song.get("time") or "0"
+    try:
+        return float(raw)
+    except ValueError:
+        return 0.0
+
+
+def describe(song: dict[str, str]) -> str:
+    """Human readable "Title — Artist (Album)" line."""
+    parts = [song_title(song)]
+    artist = song_artist(song)
+    if artist:
+        parts.append(artist)
+    album = song.get("album") or ""
+    line = " — ".join(parts)
+    if album:
+        line = f"{line} ({album})"
+    seconds = song_duration(song)
+    if seconds:
+        line = f"{line} [{duration_to_clock(seconds)}]"
+    return line
+
+
+class Controller:
+    """Maps intents onto MPD commands; knows nothing about audio."""
+
+    def __init__(self, client: MPDClient, cfg: Config) -> None:
+        self.client = client
+        self.cfg = cfg
+        self._volume_before_mute: int | None = None
+
+    # -- helpers -------------------------------------------------------
+    def _t(self, key: str, lang: str = "ru", **kwargs: object) -> str:
+        table = PHRASES.get(lang) or PHRASES["ru"]
+        template = table.get(key) or PHRASES["en"].get(key, key)
+        return template.format(**kwargs)
+
+    def handle_text(self, text: str) -> Reply:
+        intent = parse(text)
+        if not intent.understood:
+            shown = (intent.raw or "").strip()
+            return Reply(
+                text=self._t("unknown", intent.lang, text=shown), ok=False
+            )
+        return self.execute(intent)
+
+    def now_playing(self, lang: str = "") -> Reply:
+        """What MPD is playing (used by `mpd-voice status`)."""
+        return self._now(lang or self.cfg.language)
+
+    def execute(self, intent: Intent) -> Reply:
+        handler = getattr(self, f"_do_{intent.name}", None)
+        if handler is None:
+            return Reply(
+                text=self._t("unknown", intent.lang, text=intent.raw), ok=False
+            )
+        try:
+            return handler(intent)
+        except MPDConnectionError:
+            return Reply(text=self._t("offline", intent.lang), ok=False)
+        except MPDError as exc:
+            return Reply(
+                text=self._t("error", intent.lang, message=exc.message),
+                ok=False,
+            )
+
+    def _search(self, tag: str, query: str) -> list[dict[str, str]]:
+        """Search by tag, falling back to `any` (paths, mixed spellings)."""
+        if query:
+            if tag in SEARCH_TAGS:
+                found = self.client.search(tag, query)
+                if found:
+                    return found
+            return self.client.search_any(query)
+        return []
+
+    def _album_tracks(self, query: str) -> list[dict[str, str]]:
+        found = self.client.search("album", query)
+        if found:
+            return found
+        loose = self.client.search_any(query)
+        if not loose:
+            return []
+        album = loose[0].get("album") or ""
+        if album:
+            tracks = self.client.search("album", album)
+            if tracks:
+                return tracks
+        return loose[:1]
+
+    def _replace_and_play(self, songs: list[dict[str, str]]) -> int:
+        self.client.clear()
+        self.client.add_many(
+            [song["file"] for song in songs if song.get("file")]
+        )
+        self.client.play(0)
+        return len(songs)
+
+    def _now(self, lang: str) -> Reply:
+        song = self.client.current_song()
+        if not song or not song.get("file"):
+            return Reply(text=self._t("nothing", lang))
+        state = self.client.status().get("state", "")
+        if state == "pause":
+            text = self._t("paused_state", lang, what=describe(song))
+        else:
+            text = describe(song)
+        return Reply(text=text)
+
+    # -- playback ------------------------------------------------------
+    def _do_play(self, intent: Intent) -> Reply:
+        self.client.play()
+        return Reply(text=self._t("started", intent.lang))
+
+    def _do_pause(self, intent: Intent) -> Reply:
+        self.client.pause(True)
+        return Reply(text=self._t("paused", intent.lang))
+
+    def _do_resume(self, intent: Intent) -> Reply:
+        self.client.resume()
+        return Reply(text=self._t("resumed", intent.lang))
+
+    def _do_toggle(self, intent: Intent) -> Reply:
+        paused = self.client.toggle_pause()
+        key = "paused" if paused else "resumed"
+        return Reply(text=self._t(key, intent.lang))
+
+    def _do_stop(self, intent: Intent) -> Reply:
+        self.client.stop()
+        return Reply(text=self._t("stopped", intent.lang))
+
+    def _do_next(self, intent: Intent) -> Reply:
+        self.client.next()
+        return self._now(intent.lang)
+
+    def _do_previous(self, intent: Intent) -> Reply:
+        self.client.previous()
+        return self._now(intent.lang)
+
+    # -- volume --------------------------------------------------------
+    def _report_volume(self, lang: str) -> Reply:
+        """Report the volume MPD actually ended up with.
+
+        Outputs without a mixer (the ``null`` plugin, some DACs) report -1 for
+        volume and silently ignore ``setvol``; saying "volume 30" then would be
+        a lie, so the missing mixer is reported instead.
+        """
+        value = self.client.volume()
+        if value is None:
+            return Reply(text=self._t("volume_unsupported", lang), ok=False)
+        return Reply(text=self._t("volume", lang, value=value))
+
+    def _do_volume_up(self, intent: Intent) -> Reply:
+        step = intent.number or self.cfg.volume_step
+        self.client.adjust_volume(abs(step))
+        return self._report_volume(intent.lang)
+
+    def _do_volume_down(self, intent: Intent) -> Reply:
+        step = intent.number or self.cfg.volume_step
+        self.client.adjust_volume(-abs(step))
+        return self._report_volume(intent.lang)
+
+    def _do_volume_set(self, intent: Intent) -> Reply:
+        self.client.set_volume(intent.number or 0)
+        return self._report_volume(intent.lang)
+
+    def _do_volume_get(self, intent: Intent) -> Reply:
+        return self._report_volume(intent.lang)
+
+    def _do_mute(self, intent: Intent) -> Reply:
+        current = self.client.volume()
+        if current is None:
+            return Reply(
+                text=self._t("volume_unsupported", intent.lang), ok=False
+            )
+        if current:
+            self._volume_before_mute = current
+        self.client.set_volume(0)
+        return Reply(text=self._t("muted", intent.lang))
+
+    def _do_unmute(self, intent: Intent) -> Reply:
+        value = self._volume_before_mute or self.cfg.volume_step
+        self.client.set_volume(value)
+        return Reply(text=self._t("unmuted", intent.lang, value=value))
+
+    def _do_now_playing(self, intent: Intent) -> Reply:
+        return self._now(intent.lang)
+
+    # -- seek ----------------------------------------------------------
+    def _do_seek_forward(self, intent: Intent) -> Reply:
+        seconds = intent.number or 10
+        self.client.seek_relative(seconds)
+        return Reply(
+            text=self._t("seek_forward", intent.lang, seconds=seconds)
+        )
+
+    def _do_seek_back(self, intent: Intent) -> Reply:
+        seconds = intent.number or 10
+        self.client.seek_relative(-seconds)
+        return Reply(text=self._t("seek_back", intent.lang, seconds=seconds))
+
+    def _do_seek_to(self, intent: Intent) -> Reply:
+        seconds = float(intent.number or 0)
+        self.client.seek_to(seconds)
+        return Reply(
+            text=self._t(
+                "seek_to", intent.lang, position=duration_to_clock(seconds)
+            )
+        )
+
+    # -- modes ---------------------------------------------------------
+    def _mode_reply(self, intent: Intent, mode: str, enabled: bool) -> Reply:
+        name = MODE_NAMES.get(intent.lang, MODE_NAMES["ru"])[mode]
+        key = "mode_on" if enabled else "mode_off"
+        return Reply(text=self._t(key, intent.lang, what=name))
+
+    def _do_shuffle_on(self, intent: Intent) -> Reply:
+        return self._mode_reply(intent, "random", self.client.set_random(True))
+
+    def _do_shuffle_off(self, intent: Intent) -> Reply:
+        return self._mode_reply(
+            intent, "random", self.client.set_random(False)
+        )
+
+    def _do_repeat_on(self, intent: Intent) -> Reply:
+        return self._mode_reply(intent, "repeat", self.client.set_repeat(True))
+
+    def _do_repeat_off(self, intent: Intent) -> Reply:
+        return self._mode_reply(
+            intent, "repeat", self.client.set_repeat(False)
+        )
+
+    def _do_repeat_single(self, intent: Intent) -> Reply:
+        self.client.set_single(True)
+        self.client.set_repeat(True)
+        return self._mode_reply(intent, "single", True)
+
+    def _do_consume_toggle(self, intent: Intent) -> Reply:
+        enabled = self.client.flip_mode("consume")
+        return self._mode_reply(intent, "consume", enabled)
+
+    # -- library search ------------------------------------------------
+    def _do_play_album(self, intent: Intent) -> Reply:
+        found = self._album_tracks(intent.value)
+        if not found:
+            return Reply(
+                text=self._t("not_found", intent.lang, name=intent.value),
+                ok=False,
+            )
+        count = self._replace_and_play(found)
+        return Reply(
+            text=self._t(
+                "playing_album",
+                intent.lang,
+                name=found[0].get("album") or intent.value,
+                count=count,
+            )
+        )
+
+    def _do_play_artist(self, intent: Intent) -> Reply:
+        found = self.client.search("artist", intent.value)
+        if not found:
+            found = self.client.search("albumartist", intent.value)
+        if not found:
+            found = self.client.search_any(intent.value)
+        if not found:
+            return Reply(
+                text=self._t("not_found", intent.lang, name=intent.value),
+                ok=False,
+            )
+        count = self._replace_and_play(found)
+        name = (
+            found[0].get("albumartist")
+            or found[0].get("artist")
+            or intent.value
+        )
+        return Reply(
+            text=self._t("playing_artist", intent.lang, name=name, count=count)
+        )
+
+    def _do_play_track(self, intent: Intent) -> Reply:
+        found = self._search("title", intent.value)
+        if not found:
+            return Reply(
+                text=self._t("not_found", intent.lang, name=intent.value),
+                ok=False,
+            )
+        self._replace_and_play(found)
+        return Reply(
+            text=self._t("playing_track", intent.lang, name=describe(found[0]))
+        )
+
+    def _do_play_genre(self, intent: Intent) -> Reply:
+        found = self._search("genre", intent.value)
+        if not found:
+            return Reply(
+                text=self._t("not_found", intent.lang, name=intent.value),
+                ok=False,
+            )
+        count = self._replace_and_play(found)
+        return Reply(
+            text=self._t(
+                "playing_many", intent.lang, name=intent.value, count=count
+            )
+        )
+
+    def _do_play_directory(self, intent: Intent) -> Reply:
+        found = self._search("file", intent.value)
+        if not found:
+            return Reply(
+                text=self._t("not_found", intent.lang, name=intent.value),
+                ok=False,
+            )
+        count = self._replace_and_play(found)
+        return Reply(
+            text=self._t(
+                "playing_many", intent.lang, name=intent.value, count=count
+            )
+        )
+
+    def _do_play_any(self, intent: Intent) -> Reply:
+        return self._do_play_track(intent)
+
+    def _do_play_playlist(self, intent: Intent) -> Reply:
+        self.client.clear()
+        self.client.load_playlist(intent.value)
+        self.client.play(0)
+        tracks = self.client.queue()
+        return Reply(
+            text=self._t(
+                "playlist_loaded",
+                intent.lang,
+                name=intent.value,
+                count=len(tracks),
+            )
+        )
+
+    def _do_add_to_queue(self, intent: Intent) -> Reply:
+        tag = intent.tag or "any"
+        if tag == "playlist":
+            count = len(self.client.playlist_songs(intent.value))
+            self.client.load_playlist(intent.value)
+            return Reply(
+                text=self._t(
+                    "playlist_loaded",
+                    intent.lang,
+                    name=intent.value,
+                    count=count,
+                )
+            )
+        found = self._search(
+            tag if tag in SEARCH_TAGS else "any", intent.value
+        )
+        if not found:
+            return Reply(
+                text=self._t("not_found", intent.lang, name=intent.value),
+                ok=False,
+            )
+        added = self.client.add_many(
+            [song["file"] for song in found if song.get("file")]
+        )
+        return Reply(text=self._t("added", intent.lang, count=added))
+
+    def _do_clear_queue(self, intent: Intent) -> Reply:
+        self.client.clear()
+        return Reply(text=self._t("queue_cleared", intent.lang))
+
+    def _do_list_playlists(self, intent: Intent) -> Reply:
+        names = self.client.playlists()
+        if not names:
+            return Reply(text=self._t("playlists_empty", intent.lang))
+        return Reply(
+            text=self._t("playlists", intent.lang, names=", ".join(names))
+        )
+
+    def _do_save_playlist(self, intent: Intent) -> Reply:
+        self.client.save_playlist(intent.value)
+        return Reply(
+            text=self._t("playlist_saved", intent.lang, name=intent.value)
+        )
+
+    def _do_update_library(self, intent: Intent) -> Reply:
+        self.client.update()
+        return Reply(text=self._t("updating", intent.lang))
+
+    # -- meta ----------------------------------------------------------
+    def _do_help(self, intent: Intent) -> Reply:
+        return Reply(text=self._t("help", intent.lang))
+
+    def _do_exit(self, intent: Intent) -> Reply:
+        return Reply(text=self._t("bye", intent.lang), should_exit=True)

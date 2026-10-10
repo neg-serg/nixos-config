@@ -1417,6 +1417,125 @@ true
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.mpdVoice.enable
+
+Whether to enable enable MPD voice client (mpd-voice CLI + its config file).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.mpdVoice.language
+
+Reply language and default speech recognition language.
+
+*Type:* one of “ru”, “en”
+
+*Default:*
+
+```nix
+"ru"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.mpdVoice.stt
+
+Speech recognition backend: auto probes the HTTP server below, then falls back to whisper-cli.
+
+*Type:* one of “auto”, “http”, “cli”, “cmd”, “none”
+
+*Default:*
+
+```nix
+"auto"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.mpdVoice.sttUrl
+
+Base URL of an OpenAI-compatible STT server (/v1/audio/transcriptions).
+
+*Type:* string
+
+*Default:*
+
+```nix
+"http://127.0.0.1:8002"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.mpdVoice.tts
+
+Speech synthesis backend: auto probes the HTTP server below, then falls back to spd-say / espeak-ng.
+
+*Type:* one of “auto”, “http”, “cmd”, “none”
+
+*Default:*
+
+```nix
+"auto"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.mpdVoice.ttsUrl
+
+Base URL of an OpenAI-compatible TTS server (/v1/audio/speech).
+
+*Type:* string
+
+*Default:*
+
+```nix
+"http://127.0.0.1:8001"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.mpdVoice.wakeWord
+
+Keyword required by `mpd-voice listen` (empty = every utterance is executed, which is what
+push-to-talk wants).
+
+*Type:* string
+
+*Default:*
+
+```nix
+""
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.solaMpd.enable
 
 Whether to enable enable Sola MPD (browser MPD client: backend + web UI).

@@ -60,6 +60,9 @@
 - dsh voice input — why there is nothing to build (the local stack is switched off on purpose):
   [dsh-voice.md](./dsh-voice.md)
 
+- MPD voice client (`mpd-voice`) — microphone → local STT → player commands, plus push-to-talk,
+  wake-word and text modes: [mpd-voice.md](./mpd-voice.md)
+
 - AppArmor — confining the LAN-facing daemons (profiles from package closures, complain → enforce):
   [apparmor.md](./apparmor.md)
 
