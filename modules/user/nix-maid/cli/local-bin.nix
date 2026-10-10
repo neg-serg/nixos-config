@@ -55,6 +55,9 @@
         # Scripts to skip automatic generation for (handled specially below)
         autoSkip = [
           "kitty-scrollback-nvim"
+          # Rendered below as `.local/bin/wl-workspaces` (python, and the
+          # command name should not carry the extension).
+          "wl-workspaces.py"
         ];
 
         autoEntries =
@@ -114,6 +117,13 @@
         ".local/bin/kitty-scrollback-nvim" = {
           executable = true;
           text = ksbText;
+        };
+        # Per-workspace wallpaper helper (wl-workspaces) — deployed without
+        # the .py so it reads like a command; the interpreter comes from the
+        # unit, which calls `${python3} …`.
+        ".local/bin/wl-workspaces" = {
+          executable = true;
+          text = subst (builtins.readFile (binDir + "/wl-workspaces.py"));
         };
         ".local/bin/hypr-focus-hist" = {
           executable = true;

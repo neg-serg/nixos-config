@@ -355,7 +355,7 @@ hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch
 hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch "kitty --class nwim -e /home/neg/.local/bin/v"'))
 hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch "~/.local/bin/pl video"'))
 hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg(_[0-9]+)?$" --launch "swayimg ~/dw"'))
-hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
+hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl-workspaces shuffle"))
 
 -- --- System ────────────────────────────────────────────────────────────
 hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty-glass --class rebuild -e nh os switch /etc/nixos#trantor --option substitute false' special"))
@@ -517,8 +517,8 @@ end)
 hl.bind(M4 .. "+" .. SH .. "+y", hl.dsp.submap("wallpaper"))
 hl.define_submap("wallpaper", "reset", function()
   submap_resets()
-  hl.bind("y", hl.dsp.exec_cmd("wl random ~/pic/wl"))
-  hl.bind(M4 .. "+y", hl.dsp.exec_cmd("wl random ~/pic/wl"))
+  hl.bind("y", hl.dsp.exec_cmd("wl-workspaces shuffle"))
+  hl.bind(M4 .. "+y", hl.dsp.exec_cmd("wl-workspaces shuffle"))
   hl.bind(SH .. "+w", hl.dsp.submap("reset"))
 end)
 
