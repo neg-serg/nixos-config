@@ -380,6 +380,11 @@ hl.bind(M4 .. "+period", hl.dsp.exec_cmd("~/.local/bin/pl cmd next"), { locked =
 hl.bind(M4 .. "+" .. SH .. "+i", hl.dsp.exec_cmd("~/.local/bin/pl vol mute"), { locked = true })
 hl.bind(M4 .. "+" .. SH .. "+o", hl.dsp.exec_cmd("~/.local/bin/pl vol unmute"), { locked = true })
 hl.bind(M4 .. "+m", hl.dsp.exec_cmd("~/.local/bin/music-rename current"), { locked = true })
+-- MPD voice client (package mpd-voice, features.media.audio.mpdVoice): one
+-- push-to-talk utterance per press — the recorder stops on silence and the
+-- command lands on MPD. The bind sits next to the media keys on purpose:
+-- SHIFT+W is play/pause, SHIFT+Q is "talk to the player".
+hl.bind(M4 .. "+" .. SH .. "+q", hl.dsp.exec_cmd("mpd-voice once"), { locked = true })
 
 -- Euphonica (GTK4/libadwaita MPD client) — run-or-raise, the GUI counterpart
 -- to the M4+f rmpc scratchpad.
