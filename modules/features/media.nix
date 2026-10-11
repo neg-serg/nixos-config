@@ -69,6 +69,24 @@
           default = "/zero/ai/music-ai/hf";
           description = "HuggingFace cache directory for the tagging/embedding models.";
         };
+        mtgVenv = lib.mkOption {
+          type = lib.types.str;
+          default = "/zero/ai/music-ai/venv-mtg";
+          description = ''
+            venv with essentia-tensorflow for the trained MTG tagger
+            (music-mtg-tags: Discogs-400 styles, Jamendo mood/theme and
+            instrument heads). Filled by scripts/dev/music-mtg-setup.sh; the
+            shared venv-analysis keeps its plain essentia build untouched.
+          '';
+        };
+        mtgModels = lib.mkOption {
+          type = lib.types.str;
+          default = "/zero/ai/music-ai/mtg-models";
+          description = ''
+            EffNet-Discogs backbone and head models for music-mtg-tags, fetched
+            by scripts/dev/music-mtg-models.sh (~25 MB, sha256-pinned mirrors).
+          '';
+        };
         # Opt-in background refresh: a systemd user timer re-runs the
         # incremental indexer so new albums get embedded without a manual
         # hours-long pass. Off by default; a host flips autoIndex.enable.

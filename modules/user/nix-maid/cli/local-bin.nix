@@ -47,6 +47,11 @@
           "@MUSIC_AI_LIB@" = "${config.lib.neg.path "packages/local-bin/lib"}";
           "@MUSIC_AI_HF_HOME@" = config.features.media.audio.musicTagging.hfHome;
           "@MUSIC_EMBED_MODEL@" = config.features.media.audio.musicTagging.embedModel;
+          # Trained MTG tagger (music-mtg-tags): its own venv, because
+          # venv-analysis carries a plain essentia without the
+          # TensorflowPredict* classes, plus the pinned model directory.
+          "@MUSIC_MTG_VENV@" = config.features.media.audio.musicTagging.mtgVenv;
+          "@MUSIC_MTG_MODELS@" = config.features.media.audio.musicTagging.mtgModels;
         };
         subst = lib.replaceStrings (builtins.attrNames substs) (builtins.attrValues substs);
 
