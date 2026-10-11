@@ -2,6 +2,8 @@ inputs: final: prev:
 let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
   pkg = final.neg.functions.pkg; # name → packages/<name>, no `../` counting
+  # Shared builder for the install-as-is Vicinae extensions.
+  mkVicinaeExtension = final.neg.functions.mkVicinaeExtension;
 in
 {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
@@ -18,10 +20,10 @@ in
   flight-gtk-theme = callPkg (pkg "flight-gtk-theme") { };
   matugen-themes = callPkg (pkg "matugen-themes") { };
   wl = callPkg (pkg "wl") { };
-  wl-switcher = callPkg (pkg "wl-switcher") { };
-  wallhaven = callPkg (pkg "wallhaven") { };
-  hyprwhspr = callPkg (pkg "hyprwhspr") { };
-  aura = callPkg (pkg "aura") { }; # the emotion/CBT diary: record a note from the launcher
+  wl-switcher = callPkg (pkg "wl-switcher") { inherit mkVicinaeExtension; };
+  wallhaven = callPkg (pkg "wallhaven") { inherit mkVicinaeExtension; };
+  hyprwhspr = callPkg (pkg "hyprwhspr") { inherit mkVicinaeExtension; };
+  aura = callPkg (pkg "aura") { inherit mkVicinaeExtension; }; # the emotion/CBT diary: record a note from the launcher
   camillagui = callPkg (pkg "camillagui") { }; # web GUI for CamillaDSP
   atrium = callPkg (pkg "atrium") { }; # Wayland multiseat display manager
 
