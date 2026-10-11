@@ -114,6 +114,27 @@ Notes:
 - Building with *different* settings than the index on disk re-embeds everything, so the tool says
   so before starting and prints the exact flags that would keep the existing index.
 
+- Raw MERT cosine is anisotropic: on the real 36 565-track index the mean top-1 similarity was
+  0.958, so everything looked equally close. `music-similar` therefore subtracts the corpus mean
+  from both sides and re-normalises (`center.npy`, written by `music-index`; readers derive it when
+  the file is absent, so older indexes work unchanged). Measured over 2000 queries:
+
+  | Variant                         | same-album rank1 | same-album P@5 | same-artist rank1 | same-artist P@5 |
+  | ------------------------------- | ---------------- | -------------- | ----------------- | --------------- |
+  | as stored                       | 0.213            | 0.157          | 0.310             | 0.186           |
+  | **mean centered**               | **0.232**        | **0.160**      | **0.331**         | **0.192**       |
+  | all-but-the-top (-4/-8/-16/-32) | 0.218–0.222      | ≤0.159         | 0.320–0.324       | ≤0.186          |
+  | CSLS (k=10)                     | 0.088–0.115      | ≤0.093         | 0.102–0.137       | ≤0.109          |
+
+  All-but-the-top and CSLS were measured on the same probe and rejected; `--no-center` restores the
+  raw cosines for comparison. Treat the absolute numbers as a proxy: the point of the queue-similar
+  feature is "the same neighbourhood", not "the same album".
+
+- Keeping the index fresh: `features.media.audio.musicTagging.autoIndex` (default **off**) adds a
+  user timer (`music-index.service` / `music-index.timer`, `OnCalendar = "Sun 04:00"`, `Persistent`,
+  `Nice = 10`, idle IO, `--quiet --threads 4`) that runs the incremental pass while the machine
+  idles. Warm runs take minutes because the per-file cache decides what to embed.
+
 - The voice client queues neighbours of the playing track: `mpd-voice say "similar tracks"` (the
   Russian phrases are listed by `mpd-voice phrases`) runs `music-similar --json` on the current song
   and appends the results to the MPD queue (`similar_cmd` and `music_dir` in the client's config —

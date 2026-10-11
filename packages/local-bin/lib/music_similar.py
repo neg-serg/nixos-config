@@ -90,7 +90,49 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="with --queue: print the commands without running them",
     )
+    parser.add_argument(
+        "--no-center",
+        action="store_true",
+        help="skip the corpus-mean correction (raw MERT cosines)",
+    )
     return parser.parse_args(argv)
+
+
+def load_center(index_dir: Path, matrix):
+    """Corpus mean vector: center.npy when the index has one, else derived.
+
+    MERT embeddings are strongly anisotropic — on the real 36k index the mean
+    top-1 cosine was 0.958, so neighbours were dominated by hubs.  Subtracting
+    the corpus mean from both sides and re-normalising lifted same-album rank-1
+    from 0.213 to 0.232 and same-artist from 0.310 to 0.331 (2000 queries).
+    All-but-the-top (-4..-32 components) and CSLS were measured on the same
+    probe and made it worse, so the correction stops at centering.
+    """
+    import numpy as np
+
+    center_path = Path(index_dir) / "center.npy"
+    if center_path.exists():
+        try:
+            center = np.load(center_path).astype(np.float32)
+        except (OSError, ValueError):
+            center = None
+        if center is not None and center.shape == (matrix.shape[1],):
+            return center
+    return matrix.mean(axis=0).astype(np.float32)
+
+
+def centered(matrix, query, index_dir: Path, enabled: bool = True):
+    """Center both sides on the corpus mean and re-normalise to unit length."""
+    import numpy as np
+
+    if not enabled:
+        return matrix, query
+    center = load_center(index_dir, matrix)
+    matrix = matrix - center
+    matrix = matrix / (np.linalg.norm(matrix, axis=1, keepdims=True) + 1e-8)
+    query = query - center
+    query = query / (np.linalg.norm(query) + 1e-8)
+    return matrix, query
 
 
 def queue_neighbours(
@@ -371,6 +413,7 @@ def main(argv: list[str] | None = None) -> int:
 
     paths = [record["path"] for record in tracks]
     exclude = None if args.self else str(query_path)
+    matrix, query = centered(matrix, query, index_dir, not args.no_center)
     results = rank(matrix, query, args.k, paths=paths, exclude_path=exclude)
     if args.queue:
         music_dir = Path(args.music_dir).expanduser()

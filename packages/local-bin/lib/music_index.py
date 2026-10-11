@@ -137,12 +137,19 @@ def _worker_embed(path: str) -> list[float]:
 def write_index(
     out_dir: Path, records: list[dict], vectors: Any, meta: dict
 ) -> None:
-    """Write vectors.npy, tracks.jsonl and meta.json into ``out_dir``."""
+    """Write vectors.npy, tracks.jsonl, center.npy and meta.json."""
     import numpy as np
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    np.save(out_dir / "vectors.npy", np.asarray(vectors, dtype=np.float32))
+    matrix = np.asarray(vectors, dtype=np.float32)
+    np.save(out_dir / "vectors.npy", matrix)
+    # The corpus mean is what music-similar subtracts before cosine: MERT
+    # embeddings are strongly anisotropic (mean top-1 cosine 0.958 on a real
+    # 36k index), and centering both sides lifted same-album rank-1 from 0.213
+    # to 0.232 and same-artist from 0.310 to 0.331.  Saving it keeps every
+    # reader on the same transform; readers also derive it when it is absent.
+    np.save(out_dir / "center.npy", matrix.mean(axis=0).astype(np.float32))
     with open(out_dir / "tracks.jsonl", "w", encoding="utf-8") as handle:
         for record in records:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")

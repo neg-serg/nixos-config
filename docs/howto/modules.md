@@ -1558,6 +1558,60 @@ true
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.musicTagging.autoIndex.enable
+
+Whether to enable weekly background refresh of the music similarity index (systemd user timer).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.musicTagging.autoIndex.limit
+
+Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.
+
+*Type:* signed integer
+
+*Default:*
+
+```nix
+0
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.musicTagging.autoIndex.onCalendar
+
+systemd calendar expression for the automatic music-index refresh.
+
+*Type:* string
+
+*Default:*
+
+```nix
+"Sun 04:00"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.musicTagging.embedModel
 
 HuggingFace music embedding model. Measured on a same-track probe (10 albums): MERT-v1-95M rank1
