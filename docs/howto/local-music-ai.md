@@ -45,11 +45,16 @@ $ music-tags ~/music/AFX-*/A01\ -\ AFX\ -\ Children\ Talking.flac --top 5
  0.863  breakbeat
  0.059  hip hop
 $ music-tags --preset mood FILE               # focused vocabulary, sharper scores
+$ music-tags --now --preset genre --top 5     # tags of the track playerctl reports
 $ music-tags --dir ~/music --out ~/tags.jsonl # batch, resumable by mtime+size
 $ music-embed --out /tmp/afx.npy ~/music/AFX-*/A01*.flac
 $ music-index ~/music --out ~/.cache/music-index      # hours for the full library, resumable
 $ music-similar --index ~/.cache/music-index -k 5     # current track via playerctl
+$ music-similar --queue -k 5                          # ...and append them to the queue
 ```
+
+The queue path is also on a key: `Super+Shift+P` (the `music` submap) then `q` —
+`music-similar --queue -k 5` — and by voice: `mpd-voice say "similar tracks"`.
 
 Notes:
 
