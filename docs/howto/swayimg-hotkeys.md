@@ -46,14 +46,14 @@ log file either way so you can read them later via `tail -f ~/tmp/swayimg-action
 
 The viewer's own keys; none of them call the helper script.
 
-| Key                       | Action            | Effect                                       |
-| ------------------------- | ----------------- | -------------------------------------------- |
-| `n` / `т` (RU)            | `open("next")`    | Next image.                                  |
-| `p` / `з` (RU)            | `open("prev")`    | Previous image.                              |
-| `BackSpace`               | `open("prev")`    | Previous image (the alias the slideshow has).|
-| `Space` / `Shift+Space`   | next / prev       | Step forward and back.                       |
-| `g` / `Shift+g`           | first / last      | Jump to the ends of the list.                |
-| `Shift+BackSpace`         | `reset_scale()`   | Reset zoom — plain `BackSpace` steps back.   |
+| Key                     | Action          | Effect                                        |
+| ----------------------- | --------------- | --------------------------------------------- |
+| `n` / `т` (RU)          | `open("next")`  | Next image.                                   |
+| `p` / `з` (RU)          | `open("prev")`  | Previous image.                               |
+| `BackSpace`             | `open("prev")`  | Previous image (the alias the slideshow has). |
+| `Space` / `Shift+Space` | next / prev     | Step forward and back.                        |
+| `g` / `Shift+g`         | first / last    | Jump to the ends of the list.                 |
+| `Shift+BackSpace`       | `reset_scale()` | Reset zoom — plain `BackSpace` steps back.    |
 
 ## Gallery Mode
 

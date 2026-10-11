@@ -5,8 +5,8 @@ Optimization). This technique allows building a kernel optimized for your specif
 production-collected profiles.
 
 > **Status note (this host):** the `boot.kernel.autofdo` NixOS module
-> (`modules/system/boot/autofdo.nix`) exists but is **not yet functional**. Trantor builds its kernel
-> through `modules/system/kernel/localmodconfig.nix`, whose
+> (`modules/system/boot/autofdo.nix`) exists but is **not yet functional**. Trantor builds its
+> kernel through `modules/system/kernel/localmodconfig.nix`, whose
 > `boot.kernelPackages = lib.mkOverride 40 …` outranks the module's `lib.mkForce` (priority 50), so
 > enabling `boot.kernel.autofdo.enable` does **not** currently switch the kernel to Clang — its
 > `AUTOFDO_CLANG y` patch also lands on a GCC build, where Kconfig drops it. The steps below

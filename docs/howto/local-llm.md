@@ -1,6 +1,7 @@
 # Local LLM stack
 
-How the local neural-network stack on the `trantor` host works, what is enabled, and how to operate it.
+How the local neural-network stack on the `trantor` host works, what is enabled, and how to operate
+it.
 
 Everything below is gated on a single feature flag:
 

@@ -104,10 +104,10 @@ environment.
   song, a missing file, an empty result list, a failed helper or unparsable JSON all become a spoken
   error, never a traceback.
 - Mood phrases queue tracks by the Jamendo mood label that the trained MTG tagger (`music-mtg-tags`)
-  stored in `tags_file`: `play dark music` (also sad, relaxing, calm, happy, epic, heavy,
-  space, meditative, romantic, and the same with `add`). The client streams the JSONL once, keeps
-  labels scoring at or above `tags_min_score`, shuffles the matches, caps them at `tags_limit` and
-  appends the URIs. Generate the file first with
+  stored in `tags_file`: `play dark music` (also sad, relaxing, calm, happy, epic, heavy, space,
+  meditative, romantic, and the same with `add`). The client streams the JSONL once, keeps labels
+  scoring at or above `tags_min_score`, shuffles the matches, caps them at `tags_limit` and appends
+  the URIs. Generate the file first with
   `music-mtg-tags --dir ~/music --out ~/.cache/music-mtg/tags.jsonl --json`; broken lines are
   skipped, paths outside `music_dir` are ignored, and a missing file or an empty match becomes a
   spoken error with a hint.

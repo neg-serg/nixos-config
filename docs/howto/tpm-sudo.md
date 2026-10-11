@@ -28,8 +28,8 @@ enabled, the module `modules/security/tpm-sudo.nix`:
 
 ## Step 1 — enable fTPM in UEFI/BIOS
 
-`trantor` (Ryzen) has "AMD fTPM" / "PSP fTPM". In the BIOS: **Advanced → AMD fTPM configuration → TPM
-Device Selection → Firmware TPM** → Enabled.
+`trantor` (Ryzen) has "AMD fTPM" / "PSP fTPM". In the BIOS: **Advanced → AMD fTPM configuration →
+TPM Device Selection → Firmware TPM** → Enabled.
 
 > Without this step the flag must not be enabled: the system will wait for the `tpmrm` device at
 > boot (the very pause because of which TPM was disabled).

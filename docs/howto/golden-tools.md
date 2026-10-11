@@ -118,5 +118,6 @@ hyperfine 'grep -r foo .' 'rg foo .' # compare legacy vs golden
 Verify the installation:
 `command -v rg fd bat eza delta jq zoxide duf dust ncdu btop procs sd hyperfine`.
 
-Package changes require a system rebuild (`nh os switch /etc/nixos#trantor --option substitute false`);
-changes under `~/.dsh/skills/` are picked up by a new dsh session without a rebuild.
+Package changes require a system rebuild
+(`nh os switch /etc/nixos#trantor --option substitute false`); changes under `~/.dsh/skills/` are
+picked up by a new dsh session without a rebuild.

@@ -59,8 +59,8 @@ exchange still advances the cadence and does not stall the mechanics. Values \<1
 - A **small fast non-reasoning instruct model** fits. Hermes observations: a local 7B 4-bit model
   (MLX) ~31s per pass; a large reasoning model is noticeably slower (thinking tokens on
   summarization) and usually no better.
-- DSH on trantor already has a local Ollama: qwen3:8b-q8_0 (52 tok/s, memory-extractor benchmark) — the
-  default for summarization; gemma4:12b as an option.
+- DSH on trantor already has a local Ollama: qwen3:8b-q8_0 (52 tok/s, memory-extractor benchmark) —
+  the default for summarization; gemma4:12b as an option.
 - If passes are too slow (descending order of effect): smaller/faster model → less loaded host →
   disable micro-compaction and fall back to batch.
 

@@ -9,8 +9,8 @@ with the Hyprland compositor without hopping across multiple files.
   The lock file pins the exact commits under that release.
 - The `hyprland-protocols` input follows Hyprland's inputs, so once the Hyprland pin is bumped the
   protocol packages move in lockstep (`flake.nix`:22-25).
-- `xdg-desktop-portal-hyprland` used to be pinned alongside them but is now plain nixpkgs: the
-  1.4.0 pin (rev `08d99f72`) burned ~160% CPU until the service was restarted, and 1.4.1 carries the
+- `xdg-desktop-portal-hyprland` used to be pinned alongside them but is now plain nixpkgs: the 1.4.0
+  pin (rev `08d99f72`) burned ~160% CPU until the service was restarted, and 1.4.1 carries the
   event-loop fix (#417). The input was removed 2026-09-29.
 
 ## nixpkgs Overlay
@@ -21,8 +21,8 @@ with the Hyprland compositor without hopping across multiple files.
   `pkgs.hyprland` evaluation.
 - `pkgs.xdg-desktop-portal-hyprland` is plain nixpkgs (>= 1.4.1, event-loop hangup fix); the
   `hyprlandOverlay` pin that downgraded it to 1.4.0 was dropped from `flake/lib.nix`.
-  `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build — the `hy3` flake input tracked
-  Hyprland 0.56+, failed to load here and was removed (audit 2026-09-15).
+  `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build — the `hy3` flake input tracked Hyprland 0.56+,
+  failed to load here and was removed (audit 2026-09-15).
 - Because everything flows through `pkgs`, Home-Manager modules just reference
   `pkgs.hyprlandPlugins.hy3` and stay agnostic of how the plugin was produced.
 

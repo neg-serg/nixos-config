@@ -25,7 +25,7 @@ set -u
 
 GREETER_TREE="/etc/quickshell"
 if [ -f /etc/nixos/files/quickshell/greeter/login.qml ]; then
-	GREETER_TREE="/etc/nixos/files/quickshell"
+  GREETER_TREE="/etc/nixos/files/quickshell"
 fi
 export QML2_IMPORT_PATH="${GREETER_TREE}${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
 

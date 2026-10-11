@@ -12,7 +12,7 @@
 out=${1:-/tmp/cap.png}
 typed=$2
 
-cat > /tmp/._cap_on.lua <<'LUA'
+cat > /tmp/._cap_on.lua << 'LUA'
 -- the terminal steps aside, the window under test takes the whole screen: a
 -- tiled window next to the terminal is only half visible, and half a tube is not
 -- a screenshot.
@@ -25,7 +25,7 @@ hl.dispatch(hl.dsp.window.move({ workspace = 1 }))
 hl.dispatch(hl.dsp.window.float({ action = "set" }))
 hl.dispatch(hl.dsp.window.center())
 LUA
-cat > /tmp/._cap_off.lua <<'LUA'
+cat > /tmp/._cap_off.lua << 'LUA'
 hl.dispatch(hl.dsp.focus({ window = "class:org.quickshell" }))
 hl.dispatch(hl.dsp.window.float({ action = "unset" }))
 hl.dispatch(hl.dsp.focus({ window = "class:term" }))
@@ -43,7 +43,7 @@ import json, sys
 for c in json.load(sys.stdin):
     if "quickshell" in c["class"]:
         print("shot of", c["class"], c["at"], c["size"])
-' 
+'
 grim "$out"
 hyprctl eval "$(cat /tmp/._cap_off.lua)" > /dev/null
 echo "saved $out"

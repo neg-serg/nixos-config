@@ -163,9 +163,9 @@ when unused: a connected client keeps the VNC encoder busy.
 ### Autostart: the VM owns the adapter
 
 The VM is the primary control path, so it starts with the machine: user unit `windows-vm`
-(`hosts/trantor/services/windows-vm.nix`) waits for the GLM adapter to appear on the bus and then runs
-`podman start windows`. Host-side control (`glm-osc` + `glm-adapter host`) is a manual reserve —
-nothing moves the adapter back to the host on its own.
+(`hosts/trantor/services/windows-vm.nix`) waits for the GLM adapter to appear on the bus and then
+runs `podman start windows`. Host-side control (`glm-osc` + `glm-adapter host`) is a manual reserve
+— nothing moves the adapter back to the host on its own.
 
 Manual control still works:
 

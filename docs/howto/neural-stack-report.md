@@ -1,8 +1,8 @@
 # Report: testing neural-network tools on trantor
 
-Check date: **2026-08-28 … 2026-09-05**. Host: trantor (NixOS, AMD RX 9070 XT, Ryzen 9 9950X3D, 60 GB
-RAM). Goal — verify that all installed neural tools really work after the build, fix what is broken,
-document the status. All models live in `/zero/ai/**`.
+Check date: **2026-08-28 … 2026-09-05**. Host: trantor (NixOS, AMD RX 9070 XT, Ryzen 9 9950X3D, 60
+GB RAM). Goal — verify that all installed neural tools really work after the build, fix what is
+broken, document the status. All models live in `/zero/ai/**`.
 
 ## Summary table
 

@@ -321,8 +321,8 @@ instead; scripts meant for the system (not the user) belong in a package, not lo
 - `just docs-guard` / `just unbound-hosts-guard` — freshness gates for generated artifacts
   (`docs/codebase.md`, `docs/howto/modules.md`, `hosts/trantor/unbound-hosts.nix`); they rerun the
   generators and diff, and are not part of `just lint`
-- `just deploy [host]` — build + switch (default `trantor`); `just deploy-nh` — nh-based alternative;
-  `just deploy-debug` — verbose
+- `just deploy [host]` — build + switch (default `trantor`); `just deploy-nh` — nh-based
+  alternative; `just deploy-debug` — verbose
 - dry-run before touching the system:
   `nix build .#nixosConfigurations.<host>.config.system.build.toplevel`
 - `nix flake check` does **not** force derivations, so a lazy eval error can pass the checks and
@@ -401,9 +401,9 @@ substituted value has to be reachable at build time:
   `nix eval` value. Byte-exact for config/rule/Lua files, `shfmt -i 2 -ci -bn -sr`-normalised for
   `.sh` files (treefmt reformats those, that is the only accepted difference);
 - A/B the evaluation: `git stash push` the touched files, capture the old values
-  (`nix eval --json --apply '...' .#nixosConfigurations.trantor.config`), `git stash pop`, then diff.
-  For home files compare `config.users.users.neg.maid.file.home` (all ~340 entries) — this catches
-  stray whitespace and wrong substitutions;
+  (`nix eval --json --apply '...' .#nixosConfigurations.trantor.config`), `git stash pop`, then
+  diff. For home files compare `config.users.users.neg.maid.file.home` (all ~340 entries) — this
+  catches stray whitespace and wrong substitutions;
 - an unchanged derivation is the strongest signal: the same `drvPath` (or the same output store path
   in the new generation) means the text is byte-identical;
 - before rolling out, force the toplevel:

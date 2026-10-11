@@ -27,8 +27,8 @@ profile:
 1. Installs/upgrades `@deepseek-harness-tui/dsh-tui` to the registry's `latest` tag, and only
    forward: a downgrade never replaces what is installed.
 1. Prunes the retired `workflow-worker-thread` row from the installed liangshen preset
-   (`dsh-tui-liangshen-prune.py`; a pnpm install puts the row back, so it cannot be a one-off
-   edit — see the facts below).
+   (`dsh-tui-liangshen-prune.py`; a pnpm install puts the row back, so it cannot be a one-off edit —
+   see the facts below).
 1. Installs/keeps `dsh-free-search` on the registry's `latest` tag as well.
 1. Rewrites `cordis.patch.yml` through `dsh-tui-preset-patch.py`: the preset declarations, the
    fallback preset row, the plugin roster, the free-search rows.
@@ -50,11 +50,11 @@ profile:
   beside its 0.2.0 replacement `@deepseek-ai/dsh-workflow-ptc`, guarded by `disabled: !!js`. The
   harness's compatibility preflight (`dsh-app-boot`) reads the declaration statically, and an
   unevaluated expression never equals `true`: it denies that row, then denies the whole
-  `liangshen-plugins` Include that reaches it (`... and that file is never rewritten`) — the
-  bundled preset cannot activate and every boot prints two ~700-character warnings. The caretaker
-  drops the row from the installed copy on any runtime that shipped the replacement, which is
-  exactly what the guard tests for; a pre-rename runtime keeps it, because there the row is the
-  live provider. `--dump-config` never runs the preflight, so only a real boot shows it.
+  `liangshen-plugins` Include that reaches it (`... and that file is never rewritten`) — the bundled
+  preset cannot activate and every boot prints two ~700-character warnings. The caretaker drops the
+  row from the installed copy on any runtime that shipped the replacement, which is exactly what the
+  guard tests for; a pre-rename runtime keeps it, because there the row is the live provider.
+  `--dump-config` never runs the preflight, so only a real boot shows it.
 - **The preset row id is scoped.** dsh-TUI's bundle patch replaces the base `agent-presets` row with
   `dsh-tui-agent-presets`. A profile row targeting `agent-presets` is reported as
   `patch: entry "agent-presets" not found` on every start.
@@ -75,12 +75,12 @@ profile:
   `~/.dsh-tui/session-index.json` (titles, `hasPrompt`, per-file revision) and `/resume` lists only
   entries whose `hasPrompt` is true. The 0.10.x store derived that flag from the log's head window
   and, across an append-only revision, copied it from the previous entry verbatim (`list.js`:
-  `hasPrompt = previous.hasPrompt;`), so a session first indexed while its log was still a sub-64-KiB
-  stub stayed hidden even after it grew — including after a crash mid-turn, which is exactly when
-  the user goes looking for it. 0.14.0 derives the flag from the log suffix upstream, and the
-  caretaker's `list.js` patcher is retired with it; entries already poisoned by an older store still
-  have to be repaired in place (set the flag to true for the affected ids) — the cache-hit path
-  reuses the corrected value verbatim.
+  `hasPrompt = previous.hasPrompt;`), so a session first indexed while its log was still a
+  sub-64-KiB stub stayed hidden even after it grew — including after a crash mid-turn, which is
+  exactly when the user goes looking for it. 0.14.0 derives the flag from the log suffix upstream,
+  and the caretaker's `list.js` patcher is retired with it; entries already poisoned by an older
+  store still have to be repaired in place (set the flag to true for the affected ids) — the
+  cache-hit path reuses the corrected value verbatim.
 - **Session search is opt-in.** `@deepseek-ai/dsh-base` mounts `session-query-sqlite` with
   `path: ':memory:'` + `openAt: never`, so every `ctx.sessionQuery` search fails with
   `SESSION_QUERY_SEARCH_DISABLED` and the `recall` tool is dead weight. The roster row overrides it

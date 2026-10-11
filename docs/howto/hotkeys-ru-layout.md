@@ -37,31 +37,31 @@ A keyboard event carries two identifiers:
 A hotkey bound to a Latin letter is matched by keysym. Under the RU layout the keysym becomes
 Cyrillic and the match fails. What happens next depends on the layer:
 
-| Layer                                              | Behavior under RU                                                                                                                                                                                                                                           |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hyprland (binds)**                               | ✅ Binds are matched against the keysym of the **first** layout (`us`), because `resolve_binds_by_sym = false` (default) and the translation state is built from `kb_layout` with group 0. All `SUPER+d`, `M4+SHIFT+r` and submaps work under both layouts. |
-| **Qt apps**                                        | ✅ `Ctrl+letter` works (Qt takes the Latin key from group 0 while a modifier is pressed). ❌ Bare letters and `Alt+letter` are matched by the actual character.                                                                                             |
-| **GTK apps**                                       | ✅ `Ctrl+letter` mostly works (falls back to the keyval of group 0). ❌ Bare letters break.                                                                                                                                                                 |
-| **Electron/Chromium** (Vivaldi, Obsidian, VS Code) | ✅ `Ctrl+letter` works (Chromium accelerators are derived from the physical key/US keycode). ❌ Modifier-free binds (vim style) match `event.key` → Cyrillic.                                                                                               |
+| Layer                                              | Behavior under RU                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hyprland (binds)**                               | ✅ Binds are matched against the keysym of the **first** layout (`us`), because `resolve_binds_by_sym = false` (default) and the translation state is built from `kb_layout` with group 0. All `SUPER+d`, `M4+SHIFT+r` and submaps work under both layouts.                                                            |
+| **Qt apps**                                        | ✅ `Ctrl+letter` works (Qt takes the Latin key from group 0 while a modifier is pressed). ❌ Bare letters and `Alt+letter` are matched by the actual character.                                                                                                                                                        |
+| **GTK apps**                                       | ✅ `Ctrl+letter` mostly works (falls back to the keyval of group 0). ❌ Bare letters break.                                                                                                                                                                                                                            |
+| **Electron/Chromium** (Vivaldi, Obsidian, VS Code) | ✅ `Ctrl+letter` works (Chromium accelerators are derived from the physical key/US keycode). ❌ Modifier-free binds (vim style) match `event.key` → Cyrillic.                                                                                                                                                          |
 | **kitty**                                          | ✅ Own shortcuts are matched against the active layout, but `map --allow-fallback=shifted,ascii` falls back to the **base-layout (US) key** for non-ASCII events (the pair kitty's own default shortcuts use). ❌ Without the option a custom Latin bind only gets the `shifted` fallback and stops matching under ru. |
-| **ghostty**                                        | ⚠️ Known bugs even with `Ctrl+letter` under RU (ghostty-org/ghostty#3513, #3584); fixed in newer versions by moving to W3C key-code binds (#7320).                                                                                                          |
-| **TUIs in the terminal**                           | ✅ `Ctrl+letter` — the terminal turns it into a control byte (0x00–0x1F) from the physical key. ❌ A letter without a modifier / `Alt+letter` — the app receives a Cyrillic character.                                                                      |
-| **Games (SDL)**                                    | ✅ Physical key scan codes — the layout has no effect.                                                                                                                                                                                                      |
+| **ghostty**                                        | ⚠️ Known bugs even with `Ctrl+letter` under RU (ghostty-org/ghostty#3513, #3584); fixed in newer versions by moving to W3C key-code binds (#7320).                                                                                                                                                                     |
+| **TUIs in the terminal**                           | ✅ `Ctrl+letter` — the terminal turns it into a control byte (0x00–0x1F) from the physical key. ❌ A letter without a modifier / `Alt+letter` — the app receives a Cyrillic character.                                                                                                                                 |
+| **Games (SDL)**                                    | ✅ Physical key scan codes — the layout has no effect.                                                                                                                                                                                                                                                                 |
 
 ## Validation: what was checked and where
 
-| Claim                                                                                        | How it was verified                                                                                                                                                                                                                                                                        | Result           |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
-| Hyprland binds resolve against the **first** layout                                          | Source at the pinned revision `36b2e0cf`: `KeybindManager.cpp` — `xkb_state_key_get_one_sym(m_resolveBindsBySym ? m_xkbSymState : m_xkbTranslationState, KEYCODE)`; `m_xkbTranslationState = xkb_state_new(keymap)` (group 0); `ConfigValues.cpp` — `resolve_binds_by_sym` default `false` | ✅               |
+| Claim                                                                                                                                    | How it was verified                                                                                                                                                                                                                                                                                                                                     | Result           |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Hyprland binds resolve against the **first** layout                                                                                      | Source at the pinned revision `36b2e0cf`: `KeybindManager.cpp` — `xkb_state_key_get_one_sym(m_resolveBindsBySym ? m_xkbSymState : m_xkbTranslationState, KEYCODE)`; `m_xkbTranslationState = xkb_state_new(keymap)` (group 0); `ConfigValues.cpp` — `resolve_binds_by_sym` default `false`                                                              | ✅               |
 | kitty matches shortcuts against the active layout, and `--allow-fallback=shifted,ascii` matches the base-layout key for non-ASCII events | kitty docs shipped with 0.49 (`share/doc/kitty/html/mapping.html`, "Non-Latin keyboard layout support": *"All default kitty shortcuts use `--allow-fallback=shifted,ascii`, so they work out of the box with non-Latin layouts"*); `options/utils.py` — `_convert_allow_fallback`, default `(shifted,)`; verified live with real keycodes under `us,ru` | ✅               |
-| mpv matches the "translated" text of the active layout; literal Unicode keys in input.conf   | mpv `DOCS/man/input.rst`: "`<key>` is either the literal character … (ASCII or Unicode)", "mpv uses input translated by the current OS keyboard layout, rather than physical scan codes"                                                                                                   | ✅               |
-| zellij accepts Cyrillic keys in its config                                                   | `zellij-utils/src/data.rs` — `BareKey::from_str`: any single char; matching via `KeyCode::Char(c)` (`input/mod.rs`)                                                                                                                                                                        | ✅               |
-| In the terminal `Ctrl+letter` = a control byte from the physical key                         | Standard terminal behavior (kitty without the keyboard protocol sends the control byte from the keycode)                                                                                                                                                                                   | ✅               |
-| Chromium/Electron: `Ctrl+letter` from the physical key                                       | Known, widely documented behavior (accelerator = US `KeyboardCode` from `DomCode`)                                                                                                                                                                                                         | ✅ (empirically) |
-| yazi accepts Cyrillic keys (lowercase)                                                       | `yazi-config/src/keymap/key.rs` — `Key::from_str`: any single char; uppercase implies SHIFT → an uppercase Cyrillic letter will not match                                                                                                                                                  | ✅ (lowercase)   |
-| rmpc accepts Cyrillic keys                                                                   | `rmpc/src/config/keys/key.rs` — winnow `any` (any Unicode char), case → SHIFT                                                                                                                                                                                                              | ✅               |
-| neomutt does **not** accept Cyrillic keys                                                    | `key/keymap.c` — `parse_keys`: `*d = (unsigned char) *s` (byte); a UTF-8 char (2 bytes) binds to its first byte and breaks input                                                                                                                                                           | ❌ not fixable   |
-| rustmission does **not** accept Cyrillic keys                                                | intuitils `keybindings.rs`: `if key.len() == 1` (byte length); Cyrillic = 2 bytes → parse error                                                                                                                                                                                            | ❌ not fixable   |
+| mpv matches the "translated" text of the active layout; literal Unicode keys in input.conf                                               | mpv `DOCS/man/input.rst`: "`<key>` is either the literal character … (ASCII or Unicode)", "mpv uses input translated by the current OS keyboard layout, rather than physical scan codes"                                                                                                                                                                | ✅               |
+| zellij accepts Cyrillic keys in its config                                                                                               | `zellij-utils/src/data.rs` — `BareKey::from_str`: any single char; matching via `KeyCode::Char(c)` (`input/mod.rs`)                                                                                                                                                                                                                                     | ✅               |
+| In the terminal `Ctrl+letter` = a control byte from the physical key                                                                     | Standard terminal behavior (kitty without the keyboard protocol sends the control byte from the keycode)                                                                                                                                                                                                                                                | ✅               |
+| Chromium/Electron: `Ctrl+letter` from the physical key                                                                                   | Known, widely documented behavior (accelerator = US `KeyboardCode` from `DomCode`)                                                                                                                                                                                                                                                                      | ✅ (empirically) |
+| yazi accepts Cyrillic keys (lowercase)                                                                                                   | `yazi-config/src/keymap/key.rs` — `Key::from_str`: any single char; uppercase implies SHIFT → an uppercase Cyrillic letter will not match                                                                                                                                                                                                               | ✅ (lowercase)   |
+| rmpc accepts Cyrillic keys                                                                                                               | `rmpc/src/config/keys/key.rs` — winnow `any` (any Unicode char), case → SHIFT                                                                                                                                                                                                                                                                           | ✅               |
+| neomutt does **not** accept Cyrillic keys                                                                                                | `key/keymap.c` — `parse_keys`: `*d = (unsigned char) *s` (byte); a UTF-8 char (2 bytes) binds to its first byte and breaks input                                                                                                                                                                                                                        | ❌ not fixable   |
+| rustmission does **not** accept Cyrillic keys                                                                                            | intuitils `keybindings.rs`: `if key.len() == 1` (byte length); Cyrillic = 2 bytes → parse error                                                                                                                                                                                                                                                         | ❌ not fixable   |
 
 ## Inventory from the config
 
@@ -70,7 +70,7 @@ Legend: ✅ works / ❌ breaks / ⚠️ partial or needs checking.
 | Program                       | What happens under the RU layout                                                              | Status                | File                                                                          |
 | ----------------------------- | --------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
 | Hyprland (all binds, submaps) | binds resolve against the first layout — work                                                 | ✅                    | `files/gui/hypr/hyprland.lua`                                                 |
-| greetd / Hyprland login       | `us,ru`, starts in us; no binds — the login card's layout chip switches it                     | ✅                    | `modules/user/session/greetd.nix`, `files/quickshell/greeter/login.qml`        |
+| greetd / Hyprland login       | `us,ru`, starts in us; no binds — the login card's layout chip switches it                    | ✅                    | `modules/user/session/greetd.nix`, `files/quickshell/greeter/login.qml`       |
 | swayimg                       | JCUKEN duplicates for all actions                                                             | ✅ (fixed)            | `files/gui/swayimg/init.lua`                                                  |
 | neovim                        | langmap + langmapper.nvim                                                                     | ✅ (fixed)            | `files/nvim/lua/00-settings.lua`, `files/nvim/lua/plugins/keymap/langmap.lua` |
 | espanso                       | `ALT+SPACE` — no letters; `:date` triggers are text                                           | ✅                    | `modules/user/nix-maid/cli/espanso.nix`                                       |
@@ -94,21 +94,21 @@ Legend: ✅ works / ❌ breaks / ⚠️ partial or needs checking.
 
 ### kitty specifics (`files/kitty/key.conf`)
 
-`kitty_mod = ctrl+shift`, and every `map` in the file carries
-**`--allow-fallback=shifted,ascii`**. A custom mapping otherwise gets the `shifted` fallback only,
-and a bind written in Latin stops matching once the active layout produces a non-Latin character;
-with `ascii` allowed, kitty falls back to the **base-layout (US) key** of the physical position —
-the pair kitty's own default shortcuts use. So `kitty_mod+v` (paste), `kitty_mod+q` (close_tab),
-`alt+n` (new_tab), the `kitty_mod+s>…` sequences, the opacity/tab/window maps and the rest all work
-under `ru` with **no duplicate mappings**: the file is plain ASCII, and the ru layout needs nothing
-from it. Verification (real keycodes, isolated kitty on a headless output, live `us,ru` with RU
-active — the compositor's own translation, exactly what a physical keyboard produces):
+`kitty_mod = ctrl+shift`, and every `map` in the file carries **`--allow-fallback=shifted,ascii`**.
+A custom mapping otherwise gets the `shifted` fallback only, and a bind written in Latin stops
+matching once the active layout produces a non-Latin character; with `ascii` allowed, kitty falls
+back to the **base-layout (US) key** of the physical position — the pair kitty's own default
+shortcuts use. So `kitty_mod+v` (paste), `kitty_mod+q` (close_tab), `alt+n` (new_tab), the
+`kitty_mod+s>…` sequences, the opacity/tab/window maps and the rest all work under `ru` with **no
+duplicate mappings**: the file is plain ASCII, and the ru layout needs nothing from it. Verification
+(real keycodes, isolated kitty on a headless output, live `us,ru` with RU active — the compositor's
+own translation, exactly what a physical keyboard produces):
 
-| injected keycode | produced under ru | bind | result |
-| --- | --- | --- | --- |
-| `Ctrl+Shift+t` | `Ctrl+Shift+Е` | `kitty_mod+t` new_tab | ✅ tab opened |
-| `Ctrl+Shift+q` | `Ctrl+Shift+Й` | `kitty_mod+q` close_tab | ✅ tab closed |
-| `Alt+n` | `Alt+т` | `alt+n` new_tab | ✅ tab opened |
+| injected keycode | produced under ru | bind                    | result        |
+| ---------------- | ----------------- | ----------------------- | ------------- |
+| `Ctrl+Shift+t`   | `Ctrl+Shift+Е`    | `kitty_mod+t` new_tab   | ✅ tab opened |
+| `Ctrl+Shift+q`   | `Ctrl+Shift+Й`    | `kitty_mod+q` close_tab | ✅ tab closed |
+| `Alt+n`          | `Alt+т`           | `alt+n` new_tab         | ✅ tab opened |
 
 Kitty itself is the only tool tested this way: its own docs say the default shortcuts rely on this
 option, and `options/utils.py` (`_convert_allow_fallback`, default `(shifted,)`) confirms that an
@@ -125,25 +125,25 @@ it does not collide with `kitty_mod+b/f/p`.
 **Inline comments are arguments.** kitty's config has no inline comment syntax: the parser splits a
 `map` line into the key and *everything else*, and the rest is the action's argument string
 (`conf/utils.py` — `key_pat`, `val.split(maxsplit=1)`). A trailing `# n→т` therefore does not
-comment anything out; it is passed to the action, and for actions that take a command —
-`new_tab`, `launch`, the `action_alias` kittens — it is a real, visible bug: the old duplicates era
-generated `map alt+т new_tab  # n→т`, so `alt+т` opened a tab that tried to run the command `#` and
-died with *Failed to launch child: #* (same for `ctrl+shift+е`, the RU `kitty_mod+t`). Comments go
-on their own lines; `lib/kitty-config-tests.nix` fails the build if an action line carries a `#`
-after the action.
+comment anything out; it is passed to the action, and for actions that take a command — `new_tab`,
+`launch`, the `action_alias` kittens — it is a real, visible bug: the old duplicates era generated
+`map alt+т new_tab  # n→т`, so `alt+т` opened a tab that tried to run the command `#` and died with
+*Failed to launch child: #* (same for `ctrl+shift+е`, the RU `kitty_mod+t`). Comments go on their
+own lines; `lib/kitty-config-tests.nix` fails the build if an action line carries a `#` after the
+action.
 
 The same trap was audited across the other configs — every line below was checked, not assumed:
 
-| parser | inline `#` after a value | checked how |
-| --- | --- | --- |
-| kitty (`map`, `action_alias`) | **argument, not a comment** | live repro: the tab ran `#` |
-| mpv `input.conf` / `mpv.conf` | comment | `man mpv`: “# starts a comment (outside of quoted string arguments)” |
-| tigrc | comment | `man tigrc`: “All text after the comment character … is ignored” |
-| Hyprland / hyprlock `.conf` (hyprlang) | comment; `##` writes a literal `#` | test program against `libhyprlang` 0.6.8 |
-| pipewire / wireplumber `.conf` (spa-json) | comment | `spa-json-dump` on a config with inline comments |
-| readline `inputrc` | comment (indented comments too) | `INPUTRC=… bash -ic 'bind -v'` |
-| TOML / YAML / KDL / RON / Lua / JS / shell | comment by design | format specs |
-| JSONC | `//` and `/* */` only | no `#` comments in the repo's JSONC files |
+| parser                                     | inline `#` after a value           | checked how                                                          |
+| ------------------------------------------ | ---------------------------------- | -------------------------------------------------------------------- |
+| kitty (`map`, `action_alias`)              | **argument, not a comment**        | live repro: the tab ran `#`                                          |
+| mpv `input.conf` / `mpv.conf`              | comment                            | `man mpv`: “# starts a comment (outside of quoted string arguments)” |
+| tigrc                                      | comment                            | `man tigrc`: “All text after the comment character … is ignored”     |
+| Hyprland / hyprlock `.conf` (hyprlang)     | comment; `##` writes a literal `#` | test program against `libhyprlang` 0.6.8                             |
+| pipewire / wireplumber `.conf` (spa-json)  | comment                            | `spa-json-dump` on a config with inline comments                     |
+| readline `inputrc`                         | comment (indented comments too)    | `INPUTRC=… bash -ic 'bind -v'`                                       |
+| TOML / YAML / KDL / RON / Lua / JS / shell | comment by design                  | format specs                                                         |
+| JSONC                                      | `//` and `/* */` only              | no `#` comments in the repo's JSONC files                            |
 
 `lib/kitty-config-tests.nix` (check `kitty-config`) keeps every `map` carrying
 `--allow-fallback=shifted,ascii`, the action lines comment-free and ASCII-only — the ru layout must
@@ -197,21 +197,20 @@ resolve_binds_by_sym = false,
 
 ### P1 — kitty (the main terminal, the most frequent scenario)
 
-**File:** `files/kitty/key.conf` — every `map` carries
-`--allow-fallback=shifted,ascii`, kitty falls back to the base-layout key, and the file stays plain
-ASCII; it is deployed as a live link (`kittyConfLive`), there is no generated block any more.
+**File:** `files/kitty/key.conf` — every `map` carries `--allow-fallback=shifted,ascii`, kitty falls
+back to the base-layout key, and the file stays plain ASCII; it is deployed as a live link
+(`kittyConfLive`), there is no generated block any more.
 
 History, in the order it happened (all three states are gone from the config):
 
 1. **2026-08 — `CYRILLIC_*` keysym names do not work here.** kitty resolves them via
    `xkb_keysym_from_name`, and `libxkbcommon` fails to load on this system (no ld cache), so the
-   names are silently dropped as "unknown key" (case matters too: `Cyrillic_em`, not
-   `CYRILLIC_EM`).
-2. **2026-08/10 — literal Cyrillic duplicates.** Built by the generator in `lib/ru-keys.nix`
+   names are silently dropped as "unknown key" (case matters too: `Cyrillic_em`, not `CYRILLIC_EM`).
+1. **2026-08/10 — literal Cyrillic duplicates.** Built by the generator in `lib/ru-keys.nix`
    (`map ctrl+shift+м …`). They matched, but doubled every bind, and the generator's trailing
    `# n→т` notes became the actions' arguments (kitty has no inline comments) — `alt+т` ran
    `new_tab #` and opened a broken tab. Both the duplicates and the generator are gone.
-3. **2026-10 — `--allow-fallback=shifted,ascii`.** kitty's own mechanism for non-Latin layouts; a
+1. **2026-10 — `--allow-fallback=shifted,ascii`.** kitty's own mechanism for non-Latin layouts; a
    custom map otherwise defaults to `shifted` only, hence the explicit option. Verified with real
    keycodes under `us,ru` (RU active) in an isolated kitty — the table is in "kitty specifics"
    above: `Ctrl+Shift+t`, `Ctrl+Shift+q` and `Alt+n` all fire their Latin binds.
@@ -220,8 +219,6 @@ History, in the order it happened (all three states are gone from the config):
 `Ctrl+Shift+й` (close tab). To check without a keyboard, inject real keycodes into a test window
 (`ydotool key 29:1 42:1 20:1 20:0 42:0 29:0`) — keysym-level `wtype` events cannot exercise the
 fallback.
-
-
 
 ### P1 — mpv
 

@@ -36,8 +36,8 @@ configuration.
 
 ### Profiles & Feature Flags
 
-- Primary toggle: `features.profiles` (list of active profiles; trantor: `["desktop" "dev" "gaming"]`).
-  Each profile sets feature-flag defaults via `modules/profiles/`.
+- Primary toggle: `features.profiles` (list of active profiles; trantor:
+  `["desktop" "dev" "gaming"]`). Each profile sets feature-flag defaults via `modules/profiles/`.
 - Feature definitions live in `modules/features/`; documentation: `OPTIONS.md`.
 - Key flags:
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
@@ -155,8 +155,8 @@ Use the same expectations regardless of whether you work under `modules/` or
   `After=/WantedBy=` wiring; avoid the legacy `mkSimple*` helpers (they have recursion edge cases).
 - Examples:
   - Service: presets `["defaultWanted" "restartOnFailure"]` (+ `RestartSec` if not 10)
-  - Graphical-session resident: presets `["graphicalSession" "restartOnFailure"]`
-    (`graphicalWanted` when the unit must be pulled in but not stopped with the session)
+  - Graphical-session resident: presets `["graphicalSession" "restartOnFailure"]` (`graphicalWanted`
+    when the unit must be pulled in but not stopped with the session)
   - Short-lived helper: preset `["oneshot"]`, add `wantedBy` only if something must pull it in
   - Timer: set `wantedBy = [ "timers.target" ]` directly.
 
@@ -255,10 +255,10 @@ Keep this manifest updated whenever vendored sources change so that licensing re
   system ships). The dedicated `hy3` flake input tracked Hyprland 0.56+ and its `.so` failed to load
   here (`undefined symbol IModeAlgorithm::getFSHandler`), so it was never used and has been removed
   (audit 2026-09-15).
-- `xdg-desktop-portal-hyprland` is not pinned anymore: the former flake input (rev `08d99f72`,
-  i.e. 1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU (event-loop busy
-  spin, fixed upstream in 1.4.1 by #417 "core: fix loop hangup detection"). It now comes from
-  nixpkgs (>= 1.4.1); the input was removed (2026-09-29).
+- `xdg-desktop-portal-hyprland` is not pinned anymore: the former flake input (rev `08d99f72`, i.e.
+  1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU (event-loop busy spin, fixed
+  upstream in 1.4.1 by #417 "core: fix loop hangup detection"). It now comes from nixpkgs (>=
+  1.4.1); the input was removed (2026-09-29).
 - Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already
   provides the portal service when set as `portalPackage`.
 
@@ -689,7 +689,8 @@ Tuning tips:
 
 - Netdata (local, very light):
 
-  - Enable per-host: set `monitoring.netdata.enable = true;` (see hosts/trantor/services/policy.nix).
+  - Enable per-host: set `monitoring.netdata.enable = true;` (see
+    hosts/trantor/services/policy.nix).
   - Opens a local UI at `http://127.0.0.1:19999` with CPU/GPU/sensors/disks/net.
   - Service is de‑prioritized (nice/CPU/IO weights) to minimize impact.
   - Extend via `services.netdata.config` if you need extra collectors.

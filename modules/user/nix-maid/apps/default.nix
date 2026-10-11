@@ -8,6 +8,9 @@
   imports = neg.importDir {
     dir = ./.;
     includeDirs = true;
-    exclude = [ "dsh-terminal-plugins.nix" "dsh-presets.nix" ];
+    exclude = [
+      "dsh-terminal-plugins.nix"
+      "dsh-presets.nix"
+    ];
   };
 }

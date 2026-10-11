@@ -54,8 +54,9 @@ the picker, sessions and the default reference `neg`.
 Edit `modules/user/nix-maid/apps/dsh-liangshen-fork/agent.cordis.yml` (or `dsh-fast/`), then
 `sudo nixos-rebuild switch --flake .#trantor --option substitute false` — or just log in: the
 caretaker regenerates the profile patch layer. Plugin names must still exist in the installed
-harness (`cordis-composition-reference`); 0.2.0-rc.2 renamed `@deepseek-ai/dsh-workflow-worker-thread`
-to `@deepseek-ai/dsh-workflow-ptc`, which that file already carries.
+harness (`cordis-composition-reference`); 0.2.0-rc.2 renamed
+`@deepseek-ai/dsh-workflow-worker-thread` to `@deepseek-ai/dsh-workflow-ptc`, which that file
+already carries.
 
 ## Removal
 

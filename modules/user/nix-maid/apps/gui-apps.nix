@@ -1,4 +1,10 @@
-{ lib, neg, pkgs, ... }: {
+{
+  lib,
+  neg,
+  pkgs,
+  ...
+}:
+{
   config = lib.mkMerge [
     {
       # Packages
