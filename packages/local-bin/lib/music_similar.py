@@ -5,6 +5,11 @@ Usage: music_similar.py [--index DIR] [-k N] [--json] [AUDIO]
 
 Without AUDIO the current track is taken from playerctl (MPRIS), which makes
 the command a one-liner for a compositor key binding.
+
+The embedding settings are read from the index meta.json and checked against
+its recorded signature, so a query is never embedded with settings other than
+the ones the index vectors were built with. --selftest runs the ranking logic
+against deterministic stub vectors (no torch, no model, no venv).
 """
 
 from __future__ import annotations
@@ -19,6 +24,15 @@ from urllib.parse import unquote, urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import music_embed  # noqa: E402  (same directory, wrapper sets PYTHONPATH)
+from music_index import (  # noqa: E402  (same directory)
+    IndexProblem,
+    embed_signature,
+    index_settings,
+    index_signature,
+    load_index,
+    stub_embed,
+    write_index,
+)
 
 DEFAULT_INDEX = Path.home() / ".cache" / "music-index"
 
@@ -50,24 +64,215 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="keep the query track itself in the results",
     )
+    parser.add_argument(
+        "--selftest",
+        action="store_true",
+        help="run the offline stub-embedder self-check and exit",
+    )
     return parser.parse_args(argv)
+
+
+def rank(
+    matrix,
+    query,
+    k: int,
+    paths: list[str] | None = None,
+    exclude_path: str | None = None,
+) -> list[tuple[float, str]]:
+    """Top-k ``(score, path)`` pairs by cosine similarity, highest first.
+
+    ``paths`` names the matrix rows; without it rows are reported by index.
+    ``exclude_path`` is compared after ``Path.resolve()`` so relative and
+    symlinked spellings of the query track are dropped.
+    """
+    import numpy as np
+
+    if k <= 0:
+        return []
+    scores = matrix @ query
+    order = np.argsort(-scores)
+    excluded = str(Path(exclude_path).resolve()) if exclude_path else None
+    results = []
+    for position in order:
+        index = int(position)
+        path = str(paths[index]) if paths is not None else str(index)
+        if excluded is not None and str(Path(path).resolve()) == excluded:
+            continue
+        results.append((float(scores[index]), path))
+        if len(results) >= k:
+            break
+    return results
+
+
+def _check(condition: bool, message: str) -> None:
+    if not condition:
+        raise AssertionError(f"music-similar selftest: {message}")
+
+
+def selftest() -> int:
+    """Offline self-check: stub vectors, ranking and index errors."""
+    import contextlib
+    import io
+    import tempfile
+
+    try:
+        index_signature({"model": "incomplete"})
+    except IndexProblem:
+        pass
+    else:
+        _check(False, "incomplete meta was accepted")
+    try:
+        import numpy as np
+    except ImportError:
+        print("[music-similar] selftest: skipped (numpy missing)")
+        return 0
+
+    matrix = np.asarray(
+        [
+            [1.0, 0.0, 0.0],  # the query vector itself
+            [1.0, 0.0, 0.0],  # its identical twin
+            [0.0, 1.0, 0.0],  # orthogonal
+        ],
+        dtype=np.float32,
+    )
+    query = np.asarray([1.0, 0.0, 0.0], dtype=np.float32)
+    paths = ["self.wav", "twin.wav", "other.wav"]
+    results = rank(matrix, query, 3, paths=paths)
+    _check(
+        sorted(path for _, path in results[:2]) == ["self.wav", "twin.wav"],
+        "nearest neighbours are not the identical pair",
+    )
+    _check(results[0][0] > 0.999, "identical vector score is not 1")
+    _check(
+        results[2][1] == "other.wav" and abs(results[2][0]) < 1e-6,
+        "orthogonal vector is not ranked last",
+    )
+    _check(len(rank(matrix, query, 1, paths=paths)) == 1, "-k not honoured")
+    _check(rank(matrix, query, 0, paths=paths) == [], "-k 0 not honoured")
+    excluded = rank(matrix, query, 3, paths=paths, exclude_path="self.wav")
+    _check(
+        [path for _, path in excluded] == ["twin.wav", "other.wav"],
+        "self-exclusion dropped the wrong row",
+    )
+    _check(parse_args(["--selftest"]).selftest, "--selftest not parsed")
+    _check(parse_args(["-k", "3"]).k == 3, "-k not parsed")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        audio = tmp / "query.wav"
+        audio.write_bytes(b"")
+        twin_dir = tmp / "twin"
+        twin_dir.mkdir()
+        (twin_dir / "query.wav").write_bytes(b"")
+        other = tmp / "other.wav"
+        other.write_bytes(b"x")
+        query_vec = stub_embed(str(audio))
+        twin_vec = stub_embed(str(twin_dir / "query.wav"))
+        _check(query_vec == twin_vec, "stub embedder is not name-stable")
+        stub_matrix = np.asarray(
+            [query_vec, twin_vec, stub_embed(str(other))], dtype=np.float32
+        )
+        stub_paths = [str(audio), str(twin_dir / "query.wav"), str(other)]
+        neighbours = rank(
+            stub_matrix,
+            np.asarray(query_vec, dtype=np.float32),
+            2,
+            paths=stub_paths,
+        )
+        _check(
+            neighbours[0][0] > 0.99 and neighbours[0][1] in stub_paths[:2],
+            "stub nearest neighbour is wrong",
+        )
+
+        missing = tmp / "missing-index"
+        try:
+            load_index(missing)
+        except IndexProblem as exc:
+            _check("no index" in str(exc), f"unclear error: {exc}")
+        else:
+            _check(False, "missing index was accepted")
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            rc = main(["--index", str(missing), "--json"])
+        _check(rc != 0, "main accepted a missing index")
+        _check("no index" in stderr.getvalue(), "main error is unclear")
+
+        index_dir = tmp / "index"
+        records = [{"path": str(audio), "mtime": 0, "size": 0}]
+        vectors = np.asarray([[1.0, 0.0, 0.0]], dtype=np.float32)
+        signature = embed_signature("stub/model", -2, 10.0, 3)
+        meta = {
+            "model": "stub/model",
+            "layer": -2,
+            "window_seconds": 10.0,
+            "windows": 3,
+            "signature": signature,
+            "dim": 3,
+            "count": 1,
+        }
+        write_index(index_dir, records, vectors, meta)
+        loaded_meta, loaded_tracks, loaded = load_index(index_dir)
+        _check(
+            loaded.shape == (1, 3) and loaded_meta["signature"] == signature,
+            "load_index returned the wrong data",
+        )
+        _check(
+            loaded_tracks[0]["path"] == str(audio),
+            "load_index returned the wrong tracks",
+        )
+        # A legacy index without a signature is accepted when its settings are
+        # complete: the signature is derived from the recorded settings.
+        legacy = {
+            key: value for key, value in meta.items() if key != "signature"
+        }
+        write_index(index_dir, records, vectors, legacy)
+        load_index(index_dir)
+        # A signature that disagrees with the recorded settings is refused.
+        bad = dict(meta, signature="0" * 12)
+        write_index(index_dir, records, vectors, bad)
+        try:
+            load_index(index_dir)
+        except IndexProblem as exc:
+            _check("signature" in str(exc), f"unclear error: {exc}")
+        else:
+            _check(False, "mismatched signature was accepted")
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            rc = main(["--index", str(index_dir), "--json"])
+        _check(rc != 0, "main accepted an incompatible index")
+        _check(
+            "signature" in stderr.getvalue(), "main signature error is unclear"
+        )
+        # Incomplete meta (settings cannot be established) is refused too.
+        incomplete = {
+            key: value
+            for key, value in meta.items()
+            if key not in ("signature", "windows")
+        }
+        write_index(index_dir, records, vectors, incomplete)
+        try:
+            load_index(index_dir)
+        except IndexProblem:
+            pass
+        else:
+            _check(False, "incomplete meta was accepted")
+    print("[music-similar] selftest: ok")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
-    import numpy as np
+    if args.selftest:
+        return selftest()
 
     index_dir = Path(args.index).expanduser()
-    vectors_path = index_dir / "vectors.npy"
-    tracks_path = index_dir / "tracks.jsonl"
-    meta_path = index_dir / "meta.json"
-    if not vectors_path.exists() or not tracks_path.exists():
-        print(
-            f"[music-similar] no index in {index_dir}; build it with music-index",
-            file=sys.stderr,
-        )
+    try:
+        meta, tracks, matrix = load_index(index_dir)
+    except IndexProblem as exc:
+        print(f"[music-similar] {exc}", file=sys.stderr)
         return 2
-    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    model_id, layer, window_seconds, windows = index_settings(meta)
+
     audio = args.audio or current_track_path()
     if not audio:
         print(
@@ -80,14 +285,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[music-similar] file not found: {query_path}", file=sys.stderr)
         return 2
 
-    model_id = meta.get("model", music_embed.DEFAULT_MODEL)
-    layer = int(meta.get("layer", -1))
     device = music_embed.pick_device(args.device)
     processor, model, rate = music_embed.load_model(model_id, device)
     recorder = music_embed.LayerRecorder(model)
     dummy = argparse.Namespace(
-        window_seconds=float(meta.get("window_seconds", 10.0)),
-        windows=int(meta.get("windows", 3)),
+        window_seconds=window_seconds,
+        windows=windows,
         quiet=True,
     )
     try:
@@ -97,28 +300,9 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         recorder.close()
 
-    matrix = np.load(vectors_path)
-    tracks = [
-        json.loads(line) for line in tracks_path.read_text().splitlines()
-    ]
-    if matrix.shape[0] != len(tracks):
-        print(
-            "[music-similar] index is inconsistent; rebuild with music-index",
-            file=sys.stderr,
-        )
-        return 3
-    scores = matrix @ query
-    order = np.argsort(-scores)
-    query_real = str(query_path.resolve())
-    results = []
-    for position in order:
-        record = tracks[int(position)]
-        path = record["path"]
-        if not args.self and str(Path(path).resolve()) == query_real:
-            continue
-        results.append((float(scores[int(position)]), path))
-        if len(results) >= args.k:
-            break
+    paths = [record["path"] for record in tracks]
+    exclude = None if args.self else str(query_path)
+    results = rank(matrix, query, args.k, paths=paths, exclude_path=exclude)
     if args.json:
         print(
             json.dumps(
