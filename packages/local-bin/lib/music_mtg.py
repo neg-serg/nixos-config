@@ -163,6 +163,178 @@ def print_record(record: dict, titles: dict) -> None:
         print(f"  {titles.get(key, key):18} {rendered}")
 
 
+def settings_key(head_set: str, keys, seconds: float, top: int | None) -> str:
+    """Everything that changes the numbers also changes the cached record."""
+    return f"{head_set}|{'/'.join(keys)}|seconds={seconds:g}|top={top or 'default'}"
+
+
+def load_done(path: Path) -> dict[str, tuple[int, int, str]]:
+    """path -> (mtime, size, settings) of the tracks already in the output."""
+    done: dict[str, tuple[int, int, str]] = {}
+    if not path.exists():
+        return done
+    for line in path.read_text(errors="replace").splitlines():
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        done[record["path"]] = (
+            record.get("mtime", 0),
+            record.get("size", 0),
+            record.get("settings", ""),
+        )
+    return done
+
+
+def _record(path: Path, partial: dict, settings: str) -> dict:
+    """Full JSONL record: tags plus the resume key of the file itself."""
+    stat = path.stat()
+    record = dict(partial)
+    record["path"] = str(path)
+    record["mtime"] = stat.st_mtime_ns
+    record["size"] = stat.st_size
+    record["engine"] = "mtg"
+    record["settings"] = settings
+    return record
+
+
+def _print_progress(done: int, total: int, started: float) -> None:
+    elapsed = time.time() - started
+    rate = done / elapsed if elapsed else 0.0
+    left = (total - done) / rate if rate else 0.0
+    print(
+        f"[music-mtg] {done}/{total} files, {elapsed:.1f}s elapsed, "
+        f"{rate:.1f} files/s, ETA {int(left // 3600):02d}:{int(left % 3600 // 60):02d}:{int(left % 60):02d}",
+        file=sys.stderr,
+    )
+
+
+_WORKER: dict = {}
+
+
+def _worker_init(
+    models_dir: str, keys, seconds: float, top: int | None
+) -> None:
+    """Load the graphs once per worker process."""
+    backbone, heads = load_heads(Path(models_dir), keys)
+    _WORKER.update(backbone=backbone, heads=heads, seconds=seconds, top=top)
+
+
+def _worker_tag(path: str) -> dict:
+    record = score(
+        _WORKER["backbone"],
+        _WORKER["heads"],
+        load_audio(Path(path), _WORKER["seconds"]),
+        top=_WORKER["top"],
+    )
+    record["path"] = path
+    return record
+
+
+def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
+    """Tag a whole library into a JSONL file, resuming by mtime+size+settings."""
+    out_path = Path(args.out).expanduser()
+    settings = settings_key(args.head_set, keys, args.seconds, args.top)
+    done = {} if args.rebuild else load_done(out_path)
+    pending = []
+    for path in files:
+        stat = path.stat()
+        if done.get(str(path)) == (stat.st_mtime_ns, stat.st_size, settings):
+            continue
+        pending.append(path)
+    if args.limit:
+        pending = pending[: args.limit]
+    if not pending:
+        print(
+            f"[music-mtg] 0 new, {len(files) - len(pending)} skipped -> {out_path}"
+        )
+        return 0
+
+    jobs = max(1, args.jobs)
+    executor = None
+    if jobs > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        try:
+            executor = ProcessPoolExecutor(
+                max_workers=jobs,
+                initializer=_worker_init,
+                initargs=(str(models_dir), keys, args.seconds, args.top),
+            )
+        except (
+            OSError,
+            PermissionError,
+        ) as exc:  # no POSIX semaphores: serial
+            print(
+                f"[music-mtg] parallel mode unavailable ({exc}); running serially",
+                file=sys.stderr,
+            )
+            executor = None
+
+    started = time.time()
+    written = 0
+    skipped = 0
+    with open(out_path, "a", encoding="utf-8") as handle:
+        if executor is not None:
+            from concurrent.futures import as_completed
+
+            futures = {
+                executor.submit(_worker_tag, str(p)): p for p in pending
+            }
+            iterator = as_completed(futures)
+        else:
+            futures = {}
+            iterator = pending
+        try:
+            for item in iterator:
+                if futures:
+                    path = futures[item]
+                    try:
+                        partial = item.result()
+                    except (
+                        Exception
+                    ) as exc:  # keep the pass going on bad files
+                        print(
+                            f"[music-mtg] skip {path}: {exc}", file=sys.stderr
+                        )
+                        skipped += 1
+                        continue
+                else:
+                    path = item
+                    try:
+                        partial = score(
+                            backbone,
+                            heads,
+                            load_audio(path, args.seconds),
+                            top=args.top,
+                        )
+                        partial["path"] = str(path)
+                    except Exception as exc:
+                        print(
+                            f"[music-mtg] skip {path}: {exc}", file=sys.stderr
+                        )
+                        skipped += 1
+                        continue
+                handle.write(
+                    json.dumps(
+                        _record(path, partial, settings), ensure_ascii=False
+                    )
+                    + "\n"
+                )
+                handle.flush()
+                written += 1
+                if not args.quiet and written % 25 == 0:
+                    _print_progress(written, len(pending), started)
+        finally:
+            if executor is not None:
+                executor.shutdown(wait=False, cancel_futures=True)
+    print(
+        f"[music-mtg] {written} new, {skipped} skipped -> {out_path} "
+        f"({time.time() - started:.1f}s)"
+    )
+    return 0 if written or not skipped else 1
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("paths", nargs="*", help="audio files")
@@ -183,6 +355,27 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--seconds", type=float, default=DEFAULT_SECONDS, help="clip length"
     )
     parser.add_argument("--dir", help="tag every audio file under DIR instead")
+    parser.add_argument(
+        "--out",
+        help=(
+            "batch mode: append JSONL records to FILE and resume by "
+            "mtime+size+settings (needed for a whole library)"
+        ),
+    )
+    parser.add_argument(
+        "--limit", type=int, help="batch mode: stop after N pending files"
+    )
+    parser.add_argument(
+        "--rebuild",
+        action="store_true",
+        help="batch mode: ignore the output file",
+    )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        help="batch mode: worker processes, each loads its own graph (660 MB RSS each)",
+    )
     parser.add_argument("--json", action="store_true", help="machine output")
     parser.add_argument(
         "--check", action="store_true", help="report models and exit"
@@ -243,6 +436,8 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # a warm-up failure must not kill the real pass
         print(f"[music-mtg] warm-up skipped: {exc}", file=sys.stderr)
     titles = {key: HEADS[key][2] for key in keys}
+    if args.out:
+        return run_batch(backbone, heads, files, keys, models_dir, args)
     records = []
     for path in files:
         try:
