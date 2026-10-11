@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -69,7 +70,75 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="run the offline stub-embedder self-check and exit",
     )
+    parser.add_argument(
+        "--queue",
+        action="store_true",
+        help="append the neighbours to the MPD queue with mpc instead of printing",
+    )
+    parser.add_argument(
+        "--music-dir",
+        default=os.environ.get("MUSIC_DIR", str(Path.home() / "music")),
+        help="MPD music_directory; queued paths are made relative to it",
+    )
+    parser.add_argument(
+        "--mpc-cmd",
+        default=os.environ.get("MPC_CMD", "mpc"),
+        help="command used for --queue (default: mpc)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="with --queue: print the commands without running them",
+    )
     return parser.parse_args(argv)
+
+
+def queue_neighbours(
+    results: list[tuple[float, str]],
+    music_dir: Path,
+    mpc_cmd: str,
+    dry_run: bool = False,
+) -> int:
+    """Append every neighbour to the MPD queue; returns how many were queued."""
+    queued = 0
+    for _score, path in results:
+        try:
+            uri = os.path.relpath(Path(path), music_dir)
+        except ValueError:
+            print(
+                f"[music-similar] outside music_dir, skipped: {path}",
+                file=sys.stderr,
+            )
+            continue
+        if uri.startswith(".."):
+            print(
+                f"[music-similar] not under {music_dir}, skipped: {path}",
+                file=sys.stderr,
+            )
+            continue
+        if dry_run:
+            print(f"{mpc_cmd} add {uri}")
+            queued += 1
+            continue
+        completed = subprocess.run(
+            [mpc_cmd, "add", uri],
+            capture_output=True,
+            text=True,
+            errors="replace",
+            check=False,
+        )
+        if completed.returncode != 0:
+            detail = (
+                (completed.stderr or completed.stdout).strip().splitlines()
+            )
+            print(
+                f"[music-similar] mpc add {uri} failed: {detail[-1] if detail else ''}",
+                file=sys.stderr,
+            )
+            continue
+        print(f"queued: {uri}")
+        queued += 1
+    return queued
 
 
 def rank(
@@ -303,6 +372,22 @@ def main(argv: list[str] | None = None) -> int:
     paths = [record["path"] for record in tracks]
     exclude = None if args.self else str(query_path)
     results = rank(matrix, query, args.k, paths=paths, exclude_path=exclude)
+    if args.queue:
+        music_dir = Path(args.music_dir).expanduser()
+        if not music_dir.is_dir():
+            print(
+                f"[music-similar] music directory not found: {music_dir}",
+                file=sys.stderr,
+            )
+            return 2
+        queued = queue_neighbours(
+            results, music_dir, args.mpc_cmd, dry_run=args.dry_run
+        )
+        print(
+            f"[music-similar] queued {queued} of {len(results)}",
+            file=sys.stderr,
+        )
+        return 0 if queued else 1
     if args.json:
         print(
             json.dumps(
