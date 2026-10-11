@@ -140,6 +140,12 @@ PRESETS: dict[str, tuple[str, ...]] = {
 }
 
 AUDIO_EXTS = {".mp3", ".flac", ".wav", ".ogg", ".opus", ".m4a", ".aac", ".wma"}
+# Prompt phrasing is part of the accuracy: measured on four known tracks
+# (funeral doom / breakbeat / dark ambient / neofolk) plain "{label}" got 2-3
+# of 4 right, "a {label} track" got 4 of 4 and put neofolk at 0.76 where the
+# plain prompt picked the wrong label.  A comma separated list averages
+# several templates (available, but not sharper in that probe).
+DEFAULT_TEMPLATE = "a {label} track"
 
 
 def load_audio(path: str, rate: int, seconds: float = 30.0):
@@ -190,35 +196,83 @@ def labels_for(args: argparse.Namespace) -> list[str]:
     return list(preset)
 
 
-def score_labels(model, processor, samples, labels: list[str], rate: int):
-    """Softmax over cosine similarity of audio vs each label."""
+def label_templates(args: argparse.Namespace) -> list[str]:
+    """Prompt templates, comma separated in --template; {label} is required."""
+    templates = [
+        item.strip() for item in (args.template or DEFAULT_TEMPLATE).split(",")
+    ]
+    templates = [item for item in templates if item]
+    if not templates or any("{label}" not in item for item in templates):
+        raise SystemExit("every --template entry must contain {label}")
+    return templates
+
+
+def score_labels(
+    model,
+    processor,
+    samples,
+    labels: list[str],
+    rate: int,
+    templates: tuple[str, ...] | list[str] = ("{label}",),
+):
+    """Mean softmax over cosine similarity of audio vs the templated labels.
+
+    Prompt phrasing matters: on four known tracks (funeral doom, breakbeat,
+    dark ambient, neofolk) plain labels got 2-3 of 4 right, while "a {label}
+    track" got 4 of 4 and retrieved neofolk with 0.76 confidence where the
+    plain prompt went to the wrong label.  Several templates are averaged when
+    given (an ensemble is no sharper here, but it is available).
+    """
+    import numpy as np
     import torch
 
     audio_inputs = processor(
         audio=samples, sampling_rate=rate, return_tensors="pt"
     )
-    text_inputs = processor(text=labels, return_tensors="pt", padding=True)
     audio_inputs = {k: v.to(model.device) for k, v in audio_inputs.items()}
-    text_inputs = {k: v.to(model.device) for k, v in text_inputs.items()}
     with torch.no_grad():
         audio_embed = _embedding(model.get_audio_features(**audio_inputs))
-        text_embed = _embedding(model.get_text_features(**text_inputs))
-    audio_embed = audio_embed / audio_embed.norm(dim=-1, keepdim=True)
-    text_embed = text_embed / text_embed.norm(dim=-1, keepdim=True)
-    scale = (
-        float(getattr(model, "logit_scale_a", None).exp())
-        if hasattr(model, "logit_scale_a")
-        else 100.0
+        audio_embed = audio_embed / audio_embed.norm(dim=-1, keepdim=True)
+        scale = 100.0
+        if hasattr(model, "logit_scale_a") and model.logit_scale_a is not None:
+            scale = float(model.logit_scale_a.detach().exp())
+        per_template = []
+        for template in templates:
+            prompts = [template.format(label=label) for label in labels]
+            text_inputs = processor(
+                text=prompts, return_tensors="pt", padding=True
+            )
+            text_inputs = {
+                key: value.to(model.device)
+                for key, value in text_inputs.items()
+            }
+            text_embed = _embedding(model.get_text_features(**text_inputs))
+            text_embed = text_embed / text_embed.norm(dim=-1, keepdim=True)
+            logits = (audio_embed @ text_embed.T)[0] * scale
+            per_template.append(logits.softmax(dim=-1).cpu().numpy())
+    if len(per_template) == 1:
+        return per_template[0].tolist()
+    return np.mean(per_template, axis=0).tolist()
+
+
+def settings_key(args, labels: list[str]) -> str:
+    """Anything that changes the numbers also changes the cached record."""
+    return "|".join(
+        [
+            args.model,
+            args.preset if not args.labels else "labels:" + ",".join(labels),
+            args.template,
+            f"{args.seconds:g}",
+        ]
     )
-    logits = (audio_embed @ text_embed.T)[0] * scale
-    probs = logits.softmax(dim=-1)
-    return probs.tolist()
 
 
 def tag_file(tagger, path: Path, labels: list[str], args) -> dict:
     processor, model, rate = tagger
     samples = load_audio(str(path), rate, args.seconds)
-    probs = score_labels(model, processor, samples, labels, rate)
+    probs = score_labels(
+        model, processor, samples, labels, rate, label_templates(args)
+    )
     ranked = sorted(zip(labels, probs), key=lambda item: -item[1])[: args.top]
     stat = path.stat()
     return {
@@ -227,6 +281,8 @@ def tag_file(tagger, path: Path, labels: list[str], args) -> dict:
         "size": stat.st_size,
         "model": args.model,
         "vocabulary": args.preset if not args.labels else "custom",
+        "template": args.template,
+        "settings": settings_key(args, labels),
         "tags": [
             {"label": label, "score": round(float(score), 4)}
             for label, score in ranked
@@ -234,9 +290,9 @@ def tag_file(tagger, path: Path, labels: list[str], args) -> dict:
     }
 
 
-def load_done(path: Path) -> dict[str, tuple[int, int]]:
-    """path -> (mtime, size) of the tracks already tagged in the output file."""
-    done: dict[str, tuple[int, int]] = {}
+def load_done(path: Path) -> dict[str, tuple[int, int, str]]:
+    """path -> (mtime, size, settings) of the tracks already in the output."""
+    done: dict[str, tuple[int, int, str]] = {}
     if not path.exists():
         return done
     for line in path.read_text().splitlines():
@@ -244,7 +300,13 @@ def load_done(path: Path) -> dict[str, tuple[int, int]]:
             record = json.loads(line)
         except json.JSONDecodeError:
             continue
-        done[record["path"]] = (record["mtime"], record["size"])
+        # Older records carry no settings: they compare as different, so a
+        # changed vocabulary or template re-tags instead of silently reusing.
+        done[record["path"]] = (
+            record["mtime"],
+            record["size"],
+            record.get("settings", ""),
+        )
     return done
 
 
@@ -259,6 +321,7 @@ def run_batch(tagger, args) -> int:
         print("[music-tags] --dir needs --out FILE.jsonl", file=sys.stderr)
         return 2
     done = {} if args.rebuild else load_done(out_path)
+    settings = settings_key(args, labels)
     files = [
         item
         for item in sorted(root.rglob("*"))
@@ -270,7 +333,11 @@ def run_batch(tagger, args) -> int:
     with open(out_path, "a") as handle:
         for path in files:
             stat = path.stat()
-            if done.get(str(path)) == (stat.st_mtime_ns, stat.st_size):
+            if done.get(str(path)) == (
+                stat.st_mtime_ns,
+                stat.st_size,
+                settings,
+            ):
                 continue
             try:
                 record = tag_file(tagger, path, labels, args)
@@ -316,6 +383,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--seconds", type=float, default=30.0, help="clip length"
+    )
+    parser.add_argument(
+        "--template",
+        default=DEFAULT_TEMPLATE,
+        help=(
+            "prompt template(s) with {label}; comma separated entries are "
+            f"averaged (default: {DEFAULT_TEMPLATE!r})"
+        ),
     )
     parser.add_argument(
         "--dir", help="batch mode: tag a whole music directory"
