@@ -288,7 +288,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("root", nargs="?", default=str(Path.home() / "music"))
     parser.add_argument("--out", default=str(DEFAULT_INDEX), help="index dir")
     parser.add_argument("--model", default=music_embed.DEFAULT_MODEL)
-    parser.add_argument("--layer", type=int, default=music_embed.DEFAULT_LAYER)
+    parser.add_argument(
+        "--layer",
+        type=int,
+        default=None,
+        help=(
+            "hidden layer to pool; default is per model (-2 for MERT-v1, "
+            "-1 for MERT-v2, both measured) and is part of the signature"
+        ),
+    )
     parser.add_argument("--device", default="auto")
     parser.add_argument(
         "--window-seconds",
@@ -315,6 +323,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument(
+        "--adopt-legacy",
+        action="store_true",
+        help=(
+            "trust pre-signature cache entries (no meta.json signature) as if "
+            "they were built with the current settings; use it when a build "
+            "started before the signature existed"
+        ),
+    )
+    parser.add_argument(
         "--selftest",
         action="store_true",
         help="run the offline stub-embedder self-check and exit",
@@ -336,6 +353,7 @@ def build_index(
     rebuild: bool = False,
     quiet: bool = False,
     threads: int = 0,
+    adopt_legacy: bool = False,
     embed=None,
 ) -> int:
     """Embed every audio file under ``root`` and write the index.
@@ -373,9 +391,21 @@ def build_index(
 
     # Pre-signature entries are only trustworthy when meta.json attributes
     # the cache to the current settings; --rebuild always re-embeds.
-    can_migrate = not rebuild and legacy_settings_match(
-        out_dir, model, layer, window_seconds, windows
+    # --adopt-legacy asserts that trust by hand: useful when a run started
+    # before the signature existed and its cache should not be thrown away.
+    can_migrate = not rebuild and (
+        adopt_legacy
+        or legacy_settings_match(
+            out_dir, model, layer, window_seconds, windows
+        )
     )
+    if adopt_legacy and not quiet:
+        print(
+            "[music-index] --adopt-legacy: treating pre-signature cache "
+            f"entries as if built with model={model} layer={layer} "
+            f"window_seconds={window_seconds:g} windows={windows}",
+            file=sys.stderr,
+        )
     pending: list[tuple[Path, Path]] = []
     migrated = 0
     for path in files:
@@ -687,7 +717,7 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.root).expanduser(),
         Path(args.out).expanduser(),
         model=args.model,
-        layer=args.layer,
+        layer=music_embed.resolve_layer(args.model, args.layer),
         window_seconds=args.window_seconds,
         windows=args.windows,
         device=args.device,
@@ -696,6 +726,7 @@ def main(argv: list[str] | None = None) -> int:
         rebuild=args.rebuild,
         quiet=args.quiet,
         threads=args.threads,
+        adopt_legacy=args.adopt_legacy,
     )
 
 
