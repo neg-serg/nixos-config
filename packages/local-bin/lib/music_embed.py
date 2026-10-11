@@ -28,17 +28,30 @@ from pathlib import Path
 DEFAULT_MODEL = os.environ.get("MUSIC_EMBED_MODEL", "m-a-p/MERT-v1-95M")
 DEFAULT_WINDOW_SECONDS = 10.0
 DEFAULT_WINDOWS = 3
-# Layer choice is measured, not guessed: on two same-album probes (6 and 12
-# albums, 30 s clips taken from different parts of the same track) the
-# second-to-last encoder layer separated same-album pairs better than the last
-# one — mean margin 0.085 vs 0.052 (6 albums) and 0.046 vs 0.020 (12 albums),
-# each with one more rank-1 hit.  -2 scales with the model depth, so it lands on
-# the second block from the top for 24-layer checkpoints as well.
+# Layer choice is measured, not guessed.  On same-track/different-excerpt
+# probes the best layer differs per checkpoint, so it is looked up by model:
+#   v1-95M  (12 layers): -2 beats the last layer (margin 0.085 vs 0.052 on 6
+#           albums, 0.046 vs 0.020 on 12; 0.025 vs 0.011 on 10 albums);
+#   v2-30s  (24 layers): -1 wins (rank1 0.65 / margin 0.046 vs 0.30-0.50 /
+#           0.025 for the layers below it) — and v2 as a whole beats v1
+#           (rank1 0.65 vs 0.50) at 1.3x the time and 2.3x the RSS.
+LAYER_BY_MODEL = {
+    "m-a-p/MERT-v1-95M": -2,
+    "m-a-p/MERT-v2-30s": -1,
+}
+# Fallback for checkpoints that were not measured: second layer from the top.
 DEFAULT_LAYER = -2
 # "auto" takes CUDA/ROCm as soon as torch sees a device; MUSIC_EMBED_DEVICE
 # pins one globally — "cuda" once the ROCm wheel is in the venv
 # (scripts/dev/music-ai-rocm.sh), or "cpu" to keep the GPU for something else.
 DEFAULT_DEVICE = os.environ.get("MUSIC_EMBED_DEVICE", "auto")
+
+
+def resolve_layer(model_id: str, requested: int | None) -> int:
+    """Layer to pool: the explicit request wins, else the measured per-model one."""
+    if requested is not None:
+        return int(requested)
+    return LAYER_BY_MODEL.get(model_id, DEFAULT_LAYER)
 
 
 def pick_device(requested: str = "auto") -> str:
@@ -230,8 +243,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--layer",
         type=int,
-        default=DEFAULT_LAYER,
-        help="hidden layer to pool (negative indexes from the top; -2 measured best)",
+        default=None,
+        help=(
+            "hidden layer to pool (negative indexes from the top); default is "
+            "per model — -2 for MERT-v1, -1 for MERT-v2 (both measured)"
+        ),
     )
     parser.add_argument(
         "--device", default=DEFAULT_DEVICE, help="auto|cpu|cuda"
@@ -257,6 +273,9 @@ def main(argv: list[str] | None = None) -> int:
         )
     processor, model, rate = load_model(args.model, device)
     recorder = LayerRecorder(model)
+    layer = resolve_layer(args.model, args.layer)
+    if not args.quiet:
+        print(f"[music-embed] layer {layer}", file=sys.stderr)
     rows = []
     try:
         for raw in args.paths:
@@ -265,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"[music-embed] file not found: {path}", file=sys.stderr)
                 return 2
             vector = embed_file(
-                model, processor, str(path), rate, args.layer, args, recorder
+                model, processor, str(path), rate, layer, args, recorder
             )
             rows.append(vector)
             if not args.quiet:
