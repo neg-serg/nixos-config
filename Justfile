@@ -189,6 +189,12 @@ update:
 fix-music-venvs *ARGS:
     bash "{{repo_root}}/scripts/dev/fix-music-venvs.sh" {{ARGS}}
 
+# Move the music-AI venv from the CUDA torch build to the local ROCm wheel so
+# music-embed/music-tags can use the GPU (torchaudio/torchvision are swapped
+# with it). --check / --dry-run are read-only; see docs/howto/local-music-ai.md.
+music-ai-rocm *ARGS:
+    bash "{{repo_root}}/scripts/dev/music-ai-rocm.sh" {{ARGS}}
+
 # Eval one trantor feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false

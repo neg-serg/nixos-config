@@ -65,7 +65,15 @@ Notes:
 - CLAP scores are a softmax over the labels you pass: comparable inside one run, not across runs
   with different label sets. `--preset {genre,mood,instrument,electronic,default}` picks a focused
   vocabulary (a smaller set gives sharper scores), `--labels a,b,c` is free-form, and
-  `--dir ~/music --out ~/tags.jsonl` tags a whole library, resuming by mtime+size.
+  `--dir ~/music --out ~/tags.jsonl` tags a whole library, resuming by mtime+size **and settings**
+  (model, vocabulary, template, clip length) — change any of those and the pass re-tags instead of
+  reusing stale rows.
+- Prompt phrasing moves the answer as much as the vocabulary does: on four known tracks (funeral
+  doom, breakbeat, dark ambient, neofolk) plain labels hit 2-3 of 4, while `a {label} track` hit 4
+  of 4 and pulled neofolk at 0.76 where the plain prompt chose the wrong label. That template is the
+  default; `--template "{label}"` restores the raw form and a comma separated list averages several
+  (measured no sharper, but available). Expect near-ties to flip between runs: the ranking comes
+  from a softmax over 30 s of audio, not from a trained head.
 - Layer choice was measured, not guessed: two same-album probes (6 and 12 albums, 30 s clips taken
   from different parts of the same track) put the **second-to-last** encoder layer above the last
   one — mean same-album margin 0.085 vs 0.052 and 0.046 vs 0.020, each with one more rank-1 hit.
@@ -87,6 +95,34 @@ Notes:
 - Same wrappers, same idea for the older tool: `audio-analysis tag` now runs the CLAP payload from
   `lib/music_tags.py` instead of the `laion_clap` package, whose Zenodo checkpoint is not on disk
   any more.
+
+## GPU (ROCm) for the embedding models
+
+The music-AI venv carries a CUDA torch build (`2.14.0+cu130`), which never sees the AMD GPU, so MERT
+and CLAP run on CPU. The ROCm build is already on disk
+(`/zero/ai/music/tmp-dl/torch-2.13.0+rocm7.1-cp312-*.whl`), and `scripts/dev/music-ai-rocm.sh` (also
+`just music-ai-rocm`) swaps it in:
+
+```console
+$ just music-ai-rocm --check     # read-only: is the venv GPU-ready?
+$ just music-ai-rocm --dry-run   # show the three installs
+$ just music-ai-rocm             # torch + torchaudio + torchvision -> +rocm7.1
+$ MUSIC_EMBED_DEVICE=cuda music-embed TRACK.flac   # or --device cuda
+```
+
+- `torchaudio`/`torchvision` are swapped together with torch on purpose: transformers imports
+  torchaudio whenever it exists, and the CUDA build of it cannot load next to ROCm torch
+  (`libcudart.so.13: cannot open shared object file`). Without the companions MERT/CLAP break.
+- The wheel ships gfx1201 code objects (`TensileLibrary_lazy_gfx1201.dat`, gfx1201 `.hsaco`), so no
+  `HSA_OVERRIDE_GFX_VERSION` is needed for the RX 9070 XT.
+- The script re-points the venv's dead `bin/python` symlink when it has to install (the same repair
+  as `just fix-music-venvs`), refuses ABI mismatches, installs nothing without `--force` when a ROCm
+  set is already there, downloads nothing (local wheels only) and never touches other venvs.
+- `MUSIC_EMBED_DEVICE` is the shared device knob for the music-AI stack (`MUSIC_TAGS_DEVICE`
+  overrides it for `music-tags`); `auto` takes the GPU as soon as torch sees one.
+- Verified in this repo's sandbox: the wheel installs into a scratch venv and HIP 7.1 loads, but the
+  sandbox denies `/dev/kfd` (device policy, `neg` is in `render`), so GPU-vs-CPU numbers must be
+  measured on the host — CPU remains the fallback and the numbers above stay CPU numbers.
 
 ## Repairing the venvs (nix-collect-garbage)
 
