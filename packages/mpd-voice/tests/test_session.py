@@ -2,13 +2,25 @@
 
 from __future__ import annotations
 
+import json
+import stat
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 
 from mpd_voice.config import Config
 from mpd_voice.mpd import MPDClient
 from mpd_voice.session import Controller, describe
 
 from .fake_mpd import FakeMPD
+
+
+def _script(directory: str, name: str, body: str) -> str:
+    path = Path(directory) / name
+    path.write_text(f"#!{sys.executable}\n{body}\n")
+    path.chmod(path.stat().st_mode | stat.S_IEXEC)
+    return str(path)
 
 
 class DescribeTests(unittest.TestCase):
@@ -224,6 +236,110 @@ class ControllerTests(unittest.TestCase):
 
         self.assertTrue(self.controller.execute(parse("пауза")).ok)
         self.assertEqual(self.fake.state, "pause")
+
+
+class QueueSimilarTests(unittest.TestCase):
+    """`queue_similar` against a fake music-similar helper."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.music = Path(self.tmp.name) / "music"
+        self.current = "Agalloch/The Mantle/01 - Falling Snow.flac"
+        current = self.music / self.current
+        current.parent.mkdir(parents=True)
+        current.write_bytes(b"")
+        self.args_log = Path(self.tmp.name) / "args.txt"
+        self.fake = FakeMPD().start()
+        self.addCleanup(self.fake.stop)
+        self.client = MPDClient("127.0.0.1", self.fake.port, timeout=5)
+        self.addCleanup(self.client.close)
+
+    def _body(self, *paths: str) -> str:
+        payload = json.dumps(
+            {
+                "query": str(self.music / self.current),
+                "model": "m-a-p/MERT-v1-95M",
+                "results": [{"score": 0.9, "path": path} for path in paths],
+            }
+        )
+        return (
+            "import sys\n"
+            f"open({str(self.args_log)!r}, 'w').write(sys.argv[-1])\n"
+            f"print({payload!r})\n"
+        )
+
+    def _controller(
+        self, body: str, music_dir: str | None = None
+    ) -> Controller:
+        script = _script(self.tmp.name, "music-similar", body)
+        config = Config(
+            language="ru",
+            similar_cmd=f"{script} --json",
+            music_dir=str(self.music) if music_dir is None else music_dir,
+        )
+        return Controller(self.client, config)
+
+    def _playing(self, body: str, music_dir: str | None = None) -> Controller:
+        controller = self._controller(body, music_dir)
+        self.assertTrue(controller.handle_text("включи альбом The Mantle").ok)
+        return controller
+
+    def test_queue_similar_appends_neighbours(self) -> None:
+        evoken = "Evoken/Antithesis of Light/06 - Antithesis of Light.flac"
+        controller = self._playing(
+            self._body(
+                str(self.music / self.current), str(self.music / evoken)
+            )
+        )
+        reply = controller.handle_text("включи похожие")
+        self.assertTrue(reply.ok)
+        self.assertIn("2", reply.text)
+        self.assertEqual(len(self.fake.queue), 4)
+        self.assertEqual(
+            self.args_log.read_text(), str(self.music / self.current)
+        )
+
+    def test_queue_similar_empty_results(self) -> None:
+        controller = self._playing(self._body())
+        before = len(self.fake.queue)
+        reply = controller.handle_text("найди похожие")
+        self.assertFalse(reply.ok)
+        self.assertEqual(len(self.fake.queue), before)
+
+    def test_queue_similar_helper_failure(self) -> None:
+        controller = self._playing("import sys\nsys.exit(3)\n")
+        before = len(self.fake.queue)
+        reply = controller.handle_text("похожие")
+        self.assertFalse(reply.ok)
+        self.assertEqual(len(self.fake.queue), before)
+
+    def test_queue_similar_unparsable_output(self) -> None:
+        controller = self._playing("print('not json')\n")
+        reply = controller.handle_text("похожие")
+        self.assertFalse(reply.ok)
+
+    def test_queue_similar_without_current_song(self) -> None:
+        controller = self._controller(self._body())
+        reply = controller.handle_text("похожие")
+        self.assertFalse(reply.ok)
+        self.assertFalse(self.args_log.exists())
+
+    def test_queue_similar_without_music_dir(self) -> None:
+        controller = self._controller("print('{}')\n", music_dir="")
+        self.assertTrue(controller.handle_text("включи альбом The Mantle").ok)
+        reply = controller.handle_text("похожие")
+        self.assertFalse(reply.ok)
+        self.assertFalse(self.args_log.exists())
+
+    def test_queue_similar_missing_track_file(self) -> None:
+        (self.music / self.current).unlink()
+        controller = self._playing(self._body())
+        before = len(self.fake.queue)
+        reply = controller.handle_text("похожие")
+        self.assertFalse(reply.ok)
+        self.assertEqual(len(self.fake.queue), before)
+        self.assertFalse(self.args_log.exists())
 
 
 if __name__ == "__main__":
