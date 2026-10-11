@@ -22,6 +22,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -130,6 +132,87 @@ def _resample(mono, native: int, rate: int):
         return np.asarray(resampled, dtype="float32")
 
 
+def _ffmpeg_binary() -> str:
+    return (
+        os.environ.get("MUSIC_AI_FFMPEG") or shutil.which("ffmpeg") or "ffmpeg"
+    )
+
+
+def _ffprobe_binary() -> str:
+    return (
+        os.environ.get("MUSIC_AI_FFPROBE")
+        or shutil.which("ffprobe")
+        or "ffprobe"
+    )
+
+
+def _ffmpeg_pcm(
+    path: str, rate: int, start_seconds: float, seconds: float | None
+):
+    """Decode a region with ffmpeg (mp4/m4a/wma/… that libsndfile cannot read)."""
+    import numpy as np
+
+    argv = [_ffmpeg_binary(), "-hide_banner", "-loglevel", "error"]
+    if start_seconds:
+        argv += ["-ss", f"{start_seconds:g}"]
+    if seconds:
+        argv += ["-t", f"{seconds:g}"]
+    argv += [
+        "-i",
+        path,
+        "-vn",
+        "-f",
+        "s16le",
+        "-acodec",
+        "pcm_s16le",
+        "-ac",
+        "1",
+        "-ar",
+        str(rate),
+        "-",
+    ]
+    try:
+        completed = subprocess.run(
+            argv, capture_output=True, check=False, timeout=300
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError(f"ffmpeg could not decode {path}: {exc}") from exc
+    if completed.returncode != 0:
+        detail = completed.stderr.decode(errors="replace").strip().splitlines()
+        raise RuntimeError(
+            f"ffmpeg failed on {path}: {detail[-1] if detail else completed.returncode}"
+        )
+    pcm = np.frombuffer(completed.stdout, dtype="<i2")
+    return (
+        (pcm.astype("float32") / 32768.0)
+        if pcm.size
+        else pcm.astype("float32")
+    )
+
+
+def _ffprobe_duration(path: str) -> float:
+    completed = subprocess.run(
+        [
+            _ffprobe_binary(),
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "csv=p=0",
+            path,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
+    try:
+        return float(completed.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
 def load_audio(path: str, rate: int, seconds: float | None = None):
     """Decode a file to mono float32 at ``rate``.
 
@@ -137,14 +220,19 @@ def load_audio(path: str, rate: int, seconds: float | None = None):
     refuses to initialise when the package is imported from PYTHONPATH (and
     the venv tree sits outside the interpreter prefix in this setup).
     Only the requested prefix is decoded — a 12-minute track should not be
-    read in full to tag or embed 30 s of it.
+    read in full to tag or embed 30 s of it. Formats libsndfile cannot read
+    (m4a/aac/wma) go through ffmpeg; that gap cost 1062 tracks of a 37k
+    library its index entry before it was noticed.
     """
     import soundfile as sf
 
-    with sf.SoundFile(path) as handle:
-        native = handle.samplerate
-        frames = int(seconds * native) if seconds else -1
-        samples = handle.read(frames, dtype="float32", always_2d=True)
+    try:
+        with sf.SoundFile(path) as handle:
+            native = handle.samplerate
+            frames = int(seconds * native) if seconds else -1
+            samples = handle.read(frames, dtype="float32", always_2d=True)
+    except (RuntimeError, sf.LibsndfileError):
+        return _ffmpeg_pcm(path, rate, 0.0, seconds)
     return _resample(samples.mean(axis=1), native, rate)
 
 
@@ -152,21 +240,27 @@ def read_window(path: str, rate: int, start_seconds: float, seconds: float):
     """Decode one region without touching the rest of the file."""
     import soundfile as sf
 
-    with sf.SoundFile(path) as handle:
-        native = handle.samplerate
-        handle.seek(max(0, int(start_seconds * native)))
-        samples = handle.read(
-            int(seconds * native), dtype="float32", always_2d=True
-        )
+    try:
+        with sf.SoundFile(path) as handle:
+            native = handle.samplerate
+            handle.seek(max(0, int(start_seconds * native)))
+            samples = handle.read(
+                int(seconds * native), dtype="float32", always_2d=True
+            )
+    except (RuntimeError, sf.LibsndfileError):
+        return _ffmpeg_pcm(path, rate, start_seconds, seconds)
     return _resample(samples.mean(axis=1), native, rate)
 
 
 def file_duration(path: str) -> float:
-    """Duration in seconds, from the header only."""
+    """Duration in seconds, from the header only (ffprobe as the fallback)."""
     import soundfile as sf
 
-    info = sf.info(path)
-    return float(info.frames) / float(info.samplerate or 1)
+    try:
+        info = sf.info(path)
+        return float(info.frames) / float(info.samplerate or 1)
+    except (RuntimeError, sf.LibsndfileError):
+        return _ffprobe_duration(path)
 
 
 def window_starts(path: str, seconds: float, count: int) -> list[float]:
