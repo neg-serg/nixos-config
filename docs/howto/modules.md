@@ -1560,8 +1560,10 @@ true
 
 ## features.media.audio.musicTagging.embedModel
 
-HuggingFace music embedding model. MERT-v1-95M is fast on CPU; m-a-p/MERT-v2-30s is stronger (632M)
-but heavier.
+HuggingFace music embedding model. Measured on a same-track probe (10 albums): MERT-v1-95M rank1
+0.50 / +0.025 margin at 1.5 s per track and 1.4 GiB; MERT-v2-30s rank1 0.65 / +0.046 at 2.0 s and
+3.2 GiB. The pooled layer is resolved per model (v1 -> -2, v2 -> -1) and recorded in the index
+signature.
 
 *Type:* string
 

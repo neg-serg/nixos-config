@@ -58,40 +58,61 @@ The queue path is also on a key: `Super+Shift+P` (the `music` submap) then `q` �
 
 Notes:
 
-- MERT-v1-95M on CPU: ~1 s per 10 s window, so the index builds at roughly 3 windows per track
-  (`--windows`, `--window-seconds`). `m-a-p/MERT-v2-30s` is stronger (Jamendo genre ROC 88.0 vs 86.1
-  on the model card) but 632M — pass `--model` or set
-  `features.media.audio.musicTagging.embedModel`.
+- Model size and throughput: MERT-v1-95M runs ~1.5 s per track (3×10 s windows) on CPU; the stronger
+  `m-a-p/MERT-v2-30s` costs ~1.3× time and 2.3× RSS for +15 points rank-1 — see the measured table
+  below. Switching is `--model` or `features.media.audio.musicTagging.embedModel`.
+
 - CLAP scores are a softmax over the labels you pass: comparable inside one run, not across runs
   with different label sets. `--preset {genre,mood,instrument,electronic,default}` picks a focused
   vocabulary (a smaller set gives sharper scores), `--labels a,b,c` is free-form, and
   `--dir ~/music --out ~/tags.jsonl` tags a whole library, resuming by mtime+size **and settings**
   (model, vocabulary, template, clip length) — change any of those and the pass re-tags instead of
   reusing stale rows.
+
 - Prompt phrasing moves the answer as much as the vocabulary does: on four known tracks (funeral
   doom, breakbeat, dark ambient, neofolk) plain labels hit 2-3 of 4, while `a {label} track` hit 4
   of 4 and pulled neofolk at 0.76 where the plain prompt chose the wrong label. That template is the
   default; `--template "{label}"` restores the raw form and a comma separated list averages several
   (measured no sharper, but available). Expect near-ties to flip between runs: the ranking comes
   from a softmax over 30 s of audio, not from a trained head.
-- Layer choice was measured, not guessed: two same-album probes (6 and 12 albums, 30 s clips taken
-  from different parts of the same track) put the **second-to-last** encoder layer above the last
-  one — mean same-album margin 0.085 vs 0.052 and 0.046 vs 0.020, each with one more rank-1 hit.
-  That is `DEFAULT_LAYER = -2`; `--layer` overrides it, and the layer is part of the index
-  signature, so an index built with a different layer is never mixed with a query embedded by
-  another one.
+
+- Layer choice is measured, not guessed, and it is resolved **per checkpoint**: `m-a-p/MERT-v1-95M`
+  → `-2`, `m-a-p/MERT-v2-30s` → `-1` (for v2 the last layer wins), anything else → `-2`; `--layer`
+  overrides it and the value is part of the index signature, so an index built with a different
+  layer is never mixed with a query embedded by another one.
+
+- Model comparison on the same probe (same track, two 30 s excerpts, 10 albums, 3×10 s windows, 16
+  threads):
+
+  | Model                         | Best layer | rank1 | Mean margin | s / clip | RSS     |
+  | ----------------------------- | ---------- | ----- | ----------- | -------- | ------- |
+  | `m-a-p/MERT-v1-95M` (default) | -2         | 0.50  | +0.025      | 1.5      | 1.4 GiB |
+  | `m-a-p/MERT-v2-30s`           | -1         | 0.65  | +0.046      | 2.0      | 3.2 GiB |
+
+  v2 embeds noticeably better for ~1.3× the time; `--threads 4` instead of the default 16 costs
+  ~1.8× (2.05 vs 1.14 s per clip), so only use it to keep the machine responsive.
+
+- `music-index --adopt-legacy` trusts pre-signature cache entries as if they came from the current
+  settings (it prints what it assumes). It exists for a build that started before the signature was
+  introduced: `music-index --layer -1 --adopt-legacy` keeps such a run's vectors instead of
+  re-embedding the whole library; without the flag the same run re-embeds.
+
 - Models land in `features.media.audio.musicTagging.hfHome` (default `/zero/ai/music-ai/hf`, created
   by tmpfiles) on first use.
+
 - The index is plain numpy (`vectors.npy` + `tracks.jsonl` + `cache/`): for a few thousand tracks a
   brute-force cosine pass costs milliseconds, so there is no Annoy dependency. Files are cached by
   path+mtime+size+embed signature, so a re-run after new albums only embeds those.
+
 - The voice client queues neighbours of the playing track: `mpd-voice say "similar tracks"` (the
   Russian phrases are listed by `mpd-voice phrases`) runs `music-similar --json` on the current song
   and appends the results to the MPD queue (`similar_cmd` and `music_dir` in the client's config —
   see [mpd-voice.md](./mpd-voice.md)).
+
 - Corpus status (verified 2026-10-10 with the built wrapper text): a query excerpt of a track ranked
   its own album's indexed track first in 4 of 5 probes (scores 0.90–0.95); the miss was an
   ambient/atmospheric pair.
+
 - Same wrappers, same idea for the older tool: `audio-analysis tag` now runs the CLAP payload from
   `lib/music_tags.py` instead of the `laion_clap` package, whose Zenodo checkpoint is not on disk
   any more.
