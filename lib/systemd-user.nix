@@ -167,25 +167,11 @@ rec {
       };
     };
 
-  # Module-shaped user unit for `systemd.user.services.<name>` — the shape the
-  # hand-rolled units in this repo use (description / unitConfig / serviceConfig
-  # / path / enable plus the module's own after/wants/partOf/wantedBy). The raw
-  # `Unit`/`Service`/`Install` shape that once lived here (mkSimpleService/
-  # mkSimpleTimer/mkSimpleSocket) had no callers and was removed with the C6
-  # audit item (2026-09-15).
-  #
-  #   systemd.user.services.foo = systemdUser.mkUserService {
-  #     description = "…";
-  #     presets = [ "defaultWanted" "restartOnFailure" ];   # scheduling + service policy
-  #     serviceConfig = { ExecStart = "…"; RestartSec = 3; };  # wins over the preset
-  #     unitConfig = { ConditionUser = "!greeter"; };   # optional
-  #     path = [ pkgs.inotify-tools ];                  # optional
-  #   };
-  #
-  # Only the fields the caller provides end up in the unit, so a migrated unit
-  # evaluates to exactly the same attrset as the hand-written one — except for
-  # the keys a preset contributes (a preset adds, the caller's value still wins).
-  mkUserService =
+  # Shared constructor behind mkUserService/mkSystemService: one preset table
+  # and one merge order for both unit shapes. `enable ? null` emits the key
+  # only when a caller overrides it; mkUserService pins its default to true
+  # because the user option shape always carries the key.
+  mkService =
     {
       description ? null,
       presets ? [ ],
@@ -199,69 +185,6 @@ rec {
       unitConfig ? { },
       # Unit-level fields the module shape carries outside unitConfig; emitted
       # only when non-empty, so a caller that omits them gets the bare shape.
-      documentation ? [ ],
-      environment ? { },
-      path ? [ ],
-      enable ? true,
-    }:
-    let
-      schedule = mkUnitFromPresets {
-        inherit
-          presets
-          after
-          wants
-          requires
-          bindsTo
-          partOf
-          wantedBy
-          ;
-      };
-      unit = schedule.Unit or { };
-      # Preset-provided service keys first, the caller's overrides last.
-      service = (schedule.Service or { }) // serviceConfig;
-    in
-    {
-      inherit enable;
-    }
-    // lib.optionalAttrs (description != null) { inherit description; }
-    // lib.optionalAttrs (path != [ ]) { inherit path; }
-    // lib.optionalAttrs (unitConfig != { }) { inherit unitConfig; }
-    // lib.optionalAttrs (service != { }) { serviceConfig = service; }
-    // lib.optionalAttrs (documentation != [ ]) { inherit documentation; }
-    // lib.optionalAttrs (environment != { }) { inherit environment; }
-    // lib.optionalAttrs ((unit.After or [ ]) != [ ]) { after = unit.After; }
-    // lib.optionalAttrs ((unit.Wants or [ ]) != [ ]) { wants = unit.Wants; }
-    // lib.optionalAttrs ((unit.Requires or [ ]) != [ ]) { requires = unit.Requires; }
-    // lib.optionalAttrs ((unit.BindsTo or [ ]) != [ ]) { bindsTo = unit.BindsTo; }
-    // lib.optionalAttrs ((unit.PartOf or [ ]) != [ ]) { partOf = unit.PartOf; }
-    // lib.optionalAttrs (((schedule.Install or { }).WantedBy or [ ]) != [ ]) {
-      wantedBy = schedule.Install.WantedBy;
-    };
-
-  # System-level twin of mkUserService for `systemd.services.<name>` — same
-  # presets and merge order, so the system and user sides share one policy
-  # table. The only shape difference is `enable`: the system option already
-  # defaults to true, so the key is emitted only when a caller overrides it
-  # (the user shape always carries it).
-  #
-  #   systemd.services.foo = systemdUser.mkSystemService {
-  #     description = "…";
-  #     presets = [ "restartOnFailure" ];                    # Restart=on-failure
-  #     serviceConfig = { ExecStart = "…"; RestartSec = 5; };  # delay stays here
-  #     wantedBy = [ "multi-user.target" ];
-  #   };
-  mkSystemService =
-    {
-      description ? null,
-      presets ? [ ],
-      after ? [ ],
-      wants ? [ ],
-      requires ? [ ],
-      bindsTo ? [ ],
-      partOf ? [ ],
-      wantedBy ? [ ],
-      serviceConfig ? { },
-      unitConfig ? { },
       documentation ? [ ],
       environment ? { },
       path ? [ ],
@@ -298,6 +221,40 @@ rec {
     // lib.optionalAttrs (((schedule.Install or { }).WantedBy or [ ]) != [ ]) {
       wantedBy = schedule.Install.WantedBy;
     };
+
+  # Module-shaped user unit for `systemd.user.services.<name>` — the shape the
+  # hand-rolled units in this repo use (description / unitConfig / serviceConfig
+  # / path / enable plus the module's own after/wants/partOf/wantedBy). The raw
+  # `Unit`/`Service`/`Install` shape that once lived here (mkSimpleService/
+  # mkSimpleTimer/mkSimpleSocket) had no callers and was removed with the C6
+  # audit item (2026-09-15).
+  #
+  #   systemd.user.services.foo = systemdUser.mkUserService {
+  #     description = "…";
+  #     presets = [ "defaultWanted" "restartOnFailure" ];   # scheduling + service policy
+  #     serviceConfig = { ExecStart = "…"; RestartSec = 3; };  # wins over the preset
+  #     unitConfig = { ConditionUser = "!greeter"; };   # optional
+  #     path = [ pkgs.inotify-tools ];                  # optional
+  #   };
+  #
+  # Only the fields the caller provides end up in the unit, so a migrated unit
+  # evaluates to exactly the same attrset as the hand-written one — except for
+  # the keys a preset contributes (a preset adds, the caller's value still wins).
+  mkUserService = args: mkService (args // { enable = args.enable or true; });
+
+  # System-level twin of mkUserService for `systemd.services.<name>` — same
+  # presets and merge order, so the system and user sides share one policy
+  # table. The only shape difference is `enable`: the system option already
+  # defaults to true, so the key is emitted only when a caller overrides it
+  # (the user shape always carries it).
+  #
+  #   systemd.services.foo = systemdUser.mkSystemService {
+  #     description = "…";
+  #     presets = [ "restartOnFailure" ];                    # Restart=on-failure
+  #     serviceConfig = { ExecStart = "…"; RestartSec = 5; };  # delay stays here
+  #     wantedBy = [ "multi-user.target" ];
+  #   };
+  mkSystemService = mkService;
 
   # System-level oneshot service + matching timer (emits `systemd.services` /
   # `systemd.timers`, not user units) — the shape hosts/trantor repeats. Returns a
