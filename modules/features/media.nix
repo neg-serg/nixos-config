@@ -69,6 +69,22 @@
           default = "/zero/ai/music-ai/hf";
           description = "HuggingFace cache directory for the tagging/embedding models.";
         };
+        # Opt-in background refresh: a systemd user timer re-runs the
+        # incremental indexer so new albums get embedded without a manual
+        # hours-long pass. Off by default; a host flips autoIndex.enable.
+        autoIndex = {
+          enable = mkBool "weekly background refresh of the music similarity index (systemd user timer)" false;
+          onCalendar = lib.mkOption {
+            type = lib.types.str;
+            default = "Sun 04:00";
+            description = "systemd calendar expression for the automatic music-index refresh.";
+          };
+          limit = lib.mkOption {
+            type = lib.types.int;
+            default = 0;
+            description = "Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.";
+          };
+        };
       };
       # MPD voice client (mpd-voice): one utterance -> local speech recognition
       # -> MPD command -> spoken confirmation. Installing it starts nothing and
