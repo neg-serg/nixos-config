@@ -45,13 +45,13 @@
 #
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
-unqualified	722
-missing-property	57
-unresolved-type	34
-import	6
-uncreatable-type	12
-incompatible-type	7
-property-override	6
-signal-handler-parameters	6
-duplicate-property-binding	4
-missing-type	1
+unqualified	619
+missing-property	32
+unresolved-type	10
+import	2
+uncreatable-type	7
+incompatible-type	1
+property-override	2
+signal-handler-parameters	3
+duplicate-property-binding	1
+missing-type	0
