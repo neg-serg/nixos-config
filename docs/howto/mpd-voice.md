@@ -37,6 +37,7 @@ $ mpd-voice listen                    # keep listening (every utterance acts)
 $ mpd-voice listen --wake-word music  # only act on utterances with the keyword
 $ mpd-voice say "next track"          # typed command, same pipeline, no microphone
 $ mpd-voice say "similar tracks"      # queue neighbours of the current track
+$ mpd-voice say "play dark music"     # queue tracks by mood (MTG tagger output)
 $ mpd-voice say --speak "volume 30"   # also speak the reply
 $ mpd-voice status --json             # scriptable now-playing
 $ mpd-voice phrases                   # every supported phrase, both languages
@@ -82,20 +83,38 @@ tts = "auto"              # auto|http|cmd|none
 tts_url = "http://127.0.0.1:8001"   # OpenAI-compatible TTS base URL
 similar_cmd = "music-similar --json -k 10"  # neighbour provider for `similar tracks`
 music_dir = "~/music"     # must match MPD's music_directory (helper wants real paths)
+# mood queue: JSONL produced by `music-mtg-tags --dir ~/music --out FILE --json`
+tags_file = "~/.cache/music-mtg/tags.jsonl"
+tags_min_score = 0.10     # mood label score floor (measured scores: 0.1-0.4)
+tags_limit = 25           # max tracks queued per mood request (0 = no cap)
 ```
 
 `similar tracks` (also `more like this`, `find similar`, `queue similar`) appends neighbour tracks
 of the currently playing song. The neighbours come from the local `music-similar` helper, and its
 embedding index is built by the `music-index` / `music-embed` tooling described in
-`local-music-ai.md`. `music_dir` must match MPD's `music_directory`: MPD reports file paths
-relative to it, while the helper takes absolute paths.
+`local-music-ai.md`. `music_dir` must match MPD's `music_directory`: MPD reports file paths relative
+to it, while the helper takes absolute paths.
+
+`play dark music` (also `play something sad`, `play relaxing music`, `play happy music`,
+`play epic music`, `play heavy music`, `play space music`, `play meditative music`,
+`play romantic music`, and the same phrases with `add`) appends shuffled tracks whose Jamendo mood
+label clears `tags_min_score` in the JSONL named by `tags_file`, capped at `tags_limit`. The labels
+come from the trained `mtg_jamendo_moodtheme` head (see `local-music-ai.md`), not from audio file
+tags, so the JSONL must be generated first:
+
+```console
+$ music-mtg-tags --dir ~/music --out ~/.cache/music-mtg/tags.jsonl --json
+```
+
+A missing file, a missing `music_dir`, an empty match or a file whose every line is broken become a
+spoken error, never a traceback.
 
 Command line overrides worth knowing: `--stt cli --stt-model FILE` (direct whisper.cpp),
 `--stt cmd --stt-cmd 'record-and-transcribe {wav}'`, `--tts cmd --tts-cmd 'espeak-ng -v ru {text}'`,
 `--tts none`, `--capture arecord --device hw:1,0`, `--no-confirm`, `--wake-word WORD`.
 
 Environment: `MPD_HOST`, `MPD_PORT`, `MPD_PASSWORD` (mpc-compatible), `MPD_VOICE_LANG`,
-`MPD_VOICE_STT`, `MPD_VOICE_TTS`.
+`MPD_VOICE_STT`, `MPD_VOICE_TTS`, `MPD_VOICE_TAGS_FILE`.
 
 Backends and their `auto` order:
 
@@ -112,11 +131,15 @@ Backends and their `auto` order:
 ## Behaviour notes
 
 - `play album|artist|genre|folder|playlist ...` replaces the queue and starts playback; `add ...`
-  appends. `similar tracks` appends neighbours of the current track without disturbing playback,
-  and an unrecognised phrase never touches MPD at all.
+  appends. `similar tracks` appends neighbours of the current track without disturbing playback, and
+  an unrecognised phrase never touches MPD at all.
 - `similar tracks` runs `similar_cmd` with the absolute path of the current song and maps the JSON
   paths back to MPD URIs relative to `music_dir`. No current song, a missing file, an empty result
   list, a failed helper or unparsable JSON become a spoken error, never a traceback.
+- Mood phrases (`play dark music`, `play something sad`, ...) stream `tags_file` once, keep tracks
+  whose matching mood label scores at or above `tags_min_score`, shuffle them, cap the result at
+  `tags_limit` and append the MPD URIs to the queue. Broken JSONL lines are skipped (all-broken is
+  reported with the line count) and paths outside `music_dir` are ignored.
 - Search is MPD's case-insensitive `search`: an exact tag match first (`Album`, `Artist`, `Genre`,
   `Title`, `file`), then `search any`.
 - Volume is clamped to 0-100; `mute` remembers the level and `unmute` restores it. Outputs without a
@@ -134,8 +157,8 @@ $ MPD_VOICE_E2E=1 python3 -m unittest discover -s tests -t .        # + espeak-n
 ```
 
 - Unit tests drive the parser, the MPD protocol client (against an in-process fake daemon speaking
-  real protocol bytes), the VAD/recorder and the STT/TTS backends (against a local HTTP stub and
-  fake command-line tools).
+  real protocol bytes), the VAD/recorder, the STT/TTS backends (against a local HTTP stub and fake
+  command-line tools) and the mood queue (against a fixture `music-mtg-tags` JSONL).
 - `MPD_VOICE_TEST_MPD=1` starts a private `mpd` on a spare port with a generated FLAC library (needs
   `mpd` and `ffmpeg`), so the full phrase → queue → playback path runs against a real daemon without
   touching the user's session or queue.

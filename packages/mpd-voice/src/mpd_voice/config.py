@@ -52,6 +52,18 @@ class Config:
     similar_cmd: str = "music-similar --json -k 10"
     music_dir: str = "~/music"
 
+    # Mood tags come from the trained MTG Jamendo head (music-mtg-tags).  The
+    # cache lives outside the repo because it is derived and machine specific:
+    # one tagging run writes it, `music-mtg-tags --dir ~/music --out
+    # ~/.cache/music-mtg/tags.jsonl --json`.
+    tags_file: str = "~/.cache/music-mtg/tags.jsonl"
+    # Measured mood scores on real tracks sit in the 0.10-0.40 band (dark
+    # 0.31 on a funeral-doom clip, epic 0.31, soundscape 0.21), so 0.10 keeps
+    # labels that are clearly present but far from confident and still drops
+    # near-zero noise.  Raise it for stricter mood playlists.
+    tags_min_score: float = 0.10
+    tags_limit: int = 25
+
     def apply_mapping(self, values: Mapping[str, object]) -> None:
         """Overlay ``values``; unknown keys and wrong shapes are ignored."""
         known = {field.name for field in fields(self)}
@@ -127,4 +139,6 @@ def _environment() -> dict[str, object]:
         mapping["stt"] = os.environ["MPD_VOICE_STT"]
     if os.environ.get("MPD_VOICE_TTS"):
         mapping["tts"] = os.environ["MPD_VOICE_TTS"]
+    if os.environ.get("MPD_VOICE_TAGS_FILE"):
+        mapping["tags_file"] = os.environ["MPD_VOICE_TAGS_FILE"]
     return mapping

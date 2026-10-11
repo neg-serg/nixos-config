@@ -93,6 +93,42 @@ _FILLER = frozenset(
     }
 )
 
+# Spoken mood words -> canonical labels of the Jamendo mood/theme head that
+# music-mtg-tags runs (the `classes` list of
+# mtg_jamendo_moodtheme-discogs-effnet-1).  The session compares the label
+# with ``tags.mood[].label`` verbatim, so the strings on the right must stay
+# exactly as the model emits them.  Patterns are matched against normalised
+# text (lower case, "ё" already folded to "е").
+_MOOD_WORDS: tuple[tuple[str, str], ...] = (
+    ("dark", r"мрачн\w*|т[её]мн\w*|dark"),
+    ("sad", r"грустн\w*|печальн\w*|sad"),
+    ("melancholic", r"меланхол\w*|melancholy|melancholic"),
+    ("calm", r"спокойн\w*|calm"),
+    ("relaxing", r"расслаб\w*|relaxed|relaxing"),
+    ("happy", r"вес[её]л\w*|радостн\w*|happy"),
+    ("epic", r"эпичн\w*|эпик\w*|epic"),
+    ("heavy", r"агрессивн\w*|тяж[её]л\w*|aggressive|heavy"),
+    ("space", r"космич\w*|космос\w*|space|cosmic"),
+    ("meditative", r"медитативн\w*|медитаци\w*|meditative|meditation"),
+    ("romantic", r"романтичн\w*|романтик\w*|romantic"),
+    ("energetic", r"энергичн\w*|energetic"),
+    ("positive", r"позитивн\w*|positive"),
+    ("hopeful", r"надежд\w*|hopeful"),
+    ("uplifting", r"воодушевля\w*|uplifting"),
+    ("groovy", r"грув\w*|groovy"),
+    ("upbeat", r"upbeat"),
+)
+
+_MOOD_ALTERNATION = "|".join(f"(?:{words})" for _label, words in _MOOD_WORDS)
+
+
+def _mood_label(surface: str) -> str:
+    """Canonical Jamendo label for a mood word matched by the parser."""
+    for label, words in _MOOD_WORDS:
+        if re.fullmatch(words, surface):
+            return label
+    return surface
+
 
 @dataclass(frozen=True)
 class Intent:
@@ -312,6 +348,20 @@ _RULES: list[RuleSpec] = [
         r"(?:похож\w*|similar|more like this)",
     ),
     (
+        # Mood requests are anchored to the whole utterance, so they cannot
+        # swallow a library query: "включи альбом Dark Side of the Moon" or
+        # "включи трек Dark" still stay play_album/play_track.  Placed before
+        # add_to_queue/play_any so "добавь грустное" does not become a
+        # library search.
+        "play_mood",
+        rf"^(?:(?:{_PLAY}|{_ADD})\s+)?"
+        rf"(?:мне\s+|please\s+)?"
+        rf"(?:(?:что-нибудь|что нибудь|какую-нибудь|какую нибудь|"
+        rf"some|something|any)\s+)?"
+        rf"(?P<value>{_MOOD_ALTERNATION})"
+        rf"(?:\s+(?:{_MUSIC}|{_TRACK}))?$",
+    ),
+    (
         "add_to_queue",
         rf"{_ADD}\s+(?:в очередь\s+|to (?:the )?queue\s+)?"
         rf"(?:(?P<tag>{_ALBUM}|{_ARTIST}|{_TRACK}|{_GENRE}|{_PLAYLIST})\s+)?"
@@ -440,6 +490,26 @@ EXAMPLES: dict[str, tuple[str, ...]] = {
     "play_playlist": ("включи плейлист evening", "play playlist evening"),
     "add_to_queue": ("добавь в очередь Agalloch", "add Agalloch to the queue"),
     "queue_similar": ("добавь похожие треки", "more like this"),
+    "play_mood": (
+        "включи мрачное",
+        "включи грустные песни",
+        "включи спокойную музыку",
+        "включи что-нибудь весёлое",
+        "включи эпичное",
+        "включи агрессивное",
+        "включи космическое",
+        "включи медитативное",
+        "включи романтичное",
+        "play dark music",
+        "play something sad",
+        "play relaxing music",
+        "play happy music",
+        "play epic music",
+        "play aggressive music",
+        "play space music",
+        "play meditative music",
+        "play romantic music",
+    ),
     "clear_queue": ("очисти очередь", "clear the queue"),
     "save_playlist": ("сохрани плейлист evening", "save playlist evening"),
     "list_playlists": ("покажи плейлисты", "list playlists"),
@@ -476,6 +546,8 @@ def parse(text: str) -> Intent:
             number = (number or 1) * 60
         tag = tag_for_word(groups.get("tag") or "")
         value = _clean_query(groups.get("value") or "")
+        if name == "play_mood" and value:
+            value = _mood_label(value)
         if name == "play_any" and (not value or normalize(value) in _FILLER):
             name, value = "play", ""
         return Intent(
