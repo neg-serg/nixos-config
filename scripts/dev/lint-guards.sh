@@ -51,47 +51,25 @@ scan_rule() {
 }
 
 # Structural rule the line-based table cannot express: a raw
-# `Restart = "on-failure";` inside a `systemd.user.services` block means the
+# `Restart = "on-failure";` inside a `systemd.<user|>.services` block means the
 # restart policy was hand-rolled — it must come from the `restartOnFailure`
 # preset of lib/systemd-user.nix (see modules/AGENTS.md). Grep cannot see block
-# nesting, so this one walks the braces with awk over the files that declare
-# user services at all. The system-level twin is
-# `scan_restart_preset_system` below.
+# nesting, so this one walks the braces with awk. The user and system variants
+# differ only in the option prefix and the message, so one function serves both.
 scan_restart_preset() {
-  local hits
-  hits=$(
-    grep -R -lE --exclude-dir=.direnv --exclude-dir=result --exclude-dir=.git \
-      --include='*.nix' 'systemd\.user\.services' modules hosts 2> /dev/null \
-      | xargs -r awk '
-        /systemd\.user\.services/ { inblk = 1 }
-        inblk {
-          opens = gsub(/\{/, "{")
-          closes = gsub(/\}/, "}")
-          depth += opens - closes
-          if ($0 ~ /^[[:space:]]*Restart[[:space:]]*=[[:space:]]*"on-failure";/) {
-            printf "%s:%d:%s\n", FILENAME, FNR, $0
-          }
-          if (depth <= 0 && opens + closes > 0) inblk = 0
-        }
-      ' || true
-  )
-  if [ -n "$hits" ]; then
-    printf '%s\n' 'Found a hand-rolled restart policy in systemd.user.services: use the `restartOnFailure` preset (lib/systemd-user.nix); keep the delay as a caller-side RestartSec.' >&2
-    printf '%s\n' "$hits" >&2
-    exit 1
+  local scope="$1" # user | system
+  local option prefix hits
+  if [ "$scope" = user ]; then
+    option='systemd.user.services'
+  else
+    option='systemd.services'
   fi
-}
-
-# Symmetric to `scan_restart_preset`: the same raw `Restart = "on-failure";`
-# inside a `systemd.services` block is hand-rolled too — the system twin
-# `mkSystemService` takes the same `restartOnFailure` preset (lib/systemd-user.nix).
-scan_restart_preset_system() {
-  local hits
+  prefix="${option//./\\.}"
   hits=$(
     grep -R -lE --exclude-dir=.direnv --exclude-dir=result --exclude-dir=.git \
-      --include='*.nix' 'systemd\.services' modules hosts 2> /dev/null \
-      | xargs -r awk '
-        /systemd\.services/ { inblk = 1 }
+      --include='*.nix' "$prefix" modules hosts 2> /dev/null \
+      | xargs -r awk -v option="$option" '
+        index($0, option) { inblk = 1 }
         inblk {
           opens = gsub(/\{/, "{")
           closes = gsub(/\}/, "}")
@@ -104,7 +82,7 @@ scan_restart_preset_system() {
       ' || true
   )
   if [ -n "$hits" ]; then
-    printf '%s\n' 'Found a hand-rolled restart policy in systemd.services: use the `restartOnFailure` preset (lib/systemd-user.nix); keep the delay as a caller-side RestartSec.' >&2
+    printf '%s\n' "Found a hand-rolled restart policy in ${option}: use the \`restartOnFailure\` preset (lib/systemd-user.nix); keep the delay as a caller-side RestartSec." >&2
     printf '%s\n' "$hits" >&2
     exit 1
   fi
@@ -168,8 +146,8 @@ while IFS='@' read -r _name gate scope pattern filter stream message; do
   fi
 done < <(lint_rules)
 
-scan_restart_preset
-scan_restart_preset_system
+scan_restart_preset user
+scan_restart_preset system
 scan_dsh_plugin_source_kind
 
 exit 0
