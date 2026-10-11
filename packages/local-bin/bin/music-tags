@@ -8,14 +8,7 @@
 # use. Payload: packages/local-bin/lib/music_tags.py.
 set -eu
 
-BASE="@MUSIC_AI_BASE@"
-LIB="@MUSIC_AI_LIB@"
-PY="${MUSIC_AI_PY:-@MUSIC_AI_PY@}"
-[ -x "$PY" ] || PY="$HOME/.local/bin/python3.12"
-SP="$BASE/venv-analysis/lib/python3.12/site-packages"
-
-export PYTHONPATH="$SP${PYTHONPATH:+:$PYTHONPATH}"
-export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:$SP/torch/lib:${LD_LIBRARY_PATH:-}"
-export HF_HOME="${MUSIC_AI_HF_HOME:-@MUSIC_AI_HF_HOME@}"
+# Shared interpreter/venv preamble (sets BASE, LIB, PY, SP and exports).
+MUSIC_AI_SELF=$0 . "$(dirname "$0")/_music_ai_env.sh"
 
 exec "$PY" "$LIB/music_tags.py" "$@"
