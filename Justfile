@@ -357,3 +357,17 @@ renoise-osc args="":
 # Record the Renoise audio (game-stereo sink by default; see renoise-osc help record)
 renoise-record args="":
     @renoise-record {{ args }}
+
+# --- Keyboard (QMK) ---------------------------------------------------------------
+
+# Build and flash the Wellum keymap onto both Ferris Sweep halves (RP2040)
+wellum:
+    bash "{{repo_root}}/scripts/dev/qmk-wellum.sh" flash
+
+# Build the Wellum keymap for the Ferris Sweep without flashing
+wellum-build:
+    bash "{{repo_root}}/scripts/dev/qmk-wellum.sh" build
+
+# Build and flash the Wellum keymap onto an AVR Pro Micro/Elite-C Sweep
+wellum-avr:
+    WELLUM_CONVERT= bash "{{repo_root}}/scripts/dev/qmk-wellum.sh" flash
