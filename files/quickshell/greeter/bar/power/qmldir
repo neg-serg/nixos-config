@@ -1,3 +1,0 @@
-module qs.bar.power
-BatteryIcon 1.0 BatteryIcon.qml
-Power 1.0 Power.qml
