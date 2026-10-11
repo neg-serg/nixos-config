@@ -44,6 +44,8 @@ Four wrappers in `packages/local-bin/bin/` share the payloads in `packages/local
 $ music-tags ~/music/AFX-*/A01\ -\ AFX\ -\ Children\ Talking.flac --top 5
  0.863  breakbeat
  0.059  hip hop
+$ music-tags --preset mood FILE               # focused vocabulary, sharper scores
+$ music-tags --dir ~/music --out ~/tags.jsonl # batch, resumable by mtime+size
 $ music-embed --out /tmp/afx.npy ~/music/AFX-*/A01*.flac
 $ music-index ~/music --out ~/.cache/music-index      # hours for the full library, resumable
 $ music-similar --index ~/.cache/music-index -k 5     # current track via playerctl
@@ -56,13 +58,24 @@ Notes:
   on the model card) but 632M — pass `--model` or set
   `features.media.audio.musicTagging.embedModel`.
 - CLAP scores are a softmax over the labels you pass: comparable inside one run, not across runs
-  with different label sets. Add your own vocabulary with
-  `--labels "neofolk,martial industrial,drone"`.
+  with different label sets. `--preset {genre,mood,instrument,electronic,default}` picks a focused
+  vocabulary (a smaller set gives sharper scores), `--labels a,b,c` is free-form, and
+  `--dir ~/music --out ~/tags.jsonl` tags a whole library, resuming by mtime+size.
+- Layer choice was measured, not guessed: two same-album probes (6 and 12 albums, 30 s clips taken
+  from different parts of the same track) put the **second-to-last** encoder layer above the last
+  one — mean same-album margin 0.085 vs 0.052 and 0.046 vs 0.020, each with one more rank-1 hit.
+  That is `DEFAULT_LAYER = -2`; `--layer` overrides it, and the layer is part of the index
+  signature, so an index built with a different layer is never mixed with a query embedded by
+  another one.
 - Models land in `features.media.audio.musicTagging.hfHome` (default `/zero/ai/music-ai/hf`, created
   by tmpfiles) on first use.
 - The index is plain numpy (`vectors.npy` + `tracks.jsonl` + `cache/`): for a few thousand tracks a
   brute-force cosine pass costs milliseconds, so there is no Annoy dependency. Files are cached by
-  path+mtime+size+model, so a re-run after new albums only embeds those.
+  path+mtime+size+embed signature, so a re-run after new albums only embeds those.
+- The voice client queues neighbours of the playing track: `mpd-voice say "similar tracks"` (the
+  Russian phrases are listed by `mpd-voice phrases`) runs `music-similar --json` on the current song
+  and appends the results to the MPD queue (`similar_cmd` and `music_dir` in the client's config —
+  see [mpd-voice.md](./mpd-voice.md)).
 - Corpus status (verified 2026-10-10 with the built wrapper text): a query excerpt of a track ranked
   its own album's indexed track first in 4 of 5 probes (scores 0.90–0.95); the miss was an
   ambient/atmospheric pair.
