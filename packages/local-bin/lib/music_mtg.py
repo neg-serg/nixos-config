@@ -380,10 +380,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--check", action="store_true", help="report models and exit"
     )
+    parser.add_argument(
+        "--stats",
+        metavar="FILE.jsonl",
+        help="summarize an existing tag file (label distribution, mood coverage)",
+    )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
-    if not args.paths and not args.dir and not args.check:
-        parser.error("need FILE..., --dir DIR or --check")
+    if not args.paths and not args.dir and not args.check and not args.stats:
+        parser.error("need FILE..., --dir DIR, --stats FILE or --check")
     return args
 
 
@@ -393,10 +398,63 @@ def head_keys(head_set: str) -> tuple[str, ...]:
     return CORE_HEADS
 
 
+def print_stats(tags_file: Path, top: int = 8) -> int:
+    """Summarize a tag file: label distribution and mood coverage."""
+    if not tags_file.is_file():
+        print(f"[music-mtg] no tag file: {tags_file}", file=sys.stderr)
+        return 2
+    counts: dict[str, dict[str, int]] = {key: {} for key in HEADS}
+    tracks = 0
+    broken = 0
+    covered = 0
+    for line in tags_file.read_text(errors="replace").splitlines():
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            broken += 1
+            continue
+        tags = record.get("tags") if isinstance(record, dict) else None
+        if not isinstance(tags, dict):
+            broken += 1
+            continue
+        tracks += 1
+        for key in counts:
+            labels = tags.get(key) or []
+            if not labels:
+                continue
+            top_label = labels[0].get("label")
+            if key == "mood" and float(labels[0].get("score", 0)) >= 0.10:
+                covered += 1
+            if isinstance(top_label, str):
+                counts[key][top_label] = counts[key].get(top_label, 0) + 1
+    if not tracks:
+        print(
+            f"[music-mtg] no usable records in {tags_file} ({broken} broken)"
+        )
+        return 1
+    print(f"{tags_file}: {tracks} tracks, {broken} broken lines")
+    for key, table in counts.items():
+        if not table:
+            continue
+        rendered = ", ".join(
+            f"{label} {count}"
+            for label, count in sorted(table.items(), key=lambda kv: -kv[1])[
+                :top
+            ]
+        )
+        print(f"  {HEADS[key][2]:18} {rendered}")
+    print(f"  mood coverage >= 0.10: {covered}/{tracks}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     models_dir = Path(args.models).expanduser()
     keys = head_keys(args.head_set)
+    if args.stats:
+        return print_stats(Path(args.stats).expanduser())
     if args.check:
         return check_models(models_dir, keys)
     missing = missing_files(models_dir, keys)
