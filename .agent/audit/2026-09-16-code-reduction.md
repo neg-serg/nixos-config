@@ -141,17 +141,17 @@ identical import lines (23, includes two `mkUserService` conversions).
   migration) still holds.
   - *Amended 2026-10-02:* the varying part of that shape was `Restart`/`RestartSec`, which the
     preset table could not carry. `lib/systemd-user.nix` presets now merge a `service` attrset
-    (`restartOnFailure`, `oneshot`) under the caller's own `serviceConfig`, and the named
-    scheduling presets `graphicalSession`/`graphicalWanted` cover the `graphical-session.target`
-    residents. With that, the migration *is* mechanical where the old measurement said it was not:
-    the 12 units of `modules/user/nix-maid/sys/user-services.nix` were migrated and proved
-    behaviour-identical by evaluating `nixosConfigurations.odin.config.systemd.user.services`
-    before/after (identical per-unit `description`/`after`/`wants`/`partOf`/`wantedBy`/`enable`/
-    `serviceConfig` for all 13 dumped units, and identical attribute signatures for every user
-    unit). The remaining "do not force it" part stands: a unit that does not fit the constructor
-    (extra unit-level options, e.g. `startLimit*` in `openrgb-profile`) stays hand-rolled.
-    Guard rule: see `scripts/dev/lint-guards.sh` (`restart-preset`, raw `Restart = "on-failure"`
-    + `RestartSec` pair inside `systemd.user.services` must come from the preset).
+    (`restartOnFailure`, `oneshot`) under the caller's own `serviceConfig`, and the named scheduling
+    presets `graphicalSession`/`graphicalWanted` cover the `graphical-session.target` residents.
+    With that, the migration *is* mechanical where the old measurement said it was not: the 12 units
+    of `modules/user/nix-maid/sys/user-services.nix` were migrated and proved behaviour-identical by
+    evaluating `nixosConfigurations.odin.config.systemd.user.services` before/after (identical
+    per-unit `description`/`after`/`wants`/`partOf`/`wantedBy`/`enable`/ `serviceConfig` for all 13
+    dumped units, and identical attribute signatures for every user unit). The remaining "do not
+    force it" part stands: a unit that does not fit the constructor (extra unit-level options, e.g.
+    `startLimit*` in `openrgb-profile`) stays hand-rolled. Guard rule: see
+    `scripts/dev/lint-guards.sh` (`restart-preset`, raw `Restart = "on-failure"`
+    - `RestartSec` pair inside `systemd.user.services` must come from the preset).
 - **Shared scaffolding for the 30 dsh plugins** — across all `lib/index.js` exactly one line is
   common (`}`); the `package.json` boilerplate is 13 lines and required by npm. `npm workspaces` and
   a generator conflict with the caretaker, which `cp`s files into the profile.

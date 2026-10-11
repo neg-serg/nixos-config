@@ -37,7 +37,7 @@ navigate-closed = "shell"
 ghost-text = 0
 
 [keybindings]
-toggle-mode = ""         # ^R is hishtory's (see the header)
+toggle-mode = ""          # ^R is hishtory's (see the header)
 toggle-menu = "shift+tab"
 select = "ctrl+e"
 navigate-up = "ctrl+p"

@@ -1,3 +1,11 @@
 [workspace]
-members = ["game", "hypr-focus", "pwroute", "hwctl", "genlc-rs", "tidalctl", "nixie"]
+members = [
+  "game",
+  "hypr-focus",
+  "pwroute",
+  "hwctl",
+  "genlc-rs",
+  "tidalctl",
+  "nixie",
+]
 resolver = "2"

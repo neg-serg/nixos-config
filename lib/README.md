@@ -13,9 +13,10 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   also re-exports `ruKeys` from `ru-keys.nix`.
 - `systemd-user.nix` — systemd unit helpers: `mkUnitFromPresets` plus the module-shaped
   `mkUserService` / `mkUserOneshot` / `mkUserActivation`, and the system-level oneshot+timer factory
-  `mkOneshotTimer` used by `hosts/trantor`; the legacy `mkSimple*` helpers were removed. The `presets`
-  table holds both scheduling keys (`after`/`wants`/`requires`/`bindsTo`/`partOf`/`wantedBy`) and a
-  `service` attrset (`Restart`/`RestartSec`/`Type`): `defaultWanted`, `restartOnFailure`, `oneshot`,
+  `mkOneshotTimer` used by `hosts/trantor`; the legacy `mkSimple*` helpers were removed. The
+  `presets` table holds both scheduling keys
+  (`after`/`wants`/`requires`/`bindsTo`/`partOf`/`wantedBy`) and a `service` attrset
+  (`Restart`/`RestartSec`/`Type`): `defaultWanted`, `restartOnFailure`, `oneshot`,
   `graphicalSession`, `graphicalWanted`. Preset service keys are merged under the caller's own
   `serviceConfig` (caller wins per key), so `presets = [ "restartOnFailure" ]` + `RestartSec = 3`
   keeps the shared policy while tuning the delay; a raw `Restart = "on-failure"` inside
@@ -115,12 +116,12 @@ imports = neg.importDir { dir = ./.; includeDirs = true; nameFilter = domainFilt
 
 ### Which resolver, where
 
-| Where the reference sits                       | Use                                                                                                                                    | Why                                                                                                                                                                      |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| a config body (option value, `config = …`)     | `config.lib.neg.path` / `readFile` / `files.<…>`                                                                                       | `config` is already the module's own argument                                                                                                                            |
+| Where the reference sits                       | Use                                                                                                                                    | Why                                                                                                                                                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| a config body (option value, `config = …`)     | `config.lib.neg.path` / `readFile` / `files.<…>`                                                                                       | `config` is already the module's own argument                                                                                                                               |
 | a top-level `let` of a module                  | `let r = neg.rooted repoRoot; in r.path "files/x"`                                                                                     | `config.lib.neg.*` there is an **infinite recursion**: module arguments are forced while the module is being collected (`hosts/trantor/services/telegram-units.nix` hit it) |
-| a package file (`packages/<name>/default.nix`) | `paths.path "files/…"` — declare `paths` as a formal and `neg.functions.callPkg` fills it in (it sniffs formals exactly like `inputs`) | no `config` at all; the resolver is built once in `packages/overlay.nix` (`neg.rooted ../.`) and handed to every overlay through `importOvP`                             |
-| a package referring to a *sibling* package     | `call (pkg "name") { }` — `neg.functions.pkg` maps the directory name to its `default.nix`                                             | no path arithmetic anywhere in `packages/`, and a typo lists the names that exist instead of pointing at a missing file                                                  |
+| a package file (`packages/<name>/default.nix`) | `paths.path "files/…"` — declare `paths` as a formal and `neg.functions.callPkg` fills it in (it sniffs formals exactly like `inputs`) | no `config` at all; the resolver is built once in `packages/overlay.nix` (`neg.rooted ../.`) and handed to every overlay through `importOvP`                                |
+| a package referring to a *sibling* package     | `call (pkg "name") { }` — `neg.functions.pkg` maps the directory name to its `default.nix`                                             | no path arithmetic anywhere in `packages/`, and a typo lists the names that exist instead of pointing at a missing file                                                     |
 
 `config.lib.neg.files` is the whole `files/` directory as one attribute set (built lazily,
 `extensions = "any"`, so keys drop their extension and colliding names keep the full one), for

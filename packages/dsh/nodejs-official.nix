@@ -48,7 +48,10 @@ stdenv.mkDerivation {
 
   # What the launcher exports as LD_LIBRARY_PATH: libstdc++ (the official build
   # links it) and glibc, in that order.
-  passthru.libraryPath = lib.makeLibraryPath [ stdenv.cc.cc.lib glibc ];
+  passthru.libraryPath = lib.makeLibraryPath [
+    stdenv.cc.cc.lib
+    glibc
+  ];
 
   meta = {
     description = "Official Node.js build (nodejs.org) — the runtime dsh's native loader supports";
