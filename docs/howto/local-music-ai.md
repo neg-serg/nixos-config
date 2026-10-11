@@ -191,6 +191,8 @@ track; a single process does ~0.36 s/track, so the pool mostly fights over cores
 fast and leaves the machine alone), 95% of tracks got a mood label above 0.10, top styles Ambient 26
 / Experimental 14 / Black Metal 8 / Funeral Doom Metal 5 / Techno 4, top moods dark 24 / film 16 /
 epic 14 / energetic 12 / relaxing 9. Expect roughly 4 h for 37k tracks, i.e. an overnight job.
+`music-mtg-tags --stats ~/.cache/music-mtg/tags.jsonl` prints that same distribution for a finished
+run (label counts per head plus mood coverage) and counts broken lines.
 
 Layout and provenance: the tagger needs `essentia-tensorflow` (the shared venv-analysis has a plain
 essentia without the `TensorflowPredict*` classes), so `just music-mtg-setup` fills a separate
