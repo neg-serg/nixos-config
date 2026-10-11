@@ -79,6 +79,10 @@ lint:
     # Per-workspace wallpaper helper: mapping/apply/skip logic against fakes
     # (fake wl + hyprctl + a temp pool; no session, no compositor).
     python3 "{{repo_root}}/packages/local-bin/bin/wl-workspaces.py" selftest
+    # Music index/similar payloads: offline stub-embedder selftests (no
+    # torch/model/venv), skipped with a notice when python3 is missing —
+    # same style as rustfmt/selene above.
+    if command -v python3 >/dev/null 2>&1; then just music-selftest; else echo "python3 not found — skipping music payload selftest"; fi
     # Shellcheck opt-in: check only files that declare a POSIX/Bash shebang
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
@@ -101,6 +105,27 @@ lint:
 #   just paths resolve ../../../lib/x.nix --from hosts/trantor/services/y.nix
 paths *ARGS:
     "{{repo_root}}/packages/local-bin/bin/paths" --root "{{repo_root}}" {{ARGS}}
+
+# Offline self-checks for the music index/similar payloads, using a stub
+# embedder (no torch, no model, no venv; a machine without numpy prints a
+# skip and exits 0). Called from `lint`; see `just --list` for the recipe.
+music-selftest:
+    #!/usr/bin/env bash
+    # Prefer an interpreter that can actually import numpy (the venv's cp312
+    # builds do not load under the system 3.14), then fall back to whatever
+    # python3 is around: the payloads print a skip and exit 0 without numpy.
+    set -euo pipefail
+    venv_sp=/zero/ai/music-ai/venv-analysis/lib/python3.12/site-packages
+    for py in "${MUSIC_AI_SELFTEST_PY:-}" "$HOME/.local/bin/python3.12" python3; do
+      [ -n "$py" ] || continue
+      command -v "$py" >/dev/null 2>&1 || continue
+      if PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" -c 'import numpy' >/dev/null 2>&1; then
+        PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_index.py" --selftest
+        PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_similar.py" --selftest
+        exit 0
+      fi
+    done
+    echo "music payload selftest skipped (no numpy-capable interpreter found)"
 
 # Check that all packages in environment.systemPackages have inline annotations
 lint-annotations:
