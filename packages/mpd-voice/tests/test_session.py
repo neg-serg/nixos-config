@@ -342,5 +342,239 @@ class QueueSimilarTests(unittest.TestCase):
         self.assertFalse(self.args_log.exists())
 
 
+class PlayMoodTests(unittest.TestCase):
+    """`play_mood` streams the music-mtg-tags JSONL into the queue."""
+
+    URIS = (
+        "Evoken/Antithesis of Light/06 - Antithesis of Light.flac",
+        "Cryo/Epilogue/04 - Dark Ambient.flac",
+        "Agalloch/The Mantle/01 - Falling Snow.flac",
+        "Various/Ambient/01 - Drone One.flac",
+        "Rome/Notturno/01 - Notturno.flac",
+    )
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.music = Path(self.tmp.name) / "music"
+        for uri in self.URIS:
+            path = self.music / uri
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"")
+        self.tags = Path(self.tmp.name) / "tags.jsonl"
+        self.fake = FakeMPD(
+            tracks=[
+                {"file": uri, "Title": Path(uri).stem} for uri in self.URIS
+            ]
+        ).start()
+        self.addCleanup(self.fake.stop)
+        self.client = MPDClient("127.0.0.1", self.fake.port, timeout=5)
+        self.addCleanup(self.client.close)
+
+    def _entry(
+        self,
+        uri: str,
+        moods: tuple[tuple[str, object], ...],
+        base: Path | None = None,
+    ) -> dict[str, object]:
+        """One JSONL object in the shape music-mtg-tags writes."""
+        return {
+            "path": str((base or self.music) / uri),
+            "mtime": 1,
+            "size": 2,
+            "engine": "mtg",
+            "settings": "core|seconds=30|top=3",
+            "tags": {
+                "genre": [{"label": "Rock---Doom Metal", "score": 0.11}],
+                "mood": [
+                    {"label": label, "score": score} for label, score in moods
+                ],
+                "instrument": [{"label": "synthesizer", "score": 0.34}],
+            },
+        }
+
+    def _write(self, lines: tuple[object, ...]) -> None:
+        rendered = [
+            json.dumps(line) if isinstance(line, dict) else line
+            for line in lines
+        ]
+        self.tags.write_text("\n".join(rendered) + "\n")
+
+    def _controller(self, **overrides: object) -> Controller:
+        values: dict[str, object] = {
+            "language": "ru",
+            "music_dir": str(self.music),
+            "tags_file": str(self.tags),
+            "tags_min_score": 0.10,
+            "tags_limit": 25,
+        }
+        values.update(overrides)
+        return Controller(self.client, Config(**values))  # type: ignore[arg-type]
+
+    def _queued(self) -> set[object]:
+        return {track["file"] for track in self.fake.queue}
+
+    def test_queues_tracks_above_the_score_floor(self) -> None:
+        self._write(
+            (
+                self._entry(self.URIS[0], (("dark", 0.31),)),
+                self._entry(self.URIS[1], (("dark", 0.05),)),
+                self._entry(self.URIS[2], (("dark", 0.10), ("sad", 0.9))),
+                self._entry(self.URIS[3], (("sad", 0.4),)),
+            )
+        )
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(reply.text, "Добавил 2 треков в настроении dark.")
+        # 0.05 is below the floor, 0.10 is exactly on it, "sad" is a
+        # different label; the queue holds only the two darks.
+        self.assertEqual(self._queued(), {self.URIS[0], self.URIS[2]})
+        self.assertEqual(self.fake.state, "stop")
+
+    def test_threshold_can_be_raised(self) -> None:
+        self._write(
+            (
+                self._entry(self.URIS[0], (("dark", 0.31),)),
+                self._entry(self.URIS[1], (("dark", 0.25),)),
+            )
+        )
+        reply = self._controller(tags_min_score=0.30).handle_text(
+            "включи мрачное"
+        )
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[0]})
+        self.assertIn("1", reply.text)
+
+    def test_queue_is_capped_at_tags_limit(self) -> None:
+        self._write(
+            tuple(self._entry(uri, (("epic", 0.4),)) for uri in self.URIS)
+        )
+        reply = self._controller(tags_limit=2).handle_text("включи эпичное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(len(self.fake.queue), 2)
+        self.assertTrue(self._queued() <= set(self.URIS))
+
+    def test_all_matches_are_queued_when_below_the_cap(self) -> None:
+        self._write(
+            tuple(
+                self._entry(uri, (("romantic", 0.3),)) for uri in self.URIS[:3]
+            )
+        )
+        reply = self._controller(tags_limit=25).handle_text(
+            "включи романтичное"
+        )
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), set(self.URIS[:3]))
+
+    def test_english_phrase_gets_an_english_reply(self) -> None:
+        self._write((self._entry(self.URIS[0], (("dark", 0.31),)),))
+        reply = self._controller().handle_text("play dark music")
+        self.assertTrue(reply.ok)
+        self.assertEqual(reply.text, "Added 1 dark tracks to the queue.")
+
+    def test_add_phrase_also_queues_the_mood(self) -> None:
+        self._write((self._entry(self.URIS[0], (("sad", 0.4),)),))
+        reply = self._controller().handle_text("добавь грустное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[0]})
+
+    def test_missing_tag_file_hints_at_music_mtg_tags(self) -> None:
+        self.tags.unlink(missing_ok=True)
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertFalse(reply.ok)
+        self.assertIn("music-mtg-tags", reply.text)
+        self.assertIn(str(self.tags), reply.text)
+        self.assertEqual(self.fake.queue, [])
+
+    def test_no_matches_is_a_reply_not_a_traceback(self) -> None:
+        self._write(
+            (
+                self._entry(self.URIS[0], (("happy", 0.4),)),
+                {"path": str(self.music / self.URIS[1]), "tags": {}},
+                {"tags": {"mood": [{"label": "dark", "score": 0.9}]}},
+            )
+        )
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertFalse(reply.ok)
+        self.assertIn("dark", reply.text)
+        self.assertEqual(self.fake.queue, [])
+
+    def test_paths_outside_music_dir_are_skipped(self) -> None:
+        nowhere = self.tmp.name
+        self._write(
+            (
+                self._entry(self.URIS[0], (("dark", 0.4),)),
+                self._entry(
+                    "outside.flac",
+                    (("dark", 0.9),),
+                    base=Path(nowhere) / "elsewhere",
+                ),
+                # A sibling directory sharing the "music" prefix is outside
+                # too, not just any string that starts the same way.
+                self._entry(
+                    "music-other/outside.flac",
+                    (("dark", 0.9),),
+                    base=Path(nowhere),
+                ),
+            )
+        )
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[0]})
+
+    def test_only_outside_paths_mean_nothing_matched(self) -> None:
+        self._write(
+            (
+                self._entry(
+                    "outside.flac",
+                    (("dark", 0.9),),
+                    base=Path(self.tmp.name) / "elsewhere",
+                ),
+            )
+        )
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertFalse(reply.ok)
+        self.assertEqual(self.fake.queue, [])
+
+    def test_broken_lines_are_skipped(self) -> None:
+        bad_score = json.dumps(
+            {
+                "path": str(self.music / self.URIS[1]),
+                "tags": {"mood": [{"label": "dark", "score": "high"}]},
+            }
+        )
+        self._write(
+            (
+                "{not json",
+                "",
+                "42",
+                self._entry(self.URIS[0], (("dark", 0.31),)),
+                bad_score,
+            )
+        )
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[0]})
+
+    def test_all_broken_lines_mention_the_count(self) -> None:
+        self._write(("{not json", "also not json"))
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertFalse(reply.ok)
+        self.assertIn("2", reply.text)
+        self.assertEqual(self.fake.queue, [])
+
+    def test_empty_tag_file_is_reported(self) -> None:
+        self.tags.write_text("")
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertFalse(reply.ok)
+        self.assertEqual(self.fake.queue, [])
+
+    def test_without_music_dir_nothing_is_touched(self) -> None:
+        self._write((self._entry(self.URIS[0], (("dark", 0.31),)),))
+        reply = self._controller(music_dir="").handle_text("включи мрачное")
+        self.assertFalse(reply.ok)
+        self.assertEqual(self.fake.queue, [])
+
+
 if __name__ == "__main__":
     unittest.main()
