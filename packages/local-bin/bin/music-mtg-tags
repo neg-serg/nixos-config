@@ -1,0 +1,37 @@
+#!/bin/sh
+# music-mtg-tags: trained MTG/Essentia tags — Discogs-400 styles, Jamendo
+# mood/theme, instruments — for one or more audio files.
+#
+#   music-mtg-tags [--set core|all] [--top N] [--seconds S] [--json] FILE...
+#   music-mtg-tags --dir ~/music --json > ~/tags-mtg.jsonl
+#   music-mtg-tags --check
+#
+# Unlike zero-shot CLAP (music-tags), these heads are trained on fixed
+# taxonomies: canonical genre names, insensitive to prompt phrasing, and cheap
+# (~0.36 s per 30 s clip on CPU, 660 MB RSS). Payload:
+# packages/local-bin/lib/music_mtg.py.
+#
+# PYTHONPATH must point at venv-mtg (essentia-tensorflow) instead of
+# venv-analysis, whose essentia has no TensorflowPredict* classes; create it
+# with scripts/dev/music-mtg-setup.sh, which also fetches the models into
+# $MUSIC_MTG_MODELS via scripts/dev/music-mtg-models.sh.
+set -eu
+
+# Shared interpreter/venv preamble (sets BASE, LIB, PY, SP and exports).
+MUSIC_AI_SELF=$0 . "$(dirname "$0")/_music_ai_env.sh"
+
+MTG_VENV="${MUSIC_MTG_VENV:-@MUSIC_MTG_VENV@}"
+MTG_SP="$MTG_VENV/lib/python3.12/site-packages"
+if [ ! -d "$MTG_SP" ]; then
+  echo "music-mtg-tags: no essentia-tensorflow venv at $MTG_VENV" >&2
+  echo "music-mtg-tags: run scripts/dev/music-mtg-setup.sh" >&2
+  exit 2
+fi
+
+# Replace (not extend) the preamble's PYTHONPATH: venv-analysis ships a plain
+# essentia, and it shadows the TF build when it comes first.
+PYTHONPATH="$MTG_SP:$LIB"
+MUSIC_MTG_MODELS="${MUSIC_MTG_MODELS:-@MUSIC_MTG_MODELS@}"
+export PYTHONPATH MUSIC_MTG_MODELS
+
+exec "$PY" "$LIB/music_mtg.py" "$@"
