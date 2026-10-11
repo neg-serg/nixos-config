@@ -46,6 +46,12 @@ class Config:
     tts_voice: str = "default"
     tts_cmd: str = ""
 
+    # Neighbour tracks come from an external helper.  MPD reports file paths
+    # relative to music_directory, while the helper wants absolute paths, so
+    # music_dir must match the MPD ``music_directory`` setting.
+    similar_cmd: str = "music-similar --json -k 10"
+    music_dir: str = "~/music"
+
     def apply_mapping(self, values: Mapping[str, object]) -> None:
         """Overlay ``values``; unknown keys and wrong shapes are ignored."""
         known = {field.name for field in fields(self)}

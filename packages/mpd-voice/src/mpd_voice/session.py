@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import json
+import os
+import shlex
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -35,6 +39,12 @@ RU = {
     "playing_many": "Играю {count} треков по запросу {name}.",
     "not_found": "Не нашёл: {name}.",
     "added": "Добавил в очередь треков: {count}.",
+    "similar_added": "Добавил в очередь похожих треков: {count}.",
+    "similar_empty": "Похожих треков не нашлось.",
+    "similar_nothing": "Сейчас ничего не играет.",
+    "similar_no_dir": "Каталог музыки не задан или не существует.",
+    "similar_missing": "Не нашёл файл текущего трека в каталоге музыки.",
+    "similar_failed": "Помощник по похожим трекам не сработал.",
     "queue_cleared": "Очередь очищена.",
     "playlists": "Плейлисты: {names}.",
     "playlists_empty": "Плейлистов нет.",
@@ -73,6 +83,12 @@ EN = {
     "playing_many": "Playing {count} tracks matching {name}.",
     "not_found": "Nothing found for: {name}.",
     "added": "Added {count} tracks to the queue.",
+    "similar_added": "Added {count} similar tracks to the queue.",
+    "similar_empty": "No similar tracks found.",
+    "similar_nothing": "Nothing is playing right now.",
+    "similar_no_dir": "The music directory is not set or does not exist.",
+    "similar_missing": "The current track is not under the music directory.",
+    "similar_failed": "The similarity helper failed.",
     "queue_cleared": "Queue cleared.",
     "playlists": "Playlists: {names}.",
     "playlists_empty": "There are no playlists.",
@@ -502,6 +518,58 @@ class Controller:
             [song["file"] for song in found if song.get("file")]
         )
         return Reply(text=self._t("added", intent.lang, count=added))
+
+    def _do_queue_similar(self, intent: Intent) -> Reply:
+        """Append neighbours of the current track, asked from a helper tool."""
+        song = self.client.current_song()
+        if not song or not song.get("file"):
+            return Reply(
+                text=self._t("similar_nothing", intent.lang), ok=False
+            )
+        if not self.cfg.music_dir:
+            return Reply(text=self._t("similar_no_dir", intent.lang), ok=False)
+        music_dir = Path(self.cfg.music_dir).expanduser()
+        if not music_dir.is_dir():
+            return Reply(text=self._t("similar_no_dir", intent.lang), ok=False)
+        # MPD reports file paths relative to music_directory; the helper
+        # expects the real path of the current track.
+        query = music_dir / song["file"]
+        if not query.is_file():
+            return Reply(
+                text=self._t("similar_missing", intent.lang), ok=False
+            )
+        try:
+            argv = shlex.split(self.cfg.similar_cmd)
+        except ValueError:
+            return Reply(text=self._t("similar_failed", intent.lang), ok=False)
+        if not argv:
+            return Reply(text=self._t("similar_failed", intent.lang), ok=False)
+        try:
+            result = subprocess.run(
+                argv + [str(query)],
+                capture_output=True,
+                text=True,
+                errors="replace",
+                timeout=120,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return Reply(text=self._t("similar_failed", intent.lang), ok=False)
+        if result.returncode != 0:
+            return Reply(text=self._t("similar_failed", intent.lang), ok=False)
+        try:
+            payload = json.loads(result.stdout)
+        except ValueError:
+            return Reply(text=self._t("similar_failed", intent.lang), ok=False)
+        entries = payload.get("results") if isinstance(payload, dict) else None
+        uris = []
+        for item in entries or []:
+            path = item.get("path") if isinstance(item, dict) else ""
+            if path:
+                uris.append(os.path.relpath(path, music_dir))
+        if not uris:
+            return Reply(text=self._t("similar_empty", intent.lang), ok=False)
+        added = self.client.add_many(uris)
+        return Reply(text=self._t("similar_added", intent.lang, count=added))
 
     def _do_clear_queue(self, intent: Intent) -> Reply:
         self.client.clear()
