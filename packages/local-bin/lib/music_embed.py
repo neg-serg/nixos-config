@@ -28,6 +28,13 @@ from pathlib import Path
 DEFAULT_MODEL = os.environ.get("MUSIC_EMBED_MODEL", "m-a-p/MERT-v1-95M")
 DEFAULT_WINDOW_SECONDS = 10.0
 DEFAULT_WINDOWS = 3
+# Layer choice is measured, not guessed: on two same-album probes (6 and 12
+# albums, 30 s clips taken from different parts of the same track) the
+# second-to-last encoder layer separated same-album pairs better than the last
+# one — mean margin 0.085 vs 0.052 (6 albums) and 0.046 vs 0.020 (12 albums),
+# each with one more rank-1 hit.  -2 scales with the model depth, so it lands on
+# the second block from the top for 24-layer checkpoints as well.
+DEFAULT_LAYER = -2
 
 
 def pick_device(requested: str = "auto") -> str:
@@ -88,19 +95,7 @@ class LayerRecorder:
         self.handles = []
 
 
-def load_audio(path: str, rate: int, seconds: float | None = None):
-    """Decode a file to mono float32 at ``rate``.
-
-    soundfile + soxr instead of librosa: librosa pulls numba, whose JIT cache
-    refuses to initialise when the package is imported from PYTHONPATH (and
-    the venv tree sits outside the interpreter prefix in this setup).
-    """
-    import soundfile as sf
-
-    samples, native = sf.read(path, dtype="float32", always_2d=True)
-    mono = samples.mean(axis=1)
-    if seconds:
-        mono = mono[: int(seconds * native)]
+def _resample(mono, native: int, rate: int):
     if native == rate:
         return mono
     try:
@@ -116,6 +111,57 @@ def load_audio(path: str, rate: int, seconds: float | None = None):
         divisor = gcd(int(native), int(rate))
         resampled = resample_poly(mono, rate // divisor, native // divisor)
         return np.asarray(resampled, dtype="float32")
+
+
+def load_audio(path: str, rate: int, seconds: float | None = None):
+    """Decode a file to mono float32 at ``rate``.
+
+    soundfile + soxr instead of librosa: librosa pulls numba, whose JIT cache
+    refuses to initialise when the package is imported from PYTHONPATH (and
+    the venv tree sits outside the interpreter prefix in this setup).
+    Only the requested prefix is decoded — a 12-minute track should not be
+    read in full to tag or embed 30 s of it.
+    """
+    import soundfile as sf
+
+    with sf.SoundFile(path) as handle:
+        native = handle.samplerate
+        frames = int(seconds * native) if seconds else -1
+        samples = handle.read(frames, dtype="float32", always_2d=True)
+    return _resample(samples.mean(axis=1), native, rate)
+
+
+def read_window(path: str, rate: int, start_seconds: float, seconds: float):
+    """Decode one region without touching the rest of the file."""
+    import soundfile as sf
+
+    with sf.SoundFile(path) as handle:
+        native = handle.samplerate
+        handle.seek(max(0, int(start_seconds * native)))
+        samples = handle.read(
+            int(seconds * native), dtype="float32", always_2d=True
+        )
+    return _resample(samples.mean(axis=1), native, rate)
+
+
+def file_duration(path: str) -> float:
+    """Duration in seconds, from the header only."""
+    import soundfile as sf
+
+    info = sf.info(path)
+    return float(info.frames) / float(info.samplerate or 1)
+
+
+def window_starts(path: str, seconds: float, count: int) -> list[float]:
+    """Evenly spaced window offsets (start/middle/end) for a track."""
+    import numpy as np
+
+    duration = file_duration(path)
+    if count <= 1 or duration <= seconds:
+        return [0.0]
+    if count == 2:
+        return [0.0, duration - seconds]
+    return [float(x) for x in np.linspace(0.0, duration - seconds, count)]
 
 
 def windows(samples, rate: int, seconds: float, count: int):
@@ -162,8 +208,10 @@ def embed_windows(
 def embed_file(
     model, processor, path: str, rate: int, layer: int, args, recorder=None
 ):
-    samples = load_audio(path, rate)
-    chunks = windows(samples, rate, args.window_seconds, args.windows)
+    starts = window_starts(path, args.window_seconds, args.windows)
+    chunks = [
+        read_window(path, rate, start, args.window_seconds) for start in starts
+    ]
     return embed_windows(
         model, processor, chunks, rate, layer, recorder=recorder
     )
@@ -178,8 +226,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--layer",
         type=int,
-        default=-1,
-        help="hidden layer to pool (negative indexes from the top)",
+        default=DEFAULT_LAYER,
+        help="hidden layer to pool (negative indexes from the top; -2 measured best)",
     )
     parser.add_argument("--device", default="auto", help="auto|cpu|cuda")
     parser.add_argument(

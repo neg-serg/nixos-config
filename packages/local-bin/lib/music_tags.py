@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
-"""Zero-shot music tagging with CLAP (text labels against one audio file).
+"""Zero-shot music tagging with CLAP (text labels against audio).
 
 Usage:
-  music_tags.py [--model laion/clap-htsat-unfused] [--labels a,b,c]
-                [--top N] [--json] AUDIO
+  music_tags.py [--preset KEY|--labels a,b,c] [--top N] [--json] AUDIO
+  music_tags.py --dir MUSIC_DIR --out TAGS.jsonl [--limit N] [--rebuild]
 
-The default label set mixes genres, moods and instrumentation so a single run
-answers "what is this".  Labels are free text: CLAP matches them against the
-audio embedding, and the reported score is a softmax over the given labels
-(comparable inside one run, not across runs with different label sets).
+Single-file mode prints the ranked labels.  Batch mode walks a music library,
+tags every file and appends one JSON object per track to the output file
+(``{"path", "mtime", "size", "model", "tags":[{"label","score"}...]}``);
+entries already present with the same mtime+size are skipped, so an
+interrupted pass resumes and a re-run only tags new or changed files.
+
+The default label set mixes genres, moods and instrumentation so one run
+answers "what is this".  CLAP matches the labels against the audio embedding,
+and the reported score is a softmax over the labels given in that run: it is
+comparable inside one run, not across runs with different label sets.
 """
 
 from __future__ import annotations
@@ -53,6 +59,88 @@ DEFAULT_LABELS = (
     "choir",
 )
 
+# Focused vocabularies: a small label set gives sharper scores than the mixed
+# default one, so asking a specific question ("genre? mood?") beats one run
+# over everything when the answer matters.
+PRESETS: dict[str, tuple[str, ...]] = {
+    "default": DEFAULT_LABELS,
+    "genre": (
+        "ambient",
+        "black metal",
+        "death metal",
+        "doom metal",
+        "drone",
+        "dungeon synth",
+        "folk",
+        "hip hop",
+        "idm",
+        "breakbeat",
+        "techno",
+        "house",
+        "drum and bass",
+        "jazz",
+        "classical",
+        "pop",
+        "punk",
+        "post-rock",
+        "rock",
+        "singer-songwriter",
+        "soundtrack",
+    ),
+    "mood": (
+        "aggressive",
+        "angry",
+        "calm",
+        "dark",
+        "dreamy",
+        "epic",
+        "happy",
+        "hopeful",
+        "melancholic",
+        "mysterious",
+        "nostalgic",
+        "peaceful",
+        "ritual",
+        "sad",
+        "tense",
+        "triumphant",
+    ),
+    "instrument": (
+        "acoustic guitar",
+        "bass guitar",
+        "cello",
+        "choir",
+        "drum kit",
+        "electric guitar",
+        "flute",
+        "female vocal",
+        "male vocal",
+        "organ",
+        "piano",
+        "saxophone",
+        "strings",
+        "synthesizer",
+        "trumpet",
+        "violin",
+    ),
+    "electronic": (
+        "ambient techno",
+        "breakbeat",
+        "drum and bass",
+        "dub techno",
+        "glitch",
+        "idm",
+        "industrial",
+        "noise",
+        "psytrance",
+        "synthwave",
+        "techno",
+        "trance",
+    ),
+}
+
+AUDIO_EXTS = {".mp3", ".flac", ".wav", ".ogg", ".opus", ".m4a", ".aac", ".wma"}
+
 
 def load_audio(path: str, rate: int, seconds: float = 30.0):
     """Decode (see music_embed.load_audio) — same loader as the embedder."""
@@ -62,6 +150,14 @@ def load_audio(path: str, rate: int, seconds: float = 30.0):
     return _load(path, rate, seconds)
 
 
+def pick_device(requested: str = "auto") -> str:
+    import torch
+
+    if requested != "auto":
+        return requested
+    return "cuda" if torch.cuda.is_available() else "cpu"
+
+
 def _embedding(output):
     """Pull the projected embedding out of a model output (transformers 4/5)."""
     if hasattr(output, "pooler_output") and output.pooler_output is not None:
@@ -69,6 +165,29 @@ def _embedding(output):
     if hasattr(output, "last_hidden_state"):
         return output.last_hidden_state.mean(dim=1)
     return output
+
+
+def load_tagger(model_id: str, device: str):
+    """Return ``(processor, model, rate)`` for a CLAP checkpoint."""
+    from transformers import ClapModel, ClapProcessor
+
+    processor = ClapProcessor.from_pretrained(model_id)
+    model = ClapModel.from_pretrained(model_id).to(device).eval()
+    rate = int(getattr(processor.feature_extractor, "sampling_rate", 48000))
+    return processor, model, rate
+
+
+def labels_for(args: argparse.Namespace) -> list[str]:
+    if args.labels:
+        return [
+            label.strip() for label in args.labels.split(",") if label.strip()
+        ]
+    preset = PRESETS.get(args.preset)
+    if preset is None:
+        raise SystemExit(
+            f"unknown preset {args.preset!r}; available: {', '.join(sorted(PRESETS))}"
+        )
+    return list(preset)
 
 
 def score_labels(model, processor, samples, labels: list[str], rate: int):
@@ -96,14 +215,101 @@ def score_labels(model, processor, samples, labels: list[str], rate: int):
     return probs.tolist()
 
 
+def tag_file(tagger, path: Path, labels: list[str], args) -> dict:
+    processor, model, rate = tagger
+    samples = load_audio(str(path), rate, args.seconds)
+    probs = score_labels(model, processor, samples, labels, rate)
+    ranked = sorted(zip(labels, probs), key=lambda item: -item[1])[: args.top]
+    stat = path.stat()
+    return {
+        "path": str(path),
+        "mtime": stat.st_mtime_ns,
+        "size": stat.st_size,
+        "model": args.model,
+        "vocabulary": args.preset if not args.labels else "custom",
+        "tags": [
+            {"label": label, "score": round(float(score), 4)}
+            for label, score in ranked
+        ],
+    }
+
+
+def load_done(path: Path) -> dict[str, tuple[int, int]]:
+    """path -> (mtime, size) of the tracks already tagged in the output file."""
+    done: dict[str, tuple[int, int]] = {}
+    if not path.exists():
+        return done
+    for line in path.read_text().splitlines():
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        done[record["path"]] = (record["mtime"], record["size"])
+    return done
+
+
+def run_batch(tagger, args) -> int:
+    root = Path(args.dir).expanduser()
+    if not root.is_dir():
+        print(f"[music-tags] not a directory: {root}", file=sys.stderr)
+        return 2
+    labels = labels_for(args)
+    out_path = Path(args.out).expanduser() if args.out else None
+    if out_path is None:
+        print("[music-tags] --dir needs --out FILE.jsonl", file=sys.stderr)
+        return 2
+    done = {} if args.rebuild else load_done(out_path)
+    files = [
+        item
+        for item in sorted(root.rglob("*"))
+        if item.is_file() and item.suffix.lower() in AUDIO_EXTS
+    ]
+    if args.limit:
+        files = files[: args.limit]
+    tagged = 0
+    with open(out_path, "a") as handle:
+        for path in files:
+            stat = path.stat()
+            if done.get(str(path)) == (stat.st_mtime_ns, stat.st_size):
+                continue
+            try:
+                record = tag_file(tagger, path, labels, args)
+            except Exception as exc:  # keep the pass going on bad files
+                print(f"[music-tags] skip {path}: {exc}", file=sys.stderr)
+                continue
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+            handle.flush()
+            tagged += 1
+            if not args.quiet:
+                top = record["tags"][0] if record["tags"] else {"label": "-"}
+                print(
+                    f"[music-tags] {tagged} new: {path.name} -> "
+                    f"{top['label']} {top.get('score', 0):.3f}",
+                    file=sys.stderr,
+                )
+    if not args.quiet:
+        print(
+            f"[music-tags] {tagged} new, {len(files) - tagged} skipped "
+            f"-> {out_path}",
+            file=sys.stderr,
+        )
+    return 0
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("audio", help="audio file to tag")
+    parser.add_argument("audio", nargs="?", help="audio file to tag")
     parser.add_argument(
         "--model", default=DEFAULT_MODEL, help="HuggingFace id"
     )
     parser.add_argument(
-        "--labels", help="comma separated labels (default: built-in set)"
+        "--labels", help="comma separated labels (overrides --preset)"
+    )
+    parser.add_argument(
+        "--preset",
+        default="default",
+        choices=sorted(PRESETS),
+        help="label vocabulary (default: mixed genre/mood/instrument set)",
     )
     parser.add_argument(
         "--top", type=int, default=10, help="how many to print"
@@ -111,48 +317,41 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--seconds", type=float, default=30.0, help="clip length"
     )
+    parser.add_argument(
+        "--dir", help="batch mode: tag a whole music directory"
+    )
+    parser.add_argument("--out", help="batch mode: JSONL output file")
+    parser.add_argument(
+        "--limit", type=int, help="batch mode: only the first N files"
+    )
+    parser.add_argument(
+        "--rebuild", action="store_true", help="ignore already tagged files"
+    )
     parser.add_argument("--json", action="store_true", help="machine output")
     parser.add_argument("--device", default="auto", help="auto|cpu|cuda")
-    return parser.parse_args(argv)
+    parser.add_argument("--quiet", action="store_true")
+    args = parser.parse_args(argv)
+    if not args.audio and not args.dir:
+        parser.error("need AUDIO or --dir")
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
-    import torch
-
-    device = args.device
-    if device == "auto":
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    labels = (
-        [label.strip() for label in args.labels.split(",") if label.strip()]
-        if args.labels
-        else list(DEFAULT_LABELS)
-    )
-    from transformers import ClapModel, ClapProcessor
-
-    processor = ClapProcessor.from_pretrained(args.model)
-    model = ClapModel.from_pretrained(args.model).to(device).eval()
-    rate = int(getattr(processor.feature_extractor, "sampling_rate", 48000))
-    samples = load_audio(args.audio, rate, args.seconds)
-    probs = score_labels(model, processor, samples, labels, rate)
-    ranked = sorted(zip(labels, probs), key=lambda item: -item[1])[: args.top]
+    tagger = load_tagger(args.model, pick_device(args.device))
+    if args.dir:
+        return run_batch(tagger, args)
+    labels = labels_for(args)
+    path = Path(args.audio).expanduser()
+    if not path.exists():
+        print(f"[music-tags] file not found: {path}", file=sys.stderr)
+        return 2
+    record = tag_file(tagger, path, labels, args)
     if args.json:
-        print(
-            json.dumps(
-                {
-                    "path": args.audio,
-                    "model": args.model,
-                    "tags": [
-                        {"label": label, "score": round(score, 4)}
-                        for label, score in ranked
-                    ],
-                },
-                ensure_ascii=False,
-            )
-        )
+        print(json.dumps(record, ensure_ascii=False))
     else:
-        for label, score in ranked:
-            print(f"{score:6.3f}  {label}")
+        for tag in record["tags"]:
+            print(f"{tag['score']:6.3f}  {tag['label']}")
     return 0
 
 
