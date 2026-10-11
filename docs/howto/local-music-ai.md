@@ -179,6 +179,15 @@ pass). Trust call: **genre → MTG** (canonical Discogs names, prompt-insensitiv
 MTG's trained Jamendo heads, free-form text ("sounds like a rainy city") → CLAP. The `danceability`
 head called dark ambient "danceable .72" — do not trust it outside club music.
 
+Agreement with the library's own GENRE tags (169 labelled tracks, strict = the label appears in a
+Discogs style, lenient = in its parent): **top-1 0.24 strict / 0.34 lenient, top-5 0.44 / 0.54**.
+The misses are mostly neighbouring families (`idm` → Electronic/Ambient, `trip-hop` → Hip Hop/Trap)
+or tracks the hand tag over-generalised (an ambient intro labelled `funeral doom metal` →
+Electronic / Ambient), with real errors in between (`symphonic metal` → Euro House). So the genre
+head is a coarse, prompt-free family classifier — good for grouping and for feeding mood/voice
+features, not a replacement for curated tags. The mood head has no ground truth in the files at all;
+its labels rest on the spot checks above.
+
 Cost: ~0.36 s per 30 s clip on CPU (0.33 s EffNet + 0.03 s for all heads), 660 MB RSS, one-time
 graph load ~0.4 s; long inputs scale with the ~1 s frame hop (5 min → 0.94 s). CPU-only: the TF
 runtime wants libcudart/libcuda, so no GPU is involved.
@@ -190,7 +199,9 @@ sample of this library (111 tracks spread over the 37k): tagged in 65 s with `--
 track; a single process does ~0.36 s/track, so the pool mostly fights over cores — `--jobs 1` is as
 fast and leaves the machine alone), 95% of tracks got a mood label above 0.10, top styles Ambient 26
 / Experimental 14 / Black Metal 8 / Funeral Doom Metal 5 / Techno 4, top moods dark 24 / film 16 /
-epic 14 / energetic 12 / relaxing 9. Expect roughly 4 h for 37k tracks, i.e. an overnight job.
+epic 14 / energetic 12 / relaxing 9. A full pass over this 37k library runs at ~1.1 s per track on
+CPU (whole-file decode plus 30 s of inference) — around 11 h single-process, ~7 h with `--jobs 4`,
+and any partial file stays valid, so an interrupted run resumes where it stopped.
 `music-mtg-tags --stats ~/.cache/music-mtg/tags.jsonl` prints that same distribution for a finished
 run (label counts per head plus mood coverage) and counts broken lines.
 
