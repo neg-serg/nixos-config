@@ -260,6 +260,18 @@ def audit_index(root: Path, out_dir: Path, limit: int = 20) -> int:
         f"[music-index] audit: {len(indexed)} indexed, {len(scanned)} scanned, "
         f"{len(missing)} missing (index built {meta.get('created', '?')})"
     )
+    if missing:
+        # The cause is usually the container, not the audio: 1062 m4a files
+        # were once absent because libsndfile cannot read them.
+        by_ext: dict[str, int] = {}
+        for path in missing:
+            suffix = Path(path).suffix.lower() or "?"
+            by_ext[suffix] = by_ext.get(suffix, 0) + 1
+        summary = ", ".join(
+            f"{ext} {count}"
+            for ext, count in sorted(by_ext.items(), key=lambda kv: -kv[1])
+        )
+        print(f"[music-index] by extension: {summary}")
     for path in missing[:limit]:
         print(path)
     if len(missing) > limit:
