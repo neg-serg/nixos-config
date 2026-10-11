@@ -13,7 +13,13 @@
 # skips, so neither ~/.cache/quickshell-wallpaper-path nor the greeter cache
 # flaps on workspace changes. `wl-workspaces shuffle` (the Super+Shift+C
 # wallpaper keybind) starts a new set for the session.
-{ lib, config, pkgs, neg, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  neg,
+  ...
+}:
 let
   cfg = config.features.gui;
   systemdUser = config.lib.neg.systemdUser;
@@ -24,33 +30,34 @@ let
   script = "${config.lib.neg.homeDir}/.local/bin/wl-workspaces";
   python = lib.getExe pkgs.python3;
 in
-lib.mkIf (cfg.enable or false) (lib.mkMerge [
-  (neg.mkHomeFiles {
-    # Live link: tuning the mapping (a new pool, a per-workspace pin) does not
-    # need a rebuild — the watcher re-reads the file on every workspace change.
-    ".config/wl/workspaces.toml".source =
-      config.lib.neg.live "files/wl/workspaces.toml";
-  })
+lib.mkIf (cfg.enable or false) (
+  lib.mkMerge [
+    (neg.mkHomeFiles {
+      # Live link: tuning the mapping (a new pool, a per-workspace pin) does not
+      # need a rebuild — the watcher re-reads the file on every workspace change.
+      ".config/wl/workspaces.toml".source = config.lib.neg.live "files/wl/workspaces.toml";
+    })
 
-  {
-    systemd.user.services."wl-workspaces" = systemdUser.mkUserService {
-      presets = [
-        "graphicalSession"
-        "restartOnFailure"
-      ];
-      description = "Per-workspace wallpapers (wl img on workspace changes)";
-      # The daemon owns the surfaces; painting before it is up would just fail.
-      after = [ "wl-daemon.service" ];
-      wants = [ "wl-daemon.service" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${python} ${script} watch";
-        RestartSec = 3;
-        Environment = [
-          "WL_WORKSPACES_WL=${pkgs.wl}/bin/wl"
-          "WL_WORKSPACES_HYPRCTL=/run/current-system/sw/bin/hyprctl"
+    {
+      systemd.user.services."wl-workspaces" = systemdUser.mkUserService {
+        presets = [
+          "graphicalSession"
+          "restartOnFailure"
         ];
+        description = "Per-workspace wallpapers (wl img on workspace changes)";
+        # The daemon owns the surfaces; painting before it is up would just fail.
+        after = [ "wl-daemon.service" ];
+        wants = [ "wl-daemon.service" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${python} ${script} watch";
+          RestartSec = 3;
+          Environment = [
+            "WL_WORKSPACES_WL=${pkgs.wl}/bin/wl"
+            "WL_WORKSPACES_HYPRCTL=/run/current-system/sw/bin/hyprctl"
+          ];
+        };
       };
-    };
-  }
-])
+    }
+  ]
+)

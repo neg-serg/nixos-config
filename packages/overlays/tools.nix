@@ -1,4 +1,5 @@
-{ inputs, paths }: final: prev:
+{ inputs, paths }:
+final: prev:
 let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
   pkg = final.neg.functions.pkg; # name → packages/<name>, no `../` counting

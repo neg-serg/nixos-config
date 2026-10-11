@@ -4,8 +4,8 @@ Machine-specific configurations.
 
 ## Available Hosts
 
-| Host   | Description         |
-| ------ | ------------------- |
+| Host      | Description         |
+| --------- | ------------------- |
 | `trantor` | Primary workstation |
 
 ## Structure

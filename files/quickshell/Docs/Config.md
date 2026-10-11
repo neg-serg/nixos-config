@@ -52,17 +52,17 @@ Startup gate (the bar at login)
 - startupCleanBar: boolean, default true. At login the bar shows only the widgets listed in
   startupCleanWidgets and hides the rest, so the first thing on screen is the wallpaper, the clock
   and the weather. The first real window brings the full bar back, and it then stays normal for the
-  rest of the session. The gate arms only when the panel starts together with the session (the
-  login marker in `$QS_LOGIN_STATE_DIR` has to be fresh), so a panel restarted in the middle of
-  work — `systemctl --user restart quickshell`, a Hyprland config reload — never strips the bar.
+  rest of the session. The gate arms only when the panel starts together with the session (the login
+  marker in `$QS_LOGIN_STATE_DIR` has to be fresh), so a panel restarted in the middle of work —
+  `systemctl --user restart quickshell`, a Hyprland config reload — never strips the bar.
 - startupCleanWidgets: string array, default ["clock", "weather"]. Widget identifiers that survive
   the login view; they still obey panelLayout and their own conditions (e.g. showWeatherInBar).
 - startupCleanMinMs: number, default 10000. How long the clean look is held once the panel is up,
   counted from panel start. Without the dwell the autostart burst (kitty term, telegram, …) would
   map a window within a second and the bar would be back to normal before it finished sliding in.
 - startupCleanIgnoreSpecial: boolean, default true. Ignore windows on special workspaces (the
-  scratchpads pre-launched at login) and hidden daemon windows (`nicotine -s`) when deciding
-  whether "the first window" has appeared. Turn it off to count every window, including those.
+  scratchpads pre-launched at login) and hidden daemon windows (`nicotine -s`) when deciding whether
+  "the first window" has appeared. Turn it off to count every window, including those.
 
 Previewing the look without logging out: `QS_STARTUP_CLEAN=1` holds the gate up for as long as the
 panel runs (restart the panel to leave it), `QS_STARTUP_CLEAN=0` disables the gate outright.
@@ -191,10 +191,10 @@ Tools
 - Validate settings:
   `node Tools/validate-settings.mjs [--settings ~/.config/quickshell/Settings.json] [--schema Docs/SettingsSchema.json]`.
 - Find settings keys that drifted apart: `node Tools/lint-settings.mjs` — lists keys declared in
-  `Settings/Settings.qml` that no code reads (dead tokens) and keys read but never declared
-  (typos; non-zero exit). A key counts as used when it appears as `settings.<key>` (the singleton,
-  a helper parameter, a re-aliased object) or as a table entry `key: "<key>"` (GlassPanel presets);
-  `Tools/` is skipped, while a name mentioned only in a comment still counts as dead.
+  `Settings/Settings.qml` that no code reads (dead tokens) and keys read but never declared (typos;
+  non-zero exit). A key counts as used when it appears as `settings.<key>` (the singleton, a helper
+  parameter, a re-aliased object) or as a table entry `key: "<key>"` (GlassPanel presets); `Tools/`
+  is skipped, while a name mentioned only in a comment still counts as dead.
 
 Settings.json schema and samples
 

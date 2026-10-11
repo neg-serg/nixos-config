@@ -84,7 +84,9 @@ let
     (
       s:
       builtins.replaceStrings
-        [ "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/trantor/default.nix" ]
+        [
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/trantor/default.nix"
+        ]
         [ (zellijRuBlock zellijRuBinds.tab) ]
         s
     )
