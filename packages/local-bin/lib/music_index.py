@@ -223,6 +223,43 @@ def load_index(index_dir: Path) -> tuple[dict, list[dict], Any]:
     return meta, tracks, matrix
 
 
+def read_meta(out_dir: Path) -> dict | None:
+    """meta.json as a dict, or None when it is absent or unreadable."""
+    meta_path = Path(out_dir) / "meta.json"
+    if not meta_path.exists():
+        return None
+    try:
+        return json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def audit_index(root: Path, out_dir: Path, limit: int = 20) -> int:
+    """List the scanned files that are not in the index (no embedding).
+
+    A finished build can be short of the scanned file count: unreadable or
+    exotic files are skipped while the pass continues. This reports exactly
+    which ones, so the gaps are known instead of guessed.
+    """
+    try:
+        meta, tracks, _matrix = load_index(out_dir)
+    except IndexProblem as exc:
+        print(f"[music-index] {exc}", file=sys.stderr)
+        return 2
+    indexed = {record["path"] for record in tracks}
+    scanned = [str(path) for path in scan(root, AUDIO_EXTS)]
+    missing = [path for path in scanned if path not in indexed]
+    print(
+        f"[music-index] audit: {len(indexed)} indexed, {len(scanned)} scanned, "
+        f"{len(missing)} missing (index built {meta.get('created', '?')})"
+    )
+    for path in missing[:limit]:
+        print(path)
+    if len(missing) > limit:
+        print(f"... and {len(missing) - limit} more")
+    return 0
+
+
 def legacy_settings_match(
     out_dir: Path, model: str, layer: int, window_seconds: float, windows: int
 ) -> bool:
@@ -336,6 +373,20 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="run the offline stub-embedder self-check and exit",
     )
+    parser.add_argument(
+        "--audit",
+        action="store_true",
+        help=(
+            "report which scanned files are missing from the existing index "
+            "(no embedding) and exit"
+        ),
+    )
+    parser.add_argument(
+        "--audit-limit",
+        type=int,
+        default=20,
+        help="how many missing paths --audit prints (default 20)",
+    )
     return parser.parse_args(argv)
 
 
@@ -371,6 +422,28 @@ def build_index(
     cache_dir = out_dir / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     signature = embed_signature(model, layer, window_seconds, windows)
+
+    # Building with different settings than the index on disk means re-embedding
+    # every file — for a real library that is hours, so say it out loud before
+    # the pass starts (and how to keep the old index instead).
+    existing_meta = read_meta(out_dir)
+    if existing_meta and not rebuild:
+        try:
+            recorded = index_settings(existing_meta)
+        except IndexProblem:
+            recorded = None
+        wanted = (str(model), int(layer), float(window_seconds), int(windows))
+        if recorded and recorded != wanted:
+            print(
+                "[music-index] WARNING: the index in "
+                f"{out_dir} was built with model={recorded[0]} layer={recorded[1]} "
+                f"window_seconds={recorded[2]:g} windows={recorded[3]}; the current "
+                "settings differ, so every file will be re-embedded. Re-run with "
+                f"--model {recorded[0]} --layer {recorded[1]} "
+                f"--window-seconds {recorded[2]:g} --windows {recorded[3]} "
+                "to keep it, or pass --adopt-legacy to reuse its cache.",
+                file=sys.stderr,
+            )
 
     files = scan(root, AUDIO_EXTS)
     if limit:
@@ -713,6 +786,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     if args.selftest:
         return selftest()
+    if args.audit:
+        return audit_index(
+            Path(args.root).expanduser(),
+            Path(args.out).expanduser(),
+            limit=args.audit_limit,
+        )
     return build_index(
         Path(args.root).expanduser(),
         Path(args.out).expanduser(),
