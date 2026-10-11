@@ -180,6 +180,15 @@ Cost: ~0.36 s per 30 s clip on CPU (0.33 s EffNet + 0.03 s for all heads), 660 M
 graph load ~0.4 s; long inputs scale with the ~1 s frame hop (5 min → 0.94 s). CPU-only: the TF
 runtime wants libcudart/libcuda, so no GPU is involved.
 
+Batch (the whole library): `music-mtg-tags --dir ~/music --out ~/.cache/music-mtg/tags.jsonl --json`
+appends one JSON object per track and resumes by mtime+size+settings, so an interrupted pass only
+costs the remaining files — the line is written and flushed as soon as a track is tagged. A stride
+sample of this library (111 tracks spread over the 37k): tagged in 65 s with `--jobs 4` (~0.58 s per
+track; a single process does ~0.36 s/track, so the pool mostly fights over cores — `--jobs 1` is as
+fast and leaves the machine alone), 95% of tracks got a mood label above 0.10, top styles Ambient 26
+/ Experimental 14 / Black Metal 8 / Funeral Doom Metal 5 / Techno 4, top moods dark 24 / film 16 /
+epic 14 / energetic 12 / relaxing 9. Expect roughly 4 h for 37k tracks, i.e. an overnight job.
+
 Layout and provenance: the tagger needs `essentia-tensorflow` (the shared venv-analysis has a plain
 essentia without the `TensorflowPredict*` classes), so `just music-mtg-setup` fills a separate
 `features.media.audio.musicTagging.mtgVenv`; models go to `...mtgModels` (both created by tmpfiles,
