@@ -134,5 +134,139 @@ class ParseTests(unittest.TestCase):
         )
 
 
+class PlayMoodTests(unittest.TestCase):
+    """Every mood phrase resolves to the canonical Jamendo label."""
+
+    PHRASES: tuple[tuple[str, str], ...] = (
+        ("включи мрачное", "dark"),
+        ("включи тёмную музыку", "dark"),
+        ("тёмное", "dark"),
+        ("play dark music", "dark"),
+        ("dark", "dark"),
+        ("включи грустные песни", "sad"),
+        ("включи печальное", "sad"),
+        ("play something sad", "sad"),
+        ("включи меланхоличное", "melancholic"),
+        ("play melancholy", "melancholic"),
+        ("включи спокойную музыку", "calm"),
+        ("play calm", "calm"),
+        ("включи расслабленное", "relaxing"),
+        ("play relaxed", "relaxing"),
+        ("play relaxing music", "relaxing"),
+        ("включи весёлое", "happy"),
+        ("включи радостные песни", "happy"),
+        ("play happy music", "happy"),
+        ("включи эпичное", "epic"),
+        ("play epic", "epic"),
+        ("включи агрессивное", "heavy"),
+        ("включи тяжёлое", "heavy"),
+        ("play aggressive music", "heavy"),
+        ("play heavy", "heavy"),
+        ("включи космическое", "space"),
+        ("включи космос", "space"),
+        ("play space music", "space"),
+        ("play cosmic", "space"),
+        ("включи медитативное", "meditative"),
+        ("play meditative music", "meditative"),
+        ("включи романтичное", "romantic"),
+        ("включи романтику", "romantic"),
+        ("play romantic music", "romantic"),
+        ("добавь грустное", "sad"),
+        ("включи что-нибудь мрачное", "dark"),
+    )
+    LABELS = frozenset(label for _phrase, label in PHRASES)
+
+    def test_phrases_resolve_to_canonical_labels(self) -> None:
+        for phrase, label in self.PHRASES:
+            with self.subTest(phrase=phrase):
+                intent = intents.parse(phrase)
+                self.assertEqual(intent.name, "play_mood")
+                self.assertEqual(intent.value, label)
+
+    def test_labels_are_jamendo_moodtheme_classes(self) -> None:
+        """The tag file stores the model's own label strings verbatim."""
+        classes = {
+            "action",
+            "adventure",
+            "advertising",
+            "background",
+            "ballad",
+            "calm",
+            "children",
+            "christmas",
+            "commercial",
+            "cool",
+            "corporate",
+            "dark",
+            "deep",
+            "documentary",
+            "drama",
+            "dramatic",
+            "dream",
+            "emotional",
+            "energetic",
+            "epic",
+            "fast",
+            "film",
+            "fun",
+            "funny",
+            "game",
+            "groovy",
+            "happy",
+            "heavy",
+            "holiday",
+            "hopeful",
+            "inspiring",
+            "love",
+            "meditative",
+            "melancholic",
+            "melodic",
+            "motivational",
+            "movie",
+            "nature",
+            "party",
+            "positive",
+            "powerful",
+            "relaxing",
+            "retro",
+            "romantic",
+            "sad",
+            "sexy",
+            "slow",
+            "soft",
+            "soundscape",
+            "space",
+            "sport",
+            "summer",
+            "trailer",
+            "travel",
+            "upbeat",
+            "uplifting",
+        }
+        self.assertEqual(len(classes), 56)
+        self.assertTrue(self.LABELS <= classes)
+
+    def test_mood_examples_use_the_labels(self) -> None:
+        for phrase in intents.EXAMPLES["play_mood"]:
+            with self.subTest(phrase=phrase):
+                intent = intents.parse(phrase)
+                self.assertEqual(intent.name, "play_mood")
+                self.assertIn(intent.value, self.LABELS)
+
+    def test_mood_words_do_not_steal_library_queries(self) -> None:
+        cases = (
+            ("включи альбом Dark Side of the Moon", "play_album"),
+            ("включи трек Dark", "play_track"),
+            ("включи папку Space", "play_directory"),
+            ("включи исполнителя Happy", "play_artist"),
+            ("play album Epic", "play_album"),
+            ("включи похожие", "queue_similar"),
+            ("добавь в очередь Agalloch", "add_to_queue"),
+        )
+        for phrase, name in cases:
+            with self.subTest(phrase=phrase):
+                self.assertEqual(intents.parse(phrase).name, name)
+
+
 if __name__ == "__main__":
     unittest.main()

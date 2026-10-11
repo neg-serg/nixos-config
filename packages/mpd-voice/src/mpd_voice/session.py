@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import shlex
 import subprocess
 from dataclasses import dataclass
@@ -45,6 +46,14 @@ RU = {
     "similar_no_dir": "Каталог музыки не задан или не существует.",
     "similar_missing": "Не нашёл файл текущего трека в каталоге музыки.",
     "similar_failed": "Помощник по похожим трекам не сработал.",
+    "mood_added": "Добавил {count} треков в настроении {mood}.",
+    "mood_empty": "Не нашёл треков в настроении {mood}.",
+    "mood_no_dir": "Каталог музыки не задан или не существует.",
+    "mood_missing": "Файл тегов настроений не найден: {path}. "
+    "Соберите его командой: music-mtg-tags --dir ~/music --out {path} --json",
+    "mood_broken": "Не смог прочитать файл тегов: все {count} строк "
+    "повреждены.",
+    "mood_failed": "Не смог прочитать файл тегов настроений.",
     "queue_cleared": "Очередь очищена.",
     "playlists": "Плейлисты: {names}.",
     "playlists_empty": "Плейлистов нет.",
@@ -89,6 +98,14 @@ EN = {
     "similar_no_dir": "The music directory is not set or does not exist.",
     "similar_missing": "The current track is not under the music directory.",
     "similar_failed": "The similarity helper failed.",
+    "mood_added": "Added {count} {mood} tracks to the queue.",
+    "mood_empty": "No tracks found with mood {mood}.",
+    "mood_no_dir": "The music directory is not set or does not exist.",
+    "mood_missing": "Mood tag file not found: {path}. Build it with: "
+    "music-mtg-tags --dir ~/music --out {path} --json",
+    "mood_broken": "Could not read the tag file: all {count} lines are "
+    "broken.",
+    "mood_failed": "Could not read the mood tag file.",
     "queue_cleared": "Queue cleared.",
     "playlists": "Playlists: {names}.",
     "playlists_empty": "There are no playlists.",
@@ -570,6 +587,110 @@ class Controller:
             return Reply(text=self._t("similar_empty", intent.lang), ok=False)
         added = self.client.add_many(uris)
         return Reply(text=self._t("similar_added", intent.lang, count=added))
+
+    def _do_play_mood(self, intent: Intent) -> Reply:
+        """Queue tracks tagged with a Jamendo mood label from ``tags_file``.
+
+        The JSONL file is streamed once: only matching URIs stay in memory,
+        so a 40k-line library costs one pass and a shortlist.  Broken lines
+        are skipped; matching tracks are shuffled before the cap so repeated
+        requests do not always queue the same first tracks.
+        """
+        mood = intent.value
+        if not mood:
+            return Reply(
+                text=self._t("mood_empty", intent.lang, mood=mood), ok=False
+            )
+        if not self.cfg.music_dir:
+            return Reply(text=self._t("mood_no_dir", intent.lang), ok=False)
+        music_dir = Path(self.cfg.music_dir).expanduser()
+        if not music_dir.is_dir():
+            return Reply(text=self._t("mood_no_dir", intent.lang), ok=False)
+        tags_file = Path(self.cfg.tags_file).expanduser()
+        if not tags_file.is_file():
+            return Reply(
+                text=self._t("mood_missing", intent.lang, path=tags_file),
+                ok=False,
+            )
+        matches: list[str] = []
+        lines = 0
+        broken = 0
+        try:
+            with open(tags_file, encoding="utf-8", errors="replace") as handle:
+                for line in handle:
+                    if not line.strip():
+                        continue
+                    lines += 1
+                    try:
+                        entry = json.loads(line)
+                    except ValueError:
+                        broken += 1
+                        continue
+                    if not isinstance(entry, dict):
+                        broken += 1
+                        continue
+                    path = self._mood_path(entry, mood)
+                    if not path:
+                        continue
+                    uri = self._mpd_uri(path, music_dir)
+                    if uri:
+                        matches.append(uri)
+        except OSError:
+            return Reply(text=self._t("mood_failed", intent.lang), ok=False)
+        if not matches:
+            if lines and broken == lines:
+                return Reply(
+                    text=self._t("mood_broken", intent.lang, count=broken),
+                    ok=False,
+                )
+            return Reply(
+                text=self._t("mood_empty", intent.lang, mood=mood), ok=False
+            )
+        pool = list(dict.fromkeys(matches))
+        random.shuffle(pool)
+        if self.cfg.tags_limit > 0:
+            pool = pool[: self.cfg.tags_limit]
+        added = self.client.add_many(pool)
+        return Reply(
+            text=self._t("mood_added", intent.lang, count=added, mood=mood)
+        )
+
+    def _mood_path(self, entry: dict[str, object], mood: str) -> str:
+        """Path of an entry whose mood label clears the score floor."""
+        path = entry.get("path")
+        if not isinstance(path, str) or not path:
+            return ""
+        tags = entry.get("tags")
+        if not isinstance(tags, dict):
+            return ""
+        moods = tags.get("mood")
+        if not isinstance(moods, list):
+            return ""
+        for item in moods:
+            if not isinstance(item, dict) or item.get("label") != mood:
+                continue
+            try:
+                score = float(item.get("score", 0.0))
+            except (TypeError, ValueError):
+                continue
+            if score >= self.cfg.tags_min_score:
+                return path
+        return ""
+
+    @staticmethod
+    def _mpd_uri(path: str, music_dir: Path) -> str:
+        """Tag-file absolute path -> MPD URI, or "" when outside music_dir."""
+        if not os.path.isabs(path):
+            return ""
+        try:
+            relative = os.path.relpath(path, music_dir)
+        except ValueError:
+            return ""
+        if relative in (os.curdir, os.pardir):
+            return ""
+        if relative.startswith(os.pardir + os.sep):
+            return ""
+        return relative
 
     def _do_clear_queue(self, intent: Intent) -> Reply:
         self.client.clear()
