@@ -104,6 +104,16 @@ Notes:
   brute-force cosine pass costs milliseconds, so there is no Annoy dependency. Files are cached by
   path+mtime+size+embed signature, so a re-run after new albums only embeds those.
 
+- Decoding goes through soundfile, and through **ffmpeg** for containers libsndfile cannot read
+  (m4a/aac/wma). That gap was real: 1062 tracks of a 37k library were silently missing from the
+  first index. `music-index --audit` now lists exactly which scanned files are absent, and the
+  incremental recipe to fill them is the plain one — run the indexer with the settings the index was
+  built with (`music-index --layer -1`), which migrates the matching cache and embeds only the
+  pending files (~50 min for those 1062 on CPU).
+
+- Building with *different* settings than the index on disk re-embeds everything, so the tool says
+  so before starting and prints the exact flags that would keep the existing index.
+
 - The voice client queues neighbours of the playing track: `mpd-voice say "similar tracks"` (the
   Russian phrases are listed by `mpd-voice phrases`) runs `music-similar --json` on the current song
   and appends the results to the MPD queue (`similar_cmd` and `music_dir` in the client's config —
