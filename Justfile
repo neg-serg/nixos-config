@@ -158,6 +158,12 @@ docs-guard:
 update:
     nix flake update
 
+# Re-point the music-AI venv interpreters after a nix-collect-garbage run (the
+# venvs symlink to store pythons that have no GC root). --check for a read-only
+# status report, --dry-run to preview the actions.
+fix-music-venvs *ARGS:
+    bash "{{repo_root}}/scripts/dev/fix-music-venvs.sh" {{ARGS}}
+
 # Eval one trantor feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
