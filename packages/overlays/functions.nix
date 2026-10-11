@@ -57,6 +57,12 @@ in
       # packages (no build step) — see packages/lib/mkScQuark.nix.
       mkScQuark = prev.callPackage (paths.path "packages/lib/mkScQuark.nix") { };
 
+      # mkVicinaeExtension: shared builder for the local Vicinae extensions
+      # (install-as-is node bundles) — see packages/lib/mkVicinaeExtension.nix.
+      mkVicinaeExtension = prev.callPackage (paths.path "packages/lib/mkVicinaeExtension.nix") {
+        inherit paths;
+      };
+
       inherit mkMeta;
     };
   };
