@@ -36,6 +36,7 @@ $ mpd-voice once                      # push-to-talk: one utterance, then exit
 $ mpd-voice listen                    # keep listening (every utterance acts)
 $ mpd-voice listen --wake-word music  # only act on utterances with the keyword
 $ mpd-voice say "next track"          # typed command, same pipeline, no microphone
+$ mpd-voice say "similar tracks"      # queue neighbours of the current track
 $ mpd-voice say --speak "volume 30"   # also speak the reply
 $ mpd-voice status --json             # scriptable now-playing
 $ mpd-voice phrases                   # every supported phrase, both languages
@@ -79,7 +80,15 @@ stt = "auto"              # auto|http|cli|cmd|none
 stt_url = "http://127.0.0.1:8002"   # OpenAI-compatible STT base URL
 tts = "auto"              # auto|http|cmd|none
 tts_url = "http://127.0.0.1:8001"   # OpenAI-compatible TTS base URL
+similar_cmd = "music-similar --json -k 10"  # neighbour provider for `similar tracks`
+music_dir = "~/music"     # must match MPD's music_directory (helper wants real paths)
 ```
+
+`similar tracks` (also `more like this`, `find similar`, `queue similar`) appends neighbour tracks
+of the currently playing song. The neighbours come from the local `music-similar` helper, and its
+embedding index is built by the `music-index` / `music-embed` tooling described in
+`local-music-ai.md`. `music_dir` must match MPD's `music_directory`: MPD reports file paths
+relative to it, while the helper takes absolute paths.
 
 Command line overrides worth knowing: `--stt cli --stt-model FILE` (direct whisper.cpp),
 `--stt cmd --stt-cmd 'record-and-transcribe {wav}'`, `--tts cmd --tts-cmd 'espeak-ng -v ru {text}'`,
@@ -103,7 +112,11 @@ Backends and their `auto` order:
 ## Behaviour notes
 
 - `play album|artist|genre|folder|playlist ...` replaces the queue and starts playback; `add ...`
-  appends. Nothing else edits the queue, and an unrecognised phrase never touches MPD at all.
+  appends. `similar tracks` appends neighbours of the current track without disturbing playback,
+  and an unrecognised phrase never touches MPD at all.
+- `similar tracks` runs `similar_cmd` with the absolute path of the current song and maps the JSON
+  paths back to MPD URIs relative to `music_dir`. No current song, a missing file, an empty result
+  list, a failed helper or unparsable JSON become a spoken error, never a traceback.
 - Search is MPD's case-insensitive `search`: an exact tag match first (`Album`, `Artist`, `Genre`,
   `Title`, `file`), then `search any`.
 - Volume is clamped to 0-100; `mute` remembers the level and `unmute` restores it. Outputs without a

@@ -306,6 +306,12 @@ _RULES: list[RuleSpec] = [
         rf"{_PLAY}\s+(?:мне\s+)?{_PLAYLIST}\s+(?P<value>.+)",
     ),
     (
+        # Before add_to_queue/play_any on purpose: "добавь похожие треки"
+        # and "включи похожие" would otherwise look like a search query.
+        "queue_similar",
+        r"(?:похож\w*|similar|more like this)",
+    ),
+    (
         "add_to_queue",
         rf"{_ADD}\s+(?:в очередь\s+|to (?:the )?queue\s+)?"
         rf"(?:(?P<tag>{_ALBUM}|{_ARTIST}|{_TRACK}|{_GENRE}|{_PLAYLIST})\s+)?"
@@ -433,6 +439,7 @@ EXAMPLES: dict[str, tuple[str, ...]] = {
     "play_directory": ("включи папку Agalloch", "play folder Agalloch"),
     "play_playlist": ("включи плейлист evening", "play playlist evening"),
     "add_to_queue": ("добавь в очередь Agalloch", "add Agalloch to the queue"),
+    "queue_similar": ("добавь похожие треки", "more like this"),
     "clear_queue": ("очисти очередь", "clear the queue"),
     "save_playlist": ("сохрани плейлист evening", "save playlist evening"),
     "list_playlists": ("покажи плейлисты", "list playlists"),

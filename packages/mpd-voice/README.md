@@ -21,6 +21,7 @@ backend, because that is a deployment decision, not a program decision.
 $ mpd-voice once                 # push-to-talk: one utterance, then exit
 $ mpd-voice listen --wake-word music
 $ mpd-voice say "next track"     # typed, same pipeline, no audio
+$ mpd-voice say "similar tracks" # queue neighbours of the current track
 $ mpd-voice say --dry-run "volume 40"   # parse only
 $ mpd-voice status --json
 $ mpd-voice phrases              # every supported phrase, both languages
@@ -80,6 +81,10 @@ stt_model = "/path/to/ggml-large-v3-turbo.bin"
 tts = "cmd"
 tts_cmd = "espeak-ng -s 165 -v ru {text}"
 # or: tts = "http"; tts_url = "http://127.0.0.1:8001"; tts_voice = "ru_RU-irina-medium"
+
+# neighbours for "similar tracks" (see docs/howto/local-music-ai.md)
+similar_cmd = "music-similar --json -k 10"
+music_dir = "~/music"  # must match MPD's music_directory
 ```
 
 Environment: `MPD_HOST`, `MPD_PORT`, `MPD_PASSWORD` (mpc-compatible) plus
@@ -89,7 +94,17 @@ over both files and environment.
 ## Behaviour notes
 
 - `play ...` (album, artist, genre, folder, playlist) replaces the queue and
-  starts playing; `add ...` appends instead.  Nothing else edits the queue.
+  starts playing; `add ...` appends instead.  `similar tracks` (also `more like
+  this`, `find similar`, `queue similar`) appends neighbours of the current
+  track without touching playback.
+- Neighbours come from the local `music-similar` helper (`similar_cmd`),
+  indexed by the `music-index` / `music-embed` tooling described in
+  `docs/howto/local-music-ai.md`.  MPD reports paths relative to
+  `music_directory`, so `music_dir` must match it; the client passes the
+  absolute path of the current song to the helper and maps the returned paths
+  back to MPD URIs.  No current song, a missing file, an empty result list, a
+  failed helper or unparsable JSON all become a spoken error, never a
+  traceback.
 - Searches use MPD's case-insensitive `search`; an exact tag match is tried
   first and falls back to `search any` (file paths included).
 - Volume is clamped to 0-100; `mute` remembers the previous level and
