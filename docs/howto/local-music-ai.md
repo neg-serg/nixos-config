@@ -105,11 +105,14 @@ Notes:
   path+mtime+size+embed signature, so a re-run after new albums only embeds those.
 
 - Decoding goes through soundfile, and through **ffmpeg** for containers libsndfile cannot read
-  (m4a/aac/wma). That gap was real: 1062 tracks of a 37k library were silently missing from the
-  first index. `music-index --audit` now lists exactly which scanned files are absent, and the
-  incremental recipe to fill them is the plain one — run the indexer with the settings the index was
-  built with (`music-index --layer -1`), which migrates the matching cache and embeds only the
-  pending files (~50 min for those 1062 on CPU).
+  (m4a/aac/wma). That gap was real: the first index of this library came up 1005 tracks short and
+  `music-index --audit` now names them, grouped by extension — .m4a 878, .mp3 113, .flac 13, .wav 1.
+  So the container was the main cause, not the only one: the long pass also skipped files that
+  decode fine today (transient errors, or albums that appeared after its scan), while 13 flac/wav
+  are genuinely corrupt (a truncated streaminfo reports a duration of 2e14 s). The fix is the
+  ordinary incremental run with the settings the index was built with (`music-index --layer -1`):
+  matching cache entries are migrated, only pending files are embedded (~50 min on CPU), and
+  whatever stays in the audit list afterwards is broken rather than merely unsupported.
 
 - Building with *different* settings than the index on disk re-embeds everything, so the tool says
   so before starting and prints the exact flags that would keep the existing index.
