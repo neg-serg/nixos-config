@@ -45,6 +45,28 @@
         };
       };
       speech.enable = mkBool "enable local speech stack (Chatterbox TTS :8300, Piper TTS :8001, whisper.cpp STT :8002)" false;
+      # Music tagging and embeddings on the local music-AI venv:
+      # music-embed (MERT embeddings), music-tags (CLAP zero-shot tags),
+      # music-index / music-similar (similarity search over the library).
+      # Installing them starts nothing; models are fetched on first use into
+      # hfHome, and the wrappers run on a nix interpreter (GC-rooted) with the
+      # venv's site-packages on PYTHONPATH.
+      musicTagging = {
+        enable = mkBool "enable music tagging/embedding wrappers (music-embed, music-tags, music-index)" true;
+        embedModel = lib.mkOption {
+          type = lib.types.str;
+          default = "m-a-p/MERT-v1-95M";
+          description = ''
+            HuggingFace music embedding model. MERT-v1-95M is fast on CPU;
+            m-a-p/MERT-v2-30s is stronger (632M) but heavier.
+          '';
+        };
+        hfHome = lib.mkOption {
+          type = lib.types.str;
+          default = "/zero/ai/music-ai/hf";
+          description = "HuggingFace cache directory for the tagging/embedding models.";
+        };
+      };
       # MPD voice client (mpd-voice): one utterance -> local speech recognition
       # -> MPD command -> spoken confirmation. Installing it starts nothing and
       # touches no microphone: the CLI is inert until it is run (or bound to a

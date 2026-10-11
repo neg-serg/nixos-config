@@ -4,18 +4,28 @@
 #   audio-analysis keybeat  input.wav        → key, tempo, beats
 #   audio-analysis tag      input.wav "txt1" "txt2"...  → CLAP zero-shot similarities
 #   audio-analysis master   input.wav ref.wav out.wav   → reference-based mastering
+#
+# The interpreter is a nix python (GC-rooted) and the packages come from the
+# venv over PYTHONPATH: the venv's own bin/python symlink dies whenever the
+# store path it points at is collected, which took this tool down once.
 set -eu
 
 BASE="@MUSIC_AI_BASE@"
-TORCHLIB="$BASE/venv-analysis/lib/python3.12/site-packages/torch/lib"
-export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:$TORCHLIB:${LD_LIBRARY_PATH:-}"
+LIB="@MUSIC_AI_LIB@"
+PY="${MUSIC_AI_PY:-@MUSIC_AI_PY@}"
+[ -x "$PY" ] || PY="$HOME/.local/bin/python3.12"
+SP="$BASE/venv-analysis/lib/python3.12/site-packages"
+
+export PYTHONPATH="$SP${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:$SP/torch/lib:${LD_LIBRARY_PATH:-}"
+export HF_HOME="${MUSIC_AI_HF_HOME:-@MUSIC_AI_HF_HOME@}"
 
 CMD="${1:?usage: audio-analysis keybeat|tag|master ...}"
 shift
 case "$CMD" in
   keybeat)
     SRC="${1:?}"
-    "$BASE/venv-analysis/bin/python" -c "
+    "$PY" -c "
 import essentia.standard as es, statistics
 audio = es.MonoLoader(filename='$SRC')()
 key = es.KeyExtractor()(audio)
@@ -31,21 +41,15 @@ print(f'key: {key[0]} {key[1]} (conf {key[2]:.2f}) | ~{bpm} BPM | {len(beats)} b
   tag)
     SRC="${1:?}"; shift
     [ $# -ge 1 ] || { echo "usage: audio-analysis tag input.wav 'label'..."; exit 1; }
-    "$BASE/venv-analysis/bin/python" -c "
-import sys, json
-from laion_clap import CLAP_Module
-texts = sys.argv[2:]
-model = CLAP_Module(enable_fusion=False)
-model.load_ckpt()
-te = model.get_text_embedding(texts)
-ae = model.get_audio_embedding_from_filelist([sys.argv[1]]*len(texts))
-sims = (ae @ te.T)[0]
-for t, s in zip(texts, sims): print(f'  {s:.3f}  {t}')
-" "$SRC" "$@"
+    # CLAP via the shared music-tags payload (transformers, model from
+    # $MUSIC_AI_HF_HOME): the laion_clap package wanted a Zenodo checkpoint
+    # that is not on disk, and the venv has transformers anyway.
+    LABELS=$(IFS=,; echo "$*")
+    exec "$PY" "$LIB/music_tags.py" "$SRC" --labels "$LABELS" --top "$#"
     ;;
   master)
     SRC="${1:?}"; REF="${2:?}"; OUT="${3:?}"
-    "$BASE/venv-analysis/bin/python" -c "
+    "$PY" -c "
 import sys, matchering as mg
 mg.process(target=sys.argv[1], reference=sys.argv[2], results=[mg.pcm16(sys.argv[3])])
 print('mastered:', sys.argv[3])
