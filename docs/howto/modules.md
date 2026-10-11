@@ -1536,6 +1536,61 @@ push-to-talk wants).
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.musicTagging.enable
+
+Whether to enable enable music tagging/embedding wrappers (music-embed, music-tags, music-index).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.musicTagging.embedModel
+
+HuggingFace music embedding model. MERT-v1-95M is fast on CPU; m-a-p/MERT-v2-30s is stronger (632M)
+but heavier.
+
+*Type:* string
+
+*Default:*
+
+```nix
+"m-a-p/MERT-v1-95M"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.musicTagging.hfHome
+
+HuggingFace cache directory for the tagging/embedding models.
+
+*Type:* string
+
+*Default:*
+
+```nix
+"/zero/ai/music-ai/hf"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.solaMpd.enable
 
 Whether to enable enable Sola MPD (browser MPD client: backend + web UI).

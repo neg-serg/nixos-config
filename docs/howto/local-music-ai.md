@@ -27,6 +27,70 @@ by hand. Never copy a literal `/nix/store/...` path: it goes stale on the next n
 `nix-collect-garbage -d` removes it (2026-09-15: the old `gcc-15.2.0-lib` prefix had no gc root
 left).
 
+## Tagging and embeddings (MERT + CLAP)
+
+Four wrappers in `packages/local-bin/bin/` share the payloads in `packages/local-bin/lib/` and the
+`venv-analysis` packages. They run on a nix python (GC-rooted) with the venv on `PYTHONPATH`, so a
+`nix-collect-garbage` run cannot break them the way it broke the venvs' own `bin/python` symlinks.
+
+| Command                   | What it does                                                         | Model                                                     |
+| ------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| `music-embed FILE...`     | embeddings, one JSON per file or `--out FILE.npy`                    | `m-a-p/MERT-v1-95M` (env `MUSIC_EMBED_MODEL`, `--model`)  |
+| `music-tags FILE`         | zero-shot genre/mood/instrument tags                                 | `laion/clap-htsat-unfused` (apache-2.0), `--labels a,b,c` |
+| `music-index [MUSIC_DIR]` | builds the similarity index (embeddings + `vectors.npy`)             | embed model from the flag (`--model` to override)         |
+| `music-similar [FILE]`    | top-k neighbours; without FILE it asks playerctl for the current one | the model recorded in the index `meta.json`               |
+
+```console
+$ music-tags ~/music/AFX-*/A01\ -\ AFX\ -\ Children\ Talking.flac --top 5
+ 0.863  breakbeat
+ 0.059  hip hop
+$ music-embed --out /tmp/afx.npy ~/music/AFX-*/A01*.flac
+$ music-index ~/music --out ~/.cache/music-index      # hours for the full library, resumable
+$ music-similar --index ~/.cache/music-index -k 5     # current track via playerctl
+```
+
+Notes:
+
+- MERT-v1-95M on CPU: ~1 s per 10 s window, so the index builds at roughly 3 windows per track
+  (`--windows`, `--window-seconds`). `m-a-p/MERT-v2-30s` is stronger (Jamendo genre ROC 88.0 vs 86.1
+  on the model card) but 632M — pass `--model` or set
+  `features.media.audio.musicTagging.embedModel`.
+- CLAP scores are a softmax over the labels you pass: comparable inside one run, not across runs
+  with different label sets. Add your own vocabulary with
+  `--labels "neofolk,martial industrial,drone"`.
+- Models land in `features.media.audio.musicTagging.hfHome` (default `/zero/ai/music-ai/hf`, created
+  by tmpfiles) on first use.
+- The index is plain numpy (`vectors.npy` + `tracks.jsonl` + `cache/`): for a few thousand tracks a
+  brute-force cosine pass costs milliseconds, so there is no Annoy dependency. Files are cached by
+  path+mtime+size+model, so a re-run after new albums only embeds those.
+- Corpus status (verified 2026-10-10 with the built wrapper text): a query excerpt of a track ranked
+  its own album's indexed track first in 4 of 5 probes (scores 0.90–0.95); the miss was an
+  ambient/atmospheric pair.
+- Same wrappers, same idea for the older tool: `audio-analysis tag` now runs the CLAP payload from
+  `lib/music_tags.py` instead of the `laion_clap` package, whose Zenodo checkpoint is not on disk
+  any more.
+
+## Repairing the venvs (nix-collect-garbage)
+
+Every venv was created with a nix python and its `bin/python` is a symlink to that store path. Those
+paths have no GC root, so `nix-collect-garbage -d` deletes them and the venvs die with
+`No such file or directory` — on 2026-10-10 16 of 20 were down (packages and weights were all still
+there; only the interpreter link was gone).
+
+```console
+$ just fix-music-venvs --check     # read-only report, non-zero when broken
+$ just fix-music-venvs             # re-point every venv (idempotent)
+$ just fix-music-venvs --dry-run   # show the planned actions
+```
+
+The script re-points `bin/python` (plus `python3`/`python3.X`) at the uv-managed interpreter of the
+same version in `~/.local/share/uv/python` (it lives in `$HOME`, so nix GC cannot touch it), falls
+back to the system profile, and rewrites the `home =` line of `pyvenv.cfg` so the stdlib is found.
+Venvs whose interpreter is still healthy are reported `ok` and left alone.
+
+Nothing under `/zero` is downloaded or reinstalled by it; if a version has no interpreter on the
+machine it is reported and skipped rather than guessed.
+
 ## RAVE (neural autoencoder)
 
 - Models: `/zero/ai/music/rave/*.ts` — guitar (16-latent, 48k), VCTK (voice v1), isis +

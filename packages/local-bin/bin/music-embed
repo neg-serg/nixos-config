@@ -1,0 +1,22 @@
+#!/bin/sh
+# music-embed: music embeddings for audio files (MERT by default).
+#
+#   music-embed [--model ID] [--layer N] [--windows N] [--out F.npy] FILE...
+#
+# Runs the payload from packages/local-bin/lib/music_embed.py inside the
+# music-AI venv: the interpreter comes from nix (GC-rooted), the packages from
+# the venv's site-packages via PYTHONPATH, so a nix-collect-garbage run that
+# removes the venv's own bin/python does not break this tool.
+set -eu
+
+BASE="@MUSIC_AI_BASE@"
+LIB="@MUSIC_AI_LIB@"
+PY="${MUSIC_AI_PY:-@MUSIC_AI_PY@}"
+[ -x "$PY" ] || PY="$HOME/.local/bin/python3.12"
+SP="$BASE/venv-analysis/lib/python3.12/site-packages"
+
+export PYTHONPATH="$SP${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:$SP/torch/lib:${LD_LIBRARY_PATH:-}"
+export HF_HOME="${MUSIC_AI_HF_HOME:-@MUSIC_AI_HF_HOME@}"
+
+exec "$PY" "$LIB/music_embed.py" "$@"
