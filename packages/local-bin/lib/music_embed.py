@@ -35,6 +35,10 @@ DEFAULT_WINDOWS = 3
 # each with one more rank-1 hit.  -2 scales with the model depth, so it lands on
 # the second block from the top for 24-layer checkpoints as well.
 DEFAULT_LAYER = -2
+# "auto" takes CUDA/ROCm as soon as torch sees a device; MUSIC_EMBED_DEVICE
+# pins one globally — "cuda" once the ROCm wheel is in the venv
+# (scripts/dev/music-ai-rocm.sh), or "cpu" to keep the GPU for something else.
+DEFAULT_DEVICE = os.environ.get("MUSIC_EMBED_DEVICE", "auto")
 
 
 def pick_device(requested: str = "auto") -> str:
@@ -229,7 +233,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default=DEFAULT_LAYER,
         help="hidden layer to pool (negative indexes from the top; -2 measured best)",
     )
-    parser.add_argument("--device", default="auto", help="auto|cpu|cuda")
+    parser.add_argument(
+        "--device", default=DEFAULT_DEVICE, help="auto|cpu|cuda"
+    )
     parser.add_argument(
         "--window-seconds", type=float, default=DEFAULT_WINDOW_SECONDS
     )

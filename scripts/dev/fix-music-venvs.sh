@@ -33,16 +33,34 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --root) ROOT="${2:?--root needs a directory}"; shift 2 ;;
-    --check) MODE="check"; shift ;;
-    --dry-run) DRY_RUN=1; shift ;;
-    -h|--help) usage 0 ;;
-    -*) echo "unknown option: $1" >&2; usage 2 ;;
-    *) SELECTED+=("$1"); shift ;;
+    --root)
+      ROOT="${2:?--root needs a directory}"
+      shift 2
+      ;;
+    --check)
+      MODE="check"
+      shift
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -h | --help) usage 0 ;;
+    -*)
+      echo "unknown option: $1" >&2
+      usage 2
+      ;;
+    *)
+      SELECTED+=("$1")
+      shift
+      ;;
   esac
 done
 
-[[ -d "$ROOT" ]] || { echo "no such directory: $ROOT" >&2; exit 2; }
+[[ -d "$ROOT" ]] || {
+  echo "no such directory: $ROOT" >&2
+  exit 2
+}
 
 # "3.12.14" -> "3.12"; a bare "3.11" stays as is.
 short_version() {
@@ -63,7 +81,7 @@ find_interpreter() {
   for pattern in "cpython-$version*" "cpython-$short*"; do
     # `find -name` takes the pattern quoted, so shellcheck stays happy and no
     # glob has to survive quoting; `|| true` keeps a miss from tripping -e.
-    candidate=$(find "$HOME/.local/share/uv/python" -maxdepth 1 -type d -name "$pattern" 2>/dev/null | sort | tail -1 || true)
+    candidate=$(find "$HOME/.local/share/uv/python" -maxdepth 1 -type d -name "$pattern" 2> /dev/null | sort | tail -1 || true)
     if [[ -n "$candidate" && -x "$candidate/bin/python$short" ]]; then
       printf '%s\n' "$candidate/bin/python$short"
       return 0
@@ -78,10 +96,10 @@ find_interpreter() {
 
 venv_version() {
   local venv="$1" version
-  version=$(sed -n 's/^version_info *= *\([0-9.]*\).*/\1/p' "$venv/pyvenv.cfg" 2>/dev/null | head -1)
+  version=$(sed -n 's/^version_info *= *\([0-9.]*\).*/\1/p' "$venv/pyvenv.cfg" 2> /dev/null | head -1)
   if [[ -z "$version" ]]; then
     # Older venvs only record the interpreter path; fall back to its basename.
-    version=$(sed -n 's#^home *= *.*python\([0-9]\+\.[0-9]\+\).*#\1#p' "$venv/pyvenv.cfg" 2>/dev/null | head -1)
+    version=$(sed -n 's#^home *= *.*python\([0-9]\+\.[0-9]\+\).*#\1#p' "$venv/pyvenv.cfg" 2> /dev/null | head -1)
   fi
   printf '%s\n' "$version"
 }
@@ -107,7 +125,7 @@ for venv in "${venvs[@]}"; do
   fi
   # A venv whose interpreter still resolves needs nothing, whatever its
   # pyvenv.cfg says — several working venvs predate the version_info field.
-  current=$(readlink -f "$venv/bin/python" 2>/dev/null || true)
+  current=$(readlink -f "$venv/bin/python" 2> /dev/null || true)
   if [[ -n "$current" && -x "$current" ]]; then
     printf '%-16s ok\n' "$name"
     continue
@@ -116,7 +134,7 @@ for venv in "${venvs[@]}"; do
   if [[ -z "$version" ]]; then
     # Last resort: the dangling link still carries the version in its name.
     # `|| true`: grep finds nothing on a missing link and pipefail would abort.
-    version=$(readlink "$venv/bin/python" 2>/dev/null | grep -o 'python3\.[0-9]*' | head -1 | sed 's/^python//' || true)
+    version=$(readlink "$venv/bin/python" 2> /dev/null | grep -o 'python3\.[0-9]*' | head -1 | sed 's/^python//' || true)
   fi
   if [[ -z "$version" ]]; then
     printf '%-16s SKIP  no version in pyvenv.cfg, cannot tell which python it wants\n' "$name"

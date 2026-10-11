@@ -146,6 +146,12 @@ AUDIO_EXTS = {".mp3", ".flac", ".wav", ".ogg", ".opus", ".m4a", ".aac", ".wma"}
 # plain prompt picked the wrong label.  A comma separated list averages
 # several templates (available, but not sharper in that probe).
 DEFAULT_TEMPLATE = "a {label} track"
+# "auto" takes the GPU as soon as torch sees one (ROCm wheel from
+# scripts/dev/music-ai-rocm.sh); MUSIC_EMBED_DEVICE is the shared knob for the
+# whole music-AI stack, MUSIC_TAGS_DEVICE overrides it for this tool.
+DEFAULT_DEVICE = os.environ.get("MUSIC_TAGS_DEVICE") or os.environ.get(
+    "MUSIC_EMBED_DEVICE", "auto"
+)
 
 
 def load_audio(path: str, rate: int, seconds: float = 30.0):
@@ -408,7 +414,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="tag the track MPRIS reports as playing (playerctl)",
     )
-    parser.add_argument("--device", default="auto", help="auto|cpu|cuda")
+    parser.add_argument(
+        "--device", default=DEFAULT_DEVICE, help="auto|cpu|cuda"
+    )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
     if not args.audio and not args.dir and not args.now:
