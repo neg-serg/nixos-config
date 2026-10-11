@@ -328,12 +328,35 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--rebuild", action="store_true", help="ignore already tagged files"
     )
     parser.add_argument("--json", action="store_true", help="machine output")
+    parser.add_argument(
+        "--now",
+        action="store_true",
+        help="tag the track MPRIS reports as playing (playerctl)",
+    )
     parser.add_argument("--device", default="auto", help="auto|cpu|cuda")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
-    if not args.audio and not args.dir:
-        parser.error("need AUDIO or --dir")
+    if not args.audio and not args.dir and not args.now:
+        parser.error("need AUDIO, --dir or --now")
     return args
+
+
+def current_track_path() -> str | None:
+    """Path of the track MPRIS reports as playing."""
+    import subprocess
+    from urllib.parse import unquote, urlparse
+
+    try:
+        url = subprocess.check_output(
+            ["playerctl", "metadata", "xesam:url"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    if not url.startswith("file://"):
+        return None
+    return unquote(urlparse(url).path)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -342,7 +365,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.dir:
         return run_batch(tagger, args)
     labels = labels_for(args)
-    path = Path(args.audio).expanduser()
+    raw = args.audio or (current_track_path() if args.now else None)
+    if not raw:
+        print(
+            "[music-tags] no audio argument and no playerctl track",
+            file=sys.stderr,
+        )
+        return 2
+    path = Path(raw).expanduser()
     if not path.exists():
         print(f"[music-tags] file not found: {path}", file=sys.stderr)
         return 2

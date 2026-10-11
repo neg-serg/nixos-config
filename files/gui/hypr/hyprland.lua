@@ -573,6 +573,10 @@ hl.define_submap("music", "reset", function()
   hl.bind("u", hl.dsp.exec_cmd("mpc update"))
   hl.bind(SH .. "+u", hl.dsp.exec_cmd("mpc rescan"))
   hl.bind("e", hl.dsp.exec_cmd('raise --match "class:regex=^(euphonica|io\\.github\\.htkhiem\\.Euphonica)$" --launch "euphonica"'))
+  -- q: queue neighbours of the playing track from the MERT index
+  -- (music-index/music-similar, see docs/howto/local-music-ai.md); the same
+  -- action is available by voice ("similar tracks" in mpd-voice).
+  hl.bind("q", hl.dsp.exec_cmd("music-similar --queue -k 5"))
 end)
 
 -- =====================================================================
