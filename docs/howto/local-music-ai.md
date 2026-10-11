@@ -148,6 +148,44 @@ Notes:
   `lib/music_tags.py` instead of the `laion_clap` package, whose Zenodo checkpoint is not on disk
   any more.
 
+## Trained tags (MTG / Essentia)
+
+CLAP labels are zero-shot — free text matched against an embedding, sensitive to phrasing. The MTG
+heads are *trained* on fixed taxonomies: EffNet-Discogs embeddings followed by `genre_discogs400`
+(400 Discogs styles), `mtg_jamendo_moodtheme`, `mtg_jamendo_instrument` and, with `--set all`,
+`danceability` and `voice_instrumental`.
+
+```console
+$ just music-mtg-setup              # venv-mtg (essentia-tensorflow) + sha256-pinned models
+$ music-mtg-tags --check            # models present?
+$ music-mtg-tags --top 5 TRACK.flac
+$ music-mtg-tags --set all --dir ~/music --json > ~/tags-mtg.jsonl
+```
+
+Measured on the same four known tracks (30 s, mean over 29 EffNet frames):
+
+| Clip   | MTG Discogs-400 top labels                          | CLAP for comparison                        |
+| ------ | --------------------------------------------------- | ------------------------------------------ |
+| Evoken | Doom Metal .11, Ambient .09, Funeral Doom Metal .08 | funeral doom .95 (plain) / .75 (templated) |
+| AFX    | Jungle .20, Drum n Bass .19, Breakcore .19, IDM .18 | breakbeat .86–.98                          |
+| Cryo   | Dark Ambient .39, Ambient .26, Industrial .21       | drone/ambient (coarser label)              |
+| Rome   | Experimental .32, Ambient .12, Neofolk .09          | neofolk .76–.81 (more confident here)      |
+
+Magnitudes are not comparable between the two (400-class sigmoid vs softmax over the labels you
+pass). Trust call: **genre → MTG** (canonical Discogs names, prompt-insensitive), mood/instrument →
+MTG's trained Jamendo heads, free-form text ("sounds like a rainy city") → CLAP. The `danceability`
+head called dark ambient "danceable .72" — do not trust it outside club music.
+
+Cost: ~0.36 s per 30 s clip on CPU (0.33 s EffNet + 0.03 s for all heads), 660 MB RSS, one-time
+graph load ~0.4 s; long inputs scale with the ~1 s frame hop (5 min → 0.94 s). CPU-only: the TF
+runtime wants libcudart/libcuda, so no GPU is involved.
+
+Layout and provenance: the tagger needs `essentia-tensorflow` (the shared venv-analysis has a plain
+essentia without the `TensorflowPredict*` classes), so `just music-mtg-setup` fills a separate
+`features.media.audio.musicTagging.mtgVenv`; models go to `...mtgModels` (both created by tmpfiles,
+~25 MB). `essentia.upf.edu` is unreachable from this network, so `scripts/dev/music-mtg-models.sh`
+downloads the files from sha256-pinned GitHub mirrors and archive.org with cross-checked hashes.
+
 ## GPU (ROCm) for the embedding models
 
 The music-AI venv carries a CUDA torch build (`2.14.0+cu130`), which never sees the AMD GPU, so MERT

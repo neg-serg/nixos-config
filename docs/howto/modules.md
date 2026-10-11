@@ -1647,6 +1647,41 @@ HuggingFace cache directory for the tagging/embedding models.
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.musicTagging.mtgModels
+
+EffNet-Discogs backbone and head models for music-mtg-tags, fetched by
+scripts/dev/music-mtg-models.sh (~25 MB, sha256-pinned mirrors).
+
+*Type:* string
+
+*Default:*
+
+```nix
+"/zero/ai/music-ai/mtg-models"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+## features.media.audio.musicTagging.mtgVenv
+
+venv with essentia-tensorflow for the trained MTG tagger (music-mtg-tags: Discogs-400 styles,
+Jamendo mood/theme and instrument heads). Filled by scripts/dev/music-mtg-setup.sh; the shared
+venv-analysis keeps its plain essentia build untouched.
+
+*Type:* string
+
+*Default:*
+
+```nix
+"/zero/ai/music-ai/venv-mtg"
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.solaMpd.enable
 
 Whether to enable enable Sola MPD (browser MPD client: backend + web UI).

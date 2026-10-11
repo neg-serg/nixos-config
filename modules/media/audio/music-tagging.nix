@@ -47,10 +47,12 @@ in
         pkgs.python312 # music-AI venv interpreter (torch/transformers live in the venv)
       ];
 
-      # Model cache for CLAP/MERT: created at activation so the first run does
-      # not have to (and so it is not owned by root when it happens).
+      # Model cache for CLAP/MERT and the MTG tagger's EffNet/head models:
+      # created at activation so the first run does not have to (and so they
+      # are not owned by root when it happens).
       systemd.tmpfiles.rules = [
         "d ${cfg.hfHome} 0775 ${user} ${user} -"
+        "d ${cfg.mtgModels} 0775 ${user} ${user} -"
       ];
     })
 

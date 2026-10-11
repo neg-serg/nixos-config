@@ -195,6 +195,12 @@ fix-music-venvs *ARGS:
 music-ai-rocm *ARGS:
     bash "{{repo_root}}/scripts/dev/music-ai-rocm.sh" {{ARGS}}
 
+# Create/fill the trained MTG tagger (venv-mtg with essentia-tensorflow) and
+# fetch its EffNet/head models; --check/--dry-run are read-only. Feeds
+# music-mtg-tags: Discogs-400 styles + Jamendo mood/theme/instrument.
+music-mtg-setup *ARGS:
+    bash "{{repo_root}}/scripts/dev/music-mtg-setup.sh" {{ARGS}}
+
 # Eval one trantor feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
