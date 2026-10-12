@@ -106,6 +106,11 @@ Notes:
   introduced: `music-index --layer -1 --adopt-legacy` keeps such a run's vectors instead of
   re-embedding the whole library; without the flag the same run re-embeds.
 
+- `just music-ai-status` (or `scripts/dev/music-ai-status.sh [--json] [--quiet]`) reports the state
+  of the whole stack in one screen — wrappers, index (count/layer/age/centering), tag file
+  (coverage, whether `audio_seconds` exists, sample paths), playlists, models, venv health, GPU and
+  the refresh timer — and ends with the items that need attention, so it doubles as a to-do list.
+
 - Models land in `features.media.audio.musicTagging.hfHome` (default `/zero/ai/music-ai/hf`, created
   by tmpfiles) on first use.
 
