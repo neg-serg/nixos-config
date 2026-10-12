@@ -102,6 +102,21 @@
             default = 0;
             description = "Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.";
           };
+          extraArgs = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            example = [
+              "--layer"
+              "-1"
+            ];
+            description = ''
+              Extra music-index arguments, appended to --quiet --threads 4.
+              Pin the settings of the existing index here (for example
+              --layer -1) so the timer never starts a full re-embed: the tool
+              logs a warning and rebuilds everything when the settings differ
+              from the index on disk.
+            '';
+          };
         };
       };
       # MPD voice client (mpd-voice): one utterance -> local speech recognition
