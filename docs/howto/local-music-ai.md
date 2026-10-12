@@ -134,10 +134,13 @@ Notes:
   raw cosines for comparison. Treat the absolute numbers as a proxy: the point of the queue-similar
   feature is "the same neighbourhood", not "the same album".
 
-- Keeping the index fresh: `features.media.audio.musicTagging.autoIndex` (default **off**) adds a
-  user timer (`music-index.service` / `music-index.timer`, `OnCalendar = "Sun 04:00"`, `Persistent`,
+- Keeping the index fresh: `features.media.audio.musicTagging.autoIndex` adds a user timer
+  (`music-index.service` / `music-index.timer`, `OnCalendar = "Sun 04:00"`, `Persistent`,
   `Nice = 10`, idle IO, `--quiet --threads 4`) that runs the incremental pass while the machine
-  idles. Warm runs take minutes because the per-file cache decides what to embed.
+  idles; warm runs take minutes because the per-file cache decides what to embed. It is **on for
+  trantor** with `extraArgs = [ "--layer" "-1" ]`: the index there was built with that layer, and
+  without the pin the default (layer -2 for MERT-v1) would make the timer re-embed the whole
+  library. Set `extraArgs` to match whatever index the host actually has.
 
 - The voice client queues neighbours of the playing track: `mpd-voice say "similar tracks"` (the
   Russian phrases are listed by `mpd-voice phrases`) runs `music-similar --json` on the current song
