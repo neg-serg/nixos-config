@@ -54,3 +54,6 @@ viz/
 
 # uv lockfile from ad-hoc `uv run` in the repo root — resolve deps on the fly
 uv.lock
+
+# GPU core dumps (ROCm aborts write ~1.6 GiB files into the CWD)
+gpucore.*

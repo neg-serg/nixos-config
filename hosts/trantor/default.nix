@@ -176,6 +176,13 @@ in
     extraArgs = [
       "--layer"
       "-1"
+      # MERT inference on the ROCm wheel aborted with "Memory access fault by
+      # GPU node-1 ... Page not present" (kernel 7.2.7, torch 2.13.0+rocm7.1,
+      # 2026-10-12) and left a 1.6 GiB core dump; the weekly run stays on CPU
+      # until that is understood. `music-embed --device cuda TRACK.flac` is the
+      # one-file way to retest.
+      "--device"
+      "cpu"
     ];
   };
   hardware.gpu.corectrl.enable = true;
