@@ -1,0 +1,35 @@
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -269,28 +269,13 @@
+ 
+ 	applyEnv(cfg)
+ 
+-	// fallback for empty keybindings
+-	if cfg.Keybindings.ToggleMode == "" {
+-		cfg.Keybindings.ToggleMode = "ctrl+r"
+-	}
+-	if cfg.Keybindings.ToggleMenu == "" {
+-		cfg.Keybindings.ToggleMenu = "shift+tab"
+-	}
+-	if cfg.Keybindings.SelectSuggestion == "" {
+-		cfg.Keybindings.SelectSuggestion = "tab"
+-	}
++	// [trantor] Keybindings are not defaulted here when empty: DefaultConfig()
++	// already supplies every key the file omits, so an explicit `""` means
++	// "disabled". Upstream re-filled an empty ToggleMode with ctrl+r, which
++	// made `toggle-mode = ""` silently capture Ctrl+R from the shell.
+ 	if cfg.Core.NavigateClosed == "" {
+ 		cfg.Core.NavigateClosed = "history"
+ 	}
+-	if cfg.Keybindings.NavigateUp == "" {
+-		cfg.Keybindings.NavigateUp = "up"
+-	}
+-	if cfg.Keybindings.NavigateDown == "" {
+-		cfg.Keybindings.NavigateDown = "down"
+-	}
+-	if cfg.Keybindings.NavigateRight == "" {
+-		cfg.Keybindings.NavigateRight = "right"
+-	}
+ 
+ 	if err := validate(cfg); err != nil {
+ 		return cfg, fmt.Errorf("config: invalid value: %w", err)
