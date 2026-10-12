@@ -249,6 +249,12 @@ def read_window(path: str, rate: int, start_seconds: float, seconds: float):
             )
     except (RuntimeError, sf.LibsndfileError):
         return _ffmpeg_pcm(path, rate, start_seconds, seconds)
+    if samples.size == 0 and start_seconds > 0:
+        # A truncated file still reports its nominal length in the header, but
+        # the audio past the cut is garbage: the tail window decodes to nothing
+        # and MERT then dies in conv1d ("padded input size 0"), which cost 61
+        # mp3 files their index entry.  Retry from the start instead.
+        return read_window(path, rate, 0.0, seconds)
     return _resample(samples.mean(axis=1), native, rate)
 
 
@@ -323,8 +329,13 @@ def embed_file(
     chunks = [
         read_window(path, rate, start, args.window_seconds) for start in starts
     ]
+    usable = [c for c in chunks if len(c) >= rate // 10]
+    if not usable:
+        raise RuntimeError(
+            f"no decodable audio in {path} (corrupt or empty file?)"
+        )
     return embed_windows(
-        model, processor, chunks, rate, layer, recorder=recorder
+        model, processor, usable, rate, layer, recorder=recorder
     )
 
 
