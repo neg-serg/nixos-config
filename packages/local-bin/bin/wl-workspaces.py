@@ -628,12 +628,28 @@ def selftest() -> int:
         )
         state = load_state(env.state)
         check("state: seed persisted", isinstance(state.get("seed"), int))
+        # The first assigner used default_seed(), which is today's date
+        # (YYYYMMDD): whether a different seed re-picked the same image was a
+        # 1-in-6 coin flip that changed with the calendar, so the gate failed
+        # for a whole day at a time.  Pin the starting seed and check the sheet
+        # semantics (assignments dropped, seed recorded) plus that the sheet
+        # really moved across the six workspaces rather than one pair.
+        state["seed"] = 4242
+        save_state(env.state, state)
+        pinned = {
+            ws: make_assigner(env, cfg).image_for(ws, name)
+            for ws, name in ws_list
+        }
         state["seed"] = 777
         save_state(env.state, state)
         other = make_assigner(env, cfg)
+        wiped = not other.state.get("assignments")
+        moved = {ws: other.image_for(ws, name) for ws, name in ws_list}
         check(
             "mapping: a new seed starts a new sheet",
-            other.image_for(1, "𐌰:term") != picks[1],
+            other.state.get("assignments_seed") == 777
+            and wiped
+            and any(moved[ws] != pinned[ws] for ws, _ in ws_list),
         )
         state["seed"] = 4242
         save_state(env.state, state)
