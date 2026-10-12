@@ -22,15 +22,17 @@ MUSIC_AI_SELF=$0 . "$(dirname "$0")/_music_ai_env.sh"
 
 MTG_VENV="${MUSIC_MTG_VENV:-@MUSIC_MTG_VENV@}"
 MTG_SP="$MTG_VENV/lib/python3.12/site-packages"
-if [ ! -d "$MTG_SP" ]; then
+if [ -d "$MTG_SP" ]; then
+  # Replace (not extend) the preamble's PYTHONPATH: venv-analysis ships a
+  # plain essentia, and it shadows the TF build when it comes first.
+  PYTHONPATH="$MTG_SP:$LIB"
+else
+  # --check, --stats and --playlists read files and never import essentia, so
+  # a missing venv must not stop them; tagging itself will say what is wrong.
   echo "music-mtg-tags: no essentia-tensorflow venv at $MTG_VENV" >&2
-  echo "music-mtg-tags: run scripts/dev/music-mtg-setup.sh" >&2
-  exit 2
+  echo "music-mtg-tags: tagging needs it — run scripts/dev/music-mtg-setup.sh" >&2
+  PYTHONPATH="$LIB"
 fi
-
-# Replace (not extend) the preamble's PYTHONPATH: venv-analysis ships a plain
-# essentia, and it shadows the TF build when it comes first.
-PYTHONPATH="$MTG_SP:$LIB"
 MUSIC_MTG_MODELS="${MUSIC_MTG_MODELS:-@MUSIC_MTG_MODELS@}"
 export PYTHONPATH MUSIC_MTG_MODELS
 
