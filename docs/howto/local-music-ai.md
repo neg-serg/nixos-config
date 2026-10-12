@@ -212,6 +212,13 @@ packs: a mood queue otherwise picked a two-second VCSL piano note, and each reco
 `music-mtg-tags --stats ~/.cache/music-mtg/tags.jsonl` prints that same distribution for a finished
 run (label counts per head plus mood coverage) and counts broken lines.
 
+Playlists come out of the same file:
+`music-mtg-tags --tags ~/.cache/music-mtg/tags.jsonl --playlists DIR --by mood --min-score 0.15 --per-list 120`
+writes one `.m3u` per label (`--by mood|style|parent|instrument`, `--filter metal` narrows the
+labels, paths are relative to `--music-dir`), which MPD loads as `mpc load dark` once the files sit
+in its playlist_directory. On the finished library that is 31 mood lists, 15 parent genres or 20
+metal styles, best scores first.
+
 Layout and provenance: the tagger needs `essentia-tensorflow` (the shared venv-analysis has a plain
 essentia without the `TensorflowPredict*` classes), so `just music-mtg-setup` fills a separate
 `features.media.audio.musicTagging.mtgVenv`; models go to `...mtgModels` (both created by tmpfiles,

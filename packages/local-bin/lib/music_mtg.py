@@ -429,9 +429,57 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         metavar="FILE.jsonl",
         help="summarize an existing tag file (label distribution, mood coverage)",
     )
+    parser.add_argument(
+        "--playlists",
+        metavar="DIR",
+        help=(
+            "write one .m3u per label from --tags (no models needed); "
+            "combine with --by/--min-score/--per-list/--filter"
+        ),
+    )
+    parser.add_argument(
+        "--tags",
+        default=os.environ.get(
+            "MUSIC_MTG_TAGS", "~/.cache/music-mtg/tags.jsonl"
+        ),
+        help="tag file for --playlists (default ~/.cache/music-mtg/tags.jsonl)",
+    )
+    parser.add_argument(
+        "--by",
+        default="mood",
+        choices=("mood", "style", "genre", "instrument", "parent"),
+        help="label group for --playlists (parent = Discogs parent genre)",
+    )
+    parser.add_argument(
+        "--min-score",
+        type=float,
+        default=0.10,
+        help="minimum score for --playlists (default 0.10)",
+    )
+    parser.add_argument(
+        "--per-list",
+        type=int,
+        default=150,
+        help="tracks per playlist, best scores first (0 = all)",
+    )
+    parser.add_argument(
+        "--filter",
+        help="only labels containing this substring (e.g. 'metal')",
+    )
+    parser.add_argument(
+        "--music-dir",
+        default=os.environ.get("MUSIC_DIR", "~/music"),
+        help="playlists store paths relative to this directory",
+    )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
-    if not args.paths and not args.dir and not args.check and not args.stats:
+    if (
+        not args.paths
+        and not args.dir
+        and not args.check
+        and not args.stats
+        and not args.playlists
+    ):
         parser.error("need FILE..., --dir DIR, --stats FILE or --check")
     return args
 
@@ -440,6 +488,89 @@ def head_keys(head_set: str) -> tuple[str, ...]:
     if head_set == "all":
         return tuple(HEADS)
     return CORE_HEADS
+
+
+def slugify(label: str) -> str:
+    """Filesystem-friendly name for a label (Rock---Funeral Doom Metal)."""
+    cleaned = "".join(
+        char.lower() if char.isalnum() else "-" for char in label
+    )
+    while "--" in cleaned:
+        cleaned = cleaned.replace("--", "-")
+    return cleaned.strip("-")
+
+
+def write_playlists(
+    tags_file: Path,
+    out_dir: Path,
+    music_dir: Path,
+    by: str = "mood",
+    min_score: float = 0.10,
+    per_list: int = 150,
+    label_filter: str | None = None,
+) -> int:
+    """Write one .m3u per label, tracks sorted by score (MPD playlist format).
+
+    Paths are relative to ``music_dir``, which is what MPD expects, so a
+    generated list loads with ``mpc load <name>`` once it sits in MPD's
+    playlist_directory.
+    """
+    if not tags_file.is_file():
+        print(f"[music-mtg] no tag file: {tags_file}", file=sys.stderr)
+        return 2
+    key = {"style": "genre", "genre": "genre", "parent": "genre"}.get(by, by)
+    if key not in HEADS:
+        print(f"[music-mtg] unknown --by {by!r}", file=sys.stderr)
+        return 2
+    collected: dict[str, list[tuple[float, str]]] = {}
+    tracks = 0
+    for line in tags_file.read_text(errors="replace").splitlines():
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        tags = record.get("tags")
+        path = record.get("path")
+        if not isinstance(tags, dict) or not isinstance(path, str):
+            continue
+        labels = tags.get(key) or []
+        if not labels or not isinstance(labels[0], dict):
+            continue
+        label = labels[0].get("label")
+        score = float(labels[0].get("score", 0.0))
+        if not isinstance(label, str) or score < min_score:
+            continue
+        if by == "parent":
+            label = label.split("---")[0]
+        if label_filter and label_filter.lower() not in label.lower():
+            continue
+        relative = os.path.relpath(Path(path), music_dir)
+        if relative.startswith(".."):
+            continue
+        tracks += 1
+        collected.setdefault(label, []).append((score, relative))
+    if not collected:
+        print(
+            f"[music-mtg] nothing above {min_score:g} for --by {by}",
+            file=sys.stderr,
+        )
+        return 1
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"{tracks} tracks, {len(collected)} labels -> {out_dir}")
+    for label, entries in sorted(
+        collected.items(), key=lambda item: -len(item[1])
+    ):
+        entries.sort(key=lambda item: -item[0])
+        chosen = entries[:per_list] if per_list else entries
+        target = out_dir / f"{slugify(label)}.m3u"
+        target.write_text(
+            "#EXTM3U\n" + "\n".join(path for _score, path in chosen) + "\n",
+            encoding="utf-8",
+        )
+        print(f"  {target.name:44} {len(chosen)} tracks")
+    return 0
 
 
 def print_stats(tags_file: Path, top: int = 8) -> int:
@@ -497,6 +628,16 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     models_dir = Path(args.models).expanduser()
     keys = head_keys(args.head_set)
+    if args.playlists:
+        return write_playlists(
+            Path(args.tags).expanduser(),
+            Path(args.playlists).expanduser(),
+            Path(args.music_dir).expanduser(),
+            by=args.by,
+            min_score=args.min_score,
+            per_list=args.per_list,
+            label_filter=args.filter,
+        )
     if args.stats:
         return print_stats(Path(args.stats).expanduser())
     if args.check:
