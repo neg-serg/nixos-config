@@ -163,6 +163,11 @@ Backends and their `auto` order:
   paths matching a `tags_exclude` glob, shuffle what is left, cap the result at `tags_limit` and
   append the MPD URIs to the queue. Broken JSONL lines are skipped (all-broken is reported with the
   line count) and paths outside `music_dir` are ignored.
+- `what's playing` (and `mpd-voice status`) appends the current track's mood labels from `tags_file`
+  when the file has that track, e.g.
+  `Antithesis of Light — Evoken (Antithesis of Light) [5:45] (dark, epic)`. Only labels at or above
+  `tags_min_score` are shown, three at most, the lookup is one streaming pass over the JSONL and the
+  answer is cached per path — a track without moods (or without a tag file) keeps the plain reply.
 - Search is MPD's case-insensitive `search`: an exact tag match first (`Album`, `Artist`, `Genre`,
   `Title`, `file`), then `search any`.
 - Volume is clamped to 0-100; `mute` remembers the level and `unmute` restores it. Outputs without a

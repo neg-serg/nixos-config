@@ -22,6 +22,7 @@ from .mpd import (
 
 RU = {
     "nothing": "Сейчас ничего не играет.",
+    "now_moods": "{what} ({moods})",
     "paused_state": "На паузе: {what}.",
     "stopped_state": "Воспроизведение остановлено.",
     "started": "Играю.",
@@ -74,6 +75,7 @@ RU = {
 
 EN = {
     "nothing": "Nothing is playing right now.",
+    "now_moods": "{what} ({moods})",
     "paused_state": "Paused: {what}.",
     "stopped_state": "Playback is stopped.",
     "started": "Playing.",
@@ -204,6 +206,9 @@ class Controller:
         self.client = client
         self.cfg = cfg
         self._volume_before_mute: int | None = None
+        # Mood labels per track path: the tag file is a few tens of MB, so a
+        # lookup is one streaming pass and the answer is remembered.
+        self._mood_cache: dict[str, list[str]] = {}
 
     # -- helpers -------------------------------------------------------
     def _t(self, key: str, lang: str = "ru", **kwargs: object) -> str:
@@ -281,7 +286,66 @@ class Controller:
             text = self._t("paused_state", lang, what=describe(song))
         else:
             text = describe(song)
+        moods = self.track_moods(str(song.get("file", "")))
+        if moods:
+            text = self._t(
+                "now_moods", lang, what=text, moods=", ".join(moods)
+            )
         return Reply(text=text)
+
+    def track_moods(self, file_uri: str, limit: int = 3) -> list[str]:
+        """Mood labels of one MPD track from the tag file (empty when unknown).
+
+        The file holds absolute paths while MPD reports paths relative to
+        music_directory, so both spellings are compared.  Records without the
+        moods (or a score below ``tags_min_score``) are ignored, and the answer
+        is cached per path: a repeat question costs nothing.
+        """
+        if not file_uri or not self.cfg.tags_file or not self.cfg.music_dir:
+            return []
+        music_dir = Path(self.cfg.music_dir).expanduser()
+        absolute = str(music_dir / file_uri)
+        cached = self._mood_cache.get(absolute)
+        if cached is not None:
+            return cached
+        tags_file = Path(self.cfg.tags_file).expanduser()
+        labels: list[str] = []
+        if tags_file.is_file():
+            wanted = {absolute, os.path.realpath(absolute)}
+            try:
+                with open(
+                    tags_file, encoding="utf-8", errors="replace"
+                ) as handle:
+                    for line in handle:
+                        if not line.strip():
+                            continue
+                        try:
+                            record = json.loads(line)
+                        except ValueError:
+                            continue
+                        path = str(record.get("path", ""))
+                        if not path or path not in wanted:
+                            continue
+                        moods = (record.get("tags") or {}).get("mood") or []
+                        for item in moods:
+                            if not isinstance(item, dict):
+                                continue
+                            try:
+                                score = float(item.get("score", 0.0))
+                            except (TypeError, ValueError):
+                                continue
+                            if score < self.cfg.tags_min_score:
+                                continue
+                            label = item.get("label")
+                            if isinstance(label, str) and label not in labels:
+                                labels.append(label)
+                            if len(labels) >= limit:
+                                break
+                        break
+            except OSError:
+                labels = []
+        self._mood_cache[absolute] = labels
+        return labels
 
     # -- playback ------------------------------------------------------
     def _do_play(self, intent: Intent) -> Reply:
