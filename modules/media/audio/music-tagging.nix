@@ -34,7 +34,8 @@ let
   # idle IO below deprioritize what is left.
   indexArgs =
     "--quiet --threads 4"
-    + lib.optionalString (autoIndex.limit > 0) " --limit ${toString autoIndex.limit}";
+    + lib.optionalString (autoIndex.limit > 0) " --limit ${toString autoIndex.limit}"
+    + lib.optionalString (autoIndex.extraArgs != [ ]) " ${lib.escapeShellArgs autoIndex.extraArgs}";
 in
 {
   config = lib.mkMerge [

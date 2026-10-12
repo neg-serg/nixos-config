@@ -1580,6 +1580,33 @@ true
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.musicTagging.autoIndex.extraArgs
+
+Extra music-index arguments, appended to --quiet --threads 4. Pin the settings of the existing index
+here (for example –layer -1) so the timer never starts a full re-embed: the tool logs a warning and
+rebuilds everything when the settings differ from the index on disk.
+
+*Type:* list of string
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Example:*
+
+```nix
+[
+  "--layer"
+  "-1"
+]
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.musicTagging.autoIndex.limit
 
 Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.
