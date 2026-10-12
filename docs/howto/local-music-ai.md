@@ -92,6 +92,15 @@ Notes:
   v2 embeds noticeably better for ~1.3× the time; `--threads 4` instead of the default 16 costs
   ~1.8× (2.05 vs 1.14 s per clip), so only use it to keep the machine responsive.
 
+- A larger probe (32 albums, the longest track of each, two 30 s excerpts, ranked against each
+  other) corrected the layer story: **with the corpus mean subtracted, layers -1 and -2 are
+  equivalent** — rank1 0.69 / margin +0.1173 for -1 and 0.69 / +0.1169 for -2 — while without
+  centering -1 scores 0.56 / -0.0036 and -2 scores 0.62 / +0.0065. The per-model default stays (-2
+  is not worse anywhere it was measured), but an index already built on -1 must **not** be rebuilt
+  for the layer: the ~11 h it would cost buys nothing, and the centering that actually moves
+  retrieval (rank1 0.56 → 0.69 on the same probe) is applied at query time and needs no rebuild at
+  all.
+
 - `music-index --adopt-legacy` trusts pre-signature cache entries as if they came from the current
   settings (it prints what it assumes). It exists for a build that started before the signature was
   introduced: `music-index --layer -1 --adopt-legacy` keeps such a run's vectors instead of
