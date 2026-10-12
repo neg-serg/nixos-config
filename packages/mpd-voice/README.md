@@ -85,12 +85,14 @@ music_dir = "~/music"  # must match MPD's music_directory
 # mood playlists: JSONL from the trained MTG tagger, one line per file
 tags_file = "~/.cache/music-mtg/tags.jsonl"
 tags_min_score = 0.10  # mood label score floor (measured scores: 0.1-0.4)
+tags_min_seconds = 45.0  # drop records whose audio_seconds is below this (0 = off)
+tags_exclude = "samples/*"  # comma-separated globs relative to music_dir ("" = none)
 tags_limit = 25        # max tracks queued per mood request (0 = no cap)
 ```
 
 Environment: `MPD_HOST`, `MPD_PORT`, `MPD_PASSWORD` (mpc-compatible) plus `MPD_VOICE_LANG`,
-`MPD_VOICE_STT`, `MPD_VOICE_TTS`, `MPD_VOICE_TAGS_FILE`. Command line flags win over both files and
-environment.
+`MPD_VOICE_STT`, `MPD_VOICE_TTS`, `MPD_VOICE_TAGS_FILE`, `MPD_VOICE_TAGS_EXCLUDE` (an empty value
+means no exclude patterns). Command line flags win over both files and environment.
 
 ## Behaviour notes
 
@@ -106,11 +108,15 @@ environment.
 - Mood phrases queue tracks by the Jamendo mood label that the trained MTG tagger (`music-mtg-tags`)
   stored in `tags_file`: `play dark music` (also sad, relaxing, calm, happy, epic, heavy, space,
   meditative, romantic, and the same with `add`). The client streams the JSONL once, keeps labels
-  scoring at or above `tags_min_score`, shuffles the matches, caps them at `tags_limit` and appends
-  the URIs. Generate the file first with
+  scoring at or above `tags_min_score`, drops records whose `audio_seconds` is below
+  `tags_min_seconds` (records without the field are kept: older tag files predate it) and paths
+  matching a `tags_exclude` glob (`samples/*` by default), shuffles the rest, caps them at
+  `tags_limit` and appends the URIs. Generate the file first with
   `music-mtg-tags --dir ~/music --out ~/.cache/music-mtg/tags.jsonl --json`; broken lines are
   skipped, paths outside `music_dir` are ignored, and a missing file or an empty match becomes a
-  spoken error with a hint.
+  spoken error with a hint. To get `audio_seconds` into an old cache, remove the JSONL and re-tag
+  from scratch with `--exclude 'samples/*' --min-seconds 20` (a plain re-run resumes by
+  mtime+size+settings and leaves the old lines untouched).
 - Searches use MPD's case-insensitive `search`; an exact tag match is tried first and falls back to
   `search any` (file paths included).
 - Volume is clamped to 0-100; `mute` remembers the previous level and `unmute` restores it.
