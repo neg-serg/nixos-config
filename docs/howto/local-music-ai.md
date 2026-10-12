@@ -140,7 +140,11 @@ Notes:
   idles; warm runs take minutes because the per-file cache decides what to embed. It is **on for
   trantor** with `extraArgs = [ "--layer" "-1" ]`: the index there was built with that layer, and
   without the pin the default (layer -2 for MERT-v1) would make the timer re-embed the whole
-  library. Set `extraArgs` to match whatever index the host actually has.
+  library. Set `extraArgs` to match whatever index the host actually has. With
+  `autoIndex.tagsAndPlaylists = true` (also on for trantor) the same run continues through
+  `scripts/dev/music-refresh.sh`: MTG tags for new albums, then the mood and parent-genre playlists,
+  so one Sunday pass keeps every derived artefact current. All three steps are incremental — an
+  unchanged library costs seconds.
 
 - The voice client queues neighbours of the playing track: `mpd-voice say "similar tracks"` (the
   Russian phrases are listed by `mpd-voice phrases`) runs `music-similar --json` on the current song

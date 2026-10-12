@@ -1639,6 +1639,28 @@ systemd calendar expression for the automatic music-index refresh.
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.musicTagging.autoIndex.tagsAndPlaylists
+
+Whether to enable also refresh MTG tags and the mood/genre playlists in the same run.
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.musicTagging.embedModel
 
 HuggingFace music embedding model. Measured on a same-track probe (10 albums): MERT-v1-95M rank1

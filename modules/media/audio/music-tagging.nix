@@ -32,6 +32,7 @@ let
   # speed for keeping most cores free for interactive work (2.05 vs 1.14 s per
   # clip against the 16-thread default, docs/howto/local-music-ai.md); Nice and
   # idle IO below deprioritize what is left.
+  refreshScript = config.lib.neg.path "scripts/dev/music-refresh.sh";
   indexArgs =
     "--quiet --threads 4"
     + lib.optionalString (autoIndex.limit > 0) " --limit ${toString autoIndex.limit}"
@@ -68,7 +69,13 @@ in
         ];
         description = "Refresh the MERT similarity index incrementally";
         serviceConfig = {
-          ExecStart = "%h/.local/bin/music-index ${indexArgs}";
+          ExecStart =
+            if autoIndex.tagsAndPlaylists then
+              # The chain refreshes index -> tags -> playlists; each step is
+              # incremental, so an unchanged library costs seconds.
+              "${pkgs.bash}/bin/bash ${refreshScript} --index-args '${indexArgs}'"
+            else
+              "%h/.local/bin/music-index ${indexArgs}";
           # A cold pass over the whole library is hours (12h covers the measured
           # ~6h at the default thread count, ~1.8x that with --threads 4); warm
           # runs finish in minutes. A timeout is not fatal: the per-file cache
