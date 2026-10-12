@@ -52,6 +52,9 @@ in
   # ZRAM: zstd compressor (Zen 5 has hw-accelerated zstd, better ratio than lzo-rle)
   # SCX BPF scheduler — V-Cache CCD aware, replaces isolcpus
   features.optimization.enable = true;
+  # Torvalds' experimental noref-filemap-read-with-llm kernel (v7.3-rc6 + the
+  # no-refcount page-cache read path) — see modules/system/kernel/localmodconfig.nix.
+  features.system.norefKernel.enable = true;
   # ROCm compute (amdkfd + clr/rocm-smi userspace); torch-rocm env via features.dev.ai.rocm
   features.hardware.amdgpu.rocm.enable = true;
   zramSwap.algorithm = "zstd";
@@ -79,9 +82,11 @@ in
   boot = {
     # Note: this is a fallback only — modules/system/kernel/localmodconfig.nix
     # overrides boot.kernelPackages (mkOverride 40) with the minimized kernel
-    # built from pkgs.linuxPackages_latest (7.2.x since 2026-10; the "ZFS does
-    # not build with latest 7.x" caveat is gone: nixpkgs ships zfs_2_4 = 2.4.4,
-    # which upstream declares compatible with 6.18 through 7.2).
+    # built from pkgs.linuxPackages_latest (7.2.x since 2026-10), or from
+    # torvalds' v7.3-rc6 noref branch while features.system.norefKernel is on.
+    # The "ZFS does not build with latest 7.x" caveat is gone: nixpkgs ships
+    # zfs_2_4 = 2.4.4, which upstream declares compatible with 6.18 through 7.2
+    # (localmodconfig.nix lifts that ceiling for the 7.3-rc6 experiment).
     kernelPackages = lib.mkDefault pkgs.linuxPackages;
 
     # Removed the amdgpu-hmm-userptr-vm-bo-null backport (patch file kept at

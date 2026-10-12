@@ -3,6 +3,7 @@
   pkgs,
   neg,
   repoRoot,
+  config,
   ...
 }:
 
@@ -106,7 +107,9 @@ let
           ];
     in
     lib.listToAttrs (lib.concatMap matchLine (lib.splitString "\n" text));
-  config = readConfig (
+  # Parsed .config for build.nix; named kernelConfig so the module-level
+  # `config` argument stays available for feature lookups below.
+  kernelConfig = readConfig (
     mergeConfigs (builtins.readFile ./base.config) (builtins.readFile ./overlay.config)
   );
   # Content tracking for rebuilds: include hash in extraMakeFlags
@@ -119,7 +122,33 @@ let
       features
       ;
     src = kernelSrc;
-    inherit configfile config;
+    inherit configfile;
+    config = kernelConfig;
+    extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
+    allowImportFromDerivation = false;
+  };
+
+  # Experimental kernel from torvalds/linux branch noref-filemap-read-with-llm:
+  # v7.3-rc6 plus nine commits that read the page cache without taking folio
+  # references and free retired folios only after an RCU grace period. Built
+  # with the same reduced .config as the default kernel. The branch has no
+  # GitHub mirror, so it is fetched from git.kernel.org; bump norefRev when
+  # advancing, then re-check norefVersion against the Makefile and boot it.
+  norefRev = "4c0f3697118eb3a708ea79175f7f07c43339bfab";
+  norefVersion = "7.3.0-rc6"; # Makefile: VERSION=7 PATCHLEVEL=3 SUBLEVEL=0 EXTRAVERSION=-rc6
+  norefSrc = builtins.fetchGit {
+    url = "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git";
+    rev = norefRev;
+    # linux.git is ~5 GB; shallow keeps the fetch to the pinned commit.
+    shallow = true;
+  };
+  norefKernel = pkgs.linuxManualConfig {
+    version = norefVersion;
+    modDirVersion = norefVersion;
+    inherit (baseKernel) features;
+    src = norefSrc;
+    inherit configfile;
+    config = kernelConfig;
     extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
     allowImportFromDerivation = false;
   };
@@ -128,5 +157,36 @@ in
   # Use mkOverride 40 to beat hardware.nix's lib.mkForce (priority 50)
   # This ensures our minimized kernel is used even when hosts/trantor
   # forces LTS kernel via lib.mkForce
-  boot.kernelPackages = lib.mkOverride 40 (pkgs.linuxKernel.packagesFor minimalKernel);
+  boot.kernelPackages = lib.mkOverride 40 (
+    let
+      noref = config.features.system.norefKernel.enable;
+      kernelPackages = pkgs.linuxKernel.packagesFor (if noref then norefKernel else minimalKernel);
+    in
+    if noref then
+      kernelPackages.extend (
+        _self: super: {
+          # zfs_2_4 (2.4.4) declares support only through 7.2, so nixpkgs marks
+          # the module broken on 7.3-rc6 and withholds --enable-linux-experimental.
+          # Both are cleared here: the ZFS root on this host must stay mountable.
+          # The four patches are the 7.3 API backports from OpenZFS master
+          # (bvec_iter.bi_bvec_done -> bi_offset, cpu_feature_enabled,
+          # iops->create without the flag arg, host fs for kernel threads);
+          # zfs-2.4.5-staging does not carry them yet.
+          zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              (r.path "files/patches/zfs-7.3-bvec-bi-offset.patch")
+              (r.path "files/patches/zfs-7.3-cpu-feature-enabled.patch")
+              (r.path "files/patches/zfs-7.3-iops-create-no-flag.patch")
+              (r.path "files/patches/zfs-7.3-kthread-host-fs.patch")
+            ];
+            configureFlags = (old.configureFlags or [ ]) ++ [ "--enable-linux-experimental" ];
+            meta = (old.meta or { }) // {
+              broken = false;
+            };
+          });
+        }
+      )
+    else
+      kernelPackages
+  );
 }

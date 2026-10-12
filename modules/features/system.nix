@@ -34,6 +34,13 @@
   options.features.system.zfsSnapshots.enable =
     mkBool "periodic sanoid snapshots for the user-data ZFS datasets" true;
 
+  # Experimental kernel from torvalds/linux branch noref-filemap-read-with-llm:
+  # v7.3-rc6 plus the no-refcount page-cache read path (folios are freed only
+  # after an RCU grace period). Built with the same reduced .config as the
+  # default kernel — see modules/system/kernel/localmodconfig.nix.
+  options.features.system.norefKernel.enable =
+    mkBool "build the kernel from torvalds' noref-filemap-read-with-llm branch" false;
+
   # Daily cap on the number of system generations (each one pins its whole
   # closure in the store until nix.gc runs).
   options.features.system.generationPrune.enable =
