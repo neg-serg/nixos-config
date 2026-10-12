@@ -674,7 +674,16 @@ def main(argv: list[str] | None = None) -> int:
         print("[music-mtg] no audio files to tag", file=sys.stderr)
         return 2
 
-    backbone, heads = load_heads(models_dir, keys)
+    try:
+        backbone, heads = load_heads(models_dir, keys)
+    except ImportError as exc:
+        print(
+            f"[music-mtg] essentia-tensorflow is not importable ({exc}); "
+            "tagging needs the venv-mtg created by "
+            "scripts/dev/music-mtg-setup.sh (--check/--stats/--playlists do not)",
+            file=sys.stderr,
+        )
+        return 2
     # One warm-up call: the first inference also loads the graph (~0.4 s).
     try:
         score(backbone, heads, load_audio(files[0], 5.0), top=1)
