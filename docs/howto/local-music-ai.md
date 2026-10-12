@@ -281,16 +281,33 @@ $ MUSIC_EMBED_DEVICE=cuda music-embed TRACK.flac   # or --device cuda
 - `torchaudio`/`torchvision` are swapped together with torch on purpose: transformers imports
   torchaudio whenever it exists, and the CUDA build of it cannot load next to ROCm torch
   (`libcudart.so.13: cannot open shared object file`). Without the companions MERT/CLAP break.
+
 - The wheel ships gfx1201 code objects (`TensileLibrary_lazy_gfx1201.dat`, gfx1201 `.hsaco`), so no
   `HSA_OVERRIDE_GFX_VERSION` is needed for the RX 9070 XT.
+
 - The script re-points the venv's dead `bin/python` symlink when it has to install (the same repair
   as `just fix-music-venvs`), refuses ABI mismatches, installs nothing without `--force` when a ROCm
   set is already there, downloads nothing (local wheels only) and never touches other venvs.
+
 - `MUSIC_EMBED_DEVICE` is the shared device knob for the music-AI stack (`MUSIC_TAGS_DEVICE`
   overrides it for `music-tags`); `auto` takes the GPU as soon as torch sees one.
+
 - Verified in this repo's sandbox: the wheel installs into a scratch venv and HIP 7.1 loads, but the
   sandbox denies `/dev/kfd` (device policy, `neg` is in `render`), so GPU-vs-CPU numbers must be
   measured on the host — CPU remains the fallback and the numbers above stay CPU numbers.
+
+- **The ROCm path crashed in production** (2026-10-12, kernel 7.2.7, torch 2.13.0+rocm7.1, RX 9070
+  XT): `music-index` running MERT inference died with
+  `Memory access fault by GPU node-1 … Reason: Page not present or supervisor privilege` and left a
+  1.6 GiB `gpucore.*` file in the CWD. The chain survived (the index step is reported as failed, the
+  rest continues) and the on-disk index stayed intact — `music-index` writes `vectors.npy` only
+  after the whole pass. Consequences in the repo: `autoIndex.extraArgs` now carries `--device cpu`
+  (the weekly run cannot crash that way), the service sets `LimitCORE = 0`, and `gpucore.*` is
+  gitignored. To retest the GPU on the host: `music-embed --device cuda TRACK.flac` (one file) or
+  the smoke test in `just music-ai-status`, which runs a matmul and a conv1d — the two operations
+  that died. If it still faults, try `HSA_ENABLE_SDMA=0` or
+  `PYTORCH_HIP_ALLOC_CONF=expandable_segments:True`; until then the CPU path is the trustworthy one
+  (1.5 s per clip, and indexing is incremental).
 
 ## Repairing the venvs (nix-collect-garbage)
 
