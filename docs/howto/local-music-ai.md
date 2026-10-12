@@ -182,11 +182,11 @@ head called dark ambient "danceable .72" — do not trust it outside club music.
 Agreement with the library's own GENRE tags (169 labelled tracks, strict = the label appears in a
 Discogs style, lenient = in its parent): **top-1 0.24 strict / 0.34 lenient, top-5 0.44 / 0.54**.
 The misses are mostly neighbouring families (`idm` → Electronic/Ambient, `trip-hop` → Hip Hop/Trap)
-or tracks the hand tag over-generalised (an ambient intro labelled `funeral doom metal` →
-Electronic / Ambient), with real errors in between (`symphonic metal` → Euro House). So the genre
-head is a coarse, prompt-free family classifier — good for grouping and for feeding mood/voice
-features, not a replacement for curated tags. The mood head has no ground truth in the files at all;
-its labels rest on the spot checks above.
+or tracks the hand tag over-generalised (an ambient intro labelled `funeral doom metal` → Electronic
+/ Ambient), with real errors in between (`symphonic metal` → Euro House). So the genre head is a
+coarse, prompt-free family classifier — good for grouping and for feeding mood/voice features, not a
+replacement for curated tags. The mood head has no ground truth in the files at all; its labels rest
+on the spot checks above.
 
 Cost: ~0.36 s per 30 s clip on CPU (0.33 s EffNet + 0.03 s for all heads), 660 MB RSS, one-time
 graph load ~0.4 s; long inputs scale with the ~1 s frame hop (5 min → 0.94 s). CPU-only: the TF
@@ -201,7 +201,14 @@ fast and leaves the machine alone), 95% of tracks got a mood label above 0.10, t
 / Experimental 14 / Black Metal 8 / Funeral Doom Metal 5 / Techno 4, top moods dark 24 / film 16 /
 epic 14 / energetic 12 / relaxing 9. A full pass over this 37k library runs at ~1.1 s per track on
 CPU (whole-file decode plus 30 s of inference) — around 11 h single-process, ~7 h with `--jobs 4`,
-and any partial file stays valid, so an interrupted run resumes where it stopped.
+and any partial file stays valid, so an interrupted run resumes where it stopped. The measured full
+pass took 5.5 h for 34 029 tracks (3 598 unreadable files skipped) and produced, library-wide:
+styles Ambient 8 617 / Experimental 6 840 / Post-Modern 1 188 / Black Metal 1 141 / Industrial 859,
+moods dark 7 018 / film 6 606 / relaxing 4 896 / epic 2 531 / energetic 2 500, instruments
+synthesizer 19 377 / piano 5 950 / drums 3 333, with mood coverage above 0.10 on 32 366 of 34 029
+tracks. Add `--exclude 'samples/*'` (or `--min-seconds 20`) when the library keeps one-shot sample
+packs: a mood queue otherwise picked a two-second VCSL piano note, and each record now carries
+`audio_seconds` so readers can filter short clips themselves.
 `music-mtg-tags --stats ~/.cache/music-mtg/tags.jsonl` prints that same distribution for a finished
 run (label counts per head plus mood coverage) and counts broken lines.
 
