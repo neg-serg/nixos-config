@@ -213,6 +213,12 @@ music-refresh *ARGS:
 music-ai-status *ARGS:
     bash "{{repo_root}}/scripts/dev/music-ai-status.sh" {{ARGS}}
 
+# Write the ML mood (and optionally the Discogs style) into the audio files so
+# players and MPD search see them; dry run unless --apply is passed, and every
+# change is logged to a JSONL file. See docs/howto/local-music-ai.md.
+music-apply-tags *ARGS:
+    python3 "{{repo_root}}/scripts/dev/music-apply-tags.py" {{ARGS}}
+
 # Eval one trantor feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false

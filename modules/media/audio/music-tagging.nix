@@ -47,6 +47,10 @@ in
       # alone — unlike the store paths the venvs themselves symlink to.
       environment.systemPackages = [
         pkgs.python312 # music-AI venv interpreter (torch/transformers live in the venv)
+        # Writes MOOD/GENRE into the files for `just music-apply-tags`
+        # (FLAC/Ogg/MP3/M4A through one code path). It also arrives with beets,
+        # but the tool must not depend on that staying enabled.
+        pkgs.python3Packages.mutagen
       ];
 
       # Model cache for CLAP/MERT and the MTG tagger's EffNet/head models:
