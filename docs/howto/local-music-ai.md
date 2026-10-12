@@ -107,12 +107,13 @@ Notes:
 - Decoding goes through soundfile, and through **ffmpeg** for containers libsndfile cannot read
   (m4a/aac/wma). That gap was real: the first index of this library came up 1005 tracks short and
   `music-index --audit` now names them, grouped by extension — .m4a 878, .mp3 113, .flac 13, .wav 1.
-  So the container was the main cause, not the only one: the long pass also skipped files that
-  decode fine today (transient errors, or albums that appeared after its scan), while 13 flac/wav
-  are genuinely corrupt (a truncated streaminfo reports a duration of 2e14 s). The fix is the
-  ordinary incremental run with the settings the index was built with (`music-index --layer -1`):
-  matching cache entries are migrated, only pending files are embedded (~50 min on CPU), and
-  whatever stays in the audit list afterwards is broken rather than merely unsupported.
+  The incremental run with the settings the index was built with (`music-index --layer -1`) closed
+  most of that gap — 37 498 of 37 627 tracks — and the 129 still missing fall into two groups.
+  Truncated files (61 mp3) report a nominal length in the header while the audio stops early, so the
+  tail window decoded to nothing and MERT died in conv1d; `read_window` now falls back to the start
+  of the file, which recovers them. Genuinely corrupt files (a truncated streaminfo reports a
+  duration of 2e14 s) are skipped with an explicit reason instead of a torch traceback, and no
+  decoder will fix those — they need re-downloading.
 
 - Building with *different* settings than the index on disk re-embeds everything, so the tool says
   so before starting and prints the exact flags that would keep the existing index.
