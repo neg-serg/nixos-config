@@ -252,6 +252,17 @@ def _worker_tag(path: str) -> dict:
 def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
     """Tag a whole library into a JSONL file, resuming by mtime+size+settings."""
     out_path = Path(args.out).expanduser()
+    # The timer may point --out at a directory that does not exist yet (a fresh
+    # machine, a cleaned ~/.cache); create it like music-index does, otherwise
+    # the append below dies with FileNotFoundError.
+    try:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        print(
+            f"[music-mtg] cannot create {out_path.parent}: {exc}",
+            file=sys.stderr,
+        )
+        return 2
     settings = settings_key(args.head_set, keys, args.seconds, args.top)
     done = {} if args.rebuild else load_done(out_path)
     pending = []

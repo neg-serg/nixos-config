@@ -170,6 +170,9 @@ in
   # because the default layer for MERT-v1 is -2 (docs/howto/local-music-ai.md).
   features.media.audio.musicTagging.autoIndex = {
     enable = true;
+    # One weekly pass refreshes the index, the MTG tags and the mood/genre
+    # playlists; every step skips work whose inputs did not change.
+    tagsAndPlaylists = true;
     extraArgs = [
       "--layer"
       "-1"

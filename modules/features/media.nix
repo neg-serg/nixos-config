@@ -102,6 +102,7 @@
             default = 0;
             description = "Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.";
           };
+          tagsAndPlaylists = mkBool "also refresh MTG tags and the mood/genre playlists in the same run" false;
           extraArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [ ];
