@@ -345,6 +345,86 @@ class QueueSimilarTests(unittest.TestCase):
         self.assertFalse(self.args_log.exists())
 
 
+class NowPlayingMoodsTests(unittest.TestCase):
+    """`now_playing` appends the current track's moods from the tag file."""
+
+    URI = "Evoken/Antithesis of Light/06 - Antithesis of Light.flac"
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.music = Path(self.tmp.name) / "music"
+        track = self.music / self.URI
+        track.parent.mkdir(parents=True)
+        track.write_bytes(b"")
+        self.tags = Path(self.tmp.name) / "tags.jsonl"
+        self.fake = FakeMPD(
+            tracks=[
+                {
+                    "file": self.URI,
+                    "Title": "Antithesis of Light",
+                    "Artist": "Evoken",
+                    "Album": "Antithesis of Light",
+                    "Time": 300,
+                }
+            ]
+        ).start()
+        self.addCleanup(self.fake.stop)
+        self.client = MPDClient("127.0.0.1", self.fake.port, timeout=5)
+        self.addCleanup(self.client.close)
+        self.controller = Controller(
+            self.client,
+            Config(  # type: ignore[arg-type]
+                language="ru",
+                music_dir=str(self.music),
+                tags_file=str(self.tags),
+                tags_min_score=0.10,
+            ),
+        )
+
+    def _write_tags(self, moods: list[dict[str, object]]) -> None:
+        record = {
+            "path": str(self.music / self.URI),
+            "mtime": 1,
+            "size": 2,
+            "engine": "mtg",
+            "settings": "core|seconds=30|top=3",
+            "tags": {"mood": moods},
+        }
+        self.tags.write_text(json.dumps(record) + "\n")
+
+    def _play_and_ask(self) -> str:
+        self.controller.handle_text("включи трек Antithesis")
+        return self.controller.now_playing().text
+
+    def test_moods_above_the_floor_are_shown(self) -> None:
+        self._write_tags(
+            [
+                {"label": "dark", "score": 0.31},
+                {"label": "epic", "score": 0.12},
+                {"label": "film", "score": 0.05},
+            ]
+        )
+        text = self._play_and_ask()
+        self.assertIn("dark", text)
+        self.assertIn("epic", text)
+        self.assertNotIn("film", text)
+
+    def test_track_without_moods_stays_plain(self) -> None:
+        self._write_tags([])
+        self.assertNotIn("dark", self._play_and_ask())
+
+    def test_missing_tag_file_stays_plain(self) -> None:
+        self.assertNotIn("dark", self._play_and_ask())
+
+    def test_unknown_track_is_cached_as_empty(self) -> None:
+        self._write_tags([{"label": "dark", "score": 0.31}])
+        self._play_and_ask()
+        self.assertEqual(
+            self.controller.track_moods("Someone/Else/01 - Other.flac"), []
+        )
+
+
 class PlayMoodTests(unittest.TestCase):
     """`play_mood` streams the music-mtg-tags JSONL into the queue."""
 
