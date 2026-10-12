@@ -21,13 +21,26 @@ buildGoModule rec {
   # Go module dependencies (charmbracelet lipgloss/glamour, cobra, modernc sqlite, ...).
   vendorHash = "sha256-9GZn8xxdWGeAfTjJXj7VF4gyFpsyrNUDHlM+oCxiUAs=";
 
-  # [trantor] The accept key (Ctrl+E / Tab) inserts the menu's current suggestion
-  # when the menu is visible, otherwise falls through to the shell so the key
-  # keeps its normal meaning (Ctrl+E: end-of-line, Tab: fzf-on-tab / ~/m/new
-  # expansion). Upstream always consumes the key, even with a hidden menu —
-  # re-checked on v0.7.3: root/wrapper.go still says "always consume the full
-  # binding atomically, even when the overlay is hidden".
-  patches = [ ./iris-select-fallthrough.patch ];
+  # [trantor] Shell-compatibility patches on top of v0.7.3:
+  #
+  # iris-select-fallthrough: the accept key (Tab) inserts the menu's current
+  # suggestion when the menu is visible, otherwise falls through to the shell
+  # so the key keeps its normal meaning (Tab: fzf-on-tab / ~/m/new expansion).
+  # Upstream always consumes the key, even with a hidden menu — re-checked on
+  # v0.7.3: root/wrapper.go still says "always consume the full binding
+  # atomically, even when the overlay is hidden".
+  #
+  # iris-empty-keybindings: an explicit `""` disables a keybinding instead of
+  # being replaced by the upstream default (v0.7.3 Load() re-filled
+  # `toggle-mode = ""` with ctrl+r, so iris silently ate Ctrl+R).
+  #
+  # iris-menu-footer: render only the shortcuts that are bound and list the
+  # navigate keys too (an empty toggle-mode used to draw a stray "<> Mode").
+  patches = [
+    ./iris-select-fallthrough.patch
+    ./iris-empty-keybindings.patch
+    ./iris-menu-footer.patch
+  ];
 
   # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
   # cache invalidation relies on directory mtime, but overlayfs doesn't bump

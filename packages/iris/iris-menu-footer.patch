@@ -1,0 +1,37 @@
+--- a/integration/overlay.go
++++ b/integration/overlay.go
+@@ -920,14 +920,29 @@
+ 	s.WriteString(ansi.EraseEntireLine)
+ 	moveToTarget()
+ 
++	// [trantor] Footer hints follow the configured keys and skip the empty
++	// ones: `toggle-mode = ""` (disabled) used to render a stray "<> Mode",
++	// and the non-arrow navigate keys were invisible.
+ 	footerInfo := ""
+ 	if !isClassic {
+ 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(t.Key)).Bold(true)
+-		selectKey := keyStyle.Render(config.FormatKeyName(config.Get().Keybindings.SelectSuggestion))
+-		ctrlRKey := keyStyle.Render(config.FormatKeyName(config.Get().Keybindings.ToggleMode))
+-		acceptText := lipgloss.NewStyle().Foreground(lipgloss.Color(t.ScrollInfo)).Render(" Accept")
+-		modeText := lipgloss.NewStyle().Foreground(lipgloss.Color(t.ScrollInfo)).Render(" Mode")
+-		footerInfo = fmt.Sprintf(" %s%s • %s%s ", selectKey, acceptText, ctrlRKey, modeText)
++		labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(t.ScrollInfo))
++		label := func(s string) string { return labelStyle.Render(s) }
++		kb := config.Get().Keybindings
++		parts := make([]string, 0, 3)
++		if kb.SelectSuggestion != "" {
++			parts = append(parts, keyStyle.Render(config.FormatKeyName(kb.SelectSuggestion))+label(" Accept"))
++		}
++		if kb.NavigateUp != "" || kb.NavigateDown != "" {
++			nav := keyStyle.Render(config.FormatKeyName(kb.NavigateUp)) + "/" + keyStyle.Render(config.FormatKeyName(kb.NavigateDown))
++			parts = append(parts, nav+label(" Navigate"))
++		}
++		if kb.ToggleMode != "" {
++			parts = append(parts, keyStyle.Render(config.FormatKeyName(kb.ToggleMode))+label(" Mode"))
++		}
++		if len(parts) > 0 {
++			footerInfo = " " + strings.Join(parts, label(" • ")) + " "
++		}
+ 	}
+ 
+ 	s.WriteString(titledEdge("╰", "╯", inner, footerInfo, border, inner-lipgloss.Width(footerInfo)-2))
