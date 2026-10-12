@@ -111,6 +111,23 @@ Notes:
   (coverage, whether `audio_seconds` exists, sample paths), playlists, models, venv health, GPU and
   the refresh timer — and ends with the items that need attention, so it doubles as a to-do list.
 
+- The mood labels only lived in the tag cache, so players and MPD's own `search` could not see them.
+  `just music-apply-tags` writes them into the files (mutagen: Vorbis comments for FLAC/Ogg, `TMOO`
+  for MP3/WAV, the `----:com.apple.iTunes:MOOD` freeform atom for M4A — the convention this library
+  already uses for ARTISTS/BARCODE). It is a **dry run unless `--apply`** is passed, refuses paths
+  outside `--music-dir`, refuses to write at all when its JSONL change log cannot be opened, and
+  logs every old -> new value so a run can be reverted by hand:
+
+  ```console
+  $ just music-apply-tags --tags ~/.cache/music-mtg/tags.jsonl --field mood
+  $ just music-apply-tags --tags ~/.cache/music-mtg/tags.jsonl --field mood --apply
+  $ just music-apply-tags --field genre --apply --only '*.flac'
+  ```
+
+  `--field genre` replaces the genre the file already has, which is why it is not in the default.
+  Verified on copies of real files: MOOD written and read back for flac/mp3/m4a, a second run writes
+  nothing (idempotent), Title/Artist/Album stay intact, and the log holds one line per write.
+
 - Models land in `features.media.audio.musicTagging.hfHome` (default `/zero/ai/music-ai/hf`, created
   by tmpfiles) on first use.
 
