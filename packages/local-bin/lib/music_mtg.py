@@ -22,6 +22,7 @@ venv-analysis has plain essentia without the TensorflowPredict* classes.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import sys
@@ -51,6 +52,17 @@ HEADS = {
 }
 CORE_HEADS = ("genre", "mood", "instrument")
 AUDIO_EXTS = {".mp3", ".flac", ".wav", ".ogg", ".opus", ".m4a", ".aac", ".wma"}
+
+
+def _excluded(path: Path, root: Path, patterns) -> bool:
+    """True when the path, relative to root, matches one of the glob patterns."""
+    if not patterns:
+        return False
+    try:
+        relative = path.relative_to(root).as_posix()
+    except ValueError:
+        relative = path.name
+    return any(fnmatch.fnmatch(relative, pattern) for pattern in patterns)
 
 
 def head_files(models_dir: Path, key: str) -> tuple[Path, Path]:
@@ -129,7 +141,13 @@ def score(backbone, heads, samples, top: int | None = None) -> dict:
         embeddings = embeddings.reshape(1, -1)
     if embeddings.size == 0 or embeddings.shape[0] == 0:
         raise ValueError("clip too short for EffNet frames (need about 1 s)")
-    record = {"frames": int(embeddings.shape[0]), "tags": {}}
+    record = {
+        "frames": int(embeddings.shape[0]),
+        # Decoded length: lets readers skip one-shot samples and jingles
+        # (a mood queue once picked a 2 s VCSL piano note).
+        "audio_seconds": round(len(samples) / 16000.0, 2),
+        "tags": {},
+    }
     for key, default_top, classes, predictor in heads:
         mean = np.asarray(predictor(embeddings)).mean(axis=0)
         order = np.argsort(mean)[::-1][: (top or default_top)]
@@ -274,6 +292,7 @@ def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
     started = time.time()
     written = 0
     skipped = 0
+    short = 0
     with open(out_path, "a", encoding="utf-8") as handle:
         if executor is not None:
             from concurrent.futures import as_completed
@@ -315,6 +334,12 @@ def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
                         )
                         skipped += 1
                         continue
+                if (
+                    args.min_seconds
+                    and partial.get("audio_seconds", 0) < args.min_seconds
+                ):
+                    short += 1
+                    continue
                 handle.write(
                     json.dumps(
                         _record(path, partial, settings), ensure_ascii=False
@@ -355,6 +380,25 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--seconds", type=float, default=DEFAULT_SECONDS, help="clip length"
     )
     parser.add_argument("--dir", help="tag every audio file under DIR instead")
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="GLOB",
+        help=(
+            "batch mode: skip files whose path relative to --dir matches GLOB "
+            "(repeatable, e.g. --exclude 'samples/*')"
+        ),
+    )
+    parser.add_argument(
+        "--min-seconds",
+        type=float,
+        default=0.0,
+        help=(
+            "batch mode: skip clips shorter than this (0 = keep everything); "
+            "one-shot samples land in mood queues otherwise"
+        ),
+    )
     parser.add_argument(
         "--out",
         help=(
@@ -481,7 +525,9 @@ def main(argv: list[str] | None = None) -> int:
         files.extend(
             item
             for item in sorted(root.rglob("*"))
-            if item.is_file() and item.suffix.lower() in AUDIO_EXTS
+            if item.is_file()
+            and item.suffix.lower() in AUDIO_EXTS
+            and not _excluded(item, root, args.exclude)
         )
     if not files:
         print("[music-mtg] no audio files to tag", file=sys.stderr)
