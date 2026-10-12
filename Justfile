@@ -207,6 +207,12 @@ music-mtg-setup *ARGS:
 music-refresh *ARGS:
     bash "{{repo_root}}/scripts/dev/music-refresh.sh" {{ARGS}}
 
+# Read-only report on the whole music-AI stack: wrappers, index, tags,
+# playlists, models, venvs, GPU and the refresh timer. Prints a to-do list and
+# exits non-zero when something needs attention.
+music-ai-status *ARGS:
+    bash "{{repo_root}}/scripts/dev/music-ai-status.sh" {{ARGS}}
+
 # Eval one trantor feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
