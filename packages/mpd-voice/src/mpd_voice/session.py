@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
 import random
@@ -595,6 +596,10 @@ class Controller:
         so a 40k-line library costs one pass and a shortlist.  Broken lines
         are skipped; matching tracks are shuffled before the cap so repeated
         requests do not always queue the same first tracks.
+
+        ``tags_exclude`` globs (relative to ``music_dir``) and the
+        ``audio_seconds`` floor keep one-shot samples out of the queue; a
+        record without ``audio_seconds`` cannot be judged and is kept.
         """
         mood = intent.value
         if not mood:
@@ -612,6 +617,11 @@ class Controller:
                 text=self._t("mood_missing", intent.lang, path=tags_file),
                 ok=False,
             )
+        excludes = [
+            pattern.strip()
+            for pattern in self.cfg.tags_exclude.split(",")
+            if pattern.strip()
+        ]
         matches: list[str] = []
         lines = 0
         broken = 0
@@ -629,12 +639,15 @@ class Controller:
                     if not isinstance(entry, dict):
                         broken += 1
                         continue
+                    if self._mood_too_short(entry):
+                        continue
                     path = self._mood_path(entry, mood)
                     if not path:
                         continue
                     uri = self._mpd_uri(path, music_dir)
-                    if uri:
-                        matches.append(uri)
+                    if not uri or self._mood_excluded(uri, excludes):
+                        continue
+                    matches.append(uri)
         except OSError:
             return Reply(text=self._t("mood_failed", intent.lang), ok=False)
         if not matches:
@@ -676,6 +689,28 @@ class Controller:
             if score >= self.cfg.tags_min_score:
                 return path
         return ""
+
+    def _mood_too_short(self, entry: dict[str, object]) -> bool:
+        """True when the tagger measured a clip below ``tags_min_seconds``.
+
+        ``audio_seconds`` was added to the tagger after the first tag files
+        were written, so an absent field cannot be judged and must not drop
+        the track; the same goes for a value that is not a number.  Setting
+        ``tags_min_seconds`` to 0 disables the filter.
+        """
+        raw = entry.get("audio_seconds")
+        if raw is None:
+            return False
+        try:
+            seconds = float(raw)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return False
+        return seconds < self.cfg.tags_min_seconds
+
+    @staticmethod
+    def _mood_excluded(uri: str, patterns: list[str]) -> bool:
+        """True when the URI matches any ``tags_exclude`` glob."""
+        return any(fnmatch.fnmatch(uri, pattern) for pattern in patterns)
 
     @staticmethod
     def _mpd_uri(path: str, music_dir: Path) -> str:

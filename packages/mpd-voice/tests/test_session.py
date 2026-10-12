@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import os
 import stat
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+from mpd_voice import config as config_module
 from mpd_voice.config import Config
 from mpd_voice.mpd import MPDClient
 from mpd_voice.session import Controller, describe
@@ -352,20 +355,21 @@ class PlayMoodTests(unittest.TestCase):
         "Various/Ambient/01 - Drone One.flac",
         "Rome/Notturno/01 - Notturno.flac",
     )
+    # The measured offender: a two-second VCSL piano one-shot.
+    SAMPLE = "samples/VCSL/02 Piano C3.wav"
 
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.music = Path(self.tmp.name) / "music"
-        for uri in self.URIS:
+        fixtures = (*self.URIS, self.SAMPLE)
+        for uri in fixtures:
             path = self.music / uri
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"")
         self.tags = Path(self.tmp.name) / "tags.jsonl"
         self.fake = FakeMPD(
-            tracks=[
-                {"file": uri, "Title": Path(uri).stem} for uri in self.URIS
-            ]
+            tracks=[{"file": uri, "Title": Path(uri).stem} for uri in fixtures]
         ).start()
         self.addCleanup(self.fake.stop)
         self.client = MPDClient("127.0.0.1", self.fake.port, timeout=5)
@@ -376,9 +380,10 @@ class PlayMoodTests(unittest.TestCase):
         uri: str,
         moods: tuple[tuple[str, object], ...],
         base: Path | None = None,
+        seconds: float | None = None,
     ) -> dict[str, object]:
         """One JSONL object in the shape music-mtg-tags writes."""
-        return {
+        entry: dict[str, object] = {
             "path": str((base or self.music) / uri),
             "mtime": 1,
             "size": 2,
@@ -392,6 +397,9 @@ class PlayMoodTests(unittest.TestCase):
                 "instrument": [{"label": "synthesizer", "score": 0.34}],
             },
         }
+        if seconds is not None:
+            entry["audio_seconds"] = seconds
+        return entry
 
     def _write(self, lines: tuple[object, ...]) -> None:
         rendered = [
@@ -444,6 +452,65 @@ class PlayMoodTests(unittest.TestCase):
         self.assertTrue(reply.ok)
         self.assertEqual(self._queued(), {self.URIS[0]})
         self.assertIn("1", reply.text)
+
+    def test_samples_path_is_excluded_by_default(self) -> None:
+        self._write(
+            (
+                self._entry(self.URIS[0], (("dark", 0.31),)),
+                self._entry(self.SAMPLE, (("dark", 0.9),)),
+            )
+        )
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[0]})
+
+    def test_clearing_or_replacing_the_exclude_brings_it_back(self) -> None:
+        self._write(
+            (
+                self._entry(self.URIS[0], (("dark", 0.31),)),
+                self._entry(self.SAMPLE, (("dark", 0.9),)),
+            )
+        )
+        cleared = self._controller(tags_exclude="").handle_text(
+            "включи мрачное"
+        )
+        self.assertTrue(cleared.ok)
+        self.assertEqual(self._queued(), {self.URIS[0], self.SAMPLE})
+        # Another glob replaces the default instead of adding to it.  The
+        # queue is emptied first: each request appends.
+        self.client.clear()
+        replaced = self._controller(tags_exclude="Evoken/*").handle_text(
+            "включи мрачное"
+        )
+        self.assertTrue(replaced.ok)
+        self.assertEqual(self._queued(), {self.SAMPLE})
+
+    def test_two_second_records_are_skipped(self) -> None:
+        self._write(
+            (
+                self._entry(self.URIS[0], (("dark", 0.31),), seconds=2.0),
+                self._entry(self.URIS[1], (("dark", 0.31),), seconds=90.5),
+            )
+        )
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[1]})
+
+    def test_records_without_audio_seconds_are_kept(self) -> None:
+        self._write((self._entry(self.URIS[0], (("dark", 0.31),)),))
+        reply = self._controller().handle_text("включи мрачное")
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[0]})
+
+    def test_min_seconds_zero_disables_the_length_filter(self) -> None:
+        self._write(
+            (self._entry(self.URIS[0], (("dark", 0.31),), seconds=2.0),)
+        )
+        reply = self._controller(tags_min_seconds=0).handle_text(
+            "включи мрачное"
+        )
+        self.assertTrue(reply.ok)
+        self.assertEqual(self._queued(), {self.URIS[0]})
 
     def test_queue_is_capped_at_tags_limit(self) -> None:
         self._write(
@@ -574,6 +641,25 @@ class PlayMoodTests(unittest.TestCase):
         reply = self._controller(music_dir="").handle_text("включи мрачное")
         self.assertFalse(reply.ok)
         self.assertEqual(self.fake.queue, [])
+
+
+class TagsConfigEnvTests(unittest.TestCase):
+    """The tags keys follow the documented MPD_VOICE_* env pattern."""
+
+    def test_exclude_env_override_and_empty_value(self) -> None:
+        path = Path("/nonexistent/mpd-voice.toml")
+        with mock.patch.dict(
+            os.environ, {"MPD_VOICE_TAGS_EXCLUDE": "samples/*, live/*"}
+        ):
+            cfg, _ = config_module.load(path=path)
+        self.assertEqual(cfg.tags_exclude, "samples/*, live/*")
+        with mock.patch.dict(os.environ, {"MPD_VOICE_TAGS_EXCLUDE": ""}):
+            cfg, _ = config_module.load(path=path)
+        self.assertEqual(cfg.tags_exclude, "")
+
+    def test_new_defaults(self) -> None:
+        self.assertEqual(Config().tags_min_seconds, 45.0)
+        self.assertEqual(Config().tags_exclude, "samples/*")
 
 
 if __name__ == "__main__":

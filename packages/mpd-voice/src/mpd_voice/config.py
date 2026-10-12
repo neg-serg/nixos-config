@@ -62,6 +62,18 @@ class Config:
     # labels that are clearly present but far from confident and still drops
     # near-zero noise.  Raise it for stricter mood playlists.
     tags_min_score: float = 0.10
+    # Tracks shorter than this are treated as one-shot samples, not music.
+    # ``audio_seconds`` is the decoded length the tagger analysed; records
+    # from tag files produced before the field existed cannot be judged and
+    # are kept, so an old cache keeps working.  45 s is a sane floor for
+    # "music, not a sample": real tracks run for minutes, while instrument
+    # samples (e.g. the two-second VCSL piano notes) are seconds long.
+    tags_min_seconds: float = 45.0
+    # Comma-separated fnmatch globs matched against the track path relative
+    # to ``music_dir``; the default drops the measured offender, the
+    # one-shot VCSL samples under ``~/music/samples``.  An empty string
+    # means no patterns (override with MPD_VOICE_TAGS_EXCLUDE).
+    tags_exclude: str = "samples/*"
     tags_limit: int = 25
 
     def apply_mapping(self, values: Mapping[str, object]) -> None:
@@ -141,4 +153,8 @@ def _environment() -> dict[str, object]:
         mapping["tts"] = os.environ["MPD_VOICE_TTS"]
     if os.environ.get("MPD_VOICE_TAGS_FILE"):
         mapping["tags_file"] = os.environ["MPD_VOICE_TAGS_FILE"]
+    # Presence, not truthiness: an empty MPD_VOICE_TAGS_EXCLUDE means "no
+    # exclude patterns", which is different from leaving the default in place.
+    if "MPD_VOICE_TAGS_EXCLUDE" in os.environ:
+        mapping["tags_exclude"] = os.environ["MPD_VOICE_TAGS_EXCLUDE"]
     return mapping

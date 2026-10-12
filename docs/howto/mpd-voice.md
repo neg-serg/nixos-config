@@ -86,6 +86,8 @@ music_dir = "~/music"     # must match MPD's music_directory (helper wants real 
 # mood queue: JSONL produced by `music-mtg-tags --dir ~/music --out FILE --json`
 tags_file = "~/.cache/music-mtg/tags.jsonl"
 tags_min_score = 0.10     # mood label score floor (measured scores: 0.1-0.4)
+tags_min_seconds = 45.0   # drop records whose audio_seconds is below this (0 = off)
+tags_exclude = "samples/*"  # comma-separated globs relative to music_dir ("" = none)
 tags_limit = 25           # max tracks queued per mood request (0 = no cap)
 ```
 
@@ -106,6 +108,24 @@ tags, so the JSONL must be generated first:
 $ music-mtg-tags --dir ~/music --out ~/.cache/music-mtg/tags.jsonl --json
 ```
 
+Two filters keep one-shot samples out of the queue. `tags_exclude` is a comma-separated list of
+`fnmatch` globs matched against the track path relative to `music_dir`; the default `samples/*`
+covers the measured offender (two-second VCSL piano notes under `~/music/samples`), and an empty
+string disables the filter. `tags_min_seconds` (default 45.0) drops records whose `audio_seconds` —
+the decoded length the tagger analysed — is below the floor; `0` disables it. 45 s is a sane floor
+for "music, not a sample": real tracks run for minutes, while instrument samples are seconds long.
+
+Tag files written before the tagger recorded `audio_seconds` have no such field. Those records
+cannot be judged, so they are kept — an old cache keeps working instead of silently emptying every
+mood queue. To get `audio_seconds` into the whole cache, re-tag from scratch: a plain re-run resumes
+by mtime+size+settings and leaves the old lines untouched, so remove the JSONL first, then let the
+tagger skip samples at the source:
+
+```console
+$ rm ~/.cache/music-mtg/tags.jsonl
+$ music-mtg-tags --dir ~/music --out ~/.cache/music-mtg/tags.jsonl --exclude 'samples/*' --min-seconds 20
+```
+
 A missing file, a missing `music_dir`, an empty match or a file whose every line is broken become a
 spoken error, never a traceback.
 
@@ -114,7 +134,8 @@ Command line overrides worth knowing: `--stt cli --stt-model FILE` (direct whisp
 `--tts none`, `--capture arecord --device hw:1,0`, `--no-confirm`, `--wake-word WORD`.
 
 Environment: `MPD_HOST`, `MPD_PORT`, `MPD_PASSWORD` (mpc-compatible), `MPD_VOICE_LANG`,
-`MPD_VOICE_STT`, `MPD_VOICE_TTS`, `MPD_VOICE_TAGS_FILE`.
+`MPD_VOICE_STT`, `MPD_VOICE_TTS`, `MPD_VOICE_TAGS_FILE`, `MPD_VOICE_TAGS_EXCLUDE` (an empty value
+means no exclude patterns).
 
 Backends and their `auto` order:
 
@@ -137,9 +158,11 @@ Backends and their `auto` order:
   paths back to MPD URIs relative to `music_dir`. No current song, a missing file, an empty result
   list, a failed helper or unparsable JSON become a spoken error, never a traceback.
 - Mood phrases (`play dark music`, `play something sad`, ...) stream `tags_file` once, keep tracks
-  whose matching mood label scores at or above `tags_min_score`, shuffle them, cap the result at
-  `tags_limit` and append the MPD URIs to the queue. Broken JSONL lines are skipped (all-broken is
-  reported with the line count) and paths outside `music_dir` are ignored.
+  whose matching mood label scores at or above `tags_min_score`, drop records whose `audio_seconds`
+  is below `tags_min_seconds` (records without the field are kept — older tag files predate it) and
+  paths matching a `tags_exclude` glob, shuffle what is left, cap the result at `tags_limit` and
+  append the MPD URIs to the queue. Broken JSONL lines are skipped (all-broken is reported with the
+  line count) and paths outside `music_dir` are ignored.
 - Search is MPD's case-insensitive `search`: an exact tag match first (`Album`, `Artist`, `Genre`,
   `Title`, `file`), then `search any`.
 - Volume is clamped to 0-100; `mute` remembers the level and `unmute` restores it. Outputs without a
