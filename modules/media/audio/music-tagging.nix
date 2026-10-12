@@ -92,6 +92,9 @@ in
           # Background refresh: yield CPU and disk to interactive work.
           Nice = 10;
           IOSchedulingClass = "idle";
+          # A crashing inference leaves a ~1.6 GiB gpucore.* file behind (the
+          # ROCm fault on 2026-10-12 did); a timer must never do that.
+          LimitCORE = 0;
         };
       };
 

@@ -198,7 +198,27 @@ if [[ -d "$AV_VENV/lib" ]]; then
       timeout 120 "$PY" -c 'import torch; print(torch.__version__, "cuda" if torch.cuda.is_available() else "cpu-only")' 2> /dev/null || echo "torch unavailable"
   )"
   if [[ "$device" == *"cuda"* ]]; then
-    note ok "gpu" "$device"
+    # A ROCm wheel can report a device and still abort inside a kernel: this
+    # host crashed MERT inference once ("page not present"), so the status also
+    # runs the two operations that died (a matmul and a conv1d) and reports.
+    smoke="$(
+      PYTHONPATH="$AV_VENV/lib/python3.12/site-packages" \
+        LD_LIBRARY_PATH="$AV_VENV/lib/python3.12/site-packages/torch/lib" \
+        timeout 180 "$PY" - << 'PYSMOKE' 2>&1 | tail -1
+import torch
+a = torch.randn(512, 512, device="cuda")
+b = (a @ a).sum().item()
+conv = torch.nn.Conv1d(1, 8, 10).cuda()
+out = conv(torch.randn(1, 1, 24000, device="cuda")).shape[0]
+print(f"ok matmul {b:.0f} conv {out}")
+PYSMOKE
+    )" || smoke="crashed"
+    case "$smoke" in
+      ok\ matmul*) note ok "gpu" "$device, $smoke" ;;
+      *)
+        note warn "gpu" "$device but the smoke test failed ($smoke) — the ROCm path is not trustworthy, use --device cpu"
+        ;;
+    esac
   elif [[ "$device" == *"+rocm"* ]]; then
     # A ROCm wheel reports cpu-only when /dev/kfd is unreachable (sandboxed
     # shell, missing render group): the environment is the problem, not the venv.
