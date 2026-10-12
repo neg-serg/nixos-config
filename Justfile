@@ -201,6 +201,12 @@ music-ai-rocm *ARGS:
 music-mtg-setup *ARGS:
     bash "{{repo_root}}/scripts/dev/music-mtg-setup.sh" {{ARGS}}
 
+# Refresh every derived music artefact in one incremental pass: MERT index ->
+# MTG tags -> mood/genre playlists (the weekly timer runs the same script).
+# --check / --dry-run are read-only; see docs/howto/local-music-ai.md.
+music-refresh *ARGS:
+    bash "{{repo_root}}/scripts/dev/music-refresh.sh" {{ARGS}}
+
 # Eval one trantor feature flag: just flag features.dev.ai.omp.enable
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
