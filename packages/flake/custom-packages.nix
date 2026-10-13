@@ -34,6 +34,7 @@
 
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
   atrium = pkgs.atrium; # Wayland multiseat display manager
+  wordcraft = pkgs.wordcraft; # Word-style word processor (.docx/.odt/.rtf) + converter CLI
   ttf-code2000 = pkgs.ttf-code2000; # Code2000 shareware Unicode TrueType font
   ttf-code2001 = pkgs.ttf-code2001; # Code2001 freeware font: Plane 1 ancient scripts
   ttf-code2002 = pkgs.ttf-code2002; # Code2002 freeware font: Plane 2 rare CJK
