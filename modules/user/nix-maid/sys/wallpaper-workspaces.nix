@@ -34,7 +34,8 @@ lib.mkIf (cfg.enable or false) (
   lib.mkMerge [
     (neg.mkHomeFiles {
       # Live link: tuning the mapping (a new pool, a per-workspace pin) does not
-      # need a rebuild — the watcher re-reads the file on every workspace change.
+      # need a rebuild — but the watcher loads the file once at startup, so
+      # restart wl-workspaces.service after editing (one-shots read it per run).
       ".config/wl/workspaces.toml".source = config.lib.neg.live "files/wl/workspaces.toml";
     })
 
