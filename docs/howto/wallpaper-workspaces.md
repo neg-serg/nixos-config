@@ -69,6 +69,9 @@ systemctl --user status wl-workspaces.service
   user manager's environment; the event socket is
   `$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock`.
 - **One workspace should never repaint** — pin it: `games = "keep"`.
+- **Config edits need a restart** — the watcher loads `~/.config/wl/workspaces.toml` once at
+  startup, so run `systemctl --user restart wl-workspaces.service` after editing (no rebuild
+  needed); one-shot commands (`show`/`apply`/`shuffle`) read the file on every run.
 - **Turn the feature off** — `[workspaces] "*" = "keep"` in the config (or stop the unit); the
   wallpaper then stays whatever it was.
 - **Images feel slow** — the pool has files up to 12000x6344; wl decodes during the transition, so
