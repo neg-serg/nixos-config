@@ -6,7 +6,10 @@
 #   keeps fzf-on-tab completion + ~/m/new fuzzy expansion. Ctrl+E is not bound
 #   by iris at all and stays end-of-line.
 # - mode = "spec" — suggest from command specs + filegen + AI only; shell
-#   history junk (dsh persistent-bash entries) never becomes a ghost.
+#   history junk (dsh persistent-bash entries) never becomes a ghost. The
+#   [trantor] spec-relevance patch keeps top-level specs to commands that are
+#   actually runnable here: binaries on PATH plus shell builtins, no macOS-only
+#   tools (dscacheutil, dscl, launchctl, ...) and no uninstalled CLIs.
 # - toggle-mode = "" — really disabled: the [trantor] empty-keybindings patch
 #   stops Load() from re-filling it with the ctrl+r default. Ctrl+R stays with
 #   hishtory (07-hishtory.zsh) and fzf. To try the toggle: "ctrl+r".

@@ -1,0 +1,152 @@
+--- a/spec/spec.go
++++ b/spec/spec.go
+@@ -1,6 +1,9 @@
+ package spec
+ 
+-import "slices"
++import (
++	"runtime"
++	"slices"
++)
+ 
+ type GeneratorFunc func(tokens []string, prefix string, partial string) []Suggestion
+ 
+@@ -57,9 +60,34 @@
+ // kind of difference nobody notices from reading either file.
+ var duplicateNames []string
+ 
++// platformOnlySpecs maps a spec name to the only OS where the command
++// exists. Register drops the spec everywhere else: on Linux the macOS
++// directory-service and Xcode commands cannot run, yet their entries used to
++// surface in every short-prefix menu (dscacheutil/dscl under "ds", launchctl
++// under "la", and so on). Keep this list to commands that do not exist on the
++// other systems at all -- cross-platform tools stay registered.
++var platformOnlySpecs = map[string]string{
++	"codesign":     "darwin",
++	"defaults":     "darwin",
++	"dscacheutil":  "darwin",
++	"dscl":         "darwin",
++	"launchctl":    "darwin",
++	"networksetup": "darwin",
++	"pkgutil":      "darwin",
++	"pmset":        "darwin",
++	"simctl":       "darwin",
++	"xcode-select": "darwin",
++	"xcodebuild":   "darwin",
++	"xcodeproj":    "darwin",
++	"xcodes":       "darwin",
++}
++
+ // Register adds a new spec to the global Registry
+ // example: Register(&Spec{Name: "git"})
+ func Register(s *Spec) {
++	if onlyOS, restricted := platformOnlySpecs[s.Name]; restricted && runtime.GOOS != onlyOS {
++		return
++	}
+ 	if _, exists := Registry[s.Name]; exists {
+ 		duplicateNames = append(duplicateNames, s.Name)
+ 	}
+--- a/spec/lookup.go
++++ b/spec/lookup.go
+@@ -429,6 +429,20 @@
+ 	return results
+ }
+ 
++// shellBuiltinSpecs are specs for words the shell itself implements, so there
++// is no binary in PATH to check them against. Everything else that is not on
++// PATH is hidden from the top-level menu (see topLevelSuggestions).
++var shellBuiltinSpecs = map[string]bool{
++	"cd":      true,
++	"command": true,
++	"exec":    true,
++	"export":  true,
++	"repeat":  true,
++	"source":  true,
++	"trap":    true,
++	"where":   true,
++}
++
+ func topLevelSuggestions(query string, aliases, abbrs map[string]string) []Suggestion {
+ 	scanExternalCommands()
+ 	results, seen := []Suggestion{}, make(map[string]bool)
+@@ -477,6 +491,15 @@
+ 			}
+ 		}
+ 		if match {
++			// [trantor] A top-level suggestion the user cannot run is noise:
++			// upstream registers specs for hundreds of CLIs, including tools
++			// that are not installed, and their flags/subcommands can only end
++			// in command-not-found. Keep specs whose program is on PATH plus a
++			// few shell builtins; subcommand completion for an already typed
++			// word (the multi-token path) is untouched.
++			if !pathCmds[name] && !shellBuiltinSpecs[name] {
++				continue
++			}
+ 			icon := spec.Icon
+ 			if icon == "" {
+ 				icon = name
+--- a/spec/lookup_relevance_test.go
++++ b/spec/lookup_relevance_test.go
+@@ -0,0 +1,62 @@
++package spec
++
++import (
++	"runtime"
++	"testing"
++)
++
++// The relevance filter in topLevelSuggestions hides specs whose binary is not
++// on PATH. Upstream tests register fake commands (git, nvim, cat), so pin them
++// here; scanExternalCommands merges into pathCmds instead of replacing it, so
++// these entries survive the real PATH scan.
++func init() {
++	for _, name := range []string{"git", "nvim", "cat"} {
++		pathCmds[name] = true
++	}
++}
++
++func TestRegisterSkipsOtherPlatforms(t *testing.T) {
++	old := Registry
++	ResetRegistry()
++	defer func() { Registry = old }()
++
++	Register(&Spec{Name: "dscl", Description: "macOS-only helper"})
++	Register(&Spec{Name: "git", Description: "cross-platform"})
++
++	if runtime.GOOS != "darwin" {
++		if _, ok := Registry["dscl"]; ok {
++			t.Fatalf("dscl must not be registered on %s", runtime.GOOS)
++		}
++	}
++	if _, ok := Registry["git"]; !ok {
++		t.Fatal("git must stay registered")
++	}
++}
++
++func TestTopLevelSuggestionsKeepOnlyRunnable(t *testing.T) {
++	old := Registry
++	ResetRegistry()
++	defer func() { Registry = old }()
++
++	Register(&Spec{Name: "git", Description: "installed command"})
++	Register(&Spec{Name: "chezmoi", Description: "not installed"})
++	Register(&Spec{Name: "cd", Description: "shell builtin"})
++	Register(&Spec{Name: "dscacheutil", Description: "macOS-only helper"})
++
++	got := make(map[string]bool)
++	for _, s := range topLevelSuggestions("", nil, nil) {
++		got[s.Cmd] = true
++	}
++	if !got["git"] {
++		t.Error("installed command must be suggested")
++	}
++	if !got["cd"] {
++		t.Error("shell builtin must be suggested")
++	}
++	if got["chezmoi"] {
++		t.Error("spec without a binary on PATH must be hidden")
++	}
++	if runtime.GOOS != "darwin" && got["dscacheutil"] {
++		t.Error("spec for another platform must not reach the menu")
++	}
++}
