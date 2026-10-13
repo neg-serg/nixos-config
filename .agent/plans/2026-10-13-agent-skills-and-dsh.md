@@ -1,8 +1,13 @@
 # Agent skills and dsh — improvement plan (2026-10-13)
 
-Status: open · Owner: next agent session · Source: read-only audit of `~/.dsh/skills`,
+Status: in progress · Owner: next agent session · Source: read-only audit of `~/.dsh/skills`,
 `packages/dsh` and this repo's agent scaffolding. Written to be executed by subagents that never saw
 the originating chat: every task carries its own context, verification and stop conditions.
+
+Progress (2026-10-13): T1, T3 and the `wordcraft` part of T4 are **written into the `~/.dsh/skills`
+working tree and verified** (see the per-task status lines); their commits are handed to the user,
+because the agent sandbox allows the file edits (approved) but not git writes outside `/etc/nixos`.
+T2, the rest of T4, T5 and T6 are open.
 
 ## Why
 
@@ -13,7 +18,7 @@ and turn the answer into a workable plan. Audit findings, all verified:
    18 skills use `name`/`description`/`whenToUse`, `j-space` is missing `whenToUse`, and no skill
    carries the hermes fields the authoring doc prescribes.
 1. Four skills describe the host by its old name (`odin`): `nixos`, `wine-apps`, `sops`,
-   `glm-genelec` (plus one historical mention in `j-space`).
+   `glm-genelec` (`j-space` needed no change: its only hit is the word "re-encoding").
 1. The `nixos` skill is wrong in three more places: the excluded-domain list (it claims
    `llm appimage apps`; `flake/nixos.nix:76` excludes `appimage`+`apps`, `llm` is active),
    `nix store du` (not a nix command) and `just check` quoted without `--option substitute false`.
@@ -41,6 +46,9 @@ and turn the answer into a workable plan. Audit findings, all verified:
   the output is captured in the task report or commit message.
 
 ## T1 — Fix the stale facts in the skill library
+
+**STATUS**: done 2026-10-13 in the `~/.dsh/skills` working tree (files: `nixos`, `wine-apps`,
+`sops`, `glm-genelec`); commit pending — see Progress.
 
 **TASK**: fix the stale host/command facts in `nixos`, `wine-apps`, `sops` and `glm-genelec` (plus
 the single `odin` mention in `j-space`). **CONTEXT** (audit 2026-10-13, every line verified with a
@@ -84,6 +92,10 @@ repo.
 
 ## T3 — Repair the dangling cross-references
 
+**STATUS**: done 2026-10-13 in the working tree (`fault-localization-first`, `memory-trust-hygiene`,
+`golden-tools`, `interactive-cards` — the last one shrank to the surviving `ask_user_question`
+surface, since `visualize` went away with the web GUI); commit pending.
+
 **TASK**: make every skill reference point at something that exists. **CONTEXT** (verified
 2026-10-13): `fault-localization-first:22` names the skill `red-green-repro`, which was never added;
 `memory-trust-hygiene:20` names `untrusted-content-as-data` (the intended target is the existing
@@ -100,6 +112,9 @@ empty; every skill name mentioned in a body exists as a directory. **DONE**: ski
 **MUST NOT**: delete skills or repurpose them.
 
 ## T4 — Add the missing skills (independent commits, in this order)
+
+**STATUS**: `wordcraft` written 2026-10-13 (commit pending); `dsh-worktrees`, `greeter` and the
+backlog remain open.
 
 **TASK**: create the skills below; each is its own commit and can be delegated on its own. **CONTEXT
 — wordcraft** (all verified 2026-10-13): package `packages/wordcraft/default.nix` (source build of
@@ -131,13 +146,21 @@ registry's `latest` tag is the same version (published 2026-09-29), and the inst
 `dsh --version` reports `0.2.0-rc.2`. The only newer code is the alpha channel (`0.2.1-alpha.1`
 2026-10-03, `0.2.1-alpha.2` 2026-10-09) — pre-releases that would mean rebasing the package's source
 patches (`patch-session-format.py`, `patch-widgets.py`, and the `grep`→`rg` sed anchors in
-`post-install.sh`, all keyed to 0.2.0-rc.2 file contents) for no user-visible need. **WHEN TO
-UPDATE**: when npm `latest` moves past `0.2.0-rc.2`. Then: bump `version`, refresh the tarball hash,
-regenerate `package-lock.json` (devDependencies are dropped by design — see the comment in
-`packages/dsh/default.nix`), recompute `npmDepsHash`, re-check every sed anchor in `post-install.sh`
-against the new files, `just fmt`/`just check`, rebuild the closure and smoke `dsh --version` plus
-one session boot. **WATCH**: the wrapper execs the store binary, so dsh cannot self-update here; an
-update is always a repo commit — do not add an updater.
+`post-install.sh`, all keyed to 0.2.0-rc.2 file contents) for no user-visible need. The full audit
+(2026-10-13, subagent) adds: the alpha carries new plugins/tools (git-worktrees, working_directory,
+Claude Code bundles) plus breaking chores (invariant plugins removed, mixed tool-presentation
+dropped, per-row dshHome removed) and the loader dep `node-addon-require-builtin` `^0.1.6` →
+`^0.1.9` — the native loader that forced `nodejs-official.nix`, so re-verify the runtime on any
+bump. **WHEN TO UPDATE** (watch dist-tag `latest` and GH releases for `0.2.1-rc.1` or a `0.2.0`
+final): bump `version`, tarball hash and `npmDepsHash` in `packages/dsh/default.nix`; regenerate
+`package-lock.json` from the new tarball with devDependencies stripped (same `runCommand` recipe);
+then rebase the patchers against the exact target tarball — `patch-widgets.py` fails its count
+assertions (the `subagent` anchor matches 0× on 0.2.1-alpha.2, and `dsh-tool-ralph`/`dsh-webhook`
+are no longer direct deps, so drop or guard those patches), `patch-session-format.py` anchors still
+match, and `post-install.sh`'s `call.name === "grep"` anchor now occurs twice (`sed -g` covers it —
+review the second site). Finally `just fmt`/`just check`, rebuild the closure and smoke
+`dsh --version` plus one session boot. **WATCH**: the wrapper execs the store binary, so dsh cannot
+self-update here; an update is always a repo commit — do not add an updater.
 
 ## T6 — Governance of the skill library
 
