@@ -1,0 +1,50 @@
+--- a/spec/lookup.go
++++ b/spec/lookup.go
+@@ -451,16 +451,26 @@
+ 		}
+ 	}
+ 
++	// A word that already names a program on PATH is a complete command: the
++	// other commands merely sharing its prefix are not what the user is
++	// typing. For "nh" those siblings would be "nhost" (built-in spec) and
++	// "nhlt-dmic-info" (PATH); such a menu has nothing to offer, the accept
++	// key can land on one of them, and while it is visible the navigate keys
++	// never reach the shell's history search (navigate-closed = "shell").
++	// Exact matches still count (spec aliases), and words that are not
++	// commands yet are completed as before.
++	queryIsCommand := pathCmds[strings.TrimSpace(query)]
++
+ 	for name, spec := range Registry {
+ 		if seen[name] {
+ 			continue
+ 		}
+ 		match := false
+ 		if query == "" || HasPrefix(name, query) {
+-			match = true
++			match = !queryIsCommand || name == query
+ 		} else {
+ 			for _, a := range spec.Aliases {
+-				if HasPrefix(a, query) {
++				if HasPrefix(a, query) && (!queryIsCommand || a == query) {
+ 					match = true
+ 					break
+ 				}
+@@ -476,11 +486,13 @@
+ 		}
+ 	}
+ 
+-	for name := range pathCmds {
+-		if !seen[name] && (query == "" || HasPrefix(name, query)) {
+-			results = append(results, Suggestion{
+-				Cmd: name, Desc: "system command", Icon: "system",
+-			})
++	if !queryIsCommand {
++		for name := range pathCmds {
++			if !seen[name] && (query == "" || HasPrefix(name, query)) {
++				results = append(results, Suggestion{
++					Cmd: name, Desc: "system command", Icon: "system",
++				})
++			}
+ 		}
+ 	}
+ 

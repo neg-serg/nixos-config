@@ -36,10 +36,20 @@ buildGoModule rec {
   #
   # iris-menu-footer: render only the shortcuts that are bound and list the
   # navigate keys too (an empty toggle-mode used to draw a stray "<> Mode").
+  #
+  # iris-command-prefix-noise: a word that already names a program on PATH is
+  # a complete command — the other commands merely sharing its prefix are not
+  # what is being typed. `nh` used to offer `nhost` (built-in spec) and
+  # `nhlt-dmic-info` (PATH): that menu has nothing to offer, the accept key
+  # can execute one of them by accident, and while it is visible the navigate
+  # keys never reach the shell's history search (`navigate-closed = "shell"`
+  # in files/iris/config.toml, zsh ^P up-line-or-beginning-search). Words that
+  # are not commands yet are completed as before.
   patches = [
     ./iris-select-fallthrough.patch
     ./iris-empty-keybindings.patch
     ./iris-menu-footer.patch
+    ./iris-command-prefix-noise.patch
   ];
 
   # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
