@@ -135,6 +135,10 @@ if [ -f "$PATCH" ]; then
   if fs_ok; then
     printf '%s\n' @searchRows@ >> "$ROWS"
   fi
+  # Provider rows (currently the llm-deepseek retry policy — see llmRows in
+  # dsh-terminal-plugins.nix). Unconditional: the rows target entries the base
+  # bundle always mounts, so a missing plugin cannot make them dangling.
+  printf '%s\n' @llmRows@ >> "$ROWS"
   # Files the preset declarations reference by a *relative* path: inserted rows
   # anchor relative paths beside their patch file, i.e. this profile directory.
   # Today that is the neg preset's tool-bootstrap.mjs; the repo copy is the

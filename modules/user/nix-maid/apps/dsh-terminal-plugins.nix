@@ -149,4 +149,45 @@ rec {
         lang: en
         bingMarket: en-US
   '';
+
+  # DeepSeek provider policy for the terminal profile: retry a malformed stream
+  # instead of closing the turn. The adapter aborts the whole turn when a
+  # tool-call's accumulated arguments fail a strict JSON.parse — the error is
+  # `tool input is invalid JSON`, code MALFORMED_RESPONSE. The provider's
+  # default retry policy does not list that code (it retries EMPTY_RESPONSE,
+  # RATE_LIMIT, SERVER, TIMEOUT and TRANSPORT — see
+  # @deepseek-ai/dsh-llm/retry-policy, DEFAULT_RETRYABLE_CODES), so the turn
+  # dies with a red `turn error` row that /resume replays forever. Observed
+  # three times on this host (2026-10-09 x2, and 2026-10-12 session efbb8d9f
+  # turn 26, where it killed the unattended music-tag pass mid-run); in the
+  # same session 1173 durable tool calls carried valid arguments, so the
+  # malformed emission is a rare generation glitch — exactly what a bounded
+  # retry recovers, since a failed attempt is never committed to the log and
+  # the step simply re-runs.
+  #
+  # This has to be an id-targeted cordis row: the base bundle's
+  # `dsh-settings-file` row does not survive composition in the tui profile
+  # (no settings.yaml provider is mounted), so the usual `llm-deepseek` user
+  # settings section cannot carry the policy here. Patch semantics replace the
+  # whole row config, so every key the base and dsh-TUI bundle layers set is
+  # repeated (composed values as of 2026-10-12).
+  llmRows = ''
+    # llm-deepseek: MALFORMED_RESPONSE is retryable (module: dsh-terminal-plugins.nix).
+    - id: llm-deepseek
+      config:
+        apiKeyEnv: DEEPSEEK_API_KEY
+        baseURL: !!js process.env.DEEPSEEK_BASE_URL
+        thinking: enabled
+        reasoningEffort: max
+        retryPolicy:
+          mode: normal
+          maxRetries: 3
+          retryableCodes:
+            - EMPTY_RESPONSE
+            - RATE_LIMIT
+            - SERVER
+            - TIMEOUT
+            - TRANSPORT
+            - MALFORMED_RESPONSE
+  '';
 }
