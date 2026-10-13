@@ -14,6 +14,7 @@ let
   video = "mpv.desktop";
   image = "swayimg.desktop;mpv.desktop";
   editor = "nvim.desktop";
+  wordprocessor = "ai.storyteller.wordcraft.desktop";
 
   associations = {
     # --- Browsing ---
@@ -32,6 +33,17 @@ let
 
     # --- Documents ---
     "application/pdf" = pdfreader;
+    # Word/ODF/RTF documents go to WordCraft (the office suite on this host;
+    # LibreOffice is not installed). Plain/markdown/tex/html stay with the editor.
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" = wordprocessor;
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.template" = wordprocessor;
+    "application/vnd.ms-word.document.macroEnabled.12" = wordprocessor;
+    "application/vnd.ms-word.template.macroEnabled.12" = wordprocessor;
+    "application/msword" = wordprocessor;
+    "application/msword-template" = wordprocessor;
+    "application/vnd.oasis.opendocument.text" = wordprocessor;
+    "application/rtf" = wordprocessor;
+    "text/rtf" = wordprocessor;
     "application/epub+zip" = pdfreader;
     "image/vnd.djvu" = pdfreader;
     "application/postscript" = pdfreader;
