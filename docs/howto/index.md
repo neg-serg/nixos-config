@@ -152,3 +152,6 @@
 
 - Lusty roadmap — hotkeys, display modes, preview and consolidation status:
   [lusty-roadmap.md](./lusty-roadmap.md)
+
+- WordCraft — the word processor: CLI conversions, MIME defaults and the font links it needs:
+  [wordcraft.md](./wordcraft.md)
