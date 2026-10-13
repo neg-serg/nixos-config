@@ -2660,6 +2660,28 @@ true
 
 - [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
+## features.system.norefKernel.enable
+
+Whether to enable build the kernel from torvalds’ noref-filemap-read-with-llm branch.
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
+
 ## features.system.zfsSnapshots.enable
 
 Whether to enable periodic sanoid snapshots for the user-data ZFS datasets.
@@ -2736,6 +2758,28 @@ Whether to enable enable reading stack (CLI/GUI viewers, OCR, Recoll).
 
 ```nix
 true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
+
+## features.text.wordcraft.enable
+
+Whether to enable enable WordCraft word processor (Word-style GUI + docx/odt/rtf CLI).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
 ```
 
 *Example:*
