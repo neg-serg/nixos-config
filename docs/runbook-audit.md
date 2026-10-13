@@ -2,7 +2,8 @@
 
 Recurring maintenance audit of `/etc/nixos` — catches cruft, stale docs, dead options and latent
 eval bugs before they bite. Run it periodically (or before a big refactor), then triage findings
-into the improvement plan.
+into the improvement plan (`.agent/plans/`, tracked; one dated file per pass, e.g.
+`2026-10-13-agent-skills-and-dsh.md`).
 
 The previous full run: `audit-2026-07-21.md` (99 findings, 18 critical; archived with the
 agent-workspace cleanup). The process below is what produced it; it is designed to be re-run as-is.
