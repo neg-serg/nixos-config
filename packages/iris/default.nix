@@ -53,18 +53,37 @@ buildGoModule rec {
   # menu (dsh, dsh-statusline, …) was drawn. Now the key falls through to the
   # shell, so up-line-or-beginning-search still recalls the full command; the
   # prefix-noise patch above only covers words that exactly name a PATH command.
+  #
+  # iris-spec-relevance: the top-level menu only suggests what can actually be
+  # run. Upstream registers specs for hundreds of CLIs (and for macOS-only
+  # tools); a spec whose program is not on PATH can only end in
+  # command-not-found, yet its entries fill every short-prefix menu. Register()
+  # now drops macOS-only commands on other systems (dscacheutil, dscl,
+  # defaults, launchctl, networksetup, pmset, pkgutil, simctl, codesign,
+  # xcode-select/build/xcodeproj/xcodes), and topLevelSuggestions keeps a
+  # registry spec only when its binary is on PATH or the word is a shell
+  # builtin (cd, exec, source, ...). Subcommand completion for an already
+  # typed word is untouched. Tests cover both rules.
   patches = [
     ./iris-select-fallthrough.patch
     ./iris-empty-keybindings.patch
     ./iris-menu-footer.patch
     ./iris-command-prefix-noise.patch
     ./iris-nav-fallthrough.patch
+    ./iris-spec-relevance.patch
   ];
 
-  # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
-  # cache invalidation relies on directory mtime, but overlayfs doesn't bump
-  # it for a file created within the same second. All other tests pass.
-  doCheck = false;
+  # Tests run: the added spec-relevance tests plus the upstream suite. Two
+  # sandbox-environment tests are skipped: TestDetectCached_MidSessionFileCreation
+  # relies on directory mtime (overlayfs does not bump it for a file created
+  # within the same second), and TestGitSuggestions expects `.git/refs/heads/main`
+  # to exist after `git init --initial-branch=main` + commit in the build sandbox
+  # (the ref layout differs there). Everything else passes.
+  doCheck = true;
+  checkFlags = [
+    "-skip"
+    "TestDetectCached_MidSessionFileCreation|TestGitSuggestions"
+  ];
 
   ldflags = [
     "-s"
