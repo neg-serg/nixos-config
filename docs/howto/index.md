@@ -155,3 +155,6 @@
 
 - WordCraft — the word processor: CLI conversions, MIME defaults and the font links it needs:
   [wordcraft.md](./wordcraft.md)
+
+- iris — shell IntelliSense on trantor: local patches, key behaviour and the smoke test:
+  [iris.md](./iris.md)
