@@ -6,8 +6,18 @@
 
 (defcfg
   process-unmapped-keys yes
-  ;; Never remap neru's virtual devices (its uinput keyboard/pointer proxies).
-  linux-dev-names-exclude ("neru-keyboard-proxy" "neru-pointer-proxy" "neru-keyboard")
+  ;; Physical keyboards only. A virtual keyboard belongs to the daemon writing
+  ;; it (ydotoold automation, vicinae snippet expansion, neru's uinput proxies);
+  ;; grabbing one races with that owner and a busy device is fatal for kanata.
+  ;; 2026-10-13: the resulting crash loop (5 restarts in 4 s) made neru re-take
+  ;; the real keyboards every time, and its stale proxy then stopped
+  ;; forwarding W for the rest of the session.
+  ;; Names are matched exactly — kanata has no glob support.
+  linux-dev-names-exclude (
+    "neru-keyboard-proxy" "neru-pointer-proxy" "neru-keyboard"
+    "ydotoold virtual device"
+    "vicinae-snippet-virtual-keyboard"
+  )
 )
 
 (defsrc
