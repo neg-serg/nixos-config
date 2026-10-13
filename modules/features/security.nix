@@ -36,6 +36,14 @@ in
     # features.security.lockKernelModules.enable — without the suffix the gate
     # above silently stays false forever (guard: flake/checks.nix feature-flags).
     lockKernelModules.enable = mkBool "Lock kernel module loading after boot (kernel.modules_disabled=1); requires everything needed to be pre-loaded via boot.kernelModules or built-in" false;
+    # Agent-triggered activation of the /etc/nixos flake
+    # (modules/security/agent-switch.nix): a root-owned oneshot unit plus a
+    # NOPASSWD rule for exactly `systemctl start nixos-agent-switch.service`, so a
+    # rollout no longer needs the maintainer at the keyboard. The cost is the flip
+    # side of the removed `nixos-rebuild` NOPASSWD entry: whatever can write the
+    # flake can request a switch, i.e. root for the main user — deliberately, and
+    # with the verified-artifact gate in that module as the only guardrail.
+    agentSwitch.enable = mkBool "Agent-triggered root switch of the /etc/nixos flake (agent rollout without the maintainer)" true;
     # AppArmor confinement for the network-facing daemons. Generated from each
     # daemon's package closure in modules/security/apparmor.nix; all of them
     # ship in "complain" so the first switch is log-only. The last four are

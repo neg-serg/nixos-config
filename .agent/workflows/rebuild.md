@@ -67,19 +67,34 @@ Keep the redirect in any scripted rollout.
 
 ## Who runs it
 
-`sudo` asks for a password: the `nixos-rebuild` NOPASSWD entry was removed on purpose
-(`modules/security/default.nix` — it was passwordless arbitrary root, since the activated flake is
-user-writable), and `features.security.tpmSudo` is off on this host. So an agent prepares the
-rollout and builds the closure, then the user runs the switch. Never add `-n` to the switch command:
-with no NOPASSWD rule `sudo -n` fails immediately instead of prompting.
+Two paths, preferred one first:
 
-Agent-side preparation (everything that needs no root):
+1. **Agent rollout (no password).** `features.security.agentSwitch` (on by default) installs a
+   root-owned oneshot unit plus a NOPASSWD rule for exactly
+   `systemctl start nixos-agent-switch.service` (`modules/security/agent-switch.nix`). The unit
+   re-builds the flake, **refuses** when the tree no longer builds the toplevel named in
+   `/etc/nixos/.agent/switch-request`, activates, and removes the request:
 
-```bash
-cd /etc/nixos
-git status                 # must be clean/intentional — the working tree is what gets activated
-just fmt && just lint
-nix build .#nixosConfigurations.trantor.config.system.build.toplevel \
-  --out-link result --option substitute false
-ls -l result               # then grep the store paths it points at to verify the change landed
-```
+   ```bash
+   cd /etc/nixos
+   just fmt && just lint
+   nix build .#nixosConfigurations.trantor.config.system.build.toplevel \
+     --out-link result --option substitute false
+   just agent-switch "$(readlink -f result)"   # request + start unit + tail the journal
+   ```
+
+   The run lands in the journal: HEAD, the dirty-file list (the tree *is* what gets activated), the
+   artifact and the activation output — `journalctl -u nixos-agent-switch`.
+
+1. **Human switch.** Use it when the mechanism is off, not activated yet, or when the change *is*
+   the mechanism:
+
+   ```bash
+   sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null
+   ```
+
+`sudo` stays password-gated for everything else: the `nixos-rebuild` and `env *` NOPASSWD entries
+were removed on purpose (`modules/security/default.nix` — passwordless arbitrary root, since the
+activated flake is user-writable), and `features.security.tpmSudo` is off on this host. The
+agent-switch unit is the one deliberate exception, and it is narrow: one root-owned unit, exact
+arguments, verified artifact only. Never add `-n` to other sudo commands.

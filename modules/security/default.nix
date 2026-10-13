@@ -28,6 +28,7 @@ in
   imports = [
     ./tpm-sudo.nix
     ./apparmor.nix
+    ./agent-switch.nix
   ];
   services.pcscd.enable = true; # pkcs support
   # nixpkgs' security.lockKernelModules (enabled below) auto-adds one kernel
@@ -150,6 +151,9 @@ in
             # /etc/nixos#trantor` activates whatever the (user-writable) flake evaluates
             # to, so any process running as mainGroup can install a root unit without
             # a prompt. Removed; rebuilds ask for a password like any other wheel command.
+            # The agent rollout has its own narrow shape instead of this blanket rule:
+            # modules/security/agent-switch.nix starts one root-owned unit, and that
+            # unit activates only the toplevel the agent already verified.
             {
               command = "/run/current-system/sw/bin/ryzenadj";
               options = [ "NOPASSWD" ];
@@ -172,20 +176,25 @@ in
             # password like any other wheel command (wheelNeedsPassword).
             # The remaining entries below are narrow systemctl / CPU helpers that
             # cannot be turned into arbitrary root.
+            # Each systemctl rule ends with "" — sudo's exact-arguments marker.
+            # Without it the caller may append arguments, and `systemctl start
+            # xray.service sshd.service` would start that second unit as well (the
+            # same trick with `stop` is how one kills a daemon the rule never
+            # mentioned).
             {
-              command = "/run/current-system/sw/bin/systemctl stop xray.service";
+              command = "/run/current-system/sw/bin/systemctl stop xray.service \"\"";
               options = [ "NOPASSWD" ];
             }
             {
-              command = "/run/current-system/sw/bin/systemctl start xray.service";
+              command = "/run/current-system/sw/bin/systemctl start xray.service \"\"";
               options = [ "NOPASSWD" ];
             }
             {
-              command = "/run/current-system/sw/bin/systemctl stop sing-box-tun.service";
+              command = "/run/current-system/sw/bin/systemctl stop sing-box-tun.service \"\"";
               options = [ "NOPASSWD" ];
             }
             {
-              command = "/run/current-system/sw/bin/systemctl start sing-box-tun.service";
+              command = "/run/current-system/sw/bin/systemctl start sing-box-tun.service \"\"";
               options = [ "NOPASSWD" ];
             }
           ];

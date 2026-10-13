@@ -57,3 +57,8 @@ uv.lock
 
 # GPU core dumps (ROCm aborts write ~1.6 GiB files into the CWD)
 gpucore.*
+
+# Agent rollout: the switch request names the toplevel the agent built and verified
+# (modules/security/agent-switch.nix). Written per switch, removed on success — it
+# must not show up as a tree change in the very diff the switch reports.
+.agent/switch-request
