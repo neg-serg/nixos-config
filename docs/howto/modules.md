@@ -2138,6 +2138,29 @@ true
 
 - [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.security.agentSwitch.enable
+
+Whether to enable Agent-triggered root switch of the /etc/nixos flake (agent rollout without the
+maintainer).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
+
 ## features.security.apparmor.enable
 
 Whether to enable AppArmor confinement for network-facing daemons (sshd, unbound, AdGuard Home,

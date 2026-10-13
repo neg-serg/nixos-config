@@ -35,6 +35,21 @@ deploy-debug host="trantor":
 switch host="trantor":
     just deploy {{ host }}
 
+# Agent rollout: activate the /etc/nixos flake without a password. The argument is
+# the toplevel the agent already built and verified — the root-owned unit refuses to
+# switch when the tree now builds something else (modules/security/agent-switch.nix).
+# Usage: just agent-switch /nix/store/…-nixos-system-trantor-…
+agent-switch toplevel:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    rc=0
+    mkdir -p /etc/nixos/.agent
+    printf '%s\n' "{{toplevel}}" > /etc/nixos/.agent/switch-request
+    sudo -n systemctl start nixos-agent-switch.service || rc=$?
+    systemctl show -p ActiveState -p ExecMainStatus nixos-agent-switch.service
+    journalctl -u nixos-agent-switch -n 40 --no-pager | tail -n 40
+    exit "$rc"
+
 # Show diff between last two generations
 diff:
     @files=$(find /nix/var/nix/profiles -maxdepth 1 -name "system-*-link" | sort -V | tail -n 2); \

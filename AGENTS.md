@@ -31,8 +31,11 @@ Scope
 
 Quick Commands
 - Quick switch (user, primary): `nh os switch /etc/nixos#trantor --option substitute false`
-- Rollout (build+switch) asks for a password — the NOPASSWD entry was removed on purpose
-  (`modules/security/default.nix`): `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
+- Agent rollout (no password): `just agent-switch "$(readlink -f result)"` — the root-owned
+  `nixos-agent-switch.service` activates the toplevel you already built and verified
+  (`modules/security/agent-switch.nix`); details under "Builds: substitute = false" below.
+- Human fallback (mechanism off, not yet activated, or the change *is* the mechanism):
+  `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
 - Build & switch (alternative): `sudo nixos-rebuild switch --flake .#trantor --option substitute false`
 - Build only: `nixos-rebuild build --flake .#trantor --option substitute false`
 - Format all: `just fmt`
@@ -198,27 +201,35 @@ Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
   `nix build .#nixosConfigurations.trantor.config.system.build.toplevel --dry-run --option substitute false`
-- Rollout (rebuild+switch) needs root and **asks for a password**, so the agent takes it as far as
-  it goes without root and then hands the switch over. The `nixos-rebuild` NOPASSWD entry was
-  deliberately removed (`modules/security/default.nix`): it was passwordless arbitrary root, because
-  the flake it activates lives in the user-writable `/etc/nixos`. `features.security.tpmSudo` is off
-  (`hosts/trantor/default.nix`, and there is no `/dev/tpmrm0` on this host), so nothing short of the
-  password unlocks `sudo`. Never ask for the password and never re-add the whitelist.
-- Agent-side rollout, in order: `git status` clean/intentional (nixos-rebuild consumes the working
-  tree, so foreign edits would be baked in) → `just fmt` → `just lint` → build the closure
+- Rollout (rebuild+switch) needs root, and the agent finishes it itself: build the closure, then
+  `just agent-switch "$(readlink -f result)"`. That writes the verified toplevel into
+  `/etc/nixos/.agent/switch-request` and starts the root-owned `nixos-agent-switch.service`, which
+  re-builds the flake, **refuses** when the tree no longer builds that toplevel, activates and logs the
+  run (HEAD, dirty files, artifact) to the journal — `modules/security/agent-switch.nix`,
+  `features.security.agentSwitch`. The blanket `nixos-rebuild` NOPASSWD entry stays removed on
+  purpose: it was passwordless arbitrary root, since the flake it activates lives in the
+  user-writable `/etc/nixos`. The agent-switch unit is the one deliberate, narrow exception, and the
+  tradeoff is unchanged and known: whoever can write the flake can request a switch, i.e. root.
+  `features.security.tpmSudo` is off (`hosts/trantor/default.nix`, and there is no `/dev/tpmrm0` on
+  this host). Never ask for the password; keep the whitelist as narrow as it is — that unit is the
+  only sanctioned addition.
+- Agent-side rollout, in order: `git status` clean/intentional (the switch consumes the working tree,
+  so foreign edits get baked in — the unit prints the dirty-file list into the journal rather than
+  guessing) → `just fmt` → `just lint` → build the closure
   (`nix build .#nixosConfigurations.trantor.config.system.build.toplevel --out-link result
   --option substitute false`) → verify what the build actually contains (grep the store paths
-  `result` points at). Then hand the user the switch command:
-  `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`.
-  The stdin redirect matters when the caller's stdin is a socket (agent/CI shells): `systemd-run
-  --pipe` refuses that, so the build succeeds and nothing is applied — see
-  `.agent/workflows/rebuild.md`.
+  `result` points at) → `just agent-switch "$(readlink -f result)"`. Hand the switch over to the human
+  only when the mechanism is off or not activated yet, or when the change *is* the mechanism:
+  `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
+  (the stdin redirect matters when the caller's stdin is a socket — `systemd-run --pipe` refuses it,
+  the build succeeds and nothing is applied; see `.agent/workflows/rebuild.md`).
 - A bare `nixos-rebuild switch` is not interchangeable with the `sudo` form: the activation step
   writes the root-owned `/nix/var/nix/profiles` (`drwxr-xr-x root root`, not writable by `neg`), and
   nixos-rebuild does not escalate by itself — it would build the whole system and only then fail.
 - Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
-  (`systemctl start/stop xray|sing-box-tun`, `reboot`, `poweroff`, `suspend`, `dmesg`, `ryzenadj`,
-  `gpu-oc`, `glm-adapter-priv`); everything else, `sudo -n` included, prompts.
+  (`systemctl start/stop xray|sing-box-tun` and the agent switch — each with sudo's `""`
+  exact-arguments marker —, `reboot`, `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`,
+  `glm-adapter-priv`); everything else, `sudo -n` included, prompts.
 - The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false` — keep
   that flag convention in any new bindings/scripts.
 - The repo's own targets already pass this flag: `just deploy*`, `just check`,
