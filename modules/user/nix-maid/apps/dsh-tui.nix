@@ -54,6 +54,7 @@ let
         pluginSeeds = roster.seeds;
         pluginRows = lib.escapeShellArg roster.rows;
         searchRows = lib.escapeShellArg roster.searchRows;
+        llmRows = lib.escapeShellArg roster.llmRows;
         presetData = presets.json;
       }
     )
