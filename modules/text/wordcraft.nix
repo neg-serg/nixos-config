@@ -25,13 +25,18 @@ in
     # fontconfig, so the desktop would offer it nothing but Iosevka and a .docx
     # asking for Calibri/Cambria/Arial/Times would render with wrong metrics.
     # Link the metric-compatible substitutes — the same families the app's own
-    # substitution table expects — into the user font folder.
+    # substitution table expects — into the user font folder, plus the coverage
+    # fonts its fallback list wants for characters the document fonts lack
+    # (CJK, emoji; the monochrome Noto Emoji renders in the rasteriser/PDF,
+    # where a COLR/CBDT colour font has no guaranteed path).
     (lib.mkIf enabled (
       neg.mkHomeFiles {
         ".local/share/fonts/carlito".source = "${pkgs.carlito}/share/fonts"; # Calibri metrics
         ".local/share/fonts/caladea".source = "${pkgs.caladea}/share/fonts"; # Cambria metrics
         ".local/share/fonts/liberation".source = "${pkgs.liberation_ttf}/share/fonts"; # Arial/Times/Courier metrics
         ".local/share/fonts/dejavu".source = "${pkgs.dejavu_fonts}/share/fonts"; # Unicode/symbol fallback
+        ".local/share/fonts/noto-cjk-sans".source = "${pkgs.noto-fonts-cjk-sans}/share/fonts"; # CJK fallback
+        ".local/share/fonts/noto-emoji".source = "${pkgs.noto-fonts-monochrome-emoji}/share/fonts"; # emoji fallback
       }
     ))
   ];
