@@ -26,6 +26,7 @@ in
   aura = callPkg (pkg "aura") { inherit mkVicinaeExtension; }; # the emotion/CBT diary: record a note from the launcher
   camillagui = callPkg (pkg "camillagui") { }; # web GUI for CamillaDSP
   atrium = callPkg (pkg "atrium") { }; # Wayland multiseat display manager
+  wordcraft = callPkg (pkg "wordcraft") { }; # Word-style word processor (docx/odt/rtf) + converter CLI
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
