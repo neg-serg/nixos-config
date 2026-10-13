@@ -102,8 +102,9 @@ lib.mkIf (cfg.enable or false) {
     };
   };
 
-  # Self-healing timer for ensure-vm-proxy-alias: the dockur container is
-  # started manually, so re-check periodically (cheap, idempotent).
+  # Self-healing timer for ensure-vm-proxy-alias: pasta copies the host .88
+  # alias into the container netns on every (re)start, so re-check
+  # periodically (cheap, idempotent).
   systemd.user.timers.ensure-vm-proxy-alias = {
     description = "Periodic VM proxy alias cleanup";
     wantedBy = [ "timers.target" ];
