@@ -61,6 +61,13 @@ keys with `kitten @ --to unix:SOCK send-text --match all 'ds'` / `send-key --mat
 read the screen back with `get-text --match all --extent screen`. Keep the window on a headless
 output or a hidden special workspace; `get-text` works while it is not visible.
 
+## Disabling
+
+iris is activated by the `source "${ZDOTDIR}/iris.zsh"` line at the top of `files/shell/zsh/.zshrc`.
+Commenting it out and switching runs plain zsh again; the package and `~/.config/iris/` stay
+deployed, so re-enabling is the same one-line change. Sessions that already run iris keep their
+binary until they are closed.
+
 ## Rebuilding
 
 ```sh
