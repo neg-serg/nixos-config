@@ -52,6 +52,22 @@ wordcraft-cli convert letter.docx /tmp/letter.pdf
 strings /tmp/letter.pdf | grep -oE '/BaseFont/[A-Z]+\+[A-Za-z0-9-]+' | sort -u
 ```
 
+## Proofing and languages
+
+English spelling needs no dictionary: the public-domain Moby word list is built in. Polish and
+Portuguese read Hunspell `.aff`/`.dic` pairs at runtime from `~/.local/share/hunspell`,
+`/usr/share/hunspell` and the other standard folders, or from the directory named by
+`WORDCRAFT_DICTIONARIES` (nixpkgs has the pairs as `hunspellDicts.pl_PL`, `pt_PT`, `pt_BR`). Every
+other language — Russian included — is "no proofing tools installed", the same as Word without a
+language pack: the text stays unmarked instead of being flagged as misspelled English. Russian
+proofing is the upstream gap tracked as issue #8 (Polish and Portuguese landed first; "the other
+languages" are estimated at 20–40 h), so Russian documents show no spelling marks yet. Hyphenation
+follows the same split: the English and Polish patterns and the Bulgarian syllable rules are
+bundled, other languages fall back to the English patterns.
+
+The interface follows the system language (`en_US.UTF-8` on trantor) and can be overridden in
+Options › Language; the Russian catalog exists (#300), one of 30 shipped interface languages.
+
 ## Notes
 
 - The app goes through XWayland by default because winit's file drag-and-drop only works on X11;
