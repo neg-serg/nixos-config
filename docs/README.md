@@ -321,8 +321,8 @@ Service override examples
 
 - params: kernel cmdline and packaging — `modules/system/kernel/params.nix`.
 - sysctl: network/security sysctls in `modules/system/kernel/sysctl.nix`.
-- minimize/localmodconfig: kernel size reduction in
-  `modules/system/kernel/{minimize.nix,localmodconfig.nix}`.
+- localmodconfig: kernel size reduction in `modules/system/kernel/localmodconfig.nix`
+  (`minimize.nix` was removed in 62e6d590).
 - Feature toggles: tune via `profiles.performance.*` and `profiles.security.*`; params derive from
   these.
 
