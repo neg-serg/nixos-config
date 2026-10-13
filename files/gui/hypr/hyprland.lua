@@ -365,12 +365,20 @@ hl.bind(M4 .. "+" .. C .. "+o", hl.dsp.exec_cmd('raise --match "class:regex=^(ob
 hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Obsidian|md\\.obsidian\\.Obsidian)$" --launch "obsidian"'))
 
 -- --- Media (media.conf) ---
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("genlc-media up; swayosd-client --output-volume +5"), { repeating = true, locked = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("genlc-media down; swayosd-client --output-volume -5"), { repeating = true, locked = true })
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("swayosd-client --output-volume +5; genlc-media up"), { repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("swayosd-client --output-volume -5; genlc-media down"), { repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("swayosd-client --output-volume mute-toggle; genlc-media mute"), { repeating = true })
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("swayosd-client --input-volume mute-toggle"), { repeating = true })
+-- The swayosd-client calls these binds inherited from the Mango session are dead
+-- config: that package left with the session (25de0c3b) and nothing in the
+-- closure provides the binary, so each one was an exec that failed with
+-- "not found". The audible half — genlc-media, which owns the Genelec runtime
+-- volume — is what the keys actually did, and it stays. The mic key gets the
+-- equivalent it never had (wpctl). Brightness stays unwired on purpose: there is
+-- no /sys/class/backlight device on this desktop, and ddcutil over the monitor's
+-- DDC hangs even in `detect` here — decide on that separately.
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("genlc-media up"), { repeating = true, locked = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("genlc-media down"), { repeating = true, locked = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("genlc-media up"), { repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("genlc-media down"), { repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("genlc-media mute"), { repeating = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { repeating = true })
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("swayosd-client --brightness +10"), { repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("swayosd-client --brightness -10"), { repeating = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
@@ -420,10 +428,14 @@ hl.bind("Caps_Lock", hl.dsp.exec_cmd("swayosd-client --caps-lock"))
 hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 
 -- --- Notifications (quickshell notification center) ---
-hl.bind(M4 .. "+n", hl.dsp.exec_cmd("quickshell ipc call globalIPC toggleNotificationCenter"))
+-- `timeout` on both IPC calls: a wedged shell keeps its process (and its IPC
+-- socket) alive without answering, and this CLI then blocks forever — on
+-- 2026-10-13 each press left another stuck client behind until the shell was
+-- restarted (the quickshell-health timer now does that on its own).
+hl.bind(M4 .. "+n", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleNotificationCenter"))
 -- Glass panel: live tuning for the hyprglass settings (see the panel module and
 -- hyprglass-apply). Next to the notification centre bind, same IPC shape.
-hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd("quickshell ipc call globalIPC toggleGlassPanel"))
+hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleGlassPanel"))
 hl.bind(M4 .. "+space", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-close-all"), { locked = true })
 
 -- --- Overlay dismissal (quickshell widgets) ---

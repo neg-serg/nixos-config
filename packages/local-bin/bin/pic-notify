@@ -3,7 +3,7 @@
 # Usage: pic-notify IMAGE
 #   Extracts dimensions, size, depth from PNG header (identify -ping, fast).
 #   Copies path to clipboard, writes JSON data + touches semaphore for quickshell.
-#   Falls back to notify-send if quickshell is not running.
+#   Falls back to notify-send when quickshell does not answer its IPC.
 
 
 IFS=' 	
@@ -82,8 +82,12 @@ JSON
 mv "$tmp" "${event_dir}/screenshot-event.json"
 touch "${event_dir}/screenshot-event"   # semaphore for FileView
 
-# ── Fallback: notify-send if quickshell is not running ─────────────────────
-if ! pgrep -f quickshell >/dev/null 2>&1; then
+# ── Fallback: notify-send when quickshell cannot serve the toast ───────────
+# A running process is not a serving shell: `pgrep -f quickshell` also passed for
+# the wedged instance of 2026-10-13, and the toast then never appeared at all.
+# One IPC round-trip is the real liveness test; `timeout` keeps a hung socket
+# from stalling the screenshot pipeline.
+if ! timeout 2 quickshell ipc show >/dev/null 2>&1; then
   if command -v notify-send >/dev/null 2>&1; then
     short=$(echo "$img" | sed "s|$HOME|~|")
     body="${w}×${h}  ·  ${size_hr}"

@@ -10,17 +10,39 @@ MODE="${1:-screen}"
 
 mkdir -p "$RECORDINGS_DIR"
 
+# Notifications are best-effort: a wedged notification daemon must never abort a
+# recording (2026-10-13: a hung quickshell made notify-send exit 1, and `set -e`
+# killed this script before wf-recorder ever started).
+notify() { notify-send -u low "Screen Recording" "$1" 2>/dev/null || true; }
+
 is_recording() {
-    [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+    local pid
+    [ -f "$PIDFILE" ] || return 1
+    pid="$(cat "$PIDFILE" 2>/dev/null)" || return 1
+    [ -n "$pid" ] || return 1
+    # The PID must still belong to wf-recorder: a stale pidfile whose PID got
+    # reused would otherwise make the toggle signal an unrelated process.
+    [ "$(cat "/proc/$pid/comm" 2>/dev/null)" = "wf-recorder" ]
 }
 
 stop_recording() {
+    local pid
     if is_recording; then
-        kill -INT "$(cat "$PIDFILE")" 2>/dev/null || true
+        pid="$(cat "$PIDFILE")"
+        kill -INT "$pid" 2>/dev/null || true
+        # wf-recorder finalizes the mp4 on SIGINT: wait for it to exit before
+        # reporting the stop, so the toast does not race the tail of the file.
+        local waited=0
+        while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt 50 ]; do
+            sleep 0.1
+            waited=$((waited + 1))
+        done
         rm -f "$PIDFILE"
-        notify-send -u low "Screen Recording" "Recording stopped"
+        notify "Recording stopped"
         exit 0
     fi
+    # Stale pidfile from a recorder that died on its own: drop it.
+    rm -f "$PIDFILE"
 }
 
 start_recording() {
@@ -34,15 +56,24 @@ start_recording() {
         fi
     fi
 
-    notify-send -u low "Screen Recording" "Recording started..."
-
+    local pid
     if [ -n "$geometry" ]; then
         wf-recorder -g "$geometry" -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
     else
         wf-recorder -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
     fi
+    pid=$!
 
-    echo $! > "$PIDFILE"
+    # wf-recorder can die right away (unwritable output, busy capture device):
+    # only a recorder that is actually alive earns a pidfile and a "started" toast.
+    sleep 0.3
+    if ! kill -0 "$pid" 2>/dev/null; then
+        notify "Recording failed to start"
+        exit 1
+    fi
+
+    echo "$pid" > "$PIDFILE"
+    notify "Recording started..."
 }
 
 # Toggle: if recording, stop; otherwise start
