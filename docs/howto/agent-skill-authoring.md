@@ -1,66 +1,71 @@
-# SKILL.md skill-authoring contract (port from hermes-agent)
+# SKILL.md authoring contract (the skill catalogue and this repo)
 
-Unified skill format from **NousResearch/hermes-agent** (82 SKILL.md; the contract —
-`skills/software-development/hermes-agent-skill-authoring/SKILL.md`, MIT). Port goal: DSH/repo
-skills get identical frontmatter and short descriptions, so the skill index (and
-dsh-category-skill-reminder reminders) find them by trigger, not by marketing.
+The contract for the skills in `~/.dsh/skills` (the deployed catalogue) and for any future
+repo-hosted skills. It describes the format dsh actually loads: the session index and the
+`dsh-category-skill-reminder` plugin read `name`/`description`
+(`modules/user/nix-maid/apps/dsh-category-skill-reminder/lib/index.js`), and every deployed skill
+follows the shape below.
 
-## Frontmatter
+## Frontmatter (required)
 
 ```yaml
 ---
-name: my-skill-name               # lowercase, hyphens, <=64 characters (MAX_NAME_LENGTH)
-description: Concise capability statement, <=60 characters.
-version: 0.1.0                    # semver; new skills start at 0.1.0
-author: Real Name (handle), Hermes Agent
-license: MIT
-platforms: [linux, macos, windows]   # audit, don't guess
-metadata:
-  hermes:
-    tags: [Short, Descriptive, Tags]
-    related_skills: [other-in-repo-skill]
+name: my-skill-name # kebab-case, must equal the directory name
+description: "<one sentence; the session index shows only its first ~55 characters>"
+whenToUse: "<when the skill must load, in the user's own phrasing>"
 ---
 ```
 
-## description rules (HARDLINE — the validator's limit of 1024 is NOT the standard)
+- `name` — lowercase, hyphen-separated; the directory name must match.
+- `description` — one sentence in the catalogue's language (the deployed skills are Russian because
+  the user is; repo docs stay English). Lead with the trigger: the system-prompt index truncates
+  around 57 characters + "...", so filler at the start hides the skill.
+- `whenToUse` — the load condition as the user would phrase it ("user asks X, Y, Z"), not a
+  restatement of the description.
+- Quote any value containing `:` or YAML parses it as a mapping.
 
-- **\<=60 characters.** One sentence. Ends with a period.
-- Capability statement, not an implementation description; don't repeat the skill name.
-- No marketing words ("powerful", "comprehensive", "seamless", "advanced").
-- The skill index in the system prompt truncates at 57 characters + "..." — the trigger/capability
-  must fit entirely in that window.
-- If description contains ":", wrap it in double quotes (otherwise YAML parses a mapping and the
-  docs generator crashes). Quotes don't count toward the 60.
+## Frontmatter (optional annex for hermes-hosted skills)
 
-Good: "Track named companies for material news with cited digests." Bad: "Use when a user asks to
-monitor named competitors or companies for product launches, pricing changes, funding, ..." (240
-characters — rejected in review).
+Skills ported from a hermes-agent catalogue may carry their provenance fields; they are validated
+only when present:
+
+```yaml
+version: 0.1.0 # semver
+author: Name (handle)
+license: MIT
+platforms: [linux, macos] # audit, don't guess
+metadata:
+  hermes:
+    tags: [Short, Descriptive, Tags]
+    related_skills: [other-skill] # must exist in the catalogue
+```
+
+Before 2026-10-13 this annex was the whole contract, which contradicted both the autolearn template
+and every deployed skill.
 
 ## Body structure
 
-- # Name → ## Overview (2-4 sentences, the principle) → ## When to Use (explicit triggers) → ## Core
-  method / steps → ## When NOT to use / exceptions → ## Notes (source, license, pairs).
-- Iron laws (if any) go at the beginning, in a blockquote or code block, and are duplicated at the
-  start of the steps.
-- References — separate files in references/ (don't bloat SKILL.md).
-- Reference example in the repo: skills/software-development/systematic-debugging/SKILL.md (Iron Law
-  \+ Feedback Loop Rule + phases + anti-patterns).
+- `# Name` → overview (2–4 sentences: the principle) → steps/commands → gotchas → notes.
+- Iron laws at the top, in a blockquote or fenced block, repeated at the start of the steps.
+- One screenful. Depth goes to `references/` or `scripts/` next to SKILL.md; long recipes belong in
+  `/etc/nixos/docs/` while the skill keeps the trigger and the gotchas.
+- A skill named in the body must exist in the catalogue, and a `docs/...` path must exist in
+  `/etc/nixos` — `scripts/check-skills.sh` checks both.
 
-## Discovery (4 levels)
+## Discovery
 
-1. project (in the working project) → 2. opencode/user (in the user directory) → 3. builtin
-   (built-in). A skill with the same name at a higher level overrides the lower one.
+1. project (`<projectRoot>/.dsh/skills`) → 2. user (`~/.dsh/skills`) → 3. built-in. A skill with the
+   same name at a higher level overrides the lower one. An MCP server inside a skill is isolated by
+   the `sessionID:skill:server` key.
 
-## Skill-embedded MCP
+## Checks
 
-An MCP server inside a skill is isolated by the sessionID:skill:server key — the state of one skill
-doesn't leak between sessions. For DSH: skills come from the session directory; when MCP is
-connected, the same isolation principle applies.
-
-## Port into this repository
-
-- Skills living in /etc/nixos (e.g., future .agent/skills/) must follow this contract.
-- Checks: name lowercase-hyphens; description \<=60 characters; version semver; platforms real;
-  related_skills reference existing skills.
-- Source: /tmp/hermes-agent (commit 27562ad), the file
-  skills/software-development/hermes-agent-skill-authoring/SKILL.md + the hermes skill validator.
+- `bash ~/.dsh/skills/scripts/check-skills.sh` — hard checks: frontmatter (name equals the
+  directory, kebab-case, non-empty `description` and `whenToUse`), `scripts/...` paths that exist,
+  `docs/...` paths that exist in `/etc/nixos`, `related_skills` entries that exist. Advisory lines
+  flag hyphenated backticked citations that match no directory; they are noisy by nature (a tool
+  name looks like a skill name), so review them rather than obeying them.
+- The skills repo wires the checker as a pre-commit hook: `.githooks/pre-commit` plus
+  `git config core.hooksPath .githooks`; the hook skips itself when the script is absent.
+- Historical origin of the annex: the hermes-agent skill validator (`/tmp/hermes-agent`, commit
+  27562ad) — the deployed contract above supersedes it.

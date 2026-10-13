@@ -24,9 +24,9 @@ every fact — only repeatable procedures worth codifying.
 
    ```markdown
    ---
-   name: <kebab-case-name>
-   description: <one sentence, <= 200 chars>
-   whenToUse: <one sentence: when to load this skill>
+   name: <kebab-case-name>   # must equal the directory name
+   description: "<one sentence; the skill index shows only the first ~55 characters, put the trigger there>"
+   whenToUse: "<when the skill must load, in the user's own phrasing>"
    ---
 
    <concrete steps, commands, gotchas — what worked>
@@ -38,6 +38,10 @@ every fact — only repeatable procedures worth codifying.
 
 1. **Never touch user-authored skills** — only create new ones or update skills this workflow
    created.
+
+1. **Validate it**: `bash ~/.dsh/skills/scripts/check-skills.sh` (the catalogue repo wires it as a
+   pre-commit hook, see `docs/howto/agent-skill-authoring.md`) — a skill the checker fails is not
+   done.
 
 1. **Keep it small** — one screenful max; trim to the reusable essence.
 
