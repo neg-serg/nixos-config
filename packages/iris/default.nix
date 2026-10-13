@@ -45,11 +45,20 @@ buildGoModule rec {
   # keys never reach the shell's history search (`navigate-closed = "shell"`
   # in files/iris/config.toml, zsh ^P up-line-or-beginning-search). Words that
   # are not commands yet are completed as before.
+  #
+  # iris-nav-fallthrough: a navigation key is only consumed while the overlay
+  # cursor can actually move. At the edge of a visible menu (Ctrl+P on the
+  # first item, Ctrl+N on the last) MoveCursor reports no move, and upstream
+  # swallowed the key silently — `ds` + Ctrl+P looked dead while the prefix
+  # menu (dsh, dsh-statusline, …) was drawn. Now the key falls through to the
+  # shell, so up-line-or-beginning-search still recalls the full command; the
+  # prefix-noise patch above only covers words that exactly name a PATH command.
   patches = [
     ./iris-select-fallthrough.patch
     ./iris-empty-keybindings.patch
     ./iris-menu-footer.patch
     ./iris-command-prefix-noise.patch
+    ./iris-nav-fallthrough.patch
   ];
 
   # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
