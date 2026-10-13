@@ -137,6 +137,9 @@ Todos (ported from omp)
   every item as its own task before working; never summarize into fewer tasks or track the
   rest from memory.
 - Mark tasks done immediately after finishing; keep task strings stable.
+- A multi-round request stays one list: sync it in every round that starts or finishes an item. A
+  status that lags the work is a silent lie; a follow-up turn ("continue", "keep going") is the
+  same tracked work, not a new list.
 - Never make a todo call the turn's only tool call — batch it with real work (init with first
   reads/edits; each done/start with the next action).
 
