@@ -1,9 +1,11 @@
 # wl-workspaces — one wallpaper per Hyprland workspace.
 #
-# Deployed as ~/.config/wl/workspaces.toml (live link: edits apply on the next
-# workspace change, no rebuild). The helper itself lives in
-# packages/local-bin/bin/wl-workspaces.py and runs as the user service
-# wl-workspaces.service; `wl-workspaces show` prints the current mapping.
+# Deployed as ~/.config/wl/workspaces.toml (live link; no rebuild). The watcher
+# loads this file once at startup — restart wl-workspaces.service after editing
+# it; one-shot commands (show/apply/shuffle) read it on every run. The helper
+# itself lives in packages/local-bin/bin/wl-workspaces.py and runs as the user
+# service wl-workspaces.service; `wl-workspaces show` prints the current
+# mapping.
 #
 # What it does: on every workspace change it paints the output with
 # `wl img <image> --no-notify`, so the greeter keeps the wallpaper *you* picked
