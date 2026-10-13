@@ -39,6 +39,10 @@ transition = "wipe"
 duration = 0.35
 
 [workspaces]
+# Wallpaper switching is off: unpinned workspaces keep whatever is painted.
+# Remove the "*" line to bring back the seeded per-workspace images.
+"*" = "keep"
+
 # Examples — uncomment to pin a workspace:
 # dev   = "~/pic/wl/dev"          # a directory of its own
 # games = "keep"                  # nothing repaints under games
