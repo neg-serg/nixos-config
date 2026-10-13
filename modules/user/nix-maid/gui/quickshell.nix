@@ -57,6 +57,43 @@ let
       }
     )
   );
+
+  # Hang watchdog probe (quickshell-health.timer runs it every 2 minutes).
+  # `Restart=on-failure` covers a shell that crashes; it does nothing for one
+  # that keeps running with a dead event loop. 2026-10-13 was exactly that: the
+  # IPC socket stopped answering while the unit stayed "active", and because
+  # quickshell owns the org.freedesktop.Notifications name, notify-send went to
+  # `Timeout was reached` — screenrec notifies *before* it starts wf-recorder, so
+  # `set -e` killed it and the recording hotkey looked broken. One IPC round-trip
+  # is the liveness test; the age guard keeps a shell that is merely starting up
+  # from being restarted under itself.
+  quickshellHealth = pkgs.writeShellScript "quickshell-health" ''
+    set -uo pipefail
+
+    # A stopped or crashed shell is not this probe's business: restartOnFailure
+    # owns that path, and the login-phase condition keeps the bar down on purpose.
+    [ "$(systemctl --user is-active quickshell.service 2>/dev/null || true)" = "active" ] || exit 0
+
+    if timeout 5 quickshell ipc show >/dev/null 2>&1; then
+      exit 0
+    fi
+
+    # Only an instance that has been up for a while can be called wedged: a shell
+    # that is still starting (or one that just restarted) answers late.
+    active_us="$(systemctl --user show -p ActiveEnterTimestampMonotonic --value quickshell.service 2>/dev/null || true)"
+    active_us="''${active_us:-0}"
+    case "$active_us" in
+      *[!0-9]*) exit 0 ;;
+    esac
+    [ "$active_us" -gt 0 ] || exit 0
+
+    uptime_s="$(cut -d. -f1 /proc/uptime)"
+    active_s=$((active_us / 1000000))
+    [ $((uptime_s - active_s)) -ge 90 ] || exit 0
+
+    systemctl --user restart quickshell.service
+  '';
+
   # Build individual nix-maid entries for source dir top-level contents,
   # excluding writable paths (Theme, Settings, Settings.json, .github)
   # and force-copied paths (Components, Bar, Helpers, Notifications,
@@ -134,6 +171,35 @@ lib.mkIf quickshellEnabled (
             # every fresh session fell back to the hardcoded -40 dB.
             "PATH=%h/.local/bin:/run/current-system/sw/bin:\${PATH}"
           ];
+        };
+      };
+
+      # Hang watchdog (probe: quickshellHealth above). `restartOnFailure` only
+      # reacts to a shell that *exits*; a shell that is "active" while its event
+      # loop is dead is invisible to systemd — and it takes the notification
+      # service down with it. One IPC round-trip every 2 minutes is the whole
+      # price of noticing.
+      systemd.user.services.quickshell-health = systemdUser.mkUserService {
+        description = "Restart the Quickshell shell when it stops answering its IPC";
+        presets = [ "oneshot" ];
+        # User units start with a minimal PATH: the probe needs the shell's own
+        # CLI plus timeout/systemctl/cut.
+        path = [
+          pkgs.coreutils # timeout and cut, used by the probe
+          pkgs.systemd # systemctl --user: the liveness check and the restart
+          quickshellWrapped # the shell's own CLI for `quickshell ipc`
+        ];
+        serviceConfig = {
+          ExecStart = quickshellHealth;
+        };
+      };
+
+      systemd.user.timers.quickshell-health = {
+        description = "Timer: Quickshell hang watchdog";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "5m";
+          OnUnitActiveSec = "2m";
         };
       };
     }
