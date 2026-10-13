@@ -4,10 +4,13 @@ Status: in progress · Owner: next agent session · Source: read-only audit of `
 `packages/dsh` and this repo's agent scaffolding. Written to be executed by subagents that never saw
 the originating chat: every task carries its own context, verification and stop conditions.
 
-Progress (2026-10-13): T1, T3 and the `wordcraft` part of T4 are **written into the `~/.dsh/skills`
-working tree and verified** (see the per-task status lines); their commits are handed to the user,
-because the agent sandbox allows the file edits (approved) but not git writes outside `/etc/nixos`.
-T2, the rest of T4, T5 and T6 are open.
+Progress (2026-10-13): everything except T6 is written and verified — T1 and T3 (edited skills), T2
+(contract rewrite committed here as `ecfbd47e`; the checker `scripts/check-skills.sh`, its
+`.githooks/pre-commit` and the `j-space` frontmatter fix live in the `~/.dsh/skills` working tree)
+and T4 (`wordcraft`, `dsh-worktrees`, `greeter`). The skills-repo commits are handed to the user,
+because the sandbox allows the approved file edits but not git writes outside `/etc/nixos`. The
+catalogue validates clean (`check-skills: OK (21 skills)`). T4's backlog, T5 (a no-op until upstream
+moves) and T6 (needs the remote decision) remain.
 
 ## Why
 
@@ -72,6 +75,10 @@ descriptions, or move files.
 
 ## T2 — One skill frontmatter contract + a validator
 
+**STATUS**: done 2026-10-13 — the contract rewrite is committed here (`ecfbd47e`); the checker, the
+hook and the `j-space` fix are staged in the skills repo (commit pending). The checker reports
+`OK (21 skills)` on the catalogue and fails a fixture whose directory name breaks the contract.
+
 **TASK**: make the repo's skill docs describe the format dsh actually loads, and add a checker.
 **CONTEXT**: three specs today — `docs/howto/agent-skill-authoring.md` (hermes: English, description
 \<=60 chars, version/author/license/platforms/metadata.hermes), `.agent/workflows/autolearn.md`
@@ -113,8 +120,8 @@ empty; every skill name mentioned in a body exists as a directory. **DONE**: ski
 
 ## T4 — Add the missing skills (independent commits, in this order)
 
-**STATUS**: `wordcraft` written 2026-10-13 (commit pending); `dsh-worktrees`, `greeter` and the
-backlog remain open.
+**STATUS**: `wordcraft`, `dsh-worktrees` and `greeter` written 2026-10-13 (commits pending); the
+backlog (`windows-vm-dockur`, `local-music-ai`, `kernel-build`, `dsh-tui-profile`) remains open.
 
 **TASK**: create the skills below; each is its own commit and can be delegated on its own. **CONTEXT
 — wordcraft** (all verified 2026-10-13): package `packages/wordcraft/default.nix` (source build of
