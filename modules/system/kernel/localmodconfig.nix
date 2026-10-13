@@ -15,31 +15,11 @@ let
 
   # 7.2.x (latest) instead of 6.18.x (default): the ZFS module nixpkgs ships
   # (zfs_2_4 = 2.4.4) officially supports 7.2, and cache-aware scheduling is
-  # the reason for the bump. Both MT6639 Bluetooth fixes below are upstream in
-  # 7.2, so they are version-gated rather than deleted: switching back to
-  # pkgs.linuxPackages (6.18.x LTS) stays a one-line change and re-applies them.
+  # the reason for the bump. MT6639 Bluetooth needs no patches on >= 7.2:
+  # btusb.c carries USB_DEVICE(0x13d3, 0x3588) and btmtk.c picks
+  # (num_altsetting > 1) ? 1 : 0; both are in-tree. Kernels older than 7.2
+  # (6.18.x LTS and below) are not supported on this host.
   baseKernel = pkgs.linuxPackages_latest.kernel;
-
-  # MediaTek MT6639 (MT7927) Bluetooth for trantor's adapter (13d3:3588, ASUS ROG
-  # STRIX X870E-E): the chip reports CHIPID=0x0000 and older 6.18.y drove it as
-  # MT7922, failing with "hci0: Opcode 0x0c03 failed: -16". The upstream MT6639
-  # backport (28b7c5a6db74, 81f971c6abec, 59c3ee19ca88) is in-tree since
-  # linux 6.18.53 (btmtk.c/btmtk.h/btmtksdio.c), but it does not add the USB ID,
-  # so pre-7.2 keeps only the missing btusb entry: mt6639-btusb-id.patch.
-  # On 7.2 both fixes are upstream (btusb.c already carries
-  # USB_DEVICE(0x13d3, 0x3588); btmtk.c picks (num_altsetting > 1) ? 1 : 0),
-  # so the patch list is empty there.
-  kernelSrc = pkgs.applyPatches {
-    name = "linux-${baseKernel.version}-mt6639";
-    src = baseKernel.src;
-    patches = lib.optionals (!lib.versionAtLeast baseKernel.version "7.2") [
-      (r.path "files/patches/mt6639-btusb-id.patch")
-      # LE Audio needs the ISO (isochronous) data path; the 6.18 driver
-      # hardcoded an alt setting that does not exist on this chip, so the
-      # path stayed down and BAP/LC3 could never be negotiated.
-      (r.path "files/patches/mt6639-iso-altsetting.patch")
-    ];
-  };
 
   # Kernel config = generated base + deliberate manual overlay
   # (H-series notes from the Jul-2026 kernel audit), merged in pure Nix.
@@ -121,7 +101,7 @@ let
       modDirVersion
       features
       ;
-    src = kernelSrc;
+    src = baseKernel.src;
     inherit configfile;
     config = kernelConfig;
     extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
