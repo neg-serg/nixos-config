@@ -1,0 +1,96 @@
+--- a/root/wrapper.go
++++ b/root/wrapper.go
+@@ -523,20 +523,25 @@
+ 
+ 	// Shared handler for configured navigation keys (e.g. ctrl+j / ctrl+k).
+ 	// Moves the overlay cursor when visible, otherwise opens history/spec
+-	// list and selects the next item in the requested direction.
+-	handleNavKey := func(dir string) {
++	// list and selects the next item in the requested direction. Reports
++	// whether the key was handled: at the edge of a visible menu the cursor
++	// cannot move (MoveCursor clamps, it never wraps), so the caller forwards
++	// the key to the shell instead of swallowing it -- ctrl+p keeps reaching
++	// up-line-or-beginning-search even while a prefix menu is drawn.
++	handleNavKey := func(dir string) (handled bool) {
+ 		if overlay.IsVisible() {
+-			intercepted = true
+-			userNavigated.Store(true)
+-
+ 			arrowDir := "down"
+ 			if dir == "up" {
+ 				arrowDir = "up"
+ 			}
+ 			moved, selectedCmd := overlay.MoveCursor(arrowDir)
+ 			if !moved {
+-				return
++				// no room to move: report "not handled" so the caller can forward
++				// the key to the shell instead of swallowing it silently
++				return false
+ 			}
++			intercepted = true
++			userNavigated.Store(true)
+ 
+ 			bufferMu.Lock()
+ 			activeModeMu.RLock()
+@@ -578,6 +583,7 @@
+ 			} else {
+ 				draw()
+ 			}
++			return true
+ 		} else if suggestionsEnabled {
+ 			// hidden-overlay history navigation only when suggestions are enabled;
+ 			// otherwise let the navigation keys pass through to the shell
+@@ -626,7 +632,11 @@
+ 					_, _ = ptmx.Write(replace)
+ 				}
+ 			}
++			return true
+ 		}
++	// Menu hidden and suggestion navigation disabled: keep the upstream
++	// behavior of consuming the key.
++	return true
+ 	}
+ 
+ 	// bridge pty output to actual stdout
+@@ -1119,9 +1129,15 @@
+ 					if isNavUp {
+ 						arrowDir = "up"
+ 					}
+-					handleNavKey(arrowDir)
+-					i += navConsumed - 1
+-					continue
++					if handleNavKey(arrowDir) {
++						i += navConsumed - 1
++						continue
++					}
++					// Menu edge: the cursor cannot move, so hand the key to the shell
++					// (ctrl+p -> up-line-or-beginning-search). Drop the stale menu first:
++					// the shell rewrites the line now, and nothing repaints the box until
++					// the next keystroke.
++					writeStdout([]byte(overlay.ClearAndDisable()))
+ 				}
+ 
+ 				if matched, consumed := config.MatchKey(inputSlice[i:], config.Get().Keybindings.SelectSuggestion); matched && config.Get().Keybindings.SelectSuggestion != "" {
+@@ -1262,12 +1278,20 @@
+ 						isNavDown, navConsumed = config.MatchKey(inputSlice[i:], config.Get().Keybindings.NavigateDown)
+ 					}
+ 					if (isNavUp || isNavDown) && !navToShell {
+-						intercepted = true
+ 						arrowDir := "down"
+ 						if isNavUp {
+ 							arrowDir = "up"
+ 						}
+-						handleNavKey(arrowDir)
++						if handleNavKey(arrowDir) {
++							intercepted = true
++							i += navConsumed - 1
++							continue
++						}
++						// Menu edge: drop the stale menu and forward the raw sequence to the
++						// shell instead of swallowing it (same rule as the generic navigation
++						// block above).
++						writeStdout([]byte(overlay.ClearAndDisable()))
++						_, _ = ptmx.Write(inputSlice[i : i+navConsumed])
+ 						i += navConsumed - 1
+ 						continue
+ 					}

@@ -11,10 +11,13 @@
 #   stops Load() from re-filling it with the ctrl+r default. Ctrl+R stays with
 #   hishtory (07-hishtory.zsh) and fzf. To try the toggle: "ctrl+r".
 # - navigate-up/down = "ctrl+p"/"ctrl+n" — home-row keys, no arrows in the
-#   menu: while the menu is open they move the selection; with the menu closed
-#   navigate-closed = "shell" forwards them to zsh, so the old ^P/^N history
-#   search keeps working. Arrows are never bound by iris — they stay pure zsh
-#   (cursor motion, up/down-line-or-beginning-search).
+#   menu: while the menu is open they move the selection, and at the list edge
+#   (nothing further up/down) the [trantor] nav-fallthrough patch hands the key
+#   back to zsh instead of swallowing it — `ds` + ^P still recalls the last
+#   `dsh …` command from history. With the menu closed navigate-closed =
+#   "shell" forwards them to zsh, so the old ^P/^N history search keeps
+#   working. Arrows are never bound by iris — they stay pure zsh (cursor
+#   motion, up/down-line-or-beginning-search).
 # - navigate-right = "right" — inert while ghost-text = 0 (there is nothing to
 #   accept): the right arrow is forwarded to zsh and just moves the cursor.
 #   If ghost text is ever turned on, set this to "" so the arrow keeps moving
