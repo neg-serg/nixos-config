@@ -4,13 +4,14 @@ Status: in progress · Owner: next agent session · Source: read-only audit of `
 `packages/dsh` and this repo's agent scaffolding. Written to be executed by subagents that never saw
 the originating chat: every task carries its own context, verification and stop conditions.
 
-Progress (2026-10-13): everything except T6 is written and verified — T1 and T3 (edited skills), T2
-(contract rewrite committed here as `ecfbd47e`; the checker `scripts/check-skills.sh`, its
-`.githooks/pre-commit` and the `j-space` frontmatter fix live in the `~/.dsh/skills` working tree)
-and T4 (`wordcraft`, `dsh-worktrees`, `greeter`). The skills-repo commits are handed to the user,
-because the sandbox allows the approved file edits but not git writes outside `/etc/nixos`. The
-catalogue validates clean (`check-skills: OK (21 skills)`). T4's backlog, T5 (a no-op until upstream
-moves) and T6 (needs the remote decision) remain.
+Progress (2026-10-13): T1–T4 are written and verified; T6 has the README, only the remote is open.
+T2's contract rewrite is committed here (`ecfbd47e`); the rest lives in the `~/.dsh/skills` working
+tree — the checker + hook + `j-space` fix (T2), four fixed skills (T1), four repaired references
+(T3), seven new skills (T4: `wordcraft`, `dsh-worktrees`, `greeter`, `windows-vm-dockur`,
+`local-music-ai`, `kernel-build`, `dsh-tui-profile`) and the catalogue README (T6). Commits are
+handed to the user, because the sandbox allows the approved file edits but not git writes outside
+`/etc/nixos`. The catalogue validates clean (`check-skills: OK (25 skills)`). T5 stays a no-op until
+upstream moves; T6 awaits the remote decision.
 
 ## Why
 
@@ -120,8 +121,8 @@ empty; every skill name mentioned in a body exists as a directory. **DONE**: ski
 
 ## T4 — Add the missing skills (independent commits, in this order)
 
-**STATUS**: `wordcraft`, `dsh-worktrees` and `greeter` written 2026-10-13 (commits pending); the
-backlog (`windows-vm-dockur`, `local-music-ai`, `kernel-build`, `dsh-tui-profile`) remains open.
+**STATUS**: done 2026-10-13 — all seven skills written (three by hand, four from subagent surveys
+that verified every path and command); commits pending, see Progress.
 
 **TASK**: create the skills below; each is its own commit and can be delegated on its own. **CONTEXT
 — wordcraft** (all verified 2026-10-13): package `packages/wordcraft/default.nix` (source build of
@@ -170,6 +171,9 @@ review the second site). Finally `just fmt`/`just check`, rebuild the closure an
 self-update here; an update is always a repo commit — do not add an updater.
 
 ## T6 — Governance of the skill library
+
+**STATUS**: the README is written (contract pointer, checker and hook install, how autolearn adds
+skills, the catalogue rules, the remote note); the remote itself is still a user decision.
 
 **TASK**: give the skills repo a README and a backup path. **CONTEXT**: `/home/neg/.dsh/skills` is
 local-only (`git remote -v` empty), 18 skills, gitignore for Python artifacts. The language policy
