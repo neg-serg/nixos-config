@@ -47,3 +47,32 @@ systemctl --user is-active kanata.service
 
 If caps-nav commits appear in the tree again, cross-check against this document before building: by
 default they **must not** end up in the deploy until a separate experiment has been agreed on.
+
+## Input chain: virtual devices and the neru coupling (2026-10-13)
+
+The live path is `physical keyboard → kanata → neru (evdev proxy) → Hyprland`; the compositor sees
+neru's proxy as the "main" keyboard.
+
+Incident: kanata crash-looped five times in four seconds (`failed read: Device or resource busy`)
+because it also tried to grab keyboards that other daemons write (`ydotoold virtual device`,
+`vicinae-snippet-virtual-keyboard`). Every restart forced neru to re-take the physical keyboards
+(`a remapper released it` / `Yielding physical keyboards … to a remapper that just started`), and
+the long-lived neru proxy drifted out of sync: `W` stopped reaching any application until neru was
+restarted.
+
+Rules that follow from it:
+
+- `linux-dev-names-exclude` in `files/cli/kanata/kanata.kbd` lists every virtual keyboard
+  (`neru-keyboard-proxy`, `ydotoold virtual device`, `vicinae-snippet-virtual-keyboard`); names are
+  matched exactly — kanata has no glob support. The remapper touches physical keyboards only.
+- `modules/hardware/input/default.nix` sets `StartLimitIntervalSec = 0`, so a crash loop cannot kill
+  the remapper permanently (the systemd default is 5 starts / 10 s).
+- `modules/user/session/neru.nix` sets `partOf = [ "kanata.service" ]`: every kanata restart also
+  restarts neru, so a stale proxy cannot survive a remapper restart.
+
+Recovery if a single key stops registering:
+
+```bash
+systemctl --user restart neru      # stale neru proxy — returns the key instantly
+systemctl --user restart kanata    # now also restarts neru
+```
