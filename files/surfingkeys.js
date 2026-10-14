@@ -361,11 +361,12 @@ api.map('k', 'k');
 // Vim classic: Ctrl-[ as Esc
 api.map('<Ctrl-[>', '<Esc>');
 
-// Large Scroll (Half Page)
-api.mapkey('b', 'Scroll half page down', () => {
+// Half-page scroll on the emacs chords; v stays the visual-mode entry and b
+// the SurfingKeys default (bookmark), overriding them to scroll was a trap.
+api.mapkey('<Ctrl-d>', 'Scroll half page down', () => {
   api.Normal.scroll("pageDown");
 });
-api.mapkey('v', 'Scroll half page up', () => {
+api.mapkey('<Ctrl-u>', 'Scroll half page up', () => {
   api.Normal.scroll("pageUp");
 });
 // s — scroll page down like Space (full viewport, instant)
@@ -401,7 +402,6 @@ api.unmap('om');  // Open VIMarks
 api.unmap('ab');  // Add bookmark
 api.unmap(';x');  // Close tabs by URL
 api.unmap(';gt'); // Gather filtered tabs into current window
-api.unmap(';u');  // Edit URL with vim editor (history autocomplete)
 api.unmap('?');   // Show usage popup
 // Remaining search aliases via o (now freed)
 api.unmap('os');  // stackoverflow search
