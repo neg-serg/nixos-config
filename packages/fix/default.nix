@@ -90,6 +90,10 @@ stdenv.mkDerivation (finalAttrs: {
     cp -r ${nss} vendor/nss
     cp -r ${publicSuffixList} vendor/psl
 
+    # Store checkouts are read-only and cp keeps the source mode: the copies
+    # below need the write bit before the zon rewrite can touch them.
+    chmod -R u+w vendor
+
     # The vendored dependencies carry their own zon files; point them at the
     # sibling trees instead of the unreachable upstream URLs.
     cp ${./vendor/ziggit.zon} vendor/ziggit/build.zig.zon
@@ -135,6 +139,10 @@ stdenv.mkDerivation (finalAttrs: {
     export HOME=$TMPDIR
     export XDG_CACHE_HOME=$TMPDIR/cache XDG_STATE_HOME=$TMPDIR/state XDG_DATA_HOME=$TMPDIR/data
     mkdir -p "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME"
+
+    # fix colours its output; without this the sandbox sees \E[33m3\E[0m and
+    # the equality checks below fail on the escape codes.
+    export NO_COLOR=1
 
     fix=${finalAttrs.finalPackage}/bin/fix
 
