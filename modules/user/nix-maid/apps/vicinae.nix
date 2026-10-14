@@ -122,6 +122,12 @@ let
       "action.refresh" = "control+R";
       "action.remove" = "control+X";
       "action.save" = "control+S";
+      # Item reordering in lists. The two move actions were unreachable (no
+      # default combo and nothing bound them); the spellings are the ones the
+      # upstream key table accepts — "control+shift+Up" would parse as an
+      # unknown key and silently unbind the action.
+      "action.move-up" = "control+shift+ARROWUP";
+      "action.move-down" = "control+shift+ARROWDOWN";
     };
     providers = {
       "@neg/wl-switcher" = {
