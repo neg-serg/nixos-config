@@ -1,0 +1,9 @@
+# Names that must NOT be blackholed even though the upstream snapshot
+# (files/sources/malw-hosts.txt) lists them: gen-unbound-hosts drops these from
+# the upstream entries, so they keep resolving through Unbound's forwarders.
+# One host name per line; survives snapshot refreshes, unlike a hand-edit there.
+#
+# api.github.com — blocked by the malw.link snapshot, which blackholes it to
+# 185.246.223.127 and breaks the `gh` CLI (and its Dependabot API) with a
+# connect timeout while github.com itself stays reachable.
+api.github.com
