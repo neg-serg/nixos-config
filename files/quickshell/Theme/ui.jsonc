@@ -8,6 +8,13 @@
     "icon": {
       "emphasisOpacity": 0.9
     },
+    "textShadow": {
+      // Soft glyph shadow on glass (Components/GlyphShadow.qml); lightThreshold
+      // gates the bar/pill shadow on the sampled wallpaper luminance.
+      "enabled": true,
+      "opacity": 0.75,
+      "lightThreshold": 0.5
+    },
     "anim": {
       "quickMs": 120,
       "rotateMs": 160,

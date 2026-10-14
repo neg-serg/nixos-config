@@ -4,6 +4,22 @@
       "openDelayMs": 320,
       "stillThresholdMs": 180
     },
+    // Art/accent resample debounce shared by Services/CoverResolver.qml and the bar widget.
+    "artDebounceMs": 60,
+    // Media capsule icon sizing; Settings.settings.mediaIcon* wins when set.
+    "icon": {
+      "mode": "compact",
+      "stretchShare": 1.0,
+      "minWidthPx": 0,
+      "maxWidthPx": 0,
+      "preferredWidthPx": 0,
+      "overlayPaddingPx": 0,
+      "panel": {
+        "overlayPaddingPx": 12,
+        "overlayBgOpacity": 0.65,
+        "overlayWidthShare": 0.45
+      }
+    },
     "time": {
       "alpha": {
         "playing": 1.0,

@@ -7,6 +7,10 @@
     "widgetSpacing": 4,
     "separatorWidthFactor": 1,
     "separatorOpacity": 0.88,
+    // Inter-widget spacing and seam geometry for the top bar capsules.
+    "interWidgetRatio": 1.35,
+    "seamWidthRatio": 0.85,
+    "seamMinPx": 8,
     "hotzone": {
       "width": 16,
       "height": 9,
@@ -14,6 +18,11 @@
     },
     "moduleHeight": 22,
     "menuYOffset": 20,
+    "icons": {
+      // Icon sizes for bar capsules/tray, before per-screen scaling.
+      "iconSize": 24,
+      "iconSizeSmall": 16
+    },
     "pill": {
       // Hover pill controls consolidated menu/tooltip popups triggered from the bar.
       "height": 28,
@@ -26,7 +35,8 @@
     "animations": {
       "stdMs": 200,
       "fastMs": 150,
-      "overlayMs": 180
+      "overlayMs": 180,
+      "slideMs": 380
     },
     "tray": {
       "longHoldMs": 2500,
@@ -39,6 +49,8 @@
     "rowSpacingSmall": 2,
     "volume": {
       "fullHideMs": 800,
+      "mutedHideMs": 180000,
+      "offReminderCooldownMs": 86400000,
       "lowColor": "#D62E6E",
       "highColor": "#0E6B4D"
     },
@@ -73,6 +85,17 @@
     "computedFontScale": 0.6,
     "seam": {
       "opacity": 0.88
+    },
+    "backdrop": {
+      "color": "#000000"
+    },
+    "tint": {
+      // Bar recolor pass (Docs/PANELS.md); panelTintEnabled toggles it at runtime.
+      "color": "#ff2a36",
+      "alpha": 0.75,
+      "strength": 1.0,
+      "featherTop": 0,
+      "featherBottom": 0
     },
     "slideTimerTickMs": 16
   }
