@@ -45,7 +45,9 @@ agent-switch toplevel:
     rc=0
     mkdir -p /etc/nixos/.agent
     printf '%s\n' "{{toplevel}}" > /etc/nixos/.agent/switch-request
-    sudo -n systemctl start nixos-agent-switch.service || rc=$?
+    # polkit allows the main user to start exactly this unit, so no sudo here:
+    # setuid sudo cannot run inside a session sandbox (no_new_privs).
+    systemctl start nixos-agent-switch.service || rc=$?
     systemctl show -p ActiveState -p ExecMainStatus nixos-agent-switch.service
     journalctl -u nixos-agent-switch -n 40 --no-pager | tail -n 40
     exit "$rc"
