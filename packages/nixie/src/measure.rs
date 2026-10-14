@@ -17,10 +17,30 @@ pub struct Limits {
     pub cage_contrast: f32,
 }
 
+impl Limits {
+    /// The plan's pixel limits are device pixels at the reference scale; at
+    /// another `--scale` the lamp is drawn at another density, so the pixel
+    /// limits move with it and the ratios do not. `factor` is the scale over
+    /// the reference scale.
+    pub fn for_scale(factor: f32) -> Self {
+        let l = Self::default();
+        let scaled = |v: u32| (v as f32 * factor).round().max(1.0) as u32;
+        Self {
+            wire_white_px: scaled(l.wire_white_px),
+            wire_hot_px: scaled(l.wire_hot_px),
+            halo_half_px: (scaled(l.halo_half_px.0), scaled(l.halo_half_px.1)),
+            glass_own_light: l.glass_own_light,
+            cage_contrast: l.cage_contrast,
+        }
+    }
+}
+
 impl Default for Limits {
     fn default() -> Self {
         // the plan's numbers are written for a lamp drawn at 2 device px per
-        // logical px, which is the scale `render --scale 2` uses
+        // logical px, which is the login screen's density and `--scale 2`.
+        // The QML density is numeralSize/18 logical px/mm, so at scale 2 the
+        // renderer draws the same device pixels the greeter does.
         Self {
             wire_white_px: 8,
             wire_hot_px: 16,
@@ -93,8 +113,8 @@ impl Measured {
 /// Measure the lamp inside `box` (x0, y0, x1, y1) of an RGBA frame.
 pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured {
     // The frame is the truth about how far the box may reach: a caller that
-    // computes it from floats can be a pixel out, and a measurement tool that
-    // panics instead of clamping is worse than useless.
+    // computes it from floats can be a pixel out, and out-of-frame reads return
+    // black rather than panicking.
     let height = (rgba.len() / 4 / width.max(1) as usize) as u32;
     let (x0, y0) = (
         box_.0.min(width.saturating_sub(1)),
@@ -105,6 +125,9 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     y1 = y1.max(y0 + 1);
     let at = |x: u32, y: u32| -> (i32, i32, i32) {
         let i = (y as usize * width as usize + x as usize) * 4;
+        if i + 3 >= rgba.len() {
+            return (0, 0, 0);
+        }
         (rgba[i] as i32, rgba[i + 1] as i32, rgba[i + 2] as i32)
     };
     let mut out = Measured::default();
@@ -115,11 +138,9 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     let mut hot = Vec::new();
     let mut white_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
     let mut hot_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
-    let mut half_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
     let mut ink_top = 0u64;
     let mut ink_bottom = 0u64;
     let (mut bx0, mut by0, mut bx1, mut by1) = (u32::MAX, u32::MAX, 0u32, 0u32);
-    let mut reds: Vec<i32> = Vec::new();
     for y in y0..y1 {
         let mut run_w = 0;
         let mut run_h = 0;
@@ -133,7 +154,6 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
                 bx1 = bx1.max(x);
                 by0 = by0.min(y);
                 by1 = by1.max(y);
-                reds.push(r);
                 if y < (y0 + y1) / 2 {
                     ink_top += 1;
                 } else {
@@ -207,25 +227,25 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
         (y0 + y1) / 2
     };
     let mut peak = 0i32;
-    let mut peak_x = x0;
     for x in x0..x1 {
         let (r, _g, _b) = at(x, mid_y);
         if r > peak {
             peak = r;
-            peak_x = x;
         }
     }
-    // the gas: the sheath around the wire, measured across it. The area a level
-    // covers, divided by the length of the wire it wraps, is its thickness —
-    // which does not care whether the stroke is upright or slanted. A run along
-    // a row would, and then the number describes the numeral, not the gas.
+    // The gas: the sheath around the wire. The area the half-peak level covers,
+    // minus the area of the hot core, divided by the wire's own length (half its
+    // perimeter) is the average thickness of the falloff on one side. Unlike a
+    // walk along one row it does not care how the numeral is slanted, and a
+    // horizontal stroke cannot make it read the whole bar as halo.
+    let mut half_mask = vec![0u8; ((x1 - x0) as usize) * ((y1 - y0) as usize)];
     for y in y0..y1 {
         for x in x0..x1 {
             let i = ((y - y0) as usize) * ((x1 - x0) as usize) + (x - x0) as usize;
             half_mask[i] = (at(x, y).0 > peak / 2) as u8;
         }
     }
-    let stats = |mask: &Vec<u8>| -> (u32, u32) {
+    let stats = |mask: &[u8]| -> (u32, u32) {
         let wd = (x1 - x0) as usize;
         let ht = (y1 - y0) as usize;
         let (mut area, mut edge) = (0u32, 0u32);
@@ -250,21 +270,6 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     let (half_area, _) = stats(&half_mask);
     let length = (hot_edge as f32 / 2.0).max(1.0);
     out.halo_half_px = (((half_area as f32 - hot_area as f32) / length) / 2.0).round() as u32;
-    // Half of the way down from the wire to the room it burns in: a sheath is
-    // measured against what it covers, so a bright wallpaper does not make the
-    // glow look wider than it is.
-    let mut room: Vec<i32> = (x0..x0 + (x1 - x0) / 20).map(|x| at(x, mid_y).0).collect();
-    room.sort_unstable();
-    let base = room.get(room.len() / 2).copied().unwrap_or(0);
-    let half = (peak + base) / 2;
-    let mut reach = 0;
-    for x in (x0..peak_x).rev() {
-        if at(x, mid_y).0 < half {
-            break;
-        }
-        reach = peak_x - x - 1;
-    }
-    out.halo_half_px = reach;
 
     // The glass's own light: what the wall adds to what it covers. The room is
     // measured on the same rows outside the glass — a clear wall shows the room,
@@ -273,7 +278,9 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     // in would judge the discharge instead of the wall. The margin is about a
     // millimetre at the reference scale, which clears the wire's own halo; on an
     // unlit tube there is no warm pixel at all and every sample is clean.
-    let (x0, y0, x1, y1) = box_;
+    // The clamped box is the only box: re-shadowing the raw argument here made
+    // the clamp above a decoration and left the loops below able to read out of
+    // bounds for a caller that passed a box bigger than the frame.
     let band_top = y0 + (y1 - y0) / 20;
     let band_bottom = y1 - (y1 - y0) / 20;
     let cx = (x0 + x1) / 2;
@@ -290,7 +297,7 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
                 r > 150 && r - b > 45
             })
             .collect();
-        for x in (cx - inner)..(cx + inner) {
+        for x in cx.saturating_sub(inner)..(cx + inner).min(width) {
             if warm.iter().any(|w| x.abs_diff(*w) < margin) {
                 continue;
             }
@@ -304,7 +311,8 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
         if v.is_empty() {
             return 0.0;
         }
-        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        // total_cmp, not partial_cmp().unwrap(): a NaN input must not panic
+        v.sort_by(|a, b| a.total_cmp(b));
         v[v.len() / 2]
     };
     out.peak = peak;
@@ -328,7 +336,7 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
         (y0 + (y1 - y0) / 3, y1 - (y1 - y0) / 3)
     };
     for y in mesh_top..mesh_bottom {
-        for x in (cx - 18)..(cx + 18) {
+        for x in cx.saturating_sub(18)..(cx + 18).min(width.saturating_sub(1)) {
             let a = at(x, y).0 as f32;
             let b = at(x + 1, y).0 as f32;
             diff += (a - b).abs();
@@ -339,6 +347,5 @@ pub fn measure(rgba: &[u8], width: u32, box_: (u32, u32, u32, u32)) -> Measured 
     if n > 0.0 {
         out.cage_contrast = (diff / n) / (mean / n).max(1.0);
     }
-    let _ = reds.len();
     out
 }

@@ -50,13 +50,15 @@ pub fn to_compute(src: &str) -> Result<String> {
     Ok(s)
 }
 
-/// Compile GLSL to SPIR-V with glslangValidator (the one nix carries).
-pub fn compile(glsl: &str, out: &Path) -> Result<PathBuf> {
-    let dir = Path::new("/tmp/nixie-glsl");
-    std::fs::create_dir_all(dir)?;
+/// Compile GLSL to SPIR-V with glslangValidator (the one nix carries). The
+/// scratch names include the process id: two concurrent runs (a sweep and the
+/// menu's preview) must never overwrite each other's source or SPIR-V.
+pub fn compile(glsl: &str) -> Result<PathBuf> {
+    let dir = Path::new("/tmp").join(format!("nixie-glsl-{}", std::process::id()));
+    std::fs::create_dir_all(&dir)?;
     let glsl_path = dir.join("nixie.comp");
-    std::fs::write(&glsl_path, glsl)?;
-    let spv = out.to_path_buf();
+    std::fs::write(&glsl_path, glsl).with_context(|| format!("writing {}", glsl_path.display()))?;
+    let spv = dir.join("nixie.comp.spv");
     let tool = std::env::var("NIXIE_GLSLANG").unwrap_or_else(|_| "glslangValidator".to_string());
     let out = Command::new(&tool)
         .arg("-V")
@@ -71,9 +73,16 @@ pub fn compile(glsl: &str, out: &Path) -> Result<PathBuf> {
         })?;
     if !out.status.success() {
         return Err(anyhow!(
-            "glslangValidator said:\n{}",
+            "{tool} failed on {}:\n{}",
+            glsl_path.display(),
             String::from_utf8_lossy(&out.stderr)
         ));
+    }
+    if !out.stderr.is_empty() {
+        eprintln!(
+            "nixie: {tool}: {}",
+            String::from_utf8_lossy(&out.stderr).trim_end()
+        );
     }
     Ok(spv)
 }
