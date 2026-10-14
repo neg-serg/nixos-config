@@ -16,6 +16,7 @@ import QtQuick
 import Quickshell
 import qs
 import qs.lock
+import qs.nixielab
 
 ShellRoot {
 // A labelled slider: the value it is given, the value it is dragged to, and
@@ -76,7 +77,7 @@ onPressed: mouse => set(mouse.x)
 
 FloatingWindow {
 id: win
-implicitWidth: 660
+implicitWidth: 1080
 implicitHeight: 980
 color: "#14161c"
 
@@ -129,10 +130,11 @@ id: stage
 // Anchored to `parent`, not to the window: a Window is not an item
 // to anchor against in this build, and anchoring to it silently gave
 // the stage a size of zero — the whole workbench drew nothing.
+// The live menu takes the right column, so the stage stops at its edge.
 anchors {
 top: parent.top
 left: parent.left
-right: parent.right
+right: labMenu.left
 bottom: controls.top
 bottomMargin: 18
 }
@@ -188,7 +190,7 @@ Column {
 id: controls
 anchors {
 left: parent.left
-right: parent.right
+right: labMenu.left
 bottom: parent.bottom
 margins: 22
 }
@@ -256,5 +258,18 @@ to: 1.8
 onMoved: value => win.tubeScale = value
 }
 }
+}
+
+// The workbench always shows the live settings menu: it is the surface the
+// widget kit was built for, and the panel writes nothing until Save.
+NixieMenu {
+id: labMenu
+anchors {
+top: parent.top
+right: parent.right
+bottom: parent.bottom
+margins: 18
+}
+width: 360
 }
 }
