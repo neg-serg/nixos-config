@@ -17,7 +17,8 @@ lib.mkIf (cfg.enable or false) (
     }
 
     (neg.mkHomeFiles {
-      ".config/broot/conf.hjson".source = "${brootRootLive}/conf.hjson";
+      # Single config: broot reads conf.hjson first and conf.toml only when
+      # the former is absent — shipping both silently shadowed the toml.
       ".config/broot/conf.toml".source = "${brootRootLive}/conf.toml";
       ".config/broot/to_stdout.hjson".source = "${brootRootLive}/to_stdout.hjson";
       ".config/broot/launcher".source = "${brootRoot}/launcher";
