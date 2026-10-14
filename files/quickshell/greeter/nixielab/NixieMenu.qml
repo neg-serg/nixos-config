@@ -526,6 +526,7 @@ Rectangle {
                             { text: "Амбра", values: { nixieTempK: 2400, nixieExposure: 1.5 } },
                             { text: "Циан", values: { nixieTint: "#cc66e0ff" } },
                             { text: "От обоев", values: { nixieTintWallpaper: 0.35 } },
+                            { text: "Ракурс 15°/10°", values: { nixieViewPitch: 15, nixieViewAngle: 10 } },
                             { text: "Погасить", values: { nixieGlow: 0 } },
                             { text: "Сброс", reset: true }
                         ]
