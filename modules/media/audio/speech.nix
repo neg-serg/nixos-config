@@ -36,6 +36,7 @@ in
     environment.systemPackages = [
       pkgs.piper-tts # CPU TTS fallback (piper-server on :8001) — note: pkgs.piper is a GTK mouse GUI!
       whisperCpp # GPU STT (whisper-cli, Vulkan backend — whisper-server on :8002)
+      pkgs.sherpa-onnx # speech toolkit (ASR/TTS/VAD + speaker diarization) for local experiments
       pkgs.rocmPackages.rocm-smi # VRAM/GPU monitoring for the ROCm TTS stack (chatterbox)
       pkgs.ffmpeg # audio conversion for whisper-server (mp3/ogg → wav)
       pkgs.python312 # base interpreter for the chatterbox venv (keeps it GC-safe; torch cp312 wheels)
