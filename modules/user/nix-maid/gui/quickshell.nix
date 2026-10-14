@@ -162,6 +162,20 @@ lib.mkIf quickshellEnabled (
           # StartLimitBurst=5/10s never trips at this cadence (NRestarts hit 198).
           # Back off and stop after 5 quick failures in 30 s.
           RestartSec = 5;
+          # Resource ceilings. Measured 2026-10-14: the shell is flat, not
+          # leaking — 264-282 MB VmRSS over a 15 min window, ~181 MB cgroup
+          # current and 203 MB cgroup peak here (251 MB peak over an 11 min
+          # session), ~2-3 % CPU (12.4 s over 8 min). The idle work is the five
+          # unconditional tick timers in Services/Timers.qml plus event
+          # handling, not a leak. The caps sit 2-3x above the measured numbers,
+          # so normal use never touches them: MemoryHigh throttles a runaway
+          # allocation (e.g. a huge wallpaper or a cover loop) before it
+          # pressures the desktop, MemoryMax kills and the restart policy brings
+          # the bar back, and CPUQuota bounds a busy loop without touching
+          # normal animation work (two cores is far above what the shell uses).
+          MemoryHigh = "384M";
+          MemoryMax = "768M";
+          CPUQuota = "200%";
           Environment = [
             "QML_XHR_ALLOW_FILE_WRITE=1"
             # ~/.local/bin first: the Genelec widget shells out to glm-vol, which
