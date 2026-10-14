@@ -57,6 +57,9 @@
 - dsh notify-input — TUI notifications while a turn waits on an approval or question card:
   [dsh-notify-input.md](./dsh-notify-input.md)
 
+- Herdr — the runtime for the dsh agent workflow (workspaces/panes for parallel sessions, agent
+  state in the sidebar, `dsh-worktree --open herdr`): [herdr.md](./herdr.md)
+
 - dsh voice input — why there is nothing to build (the local stack is switched off on purpose):
   [dsh-voice.md](./dsh-voice.md)
 
