@@ -1,6 +1,5 @@
 bind editor <Tab> complete-query
 bind editor ^T complete
-bind editor <space> noop
 
 bind index g noop
 bind pager g noop

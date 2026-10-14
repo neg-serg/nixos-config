@@ -42,6 +42,8 @@ keybindings = [
   { modifier = "Ctrl", on = "e", action = "GoToEnd" },
   { modifier = "Ctrl", on = "v", action = "ScrollPageDown" },
   { modifier = "Alt", on = "v", action = "ScrollPageUp" },
+  { modifier = "Ctrl", on = "d", action = "ScrollPageDown" },
+  { modifier = "Ctrl", on = "u", action = "ScrollPageUp" },
 
   # Sorting
   { on = "H", action = "MoveToColumnLeft" },
