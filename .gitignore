@@ -62,3 +62,8 @@ gpucore.*
 # (modules/security/agent-switch.nix). Written per switch, removed on success — it
 # must not show up as a tree change in the very diff the switch reports.
 .agent/switch-request
+
+# Generated theme artifact: Tools/build-theme.mjs writes it, and the running shell merges the
+# live copy under $XDG_CONFIG_HOME/quickshell/Theme. A tracked copy only ever ships a stale
+# snapshot (June 2026, pre-nixie keys) to the tools that read it by default.
+files/quickshell/Theme/.theme.json
