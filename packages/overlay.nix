@@ -17,6 +17,7 @@ let
   gui = importOv ./overlays/gui.nix;
   dev = importOv ./overlays/dev.nix;
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
+  fixSources = importOv ./overlays/fix-sources.nix;
   aurPorted = import ./overlays/aur-ported.nix final finalPrev;
   vendored = importOvP ./overlays/vendored-sources.nix;
 
@@ -25,7 +26,18 @@ let
   disableChecks = import ./overlays/disable-checks.nix inputs final finalPrev;
 in
 # Standard overlay pattern: merge top-level attributes
-(functions // tools // media // dev // gui // fixTinycc // aurPorted // vendored // disableChecks)
+(
+  functions
+  // tools
+  // media
+  // dev
+  // gui
+  // fixTinycc
+  // fixSources
+  // aurPorted
+  // vendored
+  // disableChecks
+)
 // {
 
   # vcv-rack's Makefile declares no dependency between the plugin sub-make

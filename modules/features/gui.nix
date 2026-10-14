@@ -8,6 +8,7 @@
     };
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     hyprwhspr.enable = mkBool "enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland)" false;
+    hyprKdeconnect.enable = mkBool "enable hypr-kdeconnect-fix (RemoteDesktop portal backend feeding KDE Connect/Deskflow input into Hyprland's virtual-input protocols)" true;
     vicinae = {
       enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;
       manageConfig = mkBool "let Nix manage vicinae theme/settings (disable for interactive config)" false;
