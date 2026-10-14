@@ -70,10 +70,12 @@ Keep the redirect in any scripted rollout.
 Two paths, preferred one first:
 
 1. **Agent rollout (no password).** `features.security.agentSwitch` (on by default) installs a
-   root-owned oneshot unit plus a NOPASSWD rule for exactly
-   `systemctl start nixos-agent-switch.service` (`modules/security/agent-switch.nix`). The unit
-   re-builds the flake, **refuses** when the tree no longer builds the toplevel named in
-   `/etc/nixos/.agent/switch-request`, activates, and removes the request:
+   root-owned oneshot unit plus a polkit rule that lets the main user start exactly
+   `nixos-agent-switch.service` (`modules/security/agent-switch.nix`) — polkit, not setuid sudo, so
+   the trigger also works from a session sandbox. The unit re-builds the flake as the main user
+   (root's libgit2 refuses a user-owned repository) and activates the verified store path as root;
+   it **refuses** when the tree no longer builds the toplevel named in
+   `/etc/nixos/.agent/switch-request`, and removes the request on success:
 
    ```bash
    cd /etc/nixos
@@ -96,5 +98,5 @@ Two paths, preferred one first:
 `sudo` stays password-gated for everything else: the `nixos-rebuild` and `env *` NOPASSWD entries
 were removed on purpose (`modules/security/default.nix` — passwordless arbitrary root, since the
 activated flake is user-writable), and `features.security.tpmSudo` is off on this host. The
-agent-switch unit is the one deliberate exception, and it is narrow: one root-owned unit, exact
-arguments, verified artifact only. Never add `-n` to other sudo commands.
+agent-switch mechanism is the one deliberate exception, and it is narrow: a single polkit rule for
+one unit and the `start` verb, verified artifact only. Never add `-n` to other sudo commands.
