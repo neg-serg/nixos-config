@@ -1,4 +1,6 @@
 {
+  config,
+  lib,
   pkgs,
 
   ...
@@ -18,5 +20,8 @@
     pkgs.nix-melt # TUI for nix flake lock --update
     pkgs.neg.nixard # TUI for exploring NixOS package closures and generating Nix declarations
     pkgs.statix # static analyzer for nix
-  ];
+  ]
+  ++ lib.optional config.features.cli.fix.enable (
+    pkgs.neg.fix # Fast Nix language evaluator (patched master) — eval/build helper
+  );
 }
