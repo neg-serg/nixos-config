@@ -18,9 +18,15 @@ let
   # deepseek-v4-flash, and that pinned model is what the session model picker
   # reports as current. The deployment runs V4.1-Flash only (the global
   # catalog is narrowed by dsh-models.nix), so the row must name the V4.1 id.
+  # The manifest declares a version as well as a name: the harness's package
+  # inventory reads the owning manifest of the modules a profile mounts by a
+  # *relative* path, and a name without a version fails every request
+  # (REQUEST_EXTENSION) instead of the one plugin. Same guard as the tui
+  # profile's caretaker (dsh-tui-ensure.sh).
   packageJson = pkgs.writeText "dsh-acp-package.json" ''
     {
       "name": "dsh-profile-acp",
+      "version": "0.0.0",
       "private": true,
       "dependencies": {},
       "dsh": {
