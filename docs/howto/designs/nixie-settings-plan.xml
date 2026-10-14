@@ -328,9 +328,12 @@ python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/qu
         17-21 px (limit 16), mesh contrast 2.8-3.0% (limit 3.0%) on several digits, glass own
         light 15-20% of the wire (limit 8%) on two. Named here for the owner: either the
         thresholds need recalibration on the corrected scale, or the wire is genuinely too thick.
-      - A12 (cursor follow): the plumbing is in QML and the P6 session exercised
-        `hyprctl dispatch movecursor`, but a final live screenshot pair was not produced before
-        the session was cut — the only acceptance item left to run live.
+      - A12 (cursor follow), measured live on 2026-10-14 with the login preview (`qs -p
+        preview.qml`, llvmpipe): with the pointer outside the clock the frame is byte-identical
+        across captures (no drift); with the pointer inside, moving x 1000 -> 1200 changes
+        31,990 px of the clock region (mean abs 6.7), and either inside position differs from
+        the outside frame by 31,322 / 35,921 px — the camera offset tracks the pointer and
+        returns to the base camera when the pointer leaves.
     </p6-outcome>
     <follow-up>
       <commit id="311a19e3">The stale tracked Theme/.theme.json is removed from git and ignored
@@ -344,13 +347,14 @@ python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/qu
       packages/nixie — nixie validate rc=0, theme set present.
     </gates>
     <open>
-      lint-theme-tokens.mjs is red independently of this work: Settings/Theme.qml uses tokens
-      (media.icon.*, notifications.*, network.capsule.*, panel.animations.*) that the Theme parts
-      do not define. It merges the parts itself (not Theme/.theme.json), so this predates the
-      untracking; left as a separate finding.
       Live-device checks still to run outside the sandbox: A5/A6 menu round-trip (Save writes the
-      user greeter.jsonc atomically, Reset/Export), the F10 toggle, and A12 cursor-follow
-      screenshots.
+      user greeter.jsonc atomically, Reset/Export) and the F10 toggle — the menu itself needs a
+      human to drag the sliders, which is why the sandbox runs it only by code review.
+      lint-theme-tokens.mjs was resolved on 2026-10-14 (optional patterns taught to the tool, the
+      36 missing tokens added to the parts, the generated schema refreshed) — see the follow-up
+      commits; the remaining "Unused" rows (notifications.*, panel.animations.overlayMs,
+      panel.separatorOpacity, ws.label.leftPadding.terminal) are candidates for a separate
+      cleanup, not failures.
     </open>
   </results>
 
