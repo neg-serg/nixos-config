@@ -28,7 +28,8 @@ in
 
     # -- GUI Patchbays --
     pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
-    pkgs.pwvucontrol # Qt6 PipeWire volume control (pavucontrol alternative, no GTK)
+    pkgs.hyprpwcenter # PipeWire control center GUI (hyprtoolkit, Hyprland-native)
+    pkgs.lxqt.pavucontrol-qt # PipeWire volume control, Qt port of pavucontrol (no GTK)
   ];
 
   services.udev.extraRules = ''
