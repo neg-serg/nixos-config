@@ -76,6 +76,22 @@ PYTHONPATH=@PATCHLIB_DIR@ python3 @PY@ "$search_pkg"
 # (exact-string + count-asserted, see packages/dsh/patch-session-format.py).
 PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V2@ "$search_pkg"
 
+# Session migration v3->v4: 0.1.x marks a steering restart by splicing a
+# next-turn message and opening turn/N+1 without a turn/end for turn/N. The
+# migration's interrupted-restart repair must keep its splice flag across the
+# events that settle the aborted turn, or it skips the synthetic turn/end and
+# the transformed artifact is refused ("turn/start does not open the expected
+# turn"), which blocked session search entirely (exact-string + count-asserted,
+# see packages/dsh/patch-session-migration.py).
+PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_MIG@ "$search_pkg"
+
+# tools/pre-execute hooks written against the pre-0.2 execution shape read
+# `exec.args` while the 0.2 registry exposes `exec.arguments`; the deployment's
+# dsh-plan-format-validator therefore saw every plan as empty and refused all
+# exit_plan_mode calls. Alias the parsed arguments under both names
+# (exact-string + count-asserted, see packages/dsh/patch-tool-exec-args.py).
+PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_EXEC@ "$search_pkg"
+
 # Agent presets are declarative rows in 0.2.0-rc.2 (and since 0.1.7): the
 # shipped ones are `presets/<id>.patch.yml` files of the dsh-web-app bundle,
 # listed in that package's `dsh.bundle.patch`, and a preset is created or
