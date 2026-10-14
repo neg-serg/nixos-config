@@ -1,30 +1,192 @@
+diff --git a/src/server/src/ui/qml/actions/ActionPanelPopover.qml b/src/server/src/ui/qml/actions/ActionPanelPopover.qml
+index 6ce9738..1684a5b 100644
+--- a/src/server/src/ui/qml/actions/ActionPanelPopover.qml
++++ b/src/server/src/ui/qml/actions/ActionPanelPopover.qml
+@@ -77,6 +77,18 @@ ViciPopover {
+                     stack.currentItem.activateCurrent();
+                 // qmllint enable missing-property
+                 event.accepted = true;
++            } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
++                // Tab/Shift+Tab navigate the open action stack, same as the
++                // main list; without this the key falls through unhandled.
++                if (stack.currentItem) {
++                    // qmllint disable missing-property
++                    const forward = event.key === Qt.Key_Tab;
++                    const step = forward ? stack.currentItem.moveDown : stack.currentItem.moveUp;
++                    if (typeof step === "function")
++                        step.call(stack.currentItem);
++                    // qmllint enable missing-property
++                }
++                event.accepted = true;
+             }
+         }
+ 
+diff --git a/src/server/src/ui/qml/controls/CompletionPopup.qml b/src/server/src/ui/qml/controls/CompletionPopup.qml
+index 21edee5..98b5cb6 100644
+--- a/src/server/src/ui/qml/controls/CompletionPopup.qml
++++ b/src/server/src/ui/qml/controls/CompletionPopup.qml
+@@ -220,6 +220,9 @@ Popup {
+                     Keys.onReturnPressed: root.acceptHighlighted()
+                     Keys.onEscapePressed: root.close()
+                     Keys.onTabPressed: event => {
++                        // Tab accepts the highlighted completion, like Return;
++                        // the popup used to swallow the key, leaving it dead.
++                        root.acceptHighlighted();
+                         event.accepted = true;
+                     }
+                     Keys.onBacktabPressed: event => {
+diff --git a/src/server/src/ui/qml/launcher/LauncherWindow.qml b/src/server/src/ui/qml/launcher/LauncherWindow.qml
+index 8a33bf5..56cd958 100644
+--- a/src/server/src/ui/qml/launcher/LauncherWindow.qml
++++ b/src/server/src/ui/qml/launcher/LauncherWindow.qml
+@@ -99,6 +99,40 @@ LauncherWindowBase {
+         width: root._w
+         height: root._h
+ 
++        // Fallback for when the keyboard focus lands outside the search bar
++        // (status bar, post-click focus, …): Tab/Shift+Tab still drive the
++        // active view. The search bar, action panel and completion popup
++        // handle their own case first, so this only runs when nothing deeper
++        // accepted the key. Skipped while an overlay, argument completion or
++        // alert owns the keyboard; forms keep their native Tab focus travel
++        // because their views expose no navigation methods.
++        Keys.onPressed: event => {
++            if (event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab)
++                return;
++            if (Launcher.hasOverlay || Launcher.hasCompleter || Launcher.alertModel.visible)
++                return;
++
++            const view = root.commandView;
++            if (!view)
++                return;
++
++            if (Launcher.compacted) {
++                Launcher.expand();
++                event.accepted = true;
++                return;
++            }
++
++            const forward = event.key === Qt.Key_Tab;
++            // qmllint disable missing-property
++            const sequential = forward ? view.moveRight : view.moveLeft;
++            const rowStep = forward ? view.moveDown : view.moveUp;
++            if (typeof sequential === "function" && sequential.call(view))
++                event.accepted = true;
++            else if (typeof rowStep === "function")
++                event.accepted = rowStep.call(view);
++            // qmllint enable missing-property
++        }
++
+         Rectangle {
+             visible: Launcher.compacted
+             width: root._w
 diff --git a/src/server/src/ui/qml/launcher/SearchBar.qml b/src/server/src/ui/qml/launcher/SearchBar.qml
-index 3d9499b..dc1c34b 100644
+index 7ccd55b..0be0b83 100644
 --- a/src/server/src/ui/qml/launcher/SearchBar.qml
 +++ b/src/server/src/ui/qml/launcher/SearchBar.qml
-@@ -275,11 +275,33 @@ Item {
+@@ -6,6 +6,8 @@ import Vicinae
+ Item {
+     id: root
+     required property Item commandView
++    // Emacs kill ring for the search input: C-k/C-u/C-w write, C-y yanks.
++    property string killRing: ""
+     property int horizontalPadding: 16
+     property real textSize: Theme.regularFontSize * 1.2
+     property bool flatAccessories: false
+@@ -147,8 +149,21 @@ Item {
+                             if (searchInput.cursorPosition < searchInput.text.length)
+                                 searchInput.cursorPosition++;
+                             return true;
++                        case Qt.Key_D:
++                            {
++                                if (searchInput.selectedText !== "") {
++                                    searchInput.remove(searchInput.selectionStart, searchInput.selectionEnd);
++                                } else if (searchInput.cursorPosition < searchInput.text.length) {
++                                    const pos = searchInput.cursorPosition;
++                                    searchInput.text = searchInput.text.substring(0, pos) + searchInput.text.substring(pos + 1);
++                                    searchInput.cursorPosition = pos;
++                                }
++                                _syncSearchText();
++                                return true;
++                            }
+                         case Qt.Key_K:
+                             {
++                                root.killRing = searchInput.text.substring(searchInput.cursorPosition);
+                                 searchInput.text = searchInput.text.substring(0, searchInput.cursorPosition);
+                                 _syncSearchText();
+                                 return true;
+@@ -156,11 +171,30 @@ Item {
+                         case Qt.Key_U:
+                             {
+                                 const pos = searchInput.cursorPosition;
++                                root.killRing = searchInput.text.substring(0, pos);
+                                 searchInput.text = searchInput.text.substring(pos);
+                                 searchInput.cursorPosition = 0;
+                                 _syncSearchText();
+                                 return true;
+                             }
++                        case Qt.Key_W:
++                            {
++                                const pos = searchInput.cursorPosition;
++                                const boundary = _wordBoundaryBackward(searchInput.text, pos);
++                                root.killRing = searchInput.text.substring(boundary, pos);
++                                searchInput.text = searchInput.text.substring(0, boundary) + searchInput.text.substring(pos);
++                                searchInput.cursorPosition = boundary;
++                                _syncSearchText();
++                                return true;
++                            }
++                        case Qt.Key_Y:
++                            {
++                                const pos = searchInput.cursorPosition;
++                                searchInput.text = searchInput.text.substring(0, pos) + root.killRing + searchInput.text.substring(pos);
++                                searchInput.cursorPosition = pos + root.killRing.length;
++                                _syncSearchText();
++                                return true;
++                            }
+                         }
+                     }
+ 
+@@ -294,12 +328,51 @@ Item {
+                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                      }
                  }
++                // Tab/Shift+Tab walk the item list (launcher-menu style).
++                // Grids step item by item within a row and spill onto the next
++                // row (moveRight/moveLeft); flat lists step by item via
++                // moveDown/moveUp. The target is the view hosted by the current
++                // LauncherPage (root.commandView) — the page wrapper itself has
++                // no navigation methods.
++                function _navigateItems(forward) {
++                    if (Launcher.compacted) {
++                        Launcher.expand();
++                        return true;
++                    }
++
++                    const view = root.commandView;
++                    if (!view)
++                        return false;
++
++                    // qmllint disable missing-property
++                    const sequential = forward ? view.moveRight : view.moveLeft;
++                    const rowStep = forward ? view.moveDown : view.moveUp;
++                    if (typeof sequential === "function" && sequential.call(view))
++                        return true;
++                    if (typeof rowStep === "function")
++                        return rowStep.call(view);
++                    // qmllint enable missing-property
++
++                    return false;
++                }
++
                  Keys.onBacktabPressed: event => {
 -                    event.accepted = false;
-+                    // Shift+Tab: navigate up the item list (launcher-menu style);
-+                    // Tab (forward) is handled in Keys.onPressed.
-+                    event.accepted = typeof commandStack.currentItem.moveUp === "function" && commandStack.currentItem.moveUp();
++                    event.accepted = _navigateItems(false) || Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                  }
                  Keys.onPressed: event => {
                      if (_handleEmacsEditing(event)) {
                          event.accepted = true;
 +                    } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-+                        // Tab/Shift+Tab navigate the item list (launcher-menu style).
-+                        // Direct inline call mirrors Up/Down arrow handling.
-+                        const nav = typeof commandStack.currentItem.moveDown === "function";
-+                        if (nav && event.key === Qt.Key_Tab) {
-+                            event.accepted = commandStack.currentItem.moveDown();
-+                        } else if (nav && event.key === Qt.Key_Backtab) {
-+                            event.accepted = commandStack.currentItem.moveUp();
-+                        } else {
-+                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
-+                        }
++                        event.accepted = _navigateItems(event.key === Qt.Key_Tab) || Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
 +                    } else if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier) && !(event.modifiers & ~(Qt.ControlModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier))) {
 +                        // Ctrl+C closes the launcher window (dismiss).
 +                        // Ctrl+C is explicitly excluded from forwardKey() at the C++ level
@@ -36,4 +198,4 @@ index 3d9499b..dc1c34b 100644
 +                        event.accepted = true;
                      } else if (_handleNavigation(event)) {
                          event.accepted = true;
-                     } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
+                     } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && Launcher.showBackButton && Launcher.popOnBackspace) {
