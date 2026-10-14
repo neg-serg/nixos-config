@@ -40,7 +40,7 @@ let
       (zellijBind "" "l" "GoToNextTab")
       (zellijBind "" "h" "GoToPreviousTab")
       (zellijBind "" "n" "NewTab; SwitchToMode \"normal\"")
-      (zellijBind "" "r" "SwitchToMode \"rename-tab\"")
+      (zellijBind "" "r" "SwitchToMode \"RenameTab\"; TabNameInput 0")
     ];
     scroll = [
       (zellijBind "" "j" "ScrollDown")
