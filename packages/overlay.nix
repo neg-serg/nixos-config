@@ -96,6 +96,10 @@ in
   # (python app, deps from nixpkgs + local geoip2fast, see packages/tewi/default.nix)
   tewi = final.callPackage ./tewi { };
 
+  # huebox: terminal theme editor (ratatui TUI) — live preview, line-level
+  # push of the palette into the terminal config — see packages/huebox/default.nix
+  huebox = final.callPackage ./huebox { };
+
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
   # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H).
   # One parameterized derivation (packages/ttf-code) with a per-variant table;
