@@ -15,8 +15,9 @@ list survives the audit scratch files, with the evidence and the one-line fix fo
   mode, espanso off `Alt+Space`.
 - editors: nvim insert-mode `<C-a>` is `<C-o>0`, matching the command line.
 - browser: the new-tab tiles take `j/k`, `Enter` opens the selection, `/` focuses the search field.
-- quickshell: MusicPopup joined the overlay manager and closes on `Esc`; vicinae runs the patched
-  hybrid vim/emacs keybinding set.
+- quickshell: MusicPopup joined the overlay manager and closes on `Esc`; named overlays (calendar,
+  weather) and the media/volume IPC are exposed for binds; vicinae runs the patched hybrid vim/emacs
+  keybinding set.
 
 ## Open
 
@@ -25,7 +26,7 @@ list survives the audit scratch files, with the evidence and the one-line fix fo
 | dsh key remap never wired       | `settings.yaml` is absent from the dsh home, and the tui profile's `cordis.patch.yml` has no `shortcuts:` section                                            | create `~/.config/dsh/settings.yaml` with the reserved panel keys (`C-k/C-a/C-e/C-p/C-b/C-o`, see `docs/howto/dsh-tui-profile.md`) and persist `/vim` there                  |
 | Obsidian vim mode               | the deployed vault is gated by `features.apps.obsidian`, and the `apps` domain is filtered out on trantor; the working vault is `~/notes`, outside this repo | enable `vimMode` and version a `.obsidian.vimrc` in the real vault (needs a write outside the repo)                                                                          |
 | Quickshell bar keyboard         | `files/quickshell/Bar/**` carries no `Keys`/`Shortcut`                                                                                                       | add `Keys.onPressed` for `C-n/C-p` to walk the modules and `Enter` to open; layer surfaces are not keyboard-interactive today, so the interaction model is a design decision |
-| Quickshell panel IPC            | `files/quickshell/Helpers/IPCHandlers.qml:13-23` exposes only idleInhibitor, Glass, NotificationCenter and Overview                                          | add `toggleCalendar()`, `toggleWeather()`, `mediaPlayPause/Next/Prev`, `volumeStep(±)` and the matching binds in `files/gui/hypr/hyprland.lua`                               |
+| Quickshell transport binds      | `IPCHandlers.qml` now exposes the calendar/weather/media/volume calls; `hyprland.lua` binds calendar, weather and play/pause                                 | add binds for `mediaNext`, `mediaPrev` and `volumeStep(±)`                                                                                                                   |
 | Quickshell panels, toasts, lock | `Components/PanelWithOverlay.qml:96` (only `k`/`d`/`Esc`), `Notifications/NotificationOverlay.qml`, `greeter/lock/LockContent.qml:739+`                      | add `j/k/Enter` and the emacs editing set; remember `Ctrl+A` is Qt's select-all in the lock field                                                                            |
 | ncpamixer arrows                | `files/media/ncpamixer.conf:14-18` binds `k`/`j`; the key-name syntax for arrows and `Ctrl`-chords is undocumented locally                                   | confirm the tokens against upstream before touching a live mixer config                                                                                                      |
 | rustmission `gg`/`G`            | `files/config/rustmission/keymap.toml` already has vim + emacs navigation and Home/End                                                                       | only if the parser supports key sequences and upstream has the actions                                                                                                       |
