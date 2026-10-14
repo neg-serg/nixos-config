@@ -111,6 +111,16 @@
     // is a flatter picture, the perspective goes as 1/distance, and 0 leaves
     // it to the shader's own default.
     "nixieViewDistance": 8.0,
+    // The camera's pitch above the clock's axis, in degrees: 0 is level, and
+    // the third member of the pView uniform carries it (the shader reads it
+    // from P6 on).
+    "nixieViewPitch": 0.0,
+    // Let the pointer move the camera: when true, the cursor adds up to
+    // nixieCameraRange degrees to the base yaw and pitch, smoothed; when false
+    // the base camera stays exactly where the two values above put it.
+    "nixieCameraFollow": true,
+    // How far, in degrees, pointer following may pull the camera off its base.
+    "nixieCameraRange": 6.0,
     // The cathode wire's radius as a fraction of the numeral's height: 0.044 of
     // 25 mm is 1.10 mm, so the wire measures 2.20 mm across — a heavy-duty
     // cathode, and what the discharge around it is drawn on. The real IN-12
@@ -123,8 +133,38 @@
     "nixieHighlight": 0.8,
     "nixieWarmth": 0.45,
     // Restrike time on a digit change — long enough to be seen, short enough
-    // that a minute never waits for it. 0 leaves the tubes steady.
+    // that a minute never waits for it. 0 leaves the tubes steady (no restrike
+    // at all), the idle shimmer below stays.
     "nixieFlickerMs": 320,
+    // Restrike on a digit change. false holds the ignition at 1 for every tube
+    // and starts no timers, whatever nixieFlickerMs says.
+    "nixieFlicker": true,
+    // The idle shimmer: how much of the shader's breathe/hum reaches the glass
+    // (0 = off — no shimmer and no periodic repaint at all) and its tick
+    // cadence in ms. 66 ms is the old 15 Hz one; the menu's range is 33..250.
+    "nixieShimmer": 1.0,
+    "nixieShimmerMs": 66,
+    // Per-tube spread: the strike offsets and the strike lengths. 1.0 is the
+    // clock's own (5/6/7 frames, 0/11/22/10 ms apart); 0 makes all four tubes
+    // strike in lockstep; up to 1.5 widens the spread.
+    "nixieJitter": 1.0,
+    // Quality tier: "full" is the drawn picture; "balanced" and "lite" are the
+    // cheaper paths implemented in nixie.frag (pQuality 0/1/2).
+    "nixieQuality": "full",
+    // 24 h format for the clock; false draws 12 h (12 at midnight and noon).
+    "nixie24h": true,
+    // true lights the tens of the hours as 0 instead of leaving that tube dark.
+    "nixieLeadingZero": false,
+    // The row's gaps (0.055 of the numeral between tubes, 0.20 between the two
+    // pairs) times this: 1.0 is the clock's own spacing, 0 closes the row.
+    "nixieSpacing": 1.0,
+    // Ageing of the getter mirror and the sputter film: 1.0 is today's look,
+    // 0 a fresh tube, above 1 a tired one.
+    "nixieAge": 1.0,
+    // The base (collar, pins, terminals) and the colon tube: both are shader
+    // stretch work. false keeps today's picture — no base, no colon.
+    "nixieBase": false,
+    "nixieColon": false,
 
     // Rounded corners, held back on purpose: the glass and the light are what
     // shape these surfaces, and a wide radius reads as a capsule fighting them.
