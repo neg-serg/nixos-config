@@ -81,8 +81,9 @@ lib.mkMerge [
 
     # Local speech stack: Chatterbox TTS (:8000), Piper TTS (:8001), whisper.cpp STT (:8002).
     # Assets in /zero/ai/speech/engines; whisper.cpp GPU via Vulkan, chatterbox via ROCm.
-    # Disabled on request (2026-08-28): local speech NN servers (STT/TTS) turned off.
-    features.media.audio.speech.enable = false;
+    # Re-enabled on request (2026-10-14): whisper.cpp STT needed again; this also
+    # starts the Piper/Chatterbox TTS services (both venvs are prepared on /zero).
+    features.media.audio.speech.enable = true;
 
     # Sola MPD: browser MPD client for the big local library (Node backend + web
     # UI on http://localhost:3000, served as the systemd user unit sola-mpd).
