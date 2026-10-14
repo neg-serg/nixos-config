@@ -41,6 +41,10 @@ let
   # drops that dead row from the installed copy (see its header).
   liangshenPrune = ./dsh-tui-liangshen-prune.py;
 
+  # One-time XDG relocation of ~/.dsh / ~/.dsh-tui (idempotent; the caretaker
+  # calls it on every run and leaves compatibility symlinks behind).
+  xdgMigrate = pkgs.writeShellScript "dsh-xdg-migrate" (builtins.readFile ./dsh-xdg-migrate.sh);
+
   ensureTui = pkgs.writeShellScript "dsh-tui-ensure" (
     builtins.readFile (
       pkgs.replaceVars ./dsh-tui-ensure.sh {
@@ -51,6 +55,7 @@ let
         liangshenPrune = pkgs.copyPathToStore liangshenPrune;
         themeJson = pkgs.copyPathToStore themeJson;
         inherit homeDir;
+        inherit xdgMigrate;
         pluginSeeds = roster.seeds;
         pluginRows = lib.escapeShellArg roster.rows;
         searchRows = lib.escapeShellArg roster.searchRows;
@@ -74,6 +79,14 @@ in
     description = "dsh-TUI — keep the tui profile on the installed harness";
     script = ensureTui;
     after = [ "network.target" ];
+  };
+
+  # Manual entry point: `systemctl --user start dsh-xdg-migrate`. The caretaker
+  # already runs the same script on every rebuild/login; this unit is for
+  # running it on demand (and for `--dry-run` via the plain script path).
+  systemd.user.services.dsh-xdg-migrate = systemdUser.mkUserOneshot {
+    description = "dsh — relocate ~/.dsh and ~/.dsh-tui into XDG directories";
+    script = xdgMigrate;
   };
 
   # The neg theme for the TUI is seeded from the repo by the caretaker; the
