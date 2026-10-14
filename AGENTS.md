@@ -204,11 +204,13 @@ Builds: substitute = false
 - Rollout (rebuild+switch) needs root, and the agent finishes it itself: build the closure, then
   `just agent-switch "$(readlink -f result)"`. That writes the verified toplevel into
   `/etc/nixos/.agent/switch-request` and starts the root-owned `nixos-agent-switch.service`, which
-  re-builds the flake, **refuses** when the tree no longer builds that toplevel, activates and logs the
+  re-builds the flake as the main user, **refuses** when the tree no longer builds that toplevel,
+  activates the verified store path as root and logs the
   run (HEAD, dirty files, artifact) to the journal — `modules/security/agent-switch.nix`,
   `features.security.agentSwitch`. The blanket `nixos-rebuild` NOPASSWD entry stays removed on
   purpose: it was passwordless arbitrary root, since the flake it activates lives in the
-  user-writable `/etc/nixos`. The agent-switch unit is the one deliberate, narrow exception, and the
+  user-writable `/etc/nixos`. The agent-switch mechanism is the one deliberate, narrow exception (a
+  polkit rule for one unit and the `start` verb), and the
   tradeoff is unchanged and known: whoever can write the flake can request a switch, i.e. root.
   `features.security.tpmSudo` is off (`hosts/trantor/default.nix`, and there is no `/dev/tpmrm0` on
   this host). Never ask for the password; keep the whitelist as narrow as it is — that unit is the
@@ -227,9 +229,10 @@ Builds: substitute = false
   writes the root-owned `/nix/var/nix/profiles` (`drwxr-xr-x root root`, not writable by `neg`), and
   nixos-rebuild does not escalate by itself — it would build the whole system and only then fail.
 - Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
-  (`systemctl start/stop xray|sing-box-tun` and the agent switch — each with sudo's `""`
-  exact-arguments marker —, `reboot`, `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`,
-  `glm-adapter-priv`); everything else, `sudo -n` included, prompts.
+  (`systemctl start/stop xray|sing-box-tun` — with sudo's `""` exact-arguments marker —, `reboot`,
+  `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`, `glm-adapter-priv`); everything else,
+  `sudo -n` included, prompts. The agent switch is not in this list: it is triggered by a polkit
+  rule for one unit and the `start` verb.
 - The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false` — keep
   that flag convention in any new bindings/scripts.
 - The repo's own targets already pass this flag: `just deploy*`, `just check`,

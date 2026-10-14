@@ -124,25 +124,11 @@ lib.mkIf (cfg.enable or false) {
     };
   };
 
-  security.sudo.extraRules = [
-    {
-      users = [ config.lib.neg.mainUser ];
-      commands = [
-        {
-          # "" is sudo's exact-arguments marker: without it extra arguments are
-          # accepted and the rule would start (or stop) any other unit.
-          command = "/run/current-system/sw/bin/systemctl start nixos-agent-switch.service \"\"";
-          options = [ "NOPASSWD" ];
-        }
-      ];
-    }
-  ];
+  # polkit lets the main user — and therefore a sandboxed agent, which cannot
+  # exec setuid sudo under `no_new_privs` — start exactly this unit without
+  # interactive authentication. One unit, one verb; the artifact check inside
+  # the unit remains the actual gate.
 
-  # The sandboxed agent cannot exec setuid sudo (`no_new_privs` is set inside
-  # the session sandbox), so the NOPASSWD rule above is unreachable for it.
-  # Mirror that rule as polkit: mainUser may start exactly this unit, without
-  # interactive authentication. Same narrow shape — one unit, one verb; the
-  # artifact check inside the unit remains the actual gate.
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {
       if (
@@ -155,4 +141,5 @@ lib.mkIf (cfg.enable or false) {
       }
     });
   '';
+
 }
