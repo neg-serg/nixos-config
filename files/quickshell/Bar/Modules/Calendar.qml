@@ -17,6 +17,7 @@ OverlayToggleCapsule {
     capsuleVisible: false
     autoToggleOnTap: true
     overlayNamespace: "qs-calendar"
+    overlayName: "calendar"
 
     property color parchmentBg: Color.withAlpha(Theme.surface, 0.85)
     property color goldAccent: Color.withAlpha(Theme.accentPrimary, 0.85)

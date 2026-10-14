@@ -8,6 +8,7 @@ import "../../Helpers/WeatherIcons.js" as WeatherIcons
 
 OverlayToggleCapsule {
     id: root
+    overlayName: "weather"
     readonly property real capsuleScale: capsule.capsuleScale
     readonly property int iconBox: capsule.capsuleInner
     capsule.backgroundKey: "weather"
