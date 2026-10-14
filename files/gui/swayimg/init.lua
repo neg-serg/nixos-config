@@ -137,6 +137,19 @@ swayimg.viewer.on_key("g", function() swayimg.viewer.open("first") end)
 swayimg.viewer.on_key("Shift-g", function() swayimg.viewer.open("last") end)
 swayimg.viewer.on_key("n", function() swayimg.viewer.open("next") end)
 swayimg.viewer.on_key("p", function() swayimg.viewer.open("prev") end)
+-- Emacs-style navigation (additive: h/j/k/l and n/p keep working).
+swayimg.viewer.on_key("Ctrl-n", function() swayimg.viewer.open("next") end)
+swayimg.viewer.on_key("Ctrl-p", function() swayimg.viewer.open("prev") end)
+swayimg.viewer.on_key("Ctrl-a", function() swayimg.viewer.open("first") end)
+swayimg.viewer.on_key("Ctrl-e", function() swayimg.viewer.open("last") end)
+swayimg.viewer.on_key("Ctrl-b", function()
+  local pos = get_pos()
+  swayimg.viewer.set_abs_position(pos.x - 50, pos.y)
+end)
+swayimg.viewer.on_key("Ctrl-f", function()
+  local pos = get_pos()
+  swayimg.viewer.set_abs_position(pos.x + 50, pos.y)
+end)
 -- The key a viewer is expected to answer to for "back". The slideshow has had
 -- it all along (see docs/howto/swayimg-hotkeys.md); the viewer had not, so it
 -- did nothing there.
