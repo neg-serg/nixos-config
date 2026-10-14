@@ -16,6 +16,8 @@ bind compose p postpone-message
 
 bind pager k previous-line
 bind pager j next-line
+bind pager <C-d> next-page
+bind pager <C-u> previous-page
 bind pager gg top
 bind pager G bottom
 bind pager R group-reply
