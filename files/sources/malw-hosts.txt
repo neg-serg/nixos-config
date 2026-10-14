@@ -1,6 +1,7 @@
 # Unbound upstream snapshot source (dns.malw.link hosts list, 2025-11-27).
 # Raw hosts format: <ip> <host>. Re-fetch/update this file, then run:
 #   just unbound-hosts
+# Names here that must NOT be blackholed live in malw-hosts-allow.txt.
 0.0.0.0 2no.co
 0.0.0.0 731111.mediascope.mail.ru
 185.246.223.127 ab.chatgpt.com
