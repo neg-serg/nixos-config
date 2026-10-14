@@ -82,14 +82,15 @@ once, before the write lands.
 
 ## Presets
 
-| button (UI)   | what it sets                                |
-| ------------- | ------------------------------------------- |
-| Vintage       | `nixieTempK` 2100, `nixieExposure` 2.5      |
-| Modern amber  | `nixieTempK` 2400, `nixieExposure` 1.5      |
-| Cyan tube     | `nixieTint` `#cc66e0ff`                     |
-| Wallpaper-lit | `nixieTintWallpaper` 0.35                   |
-| Dim/off       | `nixieGlow` 0                               |
-| Reset         | the repository defaults, as described above |
+| button (UI)    | what it sets                                |
+| -------------- | ------------------------------------------- |
+| Vintage        | `nixieTempK` 2100, `nixieExposure` 2.5      |
+| Modern amber   | `nixieTempK` 2400, `nixieExposure` 1.5      |
+| Cyan tube      | `nixieTint` `#cc66e0ff`                     |
+| Wallpaper-lit  | `nixieTintWallpaper` 0.35                   |
+| Camera 15°/10° | `nixieViewPitch` 15, `nixieViewAngle` 10    |
+| Dim/off        | `nixieGlow` 0                               |
+| Reset          | the repository defaults, as described above |
 
 ## llvmpipe / GPU caveat
 
