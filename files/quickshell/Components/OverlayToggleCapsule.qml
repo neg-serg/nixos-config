@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Components
+import qs.Services
 
 /*!
  * OverlayToggleCapsule bundles a WidgetCapsule trigger with OverlayToggle
@@ -12,6 +13,9 @@ Item {
     property bool capsuleVisible: true
     property bool autoToggleOnTap: true
     property var screen: null
+    // Stable name in OverlayManager's registry, so IPC handlers and keybinds can
+    // toggle this capsule without holding a reference to it.
+    property string overlayName: ""
     property alias capsule: capsule
     property alias overlay: overlay
     property alias overlayChildren: overlayHost.data
@@ -64,4 +68,11 @@ Item {
     function open(reason = "open") { overlay.open(reason); }
     function close(reason = "programmatic") { overlay.close(reason); }
     function toggle(reason = "toggle") { overlay.toggle(reason); }
+
+    Component.onCompleted: {
+        if (root.overlayName !== "") OverlayManager.registerNamed(root.overlayName, root);
+    }
+    Component.onDestruction: {
+        if (root.overlayName !== "") OverlayManager.unregisterNamed(root.overlayName, root);
+    }
 }

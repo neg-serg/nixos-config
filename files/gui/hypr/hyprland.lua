@@ -439,6 +439,12 @@ hl.bind(M4 .. "+n", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC tog
 -- Glass panel: live tuning for the hyprglass settings (see the panel module and
 -- hyprglass-apply). Next to the notification centre bind, same IPC shape.
 hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleGlassPanel"))
+-- Panel toggles and transport for the same shell (audit #7): the calendar and
+-- weather capsules register names with OverlayManager; media goes through the
+-- MPRIS manager. M4+SH+j/u/x were the free slots in this keymap.
+hl.bind(M4 .. "+" .. SH .. "+u", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleCalendar"))
+hl.bind(M4 .. "+" .. SH .. "+x", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleWeather"))
+hl.bind(M4 .. "+" .. SH .. "+j", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaPlayPause"))
 hl.bind(M4 .. "+space", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-close-all"), { locked = true })
 
 -- --- Overlay dismissal (quickshell widgets) ---

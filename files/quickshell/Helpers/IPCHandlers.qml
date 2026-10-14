@@ -20,6 +20,22 @@ Item {
         // Same path the workspace capsule click uses; handy for binds, scripts
         // and anything else that should not re-implement the hyprctl incantation.
         function toggleOverview(): void { Services.Expo.toggle(); }
+        // Panels the bar opens by click are reachable from binds and scripts
+        // too. The capsules register themselves under these names through
+        // OverlayManager.registerNamed (see Components/OverlayToggleCapsule).
+        function toggleCalendar(): string {
+            return Services.OverlayManager.toggleNamed("calendar") ? "ok" : "not-registered";
+        }
+        function toggleWeather(): string {
+            return Services.OverlayManager.toggleNamed("weather") ? "ok" : "not-registered";
+        }
+        // MPRIS transport of the current player, the same calls the bar's
+        // transport buttons make.
+        function mediaPlayPause(): void { Services.MusicManager.playPause(); }
+        function mediaNext(): void { Services.MusicManager.next(); }
+        function mediaPrev(): void { Services.MusicManager.previous(); }
+        // Relative volume step (percent, e.g. +5/-5); Audio clamps and rounds.
+        function volumeStep(delta: real): void { Services.Audio.changeVolume(delta); }
         // Per-window glass overrides, same functions the Glass panel's buttons
         // call. spec is a JSON object: {"class":"music","enabled":true,
         // "blurStrength":16,"glassOpacity":0.9,"adaptiveDim":0,"tint":"000000cc"}.
