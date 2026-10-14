@@ -28,11 +28,11 @@
 # its RPATH; tesseract's language data is wired through the wrapper.
 stdenv.mkDerivation (finalAttrs: {
   pname = "neru";
-  version = "1.57.0";
+  version = "1.58.0";
 
   src = fetchurl {
     url = "https://github.com/y3owk1n/neru/releases/download/v${finalAttrs.version}/neru-linux-amd64.zip";
-    hash = "sha256-7fRxwu0VXj6MP7v0wP3IsOUe8NtSfjS01QqWlhq6LpU=";
+    hash = "sha256-Nk+NfACg3sOUyC9k8lga+h1o1Y6OEnSDLM18UKBtkZs=";
   };
 
   unpackPhase = "unzip $src";
