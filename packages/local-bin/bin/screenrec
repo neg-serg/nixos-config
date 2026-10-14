@@ -45,24 +45,70 @@ stop_recording() {
     rm -f "$PIDFILE"
 }
 
+# The output whose picture the recorder should take: hyprctl knows the one
+# holding focus; when it cannot be reached, a single available output is
+# unambiguous. With two outputs and no focus answer (the headless "lab" output
+# that hosts the games workspace is the local case), plain wf-recorder has to
+# pick one by itself, and under this non-interactive toggle that used to die
+# instead of recording.
+focused_output() {
+    local name="" count
+    if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+        name="$(hyprctl -j monitors 2>/dev/null | jq -r '.[] | select(.focused) | .name' 2>/dev/null | head -n1)" || name=""
+    fi
+    if [ -z "$name" ]; then
+        count="$(wf-recorder -L 2>/dev/null | awk '/Name:/{n++} END{print n+0}')"
+        if [ "$count" = "1" ]; then
+            name="$(wf-recorder -L 2>/dev/null | awk '/Name:/{print $3; exit}')" || name=""
+        fi
+    fi
+    printf '%s' "$name"
+}
+
+# "x y w h" of the focused output: only a selection that lies inside it may be
+# recorded through -o; a region that leaves the output keeps wf-recorder's own
+# choice.
+focused_output_rect() {
+    command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 1
+    hyprctl -j monitors 2>/dev/null |
+        jq -r '.[] | select(.focused) | "\(.x) \(.y) \(.width) \(.height)"' 2>/dev/null |
+        head -n1
+}
+
 start_recording() {
     local filename="$RECORDINGS_DIR/rec-$(date '+%Y%m%d-%H.%M.%S').mp4"
     local geometry=""
+    local gx gy gw gh
 
     if [ "$MODE" = "area" ]; then
-        geometry=$(slurp -d 2>/dev/null) || exit 0
-        if [ -z "$geometry" ]; then
+        # Coordinates as numbers: the output-membership test below then needs no
+        # parsing of the "x,y WxH" display form.
+        read -r gx gy gw gh < <(slurp -f '%x %y %w %h' 2>/dev/null) || exit 0
+        if [ -z "${gx:-}" ] || [ -z "${gh:-}" ]; then
             exit 0
+        fi
+        geometry="$gx,$gy ${gw}x${gh}"
+    fi
+
+    local output rect mx my mw mh
+    output="$(focused_output)"
+    if [ -n "$geometry" ] && [ -n "$output" ]; then
+        rect="$(focused_output_rect)" || rect=""
+        if [ -n "$rect" ]; then
+            read -r mx my mw mh <<<"$rect"
+            if [ "$gx" -lt "$mx" ] || [ "$gy" -lt "$my" ] ||
+                [ $((gx + gw)) -gt $((mx + mw)) ] || [ $((gy + gh)) -gt $((my + mh)) ]; then
+                output=""
+            fi
         fi
     fi
 
-    local pid
-    if [ -n "$geometry" ]; then
-        wf-recorder -g "$geometry" -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
-    else
-        wf-recorder -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
-    fi
-    pid=$!
+    local args=(-c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename")
+    [ -n "$geometry" ] && args+=(-g "$geometry")
+    [ -n "$output" ] && args+=(-o "$output")
+
+    wf-recorder "${args[@]}" &
+    local pid=$!
 
     # wf-recorder can die right away (unwritable output, busy capture device):
     # only a recorder that is actually alive earns a pidfile and a "started" toast.
