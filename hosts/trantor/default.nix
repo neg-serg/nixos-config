@@ -49,6 +49,11 @@ let
       (zellijBind "" "n" "ScrollDown")
       (zellijBind "" "p" "ScrollUp")
     ];
+    # Mode entries (Pane/Move keep zellij's own defaults inside the mode).
+    modes = [
+      (zellijBind "Alt " "y" "SwitchToMode \"pane\"")
+      (zellijBind "Alt " "m" "SwitchToMode \"move\"")
+    ];
   };
 
   # Generated blocks are indented to match the surrounding keybinds (8 spaces).
@@ -97,6 +102,15 @@ let
           "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/trantor/default.nix"
         ]
         [ (zellijRuBlock zellijRuBinds.scroll) ]
+        s
+    )
+    (
+      s:
+      builtins.replaceStrings
+        [
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.modes), see hosts/trantor/default.nix"
+        ]
+        [ (zellijRuBlock zellijRuBinds.modes) ]
         s
     )
   ];
