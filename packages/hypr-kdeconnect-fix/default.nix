@@ -48,6 +48,11 @@ stdenv.mkDerivation {
     wayland # wayland-client
   ];
 
+  # Headless D-Bus service: QtCore/QtDBus only (QCoreApplication, no GUI), so
+  # the Qt setup hook's wrapping (QT_PLUGIN_PATH/QML) buys nothing — the hook
+  # still wants the choice spelled out.
+  dontWrapQtApps = true;
+
   # CTest suite: key resolver, D-Bus/session security policy, the EIS input
   # bridge, the generated portal metadata and PIE/hardening flags.
   doCheck = true;
