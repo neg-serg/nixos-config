@@ -20,7 +20,14 @@ rustPlatform.buildRustPackage rec {
   # Silence the "recovering lost surface" warning on monitor restore (DPMS
   # off→on): the recovery itself still runs, the message is just demoted to
   # debug so it only shows with RUST_LOG=debug.
-  patches = [ ./silence-surface-recovery-log.patch ];
+  #
+  # vulkan-device-lost.patch: a transition left running while a plain `wl img`
+  # / `wl restore` (TransitionType::None) replaces the wallpaper kept sampling
+  # the destroyed old texture (radv GPUVM fault, CLIENT_ID TCP → device lost).
+  patches = [
+    ./silence-surface-recovery-log.patch
+    ./vulkan-device-lost.patch
+  ];
 
   nativeBuildInputs = [
     makeWrapper

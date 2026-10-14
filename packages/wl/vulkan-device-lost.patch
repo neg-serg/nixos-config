@@ -1,0 +1,105 @@
+diff --git a/daemon/src/main.rs b/daemon/src/main.rs
+index ab9e8f3..f69c4be 100644
+--- a/daemon/src/main.rs
++++ b/daemon/src/main.rs
+@@ -956,6 +956,37 @@ fn complete_transition(daemon: &mut DaemonState, output_name: &str) {
+     output.needs_redraw = true;
+ }
+ 
++/// Drop a running transition without drawing it, freeing its GPU resources.
++///
++/// `TransitionState::new_texture` aliases the `output.wallpaper.texture`
++/// handles (established when the transition starts), so only `old_texture` is
++/// owned by the transition and only that one may be destroyed here. Callers use
++/// this before replacing the current wallpaper: otherwise the transition keeps
++/// its descriptor set pointing at the wallpaper texture that `set_wallpaper`
++/// frees, and the next frame samples freed GPU memory.
++///
++/// # Safety
++/// The GPU must be idle (all callers arrive via `handle_img`, which waits) and
++/// `device` must own the transition resources.
++unsafe fn cancel_transition(
++    device: &ash::Device,
++    transition_pipeline: Option<&TransitionPipeline>,
++    output: &mut Output,
++) {
++    let Some(t) = output.transition.take() else {
++        return;
++    };
++    // SAFETY: caller guarantees the GPU is idle; handles belong to `output`.
++    unsafe {
++        t.old_texture.destroy(device);
++        if let Some(ds) = t.descriptor_set
++            && let Some(tp) = transition_pipeline
++        {
++            tp.free_descriptor_set(device, ds);
++        }
++    }
++}
++
+ /// Tick all active animations, requesting redraw when frame changes.
+ fn tick_animations(daemon: &mut DaemonState) {
+     for output in daemon.outputs.values_mut() {
+@@ -1354,6 +1385,18 @@ fn handle_img(
+                     is_animated: true,
+                 };
+ 
++                // A transition still running here would keep its descriptor set
++                // pointing at the old wallpaper/atlas that the block below
++                // frees; drop it first so nothing can sample freed memory.
++                // SAFETY: GPU is idle (upload_gif_atlas waited for the queue).
++                unsafe {
++                    cancel_transition(
++                        &daemon.vk.device,
++                        daemon.transition_pipeline.as_ref(),
++                        output,
++                    );
++                }
++
+                 // SAFETY: GPU is idle.
+                 unsafe {
+                     // Clear old wallpaper texture (if not animated - if animated, animation owns it)
+@@ -1660,8 +1703,18 @@ fn set_static_wallpaper(
+                     is_animated: false,
+                 };
+ 
+-                // SAFETY: GPU is idle (waited above), old texture safe to free.
++                // A transition still running here samples `output.wallpaper`'s
++                // current texture, which set_wallpaper() frees below; without
++                // this the next frame would read destroyed GPU memory.
++                // SAFETY: GPU is idle (handle_img waited), descriptor set was
++                // just rebound to `gpu_tex`, and only the transition's own
++                // old_texture is destroyed.
+                 unsafe {
++                    cancel_transition(
++                        &daemon.vk.device,
++                        daemon.transition_pipeline.as_ref(),
++                        output,
++                    );
+                     output.set_wallpaper(&daemon.vk.device, wallpaper);
+                 }
+                 debug!(output = %name, "set_static_wallpaper: non-transition path complete");
+diff --git a/daemon/src/output.rs b/daemon/src/output.rs
+index ff07b0c..4094ce6 100644
+--- a/daemon/src/output.rs
++++ b/daemon/src/output.rs
+@@ -204,10 +204,17 @@ impl Output {
+                 // wallpaper.texture (set at transition start). The
+                 // wallpaper destruction below handles those resources.
+             }
+-            if let Some(animation) = self.animation.take() {
++            // The GIF path stores the same handles in animation.atlas and
++            // wallpaper.texture; destroy them once. Only when no wallpaper owns
++            // the atlas (cannot happen today, but keep a leak instead of a
++            // double free) is the atlas destroyed explicitly.
++            let wallpaper = self.wallpaper.take();
++            if let Some(animation) = self.animation.take()
++                && wallpaper.is_none()
++            {
+                 animation.atlas.destroy(device);
+             }
+-            if let Some(wallpaper) = self.wallpaper.take() {
++            if let Some(wallpaper) = wallpaper {
+                 wallpaper.texture.destroy(device);
+             }
+             for fb in self.framebuffers.drain(..) {
