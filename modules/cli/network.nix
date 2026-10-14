@@ -10,6 +10,7 @@
     pkgs.urlscan # extract URLs from text blobs
     pkgs.whois # domain info lookup
     pkgs.neg.oryx # TUI traffic sniffer using eBPF (run with sudo; needs BTF kernel)
+    pkgs.netwatch # TUI network diagnostics (per-connection process view; sudo for capture)
 
     # Remote access
     pkgs.abduco # CLI session detach
