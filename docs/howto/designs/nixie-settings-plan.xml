@@ -347,9 +347,13 @@ python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/qu
       packages/nixie — nixie validate rc=0, theme set present.
     </gates>
     <open>
-      Live-device checks still to run outside the sandbox: A5/A6 menu round-trip (Save writes the
-      user greeter.jsonc atomically, Reset/Export) and the F10 toggle — the menu itself needs a
-      human to drag the sliders, which is why the sandbox runs it only by code review.
+      Live-device checks still to run outside the sandbox: the A5/A6 Save/Reset/Export clicks and
+      the F10 toggle. What the sandbox could still show on 2026-10-14: the lab renders (presets
+      strip, Разряд/Стекло/Камера/Ряд sections, sliders and the status line) in an isolated
+      `XDG_CONFIG_HOME` copy; clicking a preset changes the buffer to "не сохранено" while the
+      part on disk stays byte-identical — the documented save-on-demand model. The menu does not
+      scroll under synthetic wheel/Page keys here (no drag), so reaching the Сохранить/Сброс row
+      needs a human.
       lint-theme-tokens.mjs was resolved on 2026-10-14 (optional patterns taught to the tool, the
       36 missing tokens added to the parts, the generated schema refreshed) — see the follow-up
       commits; the remaining "Unused" rows (notifications.*, panel.animations.overlayMs,
