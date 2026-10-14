@@ -445,6 +445,13 @@ hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd("timeout 3 quickshell ipc call 
 hl.bind(M4 .. "+" .. SH .. "+u", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleCalendar"))
 hl.bind(M4 .. "+" .. SH .. "+x", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleWeather"))
 hl.bind(M4 .. "+" .. SH .. "+j", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaPlayPause"))
+-- The rest of the transport and the shell volume steps: M4+C+period/comma mimic
+-- the > and < keys, equal/minus stand in for the volume rocker (the XF86 keys
+-- stay on the Genelec path). `--` keeps the negative step out of the flag parser.
+hl.bind(M4 .. "+" .. C .. "+period", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaNext"))
+hl.bind(M4 .. "+" .. C .. "+comma", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaPrev"))
+hl.bind(M4 .. "+" .. C .. "+equal", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC volumeStep -- 5"), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+minus", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC volumeStep -- -5"), { repeating = true })
 hl.bind(M4 .. "+space", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-close-all"), { locked = true })
 
 -- --- Overlay dismissal (quickshell widgets) ---
