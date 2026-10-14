@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
 import qs.Settings
+import qs.Services
 import "../../Helpers/Utils.js" as Utils
 
 Item {
@@ -30,6 +31,18 @@ Item {
         id: toast
         color: "transparent"
         visible: false
+
+        // OverlayManager contract: registered overlays are dismissed via
+        // dismiss() — wire it to the popup's own hide and register on show so
+        // the global dismiss trigger (M4+SHIFT+K/D) reaches this window too.
+        function dismiss() {
+            hidePopup();
+        }
+
+        onVisibleChanged: {
+            if (visible) OverlayManager.registerOverlay(toast);
+            else OverlayManager.unregisterOverlay(toast);
+        }
 
         WlrLayershell.namespace: "qs-music"
         WlrLayershell.exclusionMode: ExclusionMode.Normal
@@ -268,6 +281,8 @@ Item {
 
             FocusScope {
                 anchors.fill: parent
+                focus: true
+                Keys.onEscapePressed: toast.dismiss()
 
                 // Pause auto-hide while pointer is over the card; resume on exit
                 HoverHandler {
