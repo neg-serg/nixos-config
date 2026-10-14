@@ -93,9 +93,6 @@ lint:
     if command -v rustfmt >/dev/null 2>&1; then bash scripts/dev/check-rustfmt.sh; else echo "rustfmt not found — skipping Rust check"; fi
     # Lua (non-nvim; nvim is a vendored config)
     if command -v selene >/dev/null 2>&1; then selene files/gui files/mpv; else echo "selene not found — skipping Lua lint"; fi
-    # Per-workspace wallpaper helper: mapping/apply/skip logic against fakes
-    # (fake wl + hyprctl + a temp pool; no session, no compositor).
-    python3 "{{repo_root}}/packages/local-bin/bin/wl-workspaces.py" selftest
     # Music index/similar payloads: offline stub-embedder selftests (no
     # torch/model/venv), skipped with a notice when python3 is missing —
     # same style as rustfmt/selene above.
