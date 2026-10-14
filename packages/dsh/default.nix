@@ -42,6 +42,14 @@ let
     path = sys.argv[1]
     pkg = json.load(open(path))
     pkg.pop("devDependencies", None)
+    # Security overrides, kept in sync with package-lock.json. npm ci replays
+    # the lockfile offline and re-resolves anything an override does not cover
+    # (the lockfile itself cannot carry overrides), so this must match the
+    # npm `overrides` the lockfile was generated with.
+    pkg["overrides"] = {
+        "@modelcontextprotocol/client": "2.2.0",
+        "fflate": "0.8.3",
+    }
     json.dump(pkg, open(path, "w"), indent=2, ensure_ascii=False)
     PY
   '';
@@ -84,8 +92,13 @@ buildNpmPackage {
       ]
       (builtins.readFile ./post-install.sh);
 
-  # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
-  npmDepsHash = "sha256-wVrtqlBxrRVQdMASCP4ObuUT0yBR3QOIH7/Qoqb6uoc=";
+  # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`.
+  # The lockfile carries two security overrides: fflate 0.8.2 -> 0.8.3
+  # (GHSA-px8p-9vwx-vf98) and @modelcontextprotocol/client 2.0.0 -> 2.2.0
+  # (GHSA-6qxp-vccf-f47h, OAuth credential leak; dsh-mcp-client pins it
+  # exactly). They are injected into package.json by `src` below, because npm ci
+  # cannot replay a lockfile that resolves past a declared pin without them.
+  npmDepsHash = "sha256-pA4usAobMGeYgWpo07+bOJC0yoK990hCJ1cWReYon2c=";
 
   meta = {
     description = "DeepSeek Harness (dsh) — open-source agent harness, everything is a plugin";
