@@ -104,18 +104,18 @@ let
 
     # Flat keys — vicinae doesn't accept nested `action: { copy: … }`
     keybinds = {
-      open-search-filter = "control+P";
+      # C-p/C-b belong to the emacs set in the search bar (C-p = up, C-b =
+      # char-left), so the filter and the action panel move to C-S-f / C-S-b —
+      # window Shortcuts run before key events and would swallow the emacs keys.
+      open-search-filter = "control+shift+F";
       open-settings = "control+,";
-      toggle-action-panel = "control+B";
+      toggle-action-panel = "control+shift+B";
       "action.copy" = "control+shift+C";
-      toggle = "control+Return";
       "action.copy-name" = "control+shift+.";
       "action.copy-path" = "control+shift+,";
       "action.duplicate" = "control+D";
       "action.edit" = "control+E";
       "action.edit-secondary" = "control+shift+E";
-      "action.move-down" = "Tab";
-      "action.move-up" = "shift+Tab";
       "action.new" = "control+N";
       "action.open" = "control+O";
       "action.pin" = "control+shift+P";

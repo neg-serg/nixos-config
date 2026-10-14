@@ -52,8 +52,15 @@ in
     prev.vicinae.overrideAttrs (old: {
       version = "0.29.0";
       inherit src;
-      # Tab/Shift+Tab navigate the item list (launcher-menu style) + Ctrl+C
-      # dismiss — QML SearchBar patch, ported to v0.29.0. The dmenu patch keeps
+      # Tab/Shift+Tab walk the item list (launcher-menu style: grids step
+      # across a row and spill onto the next one), work window-wide via a
+      # fallback in LauncherWindow, navigate the open action stack, accept the
+      # highlighted completion and keep an emacs kill ring in the search input
+      # (C-d/C-k/C-u/C-w/C-y); Ctrl+C dismisses. The keybinding patch makes the
+      # list navigation chords hybrid — emacs C-n/C-p/C-Alt-b/f and vim
+      # C-j/C-k/C-h/C-l both work in one launcher. The QML patches target the
+      # LauncherPage's view (root.commandView), not the page wrapper — ported
+      # to v0.29.0. The dmenu patch keeps
       # the `vicinae dmenu` picker alive across focus changes and resolves the
       # CLI request when the window closes (upstream issue #1827). The lusty
       # patch ranks the root search with the lusty-fuzzy crate's matcher
@@ -61,6 +68,7 @@ in
       # scorer, so the pickers, the tray and the launcher rank identically.
       patches = (old.patches or [ ]) ++ [
         ./vicinae-tab-qml.patch
+        ./vicinae-hybrid-keys.patch
         ./vicinae-dmenu-fix.patch
         ./vicinae-lusty-search.patch
       ];
