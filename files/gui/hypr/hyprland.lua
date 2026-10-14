@@ -424,6 +424,9 @@ hl.bind(M4 .. "+" .. SH .. "+t", hl.dsp.exec_cmd("sc-live")) -- raw SuperCollide
 -- Renoise tracker (workspace 12 "daw"): run-or-raise via the raise helper
 hl.bind(M4 .. "+" .. SH .. "+a", hl.dsp.exec_cmd('raise --match "class:regex=^(Renoise)$" --launch "renoise"'))
 hl.bind(M1 .. "+q", hl.dsp.exec_cmd(menu))
+-- The caps-lock toast only fires while kanata is stopped: the service maps
+-- caps to LeftCtrl (files/cli/kanata/kanata.kbd), so the compositor never sees
+-- Caps_Lock otherwise. Kept as the no-kanata fallback (audit #21).
 hl.bind("Caps_Lock", hl.dsp.exec_cmd("swayosd-client --caps-lock"))
 hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 
