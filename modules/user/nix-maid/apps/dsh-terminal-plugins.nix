@@ -67,6 +67,12 @@ rec {
     # sessions. Host/agent-plane: it injects `commands` and `subprocess`, both
     # mounted here (dsh-subprocess-local is what the bash tool already uses).
     "dsh-worktree"
+    # Herdr state reporting: maps agent/status + the approval/question
+    # waterfalls onto `herdr pane report-agent`, so the pane shows up as a
+    # first-class agent (working/idle/blocked) in the sidebar, notifications and
+    # `herdr agent wait`. Inert outside a Herdr pane (HERDR_ENV=1); injects
+    # `subprocess` only. See docs/howto/herdr.md.
+    "dsh-herdr"
     # /diff + show_diff: the diff-review surface. The tool declares the harness's
     # `card: "diff"` presenter (the same one the edit-approval preview uses), so
     # a review renders as structured red/green file diffs; the command is the

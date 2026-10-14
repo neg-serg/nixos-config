@@ -1,0 +1,12 @@
+{
+  "name": "dsh-herdr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Report the dsh agent lifecycle (working/idle/blocked) to the Herdr runtime so the pane shows up as a first-class agent in the sidebar, notifications and `herdr agent wait`.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
