@@ -4,6 +4,7 @@
     enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
+      herdr.enable = mkBool "install Herdr (terminal workspace manager / runtime for AI coding agents) with its neg config" false;
       omp.enable = mkBool "install Oh My Pi (omp) AI coding agent (fork of Pi)" false;
       rocm.enable = mkBool "install PyTorch with ROCm (gfx1201) + torch-rocm CLI for GPU fine-tuning" false;
     };
