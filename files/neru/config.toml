@@ -3,12 +3,18 @@
 # Linux ships no global hotkeys by default (so none collide with terminal
 # shortcuts), so the modes are bound here. Ctrl+Alt+… stays clear of this
 # machine's Super(Alt)-based Hyprland binds and the Ctrl+Shift terminal ones.
+# Scroll sits on Ctrl+Alt+W on purpose: Ctrl+Alt+S is kitty's
+# scrollback_nvim (files/kitty/key.conf).
 # Apply edits with `neru config reload` (the daemon does not watch the file).
+
+# Latin hint letters must be typeable while the focused window is on the ru
+# layout, so neru reads keys as if the keyboard were us.
+[general]
+kb_layout_to_use = "us"
 
 [hotkeys]
 "Ctrl+Alt+Space" = "hints"
 "Ctrl+Alt+C" = "recursive_grid"
-"Ctrl+Alt+S" = "scroll"
-# Uncomment for the remaining modes:
-# "Ctrl+Alt+B" = "bisect"
-# "Ctrl+Alt+G" = "grid"
+"Ctrl+Alt+W" = "scroll"
+"Ctrl+Alt+B" = "bisect"
+"Ctrl+Alt+G" = "grid"
