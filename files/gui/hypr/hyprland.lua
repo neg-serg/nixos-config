@@ -58,7 +58,7 @@ local m = {
   pip                = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$",
   telegram_wrapped   = "^(.telegram-desktop-wrapped)$",
   telegram_org       = "^(org\\.telegram.desktop)$",
-  utility            = "^(qt5ct|wine|steamwebhelper|sun-awt-X11-XFramePeer|xdg-desktop-portal-gtk)$",
+  utility            = "^(wine|steamwebhelper|sun-awt-X11-XFramePeer|xdg-desktop-portal-gtk)$",
   steam_app          = "^(steam_app)",
   xwaylandvideobridge = "^(xwaylandvideobridge)$",
   -- scratchpad classes
