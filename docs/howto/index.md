@@ -12,9 +12,6 @@
 - kitty: font size follows the window size (watcher `font_zoom.py`):
   [kitty-font-zoom.md](./kitty-font-zoom.md)
 
-- Per-workspace wallpapers — one image per Hyprland workspace, while the greeter keeps the user's
-  pick: [wallpaper-workspaces.md](./wallpaper-workspaces.md)
-
 - Kanata — CapsLock layout: status and history (simple scheme active, caps-nav reverted to a
   separate experiment): [kanata.md](./kanata.md)
 
