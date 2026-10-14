@@ -11,8 +11,8 @@
  * agent revises before the user sees it. Strictness is deliberately low: the
  * gate checks shape, not content quality (Momus QA stays in the workflow).
  *
- * Mechanism: tools/pre-execute deny on the exit_plan_mode tool when
- * args.plan fails the checks. Never touches other tools.
+ * Mechanism: tools/pre-execute deny on the exit_plan_mode tool when the plan
+ * argument fails the checks. Never touches other tools.
  */
 
 export const name = 'dsh-plan-format-validator'
@@ -40,7 +40,10 @@ export function apply(ctx) {
     const decision = await next()
     if (decision.kind !== 'allow') return decision
     if (exec.name !== PLAN_TOOL) return decision
-    const plan = exec?.args?.plan ?? ''
+    // 0.2 hands listeners a ToolExecution carrying the parsed `arguments`; the
+    // pre-0.2 `args` alias is kept for older harness builds (and for the
+    // package-side compatibility patch in packages/dsh).
+    const plan = exec?.arguments?.plan ?? exec?.args?.plan ?? ''
     if (typeof plan !== 'string' || plan.trim() === '') {
       return { kind: 'deny', reason: 'plan-format-validator: план пуст — отправь полный markdown-план (начинается с "' + HASH + ' ").' }
     }

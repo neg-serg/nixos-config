@@ -9,18 +9,21 @@ ok(typeof listeners["tools/pre-execute"] === "function", "pre-execute listener r
 const nextAllow = async () => ({ kind: "allow" });
 (async () => {
   // 1. write to notepad → deny
-  const d1 = await listeners["tools/pre-execute"]({ name: "write", args: { path: "/etc/nixos/.agent/notepads/x/learnings.md" } }, nextAllow);
+  const d1 = await listeners["tools/pre-execute"]({ name: "write", arguments: { path: "/etc/nixos/.agent/notepads/x/learnings.md" } }, nextAllow);
   ok(d1.kind === "deny", "write to notepad denied");
   ok((d1.reason ?? "").includes("append-only"), "reason mentions append-only");
   // 2. edit outside notepads → allow
-  const d2 = await listeners["tools/pre-execute"]({ name: "edit", args: { file_path: "/etc/nixos/modules/x.nix" } }, nextAllow);
+  const d2 = await listeners["tools/pre-execute"]({ name: "edit", arguments: { file_path: "/etc/nixos/modules/x.nix" } }, nextAllow);
   ok(d2.kind === "allow", "edit outside notepads allowed");
   // 3. read_document of notepad → deny (write-type tool on read path is still guarded)
-  const d3 = await listeners["tools/pre-execute"]({ name: "read_document", args: { file_path: "/x/.agent/notepads/y/verification.md" } }, nextAllow);
+  const d3 = await listeners["tools/pre-execute"]({ name: "read_document", arguments: { file_path: "/x/.agent/notepads/y/verification.md" } }, nextAllow);
   ok(d3.kind === "deny", "read_document on notepad denied");
   // 4. bash → untouched
-  const d4 = await listeners["tools/pre-execute"]({ name: "bash", args: { command: "cat .agent/notepads/x.md" } }, nextAllow);
+  const d4 = await listeners["tools/pre-execute"]({ name: "bash", arguments: { command: "cat .agent/notepads/x.md" } }, nextAllow);
   ok(d4.kind === "allow", "bash untouched (guard is tool-level)");
+  // 5. pre-0.2 `args` alias still denied
+  const d5 = await listeners["tools/pre-execute"]({ name: "write", args: { path: "/etc/nixos/.agent/notepads/x/learnings.md" } }, nextAllow);
+  ok(d5.kind === "deny", "legacy args shape still denied");
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail === 0 ? 0 : 1);
 })();

@@ -12,22 +12,25 @@ const barePlan = "Сделать y";
 const noSections = "# Рефакторинг x\nпросто текст без секций";
 (async () => {
   // 1. good plan → allow
-  const d1 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", args: { plan: goodPlan } }, nextAllow);
+  const d1 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", arguments: { plan: goodPlan } }, nextAllow);
   ok(d1.kind === "allow", "well-formed plan allowed");
   // 2. bare text → deny (no heading)
-  const d2 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", args: { plan: barePlan } }, nextAllow);
+  const d2 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", arguments: { plan: barePlan } }, nextAllow);
   ok(d2.kind === "deny", "bare plan denied");
   ok((d2.reason ?? "").includes("заголовок"), "reason names heading");
   // 3. heading but no sections → deny
-  const d3 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", args: { plan: noSections } }, nextAllow);
+  const d3 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", arguments: { plan: noSections } }, nextAllow);
   ok(d3.kind === "deny", "no-sections plan denied");
   ok((d3.reason ?? "").includes("секции"), "reason names sections");
   // 4. empty plan → deny
-  const d4 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", args: { plan: "" } }, nextAllow);
+  const d4 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", arguments: { plan: "" } }, nextAllow);
   ok(d4.kind === "deny", "empty plan denied");
   // 5. other tool untouched
-  const d5 = await listeners["tools/pre-execute"]({ name: "edit", args: { file_path: "/x.md" } }, nextAllow);
+  const d5 = await listeners["tools/pre-execute"]({ name: "edit", arguments: { file_path: "/x.md" } }, nextAllow);
   ok(d5.kind === "allow", "edit untouched");
+  // 6. pre-0.2 `args` alias still accepted (older harness / compatibility shim)
+  const d6 = await listeners["tools/pre-execute"]({ name: "exit_plan_mode", args: { plan: goodPlan } }, nextAllow);
+  ok(d6.kind === "allow", "legacy args shape allowed");
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail === 0 ? 0 : 1);
 })();
