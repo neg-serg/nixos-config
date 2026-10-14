@@ -1,7 +1,15 @@
 {
   "ws": {
     "icon": {
-      "svgScale": 0.52
+      // Glyph metrics for Bar/Modules/WsIndicator.qml.
+      "svgScale": 0.52,
+      "spacing": 1,
+      "scale": 1.4,
+      "detachedScale": 1.15,
+      "baselineOffset": 0,
+      "detachedPadding": 0,
+      "detachedBaselineOffset": 0,
+      "innerPadding": 1
     },
     "submap": {
       "icon": {

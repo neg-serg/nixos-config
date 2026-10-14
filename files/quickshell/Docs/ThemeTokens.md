@@ -189,7 +189,7 @@ Core mappings (examples):
   panel.sideMargin; panelWidgetSpacing → panel.widgetSpacing; panelModuleHeight →
   panel.moduleHeight; panelMenuYOffset → panel.menuYOffset
 - Panel icons: panelIconSize → panel.icons.iconSize; panelIconSizeSmall → panel.icons.iconSizeSmall
-  (deprecated; not wired into capsule sizing, so left undefined in the default theme)
+  (legacy name; read by TrayIcon/Spinner, defined as 16 in the default theme)
 - Hotzone: panelHotzoneWidth → panel.hotzone.width; panelHotzoneHeight → panel.hotzone.height;
   panelHotzoneRightShift → panel.hotzone.rightShift
 - Shape: cornerRadius → shape.cornerRadius; cornerRadiusSmall → shape.cornerRadiusSmall;
