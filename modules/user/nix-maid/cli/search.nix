@@ -29,6 +29,7 @@
               "--bind='ctrl-j:execute(v {+})+abort'"
               # NB: fzf stops parsing FZF_DEFAULT_OPTS at '#' — keep inline '#' out of the string
               "--bind='ctrl-n:down,ctrl-p:up,ctrl-f:page-down,ctrl-b:page-up,ctrl-a:beginning-of-line,ctrl-e:end-of-line'"
+              "--bind='alt-j:down,alt-k:up'"
               "--bind='ctrl-space:select-all'"
               "--bind='ctrl-t:accept'"
               "--bind='ctrl-v:execute(v {+})'"
