@@ -44,6 +44,10 @@ in
         ".config/hypr/hyprwindowshade.lua".text =
           config.lib.neg.readFile "files/gui/hypr/hyprwindowshade.lua";
 
+        # Hyprwinwrap background-window declarations. Pushed by
+        # hyprwinwrap-setup; the plugin itself is loaded at session start.
+        ".config/hypr/hyprwinwrap.lua".text = config.lib.neg.readFile "files/gui/hypr/hyprwinwrap.lua";
+
         ".config/hypr/hypridle.conf".text = ''
           # Hypridle — idle configuration
           # Idle locking temporarily disabled (2026-08-31): hyprlock removed.

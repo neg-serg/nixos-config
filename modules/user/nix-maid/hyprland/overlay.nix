@@ -187,6 +187,55 @@
               platforms = final.lib.platforms.linux;
             };
           };
+
+          # Hyprwinwrap: any window (mpv, a browser, a shader canvas) pinned as a
+          # background layer behind the desktop. Upstream is a hyprpm plugin; the
+          # rev is the commit its hyprpm.toml pins for Hyprland 0.56.2, the same
+          # commit family as the rest of this overlay, so plugin and compositor
+          # stay in step. hyprpm builds it with CMake and `install(TARGETS)`
+          # drops libhyprwinwrap.so into $out/lib, so the default phases work.
+          # The .so is dlopen'd by the generated hyprwinwrap-setup helper at
+          # session start (see main.nix); the background-window declarations in
+          # files/gui/hypr/hyprwinwrap.lua are pushed through `hyprctl eval`,
+          # because a plugin cannot be loaded while hyprland.lua is parsed.
+          # One local patch (hyprwinwrap-lua-window-merge.patch): upstream's
+          # luaWindow() only appends to gLuaSpecs and leaves the merge to the
+          # config.reloaded event, which a runtime `hyprctl eval` never fires —
+          # and a reload would clear the list in its config.preReload handler
+          # before merging. The patch merges immediately, which is what makes
+          # the eval push take effect at all. Verified in a nested 0.56.2
+          # instance: after the patch a window matching the pushed class is
+          # adopted as a full-screen background window.
+          hyprwinwrap = final.hyprlandPlugins.mkHyprlandPlugin {
+            pluginName = "hyprwinwrap";
+            version = "0-unstable-2026-09-10";
+
+            src = final.fetchFromGitHub {
+              owner = "gen3vra";
+              repo = "hyprwinwrap";
+              rev = "3b6e337b9ee934ee23179d1445cb8cacfc38af28";
+              hash = "sha256-J3dFF2ibY+SjYoSm2JnBrBu9riVbycQ1q39xnYlNUjM=";
+            };
+
+            patches = [ ./hyprwinwrap-lua-window-merge.patch ];
+
+            nativeBuildInputs = [ final.cmake ];
+            # The CMakeLists asks pkg-config for hyprland, libdrm, libinput,
+            # libudev, pangocairo, pixman-1, wayland-server and xkbcommon; all of
+            # those (and their .pc files) arrive through mkHyprlandPlugin's
+            # hyprland.buildInputs. Only the Lua headers need an explicit input:
+            # lua5_5 is the interpreter Hyprland itself links, and its lua55.pc
+            # is what the plugin's pkg_search_module(lua55 …) matches.
+            buildInputs = [ final.lua5_5 ];
+            env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
+
+            meta = {
+              homepage = "https://github.com/gen3vra/hyprwinwrap";
+              description = "Display any window as a background wallpaper in Hyprland";
+              license = final.lib.licenses.bsd3;
+              platforms = final.lib.platforms.linux;
+            };
+          };
         };
       })
     ];
