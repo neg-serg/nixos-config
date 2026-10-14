@@ -10,7 +10,9 @@
 #   * name/branch collisions and running outside a repository fail loudly;
 #   * a dirty worktree is not removed without --force, and --force does remove it;
 #   * --copy brings gitignored files in, DSH_WORKTREE_POST_CREATE runs in the
-#     new tree.
+#     new tree;
+#   * --open herdr fails loudly when no herdr binary is available, and auto
+#     stays on the print fallback inside a Herdr pane without one.
 #
 # Usage: check-dsh-worktree.sh [dsh-worktree-path]
 #
@@ -95,6 +97,14 @@ run new --force --open print > /dev/null 2>&1
 assert_fails $? "a leading dash is rejected (a mistyped flag cannot become a name)"
 run new other --branch wt/task1 --open print > /dev/null 2>&1
 assert_fails $? "an existing branch is rejected"
+run new herdr-task --open herdr > /dev/null 2>&1
+assert_fails $? "--open herdr without a herdr binary fails loudly"
+run new herdr-task --open nope > /dev/null 2>&1
+assert_fails $? "an unknown --open mode is rejected"
+export HERDR_ENV=1
+run new autoless --open auto > /dev/null 2>&1
+assert $? "auto inside HERDR_ENV without a herdr binary falls back (print)"
+unset HERDR_ENV
 (cd "$work" && run new outsider --open print > /dev/null 2>&1)
 assert_fails $? "running outside a repository is rejected"
 

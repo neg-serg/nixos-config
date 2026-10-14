@@ -21,7 +21,7 @@ every `git status` the agent runs. The guard test asserts the main checkout stay
 ## Usage
 
 ```sh
-dsh-worktree new <name> [--from REF] [--open auto|kitty|zellij|print]
+dsh-worktree new <name> [--from REF] [--open auto|herdr|kitty|zellij|print]
                         [--cmd CMD] [--copy RELPATH]... [--branch BR]
 dsh-worktree list
 dsh-worktree path <name>
@@ -42,16 +42,27 @@ dsh-worktree prune
 
 ### Opening a pane
 
-`--open auto` (the default) picks the first that works: **kitty** when `KITTY_LISTEN_ON` is set and
-`kitty @ ls` answers, else **zellij** when inside a zellij session, else it just prints the command
-to run. The exact invocations, verified against the installed versions:
+`--open auto` (the default) picks the first that works: **herdr** inside a Herdr pane (`HERDR_ENV=1`
+with the binary on PATH), else **kitty** when `KITTY_LISTEN_ON` is set and `kitty @ ls` answers,
+else **zellij** when inside a zellij session, else it just prints the command to run. The exact
+invocations, verified against the installed versions:
 
 ```sh
 kitty @ launch --type=tab --cwd <path> --tab-title wt:<name> -- dsh --profile tui
 zellij action new-pane --cwd <path> --name wt:<name> -- dsh --profile tui
+herdr worktree open --cwd <repo> --path <path> --label wt:<name> --focus
+herdr pane run <root-pane-id> "dsh --profile tui"
 ```
 
 kitty needs `allow_remote_control yes` (already set in `files/kitty/kitty.conf`).
+
+The Herdr path registers the checkout as a workspace **grouped under the repository**
+(`herdr worktree open`), so the tree shows up in the sidebar with Git provenance, and then starts
+`dsh --profile tui` in that workspace's root pane (`herdr pane run`). Inside a Herdr pane the server
+exports `HERDR_ENV`, `HERDR_PANE_ID` and `HERDR_BIN_PATH`; the helper uses the latter so it drives
+the same server as the calling pane. If the server rejects `worktree open` (older build, or Git
+refuses the checkout), the helper falls back to `herdr workspace create --cwd <path>`, which loses
+the grouping but still opens the tree. See `docs/howto/herdr.md` for the runtime itself.
 
 ### Environment
 
@@ -60,6 +71,7 @@ kitty needs `allow_remote_control yes` (already set in `files/kitty/kitty.conf`)
 | `DSH_WORKTREE_ROOT`        | where trees live (default `~/.dsh/worktrees`)                                                                       |
 | `DSH_WORKTREE_CMD`         | what a launched pane runs (default `dsh --profile tui`; `dsh` has no default profile, it must be named explicitly)  |
 | `DSH_WORKTREE_POST_CREATE` | hook run **inside** the new tree after creation, e.g. `ln -s ../../node_modules node_modules` to avoid a re-install |
+| `HERDR_BIN_PATH`           | Herdr binary used by `--open herdr` (default `herdr` on PATH; a Herdr pane sets it)                                 |
 
 Gitignored files (`.env`, local editor config) do not follow a worktree into existence: pass
 `--copy .env` for the ones a task needs, or use the post-create hook.
@@ -71,7 +83,7 @@ registers the same verbs as a slash command, so a session can spawn a worker ses
 instead of leaving the terminal:
 
 ```text
-/worktree new auth-fix --copy .env     # tree + branch + a kitty/zellij pane running dsh there
+/worktree new auth-fix --copy .env     # tree + branch + a herdr/kitty/zellij pane running dsh there
 /worktree list
 /worktree path auth-fix
 /worktree rm auth-fix --force
