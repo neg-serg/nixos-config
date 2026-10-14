@@ -44,7 +44,6 @@ ShellRoot {
 
 			BackgroundImage {
 				id: lockBackdrop
-				id: backgroundImage
 				anchors.fill: parent
 				screen: lockSurface.screen
 				slideAmount: 0

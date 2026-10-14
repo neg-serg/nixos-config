@@ -60,16 +60,61 @@ readonly property real pad: Math.round(GreeterTheme.nixieTubeMargin * root.uiSca
 implicitWidth: root.glassWidth + root.pad * 2
 implicitHeight: root.glassHeight + root.pad * 2
 
+// The camera follows the pointer over the tube when nixieCameraFollow is on:
+// the pointer adds at most nixieCameraRange degrees to the base yaw and pitch
+// (the base itself is not clamped), smoothed by a Behavior; a pointer outside
+// the tube leaves the camera on its base. pView's third member carries the
+// pitch; the shader consumes it from P6 on.
+readonly property real cameraX: cameraHover.active
+                                ? (cameraHover.point.position.x / Math.max(1, root.width) - 0.5) * 2 : 0
+readonly property real cameraY: cameraHover.active
+                                ? (cameraHover.point.position.y / Math.max(1, root.height) - 0.5) * 2 : 0
+readonly property real cameraRange: Math.max(0, GreeterTheme.nixieCameraRange)
+readonly property real yawOffset: GreeterTheme.nixieCameraFollow
+        ? Math.max(-root.cameraRange, Math.min(root.cameraRange, root.cameraX * root.cameraRange)) : 0
+readonly property real pitchOffset: GreeterTheme.nixieCameraFollow
+        ? Math.max(-root.cameraRange, Math.min(root.cameraRange, root.cameraY * root.cameraRange)) : 0
+// The Behavior below needs a writable property, so these two are not readonly:
+// the binding keeps them on the base camera plus the clamped pointer offset,
+// and the animation is the smoothing.
+property real effectiveYaw: GreeterTheme.nixieViewAngle + root.yawOffset
+property real effectivePitch: GreeterTheme.nixieViewPitch + root.pitchOffset
+Behavior on effectiveYaw { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+Behavior on effectivePitch { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+
+HoverHandler {
+id: cameraHover
+}
+
 // Discharge of the current digit: 1 while it burns steadily, and a stutter
 // between 0 and 1 for the frames after it changed. steady = true holds it at 1
 // from the first frame: the workbench screenshots a tube that is not stuttering.
 property bool steady: false
 property real ignition: 1.0
+// One-shot ticks still owed; 0 is settled.
 property int strikesLeft: 0
-// Seconds of idle time, advanced in small steps so the shader's shimmer has
-// something to move with (pTime). The interval is the price of the life: 15
-// repaints a second over one small item, and nothing else on the screen moves.
+// Seconds of idle time, advanced only by the shimmer tick (nixieShimmerMs;
+// frozen with nixieShimmer=0 and in steady mode).
 property real clock: 0
+
+// nixieFlicker=false holds the tube at full ignition and starts no timers;
+// nixieFlickerMs=0 means the same "no restrike" the docs always promised.
+readonly property bool strikeEnabled: GreeterTheme.nixieFlicker && GreeterTheme.nixieFlickerMs > 0
+readonly property bool shimmerOn: GreeterTheme.nixieShimmer > 0
+// A steady tube never strikes, so its patch is never kept live for one.
+readonly property bool striking: !root.steady && root.ignition < 0.999
+
+// How many one-shot ticks the tube owes: strike() sets zero, the tick that
+// reaches 1 settles. nixieJitter spreads the lengths apart (1.0 is the tube
+// lab's own 5/6/7); 0 makes every tube strike alike.
+function strikeLength() {
+    return 6 + Math.round((root.tubeIndex % 3) * Math.max(0.0, GreeterTheme.nixieJitter));
+}
+
+// The tube's own moment, so four tubes never start together.
+function strikeOffset() {
+    return Math.round(((root.tubeIndex * 11) % 23) * Math.max(0.0, GreeterTheme.nixieJitter));
+}
 
 // A nixie does not cross-fade. On a digit change it stutters for a few frames
 // and then holds. It is never perfectly still, though: the discharge breathes
@@ -77,42 +122,64 @@ property real clock: 0
 // stand still once, and the owner has since asked it to live, so the motion is
 // slow and small — a strobing login screen would be a bug, not a lamp.
 function strike() {
-root.strikesLeft = 5 + (root.tubeIndex % 3);
-root.ignition = 0.0;
-strikeTimer.restart();
+    if (!root.strikeEnabled) {
+        root.ignition = 1.0;
+        return;
+    }
+    root.strikesLeft = root.strikeLength();
+    root.ignition = 0.0;
+    strikeTimer.restart();
 }
 
+// One one-shot tick. A settled tube is not touched: no write, no restart.
+function tick() {
+    if (root.strikesLeft <= 0)
+        return;
+    root.strikesLeft -= 1;
+    if (root.strikesLeft <= 0) {
+        root.ignition = 1.0; // the settle
+        return;
+    }
+    root.ignition = 0.08 + 0.92 * Math.random() * Math.random();
+    strikeTimer.restart();
+}
+
+// The shimmer tick: nixieShimmerMs, only while the shimmer is on and the tube
+// is visible, and never in steady mode (the workbench wants a still tube).
 Timer {
-	id: clockTimer
-	interval: 66
-	repeat: true
-	running: true
-	onTriggered: root.clock += interval / 1000.0
+    id: clockTimer
+    interval: Math.max(1, Math.round(GreeterTheme.nixieShimmerMs))
+    repeat: true
+    running: !root.steady && root.shimmerOn && root.visible
+    onTriggered: root.clock += interval / 1000.0
 }
 
+// One-shot: a settled tube stops its timer instead of waking up forever.
 Timer {
-id: strikeTimer
-interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + ((root.tubeIndex * 11) % 23)
-
-onTriggered: {
-if (root.strikesLeft <= 0) {
-root.ignition = 1.0;
-return;
-}
-root.strikesLeft -= 1;
-// The gas strikes unevenly: some frames almost out, the last ones all but
-// settled. The floor used to sit at a fifth of full, and the strike read as a
-// dim instead of a stutter.
-root.ignition = 0.08 + 0.92 * Math.random() * Math.random();
-strikeTimer.restart();
-}
+    id: strikeTimer
+    interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + root.strikeOffset()
+    repeat: false
+    onTriggered: root.tick()
 }
 
-onDigitChanged: root.strike()
+onDigitChanged: {
+    if (!root.steady)
+        root.strike();
+}
+
+onStrikeEnabledChanged: {
+    if (!root.strikeEnabled) {
+        strikeTimer.stop();
+        root.strikesLeft = 0;
+        root.ignition = 1.0;
+    }
+}
+
 Component.onCompleted: {
-root.ignition = 1.0
-if (!root.steady)
-root.strike()
+    root.ignition = 1.0
+    if (!root.steady)
+        root.strike()
+    patchWarmup.restart()
 }
 
 
@@ -147,6 +214,22 @@ property real pWarmth: GreeterTheme.nixieWarmth * root.warmthScale
 property real pFlicker: root.ignition
 property real pTime: root.clock
 property real pExposure: GreeterTheme.nixieExposure
+// The quality tier, the shimmer strength and the ageing, straight off their
+// tokens; the shader work behind them is P3's, and the defaults keep today's
+// picture.
+property real pQuality: GreeterTheme.nixieQuality === "balanced" ? 1.0
+                      : (GreeterTheme.nixieQuality === "lite" ? 2.0 : 0.0)
+property real pShimmer: GreeterTheme.nixieShimmer
+property real pAge: GreeterTheme.nixieAge
+property real pBaseOn: GreeterTheme.nixieBase ? 1.0 : 0.0
+// The row's uniforms: a single tube has no row, so they stay zero. pTile must
+// still be declared — the shader reads pTile.x for its lab offset and Qt warns
+// about every uniform with no property behind it — and pTile.w = 0 keeps the
+// shader in single-tube mode.
+property vector4d pTile: Qt.vector4d(0, 0, 0, 0)
+property vector4d pRowX: Qt.vector4d(0, 0, 0, 0)
+property vector4d pRowDigit: Qt.vector4d(0, 0, 0, 0)
+property vector4d pRowFlicker: Qt.vector4d(0, 0, 0, 0)
 // The block's two pure std140 paddings. A vec4 of the shader's own floats has
 // to start on a 16-byte boundary, so the slots carrying the temperature and the
 // highlight have a spare float each; nothing reads them, but Qt warns about
@@ -163,15 +246,16 @@ property color pGlass: GreeterTheme.nixieGlassColor
 property color pCathode: GreeterTheme.nixieCathodeColor
 property color pTint: GreeterTheme.nixieTint
 property vector4d pWallpaper: Qt.vector4d(GreeterTheme.nixieTintWallpaper, 0, 0, 0)
-property vector4d pView: Qt.vector4d(GreeterTheme.nixieViewAngle, GreeterTheme.nixieViewDistance, 0, 0)
+property vector4d pView: Qt.vector4d(root.effectiveYaw, GreeterTheme.nixieViewDistance, root.effectivePitch, 0)
 
 fragmentShader: Qt.resolvedUrl("../shaders/nixie.frag.qsb")
 }
 
 // The wallpaper the glass bends: the tube's rect, one pad wider on every side,
-// captured from the backdrop the host handed in. Live only while the tube is
-// striking — that is also when the layout settles at startup, so the patch is
-// taken again exactly when it has to be.
+// captured from the backdrop the host handed in. Live while the tube strikes
+// plus a short warm-up — the wallpaper can arrive asynchronously, and one
+// scheduled update re-captures the glass once the strike settles, so a steady
+// tube (or a late picture) does not leave a blank patch until the next change.
 readonly property point sampleOrigin: {
 const w = root.width;
 const h = root.height;
@@ -180,11 +264,24 @@ return Qt.point(0, 0);
 return root.mapToItem(root.backdrop, -root.pad, -root.pad);
 }
 
+Timer {
+id: patchWarmup
+interval: 1500
+repeat: false
+}
+
+onBackdropChanged: patchWarmup.restart()
+
+onStrikingChanged: {
+    if (!root.striking)
+        wallpaperPatch.scheduleUpdate();
+}
+
 ShaderEffectSource {
 id: wallpaperPatch
 sourceItem: root.backdrop
 visible: false
-live: root.steady || root.ignition < 0.999
+live: root.striking || patchWarmup.running
 smooth: true
 sourceRect: Qt.rect(root.sampleOrigin.x, root.sampleOrigin.y,
 root.width + 2 * root.pad, root.height + 2 * root.pad)
