@@ -1242,6 +1242,11 @@ hl.on("hyprland.start", function()
   -- Liquid glass: loads the plugin and pushes files/gui/hypr/hyprglass.lua
   hl.exec_cmd("@hyprglass_setup@")
 
+  -- Dynamic cursors (stretch): loads the plugin and pushes
+  -- files/gui/hypr/hyprdynamiccursors.lua. Session branch like hyprglass — the
+  -- login screen keeps the stock cursor. Re-runnable: `hyprdynamiccursors-setup`.
+  hl.exec_cmd("@hyprdynamiccursors_setup@")
+
   -- HyprExpo and HyprWindowShade are loaded above, before the login branch — they
   -- must come up in the login phase too (see the comment at the top of this handler).
 
