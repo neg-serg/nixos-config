@@ -24,6 +24,19 @@ function flatten(obj, base = '') {
   return Array.from(out);
 }
 
+// Tokens that Settings/Theme.qml reads with a fallback and that are absent from
+// the parts on purpose:
+// - colors.overrides.* — override slots for the derived colors; a theme that
+//   wants different formulas adds them (ThemeParts.js warnMissingToken() skips
+//   them too, so strict mode stays quiet).
+// - network.capsule.* — inherit keyboard.capsule.* while absent; a concrete
+//   value in network.jsonc would freeze that inheritance.
+const OPTIONAL_TOKEN_PATTERNS = [
+  /^colors\.overrides\./,
+  /^network\.capsule\.(iconSpacing|iconScale|iconBaselineOffset|labelPadding|minLabelGap|iconAlignMode)$/,
+];
+const isOptionalToken = p => OPTIONAL_TOKEN_PATTERNS.some(re => re.test(p));
+
 function main(){
   let theme = null;
   const partsDir = path.join(root, 'Theme');
@@ -38,8 +51,9 @@ function main(){
   const used = new Set();
   let m; while ((m = re.exec(qml)) !== null) used.add(m[1]);
 
-  const unused = Array.from(def).filter(p => !used.has(p)).sort();
-  const unknown = Array.from(used).filter(p => !def.has(p)).sort();
+  // Greeter tokens are consumed by greeter/GreeterTheme.qml, outside this file.
+  const unused = Array.from(def).filter(p => !used.has(p) && !/^greeter\./.test(p)).sort();
+  const unknown = Array.from(used).filter(p => !def.has(p) && !isOptionalToken(p)).sort();
 
   if (unknown.length) {
     console.error('\nUnknown Theme tokens (used in Theme.qml but not present in Theme/.theme.json):');
