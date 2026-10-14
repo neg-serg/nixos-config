@@ -281,6 +281,24 @@ let
     "$hyprctl_bin" eval "
     $(cat ${pkgs.writeText "hyprwinwrap.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprwinwrap.lua"))})" || true
   '';
+
+  # HyprDynamicCursors (cursor stretch): same load-then-push pattern as
+  # hyprglass/hyprexpo. Its config keys (plugin.dynamic_cursors.*) only exist
+  # once the .so is loaded, so files/gui/hypr/hyprdynamiccursors.lua is pushed
+  # with hyprctl eval. Re-runnable in a live session
+  # (`hyprdynamiccursors-setup`).
+  hyprdynamiccursorsSetup = pkgs.writeShellScriptBin "hyprdynamiccursors-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+    plugin=${pkgs.hyprlandPlugins."hypr-dynamic-cursors"}/lib/libhypr-dynamic-cursors.so
+
+    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
+    "$hyprctl_bin" plugin load "$plugin" || true
+
+    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
+    # comment) as a flag, hence the leading newline.
+    "$hyprctl_bin" eval "
+    $(cat ${pkgs.writeText "hyprdynamiccursors.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprdynamiccursors.lua"))})" || true
+  '';
   hyprlandLuaText =
     builtins.replaceStrings
       [
@@ -288,12 +306,14 @@ let
         "@hyprexpo_setup@"
         "@hyprwindowshade_setup@"
         "@hyprwinwrap_setup@"
+        "@hyprdynamiccursors_setup@"
       ]
       [
         "${hyprglassSetup}/bin/hyprglass-setup"
         "${hyprexpoSetup}/bin/hyprexpo-setup"
         "${hyprwindowshadeSetup}/bin/hyprwindowshade-setup"
         "${hyprwinwrapSetup}/bin/hyprwinwrap-setup"
+        "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup"
       ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
@@ -313,6 +333,7 @@ in
           hyprexpoSetup
           hyprwindowshadeSetup
           hyprwinwrapSetup # loads the plugin and (re)applies the background-window declarations
+          hyprdynamiccursorsSetup # loads the plugin and (re)applies the cursor stretch settings
           hyprExpo # `hypr-expo toggle|push`: loads the overview plugin on demand
         ];
 
