@@ -27,6 +27,28 @@ if [ -L "$PROFILE_AI" ]; then
   echo "dsh-tui-ensure: removed the legacy @deepseek-ai store link (dsh owns the module fallback now)"
 fi
 
+# The profile manifest is the owning package.json of the modules the preset
+# rows mount by a *relative* path (the neg preset's tool-bootstrap.mjs, copied
+# below), and the harness's package inventory reads that owner for the
+# dsh_plugin_packages request field. A manifest that declares a name without a
+# version is rejected there — and that rejection is not scoped to the plugin:
+# every DeepSeek request of every session dies before its HTTP dispatch with
+# "DeepSeek request extension preparation failed" (REQUEST_EXTENSION). The
+# manifest is created by hand once (dsh's own profile templates omit the
+# field), so the version is kept here.
+MANIFEST="$PROFILE_DIR/package.json"
+if [ -f "$MANIFEST" ] && [ "$(jq -r '.version // ""' "$MANIFEST" 2> /dev/null)" = "" ]; then
+  tmp="$(mktemp)"
+  if jq --indent 2 '. + { version: "0.0.0" }' "$MANIFEST" > "$tmp"; then
+    chmod 600 "$tmp"
+    mv "$tmp" "$MANIFEST"
+    echo "dsh-tui-ensure: $MANIFEST: added the missing version (the harness rejects a versionless profile manifest)"
+  else
+    rm -f "$tmp"
+    echo "dsh-tui-ensure: could not add a version to $MANIFEST" >&2
+  fi
+fi
+
 # The retired preset root. Until dsh 0.1.6 the harness discovered presets as
 # $DSH_HOME/.agent-presets/<id>/{preset.yml,agent.cordis.yml} and the two preset
 # modules (dsh-fast.nix, dsh-liangshen-fork.nix — both retired with the 0.2.0
