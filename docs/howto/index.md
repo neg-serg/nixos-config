@@ -169,3 +169,6 @@
 
 - Hotkey backlog — the open emacs/vim-friendly items left after the 2026-10-14 audit:
   [hotkeys-backlog.md](./hotkeys-backlog.md)
+
+- fix — fast Nix evaluator (packaged from patched master): usage, local patches and its
+  pure-eval/rollout limits: [fix.md](./fix.md)

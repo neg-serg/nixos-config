@@ -222,6 +222,7 @@ in
   # NOTE: colibri-serve deliberately NOT enabled (user's choice 2026-08-28):
   # run manually when needed — see docs/howto/local-llm.md (colibrì section).
   features.cli.broot.enable = true;
+  features.cli.fix.enable = true; # fix — fast Nix evaluator (patched master; eval/build helper)
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
   features.hardware.usbAutomount.enable = true;
   features.hardware.bluetooth.enable = true; # BlueZ — BT audio + HID (gamepads/keyboards/mice), needs kernel BT_HIDP/UHID
