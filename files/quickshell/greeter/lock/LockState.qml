@@ -55,7 +55,8 @@ Scope {
 
 	Process {
 		id: wlRestart
-		command: ["bash", "-c", "systemctl --user restart wl-daemon.service; wl random ~/pic/wl"]
+		// Re-apply the same wallpaper from wl state after DPMS (no random pick here).
+		command: ["bash", "-c", "systemctl --user restart wl-daemon.service"]
 		running: false
 	}
 
