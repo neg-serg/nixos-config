@@ -91,6 +91,14 @@ print. Details: [dsh-worktrees.md](./dsh-worktrees.md).
 - keys: `ctrl+b` prefix and `alt+h/j/k/l` pane focus next to the prefix binds. No Cyrillic
   duplicates: the ru-layout daemon pins terminal windows to `us`
   ([hotkeys-ru-layout.md](./hotkeys-ru-layout.md)).
+- agent navigation: `prefix+u` / `prefix+i` move to the previous/next agent row, `prefix+alt+1..9`
+  jumps to the nth one; the Goto picker (`prefix+g`) filters with `b`/`w`/`i`/`d` for
+  blocked/working/idle/done. `prefix+shift+r` reloads the config (including local keybindings) from
+  inside Herdr.
+- sidebar: agent rows keep the location line, then show `terminal_title_stripped` — for dsh that is
+  the statusline title (branch, dirty counts, tokens, turn) — and the agent label. The per-agent
+  `rows_by_agent` table is not usable for dsh on 0.9.1: it only accepts built-in agent ids, not a
+  self-reported label.
 - Herdr's own `worktrees.directory` stays at its default; dsh-worktree trees live under
   `~/.dsh/worktrees` and are *opened* by Herdr rather than created by it.
 
