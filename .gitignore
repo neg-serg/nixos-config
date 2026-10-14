@@ -63,6 +63,12 @@ gpucore.*
 # must not show up as a tree change in the very diff the switch reports.
 .agent/switch-request
 
+# Agent build cache and scratch logs — regenerable byproducts of a build/reflect run
+# (the nixie plan pins XDG_CACHE_HOME here because the sandbox cannot write HOME).
+.agent/tmp-nix-cache/
+.agent/*.log
+.agent/*.rc
+
 # Generated theme artifact: Tools/build-theme.mjs writes it, and the running shell merges the
 # live copy under $XDG_CONFIG_HOME/quickshell/Theme. A tracked copy only ever ships a stale
 # snapshot (June 2026, pre-nixie keys) to the tools that read it by default.
