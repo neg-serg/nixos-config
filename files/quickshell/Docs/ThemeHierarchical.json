@@ -3,8 +3,8 @@
     "accent": {
       "primary": "#006FCC"
     },
-    "background": "#ef000000",
-    "surface": "#181C25",
+    "background": "#ff000000",
+    "surface": "#88000000",
     "surfaceVariant": "#242A35",
     "outline": "#3B4C5C",
     "text": {
@@ -14,16 +14,17 @@
     },
     "shadow": "#000000",
     "status": {
-      "error": "#FF6B81"
+      "error": "#FF6B81",
+      "warning": "#FFB347"
     },
     "highlight": "#94E1F9",
     "onAccent": "#FFFFFF"
   },
   "panel": {
     "height": 22,
-    "scale": 1.0,
-    "sideMargin": 0,
-    "widgetSpacing": 0,
+    "scale": 1.15,
+    "sideMargin": 4,
+    "widgetSpacing": 4,
     "separatorWidthFactor": 1,
     "separatorOpacity": 0.88,
     "hotzone": {
@@ -36,23 +37,25 @@
     "pill": {
       "height": 28,
       "iconSize": 22,
-      "paddingH": 14,
+      "paddingH": 8,
       "showDelayMs": 500,
-      "autoHidePauseMs": 2500
+      "autoHidePauseMs": 2500,
+      "color": "#000000"
     },
     "animations": {
-      "stdMs": 250,
-      "fastMs": 200
+      "stdMs": 200,
+      "fastMs": 150,
+      "overlayMs": 180
     },
     "tray": {
       "longHoldMs": 2500,
       "shortHoldMs": 1500,
       "guardMs": 120,
       "overlayDismissDelayMs": 5000,
-      "inlinePadding": 8
+      "inlinePadding": 4
     },
-    "rowSpacing": 8,
-    "rowSpacingSmall": 4,
+    "rowSpacing": 4,
+    "rowSpacingSmall": 2,
     "volume": {
       "fullHideMs": 800,
       "lowColor": "#D62E6E",
@@ -76,9 +79,9 @@
       "iconSize": 16,
       "itemFontScale": 0.9
     },
-    "overlayRadius": 20,
+    "overlayRadius": 5,
     "netCluster": {
-      "spacing": 6
+      "spacing": 2
     },
     "capsule": {
       "borderInset": -1,
@@ -86,21 +89,25 @@
       "borderOpacity": 0.08,
       "borderColor": "#000000"
     },
-    "computedFontScale": 0.6
+    "computedFontScale": 0.6,
+    "seam": {
+      "opacity": 0.88
+    },
+    "slideTimerTickMs": 16
   },
   "shape": {
-    "cornerRadius": 0,
-    "cornerRadiusSmall": 0,
+    "cornerRadius": 6,
+    "cornerRadiusSmall": 6,
     "cornerRadiusLarge": 0
   },
   "tooltip": {
-    "delayMs": 1500,
+    "delayMs": 150,
     "minSize": 20,
     "margin": 12,
     "padding": 8,
     "borderWidth": 1,
     "radius": 2,
-    "fontPx": 14,
+    "fontPx": 12,
     "smallScaleRatio": 0.71
   },
   "sidePanel": {
@@ -116,14 +123,14 @@
     "selector": {
       "minWidth": 120
     },
-    "spacing": 12,
-    "spacingTight": 6,
-    "spacingSmall": 4,
+    "spacing": 6,
+    "spacingTight": 3,
+    "spacingSmall": 2,
     "albumArtSize": 200,
     "button": {
       "activeVisibleMin": 0.18
     },
-    "spacingMedium": 8
+    "spacingMedium": 4
   },
   "ui": {
     "iconSizeLarge": 28,
@@ -177,8 +184,8 @@
     "label": {
       "padding": 0,
       "leftPadding": {
-        "normal": 2,
-        "terminal": -2
+        "normal": 6,
+        "terminal": 6
       }
     }
   },
@@ -198,12 +205,19 @@
     "wsRefreshDebounceMs": 120,
     "musicPositionPollMs": 1000,
     "musicPlayersPollMs": 5000,
-    "musicMetaRecalcDebounceMs": 80
+    "musicMetaRecalcDebounceMs": 80,
+    "genericTickMs": 2000
   },
   "network": {
     "vpnPollMs": 2500,
     "restartBackoffMs": 1500,
-    "linkPollMs": 4000
+    "linkPollMs": 4000,
+    "capsule": {
+      "iconPadding": 0,
+      "gapTightenPx": 8,
+      "iconHorizontalMargin": 0,
+      "stacked": true
+    }
   },
   "media": {
     "hover": {
@@ -246,7 +260,8 @@
   },
   "weather": {
     "headerScale": 0.75,
-    "centerOffset": -2
+    "centerOffset": -2,
+    "httpTimeoutMs": 8000
   },
   "vpn": {
     "accent": {
@@ -273,5 +288,112 @@
       "autoHidePauseMs": 2500,
       "showDelayMs": 500
     }
+  },
+  "greeter": {
+    "lockAnimationMs": 500,
+    "slideshowDurationMs": 3000,
+    "contextTimerMs": 300,
+    "animFastMs": 150,
+    "animMediumMs": 250,
+    "animSlowMs": 500,
+    "barColor": "#30c0ffff",
+    "barOutline": "#50ffffff",
+    "widgetColor": "#25ceffff",
+    "widgetActiveColor": "#80ceffff",
+    "widgetOutline": "#40ffffff",
+    "widgetOutlineSeparate": "#20ffffff",
+    "separatorColor": "#60ffffff",
+    "uiScale": 1.2,
+    "uiFont": "Iosevka",
+    "displayFont": "Iosevka",
+    "cardColor": "#a60f141c",
+    "avatarPath": "assets/avatar.jpg",
+    "glassBlur": 9,
+    "glassTint": "#c20a0e14",
+    "glassHighlight": 0.045,
+    "glassRefract": 10,
+    "glassShadow": 26,
+    "glassGrain": 0.02,
+    "glassLens": 16,
+    "glassChroma": 0.5,
+    "glassSpecular": 0,
+    "glassPointer": 0.12,
+    "fieldBlur": 6,
+    "fieldTint": "#e60a0e14",
+    "avatarRingWidth": 0.05,
+    "avatarGlow": 0.5,
+    "nixieDigitSize": 92,
+    "nixieTubeMargin": 16,
+    "nixieGlow": 1,
+    "nixieTempK": 2100,
+    "nixieExposure": 2.5,
+    "nixieGlowColor": "#ff5a10",
+    "nixieGlassColor": "#4d120b06",
+    "nixieCathodeColor": "#aab6c4",
+    "nixieTint": "#00000000",
+    "nixieTintWallpaper": 0,
+    "nixieViewAngle": 16,
+    "nixieViewDistance": 8,
+    "nixieViewPitch": 0,
+    "nixieCameraFollow": true,
+    "nixieCameraRange": 6,
+    "nixieWire": 0.044,
+    "nixieStack": 0.5,
+    "nixieHighlight": 0.8,
+    "nixieWarmth": 0.45,
+    "nixieFlickerMs": 320,
+    "nixieFlicker": true,
+    "nixieShimmer": 1,
+    "nixieShimmerMs": 66,
+    "nixieJitter": 1,
+    "nixieQuality": "full",
+    "nixie24h": true,
+    "nixieLeadingZero": false,
+    "nixieSpacing": 1,
+    "nixieAge": 1,
+    "nixieBase": false,
+    "nixieColon": false,
+    "cardRadius": 6,
+    "fieldRadius": 8,
+    "chipRadius": 999,
+    "buttonRadius": 999,
+    "avatarRadius": 16,
+    "posterizeEnabled": true,
+    "posterizeMode": "yliluoma",
+    "posterizeMaskScale": 1,
+    "posterizeChroma": 1.35,
+    "posterizeDither": 0.85,
+    "posterizeCell": 2,
+    "posterizeGamma": 1,
+    "posterizeMix": 0.15,
+    "posterizeTint": "",
+    "crtEnabled": true,
+    "crtLineSpacing": 3,
+    "crtScanStrength": 0.13,
+    "crtUiLines": 0,
+    "crtMaskStrength": 0.05,
+    "crtAberration": 0.6,
+    "crtBarrel": 0.008,
+    "crtBloom": 0.35,
+    "crtVignette": 0.35,
+    "crtRollStrength": 0,
+    "crtRollMs": 9000,
+    "cardOutline": "#3dffffff",
+    "accentColor": "#7fd6ff",
+    "dangerColor": "#ff9b9b",
+    "textColor": "#f2f6fa",
+    "textMutedColor": "#c3d2e0",
+    "avatarColor": "#3d7fd6ff",
+    "appearMs": 420
+  },
+  "notifications": {
+    "background": "#000000",
+    "foreground": "#E0E6EF",
+    "frameColor": "#000000",
+    "accentColor": "#004E8F",
+    "radius": 4,
+    "padding": 6,
+    "maxWidth": 500,
+    "maxToastCount": 2
   }
 }

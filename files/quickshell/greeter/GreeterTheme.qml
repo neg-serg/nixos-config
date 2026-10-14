@@ -21,6 +21,35 @@ Singleton {
 
     property var _data: null
 
+    // Runtime overrides for the settings menu: keyed by full token path
+    // (e.g. "greeter.nixieGlow"). They live only in this process — the menu's
+    // Save is the only disk path — and an empty object leaves the layer below
+    // (the user's theme part, then the fallback) in charge.
+    property var overrides: ({})
+
+    function setOverride(path, value) {
+        var next = Object.assign({}, root.overrides);
+        next[path] = value;
+        root.overrides = next; // a fresh object notifies every _val binding
+    }
+
+    function clearOverrides() {
+        root.overrides = ({});
+    }
+
+    function isOverridden(path) {
+        return root.overrides !== null && root.overrides[path] !== undefined;
+    }
+
+    // Override, else the theme file, else the hardcoded fallback: the menu
+    // tunes the running shell, and a login screen that cannot read the user's
+    // theme still draws the same picture.
+    function effective(path, fallback) {
+        if (root.isOverridden(path))
+            return root.overrides[path];
+        return root._val(path, fallback);
+    }
+
     FileView {
         id: themeFileView
         path: root._themePath
@@ -43,6 +72,8 @@ Singleton {
 
     // Helper to resolve a dotted path from the loaded theme data
     function _val(path, fallback) {
+        if (root.isOverridden(path))
+            return root.overrides[path];
         if (!_data) return fallback;
         try {
             var parts = path.split('.');
@@ -95,8 +126,8 @@ Singleton {
     readonly property real nixieDigitSize: _val('greeter.nixieDigitSize', 92)
     readonly property real nixieTubeMargin: _val('greeter.nixieTubeMargin', 16)
     readonly property real nixieGlow: _val('greeter.nixieGlow', 1.0)
-    readonly property real nixieTempK: _val('greeter.nixieTempK', 2400)
-readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)
+    readonly property real nixieTempK: _val('greeter.nixieTempK', 2100)
+    readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)
     readonly property color nixieGlowColor: _val('greeter.nixieGlowColor', "#ff5a10")
     readonly property color nixieGlassColor: _val('greeter.nixieGlassColor', "#4d120b06")
     readonly property color nixieCathodeColor: _val('greeter.nixieCathodeColor', "#aab6c4")
@@ -111,6 +142,14 @@ readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)
     // draws the same camera.
     readonly property real nixieViewAngle: _val('greeter.nixieViewAngle', 16.0)
     readonly property real nixieViewDistance: _val('greeter.nixieViewDistance', 8.0)
+    // The camera's pitch above the clock's axis, in degrees (0 is level); the
+    // third member of pView carries it.
+    readonly property real nixieViewPitch: _val('greeter.nixieViewPitch', 0.0)
+    // Pointer following: when true the pointer pulls the camera off its base
+    // yaw and pitch by at most nixieCameraRange degrees, smoothed; false keeps
+    // the base camera exactly.
+    readonly property bool nixieCameraFollow: _val('greeter.nixieCameraFollow', true)
+    readonly property real nixieCameraRange: _val('greeter.nixieCameraRange', 6.0)
     // The lit cathode's radius as a share of a numeral's height. The fallback
     // mirrors Theme/greeter.jsonc, so a login screen that cannot read the user's
     // theme draws the same wire the desktop shows.
@@ -119,6 +158,28 @@ readonly property real nixieExposure: _val('greeter.nixieExposure', 2.5)
     readonly property real nixieHighlight: _val('greeter.nixieHighlight', 0.8)
     readonly property real nixieWarmth: _val('greeter.nixieWarmth', 0.45)
     readonly property int nixieFlickerMs: _val('greeter.nixieFlickerMs', 320)
+    // Restrike on a digit change; false holds every tube lit and starts no
+    // timers, whatever nixieFlickerMs says.
+    readonly property bool nixieFlicker: _val('greeter.nixieFlicker', true)
+    // The idle shimmer: how much of the shader's breathe/hum reaches the glass
+    // (0 = off: no shimmer and no periodic repaint) and its tick cadence in ms.
+    readonly property real nixieShimmer: _val('greeter.nixieShimmer', 1.0)
+    readonly property int nixieShimmerMs: _val('greeter.nixieShimmerMs', 66)
+    // Per-tube spread: strike offsets and lengths. 0 makes the tubes lockstep.
+    readonly property real nixieJitter: _val('greeter.nixieJitter', 1.0)
+    // "full" | "balanced" | "lite": the shader's quality tier (pQuality 0|1|2).
+    readonly property string nixieQuality: _val('greeter.nixieQuality', "full")
+    // Time format and the tens of the hours.
+    readonly property bool nixie24h: _val('greeter.nixie24h', true)
+    readonly property bool nixieLeadingZero: _val('greeter.nixieLeadingZero', false)
+    // The row's gaps (tubeGap 0.055, pairGap 0.20 of the numeral) times this.
+    readonly property real nixieSpacing: _val('greeter.nixieSpacing', 1.0)
+    // Ageing of the getter mirror and the sputter film: 1.0 is today's look.
+    readonly property real nixieAge: _val('greeter.nixieAge', 1.0)
+    // The base and the colon are the shader stretch: the tokens exist for the
+    // menu, and false keeps today's base-off, colonless picture.
+    readonly property bool nixieBase: _val('greeter.nixieBase', false)
+    readonly property bool nixieColon: _val('greeter.nixieColon', false)
 
     // Rounded and borderless by default (see the theme file)
     readonly property real cardRadius: _val('greeter.cardRadius', 6)

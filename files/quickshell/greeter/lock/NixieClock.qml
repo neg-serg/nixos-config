@@ -27,8 +27,8 @@ readonly property real tubeMargin: Math.round(GreeterTheme.nixieTubeMargin * roo
 // What the eye sees between two glasses, and between the two pairs. The
 // colon is not drawn — the clock is four tubes — so the break between the
 // hours and the minutes is only this much wider than a tube's own gap.
-readonly property real tubeGap: Math.round(root.numeralSize * 0.055)
-readonly property real pairGap: Math.round(root.numeralSize * 0.20)
+readonly property real tubeGap: Math.round(root.numeralSize * 0.055 * GreeterTheme.nixieSpacing)
+readonly property real pairGap: Math.round(root.numeralSize * 0.20 * GreeterTheme.nixieSpacing)
 
 // The tube's own item, straight off the drawing: 21 x 35 mm at the numeral's
 // scale (numeralSize is 18 mm of the sheet), plus the margin for the bloom.
@@ -54,11 +54,45 @@ const mid = root.width / 2;
 return left.map(function (x) { return root.tubeMargin + x - mid; });
 }
 
-// -1 in a tube that has nothing to light (see the shader's digit).
+// The camera follows the pointer over the clock when nixieCameraFollow is on:
+// the pointer adds at most nixieCameraRange degrees to the base yaw and pitch
+// (the base itself is not clamped), and the drift is smoothed so the lamp
+// drifts after the cursor instead of snapping. A pointer outside the clock
+// leaves the camera on its base. pView's third member carries the pitch; the
+// shader consumes it from P6 on.
+readonly property real cameraX: cameraHover.active
+                                ? (cameraHover.point.position.x / Math.max(1, root.width) - 0.5) * 2 : 0
+readonly property real cameraY: cameraHover.active
+                                ? (cameraHover.point.position.y / Math.max(1, root.height) - 0.5) * 2 : 0
+readonly property real cameraRange: Math.max(0, GreeterTheme.nixieCameraRange)
+readonly property real yawOffset: GreeterTheme.nixieCameraFollow
+        ? Math.max(-root.cameraRange, Math.min(root.cameraRange, root.cameraX * root.cameraRange)) : 0
+readonly property real pitchOffset: GreeterTheme.nixieCameraFollow
+        ? Math.max(-root.cameraRange, Math.min(root.cameraRange, root.cameraY * root.cameraRange)) : 0
+// The Behavior below needs a writable property, so these two are not readonly:
+// the binding keeps them on the base camera plus the clamped pointer offset,
+// and the animation is the smoothing.
+property real effectiveYaw: GreeterTheme.nixieViewAngle + root.yawOffset
+property real effectivePitch: GreeterTheme.nixieViewPitch + root.pitchOffset
+
+HoverHandler {
+id: cameraHover
+}
+
+// -1 in a tube that has nothing to light (see the shader's digit). nixie24h
+// picks the format; nixieLeadingZero lights the tens of the hours as 0 instead
+// of leaving that tube dark.
 function hourDigit(place) {
-const text = String(Math.max(0, Math.min(23, root.hours))).padStart(2, "0");
-const digit = Number(text[place]);
-return (place === 0 && digit === 0) ? -1 : digit;
+    const h = Math.max(0, Math.min(23, root.hours));
+    if (!GreeterTheme.nixie24h) {
+        const text = String(h % 12 === 0 ? 12 : h % 12);
+        if (place === 0)
+            return text.length < 2 ? (GreeterTheme.nixieLeadingZero ? 0 : -1) : Number(text[0]);
+        return Number(text[text.length - 1]);
+    }
+    const text = String(h).padStart(2, "0");
+    const digit = Number(text[place]);
+    return (place === 0 && digit === 0 && !GreeterTheme.nixieLeadingZero) ? -1 : digit;
 }
 
 function minuteDigit(place) {
@@ -72,92 +106,168 @@ readonly property var digits: [root.hourDigit(0), root.hourDigit(1),
 // and then holds — and the four tubes never stutter together, or the clock
 // reads as an animation instead of four lamps. It is never perfectly still
 // either: the discharge breathes and the wire hums a few per cent (see the
-// shader's breathe and hum), which is what `time` below carries.
+// shader's breathe and hum), which is what the shimmer timer below carries.
 property var ignition: [1.0, 1.0, 1.0, 1.0]
+// One-shot ticks still owed per tube; 0 is settled.
 property var strikesLeft: [0, 0, 0, 0]
-// Seconds of idle time, advanced in small steps so the shimmer has something
-// to move with. The interval is the price of the life: 15 repaints a second
-// over one item, and nothing else on the screen moves.
+// The digits the last decision was made on, so a minute restrikes only the
+// tubes whose value actually changed.
+property var previousDigits: []
+// Seconds of idle time, advanced only by the shimmer tick: with nixieShimmer
+// off nothing here wakes up at all.
 property real time: 0
 
+// nixieFlicker=false holds every tube at full ignition and starts no timers;
+// nixieFlickerMs=0 means the same "no restrike" the docs always promised.
+readonly property bool strikeEnabled: GreeterTheme.nixieFlicker && GreeterTheme.nixieFlickerMs > 0
+readonly property bool shimmerOn: GreeterTheme.nixieShimmer > 0
+
+// How many one-shot ticks a struck tube owes: strike() sets zero, the tick
+// that reaches 1 settles. nixieJitter spreads the lengths apart (1.0 is the
+// clock's own 5/6/7 and the old timings); 0 makes every tube strike alike.
+function strikeLength(index) {
+    return 6 + Math.round((index % 3) * Math.max(0.0, GreeterTheme.nixieJitter));
+}
+
+// The per-tube moment that keeps the four from ever starting together.
+function strikeOffset(index) {
+    return Math.round(((index * 11) % 23) * Math.max(0.0, GreeterTheme.nixieJitter));
+}
+
+function restartStrike(index) {
+    if (index === 0)
+        strike0.restart();
+    else if (index === 1)
+        strike1.restart();
+    else if (index === 2)
+        strike2.restart();
+    else
+        strike3.restart();
+}
+
 function strike(index) {
-const left = root.strikesLeft.slice();
-left[index] = 5 + (index % 3);
-root.strikesLeft = left;
-const ign = root.ignition.slice();
-ign[index] = 0.0;
-root.ignition = ign;
-if (index === 0)
-strike0.restart();
-else if (index === 1)
-strike1.restart();
-else if (index === 2)
-strike2.restart();
-else
-strike3.restart();
+    if (!root.strikeEnabled)
+        return;
+    const left = root.strikesLeft.slice();
+    left[index] = root.strikeLength(index);
+    const ign = root.ignition.slice();
+    ign[index] = 0.0;
+    root.strikesLeft = left;
+    root.ignition = ign;
+    root.restartStrike(index);
 }
 
+// One one-shot tick of a tube's strike. A settled tube is left completely
+// alone — no slice, no ignition write, no timer — so an idle clock has nothing
+// to do; the last tick settles the tube instead of leaving it mid-stutter.
 function tick(index) {
-const left = root.strikesLeft.slice();
-const ign = root.ignition.slice();
-if (left[index] <= 0) {
-ign[index] = 1.0;
-root.ignition = ign;
-return;
-}
-left[index] -= 1;
-root.strikesLeft = left;
-// The gas strikes unevenly: some frames almost out, the last ones all but
-// settled — the floor sits at 0.08 so no frame reads as a clean fade.
-ign[index] = 0.08 + 0.92 * Math.random() * Math.random();
-root.ignition = ign;
+    const left = root.strikesLeft[index];
+    if (left <= 0)
+        return;
+    const next = root.strikesLeft.slice();
+    next[index] = left - 1;
+    const ign = root.ignition.slice();
+    if (left === 1)
+        ign[index] = 1.0;
+    else
+        ign[index] = 0.08 + 0.92 * Math.random() * Math.random();
+    root.strikesLeft = next;
+    root.ignition = ign;
+    if (next[index] > 0)
+        root.restartStrike(index); // one-shot: only while more ticks are owed
 }
 
-// One timer per tube: the same stutter, its own moment, its own jitter.
+// Drop every tube to rest and stop the timers, e.g. when flicker is switched
+// off while a strike is in flight.
+function settleAll() {
+    strike0.stop();
+    strike1.stop();
+    strike2.stop();
+    strike3.stop();
+    root.strikesLeft = [0, 0, 0, 0];
+    root.ignition = [1.0, 1.0, 1.0, 1.0];
+}
+
+// One timer per tube: the same stutter, its own moment, its own jitter. They
+// are one-shot — a settled tube stops its timer instead of waking up forever —
+// and restart only while the tube still owes ticks.
 Timer {
 id: strike0
-interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8))
-repeat: true
+interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + root.strikeOffset(0)
+repeat: false
 onTriggered: root.tick(0)
 }
 
 Timer {
 id: strike1
-interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + 11
-repeat: true
+interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + root.strikeOffset(1)
+repeat: false
 onTriggered: root.tick(1)
 }
 
 Timer {
 id: strike2
-interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + 22
-repeat: true
+interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + root.strikeOffset(2)
+repeat: false
 onTriggered: root.tick(2)
 }
 
 Timer {
 id: strike3
-interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + 10
-repeat: true
+interval: Math.max(24, Math.round(GreeterTheme.nixieFlickerMs / 8)) + root.strikeOffset(3)
+repeat: false
 onTriggered: root.tick(3)
 }
 
+// The only periodic work this item does: advance the shader's pTime. It runs
+// only while the shimmer is on and the clock is visible, at nixieShimmerMs, so
+// nixieShimmer=0 leaves the whole clock with nothing to wake it.
 Timer {
-interval: 66
+id: shimmerTimer
+interval: Math.max(1, Math.round(GreeterTheme.nixieShimmerMs))
 repeat: true
-running: true
+running: root.shimmerOn && root.visible
 onTriggered: root.time += interval / 1000.0
 }
 
-// Every tube strikes when its own digit changes; at startup they all do.
+// At startup every tube strikes; on a minute change only the tubes whose digit
+// changed do — the four never restrike in the same event-loop turn, which is
+// what the design above and the per-tube timers are for.
 function strikeAll() {
-for (let i = 0; i < 4; i++)
-root.strike(i);
+    if (!root.strikeEnabled) {
+        root.settleAll();
+        return;
+    }
+    for (let i = 0; i < 4; i++)
+        root.strike(i);
 }
 
-onDigitsChanged: root.strikeAll()
+function applyDigits() {
+    if (root.strikeEnabled && root.previousDigits.length !== 4) {
+        root.previousDigits = root.digits.slice();
+        root.strikeAll();
+        return;
+    }
+    if (root.strikeEnabled) {
+        for (let i = 0; i < 4; i++) {
+            if (root.digits[i] !== root.previousDigits[i])
+                root.strike(i);
+        }
+    }
+    root.previousDigits = root.digits.slice();
+}
 
-Component.onCompleted: root.strikeAll()
+onDigitsChanged: root.applyDigits()
+
+onStrikeEnabledChanged: {
+    if (!root.strikeEnabled)
+        root.settleAll();
+}
+
+Component.onCompleted: {
+    root.applyDigits();
+    patchWarmup.restart();
+}
 
 // The row itself: one pass, four tubes, one light.
 ShaderEffect {
@@ -184,6 +294,14 @@ property real pHighlight: GreeterTheme.nixieHighlight
 property real pWarmth: GreeterTheme.nixieWarmth
 property real pExposure: GreeterTheme.nixieExposure
 property real pTempK: GreeterTheme.nixieTempK
+// The quality tier, the shimmer strength and the ageing, straight off their
+// tokens; the shader work behind them is P3's, and the defaults keep today's
+// picture.
+property real pQuality: GreeterTheme.nixieQuality === "balanced" ? 1.0
+                      : (GreeterTheme.nixieQuality === "lite" ? 2.0 : 0.0)
+property real pShimmer: GreeterTheme.nixieShimmer
+property real pAge: GreeterTheme.nixieAge
+property real pBaseOn: GreeterTheme.nixieBase ? 1.0 : 0.0
 property real pTime: root.time
 property real pMm: root.numeralSize / 18.0
 property real pThick: Math.max(0.8, 0.9 * root.mmPerPx)   // the wall, ~0.9 mm
@@ -193,7 +311,7 @@ property color pGlass: GreeterTheme.nixieGlassColor
 property color pCathode: GreeterTheme.nixieCathodeColor
 property color pTint: GreeterTheme.nixieTint
 property vector4d pWallpaper: Qt.vector4d(GreeterTheme.nixieTintWallpaper, 0, 0, 0)
-property vector4d pView: Qt.vector4d(GreeterTheme.nixieViewAngle, GreeterTheme.nixieViewDistance, 0, 0)
+property vector4d pView: Qt.vector4d(root.effectiveYaw, GreeterTheme.nixieViewDistance, root.effectivePitch, 0)
 // The single tube's own handles: the row does not read them, but they are
 // in the block, and Qt warns about every uniform with no property.
 property real pDigit: -1
@@ -206,11 +324,29 @@ fragmentShader: Qt.resolvedUrl("../shaders/nixie.frag.qsb")
 }
 
 // The wallpaper the glass bends: the row's rect, one margin wider on every
-// side, captured from the backdrop the host handed in. Live while any tube is
-// striking — that is also when the layout settles at startup, so the patch is
-// taken again exactly when it has to be.
+// side, captured from the backdrop the host handed in. The wallpaper can load
+// asynchronously, so the patch cannot be live only while the tubes strike: the
+// strike can be over before the picture is decoded. It stays live for a short
+// warm-up after creation, a backdrop change or a resize, and one scheduled
+// update re-captures it once the last strike settles — otherwise the glass
+// could refract a blank patch until the next minute.
 readonly property bool striking: root.ignition[0] < 0.999 || root.ignition[1] < 0.999
                                 || root.ignition[2] < 0.999 || root.ignition[3] < 0.999
+
+Timer {
+id: patchWarmup
+interval: 1500
+repeat: false
+}
+
+onBackdropChanged: patchWarmup.restart()
+onWidthChanged: patchWarmup.restart()
+onHeightChanged: patchWarmup.restart()
+
+onStrikingChanged: {
+    if (!root.striking)
+        wallpaperPatch.scheduleUpdate();
+}
 
 readonly property point sampleOrigin: {
 if (root.backdrop === null || root.width <= 0 || root.height <= 0)
@@ -222,7 +358,7 @@ ShaderEffectSource {
 id: wallpaperPatch
 sourceItem: root.backdrop
 visible: false
-live: root.striking
+live: root.striking || patchWarmup.running
 smooth: true
 sourceRect: Qt.rect(root.sampleOrigin.x, root.sampleOrigin.y,
                     root.width + 2 * root.tubeMargin, root.height + 2 * root.tubeMargin)
