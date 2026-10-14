@@ -68,8 +68,14 @@ let
       *) echo "switch request does not name a store path: $expected" >&2; exit 1 ;;
     esac
 
-    echo "agent switch: HEAD=$(git -C "$repo" rev-parse HEAD)"
-    dirty="$(git -C "$repo" status --porcelain)"
+    # The unit runs as root while /etc/nixos belongs to the main user, so git
+    # refuses with "detected dubious ownership" and `set -e` aborts the switch
+    # before the build (observed 2026-10-14). Ask for safe.directory explicitly
+    # instead of depending on root's own git config.
+    git_repo() { git -c "safe.directory=$repo" -C "$repo" "$@"; }
+
+    echo "agent switch: HEAD=$(git_repo rev-parse HEAD)"
+    dirty="$(git_repo status --porcelain)"
     if [ -n "$dirty" ]; then
       echo "agent switch: the tree is DIRTY; these changes are part of what gets activated:"
       echo "$dirty"
