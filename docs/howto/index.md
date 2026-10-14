@@ -166,3 +166,6 @@
   [nixie-lab.md](./nixie-lab.md)
 
 - Nixie tube — geometry, tokens and the shader contract: [nixie-tube.md](./nixie-tube.md)
+
+- Hotkey backlog — the open emacs/vim-friendly items left after the 2026-10-14 audit:
+  [hotkeys-backlog.md](./hotkeys-backlog.md)
