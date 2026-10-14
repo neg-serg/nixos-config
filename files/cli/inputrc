@@ -25,30 +25,36 @@ set visible-stats              on
 set colored-stats              on
 set completion-prefix-display-length 3
 
-$if mode=vi
+# vi editing mode for bash only: INPUTRC is exported system-wide, and other
+# readline consumers (psql, python, …) keep their defaults. Insert mode keeps
+# the emacs chords, command mode keeps the native vi keys — the same mix as zsh
+# (files/shell/zsh/04-bindings.zsh).
+$if Bash
+  set editing-mode vi
+
   set keymap vi-insert
-  "gg": beginning-of-history
-  "G": end-of-history
-  "j": history-search-forward
-  "k": history-search-backward
-  set keymap vi-insert
-  "kj": vi-movement-mode
+  "\C-a": beginning-of-line
+  "\C-b": backward-char
+  "\C-e": end-of-line
+  "\C-f": forward-char
+  "\C-k": kill-line
+  "\C-u": kill-whole-line
   "\C-w": backward-kill-word
   "\C-l": clear-screen
-  # auto-complete from the history
   "\C-p": history-search-backward
   "\C-n": history-search-forward
-$endif
+  "\e[A": history-search-backward
+  "\e[B": history-search-forward
+  "\ew": copy-backward-word
+  "\C-\M-w": unix-word-rubout
+  "\C-x\C-i": menu-complete
+  "\C-x\C-o": menu-complete-backward
+  "\C-x\C-r": re-read-init-file
+  "\ei": tab-insert
+  # leave insert mode without reaching for Esc
+  "kj": vi-movement-mode
 
-"\C-w": backward-kill-word
-"\ew": copy-backward-word
-"\C-p": history-search-backward
-"\C-n": history-search-forward
-"\e[B": history-search-forward
-"\e[A": history-search-backward
-"\C-x\C-i": menu-complete
-"\C-x\C-o": menu-complete-backward
-"\C-x\C-r": re-read-init-file
-"\C-u": kill-whole-line
-"\C-\M-w": unix-word-rubout
-"\ei": tab-insert
+  set keymap vi-command
+  "gg": beginning-of-history
+  "G": end-of-history
+$endif

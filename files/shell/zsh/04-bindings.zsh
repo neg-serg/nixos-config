@@ -1,4 +1,7 @@
-bindkey -e
+# vi mode: Esc enters command mode (native hjkl/G/gg/u); insert mode keeps the
+# emacs chords via the viins layer at the bottom of this file. All binds below
+# land in viins because `bindkey -v` makes it the main keymap.
+bindkey -v
 
 autoload -Uz fg-widget && zle -N fg-widget
 autoload -Uz imv
@@ -35,7 +38,13 @@ bindkey "^n" down-line-or-beginning-search
 
 bindkey . rationalise-dot
 bindkey "^xd" describe-key-briefly
-bindkey "^Z" fg-widget
+# ^Z suspends again (zle has no built-in suspend widget, so wrap the builtin);
+# the old fg helper moved to C-x f.
+suspend_widget() { zle -I; suspend }
+zle -N suspend_widget
+bindkey -M viins '^Z' suspend_widget
+bindkey -M vicmd '^Z' suspend_widget
+bindkey -M viins '^Xf' fg-widget
 bindkey '^M' special-accept-line
 bindkey " "  magic-space
 bindkey ",." zleiab
@@ -46,26 +55,41 @@ if (( $+commands[zoxide] )); then
   bindkey '^Y' zoxide-complete
   bindkey '^@' zoxide-complete
 fi
-# Job Management Widgets (Ctrl+S prefix)
+# Job Management Widgets (C-x prefix; ^S is left to incremental search)
 jobs_widget() { echo ""; jobs; zle reset-prompt; }
 zle -N jobs_widget
-bindkey '^S^S' jobs_widget
 
-fg_current_widget() { zle -I; fg %+; }
 kill_job_current_widget() { kill %+ && fg %+; }
-zle -N fg_current_widget
 zle -N kill_job_current_widget
 
-bindkey '^S^M' fg_current_widget
-bindkey '^S^K^M' kill_job_current_widget
+bindkey '^Xj' jobs_widget
+bindkey '^Xk' kill_job_current_widget
 for i in {1..9}; do
     eval "fg_${i}_widget() { zle -I; fg %${i}; }"
     eval "kill_job_${i}_widget() { kill %${i} && fg %${i}; }"
     eval "zle -N fg_${i}_widget"
     eval "zle -N kill_job_${i}_widget"
-    eval "bindkey '^S${i}' fg_${i}_widget"
-    eval "bindkey '^S^K${i}' kill_job_${i}_widget"
+    eval "bindkey '^X${i}' fg_${i}_widget"
+    eval "bindkey '^Xk${i}' kill_job_${i}_widget"
 done
 
 # zoxide_complete provides the fzf-backed picker
+
+# --- vi insert-mode emacs layer --------------------------------------------
+# viins leaves ^A/^B/^E/^F/^K unbound (self-insert) and has no Alt(word)
+# chords; command mode already carries the native vi keys, so this layer is
+# additive. ^U/^W keep the vim defaults (kill line / kill word). The ^R bind
+# here is the no-fzf fallback: 04-fzf.zsh later points ^R (viins included) at
+# fzf-history-widget.
+bindkey -M viins '^A' beginning-of-line
+bindkey -M viins '^B' backward-char
+bindkey -M viins '^E' end-of-line
+bindkey -M viins '^F' forward-char
+bindkey -M viins '^K' kill-line
+bindkey -M viins '^R' history-incremental-search-backward
+bindkey -M viins '^S' history-incremental-search-forward
+bindkey -M viins '^[b' backward-word
+bindkey -M viins '^[d' kill-word
+bindkey -M viins '^[f' forward-word
+
 # vim: ft=zsh:nowrap
