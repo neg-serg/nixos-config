@@ -4,7 +4,10 @@
       "spacing": 0,
       "slideMs": 220,
       "autoHideMs": 4000,
-      "outerMargin": 4
+      "outerMargin": 4,
+      // Now-playing card fill and hairline edge under hyprglass (Widgets/SidePanel/Music.qml).
+      "glassOpacity": 0.75,
+      "glassBorderOpacity": 0.1
     },
     "cornerRadius": 0,
     "innerRadius": 0,

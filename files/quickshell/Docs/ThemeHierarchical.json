@@ -27,6 +27,9 @@
     "widgetSpacing": 4,
     "separatorWidthFactor": 1,
     "separatorOpacity": 0.88,
+    "interWidgetRatio": 1.35,
+    "seamWidthRatio": 0.85,
+    "seamMinPx": 8,
     "hotzone": {
       "width": 16,
       "height": 9,
@@ -34,6 +37,10 @@
     },
     "moduleHeight": 22,
     "menuYOffset": 20,
+    "icons": {
+      "iconSize": 24,
+      "iconSizeSmall": 16
+    },
     "pill": {
       "height": 28,
       "iconSize": 22,
@@ -45,7 +52,8 @@
     "animations": {
       "stdMs": 200,
       "fastMs": 150,
-      "overlayMs": 180
+      "overlayMs": 180,
+      "slideMs": 380
     },
     "tray": {
       "longHoldMs": 2500,
@@ -58,6 +66,8 @@
     "rowSpacingSmall": 2,
     "volume": {
       "fullHideMs": 800,
+      "mutedHideMs": 180000,
+      "offReminderCooldownMs": 86400000,
       "lowColor": "#D62E6E",
       "highColor": "#0E6B4D"
     },
@@ -93,6 +103,16 @@
     "seam": {
       "opacity": 0.88
     },
+    "backdrop": {
+      "color": "#000000"
+    },
+    "tint": {
+      "color": "#ff2a36",
+      "alpha": 0.75,
+      "strength": 1,
+      "featherTop": 0,
+      "featherBottom": 0
+    },
     "slideTimerTickMs": 16
   },
   "shape": {
@@ -115,7 +135,9 @@
       "spacing": 0,
       "slideMs": 220,
       "autoHideMs": 4000,
-      "outerMargin": 4
+      "outerMargin": 4,
+      "glassOpacity": 0.75,
+      "glassBorderOpacity": 0.1
     },
     "cornerRadius": 0,
     "innerRadius": 0,
@@ -140,6 +162,11 @@
     },
     "icon": {
       "emphasisOpacity": 0.9
+    },
+    "textShadow": {
+      "enabled": true,
+      "opacity": 0.75,
+      "lightThreshold": 0.5
     },
     "anim": {
       "quickMs": 120,
@@ -173,7 +200,14 @@
   },
   "ws": {
     "icon": {
-      "svgScale": 0.52
+      "svgScale": 0.52,
+      "spacing": 1,
+      "scale": 1.4,
+      "detachedScale": 1.15,
+      "baselineOffset": 0,
+      "detachedPadding": 0,
+      "detachedBaselineOffset": 0,
+      "innerPadding": 1
     },
     "submap": {
       "icon": {
@@ -223,6 +257,20 @@
     "hover": {
       "openDelayMs": 320,
       "stillThresholdMs": 180
+    },
+    "artDebounceMs": 60,
+    "icon": {
+      "mode": "compact",
+      "stretchShare": 1,
+      "minWidthPx": 0,
+      "maxWidthPx": 0,
+      "preferredWidthPx": 0,
+      "overlayPaddingPx": 0,
+      "panel": {
+        "overlayPaddingPx": 12,
+        "overlayBgOpacity": 0.65,
+        "overlayWidthShare": 0.45
+      }
     },
     "time": {
       "alpha": {
