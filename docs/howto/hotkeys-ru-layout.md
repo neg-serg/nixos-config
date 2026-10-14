@@ -333,23 +333,23 @@ binds (#7320)". If ghostty is ever needed — remove the note after checking.
 
 ## Changes made (by file)
 
-| File                                                                | Change                                                                                                                       |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `files/gui/hypr/hyprland.lua`                                       | P0: comment about the invariants + explicit `resolve_binds_by_sym = false`                                                   |
-| `files/kitty/key.conf`                                              | P1: Latin binds; RU duplicates are **generated** and appended from `lib/ru-keys.nix` (see "Duplicate generation")            |
-| `modules/user/nix-maid/cli/shells.nix`                              | P1: `kittyRuBinds` data + `key.conf` generation; kitty config is deployed per file                                           |
-| `modules/user/nix-maid/apps/mpv/input.nix`                          | P1: Cyrillic duplicates (pause/seek/fullscreen/mute/subtitles/upscale)                                                       |
-| `files/surfingkeys.js`                                              | P1: langmap block `ru2en` + `api.map`                                                                                        |
-| `files/gui/zellij/config.kdl`                                       | P2: `Alt+р/о/л/д` duplicates, resize/tab/scroll                                                                              |
-| `modules/user/nix-maid/cli/yazi.nix`                                | P2: navigation and custom-bind duplicates — **generated** from `lib/ru-keys.nix` (`neg.ruKeys.mkRuKeys`)                     |
-| `files/rmpc/config.ron`                                             | P2: global/navigation/queue duplicates (incl. uppercase)                                                                     |
-| `files/shell/zsh/04-bindings.zsh`                                   | vi mode (`bindkey -v`) + additive viins emacs layer; terminal classes are in `usClasses`, so vi keys work under RU           |
-| `files/cli/inputrc`                                                 | vi mode for bash only (`$if Bash`) + vi-insert emacs layer; the file is read at last (`INPUTRC` fixed in `environment.nix`)  |
-| `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: "do not use with RU" note (config kept as a migration reference)                                                         |
-| `lib/ru-keys.nix`                                                   | **new**: qwerty→JCUKEN table + generators (`mkRuKeys`, `kittySeq`, `mkKittyLines`, `mkLangmap`) — the single source of truth |
-| `lib/ru-keys-tests.nix`, `flake/checks.nix`                         | **new**: `ru-keys` check (table completeness, bijection, golden for langmap/kitty lines)                                     |
-| `modules/user/nix-maid/hyprland/ru-layout.nix`                      | **new**: `ru-layout` service — upstream `hyprland-per-window-layout` (per-window layout, event-driven)                       |
-| `docs/howto/hotkeys-ru-layout.md`, `docs/howto/index.md`            | this document                                                                                                                |
+| File                                                                | Change                                                                                                                      |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `files/gui/hypr/hyprland.lua`                                       | P0: comment about the invariants + explicit `resolve_binds_by_sym = false`                                                  |
+| `files/kitty/key.conf`                                              | P1: Latin binds; RU duplicates are **generated** and appended from `lib/ru-keys.nix` (see "Duplicate generation")           |
+| `modules/user/nix-maid/cli/shells.nix`                              | P1: `kittyRuBinds` data + `key.conf` generation; kitty config is deployed per file                                          |
+| `modules/user/nix-maid/apps/mpv/input.nix`                          | P1: Cyrillic duplicates (pause/seek/fullscreen/mute/subtitles/upscale)                                                      |
+| `files/surfingkeys.js`                                              | P1: langmap block `ru2en` + `api.map`                                                                                       |
+| `files/gui/zellij/config.kdl`                                       | P2: `Alt+р/о/л/д` duplicates, resize/tab/scroll                                                                             |
+| `modules/user/nix-maid/cli/yazi.nix`                                | P2: navigation and custom-bind duplicates — **generated** from `lib/ru-keys.nix` (`neg.ruKeys.mkRuKeys`)                    |
+| `files/rmpc/config.ron`                                             | P2: global/navigation/queue duplicates (incl. uppercase)                                                                    |
+| `files/shell/zsh/04-bindings.zsh`                                   | vi mode (`bindkey -v`) + additive viins emacs layer; terminal classes are in `usClasses`, so vi keys work under RU          |
+| `files/cli/inputrc`                                                 | vi mode for bash only (`$if Bash`) + vi-insert emacs layer; the file is read at last (`INPUTRC` fixed in `environment.nix`) |
+| `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: "do not use with RU" note (config kept as a migration reference)                                                        |
+| `lib/ru-keys.nix`                                                   | **new**: qwerty→JCUKEN table + generators (`toRu`, `mkRuKeys`, `mkLangmap`) — the single source of truth                    |
+| `lib/ru-keys-tests.nix`, `flake/checks.nix`                         | **new**: `ru-keys` check (table completeness, bijection, golden for langmap/kitty lines)                                    |
+| `modules/user/nix-maid/hyprland/ru-layout.nix`                      | **new**: `ru-layout` service — upstream `hyprland-per-window-layout` (per-window layout, event-driven)                      |
+| `docs/howto/hotkeys-ru-layout.md`, `docs/howto/index.md`            | this document                                                                                                               |
 
 "Not fixable via config" (mutt, rustmission, btop) is now **fixed automatically** by the
 layout-daemon (see "Layout-daemon") — we do not touch the configs of these programs; the compositor
@@ -390,9 +390,9 @@ Latin binds. With `lib/ru-keys.nix` all duplicates are **generated** from a sing
 JCUKEN):
 
 - modules receive it as `neg.ruKeys` (via `lib/neg-helpers.nix`, specialArgs);
-- `neg.ruKeys.mkRuKeys [ "j" ]` → `[ "о" ]` (yazi and similar apps with key lists);
-- `neg.ruKeys.mkKittyLines [{ mod; keys; action; }]` → `map ctrl+shift+CYRILLIC_* …` lines (kitty:
-  `kittyRuBinds` data in `modules/user/nix-maid/cli/shells.nix`);
+- `neg.ruKeys.toRu "j"` → `"о"` (one key; e.g. the zellij RU table in `hosts/trantor/default.nix`)
+  and `neg.ruKeys.mkRuKeys [ "j" "k" ]` → `[ "о" "л" ]` with misses dropped (yazi's duplicate binds
+  in `modules/user/nix-maid/cli/yazi.nix`);
 - `neg.ruKeys.mkLangmap` reproduces the neovim langmap byte-for-byte (golden test).
 
 Rule: do not write new duplicates by hand — add the bind to the data and/or extend the generator.
