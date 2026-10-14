@@ -355,7 +355,8 @@ hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch
 hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch "kitty --class nwim -e /home/neg/.local/bin/v"'))
 hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch "~/.local/bin/pl video"'))
 hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg(_[0-9]+)?$" --launch "swayimg ~/dw"'))
-hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl-workspaces shuffle"))
+-- Wallpaper shuffle hotkey removed with the per-workspace feature (2026-10-14):
+-- no bind may repaint the desktop.
 
 -- --- System ────────────────────────────────────────────────────────────
 hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty-glass --class rebuild -e nh os switch /etc/nixos#trantor --option substitute false' special"))
@@ -555,14 +556,7 @@ hl.define_submap("special", "reset", function()
 end)
 
 
--- Submap: wallpaper (wallpaper.conf)
-hl.bind(M4 .. "+" .. SH .. "+y", hl.dsp.submap("wallpaper"))
-hl.define_submap("wallpaper", "reset", function()
-  submap_resets()
-  hl.bind("y", hl.dsp.exec_cmd("wl-workspaces shuffle"))
-  hl.bind(M4 .. "+y", hl.dsp.exec_cmd("wl-workspaces shuffle"))
-  hl.bind(SH .. "+w", hl.dsp.submap("reset"))
-end)
+-- Wallpaper submap removed with the shuffle hotkeys (M4+SH+y used to open it).
 
 -- Submap: tiling (tiling.conf)
 hl.bind(M4 .. "+minus", hl.dsp.submap("tiling"))
@@ -704,7 +698,7 @@ hl.bind(M4 .. "+" .. M1 .. "+bracketleft",  L("fit_into_view"))
 
 -- Tape (M4+v also gets a master fallback: 0.56.2 spells an absolute split as
 -- "mfact exact <ratio>", a bare "mfact 0.5" would be a +0.5 delta). Keys were free:
--- M4+minus is the tiling submap, M4+y the wallpaper one, M4+C+z kitty font zoom.
+-- M4+minus is the tiling submap, M4+C+z kitty font zoom (the wallpaper submap is gone).
 hl.bind(M4 .. "+equal", L("fit expand"))   -- the column soaks up the free space without pushing neighbours
 hl.bind(M4 .. "+a",     L("fit all"))      -- whole tape into view (all columns share the screen)
 hl.bind(M4 .. "+v",     L("fit visible", "mfact exact 0.5")) -- tape: fit the visible columns; master: split back to 50/50
