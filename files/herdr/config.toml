@@ -32,8 +32,11 @@ peach = "#8a6a40"         # neg orange
 active_row_bg = "#0c1c30" # focused Space/Agent row (neg card)
 
 [keys]
-# ctrl+b, like zellij (files/gui/zellij/config.kdl).
-prefix = "ctrl+b"
+# ctrl+s — the key zellij uses for its session mode (files/gui/zellij/config.kdl).
+# Tradeoff: Herdr consumes the prefix, so inside a Herdr pane zsh's `^S`
+# history-incremental-search-forward (files/shell/zsh/04-bindings.zsh) no longer
+# fires; ctrl+b stays zellij's own prefix, so the two do not collide.
+prefix = "ctrl+s"
 
 # Alt + hjkl pane focus — the same muscle memory as zellij and kitty. The
 # ru-layout daemon pins terminal windows to `us`
