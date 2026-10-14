@@ -53,7 +53,13 @@ in
       # --a11y=1 sets org.a11y.Status.IsEnabled=true on the bus at
       # startup: without it GTK/Qt apps do not export accessibility trees
       # and CUL list_apps returns an empty accessible_apps list.
-      ExecStart = "${pkgs.at-spi2-core}/libexec/at-spi-bus-launcher --a11y=1";
+      # The empty first entry resets the packaged unit's ExecStart: since
+      # services.gnome.at-spi2-core ships the same unit, this definition is
+      # merged as a drop-in, and Type=dbus refuses two ExecStart lines.
+      ExecStart = [
+        ""
+        "${pkgs.at-spi2-core}/libexec/at-spi-bus-launcher --a11y=1"
+      ];
       Slice = "session.slice";
       TimeoutStopSec = 5;
     };
