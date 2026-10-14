@@ -7,6 +7,10 @@
 #
 # The per-model units stay available for manual use, but do not run them while
 # llama-swap owns the GPU (16 GB VRAM, one big model at a time).
+#
+# Games get VRAM priority: a user-level guard unloads every llama-swap model
+# while a game (Proton/Wine, Steam, gamescope) is running — see the
+# llama-swap-game-guard unit below.
 {
   config,
   lib,
@@ -48,6 +52,52 @@ let
   '';
 
   ollamaUrl = "http://127.0.0.1:11434";
+
+  systemdUser = config.lib.neg.systemdUser;
+  swapEnabled = enabled && config.services.llama-swap.enable;
+
+  # Game guard: games get priority on the 16 GB of VRAM. While a game (native
+  # via steamapps/, Proton/Wine, or anything under gamescope) is visible, every
+  # model llama-swap has loaded is unloaded every 20 s, so a leftover vision
+  # model cannot OOM the game; the next request re-spawns a backend on demand.
+  gameGuard = pkgs.writeShellApplication {
+    name = "llama-swap-game-guard";
+    runtimeInputs = [
+      pkgs.coreutils # sleep in the polling loop
+      pkgs.curl # GET /unload against llama-swap
+      pkgs.procps # pgrep for game process detection
+    ];
+    text = ''
+      endpoint="http://127.0.0.1:${toString config.services.llama-swap.port}/unload"
+      gaming=0
+
+      is_gaming() {
+        # Match on the full command line (argv[0] may be a wrapper or a
+        # renamed binary); patterns are anchored to a path separator or space.
+        if pgrep -f '(^|/)(gamescope|wine|wine64|wineserver|wine-preloader|wine64-preloader|pressure-vessel-wrap|srt-bwrap|lutris|heroic|bottles)( |$)' >/dev/null 2>&1; then
+          return 0
+        fi
+        pgrep -f 'steamapps/common/|steam-launch-wrapper|\.exe' >/dev/null 2>&1
+      }
+
+      while true; do
+        if is_gaming; then
+          if [ "$gaming" = 0 ]; then
+            echo "game detected — unloading llama-swap models"
+            gaming=1
+          fi
+          curl -fsS -o /dev/null --max-time 5 "$endpoint" || echo "unload request failed" >&2
+          sleep 20
+        else
+          if [ "$gaming" = 1 ]; then
+            echo "game stopped"
+            gaming=0
+          fi
+          sleep 5
+        fi
+      done
+    '';
+  };
 in
 {
   services.llama-swap = lib.mkIf enabled {
@@ -62,16 +112,20 @@ in
         "qwen3-vl-30b" = {
           cmd = vision30b;
           aliases = [ "vision" ];
-          ttl = 900;
+          # Shorter than the other models: 16 GB VRAM is tight, and a game may
+          # start at any moment (the guard also unloads on game detection).
+          ttl = 300;
         };
         "qwen3-vl-8b" = {
           cmd = vision8b;
           aliases = [ "vision-8b" ];
-          ttl = 900;
+          ttl = 300;
         };
         "qwen3.8-flash-next" = {
           cmd = flashNext;
-          ttl = 900;
+          # Cold start is ~1.5 min (111 GB mmap), so keep it longer than the
+          # vision models; the game guard still unloads it for games.
+          ttl = 600;
         };
 
       };
@@ -107,4 +161,22 @@ in
       SystemCallFilter = lib.mkForce [ ];
     };
   };
+
+  # User-level guard (no root needed to call /unload): unloads llama-swap
+  # models while a game runs; see the gameGuard script above.
+  systemd.user.services.llama-swap-game-guard = lib.mkIf swapEnabled (
+    systemdUser.mkUserService {
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
+      description = "Unload llama-swap models while a game is running";
+      after = [ "network.target" ];
+      serviceConfig = {
+        Type = "simple";
+        RestartSec = 5;
+        ExecStart = lib.getExe gameGuard;
+      };
+    }
+  );
 }
