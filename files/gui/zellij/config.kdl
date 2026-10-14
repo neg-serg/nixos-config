@@ -102,6 +102,12 @@ keybinds {
 
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/trantor/default.nix
 
+        // --- Pane / Move mode entries (zellij's own defaults apply inside) ---
+        bind "Alt y" { SwitchToMode "pane"; }
+        bind "Alt m" { SwitchToMode "move"; }
+
+        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.modes), see hosts/trantor/default.nix
+
         // Mouse binds are not part of keybinds in zellij 0.45 — the built-in
         // mouse handling is left as is (the old `mouse { … }` block made the
         // whole config unparseable).
@@ -120,6 +126,7 @@ keybinds {
         bind "l" { Resize "right"; }
         bind "Enter" { SwitchToMode "normal"; }
         bind "Esc" { SwitchToMode "normal"; }
+        bind "Ctrl [" { SwitchToMode "normal"; }
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/trantor/default.nix
     }
 
@@ -134,6 +141,7 @@ keybinds {
         bind "Tab" { GoToNextTab; }
         bind "Left" { GoToPreviousTab; }
         bind "Right" { GoToNextTab; }
+        bind "Ctrl [" { SwitchToMode "normal"; }
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/trantor/default.nix
     }
 
@@ -153,6 +161,7 @@ keybinds {
         bind "Ctrl d" { HalfPageScrollDown; }
         bind "Esc" { SwitchToMode "normal"; }
         bind "Enter" { SwitchToMode "normal"; }
+        bind "Ctrl [" { SwitchToMode "normal"; }
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/trantor/default.nix
     }
 
@@ -160,6 +169,7 @@ keybinds {
     session {
         bind "Enter" { SwitchToMode "normal"; }
         bind "Esc" { SwitchToMode "normal"; }
+        bind "Ctrl [" { SwitchToMode "normal"; }
     }
 }
 
