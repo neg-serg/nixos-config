@@ -196,9 +196,18 @@ docs-guard:
     git checkout -- docs/codebase.md 2>/dev/null || true
     echo "generated docs are fresh"
 
-# Update the flake lock (all inputs)
+# Update the flake lock (all inputs). The agent session sandbox cannot write $HOME
+# (Landlock reports it writable but denies the opens), so fall back to the repo-local
+# nix cache the way .agent/tmp-nix-cache is already used by the build recipes.
 update:
-    nix flake update
+    cache="${XDG_CACHE_HOME:-$HOME/.cache}"; \
+    if ( mkdir -p "$cache/nix" && touch "$cache/nix/.probe" ) 2>/dev/null; then \
+      rm -f "$cache/nix/.probe"; \
+    else \
+      cache="{{repo_root}}/.agent/tmp-nix-cache"; \
+      echo "update: using repo-local nix cache at $cache" >&2; \
+    fi; \
+    XDG_CACHE_HOME="$cache" nix flake update
 
 # Re-point the music-AI venv interpreters after a nix-collect-garbage run (the
 # venvs symlink to store pythons that have no GC root). --check for a read-only
