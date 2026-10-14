@@ -291,4 +291,41 @@ python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/qu
     </notes>
   </appendix>
 
+  <results recorded="2026-10-14">
+    <landed>
+      <commit id="55745b7a">P4 — packages/nixie hardening: hex validation, row geometry and QML
+        density parity, guessed-format image loading, Vulkan teardown, --set and JSON metrics,
+        plus the comment-preserving `nixie theme set`.</commit>
+      <commit id="ba1954da">P1 — nixie* tokens with fallbacks (nixieTempK 2100), GreeterTheme
+        override layer, idle fix (one-shot strikes, per-digit restrike, shimmer/flicker gating,
+        wallpaper warm-up), pTile contract, duplicate-id blocker, theme part and regenerated
+        schema.</commit>
+      <commit id="939ca37f">P3+P6 — shader correctness and pQuality tiers behind a world-space 3D
+        camera (yaw/pitch/distance, cursor follow via pView.w); .qsb rebuilt with the pinned qsb
+        command.</commit>
+      <commit id="0c9e7b58">P2 — qs.nixielab widget kit and the assembled live menu, mounted in
+        tube-lab.qml always and preview.qml behind PREVIEW_LAB=1; docs/howto/nixie-lab.md.</commit>
+      <commit id="29083e22">P1 doc — docs/howto/nixie-tube.md drift fixed; token table with
+        defaults, ranges and menu clamps.</commit>
+      <commit id="9f4f8938">P5 — this plan file.</commit>
+    </landed>
+    <follow-up>
+      <commit id="311a19e3">The stale tracked Theme/.theme.json is removed from git and ignored
+        (P5 decision: remove, not document); rebuilt locally from the 19 parts, validate-theme
+        green.</commit>
+      <commit id="db314cba">docs/howto/index.md links both nixie howtos (A9).</commit>
+    </follow-up>
+    <gates>
+      just fmt — 0 changed. just lint — exit 0 (qmllint: 0 defect-kind, known-inherent below
+      baseline). just check — exit 0. node Tools/validate-theme.mjs — exit 0. Fresh build of
+      packages/nixie — nixie validate rc=0, theme set present.
+    </gates>
+    <open>
+      lint-theme-tokens.mjs is red independently of this work: Settings/Theme.qml uses tokens
+      (media.icon.*, notifications.*, network.capsule.*, panel.animations.*) that the Theme parts
+      do not define. It merges the parts itself (not Theme/.theme.json), so this predates the
+      untracking; left as a separate finding.
+    </open>
+  </results>
+
 </plan>
