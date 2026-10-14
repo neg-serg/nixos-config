@@ -469,8 +469,8 @@ hl.bind(E .. "+p", hl.dsp.focus({ direction = "up" }))
 hl.bind(E .. "+f", hl.dsp.focus({ direction = "right" }))
 hl.bind(E .. "+b", hl.dsp.focus({ direction = "left" }))
 hl.bind(E .. "+a", hl.dsp.focus({ workspace = "1" }))
-hl.bind(E .. "+e", hl.dsp.focus({ workspace = "19" }))
-hl.bind(E .. "+0", hl.dsp.focus({ workspace = "20" }))
+hl.bind(E .. "+e", hl.dsp.focus({ workspace = "20" }))
+hl.bind(E .. "+0", hl.dsp.focus({ workspace = "10" }))
 hl.bind(E .. "+o", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(E .. "+Tab", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
 hl.bind(E .. "+x", hl.dsp.exec_cmd(menu))
@@ -479,6 +479,15 @@ for _, i in ipairs({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }) do
 end
 hl.bind(E .. "+minus", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(E .. "+equal", hl.dsp.focus({ workspace = "e+1" }))
+
+-- Workspace hops in vim/emacs style: C-S-h/l cycle through workspaces, and
+-- the focused window moves to a numbered workspace with M4+SHIFT+1..9/0.
+hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+h", hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+l", hl.dsp.focus({ workspace = "e+1" }))
+for _, i in ipairs({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }) do
+  hl.bind(M4 .. "+" .. SH .. "+" .. tostring(i), hl.dsp.window.move({ workspace = tostring(i) }))
+end
+hl.bind(M4 .. "+" .. SH .. "+0", hl.dsp.window.move({ workspace = "10" }))
 
 -- =====================================================================
 -- Submaps (bindings/_resets.conf and submap files)
