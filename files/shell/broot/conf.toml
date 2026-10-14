@@ -5,6 +5,7 @@ default_flags = "sdp"
 true_colors = true
 icon_theme = "vscode"
 show_selection_mark = true
+quit_on_last_cancel = true
 
 # date_time_format = "%Y/%m/%d %R"
 
