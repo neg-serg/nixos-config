@@ -53,10 +53,14 @@ outside a Herdr pane the plugin is inert, and `DSH_HERDR=0` disables it.
 Check what Herdr sees, and drive it from scripts or another agent:
 
 ```sh
-herdr agent list
-herdr pane get "$HERDR_PANE_ID"
-herdr agent wait dsh --until blocked --timeout 120000
+herdr agent list                                   # every agent, with state
+herdr pane get "$HERDR_PANE_ID"                    # this pane's agent row
+herdr agent wait wD:p1 --until blocked --timeout 120000
 ```
+
+A bare `dsh` is the agent *kind* label, not a usable target (`herdr agent wait dsh` answers
+`agent_not_found`): address an agent by its pane id, or give it a stable name once with
+`herdr agent rename wD:p1 main` and use that name afterwards.
 
 Limitation: nixpkgs ships Herdr 0.9.1, which forwards state but has no resume-command support, so a
 server restart brings the pane back as a shell rather than as the resumed dsh session. Resume
