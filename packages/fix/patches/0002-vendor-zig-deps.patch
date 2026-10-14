@@ -1,0 +1,22 @@
+--- a/build.zig.zon
++++ b/build.zig.zon
+@@ -4,14 +4,11 @@
+     .fingerprint = 0x59fa47602c959ada, // Changing this has security and trust implications.
+     .minimum_zig_version = "0.16.0",
+     .dependencies = .{
+-        .zurl = .{
+-            .url = "git+https://git.lilithsemi.com/LilithSemi/zurl#388fa599799cb52816036bbf5da0887a1a83e2d3",
+-            .hash = "zurl-0.1.0-eM4POZ5gjAAKkMaw5XdBeWQ6eSMFpglYaE6WxR3dpt1e",
+-        },
+-        .ziggit = .{
+-            .url = "git+https://git.lilithsemi.com/LilithSemi/ziggit.git#33476955c813e3e36b0addf4a61dcedf0dfe42d6",
+-            .hash = "ziggit-0.1.0-KYLpgeMPEwCSvXIxDTmqaKWXsizgO0xhx_0wAEQiD0AJ",
+-        },
++        // Vendored by the Nix package from the projects' GitHub mirrors: the
++        // upstream git host (git.lilithsemi.com) serves nothing to the build
++        // machine, and a Nix build has no network access anyway.
++        .zurl = .{ .path = "vendor/zurl" },
++        .ziggit = .{ .path = "vendor/ziggit" },
+     },
+     .paths = .{
+         "LICENSE",

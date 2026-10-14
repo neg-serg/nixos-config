@@ -1,0 +1,24 @@
+.{
+    .name = .zurl,
+    .version = "0.1.0",
+    .fingerprint = 0x2ef10358390fce78,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        // Vendored by the Nix package (packages/fix/default.nix): upstream
+        // pins GitHub archives (kept, with their hashes) but the build has no
+        // network, so the fetched trees are wired in as path dependencies.
+        // NSS is zurl's TLS dependency; `tools/psl2bin.zig` turns the public
+        // suffix list into the table `lib/zurl-core/psl.zig` embeds.
+        .nss = .{ .path = "../nss" },
+        .public_suffix_list = .{ .path = "../psl" },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "lib",
+        "src",
+        "tools",
+        "LICENSE",
+        "README.md",
+    },
+}
