@@ -309,6 +309,29 @@ python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/qu
         defaults, ranges and menu clamps.</commit>
       <commit id="9f4f8938">P5 — this plan file.</commit>
     </landed>
+    <p6-outcome recorded="2026-10-14">
+      The world-space camera is the shipped state (an intermediate P6 note claiming a revert was
+      superseded: the WIP was restored, rebuilt with the pinned qsb command and is what the tree
+      carries). Re-measured here with the P4 workbench binary on the shipped .frag/.qsb:
+      - A4 parity against the P3 state, same binary, theme and tokens, yaw=pitch=0: single tube
+        mean abs 1.06; row 1750 mean abs 9.95 (allowance 12/255). `render --verify` is
+        bit-identical; `nixie validate` rc=0.
+      - A11: pitch 0 -> 15 changes 158,506 px (the P3 state changes 0 px: pitch was inert there);
+        yaw 0 -> 30 changes 13,424 px in the upper glass band and 10,961 px in the lower band, so
+        the glass body itself, not just the numerals, answers the orbit. The outer bounding box
+        stays put under yaw because the bulb is a body of revolution — intrinsic, not a
+        screen-space shortcut.
+      - A8: tier taps measured during P3 (49-59 -> 14 -> 6); wall time on llvmpipe for one tube:
+        336-345 ms (full) vs 305-310 ms (lite).
+      - A2 residual: `sweep --check` rc=1 with 35 threshold FAILs, all in the drawing-quality
+        checks on the workbench's corrected login scale: wire white 16-24 px (limit 8), hot zone
+        17-21 px (limit 16), mesh contrast 2.8-3.0% (limit 3.0%) on several digits, glass own
+        light 15-20% of the wire (limit 8%) on two. Named here for the owner: either the
+        thresholds need recalibration on the corrected scale, or the wire is genuinely too thick.
+      - A12 (cursor follow): the plumbing is in QML and the P6 session exercised
+        `hyprctl dispatch movecursor`, but a final live screenshot pair was not produced before
+        the session was cut — the only acceptance item left to run live.
+    </p6-outcome>
     <follow-up>
       <commit id="311a19e3">The stale tracked Theme/.theme.json is removed from git and ignored
         (P5 decision: remove, not document); rebuilt locally from the 19 parts, validate-theme
@@ -325,6 +348,9 @@ python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/qu
       (media.icon.*, notifications.*, network.capsule.*, panel.animations.*) that the Theme parts
       do not define. It merges the parts itself (not Theme/.theme.json), so this predates the
       untracking; left as a separate finding.
+      Live-device checks still to run outside the sandbox: A5/A6 menu round-trip (Save writes the
+      user greeter.jsonc atomically, Reset/Export), the F10 toggle, and A12 cursor-follow
+      screenshots.
     </open>
   </results>
 
