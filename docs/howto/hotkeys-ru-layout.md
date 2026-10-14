@@ -87,7 +87,8 @@ Legend: ✅ works / ❌ breaks / ⚠️ partial or needs checking.
 | btop                          | toggles `d n m c f` — **keys are hardcoded, not remappable via config**                       | ❌ (not fixable)      | `modules/user/nix-maid/cli/monitoring.nix`                                    |
 | broot / tig / amfora          | letter binds                                                                                  | ❌                    | (standard configs)                                                            |
 | nethack                       | letter commands (game)                                                                        | ❌                    | `modules/user/nix-maid/fun/nethack.nix`                                       |
-| zsh vi-mode                   | `h/j/k/l` in command mode                                                                     | ❌                    | `modules/user/nix-maid/cli/shells.nix`                                        |
+| zsh vi-mode                   | `h/j/k/l` in command mode — vi mode on, terminals pinned to `us`                              | ✅                    | `files/shell/zsh/04-bindings.zsh`                                             |
+| bash vi-mode (readline)       | vi keys in bash only (`$if Bash`), insert-mode emacs layer; terminals pinned to `us`          | ✅                    | `files/cli/inputrc`                                                           |
 | satty (screenshots)           | single letters (GTK, no modifier)                                                             | ⚠️                    | —                                                                             |
 | ghostty                       | config deployed, **package not installed**; known `Ctrl+letter` bugs under RU                 | ⚠️                    | `files/cli/ghostty/config`                                                    |
 | Vivaldi / Obsidian (Chromium) | system `Ctrl+letter` ✅; extension letter binds ❌                                            | ⚠️                    | —                                                                             |
@@ -309,7 +310,11 @@ the letter binds (`j k g G R u`) remain US-only — known issue.
 - **broot / tig**: standard configs — optional, same technique.
 - **btop**: keys are **hardcoded**, not remappable via config — arrow navigation works, the letter
   toggles (`d n m c f`) are unavailable under RU; accept it or replace it.
-- **nethack / zsh vi-mode / satty**: not fixed (games/edge cases), recorded as known issue.
+- **nethack / satty**: not fixed (games/edge cases), recorded as known issue. zsh vi-mode is on:
+  `bindkey -v` plus an additive viins emacs layer in `files/shell/zsh/04-bindings.zsh`; the layout
+  daemon pins the terminal windows to `us`, so the bare `h/j/k/l` keys reach zsh. bash vi-mode is on
+  the same terms: `set editing-mode vi` under `$if Bash` in `files/cli/inputrc` (the file was never
+  read before — `INPUTRC` pointed at a non-existent path), with the emacs chords kept in vi-insert.
 
 ### P2 — ghostty ✅ (decision: keep it with a note)
 
@@ -338,6 +343,8 @@ binds (#7320)". If ghostty is ever needed — remove the note after checking.
 | `files/gui/zellij/config.kdl`                                       | P2: `Alt+р/о/л/д` duplicates, resize/tab/scroll                                                                              |
 | `modules/user/nix-maid/cli/yazi.nix`                                | P2: navigation and custom-bind duplicates — **generated** from `lib/ru-keys.nix` (`neg.ruKeys.mkRuKeys`)                     |
 | `files/rmpc/config.ron`                                             | P2: global/navigation/queue duplicates (incl. uppercase)                                                                     |
+| `files/shell/zsh/04-bindings.zsh`                                   | vi mode (`bindkey -v`) + additive viins emacs layer; terminal classes are in `usClasses`, so vi keys work under RU           |
+| `files/cli/inputrc`                                                 | vi mode for bash only (`$if Bash`) + vi-insert emacs layer; the file is read at last (`INPUTRC` fixed in `environment.nix`)  |
 | `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: "do not use with RU" note (config kept as a migration reference)                                                         |
 | `lib/ru-keys.nix`                                                   | **new**: qwerty→JCUKEN table + generators (`mkRuKeys`, `kittySeq`, `mkKittyLines`, `mkLangmap`) — the single source of truth |
 | `lib/ru-keys-tests.nix`, `flake/checks.nix`                         | **new**: `ru-keys` check (table completeness, bijection, golden for langmap/kitty lines)                                     |
