@@ -8,7 +8,7 @@
       core.enable = mkBool "enable audio core (PipeWire routing tools)" true;
       apps.enable = mkBool "enable audio apps (players, tools)" true;
       creation.enable = mkBool "enable audio creation stack (DAW, synths)" true;
-      mpd.enable = mkBool "enable MPD stack (mpd, clients, mpdris2)" true;
+      mpd.enable = mkBool "enable MPD stack (mpd, clients, mpd-mpris)" true;
       # Sola MPD: browser MPD client (Node backend + React UI on loopback) aimed
       # at large libraries — flexible browsing, search and queue editing.
       solaMpd = {

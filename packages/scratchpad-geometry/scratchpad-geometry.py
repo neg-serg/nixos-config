@@ -46,7 +46,7 @@ SCRATCHPAD_CLASSES = {
     "mutterfox",
     "neomutt",
     "ncpamixer",
-    "com.saivert.pwvucontrol",
+    "pavucontrol-qt",
     "torrment",
     "teardown",
     "vpn",
