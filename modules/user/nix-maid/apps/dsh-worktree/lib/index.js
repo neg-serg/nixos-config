@@ -38,7 +38,7 @@ const FORWARDED_ENV = ['DSH_WORKTREE_ROOT', 'DSH_WORKTREE_CMD', 'DSH_WORKTREE_PO
 const VERBS = ['new', 'list', 'path', 'rm', 'prune']
 
 const USAGE =
-  'usage: /worktree new <name> [--from REF] [--open auto|kitty|zellij|print] [--copy RELPATH] ' +
+  'usage: /worktree new <name> [--from REF] [--open auto|herdr|kitty|zellij|print] [--copy RELPATH] ' +
   '| /worktree list | /worktree path <name> | /worktree rm <name> [--force] | /worktree prune'
 
 /** Only the helper's own verbs are accepted, so a typo cannot run something else. */
