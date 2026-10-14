@@ -72,22 +72,29 @@ pub fn check(d: &Drawing) -> Report {
             l.foot_y
         ),
     );
+    // Only a check when the shader carries a base radius of its own: reading
+    // BULB_R_MM for both made this compare a number with itself.
     c(
         "the base hides the glass's foot",
-        d.collar_r >= d.bulb_r,
-        format!(
-            "base Ø{:.1} >= bulb Ø{:.1}",
-            d.collar_r * 2.0,
-            d.bulb_r * 2.0
-        ),
+        match d.collar_r {
+            Some(collar) => collar >= d.bulb_r,
+            None => true,
+        },
+        match d.collar_r {
+            Some(collar) => format!("base Ø{:.1} >= bulb Ø{:.1}", collar * 2.0, d.bulb_r * 2.0),
+            None => {
+                "skipped: the shader has no separate base radius (the lamp has no base)".to_string()
+            }
+        },
     );
     c(
         "the pip is the top of the box",
         (l.apex_y + l.box_mid).abs() < 1e-9,
         format!("glass top {:.2} = box top {:.2}", l.apex_y, -l.box_mid),
     );
-    // The sheet's numerals are 18 mm, but the lamp is asked to fill its glass:
-    // what has to hold is that they still fit the bore and stay on the axis.
+    // The sheet's numerals are 18 mm, but the shader draws them at DIGIT_H (25)
+    // on purpose: the lamp is asked to fill its glass. What has to hold is that
+    // they fit the bore, which the second bound keeps honest.
     c(
         "the numerals fill the glass without leaving it",
         d.digit_h <= d.bulb_h - d.wall * 2.0 && d.digit_h >= 18.0 - 1e-9,
