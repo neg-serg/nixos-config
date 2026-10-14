@@ -91,7 +91,7 @@ let
     "<" = "Б";
     ">" = "Ю";
     "?" = ",";
-    "~" = "Ë";
+    "~" = "Ё";
   };
 
   # ru counterpart of a latin key, or null when the key has none (digits,
