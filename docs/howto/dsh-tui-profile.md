@@ -1,21 +1,44 @@
 # dsh tui profile — what it runs
 
-The `tui` profile (`~/.dsh/profiles/tui`, launched as `dsh --profile tui`) is the daily terminal UI.
-It runs **dsh-TUI** (`@deepseek-harness-tui/dsh-tui`, upstream
+The `tui` profile (`~/.local/share/dsh/profiles/tui`, reached through the `~/.dsh` compat symlink;
+launched as `dsh --profile tui`) is the daily terminal UI. It runs **dsh-TUI**
+(`@deepseek-harness-tui/dsh-tui`, upstream
 [ccch1mneyyy/dsh-TUI](https://github.com/ccch1mneyyy/dsh-TUI)) — a Cordis plugin that mounts its
 front door over the same harness every other profile uses.
 
-| Piece                    | Path                                                             |
-| ------------------------ | ---------------------------------------------------------------- |
-| Module (caretaker)       | `modules/user/nix-maid/apps/dsh-tui.nix`                         |
-| Profile caretaker script | `modules/user/nix-maid/apps/dsh-tui-ensure.sh`                   |
-| Profile-layer rewriter   | `modules/user/nix-maid/apps/dsh-tui-preset-patch.py`             |
-| Preset row pruner        | `modules/user/nix-maid/apps/dsh-tui-liangshen-prune.py`          |
-| Plugin roster            | `modules/user/nix-maid/apps/dsh-terminal-plugins.nix`            |
-| Profile                  | `~/.dsh/profiles/tui`                                            |
-| TUI state                | `~/.dsh-tui/` (themes, `theme.json`, `lang.json`, history, pins) |
-| Neg theme                | `modules/user/nix-maid/apps/dsh-tui-assets/themes/neg.json`      |
-| Launcher                 | the `dsh` wrapper in `modules/user/nix-maid/apps/dsh.nix`        |
+| Piece                    | Path                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| Module (caretaker)       | `modules/user/nix-maid/apps/dsh-tui.nix`                                     |
+| Profile caretaker script | `modules/user/nix-maid/apps/dsh-tui-ensure.sh`                               |
+| Profile-layer rewriter   | `modules/user/nix-maid/apps/dsh-tui-preset-patch.py`                         |
+| Preset row pruner        | `modules/user/nix-maid/apps/dsh-tui-liangshen-prune.py`                      |
+| Plugin roster            | `modules/user/nix-maid/apps/dsh-terminal-plugins.nix`                        |
+| Profile                  | `~/.local/share/dsh/profiles/tui` (via the `~/.dsh` symlink)                 |
+| TUI state                | `~/.local/state/dsh/tui/` (themes, `theme.json`, `lang.json`, history, pins) |
+| Neg theme                | `modules/user/nix-maid/apps/dsh-tui-assets/themes/neg.json`                  |
+| Launcher                 | the `dsh` wrapper in `modules/user/nix-maid/apps/dsh.nix`                    |
+
+## Paths (XDG)
+
+dsh resolves exactly one root (`$DSH_HOME`, upstream default `~/.dsh`) and dsh-TUI keeps its
+preferences in a hardcoded `~/.dsh-tui`; neither honours `XDG_*`. `dsh-xdg-migrate.sh` is the
+one-time, idempotent relocation that moves both into XDG directories and leaves compatibility
+symlinks behind, so every hardcoded path in scripts and older notes keeps working:
+
+| What                                        | Where                                     |
+| ------------------------------------------- | ----------------------------------------- |
+| Profiles, skills, storages, attachments, db | `~/.local/share/dsh` (`$DSH_HOME`)        |
+| `settings.yaml`, `cordis.patch.yml`         | `~/.config/dsh` (symlinked back)          |
+| `sessions/`, TUI state (`tui/`)             | `~/.local/state/dsh`                      |
+| `cache/`                                    | `~/.cache/dsh`                            |
+| Compatibility                               | `~/.dsh` → data, `~/.dsh-tui` → state/tui |
+
+The `dsh` wrapper exports `DSH_HOME` only once the data directory exists, so a half-finished
+migration never boots an empty home. The caretaker runs the script on every rebuild/login;
+`systemctl --user start dsh-xdg-migrate` runs it on demand, and the script itself accepts
+`--dry-run`. Private material — credentials, `secrets/`, sessions, attachments — stays in the
+data/state homes and is never part of the repo; the repo owns the wrapper, the model-policy blocks
+in `settings.yaml`, the preset/roster declarations and the TUI theme.
 
 ## What the caretaker does
 

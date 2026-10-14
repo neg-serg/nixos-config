@@ -8,6 +8,11 @@ let
   # secret was wired (a shell only sources .zshenv at startup).
   dshWrapped = pkgs.writeShellScriptBin "dsh" ''
     export DEEPSEEK_API_KEY="''${DEEPSEEK_API_KEY:-$(cat /run/secrets/deepseek-api 2>/dev/null)}"
+    # XDG home (see dsh-xdg-migrate.sh). Until the one-time migration has moved
+    # ~/.dsh, DSH_HOME stays unset and dsh keeps its own default; afterwards the
+    # wrapper pins the XDG location explicitly.
+    dsh_home="''${XDG_DATA_HOME:-$HOME/.local/share}/dsh"
+    [ -e "$dsh_home" ] && export DSH_HOME="$dsh_home"
     exec ${pkgs.neg.dsh}/bin/dsh "$@"
   '';
 in
