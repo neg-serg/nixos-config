@@ -47,8 +47,11 @@ profile roster) uses Herdr's self-report protocol
 ([Add Herdr support to your agent](https://herdr.dev/docs/add-herdr-support/)): while `HERDR_ENV=1`
 it maps `agent/status` running/idle to working/idle, and the `approval/request` and
 `user-questions/request` waterfalls to blocked after a grace period — a request that auto-settles
-stays silent, and answering the card returns the pane to working. Reports are fire-and-forget:
-outside a Herdr pane the plugin is inert, and `DSH_HERDR=0` disables it.
+stays silent, and answering the card returns the pane to working. On Herdr >= 0.9.2 every report
+also carries the resume command (`dsh --profile tui --resume <id>`); older servers reject that
+trailing argv, so the plugin probes `herdr --version` once and attaches it only when supported.
+Reports are fire-and-forget: outside a Herdr pane the plugin is inert, and `DSH_HERDR=0` disables
+it.
 
 Check what Herdr sees, and drive it from scripts or another agent:
 
@@ -62,10 +65,10 @@ A bare `dsh` is the agent *kind* label, not a usable target (`herdr agent wait d
 `agent_not_found`): address an agent by its pane id, or give it a stable name once with
 `herdr agent rename wD:p1 main` and use that name afterwards.
 
-Limitation: nixpkgs ships Herdr 0.9.1, which forwards state but has no resume-command support, so a
-server restart brings the pane back as a shell rather than as the resumed dsh session. Resume
-commands need Herdr >= 0.9.2; the plugin already reports the session id, so enabling that later is a
-version bump, not a plugin change.
+Native session restore (Herdr >= 0.9.2) is on by default: after a server restart Herdr reopens each
+pane in its directory and runs the reported `dsh --profile tui --resume <id>`, so the pane comes
+back as the same conversation. Turn it off with `[session] resume_agents_on_restore = false` in
+`~/.config/herdr/config.toml`; the plugin keeps reporting state either way.
 
 ## dsh-worktree: `--open herdr`
 
@@ -98,15 +101,14 @@ print. Details: [dsh-worktrees.md](./dsh-worktrees.md).
   inside Herdr.
 - sidebar: agent rows keep the location line, then show `terminal_title_stripped` — for dsh that is
   the statusline title (branch, dirty counts, tokens, turn) — and the agent label. The per-agent
-  `rows_by_agent` table is not usable for dsh on 0.9.1: it only accepts built-in agent ids, not a
-  self-reported label.
+  `rows_by_agent` table only accepts built-in agent ids, not a self-reported label such as `dsh`.
 - Herdr's own `worktrees.directory` stays at its default; dsh-worktree trees live under
   `~/.dsh/worktrees` and are *opened* by Herdr rather than created by it.
 
 ## Package notes
 
-- Version: nixpkgs' `herdr` (0.9.1 at the current pin; upstream is newer). Updates ride nixpkgs
-  bumps.
+- Version: nixpkgs' `herdr` (0.9.3 at the pinned nixos-unstable channel release of 2026-10-14;
+  upstream may be newer). Updates ride the `nixpkgs` pin in `flake.nix`.
 - The package builds from source (Rust plus zig/ghostty dependencies). With
   `--option substitute false` the zig-deps fixed-output derivation fetches from
   `deps.files.ghostty.org` inside the sandbox; if that fails with `NetworkUnreachable`, fetch the
