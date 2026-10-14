@@ -48,6 +48,11 @@ in
         # hyprwinwrap-setup; the plugin itself is loaded at session start.
         ".config/hypr/hyprwinwrap.lua".text = config.lib.neg.readFile "files/gui/hypr/hyprwinwrap.lua";
 
+        # HyprDynamicCursors stretch settings. Pushed by
+        # hyprdynamiccursors-setup; the plugin is loaded in the session phase.
+        ".config/hypr/hyprdynamiccursors.lua".text =
+          config.lib.neg.readFile "files/gui/hypr/hyprdynamiccursors.lua";
+
         ".config/hypr/hypridle.conf".text = ''
           # Hypridle — idle configuration
           # Idle locking temporarily disabled (2026-08-31): hyprlock removed.
