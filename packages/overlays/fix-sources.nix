@@ -14,4 +14,19 @@ _inputs: _final: prev: {
       hash = "sha256-Xe1+Ih+F9kJSHEmxgmyN4ZhFqjcrr11jClF3S1RPvbs=";
     };
   });
+
+  # sqliteodbc: the upstream host no longer serves the 0.99991 tarball
+  # (http://www.ch-werner.de/sqliteodbc/ answers 404 and the HTTPS certificate
+  # does not match), and nixpkgs master still points there. qtbase's ODBC SQL
+  # driver needs it, so a from-source qt6 build fails. Ubuntu's orig tarball is
+  # byte-identical — same sha256 as nixpkgs pins (verified 2026-10-14).
+  unixodbcDrivers = prev.unixodbcDrivers // {
+    sqlite = prev.unixodbcDrivers.sqlite.overrideAttrs (old: {
+      src = prev.fetchurl {
+        name = "sqliteodbc-${old.version}.tar.gz";
+        url = "http://archive.ubuntu.com/ubuntu/pool/universe/s/sqliteodbc/sqliteodbc-${old.version}.orig.tar.gz";
+        hash = "sha256-TZStuNPN4fqUoorrDfzHvnMUW8383z1eIlQ02zHcilw=";
+      };
+    });
+  };
 }
