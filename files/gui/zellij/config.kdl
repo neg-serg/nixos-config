@@ -85,8 +85,8 @@ keybinds {
         bind "Ctrl f" { SwitchToMode "scroll"; }
 
         // --- Plugins ---
-        bind "Ctrl o" { LaunchOrFocusPlugin "strider" { floating true }; SwitchToMode "normal"; }
-        bind "Ctrl p" { LaunchOrFocusPlugin "session-manager" { floating true }; SwitchToMode "normal"; }
+        bind "Ctrl o" { LaunchOrFocusPlugin "strider" { floating true; }; SwitchToMode "normal"; }
+        bind "Ctrl p" { LaunchOrFocusPlugin "session-manager" { floating true; }; SwitchToMode "normal"; }
 
         // --- Move focus (Alt + hjkl, like herdr) ---
         bind "Alt h" { MoveFocus "left"; }
@@ -102,12 +102,9 @@ keybinds {
 
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/trantor/default.nix
 
-        // --- Mouse ---
-        mouse {
-            bind "LeftClick" { LeftClick; }
-            bind "RightClick" { RightClick; }
-            bind "MiddleClick" { SwitchToMode "normal"; }
-        }
+        // Mouse binds are not part of keybinds in zellij 0.45 — the built-in
+        // mouse handling is left as is (the old `mouse { … }` block made the
+        // whole config unparseable).
     }
 
     // --- Locked mode (Ctrl+B pass-through) ---
@@ -122,7 +119,7 @@ keybinds {
         bind "k" { Resize "up"; }
         bind "l" { Resize "right"; }
         bind "Enter" { SwitchToMode "normal"; }
-        bind "Escape" { SwitchToMode "normal"; }
+        bind "Esc" { SwitchToMode "normal"; }
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/trantor/default.nix
     }
 
@@ -131,9 +128,9 @@ keybinds {
         bind "l" { GoToNextTab; }
         bind "h" { GoToPreviousTab; }
         bind "n" { NewTab; SwitchToMode "normal"; }
-        bind "r" { SwitchToMode "rename-tab"; }
+        bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
         bind "Enter" { SwitchToMode "normal"; }
-        bind "Escape" { SwitchToMode "normal"; }
+        bind "Esc" { SwitchToMode "normal"; }
         bind "Tab" { GoToNextTab; }
         bind "Left" { GoToPreviousTab; }
         bind "Right" { GoToNextTab; }
@@ -149,7 +146,12 @@ keybinds {
         // Emacs-style scroll (additive; j/k still work)
         bind "n" { ScrollDown; }
         bind "p" { ScrollUp; }
-        bind "Escape" { SwitchToMode "normal"; }
+        // Vim/emacs ends and pages (additive)
+        bind "g" { ScrollToTop; }
+        bind "G" { ScrollToBottom; }
+        bind "Ctrl u" { HalfPageScrollUp; }
+        bind "Ctrl d" { HalfPageScrollDown; }
+        bind "Esc" { SwitchToMode "normal"; }
         bind "Enter" { SwitchToMode "normal"; }
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/trantor/default.nix
     }
@@ -157,7 +159,7 @@ keybinds {
     // --- Session mode ---
     session {
         bind "Enter" { SwitchToMode "normal"; }
-        bind "Escape" { SwitchToMode "normal"; }
+        bind "Esc" { SwitchToMode "normal"; }
     }
 }
 
