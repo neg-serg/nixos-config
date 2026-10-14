@@ -97,12 +97,17 @@ run new --force --open print > /dev/null 2>&1
 assert_fails $? "a leading dash is rejected (a mistyped flag cannot become a name)"
 run new other --branch wt/task1 --open print > /dev/null 2>&1
 assert_fails $? "an existing branch is rejected"
-run new herdr-task --open herdr > /dev/null 2>&1
+# The two gates below assert the *no herdr installed* behaviour, so they name a
+# binary `command -v` cannot find: HERDR_BIN_PATH is the script's own lookup
+# seam, and a host that has herdr on PATH (trantor does — the Herdr runtime is
+# a feature) would otherwise make the first gate fail for the wrong reason and
+# let `--open auto` take the herdr branch instead of falling back.
+HERDR_BIN_PATH=herdr-not-installed run new herdr-task --open herdr > /dev/null 2>&1
 assert_fails $? "--open herdr without a herdr binary fails loudly"
 run new herdr-task --open nope > /dev/null 2>&1
 assert_fails $? "an unknown --open mode is rejected"
 export HERDR_ENV=1
-run new autoless --open auto > /dev/null 2>&1
+HERDR_BIN_PATH=herdr-not-installed run new autoless --open auto > /dev/null 2>&1
 assert $? "auto inside HERDR_ENV without a herdr binary falls back (print)"
 unset HERDR_ENV
 (cd "$work" && run new outsider --open print > /dev/null 2>&1)
