@@ -20,7 +20,9 @@ const WRITE_TOOLS = new Set(['write', 'edit', 'str_replace_editor', 'hashline_ed
 const NOTEPAD_MARKERS = ['.agent/notepads', 'notepads/']
 
 function targetPath(exec) {
-  const args = exec?.args ?? {}
+  // 0.2 hands listeners a ToolExecution with the parsed `arguments`; fall back
+  // to the pre-0.2 `args` alias for older harness builds.
+  const args = exec?.arguments ?? exec?.args ?? {}
   return args.path ?? args.file_path ?? args.pathname ?? ''
 }
 
