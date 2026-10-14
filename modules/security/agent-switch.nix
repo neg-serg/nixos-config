@@ -122,4 +122,22 @@ lib.mkIf (cfg.enable or false) {
       ];
     }
   ];
+
+  # The sandboxed agent cannot exec setuid sudo (`no_new_privs` is set inside
+  # the session sandbox), so the NOPASSWD rule above is unreachable for it.
+  # Mirror that rule as polkit: mainUser may start exactly this unit, without
+  # interactive authentication. Same narrow shape — one unit, one verb; the
+  # artifact check inside the unit remains the actual gate.
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if (
+        action.id == "org.freedesktop.systemd1.manage-units" &&
+        action.lookup("unit") == "nixos-agent-switch.service" &&
+        action.lookup("verb") == "start" &&
+        subject.user == "${config.lib.neg.mainUser}"
+      ) {
+        return polkit.Result.YES;
+      }
+    });
+  '';
 }
