@@ -124,6 +124,28 @@ true
 
 - [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.fix.enable
+
+Whether to enable install fix, the fast Nix evaluator (patched master; eval/build helper).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
+
 ## features.cli.yazi.enable
 
 Whether to enable enable yazi terminal file manager.
@@ -178,6 +200,29 @@ Whether to enable enable AI tools (e.g., LM Studio).
 
 ```nix
 true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
+
+## features.dev.ai.herdr.enable
+
+Whether to enable install Herdr (terminal workspace manager / runtime for AI coding agents) with its
+neg config.
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
 ```
 
 *Example:*
@@ -816,6 +861,29 @@ true
 
 - [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.hyprKdeconnect.enable
+
+Whether to enable enable hypr-kdeconnect-fix (RemoteDesktop portal backend feeding KDE
+Connect/Deskflow input into Hyprland’s virtual-input protocols).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
+
 ## features.gui.hyprwhspr.enable
 
 Whether to enable enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland).
@@ -1397,7 +1465,7 @@ Network interface used by the PipeWire RTP sink for multicast output.
 
 ## features.media.audio.mpd.enable
 
-Whether to enable enable MPD stack (mpd, clients, mpdris2).
+Whether to enable enable MPD stack (mpd, clients, mpd-mpris).
 
 *Type:* boolean
 
