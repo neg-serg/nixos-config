@@ -42,3 +42,33 @@ focus_pane_left = ["prefix+h", "alt+h"]
 focus_pane_down = ["prefix+j", "alt+j"]
 focus_pane_up = ["prefix+k", "alt+k"]
 focus_pane_right = ["prefix+l", "alt+l"]
+
+# Agent navigation: the farm runs several dsh sessions at once, so cycle the
+# sidebar's agent rows (and jump to them by index) without touching the mouse.
+# `prefix+g` (the Goto picker) stays the filtered view: b/w/i/d there filter
+# blocked / working / idle / done agents.
+previous_agent = "prefix+u"
+next_agent = "prefix+i"
+focus_agent = "prefix+alt+1..9"
+
+# Agent rows in the sidebar: keep the location line, add the session title
+# Herdr strips of its spinner, then the agent label. For dsh the title is the
+# statusline (branch, dirty counts, tokens, turn), so the sidebar answers
+# "which agent needs me" without opening the pane. The per-agent
+# `rows_by_agent` table exists, but 0.9.1 only accepts built-in agent ids
+# there — not a self-reported label such as `dsh`.
+[ui.sidebar.agents]
+rows = [
+  [
+    "state_icon",
+    "machine",
+    "workspace",
+    "tab",
+  ],
+  [
+    "terminal_title_stripped",
+  ],
+  [
+    "agent",
+  ],
+]
