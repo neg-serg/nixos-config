@@ -1157,15 +1157,17 @@ hl.on("hyprland.start", function()
   -- left hyprexpo unloaded for the whole session, because nothing re-parses the
   -- config after the password (hypr-start restarts units, it does not reload).
   -- The workspace capsule click then evaluated hl.plugin.hyprexpo.* on a nil
-  -- namespace: hyprctl answers "ok" and no overview ever appears. Both plugins are
-  -- passive (nothing is painted until they are asked to), so loading them while the
-  -- login layer is up is harmless. hyprglass deliberately stays in the session
-  -- branch: it has systemd units of its own (hyprglass-apply, hyprglass-watch) that
-  -- load and configure it after the login layer is gone, and the login screen must
-  -- not be glazed. Re-runnable in a live session: `hyprexpo-setup` /
-  -- `hyprwindowshade-setup` (also in PATH).
+  -- namespace: hyprctl answers "ok" and no overview ever appears. These plugins
+  -- are passive (nothing is painted until they are asked to), so loading them
+  -- while the login layer is up is harmless. hyprglass deliberately stays in the
+  -- session branch: it has systemd units of its own (hyprglass-apply,
+  -- hyprglass-watch) that load and configure it after the login layer is gone,
+  -- and the login screen must not be glazed. Re-runnable in a live session:
+  -- `hyprexpo-setup` / `hyprwindowshade-setup` / `hyprwinwrap-setup` (also in
+  -- PATH).
   hl.exec_cmd("@hyprexpo_setup@")
   hl.exec_cmd("@hyprwindowshade_setup@")
+  hl.exec_cmd("@hyprwinwrap_setup@")
 
   if loginPhase then
     -- Login phase: start the login layer instead of the desktop. Nothing of the

@@ -270,6 +270,41 @@ behind Hyprland.
   command, whose actions were measured the same way (`shade on crt` on a window changes its unique
   colour count and mean luminance, `shade off` restores them).
 
+### hyprwinwrap (any window as wallpaper)
+
+- **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — nixpkgs has no
+  `hyprlandPlugins.hyprwinwrap`, so it is built with nixpkgs' `mkHyprlandPlugin` helper. The rev is
+  the commit upstream's `hyprpm.toml` pins for Hyprland 0.56.2 (`3b6e337b9e…`, 2026-09-10), so
+  plugin and compositor stay in one commit family. hyprpm builds it with CMake and
+  `install(TARGETS)` drops `libhyprwinwrap.so` into `$out/lib`, so no custom install phase is
+  needed; Lua headers come from `lua5_5` (the interpreter Hyprland links — its `lua55.pc` is what
+  the plugin's `pkg_search_module(lua55 …)` matches).
+- **Load + configure**: same load-then-push pattern as hyprglass/hyprexpo — the `hyprland.start`
+  hook runs `hyprwinwrap-setup`, which `hyprctl plugin load`s `libhyprwinwrap.so` and pushes
+  `files/gui/hypr/hyprwinwrap.lua` through `hyprctl eval`. The helper is in PATH, so edited
+  declarations can be re-applied in a live session. The load sits at the top of the handler, before
+  the login branch: the plugin is passive until a matching window is mapped, and the config is
+  parsed only once. The declarations cannot live in `hyprland.lua` itself — the plugin is loaded
+  *after* that file is parsed, so `hl.plugin.hyprwinwrap` is nil while it runs.
+- **Usage**:
+  `hl.plugin.hyprwinwrap.window({ class = …, title = …, layer = …, pos_x = …, pos_y = …, size_x = …, size_y = … })`
+  pins a window behind the desktop. `class`/`title` are exact matches (not regexes — find them with
+  `hyprctl clients`), `pos_*`/`size_*` are screen percentages and `layer` orders several background
+  windows. `hl.plugin.hyprwinwrap.focus("class-or-title")` toggles a background window forward.
+  `files/gui/hypr/hyprwinwrap.lua` ships without active declarations — it is the place to add the
+  app that should run as wallpaper.
+- **Patch** (`hyprwinwrap-lua-window-merge.patch`): upstream's `luaWindow()` only appends the spec
+  to `gLuaSpecs` and leaves the merge into `gMergedSpecs` to the `config.reloaded` event — which a
+  runtime `hyprctl eval` never fires; a real reload would not save it either, because the
+  `config.preReload` handler clears `gLuaSpecs` before the merge runs. The patch calls
+  `onConfigReloaded()` right after the append, which is what makes the pushed declarations take
+  effect at all. Bump this patch together with the rev.
+- **Verified** (nested 0.56.2, patched build): the load + eval sequence adopted a
+  `kitty --class window-bg` spawned after the eval — the client jumped from its default float (21,21
+  486×486) to 0,0 on the full logical monitor, and `focus("window-bg")` toggled it without the "no
+  background window matching" error. On the unpatched build the same sequence left the window
+  untouched and `focus` failed: the eval-pushed spec never reached `gMergedSpecs`.
+
 ## Testing a plugin without endangering the session
 
 Plugins run inside the compositor, so a crashing one takes the whole session with it (that is how
