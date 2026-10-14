@@ -58,7 +58,7 @@ focus_agent = "prefix+alt+1..9"
 # Herdr strips of its spinner, then the agent label. For dsh the title is the
 # statusline (branch, dirty counts, tokens, turn), so the sidebar answers
 # "which agent needs me" without opening the pane. The per-agent
-# `rows_by_agent` table exists, but 0.9.1 only accepts built-in agent ids
+# `rows_by_agent` table exists, but it only accepts built-in agent ids
 # there — not a self-reported label such as `dsh`.
 [ui.sidebar.agents]
 rows = [
