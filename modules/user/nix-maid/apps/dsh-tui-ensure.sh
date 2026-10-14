@@ -1,5 +1,13 @@
 set -eu
 export PATH=/run/current-system/sw/bin:$PATH
+
+# XDG relocation first (idempotent): it must run before the profile checks, so
+# a machine with the legacy ~/.dsh still ends up on the XDG layout. Failure is
+# not fatal — the legacy paths below keep working through the compat symlinks.
+if [ -x "@xdgMigrate@" ]; then
+  "@xdgMigrate@" || echo "dsh-tui-ensure: dsh-xdg-migrate reported a problem — keeping legacy paths"
+fi
+
 PROFILE_DIR="@homeDir@/.dsh/profiles/tui"
 [ -d "$PROFILE_DIR" ] || exit 0
 
