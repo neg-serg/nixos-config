@@ -19,7 +19,9 @@ IFS='
 
 # POSIX sh: avoid alias; provide function instead
 yt() {
-    yt-dlp --downloader aria2c -f "(bestvideo+bestaudio/best)" "$@"
+    # Native downloader on purpose: aria2c's --all-proxy cannot carry the
+    # socks5:// proxy from ~/.config/yt-dlp/config (see commit 7d11cc61).
+    yt-dlp -f "(bestvideo+bestaudio/best)" "$@"
 }
 
 read_command() {
