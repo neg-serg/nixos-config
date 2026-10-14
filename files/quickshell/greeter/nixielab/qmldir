@@ -1,0 +1,8 @@
+module qs.nixielab
+NixieSlider 1.0 NixieSlider.qml
+NixieColorField 1.0 NixieColorField.qml
+NixieToggle 1.0 NixieToggle.qml
+NixieChoice 1.0 NixieChoice.qml
+NixieSection 1.0 NixieSection.qml
+NixiePresetRow 1.0 NixiePresetRow.qml
+NixieMenu 1.0 NixieMenu.qml

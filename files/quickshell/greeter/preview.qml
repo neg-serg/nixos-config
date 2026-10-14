@@ -14,6 +14,7 @@ import Quickshell
 import qs
 import qs.lock
 import qs.background
+import qs.nixielab
 
 ShellRoot {
 	FloatingWindow {
@@ -21,6 +22,36 @@ ShellRoot {
 		implicitWidth: 1280
 		implicitHeight: 720
 		color: "#000000"
+
+		// The settings menu is a development surface: it is built only when the
+		// harness is asked for it (PREVIEW_LAB=1) or toggled with F10 — an
+		// ordinary preview run stays exactly the login screen.
+		property bool labEnabled: (Quickshell.env("PREVIEW_LAB") || "") === "1"
+
+		Shortcut {
+			sequence: "F10"
+			onActivated: win.labEnabled = !win.labEnabled
+		}
+
+		Loader {
+			id: labLoader
+			// Above the wallpaper, the CRT pass and the card: the panel is the
+			// only interactive thing the harness adds, and it must stay on top.
+			z: 10
+			anchors {
+				top: parent.top
+				right: parent.right
+				bottom: parent.bottom
+				margins: 12
+			}
+			width: 400
+			active: win.labEnabled
+			sourceComponent: Component {
+				NixieMenu {
+					anchors.fill: parent
+				}
+			}
+		}
 
 		BackgroundImage {
 			id: backdrop
