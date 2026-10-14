@@ -16,6 +16,11 @@ in
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
   hyprland = prev.hyprland.override { wrapRuntimeDeps = false; };
+  # hyprland-guiutils — not in the pinned nixpkgs yet, pinned locally (see
+  # packages/hyprland-guiutils). It supersedes hyprland-qtutils and ships the
+  # same five binaries (hyprland-dialog, -donate-screen, -update-screen,
+  # -welcome, -run), so installing both would collide in the system profile.
+  hyprland-guiutils = callPkg (pkg "hyprland-guiutils") { };
   andromeda-gtk-theme = callPkg (pkg "andromeda-gtk-theme") { };
   flight-gtk-theme = callPkg (pkg "flight-gtk-theme") { };
   matugen-themes = callPkg (pkg "matugen-themes") { };

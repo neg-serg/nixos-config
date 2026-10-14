@@ -20,6 +20,9 @@
         # SingletonLock.
         pkgs.zenity # GTK dialog tool Chromium uses for profile-in-use prompts
         pkgs.hyprshell # GTK4 window switcher + app launcher for Hyprland (ex-hyprswitch)
+        # Hyprland dialogs (hyprland-dialog/-welcome/-run/...) on hyprtoolkit;
+        # replaced hyprland-qtutils, which ships the same binary names.
+        pkgs.hyprland-guiutils # Hyprland GUI utilities (hyprtoolkit, ex-hyprland-qtutils)
       ];
     }
     (neg.mkHomeFiles {
