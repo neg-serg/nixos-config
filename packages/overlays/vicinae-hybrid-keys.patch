@@ -1,0 +1,81 @@
+diff --git a/src/server/src/services/keybinding/keybinding-service.hpp b/src/server/src/services/keybinding/keybinding-service.hpp
+index e32654f..2ecc0fb 100644
+--- a/src/server/src/services/keybinding/keybinding-service.hpp
++++ b/src/server/src/services/keybinding/keybinding-service.hpp
+@@ -32,60 +32,28 @@ public:
+            (mods & ~(required | Qt::KeypadModifier | Qt::GroupSwitchModifier)) == 0;
+   }
+ 
+-  static bool isDownKey(QKeyEvent *event, const std::string &keybinding) {
+-    switch (getMode(keybinding)) {
+-    case KeyBindingMode::Native:
+-#ifdef Q_OS_MACOS
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_N;
+-#else
+-      return false;
+-#endif
+-    case KeyBindingMode::Emacs:
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_N;
+-    case KeyBindingMode::Vim:
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_J;
+-    }
+-    return false;
++  // The navigation chords are hybrid on purpose: the launcher accepts both the
++  // emacs set (C-n/C-p, C-Alt-b/f) and the vim set (C-j/C-k/C-h/C-l), so both
++  // muscle memories work at once. The `keybinding` mode still selects the
++  // text-editing scheme (see ConfigBridge::emacsMode), not the navigation set.
++  static bool isDownKey(QKeyEvent *event, const std::string &) {
++    return usesOnly(event, PHYSICAL_CTRL) &&
++           (event->key() == Qt::Key_N || event->key() == Qt::Key_J);
+   }
+ 
+-  static bool isUpKey(QKeyEvent *event, const std::string &keybinding) {
+-    switch (getMode(keybinding)) {
+-    case KeyBindingMode::Native:
+-#ifdef Q_OS_MACOS
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_P;
+-#else
+-      return false;
+-#endif
+-    case KeyBindingMode::Emacs:
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_P;
+-    case KeyBindingMode::Vim:
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_K;
+-    }
+-    return false;
++  static bool isUpKey(QKeyEvent *event, const std::string &) {
++    return usesOnly(event, PHYSICAL_CTRL) &&
++           (event->key() == Qt::Key_P || event->key() == Qt::Key_K);
+   }
+ 
+-  static bool isLeftKey(QKeyEvent *event, const std::string &keybinding) {
+-    switch (getMode(keybinding)) {
+-    case KeyBindingMode::Native:
+-      return false;
+-    case KeyBindingMode::Vim:
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_H;
+-    case KeyBindingMode::Emacs:
+-      return usesOnly(event, PHYSICAL_CTRL | Qt::AltModifier) && event->key() == Qt::Key_B;
+-    }
+-    return false;
++  static bool isLeftKey(QKeyEvent *event, const std::string &) {
++    return (usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_H) ||
++           (usesOnly(event, PHYSICAL_CTRL | Qt::AltModifier) && event->key() == Qt::Key_B);
+   }
+ 
+-  static bool isRightKey(QKeyEvent *event, const std::string &keybinding) {
+-    switch (getMode(keybinding)) {
+-    case KeyBindingMode::Native:
+-      return false;
+-    case KeyBindingMode::Vim:
+-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_L;
+-    case KeyBindingMode::Emacs:
+-      return usesOnly(event, PHYSICAL_CTRL | Qt::AltModifier) && event->key() == Qt::Key_F;
+-    }
+-    return false;
++  static bool isRightKey(QKeyEvent *event, const std::string &) {
++    return (usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_L) ||
++           (usesOnly(event, PHYSICAL_CTRL | Qt::AltModifier) && event->key() == Qt::Key_F);
+   }
+ 
+   // Returns 0=none, 1=up, 2=down, 3=left, 4=right
