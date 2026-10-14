@@ -31,8 +31,8 @@ herdr status server   # is the background server up?
 herdr                 # run again after closing the terminal -> reattach
 ```
 
-- `ctrl+b` enters prefix mode (the same prefix as zellij); `prefix+?` shows every binding,
-  `prefix+q` detaches. `prefix+h/j/k/l` and `alt+h/j/k/l` focus panes.
+- `ctrl+s` enters prefix mode (the key zellij uses for its session mode); `prefix+?` shows every
+  binding, `prefix+q` detaches. `prefix+h/j/k/l` and `alt+h/j/k/l` focus panes.
 - One workspace per project: `prefix+shift+n` creates one, `prefix+c` a tab, `prefix+v` /
   `prefix+minus` split.
 - Herdr is mouse-native: click rows/tabs/panes, drag borders, right-click menus.
@@ -88,8 +88,9 @@ print. Details: [dsh-worktrees.md](./dsh-worktrees.md).
 
 - theme: catppuccin base plus neg palette tokens (the colours zellij's `neg-dark` uses);
   `onboarding = false`.
-- keys: `ctrl+b` prefix and `alt+h/j/k/l` pane focus next to the prefix binds. No Cyrillic
-  duplicates: the ru-layout daemon pins terminal windows to `us`
+- keys: `ctrl+s` prefix and `alt+h/j/k/l` pane focus next to the prefix binds. Herdr consumes the
+  prefix, so zsh's `^S` history-incremental-search-forward does not fire inside a Herdr pane; no
+  Cyrillic duplicates are needed because the ru-layout daemon pins terminal windows to `us`
   ([hotkeys-ru-layout.md](./hotkeys-ru-layout.md)).
 - agent navigation: `prefix+u` / `prefix+i` move to the previous/next agent row, `prefix+alt+1..9`
   jumps to the nth one; the Goto picker (`prefix+g`) filters with `b`/`w`/`i`/`d` for
