@@ -44,7 +44,9 @@ map('n', "`", "'")
 map('n', '<M-w>', '<Cmd>bd<CR>', {silent=true, desc = 'Delete buffer'})
 map('i', '<C-V>', '<C-R>+')
 map('c', '<C-a>', '<home>', {noremap=true})
-map('i', '<C-a>', "<C-o>^", {noremap=true})
+-- Emacs C-a is column zero, not "back to indentation" (that is M-m): <C-o>^
+-- stops at the first non-blank, so it disagreed with the cmdline mapping above.
+map('i', '<C-a>', "<C-o>0", {noremap=true})
 map('c', '<C-n>', '<down>', {noremap=true})
 map('c', '<C-p>', '<up>', {noremap=true})
 map({'c','i'}, '<C-b>', '<left>', {noremap=true})
