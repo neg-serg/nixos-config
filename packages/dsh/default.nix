@@ -66,12 +66,22 @@ buildNpmPackage {
   # localized upstream now — see post-install.sh.)
   postInstall =
     builtins.replaceStrings
-      [ "@NODEJS@" "@NODELIB@" "@PY@" "@PY_V2@" "@PATCHLIB_DIR@" ]
+      [
+        "@NODEJS@"
+        "@NODELIB@"
+        "@PY@"
+        "@PY_V2@"
+        "@PY_MIG@"
+        "@PY_EXEC@"
+        "@PATCHLIB_DIR@"
+      ]
       [
         (lib.getExe nodejsRuntime)
         nodejsRuntime.libraryPath
         "${./patch-widgets.py}"
         "${./patch-session-format.py}"
+        "${./patch-session-migration.py}"
+        "${./patch-tool-exec-args.py}"
         "${./lib}"
       ]
       (builtins.readFile ./post-install.sh);
