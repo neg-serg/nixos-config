@@ -13,8 +13,8 @@ float qt_Opacity;
 vec2 pSize;        // the item: the envelope plus the room the bloom needs
 vec2 pBackdrop;    // the size of the sampled wallpaper patch
 float pInset;      // how much of pSize is the bloom's room
-float pRadius;     // corner radius of the envelope; half the width makes a disc
-float pBase;       // height of the metal base band, px (0 = a plain envelope)
+float pRadius;     // unused: the QML mirror declares it and the drawing shapes the envelope
+float pBase;       // unused: the base's height is the drawing's own 7 mm; pBaseOn says if it is drawn
 float pGlow;       // discharge strength (0 = the tube is on but shows nothing)
 float pDigit;      // the lit cathode, 0..9; -1 = nothing is lit
 float pBulb;       // 1 = the colon separator: one filled bulb, no numerals
@@ -25,11 +25,11 @@ float pWarmth;     // how much of the discharge lands on the glass itself
 float pFlicker;    // ignition progress, 1 = struck and steady
 // The lit cathode's temperature, in kelvin: a metal that hot is its own light,
 // and blackbody() below turns it into the colour. It takes the vec4 slot the
-// old core colour had, padded, because std140 rounds vec4s to 16 bytes and the
-// workbench mirrors this block field by field.
-// std140: the slot below is 16-byte aligned in the block (it was a vec4, and
-// the workbench's struct still reserves the same room), so a bare float here
-// would land one slot earlier and read the field before it.
+// old core colour had, padded, because std140 base-aligns a vec4 to 16 bytes
+// and the workbench mirrors this block field by field.
+// padCore0 and padCore3 keep pTempK and pExposure where the workbench's
+// struct has them; neither pad is read. The four knobs at the end of the
+// block are appended after pView so every offset above them is unchanged.
 float padCore0;
 float pTempK;
 float pExposure;   // stops above white the discharge is exposed at
@@ -38,7 +38,7 @@ vec4 pHalo;        // colour of the gas around it
 vec4 pGlass;       // the envelope's own tint
 vec4 pCathode;     // the unlit wire, seen through the glass
 float pThick;      // wall thickness of the envelope, px (0 = a shell, no glass)
-float pMm;         // px per millimetre: the scale the drawing below is drawn at
+float pMm;         // unused: the millimetres come from pTile in nixie_tube, not from the caller
 float pRefract;    // how hard the envelope bends the picture behind it (1 = the glass's own)
 float pTime;       // seconds of session time: the tube is alive, but slowly
 // The row: the login clock draws its four tubes in one pass, because a tube's
@@ -52,8 +52,25 @@ vec4 pRowFlicker;  // the four ignitions: a nixie's tubes never strike together
 vec4 pTile;        // the tube's own item (width, height, margin), and the mode
 vec4 pTint;        // the colour of coloured glass: hue in rgb, strength in a
 vec4 pWallpaper;   // x: tint the lamp with the wallpaper's own accent instead
-vec4 pView;        // the camera: x is its yaw off the tube's axis, in degrees,
-                   // and y how far it stands, in tube widths (0: the default)
+vec4 pView;        // the camera: x is its yaw off the tube's axis in degrees,
+                   // y how far it stands in tube widths (0: the default) and
+                   // z its pitch. The three build one pinhole; nothing here is
+                   // a screen-space shift of a flat drawing.
+
+// The quality tier. 0 draws today's picture; 1 shares one metal environment,
+// drops the inner-wall echo and cuts the 8's chord loop; 2 also drops the two
+// dispersion rays, the caustic and the second noise scale, samples every
+// other unlit cathode and stops sampling the room for metal at all.
+float pQuality;
+// The breathing and the mains hum, as a fraction: 1 is today's shimmer, 0
+// freezes the discharge while the wire stays lit and the gas stays lit.
+float pShimmer;
+// Multiplier on the getter and sputter films: 1 is today's patina, 0 a tube
+// that has just been made.
+float pAge;
+// 1 draws the sheet's 7 mm metal base (nixieBase); 0 keeps today's
+// base-off look.
+float pBaseOn;
 };
 
 // A nixie tube, drawn in one pass over the wallpaper patch behind it.
@@ -117,6 +134,7 @@ return sdArc(q, vec2(0.0), 1.0, a0, a1) * min(rad.x, rad.y);
 // Wire that was bent keeps a radius at the corner: the joints are rounded by
 // about the thickness of the wire, never mitred.
 float smin(float a, float b, float k) {
+if (k <= 1e-5) return min(a, b);   // a straight wire: pWire = 0 must not divide by zero
 float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
 return mix(b, a, h) - k * h * (1.0 - h);
 }
@@ -150,7 +168,8 @@ return d;
 
 // Which strand of a ribbon-shaped numeral the nearest piece of wire belongs to:
 // +1 the one that passes over, -1 the one that goes under, 0 an ordinary piece.
-// Only the 8 sets it, and only its own wire reads it.
+// Only the 8 sets it; every path that reads it first clears it, because the
+// last 8 the stack sampled is not the strand a lit wire belongs to.
 float wirePass = 0.0;
 // The wire's own radius in the numeral's space, filled in by main() from the
 // nixieWire token: an elbow of bent wire is as thick as the wire (see digitWire).
@@ -228,7 +247,9 @@ if (digit == 8)
 // (Gerono's, and the numerals' own space makes it as tall and as narrow as the
 // others). Sampled as chords: a hundred and sixty of them put the joints about
 // half a millimetre apart, which is under the wire's own width even on the
-// login screen at 1x, so nothing of the polygon survives the glow.
+// login screen at 1x, so nothing of the polygon survives the glow. Balanced
+// and lite cut the loop to 48 chords — joints about 1.7 mm apart, still under
+// the 2.2 mm the wire is drawn at, and a third of the work.
 //
 // The curve passes through the waist twice — once at t = pi/2, once at
 // t = 3pi/2 — and a ribbon is what those two passes make. Which of them runs
@@ -238,6 +259,21 @@ if (digit == 8)
 float d = 1e5;
 float best = 0.0;
 vec2 prev = vec2(0.0, 1.02);
+if (pQuality >= 0.5) {
+for (int i = 1; i <= 48; i++) {
+float t = float(i) / 48.0 * 6.2831853072;
+vec2 q = vec2(0.420 * sin(2.0 * t), 1.020 * cos(t));
+float piece = sdSegment(p, prev, q);
+if (piece < d) {
+d = piece;
+best = float(i);
+}
+prev = q;
+}
+// 12 is t = pi/2, 36 is t = 3pi/2; the windows scale with the chord count.
+wirePass = 1.0 - smoothstep(1.8, 9.0, abs(best - 12.0))
+         - (1.0 - smoothstep(1.8, 9.0, abs(best - 36.0)));
+} else {
 for (int i = 1; i <= 160; i++) {
 float t = float(i) / 160.0 * 6.2831853072;
 vec2 q = vec2(0.420 * sin(2.0 * t), 1.020 * cos(t));
@@ -252,13 +288,12 @@ prev = q;
 // crossing and smooth enough that the flag reads as a twist, not as a step.
 wirePass = 1.0 - smoothstep(6.0, 30.0, abs(best - 40.0))
          - (1.0 - smoothstep(6.0, 30.0, abs(best - 120.0)));
+}
 return d;
 }
 if (digit == 9)
 // The bowl rides on top and the leg under it is straight. A 9 is a 6 turned
 // over, and what tells them apart is which end carries the loop.
-return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
-            sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), bendK);
 return smin(sdEllipse(p, vec2(0.0, 0.52), vec2(0.30, 0.48)),
             sdSegment(p, vec2(0.30, 0.52), vec2(0.29, -0.98)), bendK);
 }
@@ -347,7 +382,7 @@ return mix(mix(a, b, s.x), mix(c, d, s.x), s.y);
 // (0.56, 0.55, 0.52), steel a shade cooler, and the roughness spreads the
 // reflection out. This is what the mesh, the rods and the collar were faking
 // with constant colours.
-vec3 metal_hit(vec2 px, vec3 n, vec3 v, vec3 f0, float rough) {
+vec3 metal_env(vec2 px, vec3 n, vec3 v, float rough) {
 vec3 r = reflect(-v, n);
 // where that ray lands on the room behind the lamp
 vec2 off = vec2(r.x, r.y) / max(-r.z, 0.05) * (0.55 * pTile.x);
@@ -361,11 +396,27 @@ env += texture(source, clamp(uv + vec2(blur.x, 0.0), vec2(0.001), vec2(0.999))).
 env += texture(source, clamp(uv - vec2(blur.x, 0.0), vec2(0.001), vec2(0.999))).rgb;
 env += texture(source, clamp(uv + vec2(0.0, blur.y), vec2(0.001), vec2(0.999))).rgb;
 env += texture(source, clamp(uv - vec2(0.0, blur.y), vec2(0.001), vec2(0.999))).rgb;
-env *= 0.2;
-// a metal darkens what it does not reflect, and Fresnel takes the edge
+return env * 0.2;
+}
+
+// A metal darkens what it does not reflect, and Fresnel takes the edge.
+vec3 metal_shade(vec3 env, vec3 n, vec3 v, vec3 f0) {
 float c = clamp(dot(n, v), 0.0, 1.0);
 vec3 f = f0 + (vec3(1.0) - f0) * pow(1.0 - c, 5.0);
 return env * f;
+}
+
+vec3 metal_hit(vec2 px, vec3 n, vec3 v, vec3 f0, float rough) {
+return metal_shade(metal_env(px, n, v, rough), n, v, f0);
+}
+
+// The tier's view of it: full reflects once per part, balanced reflects once
+// for the whole tube and gives every part its own Fresnel, lite stops sampling
+// the room at all and shades the metal from one dim constant.
+vec3 metal_for(vec2 px, vec3 n, vec3 v, vec3 f0, float rough, vec3 sharedEnv, float quality) {
+if (quality >= 1.5) return metal_shade(vec3(0.22), n, v, f0);
+if (quality >= 0.5) return metal_shade(sharedEnv, n, v, f0);
+return metal_hit(px, n, v, f0, rough);
 }
 
 // A reflection off glass or metal is never a mirror image: the surface scatters
@@ -522,15 +573,77 @@ float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
 return mix(c, newPeak * vec3(1.0), g);
 }
 
-vec4 nixie_tube(vec2 px, vec2 p, vec2 tile, float pad, vec3 accent,
+// --- the camera, and the geometry a ray meets ------------------------------
+// A real one: a pinhole standing pView.y tube widths in front of the tube's
+// centre plane, turned by the theme's yaw (pView.x) and pitch (pView.z). The
+// caller builds the basis in main() and hands every pixel its own ray, in a
+// frame whose unit is the tube's own drawing pixel. The drawing is exactly the
+// picture that camera takes from dead ahead, so at yaw = pitch = 0 nothing
+// below moves a pixel; at any other angle the outline, the rims and everything
+// inside the glass follow the geometry instead of shifting on the screen.
+vec2 plane_hit(vec3 o, vec3 d, float z) {
+    return o.xy + (z - o.z) / min(d.z, -1e-4) * d.xy;
+}
+
+// The outer wall of the glass: the cylinder between +-h closed by two
+// hemispheres. The nearest front-facing hit is the surface this pixel sees
+// (t < 0: the ray misses the glass). The normal comes back with z negated,
+// which is the sign the optics below were written with.
+vec4 capsule_hit(vec3 o, vec3 d, float ra, float h) {
+    float t = -1.0;
+    float a = dot(d.xz, d.xz);
+    float b = dot(o.xz, d.xz);
+    float c = dot(o.xz, o.xz) - ra * ra;
+    float disc = b * b - a * c;
+    if (a > 1e-8 && disc > 0.0) {
+        float tc = (-b - sqrt(disc)) / a;
+        if (tc > 0.0 && abs(o.y + tc * d.y) <= h) t = tc;
+    }
+    for (int s = 0; s < 2; s++) {
+        float sy = (s == 0) ? -h : h;
+        vec3 os = o - vec3(0.0, sy, 0.0);
+        float tb = dot(os, d);
+        float td = tb * tb - dot(os, os) + ra * ra;
+        if (td > 0.0) {
+            float ts = -tb - sqrt(td);
+            float y = o.y + ts * d.y;
+            if (ts > 0.0 && ((s == 0 && y <= -h) || (s == 1 && y >= h))) {
+                if (t < 0.0 || ts < t) t = ts;
+            }
+        }
+    }
+    if (t < 0.0) return vec4(-1.0, 0.0, 0.0, -1.0);
+    vec3 q = o + t * d;
+    if (q.z <= 0.0) return vec4(-1.0, 0.0, 0.0, -1.0);   // only the near wall is the glass
+    return vec4(t, normalize(vec3(q.x, q.y - clamp(q.y, -h, h), -q.z)));
+}
+
+// Where a point of the drawing lands on the film: the frame's camera, the
+// tube's centre at the origin, the film through it. Used by the small parts
+// that are placed directly — the pip and the pins.
+vec2 cam_project(vec3 w, vec3 camO, mat3 camB, float near) {
+    float t = near / dot(w - camO, camB[2]);
+    vec3 q = camO + t * (w - camO);
+    return vec2(dot(q, camB[0]), dot(q, camB[1]));
+}
+
+vec4 nixie_tube(vec2 px, vec2 p, vec3 rayO, vec3 rayD, mat3 camB, float camNear,
+                vec2 tile, float pad, vec3 accent,
                 float digit, float flicker, float bulb, float edgeFade) {
 const float PI = 3.14159265;
+// The tier this call is drawn at, and the knobs clamped once so a hostile
+// theme value cannot poison every term below.
+float quality = clamp(pQuality, 0.0, 2.0);
+float glow = max(pGlow, 0.0);
+float shimmer = clamp(pShimmer, 0.0, 1.0);
+float age = max(pAge, 0.0);
+wirePass = 0.0;   // the previous tube's ribbon flag must not modulate this one
 
 // --- the envelope, from the drawing ------------------------------------
 // Every number here is off Reflector's IN-12A/B data sheet (1988), in its own
 // millimetres: the bulb is Ø19 and stands 28 from its foot to the top of the
 // dome, the base is Ø21 and 7 deep, the pip the tube was sealed by is Ø3.5, and
-// the whole lamp without its pins is 35 max. pMm turns those millimetres into
+// the whole lamp without its pins is 35 max. pTile turns those millimetres into
 // pixels, so the shape below is the tube and not a decoration shaped like one.
 // The drawing's box is 21 mm across and 35 mm tall (base included). The item
 // the caller laid out is that box plus the pads, and it is the item that has to
@@ -541,24 +654,25 @@ const float PI = 3.14159265;
 float boxW = 21.0, boxH = 35.0;
 // the bulb is a cylinder with a hemisphere at each end, both bulging outward
 const float BULB_R_MM = 9.5;    // the glass, Ø19 as on the sheet; the cylinder is 16 mm
-const float BULB_H_MM = 35.0;   // the whole height
-const float COLLAR_H_MM = 0.0;  // there is no base on this lamp
+const float BULB_H_MM = 28.0;   // the glass, when the sheet's base is drawn
+const float COLLAR_H_MM = 7.0;  // and the base: 28 + 7 = the 35 mm lamp
 float mm = min((tile.x - 2.0 * pad) / boxW, (tile.y - 2.0 * pad) / boxH);
 mm = max(mm, 0.01);
 float bulbR = BULB_R_MM * mm;           // the glass is as wide as the box, Ø21
-// The camera's yaw off the tube's axis, and where the numerals sit inside: a
-// cathode stands in front of the axis, so the angle moves it (see below) and
-// tilts every ray the glass bends.
-float pYaw = radians(clamp(pView.x, -30.0, 30.0));
+// Where the numerals sit inside: a cathode stands in front of the axis, and
+// the cathode plane below is where every glyph is read from, so the numerals
+// have a depth of their own and the camera's angle moves them.
 const float CATHODE_Z = 0.72;   // where the numerals sit, in bulb radii in front of the axis
-float bulbH = BULB_H_MM * mm;           // and as tall: cylinder + two hemispheres
-// The collar is the sheet's 7 mm, full stop. pBase is only the caller saying
+// The collar is the sheet's 7 mm, full stop. pBaseOn is only the caller saying
 // whether this envelope has one at all (the colon has not), because a caller
 // working in its own pixels must not be able to put the base somewhere the
-// drawing does not.
-float collarH = COLLAR_H_MM * mm;     // no base: the bulb is the whole lamp
-float pipR = 1.75 * mm;                 // the seal's pip, Ø3.5 (unused now)
-float sdPipUnused = 1e5;
+// drawing does not. 0 keeps today's base-off look — the whole 35 mm is glass;
+// with the base on, the sheet's 28 mm bulb stands on its 7 mm collar and the
+// two still add up to the box.
+float baseOn = (pBaseOn > 0.5) ? 1.0 : 0.0;
+float collarH = COLLAR_H_MM * baseOn * mm;
+float bulbH = (BULB_H_MM + COLLAR_H_MM * (1.0 - baseOn)) * mm; // the glass: cylinder + two caps
+float pipR = 1.75 * mm;                 // the seal's pip, Ø3.5
 
 float boxMid = 0.5 * boxH * mm;         // the item's centre, and the box's
 float pipTop = -boxMid;                 // the sheet's 35 mm is measured to the pip
@@ -566,49 +680,50 @@ float footY = boxMid - collarH;         // where the glass meets the collar
 float apexY = footY - bulbH;            // the top of the dome
 float capY = apexY + bulbR;             // the centre of the dome's cap
 
-// The bulb: a cylinder closed by a hemispherical dome. The shoulder is the
-// tangent between them, which is how the drawing's fillet reads at any size.
-// y runs down: the dome is where p.y is above the cap's centre, so the flat side
-// of the capsule (a cylinder) is below it and the sphere above. Getting this
-// backwards puts the dome inside the base and draws the glass as a pane.
 // A capsule: hemispheres at both ends, so the top and the bottom of the glass
-// are the same shape. That is what a symmetric bulb is.
-// p.y = 0 is the middle of the item, and the box is centred on it, so the glass
-// is centred on 0. Centring it on boxMid (the box's half height) dropped the
-// glass half a box below the numerals, which is what the picture showed.
+// are the same shape. That is what a symmetric bulb is. p.y = 0 is the middle
+// of the item and the glass is centred on it, so the drawing and the ray
+// measure from the same place.
 // The capsule: a rectangle closed by two semicircles. The max(..., 0) is what
 // makes the middle a straight-sided body — without it the profile pinches in
 // and the lamp reads as two spheres with a waist between them.
-float sdBulb = length(vec2(p.x, max(abs(p.y) - (0.5 * bulbH - bulbR), 0.0))) - bulbR;
-float sdPip = sdPipUnused;   // no pip on a symmetric bulb
-float sd = sdBulb;
+float R = max(bulbR, 1.0);
+float capOffset = max(0.5 * bulbH - bulbR, 0.0);          // the cylinder's half length
+
+// What the glass hides, in the image plane: the capsule the bulb is, as this
+// camera draws it. Pitch compresses its straight run by the cosine of the
+// angle between the tube's axis and the film; yaw cannot change a cylinder's
+// width, and should not. sd is the signed distance to that silhouette in the
+// tube's own pixels, and every rim, hairline and spill below is measured from
+// it exactly as the drawing measured it before.
+float axisCos = clamp(camB[1].y, 0.0, 1.0);              // the axis, as the film sees it
+float capProj = capOffset * axisCos;
+float sd = length(vec2(p.x, max(abs(p.y) - capProj, 0.0))) - R;
 float inside = 1.0 - smoothstep(-0.7, 0.7, sd);
 float d = -sd;
 
-float xr = clamp(p.x / max(bulbR, 1.0), -1.0, 1.0);
+// --- the wall, where the ray meets it -------------------------------------
+// The ray is tested against the real capsule: the cylinder between the
+// shoulders and the two hemispheres, and the nearest front-facing hit is the
+// surface this pixel sees. Everything the glass does — the Fresnel at its
+// walls, the bend of the picture behind it, the room it reflects — is fed by
+// that point and its normal, so the envelope answers the camera as one solid
+// object. A ray that misses keeps the drawing's own normal; every surface
+// term below is masked by inside anyway. The test is analytic, not marched:
+// two quadratics and a square root, run only for the pixels the silhouette
+// keeps.
+vec4 hit = vec4(-1.0);
+if (inside > 0.001) hit = capsule_hit(rayO, rayD, R, capOffset);
+float hitOK = (hit.x > 0.0) ? 1.0 : 0.0;
+vec3 P1 = (hitOK > 0.5) ? (rayO + hit.x * rayD) : vec3(p, 0.0);
+vec3 N3 = (hitOK > 0.5) ? hit.yzw
+                        : normalize(vec3(p.x, 0.0, -sqrt(max(R * R - p.x * p.x, 1e-4))));
+vec3 Ncyl = normalize(vec3(P1.x, 0.0, -sqrt(max(R * R - P1.x * P1.x, 1e-4))));
+float xr = clamp(P1.x / R, -1.0, 1.0);
 float u = asin(xr) / (PI * 0.5);
-float v = clamp(-(p.y - capY) / max(bulbH - bulbR, 1.0), -1.0, 1.0);
+float v = clamp(-(P1.y - capY) / max(bulbH - bulbR, 1.0), -1.0, 1.0);
 float grazing = 1.0 - sqrt(max(0.0, 1.0 - xr * xr));
 
-// --- the surface of the envelope, in 3D --------------------------------
-// The tube is a cylinder with a spherical cap, and its axis lies in the plane
-// of the screen: what a pixel sees of the wall is at z = 0, so the depth of
-// every point on it follows from the radius alone. That is what makes the
-// optics solvable here instead of raymarched — the normal is exact, and so is
-// the distance a ray travels through the glass.
-float R = max(bulbR, 1.0);
-// The envelope in profile is a rectangle closed by two semicircles, so the
-// surface below has TWO caps, one at each end, and the cylinder between them.
-// Normals taken from a single cap turned the two hemispheres into two spheres,
-// which is what the picture showed.
-float capOffset = max(0.5 * bulbH - bulbR, 0.0);          // the cylinder's half length
-float capCentre = sign(p.y) * capOffset;                  // the nearest cap's centre
-float capDist = max(abs(p.y) - capOffset, 0.0);           // how far into that cap
-float capZ = sqrt(max(0.0, R * R - p.x * p.x - capDist * capDist));
-vec3 Ncap = normalize(vec3(p.x, capDist * sign(p.y), -capZ));
-vec3 Ncyl = normalize(vec3(p.x, 0.0, -sqrt(max(0.0, R * R - p.x * p.x))));
-float blend = clamp(capDist / max(0.5 * mm, 1.0), 0.0, 1.0);   // 0 in the cylinder, 1 in a cap
-vec3 N3 = normalize(mix(Ncyl, Ncap, blend));
 // Bubbles in the glass and the ripple the blower left: two scales of noise,
 // each taken as its own gradient, added to the wall's normal. A few degrees of
 // tilt is all it is — enough that the room the wall reflects breaks into
@@ -626,11 +741,10 @@ float bv = vnoise(bq + vec2(0.0, 1.0));
 vec3 bump = vec3((wu - w0) * 0.05 + (bu - b0) * 0.13,
                  (wv - w0) * 0.05 + (bv - b0) * 0.13, 0.0);
 N3 = normalize(N3 + bump);
-// The eye looks along -z when the camera is dead ahead, and off to one side when
-// the theme turns it: the refraction into the glass, the room it reflects and the
-// Fresnel at its walls all follow this one direction, which is what makes the
-// picture inside the tube slide sideways instead of sitting still.
-vec3 VIEW = vec3(sin(pYaw), 0.0, -cos(pYaw));
+// The direction this pixel looks along: the camera's own ray, so the
+// refraction into the glass, the room it reflects and the Fresnel at its
+// walls all follow the real camera instead of one global yaw.
+vec3 VIEW = rayD;
 // --- the glass ---------------------------------------------------------
 // Clear glass over a dark room shows almost nothing: the rim, where the wall is
 // seen edge-on, the reflections it catches, the dome and the pip the tube was
@@ -707,20 +821,28 @@ vec3 absorb = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.30 * pathIn / R);
 float planeDist = 0.30 * tile.x;          // where the picture the glass bends hangs
 float roomDist = 0.16 * tile.x;           // where the reflections come from
 vec2 off = glass_offset(p, rayT, rayOut, planeDist, wallLens);
-vec2 offR = glass_offset(p, rayTr, rayOut, planeDist, wallLens);
-vec2 offB = glass_offset(p, rayTb, rayOut, planeDist, wallLens);
+// The two dispersion rays are the lite tier's first cut: lite lets the green
+// ray carry all three channels, so their offsets are only computed when they
+// are sampled.
+vec2 offR = vec2(0.0);
+vec2 offB = vec2(0.0);
+if (quality < 1.5) {
+offR = glass_offset(p, rayTr, rayOut, planeDist, wallLens);
+offB = glass_offset(p, rayTb, rayOut, planeDist, wallLens);
+}
 // A cylinder of glass is a lens, not a window: it has power across its axis and
 // none along it, so the picture inside is magnified sideways — most of all on
 // the axis, and not at all at the wall, where the glass is edge-on. That is the
 // magnifying-glass bend, and it is why a nixie's numerals read taller in the
 // middle of the tube than they measure on the bench.
-float lensK = 1.0 - 0.30 * pRefract * (1.0 - pow(clamp(abs(u), 0.0, 1.0), 2.0));
+float uAbs = clamp(abs(u), 0.0, 1.0);
+float lensK = 1.0 - 0.30 * pRefract * (1.0 - uAbs * uAbs);
 off  = vec2(off.x  * lensK, off.y);
-offR = vec2(offR.x * lensK, offR.y);
-offB = vec2(offB.x * lensK, offB.y);
 off  = clamp(off,  vec2(-0.75 * R), vec2(0.75 * R));
-offR = clamp(offR, vec2(-0.75 * R), vec2(0.75 * R));
-offB = clamp(offB, vec2(-0.75 * R), vec2(0.75 * R));
+if (quality < 1.5) {
+offR = clamp(vec2(offR.x * lensK, offR.y), vec2(-0.75 * R), vec2(0.75 * R));
+offB = clamp(vec2(offB.x * lensK, offB.y), vec2(-0.75 * R), vec2(0.75 * R));
+}
 // Real glass is never clean. It was wiped with something, it has settled dust,
 // it carries a hairline scratch or two, and its walls are not a perfect
 // cylinder. All of it is faint, and — invariant I1 — all of it is a hash of the
@@ -730,19 +852,29 @@ float dustFine = hash(floor(p / (0.55 * mm)) + 91.0);
 // A scratch is one family of hairlines at a shallow angle; the hash decides
 // where along them a scratch was actually left.
 float scratchU = p.x * 0.28 + p.y;
-float scratch = exp(-pow(fract(scratchU / (19.0 * mm)) - 0.5, 2.0) / 0.0007)
-              * step(0.80, hash(vec2(floor(scratchU / (19.0 * mm)), 5.0)));
+float scratchT = scratchU / (19.0 * mm);
+float scratchD = fract(scratchT) - 0.5;
+float scratch = exp(-scratchD * scratchD / 0.0007)
+              * step(0.80, hash(vec2(floor(scratchT), 5.0)));
 float dust = step(0.9968, dustFine);
 // The wall wanders: what the glass shows of the room drifts a pixel with it.
 vec2 wobble = vec2(smudge - 0.5, dustFine - 0.5) * 1.2;
 off  += wobble;
+if (quality < 1.5) {
 offR += wobble;
 offB += wobble;
-// One channel per ray: that is the dispersion, and it costs two more taps.
+}
+// One channel per ray at full — that is the dispersion, and it costs two more
+// taps. Lite takes the green ray for all three channels instead: no fringe,
+// and one tap.
 vec3 disp;
+if (quality >= 1.5) {
+disp = texture(source, clamp((px + pInset + off) / pBackdrop, vec2(0.001), vec2(0.999))).rgb;
+} else {
 disp.r = texture(source, clamp((px + pInset + offR) / pBackdrop, vec2(0.001), vec2(0.999))).r;
 disp.g = texture(source, clamp((px + pInset + off)  / pBackdrop, vec2(0.001), vec2(0.999))).g;
 disp.b = texture(source, clamp((px + pInset + offB) / pBackdrop, vec2(0.001), vec2(0.999))).b;
+}
 vec3 refract = disp * absorb;
 // the smear keeps a little of the room to itself
 refract *= 1.0 - 0.06 * smudge;
@@ -750,10 +882,13 @@ refract *= 1.0 - 0.06 * smudge;
 // folds over instead of stretching further, and the picture returns to the eye
 // inverted — a second, almost mirrored image along the rim. One more tap at the
 // folded offset, carried by grazing so the middle of the tube is untouched.
+// Lite drops it: the rim keeps its two hairlines and loses the folded image.
+if (quality < 1.5) {
 float caustic = pow(grazing, 3.0) * pRefract * inside * wallLens;
 vec2 offC = -off * 1.10;
 vec3 causticImg = texture(source, clamp((px + pInset + offC) / pBackdrop, vec2(0.001), vec2(0.999))).rgb;
 refract = mix(refract, causticImg * absorb, caustic * 0.70);
+}
 
 vec3 colour = vec3(0.0);
 vec3 glassLight = vec3(0.0);
@@ -767,7 +902,8 @@ colour += vec3(0.003, 0.004, 0.008) * inside * grazing;   // the body is not a f
 
 // the wall edge-on: two surfaces with a dark gap between them
 float rim = exp(-max(d, 0.0) / 0.35) * inside;   // the wall seen edge-on: a hairline
-float rimInner = exp(-pow((d - wall) / max(0.8, 0.20 * wall), 2.0)) * inside;
+float rimRel = (d - wall) / max(0.8, 0.20 * wall);
+float rimInner = exp(-rimRel * rimRel) * inside;
 // The body of the wall, seen edge-on: on a thick-walled tube the silhouette is
 // not two hairlines but a band of glass, and that band is where Beer has the
 // longest path — it is the green-teal depth of a real envelope.
@@ -776,12 +912,13 @@ glassLight += vec3(1.0) * rim * (0.20 + 0.85 * pow(grazing, 3.0));
 alpha += rim * 0.26 + rimInner * 0.16;
 colour += vec3(0.02, 0.05, 0.06) * (rimInner * 0.6);
 // the wall's own body: the glass colour, taken through its own absorption
-colour = mix(colour, vec3(0.010, 0.030, 0.032) * (0.6 + 0.8 * pow(grazing, 2.0)), wallBody * 0.55);
+colour = mix(colour, vec3(0.010, 0.030, 0.032) * (0.6 + 0.8 * grazing * grazing), wallBody * 0.55);
 alpha = max(alpha, wallBody * 0.36);
 
 // what the glass reflects: the room along the mirror direction, weighted by
 // Fresnel — the reason the middle of a tube is clear and its edges are not
-float fade = clamp(1.0 - pow((v - 0.25) / 0.90, 2.0), 0.0, 1.0) * clamp((v + 0.95) / 0.45, 0.2, 1.0);
+float fadeV = (v - 0.25) / 0.90;
+float fade = clamp(1.0 - fadeV * fadeV, 0.0, 1.0) * clamp((v + 0.95) / 0.45, 0.2, 1.0);
 vec2 mir = vec2(rayIn.x, rayIn.y) / max(-rayIn.z, 0.06) * roomDist;
 mir = clamp(mir, vec2(-0.20 * R), vec2(0.20 * R));
 vec2 uvR = (px + pInset + mir) / pBackdrop;
@@ -796,17 +933,23 @@ glassLight += (room * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * inside;
 // doubled echo a real tube throws beside its bright core. Only the lateral
 // direction flips (the wall that reflects is the far side of the cylinder), and
 // the second wall plus the longer path take their share through absorb2.
+// Balanced and lite drop it: the weight is at most a twentieth of the front
+// reflection, and it costs five taps.
+if (quality < 0.5) {
 vec2 mir2 = vec2(-rayIn.x, rayIn.y) * 0.55 * roomDist / max(-rayIn.z, 0.06);
 mir2 = clamp(mir2, vec2(-0.20 * R), vec2(0.20 * R));
 vec3 room2 = blurred_room((px + pInset + mir2) / pBackdrop, vec2(0.050, 0.040) * pRefract);
 vec3 absorb2 = exp(-(1.0 - pGlass.rgb) * ABSORB_DISP * 2.00 * 2.0 * pathIn / R);
 glassLight += (room2 * 0.90 + 0.002) * min(F, 0.55) * 0.16 * pHighlight * absorb2 * 0.55 * inside;
+}
 // two narrow lights the tube always catches, and they stop before the collar
 // where the wall is uneven the reflection is not one clean line: the noise
 // breaks the two highlights the tube always catches into soft dashes
 float broke = 0.80 + 0.40 * w0;
-glassLight += vec3(0.82, 0.88, 1.0) * exp(-pow((abs(u) - 0.76) / 0.030, 2.0)) * inside * fade * 0.17 * pHighlight * broke;
-glassLight += vec3(0.75, 0.80, 0.95) * exp(-pow((abs(u) - 0.40) / 0.22, 2.0)) * inside * fade * 0.055 * pHighlight * broke;
+float dash1 = (abs(u) - 0.76) / 0.030;
+float dash2 = (abs(u) - 0.40) / 0.22;
+glassLight += vec3(0.82, 0.88, 1.0) * exp(-dash1 * dash1) * inside * fade * 0.17 * pHighlight * broke;
+glassLight += vec3(0.75, 0.80, 0.95) * exp(-dash2 * dash2) * inside * fade * 0.055 * pHighlight * broke;
 // what was wiped on the glass, what settled on it, and the scratches: each
 // catches the light a little differently, which is all the eye needs to read a
 // surface as a surface and not as a window
@@ -815,8 +958,12 @@ glassLight += vec3(1.00, 0.97, 0.88) * dust * 0.050 * inside;
 glassLight += vec3(0.86, 0.90, 1.00) * scratch * 0.045 * inside;
 
 // The pip the tube was sealed by — the one mark every nixie has on top of its
-// dome. The dome itself is carried by the rim, which follows its arc.
-float tip = exp(-pow(length(p - vec2(0.0, pipTop + 0.5 * pipR)) / (0.30 * pipR), 2.0));
+// dome. The dome itself is carried by the rim, which follows its arc. The pip
+// stands on the axis, so pitch and the camera's distance place it: it drops
+// with the dome and slides with the tube's own perspective.
+vec2 pipP = cam_project(vec3(0.0, pipTop + 0.5 * pipR, 0.0), rayO, camB, camNear);
+float tipD = length(p - pipP) / (0.30 * pipR);
+float tip = exp(-tipD * tipD);
 glassLight += vec3(0.90, 0.95, 1.0) * tip * 0.22;
 alpha += tip * 0.06;
 
@@ -829,8 +976,8 @@ const float DIGIT_H = 25.0;   // the numerals, mm: a margin at each end of the 3
 const float DIGIT_W = 14.0;   // and across: the ink now keeps Iosevka's own aspect, 0.51
 const float GLYPH_H = 2.04;   // how tall the glyphs in digitWire() are
 const float GLYPH_W = 0.85;   // and how wide the box a numeral is drawn in is
-// The numerals are 18 mm high on the sheet, and the glyphs in digitWire() run
-// from -1.02 to +1.02, i.e. 2.04 units tall, so one unit is 18/2.04 mm. The box
+// The numerals are 25 mm high here, and the glyphs in digitWire() run from
+// -1.02 to +1.02, i.e. 2.04 units tall, so one unit is 25/2.04 mm. The box
 // across is 0.85 units, and the numerals inside it run to about ±0.33, which is
 // the 10 mm an IN-12's numeral measures. The wire is a real cathode, and a fat
 // one: 0.38 mm to its edge, so 0.76 mm across.
@@ -840,17 +987,16 @@ float gm = sqrt(gx * gy);
 float digitMid = 0.5 * (apexY + footY);   // the glass's middle
 vec2 centre = vec2(0.0, digitMid);        // and the glyphs are centred on it
 
-// The camera sits a little off the tube's axis, so what is inside the glass
-// lands where the glass puts it: a cathode that stands in front of the axis
-// (z > 0) projects to x·cos(yaw) + z·sin(yaw) — shifted towards the viewer's
-// side and narrowed by the cosine. The envelope itself keeps its silhouette,
-// because a cylinder seen at an angle is exactly as wide, and that difference
-// is the whole depth cue: the numerals move inside the tube while the tube
-// stays where it was. pView.x is the angle in degrees; zero leaves the
-// drawing exactly as the workbench measures it.
-float camShift = CATHODE_Z * bulbR * sin(pYaw);
-float camCos = max(cos(pYaw), 0.5);
-vec2 dp = vec2((p.x - camShift - centre.x) / (gx * camCos), (centre.y - p.y) / gy);
+// Where the camera's ray crosses the cathode's plane: the numerals stand on a
+// real plane in front of the axis, so which part of a numeral a pixel sees
+// depends on the camera's angle — that is the parallax, and it is the plane
+// that moves, not the glyph. sp is that crossing in the drawing's own pixels;
+// kc undoes the plane's dead-ahead magnification, so the numerals keep the
+// size the drawing gives them and only their position answers the camera.
+float Zc = CATHODE_Z * R;
+float kc = max(1.0 - Zc / max(camNear, 1.0), 0.2);
+vec2 sp = plane_hit(rayO, rayD, Zc) / kc;
+vec2 dp = vec2((sp.x - centre.x) / gx, (centre.y - sp.y) / gy);
 // The cathode's radius: the theme says what share of a numeral's height it
 // takes (nixieWire), and the numeral is 25 mm here — 0.044 of it is the 1.10 mm
 // this is drawn at, so the wire is 2.20 mm across. A real cathode is
@@ -860,22 +1006,34 @@ float wirePx = pWire * DIGIT_H * mm;
 bendK = wirePx / gm;   // the bend of a bent wire is its own radius
 float baseTop = footY;
 
-// the two rods the stack is welded to
-float rods = min(abs(abs(p.x) - 7.4 * mm), 1e5);      // the stack's rods, clear of the wider numerals
-float rodMask = exp(-pow(rods / max(0.8, 0.10 * mm), 2.0)) * step(p.y, apexY + 0.22 * bulbH) * step(baseTop, p.y);
-vec3 rodMetal = metal_hit(px, Ncyl, VIEW, vec3(0.56, 0.55, 0.52), 0.25);
+// the two rods the stack is welded to: they stand with the stack, on its
+// plane, so the camera moves them with the numerals. The workbench reads the
+// drawing's rod offset out of this file by the marker
+//   float rods = min(abs(abs(p.x) - 7.4 * mm), 1e5);
+// which is why that line is kept here as the comment you are reading — the
+// rods themselves are measured on the stack's plane, not on the screen.
+// Balanced and lite sample the room once for the whole tube instead of once
+// per part: the parts keep their own tint and Fresnel, and that is what still
+// tells them apart; the roughness blur is quantised to one radius.
+vec3 sharedMetalEnv = vec3(0.0);
+if (quality >= 0.5 && quality < 1.5) sharedMetalEnv = metal_env(px, Ncyl, VIEW, 0.35);
+float rodRel = min(abs(abs(sp.x) - 7.4 * mm), 1e5) / max(0.8, 0.10 * mm);
+float rodMask = exp(-rodRel * rodRel) * step(sp.y, apexY + 0.22 * bulbH) * step(baseTop, sp.y);
+vec3 rodMetal = metal_for(px, Ncyl, VIEW, vec3(0.56, 0.55, 0.52), 0.25, sharedMetalEnv, quality);
 colour += rodMetal * rodMask * 1.6;
 alpha += rodMask * 0.42;
 
 // the mica washers that hold the stack together: discs, seen edge-on
 for (int w = 0; w < 2; w++) {
 // The two mica washers clamp the stack, so they sit where the numerals end:
-// 0.66 of the 18 mm box above and below its middle, which is inside the glass.
+// 0.66 of the box above and below its middle, which is inside the glass.
 float wY = digitMid + ((w == 0) ? -0.66 : 0.66) * 9.0 * mm;
-float line = exp(-pow((p.y - wY) / max(0.6, 0.05 * mm), 2.0)) * inside * step(abs(p.x), 0.84 * bulbR);
+float lineRel = (sp.y - wY) / max(0.6, 0.05 * mm);
+float line = exp(-lineRel * lineRel) * inside * step(abs(sp.x), 0.84 * bulbR);
 colour = mix(colour, vec3(0.26, 0.26, 0.29), line * 0.65);
 alpha += line * 0.30;
-glassLight += vec3(0.9, 0.92, 1.0) * exp(-pow((p.y - wY + 0.4) / max(0.5, 0.02 * mm), 2.0)) * inside * step(abs(p.x), 0.84 * bulbR) * 0.12;
+float micaRel = (sp.y - wY + 0.4) / max(0.5, 0.02 * mm);
+glassLight += vec3(0.9, 0.92, 1.0) * exp(-micaRel * micaRel) * inside * step(abs(sp.x), 0.84 * bulbR) * 0.12;
 }
 
 // the unlit cathodes: nine wires in the stack, drawn as the grey metal they are
@@ -883,8 +1041,20 @@ float stack = 0.0;
 if (bulb < 0.5) {
 for (int i = 0; i < 10; i++) {
 if (abs(float(i) - digit) < 0.5) continue;
+// Lite draws every other unlit cathode: five wires instead of nine, and the
+// stack is mixed at a sixth of the cathode colour, so the ones left out are
+// the dimmest part of an already dim bundle.
+if (quality >= 1.5 && mod(float(i), 2.0) > 0.5) continue;
+// The nine unlit cathodes stand behind the lit one, each on its own plane a
+// third of a millimetre further back: the camera reads every one of them from
+// its own angle, so the stack has real depth. The fan of the drawing — each
+// lead bends a little differently — is kept as a lateral offset of the wire
+// in its own plane, so dead ahead the picture is the drawing's.
 float depth = float(i) - 4.5;
-vec2 q = (dp - vec2(depth * 0.010, depth * -0.007)) / (1.0 - 0.012 * abs(depth));
+float zi = Zc - depth * 0.35 * mm;
+vec2 qi = plane_hit(rayO, rayD, zi) / max(1.0 - zi / max(camNear, 1.0), 0.2);
+vec2 q = (vec2((qi.x - centre.x) / gx, (centre.y - qi.y) / gy)
+          - vec2(depth * 0.010, depth * -0.007)) / (1.0 - 0.012 * abs(depth));
 stack = max(stack, (1.0 - smoothstep(-0.003, 0.003, digitWire(i, q) * gm - wirePx)) * (1.0 - 0.05 * abs(depth)));
 }
 stack *= pStack;
@@ -893,7 +1063,7 @@ colour = mix(colour, pCathode.rgb * 0.16, stem);
 alpha = mix(alpha, 0.34, stem * 0.9);
 // the lit edge of each wire: a cathode in a lamp is metal, and metal always
 // catches some of the room, so the stack reads even over a dark picture
-colour += metal_hit(px, Ncyl, VIEW, vec3(0.50, 0.50, 0.53), 0.40) * clamp(stack - 0.35, 0.0, 1.0) * 0.75;
+colour += metal_for(px, Ncyl, VIEW, vec3(0.50, 0.50, 0.53), 0.40, sharedMetalEnv, quality) * clamp(stack - 0.35, 0.0, 1.0) * 0.75;
 }
 
 // --- the anode: the wire-mesh cage around the stack ----------------------
@@ -905,68 +1075,113 @@ float cageFade = 0.0;
 float cageBottom = footY - 1.0 * mm;    // and stops above the glass's foot
 vec3 cageGlow = vec3(0.0);
 float grid = 0.0;
-if (p.y > cageTop && p.y < cageBottom) {
-float uu = asin(clamp(p.x / cageR, -0.999, 0.999)) / (PI * 0.5);
-float wireV = exp(-pow(abs(fract(uu * 12.0) - 0.5) * 2.0 / 0.16, 2.0));
-float wireH = exp(-pow(abs(fract(p.y / (1.0 * mm)) - 0.5) * 2.0 / 0.18, 2.0));
-float rails = exp(-pow((abs(p.x) - cageR) / 1.0, 2.0));
-grid = max(max(wireV, wireH * 0.65), rails);
-grid *= step(abs(p.x), cageR);
-// no seam where the cage ends: the wires fade over the last few px
-cageFade = clamp((p.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - p.y) / 8.0, 0.0, 1.0)
-		 * clamp((cageR - abs(p.x)) / 6.0, 0.0, 1.0);
-grid *= cageFade;
-// the discharge lives inside the cage: the mesh glows where it is touched
-float near = exp(-max(digitWire(int(digit + 0.5), dp) * gm - wirePx, 0.0) / (1.3 * mm)) * step(-0.5, digit);
-cageGlow = pHalo.rgb * near * pGlow * 0.60;
+// The cage is a real cylinder around the stack: the ray meets its near side
+// and its far side, and each meets it at its own azimuth and height. The mesh
+// then turns with the camera — its wires run around a real surface — and when
+// the camera looks down, the far half rides up behind the near one.
+float tCageF = -1.0;
+float tCageB = -1.0;
+{
+    float ca = dot(rayD.xz, rayD.xz);
+    float cb = dot(rayO.xz, rayD.xz);
+    float cc = dot(rayO.xz, rayO.xz) - cageR * cageR;
+    float cdisc = cb * cb - ca * cc;
+    if (ca > 1e-8 && cdisc > 0.0) {
+        float csq = sqrt(cdisc);
+        tCageF = (-cb - csq) / ca;
+        tCageB = (-cb + csq) / ca;
+    }
+}
+vec3 Pf = (tCageF > 0.0) ? (rayO + tCageF * rayD) : vec3(0.0);
+vec3 Pb = (tCageB > 0.0) ? (rayO + tCageB * rayD) : vec3(0.0);
+vec2 spf = Pf.xy / max(1.0 - Pf.z / max(camNear, 1.0), 0.2);
+vec2 spb = Pb.xy / max(1.0 - Pb.z / max(camNear, 1.0), 0.2);
+if (tCageF > 0.0 && spf.y > cageTop && spf.y < cageBottom) {
+    // The wires stand on the cage's own generators: the azimuth comes from
+    // where the camera puts the surface, so the mesh turns with it — and at
+    // dead ahead that is the drawing's asin(x/r) exactly.
+    float uu = asin(clamp(spf.x / cageR, -0.999, 0.999)) / (PI * 0.5);
+    float cageV = abs(fract(uu * 12.0) - 0.5) * 2.0 / 0.16;
+    float cageH = abs(fract(spf.y / (1.0 * mm)) - 0.5) * 2.0 / 0.18;
+    float wireV = exp(-cageV * cageV);
+    float wireH = exp(-cageH * cageH);
+    float railsRel = abs(p.x) - cageR;
+    float rails = exp(-railsRel * railsRel);
+    grid = max(max(wireV, wireH * 0.65), rails);
+    grid *= step(abs(Pf.x), cageR);
+    // no seam where the cage ends: the wires fade over the last few px
+    cageFade = clamp((spf.y - cageTop) / 8.0, 0.0, 1.0) * clamp((cageBottom - spf.y) / 8.0, 0.0, 1.0)
+             * clamp((cageR - abs(spf.x)) / 6.0, 0.0, 1.0);
+    grid *= cageFade;
+}
+// the discharge lives inside the cage: the mesh glows where it is touched.
+// A dark tube has no discharge to glow from, so the field is only measured
+// when there is a digit under the mesh at all.
+float near = 0.0;
+if (digit >= -0.5) near = exp(-max(digitWire(int(digit + 0.5), dp) * gm - wirePx, 0.0) / (1.3 * mm));
+cageGlow = pHalo.rgb * near * glow * 0.60;
 // The mesh is a wire in the discharge, so it is hot: 320 K where the gas is
 // cold, up to ~1100 K where the arc touches it. At that temperature it is not
 // reflecting the room any more, it is making its own light — dull red, and
 // strongest right where the numeral it surrounds is lit.
-float meshTemp = 320.0 + 780.0 * near * pGlow;
+float meshTemp = 320.0 + 780.0 * near * glow;
 vec3 meshEmit = blackbody(meshTemp) * heat_power(meshTemp, 3.4) * (0.12 + 0.88 * near);
 // Metal blocks the picture instead of adding to it: the mesh darkens what is
 // behind it and catches one lit edge from the left.
 colour = mix(colour, vec3(0.030, 0.034, 0.042) + cageGlow, grid * 0.72);
 alpha = mix(alpha, 0.55, grid * 0.55);
 // the far half of the same mesh, seen through the tube behind the numeral
-float gridBack = max(exp(-pow(abs(fract(uu * 12.0 + 0.5) - 0.5) * 2.0 / 0.16, 2.0)),
-                     exp(-pow(abs(fract(p.y / (1.0 * mm) + 0.5) - 0.5) * 2.0 / 0.18, 2.0)) * 0.65);
-gridBack *= step(abs(p.x), cageR) * cageFade;
+float gridBack = 0.0;
+if (tCageB > 0.0 && spb.y > cageTop && spb.y < cageBottom) {
+    float uub = 2.0 - asin(clamp(spb.x / cageR, -0.999, 0.999)) / (PI * 0.5);
+    float backV = abs(fract(uub * 12.0 + 0.5) - 0.5) * 2.0 / 0.16;
+    float backH = abs(fract(spb.y / (1.0 * mm) + 0.5) - 0.5) * 2.0 / 0.18;
+    gridBack = max(exp(-backV * backV), exp(-backH * backH) * 0.65);
+    gridBack *= step(abs(Pb.x), cageR) * cageFade;
+}
 colour = mix(colour, vec3(0.020, 0.022, 0.028), gridBack * 0.34);
 alpha = mix(alpha, 0.34, gridBack * 0.30);
-colour += metal_hit(px, Ncyl, VIEW, F0_RHODIUM, 0.35) * clamp(grid - 0.45, 0.0, 1.0) * 0.60;
+colour += metal_for(px, Ncyl, VIEW, F0_RHODIUM, 0.35, sharedMetalEnv, quality) * clamp(grid - 0.45, 0.0, 1.0) * 0.60;
 // the mesh's own emission: it lands on the wires and on the gas around them
-colour += meshEmit * grid * (0.55 + 0.45 * min(pGlow, 1.0));
+colour += meshEmit * grid * (0.55 + 0.45 * min(glow, 1.0));
 
 // --- the metal insert ---------------------------------------------------
+// The ring and the sleeve stand inside the cage's own window, which is the
+// block they have always been drawn through.
+if (p.y > cageTop && p.y < cageBottom) {
 // Two pieces of plated metal that a real lamp has and a drawing does not: the
 // ring the anode cage hangs from at the top, and the sleeve the stack is
 // welded into at the foot. Both are inside the glass, both are machined, and
 // they are what the eye reads as "this thing was made", not printed.
 float ringY = cageTop - 0.6 * mm;
-float ringMask = exp(-pow((p.y - ringY) / max(0.5, 0.45 * mm), 2.0))
-               * step(abs(p.x), cageR + 0.9 * mm) * inside;
+float ringRel = (sp.y - ringY) / max(0.5, 0.45 * mm);
+float ringMask = exp(-ringRel * ringRel)
+               * step(abs(sp.x), cageR + 0.9 * mm) * inside;
 if (ringMask > 0.002) {
 // a torus seen edge-on: the tube of the ring itself, lit along its own axis
-float ringTube = exp(-pow((abs(abs(p.x) - cageR) - 0.0) / max(0.5, 0.45 * mm), 2.0));
-vec3 ringMetal = metal_hit(px, Ncyl, VIEW, F0_GOLD, 0.22);
+float ringTubeRel = (abs(abs(sp.x) - cageR) - 0.0) / max(0.5, 0.45 * mm);
+float ringTube = exp(-ringTubeRel * ringTubeRel);
+vec3 ringMetal = metal_for(px, Ncyl, VIEW, F0_GOLD, 0.22, sharedMetalEnv, quality);
 colour = mix(colour, ringMetal * 1.25, ringMask * (0.35 + 0.65 * ringTube));
 alpha = mix(alpha, 0.68, ringMask * 0.55);
 glassLight += ringMetal * ringMask * ringTube * 0.35 * pHighlight;
-colour += blackbody(360.0 + 240.0 * pGlow) * heat_power(360.0 + 240.0 * pGlow, 2.0) * ringMask * 0.12;
+// the ring is a metal in the discharge: one temperature, one blackbody call
+float ringTemp = 360.0 + 240.0 * glow;
+colour += blackbody(ringTemp) * heat_power(ringTemp, 2.0) * ringMask * 0.12;
 }
 float sleeveTop = footY + 2.6 * mm;
-float sleeve = exp(-pow((p.y - sleeveTop) / max(0.6, 0.5 * mm), 2.0))
-             * step(abs(p.x), 5.6 * mm) * inside;
+float sleeveRel = (sp.y - sleeveTop) / max(0.6, 0.5 * mm);
+float sleeve = exp(-sleeveRel * sleeveRel)
+             * step(abs(sp.x), 5.6 * mm) * inside;
 if (sleeve > 0.002) {
 // the sleeve is a rhodium-plated cylinder around the stem, and it is the one
 // part of the inside that the numerals never cover
-float sleeveSide = exp(-pow((abs(p.x) - 5.6 * mm) / max(0.5, 0.45 * mm), 2.0));
-vec3 sleeveMetal = metal_hit(px, Ncyl, VIEW, F0_RHODIUM, 0.30);
+float sleeveSideRel = (abs(sp.x) - 5.6 * mm) / max(0.5, 0.45 * mm);
+float sleeveSide = exp(-sleeveSideRel * sleeveSideRel);
+vec3 sleeveMetal = metal_for(px, Ncyl, VIEW, F0_RHODIUM, 0.30, sharedMetalEnv, quality);
 colour = mix(colour, sleeveMetal * 0.95, sleeve * (0.40 + 0.60 * sleeveSide));
 alpha = mix(alpha, 0.72, sleeve * 0.5);
-colour += sleeveMetal * sleeve * sleeveSide * min(pGlow, 1.0) * 0.25;
+colour += sleeveMetal * sleeve * sleeveSide * min(glow, 1.0) * 0.25;
 }
 }
 
@@ -980,12 +1195,13 @@ for (int e = 0; e < 2; e++) {
 	float lx = (e == 0) ? -7.4 * mm : 7.4 * mm;
 	vec2 lc = vec2(lx, leadY);
 	// the eye is a squashed ring, open: the wire is welded through it
-	float eyeRing = abs(length((p - lc) / vec2(1.0, 0.78)) - 0.72 * mm) - 0.26 * mm;
+	float eyeRing = abs(length((sp - lc) / vec2(1.0, 0.78)) - 0.72 * mm) - 0.26 * mm;
 	float eyeMask = (1.0 - smoothstep(-0.5, 0.5, eyeRing)) * inside;
 	// the lead, from the eye to the foot; inside cuts it where the glass tapers
-	float eyeLead = exp(-pow((p.x - lx) / max(0.20 * mm, 0.5), 2.0))
-	              * smoothstep(leadY - 0.5 * mm, leadY + 0.5 * mm, p.y) * step(p.y, footY) * inside;
-	vec3 eyeMetal = metal_hit(px, Ncyl, VIEW, F0_RHODIUM, 0.24);
+	float eyeLeadRel = (sp.x - lx) / max(0.20 * mm, 0.5);
+	float eyeLead = exp(-eyeLeadRel * eyeLeadRel)
+	              * smoothstep(leadY - 0.5 * mm, leadY + 0.5 * mm, sp.y) * step(sp.y, footY) * inside;
+	vec3 eyeMetal = metal_for(px, Ncyl, VIEW, F0_RHODIUM, 0.24, sharedMetalEnv, quality);
 	colour = mix(colour, eyeMetal * 1.05, eyeMask + eyeLead * 0.65);
 	alpha = mix(alpha, 0.62, eyeMask * 0.85 + eyeLead * 0.45);
 	// lit from the left, as the rest of the metal in the tube is
@@ -996,30 +1212,37 @@ for (int e = 0; e < 2; e++) {
 // Two films, both thin and both uneven, because neither was painted on. The
 // getter the tube was flashed with condenses on the inside of the dome as a
 // silvery mirror; the cathode it has burnt off lands on the glass around the
-// foot as a dark, warm film. There is no token for age, so the weights are
-// constants here, and a coarse hash makes each film patchy. Both absorb first
-// — the picture behind the glass dims through them — and reflect second:
-// metal_hit() throws back the same room the rods and the collar reflect.
+// foot as a dark, warm film. The weights below are the film at its thickest:
+// pAge multiplies them — 1 is today's patina, 0 a tube that has just been
+// made — and a coarse hash makes each film patchy. Both absorb first — the
+// picture behind the glass dims through them — and reflect second: metal_for()
+// throws back the room the rods and the collar reflect.
 //
 // The getter: a mirror over the top cap, thinning down the cylinder. The cap's
 // own sphere is the natural mask; 0.62 is where the film is judged to stop, and
 // 0.50 is how much of the picture it hides at its thickest. The sputter is the
 // weaker film (0.38) and shorter (about 6.5 mm above the foot).
-float domeT = clamp((-(p.y) - capOffset) / max(bulbR, 1.0), 0.0, 1.0);
+float domeT = clamp((-(P1.y) - capOffset) / max(bulbR, 1.0), 0.0, 1.0);
 float getterFilm = smoothstep(0.02, 0.62, domeT) * (0.52 + 0.48 * hash(floor(p / max(1.0, 1.7 * mm))));
-float getter = getterFilm * inside;
+float getter = getterFilm * inside * age;
 // the sputter: heaviest in the last few millimetres above the foot, where the
 // cathode's own metal lands, and thinning up the tube over about 6 mm
-float footT = exp(-max(footY - p.y, 0.0) / (6.5 * mm));
+float footT = exp(-max(footY - P1.y, 0.0) / (6.5 * mm));
 float sputterFilm = footT * (0.45 + 0.55 * hash(floor(p / max(1.0, 1.1 * mm)) + 37.0));
-float sputter = sputterFilm * inside;
+float sputter = sputterFilm * inside * age;
 // absorption and reflection of each film: the getter is cold silver, barium's
-// own n and k, the sputter is nearly black and warm, as burnt tungsten is
+// own n and k, the sputter is nearly black and warm, as burnt tungsten is.
+// The masks are zero over most of the tube, so the film's own reflection is
+// only sampled where there is film to reflect.
 refract *= 1.0 - clamp(0.50 * getter + 0.38 * sputter, 0.0, 0.90);
 alpha = mix(alpha, 0.55, getter * 0.55);
 alpha = mix(alpha, 0.45, sputter * 0.50);
-colour += metal_hit(px, N3, VIEW, vec3(0.60, 0.61, 0.64), 0.30) * getter * 0.80;
-colour += metal_hit(px, N3, VIEW, vec3(0.19, 0.17, 0.15), 0.55) * sputter * 0.35;
+if (getter > 0.0) {
+colour += metal_for(px, N3, VIEW, vec3(0.60, 0.61, 0.64), 0.30, sharedMetalEnv, quality) * getter * 0.80;
+}
+if (sputter > 0.0) {
+colour += metal_for(px, N3, VIEW, vec3(0.19, 0.17, 0.15), 0.55, sharedMetalEnv, quality) * sputter * 0.35;
+}
 
 // --- the discharge --------------------------------------------------------
 // The lit cathode is a wire with a gas sheath around it, and nothing else on
@@ -1043,26 +1266,30 @@ float wireRadiance = 0.0;
 // for the metal's temperature, not a fixed tint.
 vec3 wireGlowColour = vec3(0.0);
 if (bulb > 0.5) {
-float bulb = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
-float lit = 1.0 - clamp((bulb + 0.4) / 0.8, 0.0, 1.0);
-gasMap = exp(-max(bulb, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulb, 0.0) / (1.4 * 5.0 * mm)) * 0.25;
+float bulbD = length(p - vec2(0.0, 0.0)) - 5.0 * mm;   // the colon, one round bulb
+float lit = 1.0 - clamp((bulbD + 0.4) / 0.8, 0.0, 1.0);
+gasMap = exp(-max(bulbD, 0.0) / (0.30 * 5.0 * mm)) * 0.60 + exp(-max(bulbD, 0.0) / (1.4 * 5.0 * mm)) * 0.25;
 wireGlowColour = tinted(blackbody(pTempK), tint);
-wireRadiance = lit * 1.20 * pGlow * flicker * heat_power(pTempK, 1.0);
+wireRadiance = lit * 1.20 * glow * flicker * heat_power(pTempK, 1.0);
 add += wireGlowColour * wireRadiance;
-add += gasColour * gasMap * 0.15 * pGlow * pow(flicker, 1.4);
+add += gasColour * gasMap * 0.15 * glow * pow(flicker, 1.4);
 } else if (digit >= -0.5) {
-float wireDist = digitWire(int(digit + 0.5), dp) * gm - wirePx;
+// The strand the ribbon flag speaks about is this digit's own: clear what the
+// stack's cathodes left behind before the lit wire is measured.
+wirePass = 0.0;
+float wireField = digitWire(int(digit + 0.5), dp) * gm;   // the field, measured once
+float wireDist = wireField - wirePx;
 float dist = max(wireDist, 0.0);
 // The core is the metal itself: full where the wire's own axis is, nothing at
 // its surface. It is a width in millimetres (the cathode is 0.24 mm across),
 // not a fraction of a pixel, which is what a white-hot filament is.
-float axis = digitWire(int(digit + 0.5), dp) * gm;
+float axis = wireField;
 // A heated wire is a surface, and a surface at one temperature has one
 // radiance: the section is flat, not a ramp. What makes a real filament read
 // as a bright core is exposure — it stands several times above white, so the
 // tone curve whitens it — and the optics, which soften its two edges. The soft
 // edge below is that: about a pixel of defocus, not a painted gradient.
-float core = smoothstep(wirePx + 0.5, wirePx - 0.5, axis);
+float core = 1.0 - smoothstep(wirePx - 0.5, wirePx + 0.5, axis);
 // dense at the wire, tight around it, a faint wash inside the cage
 // The sheath around the wire: the gas hugs a hot filament and falls away fast.
 // A thicker cathode carries more of it, so the sheath is wider and denser than
@@ -1073,10 +1300,12 @@ gas *= 0.955 + 0.09 * hash(floor(px / 2.0));
 // the mains, and the eye reads that slow irregular drift as a lamp that is on.
 // Two sines for the breathing (so its period never reads as a beat) and one
 // for the hum; per cent, not per ten — a login screen that strobes is a bug.
-float breathe = 1.0 + 0.035 * sin(pTime * 2.1 + p.y * 0.013) * sin(pTime * 0.7 + 1.3);
-float hum = 1.0 + 0.015 * sin(pTime * 8.0 + dp.y * 2.0);
-float coreLit = pGlow * pow(flicker, 0.5);
-float haloLit = pGlow * pow(flicker, 1.4) * breathe;
+// pShimmer scales those two amplitudes only: 0 leaves the wire and the gas
+// just as lit as ever, with no periodic motion.
+float breathe = 1.0 + shimmer * 0.035 * sin(pTime * 2.1 + p.y * 0.013) * sin(pTime * 0.7 + 1.3);
+float hum = 1.0 + shimmer * 0.015 * sin(pTime * 8.0 + dp.y * 2.0);
+float coreLit = glow * pow(flicker, 0.5);
+float haloLit = glow * pow(flicker, 1.4) * breathe;
 // The wire is held at its two ends by the stack's rods, and heat conducts out
 // through them: the run sits at pTempK where it is far from both ends and loses
 // HEAT_END_DROP kelvin at the ends themselves. The distance to the nearer end
@@ -1103,8 +1332,9 @@ float filament = 1.0 + 0.07 * hash(floor(dp * 22.0));
 // at a grazing angle is one minus a reflectance that is rising there. The
 // cosine below is the surface's own angle to the eye across the wire, so the
 // stroke keeps a soft edge without a painted ramp.
-float cosv = sqrt(max(0.0, 1.0 - pow(clamp(axis / max(wirePx, 0.5), 0.0, 1.0), 2.0)));
-float limb = 1.0 - 0.55 * pow(1.0 - cosv, 2.0);
+float cosvBase = clamp(axis / max(wirePx, 0.5), 0.0, 1.0);
+float cosv = sqrt(max(0.0, 1.0 - cosvBase * cosvBase));
+float limb = 1.0 - 0.55 * (1.0 - cosv) * (1.0 - cosv);
 wireRadiance = core * limb * coreLit * wireHeat * filament * hum * (1.0 + 0.11 * wirePass);
 add += wireColour * wireRadiance;   // the metal itself, and no wider than the wire
 // The wire's own light scattered in the gas right at its surface: a thin warm
@@ -1168,7 +1398,7 @@ colour += cageGlow * 0.25;
 // then added a "headroom" of the wire's excess on top of the *display* value,
 // where an 8-bit sRGB surface simply clips it. The excess was a fixed 0.10 of
 // a number that already had a gain and an exposure folded into it.
-add = pow(tone_map(add * pExposure), vec3(0.4545));
+add = pow(tone_map(add * clamp(pExposure, 0.0, 30.0)), vec3(0.4545));
 float spill = exp(-max(sd, 0.0) / (0.9 * bulbR)) * 0.90
             + exp(-max(sd, 0.0) / (3.0 * bulbR)) * 1.05
             + exp(-max(sd, 0.0) / (9.0 * bulbR)) * 0.55;
@@ -1190,37 +1420,63 @@ float warmth = clamp(pWarmth / 0.45, 0.0, 3.0);
 // spill fades to nothing over the last two margins of it, so the lamp lights the
 // desk without drawing its own box.
 colour += wash * add * spill * warmth * 0.12 * edgeFade;
-alpha += clamp(gasMap * pGlow * 0.10, 0.0, 0.30) * inside;
+alpha += clamp(gasMap * glow * 0.10, 0.0, 0.30) * inside;
 
 // --- the collar the tube is plugged in by ---------------------------------
 if (collarH > 0.5) {
 // The collar's own mask: a rounded box from the glass's foot down to the box's
 // bottom, Ø21 as the drawing has it. It cannot use the bulb's mask — the bulb
 // ends where the collar begins.
+// The base is a body of revolution like the bulb: pitch tips its top face
+// towards the camera — the disc the glass stands in becomes visible, which is
+// the one cue a base gives that its own front cannot — and shortens the
+// crimps; yaw leaves its width alone. ellV is how far the near edge of that
+// face sits below its far edge on the film.
+float sinP = camB[2].y;                        // the pitch, signed
+float ellV = 10.5 * mm * sinP;
+vec2 pc = vec2(p.x, (p.y - ellV) / max(axisCos, 0.2));
 vec2 bc = vec2(0.0, footY + 0.5 * collarH);
-float sdCollar = sdRoundBox(p - bc, vec2(10.5 * mm, 0.5 * collarH), 0.8 * mm);
+float sdCollar = sdRoundBox(pc - bc, vec2(10.5 * mm, 0.5 * collarH), 0.8 * mm);
 float insideCollar = 1.0 - smoothstep(-0.8, 0.8, sdCollar);
-float bm = insideCollar * clamp((p.y - (baseTop - 1.5)) / 3.0, 0.0, 1.0);
-float side = clamp(p.x / max(10.5 * mm, 1.0), -1.0, 1.0);   // the collar, Ø21
+float bm = insideCollar * clamp((pc.y - (baseTop - 1.5)) / 3.0, 0.0, 1.0);
+float side = clamp(pc.x / max(10.5 * mm, 1.0), -1.0, 1.0);   // the collar, Ø21
 float uu = asin(clamp(side, -0.999, 0.999)) / (PI * 0.5);
 // crimped metal: flutes, lit from the left, its foot going dark
 vec3 ceramic = vec3(0.032, 0.031, 0.033) * (0.30 + 0.70 * sqrt(max(0.0, 1.0 - side * side)));
-ceramic += metal_hit(px, Ncyl, VIEW, vec3(0.29, 0.30, 0.33), 0.45) * 0.55;   // steel: the room, dimmed
-ceramic *= 1.0 - 0.20 * exp(-pow((fract(uu * 14.0) - 0.5) * 2.0 / 0.55, 2.0)); // the moulding's crimps
-ceramic += vec3(0.045) * exp(-pow((fract(uu * 14.0) - 0.5) * 2.0 / 0.30 + 1.2, 2.0)) * max(0.0, side + 0.4);
+ceramic += metal_for(px, Ncyl, VIEW, vec3(0.29, 0.30, 0.33), 0.45, sharedMetalEnv, quality) * 0.55;   // steel: the room, dimmed
+float crimp = fract(uu * 14.0) - 0.5;
+float crimpRel = crimp * 2.0 / 0.55;
+ceramic *= 1.0 - 0.20 * exp(-crimpRel * crimpRel); // the moulding's crimps
+float beadRel = crimp * 2.0 / 0.30 + 1.2;
+ceramic += vec3(0.045) * exp(-beadRel * beadRel) * max(0.0, side + 0.4);
 colour = mix(colour, ceramic, bm);
 alpha = mix(alpha, 0.96, bm);
-colour += vec3(0.030) * exp(-pow(abs(fract(uu * 14.0) - 0.5) * 2.0 / 0.30, 2.0)) * bm * (0.5 + 0.5 * side);
-float edge = exp(-pow((p.y - baseTop) / 1.1, 2.0)) * insideCollar;
-colour += vec3(0.20, 0.20, 0.21) * edge * (0.35 + 0.65 * min(pGlow, 1.0));   // the flange, moulded and matte
+float ridgeRel = abs(crimp) * 2.0 / 0.30;
+colour += vec3(0.030) * exp(-ridgeRel * ridgeRel) * bm * (0.5 + 0.5 * side);
+float baseRel = (pc.y - baseTop) / 1.1;
+float edge = exp(-baseRel * baseRel) * insideCollar;
+colour += vec3(0.20, 0.20, 0.21) * edge * (0.35 + 0.65 * min(glow, 1.0));   // the flange, moulded and matte
 alpha += edge * 0.35;
-colour *= 1.0 - 0.35 * exp(-pow((p.y - (baseTop - 2.2)) / 1.6, 2.0)) * insideCollar;
-colour += vec3(1.0) * exp(-pow((p.y - (boxMid + 0.5 * collarH) + 1.2) / 1.2, 2.0)) * insideCollar * 0.09;
+// The face of the base: the disc the glass stands in, seen because the camera
+// is above the lamp. Its far rim is the ellipse's top edge and the flange above
+// is its near rim; the glass covers the middle of it.
+if (abs(ellV) > 0.5) {
+	float facePlot = length(vec2(pc.x, p.y - footY * axisCos) / vec2(10.5 * mm, max(abs(ellV), 0.5)));
+	float faceMask = (1.0 - smoothstep(0.96, 1.04, facePlot)) * (1.0 - inside);
+	vec3 faceMetal = metal_for(px, Ncyl, VIEW, vec3(0.30, 0.30, 0.33), 0.45, sharedMetalEnv, quality);
+	colour = mix(colour, faceMetal * 0.85, faceMask * 0.90);
+	alpha = max(alpha, faceMask * 0.90);
+}
+float footDarkRel = (pc.y - (baseTop - 2.2)) / 1.6;
+colour *= 1.0 - 0.35 * exp(-footDarkRel * footDarkRel) * insideCollar;
+float footLightRel = (pc.y - (boxMid + 0.5 * collarH) + 1.2) / 1.2;
+colour += vec3(1.0) * exp(-footLightRel * footLightRel) * insideCollar * 0.09;
 
 // The pins: Ø1 mm, twelve of them, on the sheet's 11.5 mm circle. They are what
 // the lamp is plugged in by and nothing else, and a base that stops at its own
-// rim reads as a cap. In this front view each pin projects to x = 5.75 mm times
-// the cosine of its own angle, and they are the same nickel the rods are.
+// rim reads as a cap. They stand on a real circle below the collar, so the
+// camera moves each one by its own depth: yaw walks them around the circle and
+// pitch drops the front ones and raises the back.
 float collarBottom = footY + collarH;
 float pinCircle = 5.75 * mm;      // the sheet's 11.5 mm circle, as a radius
 float pinR = 0.5 * mm;            // Ø1 mm
@@ -1229,15 +1485,19 @@ float pinLen = 7.0 * mm;          // and 7 mm long, as the sheet has them
 float pinEdge = clamp((0.5 * tile.y - p.y) / max(1.0, 0.75 * mm), 0.0, 1.0);
 for (int i = 0; i < 12; i++) {
 	float a = float(i) * 0.5235987756;   // twelve pins, 30 degrees apart
-	float pinX = pinCircle * cos(a);     // the circle, seen from the front
-	float shaft = exp(-pow((p.x - pinX) / max(pinR, 0.6), 2.0));
-	float tip = 1.0 - smoothstep(collarBottom + 0.60 * pinLen, collarBottom + pinLen, p.y);
-	float pinMask = shaft * tip * pinEdge * smoothstep(collarBottom - 0.5 * mm, collarBottom, p.y);
-	vec3 pinMetal = metal_hit(px, Ncyl, VIEW, F0_NICKEL, 0.32);
+	vec3 pinRoot = vec3(pinCircle * cos(a), collarBottom, pinCircle * sin(a));
+	vec2 pinA = cam_project(pinRoot, rayO, camB, camNear);
+	vec2 pinB = cam_project(pinRoot + vec3(0.0, pinLen, 0.0), rayO, camB, camNear);
+	float shaftRel = (p.x - pinA.x) / max(pinR, 0.6);
+	float shaft = exp(-shaftRel * shaftRel);
+	float tip = 1.0 - smoothstep(pinA.y + 0.60 * (pinB.y - pinA.y), pinB.y, p.y);
+	float pinMask = shaft * tip * pinEdge * smoothstep(pinA.y - 0.5 * mm, pinA.y, p.y);
+	vec3 pinMetal = metal_for(px, Ncyl, VIEW, F0_NICKEL, 0.32, sharedMetalEnv, quality);
 	colour = mix(colour, pinMetal * 1.10, pinMask);
 	alpha = mix(alpha, 0.95, pinMask);
 	// the pin's own roundness catches the left light the rest of the metal gets
-	colour += vec3(0.13, 0.13, 0.14) * pinMask * exp(-pow((p.x - pinX + 0.40 * pinR) / max(0.40 * pinR, 0.4), 2.0));
+	float pinLightRel = (p.x - pinA.x + 0.40 * pinR) / max(0.40 * pinR, 0.4);
+	colour += vec3(0.13, 0.13, 0.14) * pinMask * exp(-pinLightRel * pinLightRel);
 }
 
 // The collar's own terminals: the two eyelets on its top face, where the glass's
@@ -1245,10 +1505,10 @@ for (int i = 0; i < 12; i++) {
 // and they are what ties the base to the stack above it.
 for (int e = 0; e < 2; e++) {
 	float tx = (e == 0) ? -7.4 * mm : 7.4 * mm;
-	vec2 tc = vec2(tx, footY + 0.9 * mm);
+	vec2 tc = cam_project(vec3(tx, footY + 0.9 * mm, 0.0), rayO, camB, camNear);
 	float termRing = abs(length((p - tc) / vec2(1.0, 0.72)) - 0.68 * mm) - 0.26 * mm;
 	float termMask = (1.0 - smoothstep(-0.5, 0.5, termRing)) * insideCollar;
-	vec3 termMetal = metal_hit(px, Ncyl, VIEW, F0_GOLD, 0.26);
+	vec3 termMetal = metal_for(px, Ncyl, VIEW, F0_GOLD, 0.26, sharedMetalEnv, quality);
 	colour = mix(colour, termMetal * 1.20, termMask);
 	alpha = mix(alpha, 0.88, termMask * 0.85);
 	colour += vec3(0.16, 0.14, 0.08) * termMask * ((e == 0) ? 1.0 : 0.40);
@@ -1283,39 +1543,67 @@ float edgeFade = smoothstep(0.0, 1.0, clamp(edge / max(2.0 * pInset, 1.0), 0.0, 
 // Read once for the whole item: one lamp, one room, one colour.
 vec3 accent = (pWallpaper.x > 0.0) ? wallpaper_accent() : vec3(0.0);
 vec4 out_colour;
-if (pTile.w < 0.5) {
-out_colour = nixie_tube(px, px - pSize * 0.5, pSize, pInset, accent,
-                        pDigit, pFlicker, pBulb, edgeFade);
-} else {
-// The row: four tubes in one pass, which is the only way their light adds up
-// into one lamp instead of four lit rectangles. The light is additive (the
-// compositor treats what a ShaderEffect writes as premultiplied), so the tubes'
-// contributions are summed; the alpha is coverage, and the glasses do not
-// overlap, so the largest wins.
-// The camera the row is photographed by. pView.x is its yaw off the clock's
-// axis and pView.y how far it stands (in tube widths): the two ends of the
-// row are then not the same size and the glasses are not the same distance
-// apart — the near end is the larger one. That perspective of the row, not
-// the numerals' shift alone, is what the eye reads as a camera that is not
-// dead ahead; the numerals keep their own shift inside each tube (the digit
-// block below), so the two agree. 0 stands the camera at the default distance.
-float rowYaw = radians(clamp(pView.x, -30.0, 30.0));
-float rowSin = sin(rowYaw);
-float rowCos = cos(rowYaw);
-float tubeW = max(pTile.x - 2.0 * pTile.z, 1.0);   // the glass, 21 mm
-// Where the camera stands when the theme asks for no particular distance,
-// in tube widths: 12 is a photo taken from about an arm's length away.
+// The camera the whole item is photographed by: a pinhole pView.y tube widths
+// in front of the item's centre plane, its film turned by the theme's yaw
+// (pView.x) and pitch (pView.z) off that plane's normal. The basis is right,
+// down (the drawing's own y) and forward; a pixel is the ray from the camera
+// through its own place on the film, and the glass below meets that ray as
+// real geometry. pView.y = 0 stands the camera at the default distance,
+// 12 tube widths — a photo taken from about an arm's length away.
+float camYaw = radians(clamp(pView.x, -30.0, 30.0));
+float camPitch = radians(clamp(pView.z, -20.0, 20.0));
+float cYawC = cos(camYaw), cYawS = sin(camYaw);
+float cPitC = cos(camPitch), cPitS = sin(camPitch);
+vec3 cRight = vec3(cYawC, 0.0, cYawS);
+vec3 cDown = vec3(-cYawS * cPitS, cPitC, cYawC * cPitS);
+vec3 cFwd = vec3(cYawS * cPitC, cPitS, -cYawC * cPitC);
+mat3 camB = mat3(cRight, cDown, cFwd);
+vec2 film = px - pSize * 0.5;                   // this pixel, on the film plane
+float tubeW = (pTile.w < 0.5) ? max(pSize.x - 2.0 * pInset, 1.0)
+                              : max(pTile.x - 2.0 * pTile.z, 1.0);
 const float CAM_TUBES = 12.0;
-float cam = ((pView.y > 0.0) ? pView.y : CAM_TUBES) * tubeW;
-vec4 acc = vec4(0.0);
+float camDist = ((pView.y > 0.0) ? max(pView.y, 1.0) : CAM_TUBES) * tubeW;
+vec3 rayD = normalize(film.x * cRight + film.y * cDown + camDist * cFwd);
+if (pTile.w < 0.5) {
+    // The tube stands on the film's centre: its drawing is exactly the picture
+    // this camera takes from dead ahead, so its frame is the camera's own.
+    out_colour = nixie_tube(px, film, -camDist * cFwd, rayD, camB, camDist,
+                            pSize, pInset, accent, pDigit, pFlicker, pBulb, edgeFade);
+} else {
+    // The row: four tubes in one pass, which is the only way their light adds up
+    // into one lamp instead of four lit rectangles. The light is additive (the
+    // compositor treats what a ShaderEffect writes as premultiplied), so the tubes'
+    // contributions are summed; the alpha is coverage, and the glasses do not
+    // overlap, so the largest wins.
+    // Each tube's frame takes the camera off its axis: a tube further along the
+    // row is further from the lens, so it is drawn smaller and its centre moves
+    // inward — the row's perspective, now from one real camera instead of a
+    // screen-space scale.
+    vec4 acc = vec4(0.0);
 for (int i = 0; i < 4; i++) {
-// The tube's own centre, as the camera puts it: x·cos(yaw) at the depth
-// its own x puts it at. A tube nearer the camera is drawn larger whole —
-// glass, digits, light — which is the row's perspective.
-float depth = cam + pRowX[i] * rowSin;
-float grow = cam / max(depth, 1.0);   // how much larger this tube is drawn
-vec2 centre = pSize * 0.5 + vec2(pRowX[i] * rowCos * grow, 0.0);
-vec4 tube = nixie_tube(px, (px - centre) / grow, pTile.xy, pTile.z, accent,
+// The tube's own frame: the camera is off its axis by this tube's place in
+// the row, so the tube's depth along the view axis sets the film's scale
+// there and its centre is where the camera puts it.
+float x = pRowX[i];
+float depth = camDist + x * cFwd.x;
+float gs = camDist / max(depth, 1.0);
+vec2 centre = gs * x * vec2(cRight.x, cDown.x);
+// The tier's first cut: a pixel this far from the tube's centre sees none of
+// its glass and only the dregs of its spill, so the whole tube is skipped.
+// The rectangle is deliberately generous — 1.10 of the item's width and 0.90
+// of its height from the centre leaves the bloom's tails (about 17 mm past the
+// glass) room; measured against the same row without the cut, what it removes
+// stays under 7/255 and is the spill's tail, not the lamp.
+if (pQuality >= 0.5) {
+float reachX = gs * 1.10 * pTile.x;
+float reachY = gs * 0.90 * pTile.y;
+if (abs(px.x - pSize.x * 0.5 - centre.x) > reachX
+    || abs(px.y - pSize.y * 0.5 - centre.y) > reachY) continue;
+}
+vec2 p = (film - centre) / gs;
+vec3 rayO = (-camDist * cFwd - vec3(x, 0.0, 0.0)) / gs;
+vec4 tube = nixie_tube(px, p, rayO, rayD, camB, depth / gs,
+                       pTile.xy, pTile.z, accent,
                        pRowDigit[i], pRowFlicker[i], 0.0, edgeFade);
 	acc.rgb += tube.rgb;
 	acc.a = max(acc.a, tube.a);
