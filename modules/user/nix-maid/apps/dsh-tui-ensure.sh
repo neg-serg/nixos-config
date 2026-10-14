@@ -202,18 +202,29 @@ seed() {
 # The user's host/agent plugins (see tuiPlugins): copy-if-missing, the same
 # contract their web-profile modules use, so edits in this repo re-apply
 # after deleting the profile copy.
+#
+# "Seeded" is judged per file, not per directory. pnpm's hoisted-linker
+# reconciliation rewrites the whole node_modules tree and drops files it does
+# not own, so a seeded package can lose its manifest while its lib/ stays:
+# observed 2026-10-14 on dsh-agent-usage-reminder, whose directory survived
+# without package.json — the harness then could not resolve the row as a
+# package and every boot printed "dsh-agent-usage-reminder: failed to import"
+# with the plugin silently inert. A directory-only check skipped the repair
+# forever, because the directory was there. An existing file is never
+# overwritten, so local edits survive.
 seed_pkg() {
   name="$1"
   src="$2"
+  dir="$PROFILE_DIR/node_modules/$name"
   [ -d "$src" ] || {
     echo "dsh-tui-ensure: $name missing in the repo" >&2
     return 0
   }
-  [ -e "$PROFILE_DIR/node_modules/$name" ] && return 0
-  mkdir -p "$PROFILE_DIR/node_modules/$name"
-  cp -f "$src/package.json" "$PROFILE_DIR/node_modules/$name/package.json" 2> /dev/null || true
-  cp -rf "$src/lib" "$PROFILE_DIR/node_modules/$name/lib"
-  echo "dsh-tui-ensure: seeded $name"
+  [ -f "$dir/package.json" ] && [ -f "$dir/lib/index.js" ] && return 0
+  mkdir -p "$dir"
+  [ -f "$dir/package.json" ] || cp -f "$src/package.json" "$dir/package.json" 2> /dev/null || true
+  [ -d "$dir/lib" ] || cp -rf "$src/lib" "$dir/lib"
+  echo "dsh-tui-ensure: seeded $name (repaired $dir)"
 }
 # Path interpolation (not toString): it registers each plugin directory as a
 # build input, so the store copy exists even for plugins no other module
