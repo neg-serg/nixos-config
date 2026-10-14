@@ -21,6 +21,8 @@ show_all_days = True
 search = /
 external_edit = e
 duplicate = d
+export = x
+delete = D
 save = ctrl s
 
 [view]
