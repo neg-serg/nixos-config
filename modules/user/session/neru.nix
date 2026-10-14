@@ -32,6 +32,10 @@ lib.mkIf cfg.enable {
     # forwarding W until it was restarted (2026-10-13); PartOf makes every kanata
     # restart or stop reset it instead of leaving a dead key behind.
     partOf = [ "kanata.service" ];
+    # hyprctl (from pkgs.hyprland) must be on PATH: user units run with a
+    # minimal PATH, and neru shells out to `hyprctl -j activewindow` to find
+    # the focused window before scanning for hints.
+    path = [ pkgs.hyprland ];
     serviceConfig = {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.neg.neru} launch --config %h/.config/neru/config.toml";
