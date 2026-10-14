@@ -192,7 +192,7 @@ lib.mkMerge [
         # Images
         pkgs.swayimg # Lightweight image viewer for Wayland
         pkgs.mpdas # Audio Scrobbler client for MPD
-        pkgs.mpdris2 # MPRIS 2 support for MPD
+        pkgs.mpd-mpris # MPRIS 2 bridge for MPD (Go, no GUI — replaces GTK-era mpdris2)
       ]
       ++ lib.optionals (config.lib.neg.enabled "media.audio.spicetify") [
         pkgs.spicetify-cli # Spotify customization tool
@@ -202,15 +202,15 @@ lib.mkMerge [
     # Note: MPD is enabled system-wide in modules/servers/mpd/default.nix
     # systemd.user.services.mpd is removed to avoid conflicts.
 
-    # MPD RIS2 (MPRIS support)
-    systemd.user.services.mpdris2 = systemdUser.mkUserService {
+    # MPD MPRIS2 bridge: mpd-mpris (Go daemon, no config file needed)
+    systemd.user.services.mpd-mpris = systemdUser.mkUserService {
       description = "MPD MPRIS2 Bridge";
       presets = [
         "defaultWanted"
         "restartOnFailure"
       ];
       serviceConfig = {
-        ExecStart = "${lib.getExe' pkgs.mpdris2 "mpDris2"}"; # Start MPD MPRIS2 bridge
+        ExecStart = lib.getExe pkgs.mpd-mpris; # Start MPD MPRIS2 bridge
       };
     };
 
@@ -221,18 +221,6 @@ lib.mkMerge [
     ".config/beets/config.yaml".text = builtins.toJSON beetsSettings;
 
     ".config/mpd/playlists/.keep".text = "";
-
-    # MPD RIS2 Config
-    ".config/mpDris2/mpDris2.conf".text = ''
-      [Connection]
-      host = localhost
-      port = 6600
-      music_dir = ${home}/music
-      [Bling]
-      notify = False
-      mmkeys = True
-      can_quit = True
-    '';
 
     # rmpc config: config.ron is GENERATED (RU duplicates spliced at the
     # rmpcRuBinds.* markers), themes deployed as-is.

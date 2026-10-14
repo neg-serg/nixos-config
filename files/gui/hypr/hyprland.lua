@@ -65,7 +65,7 @@ local m = {
   im_scratchpad      = "^(KotatogramDesktop|Skype|Slack|TelegramDesktop|org\\.telegram\\.desktop|zoom)$",
   music_scratchpad   = "^(ncmpcpp|rmpc|music)$",
   mail_scratchpad    = "^(mutterfox|neomutt)$",
-  mixer_scratchpad   = "^(ncpamixer|com\\.saivert\\.pwvucontrol)$",
+  mixer_scratchpad   = "^(ncpamixer|pavucontrol-qt)$",
   torrment_scratchpad = "^(torrment)$",
   rebuild_scratchpad = "^(rebuild)$",
   teardown_scratchpad = "^(teardown)$",
@@ -571,7 +571,7 @@ hl.define_submap("tiling", "reset", function()
 end)
 
 -- Submap: music (MPD transport with ncmpcpp/rmpc letter bindings)
--- mpc drives MPD directly: playerctl/mpdris2 relays only play-pause and skips,
+-- mpc drives MPD directly: playerctl/mpd-mpris relays only play-pause and skips,
 -- while repeat/random/single/consume, relative seek and the MPD software mixer
 -- (mixer_type "software" in mpd.conf) exist only on the MPD protocol.
 -- Letters follow the rmpc config (files/rmpc/config.ron) and ncmpcpp:
