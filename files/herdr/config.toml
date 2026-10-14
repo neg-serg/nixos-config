@@ -1,0 +1,44 @@
+# Herdr configuration — managed by /etc/nixos; see
+# modules/user/nix-maid/apps/herdr.nix. Docs: https://herdr.dev/docs/configuration/,
+# full defaults: `herdr --default-config`.
+#
+# The file is deployed as a live link (neg.live): edit it in the repo and run
+# `herdr server reload-config` — no rebuild. Validate with `herdr config check`.
+
+# The config below is the setup; skip the first-run onboarding flow.
+onboarding = false
+
+[theme]
+# Catppuccin is the neutral base; the token overrides below carry the neg
+# palette (the same colours zellij uses in files/gui/zellij/config.kdl).
+name = "catppuccin"
+
+[theme.custom]
+sidebar_bg = "#040f1c"    # neg bg (very dark navy)
+panel_bg = "#040f1c"      # neg bg
+surface0 = "#0c1c30"      # neg card
+surface1 = "#081626"      # between bg and card (borders, separators)
+overlay0 = "#3a6a6a"      # neg cyan
+overlay1 = "#7a6a8a"      # neg magenta
+text = "#a4b3c6"          # neg fg
+accent = "#005faf"        # neg accent (deep blue)
+blue = "#367cb0"          # neg light blue
+green = "#00a082"         # neg light green (success)
+red = "#a02846"           # neg light red (error)
+yellow = "#c8a8ef"        # neg warning (lilac)
+mauve = "#9682a0"         # neg light magenta
+teal = "#3a6a6a"          # neg cyan
+peach = "#8a6a40"         # neg orange
+active_row_bg = "#0c1c30" # focused Space/Agent row (neg card)
+
+[keys]
+# ctrl+b, like zellij (files/gui/zellij/config.kdl).
+prefix = "ctrl+b"
+
+# Alt + hjkl pane focus — the same muscle memory as zellij and kitty. The
+# ru-layout daemon pins terminal windows to `us`
+# (docs/howto/hotkeys-ru-layout.md), so no Cyrillic duplicates are needed here.
+focus_pane_left = ["prefix+h", "alt+h"]
+focus_pane_down = ["prefix+j", "alt+j"]
+focus_pane_up = ["prefix+k", "alt+k"]
+focus_pane_right = ["prefix+l", "alt+l"]
