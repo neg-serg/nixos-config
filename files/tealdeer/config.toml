@@ -29,7 +29,7 @@ italic = false
 
 [display]
 compact = false
-use_pager = false
+use_pager = true
 
 [updates]
 auto_update = true
