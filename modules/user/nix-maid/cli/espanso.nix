@@ -16,7 +16,7 @@
     (neg.mkHomeFiles {
       ".config/espanso/config/default.yml".text = ''
         backend: Clipboard
-        search_shortcut: ALT+SPACE
+        search_shortcut: ALT+SHIFT+SPACE
       '';
       ".config/espanso/match/base.yml".text = ''
         matches:
