@@ -29,4 +29,18 @@ _inputs: _final: prev: {
       };
     });
   };
+
+  # bmake: crufty.net stopped serving the release tarball (404 for
+  # bmake-20260313.tar.gz, confirmed 2026-10-14; nixpkgs master still carries
+  # the dead URL). lowdown builds with bmake and the nix/maid chain depends on
+  # lowdown, so a from-source rebuild of this host fails while fetching it.
+  # ftp.netbsd.org/pub/NetBSD/misc/sjg is the upstream release directory
+  # (tarball, .md5 and .sha1 sit next to each other) and serves the identical
+  # file — the pinned fixed-output hash matches (verified 2026-10-14).
+  bmake = prev.bmake.overrideAttrs (old: {
+    src = prev.fetchurl {
+      url = "https://ftp.netbsd.org/pub/NetBSD/misc/sjg/bmake-${old.version}.tar.gz";
+      hash = "sha256-dsjzzULuBc/7R7zIElbj1edCb00I5zN4i0WYXe30+XU=";
+    };
+  });
 }
