@@ -97,7 +97,9 @@
           repl $XDG_CONFIG_HOME/aspell/en.prepl;
         '';
         HISTFILE = "$XDG_DATA_HOME/bash/history";
-        INPUTRC = "$XDG_CONFIG_HOME/readline/inputrc";
+        # nix-maid deploys the file to ~/.config/inputrc (shells.nix) — keep the
+        # variable and the deployment path in sync or readline never reads it.
+        INPUTRC = "$XDG_CONFIG_HOME/inputrc";
         LESSHISTFILE = "$XDG_CACHE_HOME/lesshst";
         WGETRC = "$XDG_CONFIG_HOME/wgetrc";
       }
