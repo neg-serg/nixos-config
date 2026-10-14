@@ -118,12 +118,31 @@ if (incoming) {
 
 const tilesEl = document.getElementById("tiles");
 
+// Keyboard selection over the tiles: j/k move it, Enter opens the selection.
+// The search field owns every other printable key (launcher behaviour), so
+// j/k and "/" are intercepted here before that fallback runs.
+let activeTile = -1;
+
+function tileEls() {
+  return Array.from(tilesEl.querySelectorAll("a.tile"));
+}
+
+function setActiveTile(step) {
+  const tiles = tileEls();
+  if (!tiles.length) return;
+  if (activeTile < 0) activeTile = step < 0 ? tiles.length - 1 : 0;
+  else activeTile = (activeTile + step + tiles.length) % tiles.length;
+  tiles.forEach((el, i) => el.classList.toggle("active", i === activeTile));
+  tiles[activeTile].scrollIntoView({ block: "nearest" });
+}
+
 function faviconUrl(pageUrl) {
   return `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(pageUrl)}&size=64`;
 }
 
 function renderTiles(links) {
   tilesEl.replaceChildren();
+  activeTile = -1;
   for (const { title, url } of links) {
     const a = document.createElement("a");
     a.className = "tile";
@@ -207,13 +226,36 @@ document.addEventListener("keydown", (event) => {
   if (event.ctrlKey && event.key.toLowerCase() === "e" && !typing) {
     event.preventDefault();
     openEditor();
+    return;
   }
-  if (event.key === "Escape" && !editor.open) {
+  if (editor.open) return;
+  if (event.key === "Escape") {
     query.value = "";
     query.blur();
+    return;
   }
-  // Any printable key goes to the search field, like a launcher.
-  if (!typing && !editor.open && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+  if (typing || event.ctrlKey || event.metaKey || event.altKey) return;
+  // vim-style tile navigation; Enter opens the selection.
+  if (event.key === "j" || event.key === "k") {
+    event.preventDefault();
+    setActiveTile(event.key === "j" ? 1 : -1);
+    return;
+  }
+  if (event.key === "Enter" && activeTile >= 0) {
+    const tile = tileEls()[activeTile];
+    if (tile) {
+      event.preventDefault();
+      location.href = tile.href;
+    }
+    return;
+  }
+  if (event.key === "/") {
+    event.preventDefault();
+    query.focus();
+    return;
+  }
+  // Any other printable key goes to the search field, like a launcher.
+  if (event.key.length === 1) {
     query.focus();
   }
 });
