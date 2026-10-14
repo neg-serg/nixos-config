@@ -70,7 +70,9 @@
             libxcb-render-util
             libxcb-errors
             glslang
-            lua
+            # lua5_5 is the interpreter Hyprland itself links; the unversioned
+            # `lua` alias does not survive allowAliases=false.
+            lua5_5
           ];
           env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
 
