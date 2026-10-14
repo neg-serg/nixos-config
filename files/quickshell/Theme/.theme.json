@@ -43,8 +43,9 @@
       "color": "#000000"
     },
     "animations": {
-      "stdMs": 250,
-      "fastMs": 200
+      "stdMs": 200,
+      "fastMs": 150,
+      "overlayMs": 180
     },
     "tray": {
       "longHoldMs": 2500,
@@ -90,27 +91,23 @@
     },
     "computedFontScale": 0.6,
     "seam": {
-      "opacity": 0.6536
+      "opacity": 0.88
     },
-    "backdrop": {
-      "opacity": 0.6536
-    },
-    "slideTimerTickMs": 50
+    "slideTimerTickMs": 16
   },
   "shape": {
-    "cornerRadius": 10,
-    "cornerRadiusSmall": 10,
+    "cornerRadius": 6,
+    "cornerRadiusSmall": 6,
     "cornerRadiusLarge": 0
   },
   "tooltip": {
-    "delayMs": 1500,
+    "delayMs": 150,
     "minSize": 20,
     "margin": 12,
     "padding": 8,
     "borderWidth": 1,
     "radius": 2,
-    "fontPx": 14,
-    "opacity": 0.98,
+    "fontPx": 12,
     "smallScaleRatio": 0.71
   },
   "sidePanel": {
@@ -130,11 +127,6 @@
     "spacingTight": 3,
     "spacingSmall": 2,
     "albumArtSize": 200,
-    "weather": {
-      "width": 440,
-      "height": 180,
-      "leftColumnRatio": 0.32
-    },
     "button": {
       "activeVisibleMin": 0.18
     },
@@ -152,7 +144,6 @@
     "anim": {
       "quickMs": 120,
       "rotateMs": 160,
-      "rippleMs": 320,
       "easing": {
         "quick": "OutQuad",
         "rotate": "OutCubic",
@@ -248,17 +239,8 @@
       "fallbackOpacity": 0.4
     },
     "accent": {
-      "samplerPx": 48,
       "retryMs": 120,
-      "retryMax": 5,
-      "satMin": 10,
-      "lumMin": 20,
-      "lumMax": 235,
-      "relaxed": {
-        "satMin": 8,
-        "lumMin": 20,
-        "lumMax": 240
-      }
+      "retryMax": 5
     }
   },
   "spectrum": {
@@ -274,53 +256,16 @@
     "rowSpacing": 2,
     "cellSpacing": 2,
     "sideMargin": 2,
-    "popupMargin": 2,
-    "borderWidth": 1,
-    "cellSize": 28,
-    "holidayDotSize": 3,
-    "font": {
-      "titlePx": 18,
-      "dowPx": 15,
-      "dayPx": 24
-    },
-    "opacity": {
-      "title": 0.7,
-      "dow": 0.9,
-      "otherMonthDay": 0.3
-    },
-    "dow": {
-      "spacing": 0,
-      "sideMargin": 0,
-      "italic": true,
-      "underline": true
-    },
-    "cell": {
-      "radiusFactor": 0.33
-    },
-    "holidayDot": {
-      "radiusFactor": 0.5
-    },
-    "grid": {
-      "spacing": 0
-    },
-    "size": {
-      "width": 280,
-      "height": 320
-    },
-    "accentDarken": 0.8
+    "popupMargin": 2
   },
   "weather": {
     "headerScale": 0.75,
-    "card": {
-      "opacity": 0.85
-    },
     "centerOffset": -2,
     "httpTimeoutMs": 8000
   },
   "vpn": {
     "accent": {
-      "saturateBoost": 0.12,
-      "lightenTowardWhite": 0.2
+      "saturateBoost": 0.12
     },
     "desaturateAmount": 0.45
   },
@@ -357,6 +302,98 @@
     "widgetActiveColor": "#80ceffff",
     "widgetOutline": "#40ffffff",
     "widgetOutlineSeparate": "#20ffffff",
-    "separatorColor": "#60ffffff"
+    "separatorColor": "#60ffffff",
+    "uiScale": 1.2,
+    "uiFont": "Iosevka",
+    "displayFont": "Iosevka",
+    "cardColor": "#a60f141c",
+    "avatarPath": "assets/avatar.jpg",
+    "glassBlur": 9,
+    "glassTint": "#c20a0e14",
+    "glassHighlight": 0.045,
+    "glassRefract": 10,
+    "glassShadow": 26,
+    "glassGrain": 0.02,
+    "glassLens": 16,
+    "glassChroma": 0.5,
+    "glassSpecular": 0,
+    "glassPointer": 0.12,
+    "fieldBlur": 6,
+    "fieldTint": "#e60a0e14",
+    "avatarRingWidth": 0.05,
+    "avatarGlow": 0.5,
+    "nixieDigitSize": 92,
+    "nixieTubeMargin": 16,
+    "nixieGlow": 1,
+    "nixieTempK": 2100,
+    "nixieExposure": 2.5,
+    "nixieGlowColor": "#ff5a10",
+    "nixieGlassColor": "#4d120b06",
+    "nixieCathodeColor": "#aab6c4",
+    "nixieTint": "#00000000",
+    "nixieTintWallpaper": 0,
+    "nixieViewAngle": 16,
+    "nixieViewDistance": 8,
+    "nixieViewPitch": 0,
+    "nixieCameraFollow": true,
+    "nixieCameraRange": 6,
+    "nixieWire": 0.044,
+    "nixieStack": 0.5,
+    "nixieHighlight": 0.8,
+    "nixieWarmth": 0.45,
+    "nixieFlickerMs": 320,
+    "nixieFlicker": true,
+    "nixieShimmer": 1,
+    "nixieShimmerMs": 66,
+    "nixieJitter": 1,
+    "nixieQuality": "full",
+    "nixie24h": true,
+    "nixieLeadingZero": false,
+    "nixieSpacing": 1,
+    "nixieAge": 1,
+    "nixieBase": false,
+    "nixieColon": false,
+    "cardRadius": 6,
+    "fieldRadius": 8,
+    "chipRadius": 999,
+    "buttonRadius": 999,
+    "avatarRadius": 16,
+    "posterizeEnabled": true,
+    "posterizeMode": "yliluoma",
+    "posterizeMaskScale": 1,
+    "posterizeChroma": 1.35,
+    "posterizeDither": 0.85,
+    "posterizeCell": 2,
+    "posterizeGamma": 1,
+    "posterizeMix": 0.15,
+    "posterizeTint": "",
+    "crtEnabled": true,
+    "crtLineSpacing": 3,
+    "crtScanStrength": 0.13,
+    "crtUiLines": 0,
+    "crtMaskStrength": 0.05,
+    "crtAberration": 0.6,
+    "crtBarrel": 0.008,
+    "crtBloom": 0.35,
+    "crtVignette": 0.35,
+    "crtRollStrength": 0,
+    "crtRollMs": 9000,
+    "cardOutline": "#3dffffff",
+    "accentColor": "#7fd6ff",
+    "dangerColor": "#ff9b9b",
+    "textColor": "#f2f6fa",
+    "textMutedColor": "#c3d2e0",
+    "avatarColor": "#3d7fd6ff",
+    "appearMs": 420
+  },
+  "notifications": {
+    "background": "#000000",
+    "foreground": "#E0E6EF",
+    "frameColor": "#000000",
+    "accentColor": "#004E8F",
+    "radius": 4,
+    "padding": 6,
+    "maxWidth": 500,
+    "maxToastCount": 2
   }
 }
