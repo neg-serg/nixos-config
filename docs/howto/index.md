@@ -158,3 +158,8 @@
 
 - iris — shell IntelliSense on trantor: local patches, key behaviour and the smoke test:
   [iris.md](./iris.md)
+
+- Nixie settings lab — live tuning of the login clock (widget kit, presets, Save semantics):
+  [nixie-lab.md](./nixie-lab.md)
+
+- Nixie tube — geometry, tokens and the shader contract: [nixie-tube.md](./nixie-tube.md)
