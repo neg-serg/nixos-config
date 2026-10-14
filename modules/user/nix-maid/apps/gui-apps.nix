@@ -19,6 +19,7 @@
         # dialog cannot be shown and the browser just exits silently on a stale
         # SingletonLock.
         pkgs.zenity # GTK dialog tool Chromium uses for profile-in-use prompts
+        pkgs.hyprshell # GTK4 window switcher + app launcher for Hyprland (ex-hyprswitch)
       ];
     }
     (neg.mkHomeFiles {
