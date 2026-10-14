@@ -72,7 +72,6 @@ buildNpmPackage {
         "@PY@"
         "@PY_V2@"
         "@PY_MIG@"
-        "@PY_EXEC@"
         "@PATCHLIB_DIR@"
       ]
       [
@@ -81,7 +80,6 @@ buildNpmPackage {
         "${./patch-widgets.py}"
         "${./patch-session-format.py}"
         "${./patch-session-migration.py}"
-        "${./patch-tool-exec-args.py}"
         "${./lib}"
       ]
       (builtins.readFile ./post-install.sh);

@@ -85,13 +85,6 @@ PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V2@ "$search_pkg"
 # see packages/dsh/patch-session-migration.py).
 PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_MIG@ "$search_pkg"
 
-# tools/pre-execute hooks written against the pre-0.2 execution shape read
-# `exec.args` while the 0.2 registry exposes `exec.arguments`; the deployment's
-# dsh-plan-format-validator therefore saw every plan as empty and refused all
-# exit_plan_mode calls. Alias the parsed arguments under both names
-# (exact-string + count-asserted, see packages/dsh/patch-tool-exec-args.py).
-PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_EXEC@ "$search_pkg"
-
 # Agent presets are declarative rows in 0.2.0-rc.2 (and since 0.1.7): the
 # shipped ones are `presets/<id>.patch.yml` files of the dsh-web-app bundle,
 # listed in that package's `dsh.bundle.patch`, and a preset is created or
