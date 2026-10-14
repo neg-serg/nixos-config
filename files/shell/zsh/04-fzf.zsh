@@ -50,5 +50,6 @@ _fzf_compgen_dir() { _fzf_fd "$1" -t d; }
 bindkey "^I" fzf-on-tab
 # No physical Tab? Ctrl+Space also triggers completion + ~/m/new expansion.
 # (^@ = NUL, what Ctrl+Space sends.) Trade-off: ^@ is set-mark-command in
-# emacs mode. Zero-conflict alternative: bindkey "^G" fzf-on-tab.
+# emacs mode, but ^G (the zero-conflict alternative) is the zoxide picker, so
+# the Tab-less completion keeps ^@ deliberately.
 bindkey "^@" fzf-on-tab
