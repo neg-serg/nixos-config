@@ -9,7 +9,7 @@
  * handshake, and that everything is inert outside a Herdr pane or when the
  * kill switch is set.
  */
-import { apply, blockedMessage, herdrTarget, inject, name } from './lib/index.js'
+import { apply, blockedMessage, herdrTarget, inject, name, parseHerdrVersion } from './lib/index.js'
 
 let pass = 0
 let fail = 0
@@ -26,12 +26,13 @@ const ok = (cond, label) => {
 const BASE_ENV = {
   HERDR_ENV: '1',
   HERDR_PANE_ID: 'w1:p1',
-  HERDR_BIN_PATH: '/nix/store/herdr-0.9.1/bin/herdr',
+  HERDR_BIN_PATH: '/nix/store/herdr-0.9.3/bin/herdr',
 }
 
 /** Fake ctx that records spawns and lets the test drive the event bus. */
-function harness({ env = { ...BASE_ENV }, graceMs = 0 } = {}) {
+function harness({ env = { ...BASE_ENV }, graceMs = 0, version = 'herdr 0.9.3\n' } = {}) {
   const spawns = []
+  const probes = []
   const listeners = {}
   const cleanups = []
   const ctx = {
@@ -43,14 +44,27 @@ function harness({ env = { ...BASE_ENV }, graceMs = 0 } = {}) {
     },
     subprocess: {
       spawn: (spec) => {
+        // The version probe is not a report: keep it out of `spawns` so the
+        // report assertions below count state reports only.
+        if (spec.argv.includes('--version')) {
+          probes.push(spec)
+          return {
+            done: Promise.resolve({ exitCode: 0, signal: null }),
+            collected: { stdout: { readFrom: () => ({ text: version }) } },
+          }
+        }
         spawns.push(spec)
-        return { done: Promise.resolve({ exitCode: 0, signal: null }) }
+        return {
+          done: Promise.resolve({ exitCode: 0, signal: null }),
+          collected: { stdout: { readFrom: () => ({ text: '' }) } },
+        }
       },
     },
   }
   apply(ctx, { env, graceMs, cwd: '/tmp/wt-x' })
   return {
     spawns,
+    probes,
     listeners,
     cleanups,
     emit: (event, ...args) => {
@@ -73,10 +87,19 @@ ok(herdrTarget(BASE_ENV)?.pane === 'w1:p1', 'HERDR_ENV=1 -> the pane id is the t
 const inert = harness({ env: {} })
 ok(Object.keys(inert.listeners).length === 0, 'outside Herdr the plugin registers nothing')
 ok(inert.spawns.length === 0, 'outside Herdr the plugin never spawns')
+ok(inert.probes.length === 0, 'outside Herdr the plugin never probes for a version')
+
+// ── resume-command support ───────────────────────────────────────────────────
+
+ok(JSON.stringify(parseHerdrVersion('herdr 0.9.3\n')) === '[0,9,3]', 'the version probe parses herdr output')
+ok(parseHerdrVersion('nonsense') === null, 'unparseable version output -> null')
 
 // ── state mapping ────────────────────────────────────────────────────────────
 
 const h = harness()
+await tick()
+ok(h.probes.length === 1, 'inside Herdr the plugin probes the binary version once')
+ok(args(h.probes[0]).endsWith('herdr --version'), 'the probe asks the pane binary for its version')
 h.emit('session/event', { id: 's1' }, { type: 'turn/start' })
 ok(h.spawns.length === 1, 'turn/start reports once')
 ok(args(h.spawns[0]).includes('pane report-agent w1:p1'), 'the report addresses the pane')
@@ -85,6 +108,10 @@ ok(args(h.spawns[0]).includes('--agent dsh'), 'the report carries the agent labe
 ok(args(h.spawns[0]).includes('--state working'), 'turn/start maps to working')
 ok(args(h.spawns[0]).includes('--seq '), 'the report carries a sequence number')
 ok(h.spawns[0].cwd === '/tmp/wt-x', 'the report runs in the session cwd')
+ok(
+  args(h.spawns[0]).includes('-- dsh --profile tui --resume s1'),
+  'a 0.9.2+ server gets the resume command with the first report',
+)
 
 h.emit('agent/status', { agent: { session: { id: 's1' } }, status: 'idle' })
 ok(h.spawns.length === 2, 'idle reports once')
@@ -100,6 +127,15 @@ ok(args(h.spawns[2]).includes('--agent-session-id s1'), 'the main session id rid
 
 h.emit('agent/status', { agent: { session: { id: 'sub-1' } }, status: 'idle' })
 ok(h.spawns.length === 3, 'subagent status never drives the pane state')
+
+// ── resume stays off on older servers ────────────────────────────────────────
+
+const old = harness({ version: 'herdr 0.9.1\n' })
+await tick()
+old.emit('session/event', { id: 's3' }, { type: 'turn/start' })
+ok(old.spawns.length === 1, 'an old server still gets the state report')
+ok(args(old.spawns[0]).includes('--agent-session-id s3'), 'an old server still gets the session id')
+ok(!args(old.spawns[0]).includes('-- dsh'), 'an old server gets no resume command')
 
 // ── blocked handshake ────────────────────────────────────────────────────────
 
@@ -127,6 +163,7 @@ ok(instant.spawns.length === 0, 'an auto-settled request stays silent')
 const kill = harness({ env: { ...BASE_ENV, DSH_HERDR: '0' } })
 kill.emit('session/event', { id: 's2' }, { type: 'turn/start' })
 ok(kill.spawns.length === 0, 'DSH_HERDR=0 disables every report')
+ok(kill.probes.length === 0, 'DSH_HERDR=0 skips the version probe too')
 
 ok(blockedMessage('approval/request', { toolName: 'write' }) === 'write', 'approval copy falls back to the tool name')
 ok(

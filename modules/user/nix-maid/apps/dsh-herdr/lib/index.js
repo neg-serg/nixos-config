@@ -16,6 +16,13 @@
  * while the card is on screen (the same seam dsh-notify-input uses) and
  * resolving it means the human answered, so the turn goes back to working.
  *
+ * Herdr >= 0.9.2 can resume the conversation after a server restart when the
+ * agent reports the command that reopens it (see
+ * https://herdr.dev/docs/add-herdr-support/): every state report then carries
+ * `dsh --profile tui --resume <id>` after `--`. Older servers reject that
+ * trailing argv, so the plugin probes `herdr --version` once and attaches the
+ * command only when it is supported.
+ *
  * Reports are fire-and-forget: a missing binary, a stopped server or a slow
  * socket must never disturb the session. Only the main session drives the pane
  * state — subagent sessions run, finish and question inside the same pane.
@@ -57,6 +64,24 @@ function disabled(env) {
   return flag === '0' || flag === 'false' || env.VITEST === '1' || env.VITEST === 'true'
 }
 
+/**
+ * Parse `herdr X.Y.Z` output; null when it carries no version.
+ * @param text - `herdr --version` stdout
+ */
+export function parseHerdrVersion(text) {
+  const match = /(\d+)\.(\d+)\.(\d+)/.exec(String(text ?? ''))
+  if (match === null) return null
+  return [Number(match[1]), Number(match[2]), Number(match[3])]
+}
+
+/** Lexicographic [major, minor, patch] comparison. */
+function atLeast(version, want) {
+  for (let index = 0; index < want.length; index += 1) {
+    if (version[index] !== want[index]) return version[index] > want[index]
+  }
+  return true
+}
+
 /** Control characters would let a message inject its own arguments. */
 function sanitize(text, limit = MAX_MESSAGE_CHARS) {
   return String(text ?? '')
@@ -95,8 +120,36 @@ export function apply(ctx, config) {
   const target = herdrTarget(env)
   if (target === null) return
 
-  const state = { seq: Date.now(), last: null, sessionId: null }
+  const state = { seq: Date.now(), last: null, sessionId: null, resume: false }
   const timers = new Set()
+
+  /**
+   * Attach the resume command only when the pane's Herdr accepts it: 0.9.2 is
+   * where `pane report-agent -- <argv>` appeared, and older servers reject the
+   * trailing argv outright, so the report would be lost.
+   */
+  function probeResumeSupport() {
+    if (disabled(env)) return
+    void (async () => {
+      try {
+        const handle = ctx.subprocess.spawn({
+          argv: [target.bin, '--version'],
+          cwd: settings.cwd ?? process.cwd(),
+          stdio: {
+            stdin: 'ignore',
+            stdout: { maxBytes: COLLECT_BYTES },
+            stderr: { maxBytes: COLLECT_BYTES },
+          },
+          graceMs: 1000,
+        })
+        await handle.done
+        const parsed = parseHerdrVersion(handle.collected?.stdout?.readFrom(0)?.text ?? '')
+        if (parsed !== null) state.resume = atLeast(parsed, [0, 9, 2])
+      } catch {
+        /* no version read -> keep reporting state without a resume command */
+      }
+    })()
+  }
 
   function report(next, message) {
     if (disabled(env)) return
@@ -119,6 +172,10 @@ export function apply(ctx, config) {
     ]
     if (message !== undefined && message !== '') argv.push('--message', message)
     if (state.sessionId !== null) argv.push('--agent-session-id', state.sessionId)
+    if (state.resume && state.sessionId !== null) {
+      // What Herdr runs when a server restart restores this pane.
+      argv.push('--', 'dsh', '--profile', 'tui', '--resume', state.sessionId)
+    }
     void (async () => {
       try {
         const handle = ctx.subprocess.spawn({
@@ -205,6 +262,8 @@ export function apply(ctx, config) {
 
   watchRequest('approval/request')
   watchRequest('user-questions/request')
+
+  probeResumeSupport()
 
   ctx.effect(() => () => {
     for (const timer of timers) clearTimeout(timer)
