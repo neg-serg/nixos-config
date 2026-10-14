@@ -36,6 +36,32 @@ in
       sha256 = "sha256-xcEfwle+bUHkYuZzfqVqXyi+ue3cvWsiuEbaaBDb0z4=";
     };
 
+    # nixpkgs' own llama.cpp patch adds llama_backend_init() to the
+    # test-llama-archs main; it is written for nixpkgs' revision and cannot
+    # apply here, but the call is still needed (test-generate-models fails
+    # with "failed to create llama model" without it), so carry an adapted
+    # copy for this source.
+    patches = [ ./0001-test-llama-archs-backend-init.patch ];
+
+    # The qwen4exp branch adds ctest cases that need the network and the state
+    # tests that depend on their fixtures: test-download-model (downloads a
+    # GGUF), test-arg-parser (real GETs to ggml.ai),
+    # test-tokenizers-ggml-vocabs (git-clones tokenizer repos), plus
+    # test-thread-safety / test-save-load-state / test-state-restore-fragmented
+    # which require the downloaded model. The checkPhase sandbox has no network,
+    # so exclude exactly those from ctest; the rest of the suite passes.
+    checkPhase = ''
+      runHook preCheck
+      ctest -j"''${NIX_BUILD_CORES:-1}" --output-on-failure -E \
+        'test-(download-model|thread-safety|state-restore-fragmented|save-load-state|tokenizers-ggml-vocabs|arg-parser)'
+      runHook postCheck
+    '';
+
+    # nixpkgs-torch's llama-cpp pins the hash of *its* tools/ui npm deps
+    # (a17M…); the qwen4exp branch ships its own package-lock.json, so the
+    # vendored deps hash differs. Value produced by the builder for this src.
+    npmDepsHash = "sha256-2Q7XhaLAArmviOLdQsNbYTfdyDE5pW9lR26cRHEVl9k=";
+
     meta = old.meta // {
       description = "llama.cpp with experimental Qwen3.8-Flash-Next (qwen4exp) support — PR #27742, ROCm (HIP) build";
       longDescription = ''
