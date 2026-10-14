@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Work plan: nixie clock quality/perf pass + live settings menu (widgets).
+
+  Machine-readable on purpose: every <task> is self-contained, because the
+  subagent that runs it does NOT see the parent chat. A brief therefore carries
+  its files, commands, constraints and acceptance criteria inline. Tasks P1,
+  P3 and P4 are file-disjoint and may run in parallel; P2 starts after P1 has
+  landed the runtime override API; P5 is the single integration gate.
+
+  Review artifacts this plan is built on (English, read-only):
+    /tmp/nixie-review-shader.md    (nixie.frag: cost, UB, contract, tiers, tokens)
+    /tmp/nixie-review-qml.md       (QML runtime, idle timers, blocker greeter.qml)
+    /tmp/nixie-review-settings.md  (theme flow, persistence, widget inventory)
+    /tmp/nixie-review-rust.md      (packages/nixie; expected by P4)
+  Docs language is English (docs/AGENTS.md). Commit subjects, when the owner
+  commits, stay English imperative with a bracketed scope; see <handoff>.
+-->
+
+<plan id="nixie-settings" version="3" revised="2026-10-14">
+
+  <goal>
+    Three outcomes, in one pass over the login clock (files/quickshell/greeter)
+    and its workbench (packages/nixie):
+    1. Quality and performance: land the review findings (idle timers that never
+       stop, strike-all on any minute change, shader UB/NaN edges, 208-248
+       texture taps/pixel without per-tube bounds, whole-window 4K repaint per
+       shimmer tick) behind a quality tier and a shimmer token that default to
+       today's picture.
+    2. Settings: expose the knobs a human wants as theme tokens
+       (nixie&lt;CamelCase&gt;), with defaults equal to the current behaviour and
+       documented ranges the menu must respect.
+    3. Menu: a live settings menu built from reusable widget components
+       (sliders, colour fields, toggles, choices, sections, presets), mounted
+       in the tube lab and the login preview, applying values to the running
+       shader on the fly, with Save (user theme part), Reset and Export.
+       The real login screen gains nothing interactive; it stays a lock surface.
+    No system switch, no commit: the plan leaves a reviewed, verified working
+    tree plus this document updated with results.
+  </goal>
+
+  <state>
+    Facts collected 2026-10-14 before any edit (verified by command; commands in
+    &lt;appendix&gt;; full evidence in the four review artifacts):
+    <item>The nixie files are clean in git; every change below is a new working-tree edit.</item>
+    <item>nixie.frag is 1326 lines, GLSL ES 100 via qsb, section banners only (no SECTION markers); one writer (P3). qsb compiles clean today: no stdout/stderr, exit 0, artifact byte-identical to the committed .qsb.</item>
+    <item>Cost today: full clock row is 208-248 texture taps/pixel (35-45 of them metal_hit), up to 64 digit_shape evaluations/pixel, no per-tube bounds test in the 4-tube row loop (shader review §1).</item>
+    <item>UV/NaN risks: pWire=0 divides by zero in smin (frag:119-121, 860); pow(x,2.0) with x&lt;0 at ~14 live sites (UB in GLSL ES); reversed-edge smoothstep (1065); pExposure&lt;=0 / pGlow&lt;0 reach tone_map; wirePass is never reset per tube (stale +-11% modulation); collar/pins block (1196-1256) is unreachable because COLLAR_H_MM=0.</item>
+    <item>Uniform contract: NixieTube.qml declares no pTile while metal_hit reads pTile.x (frag:353) -> Qt warning and zeroed lab offset; NixieClock.qml is complete; std140 offsets verified. pRadius/pBase/pMm are declared but unread.</item>
+    <item>QML idle/behaviour: four repeat:true strike timers never stop (~81 triggers/s, ~162 array slices/s, ~81 dead ignition writes/s at idle); a fresh equal-content `var` array notifies but equal vector4d suppresses repaint, so the cost is wake-ups and JS, not frames. The 15.15 Hz `time` timer is the only idle animator and each tick repaints the whole 4K window (DP-2 3840x2160@2) through the posterize/CRT passes (~500 Mpx/s). onDigitsChanged -> strikeAll() restrikes all four tubes every minute. The wallpaper patch is live only while striking (~0.4 s) while the wallpaper loads async -> a blank/stale patch is possible until the next minute.</item>
+    <item>BLOCKER in the revert path: greeter.qml:46-47 sets two ids on one object (lockBackdrop + backgroundImage); Qt 6.11.2 rejects the component with "Property value set multiple times" (committed since dc066ade; qmllint exits 0 and misses it). One-line fix: delete the unused id.</item>
+    <item>Theme flow: Theme/*.jsonc parts -> main shell merge (Settings/Theme.qml, 80 ms debounce, atomic temp+mv) -> ~/.config/quickshell/Theme/.theme.json -> GreeterTheme FileView (watchChanges) -> uniforms. .theme.json is a build artifact written exclusively by the merge; never a save target. The user copy of the part is ~/.config/quickshell/Theme/greeter.jsonc; the repo copy files/quickshell/Theme/greeter.jsonc is the commented source of truth (copy-once + touch).</item>
+    <item>Settings hazards: repo nixieTempK default is 2100 but the GreeterTheme fallback is 2400; nixieFlickerMs=0 does NOT disable the restrike although the docs claim it does; the live user part is already missing nixieTubeMargin (repo 81 greeter.* keys vs runtime 80); repo files/quickshell/Theme/.theme.json is a tracked stale artifact (June, 13 greeter keys, zero nixie keys) that must never be used as defaults; no colour picker exists anywhere under files/quickshell.</item>
+    <item>Owner note (2026-10-14): the current camera is rejected as a 2D cheat — yaw only shifts and narrows the numerals on screen while the envelope silhouette stays head-on; the wanted behaviour is a real 3D camera that can be orbited (and driven with the cursor) so the clock reads as solid objects.</item>
+    <item>Rust review (verified): colour() panics on short hex ("#12"); render --row geometry is wrong (single-tile pSize/pBackdrop, 6*scale gaps -> row shifted ~870 px, two tubes off-frame); workbench density mm=12*scale vs QML numeralSize/18 makes sweep --check fail every digit (white 27-34 px vs limit 8); image::open cannot decode the extension-less ~/.cache/greeter-wallpaper (silently measures a synthetic gradient); Vulkan objects are never destroyed (leak per render; sweep leaks 11x); on llvmpipe two runs were byte-identical, so the documented ~9/255 run noise was not reproduced.</item>
+    <item>Gates that exist: bash scripts/dev/check-qml-lint.sh (0 defect-kind, bounded known-inherent baseline), qsb compile, nixie workbench CLI (validate|render|sweep --check, --shader/--theme/--row/--glow/--room/--verify). Build: XDG_CACHE_HOME=/etc/nixos/.agent/tmp-nix-cache nix build .#nixosConfigurations.trantor.pkgs.nixie --out-link /tmp/nixie-pkg --option substitute false (attribute resolves to nixie-0.1.0; plain nix needs the cache override in this sandbox).</item>
+    <item>Baseline recorded: /tmp/base-nixie-d6.png (render --digit 6, 568x904, 1.5 s on llvmpipe), nixie validate rc=0, idle CPU of qs -p preview ~2790% (llvmpipe; the sandbox cannot open /dev/dri, so absolute numbers are software-rendering numbers).</item>
+    <item>Docs drift in docs/howto/nixie-tube.md: claims HEAT_END_DROP=550 K (code: 150, frag:322), describes sdRoundQuad that does not exist, claims a wire ramp expression that is gone, claims headroom is still carried (tone_map rolls off), says flicker 0 leaves steady (not implemented), mixes 18 mm and 25 mm numeral height, and lists scripts (nixie-check.sh, nixie_sim.py, capture-window.sh) that do not exist.</item>
+  </state>
+
+  <invariants>
+    <inv id="I1">The login screen stays self-contained: GreeterTheme keeps hardcoded fallbacks, no dependency on the main shell's Settings or a running merge; menu code never runs in the lock surface.</inv>
+    <inv id="I2">Only this compile command produces shader artifacts: QSB=$(ls -d /nix/store/*qtshadertools-*/bin/qsb | head -1); "$QSB" --glsl "100es,120,150" -o .../nixie.frag.qsb .../nixie.frag, goal GLSL ES 100: constant loop bounds, no arrays with non-constant index in loops, `half` reserved.</inv>
+    <inv id="I3">One writer per file. nixie.frag/.qsb: P3 only. GreeterTheme.qml, NixieClock.qml, NixieTube.qml, greeter.qml (blocker line), Theme/greeter.jsonc nixie block, docs/howto/nixie-tube.md: P1 only. New nixielab module + tube-lab.qml + preview.qml + nixie-lab.md: P2 only. packages/nixie/**: P4 only. No task runs repo-wide formatters or mutating git commands.</inv>
+    <inv id="I4">New token defaults must reproduce the current picture and timing (A4). Tokens are named nixie&lt;CamelCase&gt;, mirrored in Theme/greeter.jsonc AND GreeterTheme.qml fallbacks, with the same JSON types.</inv>
+    <inv id="I5">The menu is inert unless opened; it persists nothing until Save; Save writes the user's greeter.jsonc atomically (temp .new + rename) and never .theme.json; Reset writes explicit defaults; Export is read-only.</inv>
+    <inv id="I6">Comments in code are English; docs are English; UI copy may be Russian (the existing lab uses Russian labels). No CJK anywhere.</inv>
+    <inv id="I7">Shimmer stays a feature, not a tax: nixieShimmer=0 stops the periodic tick entirely; with shimmer on, the tick rate is nixieShimmerMs and nothing else wakes the clock at idle.</inv>
+    <inv id="I8">Hazard clamps the menu must respect: viewAngle -30..30 (shader clamps), exposure 0.5..4.0, wire 0.02..0.08, tempK 1600..3200, viewDistance 0 = shader default; colour tokens use #AARRGGBB and alpha is a strength for tint/glass, opaque for glow/cathode.</inv>
+  </invariants>
+
+  <interfaces>
+    <tokens>
+      Frozen names, types and defaults (P1 adds them; P2 builds widgets against them; P3 consumes pQuality and nixieAge):
+      nixieShimmer      real  1.0     0..1 multiplier on breathe/hum; 0 = no shimmer, no periodic repaint
+      nixieShimmerMs    int   66      shimmer tick cadence, 33..250 ms
+      nixieJitter       real  1.0     per-tube timer offsets and strike-length jitter, 0..1.5 (0 = lockstep)
+      nixieFlicker      bool  true    restrike on digit change; false holds ignition at 1 (pairs with nixieFlickerMs)
+      nixieQuality      string "full" one of full|balanced|lite -> pQuality uniform 0|1|2
+      nixie24h          bool  true    24 h format for hourDigit()
+      nixieLeadingZero  bool  false   true lights the tens of hours as 0 instead of leaving the tube dark
+      nixieSpacing      real  1.0     multiplier on the row gaps (tubeGap 0.055, pairGap 0.20 of the numeral)
+      nixieAge          real  1.0     multiplier on the getter/sputter film weights; 1.0 keeps today's look
+      nixieViewPitch    real  0      base camera pitch in degrees, -20..20; travels in the third member of pView
+      nixieCameraFollow bool  true   the cursor drives a yaw/pitch offset around the base camera, clamped to nixieCameraRange and smoothed; false freezes the camera
+      nixieCameraRange  real  6      how many degrees the cursor may add, 0..15
+      Stretch, P3 only if the tier work lands cleanly: nixieBase bool false (wire COLLAR_H_MM to pBase; block already exists but is dead), nixieColon bool false (a fifth, bulb-mode tube in the row pass).
+      Existing tokens keep their meaning; nixieFlickerMs keeps its definition, but Flicker=false must actually disable the restrike.
+    </tokens>
+    <runtime>
+      GreeterTheme.qml (singleton qs.GreeterTheme) gains a runtime override layer for the menu:
+        property var overrides: ({})              // keyed by full path, e.g. "greeter.nixieGlow"
+        function setOverride(path, value)         // store override
+        function clearOverrides()                 // drop all overrides
+        function isOverridden(path)               // bool
+        function effective(path, fallback)        // override, else file value, else fallback
+      _val(path, fallback) consults overrides first, so every existing binding
+      (NixieClock, NixieTube, LockContent) becomes live-tunable with no further
+      edits. Overrides are process-local and runtime-only; Save is the only disk path.
+      Uniform properties frozen across QML and shader:
+        property real pQuality   0 full, 1 balanced, 2 lite (P1 adds to both blocks; P3 implements in the shader)
+        property real pShimmer   nixieShimmer (shader scales breathe/hum; P3)
+        property real pAge       nixieAge (film weights; P3)
+        property real pBaseOn    nixieBase (0 keeps today's base-off look; P3 stretch)
+        pView stays a vector4d and its third member becomes the camera PITCH: Qt.vector4d(effectiveYaw, nixieViewDistance, effectivePitch, 0). NixieClock/NixieTube compute effectiveYaw/effectivePitch = base token + cursor offset when nixieCameraFollow is on (clamped to nixieCameraRange, smoothed) and P6 consumes them in a world-space camera transform. Until P6 lands, the old shader ignores the pitch member.
+        NixieTube.qml additionally declares pTile (default 0,0,0,0) and the pRow* zeros it does not use, so Qt stops warning and metal_hit stops reading an undeclared pTile.
+    </runtime>
+    <menu>
+      Module qs.nixielab at files/quickshell/greeter/nixielab/ (qmldir `module qs.nixielab`), all types 1.0, greeter-local (no qs.Components/qs.Widgets imports; the fork rule and "no user config at login" stay intact):
+        NixieSlider      label, value, from, to, step, unit, moved(real)      — modelled on Widgets/Glass/GlassSlider.qml (click-to-jump + drag, hairline track, accent fill)
+        NixieColorField  label, value(color), alpha(bool), picked(color)      — no precedent in tree: hex entry + alpha row; alpha=true for tint/glass, false for glow/cathode
+        NixieToggle      label, value(bool), toggled(bool)                    — modelled on GlassToggle
+        NixieChoice      label, options([{text,value}]), value, chosen(value)
+        NixieSection     title + default property content (Text header + spacing, as GlassPanel does)
+        NixieMenu        assembled panel: sections, presets, Save/Reset/Export, dirty indicator
+        NixiePresetRow   presets: Vintage (2100 K / 2.5), Modern amber (2400 K / 1.5), Cyan tube (tint #cc66e0ff), Wallpaper-lit (nixieTintWallpaper 0.35), Dim/off (nixieGlow 0), Reset
+      Mounts: tube-lab.qml always shows the menu (it is the workbench); preview.qml shows it only when PREVIEW_LAB=1 so ordinary preview screenshots stay clean. A dev key may toggle it in those harnesses.
+      Save semantics (settings review Rank 1): while dragging, values live only in GreeterTheme.overrides (the preview follows immediately); on release (or Save) the menu writes ONLY the changed keys into the user's ~/.config/quickshell/Theme/greeter.jsonc, atomically (.new + rename; parse-checked before write). The running shell's part watcher regenerates .theme.json within ~80 ms and GreeterTheme reloads. The user copy is machine state after a save (its comments may be lost); the repo copy stays the commented truth, and the menu only offers "Copy repo snippet" for it — /etc/nixos is patched by the owner/P5 via the P4 helper, never silently by a slider.
+      Reset writes the repo defaults explicitly (loaded from files/quickshell/Theme/greeter.jsonc with an embedded fallback map), never by deleting keys, because of the nixieTempK fallback mismatch.
+    </menu>
+  </interfaces>
+
+  <acceptance>
+    <criterion id="A1">Shader compiles clean: the qsb command in I2 exits 0 for nixie.frag.</criterion>
+    <criterion id="A2">Geometry: a freshly built /tmp/nixie-pkg/bin/nixie validate exits 0. sweep --check currently fails every digit for workbench-side reasons outside the shader (density and row geometry); P4 fixes those, after which P5 requires sweep --check to pass, or to fail only on residual thresholds that the report names explicitly with baseline numbers.</criterion>
+    <criterion id="A3">Gates: bash scripts/dev/check-qml-lint.sh exits 0 with 0 defect-kind findings and no category above baseline; at integration just fmt and just lint exit 0.</criterion>
+    <criterion id="A4">Default parity: with all new tokens at defaults, nixie render --digit 6 and --row 1750 compared to /tmp/base-nixie-d6.png show no intended change: mean absolute channel difference on the tube region within render noise (baseline runs differ ~9/255; allow 12/255); sweep --check has no new threshold failures.</criterion>
+    <criterion id="A4b">If P3 proposes making "balanced" the default quality, it must earn it with numbers: mean abs diff &lt;= 2/255 vs baseline and no sweep threshold movement; otherwise the default stays "full" and balanced stays one menu click away. The decision and numbers go in the report either way.</criterion>
+    <criterion id="A5">Live menu: for three settings of different kinds (nixieGlow, nixieTempK, nixieTint), screenshots with the value changed differ from the default in the expected direction, proving the uniform reached the running shader without restart.</criterion>
+    <criterion id="A6">Save round-trip: after Save, ~/.config/quickshell/Theme/greeter.jsonc parses as JSON, contains exactly the chosen values, and was replaced atomically; the running shell's merge regenerates .theme.json with the value (jq check); Reset restores explicit repo defaults in the UI and on disk; a second Save is idempotent. No write ever targets .theme.json.</criterion>
+    <criterion id="A7">Idle cost: with nixieShimmer=0 the preview performs no periodic repaints and no strike-timer triggers (code evidence plus pidstat CPU, relative to the 2790% llvmpipe baseline, must drop by an order of magnitude); with the default shimmer the only periodic work is the nixieShimmerMs tick, and CPU is recorded. With nixieFlicker=false no restrike occurs even when digits change.</criterion>
+    <criterion id="A8">Quality tiers: lite measurably reduces the expensive path (render wall time and/or taps count argument in the report); the picture still reads as the lamp; the chosen default passes A4/A4b.</criterion>
+    <criterion id="A9">Docs: docs/howto/nixie-tube.md is corrected (token table with defaults and ranges; HEAT_END_DROP=150; no sdRoundQuad or stale ramp/headroom claims; 25 mm numeral scale stated once; script references fixed); docs/howto/nixie-lab.md explains menu, presets, Save semantics and the llvmpipe caveat; docs/index.md links it; node Tools/generate-theme-schema.mjs regenerated so validate-theme stays clean.</criterion>
+    <criterion id="A10">Blocker gone: greeter.qml:46-47 has one id only, and the regression repro from /tmp/nixie-review-qml.md no longer fails.</criterion>
+    <criterion id="A11">True 3D camera: with yaw/pitch changed (e.g. yaw 30, pitch 15) the glass SILHOUETTE changes as a solid object (visible cross-section opening, dome/pip shift, base plane) and the numerals show real parallax inside it — not a lateral screen-space shift with a frozen outline. Verified by rendering sets (0,0), (30,0), (0,15), (30,15) and comparing outline geometry numerically (edge x at scanlines, end-cap ellipse, pip position); at yaw=pitch=0 the picture passes A4.</criterion>
+    <criterion id="A12">Cursor follow: in preview with nixieCameraFollow on, hyprctl dispatch movecursor (then back) changes the camera smoothly and reversibly within nixieCameraRange; with follow off the camera is static. Screenshot pair plus the recorded effective angles in the report.</criterion>
+  </acceptance>
+
+  <tasks>
+
+    <task id="P0" owner="parent" order="first" parallel="no">
+      <title>Freeze baseline, interfaces and review evidence</title>
+      <status>done</status>
+      <brief>
+        <TASK>Record the pre-change state (baseline render, validate output, idle CPU, four review reports, token/uniform inventory) and freeze interfaces in this file before any writer starts.</TASK>
+        <EXPECTED_OUTCOME>This plan v2; /tmp/base-nixie-d6.png; /tmp/nixie-review-*.md; baseline CPU number; every task carrying its owns and commands.</EXPECTED_OUTCOME>
+      </brief>
+    </task>
+
+    <task id="P1" owner="subagent" depends_on="P0" parallel="yes">
+      <title>Clock runtime: tokens, overrides, idle fix, QML blocker</title>
+      <owns>files/quickshell/greeter/GreeterTheme.qml, files/quickshell/greeter/lock/NixieClock.qml, files/quickshell/greeter/lock/NixieTube.qml, files/quickshell/greeter/greeter.qml (the duplicate-id line only), files/quickshell/Theme/greeter.jsonc (the nixie block only), docs/howto/nixie-tube.md</owns>
+      <brief>
+        <TASK>Add the frozen tokens and the runtime override layer; make the clock genuinely idle; fix the QML findings; wire the new uniforms in both blocks; correct the doc drift.</TASK>
+        <EXPECTED_OUTCOME>
+          - GreeterTheme: new nixie* properties with fallbacks equal to repo defaults (fix nixieTempK fallback 2400 -> 2100); override API exactly as in &lt;interfaces&gt;.
+          - NixieClock: strike timers become one-shot loops (repeat:false, restart only while strikesLeft > 0); tick() returns before allocating/assigning anything when settled; only tubes whose digit actually changed restrike (keep previous digits; one line per index, no strikeAll on unchanged); nixieFlicker=false holds ignition at 1 and starts no timers; nixieFlickerMs=0 disables the restrike as the docs claim; shimmer tick runs only when nixieShimmer > 0, at nixieShimmerMs, and pauses when the item is not visible; pTime advances only on that tick.
+          - NixieClock wallpaper patch: cover the async wallpaper case (when backdrop/source changes or layout settles, keep the patch live for a short warm-up and/or schedule an update after the strike ends), so the glass never shows a stale/blank patch until the next minute.
+          - NixieTube: same shimmer/flicker gating; its `steady` mode (workbench) no longer keeps ShaderEffectSource permanently live unless the harness wants it; declare pTile (and zero pRow* stubs) so the uniform contract matches the shader.
+          - Both uniform blocks: pQuality, pShimmer, pAge, pBaseOn properties from their tokens (shader implementation is P3's; extra QML properties are harmless meanwhile).
+          - Theme/greeter.jsonc: the new keys with comments in the surrounding style; defaults and fallbacks agree (grep-proof).
+          - greeter.qml: delete the duplicate id at line 47 (fix A10; repro command is in the QML report).
+          - nixie-tube.md: fix every drift item in &lt;state&gt; last bullet; extend the token table with the new tokens, defaults, ranges and the hazard clamps from I8.
+        </EXPECTED_OUTCOME>
+        <MUST_DO>Run bash scripts/dev/check-qml-lint.sh from the repo root and paste the tail. Copy+touch the theme part, then python3/jq-verify that .theme.json carries the new keys and that nixieTempK is 2100. Record idle CPU (qs -p preview moved to special:nixie via hyprctl; pidstat -p PID 1 6) with nixieShimmer=1 and with 0. Paste both. Verify the greeter.qml repro no longer fails using the method from the QML report.</MUST_DO>
+        <MUST_NOT_DO>Do not edit nixie.frag/.qsb (P3), the nixielab module/tube-lab/preview/menu files (P2), packages/nixie (P4). Do not run just fmt (repo-wide; P5). Do not commit. Do not touch LockContent.qml outside reading it.</MUST_NOT_DO>
+      </brief>
+      <verification>A3, A4 (QML-level defaults), A6 (new keys land), A7, A10.</verification>
+    </task>
+
+    <task id="P2" owner="subagent" depends_on="P1" parallel="no">
+      <title>Widget kit and live menu</title>
+      <owns>files/quickshell/greeter/nixielab/** (new), files/quickshell/greeter/tube-lab.qml, files/quickshell/greeter/preview.qml, docs/howto/nixie-lab.md (new)</owns>
+      <brief>
+        <TASK>Build the widget components and assemble the live NixieMenu; mount it in tube-lab.qml always and in preview.qml behind PREVIEW_LAB=1; implement the override-driven live edit, Save, Reset and Export per &lt;menu&gt;.</TASK>
+        <EXPECTED_OUTCOME>
+          - nixielab module with the &lt;interfaces&gt; types; dark panel, cyan accent, Russian labels (consistent with the existing lab); no main-tree imports; qmldir present from the first edit.
+          - Sections: Presets; Discharge (glow, tempK, exposure, glowColor, tint, tintWallpaper); Glass (glassColor, cathodeColor, highlight, warmth, wire, stack); Camera (viewAngle, viewDistance); Row (digitSize, tubeMargin, spacing); Motion (flicker, flickerMs, shimmer, shimmerMs, jitter); Format (24h, leadingZero); Quality (quality, age, base); Actions (Save, Reset, Export).
+          - Slider ranges honour I8 exactly; colour fields honour alpha semantics per token.
+          - Live edit via GreeterTheme.setOverride only; Save writes only changed keys to the user's greeter.jsonc atomically after a ~250 ms debounce on release (no per-frame writes); Reset writes explicit repo defaults; Export prints a repo-ready snippet.
+          - Mounts do not change harness layout when the menu is off; preview stays clean unless PREVIEW_LAB=1.
+          - docs/howto/nixie-lab.md: how to open it, what Save touches and what it does not, the copy-once caveat, the llvmpipe/GPU measurement caveat.
+        </EXPECTED_OUTCOME>
+        <MUST_DO>Verify live application with screenshots: qs -p preview with PREVIEW_LAB=1, window moved to special:nixie, grim captures for default and changed values; kill the process after. Verify Save with jq on the user part and on .theme.json after the merge; verify Reset; verify Export contents. Run bash scripts/dev/check-qml-lint.sh and paste the tail.</MUST_DO>
+        <MUST_NOT_DO>Do not edit GreeterTheme.qml/NixieClock.qml/NixieTube.qml/Theme/greeter.jsonc (P1) — if the frozen API is insufficient, report it instead of patching around. Do not edit nixie.frag (P3) or packages/nixie (P4). No commits; no repo-wide formatters.</MUST_NOT_DO>
+      </brief>
+      <verification>A5, A6, A3.</verification>
+    </task>
+
+    <task id="P3" owner="subagent" depends_on="P0" parallel="yes">
+      <title>Shader: correctness, performance, quality tiers</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag, files/quickshell/greeter/shaders/nixie.frag.qsb</owns>
+      <brief>
+        <TASK>Read /tmp/nixie-review-shader.md (full findings with lines) and land its corrections plus `uniform float pQuality;` (0 full, 1 balanced, 2 lite) and `uniform float pShimmer;` (scales breathe/hum; 1.0 = today). Default path must draw today's picture. Work the tier ranking as given (bounds early-out first, then shared metal env, inner-wall echo, digit-8 chord count, single glass ray, caustic, noise, stack).</TASK>
+        <EXPECTED_OUTCOME>
+          - Correctness: smin guard for k&lt;=eps (pWire=0 no longer NaN); pow(e,2.0) -> e*e at all live sites; smoothstep edges flipped where reversed; pExposure/pGlow clamped; pView.y tiny-positive guarded; wirePass reset per tube (no stale +-11%); unreachable digit_shape(9) return removed; shadowing renamed; pMm/pRadius/pBase either used or comments corrected.
+          - Performance: per-tube bounds early-out in the 4-tube loop (tier 1); the tier table applied behind pQuality; hoisting of tile-derived constants where it does not hurt readability; wirePass and other state fixes are free wins.
+          - pShimmer multiplies the breathe/hum amplitudes only (0 = still wire, still glow); pAge multiplies the getter/sputter weights (1.0 = today); nixieBase/nixieColon only as stretch items, default off, and only if they cannot affect the default picture.
+          - .qsb rebuilt with the exact I2 command, exit 0, no new warnings; committed .qsb updated in the same edit.
+          - Evidence note /tmp/nixie-review-shader-result.md: effects dropped per tier, llvmpipe render wall time for pQuality 0/2, default-parity mean abs diff vs /tmp/base-nixie-d6.png, sweep --check output, and the A4b recommendation with numbers.
+        </EXPECTED_OUTCOME>
+        <MUST_DO>Keep the drawing's documented geometry intact: nixie validate must stay rc=0. Measure with a built binary (P4's /tmp/nixie-pkg when available, else /tmp/nixie-latest): render --digit 6 --scale 2 and, once, --row 1750; sweep --check; paste raw tails.</MUST_DO>
+        <MUST_NOT_DO>Do not touch QML, Theme or packages/nixie; do not edit docs/howto/nixie-tube.md (P1 owns the doc; report doc deltas instead). Do not rename existing uniforms. One writer, surgical diff. No commits.</MUST_NOT_DO>
+      </brief>
+      <verification>A1, A2, A4, A4b, A8.</verification>
+    </task>
+
+    <task id="P4" owner="subagent" depends_on="P0" parallel="yes">
+      <title>Workbench hardening (packages/nixie)</title>
+      <owns>packages/nixie/** (src; Cargo.toml/Cargo.lock only if a dependency is unavoidable and reported first; default.nix only if needed)</owns>
+      <brief>
+        <TASK>Read /tmp/nixie-review-rust.md and apply its findings, prioritized for the settings workflow: (0) the verified top items first: colour() validates hex length and returns Result (no panic on short hex); render --row passes row geometry and the QML gap constants (tubeGap 0.055, pairGap 0.20 of the numeral) so the row is not shifted/off-frame; mm and pInset match the QML density (numeralSize/18 logical px per mm, pad 16 logical) so sweep numbers describe the login's pixels; image loading uses with_guessed_format or load_from_memory (the wallpaper file has no extension); Vulkan objects are destroyed on every path (no per-render leaks). (1) panic-free CLI/file handling with actionable errors; (2) any-token override flag (e.g. --set nixieGlow=1.4, replacing reliance on --glow) so preset sweeps can be scripted; (3) JSON metrics output for scripts; (4) reproducibility: fix the cheap sources of the ~9/255 run-to-run noise or document precisely what remains, and make --verify a meaningful gate; (5) path defaults follow the repo/env instead of a bare /etc/nixos constant (keep the current value as fallback); (6) extend uniforms.rs to read every new numeric/colour token it can honour (Tokens currently reads 10 numbers and hardcodes three colours), so the workbench stays token-complete.</TASK>
+        <EXPECTED_OUTCOME>
+          - packages/nixie/src changes with English comments, rustfmt clean, no new heavyweight deps.
+          - ALSO (shared deliverable for P2/P5): a comment-preserving JSONC token patch mode, e.g. `nixie theme set --file PATH --key nixieGlow --value 1.4 [--to PATH]`, which replaces the value after `"key":` and leaves the file otherwise byte-for-byte; `--to` is the explicit repo save-back path (with a diff preview or dry-run flag). This is the only sanctioned way to patch files/quickshell/Theme/greeter.jsonc.
+          - Fresh build: XDG_CACHE_HOME=... nix build .#nixosConfigurations.trantor.pkgs.nixie --out-link /tmp/nixie-pkg --option substitute false; then validate rc=0, render --verify rc=0 (or documented residual), sweep --check recorded, --set and `theme set` demonstrated (dry-run + real on a /tmp copy).
+          - Evidence note /tmp/nixie-review-rust-result.md with commands and raw output tails.
+        </EXPECTED_OUTCOME>
+        <MUST_DO>Keep validate/render/sweep CLI names and flags working (scripts and docs use them). Run bash scripts/dev/check-rustfmt.sh and paste the result.</MUST_DO>
+        <MUST_NOT_DO>Do not touch QML/shader/theme files or the repo theme part (the theme-set helper may be tested only on /tmp copies). No commits. If a Cargo dependency would be needed, stop and report instead of adding it.</MUST_NOT_DO>
+      </brief>
+      <verification>A2, render --verify, sweep --check, rustfmt, theme-set tested on a /tmp copy (no repo writes).</verification>
+    </task>
+
+    <task id="P6" owner="subagent" depends_on="P1,P3" parallel="no">
+      <title>True 3D camera: world-space orbit and cursor follow</title>
+      <owns>files/quickshell/greeter/shaders/nixie.frag, files/quickshell/greeter/shaders/nixie.frag.qsb (after P3), files/quickshell/greeter/lock/NixieClock.qml, files/quickshell/greeter/lock/NixieTube.qml (camera plumbing only)</owns>
+      <brief>
+        <TASK>The owner rejects the current camera as a 2D cheat: yaw shifts and narrows the numerals in screen space while the envelope keeps its head-on silhouette, so nothing reads as solid. Replace it with a real 3D camera: a world-space view transform (yaw + pitch + finite distance) generating a ray per pixel against the tube's actual 3D geometry (cylinder + shoulder + dome + pip, the cathode plane at its real depth, mesh and stack in their real places), so silhouette, internal parallax and glass reflections all respond correctly. The glass keeps its current physics (dispersion, wall reflection, absorption) but through the real camera; digits are evaluated where the refracted ray crosses the cathode plane. Cursor follow: effective yaw/pitch = base token + pointer offset (clamped to nixieCameraRange, smoothed) computed in QML and passed through pView as (yaw, distance, pitch, 0).</TASK>
+        <EXPECTED_OUTCOME>
+          - nixie.frag: camera basis built from yaw/pitch/distance (right/up/forward), every screen-space camera shortcut replaced; at yaw=pitch=0 the picture passes A4 parity; P3's pShimmer/pAge/pQuality behaviour preserved; .qsb rebuilt with I2.
+          - NixieClock.qml / NixieTube.qml: pointer-follow plumbing behind nixieCameraFollow (QML only), smoothing, pView third member = pitch.
+          - Evidence /tmp/nixie-p6-result.md: renders at (0,0), (30,0), (0,15), (30,15) with numeric silhouette comparison (glass edge x at several scanlines, visible end-cap opening, pip position) proving the outline moves as a 3D object; parallax measurement of a digit edge against the glass edge at yaw 30; screenshots of follow on/off; parity number at (0,0); validate/sweep tails; tap/iteration delta versus the P3 baseline.
+        </EXPECTED_OUTCOME>
+        <MUST_DO>Keep the lamp one object on one axis (validate rc=0). Work from the P3 state of the file; read the camera/glass sections before editing. Prefer analytic ray tests against cylinder/sphere/capsule over generic raymarching if that keeps cost close to today's, and say what it costs. Update shader comments; do not edit docs (P1 owns nixie-tube.md; report doc deltas instead). There is no GL depth state or GL projection/view matrix stack in this path — one ShaderEffect pass with analytic occlusion; verify numerically that the camera basis is orthonormal, every ray direction is normalized, and the cathode-plane/backdrop-plane intersections are correct at several yaw/pitch values (A11/A12).</MUST_DO>
+        <MUST_NOT_DO>Do not touch QML files other than the two listed; do not touch packages/nixie, the menu or Theme files. No commits, no repo-wide formatters. Do not regress P3's correctness fixes or tier gating.</MUST_NOT_DO>
+      </brief>
+      <verification>A1, A2, A4, A8, A11, A12.</verification>
+    </task>
+
+    <task id="P5" owner="parent" order="last" parallel="no">
+      <title>Integration, gates and final report</title>
+      <owns>just fmt at the end, docs/index.md cross-link, node Tools/generate-theme-schema.mjs, decision on the stale tracked files/quickshell/Theme/.theme.json, final report</owns>
+      <brief>
+        <TASK>Collect P1-P4, resolve conflicts, run the full gates, take the acceptance screenshots and numbers, apply the repo theme changes via the P4 helper, regenerate the theme schema, update the docs index, decide/fix the stale tracked .theme.json (remove or document, with evidence), and write the final review summary.</TASK>
+        <EXPECTED_OUTCOME>
+          - just fmt and just lint pass on the integrated tree; qsb artifacts fresh; nixie validate/render/sweep from a fresh build; render --verify.
+          - Acceptance evidence under /tmp: screenshots for A5/A6 (menu off/on/changed/saved), pidstat numbers for A7, diff numbers for A4/A4b/A8, greeter.qml repro for A10, jq outputs for A6/A9.
+          - Final message to the owner: review findings (severity + where fixed or deferred), what was added, the missing-settings list, measured before/after, what remains and why.
+        </EXPECTED_OUTCOME>
+        <MUST_DO>Verify by execution; judge nothing from a header or an earlier run. If a result cannot be verified, say so explicitly instead of averaging it into "done". Apply repo theme values with `nixie theme set` (never by copying the user part over the repo), then re-run the theme validators.</MUST_DO>
+        <MUST_NOT_DO>No commits, no system switch, no cleanup of the user's git state beyond formatting the touched files.</MUST_NOT_DO>
+      </brief>
+      <verification>All A1-A10 with raw output in /tmp; the report carries numbers, not adjectives.</verification>
+    </task>
+
+  </tasks>
+
+  <risks>
+    <risk id="R1" prob="high">The sandbox cannot open /dev/dri (llvmpipe in both nixie and qs), so absolute performance numbers are software-rendering numbers. Mitigation: relative before/after in the same environment, structural facts (timers, taps), and the caveat stated in every report.</risk>
+    <risk id="R2" prob="medium">Menu Save strips JSONC comments in the user's greeter.jsonc copy. Mitigation: user copy is machine state by contract; repo copy stays commented; repo save-back goes through the comment-preserving helper only; Save is atomic and parse-checked; documented.</risk>
+    <risk id="R3" prob="medium">Parallel writers conflict. Mitigation: strict file ownership (I3), no repo-wide formatters until P5, single writer on nixie.frag.</risk>
+    <risk id="R4" prob="medium">qmllint may not resolve the new module until its qmldir is picked up; the lint script scans qmldir files. Mitigation: P2 ships qmldir with the first edit and runs the lint.</risk>
+    <risk id="R5" prob="low">Preview windows disturb the owner's session. Mitigation: move to special:nixie and kill after capture; short runs.</risk>
+    <risk id="R6" prob="medium">The idle fix changes visible timing (only the tube whose digit changed restrikes; shimmer at the token rate). Mitigation: A4 parity plus an explicit note in the report on the intended behaviour change.</risk>
+    <risk id="R7" prob="medium">Copy-once theme drift (runtime part already missing nixieTubeMargin) can make the menu's values diverge from the repo. Mitigation: P1 copies+touches and verifies; P5 applies repo values explicitly via the helper; A6 checks the round-trip.</risk>
+    <risk id="R8" prob="medium">Default quality tier change can alter the look. Mitigation: A4b gates it on numbers; otherwise default stays full.</risk>
+    <risk id="R9" prob="high">The 3D camera is a rewrite of the shader's view path and can regress the accepted look. Mitigation: parity gate at yaw=pitch=0 (A4), numeric silhouette criterion (A11), P3 tiers re-measured (A8), single shader writer, P5 acceptance before any report; if parity cannot be restored after 2-3 iterations, revert to the P3 state and report the blocker instead of shipping a worse lamp.</risk>
+  </risks>
+
+  <handoff>
+    <order>P0 (done) -&gt; in parallel [P1, P3, P4] -&gt; P2 (needs P1's API and the camera tokens) -&gt; P6 (after P1+P3; shader single writer) -&gt; P5.</order>
+    <rules>Each subagent gets its task brief verbatim plus owns, MUST_DO/MUST_NOT_DO and verification; it works in the shared /etc/nixos tree, touches only its owns, does not commit, and returns: files changed, exact commands with raw result tails, numbers, and anything it could not verify. No narrative progress; the artifact is the report. If blocked, stop and report instead of widening scope.</rules>
+    <commit_style>When the owner commits: bracketed scope, English imperative subject, e.g. "[greeter] ..." or "[dev/pkgs] ..."; body may be Russian.</commit_style>
+  </handoff>
+
+  <appendix>
+    <qsb>QSB=$(ls -d /nix/store/*qtshadertools-*/bin/qsb | head -1); "$QSB" --glsl "100es,120,150" -o files/quickshell/greeter/shaders/nixie.frag.qsb files/quickshell/greeter/shaders/nixie.frag</qsb>
+    <lint>bash scripts/dev/check-qml-lint.sh   # from /etc/nixos; exit 1 on defect-kind findings or baseline regressions</lint>
+    <build-nixie>XDG_CACHE_HOME=/etc/nixos/.agent/tmp-nix-cache nix build .#nixosConfigurations.trantor.pkgs.nixie --out-link /tmp/nixie-pkg --option substitute false</build-nixie>
+    <workbench>/tmp/nixie-pkg/bin/nixie validate; /tmp/nixie-pkg/bin/nixie render /tmp/after-d6.png --digit 6 --scale 2; /tmp/nixie-pkg/bin/nixie sweep /tmp/after-sweep.png --check</workbench>
+    <theme-copy>cp -f files/quickshell/Theme/greeter.jsonc ~/.config/quickshell/Theme/greeter.jsonc &amp;&amp; touch ~/.config/quickshell/Theme/greeter.jsonc
+python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.config/quickshell/Theme/.theme.json')))['greeter'].get('nixieTempK'))"</theme-copy>
+    <preview-and-measure>qs -p files/quickshell/greeter/preview.qml &amp; sleep 6; QPID=$(pgrep -f preview.qml | head -1); ADDR=$(hyprctl clients -j | jq -r --argjson p "$QPID" '.[] | select(.pid==$p) | .address'); hyprctl dispatch movetoworkspacesilent "special:nixie,address:$ADDR"; pidstat -p "$QPID" 1 6; kill "$QPID"</preview-and-measure>
+    <parity-diff>python3 -c "from PIL import Image; import numpy as np; a=np.asarray(Image.open('/tmp/base-nixie-d6.png').convert('RGB'),dtype=np.int16); b=np.asarray(Image.open('/tmp/after-d6.png').convert('RGB'),dtype=np.int16); print('mean abs diff:', float(np.abs(a-b).mean()))"</parity-diff>
+    <notes>
+      Trees are live-linked: files/quickshell/greeter is ~/.config/quickshell/greeter, so QML edits show up on the next qs -p without a rebuild; Theme/ is copy-once (theme-copy).
+      hyprctl on this host is the Lua-enabled build, but plain hyprctl dispatch movetoworkspacesilent still works for the capture recipe above.
+      The sandbox blocks /dev/dri; both nixie and qs fall back to llvmpipe. Use relative numbers.
+      Review artifacts are the source for task details: read the matching /tmp/nixie-review-*.md before editing.
+    </notes>
+  </appendix>
+
+</plan>
