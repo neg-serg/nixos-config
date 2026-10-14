@@ -8,8 +8,11 @@
 #
 #   - one root-owned oneshot unit performs the activation; there is no free-form
 #     command line to hijack,
-#   - sudoers allows exactly `systemctl start nixos-agent-switch.service` (with the
-#     trailing "" marker, so the rule cannot start any other unit),
+#   - a polkit rule lets the main user start exactly this unit, so the trigger
+#     also works inside a session sandbox where setuid sudo cannot run,
+#   - the flake build runs with the main user's uid (root's libgit2 refuses a
+#     user-owned repository) and only the verified store path is activated as
+#     root — profile-set + switch-to-configuration, the same steps nh uses,
 #   - the unit activates only the artifact the agent already built and verified:
 #     `.agent/switch-request` names the expected toplevel, and the unit refuses
 #     when the tree now builds something else — a WIP edit in /etc/nixos cannot
@@ -33,6 +36,9 @@ let
   cfg = config.features.security.agentSwitch or { };
   systemdUser = config.lib.neg.systemdUser;
   host = config.networking.hostName;
+  mainUser = config.lib.neg.mainUser;
+  mainGroup = config.users.users.${mainUser}.group;
+  mainHome = config.users.users.${mainUser}.home;
 
   # Written by the agent (see .agent/workflows/rebuild.md), consumed and removed
   # by a successful switch. Gitignored: it must not show up as a tree change.
@@ -45,7 +51,7 @@ let
         config.nix.package
         pkgs.coreutils # readlink/head/tr for the request-and-artifact checks
         pkgs.git # rev-parse/status, so the journal records what was activated
-        pkgs.nixos-rebuild-ng # the switch itself (the same nixos-rebuild-ng the host ships)
+        pkgs.util-linux # setpriv: run the build with the repo owner's uid
       ]
     }
 
@@ -81,9 +87,14 @@ let
       echo "$dirty"
     fi
 
-    mkdir -p "$work"
-    nix build "$repo#nixosConfigurations.${host}.config.system.build.toplevel" \
-      --out-link "$work/toplevel" --option substitute false
+    install -d -o "${mainUser}" -g "${mainGroup}" -m 0755 "$work"
+    # The flake belongs to the main user; root's libgit2 refuses a user-owned
+    # repository ("repository path is not owned by current user"), so build
+    # with that user's uid and only activate the verified artifact as root.
+    setpriv --reuid "${mainUser}" --regid "${mainGroup}" --init-groups \
+      env HOME="${mainHome}" XDG_CACHE_HOME="${mainHome}/.cache" \
+      nix build "$repo#nixosConfigurations.${host}.config.system.build.toplevel" \
+        --out-link "$work/toplevel" --option substitute false
 
     built="$(readlink -f "$work/toplevel")"
     if [ "$built" != "$expected" ]; then
@@ -92,7 +103,11 @@ let
       exit 1
     fi
 
-    nixos-rebuild switch --flake "$repo#${host}" --option substitute false
+    # Activate exactly the verified artifact: set the system profile and run
+    # the generation's own switch-to-configuration (what nixos-rebuild and nh do
+    # after building), so no flake evaluation happens as root at all.
+    nix-env --profile /nix/var/nix/profiles/system --set "$built"
+    NIXOS_INSTALL_BOOTLOADER=1 "$built/bin/switch-to-configuration" switch
     rm -f "$request"
     echo "agent switch: activated $built"
   '';
