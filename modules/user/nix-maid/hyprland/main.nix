@@ -263,13 +263,37 @@ let
     "$hyprctl_bin" eval "
     $(cat ${pkgs.writeText "hyprwindowshade.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprwindowshade.lua"))})" || true
   '';
+
+  # Hyprwinwrap: same load-then-push pattern as hyprglass/hyprexpo. Its Lua API
+  # (hl.plugin.hyprwinwrap.window/focus) only exists once the .so is loaded, so
+  # the background-window declarations in files/gui/hypr/hyprwinwrap.lua are
+  # pushed with hyprctl eval. Re-runnable in a live session (`hyprwinwrap-setup`):
+  # the load of an already loaded plugin fails harmlessly and the declarations
+  # are re-applied to a running compositor.
+  hyprwinwrapSetup = pkgs.writeShellScriptBin "hyprwinwrap-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+
+    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
+    "$hyprctl_bin" plugin load ${pkgs.hyprlandPlugins.hyprwinwrap}/lib/libhyprwinwrap.so || true
+
+    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
+    # comment) as a flag, hence the leading newline.
+    "$hyprctl_bin" eval "
+    $(cat ${pkgs.writeText "hyprwinwrap.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprwinwrap.lua"))})" || true
+  '';
   hyprlandLuaText =
     builtins.replaceStrings
-      [ "@hyprglass_setup@" "@hyprexpo_setup@" "@hyprwindowshade_setup@" ]
+      [
+        "@hyprglass_setup@"
+        "@hyprexpo_setup@"
+        "@hyprwindowshade_setup@"
+        "@hyprwinwrap_setup@"
+      ]
       [
         "${hyprglassSetup}/bin/hyprglass-setup"
         "${hyprexpoSetup}/bin/hyprexpo-setup"
         "${hyprwindowshadeSetup}/bin/hyprwindowshade-setup"
+        "${hyprwinwrapSetup}/bin/hyprwinwrap-setup"
       ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
@@ -288,6 +312,7 @@ in
           hyprglassSetup
           hyprexpoSetup
           hyprwindowshadeSetup
+          hyprwinwrapSetup # loads the plugin and (re)applies the background-window declarations
           hyprExpo # `hypr-expo toggle|push`: loads the overview plugin on demand
         ];
 

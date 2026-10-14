@@ -1,0 +1,28 @@
+diff -ruN a/main.cpp b/main.cpp
+--- a/main.cpp	2026-10-14 09:42:12.604673559 +0300
++++ b/main.cpp	2026-10-14 09:42:12.620673456 +0300
+@@ -379,6 +379,8 @@
+ 
+ // hl.plugin.hyprwinwrap.window({ class = "...", title = "...", layer = 0,
+ //                                pos_x = 0, pos_y = 0, size_x = 100, size_y = 100 })
++void onConfigReloaded();
++
+ static int luaWindow(lua_State *L)
+ {
+     luaL_checktype(L, 1, LUA_TTABLE);
+@@ -417,6 +419,15 @@
+         return luaL_error(L, "hyprwinwrap.window: requires a 'class' or 'title' field");
+ 
+     gLuaSpecs.push_back(s);
++
++    // Packaged patch (modules/user/nix-maid/hyprland/hyprwinwrap-lua-window-merge.patch):
++    // merge the new spec right away. The runtime path — a `hyprctl eval
++    // 'hl.plugin.hyprwinwrap.window{...}'` from hyprwinwrap-setup — has no
++    // config.reloaded event of its own, so without this the spec would sit in
++    // gLuaSpecs until the next reload, and that reload's config.preReload
++    // handler clears the list before the merge runs.
++    onConfigReloaded();
++
+     return 0;
+ }
+ 
