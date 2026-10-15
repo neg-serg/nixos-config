@@ -17,9 +17,16 @@ _: {
             nativeBuildInputs = builtins.filter (x: (x.pname or "") != "pandoc-cli") (
               old.nativeBuildInputs or [ ]
             );
-            postInstall = (old.postInstall or "") + ''
-              mkdir -p $man
-            '';
+            # nixpkgs 2026-10-14 defaults withManPages to false on i686, so the
+            # `man` output is no longer declared and `$man` is empty — the old
+            # unconditional `mkdir -p $man` failed the installPhase with
+            # "mkdir: missing operand". Create the directory only while the
+            # output still exists (older nixpkgs revisions declare it).
+            postInstall =
+              (old.postInstall or "")
+              + p32.lib.optionalString (builtins.elem "man" (old.outputs or [ ])) ''
+                mkdir -p $man
+              '';
           });
         }
       );
