@@ -51,6 +51,16 @@ let
       --jinja --chat-template-kwargs '{"reasoning_effort":"low"}'
   '';
 
+  # Spark-X2.5-4B (text, 4B, hybrid sliding-window attention, 1M native ctx):
+  # spark2_5 support is native in nixpkgs' llama.cpp (build 11429), so the
+  # stock Vulkan binary runs it; measured ~78 tok/s generation, 32k context
+  # costs ~2 GB of KV next to the 4.2 GB Q8_0 weights.
+  spark4b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/Spark-X2.5-4B-Q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} -c 32768 -np 1 --jinja
+  '';
+
   ollamaUrl = "http://127.0.0.1:11434";
 
   systemdUser = config.lib.neg.systemdUser;
@@ -126,6 +136,11 @@ in
           # Cold start is ~1.5 min (111 GB mmap), so keep it longer than the
           # vision models; the game guard still unloads it for games.
           ttl = 600;
+        };
+        "spark-x2.5-4b" = {
+          cmd = spark4b;
+          aliases = [ "spark" ];
+          ttl = 300;
         };
 
       };
