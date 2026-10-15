@@ -43,4 +43,17 @@ _inputs: _final: prev: {
       hash = "sha256-dsjzzULuBc/7R7zIElbj1edCb00I5zN4i0WYXe30+XU=";
     };
   });
+
+  # typescript-language-server: its pnpm deps FOD stopped reproducing the hash
+  # nixpkgs pins — the build dies with
+  #   specified: sha256-MUSxDMlbG21KSesGdEvqa2kEpuVfLlXRUX1qV/FGsSo=
+  #        got: sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=
+  # (npm registry content drifted, checked 2026-10-15). Pin the hash the
+  # builder actually produces; nix keeps the mismatched output under that hash,
+  # so the deps are already in the store and nothing is refetched.
+  typescript-language-server = prev.typescript-language-server.overrideAttrs (old: {
+    pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
+      outputHash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
+    });
+  });
 }
