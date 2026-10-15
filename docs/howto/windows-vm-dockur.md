@@ -422,6 +422,49 @@ From the host, verify that nothing is stuck on the retired address:
 ss -tn state syn-sent | grep 192.168.2.88   # must stay empty
 ```
 
+## Changing the host uplink (LAN move)
+
+A move re-addresses the host and leaves the retired alias in **independent copies**; editing the
+repo does not reach the running VM (the 2026-10-15 `.88` → `.11` move took an evening because one
+copy — the live user hive — was missed). Work through the copies in this order:
+
+1. **Host**: `hosts/trantor/networking.nix` (net1 addresses + `.11` alias + default route), then
+   every comment/range that carries the subnet (`files/net/firewall-extra.sh`, fail2ban/policy
+   notes). `rg '<old subnet>'` finds the repo-side copies; commit `4be9aa24d` is the exact file list
+   for the last move.
+1. **Repo-side VM copies**: `oem/setup.ps1`, `oem/glm-midi-bridge.ps1`, `glm-vm-netfix`
+   (`NETFIX_ADDR`), `glm-monitoring`, `files/rtpmidid/config.ini`.
+1. **Live guest** — nothing re-applies these by itself:
+   - proxy: `powershell -ExecutionPolicy Bypass -File C:\OEM\proxy-sync.ps1 -Proxy <new alias>` —
+     writes HKLM and every user hive (the `GLMProxySync` hook keeps user hives in sync on later
+     logons, so one run per move is enough);
+   - MIDI bridge: replace `C:\OEM\glm-midi-bridge.ps1` and restart the `GLMMidiBridge` task
+     (`schtasks /end /tn GLMMidiBridge & schtasks /run /tn GLMMidiBridge`) — it is a separate copy
+     and keeps dialing the old relay otherwise.
+1. **Verify** (host, seconds): `ss -tn state syn-sent` shows no stuck connects to retired addresses,
+   `ss -tnp | grep 10812` shows the VM's live proxy connections, `glm-adapter health` still gets the
+   guest's RDP reply.
+
+### Reaching the guest when its pointers are stale
+
+No RDP, noVNC or firewall change needed — the QEMU monitor plus the VM's own proxy are enough:
+
+1. Serve the payload from the host on loopback: `python3 -m http.server 8010 --bind 127.0.0.1` in
+   the directory with the scripts. The 10812 proxy resolves `127.0.0.1` **on the host**, so the
+   request never hits a firewall rule.
+1. In the guest:
+   `curl.exe -s -x http://192.168.0.11:10812 http://127.0.0.1:8010/<file> -o C:\<file>`. `irm` /
+   `Invoke-WebRequest -Proxy` fails with `Unable to connect to the remote server` in this topology
+   even though the request reaches the server — `curl.exe` is the client that works.
+1. Keyboard: `podman exec -i windows nc -N -U /run/shm/monitor.sock` with `sendkey` (as in the WinRE
+   note above). Keys sent faster than the monitor's ~100 ms hold time are eaten — type in chunks of
+   ~10–15 keys at ≥0.35 s each and `screendump` the line before pressing Return. Guest consoles
+   start with the `Restricted` execution policy: run scripts as
+   `powershell -ExecutionPolicy Bypass -File …`; `Win+R` in this VM opens a PowerShell console (its
+   default terminal profile) and is the easiest keyboard target.
+1. Results back: run a POST-capable server on `127.0.0.1:8010` the same way and
+   `curl.exe -x http://192.168.0.11:10812 -d @C:\result.txt http://127.0.0.1:8010/log`.
+
 ## Windows setup inside the VM
 
 - **Edge** (browser only) — the policy overrides everything else:
