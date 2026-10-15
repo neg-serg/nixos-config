@@ -339,9 +339,14 @@ behind Hyprland.
   forwarded one bool too few as well. The patch updates the typedef, the handler parameters and the
   signature string to the 0.56.2 arity. Bump the patch together with the rev; the override can go
   once nixpkgs carries a rev pinned to 0.56.2.
-- **Usage**: `stretch` is one of the simulation modes (`tilt`, `rotate`, `stretch`, `none`); the
-  shake-to-find magnification is independent and stays on by default. After a successful load,
-  `hyprctl getoption plugin:dynamic-cursors:mode` prints `str: stretch`.
+- **Shake magnification is off**: shake-to-find (`src/other/Shake.cpp`, the KDE-style detector that
+  compares total travel against the bounding-box diagonal over a one-second window) fires on fast
+  circling (trail/diagonal above `shake:threshold` while the diagonal exceeds 100 px) and magnifies
+  the cursor from `shake:base` (4×) upward — that read as "the cursor gets bigger when I spin it",
+  so `shake.enabled = false` in both config copies. The `stretch` mode itself stays.
+- **Usage**: `stretch` is one of the simulation modes (`tilt`, `rotate`, `stretch`, `none`). After a
+  successful load, `hyprctl getoption plugin:dynamic-cursors:mode` prints `str: stretch` and
+  `plugin:dynamic-cursors:shake:enabled` prints `bool: false`.
 
 ## Testing a plugin without endangering the session
 
