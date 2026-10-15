@@ -19,6 +19,13 @@ if ($LASTEXITCODE -eq 0) {
 }
 Log "WinINET proxy set (192.168.0.11:10812, HKLM + Default profile)"
 
+# The Default profile only covers users created later: existing hives keep their own copy, and
+# WinINET reads HKCU before HKLM - after a LAN move they stay on the old alias (2026-10-15:
+# OneDrive in SYN-SENT to the retired 192.168.2.88). proxy-sync.ps1 re-copies the HKLM value
+# into every loaded hive at logon; after an uplink move run it once with -Proxy <new alias>.
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "C:\OEM\proxy-sync.ps1" -InstallHook | Out-Null
+Log "proxy-sync logon hook registered (HKLM Run: GLMProxySync)"
+
 # --- 2. Edge policy proxy (fixed_servers, SOCKS — Chromium cannot auth SOCKS) ---
 reg add "HKLM\Software\Policies\Microsoft\Edge" /v ProxyMode /t REG_SZ /d fixed_servers /f | Out-Null
 reg add "HKLM\Software\Policies\Microsoft\Edge" /v ProxyServer /t REG_SZ /d "socks5://192.168.0.11:10811" /f | Out-Null

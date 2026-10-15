@@ -400,6 +400,28 @@ Two passwordless inbounds, added to the generator `packages/local-bin/bin/proxy`
 Firewall (`modules/system/net/firewall.nix`): both ports are allowed only from private ranges
 (`10/8`, `172.16/12`, `192.168/16`), as is `10810`.
 
+### User hive drifts after an uplink move
+
+`setup.ps1` seeds the proxy once and WinINET reads `HKCU` before `HKLM`, so every account carries
+its own copy — taken at first logon. When the uplink moved to another LAN (2026-10-15,
+`192.168.2.88` → `192.168.0.11`) the machine values followed the commit while the live user hive
+still had the old alias: OneDrive sat in `SYN-SENT` to the dead address, and every WinINET app was
+on the same path.
+
+`oem/proxy-sync.ps1` copies `ProxyEnable`/`ProxyServer` from HKLM into every loaded user hive and
+refreshes WinINET; `setup.ps1` registers it as the `GLMProxySync` logon hook. After a LAN move give
+it the new alias once (it writes HKLM too):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\OEM\proxy-sync.ps1 -Proxy 192.168.0.11:10812
+```
+
+From the host, verify that nothing is stuck on the retired address:
+
+```bash
+ss -tn state syn-sent | grep 192.168.2.88   # must stay empty
+```
+
 ## Windows setup inside the VM
 
 - **Edge** (browser only) — the policy overrides everything else:
@@ -504,6 +526,8 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
   bridge)
 - `packages/local-bin/bin/glm-midi-relay` + `glm-midi` — MIDI bridge (relay) and CLI
 - `packages/dockur-windows/oem/glm-midi-bridge.ps1` — bridge in the VM
+- `packages/dockur-windows/oem/proxy-sync.ps1` — copies the machine WinINET proxy into every loaded
+  user hive (logon hook `GLMProxySync`), so an uplink move cannot leave HKCU on the old alias
 - `packages/local-bin/bin/proxy` — the inbounds `in-lan-vm` (SOCKS 10811) and `in-lan-vm-http` (HTTP
   10812\)
 - `hosts/trantor/services/windows-vm.nix` — VM start unit (`ExecStartPost` runs `glm-vm-netfix`)
