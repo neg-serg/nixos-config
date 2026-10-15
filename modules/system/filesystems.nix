@@ -14,7 +14,6 @@ in
 {
   boot.supportedFilesystems = [
     "exfat"
-    "xfs"
     "udf"
     "zfs"
     "vfat"
