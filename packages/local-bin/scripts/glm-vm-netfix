@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# glm-vm-netfix — drop the host's 192.168.2.88 alias that pasta copies INTO the
+# glm-vm-netfix — drop the host's 192.168.0.11 alias that pasta copies INTO the
 # dockur Windows container on every (re)start.
 #
 # podman starts pasta with `--config-net`, which copies the whole address list of
-# the host uplink (net1: 192.168.2.87/24 plus the 192.168.2.88/24 alias) into the
-# container's network namespace. The guest shares the host IP (192.168.2.87,
-# passt user-mode networking), so while that alias is present 192.168.2.88 is the
+# the host uplink (net1: 192.168.0.10/24 plus the 192.168.0.11/24 alias) into the
+# container's network namespace. The guest shares the host IP (192.168.0.10,
+# passt user-mode networking), so while that alias is present 192.168.0.11 is the
 # container's OWN address: the guest's packets are answered inside the container,
 # where nothing listens on 9003 (glm-midi-relay) or 10811/10812 (the VM proxy).
 # The MIDI bridge then holds a dead TCP connection — it keeps printing
@@ -14,18 +14,18 @@
 # each time:
 #   * windows-vm.service runs this as ExecStartPost (normal start path);
 #   * glm-adapter calls this after the VM restarts it performs itself.
-# See docs/howto/windows-vm-dockur.md, "Pitfall: .88 alias inside the container".
+# See docs/howto/windows-vm-dockur.md, "Pitfall: .11 alias inside the container".
 #
 # Usage: glm-vm-netfix [container]          # default container: windows
 # Env:   PODMAN (default: podman; absolute path in systemd units),
-#        NETFIX_ADDR (default 192.168.2.88/24),
+#        NETFIX_ADDR (default 192.168.0.11/24),
 #        NETFIX_WAIT (default 10) — seconds to wait for the address to appear (pasta
 #        configures the container netns before the container process starts, so it is
 #        normally there on the first check; the loop only covers slow starts).
 set -euo pipefail
 
 CT=${1:-windows}
-ADDR=${NETFIX_ADDR:-192.168.2.88/24}
+ADDR=${NETFIX_ADDR:-192.168.0.11/24}
 PODMAN=${PODMAN:-podman}
 WAIT=${NETFIX_WAIT:-10}
 

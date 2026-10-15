@@ -9,13 +9,13 @@ let
   # Module-shaped systemd user units (lib/systemd-user.nix)
   systemdUser = config.lib.neg.systemdUser;
 
-  # podman pasta --config-net copies ALL host net1 addresses (incl. the .88
+  # podman pasta --config-net copies ALL host net1 addresses (incl. the .11
   # alias) into the dockur container netns, shadowing the host alias and
-  # breaking the VM's proxy path (.88:10812). Remove the shadow after the
+  # breaking the VM's proxy path (.11:10812). Remove the shadow after the
   # container starts; idempotent when the address is absent.
   ensureVmProxyAlias = pkgs.writeShellScript "ensure-vm-proxy-alias" ''
     if ${lib.getExe pkgs.podman} container exists windows 2>/dev/null; then
-      ${lib.getExe pkgs.podman} exec windows ip addr del 192.168.2.88/24 dev net1 2>/dev/null || true
+      ${lib.getExe pkgs.podman} exec windows ip addr del 192.168.0.11/24 dev net1 2>/dev/null || true
     fi
   '';
 in
@@ -89,20 +89,20 @@ lib.mkIf (cfg.enable or false) {
     };
 
     # ensure-vm-proxy-alias — one-shot cleanup for the dockur Windows VM's
-    # network: podman pasta --config-net copies the host's .88 alias into the
-    # container netns, shadowing it, so the VM's proxy (.88:10812) dies inside
+    # network: podman pasta --config-net copies the host's .11 alias into the
+    # container netns, shadowing it, so the VM's proxy (.11:10812) dies inside
     # the container. Re-applied on a short timer (container is started
     # manually, not as a systemd unit).
     ensure-vm-proxy-alias = systemdUser.mkUserService {
       presets = [ "oneshot" ];
-      description = "Remove host .88 alias from dockur container netns";
+      description = "Remove host .11 alias from dockur container netns";
       serviceConfig = {
         ExecStart = ensureVmProxyAlias;
       };
     };
   };
 
-  # Self-healing timer for ensure-vm-proxy-alias: pasta copies the host .88
+  # Self-healing timer for ensure-vm-proxy-alias: pasta copies the host .11
   # alias into the container netns on every (re)start, so re-check
   # periodically (cheap, idempotent).
   systemd.user.timers.ensure-vm-proxy-alias = {

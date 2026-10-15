@@ -1,9 +1,9 @@
 # glm-midi-bridge.ps1 - one-way MIDI bridge for the dockur VM.
-# Connects OUT to the host relay 192.168.2.88:9003 (TCP), receives raw MIDI
+# Connects OUT to the host relay 192.168.0.11:9003 (TCP), receives raw MIDI
 # messages (3 bytes: status CC value) and sends them to the loopMIDI/rtpMIDI
 # MIDI out port -> GLM software (Settings -> MIDI -> that port).
 # The VM initiates the connection because host->VM UDP (RTP-MIDI) replies die
-# on the same-IP pasta topology; outbound TCP works (like the .88:10812 proxy).
+# on the same-IP pasta topology; outbound TCP works (like the .11:10812 proxy).
 # Run:  powershell -ExecutionPolicy Bypass -File C:\OEM\glm-midi-bridge.ps1
 Add-Type -TypeDefinition @"
 using System;
@@ -41,13 +41,13 @@ if ($dev -lt 0) { Write-Host "MIDI out device not found - is loopMIDI/rtpMIDI ru
 $h = [IntPtr]::Zero
 $rc = [GM]::midiOutOpen([ref]$h, $dev, [IntPtr]::Zero, [IntPtr]::Zero, 0)
 if ($rc -ne 0) { Write-Host "midiOutOpen failed: $rc"; exit 1 }
-Write-Host "bridge: host 192.168.2.88:9003 -> MIDI device $dev (reconnecting...)"
+Write-Host "bridge: host 192.168.0.11:9003 -> MIDI device $dev (reconnecting...)"
 
 while ($true) {
   $c = $null
   try {
     $c = New-Object System.Net.Sockets.TcpClient
-    $c.Connect("192.168.2.88", 9003)
+    $c.Connect("192.168.0.11", 9003)
     $ns = $c.GetStream()
     Write-Host "bridge: connected to host relay"
     while ($true) {

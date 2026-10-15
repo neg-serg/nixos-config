@@ -461,7 +461,7 @@ Expose the audio stack to the local network via `features.media.audio.lanAccess.
   Firewall port 6600 was already open.
 - **PipeWire, receive** — Pulse-compatible TCP server on port 4713
   (`pipewire-pulse.conf.d/20-network.conf`). Other devices can play audio through this machine, e.g.
-  `PULSE_SERVER=192.168.2.87:4713` on a Linux client, or any PulseAudio-over-network client.
+  `PULSE_SERVER=192.168.0.10:4713` on a Linux client, or any PulseAudio-over-network client.
 - **PipeWire, send** — an RTP multicast sink (`libpipewire-module-rtp-sink`, node name `rtp-sink`)
   that broadcasts anything routed to it to `224.0.0.56:46000` over the interface set in
   `features.media.audio.lanAccess.rtp.interface` (default `net1`). Receive it with e.g. VLC:

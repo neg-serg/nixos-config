@@ -109,7 +109,7 @@ lib.mkMerge [
     # inputs still declare them for *every* interface (ollama 11434, mpd 6600,
     # pipewire-pulse 4713, vane 3005, adguard/sola-mpd 3000, plus Steam Remote
     # Play and mosh ranges pulled in by the games modules), so those globals are
-    # cleared here and re-added on net1 (home uplink, 192.168.2.0/24) only.
+    # cleared here and re-added on net1 (home uplink, 192.168.0.0/24) only.
     # net0 / wlan0 — the interfaces used on untrusted networks — keep nothing
     # open but sshd (key-only) and the net1-scoped lists below.
     networking.firewall = {

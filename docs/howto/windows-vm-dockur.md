@@ -348,22 +348,22 @@ clients pile up inside the container until the monitor stops answering at all (v
 
 ## VM network: IP conflict and host alias
 
-pasta/passt give the VM **the same IP as the host** (`192.168.2.87`) — the VM physically cannot
-reach the host on its main address. Therefore an **alias `192.168.2.88`** was added on net1
+pasta/passt give the VM **the same IP as the host** (`192.168.0.10`) — the VM physically cannot
+reach the host on its main address. Therefore an **alias `192.168.0.11`** was added on net1
 (declaratively in `hosts/trantor/networking.nix` — Address as a list):
 
 ```nix
 Address = [
-  "192.168.2.87/24"
-  "192.168.2.88/24"
+  "192.168.0.10/24"
+  "192.168.0.11/24"
 ];
 ```
 
-All VM proxies go through `192.168.2.88`. (A runtime alias `ip addr add …` is washed away by
+All VM proxies go through `192.168.0.11`. (A runtime alias `ip addr add …` is washed away by
 networkd — that is why it lives in the config.)
 
 While the alias is on the host, pasta copies it **into the container** on every start
-(`--config-net` copies the host uplink's whole address list). The container then answers as .88
+(`--config-net` copies the host uplink's whole address list). The container then answers as .11
 itself, so the VM gets `Connection refused` instead of reaching the host: the MIDI bridge sits in a
 dead connection (still printing `connected to host relay`, every CC disappears) and the proxy dies
 too. `packages/local-bin/scripts/glm-vm-netfix` drops the alias right after each start —
@@ -388,26 +388,26 @@ Firewall (`modules/system/net/firewall.nix`): both ports are allowed only from p
 - **Edge** (browser only) — the policy overrides everything else:
   ```
   reg add "HKCU\Software\Policies\Microsoft\Edge" /v ProxyMode /t REG_SZ /d fixed_servers /f
-  reg add "HKCU\Software\Policies\Microsoft\Edge" /v ProxyServer /t REG_SZ /d "socks5://192.168.2.88:10811" /f
+  reg add "HKCU\Software\Policies\Microsoft\Edge" /v ProxyServer /t REG_SZ /d "socks5://192.168.0.11:10811" /f
   ```
 - **WinINET system proxy** (GLM and other GUI apps; Edge is unaffected):
   ```
   reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 1 /f
-  reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer /t REG_SZ /d "192.168.2.88:10812" /f
+  reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer /t REG_SZ /d "192.168.0.11:10812" /f
   ```
 - **Console utilities** (new windows):
-  `setx ALL_PROXY/HTTPS_PROXY/HTTP_PROXY "socks5h://192.168.2.88:10811"`.
+  `setx ALL_PROXY/HTTPS_PROXY/HTTP_PROXY "socks5h://192.168.0.11:10811"`.
 
 ## Checks and debugging
 
 - Exit IP via the proxy ≠ direct:
   ```bash
   curl -s http://api.ipify.org                      # direct: 178.237.248.44
-  curl -s -x http://192.168.2.88:10812 http://api.ipify.org   # node: 193.29.139.195
+  curl -s -x http://192.168.0.11:10812 http://api.ipify.org   # node: 193.29.139.195
   ```
 - The VM really does go through the proxy (live VM connections via passt):
   ```bash
-  ss -tnp | grep 10812   # ESTAB 192.168.2.87:… -> 192.168.2.88:10812 (passt.avx2)
+  ss -tnp | grep 10812   # ESTAB 192.168.0.10:… -> 192.168.0.11:10812 (passt.avx2)
   ```
 - Proxy log: `journalctl --user -u sing-box-proxy`. DNS timeouts
   (`lookup failed … context deadline exceeded`, DoH 1.1.1.1) are transient and need no action.
@@ -421,11 +421,11 @@ GLM 5 supports MIDI remote (volume/mute/dim/power). Chain: `glm-midi` (CLI) → 
 service, TCP) → bridge in the VM (`glm-midi-bridge.ps1`, TCP client) → **rtpMIDI** (a virtual MIDI
 port in Windows) → GLM 5.
 
-Why a TCP bridge and not RTP-MIDI: the VM shares the host IP (192.168.2.87 via pasta), so the host
+Why a TCP bridge and not RTP-MIDI: the VM shares the host IP (192.168.0.10 via pasta), so the host
 replies to the RTP-MIDI UDP handshake go “to itself” and get lost — a bidirectional protocol
 physically does not work in this topology (rtpmidid/rtpMIDI stay in the repo as a fallback but are
 not used). The only bidirectional host↔VM channel is a TCP connection initiated by the VM itself (VM
-outbound traffic via passt works; replies come back — like through the .88:10812 proxy). Hence the
+outbound traffic via passt works; replies come back — like through the .11:10812 proxy). Hence the
 bridge in the VM connects to the host on its own.
 
 ### Linux (trantor)
@@ -440,10 +440,10 @@ bridge in the VM connects to the host on its own.
 ### VM (Windows)
 
 - `packages/dockur-windows/oem/glm-midi-bridge.ps1` — PowerShell bridge: connects to
-  `192.168.2.88:9003`, receives MIDI messages and sends them to the rtpMIDI port (winmm `midiOut`);
+  `192.168.0.11:9003`, receives MIDI messages and sends them to the rtpMIDI port (winmm `midiOut`);
   on a drop it reconnects every 2 s. Launch:
   `powershell -ExecutionPolicy Bypass -File C:\OEM\glm-midi-bridge.ps1` (or download it from
-  `http://192.168.2.88:8010/glm-midi-bridge.ps1` and run).
+  `http://192.168.0.11:8010/glm-midi-bridge.ps1` and run).
 - In rtpMIDI, leave the GLM listening port as MIDI-in; the rtpMIDI network session is no longer
   needed.
 
@@ -481,7 +481,7 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
 ## Affected files
 
 - `hosts/trantor/default.nix` — flag `features.net.proxy.enable`
-- `hosts/trantor/networking.nix` — alias `192.168.2.88/24`
+- `hosts/trantor/networking.nix` — alias `192.168.0.11/24`
 - `hosts/trantor/hardware.nix` — Genelec GLM udev rule (0666)
 - `modules/system/net/firewall.nix` — ports 10811/10812, 5010/5011 (RTP-MIDI, fallback), 9003 (MIDI
   bridge)
@@ -494,7 +494,7 @@ Tidal/SuperCollider: call `glm-midi` from code (SC: `SystemCmd("glm-midi mute")`
   probe is the guest's RDP reply, and a WinRE screen pages instead of restarting)
 - `packages/local-bin/scripts/windows-vm-stop` — ACPI shutdown of the guest for the unit's
   `ExecStop`
-- `packages/local-bin/scripts/glm-vm-netfix` — drops the .88 alias pasta copies into the container,
+- `packages/local-bin/scripts/glm-vm-netfix` — drops the .11 alias pasta copies into the container,
   otherwise the bridge and the VM proxy get `Connection refused` from the container itself
 
 ## GLM alternative: the glm-osc OSC bridge (adapter on the host)
