@@ -39,10 +39,21 @@ in
     # skipped the same way the nixpkgs `nix` package skips its own (disable-checks.nix):
     # doCheck = false. Verified — the resulting drv lists no `*-tests-run` inputs at all,
     # because nixpkgs' mkDerivation gates checkInputs on doCheck.
+    # Meson >=1.12 counts every file below the build directory as generated;
+    # nix-src's `src/libstore/build` holds real sources, so the in-source
+    # `meson setup build` makes ninja fail there with "missing and no known
+    # rule to make it". `overrideAllMesonComponents` is nix-src's supported
+    # override hook: move the meson build dir for that component only.
     package = lib.mkForce (
-      inputs.nix-src.packages.${pkgs.stdenv.hostPlatform.system}.nix.overrideAttrs (_: {
-        doCheck = false;
-      })
+      (inputs.nix-src.packages.${pkgs.stdenv.hostPlatform.system}.nix.overrideAllMesonComponents (
+        _final: prev:
+        lib.optionalAttrs ((prev.pname or "") == "determinate-nix-store") {
+          mesonBuildDir = "build-meson";
+        }
+      )).overrideAttrs
+        (_: {
+          doCheck = false;
+        })
     );
 
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
