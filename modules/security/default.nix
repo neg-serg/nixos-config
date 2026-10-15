@@ -30,18 +30,12 @@ in
     ./apparmor.nix
     ./agent-switch.nix
   ];
-  services.pcscd.enable = true; # pkcs support
   # nixpkgs' security.lockKernelModules (enabled below) auto-adds one kernel
   # module per fileSystem entry; our bind mounts use fsType = "none", which
   # would be loaded as a (nonexistent) module at boot ("Failed to find module
   # 'none'"). boot.kernelModules is an attrset-of-bool, so mkForce-ing this
   # attr to false drops it from the final list without touching the mounts.
   boot.kernelModules.none = lib.mkForce false;
-  # Tell p11-kit to load/proxy opensc-pkcs11.so, providing all available slots
-  # (PIN1 for authentication/decryption, PIN2 for signing).
-  environment.etc."pkcs11/modules/opensc-pkcs11".text = ''
-    module: ${pkgs.opensc}/lib/opensc-pkcs11.so # smart card support library
-  '';
 
   security = {
     apparmor = {
@@ -87,9 +81,6 @@ in
       ];
       services = {
         # hyprlock PAM service removed with hyprlock (temporarily disabled, 2026-08-31)
-        login.u2fAuth = false;
-
-        sudo.u2fAuth = false;
         # AppArmor-aware PAM for common services: disabled. Processes are
         # unconfined, so change_hat fails on every sudo/login ("unconfined can
         # not change_hat") and only spams the journal + audit. Re-enable when
@@ -99,12 +90,6 @@ in
         sudo.enableAppArmor = false;
         su.enableAppArmor = false;
         greetd.enableAppArmor = false;
-      };
-
-      u2f = {
-        enable = false;
-        settings.cue = false;
-        control = "sufficient";
       };
     };
 
