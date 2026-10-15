@@ -6,15 +6,9 @@ let
   mkVicinaeExtension = final.neg.functions.mkVicinaeExtension;
 in
 {
-  hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
-    postPatch = (old.postPatch or "") + ''
-      for f in $(grep -RIl "Qt6::WaylandClientPrivate" . || true); do
-        substituteInPlace "$f" --replace "Qt6::WaylandClientPrivate" "Qt6::WaylandClient"
-      done
-    '';
-  });
-  # Avoid pulling hyprland-qtutils into Hyprland runtime closure
-  # Some downstream overlays add qtutils to PATH wrapping; disable that.
+  # nixpkgs' hyprland wraps hyprland-qtutils into its runtime PATH
+  # (wrapRuntimeDeps); the config runs hyprland-guiutils instead, so keep
+  # qtutils out of the closure.
   hyprland = prev.hyprland.override { wrapRuntimeDeps = false; };
   # hyprland-guiutils — not in the pinned nixpkgs yet, pinned locally (see
   # packages/hyprland-guiutils). It supersedes hyprland-qtutils and ships the
