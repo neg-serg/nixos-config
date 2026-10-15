@@ -29,7 +29,7 @@ in
   # non-loopback request must pass the plugin's own 8-char PIN, so this rule is
   # the second gate rather than the only one.
   #
-  # Scoped to the uplink the phone shares (Wi-Fi clients of the 192.168.2.x
+  # Scoped to the uplink the phone shares (Wi-Fi clients of the 192.168.0.x
   # router arrive here), the same way net-health opens 2586.
   networking.firewall.interfaces.net1.allowedTCPPorts = [
     3081 # dsh-pocket phone bridge (proxies 127.0.0.1:3080, PIN-gated)

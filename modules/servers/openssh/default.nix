@@ -98,7 +98,7 @@ in
     # reachable on net0/wlan0, the interfaces used on untrusted networks), so
     # this is the compensating control instead of narrowing that rule.
     # nixpkgs ships a systemd-backend sshd jail and mkDefaults LogLevel=VERBOSE
-    # on sshd; loopback and the home LAN (192.168.2.0/24) are ignored so
+    # on sshd; loopback and the home LAN (192.168.0.0/24) are ignored so
     # fail2ban cannot lock out the user's own devices.
     services.fail2ban = {
       enable = true;
@@ -111,7 +111,7 @@ in
       ignoreIP = [
         "127.0.0.1/8"
         "::1"
-        "192.168.2.0/24"
+        "192.168.0.0/24"
       ];
     };
     systemd.services.sshd.serviceConfig = {

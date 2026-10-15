@@ -37,33 +37,28 @@
     networks = {
       "10-lan-v2" = {
         matchConfig.Name = "net0";
-        # BPI R4 Pro (new router): DHCP from its LAN (192.168.1.x); the
-        # static fallback keeps access to 192.168.1.1 even before DHCP is up.
+        # Second NIC: plain DHCP on whichever LAN it is plugged into (the
+        # legacy 192.168.1.50 / 10.0.2.140 / 192.168.88.140 fallbacks are gone
+        # with the old MikroTik addressing).
         networkConfig.DHCP = "ipv4";
-        # Keep system DNS (local unbound) — don't take DNS from the BPI yet
+        # Keep system DNS (local unbound) — don't take DNS from the router yet
         dhcpV4Config.UseDNS = false;
-        # Legacy MikroTik fallbacks, kept until the BPI migration is done
-        address = [
-          "192.168.1.50/24"
-          "10.0.2.140/27"
-          "192.168.88.140/24"
-        ];
         # Don't block boot waiting for net0
         linkConfig.RequiredForOnline = "no";
       };
       "11-lan" = {
         matchConfig.Name = "net1";
         networkConfig = {
-          # Static LAN address (previously DHCP): stable for the phone remote
-          # panel — dsh-lan-proxy binds 192.168.2.87:3080 — and for br0 NAT.
-          # Keep .87 out of the router's DHCP pool (reserve it) to avoid a
+          # Static LAN address: stable for the phone remote panel —
+          # dsh-lan-proxy binds 192.168.0.10:3080 — and for br0 NAT. Keep .10
+          # out of the router's DHCP pool (reserve it) to avoid a
           # duplicate-address conflict.
-          # Alias .88: the dockur Windows VM's DHCP lease collides with the
-          # host's .87, so the VM reaches the host's sing-box through this
+          # Alias .11: the dockur Windows VM's DHCP lease collides with the
+          # host's .10, so the VM reaches the host's sing-box through this
           # alias (auth-less in-lan-vm inbound, port 10811, LAN-only).
           Address = [
-            "192.168.2.87/24"
-            "192.168.2.88/24"
+            "192.168.0.10/24"
+            "192.168.0.11/24"
           ];
           KeepConfiguration = "yes";
         };
@@ -72,7 +67,7 @@
         routes = [
           {
             Destination = "0.0.0.0/0";
-            Gateway = "192.168.2.1";
+            Gateway = "192.168.0.1";
             Metric = 10;
           }
         ];

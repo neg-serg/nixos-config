@@ -478,7 +478,7 @@ if lan_auth:
 inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808},
             in_lan,
             # Auth-less LAN SOCKS for the dockur Windows VM (firewall: LAN
-            # only, reachable at the 192.168.2.88 alias). Chromium cannot
+            # only, reachable at the 192.168.0.11 alias). Chromium cannot
             # authenticate SOCKS5, hence the unauthenticated inbound.
             {"type": "socks", "tag": "in-lan-vm", "listen": "0.0.0.0", "listen_port": 10811},
             # Auth-less LAN HTTP CONNECT for the Windows VM system proxy
