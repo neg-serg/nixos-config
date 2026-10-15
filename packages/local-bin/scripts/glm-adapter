@@ -37,8 +37,8 @@ STATE="$RUNTIME_DIR/genlc-volume"
 # /tmp/<fixed name> piles up across users and reboots, and is writable by anyone.
 GENLC=/run/current-system/sw/bin/genlc
 PRIV=/run/current-system/sw/bin/glm-adapter-priv
-# pasta re-adds the host's 192.168.2.88 alias to the container's netns on every
-# start; left there, the guest's packets to .88 are answered by the container
+# pasta re-adds the host's 192.168.0.11 alias to the container's netns on every
+# start; left there, the guest's packets to .11 are answered by the container
 # instead of the host (see fix_vm_net below).
 NETFIX="$HOME/.local/bin/glm-vm-netfix"
 GREEN=$'\e[32m'; RED=$'\e[31m'; YELLOW=$'\e[33m'; NC=$'\e[0m'
@@ -229,6 +229,18 @@ vm_cycle() {
 }
 
 
+# vm_cycle with the restart-lock fd closed in the child shell. Every open fd is
+# inherited across `podman start` and lives on in conmon/passt/fuse-overlayfs/
+# QEMU for the container's whole lifetime, so the lock must be dropped before
+# the exec: the children never see the fd, while the parent's copy stays open
+# and keeps the lock held for the entire cycle.
+vm_cycle_locked() {
+  (
+    exec {lock_fd}>&-
+    vm_cycle
+  )
+}
+
 # A fresh QEMU is the only thing that opens a passed-through device again (see
 # the header), so a lost adapter is healed by restarting the VM. Rate-limited
 # with a leaky bucket: a flapping adapter must not turn into a reboot loop, but
@@ -275,8 +287,8 @@ notify_reset() {
 }
 
 # pasta copies the host uplink's whole address list into the container ('--config-net'),
-# including the 192.168.2.88 alias the VM must reach the host on: while it is in the
-# container, the guest's packets to .88 are answered by the container itself
+# including the 192.168.0.11 alias the VM must reach the host on: while it is in the
+# container, the guest's packets to .11 are answered by the container itself
 # ("Connection refused") and the MIDI bridge holds a dead connection while still
 # printing "connected to host relay". The normal start path is covered by ExecStartPost
 # of windows-vm.service; this covers the restarts glm-adapter performs itself.
@@ -345,8 +357,14 @@ vm_restart() {
   # One restart at a time: the 60 s timer and a manual `glm-adapter attach` can
   # otherwise run two stop/start sequences on the same container — the very race
   # wait_teardown() exists for.
-  exec 8>"$STATE_DIR/restart.lock"
-  if ! flock -n 8; then
+  # bash sets no O_CLOEXEC on redirection fds (verified on 5.3, `{var}>` too),
+  # and the podman descendants live as long as the container. With the lock fd
+  # inherited, conmon/passt/fuse-overlayfs kept the flock after the 2026-10-13
+  # restart: every 60 s `auto` run failed with "another restart is already in
+  # progress" until the container was restarted by hand two days later.
+  # vm_cycle_locked() closes the fd in its subshell before podman runs.
+  exec {lock_fd}>"$STATE_DIR/restart.lock"
+  if ! flock -n "$lock_fd"; then
     warn "another restart is already in progress — skipping"
     return 1
   fi
@@ -373,9 +391,9 @@ vm_restart() {
   # An explicit stop + start is the sequence that was verified to bring the
   # pasta interface (net1) and its addresses back. The stop must also be
   # *finished* (rootfs unmounted, conmon reaped) before the start — wait_teardown().
-  if ! vm_cycle; then
+  if ! vm_cycle_locked; then
     warn "VM did not come back up — retrying the restart once"
-    if ! vm_cycle; then
+    if ! vm_cycle_locked; then
       fail "container '$CT' is not up with the adapter attached after two restarts (podman logs windows)"
       notify_once "failed" firing "ВМ не поднялась после двух рестартов: $why. Смотреть: podman logs $CT"
       return 1
