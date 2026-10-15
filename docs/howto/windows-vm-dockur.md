@@ -192,6 +192,17 @@ while the MIDI bridge kept a dead connection) — rate-limited to three restarts
 restart. Placement check: `glm-adapter status` → `VM: adapter attached (1)`, which on the host means
 the adapter interface carries the `usbfs` driver.
 
+### The restart lock must not leak into the container
+
+`glm-adapter` serializes restarts with `flock` on `~/.local/state/glm-adapter/restart.lock`. bash
+sets no `O_CLOEXEC` on redirection fds (not even with `{var}>`), and rootless podman's children
+(conmon, passt, fuse-overlayfs, QEMU) live as long as the container: an inherited lock fd keeps the
+flock for that whole lifetime. Symptom: every 60 s `auto` run prints
+`another restart is already in progress — skipping` while no `glm-adapter` process exists, so a lost
+adapter can no longer be healed and only a container restart (which kills the holders) releases the
+lock. Seen 2026-10-13, fixed 2026-10-15: `vm_cycle_locked()` closes the fd in a subshell before
+`podman` runs — keep that when touching `vm_restart`.
+
 ### Attached is not the same as working
 
 `glm-adapter status` can report `VM: adapter attached (1)` and `verify` can show the MIDI bridge
