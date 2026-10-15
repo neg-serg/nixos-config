@@ -2186,7 +2186,7 @@ Order matters — profiles listed later override earlier ones. Available: deskto
 
 ## features.secrets.enable
 
-Whether to enable enable secrets tooling (pass, YubiKey helpers).
+Whether to enable enable secrets tooling (pass).
 
 *Type:* boolean
 
