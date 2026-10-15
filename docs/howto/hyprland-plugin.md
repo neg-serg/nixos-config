@@ -310,12 +310,27 @@ behind Hyprland.
 - **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — the plugin comes from nixpkgs
   (`hyprlandPlugins."hypr-dynamic-cursors"`, `0-unstable-2026-07-21`), so the overlay only adds a
   patch instead of re-pinning a rev.
-- **Load + configure**: the same load-then-push pattern as hyprglass/hyprexpo — the `hyprland.start`
-  hook runs `hyprdynamiccursors-setup`, which `hyprctl plugin load`s `libhypr-dynamic-cursors.so`
-  and pushes `files/gui/hypr/hyprdynamiccursors.lua` through `hyprctl eval`. The file sets
+- **Load + configure**: the `hyprdynamiccursors-setup` helper `hyprctl plugin load`s
+  `libhypr-dynamic-cursors.so` and pushes `files/gui/hypr/hyprdynamiccursors.lua` through
+  `hyprctl eval` (the same load-then-push pattern as hyprglass/hyprexpo). The file sets
   `plugin.dynamic_cursors.mode = "stretch"` (the Lua spelling the plugin README documents; the raw
   config section is `plugin:dynamic-cursors`). The keys only exist after the plugin registered them,
-  so the config cannot live in `hyprland.lua` itself.
+  so the config cannot live in `hyprland.lua` as static config.
+- **Login activation**: on a normal greetd login nothing re-parses `hyprland.lua` after the password
+  (`hypr-start` restarts units, it does not reload), so the `hl.exec_cmd` in the session branch —
+  and with it the helper — never ran: the plugin stayed unloaded and stretch never applied (observed
+  2026-10-15). The `hyprdynamiccursors` user unit now runs the helper with
+  `hyprland-session.target`, the way hyprglass is loaded by its units, so the login screen still
+  keeps the stock cursor; the `hl.exec_cmd` path remains for a hand-started compositor. The helper
+  is idempotent (it skips an already-loaded plugin and re-pushes the settings), logs every run to
+  `$XDG_RUNTIME_DIR/hyprdynamiccursors-setup.log` and polls `hyprctl plugin list` for up to ~5 s,
+  because a load issued while the compositor is still busy with the login transition does not stick.
+- **Reload persistence**: a reload keeps the loaded plugin but re-registers its defaults, so the
+  runtime push from the helper is lost and the mode falls back to `tilt` (observed 2026-10-15 after
+  `hyprctl reload`). The guarded `hl.config` block at the top of `hyprland.lua` re-applies the
+  stretch settings on every parse — it is skipped on the first parse, when the plugin is not loaded
+  yet, so the login screen keeps the stock cursor. Keep its values in sync with
+  `files/gui/hypr/hyprdynamiccursors.lua`.
 - **Patch** (`hypr-dynamic-cursors-hyprland-056-signature.patch`): the pinned rev predates Hyprland
   0.56.2, where `CPointerManager::renderSoftwareCursorsFor` gained a `screencopy` bool before
   `forceRender`. The plugin's hardcoded mangled signature still described the one-bool form, so the
