@@ -1,4 +1,4 @@
-{ config, ... }: {
+{ config, lib, ... }: {
   networking = {
     hostName = "trantor";
     hostId = config.networking.hostName |> builtins.hashString "sha1" |> builtins.substring 0 8; # Required for ZFS pool import
@@ -19,6 +19,11 @@
     useNetworkd = true;
     useDHCP = false;
   };
+
+  # nat.nix stages an nf_nat_ftp modprobe on every NAT-enabled host; the FTP
+  # conntrack helpers were trimmed from the kernel (overlay.config H19j), so
+  # drop the stale request — otherwise systemd-modules-load fails at boot.
+  boot.kernelModules.nf_nat_ftp = lib.mkForce false;
 
   # No global IPv6 upstream: Steam/other apps pick AAAA from DNS and stall
   # (no Happy-Eyeballs fallback). Keep IPv6 off on the physical uplink only;
