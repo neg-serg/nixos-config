@@ -286,6 +286,20 @@ let
     $(cat ${pkgs.writeText "hyprwinwrap.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprwinwrap.lua"))})" || true
   '';
 
+  # GloView: same load-then-push pattern as hyprglass/hyprexpo. It is passive
+  # (nothing is painted until a dispatcher asks for it), so loading it while the
+  # login layer is up is harmless. Its dispatchers (gloview:toggle/open/close,
+  # gloview:next/prev, gloview:allworkspaces) and the gloview.* config helpers
+  # only exist once the .so is loaded. Re-runnable in a live session
+  # (`gloview-setup`); the load of an already loaded plugin fails harmlessly.
+  gloviewSetup = pkgs.writeShellScriptBin "gloview-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+    plugin=${pkgs.hyprlandPlugins.gloview}/lib/gloview.so
+
+    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
+    "$hyprctl_bin" plugin load "$plugin" || true
+  '';
+
   # HyprDynamicCursors (cursor stretch): same load-then-push pattern as
   # hyprglass/hyprexpo. Its config keys (plugin.dynamic_cursors.*) only exist
   # once the .so is loaded, so files/gui/hypr/hyprdynamiccursors.lua is pushed
@@ -335,6 +349,7 @@ let
         "@hyprwindowshade_setup@"
         "@hyprwinwrap_setup@"
         "@hyprdynamiccursors_setup@"
+        "@gloview_setup@"
       ]
       [
         "${hyprglassSetup}/bin/hyprglass-setup"
@@ -342,6 +357,7 @@ let
         "${hyprwindowshadeSetup}/bin/hyprwindowshade-setup"
         "${hyprwinwrapSetup}/bin/hyprwinwrap-setup"
         "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup"
+        "${gloviewSetup}/bin/gloview-setup"
       ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
@@ -362,6 +378,7 @@ in
           hyprwindowshadeSetup
           hyprwinwrapSetup # loads the plugin and (re)applies the background-window declarations
           hyprdynamiccursorsSetup # loads the plugin and (re)applies the cursor stretch settings
+          gloviewSetup # loads the macOS-style overview plugin (dispatch: hl.plugin.gloview.toggle())
           hyprExpo # `hypr-expo toggle|push`: loads the overview plugin on demand
         ];
 

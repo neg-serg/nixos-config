@@ -331,6 +331,19 @@ hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 
 hl.bind(M4 .. "+grave", hl.dsp.exec_cmd("hypr-expo toggle"))
 
+-- --- Overview (GloView) ─────────────────────────────────────────────────
+-- The plugin is dlopen'd by gloview-setup from the start hook (main.nix), so
+-- hl.plugin.gloview is nil *here* and the call has to be lazy, exactly like the
+-- hyprexpo submap below: `hyprctl dispatch gloview:toggle` is only a deprecated
+-- shorthand in Lua config mode and mangles plugin dispatchers ("expected a
+-- dispatcher"), while the runtime Lua namespace (addLuaFunction in the plugin's
+-- main.cpp) resolves at press time.
+--
+-- Bound but deliberately left commented while the overview is being tried out;
+-- to toggle it by hand in the meantime:
+--   hyprctl eval 'hl.plugin.gloview.toggle()'
+-- hl.bind(M4 .. "+o", function() hl.plugin.gloview.toggle() end)
+
 -- The overview is driven from its own submap: on open the plugin enters `hyprexpo`
 -- and resets it on close, exactly as upstream documents it (`hl.define_submap` for
 -- Lua configs, `submap = hyprexpo ... submap = reset` for hyprland.conf). The binds
@@ -1186,11 +1199,12 @@ hl.on("hyprland.start", function()
   -- session branch: it has systemd units of its own (hyprglass-apply,
   -- hyprglass-watch) that load and configure it after the login layer is gone,
   -- and the login screen must not be glazed. Re-runnable in a live session:
-  -- `hyprexpo-setup` / `hyprwindowshade-setup` / `hyprwinwrap-setup` (also in
-  -- PATH).
+  -- `hyprexpo-setup` / `hyprwindowshade-setup` / `hyprwinwrap-setup` /
+  -- `gloview-setup` (also in PATH).
   hl.exec_cmd("@hyprexpo_setup@")
   hl.exec_cmd("@hyprwindowshade_setup@")
   hl.exec_cmd("@hyprwinwrap_setup@")
+  hl.exec_cmd("@gloview_setup@")
 
   if loginPhase then
     -- Login phase: start the login layer instead of the desktop. Nothing of the
