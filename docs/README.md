@@ -323,6 +323,12 @@ Service override examples
 - sysctl: network/security sysctls in `modules/system/kernel/sysctl.nix`.
 - localmodconfig: kernel size reduction in `modules/system/kernel/localmodconfig.nix`
   (`minimize.nix` was removed in 62e6d590).
+- Attack-surface trim: `modules/system/kernel/overlay.config` H19 removes drivers for hardware
+  this host does not have (legacy SATA/USB host controllers, vendor Bluetooth helpers, TV/radio/
+  SDR tuners and IR, Intel platform glue, NVMe in-band authentication, the Intel KVM flavour, the
+  FTP conntrack helpers); H20 fixes three `base.config` lines kconfig rejects. The built kernel
+  ships 209 modules instead of 258, and the initrd module list in `modules/system/boot.nix` no
+  longer names the removed ones.
 - Feature toggles: tune via `profiles.performance.*` and `profiles.security.*`; params derive from
   these.
 
