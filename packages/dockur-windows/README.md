@@ -9,6 +9,9 @@ dockur copies the mounted `/oem` onto the Windows disk at `C:\OEM` and runs `C:\
 during setup (the built-in OEM_SCRIPT hook). `install.bat` invokes `setup.ps1`, which:
 
 1. sets the system WinINET proxy (`HKLM` → `192.168.0.11:10812`) — for GLM and GUI apps;
+1. copies that value into every loaded user hive (`proxy-sync.ps1`, logon hook `GLMProxySync`) —
+   WinINET reads HKCU before HKLM, so a later host LAN move would otherwise leave the user hive on
+   the old alias;
 1. sets the Edge policy (`HKLM\Software\Policies\Microsoft\Edge` → `socks5://192.168.0.11:10811`);
 1. writes the env vars ALL_PROXY/HTTPS_PROXY/HTTP_PROXY (machine-wide);
 1. silently installs everything from `oem/installers/` (Inno: /VERYSILENT, NSIS: /S, MSI: /qn);
@@ -64,6 +67,19 @@ bridge script is placed in `C:\OEM\` during setup (or downloaded from
 
 After Windows boots: the host should show the VM's proxy connections (`ss -tnp | grep 10812`), and
 inside the VM — `C:\OEM\provisioned.txt` and logs.
+
+## After an uplink move (host re-addressed)
+
+`setup.ps1` runs only during provisioning, so when the host alias changes (`.88` → `.11` on
+2026-10-15) apply the new value in the running VM once — `proxy-sync.ps1 -Proxy` writes HKLM and
+every user hive:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\OEM\proxy-sync.ps1 -Proxy 192.168.0.11:10812
+```
+
+Without it the user hive keeps the old alias and every WinINET app (OneDrive, GLM) sits in
+`SYN-SENT` to the dead address.
 
 ## Pitfall: .11 alias inside the container
 
