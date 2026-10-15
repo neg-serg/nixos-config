@@ -150,6 +150,40 @@
             };
           };
 
+          # GloView: macOS Mission-Control-style overview — live previews of
+          # every window plus a workspace strip. Upstream ships CMake + hyprpm
+          # and pins Hyprland 0.56.2 in its own flake; the rev below is main as
+          # of 2026-10-15 (no release tag, and its hyprpm.toml pins no commit),
+          # so the plugin is built here against the same nixpkgs Hyprland the
+          # session runs. CMake pkg-configs hyprland + glesv2 (libglvnd, already
+          # in Hyprland's buildInputs) and searches for a Lua module named
+          # lua/lua5.4/luajit; nixpkgs' lua5_5 installs the generic lua.pc, so
+          # putting lua5_5 first links the interpreter Hyprland itself runs.
+          # The .so is dlopen'd by the generated gloview-setup helper at session
+          # start (see main.nix).
+          gloview = final.hyprlandPlugins.mkHyprlandPlugin {
+            pluginName = "gloview";
+            version = "0.3.0";
+
+            src = final.fetchFromGitHub {
+              owner = "fedsfarm";
+              repo = "gloview";
+              rev = "f08f38e242107bc4459813b4fb4e5e8ff7916dce";
+              hash = "sha256-sG6YUV6Se7kNk4F6+dKRU1mmMFvfrKTwrYw3uK0SInI=";
+            };
+
+            nativeBuildInputs = [ final.cmake ];
+            buildInputs = [ final.lua5_5 ];
+            env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
+
+            meta = {
+              homepage = "https://github.com/fedsfarm/gloview";
+              description = "macOS Mission Control-style window overview for Hyprland";
+              license = final.lib.licenses.gpl3Plus;
+              platforms = final.lib.platforms.linux;
+            };
+          };
+
           # HyprWindowShade: per-window, per-layer and per-class fragment shaders
           # (HyprShade-compatible GLSL ES 3.20). Upstream ships a Makefile for hyprpm;
           # the rev is the commit its hyprpm.toml pins for the Hyprland commit we run
