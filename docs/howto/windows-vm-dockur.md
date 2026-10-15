@@ -192,6 +192,12 @@ while the MIDI bridge kept a dead connection) — rate-limited to three restarts
 restart. Placement check: `glm-adapter status` → `VM: adapter attached (1)`, which on the host means
 the adapter interface carries the `usbfs` driver.
 
+The restart only re-claims the adapter while nothing else holds it: after the previous QEMU exits
+the kernel binds `usbhid` again, and QEMU fails to claim the device from the driver (2026-10-15:
+three `auto` restarts in a row left the adapter on the host). Both `cmd_attach` and the `auto`
+restart path therefore detach `usbhid` first (`glm-adapter-priv to-vm`) and only then re-create the
+VM.
+
 ### The restart lock must not leak into the container
 
 `glm-adapter` serializes restarts with `flock` on `~/.local/state/glm-adapter/restart.lock`. bash
