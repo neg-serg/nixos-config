@@ -314,8 +314,8 @@ behind Hyprland.
   hook runs `hyprdynamiccursors-setup`, which `hyprctl plugin load`s `libhypr-dynamic-cursors.so`
   and pushes `files/gui/hypr/hyprdynamiccursors.lua` through `hyprctl eval`. The file sets
   `plugin.dynamic_cursors.mode = "stretch"` (the Lua spelling the plugin README documents; the raw
-  config section is `plugin:dynamic-cursors`). The keys only exist after the plugin registered
-  them, so the config cannot live in `hyprland.lua` itself.
+  config section is `plugin:dynamic-cursors`). The keys only exist after the plugin registered them,
+  so the config cannot live in `hyprland.lua` itself.
 - **Patch** (`hypr-dynamic-cursors-hyprland-056-signature.patch`): the pinned rev predates Hyprland
   0.56.2, where `CPointerManager::renderSoftwareCursorsFor` gained a `screencopy` bool before
   `forceRender`. The plugin's hardcoded mangled signature still described the one-bool form, so the
