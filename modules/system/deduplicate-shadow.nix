@@ -18,7 +18,6 @@ let
     # Core system users
     "nobody"
     "nscd"
-    "pcscd"
     "polkituser"
     "rtkit"
     "sshd"
