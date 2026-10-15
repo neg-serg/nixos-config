@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """glm-midi-relay — one-way MIDI relay to the dockur Windows VM.
 
-Topology constraint: the VM shares the host IP (192.168.2.87 via pasta), so
+Topology constraint: the VM shares the host IP (192.168.0.10 via pasta), so
 bidirectional UDP (RTP-MIDI) handshakes die on the host->VM reply path. The
 only reliable host->VM channel is a connection the VM *initiates* (outbound
-TCP through passt works, replies flow back — same as the .88:10812 proxy).
+TCP through passt works, replies flow back — same as the .11:10812 proxy).
 
 Design:
   - the VM-side bridge (oem/glm-midi-bridge.ps1) connects OUT to :9003

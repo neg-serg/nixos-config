@@ -32,7 +32,7 @@ let
   '';
 
   # pasta runs with --config-net, which copies the host uplink's whole address
-  # list into the container's netns — including the 192.168.2.88 alias the guest
+  # list into the container's netns — including the 192.168.0.11 alias the guest
   # needs to reach the host on (:9003 MIDI relay, 10811/10812 VM proxy). While
   # that alias is present inside the container the guest's packets are answered
   # by the container itself — "Connection refused" — so the MIDI bridge holds a

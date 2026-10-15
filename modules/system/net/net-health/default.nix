@@ -75,8 +75,8 @@ in
     };
 
     networking.firewall.interfaces = {
-      net0.allowedTCPPorts = [ 2586 ]; # ntfy server (MikroTik LAN 10.0.2.140/27)
-      net1.allowedTCPPorts = [ 2586 ]; # ntfy server (uplink, router 192.168.2.x)
+      net0.allowedTCPPorts = [ 2586 ]; # ntfy server (second NIC, DHCP LAN)
+      net1.allowedTCPPorts = [ 2586 ]; # ntfy server (uplink, router 192.168.0.x)
       br0.allowedTCPPorts = [ 2586 ]; # ntfy server (libvirt bridge)
     };
 
