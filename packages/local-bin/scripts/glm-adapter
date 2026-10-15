@@ -589,6 +589,12 @@ cmd_auto() {
     notify_once "missing" firing "адаптера нет на USB"
     return 0
   fi
+  # QEMU cannot claim the device while usbhid holds it (2026-10-15: three auto
+  # restarts in a row left the adapter on the host and burned the hourly budget
+  # until the driver was detached by hand); detach it first, as cmd_attach does.
+  warn "unbinding usbhid from the adapter"
+  sudo "$PRIV" to-vm 2>/dev/null || true
+  sleep 2
   if vm_restart; then
     ok "adapter attached to the VM (after restarting $CT)"
     verify_chain
