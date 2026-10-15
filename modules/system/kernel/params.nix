@@ -53,56 +53,6 @@ let
     "nowatchdog"
     "kernel.nmi_watchdog=0"
   ];
-  obscure_network_protocols = [
-    "ax25"
-    "netrom"
-    "rose"
-    "dccp"
-    "sctp"
-    "rds"
-    "tipc"
-    "n-hdlc"
-    "x25"
-    "decnet"
-    "econet"
-    "af_802154"
-    "ipx"
-    "appletalk"
-    "psnap"
-    "p8023"
-    "p8022"
-    "can"
-    "atm"
-  ];
-  old_rare_insufficiently_audited_fs = [
-    "adfs"
-    "affs"
-    "befs"
-    "bfs"
-    "cramfs"
-    "efs"
-    "erofs"
-    "exofs"
-    "freevxfs"
-    "gfs2"
-    "hfs"
-    "hfsplus"
-    "hpfs"
-    "jffs2"
-    "jfs"
-    "ksmbd"
-    "minix"
-    "nilfs2"
-    "omfs"
-    "qnx4"
-    "qnx6"
-    "squashfs"
-    "sysv"
-    "ufs"
-    "vivid"
-    "udf"
-  ];
-
   base_params = [
     # Keep classic interface names for consistency
     "net.ifnames=0"
@@ -182,25 +132,14 @@ in
           "ntsync"
           "i2c-dev" # needed by OpenRGB for RGB controller access via /dev/i2c-*
         ];
-        blacklistedKernelModules = [
-          "sp5100_tco"
-          "snd_hdspm" # conflicts with DKMS snd-hdspe (RME HDSPe AIO Pro)
-          "snd_aloop" # races with USB audio, PipeWire provides loopback
-          "snd_hda_intel" # unused — GPU audio is not needed
-          # NB: snd_usb_audio is NOT blacklisted — the Expressive E Osmose (USB MIDI)
-          # needs it. The ASUS "USB Audio" (0b05:1b7c) is instead blocked by a
-          # modalias alias in extraModprobeConfig below: same boot-time win, no
-          # collateral damage to real USB audio/MIDI gear.
-        ]
-        # TPM transport drivers stay blacklisted unless TPM-backed sudo is
-        # enabled (features.security.tpmSudo) — see modules/security/tpm-sudo.nix.
-        ++ lib.optionals (!(config.lib.neg.enabled "security.tpmSudo")) [
-          "tpm"
-          "tpm_crb"
-          "tpm_tis"
-        ]
-        ++ obscure_network_protocols
-        ++ old_rare_insufficiently_audited_fs;
+        # No module blacklist: every driver that used to need one is either
+        # compiled out of the kernel (sp5100_tco, snd_hdspm/snd_aloop/
+        # snd_hda_intel, the obscure network protocols and the legacy
+        # filesystems — overlay.config H19) or built in (the TPM stack,
+        # TCG_TPM=y), so blacklisting their module names could not do anything.
+        # The one autoload still worth blocking (the ASUS onboard "USB Audio")
+        # is pinned below by modalias instead; snd_usb_audio must stay
+        # available for the Expressive E Osmose.
 
         # Pin the ASUS onboard "USB Audio" (0b05:1b7c) out of the autoload path:
         # probing it costs ~11 s and holds udevadm settle until the boot is over.

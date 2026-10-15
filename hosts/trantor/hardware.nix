@@ -131,10 +131,6 @@ in
 
     # Enable AutoFDO (requires building kernel with Clang)
     kernel.autofdo.enable = false;
-
-    blacklistedKernelModules = kernelData.blacklistedKernelModules;
-    # No separate initrd blacklist option; TPM modules are excluded from initrd
-    # via modules/system/boot.nix when security.tpm2.enable = false
   };
 
   # kexec preparation hooks
