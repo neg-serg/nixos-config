@@ -103,15 +103,9 @@ in
     "snd-seq-midi" # ALSA sequencer raw MIDI clients
   ];
 
-  # tpm/tpm_crb/tpm_tis and snd-hdspm already blacklisted in modules/system/kernel/params.nix
-  blacklistedKernelModules = [
-    "8250"
-    "serial8250"
-    "thunderbolt" # No Thunderbolt hardware connected; probe times out (-110) at boot
-  ]
-  ++ lib.optionals (!(config.lib.neg.enabled "security.tpmSudo")) [
-    # TPM transport core; needed by fTPM for TPM-backed sudo
-    # (modules/security/tpm-sudo.nix).
-    "tpm_tis_core"
-  ];
+  # No module blacklist: 8250/serial8250 are built into the kernel
+  # (CONFIG_SERIAL_8250=y), and the USB4/Thunderbolt module is pulled in as a
+  # dependency of typec, so a blacklist entry cannot stop it (no Thunderbolt
+  # hardware is used anyway). tpm_tis_core is built in as well — see the TPM
+  # note in modules/system/kernel/params.nix.
 }
