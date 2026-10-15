@@ -22,6 +22,10 @@ let
   };
   files = import ./files.nix { inherit lib neg config; };
 
+  # Unit constructor for the session-phase unit below — the same helper
+  # services.nix builds for its modules.
+  systemdUser = neg.systemdUser lib;
+
   # hy3 and hyprspace were removed for the nixos-unstable (Hyprland 0.56)
   # migration (their 0.55 CCompositor/monitor API no longer compiles).
   # hyprland.lua no longer contains @HY3@/@HYPRSPACE@ placeholders, so no
@@ -287,17 +291,41 @@ let
   # once the .so is loaded, so files/gui/hypr/hyprdynamiccursors.lua is pushed
   # with hyprctl eval. Re-runnable in a live session
   # (`hyprdynamiccursors-setup`).
+  #
+  # The session branch fires this while the login-phase config reload is still
+  # settling, and a plugin load issued in that window does not stick: on
+  # 2026-10-15 both login and a manual `hyprctl reload` left the plugin
+  # unloaded, while a manual run right after worked. exec_cmd discards both
+  # streams, so the failure was silent — log every run and poll until the
+  # plugin really reports as loaded instead of trusting the first load.
   hyprdynamiccursorsSetup = pkgs.writeShellScriptBin "hyprdynamiccursors-setup" ''
     hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
     plugin=${pkgs.hyprlandPlugins."hypr-dynamic-cursors"}/lib/libhypr-dynamic-cursors.so
 
-    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
-    "$hyprctl_bin" plugin load "$plugin" || true
+    exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hyprdynamiccursors-setup.log" 2>&1
+    echo "--- $(date '+%F %T') hyprdynamiccursors-setup"
+
+    loaded() {
+      "$hyprctl_bin" plugin list 2>/dev/null | grep -q "^Plugin dynamic-cursors "
+    }
+
+    # ~5 s budget: enough for the reload to settle and for a load that gets
+    # wiped by the reload finalization to be retried.
+    for _ in $(seq 1 20); do
+      loaded && break
+      "$hyprctl_bin" plugin load "$plugin" || true
+      sleep 0.25
+    done
+
+    if ! loaded; then
+      echo "plugin never reported as loaded"
+      exit 1
+    fi
 
     # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
     # comment) as a flag, hence the leading newline.
     "$hyprctl_bin" eval "
-    $(cat ${pkgs.writeText "hyprdynamiccursors.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprdynamiccursors.lua"))})" || true
+    $(cat ${pkgs.writeText "hyprdynamiccursors.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprdynamiccursors.lua"))})"
   '';
   hyprlandLuaText =
     builtins.replaceStrings
@@ -338,7 +366,25 @@ in
         ];
 
         systemd.user.targets = services.systemdTargets;
-        systemd.user.services = services.systemdServices;
+        systemd.user.services = services.systemdServices // {
+          # The greetd flow parses hyprland.lua exactly once: the login branch
+          # returns before the session branch that execs
+          # hyprdynamiccursors-setup, and nothing re-parses the config after the
+          # password (hypr-start restarts units, it does not reload), so the
+          # exec'd helper never ran on a normal login — the plugin stayed
+          # unloaded until the setup was run by hand (observed 2026-10-15).
+          # Start it with the session target instead, the way hyprglass is
+          # loaded by its units; the helper is idempotent (it skips an
+          # already-loaded plugin and re-pushes the stretch settings).
+          hyprdynamiccursors = systemdUser.mkUserService {
+            presets = [ "oneshot" ];
+            description = "Load hypr-dynamic-cursors and push the cursor stretch settings";
+            wantedBy = [ "hyprland-session.target" ];
+            bindsTo = [ "hyprland-session.target" ];
+            after = [ "hyprland-session.target" ];
+            serviceConfig.ExecStart = "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup";
+          };
+        };
       }
 
       (files.generateFileLinks {
