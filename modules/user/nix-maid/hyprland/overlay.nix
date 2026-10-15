@@ -238,6 +238,21 @@
               platforms = final.lib.platforms.linux;
             };
           };
+
+          # HyprDynamicCursors: stretch/tilt/rotate cursor effects plus shake
+          # to find. nixpkgs pins 0-unstable-2026-07-21, which predates
+          # Hyprland 0.56.2: renderSoftwareCursorsFor gained a `screencopy`
+          # bool before `forceRender`, so the plugin's hardcoded
+          # mangled-signature check rejected the load ("unexpected function
+          # signature") and the hook handler forwarded one bool too few. The
+          # local patch updates the typedef, handler and signature string to
+          # the 0.56.2 arity; everything else in the plugin compiles against
+          # the same headers it is built with. The .so is dlopen'd by the
+          # generated hyprdynamiccursors-setup helper at session start (see
+          # main.nix).
+          "hypr-dynamic-cursors" = prev.hyprlandPlugins."hypr-dynamic-cursors".overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [ ./hypr-dynamic-cursors-hyprland-056-signature.patch ];
+          });
         };
       })
     ];
