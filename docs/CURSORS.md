@@ -2,6 +2,12 @@
 
 - Current theme: Alkano-aio, size 23 set in `modules/user/nix-maid/gui/theme.nix`
   (XCURSOR/HYPRCURSOR/GTK/Stylix all aligned).
+- hyprcursor assets are compiled at build time by the theme package itself
+  (`hyprcursor-util --extract` with `xcur2png`, then `--create`) next to `cursors/`: upstream is
+  XCursor-only and libhyprcursor's `themeAccessible()` requires `manifest.hl`, so before 2026-10-15
+  `HYPRCURSOR_THEME` silently resolved to nothing and the compositor drew XCursor. Check with
+  `ls /run/current-system/sw/share/icons/Alkano-aio/manifest.hl` or a libhyprcursor harness
+  (`hyprcursor_manager_valid` → 1); `hyprctl setcursor Alkano-aio 23` re-reads the theme live.
 - Extracted pointer frames (generated locally, NOT tracked in git — there is no `docs/cursors/` tree
   in a fresh checkout): `docs/cursors/alkano/left-main_000.png`…`left-main_029.png` with metadata
   `docs/cursors/alkano/left-main.conf` (sizes/hotspots) plus reports
