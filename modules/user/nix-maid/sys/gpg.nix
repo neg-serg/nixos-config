@@ -30,12 +30,6 @@ let
     enable-ssh-support
   '';
 
-  # Scdaemon Config
-  scdaemonConf = ''
-    disable-ccid
-    pcsc-shared
-    reader-port "Yubico Yubi"
-  '';
 in
 {
   config = lib.mkIf (cfg.enable or false) (
@@ -96,7 +90,6 @@ in
       # 1. Config Files via Maid
       (neg.mkHomeFiles {
         ".gnupg/gpg-agent.conf".text = agentConf;
-        ".gnupg/scdaemon.conf".text = scdaemonConf;
         # Ensure permissions for GPG dir? Maid handles file creation, but usually gnupg handles dir perms on run.
       })
     ]

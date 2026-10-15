@@ -36,8 +36,8 @@ modules/
 | `monitoring`    | System monitoring — Alertmanager, sysstat, vnstat                                                                                        |
 | `nix`           | Nix daemon — caches, GC, nix-ld, Hyprland, settings                                                                                      |
 | `profiles`      | Host profiles — feature presets (desktop, gaming, dev) + system toggles (debug, performance, security, vm, work, services) — auto-import |
-| `secrets`       | sops-nix secrets — pass, yubikey, pkgs                                                                                                   |
-| `security`      | Hardening — AppArmor, sudo, PAM limits, polkit, pcscd                                                                                    |
+| `secrets`       | sops-nix secrets — pass, pkgs                                                                                                            |
+| `security`      | Hardening — AppArmor, sudo, PAM limits, polkit                                                                                           |
 | `servers`       | Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound                                                                    |
 | `shell`         | Shell — Zsh with plugins, Oh My Posh, aliases, env vars                                                                                  |
 | `system`        | Core system — boot (Limine), kernel, networking, systemd, users, virtualisation                                                          |
