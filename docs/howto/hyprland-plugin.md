@@ -305,6 +305,29 @@ behind Hyprland.
   background window matching" error. On the unpatched build the same sequence left the window
   untouched and `focus` failed: the eval-pushed spec never reached `gMergedSpecs`.
 
+### hypr-dynamic-cursors (cursor stretch)
+
+- **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — the plugin comes from nixpkgs
+  (`hyprlandPlugins."hypr-dynamic-cursors"`, `0-unstable-2026-07-21`), so the overlay only adds a
+  patch instead of re-pinning a rev.
+- **Load + configure**: the same load-then-push pattern as hyprglass/hyprexpo — the `hyprland.start`
+  hook runs `hyprdynamiccursors-setup`, which `hyprctl plugin load`s `libhypr-dynamic-cursors.so`
+  and pushes `files/gui/hypr/hyprdynamiccursors.lua` through `hyprctl eval`. The file sets
+  `plugin.dynamic_cursors.mode = "stretch"` (the Lua spelling the plugin README documents; the raw
+  config section is `plugin:dynamic-cursors`). The keys only exist after the plugin registered
+  them, so the config cannot live in `hyprland.lua` itself.
+- **Patch** (`hypr-dynamic-cursors-hyprland-056-signature.patch`): the pinned rev predates Hyprland
+  0.56.2, where `CPointerManager::renderSoftwareCursorsFor` gained a `screencopy` bool before
+  `forceRender`. The plugin's hardcoded mangled signature still described the one-bool form, so the
+  load-time check aborted with "unexpected function signature" (surfaced by `hyprctl plugin load` as
+  `plugin crashed/threw in main: std::exception`); the hook handler and the original-call typedef
+  forwarded one bool too few as well. The patch updates the typedef, the handler parameters and the
+  signature string to the 0.56.2 arity. Bump the patch together with the rev; the override can go
+  once nixpkgs carries a rev pinned to 0.56.2.
+- **Usage**: `stretch` is one of the simulation modes (`tilt`, `rotate`, `stretch`, `none`); the
+  shake-to-find magnification is independent and stays on by default. After a successful load,
+  `hyprctl getoption plugin:dynamic-cursors:mode` prints `str: stretch`.
+
 ## Testing a plugin without endangering the session
 
 Plugins run inside the compositor, so a crashing one takes the whole session with it (that is how
