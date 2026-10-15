@@ -55,6 +55,30 @@
           "xhci_pci_prom21" # AMD 800-series chipset USB (see above)
         ];
       }
+      # Modules dropped from the kernel config (overlay.config H19). nixpkgs'
+      # includeDefaultModules lists them for the initrd, and
+      # allowMissingModules=false fails the initrd build when a listed module
+      # is absent from the kernel, so the references are dropped explicitly.
+      {
+        availableKernelModules = {
+          sata_nv = lib.mkForce false;
+          sata_via = lib.mkForce false;
+          sata_sis = lib.mkForce false;
+          sata_uli = lib.mkForce false;
+          pata_marvell = lib.mkForce false;
+          uhci_hcd = lib.mkForce false;
+          ehci_hcd = lib.mkForce false;
+          ehci_pci = lib.mkForce false;
+          ohci_hcd = lib.mkForce false;
+          ohci_pci = lib.mkForce false;
+          hid_lenovo = lib.mkForce false;
+          hid_apple = lib.mkForce false;
+          hid_roccat = lib.mkForce false;
+          hid_microsoft = lib.mkForce false;
+          hid_cherry = lib.mkForce false;
+          hid_corsair = lib.mkForce false;
+        };
+      }
       (lib.mkIf (config.profiles.performance.optimizeInitrdCompression or false) {
         # Use function form to avoid nixpkgs initrd-compressor-meta bug
         # where pkgs.lz4 resolves to the dev output (no binary)
