@@ -12,7 +12,6 @@
   flow = pkgs.neg.flow; # terminal dashboard for real-time network throughput
   lsfg-vk = pkgs.neg.lsfg-vk; # Vulkan frame-gen layer (LSFG on Linux; CC BY-NC-ND, needs Lossless Scaling on Steam)
   nixard = pkgs.neg.nixard; # TUI for exploring NixOS package closures
-  fix = pkgs.neg.fix; # Fast Nix language evaluator (patched master; build/switch helper)
   geekbench-ai = pkgs.neg.geekbench-ai; # Geekbench AI — on-device inference benchmark (unfree binary)
   neru = pkgs.neg.neru; # Desktop keyboard navigation: hints, grids, vim-style modes (prebuilt binary)
 
