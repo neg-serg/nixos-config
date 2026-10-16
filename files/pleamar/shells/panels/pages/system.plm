@@ -1,0 +1,61 @@
+// pages/system.plm — the system monitor drawer (`drawer == system`).
+//
+// pleamar has no system-monitor service, so this drawer is fed by the
+// pleamar-sysmon worker (procfs/sysfs; scripts/helpers/README.md) while it is
+// open: one sample per second with cpu_percent, mem/swap, disk rates, gpu and
+// a cpu temperature. panels.luau turns each sample into one `tiles` record —
+// label, formatted value, a 0..1 level and a tone 0 accent / 1 amber / 2 warn —
+// so the scene stays a pure drawing of whatever the worker last said. A worker
+// that is absent or died leaves the tiles at their last sample and writes
+// `sysmon.err`; `sysmon_online` is 0 and the header says offline.
+//
+// The legacy SystemMonitorPopup was a journal/TTY dashboard fed by journalctl
+// and log files, which this slice does not port: the worker is the metrics
+// source the port froze (INTERFACES.md §7), the journal dashboard is deferred.
+
+part System {
+    component SystemDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+        size: 1040 * scale, 420 * scale
+
+        group {
+            move: (screen.width - min(1040 * scale, screen.width - 48 * scale)) / 2, screen.height - (420 + bar.height + bar.gap) * scale + (1 - lift) * (420 + bar.height + bar.gap) * scale
+
+            // ----***----------------------------- the card
+            Capsule(1040, 420, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: scale)
+
+            // ----***---------------------------- header
+            text "System monitor" { at: 16 * scale, 22 * scale; anchor: left center; size: 1 * type.body * text_scale * scale; weight: 1 * weight.medium; color: ink }
+            ellipse { at: 900 * scale, 22 * scale; radius: 5 * scale; color: pick(sysmon_online, warn, volume.high) }
+            text pick(sysmon_online, "offline", "live") { at: 914 * scale, 22 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+
+            group { move: 980 * scale, 12 * scale
+                Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
+                text "Close" { at: 22 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
+                zone box close { from: 0, 0; size: 44 * scale, 20 * scale; corner: 10 * scale
+                    cursor: pointer; label: "Close {drawer}"; role: button }
+                on press close { drawer = none }
+            }
+
+            box { from: 16 * scale, 52 * scale; size: 1008 * scale, 1 * scale; color: ink; opacity: ink.subtle }
+            text sysmon.err { at: 16 * scale, 42 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: warn }
+
+            // ----***---------------------------- samples
+            text "Sampling…" { at: 520 * scale, 240 * scale; anchor: center; size: 1 * type.body * text_scale * scale; color: ink.off; show: tiles.total == 0 }
+
+            column rows { at: 16 * scale, 64 * scale; gap: 6 * scale
+                for t in tiles {
+                    group {
+                        size: 1008 * scale, 48 * scale
+                        box { from: 0, 0; size: 1008 * scale, 48 * scale; corner: 4 * scale; color: ink; opacity: ink.hover }
+                        text t.label { at: 14 * scale, 24 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+                        text t.value { at: 994 * scale, 15 * scale; anchor: right center; size: 1 * type.body * text_scale * scale; weight: 1 * weight.medium; color: ink }
+                        box { from: 14 * scale, 40 * scale; size: 980 * scale, 5 * scale; corner: 2.5 * scale; color: ink; opacity: ink.active }
+                        box { from: 14 * scale, 40 * scale; size: 980 * t.level * scale, 5 * scale; corner: 2.5 * scale; color: pick(t.tone, accent, amber, warn) }
+                    }
+                }
+            }
+        }
+    }
+
+    SystemDrawer() { show: drawer == system }
+}
