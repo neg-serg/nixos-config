@@ -31,6 +31,13 @@ while IFS= read -r -d '' file; do
     continue
   fi
   rel="${file#./}"
+  # Vendored Chaldea exports stay byte-identical to upstream
+  # (files/quickshell/Chaldea/), and one upstream README names a CJK design
+  # glyph in its prose. The policy below covers docs this repo authors, so the
+  # vendored tree is skipped by prefix rather than by content.
+  case "$rel" in
+    files/quickshell/Chaldea/*) continue ;;
+  esac
   case " $GLYPH_ALLOWLIST " in
     *" $rel "*) continue ;;
   esac

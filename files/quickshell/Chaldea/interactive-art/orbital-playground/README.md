@@ -1,0 +1,47 @@
+# Tsugumori / Orbital playground
+
+The owner-supplied design now has an interactive browser preview and a native QML export. Both use the same simulation and drawing rules in `ArtEngine.js`.
+
+## Run
+
+Save each file from the output selector into a widget folder, preserving the displayed file names and subfolders. Keep `Widget.qml`, its QML helpers, and `ArtEngine.js` together. With Quickshell 0.3.0 and Qt 6.11.2 installed, run:
+
+```sh
+qs -p /absolute/path/to/the/widget-folder/shell.qml
+```
+
+The launcher opens a regular, resizable window and scrolls when the controls need more room. It uses Qt Quick, Qt Quick Controls Basic, and Qt Quick Layouts. To embed the component in a QML layout:
+
+```qml
+import "./orbital-playground" as Art
+
+Art.Widget {
+    width: 740
+}
+```
+
+The artwork adapts to the component width. Font families use installed fonts with system fallback. No remote assets are requested.
+
+Orbit tracks use the available canvas width while keeping bodies inside the drawing area. Body sizes scale with the canvas, and brighter front wires distinguish them from the dimmer rear wires. Labels use separate callouts that avoid other labels and bodies, including when several orbits converge. Drawing and dragging share the same geometry in the browser and native QML.
+
+## Interaction and settings
+
+Select a body by clicking it or choosing a preview workspace. Drag a body and release it to change its orbit and momentum. Orbit changes the radius; Push and Reverse change its travel. The five workspaces are sample labels inside the artwork. Accent color adjusts its appearance.
+
+Give it a push increases the selected body's speed from its current position. Reverse changes direction without moving it to another point on the orbit. Both preserve the current play/pause state; a push while paused takes effect when you resume.
+
+Use the customization sidebar in the library, or the local controls in standalone previews and native QML. Pause freezes continuous motion while leaving controls usable. The browser starts paused when reduced motion is preferred. In native QML, set `paused: true` or use the pause control. Hiding a native component stops its animation and releases pointer drags.
+
+Appearance changes and Reset preserve the current scene and collections. All interaction state stays in memory for the component’s lifetime. Leaving the browser preview or closing the native component resets it. Copied QML and individual file downloads contain the same settings snapshot; they do not include the current scene or collections.
+
+## Host integration
+
+`paused`, `running`, and `statusText` expose the component’s current state. The native template binds Chaldea settings to the component. `ArtEngine.js` contains this design’s original drawing and interaction logic, shared with the browser host. Chaldea’s frontend generator creates the QML template output.
+
+## Source and license
+
+The design is from `Lib-assests/interactive-art/tsugumori-play-lab.html`. It remains its own widget entry; the source archive is unchanged.
+
+Source SHA-256: `7602b97ddbef589470b84531394c4302b5b684a4c96737fad5a933f110520529`.
+
+Original drawing rules, preview code, and native implementation use 0BSD. The output file list includes `LICENSE`.
