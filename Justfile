@@ -153,46 +153,6 @@ check-dsh-sessions dsh-path:
 rustfmt:
     bash "{{repo_root}}/scripts/dev/check-rustfmt.sh" "{{repo_root}}" fix
 
-docs-modules:
-    # Generate modules documentation (opt-in)
-    nix build .#docs-modules -o .result-docs --option substitute false
-    mkdir -p docs/howto
-    cp -f .result-docs/modules.md docs/howto/modules.md
-    rm -f .result-docs
-    chmod +w docs/howto/modules.md
-    echo "Generated docs/howto/modules.md"
-
-# Regenerate the codebase map (docs/codebase.md) for agents/quick orientation
-codebase:
-    "{{repo_root}}/packages/local-bin/bin/gen-codebase" "{{repo_root}}"; \
-    nix fmt # normalize markdown (mdformat) so the artifact is fmt-stable
-
-# Fail if the committed generated docs drift from what the generators produce.
-# They are checked-in artifacts (docs/codebase.md, docs/howto/modules.md), so a
-# structure/flag change that forgets to regenerate them is a silent lie; run
-# this before committing such a change (and after every audit, see
-# docs/runbook-audit.md).
-docs-guard:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    cd "{{repo_root}}"
-    just codebase
-    just docs-modules
-    just fmt
-    # -I: gen-codebase stamps the document with the generation time, so a
-    # timestamp-only change must not count as drift (real content changes still
-    # produce other lines in the hunk and fail the check).
-    if ! git diff --quiet -I 'Generated: [0-9]' -- docs/codebase.md docs/howto/modules.md; then
-      echo "Generated docs are stale — regenerate and commit them:" >&2
-      git diff --stat -I 'Generated: [0-9]' -- docs/codebase.md docs/howto/modules.md >&2
-      exit 1
-    fi
-    # The check above ignores the timestamp, but regenerating rewrites it, which
-    # would leave the tree dirty after a guard run that passed. Drop that one
-    # line's change; anything else would have failed the check already.
-    git checkout -- docs/codebase.md 2>/dev/null || true
-    echo "generated docs are fresh"
-
 # Update the flake lock (all inputs). The agent session sandbox cannot write $HOME
 # (Landlock reports it writable but denies the opens), so fall back to the repo-local
 # nix cache the way .agent/tmp-nix-cache is already used by the build recipes.
@@ -255,9 +215,8 @@ unbound-hosts:
 # Freshness gate for the same generated file: reruns the generator against a
 # scratch root (only the source files are copied in) and diffs the result, so a
 # stale committed file fails here instead of silently keeping old host entries.
-# Not wired into the lint pass or the pre-commit hook — like docs-guard it runs
-# a generator, which is slower than lint. Run it (and docs-guard) before
-# committing changes to either source file.
+# Not wired into the lint pass or the pre-commit hook — it runs a generator, which is slower than
+# lint. Run it before committing changes to either source file.
 unbound-hosts-guard:
     #!/usr/bin/env bash
     set -euo pipefail
