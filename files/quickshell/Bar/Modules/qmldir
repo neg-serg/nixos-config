@@ -1,6 +1,7 @@
 module qs.Bar.Modules
 AudioEndpointTile 1.0 AudioEndpointTile.qml
 BuildStatus 1.0 BuildStatus.qml
+BuildStatusPopup 1.0 BuildStatusPopup.qml
 Calendar 1.0 Calendar.qml
 ClockWidget 1.0 ClockWidget.qml
 CustomTrayMenu 1.0 CustomTrayMenu.qml
