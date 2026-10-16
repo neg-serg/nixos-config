@@ -17,6 +17,9 @@ let
   # hosts/trantor/telegram.nix (socks-proxy retry lives there).
   crashLoopScript = pkgs.replaceVars ./notify/telegram-crashloop.py {
     sender = config.trantor.telegram.sender;
+    # The scanner is a system service (root), so the user scope needs the
+    # target manager spelled out (`systemctl --user --machine neg@.host`).
+    userManager = "${config.lib.neg.mainUser}@.host";
   };
 in
 {

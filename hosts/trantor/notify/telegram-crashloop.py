@@ -27,13 +27,20 @@ AUTO_RESTART = {
 
 
 SYSTEMCTL = "/run/current-system/sw/bin/systemctl"
+# The scanner runs as a system service (root), so the user scope has to name
+# the target manager: a bare `systemctl --user` would talk to root's own
+# (nonexistent) manager. Filled in by notify-crashloop.nix, e.g. "neg@.host".
+USER_MANAGER = "@userManager@"
 
 
 def systemctl_cmd(scope):
-    # scope: "system" | "user". The scanner runs as a user timer
-    # (notify-crashloop.nix) but watches both managers, so a crash-looping
-    # koito (system) and listenbrainz-mpd (user) are both caught.
-    return [SYSTEMCTL] + (["--user"] if scope == "user" else [])
+    # scope: "system" | "user". Watches BOTH managers, so a crash-looping
+    # koito (system) and listenbrainz-mpd (user) are both caught. If the user
+    # manager is not running the call comes back empty and the scan simply
+    # skips that scope.
+    if scope == "user":
+        return [SYSTEMCTL, "--user", "--machine", USER_MANAGER]
+    return [SYSTEMCTL]
 
 
 def unit_key(scope, unit):
