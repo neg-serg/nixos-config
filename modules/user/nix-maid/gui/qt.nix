@@ -20,7 +20,7 @@ in
           pkgs.kdePackages.svgpart # SVG viewer KPart
         ];
         environment.sessionVariables = {
-          QT_QPA_PLATFORMTHEME = "qt6ct";
+          QT_QPA_PLATFORMTHEME = "hyprqt6engine";
           QT_XDG_DESKTOP_PORTAL = "1";
         };
       }
@@ -44,6 +44,20 @@ in
           ];
       }
       (neg.mkHomeFiles {
+        # hyprqt6engine reads its own hyprlang config; keep it beside the qt6ct
+        # one so a switch is just a flip of QT_QPA_PLATFORMTHEME. The style is
+        # the same Kvantum theme the qt6ct config selects, the palette comes
+        # from Kvantum's matching .colors file (KF6ColorScheme), and the icon
+        # theme matches the system-wide one.
+        ".config/hypr/hyprqt6engine.conf".text = ''
+          # Managed by features.gui.qt (modules/user/nix-maid/gui/qt.nix).
+          theme {
+            style = kvantum
+            color_scheme = ${pkgs.kdePackages.qtstyleplugin-kvantum}/share/color-schemes/${kvantumTheme}.colors
+            icon_theme = ${iconTheme}
+          }
+        '';
+
         ".config/qt6ct/qt6ct.conf".text = ''
           [Appearance]
           style=kvantum
