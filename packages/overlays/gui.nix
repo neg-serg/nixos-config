@@ -18,10 +18,6 @@ in
   # hypr-kdeconnect-fix — RemoteDesktop portal backend bridging KDE Connect /
   # Deskflow input to the wlroots virtual-input protocols Hyprland exposes.
   hypr-kdeconnect-fix = callPkg (pkg "hypr-kdeconnect-fix") { };
-  # hyprkcs — Hyprland keybind manager / cheat sheet (GTK4 layer-shell overlay;
-  # parses hyprlang configs, Lua configs are unsupported upstream — see the
-  # package header).
-  hyprkcs = callPkg (pkg "hyprkcs") { };
   andromeda-gtk-theme = callPkg (pkg "andromeda-gtk-theme") { };
   flight-gtk-theme = callPkg (pkg "flight-gtk-theme") { };
   matugen-themes = callPkg (pkg "matugen-themes") { };
