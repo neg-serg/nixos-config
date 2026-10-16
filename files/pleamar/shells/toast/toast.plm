@@ -1,0 +1,202 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+// toast.plm — the toast scene of the pleamar shell (PH2-D).
+//
+// What this scene owns: the screenshot feedback card (the legacy
+// Widgets/ScreenshotToast.qml) — a preview of the shot taken last, its
+// dimensions/size/depth line, the two pic-ocr engines, copy and open — drawn
+// in a corner over everything (level: overlay, no reserve). The transient
+// notification toasts of the shell are drawn by the `notifications` scene
+// (PH2-C); this scene keeps the frozen `visible` fact of INTERFACES §2.1
+// ("how many toasts are on screen") and is where a stack of its own would go.
+//
+// Trigger and dismissal.
+//   · toast.luau polls the screenshot event file and shows the card when it
+//     changes. INTERFACES §1.2 fixes the path as
+//     `$XDG_CACHE_HOME/pleamar/screenshot-event.json`. That path is OUTSIDE
+//     the scene's own folder and the files service never leaves the folder, so
+//     the logic reads it with `run("cat", …)` (permission `run: "cat"`).
+//   · The legacy producer (`packages/local-bin/bin/pic-notify`) still writes
+//     `~/.cache/quickshell/screenshot-event{,.json}`; the cutover must point it
+//     at the pleamar path — a new scene must not add files under the legacy
+//     cache (INTERFACES §1.2).
+//   · The card is hidden by its own Dismiss/close actions, by 8 s without
+//     hover (the legacy autoHideMs), and by the `overlay` scene, which relays
+//     the dismissal semaphores: `pleamar --say toast "emit hide"`.
+//
+// Actions and permissions. Every external program the logic runs is declared
+// in `permissions { run: … }`: `cat` (the event file), `pic-ocr` (both
+// engines), `wl-copy` (the path) and `xdg-open` (the shot) — nothing else is
+// called. The card only launches them on a real press; nothing runs at load.
+//
+// Settings (INTERFACES §6.3, read and clamped by toast.luau):
+//   anchor  text,   default "bottom_right"  a surface.anchor value, where the
+//           card sits. INTERFACES writes "top_right" as the key default for
+//           the transient toast stack; this card keeps the legacy corner
+//           (bottom-right) unless the user sets the key (decision, PH2-D).
+//   margin  number, default 24,  0..64      design px from the corner.
+// (The legacy had no settings; the frozen keys are honoured when present.)
+//
+// Deviations, written down rather than hidden:
+//   · no camera placeholder glyph: the legacy used a Material icon, which the
+//     session's icon theme may not have. The placeholder is drawn from shapes.
+//   · the slide is in-only: the surface closes when `shown` falls, so there is
+//     no slide-out frame (the legacy animated out before unmapping).
+//
+// Labels/roles/agent policy: the zones carry the legacy action words verbatim
+// ("OCR", "OCR NN", "Copy", "Open", "Dismiss"), the preview is one "Open
+// screenshot" button and the screenshot path row is `agent: hidden` — a file
+// name is private (INTERFACES §8.1).
+
+scene toast {
+
+    // ------***------------- facts & texts
+    // `visible` is interface (§2.1): how many toasts are on screen.
+    fact visible: number = 0
+    fact shown = false            // the screenshot card is up
+
+    // What toast.luau fills from the event file. `shot_path` carries
+    // "<path>?<n>": the ?n makes the renderer reload the file when a new shot
+    // is written under the same name (reference §6, "written again under the
+    // same name").
+    fact shot_ok = false
+    text shot_path = ""
+    text shot_meta = ""
+    text shot_short = ""
+    text shot_ts = ""
+
+    // The preview: whatever `shot_path` says (a path, an icon name would be
+    // read too). Declared at the size it is drawn, so the picture is fitted
+    // into the declared cell and keeps its proportions.
+    image shot = from shot_path, 422, 274
+
+    // Where the card sits, from settings.json (clamped by the logic).
+    fact card_anchor: top | bottom | left | right | top_left | top_right | bottom_left | bottom_right | center = bottom_right
+    fact card_margin = 24
+
+    // The slide: the surface may close as soon as `shown` falls, but `lift`
+    // still travels to its resting value, so the next show does not jump.
+    fact ever_shown = false
+    prop lift = 44 ~ui.slide
+    follow lift = if(shown, 0, 44)
+
+    // Events the logic carries (the `->` sends them to toast.luau). `hide` is
+    // also the IPC entry point: `pleamar --say toast "emit hide"`.
+    event ocr_tess ->
+    event ocr_nn ->
+    event copy_path ->
+    event open_shot ->
+    event hide ->
+    event hover_in ->
+    event hover_out ->
+
+    // ------***------------------- permissions
+    // Only what toast.luau actually calls: `cat` reads the event file (outside
+    // the scene's own folder, which `files` cannot reach), `pic-ocr` runs both
+    // engines, `wl-copy` copies the path, `xdg-open` opens the shot; `env` is
+    // HOME/XDG_CACHE_HOME and `files` is the scene's own settings.json.
+    permissions { run: "cat", "pic-ocr", "wl-copy", "xdg-open"; services: "env", "files" }
+
+    // ------***------------------------ surface
+    // One per monitor, full size so `screen.width` / `screen.height` measure
+    // the monitor and the frozen scale expression (INTERFACES §3.2) is valid;
+    // only the zones take clicks, so the empty part lets everything through.
+    surface {
+        size: full, full
+        anchor: card_anchor
+        level: overlay
+        reserve: -1
+        screens: each
+        open: shown or (ever_shown and lift > 1)
+    }
+
+    // ------***------------------------- card
+    // scaleNow (INTERFACES §3.2) as the component default: it is read at the
+    // use site, so every monitor copy gets its own. Everything the card draws
+    // is a design pixel inside `group zoom { scale: scale }`; text `size:` is a
+    // literal, so the group is the only multiplier (INTERFACES §9, D9).
+    component Card(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        let w = 460
+        let h = 520
+
+        // Which edge the card hangs from: 1 left/top, -1 right/bottom, 0 the
+        // middle of that axis. `card_anchor` is the frozen settings value.
+        let cax = if(card_anchor == top_left or card_anchor == left or card_anchor == bottom_left, 1, if(card_anchor == top_right or card_anchor == right or card_anchor == bottom_right, -1, 0))
+        let cay = if(card_anchor == top_left or card_anchor == top or card_anchor == top_right, 1, if(card_anchor == bottom_left or card_anchor == bottom or card_anchor == bottom_right, -1, 0))
+        let cx = if(cax < 0, screen.width - (card_margin + w) * scale, if(cax > 0, card_margin * scale, (screen.width - w * scale) / 2))
+        let cy = if(cay < 0, screen.height - (card_margin + h) * scale, if(cay > 0, card_margin * scale, (screen.height - h * scale) / 2)) + lift * scale
+
+        group place {
+            move: cx, cy
+            group zoom {
+                scale: scale
+
+                // The card swallows the clicks that land on it — it is a card,
+                // not a hole. Not pressable, so no label; hidden from agents.
+                zone box card { from: 0, 0; size: w, h; corner: 4; role: region; agent: hidden }
+                on enter card { emit hover_in }
+                on leave card { emit hover_out }
+
+                // The box: translucent coal (the legacy 85%) with the outline
+                // hairline the legacy border drew.
+                Capsule(w, h, fill: coal, alpha: 85%, radius: 4, edge: 1, edge_tone: outline, edge_alpha: 100%, shadow: 45%, scale: 1) { }
+
+                // ------***----------- preview
+                // 428 x 280 plate, the picture fitted inside it (the legacy
+                // Image with PreserveAspectFit).
+                box { from: 16, 16; size: 428, 280; corner: 4; color: slate; opacity: 45% }
+                image shot { at: 19, 19; size: 422, 274; show: shot_ok }
+                // The legacy camera glyph, drawn from shapes: an icon name is
+                // not guaranteed in the session's theme, three boxes are.
+                group cam { show: not shot_ok; opacity: 55%
+                    box { from: 199, 133; size: 62, 46; corner: 8; color: ink.off }
+                    ellipse { at: 230, 156; radius: 12; color: coal }
+                    box { from: 214, 123; size: 32, 10; corner: 4; color: ink.off }
+                }
+                zone box preview { from: 16, 16; size: 428, 280; corner: 4; cursor: pointer; label: "Open screenshot"; role: button }
+                on press preview { emit open_shot }
+
+                // ------***----------- title and close
+                text "Screenshot captured" { at: 16, 318; anchor: left center; size: 14; weight: 500; color: ink }
+                text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; color: ink.dim }
+                line { from: 436, 312; to: 448, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
+                line { from: 448, 312; to: 436, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
+                zone box close_zone { from: 426, 302; size: 32, 32; corner: 6; cursor: pointer; label: "Dismiss screenshot"; role: button }
+                on press close_zone { emit hide }
+
+                // ------***----------- path row (private)
+                text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; color: ink.off }
+                text shot_ts { at: 444, 372; anchor: right center; size: 11; color: ink.off }
+                // A zone only so that `agent: hidden` keeps the path out of
+                // `describe` (INTERFACES §8.1: a file name is private). Its
+                // label is the neutral one, so even a describe that ignored
+                // `hidden` would report the label and not the path.
+                zone box path_row { from: 8, 356; size: 444, 32; label: "Screenshot path"; role: region; agent: hidden }
+
+                // ------***----------- actions
+                // The legacy rows: the two OCR engines share the width, Copy,
+                // Open and Dismiss keep their own.
+                Action("OCR", ocr_tess, 16, 404, 211)
+                Action("OCR NN", ocr_nn, 233, 404, 211)
+                Action("Copy", copy_path, 16, 452, 138)
+                Action("Open", open_shot, 160, 452, 140)
+                Action("Dismiss", hide, 306, 452, 138)
+            }
+        }
+    }
+
+    // One action button of the card; the zone owns the label and the press and
+    // hardcodes `role: button` (a role cannot be parameterised, §9).
+    component Action(title: text, press: event, x: number, y: number, w: number) {
+        size: w, 36
+        box { from: x, y; size: w, 36; corner: 6; color: mix(coal, slate, 65% + 35% * hit.hover) }
+        text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; weight: 500; color: ink }
+        zone box hit { from: x, y; size: w, 36; corner: 6; cursor: pointer; label: title; role: button }
+        on press hit { emit press }
+    }
+
+    Card()
+}

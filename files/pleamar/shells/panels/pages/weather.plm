@@ -56,7 +56,7 @@ part Weather {
                 }
             }
 
-            text weather.err { at: 150 * scale, 198 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: warn }
+            text weather.err { at: 150 * scale, 201 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: warn }
         }
     }
 

@@ -24,7 +24,7 @@ import "../../lib/capsule.plm"
 // scene's full-monitor zone, declared before every part so each drawer's zones
 // sit above it (a press inside a drawer never reaches the catcher).
 //
-// Settings (`~/.local/share/pleamar/panels/settings.json`, written by panels.luau)
+// Settings (`~/.local/share/pleamar/panels/settings.json`, read and watched by panels.luau)
 // -------------------------------------------------------------------------------
 //   closeOnEscape     bool    true    Escape closes the open drawer
 //   closeOnOutside    bool    true    a press outside the drawer closes it
@@ -33,18 +33,21 @@ import "../../lib/capsule.plm"
 //   weatherCity       text    "Saint Petersburg"  empty: let the helper fall back to its env
 //   useFahrenheit     bool    false   weather temperatures in °F instead of °C
 //   calendarCountry   text    ""      ISO country for public holidays, empty: none
-// Unknown keys survive (panels.luau mutates the parsed table, never rebuilds it).
+// Slice 1 only reads and clamps these; there is no settings UI yet, so nothing
+// writes the file. A later slice that adds one must mutate the parsed table so
+// keys another version put there survive.
 //
 // Helper workers (INTERFACES.md §7; installed into PATH as pleamar-<name>)
-// -----------------------------------------------------------------------
-//   pleamar-sysmon    while `system` is open    one JSON sample per second
-//   pleamar-weather   while `weather` is open   one sample, then every refresh
-//   pleamar-calendar  while `calendar` is open  one month of events, then refresh
-// They are started and killed by panels.luau; a missing worker leaves the drawer
-// in its documented "not available" state (`sysmon.err`, `weather.err`, `cal.err`),
-// never with made-up data. panels.luau accepts both the worker wire shape shipped
-// in scripts/helpers/README.md (`{"ok":{…}}` per line) and the §7 sample shape
-// (`{"ok":true,"topic":…,"data":{…}}`); handshake and ack lines are ignored.
+// ------***--------------------------------
+//   pleamar-sysmon    while `system` is open    topic sysmon, one sample per second
+//   pleamar-weather   while `weather` is open   topic weather, refreshed every five minutes
+//   pleamar-calendar  while `calendar` is open  topic calendar, one month + navigation
+// They are started, subscribed and killed by panels.luau; a missing worker leaves
+// the drawer in its documented "not available" state (`sysmon.err`, `weather.err`,
+// `cal.err`), never with made-up data. The handshake's `version` must be 1 (an
+// unknown one is killed and reported), month navigation travels as
+// `{"cmd":"sample","month":…}`, and the deprecated draft sample shape with no
+// handshake is still accepted for one release of the workers.
 //
 // The scale model (INTERFACES.md §3.2)
 // ------------------------------------
@@ -58,11 +61,15 @@ import "../../lib/capsule.plm"
 scene panels {
 
     // The drawer surface: full monitor, anchored top (geometry origin), overlay
-    // level, reserve 0 so the bar's exclusive zone is the bar's alone. The
-    // surface exists only while a drawer is up (the spring makes the close
-    // read as the drawer leaving, not as the window vanishing).
+    // level, reserve 0 so the bar's exclusive zone is the bar's alone. It is
+    // there exactly while a drawer is open; the `lift` spring below is what the
+    // drawers slide in with (a closed surface is not seen and cannot be pressed,
+    // so the close is immediate and the slide-out is not drawn).
+    // keyboard: exclusive while the surface exists (drawer != none): Escape must
+    // reach the open drawer without a click first, and a modal drawer is the one
+    // moment the shell may hold the keyboard. Compositor-level binds still fire.
     surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
-              keyboard: on_demand; open: lift > 0.02 }
+              keyboard: exclusive; open: drawer != none }
 
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
@@ -100,18 +107,18 @@ scene panels {
     event close_drawer
 
     // Calendar navigation (panels.luau re-asks the worker for the month).
-    event cal_prev
-    event cal_next
+    event cal_prev ->
+    event cal_next ->
 
     // Mixer (the logic carries them to sys.call("audio.…")).
-    event set_out
-    event set_in
-    event toggle_out
-    event toggle_in
-    event set_default_out
-    event set_default_in
-    event app_set
-    event app_mute
+    event set_out ->
+    event set_in ->
+    event toggle_out ->
+    event toggle_in ->
+    event set_default_out ->
+    event set_default_in ->
+    event app_set ->
+    event app_mute ->
 
     // ----***----------------------- live texts
     text sysmon.err = ""
