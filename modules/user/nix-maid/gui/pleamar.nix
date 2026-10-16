@@ -16,12 +16,18 @@ let
   # The single scene list: the per-scene units, the deployed links and the
   # generated autostart file all derive from it. Later phases append names here
   # (bar, notifications, …) — nothing else in this module needs editing.
-  pleamarScenes = [ "proof" ];
+  # `proof` is the PH0 pipeline probe: it stays out of autostart on purpose.
+  pleamarScenes = [
+    "bar"
+    "panels"
+    "notifications"
+    "toast"
+  ];
 
-  # Scene the hang watchdog probes. `proof` is the only bar-shaped scene until
-  # the bar scene lands (PH1); switch this to "bar" in the same commit that
-  # adds it above.
-  pleamarHealthScene = "proof";
+  # Scene the hang watchdog probes: the bar is the one the session cannot lose.
+  # A scene with no deployed file is skipped by its own condition, so the name
+  # may be listed before the file lands (the bar scene exists since PH2-A).
+  pleamarHealthScene = "bar";
 
   # Login-phase contract shared with the Quickshell bar: while the marker
   # exists the greeter owns the screen and no session scene may start. systemd
@@ -55,9 +61,29 @@ let
     ) pleamarScenes}
   '';
 
+  # Helper workers a scene spawns by name (`permissions { run: "pleamar-sysmon" }`):
+  # nix-maid links them into ~/.local/bin so `spawn("pleamar-sysmon", …)` resolves
+  # (the unit PATH already puts %h/.local/bin first). The names are the contract
+  # INTERFACES.md §7 fixes; the file each name points at is this repo's script.
+  pleamarHelperLinks = {
+    ".local/bin/pleamar-sysmon" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/sysmon.sh";
+    };
+    ".local/bin/pleamar-weather" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/weather.sh";
+    };
+    ".local/bin/pleamar-calendar" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/calendar.sh";
+    };
+    ".local/bin/pleamar-kbdlayout" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/kbd.sh";
+    };
+  };
+
   pleamarHomeFiles =
     neg.mkDirLinks ".config/pleamar/shells" pleamarShellsLive pleamarShellNames
     // neg.mkDirLinks ".config/pleamar/lib" pleamarLibLive pleamarLibNames
+    // pleamarHelperLinks
     // {
       ".config/pleamar/autostart" = {
         source = pleamarAutostart;
@@ -176,6 +202,8 @@ let
           done
           [ -L "$dst/autostart" ] && rm -f "$dst/autostart" 2>/dev/null || true
         fi
+        # Helper links live in ~/.local/bin: drop only those pointing into this repo.
+        find "$HOME/.local/bin" -maxdepth 1 -type l -lname '*files/pleamar*' -delete 2>/dev/null || true
         rm -rf "$HOME/.local/state/nix-maid/static/.config/pleamar" 2>/dev/null || true
       '';
     };
