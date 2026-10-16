@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# describe-snap.sh - commit and verify `pleamar --say NAME describe json`.
+# describe-snap.sh - commit and verify `pleamar --say NAME describe` (the plain tree;
+# the json form is tried first and used when the binary offers it).
 #
 # Starts one scene in a sandbox (pleamar-wm headless when available; with
 # --live, directly in the current session), waits until its socket answers
-# `pleamar --say NAME describe`, captures `describe json` into
-# tests/<scene>.describe.json and kills what it started. Without --update the
+# `pleamar --say NAME describe`, captures the tree into
+# tests/<scene>.describe.txt and kills what it started. Without --update the
 # captured tree is diffed against the committed snapshot and the script exits
 # non-zero on drift, printing a human-readable summary.
 #
@@ -62,11 +63,11 @@ die() {
 
 usage() {
   cat << 'EOF'
-describe-snap.sh - commit and verify `pleamar --say NAME describe json`
+describe-snap.sh - commit and verify `pleamar --say NAME describe`
 
 Starts one scene without touching the live session (pleamar-wm headless when
 available; --live runs it in the current session instead), waits for its
-socket, captures the agent tree into tests/<scene>.describe.json and kills
+socket, captures the agent tree into tests/<scene>.describe.txt and kills
 what it started.
 
 Usage:
@@ -533,14 +534,14 @@ if ! canonicalize "$RAW" > "$NEW" 2> "$TEMPROOT/jq.err"; then
   die "cannot snapshot the agent tree (--keep-tmp keeps the raw output)"
 fi
 
-SNAP="$PROJECT_DIR/tests/$SCENE_NAME.describe.json"
+SNAP="$PROJECT_DIR/tests/$SCENE_NAME.describe.txt"
 
 stop_scene
 
 if [ "$SNAP_UPDATE" -eq 1 ]; then
   if [ -f "$SNAP" ]; then
     if ! canonicalize "$SNAP" > "$OLD" 2> /dev/null; then
-      fail "the committed snapshot $SNAP is not valid JSON; fix it by hand or delete it and re-run with --update"
+      fail "the committed snapshot $SNAP does not parse as its own format; fix it by hand or delete it and re-run with --update"
     fi
     if cmp -s "$OLD" "$NEW"; then
       say "snapshot unchanged: $SNAP"
@@ -561,7 +562,7 @@ if [ ! -f "$SNAP" ]; then
   fail "no committed snapshot at $SNAP; run: describe-snap.sh --update $SCENE_NAME"
 fi
 if ! canonicalize "$SNAP" > "$OLD" 2> /dev/null; then
-  fail "the committed snapshot $SNAP is not valid JSON; regenerate it with --update"
+  fail "the committed snapshot $SNAP does not parse as its own format; regenerate it with --update"
 fi
 if cmp -s "$OLD" "$NEW"; then
   say "snapshot matches: $SNAP"
