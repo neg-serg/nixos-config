@@ -1,0 +1,56 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+// preview.plm — the lock card in an ordinary window (scene `preview`; the IPC
+// name is the file stem, so `pleamar --say preview …` reaches it).
+//
+// The harness that replaces `qs -p files/quickshell/greeter/preview.qml`: it
+// draws exactly the backdrop, the clock and the card of lock.plm, but on a
+// `kind: window` surface, so the look can be inspected and screenshotted while
+// the session runs — starting the real lock scene is never needed for that and
+// must never be done by hand.
+//
+// It deliberately does *not* carry the lock: no `kind: lock`, no `fact locked`
+// and no handover. Its logic (preview.luau) still sends what is typed through
+// the real `auth.check` path (that is the legacy preview's behaviour too), but
+// a true answer only says so on the card — nothing is released, no marker is
+// written, and the `unlocked` event of the shared part is never emitted.
+//
+//   pleamar --scene <this file>                          # a window
+//   PREVIEW_WALLPAPER=/path/to/wall.png pleamar --scene … # look with a picture
+//
+// The wallpaper comes from PREVIEW_WALLPAPER first (the legacy override),
+// then from the settings below; a missing picture leaves the shader's dot-grid
+// fallback. This scene is not a systemd unit and is not part of the shell: it
+// lives next to the scene it previews (a documented exception to the one-scene
+// naming rule, see README.md).
+
+scene preview {
+
+    // The same reads as the lock scene: auth for the real password path, clock
+    // for the face, env for PREVIEW_WALLPAPER, files for the settings.
+    permissions { run: "cat"; services: "auth", "clock", "env", "files" }
+
+    include "pages/state.plm"
+
+    surface preview_window {
+        size: 1280, 720
+        kind: window
+        title: "pleamar · lock preview"
+        keyboard: on_demand
+
+        include "pages/backdrop.plm"
+        include "pages/clock.plm"
+        include "pages/card.plm"
+
+        // A strip that exists only here (and is drawn last, so the backdrop
+        // cannot cover it): a screenshot of the preview can never be mistaken
+        // for the lock screen itself.
+        box preview_strip { from: 0, 0; size: screen.width, 26; color: coal; opacity: 70% }
+        text "предпросмотр · сессия не блокируется" {
+            at: screen.width / 2, 13; anchor: center; size: 12; color: lock.ink.dim; family: "Iosevka"
+        }
+    }
+}
