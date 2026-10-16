@@ -146,12 +146,13 @@ let
       serviceConfig = {
         ExecStart = "${pkgs.pleamar}/bin/pleamar --scene %h/.config/pleamar/shells/${scene}/${scene}.plm --no-hud";
         RestartSec = 5;
-        # Starter ceilings (PH0): deliberately generous until PH0-T5 measures a
-        # real scene. MemoryHigh throttles a runaway allocation, MemoryMax kills
-        # and the restart policy brings the scene back; one core bounds a busy
-        # loop without touching normal animation work.
-        MemoryHigh = "64M";
-        MemoryMax = "128M";
+        # Starter ceilings (PH0) measured wrong: every scene sat pinned at the
+        # 64M MemoryHigh, while the bar alone needs ~73M peak with no cap;
+        # the surplus went to swap (notifications swapped 322M), the renderer
+        # starved and the health probe timed out. High throttles before Max
+        # kills; both bound a runaway, but with room for a real scene.
+        MemoryHigh = "256M";
+        MemoryMax = "512M";
         CPUQuota = "100%";
         Environment = [
           # ~/.local/bin first: scenes shell out to user helpers that live there
@@ -170,20 +171,23 @@ let
 
   # Hang watchdog: `Restart=on-failure` covers a scene that *exits*; a scene
   # that keeps running with dead logic is invisible to systemd. One
-  # `--say <scene> describe` round-trip every 2 minutes notices it, and only
-  # the probed scene is restarted.
+  # `--say <scene> describe` round-trip every 2 minutes notices it; the probe
+  # only restarts after TWO misses in a row (15 s timeout — the old 5 s one
+  # and a single miss restarted the bar 74 times in one day).
   pleamarHealth = pkgs.writeShellScript "pleamar-health" ''
     set -uo pipefail
 
     scene="${pleamarHealthScene}"
     unit="pleamar-$scene.service"
+    fails_file="''${XDG_RUNTIME_DIR:-/tmp}/pleamar-health-$scene.fails"
 
     # A stopped or crashed scene is not this probe's business: restartOnFailure
     # owns that path, and the login-phase condition keeps scenes down on
     # purpose behind the greeter.
     [ "$(systemctl --user is-active "$unit" 2>/dev/null || true)" = "active" ] || exit 0
 
-    if timeout 5 pleamar --say "$scene" describe > /dev/null 2>&1; then
+    if timeout 15 pleamar --say "$scene" describe > /dev/null 2>&1; then
+      rm -f "$fails_file" 2>/dev/null || true
       exit 0
     fi
 
@@ -200,13 +204,26 @@ let
     active_s=$((active_us / 1000000))
     [ $((uptime_s - active_s)) -ge 90 ] || exit 0
 
+    # Consecutive misses: one slow probe (a busy scene) must not restart it.
+    fails=0
+    if [ -r "$fails_file" ]; then
+      fails="$(cat "$fails_file" 2>/dev/null || echo 0)"
+    fi
+    case "$fails" in *[!0-9]* | "") fails=0 ;; esac
+    fails=$((fails + 1))
+    printf '%s' "$fails" > "$fails_file" 2>/dev/null || true
+    [ "$fails" -ge 2 ] || exit 0
+    rm -f "$fails_file" 2>/dev/null || true
+
     systemctl --user restart "$unit"
   '';
 
-  # Remove stale nix-maid symlinks *before* activation redeploys them, so a
-  # renamed/removed scene or library does not leave a dangling link behind.
-  # Only symlinks are deleted: writable runtime state under ~/.config/pleamar
-  # (scene settings, theme output) is not ours to remove.
+  # Remove STALE nix-maid symlinks before activation redeploys them: a link
+  # left behind by a renamed or removed scene/library must not dangle. Only
+  # broken links go — deleting every link (the first version) pulled live
+  # /etc/nixos targets out from under scenes that (re)started inside the
+  # cleanup→activation window (33 "cannot read … .plm" crashes in one day).
+  # Writable runtime state (~/.config/pleamar) is still not ours to remove.
   pleamarCleanup = {
     description = "Remove old pleamar symlinks before nix-maid activation";
     before = [ "maid-activation.service" ];
@@ -219,12 +236,12 @@ let
           rm -f "$dst" 2>/dev/null || true
         elif [ -d "$dst" ]; then
           for sub in shells lib; do
-            [ -d "$dst/$sub" ] && find "$dst/$sub" -maxdepth 1 -type l -delete 2>/dev/null || true
+            [ -d "$dst/$sub" ] && find "$dst/$sub" -maxdepth 1 -type l -xtype l -delete 2>/dev/null || true
           done
-          [ -L "$dst/autostart" ] && rm -f "$dst/autostart" 2>/dev/null || true
+          [ -L "$dst/autostart" ] && [ ! -e "$dst/autostart" ] && rm -f "$dst/autostart" 2>/dev/null || true
         fi
-        # Helper links live in ~/.local/bin: drop only those pointing into this repo.
-        find "$HOME/.local/bin" -maxdepth 1 -type l -lname '*files/pleamar*' -delete 2>/dev/null || true
+        # Helper links live in ~/.local/bin: drop the broken ones pointing into this repo.
+        find "$HOME/.local/bin" -maxdepth 1 -type l -lname '*files/pleamar*' -xtype l -delete 2>/dev/null || true
         rm -rf "$HOME/.local/state/nix-maid/static/.config/pleamar" 2>/dev/null || true
       '';
     };
