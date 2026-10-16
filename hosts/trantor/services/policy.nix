@@ -52,6 +52,9 @@ lib.mkMerge [
       adguardhome.enable = true;
       # SearXNG metasearch on 127.0.0.1:7777 (default search in Vivaldi)
       searx.enable = true;
+      # Koito scrobbler on 127.0.0.1:4110 — local ListenBrainz-compatible hub for
+      # listenbrainz-mpd; the first account is created in the web UI.
+      koito.enable = true;
       # Local sshd, key-only auth (hardened profile). The dsh web agent has a
       # dedicated key in ~/.ssh/agent/dsh-agent-key (authorized_keys entry
       # restricted to localhost) so its SSH tools/terminal can reach the host.
