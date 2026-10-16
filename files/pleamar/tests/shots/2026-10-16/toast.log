@@ -1,0 +1,35 @@
+headless · its scene listens in /tmp/pleamar-smoke.n27Gqs/run/pleamar-headless-1446307
+text   · 525 system fonts in 7 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+headless · monitor 0: surface 0 '' 1920×1080 at 0,0
+headless · monitor 0: surface 4 'phone_curtain' 1920×1080 at 0,0
+headless · monitor 0: surface 8 'remote_mark' 1920×1080 at 0,0
+headless · monitor 0: surface 12 'agent_hands' 1920×1080 at 0,0
+render · scene: 5516 properties, 23172 instructions, 1234 facts, 0 layers, 0 gestures, 8784 rules, 2256 zones
+portal · org.freedesktop.impl.portal.desktop.pleamar: sharing the screen is this session's
+windows · programs connect at WAYLAND_DISPLAY=pleamar-1
+portal · no PipeWire (Creation failed): the screen cannot be shared
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/card1: Permission denied
+windows · X11 programs open here too (XWayland, DISPLAY=:1)
+ATTENTION: default value of option mesa_glthread overridden by environment.
+render · llvmpipe (LLVM 21.1.8, 256 bits): on OpenGL, through EGL (its Vulkan driver cannot take buffers by their layout)
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Gl) · Bgra8Unorm · Opaque
+render · surface 7001 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz
+render · surface 7002 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · phone_curtain
+render · surface 7003 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · remote_mark
+render · surface 7004 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · agent_hands
+render · first frame 369 ms after starting
+cycle  ·   84 frames · mean 17.44 ms · p99  88.14 ms · max  88.14 ms · reading the scene 0.04 ms · with the logic blocked: 0 frames, max 0.00 ms
+windows · starting: /tmp/plm-recon/run-pleamar.sh --scene /etc/nixos/files/pleamar/shells/toast/toast.plm --no-hud
+text   · 525 system fonts in 7 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+render · scene: 76 properties, 136 instructions, 33 facts, 0 layers, 0 gestures, 92 rules, 36 zones
+windows · 'pleamar' on HEADLESS-1
+logic  · /etc/nixos/files/pleamar/shells/toast/toast.luau running in 0.6 ms · 7 handlers, 1 timers
+logic  · permissions · commands: cat, pic-ocr, wl-copy, xdg-open · services: env, files
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Vulkan) · Bgra8Unorm · PreMultiplied
+render · surface 0 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz
+render · first frame 154 ms after starting
+headless · the frame shown went to /etc/nixos/files/pleamar/tests/shots/2026-10-16/toast.png

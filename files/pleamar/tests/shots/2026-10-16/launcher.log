@@ -1,0 +1,64 @@
+headless · its scene listens in /tmp/pleamar-smoke.n27Gqs/run/pleamar-headless-1439871
+text   · 525 system fonts in 18 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+headless · monitor 0: surface 0 '' 1920×1080 at 0,0
+headless · monitor 0: surface 4 'phone_curtain' 1920×1080 at 0,0
+headless · monitor 0: surface 8 'remote_mark' 1920×1080 at 0,0
+headless · monitor 0: surface 12 'agent_hands' 1920×1080 at 0,0
+render · scene: 5516 properties, 23172 instructions, 1234 facts, 0 layers, 0 gestures, 8784 rules, 2256 zones
+portal · org.freedesktop.impl.portal.desktop.pleamar: sharing the screen is this session's
+windows · programs connect at WAYLAND_DISPLAY=pleamar-1
+portal · no PipeWire (Creation failed): the screen cannot be shared
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/card1: Permission denied
+windows · X11 programs open here too (XWayland, DISPLAY=:4)
+ATTENTION: default value of option mesa_glthread overridden by environment.
+render · llvmpipe (LLVM 21.1.8, 256 bits): on OpenGL, through EGL (its Vulkan driver cannot take buffers by their layout)
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Gl) · Bgra8Unorm · Opaque
+render · surface 7001 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz
+render · surface 7002 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · phone_curtain
+render · surface 7003 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · remote_mark
+render · surface 7004 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · agent_hands
+render · first frame 839 ms after starting
+cycle  ·   78 frames · mean 18.64 ms · p99 156.87 ms · max 156.87 ms · reading the scene 0.11 ms · with the logic blocked: 0 frames, max 0.00 ms
+windows · starting: /tmp/plm-recon/run-pleamar.sh --scene /etc/nixos/files/pleamar/shells/launcher/launcher.plm --no-hud
+text   · 525 system fonts in 7 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+render · scene: 147 properties, 222 instructions, 36 facts, 0 layers, 0 gestures, 31 rules, 24 zones
+image  · cannot load Icon("network-wireless-symbolic")
+logic  · /etc/nixos/files/pleamar/shells/launcher/launcher.luau running in 2.3 ms · 5 handlers, 1 timers
+logic  · permissions · commands: none · services: apps, apps.launch, files
+image  · cannot load Icon("network-wireless-offline-symbolic")
+image  · cannot load Icon("network-wired-symbolic")
+image  · cannot load Icon("network-vpn-symbolic")
+windows · 'pleamar' on HEADLESS-1
+image  · cannot load Icon("bluetooth-symbolic")
+keyboard · repeats after 400 ms, then every 40 ms
+image  · cannot load Icon("bluetooth-active-symbolic")
+image  · cannot load Icon("battery-level-100-symbolic")
+image  · cannot load Icon("battery-level-50-charging-symbolic")
+image  · cannot load Icon("audio-volume-high-symbolic")
+image  · cannot load Icon("audio-volume-muted-symbolic")
+image  · cannot load Icon("microphone-sensitivity-high-symbolic")
+image  · cannot load Icon("microphone-sensitivity-muted-symbolic")
+image  · cannot load Icon("alarm-symbolic")
+image  · cannot load Icon("weather-few-clouds-symbolic")
+image  · cannot load Icon("input-keyboard-symbolic")
+image  · cannot load Icon("view-app-grid-symbolic")
+image  · cannot load Icon("multimedia-player-symbolic")
+image  · cannot load Icon("media-playback-start-symbolic")
+image  · cannot load Icon("media-playback-pause-symbolic")
+image  · cannot load Icon("media-skip-backward-symbolic")
+image  · cannot load Icon("media-skip-forward-symbolic")
+image  · cannot load Icon("system-shutdown-symbolic")
+image  · cannot load Icon("process-stop-symbolic")
+image  · cannot load Icon("system-search-symbolic")
+image  · cannot load Icon("system-lock-screen-symbolic")
+image  · cannot load Icon("object-select-symbolic")
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Vulkan) · Bgra8Unorm · PreMultiplied
+image  · cannot load Icon("go-next-symbolic")
+image  · cannot load Icon("view-grid-symbolic")
+render · surface 0 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · launcher
+render · first frame 211 ms after starting
+headless · the frame shown went to /etc/nixos/files/pleamar/tests/shots/2026-10-16/launcher.png
