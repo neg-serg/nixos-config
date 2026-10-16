@@ -89,11 +89,19 @@ let
     neg.mkDirLinks ".local/share/icons" "${pkgs.adwaita-icon-theme}/share/icons" [ "Adwaita" ]
     // neg.mkDirLinks ".local/share/icons" "${pkgs.hicolor-icon-theme}/share/icons" [ "hicolor" ];
 
+  # Theme pipeline (scripts/theme): theme.sh and theme-extract.awk deploy together
+  # so the script finds its awk beside it; the generated ~/.config/pleamar/theme.plm
+  # is user data and never a Nix-owned file.
+  pleamarThemeLinks =
+    neg.mkDirLinks ".local/lib/pleamar" "${config.lib.neg.live "files/pleamar/scripts"}"
+      [ "theme" ];
+
   pleamarHomeFiles =
     neg.mkDirLinks ".config/pleamar/shells" pleamarShellsLive pleamarShellNames
     // neg.mkDirLinks ".config/pleamar/lib" pleamarLibLive pleamarLibNames
     // pleamarHelperLinks
     // pleamarIconLinks
+    // pleamarThemeLinks
     // {
       ".config/pleamar/autostart" = {
         source = pleamarAutostart;
@@ -218,6 +226,18 @@ let
       '';
     };
   };
+
+  # Seed ~/.config/pleamar/theme.plm once from the default, then let theme.sh
+  # rewrite it from the wallpaper. A failing run leaves the previous file intact.
+  pleamarThemeRun = pkgs.writeShellScript "pleamar-theme" ''
+    set -eu
+    theme_dir="$HOME/.local/lib/pleamar/theme"
+    dst="$HOME/.config/pleamar/theme.plm"
+    if [ ! -e "$dst" ]; then
+      install -Dm644 "$theme_dir/theme.default.plm" "$dst"
+    fi
+    exec "$theme_dir/theme.sh"
+  '';
 in
 lib.mkIf pleamarEnabled (
   lib.mkMerge [
@@ -244,6 +264,29 @@ lib.mkIf pleamarEnabled (
           };
         };
         pleamar-cleanup-symlink = pleamarCleanup;
+        pleamar-theme = systemdUser.mkUserService {
+          description = "Write ~/.config/pleamar/theme.plm from the current wallpaper";
+          presets = [ "oneshot" ];
+          after = [
+            "maid-activation.service"
+            "wl-state-sync.service"
+          ];
+          wants = [ "maid-activation.service" ];
+          wantedBy = [ "graphical-session.target" ];
+          # Runs on every wallpaper change: bursts are normal, not a failure.
+          unitConfig.StartLimitIntervalSec = 0;
+          # theme.sh shells out to imagemagick, gawk and jq.
+          path = [
+            pkgs.coreutils # install and text tools used by the wrapper and the script
+            pkgs.bash # interpreter for theme.sh
+            pkgs.imagemagick # samples the wallpaper's colours
+            pkgs.gawk # runs theme-extract.awk
+            pkgs.jq # JSON reads in the pipeline
+          ];
+          serviceConfig = {
+            ExecStart = pleamarThemeRun;
+          };
+        };
       };
 
       systemd.user.timers.pleamar-health = {
@@ -252,6 +295,19 @@ lib.mkIf pleamarEnabled (
         timerConfig = {
           OnBootSec = "5m";
           OnUnitActiveSec = "2m";
+        };
+      };
+
+      systemd.user.paths.pleamar-theme = {
+        description = "Run the pleamar theme pipeline when the wallpaper changes";
+        wantedBy = [ "graphical-session.target" ];
+        pathConfig = {
+          # The new producer path plus the legacy one until the cutover.
+          PathModified = [
+            "%h/.cache/pleamar/wallpaper-path"
+            "%h/.cache/quickshell-wallpaper-path"
+          ];
+          Unit = "pleamar-theme.service";
         };
       };
     }
