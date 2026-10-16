@@ -38,8 +38,12 @@ in
   # pleamar — Wayland desktop shell runtime (bars, launchers, notification
   # centres, docks, lock screens as animated scenes). Rev-pinned input in
   # flake.nix; nixpkgs follows the top-level pin so the Rust build reuses the
-  # cached toolchain closure.
-  pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar;
+  # cached toolchain closure. Patched with the cursor-shape fixes that keep a
+  # bar from leaving Hyprland's single global cursor stale or empty under it
+  # (upstream hyprwm/Hyprland#14906); see pleamar-cursor-shape.patch.
+  pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ ./pleamar-cursor-shape.patch ];
+  });
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
