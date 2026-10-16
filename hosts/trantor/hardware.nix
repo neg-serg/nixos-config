@@ -116,16 +116,17 @@ in
     # CoreCtrl needs it for UV/OC). "quiet" alone does not cover it.
 
     loader = {
-      # 0 = boot the default entry immediately. The boot menu is then only
-      # reachable from the firmware/boot entry selection, which is the trade
-      # taken for the second: Limine's countdown was the whole loader phase
-      # (1.41s of a 20.6s boot), and the machine boots the same entry either way.
+      # 0 = systemd-boot skips its own menu and boots the default entry. The
+      # visible menu is NERV (first firmware entry): its countdown is the part
+      # of the loader phase we pay for, and after the handoff systemd-boot
+      # boots the same entry it would have picked anyway.
       timeout = 0;
-      limine = {
+      nerv = {
         enable = true;
-        resolution = "3840x2160";
-        enableEditor = true;
-        style = systemData.limineStyle;
+        settings = {
+          timeout = 8; # seconds on the NERV countdown before autoboot
+          bls-limit = 5; # generations shown in the menu (systemd-boot keeps 25)
+        };
       };
     };
 
