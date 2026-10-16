@@ -31,6 +31,11 @@
 // not read `index.theme`, so the deployment must expose one of those. A scene
 // that needs a glyph this file does not cover declares it locally, next to the
 // scene; this library stays small.
+//
+// Three names have no Adwaita counterpart under that algorithm (`accessories-clock-symbolic`,
+// `system-tray-symbolic`, `window-close-symbolic`): they are declared with the closest
+// Adwaita glyph, and the kora-pgrey source each replaces is named beside the line.
+// kora-pgrey itself carries all 28 names, so a deployment that exposes it can switch back.
 
 library Icons strict {
 
@@ -51,10 +56,10 @@ library Icons strict {
     image volume.muted = icon "audio-volume-muted-symbolic", 16, 16
     image microphone = icon "microphone-sensitivity-high-symbolic", 16, 16
     image microphone.muted = icon "microphone-sensitivity-muted-symbolic", 16, 16
-    image clock = icon "accessories-clock-symbolic", 16, 16
+    image clock = icon "alarm-symbolic", 16, 16              // kora: accessories-clock-symbolic
     image weather = icon "weather-few-clouds-symbolic", 16, 16
     image keyboard = icon "input-keyboard-symbolic", 16, 16
-    image tray = icon "system-tray-symbolic", 16, 16
+    image tray = icon "view-app-grid-symbolic", 16, 16       // kora: system-tray-symbolic
 
     // ----------------------------------------------------------------- media
     // icon.small
@@ -67,7 +72,7 @@ library Icons strict {
     // ---------------------------------------------------------------- system
     // icon.small
     image power = icon "system-shutdown-symbolic", 16, 16
-    image close = icon "window-close-symbolic", 16, 16
+    image close = icon "process-stop-symbolic", 16, 16       // kora: window-close-symbolic
     // icon.large — the launcher's search mark and the lock's padlock
     image search = icon "system-search-symbolic", 28, 28
     image lock = icon "system-lock-screen-symbolic", 28, 28
