@@ -26,11 +26,27 @@ AUTO_RESTART = {
 }
 
 
-def running_units():
+SYSTEMCTL = "/run/current-system/sw/bin/systemctl"
+
+
+def systemctl_cmd(scope):
+    # scope: "system" | "user". The scanner runs as a user timer
+    # (notify-crashloop.nix) but watches both managers, so a crash-looping
+    # koito (system) and listenbrainz-mpd (user) are both caught.
+    return [SYSTEMCTL] + (["--user"] if scope == "user" else [])
+
+
+def unit_key(scope, unit):
+    # System units keep their plain name (stable state across upgrades); user
+    # units get a prefix so a same-named unit in both managers cannot collide.
+    return unit if scope == "system" else "user:" + unit
+
+
+def running_units(scope):
     # First column of `systemctl list-units --type=service` is the unit name.
     proc = subprocess.run(
-        [
-            "/run/current-system/sw/bin/systemctl",
+        systemctl_cmd(scope)
+        + [
             "list-units",
             "--type=service",
             "--state=running",
@@ -49,11 +65,11 @@ def running_units():
     return names
 
 
-def restart_state(unit):
+def restart_state(scope, unit):
     # Returns (restart_policy, nrestarts) or (None, None) if unreadable.
     proc = subprocess.run(
-        [
-            "/run/current-system/sw/bin/systemctl",
+        systemctl_cmd(scope)
+        + [
             "show",
             unit,
             "-p",
@@ -107,58 +123,62 @@ def main():
     changed = False
     alerted = []
 
-    for unit in running_units():
-        policy, nrestarts = restart_state(unit)
-        if policy not in AUTO_RESTART or nrestarts is None:
-            continue
+    for scope in ("system", "user"):
+        for unit in running_units(scope):
+            policy, nrestarts = restart_state(scope, unit)
+            if policy not in AUTO_RESTART or nrestarts is None:
+                continue
+            key = unit_key(scope, unit)
 
-        entry = units.get(unit)
-        if entry is None:
-            # First observation: just baseline it, never alert on the very
-            # first sight of an already-restarted unit.
-            units[unit] = {"last": nrestarts, "next_allowed": 0}
-            changed = True
-            continue
-
-        last = entry.get("last", 0)
-        # Counter reset (unit stopped/reloaded/rebooted => NRestarts 0):
-        # adopt the lower value as the new baseline, no alert, so real
-        # restarts are never missed across a reset.
-        if nrestarts <= last:
-            if nrestarts != last:
-                entry["last"] = nrestarts
+            entry = units.get(key)
+            if entry is None:
+                # First observation: just baseline it, never alert on the very
+                # first sight of an already-restarted unit.
+                units[key] = {"last": nrestarts, "next_allowed": 0}
                 changed = True
-            continue
+                continue
 
-        delta = nrestarts - last
-        if delta >= CRASH_THRESHOLD and now >= entry.get("next_allowed", 0):
-            text = "🔄 crash-loop: {0}: {1} рестартов за 5 мин (всего {2})".format(
-                unit, delta, nrestarts
-            )
-            print("crashloop: alert {0}".format(text))
-            if send_alert(text):
-                # Successful send arms the per-unit cooldown and resets the
-                # baseline so we never re-alert this burst again.
-                entry["next_allowed"] = now + COOLDOWN_SECONDS
-                entry["last"] = nrestarts
-                alerted.append(unit)
-                changed = True
-            else:
-                # Delivery failed: keep the old baseline so the next run
-                # retries the alert; never mark it as handled.
-                print(
-                    "crashloop: send failed for {0}, will retry next scan".format(
-                        unit
-                    ),
-                    file=sys.stderr,
+            last = entry.get("last", 0)
+            # Counter reset (unit stopped/reloaded/rebooted => NRestarts 0):
+            # adopt the lower value as the new baseline, no alert, so real
+            # restarts are never missed across a reset.
+            if nrestarts <= last:
+                if nrestarts != last:
+                    entry["last"] = nrestarts
+                    changed = True
+                continue
+
+            delta = nrestarts - last
+            if delta >= CRASH_THRESHOLD and now >= entry.get(
+                "next_allowed", 0
+            ):
+                text = "🔄 crash-loop: {0}: {1} рестартов за 5 мин (всего {2})".format(
+                    key, delta, nrestarts
                 )
-        else:
-            # Either below threshold or still inside the cooldown window.
-            # Adopt the new counter so a sustained crash-loop re-alerts
-            # (with a fresh delta) once the cooldown expires, but never
-            # accumulates into a giant stale number.
-            entry["last"] = nrestarts
-            changed = True
+                print("crashloop: alert {0}".format(text))
+                if send_alert(text):
+                    # Successful send arms the per-unit cooldown and resets the
+                    # baseline so we never re-alert this burst again.
+                    entry["next_allowed"] = now + COOLDOWN_SECONDS
+                    entry["last"] = nrestarts
+                    alerted.append(key)
+                    changed = True
+                else:
+                    # Delivery failed: keep the old baseline so the next run
+                    # retries the alert; never mark it as handled.
+                    print(
+                        "crashloop: send failed for {0}, will retry next scan".format(
+                            key
+                        ),
+                        file=sys.stderr,
+                    )
+            else:
+                # Either below threshold or still inside the cooldown window.
+                # Adopt the new counter so a sustained crash-loop re-alerts
+                # (with a fresh delta) once the cooldown expires, but never
+                # accumulates into a giant stale number.
+                entry["last"] = nrestarts
+                changed = True
 
     if alerted:
         changed = True
