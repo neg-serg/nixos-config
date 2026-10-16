@@ -68,6 +68,27 @@ else
   msg="$msg$nl  (systemctl недоступен)"
 fi
 
+# --- failed user units -------------------------------------------------
+# The digest runs as a user timer, so the user manager is reachable as well:
+# listenbrainz-mpd and the other per-user services are not covered by the
+# system `systemctl --failed` above.
+if userfailed="$(systemctl --user --failed --no-legend --plain 2> /dev/null)"; then
+  if [ -n "$userfailed" ]; then
+    msg="$msg$nl  👤 пользовательские:"
+    while IFS= read -r uline; do
+      [ -n "$uline" ] || continue
+      uunit=${uline%% *}
+      msg="$msg$nl    • $uunit"
+    done <<< "$userfailed"
+  fi
+fi
+
+# --- scrobbling --------------------------------------------------------
+# listenbrainz-mpd (user unit) and koito (system unit, the local hub).
+lb_state="$(systemctl --user is-active listenbrainz-mpd.service 2> /dev/null || true)"
+koito_state="$(systemctl is-active koito.service 2> /dev/null || true)"
+msg="$msg$nl$nl🎧 Скробблинг: listenbrainz-mpd: ${lb_state:-unknown} · koito: ${koito_state:-unknown}"
+
 # --- send as a single Telegram message (sender retries ~1 min) --------
 # The digest header carries its own timestamp; keep the plain format.
 TELEGRAM_SEND_PLAIN=1 "$SEND" "$msg"
