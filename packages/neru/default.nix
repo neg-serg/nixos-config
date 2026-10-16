@@ -51,6 +51,14 @@ buildGoModule (finalAttrs: {
 
   subPackages = [ "cmd/neru" ];
 
+  # Upstream (as of the pinned rev) refuses a capture region that no single
+  # output wholly contains: a file chooser taller than the work area, or one
+  # moved to hang off the screen, fails every screen-capture strategy, so
+  # hints never open over a picker. The patch clips the window region to the
+  # screen the cursor is on, hinting the visible part instead of refusing.
+  # Drop it once the fix lands upstream.
+  patches = [ ./clip-hint-region-to-screen.patch ];
+
   ldflags = [
     "-s"
     "-w"
