@@ -80,10 +80,20 @@ let
     };
   };
 
+  # Icons: pleamar's `icon "…"` looks only under ~/.local/share/icons, ~/.icons and
+  # /usr/share/icons, in the fixed theme list hicolor, Papirus, Papirus-Dark,
+  # Adwaita, breeze, breeze-dark — never index.theme. On NixOS the themes live in
+  # the system profile, so the searched names this shell needs are linked here;
+  # lib/icons.plm resolves its glyphs in Adwaita, with hicolor as the base.
+  pleamarIconLinks =
+    neg.mkDirLinks ".local/share/icons" "${pkgs.adwaita-icon-theme}/share/icons" [ "Adwaita" ]
+    // neg.mkDirLinks ".local/share/icons" "${pkgs.hicolor-icon-theme}/share/icons" [ "hicolor" ];
+
   pleamarHomeFiles =
     neg.mkDirLinks ".config/pleamar/shells" pleamarShellsLive pleamarShellNames
     // neg.mkDirLinks ".config/pleamar/lib" pleamarLibLive pleamarLibNames
     // pleamarHelperLinks
+    // pleamarIconLinks
     // {
       ".config/pleamar/autostart" = {
         source = pleamarAutostart;
