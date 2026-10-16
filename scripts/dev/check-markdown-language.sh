@@ -21,9 +21,10 @@ fi
 shopt -s nullglob
 
 # Allowlisted files may contain literal Cyrillic glyphs as CONTENT EXAMPLES
-# (Russian keyboard-layout characters in keysym/duplicate tables). Prose in
-# these files is still English; no Russian documentation is allowed.
-GLYPH_ALLOWLIST="docs/howto/hotkeys-ru-layout.md docs/howto/swayimg-hotkeys.md"
+# (Russian keyboard-layout characters in keysym/duplicate tables, or a Cyrillic
+# sample in a UTF-8 test corpus). Prose in these files is still English; no
+# Russian documentation is allowed.
+GLYPH_ALLOWLIST="docs/howto/hotkeys-ru-layout.md docs/howto/swayimg-hotkeys.md .agent/upstream-fix/verification.md"
 
 fail=0
 while IFS= read -r -d '' file; do
