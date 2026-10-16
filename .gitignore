@@ -8,6 +8,8 @@ __pycache__/
 .pi/
 packages/target/
 .omo/
+# J-Space controller ledger — the j-space skill keeps .jspace/ in the task workspace
+.jspace/
 # DSH web runtime uploads (voice recordings, images from chat)
 .dsh-uploads/
 nvim.log
