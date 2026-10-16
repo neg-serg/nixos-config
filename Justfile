@@ -314,6 +314,12 @@ flamegraph-eval host="trantor":
 # Generate perf+Inferno flamegraph SVG for nix eval
 profile-eval: flamegraph-eval
 
+# Rollout benchmark: eval+instantiate+realize timings for `fix` and `nix` on a
+# one-line change (the `system.nixos.label` trigger in hosts/trantor/default.nix)
+# Usage: just bench-rollout [runs] [engines]
+bench-rollout runs="3" engines="fix,nix":
+    scripts/dev/rollout-bench.sh --runs {{ runs }} --engines {{ engines }}
+
 # --- TidalCycles Live Coding --------------------------------------------------
 # Engine, editor, recording and monitoring are handled by the `tidalctl` CLI
 # (packages/tidalctl); recipes below are thin wrappers over it plus the Renoise
