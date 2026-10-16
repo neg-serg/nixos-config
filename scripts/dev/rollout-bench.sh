@@ -98,23 +98,27 @@ have sd || {
   exit 1
 }
 if [[ $engines == *fix* ]] && ! have "$fix_bin"; then
-  echo "rollout-bench: '$fix_bin' not found; build .#fix or pass FIX_BIN=/path/to/fix" >&2
+  echo "rollout-bench: '$fix_bin' not found; pass FIX_BIN=/path/to/fix (the package left the tree, git revert brings it back)" >&2
   exit 1
 fi
 
-original_label=$(rg -N -o 'system\.nixos\.label = "[^"]*";' "$label_file" | head -1)
+# The trigger line is captured without its indentation and put back verbatim
+# after the run, so the default expression (`lib.mkDefault …`) survives
+# byte-for-byte. `|| true` keeps a missing match from killing the script under
+# `set -e` before the message below can explain what is wrong.
+original_label=$(rg -N -o 'system\.nixos\.label = .*;' "$label_file" | head -1 || true)
 if [ -z "$original_label" ]; then
-  echo "rollout-bench: no system.nixos.label trigger found in $label_file" >&2
+  echo "rollout-bench: no 'system.nixos.label = …;' trigger found in $label_file" >&2
   exit 1
 fi
 
 set_label() {
-  sd 'system\.nixos\.label = "[^"]*";' "system.nixos.label = \"$1\";" "$label_file"
+  sd 'system\.nixos\.label = .*;' "system.nixos.label = \"$1\";" "$label_file"
 }
 
 restore_label() {
   if [ "$keep" = 1 ]; then return 0; fi
-  sd 'system\.nixos\.label = "[^"]*";' "$original_label" "$label_file"
+  sd 'system\.nixos\.label = .*;' "$original_label" "$label_file"
 }
 trap restore_label EXIT
 
