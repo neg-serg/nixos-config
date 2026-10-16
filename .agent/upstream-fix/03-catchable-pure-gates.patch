@@ -1,0 +1,176 @@
+diff --git a/src/expr/eval/tests/io_fetch.zig b/src/expr/eval/tests/io_fetch.zig
+index 168475e..66b70fd 100644
+--- a/src/expr/eval/tests/io_fetch.zig
++++ b/src/expr/eval/tests/io_fetch.zig
+@@ -1123,10 +1123,13 @@ test "pure evaluation sandboxes env, out-of-tree reads, search paths, and unlock
+     try std.testing.expectError(error.RestrictedInPureEval, ev.evaluate("builtins.currentSystem"));
+     try std.testing.expectError(error.RestrictedInPureEval, ev.evaluate("builtins.currentTime"));
+ 
+-    // Search-path lookups and unlocked fetches are forbidden — but the
+-    // synthetic corepkgs `<nix/fetchurl.nix>` stays importable (it resolves to
+-    // embedded source, not a search-path entry or an on-disk read).
+-    try std.testing.expectError(error.RestrictedInPureEval, ev.evaluate("builtins.findFile builtins.nixPath \"nixpkgs\""));
++    // Search-path lookups fail as a catchable "not found" — pure eval exposes an
++    // empty `builtins.nixPath` (see the dedicated test below) — while unlocked
++    // fetches stay forbidden. The synthetic corepkgs `<nix/fetchurl.nix>` stays
++    // importable: it resolves to embedded source, not to a search-path entry or
++    // an on-disk read.
++    const lookup = try ev.evaluate("(builtins.tryEval (builtins.findFile builtins.nixPath \"nixpkgs\")).success");
++    try std.testing.expect(!lookup.asBool());
+     const fetchurl_fn = try ev.evaluate("builtins.isFunction (import <nix/fetchurl.nix>)");
+     try std.testing.expect(fetchurl_fn.asBool());
+     try std.testing.expectError(
+@@ -1500,3 +1503,45 @@ test "finishEvaluation releases retained flat recipe payload" {
+         try std.testing.expectEqual(@as(usize, 1), tracking.freeCount());
+     } else return error.MissingRecipeRegistryApi;
+ }
++
++test "pure evaluation exposes no search path and probes answer false" {
++    var tmp = std.testing.tmpDir(.{});
++    defer tmp.cleanup();
++
++    const cwd = try std.process.currentPathAlloc(std.testing.io, std.testing.allocator);
++    defer std.testing.allocator.free(cwd);
++    const dir = try std.fs.path.resolve(std.testing.allocator, &.{ cwd, ".zig-cache", "tmp", &tmp.sub_path });
++    defer std.testing.allocator.free(dir);
++
++    var ev = try Engine.init(std.testing.allocator, .{ .worker_count = 0 });
++    defer ev.deinit();
++    ev.setFileIo(std.testing.io);
++    ev.policy.flakes_enabled = true;
++    try ev.setPureEval(true, &.{dir});
++
++    // Nix exposes no search path in pure mode: `builtins.nixPath` is empty and a
++    // lookup fails as a catchable "not found". nixpkgs' `impure-overlays.nix`
++    // probes `<nixpkgs-overlays>` under `tryEval`, so an uncatchable gate there
++    // aborts the whole evaluation.
++    const nix_path_len = try ev.evaluate("builtins.length builtins.nixPath");
++    try std.testing.expectEqual(@as(i64, 0), nix_path_len.asInt());
++    const probed = try ev.evaluate("(builtins.tryEval (toString <nixpkgs-overlays>)).success");
++    try std.testing.expect(!probed.asBool());
++
++    // Probing a path this evaluation may not read answers false, as Nix's
++    // `pathExists` does; reading it stays an error.
++    const outside = try ev.evaluate("builtins.pathExists \"/etc/hostname\"");
++    try std.testing.expect(!outside.asBool());
++
++    // An explicit search-path list is not a loophole: its bases are read-confined,
++    // so a directory outside the allowed roots is refused instead of disclosed
++    // (Nix: "access to absolute path '/etc' is forbidden in pure evaluation mode").
++    try std.testing.expectError(
++        error.RestrictedInPureEval,
++        ev.evaluate("builtins.findFile [{ prefix = \"\"; path = \"/etc\"; }] \"hostname\""),
++    );
++
++    // The synthetic corepkgs file stays importable (embedded source, no lookup).
++    const fetchurl_fn = try ev.evaluate("builtins.isFunction (import <nix/fetchurl.nix>)");
++    try std.testing.expect(fetchurl_fn.asBool());
++}
+diff --git a/src/expr/evaluator.zig b/src/expr/evaluator.zig
+index 1ac6f50..c177fdf 100644
+--- a/src/expr/evaluator.zig
++++ b/src/expr/evaluator.zig
+@@ -3300,7 +3300,11 @@ pub const Engine = struct {
+         try self.heap.ensureEmptySingletons();
+         const nix_path = try self.sources.search_paths.toNixPath(self.allocator);
+         defer self.allocator.free(nix_path);
+-        const value = try builtins.buildAttrSet(&self.intern, &self.heap, nix_path, self.store.realization.store_dir);
++        // Pure eval exposes no search path at all (Nix parity): `builtins.nixPath`
++        // is `[]` and `<name>` lookups fail as a catchable "not found" — nixpkgs'
++        // `impure-overlays.nix` probes `<nixpkgs-overlays>` under `tryEval`.
++        const effective_nix_path: []const builtins.NixPathEntry = if (self.policy.pure_eval) &.{} else nix_path;
++        const value = try builtins.buildAttrSet(&self.intern, &self.heap, effective_nix_path, self.store.realization.store_dir);
+         self.builtins_value = value;
+         return value;
+     }
+diff --git a/src/expr/vm/builtins/io.zig b/src/expr/vm/builtins/io.zig
+index 3bfe319..745f8e1 100644
+--- a/src/expr/vm/builtins/io.zig
++++ b/src/expr/vm/builtins/io.zig
+@@ -24,7 +24,14 @@ const stringTextInternId = strings.stringTextInternId;
+ const isPlainString = strings.isPlainString;
+ 
+ pub fn builtinPathExists(self: *VM, arg: Value) !Value {
+-    const path = try demandPathArg(self, arg);
++    // A path the policy does not let this evaluation read answers `false`, not
++    // an error: Nix's `pathExists` behaves that way (its string→path coercion
++    // fails silently), and nixpkgs probes `~/.config/nixpkgs/overlays.nix` this
++    // way in pure eval — a throw here aborts the whole evaluation.
++    const path = demandPathArg(self, arg) catch |err| switch (err) {
++        error.RestrictedInPureEval => return Value.boolVal(false),
++        else => return err,
++    };
+     if (!try self.files.pathExists(path)) return Value.boolVal(false);
+     // A trailing `/` or `/.` requires the target to be a directory (Nix): the
+     // path model canonicalizes those away, so check the resolved type (a final
+@@ -280,9 +287,11 @@ pub fn builtinFindFile(self: *VM, search_path_arg: Value, name_arg: Value) !Valu
+     // which case a matching prefixless entry wins over the corepkgs default).
+     const is_corepkgs = std.mem.eql(u8, name, corepkgs.fetchurl_name);
+ 
+-    // Pure eval forbids `<...>` / NIX_PATH lookups, except the synthetic
+-    // `<nix/fetchurl.nix>` corepkgs file (not a real search-path entry).
+-    if (!is_corepkgs) try purity.enforceNoSearchPath(self);
++    // Pure eval exposes no search path (empty `builtins.nixPath`, see
++    // `Engine.ensureBuiltins`), so a lookup simply fails with the catchable
++    // not-found error below — as in Nix, where nixpkgs' `impure-overlays.nix`
++    // probes `<nixpkgs-overlays>` under `tryEval`. The synthetic
++    // `<nix/fetchurl.nix>` corepkgs file is unaffected either way.
+ 
+     const path_id = try self.intern.intern("path");
+     const prefix_id = try self.intern.intern("prefix");
+@@ -349,9 +358,21 @@ pub fn builtinFindFile(self: *VM, search_path_arg: Value, name_arg: Value) !Valu
+ }
+ 
+ pub fn findFileCandidate(self: *VM, base: []const u8, prefix: []const u8, name: []const u8) !?[]u8 {
++    // A search-path base is a filesystem read like any other, and pure eval
++    // confines those to the store and the flake's own sources. Without this an
++    // explicit list would report the existence and canonical path of files the
++    // evaluation may not read — `builtins.findFile [{ prefix = ""; path = "/etc"; }]
++    // "hostname"` returned `/etc/hostname` — while Nix refuses with "access to
++    // absolute path '/etc' is forbidden in pure evaluation mode". `<...>` lookups
++    // stay catchable because pure eval exposes an empty `builtins.nixPath`
++    // (`Engine.ensureBuiltins`), so there is simply no base to probe.
++    try purity.enforceReadPath(self, base);
+     const suffix = path_ops.searchPathSuffix(prefix, name) orelse return null;
+     const candidate = try std.fs.path.resolve(self.allocator, &.{ base, suffix });
+     errdefer self.allocator.free(candidate);
++    // The resolved path too: a `name` carrying `..` must not walk out of a base
++    // that is itself allowed.
++    try purity.enforceReadPath(self, candidate);
+     if (try self.files.pathExists(candidate)) return candidate;
+     self.allocator.free(candidate);
+     return null;
+diff --git a/src/expr/vm/builtins/purity.zig b/src/expr/vm/builtins/purity.zig
+index 30871c4..b513d5d 100644
+--- a/src/expr/vm/builtins/purity.zig
++++ b/src/expr/vm/builtins/purity.zig
+@@ -1,9 +1,14 @@
+-//! Pure-evaluation enforcement shared by the filesystem, search-path, and fetch
++//! Pure-evaluation enforcement shared by the filesystem, fetch and pure-guard
+ //! builtins. In pure eval (Nix's default for flake commands; `--impure` opts
+ //! out) impure operations are restricted so a flake evaluates the same for
+ //! everyone: the environment is invisible, reads are confined to the store and
+ //! the flake's own source, and fetches must be content-locked.
+ //!
++//! Search-path lookups are deliberately *not* gated here: pure eval exposes an
++//! empty `builtins.nixPath` (`Engine.ensureBuiltins`), so a `<name>` lookup
++//! fails as a catchable "not found" — the shape nixpkgs' `impure-overlays.nix`
++//! probe relies on.
++//!
+ //! Every entry point is a no-op when `policy.pure_eval` is false, so callers can
+ //! invoke them unconditionally on the hot path (the branch folds to nothing when
+ //! purity is off).
+@@ -40,13 +45,6 @@ pub fn enforceReadPath(self: *VM, path: []const u8) !void {
+     return restrict(self, "access to absolute path '{s}' is forbidden in pure evaluation mode (use --impure to allow)", .{path});
+ }
+ 
+-/// In pure eval, `<name>` / NIX_PATH search-path lookups are forbidden (a flake
+-/// must not depend on channels or `$NIX_PATH`).
+-pub fn enforceNoSearchPath(self: *VM) !void {
+-    if (!self.policy.pure_eval) return;
+-    return restrict(self, "'<...>' path / NIX_PATH lookups are not allowed in pure evaluation mode (use --impure to allow)", .{});
+-}
+-
+ /// True when `attrs` carries a field that content-locks a fetch.
+ pub fn attrsHaveLock(self: *VM, attrs: Value) bool {
+     if (!attrs.isAttrs()) return false;

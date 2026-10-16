@@ -1,0 +1,199 @@
+diff --git a/src/expr/eval/tests/io_fetch.zig b/src/expr/eval/tests/io_fetch.zig
+index 168475e..7ae979d 100644
+--- a/src/expr/eval/tests/io_fetch.zig
++++ b/src/expr/eval/tests/io_fetch.zig
+@@ -587,6 +587,98 @@ test "parseFlakeRef handles github refs without a branch and bare absolute paths
+     try std.testing.expectEqualStrings("\"{\\\"path\\\":\\\"/tmp/source\\\",\\\"type\\\":\\\"path\\\"}\"", bare_absolute_path);
+ }
+ 
++/// `renderWithFlakes` plus a file-cache io handle, optionally with store writes
++/// enabled — the flag that makes a bare local path resolve like Nix's
++/// git-backed flake ref instead of a plain directory copy.
++fn renderWithFlakesAndFileIo(source: []const u8, store_writes: bool) ![]u8 {
++    var ev = try Engine.init(std.testing.allocator, .{ .worker_count = 0 });
++    defer ev.deinit();
++    ev.setFileIo(std.testing.io);
++    ev.policy.flakes_enabled = true;
++    if (store_writes) ev.enableStoreWrites();
++
++    const result = try ev.evaluate(source);
++
++    var out: std.Io.Writer.Allocating = .init(std.testing.allocator);
++    defer out.deinit();
++
++    try ev.writeValue(&out.writer, result);
++    return out.toOwnedSlice();
++}
++
++/// The `type` `builtins.parseFlakeRef` reports for `dir`, with store writes on.
++fn flakeRefType(dir: []const u8, buf: []u8) ![]const u8 {
++    const src = try std.fmt.allocPrint(std.testing.allocator, "builtins.toJSON (builtins.parseFlakeRef \"{s}\")", .{dir});
++    defer std.testing.allocator.free(src);
++    const rendered = try renderWithFlakesAndFileIo(src, true);
++    defer std.testing.allocator.free(rendered);
++    const git = std.mem.indexOf(u8, rendered, "\\\"type\\\":\\\"git\\\"") != null;
++    const path_type = std.mem.indexOf(u8, rendered, "\\\"type\\\":\\\"path\\\"") != null;
++    const text = if (git) "git" else if (path_type) "path" else "other";
++    @memcpy(buf[0..text.len], text);
++    return buf[0..text.len];
++}
++
++test "a bare path that is a git work-tree root resolves as a git ref" {
++    var tmp = std.testing.tmpDir(.{});
++    defer tmp.cleanup();
++    const cwd = try std.process.currentPathAlloc(std.testing.io, std.testing.allocator);
++    defer std.testing.allocator.free(cwd);
++    const dir = try std.fs.path.resolve(std.testing.allocator, &.{ cwd, ".zig-cache", "tmp", &tmp.sub_path });
++    defer std.testing.allocator.free(dir);
++
++    // A `.git` entry (a directory in a normal checkout, a file in a linked
++    // work tree or submodule) is what makes the directory a work-tree root.
++    try tmp.dir.writeFile(std.testing.io, .{ .sub_path = ".git", .data = "gitdir: /tmp/worktree\n" });
++
++    const bare = try std.fmt.allocPrint(std.testing.allocator, "builtins.toJSON (builtins.parseFlakeRef \"{s}\")", .{dir});
++    defer std.testing.allocator.free(bare);
++
++    // Store writes on: like Nix, the flake source is the git snapshot.
++    const with_writes = try renderWithFlakesAndFileIo(bare, true);
++    defer std.testing.allocator.free(with_writes);
++    try std.testing.expect(std.mem.indexOf(u8, with_writes, "\\\"type\\\":\\\"git\\\"") != null);
++    try std.testing.expect(std.mem.indexOf(u8, with_writes, "file://") != null);
++
++    // Plain eval (no store writes): the local directory is read in place.
++    const without_writes = try renderWithFlakesAndFileIo(bare, false);
++    defer std.testing.allocator.free(without_writes);
++    try std.testing.expect(std.mem.indexOf(u8, without_writes, "\\\"type\\\":\\\"path\\\"") != null);
++
++    // HEAD shapes decide between the git snapshot and the directory copy: only a
++    // HEAD this check can prove resolvable may take the git route, so unborn,
++    // empty, garbage and missing HEADs keep the path behaviour that used to work.
++    const cases = [_]struct { head: ?[]const u8, loose_ref: bool, want: []const u8 }{
++        .{ .head = "ref: refs/heads/main\n", .loose_ref = false, .want = "path" }, // git init, nothing committed
++        .{ .head = "ref: refs/heads/main\n", .loose_ref = true, .want = "git" },
++        .{ .head = "", .loose_ref = false, .want = "path" },
++        .{ .head = "garbage\n", .loose_ref = false, .want = "path" },
++        .{ .head = null, .loose_ref = false, .want = "path" },
++        .{ .head = "ref: \n", .loose_ref = false, .want = "path" },
++        .{ .head = "0123456789abcdef0123456789abcdef01234567\n", .loose_ref = false, .want = "git" }, // detached
++    };
++    for (cases) |case| {
++        var case_tmp = std.testing.tmpDir(.{});
++        defer case_tmp.cleanup();
++        try case_tmp.dir.createDirPath(std.testing.io, ".git");
++        if (case.head) |head| {
++            try case_tmp.dir.writeFile(std.testing.io, .{ .sub_path = ".git/HEAD", .data = head });
++        }
++        if (case.loose_ref) {
++            try case_tmp.dir.createDirPath(std.testing.io, ".git/refs/heads");
++            try case_tmp.dir.writeFile(std.testing.io, .{ .sub_path = ".git/refs/heads/main", .data = "0123456789abcdef0123456789abcdef01234567\n" });
++        }
++        const case_dir = try std.fs.path.resolve(std.testing.allocator, &.{ cwd, ".zig-cache", "tmp", &case_tmp.sub_path });
++        defer std.testing.allocator.free(case_dir);
++        var type_buf: [8]u8 = undefined;
++        const got = try flakeRefType(case_dir, &type_buf);
++        std.testing.expectEqualStrings(case.want, got) catch |err| {
++            std.debug.print("HEAD case {s} want {s} got {s}\n", .{ case.head orelse "(missing)", case.want, got });
++            return err;
++        };
++    }
++}
++
+ test "parseFlakeRef rejects malformed refs" {
+     try std.testing.expectError(error.InvalidFlakeRef, renderWithFlakes("builtins.parseFlakeRef \"github:NixOS\""));
+     try std.testing.expectError(error.InvalidFlakeRef, renderWithFlakes("builtins.parseFlakeRef \"relative/path\""));
+diff --git a/src/expr/vm/builtins/flake_ref.zig b/src/expr/vm/builtins/flake_ref.zig
+index 9dc7021..964c5e2 100644
+--- a/src/expr/vm/builtins/flake_ref.zig
++++ b/src/expr/vm/builtins/flake_ref.zig
+@@ -14,6 +14,65 @@ const appendStringAttr = arguments.appendStringAttr;
+ const optionalStringAttr = arguments.optionalStringAttr;
+ const requiredStringAttr = arguments.requiredStringAttr;
+ 
++/// The root of a git work tree: a `.git` entry, either a directory in a
++/// normal checkout or a file in a linked work tree / submodule.
++fn isWorkTreeRoot(self: *VM, path: []const u8) bool {
++    const dot_git = std.fs.path.join(self.allocator, &.{ path, ".git" }) catch return false;
++    defer self.allocator.free(dot_git);
++    return self.files.pathExists(dot_git) catch false;
++}
++
++/// A work tree whose `HEAD` already resolves to a revision. `git init` leaves
++/// `HEAD` symbolic (`ref: refs/heads/main`) with no ref behind it: the git
++/// transport has nothing to fetch there (`FetchGitRevisionNotFound`), while the
++/// plain directory copy worked. Any HEAD this check cannot *prove* resolvable —
++/// unborn, empty, garbage, missing, or an unreadable `.git` — keeps the path
++/// behaviour, so a broken repository degrades to the old directory copy instead
++/// of failing the fetch. A `.git` *file* (linked work tree, submodule) names its
++/// own gitdir and stays on the git path, as before; `.git` as a symlink is read
++/// through, so a symlinked unborn checkout is caught too.
++fn hasResolvedHead(self: *VM, path: []const u8) bool {
++    const git_dir = std.fs.path.join(self.allocator, &.{ path, ".git" }) catch return false;
++    defer self.allocator.free(git_dir);
++    switch (self.files.fileType(git_dir) catch return false) {
++        .directory, .symlink => {},
++        // A `.git` file (linked work tree, submodule) points at its own gitdir.
++        .regular => return true,
++        else => return false,
++    }
++
++    const head_path = std.fs.path.join(self.allocator, &.{ git_dir, "HEAD" }) catch return false;
++    defer self.allocator.free(head_path);
++    const head_raw = self.files.readFile(head_path) catch return false;
++    const head = std.mem.trimEnd(u8, head_raw, " \t\r\n");
++    if (head.len == 0) return false;
++
++    if (std.mem.startsWith(u8, head, "ref: ")) {
++        const ref = std.mem.trim(u8, head["ref: ".len..], " \t\r\n");
++        if (ref.len == 0) return false;
++
++        const loose = std.fs.path.join(self.allocator, &.{ git_dir, ref }) catch return false;
++        defer self.allocator.free(loose);
++        if (self.files.pathExists(loose) catch false) return true;
++
++        const packed_path = std.fs.path.join(self.allocator, &.{ git_dir, "packed-refs" }) catch return false;
++        defer self.allocator.free(packed_path);
++        const packed_refs = self.files.readFile(packed_path) catch return false;
++        var lines = std.mem.splitScalar(u8, packed_refs, '\n');
++        while (lines.next()) |line| {
++            const entry = std.mem.trim(u8, line, " \t\r");
++            if (entry.len == 0 or entry[0] == '#' or entry[0] == '^') continue;
++            const space = std.mem.indexOfScalar(u8, entry, ' ') orelse continue;
++            if (std.mem.eql(u8, std.mem.trim(u8, entry[space + 1 ..], " \t\r"), ref)) return true;
++        }
++        return false; // unborn: nothing to fetch yet
++    }
++
++    // Detached HEAD: only a full revision id proves the object exists. Anything
++    // else (empty, garbage) is treated as unresolvable on purpose.
++    return looksLikeGitRev(head);
++}
++
+ /// A 40-char lowercase-hex git revision (as opposed to a branch/tag `ref`).
+ fn looksLikeGitRev(text: []const u8) bool {
+     if (text.len != 40) return false;
+@@ -90,6 +149,25 @@ pub fn parse(self: *VM, arg: Value) !Value {
+         return Value.attrs(try self.heap.addAttrs(entries.items));
+     }
+     if (std.fs.path.isAbsolute(base)) {
++        // Nix resolves a bare path that is a git work tree as `git+file`, so
++        // the flake sees the work tree's tracked snapshot — uncommitted
++        // tracked edits included, `.git` and untracked files excluded — and
++        // not the raw directory. Mirror that whenever the tree is written to
++        // the store (`instantiate`/`build`/`switch`): a raw-directory copy
++        // pulls repository junk (build outputs, caches, `.git`) into the
++        // store and can trip the file-size guard on large untracked blobs.
++        // Plain `eval` keeps evaluating the local directory in place, where
++        // relative imports already resolve without a store round trip.
++        // Explicit `path:` refs stay `path` in both modes (Nix copies those
++        // verbatim), as does a path that is not a work-tree root.
++        if (self.realization.storeWritesEnabled() and isWorkTreeRoot(self, base) and hasResolvedHead(self, base)) {
++            const url = try std.fmt.allocPrint(self.allocator, "file://{s}", .{base});
++            defer self.allocator.free(url);
++            try appendStringAttr(self, &entries, "type", "git");
++            try appendStringAttr(self, &entries, "url", url);
++            try appendQueryAttrs(self, &entries, query);
++            return Value.attrs(try self.heap.addAttrs(entries.items));
++        }
+         try appendStringAttr(self, &entries, "type", "path");
+         try appendStringAttr(self, &entries, "path", base);
+         try appendQueryAttrs(self, &entries, query);

@@ -1,0 +1,128 @@
+diff --git a/src/runtime/builtins.zig b/src/runtime/builtins.zig
+index f297f49..f564928 100644
+--- a/src/runtime/builtins.zig
++++ b/src/runtime/builtins.zig
+@@ -422,7 +422,7 @@ pub fn arity(id: BuiltinId) u8 {
+     };
+ }
+ 
+-pub fn buildAttrSet(intern: *InternTable, heap: *ObjectHeap, nix_path: []const NixPathEntry, store_dir: []const u8) !Value {
++pub fn buildAttrSet(intern: *InternTable, heap: *ObjectHeap, nix_path: []const NixPathEntry, store_dir: []const u8, pure_eval: bool) !Value {
+     var entries: std.ArrayListUnmanaged(AttrEntry) = .empty;
+     defer entries.deinit(heap.allocator);
+     try entries.ensureTotalCapacity(heap.allocator, public_builtin_count + constant_bindings.len + 1);
+@@ -442,17 +442,22 @@ pub fn buildAttrSet(intern: *InternTable, heap: *ObjectHeap, nix_path: []const N
+         .name = try intern.intern("storeDir"),
+         .value = Value.string(try intern.intern(store_dir)),
+     });
+-    // `currentSystem` / `currentTime` are impure: wrapped in a force-time guard
+-    // that raises `RestrictedInPureEval` under pure eval (a flake must take
+-    // `system` explicitly), and otherwise resolves to the constant.
+-    entries.appendAssumeCapacity(.{
+-        .name = try intern.intern("currentSystem"),
+-        .value = try pureGuardedThunk(heap, Value.string(try intern.intern(hostSystemName()))),
+-    });
+-    entries.appendAssumeCapacity(.{
+-        .name = try intern.intern("currentTime"),
+-        .value = try pureGuardedThunk(heap, Value.int(0)),
+-    });
++    // `currentSystem` / `currentTime` are impure: Nix omits them from
++    // `builtins` in pure eval, so `builtins ? currentSystem` is false and
++    // flake-compat guards (`!builtins ? currentSystem || …`) take the
++    // explicit-`system` branch instead of tripping the guard. Impure eval
++    // keeps the force-time wrapper, which still reports the pure-eval
++    // diagnostic if such a value ever crosses into a pure policy.
++    if (!pure_eval) {
++        entries.appendAssumeCapacity(.{
++            .name = try intern.intern("currentSystem"),
++            .value = try pureGuardedThunk(heap, Value.string(try intern.intern(hostSystemName()))),
++        });
++        entries.appendAssumeCapacity(.{
++            .name = try intern.intern("currentTime"),
++            .value = try pureGuardedThunk(heap, Value.int(0)),
++        });
++    }
+     entries.appendAssumeCapacity(.{
+         .name = try intern.intern("nixVersion"),
+         .value = Value.string(try intern.intern(nix_compat_version)),
+2.55.0
+
+diff --git a/src/expr/evaluator.zig b/src/expr/evaluator.zig
+index 1ac6f50..e66719b 100644
+--- a/src/expr/evaluator.zig
++++ b/src/expr/evaluator.zig
+@@ -848,6 +848,14 @@ pub const Engine = struct {
+         self.pure_eval_roots = replacement;
+         self.policy.pure_eval = pure;
+         self.policy.allowed_path_roots = self.pure_eval_roots;
++        // `builtins` is purity-sensitive: pure eval omits `currentSystem` /
++        // `currentTime` (Nix parity, so `builtins ? currentSystem` is false).
++        // The attrset may already exist — the CLI resolves flake refs before
++        // it settles the policy — so drop the cache and let the next
++        // `ensureBuiltins` rebuild it against the final policy. Bootstrap
++        // objects stay pinned for the eval's lifetime, so the stale attrset
++        // cannot be collected while an old reference is still live.
++        self.builtins_value = null;
+     }
+ 
+     pub fn languagePolicy(self: *const Engine) LanguagePolicy {
+@@ -3300,7 +3308,7 @@ pub const Engine = struct {
+         try self.heap.ensureEmptySingletons();
+         const nix_path = try self.sources.search_paths.toNixPath(self.allocator);
+         defer self.allocator.free(nix_path);
+-        const value = try builtins.buildAttrSet(&self.intern, &self.heap, nix_path, self.store.realization.store_dir);
++        const value = try builtins.buildAttrSet(&self.intern, &self.heap, nix_path, self.store.realization.store_dir, self.policy.pure_eval);
+         self.builtins_value = value;
+         return value;
+     }
+diff --git a/src/expr/eval/tests/io_fetch.zig b/src/expr/eval/tests/io_fetch.zig
+index 168475e..affae6f 100644
+--- a/src/expr/eval/tests/io_fetch.zig
++++ b/src/expr/eval/tests/io_fetch.zig
+@@ -1119,9 +1183,14 @@ test "pure evaluation sandboxes env, out-of-tree reads, search paths, and unlock
+     try std.testing.expectEqualStrings("INSIDE", ev.intern.get(in_val.asInternId()));
+     try std.testing.expectError(error.RestrictedInPureEval, ev.evaluate("builtins.readFile \"/etc/hostname\""));
+ 
+-    // currentSystem / currentTime are unavailable in pure eval.
+-    try std.testing.expectError(error.RestrictedInPureEval, ev.evaluate("builtins.currentSystem"));
+-    try std.testing.expectError(error.RestrictedInPureEval, ev.evaluate("builtins.currentTime"));
++    // currentSystem / currentTime are absent from `builtins` in pure eval
++    // (Nix parity): the attrset probe is false — so flake-compat guards
++    // (`!builtins ? currentSystem || …`) take the explicit-`system` branch —
++    // and a direct access fails as a missing attribute.
++    const has_current = try ev.evaluate("builtins ? currentSystem");
++    try std.testing.expect(!has_current.asBool());
++    try std.testing.expectError(error.MissingAttribute, ev.evaluate("builtins.currentSystem"));
++    try std.testing.expectError(error.MissingAttribute, ev.evaluate("builtins.currentTime"));
+ 
+     // Search-path lookups and unlocked fetches are forbidden — but the
+     // synthetic corepkgs `<nix/fetchurl.nix>` stays importable (it resolves to
+@@ -1142,6 +1211,28 @@ test "pure evaluation sandboxes env, out-of-tree reads, search paths, and unlock
+     }
+ }
+ 
++test "setPureEval rebuilds the builtins attrset" {
++    // The attrset can be built before the policy settles (the CLI resolves
++    // flake refs first), so flipping purity must rebuild it — otherwise the
++    // pure-only omission of currentSystem/currentTime never takes effect and
++    // `builtins ? currentSystem` stays true in pure eval.
++    var ev = try Engine.init(std.testing.allocator, .{ .worker_count = 0 });
++    defer ev.deinit();
++    ev.setFileIo(std.testing.io);
++
++    const impure_has = try ev.evaluate("builtins ? currentSystem");
++    try std.testing.expect(impure_has.asBool());
++
++    try ev.setPureEval(true, &.{});
++    const pure_has = try ev.evaluate("builtins ? currentSystem");
++    try std.testing.expect(!pure_has.asBool());
++    try std.testing.expectError(error.MissingAttribute, ev.evaluate("builtins.currentSystem"));
++
++    try ev.setPureEval(false, &.{});
++    const back = try ev.evaluate("builtins ? currentSystem");
++    try std.testing.expect(back.asBool());
++}
++
+ test "flake builtins are gated on the flakes experimental feature" {
+     // getFlake / parseFlakeRef / flakeRefToString are hard-gated (uncatchable
+     // by tryEval), like Nix. Without the feature they error before doing work.
