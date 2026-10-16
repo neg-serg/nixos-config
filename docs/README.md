@@ -251,10 +251,11 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 - The compositor (`pkgs.hyprland`) comes from nixpkgs (`modules/user/nix-maid/hyprland/overlay.nix`,
   consolidated from the former `modules/nix/hyprland.nix`); the dedicated `hyprland` flake input was
   removed (it had no functional references).
-- `pkgs.hyprlandPlugins.hy3` comes from nixpkgs (0.55.0, built against the Hyprland 0.55.4 the
-  system ships). The dedicated `hy3` flake input tracked Hyprland 0.56+ and its `.so` failed to load
-  here (`undefined symbol IModeAlgorithm::getFSHandler`), so it was never used and has been removed
-  (audit 2026-09-15).
+- `pkgs.hyprlandPlugins.hy3` comes from nixpkgs (0.56.0.1, upstream tag `hl0.56.0.1`), built by
+  `mkHyprlandPlugin` against the same Hyprland 0.56.2 commit the system ships; `hy3-setup` loads it
+  at session start and `general:layout = "hy3"` in `files/gui/hypr/hyprland.lua` selects it (see
+  `docs/howto/hyprland-plugin.md`). The dedicated `hy3` flake input is gone — its `.so` tracked a
+  different Hyprland build and refused to load (audit 2026-09-15).
 - `xdg-desktop-portal-hyprland` is not pinned anymore: the former flake input (rev `08d99f72`, i.e.
   1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU (event-loop busy spin, fixed
   upstream in 1.4.1 by #417 "core: fix loop hangup detection"). It now comes from nixpkgs (>=

@@ -1,76 +1,111 @@
-# Hyprland Plugin (hy3)
+# Hyprland Plugins
 
-This note pulls together every moving part related to the `hy3` plugin so we can keep it aligned
-with the Hyprland compositor without hopping across multiple files.
+This note pulls together every moving part of the Hyprland plugin stack so the plugins stay aligned
+with the compositor without hopping across multiple files. hy3 is the layout; the other plugins
+(glass, exposé, shaders, background windows, cursor, capture) are documented under
+[Current plugins](#current-plugins).
 
 ## Source of Truth and Pinning
 
-- The flake pins Hyprland to v0.55.4 while `hy3` is pinned via the flake inputs (`flake.nix`:12-39).
-  The lock file pins the exact commits under that release.
-- The `hyprland-protocols` input follows Hyprland's inputs, so once the Hyprland pin is bumped the
-  protocol packages move in lockstep (`flake.nix`:22-25).
-- `xdg-desktop-portal-hyprland` used to be pinned alongside them but is now plain nixpkgs: the 1.4.0
-  pin (rev `08d99f72`) burned ~160% CPU until the service was restarted, and 1.4.1 carries the
-  event-loop fix (#417). The input was removed 2026-09-29.
-
-## nixpkgs Overlay
-
+- The compositor comes from nixpkgs (`pkgs.hyprland`, 0.56.2 at the time of writing); the `hyprland`
+  and `hy3` flake inputs are gone. `nix flake lock --update-input nixpkgs` therefore moves the
+  compositor and the nixpkgs-built plugins together.
+- `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build: **0.56.0.1** (upstream tag `hl0.56.0.1`),
+  compiled by `mkHyprlandPlugin` against the same Hyprland 0.56.2 commit as the session compositor
+  (`efb50993780079460b0cbed1363e2166a2de1d9f`). hy3's `PLUGIN_INIT` compares an API hash and refuses
+  to load on a mismatch, so plugin and compositor must come from one nixpkgs rev.
 - `modules/user/nix-maid/hyprland/overlay.nix` (consolidated from the former
-  `modules/nix/hyprland.nix`, now removed) adds the `hyprglass` decoration plugin to
-  `pkgs.hyprlandPlugins`, gated behind `features.gui.enable` so headless hosts skip the
-  `pkgs.hyprland` evaluation.
-- `pkgs.xdg-desktop-portal-hyprland` is plain nixpkgs (>= 1.4.1, event-loop hangup fix); the
-  `hyprlandOverlay` pin that downgraded it to 1.4.0 was dropped from `flake/lib.nix`.
-  `pkgs.hyprlandPlugins.hy3` is nixpkgs' own build — the `hy3` flake input tracked Hyprland 0.56+,
-  failed to load here and was removed (audit 2026-09-15).
-- Because everything flows through `pkgs`, Home-Manager modules just reference
-  `pkgs.hyprlandPlugins.hy3` and stay agnostic of how the plugin was produced.
+  `modules/nix/hyprland.nix`, now removed) only *adds* what nixpkgs does not carry and patches
+  `hypr-dynamic-cursors`; it deliberately does not override hy3. Everything is gated behind
+  `features.gui.enable` so headless hosts skip the `pkgs.hyprland` evaluation.
+- `pkgs.xdg-desktop-portal-hyprland` is plain nixpkgs (>= 1.4.1, event-loop hangup fix); the 1.4.0
+  pin (rev `08d99f72`, ~160% CPU busy spin) was dropped with the input on 2026-09-29.
 
-## Package Delivery to User Sessions
+## Load Model
 
-- The workstation session profile keeps the plugin derivation in the system profile (via the system
-  profile). This guarantees the `libhy3.so` payload exists in the store even if a user never
-  installs extra Wayland packages manually.
+- Hyprland's Lua config mode auto-detects `hyprland.lua` and ignores the legacy `hyprland.conf`, and
+  a plugin cannot be dlopen'd while that file is still being parsed: `plugin = …` lines do nothing
+  and `hl.plugin.load` mid-parse is a no-op. Every plugin is loaded from the `hyprland.start` hook
+  by a generated `*-setup` helper (`main.nix`), then configured by pushing its Lua settings file
+  through `hyprctl eval`. The helpers are in `PATH` and idempotent, so they can be re-run in a live
+  session.
+- Loads sit before the login-phase branch of the hook: the compositor parses the config exactly
+  once, so a plugin loaded only in the session branch never comes up on a greetd login.
+- In Lua config mode `hyprctl dispatch` is only a deprecated shorthand and mangles plugin
+  dispatchers ("expected a dispatcher"); the plugin's Lua namespace, evaluated with `hyprctl eval`,
+  is the working path. Plugin dispatchers are dispatcher objects, so Lua callbacks run them with
+  `hl.dispatch(factory(plugin))` — see the `hy3()` bind helper in `hyprland.lua`.
 
 ## Home Configuration Wiring
 
 - Everything Hyprland lives under `modules/user/nix-maid/hyprland/` (one domain): `main.nix`
-  assembles `environment.nix` (the `hyprland.conf` text: `plugin = hy3/hyprglass` lines plus
-  `source` of the lua config), `files.nix` (home-file links: `hyprland.conf`, `hyprland.lua`,
-  `hyprlock.conf`, `hypridle.conf`), and `services.nix` (systemd user services + the
-  Hyprland-related package set; the session packages moved here from the removed
-  `modules/user/session/hyprland.nix`).
-- `files.nix` also writes the `permission = ..., plugin, allow` stanza into `hyprland.conf`,
-  ensuring hy3 can register without triggering the ecosystem permission guard, plus the wlroots
-  screencopy hardening permissions for grim/hyprlock.
+  assembles `environment.nix` (the `hyprland.conf` text) and `hyprlandLuaText` (the
+  `@<plugin>_setup@` placeholder substitution in `hyprland.lua`), `files.nix` (home-file links:
+  `hyprland.lua`, the plugin settings files, `hyprlock.conf`, `hypridle.conf`) and `services.nix`
+  (systemd user services + the Hyprland-related package set). The generated helpers are added to
+  `environment.systemPackages`.
+- The start hook in `hyprland.lua` execs every helper; `hyprcapture-setup` and
+  `hyprdynamiccursors-setup` additionally run as user units on `hyprland-session.target`, because
+  their loads must not race the config parse or the login transition.
 
-## Updating Hyprland + hy3
+## Updating Hyprland + plugins
 
-1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`); there are no
-   portal/protocol companion pins left (`hyprland`, `hy3` and `xdg-desktop-portal-hyprland` inputs
-   are all gone — the portal comes from nixpkgs since 2026-09-29).
-1. Rebuild with `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
-1. Optional: add `--update-input nixpkgs` to `system.autoUpgrade` if you want unattended bumps;
-   otherwise keep the updates manual to review ABI churn.
-
-Because the overlay flows through `pkgs`, no Home-Manager changes are needed when updating; the new
-plugin propagates automatically once the system rebuild succeeds.
+1. Bump nixpkgs (`nix flake lock --update-input nixpkgs`) — the compositor and the nixpkgs-built
+   plugins move together.
+1. Third-party plugins pinned in `overlay.nix` (hyprexpo, GloView, HyprWindowShade, hyprwinwrap) and
+   `hypr-dynamic-cursors` carry revs or patches pinned to a Hyprland commit; bump them with the
+   compositor and re-check the patch headers.
+1. Rebuild with `sudo nixos-rebuild switch --flake /etc/nixos#<host>` (or the agent-switch flow).
+1. A compositor reload keeps loaded plugins but resets their runtime config; re-run the affected
+   `*-setup` helper. hy3 itself needs nothing beyond the load.
 
 ## Verification Checklist
 
-- Quick health checks after any update:
-  - `nix path-info .#legacyPackages.<system>.hyprlandPlugins.hy3` should print the store path that
-    backs the plugin for that host's build (replace `<system>` with `x86_64-linux`, etc.).
-  - `grep plugin ~/.config/hypr/hyprland.conf` should show the expected `hy3`/`hyprglass` `.so`
-    paths exported by `pkgs.hyprlandPlugins.*` (the old `plugins.conf` was folded into
-    `hyprland.conf`).
-  - `Hyprland --version` output should match the Hyprland commit recorded in `flake.lock` to confirm
-    the plugin and compositor were updated together.
-
-Keeping the above pieces in sync prevents the common ABI mismatch issues that surface when hy3 lags
-behind Hyprland.
+- `nix path-info .#nixosConfigurations.<host>.pkgs.hyprlandPlugins.hy3` prints the `hy3-0.56.0.1`
+  store path.
+- `hyprctl plugin list` shows `Plugin hy3 by outfoxxed` (plus the session's other plugins).
+- `hyprctl getoption general:layout` prints `str: hy3`, and
+  `hyprctl getoption plugin:hy3:tabs:height` prints `int: 22` once the plugin has registered its
+  config keys.
+- `Hyprland --version` must match the commit the plugins were built against; both come from the same
+  nixpkgs, so this holds automatically unless an overlay pin is bumped alone.
+- To try a plugin without endangering the session, use a nested instance — see
+  [Testing a plugin without endangering the session](#testing-a-plugin-without-endangering-the-session).
 
 ## Current plugins
+
+### hy3 (i3-style manual tiling — the layout)
+
+- **Build**: no overlay entry — `pkgs.hyprlandPlugins.hy3` comes from nixpkgs (0.56.0.1, upstream
+  tag `hl0.56.0.1`), compiled against the same 0.56.2 commit as the compositor.
+- **Load**: `hy3-setup` (`main.nix`) `hyprctl plugin load`s `lib/libhy3.so`, logs every run to
+  `$XDG_RUNTIME_DIR/hy3-setup.log` and polls `hyprctl plugin list` for up to ~5 s (a load issued
+  while the compositor is busy with the login transition does not always stick). The helper is
+  re-runnable in a live session; the load sits before the login branch of the start hook, so the
+  plugin is up for the whole session.
+- **Layout selection**: `general:layout = "hy3"` in `files/gui/hypr/hyprland.lua` (parsed on every
+  reload as well, so a reload keeps the layout while the plugin stays loaded). Before `hy3-setup`
+  has run the name is unknown and Hyprland falls back to dwindle; as soon as the plugin registers
+  the algorithm, `CWorkspaceAlgoMatcher::updateWorkspaceLayouts` re-tiles every existing workspace
+  onto hy3 — that is what makes the static layout selection race-free. The per-workspace
+  `layout = "scrolling"|"master"` rules the workspace table used to carry are gone: a rule's layout
+  would shadow hy3.
+- **Keys**: focus/move/tab binds go through the plugin's Lua factories — `hy3.move_focus` (M4+hjkl,
+  arrows, M4+ALT+n/p/f/b), `hy3.move_window` (M4+CTRL+j/k and the tiling submap's SH+hjkl),
+  `hy3.move_to_workspace` (M4+SHIFT+1..9/0), `hy3.make_group("tab")` (M4+CTRL+g) and `hy3.focus_tab`
+  (M4+CTRL+h/l, M4+CTRL+SHIFT+1..5). The binds are lazy: hy3 is loaded *after* `hyprland.lua` is
+  parsed, so the `hy3()` helper resolves `hl.plugin.hy3` at press time and skips silently when the
+  plugin is not there.
+- **Dormant tape keys**: the core layoutmsg binds (column width, consume/expel, fit/center, the
+  scrolling keys) stay in the file but no-op on hy3 — `L(...)` passes no fallback for a hy3
+  workspace. The per-app `scrolling_width` rules and the `scrolling`/`master` config blocks stay for
+  the case where a workspace is put back onto a core layout.
+- **Verified** (nested 0.56.2, 2026-10-16): `hyprctl plugin load libhy3.so` answers `ok` and
+  `plugin list` reports `Plugin hy3 by outfoxxed`; `hl.config({general={layout="hy3"}})` flips
+  `getoption general:layout` to `hy3` on the running instance; two spawned kitty windows are tiled
+  by the plugin (`make_group("tab", {toggle=true})` adds its ~27 px tab bar: y 21→48, height −27 px)
+  and `move_focus`/`move_window`/`focus_tab` all return `ok`; `Hyprland --verify-config` on the
+  deployed `hyprland.lua` reports `config ok`; no crash lines in the nested log.
 
 ### hyprglass (liquid glass)
 

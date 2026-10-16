@@ -26,10 +26,11 @@ let
   # services.nix builds for its modules.
   systemdUser = neg.systemdUser lib;
 
-  # hy3 and hyprspace were removed for the nixos-unstable (Hyprland 0.56)
-  # migration (their 0.55 CCompositor/monitor API no longer compiles).
-  # hyprland.lua no longer contains @HY3@/@HYPRSPACE@ placeholders, so no
-  # store-path injection is needed.
+  # hy3 is back on 0.56: nixpkgs carries 0.56.0.1 (hl0.56.0.1), built by
+  # mkHyprlandPlugin against the same Hyprland 0.56.2 commit as the compositor,
+  # so @hy3_setup@ only has to dlopen it — the layout is selected by
+  # `general:layout = "hy3"` in hyprland.lua. hyprspace stays dropped: its
+  # 0.55 CCompositor/monitor API no longer compiles against 0.56.
   # hyprglass has to be loaded before its config keys exist, and a plugin cannot be
   # dlopen'd while hyprland.lua is still being parsed — so the .so is loaded from the
   # session-start hook and the settings (files/gui/hypr/hyprglass.lua, plain config
@@ -59,6 +60,41 @@ let
     # above is the fallback for the case where the deployed file is not there yet
     # (the activation order is not guaranteed).
     hyprglass-apply >/dev/null 2>&1 || true
+  '';
+
+  # hy3 (i3-style manual tiling). The plugin cannot be dlopen'd while
+  # hyprland.lua is being parsed, so it is loaded from the session-start hook;
+  # the layout itself lives in hyprland.lua (`general:layout = "hy3"`). Until
+  # this helper has run, that name is unknown and Hyprland falls back to
+  # dwindle; the moment the algorithm registers, the compositor re-tiles every
+  # workspace onto hy3 (CWorkspaceAlgoMatcher::registerTiledAlgo ->
+  # updateWorkspaceLayouts). Idempotent, logs every run and polls
+  # `hyprctl plugin list` for up to ~5 s: a load issued while the compositor is
+  # still busy with the login transition does not always stick (the
+  # hyprcapture/hyprdynamiccursors lesson). Re-runnable in a live session
+  # (`hy3-setup`), which is also how the layout can be re-selected without a
+  # relogin.
+  hy3Setup = pkgs.writeShellScriptBin "hy3-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+    plugin=${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so
+
+    exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hy3-setup.log" 2>&1
+    echo "--- $(date '+%F %T') hy3-setup"
+
+    loaded() {
+      "$hyprctl_bin" plugin list 2> /dev/null | grep -q "^Plugin hy3 "
+    }
+
+    for _ in $(seq 1 20); do
+      loaded && break
+      "$hyprctl_bin" plugin load "$plugin" || true
+      sleep 0.25
+    done
+
+    if ! loaded; then
+      echo "plugin never reported as loaded"
+      exit 1
+    fi
   '';
 
   # HyprExpo (workspace overview). `hypr-expo` is the one entry point for the panel
@@ -344,6 +380,7 @@ let
   hyprlandLuaText =
     builtins.replaceStrings
       [
+        "@hy3_setup@"
         "@hyprglass_setup@"
         "@hyprexpo_setup@"
         "@hyprwindowshade_setup@"
@@ -352,6 +389,7 @@ let
         "@gloview_setup@"
       ]
       [
+        "${hy3Setup}/bin/hy3-setup"
         "${hyprglassSetup}/bin/hyprglass-setup"
         "${hyprexpoSetup}/bin/hyprexpo-setup"
         "${hyprwindowshadeSetup}/bin/hyprwindowshade-setup"
@@ -373,6 +411,7 @@ in
         # hyprglass-setup is in PATH as well, so the glass can be (re)applied in a
         # running session without logging out (the start hook only fires on start).
         environment.systemPackages = services.packages ++ [
+          hy3Setup # loads the hy3 layout plugin; re-run to re-select the layout in a live session
           hyprglassSetup
           hyprexpoSetup
           hyprwindowshadeSetup
