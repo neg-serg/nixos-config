@@ -17,11 +17,14 @@ let
   # generated autostart file all derive from it. Later phases append names here
   # (bar, notifications, …) — nothing else in this module needs editing.
   # `proof` is the PH0 pipeline probe: it stays out of autostart on purpose.
+  # `overview` is deliberately absent: its first version is a thin `hypr-expo toggle`
+  # and a resident process just to answer one IPC verb would cost more than the bind;
   pleamarScenes = [
     "bar"
     "panels"
     "notifications"
     "toast"
+    "launcher"
   ];
 
   # Scene the hang watchdog probes: the bar is the one the session cannot lose.
