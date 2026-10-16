@@ -1,3 +1,33 @@
+# `fix` — a from-scratch Nix-language evaluator in Zig (psyclyx/fix) that speaks
+# the Nix daemon protocol, so it can evaluate, instantiate, build and (through
+# its own sudo) activate a configuration. Enabled per host with
+# `features.cli.fix.enable = true`.
+#
+# Usage (keep `--option substitute false` as everywhere in this repo):
+#
+#   fix flake metadata /etc/nixos             # parse this repo's lock; cheap sanity check
+#   fix eval --flake /etc/nixos#lastModified  # evaluate a flake output
+#   fix switch build --nixos --flake /etc/nixos#trantor --option substitute false
+#
+# `fix switch build` evaluates and realizes the toplevel without root and
+# without activation — the useful path for rollout checks. Realizing a changed
+# closure with `substitute = false` rebuilds from source in the daemon, which
+# can take hours (an LLVM bump, say); the store is shared with Nix, so anything
+# Nix already built is reused.
+#
+# Known divergence from Nix (upstream, not worked around): for derivations
+# whose text comes from a *built* file (`builtins.readFile` of a derivation —
+# nixpkgs' `replaceVars` + `readFile`, e.g. `dsh-tui-ensure` or
+# `net-health-check`), fix records fewer `inputSrcs` than Nix, whose string
+# context carries over from the coercion that built the file. The written files
+# are byte-identical; only the derivation hash (and everything downstream)
+# differs, so a `fix`-built toplevel never matches a Nix-built one by path.
+#
+# Other upstream limits: pure `fix eval` of flake inputs that import relative
+# files fails while the input still lives in fix's download cache instead of
+# the store (upstream #43; store-writing commands are unaffected), and
+# `fix switch` activates through its own sudo instead of `just agent-switch` —
+# use `fix switch build` for verification and the normal path for activation.
 {
   lib,
   stdenv,
@@ -93,6 +123,10 @@ stdenv.mkDerivation (finalAttrs: {
     # fail as a catchable "not found"), as in Nix — nixpkgs' impure-overlays
     # probe under `tryEval` otherwise aborts the whole evaluation.
     ./patches/0005-pure-eval-empty-search-path.patch
+    # Escape every control character in structured-attrs `__json`: a raw ESC
+    # from a coloured snippet made the daemon reject the whole derivation with
+    # `invalid string: control character U+001B must be escaped` (upstream #61).
+    ./patches/0006-structured-attrs-json-escape.patch
   ];
 
   postPatch = ''
