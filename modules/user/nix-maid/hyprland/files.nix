@@ -62,11 +62,16 @@ in
         '';
 
         # Hyprscratch config: Telegram scratchpad (name without dots — togglespecialworkspace breaks on '.')
-        # Only scratchpads whose *command* must live in the daemon config belong
-        # here: the other pads pass it on the bind. There is deliberately no music
-        # entry — the daemon has no `offset` field (it logged "Unknown scratchpad
-        # field 'offset'" on every parse), and rmpc geometry comes from the
-        # music-scratchpad window rule in hyprland.lua.
+        # and the mixer pad. Only scratchpads whose class/command must live in
+        # the daemon config belong here: the other pads pass the command on the
+        # bind, and the daemon then derives the class from the pad *name* (the
+        # kitty pads make that name the class via --class). hyprpwcenter sets
+        # its own Wayland class, so `mixer` has to map to it here — registered
+        # by the bind alone it matched no window and the pad opened tiled on the
+        # current workspace. There is deliberately no music entry — the daemon
+        # has no `offset` field (it logged "Unknown scratchpad field 'offset'"
+        # on every parse), and rmpc geometry comes from the music-scratchpad
+        # window rule in hyprland.lua.
         ".config/hypr/hyprscratch.conf".text = ''
           telegram {
               class = org.telegram.desktop
@@ -75,6 +80,14 @@ in
               # Fresh spawns land right-aligned; user geometry (saved by
               # scratchpad-geometry.service) wins once the window is moved.
               rules = size monitor_w*0.3 monitor_h-60; move monitor_w*0.7-8 8
+          }
+
+          # Float/size/move come from the mixer-scratchpad window rule in
+          # hyprland.lua; scratchpad-geometry remembers the user's drags.
+          mixer {
+              class = hyprpwcenter
+              command = hyprpwcenter
+              options = special
           }
         '';
 

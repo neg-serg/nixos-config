@@ -30,7 +30,7 @@
             "teardown" # btop (M4+d)
             "torrment" # rustmission (M4+t)
             "vpn" # tun status (M4+u)
-            "mixer" # ncpamixer (M4+C+p)
+            "hyprpwcenter" # PipeWire control center (M4+C+p)
             "rebuild" # nh os switch (M4+S+n)
             "mpv" # video player: no text input, vim-style keys
           ];
