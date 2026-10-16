@@ -12,6 +12,26 @@
 [general]
 kb_layout_to_use = "us"
 
+[hints]
+# Linux defaults to `contour`, which in text-heavy windows labels every blob it
+# finds (measured ~600 labels in a terminal) and covers the screen. `segment`
+# with `controls` is instant, needs no OCR, and labels buttons, fields, icons
+# and pictures only -> far fewer boxes. Text targets stay on Ctrl+Alt+F
+# (vision + search), which overrides the strategy per activation.
+strategy = "segment"
+
+[hints.segment]
+targets = "controls"
+
+# Stock labels are 95%-opaque boxes with an accent border, which hides what is
+# under them. Smaller, borderless and 60% opaque keeps the window readable.
+[hints.ui]
+font_size = 9
+padding_x = 3
+padding_y = 1
+border_width = 0
+background_color = { light = "#99EEF2FF", dark = "#990A1338" }
+
 [hotkeys]
 # Hints click as soon as a label is typed and reopen for the next target
 # (--repeat): chained clicking, Esc exits. Right/middle click stay on
