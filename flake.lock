@@ -531,6 +531,27 @@
         "type": "github"
       }
     },
+    "nerv-boot": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1791300367,
+        "narHash": "sha256-PnTy/TmckYIsoQoN4CQCkWoX/ZiVPsDLocPPu0hOdhQ=",
+        "ref": "refs/heads/main",
+        "rev": "ba5bc2a582474b71ebc3c04cff8ac0f12dbe2969",
+        "revCount": 4,
+        "type": "git",
+        "url": "https://codeberg.org/GuillotineMelody/nervboot"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://codeberg.org/GuillotineMelody/nervboot"
+      }
+    },
     "nix-cachyos-kernel": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -766,6 +787,27 @@
         "type": "github"
       }
     },
+    "pleamar": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792081881,
+        "narHash": "sha256-qwEjDsgwdWeJDVR+Xo8L1yJKifuDapaQGpfNSxYy9U0=",
+        "owner": "k4ditano",
+        "repo": "pleamar",
+        "rev": "57568fa7e9b2b432cc18f074f4fc7ec283bae952",
+        "type": "github"
+      },
+      "original": {
+        "owner": "k4ditano",
+        "repo": "pleamar",
+        "rev": "57568fa7e9b2b432cc18f074f4fc7ec283bae952",
+        "type": "github"
+      }
+    },
     "quickshell": {
       "inputs": {
         "nixpkgs": [
@@ -830,12 +872,14 @@
         "mt7927": "mt7927",
         "multiverse": "multiverse",
         "neg-pkgs": "neg-pkgs",
+        "nerv-boot": "nerv-boot",
         "nix-cachyos-kernel": "nix-cachyos-kernel",
         "nix-flatpak": "nix-flatpak",
         "nix-maid": "nix-maid",
         "nix-src": "nix-src",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-torch": "nixpkgs-torch",
+        "pleamar": "pleamar",
         "quickshell": "quickshell",
         "raise": "raise",
         "renoise-src": "renoise-src",
@@ -882,6 +926,27 @@
         "owner": "rust-lang",
         "ref": "nightly",
         "repo": "rust-analyzer",
+        "type": "github"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "nerv-boot",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791276535,
+        "narHash": "sha256-iwqAmHTX1IgzTumJR3JayNAQAo5xEmmOuGzB6b2pT/Q=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "b962e5d0c8cd97196c6a882d659fe451b52ad989",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
         "type": "github"
       }
     },

@@ -1,5 +1,6 @@
 {
   self,
+  inputs,
   nixpkgs,
   flakeLib,
   mkTestHost,
@@ -15,6 +16,9 @@ in
 {
   packages = (mkCustomPkgs pkgs) // {
     default = pkgs.zsh; # default shell for flake environment
+    # NERV UEFI boot menu (external flake). Package only — no boot wiring, since
+    # trantor boots through limine and the upstream module needs systemd-boot.
+    nerv-boot = inputs.nerv-boot.packages.${system}.nerv-boot;
   };
 
   formatter = pkgs.writeShellApplication {
