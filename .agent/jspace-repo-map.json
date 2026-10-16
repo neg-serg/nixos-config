@@ -1,0 +1,109 @@
+{
+  "summary": "NixOS + home-manager configuration for the single host trantor, built from one flake. flake/ produces the outputs, hosts/trantor holds host-specific settings, modules/ holds the feature modules (with flags under modules/features/), packages/ holds custom derivations, and the Justfile is the task interface; scripts/dev/ carries the repo gates that `just lint` and `just check` run.",
+  "areas": [
+    {
+      "path": "flake.nix",
+      "purpose": "Flake entry point: inputs and the nixosConfigurations, checks, devShells and apps outputs",
+      "dependencies": ["flake/per-system.nix", "flake/nixos.nix"],
+      "tests": ["nix flake check -L --option substitute false"],
+      "coverage": "Outputs read at lines 161-208; input set not audited"
+    },
+    {
+      "path": "flake",
+      "purpose": "Flake helpers: nixos.nix (mkNixosOutputs, trantorDomains), checks.nix (parallel-eval checks and guards), per-system.nix, devshells.nix, apps.nix, lib.nix",
+      "dependencies": ["lib"],
+      "tests": ["just check"],
+      "coverage": "checks.nix and nixos.nix inspected in this session"
+    },
+    {
+      "path": "hosts/trantor",
+      "purpose": "Host-specific configuration: default.nix, hardware.nix, networking.nix, services/, plus the notification and telegram integration files",
+      "dependencies": ["modules", "secrets"],
+      "tests": ["just check"],
+      "coverage": "Directory listing only; file contents beyond default.nix not read here"
+    },
+    {
+      "path": "modules",
+      "purpose": "Feature modules grouped by domain (core, cli, dev, features, hardware, llm, media, monitoring, security, servers, system, user, ...); feature flags live under modules/features/ and gates in modules/user/nix-maid/apps/",
+      "dependencies": ["packages", "lib", "files"],
+      "tests": ["just flag <path>", "just check"],
+      "coverage": "170 directories counted; the first 20 groups were listed, the rest remain uninspected"
+    },
+    {
+      "path": "packages",
+      "purpose": "Custom overlays and per-package derivations, exposed through packages/overlay.nix as pkgs.neg.* (for example packages/dsh)",
+      "dependencies": ["flake"],
+      "tests": ["just check", "nix build .#<package> --option substitute false"],
+      "coverage": "Directory listing and the overlay entry point; individual packages not audited"
+    },
+    {
+      "path": "lib",
+      "purpose": "Shared Nix helpers (opts.nix, neg-helpers.nix) and eval-only unit tests (feature-flags-tests.nix, fzf-opts-tests.nix, ...) wired into the flake checks",
+      "dependencies": ["flake/checks.nix"],
+      "tests": ["just check"],
+      "coverage": "File listing; helper semantics not verified"
+    },
+    {
+      "path": "files",
+      "purpose": "Userland configuration data consumed by modules (hyprland, quickshell, cli, gui, art, firmware, ...)",
+      "dependencies": ["modules"],
+      "tests": [],
+      "coverage": "First 14 entries listed; no content inspection"
+    },
+    {
+      "path": "scripts/dev",
+      "purpose": "Repo gates and helper scripts invoked by `just lint` / `just check` (markdown language policy, osh syntax, dsh session/statusline/worktree guards, hyprland variables)",
+      "dependencies": ["Justfile"],
+      "tests": ["just lint"],
+      "coverage": "Listing only; individual gate semantics documented where they live"
+    },
+    {
+      "path": "docs",
+      "purpose": "Operational runbooks (runbook-*.md, index in runbook-index.md) and howtos; docs/AGENTS.md fixes the English-only policy",
+      "dependencies": [],
+      "tests": ["scripts/dev/check-markdown-language.sh"],
+      "coverage": "Listing and the language policy; individual runbooks not read"
+    },
+    {
+      "path": "secrets",
+      "purpose": "SOPS-encrypted secrets, consumed in Nix as <secret>.path with 0400/0600 modes; secrets/AGENTS.md governs access",
+      "dependencies": [],
+      "tests": [],
+      "coverage": "Directory and policy file only; contents are encrypted and were not opened"
+    },
+    {
+      "path": "tests",
+      "purpose": "Nix-side test fixtures referenced by flake checks (for example apparmor-enforce.nix)",
+      "dependencies": ["flake/checks.nix"],
+      "tests": ["just check"],
+      "coverage": "Listing only"
+    },
+    {
+      "path": "Justfile",
+      "purpose": "Task interface: fmt (nix fmt), lint (statix, deadnix, guards, ruff/black, taplo, rustfmt, music selftest), check (nix flake check -L --option substitute false), deploy/switch, agent-switch, flag, flag-eval",
+      "dependencies": ["scripts/dev"],
+      "tests": ["just lint", "just check"],
+      "coverage": "Recipes fmt, lint and check read; target list reviewed"
+    },
+    {
+      "path": "AGENTS.md",
+      "purpose": "Repo-wide agent contract: language policy, minimal changes, substitute=false builds, switch discipline, commit style",
+      "dependencies": [],
+      "tests": [],
+      "coverage": "Read in full during this session"
+    }
+  ],
+  "facts": [
+    {"claim": "The flake exposes nixosConfigurations, checks, devShells and apps, generated per system", "evidence": "flake.nix"},
+    {"claim": "`just check` runs nix flake check with substitute false, and `just lint` runs the devshell gate set", "evidence": "Justfile"},
+    {"claim": "A repo gate enforces the markdown language policy (no Cyrillic or CJK in *.md)", "evidence": "scripts/dev/check-markdown-language.sh"},
+    {"claim": "trantor's module domain set is restricted by trantorDomains in flake/nixos.nix", "evidence": "flake/nixos.nix"},
+    {"claim": "Agent switch requests are handed to a root-owned unit instead of passwordless nixos-rebuild", "evidence": "modules/security/agent-switch.nix"}
+  ],
+  "unknowns": [
+    "The complete module-group list and per-group purpose (modules/ holds 170 directories; only the first 20 groups were listed)",
+    "Which files/ subtrees are generated versus hand-maintained",
+    "Behaviour of the appimage and apps domains, which trantorDomains excludes",
+    "No production or runtime verification is represented here: this map is a reading aid, not a test result"
+  ]
+}
