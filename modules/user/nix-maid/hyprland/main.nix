@@ -336,6 +336,47 @@ let
     "$hyprctl_bin" plugin load "$plugin" || true
   '';
 
+  # HyprCapture (screenshots/recording): loaded with the session target (the
+  # user unit below), not from hyprland.lua. Its PLUGIN_INIT calls
+  # HyprlandAPI::reloadConfig() to register the plugin.hyprcapture.* keys, and a
+  # load issued while hyprland.lua is still being parsed would re-enter the
+  # config parser mid-file; the binds in hyprland.lua are lazy functions, so
+  # they resolve the namespace at press time. Re-runnable in a live session
+  # (`hyprcapture-setup`); the load of an already loaded plugin fails
+  # harmlessly.
+  hyprcaptureSetup = pkgs.writeShellScriptBin "hyprcapture-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+    plugin=${pkgs.hyprlandPlugins.hyprcapture}/lib/libhyprcapture.so
+
+    exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hyprcapture-setup.log" 2>&1
+    echo "--- $(date '+%F %T') hyprcapture-setup"
+
+    loaded() {
+      "$hyprctl_bin" plugin list 2>/dev/null | grep -q "HyprCapture"
+    }
+
+    # ~5 s budget, the hyprdynamiccursors pattern: a load issued while the
+    # compositor is still busy with the login transition does not stick, so
+    # retry until `hyprctl plugin list` really reports the plugin.
+    for _ in $(seq 1 20); do
+      loaded && break
+      "$hyprctl_bin" plugin load "$plugin" || true
+      sleep 0.25
+    done
+
+    if ! loaded; then
+      echo "plugin never reported as loaded"
+      exit 1
+    fi
+
+    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
+    # comment) as a flag, hence the leading newline. The settings file cannot
+    # be part of hyprland.lua: the plugin registers its config keys only in
+    # PLUGIN_INIT.
+    "$hyprctl_bin" eval "
+    $(cat ${pkgs.writeText "hyprcapture.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprcapture.lua"))})"
+  '';
+
   # HyprDynamicCursors (cursor stretch): same load-then-push pattern as
   # hyprglass/hyprexpo. Its config keys (plugin.dynamic_cursors.*) only exist
   # once the .so is loaded, so files/gui/hypr/hyprdynamiccursors.lua is pushed
@@ -418,6 +459,7 @@ in
           hyprwinwrapSetup # loads the plugin and (re)applies the background-window declarations
           hyprdynamiccursorsSetup # loads the plugin and (re)applies the cursor stretch settings
           gloviewSetup # loads the macOS-style overview plugin (dispatch: hl.plugin.gloview.toggle())
+          hyprcaptureSetup # loads the plugin and (re)applies the screenshot/recording settings
           hyprExpo # `hypr-expo toggle|push`: loads the overview plugin on demand
         ];
 
@@ -439,6 +481,21 @@ in
             bindsTo = [ "hyprland-session.target" ];
             after = [ "hyprland-session.target" ];
             serviceConfig.ExecStart = "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup";
+          };
+
+          # HyprCapture starts with the session target for the same reason as
+          # hyprdynamiccursors (after a greetd login nothing re-parses
+          # hyprland.lua), plus one of its own: PLUGIN_INIT reloads the config,
+          # so the load must not run while that file is being parsed. The
+          # helper is idempotent and pushes the settings from
+          # files/gui/hypr/hyprcapture.lua after the load.
+          hyprcapture = systemdUser.mkUserService {
+            presets = [ "oneshot" ];
+            description = "Load HyprCapture and push the screenshot/recording settings";
+            wantedBy = [ "hyprland-session.target" ];
+            bindsTo = [ "hyprland-session.target" ];
+            after = [ "hyprland-session.target" ];
+            serviceConfig.ExecStart = "${hyprcaptureSetup}/bin/hyprcapture-setup";
           };
         };
       }
