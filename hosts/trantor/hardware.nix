@@ -123,6 +123,12 @@ in
       timeout = 0;
       nerv = {
         enable = true;
+        # The module's own NVRAM step aborts the whole bootloader install on
+        # this host: /boot is a systemd automount, so `findmnt --target /boot`
+        # prints the autofs row and the real device, and feeding that two-line
+        # value to lsblk fails under the installer's `set -e`. The same checks
+        # live in systemData.nervEfiEntry, tolerant of the two-line output.
+        efiEntry.enable = false;
         settings = {
           timeout = 8; # seconds on the NERV countdown before autoboot
           bls-limit = 5; # generations shown in the menu (systemd-boot keeps 25)
@@ -133,6 +139,12 @@ in
     # Enable AutoFDO (requires building kernel with Clang)
     kernel.autofdo.enable = false;
   };
+
+  # NERV firmware entry — our own tolerant replacement for the module's
+  # efiEntry step (see the boot.loader.nerv comment above).
+  system.activationScripts.nervEfiEntry = lib.stringAfter [ "etc" ] (
+    lib.getExe systemData.nervEfiEntry
+  );
 
   # kexec preparation hooks
   systemd.services.prepare-kexec = {

@@ -7,6 +7,58 @@
   config,
 }:
 {
+  # Create the NERV firmware boot entry that boot.loader.nerv's own install step
+  # would add. Kept here because /boot is a systemd automount on this host:
+  # `findmnt --target /boot` then prints two rows (the autofs and the real
+  # device), and the module's snippet feeds that two-line value into lsblk,
+  # which fails and aborts the whole bootloader install under `set -e`. This
+  # variant takes the last row, and every failure path only prints the manual
+  # efibootmgr command instead of breaking activation.
+  nervEfiEntry = pkgs.writeShellApplication {
+    name = "nerv-efi-entry";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.efibootmgr
+      pkgs.gnugrep
+      pkgs.util-linux
+    ];
+    text = ''
+      esp=/boot
+      loader='\EFI\nerv\nerv-boot.efi'
+
+      # No EFI variables to write — nothing to do.
+      [ -d /sys/firmware/efi/efivars ] || exit 0
+
+      # An entry pointing at nerv-boot already exists (ours or the user's):
+      # leave it and its boot order alone.
+      if efibootmgr -v | grep -qiF "$loader"; then
+        exit 0
+      fi
+
+      # tail -n1 skips the autofs row; mountinfo lists the real mount last.
+      src="$(findmnt -nro SOURCE --target "$esp" 2>/dev/null | tail -n1 || true)"
+      case "$src" in
+        /dev/*) ;;
+        *)
+          echo "nerv: cannot resolve the ESP device ($src); create the entry by hand" >&2
+          exit 0
+          ;;
+      esac
+      disk="$(lsblk -nro PKNAME "$src" 2>/dev/null || true)"
+      part="$(lsblk -nro PARTN "$src" 2>/dev/null || true)"
+      if [ -z "$disk" ] || [ -z "$part" ]; then
+        echo "nerv: cannot derive disk/partition for $src; create the entry by hand:" >&2
+        echo "nerv:   efibootmgr --create --disk <disk> --part <part> --label NERV --loader '$loader'" >&2
+        exit 0
+      fi
+      if efibootmgr --quiet --create --disk "/dev/$disk" --part "$part" --label NERV --loader "$loader"; then
+        echo "nerv: created firmware boot entry NERV (first in BootOrder)"
+      else
+        echo "nerv: efibootmgr failed; create the entry by hand (see nerv-boot's README)" >&2
+      fi
+    '';
+  };
+
   # Rename NICs to stable names via systemd-networkd link files
   networkLinks = {
     "10-net0" = {
