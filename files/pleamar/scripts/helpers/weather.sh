@@ -209,9 +209,10 @@ if ! command -v curl > /dev/null 2>&1; then
   start_error "curl not installed"
 fi
 
+NOW_MS=0
 now_ms() {
   local t=$EPOCHREALTIME
-  printf '%s' "$((10#${t%.*} * 1000 + 10#${t#*.} / 1000))"
+  printf -v NOW_MS '%s' "$((10#${t%.*} * 1000 + 10#${t#*.} / 1000))"
 }
 
 json_err() {
@@ -219,7 +220,8 @@ json_err() {
 }
 
 sample_error() {
-  jq -cn --arg w "$WORKER" --arg e "$1" --argjson t "$(now_ms)" '{ok:false,worker:$w,err:$e,t:$t}'
+  now_ms
+  jq -cn --arg w "$WORKER" --arg e "$1" --argjson t "$NOW_MS" '{ok:false,worker:$w,err:$e,t:$t}'
 }
 
 ack() {
@@ -235,6 +237,8 @@ fi
 NOW=0
 HTTP_BODY=""
 HTTP_ERROR=""
+HTTP_TMP=""
+CURL_PID=""
 ERR_MSG=""
 GEOCODED_AT=0
 PAYLOAD=""
@@ -242,18 +246,30 @@ PAYLOAD=""
 # Sets HTTP_BODY on 0, HTTP_ERROR on 1. Never runs in a subshell: callers
 # need both globals, and error text must survive back to emit_sample.
 http_get() {
-  local url=$1 out
+  local url=$1 rc=0 err
   HTTP_BODY=""
   HTTP_ERROR=""
-  if ! out=$(curl --fail --silent --show-error --location --max-time "$TIMEOUT" \
-    --user-agent "$USER_AGENT" "$url" 2>&1); then
-    HTTP_ERROR=${out##*$'\n'}
+  HTTP_TMP=$(mktemp -d "${TMPDIR:-/tmp}/pleamar-weather.XXXXXX")
+  curl --fail --silent --show-error --location --max-time "$TIMEOUT" \
+    --user-agent "$USER_AGENT" "$url" > "$HTTP_TMP/body" 2> "$HTTP_TMP/err" &
+  CURL_PID=$!
+  # `wait` lets the TERM trap run at once and kill curl, so a closed view does
+  # not keep the worker alive until the request times out.
+  wait "$CURL_PID" || rc=$?
+  CURL_PID=""
+  if [ "$rc" -ne 0 ]; then
+    err=$(< "$HTTP_TMP/err")
+    HTTP_ERROR=${err##*$'\n'}
     if [ -z "$HTTP_ERROR" ]; then
-      HTTP_ERROR="curl failed"
+      HTTP_ERROR="curl exit $rc"
     fi
+    rm -rf -- "$HTTP_TMP"
+    HTTP_TMP=""
     return 1
   fi
-  HTTP_BODY=$out
+  HTTP_BODY=$(< "$HTTP_TMP/body")
+  rm -rf -- "$HTTP_TMP"
+  HTTP_TMP=""
   return 0
 }
 
@@ -372,8 +388,14 @@ fetch_wttr() {
 
 TMP_CACHE=""
 cleanup() {
+  if [ -n "$CURL_PID" ]; then
+    kill "$CURL_PID" 2> /dev/null || true
+  fi
   if [ -n "$TMP_CACHE" ]; then
     rm -f -- "$TMP_CACHE"
+  fi
+  if [ -n "$HTTP_TMP" ]; then
+    rm -rf -- "$HTTP_TMP"
   fi
 }
 trap cleanup EXIT
@@ -468,7 +490,8 @@ build_payload() {
 
 emit_sample() {
   local now
-  now=$(now_ms)
+  now_ms
+  now=$NOW_MS
   if build_payload; then
     printf '{"ok":true,"worker":"%s","topic":"weather","t":%s,"data":%s}\n' "$WORKER" "$now" "$PAYLOAD"
   else
@@ -549,7 +572,8 @@ handle_command() {
       ack set
       ;;
     sample)
-      now=$(now_ms)
+      now_ms
+      now=$NOW_MS
       for topic in "${!SUB_NEXT[@]}"; do
         SUB_NEXT[$topic]=0
       done
@@ -598,6 +622,7 @@ while :; do
       break
     fi
   fi
-  emit_due_samples "$(now_ms)"
+  now_ms
+  emit_due_samples "$NOW_MS"
 done
 exit 0
