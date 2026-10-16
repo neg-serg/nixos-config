@@ -1,0 +1,267 @@
+diff --git a/src/fetchers/git_transport.zig b/src/fetchers/git_transport.zig
+index 50a03ae..4c8faed 100644
+--- a/src/fetchers/git_transport.zig
++++ b/src/fetchers/git_transport.zig
+@@ -24,6 +24,11 @@ pub const Options = struct {
+     /// environment of its own, so the caller supplies this. Null offers no
+     /// agent credential, and an `ssh://` fetch that needs one then fails.
+     ssh_auth_sock: ?[]const u8 = null,
++    /// The `git` binary the transport falls back to when the built-in client
++    /// cannot complete a fetch (git.kernel.org answers it with something it
++    /// refuses, while `git` fetches the same revision). `null` disables the
++    /// fallback; a test points it at a stub.
++    git_fallback_bin: ?[]const u8 = "git",
+ };
+ pub const Result = struct {
+     rev: [40]u8,
+@@ -161,9 +166,9 @@ pub fn materialize(
+ 
+     if (created) {
+         repo.createRemote("origin", url, refspec_text) catch |err| return mapError(err);
+-        try fetchTargeted(allocator, io, &repo, url, refspec_text, rev, ref_name, all_refs, shallow, transport_options, ssh_options, &diag);
++        try fetchTargetedOrSystemGit(allocator, io, &repo, work_dir, path, url, refspec_text, rev, ref_name, all_refs, shallow, options.git_fallback_bin, transport_options, ssh_options, &diag);
+     } else if (refresh) {
+-        try fetchTargeted(allocator, io, &repo, url, refspec_text, rev, ref_name, all_refs, shallow, transport_options, ssh_options, &diag);
++        try fetchTargetedOrSystemGit(allocator, io, &repo, work_dir, path, url, refspec_text, rev, ref_name, all_refs, shallow, options.git_fallback_bin, transport_options, ssh_options, &diag);
+     }
+ 
+     const target = resolveObject(allocator, &repo, rev, ref_name, &diag) catch |err| return err;
+@@ -533,6 +538,125 @@ fn updateSubmodules(
+     }, diag) catch |err| return mapError(err);
+ }
+ 
++/// `fetchTargeted`, with the system `git` as a last resort.
++///
++/// The built-in client speaks the modern forges, but some servers answer it in
++/// a dialect it refuses — git.kernel.org is the known case — and Nix itself has
++/// always shelled out to `git` for this step. Only a transport-level failure
++/// falls back; a bad revision stays an error. The cache repository is reopened
++/// afterwards: an external fetch added pack files the open handle has not
++/// indexed, so the resolve/checkout steps below must see a fresh repository.
++fn fetchTargetedOrSystemGit(
++    allocator: std.mem.Allocator,
++    io: std.Io,
++    repo: *ziggit.Repository,
++    work_dir: std.Io.Dir,
++    path: []const u8,
++    url: []const u8,
++    refspec_text: []const u8,
++    rev: ?[]const u8,
++    ref_name: ?[]const u8,
++    all_refs: bool,
++    shallow: bool,
++    fallback_bin: ?[]const u8,
++    transport_options: ziggit.TransportOptions,
++    ssh_options: ziggit.Ssh.SshOptions,
++    diag: ?*?ziggit.Diagnostic,
++) !void {
++    fetchTargeted(allocator, io, repo, url, refspec_text, rev, ref_name, all_refs, shallow, transport_options, ssh_options, diag) catch |err| switch (err) {
++        error.FetchGitFailed, error.FetchTransient => {
++            const bin = fallback_bin orelse return err;
++            // Fetch through the system `git` *before* dropping the open handle: if
++            // that fails too, the error propagates and `materialize`'s deferred
++            // `repo.deinit()` must still see a live repository (deiniting twice
++            // segfaults). Only a successful external fetch has to invalidate the
++            // handle — it added pack files this repository has not indexed — and
++            // the replacement is opened before the old handle goes away, so no
++            // path leaves `repo` dangling.
++            try fetchWithSystemGit(allocator, io, bin, path, url, rev, ref_name, all_refs, shallow);
++            const reopened = openRepositoryAt(allocator, io, work_dir, diag) catch |reopen_err| return mapError(reopen_err);
++            repo.deinit();
++            repo.* = reopened;
++        },
++        else => return err,
++    };
++}
++
++/// Last-resort fetch through the system `git`.
++///
++/// The refspecs mirror `fetchRefspec`, so the caller's resolve/checkout steps
++/// find exactly what a built-in fetch would have left behind. A missing `git`
++/// or a non-zero exit is reported as `FetchGitFailed`, like any other
++/// transport fault.
++fn fetchWithSystemGit(
++    allocator: std.mem.Allocator,
++    io: std.Io,
++    bin: []const u8,
++    path: []const u8,
++    url: []const u8,
++    rev: ?[]const u8,
++    ref_name: ?[]const u8,
++    all_refs: bool,
++    shallow: bool,
++) !void {
++    // `git` refuses to fetch into a directory it does not recognize, and the
++    // built-in client may have created only a bare skeleton before failing.
++    try runSystemGit(allocator, io, bin, &.{ "-C", path, "init", "-q" });
++
++    const refspec_text = try fetchRefspec(allocator, rev, ref_name, all_refs);
++    defer allocator.free(refspec_text);
++
++    try fetchWithSystemGitRefspec(allocator, io, bin, path, url, refspec_text, shallow);
++
++    // A plain `ref` may name a tag: retry with the tag refspec before giving
++    // up, mirroring the candidates `resolveObject` walks.
++    if (rev == null and ref_name != null and !all_refs and !std.mem.startsWith(u8, ref_name.?, "refs/")) {
++        const tag_spec = try std.fmt.allocPrint(allocator, "+refs/tags/{s}:refs/tags/{s}", .{ ref_name.?, ref_name.? });
++        defer allocator.free(tag_spec);
++        fetchWithSystemGitRefspec(allocator, io, bin, path, url, tag_spec, shallow) catch {};
++    }
++}
++
++fn fetchWithSystemGitRefspec(
++    allocator: std.mem.Allocator,
++    io: std.Io,
++    bin: []const u8,
++    path: []const u8,
++    url: []const u8,
++    refspec_text: []const u8,
++    shallow: bool,
++) !void {
++    var args: std.ArrayListUnmanaged([]const u8) = .empty;
++    defer args.deinit(allocator);
++    try args.appendSlice(allocator, &.{ "-C", path, "fetch" });
++    if (shallow) try args.appendSlice(allocator, &.{ "--depth", "1" });
++    try args.appendSlice(allocator, &.{ url, refspec_text });
++    try runSystemGit(allocator, io, bin, args.items);
++}
++
++/// Runs one `git` command (`bin`), resolving a bare name through the parent's
++/// PATH. Output is
++/// discarded: the caller only cares whether the fetch landed.
++fn runSystemGit(allocator: std.mem.Allocator, io: std.Io, bin: []const u8, args: []const []const u8) !void {
++    const argv = try allocator.alloc([]const u8, args.len + 1);
++    defer allocator.free(argv);
++    argv[0] = bin;
++    @memcpy(argv[1..], args);
++
++    var child = std.process.spawn(io, .{
++        .argv = argv,
++        .expand_arg0 = .expand,
++        .stdin = .ignore,
++        .stdout = .ignore,
++        .stderr = .ignore,
++    }) catch return error.FetchGitFailed;
++    const term = child.wait(io) catch return error.FetchGitFailed;
++    switch (term) {
++        .exited => |code| if (code != 0) return error.FetchGitFailed,
++        else => return error.FetchGitFailed,
++    }
++}
++
+ /// The single refspec Nix fetches: everything under `allRefs`, the pinned rev
+ /// itself, or the one requested ref (a plain name means a branch, as in Nix);
+ /// the remote's HEAD when nothing is requested.
+@@ -1068,3 +1192,112 @@ test "an unpinned snapshot keeps dirty tracked edits and excludes untracked file
+     // Repository metadata is never part of a snapshot.
+     try testing.expectError(error.FileNotFound, dir.statFile(testing.io, ".git", .{}));
+ }
++
++test "the git fallback runs the configured binary with the fetch refspec" {
++    const testing = std.testing;
++
++    var tmp = testing.tmpDir(.{});
++    defer tmp.cleanup();
++
++    const cwd = try std.process.currentPathAlloc(testing.io, testing.allocator);
++    defer testing.allocator.free(cwd);
++    const base = try std.fs.path.resolve(testing.allocator, &.{ cwd, ".zig-cache", "tmp", &tmp.sub_path });
++    defer testing.allocator.free(base);
++
++    const stub = try std.fs.path.join(testing.allocator, &.{ base, "stub-git" });
++    defer testing.allocator.free(stub);
++    const log = try std.fs.path.join(testing.allocator, &.{ base, "argv.log" });
++    defer testing.allocator.free(log);
++
++    const script = try std.fmt.allocPrint(testing.allocator, "#!/bin/sh\nprintf '%s\\n' \"$@\" >> '{s}'\n", .{log});
++    defer testing.allocator.free(script);
++    try tmp.dir.writeFile(testing.io, .{ .sub_path = "stub-git", .data = script });
++    switch (@import("builtin").os.tag) {
++        .windows => return error.SkipZigTest,
++        else => {
++            var stub_file = try tmp.dir.openFile(testing.io, "stub-git", .{});
++            defer stub_file.close(testing.io);
++            try stub_file.setPermissions(testing.io, std.Io.File.Permissions.fromMode(0o755));
++        },
++    }
++
++    const fetch_dir = try std.fs.path.join(testing.allocator, &.{ base, "cache" });
++    defer testing.allocator.free(fetch_dir);
++
++    // Nothing listens on port 1, so the built-in fetch fails on its own and the
++    // transport has to take the fallback path — no network, no real git.
++    const rev = "0123456789abcdef0123456789abcdef01234567";
++    _ = materialize(testing.allocator, testing.io, "http://127.0.0.1:1/repo.git", fetch_dir, rev, null, false, false, true, true, .{
++        .git_fallback_bin = stub,
++        .connect_timeout_seconds = 1,
++    }) catch {};
++
++    const argv = try std.Io.Dir.cwd().readFileAlloc(testing.io, log, testing.allocator, .limited(4096));
++    defer testing.allocator.free(argv);
++    try testing.expect(std.mem.indexOf(u8, argv, "fetch") != null);
++    try testing.expect(std.mem.indexOf(u8, argv, "--depth") != null);
++    try testing.expect(std.mem.indexOf(u8, argv, "+0123456789abcdef0123456789abcdef01234567:refs/remotes/origin/pinned") != null);
++}
++
++test "a failing system git leaves the cache repository usable" {
++    const testing = std.testing;
++
++    var tmp = testing.tmpDir(.{});
++    defer tmp.cleanup();
++
++    const cwd = try std.process.currentPathAlloc(testing.io, testing.allocator);
++    defer testing.allocator.free(cwd);
++    const base = try std.fs.path.resolve(testing.allocator, &.{ cwd, ".zig-cache", "tmp", &tmp.sub_path });
++    defer testing.allocator.free(base);
++
++    // A stub that fails, like a machine without `git` or a server it cannot reach.
++    // The fallback must report an error rather than deinit the repository twice:
++    // the error path used to leave `repo` deinited behind `materialize`'s
++    // deferred `repo.deinit()`, which segfaulted.
++    try tmp.dir.writeFile(testing.io, .{ .sub_path = "git-that-fails", .data = "#!/bin/sh\nexit 1\n" });
++    switch (@import("builtin").os.tag) {
++        .windows => return error.SkipZigTest,
++        else => {
++            var stub_file = try tmp.dir.openFile(testing.io, "git-that-fails", .{});
++            defer stub_file.close(testing.io);
++            try stub_file.setPermissions(testing.io, std.Io.File.Permissions.fromMode(0o755));
++        },
++    }
++    const stub = try std.fs.path.join(testing.allocator, &.{ base, "git-that-fails" });
++    defer testing.allocator.free(stub);
++
++    const fetch_dir = try std.fs.path.join(testing.allocator, &.{ base, "cache" });
++    defer testing.allocator.free(fetch_dir);
++
++    try testing.expectError(error.FetchGitFailed, materialize(
++        testing.allocator,
++        testing.io,
++        "http://127.0.0.1:1/repo.git",
++        fetch_dir,
++        "0123456789abcdef0123456789abcdef01234567",
++        null,
++        false,
++        false,
++        true,
++        true,
++        .{ .git_fallback_bin = stub, .connect_timeout_seconds = 1 },
++    ));
++
++    // And when the fallback binary is missing altogether (the spawn itself
++    // fails), which is the other shape of the same crash.
++    const missing = try std.fs.path.join(testing.allocator, &.{ base, "no-such-git" });
++    defer testing.allocator.free(missing);
++    try testing.expectError(error.FetchGitFailed, materialize(
++        testing.allocator,
++        testing.io,
++        "http://127.0.0.1:1/repo.git",
++        fetch_dir,
++        "0123456789abcdef0123456789abcdef01234567",
++        null,
++        false,
++        false,
++        true,
++        true,
++        .{ .git_fallback_bin = missing, .connect_timeout_seconds = 1 },
++    ));
++}

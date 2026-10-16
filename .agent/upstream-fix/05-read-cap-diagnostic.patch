@@ -1,0 +1,52 @@
+diff --git a/src/store/file_cache.zig b/src/store/file_cache.zig
+index 60cd833..f7b2ee1 100644
+--- a/src/store/file_cache.zig
++++ b/src/store/file_cache.zig
+@@ -193,12 +197,7 @@ pub const FileCache = struct {
+         // lifetime — big ones (≥64 KB) get their own bucket.
+         const prev_tag = vma.setAllocTag(.file_cache);
+         defer _ = vma.setAllocTag(prev_tag);
+-        const contents = try std.Io.Dir.cwd().readFileAlloc(
+-            io,
+-            entry.path,
+-            self.allocator,
+-            .limited(max_read_bytes),
+-        );
++        const contents = try self.readCapped(io, entry.path);
+         const handle = try ImmutableBytes.fromOwned(self.allocator, contents);
+ 
+         entry.exists_known = true;
+@@ -238,6 +237,19 @@ pub const FileCache = struct {
+         self.invalidateParentListing(entry.path);
+     }
+ 
++    /// `readFileAlloc` under the cache's size cap, naming the offending path
++    /// when the cap is what rejected the read: a bare `StreamTooLong` says
++    /// nothing about which file, and this cap is the one failure a caller
++    /// cannot diagnose from the error alone.
++    fn readCapped(self: *FileCache, io: std.Io, path: []const u8) ![]u8 {
++        return std.Io.Dir.cwd().readFileAlloc(io, path, self.allocator, .limited(max_read_bytes)) catch |err| {
++            if (err == error.StreamTooLong) {
++                std.debug.print("fix: file-read cap ({d} MiB) exceeded by {s}\n", .{ max_read_bytes / (1024 * 1024), path });
++            }
++            return err;
++        };
++    }
++
+     /// Return a retained immutable handle for a file, populating the same
+     /// cache entry used by `readFile` on a cold miss.
+     pub fn retainFile(self: *FileCache, path: []const u8) !ImmutableBytes {
+@@ -249,12 +261,7 @@ pub const FileCache = struct {
+         const io = self.io orelse return error.FileIoUnavailable;
+         const prev_tag = vma.setAllocTag(.file_cache);
+         defer _ = vma.setAllocTag(prev_tag);
+-        const owned = try std.Io.Dir.cwd().readFileAlloc(
+-            io,
+-            entry.path,
+-            self.allocator,
+-            .limited(max_read_bytes),
+-        );
++        const owned = try self.readCapped(io, entry.path);
+         const handle = try ImmutableBytes.fromOwned(self.allocator, owned);
+ 
+         entry.exists_known = true;
