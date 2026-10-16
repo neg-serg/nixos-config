@@ -20,16 +20,13 @@ in
     # -- Volume control --
     pkgs.genlc # Genelec SAM monitor volume control via GLM USB adapter
     glmAdapterPriv # root helper (NOPASSWD) that moves the GLM adapter host<->VM
-    pkgs.pw-volume # minimal PipeWire volume controller for scripts
 
     # -- RME HDSPe --
     pkgs.hdspeconf # HDSPe matrix mixer & config (for snd-hdspe driver)
     pkgs.alsa-tools # hdspmixer, hdsploader (RME HDSPe userland tools)
 
-    # -- GUI Patchbays --
-    pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
-    pkgs.hyprpwcenter # PipeWire control center GUI (hyprtoolkit, Hyprland-native)
-    pkgs.lxqt.pavucontrol-qt # PipeWire volume control, Qt port of pavucontrol (no GTK)
+    # -- Mixer --
+    pkgs.hyprpwcenter # PipeWire control center — the session mixer (M4+C+p scratchpad)
   ];
 
   services.udev.extraRules = ''
