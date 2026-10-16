@@ -1,0 +1,74 @@
+// icons.plm — the shell's shared glyphs: one image per role, so every scene
+// draws the same picture in the same cell.
+//
+// This is the pleamar form of the legacy MaterialIcon call sites: a scene that
+// needs a wifi, a battery or a transport mark takes it here instead of naming an
+// icon theme glyph of its own, and the whole shell changes look in one place.
+//
+//   import "../../lib/palette.plm"
+//   import "../../lib/icons.plm"
+//
+//   image Icons.wifi { at: 8, 8; size: icon.small * scale, icon.small * scale; tint: ink }
+//
+// An image of a library lives under the library's name: it is `Icons.wifi` from
+// a scene, whatever surname the import was given (INTERFACES.md §5, the same
+// rule that makes a plugin's fact `Clock.now`). Each image is declared for its
+// role's size — `icon.small` (16) for the bar's glyphs, `icon.large` (28) for
+// the launcher's search mark and the lock's padlock — and is drawn at that size
+// times the per-copy scale, so the cell keeps the shape it was declared with.
+// (The declaration takes literal numbers; an expression like `icon.small` is
+// `expected a number here` in 0.4.11, so the two sizes are written out and the
+// palette token they mirror is named beside each group.)
+//
+// The sources are symbolic glyphs: an image's `tint:` paints its shape in that
+// colour (the alpha is the mask), which is how the shell keeps one hue — draw
+// them with `tint: ink`, `tint: ink.dim` or the tone the widget means, as
+// pleamar's own bar example does. A scene that needs a glyph this file does not
+// cover declares it locally, next to the scene; this library stays small.
+
+library Icons strict {
+
+    // ---------------------------------------------------------- connectivity
+    // icon.small
+    image wifi = icon "network-wireless-symbolic", 16, 16
+    image wifi.off = icon "network-wireless-disconnected-symbolic", 16, 16
+    image ethernet = icon "network-wired-symbolic", 16, 16
+    image vpn = icon "network-vpn-symbolic", 16, 16
+    image bluetooth = icon "bluetooth-symbolic", 16, 16
+    image bluetooth.on = icon "bluetooth-active-symbolic", 16, 16
+
+    // ---------------------------------------------------------------- status
+    // icon.small
+    image battery = icon "battery-good-symbolic", 16, 16
+    image battery.charging = icon "battery-good-charging-symbolic", 16, 16
+    image volume = icon "audio-volume-high-symbolic", 16, 16
+    image volume.muted = icon "audio-volume-muted-symbolic", 16, 16
+    image microphone = icon "microphone-sensitivity-high-symbolic", 16, 16
+    image microphone.muted = icon "microphone-sensitivity-muted-symbolic", 16, 16
+    image clock = icon "accessories-clock-symbolic", 16, 16
+    image weather = icon "weather-few-clouds-symbolic", 16, 16
+    image keyboard = icon "input-keyboard-symbolic", 16, 16
+    image tray = icon "system-tray-symbolic", 16, 16
+
+    // ----------------------------------------------------------------- media
+    // icon.small
+    image media = icon "multimedia-player-symbolic", 16, 16
+    image media.play = icon "media-playback-start-symbolic", 16, 16
+    image media.pause = icon "media-playback-pause-symbolic", 16, 16
+    image media.previous = icon "media-skip-backward-symbolic", 16, 16
+    image media.next = icon "media-skip-forward-symbolic", 16, 16
+
+    // ---------------------------------------------------------------- system
+    // icon.small
+    image power = icon "system-shutdown-symbolic", 16, 16
+    image close = icon "window-close-symbolic", 16, 16
+    // icon.large — the launcher's search mark and the lock's padlock
+    image search = icon "system-search-symbolic", 28, 28
+    image lock = icon "system-lock-screen-symbolic", 28, 28
+
+    // ------------------------------------------------------- lines and marks
+    // icon.small
+    image check = icon "object-select-symbolic", 16, 16
+    image chevron = icon "go-next-symbolic", 16, 16
+    image workspace = icon "workspace-switcher-symbolic", 16, 16
+}
