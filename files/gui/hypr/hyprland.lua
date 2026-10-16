@@ -45,6 +45,21 @@ if hl.plugin and hl.plugin.dynamic_cursors then
   })
 end
 
+-- HyprCapture keeps the same shape: the push from hyprcapture-setup is dropped
+-- by a reload while the loaded plugin re-registers its defaults, and its config
+-- keys exist only once the .so is loaded, hence the guard. Keep the values in
+-- sync with files/gui/hypr/hyprcapture.lua.
+if hl.plugin and hl.plugin.hyprcapture then
+  hl.config({
+    plugin = {
+      hyprcapture = {
+        save_dir = "$XDG_PICTURES_DIR/shots",
+        record_save_dir = "$XDG_VIDEOS_DIR/recordings",
+      },
+    },
+  })
+end
+
 -- ---------------------------------------------------------------------
 -- Visual variables (from vars.conf)
 -- ---------------------------------------------------------------------
@@ -453,8 +468,19 @@ hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record stop"), { release =
 -- included) *and* the main-menu helper actions — menu-search lists both and fires
 -- the chosen entry. Replaces the bare main-menu picker on this hotkey.
 hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("menu-search"), { locked = true })
-hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grim -l 0 "$shot" && pic-info "$shot"'))
-hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grim -l 0 -g "$(slurp)" "$shot" && pic-info "$shot"'))
+-- Screenshots go through HyprCapture (the plugin is loaded by the hyprcapture
+-- user unit, see main.nix): the namespace is still nil while this file is
+-- parsed, so the actions are lazy functions resolved at press time. The plugin
+-- saves into the shots/ directory the grim flow used, copies to the clipboard
+-- and shows its own result thumbnail (what pic-info used to preview), and
+-- `open()` captures without the annotation toolbar — open_editor() is the
+-- annotated variant.
+hl.bind(M4 .. "+" .. SH .. "+r", function()
+  hl.plugin.hyprcapture.open("fullscreen")
+end)
+hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", function()
+  hl.plugin.hyprcapture.open("region")
+end)
 hl.bind(M4 .. "+" .. SH .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec screen"))
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec area"))
 -- Screen annotation overlay (wayscriber): toggle the resident drawing layer
