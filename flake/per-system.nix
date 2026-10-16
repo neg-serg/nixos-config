@@ -9,16 +9,12 @@
 }:
 system:
 let
-  inherit (nixpkgs) lib;
   mkCustomPkgs = flakeLib.mkCustomPkgs; # pkgs is now passed from flake.nix
   nixfmtPkg = nixpkgs.legacyPackages.${system}.nixfmt;
 in
 {
   packages = (mkCustomPkgs pkgs) // {
     default = pkgs.zsh; # default shell for flake environment
-    docs-modules = import ./docs-modules.nix {
-      inherit pkgs lib self;
-    };
   };
 
   formatter = pkgs.writeShellApplication {

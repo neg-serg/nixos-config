@@ -52,7 +52,8 @@ Project Structure
 - `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
 - `files/` — config files (Hyprland, Quickshell panel, scripts)
-- `docs/` — documentation (`docs/index.md`, `docs/howto/`, `docs/runbook-*.md`)
+- `docs/` — operational runbooks only (`docs/runbook-*.md`); everything else is documented in the
+  code it describes (module headers, option descriptions, comments)
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild, theming)
 - `.githooks/` — git hooks (enable with `just hooks-enable`)
@@ -80,11 +81,14 @@ Nix style: `pkgs.*` lists
 General guidance
 - Keep changes minimal and focused on the feature you are touching.
 - Avoid drive-by refactors; mention unrelated issues separately instead of fixing them silently.
-- When changing behavior, prefer updating relevant docs under `docs/` as needed.
-- For WireGuard/VPN host vs user-level setup patterns, see `git log` and the
-  howtos under `docs/howto/`.
-- For a quick orientation, `docs/codebase.md` is a generated repo map (modules, features, profiles, packages); regenerate with `just codebase` when structure changes.
-- For verified step-by-step change workflows (add module/flag/package/host/script/secret, docs, commit rules), see `docs/howto/agent-recipes.md`.
+- Document behavior where it lives: module header comments, `mkOption` descriptions, and comments
+  next to non-obvious code (the *why*, invariants, gotchas) — in English. `docs/` holds runbooks
+  (`docs/runbook-*.md`) only; do not add howtos, overviews or generated maps, fold that knowledge
+  into the code instead.
+- For WireGuard/VPN host vs user-level setup patterns, see `git log` and the module comments in
+  `modules/system/net/vpn/`.
+- For verified step-by-step change workflows (add module/flag/package/host/script/secret, commit
+  rules), see `.agent/workflows/` (long-form recipes: `docs/howto/agent-recipes.md`).
 - Before committing: run `just fmt` then `just check`; never commit unformatted
   or failing changes.
 
@@ -236,7 +240,7 @@ Builds: substitute = false
 - The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false` — keep
   that flag convention in any new bindings/scripts.
 - The repo's own targets already pass this flag: `just deploy*`, `just check`,
-  `just docs-modules`, `just flag`. Do not introduce nix invocations without it.
+  `just flag`. Do not introduce nix invocations without it.
 
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/trantor] …`, `[dev/pkgs] …`, `[docs] …`.
