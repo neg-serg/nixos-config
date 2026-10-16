@@ -23,9 +23,14 @@ let
   # Chatterbox runs pip-installed torch ROCm wheels inside a venv; those wheels
   # are manylinux ELFs and need nixpkgs' libstdc++/libzstd (not on NixOS default
   # linker path). Declare the search path declaratively instead of hardcoding
-  # store paths in chatterbox.env. The venv python is nixpkgs python312 (in
-  # systemPackages, GC-safe) — uv-managed pythons are generic ELFs NixOS refuses
-  # to run without patchelf.
+  # store paths in chatterbox.env.
+  #
+  # The venv interpreter must stay on the *profile* path
+  # (/run/current-system/sw/bin/python3.12): a store-path symlink (what uv/venv
+  # create by default) is GC'ed with the next python312 update and the unit
+  # then crash-loops with status=203/EXEC — repaired 2026-10-16 (relink
+  # bin/python3.12 + pyvenv.cfg; backup kept as pyvenv.cfg.bak-20261016).
+  # uv-managed pythons are generic ELFs NixOS refuses to run without patchelf.
   chatterboxLibPath = pkgs.lib.makeLibraryPath [
     pkgs.stdenv.cc.cc.lib # libstdc++.so.6, libgomp.so.1
     pkgs.zstd # libzstd.so.1
