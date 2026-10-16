@@ -8,11 +8,12 @@
 let
   systemdUser = neg.systemdUser lib;
 
-  # Crash-loop scanner: every 5 minutes walks running services, finds units
-  # that auto-restart (Restart=always/on-failure/on-abnormal) and whose
-  # NRestarts counter jumped by >= CRASH_THRESHOLD since the previous run,
-  # then posts one Telegram alert per affected unit with a per-unit cooldown
-  # so it can never spam. Delivery goes through the shared sender in
+  # Crash-loop scanner: every 5 minutes walks running services in BOTH systemd
+  # managers (system and the user manager — listenbrainz-mpd and friends),
+  # finds units that auto-restart (Restart=always/on-failure/on-abnormal) and
+  # whose NRestarts counter jumped by >= CRASH_THRESHOLD since the previous
+  # run, then posts one Telegram alert per affected unit with a per-unit
+  # cooldown so it can never spam. Delivery goes through the shared sender in
   # hosts/trantor/telegram.nix (socks-proxy retry lives there).
   crashLoopScript = pkgs.replaceVars ./notify/telegram-crashloop.py {
     sender = config.trantor.telegram.sender;
