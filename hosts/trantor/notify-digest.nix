@@ -19,6 +19,14 @@
 let
   systemdUser = neg.systemdUser lib;
 
+  # The local BBS board mirror: empty when servicesProfiles.minibbs is off,
+  # which makes digest.sh skip that step (the guard lives in the script).
+  minibbsPost =
+    let
+      post = config.servicesProfiles.minibbs.postCommand or null;
+    in
+    if post == null then "" else lib.getExe post;
+
   telegramDigestScript = pkgs.writeShellApplication {
     name = "telegram-digest";
     runtimeInputs = [
@@ -32,6 +40,7 @@ let
         sender = config.trantor.telegram.sender;
         # System-service digest: the user manager is reached via --machine.
         userManager = "${config.lib.neg.mainUser}@.host";
+        inherit minibbsPost;
       }
     );
   };

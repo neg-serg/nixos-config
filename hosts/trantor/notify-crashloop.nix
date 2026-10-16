@@ -20,6 +20,12 @@ let
     # The scanner is a system service (root), so the user scope needs the
     # target manager spelled out (`systemctl --user --machine neg@.host`).
     userManager = "${config.lib.neg.mainUser}@.host";
+    # Local BBS mirror; empty when servicesProfiles.minibbs is off.
+    minibbsPost =
+      let
+        post = config.servicesProfiles.minibbs.postCommand or null;
+      in
+      if post == null then "" else lib.getExe post;
   };
 in
 {
