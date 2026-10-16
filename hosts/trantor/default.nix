@@ -191,9 +191,9 @@ in
   # the replacement did not work out, so Quickshell stays the session shell.
   # The scenes and pkgs.pleamar stay in the tree; flip this back on to retry.
   features.gui.pleamar.enable = false;
-  # DankMaterialShell (features.gui.dms): install DankLinux's shell to try it
-  # beside the existing panel — no autostart, trial steps in modules/user/dms.nix.
-  features.gui.dms.enable = true;
+  # DankMaterialShell (features.gui.dms): off after the trial — the panel keeps
+  # the session; the install path stays in modules/user/dms.nix for a retry.
+  features.gui.dms.enable = false;
   # Weekly incremental refresh of the MERT similarity index (music-index): warm
   # runs embed only new/changed albums. --layer -1 pins the settings of the
   # index built on 2026-10-12; without it the timer would rebuild everything,
