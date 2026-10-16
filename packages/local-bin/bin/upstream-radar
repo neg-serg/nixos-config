@@ -7,13 +7,22 @@
 # through it fails with EACCES. The version is pinned rather than tracking
 # `latest`: a vetting tool must produce the same verdict for the same input.
 #
-# Usage:
-#   upstream-radar scan https://github.com/owner/dsh-plugin --fail-on never
+# Usage (README examples that use `owner/dsh-plugin` are placeholders; use a
+# real repository):
+#   upstream-radar scan https://github.com/omdsh-dev/dsh-mnemon --fail-on never
 #   upstream-radar inspect <pkg>@<version> --deep --fail-on never
+#   upstream-radar --help
 #
 # The static commands read package and repository evidence only: they never
 # install dependencies, run lifecycle scripts or execute plugin code.
 set -eu
+
+case "${1:-}" in
+-h | --help)
+	sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+	exit 0
+	;;
+esac
 
 version=0.45.0
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/upstream-radar/npm"
