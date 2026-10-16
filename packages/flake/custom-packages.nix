@@ -33,6 +33,7 @@
 
   dsh = pkgs.neg.dsh;
 
+  hyprkcs = pkgs.hyprkcs; # Hyprland keybind manager / cheat sheet (GTK4 layer-shell overlay)
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
   atrium = pkgs.atrium; # Wayland multiseat display manager
   wordcraft = pkgs.wordcraft; # Word-style word processor (.docx/.odt/.rtf) + converter CLI
