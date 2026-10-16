@@ -128,6 +128,11 @@ in
     exclude = [ "unbound-hosts.nix" ];
   };
   system.preserveFlake = false;
+  # Rollout benchmark trigger: scripts/dev/rollout-bench.sh rewrites this label
+  # for every measured round, so each round performs a real (tiny) rollout
+  # instead of a fully warm no-op. Kept empty by default — the value is cosmetic
+  # (it lands in `os-release` and in the toplevel store path name).
+  system.nixos.label = "";
 
   # Composable profiles: order matters, last wins on conflicts
   features.profiles = [
@@ -178,7 +183,6 @@ in
   features.wine.enable = true;
   features.wine.apps = { }; # Windows apps for the wineapps CLI; add only what you need
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
-  features.gui.hyprKCS.enable = true; # hyprKCS keybind cheat sheet overlay (SUPER+SHIFT+slash)
   # Weekly incremental refresh of the MERT similarity index (music-index): warm
   # runs embed only new/changed albums. --layer -1 pins the settings of the
   # index built on 2026-10-12; without it the timer would rebuild everything,
