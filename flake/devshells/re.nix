@@ -5,5 +5,7 @@
     pkgs.flawfinder # Tool to examines C/C++ source code for security flaws
     pkgs.codeql # Semantic code analysis engine
     pkgs.foremost # forensic tool
+    pkgs.ghidra-bin # Software reverse engineering (SRE) suite: GUI (`ghidra`) and
+    # the headless analyzer (`ghidra-analyzeHeadless`), JDK 21 bundled
   ];
 }
