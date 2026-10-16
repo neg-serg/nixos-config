@@ -1,0 +1,75 @@
+language 0.4
+
+// overview.plm — the workspace overview (scene `overview`, PH3-O).
+//
+// Legacy: Hyprland's hyprexpo plugin, toggled from Services/Expo.qml
+// (`hypr-expo toggle`), bound to SUPER+grave in files/gui/hypr/hyprland.lua:368
+// and to the panel's workspace-capsule click (the same Expo.toggle()).
+//
+// Which overview this is
+// ----------------------
+// The smallest honest implementation the interface allows: the overview stays
+// Hyprland's hyprexpo, and this scene is the thin toggle bridge that gives the
+// shell a stable `overview` IPC name. INTERFACES.md §2 lists seven scenes and
+// does not name an overview scene yet, so nothing here extends the frozen
+// interface: the scene answers only to the scene-IPC name `overview` and
+// declares no fact, text or zone another scene reads.
+//
+// The pleamar-native second path — a window grid drawn from the `window` and
+// `thumbnails` services, `thumbnails.want`/`thumbnails.live` previews and
+// `window.activate`/`window.close` on a card — is a real scene with its own
+// surface, selection and close behaviour. It is not built here: this sandbox has
+// no renderer or live session to review screenshots in, and the cutover only has
+// to keep SUPER+grave working (the plugin keeps the tile gestures, labels and
+// submap the legacy shell already uses). Recorded as a PH4 candidate; its
+// permissions would be `services: "window", "window.activate", "window.close",
+// "thumbnails", "thumbnails.want", "thumbnails.live"`.
+//
+// Opening/closing
+// ---------------
+//   pleamar --say overview "emit toggle_overview"   toggle (the bind uses this)
+// There is no drawing here: the 1×1 surface below is never open and exists only
+// so the scene process (and its IPC name) stays alive and watchable, exactly as
+// a scene whose drawer is closed does. What draws and closes the overview is the
+// plugin: `hypr-expo toggle`, with Escape, the arrow keys, the tile tokens and
+// the workspace click living in the `hyprexpo` submap in hyprland.lua.
+//
+// Cutover binds (PH4-C)
+// ---------------------
+// Replace the helper call at hyprland.lua:368
+//   hl.bind(M4 .. "+grave", hl.dsp.exec_cmd("hypr-expo toggle"))
+// with
+//   hl.bind(M4 .. "+grave", hl.dsp.exec_cmd('pleamar --say overview "emit toggle_overview"'))
+// and route the other two callers the legacy shell had — Services/Expo.qml
+// `Expo.toggle()` (panel workspace capsule) and the `quickshell ipc call
+// globalIPC toggleOverview` entry point — through
+// `pleamar --say overview "emit toggle_overview"`. The `hypr-expo` helper
+// itself stays: this scene's logic is what runs it now.
+//
+// Settings (`~/.local/share/pleamar/overview/settings.json`; applied by overview.luau)
+// ------------------------------------------------------------------------------------
+//   enabled      bool     true    the toggle is ignored while false
+//   cooldownMs   number   250     0 – 2000  ignore a repeat toggle inside this window
+// Defaults live in the logic; the file holds only what the user changed, and an
+// unknown key in it survives because the logic only reads (no settings UI writes
+// it back yet).
+
+scene overview {
+
+    // The logic runs `hypr-expo toggle`; it reads the scene's own settings file.
+    permissions { run: "hypr-expo"; services: "files" }
+
+    // Never open. `open: false` keeps the scene's surface out of the session:
+    // the legacy overview is the plugin's own layer, not a pleamar surface.
+    surface { size: 1, 1; anchor: top; level: background; open: false }
+
+    // Private state, not part of the frozen interface (§2.1): `enabled` mirrors
+    // the setting for `--say overview "get enabled"` and `toggles` counts the
+    // toggles this process actually asked for (readable evidence for tests).
+    fact enabled = true
+    fact toggles = 0
+
+    // The one entry point, declared so `--say overview "emit toggle_overview"`
+    // reaches overview.luau (`->`).
+    event toggle_overview ->
+}
