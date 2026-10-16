@@ -8,7 +8,10 @@
 # by hand in a terminal:
 #
 #   systemctl --user stop quickshell.service   # free the session for DMS
-#   dms run                                    # start DankMaterialShell (no dms.service)
+#   dms run                                    # start DankMaterialShell
+#   systemctl --user start dms                 # same thing, under journald
+#                                              # (the unit ships with the package
+#                                              # but stays disabled: no autostart)
 #
 # Skip `dms setup` for now: it rewrites compositor keybinds/colors, and those files
 # are nix-maid symlinks owned by this repo.
@@ -21,7 +24,10 @@
   config = lib.mkIf (config.lib.neg.enabled "gui.dms") {
     programs.dms-shell = {
       enable = true; # installs dms + its Quickshell, matugen, cava
-      systemd.enable = false; # no dms.service — quickshell.service owns the session
+      # The package ships dms.service either way, but with this off the unit is
+      # never enabled/wanted: nothing autostarts it at login, so quickshell.service
+      # keeps owning the session until someone starts DMS by hand.
+      systemd.enable = false;
     };
   };
 }
