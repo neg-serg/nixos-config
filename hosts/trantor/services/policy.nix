@@ -63,6 +63,13 @@ lib.mkMerge [
         instanceName = "trantor";
         externalUrl = "http://trantor.local:8090";
       };
+      # minibbs — BBS-style board the host's own bots post to
+      # (http://trantor.local:8091); the bearer token lives in
+      # /var/lib/minibbs/token and the web UI is read-only.
+      minibbs = {
+        enable = true;
+        title = "trantor BBS";
+      };
       # Local sshd, key-only auth (hardened profile). The dsh web agent has a
       # dedicated key in ~/.ssh/agent/dsh-agent-key (authorized_keys entry
       # restricted to localhost) so its SSH tools/terminal can reach the host.
@@ -144,6 +151,7 @@ lib.mkMerge [
           5000 # local service (see features below)
           6600 # mpd
           8090 # flohmarkt small-ads board (servicesProfiles.flohmarkt above)
+          8091 # minibbs board (servicesProfiles.minibbs above)
           11434 # ollama (no auth — LAN only)
           27015 # Steam
           27036 # Steam Remote Play
