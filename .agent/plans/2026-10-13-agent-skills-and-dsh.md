@@ -194,3 +194,20 @@ the hook runs. **MUST NOT**: push anywhere before the user approves the destinat
   browser tool, not this workaround, but decide before anyone edits that skill.
 - Should project skills (`nixos`, `wine-apps`, `wordcraft`) move to `/etc/nixos/.dsh/skills`?
   Blocked today by the English-only markdown policy in this repo.
+
+## Addendum — 2026-10-16: j-space re-ported to upstream SV1
+
+**STATUS**: done in the skills repo — `b901cdc` (skill body, 26 files, +2969/−503) and `d7cf629`
+(provenance plus the upstream Apache-2.0 `LICENSE`).
+
+**WHAT CHANGED** against the state this plan describes: the skill is now upstream SV1 (`b2023124`) —
+13 modules and 7 references instead of 9 and 3, plus the `control.py` controller, `host_bridge.py`
+and a reworked entry. So the T2 context above ("`j-space` is missing `whenToUse`", the five-file
+commit, the `odin` mention) describes the old 3.6.1 copy; it is history, not current state.
+
+**STILL TRUE**: `whenToUse` stays — the catalogue contract wins over the upstream validator, which
+reports that one key (`SKILL.md: unsupported frontmatter keys: whenToUse`) and nothing else, while
+`scripts/check-skills.sh` stays green. `.jspace/` (the controller ledger, written into the task
+workspace) is ignored in both `/etc/nixos/.gitignore` and the skills repo. The host side stays
+unwired on purpose: upstream's `references/host-integration.md` registers nothing by itself, so the
+`jspace.py` ledger is the working half and `control.py` waits for a host adapter nobody asked for.
