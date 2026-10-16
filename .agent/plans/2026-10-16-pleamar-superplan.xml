@@ -119,6 +119,7 @@
       <decision id="D6">Notifications: pleamar is the D-Bus server; DND, persistent history and (optionally) sounds are implemented scene-side (the `sound` service plays tones). QS must not own org.freedesktop.Notifications at the same time — handover is a cutover checklist item.</decision>
       <decision id="D7">Tray: consume the `tray` service, draw menus in place (Vitreus logic/tray.luau pattern), persist pinning; accept the 14-row cap and no-tooltip limits and document them as deviations until upstream closes B10/B13.</decision>
       <decision id="D8">Supervision: prefer systemd per-scene units (Restart=on-failure, StartLimit*, caps) for the NixOS session; keep a `pleamar-keep` port for manual/foreign compositor use, following bin/vitreus-keep semantics (flock, pgrep guard, give up after 5 quick stops, exit when the Wayland socket stops answering).</decision>
+      <decision id="D9" amended="2026-10-16">Scale model corrected against the compiler (verified in src/language/compiler.rs `fn num` + empirically by PH2-A): a `text`'s `size:`/`weight:`, a `body`'s `rim:` and a surface's `size:`/`reserve:` take ONE literal number — anything after it is silently dropped (`12 * ui` draws at 12 px, `1 * type.small` at 1 px). Per-monitor scaling therefore goes through `group { scale: S }` wrapping the widget, with `Capsule(…, scale: 1)` inside it; all other geometry (`at`, `from`, a box/zone `size`, `content`, `step`, fill alpha, anchor facts) takes expressions. INTERFACES.md §3.1/§4/§9.2 and lib/capsule.plm's header were corrected accordingly by the main agent; PH2-A/PH2-B already follow the group idiom. Upstream report warranted: the compiler accepting and ignoring the tail is a silent-value bug (open question Q3).</decision>
     </design-decisions>
 
     <theming>
@@ -497,6 +498,12 @@ CONTEXT: /home/neg/src/pleamar (v0.4.11, flake.nix, nix/package.nix, Cargo.lock)
   </recon>
   <progress date="2026-10-16" phase="PH0 nearly closed">
     <done>
+      <item>PH2-A ✅ bar slice 1: shells/bar/bar.plm (ok · 170 properties/560 instructions/44 rules/48 zones) + bar.luau; one bottom surface per monitor, clock/date, workspace tabs, network capsule, volume capsule; the group-scale idiom (D9) is implemented and documented in the scene header; settings.json read-only merge.</item>
+      <item>PH1-T1 ✅ interfaces frozen (palette 195 tokens, Capsule, INTERFACES.md) and PH1-T3 in flight (lib/menu.plm + lib/icons.plm from §5).</item>
+      <item>Docs corrected after the D9 finding: INTERFACES.md §3.1/§4/§9.2 and lib/capsule.plm's header now teach `group { scale: S }` + `Capsule(…, scale: 1)` instead of the silently-wrong `12 * ui`; mdformat-clean; a /tmp consumer still compiles (ok · 25 properties).</item>
+      <item>PH2-E ✅ protocol decision: the frozen §7 JSONL envelope (handshake + subscribe/sample/ack) wins over the simple shape; the workers install as `pleamar-sysmon/weather/calendar/kbdlayout` — PATH installation in the module is a follow-up (parent).</item>
+      <item>Repo-wide `just lint` runs only through the XDG_RUNTIME_DIR=/tmp/just-rt workaround and currently stops on another session's unformatted packages/nixbuild-status/src/main.rs — everything our change touched passed up to that point.</item>
+      <!-- PH0 items follow (merged into this <done>): -->
       <item>PH0-T1 ✅ pleamar 0.4.11 built (nix from local checkout) and re-built from the pinned flake input; main agent verified --version and --check.</item>
       <item>PH0-T1i ✅ flake input (rev 57568fa) + overlay packages/overlays/gui.nix; `pkgs.pleamar.version` = 0.4.11; a concurrent session's nerv-boot input survived (verified).</item>
       <item>PH0-T2 ✅ files/pleamar skeleton + scripts/dev/check-plm.sh wired into `just lint` + `just pleamar-check`; untracked scenes are checked too; shellcheck/shfmt/mdformat clean (verified).</item>
