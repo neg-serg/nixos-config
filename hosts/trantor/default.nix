@@ -129,10 +129,11 @@ in
   };
   system.preserveFlake = false;
   # Rollout benchmark trigger: scripts/dev/rollout-bench.sh rewrites this label
-  # for every measured round, so each round performs a real (tiny) rollout
-  # instead of a fully warm no-op. Kept empty by default — the value is cosmetic
-  # (it lands in `os-release` and in the toplevel store path name).
-  system.nixos.label = "";
+  # for every measured round, so a round performs a real (tiny) rollout instead
+  # of a fully warm no-op. It repeats nixpkgs' own default (label = version), so
+  # the tree builds exactly as it would without the line — keep that property if
+  # the value ever changes.
+  system.nixos.label = lib.mkDefault config.system.nixos.version;
 
   # Composable profiles: order matters, last wins on conflicts
   features.profiles = [
@@ -227,7 +228,6 @@ in
   # NOTE: colibri-serve deliberately NOT enabled (user's choice 2026-08-28):
   # run manually when needed — see docs/howto/local-llm.md (colibrì section).
   features.cli.broot.enable = true;
-  features.cli.fix.enable = true; # fix — fast Nix evaluator (patched master; eval/build helper)
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
   features.hardware.usbAutomount.enable = true;
   features.hardware.bluetooth.enable = true; # BlueZ — BT audio + HID (gamepads/keyboards/mice), needs kernel BT_HIDP/UHID
