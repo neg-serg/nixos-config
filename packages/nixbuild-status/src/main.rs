@@ -675,14 +675,37 @@ fn active_drvs(log_root: &Path, state_path: &Path, fresh: u64) -> Vec<String> {
             }
         }
     }
+    let remembered = found.len();
 
     if !found.iter().any(|d| now - d.mtime <= fresh) {
         // Recently touched directories can only contain freshly created logs.
         scan_logs(log_root, now, fresh, false, &mut seen, &mut found);
         if found.is_empty() {
             // Cold start in the middle of a build: pay for the full walk once.
-            scan_logs(log_root, now, fresh, true, &mut seen, &mut found);
+            // The window is the remembered TTL, not `fresh`: a compile can run
+            // quietly for minutes, and the newest log found this way is still
+            // the best available guess for "what is building right now".
+            scan_logs(
+                log_root,
+                now,
+                REMEMBER_TTL_SECS,
+                true,
+                &mut seen,
+                &mut found,
+            );
         }
+    }
+
+    if env::var_os("NBS_DEBUG").is_some() {
+        eprintln!(
+            "nbs-debug: remembered={} found={} newest={:?}",
+            remembered,
+            found.len(),
+            found
+                .iter()
+                .max_by_key(|d| d.mtime)
+                .map(|d| (d.name.as_str(), now - d.mtime))
+        );
     }
 
     found.sort_by(|a, b| b.mtime.cmp(&a.mtime).then_with(|| a.name.cmp(&b.name)));
@@ -691,7 +714,18 @@ fn active_drvs(log_root: &Path, state_path: &Path, fresh: u64) -> Vec<String> {
         state_path,
         &found.iter().map(|d| d.path.clone()).collect::<Vec<_>>(),
     );
-    found.into_iter().map(|d| d.name).collect()
+
+    // What the caller displays: the logs being written right now, freshest
+    // first. When none is fresh (a compile can be quiet for minutes), fall
+    // back to the newest known derivation — one name, not a stale list, so the
+    // "+N parallel" counter keeps meaning "several builds are running".
+    let mut shown: Vec<&Drv> = found.iter().filter(|d| now - d.mtime <= fresh).collect();
+    if shown.is_empty() {
+        if let Some(newest) = found.iter().max_by_key(|d| d.mtime) {
+            shown.push(newest);
+        }
+    }
+    shown.into_iter().map(|d| d.name.clone()).collect()
 }
 
 fn scan_logs(
@@ -703,21 +737,28 @@ fn scan_logs(
     out: &mut Vec<Drv>,
 ) {
     let mut budget = SCAN_ENTRY_CAP;
+    let mut dirs_seen = 0usize;
+    let mut dirs_scanned = 0usize;
+    let mut dirs_failed = 0usize;
+    let mut fresh_files = 0usize;
     let Ok(dirs) = fs::read_dir(root) else {
         return;
     };
     for dir in dirs.flatten() {
         let dir_path = dir.path();
         let Ok(meta) = dir.metadata() else {
+            dirs_failed += 1;
             continue;
         };
         if !meta.is_dir() {
             continue;
         }
+        dirs_seen += 1;
         if !all && now - meta.mtime() > fresh {
             // No file was created here recently, so nothing new is building.
             continue;
         }
+        dirs_scanned += 1;
         let Ok(files) = fs::read_dir(&dir_path) else {
             continue;
         };
@@ -737,8 +778,14 @@ fn scan_logs(
             if now - mtime > fresh || !seen.insert(path.clone()) {
                 continue;
             }
+            fresh_files += 1;
             out.push(Drv { path, mtime, name });
         }
+    }
+    if env::var_os("NBS_DEBUG").is_some() {
+        eprintln!(
+            "nbs-debug: scan all={all} dirs={dirs_scanned}/{dirs_seen} failed={dirs_failed} fresh_files={fresh_files} window={fresh}s"
+        );
     }
 }
 
