@@ -406,8 +406,8 @@ with the compositor without hopping across multiple files. hy3 is the layout; th
   the compositor is still busy with the login transition does not stick.
 - **Reload persistence**: a reload keeps the loaded plugin but re-registers its defaults, so the
   runtime push is lost; the guarded `hl.config` block at the top of `hyprland.lua` re-applies the
-  two directories on every parse (false on the first parse, when the plugin is not loaded yet). Keep
-  its values in sync with `files/gui/hypr/hyprcapture.lua`.
+  keys on every parse (false on the first parse, when the plugin is not loaded yet). Keep its values
+  in sync with `files/gui/hypr/hyprcapture.lua`.
 - **Verified at install time** (2026-10-16): the package builds against this nixpkgs' Hyprland
   0.56.2, `libhyprcapture.so` exports `pluginInit`/`pluginExit`/`pluginAPIVersion`, the embedded
   helper path points at the package's own `bin/hyprcapture-ui`, and the closure carries the TFLite
@@ -423,9 +423,21 @@ with the compositor without hopping across multiple files. hy3 is the layout; th
   grim/slurp + `pic-info` pair used, now `hl.plugin.hyprcapture.open("fullscreen")` /
   `open("region")`. `open()` captures without the annotation toolbar; the annotated flow is
   `open_editor(mode)`, and `hl.plugin.hyprcapture.record_toggle()` drives recording.
-- **Configured keys**: only the output directories (`save_dir` → `$XDG_PICTURES_DIR/shots`,
-  `record_save_dir` → `$XDG_VIDEOS_DIR/recordings`); everything else keeps upstream's defaults (save
-  \+ clipboard + result thumbnail on).
+- **Configured keys**: the output directories (`save_dir` → `$XDG_PICTURES_DIR/shots`,
+  `record_save_dir` → `$XDG_VIDEOS_DIR/recordings`) plus `screenshot_notification = false` and
+  `show_thumbnail = false`. The directories keep the grim/screenrec paths and the `pic-*` helpers
+  working; the two switches hand screenshot feedback back to the fast quickshell toast (below)
+  instead of the plugin's own notification and result thumbnail. Recording status notifications stay
+  on — the record binds use `screenrec`, not HyprCapture, so the thumbnail loss is theirs too.
+- **Screenshot toast** (why the plugin feedback is off): the grim flow's instant feedback was
+  `grim -l 0 … && pic-info` → `pic-notify` → quickshell `ScreenshotToast`. HyprCapture saves into
+  the same shots directory and has no post-capture hook, so the `screenshot-toast.path` unit
+  (`main.nix`) watches that directory and runs `screenshot-toast`
+  (`packages/local-bin/bin/screenshot-toast`), which forwards the newest file to `pic-info`.
+  `PathChanged` (the path unit) fires when the written file is closed, the script ignores files
+  older than ~20 s (a delete or rename triggers the directory watch too), and the unit is
+  session-scoped. The toast therefore lands right after the save — later than with `grim -l 0`,
+  earlier than the plugin's own notification plus thumbnail.
 
 ## Testing a plugin without endangering the session
 
