@@ -516,7 +516,7 @@ Quick-access overlays for common applications:
 | 💬 **im** | Telegram | `Super+E` | 30% × full height (right edge) |
 | 🎵 **music** | RMPC | `Super+F` | 70% × 40% |
 | 📬 **mail** | neomutt | — (class rule only) | 50% × 50% (centered) |
-| 🔊 **mixer** | ncpamixer | `Super+Ctrl+P` | 40% × full height (right edge) |
+| 🔊 **mixer** | hyprpwcenter | `Super+Ctrl+P` | 40% × full height (right edge) |
 | ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% (top-left) |
 | 📊 **teardown** | btop | `Super+D` | 98% × 50% (top-left) |
 | 🔒 **vpn** | tunnel status | `Super+U` | 50% × 30% (centered) |
