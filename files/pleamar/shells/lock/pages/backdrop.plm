@@ -1,0 +1,32 @@
+// pages/backdrop.plm — the wallpaper: posterised, dithered, run through the tube.
+//
+// Drawn inside the scene's surface, below everything else. One group shader
+// carries both QML passes (shaders/paper.wgsl): the picture is pushed to four
+// levels through an ordered Bayer dither, then the tube's barrel curve,
+// chromatic aberration, bloom, scanlines and vignette are applied over it. The
+// shader draws the legacy dot-grid fallback itself when no wallpaper path was
+// published, so the scene needs no second shader for that case.
+//
+// No loose `let`: with `screens: each` the copies would share it, so the cover
+// arithmetic is written inside the repeated drawing, where `screen.*` belongs
+// to the copy (INTERFACES.md §3.2). The image cell is declared 16:9; a monitor
+// of another shape gets a wider or taller crop, never a squash.
+
+part Backdrop {
+
+    group deck {
+        // barrel, aberration, scanlines, grille, bloom, vignette, dither
+        // amount, dither cell (paper.wgsl)
+        shader: paper, 0.008, 0.6, 0.13, 0.05, 0.35, 0.35, 0.55, 2
+
+        image wall {
+            at: (screen.width - max(screen.width, screen.height * 1.7777778)) / 2, (screen.height - max(screen.width / 1.7777778, screen.height)) / 2
+            size: max(screen.width, screen.height * 1.7777778), max(screen.width / 1.7777778, screen.height)
+            show: wall_ok
+        }
+    }
+
+    // The scrim of LockContent.qml: 18 % of black over the tube, so the eye
+    // lands on the clock and the card. The vignette lives in paper.wgsl.
+    box scrim { from: 0, 0; size: screen.width, screen.height; color: coal; opacity: 18% }
+}

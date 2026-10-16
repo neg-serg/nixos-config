@@ -1,0 +1,52 @@
+// pages/clock.plm — the clock block of the login card's screen.
+//
+// LockContent.qml draws four nixie tubes here (NixieClock + shaders/nixie.frag:
+// real glass that refracts the wallpaper behind it, four cathodes per tube and
+// a discharge around the lit numeral). None of that survives a scene shader —
+// no texture input, two colours, no per-cathode geometry — so the port keeps
+// the *reading*: the time huge and warm-lit, the date and greeting under it.
+// What stands in for the tube glass is a native glass slab (`box { glass: }`),
+// which bends the wallpaper the scene painted under it; the numeral's light is
+// the text's shadow halo. README.md records the drop.
+//
+// The whole block is one group: its `move` puts it in the upper part of the
+// monitor, its `scale` is `scaleNow` (the per-monitor fit times the user's
+// uiScale), so every length inside is a design pixel.
+
+part Clock {
+
+    group clock_block {
+        move: screen.width / 2, screen.height * 0.13
+        scale: ui_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)
+
+        // The tube row, approximated: a lit glass slab. `glass` bends the
+        // wallpaper painted under it; the numerals are drawn on top.
+        box tube_glass {
+            from: -272, -66; size: 544, 132; corner: 22
+            color: lock.widget
+            opacity: lock.widget.alpha
+            glass: 100%
+            refraction: 130%
+            frost: 100%
+        }
+
+        text "{now.time}" {
+            at: 0, -8; anchor: center; size: 92; weight: 500; color: lock.ink; family: "Iosevka"
+            shadow: 0, 0, 30, 60%, lock.accent; show: clock_24h
+        }
+        text clock12 {
+            at: 0, -8; anchor: center; size: 92; weight: 500; color: lock.ink; family: "Iosevka"
+            shadow: 0, 0, 30, 60%, lock.accent; show: not clock_24h
+        }
+        text "{now.date}" {
+            at: 0, 66; anchor: center; size: 24; color: lock.ink.dim; family: "Iosevka"
+            shadow: 0, 1, 10, 50%, coal
+        }
+
+        // The greeting of LockContent.qml (`greeting`), one line per window.
+        text "Доброе утро" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 5 and now.hour < 12 }
+        text "Добрый день" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 12 and now.hour < 17 }
+        text "Добрый вечер" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 17 and now.hour < 23 }
+        text "Доброй ночи" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 23 or now.hour < 5 }
+    }
+}

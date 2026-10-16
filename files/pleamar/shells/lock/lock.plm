@@ -1,0 +1,78 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+// lock.plm — the session lock / login scene of the pleamar shell (PH3-L).
+//
+// The same card the legacy Quickshell login layer draws (greeter/login.qml +
+// greeter/lock/LockContent.qml) as an `ext-session-lock` surface: while it is
+// open the compositor paints nothing else and routes every key and pointer
+// event here, on every monitor. `preview.plm` next to this file draws the same
+// card in an ordinary window for looking at it without locking anything.
+//
+// Unit / marker contract, cutover, rollback and the rescue path: README.md.
+// In one line: this scene only ever runs while the wrapper marker says "login"
+// (`$QS_LOGIN_STATE_DIR/login-phase` exists), it is born locked (`fact locked`
+// true), and a successful password emits `unlocked`; the integration writes
+// `state=session`, removes `login-phase` and *then* releases the lock with
+// `pleamar --say lock "fact locked false"`. Killing this scene never unlocks
+// the session — ext-session-lock keeps it locked on purpose.
+//
+// Authentication: the logic next to this file (lock.luau) asks
+// `sys.ask("auth.check", password)` — the `auth` service, real PAM behind it
+// (the same check the legacy PamContext ran) — and nothing else. The password
+// is read from `text.password`, never written to a file, never logged, and the
+// field is cleared before the answer is reported.
+//
+// Settings — `~/.local/share/pleamar/lock/settings.json`, read and watched by
+// lock.luau, defaults in code, unknown keys kept:
+//   clock24h   bool    true    greeter `nixie24h`; false shows the 12-hour form
+//   uiScale    number  1.2     0.8 – 2.0, greeter `uiScale`: the card's scale
+//   wallpaper  text    ""      absolute path of the wallpaper to show; empty
+//                              falls back to the dot grid (never a literal path)
+//   avatar     text    ""      absolute path of the portrait; empty draws the
+//                              monogram
+//   user       text    ""      override for the identity line; empty reads $USER
+//   retryDelayMs number 800    300 – 5000: the pause before another submit counts
+// `uiScale` and `clock24h` are the frozen lock keys of INTERFACES.md §6.3; the
+// rest are this scene's own and are documented here (an integration publishing
+// a wallpaper should prefer `pleamar --say lock text wallpaper <path>`).
+
+scene lock {
+
+    // The lock is the whole screen: auth check, clock, and its own settings.
+    // `cat` reads /etc/hostname for the identity line (fixed, read-only path).
+    permissions { run: "cat"; services: "auth", "clock", "env", "files" }
+
+    // `locked` is INTERFACES.md §2.1: the lock surface wants the session (the
+    // compositor's own `lock.held` says whether it has it). It is born true:
+    // this scene is only started in the login phase, and a lock screen that
+    // failed open would be worse than one that has to be released. Verified at
+    // runtime with `pleamar --say lock "get locked"`.
+    fact locked = true
+    // The handover contract (README.md): the logic raises it once `auth.check`
+    // answered true, and the integration releases the session with
+    // `fact locked false` only after the marker is on disk.
+    fact unlocked = false
+
+    include "pages/state.plm"
+
+    // One lock face per monitor (`screens: each`); the protocol covers every
+    // other monitor with plain black by itself. `agent: hidden` and
+    // `captures: hidden` are the policy for the whole surface (§8.1): an agent
+    // never reads it, a screenshot never catches it.
+    surface screen_lock {
+        kind: lock
+        size: full, full
+        open: locked
+        screens: each
+        keyboard: exclusive while locked
+        agent: hidden
+        captures: hidden
+
+        include "pages/backdrop.plm"
+        include "pages/clock.plm"
+        include "pages/card.plm"
+    }
+}
