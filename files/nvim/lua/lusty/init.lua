@@ -7,11 +7,12 @@
 --   :LustyRecent                      recent files / visited dirs
 --
 -- Mappings (unless g:LustyExplorerDefaultMappings == 0):
---   <Leader>l   filesystem explorer from the current file's directory
---   <Leader>C   filesystem explorer (cwd)
 --   <C-b>       buffer explorer
 --   <C-g>       buffer grep
 --   <Leader>.   recent files
+-- The filesystem explorer keys (,l from here / ,C cwd) moved to broot
+-- (plugins/files.lua — broot is the file manager now); the float itself stays
+-- available through the :LustyFilesystemExplorer* commands below.
 --
 -- The pickers are rendered by the Rust backend (`lusty serve`, see native.lua);
 -- the historical Lua port was removed, so there is no fallback mode any more.
@@ -77,19 +78,10 @@ function M.setup()
   -- Default mappings are ON unless the option explicitly disables them.
   local dm = vim.g.LustyExplorerDefaultMappings
   if not (dm == 0 or dm == false or dm == '0') then
-    -- ,l fires INSTANTLY (nowait): it used to be a prefix of the ,l[fbgr]
-    -- chords, so nvim waited for a second key and swallowed the first typed
-    -- query letter (',lgames' opened BufferGrep with 'ames'). The secondary
-    -- functions live on ,C / C-b / C-g / ,. instead.
-    local function from_here()
-      local d = vim.fn.expand('%:p:h')
-      run_fs(d == '' and vim.fn.getcwd() or d)
-    end
-    vim.keymap.set('n', '<leader>l', from_here,
-      { nowait = true, desc = 'Lusty filesystem explorer from here' })
-    vim.keymap.set('n', '<leader>C', function()
-      run_fs(nil)
-    end, { desc = 'Lusty filesystem explorer (cwd)' })
+    -- The filesystem explorer keys (,l from here / ,C cwd) now live on broot
+    -- (plugins/files.lua): broot is the file manager, LustyExplorer keeps the
+    -- buffer/grep/recent pickers. The old ,l[fbgr] chords are gone with them,
+    -- so nvim no longer has to wait a timeoutlen before firing ,l.
     vim.keymap.set('n', '<leader>.', function()
       nrecent.run()
     end, { nowait = true, desc = 'Lusty recent files' })
