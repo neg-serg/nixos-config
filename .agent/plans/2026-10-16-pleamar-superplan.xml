@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Superplan: port the Quickshell desktop shell (/etc/nixos/files/quickshell)
+  to pleamar (a Rust desktop runtime with its own declarative language).
+
+  Audience: any agent executing this plan, plus the human owner (neg / trantor).
+  Rules that apply: /etc/nixos/AGENTS.md, files/quickshell/AGENTS.md,
+  modules/AGENTS.md, .agent/workflows/{plan-before-code,delegate-task,rebuild}.md.
+  Docs are English only; chat replies are Russian; commits are `[gui/pleamar] ...`.
+-->
+<superplan id="pleamar-shell" version="0.1" date="2026-10-16" status="awaiting-approval">
+  <meta>
+    <goal>
+      A new project (a pleamar shell) that reproduces every behaviour of the current
+      Quickshell shell and beats it on every axis we can measure: memory, CPU, startup,
+      animation under load, config safety, testability, agent-drivability, isolation
+      and dependency footprint. Quickshell must remain a one-flag rollback until the
+      cutover gate passes.
+    </goal>
+    <success-criteria>
+      <criterion id="SC1">Feature parity: every P0 item of the Quickshell inventory exists as a pleamar scene with the same user-visible behaviour.</criterion>
+      <criterion id="SC2">Budgets (measured, not asserted): see &lt;metrics&gt;. All must hold on trantor, in the real session, for 24 h.</criterion>
+      <criterion id="SC3">Every scene passes `pleamar --check`; CI renders every scene headlessly and diffs its describe tree.</criterion>
+      <criterion id="SC4">The whole shell runs as independent, restartable units with per-scene resource caps; killing one scene never takes the shell down.</criterion>
+      <criterion id="SC5">A single flag flip (features.gui.pleamar.enable) switches the desktop; rollback is the reverse flip and stays tested.</criterion>
+      <criterion id="SC6">All repo gates green: `just fmt`, `just lint`, `just check`, toplevel build with `--option substitute false`.</criterion>
+    </success-criteria>
+    <non-goals>
+      <item>Do not port Quickshell code mechanically; rebuild each behaviour in pleamar's idioms (springs, rules, services, Luau logic).</item>
+      <item>Do not touch secrets/, do not change VPN/network config, do not remove the Quickshell tree before the decommission step.</item>
+      <item>No change to the live session until the human runs the switch; PH0-PH4 work happens in the repo and in headless/nested compositors.</item>
+    </non-goals>
+    <hard-constraints>
+      <constraint>NixOS repo: minimal, focused diffs; conventions from AGENTS.md; new module follows modules/README.md layout and lib/systemd-user.nix presets.</constraint>
+      <constraint>Any nix build/eval passes `--option substitute false` (cache.nixos.org unreliable).</constraint>
+      <constraint>Before commit: `just fmt` then `just lint`; before switch: build toplevel and verify its store paths.</constraint>
+      <constraint>pleamar has no word that is not in `pleamar --grammar`; never guess a keyword, always `pleamar --check` after an edit.</constraint>
+      <constraint>pleamar runtime state is user data: settings live in ~/.local/share/pleamar/&lt;scene&gt;/, never in the repo; the repo holds scenes and libraries.</constraint>
+      <constraint>English in every file; Russian only in chat.</constraint>
+    </hard-constraints>
+  </meta>
+
+  <naming>
+    <working-title>salitre</working-title>
+    <note>Paths in this plan use `files/pleamar/shells/&lt;scene&gt;` and need no umbrella brand; the title only appears in docs. Rename is a docs-only change (open question Q1).</note>
+  </naming>
+
+  <current-state>
+    <quickshell evidence="files/quickshell, modules/user/nix-maid/gui/quickshell.nix">
+      <fact>281 files, 131 *.qml; entry shell.qml; areas: Bar (75 KB Bar.qml + 30 modules), Components, Services, Settings, Notifications, Widgets, Helpers, Theme, Tools, shaders (*.frag.qsb), greeter/ (login.qml + lock/ + background/, own shaders), overview/, Docs/, scripts/.</fact>
+      <fact>Runs as one systemd user unit `quickshell.service` (ExecStart: quickshell -p ~/.config/quickshell/shell.qml), with ExecStartPre deploy script, `quickshell-health` watchdog every 2 min (one `quickshell ipc show` round-trip), MemoryHigh=384M / MemoryMax=768M / CPUQuota=200%, ConditionPathExists=!%t/quickshell-login/login-phase so the bar stays down behind the login layer.</fact>
+      <fact>Version in use: Quickshell 0.3.1 (wrapped), dependency closure includes Qt6/QML, khal, mpc, ffmpeg, socat, hyprland CLI, rsmetrx, gawk.</fact>
+      <fact>Baseline measured 2026-10-16 08:06 MSK: cgroup MemoryCurrent 93.7 MiB, MemoryPeak 339.7 MiB, process VmRSS 110.4 MB, CPUUsageNSec 1308 s since 2026-10-15 23:16 (~4% of one core), NRestarts=0.</fact>
+      <fact>Config deploys via nix-maid dir links plus copy-once writable Theme/ and Settings/; theme flows wallpaper -> Theme/.theme.json -> QML tokens; QS_* env toggles exist for panel/shader debugging.</fact>
+      <fact>The greeter fork owns the login screen (session-lock layer launched by hyprland.lua while the login marker exists) and is linted by the same qmllint gate.</fact>
+    </quickshell>
+    <pleamar evidence="~/src/pleamar (v0.4.11), docs/00-index.md, docs/07-whats-missing.md, skill/SKILL.md">
+      <fact>Rust runtime + declarative .plm scenes + optional sandboxed Luau logic; springs are renderer-side, so the logic cannot stall animation (measured: 38 frames at ~17 ms with logic blocked 600 ms; QtQuick showed a 600 ms gap).</fact>
+      <fact>Services with a fixed vocabulary: clock, audio, battery, network, media (MPRIS), notifications (pleamar is the server), tray, apps, workspaces/window (ext-workspace, wlr-foreign-toplevel), thumbnails, files, clipboard. Permissions per service/command are declared in the scene.</fact>
+      <fact>Surfaces: bar layers (surface panel), popups (xdg_popup), windows, lock (ext-session-lock), one surface per monitor (`screens: each`), fractional scale.</fact>
+      <fact>Agent interface: `pleamar --say NAME describe|press|type|key|wait|watch`, labels/roles derived or declared, `agent: no` / `agent: hidden`; pleamar-wm enforces `agent: no` through a separate seat.</fact>
+      <fact>Tooling: `--check` (compiler), `--grammar`, `--docs reference|guide|recipes|logic|measuring`, `--report`, `--record`, `--lsp`, headless pleamar-wm (`PLEAMAR_HEADLESS_AT/PNG/INPUT`) for screenshots and synthetic input.</fact>
+      <fact>Packaging: flake.nix with packages.pleamar (nix/package.nix, rustPlatform), overlay.default, homeManagerModules.default (programs.pleamar.enable/autostart), install.sh (source + keep-alive wrappers in ~/.local/bin).</fact>
+      <fact>Honest gaps (docs/07-whats-missing.md): deferred loading (Loader/LazyLoader/Component, 128 uses in the reference config) missing; list inertia missing; copies born at runtime (G12) missing; whole-screen live capture and IME (E7) missing; keyboard-exclusive/popup-outside-click/tray/notifications not yet exercised by real hands in the reference session.</fact>
+      <fact>Reference shell on pleamar already exists in ~/src/Vitreus (scenes + Luau + WGSL + install.sh); its `vitreus-keep` supervisor is the pattern for scene keep-alive (lockfile, restart with give-up after 5 quick stops, exits when the compositor is gone).</fact>
+    </pleamar>
+    <already-done>
+      <item>Reconnaissance RE-1..RE-4 complete (reports under /tmp/plm-recon/; digests folded into &lt;recon&gt;); this plan was rewritten after them.</item>
+      <item>PLEAMAR GREEN: /nix/store/649h2brdgpwqqagn238j3d46548kz70l-pleamar-0.4.11/bin/pleamar verified by the main agent (--version, --check on an upstream example).</item>
+    </already-done>
+
+    <source-drift>
+      <fact>Other agent sessions are editing this repo concurrently while the port runs (observed 2026-10-16 08:09-08:22: a nerv-boot flake input, flake/per-system.nix, media/koito/listenbrainz modules, and live edits inside files/quickshell — including a new Bar/Modules/BuildStatus.qml).</fact>
+      <fact>Quickshell worktree fingerprint (all files except *.qsb/*.png, sha256 of sha256sums) at plan time: 6e5d58767e0153a3454302f8fa21ff8af04957268a7c788462f6a032f201b2dc. Uncommitted QS changes at that moment: .qmllint-baseline.tsv, Bar/Bar.qml, +Bar/Modules/BuildStatus.qml, Modules/qmldir, Services/WidgetRegistry.qml, Settings/Settings.qml.</fact>
+      <rule>Shared-file contention: flake.nix/flake.lock, Justfile, OPTIONS.md and files/quickshell are touched by other sessions. Every agent working in this repo re-reads a shared file immediately before editing, makes additive hunks, and proves the other session's changes survived (git diff) before reporting.</rule>
+      <rule>Parity target = the QS tree as of the cutover commit, not as of this plan: PH4-V repeats the fingerprint and diffs the drift; widgets added meanwhile (e.g. BuildStatus) enter the backlog unless the human marks them P0.</rule>
+    </source-drift>
+  </current-state>
+
+  <target-architecture>
+
+    <migration-contract source="RE-3 (verified by rg: unit/CLI/login-marker callers)">
+      <item>Unit `quickshell.service` has ~10 live callers (compositor-helpers.nix restarts, hyprland.lua 1341/1370, session-helpers.nix:71, lib/quickshell-wrapper-install.sh:33, health probe) and `hyprland-session.target` wiring: the pleamar units must take over those call sites in the cutover commit, or keep the old unit name as an alias during the dual-run window.</item>
+      <item>`quickshell ipc call globalIPC ...` is bound in hyprland.lua (notification centre, glass panel, calendar, weather, media play/pause/next/prev, volumeStep) and `quickshell ipc show` is a liveness probe (health unit, pic-notify:90): every call site must be rewritten to `pleamar --say &lt;scene&gt; ...` before QS removal.</item>
+      <item>Login phase contract: `QS_LOGIN_STATE_DIR` (default %t/quickshell-login), file `state` = login|session, marker `login-phase`; the condition `ConditionPathExists=!%t/quickshell-login/login-phase` guards the bar and hypridle. pleamar bar units must inherit the same guard; the lock scene takes over the login role later (PH3-L) without changing the marker names until then.</item>
+      <item>Deployment semantics to reproduce: nix-maid live symlinks into /etc/nixos plus copy-once writable dirs, a cleanup unit ordered before maid-activation, ExecStartPre deploy step; the pleamar module mirrors this (but with a single writable root under ~/.config/pleamar).</item>
+      <item>State paths other tools depend on: ~/.cache/quickshell/state.json, ~/.cache/quickshell-wallpaper-path, semaphore files (notif-close-all, dismiss-overlay, screenshot-event.json), ~/.local/state/quickshell/pill-tracker.json, glass-tint, Settings.json. Each either keeps its path (consumers unchanged) or every consumer is updated in the same commit.</item>
+      <item>Environment: the wrapper exports QT_PLUGIN_PATH/QML2_IMPORT_PATH (QS-only, dropped for pleamar); keep the unit-level `PATH=%h/.local/bin:/run/current-system/sw/bin:${PATH}` so helpers (glm-vol, pic-ocr, flow, rsmetrx) resolve, and `~/.config/environment.d/quickshell-fix.conf` becomes obsolete with the Qt stack.</item>
+      <item>Gates: `qmllint` reads the deployed `qs` wrapper for import paths — the pleamar gate must not depend on it; keep `.githooks/pre-commit -> just lint` green at every step.</item>
+      <item>Build-environment gotcha (RE-1): inside this agent sandbox `~/.cache/nix` is not writable; run nix builds with `XDG_CACHE_HOME=/tmp/...` (and the same for hermetic scene runs: XDG_CONFIG_HOME/XDG_DATA_HOME/XDG_RUNTIME_DIR under /tmp).</item>
+    </migration-contract>
+
+    <repo-layout>
+      <path>files/pleamar/README.md — what the project is, how to run one scene by hand, how to preview/measure.</path>
+      <path>files/pleamar/AGENTS.md — subtree rules (pleamar idioms, --check mandate, English comments).</path>
+      <path>files/pleamar/lib/ — shared scenes/libraries: palette.plm (strict), capsule.plm, menu.plm, icons.plm.</path>
+      <path>files/pleamar/shells/&lt;scene&gt;/&lt;scene&gt;.plm (+ &lt;scene&gt;.luau) — one directory per scene; scene names double as IPC names.</path>
+      <path>files/pleamar/scripts/ — smoke.sh (headless PNG matrix), describe-snap.sh (agent-tree snapshots), measure.sh (--report parsing).</path>
+      <path>files/pleamar/tests/ — committed snapshots (*.describe.json), golden screenshots, expected budgets.tsv.</path>
+      <path>scripts/dev/check-plm.sh — repo gate: `pleamar --check` over every tracked .plm (skips with a notice when the binary is absent), wired into `just lint` next to check-qml-lint.sh.</path>
+      <path>modules/user/nix-maid/gui/pleamar.nix — package, deployment, units (feature-flagged, default off).</path>
+      <path>modules/features/gui.nix — feature flag `features.gui.pleamar.enable` + `lib.neg.pleamarEnabled`.</path>
+      <path>docs/runbook-pleamar-shell.md — operational runbook (cutover, rollback, per-scene restart, health probe, measuring).</path>
+    </repo-layout>
+    <runtime-model>
+      <item>One systemd user unit per scene (generated from a single `pleamarScenes` list), instead of one process for the whole shell: crash isolation, per-scene caps, `journalctl --user -u pleamar-bar`, independent restart.</item>
+      <item>`pleamar --autostart` stays supported for manual/foreign sessions (lines generated by Nix into ~/.config/pleamar/autostart).</item>
+      <item>A health probe (port of quickshell-health) answers `pleamar --say NAME describe` for the bar; failure past a start-up grace window restarts the unit.</item>
+      <item>Login-phase guard: the bar units keep the existing ConditionPathExists=!%t/quickshell-login/login-phase (renamed marker once the lock scene owns the login phase).</item>
+      <item>Deployment: nix-maid dir links from files/pleamar into ~/.config/pleamar; writable runtime stuff (theme.plm output, scene settings) lives outside the repo; an activation-ordering cleanup unit mirrors quickshell-cleanup-symlink.</item>
+    </runtime-model>
+
+    <design-decisions adopted="2026-10-16" source="RE-4, Vitreus, RE-2-partial">
+      <decision id="D1">One full-screen layer surface per monitor with include'd drawers instead of many windows/popups. Vitreus proves this avoids every popup limitation (single parent, no keyboard, resize closes, 10k px offset) and gives per-zone input regions for free; panels hang from the bar as the same silhouette. Keep `popup` only where the shell must position independently (candidate: music popup) and verify it headlessly first.</decision>
+      <decision id="D2">Reserve/exclusive zone via `reserve N while expr` on the bar surface; the three-surface QS bar (reserve + left + right) becomes one surface whose row layout reproduces the reading order; the wedge/tint shader seam becomes a WGSL shader or a group effect, not two FBO passes.</decision>
+      <decision id="D3">Port the shell DSL first: lib/ gains capsule/row/button/pill/overlay/tooltip equivalents of Components/*.qml (WidgetCapsule, CenteredCapsuleRow, CapsuleButton, PillIndicator, AudioLevelCapsule, OverlayFrame, SlideReveal). Bar modules are written on top of them.</decision>
+      <decision id="D4">Missing services get Vitreus-style helper workers, not new pleamar features: system monitor (JSON line per second from procfs), weather (curl Open-Meteo + cache), calendar (khal list + own month model), keyboard layout (hyprctl/IPC), wallpaper palette (iris or the existing QS pipeline). Each helper is spawned only while its view exists (pattern: bin/vitreus-sysmon).</decision>
+      <decision id="D5">Settings: per-scene JSON under ~/.local/share/pleamar/&lt;scene&gt;/ with pcall + defaults + clamps, one file per feature; the ~200-key QS Settings.json becomes per-scene schemas, and dropped knobs are listed in MIGRATION.md.</decision>
+      <decision id="D6">Notifications: pleamar is the D-Bus server; DND, persistent history and (optionally) sounds are implemented scene-side (the `sound` service plays tones). QS must not own org.freedesktop.Notifications at the same time — handover is a cutover checklist item.</decision>
+      <decision id="D7">Tray: consume the `tray` service, draw menus in place (Vitreus logic/tray.luau pattern), persist pinning; accept the 14-row cap and no-tooltip limits and document them as deviations until upstream closes B10/B13.</decision>
+      <decision id="D8">Supervision: prefer systemd per-scene units (Restart=on-failure, StartLimit*, caps) for the NixOS session; keep a `pleamar-keep` port for manual/foreign compositor use, following bin/vitreus-keep semantics (flock, pgrep guard, give up after 5 quick stops, exit when the Wayland socket stops answering).</decision>
+    </design-decisions>
+
+    <theming>
+      <item>Keep the existing wallpaper -> palette pipeline as the source of truth; add a step that writes ~/.config/pleamar/theme.plm (writable copy-once path) consumed by scenes via `import "../../theme.plm"`.</item>
+      <item>pleamar hot-reloads imported files, so a wallpaper change re-themes live; per-scene dynamic tints use `rgb(r,g,b)` over facts when a runtime palette is better.</item>
+      <item>The wedge-clip shader and the QS glass tweaks are replaced by native pleamar group effects (blur/glow/mask/clip) and, where needed, WGSL shaders (`shader name = file "x.wgsl"`).</item>
+    </theming>
+    <settings>
+      <item>Port Settings.json as per-scene JSON under ~/.local/share/pleamar/&lt;scene&gt;/ (pleamar's own convention), with defaults in the scene and edits by the scene's own UI.</item>
+      <item>QML-only knobs that stop making sense (shader toggles, qmllint baselines) are dropped, not ported; every dropped knob is listed in the migration note.</item>
+    </settings>
+
+    <module-spec>
+      <item>Flag: modules/features/gui.nix gains `pleamar.enable = mkBool "enable the pleamar shell at login" false`; modules/core/neg.nix gains `pleamarEnabled = enabled "gui" &amp;&amp; enabled "gui.pleamar" &amp;&amp; !(enabled "devSpeed")` next to quickshellEnabled (same style, same comment discipline).</item>
+      <item>Module: modules/user/nix-maid/gui/pleamar.nix (auto-imported by the directory importer), guarded by `lib.mkIf config.lib.neg.pleamarEnabled`; it must not change behaviour while the flag is off.</item>
+      <item>Units: one `pleamar-&lt;scene&gt;.service` per scene name in the module's scene list, built with systemdUser.mkUserService, presets ["restartOnFailure"] + RestartSec, after/wants maid-activation + pipewire + graphical-session-pre, PartOf/WantedBy hyprland-session.target, unitConfig.ConditionPathExists = "!%t/quickshell-login/login-phase", ExecStart = "${pkgs.pleamar}/bin/pleamar --scene %h/.config/pleamar/shells/&lt;scene&gt;/&lt;scene&gt;.plm --no-hud", Environment PATH including %h/.local/bin, per-scene MemoryHigh/MemoryMax/CPUQuota sized from the PH0-T5 measurements (start generous: 64M/128M/100%).</item>
+      <item>Health: a `pleamar-health` oneshot + 2-minute timer answering `pleamar --say bar describe` (5 s timeout) with the same uptime guard as quickshell-health; it restarts only the wedged scene unit.</item>
+      <item>Deploy: nix-maid links of files/pleamar/shells/* and files/pleamar/lib into ~/.config/pleamar/{shells,lib}, plus a generated ~/.config/pleamar/autostart (comment header + one `pleamar --scene ... --no-hud` line per scene, used by manual `pleamar --autostart`); a cleanup unit removes stale symlinks before maid-activation, mirroring quickshell-cleanup-symlink.</item>
+      <item>Non-goals here: no lock scene, no quickshell removal, no OPTIONS.md churn beyond the new feature flag entry, no default-on.</item>
+    </module-spec>
+  </target-architecture>
+
+  <superiority-matrix>
+    <!-- baselines are measured on trantor, 2026-10-16; targets are budgets the verifier enforces -->
+    <row id="M1" dimension="Idle memory (whole shell)" quickshell="110.4 MB VmRSS / 93.7 MiB cgroup current (peak 340 MB)" target="&lt;= 60 MB total, hard ceiling 128 MB; per-scene unit caps" how="systemctl --user show pleamar-*.service -p MemoryCurrent; smem/ps snapshot in tests/evidence" />
+    <row id="M2" dimension="Idle CPU" quickshell="~4% of one core average over ~9 h uptime" target="&lt;= 1% idle; tick timers only where declared" how="CPUUsageNSec deltas + pleamar --report" />
+    <row id="M3" dimension="Startup to usable" quickshell="not measured yet (unit start -> first frame + ipc answer)" target="&lt;= 300 ms for the bar scene; whole session shells under 1 s" how="hyperfine + systemd timestamps + `pleamar --say bar describe` latency" />
+    <row id="M4" dimension="Animation under blocked logic" quickshell="600 ms frame gap when the event loop stalls (QtQuick)" target="logic blocked 600 ms -> 38 frames at ~17 ms, reproduced as a test scene" how="dedicated test scene + `--record`; screenshots of frame times" />
+    <row id="M5" dimension="Config safety" quickshell="binding typos become runtime undefined (qmllint finds a subset)" target="zero scene loads with unknown names: `--check` in the repo gate" how="scripts/dev/check-plm.sh on every tracked .plm" />
+    <row id="M6" dimension="Agent-drivability" quickshell="none (pixels only)" target="every scene answers describe; all interactive zones labelled; destructive zones `agent: no`; snapshots committed" how="pleamar --say &lt;scene&gt; describe json vs tests/*.describe.json" />
+    <row id="M7" dimension="Crash isolation" quickshell="one process for bar+notifications+panels; restart = 5 s blink and 130 MB again" target="kill -9 one scene -> it is back &lt;= 5 s, other scenes untouched" how="fault injection in tests/evidence/fault-injection.md" />
+    <row id="M8" dimension="Dev loop" quickshell="edit -> restart quickshell (seconds, state lost)" target="edit a scene -> hot reload on save, state kept; one command preview" how="README recipe + recorded session" />
+    <row id="M9" dimension="Dependency footprint" quickshell="Qt6/QML closure + khal/mpc/ffmpeg/socat wrappers" target="one Rust binary + luau; scene deps declared per scene in `permissions`" how="nix path-info -Sh on both closures" />
+    <row id="M10" dimension="Testability" quickshell="qmllint/qmlformat only; no render tests" target="headless screenshot matrix + describe snapshots + budgets in CI" how="files/pleamar/scripts/smoke.sh output gallery + snapshots" />
+    <row id="M11" dimension="Portability" quickshell="Hyprland + Wayland protocols; Qt platform plugin" target="same scenes on any compositor; workspaces via ext-workspace/wlr-foreign-toplevel; `./portable.sh` compile checks upstream" how="run scenes under a nested compositor and pleamar-wm headless" />
+    <row id="M12" dimension="Plugin safety" quickshell="third-party JS runs with all user permissions" target="plugins are sandboxed Luau with explicitly approved permissions (`pleamar --approve`)" how="hostile-plugin test in the plugin workstream" />
+    <row id="M13" dimension="Beyond-parity fixes found while porting" quickshell="calendar passes ISO dates to khal configured with dateformat = %d.%m.%Y, so khal exits 1 and the month grid shows no events (verified on this host: `khal list '2026-10-16' 1` → 'Could not parse')" target="the calendar worker normalizes dates both ways; events actually appear" how="PH2-E calendar.sh proof + PH2-B panel screenshot" />
+  </superiority-matrix>
+
+  <roadmap>
+    <phase id="PH0" title="Foundation (week 0)" gate="PH0-EXIT">
+      <exit-criteria>
+        <criterion>`pleamar` builds and runs on trantor; version pinned via flake input with a documented local fallback.</criterion>
+        <criterion>Repo skeleton exists; `just lint` runs the new check-plm gate (green, skipping with a notice if the binary is missing).</criterion>
+        <criterion>Harness v0 renders the proof scene headlessly and dumps its describe tree.</criterion>
+        <criterion>The pleamar Nix module evaluates with the flag off and on, changing nothing while off.</criterion>
+      </exit-criteria>
+      <tasks>
+        <task id="PH0-T1" owner="subagent:toolsmith" depends-on="" status="running" report="/tmp/plm-recon/build-feasibility.md">
+          <goal>Get a working, reproducible pleamar binary.</goal>
+          <deliverable>flake input `pleamar` (github:k4ditano/pleamar, pinned) + overlay `pkgs.pleamar`; fallback recipe (cargo offline build with vendored crates) documented in the module header; `pleamar --version` output recorded.</deliverable>
+          <steps>
+            <step>`nix build .#packages.x86_64-linux.pleamar --option substitute false` from the local checkout or from the input.</step>
+            <step>If crates.io is unreachable in the build sandbox: `cargo vendor --locked --offline` from ~/.cargo cache, then a local package with `cargoVendorDir`; document the update path.</step>
+            <step>Prove: `pleamar --version`, `pleamar --check examples/bar.plm` in the checkout.</step>
+          </steps>
+          <verification>`nix path-info -Sh` on the result; `pleamar --version`; `pleamar --check` on an upstream example.</verification>
+          <acceptance>A store path with bin/pleamar runs and reports 0.4.x; update procedure written down.</acceptance>
+          <artifacts>/tmp/plm-recon/build-feasibility.md; nix build log.</artifacts>
+          <delegation-prompt format="7-element"><![CDATA[
+TASK: Make `pkgs.pleamar` buildable in this NixOS repo and prove the binary runs.
+EXPECTED OUTCOME: flake input + overlay wired in the repo's style, a built store path, and a documented fallback if the sandbox cannot fetch crates.io.
+REQUIRED TOOLS: bash (nix, cargo), read, edit.
+MUST DO: always pass `--option substitute false`; keep diffs to flake.nix/flake.lock + packages/overlays; record exact commands and outputs; verify `pleamar --version` and `pleamar --check` on an upstream example; if a fallback is needed, vendor crates from the local cargo cache (offline) and say so in the module header.
+MUST NOT DO: do not touch the live session, do not change any other flake input, do not commit, do not disable existing checks.
+CONTEXT: /home/neg/src/pleamar (v0.4.11, flake.nix, nix/package.nix, Cargo.lock); repo /etc/nixos; AGENTS.md build rules; the quickshell input in flake.nix is the pattern to follow.
+          ]]></delegation-prompt>
+        </task>
+
+        <task id="PH0-T2" owner="subagent:toolsmith" depends-on="PH0-T1" status="pending" report="/tmp/plm-recon/reports/PH0-T2.md">
+          <goal>Skeleton + repo gate.</goal>
+          <deliverable>files/pleamar/{README.md,AGENTS.md,lib/,shells/,scripts/,tests/} skeleton; scripts/dev/check-plm.sh; Justfile target `pleamar-check` included in `lint`.</deliverable>
+          <steps>
+            <step>Write check-plm.sh modelled on scripts/dev/check-qml-lint.sh: iterate `git ls-files '*.plm'`, run `pleamar --check`, aggregate failures, skip with a notice when pleamar is not in PATH.</step>
+            <step>Wire it into Justfile `lint` next to check-qml-lint.sh; keep `just check` untouched.</step>
+            <step>AGENTS.md: pleamar idioms (--check mandate, no QML names, English comments, scene naming).</step>
+          </steps>
+          <verification>`just lint` green; `bash scripts/dev/check-plm.sh` exit 0 with zero scenes; break a scene on purpose -> script fails with the compiler message (then revert).</verification>
+          <acceptance>Gate fails on a broken scene and passes on a valid one; no false failures when the binary is absent.</acceptance>
+        </task>
+
+        <task id="PH0-T3" owner="subagent:verifier" depends-on="PH0-T1" status="pending" report="/tmp/plm-recon/reports/PH0-T3.md">
+          <goal>Verification harness v0.</goal>
+          <deliverable>files/pleamar/scripts/smoke.sh (headless render matrix -> PNG per scene), describe-snap.sh (write/verify `pleamar --say NAME describe json` snapshots), measure.sh (parse `--report`/CPUUsageNSec into a budget table).</deliverable>
+          <steps>
+            <step>smoke.sh: `PLEAMAR_WM_AUTOSTART` + `PLEAMAR_HEADLESS_AT` + `PLEAMAR_HEADLESS_PNG` per scene, `--seconds` bound, non-zero PNG, log kept.</step>
+            <step>describe-snap.sh: run a scene, snapshot the tree, diff against tests/&lt;scene&gt;.describe.json, fail on drift unless `--update`.</step>
+            <step>measure.sh: run a scene N seconds, collect cgroup memory/CPU and `--report`, emit tests/evidence/&lt;date&gt;-&lt;scene&gt;.tsv.</step>
+          </steps>
+          <verification>Run all three on the proof scene; PNG is non-empty and shows the scene; snapshot round-trips; measure produces a table.</verification>
+          <acceptance>One command per concern; no GUI session needed; all three fail loudly.</acceptance>
+        </task>
+
+        <task id="PH0-T4" owner="subagent:toolsmith" depends-on="PH0-T1" status="pending" report="/tmp/plm-recon/reports/PH0-T4.md">
+          <goal>Nix integration skeleton behind a flag.</goal>
+          <deliverable>modules/user/nix-maid/gui/pleamar.nix + features.gui.pleamar.enable (default false) + lib.neg.pleamarEnabled; per-scene systemd units generated from one `pleamarScenes` list; health probe; resource caps; deployment/cleanup units.</deliverable>
+          <steps>
+            <step>Follow modules/user/nix-maid/gui/quickshell.nix shape; use lib/systemd-user.nix presets; no raw Restart=.</step>
+            <step>Generate ~/.config/pleamar/autostart + links via neg.mkDirLinks/mkHomeFiles; cleanup unit before maid-activation.</step>
+            <step>Keep ConditionPathExists login-phase marker; document the rename plan for the lock phase.</step>
+          </steps>
+          <verification>`nix eval` with flag off and on; `just check` green; `systemd-analyze verify` on generated units (or `nix build` of a dry-run toplevel with the flag on, no switch).</verification>
+          <acceptance>Flag off = byte-identical behaviour to today; flag on = units defined but nothing started until the human switches.</acceptance>
+        </task>
+
+        <task id="PH0-T5" owner="subagent:bar-smith" depends-on="PH0-T2,PH0-T3" status="pending" report="/tmp/plm-recon/reports/PH0-T5.md">
+          <goal>Proof scene: one real bar strip served by real services.</goal>
+          <deliverable>files/pleamar/shells/proof/proof.plm (+ .luau if needed): clock, active workspace, volume capsule, one zone with label; passes the full harness.</deliverable>
+          <steps>
+            <step>Read `pleamar --docs guide` + `--grammar`; write the scene; `--check` after every edit.</step>
+            <step>Headless render + describe snapshot + measure; commit artifacts under tests/.</step>
+            <step>Record the screenshot path for the human.</step>
+          </steps>
+          <verification>smoke.sh + describe-snap.sh + measure.sh all green; PNG reviewed by the human.</verification>
+          <acceptance>The scene shows live clock/workspace/volume, answers describe, and every interactive zone has a label.</acceptance>
+        </task>
+      </tasks>
+    </phase>
+
+    <phase id="PH1" title="Interface freeze (week 1, single writer)" gate="PH1-EXIT">
+      <exit-criteria>
+        <criterion>files/pleamar/docs/INTERFACES.md committed: palette token names, scene/IPC names, per-scene settings schema, service map, label/role/agent:no policy, library layout.</criterion>
+        <criterion>lib/ holds palette.plm, capsule.plm, menu.plm, icons.plm; all strict; all pass --check; proof scene restyled through them.</criterion>
+        <criterion>theme.plm pipeline produces the palette from the wallpaper and scenes re-theme on save.</criterion>
+      </exit-criteria>
+      <tasks>
+        <task id="PH1-T1" owner="subagent:architect" depends-on="PH0-T5" status="pending" report="/tmp/plm-recon/reports/PH1-T1.md">
+          <goal>Freeze every interface PH2 writers depend on.</goal>
+          <deliverable>files/pleamar/docs/INTERFACES.md (English) + the shared libraries it describes.</deliverable>
+          <steps>
+            <step>Map QS Theme tokens to palette.plm names; keep the existing colour language (mint/ink/amber...) so the look survives the port.</step>
+            <step>Define scene names (bar, notifications, panels/..., lock, launcher, toast) and their IPC names.</step>
+            <step>Define the settings JSON schema per scene and where it is written.</step>
+            <step>Define the capsule/menu library APIs (a component with parameters, events as parameters).</step>
+          </steps>
+          <verification>Every library passes --check; proof scene consumes them; INTERFACES.md referenced from README.</verification>
+          <acceptance>PH2 writers need no questions: names, files, schemas and APIs are explicit.</acceptance>
+        </task>
+        <task id="PH1-T2" owner="subagent:theme-smith" depends-on="PH1-T1" status="pending" report="/tmp/plm-recon/reports/PH1-T2.md" scope="files/pleamar/scripts/theme/**, files/pleamar/shells/theme/**">
+          <goal>Theme pipeline: wallpaper -> palette -> scenes, mirroring the QS pipeline (Theme/*.jsonc + wallpaper accent) without QML.</goal>
+          <deliverable>A script (repo, English comments) that produces ~/.config/pleamar/theme.plm (writable copy-once path) from the current wallpaper/accent source, plus a theme scene or facts bridge so a wallpaper change re-themes live (hot reload of the imported theme.plm; per-scene rgb() facts where useful).</deliverable>
+          <verification>Run the script with a fixture wallpaper in a temp HOME; theme.plm passes --check; the proof scene restyles when theme.plm changes; document the QS parity (which tokens map where).</verification>
+          <acceptance>One command re-themes; no QML/py-Qt dependency; values traceable to the QS token names.</acceptance>
+        </task>
+      </tasks>
+    </phase>
+
+    <phase id="PH2" title="Core parity (weeks 2-3, parallel writers)" gate="PH2-EXIT">
+      <exit-criteria>
+        <criterion>P0 inventory list complete: bar widgets, notifications, panels/popups, tray, theming, settings.</criterion>
+        <criterion>Every scene: --check green, headless PNG reviewed, describe snapshot committed, budget table row within targets.</criterion>
+      </exit-criteria>
+      <notes>
+        Parallel writers own disjoint directories; no shared file is touched by two agents.
+        The integrator (main agent) merges, runs the gates and verifies claims personally.
+        Inventory correction (RE-2): the media stack (bar capsule 797 + transport + popup ~1100 lines) is the
+        largest single widget and is effectively required for parity — treat it as part of PH2-B's critical path,
+        not as an optional extra. The bar anchors to the bottom edge on this machine (verified), so the surface
+        declaration in PH2-A uses anchor: bottom + reserve.
+      </notes>
+      <tasks>
+        <task id="PH2-A" owner="subagent:bar-smith" depends-on="PH1-T1" status="pending" scope="files/pleamar/shells/bar/**">
+          <goal>Bar parity, module by module (from RE-2): WsIndicator (workspaces + submap icon + hyprexpo click), ClockWidget/Time, Volume/Microphone/AudioEndpointTile, NetClusterCapsule + NetFlowCapsule, SystemMonitorCapsule (6 metrics), WeatherButton, KeyboardLayoutHypr, Media capsule + MediaTransport strip, MpdFlags, GenelecWidget, PillCapsule, SystemTray, startup gate behaviour, per-monitor scaling.</goal>
+          <deliverable>One bar scene per monitor (D1/D2) reproducing the left/right reading order and interactions; uses lib/ capsules from PH1.</deliverable>
+          <verification>Harness + describe snapshot listing every widget zone with a label; headless input for wheel/drag volume, tray click, media transport reveal; per-monitor scale check.</verification>
+        </task>
+        <task id="PH2-B" owner="subagent:panels-smith" depends-on="PH1-T1" status="pending" scope="files/pleamar/shells/panels/**">
+          <goal>Panel/popup parity: Music popup (SidePanel/Music 716 + MusicPopup 333 + detail rows), Weather popup + SunIcon, NetFlowPopup (flow -json-stream), SystemMonitorPopup (journal problems, tty logs, clipboard copy), Calendar (khal + holidays), mixer, tray menus; GlassPanel (hyprglass tuning) is P2 — decide with the human whether it becomes a thin settings UI or is dropped. Calendar must fix the khal dateformat bug (M13): pass the date in the configured format and normalize back to ISO.</goal>
+          <deliverable>Drawers inside the bar surface (D1) with the QS interaction model: open on click, close on outside click/escape, single active overlay.</deliverable>
+          <verification>Headless input sequences open/close each drawer; describe snapshots; no zone without a label.</verification>
+        </task>
+        <task id="PH2-C" owner="subagent:notify-smith" depends-on="PH1-T1" status="pending" scope="files/pleamar/shells/notifications/**">
+          <goal>Notification parity: dunst-style stacked toasts (max 2, auto-dismiss), centre + history (cap 50), DND, actions and default action, images, urgency; scene-side DND + persistent history (D6); optional sound via the `sound` service.</goal>
+          <deliverable>Notification scene + a written cutover checklist item for the org.freedesktop.Notifications handover.</deliverable>
+          <verification>notify-send scenarios (urgency, actions, image, action-icons) in a shadow session; describe snapshot of the centre; history survives a scene restart.</verification>
+        </task>
+        <task id="PH2-D" owner="subagent:overlay-smith" depends-on="PH1-T1" status="pending" scope="files/pleamar/shells/toast/**, files/pleamar/shells/overlay/**">
+          <goal>Overlay parity: ScreenshotToast (screenshot-event file, pic-ocr engines, wl-copy, xdg-open), overlay dismissal triggers (dismiss-overlay / notif-close-all cache files), idle inhibitor equivalent, wallpaper accent publishing, native effects replacing the glass/wedge shaders.</goal>
+          <deliverable>Overlay scenes + the list of QS helpers that become unnecessary (with evidence).</deliverable>
+          <verification>Trigger each overlay by its real command (screenshot-toast, notif-close-all) in a shadow session; screenshot of each state.</verification>
+        </task>
+        <task id="PH2-E" owner="subagent:helper-smith" depends-on="PH1-T1" status="pending" scope="files/pleamar/scripts/helpers/**, files/pleamar/lib/helpers/**">
+          <goal>Service completion workers (D4): system monitor (procfs -> one JSON line per second), weather (Open-Meteo + cache + wttr fallback), calendar (khal list -> month model), keyboard layout (hyprctl/IPC), wallpaper palette bridge (iris or the existing pipeline), network/bluetooth detail (nmcli/bluetoothctl) where the services are too thin.</goal>
+          <deliverable>Small scripts + their scene-side clients; each worker spawned only while its view exists and killed on close; permissions lists written down; helper protocol (line-delimited JSON over stdin/stdout) defined in INTERFACES.md.</deliverable>
+          <verification>Each worker: unit input -> JSON line -> scene fact; killed when the view closes (pgrep check); no zombie processes; errors surface in the scene, not silently.</verification>
+        </task>
+      </tasks>
+    </phase>
+
+    <phase id="PH3" title="Depth, lock and plugins (weeks 3-5)" gate="PH3-EXIT">
+      <exit-criteria>
+        <criterion>Lock/login parity with PAM tested by hand (human gate), QS login layer still available as fallback until then.</criterion>
+        <criterion>Overview + launcher with compositor binds via `pleamar --say`.</criterion>
+        <criterion>At least two real plugins ported (e.g. Genelec, MPD/Cava) with approved permissions.</criterion>
+      </exit-criteria>
+      <tasks>
+        <task id="PH3-L" owner="subagent:lock-smith" depends-on="PH2-A" risk="high" human-gate="yes" scope="files/pleamar/shells/lock/**">
+          <goal>Lock/login parity with greeter/login.qml + LockContent (49 files, ~5k QML LOC in greeter/): ext-session-lock scene (`kind: lock`) rendering the same card, the nixie/CRT background (posterize dither + blue-noise mask, k-means Oklab palette from the wallpaper), preview harness (`pleamar --scene preview.plm` replacing `qs -p`), password check via `auth.check` (PAM), hypridle lock_cmd wiring, multi-monitor faces.</goal>
+          <deliverable>Lock scene as its own supervised unit (a lock that dies with the shell would unlock the session — Vitreus rationale) + a documented fallback to the QS login layer.</deliverable>
+          <verification>Manual matrix (human): lock, unlock, wrong password, monitor unplug while locked, session end, idle lock; screenshots; tests/evidence/lock-manual.md.</verification>
+          <must>Human performs the lock tests; no cutover before they pass; no PAM configuration changes.</must>
+        </task>
+        <task id="PH3-O" owner="subagent:overlay-smith" depends-on="PH2-B" scope="files/pleamar/shells/overview/**, files/pleamar/shells/launcher/**">
+          <goal>Overview parity (QS uses Hyprland hyprexpo via Services/Expo.qml — keep the same mechanism, binds call `hypr-expo toggle`; add a pleamar-native overview only if hyprexpo is going away) + launcher (apps service, icons, search) + compositor binds calling `pleamar --say` instead of `qs ipc`.</goal>
+          <verification>Headless input walkthrough + describe snapshots; key bindings added behind the pleamar flag; hyprexpo toggle verified from the bar.</verification>
+        </task>
+        <task id="PH3-P" owner="subagent:plugin-smith" depends-on="PH2-A,PH2-C" scope="files/pleamar/lib/plugins/**">
+          <goal>Plugin ports with approved permissions: Genelec (genlc/glm-vol/glm-midi + $XDG_RUNTIME_DIR/genlc-volume watch, negative-dB semantics, genelecMaxVolume clamp), MPD flags (mpc idle options player), Cava spectrum (cava spawn + IPhoneSpectrum/LinearSpectrum visuals), PillTracker (state JSON + ICS write), CoverResolver/MusicMeta (ffprobe/mediainfo/sox).</goal>
+          <deliverable>Each plugin declares its own permissions; a hostile plugin test proves the boundary.</deliverable>
+          <verification>Plugin runs with only approved permissions; removal test; hostile plugin refused; sandbox cut-off behaviour checked.</verification>
+        </task>
+      </tasks>
+    </phase>
+
+    <phase id="PH4" title="Superiority, cutover, decommission (week 5+)" gate="PH4-EXIT">
+      <exit-criteria>
+        <criterion>Superiority matrix rows all measured with evidence files; deviations documented, not hidden.</criterion>
+        <criterion>24 h shadow run: pleamar scenes alongside the live shell, no interference; then a full day with pleamar as the shell, rollback untested-but-ready.</criterion>
+        <criterion>Runbook committed; QS tree marked deprecated; feature flags flipped in one commit.</criterion>
+      </exit-criteria>
+      <tasks>
+        <task id="PH4-V" owner="subagent:verifier" depends-on="PH2-EXIT,PH3-EXIT" report="/tmp/plm-recon/reports/PH4-V.md">
+          <goal>Adversarial verification of every claim: budgets, isolation, agent tree, portability, plugin safety.</goal>
+          <deliverable>tests/evidence/&lt;date&gt;-superiority.tsv + a report naming every unmet target and its cause.</deliverable>
+          <verification>Re-run each measurement twice on a cold and warm session; cross-check with `pleamar --report`.</verification>
+        </task>
+        <task id="PH4-S" owner="main-agent" depends-on="PH4-V" human-gate="yes">
+          <goal>Cutover: flag flip, toplevel build, agent-switch, post-switch checks; rollback drill.</goal>
+          <deliverable>docs/runbook-pleamar-shell.md updated with the exact cutover and rollback commands; commit with `[gui/pleamar]` scope.</deliverable>
+          <verification>Build toplevel with the flag on, grep the closure for pleamar units, run the switch, verify bar/notifications/lock, then rehearse rollback in a dry run.</verification>
+        </task>
+        <task id="PH4-C" owner="main-agent" depends-on="PH4-S" scope="files/gui/hypr/**, modules/user/nix-maid/**, packages/local-bin/**, lib/**">
+          <goal>Caller migration: every `quickshell.service` reference, `quickshell ipc call globalIPC ...` bind, `quickshell ipc show` liveness probe and QS state-path consumer is rewritten to the pleamar equivalent (units, `pleamar --say` commands, marker names kept).</goal>
+          <deliverable>One commit that lands the call-site changes together with the flag flip; a grep report proving zero remaining live references (the archived files/quickshell tree excepted).</deliverable>
+          <verification>`rg -n 'quickshell\.service|quickshell ipc' --glob '!files/quickshell/**'` reviewed; binds exercised by hand; pic-notify and the health probe talk to the pleamar scenes.</verification>
+        </task>
+
+        <task id="PH4-D" owner="main-agent" depends-on="PH4-S" human-gate="yes">
+          <goal>Decommission the Quickshell shell (keep the greeter revert path until PH3-L is trusted).</goal>
+          <deliverable>Moved/archived files/quickshell (history preserved), removed units, updated docs and OPTIONS.md.</deliverable>
+          <verification>No dangling references (`rg -n quickshell` reviewed); `just check` green.</verification>
+        </task>
+      </tasks>
+    </phase>
+  </roadmap>
+
+  <subagent-orchestration>
+    <roles>
+      <role id="toolsmith" mission="Build, packaging, repo gates, Nix units" write-scope="flake.*, packages/overlays/**, modules/user/nix-maid/gui/pleamar.nix, scripts/dev/check-plm.sh, Justfile" />
+      <role id="architect" mission="Freeze interfaces: palette, scene names, settings schema, shared libraries" write-scope="files/pleamar/lib/**, files/pleamar/docs/INTERFACES.md" />
+      <role id="bar-smith" mission="Bar scenes" write-scope="files/pleamar/shells/bar/**" />
+      <role id="panels-smith" mission="Panels/popups" write-scope="files/pleamar/shells/panels/**" />
+      <role id="notify-smith" mission="Notifications" write-scope="files/pleamar/shells/notifications/**" />
+      <role id="overlay-smith" mission="Toasts, overview, launcher, effects" write-scope="files/pleamar/shells/{toast,overlay,overview,launcher}/**" />
+      <role id="lock-smith" mission="Lock/login scene (human-tested)" write-scope="files/pleamar/shells/lock/**" />
+      <role id="plugin-smith" mission="Plugin ports and sandbox tests" write-scope="files/pleamar/lib/plugins/**" />
+      <role id="verifier" mission="Harness, snapshots, budgets, adversarial checks" write-scope="files/pleamar/scripts/**, files/pleamar/tests/**" />
+      <role id="scribe" mission="README, AGENTS, runbook, migration notes" write-scope="files/pleamar/README.md, files/pleamar/AGENTS.md, docs/runbook-pleamar-shell.md" />
+    </roles>
+    <ownership-rule>Exactly one writer per path. A path not listed for you is read-only. Interfaces change only through the architect, with a plan amendment note.</ownership-rule>
+    <concurrency>At most 3 writers + 1 verifier at once; PH1 has a single writer; PH2 fans out only after PH1-EXIT.</concurrency>
+    <handoff-protocol>
+      Every delegation returns: status (done|blocked|deviated), changed files (paths), evidence (commands + outputs), deviations from this plan, blockers, and a report file under /tmp/plm-recon/reports/. Digest limit: 450 words. The main agent verifies personally: reads the diff, runs the gate, and only then marks a task complete.
+    </handoff-protocol>
+    <dag>
+      PH0-T1 -> PH0-T2, PH0-T3, PH0-T4 (parallel) -> PH0-T5;
+      PH0-T5 -> PH1-T1 (single writer);
+      PH1 -> {PH2-A, PH2-B, PH2-C, PH2-D} (parallel, disjoint);
+      {PH2-A} -> PH3-L; {PH2-B} -> PH3-O; {PH2-A,PH2-C} -> PH3-P;
+      everything -> PH4-V -> PH4-S -> PH4-D.
+    </dag>
+    <failure-policy>
+      Three consecutive failures on one piece -> stop, change strategy, document. Any gate that cannot pass -> escalate to the human with evidence; never mark a task done on partial evidence and never edit a test to make it pass.
+    </failure-policy>
+  </subagent-orchestration>
+
+  <quality-gates>
+    <gate id="G0" name="compiler">`bash scripts/dev/check-plm.sh` and `pleamar --check` on every scene; zero errors.</gate>
+    <gate id="G1" name="render">smoke.sh: every scene renders headlessly to a non-empty PNG; screenshots archived under files/pleamar/tests/shots/&lt;date&gt;/.</gate>
+    <gate id="G2" name="agent-tree">describe snapshots match tests/&lt;scene&gt;.describe.json; every interactive zone has a label or agent:no.</gate>
+    <gate id="G3" name="budgets">tests/evidence budgets hold (memory, CPU, startup, frame times).</gate>
+    <gate id="G4" name="session">Real-session checklist: bar interaction, panels, notifications (notify-send), tray, lock/unlock, hypridle, multi-monitor.</gate>
+    <gate id="G5" name="repo">`just fmt`, `just lint`, `just check`, toplevel build with `--option substitute false`; no secrets in diffs; English-only files.</gate>
+    <gate id="G6" name="rollback">Flag flip back to Quickshell documented and drilled; QS tree intact until PH4-D.</gate>
+  </quality-gates>
+
+  <metrics>
+    <commands>
+      <cmd>`just pleamar-check` — compiler gate.</cmd>
+      <cmd>`files/pleamar/scripts/smoke.sh` — headless render matrix.</cmd>
+      <cmd>`files/pleamar/scripts/measure.sh &lt;scene&gt;` — cgroup memory/CPU + `pleamar --report`.</cmd>
+      <cmd>`pleamar --say &lt;scene&gt; describe json` — agent tree snapshot.</cmd>
+      <cmd>`hyperfine --warmup 3 'pleamar --scene ... --seconds 1'` — startup cost.</cmd>
+      <cmd>`systemctl --user show pleamar-&lt;scene&gt;.service -p MemoryCurrent -p MemoryPeak -p CPUUsageNSec` — live unit metrics.</cmd>
+    </commands>
+    <baselines-taken>
+      <item>Quickshell: 110.4 MB RSS, 93.7 MiB cgroup current, 339.7 MiB peak, ~4% CPU, 0 restarts (16 Oct 08:06).</item>
+    </baselines-taken>
+  </metrics>
+
+  <risks>
+    <risk id="R1" severity="high">pleamar gaps (deferred loading, list inertia, runtime-born copies, IME) make some QS behaviour impossible as written.
+      <mitigation>Per-gap redesign in the scene (fixed-size lists, chunked `content:` windows); if a gap really blocks parity, open an upstream issue in ~/src/pleamar and record the deviation — never fake it.</mitigation></risk>
+    <risk id="R2" severity="medium">Notification server name conflict while both shells run.
+      <mitigation>Shadow runs disable the pleamar notification scene; handover tested explicitly at cutover (`notify-send` round trip).</mitigation></risk>
+    <risk id="R3" severity="medium">Tray/StatusNotifier ownership conflict.
+      <mitigation>Same as R2: one owner at a time; cutover checklist item.</mitigation></risk>
+    <risk id="R4" severity="high">Lock screen failure locks the user out or weakens login security.
+      <mitigation>Human-gated manual matrix, keep the QS login layer until PH3-L passes, rollback documented, no PAM changes.</mitigation></risk>
+    <risk id="R5" severity="medium">Build environment: sandbox offline, QT-free closure changes, crates.io reachability.
+      <mitigation>pin the flake input; keep the cargo-vendor fallback; verify the built toplevel closure contains pleamar.</mitigation></risk>
+    <risk id="R6" severity="low">Hyprland protocol coverage (ext-workspace / foreign-toplevel) for workspaces and active window.
+      <mitigation>verify early with a proof scene; fall back to `hyprctl` through permissions only if the protocol is missing.</mitigation></risk>
+    <risk id="R7" severity="medium">Scope creep: QS has years of small behaviours (genelec volume semantics, MPD flags, contrast guard).
+      <mitigation>MoSCoW: P0 parity first; each P1/P2 item gets its own task and can be deferred with a written note.</mitigation></risk>
+    <risk id="R8" severity="low">Perf claims flattering without measurement.
+      <mitigation>Only `--record`/`--report`/cgroup numbers count; every claim links an evidence file.</mitigation></risk>
+  </risks>
+
+  <rollback>
+    <item>Feature flags: features.gui.pleamar.enable / features.gui.quickshell.enable; flip back and rebuild — no file moves required until PH4-D.</item>
+    <item>System generations: previous NixOS generation keeps the QS shell; `nixos-rebuild switch --rollback` is the last resort.</item>
+    <item>Per-scene units isolate failures; stopping one unit never touches the rest.</item>
+  </rollback>
+
+  <definition-of-done>
+    <item>SC1..SC6 satisfied with evidence, not narration.</item>
+    <item>P0 inventory closed; P1/P2 deviations listed in files/pleamar/docs/MIGRATION.md with reasons.</item>
+    <item>Runbook covers: run one scene, preview, snapshot, measure, restart a scene, cut over, roll back.</item>
+    <item>Commits: `[gui/pleamar] ...` scope, English imperative subjects, fmt/lint/check green before each.</item>
+  </definition-of-done>
+
+  <open-questions for="human">
+    <q id="Q1">Name of the shell for docs: working title `salitre` — keep it, keep `nixie`, or another?</q>
+    <q id="Q2">Cutover appetite: full replacement in one switch, or staged (bar first, lock last)?</q>
+    <q id="Q3">May we patch ~/src/pleamar upstream for gaps found during the port, or keep changes scene-side only?</q>
+    <q id="Q4">Location: /etc/nixos/files/pleamar (default, matches the current shell) or a separate repo?</q>
+    <q id="Q5">Keep the nixie/CRT look of the current greeter in the pleamar lock scene, or redesign it?</q>
+  </open-questions>
+
+  <recon ref="/tmp/plm-recon">
+    <report id="RE-1" path="/tmp/plm-recon/build-feasibility.md" status="done" topic="pleamar binary: cargo offline is dead, nix build works">
+      <findings>
+        <fact>Binary: /nix/store/649h2brdgpwqqagn238j3d46548kz70l-pleamar-0.4.11/bin/pleamar (GC root /tmp/plm-recon/result). Verified by the main agent: `--version` -> `pleamar 0.4.11 · language 0.4`; `--check examples/bar.plm` -> `ok · 271 properties, 436 instructions, 0 layers, 124 rules, 48 zones, 0 gestures`.</fact>
+        <fact>cargo --offline is impossible on this host: only 51/318 locked crates are in ~/.cargo/registry and 12 exist nowhere on disk; the session LD_LIBRARY_PATH also breaks rustup binaries (run everything with `env -u LD_LIBRARY_PATH`).</fact>
+        <fact>Working build command: `XDG_CACHE_HOME=/tmp/... nix build .#packages.x86_64-linux.pleamar --option substitute false --out-link &lt;outside the repo&gt;`; measured 2 min 25 s. The sandbox cannot write ~/.cache/nix (fetcher-locks) — always override XDG_CACHE_HOME for nix in this environment.</fact>
+      </findings>
+    </report>
+    <report id="RE-2" path="/tmp/plm-recon/quickshell-inventory.md" status="done" topic="Quickshell area inventory (280 files, 131 QML, ~32.4k LOC; 526-line report)"/>
+    <report id="RE-3" path="/tmp/plm-recon/nixos-integration.md" status="done" topic="NixOS wiring: units, deployment, theming pipeline; digest at /tmp/plm-recon/digest-nixos-integration.md"/>
+    <report id="RE-4" path="/tmp/plm-recon/pleamar-capabilities.md" status="done" topic="pleamar 0.4.11 capabilities, limitations, Vitreus patterns"/>
+
+    <findings source="RE-4">
+      <fact>Data plane is covered: clock/clock.seconds, audio (volume, devices, per-app streams), battery, brightness, network (NM/iwd), bluetooth, media (MPRIS + players), window, thumbnails, workspaces, apps, tray, notifications (pleamar IS org.freedesktop.Notifications) + notification_history, polkit; command-only: session (lock/suspend/logout/reboot/poweroff), files (per-scene JSON folder), env, clipboard, auth.check (PAM), sound, gamepad.</fact>
+      <fact>Surfaces: `surface` panel/window/lock with anchor/level/reserve/screens/margin/rate/keyboard/captures/agent; `screens: each max 4`; `popup` is an xdg_popup onto the same scene; `pages` for paged panels; `import "pleamar:ui"` gives Cards/Tiles/Segmented.</fact>
+      <fact>Supervision: `--autostart` spawns and lets go (no supervisor); Vitreus pairs each line with `vitreus-keep` (flock, restart, 5-strikes backoff, exits when the compositor socket is gone). Headless rendering lives in `pleamar-wm headless` (PLEAMAR_HEADLESS_AT/PNG/INPUT).</fact>
+      <fact>Gaps cluster in presentation and unwritten services: no deferred loading (07 §2); models cap 256 records, no identity, no list inertia; popups single-parent/no keyboard/resize closes; tray submenus in place (14-row cap, no tooltips), click coords (0,0); notifications: no sound/DND/markup, 6 s default, volatile history, one receiver; no generic D-Bus; no IME; fixed surface size (no fit-to-content; changes not applied on hot reload); no whole-screen live capture; files JSON-only, watch polls 4/s.</fact>
+      <fact>Missing services the QS shell depends on: system monitor, weather, calendar, keyboard layout, wallpaper palette — all solved the Vitreus way: `run`/`spawn` JSON-lines helpers + per-scene JSON + third-party tools (nmcli/bluetoothctl/hyprctl/curl/iris).</fact>
+      <fact>Vitreus patterns to copy: (D1) one full-screen surface per monitor with include'd drawers instead of popups; (D2) live palette as facts (`pal_*`) plus written palette files for other processes; (D3) per-scene JSON settings with pcall/defaults/clamps; (D4) batched inter-scene `--say` over socat (~30 ms per process start); (D5) helper daemons spawned only while a view is open (e.g. vitreus-sysmon, one JSON line per second).</fact>
+      <fact>Measuring: `--record` per-frame TSV, `--report` Markdown with late-frame breakdown, `PLEAMAR_TIMING=1`; the measuring doc warns Quickshell numbers drift with uptime and that A/B pixel comparisons need PLEAMAR_FULL_REPAINT/SWAPCHAIN/FIFO.</fact>
+    </findings>
+
+    <findings source="RE-2 (partial, first-hand read of the inventory file)">
+      <fact>Tree: 280 files, 131 QML, 28 JS, 19 Theme/*.jsonc, ~32.4k text LOC. One QS process + a login-layer instance (`qs-login-layer` -> greeter/login.qml) + legacy greeter session.</fact>
+      <fact>Bar = 3 layer-shell surfaces per monitor (reserve panel, left, right) + wedge/tint shaders; Bar.qml 1306 lines; 21 bar modules (Media 797, SystemMonitorPopup 539, Calendar 418, KeyboardLayoutHypr 350, NetFlowPopup 330, NetClusterCapsule 261, SystemTray 255, WsIndicator 217, WeatherButton 190, MpdFlags 163, GenelecWidget 149, ...).</fact>
+      <fact>Components/ (43) is the shell's DSL: WidgetCapsule, ProcessRunner, CenteredCapsuleRow, AudioLevelCapsule, PillIndicator, SubmenuHost, tray icon+menu, spectrum widgets, tooltips, overlay frames — must be ported as pleamar libraries before bar modules can exist.</fact>
+      <fact>Services/ (19) is where Luau logic will live: Timers, Settings/Theme/StateCache, Audio (PipeWire + pwroute), Connectivity (ip/ping/rsmetrx), SystemMonitor (procfs+awk), Genelec (genlc/glm-vol/glm-midi + runtime file), MPRIS stack (MusicPlayers/MusicManager/MusicMeta/MusicPosition/CoverResolver), HyprlandWatcher (socat socket2 + hyprctl), PillTracker, Weather, Expo (hyprexpo), OverlayManager, WidgetRegistry, WallpaperAccent.</fact>
+      <fact>Widgets/: music popup ~1100 lines, weather popup, GlassPanel writes another app's config (hyprglass.json) — candidate for P2 or a thin settings UI; ScreenshotToast watches ~/.cache/quickshell/screenshot-event and calls pic-ocr/wl-copy/xdg-open.</fact>
+      <fact>Notifications replace dunst: D-Bus NotificationServer + toasts + centre + history cap 50 + DND + trigger files.</fact>
+      <fact>Settings/ = Settings.json (~200 typed keys, external schema validation) + Theme.qml (JSONC part merge -> .theme.json, derived tokens, per-monitor scale) + StateCache (~/.cache/quickshell/state.json).</fact>
+      <fact>`overview/` is dead (unreferenced); the real overview is Hyprland's hyprexpo via Services/Expo.qml.</fact>
+      <fact>Bar geometry resolved: Bar.qml anchors all three panel surfaces to the BOTTOM (`anchors.bottom: true` at lines 309/346/403, reserve panel bottom with exclusiveZone = barHeightPx), while Theme/panel.jsonc comments say "top bar" — the comments are stale; the port reproduces the bottom-anchored layout (and the plan's surface declaration uses anchor: bottom).</fact>
+    </findings>
+
+    <note>RE-1 and RE-3 digests are folded in before PH1; they refine the build path and the unit/deployment details, not the direction.</note>
+  </recon>
+  <progress date="2026-10-16" phase="PH0 nearly closed">
+    <done>
+      <item>PH0-T1 ✅ pleamar 0.4.11 built (nix from local checkout) and re-built from the pinned flake input; main agent verified --version and --check.</item>
+      <item>PH0-T1i ✅ flake input (rev 57568fa) + overlay packages/overlays/gui.nix; `pkgs.pleamar.version` = 0.4.11; a concurrent session's nerv-boot input survived (verified).</item>
+      <item>PH0-T2 ✅ files/pleamar skeleton + scripts/dev/check-plm.sh wired into `just lint` + `just pleamar-check`; untracked scenes are checked too; shellcheck/shfmt/mdformat clean (verified).</item>
+      <item>PH0-T3 ✅ harness: files/pleamar/scripts/{smoke,describe-snap,measure}.sh + tests/README.md; hermetic XDG sandbox, --soft (lavapipe ICD), renderer order pleamar-wm -&gt; sway/cage -&gt; none; verified against socket fakes and by the main agent.</item>
+      <item>PH0-T4 ✅ modules/user/nix-maid/gui/pleamar.nix behind features.gui.pleamar.enable (false): per-scene units, health probe, deploy links, cleanup; main agent re-ran the eval proofs (off =&gt; no units; on =&gt; pleamar-proof.service rendered with the intended ExecStart/caps/conditions).</item>
+      <item>PH0-T5 ✅ shells/proof/proof.plm + proof.luau (clock via service `time`, workspaces tabs with focus, audio capsule, labelled proof button); `--check` ok · 23 properties/67 instructions/12 rules/11 zones; the main agent fixed the clock to the zero-padded service text.</item>
+    </done>
+    <blocked>
+      <item>Headless render of proof (PH0-T3 acceptance): the agent sandbox denies /dev/dri (EACCES) and a nested Hyprland cannot start (setcap + aquamarine CBackend::create failure). Only pleamar-wm headless with Mesa lavapipe remains; its build (github:k4ditano/pleamar-wm) was still running at the time of this note (heavy LLVM dependency chain).</item>
+      <item>PH1-T1 (interfaces + lib/palette.plm + lib/capsule.plm) is in flight by the architect subagent; the proof scene will be restyled through the libraries when it lands.</item>
+    </blocked>
+    <next>
+      <item>PH1-T1 ✅ interfaces frozen: lib/palette.plm (195 tokens + springs, strict, mapped token-by-token from the QS theme — note the real theme has no mint/ink; those are house names kept where the role matches), lib/capsule.plm (Capsule component), docs/INTERFACES.md (1178 lines: scene/IPC catalog, palette table, settings schema, helper JSONL protocol, label/role/agent policy, compiler traps §9), proof.plm restyled (ok · 88 properties/135 instructions).</item>
+      <item>Gate fixed by the main agent: scripts/dev/check-plm.sh now skips `library`/`part` files (the compiler refuses them standalone) — verified `1 scene(s), 2 library/part file(s) skipped, OK`; shellcheck/shfmt clean. INTERFACES.md §9.1 kept the note for the record.</item>
+      <item>PH2 started in parallel: bar slice 1 (PH2-A), helper workers (PH2-E), panels slice 1 (PH2-B), notifications (PH2-C). PH2-D (overlays) is held until a writer frees a slot.</item>
+      <item>Known compiler traps for every scene author (INTERFACES.md §9): literal first factor for `text size:`/`body rim:`, no forwarding `children` into a nested component copy, no 8-digit hex, no string `let`s, `role:`/`agent:` cannot be parameters, a `let` redeclared across imports may differ per `screens: each` copy.</item>
+      <item>When pleamar-wm lands: smoke.sh --soft --scene proof (PNG), describe-snap.sh --update, measure.sh; attach the PNG as the first visual artifact.</item>
+      <item>Repo discipline: keep features.gui.pleamar.enable off; quickshell stays the live shell; commit only at the human-gated cutover.</item>
+    </next>
+  </progress>
+</superplan>
