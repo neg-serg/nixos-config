@@ -158,6 +158,8 @@ scene toast {
                 }
                 zone box preview { from: 16, 16; size: 428, 280; corner: 4; cursor: pointer; label: "Open screenshot"; role: button }
                 on press preview { emit open_shot }
+                on enter preview { emit hover_in }
+                on leave preview { emit hover_out }
 
                 // ------***----------- title and close
                 text "Screenshot captured" { at: 16, 318; anchor: left center; size: 14; weight: 500; color: ink }
@@ -166,6 +168,8 @@ scene toast {
                 line { from: 448, 312; to: 436, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
                 zone box close_zone { from: 426, 302; size: 32, 32; corner: 6; cursor: pointer; label: "Dismiss screenshot"; role: button }
                 on press close_zone { emit hide }
+                on enter close_zone { emit hover_in }
+                on leave close_zone { emit hover_out }
 
                 // ------***----------- path row (private)
                 text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; color: ink.off }
@@ -196,6 +200,8 @@ scene toast {
         text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; weight: 500; color: ink }
         zone box hit { from: x, y; size: w, 36; corner: 6; cursor: pointer; label: title; role: button }
         on press hit { emit press }
+        on enter hit { emit hover_in }
+        on leave hit { emit hover_out }
     }
 
     Card()

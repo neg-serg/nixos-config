@@ -1,0 +1,114 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+// overlay.plm — the always-on overlay scene of the pleamar shell (PH2-D).
+//
+// Three jobs, all of them small and always there:
+//
+//  1. The dismissal catcher. `active`, the frozen fact of INTERFACES §2.1,
+//     says an overlay is up; while it holds, one surface per monitor covers the
+//     desktop and a press anywhere dismisses it. The label/role/agent policy is
+//     the frozen one of §8.2 ("Dismiss overlay", region, agent: no).
+//
+//  2. The trigger semaphores. INTERFACES §1.2 gives this scene
+//     `~/.cache/pleamar/dismiss-overlay` and the `notif-close-all` relay. The
+//     cache is outside every scene folder and the `files` service never leaves
+//     the folder, so overlay.luau watches the files with `run("stat", …)` and
+//     owns them (mkdir + touch at startup, the way the legacy OverlayManager
+//     did), then relays a change by IPC to the scenes that own overlays.
+//
+//  3. The idle inhibitor (legacy Helpers/IdleInhibitor.qml). The `inhibit`
+//     fact is the switch; overlay.luau holds
+//     `systemd-inhibit --what=idle:sleep --who=pleamar --why=… sleep infinity`
+//     while it is true and kills it when it is false. Nothing is spawned until
+//     somebody asks. See the note at the bottom: systemd-inhibit is logind's
+//     inhibitor, and what a compositor-side idle daemon does with it is a
+//     cutover question, not something this scene may invent.
+//
+// One active overlay, the port's form. The legacy Services/OverlayManager.qml
+// kept a single registered overlay and dismissed the previous one when a new
+// one opened. Scenes are processes and share no objects, so the rule is kept
+// cooperatively:
+//   · the scene that opens an overlay raises `active`
+//     (`pleamar --say overlay "fact active true"`) and lowers it when it
+//     closes;
+//   · while `active` holds, this scene's catcher takes the press that lands
+//     outside the overlay and relays a dismissal to every overlay owner;
+//   · `pleamar --say overlay "emit dismiss"` is the same relay without a
+//     press — a compositor bind or another scene can use it.
+// The scenes that already catch their own outside press (panels, the
+// notification centre) need not raise it; no scene does yet, and the catcher
+// stays down until one does, so the scene alone is inert. Its two other jobs —
+// the semaphore relay and the idle inhibitor — work either way.
+//
+// Permissions: `stat` watches the two semaphores, `mkdir`/`touch` own them,
+// `pleamar` carries the relay, `systemd-inhibit` is the inhibitor; `env` is
+// HOME/XDG_CACHE_HOME and `files` is the scene's own settings.json.
+//
+// Settings (INTERFACES §6.3): dismissOnEscape, bool, default true — Escape on
+// the catcher dismisses.
+//
+// Wallpaper accent — a commented extension point, not an implementation. The
+// legacy Services/WallpaperAccent.qml watched `~/.cache/quickshell-wallpaper-path`
+// and republished the path. INTERFACES §2 gives the "wallpaper → theme.plm
+// bridge and live accent facts" job to the `theme` scene (PH1-T2), and §1.2
+// reserves `~/.cache/pleamar/wallpaper-path` for it, so this scene stays out:
+// a second publisher would be a second owner. If the cutover needs a stopgap
+// before `theme` lands, the extension point is a `text wallpaper = ""` here,
+// filled by the logic with `run("cat", { <XDG_CACHE_HOME> "/quickshell-wallpaper-path" })`
+// for the legacy path (or `…/pleamar/wallpaper-path` once the theme script
+// writes it), permission `run: "cat"` — added in the theme task's commit, with
+// its owner, not silently here.
+
+scene overlay {
+
+    // ------***------------------------- facts
+    // `active` is interface (§2.1): the dismissal catcher is up. The rest are
+    // this scene's own and are documented in the header.
+    fact active = false
+    fact dismiss_on_escape = true
+    fact inhibit = false
+    text inhibit_error = ""
+
+    // `dismiss` is the relay (catcher press, Escape, IPC, or the semaphore).
+    // `toggle_inhibit` is the idle inhibitor's IPC entry point; `fact inhibit
+    // true|false` also works.
+    event dismiss ->
+    event toggle_inhibit ->
+
+    // ------***-------------------- permissions
+    permissions { run: "stat", "mkdir", "touch", "pleamar", "systemd-inhibit"; services: "env", "files" }
+
+    // ------***----------------------surface
+    // Full size on every monitor, over everything, nothing reserved; it is
+    // open only while an overlay is up, so its empty state costs nothing.
+    surface {
+        size: full, full
+        anchor: top
+        level: overlay
+        reserve: -1
+        screens: each
+        open: active
+        keyboard: on_demand while active
+    }
+
+    // ------***----------------------- catcher
+    // It draws nothing: the whole surface is one zone with the shell's
+    // standard wording. A press — or Escape, unless the setting says no —
+    // asks the logic for the relay.
+    zone box catcher { from: 0, 0; size: screen.width, screen.height; label: "Dismiss overlay"; role: region; agent: no }
+    on press catcher { emit dismiss }
+    on key Escape while dismiss_on_escape { emit dismiss }
+
+    // What a cutover or a later slice must wire, written here so it is not
+    // forgotten: (a) point the Hyprland binds at the pleamar semaphores
+    // (`mkdir -p ~/.cache/pleamar; touch ~/.cache/pleamar/dismiss-overlay`,
+    // `touch ~/.cache/pleamar/notif-close-all`) or at `pleamar --say overlay
+    // "emit dismiss"` / `--say notifications "emit dismiss_all"`; (b) any
+    // overlay scene that wants the shared catcher raises `active` while it is
+    // open; (c) decide the idle story: systemd-inhibit blocks logind's idle
+    // hint, and whether the compositor's idle daemon (hypridle) honours it
+    // must be checked on the cutover — this scene does not guess one.
+}
