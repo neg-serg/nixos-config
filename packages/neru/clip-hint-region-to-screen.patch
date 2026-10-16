@@ -1,0 +1,25 @@
+diff --git a/internal/app/services/hint_service.go b/internal/app/services/hint_service.go
+index 3e286ec..3db483c 100644
+--- a/internal/app/services/hint_service.go
++++ b/internal/app/services/hint_service.go
+@@ -519,6 +519,20 @@ func (s *HintService) resolveDetectionBounds(
+ 
+ 		switch {
+ 		case boundsErr == nil && found:
++			// A window can hang off the screen: a file chooser taller than the
++			// work area, centered on the display, is the usual case. The capture
++			// backends refuse a region no single output wholly contains, so a
++			// window that leaves the screen fails the activation outright
++			// instead of hinting what is visible. Clipping to the screen the
++			// cursor is on keeps the region capturable and scans the part that
++			// can hold a target; a window on another screen does not intersect
++			// it and is left as it was.
++			if activeScreen, screenErr := s.system.ScreenBounds(ctx); screenErr == nil {
++				if clipped := windowBounds.Intersect(activeScreen); !clipped.Empty() && clipped != windowBounds {
++					return clipped, true
++				}
++			}
++
+ 			return windowBounds, true
+ 		case boundsErr != nil:
+ 			s.logger.Warn(
