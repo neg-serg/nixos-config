@@ -5,16 +5,16 @@ half that scenes opt into. It mirrors the legacy Quickshell contract (`docs/INTE
 §3.3): the frozen `lib/palette.plm` keeps the QS names and values, and `theme.plm` adds the
 wallpaper's own tones under a `skin.` prefix — the QS wallpaper accent
 (`Services/WallpaperAccent.qml` + `Helpers/AccentSampler.js` + `Settings/Theme.qml`'s
-`accentPrimary`) and the greeter's Oklab k-means palette
-(`greeter/background/BackgroundImage.qml`), without QML or PyQt anywhere.
+`accentPrimary`) and the greeter's Oklab k-means palette (`greeter/background/BackgroundImage.qml`),
+without QML or PyQt anywhere.
 
 Files in this directory:
 
-| file                | what it is                                                                      |
-| ------------------- | ------------------------------------------------------------------------------- |
-| `theme.sh`          | the generator: resolves the wallpaper, writes `theme.plm` atomically            |
-| `theme-extract.awk` | the two samplers (accent mean + Oklab k-means), a port of the legacy JS/QML     |
-| `theme.default.plm` | the seed copy for a fresh session; `theme.sh` overwrites the live file, not it  |
+| file                | what it is                                                                       |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `theme.sh`          | the generator: resolves the wallpaper, writes `theme.plm` atomically             |
+| `theme-extract.awk` | the two samplers (accent mean + Oklab k-means), a port of the legacy JS/QML      |
+| `theme.default.plm` | the seed copy for a fresh session; `theme.sh` overwrites the live file, not it   |
 | `test.sh`           | hermetic proof: temp HOME/XDG, fixtures, assertions, optional `--check` consumer |
 | `README.md`         | this file                                                                        |
 
@@ -44,19 +44,19 @@ Rules the file obeys, so PH2 writers can rely on them:
 
 ### The exported names
 
-| name                 | value                                             | from                                              |
-| -------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `skin.coal`          | darkest wallpaper tone (`colors.background` role) | darkest of four Oklab k-means clusters             |
-| `skin.surface`       | raised surface (`colors.surfaceVariant` role)     | second-darkest cluster                             |
-| `skin.ink`           | text (`colors.text.primary` role)                 | lightest cluster, readability-clamped (see below)  |
-| `skin.ink.dim`       | secondary text (`colors.text.secondary` role)     | `mix(skin.ink, skin.surface, 35%)`                 |
-| `skin.accent`        | accent (`colors.accent.primary` role)             | wallpaper mean hue, QS saturation/lightness        |
-| `skin.accent.hover`  | `Theme.accentHover`                               | `mix(skin.accent, #ffffff, 20%)`                   |
-| `skin.accent.deep`   | `Theme.accentDarkStrong`                          | `mix(skin.accent, skin.coal, 80%)`                 |
-| `skin.on.accent`     | `colors.onAccent`                                 | constant `#ffffff`, as in the legacy theme         |
+| name                | value                                             | from                                              |
+| ------------------- | ------------------------------------------------- | ------------------------------------------------- |
+| `skin.coal`         | darkest wallpaper tone (`colors.background` role) | darkest of four Oklab k-means clusters            |
+| `skin.surface`      | raised surface (`colors.surfaceVariant` role)     | second-darkest cluster                            |
+| `skin.ink`          | text (`colors.text.primary` role)                 | lightest cluster, readability-clamped (see below) |
+| `skin.ink.dim`      | secondary text (`colors.text.secondary` role)     | `mix(skin.ink, skin.surface, 35%)`                |
+| `skin.accent`       | accent (`colors.accent.primary` role)             | wallpaper mean hue, QS saturation/lightness       |
+| `skin.accent.hover` | `Theme.accentHover`                               | `mix(skin.accent, #ffffff, 20%)`                  |
+| `skin.accent.deep`  | `Theme.accentDarkStrong`                          | `mix(skin.accent, skin.coal, 80%)`                |
+| `skin.on.accent`    | `colors.onAccent`                                 | constant `#ffffff`, as in the legacy theme        |
 
-`theme.sh` writes one comment above each name saying where that name's value came from — the
-sampled wallpaper, `--accent`, `--from-json`, or the QS base-palette fallback.
+`theme.sh` writes one comment above each name saying where that name's value came from — the sampled
+wallpaper, `--accent`, `--from-json`, or the QS base-palette fallback.
 
 ## The command
 
@@ -78,9 +78,9 @@ Usage: theme.sh [--wallpaper FILE] [--accent '#RRGGBB'] [--from-json FILE] [--he
 Wallpaper resolution order:
 
 1. `--wallpaper FILE` (unreadable is an error);
-2. `$XDG_CACHE_HOME/pleamar/wallpaper-path`, first line (`INTERFACES.md` §1.2 reserves the path for
+1. `$XDG_CACHE_HOME/pleamar/wallpaper-path`, first line (`INTERFACES.md` §1.2 reserves the path for
    this pipeline);
-3. `$XDG_CACHE_HOME/quickshell-wallpaper-path`, the legacy cache `WallpaperAccent.qml` watched —
+1. `$XDG_CACHE_HOME/quickshell-wallpaper-path`, the legacy cache `WallpaperAccent.qml` watched —
    what the session publishes today.
 
 The writer is a module, not this script: `wl-state-sync.service` / the wallpaper daemon must publish
@@ -129,16 +129,16 @@ to the live path so scenes compile before the first wallpaper change.
 
 The full palette translation is `INTERFACES.md` §3.3; this is the wallpaper half of it.
 
-| QS token / derived token (legacy)   | `skin.*`             | how the generator gets it                                                     |
-| ----------------------------------- | -------------------- | ----------------------------------------------------------------------------- |
-| `colors.background` `#ff000000`     | `skin.coal`          | greeter k-means cluster 1/4 (darkest), chroma ×1.35                           |
-| `colors.surfaceVariant` `#242A35`   | `skin.surface`       | cluster 2/4                                                                   |
-| `colors.text.primary` `#CBD6E5`     | `skin.ink`           | cluster 4/4, then pushed toward white (or black on a light palette) to WCAG 4.5:1 on `skin.surface` |
-| `colors.text.secondary` `#AEB9C8`   | `skin.ink.dim`       | `mix(ink, surface, 35%)` (the QS step below primary)                          |
-| `colors.accent.primary` `#006FCC`   | `skin.accent`        | `AccentSampler` mean hue; HSL saturation/lightness of `#006FCC`               |
-| `Theme.accentHover`                 | `skin.accent.hover`  | `mix(accent, #ffffff, 20%)` — the same formula                                |
-| `Theme.accentDarkStrong`            | `skin.accent.deep`   | `mix(accent, coal, 80%)` — the same formula                                   |
-| `colors.onAccent` `#FFFFFF`         | `skin.on.accent`     | constant, as in `Settings/Theme.qml`                                          |
+| QS token / derived token (legacy) | `skin.*`            | how the generator gets it                                                                           |
+| --------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| `colors.background` `#ff000000`   | `skin.coal`         | greeter k-means cluster 1/4 (darkest), chroma ×1.35                                                 |
+| `colors.surfaceVariant` `#242A35` | `skin.surface`      | cluster 2/4                                                                                         |
+| `colors.text.primary` `#CBD6E5`   | `skin.ink`          | cluster 4/4, then pushed toward white (or black on a light palette) to WCAG 4.5:1 on `skin.surface` |
+| `colors.text.secondary` `#AEB9C8` | `skin.ink.dim`      | `mix(ink, surface, 35%)` (the QS step below primary)                                                |
+| `colors.accent.primary` `#006FCC` | `skin.accent`       | `AccentSampler` mean hue; HSL saturation/lightness of `#006FCC`                                     |
+| `Theme.accentHover`               | `skin.accent.hover` | `mix(accent, #ffffff, 20%)` — the same formula                                                      |
+| `Theme.accentDarkStrong`          | `skin.accent.deep`  | `mix(accent, coal, 80%)` — the same formula                                                         |
+| `colors.onAccent` `#FFFFFF`       | `skin.on.accent`    | constant, as in `Settings/Theme.qml`                                                                |
 
 The mappings `Theme.surfaceHover`, `surfaceActive`, `borderSubtle`, `overlayWeak/Strong` (alpha
 numbers in `lib/palette.plm`) stay scene-side: `skin.*` carries tones, the drawing site applies
@@ -146,9 +146,9 @@ numbers in `lib/palette.plm`) stay scene-side: `skin.*` carries tones, the drawi
 
 ### How the samplers mirror the legacy code, and the deviations
 
-- **Tones** — `theme-extract.awk` ports `BackgroundImage.qml`'s `paintPalette()`: Oklab, k=4,
-  pixel weight `0.25 + saturation × 1.75`, seeds spread over the lightness range, 16 iterations,
-  centres sorted darkest to lightest, chroma ×1.35 (`greeter.posterizeChroma`).
+- **Tones** — `theme-extract.awk` ports `BackgroundImage.qml`'s `paintPalette()`: Oklab, k=4, pixel
+  weight `0.25 + saturation × 1.75`, seeds spread over the lightness range, 16 iterations, centres
+  sorted darkest to lightest, chroma ×1.35 (`greeter.posterizeChroma`).
 - **Accent** — ports `AccentSampler.sampleAccent()`: the mean of pixels with chroma ≥ 10 and mean
   brightness 20..235, then the relaxed pass (≥ 8, 20..240), then every pixel; the mean is
   hue-matched the way `Color.matchHue(mean, "#006FCC")` does for `Theme.accentPrimary` (wallpaper
@@ -199,14 +199,17 @@ The module task owns this (PH1-T2 does not edit `modules/`); the requirements ar
 1. **The writable path.** `~/.config/pleamar/` must be a real, user-writable directory whose `lib/`
    and `shells/` are links into the repo — not one link of the whole directory. Nix must never own
    `theme.plm`: the script rewrites it, and the module's activation must not replace it.
-2. **A seed.** Copy `scripts/theme/theme.default.plm` to `~/.config/pleamar/theme.plm` **only when
+
+1. **A seed.** Copy `scripts/theme/theme.default.plm` to `~/.config/pleamar/theme.plm` **only when
    it does not exist**, so the scenes that import `../../theme.plm` compile on a fresh login.
-3. **The script.** Deploy `theme.sh` *with* `theme-extract.awk` in the same directory (the script
+
+1. **The script.** Deploy `theme.sh` *with* `theme-extract.awk` in the same directory (the script
    finds its sibling and resolves symlinks, so a link to the directory is fine). A store wrapper
    (`writeShellApplication` style) works if both files sit next to each other; put `imagemagick`,
    `gawk`, `jq` and `coreutils` on its `PATH`, or point `MAGICK_BIN`/`AWK_BIN`/`JQ_BIN` at the store
    paths.
-4. **The trigger.** Something must run the script whenever the wallpaper changes. Today
+
+1. **The trigger.** Something must run the script whenever the wallpaper changes. Today
    `wl-state-sync.service` already runs on every change and publishes
    `~/.cache/quickshell-wallpaper-path`; the smallest correct step is an `ExecStartPost` on that
    unit (or a path unit watching the same file). The README of this pipeline recommends moving the
