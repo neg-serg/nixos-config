@@ -23,11 +23,16 @@ edition_for() {
 }
 
 fail=0
+# LD_LIBRARY_PATH on this host carries the nix gcc/glibc (pulled in for the GPU
+# and AI stacks); the rustup toolchain shim resolves its own libc against that
+# value and dies with `undefined symbol: __pointer_chk_guard, version
+# GLIBC_PRIVATE`, which the check then reads as "not formatted". Drop the
+# variable for rustfmt so the gate reports formatting, not the loader.
 while IFS= read -r f; do
   edition="$(edition_for "$f")"
   if [ "$MODE" = "fix" ]; then
-    rustfmt --edition "$edition" "$f"
-  elif ! rustfmt --check --edition "$edition" "$f" > /dev/null 2>&1; then
+    env -u LD_LIBRARY_PATH rustfmt --edition "$edition" "$f"
+  elif ! env -u LD_LIBRARY_PATH rustfmt --check --edition "$edition" "$f" > /dev/null 2>&1; then
     echo "rustfmt: $f (edition $edition) not formatted — run 'just rustfmt'"
     fail=1
   fi
