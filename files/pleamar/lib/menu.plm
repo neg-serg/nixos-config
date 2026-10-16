@@ -22,9 +22,12 @@
 //
 // `Action` is a row with a label; `Icon` draws an image (`menu.icon` design px
 // square, before the label) and then the label. Both draw
-// `width × menu.item.height` design pixels and multiply everything by `scale`
-// (`ui` by default), like Capsule, so a call site passes design sizes: never
-// `width * scale`.
+// `width × menu.item.height` design pixels of geometry and multiply that by
+// `scale` (`ui` by default), like Capsule, so a call site passes design sizes:
+// never `width * scale`. A `text size:` takes one literal number in 0.4.11
+// (everything after it is ignored), so the label is written at the design size
+// `type.small` (14) and scales with the enclosing `group { scale: … }` — the
+// same convention Capsule users follow (INTERFACES.md §4 note and §5.1).
 //
 // The row is `menu.pad + depth * menu.sub.gap` from the left, so a tree walked
 // with nested `for`s reads as a tree: pass the row's `depth`. Rows with a
@@ -76,8 +79,10 @@ library Menu strict {
             at: indent * scale, menu.item.height / 2 * scale
             anchor: left center
             width: room * scale
-            size: 1 * type.small * menu.type * scale
-            weight: 1 * weight.medium
+            // `size:` and `weight:` take one literal number in 0.4.11: the
+            // design size of `type.small`, and `weight.medium`.
+            size: 14
+            weight: 500
             lines: 1
             color: tone
             opacity: dim
@@ -142,8 +147,10 @@ library Menu strict {
             at: labelx * scale, menu.item.height / 2 * scale
             anchor: left center
             width: room * scale
-            size: 1 * type.small * menu.type * scale
-            weight: 1 * weight.medium
+            // `size:` and `weight:` take one literal number in 0.4.11: the
+            // design size of `type.small`, and `weight.medium`.
+            size: 14
+            weight: 500
             lines: 1
             color: tone
             opacity: dim
