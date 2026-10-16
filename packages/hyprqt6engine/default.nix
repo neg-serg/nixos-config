@@ -1,11 +1,17 @@
 # hyprqt6engine — Qt6 platform theme + widget style for Hyprland; a drop-in
 # replacement for qt6ct that reads the Hyprland/hyprqt6engine config. Not in the
 # pinned nixpkgs yet (checked 2026-10: no pkgs/by-name/hy/hyprqt6engine), so it
-# is pinned here. To bump: new tag in src.tag, refresh src.hash
-# (`nix store prefetch-file --unpack --json <tarball>`), and re-check the Qt6
-# minimum in CMakeLists.txt (currently 6.9). The KF6 packages are optional in
-# upstream CMake, so this build ships without KDE color-scheme/icon-theme
-# support; add kdePackages.kconfig/kcolorscheme/kiconthemes if that is needed.
+# is pinned here. Pinned to a main rev instead of the v0.1.0 tag: the tag's
+# hyprqtplugin/CMakeLists.txt never calls find_package(Qt6 … GuiPrivate), so the
+# link fails with "Target Qt6::GuiPrivate was not found"; main (d0ce29ca) adds
+# it and bumps nothing else (VERSION is still 0.1.0). To bump: new rev + hash
+# (`nix store prefetch-file --unpack --json <tarball>`), re-check the Qt6
+# minimum in CMakeLists.txt (currently 6.9), and switch back to a tag once a
+# release is cut from main. The KF6 packages are optional in upstream CMake
+# (the build only prints "Could not find a package configuration file" warnings
+# for KF6Config/KF6ColorScheme/KF6IconThemes and the C++ side guards them with
+# #ifdef), so this build ships without KDE color-scheme/icon-theme support; add
+# kdePackages.kconfig/kcolorscheme/kiconthemes if that is wanted.
 {
   lib,
   stdenv,
@@ -18,15 +24,15 @@
   qt6,
 }:
 
-stdenv.mkDerivation (finalAttrs: {
+stdenv.mkDerivation {
   pname = "hyprqt6engine";
-  version = "0.1.0";
+  version = "0.1.0-unstable-2026-08-11";
 
   src = fetchFromGitHub {
     owner = "hyprwm";
     repo = "hyprqt6engine";
-    tag = "v${finalAttrs.version}";
-    hash = "sha256-WSUMQmfVlpz31o2Tgfue0jnVRCeTrRi3Cy6s2/o8hzQ=";
+    rev = "d0ce29ca5471f406c71558cd9453573686b8c976";
+    hash = "sha256-UQQue60zRgkz4KqqAyVZlVqGvdGZcj5BuWV9SlbURis=";
   };
 
   nativeBuildInputs = [
@@ -55,4 +61,4 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.bsd3;
     maintainers = [ lib.maintainers.fufexan ];
   };
-})
+}
