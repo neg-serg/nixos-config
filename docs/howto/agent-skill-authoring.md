@@ -43,6 +43,18 @@ metadata:
 Before 2026-10-13 this annex was the whole contract, which contradicted both the autolearn template
 and every deployed skill.
 
+## Vendored skills
+
+A skill may be a verbatim copy of an upstream catalogue (`j-space` is the only one today). Keep the
+upstream text untouched and apply this contract to the frontmatter only: `name`, `description` and
+`whenToUse` still hold. Record the origin in `<skill>/PROVENANCE.md` — upstream URL, pinned commit,
+license, the skills-repo port commit — and keep the upstream `LICENSE` next to it, so fidelity stays
+checkable with `git clone` + `git checkout <commit>` + `diff -r`.
+
+A validator shipped inside such a skill may reject the catalogue's extra key: `j-space`'s upstream
+`verify_suite.py` reports `SKILL.md: unsupported frontmatter keys: whenToUse` and nothing else. That
+single finding is expected — the catalogue contract wins and `scripts/check-skills.sh` is the gate.
+
 ## Body structure
 
 - `# Name` → overview (2–4 sentences: the principle) → steps/commands → gotchas → notes.
