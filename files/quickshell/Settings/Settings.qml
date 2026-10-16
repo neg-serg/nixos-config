@@ -222,7 +222,7 @@ Singleton {
             // Panel layout: ordered widget identifiers per section
             property var panelLayout: ({
                     left: ["clock", "workspaces", "keyboard", "network", "weather"],
-                    right: ["media", "mpdFlags", "sysmon", "pill", "systray", "microphone", "volume", "genelec"]
+                    right: ["media", "mpdFlags", "sysmon", "pill", "systray", "microphone", "volume", "genelec", "nixbuild"]
                 })
 
             // Startup gate: at login the panel shows only the widgets listed in

@@ -1,0 +1,12 @@
+[package]
+name = "nixbuild-status"
+version = "0.1.0"
+edition = "2021"
+description = "One-line NixOS build status for status bars (waybar/i3bar/polybar)"
+license = "MIT"
+
+[[bin]]
+name = "nixbuild-status"
+path = "src/main.rs"
+
+[dependencies]

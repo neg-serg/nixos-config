@@ -925,6 +925,14 @@ Scope {
                             anchors.right: rightBarBackground.right
                             anchors.rightMargin: rightPanel.sideMargin
                             spacing: 0
+                            // Build status: hidden while the store is idle, so the
+                            // capsule only shows up during a real rebuild.
+                            LocalMods.BuildStatus {
+                                id: buildStatusWidget
+                                visible: rootScope.panelWidgets["nixbuild"]
+                                Layout.alignment: Qt.AlignVCenter
+                                screen: modelData
+                            }
                             // Playback controls for the media widget: revealed to its
                             // left while the cursor is on the cover art (or on the
                             // strip itself) and collapsed when the cursor leaves.
