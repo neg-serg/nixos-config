@@ -148,10 +148,10 @@
       url = "github:samjoshuadud/waylandar/b46d5c348f846ca489071f2d271312ea35c019b4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # NERV-styled UEFI boot menu (GuillotineMelody/nervboot on Codeberg).
-    # Package only: trantor boots via limine, while the upstream NixOS module is
-    # systemd-boot-only (asserts systemd-boot and installs via its extraFiles),
-    # so the module is deliberately NOT imported. Build with `nix build .#nerv-boot`.
+    # NERV-styled UEFI boot menu (GuillotineMelody/nervboot on Codeberg) — the
+    # visible boot menu on trantor: firmware boots its NERV entry, it reads the
+    # BLS entries systemd-boot writes and hands the pick back to systemd-boot.
+    # Imported in hosts/trantor/default.nix; standalone build: `nix build .#nerv-boot`.
     nerv-boot = {
       url = "git+https://codeberg.org/GuillotineMelody/nervboot";
       inputs.nixpkgs.follows = "nixpkgs";

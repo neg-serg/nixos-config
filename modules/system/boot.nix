@@ -1,6 +1,6 @@
 ##
 # Module: system/boot
-# Purpose: Bootloader (Limine/EFI), initrd modules, kexec.
+# Purpose: Bootloader (systemd-boot + NERV/EFI), initrd modules, kexec.
 # Key options: none (uses config.boot.* directly).
 # Dependencies: pkgs (efibootmgr/efivar).
 {
@@ -18,8 +18,14 @@
 
     loader = {
       efi.canTouchEfiVariables = true;
-      timeout = lib.mkDefault 0; # Skip boot menu unless key pressed; speeds up loader phase
-      limine.maxGenerations = 25; # Keep at most 25 generations in boot menu
+      # systemd-boot owns the ESP side: it writes the BLS entries NERV lists,
+      # does the actual booting after NERV's handoff, and keeps random-seed /
+      # boot-counting state. NERV's own settings live in hosts/trantor.
+      systemd-boot = {
+        enable = true;
+        configurationLimit = 25; # Keep at most 25 generations in boot menu
+      };
+      timeout = lib.mkDefault 0; # Skip the systemd-boot menu; NERV's countdown governs
     };
     # Boot-specific options only; no activation scripts touching /boot
     initrd = lib.mkMerge [
@@ -92,7 +98,7 @@
     ];
   };
   # kexec protection: disable kexec entirely. Nothing here uses it (boots go
-  # through limine), and it removes the "load a kernel, then reboot into it"
+  # through systemd-boot), and it removes the "load a kernel, then reboot into it"
   # primitive that bypasses the boot chain and measured boot.
   boot.kernel.sysctl."kernel.kexec_load_disabled" = lib.mkDefault 1;
 }

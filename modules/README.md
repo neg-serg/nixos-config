@@ -40,7 +40,7 @@ modules/
 | `security`      | Hardening — AppArmor, sudo, PAM limits, polkit                                                                                           |
 | `servers`       | Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound                                                                    |
 | `shell`         | Shell — Zsh with plugins, Oh My Posh, aliases, env vars                                                                                  |
-| `system`        | Core system — boot (Limine), kernel, networking, systemd, users, virtualisation                                                          |
+| `system`        | Core system — boot (systemd-boot + NERV), kernel, networking, systemd, users, virtualisation                                             |
 | `text`          | Text processing — editors, PDF tools, converters                                                                                         |
 | `tools`         | Miscellaneous — nix-output-monitor (Nerd Font icons), custom wraps                                                                       |
 | `torrent`       | BitTorrent — Transmission daemon, rustmission, stig TUI                                                                                  |

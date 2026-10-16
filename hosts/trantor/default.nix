@@ -121,6 +121,9 @@ in
   imports = [
     # Out-of-tree MT7927/MT6639 WiFi (mt76/mt7925e) — see hardware flags below
     inputs.mt7927.nixosModules.default
+    # NERV boot menu — reads the BLS entries systemd-boot writes and hands the
+    # picked entry back to systemd-boot
+    inputs.nerv-boot.nixosModules.default
   ]
   ++ neg.importDir {
     dir = ./.; # unbound-hosts.nix is generated data (a list), not a module

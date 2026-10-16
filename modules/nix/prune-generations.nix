@@ -6,9 +6,9 @@
 # generations before a manual trim, Oct 2026). nix.gc's `--delete-older-than
 # 21d` cannot help there: on a machine that rebuilds several times a day every
 # generation is younger than the window.
-# Retention: the newest 25, deliberately the same count as the Limine menu
-# (boot.loader.limine.maxGenerations in modules/system/boot.nix), so the boot
-# entries and the profile links stay in step. nix.gc then frees what the
+# Retention: the newest 25, deliberately the same count as the systemd-boot menu
+# (boot.loader.systemd-boot.configurationLimit in modules/system/boot.nix), so the
+# boot entries and the profile links stay in step. nix.gc then frees what the
 # dropped generations were pinning.
 # Key options: features.system.generationPrune.enable (default true).
 # Dependencies: config.nix.package (nix-env), neg.systemdUser.mkOneshotTimer.
@@ -28,7 +28,7 @@ let
   cfg = config.features.system.generationPrune;
   systemdUser = neg.systemdUser lib;
 
-  # Keep in sync with boot.loader.limine.maxGenerations.
+  # Keep in sync with boot.loader.systemd-boot.configurationLimit.
   keep = 25;
 
   pruneScript = pkgs.writeShellApplication {
