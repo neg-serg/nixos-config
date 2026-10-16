@@ -103,6 +103,7 @@ lint:
       | xargs -0 -r shellcheck -S warning -x
     bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-qml-lint.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-markdown-language.sh" && \
@@ -110,6 +111,11 @@ lint:
     bash "{{repo_root}}/scripts/dev/check-osh-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-lusty-smoke.sh"
     just lint-annotations
+
+# Compile-check every pleamar scene in the repo (`pleamar --check`). Skips when
+# the binary is missing from PATH; also runs as part of `lint`.
+pleamar-check:
+    bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}"
 
 # Resolve repo paths by name (see lib/README.md → Which resolver, where):
 #   just paths keys files        what to write in Nix for files/…

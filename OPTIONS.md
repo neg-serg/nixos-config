@@ -55,6 +55,11 @@ never implemented. Dev tooling is gated where it is installed instead — `featu
   `secrets/home/listenbrainz-mpd.sops.yaml` (key `token`) exists — no secret, no unit.
   `apiUrl` can point at the local Koito hub (`servicesProfiles.koito`, loopback 4110, starts
   without any secret); the mpdas/Last.fm path stays unchanged until the new one is verified.
+- **Pleamar shell** (`features.gui.pleamar.enable`, default off): per-scene systemd user units
+  (`pleamar-<scene>.service`) run `pkgs.pleamar` on `~/.config/pleamar/shells/<scene>/<scene>.plm`
+  with memory/CPU caps, a `pleamar-health` hang watchdog, and nix-maid links of
+  `files/pleamar/{shells,lib}` plus a generated `~/.config/pleamar/autostart`. Quickshell stays the
+  default shell until the flag is flipped.
 
 ## Extra Arguments (flake extraSpecialArgs)
 

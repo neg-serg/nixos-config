@@ -73,6 +73,11 @@ in
         quickshellEnabled =
           enabled "gui" && enabled "gui.qt" && enabled "gui.quickshell" && !(enabled "devSpeed");
 
+        # Pleamar shell: full GUI + the pleamar flag, off in dev-speed mode.
+        # No Qt gate on purpose — pleamar is a single Rust binary and shares no
+        # part of the Quickshell/Qt stack.
+        pleamarEnabled = enabled "gui" && enabled "gui.pleamar" && !(enabled "devSpeed");
+
         # Repo-root resolver (`path`, `pathExists`, `readFile`, `tree`, `find`) is
         # spread in above from the top-level `repo` binding: repoRoot is a real
         # path, so `repo.path "files/x"` carries Nix path context — used in a
