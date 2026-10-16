@@ -39,6 +39,29 @@ herdr                 # run again after closing the terminal -> reattach
 - Panes and agents keep running after the client detaches; `herdr server stop` stops the session and
   its panes.
 
+### Copy mode (keyboard selection)
+
+`prefix+[` (`Ctrl+S`, then `[` with this config) enters Herdr's vi-style copy mode for the focused
+pane; the pane keeps producing output while the mode is active and the prefix still works inside it.
+
+| Key                                                       | Action                                     |
+| --------------------------------------------------------- | ------------------------------------------ |
+| `h/j/k/l`, arrows                                         | Move the cursor                            |
+| `w/b/e`, `W/B/E`, `{`/`}`                                 | Word / big-word / paragraph motions        |
+| `PageUp`/`PageDown`, `Ctrl+B`/`Ctrl+F`, `Ctrl+U`/`Ctrl+D` | Full / half page                           |
+| `0`/`Home`, `$`/`End`, `^`                                | Line start / end / first non-blank         |
+| `g`/`G`                                                   | Top of history / bottom                    |
+| `/`, `?`, then `n`/`N`                                    | Forward/backward smart-case search, repeat |
+| `v` or `Space`, `V`                                       | Start character / linewise selection       |
+| `y` or `Enter`                                            | Copy the selection and leave               |
+| `q` or `Esc`                                              | Leave without copying; `Esc` clears first  |
+
+`Ctrl+S` inside copy mode still enters prefix mode (the mode keeps the prefix), so the paging keys
+are `Ctrl+B`/`Ctrl+F`; with the default `ctrl+b` prefix they would be shadowed instead. Copied text
+goes to the system clipboard via OSC 52 through kitty. Mouse drag-select copies without entering
+copy mode (`copy_on_select` default), and the kitty hint layer (`Ctrl+Shift+S`, then
+`w`/`l`/`p`/`h`) copies one visible word/line/path/hash without copy mode at all.
+
 ## dsh in Herdr
 
 dsh is not one of the agents Herdr recognizes by reading the screen, so a pane without the plugin is
