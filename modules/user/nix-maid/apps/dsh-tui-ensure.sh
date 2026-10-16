@@ -200,6 +200,34 @@ if ! fs_ok || { [ -n "$FS_WANT" ] && newer "$FS_HAVE" "$FS_WANT"; }; then
   fi
 fi
 
+# dsh-find-plugin: plugin discovery from inside the session (`find_dsh_plugin`
+# searches the dsh-plugin topic live, ranks by stars and returns a ready
+# `dsh plugin add` command). The package ships its own bundle patch, so unlike
+# the repo-seeded plugins it owes no loader row here — the caretaker only keeps
+# the package installed. install_profile_plugin grants the version exemption it
+# needs: the plugin's declared peer range stops at 0.1.7, so the 0.2.0 harness
+# asks for an exact-version exemption on 0.2.0-rc.2 (the harness prints it).
+FP_PKG="$PROFILE_DIR/node_modules/dsh-find-plugin/package.json"
+fp_ok() {
+  [ -f "$FP_PKG" ] || return 1
+  [ "$(jq -r '.dependencies["dsh-find-plugin"] // ""' "$PROFILE_DIR/package.json")" != "" ] || return 1
+  return 0
+}
+FP_HAVE=""
+if [ -f "$FP_PKG" ]; then
+  FP_HAVE="$(jq -r '.version // ""' "$FP_PKG")"
+fi
+FP_WANT="$(registry_version dsh-find-plugin)"
+if ! fp_ok || { [ -n "$FP_WANT" ] && newer "$FP_HAVE" "$FP_WANT"; }; then
+  if [ -z "$FP_WANT" ]; then
+    echo "dsh-tui-ensure: registry lookup for dsh-find-plugin failed — keeping ${FP_HAVE:-nothing}" >&2
+  else
+    echo "dsh-tui-ensure: installing dsh-find-plugin ^$FP_WANT (in-session plugin discovery)..."
+    install_profile_plugin "dsh-find-plugin@^$FP_WANT" \
+      || echo "dsh-tui-ensure: dsh-find-plugin install failed — will retry on next login" >&2
+  fi
+fi
+
 # dsh-TUI session visibility: the 0.10.x hasPrompt carry-forward defect (a
 # session indexed while its log was a stub stayed hasPrompt = false forever and
 # disappeared from the conversations list) is fixed upstream in 0.14.0 — the
