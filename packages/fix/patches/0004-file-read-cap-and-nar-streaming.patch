@@ -1,0 +1,148 @@
+diff --git a/src/store/file_cache.zig b/src/store/file_cache.zig
+index 60cd833..f7b2ee1 100644
+--- a/src/store/file_cache.zig
++++ b/src/store/file_cache.zig
+@@ -27,7 +27,11 @@ pub const FileCache = struct {
+     /// lookup / insert, never across I/O.
+     map_mu: sync.BlockingMutex = .{},
+ 
+-    const max_read_bytes = 128 * 1024 * 1024;
++    /// The read cap: files above it are not materialized in memory. The NAR
++    /// serializer streams those instead (`nar.writeFileContents`), so a tree
++    /// holding a large blob (a vendored tarball, a demo build) still
++    /// serializes.
++    pub const max_read_bytes = 128 * 1024 * 1024;
+ 
+     pub const FileKind = enum {
+         regular,
+@@ -193,12 +197,7 @@ pub const FileCache = struct {
+         // lifetime — big ones (≥64 KB) get their own bucket.
+         const prev_tag = vma.setAllocTag(.file_cache);
+         defer _ = vma.setAllocTag(prev_tag);
+-        const contents = try std.Io.Dir.cwd().readFileAlloc(
+-            io,
+-            entry.path,
+-            self.allocator,
+-            .limited(max_read_bytes),
+-        );
++        const contents = try self.readCapped(io, entry.path);
+         const handle = try ImmutableBytes.fromOwned(self.allocator, contents);
+ 
+         entry.exists_known = true;
+@@ -238,6 +237,19 @@ pub const FileCache = struct {
+         self.invalidateParentListing(entry.path);
+     }
+ 
++    /// `readFileAlloc` under the cache's size cap, naming the offending path
++    /// when the cap is what rejected the read: a bare `StreamTooLong` says
++    /// nothing about which file, and this cap is the one failure a caller
++    /// cannot diagnose from the error alone.
++    fn readCapped(self: *FileCache, io: std.Io, path: []const u8) ![]u8 {
++        return std.Io.Dir.cwd().readFileAlloc(io, path, self.allocator, .limited(max_read_bytes)) catch |err| {
++            if (err == error.StreamTooLong) {
++                std.debug.print("fix: file-read cap ({d} MiB) exceeded by {s}\n", .{ max_read_bytes / (1024 * 1024), path });
++            }
++            return err;
++        };
++    }
++
+     /// Return a retained immutable handle for a file, populating the same
+     /// cache entry used by `readFile` on a cold miss.
+     pub fn retainFile(self: *FileCache, path: []const u8) !ImmutableBytes {
+@@ -249,12 +261,7 @@ pub const FileCache = struct {
+         const io = self.io orelse return error.FileIoUnavailable;
+         const prev_tag = vma.setAllocTag(.file_cache);
+         defer _ = vma.setAllocTag(prev_tag);
+-        const owned = try std.Io.Dir.cwd().readFileAlloc(
+-            io,
+-            entry.path,
+-            self.allocator,
+-            .limited(max_read_bytes),
+-        );
++        const owned = try self.readCapped(io, entry.path);
+         const handle = try ImmutableBytes.fromOwned(self.allocator, owned);
+ 
+         entry.exists_known = true;
+@@ -303,6 +310,24 @@ pub const FileCache = struct {
+         return kind;
+     }
+ 
++    /// Size of the file at `path`, following a final symlink. The NAR writer
++    /// needs the length before the contents, so it stat's the file rather than
++    /// remembering a cached read.
++    pub fn fileSize(self: *FileCache, path: []const u8) !u64 {
++        const entry = try self.entryFor(path);
++        const io = self.io orelse return error.FileIoUnavailable;
++        const stat = try std.Io.Dir.cwd().statFile(io, entry.path, .{ .follow_symlinks = true });
++        return stat.size;
++    }
++
++    /// Open `path` for streaming reads — the NAR writer's large-file path.
++    /// The caller closes the returned handle.
++    pub fn openRead(self: *FileCache, path: []const u8) !std.Io.File {
++        const entry = try self.entryFor(path);
++        const io = self.io orelse return error.FileIoUnavailable;
++        return std.Io.Dir.cwd().openFile(io, entry.path, .{});
++    }
++
+     /// Trap: deliberately UNcached. Unlike `readFile`/`fileType`/`readDir`,
+     /// this does not take the per-entry mutex or memoize on the `Entry`; it
+     /// stats the file fresh on every call.
+diff --git a/src/store/nar.zig b/src/store/nar.zig
+index 4ccb8a6..f30ad0f 100644
+--- a/src/store/nar.zig
++++ b/src/store/nar.zig
+@@ -149,7 +149,7 @@ fn writeNode(allocator: std.mem.Allocator, files: *FileCache, writer: *std.Io.Wr
+                 try writeString(writer, "");
+             }
+             try writeString(writer, "contents");
+-            try writeString(writer, try files.readFile(path));
++            try writeFileContents(files, writer, path);
+         },
+         .directory => {
+             try writeString(writer, "type");
+@@ -194,6 +194,44 @@ fn writeNode(allocator: std.mem.Allocator, files: *FileCache, writer: *std.Io.Wr
+     try writeString(writer, ")");
+ }
+ 
++/// Serialize a regular file's contents.
++///
++/// Files at or below `FileCache.max_read_bytes` come from the cache, which
++/// usually already holds them. Larger ones are streamed in bounded chunks:
++/// NAR writes the length before the contents, and a source tree may hold
++/// blobs far above the read cap (a vendored tarball, a demo build), which
++/// must not be materialized in memory. Nix streams every file the same way,
++/// so the serialized bytes are unchanged.
++fn writeFileContents(files: *FileCache, writer: *std.Io.Writer, path: []const u8) !void {
++    const size = try files.fileSize(path);
++    if (size <= FileCache.max_read_bytes) {
++        try writeString(writer, try files.readFile(path));
++        return;
++    }
++
++    var length: [8]u8 = undefined;
++    std.mem.writeInt(u64, &length, size, .little);
++    try writer.writeAll(&length);
++
++    const io = files.io orelse return error.FileIoUnavailable;
++    var file = try files.openRead(path);
++    defer file.close(io);
++
++    var buffer: [64 * 1024]u8 = undefined;
++    var reader = file.readerStreaming(io, &buffer);
++    var remaining: u64 = size;
++    while (remaining > 0) {
++        const want: usize = @intCast(@min(remaining, buffer.len));
++        const chunk = try reader.interface.take(want);
++        if (chunk.len == 0) return error.UnexpectedEof;
++        try writer.writeAll(chunk);
++        remaining -= chunk.len;
++    }
++    // NAR pads every string to 8 bytes, exactly as `writeString` does.
++    const padding = (8 - size % 8) % 8;
++    try writer.splatByteAll(0, @intCast(padding));
++}
++
+ fn writeString(writer: *std.Io.Writer, text: []const u8) !void {
+     var len: [8]u8 = undefined;
+     std.mem.writeInt(u64, &len, text.len, .little);
