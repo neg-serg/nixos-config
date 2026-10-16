@@ -144,9 +144,10 @@ if ! command -v awk > /dev/null 2>&1; then
   start_error "awk not installed"
 fi
 
+NOW_MS=0
 now_ms() {
   local t=$EPOCHREALTIME
-  printf '%s' "$((10#${t%.*} * 1000 + 10#${t#*.} / 1000))"
+  printf -v NOW_MS '%s' "$((10#${t%.*} * 1000 + 10#${t#*.} / 1000))"
 }
 
 json_err() {
@@ -154,7 +155,8 @@ json_err() {
 }
 
 sample_error() {
-  jq -cn --arg w "$WORKER" --arg e "$1" --argjson t "$(now_ms)" '{ok:false,worker:$w,err:$e,t:$t}'
+  now_ms
+  jq -cn --arg w "$WORKER" --arg e "$1" --argjson t "$NOW_MS" '{ok:false,worker:$w,err:$e,t:$t}'
 }
 
 ack() {
@@ -436,6 +438,12 @@ BEGIN {
 }
 AWK
 
+# The first sample needs a baseline: read the counters once now, so the first
+# emitted sample covers a real interval instead of a cold start.
+awk -v state="$STATE_FILE" -v io_max="$IO_MAX_KIBPS" \
+  -v gpu_path="$GPU_PATH" -v temp_path="$TEMP_PATH" \
+  -v dt_ms="$INTERVAL_MS" -v interval_ms="$INTERVAL_MS" "$AWK_PROGRAM" > /dev/null 2>&1 || true
+
 KNOWN_TOPICS="sysmon cpu mem swap disk gpu temp"
 topic_known() {
   case " $KNOWN_TOPICS " in
@@ -446,13 +454,14 @@ topic_known() {
 
 declare -A SUB_INTERVAL=()
 declare -A SUB_NEXT=()
-LAST_SAMPLE_MS=0
+now_ms
+LAST_SAMPLE_MS=$NOW_MS
 
 printf '{"ok":true,"worker":"%s","version":1,"topics":["sysmon","cpu","mem","swap","disk","gpu","temp"]}\n' "$WORKER"
 
 # Auto-subscription: one full sample per --interval-ms even without commands.
 SUB_INTERVAL[sysmon]=$INTERVAL_MS
-SUB_NEXT[sysmon]=0
+SUB_NEXT[sysmon]=$((LAST_SAMPLE_MS + INTERVAL_MS))
 
 emit_samples() {
   local topic due_topic now=$1 data d dt_ms
@@ -546,7 +555,8 @@ handle_command() {
       ack set
       ;;
     sample)
-      now=$(now_ms)
+      now_ms
+      now=$NOW_MS
       for topic in "${!SUB_NEXT[@]}"; do
         SUB_NEXT[$topic]=0
       done
@@ -565,7 +575,9 @@ handle_command() {
 }
 
 if [ "$ONCE" -eq 1 ]; then
-  emit_samples "$(now_ms)"
+  sleep "$(awk -v ms="$INTERVAL_MS" 'BEGIN { printf "%.3f", ms / 1000 }')"
+  now_ms
+  emit_samples "$NOW_MS"
   exit 0
 fi
 
@@ -582,6 +594,7 @@ while :; do
       break
     fi
   fi
-  emit_samples "$(now_ms)"
+  now_ms
+  emit_samples "$NOW_MS"
 done
 exit 0
