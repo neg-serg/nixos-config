@@ -5,7 +5,8 @@ language 0.4
 // Legacy: files/quickshell/Bar/Bar.qml asks for three layer-shell surfaces per
 // monitor, all anchored to the BOTTOM edge (anchors.bottom: true), one of them
 // the reserve panel whose exclusiveZone is the bar height; the port asks for
-// ONE surface, bottom-anchored, reserving its strip from the windows.
+// ONE surface, anchored by the `edge` setting (bottom on trantor), reserving
+// its strip while `shown` holds.
 //
 // Reading order, left to right, is the legacy one:
 //   left row:  clock · workspaces · pill · keyboard · network · sysmon · weather
@@ -14,36 +15,71 @@ language 0.4
 // and the volume capsule (right). The other modules come later; each has a
 // marked extension point below.
 //
-// `screens: each` gives every monitor its own copy and its own scaling. The
-// per-monitor factor is the palette rule-2 expression, written at the two call
-// sites and nowhere as a scene `let` (a loose `let` is shared by every copy,
-// which is what the palette warns against).
+// Interfaces this file follows: files/pleamar/docs/INTERFACES.md — §2 (surface,
+// facts `shown`/`startup`), §3.2 (the per-monitor scale), §4 (the Capsule API),
+// §6 (the settings keys, merged by bar.luau), §8 (labels and roles).
 //
-// A note on text sizes, checked against the compiler: a text's `size:`, `weight:`
-// and `lines:` take a literal number (compiler.rs: `style.px = c.num()?`), so a
-// name there is an error and an expression such as `12 * scale` would silently
-// draw at 12. Each widget therefore draws in DESIGN PIXELS inside a
-// `group { scale: scale }`, and the group does the per-monitor scaling; a lib
-// Capsule is asked for `scale: 1` inside it so the group is the only multiplier.
+// Two compiler facts shape the file:
+//   · A surface `size:`/`reserve:` and a text `size:`/`weight:` take a LITERAL
+//     number (`c.num()` in compiler.rs): `bar.height * 2` is refused by a
+//     surface, and `12 * scale` inside a text would silently draw at 12. So the
+//     surface height is spelled out (44: the pleamar bar strip, the examples'
+//     own bar), and every widget draws in DESIGN PIXELS inside a
+//     `group { scale: scale }`, the group scaling once for the monitor; a lib
+//     Capsule is asked for `scale: 1` inside it so the group is the only
+//     multiplier.
+//   · A component parameter default is read at the use site (INTERFACES §4), so
+//     a `scale:` default is per monitor. Call sites pass no scale; the default
+//     is the palette rule-2 expression with the user's `scale` setting on top.
+//
+// Settings, merged by bar.luau from the scene's own settings.json:
+//   edge          top | bottom, default bottom   — applied: the `bar_edge` fact
+//                 drives `anchor:` (the fact cannot be called `edge`: that name
+//                 collides with the Capsule component's own `edge` parameter)
+//   scale         0.5..2.0, default 1.0          — applied: `user_scale`
+//   widgets       array of text, max 24          — applied as visibility for
+//                 this slice's four: clock, workspaces, network, volume
+//   height        16..64, default 22             — frozen, not applied: a
+//                 surface size cannot name a fact in 0.4.11 (checked:
+//                 `size: full, h` is `expected a number here`)
+//   fontScale, animations, startupClean,         — the features they tune are
+//   monitorScale                                   later slices; not applied
 
 import "../../lib/palette.plm"
 import "../../lib/capsule.plm"
 
 scene bar {
 
+    // ------------------------------------------------- facts the interface fixes
+    // `bar_edge` is the surface anchor; `shown` gates surface and reserve (tests
+    // and other tools read both). `startup` is the login gate's fact: this slice
+    // leaves it false, the gate itself is a later slice.
+    fact bar_edge: top | bottom = bottom
+    fact shown = true
+    fact startup = false
+    // The user's settings, merged by bar.luau: `scale` multiplies ui and the
+    // per-monitor fit; `widget.*` decide which widgets of this slice are there.
+    fact user_scale = 1.0
+    fact widget.clock = true
+    fact widget.workspaces = true
+    fact widget.network = true
+    fact widget.volume = true
+
     // --------------------------------------------------------------- surface
-    // 44 px is the pleamar bar strip (the examples' own bar uses 44 too). A
-    // surface size takes a literal — `bar.height * 2` is refused there — so 44
-    // is spelled out; `strip` below is the same number, for what is drawn inside.
+    // 44 px is the pleamar bar strip; the surface is exactly that tall and
+    // reserves the same, so windows stop at the bar. (`bar.height * scale` — the
+    // QS strip height in INTERFACES §2.3 — cannot go in a surface size: literal
+    // only. The slice that can act on `height` takes that up.)
     surface {
         size: full, 44
-        anchor: bottom
+        anchor: bar_edge
         level: top
-        reserve: 44
+        reserve: 44 while shown
         screens: each
     }
 
-    let strip = 2 * bar.height
+    // What is drawn inside the surface, in the same design pixels.
+    let strip = 44
 
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
@@ -68,9 +104,9 @@ scene bar {
     service audio { volume: number; muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
 
-    // ------------------------------------------------------- facts & events
-    // `side` is the side margin in design px: palette `bar.side` is its default,
-    // and the logic merges the scene's settings.json over it.
+    // --------------------------------------------------------- facts & events
+    // `side` is the side margin in design px (palette bar.side): a later
+    // settings round may expose it, the frozen schema does not.
     fact side = 4
     // The volume fill is a spring carried by rules, never touched per frame.
     prop level = 0 ~calm
@@ -83,7 +119,7 @@ scene bar {
     // -------------------------------------------------------- left: the clock
     // The service writes time and date itself; no slot here pads numbers, so
     // neither is composed from hour/minute.
-    component Clock(scale: number) {
+    component Clock(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         size: 64 * scale, 34 * scale
         group zoom {
             scale: scale
@@ -91,6 +127,7 @@ scene bar {
                 text "{now.time}" { size: 13; weight: 500; color: time.tone; family: "Iosevka" }
                 text "{now.date}" { size: 10; color: ink.dim; family: "Iosevka" }
             }
+            zone box clock { from: 0, 0; size: 64, 34; corner: corner; label: "Clock {now.time}"; role: region }
         }
     }
 
@@ -98,7 +135,8 @@ scene bar {
     // One round tab per record the service reports; the active one on its monitor
     // is lit through a spring. A press hands the id to the logic, which commands
     // `workspaces.focus`.
-    component Tab(ws: record, scale: number, focus: event) {
+    component Tab(ws: record, focus: event,
+                  scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         size: pill.height * scale, pill.height * scale
         group zoom {
             scale: scale
@@ -114,9 +152,10 @@ scene bar {
     }
 
     // ------------------------------------------------------ left: the network
-    // What the service reports: online (the dot), kind, name, strength. No click
-    // behaviour yet; the zone carries the tooltip-ish label an agent reads.
-    component NetCapsule(scale: number) {
+    // What the service reports: online (the dot), kind, name, strength. The
+    // label is the standard one — `Network {name}`, or `Network: offline` — and
+    // clicking it will open the network drawer in a later slice.
+    component NetCapsule(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         let w = 118
         let h = capsule.height
         let ih = h - 2 * capsule.pad.y
@@ -131,7 +170,7 @@ scene bar {
                     text "{network.strength, 0} %" { at: w - 2 * capsule.pad - 2, ih / 2; anchor: right center; size: 10; color: ink.dim; family: "Iosevka" }
                 }
             }
-            zone box net { from: 0, 0; size: w, h; corner: corner; label: "Network {network.kind} {network.name}, {network.strength, 0} % signal"; role: region }
+            zone box net { from: 0, 0; size: w, h; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
         }
     }
 
@@ -139,7 +178,8 @@ scene bar {
     // The fill follows the level spring; the wheel steps the volume and a press
     // toggles silence, both through events the logic carries to `audio.step`
     // and `audio.mute`.
-    component VolCapsule(scale: number, step: event, mute: event) {
+    component VolCapsule(step: event, mute: event,
+                         scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         let w = 78
         let h = capsule.height
         let iw = w - 2 * capsule.pad
@@ -161,31 +201,33 @@ scene bar {
     }
 
     // ------------------------------------------------------------------ rows
-    component Left(scale: number) {
+    component Left(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         row { at: side * scale, strip / 2; anchor: left middle; gap: bar.gap * scale
-            Clock(scale)
-            row tabs { gap: ws.gap * scale
-                for ws in spaces { Tab(ws, scale, focus_workspace) }
+            Clock() { show: widget.clock }
+            row tabs { show: widget.workspaces; gap: ws.gap * scale
+                for ws in spaces { Tab(ws, focus_workspace) }
             }
             // Extension point: the pill capsule and the keyboard layout go here
             // (legacy order: clock · workspaces · pill · keyboard · network).
-            NetCapsule(scale)
+            NetCapsule() { show: widget.network }
             // Extension point: sysmon, then weather, go here.
         }
     }
 
-    component Right(scale: number) {
+    component Right(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         row { at: screen.width - side * scale, strip / 2; anchor: right middle; gap: bar.gap * scale
             // Extension point: media, MPD flags, sysmon, the tray and the
             // microphone go here (legacy order, left of the volume).
-            VolCapsule(scale, wheel_volume, toggle_mute)
+            VolCapsule(wheel_volume, toggle_mute) { show: widget.volume }
             // Extension point: Genelec, the rightmost module, goes here.
         }
     }
 
     // -------------------------------------------------------------- the strip
     // One bottom strip: translucent coal with a light rim. The widget rows are
-    // placed inside it by the surface copies.
+    // placed inside it by the surface copies. No drop shadow: the surface is
+    // exactly the strip, and a shadow below it would be cut (INTERFACES §2.3
+    // asks for shadow room; impossible while a surface size is a literal).
     body {
         color: coal
         opacity: veil
@@ -193,19 +235,18 @@ scene bar {
         box { from: 0, 0; size: screen.width, strip; corner: corner }
     }
 
-    Left(ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max))
-    Right(ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max))
+    Left()
+    Right()
 
     // ------------------------------------------------------------ what waits
     // Later slices (rest of PH2-A): the pill capsule, the keyboard layout, the
     // system monitor and the weather on the left; media + its transport, the MPD
     // flags, the system monitor, the tray, the microphone and Genelec on the
-    // right; the seam/wedge between the two bar halves; the startup gate and the
-    // per-widget visibility of QS `panelLayout`. None of them is drawn here.
+    // right; the seam/wedge between the two bar halves; the startup gate (it
+    // reads `startupClean` and drives `startup`); and the settings keys that
+    // cannot act yet (see the header).
     //
-    // Settings: this slice merges `side_margin` and `volume_step` from the
-    // scene's own `settings.json` (bar.luau). Widget ORDER cannot be a runtime
-    // setting: the scene paints in the order it is written, so an order would be
-    // applied when the scene is generated, not while it runs; per-widget `show:`
-    // facts are the runtime-tunable shape of it and belong to a later slice.
+    // Widget ORDER is not a runtime thing: the scene paints in the order it is
+    // written, so `widgets` is applied as visibility here, and an order would be
+    // applied when the scene is generated.
 }
