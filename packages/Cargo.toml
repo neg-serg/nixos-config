@@ -7,5 +7,6 @@ members = [
   "genlc-rs",
   "tidalctl",
   "nixie",
+  "nixbuild-status",
 ]
 resolver = "2"
