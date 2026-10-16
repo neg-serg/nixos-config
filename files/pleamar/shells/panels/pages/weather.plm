@@ -1,0 +1,64 @@
+// pages/weather.plm — the weather drawer (`drawer == weather`).
+//
+// Current conditions and a short daily forecast from the pleamar-weather
+// worker (Open-Meteo + wttr.in fallback; scripts/helpers/README.md): the
+// worker reports numbers and WMO codes, panels.luau turns them into the
+// formatted live texts this part draws (`weather.temp`, `weather.cond`,
+// `weather.wind`, `weather.humidity`, `weather.pressure`, `weather.city`) and
+// fills `forecast` with one record per day. Nothing here is invented: with no
+// worker or a failed fetch the texts say "--" and `weather.err` explains.
+//
+// The card hangs centred above the bar, like the legacy weather popup
+// (WeatherButton.qml anchors it to the bar's centre with panelModuleHeight + 4).
+
+part Weather {
+    component WeatherDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+        size: 300 * scale, 210 * scale
+
+        group {
+            move: (screen.width - 300 * scale) / 2, screen.height - (210 + bar.height + bar.gap) * scale + (1 - lift) * (210 + bar.height + bar.gap) * scale
+
+            // ----***----------------------------- the card
+            Capsule(300, 210, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: scale)
+
+            // ----***---------------------------- header
+            text "Weather" { at: 14 * scale, 20 * scale; anchor: left center; size: 1 * type.body * text_scale * scale; weight: 1 * weight.medium; color: ink }
+            group { move: 242 * scale, 10 * scale
+                Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
+                text "Close" { at: 22 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
+                zone box close { from: 0, 0; size: 44 * scale, 20 * scale; corner: 10 * scale
+                    cursor: pointer; label: "Close {drawer}"; role: button }
+                on press close { drawer = none }
+            }
+
+            box { from: 12 * scale, 36 * scale; size: 276 * scale, 1 * scale; color: ink; opacity: ink.subtle }
+
+            // ----***--------------------- current conditions
+            text weather.city { at: 14 * scale, 52 * scale; anchor: left center; width: 150 * scale; lines: 1; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+            text weather.temp { at: 14 * scale, 86 * scale; anchor: left center; size: 1 * type.header * weather.header * text_scale * scale; weight: 1 * weight.medium; color: ink }
+            text pick(use_fahrenheit, "°F", "°C") { at: 84 * scale, 88 * scale; anchor: left center; size: 1 * type.body * text_scale * scale; color: ink.dim }
+            text weather.cond { at: 120 * scale, 76 * scale; anchor: left center; width: 166 * scale; lines: 2; size: 1 * type.caption * text_scale * scale; color: ink }
+
+            text weather.wind { at: 14 * scale, 112 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+            text weather.humidity { at: 112 * scale, 112 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+            text weather.pressure { at: 208 * scale, 112 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+
+            // ----***--------------------------- forecast
+            row days { at: 14 * scale, 126 * scale; gap: 6 * scale
+                for f in forecast {
+                    group {
+                        size: 48 * scale, 66 * scale
+                        text f.day { at: 24 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+                        text f.cond { at: 24 * scale, 28 * scale; anchor: center; width: 46 * scale; lines: 2; size: 9 * text_scale * scale; color: ink }
+                        text f.hi { at: 24 * scale, 50 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
+                        text f.lo { at: 24 * scale, 62 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.off }
+                    }
+                }
+            }
+
+            text weather.err { at: 150 * scale, 198 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: warn }
+        }
+    }
+
+    WeatherDrawer() { show: drawer == weather }
+}

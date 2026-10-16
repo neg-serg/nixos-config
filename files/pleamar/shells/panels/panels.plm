@@ -1,0 +1,164 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+// panels.plm — the drawer surface of the shell (scene `panels`, PH2-B slice 1).
+//
+// One overlay surface per monitor, no exclusive zone, opening the drawers that
+// hang from the bottom-anchored bar: the bar keeps its reserve, this surface
+// reserves nothing and draws the drawers upward from the bar's top edge.
+// The drawers themselves are parts under pages/, which the scene imports for;
+// a part has no name of its own and is not checked alone (INTERFACES.md §1.3).
+// Slice 1 ships calendar, system, weather and volume; microphone, network,
+// bluetooth, media, keyboard, tray, power and settings stay reserved and get
+// their own parts in later slices (the `drawer` fact already names them).
+//
+// Opening and closing
+// -------------------
+//   `pleamar --say panels "fact drawer calendar"`      interface, one at a time
+//   `pleamar --say panels "fact drawer none"`          close
+//   `pleamar --say panels "emit open_calendar"`        bind-friendly events, below
+//   `pleamar --say panels "emit close_drawer"`
+// Escape and an outside press close the open drawer; the outside catcher is the
+// scene's full-monitor zone, declared before every part so each drawer's zones
+// sit above it (a press inside a drawer never reaches the catcher).
+//
+// Settings (`~/.local/share/pleamar/panels/settings.json`, written by panels.luau)
+// -------------------------------------------------------------------------------
+//   closeOnEscape     bool    true    Escape closes the open drawer
+//   closeOnOutside    bool    true    a press outside the drawer closes it
+//   scale             number  1.0     0.5 – 2.0, user multiplier on top of `ui` and the fit
+//   fontScale         number  1.0     0.5 – 2.0, multiplies type.* sizes (the QS fontSizeMultiplier)
+//   weatherCity       text    "Saint Petersburg"  empty: let the helper fall back to its env
+//   useFahrenheit     bool    false   weather temperatures in °F instead of °C
+//   calendarCountry   text    ""      ISO country for public holidays, empty: none
+// Unknown keys survive (panels.luau mutates the parsed table, never rebuilds it).
+//
+// Helper workers (INTERFACES.md §7; installed into PATH as pleamar-<name>)
+// -----------------------------------------------------------------------
+//   pleamar-sysmon    while `system` is open    one JSON sample per second
+//   pleamar-weather   while `weather` is open   one sample, then every refresh
+//   pleamar-calendar  while `calendar` is open  one month of events, then refresh
+// They are started and killed by panels.luau; a missing worker leaves the drawer
+// in its documented "not available" state (`sysmon.err`, `weather.err`, `cal.err`),
+// never with made-up data. panels.luau accepts both the worker wire shape shipped
+// in scripts/helpers/README.md (`{"ok":{…}}` per line) and the §7 sample shape
+// (`{"ok":true,"topic":…,"data":{…}}`); handshake and ack lines are ignored.
+//
+// The scale model (INTERFACES.md §3.2)
+// ------------------------------------
+// scaleNow = ui * clamp(min(screen.width / design.width, screen.height / design.height),
+//                       fit.min, fit.max) * zoom
+// It is never a loose `let`/`prop`/`fact`: every drawer component carries it as
+// the default of its own `scale` parameter, so each monitor copy reads its own
+// `screen.*` at the use site. Everything else is a design length times `scale`,
+// and every text size additionally times the `text_scale` fact (fontScale).
+
+scene panels {
+
+    // The drawer surface: full monitor, anchored top (geometry origin), overlay
+    // level, reserve 0 so the bar's exclusive zone is the bar's alone. The
+    // surface exists only while a drawer is up (the spring makes the close
+    // read as the drawer leaving, not as the window vanishing).
+    surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
+              keyboard: on_demand; open: lift > 0.02 }
+
+    // Commands the logic runs (workers), services it listens to (audio, own
+    // settings file) and commands it sends (audio.*).
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar"
+                  services: "audio", "audio.*", "files", "files.write" }
+
+    // ----***--------------- drawer state and settings
+    fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | keyboard | tray | system | power | settings = none
+    fact close_on_escape = true
+    fact close_on_outside = true
+    fact zoom = 1
+    fact text_scale = 1
+    fact use_fahrenheit = false
+
+    // Calendar UI state (the grid and title are panels.luau's, the selection is a rule's).
+    fact sel_day = 0
+    fact cal_year = 0
+    fact cal_month = 0
+
+    // Worker state, read by the drawers.
+    fact sysmon_online = 0
+    fact weather_ok = 0
+
+    // The shared slide: every drawer leaves and arrives with the same motion.
+    // A loose prop in a `screens: each` scene is shared by the copies on purpose:
+    // the drawer is one thing on every monitor, not one per monitor.
+    prop lift = 0 ~ui.overlay
+    follow lift = if(drawer == none, 0, 1)
+
+    // ----***--------------------- entry points
+    event open_volume
+    event open_calendar
+    event open_weather
+    event open_system
+    event close_drawer
+
+    // Calendar navigation (panels.luau re-asks the worker for the month).
+    event cal_prev
+    event cal_next
+
+    // Mixer (the logic carries them to sys.call("audio.…")).
+    event set_out
+    event set_in
+    event toggle_out
+    event toggle_in
+    event set_default_out
+    event set_default_in
+    event app_set
+    event app_mute
+
+    // ----***----------------------- live texts
+    text sysmon.err = ""
+    text weather.city = ""
+    text weather.temp = ""
+    text weather.cond = ""
+    text weather.wind = ""
+    text weather.humidity = ""
+    text weather.pressure = ""
+    text weather.err = ""
+    text cal.title = ""
+    text cal.err = ""
+    text cal.today = ""
+
+    // ----***---- models filled by panels.luau (columns the drawers draw)
+    model forecast max 5 { day: text; cond: text; hi: text; lo: text }
+    model tiles max 8 { label: text; value: text; level: number; tone: number }
+    model cells max 42 { day: number; this: bool; today: bool; weekend: bool; mark: number; label: text }
+    model events max 60 { day: number; time: text; title: text; cal: text }
+    model holidays max 10 { day: number; name: text }
+    model streams max 8 { id: text; name: text; binary: text; title: text; volume: number; muted: bool; playing: bool }
+    model sinks max 8 { id: text; name: text; default: bool }
+    model sources max 8 { id: text; name: text; default: bool }
+
+    // ----***------------------- audio (no worker)
+    // Volume, microphone and the per-stream mixers come from the service; the
+    // mixer drawer stays live while it is on screen, there is nothing to start.
+    service audio { volume: number; muted: bool; input: number; input_muted: bool
+                    outputs: sinks; inputs: sources; apps: streams }
+
+    // ----***---------------------- close behaviour
+    // Declared before the parts: a later zone is on top, so the catcher is under
+    // every drawer zone and a press inside a drawer does not close it.
+    zone box catcher { from: 0, 0; size: screen.width, screen.height
+        label: "Dismiss drawer"; role: region }
+    on press catcher while close_on_outside and drawer != none { drawer = none }
+    on key Escape while close_on_escape and drawer != none { drawer = none }
+
+    on open_volume { drawer = volume }
+    on open_calendar { drawer = calendar }
+    on open_weather { drawer = weather }
+    on open_system { drawer = system }
+    on close_drawer { drawer = none }
+
+    // ----***------------------------ the drawers
+    include "pages/volume.plm"
+    include "pages/calendar.plm"
+    include "pages/weather.plm"
+    include "pages/system.plm"
+}
