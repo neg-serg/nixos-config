@@ -252,6 +252,9 @@ in
         default = "/var/lib/minibbs";
         description = "Directory holding the SQLite database and the generated bot token.";
       };
+      postCommand = opts.mkOpt (types.nullOr types.package) null {
+        description = "The minibbs-post helper (set by modules/servers/minibbs) for other modules and notifiers; null when the board is off.";
+      };
     };
   };
 }
