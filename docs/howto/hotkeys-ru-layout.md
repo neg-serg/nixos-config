@@ -67,31 +67,31 @@ Cyrillic and the match fails. What happens next depends on the layer:
 
 Legend: ✅ works / ❌ breaks / ⚠️ partial or needs checking.
 
-| Program                       | What happens under the RU layout                                                              | Status                | File                                                                          |
-| ----------------------------- | --------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
-| Hyprland (all binds, submaps) | binds resolve against the first layout — work                                                 | ✅                    | `files/gui/hypr/hyprland.lua`                                                 |
-| greetd / Hyprland login       | `us,ru`, starts in us; no binds — the login card's layout chip switches it                    | ✅                    | `modules/user/session/greetd.nix`, `files/quickshell/greeter/login.qml`       |
-| swayimg                       | JCUKEN duplicates for all actions                                                             | ✅ (fixed)            | `files/gui/swayimg/init.lua`                                                  |
-| neovim                        | langmap + langmapper.nvim                                                                     | ✅ (fixed)            | `files/nvim/lua/00-settings.lua`, `files/nvim/lua/plugins/keymap/langmap.lua` |
-| espanso                       | `ALT+SPACE` — no letters; `:date` triggers are text                                           | ✅                    | `modules/user/nix-maid/cli/espanso.nix`                                       |
-| vicinae                       | `Ctrl+letter` binds (Qt fallback)                                                             | ✅ (check manually)   | `modules/user/nix-maid/apps/vicinae.nix`                                      |
-| kitty                         | `kitty_mod+letter` (Ctrl+Shift), `Ctrl+s>l/p/h`, `kitty_mod+,/.`/grave/`[`/`]`, `Alt+n`, etc. | ✅ (fixed)            | `files/kitty/key.conf`                                                        |
-| mpv                           | `p i r t v f l h L H m j s A`, `Ctrl+h/l/H`, `Alt+I/U`, `>`/`<` (RU duplicates `Ю`/`Б`)       | ✅ (fixed)            | `modules/user/nix-maid/apps/mpv/input.nix`                                    |
-| SurfingKeys (Vivaldi)         | vim keys `j k h l t d u w o e b v s H L F J+,`; the **hint letter set** (`asdfghjkl`) too     | ❌                    | `files/surfingkeys.js`                                                        |
-| zellij                        | `Alt+h/j/k/l`; in resize/tab/scroll modes: `h j k l n r`                                      | ✅ (fixed)            | `files/gui/zellij/config.kdl`                                                 |
-| mutt                          | `j k g G R u gg`, macros with letters; arrows work                                            | ❌ (not fixable)      | `modules/user/nix-maid/mutt-conf/04-bindings.mutt`                            |
-| yazi                          | `g d f p` and `h j k l` navigation                                                            | ✅ (fixed, lowercase) | `modules/user/nix-maid/cli/yazi.nix`                                          |
-| rustmission                   | `h l k j H L`                                                                                 | ❌ (not fixable)      | `files/config/rustmission/keymap.toml`                                        |
-| rmpc                          | `p s q u w b f o z r y a d g G j k h l n N m M`, etc.                                         | ✅ (fixed)            | `files/rmpc/config.ron`                                                       |
-| khal                          | `e` (edit), `d` (duplicate)                                                                   | ❌                    | `modules/user/nix-maid/sys/khal.nix`                                          |
-| btop                          | toggles `d n m c f` — **keys are hardcoded, not remappable via config**                       | ❌ (not fixable)      | `modules/user/nix-maid/cli/monitoring.nix`                                    |
-| broot / tig / amfora          | letter binds                                                                                  | ❌                    | (standard configs)                                                            |
-| nethack                       | letter commands (game)                                                                        | ❌                    | `modules/user/nix-maid/fun/nethack.nix`                                       |
-| zsh vi-mode                   | `h/j/k/l` in command mode — vi mode on, terminals pinned to `us`                              | ✅                    | `files/shell/zsh/04-bindings.zsh`                                             |
-| bash vi-mode (readline)       | vi keys in bash only (`$if Bash`), insert-mode emacs layer; terminals pinned to `us`          | ✅                    | `files/cli/inputrc`                                                           |
-| satty (screenshots)           | single letters (GTK, no modifier)                                                             | ⚠️                    | —                                                                             |
-| ghostty                       | config deployed, **package not installed**; known `Ctrl+letter` bugs under RU                 | ⚠️                    | `files/cli/ghostty/config`                                                    |
-| Vivaldi / Obsidian (Chromium) | system `Ctrl+letter` ✅; extension letter binds ❌                                            | ⚠️                    | —                                                                             |
+| Program                       | What happens under the RU layout                                                                    | Status                | File                                                                          |
+| ----------------------------- | --------------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
+| Hyprland (all binds, submaps) | binds resolve against the first layout — work                                                       | ✅                    | `files/gui/hypr/hyprland.lua`                                                 |
+| greetd / Hyprland login       | `us,ru`, starts in us; no binds — the login card's layout chip switches it                          | ✅                    | `modules/user/session/greetd.nix`, `files/quickshell/greeter/login.qml`       |
+| swayimg                       | JCUKEN duplicates for all actions                                                                   | ✅ (fixed)            | `files/gui/swayimg/init.lua`                                                  |
+| neovim                        | langmap + langmapper.nvim                                                                           | ✅ (fixed)            | `files/nvim/lua/00-settings.lua`, `files/nvim/lua/plugins/keymap/langmap.lua` |
+| espanso                       | `ALT+SPACE` — no letters; `:date` triggers are text                                                 | ✅                    | `modules/user/nix-maid/cli/espanso.nix`                                       |
+| vicinae                       | `Ctrl+letter` binds (Qt fallback)                                                                   | ✅ (check manually)   | `modules/user/nix-maid/apps/vicinae.nix`                                      |
+| kitty                         | `kitty_mod+letter` (Ctrl+Shift), `Ctrl+Alt+S>w/l/p/h`, `kitty_mod+,/.`/grave/`[`/`]`, `Alt+n`, etc. | ✅ (fixed)            | `files/kitty/key.conf`                                                        |
+| mpv                           | `p i r t v f l h L H m j s A`, `Ctrl+h/l/H`, `Alt+I/U`, `>`/`<` (RU duplicates `Ю`/`Б`)             | ✅ (fixed)            | `modules/user/nix-maid/apps/mpv/input.nix`                                    |
+| SurfingKeys (Vivaldi)         | vim keys `j k h l t d u w o e b v s H L F J+,`; the **hint letter set** (`asdfghjkl`) too           | ❌                    | `files/surfingkeys.js`                                                        |
+| zellij                        | `Alt+h/j/k/l`; in resize/tab/scroll modes: `h j k l n r`                                            | ✅ (fixed)            | `files/gui/zellij/config.kdl`                                                 |
+| mutt                          | `j k g G R u gg`, macros with letters; arrows work                                                  | ❌ (not fixable)      | `modules/user/nix-maid/mutt-conf/04-bindings.mutt`                            |
+| yazi                          | `g d f p` and `h j k l` navigation                                                                  | ✅ (fixed, lowercase) | `modules/user/nix-maid/cli/yazi.nix`                                          |
+| rustmission                   | `h l k j H L`                                                                                       | ❌ (not fixable)      | `files/config/rustmission/keymap.toml`                                        |
+| rmpc                          | `p s q u w b f o z r y a d g G j k h l n N m M`, etc.                                               | ✅ (fixed)            | `files/rmpc/config.ron`                                                       |
+| khal                          | `e` (edit), `d` (duplicate)                                                                         | ❌                    | `modules/user/nix-maid/sys/khal.nix`                                          |
+| btop                          | toggles `d n m c f` — **keys are hardcoded, not remappable via config**                             | ❌ (not fixable)      | `modules/user/nix-maid/cli/monitoring.nix`                                    |
+| broot / tig / amfora          | letter binds                                                                                        | ❌                    | (standard configs)                                                            |
+| nethack                       | letter commands (game)                                                                              | ❌                    | `modules/user/nix-maid/fun/nethack.nix`                                       |
+| zsh vi-mode                   | `h/j/k/l` in command mode — vi mode on, terminals pinned to `us`                                    | ✅                    | `files/shell/zsh/04-bindings.zsh`                                             |
+| bash vi-mode (readline)       | vi keys in bash only (`$if Bash`), insert-mode emacs layer; terminals pinned to `us`                | ✅                    | `files/cli/inputrc`                                                           |
+| satty (screenshots)           | single letters (GTK, no modifier)                                                                   | ⚠️                    | —                                                                             |
+| ghostty                       | config deployed, **package not installed**; known `Ctrl+letter` bugs under RU                       | ⚠️                    | `files/cli/ghostty/config`                                                    |
+| Vivaldi / Obsidian (Chromium) | system `Ctrl+letter` ✅; extension letter binds ❌                                                  | ⚠️                    | —                                                                             |
 
 ### kitty specifics (`files/kitty/key.conf`)
 
@@ -121,7 +121,10 @@ keyboard itself) when checking.
 Layout quirks that stay: `kitty_mod+/` (search) is unreachable under RU (`/` → `.`, which is already
 `kitty_mod+.` = move_tab_forward); `mouse_map ctrl+shift+right` is modifier+button, layout-free ✅.
 The Emacs scroll layer (`scroll_line_down/up`, `scroll_page_down/up`) is on **Ctrl+Alt+n/p/f/b** so
-it does not collide with `kitty_mod+b/f/p`.
+it does not collide with `kitty_mod+b/f/p`. The hint layer's paste-into-program sequences sit on
+**Ctrl+Alt+S>w/l/p/h** (not `Ctrl+S`): Herdr uses `Ctrl+S` as its prefix, and a kitty sequence
+prefix would consume it before Herdr sees it, shadowing `prefix+h/l` pane focus and `prefix+w/p`
+(files/herdr/config.toml); the scrollback-screen binding moved to `kitty_mod+alt+s` to free the key.
 
 **Inline comments are arguments.** kitty's config has no inline comment syntax: the parser splits a
 `map` line into the key and *everything else*, and the rest is the action's argument string

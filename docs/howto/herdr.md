@@ -94,7 +94,8 @@ print. Details: [dsh-worktrees.md](./dsh-worktrees.md).
 - keys: `ctrl+s` prefix and `alt+h/j/k/l` pane focus next to the prefix binds. Herdr consumes the
   prefix, so zsh's `^S` history-incremental-search-forward does not fire inside a Herdr pane; no
   Cyrillic duplicates are needed because the ru-layout daemon pins terminal windows to `us`
-  ([hotkeys-ru-layout.md](./hotkeys-ru-layout.md)).
+  ([hotkeys-ru-layout.md](./hotkeys-ru-layout.md)). Kitty's hint layer sits on `Ctrl+Alt+S`, not
+  `Ctrl+S`, so the prefix reaches Herdr unmangled inside a kitty pane.
 - agent navigation: `prefix+u` / `prefix+i` move to the previous/next agent row, `prefix+alt+1..9`
   jumps to the nth one; the Goto picker (`prefix+g`) filters with `b`/`w`/`i`/`d` for
   blocked/working/idle/done. `prefix+shift+r` reloads the config (including local keybindings) from
