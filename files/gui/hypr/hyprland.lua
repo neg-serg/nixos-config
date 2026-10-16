@@ -173,8 +173,9 @@ hl.env("QML_XHR_ALLOW_FILE_READ", "1")
 hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
 hl.env("QT_ENABLE_HIGHDPI_SCALING", "1")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
-hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
-hl.env("QT_STYLE_OVERRIDE", "kvantum")
+hl.env("QT_QPA_PLATFORMTHEME", "hyprqt6engine")
+-- No QT_STYLE_OVERRIDE: hyprqt6engine's config selects the style (theme:style =
+-- kvantum), so its proxy style stays in the chain (menu icons, click hints).
 hl.env("QT_XDG_DESKTOP_PORTAL", "1")
 hl.env("SDL_VIDEODRIVER", "wayland,x11")
 hl.env("XCURSOR_SIZE", "23")
@@ -1355,8 +1356,8 @@ hl.on("hyprland.start", function()
   -- opens without walking the bus for every menu (menu-search --refresh; it also
   -- refreshes in the background on every use).
   hl.exec_cmd("zsh -c 'sleep 8; menu-search --refresh'")
-  hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
-  hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
+  hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_QPA_PLATFORMTHEME")
+  hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_QPA_PLATFORMTHEME")
 end)
 
 -- Ensure the quickshell panel is running after every config reload
