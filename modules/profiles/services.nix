@@ -203,5 +203,35 @@ in
         description = "Loopback port for the Koito web UI and its ListenBrainz-compatible submit API.";
       };
     };
+    # Flohmarkt — self-hosted small-ads board served to the LAN from the
+    # upstream release image plus a CouchDB sidecar (podman containers, see
+    # modules/servers/flohmarkt). The first admin account is created through the
+    # one-time /setup/<code> page, so bootstrapping needs no MTA.
+    flohmarkt = {
+      enable = opts.mkEnableOption "Flohmarkt small-ads board on the LAN (podman containers).";
+      port = opts.mkOpt types.port 8090 {
+        description = "Host port the board is published on.";
+      };
+      bindAddress = opts.mkStrOpt {
+        default = "0.0.0.0";
+        description = "Host address the board is published on (0.0.0.0 = LAN, 127.0.0.1 = loopback only).";
+      };
+      instanceName = opts.mkStrOpt {
+        default = "trantor";
+        description = "Instance name shown in the web UI and in federation metadata.";
+      };
+      externalUrl = opts.mkStrOpt {
+        default = "http://trantor.local:8090";
+        description = "External URL clients reach the board at (no trailing slash).";
+      };
+      image = opts.mkStrOpt {
+        default = "codeberg.org/flohmarkt/flohmarkt:0.20.1";
+        description = "Flohmarkt release image; pin a versioned tag, upstream forbids the unstable branches.";
+      };
+      dataDir = opts.mkStrOpt {
+        default = "/var/lib/flohmarkt";
+        description = "Host directory holding the small-ads data and the host-generated secrets.";
+      };
+    };
   };
 }
