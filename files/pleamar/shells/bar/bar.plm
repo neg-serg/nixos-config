@@ -1,0 +1,211 @@
+language 0.4
+
+// bar.plm — the pleamar bar, first slice (PH2-A / superplan).
+//
+// Legacy: files/quickshell/Bar/Bar.qml asks for three layer-shell surfaces per
+// monitor, all anchored to the BOTTOM edge (anchors.bottom: true), one of them
+// the reserve panel whose exclusiveZone is the bar height; the port asks for
+// ONE surface, bottom-anchored, reserving its strip from the windows.
+//
+// Reading order, left to right, is the legacy one:
+//   left row:  clock · workspaces · pill · keyboard · network · sysmon · weather
+//   right row: media · MPD · sysmon · tray · mic · volume · Genelec
+// This slice draws clock/date, the workspace tabs, the network capsule (left)
+// and the volume capsule (right). The other modules come later; each has a
+// marked extension point below.
+//
+// `screens: each` gives every monitor its own copy and its own scaling. The
+// per-monitor factor is the palette rule-2 expression, written at the two call
+// sites and nowhere as a scene `let` (a loose `let` is shared by every copy,
+// which is what the palette warns against).
+//
+// A note on text sizes, checked against the compiler: a text's `size:`, `weight:`
+// and `lines:` take a literal number (compiler.rs: `style.px = c.num()?`), so a
+// name there is an error and an expression such as `12 * scale` would silently
+// draw at 12. Each widget therefore draws in DESIGN PIXELS inside a
+// `group { scale: scale }`, and the group does the per-monitor scaling; a lib
+// Capsule is asked for `scale: 1` inside it so the group is the only multiplier.
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+scene bar {
+
+    // --------------------------------------------------------------- surface
+    // 44 px is the pleamar bar strip (the examples' own bar uses 44 too). A
+    // surface size takes a literal — `bar.height * 2` is refused there — so 44
+    // is spelled out; `strip` below is the same number, for what is drawn inside.
+    surface {
+        size: full, 44
+        anchor: bottom
+        level: top
+        reserve: 44
+        screens: each
+    }
+
+    let strip = 2 * bar.height
+
+    // ----------------------------------------------------------- permissions
+    // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
+    // audio.* (step/mute) and the scene's own settings file.
+    permissions { services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "files", "files.write" }
+
+    // ------------------------------------------------------------------ data
+    // One record per workspace; `active` says whether that one is the active
+    // workspace of the monitor it lives on — per-monitor, so each copy of the
+    // bar lights its own without a line of logic.
+    //
+    // Limitation, checked against the compiler: the record's `monitor` is text
+    // and the language compares numbers only, so the tabs cannot be filtered to
+    // this monitor's workspaces (`ws.monitor == screen.name` is refused). On one
+    // monitor the list is exactly right; on several, each copy shows them all
+    // and the active tab of every monitor is lit. Closing it needs a text
+    // comparison in the language or a helper worker that distributes per monitor.
+    model spaces max 9 { id: number; name: text; monitor: text; active: bool }
+
+    service clock as now { time: text; date: text }
+    service workspaces { list: spaces }
+    service audio { volume: number; muted: bool }
+    service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
+
+    // ------------------------------------------------------- facts & events
+    // `side` is the side margin in design px: palette `bar.side` is its default,
+    // and the logic merges the scene's settings.json over it.
+    fact side = 4
+    // The volume fill is a spring carried by rules, never touched per frame.
+    prop level = 0 ~calm
+    follow level = if(audio.muted, 0, audio.volume)
+
+    event focus_workspace ->
+    event wheel_volume ->
+    event toggle_mute ->
+
+    // -------------------------------------------------------- left: the clock
+    // The service writes time and date itself; no slot here pads numbers, so
+    // neither is composed from hour/minute.
+    component Clock(scale: number) {
+        size: 64 * scale, 34 * scale
+        group zoom {
+            scale: scale
+            column { at: 0, 3; gap: 1
+                text "{now.time}" { size: 13; weight: 500; color: time.tone; family: "Iosevka" }
+                text "{now.date}" { size: 10; color: ink.dim; family: "Iosevka" }
+            }
+        }
+    }
+
+    // -------------------------------------------------- left: workspace tabs
+    // One round tab per record the service reports; the active one on its monitor
+    // is lit through a spring. A press hands the id to the logic, which commands
+    // `workspaces.focus`.
+    component Tab(ws: record, scale: number, focus: event) {
+        size: pill.height * scale, pill.height * scale
+        group zoom {
+            scale: scale
+            prop lit = 0 ~ui.quick
+            follow lit = if(ws.active, 1, 0)
+
+            box { from: 0, 0; size: pill.height, pill.height; corner: pill.height / 2; color: mix(slate, highlight, lit) }
+            text "{ws.name}" { at: pill.height / 2, pill.height / 2; anchor: center; size: 11.5; weight: 600; color: mix(ink, coal, lit); width: pill.height - 8; lines: 1; align: center; family: "Iosevka" }
+
+            zone box tab { from: 0, 0; size: pill.height, pill.height; corner: pill.height / 2; cursor: pointer; label: "Workspace {ws.name}"; role: tab; selected: ws.active }
+            on press tab { emit focus(ws.id) }
+        }
+    }
+
+    // ------------------------------------------------------ left: the network
+    // What the service reports: online (the dot), kind, name, strength. No click
+    // behaviour yet; the zone carries the tooltip-ish label an agent reads.
+    component NetCapsule(scale: number) {
+        let w = 118
+        let h = capsule.height
+        let ih = h - 2 * capsule.pad.y
+        size: 118 * scale, capsule.height * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+                group net {
+                    size: w - 2 * capsule.pad, ih
+                    ellipse { at: 3, ih / 2; radius: 2.5; color: if(network.online, highlight, warn) }
+                    text "{network.kind} {network.name}" { at: 9, ih / 2; anchor: left center; size: 10; width: 72; lines: 1; color: if(network.online, ink, ink.off); family: "Iosevka" }
+                    text "{network.strength, 0} %" { at: w - 2 * capsule.pad - 2, ih / 2; anchor: right center; size: 10; color: ink.dim; family: "Iosevka" }
+                }
+            }
+            zone box net { from: 0, 0; size: w, h; corner: corner; label: "Network {network.kind} {network.name}, {network.strength, 0} % signal"; role: region }
+        }
+    }
+
+    // ------------------------------------------------------ right: the volume
+    // The fill follows the level spring; the wheel steps the volume and a press
+    // toggles silence, both through events the logic carries to `audio.step`
+    // and `audio.mute`.
+    component VolCapsule(scale: number, step: event, mute: event) {
+        let w = 78
+        let h = capsule.height
+        let iw = w - 2 * capsule.pad
+        let ih = h - 2 * capsule.pad.y
+        size: 78 * scale, capsule.height * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+                group track {
+                    size: iw, ih
+                    box { from: 0, 0; size: iw * level, ih; corner: corner.small; color: mix(volume.low, volume.high, level) }
+                    text "{audio.volume * 100, 0} %" { at: iw / 2, ih / 2; anchor: center; size: 10; weight: 600; color: ink; family: "Iosevka" }
+                }
+            }
+            zone box vol { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
+            on scroll vol { emit step(wheel) }
+            on press vol { emit mute }
+        }
+    }
+
+    // ------------------------------------------------------------------ rows
+    component Left(scale: number) {
+        row { at: side * scale, strip / 2; anchor: left middle; gap: bar.gap * scale
+            Clock(scale)
+            row tabs { gap: ws.gap * scale
+                for ws in spaces { Tab(ws, scale, focus_workspace) }
+            }
+            // Extension point: the pill capsule and the keyboard layout go here
+            // (legacy order: clock · workspaces · pill · keyboard · network).
+            NetCapsule(scale)
+            // Extension point: sysmon, then weather, go here.
+        }
+    }
+
+    component Right(scale: number) {
+        row { at: screen.width - side * scale, strip / 2; anchor: right middle; gap: bar.gap * scale
+            // Extension point: media, MPD flags, sysmon, the tray and the
+            // microphone go here (legacy order, left of the volume).
+            VolCapsule(scale, wheel_volume, toggle_mute)
+            // Extension point: Genelec, the rightmost module, goes here.
+        }
+    }
+
+    // -------------------------------------------------------------- the strip
+    // One bottom strip: translucent coal with a light rim. The widget rows are
+    // placed inside it by the surface copies.
+    body {
+        color: coal
+        opacity: veil
+        rim: 8%
+        box { from: 0, 0; size: screen.width, strip; corner: corner }
+    }
+
+    Left(ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max))
+    Right(ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max))
+
+    // ------------------------------------------------------------ what waits
+    // Later slices (rest of PH2-A): the pill capsule, the keyboard layout, the
+    // system monitor and the weather on the left; media + its transport, the MPD
+    // flags, the system monitor, the tray, the microphone and Genelec on the
+    // right; the seam/wedge between the two bar halves; the startup gate and the
+    // per-widget visibility of QS `panelLayout`. None of them is drawn here.
+    //
+    // Settings: this slice merges `side_margin` and `volume_step` from the
+    // scene's own `settings.json` (bar.luau). Widget ORDER cannot be a runtime
+    // setting: the scene paints in the order it is written, so an order would be
+    // applied when the scene is generated, not while it runs; per-widget `show:`
+    // facts are the runtime-tunable shape of it and belong to a later slice.
+}
