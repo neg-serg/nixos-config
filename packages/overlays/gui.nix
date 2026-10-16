@@ -18,6 +18,11 @@ in
   # hypr-kdeconnect-fix — RemoteDesktop portal backend bridging KDE Connect /
   # Deskflow input to the wlroots virtual-input protocols Hyprland exposes.
   hypr-kdeconnect-fix = callPkg (pkg "hypr-kdeconnect-fix") { };
+  # hyprqt6engine — not in the pinned nixpkgs yet, pinned locally (see
+  # packages/hyprqt6engine). Qt6 platform theme + widget style for Hyprland;
+  # activated per session by QT_QPA_PLATFORMTHEME=hyprqt6engine, not by
+  # installing it (the session currently selects qt6ct).
+  hyprqt6engine = callPkg (pkg "hyprqt6engine") { };
   andromeda-gtk-theme = callPkg (pkg "andromeda-gtk-theme") { };
   flight-gtk-theme = callPkg (pkg "flight-gtk-theme") { };
   matugen-themes = callPkg (pkg "matugen-themes") { };
