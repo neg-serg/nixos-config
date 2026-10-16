@@ -1,0 +1,33 @@
+// theme.default.plm — the seed copy of ~/.config/pleamar/theme.plm.
+//
+// The module (or the user, once) copies this to ~/.config/pleamar/theme.plm so
+// scenes that `import "../../theme.plm"` compile before the first wallpaper
+// run; theme.sh rewrites the live file on every wallpaper change and this one
+// stays where it is. The values are the QS base palette (INTERFACES.md §3.3) —
+// exactly the fallbacks theme.sh emits when it has neither a wallpaper nor an
+// explicit colour — so a fresh session looks like the legacy shell until the
+// first palette is written.
+
+library Skin strict {
+
+    // colors.background, the QS fallback #ff000000 (opaque part).
+    let skin.coal = #000000
+
+    // colors.surfaceVariant, the QS fallback #242A35.
+    let skin.surface = #242A35
+
+    // colors.text.primary, the QS fallback #CBD6E5.
+    let skin.ink = #CBD6E5
+
+    // colors.text.secondary role: skin.ink mixed 35% toward skin.surface.
+    let skin.ink.dim = mix(skin.ink, skin.surface, 35%)
+
+    // colors.accent.primary, the QS fallback #006FCC.
+    let skin.accent = #006FCC
+    // Theme.accentHover: towardsWhite(accentPrimary, 0.2).
+    let skin.accent.hover = mix(skin.accent, #ffffff, 20%)
+    // Theme.accentDarkStrong: towardsBlack(accentPrimary, 0.8).
+    let skin.accent.deep = mix(skin.accent, skin.coal, 80%)
+    // colors.onAccent, unchanged.
+    let skin.on.accent = #ffffff
+}
