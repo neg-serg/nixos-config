@@ -97,3 +97,13 @@ msg="$msg$nl$nl🎧 Скробблинг: listenbrainz-mpd: ${lb_state:-unknown}
 # --- send as a single Telegram message (sender retries ~1 min) --------
 # The digest header carries its own timestamp; keep the plain format.
 TELEGRAM_SEND_PLAIN=1 "$SEND" "$msg"
+
+# --- mirror onto the local BBS board ----------------------------------
+# @minibbsPost@ is the minibbs-post helper (empty when the board is disabled).
+# One thread per day: the subject is the date, the body is the same message.
+# The helper never exits non-zero, so the Telegram send above stays the only
+# delivery path that can fail this unit.
+MINIBBS_POST="@minibbsPost@"
+if [ -n "$MINIBBS_POST" ]; then
+  printf '%s\n' "$msg" | "$MINIBBS_POST" digest digest "Сводка $(date '+%d.%m.%Y')" || true
+fi

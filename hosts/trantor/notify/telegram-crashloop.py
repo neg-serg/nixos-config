@@ -7,6 +7,9 @@ import time
 STATE_DIR = pathlib.Path("/var/lib/telegram-crashloop")
 STATE_FILE = STATE_DIR / "state.json"
 SENDER = "@sender@/bin/telegram-send"
+# Local BBS board mirror (hosts/trantor/minibbs): posts the same alert text to
+# the `alerts` board. Empty when the board is disabled.
+MINIBBS = "@minibbsPost@"
 
 # A unit is deemed to be crash-looping when NRestarts grew by at least
 # this many within one ~5 min scan window, which is well above any
@@ -109,7 +112,26 @@ def load_state():
         return {}
 
 
+def mirror_to_board(text):
+    # Copy the alert onto the local BBS board. The helper never exits non-zero
+    # and this is a mirror, not the alert path, so nothing here may break the
+    # scan (an empty path means the board is disabled).
+    if not MINIBBS:
+        return
+    try:
+        subprocess.run(
+            [MINIBBS, "alerts", "crashloop"],
+            input=text.encode("utf-8"),
+            check=False,
+        )
+    except OSError as exc:
+        print(
+            "crashloop: board mirror failed: {0}".format(exc), file=sys.stderr
+        )
+
+
 def send_alert(text):
+    mirror_to_board(text)
     # The shared sender (hosts/trantor/telegram.nix) owns the socks-proxy
     # retry; return True only on an actual successful delivery.
     try:

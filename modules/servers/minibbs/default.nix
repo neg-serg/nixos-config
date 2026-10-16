@@ -34,11 +34,51 @@ let
 
   app = config.lib.neg.path "files/minibbs/minibbs.py";
 
+  # Posting helper shared by the host's bots (hosts/trantor/notify-*). It stays
+  # non-fatal on purpose: a board that is down must never break a notifier.
+  # MINIBBS_URL / MINIBBS_TOKEN_FILE override the baked-in defaults (tests).
+  minibbsPost = pkgs.writeShellApplication {
+    name = "minibbs-post";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+    ];
+    text = ''
+      # usage: minibbs-post <board> <author> [subject]  (body on stdin)
+      board="''${1:?usage: minibbs-post <board> <author> [subject]}"
+      author="''${2:?usage: minibbs-post <board> <author> [subject]}"
+      subject="''${3:-}"
+      body="$(cat)"
+      if [ -z "$body" ]; then
+        echo "minibbs-post: empty body, nothing to post" >&2
+        exit 0
+      fi
+      payload="$(jq -n --arg b "$board" --arg a "$author" --arg s "$subject" --arg t "$body" \
+        '{board: $b, author: $a, body: $t} + (if $s == "" then {} else {subject: $s} end)')"
+      url="''${MINIBBS_URL:-http://127.0.0.1:${toString cfg.port}}/api/post"
+      token_file="''${MINIBBS_TOKEN_FILE:-${cfg.dataDir}/token}"
+      token="$(cat "$token_file" 2> /dev/null || true)"
+      if [ -z "$token" ]; then
+        echo "minibbs-post: no token at $token_file" >&2
+        exit 0
+      fi
+      curl -fsS -m 10 -X POST "$url" \
+        -H "Authorization: Bearer $token" \
+        -H 'Content-Type: application/json' \
+        -d "$payload" > /dev/null \
+        || echo "minibbs-post: could not reach $url" >&2
+      exit 0
+    '';
+  };
+
   # Module-shaped systemd units (lib/systemd-user.nix)
   systemdUser = config.lib.neg.systemdUser;
 in
 {
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ minibbsPost ];
+    # Other modules (the notifiers) reach the same helper through this option.
+    servicesProfiles.minibbs.postCommand = minibbsPost;
     # Host networking is not involved here (plain systemd service), so this is
     # the only firewall line that matters on a host without a mkForce override.
     networking.firewall.allowedTCPPorts = lib.optionals (cfg.bindAddress != "127.0.0.1") [ cfg.port ];
