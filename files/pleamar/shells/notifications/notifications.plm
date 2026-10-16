@@ -84,10 +84,15 @@ scene notifications {
         list acts max 3 { ix: number = -1; label: text }
     }
 
-    // What the centre draws: the notifications the server still keeps first,
-    // then the ones already gone (`old`), with `first` on the first of those —
-    // the "Earlier" line. 200 is the top of the historyMax clamp.
-    model entries max 200 {
+    // What the centre draws: a *window* of the notifications the server still
+    // keeps first, then the ones already gone (`old`), with `first` on the
+    // first of those — the "Earlier" line. The list itself can hold 200 (the
+    // top of the historyMax clamp); only these 12 rows are unfolded, and the
+    // logic hands over the slice that is on screen (`entryFirst`,
+    // `entryFirstY`, `entryTotal`). `y` and `h` are that row's place and
+    // height in the whole list, in design pixels. Unfolding all 200 cards was
+    // what cost the frame: thousands of zones, most inside a shut drawer.
+    model entries max 12 {
         slot: number = 0
         app: text
         title: text
@@ -97,6 +102,8 @@ scene notifications {
         old: number = 0
         first: number = 0
         def: number = -1
+        y: number = 0
+        h: number = 0
         list acts max 3 { ix: number = -1; label: text }
     }
 
@@ -104,6 +111,12 @@ scene notifications {
     fact dnd = false
     fact centre = false
     fact count = 0
+    // The centre's window, in design pixels, kept by the logic: the row the
+    // slice starts at (0-based, for `for … from`), where that row sits in the
+    // whole list, and how long the whole list is (`content:`).
+    fact entryFirst = 0
+    fact entryFirstY = 0
+    fact entryTotal = 0
 
     event open_centre
     event close_centre
@@ -112,6 +125,7 @@ scene notifications {
     event clear_all ->    // empty the centre and the history (centre button)
     event act ->          // payload: an index into the logic's action table
     event drop ->         // payload: a record's handle (dismiss it, or forget it)
+    event slid ->         // payload: where the centre is scrolled, design pixels
 
     // --------------------------------------------------------- permissions
     // Watching `notifications` is not commanding it; the commands the logic
@@ -182,11 +196,16 @@ scene notifications {
 
         // The history, scrolled: the list zone is the standard "Notifications"
         // list and sits under the cards (declared before them), so a card keeps
-        // its own clicks.
+        // its own clicks. `content:` is the whole list, so the wheel and the
+        // drag run over it; the copies are only the window (`entries`), placed
+        // where they belong by `entryFirstY` in CentreCard. Whenever the
+        // scroll crosses a design pixel the logic is told where it is, and it
+        // answers with the slice that now fits.
         zone box list_zone { from: x + 14 * scale, 88 * scale; size: 336 * scale, h - 102 * scale; label: "Notifications"; role: list }
-        column list ~ui.overlay { at: x + 14 * scale, 88 * scale; gap: 8 * scale; view: 336 * scale, h - 102 * scale
+        column list ~ui.overlay { at: x + 14 * scale, 88 * scale; gap: 8 * scale; view: 336 * scale, h - 102 * scale; content: entryTotal * scale
             for n in entries { CentreCard(n, scale) }
         }
+        on change floor(list.scroll / scale) { emit slid(floor(list.scroll / scale)) }
         text "No notifications" { at: x + w / 2, h / 2; anchor: center; size: 1 * type.body * type.scale * scale; color: notify.ink; opacity: 55%; show: entries.count == 0 }
 
         // Pressing outside the drawer closes it.
@@ -239,6 +258,9 @@ scene notifications {
     component CentreCard(n: record, scale: number) {
         // The header line is read before the body's `let`s, so the height says
         // it out in full; `oy` is the same expression for the drawing below.
+        // `h` comes from the logic, which lays every row out in the whole list,
+        // so the window's rows keep the gaps the scrolled list had. `move`
+        // shifts the whole slice to where it belongs in that list.
         size: 336 * scale, 96 * scale + if(n.first == 1, 22 * scale, 0)
         let oy = if(n.first == 1, 22 * scale, 0)
 

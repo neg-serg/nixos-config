@@ -193,6 +193,61 @@ local function entry_of(r, old, first, with_actions)
     }
 end
 
+-- ----- the centre's window ------***--------------
+
+-- The centre can hold 200 rows, but the scene unfolds only a window of them
+-- (`model entries max 12`): the whole list stays here, every row is given its
+-- place and height in design pixels, and the scene is handed the slice that
+-- fits. Unfolding all of them cost the frame even with the drawer closed;
+-- with the window the closed drawer carries 12 rows of static drawing and
+-- nothing per frame.
+local ROW_H = 96        -- a centre card's design height (see CentreCard)
+local EARLIER_H = 22    -- the "Earlier" line's extra height
+local GAP_H = 8         -- the list's gap, design pixels
+local WINDOW = 12       -- row copies unfolded (model entries max 12)
+local VIEW = 1150       -- design pixels a window must cover (4K at fit.max)
+
+local nt_rows = {}      -- the whole centre, newest first: entries with y/h
+local nt_total = 0      -- how long the whole list is, design pixels
+local nt_scroll = 0     -- where the centre is scrolled, design pixels
+local nt_win = 0        -- first row of the window (1-based), 0 = none
+local nt_win_n = 0      -- how many rows the window holds
+
+-- `s` is where the centre is scrolled, in design pixels (`list.scroll / scale`
+-- from the scene). The row that contains it starts the window; WINDOW rows
+-- from there cover more than the drawer of any monitor up to 4K, and the
+-- scene's `content:` is `nt_total`, so the wheel runs over the whole history.
+local function window_at(s)
+    nt_scroll = s
+    local n = #nt_rows
+    if n == 0 then
+        nt_win, nt_win_n = 0, 0
+        model.entries = {}
+        fact.entryFirst = 0
+        fact.entryFirstY = 0
+        fact.entryTotal = 0
+        return
+    end
+    if s < 0 then s = 0 end
+    if s > nt_total then s = nt_total end
+    local first = 1
+    while first < n and nt_rows[first + 1].y <= s do first = first + 1 end
+    local last = first + WINDOW - 1
+    if last > n then
+        last = n
+        first = last - WINDOW + 1
+        if first < 1 then first = 1 end
+    end
+    if nt_win_n > 0 and first == nt_win then return end
+    local slice = {}
+    for k = first, last do slice[#slice + 1] = nt_rows[k] end
+    nt_win, nt_win_n = first, #slice
+    fact.entryFirst = first - 1
+    fact.entryFirstY = nt_rows[first].y
+    fact.entryTotal = nt_total
+    model.entries = slice
+end
+
 local function rebuild()
     nt_acts = {}
     local toasts = {}
@@ -204,24 +259,39 @@ local function rebuild()
 
     -- The centre: what the server still keeps (newest first), then the ones
     -- already gone, with `first` on the first of those — the "Earlier" line.
-    local entries = {}
+    -- The whole list lives here; only the window that fits is handed over.
+    local rows = {}
     local count = 0
     for _, r in ipairs(nt_hist) do
         if r.on then
-            if #entries >= 200 then break end
-            entries[#entries + 1] = entry_of(r, 0, 0, true)
+            if #rows >= 200 then break end
+            rows[#rows + 1] = entry_of(r, 0, 0, true)
             count = count + 1
         end
     end
     local first_old = true
     for _, r in ipairs(nt_hist) do
         if not r.on then
-            if #entries >= 200 then break end
-            entries[#entries + 1] = entry_of(r, 1, first_old and 1 or 0, false)
+            if #rows >= 200 then break end
+            rows[#rows + 1] = entry_of(r, 1, first_old and 1 or 0, false)
             first_old = false
         end
     end
-    model.entries = entries
+
+    -- Every row's place and height in the whole list, in design pixels: the
+    -- scene multiplies them by the monitor scale (`y`/`h`, `entryFirstY`,
+    -- `content: entryTotal * scale`).
+    local at = 0
+    for _, e in ipairs(rows) do
+        e.h = ROW_H + (e.first == 1 and EARLIER_H or 0)
+        e.y = at
+        at = at + e.h + GAP_H
+    end
+    nt_rows = rows
+    nt_total = (at > 0) and (at - GAP_H) or 0
+    nt_win, nt_win_n = 0, 0
+    window_at(nt_scroll)
+
     fact.count = count
 end
 
@@ -389,6 +459,13 @@ on("drop", function(v)
     end
     rebuild()
     save_hist()
+end)
+
+-- The centre scrolled: the scene sends where it is, in design pixels, and the
+-- window follows. Nothing else is touched — the list runs over the whole
+-- history and the rows keep their places.
+on("slid", function(v)
+    window_at(math.floor(num(v, 0, 1e12, 0)))
 end)
 
 -- `emit dismiss_all` — the legacy notif-close-all path (M4+space): every
