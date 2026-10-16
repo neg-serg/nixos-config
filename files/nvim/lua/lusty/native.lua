@@ -1408,11 +1408,11 @@ end
 --- Define the few extra highlight groups (lsc groups come from its own cache).
 function M.ensure_highlights()
   -- selection styled like the neg.nvim PmenuSel bar: read the live colors
-  -- (bg #005faf / fg #d1e5ff in the neg palette) so it always matches the
-  -- active colorscheme, with a neg fallback
+  -- (bg #2b2b2b / fg #e6e6e6 in the monochrome neg palette) so it always
+  -- matches the active colorscheme, with a neg fallback
   local okp, h = pcall(api.nvim_get_hl_by_name, 'PmenuSel', true)
-  local bg = 0x005faf
-  local fg = 0xd1e5ff
+  local bg = 0x2b2b2b
+  local fg = 0xe6e6e6
   if okp and type(h) == 'table' then
     if h.background then
       bg = h.background
@@ -1427,7 +1427,7 @@ function M.ensure_highlights()
     bold = true,
   })
   if not ok then
-    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#005faf', fg = '#d1e5ff', bold = true })
+    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#2b2b2b', fg = '#e6e6e6', bold = true })
   end
   -- Selection style from the theme TOML (files/nvim/lua/lusty/theme.toml):
   -- bg/fg/bold/underline/reverse. g:LustyExplorerSelStyle (1..4) overrides
