@@ -80,6 +80,7 @@ buildNpmPackage {
         "@PY@"
         "@PY_V2@"
         "@PY_MIG@"
+        "@PY_PTC@"
         "@PATCHLIB_DIR@"
       ]
       [
@@ -88,6 +89,7 @@ buildNpmPackage {
         "${./patch-widgets.py}"
         "${./patch-session-format.py}"
         "${./patch-session-migration.py}"
+        "${./patch-ptc-env.py}"
         "${./lib}"
       ]
       (builtins.readFile ./post-install.sh);
