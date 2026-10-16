@@ -6,6 +6,13 @@ if [[ "${SKIP_MARKDOWN_CHECK:-}" == "1" ]]; then
   exit 0
 fi
 
+# Check only git-visible files: ignored scratch (e.g. .agent/tmp/) must not
+# fail the policy, while tracked and staged Markdown is still checked.
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "Markdown language policy: not a git work tree, skipping" >&2
+  exit 0
+fi
+
 # Policy (hard rule, see AGENTS.md):
 # - Documentation is English-only. Russian and Chinese characters are not
 #   allowed in ANY Markdown file in this repo (no *.ru.md variants either).
@@ -36,7 +43,7 @@ while IFS= read -r -d '' file; do
       fail=1
     fi
   done
-done < <(find . -name '*.md' -print0)
+done < <(git ls-files -z -- '*.md')
 
 if [[ $fail -ne 0 ]]; then
   echo "Markdown language policy: FAILED (English-only docs; no Cyrillic/CJK in *.md)" >&2
