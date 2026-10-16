@@ -1,0 +1,246 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+import "../../lib/icons.plm"
+
+// launcher.plm — the application launcher (scene `launcher`, PH3-O).
+//
+// The legacy shell had no launcher in the Quickshell tree: application search
+// was the system-side Vicinae (`vicinae toggle`). This scene is therefore new,
+// designed against INTERFACES.md §2 (surface and facts `open`/`query`), §3.2
+// (the per-monitor scale), §5 (the menu-row look), §6.3 (`maxResults`), §8
+// (labels, roles, agent policy) and the D9 scale rule.
+//
+// Opening and closing
+// -------------------
+//   pleamar --say launcher "emit open_launcher"   open (the compositor bind uses this)
+//   pleamar --say launcher "fact open true"       open through the fact alone
+//   pleamar --say launcher "fact open false"      close
+//   pleamar --say launcher "text query kitty"     type into the filter without a keyboard
+//   pleamar --say launcher "submit query kitty"   type and press Enter
+// The facts are the interface (§2.1): `open` (bool, false) and `query` (text, "").
+// Enter launches the selected row and closes; Escape and a press outside close;
+// a press on a row launches it. The surface holds the keyboard exclusively while
+// `open` (INTERFACES §2, the launcher surface).
+//
+// Cutover binds (PH4-C)
+// ---------------------
+// In files/gui/hypr/hyprland.lua, replace the Vicinae launcher (`local menu =
+// "vicinae toggle"`, line ~270) wherever it is bound:
+//   hl.bind(M1 .. "+q", ...)          // ALT+Q,   hyprland.lua:500
+//   hl.bind(E .. "+x", ...)           // SUPER+ALT+X, hyprland.lua:566
+// with
+//   hl.bind(M1 .. "+q", hl.dsp.exec_cmd('pleamar --say launcher "emit open_launcher"'))
+//   hl.bind(E .. "+x",  hl.dsp.exec_cmd('pleamar --say launcher "emit open_launcher"'))
+// and drop the `vicinae toggle` entries; the scene is one process per monitor
+// (`screens: each`), so a bind on any monitor opens it everywhere.
+//
+// Settings (`~/.local/share/pleamar/launcher/settings.json`; applied by launcher.luau)
+// ------------------------------------------------------------------------------------
+//   maxResults   number   8     1 – 20     how many filtered rows the list keeps (INTERFACES §6.3)
+//   scale        number   1.0   0.5 – 2.0  user multiplier on top of `ui` and the fit (§6.2)
+// Defaults live in the logic; the file holds only what the user changed, and an
+// unknown key in it survives because the logic only ever reads (no settings UI
+// exists yet, so nothing writes it back).
+//
+// Filter and launch path (launcher.luau)
+// --------------------------------------
+// Records come from the `apps` service (`{ name, exec, icon, id, wmclass,
+// local_name, categories }`). Typing into `query` re-slices `model results` in
+// the logic: case-insensitive substring first, then a subsequence (fuzzy) pass,
+// over local_name/name, id and wmclass; the slice is capped by `maxResults`.
+// Enter (or a row press) emits `launch_app(index)`; the logic hands the chosen
+// record's `exec` to `sys.call("apps.launch", exec)` and closes the launcher.
+//
+// Why the list is not windowed: `maxResults` clamps the slice to 1–20 rows, so
+// the whole result set is unfolded in `for a in results` and the `view:` merely
+// scrolls if the panel is ever taller than the monitor (the reference's
+// `content:`/`from first` window is for thousands of records — the cap here is
+// 20, and `model apps` is sized for the apps service's full list, 256).
+
+scene launcher {
+
+    // One overlay surface per monitor, full size, no reserve: the launcher is
+    // modal on every screen while `open` holds, and a closed surface is neither
+    // seen nor pressed (INTERFACES §2.3). `keyboard: exclusive while open` is what
+    // makes it type-to-filter without a click first; Escape gives the keyboard
+    // back (INTERFACES §2, D5).
+    surface launcher {
+        size: full, full
+        anchor: center
+        level: overlay
+        reserve: 0
+        screens: each
+        keyboard: exclusive while open
+        open: open
+    }
+
+    // Listening: apps (the declarative list below). Commanding: apps.launch.
+    // Files: the scene's own settings.json, read and watched by launcher.luau.
+    permissions { services: "apps", "apps.launch", "files" }
+
+    // The interface facts (INTERFACES §2.1); `max_results` and `zoom` are the
+    // user's settings, merged by launcher.luau.
+    fact open = false
+    fact selected = 0
+    fact max_results = 8
+    fact zoom = 1
+
+    // `query` is the interface text: the input below is bound to it by name.
+    text query = ""
+
+    // The apps service's full list, straight into a model (no logic). 256 is the
+    // documented model ceiling; a system with more .desktop entries would need the
+    // helper-worker protocol — the logic logs when this model is full.
+    model apps max 256 {
+        name: text; exec: text; icon: image 16, 16
+        id: text; wmclass: text; local_name: text
+    }
+    // The filtered slice the panel draws. 20 = the `maxResults` clamp top.
+    model results max 20 {
+        name: text; exec: text; icon: image 16, 16; id: text; local_name: text
+    }
+
+    service apps { list: apps }
+
+    // Events. `open_launcher` and `launch_app` reach launcher.luau (`->`);
+    // `pick_row` is a press on a row: it stays in the scene, where the rule below
+    // selects the row and asks for the launch.
+    event open_launcher ->
+    event launch_app ->
+    event pick_row
+
+    // ----***--------------------------- close behaviour
+    // The scrim dims what is under the launcher. The catcher is the full-monitor
+    // zone that closes it on an outside press; it is declared before the panel,
+    // so every panel zone sits above it (INTERFACES §2.2's pattern).
+    box { from: 0, 0; size: screen.width, screen.height; color: coal; opacity: shadow.strong; show: open }
+
+    zone box catcher {
+        from: 0, 0; size: screen.width, screen.height
+        label: "Dismiss launcher"; role: region
+    }
+    on press catcher while open { open = false }
+
+    // Escape and the keyboard-driven selection. Up/Down are the primary keys;
+    // Ctrl+p/Ctrl+n repeat them because a single-line input may keep the arrow
+    // keys for its caret. `results.count` is the slice's length, so the selection
+    // cannot leave the list.
+    on key Escape while open { open = false }
+    on key Down while open { selected = max(0, min(selected + 1, results.count - 1)) }
+    on key Up while open { selected = max(0, selected - 1) }
+    on key Ctrl+n while open { selected = max(0, min(selected + 1, results.count - 1)) }
+    on key Ctrl+p while open { selected = max(0, selected - 1) }
+
+    // Enter inside the input, and Return as a fallback when the caret is not in
+    // the field: both ask the logic to launch the selection. The logic ignores a
+    // second ask after the first one closed the launcher.
+    on submit query { emit launch_app(selected) }
+    on key Return while open { emit launch_app(selected) }
+
+    // The field gets the caret when the launcher opens; `focus()` from the logic
+    // is the documented route for a search opened from a shortcut, and this rule
+    // is the renderer-side backstop for the same frame.
+    on change open while open { focus query }
+
+    on pick_row(v) { selected = v; emit launch_app(v) }
+
+    // ----***------------------------------ the panel
+    // scaleNow (INTERFACES §3.2) plus the user's `scale` setting, read at the use
+    // site: every monitor copy gets its own, and `zoom` is shared by them on
+    // purpose (the launcher is one thing on every monitor).
+    component Result(a: record, chosen: number, pick: event,
+                     scale: number = ui * zoom * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        let w = 420
+        let h = menu.item.height
+
+        size: w * scale, h * scale
+
+        // The keyboard selection is a spring, never touched per frame; the hover
+        // wash comes from the zone's own springs (INTERFACES §5.1).
+        prop lit = 0 ~ui.quick
+        follow lit = if(chosen == a.index, 1, 0)
+
+        group zoom {
+            scale: scale
+
+            box wash {
+                from: 0, 0; size: w, h; corner: menu.item.corner
+                color: mix(slate, accent, 0.18 + 0.22 * lit)
+                opacity: max(0.10 + 0.55 * lit, hit.hover * 0.8)
+            }
+            image a.icon { at: 5, 5; size: 16, 16 }
+            text a.local_name {
+                at: 27, h / 2; anchor: left center; width: 256; lines: 1
+                size: 14; weight: 500; color: ink
+            }
+            text a.id {
+                at: w - 6, h / 2; anchor: right center; width: 120; lines: 1
+                size: 10; color: ink.off
+            }
+
+            // The row zone: the standard launcher-result label `{app.local_name}`
+            // (INTERFACES §8.2), `role: item`, and `selected:` so the machine tree
+            // says which row the keyboard has (INTERFACES §8.1).
+            zone box hit {
+                from: 0, 0; size: w, h; corner: menu.item.corner; cursor: pointer
+                label: "{a.local_name}"; role: item; selected: chosen == a.index
+            }
+            on press hit { emit pick(a.index) }
+        }
+    }
+
+    component Panel(scale: number = ui * zoom * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        let w = 460
+        // Search strip 48 + divider + the list + a 6 px bottom pad. The panel is
+        // exactly as tall as `maxResults` rows, so every filtered row is in the
+        // view and the keyboard selection is never scrolled out of sight.
+        let h = 60 + max_results * (menu.item.height + menu.item.gap)
+        let cx = (screen.width - w * scale) / 2
+        let cy = (screen.height - h * scale) / 2
+
+        group place {
+            move: cx, cy
+            group zoom {
+                scale: scale
+
+                Capsule(w, h, fill: coal, alpha: 96%, radius: overlay.corner, shadow: 45%, scale: 1) { }
+
+                // The card swallows the presses that land on it, so they do not
+                // reach the dismissal catcher underneath. Not pressable, so no
+                // label (INTERFACES §8.1).
+                zone box body { from: 0, 0; size: w, h; corner: overlay.corner; role: region }
+
+                image Icons.search { at: 18, 13; size: 22, 22; tint: ink.dim }
+                input query {
+                    at: 52, 12; width: 390
+                    size: 15; color: ink; family: "Iosevka"; selection: accent.deep
+                    placeholder: "Search applications"
+                    label: "Search applications"
+                }
+                box { from: 0, 47; size: w, 1; color: ink; opacity: ink.subtle }
+
+                text "No applications found" {
+                    at: w / 2, (54 + max_results * (menu.item.height + menu.item.gap)) / 2
+                    anchor: center; size: 13; color: ink.off
+                    show: results.total == 0
+                }
+
+                // One row per filtered record. `view:` is the scroll window: the
+                // slice is at most 20 rows and the panel is sized for `maxResults`,
+                // so normally everything fits; a taller slice would wheel-scroll
+                // (a `content:`/`from first` window is the route for thousands,
+                // not for a slice capped at 20).
+                column list ~ui.quick {
+                    at: 20, 54
+                    view: 420, max_results * (menu.item.height + menu.item.gap)
+                    gap: menu.item.gap
+                    for a in results { Result(a, selected, pick_row, scale: 1) }
+                }
+            }
+        }
+    }
+
+    Panel() { show: open }
+}
