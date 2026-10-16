@@ -1,9 +1,12 @@
 local map = vim.keymap.set
 map('v', '<C-j>', '<ESC>', {nowait = true, desc = 'Escape'})
-for _, key in ipairs({ 'j', 'k', 'l', 'h' }) do
+-- Window navigation on ,h/,j/,k; ,l belongs to the file manager (broot, see
+-- plugins/files.lua) — exactly as when LustyExplorer owned that key, so the
+-- old ,l window-right mapping was already dead at runtime and is dropped here
+-- to keep broot's lazy key from being shadowed.
+for _, key in ipairs({ 'j', 'k', 'h' }) do
   map('n', '<leader>' .. key, '<C-w>' .. key, { nowait = true, desc = 'Window ' .. key })
 end
-map('n', '_', "<Cmd>exe 'e ' . getcwd()<CR>", {desc = 'Open cwd'})
 
 map('t', '<Esc>', '<C-\\><C-n>', {silent=true, desc = 'Terminal escape'})
 

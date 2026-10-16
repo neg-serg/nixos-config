@@ -83,13 +83,16 @@ return {
     { "<leader>gl", function() Snacks.lazygit.log() end, desc = "Lazygit Log (cwd)" },
     { "ei", function() Snacks.terminal.toggle() end, desc = "Toggle terminal" },
 
-    -- File finding / grep (snacks is the picker of record)
+    -- File finding / grep (snacks is the picker of record). The file-manager
+    -- keys (,l / ,C / ,fb / ,fB / ,fm, ee and _) belong to broot now:
+    -- plugins/files.lua.
     { "<leader>e",  function() Snacks.picker.files() end, desc = "Find files (snacks)" },
     { "<leader>ff", function() Snacks.picker.files() end, desc = "Find files (snacks)" },
-    { "ee",         function() Snacks.picker.smart() end, desc = "Smart find (buffers+recent+files)" },
+    -- ee used to be the smart picker; it moved to broot, so smart find keeps a
+    -- home on sf (buffers+recent+files, frecency-ranked like the old fff ee).
+    { "<leader>sf", function() Snacks.picker.smart() end, desc = "Smart find (buffers+recent+files)" },
     { "<leader>.",  function() Snacks.picker.recent() end, desc = "Recent files (snacks)" },
     { "gz",         function() Snacks.picker.files({ cwd = vim.fn.expand("%:p:h") }) end, desc = "Files in current dir" },
-    -- <leader>l prefix is free for LustyExplorer (lf/lr/lb/lg); use gz for this picker
     { "<leader>L",  function() Snacks.picker.files({ cwd = require("utils.fzf").project_root() }) end, desc = "Files in project root" },
     { "<leader>fg", function() Snacks.picker.grep() end, desc = "Live grep (snacks)" },
     { "<leader>fG", function() Snacks.picker.grep_word() end, desc = "Grep word under cursor" },
