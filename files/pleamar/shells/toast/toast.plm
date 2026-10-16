@@ -48,8 +48,12 @@ import "../../lib/capsule.plm"
 //
 // Labels/roles/agent policy: the zones carry the legacy action words verbatim
 // ("OCR", "OCR NN", "Copy", "Open", "Dismiss"), the preview is one "Open
-// screenshot" button and the screenshot path row is `agent: hidden` — a file
-// name is private (INTERFACES §8.1).
+// screenshot" button. The screenshot path is private (INTERFACES §8.1); the row
+// that shows it is a labelled read-only region, because in 0.4.11 `agent:
+// hidden` on a zone does not hide the words drawn over it — checked with a
+// probe scene: the hidden zone vanishes and the words surface as loose text, so
+// the path would leak into `describe`. The labelled region is the mechanism
+// this version supports; `describe` reports «Screenshot path», never the path.
 
 scene toast {
 
@@ -174,34 +178,57 @@ scene toast {
                 // ------***----------- path row (private)
                 text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; color: ink.off }
                 text shot_ts { at: 444, 372; anchor: right center; size: 11; color: ink.off }
-                // A zone only so that `agent: hidden` keeps the path out of
-                // `describe` (INTERFACES §8.1: a file name is private). Its
-                // label is the neutral one, so even a describe that ignored
-                // `hidden` would report the label and not the path.
-                zone box path_row { from: 8, 356; size: 444, 32; label: "Screenshot path"; role: region; agent: hidden }
+                // The screenshot path is private (INTERFACES §8.1). `agent: hidden`
+                // on a zone does not hide the words drawn over it in 0.4.11 —
+                // checked with a probe scene and `--say describe`: the zone
+                // disappears and the words surface as loose text. A labelled
+                // read-only region is what this version supports: describe reports
+                // «Screenshot path» and the path itself is not listed.
+                zone box path_row { from: 8, 356; size: 444, 32; label: "Screenshot path"; role: region }
 
                 // ------***----------- actions
                 // The legacy rows: the two OCR engines share the width, Copy,
-                // Open and Dismiss keep their own.
-                Action("OCR", ocr_tess, 16, 404, 211)
-                Action("OCR NN", ocr_nn, 233, 404, 211)
-                Action("Copy", copy_path, 16, 452, 138)
-                Action("Open", open_shot, 160, 452, 140)
-                Action("Dismiss", hide, 306, 452, 138)
+                // Open and Dismiss keep their own. The zone of each one is
+                // declared below with its own name, so a hand can press it
+                // (`describe` prints `ocr_zone#Card1`, `dismiss_zone#Card1`, …;
+                // this version addresses a zone by name, not by label).
+                Action("OCR", 16, 404, 211, ocr_zone.hover)
+                Action("OCR NN", 233, 404, 211, ocr_nn_zone.hover)
+                Action("Copy", 16, 452, 138, copy_zone.hover)
+                Action("Open", 160, 452, 140, open_zone.hover)
+                Action("Dismiss", 306, 452, 138, dismiss_zone.hover)
+
+                zone box ocr_zone { from: 16, 404; size: 211, 36; corner: 6; cursor: pointer; label: "OCR"; role: button }
+                on press ocr_zone { emit ocr_tess }
+                on enter ocr_zone { emit hover_in }
+                on leave ocr_zone { emit hover_out }
+                zone box ocr_nn_zone { from: 233, 404; size: 211, 36; corner: 6; cursor: pointer; label: "OCR NN"; role: button }
+                on press ocr_nn_zone { emit ocr_nn }
+                on enter ocr_nn_zone { emit hover_in }
+                on leave ocr_nn_zone { emit hover_out }
+                zone box copy_zone { from: 16, 452; size: 138, 36; corner: 6; cursor: pointer; label: "Copy"; role: button }
+                on press copy_zone { emit copy_path }
+                on enter copy_zone { emit hover_in }
+                on leave copy_zone { emit hover_out }
+                zone box open_zone { from: 160, 452; size: 140, 36; corner: 6; cursor: pointer; label: "Open"; role: button }
+                on press open_zone { emit open_shot }
+                on enter open_zone { emit hover_in }
+                on leave open_zone { emit hover_out }
+                zone box dismiss_zone { from: 306, 452; size: 138, 36; corner: 6; cursor: pointer; label: "Dismiss"; role: button }
+                on press dismiss_zone { emit hide }
+                on enter dismiss_zone { emit hover_in }
+                on leave dismiss_zone { emit hover_out }
             }
         }
     }
 
-    // One action button of the card; the zone owns the label and the press and
-    // hardcodes `role: button` (a role cannot be parameterised, §9).
-    component Action(title: text, press: event, x: number, y: number, w: number) {
+    // One action button of the card. The zone that presses it lives in the card
+    // and not here, so that it has a stable name an agent can use (a role cannot
+    // be parameterised, §9) and its hover spring reaches this copy as a number.
+    component Action(title: text, x: number, y: number, w: number, hover: number) {
         size: w, 36
-        box { from: x, y; size: w, 36; corner: 6; color: mix(coal, slate, 65% + 35% * hit.hover) }
+        box { from: x, y; size: w, 36; corner: 6; color: mix(coal, slate, 65% + 35% * hover) }
         text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; weight: 500; color: ink }
-        zone box hit { from: x, y; size: w, 36; corner: 6; cursor: pointer; label: title; role: button }
-        on press hit { emit press }
-        on enter hit { emit hover_in }
-        on leave hit { emit hover_out }
     }
 
     Card()
