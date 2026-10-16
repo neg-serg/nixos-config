@@ -36,6 +36,8 @@ let
 
     pkgs.neg.brrtfetch # animated ASCII art GIF renderer for sysinfo
 
+    pkgs.esshader # Shadertoy-compatible GLES shader viewer (the shtoy helper plays links in it)
+
   ];
 in
 {
