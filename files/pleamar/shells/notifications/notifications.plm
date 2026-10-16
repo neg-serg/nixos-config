@@ -1,0 +1,282 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+// notifications.plm — the notification scene of the pleamar shell (PH2-C).
+//
+// While this scene runs, this process IS `org.freedesktop.Notifications`. The
+// `notifications` service hands every record the server keeps to
+// notifications.luau — `{ id, app, title, body, icon, image, urgency, time,
+// actions }` — and the logic answers with `notifications.dismiss`,
+// `notifications.invoke`, `notifications.clear` and `notifications.keep`.
+// This is the port of files/quickshell/Notifications: dunst-style stacked
+// toasts in the bottom-right corner (max two by default, auto-dismiss,
+// urgency-coloured), the notification centre with history, DND, per-record
+// actions and the default action, and images.
+//
+// One surface per monitor (`screens: each`, the scene's own): full size,
+// `level: overlay`, `reserve: -1` — nothing reserves room for it. It is open
+// only while the centre is up or a toast is on screen, and only its zones take
+// clicks, so the empty part lets everything through. The centre drawer and the
+// toast stack live in the same surface, which keeps `screen.width` /
+// `screen.height` (the frozen per-monitor scale expression, INTERFACES §3.2)
+// measuring the monitor and not a small corner window: in pleamar 0.4.11 only
+// the scene's own surface feeds those names, and a `size:` is a literal.
+//
+// Persistence (INTERFACES §6), inside this scene's own folder
+// `~/.local/share/pleamar/notifications/`, written only by notifications.luau:
+//
+//   settings.json
+//     dnd           (bool,   false)           do not disturb; also the `dnd` fact
+//     maxToasts     (number, 2, 1..6)         toasts on screen at once
+//     autoDismissMs (number, 6000, 0..60000)  0 keeps a toast until it is dismissed
+//     historyMax    (number, 50, 0..200)      records remembered — the ones the
+//                                             server no longer keeps; the ones
+//                                             still kept sit on top of those
+//     sound         (bool,   false)           extra key: a short bell with a toast
+//   history.json
+//     items = { { id, app, title, body, icon, image, urgency, time, actions }, … },
+//     newest first, capped by historyMax. Unknown keys survive in both files.
+//
+// IPC (INTERFACES §2.1; the scene name is the IPC name, no aliases):
+//   pleamar --say notifications "emit open_centre"     show the centre
+//   pleamar --say notifications "emit close_centre"    hide it
+//   pleamar --say notifications "emit toggle_centre"
+//   pleamar --say notifications "emit dismiss_all"     close every toast and the centre
+//   pleamar --say notifications "emit clear_all"       empty the centre and the history
+//   pleamar --say notifications "fact dnd true"        do not disturb (persisted)
+//   pleamar --say notifications "fact centre true"     same as open_centre
+//
+// `emit dismiss_all` is the path a compositor bind calls: after the cutover it
+// replaces the legacy `touch ~/.cache/quickshell/notif-close-all`. The
+// `~/.cache/pleamar/notif-close-all` semaphore of INTERFACES §1.2 cannot be
+// read from a scene — the files API never leaves the scene's own folder — so
+// the bind talks to this event instead (PH2-D owns the trigger files).
+//
+// Agent policy (INTERFACES §8): the standard labels are used verbatim; "Clear
+// all notifications" is `agent: no`. The notification body is private: a
+// `text` cannot carry `agent:` itself and a hidden zone does not claim the
+// words drawn in it (they would surface as loose text), so each card draws the
+// body inside its card zone — declared after the hidden body zone, so the
+// pointer still reaches it — whose `label:` is the standard `{app}: {title}`.
+// `describe` therefore reports the card and its standard label, and the
+// `agent: hidden` body zone is the explicit mark that the area is private.
+//
+// Every drawn length is a design pixel multiplied by `scale` exactly once;
+// `scale` is the frozen per-monitor expression below, read per copy because a
+// component parameter default is read where the copy is used.
+
+scene notifications {
+
+    // ---------------------------------------------------------------- data
+    // What the toast stack draws; the logic fills it oldest first, so the
+    // newest toast sits at the bottom edge, the way the legacy display pushed
+    // them up.
+    model toasts max 6 {
+        slot: number = 0
+        app: text
+        title: text
+        body: text
+        pic: image 44, 44
+        urgency: number = 0
+        def: number = -1
+        list acts max 3 { ix: number = -1; label: text }
+    }
+
+    // What the centre draws: the notifications the server still keeps first,
+    // then the ones already gone (`old`), with `first` on the first of those —
+    // the "Earlier" line. 200 is the top of the historyMax clamp.
+    model entries max 200 {
+        slot: number = 0
+        app: text
+        title: text
+        body: text
+        pic: image 40, 40
+        urgency: number = 0
+        old: number = 0
+        first: number = 0
+        def: number = -1
+        list acts max 3 { ix: number = -1; label: text }
+    }
+
+    // ------------------------------------------------------- facts & events
+    fact dnd = false
+    fact centre = false
+    fact count = 0
+
+    event open_centre
+    event close_centre
+    event toggle_centre
+    event dismiss_all ->  // close every toast and the centre (legacy M4+space)
+    event clear_all ->    // empty the centre and the history (centre button)
+    event act ->          // payload: an index into the logic's action table
+    event drop ->         // payload: a record's handle (dismiss it, or forget it)
+
+    // --------------------------------------------------------- permissions
+    // Watching `notifications` is not commanding it; the commands the logic
+    // carries need `notifications.*` (INTERFACES §6 / logic docs §Permissions).
+    permissions { services: "notifications", "notifications.*", "files", "files.write", "sound" }
+
+    // -------------------------------------------------------------- window
+    surface {
+        size: full, full
+        anchor: right
+        level: overlay
+        reserve: -1
+        screens: each
+        open: centre or toasts.count > 0
+        keyboard: exclusive while centre
+    }
+
+    // --------------------------------------------------------------- rules
+    on open_centre { centre = true }
+    on close_centre { centre = false }
+    on toggle_centre { toggle centre }
+    on key Escape { centre = false }
+
+    // ------------------------------------------------------------- drawing
+    // The centre: a scrim, the drawer and its zones. Hidden as a whole while
+    // it is closed, so nothing of it is drawn, described or pressed.
+    group { show: centre
+        box { from: 0, 0; size: screen.width, screen.height; color: coal; opacity: 25% }
+        Centre()
+    }
+
+    // The toast stack, bottom right.
+    ToastStack()
+
+    // ---------------------------------------------------------- components
+    // scaleNow (INTERFACES §3.2). The default is read where the copy is used —
+    // inside the repeated drawing — so each monitor gets its own value.
+    component Centre(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        let x = screen.width - 364 * scale
+        let w = 364 * scale
+        let h = screen.height
+
+        prop dnd_knob = 0 ~ui.quick
+        follow dnd_knob = dnd
+
+        // The drawer and its left hairline.
+        box { from: x, 0; size: w, h; color: coal; opacity: 94% }
+        box { from: x, 0; size: 1 * scale, h; color: ink; opacity: 12% }
+
+        // Header: the title, a close button, the DND toggle and clear-all.
+        text "Notifications" { at: x + 18 * scale, 28 * scale; anchor: left center; size: 1 * type.body * type.scale * scale; weight: 1 * weight.medium; color: notify.ink }
+        line { from: x + w - 31 * scale, 19 * scale; to: x + w - 19 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        line { from: x + w - 19 * scale, 19 * scale; to: x + w - 31 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        zone box close_zone { from: x + w - 36 * scale, 14 * scale; size: 26 * scale, 26 * scale; corner: 6 * scale; cursor: pointer; label: "Close notifications"; role: button }
+        on press close_zone { centre = false }
+
+        box { from: x + 20 * scale, 57 * scale; size: 30 * scale, 14 * scale; corner: 7 * scale; color: mix(slate, accent, dnd); opacity: 1 }
+        ellipse { at: x + 20 * scale + (7 + 16 * dnd_knob) * scale, 64 * scale; radius: 6 * scale; color: ink }
+        text "Do not disturb" { at: x + 60 * scale, 63 * scale; anchor: left center; size: 1 * type.small * type.scale * scale; color: notify.ink; opacity: if(dnd, 100%, 75%) }
+        zone box dnd_zone { from: x + 12 * scale, 48 * scale; size: 176 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Do not disturb"; role: toggle; checked: dnd }
+        on press dnd_zone { toggle dnd }
+
+        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: slate; opacity: 1 }
+        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: ink; opacity: ink.hover * clear_zone.hover }
+        text "Clear all" { at: x + w - 94 * scale, 63 * scale; anchor: center; size: 1 * type.small * type.scale * scale; color: ink }
+        zone box clear_zone { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Clear all notifications"; role: button; agent: no }
+        on press clear_zone { emit clear_all }
+
+        // The history, scrolled: the list zone is the standard "Notifications"
+        // list and sits under the cards (declared before them), so a card keeps
+        // its own clicks.
+        zone box list_zone { from: x + 14 * scale, 88 * scale; size: 336 * scale, h - 102 * scale; label: "Notifications"; role: list }
+        column list ~ui.overlay { at: x + 14 * scale, 88 * scale; gap: 8 * scale; view: 336 * scale, h - 102 * scale
+            for n in entries { CentreCard(n, scale) }
+        }
+        text "No notifications" { at: x + w / 2, h / 2; anchor: center; size: 1 * type.body * type.scale * scale; color: notify.ink; opacity: 55%; show: entries.count == 0 }
+
+        // Pressing outside the drawer closes it.
+        zone box catcher { from: 0, 0; size: x, h; label: "Dismiss notification centre"; role: region }
+        on press catcher { centre = false }
+    }
+
+    component ToastStack(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        column stack ~ui.overlay { at: screen.width - 12 * scale, screen.height - 54 * scale; anchor: right bottom; gap: 6 * scale
+            for t in toasts { ToastCard(t, scale) }
+        }
+    }
+
+    // One toast: the card, its urgency stripe, its picture, its title and
+    // body, its actions and its dismiss mark.
+    component ToastCard(t: record, scale: number) {
+        size: 340 * scale, 96 * scale
+
+        Capsule(340, 96, fill: notify.tone, alpha: 94%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 30%, shadow: 45%, scale: scale) { }
+        box { from: 2 * scale, 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(t.urgency == 2, warn, if(t.urgency == 1, amber, notify.accent)) }
+        image t.pic { at: 12 * scale, 18 * scale; size: 44 * scale, 44 * scale }
+        text t.title { at: 66 * scale, 24 * scale; anchor: left center; width: 230 * scale; lines: 1; size: 1 * type.small * type.scale * scale; weight: 1 * weight.medium; color: notify.ink }
+        text t.body { at: 66 * scale, 38 * scale; anchor: left top; width: 230 * scale; lines: 2; size: 1 * type.caption * type.scale * scale; color: notify.ink; opacity: 85% }
+
+        // The body is private. `text` cannot carry `agent:` itself, and a
+        // hidden zone does not claim the words drawn in it — they would surface
+        // as loose text. So the card zone below (same area, declared after, so
+        // the pointer reaches it) claims them under its standard
+        // `{app}: {title}` label, and this hidden zone is the explicit mark:
+        // describe leaves the area out.
+        zone box body_private { from: 62 * scale, 34 * scale; size: 238 * scale, 38 * scale; agent: hidden }
+
+        // The whole card answers the pointer: the default action, if the record
+        // has one. Declared before the actions, so their zones stay on top.
+        zone box body_zone { from: 0, 0; size: 340 * scale, 96 * scale; corner: 4 * scale; cursor: pointer; label: "{t.app}: {t.title}"; role: item }
+        on press body_zone { emit act(t.def) }
+
+        row acts { at: 12 * scale, 70 * scale; gap: 6 * scale; align: start
+            for a in t.acts { Action(a, scale) }
+        }
+
+        line { from: 319 * scale, 15 * scale; to: 327 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        line { from: 327 * scale, 15 * scale; to: 319 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        zone box close_zone { from: 314 * scale, 10 * scale; size: 18 * scale, 18 * scale; corner: 5 * scale; cursor: pointer; label: "Dismiss notification"; role: button }
+        on press close_zone { emit drop(t.slot) }
+    }
+
+    // One notification in the centre: the same card, plus the "Earlier" line
+    // when it is the first of the ones already gone.
+    component CentreCard(n: record, scale: number) {
+        // The header line is read before the body's `let`s, so the height says
+        // it out in full; `oy` is the same expression for the drawing below.
+        size: 336 * scale, 96 * scale + if(n.first == 1, 22 * scale, 0)
+        let oy = if(n.first == 1, 22 * scale, 0)
+
+        text "Earlier" { at: 2 * scale, 12 * scale; anchor: left center; size: 1 * type.caption * type.scale * scale; weight: 1 * weight.medium; color: notify.ink; opacity: 60%; show: n.first == 1 }
+
+        // The body is private here too: the hidden zone marks the area first,
+        // then the card zone (declared after, so the pointer reaches it) claims
+        // the words under its standard label (see ToastCard).
+        zone box body_private { from: 56 * scale, oy + 34 * scale; size: 270 * scale, 38 * scale; agent: hidden }
+
+        // Pressing the card dismisses what the server still keeps; a record
+        // already gone is forgotten from the history (the legacy centre's
+        // "Earlier" cards were inert — this is the port's one deviation).
+        // Declared before the action buttons: a zone declared later is on top.
+        zone box card_zone { from: 0, oy; size: 336 * scale, 96 * scale; corner: 4 * scale; cursor: pointer; label: "{n.app}: {n.title}"; role: item }
+        on press card_zone { emit drop(n.slot) }
+
+        group dim { opacity: if(n.old == 1, 74%, 100%)
+            group bg { move: 0, oy
+                Capsule(336, 96, fill: notify.tone, alpha: 94%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 30%, scale: scale) { }
+            }
+            box { from: 2 * scale, oy + 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(n.urgency == 2, warn, if(n.urgency == 1, amber, notify.accent)) }
+            image n.pic { at: 12 * scale, oy + 18 * scale; size: 40 * scale, 40 * scale }
+            text n.title { at: 60 * scale, oy + 24 * scale; anchor: left center; width: 262 * scale; lines: 1; size: 1 * type.small * type.scale * scale; weight: 1 * weight.medium; color: notify.ink }
+            text n.body { at: 60 * scale, oy + 38 * scale; anchor: left top; width: 262 * scale; lines: 2; size: 1 * type.caption * type.scale * scale; color: notify.ink; opacity: 85% }
+            row acts { at: 12 * scale, oy + 70 * scale; gap: 6 * scale; align: start
+                for a in n.acts { Action(a, scale) }
+            }
+        }
+    }
+
+    // One action button of a notification.
+    component Action(a: record, scale: number) {
+        size: 96 * scale, 22 * scale
+
+        box { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; color: mix(slate, ink, 0.2 * hit.hover); opacity: 1 }
+        text a.label { at: 48 * scale, 11 * scale; anchor: center; width: 88 * scale; align: center; lines: 1; size: 1 * type.caption * type.scale * scale; color: ink }
+        zone box hit { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; cursor: pointer; label: "{a.label}"; role: button }
+        on press hit { emit act(a.ix) }
+    }
+}

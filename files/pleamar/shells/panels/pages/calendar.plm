@@ -57,25 +57,25 @@ part Calendar {
 
             // ----***------------------------- weekday row
             repeat c in 0..6 {
-                text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 22 * scale + c * 50 * scale, 48 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+                text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 40 * scale + c * 48 * scale, 48 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
             }
 
             // ----***--------------------------- month grid
             // wrap: 7 is the grid (7 per line); the 42 cells are always there,
             // so nothing moves when a month is short.
-            row { at: 12 * scale, 58 * scale; wrap: 7; gap: 2 * scale
+            row { at: 16 * scale, 58 * scale; wrap: 7; gap: 2 * scale
                 for c in cells {
                     group {
-                        size: 50 * scale, 40 * scale
-                        box { from: 0, 0; size: 50 * scale, 40 * scale; corner: 3 * scale; color: accent; opacity: ink.active; show: c.this and c.day == sel_day }
-                        box { from: 0.75 * scale, 0.75 * scale; size: 48.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.2 * scale; color: accent; show: c.today }
-                        box { from: 0.75 * scale, 0.75 * scale; size: 48.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1 * scale; color: warn; opacity: 55%; show: c.weekend and not c.today }
+                        size: 48 * scale, 40 * scale
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: accent; opacity: ink.active; show: c.this and c.day == sel_day }
+                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.2 * scale; color: accent; show: c.today }
+                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1 * scale; color: warn; opacity: 55%; show: c.weekend and c.this and not c.today }
                         ellipse { at: 6 * scale, 6 * scale; radius: 2.5 * scale; color: accent; show: c.mark == 1 }
-                        ellipse { at: 44 * scale, 6 * scale; radius: 2.5 * scale; color: warn; show: c.mark == 2 }
-                        text number(c.day, 0) { at: 25 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink; show: c.this and not c.today }
-                        text number(c.day, 0) { at: 25 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; weight: 1 * weight.medium; color: accent; show: c.today }
-                        text number(c.day, 0) { at: 25 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.off; show: not c.this }
-                        zone box day { from: 0, 0; size: 50 * scale, 40 * scale; corner: 3 * scale; active: c.this
+                        ellipse { at: 42 * scale, 6 * scale; radius: 2.5 * scale; color: warn; show: c.mark == 2 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink; show: c.this and not c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; weight: 1 * weight.medium; color: accent; show: c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.off; show: not c.this }
+                        zone box day { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
                             cursor: pointer; label: c.label; role: button; selected: c.this and c.day == sel_day }
                         on press day { sel_day = c.day }
                     }
@@ -83,10 +83,10 @@ part Calendar {
             }
 
             box { from: 12 * scale, 312 * scale; size: 356 * scale, 1 * scale; color: ink; opacity: ink.subtle }
-            text cal.err { at: 190 * scale, 322 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: warn }
+            text cal.err { at: 190 * scale, 320 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: warn }
 
             // ----***------------------- the selected day's entries
-            text "Selected day" { at: 14 * scale, 334 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim; show: sel_day > 0 }
+            text "Selected day" { at: 14 * scale, 336 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim; show: sel_day > 0 }
             column daylist {
                 at: 14 * scale, 346 * scale
                 view: 352 * scale, 106 * scale
