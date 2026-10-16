@@ -1,0 +1,90 @@
+diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
+index 7154d82..ca4a0d8 100644
+--- a/src/platform/wayland.rs
++++ b/src/platform/wayland.rs
+@@ -708,12 +708,26 @@ impl PlatformWindow for WaylandWindow {
+     fn cursor(&self, c: Cursor) {
+         let shape = shape_of(c);
+         CURSOR_SHAPE.store(c as u8, Ordering::Relaxed);
++        if !shapes_wanted() {
++            return;
++        }
+         if let Some(d) = self.cursors.lock().unwrap().as_ref() {
+             d.set_shape(self.serial.load(Ordering::Relaxed), shape);
+         }
+     }
+ }
+ 
++/// `PLEAMAR_NO_CURSOR_SHAPES=1`: never ask the compositor for a cursor shape, not even on
++/// the way out. A compositor keeps one cursor shape for the whole session, not one per surface,
++/// and Hyprland drops a shape that arrives while another client holds the pointer
++/// (hyprwm/Hyprland discussion #14906), so a layer surface that asks for a hand can leave it
++/// stuck — or leave the compositor with no cursor image at all. This is the switch that takes
++/// a scene out of the cursor's business without touching the scene.
++fn shapes_wanted() -> bool {
++    static WANTED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
++    *WANTED.get_or_init(|| std::env::var_os("PLEAMAR_NO_CURSOR_SHAPES").is_none())
++}
++
+ /// The cursor the scene last asked for. A client has to say which cursor it
+ /// wants every time the pointer ENTERS one of its surfaces, or the compositor
+ /// draws none: over a transparent full-screen surface that is a mouse that has
+@@ -1780,7 +1794,7 @@ impl PointerHandler for State {
+                 PointerEventKind::Enter { .. } | PointerEventKind::Motion { .. } => {
+                     if let PointerEventKind::Enter { serial } = e.kind {
+                         self.serial.store(serial, Ordering::Relaxed);
+-                        if let Some(d) = self.cursors.lock().unwrap().as_ref() {
++                        if let Some(d) = self.cursors.lock().unwrap().as_ref().filter(|_| shapes_wanted()) {
+                             let c = match CURSOR_SHAPE.load(Ordering::Relaxed) {
+                                 1 => Cursor::Hand,
+                                 2 => Cursor::Text,
+@@ -1803,6 +1817,18 @@ impl PointerHandler for State {
+                     let _ = self.to_render.send(ToRender::Pointer(Some((x, y))));
+                 }
+                 PointerEventKind::Leave { .. } => {
++                    // A compositor that keeps the shape per surface expects the default back when
++                    // the pointer goes. Hyprland keeps one shape for the whole session and only
++                    // listens while the asking client holds the pointer, so there this arrives too
++                    // late and is dropped; what repairs Hyprland is the renderer saying the shape
++                    // again while the pointer is inside (see render.rs). Keep the wish honest
++                    // either way: after leaving, this process asks for nothing special.
++                    CURSOR_SHAPE.store(Cursor::Normal as u8, Ordering::Relaxed);
++                    if shapes_wanted() {
++                        if let Some(d) = self.cursors.lock().unwrap().as_ref() {
++                            d.set_shape(self.serial.load(Ordering::Relaxed), Shape::Default);
++                        }
++                    }
+                     let _ = self.to_render.send(ToRender::Pointer(None));
+                 }
+                 PointerEventKind::Press { button, .. } | PointerEventKind::Release { button, .. } => {
+diff --git a/src/render.rs b/src/render.rs
+index 535c17b..e77bcda 100644
+--- a/src/render.rs
++++ b/src/render.rs
+@@ -539,6 +539,8 @@ pub fn run(
+     let mut handle_asked: Option<(usize, u32, u32)> = None;
+     let mut handle_held: Option<usize> = None;
+     let mut cursor_set = Cursor::Normal;
++    // When the shape was said again (see the refresh where the cursor is decided).
++    let mut cursor_said = Instant::now() - std::time::Duration::from_secs(10);
+ 
+     // The keyboard that has been asked of the compositor, whether it has the focus, and whether it has
+     // been asked for exclusively (see `Effect::FocusField`).
+@@ -2534,7 +2536,16 @@ pub fn run(
+         };
+         // Over a window, the one the window asks for.
+         let wanted = if nest_pointer.is_some() { nest_cursor } else { wanted };
+-        if wanted != cursor_set {
++        // The compositor keeps one cursor shape for the whole session, not one per surface, and
++        // it can be left stale or emptied under us (a key press with `cursor:hide_on_key_press`
++        // throws the image away, a client's cursor surface going away empties it, and a shape set
++        // while an override is up is dropped). Nothing re-evaluates the cursor while the pointer
++        // is over a layer surface, so say the shape again now and then while the pointer is
++        // inside: half a second of a wrong or missing cursor instead of one until the mouse
++        // happens to move onto a window. With the shape unchanged the compositor does nothing.
++        let again = pointer.is_some() && cursor_said.elapsed() >= std::time::Duration::from_millis(500);
++        if wanted != cursor_set || again {
++            cursor_said = Instant::now();
+             cursor_set = wanted;
+             for l in &sheets {
+                 l.cursor(wanted);
