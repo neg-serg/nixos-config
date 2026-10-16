@@ -80,6 +80,19 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/0001-flake-git-worktree-and-pure-builtins.patch
     # Rewrite the two zig dependencies to the vendored trees (see above).
     ./patches/0002-vendor-zig-deps.patch
+    # `builtins.fetchGit` to git.kernel.org (the experimental `noref` kernel in
+    # modules/system/kernel/localmodconfig.nix) fails in fix's own git client;
+    # fall back to the system `git` for transport-level failures, like Nix.
+    ./patches/0003-git-transport-system-git-fallback.patch
+    # Name the file that exceeds the file-read cap (a bare `StreamTooLong`
+    # says nothing about which file tripped the 128 MiB guard) and stream
+    # files above the cap through the NAR writer instead of materializing
+    # them — the `renoise-src` path input alone carries a >200 MiB tarball.
+    ./patches/0004-file-read-cap-and-nar-streaming.patch
+    # Pure eval exposes no search path (`builtins.nixPath` is `[]`, lookups
+    # fail as a catchable "not found"), as in Nix — nixpkgs' impure-overlays
+    # probe under `tryEval` otherwise aborts the whole evaluation.
+    ./patches/0005-pure-eval-empty-search-path.patch
   ];
 
   postPatch = ''
