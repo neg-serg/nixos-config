@@ -1,0 +1,297 @@
+#!/usr/bin/env bash
+# shtoy — open Shadertoy shaders fullscreen in esshader (no browser).
+#
+#   shtoy FILE                 run a local Shadertoy-style fragment shader
+#   shtoy URL|ID               run a cached copy of https://www.shadertoy.com/view/<ID>
+#   shtoy --import URL|ID      cache the source from the clipboard (copy it on the
+#                              site) and run it
+#   shtoy -                    read the shader source from stdin
+#
+# Options:
+#   --channel N FILE           bind FILE as iChannelN (repeatable, N = 0..3)
+#   --keyboard N               bind the live keyboard atlas as iChannelN
+#   --legacy                   force GLES2/GLSL 100 instead of the default GLES3
+#   --list                     list cached shaders
+#   -h, --help                 this help
+#
+# esshader is Shadertoy-compatible on its own — it prepends iResolution, iTime,
+# iMouse, iDate and iChannel0-3, and calls mainImage() from its own main() — so
+# nothing is rewritten except what it cannot supply: `#version` lines are
+# dropped (esshader prepends its own) and iFrame/iTimeDelta/iFrameRate become
+# defines when the shader uses them. GLES3 (GLSL 300 es) is the default;
+# --legacy switches to GLES2/GLSL 100 for sources that still call texture2D()
+# (also picked automatically when a source has texture2D and no texture()).
+#
+# Only the Image pass runs: multi-pass shaders (Buffer A-D) are not supported.
+# iChannelResolution, iChannelTime and iDate are declared but never filled by
+# esshader, and iMouse carries press flags in .zw instead of Shadertoy's click
+# position. Quit with ESC or q.
+#
+# Cached sources live at $XDG_CACHE_HOME/shtoy/<id>.frag as copied from the
+# site. Sources that need rewriting go through a temp copy whose path is printed
+# on stderr.
+#
+# The API path needs an app key (SHADERTOY_API_KEY, or
+# $XDG_CONFIG_HOME/shtoy/api_key). Cloudflare fronts shadertoy.com, so keyed
+# curl calls from this host are challenged as well — --import is the reliable
+# way to get a shader in.
+
+set -euo pipefail
+
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
+
+CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/shtoy
+API_KEY_FILE=${XDG_CONFIG_HOME:-$HOME/.config}/shtoy/api_key
+
+usage() { usage_from_header 2 37; }
+
+case ${1:-} in
+  -h | --help | help | \?)
+    usage
+    exit 0
+    ;;
+esac
+
+mode=run
+legacy=0
+keyboard=-1
+arg=
+texture_channels=" "
+bound_channels=" "
+declare -a channel_args=()
+declare -a cleanup=()
+
+while (($#)); do
+  case $1 in
+    --channel)
+      (($# >= 3)) || die "--channel needs a number and a file"
+      case $2 in
+        0 | 1 | 2 | 3) ;;
+        *) die "channel number must be 0..3, got: $2" ;;
+      esac
+      [ -e "$3" ] || die "channel texture not found: $3"
+      channel_args+=("-$2" "$3")
+      texture_channels="$texture_channels$2 "
+      bound_channels="$bound_channels$2 "
+      shift 3
+      ;;
+    --keyboard)
+      (($# >= 2)) || die "--keyboard needs a channel number"
+      case $2 in
+        0 | 1 | 2 | 3) ;;
+        *) die "channel number must be 0..3, got: $2" ;;
+      esac
+      keyboard=$2
+      bound_channels="$bound_channels$2 "
+      shift 2
+      ;;
+    --legacy)
+      legacy=1
+      shift
+      ;;
+    --import)
+      mode=import
+      shift
+      ;;
+    --list)
+      mode=list
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -?*)
+      die "unknown option: $1 (see --help)"
+      ;;
+    *)
+      [ -z "$arg" ] || die "more than one shader given: $arg, $1"
+      arg=$1
+      shift
+      ;;
+  esac
+done
+
+while (($#)); do
+  [ -z "$arg" ] || die "more than one shader given: $arg, $1"
+  arg=$1
+  shift
+done
+
+if ((keyboard >= 0)); then
+  case $texture_channels in
+    *" $keyboard "*) die "channel $keyboard is bound to both a texture and the keyboard" ;;
+  esac
+fi
+
+# ---- cache listing ---------------------------------------------------------
+
+if [ "$mode" = list ]; then
+  shopt -s nullglob
+  files=("$CACHE_DIR"/*.frag)
+  ((${#files[@]})) || die "cache is empty: $CACHE_DIR"
+  for f in "${files[@]}"; do
+    basename "$f" .frag
+  done
+  exit 0
+fi
+
+[ -n "$arg" ] || die "no shader given (see --help)"
+
+# ---- source resolution -----------------------------------------------------
+
+api_key=${SHADERTOY_API_KEY:-}
+if [ -z "$api_key" ] && [ -r "$API_KEY_FILE" ]; then
+  api_key=$(tr -d '[:space:]' < "$API_KEY_FILE")
+fi
+
+shader_id() { # URL or bare id -> id on stdout, non-zero when it is neither
+  local s=${1%/}
+  s=${s%%\?*}
+  s=${s%%#*}
+  s=${s##*/}
+  [[ $s =~ ^[A-Za-z0-9]{6,8}$ ]] || return 1
+  printf '%s\n' "$s"
+}
+
+clipboard_source() { # $1 = url for the hint
+  require wl-paste
+  local text
+  text=$(wl-paste --no-newline 2> /dev/null || true)
+  [ -n "$text" ] || die "clipboard is empty — copy the shader source on $1 first"
+  case $text in
+    *mainImage* | *'void main'*) ;;
+    *) die "clipboard does not look like shader source (neither mainImage nor main)" ;;
+  esac
+  printf '%s\n' "$text"
+}
+
+api_source() { # $1 = id
+  require curl
+  require jq
+  local json
+  json=$(mktemp "${TMPDIR:-/tmp}/shtoy-api-XXXXXX.json")
+  if ! curl -fsS --max-time 20 -o "$json" "https://www.shadertoy.com/api/v1/shaders/$1?key=$api_key"; then
+    rm -f "$json"
+    die "Shadertoy API fetch failed for $1 (Cloudflare challenges curl from here — use --import)"
+  fi
+  if ! jq -e '.Shader.renderpass' "$json" > /dev/null 2>&1; then
+    rm -f "$json"
+    die "Shadertoy API returned no shader data for $1 (challenge page, bad key or unknown id?)"
+  fi
+  jq -r '[.Shader.renderpass[] | select(.type == "image")][0].code // empty' "$json"
+  rm -f "$json"
+}
+
+raw=
+case $arg in
+  -)
+    stdin_file=$(mktemp "${TMPDIR:-/tmp}/shtoy-stdin-XXXXXX.frag")
+    cleanup+=("$stdin_file")
+    cat > "$stdin_file"
+    raw=$stdin_file
+    ;;
+  *)
+    if [ -f "$arg" ]; then
+      if [ "$mode" = import ]; then
+        die "--import takes a Shadertoy id or URL, not a file"
+      fi
+      raw=$arg
+    else
+      id=$(shader_id "$arg") || die "not a file, and not a Shadertoy id: $arg"
+      url="https://www.shadertoy.com/view/$id"
+      raw=$CACHE_DIR/$id.frag
+      if [ ! -f "$raw" ] && [ "$mode" = import ]; then
+        mkdir -p "$CACHE_DIR"
+        clipboard_source "$url" > "$raw.part"
+        mv -f "$raw.part" "$raw"
+        printf '%s: cached %s\n' "$PROG" "$raw" >&2
+      elif [ ! -f "$raw" ] && [ -n "$api_key" ]; then
+        mkdir -p "$CACHE_DIR"
+        api_source "$id" > "$raw.part"
+        if [ ! -s "$raw.part" ]; then
+          rm -f "$raw.part"
+          die "the API returned no Image pass for $id"
+        fi
+        mv -f "$raw.part" "$raw"
+        printf '%s: fetched %s -> %s\n' "$PROG" "$id" "$raw" >&2
+      elif [ ! -f "$raw" ]; then
+        die "no cached copy of $id — copy the shader source on $url, then run: shtoy --import $id"
+      fi
+    fi
+    ;;
+esac
+
+# ---- source preparation ----------------------------------------------------
+
+needs_rewrite=0
+prefix=
+if grep -qE '^[[:space:]]*#version[[:space:]]' "$raw"; then
+  needs_rewrite=1
+fi
+for name in iFrame iTimeDelta iFrameRate; do
+  if ! grep -q "$name" "$raw"; then
+    continue
+  fi
+  if grep -qE "(uniform|const|#define)[^;]*[^A-Za-z0-9_]$name" "$raw"; then
+    continue # the shader declares it itself
+  fi
+  case $name in
+    iFrame) prefix+=$'#define iFrame int(iTime * 60.0)\n' ;;
+    iTimeDelta) prefix+=$'#define iTimeDelta (1.0 / 60.0)\n' ;;
+    iFrameRate) prefix+=$'#define iFrameRate 60.0\n' ;;
+  esac
+  needs_rewrite=1
+done
+
+shader_file=$raw
+if ((needs_rewrite)); then
+  shader_file=$(mktemp "${TMPDIR:-/tmp}/shtoy-XXXXXX.frag")
+  cleanup+=("$shader_file")
+  {
+    if [ -n "$prefix" ]; then
+      printf '%s' "$prefix"
+    fi
+    sed -e '/^[[:space:]]*#version[[:space:]]/d' "$raw"
+  } > "$shader_file"
+fi
+
+if ((${#cleanup[@]})); then
+  # shellcheck disable=SC2064  # expand the array at trap time, not now
+  trap 'rm -f "${cleanup[@]}"' EXIT
+fi
+
+for n in 0 1 2 3; do
+  grep -q "iChannel$n" "$raw" || continue
+  case $bound_channels in
+    *" $n "*) ;;
+    *) printf '%s: note: %s samples iChannel%s with no texture bound (--channel %s FILE)\n' \
+      "$PROG" "$raw" "$n" "$n" >&2 ;;
+  esac
+done
+
+if ((legacy == 0)) && grep -q 'texture2D' "$raw" && ! grep -q 'texture(' "$raw"; then
+  legacy=1
+  printf '%s: GLES2/GLSL 100 requested by source (texture2D)\n' "$PROG" >&2
+fi
+
+# ---- run -------------------------------------------------------------------
+
+require esshader
+
+viewer_args=(-f -s "$shader_file")
+if ((legacy)); then
+  viewer_args+=(-l)
+fi
+if ((keyboard >= 0)); then
+  viewer_args+=(-k "$keyboard")
+fi
+if ((${#channel_args[@]})); then
+  viewer_args+=("${channel_args[@]}")
+fi
+
+printf '%s: running %s\n' "$PROG" "$shader_file" >&2
+
+esshader "${viewer_args[@]}" &
+viewer_pid=$!
+wait "$viewer_pid"
