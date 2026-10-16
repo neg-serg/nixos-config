@@ -95,6 +95,13 @@
       url = "github:quickshell-mirror/quickshell/2d3b3e9c70ef380dff751b61d334dc88df016c29";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    pleamar = {
+      # Pinned 2026-10-16: v0.4.11 @ 57568fa, the rev of the local checkout
+      # ~/src/pleamar. Update with:
+      # nix flake lock --update-input pleamar
+      url = "github:k4ditano/pleamar/57568fa7e9b2b432cc18f074f4fc7ec283bae952";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     rsmetrx = {
       url = "github:neg-serg/rsmetrx";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -139,6 +146,14 @@
     # pin so the build reuses the cached quickshell/python closure.
     waylandar = {
       url = "github:samjoshuadud/waylandar/b46d5c348f846ca489071f2d271312ea35c019b4";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # NERV-styled UEFI boot menu (GuillotineMelody/nervboot on Codeberg).
+    # Package only: trantor boots via limine, while the upstream NixOS module is
+    # systemd-boot-only (asserts systemd-boot and installs via its extraFiles),
+    # so the module is deliberately NOT imported. Build with `nix build .#nerv-boot`.
+    nerv-boot = {
+      url = "git+https://codeberg.org/GuillotineMelody/nervboot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
