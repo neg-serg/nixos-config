@@ -21,26 +21,26 @@ The replacements are faster and lighter than the classic utilities for several r
 
 ## Replacement table
 
-| Legacy (slow/clunky)            | Golden (fast/convenient) | Status on this host           | Where it is wired in the repo                                         |
-| ------------------------------- | ------------------------ | ----------------------------- | --------------------------------------------------------------------- |
-| `grep -r`                       | `rg` (ripgrep)           | ✅ installed                  | `modules/cli/tools.nix`, `modules/user/nix-maid/cli/search.nix`       |
-| `grep -r` (interactive)         | `ugrep` / `ug`           | ✅ installed                  | `modules/cli/tools.nix` + `modules/cli/ugrep.nix` (`/etc/ugrep.conf`) |
-| `find`                          | `fd`                     | ✅ installed                  | `modules/cli/tools.nix`, nix-maid `cli/search.nix`                    |
-| `cat`                           | `bat`                    | ✅ installed, alias `cat`     | nix-maid `cli/search.nix`, alias in `lib/aliae.nix`                   |
-| `ls`                            | `eza`                    | ✅ installed, alias `ls`      | `modules/cli/tools.nix`, alias in `lib/aliae.nix`                     |
-| `diff`                          | `delta`                  | ✅ installed (git-pager)      | `modules/cli/tools.nix`, nix-maid `cli/git.nix`                       |
-| `du`                            | `dust` / `ncdu`          | ✅ installed                  | `modules/cli/tools.nix`                                               |
-| `df`                            | `duf`                    | ✅ installed                  | `modules/cli/tools.nix` (`pkgs.neg.duf`)                              |
-| `top`                           | `btop`                   | ✅ installed                  | `modules/monitoring/pkgs/default.nix`, nix-maid `cli/monitoring.nix`  |
-| `ps`                            | `procs`                  | ⏳ being added (`pkgs.procs`) | `modules/cli/tools.nix`                                               |
-| `sed 's/a/b/'` (simple replace) | `sd`                     | ⏳ being added (`pkgs.sd`)    | `modules/cli/tools.nix`                                               |
-| `sed`/`awk` for JSON            | `jq`                     | ✅ installed                  | `modules/cli/file-ops.nix`, `modules/text/manipulate-packages.nix`    |
-| `cd` + remembering paths        | `zoxide` (`z`)           | ✅ installed                  | `modules/cli/tools.nix`                                               |
-| interactive selection           | `fzf`                    | ✅ installed                  | nix-maid `cli/search.nix` (+ `FZF_*` variables)                       |
-| benchmarking by eye             | `hyperfine`              | ✅ installed                  | `modules/dev/pkgs/default.nix`                                        |
-| `tree`                          | `erdtree` / `eza --tree` | ✅ installed                  | `modules/cli/tools.nix`                                               |
+| Legacy (slow/clunky)            | Golden (fast/convenient) | Status on this host         | Where it is wired in the repo                                         |
+| ------------------------------- | ------------------------ | --------------------------- | --------------------------------------------------------------------- |
+| `grep -r`                       | `rg` (ripgrep)           | ✅ installed                | `modules/cli/tools.nix`, `modules/user/nix-maid/cli/search.nix`       |
+| `grep -r` (interactive)         | `ugrep` / `ug`           | ✅ installed                | `modules/cli/tools.nix` + `modules/cli/ugrep.nix` (`/etc/ugrep.conf`) |
+| `find`                          | `fd`                     | ✅ installed                | `modules/cli/tools.nix`, nix-maid `cli/search.nix`                    |
+| `cat`                           | `bat`                    | ✅ installed, alias `cat`   | nix-maid `cli/search.nix`, alias in `lib/aliae.nix`                   |
+| `ls`                            | `eza`                    | ✅ installed, alias `ls`    | `modules/cli/tools.nix`, alias in `lib/aliae.nix`                     |
+| `diff`                          | `delta`                  | ✅ installed (git-pager)    | `modules/cli/tools.nix`, nix-maid `cli/git.nix`                       |
+| `du`                            | `dust` / `ncdu`          | ✅ installed                | `modules/cli/tools.nix`                                               |
+| `df`                            | `duf`                    | ✅ installed                | `modules/cli/tools.nix` (`pkgs.neg.duf`)                              |
+| `top`                           | `btop`                   | ✅ installed                | `modules/monitoring/pkgs/default.nix`, nix-maid `cli/monitoring.nix`  |
+| `ps`                            | `procs`                  | ✅ installed (`pkgs.procs`) | `modules/cli/tools.nix`                                               |
+| `sed 's/a/b/'` (simple replace) | `sd`                     | ✅ installed (`pkgs.sd`)    | `modules/cli/tools.nix`                                               |
+| `sed`/`awk` for JSON            | `jq`                     | ✅ installed                | `modules/cli/file-ops.nix`, `modules/text/manipulate-packages.nix`    |
+| `cd` + remembering paths        | `zoxide` (`z`)           | ✅ installed                | `modules/cli/tools.nix`                                               |
+| interactive selection           | `fzf`                    | ✅ installed                | nix-maid `cli/search.nix` (+ `FZF_*` variables)                       |
+| benchmarking by eye             | `hyperfine`              | ✅ installed                | `modules/dev/pkgs/default.nix`                                        |
+| `tree`                          | `erdtree` / `eza --tree` | ✅ installed                | `modules/cli/tools.nix`                                               |
 
-Legend: ✅ — already on the system; ⏳ — being added in `modules/cli/tools.nix`.
+Legend: ✅ — already on the system.
 
 ## Configuration (already set up)
 
