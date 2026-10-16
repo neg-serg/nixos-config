@@ -48,13 +48,17 @@ Naming rule from `AGENTS.md`, unchanged: one directory per scene, and the direct
 The repo is linked read-only into `~/.config/pleamar`: `lib/` to `~/.config/pleamar/lib/`,
 `shells/*` to `~/.config/pleamar/shells/*`. Runtime files are never written into that tree:
 
-| what                                                                       | path                                                                                    | who writes                                   |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------- |
-| per-scene settings                                                         | `~/.local/share/pleamar/<scene>/settings.json` (or `<feature>.json` in the same folder) | the scene's own logic, through `files.write` |
-| wallpaper theme                                                            | `~/.config/pleamar/theme.plm`                                                           | PH1-T2's theme script                        |
-| cache / signal files                                                       | `~/.cache/pleamar/<name>`                                                               | the scene that owns the signal               |
-| durable scene state                                                        | `~/.local/state/pleamar/<scene>/`                                                       | the scene's logic                            |
-| pleamar's own per-scene folder (`files.read`/`files.write`/`files.folder`) | `~/.local/share/pleamar/<scene>/` (XDG_DATA_HOME)                                       | the logic                                    |
+| what | path | who writes | |
+
+| --------------------------------------------------------------------------              |
+| --------------------------------------------------------------------------------------- |
+| --------------------------------------------                                            |
+| `~/.local/share/pleamar/<scene>/settings.json` (or `<feature>.json` in the same folder) |
+| scene's own logic, through `files.write`                                                |
+| PH1-T2's theme script                                                                   |
+| signal                                                                                  |
+| own per-scene folder (`files.read`/`files.write`/`files.folder`)                        |
+| (XDG_DATA_HOME)                                                                         |
 
 Two facts of the language shape all of this: a scene can only touch files in its own folder
 (`no paths, no ..`), and the folder is `$XDG_DATA_HOME/pleamar/<scene>/`. So every settings file is
@@ -122,16 +126,30 @@ The seven scene processes of the port, with their names fixed here. The IPC name
 `pleamar --say <name> …` (unit `pleamar-<name>.service`). One scene per process, one or more
 surfaces inside it (D1/D2), never a popup for a drawer.
 
-| scene           | file                                     | surface                                                                                                                                                        | purpose                                                                                                                              | owner  |
-| --------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| `bar`           | `shells/bar/bar.plm`                     | one per monitor (`screens: each`), anchor from settings (`bottom` on trantor), `size: full, bar.height * scale + shadow room`, `reserve: <height> while shown` | the strip and its widgets: clock, workspaces, volume, network, battery, media, weather, keyboard, tray, system monitor, startup gate | PH2-A  |
-| `panels`        | `shells/panels/panels.plm`               | one per monitor (`screens: each`), anchor `top`, `level: overlay`, `reserve: 0`, open while a drawer is open                                                   | every drawer hanging from the bar: music, weather, network, calendar, mixer, tray menus, system monitor, settings                    | PH2-B  |
-| `notifications` | `shells/notifications/notifications.plm` | one per monitor for the centre, plus the toast placement it owns                                                                                               | notification centre, persistent history, DND, actions, images; it is the `org.freedesktop.Notifications` server while it runs (D6)   | PH2-C  |
-| `toast`         | `shells/toast/toast.plm`                 | one per monitor, `level: overlay`, `agent: hidden` on decorative parts                                                                                         | transient stacked toasts (max 2), screenshot toast with OCR actions                                                                  | PH2-D  |
-| `overlay`       | `shells/overlay/overlay.plm`             | one per monitor, full size, `level: overlay`                                                                                                                   | full-screen dismissal catcher (`dismiss-overlay`), clear-all (`notif-close-all`), idle-inhibitor equivalent                          | PH2-D  |
-| `lock`          | `shells/lock/lock.plm`                   | `kind: lock` (ext-session-lock), one copy per monitor                                                                                                          | the session lock screen; owns the login phase later (PH3-L)                                                                          | PH3-L  |
-| `launcher`      | `shells/launcher/launcher.plm`           | one per monitor, `level: overlay`                                                                                                                              | application launcher and search                                                                                                      | PH3-O  |
-| `theme`         | `shells/theme/theme.plm`                 | small helper surface, optional                                                                                                                                 | wallpaper → `theme.plm` bridge and live accent facts                                                                                 | PH1-T2 |
+| scene | file | surface | purpose | owner | | --------------- |
+\---------------------------------------- |
+\--------------------------------------------------------------------------------------------------------------------------------------------------------------
+|
+\------------------------------------------------------------------------------------------------------------------------------------
+| ------ | | `bar` | `shells/bar/bar.plm` | one per monitor (`screens: each`), anchor from settings
+(`bottom` on trantor), `size: full, bar.height * scale + shadow room`,
+`reserve: <height> while shown` | the strip and its widgets: clock, workspaces, volume, network,
+battery, media, weather, keyboard, tray, system monitor, startup gate | PH2-A | | `panels` |
+`shells/panels/panels.plm` | one per monitor (`screens: each`), anchor `top`, `level: overlay`,
+`reserve: 0`, open while a drawer is open | every drawer hanging from the bar: music, weather,
+network, calendar, mixer, tray menus, system monitor, settings | PH2-B | | `notifications` |
+`shells/notifications/notifications.plm` | one per monitor for the centre, plus the toast placement
+it owns | notification centre, persistent history, DND, actions, images; it is the
+`org.freedesktop.Notifications` server while it runs (D6) | PH2-C | | `toast` |
+`shells/toast/toast.plm` | one per monitor, `level: overlay`, `agent: hidden` on decorative parts |
+transient stacked toasts (max 2), screenshot toast with OCR actions | PH2-D | | `overlay` |
+`shells/overlay/overlay.plm` | one per monitor, full size, `level: overlay` | full-screen dismissal
+catcher (`dismiss-overlay`), clear-all (`notif-close-all`), idle-inhibitor equivalent | PH2-D | |
+`lock` | `shells/lock/lock.plm` | `kind: lock` (ext-session-lock), one copy per monitor | the
+session lock screen; owns the login phase later (PH3-L) | PH3-L | | `launcher` |
+`shells/launcher/launcher.plm` | one per monitor, `level: overlay` | application launcher and search
+| PH3-O | | `theme` | `shells/theme/theme.plm` | small helper surface, optional | wallpaper →
+`theme.plm` bridge and live accent facts | PH1-T2 |
 
 ### 2.1 Facts a scene exposes for IPC and for the other scenes
 
@@ -139,19 +157,22 @@ Only these names are interface; everything else in a scene is private and may ch
 Read them with `pleamar --say <scene> "get <fact>"` and set them with
 `pleamar --say <scene> "fact <name> <value>"`.
 
-| scene           | fact / text | type                                                                                                                                           | default | meaning                                                                                      |
-| --------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------- |
-| `bar`           | `shown`     | bool                                                                                                                                           | `true`  | the strip is there; `reserve` counts only while true                                         |
-| `bar`           | `startup`   | bool                                                                                                                                           | `false` | login gate is up (clean bar) — written by its logic, read by tests                           |
-| `panels`        | `drawer`    | enum `none \| volume \| microphone \| network \| bluetooth \| media \| calendar \| weather \| keyboard \| tray \| system \| power \| settings` | `none`  | which drawer is open (one at a time, D1)                                                     |
-| `notifications` | `dnd`       | bool                                                                                                                                           | `false` | do not disturb                                                                               |
-| `notifications` | `centre`    | bool                                                                                                                                           | `false` | the notification centre is open                                                              |
-| `notifications` | `count`     | number                                                                                                                                         | `0`     | notifications currently shown or kept (read-only for other scenes)                           |
-| `toast`         | `visible`   | number                                                                                                                                         | `0`     | how many toasts are on screen                                                                |
-| `overlay`       | `active`    | bool                                                                                                                                           | `false` | the dismissal catcher is up                                                                  |
-| `lock`          | `locked`    | bool                                                                                                                                           | `false` | the lock surface wants the session (the compositor's own `lock.held` says whether it has it) |
-| `launcher`      | `open`      | bool                                                                                                                                           | `false` | the launcher is up                                                                           |
-| `launcher`      | `query`     | text                                                                                                                                           | `""`    | what has been typed                                                                          |
+| scene | fact / text | type | default | meaning | | --------------- | ----------- |
+\----------------------------------------------------------------------------------------------------------------------------------------------
+| \------- |
+\-------------------------------------------------------------------------------------------- | |
+`bar` | `shown` | bool | `true` | the strip is there; `reserve` counts only while true | | `bar` |
+`startup` | bool | `false` | login gate is up (clean bar) — written by its logic, read by tests | |
+`panels` | `drawer` | enum
+`none \| volume \| microphone \| network \| bluetooth \| media \| calendar \| weather \| keyboard \| tray \| system \| power \| settings`
+| `none` | which drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` |
+do not disturb | | `notifications` | `centre` | bool | `false` | the notification centre is open | |
+`notifications` | `count` | number | `0` | notifications currently shown or kept (read-only for
+other scenes) | | `toast` | `visible` | number | `0` | how many toasts are on screen | | `overlay` |
+`active` | bool | `false` | the dismissal catcher is up | | `lock` | `locked` | bool | `false` | the
+lock surface wants the session (the compositor's own `lock.held` says whether it has it) | |
+`launcher` | `open` | bool | `false` | the launcher is up | | `launcher` | `query` | text | `""` |
+what has been typed |
 
 IPC examples that other tools (Hyprland binds, health probe, scripts) may rely on:
 
@@ -228,13 +249,17 @@ a `screens: each` scene (§3.2). Type sizes additionally carry the user's `type.
 call passes design sizes:
 
 ```plm
-Capsule(140, 34, shadow: 25%) {               // 140 × 34 design px
-    text "wifi" { size: 12 * ui; color: ink } // content: the caller scales
+group zoom {                                 // the one place the multiplier lives
+    scale: scale                             // per-monitor expression (§3.2)
+    Capsule(140, 34, scale: 1, shadow: 25%) { // design px; the group scales it
+        text "wifi" { size: 12; color: ink }
+    }
 }
 ```
 
-Qt font sizes were integers in QS; `12 * ui` = 13.8 is fine — pleamar takes fractional sizes, and
-rounding them is a defect (it makes 1.15 and 2.0 monitors disagree).
+pleamar takes fractional sizes, but `text`'s `size:` is one literal number: `12 * ui` is parsed as
+`12` and the rest is dropped, so the multiplier belongs to the enclosing `group { scale: … }`. Round
+nothing by hand and keep the factor in that one place, or monitors at scale 1.15 and 2.0 disagree.
 
 ### 3.2 The per-monitor scale model
 
@@ -279,268 +304,203 @@ expression, evaluated when the scene loads.
 
 #### Colours — base and text
 
-| QS token                | palette name | value     | note                                      |
-| ----------------------- | ------------ | --------- | ----------------------------------------- |
-| `colors.background`     | `coal`       | `#000000` | #ff000000, opaque part                    |
-| `colors.surface`        | `veil`       | `53%`     | #88000000 → alpha 136/255 ≈ 53% over coal |
-| `colors.surfaceVariant` | `slate`      | `#242A35` |                                           |
-| `colors.outline`        | `outline`    | `#3B4C5C` |                                           |
-| `colors.text.primary`   | `ink`        | `#CBD6E5` |                                           |
-| `colors.text.secondary` | `ink.dim`    | `#AEB9C8` |                                           |
-| `colors.text.disabled`  | `ink.off`    | `#6B718A` |                                           |
+| QS token | palette name | value | note | | ----------------------- | ------------ | --------- |
+----------------------------------------- | | `colors.background` | `coal` | `#000000` | #ff000000,
+opaque part | | `colors.surface` | `veil` | `53%` | #88000000 → alpha 136/255 ≈ 53% over coal | |
+`colors.surfaceVariant` | `slate` | `#242A35` | | | `colors.outline` | `outline` | `#3B4C5C` | | |
+`colors.text.primary` | `ink` | `#CBD6E5` | | | `colors.text.secondary` | `ink.dim` | `#AEB9C8` | |
+| `colors.text.disabled` | `ink.off` | `#6B718A` | |
 
 #### Colours — veils and shadow
 
-| QS token              | palette name    | value | note                                                                |
-| --------------------- | --------------- | ----- | ------------------------------------------------------------------- |
-| `Theme.surfaceHover`  | `ink.hover`     | `6%`  | ink at 6% (QS Color.withAlpha(textPrimary, 0.06))                   |
-| `Theme.surfaceActive` | `ink.active`    | `10%` | ink at 10%                                                          |
-| `Theme.borderSubtle`  | `ink.subtle`    | `15%` | ink at 15%                                                          |
-| `colors.shadow`       | `shadow`        | `70%` | #B3000000 after Theme.applyOpacity(..., "B3") → alpha 179/255 ≈ 70% |
-| `Theme.overlayWeak`   | `shadow.weak`   | `8%`  | shadow at 8%                                                        |
-| `Theme.overlayStrong` | `shadow.strong` | `18%` | shadow at 18%                                                       |
-| `(new)`               | `shadow.dx`     | `0`   | the usual QS shadow offset 0, 2, 6                                  |
-| `(new)`               | `shadow.dy`     | `2`   | the usual QS shadow offset 0, 2, 6                                  |
-| `(new)`               | `shadow.blur`   | `6`   | the usual QS shadow offset 0, 2, 6                                  |
+| QS token | palette name | value | note | | --------------------- | --------------- | ----- |
+------------------------------------------------------------------- | | `Theme.surfaceHover` |
+`ink.hover` | `6%` | ink at 6% (QS Color.withAlpha(textPrimary, 0.06)) | | `Theme.surfaceActive` |
+`ink.active` | `10%` | ink at 10% | | `Theme.borderSubtle` | `ink.subtle` | `15%` | ink at 15% | |
+`colors.shadow` | `shadow` | `70%` | #B3000000 after Theme.applyOpacity(..., "B3") → alpha 179/255 ≈
+70% | | `Theme.overlayWeak` | `shadow.weak` | `8%` | shadow at 8% | | `Theme.overlayStrong` |
+`shadow.strong` | `18%` | shadow at 18% | | `(new)` | `shadow.dx` | `0` | the usual QS shadow offset
+0, 2, 6 | | `(new)` | `shadow.dy` | `2` | the usual QS shadow offset 0, 2, 6 | | `(new)` |
+`shadow.blur` | `6` | the usual QS shadow offset 0, 2, 6 |
 
 #### Colours — accent and status
 
-| QS token                 | palette name   | value                       | note                                                                         |
-| ------------------------ | -------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| `colors.accent.primary`  | `accent`       | `#006FCC`                   | wallpaper hue-matched at runtime (Theme.accentPrimary); this is the fallback |
-| `Theme.accentHover`      | `accent.hover` | `mix(accent, #ffffff, 20%)` | towards white 20%                                                            |
-| `Theme.accentDarkStrong` | `accent.deep`  | `mix(accent, coal, 80%)`    | towards black 80%                                                            |
-| `colors.onAccent`        | `on.accent`    | `#FFFFFF`                   |                                                                              |
-| `colors.highlight`       | `highlight`    | `#94E1F9`                   |                                                                              |
-| `colors.status.error`    | `warn`         | `#FF6B81`                   | the house word for the error role; QS hue kept                               |
-| `colors.status.warning`  | `amber`        | `#FFB347`                   |                                                                              |
-| `panel.pill.color`       | `pill`         | `#000000`                   |                                                                              |
+| QS token | palette name | value | note | | ------------------------ | -------------- |
+\--------------------------- |
+\---------------------------------------------------------------------------- | |
+`colors.accent.primary` | `accent` | `#006FCC` | wallpaper hue-matched at runtime
+(Theme.accentPrimary); this is the fallback | | `Theme.accentHover` | `accent.hover` |
+`mix(accent, #ffffff, 20%)` | towards white 20% | | `Theme.accentDarkStrong` | `accent.deep` |
+`mix(accent, coal, 80%)` | towards black 80% | | `colors.onAccent` | `on.accent` | `#FFFFFF` | | |
+`colors.highlight` | `highlight` | `#94E1F9` | | | `colors.status.error` | `warn` | `#FF6B81` | the
+house word for the error role; QS hue kept | | `colors.status.warning` | `amber` | `#FFB347` | | |
+`panel.pill.color` | `pill` | `#000000` | |
 
 #### Colours — volume and notifications
 
-| QS token                    | palette name    | value     | note |
-| --------------------------- | --------------- | --------- | ---- |
-| `panel.volume.lowColor`     | `volume.low`    | `#D62E6E` |      |
-| `panel.volume.highColor`    | `volume.high`   | `#0E6B4D` |      |
-| `notifications.background`  | `notify.tone`   | `#000000` |      |
-| `notifications.foreground`  | `notify.ink`    | `#E0E6EF` |      |
-| `notifications.frameColor`  | `notify.frame`  | `#000000` |      |
-| `notifications.accentColor` | `notify.accent` | `#004E8F` |      |
+| QS token | palette name | value | note | | --------------------------- | --------------- |
+--------- | ---- | | `panel.volume.lowColor` | `volume.low` | `#D62E6E` | | |
+`panel.volume.highColor` | `volume.high` | `#0E6B4D` | | | `notifications.background` |
+`notify.tone` | `#000000` | | | `notifications.foreground` | `notify.ink` | `#E0E6EF` | | |
+`notifications.frameColor` | `notify.frame` | `#000000` | | | `notifications.accentColor` |
+`notify.accent` | `#004E8F` | |
 
 #### Colours — lock (greeter)
 
-| QS token                        | palette name        | value     | note                                             |
-| ------------------------------- | ------------------- | --------- | ------------------------------------------------ |
-| `greeter.accentColor`           | `lock.accent`       | `#7FD6FF` |                                                  |
-| `greeter.dangerColor`           | `lock.danger`       | `#FF9B9B` |                                                  |
-| `greeter.textColor`             | `lock.ink`          | `#F2F6FA` |                                                  |
-| `greeter.textMutedColor`        | `lock.ink.dim`      | `#C3D2E0` |                                                  |
-| `greeter.cardColor`             | `lock.card`         | `#0F141C` | #a60f141c → color part; alpha in lock.card.alpha |
-| `greeter.cardColor`             | `lock.card.alpha`   | `65%`     | 0xa6 ≈ 65%                                       |
-| `greeter.widgetColor`           | `lock.widget`       | `#CEFFFF` | #25ceffff → color part                           |
-| `greeter.widgetColor`           | `lock.widget.alpha` | `15%`     | 0x25 ≈ 15%                                       |
-| `greeter.widgetActiveColor`     | `lock.widget.on`    | `50%`     | #80ceffff → 0x80 ≈ 50%                           |
-| `greeter.widgetOutline`         | `lock.edge`         | `#FFFFFF` | #40ffffff → color part                           |
-| `greeter.widgetOutline`         | `lock.edge.alpha`   | `25%`     | #40 ≈ 25%                                        |
-| `greeter.widgetOutlineSeparate` | `lock.edge.soft`    | `13%`     | #20 ≈ 13%                                        |
-| `greeter.separatorColor`        | `lock.seam`         | `#FFFFFF` | #60ffffff → color part                           |
-| `greeter.separatorColor`        | `lock.seam.alpha`   | `38%`     | #60 ≈ 38%                                        |
+| QS token | palette name | value | note | | ------------------------------- | ------------------- |
+--------- | ------------------------------------------------ | | `greeter.accentColor` |
+`lock.accent` | `#7FD6FF` | | | `greeter.dangerColor` | `lock.danger` | `#FF9B9B` | | |
+`greeter.textColor` | `lock.ink` | `#F2F6FA` | | | `greeter.textMutedColor` | `lock.ink.dim` |
+`#C3D2E0` | | | `greeter.cardColor` | `lock.card` | `#0F141C` | #a60f141c → color part; alpha in
+lock.card.alpha | | `greeter.cardColor` | `lock.card.alpha` | `65%` | 0xa6 ≈ 65% | |
+`greeter.widgetColor` | `lock.widget` | `#CEFFFF` | #25ceffff → color part | | `greeter.widgetColor`
+| `lock.widget.alpha` | `15%` | 0x25 ≈ 15% | | `greeter.widgetActiveColor` | `lock.widget.on` |
+`50%` | #80ceffff → 0x80 ≈ 50% | | `greeter.widgetOutline` | `lock.edge` | `#FFFFFF` | #40ffffff →
+color part | | `greeter.widgetOutline` | `lock.edge.alpha` | `25%` | #40 ≈ 25% | |
+`greeter.widgetOutlineSeparate` | `lock.edge.soft` | `13%` | #20 ≈ 13% | | `greeter.separatorColor`
+| `lock.seam` | `#FFFFFF` | #60ffffff → color part | | `greeter.separatorColor` | `lock.seam.alpha`
+| `38%` | #60 ≈ 38% |
 
 #### Shape and spacing
 
-| QS token                   | palette name      | value  | note                    |
-| -------------------------- | ----------------- | ------ | ----------------------- |
-| `shape.cornerRadius`       | `corner`          | `6`    |                         |
-| `shape.cornerRadiusSmall`  | `corner.small`    | `6`    | capsule default         |
-| `shape.cornerRadiusLarge`  | `corner.large`    | `0`    |                         |
-| `panel.overlayRadius`      | `overlay.corner`  | `5`    |                         |
-| `panel.height`             | `bar.height`      | `22`   |                         |
-| `panel.moduleHeight`       | `bar.module`      | `22`   |                         |
-| `panel.sideMargin`         | `bar.side`        | `4`    |                         |
-| `panel.widgetSpacing`      | `bar.gap`         | `4`    |                         |
-| `panel.rowSpacing`         | `bar.row`         | `4`    |                         |
-| `panel.rowSpacingSmall`    | `bar.row.small`   | `2`    |                         |
-| `panel.hotzone.width`      | `bar.hot`         | `16`   |                         |
-| `panel.hotzone.height`     | `bar.hot.height`  | `9`    |                         |
-| `panel.hotzone.rightShift` | `bar.hot.shift`   | `1.15` |                         |
-| `panel.menuYOffset`        | `bar.menu.offset` | `20`   |                         |
-| `panel.seamWidthRatio`     | `bar.seam`        | `0.85` |                         |
-| `panel.seamMinPx`          | `bar.seam.min`    | `8`    |                         |
-| `panel.separatorOpacity`   | `bar.seam.alpha`  | `88%`  | also panel.seam.opacity |
-| `panel.interWidgetRatio`   | `bar.inter`       | `1.35` |                         |
+| QS token | palette name | value | note | | -------------------------- | ----------------- | ------
+| ----------------------- | | `shape.cornerRadius` | `corner` | `6` | | | `shape.cornerRadiusSmall`
+| `corner.small` | `6` | capsule default | | `shape.cornerRadiusLarge` | `corner.large` | `0` | | |
+`panel.overlayRadius` | `overlay.corner` | `5` | | | `panel.height` | `bar.height` | `22` | | |
+`panel.moduleHeight` | `bar.module` | `22` | | | `panel.sideMargin` | `bar.side` | `4` | | |
+`panel.widgetSpacing` | `bar.gap` | `4` | | | `panel.rowSpacing` | `bar.row` | `4` | | |
+`panel.rowSpacingSmall` | `bar.row.small` | `2` | | | `panel.hotzone.width` | `bar.hot` | `16` | | |
+`panel.hotzone.height` | `bar.hot.height` | `9` | | | `panel.hotzone.rightShift` | `bar.hot.shift` |
+`1.15` | | | `panel.menuYOffset` | `bar.menu.offset` | `20` | | | `panel.seamWidthRatio` |
+`bar.seam` | `0.85` | | | `panel.seamMinPx` | `bar.seam.min` | `8` | | | `panel.separatorOpacity` |
+`bar.seam.alpha` | `88%` | also panel.seam.opacity | | `panel.interWidgetRatio` | `bar.inter` |
+`1.35` | |
 
 #### Icons, pills, capsule
 
-| QS token                         | palette name        | value  | note                                                                          |
-| -------------------------------- | ------------------- | ------ | ----------------------------------------------------------------------------- |
-| `panel.icons.iconSize`           | `icon.size`         | `24`   |                                                                               |
-| `panel.icons.iconSizeSmall`      | `icon.small`        | `16`   |                                                                               |
-| `ui.iconSizeLarge`               | `icon.large`        | `28`   |                                                                               |
-| `ui.control.height`              | `control.height`    | `48`   |                                                                               |
-| `ui.visibilityEpsilon`           | `vis.epsilon`       | `0.01` |                                                                               |
-| `panel.pill.height`              | `pill.height`       | `28`   |                                                                               |
-| `panel.pill.iconSize`            | `pill.icon`         | `22`   |                                                                               |
-| `panel.pill.paddingH`            | `pill.pad`          | `8`    |                                                                               |
-| `ui.spacing.xsmall`              | `capsule.pad`       | `4`    | CapsuleMetrics.padding: max(2, round(4 * scale))                              |
-| `CapsuleMetrics verticalPadding` | `capsule.pad.y`     | `2`    | max(2, round(padding * 0.6)) → 2                                              |
-| `CapsuleMetrics height`          | `capsule.height`    | `18`   | inner (round(fontSizeSmall * time.font.scale) = 10) + 2 * pad → 18            |
-| `CapsuleButton.iconSpacing`      | `capsule.gap`       | `2`    | panel.rowSpacingSmall                                                         |
-| `panel.capsule.borderWidth`      | `capsule.edge`      | `0`    | 0 in the shipped theme                                                        |
-| `panel.capsule.borderColor`      | `capsule.edge.tone` | `coal` | the shipped override is #000000                                               |
-| `panel.capsule.borderOpacity`    | `capsule.edge.soft` | `8%`   | the hairline alpha; invisible in the shipped theme because `borderWidth` is 0 |
+| QS token | palette name | value | note | | -------------------------------- | -------------------
+| \------ | ----------------------------------------------------------------------------- | |
+`panel.icons.iconSize` | `icon.size` | `24` | | | `panel.icons.iconSizeSmall` | `icon.small` | `16`
+| | | `ui.iconSizeLarge` | `icon.large` | `28` | | | `ui.control.height` | `control.height` | `48` |
+| | `ui.visibilityEpsilon` | `vis.epsilon` | `0.01` | | | `panel.pill.height` | `pill.height` | `28`
+| | | `panel.pill.iconSize` | `pill.icon` | `22` | | | `panel.pill.paddingH` | `pill.pad` | `8` | |
+| `ui.spacing.xsmall` | `capsule.pad` | `4` | CapsuleMetrics.padding: max(2, round(4 * scale)) | |
+`CapsuleMetrics verticalPadding` | `capsule.pad.y` | `2` | max(2, round(padding * 0.6)) → 2 | |
+`CapsuleMetrics height` | `capsule.height` | `18` | inner (round(fontSizeSmall * time.font.scale) =
+10\) + 2 * pad → 18 | | `CapsuleButton.iconSpacing` | `capsule.gap` | `2` | panel.rowSpacingSmall | |
+`panel.capsule.borderWidth` | `capsule.edge` | `0` | 0 in the shipped theme | |
+`panel.capsule.borderColor` | `capsule.edge.tone` | `coal` | the shipped override is #000000 | |
+`panel.capsule.borderOpacity` | `capsule.edge.soft` | `8%` | the hairline alpha; invisible in the
+shipped theme because `borderWidth` is 0 |
 
 #### Tooltip, menu, side panel
 
-| QS token                             | palette name        | value  | note |
-| ------------------------------------ | ------------------- | ------ | ---- |
-| `tooltip.delayMs`                    | `tooltip.delay`     | `150`  |      |
-| `tooltip.minSize`                    | `tooltip.min`       | `20`   |      |
-| `tooltip.margin`                     | `tooltip.margin`    | `12`   |      |
-| `tooltip.padding`                    | `tooltip.pad`       | `8`    |      |
-| `tooltip.borderWidth`                | `tooltip.edge`      | `1`    |      |
-| `tooltip.radius`                     | `tooltip.corner`    | `2`    |      |
-| `tooltip.fontPx`                     | `tooltip.type`      | `12`   |      |
-| `tooltip.smallScaleRatio`            | `tooltip.scale`     | `0.71` |      |
-| `panel.menu.width`                   | `menu.width`        | `180`  |      |
-| `panel.menu.submenuWidth`            | `menu.width.sub`    | `180`  |      |
-| `panel.menu.padding`                 | `menu.pad`          | `4`    |      |
-| `panel.menu.itemSpacing`             | `menu.item.gap`     | `2`    |      |
-| `panel.menu.itemHeight`              | `menu.item.height`  | `26`   |      |
-| `panel.menu.itemRadius`              | `menu.item.corner`  | `0`    |      |
-| `panel.menu.radius`                  | `menu.corner`       | `0`    |      |
-| `panel.menu.heightExtra`             | `menu.extra`        | `12`   |      |
-| `panel.menu.anchorYOffset`           | `menu.offset`       | `4`    |      |
-| `panel.menu.submenuGap`              | `menu.sub.gap`      | `12`   |      |
-| `panel.menu.chevronSize`             | `menu.chevron`      | `15`   |      |
-| `panel.menu.iconSize`                | `menu.icon`         | `16`   |      |
-| `panel.menu.itemFontScale`           | `menu.type`         | `0.9`  |      |
-| `sidePanel.spacing`                  | `side.pad`          | `6`    |      |
-| `sidePanel.spacingTight`             | `side.pad.tight`    | `3`    |      |
-| `sidePanel.spacingSmall`             | `side.pad.small`    | `2`    |      |
-| `sidePanel.spacingMedium`            | `side.pad.medium`   | `4`    |      |
-| `sidePanel.cornerRadius`             | `side.corner`       | `0`    |      |
-| `sidePanel.innerRadius`              | `side.corner.inner` | `0`    |      |
-| `sidePanel.buttonHoverRadiusFactor`  | `side.corner.hover` | `0.5`  |      |
-| `sidePanel.selector.minWidth`        | `side.selector`     | `120`  |      |
-| `sidePanel.albumArtSize`             | `side.art`          | `200`  |      |
-| `sidePanel.popup.glassOpacity`       | `side.glass`        | `75%`  |      |
-| `sidePanel.popup.glassBorderOpacity` | `side.edge`         | `10%`  |      |
-| `sidePanel.popup.outerMargin`        | `side.margin`       | `4`    |      |
+| QS token | palette name | value | note | | ------------------------------------ |
+------------------- | ------ | ---- | | `tooltip.delayMs` | `tooltip.delay` | `150` | | |
+`tooltip.minSize` | `tooltip.min` | `20` | | | `tooltip.margin` | `tooltip.margin` | `12` | | |
+`tooltip.padding` | `tooltip.pad` | `8` | | | `tooltip.borderWidth` | `tooltip.edge` | `1` | | |
+`tooltip.radius` | `tooltip.corner` | `2` | | | `tooltip.fontPx` | `tooltip.type` | `12` | | |
+`tooltip.smallScaleRatio` | `tooltip.scale` | `0.71` | | | `panel.menu.width` | `menu.width` | `180`
+| | | `panel.menu.submenuWidth` | `menu.width.sub` | `180` | | | `panel.menu.padding` | `menu.pad` |
+`4` | | | `panel.menu.itemSpacing` | `menu.item.gap` | `2` | | | `panel.menu.itemHeight` |
+`menu.item.height` | `26` | | | `panel.menu.itemRadius` | `menu.item.corner` | `0` | | |
+`panel.menu.radius` | `menu.corner` | `0` | | | `panel.menu.heightExtra` | `menu.extra` | `12` | | |
+`panel.menu.anchorYOffset` | `menu.offset` | `4` | | | `panel.menu.submenuGap` | `menu.sub.gap` |
+`12` | | | `panel.menu.chevronSize` | `menu.chevron` | `15` | | | `panel.menu.iconSize` |
+`menu.icon` | `16` | | | `panel.menu.itemFontScale` | `menu.type` | `0.9` | | | `sidePanel.spacing`
+| `side.pad` | `6` | | | `sidePanel.spacingTight` | `side.pad.tight` | `3` | | |
+`sidePanel.spacingSmall` | `side.pad.small` | `2` | | | `sidePanel.spacingMedium` |
+`side.pad.medium` | `4` | | | `sidePanel.cornerRadius` | `side.corner` | `0` | | |
+`sidePanel.innerRadius` | `side.corner.inner` | `0` | | | `sidePanel.buttonHoverRadiusFactor` |
+`side.corner.hover` | `0.5` | | | `sidePanel.selector.minWidth` | `side.selector` | `120` | | |
+`sidePanel.albumArtSize` | `side.art` | `200` | | | `sidePanel.popup.glassOpacity` | `side.glass` |
+`75%` | | | `sidePanel.popup.glassBorderOpacity` | `side.edge` | `10%` | | |
+`sidePanel.popup.outerMargin` | `side.margin` | `4` | |
 
 #### Workspaces, keyboard, calendar, network
 
-| QS token                       | palette name        | value  | note |
-| ------------------------------ | ------------------- | ------ | ---- |
-| `ws.icon.scale`                | `ws.scale`          | `1.4`  |      |
-| `ws.icon.detachedScale`        | `ws.scale.detached` | `1.15` |      |
-| `ws.icon.spacing`              | `ws.gap`            | `1`    |      |
-| `ws.icon.svgScale`             | `ws.svg`            | `0.52` |      |
-| `ws.icon.innerPadding`         | `ws.pad`            | `1`    |      |
-| `ws.label.leftPadding.normal`  | `ws.label`          | `6`    |      |
-| `keyboard.capsule.minLabelGap` | `keyboard.min`      | `3`    |      |
-| `panel.netCluster.spacing`     | `network.cluster`   | `2`    |      |
-| `calendar.rowSpacing`          | `calendar.row`      | `2`    |      |
-| `calendar.cellSpacing`         | `calendar.cell`     | `2`    |      |
-| `calendar.sideMargin`          | `calendar.side`     | `2`    |      |
-| `calendar.popupMargin`         | `calendar.popup`    | `2`    |      |
+| QS token | palette name | value | note | | ------------------------------ | ------------------- |
+------ | ---- | | `ws.icon.scale` | `ws.scale` | `1.4` | | | `ws.icon.detachedScale` |
+`ws.scale.detached` | `1.15` | | | `ws.icon.spacing` | `ws.gap` | `1` | | | `ws.icon.svgScale` |
+`ws.svg` | `0.52` | | | `ws.icon.innerPadding` | `ws.pad` | `1` | | | `ws.label.leftPadding.normal`
+| `ws.label` | `6` | | | `keyboard.capsule.minLabelGap` | `keyboard.min` | `3` | | |
+`panel.netCluster.spacing` | `network.cluster` | `2` | | | `calendar.rowSpacing` | `calendar.row` |
+`2` | | | `calendar.cellSpacing` | `calendar.cell` | `2` | | | `calendar.sideMargin` |
+`calendar.side` | `2` | | | `calendar.popupMargin` | `calendar.popup` | `2` | |
 
 #### Media, spectrum, VPN, weather
 
-| QS token                             | palette name           | value  | note |
-| ------------------------------------ | ---------------------- | ------ | ---- |
-| `media.hover.openDelayMs`            | `media.hover.delay`    | `320`  |      |
-| `media.hover.stillThresholdMs`       | `media.hover.still`    | `180`  |      |
-| `media.artDebounceMs`                | `media.art.debounce`   | `60`   |      |
-| `media.accent.retryMs`               | `media.accent.retry`   | `120`  |      |
-| `media.accent.retryMax`              | `media.accent.tries`   | `5`    |      |
-| `media.icon.panel.overlayPaddingPx`  | `media.panel.pad`      | `12`   |      |
-| `media.icon.panel.overlayBgOpacity`  | `media.panel.veil`     | `65%`  |      |
-| `media.icon.panel.overlayWidthShare` | `media.panel.share`    | `0.45` |      |
-| `media.albumArt.fallbackOpacity`     | `media.art.fade`       | `40%`  |      |
-| `spectrum.peakDecayIntervalMs`       | `spectrum.decay`       | `50`   |      |
-| `spectrum.barAnimMs`                 | `spectrum.anim`        | `100`  |      |
-| `spectrum.barGap`                    | `spectrum.gap`         | `2`    |      |
-| `spectrum.minBarWidth`               | `spectrum.bar.min`     | `2`    |      |
-| `spectrum.peakOpacity`               | `spectrum.peak.alpha`  | `70%`  |      |
-| `spectrum.fillOpacity`               | `spectrum.fill.alpha`  | `35%`  |      |
-| `spectrum.peakThickness`             | `spectrum.peak.height` | `2`    |      |
-| `vpn.accent.saturateBoost`           | `vpn.saturate`         | `0.12` |      |
-| `vpn.desaturateAmount`               | `vpn.desaturate`       | `0.45` |      |
-| `weather.headerScale`                | `weather.header`       | `0.75` |      |
-| `weather.centerOffset`               | `weather.offset`       | `-2`   |      |
-| `weather.httpTimeoutMs`              | `weather.timeout`      | `8000` |      |
+| QS token | palette name | value | note | | ------------------------------------ |
+---------------------- | ------ | ---- | | `media.hover.openDelayMs` | `media.hover.delay` | `320` |
+| | `media.hover.stillThresholdMs` | `media.hover.still` | `180` | | | `media.artDebounceMs` |
+`media.art.debounce` | `60` | | | `media.accent.retryMs` | `media.accent.retry` | `120` | | |
+`media.accent.retryMax` | `media.accent.tries` | `5` | | | `media.icon.panel.overlayPaddingPx` |
+`media.panel.pad` | `12` | | | `media.icon.panel.overlayBgOpacity` | `media.panel.veil` | `65%` | |
+| `media.icon.panel.overlayWidthShare` | `media.panel.share` | `0.45` | | |
+`media.albumArt.fallbackOpacity` | `media.art.fade` | `40%` | | | `spectrum.peakDecayIntervalMs` |
+`spectrum.decay` | `50` | | | `spectrum.barAnimMs` | `spectrum.anim` | `100` | | | `spectrum.barGap`
+| `spectrum.gap` | `2` | | | `spectrum.minBarWidth` | `spectrum.bar.min` | `2` | | |
+`spectrum.peakOpacity` | `spectrum.peak.alpha` | `70%` | | | `spectrum.fillOpacity` |
+`spectrum.fill.alpha` | `35%` | | | `spectrum.peakThickness` | `spectrum.peak.height` | `2` | | |
+`vpn.accent.saturateBoost` | `vpn.saturate` | `0.12` | | | `vpn.desaturateAmount` | `vpn.desaturate`
+| `0.45` | | | `weather.headerScale` | `weather.header` | `0.75` | | | `weather.centerOffset` |
+`weather.offset` | `-2` | | | `weather.httpTimeoutMs` | `weather.timeout` | `8000` | |
 
 #### Typography
 
-| QS token                             | palette name     | value | note                                                         |
-| ------------------------------------ | ---------------- | ----- | ------------------------------------------------------------ |
-| `Theme.fontSizeHeader`               | `type.header`    | `32`  | 32 × fontSizeMultiplier                                      |
-| `Theme.fontSizeBody`                 | `type.body`      | `16`  | 16 × fontSizeMultiplier                                      |
-| `Theme.fontSizeSmall`                | `type.small`     | `14`  | 14 × fontSizeMultiplier                                      |
-| `Theme.fontSizeCaption`              | `type.caption`   | `12`  | 12 × fontSizeMultiplier                                      |
-| `Settings.json fontSizeMultiplier`   | `type.scale`     | `1.0` | runtime value; scene reads it and multiplies the sizes above |
-| `panel.computedFontScale`            | `type.inline`    | `0.6` | 0.6, clamped 0.1–2.0                                         |
-| `Font weight`                        | `weight.regular` | `400` |                                                              |
-| `Font.Medium / Theme.timeFontWeight` | `weight.medium`  | `500` |                                                              |
-| `Font.Bold`                          | `weight.bold`    | `600` |                                                              |
-| `time.font.scale`                    | `time.scale`     | `0.7` |                                                              |
-| `time.font.weight`                   | `time.weight`    | `500` |                                                              |
-| `time.text.color`                    | `time.tone`      | `ink` |                                                              |
+| QS token | palette name | value | note | | ------------------------------------ | ----------------
+| ----- | ------------------------------------------------------------ | | `Theme.fontSizeHeader` |
+`type.header` | `32` | 32 × fontSizeMultiplier | | `Theme.fontSizeBody` | `type.body` | `16` | 16 ×
+fontSizeMultiplier | | `Theme.fontSizeSmall` | `type.small` | `14` | 14 × fontSizeMultiplier | |
+`Theme.fontSizeCaption` | `type.caption` | `12` | 12 × fontSizeMultiplier | |
+`Settings.json fontSizeMultiplier` | `type.scale` | `1.0` | runtime value; scene reads it and
+multiplies the sizes above | | `panel.computedFontScale` | `type.inline` | `0.6` | 0.6, clamped
+0.1–2.0 | | `Font weight` | `weight.regular` | `400` | | | `Font.Medium / Theme.timeFontWeight` |
+`weight.medium` | `500` | | | `Font.Bold` | `weight.bold` | `600` | | | `time.font.scale` |
+`time.scale` | `0.7` | | | `time.font.weight` | `time.weight` | `500` | | | `time.text.color` |
+`time.tone` | `ink` | |
 
 #### Timers
 
-| QS token                             | palette name          | value      | note                    |
-| ------------------------------------ | --------------------- | ---------- | ----------------------- |
-| `timers.timeTickMs`                  | `time.tick`           | `1000`     |                         |
-| `timers.wsRefreshDebounceMs`         | `ws.debounce`         | `120`      |                         |
-| `timers.genericTickMs`               | `tick.generic`        | `2000`     |                         |
-| `timers.musicPositionPollMs`         | `music.position`      | `1000`     |                         |
-| `timers.musicPlayersPollMs`          | `music.players`       | `5000`     |                         |
-| `timers.musicMetaRecalcDebounceMs`   | `music.meta`          | `80`       |                         |
-| `media.mpd.flags.fallbackMs`         | `mpd.flags`           | `2500`     |                         |
-| `network.vpnPollMs`                  | `vpn.poll`            | `2500`     |                         |
-| `network.restartBackoffMs`           | `network.backoff`     | `1500`     |                         |
-| `network.linkPollMs`                 | `network.link`        | `4000`     |                         |
-| `ui.anim.quickMs`                    | `anim.quick`          | `120`      | also panel.hover.fadeMs |
-| `ui.anim.rotateMs`                   | `anim.rotate`         | `160`      |                         |
-| `ui.spinner.durationMs`              | `anim.spinner`        | `1000`     |                         |
-| `panel.animations.fastMs`            | `anim.fast`           | `150`      |                         |
-| `panel.animations.stdMs`             | `anim.std`            | `200`      |                         |
-| `panel.animations.overlayMs`         | `anim.overlay`        | `180`      |                         |
-| `panel.animations.slideMs`           | `anim.slide`          | `380`      |                         |
-| `greeter.animFastMs`                 | `anim.greeter.fast`   | `150`      |                         |
-| `greeter.animMediumMs`               | `anim.greeter`        | `250`      |                         |
-| `greeter.animSlowMs`                 | `anim.greeter.slow`   | `500`      |                         |
-| `greeter.lockAnimationMs`            | `anim.lock`           | `500`      |                         |
-| `panel.pill.showDelayMs`             | `pill.show`           | `500`      |                         |
-| `panel.pill.autoHidePauseMs`         | `pill.pause`          | `2500`     |                         |
-| `panel.tray.longHoldMs`              | `tray.long`           | `2500`     |                         |
-| `panel.tray.shortHoldMs`             | `tray.short`          | `1500`     |                         |
-| `panel.tray.guardMs`                 | `tray.guard`          | `120`      |                         |
-| `panel.tray.overlayDismissDelayMs`   | `tray.dismiss`        | `5000`     |                         |
-| `panel.tray.inlinePadding`           | `tray.pad`            | `4`        |                         |
-| `panel.volume.fullHideMs`            | `volume.hide`         | `800`      |                         |
-| `panel.volume.mutedHideMs`           | `volume.hide.muted`   | `180000`   |                         |
-| `panel.volume.offReminderCooldownMs` | `volume.off.cooldown` | `86400000` |                         |
-| `volume.icon.offThreshold`           | `volume.icons.off`    | `0`        |                         |
-| `volume.icon.downThreshold`          | `volume.icons.down`   | `30`       |                         |
-| `volume.icon.upThreshold`            | `volume.icons.up`     | `50`       |                         |
-| `panel.slideTimerTickMs`             | `tick.bar`            | `16`       |                         |
+| QS token | palette name | value | note | | ------------------------------------ |
+--------------------- | ---------- | ----------------------- | | `timers.timeTickMs` | `time.tick` |
+`1000` | | | `timers.wsRefreshDebounceMs` | `ws.debounce` | `120` | | | `timers.genericTickMs` |
+`tick.generic` | `2000` | | | `timers.musicPositionPollMs` | `music.position` | `1000` | | |
+`timers.musicPlayersPollMs` | `music.players` | `5000` | | | `timers.musicMetaRecalcDebounceMs` |
+`music.meta` | `80` | | | `media.mpd.flags.fallbackMs` | `mpd.flags` | `2500` | | |
+`network.vpnPollMs` | `vpn.poll` | `2500` | | | `network.restartBackoffMs` | `network.backoff` |
+`1500` | | | `network.linkPollMs` | `network.link` | `4000` | | | `ui.anim.quickMs` | `anim.quick` |
+`120` | also panel.hover.fadeMs | | `ui.anim.rotateMs` | `anim.rotate` | `160` | | |
+`ui.spinner.durationMs` | `anim.spinner` | `1000` | | | `panel.animations.fastMs` | `anim.fast` |
+`150` | | | `panel.animations.stdMs` | `anim.std` | `200` | | | `panel.animations.overlayMs` |
+`anim.overlay` | `180` | | | `panel.animations.slideMs` | `anim.slide` | `380` | | |
+`greeter.animFastMs` | `anim.greeter.fast` | `150` | | | `greeter.animMediumMs` | `anim.greeter` |
+`250` | | | `greeter.animSlowMs` | `anim.greeter.slow` | `500` | | | `greeter.lockAnimationMs` |
+`anim.lock` | `500` | | | `panel.pill.showDelayMs` | `pill.show` | `500` | | |
+`panel.pill.autoHidePauseMs` | `pill.pause` | `2500` | | | `panel.tray.longHoldMs` | `tray.long` |
+`2500` | | | `panel.tray.shortHoldMs` | `tray.short` | `1500` | | | `panel.tray.guardMs` |
+`tray.guard` | `120` | | | `panel.tray.overlayDismissDelayMs` | `tray.dismiss` | `5000` | | |
+`panel.tray.inlinePadding` | `tray.pad` | `4` | | | `panel.volume.fullHideMs` | `volume.hide` |
+`800` | | | `panel.volume.mutedHideMs` | `volume.hide.muted` | `180000` | | |
+`panel.volume.offReminderCooldownMs` | `volume.off.cooldown` | `86400000` | | |
+`volume.icon.offThreshold` | `volume.icons.off` | `0` | | | `volume.icon.downThreshold` |
+`volume.icons.down` | `30` | | | `volume.icon.upThreshold` | `volume.icons.up` | `50` | | |
+`panel.slideTimerTickMs` | `tick.bar` | `16` | |
 
 #### Scale model (new, not a QS token)
 
-| QS token      | palette name    | value  | note                                                                                |
-| ------------- | --------------- | ------ | ----------------------------------------------------------------------------------- |
-| `panel.scale` | `ui`            | `1.15` | × Settings.json fontSizeMultiplier (default 1.0), clamped 0.25–2.5 in QS            |
-| `(new)`       | `design.width`  | `1920` | logical width of the reference monitor (DP-2 nx2160@240 at scale 2 → 1920×1080)     |
-| `(new)`       | `design.height` | `1080` | logical height of the reference monitor                                             |
-| `(new)`       | `fit.min`       | `0.8`  | lower clamp for the per-monitor scale; replaces Settings.json monitorScaleOverrides |
-| `(new)`       | `fit.max`       | `1.5`  | upper clamp for the per-monitor scale                                               |
+| QS token | palette name | value | note | | ------------- | --------------- | ------ |
+\----------------------------------------------------------------------------------- | |
+`panel.scale` | `ui` | `1.15` | × Settings.json fontSizeMultiplier (default 1.0), clamped 0.25–2.5
+in QS | | `(new)` | `design.width` | `1920` | logical width of the reference monitor (DP-2
+nx2160@240 at scale 2 → 1920×1080) | | `(new)` | `design.height` | `1080` | logical height of the
+reference monitor | | `(new)` | `fit.min` | `0.8` | lower clamp for the per-monitor scale; replaces
+Settings.json monitorScaleOverrides | | `(new)` | `fit.max` | `1.5` | upper clamp for the
+per-monitor scale |
 
 #### Springs
 
-| palette name | stiffness, damping | ≈ arrival |
-| ------------ | ------------------ | --------- |
+| palette name | stiffness, damping | ≈ arrival | | ------------ | ------------------ | --------- |
 
 ### 3.4 Colour use, in practice
 
@@ -575,17 +535,18 @@ The capsule is the one background every widget uses; it is the pleamar form of
 draws no zone and emits no event: the widget that uses it owns the interactive zone (and its
 `label:`/`role:`/`agent:` policy, §8). The contract in QS terms:
 
-| QS (`WidgetCapsule.qml`)               | pleamar                                                                                                   |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `color` (`WidgetBg`/`Theme.surface`)   | `fill` + `alpha` (defaults `slate` / `veil`)                                                              |
-| corner radii, per-corner               | `radius` (one corner; a triangle overlay is not ported)                                                   |
-| `horizontalPadding`, `verticalPadding` | `pad`, `pad_y`                                                                                            |
-| content area, vertically centred       | the `content` row slot: `at: pad * scale, pad_y * scale`, `size: width - 2 * pad`, `align: center`, `gap` |
-| `OverlayFrame` border                  | `edge` + `edge_tone` + `edge_alpha` (body `border`)                                                       |
-| hover tracking (`hovered`, cursor)     | the consumer's own zone (`hit.hover`, `cursor: pointer`)                                                  |
-| `uniformCapsuleHeight`                 | `h: capsule.height` default; the caller passes the design height the widget wants                         |
-| per-monitor `Theme.scale(screen)`      | `scale` parameter, default `ui`, or `scaleNow` §3.2                                                       |
-| `implicitWidth` from content           | not ported: `w` is required and the caller measures its content (text publishes `measure:`)               |
+| QS (`WidgetCapsule.qml`) | pleamar | | -------------------------------------- |
+\---------------------------------------------------------------------------------------------------------
+| | `color` (`WidgetBg`/`Theme.surface`) | `fill` + `alpha` (defaults `slate` / `veil`) | | corner
+radii, per-corner | `radius` (one corner; a triangle overlay is not ported) | | `horizontalPadding`,
+`verticalPadding` | `pad`, `pad_y` | | content area, vertically centred | the `content` row slot:
+`at: pad * scale, pad_y * scale`, `size: width - 2 * pad`, `align: center`, `gap` | | `OverlayFrame`
+border | `edge` + `edge_tone` + `edge_alpha` (body `border`) | | hover tracking (`hovered`, cursor)
+| the consumer's own zone (`hit.hover`, `cursor: pointer`) | | `uniformCapsuleHeight` |
+`h: capsule.height` default; the caller passes the design height the widget wants | | per-monitor
+`Theme.scale(screen)` | `scale` parameter, default `ui`, or `scaleNow` §3.2 | | `implicitWidth` from
+content | not ported: `w` is required and the caller measures its content (text publishes
+`measure:`) |
 
 Signature (frozen; `lib/capsule.plm` as written):
 
@@ -607,19 +568,19 @@ component Capsule(w: number,
                   scale: number = ui)
 ```
 
-| parameter                         | meaning                                      | default               | QS source                                                     |
-| --------------------------------- | -------------------------------------------- | --------------------- | ------------------------------------------------------------- |
-| `w`                               | design width; the copy is `w * scale` wide   | required              | —                                                             |
-| `h`                               | design height                                | `capsule.height` = 18 | `uniformCapsuleHeight` (inner 10 + 2 × pad)                   |
-| `fill`                            | box colour                                   | `slate`               | `Theme.surfaceVariant` / `WidgetBg` fallback                  |
-| `alpha`                           | how much of `fill` covers                    | `veil` = 53%          | `Theme.surface` #88000000                                     |
-| `pad`, `pad_y`                    | room around the content                      | 4 / 2                 | `CapsuleMetrics.padding`, vertical ×0.6                       |
-| `gap`                             | gap between several children in the slot     | 2                     | `CapsuleButton.iconSpacing`                                   |
-| `radius`                          | corner                                       | 6                     | `shape.cornerRadiusSmall`                                     |
-| `rim`                             | 0–1, light inside the silhouette             | 0                     | not in QS; the pleamar rim                                    |
-| `edge`, `edge_tone`, `edge_alpha` | hairline outline                             | 0 / `coal` / 8%       | `panel.capsule.borderWidth` / `borderColor` / `borderOpacity` |
-| `shadow`, `shadow_tone`           | 0–1 alpha of `0, 2, 6` drop shadow           | 0 / `coal`            | QS cards' shadow                                              |
-| `scale`                           | per-copy multiplier, applied to every length | `ui`                  | `Theme.scale(screen)`                                         |
+| parameter | meaning | default | QS source | | --------------------------------- |
+\-------------------------------------------- | --------------------- |
+------------------------------------------------------------- | | `w` | design width; the copy is
+`w * scale` wide | required | — | | `h` | design height | `capsule.height` = 18 |
+`uniformCapsuleHeight` (inner 10 + 2 × pad) | | `fill` | box colour | `slate` |
+`Theme.surfaceVariant` / `WidgetBg` fallback | | `alpha` | how much of `fill` covers | `veil` = 53%
+| `Theme.surface` #88000000 | | `pad`, `pad_y` | room around the content | 4 / 2 |
+`CapsuleMetrics.padding`, vertical ×0.6 | | `gap` | gap between several children in the slot | 2 |
+`CapsuleButton.iconSpacing` | | `radius` | corner | 6 | `shape.cornerRadiusSmall` | | `rim` | 0–1,
+light inside the silhouette | 0 | not in QS; the pleamar rim | | `edge`, `edge_tone`, `edge_alpha` |
+hairline outline | 0 / `coal` / 8% | `panel.capsule.borderWidth` / `borderColor` / `borderOpacity` |
+| `shadow`, `shadow_tone` | 0–1 alpha of `0, 2, 6` drop shadow | 0 / `coal` | QS cards' shadow | |
+`scale` | per-copy multiplier, applied to every length | `ui` | `Theme.scale(screen)` |
 
 Behaviour and rules:
 
@@ -648,7 +609,7 @@ import "../../lib/palette.plm"
 import "../../lib/capsule.plm"
 
 scene Clock {
-    surface { size: full, 48 * ui; anchor: bottom; screens: each }
+    surface { size: full, 48; anchor: bottom; screens: each } // size/reserve are literals
     permissions { services: "clock" }
     service clock { time: text = "--:--"; date: text }
 
@@ -675,10 +636,11 @@ Two traps the example avoids, both compiler behaviour in 0.4.11:
   `Capsule(…) { children }` makes the 0.4.11 compiler overflow its stack
   (`fatal runtime error: stack overflow`). A wrapper component must declare the content it wraps, or
   the call site uses `Capsule(…) { … }` directly. This was verified with `--check` on both forms.
-- **`text`'s `size:` and `weight:` and the body's `rim:` need a literal first.** `size: type.small`
-  and `weight: weight.medium` are rejected (`expected a number here`); `size: 1 * type.small` and
-  `weight: 1 * weight.medium` are accepted. All other numeric properties take bare names
-  (`size: corner, 2` on a box is fine).
+- **`text`'s `size:`/`weight:`, `body`'s `rim:` and a surface's `size:`/`reserve:` take one literal
+  number; anything after it is ignored.** `size: 1 * type.small` compiles and draws at 1 px,
+  `12 * ui` draws at 12. Scale by wrapping what draws in `group { scale: S }` and passing
+  `Capsule(…, scale: 1)` inside it. Expression properties (`at`, `from`, a box/zone `size`, `fill`
+  alpha, `content`, `step`, an `anchor` fact) are unaffected.
 
 ## 5. Menu and icon APIs (frozen, `lib/menu.plm` / `lib/icons.plm` not written yet)
 
@@ -701,9 +663,8 @@ component Icon(label: text, icon: image, press: event, value: number = -1, depth
 ```
 
 - Both draw one row: `width × menu.item.height` design px, `corner: menu.item.corner`, label at
-  `menu.pad + depth * menu.sub.gap`, size `type.small * menu.type` (literal first:
-  `1 * type.small * menu.type`), one line, ellipsis. `Icon` puts the icon (`menu.icon` square)
-  before the label.
+  `menu.pad + depth * menu.sub.gap`, size `type.small` (a literal), one line, ellipsis. Rows scale
+  through the enclosing `group`, so `Icon` puts the icon (`menu.icon` square) before the label.
 - Hover wash under the pointer: `mix(slate, ink, 0.2 * hit.hover)`; pressed adds `hit.pressed`. The
   zone is inside the component (`role: item`, `label:` from the parameter, `selected: checked`,
   `active: enabled`) and the press **emits the event passed in**, with the row's `value` as payload:
@@ -842,14 +803,17 @@ end
 
 ### 6.2 Common keys (every scene that has them uses these names and clamps)
 
-| key             | type             | default     | clamp          | meaning                                                                                                                |
-| --------------- | ---------------- | ----------- | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `scale`         | number           | 1.0         | 0.5 – 2.0      | user multiplier applied on top of `ui` and the per-monitor fit                                                         |
-| `fontScale`     | number           | 1.0         | 0.5 – 2.0      | multiplies `type.scale` (the QS `fontSizeMultiplier`)                                                                  |
-| `fontFamily`    | text             | `"Iosevka"` | non-empty      | written into `family:` until pleamar gets string lets                                                                  |
-| `animations`    | bool             | true        | —              | false = settle springs at once (QS `animationsEnabled`; `--reduced-motion` does this too)                              |
-| `reducedMotion` | bool             | false       | —              | the QS Settings.json name for the same intent; `animations` is the pleamar name, keep one per scene and document which |
-| `monitorScale`  | array of numbers | `[]`        | each 0.5 – 2.5 | optional per-monitor override indexed by `screen.index`; only for scenes that declare a per-monitor model              |
+| key | type | default | clamp | meaning | | --------------- | ---------------- | ----------- |
+\-------------- |
+\----------------------------------------------------------------------------------------------------------------------
+| | `scale` | number | 1.0 | 0.5 – 2.0 | user multiplier applied on top of `ui` and the per-monitor
+fit | | `fontScale` | number | 1.0 | 0.5 – 2.0 | multiplies `type.scale` (the QS
+`fontSizeMultiplier`) | | `fontFamily` | text | `"Iosevka"` | non-empty | written into `family:`
+until pleamar gets string lets | | `animations` | bool | true | — | false = settle springs at once
+(QS `animationsEnabled`; `--reduced-motion` does this too) | | `reducedMotion` | bool | false | — |
+the QS Settings.json name for the same intent; `animations` is the pleamar name, keep one per scene
+and document which | | `monitorScale` | array of numbers | `[]` | each 0.5 – 2.5 | optional
+per-monitor override indexed by `screen.index`; only for scenes that declare a per-monitor model |
 
 Rules that make these safe:
 
@@ -865,25 +829,23 @@ Rules that make these safe:
 
 ### 6.3 Per-scene keys (the keys other tools may rely on)
 
-| scene           | key               | type          | default              | clamp                    | meaning                                |
-| --------------- | ----------------- | ------------- | -------------------- | ------------------------ | -------------------------------------- |
-| `bar`           | `edge`            | text          | `"bottom"`           | `top`/`bottom`           | the strip's anchor                     |
-| `bar`           | `height`          | number        | 22                   | 16 – 64                  | strip height, design px                |
-| `bar`           | `widgets`         | array of text | the QS default order | ≤ 24                     | visible widgets, in reading order      |
-| `bar`           | `startupClean`    | bool          | true                 | —                        | the login gate (QS startup-clean bar)  |
-| `panels`        | `closeOnEscape`   | bool          | true                 | —                        | Escape closes the open drawer          |
-| `panels`        | `closeOnOutside`  | bool          | true                 | —                        | a press outside closes the open drawer |
-| `notifications` | `dnd`             | bool          | false                | —                        | do not disturb (also a fact, §2.1)     |
-| `notifications` | `maxToasts`       | number        | 2                    | 1 – 6                    | stacked toasts                         |
-| `notifications` | `autoDismissMs`   | number        | 6000                 | 0 – 60000                | 0 = keep until dismissed               |
-| `notifications` | `historyMax`      | number        | 50                   | 0 – 200                  | history entries kept across restarts   |
-| `toast`         | `anchor`          | text          | `"top_right"`        | a `surface.anchor` value | where toasts stack                     |
-| `toast`         | `margin`          | number        | 12                   | 0 – 64                   | design px from the corner              |
-| `overlay`       | `dismissOnEscape` | bool          | true                 | —                        | Escape closes overlays                 |
-| `lock`          | `clock24h`        | bool          | true                 | —                        | greeter `nixie24h`                     |
-| `lock`          | `uiScale`         | number        | 1.2                  | 0.8 – 2.0                | greeter `uiScale`                      |
-| `launcher`      | `maxResults`      | number        | 8                    | 1 – 20                   | list cap                               |
-| `theme`         | `wallpaper`       | text          | `""`                 | —                        | the wallpaper the theme was built from |
+| scene | key | type | default | clamp | meaning | | --------------- | ----------------- |
+\------------- | -------------------- | ------------------------ |
+-------------------------------------- | | `bar` | `edge` | text | `"bottom"` | `top`/`bottom` | the
+strip's anchor | | `bar` | `height` | number | 22 | 16 – 64 | strip height, design px | | `bar` |
+`widgets` | array of text | the QS default order | ≤ 24 | visible widgets, in reading order | |
+`bar` | `startupClean` | bool | true | — | the login gate (QS startup-clean bar) | | `panels` |
+`closeOnEscape` | bool | true | — | Escape closes the open drawer | | `panels` | `closeOnOutside` |
+bool | true | — | a press outside closes the open drawer | | `notifications` | `dnd` | bool | false
+| — | do not disturb (also a fact, §2.1) | | `notifications` | `maxToasts` | number | 2 | 1 – 6 |
+stacked toasts | | `notifications` | `autoDismissMs` | number | 6000 | 0 – 60000 | 0 = keep until
+dismissed | | `notifications` | `historyMax` | number | 50 | 0 – 200 | history entries kept across
+restarts | | `toast` | `anchor` | text | `"top_right"` | a `surface.anchor` value | where toasts
+stack | | `toast` | `margin` | number | 12 | 0 – 64 | design px from the corner | | `overlay` |
+`dismissOnEscape` | bool | true | — | Escape closes overlays | | `lock` | `clock24h` | bool | true |
+— | greeter `nixie24h` | | `lock` | `uiScale` | number | 1.2 | 0.8 – 2.0 | greeter `uiScale` | |
+`launcher` | `maxResults` | number | 8 | 1 – 20 | list cap | | `theme` | `wallpaper` | text | `""` |
+— | the wallpaper the theme was built from |
 
 A scene documents its own extra keys in its file header as `key (type, default, clamp)` and adds a
 row here only when another scene, a script or a test reads it. A key that is dropped in the port is
@@ -930,13 +892,12 @@ worker that cannot start writes `{"ok":false,"worker":"sysmon","err":"…"}` and
 
 **Scene → worker commands** (one object per line; `cmd` is required):
 
-| line                                                   | meaning                                       |
-| ------------------------------------------------------ | --------------------------------------------- |
-| `{"cmd":"sample"}`                                     | emit one sample of every subscribed topic now |
-| `{"cmd":"subscribe","topic":"cpu","interval_ms":1000}` | start a topic, one line per `interval_ms`     |
-| `{"cmd":"unsubscribe","topic":"cpu"}`                  | stop that topic                               |
-| `{"cmd":"set","interval_ms":250}`                      | change the cadence of the subscribed topics   |
-| `{"cmd":"stop"}`                                       | finish cleanly, exit 0                        |
+| line | meaning | | ------------------------------------------------------ |
+--------------------------------------------- | | `{"cmd":"sample"}` | emit one sample of every
+subscribed topic now | | `{"cmd":"subscribe","topic":"cpu","interval_ms":1000}` | start a topic, one
+line per `interval_ms` | | `{"cmd":"unsubscribe","topic":"cpu"}` | stop that topic | |
+`{"cmd":"set","interval_ms":250}` | change the cadence of the subscribed topics | | `{"cmd":"stop"}`
+| finish cleanly, exit 0 |
 
 Every command gets an acknowledgement line `{"ok":true,"ack":"subscribe"}` or an error line
 `{"ok":false,"err":"unknown topic: cpu2"}`. An unknown `cmd` is an error line, not an exit.
@@ -1037,41 +998,31 @@ interface; PH2's verification (describe snapshots) checks them.
 
 Use these texts verbatim; tests match them and the migration keeps them stable.
 
-| zone                 | label                                              | role     | state                                | agent                 |
-| -------------------- | -------------------------------------------------- | -------- | ------------------------------------ | --------------------- |
-| clock                | `Clock {now.time}`                                 | `region` | —                                    | —                     |
-| workspace tab        | `Workspace {ws.name}`                              | `tab`    | `selected: ws.active`                | —                     |
-| volume               | `Volume {audio.volume * 100, 0} %`                 | `slider` | `value: "{audio.volume * 100, 0} %"` | —                     |
-| microphone           | `Microphone {audio.input * 100, 0} %`              | `slider` | `value: "{…} %"`                     | —                     |
-| brightness           | `Brightness {brightness.level * 100, 0} %`         | `slider` | `value: "{…} %"`                     | —                     |
-| network              | `Network {network.name}` / `Network: offline`      | `button` | —                                    | —                     |
-| VPN                  | `VPN: {state}`                                     | `button` | —                                    | —                     |
-| Bluetooth            | `Bluetooth`                                        | `button` | —                                    | —                     |
-| battery              | `Battery {battery.percent, 0} %`                   | `button` | —                                    | —                     |
-| keyboard layout      | `Keyboard: {layout}`                               | `button` | —                                    | —                     |
-| media capsule        | `Media: {media.title}` / `Media`                   | `button` | —                                    | —                     |
-| transport            | `Previous track` / `Play` / `Pause` / `Next track` | `button` | —                                    | —                     |
-| weather              | `Weather: {temp, 0}°, {condition}`                 | `button` | —                                    | —                     |
-| system monitor       | `System monitor`                                   | `button` | —                                    | —                     |
-| tray item            | `{tray.title}` (fall back to the app name)         | `button` | —                                    | —                     |
-| drawer opener        | the drawer title, §2.2                             | `button` | —                                    | —                     |
-| drawer close         | `Close {drawer}`                                   | `button` | —                                    | —                     |
-| power: lock          | `Lock`                                             | `button` | —                                    | —                     |
-| power: suspend       | `Suspend`                                          | `button` | —                                    | —                     |
-| power: log out       | `Log out`                                          | `button` | —                                    | `no`                  |
-| power: reboot        | `Reboot`                                           | `button` | —                                    | `no`                  |
-| power: power off     | `Power off`                                        | `button` | —                                    | `no`                  |
-| toast                | `{n.app}: {n.title}`                               | `item`   | —                                    | —                     |
-| toast notice actions | `{action.label}`                                   | `button` | —                                    | —                     |
-| toast dismiss        | `Dismiss notification`                             | `button` | —                                    | —                     |
-| notification centre  | `Notifications`                                    | `list`   | —                                    | —                     |
-| centre entry         | `{n.app}: {n.title}`                               | `item`   | —                                    | —                     |
-| centre clear         | `Clear all notifications`                          | `button` | —                                    | `no`                  |
-| overlay catcher      | `Dismiss overlay`                                  | `region` | —                                    | `no`                  |
-| lock password        | `Password`                                         | field    | —                                    | `no` + `secret: true` |
-| lock unlock          | `Unlock`                                           | `button` | —                                    | `no`                  |
-| launcher input       | `Search applications`                              | field    | —                                    | —                     |
-| launcher result      | `{app.local_name}`                                 | `item`   | —                                    | —                     |
+| zone | label | role | state | agent | | -------------------- |
+\-------------------------------------------------- | -------- | ------------------------------------
+| --------------------- | | clock | `Clock {now.time}` | `region` | — | — | | workspace tab |
+`Workspace {ws.name}` | `tab` | `selected: ws.active` | — | | volume |
+`Volume {audio.volume * 100, 0} %` | `slider` | `value: "{audio.volume * 100, 0} %"` | — | |
+microphone | `Microphone {audio.input * 100, 0} %` | `slider` | `value: "{…} %"` | — | | brightness
+| `Brightness {brightness.level * 100, 0} %` | `slider` | `value: "{…} %"` | — | | network |
+`Network {network.name}` / `Network: offline` | `button` | — | — | | VPN | `VPN: {state}` | `button`
+| — | — | | Bluetooth | `Bluetooth` | `button` | — | — | | battery |
+`Battery {battery.percent, 0} %` | `button` | — | — | | keyboard layout | `Keyboard: {layout}` |
+`button` | — | — | | media capsule | `Media: {media.title}` / `Media` | `button` | — | — | |
+transport | `Previous track` / `Play` / `Pause` / `Next track` | `button` | — | — | | weather |
+`Weather: {temp, 0}°, {condition}` | `button` | — | — | | system monitor | `System monitor` |
+`button` | — | — | | tray item | `{tray.title}` (fall back to the app name) | `button` | — | — | |
+drawer opener | the drawer title, §2.2 | `button` | — | — | | drawer close | `Close {drawer}` |
+`button` | — | — | | power: lock | `Lock` | `button` | — | — | | power: suspend | `Suspend` |
+`button` | — | — | | power: log out | `Log out` | `button` | — | `no` | | power: reboot | `Reboot` |
+`button` | — | `no` | | power: power off | `Power off` | `button` | — | `no` | | toast |
+`{n.app}: {n.title}` | `item` | — | — | | toast notice actions | `{action.label}` | `button` | — | —
+| | toast dismiss | `Dismiss notification` | `button` | — | — | | notification centre |
+`Notifications` | `list` | — | — | | centre entry | `{n.app}: {n.title}` | `item` | — | — | | centre
+clear | `Clear all notifications` | `button` | — | `no` | | overlay catcher | `Dismiss overlay` |
+`region` | — | `no` | | lock password | `Password` | field | — | `no` + `secret: true` | | lock
+unlock | `Unlock` | `button` | — | `no` | | launcher input | `Search applications` | field | — | — |
+| launcher result | `{app.local_name}` | `item` | — | — |
 
 `—` in the agent column means the default. The default for a zone that only navigates or changes a
 preference is `agent: yes` (pressable); the default for `agent:` is what the surface says, and the
@@ -1107,11 +1058,11 @@ surface default is yes.
 These were found while writing the two libraries; they are the traps that cost time.
 
 1. **Library check refuses by design** — see 9.1.
-1. **Literal first.** The `size:` and `weight:` properties of `text` and the `rim:` property of
-   `body` reject an expression that starts with a name (`size: type.small`, `weight: weight.medium`,
-   `rim: rim` all fail with `expected a number here`). Write `size: 1 * type.small`,
-   `weight: 1 * weight.medium`, `rim: 1 * rim`. Every other numeric property takes bare names
-   (`size: corner, 2` on a box is fine).
+1. **A literal number is the whole value.** `text`'s `size:`/`weight:`, `body`'s `rim:` and a
+   surface's `size:`/`reserve:` read one number and silently drop the rest of the expression:
+   `size: 1 * type.small` compiles and draws at 1 px, `12 * ui` at 12 px. Scale through
+   `group { scale: S }`; every other numeric property takes expressions (`size: corner, 2` on a box
+   is fine).
 1. **Colour literals are opaque:** `#rgb` or `#rrggbb`, nothing else. Translucency is a tone plus an
    alpha number applied with `opacity:` / `fill: tone alpha`; there is no 8-digit hex and no
    colour-with-alpha function.
