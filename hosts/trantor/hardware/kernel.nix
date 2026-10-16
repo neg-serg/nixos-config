@@ -23,7 +23,7 @@ in
     "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
     "acpi_osi=Linux" # Report Linux-compatible ACPI interface
     # video=3840x2160@240 removed: simpledrm rejects custom modelines, causes "User-defined mode not supported"
-    # Limine resolution = "3840x2160" covers the bootloader resolution instead
+    # NERV renders at the firmware GOP resolution (its `resolution` setting is unset), which covers the bootloader phase
     "lru_gen=1" # Enable multi-gen LRU page reclaim
     "lru_gen.min_ttl_ms=1000" # Min TTL for multi-gen LRU
     "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend

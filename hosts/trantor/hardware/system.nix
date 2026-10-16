@@ -1,27 +1,12 @@
 # Literal host-system data for host 'trantor', kept out of the module body so
-# hardware.nix stays wiring: bootloader style, stable NIC link names, the
-# kexec helper scripts and the out-of-tree MT6639 Bluetooth firmware blob.
+# hardware.nix stays wiring: stable NIC link names, the kexec helper scripts
+# and the out-of-tree MT6639 Bluetooth firmware blob.
 # Comments travel with the data — they document the hardware quirks.
 {
   pkgs,
   config,
 }:
 {
-  # Limine bootloader theme
-  limineStyle = {
-    interface = {
-      branding = "NixOS";
-      brandingColor = "00D9FF";
-      # Match autoboot countdown colour to the branding accent
-      helpColor = "00AAAA";
-      helpColorBright = "55FF55";
-    };
-    # No wallpaper image — an explicit empty list overrides the nixpkgs default
-    # (nixos-artwork simple-dark-gray); the loader draws on the backdrop below.
-    wallpapers = [ ];
-    backdrop = "000000";
-  };
-
   # Rename NICs to stable names via systemd-networkd link files
   networkLinks = {
     "10-net0" = {
