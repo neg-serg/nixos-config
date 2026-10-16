@@ -141,6 +141,15 @@
         ".config/menu-search/window-class.tsv" = {
           text = builtins.readFile (filesDir + "/window-class.tsv");
         };
+        # Shader sources that ship with the shtoy helper — the self-contained
+        # ports in files/gui/shtoy (ltffzl, mtyGWy) plus their default textures.
+        # Imported shadertoy.com sources stay in ~/.cache/shtoy instead.
+        ".config/shtoy/shaders" = {
+          source = config.lib.neg.path "files/gui/shtoy/shaders";
+        };
+        ".config/shtoy/tex" = {
+          source = config.lib.neg.path "files/gui/shtoy/tex";
+        };
       }
     )
   );
