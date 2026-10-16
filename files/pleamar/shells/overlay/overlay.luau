@@ -140,7 +140,7 @@ local inh = nil
 
 local function inhibit_apply()
     if fact.inhibit and not inh then
-        fact.inhibit_error = ""
+        text.inhibit_error = ""
         -- A missing program must not take the fact handler down with it.
         local ok = pcall(function()
             inh = spawn(
@@ -150,7 +150,7 @@ local function inhibit_apply()
                 function(_, code)
                     inh = nil
                     if fact.inhibit then
-                        fact.inhibit_error = "systemd-inhibit exited with " .. tostring(code)
+                        text.inhibit_error = "systemd-inhibit exited with " .. tostring(code)
                         log("idle inhibitor: systemd-inhibit exited with", code)
                     end
                 end
@@ -158,7 +158,7 @@ local function inhibit_apply()
         end)
         if not ok or inh == nil then
             inh = nil
-            fact.inhibit_error = "systemd-inhibit could not start"
+            text.inhibit_error = "systemd-inhibit could not start"
             log("idle inhibitor: systemd-inhibit could not start")
         end
     elseif not fact.inhibit and inh then
