@@ -20,8 +20,8 @@ in
   hypr-kdeconnect-fix = callPkg (pkg "hypr-kdeconnect-fix") { };
   # hyprqt6engine — not in the pinned nixpkgs yet, pinned locally (see
   # packages/hyprqt6engine). Qt6 platform theme + widget style for Hyprland;
-  # activated per session by QT_QPA_PLATFORMTHEME=hyprqt6engine, not by
-  # installing it (the session currently selects qt6ct).
+  # the session selects it via QT_QPA_PLATFORMTHEME=hyprqt6engine and feeds it
+  # ~/.config/hypr/hyprqt6engine.conf (modules/user/nix-maid/gui/qt.nix).
   hyprqt6engine = callPkg (pkg "hyprqt6engine") { };
   andromeda-gtk-theme = callPkg (pkg "andromeda-gtk-theme") { };
   flight-gtk-theme = callPkg (pkg "flight-gtk-theme") { };

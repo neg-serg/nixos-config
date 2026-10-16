@@ -8,11 +8,10 @@
 # (`nix store prefetch-file --unpack --json <tarball>`), re-check the Qt6
 # minimum in CMakeLists.txt (currently 6.9), and switch back to a tag once a
 # release is cut from main. KF6 support in upstream CMake is optional and every
-# use site is #ifdef-guarded; kdePackages.kiconthemes is wired in so the
-# platform theme resolves icon themes via KF6IconThemes. KDE color schemes stay
-# off — add kdePackages.kconfig + kdePackages.kcolorscheme for
-# KF6Config/KF6ColorScheme (the common lib then defines KF_CONFIGCORE_LIB and
-# KF_COLORSCHEME_LIB).
+# use site is #ifdef-guarded; the KF6 pieces are wired in so the platform theme
+# runs with its intended features: KF6IconThemes for the icon-theme lookup and
+# KF6ConfigCore + KF6ColorScheme for parsing the .colors file named by
+# theme:color_scheme (without the latter the palette stays the generic Qt one).
 {
   lib,
   stdenv,
@@ -46,6 +45,8 @@ stdenv.mkDerivation {
   buildInputs = [
     hyprlang
     hyprutils
+    kdePackages.kcolorscheme # KF6ColorScheme: turns the .colors file into the palette
+    kdePackages.kconfig # KF6ConfigCore: KSharedConfig backing KColorScheme
     kdePackages.kiconthemes # KF6IconThemes: icon-theme lookup for the platform theme
     qt6.qtbase
   ];
