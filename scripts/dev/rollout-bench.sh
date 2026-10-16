@@ -22,7 +22,12 @@
 #
 # Usage: scripts/dev/rollout-bench.sh [--runs N] [--engines fix,nix]
 #                                    [--host trantor] [--flake DIR]
-#                                    [--keep] [--no-warmup]
+#                                    [--csv PATH] [--keep] [--no-warmup]
+#
+# Every measured round is appended to `--csv` (default
+# $XDG_STATE_HOME/rollout-bench.csv, i.e. outside the repository) as
+# `timestamp,engine,seconds,host,rev` — one line per round, so runs over time can
+# be plotted. Pass `--csv /dev/null` to skip the log.
 #
 # The `fix` engine needs the binary on PATH (or FIX_BIN=/path/to/fix); build it
 # with `nix build .#fix --option substitute false`. Set FIX_XDG_CACHE_HOME to
@@ -39,6 +44,7 @@ runs=3
 engines=fix,nix
 keep=0
 warmup=1
+csv=${XDG_STATE_HOME:-$HOME/.local/state}/rollout-bench.csv
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -58,6 +64,10 @@ while [ $# -gt 0 ]; do
       flake=$2
       shift 2
       ;;
+    --csv)
+      csv=$2
+      shift 2
+      ;;
     --keep)
       keep=1
       shift
@@ -67,7 +77,7 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     -h | --help)
-      sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'
+      awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"
       exit 0
       ;;
     *)
@@ -181,3 +191,16 @@ echo "medians"
 for engine in "${engine_list[@]}"; do
   printf '  %-4s rollout %ss\n' "$engine" "$(awk -v e="$engine" '$1 == e { print $2 }' "$results" | median)"
 done
+
+if [ -n "$csv" ]; then
+  mkdir -p "$(dirname "$csv")"
+  if [ ! -s "$csv" ]; then
+    printf 'timestamp,engine,seconds,host,rev\n' >> "$csv"
+  fi
+  rev=$(git -C "$repo_root" describe --always --dirty)
+  while read -r engine seconds; do
+    printf '%s,%s,%s,%s,%s\n' "$(date -Is)" "$engine" "$seconds" "$host" "$rev" >> "$csv"
+  done < "$results"
+  echo
+  echo "appended $(rg -c '' "$results") rows to $csv"
+fi
