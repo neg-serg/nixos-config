@@ -211,3 +211,12 @@ reports that one key (`SKILL.md: unsupported frontmatter keys: whenToUse`) and n
 workspace) is ignored in both `/etc/nixos/.gitignore` and the skills repo. The host side stays
 unwired on purpose: upstream's `references/host-integration.md` registers nothing by itself, so the
 `jspace.py` ledger is the working half and `control.py` waits for a host adapter nobody asked for.
+
+**VERIFIED LIVE (2026-10-16)**: `control.py` ran a full cooperative cycle with `/etc/nixos` as the
+task root — `init --level high`, `pulse --event resume` (returns the entry's real contents plus its
+SHA256), `read --agent root`, `route`, `check --stage work`. It blocked on the first `check` while
+`modules/repository.md` was routed without a repository map, and rerouting to `modules/capacity.md`
+with a recorded reason lifted the block (`ALLOW work`). `.jspace/` (`control.json`, `CONTROL.md`)
+stayed invisible to `git status`, so the ignore rule holds in the real flow. Deliberate limits: the
+schedule is cooperative (nothing calls the controller unless the agent does), and no repository map
+exists for `/etc/nixos`, so repository-routed work will block until one does.
