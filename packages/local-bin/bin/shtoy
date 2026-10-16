@@ -11,6 +11,7 @@
 #   --channel N FILE           bind FILE as iChannelN (repeatable, N = 0..3)
 #   --keyboard N               bind the live keyboard atlas as iChannelN
 #   --legacy                   force GLES2/GLSL 100 instead of the default GLES3
+#   --save                     cache the source, print its path, do not open the viewer
 #   --list                     list cached shaders
 #   -h, --help                 this help
 #
@@ -43,7 +44,7 @@ LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/shtoy
 API_KEY_FILE=${XDG_CONFIG_HOME:-$HOME/.config}/shtoy/api_key
 
-usage() { usage_from_header 2 37; }
+usage() { usage_from_header 2 38; }
 
 case ${1:-} in
   -h | --help | help | \?)
@@ -53,6 +54,7 @@ case ${1:-} in
 esac
 
 mode=run
+save=0
 legacy=0
 keyboard=-1
 arg=
@@ -87,6 +89,10 @@ while (($#)); do
       ;;
     --legacy)
       legacy=1
+      shift
+      ;;
+    --save)
+      save=1
       shift
       ;;
     --import)
@@ -186,6 +192,9 @@ api_source() { # $1 = id
 raw=
 case $arg in
   -)
+    if ((save)); then
+      die "--save takes a Shadertoy id or URL, not a stream"
+    fi
     stdin_file=$(mktemp "${TMPDIR:-/tmp}/shtoy-stdin-XXXXXX.frag")
     cleanup+=("$stdin_file")
     cat > "$stdin_file"
@@ -193,8 +202,8 @@ case $arg in
     ;;
   *)
     if [ -f "$arg" ]; then
-      if [ "$mode" = import ]; then
-        die "--import takes a Shadertoy id or URL, not a file"
+      if [ "$mode" = import ] || ((save)); then
+        die "--import/--save take a Shadertoy id or URL, not a file"
       fi
       raw=$arg
     else
@@ -221,6 +230,11 @@ case $arg in
     fi
     ;;
 esac
+
+if ((save)); then
+  printf '%s\n' "$raw"
+  exit 0
+fi
 
 # ---- source preparation ----------------------------------------------------
 
