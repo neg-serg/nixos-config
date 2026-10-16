@@ -233,5 +233,25 @@ in
         description = "Host directory holding the small-ads data and the host-generated secrets.";
       };
     };
+    # minibbs — tiny BBS-style board for the LAN: boards + threads, bots post
+    # through a bearer-token JSON API, humans read the read-only web UI.
+    minibbs = {
+      enable = opts.mkEnableOption "minibbs BBS-style message board (LAN, bot-first JSON API).";
+      port = opts.mkOpt types.port 8091 {
+        description = "Host port the board is published on.";
+      };
+      bindAddress = opts.mkStrOpt {
+        default = "0.0.0.0";
+        description = "Host address the board is published on (0.0.0.0 = LAN, 127.0.0.1 = loopback only).";
+      };
+      title = opts.mkStrOpt {
+        default = "trantor BBS";
+        description = "Title shown in the web UI.";
+      };
+      dataDir = opts.mkStrOpt {
+        default = "/var/lib/minibbs";
+        description = "Directory holding the SQLite database and the generated bot token.";
+      };
+    };
   };
 }
