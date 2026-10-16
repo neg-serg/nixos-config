@@ -18,11 +18,13 @@ let
   # The tui profile's caretaker. It keeps the profile on the installed harness:
   # installs/upgrades the dsh-TUI plugin, keeps dsh-free-search, removes a
   # leftover @deepseek-ai store link (dsh's own profile module fallback owns
-  # that tree and cannot write through the read-only link), prunes the retired
-  # workflow row from the installed liangshen preset, rewrites the profile's
-  # patch layer, seeds the repo-local plugin copies, and seeds the neg theme
-  # plus the `en` default language. The profile itself is created by hand once
-  # (see the `[ -d "$PROFILE_DIR" ] || exit 0` guard).
+  # that tree and cannot write through the read-only link), grants the harness's
+  # exact-version exemptions when the TUI bundle's retired 0.1.5 rows trip the
+  # install compatibility check, prunes the retired workflow row from the
+  # installed liangshen preset, rewrites the profile's patch layer, seeds the
+  # repo-local plugin copies, and seeds the neg theme plus the `en` default
+  # language. The profile itself is created by hand once (see the
+  # `[ -d "$PROFILE_DIR" ] || exit 0` guard).
   # The plugin roster, its loader rows, the seed list and the search rows live
   # in dsh-terminal-plugins.nix; the agent-preset declarations (0.2.0 registry
   # rows: .agent-presets directories are dead) live in dsh-presets.nix.
