@@ -35,10 +35,6 @@ MAGICK_BIN="${MAGICK_BIN:-magick}"
 AWK_BIN="${AWK_BIN:-awk}"
 JQ_BIN="${JQ_BIN:-jq}"
 
-CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-OUT="$CONFIG_HOME/pleamar/theme.plm"
-
 # Palette values and where each came from; filled in below.
 WALLPAPER=""
 EXTRACTED=0
@@ -74,6 +70,14 @@ tool_die() {
   err "$@"
   exit 2
 }
+
+if [[ -z "${HOME:-}" ]]; then
+  err "HOME is not set — nothing to write"
+  exit 1
+fi
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+OUT="$CONFIG_HOME/pleamar/theme.plm"
 
 usage() {
   cat << 'EOF'
