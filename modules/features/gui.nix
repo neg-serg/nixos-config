@@ -6,9 +6,6 @@
     quickshell = {
       enable = mkBool "enable Quickshell (panel) at login" true;
     };
-    dms = {
-      enable = mkBool "install DankMaterialShell (DankLinux shell) for on-demand trial, without autostart" false;
-    };
     pleamar = {
       enable = mkBool "enable the pleamar shell at login" false;
     };
