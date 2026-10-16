@@ -1,0 +1,176 @@
+// menu.plm — the menu rows: one pressable line of a menu, with its label,
+// an optional icon before it and an optional check mark at the right edge.
+//
+// This is the pleamar form of Components/DelegateEntry.qml: the row is as wide
+// as the menu, as tall as the theme says, washes under the pointer and reports
+// which line was chosen. No QML, no popup: a row, a zone and numbers.
+//
+//   import "../../lib/palette.plm"
+//   import "../../lib/capsule.plm"
+//   import "../../lib/icons.plm"
+//   import "../../lib/menu.plm" as menu
+//
+//   Capsule(menu.width, 3 * menu.item.height + 4 * menu.pad,
+//           radius: menu.corner, fill: coal, alpha: 1) {
+//       column { padding: menu.pad; gap: menu.item.gap
+//           menu.Action("Open", pick, value: 0)
+//           menu.Icon("Wi-Fi", Icons.wifi, pick, value: 1, checked: true)
+//           menu.Action("Power off", pick, value: 9, danger: true)
+//       }
+//   }
+//   on pick(v) { … }
+//
+// `Action` is a row with a label; `Icon` draws an image (`menu.icon` design px
+// square, before the label) and then the label. Both draw
+// `width × menu.item.height` design pixels and multiply everything by `scale`
+// (`ui` by default), like Capsule, so a call site passes design sizes: never
+// `width * scale`.
+//
+// The row is `menu.pad + depth * menu.sub.gap` from the left, so a tree walked
+// with nested `for`s reads as a tree: pass the row's `depth`. Rows with a
+// submenu have no parameter of their own in this frozen surface (INTERFACES.md
+// §5.1): a scene that wants a chevron beside such a row draws it itself.
+//
+// The zone is part of the row: `role: item`, `label:` the one passed, `selected:
+// checked`, `active: enabled`. A press emits the event it was given, carrying
+// the row's `value` as payload, so a scene declares one event and reads the
+// choice. `danger` paints the label `warn`; `enabled: false` paints it
+// `ink.off`, dims the row and leaves the zone inactive (described as inactive,
+// not pressable, INTERFACES.md §5.1). A row that must be agent-closed declares
+// its own zone: `agent:` cannot be a parameter here (INTERFACES.md §9.2 trap 6).
+//
+// Menus are drawn in place (D7), never in a popup: build the panel with Capsule
+// (`radius: menu.corner, fill: coal, alpha: 1`) and a column of rows inside it,
+// as above; a panel that can hold more rows than fit declares a `view:` and lets
+// the list scroll.
+
+import "palette.plm"
+
+library Menu strict {
+
+    // One menu row with a label. By position: the text it shows and the event
+    // its press emits; then, if wanted, by name: the payload, the tree depth,
+    // the check mark, the danger tone, whether it answers, and the size.
+    component Action(label: text, press: event, value: number = -1, depth: number = 0,
+                     checked: bool = false, danger: bool = false, enabled: bool = true,
+                     width: number = menu.width, scale: number = ui) {
+
+        size: width * scale, menu.item.height * scale
+
+        let indent = menu.pad + depth * menu.sub.gap
+        let tone = mix(mix(ink, warn, danger), ink.off, 1 - enabled)
+        let dim = if(enabled, 1, 50%)
+        let room = max(width - indent - menu.pad - checked * (menu.chevron + menu.item.gap), 0)
+
+        // The hover wash: slate toward ink under the pointer, deeper while the
+        // button is down, and only there while the pointer is (§5.1).
+        box wash {
+            from: 0, 0
+            size: width * scale, menu.item.height * scale
+            corner: menu.item.corner * scale
+            color: mix(slate, ink, 0.2 * hit.hover + 0.2 * hit.pressed)
+            opacity: hit.hover
+        }
+
+        text label {
+            at: indent * scale, menu.item.height / 2 * scale
+            anchor: left center
+            width: room * scale
+            size: 1 * type.small * menu.type * scale
+            weight: 1 * weight.medium
+            lines: 1
+            color: tone
+            opacity: dim
+        }
+
+        // The check mark: a `menu.chevron`-sized path at the right edge, drawn
+        // only when the row is the chosen one.
+        path check {
+            at: (width - menu.pad - menu.chevron) * scale, (menu.item.height - menu.chevron) / 2 * scale
+            stroke: 1.6 * scale
+            color: tone
+            opacity: dim
+            show: checked
+            move 0.1 * menu.chevron * scale, 0.55 * menu.chevron * scale
+            line 0.42 * menu.chevron * scale, 0.85 * menu.chevron * scale
+            line 0.95 * menu.chevron * scale, 0.15 * menu.chevron * scale
+        }
+
+        zone box hit {
+            from: 0, 0
+            size: width * scale, menu.item.height * scale
+            corner: menu.item.corner * scale
+            cursor: pointer
+            label: label
+            role: item
+            selected: checked
+            active: enabled
+        }
+
+        on press hit { emit press(value) }
+    }
+
+    // One menu row with an image before its label, for the rows a menu feeds
+    // from a model (`Icons.wifi`, or a record's own `image`).
+    component Icon(label: text, icon: image, press: event, value: number = -1, depth: number = 0,
+                   checked: bool = false, danger: bool = false, enabled: bool = true,
+                   width: number = menu.width, scale: number = ui) {
+
+        size: width * scale, menu.item.height * scale
+
+        let indent = menu.pad + depth * menu.sub.gap
+        let labelx = indent + menu.icon + menu.item.gap
+        let tone = mix(mix(ink, warn, danger), ink.off, 1 - enabled)
+        let dim = if(enabled, 1, 50%)
+        let room = max(width - labelx - menu.pad - checked * (menu.chevron + menu.item.gap), 0)
+
+        box wash {
+            from: 0, 0
+            size: width * scale, menu.item.height * scale
+            corner: menu.item.corner * scale
+            color: mix(slate, ink, 0.2 * hit.hover + 0.2 * hit.pressed)
+            opacity: hit.hover
+        }
+
+        image icon {
+            at: indent * scale, (menu.item.height - menu.icon) / 2 * scale
+            size: menu.icon * scale, menu.icon * scale
+            opacity: dim
+        }
+
+        text label {
+            at: labelx * scale, menu.item.height / 2 * scale
+            anchor: left center
+            width: room * scale
+            size: 1 * type.small * menu.type * scale
+            weight: 1 * weight.medium
+            lines: 1
+            color: tone
+            opacity: dim
+        }
+
+        path check {
+            at: (width - menu.pad - menu.chevron) * scale, (menu.item.height - menu.chevron) / 2 * scale
+            stroke: 1.6 * scale
+            color: tone
+            opacity: dim
+            show: checked
+            move 0.1 * menu.chevron * scale, 0.55 * menu.chevron * scale
+            line 0.42 * menu.chevron * scale, 0.85 * menu.chevron * scale
+            line 0.95 * menu.chevron * scale, 0.15 * menu.chevron * scale
+        }
+
+        zone box hit {
+            from: 0, 0
+            size: width * scale, menu.item.height * scale
+            corner: menu.item.corner * scale
+            cursor: pointer
+            label: label
+            role: item
+            selected: checked
+            active: enabled
+        }
+
+        on press hit { emit press(value) }
+    }
+}

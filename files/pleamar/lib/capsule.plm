@@ -8,29 +8,34 @@
 //   import "../../lib/palette.plm"
 //   import "../../lib/capsule.plm"
 //
-//   Capsule(140, 34, fill: slate, shadow: 25%, rim: 0.06) {
-//       text "wifi" { size: 12 * ui; color: ink }
+//   group zoom {                                 // the widget's one multiplier
+//       scale: scale                             // per-monitor expression (§3.2)
+//       Capsule(140, 34, scale: 1, fill: slate, shadow: 25%, rim: 0.06) {
+//           text "wifi" { size: 12; color: ink }  // text sizes are literals
+//       }
 //   }
 //
-// Every length here is a DESIGN PIXEL (the numbers the QS theme uses). The
-// component multiplies w, h, pad, pad_y, gap, radius, the edge width and the
-// shadow's offset and blur by `scale` itself, so a call site passes the design
-// size and the per-copy scale once:
+// Every length here is a DESIGN PIXEL (the numbers the QS theme uses). The component
+// multiplies w, h, pad, pad_y, gap, radius, the edge width and the shadow's offset
+// and blur by `scale` itself — but a `text`'s `size:` is one literal number and cannot
+// follow it. So a widget that draws text is wrapped in `group { scale: S }` and the
+// capsule is asked for `scale: 1`: the group is the only multiplier and every inner
+// length stays a design number.
 //
-//   · single-surface scene:       the default `scale: ui` is right;
-//   · `screens: each` scene:      scale: ui * clamp(min(screen.width /
-//                                 design.width, screen.height / design.height),
-//                                 fit.min, fit.max)   — see palette.plm rule 2.
 //
-// The caller scales its own content (text sizes, icons) by the same value.
+//   · single-surface scene:   scale: ui
 //
-// A capsule is not a zone. The widget that uses one declares the interactive
-// zone on top, with the label/role/agent the interface document requires:
+//   · `screens: each` scene:  scale: ui * clamp(min(screen.width / design.width,
 //
-//   Capsule(28, 28) { text "+" { size: 14 * ui; color: ink } }
-//   zone box hit { from: 0, 0; size: 28 * ui, 28 * ui; corner: 14 * ui
-//                  cursor: pointer; label: "Add"; role: button }
-//   on press hit { emit add }
+//                             screen.height / design.height), fit.min, fit.max)
+//                             — palette.plm rule 2.
+//
+//   group zoom { scale: scale                 // design px inside; the group scales
+//       Capsule(28, 28, scale: 1) { text "+" { size: 14; color: ink } }
+//       zone box hit { from: 0, 0; size: 28, 28; corner: 14
+//                      cursor: pointer; label: "Add"; role: button }
+//       on press hit { emit add }
+//   }
 //
 // That keeps `pleamar --say <scene> describe` truthful: the background says
 // nothing, the zone says what it does.
