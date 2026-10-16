@@ -383,6 +383,50 @@ with the compositor without hopping across multiple files. hy3 is the layout; th
   successful load, `hyprctl getoption plugin:dynamic-cursors:mode` prints `str: stretch` and
   `plugin:dynamic-cursors:shake:enabled` prints `bool: false`.
 
+### HyprCapture (screenshots and screen recording)
+
+- **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — the plugin ships its own Nix recipe
+  (`nix/package.nix`) and version-suffixed release tags; `v0.4.2-0.56.2` is the tag cut for exactly
+  the Hyprland 0.56.2 this nixpkgs carries, so the recipe is evaluated against this tree's `pkgs`
+  from the pinned checkout (its `../cmake` and `./aec-sources.json` references resolve inside the
+  store). Upstream's build also compiles the private gain-map HEIC codec (libultrahdr + patched
+  libheif), the DTLN TFLite AEC runtime and the pinned models, and embeds `$out/bin/hyprcapture-ui`
+  as the helper path (`HYPRCAPTURE_DEFAULT_HELPER_PATH`) — the plugin never resolves its helper
+  through `PATH`. `lua5_5` is passed explicitly (the unversioned `lua` alias does not exist with
+  `allowAliases = false`).
+- **Load + configure**: the generated `hyprcapture-setup` helper `hyprctl plugin load`s
+  `lib/libhyprcapture.so` and pushes `files/gui/hypr/hyprcapture.lua` through `hyprctl eval` (the
+  same load-then-push pattern as hyprglass/hyprexpo). It is started by the `hyprcapture` user unit
+  with `hyprland-session.target`, not from `hyprland.lua`: `PLUGIN_INIT` itself calls
+  `HyprlandAPI::reloadConfig()` to register the `plugin.hyprcapture.*` keys, and a load issued while
+  that file is still being parsed would re-enter the config parser mid-file. The binds in
+  `hyprland.lua` are lazy functions, so they resolve `hl.plugin.hyprcapture` at press time. The
+  helper is idempotent, logs to `$XDG_RUNTIME_DIR/hyprcapture-setup.log` and polls
+  `hyprctl plugin list` for up to ~5 s — the hyprdynamiccursors pattern, because a load issued while
+  the compositor is still busy with the login transition does not stick.
+- **Reload persistence**: a reload keeps the loaded plugin but re-registers its defaults, so the
+  runtime push is lost; the guarded `hl.config` block at the top of `hyprland.lua` re-applies the
+  two directories on every parse (false on the first parse, when the plugin is not loaded yet). Keep
+  its values in sync with `files/gui/hypr/hyprcapture.lua`.
+- **Verified at install time** (2026-10-16): the package builds against this nixpkgs' Hyprland
+  0.56.2, `libhyprcapture.so` exports `pluginInit`/`pluginExit`/`pluginAPIVersion`, the embedded
+  helper path points at the package's own `bin/hyprcapture-ui`, and the closure carries the TFLite
+  AEC runtime, the DTLN models and the gain-map HEIC codec. A nested-instance smoke test is not
+  possible from the agent sandbox (no `/dev/dri` access — aquamarine's `CBackend::create()` fails
+  there). The load itself was verified in the live session after the switch to generation 2154:
+  `hyprcapture.service` exited 0 (`$XDG_RUNTIME_DIR/hyprcapture-setup.log` logs `ok` twice),
+  `hyprctl plugin list` reports HyprCapture 0.4.2, `hyprctl getoption plugin:hyprcapture:save_dir`
+  prints the configured path with `set: true`, and one capture wrote an owner-only PNG (3840x2160,
+  mode 600) into `~/pic/shots` with the plugin's filename template. Check a new session the same
+  way: `hyprctl plugin list`, the option, then a capture.
+- **Binds**: `SUPER+SHIFT+R` captures fullscreen and `SUPER+SHIFT+CTRL+R` region — the same keys the
+  grim/slurp + `pic-info` pair used, now `hl.plugin.hyprcapture.open("fullscreen")` /
+  `open("region")`. `open()` captures without the annotation toolbar; the annotated flow is
+  `open_editor(mode)`, and `hl.plugin.hyprcapture.record_toggle()` drives recording.
+- **Configured keys**: only the output directories (`save_dir` → `$XDG_PICTURES_DIR/shots`,
+  `record_save_dir` → `$XDG_VIDEOS_DIR/recordings`); everything else keeps upstream's defaults (save
+  \+ clipboard + result thumbnail on).
+
 ## Testing a plugin without endangering the session
 
 Plugins run inside the compositor, so a crashing one takes the whole session with it (that is how

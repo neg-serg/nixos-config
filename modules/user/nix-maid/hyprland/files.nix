@@ -53,6 +53,12 @@ in
         ".config/hypr/hyprdynamiccursors.lua".text =
           config.lib.neg.readFile "files/gui/hypr/hyprdynamiccursors.lua";
 
+        # HyprCapture settings (screenshot/recording directories). Pushed by
+        # hyprcapture-setup after the plugin is loaded — the plugin registers
+        # its config keys in PLUGIN_INIT, so they do not exist while
+        # hyprland.lua is parsed.
+        ".config/hypr/hyprcapture.lua".text = config.lib.neg.readFile "files/gui/hypr/hyprcapture.lua";
+
         ".config/hypr/hypridle.conf".text = ''
           # Hypridle — idle configuration
           # Idle locking temporarily disabled (2026-08-31): hyprlock removed.

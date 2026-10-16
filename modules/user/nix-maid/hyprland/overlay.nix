@@ -187,6 +187,38 @@
             };
           };
 
+          # HyprCapture: the compositor half of a screenshot/recording overlay
+          # (frozen-compositor artifacts, region/window/scrolling capture,
+          # annotation, pinning, recording with sound). Upstream ships
+          # nix/package.nix for its own flake, and the release tag names the
+          # Hyprland ABI it was cut for — v0.4.2-0.56.2 is exactly the 0.56.2
+          # this nixpkgs ships. The recipe is evaluated from the pinned checkout
+          # (its ../cmake and ./aec-sources.json references resolve in the
+          # store), so upstream stays the single source of truth for the build:
+          # it also builds the private gain-map HEIC codec (libultrahdr +
+          # patched libheif), the DTLN TFLite AEC runtime and the pinned models,
+          # and embeds $out/bin/hyprcapture-ui as the helper path through
+          # builtins.placeholder — the plugin never resolves its helper through
+          # PATH. lua5_5 is the interpreter the session's Hyprland links (the
+          # unversioned `lua` alias does not survive allowAliases=false). The
+          # .so is dlopen'd by the generated hyprcapture-setup helper from the
+          # session-target unit (see main.nix), not from hyprland.lua: the
+          # plugin reloads the config in PLUGIN_INIT, which must not happen
+          # while that file is still being parsed.
+          hyprcapture =
+            let
+              hyprcaptureSrc = final.fetchFromGitHub {
+                owner = "gfhdhytghd";
+                repo = "HyprCapture";
+                rev = "v0.4.2-0.56.2";
+                hash = "sha256-uTcUsV/sEkZ1TbAuto05eeVT2kQ++wkbs4a/5Pw3z3g=";
+              };
+            in
+            final.callPackage "${hyprcaptureSrc}/nix/package.nix" {
+              src = hyprcaptureSrc;
+              lua = final.lua5_5;
+            };
+
           # HyprWindowShade: per-window, per-layer and per-class fragment shaders
           # (HyprShade-compatible GLSL ES 3.20). Upstream ships a Makefile for hyprpm;
           # the rev is the commit its hyprpm.toml pins for the Hyprland commit we run
