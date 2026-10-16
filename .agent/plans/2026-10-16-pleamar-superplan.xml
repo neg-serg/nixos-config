@@ -153,6 +153,7 @@
     <row id="M7" dimension="Crash isolation" quickshell="one process for bar+notifications+panels; restart = 5 s blink and 130 MB again" target="kill -9 one scene -> it is back &lt;= 5 s, other scenes untouched" how="fault injection in tests/evidence/fault-injection.md" />
     <row id="M8" dimension="Dev loop" quickshell="edit -> restart quickshell (seconds, state lost)" target="edit a scene -> hot reload on save, state kept; one command preview" how="README recipe + recorded session" />
     <row id="M9" dimension="Dependency footprint" quickshell="Qt6/QML closure + khal/mpc/ffmpeg/socat wrappers" target="one Rust binary + luau; scene deps declared per scene in `permissions`" how="nix path-info -Sh on both closures" />
+    <row id="M14" dimension="Scene complexity watch" quickshell="n/a" target="the notifications scene compiles to 19 151 properties / 4 168 zones — verify at render time that hit-testing, describe latency and the input region stay within budget, or split the centre into its own scene" how="pleamar --report + describe latency + measure.sh once a renderer exists" />
     <row id="M10" dimension="Testability" quickshell="qmllint/qmlformat only; no render tests" target="headless screenshot matrix + describe snapshots + budgets in CI" how="files/pleamar/scripts/smoke.sh output gallery + snapshots" />
     <row id="M11" dimension="Portability" quickshell="Hyprland + Wayland protocols; Qt platform plugin" target="same scenes on any compositor; workspaces via ext-workspace/wlr-foreign-toplevel; `./portable.sh` compile checks upstream" how="run scenes under a nested compositor and pleamar-wm headless" />
     <row id="M12" dimension="Plugin safety" quickshell="third-party JS runs with all user permissions" target="plugins are sandboxed Luau with explicitly approved permissions (`pleamar --approve`)" how="hostile-plugin test in the plugin workstream" />
@@ -355,6 +356,11 @@ CONTEXT: /home/neg/src/pleamar (v0.4.11, flake.nix, nix/package.nix, Cargo.lock)
           <goal>Caller migration: every `quickshell.service` reference, `quickshell ipc call globalIPC ...` bind, `quickshell ipc show` liveness probe and QS state-path consumer is rewritten to the pleamar equivalent (units, `pleamar --say` commands, marker names kept).</goal>
           <deliverable>One commit that lands the call-site changes together with the flag flip; a grep report proving zero remaining live references (the archived files/quickshell tree excepted).</deliverable>
           <verification>`rg -n 'quickshell\.service|quickshell ipc' --glob '!files/quickshell/**'` reviewed; binds exercised by hand; pic-notify and the health probe talk to the pleamar scenes.</verification>
+          <must>
+            <item>Notification name handover, in order: stop/disable the Quickshell notification server (org.freedesktop.Notifications) -&gt; start the pleamar notifications unit -&gt; `notify-send` round trip (toast, `emit open_centre`, action invoke, get count). The scene queues behind another owner, so starting it first does not steal the name.</item>
+            <item>Rewrite the Hyprland binds in the same commit: M4+n -&gt; `pleamar --say notifications "emit open_centre"` (toggle semantics kept), M4+space -&gt; `emit dismiss_all`; review the layer rules for the new namespaces.</item>
+            <item>The legacy `notif-close-all` semaphore cannot be read from a scene (the files API is folder-scoped): either move the producer to `pleamar --say` or keep the trigger in the overlay scene (PH2-D) — pick one and delete the other path.</item>
+          </must>
         </task>
 
         <task id="PH4-D" owner="main-agent" depends-on="PH4-S" human-gate="yes">
