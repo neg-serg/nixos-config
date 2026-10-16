@@ -1,0 +1,144 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/capsule.plm"
+
+// proof.plm — the first real pleamar scene of this shell (PH0 / task T5).
+// Restyled by PH1-T1: colours and sizes come from lib/palette.plm, widget
+// backgrounds are lib/capsule.plm capsules, and nothing here is a colour
+// literal any more. The geometry below is the verified proof layout at scale
+// 1; a per-monitor scene passes `scaleNow` instead (INTERFACES.md §3.2).
+//
+// One top bar, 48 px tall, built on pleamar's own services and nothing else:
+//   · clock      — the service's prewritten `time` text (zero-padded) drawn as is
+//   · workspaces — a tab per workspace reported by the service, the active one
+//                  lit; pressing a tab hands its id to the logic, which
+//                  commands `workspaces.focus`
+//   · audio      — a capsule whose fill follows `audio.volume`; the wheel steps
+//                  it and a press mutes/unmutes, both commanding the service
+//   · proof      — one labelled button that emits the declared `proof` event;
+//                  the thin logic counts it and the count reads back through
+//                  the `pings` fact
+//
+// The declarative side draws and animates (props are springs, movement is
+// carried by `follow` or rules — never set per frame); the logic next to this
+// file (proof.luau) only does what rules cannot: commanding services and
+// answering the proof event. Interactive zones carry `label:`/`role:` so
+// `pleamar --say proof describe` can name them for an agent.
+
+scene proof {
+
+    // --------------------------------------------------------------- window
+    // One surface, anchored to the top, fixed 48 px: a 44 px strip and 4 px
+    // left over so a shadow or rim below the strip is never cut by the edge.
+    surface { size: full, 48; anchor: top; level: top }
+
+    // ---------------------------------------------------------- permissions
+    // Listening: clock, workspaces, audio. Commanding: workspaces.focus and
+    // audio.* (audio.step, audio.mute). Nothing else is granted.
+    permissions { services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*" }
+
+    // ----------------------------------------------------------------- theme
+    // Every colour is a palette token now: ink, coal, slate, warn, accent (the
+    // QS blue), on.accent. The capsules of lib/capsule.plm bring their own
+    // defaults (slate fill, veil alpha, corner 6).
+
+    // ------------------------------------------------------------------ data
+    // The workspaces list goes into this model record by record; the scene
+    // takes only the fields it draws (the service also reports `windows` and
+    // `monitor`, which this bar does not need). `active` is true for the
+    // workspace the monitor holding it is showing.
+    model spaces max 9 { id: number; name: text; active: bool }
+
+    // -------------------------------------------------------------- services
+    service clock as now { time: text }                     // "9:05", already padded by the service
+    service workspaces { active: number; list: spaces }     // fills `spaces`
+    service audio { volume: number; muted: bool }           // volume 0..1, and silence
+
+    // -------------------------------------------------------- facts & events
+    fact pings = 0                    // how many times the proof button was pressed
+    event proof ->                    // the extra button's declared event (reaches the logic)
+    event focus_workspace ->          // payload: id of the workspace to show
+    event wheel_volume ->             // payload: wheel notches over the capsule (+ is up)
+    event toggle_mute ->              // the capsule was pressed: flip the sink's silence
+
+    // ------------------------------------------------------------ the strip
+    // 44 px of bar; the remaining 4 px of the surface are kept for its shadow.
+    body {
+        color: coal
+        rim: 8%
+        box { from: 0, 0; size: screen.width, 44 }
+    }
+
+    // ------------------------------------------------------------ left: clock
+    // The service hands a prewritten "10:41" form: no slot padds numbers, so
+    // `{now.hour}:{now.minute}` would show "9:5" at nine past nine.
+    text t = "{now.time}"
+    text t { at: 16, 22; anchor: left center; size: 13; weight: 600; color: ink }
+
+    // ------------------------------------------------------ centre: workspaces
+    // One tab per record the service reports. The active one is lit through a
+    // spring (`follow`), its zone tells an agent it is the selected tab, and
+    // pressing it emits the id so the logic can command `workspaces.focus`.
+    row tabs { at: 96, 22; anchor: left middle; gap: 4
+        for ws in spaces {
+            group {
+                size: 28, 28
+                prop lit = 0 ~quick
+                follow lit = if(ws.active, 1, 0)
+
+                // The tab background is a capsule; the zone comes after it so
+                // the press and the tooltip belong to the whole pill.
+                Capsule(28, 28, fill: mix(slate, accent, lit), alpha: 1, radius: 14, scale: 1) {
+                    text "{ws.name}" { width: 20; align: center; size: 12; weight: 600; color: mix(ink, on.accent, lit) }
+                }
+                zone box tab {
+                    from: 0, 0; size: 28, 28; corner: 14; cursor: pointer
+                    label: "Workspace {ws.name}"; role: tab; selected: ws.active
+                }
+
+                on press tab { emit focus_workspace(ws.id) }
+            }
+        }
+    }
+
+    // ----------------------------------------------------- right: audio capsule
+    // Geometry hangs off the right edge, so the bar follows its monitor.
+    let caps.x = screen.width - 178
+    let caps.y = 15
+
+    // The fill is a spring carried by `follow`: the renderer moves it, the
+    // logic never touches it per frame. It empties while the sink is muted.
+    prop level = 0 ~calm
+    follow level = if(audio.muted, 0, audio.volume)
+
+    group speaker { move: caps.x, caps.y
+        Capsule(78, 18, fill: slate, alpha: 1, radius: 9, scale: 1, pad: 2, pad_y: 2, shadow: 45%) {
+            box { size: 74 * level, 14; corner: 7; color: mix(accent, warn, audio.muted) }
+        }
+    }
+    text "{audio.volume * 100, 0} %" { at: caps.x + 39, 24; anchor: center; size: 10; weight: 600; color: ink }
+
+    // The capsule is one zone: wheel steps the volume, press toggles silence.
+    // Both leave through events; the logic carries the service commands.
+    zone box vol {
+        from: caps.x, caps.y; size: 78, 18; corner: 9; cursor: pointer
+        label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %"
+    }
+    on scroll vol { emit wheel_volume(wheel) }
+    on press vol { emit toggle_mute }
+
+    // -------------------------------------------------- right: proof button
+    // The extra labelled button: it emits only the declared `proof` event; the
+    // number it shows comes back from the logic through the `pings` fact.
+    group ping_bg { move: screen.width - 90, 11
+        Capsule(76, 26, fill: slate, alpha: 1, radius: 13, scale: 1) {
+            text "proof {pings}" { width: 68; align: center; size: 11; weight: 600; color: ink }
+        }
+    }
+    zone box ping {
+        from: screen.width - 90, 11; size: 76, 26; corner: 13; cursor: pointer
+        label: "Proof button"; role: button
+    }
+    on press ping { emit proof }
+}
