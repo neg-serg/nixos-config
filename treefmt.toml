@@ -17,6 +17,13 @@ excludes = [
   "files/obsidian-vault/**",
   # Zsh-specific scripts that shfmt can't parse
   "packages/local-bin/bin/swayimg-actions.sh",
+  # Vendored Chaldea widget exports — kept byte-identical to the upstream
+  # exports, so mdformat must not rewrap the per-widget READMEs
+  "files/quickshell/Chaldea/quick-notes/**",
+  "files/quickshell/Chaldea/player/**",
+  "files/quickshell/Chaldea/glyphs/**",
+  "files/quickshell/Chaldea/interactive-art/**",
+  "files/quickshell/Chaldea/lockscreens/**",
 ]
 
 # Nix files: format with nixfmt

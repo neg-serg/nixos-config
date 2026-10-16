@@ -62,7 +62,12 @@ IMPORT_ARGS=()
 for dir in "${MODULE_DIRS[@]}"; do
   IMPORT_ARGS+=(-i "$dir/qmldir")
 done
-mapfile -t FILES < <(find . -name "*.qml" -not -path "*/overview/*" | sort)
+# Lint this config's own QML. The vendored Chaldea export tree (Chaldea/) is
+# third-party 0BSD code kept byte-identical to upstream: check-qml-syntax.sh
+# still parses every file there, and its inherent qmllint findings (5
+# property-override, 4 incompatible-type at the 2026-10-16 revision) stay out of
+# this baseline, which must keep tracking changes in our own tree.
+mapfile -t FILES < <(find . -name "*.qml" -not -path "*/overview/*" -not -path "./Chaldea/*" | sort)
 
 echo "qmllint: ${#FILES[@]} files, ${#MODULE_DIRS[@]} modules, $(printf '%s' "$IMPORT_PATHS" | tr ':' '\n' | wc -l) import paths"
 
