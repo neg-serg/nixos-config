@@ -78,7 +78,7 @@ local m = {
   im_scratchpad      = "^(KotatogramDesktop|Skype|Slack|TelegramDesktop|org\\.telegram\\.desktop|zoom)$",
   music_scratchpad   = "^(ncmpcpp|rmpc|music)$",
   mail_scratchpad    = "^(mutterfox|neomutt)$",
-  mixer_scratchpad   = "^(ncpamixer|pavucontrol-qt)$",
+  mixer_scratchpad   = "^(hyprpwcenter)$",
   torrment_scratchpad = "^(torrment)$",
   rebuild_scratchpad = "^(rebuild)$",
   teardown_scratchpad = "^(teardown)$",
@@ -315,7 +315,7 @@ hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch toggle telegram"))
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hyprscratch music 'kitty-glass --class music -e rmpc' special"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class torrment -e rustmission' special"))
 hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty-glass --class vpn -e tun status' special"))
-hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch mixer 'kitty-glass --class mixer -e ncpamixer' special"))
+hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch toggle mixer"))
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 -- --- Overview (hyprexpo) ───────────────────────────────────────────────
 -- `hypr-expo` (modules/user/nix-maid/hyprland/main.nix) is the same command the

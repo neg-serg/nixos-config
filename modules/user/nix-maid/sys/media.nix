@@ -186,7 +186,6 @@ lib.mkMerge [
         pkgs.mpc # A minimalist command line interface to MPD
         pkgs.rmpc # Rust Music Player Client
         pkgs.euphonica # GTK4/libadwaita MPD client (GUI counterpart to rmpc)
-        pkgs.ncpamixer # An ncurses mixer for PulseAudio
         pkgs.playerctl # Command-line controller for MPC-capable players
 
         # Images
@@ -228,8 +227,6 @@ lib.mkMerge [
     ".config/rmpc/themes".source = config.lib.neg.live "files/rmpc/themes";
 
     ".config/swayimg".source = config.lib.neg.live "files/gui/swayimg";
-
-    ".config/ncpamixer.conf".text = config.lib.neg.readFile "files/media/ncpamixer.conf";
 
     # Spicetify Config (partial management)
     ".config/spicetify/config-xpui.ini" = lib.mkIf (config.lib.neg.enabled "media.audio.spicetify") {
