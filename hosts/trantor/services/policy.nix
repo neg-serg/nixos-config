@@ -55,6 +55,14 @@ lib.mkMerge [
       # Koito scrobbler on 127.0.0.1:4110 — local ListenBrainz-compatible hub for
       # listenbrainz-mpd; the first account is created in the web UI.
       koito.enable = true;
+      # Flohmarkt small-ads board for the LAN (http://trantor.local:8090). The
+      # first admin account comes from the one-time /setup/<code> page; the code
+      # is generated at activation into /var/lib/flohmarkt/setup-code.
+      flohmarkt = {
+        enable = true;
+        instanceName = "trantor";
+        externalUrl = "http://trantor.local:8090";
+      };
       # Local sshd, key-only auth (hardened profile). The dsh web agent has a
       # dedicated key in ~/.ssh/agent/dsh-agent-key (authorized_keys entry
       # restricted to localhost) so its SSH tools/terminal can reach the host.
@@ -135,6 +143,7 @@ lib.mkMerge [
           4713 # pipewire-pulse TCP (LAN audio)
           5000 # local service (see features below)
           6600 # mpd
+          8090 # flohmarkt small-ads board (servicesProfiles.flohmarkt above)
           11434 # ollama (no auth — LAN only)
           27015 # Steam
           27036 # Steam Remote Play

@@ -1,10 +1,8 @@
 ##
 # Module: servers/flohmarkt
 # Purpose: Flohmarkt — self-hosted small-ads board — for the LAN. The upstream
-#          release image and its CouchDB sidecar run as podman containers, and
-#          the web UI is published on cfg.bindAddress:cfg.port. Publishing a
-#          container port bypasses the NixOS firewall, so the bind address is
-#          the only exposure knob.
+#          release image and its CouchDB sidecar run as podman containers and
+#          the web UI listens on cfg.bindAddress:cfg.port.
 # Key options: cfg = config.servicesProfiles.flohmarkt
 # Secret: none in the repo or the store. The CouchDB password and the one-time
 #         setup code are generated at activation into <dataDir>/{db-password,setup-code}
@@ -12,6 +10,18 @@
 #         containers read at start. The /setup/<code> page at the board's URL
 #         creates the first admin account, so bootstrapping does not depend on
 #         a working MTA; ordinary registrations still need SMTP (follow-up).
+#
+# Networking notes: this kernel has no CONFIG_VETH, so podman's netavark bridge
+# cannot create veth pairs ("netlink: Operation not supported") and both
+# containers run with --network=host instead (the ceno container here does the
+# same). Consequences wired up below:
+#   * host networking is firewalled like any other host socket, so the board
+#     port is opened explicitly unless it stays on loopback;
+#   * CouchDB would listen on all interfaces, so the wrapper entrypoint drops a
+#     local.d file pinning it to 127.0.0.1 — the web container shares the
+#     namespace and reaches it there;
+#   * the image's entrypoint hardcodes uvicorn on 0.0.0.0:8000, so the module
+#     repeats its config-generation step and listens on bindAddress/port.
 {
   lib,
   config,
@@ -32,12 +42,27 @@ let
 
   envFile = "${cfg.dataDir}/env";
 
+  # Same steps as the image's docker/entrypoint.sh for the "web" command: the
+  # generator it calls lives next to it under $FLOHDRVPATH (the nix-built image
+  # bakes the source tree in and exports that variable), and the entrypoint's
+  # hardcoded 0.0.0.0:8000 gives way to bindAddress/port.
+  webCommand = ''
+    mkdir -p /etc/flohmarkt
+    python3 "''${FLOHDRVPATH:-/}/docker/config_generator.py" > /etc/flohmarkt/flohmarkt.conf
+    exec uvicorn --proxy-headers --forwarded-allow-ips='*' \
+      --host ${cfg.bindAddress} --port ${toString cfg.port} flohmarkt.web:start --factory
+  '';
+
   # The one-time setup code has to be readable by the human who creates the
   # first account, so the file is owned root:<mainUser's group>.
   mainGroup = config.users.users.${config.lib.neg.mainUser}.group;
 in
 {
   config = lib.mkIf cfg.enable {
+    # Host networking means no implicit podman firewall bypass: the board port
+    # has to be allowed explicitly unless it stays on loopback.
+    networking.firewall.allowedTCPPorts = lib.optionals (cfg.bindAddress != "127.0.0.1") [ cfg.port ];
+
     virtualisation.oci-containers.containers = {
       flohmarkt-couchdb = {
         # Named volume, not a bind mount: podman seeds an empty volume from the
@@ -45,34 +70,54 @@ in
         # user in the image expects instead of root-owned host directories.
         image = "docker.io/library/couchdb:3.3";
         environmentFiles = [ envFile ];
-        volumes = [ "flohmarkt-couchdb-data:/opt/couchdb/data" ];
+        volumes = [
+          "flohmarkt-couchdb-data:/opt/couchdb/data"
+        ];
+        # The drop-in must be written inside the container: the image's
+        # entrypoint runs `find /opt/couchdb ... -exec chown ...` over that
+        # tree, and with a read-only bind mount that chown fails, aborting the
+        # entrypoint (set -e) with no log output and an instant exit 1.
+        entrypoint = "/bin/bash";
+        cmd = [
+          "-c"
+          ''
+            printf '%s\n' '[chttpd]' 'bind_address = 127.0.0.1' \
+              > /opt/couchdb/etc/local.d/90-flohmarkt-bind.ini
+            exec /docker-entrypoint.sh couchdb
+          ''
+        ];
+        extraOptions = [ "--network=host" ];
         pull = "missing";
       };
 
       flohmarkt = {
         image = cfg.image;
-        cmd = [ "web" ];
+        entrypoint = "/bin/bash";
+        cmd = [
+          "-c"
+          webCommand
+        ];
         environmentFiles = [ envFile ];
         volumes = [ "${cfg.dataDir}:/var/lib/flohmarkt" ];
-        ports = [ "${cfg.bindAddress}:${toString cfg.port}:8000" ];
+        extraOptions = [ "--network=host" ];
         pull = "missing";
         dependsOn = [ "flohmarkt-couchdb" ];
       };
     };
 
-    # CouchDB is not published on the host, so both the readiness probe and the
-    # bootstrap have to run inside the podman network. The bootstrap is
-    # idempotent (create-or-update of databases, users and design docs), which
-    # is why the web container only waits for it instead of owning it.
+    # The bootstrap is idempotent (create-or-update of databases, users and
+    # design docs), which is why the web container only waits for it instead of
+    # owning it. The readiness probe runs inside the CouchDB container because
+    # the database is pinned to loopback.
     systemd.services.flohmarkt-initdb = {
       description = "Flohmarkt CouchDB bootstrap (databases, user, design docs)";
       after = [ "podman-flohmarkt-couchdb.service" ];
       requires = [ "podman-flohmarkt-couchdb.service" ];
       wantedBy = [ "multi-user.target" ];
       path = [
-        pkgs.coreutils
-        pkgs.curl
-        pkgs.podman
+        pkgs.coreutils # seq and sleep in the readiness loop
+        pkgs.curl # the readiness probe's curl, run inside the CouchDB container
+        pkgs.podman # podman exec/run: probe and initdb stay in the host network
       ];
       serviceConfig = {
         Type = "oneshot";
@@ -84,7 +129,7 @@ in
           podman exec flohmarkt-couchdb curl -fsS http://127.0.0.1:5984/ >/dev/null 2>&1 && break
           sleep 2
         done
-        podman run --rm --network podman --env-file ${envFile} \
+        podman run --rm --network host --env-file ${envFile} \
           -v ${cfg.dataDir}:/var/lib/flohmarkt ${cfg.image} initdb
       '';
     };
@@ -99,7 +144,10 @@ in
     # re-rendered on every activation while the generated values persist, so the
     # containers keep the same credentials across switches.
     system.activationScripts.flohmarkt = lib.stringAfter [ "var" ] ''
-      ${pkgs.coreutils}/bin/install -d -m 0750 -o root -g root ${cfg.dataDir}
+      # Directory group-read for the main user is what makes <dataDir>/setup-code
+      # reachable (the code is 0640 root:<group>); the two secret files inside
+      # stay 0600/0640 owned by root and are never world-readable.
+      ${pkgs.coreutils}/bin/install -d -m 0750 -o root -g ${mainGroup} ${cfg.dataDir}
       if [ ! -s ${cfg.dataDir}/db-password ]; then
         umask 077
         ${lib.getExe pkgs.openssl} rand -hex 24 > ${cfg.dataDir}/db-password
@@ -119,7 +167,7 @@ in
           'FLOHMARKT_EXTERNAL_URL=${cfg.externalUrl}' \
           'FLOHMARKT_DATA_PATH=/var/lib/flohmarkt' \
           'FLOHMARKT_DB_HTTPS=0' \
-          'FLOHMARKT_DB_HOST=flohmarkt-couchdb' \
+          'FLOHMARKT_DB_HOST=127.0.0.1' \
           'FLOHMARKT_DB_PORT=5984' \
           'FLOHMARKT_DB_NAME=flohmarkt' \
           'FLOHMARKT_DB_USER=admin' \
