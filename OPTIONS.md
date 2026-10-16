@@ -50,6 +50,11 @@ never implemented. Dev tooling is gated where it is installed instead — `featu
   `~/.local/share/wineprefixes/<app>` (bind → `/gamez/main/wineprefixes`), registry at
   `/etc/wineapps/apps.json`. Apps are declared in `features.wine.apps.<id>`
   (installer/executable/winetricks/...); see the `wine-apps` DSH skill for the add/remove workflow.
+- **Scrobbling** (`features.media.audio.listenbrainzMpd`): installs `listenbrainz-mpd`
+  (MPD → ListenBrainz) and emits its user unit only when
+  `secrets/home/listenbrainz-mpd.sops.yaml` (key `token`) exists — no secret, no unit.
+  `apiUrl` can point at the local Koito hub (`servicesProfiles.koito`, loopback 4110, starts
+  without any secret); the mpdas/Last.fm path stays unchanged until the new one is verified.
 
 ## Extra Arguments (flake extraSpecialArgs)
 

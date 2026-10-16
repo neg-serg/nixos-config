@@ -195,6 +195,9 @@ lib.mkMerge [
       ]
       ++ lib.optionals (config.lib.neg.enabled "media.audio.spicetify") [
         pkgs.spicetify-cli # Spotify customization tool
+      ]
+      ++ lib.optionals (config.lib.neg.enabled "media.audio.listenbrainzMpd") [
+        pkgs.listenbrainz-mpd # MPD -> ListenBrainz scrobbler (user unit in sys/user-services)
       ];
 
     # MPD Service
@@ -244,6 +247,39 @@ lib.mkMerge [
     };
     # mpdas service lives in sys/user-services.nix.
   })
+  # listenbrainz-mpd (MPD -> ListenBrainz, unit in sys/user-services/listenbrainz.nix):
+  # the token secret does not exist yet, so secret + config.toml + unit are all
+  # gated on it — enabling the feature flag without the secret is a no-op. To
+  # activate: create secrets/home/listenbrainz-mpd.sops.yaml with key `token`
+  # (yaml) and rebuild. See features.media.audio.listenbrainzMpd.apiUrl to feed
+  # the local Koito hub (servicesProfiles.koito) instead of listenbrainz.org.
+  (lib.mkIf
+    (
+      config.lib.neg.enabled "media.audio.listenbrainzMpd"
+      && config.lib.neg.pathExists "secrets/home/listenbrainz-mpd.sops.yaml"
+    )
+    (
+      lib.mkMerge [
+        {
+          sops.secrets."listenbrainz-mpd-token" = {
+            sopsFile = config.lib.neg.path "secrets/home/listenbrainz-mpd.sops.yaml";
+            key = "token";
+            owner = "neg";
+          };
+        }
+        (neg.mkHomeFiles {
+          ".config/listenbrainz-mpd/config.toml".text = ''
+            [submission]
+            token_file = "${config.sops.secrets."listenbrainz-mpd-token".path}"
+            api_url = "${config.features.media.audio.listenbrainzMpd.apiUrl}"
+
+            [mpd]
+            address = "127.0.0.1:6600"
+          '';
+        })
+      ]
+    )
+  )
   (lib.mkIf (config.lib.neg.enabled "media.aiUpscale") (
     neg.mkHomeFiles {
       ".local/bin/ai-upscale-video" = {
