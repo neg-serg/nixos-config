@@ -2,6 +2,11 @@ set -euo pipefail
 
 SEND=@sender@/bin/telegram-send
 
+# The digest runs as a system service (root), so the user manager has to be
+# named explicitly: a bare `systemctl --user` would query root's own
+# (nonexistent) manager. Filled in by notify-digest.nix, e.g. "neg@.host".
+UM=@userManager@
+
 nl=$'\n'
 
 # Russian weekday from the numeric day-of-week (1=Mon .. 7=Sun).
@@ -69,10 +74,10 @@ else
 fi
 
 # --- failed user units -------------------------------------------------
-# The digest runs as a user timer, so the user manager is reachable as well:
-# listenbrainz-mpd and the other per-user services are not covered by the
-# system `systemctl --failed` above.
-if userfailed="$(systemctl --user --failed --no-legend --plain 2> /dev/null)"; then
+# The digest is a system service (root), so the user manager is addressed via
+# --machine: listenbrainz-mpd and the other per-user services are not covered
+# by the system `systemctl --failed` above.
+if userfailed="$(systemctl --user --machine "$UM" --failed --no-legend --plain 2> /dev/null)"; then
   if [ -n "$userfailed" ]; then
     msg="$msg$nl  👤 пользовательские:"
     while IFS= read -r uline; do
@@ -85,7 +90,7 @@ fi
 
 # --- scrobbling --------------------------------------------------------
 # listenbrainz-mpd (user unit) and koito (system unit, the local hub).
-lb_state="$(systemctl --user is-active listenbrainz-mpd.service 2> /dev/null || true)"
+lb_state="$(systemctl --user --machine "$UM" is-active listenbrainz-mpd.service 2> /dev/null || true)"
 koito_state="$(systemctl is-active koito.service 2> /dev/null || true)"
 msg="$msg$nl$nl🎧 Скробблинг: listenbrainz-mpd: ${lb_state:-unknown} · koito: ${koito_state:-unknown}"
 
