@@ -23,15 +23,21 @@
 // The sources are symbolic glyphs: an image's `tint:` paints its shape in that
 // colour (the alpha is the mask), which is how the shell keeps one hue — draw
 // them with `tint: ink`, `tint: ink.dim` or the tone the widget means, as
-// pleamar's own bar example does. A scene that needs a glyph this file does not
-// cover declares it locally, next to the scene; this library stays small.
+// pleamar's own bar example does. They were chosen so that they resolve in the
+// session icon theme `kora-pgrey` and, where the standard theme has an
+// equivalent, in Adwaita too: `icon "…"` in 0.4.11 looks only under
+// `~/.local/share/icons`, `~/.icons` and `/usr/share/icons`, in the fixed
+// themes hicolor, Papirus, Papirus-Dark, Adwaita, breeze, breeze-dark, and does
+// not read `index.theme`, so the deployment must expose one of those. A scene
+// that needs a glyph this file does not cover declares it locally, next to the
+// scene; this library stays small.
 
 library Icons strict {
 
     // ---------------------------------------------------------- connectivity
     // icon.small
     image wifi = icon "network-wireless-symbolic", 16, 16
-    image wifi.off = icon "network-wireless-disconnected-symbolic", 16, 16
+    image wifi.off = icon "network-wireless-offline-symbolic", 16, 16
     image ethernet = icon "network-wired-symbolic", 16, 16
     image vpn = icon "network-vpn-symbolic", 16, 16
     image bluetooth = icon "bluetooth-symbolic", 16, 16
@@ -39,8 +45,8 @@ library Icons strict {
 
     // ---------------------------------------------------------------- status
     // icon.small
-    image battery = icon "battery-good-symbolic", 16, 16
-    image battery.charging = icon "battery-good-charging-symbolic", 16, 16
+    image battery = icon "battery-level-100-symbolic", 16, 16
+    image battery.charging = icon "battery-level-50-charging-symbolic", 16, 16
     image volume = icon "audio-volume-high-symbolic", 16, 16
     image volume.muted = icon "audio-volume-muted-symbolic", 16, 16
     image microphone = icon "microphone-sensitivity-high-symbolic", 16, 16
@@ -70,5 +76,5 @@ library Icons strict {
     // icon.small
     image check = icon "object-select-symbolic", 16, 16
     image chevron = icon "go-next-symbolic", 16, 16
-    image workspace = icon "workspace-switcher-symbolic", 16, 16
+    image workspace = icon "view-grid-symbolic", 16, 16
 }
