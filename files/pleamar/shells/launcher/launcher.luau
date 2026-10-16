@@ -136,10 +136,14 @@ local function rebuild()
     local out = {}
     for i = 1, limit do
         local rec = hits[i].rec
+        -- A model assignment is atomic and a bad field would keep the old list;
+        -- the image field gets a string or nothing.
+        local icon = rec.icon
+        if type(icon) ~= "string" then icon = "" end
         out[i] = {
             name = tostring(rec.name or ""),
             exec = tostring(rec.exec or ""),
-            icon = rec.icon,
+            icon = icon,
             id = tostring(rec.id or ""),
             local_name = display_name(rec),
         }
@@ -159,8 +163,8 @@ end
 -- ======================= the launch path =======================
 
 local function launch(i)
-    -- A second ask arriving in the same turn (Enter and Return both fire, or a
-    -- row press after Enter) must not launch twice.
+    -- A second ask in the same turn (a row press, a repeated submit) must not
+    -- launch twice.
     if not fact.open then return end
 
     local rec = model.results[i + 1]
@@ -200,6 +204,15 @@ end)
 on("text:query", function()
     fact.selected = 0
     rebuild()
+end)
+
+-- Enter in the field. `submit:query` carries the text, so a one-shot
+-- `--say launcher "submit query kitty"` re-slices from the submitted value
+-- before launching; the typed route has already re-sliced on every keystroke.
+on("submit:query", function(value)
+    if type(value) == "string" then text.query = value end
+    rebuild()
+    launch(fact.selected)
 end)
 
 -- Closing by any route (Escape, the catcher, --say "fact open false") clears

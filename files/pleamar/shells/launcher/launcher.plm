@@ -53,11 +53,11 @@ import "../../lib/icons.plm"
 // Enter (or a row press) emits `launch_app(index)`; the logic hands the chosen
 // record's `exec` to `sys.call("apps.launch", exec)` and closes the launcher.
 //
-// Why the list is not windowed: `maxResults` clamps the slice to 1–20 rows, so
-// the whole result set is unfolded in `for a in results` and the `view:` merely
-// scrolls if the panel is ever taller than the monitor (the reference's
-// `content:`/`from first` window is for thousands of records — the cap here is
-// 20, and `model apps` is sized for the apps service's full list, 256).
+// Why the list is not windowed: `maxResults` clamps the slice to 1–20 rows and
+// the panel is exactly as tall as that many, so `for a in results` unfolds the
+// whole slice and the `view:` is the scroll container (wheel works over it)
+// rather than a window. The reference's `content:`/`from first` slicing is for
+// lists of thousands, which this cap never reaches.
 
 scene launcher {
 
@@ -133,11 +133,11 @@ scene launcher {
     on key Ctrl+n while open { selected = max(0, min(selected + 1, results.count - 1)) }
     on key Ctrl+p while open { selected = max(0, selected - 1) }
 
-    // Enter inside the input, and Return as a fallback when the caret is not in
-    // the field: both ask the logic to launch the selection. The logic ignores a
-    // second ask after the first one closed the launcher.
-    on submit query { emit launch_app(selected) }
-    on key Return while open { emit launch_app(selected) }
+    // Enter is launcher.luau's: the `submit:query` trigger carries the field's
+    // text, so `pleamar --say launcher "submit query kitty"` re-slices from the
+    // submitted value before launching. A scene rule here would race the logic's
+    // timer for the same query and could launch the stale selection.
+    // (The typed route re-slices on every keystroke, so the slice is current.)
 
     // The field gets the caret when the launcher opens; `focus()` from the logic
     // is the documented route for a search opened from a shortcut, and this rule
@@ -227,11 +227,11 @@ scene launcher {
                     show: results.total == 0
                 }
 
-                // One row per filtered record. `view:` is the scroll window: the
-                // slice is at most 20 rows and the panel is sized for `maxResults`,
-                // so normally everything fits; a taller slice would wheel-scroll
-                // (a `content:`/`from first` window is the route for thousands,
-                // not for a slice capped at 20).
+                // One row per filtered record. The `view:` is the scroll
+                // container; the slice is at most 20 rows and the panel is sized
+                // for `maxResults`, so everything fits and it never has to
+                // scroll — no scroll bar, and no `content:`/`from first` window
+                // (that is the route for thousands, not for a slice capped at 20).
                 column list ~ui.quick {
                     at: 20, 54
                     view: 420, max_results * (menu.item.height + menu.item.gap)
