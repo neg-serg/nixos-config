@@ -83,11 +83,14 @@
         };
 
         hyprlandPlugins = prev.hyprlandPlugins // {
-          # hy3 and hyprspace were removed for the nixos-unstable (Hyprland
-          # 0.56) migration — their 0.55 CCompositor/monitor API
-          # (getMonitorFromCursor/warpCursorTo/m_monitors) no longer compiles
-          # against 0.56, which moved monitor access into a State query system
-          # and made CCompositor a small class. Re-port them before re-exporting.
+          # hy3 needs no override: nixpkgs' hyprlandPlugins.hy3 is 0.56.0.1
+          # (upstream tag hl0.56.0.1), built by mkHyprlandPlugin against the
+          # same Hyprland 0.56.2 commit as the session compositor, and the
+          # session loads it with hy3-setup (main.nix). hyprspace stays
+          # dropped — its 0.55 CCompositor/monitor API (getMonitorFromCursor/
+          # warpCursorTo/m_monitors) no longer compiles against 0.56, which
+          # moved monitor access into a State query system and made
+          # CCompositor a small class. Re-port it before re-exporting.
           # HyprExpo: upstream retired the plugin from hyprwm/hyprland-plugins
           # (hence no nixpkgs attr), sandwichfarm's fork continues it and pins
           # 0.56.2 at commit 5891014c (see its hyprpm.toml). Built with the
