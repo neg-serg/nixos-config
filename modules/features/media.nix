@@ -9,6 +9,24 @@
       apps.enable = mkBool "enable audio apps (players, tools)" true;
       creation.enable = mkBool "enable audio creation stack (DAW, synths)" true;
       mpd.enable = mkBool "enable MPD stack (mpd, clients, mpd-mpris)" true;
+      # listenbrainz-mpd: MPD -> ListenBrainz scrobbler (the Last.fm-free path;
+      # mpdas stays Last.fm-only). The package, config.toml and the systemd user
+      # unit are emitted only when secrets/home/listenbrainz-mpd.sops.yaml
+      # exists, so the flag can stay on with no secret present — see
+      # modules/user/nix-maid/sys/media.nix and sys/user-services/listenbrainz.nix.
+      listenbrainzMpd = {
+        enable = mkBool "enable listenbrainz-mpd (MPD -> ListenBrainz scrobbler)" true;
+        apiUrl = lib.mkOption {
+          type = lib.types.str;
+          default = "https://api.listenbrainz.org";
+          description = ''
+            ListenBrainz-compatible submission API base URL. Point this at the
+            local Koito hub (http://127.0.0.1:4110, servicesProfiles.koito) to
+            scrobble locally first and relay onwards; the token then has to be
+            the Koito API key, not a ListenBrainz one.
+          '';
+        };
+      };
       # Sola MPD: browser MPD client (Node backend + React UI on loopback) aimed
       # at large libraries — flexible browsing, search and queue editing.
       solaMpd = {
