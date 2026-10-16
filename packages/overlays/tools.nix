@@ -43,6 +43,7 @@ in
     flow = callPkg (pkg "flow") { }; # Terminal dashboard for real-time network throughput
     lsfg-vk = callPkg (pkg "lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
     nixard = callPkg (pkg "nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
+    nixbuild-status = callPkg (pkg "nixbuild-status") { }; # One-line NixOS build status for status bars (waybar/i3bar/polybar)
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/lusty
     tgchat = callPkg (pkg "tgchat") { }; # Telegram chat access via Telethon (read/send as the user)
     topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)

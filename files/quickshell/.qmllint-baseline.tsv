@@ -19,6 +19,9 @@
 #                             and Theme from the enclosing window scope, which the
 #                             analyzer cannot resolve through the attached-property
 #                             type that is itself unresolved (see unresolved-type).
+#                             Two more (619 → 621): the bar's BuildStatus capsule
+#                             reads panelWidgets from Bar.qml's scope and takes
+#                             modelData as its screen — the same inherent kind.
 #   missing-property          a property reached through `parent.`/scope, where the
 #                             analyzer only knows the C++ base type. 51 → 57: the
 #                             tube's QML now talks to its own shader
@@ -45,7 +48,7 @@
 #
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
-unqualified	619
+unqualified	621
 missing-property	32
 unresolved-type	10
 import	2

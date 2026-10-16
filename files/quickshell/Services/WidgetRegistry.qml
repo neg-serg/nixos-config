@@ -20,7 +20,7 @@ Singleton {
     // Default layout used when Settings.panelLayout is absent/invalid
     readonly property var defaultLayout: ({
             left: ["clock", "workspaces", "keyboard", "network", "weather"],
-            right: ["media", "mpdFlags", "sysmon", "pill", "systray", "microphone", "volume", "genelec"]
+            right: ["media", "mpdFlags", "sysmon", "pill", "systray", "microphone", "volume", "genelec", "nixbuild"]
         })
 
     // Widget-id -> true lookup for a panelLayout value.

@@ -14,7 +14,10 @@ let
       lib.attrByPath [ "packages" hostSystem "default" ] null inputs.rsmetrx
     else
       null;
-  quickshellExtras = lib.optionals (rsmetrxPkg != null) [
+  quickshellExtras = [
+    pkgs.neg.nixbuild-status # one-line NixOS build status streamed by the bar's BuildStatus widget
+  ]
+  ++ lib.optionals (rsmetrxPkg != null) [
     rsmetrxPkg # rsmetrx shader pack for Quickshell HUDs
   ];
 in

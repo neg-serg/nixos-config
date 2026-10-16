@@ -524,6 +524,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "nixbuild-status"
+version = "0.1.0"
+
+[[package]]
 name = "nixie"
 version = "0.1.0"
 dependencies = [
