@@ -40,8 +40,8 @@ let
   minibbsPost = pkgs.writeShellApplication {
     name = "minibbs-post";
     runtimeInputs = [
-      pkgs.curl
-      pkgs.jq
+      pkgs.curl # HTTP client the posting helper uses for the board's JSON API
+      pkgs.jq # builds the JSON payload, keeping the quoting out of the shell
     ];
     text = ''
       # usage: minibbs-post <board> <author> [subject]  (body on stdin)
