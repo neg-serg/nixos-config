@@ -497,6 +497,40 @@ in
             after = [ "hyprland-session.target" ];
             serviceConfig.ExecStart = "${hyprcaptureSetup}/bin/hyprcapture-setup";
           };
+
+          # Screenshot feedback: HyprCapture saves captures into the shots
+          # directory and its own notification/thumbnail are disabled (see
+          # files/gui/hypr/hyprcapture.lua), so this service is what fires the
+          # pre-HyprCapture quickshell toast (pic-info -> pic-notify) for a
+          # capture that landed there. The screenshot-toast.path unit triggers
+          # it.
+          screenshot-toast = systemdUser.mkUserService {
+            presets = [ "oneshot" ];
+            description = "Show the screenshot toast for a new capture";
+            serviceConfig = {
+              # A user unit starts with a minimal PATH: pic-info/pic-notify live
+              # in ~/.local/bin, the tools they call (find, sort, stat, identify,
+              # wl-copy) come from the system profile.
+              ExecStart = "%h/.local/bin/screenshot-toast";
+              Environment = [ "PATH=%h/.local/bin:/run/current-system/sw/bin:\${PATH}" ];
+            };
+          };
+        };
+
+        # PathChanged, not PathModified: the unit runs once the written file is
+        # closed, so pic-info reads a complete PNG. The directory watch also
+        # fires for a delete or a rename — screenshot-toast ignores files older
+        # than ~20 s, so only a fresh capture can pop a toast. Session-scoped:
+        # outside the session nothing should write the toast event file for a
+        # shell that is not running yet.
+        systemd.user.paths.screenshot-toast = {
+          description = "Watch the shots directory for new captures";
+          wantedBy = [ "hyprland-session.target" ];
+          partOf = [ "hyprland-session.target" ];
+          pathConfig = {
+            PathChanged = "/home/neg/pic/shots";
+            Unit = "screenshot-toast.service";
+          };
         };
       }
 

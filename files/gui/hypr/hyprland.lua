@@ -55,6 +55,12 @@ if hl.plugin and hl.plugin.hyprcapture then
       hyprcapture = {
         save_dir = "$XDG_PICTURES_DIR/shots",
         record_save_dir = "$XDG_VIDEOS_DIR/recordings",
+        -- Screenshots get the fast quickshell toast (the screenshot-toast.path
+        -- unit runs screenshot-toast -> pic-info), so the plugin's own
+        -- notification and result thumbnail stay off. Keep in sync with
+        -- files/gui/hypr/hyprcapture.lua.
+        screenshot_notification = false,
+        show_thumbnail = false,
       },
     },
   })
@@ -411,10 +417,6 @@ hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch
 hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch "kitty --class nwim -e /home/neg/.local/bin/v"'))
 hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch "~/.local/bin/pl video"'))
 hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg(_[0-9]+)?$" --launch "swayimg ~/dw"'))
--- hyprKCS cheat sheet (SUPER+?): a layer-shell overlay listing the keybinds; a
--- second launch toggles it closed. Upstream parses hyprlang configs only, so
--- with this Lua config the overlay renders empty until kosa12/hyprKCS#77 lands.
-hl.bind(M4 .. "+" .. SH .. "+slash", hl.dsp.exec_cmd("hyprkcs"))
 -- Wallpaper shuffle hotkey removed with the per-workspace feature (2026-10-14):
 -- no bind may repaint the desktop.
 

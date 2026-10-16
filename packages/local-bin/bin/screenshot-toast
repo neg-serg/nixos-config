@@ -1,0 +1,42 @@
+#!/bin/sh
+# screenshot-toast: show the quickshell ScreenshotToast for a finished capture.
+#
+# HyprCapture saves into the shots directory and its own feedback is off
+# (files/gui/hypr/hyprcapture.lua disables the plugin's notification and the
+# result thumbnail), so this script is what puts the pre-HyprCapture toast
+# back: the `screenshot-toast.path` unit runs it when the shots directory
+# changes and it forwards the newest file to pic-info -> pic-notify ->
+# quickshell. Re-runnable by hand (`screenshot-toast` shows the latest shot).
+#
+# With an explicit FILE argument the toast is shown unconditionally; without
+# one (the path-unit case) only a file that landed in the last 20 seconds is
+# announced — a delete or a rename in the directory triggers the unit too —
+# and a file that was just announced is skipped, because one write can raise
+# several directory events (create, close, chmod) and more than one watcher
+# may be around right after a change.
+#
+# Requires pic-info and pic-notify in PATH (both live in ~/.local/bin).
+
+set -u
+
+dir="${PIC_INFO_DIR:-${GRIM_DEFAULT_DIR:-}}"
+if [ -z "$dir" ]; then
+  pictures="${XDG_PICTURES_DIR:-$HOME/pic}"
+  dir="${pictures%/}/shots"
+fi
+
+file="${1:-}"
+if [ -z "$file" ]; then
+  file=$(find "$dir" -maxdepth 1 -type f -printf '%T@ %p\n' 2>/dev/null \
+    | sort -rn 2>/dev/null | head -n 1 | cut -d' ' -f2-)
+  [ -n "$file" ] || exit 0
+  mtime=$(stat -c %Y "$file" 2>/dev/null || echo 0)
+  [ "$(( $(date +%s) - mtime ))" -le 20 ] || exit 0
+  key="$file $mtime"
+  stamp="${XDG_RUNTIME_DIR:-/tmp}/screenshot-toast-last"
+  [ "$(cat "$stamp" 2>/dev/null || true)" = "$key" ] && exit 0
+  printf '%s' "$key" > "$stamp" 2>/dev/null || true
+fi
+
+[ -e "$file" ] || exit 0
+exec pic-info "$file"
