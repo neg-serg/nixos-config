@@ -15,13 +15,16 @@ kb_layout_to_use = "us"
 [hints]
 # Linux defaults to `contour`, which in text-heavy windows labels every blob it
 # finds (measured ~600 labels in a terminal) and covers the screen. `segment`
-# with `controls` is instant, needs no OCR, and labels buttons, fields, icons
-# and pictures only -> far fewer boxes. Text targets stay on Ctrl+Alt+F
-# (vision + search), which overrides the strategy per activation.
+# is instant and needs no OCR. Its `phrases` target set keeps every control
+# (buttons, fields, icons, pictures) and adds one label per text phrase, so
+# frameless text -- links and flat text buttons -- is reachable too; `controls`
+# alone drops those, which reads as "some labels are missing". `words` labels
+# every word (too noisy); Ctrl+Alt+F still overrides the strategy with
+# vision + search per activation.
 strategy = "segment"
 
 [hints.segment]
-targets = "controls"
+targets = "phrases"
 
 # Stock labels are 95%-opaque boxes with an accent border, which hides what is
 # under them. Smaller, borderless and 60% opaque keeps the window readable.
