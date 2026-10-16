@@ -67,6 +67,8 @@ local CACHE = "/tmp/.cache"
 
 local ok_home, home = pcall(function() return sys.ask("env", "HOME") end)
 if ok_home and type(home) == "string" and home ~= "" then HOME = home end
+-- A trailing slash would turn "~" .. rest into "~rest".
+if HOME:sub(-1) == "/" then HOME = HOME:sub(1, -2) end
 
 local ok_cache, cache = pcall(function() return sys.ask("env", "XDG_CACHE_HOME") end)
 if ok_cache and type(cache) == "string" and cache ~= "" then CACHE = cache end
@@ -176,7 +178,9 @@ poll()
 local function act(cmd, args)
     if path == "" then return end
     hide()
-    run(cmd, args)
+    -- A missing program must not take the press handler down with it.
+    local ok = pcall(function() run(cmd, args) end)
+    if not ok then log("toast: could not run", cmd) end
 end
 
 on("ocr_tess", function() act("pic-ocr", { "--engine=tesseract", path }) end)
