@@ -230,7 +230,7 @@ mirror_source() { # $1 = id; a mirrored Image pass on stdout (stderr: source URL
     --data-urlencode 'v=V3' \
     https://sourcegraph.com/.api/search/stream -o "$stream"; then
     # Busy queries can outlive --max-time; the stream is still a valid prefix.
-    [ -s "$stream" ] || die "mirror search failed (Sourcegraph${MIRROR_PROXY:+ via $MIRROR_PROXY})"
+    [ -s "$stream" ] || return 1
     printf '%s: note: mirror search returned partial results\n' "$PROG" >&2
   fi
   # Keep files that cite the view URL; prefer an early citation (mirror header)
@@ -241,7 +241,8 @@ mirror_source() { # $1 = id; a mirrored Image pass on stdout (stderr: source URL
      | select(any(.lineMatches[]?.line; test($ref; "i")))
      | {repo: .repository, commit: (.commit // ""), path: .path,
         line: ([.lineMatches[]?.lineNumber] | min // 999)}]
-    | map(select(.repo != null and .path != null))
+    | map(select(.repo != null and .path != null
+                 and (.path | test("\\.(frag|fs|glsl)$"; "i"))))
     | unique_by(.repo + " " + .path)
     | sort_by(.line,
               (if (.path | test("\\.(frag|fs|glsl)$"; "i")) then 0 else 2 end),
@@ -252,13 +253,13 @@ mirror_source() { # $1 = id; a mirrored Image pass on stdout (stderr: source URL
     case $repo in github.com/*) ;; *) continue ;; esac
     raw="https://raw.githubusercontent.com/${repo#github.com/}/${commit:-HEAD}/${path// /%20}"
     if curl -fsS --max-time 30 "${proxy[@]}" -o "$tmp" "$raw" &&
-      grep -qE 'mainImage[[:space:]]*\(' "$tmp"; then
+      grep -qE '^[[:space:]]*(void|vec4)[[:space:]]+mainImage[[:space:]]*\(' "$tmp"; then
       printf '%s: mirror %s\n' "$PROG" "$raw" >&2
       cat "$tmp"
       return 0
     fi
   done <<< "$candidates"
-  die "no mirror copy with a mainImage() pass for $id — use --import"
+  return 1
 }
 
 raw=
@@ -291,7 +292,10 @@ case $arg in
         printf '%s: cached %s\n' "$PROG" "$raw" >&2
       elif [ "$mode" = mirror ]; then
         mkdir -p "$CACHE_DIR"
-        mirror_source "$id" > "$raw.part"
+        if ! mirror_source "$id" > "$raw.part"; then
+          rm -f "$raw.part"
+          die "no usable mirror copy of $id — copy the source on $url, then run: shtoy --import $id"
+        fi
         mv -f "$raw.part" "$raw"
         printf '%s: fetched %s -> %s\n' "$PROG" "$id" "$raw" >&2
       elif [ -f "$SHADER_DIR/$id.frag" ]; then
