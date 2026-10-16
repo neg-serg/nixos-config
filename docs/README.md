@@ -8,15 +8,14 @@ configuration.
 ## Working Tree Layout
 
 - `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
-  (`docs/index.md`, `docs/howto/`, `docs/runbook-*.md`).
+  (`docs/runbook-*.md`).
 - `files/` — static config files linked to user homes via nix-maid.
-- `docs/index.md` — entry point; `docs/howto/` — focused guides; `docs/runbook-*.md` — operational
-  steps.
+- `docs/runbook-*.md` — operational steps (entry point `docs/runbook-index.md`); everything else is
+  documented in the code it describes.
 
 ## Quick Start (System)
 
 - Rebuild: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`
-- Generated option docs: `just docs-modules`
 - Formatting/lint: `just fmt`, `just lint`, `just check`
 - Hooks (optional): `just hooks-enable`
 

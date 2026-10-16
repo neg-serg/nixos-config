@@ -3,11 +3,9 @@
 Human-curated notes on how `features.*` flags are composed and overridden in this
 repo — profile cascades, unfree policy, exclusions, and notable behaviors.
 
-> **Exhaustive flag reference is generated, not maintained here:**
-> - Full option docs (every `features.*` flag with type/default/description):
->   [`docs/howto/modules.md`](./docs/howto/modules.md) — regenerate with `just docs-modules`
-> - Structural map + compact flag list with defaults:
->   [`docs/codebase.md`](./docs/codebase.md) — regenerate with `just codebase`
+> **Exhaustive flag reference:** read the declarations — every `features.*` flag carries its type,
+> default and description where it is declared (`modules/features/*.nix`, plus flags declared next
+> to their domain, e.g. `features.profiles` in `modules/profiles/default.nix`).
 
 ## Profiles
 

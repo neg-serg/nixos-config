@@ -4,8 +4,8 @@ Hands-on, verified recipes for the most common changes to this repo. Every step 
 against the current tree (paths, option names, lint rules). If a recipe contradicts what you
 actually see in the tree, the recipe is wrong — fix the recipe, don't work around it.
 
-Orientation first: `docs/codebase.md` (generated, regenerate with `just codebase`) maps the
-structure — feature flags, module domains, packages, overlay wiring.
+Orientation first: read the tree — a domain's `default.nix` auto-imports its siblings
+(`neg.importDir`), flags are declared where they are used, and modules carry their own comments.
 
 ## 0. Golden rules (apply to every change)
 
@@ -37,8 +37,7 @@ structure — feature flags, module domains, packages, overlay wiring.
 
 **Steps:**
 
-1. Pick the domain (see `modules/README.md` or the `## Module domains` section of
-   `docs/codebase.md`).
+1. Pick the domain (see `modules/AGENTS.md` for the domain layout and auto-import rules).
 
 1. Create the module and gate it on its feature flag:
 
@@ -137,14 +136,14 @@ declaratively managed file (`force = true`) or a `writeShellScriptBin` wrapper (
    `# comment` when non-obvious), or per profile: `modules/profiles/<name>.nix` →
    `features.<domain>.<feature>.enable = mkDefault true;`.
 
-1. Refresh: update `OPTIONS.md`, run `just codebase`.
+1. Refresh: nothing to regenerate — the flag's own description is its documentation.
 
 **Example:**
 `features.dev.ai.omp.enable = mkBool "install Oh My Pi (omp) AI coding agent (fork of Pi)" false;`
 in `modules/features/dev.nix`, enabled in `hosts/trantor/default.nix`.
 
 **Verify:** `rg "features.<domain>.<feature>" modules/ hosts/` shows definition, host/profile
-enablement, and consumer; `just codebase` lists the flag with its default and description.
+enablement, and consumer; the flag's description states its default.
 
 ## 4. Add a package
 
@@ -242,9 +241,6 @@ normal hosts.
 1. Naming: extensionless python files avoid the `*.py` lint path (`just lint` runs ruff/black only
    on `*.py`); `.sh`/`.bash` files are shellchecked when they carry a bash shebang.
 
-**Example:** `packages/local-bin/bin/gen-codebase` — generates `docs/codebase.md`; run from anywhere
-(resolves the repo root via git).
-
 **Verify:** `~/.local/bin/<name>` exists after rebuild and behaves; `just lint` stays clean.
 
 **Gotchas:** don't hardcode Nix store paths in scripts — add a substitution case in local-bin.nix
@@ -303,28 +299,32 @@ instead; scripts meant for the system (not the user) belong in a package, not lo
 
 ## 8. Update docs
 
-- Cross-link new documents from `docs/index.md` (and `docs/howto/index.md` for how-tos) — required
-  by `docs/AGENTS.md`.
+- New knowledge goes into the code it describes (module header, option description, comment) —
+  mandatory, not optional: `docs/` is reserved for runbooks (`docs/AGENTS.md`).
 - Docs are English-only (hard rule, root `AGENTS.md`): no `*.ru.md` variants, no Russian prose in
   docs; the markdown-language check fails on Cyrillic/CJK in any `*.md` file.
-- Generated docs: `just docs-modules` → `docs/howto/modules.md`; `just codebase` →
-  `docs/codebase.md`. `OPTIONS.md` is maintained manually.
-- Placement: `docs/howto/` — focused guides/reference; `docs/runbook-*.md` — operational steps; add
-  new topics to `docs/index.md` / `docs/howto/index.md`.
+- Docs live in the code they describe: module headers, `mkOption` descriptions, comments next to
+  non-obvious behavior. There is no generated reference to refresh.
+- Placement: `docs/runbook-*.md` — operational steps; everything else belongs in the code.
 
 ## 9. Verify & deploy
 
 - `just fmt` — format everything (nixfmt, shfmt, black, mdformat, taplo)
+
 - `just lint` — full lint suite (statix, deadnix, ruff/black, shellcheck,
   QML/Hyprland/markdown/syntax checks, package annotations)
+
 - `just check` — `nix flake check -L`
-- `just docs-guard` / `just unbound-hosts-guard` — freshness gates for generated artifacts
-  (`docs/codebase.md`, `docs/howto/modules.md`, `hosts/trantor/unbound-hosts.nix`); they rerun the
-  generators and diff, and are not part of `just lint`
+
+- `just unbound-hosts-guard` — freshness gate for the generated `hosts/trantor/unbound-hosts.nix`:
+  reruns the generator and diffs; not part of `just lint`.
+
 - `just deploy [host]` — build + switch (default `trantor`); `just deploy-nh` — nh-based
   alternative; `just deploy-debug` — verbose
+
 - dry-run before touching the system:
   `nix build .#nixosConfigurations.<host>.config.system.build.toplevel`
+
 - `nix flake check` does **not** force derivations, so a lazy eval error can pass the checks and
   fail the switch. Force the toplevel drv as well:
   `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`
