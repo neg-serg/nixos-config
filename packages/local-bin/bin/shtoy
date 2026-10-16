@@ -30,8 +30,9 @@
 # rejects progressive JPEGs — convert those to baseline or PNG first.
 #
 # Cached sources live at $XDG_CACHE_HOME/shtoy/<id>.frag as copied from the
-# site. Sources that need rewriting go through a temp copy whose path is printed
-# on stderr.
+# site; sources shipped with this config live in $XDG_CONFIG_HOME/shtoy/shaders
+# (<id>.frag, used when the cache has no copy — --list marks them). Sources
+# that need rewriting go through a temp copy whose path is printed on stderr.
 #
 # The API path needs an app key (SHADERTOY_API_KEY, or
 # $XDG_CONFIG_HOME/shtoy/api_key). Cloudflare fronts shadertoy.com, so keyed
@@ -43,9 +44,10 @@ set -euo pipefail
 LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 
 CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/shtoy
+SHADER_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/shtoy/shaders
 API_KEY_FILE=${XDG_CONFIG_HOME:-$HOME/.config}/shtoy/api_key
 
-usage() { usage_from_header 2 39; }
+usage() { usage_from_header 2 40; }
 
 case ${1:-} in
   -h | --help | help | \?)
@@ -135,10 +137,17 @@ fi
 
 if [ "$mode" = list ]; then
   shopt -s nullglob
-  files=("$CACHE_DIR"/*.frag)
-  ((${#files[@]})) || die "cache is empty: $CACHE_DIR"
-  for f in "${files[@]}"; do
+  cached=("$CACHE_DIR"/*.frag)
+  shipped=("$SHADER_DIR"/*.frag)
+  ((${#cached[@]} + ${#shipped[@]})) || die "no cached or shipped shaders"
+  for f in "${cached[@]}"; do
     basename "$f" .frag
+  done
+  for f in "${shipped[@]}"; do
+    name=$(basename "$f" .frag)
+    if [ ! -f "$CACHE_DIR/$name.frag" ]; then
+      printf '%s (shipped)\n' "$name"
+    fi
   done
   exit 0
 fi
@@ -211,12 +220,16 @@ case $arg in
       id=$(shader_id "$arg") || die "not a file, and not a Shadertoy id: $arg"
       url="https://www.shadertoy.com/view/$id"
       raw=$CACHE_DIR/$id.frag
-      if [ ! -f "$raw" ] && [ "$mode" = import ]; then
+      if [ -f "$raw" ]; then
+        : # already cached
+      elif [ "$mode" = import ]; then
         mkdir -p "$CACHE_DIR"
         clipboard_source "$url" > "$raw.part"
         mv -f "$raw.part" "$raw"
         printf '%s: cached %s\n' "$PROG" "$raw" >&2
-      elif [ ! -f "$raw" ] && [ -n "$api_key" ]; then
+      elif [ -f "$SHADER_DIR/$id.frag" ]; then
+        raw=$SHADER_DIR/$id.frag
+      elif [ -n "$api_key" ]; then
         mkdir -p "$CACHE_DIR"
         api_source "$id" > "$raw.part"
         if [ ! -s "$raw.part" ]; then
@@ -225,7 +238,7 @@ case $arg in
         fi
         mv -f "$raw.part" "$raw"
         printf '%s: fetched %s -> %s\n' "$PROG" "$id" "$raw" >&2
-      elif [ ! -f "$raw" ]; then
+      else
         die "no cached copy of $id — copy the shader source on $url, then run: shtoy --import $id"
       fi
     fi
