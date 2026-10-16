@@ -25,7 +25,9 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# readlink -f so a deployment that symlinks the script still finds its
+# sibling theme-extract.awk.
+SCRIPT_DIR="$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")" && pwd)"
 TOOL_NAME="theme"
 
 # Tools, overridable for tests and for a host with unusual names.
@@ -43,12 +45,10 @@ EXTRACTED=0
 COAL=""
 SURFACE=""
 INK=""
-INK_DIM=""
 ACCENT=""
 COAL_NOTE=""
 SURFACE_NOTE=""
 INK_NOTE=""
-INK_DIM_NOTE=""
 ACCENT_NOTE=""
 
 TMP_FILE=""
@@ -100,13 +100,14 @@ Colours:
   * the accent is the legacy AccentSampler mean of the saturated pixels,
     hue-matched onto #006FCC (Settings/Theme.qml's accentPrimary);
   * --accent overrides the extracted accent; --from-json FILE reads a JSON
-    object and overrides any of coal, surface, ink, ink_dim, accent that it
-    gives ("#RRGGBB" strings, "#RGB" accepted). --accent wins over the file;
+    object and overrides any of coal, surface, ink, accent that it gives
+    ("#RRGGBB" strings, "#RGB" accepted). --accent wins over the file;
   * no wallpaper to sample and no colour given is an error — the file is left
     as it was. A colour given without a wallpaper keeps the QS base palette
     for the tones it did not name (colors.background #000000,
     colors.surfaceVariant #242A35, colors.text.primary #CBD6E5,
-    colors.text.secondary #AEB9C8, colors.accent.primary #006FCC).
+    colors.accent.primary #006FCC); skin.ink.dim stays the mix of the two
+    text/surface tones above.
 
 Environment: MAGICK_BIN (magick), AWK_BIN (awk), JQ_BIN (jq, --from-json only).
 
@@ -201,7 +202,6 @@ load_pairs() {
       coal) COAL="$value" ;;
       surface) SURFACE="$value" ;;
       ink) INK="$value" ;;
-      ink_dim) INK_DIM="$value" ;;
       accent) ACCENT="$value" ;;
       *)
         err "extractor: unexpected key '$key'"
@@ -234,7 +234,7 @@ if [[ -n "$WALLPAPER" ]]; then
     if extracted="$(extract_palette "$WALLPAPER")"; then
       if load_pairs <<< "$extracted"; then
         EXTRACTED=1
-        for value in "$COAL" "$SURFACE" "$INK" "$INK_DIM" "$ACCENT"; do
+        for value in "$COAL" "$SURFACE" "$INK" "$ACCENT"; do
           if [[ ! "$value" =~ ^#[0-9a-f]{6}$ ]]; then
             die "extractor: bad value from '$WALLPAPER': $value"
           fi
@@ -253,13 +253,11 @@ if ((EXTRACTED == 1)); then
   COAL_NOTE="colors.background role: the wallpaper's darkest Oklab k-means cluster."
   SURFACE_NOTE="colors.surfaceVariant role: the wallpaper's second-darkest cluster."
   INK_NOTE="colors.text.primary role: the lightest cluster, pushed to 4.5:1 contrast on skin.surface."
-  INK_DIM_NOTE="colors.text.secondary role: skin.ink mixed 35% toward skin.surface."
   ACCENT_NOTE="colors.accent.primary role: the wallpaper's mean saturated colour, hue-matched onto #006FCC (Settings/Theme.qml accentPrimary)."
 else
   COAL_NOTE="colors.background, the QS fallback #ff000000 (opaque part): no wallpaper was sampled."
   SURFACE_NOTE="colors.surfaceVariant, the QS fallback #242A35: no wallpaper was sampled."
   INK_NOTE="colors.text.primary, the QS fallback #CBD6E5: no wallpaper was sampled."
-  INK_DIM_NOTE="colors.text.secondary, the QS fallback #AEB9C8: no wallpaper was sampled."
   ACCENT_NOTE="colors.accent.primary, the QS fallback #006FCC: no wallpaper was sampled."
 fi
 
@@ -268,7 +266,7 @@ if [[ -n "$FROM_JSON" ]]; then
   command -v "$JQ_BIN" > /dev/null 2>&1 \
     || tool_die "no '$JQ_BIN' on PATH (JQ_BIN overrides it); jq is needed for --from-json"
   json_keys=0
-  for key in coal surface ink ink_dim accent; do
+  for key in coal surface ink accent; do
     value="$("$JQ_BIN" -er --arg k "$key" '.[$k] | select(type == "string")' "$FROM_JSON" 2> /dev/null || true)"
     [[ -n "$value" ]] || continue
     normalized="$(normalize_hex "$value")" \
@@ -286,10 +284,6 @@ if [[ -n "$FROM_JSON" ]]; then
         INK="$normalized"
         INK_NOTE="--from-json $FROM_JSON (overrides the sampled tone)."
         ;;
-      ink_dim)
-        INK_DIM="$normalized"
-        INK_DIM_NOTE="--from-json $FROM_JSON (overrides the sampled tone)."
-        ;;
       accent)
         ACCENT="$normalized"
         ACCENT_NOTE="--from-json $FROM_JSON (overrides the sampled accent)."
@@ -298,7 +292,7 @@ if [[ -n "$FROM_JSON" ]]; then
     json_keys=$((json_keys + 1))
   done
   ((json_keys > 0)) \
-    || die "--from-json: no coal/surface/ink/ink_dim/accent string in $FROM_JSON"
+    || die "--from-json: no coal/surface/ink/accent string in $FROM_JSON"
 fi
 
 if [[ -n "$ACCENT_ARG" ]]; then
@@ -312,7 +306,7 @@ if [[ -n "$ACCENT_ARG" ]]; then
   fi
 fi
 
-if [[ -z "$COAL$SURFACE$INK$INK_DIM$ACCENT" ]]; then
+if [[ -z "$COAL$SURFACE$INK$ACCENT" ]]; then
   err "nothing to extract: no wallpaper found and no --accent/--from-json colour"
   err "looked at: $CACHE_HOME/pleamar/wallpaper-path, $CACHE_HOME/quickshell-wallpaper-path"
   err "pass --wallpaper FILE, --accent '#RRGGBB' or --from-json FILE"
@@ -323,7 +317,6 @@ fi
 COAL="${COAL:-#000000}"
 SURFACE="${SURFACE:-#242A35}"
 INK="${INK:-#CBD6E5}"
-INK_DIM="${INK_DIM:-#AEB9C8}"
 ACCENT="${ACCENT:-#006FCC}"
 
 # ---- write ------------------------------------------------------------------
@@ -359,7 +352,8 @@ render() {
   printf '    // %s\n' "$INK_NOTE"
   printf '    let skin.ink = %s\n' "$INK"
   printf '\n'
-  printf '    // %s\n' "$INK_DIM_NOTE"
+  printf '    // colors.text.secondary role: skin.ink mixed 35%% toward skin.surface —\n'
+  printf '    // the formula follows whatever ink/surface this file holds.\n'
   printf '    let skin.ink.dim = mix(skin.ink, skin.surface, 35%%)\n'
   printf '\n'
   printf '    // %s\n' "$ACCENT_NOTE"
@@ -385,5 +379,5 @@ printf '%s: wrote %s\n' "$TOOL_NAME" "$OUT"
 if [[ -n "$WALLPAPER" ]]; then
   printf '%s: source %s\n' "$TOOL_NAME" "$WALLPAPER"
 fi
-printf '%s: coal %s  surface %s  ink %s  ink.dim %s  accent %s\n' \
-  "$TOOL_NAME" "$COAL" "$SURFACE" "$INK" "$INK_DIM" "$ACCENT"
+printf '%s: coal %s  surface %s  ink %s  accent %s\n' \
+  "$TOOL_NAME" "$COAL" "$SURFACE" "$INK" "$ACCENT"

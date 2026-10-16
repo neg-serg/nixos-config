@@ -30,8 +30,8 @@
 #
 # `ink` is readability-clamped: it is pushed from the wallpaper's lightest (or,
 # on a light palette, darkest) centre toward white (black) until it contrasts
-# with `surface` at WCAG 4.5:1, or reaches the extreme. `ink_dim` is `ink`
-# mixed 35% toward `surface` (the QS text.secondary step below text.primary).
+# with `surface` at WCAG 4.5:1, or reaches the extreme. The secondary text
+# (`skin.ink.dim`) is not sampled: theme.plm derives it with `mix()`.
 
 function hexdec(s,   i, c, d, v) {
   v = 0
@@ -257,13 +257,8 @@ END {
     ib = bB + (tB - bB) * t
   }
 
-  dr = ir + (surfR - ir) * 0.35               # text.secondary step
-  dg = ig + (surfG - ig) * 0.35
-  db = ib + (surfB - ib) * 0.35
-
   print "coal=" hex(coalR, coalG, coalB)
   print "surface=" hex(surfR, surfG, surfB)
   print "ink=" hex(ir, ig, ib)
-  print "ink_dim=" hex(dr, dg, db)
   print "accent=" hex(acR, acG, acB)
 }
