@@ -30,6 +30,8 @@ let
     text = builtins.readFile (
       pkgs.replaceVars ./notify/digest.sh {
         sender = config.trantor.telegram.sender;
+        # System-service digest: the user manager is reached via --machine.
+        userManager = "${config.lib.neg.mainUser}@.host";
       }
     );
   };
