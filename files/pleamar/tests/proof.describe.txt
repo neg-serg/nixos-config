@@ -1,0 +1,4 @@
+main · panel 1920×48 · scale 1
+  text          «{now.time}»  at 16,14 69×17
+  slider  vol   «Volume 0 %»  "0 %"  at 1742,15 78×18
+  button  ping  «Proof button»  at 1830,11 76×26

@@ -1,0 +1,4 @@
+main (screen 0) · panel 1920×44 · scale 1
+  region  clock#Left1#Clock2        «Clock 09:54»  at 4,6 59×31
+  button  net#Left1#NetCapsule28    «Network net1»  at 70,6 109×17
+  slider  vol#Right34#VolCapsule35  «Volume 0 %»  "0 %"  at 1845,14 72×17
