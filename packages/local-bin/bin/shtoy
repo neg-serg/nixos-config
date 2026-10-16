@@ -26,7 +26,8 @@
 # Only the Image pass runs: multi-pass shaders (Buffer A-D) are not supported.
 # iChannelResolution, iChannelTime and iDate are declared but never filled by
 # esshader, and iMouse carries press flags in .zw instead of Shadertoy's click
-# position. Quit with ESC or q.
+# position. Quit with ESC or q. esshader loads channels through SOIL, which
+# rejects progressive JPEGs — convert those to baseline or PNG first.
 #
 # Cached sources live at $XDG_CACHE_HOME/shtoy/<id>.frag as copied from the
 # site. Sources that need rewriting go through a temp copy whose path is printed
@@ -44,7 +45,7 @@ LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/shtoy
 API_KEY_FILE=${XDG_CONFIG_HOME:-$HOME/.config}/shtoy/api_key
 
-usage() { usage_from_header 2 38; }
+usage() { usage_from_header 2 39; }
 
 case ${1:-} in
   -h | --help | help | \?)
@@ -243,6 +244,10 @@ prefix=
 if grep -qE '^[[:space:]]*#version[[:space:]]' "$raw"; then
   needs_rewrite=1
 fi
+# shaderbang-style exports carry a shebang; GLSL has no such directive.
+if grep -qE '^#!' "$raw"; then
+  needs_rewrite=1
+fi
 for name in iFrame iTimeDelta iFrameRate; do
   if ! grep -q "$name" "$raw"; then
     continue
@@ -266,7 +271,7 @@ if ((needs_rewrite)); then
     if [ -n "$prefix" ]; then
       printf '%s' "$prefix"
     fi
-    sed -e '/^[[:space:]]*#version[[:space:]]/d' "$raw"
+    sed -e '/^[[:space:]]*#version[[:space:]]/d' -e '/^#!/d' "$raw"
   } > "$shader_file"
 fi
 
