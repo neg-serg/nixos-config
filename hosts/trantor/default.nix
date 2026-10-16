@@ -187,10 +187,10 @@ in
   features.wine.enable = true;
   features.wine.apps = { }; # Windows apps for the wineapps CLI; add only what you need
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
-  # Pleamar shell, enabled for the dual-run window: bar/panels/notifications/toast
-  # scenes start alongside the Quickshell bar. Rollback is this flag — false
-  # returns the session to Quickshell alone.
-  features.gui.pleamar.enable = true;
+  # Pleamar shell (features.gui.pleamar): disabled after the dual-run trial —
+  # the replacement did not work out, so Quickshell stays the session shell.
+  # The scenes and pkgs.pleamar stay in the tree; flip this back on to retry.
+  features.gui.pleamar.enable = false;
   # Weekly incremental refresh of the MERT similarity index (music-index): warm
   # runs embed only new/changed albums. --layer -1 pins the settings of the
   # index built on 2026-10-12; without it the timer would rebuild everything,
