@@ -1,0 +1,119 @@
+// pages/card.plm — the login card: glass, avatar, identity, field, status.
+//
+// The card of LockContent.qml, drawn with what the language has: a native glass
+// slab (box { glass: 100% … }) in place of shaders/glass_card.frag, an image
+// rounded by a clip, and the password `input` — declared here, inside the
+// surface, because an input inside a component would be renamed by the copies
+// (`password#Card1`) and the logic could not read `text.password`.
+//
+// Dropped from LockContent.qml, and why (README.md has the long form):
+//   · the five power buttons (screen off, media pause, suspend, reboot, power
+//     off) and the keyboard-layout chip: they need `run: "systemctl"` /
+//     `run: "hyprctl"` and the two-step agent policy, so they belong to the
+//     human-gated cutover, not to this scene;
+//   · the Caps Lock warning (the kernel exposes it as an LED, and the scene has
+//     no business reading /sys), the fingerprint hint, the hover tooltips and
+//     the user/session selector (greeter mode only);
+//   · the caret is the input's own.
+//
+// The failure is visible three times over: the tint warms, the nudge plays and
+// the status line turns red — all through facts the logic sets, so a wrong
+// password can never look like a slow one.
+
+part Card {
+
+    group card_block {
+        // Centre of the card; `shake` is the refusal nudge (logical px), the
+        // entrance slides up 18 px. The `scale` is `scaleNow` for this copy.
+        move: screen.width / 2 + shake, screen.height * 0.62 + (1 - appear) * 18
+        scale: ui_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)
+        opacity: appear
+
+        // ------------------------------------------------------- the glass
+        // Legacy glassTint #c20a0e14: lock.card at lock.card.alpha, warmed by
+        // the failure. No frame: the glass paints its own rim; the drop shadow
+        // is a body's (`shadow:` is not a box property).
+        body {
+            color: mix(lock.card, lock.danger, alarm * 0.25)
+            opacity: lock.card.alpha
+            glass: 100%
+            refraction: 150%
+            dispersion: 110%
+            frost: 100%
+            shine: pointer
+            shadow: 0, 10, 28, 45%
+            box { from: -240, -165; size: 480, 320; corner: 6 }
+        }
+
+        // ------------------------------------------------------- the avatar
+        // Rounded square, photo clipped inside, ring over it; the monogram is
+        // the fallback (LockContent.qml tries theme avatar → ~/.face →
+        // monogram; the integration publishes one path, see README.md).
+        group avatar_block {
+            move: 0, -83
+
+            group portrait {
+                clip inset 0 box { from: -52, -52; size: 104, 104; corner: 16 }
+                image face { at: -52, -52; size: 104, 104; show: avatar_ok }
+            }
+            box avatar_fallback {
+                from: -52, -52; size: 104, 104; corner: 16
+                color: slate; opacity: 30%; show: not avatar_ok
+            }
+            text monogram {
+                at: 0, 0; anchor: center; size: 46; weight: 500; color: lock.ink
+                family: "Iosevka"; show: not avatar_ok
+            }
+            box avatar_ring {
+                from: -52, -52; size: 104, 104; corner: 16
+                stroke: 2; color: mix(lock.edge, lock.danger, alarm)
+                opacity: if(failed, 80%, lock.edge.alpha)
+            }
+        }
+
+        // --------------------------------------------------- user@host line
+        row identity { at: 0, -2; anchor: center; gap: 0
+            text user { size: 22; color: lock.ink; family: "Iosevka" }
+            text host { size: 22; color: lock.ink.dim; opacity: 60%; family: "Iosevka" }
+        }
+
+        // ------------------------------------------------------- the field
+        // A dark glass slab; the prompt glyph and the input sit on it. No
+        // frame: the slab's own rim and the caret say "type here".
+        box field_bg {
+            from: -192, 33; size: 384, 58; corner: 8
+            color: coal; opacity: 55%
+            glass: 100%; refraction: 70%; frost: 100%
+        }
+        text ">" {
+            at: -174, 62; anchor: left center; size: 20; color: lock.accent
+            opacity: if(busy, 90%, 35%); family: "Iosevka"
+        }
+        // The password field: `secret: true` and `agent: no` are the policy
+        // (INTERFACES.md §8.1, frozen label `Password`). The logic is the only
+        // reader of `text.password`; drawing never shows it.
+        input password {
+            at: -150, 48; width: 330; size: 22; weight: 500; color: lock.ink
+            family: "Iosevka"; selection: lock.accent
+            secret: true; label: "Password"; agent: no
+            placeholder: "введите пароль"
+        }
+        // PAM is running: one accent line filling along the bottom edge of the
+        // field (the legacy sweeping bar, as a fill — a sweep needs a loop).
+        box field_progress {
+            from: -177, 86; size: 354 * busy_progress, 2; corner: 1
+            color: lock.accent; show: busy
+        }
+
+        // ---------------------------------------------------- the status line
+        // Keeps its place whether or not it says something: the card never
+        // grows a row on a typo and never moves the field.
+        text status {
+            at: 0, 113; anchor: center; size: 16; family: "Iosevka"
+            color: if(failed, lock.danger, lock.ink.dim)
+        }
+    }
+
+    // The refusal nudge, played by the logic's `rejected` event.
+    on rejected { play jolt }
+}

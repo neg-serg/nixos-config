@@ -1,0 +1,83 @@
+// pages/state.plm — the declarations the lock card and its preview share.
+//
+// A part is the same scene in another file (INTERFACES.md §1.3): what is
+// declared here belongs to `lock.plm` and to `preview.plm` alike. It holds no
+// drawing, so both scenes draw the same state and the same gestures.
+//
+// The password is a live text, `password`, edited by the `input` each scene
+// declares inside its own surface (an input cannot live in a component: a
+// component's copies rename their inputs). The logic is the only reader; it
+// clears the text before it reports an answer and never logs or stores it
+// (scope of the task: never echo, never keep).
+
+part State {
+
+    // ------------------------------------------------------------- settings
+    // Merged and clamped by the scene's logic from `settings.json` (see the
+    // scene header): `uiScale` is the lock's own frozen key, `clock24h` the
+    // greeter's `nixie24h`. The rest are facts the card draws from.
+    fact ui_scale = 1.2            // 0.8 – 2.0, greeter.uiScale
+    fact clock_24h = true          // clock24h
+    fact busy = false              // an auth.check is in flight
+    fact failed = false            // the last check was refused
+    fact armed = true              // the retry window is open
+    fact wall_ok = false           // an absolute wallpaper path is published
+    fact avatar_ok = false         // an avatar image path is published
+    fact status_ok = false         // the status line has something to say
+    fact retry_delay = 800         // ms before another submit counts (settings)
+
+    // --------------------------------------------------------- live texts
+    text status = ""               // one line under the field
+    text password = ""             // the secret; cleared by the logic, never read by drawing
+    text wallpaper = ""            // absolute path, published by the integration
+    text avatar = ""               // absolute path to the portrait, or empty
+    text clock12 = ""              // the 12-hour form, when clock24h is false
+    text user = ""                 // session user
+    text host = ""                 // "@host", or empty
+    text monogram = "?"            // the fallback letter
+
+    // ------------------------------------------------------------- motion
+    prop appear = 0 ~ui.slow       // entrance
+    follow appear = 1
+    prop alarm = 0 ~ui.std         // the warm tint of a refusal
+    follow alarm = if(failed, 1, 0)
+    prop busy_progress = 0 ~ui.quick // the field's progress fill
+    follow busy_progress = if(busy, 1, 0)
+    pose shake = 0                 // the refusal nudge, in logical pixels
+
+    // The refusal nudge of LockContent.qml's SequentialAnimation: a shake, not
+    // a throw, so the field never moves out from under the pointer.
+    gesture jolt reflex {
+        55ms out_quad { shake: -5 }
+        70ms linear   { shake: 5 }
+        60ms linear   { shake: -3 }
+        60ms linear   { shake: 3 }
+        55ms linear   { shake: 0 }
+    }
+
+    // -------------------------------------------------------------- services
+    // The clock service, drawn directly (`text "{now.time}"`): the service
+    // writes `time`/`date` itself, `hour`/`minute` are read by the greeting and
+    // by the logic's 12-hour form. No nixie tubes: see README.md, "What is
+    // ported", for why the look is a glass slab and a glowing text instead.
+    service clock as now { hour: number; minute: number; time: text; date: text }
+
+    // ---------------------------------------------------------- the picture
+    // Both shaders are the scene's own (shaders/*.wgsl) and both are group
+    // shaders: `dither` posterises what the group holds (the wallpaper image),
+    // `crt` runs the tube pass over the dithered picture. The image paths come
+    // from live texts the logic fills; `wall_ok`/`avatar_ok` gate drawing so an
+    // empty path never reaches the atlas.
+    // One shader, both passes: a group may carry only one `shader:`, and group
+    // effects cannot nest, so the posteriser and the tube live in one file and
+    // compose on each sample (shaders/paper.wgsl).
+    shader paper = file "../shaders/paper.wgsl"
+    image wall = from wallpaper, 3840, 2160
+    image face = from avatar, 512, 512
+
+    // --------------------------------------------------------------- events
+    // Both are emitted by the logic: `rejected` plays the nudge, `unlocked`
+    // is the handover contract (README.md, "The handover").
+    event rejected ->
+    event unlocked ->
+}
