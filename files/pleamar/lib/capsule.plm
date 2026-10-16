@@ -1,0 +1,95 @@
+// capsule.plm — the capsule every widget background is built on.
+//
+// This is the pleamar form of Components/WidgetCapsule.qml: one rounded box,
+// its corner, an optional rim, an optional hairline edge and an optional drop
+// shadow, with the widget's content in a slot. No QML: a background, a slot
+// and numbers.
+//
+//   import "../../lib/palette.plm"
+//   import "../../lib/capsule.plm"
+//
+//   Capsule(140, 34, fill: slate, shadow: 25%, rim: 0.06) {
+//       text "wifi" { size: 12 * ui; color: ink }
+//   }
+//
+// Every length here is a DESIGN PIXEL (the numbers the QS theme uses). The
+// component multiplies w, h, pad, pad_y, gap, radius, the edge width and the
+// shadow's offset and blur by `scale` itself, so a call site passes the design
+// size and the per-copy scale once:
+//
+//   · single-surface scene:       the default `scale: ui` is right;
+//   · `screens: each` scene:      scale: ui * clamp(min(screen.width /
+//                                 design.width, screen.height / design.height),
+//                                 fit.min, fit.max)   — see palette.plm rule 2.
+//
+// The caller scales its own content (text sizes, icons) by the same value.
+//
+// A capsule is not a zone. The widget that uses one declares the interactive
+// zone on top, with the label/role/agent the interface document requires:
+//
+//   Capsule(28, 28) { text "+" { size: 14 * ui; color: ink } }
+//   zone box hit { from: 0, 0; size: 28 * ui, 28 * ui; corner: 14 * ui
+//                  cursor: pointer; label: "Add"; role: button }
+//   on press hit { emit add }
+//
+// That keeps `pleamar --say <scene> describe` truthful: the background says
+// nothing, the zone says what it does.
+//
+// Parameters (all optional but `w`; defaults come from palette.plm):
+//
+//   w, h          design size of the capsule (h defaults to capsule.height)
+//   fill, alpha   the box colour (slate) and how much of it covers (veil, the
+//                 QS colors.surface 53% — a colour literal cannot carry alpha)
+//   pad, pad_y    horizontal / vertical room around the content
+//   gap           gap between several children in the slot
+//   radius        the corner
+//   rim           0..1, light inside the silhouette (body rim)
+//   edge          hairline width around the silhouette, 0 by default
+//   edge_tone     its colour, edge_alpha how strongly it shows (8% by default)
+//   shadow        0..1, alpha of the drop shadow (0 by default)
+//   shadow_tone   its colour
+//   scale         the per-copy multiplier (palette `ui` by default)
+//
+// The content slot is a horizontal row, vertically centred. A widget that
+// stacks its content passes a single `column` as the only child.
+
+import "palette.plm"
+
+library Capsule strict {
+
+    component Capsule(w: number,
+                      h: number = capsule.height,
+                      fill: color = slate,
+                      alpha: number = veil,
+                      pad: number = capsule.pad,
+                      pad_y: number = capsule.pad.y,
+                      gap: number = capsule.gap,
+                      radius: number = corner,
+                      rim: number = 0,
+                      edge: number = capsule.edge,
+                      edge_tone: color = capsule.edge.tone,
+                      edge_alpha: number = capsule.edge.soft,
+                      shadow: number = 0,
+                      shadow_tone: color = coal,
+                      scale: number = ui) {
+
+        size: w * scale, h * scale
+
+        body {
+            color: fill
+            opacity: alpha
+            rim: 1 * rim
+            shadow: shadow.dx, shadow.dy * scale, shadow.blur * scale, shadow, shadow_tone
+            border: edge * scale, mix(fill, edge_tone, edge_alpha)
+            box { from: 0, 0; size: w * scale, h * scale; corner: radius * scale }
+        }
+
+        row content {
+            at: pad * scale, pad_y * scale
+            size: (w - 2 * pad) * scale, (h - 2 * pad_y) * scale
+            gap: gap * scale
+            align: center
+            children
+        }
+    }
+}

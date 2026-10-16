@@ -30,6 +30,12 @@ in
   atrium = callPkg (pkg "atrium") { }; # Wayland multiseat display manager
   wordcraft = callPkg (pkg "wordcraft") { }; # Word-style word processor (docx/odt/rtf) + converter CLI
 
+  # pleamar — Wayland desktop shell runtime (bars, launchers, notification
+  # centres, docks, lock screens as animated scenes). Rev-pinned input in
+  # flake.nix; nixpkgs follows the top-level pin so the Rust build reuses the
+  # cached toolchain closure.
+  pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar;
+
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
   hyprscratch =

@@ -1,0 +1,268 @@
+// palette.plm — the shell's colour, size, type, timer and spring tokens.
+//
+// Every scene in this shell imports this library and names tokens from it
+// instead of writing literals. The values are the Quickshell theme, token by
+// token: files/quickshell/Theme/*.jsonc merged into Theme/.theme.json, plus
+// the tokens Settings/Theme.qml derives (accentHover, surfaceHover, …). The
+// full QS-token -> palette-name -> value table is in docs/INTERFACES.md.
+//
+//   import "../../lib/palette.plm"          // from shells/<scene>/<scene>.plm
+//
+// The library is `strict` and declares names only: colours, lengths, times and
+// springs. A scene may re-declare any name to tune it (a scene's `let` treads
+// on the imported one), but the shell's look comes from not doing so.
+//
+// Three rules this file freezes:
+//
+// 1. Lengths are DESIGN PIXELS, the numbers the QS theme uses (panel.height
+//    22, cornerRadius 6, …). A scene multiplies them by `ui` — or, per monitor,
+//    by the scale expression below — exactly once, where it draws.
+//
+// 2. Per-monitor scale (`screens: each` scenes). There is no per-monitor
+//    settings channel in pleamar and a loose `let` is shared by every copy, so
+//    the scale must be computed inside the repeated drawing:
+//
+//        ui * clamp(min(screen.width / design.width,
+//                       screen.height / design.height), fit.min, fit.max)
+//
+//    That is 1.15 on the reference monitor and stays within fit.min..fit.max
+//    elsewhere. Pass it as the `scale:` argument of the lib components and
+//    multiply every other length by it. In a single-surface scene use `ui`
+//    alone: there `screen.width`/`screen.height` measure the surface, not the
+//    monitor.
+//
+// 3. A colour literal is opaque (#RRGGBB or #RGB); pleamar has no 8-digit
+//    hex. The QS tokens that were translucent are split into a tone and an
+//    alpha (`veil` 53% over `coal`, `ink.hover` 6%, …) and the drawing site
+//    applies the alpha with `opacity:` or `fill: tone alpha`.
+//
+// Springs are named after the QS animation timings they replace and are
+// critically damped to arrive in that time: `ui.quick` ≈ 120 ms, `ui.fast`
+// ≈ 150 ms, `ui.overlay` ≈ 180 ms, `ui.std` ≈ 200 ms, `ui.slide` ≈ 380 ms,
+// `ui.slow` ≈ 500 ms. Use `~ui.std` where QS said 200 ms OutCubic.
+
+library Palette strict {
+
+    // ---------------------------------------------------------------- scale
+    let ui = 1.15                 // panel.scale 1.15 * fontSizeMultiplier 1.0
+    let design.width = 1920       // the logical monitor the lengths were tuned on
+    let design.height = 1080
+    let fit.min = 0.8             // per-monitor clamp (lower than this stays 0.8)
+    let fit.max = 1.5
+
+    // -------------------------------------------------------------- colours
+    let coal = #000000            // colors.background
+    let veil = 53%                // colors.surface (#88000000) as alpha over coal
+    let slate = #242A35           // colors.surfaceVariant
+    let outline = #3B4C5C         // colors.outline
+    let ink = #CBD6E5             // colors.text.primary
+    let ink.dim = #AEB9C8         // colors.text.secondary
+    let ink.off = #6B718A         // colors.text.disabled
+    let ink.hover = 6%            // Theme.surfaceHover: ink at 6%
+    let ink.active = 10%          // Theme.surfaceActive: ink at 10%
+    let ink.subtle = 15%          // Theme.borderSubtle: ink at 15%
+    let shadow = 70%              // colors.shadow (#B3000000 after Theme.qml)
+    let shadow.weak = 8%          // Theme.overlayWeak
+    let shadow.strong = 18%       // Theme.overlayStrong
+    let shadow.dx = 0
+    let shadow.dy = 2
+    let shadow.blur = 6
+    let warn = #FF6B81            // colors.status.error
+    let amber = #FFB347           // colors.status.warning
+    let highlight = #94E1F9       // colors.highlight
+    let accent = #006FCC          // colors.accent.primary (wallpaper hue-matched)
+    let accent.hover = mix(accent, #ffffff, 20%)     // Theme.accentHover
+    let accent.deep = mix(accent, coal, 80%)         // Theme.accentDarkStrong
+    let on.accent = #FFFFFF       // colors.onAccent
+    let pill = #000000            // panel.pill.color
+    let volume.low = #D62E6E      // panel.volume.lowColor
+    let volume.high = #0E6B4D     // panel.volume.highColor
+    let notify.tone = #000000     // notifications.background
+    let notify.ink = #E0E6EF      // notifications.foreground
+    let notify.frame = #000000    // notifications.frameColor
+    let notify.accent = #004E8F   // notifications.accentColor
+
+    // The lock scene (greeter tokens; #AARRGGBB split into tone + alpha).
+    let lock.accent = #7FD6FF     // greeter.accentColor
+    let lock.danger = #FF9B9B     // greeter.dangerColor
+    let lock.ink = #F2F6FA        // greeter.textColor
+    let lock.ink.dim = #C3D2E0    // greeter.textMutedColor
+    let lock.card = #0F141C       // greeter.cardColor #a60f141c
+    let lock.card.alpha = 65%
+    let lock.widget = #CEFFFF     // greeter.widgetColor #25ceffff
+    let lock.widget.alpha = 15%
+    let lock.widget.on = 50%      // greeter.widgetActiveColor #80ceffff
+    let lock.edge = #FFFFFF       // greeter.widgetOutline #40ffffff
+    let lock.edge.alpha = 25%
+    let lock.edge.soft = 13%      // greeter.widgetOutlineSeparate #20ffffff
+    let lock.seam = #FFFFFF       // greeter.separatorColor #60ffffff
+    let lock.seam.alpha = 38%
+
+    // ----------------------------------------------------- shape and spacing
+    let corner = 6                // shape.cornerRadius
+    let corner.small = 6          // shape.cornerRadiusSmall
+    let corner.large = 0          // shape.cornerRadiusLarge
+    let overlay.corner = 5        // panel.overlayRadius
+    let bar.height = 22           // panel.height
+    let bar.module = 22           // panel.moduleHeight
+    let bar.side = 4              // panel.sideMargin
+    let bar.gap = 4               // panel.widgetSpacing
+    let bar.row = 4               // panel.rowSpacing
+    let bar.row.small = 2         // panel.rowSpacingSmall
+    let bar.hot = 16              // panel.hotzone.width
+    let bar.hot.height = 9        // panel.hotzone.height
+    let bar.hot.shift = 1.15      // panel.hotzone.rightShift
+    let bar.menu.offset = 20      // panel.menuYOffset
+    let bar.seam = 0.85           // panel.seamWidthRatio
+    let bar.seam.min = 8          // panel.seamMinPx
+    let bar.seam.alpha = 88%      // panel.separatorOpacity / panel.seam.opacity
+    let bar.inter = 1.35          // panel.interWidgetRatio
+    let icon.size = 24            // panel.icons.iconSize
+    let icon.small = 16           // panel.icons.iconSizeSmall
+    let icon.large = 28           // ui.iconSizeLarge
+    let control.height = 48       // ui.control.height
+    let vis.epsilon = 0.01        // ui.visibilityEpsilon
+    let pill.height = 28          // panel.pill.height
+    let pill.icon = 22            // panel.pill.iconSize
+    let pill.pad = 8              // panel.pill.paddingH
+
+    // The capsule contract (lib/capsule.plm) reads these as its defaults.
+    let capsule.pad = 4           // CapsuleMetrics.padding (ui.spacing.xsmall)
+    let capsule.pad.y = 2         // CapsuleMetrics vertical padding
+    let capsule.height = 18       // CapsuleMetrics height: inner 10 + 2 * pad
+    let capsule.gap = 2           // CapsuleButton iconSpacing (rowSpacingSmall)
+    let capsule.edge = 0          // panel.capsule.borderWidth
+    let capsule.edge.tone = coal  // panel.capsule.borderColor (the shipped override)
+    let capsule.edge.soft = 8%    // panel.capsule.borderOpacity (the hairline alpha)
+
+    // Tooltips, menus and side panels.
+    let tooltip.delay = 150       // tooltip.delayMs
+    let tooltip.min = 20          // tooltip.minSize
+    let tooltip.margin = 12       // tooltip.margin
+    let tooltip.pad = 8           // tooltip.padding
+    let tooltip.edge = 1          // tooltip.borderWidth
+    let tooltip.corner = 2        // tooltip.radius
+    let tooltip.type = 12         // tooltip.fontPx
+    let tooltip.scale = 0.71      // tooltip.smallScaleRatio
+    let menu.width = 180          // panel.menu.width
+    let menu.width.sub = 180      // panel.menu.submenuWidth
+    let menu.pad = 4              // panel.menu.padding
+    let menu.item.gap = 2         // panel.menu.itemSpacing
+    let menu.item.height = 26     // panel.menu.itemHeight
+    let menu.item.corner = 0      // panel.menu.itemRadius
+    let menu.corner = 0           // panel.menu.radius
+    let menu.extra = 12           // panel.menu.heightExtra
+    let menu.offset = 4           // panel.menu.anchorYOffset
+    let menu.sub.gap = 12         // panel.menu.submenuGap
+    let menu.chevron = 15         // panel.menu.chevronSize
+    let menu.icon = 16            // panel.menu.iconSize
+    let menu.type = 0.9           // panel.menu.itemFontScale
+    let side.pad = 6              // sidePanel.spacing
+    let side.pad.tight = 3        // sidePanel.spacingTight
+    let side.pad.small = 2        // sidePanel.spacingSmall
+    let side.pad.medium = 4       // sidePanel.spacingMedium
+    let side.corner = 0           // sidePanel.cornerRadius
+    let side.corner.inner = 0     // sidePanel.innerRadius
+    let side.corner.hover = 0.5   // sidePanel.buttonHoverRadiusFactor
+    let side.selector = 120       // sidePanel.selector.minWidth
+    let side.art = 200            // sidePanel.albumArtSize
+    let side.glass = 75%          // sidePanel.popup.glassOpacity
+    let side.edge = 10%           // sidePanel.popup.glassBorderOpacity
+    let side.margin = 4           // sidePanel.popup.outerMargin
+    let ws.scale = 1.4            // ws.icon.scale
+    let ws.scale.detached = 1.15  // ws.icon.detachedScale
+    let ws.gap = 1                // ws.icon.spacing
+    let ws.svg = 0.52             // ws.icon.svgScale
+    let ws.pad = 1                // ws.icon.innerPadding
+    let ws.label = 6              // ws.label.leftPadding.normal
+    let keyboard.min = 3          // keyboard.capsule.minLabelGap
+    let network.cluster = 2       // panel.netCluster.spacing
+    let calendar.row = 2          // calendar.rowSpacing
+    let calendar.cell = 2         // calendar.cellSpacing
+    let calendar.side = 2         // calendar.sideMargin
+    let calendar.popup = 2        // calendar.popupMargin
+    let media.hover.delay = 320   // media.hover.openDelayMs
+    let media.hover.still = 180   // media.hover.stillThresholdMs
+    let media.art.debounce = 60   // media.artDebounceMs
+    let media.accent.retry = 120  // media.accent.retryMs
+    let media.accent.tries = 5    // media.accent.retryMax
+    let media.panel.pad = 12      // media.icon.panel.overlayPaddingPx
+    let media.panel.veil = 65%    // media.icon.panel.overlayBgOpacity
+    let media.panel.share = 0.45  // media.icon.panel.overlayWidthShare
+    let media.art.fade = 40%      // media.albumArt.fallbackOpacity
+    let spectrum.decay = 50       // spectrum.peakDecayIntervalMs
+    let spectrum.anim = 100       // spectrum.barAnimMs
+    let spectrum.gap = 2          // spectrum.barGap
+    let spectrum.bar.min = 2      // spectrum.minBarWidth
+    let spectrum.peak.alpha = 70% // spectrum.peakOpacity
+    let spectrum.fill.alpha = 35% // spectrum.fillOpacity
+    let spectrum.peak.height = 2  // spectrum.peakThickness
+    let vpn.saturate = 0.12       // vpn.accent.saturateBoost
+    let vpn.desaturate = 0.45     // vpn.desaturateAmount
+    let weather.header = 0.75     // weather.headerScale
+    let weather.offset = -2       // weather.centerOffset
+    let weather.timeout = 8000    // weather.httpTimeoutMs
+
+    // ----------------------------------------------------------- typography
+    // The family "Iosevka" is written at each text (`family: "Iosevka"`):
+    // pleamar `let` holds numbers and colours, not strings. The sizes are QS
+    // Theme.fontSize* at fontSizeMultiplier 1.0; multiply by `type.scale` (the
+    // runtime settings value) and then by the per-monitor scale.
+    let type.header = 32          // Theme.fontSizeHeader
+    let type.body = 16            // Theme.fontSizeBody
+    let type.small = 14           // Theme.fontSizeSmall
+    let type.caption = 12         // Theme.fontSizeCaption
+    let type.scale = 1.0          // Settings.json fontSizeMultiplier
+    let type.inline = 0.6         // panel.computedFontScale
+    let weight.regular = 400
+    let weight.medium = 500       // Font.Medium, Theme.timeFontWeight
+    let weight.bold = 600
+    let time.scale = 0.7          // time.font.scale
+    let time.weight = 500         // time.font.weight
+    let time.tone = ink           // time.text.color
+
+    // --------------------------------------------------------------- timers
+    let time.tick = 1000          // timers.timeTickMs
+    let ws.debounce = 120         // timers.wsRefreshDebounceMs
+    let tick.generic = 2000       // timers.genericTickMs
+    let music.position = 1000     // timers.musicPositionPollMs
+    let music.players = 5000      // timers.musicPlayersPollMs
+    let music.meta = 80           // timers.musicMetaRecalcDebounceMs
+    let mpd.flags = 2500          // media.mpd.flags.fallbackMs
+    let vpn.poll = 2500           // network.vpnPollMs
+    let network.backoff = 1500    // network.restartBackoffMs
+    let network.link = 4000       // network.linkPollMs
+    let anim.quick = 120          // ui.anim.quickMs / panel.hover.fadeMs
+    let anim.rotate = 160         // ui.anim.rotateMs
+    let anim.spinner = 1000       // ui.spinner.durationMs
+    let anim.fast = 150           // panel.animations.fastMs
+    let anim.std = 200            // panel.animations.stdMs
+    let anim.overlay = 180        // panel.animations.overlayMs
+    let anim.slide = 380          // panel.animations.slideMs
+    let anim.greeter.fast = 150   // greeter.animFastMs
+    let anim.greeter = 250        // greeter.animMediumMs
+    let anim.greeter.slow = 500   // greeter.animSlowMs
+    let anim.lock = 500           // greeter.lockAnimationMs
+    let pill.show = 500           // panel.pill.showDelayMs
+    let pill.pause = 2500         // panel.pill.autoHidePauseMs
+    let tray.long = 2500          // panel.tray.longHoldMs
+    let tray.short = 1500         // panel.tray.shortHoldMs
+    let tray.guard = 120          // panel.tray.guardMs
+    let tray.dismiss = 5000       // panel.tray.overlayDismissDelayMs
+    let tray.pad = 4              // panel.tray.inlinePadding
+    let volume.hide = 800         // panel.volume.fullHideMs
+    let volume.hide.muted = 180000 // panel.volume.mutedHideMs
+    let volume.off.cooldown = 86400000 // panel.volume.offReminderCooldownMs
+    let volume.icons.off = 0      // volume.icon.offThreshold
+    let volume.icons.down = 30    // volume.icon.downThreshold
+    let volume.icons.up = 50      // volume.icon.upThreshold
+    let tick.bar = 16             // panel.slideTimerTickMs
+
+    // --------------------------------------------------------------- springs
+    spring ui.quick = 3060, 111   // ~120 ms
+    spring ui.fast = 1960, 89     // ~150 ms
+    spring ui.overlay = 1360, 74  // ~180 ms
+    spring ui.std = 1100, 66      // ~200 ms
+    spring ui.slide = 306, 35     // ~380 ms
+    spring ui.slow = 177, 27      // ~500 ms
+}
