@@ -5,6 +5,9 @@
 #   shtoy URL|ID               run a cached copy of https://www.shadertoy.com/view/<ID>
 #   shtoy --import URL|ID      cache the source from the clipboard (copy it on the
 #                              site) and run it
+#   shtoy --mirror URL|ID      cache a community mirror copy of the source
+#                              (Sourcegraph search + raw.githubusercontent.com,
+#                              both through the sing-box SOCKS proxy)
 #   shtoy -                    read the shader source from stdin
 #
 # Options:
@@ -38,6 +41,14 @@
 # $XDG_CONFIG_HOME/shtoy/api_key). Cloudflare fronts shadertoy.com, so keyed
 # curl calls from this host are challenged as well — --import is the reliable
 # way to get a shader in.
+#
+# --mirror does not touch shadertoy.com: it asks Sourcegraph for files citing
+# the view URL, downloads the candidates over the same SOCKS proxy and caches
+# the first one that has a mainImage() entry point. The proxy defaults to
+# socks5h://127.0.0.1:10808; set SHTOY_PROXY to another value or to the empty
+# string for a direct connection. Mirrors are third-party copies, and only a
+# single-pass source is cached — multi-pass (Buffer A-D) originals are not
+# fetched.
 
 set -euo pipefail
 
@@ -46,8 +57,11 @@ LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/shtoy
 SHADER_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/shtoy/shaders
 API_KEY_FILE=${XDG_CONFIG_HOME:-$HOME/.config}/shtoy/api_key
+# SOCKS proxy for the mirror search and raw.githubusercontent.com downloads
+# (shtoy itself talks to no other host). Empty SHTOY_PROXY means direct.
+MIRROR_PROXY=${SHTOY_PROXY-socks5h://127.0.0.1:10808}
 
-usage() { usage_from_header 2 40; }
+usage() { usage_from_header 2 51; }
 
 case ${1:-} in
   -h | --help | help | \?)
@@ -100,6 +114,10 @@ while (($#)); do
       ;;
     --import)
       mode=import
+      shift
+      ;;
+    --mirror)
+      mode=mirror
       shift
       ;;
     --list)
@@ -199,6 +217,50 @@ api_source() { # $1 = id
   rm -f "$json"
 }
 
+mirror_source() { # $1 = id; a mirrored Image pass on stdout (stderr: source URL)
+  require curl
+  require jq
+  local id=$1 proxy=() stream candidates tmp repo commit path raw
+  [ -n "$MIRROR_PROXY" ] && proxy=(-x "$MIRROR_PROXY")
+  stream=$(mktemp "${TMPDIR:-/tmp}/shtoy-mirror-XXXXXX.json")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/shtoy-mirror-XXXXXX.frag")
+  cleanup+=("$stream" "$tmp")
+  if ! curl -fsSN --max-time 60 "${proxy[@]}" -H 'Accept: text/event-stream' \
+    -G --data-urlencode "q=count:50 content:\"shadertoy.com/view/$id\"" \
+    --data-urlencode 'v=V3' \
+    https://sourcegraph.com/.api/search/stream -o "$stream"; then
+    # Busy queries can outlive --max-time; the stream is still a valid prefix.
+    [ -s "$stream" ] || die "mirror search failed (Sourcegraph${MIRROR_PROXY:+ via $MIRROR_PROXY})"
+    printf '%s: note: mirror search returned partial results\n' "$PROG" >&2
+  fi
+  # Keep files that cite the view URL; prefer an early citation (mirror header)
+  # in a .frag/.fs/.glsl over ports, and demote separate Buffer/channel passes
+  # of multi-pass shaders.
+  candidates=$(sed -n 's/^data: //p' "$stream" | jq -r --arg ref "shadertoy.com/view/$id" '
+    [.[]? | select(type == "object") | select(.type == "content")
+     | select(any(.lineMatches[]?.line; test($ref; "i")))
+     | {repo: .repository, commit: (.commit // ""), path: .path,
+        line: ([.lineMatches[]?.lineNumber] | min // 999)}]
+    | map(select(.repo != null and .path != null))
+    | unique_by(.repo + " " + .path)
+    | sort_by(.line,
+              (if (.path | test("\\.(frag|fs|glsl)$"; "i")) then 0 else 2 end),
+              (if (.path | test("buffer|buf"; "i")) then 1 else 0 end))
+    | limit(8; .[] | [.repo, .commit, .path] | @tsv)
+  ' 2> /dev/null) || candidates=
+  while IFS=$'\t' read -r repo commit path; do
+    case $repo in github.com/*) ;; *) continue ;; esac
+    raw="https://raw.githubusercontent.com/${repo#github.com/}/${commit:-HEAD}/${path// /%20}"
+    if curl -fsS --max-time 30 "${proxy[@]}" -o "$tmp" "$raw" &&
+      grep -qE 'mainImage[[:space:]]*\(' "$tmp"; then
+      printf '%s: mirror %s\n' "$PROG" "$raw" >&2
+      cat "$tmp"
+      return 0
+    fi
+  done <<< "$candidates"
+  die "no mirror copy with a mainImage() pass for $id — use --import"
+}
+
 raw=
 case $arg in
   -)
@@ -212,8 +274,8 @@ case $arg in
     ;;
   *)
     if [ -f "$arg" ]; then
-      if [ "$mode" = import ] || ((save)); then
-        die "--import/--save take a Shadertoy id or URL, not a file"
+      if [ "$mode" = import ] || [ "$mode" = mirror ] || ((save)); then
+        die "--import/--mirror/--save take a Shadertoy id or URL, not a file"
       fi
       raw=$arg
     else
@@ -227,6 +289,11 @@ case $arg in
         clipboard_source "$url" > "$raw.part"
         mv -f "$raw.part" "$raw"
         printf '%s: cached %s\n' "$PROG" "$raw" >&2
+      elif [ "$mode" = mirror ]; then
+        mkdir -p "$CACHE_DIR"
+        mirror_source "$id" > "$raw.part"
+        mv -f "$raw.part" "$raw"
+        printf '%s: fetched %s -> %s\n' "$PROG" "$id" "$raw" >&2
       elif [ -f "$SHADER_DIR/$id.frag" ]; then
         raw=$SHADER_DIR/$id.frag
       elif [ -n "$api_key" ]; then
