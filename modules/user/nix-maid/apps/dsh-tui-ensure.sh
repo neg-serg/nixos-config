@@ -79,6 +79,50 @@ newer() {
   [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" = "$1" ]
 }
 
+# Install (or re-add) one profile plugin, granting the harness's own
+# version-compatibility exemptions when its error text asks for them.
+#
+# The TUI bundle's cordis.patch.yml still carries two 0.1.5-era rows
+# (`dsh-tui-agent-presets` -> @deepseek-ai/dsh-agent-presets and
+# `dsh-tui-code-runtime` -> @deepseek-ai/dsh-code-runtime-worker-thread) behind
+# `disabled: !!js` guards. The post-install compatibility check collects the
+# rows' package names statically — an unevaluated expression is never `true` —
+# and denies the WHOLE install when those packages' registry versions only
+# peer-depend on 0.1.5 (observed 2026-10-16: every activation/login since 03:24
+# failed with "installation rejected", and the TUI session died showing
+# "DSH plugin incompatible with dsh version"). A 0.2.x runtime ships the
+# replacements and the profile layer disables both rows, so nothing mounts
+# them; the harness prints the exact exemption it wants, hence granting what it
+# asks for and retrying once instead of hardcoding versions that move with the
+# bundle.
+install_profile_plugin() {
+  spec="$1"
+  out="$(mktemp)"
+  if (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "$spec" -w) > "$out" 2>&1; then
+    rm -f "$out"
+    return 0
+  fi
+  granted=0
+  while read -r package version; do
+    [ -n "$package" ] || continue
+    echo "dsh-tui-ensure: granting the harness exemption $package on $version"
+    dsh plugin --profile tui allow-version "$package" --dsh-version "$version" --accept-risk > /dev/null 2>&1 || true
+    granted=1
+  done < <(sed -n 's/.*dsh plugin --profile tui allow-version \([^ ]*\) --dsh-version \([^ ]*\).*/\1 \2/p' "$out" | sort -u)
+  if [ "$granted" -eq 0 ]; then
+    cat "$out" >&2
+    rm -f "$out"
+    return 1
+  fi
+  if (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "$spec" -w) >> "$out" 2>&1; then
+    rm -f "$out"
+    return 0
+  fi
+  cat "$out" >&2
+  rm -f "$out"
+  return 1
+}
+
 LEGACY_PRESETS="@homeDir@/.dsh/.agent-presets"
 if [ -d "$LEGACY_PRESETS" ]; then
   rm -rf "$LEGACY_PRESETS"
@@ -92,10 +136,13 @@ if [ -f "$PKG" ]; then
 fi
 TUI_WANT="$(registry_version '@deepseek-harness-tui%2Fdsh-tui')"
 if [ -z "$VER" ] || { [ -n "$TUI_WANT" ] && newer "$VER" "$TUI_WANT"; }; then
-  want="${TUI_WANT:-latest}"
-  echo "dsh-tui-ensure: installing @deepseek-harness-tui/dsh-tui ^$want (current: ${VER:-missing})..."
-  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "@deepseek-harness-tui/dsh-tui@^$want" -w) \
-    || echo "dsh-tui-ensure: install failed — will retry on next login" >&2
+  if [ -z "$TUI_WANT" ]; then
+    echo "dsh-tui-ensure: registry lookup for @deepseek-harness-tui/dsh-tui failed — keeping ${VER:-nothing}" >&2
+  else
+    echo "dsh-tui-ensure: installing @deepseek-harness-tui/dsh-tui ^$TUI_WANT (current: ${VER:-missing})..."
+    install_profile_plugin "@deepseek-harness-tui/dsh-tui@^$TUI_WANT" \
+      || echo "dsh-tui-ensure: install failed — will retry on next login" >&2
+  fi
 fi
 
 # The dsh-TUI bundle's liangshen preset still carries the 0.1.x
@@ -144,10 +191,13 @@ if [ -f "$FS_PKG" ]; then
 fi
 FS_WANT="$(registry_version dsh-free-search)"
 if ! fs_ok || { [ -n "$FS_WANT" ] && newer "$FS_HAVE" "$FS_WANT"; }; then
-  want="${FS_WANT:-latest}"
-  echo "dsh-tui-ensure: installing dsh-free-search ^$want (keyless web search)..."
-  (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui add "dsh-free-search@^$want" -w) \
-    || echo "dsh-tui-ensure: dsh-free-search install failed — will retry on next login" >&2
+  if [ -z "$FS_WANT" ]; then
+    echo "dsh-tui-ensure: registry lookup for dsh-free-search failed — keeping ${FS_HAVE:-nothing}" >&2
+  else
+    echo "dsh-tui-ensure: installing dsh-free-search ^$FS_WANT (keyless web search)..."
+    install_profile_plugin "dsh-free-search@^$FS_WANT" \
+      || echo "dsh-tui-ensure: dsh-free-search install failed — will retry on next login" >&2
+  fi
 fi
 
 # dsh-TUI session visibility: the 0.10.x hasPrompt carry-forward defect (a

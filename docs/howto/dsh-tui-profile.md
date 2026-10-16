@@ -48,7 +48,10 @@ profile:
 
 1. Removes a leftover `node_modules/@deepseek-ai` store link (see below).
 1. Installs/upgrades `@deepseek-harness-tui/dsh-tui` to the registry's `latest` tag, and only
-   forward: a downgrade never replaces what is installed.
+   forward: a downgrade never replaces what is installed. A denied install is retried once after
+   granting the exact-version exemptions the harness's error text asks for (see the retired-rows
+   fact below); an empty registry lookup skips the install with a message instead of passing the
+   invalid `^latest` spec to pnpm.
 1. Prunes the retired `workflow-worker-thread` row from the installed liangshen preset
    (`dsh-tui-liangshen-prune.py`; a pnpm install puts the row back, so it cannot be a one-off edit —
    see the facts below).
@@ -78,6 +81,18 @@ profile:
   row from the installed copy on any runtime that shipped the replacement, which is exactly what the
   guard tests for; a pre-rename runtime keeps it, because there the row is the live provider.
   `--dump-config` never runs the preflight, so only a real boot shows it.
+- **The TUI bundle's retired rows block installs.** dsh-TUI's own `cordis.patch.yml` still carries
+  the 0.1.5-era rows `dsh-tui-agent-presets` (`@deepseek-ai/dsh-agent-presets`) and
+  `dsh-tui-code-runtime` (`@deepseek-ai/dsh-code-runtime-worker-thread`), each guarded by
+  `disabled: !!js`. The post-install compatibility check collects the rows' package names statically
+  — an unevaluated expression is never `true` — resolves them from the registry and denies the WHOLE
+  install because their `^0.1.5-rc.1` peer ranges do not cover the 0.2.x runtime. Observed
+  2026-10-16: every activation/login since 03:24 failed with `installation rejected`, the TUI
+  session died showing `DSH plugin incompatible with dsh version`, and the profile stayed one
+  release behind. A 0.2.x runtime ships the replacements (`dsh-agent-preset-registry`,
+  `dsh-ptc-runtime-node`) and the profile layer disables both rows, so nothing ever mounts them; the
+  caretaker parses the exemption commands out of the harness's own error text, grants them and
+  retries the install once, instead of hardcoding versions that move with the bundle.
 - **The preset row id is scoped.** dsh-TUI's bundle patch replaces the base `agent-presets` row with
   `dsh-tui-agent-presets`. A profile row targeting `agent-presets` is reported as
   `patch: entry "agent-presets" not found` on every start.
