@@ -325,11 +325,27 @@ start_runner() {
   return 1
 }
 
+# Where the scene put its socket: a bare pleamar listens in $XDG_RUNTIME_DIR/pleamar,
+# while under pleamar-wm's own session the directory is $XDG_RUNTIME_DIR/pleamar-<display>.
+# PLEAMAR_SOCKETS is what `--say` consults, so it is discovered and exported here.
+find_socket_dir() {
+  local name=$1
+  local sock
+  sock=$(find "${XDG_RUNTIME_DIR:-/tmp}" -maxdepth 2 -type s -name "${name}.sock" 2> /dev/null | head -n 1) || true
+  [ -n "$sock" ] || return 1
+  dirname "$sock"
+}
+
 wait_for_socket() {
   local name=$1
   local limit=$2
   local i=0
   while [ "$i" -lt $((limit * 4)) ]; do
+    if [ -z "${PLEAMAR_SOCKETS:-}" ]; then
+      if found=$(find_socket_dir "$name"); then
+        export PLEAMAR_SOCKETS="$found"
+      fi
+    fi
     if "$PLEAMAR" --say "$name" describe > /dev/null 2>&1; then
       return 0
     fi
@@ -354,11 +370,23 @@ stop_scene() {
 
 canonicalize() {
   local file=$1
-  if [ -n "$JQ" ]; then
-    "$JQ" -S . "$file"
-  else
-    cat -- "$file"
-  fi
+  local first
+  first=$(head -c 1 -- "$file" 2> /dev/null || true)
+  case "$first" in
+    "{" | "[")
+      if [ -n "$JQ" ]; then
+        "$JQ" -S . "$file"
+      else
+        cat -- "$file"
+      fi
+      ;;
+    *)
+      # The 0.4.11 build answers `describe` with the human-readable tree (its
+      # json form arrived later): normalise trailing whitespace, mask the parts
+      # that move on their own (the clock in a label) and diff text.
+      sed -e 's/[[:space:]]*$//' -e 's/[0-9][0-9]:[0-9][0-9]/HH:MM/g' -- "$file"
+      ;;
+  esac
 }
 
 show_log_tail() {
@@ -377,7 +405,7 @@ drift_summary() {
   added="$(diff -u -- "$old" "$new" | grep -c '^+[^+]' || true)"
   removed="$(diff -u -- "$old" "$new" | grep -c '^-[^-]' || true)"
   say "drift: +${added}/-${removed} lines"
-  if [ -n "$JQ" ]; then
+  if [ -n "$JQ" ] && [ "$(head -c 1 -- "$old" 2> /dev/null || true)" = "{" ]; then
     while IFS= read -r key; do
       if ! "$JQ" -e --arg k "$key" 'has($k)' "$old" > /dev/null 2>&1; then
         say "  + top-level key added: $key"
@@ -480,18 +508,27 @@ if [ "$wait_rc" -ne 0 ]; then
   die "scene '$SCENE_NAME' never answered (see log above; --keep-tmp keeps the sandbox)"
 fi
 
-RAW="$TEMPROOT/describe.raw.json"
-if ! "$PLEAMAR" --say "$SCENE_NAME" describe json > "$RAW" 2> "$TEMPROOT/describe.err"; then
-  printf 'describe-snap: error: `describe json` failed:\n' >&2
-  head -n 5 -- "$TEMPROOT/describe.err" >&2 2> /dev/null || true
-  show_log_tail
-  die "could not capture the agent tree"
+RAW="$TEMPROOT/describe.raw"
+FIRST=""
+if "$PLEAMAR" --say "$SCENE_NAME" describe json > "$RAW" 2> "$TEMPROOT/describe.err"; then
+  FIRST=$(head -c 1 -- "$RAW" 2> /dev/null || true)
 fi
+case "$FIRST" in
+  "{" | "[") : ;; # a machine-readable tree
+  *)
+    if ! "$PLEAMAR" --say "$SCENE_NAME" describe > "$RAW" 2> "$TEMPROOT/describe.err"; then
+      printf 'describe-snap: error: describe failed:\n' >&2
+      head -n 5 -- "$TEMPROOT/describe.err" >&2 2> /dev/null || true
+      show_log_tail
+      die "could not capture the agent tree"
+    fi
+    ;;
+esac
 
 OLD="$TEMPROOT/old.json"
 NEW="$TEMPROOT/new.json"
 if ! canonicalize "$RAW" > "$NEW" 2> "$TEMPROOT/jq.err"; then
-  printf 'describe-snap: error: `describe json` did not return valid JSON:\n' >&2
+  printf 'describe-snap: error: the agent tree could not be normalised:\n' >&2
   head -n 5 -- "$RAW" >&2 2> /dev/null || true
   die "cannot snapshot the agent tree (--keep-tmp keeps the raw output)"
 fi

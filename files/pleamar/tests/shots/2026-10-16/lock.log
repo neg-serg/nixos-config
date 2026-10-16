@@ -1,0 +1,43 @@
+headless · its scene listens in /tmp/pleamar-smoke.n27Gqs/run/pleamar-headless-1440613
+text   · 525 system fonts in 8 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+headless · monitor 0: surface 0 '' 1920×1080 at 0,0
+headless · monitor 0: surface 4 'phone_curtain' 1920×1080 at 0,0
+headless · monitor 0: surface 8 'remote_mark' 1920×1080 at 0,0
+headless · monitor 0: surface 12 'agent_hands' 1920×1080 at 0,0
+render · scene: 5516 properties, 23172 instructions, 1234 facts, 0 layers, 0 gestures, 8784 rules, 2256 zones
+portal · org.freedesktop.impl.portal.desktop.pleamar: sharing the screen is this session's
+windows · programs connect at WAYLAND_DISPLAY=pleamar-1
+portal · no PipeWire (Creation failed): the screen cannot be shared
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/card1: Permission denied
+windows · X11 programs open here too (XWayland, DISPLAY=:4)
+ATTENTION: default value of option mesa_glthread overridden by environment.
+render · llvmpipe (LLVM 21.1.8, 256 bits): on OpenGL, through EGL (its Vulkan driver cannot take buffers by their layout)
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Gl) · Bgra8Unorm · Opaque
+render · surface 7001 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz
+render · surface 7002 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · phone_curtain
+render · surface 7003 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · remote_mark
+render · surface 7004 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · agent_hands
+render · first frame 477 ms after starting
+cycle  ·   82 frames · mean 17.91 ms · p99 112.38 ms · max 112.38 ms · reading the scene 0.07 ms · with the logic blocked: 0 frames, max 0.00 ms
+windows · starting: /tmp/plm-recon/run-pleamar.sh --scene /etc/nixos/files/pleamar/shells/lock/lock.plm --no-hud
+text   · 525 system fonts in 17 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+render · scene: 45 properties, 188 instructions, 40 facts, 0 layers, 1 gestures, 4 rules, 12 zones
+windows · the session is locked
+lock   · HEADLESS-1 arrived while locked: it has its face
+logic  · /etc/nixos/files/pleamar/shells/lock/lock.luau running in 1.5 ms · 1 handlers, 2 timers
+logic  · permissions · commands: cat · services: auth, clock, env, files
+keyboard · repeats after 400 ms, then every 40 ms
+lock   · the session is locked
+warning: none of the monitors asked for ([Number(0), Number(1), Number(2), Number(3)]) is plugged in; waiting for one to appear
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Vulkan) · Bgra8Unorm · PreMultiplied
+render · surface 0 on HEADLESS-1 (lock) · 1920×1080 · scale 1 · 60 Hz · screen_lock
+headless · the frame shown went to /etc/nixos/files/pleamar/tests/shots/2026-10-16/lock.png
+render · first frame 1630 ms after starting
+render · slow frame: 100 ms at 1.71 s
+render · slow frame: 51 ms at 1.76 s
+render · slow frame: 55 ms at 2.20 s
+render · slow frame: 61 ms at 2.73 s

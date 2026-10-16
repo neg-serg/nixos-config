@@ -1,0 +1,59 @@
+headless · its scene listens in /tmp/pleamar-smoke.n27Gqs/run/pleamar-headless-1441470
+text   · 525 system fonts in 12 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+render · scene: 5516 properties, 23172 instructions, 1234 facts, 0 layers, 0 gestures, 8784 rules, 2256 zones
+headless · monitor 0: surface 0 '' 1920×1080 at 0,0
+headless · monitor 0: surface 4 'phone_curtain' 1920×1080 at 0,0
+headless · monitor 0: surface 8 'remote_mark' 1920×1080 at 0,0
+headless · monitor 0: surface 12 'agent_hands' 1920×1080 at 0,0
+portal · org.freedesktop.impl.portal.desktop.pleamar: sharing the screen is this session's
+windows · programs connect at WAYLAND_DISPLAY=pleamar-1
+portal · no PipeWire (Creation failed): the screen cannot be shared
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/card1: Permission denied
+windows · X11 programs open here too (XWayland, DISPLAY=:3)
+ATTENTION: default value of option mesa_glthread overridden by environment.
+render · llvmpipe (LLVM 21.1.8, 256 bits): on OpenGL, through EGL (its Vulkan driver cannot take buffers by their layout)
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Gl) · Bgra8Unorm · Opaque
+render · surface 7001 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz
+render · surface 7002 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · phone_curtain
+render · surface 7003 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · remote_mark
+render · surface 7004 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · agent_hands
+render · first frame 870 ms after starting
+cycle  ·   71 frames · mean 20.73 ms · p99 208.98 ms · max 208.98 ms · reading the scene 0.14 ms · with the logic blocked: 0 frames, max 0.00 ms
+windows · starting: /tmp/plm-recon/run-pleamar.sh --scene /etc/nixos/files/pleamar/shells/lock/preview.plm --no-hud
+text   · 525 system fonts in 7 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+render · scene: 17 properties, 49 instructions, 25 facts, 0 layers, 1 gestures, 1 rules, 3 zones
+logic  · /etc/nixos/files/pleamar/shells/lock/preview.luau running in 0.8 ms · 1 handlers, 2 timers
+logic  · permissions · commands: cat · services: auth, clock, env, files
+windows · the keyboard to 
+keyboard · repeats after 400 ms, then every 40 ms
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Vulkan) · Bgra8Unorm · PreMultiplied
+render · surface 0 on HEADLESS-1 · 1280×720 · scale 1 · 60 Hz · preview_window
+render · first frame 362 ms after starting
+render · slow frame: 98 ms at 0.45 s
+render · the compositor is not showing this surface: painting once a second until it shows it again
+render · slow frame: 66 ms at 0.52 s
+render · the compositor is showing it again
+render · slow frame: 65 ms at 0.58 s
+render · slow frame: 66 ms at 0.68 s
+render · the compositor is not showing this surface: painting once a second until it shows it again
+render · slow frame: 67 ms at 0.75 s
+render · the compositor is showing it again
+render · slow frame: 73 ms at 0.82 s
+render · slow frame: 116 ms at 0.94 s
+render · slow frame: 66 ms at 1.01 s
+render · the compositor is not showing this surface: painting once a second until it shows it again
+render · slow frame: 73 ms at 1.08 s
+render · the compositor is showing it again
+render · slow frame: 66 ms at 1.15 s
+render · slow frame: 102 ms at 1.25 s
+render · slow frame: 52 ms at 1.60 s
+render · slow frame: 53 ms at 1.69 s
+headless · the frame shown went to /etc/nixos/files/pleamar/tests/shots/2026-10-16/preview.png
+render · slow frame: 2087 ms at 5.20 s
+render · slow frame: 40 ms at 5.32 s
+render · a shadow is cut: it needs 22 px on the left and 22 px on the right and 44 px below more than this 1920 x 1080 surface has. The shape fits; its shadow does not
+cycle  ·   23 frames · mean 112.34 ms · p99 2086.61 ms · max 2086.61 ms · reading the scene 1.33 ms · with the logic blocked: 0 frames, max 0.00 ms

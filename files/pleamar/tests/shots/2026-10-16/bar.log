@@ -1,0 +1,37 @@
+headless · its scene listens in /tmp/pleamar-smoke.n27Gqs/run/pleamar-headless-1439247
+text   · 525 system fonts in 16 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+headless · monitor 0: surface 0 '' 1920×1080 at 0,0
+headless · monitor 0: surface 4 'phone_curtain' 1920×1080 at 0,0
+headless · monitor 0: surface 8 'remote_mark' 1920×1080 at 0,0
+headless · monitor 0: surface 12 'agent_hands' 1920×1080 at 0,0
+render · scene: 5516 properties, 23172 instructions, 1234 facts, 0 layers, 0 gestures, 8784 rules, 2256 zones
+portal · org.freedesktop.impl.portal.desktop.pleamar: sharing the screen is this session's
+windows · programs connect at WAYLAND_DISPLAY=pleamar-1
+portal · no PipeWire (Creation failed): the screen cannot be shared
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/renderD128: Permission denied
+MESA-EGL: warning: failed to open /dev/dri/card1: Permission denied
+windows · X11 programs open here too (XWayland, DISPLAY=:4)
+ATTENTION: default value of option mesa_glthread overridden by environment.
+render · llvmpipe (LLVM 21.1.8, 256 bits): on OpenGL, through EGL (its Vulkan driver cannot take buffers by their layout)
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Gl) · Bgra8Unorm · Opaque
+render · surface 7001 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz
+render · surface 7002 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · phone_curtain
+render · surface 7003 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · remote_mark
+render · surface 7004 on HEADLESS-1 · 1920×1080 · scale 1 · 60 Hz · agent_hands
+render · first frame 2912 ms after starting
+windows · starting: /tmp/plm-recon/run-pleamar.sh --scene /etc/nixos/files/pleamar/shells/bar/bar.plm --no-hud
+text   · 525 system fonts in 10 ms
+pleamar · decoupled (independent render) mode · the logic blocks 600 ms after every decision
+render · scene: 170 properties, 560 instructions, 61 facts, 0 layers, 0 gestures, 44 rules, 48 zones
+windows · 'pleamar' on HEADLESS-1
+logic  · /etc/nixos/files/pleamar/shells/bar/bar.luau running in 0.7 ms · 3 handlers, 0 timers
+logic  · permissions · commands: none · services: clock, workspaces, workspaces.focus, audio, audio.*, network, files, files.write
+logic  · the 'workspaces' service is not available here: 'workspaces' stays as the scene left it
+logic  · the 'audio' service is not available here: 'audio' stays as the scene left it
+render · llvmpipe (LLVM 21.1.8, 256 bits) (Vulkan) · Bgra8Unorm · PreMultiplied
+render · surface 0 on HEADLESS-1 · 1920×44 · scale 1 · 60 Hz
+render · first frame 925 ms after starting
+headless · the frame shown went to /etc/nixos/files/pleamar/tests/shots/2026-10-16/bar.png
+render · slow frame: 51 ms at 1.63 s
