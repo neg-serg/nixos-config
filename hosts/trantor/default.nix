@@ -178,6 +178,7 @@ in
   features.wine.enable = true;
   features.wine.apps = { }; # Windows apps for the wineapps CLI; add only what you need
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
+  features.gui.hyprKCS.enable = true; # hyprKCS keybind cheat sheet overlay (SUPER+SHIFT+slash)
   # Weekly incremental refresh of the MERT similarity index (music-index): warm
   # runs embed only new/changed albums. --layer -1 pins the settings of the
   # index built on 2026-10-12; without it the timer would rebuild everything,
