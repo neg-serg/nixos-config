@@ -85,6 +85,12 @@ PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V2@ "$search_pkg"
 # see packages/dsh/patch-session-migration.py).
 PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_MIG@ "$search_pkg"
 
+# run_code / PTC workers: the node runtime tombstones every ambient env key
+# except STARTUP_ENVIRONMENT_NAMES, which silently drops LD_LIBRARY_PATH and
+# kills the official Node build (no RPATH) with exit 127 before it boots
+# (see packages/dsh/patch-ptc-env.py).
+PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_PTC@ "$search_pkg"
+
 # Agent presets are declarative rows in 0.2.0-rc.2 (and since 0.1.7): the
 # shipped ones are `presets/<id>.patch.yml` files of the dsh-web-app bundle,
 # listed in that package's `dsh.bundle.patch`, and a preset is created or
