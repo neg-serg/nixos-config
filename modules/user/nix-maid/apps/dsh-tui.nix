@@ -16,7 +16,8 @@ let
   themeJson = ./dsh-tui-assets/themes/neg.json;
 
   # The tui profile's caretaker. It keeps the profile on the installed harness:
-  # installs/upgrades the dsh-TUI plugin, keeps dsh-free-search, removes a
+  # installs/upgrades the dsh-TUI plugin, keeps dsh-free-search and
+  # dsh-find-plugin, removes a
   # leftover @deepseek-ai store link (dsh's own profile module fallback owns
   # that tree and cannot write through the read-only link), grants the harness's
   # exact-version exemptions when the TUI bundle's retired 0.1.5 rows trip the

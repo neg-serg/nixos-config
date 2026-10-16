@@ -15,6 +15,9 @@
 # carry no UI face and need no web runtime (see the note below).
 # dsh-free-search is mounted as well, but through pnpm instead of the repo
 # seed — the caretaker installs it and owns its English-market config row.
+# dsh-find-plugin rides the same pnpm path but needs no row override: the
+# package's own bundle patch mounts its row, so the caretaker only keeps it
+# installed (registry `latest`, like the TUI bundle).
 # Every plugin directory must be `git add`ed before the switch: the flake
 # source is a git snapshot, so an untracked directory never reaches the store
 # and the caretaker reports it missing while the row is already in the patch
