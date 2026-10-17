@@ -18,10 +18,10 @@ podman run -d --name windows \
   -p 8006:8006/tcp -p 3389:3389/tcp -p 3389:3389/udp -p 5004:5004/udp -p 5005:5005/udp \
   --cap-add NET_ADMIN \
   --network pasta \
-  --memory 10g --cpus 2 --cpu-shares 512 \
+  --memory 10g --cpus 4 --cpu-shares 512 \
   --stop-timeout 120 \
   -e VERSION="win11" -e USERNAME="neg" -e PASSWORD="…" \
-  -e RAM_SIZE="6G" -e DISK_SIZE="120G" -e CPU_CORES="2" \
+  -e RAM_SIZE="6G" -e DISK_SIZE="120G" -e CPU_CORES="4" \
   -e TPM_VERSION="2.0" -e SECURE_BOOT="Y" \
   -e ARGUMENTS="-device usb-host,vendorid=0x1781,productid=0x0e39 -device vfio-pci,host=0000:7c:00.0 -device vfio-pci,host=0000:7c:00.1" \
   docker.io/dockurr/windows:latest
@@ -101,8 +101,8 @@ Measured on trantor (host: 60 GiB RAM, Ryzen 9 9950X3D, 32 threads; numbers from
 | QEMU `VmRSS` (resident, pinned)   | 16.1 GB              | 6.1 GB                  |
 | Host `used` (`free -h`)           | 27 GiB               | 21 GiB                  |
 
-CPU is **not** governed by `RAM_SIZE`: both instances peak at 125-140 % during boot and then decay
-to a run-dependent idle of 5-20 % while Windows finishes its own background work (Defender, Update
+CPU is **not** governed by `RAM_SIZE`: both instances peak above 100 % during boot and then decay to
+a run-dependent idle of 5-20 % while Windows finishes its own background work (Defender, Update
 checks over the proxied network, telemetry, pagefile resize after a RAM change — the 6G instance
 still showed growing block/network I/O 16 minutes after boot). The stable, reproducible part is the
 memory picture: the guest RAM is pinned, so `RAM_SIZE` maps 1:1 onto host RAM.
@@ -128,11 +128,30 @@ Changing `RAM_SIZE` does not touch the installed Windows (no reinstall, no re-ac
 boot after the change spends a few minutes resizing the pagefile, which is why CPU stays elevated
 for a while.
 
+### Measured boot (2026-10-17)
+
+Same container, same disk, host otherwise idle; `glm-adapter health` polls the guest with an X.224
+probe and `podman stats` samples the container every 2 s:
+
+| metric                              | 2 vCPU (`CPU_CORES=2`)       | 4 vCPU (`CPU_CORES=4`) |
+| ----------------------------------- | ---------------------------- | ---------------------- |
+| container start → guest answers RDP | 20 s                         | **10 s**               |
+| peak container CPU during boot      | 165 % (of the 200 % ceiling) | 249 %                  |
+| container CPU at t=50 s             | ~102 %                       | ~98 %                  |
+
+The guest was shut down through the ACPI path before each run, so both boots are real boots, not
+hiberboot resumes. RDP answering is the only guest-side milestone the host can observe directly; the
+desktop settles later (startup apps, pagefile resize), which is why the CPU column keeps decaying
+past t=50 s in both rows.
+
 ### cgroup limits
 
 - `--memory 10g` — hard ceiling: 6 GB guest + ~1 GB QEMU overhead + page cache. Not hit in normal
   operation; it only bounds a runaway.
-- `--cpus 2` — matches `CPU_CORES=2`, i.e. a no-op ceiling against QEMU thread oversubscription.
+- `--cpus 4` — matches `CPU_CORES=4`, i.e. a no-op ceiling against QEMU thread oversubscription. Two
+  vCPUs were the boot bottleneck: measured container start → guest answering RDP was 20 s with 2
+  vCPU (CPU pegged at 165 % of the 200 % ceiling) and 10 s with 4 (peak 249 %), see “Measured boot”
+  below.
 - `--cpu-shares 512` — half the default weight, so the VM yields to the desktop under contention.
 - `--cpuset-cpus` does **not** work here: rootless podman would need the `cpuset` controller, but
   `user@1000.service` delegates only `cpu io memory pids` (check:
