@@ -36,3 +36,26 @@ Image/video/3D generation through ComfyUI on RX 9070 XT (gfx1201).
 - custom_nodes: WanVideoWrapper (GGUF), VideoHelperSuite, Hunyuan3DWrapper, LTXVideo, GGUF,
   IPAdapter.
 - Output: /zero/ai/video/comfyui/output/ and comfyui-output/.
+
+## Animated wallpaper (still image → seamless loop)
+
+HunyuanVideo 1.5 480p I2V cfg-distilled is the model that fits the 16 GB card (8.3 GB): LTX 2.3 22B
+OOMs even at 512x320x97, and the Wan GGUFs were removed (the `Wan2.2-*` symlinks in
+`comfyui/models/diffusion_models` are broken).
+
+Graph that keeps the start image faithful:
+
+- `DualCLIPLoader` with type `hunyuan_video_15` (Qwen2.5-VL text encoder) and `CLIPTextEncode` for
+  positive/negative;
+- `CLIPVisionLoader` + `CLIPVisionEncode` (SigLIP) feeding the optional `clip_vision_output` of
+  `HunyuanVideo15ImageToVideo` — without it the scene drifts into a different waterfall by mid-clip,
+  with it the start image holds;
+- `KSampler` (euler, simple), 8 steps, CFG 1.0, 768x480, 97 frames (4 s @ 24 fps).
+
+A render costs ~16 min on the RX 9070 XT (61 s/step sampling plus CPU VAE decode with `--cpu-vae`;
+drop `--cpu-vae` to decode on the GPU when VRAM is free). Knobs: 896x560 or 1024x640 instead of
+768x480, 49 frames for a 2 s clip, prompt wording ("static camera", "no scene change").
+
+The frames are cross-faded (tail into head, 1 s) into a seamless MP4, and the `wallpaper-video` user
+service (`modules/user/session/wallpaper-video.nix`) plays it with `mpv --loop-file`; hyprwinwrap
+pins the window behind the desktop via the declaration in `files/gui/hypr/hyprwinwrap.lua`.

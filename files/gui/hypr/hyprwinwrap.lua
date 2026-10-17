@@ -22,3 +22,17 @@
 --
 -- `hl.plugin.hyprwinwrap.focus("<class-or-title>")` toggles a background
 -- window forward; calling it again (or focusing anything else) sends it back.
+--
+-- Active declaration: the looped waterfall played by the wallpaper-video user
+-- service (modules/user/session/wallpaper-video.nix). The clip is
+-- ~/pic/wl/video/waterfall_loop.mp4 and the service passes the same
+-- class/title/app-id.
+hl.plugin.hyprwinwrap.window({
+  class = "waterfall-bg",
+  title = "waterfall-bg",
+  layer = 0,
+  pos_x = 0,
+  pos_y = 0,
+  size_x = 100,
+  size_y = 100,
+})
