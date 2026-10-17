@@ -71,7 +71,7 @@ Two paths, preferred one first:
 
 1. **Agent rollout (no password).** `features.security.agentSwitch` (on by default) installs a
    root-owned oneshot unit plus a polkit rule that lets the main user start exactly
-   `nixos-agent-switch.service` (`modules/security/agent-switch.nix`) — polkit, not setuid sudo, so
+   `nixos-agent-rollout.service` (`modules/security/agent-switch.nix`) — polkit, not setuid sudo, so
    the trigger also works from a session sandbox. The unit re-builds the flake as the main user
    (root's libgit2 refuses a user-owned repository) and activates the verified store path as root;
    it **refuses** when the tree no longer builds the toplevel named in
@@ -86,7 +86,12 @@ Two paths, preferred one first:
    ```
 
    The run lands in the journal: HEAD, the dirty-file list (the tree *is* what gets activated), the
-   artifact and the activation output — `journalctl -u nixos-agent-switch`.
+   artifact and the activation output — `journalctl -u nixos-agent-rollout`.
+
+   The unit file is a constant string: it must never contain a store path, otherwise a switch that
+   rebuilds one of those paths would stop the unit that is running the switch (2026-10-17: an
+   activation died on `status=15/TERM` this way). The `nixos-agent-switch` name is the pre-rename
+   unit, kept byte-identical for one generation by a bootstrap block in the module.
 
 1. **Human switch.** Use it when the mechanism is off, not activated yet, or when the change *is*
    the mechanism:
