@@ -16,9 +16,11 @@ Guidelines
   - `docs/runbook-*.md` — operational steps (entry point `docs/runbook-index.md`);
   - `docs/howto/*.md` — cross-cutting howtos, one file per topic, and every new file is linked from
     `docs/howto/index.md`;
-  - `docs/README.md` — repository overview. Knowledge that belongs to a single module still lives in
-    that module's header, not in a new file here: a howto covers a workflow spanning several files
-    and links to the code instead of restating it.
+  - `docs/README.md` — repository overview. Knowledge that belongs to a single module lives in that
+    module's header comment, not in a file here: a howto covers a workflow spanning several files
+    and links to the code instead of restating it. When a howto starts describing one module's
+    behaviour only, fold it into that module's header and delete the file (the 2026-10-17 pass moved
+    17 howtos this way).
 - Reuse existing scripts or commands referenced in docs instead of inventing new ones unless needed.
 - If you find Cyrillic or CJK in any `docs/**/*.md`, translate the prose to English (code/commands
   stay verbatim) — do not leave it for later.
