@@ -73,6 +73,10 @@ in
         volumes = [
           "flohmarkt-couchdb-data:/opt/couchdb/data"
         ];
+        # The drop-in carries the loopback bind and `log.level = warning`:
+        # CouchDB logs every request at notice level and writes to stderr, so
+        # journald files those access lines as priority=err — without the level
+        # `journalctl -p err` drowns in `POST /flohmarkt/_find 200 ok`.
         # The drop-in must be written inside the container: the image's
         # entrypoint runs `find /opt/couchdb ... -exec chown ...` over that
         # tree, and with a read-only bind mount that chown fails, aborting the
@@ -82,6 +86,7 @@ in
           "-c"
           ''
             printf '%s\n' '[chttpd]' 'bind_address = 127.0.0.1' \
+              '[log]' 'level = warning' \
               > /opt/couchdb/etc/local.d/90-flohmarkt-bind.ini
             exec /docker-entrypoint.sh couchdb
           ''
@@ -113,7 +118,9 @@ in
       description = "Flohmarkt CouchDB bootstrap (databases, user, design docs)";
       after = [ "podman-flohmarkt-couchdb.service" ];
       requires = [ "podman-flohmarkt-couchdb.service" ];
-      wantedBy = [ "multi-user.target" ];
+      # Behind post-boot: the bootstrap waited on CouchDB on the critical path
+      # to graphical.target (see the deferral note further down).
+      wantedBy = [ "post-boot.target" ];
       path = [
         pkgs.coreutils # seq and sleep in the readiness loop
         pkgs.curl # the readiness probe's curl, run inside the CouchDB container
@@ -137,6 +144,15 @@ in
     systemd.services.podman-flohmarkt = {
       after = [ "flohmarkt-initdb.service" ];
       wants = [ "flohmarkt-initdb.service" ];
+    };
+
+    # The board is not needed for a login: CouchDB plus the initdb bootstrap sat
+    # on the critical path to graphical.target (~3 s: initdb alone waits up to
+    # 2.5 s for CouchDB), so the three units move behind post-boot.target
+    # (modules/system/systemd/post-boot.nix). They still pull each other in.
+    systemd.services = {
+      "podman-flohmarkt-couchdb".wantedBy = lib.mkForce [ "post-boot.target" ];
+      podman-flohmarkt.wantedBy = lib.mkForce [ "post-boot.target" ];
     };
 
     # Secrets stay host-local by design: only the two generated values ever
