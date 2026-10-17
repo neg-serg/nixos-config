@@ -182,12 +182,6 @@
 - Profiles and feature flags — bundles, service profiles, host overrides:
   [profiles-and-flags.md](./profiles-and-flags.md)
 
-- Kernel module layout and attack-surface trimming: [kernel-modules.md](./kernel-modules.md)
-
-- Cooling and fan control (quiet profile): [cooling.md](./cooling.md)
-
-- GPU undervolt through CoreCtrl: [gpu-undervolt.md](./gpu-undervolt.md)
-
 - RNNoise virtual microphone (PipeWire): [rnnoise-mic.md](./rnnoise-mic.md)
 
 - LAN audio access (MPD + PipeWire): [lan-audio.md](./lan-audio.md)
