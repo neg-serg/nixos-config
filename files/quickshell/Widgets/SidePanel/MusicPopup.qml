@@ -39,11 +39,6 @@ Item {
             hidePopup();
         }
 
-        onVisibleChanged: {
-            if (visible) OverlayManager.registerOverlay(toast);
-            else OverlayManager.unregisterOverlay(toast);
-        }
-
         WlrLayershell.namespace: "qs-music"
         WlrLayershell.exclusionMode: ExclusionMode.Normal
 
@@ -120,13 +115,23 @@ Item {
             autoHideTimer.stop();
             toast._autoHideRemainingMs = toast.autoHideTotalMs;
         }
+        // One handler, both jobs: OverlayManager registration (so the global
+        // dismiss trigger reaches this window) and the auto-hide timer. QML
+        // allows exactly one `onVisibleChanged` per object — a second one is a
+        // hard compile error ("Property value set multiple times"), and because
+        // this file is loaded through a Loader the failure is silent: the
+        // Loader's item stays null and every click on the media capsule logged
+        // "sidePanelPopup is null". That is how the popup died on 2026-10-14
+        // (501793bc2 added the registration handler next to this one).
         onVisibleChanged: {
             if (visible) {
+                OverlayManager.registerOverlay(toast);
                 toast.startAutoHide();
                 if (sidebarPopup.anchorWindow && sidebarPopup.anchorWindow.panelHovering === true) {
                     toast.pauseAutoHide();
                 }
             } else {
+                OverlayManager.unregisterOverlay(toast);
                 toast.cancelAutoHide();
             }
         }
