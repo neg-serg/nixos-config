@@ -28,17 +28,22 @@
 #     that is performing it — see the comment on the environment.etc block below
 #     for what that cost on 2026-10-17.
 #
-# Known limitation (2026-10-17): the polkit rule below is not the boundary it
-# looks like. The main user can already manage system units without
-# authentication on this host — ''systemd-run --unit=x /bin/sh -c "id -u"''
-# printed 0 (root), ''systemctl stop''/''restart'' of unrelated units returned 0,
-# and ''pkcheck'' (run as root with the main user as subject) answers
-# "authorized" for org.freedesktop.systemd1.manage-units with an arbitrary unit
-# name. A rule returning polkit.Result.AUTH_ADMIN for every other manage-units
-# action changed nothing, so the authorization does not come from the rules in
-# /etc/polkit-1/rules.d; debugging polkitd itself (--debug) is the next step.
-# Until that is settled, treat this account as having passwordless root and the
-# module as convenience, not as a gate.
+# Polkit boundary — measured on 2026-10-17 after the rollout rework:
+#   - `systemctl start nixos-agent-rollout.service` as the main user: allowed by
+#     the rule below (rc=0, no prompt);
+#   - everything else under org.freedesktop.systemd1.manage-units — `systemctl
+#     stop`/`restart` of unrelated units, `systemd-run` of a transient unit
+#     (which runs as root) — is denied without authentication ("Failed to stop
+#     …: Connection timed out", rc=1). The action's own auth_admin default
+#     applies, so an interactive session gets the usual password prompt.
+# Between 14:07 and 14:16 the same afternoon such calls *did* succeed with no
+# authentication (a transient unit printed uid 0), all of them served by the
+# polkitd instance started at 13:55; after the rollouts restarted polkitd it
+# never reproduced. The window is therefore unexplained rather than fixed: if it
+# returns, debug the authority itself — SIGUSR1 toggles polkitd's debug log, and
+# `pkcheck --action-id org.freedesktop.systemd1.manage-units --process <pid of a
+# main-user process> --detail unit x --detail verb start` (run as root) is the
+# fastest probe.
 #
 # The cost, spelled out: with this on, anything running as the main user can
 # install a root unit by writing the flake and requesting a switch — that is root
