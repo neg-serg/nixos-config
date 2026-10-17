@@ -168,19 +168,8 @@
 - Hotkey backlog — the open emacs/vim-friendly items left after the 2026-10-14 audit:
   [hotkeys-backlog.md](./hotkeys-backlog.md)
 
-- Nix build status in the bar (`nixbuild-status` CLI, capsule and popup):
-  [nixbuild-status.md](./nixbuild-status.md)
-
-- pleamar shell — the alternate shell, off by default: [pleamar.md](./pleamar.md)
-
 - Repository conventions — coding style, module patterns, systemd-user helpers, commits and the
   local hooks: [repo-conventions.md](./repo-conventions.md)
-
-- Custom packages and vendored sources (overlay layout, `pkgs.neg.*`, path inputs):
-  [custom-packages.md](./custom-packages.md)
-
-- Profiles and feature flags — bundles, service profiles, host overrides:
-  [profiles-and-flags.md](./profiles-and-flags.md)
 
 - Gaming on trantor — SCX + cpuset, Gamescope recommendations, lightweight monitoring:
   [gaming-scx-cpuset.md](./gaming-scx-cpuset.md)
