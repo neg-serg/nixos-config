@@ -426,25 +426,29 @@ with the compositor without hopping across multiple files. hy3 is the layout; th
   prints the configured path with `set: true`, and one capture wrote an owner-only PNG (3840x2160,
   mode 600) into `~/pic/shots` with the plugin's filename template. Check a new session the same
   way: `hyprctl plugin list`, the option, then a capture.
-- **Binds**: `SUPER+SHIFT+R` captures fullscreen and `SUPER+SHIFT+CTRL+R` region — the same keys the
-  grim/slurp + `pic-info` pair used, now `hl.plugin.hyprcapture.open("fullscreen")` /
-  `open("region")`. `open()` captures without the annotation toolbar; the annotated flow is
-  `open_editor(mode)`, and `hl.plugin.hyprcapture.record_toggle()` drives recording.
+- **Binds**: none. `SUPER+SHIFT+R` (fullscreen) and `SUPER+SHIFT+CTRL+R` (region) are back on the
+  grim flow — `grim -l 0` for the fastest PNG compression, no cursor (`-c` is what includes it;
+  HyprCapture saves its frozen frame with the pointer baked in and `include_cursor` is already
+  false, so there is nothing to turn off there), `slurp` for the region. The plugin stays loaded and
+  usable for the flows the plain binds do not cover: `open_editor(mode)` (annotation toolbar),
+  `record_toggle()` (recording, though the record binds use `screenrec`) and scrolling capture,
+  reachable from `hyprctl eval 'hl.plugin.hyprcapture.open_editor("region")'`.
 - **Configured keys**: the output directories (`save_dir` → `$XDG_PICTURES_DIR/shots`,
   `record_save_dir` → `$XDG_VIDEOS_DIR/recordings`) plus `screenshot_notification = false` and
   `show_thumbnail = false`. The directories keep the grim/screenrec paths and the `pic-*` helpers
   working; the two switches hand screenshot feedback back to the fast quickshell toast (below)
   instead of the plugin's own notification and result thumbnail. Recording status notifications stay
   on — the record binds use `screenrec`, not HyprCapture, so the thumbnail loss is theirs too.
-- **Screenshot toast** (why the plugin feedback is off): the grim flow's instant feedback was
-  `grim -l 0 … && pic-info` → `pic-notify` → quickshell `ScreenshotToast`. HyprCapture saves into
-  the same shots directory and has no post-capture hook, so the `screenshot-toast.path` unit
-  (`main.nix`) watches that directory and runs `screenshot-toast`
-  (`packages/local-bin/bin/screenshot-toast`), which forwards the newest file to `pic-info`.
-  `PathChanged` (the path unit) fires when the written file is closed, the script ignores files
-  older than ~20 s (a delete or rename triggers the directory watch too), and the unit is
-  session-scoped. The toast therefore lands right after the save — later than with `grim -l 0`,
-  earlier than the plugin's own notification plus thumbnail.
+- **Screenshot toast**: the `screenshot-toast.path` unit (`main.nix`) watches the shots directory
+  and runs `screenshot-toast` (`packages/local-bin/bin/screenshot-toast`), which forwards the newest
+  file to `pic-info` → `pic-notify` → quickshell `ScreenshotToast`. It is the *only* producer: no
+  bind calls `pic-info` itself, so one capture yields one toast. `PathChanged` on a directory fires
+  on the writer's first write event, not on close, and both writers grow the PNG in place (grim
+  writes it, HyprCapture wrote ~280 KB of a 5 MB capture before the event landed) — so the script
+  waits for the PNG `IEND` trailer before announcing, otherwise the toast showed a half-decoded
+  preview, a bogus size, and Copy/Open acted on a partial file. The script also ignores files older
+  than ~20 s (a delete or rename triggers the directory watch too) and skips a file it already
+  announced; the unit is session-scoped.
 
 ## Testing a plugin without endangering the session
 

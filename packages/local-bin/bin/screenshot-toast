@@ -15,6 +15,15 @@
 # several directory events (create, close, chmod) and more than one watcher
 # may be around right after a change.
 #
+# The watched file is still being written when the unit fires: PathChanged on
+# a directory reports the writer's first write event, not the close, and
+# HyprCapture grows the PNG in place (~280 KB of a 5 MB capture is on disk
+# when the first event lands). Announcing at that point handed the toast a
+# truncated PNG — a half-drawn preview, a bogus size, and Copy/Open acting on
+# a partial file — and the "already announced" stamp kept the event that
+# fires when the write completes from re-announcing it. So wait for the size
+# to settle first, and key the stamp on the settled file.
+#
 # Requires pic-info and pic-notify in PATH (both live in ~/.local/bin).
 
 set -u
@@ -24,15 +33,50 @@ if [ -z "$dir" ]; then
   pictures="${XDG_PICTURES_DIR:-$HOME/pic}"
   dir="${pictures%/}/shots"
 fi
+# Wait for the writer to finish. A capture is written in place, so the first
+# directory event lands on a partial file. A PNG says that itself: it ends with
+# the fixed IEND chunk and no prefix of it does, while two agreeing size samples
+# do not — a writer can pause (the tray below reproduces exactly that). Other
+# formats have no such trailer and fall back to the size samples.
+# 40 x 150 ms bounds the wait at 6 s.
+capture_complete() {
+  case "$1" in
+    *.png|*.PNG)
+      [ "$(tail -c 8 "$1" 2>/dev/null | od -An -tx1 | tr -d ' \n')" = "49454e44ae426082" ]
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+settle_capture() {
+  prev=-1
+  i=0
+  while [ "$i" -lt 40 ]; do
+    if [ -s "$1" ]; then
+      capture_complete "$1" && return 0
+      cur=$(stat -c %s "$1" 2>/dev/null || echo -1)
+      case "$1" in
+        *.png|*.PNG) : ;;
+        *) [ "$cur" = "$prev" ] && return 0 ;;
+      esac
+      prev=$cur
+    fi
+    i=$((i + 1))
+    sleep 0.15
+  done
+}
 
 file="${1:-}"
 if [ -z "$file" ]; then
   file=$(find "$dir" -maxdepth 1 -type f -printf '%T@ %p\n' 2>/dev/null \
     | sort -rn 2>/dev/null | head -n 1 | cut -d' ' -f2-)
   [ -n "$file" ] || exit 0
+  settle_capture "$file"
   mtime=$(stat -c %Y "$file" 2>/dev/null || echo 0)
   [ "$(( $(date +%s) - mtime ))" -le 20 ] || exit 0
-  key="$file $mtime"
+  # Size as well as mtime: the completion event re-runs this script for the same
+  # file, and only a settled size keeps that second run a no-op.
+  key="$file $mtime $(stat -c %s "$file" 2>/dev/null || echo 0)"
   stamp="${XDG_RUNTIME_DIR:-/tmp}/screenshot-toast-last"
   [ "$(cat "$stamp" 2>/dev/null || true)" = "$key" ] && exit 0
   printf '%s' "$key" > "$stamp" 2>/dev/null || true
