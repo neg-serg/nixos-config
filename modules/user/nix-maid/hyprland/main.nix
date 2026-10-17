@@ -517,10 +517,12 @@ in
           };
         };
 
-        # PathChanged, not PathModified: the unit runs once the written file is
-        # closed, so pic-info reads a complete PNG. The directory watch also
-        # fires for a delete or a rename — screenshot-toast ignores files older
-        # than ~20 s, so only a fresh capture can pop a toast. Session-scoped:
+        # PathChanged on a directory reports the writer's first write event, not
+        # its close, and the capture is written in place — so the unit fires
+        # while the PNG is still growing. screenshot-toast waits for the IEND
+        # trailer before it announces anything (see the script). The watch also
+        # fires for a delete or a rename — the script ignores files older than
+        # ~20 s, so only a fresh capture can pop a toast. Session-scoped:
         # outside the session nothing should write the toast event file for a
         # shell that is not running yet.
         systemd.user.paths.screenshot-toast = {
