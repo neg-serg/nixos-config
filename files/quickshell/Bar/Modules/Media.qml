@@ -49,8 +49,8 @@ Item {
     })()
     // Plain "Artist — Title" label. The hidden width measurement (titleMeasure)
     // and the regex-restyled rendered title (trackText.titlePart) must derive
-    // from this single expression, or the rendered title is measured against a
-    // string that differs from the one displayed.
+    // from this single expression, or the spectrum is sized against a string
+    // that differs from the one displayed.
     readonly property string _trackTitlePlain: (MusicManager.trackArtist || MusicManager.trackTitle)
         ? [MusicManager.trackArtist, MusicManager.trackTitle].filter(function(x) { return !!x; }).join(" — ")
         : ""
@@ -135,7 +135,7 @@ Item {
     // Reveals the transport strip next to the capsule. Hover cannot be watched
     // from here: the panel-level tracker in Bar.qml (z: 10000) is the topmost
     // hover-enabled item, so a handler of our own would either never fire or
-    // steal hover from it. The
+    // steal hover from it (taking the bar's analyser-on-hover with it). The
     // tracker therefore hands us the cursor position (panelPointerPos) and the
     // cover art rect is tested against it.
     property point panelPointerPos: Qt.point(-1, -1)
@@ -146,6 +146,33 @@ Item {
         return panelPointerPos.x >= origin.x && panelPointerPos.x <= origin.x + albumArtContainer.width
             && panelPointerPos.y >= origin.y && panelPointerPos.y <= origin.y + albumArtContainer.height;
     })()
+
+    // ── Small bar analyser: live copy of cava values (in-place mutation won't
+    // trigger bindings, so copy on a timer) ──
+    property var _barSpec: []
+    // Stand-in bound while an analyser is off screen. Feeding a hidden spectrum
+    // still updates every bar height (and its SmoothedAnimation), which dirties
+    // the window on each cava frame: measured ~9% of a core while music played
+    // with the bar not hovered and every analyser hidden.
+    readonly property var _emptySpec: []
+    // None of these read cavaValues, so they do not re-evaluate ~60x/s.
+    readonly property bool _barSpecWanted: Settings.settings.musicPopupSpectrum === true
+        && MusicManager.isPlaying
+        && mediaControl.panelHovering
+    readonly property bool _iphoneSpecWanted: Settings.settings.showIphoneVisualizer === true
+        && MusicManager.visualizerAllowed
+        && MusicManager.isPlaying
+    readonly property bool _linearSpecWanted: Settings.settings.showMediaVisualizer === true
+        && MusicManager.visualizerAllowed
+        && MusicManager.isPlaying
+    Timer {
+        id: barSpecTick
+        // ~30 Hz sample (was 12.5 Hz).
+        interval: 32
+        repeat: true
+        running: mediaControl._barSpecWanted
+        onTriggered: mediaControl._barSpec = (MusicManager.cavaValues || []).slice();
+    }
 
     // ── Accent color sampling (Canvas must live in a windowed component) ──
     property int _accentRetryCount: 0
@@ -226,6 +253,12 @@ Item {
     }
     Component.onCompleted: { _requestAccentSample(); }
 
+    // Active visualizer profile (if any). Settings are schema-validated, so no clamps here.
+    property var _vizProfile: (Settings.settings.visualizerProfiles
+                               && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile])
+                              ? Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile]
+                              : null
+
     function _resolveIconPx(settingVal, themeVal, fallback) {
         var s = Number(settingVal);
         if (isFinite(s) && s > 0) return Math.round(s * mediaControl.capsuleScale);
@@ -265,6 +298,42 @@ Item {
                 spacing: mediaControl.mediaRowSpacing
                 visible: !mediaControl.stretchMode && !mediaControl.panelMode
                 enabled: visible
+
+                // Small iPhone-style analyser to the left of the album art.
+                // Metrics: width = album-art extent (iconPreferredWidth), height =
+                // full capsule height so the mirrored bars fill the row — instead
+                // of a tiny square that reads as "too short".
+                // The analyser is hover-only. Toggling `visible` pulled the whole
+                // row sideways in a single frame (a hidden item takes no space in
+                // a RowLayout), so it rides out through SlideReveal instead, like
+                // the transport strip.
+                SlideReveal {
+                    id: barSpectrumReveal
+                    Layout.alignment: Qt.AlignVCenter
+                    contentWidthHint: Math.round(mediaControl.iconPreferredWidth)
+                    contentHeightHint: Math.round(mediaControl.baseHeight)
+                    revealed: Settings.settings.musicPopupSpectrum && MusicManager.isPlaying
+                        && mediaControl.panelHovering
+
+                    IPhoneSpectrum {
+                        id: barMiniSpec
+                        width: Math.round(mediaControl.iconPreferredWidth)
+                        height: Math.round(mediaControl.baseHeight)
+                        values: mediaControl._barSpec
+                        targetBars: Settings.settings.barAnalyserBars
+                        mirror: Settings.settings.barAnalyserMirror
+                        // Small preview keeps the classic flat cover-accent look;
+                        // the 3D neon treatment stays on the large toast analyser.
+                        accentColor: mediaControl.mediaAccent
+                        fillOpacity: 0.8
+                        barGap: 4
+                        minBarWidth: 1
+                        glow: false
+                        threeD: false
+                        animDurationMs: 80
+                        opacity: 0.95
+                    }
+                }
 
                 Item {
                     id: compactIconHost
@@ -356,6 +425,45 @@ Item {
                 }
 
                 Item {
+                    id: iphoneSpectrumHost
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.fillHeight: true
+                    implicitHeight: mediaControl.baseHeight
+                    // Same story as the analyser above: the slot used to jump
+                    // between 0 and the spectrum width when the visualiser came
+                    // and went, dragging the row with it.
+                    readonly property real _revealTarget: iphoneSpectrum.visible ? 1 : 0
+                    property real _reveal: iphoneSpectrumHost._revealTarget
+                    readonly property real revealWidth: Math.round(iphoneSpectrum.implicitWidth * _reveal)
+                    Layout.preferredWidth: revealWidth
+                    implicitWidth: revealWidth
+                    Behavior on _reveal {
+                        enabled: Theme.animationsEnabled
+                        NumberAnimation { duration: Theme.panelAnimFastMs; easing.type: Theme.uiEasingQuick }
+                    }
+
+                    IPhoneSpectrum {
+                        id: iphoneSpectrum
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: Settings.settings.showIphoneVisualizer === true
+                                 && MusicManager.visualizerAllowed
+                                 && MusicManager.isPlaying
+                                 && MusicManager.cavaValues.length > 0
+                        implicitWidth: Math.round(mediaControl.baseHeight * 1.6)
+                        implicitHeight: Math.round(mediaControl.baseHeight * 0.55)
+                        height: implicitHeight
+                        width: implicitWidth
+                        values: mediaControl._iphoneSpecWanted ? MusicManager.cavaValues : mediaControl._emptySpec
+                        targetBars: Math.max(12, Math.min(32, Math.round(implicitWidth / 2.5)))
+                        accentColor: mediaControl.accentReady ? mediaControl.mediaAccent : Theme.accentPrimary
+                        fillOpacity: 0.8
+                        barGap: Math.max(1, Math.round(capsuleScale * 1.0))
+                        minBarWidth: Math.max(1, Math.round(capsuleScale * 1.5))
+                        animDurationMs: 70
+                    }
+                }
+
+                Item {
                     id: compactTrackHost
                     Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: true
@@ -367,7 +475,8 @@ Item {
                         anchors.fill: parent
                         implicitWidth: trackText.implicitWidth
                         implicitHeight: Math.max(mediaControl.musicTextPx * 1.6,
-                                                 trackText.implicitHeight)
+                                                 trackText.implicitHeight
+                                                 + (linearSpectrum.visible ? linearSpectrum.height : 0))
 
                         MouseArea {
                             id: trackSidePanelClick
@@ -420,6 +529,51 @@ Item {
                             text: mediaControl._trackTitlePlain
                             font.pixelSize: mediaControl.musicTextPx
                             font.weight: Font.Medium
+                        }
+
+                        LinearSpectrum {
+                            id: linearSpectrum
+                            visible: Settings.settings.showMediaVisualizer === true
+                                     && MusicManager.visualizerAllowed
+                                     && MusicManager.isPlaying
+                                     && (trackText.text && trackText.text.length > 0)
+                            anchors.left: parent.left
+                            anchors.top: textFrame.bottom
+                            anchors.topMargin: -Math.round(trackText.font.pixelSize * (
+                                ((_vizProfile && _vizProfile.spectrumOverlapFactor !== undefined)
+                                    ? _vizProfile.spectrumOverlapFactor
+                                    : Settings.settings.spectrumOverlapFactor)
+                                + ((_vizProfile && _vizProfile.spectrumVerticalRaise !== undefined)
+                                    ? _vizProfile.spectrumVerticalRaise
+                                    : Settings.settings.spectrumVerticalRaise)
+                            ))
+                            height: Math.round(trackText.font.pixelSize * (
+                                (_vizProfile && _vizProfile.spectrumHeightFactor !== undefined)
+                                    ? _vizProfile.spectrumHeightFactor
+                                    : Settings.settings.spectrumHeightFactor))
+                            width: Math.ceil(titleMeasure.width)
+                            values: mediaControl._linearSpecWanted ? MusicManager.cavaValues : mediaControl._emptySpec
+                            amplitudeScale: 1.0
+                            barGap: (((_vizProfile && _vizProfile.spectrumBarGap !== undefined)
+                                       ? _vizProfile.spectrumBarGap
+                                       : Settings.settings.spectrumBarGap)) * mediaControl.capsuleScale
+                            minBarWidth: 2 * mediaControl.capsuleScale
+                            mirror: ((_vizProfile && _vizProfile.spectrumMirror !== undefined) ? _vizProfile.spectrumMirror : Settings.settings.spectrumMirror)
+                            drawTop: ((_vizProfile && _vizProfile.showSpectrumTopHalf !== undefined) ? _vizProfile.showSpectrumTopHalf : Settings.settings.showSpectrumTopHalf)
+                            drawBottom: true
+                            fillOpacity: ((_vizProfile && _vizProfile.spectrumFillOpacity !== undefined)
+                                              ? _vizProfile.spectrumFillOpacity
+                                              : (Settings.settings.spectrumFillOpacity !== undefined
+                                                  ? Settings.settings.spectrumFillOpacity
+                                                  : Theme.spectrumFillOpacity))
+                            peakOpacity: Theme.spectrumPeakOpacity
+                            useGradient: (Settings.settings.visualizerProfiles
+                                          && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile]
+                                          && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].spectrumUseGradient !== undefined)
+                                         ? Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].spectrumUseGradient
+                                         : Settings.settings.spectrumUseGradient
+                            barColor: mediaControl.accentReady ? mediaControl.mediaAccent : Theme.borderSubtle
+                            z: -1
                         }
 
                         Item {

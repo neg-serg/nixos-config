@@ -323,7 +323,7 @@ Item {
                             Layout.alignment: Qt.AlignRight
                             // The card cannot see the window it lives in (see
                             // Music.onScreen), so the surface's own visibility is
-                            // passed down.
+                            // passed down: this is what gates the cava feed.
                             isOnScreen: toast.visible
                         }
                     }
