@@ -4,15 +4,23 @@
     extra-experimental-features = "pipe-operators";
   };
   inputs = {
+    # Determinate Nix 3.23.3 (determinate + nix-src share the release tag on
+    # purpose — the module installs the determinate-nixd binary that pairs with
+    # the nix build, so bump both together). Bumped from 3.21.7: on that rev
+    # packaging/everything.nix and src/perl/package.nix still used the deprecated
+    # `stdenv.isLinux`/`stdenv.isDarwin` attributes, which every rebuild printed
+    # as evaluation warnings; 3.23.3 uses hostPlatform and dropped the Perl
+    # bindings. Re-lock with `just update` or:
+    #   nix flake lock --update-input determinate --update-input nix-src
     determinate = {
-      url = "github:DeterminateSystems/determinate/73b3bdb962a070aa088ac310e606ff760bcc0cf7";
+      url = "github:DeterminateSystems/determinate/5f516660eb6faa93f5cb83ef493345967ca719ef";
       inputs.nix.follows = "nix-src";
       # Determinate's own nixpkgs pins flakehub nixpkgs-weekly, which is
       # unreachable from this host; follow the top-level nixpkgs input instead.
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-src = {
-      url = "github:DeterminateSystems/nix-src/b1123363e07a216333222d483cfe8e682b95d7c1";
+      url = "github:DeterminateSystems/nix-src/74d688aa7b83ee1894ac1881eb3421b4c3fe3677";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # Moved to nixos-unstable (2026-08) for newer Hyprland/color-mgmt
