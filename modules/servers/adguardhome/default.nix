@@ -37,12 +37,13 @@ in
     services.adguardhome = {
       enable = true;
       openFirewall = true;
-      # Bind the admin web UI away from :80 so Caddy can use it
-      host = "127.0.0.1";
-      port = 3000;
       # Make sure our Nix settings are honored strictly to avoid stale state conflicts
       mutableSettings = false;
       settings = {
+        # Bind the admin web UI away from :80 so Caddy can use it. Written as
+        # `host:port` because services.adguardhome.host/port are deprecated; the
+        # module derives the firewall port from the last segment.
+        http.address = "127.0.0.1:3000";
         filtering = {
           protection_enabled = true;
           filtering_enabled = true;
