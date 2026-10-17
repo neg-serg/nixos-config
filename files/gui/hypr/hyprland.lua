@@ -307,14 +307,27 @@ local function hy3(factory)
   end
 end
 
--- Same, but for a factory a build may not have: the local detach/float patch
--- adds hy3.detach, and a stock hy3 (or a session where the patched .so failed to
--- load) must make the bind a silent no-op rather than a Lua error on every press.
-local function hy3opt(name, arg)
-  return function()
-    local plugin = hl.plugin and hl.plugin.hy3
-    local factory = plugin and plugin[name]
-    if factory then return hl.dispatch(factory(arg)) end
+-- Detach, then shrink the floating node to DETACH_SCALE of the box it had in the
+-- layout. The local detach/float patch adds hy3.detach, so a stock hy3 (or a
+-- session where the patched .so failed to load) makes the bind a silent no-op
+-- rather than a Lua error on every press. The patch keeps that box on purpose (neighbours must not reflow), so on
+-- a one-window workspace the float would cover exactly the screen and the press
+-- would look like a no-op; ion3's detach is visibly smaller for the same reason.
+-- Hyprland's relative resize grows and shrinks around the window's centre, so no
+-- extra move is needed, and reattaching restores the tiled box on its own.
+local DETACH_SCALE = 0.7
+local function hy3detach()
+  local plugin = hl.plugin and hl.plugin.hy3
+  if not (plugin and plugin.detach) then return end
+  local win = hl.get_active_window and hl.get_active_window()
+  if not win then return hl.dispatch(plugin.detach("toggle")) end
+  -- Already floating: this is the reattach half of the toggle, keep the box.
+  if win.floating then return hl.dispatch(plugin.detach("toggle")) end
+  local cw, ch = win.size.x, win.size.y
+  hl.dispatch(plugin.detach("toggle"))
+  local dx, dy = math.floor(cw * (1 - DETACH_SCALE)), math.floor(ch * (1 - DETACH_SCALE))
+  if dx > 0 and dy > 0 then
+    hl.dispatch(hl.dsp.window.resize({ x = -dx, y = -dy, relative = true }))
   end
 end
 
@@ -642,7 +655,7 @@ hl.define_submap("special", "reset", function()
   -- Detach/float is the hy3 patch's dispatcher: under hy3 the core float
   -- toggle no longer moves anything, so Alt+E -> e is where the old
   -- "float this window" habit goes now (ion3's META+K -> D → E here).
-  binde_reset("e", hy3opt("detach", "toggle"))
+  binde_reset("e", hy3detach)
   binde_reset("f", hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }))
   binde_reset("z", hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }))
   hl.bind("semicolon", hl.dsp.submap("reset"), { repeating = true })
@@ -667,7 +680,7 @@ hl.define_submap("tiling", "reset", function()
   binde_reset("i", hl.dsp.window.move({ into_group = "l" }))    -- neighbour on the left into the tab group (no-op if it is not a group)
   binde_reset("o", hl.dsp.window.move({ out_of_group = true })) -- window out of the tab group, back into its own column
   -- ion3's detach is META+K → D; the everyday key is Alt+E → e (special submap).
-  hl.bind("d", hy3opt("detach", "toggle"))                      -- detach the focused node into a float (or reattach it)
+  hl.bind("d", hy3detach)                                      -- detach the focused node into a float (or reattach it)
 end)
 
 -- Submap: music (MPD transport with ncmpcpp/rmpc letter bindings)
@@ -953,7 +966,9 @@ end
 -- Detach/float (ion3-style): the focused node — a single window or a whole tab
 -- group — floats above the layout but keeps its slot in it, so the neighbours do
 -- not reflow and a detached group keeps hiding its inactive tabs; the same key
--- reattaches it exactly where it was. The keys are Alt+E → e (the special
+-- reattaches it exactly where it was. A freshly detached window is shrunk to
+-- DETACH_SCALE of its box (centred), otherwise a full-screen tile would float at
+-- full-screen size and the action would be invisible. The keys are Alt+E → e (the special
 -- submap below, next to the rest of the window verbs) and D in the tiling
 -- submap. NOT a plain M4+SHIFT+F: that is the pseudo-fullscreen toggle above,
 -- and the key parser is case-insensitive, so the two would be one binding.
