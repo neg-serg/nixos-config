@@ -4,13 +4,21 @@ Image/video/3D generation through ComfyUI on RX 9070 XT (gfx1201).
 
 ## Launch
 
-`/zero/ai/video/comfyui/start-comfyui.sh` — launcher:
+`~/.local/bin/comfyui` (preferred — it builds `LD_LIBRARY_PATH` dynamically) or
+`/zero/ai/video/comfyui/start-comfyui.sh` (pinned store paths) — both start the same server:
 
 - **HSA_OVERRIDE_GFX_VERSION=12.0.0 REQUIRED** (pip-torch does not know gfx1201; an empty value =
   "No HIP GPUs"). Do not remove.
 - LD_LIBRARY_PATH: nix libs + libglvnd + e2fsprogs (needed by pymeshlab/Hunyuan3D).
 - `--novram`: works around the known Wan 2.2 slowdown on ROCm.
 - UI: http://127.0.0.1:8188
+
+`venv/bin/python` points at the uv-managed CPython 3.14.6
+(`~/.local/share/uv/python/cpython-3.14.6-linux-x86_64-gnu/bin`): the Nix store interpreter the venv
+was built from was garbage-collected, so the venv was relinked on 2026-10-16 (site-packages and the
+ROCm wheels were intact). A shell whose sandbox blocks `/dev/kfd` reports
+`torch.cuda.is_available() == False` — start the server from a session terminal or a
+`systemd-run --user` unit.
 
 ## Models (/zero/ai/video/models + comfyui/models/diffusion_models)
 
