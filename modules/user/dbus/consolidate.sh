@@ -28,7 +28,13 @@ for dirset in \
   done
 done
 
-# Merge activation files (*.service) from system-services and services
+# Merge activation files (*.service) from system-services and services.
+# Two packages can ship different filenames for the same D-Bus name (for
+# example org.gnome.keyring.service and org.gnome.keyring.portal.service), and
+# dbus-broker then logs "Ignoring duplicate name '…'" at error priority on
+# every boot — 289 such lines before this dedupe. The first provider wins; the
+# link name stays the file's own basename, so activation still works.
+declare -A seen_names=()
 for dirset in \
   "share/dbus-1/system-services:*" \
   "share/dbus-1/services:*"; do
@@ -37,7 +43,21 @@ for dirset in \
     srcdir="$pkg/$subdir"
     if [ -d "$srcdir" ]; then
       for f in "$srcdir"/*; do
-        [ -f "$f" ] && ln -sfn "$f" "$out/$subdir/$(basename "$f")"
+        [ -f "$f" ] || continue
+        name=""
+        while IFS= read -r line; do
+          case "$line" in
+            Name=*)
+              name=${line#Name=}
+              break
+              ;;
+          esac
+        done < "$f"
+        if [ -n "$name" ] && [ -n "${seen_names[$name]:-}" ]; then
+          continue
+        fi
+        [ -n "$name" ] && seen_names[$name]=$f
+        ln -sfn "$f" "$out/$subdir/$(basename "$f")"
       done
     fi
   done
