@@ -1,6 +1,6 @@
 #
 # TPM-sudo — passwordless sudo via TPM (no manual steps)
-# (folded from docs/howto/tpm-sudo.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # How to get `sudo` without typing a password yet with protection: the private SSH key lives **inside
@@ -109,7 +109,7 @@
 #   asking for a password. The private key never leaves the TPM.
 # Gate: features.security.tpmSudo.enable (default false). Enable fTPM in
 #   UEFI/BIOS BEFORE flipping this on, otherwise boot stalls on the tpmrm
-#   device wait. Full setup: docs/howto/tpm-sudo.md.
+#   device wait. Full setup: the header of this module.
 # Dependencies: security.tpm2 (tpm2-tools/tpm2-pkcs11), pam_ssh_agent_auth,
 #   openssh (ssh-agent + ssh-add).
 {
@@ -134,7 +134,7 @@
       enable = true;
       # Root-owned, keyed by the INVOKING user (%u → neg). Never point at a
       # user-writeable path (nixpkgs#31611). Put the TPM key's public part in
-      # /etc/ssh/authorized_keys.d/neg — see docs/howto/tpm-sudo.md.
+      # /etc/ssh/authorized_keys.d/neg — see the header of this module.
       authorizedKeysFiles = [ "/etc/ssh/authorized_keys.d/%u" ];
     };
     security.pam.services.sudo.sshAgentAuth = true;

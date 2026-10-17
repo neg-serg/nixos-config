@@ -5,7 +5,7 @@
 }:
 let
   # One AppArmor state per daemon. Profiles themselves live in
-  # modules/security/apparmor.nix; see docs/howto/apparmor.md.
+  # modules/security/apparmor.nix; see modules/security/apparmor.nix.
   mkState =
     daemon:
     lib.mkOption {
@@ -24,7 +24,7 @@ in
     # TPM-backed passwordless sudo: a non-exportable SSH key in the TPM
     # (tpm2-pkcs11, empty PIN) + pam_ssh_agent_auth for `sudo`. Flip on only
     # AFTER enabling fTPM in UEFI/BIOS — otherwise boot stalls on the tpmrm
-    # device wait. See modules/security/tpm-sudo.nix and docs/howto/tpm-sudo.md.
+    # device wait. See modules/security/tpm-sudo.nix and modules/security/tpm-sudo.nix.
     tpmSudo.enable = mkBool "TPM-backed passwordless sudo (tpm2-pkcs11 + pam_ssh_agent_auth)" false;
     # Lock runtime module loading at boot (nixpkgs security.lockKernelModules
     # → kernel.modules_disabled=1 right after systemd-modules-load, i.e. after

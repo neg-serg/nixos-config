@@ -16,7 +16,7 @@
 #
 # The plugin exposes its actions only through its Lua namespace, which exists
 # after hyprwindowshade-setup has dlopen'd the .so — hence hyprctl eval, not
-# dispatch (see docs/howto/hyprland-plugin.md).
+# dispatch (see modules/user/nix-maid/hyprland/main.nix).
 
 LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
 

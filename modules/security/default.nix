@@ -53,7 +53,7 @@ in
         # profile including <abstractions/base> fails to load with
         # "Failed to find declaration for: @{lib}". Its profiles are
         # FHS-based anyway (/usr/sbin/*), so they cannot attach on NixOS.
-        # Kept in systemPackages for reference; see docs/howto/apparmor.md.
+        # Kept in systemPackages for reference; see modules/security/apparmor.nix.
       ];
     };
     pki.useCompatibleBundle = true;

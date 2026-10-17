@@ -1,6 +1,6 @@
 #
 # Custom packages and vendored sources
-# (folded from docs/howto/custom-packages.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # - All local derivations (`pkgs.neg.*`, CLI wrappers, MCP servers, etc.) now live under the top-level
