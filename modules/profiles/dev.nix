@@ -11,7 +11,6 @@ lib.mkIf (builtins.elem "dev" (config.features.profiles or [ ])) {
       rust.enable = lib.mkDefault true;
       cpp.enable = lib.mkDefault true;
       java.enable = lib.mkDefault true; # enable Java/JVM toolchain (JDK, Maven, PraxisLIVE)
-      pkgs.iac = lib.mkDefault true; # enable Infrastructure as Code tools (terraform, opentofu)
     };
   };
 }
