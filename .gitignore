@@ -67,6 +67,9 @@ gpucore.*
 
 # Agent build cache and scratch logs — regenerable byproducts of a build/reflect run
 # (the nixie plan pins XDG_CACHE_HOME here because the sandbox cannot write HOME).
+# `.agent/tmp/` was ignored only by the global gitignore, so any `git add -A` (or a git run
+# as root, which ignores the user's global file) would have pulled gigabytes of scratch in.
+.agent/tmp/
 .agent/tmp-nix-cache/
 .agent/tmp-nixcache/
 .agent/tmp-runtime/
