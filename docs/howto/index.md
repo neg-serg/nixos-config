@@ -66,7 +66,8 @@
 - AppArmor — confining the LAN-facing daemons (profiles from package closures, complain → enforce):
   [apparmor.md](./apparmor.md)
 
-- Options/modules reference: [modules.md](./modules.md)
+- Options reference: [OPTIONS.md](../../OPTIONS.md) · module/flag recipes:
+  [agent-recipes.md](./agent-recipes.md)
 
 - Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I,):
   [local-llm.md](./local-llm.md)

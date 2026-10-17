@@ -333,8 +333,9 @@ with the compositor without hopping across multiple files. hy3 is the layout; th
   pins a window behind the desktop. `class`/`title` are exact matches (not regexes — find them with
   `hyprctl clients`), `pos_*`/`size_*` are screen percentages and `layer` orders several background
   windows. `hl.plugin.hyprwinwrap.focus("class-or-title")` toggles a background window forward.
-  `files/gui/hypr/hyprwinwrap.lua` ships without active declarations — it is the place to add the
-  app that should run as wallpaper.
+  `files/gui/hypr/hyprwinwrap.lua` carries one active declaration — the looped waterfall window
+  played by `wallpaper-video.service` (`features.gui.wallpaperVideo`, off by default: wl-daemon owns
+  the background layer and a pinned window would cover its still image).
 - **Patch** (`hyprwinwrap-lua-window-merge.patch`): upstream's `luaWindow()` only appends the spec
   to `gLuaSpecs` and leaves the merge into `gMergedSpecs` to the `config.reloaded` event — which a
   runtime `hyprctl eval` never fires; a real reload would not save it either, because the

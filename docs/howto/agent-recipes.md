@@ -52,7 +52,8 @@ Orientation first: read the tree — a domain's `default.nix` auto-imports its s
 
 1. Define the flag if it doesn't exist yet (recipe 3).
 
-1. Refresh docs: `just codebase`; update `OPTIONS.md` (manual, tracked) if options changed.
+1. Update `OPTIONS.md` by hand if the flag layout changed. The `just codebase` target and the
+   generated docs were removed in `0ceafa815`; nothing regenerates them now.
 
 **Example:** `modules/dev/omp.nix` — gates `features.dev.ai.omp.enable`, wraps the omp binary,
 installs via `environment.systemPackages`.
@@ -102,7 +103,7 @@ declaratively managed file (`force = true`) or a `writeShellScriptBin` wrapper (
 
 - `modules/features/<domain>.nix` — flag definitions (dir is auto-imported)
 - `modules/features/default.nix` — optional `assertParent` cross-checks
-- `OPTIONS.md` — manual refresh (root, tracked)
+- `OPTIONS.md` — edited by hand when flags change (root, tracked)
 
 **Steps:**
 

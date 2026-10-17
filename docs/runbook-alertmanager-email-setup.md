@@ -1,8 +1,11 @@
-# TODO: Configure Alertmanager email delivery
+# Alertmanager email delivery (not wired yet)
 
-This host is wired to send Alertmanager notifications to `serg.zorg@gmail.com` via Gmail SMTP, but
-credentials are provided via a SOPS‑managed env file that is not yet created. Until the secret
-exists, emails will not be sent.
+Alerting on this host goes to Telegram: `modules/monitoring/alertmanager/default.nix` renders
+`alertmanager.yml` with a `telegram` receiver pointing at the local webhook bridge in
+`hosts/trantor/services/telegram-units.nix`. Email delivery does **not** exist in the configuration
+today: `global` is empty, there is no `smtp_*` stanza, no `alertmanager/env` secret, and nothing in
+the repo reads `ALERT_SMTP_*`. The steps below are the plan; adding them is a Nix change, not just a
+secret.
 
 ## Where it’s configured
 
@@ -12,6 +15,11 @@ exists, emails will not be sent.
   `secrets/alertmanager.env.sops`
 
 ## Steps to enable email delivery
+
+1. Wire SMTP in the module: fill `global.smtp_*` in `modules/monitoring/alertmanager/default.nix`
+   (smarthost `smtp.gmail.com:587`, from `serg.zorg@gmail.com`, `require_tls = true`), add an
+   `email` receiver and route to it, then declare `sops.secrets."alertmanager/env"` so the
+   credentials land in `environmentFile`.
 
 1. Create a Gmail App Password
 

@@ -207,19 +207,8 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 
 ## Open Tasks
 
-- Document the Firefox multi-profile stack (profiles, desktop entries, addon requirements) once the
-  layout stabilises.
-- Populate secrets/env vars for the new MCP stack so `seh` can finish without placeholders. Needed
-  providers: Gmail (`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`,
-  `OPENAI_API_KEY`), Google Calendar (`GCAL_CLIENT_ID`, `GCAL_CLIENT_SECRET`, `GCAL_REFRESH_TOKEN`,
-  optional `GCAL_ACCESS_TOKEN`, `GCAL_CALENDAR_ID`), IMAP (`IMAP_HOST`, `IMAP_PORT`,
-  `IMAP_USERNAME`, `IMAP_PASSWORD`, `IMAP_USE_SSL`), SMTP (`SMTP_HOST`, `SMTP_PORT`,
-  `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS`, `SMTP_USE_TLS`, `SMTP_USE_SSL`, optional
-  `SMTP_BEARER_TOKEN`), GitHub (`GITHUB_TOKEN`, optional `GITHUB_HOST`, `GITHUB_TOOLSETS`,
-  `GITHUB_DYNAMIC_TOOLSETS`, `GITHUB_READ_ONLY`, `GITHUB_LOCKDOWN_MODE`), GitLab (`GITLAB_TOKEN`,
-  `GITLAB_API_URL`, optional `GITLAB_PROJECT_ID`, `GITLAB_ALLOWED_PROJECT_IDS`,
-  `GITLAB_READ_ONLY_MODE`, `USE_GITLAB_WIKI`, `USE_MILESTONE`, `USE_PIPELINE`), Discord
-  (`DISCORD_BOT_TOKEN`, optional `DISCORD_CHANNEL_IDS`).
+Open work lives in `.agent/plans/` (one file per direction) — this section used to track it and the
+entries went stale, so it now only points there.
 
 ## Evaluation Noise Policy
 
@@ -541,7 +530,8 @@ Additionally, a Markdown language policy is enforced:
 ## Module Pattern & Option Helpers
 
 - This repo favors a consistent module pattern and provides helpers in `lib/opts.nix`.
-- See aggregated options and module examples in generated docs under flake outputs.
+- Flag overview: `OPTIONS.md`; module recipes: `docs/howto/agent-recipes.md`. The generated
+  docs-modules output no longer exists (removed in `0ceafa815`).
 
 ## Gaming: Hybrid CPU Scheduling (SCX + cpuset)
 
