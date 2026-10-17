@@ -3,14 +3,14 @@
 Everything needed to hand our changes to the upstream evaluator, plus the story of how it was
 prepared. The first wave is **sent** against `psyclyx/fix@e0c1f6d` (upstream HEAD at the time):
 
-| what | link |
-| ---- | ---- |
-| `01` json-control-chars (closes #61) | https://github.com/psyclyx/fix/pull/67 |
-| `02` pure-gated-constants (#53) | https://github.com/psyclyx/fix/pull/68 |
-| `03` catchable-pure-gates (#52) | https://github.com/psyclyx/fix/pull/69 |
-| `04` git-worktree-root (#55) | https://github.com/psyclyx/fix/pull/70 |
+| what                                  | link                                     |
+| ------------------------------------- | ---------------------------------------- |
+| `01` json-control-chars (closes #61)  | https://github.com/psyclyx/fix/pull/67   |
+| `02` pure-gated-constants (#53)       | https://github.com/psyclyx/fix/pull/68   |
+| `03` catchable-pure-gates (#52)       | https://github.com/psyclyx/fix/pull/69   |
+| `04` git-worktree-root (#55)          | https://github.com/psyclyx/fix/pull/70   |
 | new issue: fetchGit vs git.kernel.org | https://github.com/psyclyx/fix/issues/65 |
-| new issue: 128 MiB read cap | https://github.com/psyclyx/fix/issues/66 |
+| new issue: 128 MiB read cap           | https://github.com/psyclyx/fix/issues/66 |
 
 Every branch was re-verified before sending: applying `0N-*.patch` to a fresh clone of upstream
 `e0c1f6d` reproduces the fork branch tree byte-for-byte (`diff -r` clean). `03`'s commit message was
