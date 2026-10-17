@@ -1,209 +1,69 @@
 # Repository Overview
 
-This repository contains the complete NixOS configuration using nix-maid for user-level management.
-All packages and services are wired from `modules/`, with user configuration under
-`modules/user/nix-maid/`. The documentation below provides workflows for system and user
-configuration.
+NixOS configuration for `trantor` (flake: NixOS + nix-maid) with user-level management under
+`modules/user/nix-maid/`. This file is the map: where things live, how to rebuild, and where the
+details are documented. Deep material lives in howtos and runbooks, not here.
 
-## Working Tree Layout
+## Layout
 
-- `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
-  (`docs/runbook-*.md`).
-- `files/` — static config files linked to user homes via nix-maid.
-- `docs/runbook-*.md` — operational steps (entry point `docs/runbook-index.md`).
-- `docs/howto/` — cross-cutting howtos, indexed in `docs/howto/index.md`; module-level knowledge stays
-  in the module header it describes.
+- `flake.nix`, `flake/` — entry point and helpers (`nixos.nix` with `trantorDomains`, `checks.nix`).
+- `modules/` — system modules by domain (`features/`, `cli/`, `dev/`, `servers/`, `system/`,
+  `user/`).
+- `hosts/trantor/` — host-specific configuration (services, hardware, networking, policy).
+- `packages/` — local derivations, CLI wrappers, overlays; `files/` — static configs linked by
+  nix-maid.
+- `lib/`, `secrets/`, `scripts/` — shared helpers, SOPS secrets, dev scripts.
+- `docs/` — `runbook-*.md` (operations, index in `docs/runbook-index.md`), `howto/` (topic howtos,
+  index in `docs/howto/index.md`), this overview.
+- `.agent/` — agent scaffolding: `workflows/`, `plans/` (open work), `upstream-fix/`.
+- Ignored, never committed: `result` (last build), `nix/`, `viz/`, `.agent/tmp*/`.
 
-## Quick Start (System)
+## Quick start
 
-- Rebuild: `sudo nixos-rebuild switch --flake /etc/nixos#<host>` (or `nh os switch`), always with
-  `--option substitute false` — cache.nixos.org is unreliable from this region.
-- Agent rollout without a password: `just agent-switch "$(readlink -f result)"`.
-- Plain `nixos-rebuild` path with the password prompt: `just switch-sudo`.
-- Formatting/lint: `just fmt`, `just lint`, `just check`
-- Hooks (optional): `just hooks-enable`
+### System
+
+- Rebuild as the user: `nh os switch /etc/nixos#trantor --option substitute false`.
+- Plain `nixos-rebuild` with a password prompt: `just switch-sudo`.
+- Agent rollout without a password: build the closure, then
+  `just agent-switch "$(readlink -f result)"` (the root-owned unit re-checks the tree first).
+- Format / lint / full check: `just fmt`, `just lint`, `just check`; git hooks: `just hooks-enable`.
+- `cache.nixos.org` is unreliable from this region: every nix invocation passes
+  `--option substitute false`.
 - `nom`/`nh` carry a local patch for Determinate Nix's activity type `10113`
   (`modules/tools/default.nix`, upstream
   [PR #321](https://github.com/maralorn/nix-output-monitor/pull/321)); drop it once a release ships
   the fix. Without it `nh os switch` dies with `invalid activity type: 10113`.
 
-## Quick Start (User Configuration)
+### User configuration
 
-### Prerequisites
+1. Nix with flakes enabled (`experimental-features = nix-command flakes`); `just` optional.
+1. User modules live under `modules/user/nix-maid/` (`apps/`, `cli/`, `gui/`, `sys/`, `fun/`,
+   `web/`) and apply during `nixos-rebuild switch` — `nixos-rebuild build --flake .#<host>` builds
+   without switching.
+1. Feature flags: primary toggle `features.profiles` (`["desktop" "dev" "gaming"]` on trantor),
+   definitions in `modules/features/`, overview in `OPTIONS.md`.
 
-1. Install Nix with flakes enabled (`experimental-features = nix-command flakes`).
-1. User configuration is managed via nix-maid modules under `modules/user/nix-maid/`.
-   - Modules are organized into categories: `apps/`, `cli/`, `gui/`, `sys/`, `fun/`, `web/`.
-1. Optional helper: `nix profile install nixpkgs#just`
+## Documentation map
 
-### Apply Configuration
+| Need                                                              | Read                                               |
+| ----------------------------------------------------------------- | -------------------------------------------------- |
+| Operational steps                                                 | `docs/runbook-index.md`                            |
+| Topic howtos                                                      | `docs/howto/index.md`                              |
+| Feature flags and their composition                               | `OPTIONS.md`                                       |
+| Coding style, module patterns, systemd-user helpers, commit rules | `docs/howto/repo-conventions.md`                   |
+| Adding a module / flag / package / secret, rebuild recipes        | `.agent/workflows/`, `docs/howto/agent-recipes.md` |
+| Open work per direction                                           | `.agent/plans/`                                    |
+| Prepared upstream patch series                                    | `.agent/upstream-fix/README.md`                    |
+| Repo-wide agent rules                                             | `AGENTS.md`                                        |
 
-- User configuration is applied automatically during `nixos-rebuild switch`.
-- Build without switching: `nixos-rebuild build --flake .#<host>`.
+## Conventions
 
-### Profiles & Feature Flags
-
-- Primary toggle: `features.profiles` (list of active profiles; trantor:
-  `["desktop" "dev" "gaming"]`). Each profile sets feature-flag defaults via `modules/profiles/`.
-- Feature definitions live in `modules/features/`; documentation: `OPTIONS.md`.
-- Key flags:
-  - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
-  - Dev stacks (`features.dev.*`, `features.dev.unreal.*`)
-  - Media/Torrent (`features.media.*`, `features.torrent.enable`)
-  - Fun extras (`features.fun.enable`)
-
-### Everyday Commands
-
-- Formatting: `just fmt`
-- Checks: `just check`
-- Lint only: `just lint`
-- Rebuild: `sudo nixos-rebuild switch --flake .#<host>`
-
-### Secrets (sops-nix / vaultix)
-
-- Secrets live under `secrets/` and are wired via sops-nix; vaultix migration docs now live in
-  `docs/runbook-vaultix-migration.md`.
-- Age keys should reside in `~/.config/sops/age/keys.txt`.
-
-### Systemd (User) Services
-
-- Prefer `config.lib.neg.systemdUser.mkUserService` for module-shaped user units: it routes
-  scheduling through the `presets` table. Presets carry scheduling keys (`defaultWanted`,
-  `graphicalWanted`, `graphicalSession`) *and* service defaults (`restartOnFailure` =
-  `Restart=on-failure` + `RestartSec=10`, `oneshot` = `Type=oneshot`); the caller's own
-  `serviceConfig` key always wins, so a unit needing another delay just passes `RestartSec`.
-- `mkUnitFromPresets` stays the value-level half (returns `Unit`/`Install`/`Service`) for callers
-  that keep their own literal `systemd.user.services.<name>` key.
-- Manage services via `systemctl --user start|stop|status <unit>`, logs via
-  `journalctl --user -u <unit>`.
-
-### Sing-box full-TUN (host)
-
-Full-TUN proxy: routes all non-private traffic through the working VLESS/Hysteria2 node via the
-`sb0` TUN interface. Defined in `modules/system/net/vpn/tun.nix`, gated on
-`features.net.proxy.enable`.
-
-- Toggle: `tun on` / `tun off` / `tun status` (`packages/local-bin/bin/tun`, NOPASSWD sudo for `neg`
-  on `systemctl start|stop sing-box-tun`). Manual toggle only — **no autostart**, so a rebuild or
-  reboot never hijacks traffic.
-- Config `/run/sing-box-tun/config.json` is generated at start (`sing-box-tun-up.sh`) from the
-  SOCKS5 proxy config `~/.config/sing-box-trojan/config.json` — same outbounds/urltest `auto`, so
-  the same working node is used. After `proxy refresh`, restart the service to pick up new nodes.
-- Routing (up: `sing-box-tun-up.sh`, teardown: `sing-box-tun-down.sh` via `ExecStopPost`):
-  - `pref 100`: VPN server IPs → `main` (direct — avoids the tunnel loop);
-  - `pref 150`: private/loopback/CGNAT nets → `main` (LAN, localhost, Tailscale stay local);
-  - `pref 200`: everything else → table `200` → `default dev sb0`;
-  - DNS: `resolvectl dns sb0 1.1.1.1 1.0.0.1` and `resolvectl domain sb0 "~."`.
-- Checks: `tun status`, `ip rule` (expect `pref 100/150/200`), `ip route show table 200` (expect
-  `default dev sb0`), `curl https://ifconfig.me` (whole-system exit IP),
-  `curl --interface sb0 https://ifconfig.me`.
-- Notes: Tailscale mesh traffic to public DERP servers also rides the tunnel while TUN is on (CGNAT
-  peer traffic stays direct via `pref 150`). Xray tun was dropped (no jsonv5/tun support); sing-box
-  only.
-
-### Hyprland & GUI Notes
-
-- Hyprland autoreload stays off; reload manually via the keybinding.
-- Hypr config is split under `files/gui/hypr/*` and linked via nix-maid.
-- Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
-  `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
-  layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click.
-- Swayimg is launched via `sx` (`packages/local-bin/bin/sx`): gallery mode, images sorted by ctime
-  (newest first). Its window is tuned via Hyprland window rules (`pic-pseudo-fullscreen`).
-
-### Miscellaneous Developer Notes
-
-- Commit format: `[scope] message` (enforced by `.githooks/commit-msg` if enabled).
-- Hyprland plugins and portals are pinned through the system flake inputs; see the sections below
-  for update policies.
-
-## Agent Guide & Conventions
-
-Use the same expectations regardless of whether you work under `modules/` or
-`modules/user/nix-maid/`; helpers live side-by-side so the patterns apply to both configurations.
-
-### Key Locations
-
-- Runtime helpers (`config.lib.neg.*`): defined in `flake/nixos.nix` specialArgs, exposed via
-  `modules/core/neg.nix` (`mkHomeFiles`, `path`, `pathExists`, `enabled`, …).
-- systemd-user helpers: `lib/systemd-user.nix` (`mkUnitFromPresets`, legacy `mkSimple*`).
-- Feature definitions/options: `modules/features/`
-
-### Package Availability Checks
-
-- Before adding any `pkgs.*`/`nodePackages_*`, confirm the attribute exists using `nix search` (or
-  any flake evaluation) against this repo. Only wire packages that exist in the currently pinned
-  channel.
-
-### QML / Quickshell Touches
-
-- Stick to upstream Qt 6 best practices: small declarative components, property bindings over the
-  imperative approach, no binding loops or global JS helpers, explicit signal handlers.
-- Assume Qt 6+ APIs; review the latest Hyprland/Quickshell release notes before suggesting changes.
-- QML syntax is checked by `scripts/dev/check-qml-syntax.sh` (invoked by `just lint`), which runs
-  `qmlformat --dry-run` over `files/quickshell`; it validates syntax only, so style still relies on
-  these conventions.
-
-### Runtime Helpers (Preferred)
-
-- Use `config.lib.neg.mkHomeFiles` or `neg.mkHomeFiles` instead of ad‑hoc `home.file` or shell
-  commands.
-
-### Activation Helpers
-
-- Use per-file `force = true` instead of re‑adding global XDG cleanup.
-- Local scripts: use `neg.mkHomeFiles` with `executable = true` (for example
-  `{ ".local/bin/<name>" = { text = …; executable = true; }; }`) so the file is marked executable
-  before linking.
-
-### Systemd (User) Pattern
-
-- Always combine `lib.mkMerge` with `config.lib.neg.systemdUser.mkUnitFromPresets` for consistent
-  `After=/WantedBy=` wiring; avoid the legacy `mkSimple*` helpers (they have recursion edge cases).
-- Examples:
-  - Service: presets `["defaultWanted" "restartOnFailure"]` (+ `RestartSec` if not 10)
-  - Graphical-session resident: presets `["graphicalSession" "restartOnFailure"]` (`graphicalWanted`
-    when the unit must be pulled in but not stopped with the session)
-  - Short-lived helper: preset `["oneshot"]`, add `wantedBy` only if something must pull it in
-  - Timer: set `wantedBy = [ "timers.target" ]` directly.
-
-### Editor Shim
-
-- Use `v` (Smart Neovim shim at `~/.local/bin/v`) in bindings/scripts. It uses `nvr` to open files
-  in an existing instance (and raises the window) or starts a new one if none exists.
-
-### Soft Migrations / Warnings
-
-- Emit guidance with `warnings = lib.optional cond "message";` instead of `builtins.trace`.
-- Keep warning conditions cheap and avoid referencing `config.lib.neg` while evaluating options.
-
-### Commit Messages
-
-- Stick to `[scope] summary`. `[quickshell/gui] improve keyboard indicator`.
-- Scopes can be combined via `/` (e.g. `[cli/gui] …`) when touching multiple areas.
-
-## Coding Style
-
-- Formatting: run `nix fmt`/`just fmt` (treefmt) before committing. It runs `nixfmt` for Nix and
-  `mdformat --wrap 100` for Markdown. Enable git hooks via `just hooks-enable` to auto-run
-  formatters (`SKIP_NIX_FMT=1` to skip).
-- Indent with 2 spaces; let nixfmt control wrapping/spacing. Avoid manual column alignment.
-- Lists with complex elements expand one per line; attribute sets become multi-line once they hold
-  more than one entry.
-- Keep prose/strings around ~100 columns; move long comments above the expression they describe.
-- Avoid `with pkgs;` around lists—refer to `pkgs.foo` explicitly. Using `with` inside local attrsets
-  or helper scopes is fine.
-- Always declare feature options centrally (see `modules/features/`) and gate module fragments via
-  the relevant `features.*` flags.
-- Structure modules with `lib.mkMerge [ … ]` and the helper sugar above. Factor package groups into
-  local `groups = { … };` sets.
-- Systemd user units/paths/sockets should reuse `config.lib.neg.systemdUser.mkUnitFromPresets`.
-- For xdg-managed files prefer `home.file` with `force = true` where parent dirs are needed.
-- Use `neg.mkHomeFiles` with `executable = true` for scripts under `~/.local/bin`.
-- Keep warnings actionable via `warnings = lib.optional cond "…";` and ensure the condition is cheap
-  (avoid referencing `config.lib.neg` while declaring the warning).
-- Commit messages must follow `[scope] subject` unless performing `Merge`, `Revert`, `fixup!`,
-  `squash!`, or `WIP`.
+- Nix style, module structure, activation helpers and commit format (`[scope] subject`) are in
+  `docs/howto/repo-conventions.md`; the enforced rules also live in `AGENTS.md` and the git hooks.
+- Secrets stay SOPS-encrypted under `secrets/` (wiring: `docs/runbook-vaultix-migration.md`); age
+  keys live outside the repo in `~/.config/sops/age/keys.txt`.
+- Evaluation output stays quiet: see the noise policy below.
+- Hyprland pins, plugin patches and session notes: `docs/howto/hyprland-plugin.md`.
 
 ## Third-Party Components
 
@@ -213,542 +73,15 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 | ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | kitty-kitten-search | [github.com/trygveaa/kitty-kitten-search](https://github.com/trygveaa/kitty-kitten-search) | `992c1f3d220dc3e1ae18a24b15fcaf47f4e61ff8` | *No license declared upstream* | Provides `search.py` / `scroll_mark.py` kittens for Kitty. Verify licensing before distributing binaries. |
 
-## Open Tasks
-
-Open work lives in `.agent/plans/` (one file per direction) — this section used to track it and the
-entries went stale, so it now only points there.
-
 ## Evaluation Noise Policy
 
 - No evaluation-time warnings or traces. Keep builds and switches quiet.
 - Do not use `warnings = [ ... ]`, `builtins.trace`, or `lib.warn` in modules.
-- If a package/feature is unavailable, silently skip or guard with a flag. Document behavior in
-  module docs/README instead of emitting warnings.
-- Use assertions only for truly fatal misconfigurations that would break the system, and phrase them
-  concisely.
+- If a package/feature is unavailable, silently skip or guard with a flag. Document behavior in the
+  module header or a howto instead of emitting warnings.
+- Use assertions only for truly fatal misconfigurations, and phrase them concisely.
 
-## Custom Packages Overlay
+## Open Tasks
 
-- All local derivations (`pkgs.neg.*`, CLI wrappers, MCP servers, etc.) now live under the top-level
-  `packages/` directory.
-- The overlay is applied in `flake/lib.nix` (`mkPkgs`); flake outputs for the custom packages are
-  exposed via `packages/flake/custom-packages.nix` (e.g. `nix build .#omp`).
-- Vendored sources live in `files/sources/` and are referenced as relative path literals (see the
-  header of `packages/overlays/vendored-sources.nix`). Files above GitHub's 100 MB limit cannot be
-  committed, so the licensed Renoise/Redux installers sit outside the repository in
-  `/home/neg/nixos-src/renoise` and arrive as the `renoise-src` path input (`flake.nix`,
-  `flake = false`), consumed as `inputs.renoise-src + "/<tarball>"`. Two consequences: a clone
-  without that directory fails to evaluate `renoise`/`renoise-redux`, and relocating such a file
-  inside the tree does not help — the flake source contains tracked files only, and absolute paths
-  are rejected in pure evaluation.
-
-## Hyprland: Source and Updates
-
-- The compositor (`pkgs.hyprland`) comes from nixpkgs (`modules/user/nix-maid/hyprland/overlay.nix`,
-  consolidated from the former `modules/nix/hyprland.nix`); the dedicated `hyprland` flake input was
-  removed (it had no functional references).
-- `pkgs.hyprlandPlugins.hy3` comes from nixpkgs (0.56.0.1, upstream tag `hl0.56.0.1`), built by
-  `mkHyprlandPlugin` against the same Hyprland 0.56.2 commit the system ships; `hy3-setup` loads it
-  at session start and `general:layout = "hy3"` in `files/gui/hypr/hyprland.lua` selects it (see
-  `docs/howto/hyprland-plugin.md`). The dedicated `hy3` flake input is gone — its `.so` tracked a
-  different Hyprland build and refused to load (audit 2026-09-15).
-- `xdg-desktop-portal-hyprland` is not pinned anymore: the former flake input (rev `08d99f72`, i.e.
-  1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU (event-loop busy spin, fixed
-  upstream in 1.4.1 by #417 "core: fix loop hangup detection"). It now comes from nixpkgs (>=
-  1.4.1); the input was removed (2026-09-29).
-- Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already
-  provides the portal service when set as `portalPackage`.
-
-How to update Hyprland (and hy3):
-
-1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`).
-1. `xdg-desktop-portal-hyprland` moves with nixpkgs — no companion pin to refresh.
-1. Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
-
-## Profiles
-
-- Profiles: feature-flag bundles under `modules/profiles/`:
-
-  - `profiles.desktop` — GUI defaults (features.gui.\* = mkDefault true)
-  - `profiles.gaming` — gaming optimizations + GUI apps
-  - `profiles.dev` — development toolchains
-
-- Service profiles: toggle per‑service via `servicesProfiles.<name>.enable` (declared in
-  `modules/profiles/services.nix`). The former `profiles.services.*` alias module was removed as
-  dead code (audit 2026-09-15) — nothing ever set those aliases.
-
-  - Hosts set desired values directly (no mkForce needed).
-
-- Host‑specific config: keep concrete settings under `hosts/<host>/*.nix`.
-
-  - Examples: NIC names, local DNS rewrites.
-
-Example (host):
-
-```nix
-{ lib, ... }: {
-  # Profiles are composed per host; disable heavy services here if needed
-  profiles.services = {
-    adguardhome.enable = false;
-  };
-}
-```
-
-Service override examples
-
-```nix
-# MPD: change music dir/port and add an extra output
-# (all options live under services.mpd.settings, see `man mpd.conf`)
-{ ... }: {
-  services.mpd.settings = {
-    music_directory = "/srv/media/music";
-    port = 6601;
-    audio_output = [
-      {
-        type = "alsa";
-        name = "USB DAC";
-        device = "hw:USB";
-      }
-    ];
-  };
-}
-```
-
-## Kernel Modules Layout
-
-- params: kernel cmdline and packaging — `modules/system/kernel/params.nix`.
-- sysctl: network/security sysctls in `modules/system/kernel/sysctl.nix`.
-- localmodconfig: kernel size reduction in `modules/system/kernel/localmodconfig.nix`
-  (`minimize.nix` was removed in 62e6d590).
-- Attack-surface trim: `modules/system/kernel/overlay.config` H19 removes drivers for hardware this
-  host does not have (legacy SATA/USB host controllers, vendor Bluetooth helpers, TV/radio/ SDR
-  tuners and IR, Intel platform glue, NVMe in-band authentication, the Intel KVM flavour, the FTP
-  conntrack helpers); H20 fixes three `base.config` lines kconfig rejects. The built kernel ships
-  209 modules instead of 258, and the initrd module list in `modules/system/boot.nix` no longer
-  names the removed ones.
-- Feature toggles: tune via `profiles.performance.*` and `profiles.security.*`; params derive from
-  these.
-
-### PREEMPT_RT
-
-- Toggle: `profiles.performance.preemptRt.enable = true;`
-- Mode: `profiles.performance.preemptRt.mode = "auto" | "in-tree" | "rt";`
-  - `auto`: use in-tree `CONFIG_PREEMPT_RT` on kernels >= 6.12, otherwise switch to
-    `linuxPackages_rt`.
-  - `in-tree`: force enabling `CONFIG_PREEMPT_RT` on the current kernel package (no package switch).
-  - `rt`: switch kernel package to `pkgs.linuxPackages_rt` explicitly.
-
-Note: extra out-of-tree modules (e.g., `amneziawg`) are pulled from the selected
-`boot.kernelPackages` when available.
-
-### noref page-cache kernel (experimental)
-
-- Toggle: `features.system.norefKernel.enable = true;` (enabled on trantor).
-- Builds torvalds/linux `noref-filemap-read-with-llm` — v7.3-rc6 plus the no-refcount page-cache
-  read path — with the same reduced `.config` as the default kernel. The pinned revision lives in
-  `modules/system/kernel/localmodconfig.nix`.
-- ZFS is built with `--enable-linux-experimental`: zfs 2.4.4 declares support only through kernel
-  7.2, but the ZFS root has to stay mountable on 7.3-rc6.
-
-### Debug/Profiling (optional)
-
-- Memory allocation profiling (6.10+):
-  `profiles.debug.memAllocProfiling.{enable,compileSupport,enabledByDefault,debugChecks}`.
-- perf data-type profiling (6.8+):
-  `profiles.debug.perfDataType.{enable,installTools,enableKernelBtf}`.
-  - These options may rebuild the kernel when enabling related `CONFIG_*` symbols.
-
-## Cooling / Fan Control (quiet profile)
-
-- Enable sensors and a quiet fan curve via `hardware.cooling.*` (module:
-  `modules/hardware/cooling.nix`).
-- For typical ASUS/Nuvoton motherboards, the module loads `nct6775` and generates `/etc/fancontrol`
-  on boot.
-- Optional: include AMD GPU fan in the same profile
-  (`hardware.cooling.gpuFancontrol.enable = true;`).
-
-Example (quiet, safe defaults):
-
-```nix
-{
-  hardware.cooling = {
-    enable = true;
-    autoFancontrol.enable = true;  # generate conservative quiet curve
-    gpuFancontrol.enable = true;   # include AMDGPU pwm1 with a quiet curve
-    # Optional tweaks (defaults shown):
-    # autoFancontrol.minTemp = 35;  # °C to start ramping
-    # autoFancontrol.maxTemp = 75;  # °C for max fan speed
-    # autoFancontrol.minPwm  = 70;  # 0–255, avoid stall while quiet
-    # autoFancontrol.maxPwm  = 255; # 0–255
-    # autoFancontrol.hysteresis = 3;  # °C
-    # autoFancontrol.interval  = 2;   # seconds
-    # autoFancontrol.allowStop = false;      # allow fans to fully stop below minTemp
-    # autoFancontrol.gpuPwmChannels = [ ];   # PWM channels (e.g., [2 3]) to follow GPU temp
-  };
-}
-```
-
-- Notes:
-- The generator uses CPU temperature (`k10temp`) to drive all motherboard PWM channels (nct6775).
-- If `gpuFancontrol.enable = true`, GPU fan (amdgpu pwm1) is driven by GPU temp (prefer junction
-  sensor when available).
-- If `/etc/fancontrol` already exists, it is backed up once to `/etc/fancontrol.backup` and replaced
-  with a symlink to `/etc/fancontrol.auto`.
-- GPU fans remain managed by the GPU driver; only motherboard PWM headers are targeted.
-  - Exception: when `gpuFancontrol.enable = true`, we switch `pwm1_enable` to manual and fancontrol
-    takes over.
-
-### Fan stop capability test
-
-- Utility: `hwctl fan test-stop` checks which motherboard PWM channels can fully stop at 0%.
-- Safe by default: skips CPU/PUMP/AIO headers; restores original settings after probing.
-- Usage examples:
-  - List channels only: `sudo hwctl fan test-stop --list`
-  - Test chassis fans: `sudo hwctl fan test-stop`
-  - Include CPU/PUMP (at your own risk): `sudo hwctl fan test-stop --include-cpu`
-- Options: `--device <hwmonN|nct6798>`, `--wait <sec>` (default 6), `--threshold <rpm>` (default
-  50).
-- Note: stop `fancontrol` during the test for accurate results: `sudo systemctl stop fancontrol`.
-
-## GPU CoreCtrl (Undervolt/Power‑Limit)
-
-- Optional capability (disabled by default): `hardware.gpu.corectrl.enable = false;`
-- When enabled, installs CoreCtrl and a polkit rule allowing members of a chosen group (default
-  `wheel`) to use the CoreCtrl helper.
-- Optional: set `hardware.gpu.corectrl.ppfeaturemask = "0xffffffff";` to unlock extended OC/UV
-  controls on some AMD GPUs.
-
-Example:
-
-```nix
-{
-  hardware.gpu.corectrl = {
-    enable = true;            # off by default
-    group = "wheel";          # who can tune
-    # ppfeaturemask = "0xffffffff"; # optional, only if needed for your GPU
-  };
-}
-```
-
-## RNNoise Virtual Mic (PipeWire)
-
-- Provides a virtual microphone with RNNoise noise suppression via PipeWire filter-chain.
-- Global default is enabled; per-host you can disable it explicitly.
-
-Example:
-
-```nix
-{
-  # Globally (module default is true)
-  hardware.audio.rnnoise.enable = true;
-
-  # Per-host override (e.g., hosts/trantor/services/policy.nix)
-  hardware.audio.rnnoise.enable = false;
-}
-```
-
-Notes:
-
-- A user service auto-selects the RNNoise source as the default input on login when enabled.
-- You can still manually choose sources in your desktop environment if you prefer.
-
-Docs are English-only (hard rule). SuperCollider live-coding docs live in the private notes repo
-(~/notes/music/supercollider/).
-
-## LAN Audio Access (MPD + PipeWire)
-
-Expose the audio stack to the local network via `features.media.audio.lanAccess.enable`:
-
-- **MPD** — `bind_to_address` becomes `any`, so MPD (port 6600) is reachable from LAN clients
-  (`mpc -h trantor`, mobile MPD apps, etc.). No password — anyone on the LAN can control playback.
-  Firewall port 6600 was already open.
-- **PipeWire, receive** — Pulse-compatible TCP server on port 4713
-  (`pipewire-pulse.conf.d/20-network.conf`). Other devices can play audio through this machine, e.g.
-  `PULSE_SERVER=192.168.0.10:4713` on a Linux client, or any PulseAudio-over-network client.
-- **PipeWire, send** — an RTP multicast sink (`libpipewire-module-rtp-sink`, node name `rtp-sink`)
-  that broadcasts anything routed to it to `224.0.0.56:46000` over the interface set in
-  `features.media.audio.lanAccess.rtp.interface` (default `net1`). Receive it with e.g. VLC:
-  `rtp://224.0.0.56:46000`.
-
-Example (host):
-
-```nix
-{
-  features.media.audio.lanAccess.enable = true;
-
-  # RTP multicast interface (only if not net1)
-  features.media.audio.lanAccess.rtp.interface = "net1";
-}
-```
-
-Usage notes:
-
-- To broadcast a specific app to the LAN: `pw-link <app-output> rtp-sink` or set `rtp-sink` as the
-  default sink (`wpctl status` to find its id).
-- Multicast loop is enabled (`net.loop`), so the stream can be tested on this machine too with VLC:
-  `rtp://224.0.0.56:46000`.
-- RTP is outgoing UDP multicast — no firewall rule required; the 4713 TCP rule is added
-  automatically when the flag is enabled.
-- Both services are unauthenticated — only enable on a trusted LAN.
-
-## AutoFDO (sample-based PGO)
-
-Enable tooling and optional compiler wrappers:
-
-```nix
-{ lib, ... }: {
-  # Install AutoFDO tools
-  dev.gcc.autofdo.enable = true;
-
-  # Provide GCC wrappers `gcc-afdo` and `g++-afdo`
-  # that append -fauto-profile=<path>
-  dev.gcc.autofdo.gccProfile = "/var/lib/afdo/myprofile.afdo";
-
-  # Provide Clang wrappers `clang-afdo` and `clang++-afdo`
-  # that append -fprofile-sample-use=<path>
-  # dev.gcc.autofdo.clangProfile = "/var/lib/afdo/llvm.prof";
-}
-```
-
-Usage:
-
-- GCC: `gcc-afdo main.c -O3 -o app`
-- Clang: `clang-afdo main.c -O3 -o app`
-
-## Commit message policy and local hook
-
-- Subject style: `[scope] short description` in English, ASCII only.
-- Exceptions: Git-generated subjects like `Merge ...`, `Revert ...`, and `WIP:` are allowed.
-
-Enable the repo hook locally:
-
-```
-git config core.hooksPath .githooks
-```
-
-The hook rejects commit messages that contain non‑ASCII characters or do not start with a bracketed
-scope.
-
-Additionally, a Markdown language policy is enforced:
-
-- All docs live in English-only `*.md` files.
-- `scripts/dev/check-markdown-language.sh` fails on any Cyrillic/CJK in `*.md` (only layout-glyph
-  examples are allowlisted).
-
-## Module Pattern & Option Helpers
-
-- This repo favors a consistent module pattern and provides helpers in `lib/opts.nix`.
-- Flag overview: `OPTIONS.md`; module recipes: `docs/howto/agent-recipes.md`. The generated
-  docs-modules output no longer exists (removed in `0ceafa815`).
-
-## Gaming: Hybrid CPU Scheduling (SCX + cpuset)
-
-### Games Stack Toggle
-
-- Toggle the whole gaming stack:
-
-  - `profiles.games.enable = false;` to disable Steam/Gamescope wrappers/MangoHud system‑wide.
-  - Defaults to `true` to preserve current behavior.
-
-- **Hybrid approach**: instead of kernel-level `isolcpus` (which blocks SCX schedulers), we use
-  **SCX `scx_lavd`** (dual-CCD X3D-aware BPF scheduler) plus **cgroup cpuset**
-  (`systemd-run -p AllowedCPUs=…`) to pin games to the V-Cache CCD.
-
-- Host `trantor` pins games to V-Cache CCD cores `1-3,16-19` (96MB L3) via `systemd-run`. Kernel
-  threads and IRQs stay on the housekeeping CCD `4-15,20-31` (32MB L3) via `irqaffinity=` and
-  `kthread_cpus=` boot params.
-
-- Transient scope runner: `game run` (Rust binary) launches any command in a user systemd scope and
-  pins it to the gaming CPUs via `AllowedCPUs`.
-
-- Gamescope helpers: `gamescope-pinned`, `gamescope-perf`, `gamescope-quality`, `gamescope-hdr`, and
-  `gamescope-targetfps` wrap `game run`.
-
-### Verifying SCX and affinity
-
-- Check SCX scheduler: `cat /sys/kernel/sched_ext/state` → expect `enabled`, `ops` = `scx_lavd`
-- Show CPU mask of current shell: `grep Cpus_allowed_list /proc/$$/status`
-- Check a game run: `game run --dry-run -- /bin/true`
-
-### Steam (per‑game Launch Options)
-
-- Basic: `game run -- %command%`
-- With Gamescope (fullscreen + VRR): `game run -- gamescope -f --adaptive-sync -- %command%`
-- Override CPU set for a game: `GAME_PIN_CPUSET=0-3,16-19 game run -- %command%`
-- Disable pinning: `game run --no-pin -- %command%`
-- Disable GameMode: `game run --no-gamemode -- %command%`
-
-### Non‑Steam games
-
-- Run directly: `game run -- /path/to/game`
-- With Gamescope presets:
-  - Performance: `game scope --preset perf -- %command%`
-  - Quality: `game scope --preset quality -- %command%`
-  - HDR: `game scope --hdr -- %command%`
-
-### Environment knobs
-
-- `GAME_PIN_CPUSET`: CPU list or ranges (default `1-3,16-19`). Examples: `14,30` or `14-15,30-31`.
-- `GAME_RUN_USE_GAMEMODE`: `1` (default) to run via `gamemoderun`, set `0` to disable.
-- `GAMESCOPE_FLAGS`: extra flags appended to gamescope in `gamescope-pinned`.
-- `GAMESCOPE_RATE`, `GAMESCOPE_OUT_W`, `GAMESCOPE_OUT_H`: override refresh and output size for
-  gamescope wrappers.
-- `TARGET_FPS`, `NATIVE_BASE_FPS`, `GAMESCOPE_AUTOSCALE`: control autoscaling in
-  `gamescope-targetfps`.
-
-Notes:
-
-- Do not wrap the entire Steam client; prefer per‑game Launch Options to keep downloads/tooling on
-  housekeeping CPUs.
-- To change the default gaming cores system‑wide, adjust `gamingCpuSet` in
-  `hosts/trantor/hardware.nix`.
-
-## Gaming Recommendations
-
-- 4K/240 Hz (VRR): use Gamescope with fullscreen and VRR to improve frame pacing on Wayland.
-
-  - Typical: `game run -- gamescope -f --adaptive-sync -r 240 -- %command%`
-  - If GPU‑limited, upscale: render lower, output native. Example 1440p→4K:
-    `-w 2560 -h 1440 -W 3840 -H 2160 --fsr-sharpness 3`.
-
-- HDR (AMD + Wayland): use the `gamescope-hdr` wrapper or add `--hdr-enabled` to Gamescope.
-
-  - Require: monitor HDR on, recent kernel/Mesa, Gamescope with HDR enabled.
-  - Some titles need in‑game HDR toggled after starting in HDR mode.
-
-- Latency and stability:
-
-  - Prefer per‑game CPU set: `GAME_PIN_CPUSET=1-3,16-19 game run -- %command%`. If a game spawns
-    many threads, widen (e.g. `14-15,28-31`).
-  - Keep VRR on: `--adaptive-sync`. If tearing or sync issues, test without it and/or cap FPS
-    slightly below max (e.g. 237 on 240 Hz) via in‑game limiter or MangoHud.
-  - Optional: test Gamescope `--rt` (realtime scheduling). If audio/input jitter occurs, remove it.
-
-- Proton settings (per‑game, in Steam > Properties > Compatibility):
-
-  - Proton‑GE often improves performance/compat (already installed). Switch back to Valve Proton if
-    regressions.
-
-- MangoHud overlay:
-
-  - Toggle with `MANGOHUD=1`. FPS limit example:
-    `MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game run -- %command%`.
-
-- Mesa/AMD specifics:
-
-  - Default Vulkan ICD is RADV (`AMD_VULKAN_ICD=RADV`). Override only for specific edge cases.
-  - For some older GL titles, `MESA_GLTHREAD=true` may help.
-
-- Troubleshooting stutter:
-
-  - Ensure VRR is active (monitor OSD or `gamescope --verbose`).
-  - Verify the game actually runs inside Gamescope (not an external launcher window).
-  - Shader cache warm‑up can cause micro‑stutters during the first minutes.
-  - If autosaves cause hitching, check disk load and disable background indexing.
-
-- Useful commands:
-
-  - Show current process CPU set: `grep Cpus_allowed_list /proc/<pid>/status`.
-  - Reuse per‑game launch: `game run -- %command%` (Steam), `game run -- <path>` (outside Steam).
-
-### Opinionated Presets (my own picks)
-
-These presets are subjective and experimental — I came up with them myself. Use them as starting
-points and tweak for your rig/game.
-
-- Competitive FPS (lowest latency, 240 Hz VRR):
-
-  - Steam Launch Options:
-    - `GAME_PIN_CPUSET=1-3,16-19 MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game run -- gamescope -f --adaptive-sync -r 240 -- %command%`
-  - Notes: cap below max refresh (237/240) for steadier frametimes; try adding `--rt` to Gamescope
-    if stability is OK; turn off in‑game V‑Sync.
-
-- Cinematic Single‑Player (quality first, steady 120 FPS feel):
-
-  - If native 4K sustainable: `game run -- gamescope -f --adaptive-sync -r 120 -- %command%`
-  - If GPU‑bound: 1800p→4K upscale:
-    `game run -- gamescope -f --adaptive-sync -r 120 -w 3200 -h 1800 -W 3840 -H 2160 --fsr-sharpness 3 -- %command%`
-  - Notes: on 240 Hz panel 120 FPS also feels smooth with VRR and frees headroom for HDR/RT.
-
-- Heavy DX12/Open‑World (e.g., RT heavy):
-
-  - Start conservative: `TARGET_FPS=110 game run -- gamescope -f --adaptive-sync -- %command%`
-  - Optional RADV toggles (may change with Mesa versions): `RADV_PERFTEST=gpl shadercache` — only if
-    you know what you're doing.
-
-- Strategy/Sim With Many Worker Threads:
-
-  - Widen CPU set for the game: `GAME_PIN_CPUSET=12-15,28-31 game run -- %command%`
-  - If stutters from background tasks — keep Gamescope and MangoHud, but drop `--rt`.
-
-- Emulators / Older GL Titles:
-
-  - `MESA_GLTHREAD=true game run -- %command%`
-  - For strict frame pacing, prefer integer scale in Gamescope or cap FPS to native rate divisors.
-
-- HDR Titles:
-
-  - `game run -- gamescope --hdr-enabled -f --adaptive-sync -- %command%`
-  - In‑game HDR must be toggled; verify monitor HDR OSD and Gamescope logs.
-
-Tuning tips:
-
-- If input lag grows, remove `--rt` and lower FPS cap slightly.
-- If GPU sits at 99% with spikes, reduce render resolution (`-w/-h`) or apply in‑game upscalers
-  (FSR/DLSS/XeSS) while keeping Gamescope output at native.
-- If CPU spikes, reduce background activity, or allow more CPUs in `GAME_PIN_CPUSET`.
-
-## Lightweight Monitoring (Gaming PC)
-
-- Netdata (local, very light):
-
-  - Enable per-host: set `monitoring.netdata.enable = true;` (see
-    hosts/trantor/services/policy.nix).
-  - Opens a local UI at `http://127.0.0.1:19999` with CPU/GPU/sensors/disks/net.
-  - Service is de‑prioritized (nice/CPU/IO weights) to minimize impact.
-  - Extend via `services.netdata.config` if you need extra collectors.
-
-- Sysstat history (ultra‑light):
-
-  - Enable per-host: `monitoring.sysstat.enable = true;`.
-  - View later: `sar`, `iostat`, `mpstat`, `pidstat`.
-
-- In‑game overlay (already included):
-
-  - Use MangoHud: run games with `MANGOHUD=1`.
-  - Toggle logging in-game: `Shift+F2` (CSV saved under `$XDG_DATA_HOME/MangoHud` by default).
-
-- VictoriaMetrics (optional, if you want graphs without Grafana):
-
-  - Suggested stack: `vmagent -> VictoriaMetrics single -> vmui`.
-  - Very low RAM/CPU at 10–15 s scrape and 7–14 days retention.
-  - Not enabled here by default; can be added later as a separate module if desired.
-
-## DNS Resolver Monitoring
-
-- Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache hits):
-  see `docs/runbook-unbound-metrics.md`.
-
-______________________________________________________________________
-
-# AGENTS: Tips and pitfalls found while wiring monitoring and post-boot
-
-Post‑Boot Systemd Target
-
-- Don’t add `After=graphical.target` to the `post-boot.target` itself; `graphical.target` already
-  wants `post-boot.target`. Adding `After=graphical.target` on the target creates an ordering cycle.
-- When deferring services to post‑boot, avoid blanket `After=graphical.target` in the helper that
-  attaches units to `post-boot.target`. Let the target be wanted by `graphical.target`, and only add
-  specific `After=` edges per service if strictly required (never the target itself).
-
-Wi‑Fi via iwd profile
-
-- The base network module installs iwd tooling but sets `networking.wireless.iwd.enable = false` so
-  wired hosts don’t start it needlessly.
-- To give a host Wi‑Fi controls, toggle `profiles.network.wifi.enable = true;` (e.g. inside
-  `hosts/<name>/networking.nix`) instead of hand-written `lib.mkForce` overrides.
-
-Prometheus PHP‑FPM Exporter
-
-- The `php-fpm-exporter` monitoring module has been removed. Prometheus server is disabled in this
-  configuration, and the exporter depended on `config.services.prometheus`.
+Open work lives in `.agent/plans/` (one file per direction); `docs/howto/index.md` points to the
+howto that describes each area.

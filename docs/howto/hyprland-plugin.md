@@ -480,3 +480,36 @@ hyprctl plugin list
 Spawning windows inside the stand exercises the real render path:
 `hyprctl eval 'hl.dispatch(hl.dsp.exec_cmd("kitty --class stand-glass"))'` (the legacy
 `hyprctl dispatch exec …` form is only a deprecated shorthand in Lua mode).
+
+## Session notes
+
+- Hyprland autoreload stays off; reload manually via the keybinding.
+- Hypr config is split under `files/gui/hypr/*` and linked via nix-maid.
+- Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
+  `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
+  layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click.
+- Swayimg is launched via `sx` (`packages/local-bin/bin/sx`): gallery mode, images sorted by ctime
+  (newest first). Its window is tuned via Hyprland window rules (`pic-pseudo-fullscreen`).
+
+## Source pins and updates
+
+- The compositor (`pkgs.hyprland`) comes from nixpkgs (`modules/user/nix-maid/hyprland/overlay.nix`,
+  consolidated from the former `modules/nix/hyprland.nix`); the dedicated `hyprland` flake input was
+  removed (it had no functional references).
+- `pkgs.hyprlandPlugins.hy3` comes from nixpkgs (0.56.0.1, upstream tag `hl0.56.0.1`), built by
+  `mkHyprlandPlugin` against the same Hyprland 0.56.2 commit the system ships; `hy3-setup` loads it
+  at session start and `general:layout = "hy3"` in `files/gui/hypr/hyprland.lua` selects it (see
+  `docs/howto/hyprland-plugin.md`). The dedicated `hy3` flake input is gone — its `.so` tracked a
+  different Hyprland build and refused to load (audit 2026-09-15).
+- `xdg-desktop-portal-hyprland` is not pinned anymore: the former flake input (rev `08d99f72`, i.e.
+  1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU (event-loop busy spin, fixed
+  upstream in 1.4.1 by #417 "core: fix loop hangup detection"). It now comes from nixpkgs (>=
+  1.4.1); the input was removed (2026-09-29).
+- Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already
+  provides the portal service when set as `portalPackage`.
+
+How to update Hyprland (and hy3):
+
+1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`).
+1. `xdg-desktop-portal-hyprland` moves with nixpkgs — no companion pin to refresh.
+1. Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.

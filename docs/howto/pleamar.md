@@ -2,8 +2,8 @@
 
 Alternate desktop shell: [pleamar](https://github.com/k4ditano/pleamar) is a Rust Wayland runtime
 with a declarative `.plm` scene language. The port replaces the Quickshell shell area by area — bar,
-panels, notifications, toast, launcher — and every scene is an independent process with its own unit,
-so one can restart or be measured without touching the others.
+panels, notifications, toast, launcher — and every scene is an independent process with its own
+unit, so one can restart or be measured without touching the others.
 
 **Off by default.** `features.gui.pleamar` is `false` (`hosts/trantor/default.nix`): the shell was
 disabled after its dual-run trial against Quickshell. Scenes and `pkgs.pleamar` stay in the tree —
@@ -11,12 +11,12 @@ flip the flag to retry.
 
 ## Sources of truth
 
-| what | where |
-| --- | --- |
-| scene layout, running one scene by hand, measurement | `files/pleamar/README.md` |
-| frozen scene/IPC catalog, palette and capsule APIs, label policy | `files/pleamar/docs/INTERFACES.md` |
-| phases, gates, budgets, open work | `.agent/plans/2026-10-16-pleamar-superplan.xml` |
-| module wiring, units, guards | `modules/user/nix-maid/gui/pleamar.nix` |
+| what                                                             | where                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------- |
+| scene layout, running one scene by hand, measurement             | `files/pleamar/README.md`                       |
+| frozen scene/IPC catalog, palette and capsule APIs, label policy | `files/pleamar/docs/INTERFACES.md`              |
+| phases, gates, budgets, open work                                | `.agent/plans/2026-10-16-pleamar-superplan.xml` |
+| module wiring, units, guards                                     | `modules/user/nix-maid/gui/pleamar.nix`         |
 
 The `.plm` files live in `files/pleamar/shells/<scene>/<scene>.plm`; directory name, scene name and
 IPC name are the same string.

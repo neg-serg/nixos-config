@@ -25,8 +25,8 @@ $ nixbuild-status --watch 1 --json    # stay resident, print only on change
 $ nixbuild-status --format polybar    # plain | ansi | waybar | i3bar | json | polybar | list
 ```
 
-Other flags: `--icons nerd|plain|none`, `--no-color`, `--compact` (drop the state word when the
-icon already shows it), `--hide-idle` (empty line instead of the idle line).
+Other flags: `--icons nerd|plain|none`, `--no-color`, `--compact` (drop the state word when the icon
+already shows it), `--hide-idle` (empty line instead of the idle line).
 
 ## Where it is wired
 
@@ -42,13 +42,13 @@ icon already shows it), `--hide-idle` (empty line instead of the idle line).
 
 Paths only — for tests and for unusual layouts:
 
-| variable | default | meaning |
-| --- | --- | --- |
-| `NBS_PROC_ROOT` | `/proc` | where build processes are looked up |
-| `NBS_LOG_ROOT` | `/nix/var/log/nix/drvs` | derivation logs |
-| `NBS_STATE` | `$XDG_RUNTIME_DIR/nixbuild-status.state` | log offsets and restart counters between runs |
-| `NBS_SYSTEM_LINK` | `/nix/var/nix/profiles/system` | activation detection |
-| `NBS_DEBUG` | unset | dump the session/log decisions to stderr |
+| variable          | default                                  | meaning                                       |
+| ----------------- | ---------------------------------------- | --------------------------------------------- |
+| `NBS_PROC_ROOT`   | `/proc`                                  | where build processes are looked up           |
+| `NBS_LOG_ROOT`    | `/nix/var/log/nix/drvs`                  | derivation logs                               |
+| `NBS_STATE`       | `$XDG_RUNTIME_DIR/nixbuild-status.state` | log offsets and restart counters between runs |
+| `NBS_SYSTEM_LINK` | `/nix/var/nix/profiles/system`           | activation detection                          |
+| `NBS_DEBUG`       | unset                                    | dump the session/log decisions to stderr      |
 
 ## Gotchas
 
