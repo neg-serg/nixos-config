@@ -83,11 +83,23 @@
         };
 
         hyprlandPlugins = prev.hyprlandPlugins // {
-          # hy3 needs no override: nixpkgs' hyprlandPlugins.hy3 is 0.56.0.1
-          # (upstream tag hl0.56.0.1), built by mkHyprlandPlugin against the
-          # same Hyprland 0.56.2 commit as the session compositor, and the
-          # session loads it with hy3-setup (main.nix). hyprspace stays
-          # dropped — its 0.55 CCompositor/monitor API (getMonitorFromCursor/
+          # hy3: nixpkgs' own 0.56.0.1 build (upstream tag hl0.56.0.1, built by
+          # mkHyprlandPlugin against the same Hyprland 0.56.2 commit as the session
+          # compositor) plus one local patch, hy3-detach-float.patch: ion3-style
+          # detach — the focused node (a window, or the tab group it lives in) can
+          # float above the layout while keeping its slot in it, so the neighbours
+          # do not reflow and reattaching returns it to exactly the same box. The
+          # patch adds the `hy3:detach` dispatcher and the `hy3.detach` Lua factory;
+          # the .so is loaded by hy3-setup (main.nix) as before, and the keys live in
+          # files/gui/hypr/hyprland.lua (M4+SHIFT+F, D in the tiling submap).
+          hy3 = prev.hyprlandPlugins.hy3.overrideAttrs (old: {
+            # The patch is a plain unified diff against src/ of tag hl0.56.0.1: five
+            # files, no build changes, so the nixpkgs recipe (which already pins the
+            # tag and builds with mkHyprlandPlugin) is kept as is.
+            patches = (old.patches or [ ]) ++ [ ./hy3-detach-float.patch ];
+          });
+
+          # hyprspace stays dropped — its 0.55 CCompositor/monitor API (getMonitorFromCursor/
           # warpCursorTo/m_monitors) no longer compiles against 0.56, which
           # moved monitor access into a State query system and made
           # CCompositor a small class. Re-port it before re-exporting.
