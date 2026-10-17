@@ -925,14 +925,9 @@ Scope {
                             anchors.right: rightBarBackground.right
                             anchors.rightMargin: rightPanel.sideMargin
                             spacing: 0
-                            // Build status: hidden while the store is idle, so the
-                            // capsule only shows up during a real rebuild.
-                            LocalMods.BuildStatus {
-                                id: buildStatusWidget
-                                visible: rootScope.panelWidgets["nixbuild"]
-                                Layout.alignment: Qt.AlignVCenter
-                                screen: modelData
-                            }
+                            // Build status is not part of this cluster: it renders in
+                            // the centred overlay panel (centerBuildPanel below), so it
+                            // never shifts the right run of widgets aside.
                             // Playback controls for the media widget: revealed to its
                             // left while the cursor is on the cover art (or on the
                             // strip itself) and collapsed when the cursor leaves.
@@ -1306,6 +1301,51 @@ Scope {
                         Rectangle { visible: false }
                     }
 
+                }
+
+                // ── Centred build-status capsule ────────────────────────────
+                // The Nix build capsule belongs to neither cluster: it is pinned to
+                // the middle of the screen, over the seam between the two wedges.
+                // Own layer surface (the left/right panels are half-screen each, so
+                // a capsule straddling the centre would be clipped by their bounds),
+                // sized to the capsule itself and offset by a computed margin — the
+                // surface never covers anything but the capsule, so it cannot eat
+                // input from the panels. Hidden while the store is idle (the module
+                // emits empty text then), which also unmaps the surface.
+                PanelLayer {
+                    id: centerBuildPanel
+                    screen: modelData
+                    color: "transparent"
+                    WlrLayershell.namespace: "qs-content-center"
+                    WlrLayershell.layer: (((Quickshell.env("QS_WEDGE_DEBUG") || "") === "1")
+                                          || ((Quickshell.env("QS_WEDGE_SHADER_TEST") || "") === "1"))
+                        ? WlrLayer.Overlay : WlrLayer.Top
+                    visible: monitorEnabled && centerBuildWidget.visible
+                    exclusionMode: ExclusionMode.Ignore
+                    exclusiveZone: 0
+                    anchors.bottom: true
+                    anchors.left: true
+                    // Horizontal centre of the screen, and the same vertical centre
+                    // inside the bar band the cluster rows use: the panel is pinned
+                    // to the bottom edge (like the left/right panels), and the margin
+                    // lifts it to the middle of the bar height.
+                    margins.left: centerBuildPanel.screen
+                        ? Math.round((centerBuildPanel.screen.width - centerBuildPanel.implicitWidth) / 2)
+                        : 0
+                    margins.bottom: Math.round((centerBuildPanel.barHeightPx - centerBuildPanel.implicitHeight) / 2)
+                    implicitWidth: Math.max(1, centerBuildWidget.implicitWidth)
+                    implicitHeight: Math.max(1, centerBuildWidget.implicitHeight)
+                    property real s: Theme.scale(centerBuildPanel.screen)
+                    property int barHeightPx: Math.round(Theme.panelHeight * s)
+
+                    LocalMods.BuildStatus {
+                        id: centerBuildWidget
+                        // The panelLayout entry only gates visibility now; whether
+                        // "nixbuild" is listed under left or right no longer decides
+                        // where the capsule lands.
+                        visible: rootScope.panelWidgets["nixbuild"] && capsuleVisible
+                        screen: centerBuildPanel.screen
+                    }
                 }
 
             }

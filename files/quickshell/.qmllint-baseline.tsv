@@ -25,6 +25,10 @@
 #                             Twenty more (621 → 641): BuildStatusPopup.qml's
 #                             delegate rows read modelData, the enclosing root
 #                             and parent — a new list popup of the same kind.
+#                             Two more (641 → 643): the bar's centred build-status
+#                             layer (Bar.qml centerBuildPanel) toggles WlrLayer and
+#                             reads its own screen for the centring margins — the
+#                             same kind as the neighbouring panel blocks.
 #   missing-property          a property reached through `parent.`/scope, where the
 #                             analyzer only knows the C++ base type. 51 → 57: the
 #                             tube's QML now talks to its own shader
@@ -34,7 +38,9 @@
 #   unresolved-type           Quickshell's plugin types ship no qmltypes
 #                             (QsMenuEntry, PopupAnchor, BluetoothDeviceState, …)
 #                             BackgroundEffect.blurRegion is typed PendingRegion and
-#                             that type is one of them (34 → 35).
+#                             that type is one of them (34 → 35). One more (35 → 36):
+#                             `margins` on the centred build-status layer, the same
+#                             unresolved grouped-property scope PanelWithOverlay hits.
 #   import                    the greeter's own submodules and Widgets.*
 #   uncreatable-type          PanelWindow (Quickshell.Wayland) is a base type, not
 #                             something to instantiate
@@ -51,9 +57,9 @@
 #
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
-unqualified	641
+unqualified	643
 missing-property	32
-unresolved-type	10
+unresolved-type	11
 import	2
 uncreatable-type	7
 incompatible-type	1
