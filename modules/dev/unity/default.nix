@@ -24,6 +24,13 @@
 # started from the Hub reaches packages.unity.com and the license service
 # through the proxy as well.
 #
+# One child needs an extra pin: Unity.Licensing.Client is .NET 7, and .NET opens
+# dual-stack AF_INET6 sockets, so the fake-DNS address proxychains hands back
+# (224.0.0.1) was connected to as ::ffff:224.0.0.1, bypassing the hook and dying
+# with ENETUNREACH — license activation failed with "[1500] Internal Client
+# Error: Network is unreachable". `DOTNET_SYSTEM_NET_DISABLEIPV6=1` forces IPv4
+# sockets, which the hook does rewrite; see the comment at the launcher.
+#
 # The GUI launcher needs a second layer on top: Chromium's network stack issues
 # its connects without going through libc, so the LD_PRELOAD hook never sees it
 # (verified with `ss -tnp`: only the Hub browser process, the `unity` CLI and
@@ -74,6 +81,16 @@ in
         export PROXYCHAINS_CONF_FILE=${proxychainsConf}
         export PROXYCHAINS_QUIET_MODE=1
         export LD_PRELOAD=${preloadLib}''${LD_PRELOAD:+:$LD_PRELOAD}
+        # The Hub spawns Unity.Licensing.Client (.NET 7) and it inherits this
+        # environment. .NET opens dual-stack AF_INET6 sockets and connects to
+        # the v4-mapped address even for an A record, so proxychains' fake-DNS
+        # answer (224.0.0.1, see proxy_dns above) reached the kernel as
+        # ::ffff:224.0.0.1 — a multicast target, i.e. ENETUNREACH, which the Hub
+        # surfaced as "[1500] Internal Client Error: Network is unreachable
+        # (license.unity3d.com:443)" and licenses never activated. The hook only
+        # rewrites AF_INET connects, so .NET is pinned to IPv4 sockets here and
+        # the fake address is proxied like any other.
+        export DOTNET_SYSTEM_NET_DISABLEIPV6=1
         # The LD_PRELOAD hook covers the Hub's Node/native side (license client,
         # downloads, Editors it spawns), but Chromium's network stack does not
         # go through libc connect(), so the in-app auth window ignored it and
@@ -85,8 +102,11 @@ in
       '')
 
       (pkgs.writeShellScriptBin "unity-proxy" ''
-        # The CLI's own HTTP stack reads the *_proxy variables; the LD_PRELOAD
-        # hook covers every code path that goes through libc instead.
+        # The CLI is a Node single-file binary: Node ignores the *_proxy
+        # variables on its own, so the CLI's own switch carries the endpoint
+        # (--proxy / UNITY_PROXY, `unity --help`); the LD_PRELOAD hook covers
+        # every code path that goes through libc instead.
+        export UNITY_PROXY=${proxyUrl}
         export http_proxy=${proxyUrl} https_proxy=${proxyUrl} all_proxy=${proxyUrl}
         export HTTP_PROXY=${proxyUrl} HTTPS_PROXY=${proxyUrl} ALL_PROXY=${proxyUrl}
         export no_proxy=localhost,127.0.0.1 NO_PROXY=localhost,127.0.0.1
