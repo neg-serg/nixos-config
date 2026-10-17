@@ -66,4 +66,6 @@ drop `--cpu-vae` to decode on the GPU when VRAM is free). Knobs: 896x560 or 1024
 
 The frames are cross-faded (tail into head, 1 s) into a seamless MP4, and the `wallpaper-video` user
 service (`modules/user/session/wallpaper-video.nix`) plays it with `mpv --loop-file`; hyprwinwrap
-pins the window behind the desktop via the declaration in `files/gui/hypr/hyprwinwrap.lua`.
+pins the window behind the desktop via the declaration in `files/gui/hypr/hyprwinwrap.lua`. The
+service is behind `features.gui.wallpaperVideo` (default off): wl-daemon is the normal wallpaper
+owner and the pinned window would cover its still image, so the two are meant to run one at a time.

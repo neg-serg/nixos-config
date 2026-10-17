@@ -78,6 +78,10 @@ in
         # part of the Quickshell/Qt stack.
         pleamarEnabled = enabled "gui" && enabled "gui.pleamar" && !(enabled "devSpeed");
 
+        # Looped video wallpaper: full GUI plus its own flag, never implied by
+        # another one — its pinned background window covers wl-daemon's output.
+        wallpaperVideoEnabled = enabled "gui" && enabled "gui.wallpaperVideo";
+
         # Repo-root resolver (`path`, `pathExists`, `readFile`, `tree`, `find`) is
         # spread in above from the top-level `repo` binding: repoRoot is a real
         # path, so `repo.path "files/x"` carries Nix path context — used in a
