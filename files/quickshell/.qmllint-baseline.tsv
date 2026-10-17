@@ -29,8 +29,13 @@
 #                             layer (Bar.qml centerBuildPanel) toggles WlrLayer and
 #                             reads its own screen for the centring margins — the
 #                             same kind as the neighbouring panel blocks.
+#                             Down to 494 when the CAVA analysers were removed
+#                             (Components/Cava.qml, IPhoneSpectrum.qml,
+#                             LinearSpectrum.qml): those three files were the bulk
+#                             of the category.
 #   missing-property          a property reached through `parent.`/scope, where the
-#                             analyzer only knows the C++ base type. 51 → 57: the
+#                             analyzer only knows the C++ base type. 32 → 28 with the
+#                             analyser components gone. 51 → 57: the
 #                             tube's QML now talks to its own shader
 #                             (Qt.vector2d / Qt.point / Qt.rect / Qt.resolvedUrl for
 #                             the uniforms and the wallpaper patch), and qmllint
@@ -57,8 +62,8 @@
 #
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
-unqualified	643
-missing-property	32
+unqualified	494
+missing-property	28
 unresolved-type	11
 import	2
 uncreatable-type	7

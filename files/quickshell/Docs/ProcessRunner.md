@@ -59,7 +59,7 @@ ProcessRunner {
 
 ```qml
 ProcessRunner {
-  cmd: ["cava","-p","/dev/stdin"]
+  cmd: ["my-raw-stream", "--stdin"]
   stdinEnabled: true
   rawMode: true
   onStarted: {
