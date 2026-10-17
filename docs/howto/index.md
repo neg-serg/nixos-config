@@ -182,9 +182,5 @@
 - Profiles and feature flags — bundles, service profiles, host overrides:
   [profiles-and-flags.md](./profiles-and-flags.md)
 
-- RNNoise virtual microphone (PipeWire): [rnnoise-mic.md](./rnnoise-mic.md)
-
-- LAN audio access (MPD + PipeWire): [lan-audio.md](./lan-audio.md)
-
 - Gaming on trantor — SCX + cpuset, Gamescope recommendations, lightweight monitoring:
   [gaming-scx-cpuset.md](./gaming-scx-cpuset.md)
