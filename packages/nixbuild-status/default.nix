@@ -1,6 +1,6 @@
 #
 # nixbuild-status — build progress in the bar
-# (folded from docs/howto/nixbuild-status.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # `nixbuild-status` (`packages/nixbuild-status`, Rust, no crate dependencies) answers one question

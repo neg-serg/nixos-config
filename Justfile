@@ -282,7 +282,7 @@ systemd-status:
 # AppArmor: what is loaded, in which mode, and what this boot denied.
 # Denials in "complain" mode are informational (the daemon was allowed);
 # they are the list of rules to add before flipping a daemon to enforce.
-# See docs/howto/apparmor.md.
+# See modules/security/apparmor.nix.
 apparmor-status:
     set -eu
     systemctl status apparmor.service --no-pager | head -12 || true
@@ -305,7 +305,7 @@ apparmor-denials daemon="":
 #   looks hung for minutes per path instead of failing.
 # --no-link: never touch ./result, which is the host deployment link the switch
 #   scripts read (`readlink -f result`).
-# See docs/howto/apparmor.md.
+# See modules/security/apparmor.nix.
 apparmor-test:
     set -eu
     cd "{{repo_root}}" && nix build --impure --file tests/apparmor-enforce.nix -L --offline --no-link

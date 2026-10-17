@@ -1,6 +1,6 @@
 #
 # AppArmor — confining the network-facing daemons
-# (folded from docs/howto/apparmor.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # AppArmor is enabled system-wide (`security.apparmor`), but nothing was confined: the shipped profile
@@ -164,14 +164,14 @@
 #   `etcFiles` for /etc (a trailing "/" expands to the whole subdirectory),
 #   `homeFiles` for the nix-maid managed files under the main user's home.
 #   Neither wildcards /nix/store, and both follow the generation on a switch.
-#   (See docs/howto/apparmor.md for the iteration loop.)
+#   (See the header of this module for the iteration loop.)
 
 # Key options: features.security.apparmor.{enable,sshd,unbound,adguardhome,ntfy,avahi,singbox,transmission,aria2}
 #   Each daemon is independent: "disable" | "complain" | "enforce".
 #   Defaults ship every profile in "complain" (denials are logged, nothing is
 #   blocked). Flip one daemon to "enforce" only after its denials in
 #   `journalctl -b --grep 'apparmor="DENIED"'` have been reviewed — see
-#   docs/howto/apparmor.md.
+#   the header of this module.
 #   apparmor.service loads /etc/apparmor.d (built from these policies) before
 #   sysinit.target, so daemons start confined on the next boot; a `switch`
 #   reloads/replaces profiles for the *next* exec of each binary.

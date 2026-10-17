@@ -1,6 +1,6 @@
 #
 # Cooling and fan control (quiet profile)
-# (folded from docs/howto/cooling.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # - Enable sensors and a quiet fan curve via `hardware.cooling.*` (module:

@@ -1,6 +1,6 @@
 #
 # pleamar shell (features.gui.pleamar)
-# (folded from docs/howto/pleamar.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # Alternate desktop shell: pleamar (https://github.com/k4ditano/pleamar) is a Rust Wayland runtime

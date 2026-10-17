@@ -1,6 +1,6 @@
 #
 # RNNoise virtual microphone (PipeWire)
-# (folded from docs/howto/rnnoise-mic.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # - Provides a virtual microphone with RNNoise noise suppression via PipeWire filter-chain.

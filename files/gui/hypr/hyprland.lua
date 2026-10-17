@@ -969,7 +969,7 @@ end
 -- submap below, next to the rest of the window verbs) and D in the tiling
 -- submap. NOT a plain M4+SHIFT+F: that is the pseudo-fullscreen toggle above,
 -- and the key parser is case-insensitive, so the two would be one binding.
--- Implemented by the local patch on hy3 (docs/howto/hyprland-plugin.md);
+-- Implemented by the local patch on hy3 (modules/user/nix-maid/hyprland/main.nix);
 -- hy3opt keeps it a no-op on a stock build.
 
 hl.bind(M4 .. "+left", hy3(function(p) return p.move_focus("l") end))

@@ -7,7 +7,7 @@
 # (the closure is local; without it nix stalls on the caches' narinfo lookups)
 # and --no-link (never clobber the host's ./result).
 #
-# Documented in docs/howto/apparmor.md. All eight profiles run in "enforce"
+# Documented in modules/security/apparmor.nix. All eight profiles run in "enforce"
 # here (the repo ships them in "complain"), so a profile that is too tight
 # fails this test instead of failing on the host.
 let

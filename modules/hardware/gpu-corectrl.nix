@@ -1,6 +1,6 @@
 #
 # GPU undervolt through CoreCtrl
-# (folded from docs/howto/gpu-undervolt.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # - Optional capability (disabled by default): `hardware.gpu.corectrl.enable = false;`

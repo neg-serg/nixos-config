@@ -1,6 +1,6 @@
 #
 # LAN audio access (MPD + PipeWire)
-# (folded from docs/howto/lan-audio.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # Expose the audio stack to the local network via `features.media.audio.lanAccess.enable`:
