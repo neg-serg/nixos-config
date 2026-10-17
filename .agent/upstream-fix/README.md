@@ -1,9 +1,25 @@
-# Upstream series for `psyclyx/fix` — prepared, not sent
+# Upstream series for `psyclyx/fix` — sent 2026-10-17
 
 Everything needed to hand our changes to the upstream evaluator, plus the story of how it was
-prepared. **No pull request and no issue has been opened against `psyclyx/fix`** (checked: zero
-issues/PRs by `neg-serg` there). The series lives in the fork and in this directory; see "Sending
-it" at the end.
+prepared. The first wave is **sent** against `psyclyx/fix@e0c1f6d` (upstream HEAD at the time):
+
+| what | link |
+| ---- | ---- |
+| `01` json-control-chars (closes #61) | https://github.com/psyclyx/fix/pull/67 |
+| `02` pure-gated-constants (#53) | https://github.com/psyclyx/fix/pull/68 |
+| `03` catchable-pure-gates (#52) | https://github.com/psyclyx/fix/pull/69 |
+| `04` git-worktree-root (#55) | https://github.com/psyclyx/fix/pull/70 |
+| new issue: fetchGit vs git.kernel.org | https://github.com/psyclyx/fix/issues/65 |
+| new issue: 128 MiB read cap | https://github.com/psyclyx/fix/issues/66 |
+
+Every branch was re-verified before sending: applying `0N-*.patch` to a fresh clone of upstream
+`e0c1f6d` reproduces the fork branch tree byte-for-byte (`diff -r` clean). `03`'s commit message was
+repaired (it had a one-word subject) and the branch force-pushed before the PR opened; neither PR
+nor issue was edited after creation.
+
+Still held back on purpose: `05-read-cap-diagnostic` (a companion of #66, better after the
+maintainer picks streaming vs a configurable cap), `06-large-file-streaming` and `07-git-fallback`
+(both PR bodies ask design questions the maintainer has not answered yet).
 
 ## Context: why `fix` left this repository
 
@@ -66,9 +82,9 @@ read-cap-diagnostic  large-file-streaming   git-fallback           upstream-note
 https://github.com/psyclyx/fix/compare/main...neg-serg:fix:<branch>?expand=1
 ```
 
-Suggested order, cheapest acceptance first: the two new issue reports
+Suggested order, cheapest acceptance first (this is what was done): the two new issue reports
 (`issues/01-kernel-org-fetch.md`, `issues/02-large-file-read-cap.md`) and `01` (closes #61), then
-`02` (#53) and `03` (#52), then `04`, and `06`/`07` after the maintainer answers the design
+`02` (#53) and `03` (#52), then `04`; `06`/`07` wait for the maintainer's answers to the design
 questions their PR bodies ask (a configurable cap instead of streaming; opt-in rather than opt-out
 for the git fallback).
 
