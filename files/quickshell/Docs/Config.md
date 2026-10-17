@@ -74,54 +74,16 @@ Monitors & Scaling
 - monitorScaleOverrides: object { "ScreenName": number }, default {}. Per‑monitor UI scale keyed by
   `Screen.name`.
 
-Media & Visualizer
+Media
 
-- showMediaVisualizer: boolean, default false. Enable visualizer (spectrum) next to track.
-- showIphoneVisualizer: boolean, default false. Enable iPhone-style spectrum visualizer next to
-  album art icon in compact mode. Uses accent color from current track's cover art.
-- activeVisualizerProfile: string, default "classic". Active visualizer profile name.
-- visualizerProfiles: object of profiles keyed by name. Each profile can override CAVA/spectrum
-  parameters below.
 - timeBracketStyle: string, default "round". Brackets for RichText:
   round|square|lenticular|lenticular_black|angle|tortoise.
-
-iPhone-style analyser (shared component; bar and toast are configured separately)
-
-- barAnalyserMirror: boolean, default false. Mirror the small bar analyser; false = one-sided.
-- barAnalyserBars: integer, default 5. Bar count for the small bar analyser.
-- toastAnalyserMirror: boolean, default false. Mirror the large toast analyser; false = one-sided.
-- toastAnalyserBars: integer, default 64. Bar count for the large toast analyser.
-- toastAnalyserStyle: string, default "neon-cyan". Visual preset for the large toast analyser:
-  neon-cyan | neon-violet | neon-lime | neon-orange | holographic | aurora | sunset | synthwave |
-  ember | matrix | analog-amber | analog-rose | analog-vu.
-
-CAVA / Spectrum (global defaults; each may be overridden per profile in visualizerProfiles.<name>)
-
-- cavaBars: integer, default 86. Number of bars.
-- cavaFramerate: integer, default 24. Frames per second.
-- cavaMonstercat: boolean, default false. Monstercat smoothing.
-- cavaGravity: integer, default 150000. Gravity/decay constant.
-- cavaNoiseReduction: integer, default 12. Noise reduction level.
-- spectrumUseGradient: boolean, default false. Gradient fill.
-- spectrumMirror: boolean, default false. Mirror spectrum.
-- showSpectrumTopHalf: boolean, default false. Show top half only.
-- spectrumMinHz: integer, default 15. Low end of the full spectrum scale (Hz).
-- spectrumMaxHz: integer, default 24000. High end of the full spectrum scale (Hz).
-- spectrumColorMinHz: integer, default 15. Low end of the coloured band (Hz).
-- spectrumColorMaxHz: integer, default 24000. High end of the coloured band (Hz).
-- spectrumDimOpacity: number 0..1, default 0.18. Opacity of bars outside the coloured band.
-- spectrum3D: boolean, default true. Enable 3D perspective arc and specular gradient on analyser
-  bars.
-- spectrum3DDepth: number 0..1, default 0.35. Perspective falloff for the 3D analyser arc.
-- spectrumColor: string, default "". Custom analyser bar colour (hex, e.g. #00e5ff) overriding the
-  preset/accent.
-- spectrumMode: string, default "bars". Analyser render implementation: bars | led | wave.
 - musicPopupProgressHeight: number, default 3. Progress scrub-bar thickness in logical px (scaled).
-- spectrumFillOpacity: number 0..1, default 0.35. Fill opacity.
-- spectrumHeightFactor: number, default 1.2. Height relative to track text size.
-- spectrumOverlapFactor: number 0..1, default 0.2. Overlap on top of text.
-- spectrumBarGap: number, default 1.0. Gap between bars (logical px before per‑screen scale).
-- spectrumVerticalRaise: number, default 0.75. Vertical offset relative to text.
+
+The audio spectrum analysers (CAVA-based: bar capsule, media toast, music panel) and their
+`cava*`/`spectrum*`/`*Analyser*` settings were removed on 2026-10-17 together with the `cava`
+package: the bars were the only consumer of that stream, and the panel spent ~9% of a core
+sampling it.
 
 Music Players
 
@@ -160,21 +122,13 @@ Weather
 - useFahrenheit: boolean, default false. Show °F.
 - weatherCity: string. City for current weather and forecast.
 
-Visualizer profiles notes
-
-- visualizerProfiles is a dictionary of user profiles. Supported fields per profile:
-  - cavaBars, cavaFramerate, cavaMonstercat, cavaGravity, cavaNoiseReduction
-  - spectrumFillOpacity, spectrumHeightFactor, spectrumOverlapFactor
-  - spectrumBarGap, spectrumVerticalRaise, spectrumMirror Any field not defined in a profile falls
-    back to the global value.
-
 Theme/.theme.json (short)
 
 - All typography, colors, paddings, radii, animations, etc. are hierarchical tokens.
 - Full list of tokens, types/defaults, and guidance: `Docs/ThemeTokens.md`.
 - Up‑to‑date example schema: `Docs/ThemeHierarchical.json`.
 - Important groups: `colors.*`, `panel.*`, `shape.*`, `tooltip.*`, `ui.*`, `ws.*`, `timers.*`,
-  `network.*`, `media.*`, `spectrum.*`, `calendar.*`, `weather.*`, `vpn.*`, `time.*`, `volume.*`,
+  `network.*`, `media.*`, `calendar.*`, `weather.*`, `vpn.*`, `time.*`, `volume.*`,
   `sidePanel.*`.
 - Strict mode (`Settings.settings.strictThemeTokens = true`) logs warnings for missing tokens and
   deprecated flat keys. Flat keys are removed after 2025‑11‑01.
@@ -201,7 +155,6 @@ Settings.json schema and samples
 - JSON Schema: `Docs/SettingsSchema.json` (Draft‑07) — types, defaults, and allowed values.
 - Preset examples:
   - `Docs/SettingsMinimal.json` — minimal typical overrides.
-  - `Docs/SettingsVisualizerSoft.json` — a soft visualizer profile and activation.
 
 Tips
 

@@ -81,23 +81,6 @@ Item {
 
     function seek(posMs) { position.seek(posMs); }
 
-    // Audio spectrum bars (prefer active profile, then settings)
-    readonly property bool visualizerAllowed: ((Quickshell.env("QS_DISABLE_VISUALIZER") || "") !== "1")
-    Loader {
-        id: cavaLoader
-        active: manager.visualizerAllowed
-        sourceComponent: Cava {
-            id: cava
-            count: (
-                Settings.settings.visualizerProfiles
-                && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile]
-                && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].cavaBars !== undefined
-            ) ? Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].cavaBars
-              : Settings.settings.cavaBars
-        }
-    }
-    property var cavaValues: cavaLoader.active && cavaLoader.item ? cavaLoader.item.values : []
-
     // ── Accent color (shared state, sampled by first consumer in a window) ──
     property color accentColor: Theme.accentPrimary
     property bool accentReady: false

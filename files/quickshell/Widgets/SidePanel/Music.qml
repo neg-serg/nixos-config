@@ -19,21 +19,13 @@ Rectangle {
     implicitWidth: playerUI.implicitWidth + Math.round(Theme.sidePanelSpacingMedium * Theme.scale(screen))
     implicitHeight: playerUI.implicitHeight
     // Whether this card is really on screen. The popup stays loaded while hidden
-    // and its local `visible` bindings are still true, so the analyser feed is
-    // gated on this: pushing cava frames into a hidden spectrum re-animates every
-    // bar and dirties the window on each frame.
+    // and its local `visible` bindings are still true, so anything that must not
+    // run off screen is gated on this. The host that owns the surface says
+    // whether it is shown.
     //
     // (Named isOnScreen, not onScreen: QML reads an `on<Capital>` name as a signal
     // handler, so assigning to it from the host fails with "Cannot assign a value
     // to a signal".)
-    //
-    // It used to ask `Window.window.visible`, which is null here — the card lives
-    // inside a top-level PanelWindow (shell.qml loads MusicPopup there so its
-    // surface actually maps), and the attached `Window` property resolves for
-    // items inside a window while a PanelWindow *is* the window. The condition
-    // was therefore always false and the panel's spectrum never received a frame
-    // (values stayed [] while cava streamed into MusicManager.cavaValues). The
-    // host that owns the surface says whether it is shown.
     property bool isOnScreen: false
 
     function warnContrast(bg, fg, label) {
@@ -122,19 +114,6 @@ Rectangle {
                 const total = Time.mprisToMs(MusicManager.trackLength || 0);
                 const pos = Math.max(0, MusicManager.currentPosition || 0);
                 return total > 0 ? Math.min(1, pos / total) : 0;
-            }
-            // Copy cava values to a fresh array on a timer: MusicManager.cavaValues
-            // is often mutated in place, so a direct binding never re-evaluates and
-            // the analyzer sits frozen. Reassigning a copy forces IPhoneSpectrum to
-            // re-animate every tick.
-            property var _spec: []
-            Timer {
-                id: specTick
-                // ~30 Hz sample of the CAVA stream (was 12.5 Hz — looked laggy).
-                interval: 32
-                repeat: true
-                running: musicCard.isOnScreen && MusicManager.hasPlayer && MusicManager.isPlaying
-                onTriggered: playerUI._spec = (MusicManager.cavaValues || []).slice()
             }
             // Mouse scrubbing: map an x position on the progress bar to a seek.
             function seekFromX(x, w) {
@@ -432,14 +411,13 @@ Rectangle {
                         }
                     }
 
-                    // Spectrum/scrub, deliberately LAST in the column and therefore at
+                    // Progress/scrub, deliberately LAST in the column and therefore at
                     // the bottom of the card: the card's content is bottom-anchored and
-                    // the seek line sits on the band's bottom edge, so the spectrogram
-                    // and the line both sit on the card's bottom.
+                    // the seek line sits on the band's bottom edge.
                     ColumnLayout {
                         Layout.fillWidth: true
                         // Same side padding as the metadata rows above, so the
-                        // spectrum and the seek line start where the text does.
+                        // seek line starts where the text does.
                         Layout.leftMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(musicCard.screen))
                         Layout.rightMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(musicCard.screen))
                         spacing: Math.round(Theme.sidePanelSpacingSmall * 0.6 * Theme.scale(screen))
@@ -466,36 +444,11 @@ Rectangle {
                                 readonly property bool seekPreviewVisible: seekX >= 0 && seekReady
                                 readonly property string seekTimeText: Format.fmtTime(seekFraction * seekTotalMs)
 
-                                // Fill colour: custom spectrum colour, else cover accent.
+                                // Fill colour: cover accent when the coloured progress is
+                                // on, otherwise the text colour.
                                 readonly property color _progressFillColor: {
-                                    var c = (Settings.settings.spectrumColor !== undefined && Settings.settings.spectrumColor !== "")
-                                        ? Settings.settings.spectrumColor
-                                        : (Settings.settings.musicPopupColoredProgress ? detailsCol.musicAccent : "");
+                                    var c = Settings.settings.musicPopupColoredProgress ? detailsCol.musicAccent : "";
                                     return (c !== "") ? c : Color.withAlpha(playerUI.musicTextColor, 0.7);
-                                }
-
-                                // Spectrum analyzer in the background of the
-                                // progress area, coloured with the cover accent.
-                                // Reuses the bar's IPhoneSpectrum so values and
-                                // animation are proven to work in this shell.
-                                IPhoneSpectrum {
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    // Leave room at the bottom so the bars end above
-                                    // the progress line instead of growing from behind it.
-                                    anchors.bottomMargin: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen))) + Math.round(3 * Theme.scale(screen))
-                                    values: playerUI._spec
-                                    targetBars: Settings.settings.toastAnalyserBars
-                                    mirror: Settings.settings.toastAnalyserMirror
-                                    // Empty style => cover accent; set the accent so the
-                                    // analyser follows the album cover colour.
-                                    accentColor: detailsCol.musicAccent
-                                    style: Settings.settings.toastAnalyserStyle
-                                    animDurationMs: 40
-                                    opacity: 1.0
-                                    visible: Settings.settings.musicPopupSpectrum
                                 }
 
                                 // Thin, glowing scrub bar at the bottom of the band.
@@ -510,7 +463,7 @@ Rectangle {
                                     readonly property real baseHeight: Math.max(2, Math.round(Settings.settings.musicPopupProgressHeight * Theme.scale(screen)))
                                     height: baseHeight + (progressBand.seekPreviewVisible
                                         ? Math.max(1, Math.round(2 * Theme.scale(musicCard.screen))) : 0)
-                                    // Subtle hairline track (the spectrum ends well above it).
+                                    // Subtle hairline track.
                                     // Hairline track tinted with the cover accent.
                                     color: Color.withAlpha(progressBand._progressFillColor,
                                         progressBand.seekPreviewVisible ? 0.3 : 0.14)
@@ -614,7 +567,7 @@ Rectangle {
                                     }
 
                                     // Bloom: a soft column behind the line so the playhead reads
-                                    // as light, not as a hard rule over the spectrum.
+                                    // as light.
                                     Rectangle {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         anchors.top: parent.top
@@ -628,7 +581,7 @@ Rectangle {
                                     }
 
                                     // Core line, with a dark hairline under it so it stays
-                                    // readable over bright spectrum bars too.
+                                    // readable over the band.
                                     Rectangle {
                                         anchors.fill: parent
                                         anchors.margins: -Math.max(0, Math.round(1 * Theme.scale(musicCard.screen)))
