@@ -134,7 +134,15 @@ in
 
     # The state directory belongs to the service user, but the main user needs
     # to traverse it to read the token, hence the group.
+    #
+    # The body runs in a subshell: NixOS concatenates every activation snippet
+    # into one shell, so a bare `umask 077` here would still be in effect for
+    # every later snippet — setupSecrets (sops) comes after this one and its
+    # per-generation /run/secrets.d/N is created with mkdir, which yields 0700
+    # under umask 077 instead of 0751. That made every non-root secret reader
+    # fail with EACCES (mpdas, listenbrainz-mpd, ...).
     system.activationScripts.minibbs = lib.stringAfter [ "var" ] ''
+      (
       ${pkgs.coreutils}/bin/install -d -m 0750 -o minibbs -g minibbs ${cfg.dataDir}
       if [ ! -s ${cfg.dataDir}/token ]; then
         umask 077
@@ -142,6 +150,7 @@ in
       fi
       ${pkgs.coreutils}/bin/chown root:minibbs ${cfg.dataDir}/token
       ${pkgs.coreutils}/bin/chmod 0640 ${cfg.dataDir}/token
+      )
     '';
   };
 }
