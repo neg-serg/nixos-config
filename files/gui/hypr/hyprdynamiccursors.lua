@@ -8,8 +8,9 @@
 -- enabled = false on purpose: the stretch is a desktop effect that reads as
 -- noise while gaming (fast mouse movement visibly deforms the pointer) and the
 -- plugin has no per-window switch, so a game cannot opt out while the desktop
--- keeps it. Opt in for the session with `cursor-stretch on` (M4+SHIFT+c); that
--- flips the live plugin config only, so a reload lands back here, on off.
+-- keeps it. Opt in for the session with `cursor-stretch on` (no hotkey on
+-- purpose); that flips the live plugin config only, so a reload lands back here,
+-- on off.
 
 hl.config({
   plugin = {
