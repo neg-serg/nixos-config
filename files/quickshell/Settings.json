@@ -3,13 +3,7 @@
         "default": "#000000b0"
     },
 
-    "activeVisualizerProfile": "classic",
     "barMonitors": [],
-    "cavaBars": 86,
-    "cavaFramerate": 24,
-    "cavaGravity": 150000,
-    "cavaMonstercat": false,
-    "cavaNoiseReduction": 12,
     "collapseSystemTray": true,
     "collapsedTrayIcon": "expand_more",
     "contrastThreshold": 0.5,
@@ -56,18 +50,8 @@
     ],
     "reverseDayMonth": false,
     "showMediaInBar": true,
-    "showMediaVisualizer": false,
-    "showIphoneVisualizer": false,
-    "showSpectrumTopHalf": false,
     "showVolumeOnHover": true,
     "showWeatherInBar": true,
-    "spectrumBarGap": 1,
-    "spectrumFillOpacity": 0.35,
-    "spectrumHeightFactor": 1.2,
-    "spectrumMirror": false,
-    "spectrumOverlapFactor": 0.2,
-    "spectrumUseGradient": false,
-    "spectrumVerticalRaise": 0.75,
     "strictThemeTokens": false,
     "systemTrayTightSpacing": true,
     "timeBracketStyle": "round",
@@ -75,20 +59,6 @@
     "use12HourClock": false,
     "useFahrenheit": false,
     "userAgent": "NegPanel",
-    "visualizerProfiles": {
-        "classic": {
-            "cavaBars": 86,
-            "cavaFramerate": 24,
-            "cavaGravity": 150000,
-            "cavaMonstercat": false,
-            "cavaNoiseReduction": 12,
-            "spectrumBarGap": 1,
-            "spectrumFillOpacity": 0.35,
-            "spectrumHeightFactor": 1.2,
-            "spectrumOverlapFactor": 0.2,
-            "spectrumVerticalRaise": 0.75
-        }
-    },
     "weatherCity": "Saint Petersburg",
     "weatherLatitude": 59.9375,
     "weatherLongitude": 30.3086

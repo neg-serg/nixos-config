@@ -103,7 +103,6 @@ in
 
       environment.systemPackages = [
         pkgs.btop # Resource monitor (CPU, memory, disks, network)
-        pkgs.cava # Console audio visualizer
         pkgs.kitty # GPU-accelerated terminal with ligatures and image support
         pkgs.mtr # Network diagnostic tool
         pkgs.oh-my-posh # Cross-shell prompt theme engine
