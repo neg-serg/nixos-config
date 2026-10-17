@@ -167,3 +167,8 @@
 
 - Hotkey backlog — the open emacs/vim-friendly items left after the 2026-10-14 audit:
   [hotkeys-backlog.md](./hotkeys-backlog.md)
+
+- Nix build status in the bar (`nixbuild-status` CLI, capsule and popup):
+  [nixbuild-status.md](./nixbuild-status.md)
+
+- pleamar shell — the alternate shell, off by default: [pleamar.md](./pleamar.md)

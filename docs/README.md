@@ -10,8 +10,9 @@ configuration.
 - `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
   (`docs/runbook-*.md`).
 - `files/` — static config files linked to user homes via nix-maid.
-- `docs/runbook-*.md` — operational steps (entry point `docs/runbook-index.md`); everything else is
-  documented in the code it describes.
+- `docs/runbook-*.md` — operational steps (entry point `docs/runbook-index.md`).
+- `docs/howto/` — cross-cutting howtos, indexed in `docs/howto/index.md`; module-level knowledge stays
+  in the module header it describes.
 
 ## Quick Start (System)
 
