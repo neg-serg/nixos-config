@@ -10,6 +10,9 @@
 # Notes:   --no-config is deliberate: the user's mpv config injects uosc and
 #          mpv-mpris, so the wallpaper would draw an OSD and appear in the
 #          status bar as a media player.
+# Flag:    features.gui.wallpaperVideo (default off). wl-daemon is the normal
+#          wallpaper owner; this window is pinned above its layer-shell
+#          background, so enabling both only hides the still wallpaper.
 {
   config,
   lib,
@@ -20,35 +23,37 @@ let
   systemdUser = config.lib.neg.systemdUser;
 in
 {
-  systemd.user.services.wallpaper-video = systemdUser.mkUserService {
-    presets = [
-      "graphicalSession"
-      "restartOnFailure"
-    ];
-    description = "Looped video wallpaper (mpv + hyprwinwrap)";
-    after = [ "graphical-session.target" ];
-    unitConfig = {
-      # No clip, no unit: keeps the service out of other users' managers and
-      # stops a retry loop when the video has not been rendered yet.
-      ConditionPathExists = "%h/pic/wl/video/waterfall_loop.mp4";
-    };
-    serviceConfig = {
-      Type = "simple";
-      # --wayland-app-id must match `class` in files/gui/hypr/hyprwinwrap.lua.
-      ExecStart = lib.concatStringsSep " " [
-        (lib.getExe pkgs.mpv)
-        "--no-config"
-        "--loop-file=inf"
-        "--no-audio"
-        "--no-osc"
-        "--no-input-default-bindings"
-        "--title=waterfall-bg"
-        "--wayland-app-id=waterfall-bg"
-        "--panscan=1.0"
-        "--really-quiet"
-        "%h/pic/wl/video/waterfall_loop.mp4"
+  config = lib.mkIf config.lib.neg.wallpaperVideoEnabled {
+    systemd.user.services.wallpaper-video = systemdUser.mkUserService {
+      presets = [
+        "graphicalSession"
+        "restartOnFailure"
       ];
-      RestartSec = 5;
+      description = "Looped video wallpaper (mpv + hyprwinwrap)";
+      after = [ "graphical-session.target" ];
+      unitConfig = {
+        # No clip, no unit: keeps the service out of other users' managers and
+        # stops a retry loop when the video has not been rendered yet.
+        ConditionPathExists = "%h/pic/wl/video/waterfall_loop.mp4";
+      };
+      serviceConfig = {
+        Type = "simple";
+        # --wayland-app-id must match `class` in files/gui/hypr/hyprwinwrap.lua.
+        ExecStart = lib.concatStringsSep " " [
+          (lib.getExe pkgs.mpv)
+          "--no-config"
+          "--loop-file=inf"
+          "--no-audio"
+          "--no-osc"
+          "--no-input-default-bindings"
+          "--title=waterfall-bg"
+          "--wayland-app-id=waterfall-bg"
+          "--panscan=1.0"
+          "--really-quiet"
+          "%h/pic/wl/video/waterfall_loop.mp4"
+        ];
+        RestartSec = 5;
+      };
     };
   };
 }

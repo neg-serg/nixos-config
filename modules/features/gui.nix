@@ -9,6 +9,10 @@
     pleamar = {
       enable = mkBool "enable the pleamar shell at login" false;
     };
+    # Looped video wallpaper (mpv in a hyprwinwrap-pinned window). Off by
+    # default: wl-daemon owns the background layer, and a pinned full-screen
+    # window covers it — the two wallpaper systems do not compose.
+    wallpaperVideo = mkBool "enable the looped video wallpaper window (mpv + hyprwinwrap)" false;
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     hyprwhspr.enable = mkBool "enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland)" false;
     hyprKdeconnect.enable = mkBool "enable hypr-kdeconnect-fix (RemoteDesktop portal backend feeding KDE Connect/Deskflow input into Hyprland's virtual-input protocols)" true;
