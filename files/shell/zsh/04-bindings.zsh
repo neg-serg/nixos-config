@@ -51,9 +51,11 @@ bindkey ",." zleiab
 bindkey -M isearch . self-insert # without this, typing a . aborts incremental history search
 bindkey '^xm' inplace_mk_dirs # load the lookup subsystem if it's available on the system
 if (( $+commands[zoxide] )); then
-  # zoxide lives on ^G alone: ^Y has to stay yank (bound in the viins-emacs
-  # layer below) and ^@ drives the Tab-less fzf completion (04-fzf.zsh). The
-  # old ^Y/^@ pair swallowed both.
+  # zoxide directory completion on ^Y (the habit from before the 2026-10-14
+  # audit) and on ^G as the alternative: ^@ still drives the Tab-less fzf
+  # completion (04-fzf.zsh), so the pair no longer collides with set-mark.
+  # `yank` moved to ^X^Y in the viins-emacs layer below.
+  bindkey '^Y' zoxide-complete
   bindkey '^G' zoxide-complete
 fi
 # Job Management Widgets (C-x prefix; ^S is left to incremental search)
@@ -87,7 +89,7 @@ bindkey -M viins '^B' backward-char
 bindkey -M viins '^E' end-of-line
 bindkey -M viins '^F' forward-char
 bindkey -M viins '^K' kill-line
-bindkey -M viins '^Y' yank
+bindkey -M viins '^X^Y' yank # ^Y itself is the zoxide picker above
 bindkey -M viins '^R' history-incremental-search-backward
 bindkey -M viins '^S' history-incremental-search-forward
 bindkey -M viins '^[b' backward-word

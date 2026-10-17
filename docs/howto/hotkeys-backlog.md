@@ -7,8 +7,8 @@ list survives the audit scratch files, with the evidence and the one-line fix fo
 
 ## Landed (orientation)
 
-- shell: `inputrc` vi + vi-insert emacs layer; zsh viins-emacs layer with `^Y` = yank and zoxide
-  moved to `^G` (`files/shell/zsh/04-bindings.zsh`, `04-fzf.zsh`); fzf `Alt-j/k`
+- shell: `inputrc` vi + vi-insert emacs layer; zsh viins-emacs layer with `^Y` = zoxide picker (`^G`
+  too) and `yank` on `^X^Y` (`files/shell/zsh/04-bindings.zsh`, `04-fzf.zsh`); fzf `Alt-j/k`
   (`modules/user/nix-maid/cli/search.nix`).
 - CLI/TUI: khal `export = x` / `delete = D`, mutt pager `C-d` / `C-u`, swayimg
   `C-n/C-p/C-a/C-e/C-b/C-f`, zellij `pane`/`move` entries with RU duplicates plus `Ctrl [` in every
