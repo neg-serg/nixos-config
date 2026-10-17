@@ -3,6 +3,7 @@ AudioEndpointCapsule 1.0 AudioEndpointCapsule.qml
 AudioLevelCapsule 1.0 AudioLevelCapsule.qml
 BaselineAlignedIcon 1.0 BaselineAlignedIcon.qml
 CapsuleButton 1.0 CapsuleButton.qml
+Cava 1.0 Cava.qml
 CenteredCapsuleRow 1.0 CenteredCapsuleRow.qml
 ColorFastInOutBehavior 1.0 ColorFastInOutBehavior.qml
 ConnectivityCapsule 1.0 ConnectivityCapsule.qml
@@ -14,6 +15,8 @@ DelegateEntry 1.0 DelegateEntry.qml
 HiDpiImage 1.0 HiDpiImage.qml
 IconButton 1.0 IconButton.qml
 InlineTrayCapsule 1.0 InlineTrayCapsule.qml
+LinearSpectrum 1.0 LinearSpectrum.qml
+IPhoneSpectrum 1.0 IPhoneSpectrum.qml
 MaterialIcon 1.0 MaterialIcon.qml
 GlyphShadow 1.0 GlyphShadow.qml
 MoonPhaseIcon 1.0 MoonPhaseIcon.qml

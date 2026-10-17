@@ -105,9 +105,54 @@ Singleton {
             property bool use12HourClock: false
             property real fontSizeMultiplier: 1.0  // Font size multiplier (1.0 = normal, 1.2 = 20% larger, 0.8 = 20% smaller)
 
+            // Media spectrum / CAVA
+            property int cavaBars: 86
+            // CAVA tuning
+            property int cavaFramerate: 60
+            property bool cavaMonstercat: false
+            property int cavaGravity: 150000
+            property int cavaNoiseReduction: 12
+            property bool spectrumUseGradient: false
+            property bool spectrumMirror: false
+            property bool showSpectrumTopHalf: false
+            // Spectrum frequency band: full scale (0..spectrumMaxHz) and the
+            // highlighted (coloured) band inside it.
+            property int spectrumMinHz: 15
+            property int spectrumMaxHz: 24000
+            property int spectrumColorMinHz: 15
+            property int spectrumColorMaxHz: 24000
+            property real spectrumDimOpacity: 0.18
+            // 3D depth for the analyser bars: perspective arc + specular gradient.
+            property bool spectrum3D: true
+            property real spectrum3DDepth: 0.35
+            // Custom colour for the analyser bars (hex like #00e5ff); empty = use the preset/accent.
+            property string spectrumColor: ""
+            // Analyser render implementation: bars | led | wave.
+            property string spectrumMode: "bars"
             // Show audio level (volume/mic/Genelec dB) when the cursor hovers
             // the capsule — delayed reveal via the existing pill/tooltip timers
             property bool showVolumeOnHover: true
+            property real spectrumFillOpacity: 0.35
+            property real spectrumHeightFactor: 1.2
+            property real spectrumOverlapFactor: 0.2
+            property real spectrumBarGap: 1.0
+            property real spectrumVerticalRaise: 0.75
+
+            property string activeVisualizerProfile: "classic"
+            property var visualizerProfiles: ({
+                    classic: {
+                        cavaBars: 86,
+                        cavaFramerate: 60,
+                        cavaMonstercat: false,
+                        cavaGravity: 150000,
+                        cavaNoiseReduction: 12,
+                        spectrumFillOpacity: 0.35,
+                        spectrumHeightFactor: 1.2,
+                        spectrumOverlapFactor: 0.2,
+                        spectrumBarGap: 1.0,
+                        spectrumVerticalRaise: 0.75
+                    }
+                })
 
             // Media time brackets styling
             property string timeBracketStyle: "round"
@@ -141,6 +186,12 @@ Singleton {
             property var ignoredPlayers: []
             // NOTE: lastActivePlayers moved to StateCache.qml (runtime state in ~/.cache)
 
+            // Media visualizer (CAVA/LinearSpectrum) toggle
+            property bool showMediaVisualizer: false
+
+            // iPhone-style visualizer beside album art in bar
+            property bool showIphoneVisualizer: false
+
             // Player selection priority
             property var playerSelectionPriority: ["mpdPlaying", "anyPlaying", "mpdRecent", "recent", "manual", "first"]
             property string playerSelectionPreset: "default"
@@ -150,9 +201,18 @@ Singleton {
             property int musicPopupHeight: 250    // logical px, scaled (used when content height unknown)
             property int musicPopupPadding: 12    // logical px, scaled (inner content padding)
             property int musicPopupEdgeMargin: 4  // logical px, scaled (distance from screen edge/panel)
+            // Toast extras
+            property bool musicPopupSpectrum: true          // show spectrum analyzer behind progress
             property bool musicPopupColoredProgress: true   // progress bar in cover accent colour
             property real musicPopupProgressHeight: 3       // logical px, scaled (progress line thickness)
 
+            // Small bar analyser (left of the bar album art)
+            property bool barAnalyserMirror: false          // false = one-sided
+            property int barAnalyserBars: 5
+            // Large toast analyser (behind the popup progress bar)
+            property bool toastAnalyserMirror: false        // false = one-sided
+            property int toastAnalyserBars: 64
+            property string toastAnalyserStyle: "neon-cyan" // neon-cyan | neon-violet | neon-lime | neon-orange | holographic | analog-amber | analog-rose | analog-vu
 
             property int networkPingIntervalMs: 30000
             property string networkPingTarget: "8.8.8.8"
