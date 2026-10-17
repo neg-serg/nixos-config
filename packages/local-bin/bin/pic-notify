@@ -18,14 +18,42 @@ fi
 echo "$img" | sed -e "s/.bmp$/.png/" | wl-copy
 
 # ── Metadata (fast: header-only) ───────────────────────────────────────────
-w=0; h=0; depth=""; chan_raw=0; chan=-1
+# %[channels] is a bare count on ImageMagick 6 and a channel-set name plus a
+# count on 7 ("srgba 4.0"). Take the trailing number when it is one, and fall
+# back to the name so the label survives both spellings.
+channel_label() {
+  n=""
+  for tok in $1; do
+    case $tok in
+      *.*) tok=${tok%%.*} ;;
+    esac
+    case $tok in
+      ""|*[!0-9]*) ;;
+      *) n=$tok ;;
+    esac
+  done
+  case ${n:-} in
+    1) printf 'Gray' ;;
+    2) printf 'Gray+Alpha' ;;
+    3) printf 'RGB' ;;
+    4) printf 'RGBA' ;;
+    "") case $1 in
+          srgba*|rgba*) printf 'RGBA' ;;
+          graya*|greya*) printf 'Gray+Alpha' ;;
+          gray*|grey*) printf 'Gray' ;;
+          srgb*|rgb*) printf 'RGB' ;;
+        esac ;;
+    *) printf '%sch' "$n" ;;
+  esac
+}
+
+w=0; h=0; depth=""; chan_raw=""; cn=""
 if command -v identify >/dev/null 2>&1; then
-  read -r w h depth chan_raw _ 2>/dev/null <<-EOF
+  read -r w h depth chan_raw 2>/dev/null <<-EOF
 	$(identify -ping -format '%w %h %z %[channels]' "$img" 2>/dev/null)
 	EOF
-  [ -z "$w" ] && { w=0; h=0; depth=""; chan_raw=0; }
-  chan=$(echo "$chan_raw" | awk '{print $NF}')
-  [ -z "$chan" ] && chan=-1
+  [ -z "$w" ] && { w=0; h=0; depth=""; chan_raw=""; }
+  cn=$(channel_label "$chan_raw")
 fi
 
 # ── File size (human-readable) ─────────────────────────────────────────────
@@ -40,17 +68,8 @@ fi
 
 # ── Depth description ──────────────────────────────────────────────────────
 depth_str=""
-if [ -n "$depth" ] && [ "$chan" -ge 1 ] 2>/dev/null; then
-  case "$chan" in
-    1) cn="Gray";;
-    2) cn="Gray+Alpha";;
-    3) cn="RGB";;
-    4) cn="RGBA";;
-    *) cn="${chan}ch";;
-  esac
-  depth_str="${depth}-bit ${cn}"
-elif [ -n "$depth" ]; then
-  depth_str="${depth}-bit"
+if [ -n "$depth" ]; then
+  depth_str="${depth}-bit${cn:+ $cn}"
 fi
 
 # ── Timestamp from filename or stat ────────────────────────────────────────
