@@ -82,8 +82,12 @@ with the compositor without hopping across multiple files. hy3 is the layout; th
   factory — the focused node (a window, or the tab group it lives in) floats above the layout while
   keeping its slot in it, so the neighbours do not reflow and reattaching returns it to the same
   box. Keys: `ALT+E` → `e` (the special submap, replacing the core float toggle, which no-ops under
-  hy3) and `d` in the tiling submap (`M4+minus`). `hy3opt()` in `hyprland.lua` keeps both a silent
-  no-op if the .so is ever a stock build. Not `M4+SHIFT+F`: that is the pseudo-fullscreen toggle and
+  hy3) and `d` in the tiling submap (`M4+minus`). `hy3detach()` in `hyprland.lua` keeps both a
+  silent no-op if the .so is ever a stock build, and shrinks a freshly detached window to
+  `DETACH_SCALE` (70 %) of its box around the centre: the patch keeps the layout slot on purpose, so
+  on a one-window workspace the float would otherwise cover exactly the screen and the press would
+  look like nothing happened. Reattaching restores the tiled box, and a toggle on an
+  already-floating node never resizes. Not `M4+SHIFT+F`: that is the pseudo-fullscreen toggle and
   the key parser is case-insensitive, so both would be one binding.
 - **Load**: `hy3-setup` (`main.nix`) `hyprctl plugin load`s `lib/libhy3.so`, logs every run to
   `$XDG_RUNTIME_DIR/hy3-setup.log` and polls `hyprctl plugin list` for up to ~5 s (a load issued

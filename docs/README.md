@@ -15,9 +15,16 @@ configuration.
 
 ## Quick Start (System)
 
-- Rebuild: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`
+- Rebuild: `sudo nixos-rebuild switch --flake /etc/nixos#<host>` (or `nh os switch`), always with
+  `--option substitute false` — cache.nixos.org is unreliable from this region.
+- Agent rollout without a password: `just agent-switch "$(readlink -f result)"`.
+- Plain `nixos-rebuild` path with the password prompt: `just switch-sudo`.
 - Formatting/lint: `just fmt`, `just lint`, `just check`
 - Hooks (optional): `just hooks-enable`
+- `nom`/`nh` carry a local patch for Determinate Nix's activity type `10113`
+  (`modules/tools/default.nix`, upstream
+  [PR #321](https://github.com/maralorn/nix-output-monitor/pull/321)); drop it once a release ships
+  the fix. Without it `nh os switch` dies with `invalid activity type: 10113`.
 
 ## Quick Start (User Configuration)
 
