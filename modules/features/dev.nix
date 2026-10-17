@@ -37,6 +37,11 @@
         description = "Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries.";
       };
     };
+    # The Hub is a manual .deb install in ~/opt/unityhub; the module only ships
+    # proxy-aware launchers (unityhub-proxy, unity-proxy) for it.
+    unity = {
+      enable = mkBool "enable proxy-aware Unity Hub / unity CLI launchers (requires features.net.proxy.enable)" false;
+    };
     bpf.enable = mkBool "enable BPF tracing tools (bpftrace, below)" false;
   };
 
