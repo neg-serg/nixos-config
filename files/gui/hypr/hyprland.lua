@@ -486,19 +486,18 @@ hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record stop"), { release =
 -- included) *and* the main-menu helper actions — menu-search lists both and fires
 -- the chosen entry. Replaces the bare main-menu picker on this hotkey.
 hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("menu-search"), { locked = true })
--- Screenshots go through HyprCapture (the plugin is loaded by the hyprcapture
--- user unit, see main.nix): the namespace is still nil while this file is
--- parsed, so the actions are lazy functions resolved at press time. The plugin
--- saves into the shots/ directory the grim flow used, copies to the clipboard
--- and shows its own result thumbnail (what pic-info used to preview), and
--- `open()` captures without the annotation toolbar — open_editor() is the
--- annotated variant.
-hl.bind(M4 .. "+" .. SH .. "+r", function()
-  hl.plugin.hyprcapture.open("fullscreen")
-end)
-hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", function()
-  hl.plugin.hyprcapture.open("region")
-end)
+-- Screenshots are the grim flow again: `-l 0` is the fastest PNG compression
+-- (the file is on disk immediately) and grim captures no pointer unless `-c`
+-- is passed — the HyprCapture overlay saves its frozen frame with the cursor
+-- baked in, and its `include_cursor` option is false already, so there is
+-- nothing to switch off. The toast is not fired from here: the
+-- screenshot-toast.path unit (main.nix) sees the new file in the shots
+-- directory and runs pic-info for it — one producer instead of two racing
+-- ones — and waits for the PNG to be complete. HyprCapture stays loaded for
+-- its editor/scrolling capture and recording
+-- (hl.plugin.hyprcapture.open_editor(...), record_toggle()); nothing binds it.
+hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/Screenshot-$(date \'+%Y-%m-%d-%H%M%S\').png"; grim -l 0 "$shot"'))
+hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/Screenshot-$(date \'+%Y-%m-%d-%H%M%S\').png"; grim -l 0 -g "$(slurp)" "$shot"'))
 hl.bind(M4 .. "+" .. SH .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec screen"))
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec area"))
 -- Screen annotation overlay (wayscriber): toggle the resident drawing layer
