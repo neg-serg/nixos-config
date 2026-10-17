@@ -5,9 +5,9 @@ import qs.Settings
 /*!
  * BuildStatus — bar capsule for running Nix builds.
  *
- * Streams `nixbuild-status --watch 1 --json --hide-idle`: the tool prints one
- * JSON line per state change and nothing at all while the store is idle, so
- * the capsule only takes bar space while something is actually evaluating,
+ * Streams `nixbuild-status --watch 1 --json`: the tool prints one JSON line per
+ * state change, and the idle state is rendered as an empty label here, so the
+ * capsule only takes bar space while something is actually evaluating,
  * building or activating. The capsule carries the summary (count + what is
  * compiling now); the tooltip and the tap-through popup list every build
  * separately. Detection happens inside the tool (/proc + the Nix derivation
@@ -112,16 +112,22 @@ OverlayToggleCapsule {
             "--watch", "1",
             "--json",
             "--icons", "none",
-            "--compact",
-            "--hide-idle"
+            "--compact"
         ]
         jsonLine: true
         restartMode: "always"
         backoffMs: 2000
 
         onJson: obj => {
-            root.stateClass = String(obj["class"] || "idle");
-            root.statusText = String(obj.text || "");
+            const cls = String(obj["class"] || "idle");
+            root.stateClass = cls;
+            // Deliberately no --hide-idle: that flag blanks the line on idle, and
+            // ProcessRunner drops empty lines, so the idle transition never
+            // reached this handler and the capsule kept the last build on screen
+            // forever (seen after the 2026-10-17 agent switch: a stale
+            // "activating" capsule). The tool prints on *change* only, so the
+            // idle line is free; it just must not mean "visible".
+            root.statusText = (cls === "idle") ? "" : String(obj.text || "");
             root.statusTooltip = String(obj.tooltip || "");
             root.builds = obj.builds || [];
         }
