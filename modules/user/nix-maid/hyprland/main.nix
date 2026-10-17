@@ -2,6 +2,15 @@
 # Hyprland Plugins
 # (moved out of the docs tree; keep it in sync with the code it describes)
 #
+# Known upstream crash (observed 2026-10-17 08:23, Hyprland 0.56.2): an internal
+# assertion fired inside CHyprOpenGLImpl::begin while a monitor frame began to
+# render (page-flip path, drmHandleEvent -> renderMonitor -> beginRender). The
+# compositor aborted, systemd's crash handler restarted it with --safe-mode, and
+# a reboot followed. The backtrace points at the renderer's begin pass, not at a
+# plugin frame, so there is nothing to patch here; if it recurs, capture
+# `coredumpctl info <pid>` and compare the frame before reporting upstream.
+#
+#
 #
 # This note pulls together every moving part of the Hyprland plugin stack so the plugins stay aligned
 # with the compositor without hopping across multiple files. hy3 is the layout; the other plugins
