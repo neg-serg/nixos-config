@@ -76,8 +76,15 @@ with the compositor without hopping across multiple files. hy3 is the layout; th
 
 ### hy3 (i3-style manual tiling — the layout)
 
-- **Build**: no overlay entry — `pkgs.hyprlandPlugins.hy3` comes from nixpkgs (0.56.0.1, upstream
-  tag `hl0.56.0.1`), compiled against the same 0.56.2 commit as the compositor.
+- **Build**: nixpkgs' `pkgs.hyprlandPlugins.hy3` (0.56.0.1, upstream tag `hl0.56.0.1`), compiled
+  against the same 0.56.2 commit as the compositor, plus one local patch from `overlay.nix`:
+  `hyprland/hy3-detach-float.patch` adds the `hy3:detach` dispatcher and the `hy3.detach` Lua
+  factory — the focused node (a window, or the tab group it lives in) floats above the layout while
+  keeping its slot in it, so the neighbours do not reflow and reattaching returns it to the same
+  box. Keys: `ALT+E` → `e` (the special submap, replacing the core float toggle, which no-ops under
+  hy3) and `d` in the tiling submap (`M4+minus`). `hy3opt()` in `hyprland.lua` keeps both a silent
+  no-op if the .so is ever a stock build. Not `M4+SHIFT+F`: that is the pseudo-fullscreen toggle and
+  the key parser is case-insensitive, so both would be one binding.
 - **Load**: `hy3-setup` (`main.nix`) `hyprctl plugin load`s `lib/libhy3.so`, logs every run to
   `$XDG_RUNTIME_DIR/hy3-setup.log` and polls `hyprctl plugin list` for up to ~5 s (a load issued
   while the compositor is busy with the login transition does not always stick). The helper is

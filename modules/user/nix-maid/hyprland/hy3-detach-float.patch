@@ -1,0 +1,560 @@
+--- a/src/Hy3Node.hpp
++++ b/src/Hy3Node.hpp
+@@ -53,6 +53,15 @@
+ 	float size_ratio = 1.0;
+ 	bool hidden = false;
+ 
++	// Detached (ion3-style float). The node keeps its place in the tree - the parent
++	// still lays its slot out, so the neighbours do not reflow - while its windows
++	// live in Hyprland's floating layer and hy3 stops setting their geometry.
++	// `floatBox` is where the floating frame actually is (the visible tab's box, or
++	// wherever the user dragged it): the box a tab switch inside a detached group
++	// hands over to the next tab.
++	bool detached = false;
++	CBox floatBox {};
++
+ 	virtual ~Hy3Node() = default;
+ 	Hy3Node(const Hy3Node&) = delete;
+ 	Hy3Node& operator=(const Hy3Node&) = delete;
+@@ -103,6 +112,14 @@
+ 	std::generator<Desktop::View::CWindow&> windows(bool visibleOnly = false);
+ 	std::string debugNode();
+ 
++	// true when this node or any ancestor is detached: that whole subtree floats, so
++	// no window in it may be positioned by the tiling layout.
++	bool detached_tree();
++	// the nearest detached ancestor group, when this node lives inside one
++	Hy3GroupNode* detached_group();
++	// clear the flag on this node and everything below it (used on reattach)
++	void clear_detached();
++
+ 	Hy3Node* collapseParents(CollapsePolicy policy);
+ 	UP<Hy3Node> extractAndMerge(
+ 	    Hy3Node& child,
+--- a/src/Hy3Node.cpp
++++ b/src/Hy3Node.cpp
+@@ -187,6 +187,35 @@
+ 	return false;
+ }
+ 
++bool Hy3Node::detached_tree() {
++	for (auto& node: this->ancestors()) {
++		if (node.detached) return true;
++	}
++
++	return false;
++}
++
++Hy3GroupNode* Hy3Node::detached_group() {
++	for (auto& node: this->ancestors()) {
++		if (!node.detached) continue;
++		// A detached window owns its box itself; only a detached group has a float box
++		// for its tabs to share.
++		if (node.is_group()) return &node.as_group();
++		return nullptr;
++	}
++
++	return nullptr;
++}
++
++void Hy3Node::clear_detached() {
++	this->detached = false;
++	if (!this->is_group()) return;
++
++	for (auto& child: this->as_group().children) {
++		child->clear_detached();
++	}
++}
++
+ Hy3NodeType Hy3Node::type() const {
+ 	if (dynamic_cast<const Hy3GroupNode*>(this)) return Hy3NodeType::Group;
+ 	if (dynamic_cast<const Hy3TargetNode*>(this)) return Hy3NodeType::Target;
+@@ -240,6 +269,15 @@
+ 	case Hy3NodeType::Target: {
+ 		auto window = this->as_window();
+ 		window->setHidden(false);
++
++		// A tab of a detached frame takes over the frame's box: hy3 does not lay the
++		// window out any more, and the box the frame floats at lives on the group
++		// (including wherever the user dragged it in the meantime).
++		if (auto* group = this->detached_group()) {
++			auto* layout = this->layout();
++			if (layout != nullptr && window->m_isFloating) layout->moveDetachedGroupTab(*group, *this);
++		}
++
+ 		Desktop::focusState()->fullWindowFocus(window, reason);
+ 		if (warp) Hy3Layout::warpCursorToBox(window->m_reportedPosition, window->m_reportedSize);
+ 		break;
+@@ -338,9 +376,40 @@
+ 	    this->visualBox.w + offsets.x + offsets.w, this->visualBox.h + offsets.y + offsets.h
+ 	);
+ 
++	// A detached (floating) frame renders at the box of its visible window, not at the
++	// slot the parent just gave it: read that box back on every pass, so the frame
++	// follows a dragged or resized window. `offsets` are the extents the tiled case
++	// maps a visual box to a window box with, so the inverse mapping is exact (the tab
++	// bar offset cancels out of it). The parent's own layout is untouched: it lays the
++	// slot out from size ratios, which is exactly what keeps the neighbours put.
++	if (this->detached && this->is_group()) {
++		for (auto& window_ref: this->windows(true)) {
++			auto window = window_ref.m_self.lock();
++			if (!window) continue;
++
++			auto target = window->layoutTarget();
++			if (!target) continue;
++
++			this->floatBox = CBox(target->position());
++			break;
++		}
++
++		this->visualBox = CBox(
++		    this->floatBox.x + offsets.x, this->floatBox.y + offsets.y,
++		    this->floatBox.w - offsets.x - offsets.w, this->floatBox.h - offsets.y - offsets.h
++		);
++		this->logicalBox = this->floatBox;
++	}
++
+ 	// Keep in sync with WindowTarget::updatePos
+ 	if (this->is_target()) {
+ 		this->as_window()->setHidden(this->hidden);
++
++		// Detached: Hyprland's floating layer owns the geometry now. The box this node
++		// carries is still its slot (kept up to date as if the window were tiled) - and
++		// keeping that slot reserved is the whole point of the detach.
++		if (this->detached_tree()) return;
++
+ 		this->as_target()->setPositionGlobal({.logicalBox = this->logicalBox, .visualBox = this->visualBox});
+ 		// warp on hidden fixes bounding boxes for the tab click handler
+ 		if (no_animation || this->hidden) this->as_target()->warpPositionSize();
+--- a/src/Hy3Layout.hpp
++++ b/src/Hy3Layout.hpp
+@@ -144,6 +144,11 @@
+ 	void shiftWindow(const CWorkspace* workspace, ShiftDirection, bool once, bool visible);
+ 	void shiftFocus(const CWorkspace* workspace, ShiftDirection, bool visible, bool warp);
+ 	void toggleFocusLayer(const CWorkspace* workspace, bool warp);
++	// ion3-style detach: the focused node (a window, or the tab group it lives in)
++	// floats while keeping its slot in the layout. `state` unset toggles.
++	void detach(const CWorkspace* workspace, std::optional<bool> state);
++	// hand the float box of a detached group over to the tab being focused
++	void moveDetachedGroupTab(Hy3GroupNode& group, Hy3Node& tab);
+ 	bool shiftMonitor(Hy3Node&, ShiftDirection, bool follow);
+ 	Hy3Node* focusMonitor(ShiftDirection);
+ 
+@@ -194,9 +199,25 @@
+ 	void updateAutotileWorkspaces();
+ 	bool shouldAutotileWorkspace(const CWorkspace* workspace);
+ 
++	// Detach (ion3-style float): a node keeps its slot while its windows float.
++	void setNodeDetached(Hy3Node& node, bool detached);
++	// Float the visible windows of `node` (the ones already floating are left alone)
++	// and put them at `box`.
++	void floatDetachedWindows(Hy3Node& node, const CBox& box);
++	// Bring every window of `node` back into the tiling.
++	void tileDetachedWindows(Hy3Node& node);
++	// Drop detached nodes whose windows are gone: a floating window has left the
++	// tiled layer, so Hyprland never routes its close (or its move to another
++	// workspace) through removeTarget.
++	bool pruneDetachedNodes();
++	Hy3Node* findDeadDetachedNode();
++	bool detachedNodeAlive(Hy3Node& node);
++
+ 	// Per-instance event listeners
+ 	CHyprSignalListener m_windowActiveListener;
+ 	CHyprSignalListener m_mouseButtonListener;
++	CHyprSignalListener m_windowDestroyListener;
++	CHyprSignalListener m_windowMoveToWorkspaceListener;
+ 
+ 	struct {
+ 		std::string raw_workspaces;
+--- a/src/Hy3Layout.cpp
++++ b/src/Hy3Layout.cpp
+@@ -23,6 +23,7 @@
+ #include <hyprland/src/plugins/PluginSystem.hpp>
+ #include <hyprland/src/xwayland/XWayland.hpp>
+ #include <hyprland/src/config/shared/workspace/WorkspaceRuleManager.hpp>
++#include <hyprland/src/layout/LayoutManager.hpp>
+ #include <hyprutils/math/Vector2D.hpp>
+ #include <hyprland/src/config/shared/ConfigErrors.hpp>
+ #include <hyprland/src/config/shared/complex/ComplexDataTypes.hpp>
+@@ -98,10 +99,40 @@
+ 					return;
+ 				}
+ 
++		    if (this->pruneDetachedNodes()) this->recalcGeometry();
+ 		    this->onWindowFocusChange(window);
+ 	    }
+ 	);
+ 
++	// A detached window has left the tiled layer, so its close/destroy (and its move
++	// to another workspace) go to the floating algorithm and hy3 never hears about
++	// them: prune such nodes here, with recalcGeometry as the catch-all for every
++	// other way a floating window can go away.
++	m_windowDestroyListener = Event::bus()->m_events.window.destroy.listen(
++		    [this](PHLWINDOWREF) {
++			if (!this->pruneDetachedNodes()) return;
++
++			this->recalcGeometry();
++			this->updateGroupBorderColors();
++		    }
++	);
++
++	m_windowMoveToWorkspaceListener = Event::bus()->m_events.window.moveToWorkspace.listen(
++		    [this](PHLWINDOW window, PHLWORKSPACE) {
++			if (window) {
++				auto* node = this->getNodeFromWindow(window.get());
++				// Only detached nodes survive a move on their own: a tiled one is
++				// removed from this layout by Hyprland itself.
++				if (node == nullptr || !node->detached_tree()) return;
++			}
++
++			if (!this->pruneDetachedNodes()) return;
++
++			this->recalcGeometry();
++			this->updateGroupBorderColors();
++		    }
++	);
++
+ 	m_mouseButtonListener = Event::bus()->m_events.input.mouse.button.listen(
+ 	    [this](IPointer::SButtonEvent event, Event::SCallbackInfo& info) {
+ 		    if (event.state != 1 || event.button != 272) return;
+@@ -178,6 +209,15 @@
+ 
+ 	auto* existing = this->getNodeFromTarget(target);
+ 	if (existing != nullptr) {
++		if (existing->detached) {
++			// The target was detached and now comes back into the tiled layer: the
++			// node never left the tree, so there is nothing to insert.
++			existing->clear_detached();
++			this->recalcGeometry();
++			this->updateGroupBorderColors();
++			return;
++		}
++
+ 		hy3_log(
+ 		    ERR,
+ 		    "newTarget called with a target ({:x}) that is already tiled (node: {:x})",
+@@ -357,6 +397,19 @@
+ void Hy3Layout::movedTarget(SP<Layout::ITarget> target, std::optional<Vector2D> focalPoint) {
+ 	if (g_suppressInsert) return;
+ 
++	// Un-floating arrives here, not through newTarget (Layout::CAlgorithm routes it
++	// through moveTarget): the node kept its slot, so the window is reattached
++	// exactly where it was instead of being dropped next to the focused node.
++	if (auto* existing = this->getNodeFromTarget(target); existing != nullptr) {
++		if (existing->detached) {
++			existing->clear_detached();
++			this->recalcGeometry();
++			this->updateGroupBorderColors();
++		}
++
++		return;
++	}
++
+ 	// Use mouse position as focal point when none provided (e.g. DnD drop)
+ 	if (!focalPoint) focalPoint = g_pInputManager->getMouseCoordsInternal();
+ 
+@@ -369,6 +422,20 @@
+ 	auto* node = this->getNodeFromTarget(target);
+ 	if (node == nullptr) return;
+ 
++	// A float toggle takes the target out of the tiled layer *before* its floating flag
++	// flips (Layout::CAlgorithm::setFloating calls removeTarget first), and only that
++	// path marks the target wasTiling (Layout::CSpace::toggleTargetFloating). Such a
++	// node keeps its place: the slot stays reserved, so the neighbours do not reflow,
++	// and the window is reattached to the very same box when it is tiled again. A
++	// window that is really going away (closed, moved to another workspace or
++	// monitor) does not set wasTiling and takes the removal path below.
++	if (node->detached || (target->wasTiling() && !target->floating())) {
++		node->detached = true;
++		this->recalcGeometry();
++		this->updateGroupBorderColors();
++		return;
++	}
++
+ 	auto window = node->as_window();
+ 
+ 	hy3_log(
+@@ -389,6 +456,164 @@
+ 	this->updateGroupBorderColors();
+ }
+ 
++void Hy3Layout::detach(const CWorkspace* workspace, std::optional<bool> state) {
++	auto* node = this->getWorkspaceFocusedNode(workspace);
++	if (node == nullptr || node->is_root()) return;
++
++	// A window inside a tab group is not detached on its own: the frame is the group,
++	// so the whole group floats and its tabs keep behaving like tabs.
++	while (node->is_target() && node->parent != nullptr && node->parent->is_group()
++	       && !node->parent->is_root() && node->parent->as_group().isTab())
++	{
++		node = node->parent.get();
++	}
++
++	this->setNodeDetached(*node, state.value_or(!node->detached));
++}
++
++void Hy3Layout::moveDetachedGroupTab(Hy3GroupNode& group, Hy3Node& tab) {
++	// The visible tab is the frame while detached: remember where it is (the user may
++	// have dragged it) so the tab coming in takes over exactly that place.
++	for (auto& child: group.children) {
++		if (!child->is_target() || !child->valid()) continue;
++
++		auto window = child->as_window();
++		auto target = child->as_target();
++		if (!window || !target || window->isHidden() || !target->floating()) continue;
++
++		group.floatBox = CBox(target->position());
++		break;
++	}
++
++	auto target = tab.as_target();
++	if (!target) return;
++
++	if (!target->floating()) {
++		// The tab was hidden when the group detached, so it never floated: do it now,
++		// at the frame's box.
++		this->floatDetachedWindows(tab, group.floatBox);
++		return;
++	}
++
++	target->setPositionGlobal(group.floatBox);
++}
++
++void Hy3Layout::setNodeDetached(Hy3Node& node, bool detached) {
++	if (node.detached == detached) return;
++	node.assertNotRoot();
++
++	if (!detached) {
++		node.clear_detached();
++		this->tileDetachedWindows(node);
++		this->recalcGeometry();
++		this->updateGroupBorderColors();
++		return;
++	}
++
++	// Float exactly where the window already is: a detach that moved the window would
++	// be indistinguishable from a workspace shuffle.
++	CBox box = node.visualBox;
++	for (auto& window_ref: node.windows(true)) {
++		auto window = window_ref.m_self.lock();
++		if (!window) continue;
++
++		auto target = window->layoutTarget();
++		if (!target) continue;
++
++		box = CBox(target->position());
++		break;
++	}
++
++	// Set before floating: Hyprland calls removeTarget on the way out of the tiled
++	// layer, and that is what has to see the flag and keep the node.
++	node.detached = true;
++	node.floatBox = box;
++	this->floatDetachedWindows(node, box);
++	hy3_log(LOG, "detached node {:x}", (uintptr_t) &node);
++}
++
++void Hy3Layout::floatDetachedWindows(Hy3Node& node, const CBox& box) {
++	for (auto& window_ref: node.windows(true)) {
++		auto window = window_ref.m_self.lock();
++		if (!window) continue;
++
++		auto target = window->layoutTarget();
++		if (!target || target->floating()) continue;
++
++		// changeFloatingMode recentres a window around its remembered floating size, so
++		// that size is set to the detach box first and the position is forced back to it
++		// right after.
++		target->rememberFloatingSize(box.size());
++		g_layoutManager->changeFloatingMode(target);
++		target->setPositionGlobal(box);
++		Desktop::windowState()->raise(window);
++	}
++}
++
++void Hy3Layout::tileDetachedWindows(Hy3Node& node) {
++	for (auto& window_ref: node.windows()) {
++		auto window = window_ref.m_self.lock();
++		if (!window) continue;
++
++		auto target = window->layoutTarget();
++		if (!target || !target->floating()) continue;
++
++		g_layoutManager->changeFloatingMode(target);
++	}
++}
++
++bool Hy3Layout::detachedNodeAlive(Hy3Node& node) {
++	if (!node.valid()) return false;
++
++	auto workspace = this->workspace();
++	if (!workspace) return false;
++
++	for (auto& window_ref: node.windows()) {
++		auto window = window_ref.m_self.lock();
++		if (!window || !window->m_isMapped) continue;
++		if (window->m_workspace == workspace) return true;
++	}
++
++	return false;
++}
++
++Hy3Node* Hy3Layout::findDeadDetachedNode() {
++	if (!this->root) return nullptr;
++
++	std::vector<Hy3Node*> stack {this->root.get()};
++	while (!stack.empty()) {
++		auto* node = stack.back();
++		stack.pop_back();
++
++		if (!node->is_group()) continue;
++
++		for (auto& child: node->as_group().children) {
++			if (child->detached) {
++				if (!this->detachedNodeAlive(*child)) return child.get();
++				continue;
++			}
++
++			stack.push_back(child.get());
++		}
++	}
++
++	return nullptr;
++}
++
++bool Hy3Layout::pruneDetachedNodes() {
++	bool pruned = false;
++
++	// One at a time: dropping a node merges its parent away, which would invalidate
++	// every other candidate found in the same walk.
++	while (auto* dead = this->findDeadDetachedNode()) {
++		hy3_log(LOG, "pruning detached node {:x}: its windows are gone", (uintptr_t) dead);
++		dead->parent->extractAndMerge(*dead, nullptr, CollapsePolicy::InvalidOnly);
++		pruned = true;
++	}
++
++	return pruned;
++}
++
+ void Hy3Layout::onWindowFocusChange(PHLWINDOW window) {
+ 	auto* node = this->getNodeFromWindow(window.get());
+ 	if (node == nullptr) return;
+@@ -437,6 +662,11 @@
+ 	auto ma = workspace->m_monitor->logicalBoxMinusReserved();
+ 	auto wa = space->workArea();
+ 
++	// Detached windows are outside the tiled layer, so several ways of losing one
++	// (a close, a workspace or monitor change) never reach removeTarget.
++	// recalcGeometry runs on every relayout and is the catch-all for those nodes.
++	this->pruneDetachedNodes();
++
+ 	if (this->root) {
+ 	this->root->visualBox = wa;
+ 	this->root->recalcSizePosRecursive(CBox{
+@@ -1262,6 +1492,9 @@
+ ) {
+ 	auto* node = this->getWorkspaceFocusedNode(workspace, false, true);
+ 	if (node == nullptr) return;
++	// Latching a detached node would hand its parent's box to a window that is
++	// already floating somewhere else entirely.
++	if (node->detached_tree()) return;
+ 	PHLWINDOW window;
+ 
+ 	switch (option) {
+--- a/src/dispatchers.cpp
++++ b/src/dispatchers.cpp
+@@ -949,6 +949,79 @@
+ 	return debugNodes();
+ }
+ 
++static constexpr std::string_view DETACH_ACTION_HELP = "on/off/toggle";
++
++struct SDetachAction {
++	std::optional<bool> state; // unset = toggle
++	bool valid = true;
++};
++
++static SDetachAction parseDetachArg(std::string_view arg) {
++	if (arg.empty() || arg == "toggle") return {};
++	if (arg == "on" || arg == "true") return {.state = true};
++	if (arg == "off" || arg == "false") return {.state = false};
++	return {.valid = false};
++}
++
++// ion3-style detach: the focused node (a window, or the tab group it lives in)
++// floats above the layout while keeping its slot in it, and the same command
++// reattaches it exactly where it was.
++static SDispatchResult detach(std::optional<bool> state) {
++	auto* hy3 = hy3InstanceForAction();
++	if (!hy3) return SDispatchResult {};
++
++	hy3->detach(hy3->workspace().get(), state);
++	return SDispatchResult {};
++}
++
++static int luaDetach(lua_State* L) {
++	static constexpr const char* FN = "hl.plugin.hy3.detach";
++	luaCheckArgCount(L, FN, 0, 1);
++
++	std::optional<bool> state;
++	if (!lua_isnoneornil(L, 1)) {
++		std::string action;
++		if (lua_istable(L, 1)) {
++			if (auto opt = LuaInternal::tableOptStr(L, 1, "action"); opt) {
++				action = *opt;
++			} else if (auto on = LuaInternal::tableOptBool(L, 1, "on"); on) {
++				state = *on;
++			}
++		} else {
++			action = luaStringArg(L, 1, FN, "action");
++		}
++
++		if (!action.empty()) {
++			auto parsed = parseDetachArg(action);
++			if (!parsed.valid)
++				return luaL_error(
++				    L,
++				    "%s: invalid action '%s' (expected %s)",
++				    FN,
++				    action.c_str(),
++				    DETACH_ACTION_HELP.data()
++				);
++			state = parsed.state;
++		}
++	}
++
++	auto dspDetach = [](lua_State* L) -> int {
++		int mode = static_cast<int>(lua_tointeger(L, lua_upvalueindex(1)));
++		detach(mode < 0 ? std::optional<bool> {} : std::optional<bool> {mode != 0});
++		return 0;
++	};
++
++	lua_pushinteger(L, luaOptionalBoolMode(state));
++	lua_pushcclosure(L, dspDetach, 1);
++	return 1;
++}
++
++static SDispatchResult dispatch_detach(std::string arg) {
++	auto parsed = parseDetachArg(arg);
++	if (!parsed.valid) return SDispatchResult {};
++	return detach(parsed.state);
++}
++
+ static void registerLuaDispatchers() {
+ 	HyprlandAPI::addLuaFunction(PHANDLE, "hy3", "make_group", luaMakeGroup);
+ 	HyprlandAPI::addLuaFunction(PHANDLE, "hy3", "change_group", luaChangeGroup);
+@@ -966,6 +1039,7 @@
+ 	HyprlandAPI::addLuaFunction(PHANDLE, "hy3", "lock_tab", luaLockTab);
+ 	HyprlandAPI::addLuaFunction(PHANDLE, "hy3", "equalize", luaEqualize);
+ 	HyprlandAPI::addLuaFunction(PHANDLE, "hy3", "debug_nodes", luaDebugNodes);
++	HyprlandAPI::addLuaFunction(PHANDLE, "hy3", "detach", luaDetach);
+ }
+ 
+ void registerDispatchers() {
+@@ -985,5 +1059,6 @@
+ 	HyprlandAPI::addDispatcherV2(PHANDLE, "hy3:locktab", dispatch_locktab);
+ 	HyprlandAPI::addDispatcherV2(PHANDLE, "hy3:equalize", dispatch_equalize);
+ 	HyprlandAPI::addDispatcherV2(PHANDLE, "hy3:debugnodes", dispatch_debug);
++	HyprlandAPI::addDispatcherV2(PHANDLE, "hy3:detach", dispatch_detach);
+ 	registerLuaDispatchers();
+ }

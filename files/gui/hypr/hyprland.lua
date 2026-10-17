@@ -305,6 +305,17 @@ local function hy3(factory)
   end
 end
 
+-- Same, but for a factory a build may not have: the local detach/float patch
+-- adds hy3.detach, and a stock hy3 (or a session where the patched .so failed to
+-- load) must make the bind a silent no-op rather than a Lua error on every press.
+local function hy3opt(name, arg)
+  return function()
+    local plugin = hl.plugin and hl.plugin.hy3
+    local factory = plugin and plugin[name]
+    if factory then return hl.dispatch(factory(arg)) end
+  end
+end
+
 -- --- Top-level binds (bindings.conf) ---
 -- Use "all" (not "current"): kanata's virtual keyboard is the last active
 -- device, so "current" switches only it and the bar/typing layouts diverge.
@@ -623,7 +634,10 @@ hl.define_submap("special", "reset", function()
   submap_resets()
   binde_reset("d", hl.dsp.exec_cmd('raise --match "class:regex=^org\\.nicotine_plus\\.Nicotine$" --launch "nicotine"'))
   binde_reset(SH .. "+l", hl.dsp.exec_cmd("hyprctl switchxkblayout all 0")) -- hyprlock temporarily disabled (2026-08-31)
-  binde_reset("e", hl.dsp.window.float({ action = "toggle" }))
+  -- Detach/float is the hy3 patch's dispatcher: under hy3 the core float
+  -- toggle no longer moves anything, so Alt+E -> e is where the old
+  -- "float this window" habit goes now (ion3's META+K -> D → E here).
+  binde_reset("e", hy3opt("detach", "toggle"))
   binde_reset("f", hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }))
   binde_reset("z", hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }))
   hl.bind("semicolon", hl.dsp.submap("reset"), { repeating = true })
@@ -647,6 +661,8 @@ hl.define_submap("tiling", "reset", function()
   -- M4+CTRL+SHIFT+1..5), so these stay core dispatchers that no-op here.
   binde_reset("i", hl.dsp.window.move({ into_group = "l" }))    -- neighbour on the left into the tab group (no-op if it is not a group)
   binde_reset("o", hl.dsp.window.move({ out_of_group = true })) -- window out of the tab group, back into its own column
+  -- ion3's detach is META+K → D; the everyday key is Alt+E → e (special submap).
+  hl.bind("d", hy3opt("detach", "toggle"))                      -- detach the focused node into a float (or reattach it)
 end)
 
 -- Submap: music (MPD transport with ncmpcpp/rmpc letter bindings)
@@ -928,6 +944,17 @@ for i = 1, 5 do
   local n = i
   hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+" .. tostring(n), hy3(function(p) return p.focus_tab({ index = n }) end))
 end
+
+-- Detach/float (ion3-style): the focused node — a single window or a whole tab
+-- group — floats above the layout but keeps its slot in it, so the neighbours do
+-- not reflow and a detached group keeps hiding its inactive tabs; the same key
+-- reattaches it exactly where it was. The keys are Alt+E → e (the special
+-- submap below, next to the rest of the window verbs) and D in the tiling
+-- submap. NOT a plain M4+SHIFT+F: that is the pseudo-fullscreen toggle above,
+-- and the key parser is case-insensitive, so the two would be one binding.
+-- Implemented by the local patch on hy3 (docs/howto/hyprland-plugin.md);
+-- hy3opt keeps it a no-op on a stock build.
+
 hl.bind(M4 .. "+left", hy3(function(p) return p.move_focus("l") end))
 hl.bind(M4 .. "+right", hy3(function(p) return p.move_focus("r") end))
 
