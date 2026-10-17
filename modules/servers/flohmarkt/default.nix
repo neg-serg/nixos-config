@@ -143,7 +143,15 @@ in
     # reach the env file, and neither passes through the nix store. The file is
     # re-rendered on every activation while the generated values persist, so the
     # containers keep the same credentials across switches.
+    #
+    # The body runs in a subshell: NixOS concatenates every activation snippet
+    # into one shell, so a bare `umask 077` here would still be in effect for
+    # every later snippet — setupSecrets (sops) comes after this one and its
+    # per-generation /run/secrets.d/N is created with mkdir, which yields 0700
+    # under umask 077 instead of 0751. That made every non-root secret reader
+    # fail with EACCES (mpdas, listenbrainz-mpd, ...).
     system.activationScripts.flohmarkt = lib.stringAfter [ "var" ] ''
+      (
       # Directory group-read for the main user is what makes <dataDir>/setup-code
       # reachable (the code is 0640 root:<group>); the two secret files inside
       # stay 0600/0640 owned by root and are never world-readable.
@@ -187,6 +195,7 @@ in
           "COUCHDB_PASSWORD=$(${pkgs.coreutils}/bin/cat ${cfg.dataDir}/db-password)"
       } > ${envFile}.new
       ${pkgs.coreutils}/bin/mv ${envFile}.new ${envFile}
+      )
     '';
   };
 }
