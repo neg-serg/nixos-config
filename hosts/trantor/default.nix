@@ -233,7 +233,7 @@ in
   features.dev.ai.herdr.enable = true; # Herdr — agent runtime: workspaces/panes for dsh sessions, state sidebar
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), colibri engine, voxinput
   # NOTE: colibri-serve deliberately NOT enabled (user's choice 2026-08-28):
-  # run manually when needed — see docs/howto/local-llm.md (colibrì section).
+  # run manually when needed — see modules/llm/default.nix (colibri section).
   features.cli.broot.enable = true;
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
   features.hardware.usbAutomount.enable = true;
@@ -256,7 +256,7 @@ in
   # in "complain" — denials are logged, nothing is blocked — so the first
   # switch is observation-only. Flip a daemon to "enforce" in
   # modules/features/security.nix after reviewing its denials:
-  # docs/howto/apparmor.md.
+  # modules/security/apparmor.nix.
   features.security.apparmor.enable = true;
 
   # nixpkgs 26.05: service users need explicit isSystemUser + group.

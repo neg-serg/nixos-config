@@ -10,7 +10,7 @@ import Quickshell
 // mode the plugin registers no dispatcher that the config path accepts —
 // `hyprctl dispatch hyprexpo:expo toggle` and `hl.dispatch(hyprexpo:expo toggle)`
 // both die with "expected a dispatcher" (reproduced in a nested session; see
-// docs/howto/hyprland-plugin.md). Evaluating the plugin's own Lua API is the
+// modules/user/nix-maid/hyprland/main.nix). Evaluating the plugin's own Lua API is the
 // supported route, and it is what the SUPER+grave bind in
 // files/gui/hypr/hyprland.lua already uses.
 //

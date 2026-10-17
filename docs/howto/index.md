@@ -27,12 +27,6 @@
 - Windows VSTs without yabridge — the free-plugin route:
   [free-windows-vst.md](./free-windows-vst.md)
 
-- Hyprland plugins: what nixpkgs ships, what the flake pins, how to add one:
-  [hyprland-plugin.md](./hyprland-plugin.md)
-
-- Local video AI on trantor (VRAM budget, models, what actually runs):
-  [local-video-ai.md](./local-video-ai.md)
-
 - Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits:
   [golden-tools.md](./golden-tools.md)
 
@@ -65,9 +59,6 @@
 
 - Options reference: [OPTIONS.md](../../OPTIONS.md) · module/flag recipes:
   [agent-recipes.md](./agent-recipes.md)
-
-- Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I,):
-  [local-llm.md](./local-llm.md)
 
 - Local music AI stack on trantor (RAVE, demucs, NAM, XTTS venvs, wrappers and how to recreate):
   [local-music-ai.md](./local-music-ai.md)
@@ -133,9 +124,6 @@
 
 - Fastfetch: black-metal blizzard (animated logo): [fastfetch-blizzard.md](./fastfetch-blizzard.md)
 
-- Quickshell: media toast — how to do it right (position/height/style):
-  [quickshell-music-toast.md](./quickshell-music-toast.md)
-
 - Dockur Windows VM on trantor: GLM USB passthrough, host alias, VM proxy chain:
   [windows-vm-dockur.md](./windows-vm-dockur.md)
 
@@ -153,11 +141,6 @@
 
 - iris — shell IntelliSense on trantor: local patches, key behaviour and the smoke test:
   [iris.md](./iris.md)
-
-- Nixie settings lab — live tuning of the login clock (widget kit, presets, Save semantics):
-  [nixie-lab.md](./nixie-lab.md)
-
-- Nixie tube — geometry, tokens and the shader contract: [nixie-tube.md](./nixie-tube.md)
 
 - Hotkey backlog — the open emacs/vim-friendly items left after the 2026-10-14 audit:
   [hotkeys-backlog.md](./hotkeys-backlog.md)

@@ -1,6 +1,6 @@
 #
 # Kernel module layout and attack-surface trimming
-# (folded from docs/howto/kernel-modules.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # - params: kernel cmdline and packaging — `modules/system/kernel/params.nix`.

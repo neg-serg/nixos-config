@@ -2,7 +2,7 @@
 
 Everything about neural networks for music/audio on this machine: where it lives, how it is called,
 how to recreate it. Complements `wine-vst-bridge.md` (Windows VSTs via yabridge in Renoise) and
-`local-llm.md` (speech stack, LLM).
+`modules/llm/default.nix` (speech stack, LLM).
 
 ## venv inventory (all in /zero/ai/music-ai/, Python from the nix store)
 

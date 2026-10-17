@@ -63,7 +63,8 @@ details are documented. Deep material lives in howtos and runbooks, not here.
 - Secrets stay SOPS-encrypted under `secrets/` (wiring: `docs/runbook-vaultix-migration.md`); age
   keys live outside the repo in `~/.config/sops/age/keys.txt`.
 - Evaluation output stays quiet: see the noise policy below.
-- Hyprland pins, plugin patches and session notes: `docs/howto/hyprland-plugin.md`.
+- Hyprland pins, plugin patches and session notes: the header of
+  `modules/user/nix-maid/hyprland/main.nix`.
 
 ## Third-Party Components
 

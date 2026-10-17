@@ -59,7 +59,8 @@ never implemented. Dev tooling is gated where it is installed instead — `featu
   plays `~/pic/wl/video/waterfall_loop.mp4` in an mpv window that hyprwinwrap pins behind the
   desktop (`files/gui/hypr/hyprwinwrap.lua`). Off by default because `wl-daemon` owns the
   background layer and the pinned window would cover its still image — exactly one of the two may
-  be active. The clip comes from the HunyuanVideo recipe in `docs/howto/local-video-ai.md`.
+  be active. The clip comes from the HunyuanVideo recipe in the header of
+  `modules/user/session/wallpaper-video.nix`.
 - **Pleamar shell** (`features.gui.pleamar.enable`, default off): per-scene systemd user units
   (`pleamar-<scene>.service`) run `pkgs.pleamar` on `~/.config/pleamar/shells/<scene>/<scene>.plm`
   with memory/CPU caps, a `pleamar-health` hang watchdog, and nix-maid links of

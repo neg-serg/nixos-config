@@ -134,4 +134,4 @@ The user dismissed the generation as garbage; removed: wrappers `/zero/ai/music-
 - `pic-ocr` NN engine (qwen3-vl) — one-off run when the "OCR NN" button in the screenshot toast is
   used.
 - `venv-tags`/PANNs — orphan (no weights, python hangs on a nonexistent path) — a removal candidate.
-- `colibri` — service off by default (user decision); manual recipe: see `docs/howto/local-llm.md`.
+- `colibri` — service off by default (user decision); manual recipe: see `modules/llm/default.nix`.

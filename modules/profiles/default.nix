@@ -1,6 +1,6 @@
 #
 # Profiles and feature flags
-# (folded from docs/howto/profiles-and-flags.md; keep it in sync with the code it describes)
+# (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
 # - Profiles: feature-flag bundles under `modules/profiles/`:
