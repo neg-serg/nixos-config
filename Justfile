@@ -35,6 +35,19 @@ deploy-debug host="trantor":
 switch host="trantor":
     just deploy {{ host }}
 
+# Plain root switch: `nixos-rebuild` itself, no nh and no nom in the path.
+# This is the fallback when the agent rollout is off, when the change *is* the
+# mechanism, and the way out when nix-output-monitor cannot read the log of the
+# Nix it now runs with (nom 2.2.0 dies on activity type 10113, CopySourcePath,
+# emitted by Determinate Nix 3.23.3).
+# The stdin redirect is not decoration: when the caller's stdin is a socket
+# (systemd-run --pipe, some agent runners) nixos-rebuild refuses it, builds the
+# whole system and applies nothing. `--option substitute false` because
+# cache.nixos.org is unreliable from this host.
+# Usage: just switch-sudo [host]
+switch-sudo host="trantor":
+    sudo nixos-rebuild switch --flake .#{{ host }} --option substitute false < /dev/null
+
 # Agent rollout: activate the /etc/nixos flake without a password. The argument is
 # the toplevel the agent already built and verified — the root-owned unit refuses to
 # switch when the tree now builds something else (modules/security/agent-switch.nix).
