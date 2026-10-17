@@ -173,6 +173,7 @@ in
   features.net.proxy.enable = true; # sing-box full-TUN proxy (tun on/off toggle, no autostart) + xray.service
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
   features.dev.ai.rocm.enable = true; # ROCm PyTorch (gfx1201) for GPU fine-tuning (kernel side: features.hardware.amdgpu.rocm)
+  features.dev.unity.enable = true; # unityhub-proxy / unity-proxy: Unity Hub + `unity` CLI through the SOCKS5 proxy
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [
