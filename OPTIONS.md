@@ -55,6 +55,11 @@ never implemented. Dev tooling is gated where it is installed instead — `featu
   `secrets/home/listenbrainz-mpd.sops.yaml` (key `token`) exists — no secret, no unit.
   `apiUrl` can point at the local Koito hub (`servicesProfiles.koito`, loopback 4110, starts
   without any secret); the mpdas/Last.fm path stays unchanged until the new one is verified.
+- **Video wallpaper** (`features.gui.wallpaperVideo`, default off): `wallpaper-video.service`
+  plays `~/pic/wl/video/waterfall_loop.mp4` in an mpv window that hyprwinwrap pins behind the
+  desktop (`files/gui/hypr/hyprwinwrap.lua`). Off by default because `wl-daemon` owns the
+  background layer and the pinned window would cover its still image — exactly one of the two may
+  be active. The clip comes from the HunyuanVideo recipe in `docs/howto/local-video-ai.md`.
 - **Pleamar shell** (`features.gui.pleamar.enable`, default off): per-scene systemd user units
   (`pleamar-<scene>.service`) run `pkgs.pleamar` on `~/.config/pleamar/shells/<scene>/<scene>.plm`
   with memory/CPU caps, a `pleamar-health` hang watchdog, and nix-maid links of
