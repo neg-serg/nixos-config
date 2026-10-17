@@ -2,7 +2,7 @@
 
 - Stretch effect (`hyprdynamiccursors`, mode `stretch`) is off by default: it deforms the pointer
   with movement direction/speed, which reads as noise in games and the plugin has no per-window
-  switch. Opt in per session with `cursor-stretch on` (bind: `M4+SHIFT+c`, toggles
+  switch. Opt in per session with `cursor-stretch on` (no hotkey: the helper is in PATH and toggles
   `plugin:dynamic_cursors:enabled` live); a `hyprctl reload` returns to off, since
   `files/gui/hypr/hyprdynamiccursors.lua` and the guarded re-apply in `hyprland.lua` push
   `enabled = false`.
