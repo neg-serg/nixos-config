@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Toggle the hyprdynamiccursors "stretch" effect (cursor deforms with movement).
+#
+# Usage: cursor-stretch [on|off|toggle|status]   (default: toggle)
+#
+# The stretch mode is a desktop effect: the arrow follows movement direction and
+# speed, which in games reads as noise (fast mouse movement visibly distorts the
+# pointer). files/gui/hypr/hyprdynamiccursors.lua therefore ships it disabled,
+# and this script is the runtime opt-in — it flips the live plugin config, no
+# reload and no rebuild.
+#
+# `hyprctl keyword` cannot do it: this config runs on Hyprland's Lua parser,
+# which refuses legacy `keyword` writes ("keyword can't work with non-legacy
+# parsers. Use eval."). The write goes through `hyprctl eval` with the same
+# hl.config() shape hyprdynamiccursors-setup uses. Reading still works through
+# `hyprctl getoption`.
+#
+# The toggle is deliberately not sticky: `hyprctl reload` re-parses hyprland.lua,
+# whose guarded re-apply pushes enabled = false again.
+set -euo pipefail
+
+key=plugin:dynamic_cursors:enabled
+verb=${1:-toggle}
+
+current=$(hyprctl -j getoption "$key" | jq -r '.bool')
+
+case $verb in
+    on) want=true ;;
+    off) want=false ;;
+    toggle) if [[ $current == true ]]; then want=false; else want=true; fi ;;
+    status)
+        printf 'dynamic_cursors enabled=%s\n' "$current"
+        exit 0
+        ;;
+    *)
+        printf 'Usage: %s [on|off|toggle|status]\n' "${0##*/}" >&2
+        exit 2
+        ;;
+esac
+
+# Leading newline: hyprctl eval reads a leading `--` as a flag, and the snippet
+# is spliced into a shell-quoted argument either way (same reason as the
+# generated *-setup helpers).
+hyprctl eval "
+hl.config({ plugin = { dynamic_cursors = { enabled = ${want} } } })" > /dev/null
+
+# The cursor only shows the change while moving; a short toast confirms the flip.
+command -v notify-send > /dev/null 2>&1 && notify-send -t 1200 "cursor stretch: $want"

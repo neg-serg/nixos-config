@@ -1,7 +1,15 @@
 # Cursor Notes
 
+- Stretch effect (`hyprdynamiccursors`, mode `stretch`) is off by default: it deforms the pointer
+  with movement direction/speed, which reads as noise in games and the plugin has no per-window
+  switch. Opt in per session with `cursor-stretch on` (bind: `M4+SHIFT+c`, toggles
+  `plugin:dynamic_cursors:enabled` live); a `hyprctl reload` returns to off, since
+  `files/gui/hypr/hyprdynamiccursors.lua` and the guarded re-apply in `hyprland.lua` push
+  `enabled = false`.
 - Current theme: Alkano-aio, size 23 set in `modules/user/nix-maid/gui/theme.nix`
-  (XCURSOR/HYPRCURSOR/GTK/Stylix all aligned).
+  (XCURSOR/HYPRCURSOR/GTK/Stylix all aligned). Alkano-aio is the only theme with `cursors/` in the
+  system profile — a per-game plain cursor needs either `--unsetenv XCURSOR_THEME` inside the Steam
+  sandbox (X11 builtin arrow) or a plain theme added to `programs.steam.package`'s `extraPkgs`.
 - hyprcursor assets are compiled at build time by the theme package itself
   (`hyprcursor-util --extract` with `xcur2png`, then `--create`) next to `cursors/`: upstream is
   XCursor-only and libhyprcursor's `themeAccessible()` requires `manifest.hl`, so before 2026-10-15
