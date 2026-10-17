@@ -15,7 +15,7 @@ in
   # than before, but overall consistency is better in general.
   nixpkgs.overlays = [
     (
-      _: prev:
+      final: prev:
       let
         oldIcons = [
           "↑"
@@ -50,8 +50,24 @@ in
               } lib/NOM/Print.hs
 
               sed -i 's/┌/╭/' lib/NOM/Print/Tree.hs
+
+              # Determinate Nix 3.23 emits activity type 10113 (`actStringly`,
+              # CopySourcePath, added with its OpenTelemetry support) and result
+              # 10111 (resHttpStatus). 2.2.0 keeps a closed table (0, 100..112)
+              # and `fail`s on anything else, which aborts the whole `nom` run —
+              # `nh os switch` died on "invalid activity type: 10113" right
+              # after the Nix 3.23.3 bump. Upstream has no release with a fix;
+              # this is PR maralorn/nix-output-monitor#321, which turns unknown
+              # types/results into OtherType/OtherResult, and nom's Update.hs
+              # already ignores unknown messages. Drop the patch once a release
+              # carries it.
+              patch -p1 --no-backup-if-mismatch < ${./nom-activity-types.patch}
             '';
           });
+
+        # nh puts nom on the wrapped binary's PATH; without this it keeps the
+        # unpatched 2.2.0 and the fix would only apply to a bare `nom`.
+        nh = prev.nh.override { nix-output-monitor = final.nix-output-monitor; };
       }
     )
     (
