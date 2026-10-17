@@ -47,9 +47,24 @@ agent-switch toplevel:
     printf '%s\n' "{{toplevel}}" > /etc/nixos/.agent/switch-request
     # polkit allows the main user to start exactly this unit, so no sudo here:
     # setuid sudo cannot run inside a session sandbox (no_new_privs).
-    systemctl start nixos-agent-switch.service || rc=$?
-    systemctl show -p ActiveState -p ExecMainStatus nixos-agent-switch.service
-    journalctl -u nixos-agent-switch -n 40 --no-pager | tail -n 40
+    # nixos-agent-rollout is the constant unit file; the legacy name only exists
+    # until the bootstrap block in modules/security/agent-switch.nix is dropped
+    # (it is still the unit the *running* generation knows about).
+    if systemctl cat nixos-agent-rollout.service > /dev/null 2>&1; then
+      unit=nixos-agent-rollout.service
+    else
+      unit=nixos-agent-switch.service
+    fi
+    systemctl start "$unit" || rc=$?
+    # The unit only launches the rollout (a Type=oneshot kept running would
+    # deadlock the activation that starts it); the work is in the transient
+    # nixos-agent-rollout-work unit, so wait for that one to finish.
+    for _ in $(seq 1 900); do
+      systemctl is-active --quiet nixos-agent-rollout-work.service || break
+      sleep 1
+    done
+    systemctl show -p ActiveState -p ExecMainStatus "$unit"
+    journalctl -u nixos-agent-rollout-work -n 40 --no-pager | tail -n 40
     exit "$rc"
 
 # Show diff between last two generations
