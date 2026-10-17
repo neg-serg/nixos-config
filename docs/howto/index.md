@@ -63,9 +63,6 @@
 - MPD voice client (`mpd-voice`) — microphone → local STT → player commands, plus push-to-talk,
   wake-word and text modes: [mpd-voice.md](./mpd-voice.md)
 
-- AppArmor — confining the LAN-facing daemons (profiles from package closures, complain → enforce):
-  [apparmor.md](./apparmor.md)
-
 - Options reference: [OPTIONS.md](../../OPTIONS.md) · module/flag recipes:
   [agent-recipes.md](./agent-recipes.md)
 
@@ -130,9 +127,6 @@
 
 - SKILL.md skill authoring contract (ported from hermes-agent):
   [agent-skill-authoring.md](./agent-skill-authoring.md)
-
-- Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions):
-  [tpm-sudo.md](./tpm-sudo.md)
 
 - Long-running goal (ongoing Goal): how to deploy, run and manage:
   [ongoing-goal.md](./ongoing-goal.md)
