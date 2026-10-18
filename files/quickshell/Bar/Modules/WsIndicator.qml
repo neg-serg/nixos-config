@@ -67,34 +67,34 @@ CenteredCapsuleRow {
 
     // Short description per workspace name (icon prefix stripped).
     readonly property var _wsDescriptions: ({
-        "term": "Терминалы и консоль",
-        "web": "Браузер и веб",
-        "dev": "Разработка",
-        "games": "Игры",
-        "doc": "Документы и заметки",
-        "vid": "Видео",
-        "obs": "Стриминг и запись",
-        "pic": "Графика и изображения",
-        "vm": "Виртуальные машины",
+        "term": "Terminals and console",
+        "web": "Browser and web",
+        "dev": "Development",
+        "games": "Games",
+        "doc": "Documents and notes",
+        "vid": "Video",
+        "obs": "Streaming and recording",
+        "pic": "Graphics and images",
+        "vm": "Virtual machines",
         "wine": "Windows / Wine",
-        "patchbay": "Звуковые соединения",
-        "daw": "Аудио и DAW",
+        "patchbay": "Audio patchbay",
+        "daw": "Audio and DAW",
         "dw": "Dwarf Fortress",
-        "keyboard": "Клавиатуры и мыши",
-        "im": "Мессенджеры",
-        "remote": "Удалённый доступ",
-        "notes": "Заметки",
-        "vital": "Vital — синтезатор",
-        "rack": "VCV Rack — модульный синтез"
+        "keyboard": "Keyboards and mice",
+        "im": "Messengers",
+        "remote": "Remote access",
+        "notes": "Notes",
+        "vital": "Vital — synth",
+        "rack": "VCV Rack — modular synthesis"
     })
     readonly property string _tooltipText: (function() {
         var key = (restName || "").toLowerCase();
         var desc = root._wsDescriptions[key] || "";
         var hints = [];
         if (desc) hints.push(desc);
-        if (submapName) hints.push("Режим: " + submapName);
-        hints.push("Клик — обзор рабочих столов");
-        return TooltipText.compose("Рабочий стол", String(wsId >= 0 ? wsId : "—"), hints);
+        if (submapName) hints.push("Mode: " + submapName);
+        hints.push("Click — workspace overview");
+        return TooltipText.compose("Workspace", String(wsId >= 0 ? wsId : "—"), hints);
     })()
     property bool isTerminalWs: WorkspaceName.isTerminal(wsName)
     property bool isSpaciousWs: isAlphaWs

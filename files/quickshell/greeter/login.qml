@@ -108,7 +108,7 @@ ShellRoot {
 			if (pam.responseRequired) {
 				pam.respond(state.currentText);
 			} else if (pam.messageIsError) {
-				root.failLogin(pam.message + " — раскладка " + root.layoutName);
+				root.failLogin(pam.message + " — layout " + root.layoutName);
 			}
 		}
 
@@ -123,7 +123,7 @@ ShellRoot {
 		if (!success) {
 			// The layout is the one failure mode the UI cannot show on its own, so
 			// it goes into the message (see the layout chip in the card).
-			root.failLogin("Неверный пароль — раскладка " + root.layoutName);
+			root.failLogin("Wrong password — layout " + root.layoutName);
 			return;
 		}
 		state.failed = false;
@@ -167,7 +167,7 @@ ShellRoot {
 				// Nothing was recorded: keep the lock and say so instead of quitting
 				// into a compositor whose config would decide on a marker that never
 				// arrived (it would put the layer back up, or start no session at all).
-				root.failLogin("Не удалось записать состояние входа");
+				root.failLogin("Could not persist the login state");
 				return;
 			}
 			// Unlock *before* quitting. Destroying a session-lock object while it is

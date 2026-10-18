@@ -207,7 +207,7 @@ Rectangle {
 
     function doSave() {
         if (!menu.dirty) {
-            menu.status = "Нет изменений";
+            menu.status = "No changes";
             return;
         }
         if (!menu.partReady)
@@ -219,7 +219,7 @@ Rectangle {
             patch[keys[i]] = ov["greeter." + keys[i]];
         var content = menu.compose(patch);
         if (content === null) {
-            menu.status = "Ошибка: файл темы не разобран";
+            menu.status = "Error: theme file could not be parsed";
             return;
         }
         menu.writeContent(content, "save", patch);
@@ -247,7 +247,7 @@ Rectangle {
             patch[keys[i]] = menu.defaultFor(keys[i]);
         var content = menu.compose(patch);
         if (content === null) {
-            menu.status = "Ошибка: файл темы не разобран";
+            menu.status = "Error: theme file could not be parsed";
             return;
         }
         menu.writeContent(content, "reset", patch);
@@ -269,7 +269,7 @@ Rectangle {
     // the values that were sent. baseValues is committed only then, so the
     // dirty marker means "matches the disk", not "the process exited".
     function onWriterStopped() {
-        menu.status = "Проверяю…";
+        menu.status = "Checking…";
         verifier.reload();
     }
 
@@ -294,7 +294,7 @@ Rectangle {
             ok = false;
         }
         if (!ok) {
-            menu.status = "Запись не проверена";
+            menu.status = "Write not verified";
             menu._pendingKeys = [];
             return;
         }
@@ -312,11 +312,11 @@ Rectangle {
         }
         menu.baseValues = bv;
         menu._pendingKeys = [];
-        menu.status = menu._mode === "reset" ? "Сброшено и проверено" : "Сохранено и проверено";
+        menu.status = menu._mode === "reset" ? "Reset and verified" : "Saved and verified";
     }
 
     function onCopied(ok) {
-        menu.status = ok ? "Скопировано в буфер" : "Буфер обмена недоступен";
+        menu.status = ok ? "Copied to the clipboard" : "Clipboard unavailable";
     }
 
     function applyPreset(preset) {
@@ -327,7 +327,7 @@ Rectangle {
         var values = preset.values || ({});
         for (var key in values)
             menu.set(key, values[key]);
-        menu.status = "Пресет: " + preset.text;
+        menu.status = "Preset: " + preset.text;
     }
 
     // The repo-ready snippet: the current value of every menu token, comments
@@ -401,7 +401,7 @@ Rectangle {
     // reload is used instead of spawning `cat`: the read has to happen after
     // the rename, and a process that exits immediately races the stdout
     // collector (the collector's streamFinished never arrived, so Save was
-    // stuck on "Проверяю…" and every later save was not idempotent).
+    // stuck on "Checking…" and every later save was not idempotent).
     FileView {
         id: verifier
         path: menu.userPartPath
@@ -411,7 +411,7 @@ Rectangle {
             if (menu._verify !== null) {
                 menu._verify = null;
                 menu._pendingKeys = [];
-                menu.status = "Запись не проверена";
+                menu.status = "Write not verified";
             }
         }
     }
@@ -491,14 +491,14 @@ Rectangle {
 
             Text {
                 Layout.fillWidth: true
-                text: "Настройки никс"
+                text: "Nixie settings"
                 color: "#e8eaf0"
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
             }
 
             Text {
-                text: menu.dirty ? "● не сохранено" : "✓ сохранено"
+                text: menu.dirty ? "● unsaved" : "✓ saved"
                 color: menu.dirty ? "#e0b04b" : "#7fbf9f"
                 font.pixelSize: 12
             }
@@ -519,25 +519,25 @@ Rectangle {
                 spacing: 12
 
                 NixieSection {
-                    title: "Пресеты"
+                    title: "Presets"
                     NixiePresetRow {
                         presets: [
-                            { text: "Винтаж", values: { nixieTempK: 2100, nixieExposure: 2.5 } },
-                            { text: "Амбра", values: { nixieTempK: 2400, nixieExposure: 1.5 } },
-                            { text: "Циан", values: { nixieTint: "#cc66e0ff" } },
-                            { text: "От обоев", values: { nixieTintWallpaper: 0.35 } },
-                            { text: "Ракурс 15°/10°", values: { nixieViewPitch: 15, nixieViewAngle: 10 } },
-                            { text: "Погасить", values: { nixieGlow: 0 } },
-                            { text: "Сброс", reset: true }
+                            { text: "Vintage", values: { nixieTempK: 2100, nixieExposure: 2.5 } },
+                            { text: "Amber", values: { nixieTempK: 2400, nixieExposure: 1.5 } },
+                            { text: "Cyan", values: { nixieTint: "#cc66e0ff" } },
+                            { text: "From wallpaper", values: { nixieTintWallpaper: 0.35 } },
+                            { text: "View 15°/10°", values: { nixieViewPitch: 15, nixieViewAngle: 10 } },
+                            { text: "Switch off", values: { nixieGlow: 0 } },
+                            { text: "Reset", reset: true }
                         ]
                         onChosen: preset => menu.applyPreset(preset)
                     }
                 }
 
                 NixieSection {
-                    title: "Разряд"
+                    title: "Discharge"
                     NixieSlider {
-                        label: "Яркость разряда"
+                        label: "Discharge brightness"
                         value: menu.val("nixieGlow")
                         from: 0
                         to: 2.5
@@ -545,7 +545,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieGlow", value)
                     }
                     NixieSlider {
-                        label: "Температура"
+                        label: "Temperature"
                         unit: " K"
                         value: menu.val("nixieTempK")
                         from: 1600
@@ -554,7 +554,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieTempK", value)
                     }
                     NixieSlider {
-                        label: "Экспозиция"
+                        label: "Exposure"
                         value: menu.val("nixieExposure")
                         from: 0.5
                         to: 4.0
@@ -562,19 +562,19 @@ Rectangle {
                         onMoved: value => menu.set("nixieExposure", value)
                     }
                     NixieColorField {
-                        label: "Цвет свечения"
+                        label: "Glow colour"
                         value: menu.val("nixieGlowColor")
                         alpha: false
                         onPicked: value => menu.setColor("nixieGlowColor", value)
                     }
                     NixieColorField {
-                        label: "Тонирование стекла"
+                        label: "Glass tinting"
                         value: menu.val("nixieTint")
                         alpha: true
                         onPicked: value => menu.setColor("nixieTint", value)
                     }
                     NixieSlider {
-                        label: "Подхват цвета обоев"
+                        label: "Pick up the wallpaper colour"
                         value: menu.val("nixieTintWallpaper")
                         from: 0
                         to: 1
@@ -584,21 +584,21 @@ Rectangle {
                 }
 
                 NixieSection {
-                    title: "Стекло"
+                    title: "Glass"
                     NixieColorField {
-                        label: "Цвет стекла"
+                        label: "Glass colour"
                         value: menu.val("nixieGlassColor")
                         alpha: true
                         onPicked: value => menu.setColor("nixieGlassColor", value)
                     }
                     NixieColorField {
-                        label: "Цвет катода"
+                        label: "Cathode colour"
                         value: menu.val("nixieCathodeColor")
                         alpha: false
                         onPicked: value => menu.setColor("nixieCathodeColor", value)
                     }
                     NixieSlider {
-                        label: "Блик стекла"
+                        label: "Glass highlight"
                         value: menu.val("nixieHighlight")
                         from: 0
                         to: 2.5
@@ -606,7 +606,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieHighlight", value)
                     }
                     NixieSlider {
-                        label: "Тепло на стекле"
+                        label: "Warmth on the glass"
                         value: menu.val("nixieWarmth")
                         from: 0
                         to: 2.5
@@ -614,7 +614,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieWarmth", value)
                     }
                     NixieSlider {
-                        label: "Толщина нити"
+                        label: "Filament thickness"
                         value: menu.val("nixieWire")
                         from: 0.02
                         to: 0.08
@@ -622,7 +622,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieWire", value)
                     }
                     NixieSlider {
-                        label: "Металл"
+                        label: "Metal"
                         value: menu.val("nixieStack")
                         from: 0
                         to: 1.5
@@ -632,9 +632,9 @@ Rectangle {
                 }
 
                 NixieSection {
-                    title: "Камера"
+                    title: "Camera"
                     NixieSlider {
-                        label: "Поворот"
+                        label: "Rotation"
                         unit: "°"
                         value: menu.val("nixieViewAngle")
                         from: -30
@@ -643,7 +643,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieViewAngle", value)
                     }
                     NixieSlider {
-                        label: "Дистанция (0 = по умолчанию)"
+                        label: "Distance (0 = default)"
                         value: menu.val("nixieViewDistance")
                         from: 0
                         to: 20
@@ -651,7 +651,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieViewDistance", value)
                     }
                     NixieSlider {
-                        label: "Наклон"
+                        label: "Pitch"
                         unit: "°"
                         value: menu.val("nixieViewPitch")
                         from: -20
@@ -660,12 +660,12 @@ Rectangle {
                         onMoved: value => menu.set("nixieViewPitch", value)
                     }
                     NixieToggle {
-                        label: "Следить за курсором"
+                        label: "Follow the cursor"
                         value: menu.val("nixieCameraFollow")
                         onToggled: value => menu.set("nixieCameraFollow", value)
                     }
                     NixieSlider {
-                        label: "Диапазон слежения"
+                        label: "Follow range"
                         unit: "°"
                         value: menu.val("nixieCameraRange")
                         from: 0
@@ -676,9 +676,9 @@ Rectangle {
                 }
 
                 NixieSection {
-                    title: "Ряд"
+                    title: "Row"
                     NixieSlider {
-                        label: "Размер цифры"
+                        label: "Digit size"
                         unit: " px"
                         value: menu.val("nixieDigitSize")
                         from: 40
@@ -687,7 +687,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieDigitSize", value)
                     }
                     NixieSlider {
-                        label: "Поле вокруг трубки"
+                        label: "Margin around the tube"
                         unit: " px"
                         value: menu.val("nixieTubeMargin")
                         from: 0
@@ -696,7 +696,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieTubeMargin", value)
                     }
                     NixieSlider {
-                        label: "Плотность ряда"
+                        label: "Row density"
                         value: menu.val("nixieSpacing")
                         from: 0
                         to: 2
@@ -706,15 +706,15 @@ Rectangle {
                 }
 
                 NixieSection {
-                    title: "Движение"
+                    title: "Motion"
                     NixieToggle {
-                        label: "Перезажигание при смене"
+                        label: "Relight on change"
                         value: menu.val("nixieFlicker")
                         onToggled: value => menu.set("nixieFlicker", value)
                     }
                     NixieSlider {
-                        label: "Длительность перезажигания"
-                        unit: " мс"
+                        label: "Relight duration"
+                        unit: " ms"
                         value: menu.val("nixieFlickerMs")
                         from: 0
                         to: 1500
@@ -722,7 +722,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieFlickerMs", value)
                     }
                     NixieSlider {
-                        label: "Мерцание"
+                        label: "Flicker"
                         value: menu.val("nixieShimmer")
                         from: 0
                         to: 1
@@ -730,8 +730,8 @@ Rectangle {
                         onMoved: value => menu.set("nixieShimmer", value)
                     }
                     NixieSlider {
-                        label: "Период мерцания"
-                        unit: " мс"
+                        label: "Flicker period"
+                        unit: " ms"
                         value: menu.val("nixieShimmerMs")
                         from: 33
                         to: 250
@@ -739,7 +739,7 @@ Rectangle {
                         onMoved: value => menu.set("nixieShimmerMs", value)
                     }
                     NixieSlider {
-                        label: "Разброс трубок"
+                        label: "Tube spread"
                         value: menu.val("nixieJitter")
                         from: 0
                         to: 1.5
@@ -749,33 +749,33 @@ Rectangle {
                 }
 
                 NixieSection {
-                    title: "Формат"
+                    title: "Format"
                     NixieToggle {
-                        label: "24-часовой формат"
+                        label: "24-hour clock"
                         value: menu.val("nixie24h")
                         onToggled: value => menu.set("nixie24h", value)
                     }
                     NixieToggle {
-                        label: "Ведущий ноль"
+                        label: "Leading zero"
                         value: menu.val("nixieLeadingZero")
                         onToggled: value => menu.set("nixieLeadingZero", value)
                     }
                 }
 
                 NixieSection {
-                    title: "Качество"
+                    title: "Quality"
                     NixieChoice {
-                        label: "Путь шейдера"
+                        label: "Shader path"
                         options: [
-                            { text: "Полное", value: "full" },
-                            { text: "Среднее", value: "balanced" },
-                            { text: "Лёгкое", value: "lite" }
+                            { text: "Full", value: "full" },
+                            { text: "Balanced", value: "balanced" },
+                            { text: "Lite", value: "lite" }
                         ]
                         value: menu.val("nixieQuality")
                         onChosen: value => menu.set("nixieQuality", value)
                     }
                     NixieSlider {
-                        label: "Старение"
+                        label: "Aging"
                         value: menu.val("nixieAge")
                         from: 0
                         to: 2
@@ -783,32 +783,32 @@ Rectangle {
                         onMoved: value => menu.set("nixieAge", value)
                     }
                     NixieToggle {
-                        label: "Цоколь с выводами"
+                        label: "Base with pins"
                         value: menu.val("nixieBase")
                         onToggled: value => menu.set("nixieBase", value)
                     }
                 }
 
                 NixieSection {
-                    title: "Действия"
+                    title: "Actions"
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
 
                         MenuButton {
                             Layout.fillWidth: true
-                            label: "Сохранить"
+                            label: "Save"
                             primary: true
                             onActivated: menu.requestSave()
                         }
                         MenuButton {
                             Layout.fillWidth: true
-                            label: "Сбросить"
+                            label: "Reset"
                             onActivated: menu.requestReset()
                         }
                         MenuButton {
                             Layout.fillWidth: true
-                            label: "Экспорт"
+                            label: "Export"
                             onActivated: menu.exportOpen = true
                         }
                     }
@@ -817,14 +817,14 @@ Rectangle {
                         Layout.fillWidth: true
                         visible: menu.status !== ""
                         text: menu.status
-                        color: menu.status.indexOf("Ошибка") === 0 ? "#e0736b" : "#8f98a8"
+                        color: menu.status.indexOf("Error") === 0 ? "#e0736b" : "#8f98a8"
                         font.pixelSize: 12
                         elide: Text.ElideRight
                     }
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Сохранение — в ~/.config/quickshell/Theme/greeter.jsonc; репозиторий меню не меняет."
+                        text: "Saves to ~/.config/quickshell/Theme/greeter.jsonc; the menu never changes the repository."
                         color: "#6f7888"
                         font.pixelSize: 11
                         wrapMode: Text.WordWrap
@@ -855,7 +855,7 @@ Rectangle {
 
             Text {
                 Layout.fillWidth: true
-                text: "Экспорт для репозитория"
+                text: "Export for the repository"
                 color: "#e8eaf0"
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
@@ -863,7 +863,7 @@ Rectangle {
 
             Text {
                 Layout.fillWidth: true
-                text: "Фрагмент вставляется в files/quickshell/Theme/greeter.jsonc вручную (или через nixie theme set). Меню файл репозитория не пишет."
+                text: "Paste the fragment into files/quickshell/Theme/greeter.jsonc by hand (or via nixie theme set). The menu does not write the repository file."
                 color: "#8f98a8"
                 font.pixelSize: 11
                 wrapMode: Text.WordWrap
@@ -895,13 +895,13 @@ Rectangle {
 
                 MenuButton {
                     Layout.fillWidth: true
-                    label: "Копировать"
+                    label: "Copy"
                     primary: true
                     onActivated: menu.copyExport()
                 }
                 MenuButton {
                     Layout.fillWidth: true
-                    label: "Закрыть"
+                    label: "Close"
                     onActivated: menu.exportOpen = false
                 }
             }

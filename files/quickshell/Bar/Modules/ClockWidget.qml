@@ -17,15 +17,15 @@ CenteredCapsuleRow {
     // Day/month names are translated manually (Qt.locale("ru_RU") is not
     // available in the quickshell locale archive).
     readonly property string _tooltipText: (function() {
-        var days = ["Воскресенье", "Понедельник", "Вторник", "Среда",
-                    "Четверг", "Пятница", "Суббота"];
-        var months = ["января", "февраля", "марта", "апреля", "мая", "июня",
-                      "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+        var days = ["Sunday", "Monday", "Tuesday", "Wednesday",
+                    "Thursday", "Friday", "Saturday"];
+        var months = ["January", "February", "March", "April", "May", "June",
+                      "July", "August", "September", "October", "November", "December"];
         var d = new Date();
         return TooltipText.compose(
-            "Часы",
+            "Clock",
             days[d.getDay()] + ", " + d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear(),
-            ["Клик — календарь"]);
+            ["Click — calendar"]);
     })()
 
     interactive: true

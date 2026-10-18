@@ -12,10 +12,10 @@ CenteredCapsuleRow {
     readonly property string _tooltipText: (function() {
         var hints = [];
         var dev = mainDeviceName || deviceName || "";
-        if (dev) hints.push("Устройство: " + dev);
-        if (submapName) hints.push("Режим: " + submapName);
-        hints.push("Клик — следующая раскладка");
-        return TooltipText.compose("Раскладка", layoutText, hints);
+        if (dev) hints.push("Device: " + dev);
+        if (submapName) hints.push("Mode: " + submapName);
+        hints.push("Click — next layout");
+        return TooltipText.compose("Layout", layoutText, hints);
     })()
 
     // Use text glyph inside the label instead of a separate inline icon

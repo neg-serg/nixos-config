@@ -153,12 +153,12 @@ Item {
 	readonly property string greeting: {
 		const hour = clock.hours;
 		if (hour >= 5 && hour < 12)
-		return "Доброе утро";
+		return "Good morning";
 		if (hour >= 12 && hour < 17)
-		return "Добрый день";
+		return "Good afternoon";
 		if (hour >= 17 && hour < 23)
-		return "Добрый вечер";
-		return "Доброй ночи";
+		return "Good evening";
+		return "Good night";
 	}
 
 	property string dateText: ""
@@ -221,11 +221,11 @@ Item {
 
 	// The five actions, in the order they sit on the right of the action row.
 	readonly property var actionButtons: [
-		{ glyph: "_", label: "Погасить экран", run: () => root.state.fadeOut() },
-		{ glyph: "||", label: "Пауза", run: () => root.state.pauseMedia(), when: root.state.mediaPlaying },
-		{ glyph: "z", label: "Спящий режим", run: () => root.powerAction("suspend") },
-		{ glyph: "r", label: "Перезагрузить", run: () => root.powerAction("reboot") },
-		{ glyph: "x", label: "Выключить", run: () => root.powerAction("poweroff") },
+		{ glyph: "_", label: "Blank the screen", run: () => root.state.fadeOut() },
+		{ glyph: "||", label: "Pause", run: () => root.state.pauseMedia(), when: root.state.mediaPlaying },
+		{ glyph: "z", label: "Suspend", run: () => root.powerAction("suspend") },
+		{ glyph: "r", label: "Reboot", run: () => root.powerAction("reboot") },
+		{ glyph: "x", label: "Power off", run: () => root.powerAction("poweroff") },
 	]
 
 	function powerAction(action) {
@@ -246,7 +246,7 @@ Item {
 		if (root.state.failed && root.state.error.length > 0)
 		return root.state.error;
 		if (root.capsKnown && root.capsLock)
-		return "Caps Lock включён";
+		return "Caps Lock is on";
 		return root.hoveredAction;
 	}
 	readonly property color statusColour: (root.state.failed || (root.capsKnown && root.capsLock))
@@ -870,8 +870,8 @@ Item {
 								opacity: 0.7
 								visible: textBox.text === ""
 								text: textBox.enabled
-								? (root.state.fprintAvailable ? "коснитесь сенсора или введите пароль" : "введите пароль")
-								: "проверка пароля…"
+								? (root.state.fprintAvailable ? "touch the sensor or type the password" : "type the password")
+								: "checking the password…"
 							}
 
 							// PAM is running: a lone accent line sweeping along the bottom
@@ -978,7 +978,7 @@ Item {
 									renderType: Text.NativeRendering
 									id: layoutChipLabel
 									anchors.centerIn: parent
-									text: "раскладка: " + root.layoutName
+									text: "layout: " + root.layoutName
 									color: GreeterTheme.textMutedColor
 									font.family: GreeterTheme.uiFont
 									font.hintingPreference: Font.PreferFullHinting

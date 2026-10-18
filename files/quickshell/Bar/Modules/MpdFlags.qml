@@ -15,7 +15,7 @@ WidgetCapsule {
             var t = activeFlags[i] && (activeFlags[i].title || activeFlags[i].key);
             if (t) hints.push(String(t));
         }
-        if (!hints.length) hints.push("Активных флагов нет");
+        if (!hints.length) hints.push("No active flags");
         return TooltipText.compose("MPD", mpdState, hints);
     })()
     enabled: false

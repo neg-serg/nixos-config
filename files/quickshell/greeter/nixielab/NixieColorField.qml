@@ -105,7 +105,7 @@ ColumnLayout {
         visible: control.alpha
 
         Text {
-            text: "Альфа"
+            text: "Alpha"
             color: "#8f98a8"
             font.pixelSize: 12
         }
