@@ -7,7 +7,7 @@ import time
 STATE_DIR = pathlib.Path("/var/lib/telegram-crashloop")
 STATE_FILE = STATE_DIR / "state.json"
 SENDER = "@sender@/bin/telegram-send"
-# Local BBS board mirror (hosts/trantor/minibbs): posts the same alert text to
+# Local BBS board mirror (modules/servers/minibbs): posts the same alert text to
 # the `alerts` board. Empty when the board is disabled.
 MINIBBS = "@minibbsPost@"
 
