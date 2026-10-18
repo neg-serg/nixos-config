@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
   "name": "aura",
   "title": "Aura",
-  "description": "Дневник эмоций и КПТ: записать заметку голосом или текстом, открыть дневник",
+  "description": "Mood and CBT diary: add a note by voice or text, open the diary",
   "categories": ["Productivity", "Health"],
   "license": "MIT",
   "platforms": ["Linux"],
@@ -10,24 +10,24 @@
   "commands": [
     {
       "name": "record",
-      "title": "Aura — записать в дневник",
-      "subtitle": "Заметка голосом или текстом",
-      "description": "Продиктованная или набранная заметка уходит в дневник эмоций: распознаётся тем же кодом, что и в самом дневнике",
+      "title": "Aura — add a diary entry",
+      "subtitle": "A note by voice or text",
+      "description": "A dictated or typed note goes to the mood diary: it is recognised by the same code as the diary itself",
       "mode": "view",
       "arguments": [
         {
           "name": "text",
           "type": "text",
-          "placeholder": "Что чувствуешь — можно надиктовать (пусто → возьму диктовку из буфера)",
+          "placeholder": "How do you feel — you can dictate it (empty → takes the dictation from the clipboard)",
           "required": false
         }
       ]
     },
     {
       "name": "open",
-      "title": "Aura — открыть дневник",
+      "title": "Aura — open the diary",
       "subtitle": "http://127.0.0.1:8080/",
-      "description": "Открыть дневник эмоций в браузере",
+      "description": "Open the mood diary in the browser",
       "mode": "no-view"
     }
   ],

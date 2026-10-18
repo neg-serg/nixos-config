@@ -64,22 +64,22 @@ function RecordCommand(props) {
 
   var markdown =
     answer.status === "running"
-      ? "### Записываю\n\n> " + (typed || "текст из буфера обмена")
+      ? "### Recording\n\n> " + (typed || "text from the clipboard")
       : answer.status === "done"
-        ? "### Записано в дневник\n\n```\n" + answer.detail + "\n```"
-        : "### Не получилось\n\n```\n" + (answer.detail || "нет ответа") + "\n```";
+        ? "### Saved to the diary\n\n```\n" + answer.detail + "\n```"
+        : "### That did not work\n\n```\n" + (answer.detail || "no answer") + "\n```";
 
   return React.createElement(
     api.Detail,
     {
       markdown: markdown,
-      navigationTitle: "Aura — запись в дневник",
+      navigationTitle: "Aura — diary entry",
       actions: React.createElement(
         api.ActionPanel,
         null,
-        React.createElement(api.Action, { title: "Открыть дневник", onAction: openDiary }),
+        React.createElement(api.Action, { title: "Open the diary", onAction: openDiary }),
         React.createElement(api.Action, {
-          title: "Скопировать заметку",
+          title: "Copy the note",
           onAction: function () { api.Clipboard.copy(typed); }
         })
       )
