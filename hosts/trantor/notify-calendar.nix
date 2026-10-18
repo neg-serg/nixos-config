@@ -7,7 +7,7 @@
 }:
 # Morning Telegram calendar reminder. Each day at 07:30 (Europe/Moscow) the
 # oneshot unit lists the local user (neg) khal calendar events for "today";
-# if there are any, it posts a single "📅 Сегодня:" message to the Telegram
+# if there are any, it posts a single "📅 Today:" message to the Telegram
 # chat from secrets/telegram.sops.yaml via the shared sender in
 # hosts/trantor/telegram.nix, otherwise it exits silently.
 #

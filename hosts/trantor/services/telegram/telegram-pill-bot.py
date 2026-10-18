@@ -25,16 +25,16 @@ PILL_OWNER = "@panelUser@"
 # Must match telegram-pill-reminder.py: used to restore the reminder
 # message (with its button) when the panel mark is reverted.
 REMINDER_TEXT = (
-    "💊 12:00 — пора принять таблетку. Нажми «Отметить», когда принял."
+    "💊 12:00 — time to take your pill. Tap «Mark taken» once you have."
 )
 REMINDER_MARKUP = json.dumps(
     {
         "inline_keyboard": [
-            [{"text": "Отметить ✅", "callback_data": "pill_taken"}]
+            [{"text": "Mark taken ✅", "callback_data": "pill_taken"}]
         ]
     }
 )
-CONFIRMED_TEXT = "💊 Принято ✅ ({0})"
+CONFIRMED_TEXT = "💊 Taken ✅ ({0})"
 
 
 def read_secrets():

@@ -70,7 +70,7 @@ def main():
 
     lines = []
     for ev in events:
-        title = (ev.get("title") or "").strip() or "(без названия)"
+        title = (ev.get("title") or "").strip() or "(untitled)"
         loc = (ev.get("location") or "").strip()
         # khal renders "all-day" as the string "True"/"False" in JSON.
         all_day_val = ev.get("all-day")
@@ -94,7 +94,7 @@ def main():
     if not lines:
         return 0  # no events today: do nothing
 
-    msg = "\U0001f4c5 Сегодня:\n" + "\n".join(lines)
+    msg = "\U0001f4c5 Today:\n" + "\n".join(lines)
     # The shared sender retries through the sing-box socks proxy;
     # never fail the unit if Telegram is unreachable.
     try:

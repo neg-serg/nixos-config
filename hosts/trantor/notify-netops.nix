@@ -2,7 +2,7 @@
 #
 # (A) telegram-vpn-watch (oneshot + timer, every 10 min): watches the on-demand
 #     WireGuard tunnel (wg-quick-vpn-trantor) and the public egress IP. Sends a
-#     Telegram message on a down->up transition ("VPN поднят") and on a public
+#     Telegram message on a down->up transition ("VPN is up") and on a public
 #     IP change while the tunnel stays up. Gated on config.trantor.telegram.enable
 #     (see hosts/trantor/telegram.nix).
 # (B) ntfy-system-stale (oneshot + timer, weekly Monday 10:00): reminds to run
