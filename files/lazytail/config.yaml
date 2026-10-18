@@ -6,6 +6,25 @@
 name: global
 theme: ghostty
 
+# Key bindings (patched lazytail: upstream 0.10.0 hard-codes every chord; see
+# packages/lazytail/keymap.patch). A list replaces the built-in chords for that
+# action, an empty list unbinds it, and `lazytail config validate` reports
+# unknown actions and chords bound twice. Style: vim/less — j/k/g/G stay as-is,
+# plus the tail -f / less aliases below. The `?` overlay renders live chords.
+keys:
+  follow: ["f", "F"]                # F: tail -f / less habit
+  help: ["?", "h"]
+  page_down: ["pagedown", "ctrl+f"] # ctrl+f / ctrl+b — page, as in less
+  page_up: ["pageup", "ctrl+b"]
+  half_page_down: ["ctrl+d"]        # ctrl+d / ctrl+u — half page, as in vim
+  half_page_up: ["ctrl+u"]
+  clear_filter: ["esc", "ctrl+k"]   # esc is eaten by the filter input; ctrl+k is a spare
+  close_tab: ["x", "ctrl+w"]
+  jump_start: ["g", "home"]
+  jump_end: ["G", "end"]
+  viewport_down: ["ctrl+e"]
+  viewport_up: ["ctrl+y"]
+
 # Sources shown in discovery mode (a plain `lazytail` with no arguments).
 # Captured sources (`cmd | lazytail -n NAME`) land in ~/.config/lazytail/data/
 # and show up on their own, without an entry here.
