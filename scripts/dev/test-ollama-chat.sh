@@ -5,7 +5,7 @@
 set -uo pipefail
 export OLLAMA_MODELS=/zero/ai/ollama OLLAMA_HOST=127.0.0.1:11434
 API=http://127.0.0.1:11434/v1/chat/completions
-PROMPT="Отвечай одним словом: привет"
+PROMPT="Answer with one word: hello"
 LIMIT_MS=90000
 FORCE=0
 while [ "$#" -gt 0 ]; do
