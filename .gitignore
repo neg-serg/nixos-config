@@ -18,6 +18,9 @@ nvim.log
 files/shell/zsh/.zcompdump
 viz/
 
+# Scratch Rust prototype workspace (player startup measurements) — not part of the config
+/prototypes/
+
 # Binary/compressed blobs — don't let them sneak in accidentally
 *.xz
 *.gz
