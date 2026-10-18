@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Новая вкладка</title>
+    <title>New tab</title>
     <link rel="stylesheet" href="newtab.css" />
   </head>
   <body>
@@ -34,11 +34,11 @@
           type="text"
           spellcheck="false"
           autocomplete="off"
-          placeholder="Поиск — или введи адрес и нажми Enter"
+          placeholder="Search — or type an address and press Enter"
         />
       </form>
 
-      <section class="tiles" id="tiles" aria-label="Быстрые ссылки"></section>
+      <section class="tiles" id="tiles" aria-label="Quick links"></section>
 
       <footer class="foot">
         <div class="weather" id="weather" hidden>
@@ -46,21 +46,21 @@
           <span class="weather-temp" id="wx-temp"></span>
           <span class="weather-text" id="wx-text"></span>
         </div>
-        <button class="hint" id="edit" type="button" title="Редактировать быстрые ссылки">
-          <span class="kbd">Ctrl</span> + <span class="kbd">E</span> — ссылки
+        <button class="hint" id="edit" type="button" title="Edit quick links">
+          <span class="kbd">Ctrl</span> + <span class="kbd">E</span> — links
         </button>
       </footer>
     </main>
 
     <dialog class="editor" id="editor">
-      <h2>Быстрые ссылки</h2>
-      <p class="muted">По одной на строку: <code>Название | https://адрес</code></p>
+      <h2>Quick links</h2>
+      <p class="muted">One per line: <code>Name | https://address</code></p>
       <textarea id="editor-text" spellcheck="false" rows="12"></textarea>
       <div class="editor-actions">
-        <button id="editor-reset" type="button" class="ghost">Сбросить</button>
+        <button id="editor-reset" type="button" class="ghost">Reset</button>
         <span class="spacer"></span>
-        <button id="editor-cancel" type="button" class="ghost">Отмена</button>
-        <button id="editor-save" type="button" class="primary">Сохранить</button>
+        <button id="editor-cancel" type="button" class="ghost">Cancel</button>
+        <button id="editor-save" type="button" class="primary">Save</button>
       </div>
     </dialog>
 
