@@ -6,9 +6,8 @@
 #   survive restarts, so this is only needed for a fresh browser/profile, a
 #   cleared cookie jar, or a different authority than the one that minted the
 #   cookie.
-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0
-fi
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
+help_from_header 2 8 "$@"
 
 # Match the URL line, not the sibling "dsh web: opening the default browser"
 # notice that shares the prefix.

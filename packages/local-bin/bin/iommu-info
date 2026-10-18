@@ -6,9 +6,8 @@
 
 setopt nullglob
 IFS=$'\n\t'
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  sed -n '2,5p' "$0" | sed 's/^# \{0,1\}//'; exit 0
-fi
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
+help_from_header 2 5 "$@"
 
 command -v lspci >/dev/null 2>&1 || { print -u2 'iommu-info: lspci not found'; :; }
 [[ -d /sys/kernel/iommu_groups ]] || { print -u2 'iommu-info: no /sys/kernel/iommu_groups'; exit 0 }

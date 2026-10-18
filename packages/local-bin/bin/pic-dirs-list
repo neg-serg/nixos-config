@@ -2,9 +2,8 @@
 # Usage: pic-dirs-list
 # pic-dirs-list: index $XDG_PICTURES_DIR dirs with zoxide on changes
 
-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  sed -n '2,2p' "$0" | sed 's/^# \{0,1\}//'; exit 0
-fi
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
+help_from_header 2 2 "$@"
 
 [ -n "${XDG_PICTURES_DIR:-}" ] || exit 0
 command -v inotifywait >/dev/null 2>&1 || exit 0
