@@ -1,9 +1,9 @@
 #!/bin/sh
 # tts-clone: zero-shot TTS voice cloning via XTTS-v2 (RU/EN/17 langs, CPU).
 # Clones the voice from a reference recording and speaks new text.
-# Usage: tts-clone "ТЕКСТ" REFERENCE.wav OUT.wav [--lang ru]
+# Usage: tts-clone "TEXT" REFERENCE.wav OUT.wav [--lang ru]
 set -e
-[ -n "$1" ] && [ -n "$2" ] && [ -n "$3" ] || { echo "usage: tts-clone "ТЕКСТ" REFERENCE.wav OUT.wav [--lang ru]" >&2; exit 2; }
+[ -n "$1" ] && [ -n "$2" ] && [ -n "$3" ] || { echo "usage: tts-clone "TEXT" REFERENCE.wav OUT.wav [--lang ru]" >&2; exit 2; }
 TEXT="$1"; REF="$2"; OUT="$3"; LANG="ru"
 shift 3
 while [ "$#" -gt 0 ]; do

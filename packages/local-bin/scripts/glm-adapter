@@ -351,8 +351,8 @@ vm_unhealthy() {
 
 vm_restart() {
   local now recent i why okmsg
-  why="${1:-адаптер не в VM}"
-  okmsg="${2:-адаптер в VM}"
+  why="${1:-adapter is not in the VM}"
+  okmsg="${2:-adapter is in the VM}"
   mkdir -p "$STATE_DIR"
   # One restart at a time: the 60 s timer and a manual `glm-adapter attach` can
   # otherwise run two stop/start sequences on the same container — the very race
@@ -378,11 +378,11 @@ vm_restart() {
   fi
   if [ "$recent" -ge "$RESTART_MAX_PER_HOUR" ]; then
     warn "VM restart suppressed: $recent restarts within the last hour"
-    notify_once "suppressed" firing "авто-лечение на паузе: $recent рестартов за час (лимит $RESTART_MAX_PER_HOUR), ВМ сейчас НЕ поднимаю. Состояние: $why. Руками: systemctl --user restart windows-vm"
+    notify_once "suppressed" firing "self-healing paused: $recent restarts in an hour (limit $RESTART_MAX_PER_HOUR), NOT bringing the VM up now. State: $why. By hand: systemctl --user restart windows-vm"
     return 1
   fi
   warn "restarting VM '$CT' ($why)"
-  notify firing "поднимаю ВМ: $why"
+  notify firing "bringing the VM up: $why"
   echo "$now" >> "$RESTART_LOG"
   # stop + start, not `podman restart`: an automatic restart was followed by a
   # container with only `lo` inside and an empty route table (no pasta tap, no
@@ -395,7 +395,7 @@ vm_restart() {
     warn "VM did not come back up — retrying the restart once"
     if ! vm_cycle_locked; then
       fail "container '$CT' is not up with the adapter attached after two restarts (podman logs windows)"
-      notify_once "failed" firing "ВМ не поднялась после двух рестартов: $why. Смотреть: podman logs $CT"
+      notify_once "failed" firing "the VM did not come up after two restarts: $why. Check: podman logs $CT"
       return 1
     fi
   fi
@@ -534,11 +534,11 @@ cmd_auto() {
     if vm_rdp_port_open && vm_recovery_screen; then
       rm -f "$RDP_STRIKES_FILE"
       warn "guest is on a recovery screen (WinRE/Automatic Repair) — a VM restart cannot fix it"
-      notify_once "recovery" firing "Windows застряла в WinRE (Automatic Repair) — нужен ручной восстановительный запуск: http://127.0.0.1:8006"
+      notify_once "recovery" firing "Windows is stuck in WinRE (Automatic Repair) — a manual recovery boot is needed: http://127.0.0.1:8006"
       return 0
     fi
     warn "VM '$CT' is Up but 127.0.0.1:3389 does not answer — the host-side plumbing is gone"
-    if vm_restart "гость Up, но 3389 не отвечает — обвязка pasta умерла" "ВМ поднята: pasta снова на месте"; then
+    if vm_restart "guest is Up but 3389 does not answer — the pasta plumbing is gone" "VM is up: pasta is back in place"; then
       rm -f "$RDP_STRIKES_FILE"
       ok "VM restarted — the guest is booting, RDP answers within ~1-2 min"
     fi
@@ -568,10 +568,10 @@ cmd_auto() {
     fi
     if ! host_present; then
       warn "VM '$CT' is down and the adapter is not on the host USB — nothing to hand over"
-      notify_once "down" firing "VM '$CT' лежит, адаптера нет на USB"
+      notify_once "down" firing "VM '$CT' is down, the adapter is not on USB"
       return 0
     fi
-    if vm_restart "контейнер '$CT' лежит (Exited)" "ВМ поднята, адаптер в VM"; then
+    if vm_restart "container '$CT' is down (Exited)" "VM is up, the adapter is in the VM"; then
       ok "VM '$CT' is back up after the crash"
       verify_chain
     else
@@ -586,7 +586,7 @@ cmd_auto() {
   fi
   if ! host_present; then
     warn "adapter is not on the host USB — restarting the VM would not help"
-    notify_once "missing" firing "адаптера нет на USB"
+    notify_once "missing" firing "the adapter is not on USB"
     return 0
   fi
   # QEMU cannot claim the device while usbhid holds it (2026-10-15: three auto
@@ -659,7 +659,7 @@ cmd_replug() {
     fail "VM '$CT' is not running — start it first: docker start windows"
     return 1
   fi
-  if ! vm_restart "адаптер в VM, но GLM без мониторов" "свежий QEMU забрал адаптер"; then
+  if ! vm_restart "the adapter is in the VM but GLM has no monitors" "a fresh QEMU grabbed the adapter"; then
     fail "no restart (another restart in progress, or the hourly budget) — see $RESTART_LOG"
     return 1
   fi
