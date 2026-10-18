@@ -96,7 +96,7 @@ part Card {
             at: -150, 48; width: 330; size: 22; weight: 500; color: lock.ink
             family: "Iosevka"; selection: lock.accent
             secret: true; label: "Password"; agent: no
-            placeholder: "введите пароль"
+            placeholder: "type the password"
         }
         // PAM is running: one accent line filling along the bottom edge of the
         // field (the legacy sweeping bar, as a fill — a sweep needs a loop).

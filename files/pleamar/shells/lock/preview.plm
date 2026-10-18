@@ -49,7 +49,7 @@ scene preview {
         // cannot cover it): a screenshot of the preview can never be mistaken
         // for the lock screen itself.
         box preview_strip { from: 0, 0; size: screen.width, 26; color: coal; opacity: 70% }
-        text "предпросмотр · сессия не блокируется" {
+        text "preview · the session is not locked" {
             at: screen.width / 2, 13; anchor: center; size: 12; color: lock.ink.dim; family: "Iosevka"
         }
     }
