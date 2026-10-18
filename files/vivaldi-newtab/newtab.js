@@ -23,7 +23,7 @@ const DEFAULT_LINKS = [
 ];
 
 // Weather needs coordinates; it stays hidden until they are set:
-//   chrome.storage.local.set({ weather: { lat: 55.75, lon: 37.62, label: "Москва" } })
+//   chrome.storage.local.set({ weather: { lat: 55.75, lon: 37.62, label: "Moscow" } })
 const WEATHER_STORAGE_KEY = "weather";
 
 // --- storage helpers -------------------------------------------------------
@@ -67,10 +67,10 @@ const dateFmt = new Intl.DateTimeFormat("ru-RU", {
 });
 
 function greetingFor(hour) {
-  if (hour < 5) return "Доброй ночи";
-  if (hour < 12) return "Доброе утро";
-  if (hour < 18) return "Добрый день";
-  return "Добрый вечер";
+  if (hour < 5) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 function tick() {
@@ -265,27 +265,27 @@ document.addEventListener("keydown", (event) => {
 const weatherEl = document.getElementById("weather");
 
 const WMO = {
-  0: "Ясно",
-  1: "Почти ясно",
-  2: "Переменная облачность",
-  3: "Пасмурно",
-  45: "Туман",
-  48: "Изморозь",
-  51: "Слабая морось",
-  53: "Морось",
-  55: "Сильная морось",
-  61: "Небольшой дождь",
-  63: "Дождь",
-  65: "Ливень",
-  71: "Небольшой снег",
-  73: "Снег",
-  75: "Сильный снег",
-  80: "Дождевые заряды",
-  81: "Ливни",
-  82: "Сильные ливни",
-  95: "Гроза",
-  96: "Гроза с градом",
-  99: "Сильная гроза с градом",
+  0: "Clear",
+  1: "Mostly clear",
+  2: "Partly cloudy",
+  3: "Overcast",
+  45: "Fog",
+  48: "Rime fog",
+  51: "Light drizzle",
+  53: "Drizzle",
+  55: "Dense drizzle",
+  61: "Light rain",
+  63: "Rain",
+  65: "Heavy rain",
+  71: "Light snow",
+  73: "Snow",
+  75: "Heavy snow",
+  80: "Rain showers",
+  81: "Moderate showers",
+  82: "Violent showers",
+  95: "Thunderstorm",
+  96: "Thunderstorm with hail",
+  99: "Severe thunderstorm with hail",
 };
 
 async function loadWeather() {
