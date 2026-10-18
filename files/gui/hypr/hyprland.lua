@@ -132,6 +132,11 @@ local cls = {
   remote      = "^(Vmware-view|xfreerdp|remmina|org.remmina.Remmina)$",
   notes       = "^(Obsidian)$",
   photo       = "^(ai\\.storyteller\\.photocraft)$",
+  -- Unity Hub (Electron) reports WM_CLASS "unityhub" verbatim (checked with
+  -- hyprctl clients); the Editor is the X11 "Unity" class. The Hub's own
+  -- desktop entry must repeat the lowercase class, else the launcher icon is
+  -- not tied to the window.
+  unity       = "^(unityhub|Unity|Unity Editor)$",
 }
 
 -- ---------------------------------------------------------------------
@@ -740,6 +745,9 @@ local workspaces = {
   { id = 8,  name = "𐌷:pic" },
   { id = 9,  name = "𐌺:vm" },
   { id = 10, name = "𐌻:wine" }, -- wine/games
+  -- 11 was the only unused number in the working range: Unity Hub and the
+  -- Editor land here, so the Hub's download/build chatter stays off :dev.
+  { id = 11, name = "𐌹:unity" },
   { id = 12, name = "𐌽:daw" },  -- media/audio
   { id = 13, name = "𐌾:dw" },
   { id = 14, name = "𐌿:keyboard" },
@@ -1185,6 +1193,7 @@ local routes = {
   { class = cls.pic,         id = 8 },
   { class = cls.vm,          id = 9 },
   { class = cls.wine,        id = 10 },
+  { class = cls.unity,       id = 11 },
   { class = cls.daw,         id = 12 },
   { class = cls.dw,          id = 13 },
   { class = cls.keyboard,    id = 14 },
