@@ -2,9 +2,8 @@
 # music-rename: rename music files/directories to a normalized scheme
 # Usage: music-rename [options] PATH...
 #   Renames files/dirs in-place following custom rules. Use with care.
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-  sed -n '2,4p' "$0" | sed 's/^# \{0,1\}//'; exit 0
-fi
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
+help_from_header 2 4 "$@"
 
 typeset -A conv_table
 

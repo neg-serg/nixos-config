@@ -3,9 +3,8 @@
 # Usage: read_documents
 
 IFS=$'\n\t'
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  sed -n '2,3p' "$0" | sed 's/^# \{0,1\}//'; exit 0
-fi
+LOCALBIN_SELF=$0 . "$(dirname "$0")/_localbin.sh"
+help_from_header 2 3 "$@"
 
 command -v fd >/dev/null 2>&1 || { print -u2 'read_documents: fd not found'; :; }
 command -v vicinae >/dev/null 2>&1 || { print -u2 'read_documents: vicinae not found'; :; }
