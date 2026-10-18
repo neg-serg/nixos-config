@@ -123,7 +123,10 @@ in
         exec = "unityhub-proxy %U";
         icon = "unityhub";
         categories = [ "Development" ];
-        startupWMClass = "Unity Hub";
+        # hyprctl clients reports the Hub window as class "unityhub" (exactly, no
+        # capital letters); the entry has to repeat that or the launcher icon and
+        # the window are not associated.
+        startupWMClass = "unityhub";
         mimeTypes = [ "x-scheme-handler/unityhub" ];
       })
     ];
