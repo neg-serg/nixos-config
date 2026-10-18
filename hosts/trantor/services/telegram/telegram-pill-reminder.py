@@ -42,11 +42,11 @@ API = "https://api.telegram.org/bot{0}/sendMessage".format(TOKEN)
 MARKUP = json.dumps(
     {
         "inline_keyboard": [
-            [{"text": "Отметить ✅", "callback_data": "pill_taken"}]
+            [{"text": "Mark taken ✅", "callback_data": "pill_taken"}]
         ]
     }
 )
-TEXT = "💊 12:00 — пора принять таблетку. Нажми «Отметить», когда принял."
+TEXT = "💊 12:00 — time to take your pill. Tap «Mark taken» once you have."
 
 
 def curl_url_config(url):

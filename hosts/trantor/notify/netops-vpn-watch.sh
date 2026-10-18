@@ -37,24 +37,24 @@ if [ -f "$IP_FILE" ]; then
   prev=$(cat "$IP_FILE")
 fi
 
-# 3. Down->up transition: notify "поднят".
+# 3. Down->up transition: notify "up".
 if [ -f "$DOWN_MARKER" ]; then
   rm -f "$DOWN_MARKER"
-  send "🌐 VPN поднят (IP: $ip)"
+  send "🌐 VPN is up (IP: $ip)"
   printf '%s\n' "$ip" > "$IP_FILE"
   exit 0
 fi
 
 # First observation while already up (fresh state): record, notify once.
 if [ -z "$prev" ]; then
-  send "🌐 VPN поднят (IP: $ip)"
+  send "🌐 VPN is up (IP: $ip)"
   printf '%s\n' "$ip" > "$IP_FILE"
   exit 0
 fi
 
 # IP changed while the tunnel stayed up: notify, keep the same marker.
 if [ "$prev" != "$ip" ]; then
-  send "🌐 VPN: публичный IP сменился $prev -> $ip"
+  send "🌐 VPN: public IP changed $prev -> $ip"
 fi
 printf '%s\n' "$ip" > "$IP_FILE"
 exit 0

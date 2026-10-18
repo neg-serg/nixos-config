@@ -39,7 +39,7 @@ let
       MARKER="/run/telegram-notify-boot.sent"
       [ -e "$MARKER" ] && exit 0
 
-      ${lib.getExe config.trantor.telegram.sender} "🚀 trantor: загрузился"
+      ${lib.getExe config.trantor.telegram.sender} "🚀 trantor: booted"
       touch "$MARKER"
     '';
   };
@@ -67,7 +67,7 @@ let
   pillPanelUser = "neg";
 
   # Daily 12:00 pill reminder: sends a Telegram message with an inline
-  # "Отметить" button; telegram-pill-bot turns a press into confirmation.
+  # "Mark taken" button; telegram-pill-bot turns a press into confirmation.
   # The message is skipped when the panel already recorded today's dose,
   # and its id is remembered so the bot can edit the very same message
   # when the dose gets marked (or unmarked) from the panel.

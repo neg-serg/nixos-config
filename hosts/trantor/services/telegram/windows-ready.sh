@@ -23,5 +23,5 @@ if [ "$ok" != 1 ]; then
   exit 0
 fi
 
-@sender@ "🪟 таз загрузился" "Windows-VM доступна по RDP (127.0.0.1:3389)"
+@sender@ "🪟 the VM booted" "Windows VM is reachable over RDP (127.0.0.1:3389)"
 touch "$STATE_FILE"

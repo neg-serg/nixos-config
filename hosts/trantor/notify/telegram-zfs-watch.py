@@ -245,11 +245,11 @@ def nvme_facts(device):
     try:
         out = run_cmd([NVME, "smart-log", "--output-format=json", device])
     except subprocess.CalledProcessError:
-        return ["smart-log не читается"], {}
+        return ["smart-log cannot be read"], {}
     try:
         log = json.loads(out)
     except ValueError:
-        return ["smart-log вернул не JSON"], {}
+        return ["smart-log returned non-JSON"], {}
     problems = []
     info = {}
     critical = int(nvme_field(log, "critical_warning") or 0)
@@ -263,7 +263,7 @@ def nvme_facts(device):
         temp_c = temp - 273.15 if temp > 200 else temp
         info["temp_c"] = round(temp_c, 1)
         if temp_c >= NVME_MAX_TEMP_C:
-            problems.append("температура {0:.0f}°C".format(temp_c))
+            problems.append("temperature {0:.0f}°C".format(temp_c))
     spare = nvme_field(log, "available_spare", "avail_spare")
     threshold = nvme_field(
         log,
@@ -282,7 +282,7 @@ def nvme_facts(device):
     if used is not None:
         info["used_percent"] = used
         if used >= NVME_MAX_USED_PERCENT:
-            problems.append("износ {0:g}%".format(used))
+            problems.append("wear {0:g}%".format(used))
     media_errors = int(nvme_field(log, "media_errors") or 0)
     info["media_errors"] = media_errors
     if media_errors:
@@ -366,7 +366,7 @@ def main():
                     kc is None or kp is None or kc > kp
                 ):
                     messages.append(
-                        "🧹 ZFS scrub {0} закончен: {1} ошибок ({2})".format(
+                        "🧹 ZFS scrub {0} finished: {1} errors ({2})".format(
                             pool, scrub["errors"], scrub["date"]
                         )
                     )

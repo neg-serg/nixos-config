@@ -19,9 +19,9 @@ if [ "$age" -le 14 ]; then
 fi
 
 # 3. Post an info/low reminder to the local ntfy `system` topic.
-msg="🕓 Флейк не обновлялся $age дней (последний раз $last). Пора nix flake update."
+msg="🕓 The flake has not been updated for $age days (last time $last). Time for nix flake update."
 $CURL -sS -m 5 -X POST \
-  -H "Title: Система" \
+  -H "Title: System" \
   -H "Priority: low" \
   --data "$msg" \
   "$NTFY_URL" > /dev/null 2>&1 || true

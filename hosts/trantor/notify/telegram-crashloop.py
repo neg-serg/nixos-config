@@ -181,7 +181,7 @@ def main():
             if delta >= CRASH_THRESHOLD and now >= entry.get(
                 "next_allowed", 0
             ):
-                text = "🔄 crash-loop: {0}: {1} рестартов за 5 мин (всего {2})".format(
+                text = "🔄 crash-loop: {0}: {1} restarts in 5 min ({2} total)".format(
                     key, delta, nrestarts
                 )
                 print("crashloop: alert {0}".format(text))

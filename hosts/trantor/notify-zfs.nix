@@ -13,7 +13,7 @@
 # message:
 #   - problems appeared           -> "⚠️ ZFS <pool>: <problems>"
 #   - problems cleared            -> "✅ ZFS <pool>: recovered"
-#   - a NEW monthly scrub finish  -> "🧹 ZFS scrub <pool> закончен: <N> ..."
+#   - a NEW monthly scrub finish  -> "🧹 ZFS scrub <pool> finished: <N> ..."
 #   - snapshot staleness / USEDSNAP pressure / missing datasets (see
 #     modules/system/zfs-snapshots.nix for the policy it audits)
 #   - NVMe SMART problems (critical_warning, temperature, spare, wear,
