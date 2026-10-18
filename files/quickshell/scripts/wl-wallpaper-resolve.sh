@@ -2,7 +2,7 @@
 # Wallpaper resolver — one answer for both halves of the login.
 #
 # Two things paint a wallpaper: the login layer (files/quickshell/greeter/login.qml,
-# fed by scripts/login-wallpaper.sh) and wl-daemon, which paints the desktop *and*
+# fed by files/quickshell/scripts/login-wallpaper.sh) and wl-daemon, which paints the desktop *and*
 # already paints it behind the login screen's lock surface (the session wrapper
 # starts the daemon before the compositor shows the login screen, see
 # modules/user/session/greetd/session-wrapper.sh + the login branch of

@@ -35,7 +35,7 @@ in
 lib.mkMerge [
   {
     # Reduce microphone background noise system-wide (PipeWire RNNoise filter)
-    # Enabled via modules/hardware/audio/noise by default for this host
+    # Enabled via modules/hardware/audio/pipewire.nix (hardware.audio.rnnoise) by default for this host
     # (If you prefer toggling via an option, we can expose one later.)
 
     # Host-specific system policy
