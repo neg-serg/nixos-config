@@ -292,8 +292,8 @@ export function apply(ctx) {
 
   ctx.commands.register({
     name: 'diff',
-    description: 'обзор незакоммиченных изменений (структурная карточка через show_diff)',
-    input: { hint: '[путь] [--staged] [--ref <ref>] [--patch]' },
+    description: 'review uncommitted changes (structural card via show_diff)',
+    input: { hint: '[path] [--staged] [--ref <ref>] [--patch]' },
     handler: async ({ rawInput, agent }) => {
       const parts = String(rawInput ?? '').trim().split(/\s+/).filter((part) => part !== '')
       const args = {}
@@ -305,11 +305,11 @@ export function apply(ctx) {
         else if (part === '--patch' || part === '-p') wantPatch = true
         else if (part === '--ref') {
           const ref = parts[i + 1]
-          if (ref === undefined) return { kind: 'error', text: 'usage: /diff [путь] [--staged] [--ref <ref>] [--patch]' }
+          if (ref === undefined) return { kind: 'error', text: 'usage: /diff [path] [--staged] [--ref <ref>] [--patch]' }
           args.ref = ref
           i += 1
         } else if (part.startsWith('-')) {
-          return { kind: 'error', text: `неизвестный флаг: ${part}\nusage: /diff [путь] [--staged] [--ref <ref>] [--patch]` }
+          return { kind: 'error', text: `unknown flag: ${part}\nusage: /diff [path] [--staged] [--ref <ref>] [--patch]` }
         } else path = part
       }
       if (path !== undefined) args.path = path
@@ -327,7 +327,7 @@ export function apply(ctx) {
       if (wantPatch && report.patch !== '') {
         lines.push('', report.patch.trimEnd())
       } else if (report.files.length > 0) {
-        lines.push('', 'полный патч: /diff --patch; структурная карточка: попросите агента вызвать ' + TOOL_NAME)
+        lines.push('', 'full patch: /diff --patch; structural card: ask the agent to call ' + TOOL_NAME)
       }
       return { kind: 'success', text: lines.join('\n') }
     },

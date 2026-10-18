@@ -34,7 +34,7 @@ let
       id = "neg";
       name = "neg";
       order = 5;
-      description = "Пресет neg — форк LiangShen (anchored-standard), поддерживаемый в /etc/nixos: фаза 1 — минимальная поверхность (bash + str_replace_editor, персона с дисциплиной мышления), после якоря — промоушен в Code Mode (PTC) с полным каталогом инструментов.";
+      description = "The neg preset — a LiangShen fork (anchored-standard) maintained in /etc/nixos: phase 1 is a minimal surface (bash + str_replace_editor, a persona with thinking discipline); after the anchor it is promoted to Code Mode (PTC) with the full tool catalogue.";
       plugins = ./dsh-liangshen-fork/agent.cordis.yml;
       # Sidecars are { src; name; }: a store path's file name carries the hash
       # prefix, so the caretaker cannot derive the destination from it.
@@ -47,9 +47,9 @@ let
     }
     {
       id = "fast";
-      name = "Fast — лёгкий";
+      name = "Fast — light";
       order = 4;
-      description = "Лёгкий быстрый режим: короткая персона без лишних секций, 4 инструмента (bash, редактор, веб-поиск, вопросы) — мало токенов, без долгих размышлений. Переключение: /fast (сюда), /smart (обратно на neg).";
+      description = "A light fast mode: a short persona without extra sections, 4 tools (bash, editor, web search, questions) — few tokens, no long deliberation. Switching: /fast (here), /smart (back to neg).";
       plugins = ./dsh-fast/agent.cordis.yml;
       sidecars = [ ];
     }

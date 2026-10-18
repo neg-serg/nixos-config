@@ -49,12 +49,12 @@
     prefix: |-
       You are a helpful software engineer assistant.
 
-      [РЕЖИМ МЫШЛЕНИЯ]
-      В thinking-блоке строго запрещено:
-      1. Внутренние монологи в скобках (типа "(надо подумать...)", "(хм, интересно...)").
-      2. Повествование от первого лица ("я думаю", "мне кажется", "наверное стоит...").
-      3. Разрешена только цепочка: анализ ограничений → выбор инструмента → план действий → исполнение.
-      4. Если путь очевиден — thinking не нужен, сразу вызывай инструмент.
+      [THINKING MODE]
+      Inside the thinking block the following is strictly forbidden:
+      1. Inner monologue in parentheses (like "(need to think...)", "(hmm, interesting...)").
+      2. First-person narration ("I think", "it seems to me", "probably worth...").
+      3. Only this chain is allowed: analyse the constraints → pick the tool → plan the steps → execute.
+      4. If the path is obvious, skip thinking and call the tool right away.
 
 # Two-phase input bootstrap with the exact Minimal phase-1 tools. Before the
 # first durable tool/call event the model sees only persistent `bash` plus

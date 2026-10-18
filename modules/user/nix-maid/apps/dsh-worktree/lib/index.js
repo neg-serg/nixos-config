@@ -69,8 +69,8 @@ function render(stdout, stderr) {
 export function apply(ctx) {
   ctx.commands.register({
     name: 'worktree',
-    description: 'изолированные git-worktree для параллельных сессий (dsh-worktree)',
-    input: { hint: 'new <имя> | list | path <имя> | rm <имя> | prune' },
+    description: 'isolated git worktrees for parallel sessions (dsh-worktree)',
+    input: { hint: 'new <name> | list | path <name> | rm <name> | prune' },
     handler: async ({ rawInput, agent }) => {
       const argv = parseArgs(rawInput)
       if (argv === null) return { kind: 'error', text: USAGE }
@@ -106,8 +106,8 @@ export function apply(ctx) {
         return {
           kind: 'error',
           text:
-            `не удалось запустить dsh-worktree: ${error instanceof Error ? error.message : String(error)}\n` +
-            'проверьте, что ~/.local/bin в PATH (пакет packages/local-bin) и что сборка прокатана',
+            `could not start dsh-worktree: ${error instanceof Error ? error.message : String(error)}\n` +
+            'check that ~/.local/bin is in PATH (packages/local-bin) and that the build is deployed',
         }
       }
 
@@ -117,7 +117,7 @@ export function apply(ctx) {
       } catch (error) {
         return {
           kind: 'error',
-          text: `dsh-worktree не сообщил результат (таймаут ${TIMEOUT_MS / 1000}s или сбой провайдера): ${
+          text: `dsh-worktree returned no result (timeout ${TIMEOUT_MS / 1000}s или сбой провайдера): ${
             error instanceof Error ? error.message : String(error)
           }`,
         }
@@ -128,10 +128,10 @@ export function apply(ctx) {
       const text = render(stdout, stderr)
 
       if (outcome.signal !== null || outcome.exitCode === null) {
-        return { kind: 'error', text: `dsh-worktree убит сигналом ${outcome.signal ?? '(неизвестно)'}\n${text}` }
+        return { kind: 'error', text: `dsh-worktree killed by signal ${outcome.signal ?? '(unknown)'}\n${text}` }
       }
       if (outcome.exitCode === 0) {
-        return { kind: 'success', text: text === '' ? 'готово' : text }
+        return { kind: 'success', text: text === '' ? 'done' : text }
       }
       return {
         kind: 'error',

@@ -45,17 +45,17 @@ export function apply(ctx) {
     // package-side compatibility patch in packages/dsh).
     const plan = exec?.arguments?.plan ?? exec?.args?.plan ?? ''
     if (typeof plan !== 'string' || plan.trim() === '') {
-      return { kind: 'deny', reason: 'plan-format-validator: план пуст — отправь полный markdown-план (начинается с "' + HASH + ' ").' }
+      return { kind: 'deny', reason: 'plan-format-validator: the plan is empty — send the full markdown plan (it starts with "' + HASH + ' ").' }
     }
     const { h1, sections, bodyChars } = headingLines(plan)
     const missing = []
-    if (h1 === null) missing.push('заголовок "' + HASH + ' …"')
-    if (sections === 0) missing.push('секции "## …" (например ## Цель / ## Шаги / ## Риски)')
-    if (bodyChars < 40) missing.push('непустое тело плана')
+    if (h1 === null) missing.push('a heading "' + HASH + ' …"')
+    if (sections === 0) missing.push('"## …" sections (e.g. ## Goal / ## Steps / ## Risks)')
+    if (bodyChars < 40) missing.push('a non-empty plan body')
     if (missing.length === 0) return decision
     return {
       kind: 'deny',
-      reason: 'plan-format-validator: план неполный — добавь: ' + missing.join(', ') + '. Исправь и отправь exit_plan_mode снова.',
+      reason: 'plan-format-validator: incomplete plan — add: ' + missing.join(', ') + '. Fix it and call exit_plan_mode again.',
     }
   })
 }
