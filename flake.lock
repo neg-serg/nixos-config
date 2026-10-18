@@ -867,7 +867,7 @@
     "renoise-src": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-gzwQVepFoz5g9QNwCYkQWVPLuT6R7mXvh5bL6xD+euM=",
+        "narHash": "sha256-HIWm3X0+9k3In2jxjJTmhEjS6MeTKD3q9I7IGkurW7o=",
         "path": "/home/neg/nixos-src/renoise",
         "type": "path"
       },
