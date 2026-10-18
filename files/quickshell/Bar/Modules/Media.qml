@@ -34,17 +34,17 @@ Item {
         var title = MusicManager.trackTitle || "";
         var artist = MusicManager.trackArtist || "";
         var hints = [];
-        if (MusicManager.trackAlbum) hints.push("Альбом: " + MusicManager.trackAlbum);
+        if (MusicManager.trackAlbum) hints.push("Album: " + MusicManager.trackAlbum);
         var q = [];
         if (MusicManager.trackCodec) q.push(String(MusicManager.trackCodec));
         if (MusicManager.trackBitrateStr) q.push(String(MusicManager.trackBitrateStr));
         if (MusicManager.trackSampleRateStr) q.push(String(MusicManager.trackSampleRateStr));
         if (MusicManager.trackBitDepthStr) q.push(String(MusicManager.trackBitDepthStr));
-        if (q.length) hints.push("Качество: " + q.join(" · "));
+        if (q.length) hints.push("Quality: " + q.join(" · "));
         var player = MusicManager.currentPlayer
             ? String(MusicManager.currentPlayer.service || MusicManager.currentPlayer.name || MusicManager.currentPlayer.identity || "")
             : "";
-        if (player) hints.push("Плеер: " + player);
+        if (player) hints.push("Player: " + player);
         return TooltipText.compose(title, artist, hints);
     })()
     // Plain "Artist — Title" label. The hidden width measurement (titleMeasure)

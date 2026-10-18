@@ -229,9 +229,9 @@ ConnectivityCapsule {
     // Link / internet / VPN / addresses + live RX/TX on hover.
     readonly property string _tooltipText: (function() {
         var hints = [];
-        hints.push(!hasLink ? "Соединения нет"
-            : (hasInternet ? "Интернет: доступен" : "Локальная сеть, интернета нет"));
-        if (vpnConnected) hints.push("VPN: подключён");
+        hints.push(!hasLink ? "No connection"
+            : (hasInternet ? "Internet: available" : "Local network, no internet"));
+        if (vpnConnected) hints.push("VPN: connected");
         if (ConnectivityState && ConnectivityState.interfaces) {
             for (var i = 0; i < ConnectivityState.interfaces.length; i++) {
                 var it = ConnectivityState.interfaces[i];
@@ -245,12 +245,12 @@ ConnectivityCapsule {
                 }
             }
         }
-        hints.push("Клик — потоковая панель");
+        hints.push("Click — streaming panel");
         var rx = (ConnectivityState && isFinite(ConnectivityState.rxKiBps) && ConnectivityState.rxKiBps > 0)
             ? ConnUi.formatScaledKiBps(ConnectivityState.rxKiBps) : "-";
         var tx = (ConnectivityState && isFinite(ConnectivityState.txKiBps) && ConnectivityState.txKiBps > 0)
             ? ConnUi.formatScaledKiBps(ConnectivityState.txKiBps) : "-";
-        return TooltipText.compose("Сеть", "RX " + rx + " · TX " + tx, hints);
+        return TooltipText.compose("Network", "RX " + rx + " · TX " + tx, hints);
     })()
 
     PanelTooltip {

@@ -46,22 +46,22 @@ PanelWindow {
     // ── Values ───────────────────────────────────────────────────────────────
     // Slider bounds; the plugin's own defaults live in files/gui/hypr/hyprglass.lua.
     property var knobs: [
-        { key: "glassBlurStrength",   label: "Блюр",        hint: "радиус = значение × 12 px",        min: 1,  max: 16, step: 0.5, digits: 1 },
-        { key: "glassBlurIterations", label: "Проходов",    hint: "гауссовых проходов, максимум 5",   min: 1,  max: 5,  step: 1,   digits: 0 },
-        { key: "glassVibrancy",       label: "Мороз",       hint: "морозный оттенок, −1 = выключен",  min: -1, max: 1,  step: 0.05, digits: 2 },
-        { key: "glassOpacity",        label: "Плотность",   hint: "сколько стекла на поверхности",    min: 0,  max: 1,  step: 0.05, digits: 2 },
-        { key: "glassRefraction",     label: "Преломление", hint: "толщина стеклянной плиты",         min: 0,  max: 1,  step: 0.05, digits: 2 },
-        { key: "glassChromatic",      label: "Аберрация",   hint: "цветные каёмки на кромках",        min: 0,  max: 1,  step: 0.05, digits: 2 },
-        { key: "glassFresnel",        label: "Френель",     hint: "подсветка кромки",                 min: 0,  max: 1,  step: 0.05, digits: 2 },
-        { key: "glassSpecular",       label: "Блик",        hint: "зеркальный отблеск",               min: 0,  max: 1,  step: 0.05, digits: 2 },
-        { key: "glassAdaptiveDim",    label: "Адаптация",   hint: "затемнение под светлым фоном",     min: 0,  max: 1,  step: 0.05, digits: 2 }
+        { key: "glassBlurStrength",   label: "Blur",        hint: "radius = value × 12 px",        min: 1,  max: 16, step: 0.5, digits: 1 },
+        { key: "glassBlurIterations", label: "Passes",    hint: "Gaussian passes, 5 max",   min: 1,  max: 5,  step: 1,   digits: 0 },
+        { key: "glassVibrancy",       label: "Frost",       hint: "frost tone, −1 = off",  min: -1, max: 1,  step: 0.05, digits: 2 },
+        { key: "glassOpacity",        label: "Density",   hint: "how much glass covers the surface",    min: 0,  max: 1,  step: 0.05, digits: 2 },
+        { key: "glassRefraction",     label: "Refraction", hint: "thickness of the glass slab",         min: 0,  max: 1,  step: 0.05, digits: 2 },
+        { key: "glassChromatic",      label: "Aberration",   hint: "coloured fringes on the edges",        min: 0,  max: 1,  step: 0.05, digits: 2 },
+        { key: "glassFresnel",        label: "Fresnel",     hint: "edge lighting",                 min: 0,  max: 1,  step: 0.05, digits: 2 },
+        { key: "glassSpecular",       label: "Specular",        hint: "mirror-like gleam",               min: 0,  max: 1,  step: 0.05, digits: 2 },
+        { key: "glassAdaptiveDim",    label: "Adaptation",   hint: "dimming over a light background",     min: 0,  max: 1,  step: 0.05, digits: 2 }
     ]
 
     // Presets: the three shapes worth having at hand, everything else is sliders.
     property var presets: [
-        { label: "Стекло",   values: { glassBlurStrength: 6, glassBlurIterations: 5, glassVibrancy: 0.5, glassOpacity: 0.65, glassRefraction: 0.5, glassChromatic: 0.3, glassFresnel: 0.3, glassSpecular: 0.1, glassAdaptiveDim: 0.5 } },
-        { label: "Плотнее",  values: { glassBlurStrength: 8, glassBlurIterations: 5, glassVibrancy: 0.7, glassOpacity: 0.75, glassRefraction: 0.6, glassChromatic: 0.4, glassFresnel: 0.35, glassSpecular: 0.15, glassAdaptiveDim: 0.6 } },
-        { label: "Без фроста", values: { glassBlurStrength: 4, glassBlurIterations: 4, glassVibrancy: -1, glassOpacity: 0.45, glassRefraction: 0.4, glassChromatic: 0.2, glassFresnel: 0.25, glassSpecular: 0.1, glassAdaptiveDim: 0.4 } }
+        { label: "Glass",   values: { glassBlurStrength: 6, glassBlurIterations: 5, glassVibrancy: 0.5, glassOpacity: 0.65, glassRefraction: 0.5, glassChromatic: 0.3, glassFresnel: 0.3, glassSpecular: 0.1, glassAdaptiveDim: 0.5 } },
+        { label: "Denser",  values: { glassBlurStrength: 8, glassBlurIterations: 5, glassVibrancy: 0.7, glassOpacity: 0.75, glassRefraction: 0.6, glassChromatic: 0.4, glassFresnel: 0.35, glassSpecular: 0.15, glassAdaptiveDim: 0.6 } },
+        { label: "No frost", values: { glassBlurStrength: 4, glassBlurIterations: 4, glassVibrancy: -1, glassOpacity: 0.45, glassRefraction: 0.4, glassChromatic: 0.2, glassFresnel: 0.25, glassSpecular: 0.1, glassAdaptiveDim: 0.4 } }
     ]
 
     function applyPreset(p) {
@@ -77,10 +77,10 @@ PanelWindow {
     // (Hyprland does not recompute tags for live windows), which is why a class
     // picks up major changes on its next window.
     property var tints: [
-        { label: "нет", value: "" },
-        { label: "чёрн", value: "000000cc" },
-        { label: "син", value: "0a1a2fcc" },
-        { label: "дым", value: "20242bcc" }
+        { label: "none", value: "" },
+        { label: "blk", value: "000000cc" },
+        { label: "blu", value: "0a1a2fcc" },
+        { label: "smoke", value: "20242bcc" }
     ]
 
     function windowOverrides() { return Settings.settings.glassWindowOverrides || []; }
@@ -129,7 +129,7 @@ PanelWindow {
         _storeOverrides(list);
     }
 
-    // "+ текущее окно": the class of the focused window, straight from hyprctl.
+    // "+ current window": the class of the focused window, straight from hyprctl.
     ProcessRunner {
         id: focusedProbe
         cmd: ["hyprctl", "-j", "activewindow"]
@@ -203,7 +203,7 @@ PanelWindow {
     // ── Verification ────────────────────────────────────────────────────────
     // The plugin has been observed to keep some values and drop others, so the
     // panel does not assume: it polls the check while it is open and says what
-    // the compositor actually reports. "Переприменить" pushes again.
+    // the compositor actually reports. "Re-apply" pushes again.
     property bool inSync: true
     property var differences: []
     property bool checked: false
@@ -258,7 +258,7 @@ PanelWindow {
             spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen))
 
             Text {
-                text: "Стекло"
+                text: "Glass"
                 color: Theme.textPrimary
                 font.family: Theme.fontFamily
                 font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 1.1)
@@ -284,7 +284,7 @@ PanelWindow {
             // The frosted tint brightens whatever is behind the glass, which
             // washes the light theme out — hence a switch of its own.
             GlassToggle {
-                label: "Мороз в светлой теме"
+                label: "Frost in the light theme"
                 checked: Settings.settings.glassLightFrost
                 onToggled: (value) => Settings.settings.glassLightFrost = value
             }
@@ -293,7 +293,7 @@ PanelWindow {
             // per-class tints are skipped for every pane (the music pane is black
             // either way, see the kitty-glass launcher).
             GlassToggle {
-                label: "Тон скратчпадов"
+                label: "Scratchpad tint"
                 checked: Settings.settings.scratchpadTint !== false
                 onToggled: (value) => Settings.settings.scratchpadTint = value
             }
@@ -339,8 +339,8 @@ PanelWindow {
                 Text {
                     Layout.fillWidth: true
                     text: !toast.checked
-                        ? "Проверяю…"
-                        : (toast.inSync ? "Применено" : "Расходится: " + toast.differences.join(", "))
+                        ? "Checking…"
+                        : (toast.inSync ? "Applied" : "Out of sync: " + toast.differences.join(", "))
                     color: !toast.checked
                         ? Color.withAlpha(Theme.textPrimary, 0.5)
                         : (toast.inSync
@@ -362,7 +362,7 @@ PanelWindow {
                         : Color.withAlpha(Theme.textPrimary, 0.07)
                     Text {
                         anchors.centerIn: parent
-                        text: "Переприменить"
+                        text: "Re-apply"
                         color: Theme.textPrimary
                         font.family: Theme.fontFamily
                         font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.8)
@@ -380,7 +380,7 @@ PanelWindow {
             Text {
                 Layout.fillWidth: true
                 Layout.topMargin: Math.round(8 * Theme.scale(Screen))
-                text: "Окна"
+                text: "Windows"
                 color: Theme.textPrimary
                 font.family: Theme.fontFamily
                 font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 1.05)
@@ -403,7 +403,7 @@ PanelWindow {
                         GlassToggle {
                             Layout.fillWidth: true
                             label: (overrideRow.modelData.class || "?")
-                                + (overrideRow.modelData.enabled === false ? "  (выкл)" : "")
+                                + (overrideRow.modelData.enabled === false ? "  (off)" : "")
                             checked: overrideRow.modelData.enabled !== false
                             onToggled: (v) => toast.patchWindowOverride(overrideRow.index, { enabled: v })
                         }
@@ -458,7 +458,7 @@ PanelWindow {
 
                     GlassSlider {
                         Layout.fillWidth: true
-                        label: "Блюр"
+                        label: "Blur"
                         from: 1
                         to: 16
                         stepSize: 0.5
@@ -469,7 +469,7 @@ PanelWindow {
                     }
                     GlassSlider {
                         Layout.fillWidth: true
-                        label: "Плотность"
+                        label: "Density"
                         from: 0
                         to: 1
                         stepSize: 0.05
@@ -480,7 +480,7 @@ PanelWindow {
                     }
                     GlassSlider {
                         Layout.fillWidth: true
-                        label: "Адаптация"
+                        label: "Adaptation"
                         from: 0
                         to: 1
                         stepSize: 0.05
@@ -499,7 +499,7 @@ PanelWindow {
                 color: addHover.containsMouse ? Color.withAlpha(Theme.accentPrimary, 0.22) : Theme.overlayWeak
                 Text {
                     anchors.centerIn: parent
-                    text: "+ текущее окно"
+                    text: "+ current window"
                     color: Theme.textPrimary
                     font.family: Theme.fontFamily
                     font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.8)
@@ -516,7 +516,7 @@ PanelWindow {
             Text {
                 Layout.fillWidth: true
                 Layout.topMargin: Math.round(2 * Theme.scale(Screen))
-                text: "Значения — в ~/.config/hypr/hyprglass.json"
+                text: "Values live in ~/.config/hypr/hyprglass.json"
                 color: Color.withAlpha(Theme.textPrimary, 0.5)
                 font.family: Theme.fontFamily
                 font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * 0.85)

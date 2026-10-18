@@ -29,10 +29,10 @@ OverlayToggleCapsule {
             if (m.gpuAvailable) hints.push("GPU: " + Math.round(m.gpuPercent) + "%");
             if (m.ramTotalGiB > 0)
                 hints.push("RAM: " + Math.round(m.ramPercent) + "% (" + m.ramUsedGiB.toFixed(1) + " / " + m.ramTotalGiB.toFixed(0) + " GiB)");
-            if (m.cpuTempCelsius > 0) hints.push("Температура: " + Math.round(m.cpuTempCelsius) + "°C");
+            if (m.cpuTempCelsius > 0) hints.push("Temperature: " + Math.round(m.cpuTempCelsius) + "°C");
         }
-        hints.push("Клик — панель мониторинга");
-        return TooltipText.compose("Мониторинг", "", hints);
+        hints.push("Click — monitoring panel");
+        return TooltipText.compose("Monitoring", "", hints);
     })()
     PanelTooltip{text:root._tooltipText;targetItem:root;visibleWhen:capsHov.containsMouse}
     MouseArea{id:capsHov;z:-1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.NoButton}

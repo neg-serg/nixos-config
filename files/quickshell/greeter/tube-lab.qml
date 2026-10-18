@@ -223,35 +223,35 @@ onClicked: win.digit = cell.index
 }
 
 Knob {
-label: "разряд ярче"
+label: "brighter discharge"
 value: win.glow
 from: 0.0
 to: 2.5
 onMoved: value => win.glow = value
 }
 Knob {
-label: "стекло светлее"
+label: "lighter glass"
 value: win.glassLight
 from: 0.0
 to: 2.5
 onMoved: value => win.glassLight = value
 }
 Knob {
-label: "тепло на стекле"
+label: "warmth on the glass"
 value: win.warmth
 from: 0.0
 to: 2.5
 onMoved: value => win.warmth = value
 }
 Knob {
-label: "металл виднее"
+label: "more visible metal"
 value: win.metal
 from: 0.0
 to: 1.5
 onMoved: value => win.metal = value
 }
 Knob {
-label: "крупнее трубка"
+label: "bigger tube"
 value: win.tubeScale
 from: 0.5
 to: 1.8
