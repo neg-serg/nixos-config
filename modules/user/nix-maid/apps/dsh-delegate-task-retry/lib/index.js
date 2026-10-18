@@ -72,7 +72,7 @@ export function apply(ctx) {
     const count = fired.size
     if (count >= MAX_PER_SESSION) return decision
     fired.set(key, true)
-    const hint = 'Делегирование (' + fail.tool + ') завершилось ошибкой. Повтори вызов subagent с тем же промптом (или уточни его: добавь контекст/ограничения из ошибки). Не переходи к следующему шагу, пока делегация не вернёт результат. [delegate-task-retry]'
+    const hint = 'Delegation (' + fail.tool + ') failed with an error. Repeat the subagent call with the same prompt (or refine it: add the context/constraints from the error). Do not move to the next step until the delegation returns a result. [delegate-task-retry]'
     return {
       ...decision,
       messages: [...decision.messages, createUserMessage({

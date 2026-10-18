@@ -44,8 +44,8 @@ function renderPresets(presets, current) {
 
 /** Human-readable listing of what the user can pick. */
 function listText(presets, current) {
-  const currentText = current !== undefined ? current : '(не задан)'
-  return `режим по умолчанию: ${currentText}\n\nдоступно:\n${renderPresets(presets, current)}\n\nсменить: /mode <id> | /fast | /smart`
+  const currentText = current !== undefined ? current : '(not set)'
+  return `default mode: ${currentText}\n\navailable:\n${renderPresets(presets, current)}\n\nswitch: /mode <id> | /fast | /smart`
 }
 
 /** Switch the default preset and the model reasoning effort in one step. */
@@ -54,7 +54,7 @@ async function setFastDefault(ctx, presetId, effort, effortLabel) {
   const target = presets.find((p) => p.id === presetId && p.broken === undefined)
   if (target === undefined) {
     const current = ctx.settings.get(SETTINGS_NS)?.default
-    return { kind: 'error', text: `нет пресета «${presetId}».\n\n${listText(presets, current)}` }
+    return { kind: 'error', text: `no preset «${presetId}».\n\n${listText(presets, current)}` }
   }
   await ctx.settings.update(SETTINGS_NS, { default: presetId })
   const model = ctx.agentDefaultModel.currentSelection()
@@ -66,14 +66,14 @@ async function setFastDefault(ctx, presetId, effort, effortLabel) {
   const name = target.name !== undefined ? ` (${target.name})` : ''
   return {
     kind: 'success',
-    text: `режим по умолчанию → ${presetId}${name}; мышление → ${effortLabel}. Применится к новым сессиям; текущая сессия остаётся на своём пресете.`,
+    text: `default mode → ${presetId}${name}; thinking → ${effortLabel}. Applies to new sessions; the current session keeps its preset.`,
   }
 }
 
 export function apply(ctx) {
   ctx.commands.register({
     name: 'mode',
-    description: 'агент-пресет: список режимов или смена режима по умолчанию',
+    description: 'agent preset: list modes or switch the default mode',
     input: { hint: '[id]' },
     handler: async ({ rawInput }) => {
       const id = rawInput.trim()
@@ -84,26 +84,26 @@ export function apply(ctx) {
       }
       const target = presets.find((p) => p.id === id && p.broken === undefined)
       if (target === undefined) {
-        return { kind: 'error', text: `нет пресета «${id}».\n\n${listText(presets, current)}` }
+        return { kind: 'error', text: `no preset «${id}».\n\n${listText(presets, current)}` }
       }
       await ctx.settings.update(SETTINGS_NS, { default: id })
       const note = target.name !== undefined ? ` (${target.name})` : ''
       return {
         kind: 'success',
-        text: `режим по умолчанию → ${id}${note}. Применится к новым сессиям; текущая сессия остаётся на своём пресете.`,
+        text: `default mode → ${id}${note}. Applies to new sessions; the current session keeps its preset.`,
       }
     },
   })
 
   ctx.commands.register({
     name: 'fast',
-    description: 'режим по умолчанию → fast (лёгкий, мало токенов) + мышление low',
+    description: 'default mode → fast (light, few tokens) + thinking low',
     handler: async () => setFastDefault(ctx, 'fast', 'low', 'low'),
   })
 
   ctx.commands.register({
     name: 'smart',
-    description: 'режим по умолчанию → neg (полный) + мышление high',
+    description: 'default mode → neg (full) + thinking high',
     handler: async () => setFastDefault(ctx, 'neg', 'high', 'high'),
   })
 
@@ -113,33 +113,33 @@ export function apply(ctx) {
 
   ctx.commands.register({
     name: 'effort',
-    description: 'уровень мышления модели по умолчанию: /effort off|low|high|max|auto',
+    description: 'default model reasoning effort: /effort off|low|high|max|auto',
     input: { hint: '[off|low|high|max|auto]' },
     handler: async ({ rawInput }) => {
       const model = ctx.agentDefaultModel.currentSelection()
       const arg = rawInput.trim()
       if (arg === '') {
-        const current = model.reasoningEffort ?? '(auto — дефолт адаптера)'
+        const current = model.reasoningEffort ?? '(auto — adapter default)'
         return {
           kind: 'success',
           text:
-            `текущая модель: ${model.provider}/${model.model}\n` +
-            `effort по умолчанию: ${current}\n\n` +
-            `сменить: /effort ${EFFORT_LEVELS.join(' | ')} | auto\n` +
-            '(на DeepSeek medium и xhigh эквивалентны high, поэтому не предлагаются)',
+            `current model: ${model.provider}/${model.model}\n` +
+            `default effort: ${current}\n\n` +
+            `switch: /effort ${EFFORT_LEVELS.join(' | ')} | auto\n` +
+            '(on DeepSeek, medium and xhigh are equivalent to high, so they are not offered)',
         }
       }
       if (arg === 'auto') {
         await ctx.agentDefaultModel.saveSelection({ provider: model.provider, model: model.model })
         return {
           kind: 'success',
-          text: 'effort → auto: новые сессии получат дефолт адаптера (DeepSeek: high).',
+          text: 'effort → auto: new sessions get the adapter default (DeepSeek: high).',
         }
       }
       if (!EFFORT_LEVELS.includes(arg)) {
         return {
           kind: 'error',
-          text: `неизвестный effort «${arg}»: доступно ${EFFORT_LEVELS.join(' | ')} | auto.`,
+          text: `unknown effort «${arg}»: available ${EFFORT_LEVELS.join(' | ')} | auto.`,
         }
       }
       await ctx.agentDefaultModel.saveSelection({
@@ -149,7 +149,7 @@ export function apply(ctx) {
       })
       return {
         kind: 'success',
-        text: `effort по умолчанию → ${arg}. Применится к новым сессиям; текущая не переключается на лету.`,
+        text: `default effort → ${arg}. Applies to new sessions; the current one does not switch on the fly.`,
       }
     },
   })

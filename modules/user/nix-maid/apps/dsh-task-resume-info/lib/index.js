@@ -66,10 +66,10 @@ export function apply(ctx) {
     const todos = foldTodos(session)
     const asks = lastUserAsks(session)
     if (todos === '' && asks.length === 0) return decision
-    const lines = ['[task-resume-info] Сессия восстановлена (resume/fork). Контекст задачи:']
-    if (asks.length > 0) lines.push('Последние запросы пользователя:', ...asks.map((a) => '  > ' + a))
-    if (todos !== '') lines.push('Незакрытые todo:', todos)
-    lines.push('Продолжай с последнего незакрытого пункта; не переспрашивай то, что уже решено.')
+    const lines = ['[task-resume-info] The session was restored (resume/fork). Task context:']
+    if (asks.length > 0) lines.push('The last user requests:', ...asks.map((a) => '  > ' + a))
+    if (todos !== '') lines.push('Open todos:', todos)
+    lines.push('Continue from the last open item; do not re-ask what is already settled.')
     return {
       ...decision,
       messages: [...decision.messages, createUserMessage({

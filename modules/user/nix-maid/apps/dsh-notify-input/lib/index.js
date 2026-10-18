@@ -98,7 +98,7 @@ export function approvalNotice(request) {
   if (tool === '') return null
   const reason = sanitize(request?.reason, 120)
   return {
-    title: 'dsh · Нужно подтверждение',
+    title: 'dsh · Confirmation needed',
     body: reason === '' ? tool : tool + ' — ' + reason,
   }
 }
@@ -109,7 +109,7 @@ export function questionNotice(request) {
   if (first === undefined || first === null) return null
   const question = sanitize(first.question, 160) || sanitize(first.header, 60)
   if (question === '') return null
-  return { title: 'dsh · Агент ждёт ответа', body: question }
+  return { title: 'dsh · The agent awaits an answer', body: question }
 }
 
 /**

@@ -43,11 +43,11 @@ function lastToolFailure(messages) {
 }
 
 const HINTS = {
-  edit: 'Правка не прошла: проверь, что old_string существует и уникален (читай файл заново перед edit), и что JSON-аргументы валидны. Не повторяй вслепую — сначала read. [json-error-recovery]',
-  write: 'Запись не прошла: проверь JSON-аргументы и путь; перечитай файл перед повтором. [json-error-recovery]',
-  str_replace_editor: 'str_replace не прошёл: old_str должен совпадать ровно один раз — перечитай файл и уточни контекст. [json-error-recovery]',
-  ast_grep: 'ast-grep не прошёл: проверь паттерн/rewrite и метапеременные; preview (apply:false) перед применением. [json-error-recovery]',
-  hashline_edit: 'hashline-правка отклонена: файл изменился с момента чтения — перечитай (read_hashline) и повтори с новыми якорями. [json-error-recovery]',
+  edit: 'The edit did not apply: check that old_string exists and is unique (re-read the file before edit) and that the JSON arguments are valid. Do not retry blindly — read first. [json-error-recovery]',
+  write: 'The write did not apply: check the JSON arguments and the path; re-read the file before retrying. [json-error-recovery]',
+  str_replace_editor: 'str_replace failed: old_str must match exactly once — re-read the file and widen the context. [json-error-recovery]',
+  ast_grep: 'ast-grep failed: check the pattern/rewrite and metavariables; preview (apply:false) before applying. [json-error-recovery]',
+  hashline_edit: 'hashline edit rejected: the file changed since it was read — re-read (read_hashline) and retry with fresh anchors. [json-error-recovery]',
 }
 
 export function apply(ctx) {
@@ -61,7 +61,7 @@ export function apply(ctx) {
     const count = fired.get(sid) || 0
     if (count >= MAX_PER_SESSION) return decision
     fired.set(sid, count + 1)
-    const hint = HINTS[fail.tool] || 'Инструмент вернул ошибку: прочитай сообщение об ошибке и исправь аргументы перед повтором. [json-error-recovery]'
+    const hint = HINTS[fail.tool] || 'The tool returned an error: read the error message and fix the arguments before retrying. [json-error-recovery]'
     return {
       ...decision,
       messages: [...decision.messages, createUserMessage({

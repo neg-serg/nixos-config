@@ -136,9 +136,9 @@ export function apply(ctx, config) {
 
     const text =
       REMINDER_OPEN +
-      ' Текущая задача похожа на скилл «' + matched.name + '». ' +
-      'ОБЯЗАТЕЛЬНО: если задача действительно покрывается этим скиллом — сначала вызови инструмент `skill` с именем «' + matched.name + '», ' +
-      'потом работай. Если работа повторяющаяся или широкая и не покрывается скиллом — делегируй через `subagent` ' +
+      ' The current task looks like the skill «' + matched.name + '». ' +
+      'MANDATORY: if the task really is covered by this skill — first call the `skill` tool with the name «' + matched.name + '», ' +
+      'then get to work. If the work is repetitive or broad and not covered by a skill — delegate via `subagent` ' +
       '(см. .agent/workflows/delegate-task.md: TASK/EXPECTED OUTCOME/MUST DO/MUST NOT DO/CONTEXT).' +
       ' ' + REMINDER_CLOSE
 

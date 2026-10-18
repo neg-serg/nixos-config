@@ -18,20 +18,20 @@ export const inject = ["commands"]
 export function apply(ctx) {
   ctx.commands.register({
     name: "rename",
-    description: "переименовать текущую сессию (закрепить заголовок)",
-    input: { hint: "<новое название>" },
+    description: "rename the current session (pin its title)",
+    input: { hint: "<new title>" },
     handler: async ({ rawInput, agent }) => {
       const title = rawInput.trim()
       if (title === "") {
-        return { kind: "error", text: "usage: /rename <новое название>" }
+        return { kind: "error", text: "usage: /rename <new title>" }
       }
       const titles = ctx.get("sessionTitle")
       if (titles === undefined) {
-        return { kind: "error", text: "переименование недоступно: нет session-title сервиса" }
+        return { kind: "error", text: "renaming unavailable: no session-title service" }
       }
       try {
         const accepted = titles.rename(agent.session, title)
-        return { kind: "success", text: `заголовок → «${accepted.title}»` }
+        return { kind: "success", text: `title → «${accepted.title}»` }
       } catch (error) {
         return { kind: "error", text: error instanceof Error ? error.message : String(error) }
       }
@@ -40,11 +40,11 @@ export function apply(ctx) {
 
   ctx.commands.register({
     name: "status",
-    description: "сводка по текущей сессии: id, cwd, пресет, размер лога",
+    description: "current session summary: id, cwd, preset, log size",
     handler: async ({ agent }) => {
       const session = agent?.session
       if (session === undefined || session === null) {
-        return { kind: "error", text: "нет текущей сессии" }
+        return { kind: "error", text: "no active session" }
       }
       const h = session.header ?? {}
       return {
@@ -52,9 +52,9 @@ export function apply(ctx) {
         text: [
           `id: ${h.id ?? "?"}`,
           `cwd: ${h.cwd ?? "—"}`,
-          `пресет: ${h.agentPreset ?? "—"}`,
-          `родитель: ${h.parentSession ?? "—"}`,
-          `событий: ${typeof session.seq === 'number' ? session.seq : "?"}`,
+          `preset: ${h.agentPreset ?? "—"}`,
+          `parent: ${h.parentSession ?? "—"}`,
+          `events: ${typeof session.seq === 'number' ? session.seq : "?"}`,
         ].join("\n"),
       }
     },
@@ -65,23 +65,23 @@ export function apply(ctx) {
 
   ctx.commands.register({
     name: "remember",
-    description: "запомнить факт (алиас /memory add --track=user)",
-    input: { hint: "<что запомнить>" },
+    description: "remember a fact (alias of /memory add --track=user)",
+    input: { hint: "<what to remember>" },
     handler: async (invocation) => {
       const input = String(invocation?.rawInput ?? "").trim()
       if (input === "") {
-        return { kind: "error", text: "usage: /remember <что запомнить>" }
+        return { kind: "error", text: "usage: /remember <what to remember>" }
       }
       const memory = ctx.get("memory")
       if (memory === undefined) {
-        return { kind: "error", text: "memento недоступен" }
+        return { kind: "error", text: "memento is unavailable" }
       }
       try {
         await memory.add(
           { track: "user", scope: "user-global", text: input, source: "command" },
           memoryWrite(invocation),
         )
-        return { kind: "success", text: "запомнил." }
+        return { kind: "success", text: "remembered." }
       } catch (error) {
         return { kind: "error", text: error instanceof Error ? error.message : String(error) }
       }
@@ -90,23 +90,23 @@ export function apply(ctx) {
 
   ctx.commands.register({
     name: "forget",
-    description: "удалить запись из памяти (алиас /memory remove)",
-    input: { hint: "<уникальный фрагмент>" },
+    description: "delete a memory entry (alias of /memory remove)",
+    input: { hint: "<unique fragment>" },
     handler: async (invocation) => {
       const match = String(invocation?.rawInput ?? "").trim()
       if (match === "") {
-        return { kind: "error", text: "usage: /forget <уникальный фрагмент>" }
+        return { kind: "error", text: "usage: /forget <unique fragment>" }
       }
       const memory = ctx.get("memory")
       if (memory === undefined) {
-        return { kind: "error", text: "memento недоступен" }
+        return { kind: "error", text: "memento is unavailable" }
       }
       try {
         await memory.remove(
           { track: "user", scope: "user-global", match },
           memoryWrite(invocation),
         )
-        return { kind: "success", text: "удалил." }
+        return { kind: "success", text: "deleted." }
       } catch (error) {
         return { kind: "error", text: error instanceof Error ? error.message : String(error) }
       }

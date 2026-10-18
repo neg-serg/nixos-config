@@ -15,7 +15,7 @@ import { parseArgs, chat, runMain } from './lib.mjs'
 
 const DEFAULT_MODEL = 'qwen3:8b-q8_0'
 
-const SYSTEM = 'Ты — строгий ревьюер кода. Получаешь git diff. Найди: баги и логические ошибки, проблемы безопасности, отсутствующие проверки, очевидные стилевые проблемы. Для каждого замечания строка формата: - [severity] файл:строка: сообщение. severity: high | medium | low. Если замечаний нет — ответь ровно OK. Не хвали, не пересказывай дифф, не пиши лишнего текста.'
+const SYSTEM = 'You are a strict code reviewer. You receive a git diff. Find: bugs and logic errors, security problems, missing checks, obvious style problems. For every finding print one line: - [severity] file:line: message. severity: high | medium | low. If there are no findings, answer exactly OK. Do not praise, do not retell the diff, do not add filler.'
 
 function countIssues(text) {
   const re = /- \[?(high|medium|low)\]?/gi
