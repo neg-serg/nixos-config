@@ -127,7 +127,7 @@ on("submit:password", function(value)
     busy = true
     fact.busy = true
     fact.failed = false
-    set_status("проверка пароля…")
+    set_status("checking the password…")
 
     local ok, answer = pcall(function() return sys.ask("auth.check", value) end)
 
@@ -137,10 +137,10 @@ on("submit:password", function(value)
 
     if ok and answer == true then
         fact.failed = false
-        set_status("пароль верный (предпросмотр)")
+        set_status("password correct (preview)")
     else
         fact.failed = true
-        set_status(ok and "Неверный пароль" or "Проверка пароля не удалась")
+        set_status(ok and "Wrong password" or "The password check failed")
         emit("rejected")
         armed = false
         fact.armed = false

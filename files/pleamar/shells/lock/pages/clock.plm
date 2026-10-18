@@ -44,9 +44,9 @@ part Clock {
         }
 
         // The greeting of LockContent.qml (`greeting`), one line per window.
-        text "Доброе утро" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 5 and now.hour < 12 }
-        text "Добрый день" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 12 and now.hour < 17 }
-        text "Добрый вечер" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 17 and now.hour < 23 }
-        text "Доброй ночи" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 23 or now.hour < 5 }
+        text "Good morning" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 5 and now.hour < 12 }
+        text "Good afternoon" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 12 and now.hour < 17 }
+        text "Good evening" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 17 and now.hour < 23 }
+        text "Good night" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 23 or now.hour < 5 }
     }
 }
