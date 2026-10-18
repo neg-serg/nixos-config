@@ -1,0 +1,17 @@
+# Kitty session for the `teardown` scratchpad (Super+D, files/gui/hypr/hyprland.lua).
+#
+# Two tabs in one window rather than a split: btop keeps the full pane width and
+# the live kernel log is one ctrl+right away (files/kitty/key.conf:
+# ctrl+left / ctrl+right switch tabs). Tab 1 is active on open.
+#
+# Started as `kitty-glass --class teardown --session ~/.config/kitty/teardown.session`
+# from `hyprscratch teardown ...`: the class stays `teardown`, which is what both
+# the daemon and the teardown-scratchpad window rule (float + size + move) match.
+#
+# `launch` runs the command directly, without a shell, hence the explicit
+# `sh -c` for the pipe. `sudo dmesg` needs no password: modules/security/default.nix
+# carries the narrow NOPASSWD entry for dmesg.
+new_tab btop
+launch btop
+new_tab dmesg
+launch sh -c "sudo dmesg -w | lazytail"

@@ -145,6 +145,9 @@ in
       ".config/kitty/tab_bar.py".source = "${kittyConfLive}/tab_bar.py";
       ".config/kitty/tab.conf".source = "${kittyConfLive}/tab.conf";
       ".config/kitty/theme.conf".source = "${kittyConfLive}/theme.conf";
+      # Kitty session for the teardown scratchpad (btop + live kernel log tabs),
+      # referenced by the M4+d bind in files/gui/hypr/hyprland.lua.
+      ".config/kitty/teardown.session".source = "${kittyConfLive}/teardown.session";
     })
   ];
 }

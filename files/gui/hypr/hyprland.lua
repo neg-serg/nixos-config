@@ -379,7 +379,11 @@ hl.bind(M4 .. "+" .. C .. "+mouse:274", hl.dsp.exec_cmd("kitty-font-zoom reset")
 hl.bind(M4 .. "+" .. C .. "+z", hl.dsp.exec_cmd("kitty-font-zoom toggle"))
 
 -- --- Scratchpads (sashetophizika/hyprscratch with special workspace) ---
-hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty-glass --class teardown -e btop' special"))
+-- teardown: two kitty tabs in one floating pane — btop, plus the live kernel log
+-- (`sudo dmesg -w | lazytail`) one ctrl+right away. The session file keeps the
+-- `teardown` class, so the teardown-scratchpad window rule and
+-- scratchpad-geometry still treat it as the same pad (files/kitty/teardown.session).
+hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty-glass --class teardown --session ~/.config/kitty/teardown.session' special"))
 hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch toggle telegram"))
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hyprscratch music 'kitty-glass --class music -e rmpc' special"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class torrment -e rustmission' special"))

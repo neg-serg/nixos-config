@@ -518,7 +518,7 @@ Quick-access overlays for common applications:
 | 📬 **mail** | neomutt | — (class rule only) | 50% × 50% (centered) |
 | 🔊 **mixer** | hyprpwcenter | `Super+Ctrl+P` | 40% × full height (right edge) |
 | ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% (top-left) |
-| 📊 **teardown** | btop | `Super+D` | 98% × 50% (top-left) |
+| 📊 **teardown** | btop, plus the live dmesg log in a lazytail tab | `Super+D` | 98% × 50% (top-left) |
 | 🔒 **vpn** | tunnel status | `Super+U` | 50% × 30% (centered) |
 | 🔁 **rebuild** | `nh os switch` | `Super+Shift+N` | 98% × 50% (top-left) |
 
