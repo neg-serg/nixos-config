@@ -27,7 +27,7 @@
             "term" # plain shell (kitty --class term)
             "nwim" # nvim wrapper (kitty --class nwim)
             "music" # rmpc (M4+f)
-            "teardown" # btop (M4+d)
+            "teardown" # btop + dmesg/lazytail tabs (M4+d)
             "torrment" # rustmission (M4+t)
             "vpn" # tun status (M4+u)
             "hyprpwcenter" # PipeWire control center (M4+C+p)
