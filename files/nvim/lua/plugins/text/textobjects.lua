@@ -24,18 +24,18 @@ return {
 
     -- Selecting objects: am/im for functions, ac/ic for classes.
     -- af/if, aa/ia and ab/ib stay untouched: mini.ai already owns those letters.
-    map({ 'x', 'o' }, 'am', function() ts_select.select_textobject('@function.outer', 'textobjects') end, { desc = 'TS: функция (вокруг)' })
-    map({ 'x', 'o' }, 'im', function() ts_select.select_textobject('@function.inner', 'textobjects') end, { desc = 'TS: функция (внутри)' })
-    map({ 'x', 'o' }, 'ac', function() ts_select.select_textobject('@class.outer', 'textobjects') end, { desc = 'TS: класс (вокруг)' })
-    map({ 'x', 'o' }, 'ic', function() ts_select.select_textobject('@class.inner', 'textobjects') end, { desc = 'TS: класс (внутри)' })
+    map({ 'x', 'o' }, 'am', function() ts_select.select_textobject('@function.outer', 'textobjects') end, { desc = 'TS: function (outer)' })
+    map({ 'x', 'o' }, 'im', function() ts_select.select_textobject('@function.inner', 'textobjects') end, { desc = 'TS: function (inner)' })
+    map({ 'x', 'o' }, 'ac', function() ts_select.select_textobject('@class.outer', 'textobjects') end, { desc = 'TS: class (outer)' })
+    map({ 'x', 'o' }, 'ic', function() ts_select.select_textobject('@class.inner', 'textobjects') end, { desc = 'TS: class (inner)' })
 
     -- Motion: ]m/[m for a function start, ]M/[M for its end, ]a/[a for an argument.
     local modes = { 'n', 'x', 'o' }
-    map(modes, ']m', function() ts_move.goto_next_start('@function.outer', 'textobjects') end, { desc = 'TS: след. функция' })
-    map(modes, '[m', function() ts_move.goto_previous_start('@function.outer', 'textobjects') end, { desc = 'TS: пред. функция' })
-    map(modes, ']M', function() ts_move.goto_next_end('@function.outer', 'textobjects') end, { desc = 'TS: конец след. функции' })
-    map(modes, '[M', function() ts_move.goto_previous_end('@function.outer', 'textobjects') end, { desc = 'TS: конец пред. функции' })
-    map(modes, ']a', function() ts_move.goto_next_start('@parameter.outer', 'textobjects') end, { desc = 'TS: след. аргумент' })
-    map(modes, '[a', function() ts_move.goto_previous_start('@parameter.outer', 'textobjects') end, { desc = 'TS: пред. аргумент' })
+    map(modes, ']m', function() ts_move.goto_next_start('@function.outer', 'textobjects') end, { desc = 'TS: next function' })
+    map(modes, '[m', function() ts_move.goto_previous_start('@function.outer', 'textobjects') end, { desc = 'TS: previous function' })
+    map(modes, ']M', function() ts_move.goto_next_end('@function.outer', 'textobjects') end, { desc = 'TS: end of next function' })
+    map(modes, '[M', function() ts_move.goto_previous_end('@function.outer', 'textobjects') end, { desc = 'TS: end of previous function' })
+    map(modes, ']a', function() ts_move.goto_next_start('@parameter.outer', 'textobjects') end, { desc = 'TS: next argument' })
+    map(modes, '[a', function() ts_move.goto_previous_start('@parameter.outer', 'textobjects') end, { desc = 'TS: previous argument' })
   end,
 }
