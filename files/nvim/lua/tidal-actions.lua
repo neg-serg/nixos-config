@@ -19,7 +19,7 @@ end
 function M.launch()
 	if not M.engine_up() then
 		vim.notify(
-			"SuperDirt не запущен — сначала `tidalctl start`",
+			"SuperDirt is not running — run `tidalctl start` first",
 			vim.log.levels.WARN,
 			{ title = "TidalCycles" }
 		)
@@ -32,7 +32,7 @@ end
 function M.send()
 	if not state.ghci then
 		vim.notify(
-			"Tidal не запущен — <leader>tl или Ctrl+Enter",
+			"Tidal is not running — <leader>tl or Ctrl+Enter",
 			vim.log.levels.WARN,
 			{ title = "TidalCycles" }
 		)
@@ -148,7 +148,7 @@ end
 function M.send_smart()
 	if not state.ghci then
 		vim.notify(
-			"Tidal не запущен — <leader>tl или Ctrl+Enter",
+			"Tidal is not running — <leader>tl or Ctrl+Enter",
 			vim.log.levels.WARN,
 			{ title = "TidalCycles" }
 		)
@@ -192,7 +192,7 @@ end
 function M.hush()
 	if not state.ghci then
 		vim.notify(
-			"Tidal не запущен — нечего глушить",
+			"Tidal is not running — nothing to hush",
 			vim.log.levels.WARN,
 			{ title = "TidalCycles" }
 		)
@@ -221,7 +221,7 @@ function M.shabda(pack, opts)
 	end
 	if not state.ghci then
 		vim.notify(
-			"Shabda-строка вставлена; Tidal не запущен — <leader>tl",
+			"Shabda line inserted; Tidal is not running — <leader>tl",
 			vim.log.levels.WARN,
 			{ title = "Shabda" }
 		)
