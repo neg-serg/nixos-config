@@ -1,0 +1,174 @@
+--- a/src/app/tab.rs
++++ b/src/app/tab.rs
+@@ -14,9 +14,9 @@
+ use anyhow::{Context, Result};
+ use std::collections::HashSet;
+ use std::fs::File;
+-use std::io::{BufRead, BufReader};
++use std::io::Read;
+ use std::path::PathBuf;
+-use std::sync::mpsc::{self, Receiver, Sender};
++use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
+ use std::sync::{Arc, Mutex};
+ use std::thread;
+ 
+@@ -26,6 +26,24 @@
+ /// Batch size for sending lines from background reader
+ const STREAM_BATCH_SIZE: usize = 10_000;
+ 
++/// A quiet stream flushes its partial batch after this much silence (see
++/// `spawn_stream_reader`); a live `tail -f`-style pipe stays visible without
++/// waiting for a full batch.
++const STREAM_FLUSH_IDLE: std::time::Duration = std::time::Duration::from_millis(100);
++
++/// Read size of the raw stream reader; only affects the syscall count.
++const STREAM_CHUNK_SIZE: usize = 8 * 1024;
++
++/// What the raw reader thread hands to the line splitter.
++enum StreamChunk {
++    /// Bytes that arrived on the stream
++    Data(Vec<u8>),
++    /// End of stream
++    Eof,
++    /// The stream failed
++    Failed(String),
++}
++
+ /// Messages sent from the background stream reader thread
+ #[derive(Debug)]
+ pub enum StreamMessage {
+@@ -911,45 +929,112 @@
+ }
+ 
+ /// Spawn a background thread to read from a stream and send batches of lines
++///
++/// A live stream (`dmesg -w`, `journalctl -f`, `kubectl logs -f`) never reaches
++/// EOF, so a batch that only flushes at `STREAM_BATCH_SIZE` would never reach the
++/// UI at all. The reader therefore also flushes whatever it has after
++/// `STREAM_FLUSH_IDLE` of silence: a flood still arrives as large batches, and a
++/// quiet pipe shows every line within a fraction of a second.
+ fn spawn_stream_reader<R: std::io::Read + Send + 'static>(reader: R, tx: Sender<StreamMessage>) {
+     thread::spawn(move || {
+-        let buf_reader = BufReader::new(reader);
+-        let mut batch = Vec::with_capacity(STREAM_BATCH_SIZE);
++        // Raw bytes in this thread, whole lines in the parent: splitting on
++        // b'\n' before decoding keeps a multi-byte character that straddles two
++        // reads intact (and a stray invalid byte no longer kills the stream).
++        let (chunk_tx, chunk_rx) = mpsc::channel::<StreamChunk>();
++        thread::spawn(move || {
++            let mut reader = reader;
++            let mut buf = [0u8; STREAM_CHUNK_SIZE];
++            loop {
++                match reader.read(&mut buf) {
++                    Ok(0) => {
++                        let _ = chunk_tx.send(StreamChunk::Eof);
++                        return;
++                    }
++                    Ok(n) => {
++                        if chunk_tx.send(StreamChunk::Data(buf[..n].to_vec())).is_err() {
++                            return;
++                        }
++                    }
++                    Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {}
++                    Err(e) => {
++                        let _ = chunk_tx.send(StreamChunk::Failed(e.to_string()));
++                        return;
++                    }
++                }
++            }
++        });
+ 
+-        for line in buf_reader.lines() {
+-            match line {
+-                Ok(line) => {
+-                    batch.push(line);
+-                    if batch.len() >= STREAM_BATCH_SIZE {
+-                        if tx
++        let mut pending: Vec<u8> = Vec::new();
++        let mut batch: Vec<String> = Vec::with_capacity(STREAM_BATCH_SIZE);
++
++        loop {
++            let chunk = match chunk_rx.recv_timeout(STREAM_FLUSH_IDLE) {
++                Ok(chunk) => Some(chunk),
++                Err(RecvTimeoutError::Timeout) => None,
++                Err(RecvTimeoutError::Disconnected) => Some(StreamChunk::Eof),
++            };
++
++            match chunk {
++                Some(StreamChunk::Data(bytes)) => {
++                    pending.extend_from_slice(&bytes);
++                    drain_lines(&mut pending, &mut batch, false);
++                    if batch.len() >= STREAM_BATCH_SIZE
++                        && tx
+                             .send(StreamMessage::Lines(std::mem::take(&mut batch)))
+                             .is_err()
+-                        {
+-                            // Receiver dropped, stop reading
+-                            return;
+-                        }
+-                        batch = Vec::with_capacity(STREAM_BATCH_SIZE);
++                    {
++                        return; // Receiver dropped, stop reading
+                     }
+                 }
+-                Err(e) => {
+-                    // Send any remaining lines before error
++                Some(StreamChunk::Eof) => {
++                    drain_lines(&mut pending, &mut batch, true);
+                     if !batch.is_empty() {
+                         let _ = tx.send(StreamMessage::Lines(std::mem::take(&mut batch)));
+                     }
+-                    let _ = tx.send(StreamMessage::Error(e.to_string()));
++                    let _ = tx.send(StreamMessage::Complete);
+                     return;
+                 }
++                Some(StreamChunk::Failed(err)) => {
++                    drain_lines(&mut pending, &mut batch, true);
++                    if !batch.is_empty() {
++                        let _ = tx.send(StreamMessage::Lines(std::mem::take(&mut batch)));
++                    }
++                    let _ = tx.send(StreamMessage::Error(err));
++                    return;
++                }
++                // Nothing arrived for a while: hand over what the stream did
++                // produce instead of holding it until the batch is full.
++                None => {
++                    if !batch.is_empty()
++                        && tx
++                            .send(StreamMessage::Lines(std::mem::take(&mut batch)))
++                            .is_err()
++                    {
++                        return;
++                    }
++                }
+             }
+         }
+-
+-        // Send any remaining lines
+-        if !batch.is_empty() {
+-            let _ = tx.send(StreamMessage::Lines(batch));
+-        }
+-        let _ = tx.send(StreamMessage::Complete);
+     });
+ }
+ 
++/// Move every complete line out of `pending` into `batch`; `flush_tail` also
++/// takes the trailing partial line (only correct at end of stream).
++fn drain_lines(pending: &mut Vec<u8>, batch: &mut Vec<String>, flush_tail: bool) {
++    while let Some(pos) = pending.iter().position(|&byte| byte == b'\n') {
++        let mut line: Vec<u8> = pending.drain(..=pos).collect();
++        line.pop(); // the newline itself
++        if line.last() == Some(&b'\r') {
++            line.pop();
++        }
++        batch.push(String::from_utf8_lossy(&line).into_owned());
++    }
++    if flush_tail && !pending.is_empty() {
++        let line = std::mem::take(pending);
++        batch.push(String::from_utf8_lossy(&line).into_owned());
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;

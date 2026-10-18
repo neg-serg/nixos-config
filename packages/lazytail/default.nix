@@ -31,7 +31,17 @@ rustPlatform.buildRustPackage rec {
   # section in `lazytail config validate`, and makes the `?` overlay render the
   # live chords. Regenerate against a new upstream tag with `git format-patch`
   # from the fork copy; drop the patch once upstream ships the feature.
-  patches = [ ./keymap.patch ];
+  #
+  # Second local patch: live pipes. v0.10.0 flushes `cmd | lazytail` output only
+  # once STREAM_BATCH_SIZE (10 000) lines have piled up or the stream ends, so a
+  # follow-style pipe — `sudo dmesg -w | lazytail`, `journalctl -f`, the teardown
+  # scratchpad tab in files/kitty/teardown.session — stayed empty forever. The
+  # patch flushes a partial batch after 100 ms of silence and splits lines on
+  # raw bytes, so a multi-byte character across two reads is no longer mangled.
+  patches = [
+    ./keymap.patch
+    ./stream-flush.patch
+  ];
 
   # Kept off: the in-tree tests do compile and pass at v0.10.0 (783 tests on
   # 2026-10-18 — the older note about IndexReader::with_timestamps is stale),
