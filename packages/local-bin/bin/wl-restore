@@ -6,7 +6,7 @@
 # restore at all.
 # The daemon must be owned by systemd (wl-daemon.service): a direct spawn
 # (wl init) orphans the process and makes the unit loop with
-# "wl-daemon уже запущен" at every restart. systemctl is the only spawner.
+# "wl-daemon is already running" at every restart. systemctl is the only spawner.
 set -euo pipefail
 
 systemctl --user start wl-daemon.service 2> /dev/null || true

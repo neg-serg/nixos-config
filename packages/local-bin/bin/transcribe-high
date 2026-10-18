@@ -28,36 +28,36 @@ OUT="${OUT:-${SRC%.*}_high.mid}"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 AUDIO="$SRC"
 
-echo "[transcribe-high] 1/5 подготовка аудио (44.1k mono)"
+echo "[transcribe-high] 1/5 preparing audio (44.1k mono)"
 ffmpeg -y -loglevel error -i "$SRC" -ar 44100 -ac 1 "$WORK/input.wav"
 AUDIO="$WORK/input.wav"
 
 if [ "$DENOISE" = "1" ] && [ -x "$BASE/venv-denoise/bin/python" ]; then
-  echo "[transcribe-high] 2/5 деноиз (noisereduce)"
+  echo "[transcribe-high] 2/5 denoise (noisereduce)"
   "$BASE/venv-denoise/bin/python" - "$WORK/input.wav" "$WORK/denoised.wav" <<'PYEOF'
 import sys, noisereduce as nr, soundfile as sf
 data, rate = sf.read(sys.argv[1])
 clean = nr.reduce_noise(y=data, sr=rate)
 sf.write(sys.argv[2], clean, rate)
 PYEOF
-  [ -s "$WORK/denoised.wav" ] && AUDIO="$WORK/denoised.wav" || echo "  (деноиз пропущен — сбой)"
+  [ -s "$WORK/denoised.wav" ] && AUDIO="$WORK/denoised.wav" || echo "  (denoise skipped — it failed)"
 else
-  echo "[transcribe-high] 2/5 деноиз — пропущен (--no-denoise или venv нет)"
+  echo "[transcribe-high] 2/5 denoise — skipped (--no-denoise or no venv)"
 fi
 
 if [ "$STEMS" = "1" ]; then
-  echo "[transcribe-high] 3/5 стемы (Demucs htdemucs_ft)"
+  echo "[transcribe-high] 3/5 stems (Demucs htdemucs_ft)"
   "$BASE/venv-demucs/bin/python" -m demucs --two-stems=vocals -o "$WORK/stems" "$AUDIO" >/dev/null 2>&1 || \
   "$BASE/venv-demucs/bin/python" -m demucs -o "$WORK/stems" "$AUDIO" >/dev/null 2>&1
   STEMS_DIR="$(find "$WORK/stems" -maxdepth 2 -type d -name 'htdemucs*' | head -1)"
-  echo "  стемы: $STEMS_DIR"
+  echo "  stems: $STEMS_DIR"
   AUDIO_INPUTS=("$STEMS_DIR"/*/*.wav "$STEMS_DIR"/*.wav)
 else
-  echo "[transcribe-high] 3/5 стемы — пропущены (--no-stems)"
+  echo "[transcribe-high] 3/5 stems — skipped (--no-stems)"
   AUDIO_INPUTS=("$AUDIO")
 fi
 
-echo "[transcribe-high] 4/5 транскрипция (basic-pitch ONNX, пороги 0.2/0.25)"
+echo "[transcribe-high] 4/5 transcription (basic-pitch ONNX, thresholds 0.2/0.25)"
 mkdir -p "$WORK/bp"
 i=0
 for stem in "${AUDIO_INPUTS[@]}"; do
@@ -68,14 +68,14 @@ for stem in "${AUDIO_INPUTS[@]}"; do
   [ -n "$mid" ] && echo "  ✓ $name → $(basename "$mid")"
 done
 
-echo "[transcribe-high] слияние стемов в один MIDI"
+echo "[transcribe-high] merging the stems into one MIDI"
 "$BASE/venv-midi2tidal/bin/python" - "$WORK/bp" "$OUT" <<'EOF'
 import sys, glob, os
 import midi
 bpdir, out = sys.argv[1], sys.argv[2]
 mids = sorted(glob.glob(os.path.join(bpdir, "*_basic_pitch.mid")))
 if not mids:
-    print("  нет MIDI-выхода — стоп"); sys.exit(1)
+    print("  no MIDI output — stopping"); sys.exit(1)
 merged = midi.Pattern()
 for m in mids:
     try:
@@ -83,12 +83,12 @@ for m in mids:
         for tr in p:
             merged.append(tr)
     except Exception as e:
-        print(f"  пропуск {m}: {e}")
+        print(f"  skipping {m}: {e}")
 midi.write_midifile(out, merged)
-print(f"  объединено {len(mids)} MIDI → {out}")
+print(f"  merged {len(mids)} MIDI → {out}")
 EOF
 
-echo "[transcribe-high] 5/5 темп (madmom)"
+echo "[transcribe-high] 5/5 tempo (madmom)"
 BPM="$("$BASE/venv-bp/bin/python" -c "
 from madmom_infer.features.downbeats import RNNDownBeatProcessor, DBNDownBeatTrackingProcessor
 from madmom_infer import models
@@ -103,12 +103,12 @@ try:
 except Exception as e:
     print('?')
 " 2>/dev/null || echo "?")"
-echo "  темп: ~$BPM BPM (для midi2tidal --tempo)"
+echo "  tempo: ~$BPM BPM (for midi2tidal --tempo)"
 
 if [ "$TIDAL" = "1" ]; then
-  echo "[transcribe-high] конвертация в Tidal (midi2tidal)"
+  echo "[transcribe-high] converting to Tidal (midi2tidal)"
   "$BASE/venv-midi2tidal/bin/python" "$BASE/midi_to_tidalcycles/src/midi_to_tidalcycles.py" -H "$OUT" 2>/dev/null || \
   midi2tidal "$OUT" || true
 fi
 
-echo "[transcribe-high] готово: $OUT (темп ~$BPM BPM)"
+echo "[transcribe-high] done: $OUT (tempo ~$BPM BPM)"

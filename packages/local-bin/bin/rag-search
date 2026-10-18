@@ -204,7 +204,7 @@ def db_connect():
 def cmd_index(args):
     files = collect_files()
     if not files:
-        log(f"Нет файлов для индексации в {NOTES_DIR}")
+        log(f"No files to index in {NOTES_DIR}")
         return 1
     chunks = []
     for f in files:
@@ -212,17 +212,17 @@ def cmd_index(args):
             with open(f, encoding="utf-8", errors="replace") as fh:
                 text = fh.read()
         except OSError as e:
-            log(f"пропуск {f}: {e}")
+            log(f"skipping {f}: {e}")
             continue
         rel = os.path.relpath(f, NOTES_DIR)
         for heading, content in chunk_markdown(text):
             chunks.append((rel, heading, content))
     if not chunks:
-        log("Нет чанков")
+        log("No chunks")
         return 1
 
     t0 = time.time()
-    log(f"Эмбеддинг {len(chunks)} чанков ({len(files)} файлов)…")
+    log(f"Embedding {len(chunks)} chunks ({len(files)} files)…")
     vecs = embed([c[2] for c in chunks], task_type="retrieval.passage")
 
     conn = db_connect()
@@ -250,7 +250,7 @@ def cmd_index(args):
     )
     conn.commit()
     conn.close()
-    log(f"Готово: {len(chunks)} чанков из {len(files)} файлов, {time.time()-t0:.1f}с → {INDEX_DB}")
+    log(f"Done: {len(chunks)} chunks from {len(files)} files, {time.time()-t0:.1f}s → {INDEX_DB}")
 
 
 def find_llama_server():
@@ -329,7 +329,7 @@ def cmd_search(args):
     query = args.query
     rows, vecs, meta = load_index()
     if rows is None:
-        log("Индекс пуст — сначала выполни: rag-search index")
+        log("The index is empty — run: rag-search index")
         return 1
     qvec = embed([query], task_type="retrieval.query")[0]
     qn = math.sqrt(sum(x * x for x in qvec))
@@ -352,18 +352,18 @@ def cmd_search(args):
         ranked = sorted(ranked, key=lambda t: -rrs.get(t[0], -1e9))
     ranked = ranked[: args.n]
 
-    print(f"Поиск «{query}» — {len(ranked)} результатов (модель эмбеддингов: {EMBED_MODEL}):\n")
+    print(f"Search «{query}» — {len(ranked)} results (embedding model: {EMBED_MODEL}):\n")
     for rank, (i, cos) in enumerate(ranked, 1):
         path, heading, content = rows[i][1], rows[i][2], rows[i][3]
         rr = rrs.get(i)
-        rr_s = f"  реранк: {rr:+.2f}" if rr is not None else ""
-        print(f"#{rank}  [косин. {cos:.3f}]{rr_s}  {path}" + (f"  ({heading})" if heading else ""))
+        rr_s = f"  rerank: {rr:+.2f}" if rr is not None else ""
+        print(f"#{rank}  [cos {cos:.3f}]{rr_s}  {path}" + (f"  ({heading})" if heading else ""))
         snippet = content.replace("\n", " ").strip()
         print(f"    …{snippet[:180]}…\n" if len(snippet) > 180 else f"    {snippet}\n")
 
     if args.llm:
         ctx = "\n\n---\n\n".join(
-            f"Файл: {rows[i][1]}" + (f", раздел: {rows[i][2]}" if rows[i][2] else "")
+            f"File: {rows[i][1]}" + (f", section: {rows[i][2]}" if rows[i][2] else "")
             + f"\n{rows[i][3]}"
             for (i, _) in ranked[:5]
         )
@@ -380,7 +380,7 @@ def cmd_search(args):
                 {"role": "user", "content": f"Вопрос: {query}\n\nФрагменты заметок:\n{ctx}"},
             ],
         }
-        print(f"\n=== Ответ {LLM_MODEL} ===\n")
+        print(f"\n=== Answer {LLM_MODEL} ===\n")
         req = urllib.request.Request(
             f"{OLLAMA_URL}/api/chat", data=json.dumps(payload).encode(),
             headers={"Content-Type": "application/json"},
@@ -403,35 +403,35 @@ def cmd_status(args):
     meta = dict(conn.execute("SELECT key, value FROM meta").fetchall())
     n = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
     conn.close()
-    print("Индекс:", INDEX_DB)
+    print("Index:", INDEX_DB)
     if meta:
-        print(f"  чанков: {meta.get('chunks')}, файлов: {meta.get('files')}, собран: {meta.get('built')}")
-        print(f"  модель: {meta.get('embed_model')}")
+        print(f"  chunks: {meta.get('chunks')}, files: {meta.get('files')}, built: {meta.get('built')}")
+        print(f"  model: {meta.get('embed_model')}")
     else:
-        print("  пуст — выполни `rag-search index`")
-    print(f"Каталог заметок: {NOTES_DIR}")
-    print(f"Реранкер: {'работает' if reranker_status() else 'не запущен'} ({RERANK_URL})")
-    print(f"Модель реранкера: {RERANK_MODEL} ({'есть' if os.path.exists(RERANK_MODEL) else 'НЕТ'})")
-    print(f"Ответы: {LLM_MODEL}")
+        print("  empty — run `rag-search index`")
+    print(f"Notes directory: {NOTES_DIR}")
+    print(f"Reranker: {'running' if reranker_status() else 'not running'} ({RERANK_URL})")
+    print(f"Reranker model: {RERANK_MODEL} ({'present' if os.path.exists(RERANK_MODEL) else 'MISSING'})")
+    print(f"Answers: {LLM_MODEL}")
     return 0
 
 
 def cmd_reranker(args):
     if args.action == "start":
         if ensure_reranker():
-            print("Реранкер запущен")
+            print("Reranker started")
             return 0
-        print("Не удалось запустить реранкер (нет llama-server или модели)", file=sys.stderr)
+        print("Could not start the reranker (no llama-server or model)", file=sys.stderr)
         return 1
     if args.action == "stop":
         try:
             http_json(f"{RERANK_URL}/shutdown", timeout=5)
         except (urllib.error.URLError, OSError, ValueError):
             pass
-        print("Реранкер остановлен (если был запущен)")
+        print("Reranker stopped (if it was running)")
         return 0
     if args.action == "status":
-        print("работает" if reranker_status() else "не запущен")
+        print("running" if reranker_status() else "not running")
         return 0
     return 2
 
@@ -439,25 +439,25 @@ def cmd_reranker(args):
 def main():
     parser = argparse.ArgumentParser(
         prog="rag-search",
-        description="Локальный векторный поиск по заметкам (qwen3-embedding + bge-reranker + qwen3).",
+        description="Local vector search over notes (qwen3-embedding + bge-reranker + qwen3).",
     )
     sub = parser.add_subparsers(dest="cmd")
 
-    p_index = sub.add_parser("index", help="переиндексировать заметки")
+    p_index = sub.add_parser("index", help="reindex the notes")
     p_index.set_defaults(fn=cmd_index)
 
-    p_search = sub.add_parser("search", help="поиск по заметкам")
-    p_search.add_argument("query", help="поисковый запрос")
-    p_search.add_argument("-n", type=int, default=5, help="сколько результатов (по умолчанию 5)")
-    p_search.add_argument("--llm", action="store_true", help="дополнительно ответ qwen3 по найденному")
+    p_search = sub.add_parser("search", help="search the notes")
+    p_search.add_argument("query", help="search query")
+    p_search.add_argument("-n", type=int, default=5, help="how many results (default 5)")
+    p_search.add_argument("--llm", action="store_true", help="also answer with qwen3 over the hits")
     p_search.add_argument("--no-rerank", dest="rerank", action="store_false", default=True,
-                          help="без реранкинга (только косинус)")
+                          help="no reranking (cosine only)")
     p_search.set_defaults(fn=cmd_search)
 
-    p_status = sub.add_parser("status", help="состояние индекса и реранкера")
+    p_status = sub.add_parser("status", help="index and reranker status")
     p_status.set_defaults(fn=cmd_status)
 
-    p_rr = sub.add_parser("reranker", help="управление фоновым реранкером")
+    p_rr = sub.add_parser("reranker", help="manage the background reranker")
     p_rr.add_argument("action", choices=["start", "stop", "status"])
     p_rr.set_defaults(fn=cmd_reranker)
 
