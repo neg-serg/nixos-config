@@ -7,10 +7,10 @@
 //! also what makes the layout testable: a test builds a real `Fonts`, draws into a `DrawList` and
 //! asserts the rects, with no GPU and no window.
 //!
-//! The visual language is the one `src/bin/player.rs` already uses for its overlays: a rounded
-//! surface at `Theme::pane_raised` elevation with `GEOM.radius_lg` corners and a one-pixel
-//! `Theme::border_hi` highlight along its top edge, a `TYPE.micro` header in the faint ink, rows
-//! laid out with
+//! The visual language is neg.nvim's, the one `src/bin/player.rs` uses for its overlays: a flat
+//! `Theme::panel` surface with `GEOM.radius_lg` corners, a one-pixel `Theme::border` hairline all
+//! the way round and a `Theme::border_hi` highlight along the top edge, no shadow, a `TYPE.micro`
+//! header in the faint ink, rows laid out with
 //! `Fonts::layout_line`, and long text truncated by `Fonts::fit` / `Fonts::layout_fitted_end`
 //! instead of a guessed width. Copy is data, never code: every Russian string this UI shows is
 //! passed in by the caller.
@@ -84,13 +84,13 @@ const MIN_PANEL_H: f32 = 72.0;
 const COL_GAP: f32 = GEOM.stack;
 
 /// Chip metrics, taken from the mode-chips block the now-playing pane already draws: an 11 px
-/// caption inside a 22 px pill, 9 px of air either side and 6 px between chips. Reusing those
+/// caption inside a 22 px chip, 9 px of air either side and 6 px between chips. Reusing those
 /// numbers is what makes the strip look like the same widget in a second place.
 const CHIP_H: f32 = 22.0;
 const CHIP_PAD_X: f32 = 9.0;
 const CHIP_GAP: f32 = GEOM.row_gap + 2.0;
 /// `layout_line` takes the top of the line box, and an 11 px caption's ink starts about 5 px down
-/// inside a 22 px pill; the existing chips use the same offset.
+/// inside a 22 px chip; the existing chips use the same offset.
 const CHIP_TEXT_DY: f32 = 5.0;
 
 /// Height of one line box. `Fonts` shapes every buffer with a 1.32 line height
@@ -102,29 +102,41 @@ fn line_h(size: f32) -> f32 {
     (size * 1.32).ceil()
 }
 
-/// The panel surface every overlay shares: elevation (surface + shadow together, since a modal is
-/// exactly the pane that owns the keyboard), rounded corners, and the 1 px top highlight that is
-/// the only thing separating two dark surfaces on this palette.
+/// The panel surface every overlay shares: the flat `Theme::panel` face, the full 1 px
+/// `Theme::border` ring that delimits it, and the 1 px `Theme::border_hi` highlight along the top
+/// edge, i.e. the edge the panel is read from.
+///
+/// This is neg's float recipe rather than an elevation: an overlay is the one surface the theme
+/// does give a fill (Neovim floats use `lighten(bg, 6)`), and it is separated from the pure black
+/// frame by a hairline and by air. Nothing here casts a shadow, because a terminal window never
+/// does — which is also why `Theme::pane_raised` is not used: that token is the app's own pane.
 fn panel_surface(list: &mut DrawList, th: &Theme, r: Rect) {
-    list.shadow(
-        r.x,
-        r.y + 2.0,
-        r.w,
-        r.h,
-        GEOM.radius_lg,
-        24.0,
-        th.pane_raised.shadow,
-    );
+    // `DrawList::rounded` clamps a radius to half the box before evaluating the SDF, so a radius
+    // that does not fit would silently stop being the token the theme names. Derive it against the
+    // panel instead of trusting `GEOM.radius_lg` to be small.
+    let radius = GEOM.radius_lg.min(r.w.min(r.h) * 0.5);
+    // A ring, not four bars: the border-coloured box is drawn whole and the panel is inset into it
+    // by one hairline. Bars would leave the corner arcs unpainted and read as a frame glued on top,
+    // which is the opposite of the theme's "you see it only if you look".
+    list.rounded(r.x, r.y, r.w, r.h, radius, th.border, th.border);
     list.rounded(
-        r.x,
-        r.y,
-        r.w,
-        r.h,
-        GEOM.radius_lg,
-        th.pane_raised.surface,
-        th.pane_raised.surface,
+        r.x + GEOM.line,
+        r.y + GEOM.line,
+        r.w - 2.0 * GEOM.line,
+        r.h - 2.0 * GEOM.line,
+        (radius - GEOM.line).max(0.0),
+        th.panel,
+        th.panel,
     );
-    list.rect(r.x, r.y, r.w, GEOM.line, th.border_hi);
+    // The top highlight covers the ring's straight top segment only: inset by the radius so the bar
+    // cannot paint past the corner arcs onto the frame behind the panel.
+    list.rect(
+        r.x + radius,
+        r.y,
+        (r.w - 2.0 * radius).max(0.0),
+        GEOM.line,
+        th.border_hi,
+    );
 }
 
 /// Fit, measure, then place one line centred on `cx`.
@@ -204,6 +216,11 @@ pub fn draw_server_info(
     // two baselines inside a row would differ by an offset that `text.rs` does not expose, and a
     // table whose labels float half a pixel above their values looks broken. The hierarchy is
     // carried by ink instead — faint label, bright value — which costs no metrics.
+    //
+    // Measured on the surface the table is painted on (`panel`, `#0f0f0f`: `text_faint` is
+    // 4.62:1 there, which clears AA, so the label column keeps the faint step; `text` is 14.94:1).
+    // The panel is lighter than the ground, so this is the tightest ground in the file and the
+    // faint step is only just enough — raising the panel any further would force `text_dim` here.
     let size = TYPE.body;
     let row_h = line_h(size);
     let pitch = row_h + GEOM.row_gap;
@@ -252,7 +269,11 @@ pub fn draw_server_info(
     };
 
     // --- surface: dim the frame, then the panel over it.
-    list.rect(0.0, 0.0, w, h, with_alpha(th.bg_bottom, 0.78));
+    // The scrim is `bg_top` (pure black in every neg variant) at alpha, which is exactly the device
+    // Neovim's `blend` uses behind a float: the ground is already black, so the layer is not a tint
+    // and not a shadow, it only buries the live content the dialog is covering. Alpha 0.78 is the
+    // heavier, modal setting: a panel that owns the keyboard may not compete for attention.
+    list.rect(0.0, 0.0, w, h, with_alpha(th.bg_top, 0.78));
     panel_surface(list, th, panel);
     if !title.is_empty() {
         fonts.layout_line(
@@ -346,7 +367,9 @@ pub fn draw_clock(
     }
 
     // Ink ladder: the time is the reason the overlay exists, the date is context, the timer is a
-    // side note. Only the fields that carry text become lines.
+    // side note. Only the fields that carry text become lines. The clock paints no surface, so the
+    // ground behind it is `bg_top` (pure black) and all three steps clear AA on it: `text` 16.36:1,
+    // `text_dim` 11.37:1, `text_faint` 5.06:1 — the faint step is the timer and nothing below it.
     let mut lines: Vec<(String, f32, Face, Rgba, f32)> = Vec::new();
     if !clock.time.trim().is_empty() {
         lines.push((
@@ -473,11 +496,12 @@ impl Gains {
     }
 }
 
-/// A bottom-right strip of mode pills: one `GEOM.radius_pill` pill per non-default value, each a
-/// one-line caption. All-default values draw nothing, which is the whole point — the strip is
+/// A bottom-right strip of mode chips: one rounded rectangle per non-default value, cornered with
+/// `GEOM.radius_pill` (a near-square radius on this geometry, not the pill it was named for), each
+/// a one-line caption. All-default values draw nothing, which is the whole point — the strip is
 /// permanent furniture, so it may only take pixels when it carries a fact.
 ///
-/// Not a modal: no scrim, no panel, no title. Geometry: the pills are `CHIP_H` tall (22 px, the
+/// Not a modal: no scrim, no panel, no title. Geometry: the chips are `CHIP_H` tall (22 px, the
 /// same widget the now-playing pane's mode block draws), `CHIP_GAP` apart, and the strip is
 /// right-aligned `GEOM.pad` from the right edge and `GEOM.pad` above the bottom edge of the rect
 /// it is given. `frame` is that rect, so a caller with a footer passes `(w, h - footer_h)` and the
@@ -515,25 +539,34 @@ pub fn draw_gains(
         .iter()
         .map(|text| fonts.measure(text, TYPE.caption, Face::UiMedium) + 2.0 * CHIP_PAD_X)
         .collect();
-    // An all-padding pill has no label left in it: better to draw nothing than four empty dots.
+    // An all-padding chip has no label left in it: better to draw nothing than four empty dots.
     if texts.iter().all(|text| text.is_empty()) {
         return None;
     }
 
     let total: f32 = widths.iter().sum::<f32>() + gap_total;
     let y = h - GEOM.pad - CHIP_H;
+    // neg's near-square geometry turned the old pills into rounded rectangles on purpose. What has
+    // to be checked rather than assumed is the shader's own limit: `DrawList::rounded` clamps a
+    // radius to half the box, so a token above `CHIP_H / 2` would draw a shorter curve than the
+    // theme asked for, silently. Deriving the radius here keeps the drawn corner equal to the token.
+    let chip_radius = GEOM.radius_pill.min(CHIP_H * 0.5);
     let mut x = (w - GEOM.pad - total).max(GEOM.pad);
     let mut rows = Vec::with_capacity(texts.len());
     for (text, width) in texts.iter().zip(widths.iter()) {
-        // The "on" chip treatment the now-playing pane already uses: an accent wash under an
-        // accent caption. A gains pill is by definition a mode that is doing something, so it
-        // never needs the hollow "off" variant.
+        // The overlay's "on" treatment: an accent wash under an accent caption. A gains chip is by
+        // definition a mode that is doing something, so it never needs the hollow "off" variant.
+        //
+        // The caption is `accent_bright`, not `accent`: `accent` on this wash measures 4.22:1 over
+        // black and 4.07:1 over the raised pane it usually sits on — under AA for an 11 px caption
+        // — while the next step of the same hue family is 5.98:1 and 5.78:1. An ink that cannot be
+        // read on its own surface goes one step up.
         list.rounded(
             x,
             y,
             *width,
             CHIP_H,
-            GEOM.radius_pill,
+            chip_radius,
             th.accent_soft,
             with_alpha(th.accent2, 0.12),
         );
@@ -544,7 +577,7 @@ pub fn draw_gains(
             y + CHIP_TEXT_DY,
             TYPE.caption,
             Face::UiMedium,
-            th.accent,
+            th.accent_bright,
         );
         rows.push(Rect {
             x,
@@ -926,9 +959,19 @@ mod tests {
                     "strip is not flush with the bottom padding: {:?}",
                     drawn.bounds
                 );
-                // A pill has to be tall enough for its caption, and the radius token has to fit.
+                // A chip has to be tall enough for its caption, and its corner radius must fit
+                // inside the chip. The old chips were true pills, i.e. the radius *was* half the
+                // height; neg's near-square geometry drops that equality, so the invariant that
+                // survives is the one the shader actually needs: the token stays strictly under
+                // half the height, where it is a deliberate rounded-rectangle corner and not a
+                // clamp (`draw_gains` derives the drawn radius from the same bound).
                 assert!(drawn.bounds.h >= line_h(TYPE.caption));
-                assert!(drawn.bounds.h <= GEOM.radius_pill * 2.0);
+                assert!(
+                    GEOM.radius_pill * 2.0 <= drawn.bounds.h,
+                    "chip {:?} is too short for its radius token {}",
+                    drawn.bounds,
+                    GEOM.radius_pill
+                );
                 let ink = vertex_bounds(&list).expect("drawn list is empty");
                 assert!(
                     outer.covers(ink, 1.0),
@@ -1020,8 +1063,15 @@ mod tests {
         .is_none());
         assert!(list.is_empty(), "default Gains pushed primitives");
 
-        // A frame that cannot hold a readable overlay gets nothing drawn into it.
-        let tiny = (120.0, 60.0);
+        // A frame that cannot hold a readable overlay gets nothing drawn into it: narrower than the
+        // minimum panel and shorter than one chip plus its air is degenerate by construction. Both
+        // bounds are derived from the tokens rather than written as literals, because `GEOM` moves —
+        // a hardcoded 60 px frame stopped being "too short for a chip" the moment the padding
+        // dropped to 18.
+        let tiny = (
+            MIN_PANEL_W - 2.0 * GEOM.line,
+            (CHIP_H + 2.0 * GEOM.pad - 2.0).min(2.0 * EDGE - 2.0),
+        );
         assert!(
             draw_server_info(&mut list, &mut fonts, tiny, dark, "server", &sample_info(3))
                 .is_none()
@@ -1103,6 +1153,61 @@ mod tests {
         ];
         for (gains, expected) in cases {
             assert_eq!(gains.chips().len(), expected, "chips for {gains:?}");
+        }
+    }
+
+    /// Every ink this module paints, measured against the surface it is actually painted on.
+    ///
+    /// The theme asserts its own ladder on the ground, but an overlay introduces two grounds the
+    /// theme cannot know about: the `panel` fill (lighter than black, so it is the tighter of the
+    /// two for the table) and the accent wash under a chip caption (a *lighter* ground than either,
+    /// which is how an accent-on-accent caption fell to 4.22:1 in `neg`). The rule the code follows
+    /// is therefore checked here: 4.5:1 on the real ground, or the ink goes one step up.
+    #[test]
+    fn overlay_ink_clears_aa_on_the_surface_it_is_painted_on() {
+        use crate::color::contrast;
+        use crate::theme::{over, VARIANTS};
+
+        let check = |theme: &Theme, what: &str, ink: Rgba, ground: Rgba| {
+            let ratio = contrast(ink, ground);
+            assert!(
+                ratio >= 4.5,
+                "{}: {what} is {ratio:.2}:1 on its surface, under AA",
+                theme.name
+            );
+        };
+
+        for theme in VARIANTS {
+            // The clock draws no surface, so its ground is the frame's own top colour.
+            check(theme, "clock time", theme.text, theme.bg_top);
+            check(theme, "clock date", theme.text_dim, theme.bg_top);
+            check(theme, "clock timer", theme.text_faint, theme.bg_top);
+
+            // The table (title, labels, values) is painted on the panel fill.
+            check(theme, "table header", theme.text_faint, theme.panel);
+            check(theme, "table label", theme.text_faint, theme.panel);
+            check(theme, "table value", theme.text, theme.panel);
+
+            // A chip caption sits on a two-stop accent wash, and that wash sits on whatever the
+            // pane behind the strip painted: black at worst, the raised pane in practice. Both
+            // stops on both grounds, because a gradient means the ink has two grounds at once.
+            for (stop, wash) in [
+                ("top", theme.accent_soft),
+                ("bottom", with_alpha(theme.accent2, 0.12)),
+            ] {
+                for (under, ground) in [
+                    ("the ground", theme.bg_top),
+                    ("the raised pane", theme.pane_raised.surface),
+                ] {
+                    let composited = over(wash, ground);
+                    check(
+                        theme,
+                        &format!("chip caption on the {stop} stop over {under}"),
+                        theme.accent_bright,
+                        composited,
+                    );
+                }
+            }
         }
     }
 }

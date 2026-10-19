@@ -13,15 +13,16 @@
 # end, which reads the logs and prints one line per check.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-bin=${PROTO_BIN:-$here/target/release/player}
-[ -s "$here/.libs" ] || "$here/libs.sh" > "$here/.libs"
-libs=$(cat "$here/.libs")
-keys="down,down,tab,tab,tab,slash,abc,esc,colon,vol 30,enter,w,esc,5,j,p,>,<,f,b,=,-,z,r,y,R,d,d,colon,save ktl,enter,colon,renameplaylist ktl ktl2,enter,colon,rmplaylist ktl2,enter,J,K,2,noop,noop,noop,noop,3,noop,noop,noop,noop,P,noop,noop,noop,noop,1,a,noop,noop,noop,noop,enter,ctrl+s,esc,F,noop,noop,b,u,enter,o,noop,noop,noop,noop,noop,noop,noop,noop,noop,noop,noop,down,enter,esc"
+root=$(cd "$here/.." && pwd)
+bin=${PROTO_BIN:-$root/target/release/player}
+# No LD_LIBRARY_PATH: `src/preload.rs` resolves what winit and ash dlopen, so the suite runs the
+# same binary a user runs, with the same environment.
+unset LD_LIBRARY_PATH
+keys="down,down,tab,tab,tab,slash,abc,esc,colon,vol 30,enter,w,esc,5,j,p,>,<,f,b,=,-,z,r,y,R,d,d,colon,save ktl,enter,colon,renameplaylist ktl ktl2,enter,colon,rmplaylist ktl2,enter,J,K,2,noop,noop,noop,noop,3,noop,noop,noop,noop,P,noop,noop,noop,noop,1,a,noop,noop,noop,noop,enter,ctrl+s,esc,F,noop,noop,b,u,enter,o,wait!outputs=true,wait!outs=filled,down,noop,enter,esc"
 # One directory instead of eleven files: each suite writes its log, its frames and its stub port
 # file under its own name ($work/<suite>/). Two suites sharing a path would overwrite each
 # other's captures, and the per-key frames used to be left behind in /tmp long after the run.
 work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
 goldenfail=$work/goldenfail
 
 # One capture: <log> <binary arguments...>. The wrappers differ only in the switches a capture
@@ -30,20 +31,20 @@ state_run() { # scripted keys in, [state] dumps out, playback untouched
   local log=$1
   shift
   PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
-    env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" timeout 180 "$bin" "$@" > "$log" 2>&1
+    timeout 180 "$bin" "$@" > "$log" 2>&1
 }
 
 hits_run() { # the same run, plus the hit rectangles the pointer is resolved against
   local log=$1
   shift
   PLAYER_DUMP_HITS=1 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
-    env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" timeout 180 "$bin" "$@" > "$log" 2>&1
+    timeout 180 "$bin" "$@" > "$log" 2>&1
 }
 
 frame_run() { # a golden capture: pixels only, so neither the dump nor the dry-run switch
   local log=$1
   shift
-  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" timeout 180 "$bin" "$@" > "$log" 2>&1
+  timeout 180 "$bin" "$@" > "$log" 2>&1
 }
 
 # Golden references: two captures of one layout (1440x900 at scale 1 and 2880x1800 at scale 2)
@@ -53,19 +54,34 @@ frame_run() { # a golden capture: pixels only, so neither the dump nor the dry-r
 # has to notice in a screenshot. Regenerate them deliberately, never reflexively:
 #   ./keys-test.sh --update-golden
 update_golden=0
+keep_work=0
 for arg in "$@"; do
   case "$arg" in
     --update-golden) update_golden=1 ;;
-    *) echo "keys-test: unknown argument $arg" >&2; exit 2 ;;
+    # Keeps the work directory and prints its path: a failing suite deletes the evidence it just
+    # produced, which turns every investigation into a re-run.
+    --keep) keep_work=1 ;;
+    *)
+      echo "keys-test: unknown argument $arg" >&2
+      exit 2
+      ;;
   esac
 done
+# The work directory is removed when the run ends unless --keep asked otherwise; the decision is
+# taken here, after the flags are parsed.
+if [ "${keep_work:-0}" = 1 ]; then
+  echo "keys-test: work directory $work (kept)"
+else
+  trap 'rm -rf "$work"' EXIT
+fi
+
 for tool in compare gzip; do
   command -v "$tool" > /dev/null 2>&1 || {
     echo "FAIL golden comparison needs $tool on PATH (ImageMagick and gzip)"
     exit 1
   }
 done
-golden_dir=$here/golden
+golden_dir=$root/golden
 mkdir -p "$golden_dir"
 
 # ---- suites. One function per capture process; the launcher at the bottom decides the order.
@@ -119,7 +135,7 @@ suite_hits() {
 # pointer), a queue row, a tab, the transport play button, a mode chip, the volume bar and — once
 # the overlay is open — an output row.
 compute_coords() { # prints "x1y1 x2y2 …" for the six targets, one per line of --keys
-python3 - "$work/hits/log" << 'PY'
+  python3 - "$work/hits/log" << 'PY'
 import re
 import sys
 closed, opened, scope = {}, {}, "closed"
@@ -194,9 +210,12 @@ suite_playlists() {
 # The stub must not inherit this function's stdout: a background child holding the pipe open
 # keeps the `$(...)` substitution waiting for EOF long after the shell itself has moved on.
 start_stub() {
-  python3 "$here/stub-mpd.py" "$1" "${@:2}" >"$1.log" 2>&1 &
+  python3 "$here/stub-mpd.py" "$1" "${@:2}" > "$1.log" 2>&1 &
   local pid=$!
-  for _ in $(seq 1 100); do [ -s "$1" ] && break; sleep 0.05; done
+  for _ in $(seq 1 100); do
+    [ -s "$1" ] && break
+    sleep 0.05
+  done
   echo "$pid"
 }
 # A stub belongs to the suite that starts it: stub_up sets $stub_pid and $stub_addr from that
@@ -206,13 +225,13 @@ stub_up() { # <dir> [stub flags…]
   local dir=$1
   shift
   stub_pid=$(start_stub "$dir/port" "$@")
-  stub_addr=$(cat "$dir/port" 2>/dev/null)
+  stub_addr=$(cat "$dir/port" 2> /dev/null)
   [ -n "$stub_addr" ] || return 1
   # The port file is written before the listening socket is ready for the *first* client, and a
   # refused connect costs the app a two-second retry — which a capture of a couple of hundred
   # frames does not have. Wait for a real handshake instead of for a file.
   for _ in $(seq 1 100); do
-    python3 - "$stub_addr" <<'PYCHK' >/dev/null 2>&1 && return 0
+    python3 - "$stub_addr" << 'PYCHK' > /dev/null 2>&1 && return 0
 import socket, sys
 s = socket.create_connection(("127.0.0.1", int(sys.argv[1])), 0.2)
 s.settimeout(0.2)
@@ -225,8 +244,8 @@ PYCHK
 
 stub_down() {
   [ -n "${stub_pid-}" ] || return 0
-  kill "$stub_pid" 2>/dev/null
-  wait "$stub_pid" 2>/dev/null
+  kill "$stub_pid" 2> /dev/null
+  wait "$stub_pid" 2> /dev/null
   # A killed server reports its own fate, and a suite's status is its last command's: tearing a
   # stub down is not a failure.
   return 0
@@ -395,13 +414,13 @@ suite_zoom() {
   local d=$work/zoom
   mkdir -p "$d"
   PLAYER_UI_STATE="$d/ui.conf" PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
-    env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" timeout 180 "$bin" \
+    timeout 180 "$bin" \
     --render-size=800x600 --shot-seq="$d/seq" \
     --keys="ctrl+equals,noop,ctrl+equals,noop,ctrl+equals,noop,colon,zoom 150,enter,noop,colon,zoom +10,enter,noop,ctrl+0,noop,ctrl+minus,noop" \
     > "$d/log" 2>&1
   # The second run presses nothing: whatever zoom it reports came out of the file.
   PLAYER_UI_STATE="$d/ui.conf" PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
-    env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" timeout 180 "$bin" \
+    timeout 180 "$bin" \
     --render-size=800x600 --shot-seq="$d/seq2" --keys="noop,noop,noop" > "$d/log2" 2>&1
 }
 
@@ -445,7 +464,10 @@ launch() { # <suite>
   done
   # The exit status goes to a file instead of into `wait`: `wait -n` cannot say which child came
   # back, and with `set -e` deliberately absent a failed child is otherwise just a number.
-  ( "suite_$1"; echo $? > "$work/rc-$1" ) &
+  (
+    "suite_$1"
+    echo $? > "$work/rc-$1"
+  ) &
   suite_names+=("$1")
 }
 
@@ -466,7 +488,7 @@ else
   # The two things that make every later check in this run unreadable: no connection to the
   # suite's own stub, or a stub that never answered. Say which one instead of leaving a cascade.
   echo "  mpd=127.0.0.1:${stub_addr:-<none>} connected=$(rg -o 'connected=(true|false)' "$work/hits/log" | head -1)"
-  echo "  stub stderr: $(head -3 "$work/hits/port.log" 2>/dev/null | tr '\n' ' ')"
+  echo "  stub stderr: $(head -3 "$work/hits/port.log" 2> /dev/null | tr '\n' ' ')"
   # An empty log, so the hover checks fail as checks instead of taking the analysis block down
   # with them: a broken hit dump must not cost the other suites their verdicts.
   mkdir -p "$work/hover"
@@ -490,7 +512,7 @@ launch parity
 wait
 suite_rc=0
 for name in "${suite_names[@]}"; do
-  if [ "$(cat "$work/rc-$name" 2>/dev/null)" != 0 ]; then
+  if [ "$(cat "$work/rc-$name" 2> /dev/null)" != 0 ]; then
     echo "FAIL suite $name exited non-zero"
     suite_rc=1
   fi
@@ -1100,8 +1122,10 @@ walk = [
     ("tab", 1, "repeat ", "a second Tab walks to the next name"),
     ("tab", 2, "random ", "and the walk keeps going"),
     ("tab", 3, "theme ", "completing a name re-scopes the popup to that command's values"),
-    ("tab", 4, "theme dark", "the re-scoped list completes the value"),
-    ("tab", 5, "theme warm", "and walking it reaches the second value"),
+    # The value list is the resolved skin names (built-ins plus anything `skins.toml` adds), so
+    # the first two candidates are the strict skin and its quiet variant.
+    ("tab", 4, "theme neg", "the re-scoped list completes the value"),
+    ("tab", 5, "theme neg-soft", "and walking it reaches the second value"),
     ("tab", 6, "zoom ", "the zoom command completes"),
     ("tab", 7, "zoom reset", "and offers its only keyword"),
     ("tab", 8, "rmplaylist ", "a playlist command completes"),
@@ -1178,10 +1202,18 @@ check(
 # stayed open (the counters themselves need a daemon that answers `stats`, which the stub does —
 # the dry-run line is gone because `stats` is read-only and therefore actually runs).
 opened = [s for s in par_states if "server=1" in s]
+# The sequence opens the panel with `:stats`, leaves it a few keys, then closes it with `esc`, so
+# the honest pair of assertions is "it opened and stayed open for a while" plus "esc closes it" —
+# asserting that it is still open at the end would only re-state where the sequence puts its esc.
 check(
-    "@ opens the server panel and keeps it open",
-    bool(opened) and "server=1" in (par_states[-1] if par_states else ""),
+    "the server panel opens and stays open",
+    len(opened) >= 3,
     f"{len(opened)} dumps with server=1, last={par_states[-1][:40] if par_states else None}",
+)
+check(
+    "esc closes the server panel",
+    bool(par_states) and "server=0" in par_states[-1],
+    str(par_states[-1][:40] if par_states else None),
 )
 check(
     "replay gain survives the cycle in the dump",
@@ -1199,4 +1231,4 @@ if [ -s "$goldenfail" ]; then
   exit 1
 fi
 # A suite that produced no log already failed its own checks above; one that died says so here.
-exit $(( python_rc || suite_rc ))
+exit $((python_rc || suite_rc))

@@ -23,22 +23,113 @@ not part of the NixOS configuration.
 ## Build and run
 
 ```sh
-nix run nixpkgs#glslc -- --version 2>/dev/null || true   # only needed to rebuild shaders
-./shaders/build.sh            # GLSL -> SPIR-V (committed .spv files are enough to build)
-export CARGO_HOME=$PWD/../.cargo
 cargo build --release
-./run.sh --frames 1            # one frame, then exit
-./measure.sh 20                # 20 runs, min/median/max for process->first_present
-./run.sh --frames 1 --shot /tmp/frame.ppm   # offscreen render of the same quads, as PPM
-./run.sh --frames 1 --hdr      # HDR probe: HDR10 swapchain + VK_EXT_hdr_metadata
-./dumpframe.sh --size=1440x900 --scale=1 --shot-after=200   # real window at 1x -> /tmp/frame.ppm
-./dumpframe.sh --size=1440x900 --scale=2 --shot-after=200   # same layout, 2x device pixels
+
+./target/release/player        # the UI
+./target/release/player-proto  # the startup probe (see above)
 ```
 
-A `--shot-after`/`--shot`/`PLAYER_DUMP_SWAPCHAIN` run always ends by itself: the capture is taken
-at that frame and the app exits a couple of frames later, so a script never has to kill the player
-(killing it has taken the compositor down before). `--scale=N` pins the device scale and `--size`
-is then the logical layout size, which is what makes a 1x and a 2x capture comparable.
+That is the whole procedure. The binaries run straight out of `target/release` with no wrapper
+and no `LD_LIBRARY_PATH`: `src/preload.rs` resolves the libraries winit and ash `dlopen` by bare
+soname (`libwayland-client.so.0`, `libxkbcommon.so.0`, `libvulkan.so.1`) before either of them
+asks, which is the piece NixOS normally supplies through `DT_RUNPATH` and `/etc/ld.so.conf`.
+Discovery walks the profiles first, caches what it found in `$XDG_CACHE_HOME/player-proto/libs`,
+and only scans `/nix/store` once. `PLAYER_LIB_DIRS` (colon-separated) overrides the search.
+
+Shaders: `./shaders/build.sh` recompiles every `*.frag`/`*.vert` to SPIR-V with `glslc`. The
+committed `.spv` files are enough to build the crate; you only need this after editing a shader.
+
+### Skins
+
+A skin is the palette, the wallpaper and the surface treatment in one switchable unit
+(`src/skin.rs`):
+
+| skin | look |
+|---|---|
+| `neg` | strict neg.nvim: pure black ground, opaque panes, nothing animated |
+| `neg-soft` | the same palette, quieter state fills |
+| `neg-glass` | frosted panes over the cover |
+| `neg-vinyl` | the cover fills the frame behind opaque panes |
+| `neg-tunnel` | a raymarched tunnel behind frosted panes |
+| `neg-plasma` | slow interference fields, the Windows-Media-Player kind of loud |
+| `neg-spectrum` | a mirrored spectrum across the frame, Winamp-style |
+
+`t` cycles them, `:skin <name>` selects one, `--skin=` starts with one, and the choice is saved
+with the layout. Glass is real: panes sample a quarter-resolution backdrop of the frame's own
+background with a refracted, blurred lookup (`shaders/glass.frag`), so the wallpaper bends at the
+slab's edge and never behind the text. Procedural backgrounds are one full-screen quad
+(`shaders/bg.frag`).
+
+### Your own skins
+
+`$XDG_CONFIG_HOME/player/skins.toml` (or `--skins=PATH`) adds skins without recompiling:
+
+```toml
+[[skin]]
+name = "neon"          # :skin neon
+theme = "neg-hc"       # neg | neg-soft | neg-hc
+backdrop = "plasma"    # none | art | tunnel | plasma | spectrum
+strength = 0.8         # how much of the wallpaper survives the dimming sheet
+glass = true
+glass_tint = "#0b0a14"
+glass_alpha = 0.82
+refraction = 0.009     # screen units, 0..0.03
+```
+
+Any palette token can be overridden per skin, which is what makes the file a palette rather than
+a preset:
+
+```toml
+[[skin]]
+name = "hot"
+theme = "neg"
+color.accent = "#ff5f5f"
+color.text_faint = "#c0c8d8"
+```
+
+The accepted token names are the fields of `Theme` in `src/theme.rs` (`text`, `text_dim`,
+`text_faint`, `accent`, `accent2`, `selection`, `playing_bg`, `hover`, `bg_top`, `panel`,
+`border`, …); an unknown name is reported instead of ignored.
+
+Every key except `name` is optional. Mistakes are reported at startup and in a toast rather than
+half-applied, and a skin that reuses a built-in name replaces it.
+
+### List styles
+
+`L` switches between two row styles, and the choice is saved:
+
+- **thin** — one dense line per track, the scan view.
+- **thick** — a 48 px cover tile plus two lines. The row that is playing shows the real artwork
+  (the app holds exactly one cover texture); every other row shows a monogram plate whose hue rail
+  is hashed from the album name, so a queue reads as a stack of sleeves instead of a grey wall.
+
+### Live widgets
+
+Two named pipes feed the widgets in the now-playing column:
+
+```sh
+mpc idleloop status | sed -u 's/^/state /' > $XDG_RUNTIME_DIR/player-fifo   # text feed
+while :; do printf '%s\n' "$(cat /proc/loadavg | cut -d' ' -f1)"; sleep 0.2; done \
+  > $XDG_RUNTIME_DIR/player-scope                                          # numbers -> oscilloscope
+```
+
+`--fifo=` and `--scope-fifo=` move them. The reader never blocks (every open is `O_NONBLOCK` and
+a dead producer is a state, not an error), and with no producer the scope draws its own slow idle
+trace instead of an empty box. The trace is drawn from axis-aligned quads — the renderer has no
+polyline primitive — one column per sample, joined to its neighbour.
+
+### Tools
+
+- `tools/capture.sh` — capture the presented frame; deterministic (`--scale=1` by default).
+- `tools/check-layout.sh` — assert the layout contract from the rectangles the draw code emits.
+- `tools/keys-test.sh` — the scripted-key suite, driven through the same handler the keyboard
+  uses (`--keep` keeps its work directory, `--update-golden` re-baselines the reference frames).
+  `wait:` and `wait!field=value` tokens hold the script until a hover or a piece of state lands,
+  so a capture never has to count frames and hope a reply arrived.
+- `tools/theme-audit/audit.sh` — regenerate `THEME-AUDIT.md` from `src/theme.rs`.
+
+The app itself still takes the probe flags (`--frames`, `--shot`, `--hdr`, `--bench`) and the UI
+flags (`--mpd=`, `--theme=`/`--skin=`, `--zoom=`, `--render-size=`, `--scale=`, `--keys=`).
 
 ## NixOS gotchas this prototype hit (all measured)
 

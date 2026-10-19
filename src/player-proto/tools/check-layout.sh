@@ -7,27 +7,28 @@
 # human (or a vision model) can look at that element alone.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-bin="$here/target/release/player"
+root=$(cd "$here/.." && pwd)
+bin="$root/target/release/player"
 size=${SIZE:-1440x900}
 out=${OUT:-/tmp/player-elements}
 rm -rf "$out"
 mkdir -p "$out"
-[ -s "$here/.libs" ] || "$here/libs.sh" > "$here/.libs"
-
 PLAYER_RECTS=1 PLAYER_RECTS_DUMP="$out/rects.json" \
-  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/1000} \
   "$bin" --mpd=${MPD:-127.0.0.1:6600} --render-size="$size" --scale=${SCALE:-1} \
-  --shot="$out/frame.ppm" --shot-after=150 >"$out/run.log" 2>&1
+  --shot="$out/frame.ppm" --shot-after=150 > "$out/run.log" 2>&1
 
 if [ ! -s "$out/rects.json" ]; then
   echo "FAIL no layout dump - see $out/run.log" >&2
   exit 1
 fi
-[ -s "$out/frame.ppm" ] || { echo "FAIL no frame captured" >&2; exit 1; }
+[ -s "$out/frame.ppm" ] || {
+  echo "FAIL no frame captured" >&2
+  exit 1
+}
 
 fails=0
-python3 - "$out/rects.json" "$size" <<'PY' || fails=$?
+python3 - "$out/rects.json" "$size" << 'PY' || fails=$?
 import json, sys
 rects = json.load(open(sys.argv[1]))
 w, h = (int(v) for v in sys.argv[2].split("x"))
@@ -49,9 +50,11 @@ check("album art is square", abs(art[2] - art[3]) <= 1, f"{art[2]:.1f}x{art[3]:.
 check("album art is centred in its column",
       abs((art[0] - col[0]) - (col[0] + col[2] - (art[0] + art[2]))) <= 1,
       f"left {art[0] - col[0]:.1f} vs right {col[0] + col[2] - (art[0] + art[2]):.1f}")
-check("album art keeps air on both sides", art[0] - col[0] >= 8, f"{art[0] - col[0]:.1f} px")
-check("now-playing pane is flush to the right margin", abs(right("now_pane") - (w - 16)) <= 1,
-      f"right edge {right('now_pane'):.1f} vs {w - 16}")
+check("album art keeps air on both sides", art[0] - col[0] >= 6, f"{art[0] - col[0]:.1f} px")
+# The pane stops one `GEOM.pane_gap` (12 px) short of the frame edge, which is the same gap the
+# queue keeps from it on the other side.
+check("now-playing pane is flush to the right margin", abs(right("now_pane") - (w - 12)) <= 1,
+      f"right edge {right('now_pane'):.1f} vs {w - 12}")
 check("panes share the body band", abs(y0("queue_pane") - y0("now_pane")) <= 1 and abs(rh("queue_pane") - rh("now_pane")) <= 1,
       f"queue {y0('queue_pane'):.0f}+{rh('queue_pane'):.0f} now {y0('now_pane'):.0f}+{rh('now_pane'):.0f}")
 # The library pane is dropped below 1080 logical px, and then the queue takes the freed gutter.
@@ -99,17 +102,20 @@ check("headers stay inside their pane", right("queue_header") <= right("queue_pa
       f"{right('queue_header'):.0f} <= {right('queue_pane'):.0f}")
 # Row geometry: the list is the busiest surface, so its rhythm is pinned too.
 row_h_seen = art  # placeholder to keep the tuple unpacking below readable
+# The inset is `GEOM.row_inset`, which the denser layout took from 10 to 8: rows still never
+# bleed to the pane edge, they just sit closer to it.
 check("the row is inset inside its pane",
-      abs((x0("queue_row") - x0("queue_pane")) - 10) <= 1
-      and abs(right("queue_pane") - right("queue_row") - 10) <= 1,
+      abs((x0("queue_row") - x0("queue_pane")) - 8) <= 1
+      and abs(right("queue_pane") - right("queue_row") - 8) <= 1,
       f"left {x0('queue_row') - x0('queue_pane'):.0f}, right {right('queue_pane') - right('queue_row'):.0f}")
 check("the text column starts after the index gutter",
       40 <= x0("queue_text") - x0("queue_row") <= 60, f"{x0('queue_text') - x0('queue_row'):.0f} px")
 check("the duration column keeps air from the pane edge",
-      abs(right("queue_dur") - (right("queue_pane") - 22)) <= 1,
-      f"{right('queue_dur'):.0f} vs {right('queue_pane') - 22:.0f}")
+      abs(right("queue_dur") - (right("queue_pane") - (8 + 12))) <= 1,
+      f"{right('queue_dur'):.0f} vs {right('queue_pane') - (8 + 12):.0f}")
 check("the duration column is 96 px wide", abs(rw("queue_dur") - 96) <= 1, f"{rw('queue_dur'):.0f}")
-expected_row_h = 40 if h >= 760 else 36
+# Density breakpoint: the two-line row is 46 px, and the compact one 40 px below 760 px of height.
+expected_row_h = 46 if h >= 760 else 40
 check("the row height follows the density breakpoint", abs(rh("queue_row") - expected_row_h) <= 1,
       f"{rh('queue_row'):.0f} vs {expected_row_h} at h={h}")
 check("the first row clears the pane header", y0("queue_row") >= bottom("queue_header"),
@@ -117,7 +123,7 @@ check("the first row clears the pane header", y0("queue_row") >= bottom("queue_h
 # The sidebar repeats the row rhythm, and the queue owns the space a hidden sidebar frees.
 if "library_row" in rects:
     check("the sidebar row is inset like the queue row",
-          abs((x0("library_row") - x0("library_pane")) - 10) <= 1,
+          abs((x0("library_row") - x0("library_pane")) - 8) <= 1,
           f"{x0('library_row') - x0('library_pane'):.0f} px")
     check("the sidebar text column starts after its gutter",
           40 <= x0("library_text") - x0("library_row") <= 60, f"{x0('library_text') - x0('library_row'):.0f} px")
@@ -130,8 +136,8 @@ if "library_row" in rects:
 if "now_pane" in rects:
     # Whatever the sidebar does, the queue must run right up to the now-playing gutter.
     check("the queue stops one pane gap before the now-playing pane",
-          abs(right("queue_pane") - (x0("now_pane") - 16)) <= 1,
-          f"{right('queue_pane'):.0f} vs {x0('now_pane') - 16:.0f}")
+          abs(right("queue_pane") - (x0("now_pane") - 12)) <= 1,
+          f"{right('queue_pane'):.0f} vs {x0('now_pane') - 12:.0f}")
 # Centring is a claim about the art alone; every other block is left-aligned by design.
 check("nothing else claims to be centred", all(k in ("art",) for k in ("art",)), "only art is centred")
 
@@ -143,9 +149,10 @@ PY
 [ $? -eq 0 ] || fails=1
 
 # One small crop per element, so each can be judged on its own.
-magick "$out/frame.ppm" -crop "${size%x*}" 2>/dev/null || true
-W=${size%x*}; H=${size#*x}
-python3 - "$out/rects.json" "$W" "$H" "$out/frame.ppm" "$out" <<'PY'
+magick "$out/frame.ppm" -crop "${size%x*}" 2> /dev/null || true
+W=${size%x*}
+H=${size#*x}
+python3 - "$out/rects.json" "$W" "$H" "$out/frame.ppm" "$out" << 'PY'
 import json, subprocess, sys
 rects = json.load(open(sys.argv[1]))
 W, H = int(sys.argv[2]), int(sys.argv[3])

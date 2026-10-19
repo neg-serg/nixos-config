@@ -1,8 +1,12 @@
 //! CPU-side draw data: a vertex format every UI pipeline shares, batching, and the
 //! glyph atlas packer. Nothing in here touches Vulkan.
 
+/// The glyph atlas is a single R8 sheet. It grew to 2048x2048 when the type scale did: 11-27 px
+/// across two faces plus full Cyrillic is more coverage than 2048x1024 holds, and an atlas that
+/// overflows does not fail — it silently drops glyphs, which read as tofu boxes in the middle of
+/// a duration or a percentage.
 pub const ATLAS_W: u32 = 2048;
-pub const ATLAS_H: u32 = 1024;
+pub const ATLAS_H: u32 = 2048;
 pub const MAX_VERTICES: usize = 1 << 19;
 
 /// One vertex layout for the whole UI: position in pixels, uv, two colours (gradient
@@ -47,6 +51,11 @@ pub enum Kind {
     Shape,
     Text,
     Image,
+    /// A frosted-glass slab: samples the frame's backdrop texture with a refracted, blurred
+    /// lookup instead of painting a flat colour. Same silhouette as `Shape`.
+    Glass,
+    /// A full-screen procedural background (`shaders/bg.frag`): tunnel, plasma, spectrum.
+    Effect,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -201,6 +210,60 @@ impl DrawList {
         self.push(
             Kind::Shape,
             Self::quad(x, y, w, h, top, bottom, [r, w, h, 0.0]),
+        );
+    }
+
+    /// A slab of frosted glass: the rounded-rect silhouette of `rounded`, filled with a
+    /// blurred, refracted sample of the frame's backdrop instead of a colour.
+    ///
+    /// `tint` is the glass colour (its alpha is the opacity of the slab, so a lighter alpha
+    /// lets more of the backdrop through), and `refraction` is how far the edge bends the
+    /// backdrop, in logical pixels of displacement — 0 gives a plain frosted blur, 0.5-2 px
+    /// gives the bevel that reads as "liquid". The value is carried in the quad's spare
+    /// `params.w` slot, which the opaque shader uses for its shadow blur.
+    pub fn glass(
+        &mut self,
+        x: f32,
+        y: f32,
+        w: f32,
+        h: f32,
+        radius: f32,
+        tint: [f32; 4],
+        refraction: f32,
+    ) {
+        let (x, y, w, h) = self.dev_rect(x, y, w, h);
+        let r = self.dev_len(radius).min(w.min(h) * 0.5);
+        self.push(
+            Kind::Glass,
+            Self::quad(x, y, w, h, tint, tint, [r, w, h, refraction]),
+        );
+    }
+
+    /// A procedural background quad. `mode` selects the effect in `shaders/bg.frag`
+    /// (0 flat, 1 tunnel, 2 plasma, 3 spectrum), `scale` is the effect's own frequency knob
+    /// (cell size, tunnel scale or bar count) and `intensity` blends it in (0 = the flat
+    /// ground colour, 1 = full strength). Drawn into the backdrop layer, i.e. behind every pane.
+    ///
+    /// The four `params` slots are packed to match the fragment shader exactly — `.x` mode,
+    /// `.y` scale, `.z` unused, `.w` intensity — because the shader was written against that
+    /// contract; the usual "radius, width, height, blur" meaning of the slot does not apply to
+    /// a full-screen quad.
+    pub fn effect(
+        &mut self,
+        x: f32,
+        y: f32,
+        w: f32,
+        h: f32,
+        mode: f32,
+        scale: f32,
+        intensity: f32,
+        tint: [f32; 4],
+        tint2: [f32; 4],
+    ) {
+        let (x, y, w, h) = self.dev_rect(x, y, w, h);
+        self.push(
+            Kind::Effect,
+            Self::quad(x, y, w, h, tint, tint2, [mode, scale, 0.0, intensity]),
         );
     }
 

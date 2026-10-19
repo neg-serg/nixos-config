@@ -4,13 +4,18 @@
 
 use std::time::Instant;
 
+pub mod color;
+pub mod config;
 pub mod cover;
 pub mod gpu;
 pub mod mpd;
 pub mod panels;
+pub mod preload;
 pub mod scene;
+pub mod skin;
 pub mod text;
 pub mod theme;
+pub mod widgets;
 
 /// Boot clock captured from an ELF `.init_array` constructor, i.e. before Rust's `main`.
 /// Used to split "exec -> loader/ctors" from "ctors -> main" in the startup budget.

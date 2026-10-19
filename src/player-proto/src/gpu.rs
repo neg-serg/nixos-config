@@ -17,12 +17,38 @@ const VERTEX_SHADER: &[u8] = include_bytes!("../shaders/ui.vert.spv");
 const SHAPE_FRAGMENT: &[u8] = include_bytes!("../shaders/solid.frag.spv");
 const TEXT_FRAGMENT: &[u8] = include_bytes!("../shaders/text.frag.spv");
 const IMAGE_FRAGMENT: &[u8] = include_bytes!("../shaders/image.frag.spv");
+/// Frosted glass: samples the backdrop layer with a refracted, blurred lookup.
+const GLASS_FRAGMENT: &[u8] = include_bytes!("../shaders/glass.frag.spv");
+/// Procedural full-screen backgrounds (tunnel / plasma / spectrum).
+const BG_FRAGMENT: &[u8] = include_bytes!("../shaders/bg.frag.spv");
 
 /// Set by the caller when an HDR10 swapchain should be requested.
 static HDR_REQUESTED: AtomicBool = AtomicBool::new(false);
 
 pub fn request_hdr(on: bool) {
     HDR_REQUESTED.store(on, Ordering::Relaxed);
+}
+
+/// How much smaller the backdrop layer is than the frame. Glass samples it with a linear
+/// filter and a small kernel, so a quarter-resolution layer is already smooth after the
+/// upscale while costing 1/16 of the pixels and a fraction of the bandwidth.
+const BACKDROP_DIVISOR: u32 = 4;
+
+/// The frame's background rendered small, and everything needed to draw into it.
+///
+/// One image, one render pass and one framebuffer, rebuilt whenever the surface changes size.
+/// It is deliberately *separate from the swapchain*: a pass that both sampled and wrote the
+/// same attachment would need subpass input attachments, and reading the previously presented
+/// image would blur last frame's UI text into this frame's glass. Rendering the background
+/// twice — once small for the glass, once at full size — costs almost nothing (it is one
+/// full-screen quad) and keeps the two uses honest.
+struct Backdrop {
+    image: vk::Image,
+    memory: vk::DeviceMemory,
+    view: vk::ImageView,
+    framebuffer: vk::Framebuffer,
+    render_pass: vk::RenderPass,
+    extent: vk::Extent2D,
 }
 
 pub struct Gpu {
@@ -48,9 +74,13 @@ pub struct Gpu {
     pipeline_shape: vk::Pipeline,
     pipeline_text: vk::Pipeline,
     pipeline_image: vk::Pipeline,
+    pipeline_glass: vk::Pipeline,
+    pipeline_effect: vk::Pipeline,
     desc_pool: vk::DescriptorPool,
     set_atlas: vk::DescriptorSet,
     set_art: vk::DescriptorSet,
+    /// Descriptor pointing at the backdrop layer; only the glass and effect pipelines bind it.
+    set_backdrop: vk::DescriptorSet,
     atlas_image: vk::Image,
     atlas_memory: vk::DeviceMemory,
     atlas_view: vk::ImageView,
@@ -91,6 +121,13 @@ pub struct Gpu {
     push_res: [f32; 2],
     /// Coverage gamma for glyph blending; 1.0 = raw linear blend (thin text on an SRGB target).
     text_gamma: f32,
+    /// The background layer glass slabs sample. `None` until a skin asks for glass or for a
+    /// procedural background, so the strict flat skin pays nothing for the feature.
+    backdrop: Option<Backdrop>,
+    /// Seconds since start, handed to the shaders in `push_constants.w`. This is the only
+    /// animation input: the glass wobble and every procedural background are functions of it,
+    /// so a still frame is reproducible and a capture is never a race.
+    frame_time: f32,
 }
 
 pub fn find_memory_type(
@@ -990,10 +1027,10 @@ pub fn create_gpu(
             .allocate_descriptor_sets(
                 &vk::DescriptorSetAllocateInfo::default()
                     .descriptor_pool(desc_pool)
-                    .set_layouts(&[dsl, dsl]),
+                    .set_layouts(&[dsl, dsl, dsl]),
             )
             .ok()?;
-        let (set_atlas, set_art) = (sets[0], sets[1]);
+        let (set_atlas, set_art, set_backdrop) = (sets[0], sets[1], sets[2]);
         let atlas_info = [vk::DescriptorImageInfo::default()
             .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
             .image_view(atlas.view)
@@ -1115,6 +1152,8 @@ pub fn create_gpu(
         let pipeline_shape = make_pipeline(SHAPE_FRAGMENT)?;
         let pipeline_text = make_pipeline(TEXT_FRAGMENT)?;
         let pipeline_image = make_pipeline(IMAGE_FRAGMENT)?;
+        let pipeline_glass = make_pipeline(GLASS_FRAGMENT)?;
+        let pipeline_effect = make_pipeline(BG_FRAGMENT)?;
         t.timing.mark("pipelines");
 
         let pool = device
@@ -1195,9 +1234,14 @@ pub fn create_gpu(
             pipeline_shape,
             pipeline_text,
             pipeline_image,
+            pipeline_glass,
+            pipeline_effect,
             desc_pool,
             set_atlas,
             set_art,
+            set_backdrop,
+            backdrop: None,
+            frame_time: 0.0,
             atlas_image: atlas.image,
             atlas_memory: atlas.memory,
             atlas_view: atlas.view,
@@ -1246,6 +1290,28 @@ pub struct Offscreen {
 
 impl Gpu {
     /// Copy the draw list into the persistent mapped vertex buffer. Returns vertex count.
+    /// Advance the animation clock the shaders read. Called once per frame from the app.
+    pub fn set_frame_time(&mut self, seconds: f32) {
+        self.frame_time = seconds.max(0.0);
+    }
+
+    /// Copy `list` into the shared vertex buffer starting at vertex `base`, so several lists
+    /// (the background layer and the frame) can be recorded from one buffer in one command
+    /// buffer without a second allocation or a second bind.
+    pub unsafe fn upload_vertices_at(&mut self, list: &DrawList, base: u32) -> usize {
+        let total = list.vertices.len();
+        assert!(
+            total as u32 + base <= MAX_VERTICES as u32,
+            "vertex budget exceeded: base {base} + {total} > {MAX_VERTICES}"
+        );
+        std::ptr::copy_nonoverlapping(
+            list.vertices.as_ptr() as *const u8,
+            self.vertex_ptr.add(base as usize * VERTEX_SIZE),
+            total * VERTEX_SIZE,
+        );
+        total
+    }
+
     pub unsafe fn upload_vertices(&mut self, list: &DrawList) -> usize {
         let total = list.vertices.len();
         assert!(total <= MAX_VERTICES, "vertex budget exceeded: {total}");
@@ -1276,58 +1342,156 @@ impl Gpu {
         Ok(total)
     }
 
-    unsafe fn record_sized(
-        &self,
-        fb: vk::Framebuffer,
-        list: &DrawList,
-        copy_out: Option<vk::Buffer>,
-        image: vk::Image,
-        clear: [f32; 4],
-        extent: vk::Extent2D,
-        vbuf: vk::Buffer,
-    ) -> Result<(), vk::Result> {
-        self.device
-            .reset_command_buffer(self.cmd, vk::CommandBufferResetFlags::empty())?;
-        self.device
-            .begin_command_buffer(self.cmd, &vk::CommandBufferBeginInfo::default())?;
-        let clear_values = [vk::ClearValue {
-            color: vk::ClearColorValue {
-                float32: crate::scene::linear(clear),
+    /// Create (or resize) the backdrop layer for `extent`, and point the glass descriptor at it.
+    ///
+    /// Returns `false` when the device refuses the image — glass then simply does not draw,
+    /// which is the right failure mode for an effect: the app keeps working, it just is not
+    /// frosted.
+    unsafe fn ensure_backdrop(&mut self, extent: vk::Extent2D) -> bool {
+        let w = (extent.width / BACKDROP_DIVISOR).max(8);
+        let h = (extent.height / BACKDROP_DIVISOR).max(8);
+        if let Some(b) = &self.backdrop {
+            if b.extent.width == w && b.extent.height == h {
+                return true;
+            }
+        }
+        self.destroy_backdrop();
+        let Some(alloc) = Gpu::create_image(
+            &self.device,
+            &self.mem_props,
+            w,
+            h,
+            self.format,
+            vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::SAMPLED,
+        ) else {
+            return false;
+        };
+        // Its own render pass: the swapchain pass ends in PRESENT_SRC_KHR, while this image has
+        // to *end* in SHADER_READ_ONLY so the main pass can sample it.
+        let attach = [vk::AttachmentDescription::default()
+            .format(self.format)
+            .samples(vk::SampleCountFlags::TYPE_1)
+            .load_op(vk::AttachmentLoadOp::CLEAR)
+            .store_op(vk::AttachmentStoreOp::STORE)
+            .stencil_load_op(vk::AttachmentLoadOp::DONT_CARE)
+            .stencil_store_op(vk::AttachmentStoreOp::DONT_CARE)
+            .initial_layout(vk::ImageLayout::UNDEFINED)
+            .final_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)];
+        let color_ref = [vk::AttachmentReference::default()
+            .attachment(0)
+            .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)];
+        let subpass = [vk::SubpassDescription::default()
+            .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
+            .color_attachments(&color_ref)];
+        // The second dependency is the one that makes the glass legal: the backdrop is written
+        // as a colour attachment and read as a texture two draws later, in the same command
+        // buffer.
+        let dep = [
+            vk::SubpassDependency::default()
+                .src_subpass(vk::SUBPASS_EXTERNAL)
+                .dst_subpass(0)
+                .src_stage_mask(vk::PipelineStageFlags::TOP_OF_PIPE)
+                .dst_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+                .dst_access_mask(vk::AccessFlags::COLOR_ATTACHMENT_WRITE),
+            vk::SubpassDependency::default()
+                .src_subpass(0)
+                .dst_subpass(vk::SUBPASS_EXTERNAL)
+                .src_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+                .src_access_mask(vk::AccessFlags::COLOR_ATTACHMENT_WRITE)
+                .dst_stage_mask(vk::PipelineStageFlags::FRAGMENT_SHADER)
+                .dst_access_mask(vk::AccessFlags::SHADER_READ),
+        ];
+        let render_pass = self.device.create_render_pass(
+            &vk::RenderPassCreateInfo::default()
+                .attachments(&attach)
+                .subpasses(&subpass)
+                .dependencies(&dep),
+            None,
+        );
+        let Ok(render_pass) = render_pass else {
+            self.destroy_image(alloc);
+            return false;
+        };
+        let fb = self.device.create_framebuffer(
+            &vk::FramebufferCreateInfo::default()
+                .render_pass(render_pass)
+                .attachments(std::slice::from_ref(&alloc.view))
+                .width(w)
+                .height(h)
+                .layers(1),
+            None,
+        );
+        let Ok(framebuffer) = fb else {
+            self.device.destroy_render_pass(render_pass, None);
+            self.destroy_image(alloc);
+            return false;
+        };
+        let info = [vk::DescriptorImageInfo::default()
+            .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
+            .image_view(alloc.view)
+            .sampler(self.sampler)];
+        self.device.update_descriptor_sets(
+            &[vk::WriteDescriptorSet::default()
+                .dst_set(self.set_backdrop)
+                .dst_binding(0)
+                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+                .image_info(&info)],
+            &[],
+        );
+        self.backdrop = Some(Backdrop {
+            image: alloc.image,
+            memory: alloc.memory,
+            view: alloc.view,
+            framebuffer,
+            render_pass,
+            extent: vk::Extent2D {
+                width: w,
+                height: h,
             },
-        }];
-        let rp_begin = vk::RenderPassBeginInfo::default()
-            .render_pass(self.render_pass)
-            .framebuffer(fb)
-            .render_area(vk::Rect2D {
-                offset: vk::Offset2D { x: 0, y: 0 },
-                extent,
-            })
-            .clear_values(&clear_values);
-        self.device
-            .cmd_begin_render_pass(self.cmd, &rp_begin, vk::SubpassContents::INLINE);
-        let viewport = [vk::Viewport {
-            x: 0.0,
-            y: 0.0,
-            width: extent.width as f32,
-            height: extent.height as f32,
-            min_depth: 0.0,
-            max_depth: 1.0,
-        }];
-        self.device.cmd_set_viewport(self.cmd, 0, &viewport);
-        // Physical resolution: the draw list arrives in device pixels, so the shader divides by
-        // the extent the viewport covers. xy = physical resolution, z = text gamma, w = reserved
-        let params = [self.push_res[0], self.push_res[1], self.text_gamma, 0.0];
+        });
+        true
+    }
+
+    unsafe fn destroy_backdrop(&mut self) {
+        if let Some(b) = self.backdrop.take() {
+            self.device.destroy_framebuffer(b.framebuffer, None);
+            self.device.destroy_render_pass(b.render_pass, None);
+            self.destroy_image(ImageAlloc {
+                image: b.image,
+                memory: b.memory,
+                view: b.view,
+            });
+        }
+    }
+
+    /// Record every batch of `list`, with the vertex buffer bound at `base` vertices.
+    ///
+    /// Split out of `record_sized` so the backdrop pass and the main pass run the *same* batch
+    /// loop: a background that had its own copy of this code would drift from the frame the
+    /// moment a primitive changed.
+    unsafe fn record_batches(
+        &self,
+        list: &DrawList,
+        vbuf: vk::Buffer,
+        base: u32,
+        extent: vk::Extent2D,
+        res: [f32; 2],
+    ) {
+        let params = [res[0], res[1], self.text_gamma, self.frame_time];
         let res_bytes = std::slice::from_raw_parts(params.as_ptr() as *const u8, 16);
-        self.device
-            .cmd_bind_vertex_buffers(self.cmd, 0, &[vbuf], &[0]);
+        self.device.cmd_bind_vertex_buffers(
+            self.cmd,
+            0,
+            &[vbuf],
+            &[(base as u64) * VERTEX_SIZE as u64],
+        );
         self.device.cmd_push_constants(
             self.cmd,
             self.layout,
-            vk::ShaderStageFlags::VERTEX,
+            vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT,
             0,
             res_bytes,
         );
-
         let mut bound: Option<Kind> = None;
         for Batch {
             kind,
@@ -1354,56 +1518,135 @@ impl Gpu {
                 })
                 .unwrap_or(vk::Rect2D {
                     offset: vk::Offset2D { x: 0, y: 0 },
-                    extent: self.extent,
+                    extent,
                 });
             if rect.extent.width == 0 || rect.extent.height == 0 {
                 continue;
             }
             self.device.cmd_set_scissor(self.cmd, 0, &[rect]);
+            // A glass batch with no backdrop to sample would bind an unwritten descriptor:
+            // undefined behaviour, and on llvmpipe a segfault. Skipping the batch degrades the
+            // frame to "no glass" instead, which is a look, not a crash.
+            if kind == Kind::Glass && self.backdrop.is_none() {
+                continue;
+            }
             if bound != Some(kind) {
-                match kind {
-                    Kind::Shape => {
-                        self.device.cmd_bind_pipeline(
-                            self.cmd,
-                            vk::PipelineBindPoint::GRAPHICS,
-                            self.pipeline_shape,
-                        );
-                    }
-                    Kind::Text => {
-                        self.device.cmd_bind_pipeline(
-                            self.cmd,
-                            vk::PipelineBindPoint::GRAPHICS,
-                            self.pipeline_text,
-                        );
-                        self.device.cmd_bind_descriptor_sets(
-                            self.cmd,
-                            vk::PipelineBindPoint::GRAPHICS,
-                            self.layout,
-                            0,
-                            &[self.set_atlas],
-                            &[],
-                        );
-                    }
-                    Kind::Image => {
-                        self.device.cmd_bind_pipeline(
-                            self.cmd,
-                            vk::PipelineBindPoint::GRAPHICS,
-                            self.pipeline_image,
-                        );
-                        self.device.cmd_bind_descriptor_sets(
-                            self.cmd,
-                            vk::PipelineBindPoint::GRAPHICS,
-                            self.layout,
-                            0,
-                            &[self.set_art],
-                            &[],
-                        );
-                    }
+                let (pipeline, set) = match kind {
+                    Kind::Shape => (self.pipeline_shape, None),
+                    Kind::Text => (self.pipeline_text, Some(self.set_atlas)),
+                    Kind::Image => (self.pipeline_image, Some(self.set_art)),
+                    Kind::Glass => (self.pipeline_glass, Some(self.set_backdrop)),
+                    Kind::Effect => (self.pipeline_effect, Some(self.set_backdrop)),
+                };
+                self.device
+                    .cmd_bind_pipeline(self.cmd, vk::PipelineBindPoint::GRAPHICS, pipeline);
+                if let Some(set) = set {
+                    self.device.cmd_bind_descriptor_sets(
+                        self.cmd,
+                        vk::PipelineBindPoint::GRAPHICS,
+                        self.layout,
+                        0,
+                        &[set],
+                        &[],
+                    );
                 }
                 bound = Some(kind);
             }
             self.device.cmd_draw(self.cmd, count, 1, first, 0);
         }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    unsafe fn record_sized(
+        &self,
+        fb: vk::Framebuffer,
+        list: &DrawList,
+        bg: Option<(&DrawList, u32)>,
+        copy_out: Option<vk::Buffer>,
+        image: vk::Image,
+        clear: [f32; 4],
+        extent: vk::Extent2D,
+        vbuf: vk::Buffer,
+    ) -> Result<(), vk::Result> {
+        self.device
+            .reset_command_buffer(self.cmd, vk::CommandBufferResetFlags::empty())?;
+        self.device
+            .begin_command_buffer(self.cmd, &vk::CommandBufferBeginInfo::default())?;
+
+        // Pass 1 — the backdrop layer. Same batch loop as the frame, at a quarter of the size
+        // (the draw list is resolution-independent: `push_res` is what the vertex shader
+        // divides by), so glass slabs have something smooth to sample.
+        if let (Some(backdrop), Some((bg_list, bg_base))) = (self.backdrop.as_ref(), bg) {
+            if !bg_list.vertices.is_empty() {
+                let bg_clear = [vk::ClearValue {
+                    color: vk::ClearColorValue {
+                        float32: crate::scene::linear(clear),
+                    },
+                }];
+                let begin = vk::RenderPassBeginInfo::default()
+                    .render_pass(backdrop.render_pass)
+                    .framebuffer(backdrop.framebuffer)
+                    .render_area(vk::Rect2D {
+                        offset: vk::Offset2D { x: 0, y: 0 },
+                        extent: backdrop.extent,
+                    })
+                    .clear_values(&bg_clear);
+                self.device
+                    .cmd_begin_render_pass(self.cmd, &begin, vk::SubpassContents::INLINE);
+                let vp = [vk::Viewport {
+                    x: 0.0,
+                    y: 0.0,
+                    width: backdrop.extent.width as f32,
+                    height: backdrop.extent.height as f32,
+                    min_depth: 0.0,
+                    max_depth: 1.0,
+                }];
+                self.device.cmd_set_viewport(self.cmd, 0, &vp);
+                // The vertices are the frame's own device pixels, so the shader still divides
+                // by the *frame* resolution: only the viewport shrinks, which is what maps the
+                // same geometry onto the small image. Dividing by the backdrop extent here
+                // would push every quad off the layer (a 1440 px position over a 360 px
+                // resolution lands at NDC 7, i.e. clipped away).
+                self.record_batches(bg_list, vbuf, bg_base, backdrop.extent, self.push_res);
+                self.device.cmd_end_render_pass(self.cmd);
+            }
+        }
+        let clear_values = [vk::ClearValue {
+            color: vk::ClearColorValue {
+                float32: crate::scene::linear(clear),
+            },
+        }];
+        let rp_begin = vk::RenderPassBeginInfo::default()
+            .render_pass(self.render_pass)
+            .framebuffer(fb)
+            .render_area(vk::Rect2D {
+                offset: vk::Offset2D { x: 0, y: 0 },
+                extent,
+            })
+            .clear_values(&clear_values);
+        self.device
+            .cmd_begin_render_pass(self.cmd, &rp_begin, vk::SubpassContents::INLINE);
+        let viewport = [vk::Viewport {
+            x: 0.0,
+            y: 0.0,
+            width: extent.width as f32,
+            height: extent.height as f32,
+            min_depth: 0.0,
+            max_depth: 1.0,
+        }];
+        self.device.cmd_set_viewport(self.cmd, 0, &viewport);
+        // Physical resolution: the draw list arrives in device pixels, so the shader divides by
+        // the extent the viewport covers. xy = physical resolution, z = text gamma.
+        // The frame's vertices start *after* the background layer's, so the bind offset has to
+        // carry that base: binding at 0 would replay the background into the frame.
+        let main_base = bg.map(|(_, base)| base).unwrap_or(0);
+        if std::env::var("PLAYER_DEBUG_BACKDROP").is_ok() {
+            if let Some((bg_list, base)) = bg {
+                // Straight to the frame, at full size: proves whether the effect shader draws.
+                self.record_batches(bg_list, vbuf, base, extent, self.push_res);
+            }
+        }
+        self.record_batches(list, vbuf, main_base, extent, self.push_res);
         self.device.cmd_end_render_pass(self.cmd);
         if copy_out.is_some() {
             // The render pass declares PRESENT_SRC_KHR as its final layout (it also serves the
@@ -1465,7 +1708,16 @@ impl Gpu {
     }
 
     /// Present one frame from `list` to the swapchain.
-    pub unsafe fn draw(&mut self, list: &DrawList, clear: [f32; 4]) -> Result<(), vk::Result> {
+    ///
+    /// `bg` is the background layer, drawn first into the quarter-resolution backdrop image
+    /// that glass slabs sample. It is `None` for the flat skin, in which case the backdrop pass
+    /// is skipped entirely and nothing about the frame changes.
+    pub unsafe fn draw(
+        &mut self,
+        bg: Option<&DrawList>,
+        list: &DrawList,
+        clear: [f32; 4],
+    ) -> Result<(), vk::Result> {
         self.device
             .wait_for_fences(&[self.in_flight], true, u64::MAX)?;
         let (idx, subopt) = self.swapchain_fn.acquire_next_image(
@@ -1479,11 +1731,35 @@ impl Gpu {
         // without this the swapchain path renders the clear colour only (the offscreen capture
         // path uploads into its own buffer, which is why screenshots looked fine while the
         // window stayed black).
-        self.upload_vertices(list);
+        // The backdrop layer has to exist before the glass descriptor can point at it; a frame
+        // without a background never creates it, and then no glass is drawn at all (see
+        // `record_batches`) rather than sampling an unbound image.
+        if bg.is_some() {
+            let ok = self.ensure_backdrop(self.extent);
+            if std::env::var("PLAYER_DEBUG_GPU").is_ok() {
+                eprintln!(
+                    "[gpu] backdrop ok={ok} extent={:?} bg_verts={:?}",
+                    self.backdrop
+                        .as_ref()
+                        .map(|b| (b.extent.width, b.extent.height)),
+                    bg.map(|l| (l.vertices.len(), l.batches.len()))
+                );
+            }
+        }
+        // Both lists live in the same buffer, background first: one bind, two passes.
+        let bg_base = match bg {
+            Some(bg_list) if !bg_list.vertices.is_empty() => {
+                self.upload_vertices_at(bg_list, 0) as u32
+            }
+            _ => 0,
+        };
+        self.upload_vertices_at(list, bg_base);
+        let bg_range = bg.map(|l| (l, bg_base)).filter(|_| bg_base > 0);
         let fb = self.framebuffers[idx as usize];
         self.record_sized(
             fb,
             list,
+            bg_range,
             None,
             vk::Image::null(),
             clear,
@@ -1723,6 +1999,9 @@ impl Gpu {
         self.record_sized(
             off.fb,
             list,
+            // An offscreen capture is a probe of the frame's own geometry; it has no
+            // wallpaper, so no backdrop layer to blur.
+            None,
             Some(off.readback),
             off.image,
             clear,
@@ -1773,6 +2052,9 @@ impl Gpu {
         self.record_sized(
             off.fb,
             list,
+            // An offscreen capture is a probe of the frame's own geometry; it has no
+            // wallpaper, so no backdrop layer to blur.
+            None,
             None,
             vk::Image::null(),
             clear,
@@ -1787,6 +2069,9 @@ impl Gpu {
             self.record_sized(
                 off.fb,
                 list,
+                // An offscreen capture is a probe of the frame's own geometry; it has no
+                // wallpaper, so no backdrop layer to blur.
+                None,
                 None,
                 vk::Image::null(),
                 clear,
