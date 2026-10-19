@@ -3540,7 +3540,37 @@ fn main() {
     let (tx_up, rx_up) = std::sync::mpsc::channel();
     spawn_mpd_worker(addr, tx_up, rx_cmd);
     let mut app = App::new(tx_cmd, rx_up);
-    let event_loop = winit::event_loop::EventLoop::new().expect("event loop");
+    let event_loop = match winit::event_loop::EventLoop::new() {
+        Ok(el) => el,
+        Err(e) => {
+            // winit's error is accurate but unhelpful on its own: say which piece is missing.
+            eprintln!("не удалось подключиться к Wayland: {e}");
+            let display = std::env::var("WAYLAND_DISPLAY").unwrap_or_else(|_| "<не задан>".into());
+            let runtime = std::env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "<не задан>".into());
+            eprintln!("  WAYLAND_DISPLAY={display}  XDG_RUNTIME_DIR={runtime}");
+            let socket = std::path::Path::new(&runtime).join(&display);
+            eprintln!(
+                "  сокет {}: {}",
+                socket.display(),
+                if socket.exists() {
+                    "есть"
+                } else {
+                    "не найден"
+                }
+            );
+            for lib in [
+                "libwayland-client.so.0",
+                "libxkbcommon.so.0",
+                "libvulkan.so.1",
+            ] {
+                eprintln!("  {lib}: ищи через launch-live.sh (он выставляет LD_LIBRARY_PATH)");
+            }
+            eprintln!(
+                "подсказка: запускай через ./launch-live.sh — он проверяет библиотеки до старта"
+            );
+            std::process::exit(1);
+        }
+    };
     let _ = event_loop.run_app(&mut app);
     if let Some(mut gpu) = app.gpu.take() {
         gpu.destroy();
