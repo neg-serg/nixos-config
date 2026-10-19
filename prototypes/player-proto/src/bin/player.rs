@@ -3613,6 +3613,16 @@ fn draw_ui(
         );
         y = meta_y + meta_h + GEOM.stack;
 
+        player_proto::record_rect("title", px, meta_y, pw, title_h);
+        player_proto::record_rect("artist", px, meta_y + title_h, pw, artist_h);
+        player_proto::record_rect(
+            "album",
+            px,
+            meta_y + title_h + artist_h,
+            album_w,
+            meta_y + meta_h - (meta_y + title_h + artist_h),
+        );
+
         // --- progress: bar, then the two timestamps under it
         let total = m.duration();
         let elapsed = m.elapsed().min(total.max(0.001));
@@ -3622,6 +3632,8 @@ fn draw_ui(
             0.0
         };
         let bar_y = y;
+        player_proto::record_rect("progress", px, bar_y, pw, bar_h);
+        player_proto::record_rect("progress_block", px, bar_y, pw, progress_h);
         // A bar under the pointer lifts its bed one step and shows the knob, so "scrubbable"
         // is visible before the first track has played and without moving the geometry. The
         // lift uses the shared hover tokens, not a white wash: a near-white at low alpha is
@@ -3694,6 +3706,14 @@ fn draw_ui(
         let center = px + pw * 0.5;
         let ty = y + transport_h * 0.5;
         let side_dx = 58.0;
+        player_proto::record_rect("transport", px, y, pw, transport_h);
+        player_proto::record_rect(
+            "play",
+            center - transport_h * 0.5,
+            y,
+            transport_h,
+            transport_h,
+        );
         hit(
             hits,
             center - side_dx - 20.0,

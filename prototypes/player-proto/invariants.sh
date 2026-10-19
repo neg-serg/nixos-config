@@ -68,6 +68,24 @@ check("queue pane sits inside the footer", bottom("queue_pane") <= y0("footer") 
 check("art sits inside the now-playing column",
       art[0] >= col[0] - 1 and art[0] + art[2] <= col[0] + col[2] + 1 and art[1] >= col[1] - 1,
       f"art y {art[1]:.0f} col y {col[1]:.0f}")
+# Centring is a claim about specific rows (the art column and the transport), not the frame.
+check("transport row is centred in the column",
+      abs((x0("transport") - col[0]) - (col[0] + col[2] - right("transport"))) <= 1,
+      f"left {x0('transport') - col[0]:.1f} vs right {col[0] + col[2] - right('transport'):.1f}")
+check("play button is centred in the transport row",
+      abs((x0("play") + rw("play") * 0.5) - (x0("transport") + rw("transport") * 0.5)) <= 1,
+      f"play {x0('play') + rw('play') * 0.5:.1f} vs row {x0('transport') + rw('transport') * 0.5:.1f}")
+check("play button fills the transport height",
+      abs(rh("play") - rh("transport")) <= 1, f"{rh('play'):.0f} vs {rh('transport'):.0f}")
+check("title, artist and album share the left edge",
+      abs(x0("title") - x0("artist")) <= 1 and abs(x0("title") - x0("album")) <= 1,
+      f"{x0('title'):.1f}/{x0('artist'):.1f}/{x0('album'):.1f}")
+check("metadata starts under the art, not beside it",
+      y0("title") >= art[1] + art[3], f"{y0('title'):.0f} vs art bottom {art[1] + art[3]:.0f}")
+check("progress spans the column, it is not a centred pill",
+      abs(rw("progress") - col[2]) <= 1, f"{rw('progress'):.1f} vs column {col[2]:.1f}")
+check("the stack reads top to bottom", y0("title") < y0("progress") < y0("transport"),
+      f"{y0('title'):.0f} < {y0('progress'):.0f} < {y0('transport'):.0f}")
 # Centring is a claim about the art alone; every other block is left-aligned by design.
 check("nothing else claims to be centred", all(k in ("art",) for k in ("art",)), "only art is centred")
 
