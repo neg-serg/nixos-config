@@ -1,0 +1,4 @@
+# NixOS has no ld.so.cache: point the binary at the system library tree so that
+# winit's dlopened libwayland-client and ash's libvulkan resolve without env vars.
+[build]
+rustflags = ["-C", "link-arg=-Wl,-rpath,/run/current-system/sw/lib"]
