@@ -30,6 +30,18 @@ local function row(p)
   return api.nvim_buf_get_lines(p.buf, 0, -1, false)[1] or ''
 end
 
+--- Text currently painted with the selection bar ('' when nothing is).
+local function bar_text(p)
+  for _, m in ipairs(
+    api.nvim_buf_get_extmarks(p.buf, api.nvim_get_namespaces()['lusty_native_ls'], 0, -1, { details = true })
+  ) do
+    if m[4] and m[4].hl_group == 'LustyNativeSel' then
+      return row(p):sub(m[3] + 1, m[4].end_col)
+    end
+  end
+  return ''
+end
+
 local wins_before = #api.nvim_tabpage_list_wins(0)
 
 -- 1. Off by default: the split keeps its normal height.
@@ -50,28 +62,40 @@ assert_eq(api.nvim_buf_line_count(p.buf), 1, 'one-line picker owns a single buff
 local line = row(p)
 assert(line:find(tmp, 1, true), 'the row carries the prompt path: ' .. line)
 assert(line:find('aaa.txt', 1, true), 'the row carries the selected entry: ' .. line)
+-- One row must still show the variants: the entries after the cursor follow it.
+assert(line:find('bbb.txt', 1, true), 'the row shows the next entry: ' .. line)
+assert(line:find('bbz.txt', 1, true), 'the row shows the entry after that: ' .. line)
 assert_eq(vim.fn.strdisplaywidth(line), api.nvim_win_get_width(p.win), 'the row is padded to the window')
-local sel_painted = false
+local bars = {}
 for _, m in ipairs(
   api.nvim_buf_get_extmarks(p.buf, api.nvim_get_namespaces()['lusty_native_ls'], 0, -1, { details = true })
 ) do
   if m[4] and m[4].hl_group == 'LustyNativeSel' then
-    sel_painted = true
+    bars[#bars + 1] = m
   end
 end
-assert(sel_painted, 'the selected entry carries the selection bar')
+assert_eq(#bars, 1, 'exactly one entry carries the selection bar')
+assert_eq(
+  line:sub(bars[1][3] + 1, bars[1][4].end_col),
+  'aaa.txt',
+  'the bar covers the selected entry and nothing else'
+)
 
--- 3. The row follows typing and the selection: no grid, no scrolling.
+-- 3. The row follows typing and the selection: no grid, no scrolling. The
+-- strip keeps showing the following entries, so the wait hangs off the match
+-- counter and the selection bar rather than off a label appearing.
 p:handle('b')
 H.wait_until(function()
   local l = row(p)
-  return l:find('bbb.txt', 1, true) ~= nil
-end, 'typing narrows the row to bbb.txt')
-assert(row(p):find('b [2]', 1, true), 'the row shows the query and the new count: ' .. row(p))
+  return l:find('b [2]', 1, true) ~= nil
+end, 'typing narrows the row to two matches')
+local narrowed = row(p)
+assert(narrowed:find('bbz.txt', 1, true), 'both matches are visible: ' .. narrowed)
+assert(not narrowed:find('aaa.txt', 1, true), 'the filtered-out entry is gone: ' .. narrowed)
 p:handle('down')
-H.wait_until(function() return row(p):find('bbz.txt', 1, true) ~= nil end, 'selection moves inline')
+H.wait_until(function() return bar_text(p) == 'bbz.txt' end, 'selection moves inline')
 p:handle('up')
-H.wait_until(function() return row(p):find('bbb.txt', 1, true) ~= nil end, 'selection moves back inline')
+H.wait_until(function() return bar_text(p) == 'bbb.txt' end, 'selection moves back inline')
 
 -- 4. The mode owns exactly one row: a resize is snapped back on the next key.
 api.nvim_win_set_height(p.win, 9)
