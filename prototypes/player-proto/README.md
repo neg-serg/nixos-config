@@ -86,9 +86,13 @@ grid, so the panes read as one system.
 
 Layout: top bar with tabs and MPD state, left library pane with incremental filtering (one-line rows
 in every window size), centre queue (or search results) with a two-line title/artist row, plus
-scrollbar; right now-playing panel; bottom hint bar. The centre pane carries a 1 px accent ring
-while it owns the cursor, drawn under the panel so only its edge shows. Responsive: below 1080 px the
-library pane is dropped, below 820 px the now-playing panel moves into the status bar.
+scrollbar; right now-playing panel; bottom hint bar. The pane that owns the keyboard is raised: it
+paints `Theme::pane_raised` (a lighter surface, a deeper shadow) while the panes at rest stay on
+`pane_rest`, so focus is readable from the pane body and not only from an outline. The centre pane
+adds a 1 px accent ring while it shows a *list* (the pickers, search), drawn under the panel so only
+its edge shows. Responsive: below 1080 px the library pane is dropped — and with it the only view
+whose keys act on the left, so the centre keeps the keyboard in every view — below 820 px the
+now-playing panel moves into the status bar.
 
 The now-playing panel is the frame's anchor and is drawn as one *measured* vertical stack: album art
 → title/artist/album (with the queue position riding the album line) → progress with knob and

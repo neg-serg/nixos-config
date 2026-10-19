@@ -606,6 +606,28 @@ enum Pane {
     Search,
 }
 
+/// Which pane owns the keyboard at this width.
+///
+/// The library tab is the only view whose keys act on the left pane, and only while that pane
+/// exists at all: below 1080 logical units the library is not drawn, so the centre pane keeps
+/// the keys in every view. Everything else (queue, the picker lists, search) is the centre
+/// pane; the now-playing column is read-only and therefore never focused. Both the elevation in
+/// `draw_ui` and the `[state]` dump call this, so the raised pane and the tested pane cannot
+/// drift apart.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum Focus {
+    Library,
+    Centre,
+}
+
+fn focus_pane(view: Pane, w: f32) -> Focus {
+    if view == Pane::Library && w >= 1080.0 {
+        Focus::Library
+    } else {
+        Focus::Centre
+    }
+}
+
 /// Interactive rectangles produced by the last frame; the mouse handler walks them in reverse
 /// so the topmost element wins.
 #[derive(Clone, Copy, Debug)]
@@ -1905,8 +1927,14 @@ impl App {
             Pane::Queue => self.model.queue_sel,
             _ => self.model.lib_sel,
         };
+        // Same rule the frame uses to choose the raised pane, so a test can assert focus
+        // without reading pixels.
+        let focus = match focus_pane(self.model.view, self.logical_size().0 as f32) {
+            Focus::Library => "library",
+            Focus::Centre => "centre",
+        };
         eprintln!(
-            "[state] token={token} mode={mode} view={view} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={}",
+            "[state] token={token} mode={mode} view={view} focus={focus} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             self.model.lib_entries.len(),
@@ -2226,17 +2254,34 @@ fn draw_ui(
     let body_bottom = h - 40.0;
     let body_h = body_bottom - body_top;
 
+    // One pane owns the keyboard; it is the only one that sits a level higher. Resolving the
+    // pair here (instead of at each call site) keeps the three panes on one z axis.
+    let focused = focus_pane(m.view, w);
+    let (left_elev, centre_elev) = if focused == Focus::Library {
+        (th.pane_raised, th.pane_rest)
+    } else {
+        (th.pane_rest, th.pane_raised)
+    };
+
     // ---------------- library
     if show_left {
-        list.shadow(16.0, body_top, left_w, body_h, GEOM.radius_lg, 26.0, 0.35);
+        list.shadow(
+            16.0,
+            body_top,
+            left_w,
+            body_h,
+            GEOM.radius_lg,
+            26.0,
+            left_elev.shadow,
+        );
         list.rounded(
             20.0,
             body_top,
             left_w,
             body_h,
             GEOM.radius_lg,
-            th.panel,
-            th.panel,
+            left_elev.surface,
+            left_elev.surface,
         );
         list.rect(20.0, body_top, left_w, GEOM.line, th.border_hi);
 
@@ -2378,11 +2423,25 @@ fn draw_ui(
         20.0
     };
     let qw = (w - qx - right_w - if show_right { 24.0 } else { 20.0 }).max(160.0);
-    list.shadow(qx, body_top, qw, body_h, GEOM.radius_lg, 26.0, 0.35);
-    // Live focus: the centre pane owns `j`/`k` whenever it is not the queue's turn. The ring is
-    // a slightly larger accent quad drawn *under* the panel, so only its 1 px edge shows —
-    // painting it after the panel would wash the whole pane in accent.
-    if m.view != Pane::Queue {
+    // The ring marks the centre pane while it is showing a *list* (the pickers, search) rather
+    // than the queue it always hosts. The raised surface already says "this pane holds the
+    // keys", so the ring stays a hairline: a slightly larger accent quad drawn *under* the
+    // panel, so only its 1 px edge shows — painting it after the panel would wash the whole
+    // pane in accent. It is not drawn in the library view, where the centre does not own j/k.
+    let centre_list_mode = matches!(
+        m.view,
+        Pane::Artists | Pane::Albums | Pane::Playlists | Pane::Search
+    );
+    list.shadow(
+        qx,
+        body_top,
+        qw,
+        body_h,
+        GEOM.radius_lg,
+        26.0,
+        centre_elev.shadow,
+    );
+    if centre_list_mode {
         list.rounded(
             qx - GEOM.line,
             body_top - GEOM.line,
@@ -2393,15 +2452,20 @@ fn draw_ui(
             theme::with_alpha(th.accent2, 0.35),
         );
     }
-    list.rounded(qx, body_top, qw, body_h, GEOM.radius_lg, th.panel, th.panel);
+    list.rounded(
+        qx,
+        body_top,
+        qw,
+        body_h,
+        GEOM.radius_lg,
+        centre_elev.surface,
+        centre_elev.surface,
+    );
     list.rect(qx, body_top, qw, GEOM.line, th.border_hi);
 
     let search_mode = m.view == Pane::Search;
     let picker_active = matches!(m.view, Pane::Artists | Pane::Albums | Pane::Playlists);
-    let active_centre = matches!(
-        m.view,
-        Pane::Queue | Pane::Artists | Pane::Albums | Pane::Playlists | Pane::Search
-    );
+    let active_centre = focused == Focus::Centre;
     let picking = m.pick_target.is_some() && m.view == Pane::Playlists;
     let centre_title = if picking {
         "ДОБАВИТЬ В ПЛЕЙЛИСТ"
@@ -2758,15 +2822,25 @@ fn draw_ui(
         let inner_top = body_top + pad;
         let inner_bottom = body_bottom - pad;
 
-        list.shadow(rx, body_top, right_w, body_h, GEOM.radius_lg, 26.0, 0.35);
+        // The now-playing column never takes keys, so it always sits at rest elevation; the
+        // focused pane is the one that visibly rises out of the background.
+        list.shadow(
+            rx,
+            body_top,
+            right_w,
+            body_h,
+            GEOM.radius_lg,
+            26.0,
+            th.pane_rest.shadow,
+        );
         list.rounded(
             rx,
             body_top,
             right_w,
             body_h,
             GEOM.radius_lg,
-            th.panel,
-            th.panel,
+            th.pane_rest.surface,
+            th.pane_rest.surface,
         );
         list.rect(rx, body_top, right_w, GEOM.line, th.border_hi);
         if m.art.is_some() {
