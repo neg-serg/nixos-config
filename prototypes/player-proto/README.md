@@ -126,7 +126,13 @@ come from MPD `list Artist`, `list Album` and `listplaylists`, and `enter` on a 
 collection (`find Artist "X"` / `find Album "X"` / `listplaylistinfo X`, each song appended with
 `addid` and the first one started with `playid`, so the queue is never cleared). `space` enqueues
 instead of playing. **Outputs** (`o`) is a modal list backed by the `outputs` command with
-`enableoutput`/`disableoutput`.
+`enableoutput`/`disableoutput`; each row is two lines, the configured name over the metadata that
+tells two outputs apart (`pulse · pipewire · hw:0,0`). The plugin and driver come from the `outputs`
+reply (MPD 0.22+); the device path only lives in the daemon's config, so it is read from `config`
+and the second line simply carries the parts the daemon was willing to share — a daemon that
+refuses that command to a non-local client, as MPD does by default, still shows its plugin.
+Metadata the daemon repeats (`plugin` and `driver` are the same word on 0.22/0.23) is printed
+once.
 
 Queue edits and playlists: `J`/`K` reorder the queue (`move`, the cursor follows the row and the
 worker refetches because `playlistlength` does not change), `d` deletes a row and `C` clears the
@@ -180,20 +186,27 @@ Artists tab).
 
 `./keys-test.sh` asserts the state machine end to end: tokens go through `apply_token` →
 `handle_key_spec` (the same path as a real keyboard), the MPD worker runs with `PLAYER_DRY_RUN=1` so
-playback is never touched, and 63 checks cover selection, tab cycling, search mode, command
+playback is never touched, and 70 checks cover selection, tab cycling, search mode, command
 execution, help, the count prefix and clamping at the end of the list, which pane is raised, what
-the pointer hovers, the playlist commands the pane's own keys emit, and the three list states. The
-hover checks are geometry-driven rather than coordinate-driven: one run dumps the frame's hit
-rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through the middle of the
-rectangles the test picked, asserting the `hover=` field of every state dump.
+the pointer hovers, the playlist commands the pane's own keys emit, the three list states and the
+outputs metadata. The hover checks are geometry-driven rather than coordinate-driven: one run dumps
+the frame's hit rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through the
+middle of the rectangles the test picked, asserting the `hover=` field of every state dump.
 
-"Empty" needs a server that answers with nothing, so the last run in the test talks to a stub MPD
-that speaks the protocol and holds no artists, albums, playlists or outputs, and delays its list
-replies by 120 ms. That makes both halves of the pair observable in one run: the immediate dump of a
-pane key still reads `loading` and a later one reads `empty`, which is what proves the panes no
+"Empty" needs a server that answers with nothing, so one run in the test talks to `stub-mpd.py`, a
+stand-in that speaks the protocol and holds no artists, albums, playlists or outputs, and delays its
+list replies by 120 ms. That makes both halves of the pair observable in one run: the immediate dump
+of a pane key still reads `loading` and a later one reads `empty`, which is what proves the panes no
 longer print the loading hint forever and that the outputs overlay has a state of its own. The same
 words are exposed in every state dump (`artists=`, `albums=`, `playlists=`, `outs=`), each one of
 `loading`, `empty` or `filled`.
+
+The same stub in `--outputs` mode answers with three configured outputs — a modern one, one shaped
+like a daemon older than 0.22, and one whose plugin repeats its driver — and with a `config` reply
+carrying the device paths, while the default mode keeps refusing `config` the way a real MPD refuses
+it. Both branches are therefore asserted without pixels: every state dump carries one
+`outN='name|plugin|driver|device|second line'` field per output, and the live daemon run covers the
+third case, a daemon that shares its plugin but refuses its config.
 
 MPD: `player --mpd=127.0.0.1:6600` (default). A worker thread polls `status`/`currentsong` every 300
 ms and refetches the queue when `playlistlength` changes, so the UI never blocks on the socket.

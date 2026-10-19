@@ -183,7 +183,13 @@ impl Client {
         Ok(())
     }
 
-    /// Configured outputs: id, name, enabled.
+    /// Configured outputs: id, name, enabled, plus whatever metadata the daemon will share.
+    ///
+    /// MPD 0.22+ reports `plugin:` (and, on 0.22/0.23, `driver:`) in the `outputs` reply itself.
+    /// The device path only exists in the daemon's own config, reachable through `config` — which
+    /// MPD refuses for non-local clients ("Command only permitted to local clients", an ACK).
+    /// That refusal is a normal answer, not a failure: the metadata degrades to the fields we do
+    /// have instead of turning the overlay into an error state.
     pub fn outputs(&mut self) -> Result<Vec<Output>, MpdError> {
         let fields = self.command("outputs")?;
         let mut out = Vec::new();
@@ -198,6 +204,9 @@ impl Client {
                         id: v.parse().unwrap_or(0),
                         name: String::new(),
                         enabled: false,
+                        plugin: String::new(),
+                        driver: String::new(),
+                        device: String::new(),
                     });
                 }
                 "outputname" => {
@@ -210,13 +219,57 @@ impl Client {
                         c.enabled = v == "1";
                     }
                 }
+                "plugin" => {
+                    if let Some(c) = cur.as_mut() {
+                        c.plugin = v;
+                    }
+                }
+                "driver" => {
+                    if let Some(c) = cur.as_mut() {
+                        c.driver = v;
+                    }
+                }
                 _ => {}
             }
         }
         if let Some(c) = cur.take() {
             out.push(c);
         }
+        // Fill the gaps from `config` where the daemon is willing to show it: a daemon older
+        // than 0.22 has no `plugin:` field at all, so its type comes from the config block, and
+        // the device path is never part of the `outputs` reply.
+        for (name, spec) in self.output_config() {
+            for o in out.iter_mut().filter(|o| o.name == name) {
+                if o.plugin.is_empty() {
+                    o.plugin = spec.kind.clone();
+                }
+                if o.device.is_empty() {
+                    o.device = spec.device.clone();
+                }
+            }
+        }
         Ok(out)
+    }
+
+    /// Audio output blocks of `config`, keyed by the configured output name.
+    ///
+    /// The reply is the daemon's own syntax, one `config:` line at a time:
+    ///
+    /// ```text
+    /// config: audio_output {
+    /// config:   name "My ALSA Device"
+    /// config:   type "alsa"
+    /// config:   device "hw:0,0"
+    /// config: }
+    /// ```
+    ///
+    /// Anything unparsable (an ACK for a non-local client, a block without a name) is dropped
+    /// instead of surfacing as an error.
+    pub fn output_config(&mut self) -> Vec<(String, OutputSpec)> {
+        match self.command("config") {
+            Ok(fields) => parse_output_config(fields.iter().map(|(_, v)| v.as_str())),
+            Err(_) => Vec::new(),
+        }
     }
 
     /// `move <from> <to>`: reorder the queue.
@@ -344,6 +397,37 @@ pub struct Output {
     pub id: u32,
     pub name: String,
     pub enabled: bool,
+    /// Output plugin reported by MPD 0.22+ (`pulse`, `alsa`, `fifo`, ...); the `type` of the
+    /// matching config block on older daemons, empty when neither says.
+    pub plugin: String,
+    /// Driver reported by MPD 0.22/0.23; 0.24 folded it into `plugin`, so it is often empty.
+    pub driver: String,
+    /// Device path from the daemon's config; empty when the daemon will not show its config.
+    pub device: String,
+}
+
+impl Output {
+    /// One dim second line for the overlay: the facts MPD actually shared, in a fixed order.
+    ///
+    /// Repeated words collapse (`plugin` and `driver` are the same string on 0.22/0.23), and a
+    /// daemon that shared nothing yields an empty string, so the row simply stays one line.
+    pub fn detail(&self) -> String {
+        let mut parts: Vec<&str> = Vec::new();
+        for part in [&self.plugin, &self.driver, &self.device] {
+            let part = part.trim();
+            if !part.is_empty() && !parts.contains(&part) {
+                parts.push(part);
+            }
+        }
+        parts.join(" \u{00b7} ")
+    }
+}
+
+/// The parts of an `audio_output` block the overlay can show.
+#[derive(Debug, Default, Clone)]
+pub struct OutputSpec {
+    pub kind: String,
+    pub device: String,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -446,6 +530,46 @@ impl Song {
 pub enum Entry {
     Dir { path: String, name: String },
     Song { path: String, song: Song },
+}
+
+/// Pull the `audio_output` blocks out of the flat `config` reply.
+///
+/// The reply interleaves simple parameters and multi-line blocks; only the blocks that carry a
+/// `name` can be matched to an `outputs` row, and everything else is skipped.
+fn parse_output_config<'a>(lines: impl Iterator<Item = &'a str>) -> Vec<(String, OutputSpec)> {
+    let mut out = Vec::new();
+    let mut in_block = false;
+    let mut name = String::new();
+    let mut spec = OutputSpec::default();
+    for line in lines {
+        let line = line.trim();
+        if !in_block {
+            if line.starts_with("audio_output") && line.contains('{') {
+                in_block = true;
+                name.clear();
+                spec = OutputSpec::default();
+            }
+            continue;
+        }
+        if line.starts_with('}') {
+            if !name.is_empty() {
+                out.push((std::mem::take(&mut name), std::mem::take(&mut spec)));
+            }
+            in_block = false;
+            continue;
+        }
+        let Some((key, value)) = line.split_once(char::is_whitespace) else {
+            continue;
+        };
+        let value = value.trim().trim_matches('"').replace("\\\"", "\"");
+        match key.trim() {
+            "name" => name = value,
+            "type" => spec.kind = value,
+            "device" => spec.device = value,
+            _ => {}
+        }
+    }
+    out
 }
 
 fn parse_songs(f: Fields) -> Vec<Song> {
