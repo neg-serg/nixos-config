@@ -1958,7 +1958,12 @@ fn draw_ui(
 
     let mut list = DrawList::new();
     let (w, h) = (extent.width as f32, extent.height as f32);
-    let row_h = GEOM.row_h;
+    // Short windows trade row height for visible tracks instead of wasting 40 px per two-line row.
+    let row_h = if h < 760.0 {
+        GEOM.row_h_compact
+    } else {
+        GEOM.row_h
+    };
     let pad = GEOM.pad;
 
     // ---------------- background
