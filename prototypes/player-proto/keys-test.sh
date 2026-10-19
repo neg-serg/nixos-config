@@ -19,7 +19,31 @@ qlog=$(mktemp)
 stubport=$(mktemp)
 metaport=$(mktemp)
 queueport=$(mktemp)
-trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog" "$emptylog" "$metalog" "$qlog" "$queueport" "$stubport" "$metaport"' EXIT
+goldenfail=$(mktemp)
+shotdir=$(mktemp -d)
+trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog" "$emptylog" "$metalog" "$qlog" "$queueport" "$stubport" "$metaport" "$goldenfail"; rm -rf "$shotdir"' EXIT
+
+# Golden references: two captures of one layout (1440x900 at scale 1 and 2880x1800 at scale 2)
+# compared pixel-for-pixel against the committed references in golden/. They are what turns a
+# silent layout drift — a row that moved two units, a title that lost its weight, text that
+# stopped being rasterised at device scale — into a failing suite instead of something a human
+# has to notice in a screenshot. Regenerate them deliberately, never reflexively:
+#   ./keys-test.sh --update-golden
+update_golden=0
+for arg in "$@"; do
+  case "$arg" in
+    --update-golden) update_golden=1 ;;
+    *) echo "keys-test: unknown argument $arg" >&2; exit 2 ;;
+  esac
+done
+for tool in compare gzip; do
+  command -v "$tool" > /dev/null 2>&1 || {
+    echo "FAIL golden comparison needs $tool on PATH (ImageMagick and gzip)"
+    exit 1
+  }
+done
+golden_dir=$here/golden
+mkdir -p "$golden_dir"
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
@@ -139,6 +163,107 @@ if [ -z "$q_addr" ]; then
   echo "FAIL the stub MPD server with a queue did not start"
   exit 1
 fi
+
+# ---- golden frames. The same stub, the same frame number, the same pinned scale: the layout is
+# the only thing that can differ between two runs, which is exactly what a reference is for.
+# The stub reports `state: stop`, so nothing in the frame animates (no equaliser, no progress,
+# no elapsed digits) — the one live pixel is the connection pulse in the top-right corner, and
+# the region table below simply does not cover it. `--scale` pins the device scale so the 1x and
+# 2x captures are the same logical layout at two device resolutions rather than two layouts.
+#
+# Regions are logical pixels at scale 1; the 2x run multiplies each by its scale. They name the
+# area that moved, so a failure says "queue pane" instead of "the images differ". The whole
+# frame is compared too, which is what catches a change in the gaps between the regions.
+golden_regions=(
+  "top bar|1320x56+0+0"
+  "connection status|96x56+1344+0"
+  "library pane|292x792+16+68"
+  "queue pane|748x792+324+68"
+  "now-playing pane|344x792+1080+68"
+  "footer|1440x40+0+860"
+)
+# Zero measured noise inside the regions (a stopped stub renders the same bytes every run), so
+# the tolerance only has to absorb a future change in the GPU's rounding, not this one.
+region_limit=0.0005
+# The pulse dot lives in the whole-frame comparison and its phase is wall-clock, so the limit has
+# to swallow it at its worst: a fully different dot is worth ~2e-5 today and ~1.7e-3 in the worst
+# case, while a 1 px layout shift is worth 2.7e-2 at scale 2 and 3.5e-2 at scale 1. 4e-3 sits in
+# the gap — loose enough for the animation, tight enough that a shift cannot hide in it.
+frame_limit=0.004
+
+# Scale a 1x region geometry (WxH+X+Y) to the capture scale.
+scale_geometry() {
+  awk -v g="$1" -v n="$2" 'BEGIN {
+    split(g, wh, "x"); split(wh[2], off, "+");
+    printf "%dx%d+%d+%d", wh[1] * n, off[1] * n, off[2] * n, off[3] * n
+  }'
+}
+
+golden_check() { # <label> <reference> <shot> <geometry> <limit>
+  local label=$1 ref=$2 shot=$3 geom=$4 limit=$5 metric norm
+  metric=$(compare -metric RMSE "${ref}[$geom]" "${shot}[$geom]" null: 2>&1)
+  norm=$(printf '%s' "$metric" | sed -n 's/.*(\([^)]*\)).*/\1/p')
+  norm=${norm:-1}
+  if awk -v v="$norm" -v l="$limit" 'BEGIN { exit !(v <= l) }'; then
+    printf 'ok   %s (RMSE %s <= %s)\n' "$label" "$norm" "$limit"
+  else
+    printf 'FAIL %s — RMSE %s > %s at %s\n' "$label" "$norm" "$limit" "$geom"
+    echo "$label" >> "$goldenfail"
+  fi
+}
+
+# One capture + its reference + the region sweep over both.
+golden_run() { # <name> <logical size> <scale> <render size>
+  local name=$1 size=$2 scale=$3 render=$4 shot="$shotdir/$1.ppm"
+  local ref="$golden_dir/$name.ppm.gz"
+  if [ "$update_golden" = 1 ]; then
+    env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+      "$bin" --mpd="127.0.0.1:$q_addr" --render-size="$render" --scale="$scale" \
+      --shot="$shot" --shot-after=150 > "$shotdir/$name.log" 2>&1
+    if [ ! -s "$shot" ]; then
+      echo "FAIL the $name capture for --update-golden produced no frame"
+      echo "golden $name" >> "$goldenfail"
+      return
+    fi
+    gzip -9 -c "$shot" > "$ref"
+    echo "updated golden/$name.ppm.gz ($size at scale $scale)"
+  fi
+  if [ ! -s "$ref" ]; then
+    echo "FAIL golden/$name.ppm.gz is missing — regenerate with ./keys-test.sh --update-golden"
+    echo "golden $name" >> "$goldenfail"
+    return
+  fi
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+    "$bin" --mpd="127.0.0.1:$q_addr" --render-size="$render" --scale="$scale" \
+    --shot="$shot" --shot-after=150 > "$shotdir/$name.log" 2>&1
+  if [ ! -s "$shot" ]; then
+    echo "FAIL the $name capture produced no frame (see $shotdir/$name.log)"
+    echo "golden $name" >> "$goldenfail"
+    return
+  fi
+  gzip -dc "$ref" > "$shotdir/$name-ref.ppm"
+  local dims
+  dims=$(head -c 64 "$shot" | awk 'NR==2 { print $1"x"$2 }')
+  if [ "$dims" != "$render" ]; then
+    echo "FAIL the $name capture is $dims, not $render"
+    echo "golden $name" >> "$goldenfail"
+    return
+  fi
+  # The whole frame: the capture is exactly the render size, so the geometry is the image.
+  golden_check "the $size frame at scale $scale matches its golden" \
+    "$shotdir/$name-ref.ppm" "$shot" "$render" "$frame_limit"
+  local entry label geom
+  for entry in "${golden_regions[@]}"; do
+    label=${entry%%|*}
+    geom=$(scale_geometry "${entry#*|}" "$scale")
+    golden_check "$label at scale $scale matches its golden" \
+      "$shotdir/$name-ref.ppm" "$shot" "$geom" "$region_limit"
+  done
+}
+
+golden_run queue-1440x900-s1 1440x900 1 1440x900
+golden_run queue-2880x1800-s2 2880x1800 2 2880x1800
+
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --mpd="127.0.0.1:$q_addr" --render-size=800x600 --shot-seq=/tmp/keys-queue \
@@ -585,3 +710,12 @@ check(
 )
 sys.exit(1 if fails else 0)
 PY
+python_rc=$?
+# The golden checks run in bash (they shell out to ImageMagick), so their verdict has to be
+# folded into the exit status the python block already produced.
+if [ -s "$goldenfail" ]; then
+  echo "golden references no longer match: $(tr '\n' ' ' < "$goldenfail")"
+  echo "  if this change is intended: ./keys-test.sh --update-golden and review the diff"
+  exit 1
+fi
+exit "$python_rc"
