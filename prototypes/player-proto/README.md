@@ -81,7 +81,9 @@ the faintest ink — position is navigation aid, not content), then the title, t
 the trailing column step down to `text_faint`. The cursor draws a vertical gradient wash
 (`selection` → `selection_edge`) plus a `GEOM.rail_w` accent rail, the playing row gets a weaker flat
 wash (`playing_bg`) with a thin rail, and a playing queue row trades its index for an animated
-equaliser. The library, the queue, the search results and the three name pickers all use that one
+equaliser. A row under the pointer gets the weakest of the three washes (`hover` → `hover_edge`),
+painted under the other two, so the hierarchy plain → hover → playing → cursor holds on every
+surface. The library, the queue, the search results and the three name pickers all use that one
 grid, so the panes read as one system.
 
 Layout: top bar with tabs and MPD state, left library pane with incremental filtering (one-line rows
@@ -105,6 +107,19 @@ instead of pushing the transport out of the panel; and the hierarchy is explicit
 the only filled accent shape, the title is the only `text`-bright line (artist `text_dim`, album and
 counter `text_faint`). The next-up block is not a label floating at the bottom any more: it is an
 inset card carrying the same accent rail the list rows use, so it reads as a row that is coming.
+
+Pointer: every frame emits a list of hit rectangles (`self.hits`) in logical units, and the pointer
+position is stored in the same space (winit reports physical pixels, the event divides by the layout
+scale), so hover and clicks resolve against the rectangles the user is actually looking at. Hover is
+one function over the previous frame's list, which keeps it from pointing at something undrawn, and
+clicks reuse the same lookup. Each target has its own state: rows take the `hover` wash, inactive
+tabs the same wash inside their pill with `text` ink, prev/next a faint disc plus brighter glyphs,
+off chips a lift to readable ink (on chips keep their accent), the progress and volume bars a lifted
+bed (`hover_well`), a thumb at the current level and — for volume — a 2 px taller track, output rows
+a wash on the list panel, and the play button a 2 px `accent_soft` ring because it is already the
+accent fill and cannot signal hover with another wash. The outputs overlay emits a full-window
+`CloseOverlay` rectangle under its panel, so the dim layer swallows the pointer instead of letting a
+click act on the row behind it. Hovering never changes the selection.
 
 Panes: Queue, Library (directories), **Artists**, **Albums**, **Playlists**, Search — the name lists
 come from MPD `list Artist`, `list Album` and `listplaylists`, and `enter` on a name plays that
@@ -158,8 +173,11 @@ Artists tab).
 
 `./keys-test.sh` asserts the state machine end to end: tokens go through `apply_token` →
 `handle_key_spec` (the same path as a real keyboard), the MPD worker runs with `PLAYER_DRY_RUN=1` so
-playback is never touched, and twelve checks cover selection, tab cycling, search mode, command
-execution, help, the count prefix and clamping at the end of the list.
+playback is never touched, and 45 checks cover selection, tab cycling, search mode, command
+execution, help, the count prefix and clamping at the end of the list, which pane is raised, and
+what the pointer hovers. The hover checks are geometry-driven rather than coordinate-driven: one run
+dumps the frame's hit rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through
+the middle of the rectangles the test picked, asserting the `hover=` field of every state dump.
 
 MPD: `player --mpd=127.0.0.1:6600` (default). A worker thread polls `status`/`currentsong` every 300
 ms and refetches the queue when `playlistlength` changes, so the UI never blocks on the socket.
@@ -176,9 +194,11 @@ PLAYER_DRY_RUN=1 ./run.sh --render-size=1440x900 --shot-seq=/tmp/seq --keys=down
 
 `--keys=` drives the same keyboard state machine as real input (`handle_key_spec`), writing one PPM
 per step; `PLAYER_DRY_RUN=1` makes the worker print what it *would* send to MPD instead of changing
-the user's playback. Real-session variants live in `real-seq.sh` / `real-ui.sh`, which are launched
-from Hyprland (`hyprctl dispatch 'hl.dsp.exec_cmd(...)'`) because the agent sandbox cannot open
-`/dev/dri`.
+the user's playback. A `cursor:XxY` token moves the pointer instead of pressing a key (`--cursor=X,Y`
+does the same once, at startup), so one run can walk the pointer across several targets; `x` is the
+separator because `--keys` already splits on commas. Real-session variants live in `real-seq.sh` /
+`real-ui.sh`, which are launched from Hyprland (`hyprctl dispatch 'hl.dsp.exec_cmd(...)'`) because
+the agent sandbox cannot open `/dev/dri`.
 
 Measured on RADV (RX 9070 XT), 1440x900, full UI: 13500 vertices, 34 batches, **p50 0.132 ms/frame**
 (p95 0.166). On llvmpipe the same frame costs 1.13 ms. Captures from both drivers differ by RMSE

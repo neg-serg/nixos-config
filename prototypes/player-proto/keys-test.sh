@@ -10,7 +10,9 @@ bin=${PROTO_BIN:-$here/target/release/player}
 keys="down,down,tab,tab,tab,slash,abc,esc,colon,vol 30,enter,w,esc,5,j,p,>,<,f,b,=,-,z,r,y,R,d,d,colon,save ktl,enter,colon,renameplaylist ktl ktl2,enter,colon,rmplaylist ktl2,enter,J,K,2,noop,noop,noop,noop,3,noop,noop,noop,noop,P,noop,noop,noop,noop,1,a,noop,noop,noop,noop,enter,ctrl+s,esc,o,noop,noop,down,enter,esc"
 out=$(mktemp)
 wide=$(mktemp)
-trap 'rm -f "$out" "$wide"' EXIT
+hitslog=$(mktemp)
+hoverlog=$(mktemp)
+trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog"' EXIT
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
@@ -20,7 +22,50 @@ PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=1440x900 --shot-seq=/tmp/keys-focus --keys="tab,noop,tab" > "$wide" 2>&1
-python3 - "$out" "$wide" << 'PY'
+# Hover: the frame resolves the pointer against the previous frame's hit rectangles. Rather than
+# hard-coding coordinates that drift with every layout change, the first run dumps those
+# rectangles (PLAYER_DUMP_HITS=1) and the second run parks the pointer in the middle of the ones
+# the test cares about. Both runs share the 1440 layout, where the now-playing column exists.
+PLAYER_DUMP_HITS=1 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+  "$bin" --render-size=1440x900 --shot=/tmp/keys-hits.ppm --shot-after=150 \
+  --keys="noop,o,noop" > "$hitslog" 2>&1
+# Targets, in the order the second run will visit them: an empty corner (nothing under the
+# pointer), a queue row, a tab, the transport play button, a mode chip, the volume bar and — once
+# the overlay is open — an output row.
+coords=$(python3 - "$hitslog" << 'PY'
+import re, sys
+closed, opened, scope = {}, {}, "closed"
+for line in open(sys.argv[1], errors="replace"):
+    if line.startswith("[state]"):
+        scope = "open" if "outputs=true" in line else "closed"
+        continue
+    m = re.match(r"\[hit\] (\S+) x=(-?[\d.]+) y=(-?[\d.]+) w=([\d.]+) h=([\d.]+)", line)
+    if not m:
+        continue
+    x, y, w, h = (float(m.group(i)) for i in (2, 3, 4, 5))
+    (opened if scope == "open" else closed)[m.group(1)] = (x + w / 2, y + h / 2)
+want = [
+    ("row:queue:2", closed),
+    ("tab:albums", closed),
+    ("transport:0", closed),
+    ("chip:1", closed),
+    ("volume", closed),
+    ("output:1", opened),
+]
+missing = [name for name, table in want if name not in table]
+if missing:
+    sys.exit(f"hit dump is missing {missing}")
+print(" ".join(f"{table[name][0]:.0f}x{table[name][1]:.0f}" for name, table in want))
+PY
+) || { echo "FAIL hit rectangles could not be read: $coords"; exit 1; }
+read -r row_at tab_at play_at chip_at vol_at out_at <<< "$coords"
+PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+  "$bin" --render-size=1440x900 --shot=/tmp/keys-hover.ppm --shot-after=560 \
+  --keys="cursor:2x2,noop,cursor:$row_at,noop,cursor:$tab_at,noop,cursor:$play_at,noop,cursor:$chip_at,noop,cursor:$vol_at,noop,o,noop,cursor:$out_at,noop" \
+  > "$hoverlog" 2>&1
+python3 - "$out" "$wide" "$hoverlog" << 'PY'
 import re, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]
@@ -136,6 +181,34 @@ check(
     "at 800 the hidden library pane never takes focus",
     bool(states) and all(field(s, "focus") == "centre" for s in states),
     str([s for s in states if field(s, "focus") != "centre"][:1]),
+)
+
+# ---- hover: the pointer is parked in the middle of each dumped rectangle, so these checks
+# prove that the rectangle the user sees is the rectangle that answers the pointer. The script
+# alternates a `cursor:` move with a `noop` (so the frame that follows the move is drawn and
+# dumped), which leaves one settled state per visited target at every second position.
+hover_states = [
+    l for l in open(sys.argv[3], errors="replace").read().splitlines() if l.startswith("[state]")
+]
+settled_hover = [field(s, "hover") for s in hover_states if "settle=1" in s]
+visited = settled_hover[::2]
+want_hover = [
+    ("an empty corner hovers nothing", "none"),
+    ("a queue row hovers itself", "row:queue:2"),
+    ("a tab hovers itself", "tab:albums"),
+    ("the play button hovers itself", "transport:0"),
+    ("a mode chip hovers itself", "chip:1"),
+    ("the volume bar hovers itself", "volume"),
+    ("the overlay scrim takes the pointer off the pane underneath", "close"),
+    ("an output row hovers itself", "output:1"),
+]
+for index, (name, want) in enumerate(want_hover):
+    got = visited[index] if index < len(visited) else "<no dump>"
+    check(name, got == want, f"got {got} want {want}")
+check(
+    "hovering never moves the selection",
+    bool(hover_states) and all(field(s, "sel") == "0" for s in hover_states),
+    str([s for s in hover_states if field(s, "sel") != "0"][:1]),
 )
 sys.exit(1 if fails else 0)
 PY

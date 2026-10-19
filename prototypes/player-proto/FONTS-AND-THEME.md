@@ -478,6 +478,20 @@ error. `pane_raised` stays one step below `panel_hi`, so chips and wells painted
 still separate, and every text tier stays above AA on it (`text` 13.9:1, `text_dim` 8.7:1,
 `text_faint` 5.9:1).
 
+Hover (implemented in `theme.rs`): the pointer state is a token pair as well — `hover` (`accent` at
+0.055) with `hover_edge` (`accent2` at 0.020) as the gradient's bottom stop, plus `hover_well`
+(`accent` at 0.030) for the two thin bars, which are too short to carry a gradient. The pair sits one
+step below `playing_bg` (0.08) and three below `selection` (0.20), so plain < hover < playing <
+cursor holds on every surface and a mouse resting on a row can never read as the keyboard cursor.
+Two traps are worth recording, both hit while tuning these values:
+
+- The frame blends in **linear** space onto an SRGB target, so a low alpha of a near-white is far
+  brighter than the same alpha of a saturated accent: `white@0.022` over `#0D1117` lands near
+  `#2E3034` (a grey bar), where `accent@0.030` lands near `#131F2E` (a tint). Use the accent, never a
+  white wash, for hover surfaces — that is why `hover_edge` is `accent2` and not `white@0.02`.
+- Hover must not fight the play button, the one filled accent shape in the panel. It cannot take a
+  wash, so it takes a 2 px `accent_soft` ring instead: a weight cue, no new colour.
+
 ______________________________________________________________________
 
 ## 8. What not to do with a single-channel glyph atlas
