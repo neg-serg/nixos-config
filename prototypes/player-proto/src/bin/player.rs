@@ -2705,6 +2705,8 @@ fn draw_ui(
     };
     let body_top = top + 12.0;
     let body_bottom = h - 40.0;
+    player_proto::record_rect("top_bar", 0.0, 0.0, w, top);
+    player_proto::record_rect("footer", 0.0, body_bottom, w, h - body_bottom);
     let body_h = body_bottom - body_top;
 
     // One pane owns the keyboard; it is the only one that sits a level higher. Resolving the
@@ -2878,6 +2880,7 @@ fn draw_ui(
         20.0
     };
     let qw = (w - qx - right_w - if show_right { 24.0 } else { 20.0 }).max(160.0);
+    player_proto::record_rect("queue_pane", qx, body_top, qw, body_h);
     // The ring marks the centre pane while it is showing a *list* (the pickers, search) rather
     // than the queue it always hosts. The raised surface already says "this pane holds the
     // keys", so the ring stays a hairline: a slightly larger accent quad drawn *under* the
@@ -3473,7 +3476,9 @@ fn draw_ui(
         } else {
             extra - chips_block
         };
-        let art_size = art_room(extra).clamp(0.0, pw);
+        // Always leave inner air at the column edges: a square that fills the column reads as a
+        // layout accident, and the review asked for equal optical margins around the art.
+        let art_size = art_room(extra).clamp(0.0, (pw - 2.0 * GEOM.inner).max(0.0));
         // Even margins: whatever the art does not fill is split above and below the stack, so
         // the panel reads as one centred composition instead of a block glued to the top.
         let content_h = art_size + art_gap + base + base_gaps + extra + footer_extra;
@@ -3481,6 +3486,9 @@ fn draw_ui(
 
         // --- album art: square, centred, equal air left and right
         let art_x = px + (pw - art_size) * 0.5;
+        player_proto::record_rect("now_pane", rx, body_top, right_w, body_h);
+        player_proto::record_rect("now_column", px, inner_top, pw, area_h);
+        player_proto::record_rect("art", art_x, y, art_size, art_size);
         if art_size > 1.0 {
             list.glow(
                 art_x - 14.0,
@@ -4758,6 +4766,9 @@ impl winit::application::ApplicationHandler for App {
                                 self.exit_frame = Some(self.frames + 2);
                             }
                         }
+                    }
+                    if let Ok(rect_path) = std::env::var("PLAYER_RECTS_DUMP") {
+                        let _ = player_proto::dump_rects(&rect_path);
                     }
                     if let Some(path) = self.shot_path.clone() {
                         if self.frames == self.shot_frames as u64 {

@@ -307,6 +307,18 @@ swapchain (debounced to 200 ms, and skipped when the new size is within 2 px),
 `SUBOPTIMAL`/`OUT_OF_DATE` from acquire/present trigger the same rebuild, and the compositor's
 `currentExtent` wins over the window size, which stops the tiling-vs-buffer size feedback loop.
 
+### Layout invariants
+
+`./invariants.sh` (1440x900 by default, `SIZE=WxH` to override) asserts the composition contract
+from the rectangles `draw_ui` records under `PLAYER_RECTS`/`PLAYER_RECTS_DUMP` — exact arithmetic,
+not pixel guessing: the album art is square and centred in its column with air on both sides,
+only the art is centred (everything else is left-aligned), the panes share the body band, the
+top bar spans the frame, the footer is bottom-flush and full width, and the queue pane takes
+either the library gutter or the freed one when the library is dropped. Each element is also cut
+into its own small crop under `/tmp/player-elements/`, so one element can be judged alone.
+The script already earned its keep by failing "art keeps air on both sides" (304 px art in a
+304 px column).
+
 ## Numbers so far (llvmpipe, software rasterizer — NOT a GPU result)
 
 Startup, median over 5-7 runs, `process+ms` (age from `fork`, see the trap below):
