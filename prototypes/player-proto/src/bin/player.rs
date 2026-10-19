@@ -571,7 +571,12 @@ const KEYMAP: &[KeyHint] = &[
     },
     KeyHint {
         keys: "/",
-        action: "поиск",
+        action: "в очереди — фильтр строк, иначе поиск",
+        group: Group::App,
+    },
+    KeyHint {
+        keys: "esc",
+        action: "сбросить фильтр очереди / вернуться в очередь",
         group: Group::App,
     },
     KeyHint {
@@ -785,9 +790,18 @@ struct Model {
     status: Status,
     current: Option<Song>,
     queue: Vec<Song>,
+    /// Cursor into the *real* queue, never into a filtered view: `enter`, `d`, `J`/`K` and the
+    /// playing-row marker address the same track whether or not a filter hides its neighbours.
     queue_sel: usize,
     queue_scroll: f32,
     queue_scroll_target: f32,
+    /// Incremental filter typed into the queue pane (`/`). It narrows what the pane draws and
+    /// what `j`/`k` can reach; it never renumbers the queue.
+    queue_filter: String,
+    /// True while the queue pane is collecting filter characters. Deliberately *not* an
+    /// `InputMode`: the app-level modes stay normal/search/command/help, and this one belongs to
+    /// a single pane, so leaving the pane ends it (see `switch_pane`).
+    queue_filter_edit: bool,
     artists: Picker,
     albums: Picker,
     playlists: Picker,
@@ -837,6 +851,8 @@ impl Model {
             queue_sel: 0,
             queue_scroll: 0.0,
             queue_scroll_target: 0.0,
+            queue_filter: std::env::var("PLAYER_QUEUE_FILTER").unwrap_or_default(),
+            queue_filter_edit: false,
             artists: Picker::default(),
             albums: Picker::default(),
             playlists: Picker::default(),
@@ -961,6 +977,38 @@ impl Model {
                 self.toast = Some((e, Instant::now()));
             }
         }
+    }
+}
+
+/// Rows the queue pane draws, as **real** indices into `Model::queue`. With no filter this is
+/// every index, so the draw loop, the motions and the mouse pointer all walk one list, and a
+/// filtered pane stays the same queue instead of becoming a second kind of list.
+fn queue_view(m: &Model) -> Vec<usize> {
+    let needle = m.queue_filter.trim().to_lowercase();
+    if needle.is_empty() {
+        return (0..m.queue.len()).collect();
+    }
+    m.queue
+        .iter()
+        .enumerate()
+        .filter(|(_, song)| {
+            song.title.to_lowercase().contains(&needle)
+                || song.artist.to_lowercase().contains(&needle)
+        })
+        .map(|(index, _)| index)
+        .collect()
+}
+
+/// The queue pane's three answers, shared by the frame and the `[state]` dump: `empty` is a
+/// queue MPD really holds no tracks in, `nomatch` is a queue whose tracks the filter hides.
+/// They must not read alike — one wants tracks, the other wants esc.
+fn queue_state(m: &Model) -> &'static str {
+    if m.queue.is_empty() {
+        "empty"
+    } else if queue_view(m).is_empty() {
+        "nomatch"
+    } else {
+        "filled"
     }
 }
 
@@ -1162,24 +1210,39 @@ impl App {
 
     fn clamp_selection(&mut self) {
         let visible = self.visible_rows();
+        if self.model.view == Pane::Queue {
+            let view = queue_view(&self.model);
+            if !view.contains(&self.model.queue_sel) {
+                // The filter changed under the cursor: land on the nearest row that survived
+                // instead of leaving the cursor on a row the pane no longer draws.
+                let pos = view
+                    .iter()
+                    .position(|i| *i > self.model.queue_sel)
+                    .unwrap_or_else(|| view.len().saturating_sub(1));
+                if let Some(&index) = view.get(pos) {
+                    self.model.queue_sel = index;
+                }
+            }
+            // Scrolling is measured in *drawn* rows, so the scroll target is the cursor's
+            // position in the filtered view, not its index in the queue.
+            let pos = queue_view(&self.model)
+                .iter()
+                .position(|i| *i == self.model.queue_sel)
+                .unwrap_or(0) as f32;
+            let min_scroll = (pos - visible as f32 + 1.0).max(0.0);
+            self.model.queue_scroll_target = self.model.queue_scroll_target.clamp(min_scroll, pos);
+            return;
+        }
         let len = self.current_list_len();
         if len == 0 {
             return;
         }
-        if self.model.queue_sel >= len {
-            self.model.queue_sel = len - 1;
+        if self.model.lib_sel >= len {
+            self.model.lib_sel = len - 1;
         }
-        let sel_scroll = match self.model.view {
-            Pane::Queue => self.model.queue_sel as f32,
-            _ => self.model.lib_sel as f32,
-        };
+        let sel_scroll = self.model.lib_sel as f32;
         let min_scroll = (sel_scroll - visible as f32 + 1.0).max(0.0);
-        let max_scroll = sel_scroll;
-        let cur = match self.model.view {
-            Pane::Queue => &mut self.model.queue_scroll_target,
-            _ => &mut self.model.lib_scroll_target,
-        };
-        *cur = (*cur).clamp(min_scroll, max_scroll);
+        self.model.lib_scroll_target = self.model.lib_scroll_target.clamp(min_scroll, sel_scroll);
     }
 
     /// Device scale to render at: `--scale` wins, a `--render-size` capture defaults to 1x (its
@@ -1249,7 +1312,7 @@ impl App {
             return p.len();
         }
         match self.model.view {
-            Pane::Queue => self.model.queue.len(),
+            Pane::Queue => queue_view(&self.model).len(),
             Pane::Library => self.filtered_library().len(),
             Pane::Search => self.model.search_results.len(),
             _ => 0,
@@ -1342,6 +1405,28 @@ impl App {
             InputMode::Normal => {}
         }
 
+        // The queue pane's filter takes the keys before any binding: while it is collecting
+        // characters every printable key belongs to the filter, so typing `b` filters instead of
+        // jumping. Esc leaves *and* clears — with no filter left the pane is the plain queue
+        // again — while enter keeps the filter and hands the keys back.
+        if self.model.queue_filter_edit {
+            match key {
+                Key::Named(NamedKey::Escape) => {
+                    self.model.queue_filter.clear();
+                    self.model.queue_filter_edit = false;
+                }
+                Key::Named(NamedKey::Enter) => self.model.queue_filter_edit = false,
+                Key::Named(NamedKey::Backspace) => {
+                    self.model.queue_filter.pop();
+                }
+                Key::Named(NamedKey::Space) => self.model.queue_filter.push(' '),
+                Key::Character(ch) => self.model.queue_filter.push_str(ch),
+                _ => {}
+            }
+            self.clamp_selection();
+            return;
+        }
+
         // The outputs overlay owns the keyboard while it is open.
         if self.model.outputs_open {
             let last = self.model.outputs.len().saturating_sub(1);
@@ -1430,8 +1515,17 @@ impl App {
             Key::Named(NamedKey::Space) => match self.model.view {
                 Pane::Queue => {
                     if let Some(pos) = self.model.status.song {
+                        // "Jump to the playing track" means *show* it: when the filter hides
+                        // it, the filter goes rather than the row.
+                        if !queue_view(&self.model).contains(&pos) {
+                            self.model.queue_filter.clear();
+                        }
+                        let row = queue_view(&self.model)
+                            .iter()
+                            .position(|i| *i == pos)
+                            .unwrap_or(0);
                         self.model.queue_sel = pos;
-                        self.model.queue_scroll_target = pos as f32;
+                        self.model.queue_scroll_target = row as f32;
                     }
                 }
                 Pane::Library => self.enqueue_selected(),
@@ -1459,7 +1553,18 @@ impl App {
             Key::Named(NamedKey::Escape) => {
                 if self.model.view != Pane::Queue {
                     self.model.view = Pane::Queue;
+                } else if !self.model.queue_filter.is_empty() {
+                    // Second meaning of esc inside the queue: drop the filter before anything
+                    // else, so one key always gets the whole queue back.
+                    self.model.queue_filter.clear();
+                    self.clamp_selection();
                 }
+            }
+            Key::Named(NamedKey::Backspace)
+                if self.model.view == Pane::Queue && !self.model.queue_filter.is_empty() =>
+            {
+                self.model.queue_filter.pop();
+                self.clamp_selection();
             }
             Key::Character(raw) => {
                 let latin = latinize(raw);
@@ -1562,6 +1667,12 @@ impl App {
                         self.model.view = Pane::Search;
                         self.model.mode = InputMode::Search;
                         self.model.search_input.clear();
+                    }
+                    // `/` filters the rows of the queue in place; everywhere else it still
+                    // opens the search pane. The typed text survives, so a second `/` resumes
+                    // the filter instead of wiping it.
+                    ("/", _, _) if self.model.view == Pane::Queue => {
+                        self.model.queue_filter_edit = true;
                     }
                     ("/", _, _) => {
                         self.model.view = Pane::Search;
@@ -1723,24 +1834,33 @@ impl App {
         if self.model.view != Pane::Queue {
             return;
         }
-        let len = self.model.queue.len();
-        if len < 2 {
+        // Reordering follows the drawn order: with a filter on, the row swaps with the
+        // neighbour the user can actually see, which is what makes the key predictable.
+        let view = queue_view(&self.model);
+        if view.len() < 2 {
             return;
         }
         let from = self.model.queue_sel;
-        let to = (from as i32 + delta).clamp(0, len as i32 - 1) as usize;
+        let Some(pos) = view.iter().position(|i| *i == from) else {
+            return;
+        };
+        let next = (pos as i32 + delta).clamp(0, view.len() as i32 - 1) as usize;
+        let to = view[next];
         if from == to {
             return;
         }
         let _ = self.tx.send(Cmd::MoveTrack { from, to });
         self.model.queue_sel = to;
-        self.model.queue_scroll_target = to as f32;
+        self.model.queue_scroll_target = next as f32;
         self.model.queue.swap(from, to);
     }
 
     /// Switch panes and lazily fetch the list the pane needs.
     fn switch_pane(&mut self, pane: Pane) {
         self.model.view = pane;
+        // The filter belongs to the queue pane: leaving it ends the typing, but the text stays
+        // so coming back shows the same subset.
+        self.model.queue_filter_edit = false;
         match pane {
             Pane::Artists if self.model.artists.len() == 0 => {
                 let _ = self.tx.send(Cmd::LoadArtists);
@@ -1860,8 +1980,14 @@ impl App {
     fn select_row(&mut self, pane: Pane, index: usize) {
         match pane {
             Pane::Queue => {
+                // `index` is a real queue index (that is what the hit rectangle carries), so the
+                // scroll target has to be its *position* in what the pane draws.
+                let pos = queue_view(&self.model)
+                    .iter()
+                    .position(|i| *i == index)
+                    .unwrap_or(0) as f32;
                 self.model.queue_sel = index;
-                self.model.queue_scroll_target = index as f32;
+                self.model.queue_scroll_target = pos;
             }
             Pane::Library => {
                 self.model.lib_sel = index;
@@ -2193,10 +2319,18 @@ impl App {
                 )
             })
             .collect();
+        // The queue filter, as the pane sees it: the text, how many rows survive it, the pane's
+        // three-state word and whether the pane is still collecting characters. `sel` stays a
+        // real queue index, so a test can prove the filter never renumbers the queue.
+        let qfilter = &self.model.queue_filter;
+        let qmatch = queue_view(&self.model).len();
+        let qstate = queue_state(&self.model);
+        let qedit = self.model.queue_filter_edit;
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta}",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} qfilter='{qfilter}' qmatch={qmatch} qstate={qstate} qedit={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
+            qedit as u8,
             self.model.lib_entries.len(),
             self.model.cmdline,
             self.model.search_input,
@@ -2237,17 +2371,30 @@ impl App {
             }
             return;
         }
+        if self.model.view == Pane::Queue {
+            // Motions walk what the pane draws, so a filtered queue steps from match to match
+            // while `queue_sel` keeps naming a real track.
+            let view = queue_view(&self.model);
+            if view.is_empty() {
+                return;
+            }
+            let pos = view
+                .iter()
+                .position(|i| *i == self.model.queue_sel)
+                .unwrap_or(0) as i32;
+            let next = (pos + delta).clamp(0, view.len() as i32 - 1) as usize;
+            self.model.queue_sel = view[next];
+            self.model.user_moved = true;
+            self.clamp_selection();
+            return;
+        }
         let len = self.current_list_len();
         if len == 0 {
             return;
         }
-        let cur = match self.model.view {
-            Pane::Queue => &mut self.model.queue_sel,
-            _ => &mut self.model.lib_sel,
-        };
         self.model.user_moved = true;
-        let next = (*cur as i32 + delta).clamp(0, len as i32 - 1);
-        *cur = next as usize;
+        let next = (self.model.lib_sel as i32 + delta).clamp(0, len as i32 - 1);
+        self.model.lib_sel = next as usize;
         self.clamp_selection();
     }
 
@@ -2259,15 +2406,20 @@ impl App {
             }
             return;
         }
+        if self.model.view == Pane::Queue {
+            let view = queue_view(&self.model);
+            let edge = if to_end { view.last() } else { view.first() };
+            if let Some(&index) = edge {
+                self.model.queue_sel = index;
+                self.clamp_selection();
+            }
+            return;
+        }
         let len = self.current_list_len();
         if len == 0 {
             return;
         }
-        let value = if to_end { len - 1 } else { 0 };
-        match self.model.view {
-            Pane::Queue => self.model.queue_sel = value,
-            _ => self.model.lib_sel = value,
-        }
+        self.model.lib_sel = if to_end { len - 1 } else { 0 };
         self.clamp_selection();
     }
 
@@ -2310,7 +2462,10 @@ impl App {
                     _ => (None, None),
                 };
                 if let Some(i) = index {
-                    let _ = self.tx.send(Cmd::PlayIndex(i));
+                    // A filtered pane must not play a row it is hiding behind the filter.
+                    if self.model.view != Pane::Queue || queue_view(&self.model).contains(&i) {
+                        let _ = self.tx.send(Cmd::PlayIndex(i));
+                    }
                 } else if let Some(u) = uri {
                     let _ = self.tx.send(Cmd::PlayUri(u));
                 }
@@ -2796,11 +2951,20 @@ fn draw_ui(
         Pane::Artists => format!("{}", m.artists.len()),
         Pane::Albums => format!("{}", m.albums.len()),
         Pane::Playlists => format!("{}", m.playlists.len()),
-        _ => format!(
-            "{}/{}",
-            m.status.song.map(|s| s + 1).unwrap_or(0),
-            m.queue.len()
-        ),
+        _ => {
+            let matches = queue_view(m).len();
+            if m.queue_filter.trim().is_empty() {
+                format!(
+                    "{}/{}",
+                    m.status.song.map(|s| s + 1).unwrap_or(0),
+                    m.queue.len()
+                )
+            } else {
+                // A filter turns the counter into "drawn / total": row numbers stay real, so
+                // this pair is the only thing that says how much of the queue is hidden.
+                format!("{matches}/{}", m.queue.len())
+            }
+        }
     };
     let cw = fonts.measure(&counter, TYPE.caption, Face::Mono);
     fonts.layout_line(
@@ -2867,9 +3031,33 @@ fn draw_ui(
         false
     };
 
+    // The queue filter reads like the search line — same face, same caret — inside the pane it
+    // filters, and only there. It is a chip of state under the title, not a second header.
+    let queue_filter_active = !search_mode
+        && !picker_active
+        && (!m.queue_filter.trim().is_empty() || m.queue_filter_edit);
+    if queue_filter_active {
+        let caret = if m.queue_filter_edit { "\u{258f}" } else { "" };
+        let shown = format!("фильтр: {}{}", m.queue_filter, caret);
+        fonts.layout_fitted(
+            &mut list,
+            &shown,
+            qx + 18.0,
+            body_top + 30.0,
+            TYPE.body,
+            Face::Mono,
+            if m.queue_filter_edit {
+                th.accent
+            } else {
+                th.text_dim
+            },
+            qw - 36.0,
+        );
+    }
+
     let q_rows_y = if search_mode {
         body_top + 60.0
-    } else if playlist_hint {
+    } else if playlist_hint || queue_filter_active {
         body_top + 50.0
     } else {
         body_top + 38.0
@@ -2999,10 +3187,22 @@ fn draw_ui(
     } else {
         &m.queue
     };
+    // What the pane draws, as real indices into `rows`: the whole queue when no filter is set,
+    // the matching rows otherwise. Positions drive the y coordinate and the scroll; indices
+    // drive the hover target, the selection and the playing marker, so a filtered row is still
+    // the same track it is in the queue.
+    let drawn: Vec<usize> = if search_mode {
+        (0..rows.len()).collect()
+    } else {
+        queue_view(m)
+    };
     let rows_offset = if search_mode { 0.0 } else { m.queue_scroll };
     let mut drawn_rows = 0usize;
-    for (i, song) in rows.iter().enumerate().filter(|_| !skip_row_loop) {
-        let y = q_rows_y + i as f32 * row_h - rows_offset * row_h;
+    for (pos, i) in drawn.iter().copied().enumerate().filter(|_| !skip_row_loop) {
+        let Some(song) = rows.get(i) else {
+            continue;
+        };
+        let y = q_rows_y + pos as f32 * row_h - rows_offset * row_h;
         if y < q_rows_y - row_h || y > body_bottom {
             continue;
         }
@@ -3113,7 +3313,7 @@ fn draw_ui(
     if std::env::var("PLAYER_DEBUG_DRAW").is_ok() {
         eprintln!(
             "[draw] rows={} drawn={} q_rows_y={q_rows_y} body_bottom={body_bottom} row_h={row_h} h={h} verts={}",
-            rows.len(),
+            drawn.len(),
             drawn_rows,
             list.vertices.len()
         );
@@ -3121,7 +3321,7 @@ fn draw_ui(
     // The queue's own empty note must not paint over a picker: with an empty queue every picker
     // frame used to carry "очередь пуста" on top of whatever the picker said, because `rows`
     // is the queue regardless of the visible pane.
-    if rows.is_empty() && !search_mode && !picker_active {
+    if !search_mode && !picker_active && rows.is_empty() {
         fonts.layout_line(
             &mut list,
             "очередь пуста · добавь трек из библиотеки (enter)",
@@ -3131,12 +3331,35 @@ fn draw_ui(
             Face::UiRegular,
             th.text_faint,
         );
+    } else if !search_mode && !picker_active && drawn.is_empty() {
+        // A filter that hides every row is not an empty queue: asking for a track would be a
+        // lie, so the pane names the filter and the one key that undoes it.
+        fonts.layout_line(
+            &mut list,
+            "ничего не нашлось",
+            qx + 20.0,
+            q_rows_y + 8.0,
+            TYPE.label,
+            Face::UiRegular,
+            th.text_dim,
+        );
+        // The filter chip is already on screen, so the note only has to name the way out.
+        fonts.layout_fitted(
+            &mut list,
+            "esc сбросит фильтр",
+            qx + 20.0,
+            q_rows_y + 30.0,
+            TYPE.caption,
+            Face::UiRegular,
+            th.text_faint,
+            qw - 40.0,
+        );
     }
-    if rows.len() as f32 > 1.0 {
+    if drawn.len() as f32 > 1.0 {
         let visible = (body_h - 44.0) / row_h;
-        let ratio = (visible / rows.len() as f32).clamp(0.05, 1.0);
+        let ratio = (visible / drawn.len() as f32).clamp(0.05, 1.0);
         let track_h = (body_h - 44.0) * ratio;
-        let max_scroll = (rows.len() as f32 - visible).max(0.0);
+        let max_scroll = (drawn.len() as f32 - visible).max(0.0);
         let pos = if max_scroll > 0.0 {
             (rows_offset / max_scroll).clamp(0.0, 1.0)
         } else {
@@ -3844,7 +4067,7 @@ fn draw_ui(
             w - pad * 2.0 - lw - 20.0,
         );
     } else if show_right || w < 700.0 {
-        let hints = "j/k move · tab pane · enter play · p pause · s stop · >/< track · f/b ±5s · =/- vol · z r y R modes · / find · : cmd · w help · q quit";
+        let hints = "j/k move · tab pane · enter play · p pause · s stop · >/< track · f/b ±5s · =/- vol · z r y R modes · / filter · esc clear · : cmd · w help · q quit";
         fonts.layout_fitted(
             &mut list,
             hints,
