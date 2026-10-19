@@ -147,6 +147,27 @@ Playlists pane. `<C-s>` opens the command line pre-filled with `save `, and `:sa
 `:renameplaylist OLD NEW`, `:rmplaylist NAME` reach the same commands from the line (the list
 refreshes after every edit).
 
+Command line completion: `:` is completed, not remembered. The popup above the line lists the
+vocabulary while it is still being typed (`:r` offers resume, repeat, random, rmplaylist,
+renameplaylist) with a one-line description each, and `Tab` writes the highlighted candidate into
+the line; pressing it again walks the list, `Shift-Tab` walks backwards. A command whose value is
+something the app already holds completes that value too: `:theme <Tab>` offers `dark`/`warm`,
+`:zoom <Tab>` offers `reset`, and `:rmplaylist <Tab>` / `:renameplaylist <Tab>` offer the playlist
+names the daemon reported (the pane does not have to be visited first — opening `:` asks for the
+list). Typing a character after a completion re-scopes the popup to the new prefix, and the three
+name prompts in the Playlists pane complete the same way, since they borrow the line's editing mode.
+
+Interface zoom: `ctrl+=` / `ctrl+-` step the scale by five points and `ctrl+0` resets it; the same
+values come from `:zoom 125`, `:zoom +5`, `:zoom -5` and `:zoom reset`. The zoom multiplies the
+device scale, so the layout is authored in its usual logical units at every zoom level, the
+snapping grid (`physical / logical`) keeps every edge on a whole device pixel, and the fact that a
+bigger zoom means a smaller logical canvas is what reflows the panes (rows go compact, the library
+pane can drop out) exactly as a smaller window would. The value is remembered between runs in
+`$XDG_STATE_HOME/player-proto/ui.conf`, written atomically on every change; `--zoom=N` overrides
+it for one run and any pinned capture (`--render-size`/`--shot`/`--shot-seq`/`--bench`) ignores the
+stored value, so a reference frame never depends on the user's preference. `PLAYER_UI_STATE` points
+the store at another file, which is what the test suite uses.
+
 Queue filter: `/` inside the queue pane narrows the rows in place instead of opening the search
 pane (everywhere else `/` still does that, and `?` reaches the search pane from the queue). It is a
 state of one pane, not a mode: the keys keep the mode line at `normal`, `esc` leaves *and* clears,
@@ -159,6 +180,29 @@ finds its track. The header carries the filter text with a caret while typing an
 counter to `matches/total`, so the pane always says how much of the queue is hidden; a filter that
 hides every row draws a "nothing matched" note plus the key that undoes it, which is a different
 sentence from an empty queue on purpose.
+
+ncmpcpp parity: the rmpc keymap above is the habit, and the keys rmpc never had are here under
+the letters ncmpcpp uses for them, chosen so nothing already bound moves. `h`/`l` seek ∓5 s (the
+design has no side-by-side panes for them to move between), `+` is a second volume-up, `x` flips
+crossfade between off and the last value used (`X` walks it up by two seconds to 20), `Y` cycles
+replay gain off → track → album → auto, `Z` shuffles the queue, `M` mutes and restores, `T` turns
+add mode on: `enter`/`space` then append collections and library songs instead of replacing the
+queue with them (the footer chip says which), `S` saves the queue under a typed name, `'` jumps to
+the playing track from any pane, `@` opens the daemon's counters, and the outputs overlay answers
+`a` (enable all) and `!` (disable all) besides `enter` on a row. The same actions are reachable
+from the line, spelled the way ncmpcpp's console spells them: `:seek <N|+N|-N|N%>`,
+`:vol <N|+N|-N>` (relative steps are *steps*: `:vol +5` raises, it does not set 5 %),
+`:toggle repeat|random|single|consume`, `:crossfade <0..20>`, `:gain <off|track|album|auto>`,
+`:shuffle`, `:prio <0..255>`, `:update`, `:rescan`, `:stats`, `:load <playlist>`, `:add <uri>`,
+`:screen <queue|library|artists|albums|playlists|search>`, and arguments are read to the end of the
+line, so a playlist name or a query may contain spaces.
+
+Two screens need no daemon at all. `F12` (or `:clock`) opens the clock: local time, the date and a
+stopwatch that `space` starts and stops, drawn over a dimmed frame so it reads as a screen of its
+own; `esc` closes it. `@` (or `:stats`) opens the daemon's counters — artists, albums, tracks,
+uptime, play time, database size and age — in the same kind of panel, refreshed on every press.
+Both ask for nothing the player does not already hold, which is why they also work with an MPD that
+is down.
 
 Mouse: tabs, rows (single click selects, double click plays), transport buttons, mode chips, the
 progress bar (click seeks) and the volume bar (click sets 0-100 %) are all hit-tested from the

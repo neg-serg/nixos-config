@@ -2,3 +2,6 @@
 # suite enforces. They are gzip-compressed PPM dumps (~40 KB and ~95 KB), which the repo-wide
 # `*.gz` rule would otherwise keep out of the tree.
 !golden/*.gz
+
+# `libs.sh` caches the loader path here for the Vulkan/Wayland probe.
+.libs

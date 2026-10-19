@@ -85,8 +85,9 @@ pub struct Gpu {
     pub swapchain_generation: u64,
     /// Set when acquire/present reported SUBOPTIMAL or OUT_OF_DATE; the app rebuilds and retries.
     pub needs_resize: bool,
-    /// Resolution passed to the vertex shader. With a HiDPI surface the UI is laid out in
-    /// logical units, so this is the *logical* size while the swapchain stays physical.
+    /// Resolution passed to the vertex shader. The draw list is snapped to whole device pixels
+    /// before it gets here, so this is the *physical* extent: the shader divides the vertices by
+    /// it and they land on the pixel grid at any device scale, fractional ones included.
     push_res: [f32; 2],
     /// Coverage gamma for glyph blending; 1.0 = raw linear blend (thin text on an SRGB target).
     text_gamma: f32,
@@ -1313,9 +1314,8 @@ impl Gpu {
             max_depth: 1.0,
         }];
         self.device.cmd_set_viewport(self.cmd, 0, &viewport);
-        // Logical resolution: on a HiDPI surface the layout is in logical units, so the
-        // shader must divide by the logical size even though the swapchain is physical.
-        // xy = logical resolution, z = text gamma, w = reserved
+        // Physical resolution: the draw list arrives in device pixels, so the shader divides by
+        // the extent the viewport covers. xy = physical resolution, z = text gamma, w = reserved
         let params = [self.push_res[0], self.push_res[1], self.text_gamma, 0.0];
         let res_bytes = std::slice::from_raw_parts(params.as_ptr() as *const u8, 16);
         self.device
@@ -1336,23 +1336,19 @@ impl Gpu {
             scissor,
         } in list.batches.iter().copied()
         {
-            // Clip rects arrive in logical units (the frame's layout space) while the scissor is
-            // applied to the physical framebuffer, so they have to be scaled - otherwise a 2x
-            // surface clips every list to half its height.
-            let k = extent.width as f32 / self.push_res[0].max(1.0);
+            // Clip rects are already device pixels (the draw list snaps them where it is
+            // authored), so the scissor takes them as they come.
             let rect = scissor
                 .map(|[x, y, w, h]| {
-                    let (x, y) = (x.max(0.0) * k, y.max(0.0) * k);
+                    let (x, y) = (x.max(0.0), y.max(0.0));
                     vk::Rect2D {
                         offset: vk::Offset2D {
                             x: x as i32,
                             y: y as i32,
                         },
                         extent: vk::Extent2D {
-                            width: ((w.max(0.0) * k) as u32)
-                                .min(extent.width.saturating_sub(x as u32)),
-                            height: ((h.max(0.0) * k) as u32)
-                                .min(extent.height.saturating_sub(y as u32)),
+                            width: (w.max(0.0) as u32).min(extent.width.saturating_sub(x as u32)),
+                            height: (h.max(0.0) as u32).min(extent.height.saturating_sub(y as u32)),
                         },
                     }
                 })
@@ -1520,7 +1516,7 @@ impl Gpu {
         Ok(())
     }
 
-    /// Logical resolution for the vertex shader (physical size / scale factor).
+    /// Physical resolution for the vertex shader: the draw list is in device pixels already.
     pub fn set_push_res(&mut self, w: f32, h: f32) {
         self.push_res = [w.max(1.0), h.max(1.0)];
     }
