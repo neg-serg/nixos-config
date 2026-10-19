@@ -18,6 +18,19 @@ in
     sourceRoot = ".";
   });
 
+  # Herdr: tab appearance knobs (per-state colours and font style, title
+  # templates, accent marker) are not in upstream 0.9.3 — packages/herdr/patches
+  # carries the series that adds them (see its `series` file; applied in order).
+  # The keys are inert in files/herdr/config.toml until this build is active:
+  # stock herdr ignores unknown keys, so the live config stays valid either way.
+  herdr = prev.herdr.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      ../herdr/patches/0001-ui-per-state-tab-colours-and-font-styles.patch
+      ../herdr/patches/0002-ui-tab-title-templates-and-the-active-marker.patch
+      ../herdr/patches/0003-docs-document-the-tab-appearance-keys.patch
+    ];
+  });
+
   # ROCm (HIP) twin — Vulkan/RADV llama.cpp is pathologically slow on this host
   # (~0.2 tok/s for VRAM-resident models); ROCm is the working compute path.
   llama-cpp-qwen4exp-rocm = callPkg (pkg "llama-cpp-qwen4exp-rocm") { };
