@@ -60,6 +60,11 @@ pub struct Geometry {
     pub rail_w: f32,
     /// Index column of a list row: three digits in the caption face plus air.
     pub gutter: f32,
+    /// Air between two blocks of a vertical stack (art → metadata → progress → transport →
+    /// modes → next-up). One value for the whole app, so blocks never drift apart.
+    pub stack: f32,
+    /// Air inside one block: a bar and its labels, a label and its value.
+    pub inner: f32,
 }
 
 pub const GEOM: Geometry = Geometry {
@@ -79,6 +84,8 @@ pub const GEOM: Geometry = Geometry {
     row_gap: 4.0,
     rail_w: 3.0,
     gutter: 34.0,
+    stack: 16.0,
+    inner: 8.0,
 };
 
 pub struct Theme {
