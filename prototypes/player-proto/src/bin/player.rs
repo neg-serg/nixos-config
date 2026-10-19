@@ -2253,6 +2253,19 @@ fn draw_ui(
     list.shadow(qx, body_top, qw, body_h, GEOM.radius_lg, 26.0, 0.35);
     list.rounded(qx, body_top, qw, body_h, GEOM.radius_lg, th.panel, th.panel);
     list.rect(qx, body_top, qw, GEOM.line, th.border_hi);
+    // Live focus: the centre pane owns `j`/`k` whenever it is not the queue's turn.
+    let centre_has_focus = m.view != Pane::Queue;
+    if centre_has_focus {
+        list.rounded(
+            qx - 1.5,
+            body_top - 1.5,
+            qw + 3.0,
+            body_h + 3.0,
+            GEOM.radius_lg + 1.0,
+            theme::with_alpha(th.accent, 0.30),
+            theme::with_alpha(th.accent, 0.30),
+        );
+    }
 
     let search_mode = m.view == Pane::Search;
     let picker_active = matches!(m.view, Pane::Artists | Pane::Albums | Pane::Playlists);
