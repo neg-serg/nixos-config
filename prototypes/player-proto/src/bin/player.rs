@@ -2804,6 +2804,24 @@ fn draw_ui(
                 continue;
             }
             let selected = active && i == m.lib_sel;
+            if y == rows_y {
+                // First visible row only: the sidebar shares the queue's rhythm, so the same
+                // three rectangles pin its inset, text column and row height.
+                player_proto::record_rect(
+                    "library_row",
+                    20.0 + lib_inset,
+                    y,
+                    lib_surface,
+                    lib_row_h,
+                );
+                player_proto::record_rect(
+                    "library_text",
+                    20.0 + lib_text_x,
+                    y,
+                    lib_surface - lib_text_x - 8.0,
+                    lib_row_h,
+                );
+            }
             let hot = hover == Some(Hit::Row(Pane::Library, i));
             hit(hits, 20.0, y, left_w, lib_row_h, Hit::Row(Pane::Library, i));
             row::surface(
@@ -2880,7 +2898,17 @@ fn draw_ui(
     } else {
         20.0
     };
-    let qw = (w - qx - right_w - if show_right { 24.0 } else { 20.0 }).max(160.0);
+    // The now-playing pane reserves the right margin itself, so the queue subtracts the same
+    // gap once more: its right edge then sits exactly one pane gap away from that pane.
+    let qw = (w
+        - qx
+        - right_w
+        - if show_right {
+            2.0 * GEOM.pane_gap
+        } else {
+            20.0
+        })
+    .max(160.0);
     player_proto::record_rect("queue_pane", qx, body_top, qw, body_h);
     // The ring marks the centre pane while it is showing a *list* (the pickers, search) rather
     // than the queue it always hosts. The raised surface already says "this pane holds the
@@ -3244,7 +3272,15 @@ fn draw_ui(
                 row_h,
             );
             player_proto::record_rect("queue_text", text_x, y, qw - (text_x - qx) - 96.0, row_h);
-            player_proto::record_rect("queue_dur", qx + qw - 96.0, y, 96.0, row_h);
+            // The duration text is right-aligned with 22 px of air from the pane edge (row
+            // inset + 12); record the column where the digits actually live.
+            player_proto::record_rect(
+                "queue_dur",
+                qx + qw - GEOM.row_inset - 12.0 - 96.0,
+                y,
+                96.0,
+                row_h,
+            );
         }
         let gutter_right = qx + GEOM.row_inset + GEOM.gutter;
         // Index column: right-aligned digits in the caption face at the faintest ink on
@@ -3403,7 +3439,7 @@ fn draw_ui(
     // drawn, so a short window shrinks the art (and finally drops the next-up card and the mode
     // chips) instead of pushing the transport out of the panel.
     if show_right {
-        let rx = w - right_w - 16.0;
+        let rx = w - right_w - GEOM.pane_gap;
         let px = rx + pad;
         let pw = right_w - pad * 2.0;
         let inner_top = body_top + pad;
