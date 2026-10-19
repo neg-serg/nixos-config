@@ -16,15 +16,19 @@ if not H.has_flag('--theme-map') then
 end
 
 local fixture = '/tmp/lusty_theme_parity.toml'
+-- The fixture has to satisfy the contrast floors the Rust reader enforces
+-- (src/contrast.rs: a 3:1 bar against the popup, 4.5:1 text and match on it).
+-- A violating theme is sanitized Rust-side by design while the Lua reader
+-- stays a plain parser, so such a fixture would compare different values.
 vim.fn.writefile({
   '[lusty.selection]',
-  'bg = "#112233"',
-  'fg = "#445566"',
+  'bg = "#336699"',
+  'fg = "#ddeeff"',
   'bold = false',
   'underline = true',
   'reverse = false',
   '[lusty.match]',
-  'fg = "#778899"',
+  'fg = "#ffffff"',
   'underline = false',
 }, fixture)
 vim.env.LUSTY_THEME = fixture
