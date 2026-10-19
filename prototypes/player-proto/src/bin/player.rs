@@ -822,6 +822,10 @@ struct App {
     key_cursor: usize,
     pending_shot: bool,
     dump_state_each_key: bool,
+    /// Last swapchain recreation, used to rate-limit resize storms.
+    last_resize: Instant,
+    /// Monitor scale factor, refreshed from winit on every scale/resize event.
+    scale: f32,
     /// Frame at which a scripted run exits; a short linger lets the MPD worker drain the
     /// commands the script produced (it polls every 300 ms).
     exit_frame: Option<u64>,
@@ -867,6 +871,8 @@ impl App {
             key_cursor: 0,
             pending_shot: false,
             dump_state_each_key: std::env::var("PLAYER_DUMP_STATE").is_ok(),
+            last_resize: Instant::now() - Duration::from_secs(1),
+            scale: 1.0,
             exit_frame: None,
             hits: Vec::new(),
             cursor: (0.0, 0.0),
@@ -978,13 +984,21 @@ impl App {
         *cur = (*cur).clamp(min_scroll, max_scroll);
     }
 
+    /// Layout size in logical units: the surface is physical, the UI is authored in CSS-ish px.
+    fn logical_size(&self) -> (u32, u32) {
+        match self.gpu.as_ref() {
+            Some(g) => (
+                (g.extent.width as f32 / self.scale).round().max(1.0) as u32,
+                (g.extent.height as f32 / self.scale).round().max(1.0) as u32,
+            ),
+            None => (1440, 900),
+        }
+    }
+
     fn visible_rows(&self) -> usize {
-        let h = self
-            .window
-            .as_ref()
-            .map(|w| w.inner_size().height)
-            .unwrap_or(900);
-        (((h as f32 - 190.0) / 34.0).floor() as usize).max(3)
+        let (_, h) = self.logical_size();
+        let row = player_proto::theme::GEOM.row_h;
+        (((h as f32 - 190.0) / row).floor() as usize).max(3)
     }
 
     /// Artists/Albums/Playlists are all name lists; the queue, library and search keep their
@@ -1502,6 +1516,30 @@ impl App {
                 }
             }
             Hit::CloseOverlay => self.model.outputs_open = false,
+        }
+    }
+
+    /// Keep the swapchain and the shader's resolution in step with the surface. Bursts of
+    /// near-identical configures are coalesced, and a size that is already close enough is
+    /// accepted as is — otherwise a tiling compositor and the app can chase each other.
+    fn sync_surface(&mut self, width: u32, height: u32) {
+        let Some(gpu) = self.gpu.as_mut() else { return };
+        let (cur_w, cur_h) = (gpu.extent.width, gpu.extent.height);
+        let close = width.abs_diff(cur_w) <= 2 && height.abs_diff(cur_h) <= 2;
+        if close {
+            return;
+        }
+        if self.last_resize.elapsed() < Duration::from_millis(200) {
+            // Debounced, but make sure the next event still gets through.
+            return;
+        }
+        self.last_resize = Instant::now();
+        match unsafe { gpu.recreate_swapchain(width, height) } {
+            Ok(()) => eprintln!(
+                "[event] swapchain {}x{} (scale {})",
+                gpu.extent.width, gpu.extent.height, self.scale
+            ),
+            Err(e) => eprintln!("[event] swapchain recreate failed: {e}"),
         }
     }
 
@@ -3311,20 +3349,34 @@ fn draw_ui(
 }
 
 impl winit::application::ApplicationHandler for App {
+    fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+        eprintln!("[event] suspended (compositor unmapped the surface)");
+    }
+
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let attrs = winit::window::Window::default_attributes()
-            .with_title("Player — MPD")
-            .with_inner_size({
-                let arg = std::env::args().find(|a| a.starts_with("--size="));
-                let (w, h) = arg
-                    .and_then(|a| {
-                        let v = a[7..].to_string();
-                        let (w, h) = v.split_once('x')?;
-                        Some((w.parse::<f64>().ok()?, h.parse::<f64>().ok()?))
-                    })
-                    .unwrap_or((1440.0, 900.0));
-                winit::dpi::LogicalSize::new(w, h)
-            });
+        eprintln!("[event] resumed");
+        // A stable Wayland app_id so the compositor can target the window with a rule
+        // (float at the design size instead of being tiled into a column).
+        #[cfg(all(unix, not(any(target_os = "macos", target_os = "ios"))))]
+        let attrs = winit::platform::wayland::WindowAttributesExtWayland::with_name(
+            winit::window::Window::default_attributes(),
+            "player",
+            "player",
+        )
+        .with_title("Player — MPD");
+        #[cfg(not(all(unix, not(any(target_os = "macos", target_os = "ios")))))]
+        let attrs = winit::window::Window::default_attributes().with_title("Player — MPD");
+        let attrs = attrs.with_inner_size({
+            let arg = std::env::args().find(|a| a.starts_with("--size="));
+            let (w, h) = arg
+                .and_then(|a| {
+                    let v = a[7..].to_string();
+                    let (w, h) = v.split_once('x')?;
+                    Some((w.parse::<f64>().ok()?, h.parse::<f64>().ok()?))
+                })
+                .unwrap_or((1440.0, 900.0));
+            winit::dpi::LogicalSize::new(w, h)
+        });
         let window = match event_loop.create_window(attrs) {
             Ok(w) => w,
             Err(e) => {
@@ -3334,6 +3386,14 @@ impl winit::application::ApplicationHandler for App {
             }
         };
         self.timing.mark("window");
+        {
+            let size = window.inner_size();
+            let scale = window.scale_factor();
+            eprintln!(
+                "[window] inner_size={}x{} scale={scale}",
+                size.width, size.height
+            );
+        }
         let mut init = InitTiming {
             timing: &mut self.timing,
         };
@@ -3347,6 +3407,12 @@ impl winit::application::ApplicationHandler for App {
                 event_loop.exit();
                 return;
             }
+        }
+        if let Some(gpu) = self.gpu.as_ref() {
+            eprintln!(
+                "[swapchain] extent={}x{} format={:?}",
+                gpu.extent.width, gpu.extent.height, gpu.format
+            );
         }
         self.fonts = Some(Fonts::new());
         self.timing.mark("ready");
@@ -3386,6 +3452,28 @@ impl winit::application::ApplicationHandler for App {
                 };
                 self.move_selection(-step);
             }
+            WindowEvent::Occluded(v) => eprintln!("[event] occluded={v}"),
+            WindowEvent::Focused(v) => eprintln!("[event] focused={v}"),
+            WindowEvent::Resized(size) => {
+                eprintln!("[event] resized={}x{}", size.width, size.height);
+                if size.width == 0 || size.height == 0 {
+                    return; // minimised: keep the last swapchain
+                }
+                self.sync_surface(size.width, size.height);
+            }
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                eprintln!("[event] scale_factor={scale_factor}");
+                self.scale = scale_factor as f32;
+                // The buffer has to be rebuilt even if the logical size did not change: the
+                // physical size did. Re-derive from the window, not from the old extent.
+                if let Some(w) = self.window.as_ref() {
+                    let size = w.inner_size();
+                    self.sync_surface(size.width, size.height);
+                }
+                if let Some(w) = self.window.as_ref() {
+                    w.request_redraw();
+                }
+            }
             WindowEvent::RedrawRequested => {
                 if let Some(at) = self.exit_frame {
                     if self.frames >= at {
@@ -3396,14 +3484,41 @@ impl winit::application::ApplicationHandler for App {
                 }
                 self.drain_updates();
                 self.animate();
-                let extent = match (self.render_size, self.gpu.as_ref()) {
-                    (Some((w, h)), Some(_)) => ash::vk::Extent2D {
+                // Layout size: logical units by default (physical / scale), or the pinned
+                // capture size. The shader gets exactly this as its resolution, so the UI always
+                // fills the surface instead of covering a fraction of it.
+                let (lw, lh) = self.logical_size();
+                let extent = match self.render_size {
+                    Some((w, h)) => ash::vk::Extent2D {
                         width: w,
                         height: h,
                     },
-                    (None, Some(g)) => g.extent,
-                    _ => return,
+                    None => ash::vk::Extent2D {
+                        width: lw,
+                        height: lh,
+                    },
                 };
+                if let Some(gpu) = self.gpu.as_mut() {
+                    gpu.set_push_res(extent.width as f32, extent.height as f32);
+                }
+                // The driver says the surface no longer matches the swapchain: rebuild before
+                // the next frame instead of accumulating mismatched buffers.
+                if self.gpu.as_ref().is_some_and(|g| g.needs_resize) {
+                    if let Some(gpu) = self.gpu.as_mut() {
+                        gpu.needs_resize = false;
+                    }
+                    self.last_resize = Instant::now() - Duration::from_secs(1);
+                    let size = self
+                        .window
+                        .as_ref()
+                        .map(|w| w.inner_size())
+                        .unwrap_or_default();
+                    self.sync_surface(size.width.max(1), size.height.max(1));
+                    if let Some(gpu) = self.gpu.as_ref() {
+                        let (lw, lh) = self.logical_size();
+                        let _ = (lw, lh, gpu.extent);
+                    }
+                }
 
                 // upload art once per track
                 if let Some((aw, ah, rgba)) = self.model.art.clone() {
@@ -3459,6 +3574,17 @@ impl winit::application::ApplicationHandler for App {
                     }
                 }
                 self.frames += 1;
+                if self.frames == 1 || self.frames % 120 == 0 {
+                    eprintln!(
+                        "[frame] n={} verts={} batches={} queue={} lib={} connected={}",
+                        self.frames,
+                        list.vertices.len(),
+                        list.batches.len(),
+                        self.model.queue.len(),
+                        self.model.lib_entries.len(),
+                        self.model.connected
+                    );
+                }
                 if std::env::var("PLAYER_DEBUG").is_ok() && self.frames % 30 == 0 {
                     let mut shape = 0;
                     let mut text = 0;
@@ -3506,6 +3632,15 @@ impl winit::application::ApplicationHandler for App {
                             && self.key_cursor == self.keys.len()
                         {
                             self.exit_frame = Some(self.frames + 40);
+                        }
+                    }
+                    if let Ok(path) = std::env::var("PLAYER_DUMP_SWAPCHAIN") {
+                        if self.frames == 90 {
+                            if let Err(e) =
+                                unsafe { gpu.dump_presented(gpu.last_present_index, &path) }
+                            {
+                                eprintln!("swapchain dump failed: {e}");
+                            }
                         }
                     }
                     if let Some(path) = self.shot_path.clone() {

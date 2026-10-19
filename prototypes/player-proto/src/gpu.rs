@@ -30,11 +30,14 @@ pub struct Gpu {
     instance: ash::Instance,
     surface_fn: ash::khr::surface::Instance,
     surface: vk::SurfaceKHR,
+    phys: vk::PhysicalDevice,
+    color_space: vk::ColorSpaceKHR,
     device: ash::Device,
     swapchain_fn: ash::khr::swapchain::Device,
     mem_props: vk::PhysicalDeviceMemoryProperties,
     swapchain: vk::SwapchainKHR,
     views: Vec<vk::ImageView>,
+    swapchain_images: Vec<vk::Image>,
     framebuffers: Vec<vk::Framebuffer>,
     render_pass: vk::RenderPass,
     pub extent: vk::Extent2D,
@@ -74,6 +77,13 @@ pub struct Gpu {
     acquire_sem: vk::Semaphore,
     render_sem: vk::Semaphore,
     in_flight: vk::Fence,
+    /// Index of the swapchain image handed to the compositor most recently.
+    pub last_present_index: u32,
+    /// Set when acquire/present reported SUBOPTIMAL or OUT_OF_DATE; the app rebuilds and retries.
+    pub needs_resize: bool,
+    /// Resolution passed to the vertex shader. With a HiDPI surface the UI is laid out in
+    /// logical units, so this is the *logical* size while the swapchain stays physical.
+    push_res: [f32; 2],
 }
 
 pub fn find_memory_type(
@@ -196,6 +206,105 @@ impl Gpu {
         self.device.destroy_image_view(img.view, None);
         self.device.destroy_image(img.image, None);
         self.device.free_memory(img.memory, None);
+    }
+
+    /// Rebuild the swapchain for a new surface size. Wayland sends the first configure at scale
+    /// 1 and then corrects to the monitor scale (2 on a HiDPI panel), so without this the buffer
+    /// stops matching the surface and the compositor stops showing the window.
+    pub unsafe fn recreate_swapchain(&mut self, width: u32, height: u32) -> Result<(), vk::Result> {
+        if width == 0 || height == 0 {
+            return Ok(());
+        }
+        if (width, height) == (self.extent.width, self.extent.height) {
+            return Ok(());
+        }
+        self.device.device_wait_idle()?;
+        for fb in self.framebuffers.drain(..) {
+            self.device.destroy_framebuffer(fb, None);
+        }
+        for v in self.views.drain(..) {
+            self.device.destroy_image_view(v, None);
+        }
+        self.swapchain_fn.destroy_swapchain(self.swapchain, None);
+
+        let caps = self
+            .surface_fn
+            .get_physical_device_surface_capabilities(self.phys, self.surface)?;
+        // Prefer what the compositor dictates: chasing the window size instead oscillates
+        // (Hyprland keeps re-configuring when the buffer size disagrees with the tile).
+        let mut extent = if caps.current_extent.width != u32::MAX {
+            caps.current_extent
+        } else {
+            vk::Extent2D { width, height }
+        };
+        if std::env::var("PLAYER_DEBUG_RESIZE").is_ok() {
+            eprintln!(
+                "[resize] requested={}x{} current_extent={}x{} -> {}x{}",
+                width,
+                height,
+                caps.current_extent.width,
+                caps.current_extent.height,
+                extent.width,
+                extent.height
+            );
+        }
+        extent.width = extent
+            .width
+            .clamp(caps.min_image_extent.width, caps.max_image_extent.width);
+        extent.height = extent
+            .height
+            .clamp(caps.min_image_extent.height, caps.max_image_extent.height);
+        let image_count = (caps.min_image_count + 1).min(if caps.max_image_count == 0 {
+            u32::MAX
+        } else {
+            caps.max_image_count
+        });
+        let swapchain = self.swapchain_fn.create_swapchain(
+            &vk::SwapchainCreateInfoKHR::default()
+                .surface(self.surface)
+                .min_image_count(image_count)
+                .image_format(self.format)
+                .image_color_space(self.color_space)
+                .image_extent(extent)
+                .image_array_layers(1)
+                .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
+                .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
+                .pre_transform(caps.current_transform)
+                .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
+                .present_mode(vk::PresentModeKHR::FIFO)
+                .clipped(true),
+            None,
+        )?;
+        let images = self.swapchain_fn.get_swapchain_images(swapchain)?;
+        for img in &images {
+            let view = self.device.create_image_view(
+                &vk::ImageViewCreateInfo::default()
+                    .image(*img)
+                    .view_type(vk::ImageViewType::TYPE_2D)
+                    .format(self.format)
+                    .subresource_range(
+                        vk::ImageSubresourceRange::default()
+                            .aspect_mask(vk::ImageAspectFlags::COLOR)
+                            .level_count(1)
+                            .layer_count(1),
+                    ),
+                None,
+            )?;
+            self.views.push(view);
+            let fb = self.device.create_framebuffer(
+                &vk::FramebufferCreateInfo::default()
+                    .render_pass(self.render_pass)
+                    .attachments(std::slice::from_ref(&view))
+                    .width(extent.width)
+                    .height(extent.height)
+                    .layers(1),
+                None,
+            )?;
+            self.framebuffers.push(fb);
+        }
+        self.swapchain = swapchain;
+        self.extent = extent;
+        Ok(())
     }
 
     pub fn destroy(&mut self) {
@@ -1036,11 +1145,14 @@ pub fn create_gpu(
             instance,
             surface_fn,
             surface,
+            phys,
+            color_space: format.color_space,
             device,
             swapchain_fn,
             mem_props,
             swapchain,
             views,
+            swapchain_images: images.clone(),
             framebuffers,
             render_pass,
             extent,
@@ -1076,6 +1188,9 @@ pub fn create_gpu(
             acquire_sem,
             render_sem,
             in_flight,
+            last_present_index: 0,
+            needs_resize: false,
+            push_res: [extent.width as f32, extent.height as f32],
         })
     }
 }
@@ -1161,7 +1276,9 @@ impl Gpu {
             max_depth: 1.0,
         }];
         self.device.cmd_set_viewport(self.cmd, 0, &viewport);
-        let res = [self.extent.width as f32, self.extent.height as f32];
+        // Logical resolution: on a HiDPI surface the layout is in logical units, so the
+        // shader must divide by the logical size even though the swapchain is physical.
+        let res = self.push_res;
         let res_bytes = std::slice::from_raw_parts(res.as_ptr() as *const u8, 8);
         self.device
             .cmd_bind_vertex_buffers(self.cmd, 0, &[vbuf], &[0]);
@@ -1308,13 +1425,18 @@ impl Gpu {
     pub unsafe fn draw(&mut self, list: &DrawList, clear: [f32; 4]) -> Result<(), vk::Result> {
         self.device
             .wait_for_fences(&[self.in_flight], true, u64::MAX)?;
-        let (idx, _subopt) = self.swapchain_fn.acquire_next_image(
+        let (idx, subopt) = self.swapchain_fn.acquire_next_image(
             self.swapchain,
             u64::MAX,
             self.acquire_sem,
             vk::Fence::null(),
         )?;
         self.device.reset_fences(&[self.in_flight])?;
+        // The frame's geometry has to be copied into the vertex buffer *before* recording:
+        // without this the swapchain path renders the clear colour only (the offscreen capture
+        // path uploads into its own buffer, which is why screenshots looked fine while the
+        // window stayed black).
+        self.upload_vertices(list);
         let fb = self.framebuffers[idx as usize];
         self.record_sized(
             fb,
@@ -1348,9 +1470,115 @@ impl Gpu {
         Ok(())
     }
 
+    /// Logical resolution for the vertex shader (physical size / scale factor).
+    pub fn set_push_res(&mut self, w: f32, h: f32) {
+        self.push_res = [w.max(1.0), h.max(1.0)];
+    }
+
     /// Fixed size for every offscreen capture, independent of compositor tiling.
     pub fn set_capture_size(&mut self, size: Option<(u32, u32)>) {
         self.capture_size = size;
+    }
+
+    /// Copy the swapchain image we just presented into a PPM. Ground truth for "the window is
+    /// black": shows whether the bad pixels are ours or the compositor's.
+    pub unsafe fn dump_presented(&mut self, index: u32, path: &str) -> Result<(), vk::Result> {
+        self.device.device_wait_idle()?;
+        let (w, h) = (self.extent.width, self.extent.height);
+        let size = (w as u64) * (h as u64) * 4;
+        let (buf, mem) = Gpu::create_buffer(
+            &self.device,
+            &self.mem_props,
+            size,
+            vk::BufferUsageFlags::TRANSFER_DST,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+        )
+        .ok_or(vk::Result::ERROR_OUT_OF_DEVICE_MEMORY)?;
+        self.device
+            .reset_command_buffer(self.cmd, vk::CommandBufferResetFlags::empty())?;
+        self.device
+            .begin_command_buffer(self.cmd, &vk::CommandBufferBeginInfo::default())?;
+        let range = vk::ImageSubresourceRange::default()
+            .aspect_mask(vk::ImageAspectFlags::COLOR)
+            .level_count(1)
+            .layer_count(1);
+        let to_src = vk::ImageMemoryBarrier::default()
+            .old_layout(vk::ImageLayout::PRESENT_SRC_KHR)
+            .new_layout(vk::ImageLayout::TRANSFER_SRC_OPTIMAL)
+            .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+            .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+            .image(self.swapchain_images[index as usize])
+            .subresource_range(range)
+            .src_access_mask(vk::AccessFlags::MEMORY_READ)
+            .dst_access_mask(vk::AccessFlags::TRANSFER_READ);
+        self.device.cmd_pipeline_barrier(
+            self.cmd,
+            vk::PipelineStageFlags::ALL_COMMANDS,
+            vk::PipelineStageFlags::TRANSFER,
+            vk::DependencyFlags::empty(),
+            &[],
+            &[],
+            &[to_src],
+        );
+        self.device.cmd_copy_image_to_buffer(
+            self.cmd,
+            self.swapchain_images[index as usize],
+            vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
+            buf,
+            &[vk::BufferImageCopy::default()
+                .image_subresource(
+                    vk::ImageSubresourceLayers::default()
+                        .aspect_mask(vk::ImageAspectFlags::COLOR)
+                        .layer_count(1),
+                )
+                .image_extent(vk::Extent3D {
+                    width: w,
+                    height: h,
+                    depth: 1,
+                })],
+        );
+        let back = vk::ImageMemoryBarrier::default()
+            .old_layout(vk::ImageLayout::TRANSFER_SRC_OPTIMAL)
+            .new_layout(vk::ImageLayout::PRESENT_SRC_KHR)
+            .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+            .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+            .image(self.swapchain_images[index as usize])
+            .subresource_range(range)
+            .src_access_mask(vk::AccessFlags::TRANSFER_READ)
+            .dst_access_mask(vk::AccessFlags::MEMORY_READ);
+        self.device.cmd_pipeline_barrier(
+            self.cmd,
+            vk::PipelineStageFlags::TRANSFER,
+            vk::PipelineStageFlags::ALL_COMMANDS,
+            vk::DependencyFlags::empty(),
+            &[],
+            &[],
+            &[back],
+        );
+        self.device.end_command_buffer(self.cmd)?;
+        let cmds = [self.cmd];
+        self.device.queue_submit(
+            self.graphics_queue,
+            &[vk::SubmitInfo::default().command_buffers(&cmds)],
+            vk::Fence::null(),
+        )?;
+        self.device.device_wait_idle()?;
+        let ptr = self
+            .device
+            .map_memory(mem, 0, vk::WHOLE_SIZE, vk::MemoryMapFlags::empty())?
+            as *const u8;
+        let pixels = std::slice::from_raw_parts(ptr, size as usize).to_vec();
+        self.device.unmap_memory(mem);
+        self.device.destroy_buffer(buf, None);
+        self.device.free_memory(mem, None);
+        let mut out = Vec::with_capacity(size as usize * 3 / 4 + 32);
+        out.extend_from_slice(format!("P6\n{w} {h}\n255\n").as_bytes());
+        for px in pixels.chunks_exact(4) {
+            out.extend_from_slice(&[px[2], px[1], px[0]]);
+        }
+        std::fs::write(path, &out).ok();
+        println!("dumped presented frame to {path} ({w}x{h})");
+        Ok(())
     }
 
     pub unsafe fn make_offscreen(&mut self) -> Result<Offscreen, vk::Result> {
