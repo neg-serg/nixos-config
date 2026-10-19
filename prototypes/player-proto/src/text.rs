@@ -55,9 +55,11 @@ pub struct Fonts {
     pub atlas_dirty: bool,
     /// CacheKey -> atlas rect + placement. Without this the atlas would be re-filled every
     /// frame and would fill up (and then stop drawing text entirely) within seconds.
+    /// Placements are kept in *physical* pixels, exactly as the atlas stores them.
     glyph_cache: HashMap<CacheKey, GlyphPlacement>,
-    /// Physical pixels per logical unit; glyph positions are snapped to this grid so text stays
-    /// crisp on a 2x panel instead of landing on half pixels.
+    /// Physical pixels per logical unit. Glyphs are rasterised at `size * scale` and their
+    /// positions are snapped to this grid, so text is crisp on a 2x panel instead of being an
+    /// upscaled 1x bitmap landing on half pixels.
     scale: f32,
 }
 
@@ -177,9 +179,14 @@ impl Fonts {
     ) -> f32 {
         let buffer = self.buffer(text, size, face);
         let mut width: f32 = 0.0;
+        // The layout is logical, the surface is physical. Ask cosmic-text for the *device*
+        // placement so the atlas gets one bitmap per device pixel; the quad is then converted
+        // back into logical units below. Rasterising at 1.0 and letting the GPU upscale is what
+        // made every stem soft at scale 2.
+        let inv = 1.0 / self.scale;
         for run in buffer.layout_runs() {
             for glyph in run.glyphs.iter() {
-                let physical = glyph.physical((0.0, 0.0), 1.0);
+                let physical = glyph.physical((0.0, 0.0), self.scale);
                 let key = physical.cache_key;
                 let placement = match self.glyph_cache.get(&key) {
                     Some(p) => *p,
@@ -206,9 +213,20 @@ impl Fonts {
                     }
                 };
                 if let Some(uv) = placement.uv {
-                    let gx = self.snap(x + physical.x as f32 + placement.left as f32);
-                    let gy = self.snap(y + run.line_y + physical.y as f32 - placement.top as f32);
-                    list.glyph(gx, gy, placement.w as f32, placement.h as f32, uv, color);
+                    // Placement is physical: divide before composing the logical quad. The
+                    // resulting position is snapped to the device grid, the size already is a
+                    // whole number of device pixels, so the bitmap maps 1:1 onto the surface.
+                    let gx = self.snap(x + (physical.x as f32 + placement.left as f32) * inv);
+                    let gy = self
+                        .snap(y + run.line_y + (physical.y as f32 - placement.top as f32) * inv);
+                    list.glyph(
+                        gx,
+                        gy,
+                        placement.w as f32 * inv,
+                        placement.h as f32 * inv,
+                        uv,
+                        color,
+                    );
                 }
             }
             width = width.max(run.line_w);

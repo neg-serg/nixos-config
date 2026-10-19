@@ -886,8 +886,12 @@ struct App {
     settle_token: Option<String>,
     settle_at: u64,
     last_resize: Instant,
-    /// Monitor scale factor, refreshed from winit on every scale/resize event.
+    /// Device scale the UI is laid out and rasterised at, refreshed from winit on every
+    /// scale/resize event unless `--scale` pins it.
     scale: f32,
+    /// `--scale=N`: pins the device scale so a scripted capture does not depend on the monitor
+    /// the window happens to land on.
+    scale_override: Option<f32>,
     /// Frame at which a scripted run exits; a short linger lets the MPD worker drain the
     /// commands the script produced (it polls every 300 ms).
     exit_frame: Option<u64>,
@@ -937,6 +941,9 @@ impl App {
             settle_at: 0,
             last_resize: Instant::now() - Duration::from_secs(1),
             scale: 1.0,
+            scale_override: std::env::args()
+                .find(|a| a.starts_with("--scale="))
+                .and_then(|a| a[8..].parse().ok()),
             exit_frame: None,
             hits: Vec::new(),
             cursor: (0.0, 0.0),
@@ -1048,15 +1055,31 @@ impl App {
         *cur = (*cur).clamp(min_scroll, max_scroll);
     }
 
-    /// Layout size in logical units: the surface is physical, the UI is authored in CSS-ish px.
-    fn logical_size(&self) -> (u32, u32) {
-        match self.gpu.as_ref() {
-            Some(g) => (
-                (g.extent.width as f32 / self.scale).round().max(1.0) as u32,
-                (g.extent.height as f32 / self.scale).round().max(1.0) as u32,
-            ),
-            None => (1440, 900),
+    /// Device scale to render at: `--scale` wins, a `--render-size` capture defaults to 1x (its
+    /// frame is authored in logical pixels), otherwise the monitor's scale.
+    fn capture_scale(&self, window_scale: f32) -> f32 {
+        match self.scale_override {
+            Some(scale) => scale.max(0.5),
+            None if self.render_size.is_some() => 1.0,
+            None => window_scale.max(0.5),
         }
+    }
+
+    /// Layout size in logical units: the surface is physical, the UI is authored in CSS-ish px.
+    /// A pinned `--render-size` defines the capture (and therefore the layout) even when the
+    /// compositor tiles the window to a different physical size.
+    fn logical_size(&self) -> (u32, u32) {
+        let physical = match self.render_size {
+            Some(size) => size,
+            None => match self.gpu.as_ref() {
+                Some(g) => (g.extent.width, g.extent.height),
+                None => return (1440, 900),
+            },
+        };
+        (
+            (physical.0 as f32 / self.scale).round().max(1.0) as u32,
+            (physical.1 as f32 / self.scale).round().max(1.0) as u32,
+        )
     }
 
     fn visible_rows(&self) -> usize {
@@ -3578,10 +3601,11 @@ impl winit::application::ApplicationHandler for App {
         self.timing.mark("window");
         {
             let size = window.inner_size();
-            let scale = window.scale_factor();
+            let window_scale = window.scale_factor() as f32;
+            self.scale = self.capture_scale(window_scale);
             eprintln!(
-                "[window] inner_size={}x{} scale={scale}",
-                size.width, size.height
+                "[window] inner_size={}x{} monitor_scale={window_scale} render_scale={}",
+                size.width, size.height, self.scale
             );
         }
         let mut init = InitTiming {
@@ -3653,7 +3677,7 @@ impl winit::application::ApplicationHandler for App {
             }
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
                 eprintln!("[event] scale_factor={scale_factor}");
-                self.scale = scale_factor as f32;
+                self.scale = self.capture_scale(scale_factor as f32);
                 if let Some(fonts) = self.fonts.as_mut() {
                     fonts.set_scale(self.scale);
                     // Glyph cache stays valid: atlas UVs do not depend on scale.
@@ -3684,16 +3708,12 @@ impl winit::application::ApplicationHandler for App {
                 if let Some(fonts) = self.fonts.as_mut() {
                     fonts.set_scale(self.scale);
                 }
+                // The draw list is authored in logical units. The shader divides by this size,
+                // so the same list lands on a 1x capture and on a 2x swapchain unchanged.
                 let (lw, lh) = self.logical_size();
-                let extent = match self.render_size {
-                    Some((w, h)) => ash::vk::Extent2D {
-                        width: w,
-                        height: h,
-                    },
-                    None => ash::vk::Extent2D {
-                        width: lw,
-                        height: lh,
-                    },
+                let extent = ash::vk::Extent2D {
+                    width: lw,
+                    height: lh,
                 };
                 if let Some(gpu) = self.gpu.as_mut() {
                     gpu.set_push_res(extent.width as f32, extent.height as f32);
