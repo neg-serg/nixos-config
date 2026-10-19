@@ -86,6 +86,17 @@ check("progress spans the column, it is not a centred pill",
       abs(rw("progress") - col[2]) <= 1, f"{rw('progress'):.1f} vs column {col[2]:.1f}")
 check("the stack reads top to bottom", y0("title") < y0("progress") < y0("transport"),
       f"{y0('title'):.0f} < {y0('progress'):.0f} < {y0('transport'):.0f}")
+# The left column and the queue follow the same rhythm as the now-playing stack.
+if "library_pane" in rects:
+    check("library pane is flush to the left margin", x0("library_pane") <= 24, f"x {x0('library_pane'):.0f}")
+    check("library and queue share the body band",
+          abs(rh("library_pane") - rh("queue_pane")) <= 1, f"{rh('library_pane'):.0f} vs {rh('queue_pane'):.0f}")
+    check("library leaves room for the queue",
+          x0("queue_pane") >= x0("library_pane") + rw("library_pane"), f"queue x {x0('queue_pane'):.0f}")
+check("pane headers sit on the same baseline as the queue header",
+      abs(y0("queue_header") - (y0("queue_pane") + 6)) <= 1, f"{y0('queue_header'):.0f}")
+check("headers stay inside their pane", right("queue_header") <= right("queue_pane") + 1,
+      f"{right('queue_header'):.0f} <= {right('queue_pane'):.0f}")
 # Centring is a claim about the art alone; every other block is left-aligned by design.
 check("nothing else claims to be centred", all(k in ("art",) for k in ("art",)), "only art is centred")
 
