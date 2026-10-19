@@ -131,9 +131,15 @@ instead of playing. **Outputs** (`o`) is a modal list backed by the `outputs` co
 Queue edits and playlists: `J`/`K` reorder the queue (`move`, the cursor follows the row and the
 worker refetches because `playlistlength` does not change), `d` deletes a row and `C` clears the
 queue (both after a confirming second press), `a` starts "add this song to a playlist" — the
-Playlists pane then acts as the chooser, `enter` appends via `playlistadd`. `<C-s>` opens the
-command line pre-filled with `save `, and `:save NAME`, `:renameplaylist OLD NEW`,
-`:rmplaylist NAME` manage saved playlists (the list refreshes after every edit).
+Playlists pane then acts as the chooser, `enter` appends via `playlistadd`. The Playlists pane also
+manages the lists it shows without leaving the keyboard: `c` names a new playlist saved from the
+current queue (`save`), `e` renames the list under the cursor (`rename`), `d` deletes it (same
+second-press confirmation, and it is the *playlist* that goes, never a queue row), and `A` appends
+the now-playing song to it (`playlistadd`). The three name prompts reuse the command line's editing
+mode, so typing, backspace and `esc` behave as they do after `:`; the keys are scoped to the
+Playlists pane. `<C-s>` opens the command line pre-filled with `save `, and `:save NAME`,
+`:renameplaylist OLD NEW`, `:rmplaylist NAME` reach the same commands from the line (the list
+refreshes after every edit).
 
 Mouse: tabs, rows (single click selects, double click plays), transport buttons, mode chips, the
 progress bar (click seeks) and the volume bar (click sets 0-100 %) are all hit-tested from the
@@ -163,6 +169,7 @@ duplicates, so muscle memory carries over:
 | `space`                                                               | queue: jump to the playing track · library: enqueue                     |
 | `z` `r` `y` `R`                                                       | repeat · random · single · consume                                      |
 | `d` `C`                                                               | delete selected row · clear queue (both need a second press within 3 s) |
+| `c` `e` `A`                                                           | playlists: save the queue as · rename · add the playing track           |
 | `/` `:` `w`                                                           | search · command line · help                                            |
 | `u` `U`                                                               | re-read the library                                                     |
 | `t`                                                                   | cycle the theme (this app's addition, not rmpc)                         |
@@ -173,11 +180,12 @@ Artists tab).
 
 `./keys-test.sh` asserts the state machine end to end: tokens go through `apply_token` →
 `handle_key_spec` (the same path as a real keyboard), the MPD worker runs with `PLAYER_DRY_RUN=1` so
-playback is never touched, and 45 checks cover selection, tab cycling, search mode, command
-execution, help, the count prefix and clamping at the end of the list, which pane is raised, and
-what the pointer hovers. The hover checks are geometry-driven rather than coordinate-driven: one run
-dumps the frame's hit rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through
-the middle of the rectangles the test picked, asserting the `hover=` field of every state dump.
+playback is never touched, and 53 checks cover selection, tab cycling, search mode, command
+execution, help, the count prefix and clamping at the end of the list, which pane is raised, what
+the pointer hovers, and the playlist commands the pane's own keys emit. The hover checks are
+geometry-driven rather than coordinate-driven: one run dumps the frame's hit rectangles
+(`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through the middle of the rectangles the
+test picked, asserting the `hover=` field of every state dump.
 
 MPD: `player --mpd=127.0.0.1:6600` (default). A worker thread polls `status`/`currentsong` every 300
 ms and refetches the queue when `playlistlength` changes, so the UI never blocks on the socket.
