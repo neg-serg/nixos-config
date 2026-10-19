@@ -15,9 +15,11 @@ hoverlog=$(mktemp)
 plog=$(mktemp)
 emptylog=$(mktemp)
 metalog=$(mktemp)
+qlog=$(mktemp)
 stubport=$(mktemp)
 metaport=$(mktemp)
-trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog" "$emptylog" "$metalog" "$stubport" "$metaport"' EXIT
+queueport=$(mktemp)
+trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog" "$emptylog" "$metalog" "$qlog" "$queueport" "$stubport" "$metaport"' EXIT
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
@@ -126,7 +128,26 @@ PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
 kill "$meta_pid" 2>/dev/null
 wait "$meta_pid" 2>/dev/null
 
-python3 - "$out" "$wide" "$hoverlog" "$plog" "$emptylog" "$metalog" << 'PY'
+# Queue filter: the stub publishes six tracks whose initials never repeat, so a one-letter
+# filter can match exactly one row. The run proves the three things that can go wrong — the
+# filter is a pane state and not a mode (view stays `queue`, `mode` stays `normal`), the
+# cursor keeps a real queue index (`sel=2`, not the filtered position 0), and the keys that
+# would otherwise act (`q` quits, `down` moves) go to the filter while it is collecting.
+q_pid=$(start_stub "$queueport" --queue)
+q_addr=$(cat "$queueport" 2>/dev/null)
+if [ -z "$q_addr" ]; then
+  echo "FAIL the stub MPD server with a queue did not start"
+  exit 1
+fi
+PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+  "$bin" --mpd="127.0.0.1:$q_addr" --render-size=800x600 --shot-seq=/tmp/keys-queue \
+  --keys="noop,noop,noop,noop,slash,w,noop,enter,noop,down,noop,enter,noop,esc,noop,slash,q,noop,esc,noop" \
+  > "$qlog" 2>&1
+kill "$q_pid" 2>/dev/null
+wait "$q_pid" 2>/dev/null
+
+python3 - "$out" "$wide" "$hoverlog" "$plog" "$emptylog" "$metalog" "$qlog" << 'PY'
 import re, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]
@@ -477,6 +498,90 @@ check(
     "a refused `config` leaves the device empty instead of failing",
     len(real_first) == 5 and real_first[3] == "" and field(real_open[-1], "outs") == "filled",
     f"{real_first} outs={field(real_open[-1], 'outs') if real_open else None}",
+)
+# ---- queue filter: `/` in the queue pane narrows the rows in place. The stub holds six tracks
+# whose initials never repeat, so `w` matches exactly one row — through its *artist* — and the
+# cursor has to stay on the real queue index 2, not on the first row of the filtered view.
+q_lines = open(sys.argv[7], errors="replace").read().splitlines()
+q_states = [l for l in q_lines if l.startswith("[state]")]
+q_dry = [l for l in q_lines if l.startswith("[dry-run]")]
+
+
+def q_seq(token, occurrence=0):
+    hits = [s for s in q_states if f"token={token} " in s]
+    settled = [s for s in hits if "settle=1" in s]
+    pool = settled or hits
+    return pool[occurrence] if len(pool) > occurrence else None
+
+
+loaded = q_seq("noop", 3)
+check(
+    "the queue pane reports the six rows the stub published",
+    loaded is not None and field(loaded, "qlen") == "6" and field(loaded, "qstate") == "filled",
+    str(loaded),
+)
+slash = q_seq("slash")
+check(
+    "'/' in the queue pane starts a filter without leaving the pane",
+    slash is not None
+    and field(slash, "qedit") == "1"
+    and field(slash, "view") == "queue"
+    and field(slash, "mode") == "normal",
+    str(slash),
+)
+typed = q_seq("w")
+check(
+    "typing filters the rows and keeps the cursor on a real queue index",
+    typed is not None
+    and field(typed, "qfilter") == "w"
+    and field(typed, "qmatch") == "1"
+    and field(typed, "sel") == "2",
+    str(typed),
+)
+handed_back = q_seq("enter", 0)
+check(
+    "enter keeps the filter and hands the keys back",
+    handed_back is not None
+    and field(handed_back, "qedit") == "0"
+    and field(handed_back, "qmatch") == "1",
+    str(handed_back),
+)
+moved = q_seq("down")
+check(
+    "motions stay inside the filter instead of escaping it",
+    moved is not None and field(moved, "sel") == "2",
+    str(moved),
+)
+check(
+    "enter plays the filtered row's real queue index, not its position",
+    any("PlayIndex(2)" in l for l in q_dry),
+    str([l for l in q_dry if "PlayIndex" in l]),
+)
+cleared = q_seq("esc", 0)
+check(
+    "esc drops the filter and the whole queue comes back",
+    cleared is not None
+    and field(cleared, "qfilter") == ""
+    and field(cleared, "qmatch") == "6"
+    and field(cleared, "qstate") == "filled",
+    str(cleared),
+)
+nomatch = q_seq("q")
+check(
+    "a filter that matches nothing reports nomatch, not a blank list",
+    nomatch is not None
+    and field(nomatch, "qfilter") == "q"
+    and field(nomatch, "qmatch") == "0"
+    and field(nomatch, "qstate") == "nomatch",
+    str(nomatch),
+)
+final = q_seq("esc", 1)
+check(
+    "q types into the filter instead of quitting the player",
+    final is not None
+    and field(final, "qfilter") == ""
+    and field(final, "qstate") == "filled",
+    str(final),
 )
 sys.exit(1 if fails else 0)
 PY

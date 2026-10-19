@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A tiny MPD stand-in for keys-test.sh.
 
-Usage: stub-mpd.py PORT_FILE [--outputs]
+Usage: stub-mpd.py PORT_FILE [--outputs] [--queue]
 
 Binds 127.0.0.1:0, writes the chosen port to PORT_FILE, then speaks just enough of the
 protocol for the player to settle: a banner, `status`, and `OK` for everything else.
@@ -13,7 +13,10 @@ The replies answer a question the real daemon cannot answer on demand:
   (no `plugin:` field) and a `config` reply that carries the blocks `outputs` cannot,
   so the plugin/device fallback is exercised;
 * without `--outputs`: `config` is refused exactly like a real MPD refuses it to a
-  non-local client, which is the branch the live daemon takes as well.
+  non-local client, which is the branch the live daemon takes as well;
+* `--queue`: six tracks whose titles and artists start with different letters, so a
+  one-letter queue filter can match exactly one row and the test can prove the pane
+  plays that row's *real* queue index instead of its position in the filtered view.
 
 The list answers are delayed by 120 ms so the transient "loading" frame is observable
 without racing the worker's 300 ms poll loop.
@@ -26,11 +29,37 @@ import time
 
 PORT_FILE = sys.argv[1]
 WITH_OUTPUTS = "--outputs" in sys.argv[2:]
+WITH_QUEUE = "--queue" in sys.argv[2:]
 
 STATUS = (
     b"volume: 40\nrepeat: 0\nrandom: 0\nsingle: 0\nconsume: 0\n"
-    b"playlistlength: 0\nstate: stop\nOK\n"
+    + (b"playlistlength: 6\n" if WITH_QUEUE else b"playlistlength: 0\n")
+    + b"state: stop\nOK\n"
 )
+
+# Titles and artists are picked so every initial letter is unique across both columns: a
+# filter of "w" matches only the artist of row 2, which is how the test tells a filter over
+# the real queue from a filter that renumbers the pane.
+TRACKS = [
+    ("Aurora", "Zelda"),
+    ("Bluebird", "Xavier"),
+    ("Cascade", "Wendy"),
+    ("Dust", "Victor"),
+    ("Ember", "Ursula"),
+    ("Fjord", "Tomas"),
+]
+
+QUEUE = b"".join(
+    (
+        f"file: stub/{index:02d}-{title.lower()}.flac\n"
+        f"Title: {title}\n"
+        f"Artist: {artist}\n"
+        f"Time: {120 + index}\n"
+        f"Pos: {index}\n"
+        f"Id: {index + 1}\n"
+    ).encode()
+    for index, (title, artist) in enumerate(TRACKS)
+) + b"OK\n"
 
 # Three outputs, three shapes of the same reply: the modern one (plugin and driver both
 # present), a daemon older than 0.22 (no `plugin` at all, so the type has to come from
@@ -71,7 +100,7 @@ CONFIG = (
 
 CONFIG_REFUSED = b"ACK [4@0] {config} Command only permitted to local clients\n"
 
-SLOW = ("list ", "listplaylists", "outputs", "listplaylistinfo")
+SLOW = ("list ", "listplaylists", "outputs", "listplaylistinfo", "playlistinfo")
 
 
 def reply(cmd):
@@ -81,6 +110,8 @@ def reply(cmd):
         return OUTPUTS if WITH_OUTPUTS else b"OK\n"
     if cmd.startswith("config"):
         return CONFIG if WITH_OUTPUTS else CONFIG_REFUSED
+    if cmd.startswith("playlistinfo"):
+        return QUEUE if WITH_QUEUE else b"OK\n"
     return b"OK\n"
 
 

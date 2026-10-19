@@ -147,6 +147,19 @@ Playlists pane. `<C-s>` opens the command line pre-filled with `save `, and `:sa
 `:renameplaylist OLD NEW`, `:rmplaylist NAME` reach the same commands from the line (the list
 refreshes after every edit).
 
+Queue filter: `/` inside the queue pane narrows the rows in place instead of opening the search
+pane (everywhere else `/` still does that, and `?` reaches the search pane from the queue). It is a
+state of one pane, not a mode: the keys keep the mode line at `normal`, `esc` leaves *and* clears,
+`enter` keeps the filter and hands the keys back, and `backspace` edits. The filter matches the
+title and the artist of a row, the motions (`j`/`k`, `g`/`G`, the wheel) walk the matching rows
+only, and `J`/`K` swap with the neighbour the user can see. Everything the pane *acts* on stays a
+real queue index: the gutter keeps printing the row's position in the queue (a filter of "w" shows
+`03`, not `01`), `enter` sends `play 2` rather than `play 0`, and the playing-row marker still
+finds its track. The header carries the filter text with a caret while typing and swaps its
+counter to `matches/total`, so the pane always says how much of the queue is hidden; a filter that
+hides every row draws a "nothing matched" note plus the key that undoes it, which is a different
+sentence from an empty queue on purpose.
+
 Mouse: tabs, rows (single click selects, double click plays), transport buttons, mode chips, the
 progress bar (click seeks) and the volume bar (click sets 0-100 %) are all hit-tested from the
 previous frame's rectangles — `draw_ui` records them into a `Vec<HitArea>` as it emits geometry.
@@ -176,7 +189,8 @@ duplicates, so muscle memory carries over:
 | `z` `r` `y` `R`                                                       | repeat · random · single · consume                                      |
 | `d` `C`                                                               | delete selected row · clear queue (both need a second press within 3 s) |
 | `c` `e` `A`                                                           | playlists: save the queue as · rename · add the playing track           |
-| `/` `:` `w`                                                           | search · command line · help                                            |
+| `/` `:` `w`                                                           | search (in the queue: filter its rows) · command line · help            |
+| `esc`                                                                 | drop the queue filter · come back to the queue                          |
 | `u` `U`                                                               | re-read the library                                                     |
 | `t`                                                                   | cycle the theme (this app's addition, not rmpc)                         |
 | `q`                                                                   | quit                                                                    |
@@ -186,10 +200,11 @@ Artists tab).
 
 `./keys-test.sh` asserts the state machine end to end: tokens go through `apply_token` →
 `handle_key_spec` (the same path as a real keyboard), the MPD worker runs with `PLAYER_DRY_RUN=1` so
-playback is never touched, and 70 checks cover selection, tab cycling, search mode, command
+playback is never touched, and 79 checks cover selection, tab cycling, search mode, command
 execution, help, the count prefix and clamping at the end of the list, which pane is raised, what
-the pointer hovers, the playlist commands the pane's own keys emit, the three list states and the
-outputs metadata. The hover checks are geometry-driven rather than coordinate-driven: one run dumps
+the pointer hovers, the playlist commands the pane's own keys emit, the three list states, the
+outputs metadata and the queue filter (text, match count, `nomatch`, and the *real* index the pane
+plays). The hover checks are geometry-driven rather than coordinate-driven: one run dumps
 the frame's hit rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through the
 middle of the rectangles the test picked, asserting the `hover=` field of every state dump.
 
@@ -207,6 +222,12 @@ carrying the device paths, while the default mode keeps refusing `config` the wa
 it. Both branches are therefore asserted without pixels: every state dump carries one
 `outN='name|plugin|driver|device|second line'` field per output, and the live daemon run covers the
 third case, a daemon that shares its plugin but refuses its config.
+
+A fourth mode, `--queue`, publishes six tracks whose titles and artists start with different
+letters, which is what makes the queue filter testable: a one-letter filter matches exactly one row,
+so `qmatch=1` and `sel=2` together prove the pane filtered without renumbering, and the dry-run log
+proves `enter` played queue index 2 and not index 0. The same run types `q` into the filter, which
+would quit the player if the pane did not own the keys while it is collecting characters.
 
 MPD: `player --mpd=127.0.0.1:6600` (default). A worker thread polls `status`/`currentsong` every 300
 ms and refetches the queue when `playlistlength` changes, so the UI never blocks on the socket.
