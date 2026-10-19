@@ -122,6 +122,8 @@ enum Cmd {
     ClearQueue,
     JumpToCurrent,
     PlayUri(String),
+    /// `add "<uri>"` without clearing the queue: the finder appends what it picked.
+    AddUri(String),
     Toggle,
     Pause(bool),
     Next,
@@ -139,15 +141,33 @@ enum Cmd {
     LoadArtists,
     LoadAlbums,
     LoadPlaylists,
-    PlayCollection { kind: Collection, name: String },
-    EnqueueCollection { kind: Collection, name: String },
-    MoveTrack { from: usize, to: usize },
+    PlayCollection {
+        kind: Collection,
+        name: String,
+    },
+    EnqueueCollection {
+        kind: Collection,
+        name: String,
+    },
+    MoveTrack {
+        from: usize,
+        to: usize,
+    },
     SavePlaylist(String),
     DeletePlaylist(String),
-    RenamePlaylist { from: String, to: String },
-    AddToPlaylist { name: String, uri: String },
+    RenamePlaylist {
+        from: String,
+        to: String,
+    },
+    AddToPlaylist {
+        name: String,
+        uri: String,
+    },
     RefreshOutputs,
-    SetOutput { id: u32, on: bool },
+    SetOutput {
+        id: u32,
+        on: bool,
+    },
     EnqueueDir(String),
     Search(String),
     Refresh,
@@ -176,12 +196,17 @@ enum Update {
     Playlists(Vec<String>),
     Outputs(Vec<player_proto::mpd::Output>),
     Connected(bool),
+    /// Results of a `lusty --list` run. `gen` discards answers to a stale query.
+    Finder {
+        gen: u64,
+        results: Vec<String>,
+    },
     Error(String),
 }
 
-/// MPD only speaks URIs relative to its music_directory, and `config` is refused for
-/// non-local clients, so the few conventional roots are probed instead.
-fn resolve_cover(uri: &str) -> Option<Vec<u8>> {
+/// Conventional MPD music roots. `config` is refused for non-local clients, so the first one
+/// that exists is used for both cover art and the lusty finder.
+fn music_roots() -> Vec<String> {
     let mut roots: Vec<String> = Vec::new();
     if let Ok(dir) = std::env::var("MPD_MUSIC_DIR") {
         roots.push(dir);
@@ -192,7 +217,55 @@ fn resolve_cover(uri: &str) -> Option<Vec<u8>> {
     }
     roots.push("/music".to_string());
     roots.push("/var/lib/mpd/music".to_string());
-    for root in roots {
+    roots
+}
+
+/// First existing music root, as the finder's start directory.
+fn music_root() -> String {
+    music_roots()
+        .into_iter()
+        .find(|r| std::path::Path::new(r).is_dir())
+        .unwrap_or_else(|| ".".to_string())
+}
+
+/// Run `lusty --list` off the UI thread and hand the rows back through the update channel.
+/// The binary is the user's own picker; `--list` is its non-interactive mode.
+fn spawn_lusty(tx: Sender<Update>, generation: u64, query: String) {
+    let root = music_root();
+    std::thread::spawn(move || {
+        let mut results = Vec::new();
+        if let Ok(out) = std::process::Command::new("lusty")
+            .arg("--list")
+            .arg(&root)
+            .arg("--depth")
+            .arg("2")
+            .arg("--query")
+            .arg(&query)
+            .stdin(std::process::Stdio::null())
+            .output()
+        {
+            for line in String::from_utf8_lossy(&out.stdout).lines() {
+                // The tool prints a "N of M entries in ..." banner first.
+                if line.contains(" entries in ") || line.trim().is_empty() {
+                    continue;
+                }
+                results.push(line.to_string());
+                if results.len() >= 400 {
+                    break;
+                }
+            }
+        }
+        let _ = tx.send(Update::Finder {
+            gen: generation,
+            results,
+        });
+    });
+}
+
+/// MPD only speaks URIs relative to its music_directory, and `config` is refused for
+/// non-local clients, so the few conventional roots are probed instead.
+fn resolve_cover(uri: &str) -> Option<Vec<u8>> {
+    for root in music_roots() {
         let path = format!("{}/{}", root.trim_end_matches('/'), uri);
         if std::path::Path::new(&path).is_file() {
             if let Some(pic) = player_proto::cover::embedded_picture(&path) {
@@ -265,6 +338,9 @@ fn spawn_mpd_worker(addr: String, tx: Sender<Update>, rx_cmd: Receiver<Cmd>) {
                             c.command(&format!("add \"{}\"", uri.replace('"', "\\\"")))?;
                             c.play()
                         }
+                        Cmd::AddUri(uri) => c
+                            .command(&format!("add \"{}\"", uri.replace('"', "\\\"")))
+                            .map(|_| ()),
                         Cmd::Toggle => {
                             let playing = c.status().map(|s| s.state == "play").unwrap_or(false);
                             c.toggle(playing)
@@ -811,6 +887,8 @@ struct Model {
     outputs_loaded: bool,
     outputs_open: bool,
     outputs_focus: usize,
+    /// `Some` while the lusty finder overlay is open.
+    finder: Option<Finder>,
     /// Some(uri) while the Playlists pane is in "add this song" mode (`a`).
     pick_target: Option<String>,
     /// Active name prompt; `InputMode::Command` is the editing mode it borrows.
@@ -860,6 +938,7 @@ impl Model {
             outputs_loaded: false,
             outputs_open: false,
             outputs_focus: 0,
+            finder: None,
             pick_target: None,
             prompt: None,
             lib_path: "/".into(),
@@ -973,9 +1052,41 @@ impl Model {
                     self.toast = Some(("MPD отключён".to_string(), Instant::now()));
                 }
             }
+            Update::Finder { gen, results } => {
+                if let Some(finder) = self.finder.as_mut() {
+                    // A slow answer to an older keystroke must not overwrite a newer one.
+                    if gen >= finder.generation {
+                        finder.loading = false;
+                        finder.results = results;
+                        finder.sel = 0;
+                    }
+                }
+            }
             Update::Error(e) => {
                 self.toast = Some((e, Instant::now()));
             }
+        }
+    }
+}
+
+/// Fuzzy file/album lookup over the MPD music root, answered by the `lusty` binary.
+struct Finder {
+    query: String,
+    results: Vec<String>,
+    sel: usize,
+    loading: bool,
+    /// Generation of the newest request, so a slow answer to an older query is dropped.
+    generation: u64,
+}
+
+impl Finder {
+    fn new() -> Self {
+        Self {
+            query: String::new(),
+            results: Vec::new(),
+            sel: 0,
+            loading: true,
+            generation: 0,
         }
     }
 }
@@ -1020,6 +1131,8 @@ struct App {
     fonts: Option<Fonts>,
     model: Model,
     tx: Sender<Cmd>,
+    /// Update channel, so side tasks (the lusty finder) can answer on the same queue.
+    update_tx: Sender<Update>,
     rx: Receiver<Update>,
     timing: Timing,
     frames: u64,
@@ -1070,13 +1183,14 @@ struct App {
 }
 
 impl App {
-    fn new(tx: Sender<Cmd>, rx: Receiver<Update>) -> Self {
+    fn new(tx: Sender<Cmd>, update_tx: Sender<Update>, rx: Receiver<Update>) -> Self {
         Self {
             window: None,
             gpu: None,
             fonts: None,
             model: Model::new(),
             tx,
+            update_tx,
             rx,
             timing: Timing::new(),
             frames: 0,
@@ -1181,6 +1295,12 @@ impl App {
                             Update::Search(v) => {
                                 return {
                                     eprintln!("[update] search({})", v.len());
+                                    self.model.apply(u)
+                                }
+                            }
+                            Update::Finder { .. } => {
+                                return {
+                                    eprintln!("[update] finder");
                                     self.model.apply(u)
                                 }
                             }
@@ -1424,6 +1544,67 @@ impl App {
                 _ => {}
             }
             self.clamp_selection();
+            return;
+        }
+
+        // The lusty finder owns the keyboard while it is open: it is a search prompt first.
+        if self.model.finder.is_some() {
+            if std::env::var("PLAYER_DEBUG_FINDER").is_ok() {
+                eprintln!("[finder] key={key:?} ctrl={ctrl}");
+            }
+            let mut submit = false;
+            let mut close = false;
+            let mut changed = false;
+            {
+                let finder = self.model.finder.as_mut().expect("checked above");
+                match key {
+                    Key::Named(NamedKey::Escape) => close = true,
+                    Key::Named(NamedKey::Enter) => submit = true,
+                    Key::Named(NamedKey::Backspace) => {
+                        finder.query.pop();
+                        changed = true;
+                    }
+                    Key::Named(NamedKey::ArrowDown) => {
+                        finder.sel = (finder.sel + 1).min(finder.results.len().saturating_sub(1))
+                    }
+                    Key::Named(NamedKey::ArrowUp) => finder.sel = finder.sel.saturating_sub(1),
+                    Key::Character(c) => match c.as_str() {
+                        "j" if ctrl => {}
+                        _ => {
+                            // Plain typing narrows the query; ctrl-chords stay bindings.
+                            if !ctrl {
+                                finder.query.push_str(&c);
+                                changed = true;
+                            }
+                        }
+                    },
+                    _ => {}
+                }
+            }
+            if changed {
+                let (query, generation) = {
+                    let finder = self.model.finder.as_mut().expect("open");
+                    finder.generation += 1;
+                    finder.loading = true;
+                    (finder.query.clone(), finder.generation)
+                };
+                spawn_lusty(self.update_tx.clone(), generation, query);
+            }
+            if submit {
+                let uri = self
+                    .model
+                    .finder
+                    .as_ref()
+                    .and_then(|f| f.results.get(f.sel).cloned());
+                if let Some(uri) = uri {
+                    let uri = uri.trim_end_matches('/').to_string();
+                    let _ = self.tx.send(Cmd::AddUri(uri));
+                }
+                self.model.finder = None;
+            }
+            if close {
+                self.model.finder = None;
+            }
             return;
         }
 
@@ -1708,6 +1889,7 @@ impl App {
                         self.add_current_to_playlist()
                     }
                     ("a", false, _) => self.start_playlist_pick(),
+                    ("F", _, _) => self.open_finder(),
                     ("t", false, _) => {
                         self.model.toast = None;
                         self.theme_name = if self.theme_name == "warm" {
@@ -1794,6 +1976,15 @@ impl App {
             uri,
         });
         self.model.toast = Some((format!("добавлено в {name}"), Instant::now()));
+    }
+
+    /// `F`: fuzzy find over the music root with the user's own `lusty` picker (`--list`).
+    fn open_finder(&mut self) {
+        let mut finder = Finder::new();
+        finder.generation += 1;
+        let generation = finder.generation;
+        self.model.finder = Some(finder);
+        spawn_lusty(self.update_tx.clone(), generation, String::new());
     }
 
     /// `a` (rmpc AddToPlaylist): remember the selected song and switch to the playlists pane.
@@ -2298,6 +2489,12 @@ impl App {
         } else {
             "loading"
         };
+        // Finder overlay: `closed`, or `open:<query>:<hits>` so a test can follow the query as
+        // it is typed and see the row count that lusty answered with.
+        let finder_state = match self.model.finder.as_ref() {
+            None => "closed".to_string(),
+            Some(f) => format!("open:{}:{}", f.query, f.results.len()),
+        };
         // The metadata each output row carries, in the order the row draws it — name, plugin,
         // driver, device and the joined second line — so a test can assert the parsing, the
         // config fallback and the rendering without reading pixels. A field the daemon did not
@@ -2327,7 +2524,7 @@ impl App {
         let qstate = queue_state(&self.model);
         let qedit = self.model.queue_filter_edit;
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} qfilter='{qfilter}' qmatch={qmatch} qstate={qstate} qedit={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta}",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} qfilter='{qfilter}' qmatch={qmatch} qstate={qstate} qedit={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta} finder={finder_state}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             qedit as u8,
@@ -4182,6 +4379,114 @@ fn draw_ui(
             w - pad * 2.0,
         );
     }
+    // ---------------- lusty finder overlay
+    //
+    // `F` opens a fuzzy find over the music root; the rows come from the user's own `lusty`
+    // binary (`--list`, its non-interactive mode), so the ranking matches their file picker
+    // instead of a second, weaker matcher living in the player.
+    if let Some(finder) = m.finder.as_ref() {
+        list.rect(0.0, 0.0, w, h, theme::with_alpha(th.bg_bottom, 0.80));
+        let panel_w = 640.0_f32.min(w - 80.0);
+        let row_h2 = GEOM.row_h_compact;
+        let visible = 10usize;
+        let rows_shown = finder.results.len().min(visible);
+        let body = if finder.results.is_empty() {
+            row_h2
+        } else {
+            rows_shown as f32 * row_h2
+        };
+        let panel_h = 96.0 + body;
+        let px = (w - panel_w) * 0.5;
+        let py = (h - panel_h) * 0.5;
+        list.shadow(px, py, panel_w, panel_h, GEOM.radius_lg, 30.0, 0.55);
+        let surface = th.pane_raised.surface;
+        list.rounded(px, py, panel_w, panel_h, GEOM.radius_lg, surface, surface);
+        fonts.layout_line(
+            &mut list,
+            "ПОИСК ПО МУЗЫКЕ · lusty",
+            px + 18.0,
+            py + 16.0,
+            TYPE.micro,
+            Face::UiMedium,
+            th.accent,
+        );
+        // Prompt line: the query, or a hint while it is still empty.
+        let prompt = if finder.query.is_empty() {
+            "начни печатать…".to_string()
+        } else {
+            finder.query.clone()
+        };
+        fonts.layout_fitted(
+            &mut list,
+            &prompt,
+            px + 18.0,
+            py + 44.0,
+            TYPE.body,
+            Face::UiMedium,
+            if finder.query.is_empty() {
+                th.text_faint
+            } else {
+                th.text
+            },
+            panel_w - 36.0,
+        );
+        let list_y = py + 76.0;
+        if finder.results.is_empty() {
+            fonts.layout_line(
+                &mut list,
+                if finder.loading {
+                    "ищу…"
+                } else {
+                    "ничего не нашлось"
+                },
+                px + 18.0,
+                list_y + 8.0,
+                TYPE.label,
+                Face::UiRegular,
+                th.text_dim,
+            );
+        }
+        for (i, row) in finder.results.iter().enumerate().take(visible) {
+            let y = list_y + i as f32 * row_h2;
+            let selected = i == finder.sel;
+            if selected {
+                list.rounded(
+                    px + 12.0,
+                    y,
+                    panel_w - 24.0,
+                    row_h2 - GEOM.row_gap,
+                    GEOM.radius_md,
+                    th.selection,
+                    th.selection,
+                );
+            }
+            let ink = if selected { th.text } else { th.text_dim };
+            fonts.layout_fitted_end(
+                &mut list,
+                row,
+                px + 24.0,
+                y + 7.0,
+                TYPE.label,
+                if selected {
+                    Face::UiMedium
+                } else {
+                    Face::UiRegular
+                },
+                ink,
+                panel_w - 48.0,
+            );
+        }
+        fonts.layout_line(
+            &mut list,
+            "enter — добавить в очередь · esc — закрыть",
+            px + 18.0,
+            py + panel_h - 24.0,
+            TYPE.caption,
+            Face::UiRegular,
+            th.text_faint,
+        );
+    }
+
     if m.outputs_open {
         list.rect(0.0, 0.0, w, h, theme::with_alpha(th.bg_bottom, 0.78));
         // The scrim is a target of its own: without it the rectangles drawn underneath keep
@@ -4869,8 +5174,8 @@ fn main() {
         .unwrap_or_else(|| "127.0.0.1:6600".to_string());
     let (tx_cmd, rx_cmd) = std::sync::mpsc::channel();
     let (tx_up, rx_up) = std::sync::mpsc::channel();
-    spawn_mpd_worker(addr, tx_up, rx_cmd);
-    let mut app = App::new(tx_cmd, rx_up);
+    spawn_mpd_worker(addr, tx_up.clone(), rx_cmd);
+    let mut app = App::new(tx_cmd, tx_up, rx_up);
     let event_loop = match winit::event_loop::EventLoop::new() {
         Ok(el) => el,
         Err(e) => {
