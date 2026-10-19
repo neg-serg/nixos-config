@@ -481,8 +481,8 @@ fn latinize(ch: &str) -> Option<&'static str> {
 }
 
 /// Mirrors the user's own rmpc keymap (`~/.config/rmpc/config.ron`): global, navigation and
-/// queue sections, plus the Cyrillic duplicates that config already carries. Keys that exist in
-/// rmpc but have no counterpart here (outputs, playlists, rename, move) are listed as such.
+/// queue sections, plus the Cyrillic duplicates that config already carries. The playlist rows
+/// at the end are our additions: rmpc reaches saved playlists only through `:` commands.
 const KEYMAP: &[KeyHint] = &[
     KeyHint {
         keys: "j / k",
@@ -561,7 +561,12 @@ const KEYMAP: &[KeyHint] = &[
     },
     KeyHint {
         keys: "d / C",
-        action: "удалить трек / очистить очередь (дважды)",
+        action: "удалить трек или плейлист / очистить очередь (дважды)",
+        group: Group::Modes,
+    },
+    KeyHint {
+        keys: "c / e / A",
+        action: "плейлисты: из очереди / имя / добавить текущий трек",
         group: Group::Modes,
     },
     KeyHint {
@@ -600,6 +605,18 @@ const KEYMAP: &[KeyHint] = &[
 enum Destructive {
     DeleteSelected,
     ClearQueue,
+    DeletePlaylist,
+}
+
+/// A name prompt opened from a pane instead of from `:`. It reuses `InputMode::Command` for the
+/// text editing, so typing, backspace and esc behave exactly like the command line; only the
+/// meaning of `enter` differs, and it dispatches the same `Cmd` the matching `:` line sends.
+#[derive(Clone, PartialEq, Eq, Debug)]
+enum Prompt {
+    /// `c` in the Playlists pane: save the current queue under the typed name (`:save NAME`).
+    NewPlaylist,
+    /// `e` in the Playlists pane: rename `from` to the typed name (`:renameplaylist FROM TO`).
+    RenamePlaylist { from: String },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -763,6 +780,8 @@ struct Model {
     outputs_focus: usize,
     /// Some(uri) while the Playlists pane is in "add this song" mode (`a`).
     pick_target: Option<String>,
+    /// Active name prompt; `InputMode::Command` is the editing mode it borrows.
+    prompt: Option<Prompt>,
     lib_path: String,
     lib_entries: Vec<Entry>,
     lib_filter: String,
@@ -806,6 +825,7 @@ impl Model {
             outputs_open: false,
             outputs_focus: 0,
             pick_target: None,
+            prompt: None,
             lib_path: "/".into(),
             lib_entries: Vec::new(),
             lib_filter: std::env::var("PLAYER_FILTER").unwrap_or_default(),
@@ -1278,11 +1298,15 @@ impl App {
                     Key::Named(NamedKey::Escape) => {
                         self.model.mode = InputMode::Normal;
                         self.model.cmdline.clear();
+                        self.model.prompt = None;
                     }
                     Key::Named(NamedKey::Enter) => {
                         let line = std::mem::take(&mut self.model.cmdline);
                         self.model.mode = InputMode::Normal;
-                        self.run_command(&line);
+                        match self.model.prompt.take() {
+                            Some(prompt) => self.apply_prompt(prompt, &line),
+                            None => self.run_command(&line),
+                        }
                     }
                     Key::Named(NamedKey::Backspace) => {
                         self.model.cmdline.pop();
@@ -1524,6 +1548,30 @@ impl App {
                     (":", _, _) => {
                         self.model.mode = InputMode::Command;
                         self.model.cmdline.clear();
+                        self.model.prompt = None;
+                    }
+                    // The Playlists pane manages the lists it shows: `c` saves the queue under a
+                    // typed name, `e` renames the playlist under the cursor and `A` appends the
+                    // now-playing song to it (`d` deletes it, see the queue-edit arms below).
+                    // Each one sends the same `Cmd` as the matching `:` line, so the two paths
+                    // cannot drift and dry-run covers both. Scoped to the pane: `c` and `e` stay
+                    // free elsewhere and nothing fires while a different list owns the cursor.
+                    ("c", false, _) if self.model.view == Pane::Playlists => {
+                        self.open_prompt(Prompt::NewPlaylist)
+                    }
+                    ("e", false, _) if self.model.view == Pane::Playlists => {
+                        match self.model.playlists.selected().cloned() {
+                            Some(from) => self.open_prompt(Prompt::RenamePlaylist { from }),
+                            None => {
+                                self.model.toast = Some((
+                                    "нет плейлиста для переименования".into(),
+                                    Instant::now(),
+                                ))
+                            }
+                        }
+                    }
+                    ("A", _, _) if self.model.view == Pane::Playlists => {
+                        self.add_current_to_playlist()
                     }
                     ("a", false, _) => self.start_playlist_pick(),
                     ("t", false, _) => {
@@ -1540,7 +1588,17 @@ impl App {
                     // queue edits: destructive, so they need a second press (see Destructive)
                     ("J", _, _) => self.move_queue_row(1),
                     ("K", _, _) => self.move_queue_row(-1),
-                    ("d", false, _) => self.confirm_destructive(Destructive::DeleteSelected),
+                    ("d", false, _) => {
+                        // `d` deletes the row under the cursor in whichever list is on screen:
+                        // in the Playlists pane that row is a saved playlist, not a queue track,
+                        // so a delete there must never reach into the queue behind it.
+                        let action = if self.model.view == Pane::Playlists {
+                            Destructive::DeletePlaylist
+                        } else {
+                            Destructive::DeleteSelected
+                        };
+                        self.confirm_destructive(action);
+                    }
                     ("C", _, _) => self.confirm_destructive(Destructive::ClearQueue),
 
                     _ => {}
@@ -1548,6 +1606,60 @@ impl App {
             }
             _ => {}
         }
+    }
+
+    /// Open a name prompt. The text editing is `InputMode::Command`'s, so the caret, backspace
+    /// and esc are the ones the user already knows from `:`; `Enter` is what differs.
+    fn open_prompt(&mut self, prompt: Prompt) {
+        self.model.mode = InputMode::Command;
+        self.model.cmdline.clear();
+        self.model.prompt = Some(prompt);
+    }
+
+    /// `Enter` in a name prompt: the same `Cmd` the `:` line sends, with the name typed instead
+    /// of parsed out of the line, and the same toast, so both paths read alike.
+    fn apply_prompt(&mut self, prompt: Prompt, text: &str) {
+        let name = text.trim();
+        if name.is_empty() {
+            self.model.toast = Some(("имя плейлиста пустое".into(), Instant::now()));
+            return;
+        }
+        match prompt {
+            Prompt::NewPlaylist => {
+                let _ = self.tx.send(Cmd::SavePlaylist(name.to_string()));
+                self.model.toast = Some((format!("очередь сохранена: {name}"), Instant::now()));
+            }
+            Prompt::RenamePlaylist { from } => {
+                if name == from {
+                    self.model.toast = Some(("имя не изменилось".into(), Instant::now()));
+                    return;
+                }
+                let _ = self.tx.send(Cmd::RenamePlaylist {
+                    from: from.clone(),
+                    to: name.to_string(),
+                });
+                self.model.toast = Some((format!("{from} → {name}"), Instant::now()));
+            }
+        }
+    }
+
+    /// `A`: append the now-playing song to the playlist under the cursor. `a` starts from the
+    /// selected song and then asks which playlist; this is the same pair the other way round,
+    /// which is what "put this track into that list" usually needs once the list is open.
+    fn add_current_to_playlist(&mut self) {
+        let Some(name) = self.model.playlists.selected().cloned() else {
+            self.model.toast = Some(("сначала выбери плейлист".into(), Instant::now()));
+            return;
+        };
+        let Some(uri) = self.model.current.as_ref().map(|s| s.file.clone()) else {
+            self.model.toast = Some(("ничего не играет".into(), Instant::now()));
+            return;
+        };
+        let _ = self.tx.send(Cmd::AddToPlaylist {
+            name: name.clone(),
+            uri,
+        });
+        self.model.toast = Some((format!("добавлено в {name}"), Instant::now()));
     }
 
     /// `a` (rmpc AddToPlaylist): remember the selected song and switch to the playlists pane.
@@ -1800,15 +1912,29 @@ impl App {
                 Destructive::ClearQueue => {
                     let _ = self.tx.send(Cmd::ClearQueue);
                 }
+                Destructive::DeletePlaylist => {
+                    if let Some(name) = self.model.playlists.selected().cloned() {
+                        let _ = self.tx.send(Cmd::DeletePlaylist(name.clone()));
+                        self.model.toast =
+                            Some((format!("удалён плейлист: {name}"), Instant::now()));
+                    }
+                }
             }
             return;
         }
         let label = match action {
-            Destructive::DeleteSelected => "удалить выбранный трек? нажми d ещё раз",
-            Destructive::ClearQueue => "очистить очередь? нажми C ещё раз",
+            Destructive::DeleteSelected => "удалить выбранный трек? нажми d ещё раз".to_string(),
+            Destructive::ClearQueue => "очистить очередь? нажми C ещё раз".to_string(),
+            Destructive::DeletePlaylist => match self.model.playlists.selected() {
+                Some(name) => format!("удалить «{name}»? нажми d ещё раз"),
+                None => {
+                    self.model.toast = Some(("нет плейлиста для удаления".into(), now));
+                    return;
+                }
+            },
         };
-        self.model.toast = Some((label.to_string(), now));
-        self.model.confirm = Some((label.to_string(), action, now));
+        self.model.toast = Some((label.clone(), now));
+        self.model.confirm = Some((label, action, now));
     }
 
     /// `:` commands. Deliberately small; each maps onto the same `Cmd` channel the keys use, so
@@ -2004,8 +2130,17 @@ impl App {
             Some(action) => hit_label(&action),
             None => "none".to_string(),
         };
+        // Name prompt in flight (`c`/`e` in the Playlists pane) and the playlist under the
+        // cursor: the test asserts the prompt opened and that rename/delete/add name the row the
+        // user was looking at, without hard-coding whatever playlists this MPD happens to hold.
+        let prompt = match &self.model.prompt {
+            Some(Prompt::NewPlaylist) => "new-playlist",
+            Some(Prompt::RenamePlaylist { .. }) => "rename-playlist",
+            None => "none",
+        };
+        let playlist = self.model.playlists.selected().cloned().unwrap_or_default();
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={}",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}'",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             self.model.lib_entries.len(),
@@ -2651,8 +2786,34 @@ fn draw_ui(
         }
     }
 
+    // The Playlists pane advertises what it can do with the list under the cursor. Its keys are
+    // scoped to this pane, so without a line here nothing on screen would announce them; in
+    // "add this song" mode the same line says which key finishes the job instead.
+    let playlist_hint = if m.view == Pane::Playlists {
+        let hint = if picking {
+            "enter — добавить в выбранный · esc — отмена"
+        } else {
+            "c — из очереди · e — переименовать · d — удалить · A — текущий трек"
+        };
+        fonts.layout_fitted(
+            &mut list,
+            hint,
+            qx + 18.0,
+            body_top + 30.0,
+            TYPE.label,
+            Face::UiRegular,
+            th.text_faint,
+            qw - 36.0,
+        );
+        true
+    } else {
+        false
+    };
+
     let q_rows_y = if search_mode {
         body_top + 60.0
+    } else if playlist_hint {
+        body_top + 50.0
     } else {
         body_top + 38.0
     };
@@ -3527,13 +3688,38 @@ fn draw_ui(
     );
     list.rect(0.0, h - 36.0, w, GEOM.line, th.border);
     if m.mode == InputMode::Command || m.mode == InputMode::Search {
-        let (sigil, text, hint) = if m.mode == InputMode::Command {
-            (":", m.cmdline.clone(), "enter — выполнить · esc — отмена")
-        } else {
-            ("/", m.search_input.clone(), "enter — искать · esc — отмена")
+        // A pane prompt borrows the command line's editing mode, so only the label and the hint
+        // change: `c` in the Playlists pane reads as a question the line is answering, with the
+        // same caret and the same esc.
+        let (label, text, hint) = match &m.prompt {
+            Some(Prompt::NewPlaylist) => (
+                "новый плейлист из очереди: ".to_string(),
+                &m.cmdline,
+                "enter — сохранить · esc — отмена",
+            ),
+            Some(Prompt::RenamePlaylist { from }) => (
+                format!("переименовать «{from}» в: "),
+                &m.cmdline,
+                "enter — переименовать · esc — отмена",
+            ),
+            None => {
+                if m.mode == InputMode::Command {
+                    (
+                        ":".to_string(),
+                        &m.cmdline,
+                        "enter — выполнить · esc — отмена",
+                    )
+                } else {
+                    (
+                        "/".to_string(),
+                        &m.search_input,
+                        "enter — искать · esc — отмена",
+                    )
+                }
+            }
         };
         let caret = "▏";
-        let line = format!("{sigil}{text}{caret}");
+        let line = format!("{text}{caret}");
         list.rounded(
             pad - 4.0,
             h - 32.0,
@@ -3543,10 +3729,20 @@ fn draw_ui(
             th.panel_inset,
             th.panel_inset,
         );
+        let label_w = fonts.measure(&label, TYPE.body, Face::Mono);
+        fonts.layout_line(
+            &mut list,
+            &label,
+            pad,
+            h - 27.0,
+            TYPE.body,
+            Face::Mono,
+            th.text_dim,
+        );
         fonts.layout_line(
             &mut list,
             &line,
-            pad,
+            pad + label_w,
             h - 27.0,
             TYPE.body,
             Face::Mono,
@@ -3556,7 +3752,7 @@ fn draw_ui(
         fonts.layout_fitted(
             &mut list,
             hint,
-            pad + lw + 16.0,
+            pad + label_w + lw + 16.0,
             h - 26.0,
             TYPE.caption,
             Face::UiRegular,

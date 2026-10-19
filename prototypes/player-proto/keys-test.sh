@@ -12,7 +12,8 @@ out=$(mktemp)
 wide=$(mktemp)
 hitslog=$(mktemp)
 hoverlog=$(mktemp)
-trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog"' EXIT
+plog=$(mktemp)
+trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog"' EXIT
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
@@ -65,7 +66,17 @@ PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   "$bin" --render-size=1440x900 --shot=/tmp/keys-hover.ppm --shot-after=560 \
   --keys="cursor:2x2,noop,cursor:$row_at,noop,cursor:$tab_at,noop,cursor:$play_at,noop,cursor:$chip_at,noop,cursor:$vol_at,noop,o,noop,cursor:$out_at,noop" \
   > "$hoverlog" 2>&1
-python3 - "$out" "$wide" "$hoverlog" << 'PY'
+# Playlist management from the pane itself: `c`/`e`/`d`/`A` must reach the same commands as
+# `:save`/`:renameplaylist`/`:rmplaylist` (dry-run shows which), must name the playlist under the
+# cursor instead of one typed into the command line, and must not fire in other panes. The run
+# also cancels a prompt with esc and then presses `c` outside the pane, so both negative cases
+# are covered by the same script.
+PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+  "$bin" --render-size=800x600 --shot-seq=/tmp/keys-playlists \
+  --keys="P,noop,c,noop,fromui,noop,enter,noop,down,e,noop,renamed,noop,enter,noop,d,noop,d,noop,A,noop,c,esc,noop,1,noop,c,noop" \
+  > "$plog" 2>&1
+python3 - "$out" "$wide" "$hoverlog" "$plog" << 'PY'
 import re, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]
@@ -209,6 +220,75 @@ check(
     "hovering never moves the selection",
     bool(hover_states) and all(field(s, "sel") == "0" for s in hover_states),
     str([s for s in hover_states if field(s, "sel") != "0"][:1]),
+)
+
+# ---- playlists: the pane manages the lists it shows. Every assertion below reads the command
+# the UI produced (dry-run) and the playlist name the cursor was on (the `pl=` field), so the
+# checks follow whatever playlists this MPD happens to hold instead of hard-coding a name.
+pl_lines = open(sys.argv[4], errors="replace").read().splitlines()
+pl_states = [l for l in pl_lines if l.startswith("[state]")]
+pl_dry = [l for l in pl_lines if l.startswith("[dry-run]")]
+
+def pl_key(token, occurrence=0):
+    hits = [s for s in pl_states if f"token={token} " in s and "settle=1" not in s]
+    return hits[occurrence] if len(hits) > occurrence else None
+
+def pl_sent(marker):
+    return any(marker in l for l in pl_dry)
+
+new_open = pl_key("c", 0)
+check(
+    "'c' in the playlists pane opens a name prompt",
+    new_open is not None
+    and field(new_open, "prompt") == "new-playlist"
+    and field(new_open, "mode") == "command",
+    str(new_open),
+)
+check(
+    "the typed name saves the queue as a playlist",
+    pl_sent('SavePlaylist("fromui")'),
+    str([l for l in pl_dry if "SavePlaylist" in l]),
+)
+ren_open = pl_key("e")
+pl_name = field(ren_open, "pl") if ren_open else None
+check(
+    "'e' opens a rename prompt for the playlist under the cursor",
+    ren_open is not None and field(ren_open, "prompt") == "rename-playlist",
+    str(ren_open),
+)
+check(
+    "the typed name renames that playlist",
+    bool(pl_name) and pl_sent(f'RenamePlaylist {{ from: "{pl_name}", to: "renamed" }}'),
+    f"pl={pl_name} {[l for l in pl_dry if 'Rename' in l]}",
+)
+check(
+    "'d' twice deletes that playlist, not a queue row",
+    bool(pl_name)
+    and pl_sent(f'DeletePlaylist("{pl_name}")')
+    and not pl_sent("DeleteIndex"),
+    str([l for l in pl_dry if "Delete" in l]),
+)
+check(
+    "'A' adds the now-playing song to that playlist",
+    bool(pl_name) and pl_sent(f'AddToPlaylist {{ name: "{pl_name}", uri: "'),
+    str([l for l in pl_dry if "AddToPlaylist" in l]),
+)
+esc_pl = pl_key("esc")
+check(
+    "esc cancels a prompt without sending anything",
+    esc_pl is not None
+    and field(esc_pl, "prompt") == "none"
+    and field(esc_pl, "mode") == "normal"
+    and sum("SavePlaylist" in l for l in pl_dry) == 1,
+    f"{esc_pl} saves={[l for l in pl_dry if 'SavePlaylist' in l]}",
+)
+outside = pl_key("c", 2)
+check(
+    "the playlist keys stay inside the playlists pane",
+    outside is not None
+    and field(outside, "prompt") == "none"
+    and field(outside, "view") == "queue",
+    str(outside),
 )
 sys.exit(1 if fails else 0)
 PY
