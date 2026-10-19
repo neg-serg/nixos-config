@@ -33,7 +33,9 @@ mod row {
     use player_proto::theme::GEOM;
 
     /// Surface of one row: the cursor wash with the accent rail, or the playing wash with a
-    /// thinner rail, or nothing. The cursor always wins over the playing marker.
+    /// thinner rail, or nothing. The cursor always wins over the playing marker. Hover is a
+    /// weaker wash painted underneath both, so a pointer resting on a row says "pressable"
+    /// without ever competing with the selection.
     pub fn surface(
         list: &mut DrawList,
         th: &theme::Theme,
@@ -42,8 +44,12 @@ mod row {
         w: f32,
         h: f32,
         selected: bool,
+        hovered: bool,
         playing: bool,
     ) {
+        if hovered && !selected {
+            list.rounded(x, y, w, h, GEOM.radius_md, th.hover, th.hover_edge);
+        }
         if playing && !selected {
             list.rounded(x, y, w, h, GEOM.radius_md, th.playing_bg, th.playing_bg);
             list.rounded(
@@ -620,6 +626,15 @@ enum Focus {
     Centre,
 }
 
+/// Parses a point written `XxY` (or `X,Y` on a command line, where commas are allowed).
+fn parse_point(text: &str) -> Option<(f32, f32)> {
+    let (x, y) = match text.split_once('x').or_else(|| text.split_once(',')) {
+        Some(parts) => parts,
+        None => return None,
+    };
+    Some((x.trim().parse().ok()?, y.trim().parse().ok()?))
+}
+
 fn focus_pane(view: Pane, w: f32) -> Focus {
     if view == Pane::Library && w >= 1080.0 {
         Focus::Library
@@ -645,7 +660,7 @@ impl HitArea {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Hit {
     Tab(Pane),
     Row(Pane, usize),
@@ -655,6 +670,29 @@ enum Hit {
     Volume(f32),
     Output(usize),
     CloseOverlay,
+}
+
+/// Stable name of a hit target. Used by the state dump so a test can assert what the pointer
+/// is over, and by the hover field of that dump, without either side re-deriving the geometry.
+fn hit_label(action: &Hit) -> String {
+    let pane = |p: Pane| match p {
+        Pane::Queue => "queue",
+        Pane::Library => "library",
+        Pane::Artists => "artists",
+        Pane::Albums => "albums",
+        Pane::Playlists => "playlists",
+        Pane::Search => "search",
+    };
+    match *action {
+        Hit::Tab(p) => format!("tab:{}", pane(p)),
+        Hit::Row(p, i) => format!("row:{}:{i}", pane(p)),
+        Hit::Transport(d) => format!("transport:{d}"),
+        Hit::Chip(i) => format!("chip:{i}"),
+        Hit::Seek(_) => "seek".to_string(),
+        Hit::Volume(_) => "volume".to_string(),
+        Hit::Output(i) => format!("output:{i}"),
+        Hit::CloseOverlay => "close".to_string(),
+    }
 }
 
 fn hit(hits: &mut Vec<HitArea>, x: f32, y: f32, w: f32, h: f32, action: Hit) {
@@ -927,7 +965,13 @@ struct App {
     /// driver. One frame of latency is invisible in a capture.
     prev_present: Option<(u64, u32)>,
     hits: Vec<HitArea>,
-    cursor: (f32, f32),
+    /// Pointer position in *logical* units — the same space the draw list and the hit areas
+    /// live in. winit reports physical pixels, so every event converts on the way in; keeping
+    /// the stored value logical is what makes hover and clicks agree at 1x and at 2x.
+    pointer: (f32, f32),
+    /// The hit target under the pointer last frame. Rebuilt from the previous frame's `hits`
+    /// (the rects the user actually saw) so hover can never point at something undrawn.
+    hover: Option<Hit>,
     last_click: Option<(Instant, Pane, usize)>,
     art_uploaded: String,
     started: Instant,
@@ -980,7 +1024,13 @@ impl App {
             dump_done: false,
             prev_present: None,
             hits: Vec::new(),
-            cursor: (0.0, 0.0),
+            // `--cursor=X,Y` parks the pointer at a known logical point so a scripted capture
+            // can show a hover state; a real CursorMoved event overwrites it.
+            pointer: std::env::args()
+                .find(|a| a.starts_with("--cursor="))
+                .and_then(|a| parse_point(&a[9..]))
+                .unwrap_or((0.0, 0.0)),
+            hover: None,
             last_click: None,
             bench_frames: std::env::args()
                 .find(|a| a.starts_with("--bench="))
@@ -1570,11 +1620,18 @@ impl App {
         }
     }
 
+    /// The rectangle under the pointer, resolved against the previous frame's hit list. Hover
+    /// and clicks both go through here, so what lights up and what reacts cannot disagree.
+    fn hit_under_pointer(&self) -> Option<HitArea> {
+        let (px, py) = self.pointer;
+        self.hits.iter().rev().find(|h| h.contains(px, py)).copied()
+    }
+
     /// Mouse: the last drawn frame's rectangles decide what was hit. Rows need a double click
     /// to act (play / enter), a single click only moves the cursor there.
     fn handle_click(&mut self) {
-        let (cx, cy) = self.cursor;
-        let Some(area) = self.hits.iter().rev().find(|h| h.contains(cx, cy)).copied() else {
+        let (cx, _) = self.pointer;
+        let Some(area) = self.hit_under_pointer() else {
             return;
         };
         let now = Instant::now();
@@ -1857,6 +1914,16 @@ impl App {
             // burns one scripted interval so async MPD replies can land before the next dump
             return;
         }
+        if let Some(at) = token.strip_prefix("cursor:") {
+            // Moves the pointer instead of pressing a key, so one scripted run can walk the
+            // pointer across several targets and dump what each one hovered. Scripted tokens
+            // are comma-separated, so a point is written `XxY` like --render-size.
+            match parse_point(at) {
+                Some(p) => self.pointer = p,
+                None => eprintln!("[keys] bad cursor token: {token}"),
+            }
+            return;
+        }
         let (ctrl, body) = match token.strip_prefix("ctrl+") {
             Some(rest) => (true, rest),
             None => (false, token),
@@ -1933,8 +2000,12 @@ impl App {
             Focus::Library => "library",
             Focus::Centre => "centre",
         };
+        let hover = match self.hover {
+            Some(action) => hit_label(&action),
+            None => "none".to_string(),
+        };
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={}",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             self.model.lib_entries.len(),
@@ -1949,6 +2020,21 @@ impl App {
                 _ => 0,
             }
         );
+        // `PLAYER_DUMP_HITS=1`: print the interactive rectangles of the last frame, so a test
+        // can aim the pointer at a real target instead of hard-coding coordinates that drift
+        // with every layout change. Settled re-dumps repeat the same rectangles, so skip them.
+        if std::env::var("PLAYER_DUMP_HITS").is_ok() && !token.contains("settle=1") {
+            for area in &self.hits {
+                eprintln!(
+                    "[hit] {} x={} y={} w={} h={}",
+                    hit_label(&area.action),
+                    area.x,
+                    area.y,
+                    area.w,
+                    area.h
+                );
+            }
+        }
     }
 
     fn move_selection(&mut self, delta: i32) {
@@ -2076,6 +2162,7 @@ fn draw_ui(
     extent: vk::Extent2D,
     t: f32,
     th: &theme::Theme,
+    hover: Option<Hit>,
     hits: &mut Vec<HitArea>,
 ) -> DrawList {
     use player_proto::theme::{Face, GEOM, TYPE};
@@ -2148,6 +2235,7 @@ fn draw_ui(
     let mut tx = title_x + fonts.measure("Player", TYPE.title, Face::UiSemiBold) + 26.0;
     for (label, pane) in tabs {
         let active = m.view == pane;
+        let hot = hover == Some(Hit::Tab(pane));
         let tw = fonts.measure(label, TYPE.heading, Face::UiMedium) + 26.0;
         let reserve = 220.0; // connection state + track counter on the right
         if !active && tx + tw > w - reserve {
@@ -2164,8 +2252,26 @@ fn draw_ui(
                 theme::with_alpha(th.accent2, 0.10),
             );
             list.rounded(tx, 15.0, tw, 26.0, GEOM.radius_pill, [0.0; 4], [0.0; 4]);
+        } else if hot {
+            // An inactive tab under the pointer takes the same pill shape, at the hover wash
+            // instead of the accent: the active tab stays the only lit one.
+            list.rounded(
+                tx,
+                15.0,
+                tw,
+                26.0,
+                GEOM.radius_pill,
+                th.hover,
+                th.hover_edge,
+            );
         }
-        let fg = if active { th.accent } else { th.text_dim };
+        let fg = if active {
+            th.accent
+        } else if hot {
+            th.text
+        } else {
+            th.text_dim
+        };
         fonts.layout_line(
             &mut list,
             label,
@@ -2348,6 +2454,7 @@ fn draw_ui(
                 continue;
             }
             let selected = active && i == m.lib_sel;
+            let hot = hover == Some(Hit::Row(Pane::Library, i));
             hit(hits, 20.0, y, left_w, lib_row_h, Hit::Row(Pane::Library, i));
             row::surface(
                 &mut list,
@@ -2357,6 +2464,7 @@ fn draw_ui(
                 lib_surface,
                 lib_row_h - GEOM.row_gap,
                 selected,
+                hot,
                 false,
             );
             // No bullet: a leading glyph on every row is visual noise. The kind of the entry is
@@ -2563,6 +2671,7 @@ fn draw_ui(
                 continue;
             }
             let selected = i == picker.sel;
+            let hot = hover == Some(Hit::Row(m.view, i));
             hit(hits, qx, y, qw, compact, Hit::Row(m.view, i));
             row::surface(
                 &mut list,
@@ -2572,6 +2681,7 @@ fn draw_ui(
                 row::surface_w(qw),
                 compact - GEOM.row_gap,
                 selected,
+                hot,
                 false,
             );
             let idx = format!("{:02}", i + 1);
@@ -2658,21 +2768,13 @@ fn draw_ui(
         let verts_before = list.vertices.len();
         let _ = verts_before;
         let selected = active_centre && i == m.queue_sel;
-        hit(
-            hits,
-            qx,
-            y,
-            qw,
-            row_h,
-            Hit::Row(
-                if search_mode {
-                    Pane::Search
-                } else {
-                    Pane::Queue
-                },
-                i,
-            ),
-        );
+        let row_pane = if search_mode {
+            Pane::Search
+        } else {
+            Pane::Queue
+        };
+        let hot = hover == Some(Hit::Row(row_pane, i));
+        hit(hits, qx, y, qw, row_h, Hit::Row(row_pane, i));
         let playing = !search_mode && i == playing_index;
         row::surface(
             &mut list,
@@ -2682,6 +2784,7 @@ fn draw_ui(
             row::surface_w(qw),
             row_h - GEOM.row_gap,
             selected,
+            hot,
             playing,
         );
         let text_x = qx + row::text_x();
@@ -3043,15 +3146,17 @@ fn draw_ui(
             0.0
         };
         let bar_y = y;
-        list.rounded(
-            px,
-            bar_y,
-            pw,
-            bar_h,
-            bar_h * 0.5,
-            th.panel_inset,
-            th.panel_inset,
-        );
+        // A bar under the pointer lifts its bed one step and shows the knob, so "scrubbable"
+        // is visible before the first track has played and without moving the geometry. The
+        // lift uses the shared hover tokens, not a white wash: a near-white at low alpha is
+        // far brighter than the same alpha of a saturated accent.
+        let hot_bar = hover == Some(Hit::Seek(pw));
+        let bed = if hot_bar {
+            th.hover_well
+        } else {
+            th.panel_inset
+        };
+        list.rounded(px, bar_y, pw, bar_h, bar_h * 0.5, bed, bed);
         hit(
             hits,
             px - GEOM.inner,
@@ -3065,6 +3170,16 @@ fn draw_ui(
             list.rounded(px, bar_y, filled, bar_h, bar_h * 0.5, th.accent, th.accent2);
             list.rounded(
                 px + filled - 5.0,
+                bar_y - 3.0,
+                10.0,
+                bar_h + 6.0,
+                (bar_h + 6.0) * 0.5,
+                th.text,
+                theme::with_alpha(th.text, 0.9),
+            );
+        } else if hot_bar {
+            list.rounded(
+                px - 5.0,
                 bar_y - 3.0,
                 10.0,
                 bar_h + 6.0,
@@ -3127,6 +3242,38 @@ fn draw_ui(
             transport_h,
             Hit::Transport(1),
         );
+        let hot_prev = hover == Some(Hit::Transport(-1));
+        let hot_play = hover == Some(Hit::Transport(0));
+        let hot_next = hover == Some(Hit::Transport(1));
+        // Prev/next have no fill of their own; under the pointer they get a faint disc so the
+        // clickable area is visible. Keeping prev/next unfilled is what leaves the play button
+        // the single accent shape in the panel.
+        for (dx, hot) in [(-side_dx, hot_prev), (side_dx, hot_next)] {
+            if hot {
+                list.rounded(
+                    center + dx - 15.0,
+                    ty - 15.0,
+                    30.0,
+                    30.0,
+                    15.0,
+                    th.hover,
+                    th.hover_edge,
+                );
+            }
+        }
+        // The play button cannot signal hover with a wash — it is already the accent fill — so
+        // it grows a thin ring instead: the same weight cue a focus ring uses, no new colour.
+        if hot_play {
+            list.rounded(
+                center - transport_h * 0.5 - 2.0,
+                y - 2.0,
+                transport_h + 4.0,
+                transport_h + 4.0,
+                (transport_h + 4.0) * 0.5,
+                th.accent_soft,
+                theme::with_alpha(th.accent2, 0.16),
+            );
+        }
         list.rounded(
             center - transport_h * 0.5,
             y,
@@ -3136,15 +3283,16 @@ fn draw_ui(
             th.accent,
             th.accent2,
         );
+        let side_ink = |hot: bool| if hot { th.text } else { th.text_dim };
         for (sym, dx, size, color) in [
-            ("◀◀", -side_dx, 15.0, th.text_dim),
+            ("◀◀", -side_dx, 15.0, side_ink(hot_prev)),
             (
                 if playing { "▮▮" } else { "▶" },
                 0.0,
                 19.0,
                 th.text_on_accent,
             ),
-            ("▶▶", side_dx, 15.0, th.text_dim),
+            ("▶▶", side_dx, 15.0, side_ink(hot_next)),
         ] {
             let sw = fonts.measure(sym, size, Face::Symbols);
             fonts.layout_line(
@@ -3171,6 +3319,7 @@ fn draw_ui(
         let vbar_x = px + label_w + GEOM.gap;
         let vbar_w = (pw - label_w - value_w - GEOM.gap * 2.0).max(24.0);
         let vcy = y + volume_h * 0.5;
+        let hot_vol = hover == Some(Hit::Volume(vbar_w));
         fonts.layout_line(
             &mut list,
             "VOL",
@@ -3178,16 +3327,26 @@ fn draw_ui(
             vcy - TYPE.micro * 0.62,
             TYPE.micro,
             Face::UiMedium,
-            th.text_faint,
+            if hot_vol { th.text_dim } else { th.text_faint },
         );
+        // Hover is where the volume bar stops looking like a static readout: the bed lifts and
+        // a thumb appears at the current level, so the same pixels say "drag me".
         list.rounded(
             vbar_x,
-            vcy - 2.0,
+            vcy - if hot_vol { 3.0 } else { 2.0 },
             vbar_w,
-            4.0,
-            2.0,
-            th.panel_inset,
-            th.panel_inset,
+            if hot_vol { 6.0 } else { 4.0 },
+            if hot_vol { 3.0 } else { 2.0 },
+            if hot_vol {
+                th.hover_well
+            } else {
+                th.panel_inset
+            },
+            if hot_vol {
+                th.hover_well
+            } else {
+                th.panel_inset
+            },
         );
         hit(
             hits,
@@ -3200,12 +3359,24 @@ fn draw_ui(
         if vol > 0 {
             list.rounded(
                 vbar_x,
-                vcy - 2.0,
+                vcy - if hot_vol { 3.0 } else { 2.0 },
                 vbar_w * (vol as f32 / 100.0),
-                4.0,
-                2.0,
-                theme::with_alpha(th.text, 0.75),
-                theme::with_alpha(th.text, 0.6),
+                if hot_vol { 6.0 } else { 4.0 },
+                if hot_vol { 3.0 } else { 2.0 },
+                theme::with_alpha(th.text, if hot_vol { 0.9 } else { 0.75 }),
+                theme::with_alpha(th.text, if hot_vol { 0.75 } else { 0.6 }),
+            );
+        }
+        if hot_vol {
+            let thumb_x = vbar_x + vbar_w * (vol as f32 / 100.0);
+            list.rounded(
+                thumb_x - 5.0,
+                vcy - 5.0,
+                10.0,
+                10.0,
+                5.0,
+                th.text,
+                theme::with_alpha(th.text, 0.9),
             );
         }
         fonts.layout_line(
@@ -3234,11 +3405,20 @@ fn draw_ui(
             {
                 let cw2 = fonts.measure(label, TYPE.caption, Face::UiMedium) + 18.0;
                 hit(hits, cx, chip_y, cw2, chips_h, Hit::Chip(chip_index as u8));
+                let hot = hover == Some(Hit::Chip(chip_index as u8));
                 let (bg1, bg2, fg) = if on {
                     (
                         th.accent_soft,
                         theme::with_alpha(th.accent2, 0.12),
                         th.accent,
+                    )
+                } else if hot {
+                    // An off chip under the pointer lifts to the hover wash and readable ink;
+                    // an on chip keeps its accent, which stays the strongest chip state.
+                    (
+                        theme::with_alpha(th.text, 0.10),
+                        theme::with_alpha(th.text, 0.06),
+                        th.text,
                     )
                 } else {
                     (
@@ -3424,6 +3604,10 @@ fn draw_ui(
     }
     if m.outputs_open {
         list.rect(0.0, 0.0, w, h, theme::with_alpha(th.bg_bottom, 0.78));
+        // The scrim is a target of its own: without it the rectangles drawn underneath keep
+        // answering through the dim layer, so a click beside the panel would act on a hidden
+        // row instead of closing the overlay.
+        hit(hits, 0.0, 0.0, w, h, Hit::CloseOverlay);
         let panel_w = 520.0_f32.min(w - 80.0);
         let row_h2 = 34.0;
         let panel_h = 92.0 + m.outputs.len().max(1) as f32 * row_h2;
@@ -3474,6 +3658,11 @@ fn draw_ui(
                 Hit::Output(i),
             );
             let focused = i == m.outputs_focus;
+            let hot = hover == Some(Hit::Output(i));
+            // Three states, three shapes: the keyboard cursor is a halo *around* the row, hover
+            // is a wash *on* the row, and enabled/disabled is the row's own base. Giving focus
+            // and hover the same rectangle made them indistinguishable whenever an enabled row
+            // was also under the pointer.
             if focused {
                 list.rounded(
                     px + 12.0,
@@ -3492,7 +3681,7 @@ fn draw_ui(
                 row_h2 - 4.0,
                 GEOM.radius_md,
                 if on {
-                    th.selection
+                    th.playing_bg
                 } else {
                     theme::with_alpha(th.text, 0.03)
                 },
@@ -3502,6 +3691,17 @@ fn draw_ui(
                     theme::with_alpha(th.text, 0.02)
                 },
             );
+            if hot {
+                list.rounded(
+                    px + 16.0,
+                    y,
+                    panel_w - 32.0,
+                    row_h2 - 4.0,
+                    GEOM.radius_md,
+                    th.hover,
+                    th.hover_edge,
+                );
+            }
             list.rounded(
                 px + 28.0,
                 y + 12.0,
@@ -3736,7 +3936,11 @@ impl winit::application::ApplicationHandler for App {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::KeyboardInput { event, .. } => self.handle_key(&event, false, false),
             WindowEvent::CursorMoved { position, .. } => {
-                self.cursor = (position.x as f32, position.y as f32);
+                // winit speaks physical pixels, the UI is authored in logical units.
+                self.pointer = (
+                    position.x as f32 / self.scale,
+                    position.y as f32 / self.scale,
+                );
             }
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
@@ -3863,12 +4067,17 @@ impl winit::application::ApplicationHandler for App {
                 let t = self.started.elapsed().as_secs_f32();
                 let theme = theme::Theme::by_name(&self.theme_name);
                 let mut hits: Vec<HitArea> = Vec::new();
+                // Hover is resolved against the rectangles of the frame the user is looking
+                // at, before this frame replaces them.
+                self.hover = self.hit_under_pointer().map(|a| a.action);
+                let hover = self.hover;
                 let list = draw_ui(
                     self.fonts.as_mut().unwrap(),
                     &self.model,
                     extent,
                     t,
                     theme,
+                    hover,
                     &mut hits,
                 );
                 self.hits = hits;

@@ -138,6 +138,15 @@ pub struct Theme {
     pub selection_edge: Rgba,
     /// Flat wash behind the playing row, always weaker than the cursor.
     pub playing_bg: Rgba,
+    /// Wash under the pointer, and the bottom stop of the same wash so a hovered row is lit
+    /// from the top like a selected one. Weaker than both washes above: hover answers "this is
+    /// pressable", the playing wash answers "this is playing" and `selection` answers "this is
+    /// where the keyboard is", so a mouse resting on a row can never outshine the cursor.
+    pub hover: Rgba,
+    pub hover_edge: Rgba,
+    /// The hover wash over a recessed well (progress and volume beds). Thin bars cannot carry
+    /// a two-stop gradient, so this is the flat value they paint instead.
+    pub hover_well: Rgba,
     // states
     pub danger: Rgba,
     pub success: Rgba,
@@ -179,6 +188,9 @@ pub const DARK: Theme = Theme {
     selection: [0.3725, 0.8196, 1.0, 0.20],
     selection_edge: [0.5490, 0.6078, 1.0, 0.07],
     playing_bg: [0.3725, 0.8196, 1.0, 0.08],
+    hover: [0.3725, 0.8196, 1.0, 0.055],
+    hover_edge: [0.5490, 0.6078, 1.0, 0.020],
+    hover_well: [0.3725, 0.8196, 1.0, 0.030],
     danger: [1.0, 0.4824, 0.4824, 1.0],     // #FF7B7B
     success: [0.3294, 0.8510, 0.5490, 1.0], // #54D98C
     backdrop: [0.25, 0.29, 0.40, 0.15],
@@ -215,6 +227,9 @@ pub const WARM: Theme = Theme {
     selection: [1.0, 0.722, 0.361, 0.22],
     selection_edge: [1.0, 0.541, 0.404, 0.07],
     playing_bg: [1.0, 0.722, 0.361, 0.10],
+    hover: [1.0, 0.722, 0.361, 0.06],
+    hover_edge: [1.0, 0.541, 0.404, 0.020],
+    hover_well: [1.0, 0.722, 0.361, 0.030],
     danger: [0.937, 0.400, 0.400, 1.0],
     success: [0.353, 0.890, 0.596, 1.0],
     backdrop: [0.40, 0.29, 0.20, 0.15],
