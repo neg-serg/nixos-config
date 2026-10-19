@@ -14,8 +14,10 @@ hitslog=$(mktemp)
 hoverlog=$(mktemp)
 plog=$(mktemp)
 emptylog=$(mktemp)
+metalog=$(mktemp)
 stubport=$(mktemp)
-trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog" "$emptylog" "$stubport"' EXIT
+metaport=$(mktemp)
+trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog" "$emptylog" "$metalog" "$stubport" "$metaport"' EXIT
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
@@ -80,53 +82,25 @@ PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   > "$plog" 2>&1
 # Empty MPD: an answered-but-empty library must read "ничего нет" and the outputs overlay must
 # read "нет выходов" — the frame used to print "загружаю…" forever, which is indistinguishable
-# from a real MPD that holds nothing. A stub server speaks the protocol with well-formed but
-# empty replies; it delays the list answers a little so the transient "loading" frame is
+# from a real MPD that holds nothing. The stub server speaks the protocol with well-formed but
+# empty replies and delays the list answers a little, so the transient "loading" frame is
 # observable without racing the worker's poll loop. Only read-only commands run under dry-run,
 # so the real daemon is never involved.
-python3 - "$stubport" << 'PY' &
-import socket, sys, threading, time
-
-srv = socket.socket()
-srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-srv.bind(("127.0.0.1", 0))
-srv.listen(8)
-with open(sys.argv[1], "w") as fh:
-    fh.write(str(srv.getsockname()[1]))
-    fh.flush()
-
-STATUS = (
-    b"volume: 40\nrepeat: 0\nrandom: 0\nsingle: 0\nconsume: 0\n"
-    b"playlistlength: 0\nstate: stop\nOK\n"
-)
-SLOW = ("list ", "listplaylists", "outputs", "listplaylistinfo")
-
-
-def serve(conn):
-    conn.sendall(b"OK MPD 0.23.5\n")
-    buf = b""
-    while True:
-        try:
-            chunk = conn.recv(4096)
-        except OSError:
-            return
-        if not chunk:
-            return
-        buf += chunk
-        while b"\n" in buf:
-            raw, buf = buf.split(b"\n", 1)
-            cmd = raw.decode("utf-8", "replace").strip()
-            if cmd.startswith(SLOW):
-                time.sleep(0.12)
-            conn.sendall(STATUS if cmd.startswith("status") else b"OK\n")
-
-
-while True:
-    conn, _ = srv.accept()
-    threading.Thread(target=serve, args=(conn,), daemon=True).start()
-PY
-stub_pid=$!
-for _ in $(seq 1 100); do [ -s "$stubport" ] && break; sleep 0.05; done
+#
+# The same stub in --outputs mode publishes two audio outputs: one in the modern shape
+# (plugin and driver in the reply) and one in the shape of a daemon older than 0.22, plus a
+# `config` reply with the device paths. In the default mode `config` is refused exactly like a
+# real MPD refuses it to a non-local client, which is how the empty run proves the overlay
+# degrades instead of erroring.
+# The stub must not inherit this function's stdout: a background child holding the pipe open
+# keeps the `$(...)` substitution waiting for EOF long after the shell itself has moved on.
+start_stub() {
+  python3 "$here/stub-mpd.py" "$1" "${@:2}" >/dev/null 2>&1 &
+  local pid=$!
+  for _ in $(seq 1 100); do [ -s "$1" ] && break; sleep 0.05; done
+  echo "$pid"
+}
+stub_pid=$(start_stub "$stubport")
 stub_addr=$(cat "$stubport" 2>/dev/null)
 if [ -z "$stub_addr" ]; then
   echo "FAIL the stub MPD server did not start"
@@ -138,7 +112,21 @@ PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   --keys="2,noop,noop,noop,3,noop,noop,noop,P,noop,noop,noop,o,noop,noop,noop" > "$emptylog" 2>&1
 kill "$stub_pid" 2>/dev/null
 wait "$stub_pid" 2>/dev/null
-python3 - "$out" "$wide" "$hoverlog" "$plog" "$emptylog" << 'PY'
+
+meta_pid=$(start_stub "$metaport" --outputs)
+meta_addr=$(cat "$metaport" 2>/dev/null)
+if [ -z "$meta_addr" ]; then
+  echo "FAIL the stub MPD server with outputs did not start"
+  exit 1
+fi
+PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+  "$bin" --mpd="127.0.0.1:$meta_addr" --render-size=800x600 --shot-seq=/tmp/keys-outs \
+  --keys="o,noop,noop,noop,cursor:400x300,noop" > "$metalog" 2>&1
+kill "$meta_pid" 2>/dev/null
+wait "$meta_pid" 2>/dev/null
+
+python3 - "$out" "$wide" "$hoverlog" "$plog" "$emptylog" "$metalog" << 'PY'
 import re, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]
@@ -401,6 +389,11 @@ check(
     ),
     str([s for s in empty_states if field(s, "artists") == "filled"][:1]),
 )
+check(
+    "a daemon with no outputs exposes no output metadata",
+    bool(empty_states) and all(field(s, "out0") is None for s in empty_states),
+    str([s for s in empty_states if field(s, "out0") is not None][:1]),
+)
 o_immediate = empty_dump("o", False)
 o_settled = [s for s in empty_states if "outputs=true" in s]
 o_settled = o_settled[-1] if o_settled else None
@@ -428,6 +421,62 @@ check(
     "a populated MPD reports its pickers as filled",
     all(vals and vals[-1] == "filled" for vals in filled.values()),
     str(filled),
+)
+# ---- outputs metadata: an output row names the plugin, the driver and the device it runs on,
+# so two rows called "PipeWire" can be told apart. The stub in --outputs mode plays three
+# shapes of the same reply at once: a modern daemon (plugin and driver both present), a daemon
+# older than 0.22 (no plugin field, so the type has to come from `config`) and one whose plugin
+# and driver are the same word. The live daemon run covers the fourth: a daemon that refuses
+# `config` to this client must still show its plugin and leave the device empty.
+def split_meta(state, key):
+    raw = field(state, key) if state else None
+    return raw.split("|") if raw else []
+
+meta_lines = open(sys.argv[6], errors="replace").read().splitlines()
+meta_states = [l for l in meta_lines if l.startswith("[state]")]
+meta_open = [s for s in meta_states if "outputs=true" in s]
+meta_last = meta_open[-1] if meta_open else None
+meta0 = split_meta(meta_last, "out0")
+meta1 = split_meta(meta_last, "out1")
+meta2 = split_meta(meta_last, "out2")
+check(
+    "an output row shows its plugin, driver, device and the joined second line",
+    meta0
+    == [
+        "Stub Pipe",
+        "pulse",
+        "pipewire",
+        "stub-device-0",
+        "pulse \u00b7 pipewire \u00b7 stub-device-0",
+    ],
+    str(meta0),
+)
+check(
+    "a daemon that omits `plugin` still gets one from its config block",
+    meta1 == ["Stub Fifo", "alsa", "fifo", "/tmp/stub.fifo", "alsa \u00b7 fifo \u00b7 /tmp/stub.fifo"],
+    str(meta1),
+)
+check(
+    "a plugin that repeats its driver is printed once",
+    meta2 == ["Stub Repeat", "alsa", "alsa", "", "alsa"],
+    str(meta2),
+)
+check(
+    "every configured output gets its own row",
+    bool(meta2) and field(meta_last, "out3") is None,
+    str(meta_last),
+)
+real_open = [s for s in states if "outputs=true" in s]
+real_first = split_meta(real_open[-1], "out0") if real_open else []
+check(
+    "the live daemon's plugin reaches the overlay",
+    len(real_first) == 5 and bool(real_first[1]),
+    str(real_first),
+)
+check(
+    "a refused `config` leaves the device empty instead of failing",
+    len(real_first) == 5 and real_first[3] == "" and field(real_open[-1], "outs") == "filled",
+    f"{real_first} outs={field(real_open[-1], 'outs') if real_open else None}",
 )
 sys.exit(1 if fails else 0)
 PY

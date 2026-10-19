@@ -2172,8 +2172,29 @@ impl App {
         } else {
             "loading"
         };
+        // The metadata each output row carries, in the order the row draws it — name, plugin,
+        // driver, device and the joined second line — so a test can assert the parsing, the
+        // config fallback and the rendering without reading pixels. A field the daemon did not
+        // share stays empty rather than being filled with a guess.
+        let outmeta: String = self
+            .model
+            .outputs
+            .iter()
+            .take(8)
+            .enumerate()
+            .map(|(i, o)| {
+                format!(
+                    " out{i}='{}|{}|{}|{}|{}'",
+                    o.name,
+                    o.plugin,
+                    o.driver,
+                    o.device,
+                    o.detail()
+                )
+            })
+            .collect();
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             self.model.lib_entries.len(),
@@ -3868,13 +3889,15 @@ fn draw_ui(
         // row instead of closing the overlay.
         hit(hits, 0.0, 0.0, w, h, Hit::CloseOverlay);
         let panel_w = 520.0_f32.min(w - 80.0);
-        let row_h2 = 34.0;
+        // Each output is a two-line row — the name and, under it, the metadata the daemon
+        // shared — so it takes the same `row_h` as a queue row instead of a one-line 34.
+        let out_row_h = GEOM.row_h;
         // No outputs is a state of its own: the panel keeps room for a headline plus a note
         // instead of shrinking to a single placeholder row that looked like a broken list.
         let body_h2 = if m.outputs.is_empty() {
-            row_h2 + 26.0
+            out_row_h + 26.0
         } else {
-            m.outputs.len() as f32 * row_h2
+            m.outputs.len() as f32 * out_row_h
         };
         let panel_h = 92.0 + body_h2;
         let px = (w - panel_w) * 0.5;
@@ -3940,14 +3963,14 @@ fn draw_ui(
             );
         }
         for (i, out) in m.outputs.iter().enumerate() {
-            let y = py + 56.0 + i as f32 * row_h2;
+            let y = py + 56.0 + i as f32 * out_row_h;
             let on = out.enabled;
             hit(
                 hits,
                 px + 16.0,
                 y,
                 panel_w - 32.0,
-                row_h2 - 4.0,
+                out_row_h - 4.0,
                 Hit::Output(i),
             );
             let focused = i == m.outputs_focus;
@@ -3961,7 +3984,7 @@ fn draw_ui(
                     px + 12.0,
                     y - 2.0,
                     panel_w - 24.0,
-                    row_h2,
+                    out_row_h,
                     GEOM.radius_md + 2.0,
                     theme::with_alpha(th.accent, 0.10),
                     theme::with_alpha(th.accent2, 0.08),
@@ -3971,7 +3994,7 @@ fn draw_ui(
                 px + 16.0,
                 y,
                 panel_w - 32.0,
-                row_h2 - 4.0,
+                out_row_h - 4.0,
                 GEOM.radius_md,
                 if on {
                     th.playing_bg
@@ -3989,7 +4012,7 @@ fn draw_ui(
                     px + 16.0,
                     y,
                     panel_w - 32.0,
-                    row_h2 - 4.0,
+                    out_row_h - 4.0,
                     GEOM.radius_md,
                     th.hover,
                     th.hover_edge,
@@ -3997,7 +4020,7 @@ fn draw_ui(
             }
             list.rounded(
                 px + 28.0,
-                y + 12.0,
+                y + 8.0,
                 8.0,
                 8.0,
                 4.0,
@@ -4012,23 +4035,42 @@ fn draw_ui(
                     theme::with_alpha(th.text, 0.25)
                 },
             );
+            // The name is the row's one bright line; the metadata below it is a hint, so it
+            // never competes for the eye and simply disappears when the daemon shared nothing.
             fonts.layout_fitted(
                 &mut list,
                 &out.name,
                 px + 48.0,
-                y + 8.0,
+                y + 3.0,
                 TYPE.body,
-                Face::UiRegular,
+                Face::UiMedium,
                 if on { th.text } else { th.text_dim },
                 panel_w - 160.0,
             );
+            let detail = out.detail();
+            if !detail.is_empty() {
+                fonts.layout_fitted(
+                    &mut list,
+                    &detail,
+                    px + 48.0,
+                    y + 20.0,
+                    TYPE.caption,
+                    Face::UiRegular,
+                    if on {
+                        theme::with_alpha(th.text, 0.55)
+                    } else {
+                        theme::with_alpha(th.text_faint, 0.8)
+                    },
+                    panel_w - 160.0,
+                );
+            }
             let state = if on { "on" } else { "off" };
             let sw = fonts.measure(state, TYPE.caption, Face::Mono);
             fonts.layout_line(
                 &mut list,
                 state,
                 px + panel_w - 32.0 - sw,
-                y + 10.0,
+                y + 5.0,
                 TYPE.caption,
                 Face::Mono,
                 if on { th.success } else { th.text_faint },
