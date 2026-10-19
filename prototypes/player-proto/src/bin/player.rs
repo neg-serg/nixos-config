@@ -3212,8 +3212,6 @@ fn draw_ui(
             continue;
         }
         drawn_rows += 1;
-        let verts_before = list.vertices.len();
-        let _ = verts_before;
         let selected = active_centre && i == m.queue_sel;
         let row_pane = if search_mode {
             Pane::Search
@@ -3235,6 +3233,19 @@ fn draw_ui(
             playing,
         );
         let text_x = qx + row::text_x();
+        if drawn_rows == 1 {
+            // Geometry of the first visible row: enough to pin the row inset, the text column
+            // and the duration column without recording every row of the frame.
+            player_proto::record_rect(
+                "queue_row",
+                qx + GEOM.row_inset,
+                y,
+                row::surface_w(qw),
+                row_h,
+            );
+            player_proto::record_rect("queue_text", text_x, y, qw - (text_x - qx) - 96.0, row_h);
+            player_proto::record_rect("queue_dur", qx + qw - 96.0, y, 96.0, row_h);
+        }
         let gutter_right = qx + GEOM.row_inset + GEOM.gutter;
         // Index column: right-aligned digits in the caption face at the faintest ink on
         // purpose — the position in the queue is navigation aid, not content. The playing row

@@ -316,8 +316,10 @@ only the art is centred (everything else is left-aligned), the panes share the b
 top bar spans the frame, the footer is bottom-flush and full width, and the queue pane takes
 either the library gutter or the freed one when the library is dropped. Each element is also cut
 into its own small crop under `/tmp/player-elements/`, so one element can be judged alone.
-The script already earned its keep by failing "art keeps air on both sides" (304 px art in a
-304 px column).
+Rows are covered too: the inset inside the pane, the index gutter before the text column, the
+96 px duration column flush with the pane's right edge, and the row height following the density
+breakpoint (40 px above 760 px of height, 36 below). The script already earned its keep by failing
+"art keeps air on both sides" (304 px art in a 304 px column).
 
 ## Numbers so far (llvmpipe, software rasterizer — NOT a GPU result)
 
