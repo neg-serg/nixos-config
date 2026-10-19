@@ -1,0 +1,99 @@
+From 03d083bb599f90037090e11a457728a5f8de0c20 Mon Sep 17 00:00:00 2001
+From: agent <agent@trantor>
+Date: Mon, 19 Oct 2026 04:30:42 +0300
+Subject: [PATCH 3/3] docs: document the tab appearance keys
+
+---
+ src/config/model.rs | 36 ++++++++++++++++++++++++++++++++++++
+ src/main.rs         | 17 +++++++++++++++++
+ 2 files changed, 53 insertions(+)
+
+diff --git a/src/config/model.rs b/src/config/model.rs
+index e73dcfa..5115322 100644
+--- a/src/config/model.rs
++++ b/src/config/model.rs
+@@ -1572,6 +1572,21 @@ status_indicators = "symbols"
+         );
+         assert!(default_config.ui.tab_bar_right.is_empty());
+         assert_eq!(default_config.ui.tab_bar_right_separator, " ");
++        assert!(default_config.ui.active_tab_fg.is_empty());
++        assert!(default_config.ui.active_tab_bg.is_empty());
++        assert!(default_config.ui.inactive_tab_fg.is_empty());
++        assert!(default_config.ui.inactive_tab_bg.is_empty());
++        assert_eq!(
++            default_config.ui.active_tab_style,
++            TabFontStyleConfig::Normal
++        );
++        assert_eq!(
++            default_config.ui.inactive_tab_style,
++            TabFontStyleConfig::Normal
++        );
++        assert!(default_config.ui.tab_title_template.is_empty());
++        assert!(default_config.ui.active_tab_title_template.is_empty());
++        assert!(default_config.ui.tab_active_marker.is_empty());
+ 
+         let toml = r#"
+ [ui]
+@@ -1590,6 +1605,15 @@ tab_bar_right = [
+   { type = "command", command = "status.sh", interval_seconds = 10, timeout_seconds = 3 },
+ ]
+ tab_bar_right_separator = " · "
++active_tab_fg = "#6c7e96"
++active_tab_bg = "#040f1c"
++inactive_tab_fg = "#1b1f25"
++inactive_tab_bg = ""
++active_tab_style = "bold-italic"
++inactive_tab_style = "normal"
++tab_title_template = "{index}:{title}"
++active_tab_title_template = "{marker}{index} {title}"
++tab_active_marker = "❯> "
+ "#;
+         let config: Config = toml::from_str(toml).unwrap();
+         assert_eq!(config.ui.pane_borders, PaneBordersConfig::Always);
+@@ -1605,6 +1629,18 @@ tab_bar_right_separator = " · "
+             TabBarRightEntryConfig::Hostname
+         ));
+         assert_eq!(config.ui.tab_bar_right_separator, " · ");
++        assert_eq!(config.ui.active_tab_fg, "#6c7e96");
++        assert_eq!(config.ui.active_tab_bg, "#040f1c");
++        assert_eq!(config.ui.inactive_tab_fg, "#1b1f25");
++        assert!(config.ui.inactive_tab_bg.is_empty());
++        assert_eq!(config.ui.active_tab_style, TabFontStyleConfig::BoldItalic);
++        assert_eq!(
++            config.ui.inactive_tab_style,
++            TabFontStyleConfig::Normal
++        );
++        assert_eq!(config.ui.tab_title_template, "{index}:{title}");
++        assert_eq!(config.ui.active_tab_title_template, "{marker}{index} {title}");
++        assert_eq!(config.ui.tab_active_marker, "❯> ");
+     }
+ 
+     #[test]
+diff --git a/src/main.rs b/src/main.rs
+index 45a6409..6999a1c 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -319,6 +319,23 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
+ # tab_bar_right = []
+ # tab_bar_right_separator = " "
+ 
++# Tab colours and font styles. Colours accept hex (#6c7e96), named colours, or
++# rgb(r,g,b); an empty value keeps the built-in colour.
++# active_tab_fg = ""
++# active_tab_bg = ""
++# inactive_tab_fg = ""
++# inactive_tab_bg = ""
++# Font style per tab: "normal", "bold", "italic" or "bold-italic".
++# active_tab_style = "normal"
++# inactive_tab_style = "normal"
++
++# Tab label templates. Tokens: {index} (tab number), {title} (tab name) and
++# {marker} (tab_active_marker on the focused tab). An empty template keeps the
++# plain label.
++# tab_title_template = ""
++# active_tab_title_template = ""
++# tab_active_marker = ""
++
+ # Title Herdr writes to the terminal it runs in, which is what window managers
+ # show in title, tab, and group bars. Tokens are {hostname}, {workspace}, {tab},
+ # {pane}, and {terminal_title}; {{ and }} are literal braces.

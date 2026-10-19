@@ -1,0 +1,203 @@
+From 5d7bde37d2bd4d3de62bd7ac8d01bc2eb3f47f97 Mon Sep 17 00:00:00 2001
+From: agent <agent@trantor>
+Date: Mon, 19 Oct 2026 04:29:57 +0300
+Subject: [PATCH 1/3] ui: per-state tab colours and font styles
+
+---
+ src/client/shell/config.rs | 16 +++++++++++++
+ src/client/shell/state.rs  |  6 +++++
+ src/client/shell/tabs.rs   | 48 +++++++++++++++++++++++++++++++-------
+ src/config.rs              |  2 +-
+ src/config/model.rs        | 32 +++++++++++++++++++++++++
+ 5 files changed, 94 insertions(+), 10 deletions(-)
+
+diff --git a/src/client/shell/config.rs b/src/client/shell/config.rs
+index bfa1fb2..88e3188 100644
+--- a/src/client/shell/config.rs
++++ b/src/client/shell/config.rs
+@@ -109,6 +109,16 @@ impl ClientShellState {
+     }
+ }
+ 
++/// Parse an optional tab-bar colour. An empty value means "keep the built-in
++/// colour", so an unset key cannot change the current look.
++fn tab_color(value: &str) -> Option<ratatui::style::Color> {
++    let value = value.trim();
++    if value.is_empty() {
++        return None;
++    }
++    Some(crate::config::parse_color(value))
++}
++
+ impl ClientShellConfig {
+     pub(crate) fn from_config(config: &Config) -> Self {
+         let theme_runtime = crate::app::client_theme_runtime_from_config(config);
+@@ -121,6 +131,12 @@ impl ClientShellConfig {
+             mobile_width_threshold: config.ui.mobile_width_threshold,
+             tab_bar_position: config.ui.tab_bar_position,
+             hide_tab_bar_when_single_tab: config.ui.hide_tab_bar_when_single_tab,
++            active_tab_fg: tab_color(&config.ui.active_tab_fg),
++            active_tab_bg: tab_color(&config.ui.active_tab_bg),
++            inactive_tab_fg: tab_color(&config.ui.inactive_tab_fg),
++            inactive_tab_bg: tab_color(&config.ui.inactive_tab_bg),
++            active_tab_style: config.ui.active_tab_style,
++            inactive_tab_style: config.ui.inactive_tab_style,
+             spaces: config.ui.sidebar.spaces.clone(),
+             agents: config.ui.sidebar.agents.clone(),
+             agent_panel_sort: config.ui.agent_panel_sort,
+diff --git a/src/client/shell/state.rs b/src/client/shell/state.rs
+index c170c9b..e8c19c9 100644
+--- a/src/client/shell/state.rs
++++ b/src/client/shell/state.rs
+@@ -21,6 +21,12 @@ pub(crate) struct ClientShellConfig {
+     pub(super) mobile_width_threshold: u16,
+     pub(super) tab_bar_position: TabBarPositionConfig,
+     pub(super) hide_tab_bar_when_single_tab: bool,
++    pub(super) active_tab_fg: Option<ratatui::style::Color>,
++    pub(super) active_tab_bg: Option<ratatui::style::Color>,
++    pub(super) inactive_tab_fg: Option<ratatui::style::Color>,
++    pub(super) inactive_tab_bg: Option<ratatui::style::Color>,
++    pub(super) active_tab_style: crate::config::TabFontStyleConfig,
++    pub(super) inactive_tab_style: crate::config::TabFontStyleConfig,
+     pub(super) spaces: SpacesSidebarConfig,
+     pub(super) agents: crate::config::AgentsSidebarConfig,
+     pub(super) agent_panel_sort: crate::config::AgentPanelSortConfig,
+diff --git a/src/client/shell/tabs.rs b/src/client/shell/tabs.rs
+index 3fdcf7d..455aed3 100644
+--- a/src/client/shell/tabs.rs
++++ b/src/client/shell/tabs.rs
+@@ -101,18 +101,37 @@ pub(crate) fn render_tab_bar(
+         }
+         let rect = Rect::new(x, area.y, width, 1);
+         let style = if tab.focused {
+-            let base = Style::default()
+-                .fg(panel_contrast_fg(palette))
+-                .bg(palette.accent);
+-            if tab.custom_label {
+-                base.add_modifier(Modifier::BOLD)
++            let style = Style::default()
++                .fg(config
++                    .active_tab_fg
++                    .unwrap_or_else(|| panel_contrast_fg(palette)))
++                .bg(config.active_tab_bg.unwrap_or(palette.accent));
++            let modifier = tab_font_modifier(config.active_tab_style);
++            if modifier.is_empty() {
++                // Built-in look: only tabs with a custom label are emphasised.
++                if tab.custom_label {
++                    style.add_modifier(Modifier::BOLD)
++                } else {
++                    style
++                }
+             } else {
+-                base
++                style.add_modifier(modifier)
+             }
+-        } else if tab.custom_label {
+-            Style::default().fg(palette.overlay1).bg(palette.surface0)
+         } else {
+-            Style::default().fg(palette.overlay0).bg(palette.surface0)
++            let fg = config.inactive_tab_fg.unwrap_or(if tab.custom_label {
++                palette.overlay1
++            } else {
++                palette.overlay0
++            });
++            let style = Style::default()
++                .fg(fg)
++                .bg(config.inactive_tab_bg.unwrap_or(palette.surface0));
++            let modifier = tab_font_modifier(config.inactive_tab_style);
++            if modifier.is_empty() {
++                style
++            } else {
++                style.add_modifier(modifier)
++            }
+         };
+         let padding = width.saturating_sub(display_width(&name));
+         let left = padding / 2;
+@@ -379,6 +398,17 @@ fn tab_label(tab: &ClientShellTab) -> String {
+     }
+ }
+ 
++/// Map the configured tab font style onto a ratatui modifier mask.
++fn tab_font_modifier(style: crate::config::TabFontStyleConfig) -> Modifier {
++    use crate::config::TabFontStyleConfig;
++    match style {
++        TabFontStyleConfig::Normal => Modifier::empty(),
++        TabFontStyleConfig::Bold => Modifier::BOLD,
++        TabFontStyleConfig::Italic => Modifier::ITALIC,
++        TabFontStyleConfig::BoldItalic => Modifier::BOLD | Modifier::ITALIC,
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::max_tab_scroll;
+diff --git a/src/config.rs b/src/config.rs
+index 8550097..2248a51 100644
+--- a/src/config.rs
++++ b/src/config.rs
+@@ -25,7 +25,7 @@ pub use self::{
+         validated_sidebar_bounds, AgentPanelSortConfig, Config, ConfigReloadReport,
+         ConfigReloadStatus, HostCursorModeConfig, NewTerminalCwdConfig, PaneBordersConfig,
+         ShellModeConfig, SidebarCollapsedModeConfig, StatusIndicatorStyle, TabBarPositionConfig,
+-        ToastClipboardPosition, ToastConfig, ToastDelivery, ToastHerdrPosition,
++        TabFontStyleConfig, ToastClipboardPosition, ToastConfig, ToastDelivery, ToastHerdrPosition,
+         UpdateChannelConfig, MAX_TOAST_DELAY_SECONDS,
+     },
+     sidebar::{
+diff --git a/src/config/model.rs b/src/config/model.rs
+index 0e2e57c..1a8364b 100644
+--- a/src/config/model.rs
++++ b/src/config/model.rs
+@@ -880,6 +880,17 @@ pub enum TabBarPositionConfig {
+     Bottom,
+ }
+ 
++/// Font style of a tab label: `normal`, `bold`, `italic` or `bold-italic`.
++#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
++#[serde(rename_all = "kebab-case")]
++pub enum TabFontStyleConfig {
++    #[default]
++    Normal,
++    Bold,
++    Italic,
++    BoldItalic,
++}
++
+ #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+ pub enum PaneBordersConfig {
+     #[default]
+@@ -988,6 +999,21 @@ pub struct UiConfig {
+     pub tab_bar_right: Vec<TabBarRightEntryConfig>,
+     /// Text inserted between visible right-side tab bar entries. Default: one space.
+     pub tab_bar_right_separator: String,
++    /// Foreground of the focused tab label. Empty keeps the built-in contrast
++    /// colour that reads on the accent bar.
++    pub active_tab_fg: String,
++    /// Background of the focused tab cell. Empty keeps the accent bar.
++    pub active_tab_bg: String,
++    /// Foreground of the other tab labels. Empty keeps the built-in overlay
++    /// colour (brighter for tabs with a custom label).
++    pub inactive_tab_fg: String,
++    /// Background of the other tab cells. Empty keeps the surface colour.
++    pub inactive_tab_bg: String,
++    /// Font style of the focused tab: normal, bold, italic, bold-italic.
++    /// Default: normal (custom labels stay bold, as before).
++    pub active_tab_style: TabFontStyleConfig,
++    /// Font style of the other tabs. Default: normal.
++    pub inactive_tab_style: TabFontStyleConfig,
+     /// Format for the outer terminal window title. Empty leaves the title alone.
+     /// Default: "{hostname}: {workspace}".
+     pub window_title: String,
+@@ -1219,6 +1245,12 @@ impl Default for UiConfig {
+             tab_bar_position: TabBarPositionConfig::Top,
+             tab_bar_right: Vec::new(),
+             tab_bar_right_separator: " ".into(),
++            active_tab_fg: String::new(),
++            active_tab_bg: String::new(),
++            inactive_tab_fg: String::new(),
++            inactive_tab_bg: String::new(),
++            active_tab_style: TabFontStyleConfig::Normal,
++            inactive_tab_style: TabFontStyleConfig::Normal,
+             window_title: super::window_title::default_window_title(),
+             agent_panel_sort: AgentPanelSortConfig::Spaces,
+             _legacy_agent_panel_scope: None,

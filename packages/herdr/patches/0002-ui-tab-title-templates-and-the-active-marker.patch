@@ -1,0 +1,167 @@
+From 2f6a1f7217e4e3230ec5e48952cd8df31c0211e5 Mon Sep 17 00:00:00 2001
+From: agent <agent@trantor>
+Date: Mon, 19 Oct 2026 04:30:24 +0300
+Subject: [PATCH 2/3] ui: tab title templates and the active marker
+
+---
+ src/client/shell/config.rs |  3 ++
+ src/client/shell/state.rs  |  3 ++
+ src/client/shell/tabs.rs   | 64 ++++++++++++++++++++++++++++++++++++--
+ src/config/model.rs        | 13 ++++++++
+ 4 files changed, 81 insertions(+), 2 deletions(-)
+
+diff --git a/src/client/shell/config.rs b/src/client/shell/config.rs
+index 88e3188..4a49d54 100644
+--- a/src/client/shell/config.rs
++++ b/src/client/shell/config.rs
+@@ -137,6 +137,9 @@ impl ClientShellConfig {
+             inactive_tab_bg: tab_color(&config.ui.inactive_tab_bg),
+             active_tab_style: config.ui.active_tab_style,
+             inactive_tab_style: config.ui.inactive_tab_style,
++            tab_title_template: config.ui.tab_title_template.clone(),
++            active_tab_title_template: config.ui.active_tab_title_template.clone(),
++            tab_active_marker: config.ui.tab_active_marker.clone(),
+             spaces: config.ui.sidebar.spaces.clone(),
+             agents: config.ui.sidebar.agents.clone(),
+             agent_panel_sort: config.ui.agent_panel_sort,
+diff --git a/src/client/shell/state.rs b/src/client/shell/state.rs
+index e8c19c9..0f15efc 100644
+--- a/src/client/shell/state.rs
++++ b/src/client/shell/state.rs
+@@ -27,6 +27,9 @@ pub(crate) struct ClientShellConfig {
+     pub(super) inactive_tab_bg: Option<ratatui::style::Color>,
+     pub(super) active_tab_style: crate::config::TabFontStyleConfig,
+     pub(super) inactive_tab_style: crate::config::TabFontStyleConfig,
++    pub(super) tab_title_template: String,
++    pub(super) active_tab_title_template: String,
++    pub(super) tab_active_marker: String,
+     pub(super) spaces: SpacesSidebarConfig,
+     pub(super) agents: crate::config::AgentsSidebarConfig,
+     pub(super) agent_panel_sort: crate::config::AgentPanelSortConfig,
+diff --git a/src/client/shell/tabs.rs b/src/client/shell/tabs.rs
+index 455aed3..d6a39f9 100644
+--- a/src/client/shell/tabs.rs
++++ b/src/client/shell/tabs.rs
+@@ -24,7 +24,7 @@ pub(crate) fn render_tab_bar(
+     let desired_widths = tabs
+         .iter()
+         .map(|tab| {
+-            let label = tab_label(tab);
++            let label = tab_title(tab, config);
+             display_width(&label).saturating_add(4).max(MIN_TAB_WIDTH)
+         })
+         .collect::<Vec<_>>();
+@@ -92,7 +92,7 @@ pub(crate) fn render_tab_bar(
+     let mut first_visible = None;
+     let mut last_visible = None;
+     for (index, tab) in tabs.iter().enumerate().skip(*tab_scroll) {
+-        let name = tab_label(tab);
++        let name = tab_title(tab, config);
+         let desired = desired_widths[index];
+         let remaining = tab_right.saturating_sub(x);
+         let width = desired.min(remaining);
+@@ -142,6 +142,9 @@ pub(crate) fn render_tab_bar(
+             right_padding = padding.saturating_sub(left) as usize,
+         );
+         put_text(buffer, rect.x, rect.y, rect.width, &text, style);
++        if tab.focused && !config.tab_active_marker.is_empty() {
++            paint_tab_marker(buffer, rect, &text, style, &config.tab_active_marker, palette.accent);
++        }
+         hits.tabs.push((rect, tab.tab_id.clone()));
+         first_visible.get_or_insert(index);
+         last_visible = Some(index);
+@@ -398,6 +401,63 @@ fn tab_label(tab: &ClientShellTab) -> String {
+     }
+ }
+ 
++/// Expand the configured title template for one tab. `{index}` is the tab
++/// number, `{title}` the tab name (zoom suffix included) and `{marker}` the
++/// `tab_active_marker` on the focused tab (empty otherwise). An empty template
++/// (or one that leaves no text) keeps the plain label, so the default look is
++/// unchanged.
++fn tab_title(tab: &ClientShellTab, config: &ClientShellConfig) -> String {
++    let template = if tab.focused {
++        &config.active_tab_title_template
++    } else {
++        &config.tab_title_template
++    };
++    if template.trim().is_empty() {
++        return tab_label(tab);
++    }
++    let marker = if tab.focused {
++        config.tab_active_marker.as_str()
++    } else {
++        ""
++    };
++    let title = template
++        .replace("{index}", &tab.number.to_string())
++        .replace("{title}", &tab_label(tab))
++        .replace("{marker}", marker);
++    if title.trim().is_empty() {
++        return tab_label(tab);
++    }
++    title
++}
++
++/// Repaint the active marker where the template put it, in the accent colour,
++/// so `{marker}` reads like kitty's accent `❯>` prompt.
++fn paint_tab_marker(
++    buffer: &mut Buffer,
++    rect: Rect,
++    text: &str,
++    base: Style,
++    marker: &str,
++    marker_fg: ratatui::style::Color,
++) {
++    let Some(byte) = text.find(marker) else {
++        return;
++    };
++    let cell = text[..byte].chars().count() as u16;
++    let width = marker.chars().count() as u16;
++    if width == 0 || cell.saturating_add(width) > rect.width {
++        return;
++    }
++    put_text(
++        buffer,
++        rect.x.saturating_add(cell),
++        rect.y,
++        rect.width.saturating_sub(cell),
++        marker,
++        base.fg(marker_fg),
++    );
++}
++
+ /// Map the configured tab font style onto a ratatui modifier mask.
+ fn tab_font_modifier(style: crate::config::TabFontStyleConfig) -> Modifier {
+     use crate::config::TabFontStyleConfig;
+diff --git a/src/config/model.rs b/src/config/model.rs
+index 1a8364b..e73dcfa 100644
+--- a/src/config/model.rs
++++ b/src/config/model.rs
+@@ -1014,6 +1014,16 @@ pub struct UiConfig {
+     pub active_tab_style: TabFontStyleConfig,
+     /// Font style of the other tabs. Default: normal.
+     pub inactive_tab_style: TabFontStyleConfig,
++    /// Template for the other tab labels. Tokens: `{index}` (tab number),
++    /// `{title}` (tab name, zoom suffix included) and `{marker}` (empty for
++    /// these tabs). Empty keeps the plain label.
++    pub tab_title_template: String,
++    /// Template for the focused tab label; same tokens, and `{marker}` expands
++    /// to `tab_active_marker`. Empty keeps the plain label.
++    pub active_tab_title_template: String,
++    /// Marker for `{marker}` on the focused tab — kitty's `❯>`-style prompt.
++    /// Painted in the accent colour. Default: empty.
++    pub tab_active_marker: String,
+     /// Format for the outer terminal window title. Empty leaves the title alone.
+     /// Default: "{hostname}: {workspace}".
+     pub window_title: String,
+@@ -1251,6 +1261,9 @@ impl Default for UiConfig {
+             inactive_tab_bg: String::new(),
+             active_tab_style: TabFontStyleConfig::Normal,
+             inactive_tab_style: TabFontStyleConfig::Normal,
++            tab_title_template: String::new(),
++            active_tab_title_template: String::new(),
++            tab_active_marker: String::new(),
+             window_title: super::window_title::default_window_title(),
+             agent_panel_sort: AgentPanelSortConfig::Spaces,
+             _legacy_agent_panel_scope: None,
