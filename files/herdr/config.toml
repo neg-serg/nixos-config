@@ -54,6 +54,20 @@ previous_agent = "prefix+u"
 next_agent = "prefix+i"
 focus_agent = "prefix+alt+1..9"
 
+# Tabs, laid out the way kitty draws them (files/kitty/tab.conf): along the
+# bottom edge of the workspace, and no tab row at all while there is a single
+# tab (kitty: tab_bar_edge bottom + tab_bar_min_tabs 2). The active-tab marker
+# already matches kitty's accent: theme.custom.accent above is #005faf, the same
+# colour kitty uses for the `❯>` prompt (files/kitty/tab.conf).
+#
+# Herdr 0.9.3 exposes no further tab chrome: there is no title template, no
+# per-tab fg/bg, no separator, alignment or fade knob (compare kitty's
+# tab_title_template / tab_fade / tab_separator / tab_bar_align), so the bar's
+# own colours come from the theme tokens above.
+[ui]
+tab_bar_position = "bottom"
+hide_tab_bar_when_single_tab = true
+
 # Agent rows in the sidebar: keep the location line, add the session title
 # Herdr strips of its spinner, then the agent label. For dsh the title is the
 # statusline (branch, dirty counts, tokens, turn), so the sidebar answers
