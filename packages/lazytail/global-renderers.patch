@@ -1,0 +1,116 @@
+diff --git a/src/cli/config.rs b/src/cli/config.rs
+index 20ee1eb..60beb35 100644
+--- a/src/cli/config.rs
++++ b/src/cli/config.rs
+@@ -70,6 +70,19 @@ pub fn validate() -> Result<(), i32> {
+                     }
+                 }
+             }
++            // Compile the renderer presets: a bad regex, an unknown style or a
++            // layout entry that sets both `width` and `max_width` is a config
++            // error the TUI would otherwise only print at startup.
++            if !cfg.renderers.is_empty() {
++                let (_, errors) = crate::renderer::PresetRegistry::compile_from_config(
++                    &cfg.renderers,
++                    config_path.parent(),
++                );
++                for err in errors {
++                    eprintln!("error: renderers: {err}");
++                    has_errors = true;
++                }
++            }
+             if has_errors {
+                 Err(1)
+             } else {
+@@ -134,6 +147,17 @@ fn show_config(cfg: &config::SingleFileConfig) {
+         println!("{}: {}", "name".cyan(), "(not set)".dimmed());
+     }
+ 
++    // Renderer presets
++    if !cfg.renderers.is_empty() {
++        println!();
++        println!("{}:", "renderers".cyan());
++        let mut names: Vec<&str> = cfg.renderers.iter().map(|r| r.name.as_str()).collect();
++        names.sort_unstable();
++        for name in names {
++            println!("  {}", name.green());
++        }
++    }
++
+     // Key binding overrides
+     match &cfg.keys {
+         Some(keys) if !keys.is_empty() => {
+diff --git a/src/config/loader.rs b/src/config/loader.rs
+index 0a43313..aa22de7 100644
+--- a/src/config/loader.rs
++++ b/src/config/loader.rs
+@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
+ 
+ use crate::config::discovery::DiscoveryResult;
+ use crate::config::error::ConfigError;
+-use crate::config::types::{Config, RawConfig, RawSource, Source};
++use crate::config::types::{Config, RawConfig, RawRendererDef, RawSource, Source};
+ 
+ /// Config loaded from a single file (for config commands).
+ ///
+@@ -23,6 +23,8 @@ pub struct SingleFileConfig {
+     pub sources: Vec<Source>,
+     /// Key binding overrides declared in this file.
+     pub keys: Option<HashMap<String, Vec<String>>>,
++    /// Renderer presets declared in this file.
++    pub renderers: Vec<RawRendererDef>,
+ }
+ 
+ /// Expand tilde in path to home directory.
+@@ -98,6 +100,7 @@ pub fn load_single_file(path: &Path) -> Result<SingleFileConfig, ConfigError> {
+         name: raw.name,
+         sources: validate_sources(raw.sources),
+         keys: raw.keys,
++        renderers: raw.renderers,
+     })
+ }
+ 
+@@ -118,6 +121,10 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
+         config.global_sources = validate_sources(raw.sources);
+         config.update_check = raw.update_check;
+         config.keys = raw.keys;
++        // Renderer presets are declarative config like keys and the theme, so a
++        // global preset (e.g. a log format used from anywhere) has to load here
++        // too; project presets shadow them by name below.
++        config.renderers = raw.renderers;
+         theme_raw = raw.theme;
+         // Note: global name is ignored, project name takes precedence
+     }
+@@ -127,7 +134,7 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
+         let raw = load_file(project_path)?;
+         config.name = raw.name;
+         config.project_sources = validate_sources(raw.sources);
+-        config.renderers = raw.renderers;
++        config.renderers = merge_renderers(std::mem::take(&mut config.renderers), raw.renderers);
+         // Project key bindings override the global ones when present.
+         if raw.keys.is_some() {
+             config.keys = raw.keys;
+@@ -145,6 +152,23 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
+     Ok(config)
+ }
+ 
++/// Merge global and project renderer presets.
++///
++/// A project preset shadows a global one with the same name (the same
++/// "closest wins" rule the keys and the theme follow), and project presets stay
++/// first so `PresetRegistry::get_by_name` resolves the project definition.
++fn merge_renderers(global: Vec<RawRendererDef>, project: Vec<RawRendererDef>) -> Vec<RawRendererDef> {
++    if project.is_empty() || global.is_empty() {
++        return if project.is_empty() { global } else { project };
++    }
++
++    let shadowed: std::collections::HashSet<String> =
++        project.iter().map(|r| r.name.clone()).collect();
++    let mut merged = project;
++    merged.extend(global.into_iter().filter(|r| !shadowed.contains(&r.name)));
++    merged
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;

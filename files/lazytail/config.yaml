@@ -25,6 +25,49 @@ keys:
   viewport_down: ["ctrl+e"]
   viewport_up: ["ctrl+y"]
 
+# Rendering presets for the log formats these sources actually write (regex
+# parser with named captures, compiled once at startup). Two upstream gaps are
+# patched in packages/lazytail: presets load from this global config too
+# (upstream reads `renderers:` from a project lazytail.yaml only) and
+# `lazytail config validate` compiles them.
+#
+# A line that does not match falls back to the raw (ANSI) render, and the
+# `severity` style resolves level text through the theme's palette, so the
+# colours follow the neg theme rather than being hard-coded here.
+renderers:
+  # vicinae: `[V] 2026-09-27T09:21:57 info  - browser-link: installed manifest …`
+  - name: vicinae
+    regex: '^\[(?P<tag>[A-Z])\] +(?P<ts>\S+) +(?P<level>[a-zA-Z]+) +- +(?P<msg>.*)$'
+    layout:
+      - literal: "["
+      - field: tag
+        style: dim
+      - literal: "] "
+      - field: ts
+        style: dim
+        width: 19
+      - literal: " "
+      - field: level
+        style: severity
+        width: 5
+      - literal: " - "
+      - field: msg
+
+  # Neovim LSP log: `[ERROR][2026-06-28 21:25:00] <source>: <message>`
+  - name: nvim-lsp
+    regex: '^\[(?P<level>[A-Z]+)\] *\[(?P<ts>[^\]]+)\] *(?P<msg>.*)$'
+    layout:
+      - literal: "["
+      - field: level
+        style: severity
+        width: 5
+      - literal: "] "
+      - field: ts
+        style: dim
+        width: 19
+      - literal: " "
+      - field: msg
+
 # Sources shown in discovery mode (a plain `lazytail` with no arguments).
 # Captured sources (`cmd | lazytail -n NAME`) land in ~/.config/lazytail/data/
 # and show up on their own, without an entry here.
@@ -35,7 +78,9 @@ sources:
     path: ~/.local/state/hypr-hang-monitor/monitor.log
   - name: vicinae
     path: ~/.local/state/vicinae/vicinae.log
+    renderers: [vicinae]
   - name: nvim-lsp
     path: ~/.local/state/nvim/lsp.log
+    renderers: [nvim-lsp]
   - name: tidalctl
     path: ~/.local/state/tidalctl/engine.log
