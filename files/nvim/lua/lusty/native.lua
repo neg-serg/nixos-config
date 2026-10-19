@@ -1252,10 +1252,14 @@ end
 --- user-resizable, and navigating (Enter on a dir, C-w, C-d) must not snap it
 --- back to the default.
 function Picker:restart(root, depth)
-  local win_h = self:height()
+  local win_h = self.grid_h or self:height()
+  local override = self.one_line_override
+  local grid_h = self.grid_h
   self:close() -- restores the caller window
   local np = Picker.new(root, depth or self.depth)
   np.win_h = win_h
+  np.one_line_override = override
+  np.grid_h = grid_h
   np:startup()
   return np
 end

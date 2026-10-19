@@ -79,6 +79,24 @@ p:handle('down')
 assert_eq(api.nvim_win_get_height(p.win), 1, 'height forced back to a single row')
 assert_eq(api.nvim_buf_line_count(p.buf), 1, 'buffer stays a single line')
 
+-- 4b. C-x switches to the grid and back, keeping the query and the selection.
+local mapped = false
+for _, m in ipairs(api.nvim_buf_get_keymap(p.buf, 'n')) do
+  if m.lhs and m.lhs:lower() == '<c-x>' then
+    mapped = true
+  end
+end
+assert(mapped, 'the C-x toggle is mapped inside the picker')
+p:handle('toggle_one_line')
+H.wait_until(function() return api.nvim_win_get_height(p.win) > 1 end, 'grid after the toggle')
+local grid_h = api.nvim_win_get_height(p.win)
+H.wait_until(function() return api.nvim_buf_line_count(p.buf) == grid_h end, 'grid drawn')
+local prompt_row = api.nvim_buf_get_lines(p.buf, -2, -1, false)[1] or ''
+assert(prompt_row:find('b [2]', 1, true), 'query survives the toggle: ' .. prompt_row)
+p:handle('toggle_one_line')
+H.wait_until(function() return api.nvim_win_get_height(p.win) == 1 end, 'one row again')
+H.wait_until(function() return row(p):find('bbb.txt', 1, true) ~= nil end, 'selection survives the toggle')
+
 -- 5. The preview pane makes no sense in one row and is refused.
 if p.caps.preview then
   p:handle('toggle_preview')
