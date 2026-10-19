@@ -13,7 +13,9 @@ wide=$(mktemp)
 hitslog=$(mktemp)
 hoverlog=$(mktemp)
 plog=$(mktemp)
-trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog"' EXIT
+emptylog=$(mktemp)
+stubport=$(mktemp)
+trap 'rm -f "$out" "$wide" "$hitslog" "$hoverlog" "$plog" "$emptylog" "$stubport"' EXIT
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
@@ -76,7 +78,67 @@ PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-playlists \
   --keys="P,noop,c,noop,fromui,noop,enter,noop,down,e,noop,renamed,noop,enter,noop,d,noop,d,noop,A,noop,c,esc,noop,1,noop,c,noop" \
   > "$plog" 2>&1
-python3 - "$out" "$wide" "$hoverlog" "$plog" << 'PY'
+# Empty MPD: an answered-but-empty library must read "ничего нет" and the outputs overlay must
+# read "нет выходов" — the frame used to print "загружаю…" forever, which is indistinguishable
+# from a real MPD that holds nothing. A stub server speaks the protocol with well-formed but
+# empty replies; it delays the list answers a little so the transient "loading" frame is
+# observable without racing the worker's poll loop. Only read-only commands run under dry-run,
+# so the real daemon is never involved.
+python3 - "$stubport" << 'PY' &
+import socket, sys, threading, time
+
+srv = socket.socket()
+srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+srv.bind(("127.0.0.1", 0))
+srv.listen(8)
+with open(sys.argv[1], "w") as fh:
+    fh.write(str(srv.getsockname()[1]))
+    fh.flush()
+
+STATUS = (
+    b"volume: 40\nrepeat: 0\nrandom: 0\nsingle: 0\nconsume: 0\n"
+    b"playlistlength: 0\nstate: stop\nOK\n"
+)
+SLOW = ("list ", "listplaylists", "outputs", "listplaylistinfo")
+
+
+def serve(conn):
+    conn.sendall(b"OK MPD 0.23.5\n")
+    buf = b""
+    while True:
+        try:
+            chunk = conn.recv(4096)
+        except OSError:
+            return
+        if not chunk:
+            return
+        buf += chunk
+        while b"\n" in buf:
+            raw, buf = buf.split(b"\n", 1)
+            cmd = raw.decode("utf-8", "replace").strip()
+            if cmd.startswith(SLOW):
+                time.sleep(0.12)
+            conn.sendall(STATUS if cmd.startswith("status") else b"OK\n")
+
+
+while True:
+    conn, _ = srv.accept()
+    threading.Thread(target=serve, args=(conn,), daemon=True).start()
+PY
+stub_pid=$!
+for _ in $(seq 1 100); do [ -s "$stubport" ] && break; sleep 0.05; done
+stub_addr=$(cat "$stubport" 2>/dev/null)
+if [ -z "$stub_addr" ]; then
+  echo "FAIL the stub MPD server did not start"
+  exit 1
+fi
+PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+  "$bin" --mpd="127.0.0.1:$stub_addr" --render-size=800x600 --shot-seq=/tmp/keys-empty \
+  --keys="2,noop,noop,noop,3,noop,noop,noop,P,noop,noop,noop,o,noop,noop,noop" > "$emptylog" 2>&1
+kill "$stub_pid" 2>/dev/null
+wait "$stub_pid" 2>/dev/null
+python3 - "$out" "$wide" "$hoverlog" "$plog" "$emptylog" << 'PY'
 import re, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]
@@ -289,6 +351,83 @@ check(
     and field(outside, "prompt") == "none"
     and field(outside, "view") == "queue",
     str(outside),
+)
+
+# ---- empty MPD: a library that answered with nothing must say so. The stub in the run above
+# holds no artists, albums, playlists or outputs, and delays its list replies, so the immediate
+# dump of a key is taken before the answer and the settled dump after it: both halves of the
+# loading/empty pair are observable in one run.
+empty_lines = open(sys.argv[5], errors="replace").read().splitlines()
+empty_states = [l for l in empty_lines if l.startswith("[state]")]
+
+
+def empty_dump(token, settled):
+    hits = [
+        s
+        for s in empty_states
+        if f"token={token} " in s and (("settle=1" in s) == settled)
+    ]
+    return hits[0] if hits else None
+
+
+def last_in_view(view):
+    hits = [s for s in empty_states if f"view={view} " in s]
+    return hits[-1] if hits else None
+
+
+# The worker polls MPD every 300ms, so the answer can land later than one settled dump; each
+# pane key is followed by noops and the assertion reads the last state of that view instead of a
+# fixed frame offset.
+for token, word in (("2", "artists"), ("3", "albums"), ("P", "playlists")):
+    immediate = empty_dump(token, False)
+    settled = last_in_view(word)
+    check(
+        f"an empty {word} list says 'ничего нет', not a spinner",
+        settled is not None and field(settled, word) == "empty",
+        str(settled),
+    )
+    check(
+        f"the {word} pane reports loading until MPD answers",
+        immediate is not None and field(immediate, word) == "loading",
+        str(immediate),
+    )
+check(
+    "an empty MPD never reports a filled picker",
+    bool(empty_states)
+    and all(
+        field(s, w) != "filled"
+        for s in empty_states
+        for w in ("artists", "albums", "playlists", "outs")
+    ),
+    str([s for s in empty_states if field(s, "artists") == "filled"][:1]),
+)
+o_immediate = empty_dump("o", False)
+o_settled = [s for s in empty_states if "outputs=true" in s]
+o_settled = o_settled[-1] if o_settled else None
+check(
+    "the outputs overlay has its own no-outputs state",
+    o_settled is not None and field(o_settled, "outs") == "empty",
+    str(o_settled),
+)
+check(
+    "the outputs overlay reports loading before MPD answers",
+    o_immediate is not None and field(o_immediate, "outs") == "loading",
+    str(o_immediate),
+)
+# The other half of the pair: against the real daemon the same fields must read "filled", so the
+# empty words above cannot be an unconditional string.
+filled = {
+    view: [
+        field(s, view)
+        for s in states
+        if f"view={view} " in s and "settle=1" in s
+    ]
+    for view in ("artists", "albums", "playlists")
+}
+check(
+    "a populated MPD reports its pickers as filled",
+    all(vals and vals[-1] == "filled" for vals in filled.values()),
+    str(filled),
 )
 sys.exit(1 if fails else 0)
 PY
