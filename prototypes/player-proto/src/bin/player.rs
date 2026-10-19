@@ -2621,7 +2621,7 @@ fn draw_ui(
     if rows.is_empty() && !search_mode {
         fonts.layout_line(
             &mut list,
-            "очередь пуста",
+            "очередь пуста · добавь трек из библиотеки (enter)",
             qx + 20.0,
             q_rows_y + 8.0,
             TYPE.label,
