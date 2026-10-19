@@ -20,25 +20,84 @@ use player_proto::text::Fonts;
 use player_proto::theme::{self};
 use player_proto::Timing;
 
-// ---------------------------------------------------------------- palette
+// ---------------------------------------------------------------- rows
 
-type Rgba = [f32; 4];
+/// Everything a row needs to look right is a design decision and lives in the theme; this
+/// module only decides *where* the pieces go, so every list shares one grid.
+///
+/// A row is laid out as: surface (inset from the pane) → index column → text column →
+/// trailing column. The index and the trailing column are always secondary: the title is the
+/// only thing a reader scans, so it gets the brightest ink and the largest face.
+mod row {
+    use super::*;
+    use player_proto::theme::GEOM;
 
-const BG: Rgba = [0.043, 0.051, 0.067, 1.0];
-const BG_TOP: Rgba = [0.063, 0.075, 0.098, 1.0];
-const PANEL: Rgba = [0.071, 0.082, 0.106, 1.0];
-const PANEL_HI: Rgba = [0.094, 0.110, 0.141, 1.0];
-const BORDER: Rgba = [1.0, 1.0, 1.0, 0.06];
-const TEXT: Rgba = [0.906, 0.925, 0.957, 1.0];
-const DIM: Rgba = [0.545, 0.596, 0.663, 1.0];
-const FAINT: Rgba = [0.353, 0.396, 0.463, 1.0];
-const ACCENT: Rgba = [0.353, 0.812, 1.0, 1.0];
-const ACCENT2: Rgba = [0.478, 0.545, 1.0, 1.0];
-const ACCENT_DIM: Rgba = [0.353, 0.812, 1.0, 0.16];
-const PLAYING_BG: Rgba = [0.353, 0.812, 1.0, 0.10];
+    /// Surface of one row: the cursor wash with the accent rail, or the playing wash with a
+    /// thinner rail, or nothing. The cursor always wins over the playing marker.
+    pub fn surface(
+        list: &mut DrawList,
+        th: &theme::Theme,
+        x: f32,
+        y: f32,
+        w: f32,
+        h: f32,
+        selected: bool,
+        playing: bool,
+    ) {
+        if playing && !selected {
+            list.rounded(x, y, w, h, GEOM.radius_md, th.playing_bg, th.playing_bg);
+            list.rounded(
+                x + GEOM.line,
+                y + 7.0,
+                GEOM.rail_w * 0.66,
+                h - 14.0,
+                GEOM.rail_w * 0.33,
+                th.accent,
+                th.accent,
+            );
+        }
+        if selected {
+            list.rounded(x, y, w, h, GEOM.radius_md, th.selection, th.selection_edge);
+            list.rounded(
+                x,
+                y + 5.0,
+                GEOM.rail_w,
+                h - 10.0,
+                GEOM.rail_w * 0.5,
+                th.accent,
+                th.accent2,
+            );
+        }
+    }
 
-fn rgba(r: f32, g: f32, b: f32, a: f32) -> Rgba {
-    [r, g, b, a]
+    /// Ink for the primary label of a row. The cursor's wash already carries the accent, so the
+    /// accent ink is reserved for the playing row when the cursor is elsewhere.
+    pub fn title_ink(th: &theme::Theme, selected: bool, playing: bool) -> [f32; 4] {
+        if playing && !selected {
+            th.accent
+        } else {
+            th.text
+        }
+    }
+
+    /// Ink for anything that only supports the title.
+    pub fn meta_ink(th: &theme::Theme, selected: bool) -> [f32; 4] {
+        if selected {
+            theme::with_alpha(th.text, 0.68)
+        } else {
+            th.text_faint
+        }
+    }
+
+    /// Left edge of the text column, relative to the pane origin.
+    pub fn text_x() -> f32 {
+        GEOM.row_inset + GEOM.gutter + GEOM.gap
+    }
+
+    /// Right edge that reserved columns must not cross.
+    pub fn surface_w(pane_w: f32) -> f32 {
+        (pane_w - GEOM.row_inset * 2.0).max(0.0)
+    }
 }
 
 // ---------------------------------------------------------------- mpd worker
@@ -1920,7 +1979,9 @@ impl App {
                 if let Some(entry) = self.filtered_library().get(self.model.lib_sel).copied() {
                     match entry {
                         Entry::Dir { path, .. } => {
-                            let _ = self.tx.send(Cmd::LoadDir(format!("{path}/")));
+                            // MPD rejects a trailing slash ("Bad relative path"), so the path
+                            // goes out exactly as `lsinfo` reported it.
+                            let _ = self.tx.send(Cmd::LoadDir(path.clone()));
                         }
                         Entry::Song { path, .. } => {
                             let _ = self.tx.send(Cmd::PlayUri(path.clone()));
@@ -2195,53 +2256,65 @@ fn draw_ui(
             .collect();
         let rows_y = body_top + 58.0;
         list.set_clip(Some([20.0, rows_y - 4.0, left_w, body_h - 62.0]));
+        let lib_inset = GEOM.row_inset;
+        let lib_surface = row::surface_w(left_w);
+        let lib_text_x = row::text_x();
+        // The library is a one-line list in every window size: its rows must not grow into the
+        // two-line pitch the queue needs, or the column reads as a sparse wall of text.
+        let lib_row_h = GEOM.row_h_compact;
         for (i, entry) in lib_filtered.iter().enumerate() {
-            let y = rows_y + i as f32 * row_h - m.lib_scroll * row_h;
-            if y < rows_y - row_h || y > body_bottom {
+            let y = rows_y + i as f32 * lib_row_h - m.lib_scroll * lib_row_h;
+            if y < rows_y - lib_row_h || y > body_bottom {
                 continue;
             }
             let selected = active && i == m.lib_sel;
-            if selected {
-                list.rounded(
-                    28.0,
-                    y,
-                    left_w - 16.0,
-                    row_h - 6.0,
-                    GEOM.radius_md,
-                    th.selection,
-                    theme::with_alpha(th.accent2, 0.12),
-                );
-                list.rounded(28.0, y + 5.0, 2.0, row_h - 16.0, 1.0, th.accent, th.accent2);
-            }
-            let (icon, label, is_dir) = match *entry {
-                Entry::Dir { name, .. } => ("▸", name.clone(), true),
-                Entry::Song { song, .. } => ("♪", song.title.clone(), false),
-            };
-            fonts.layout_line(
+            hit(hits, 20.0, y, left_w, lib_row_h, Hit::Row(Pane::Library, i));
+            row::surface(
                 &mut list,
-                icon,
-                34.0,
-                y + 8.0,
-                TYPE.label,
-                Face::Symbols,
-                if is_dir { th.accent } else { th.text_faint },
+                th,
+                20.0 + lib_inset,
+                y,
+                lib_surface,
+                lib_row_h - GEOM.row_gap,
+                selected,
+                false,
             );
-            let color = if selected {
-                th.text
-            } else if is_dir {
-                theme::with_alpha(th.text, 0.9)
-            } else {
-                th.text_dim
+            // No bullet: a leading glyph on every row is visual noise. The kind of the entry is
+            // carried by the trailing column (a duration for songs, a chevron for directories)
+            // and by ink weight, so the title is the only thing that competes for attention.
+            let (label, is_dir, meta) = match *entry {
+                Entry::Dir { name, .. } => (name.clone(), true, "›".to_string()),
+                Entry::Song { song, .. } => (song.title.clone(), false, fmt_time(song.duration)),
             };
+            let meta_w = fonts.measure(&meta, TYPE.caption, Face::Mono);
+            let meta_x = 20.0 + left_w - lib_inset - 10.0 - meta_w;
+            let title_w = meta_x - 20.0 - lib_text_x - GEOM.gap;
             fonts.layout_fitted(
                 &mut list,
                 &label,
-                48.0,
+                20.0 + lib_text_x,
                 y + 7.0,
                 TYPE.body,
                 Face::UiRegular,
-                color,
-                left_w - 38.0,
+                if selected || is_dir {
+                    th.text
+                } else {
+                    theme::with_alpha(th.text, 0.86)
+                },
+                title_w,
+            );
+            fonts.layout_line(
+                &mut list,
+                &meta,
+                meta_x,
+                y + 9.0,
+                TYPE.caption,
+                Face::Mono,
+                if is_dir {
+                    theme::with_alpha(th.text_faint, 0.75)
+                } else {
+                    row::meta_ink(th, selected)
+                },
             );
         }
         if lib_filtered.is_empty() {
@@ -2253,7 +2326,7 @@ fn draw_ui(
             fonts.layout_line(
                 &mut list,
                 msg,
-                36.0,
+                20.0 + lib_text_x,
                 rows_y + 6.0,
                 TYPE.label,
                 Face::UiRegular,
@@ -2271,21 +2344,22 @@ fn draw_ui(
     };
     let qw = (w - qx - right_w - if show_right { 24.0 } else { 20.0 }).max(160.0);
     list.shadow(qx, body_top, qw, body_h, GEOM.radius_lg, 26.0, 0.35);
-    list.rounded(qx, body_top, qw, body_h, GEOM.radius_lg, th.panel, th.panel);
-    list.rect(qx, body_top, qw, GEOM.line, th.border_hi);
-    // Live focus: the centre pane owns `j`/`k` whenever it is not the queue's turn.
-    let centre_has_focus = m.view != Pane::Queue;
-    if centre_has_focus {
+    // Live focus: the centre pane owns `j`/`k` whenever it is not the queue's turn. The ring is
+    // a slightly larger accent quad drawn *under* the panel, so only its 1 px edge shows —
+    // painting it after the panel would wash the whole pane in accent.
+    if m.view != Pane::Queue {
         list.rounded(
-            qx - 1.5,
-            body_top - 1.5,
-            qw + 3.0,
-            body_h + 3.0,
-            GEOM.radius_lg + 1.0,
-            theme::with_alpha(th.accent, 0.30),
-            theme::with_alpha(th.accent, 0.30),
+            qx - GEOM.line,
+            body_top - GEOM.line,
+            qw + GEOM.line * 2.0,
+            body_h + GEOM.line * 2.0,
+            GEOM.radius_lg + GEOM.line,
+            theme::with_alpha(th.accent, 0.55),
+            theme::with_alpha(th.accent2, 0.35),
         );
     }
+    list.rounded(qx, body_top, qw, body_h, GEOM.radius_lg, th.panel, th.panel);
+    list.rect(qx, body_top, qw, GEOM.line, th.border_hi);
 
     let search_mode = m.view == Pane::Search;
     let picker_active = matches!(m.view, Pane::Artists | Pane::Albums | Pane::Playlists);
@@ -2391,54 +2465,45 @@ fn draw_ui(
             }
             let selected = i == picker.sel;
             hit(hits, qx, y, qw, compact, Hit::Row(m.view, i));
-            if selected {
-                list.rounded(
-                    qx + 10.0,
-                    y,
-                    qw - 20.0,
-                    compact - 4.0,
-                    GEOM.radius_md,
-                    th.selection,
-                    theme::with_alpha(th.accent2, 0.14),
-                );
-                list.rounded(
-                    qx + 10.0,
-                    y + 5.0,
-                    2.0,
-                    compact - 14.0,
-                    1.0,
-                    th.accent,
-                    th.accent2,
-                );
-            }
-            let idx = format!("{:03}", i + 1);
+            row::surface(
+                &mut list,
+                th,
+                qx + GEOM.row_inset,
+                y,
+                row::surface_w(qw),
+                compact - GEOM.row_gap,
+                selected,
+                false,
+            );
+            let idx = format!("{:02}", i + 1);
+            let idx_w = fonts.measure(&idx, TYPE.caption, Face::Mono);
             fonts.layout_line(
                 &mut list,
                 &idx,
-                qx + 20.0,
+                qx + GEOM.row_inset + GEOM.gutter - idx_w,
                 y + 10.0,
                 TYPE.caption,
                 Face::Mono,
                 if selected {
-                    theme::with_alpha(th.text, 0.7)
+                    theme::with_alpha(th.text, 0.55)
                 } else {
-                    th.text_faint
+                    theme::with_alpha(th.text_faint, 0.8)
                 },
             );
-            let color = if selected {
-                th.text
-            } else {
-                theme::with_alpha(th.text, 0.88)
-            };
+            let text_x = qx + row::text_x();
             fonts.layout_fitted(
                 &mut list,
                 name,
-                qx + 54.0,
+                text_x,
                 y + 9.0,
                 TYPE.body,
-                Face::UiRegular,
-                color,
-                qw - 76.0,
+                if selected {
+                    Face::UiMedium
+                } else {
+                    Face::UiRegular
+                },
+                th.text,
+                qx + qw - GEOM.row_inset - 12.0 - text_x,
             );
         }
         if picker.items.is_empty() {
@@ -2510,108 +2575,60 @@ fn draw_ui(
             ),
         );
         let playing = !search_mode && i == playing_index;
-        if playing {
-            list.rounded(
-                qx + 10.0,
-                y,
-                qw - 20.0,
-                row_h - 4.0,
-                GEOM.radius_md,
-                th.playing_bg,
-                th.playing_bg,
-            );
-        }
-        if selected {
-            list.rounded(
-                qx + 10.0,
-                y,
-                qw - 20.0,
-                row_h - 4.0,
-                GEOM.radius_md,
-                th.selection,
-                theme::with_alpha(th.accent2, 0.14),
-            );
-            list.rounded(
-                qx + 10.0,
-                y + 5.0,
-                2.0,
-                row_h - 14.0,
-                1.0,
-                th.accent,
-                th.accent2,
-            );
-        }
-        if playing {
-            for b in 0..3 {
-                let phase = t * 5.5 + b as f32 * 0.9;
-                let amp = 0.30 + 0.70 * (phase.sin() * 0.5 + 0.5);
-                let bh = 4.0 + amp * 10.0;
-                list.rounded(
-                    qx + 20.0 + b as f32 * 5.0,
-                    y + row_h * 0.5 - 2.0 - bh * 0.5,
-                    3.0,
-                    bh,
-                    1.5,
-                    th.accent,
-                    th.accent2,
-                );
-            }
-        }
-        let idx_label = format!("{:02}", i + 1);
-        // On the selection pill the accent loses contrast, so accent colouring is reserved for
-        // the playing row when it is not the selected one.
-        let highlight = playing && !selected;
-        fonts.layout_line(
+        row::surface(
             &mut list,
-            &idx_label,
-            qx + 40.0,
-            y + 9.0,
-            TYPE.caption,
-            Face::Mono,
-            if highlight {
-                th.accent
-            } else if selected {
-                theme::with_alpha(th.text, 0.75)
-            } else {
-                th.text_faint
-            },
+            th,
+            qx + GEOM.row_inset,
+            y,
+            row::surface_w(qw),
+            row_h - GEOM.row_gap,
+            selected,
+            playing,
         );
-        let title_color = if selected {
-            th.text
-        } else if playing {
-            th.accent
-        } else {
-            theme::with_alpha(th.text, 0.88)
-        };
-        let title_w = qw - 210.0;
-        let face = if playing {
-            Face::UiSemiBold
-        } else {
-            Face::UiRegular
-        };
-        let secondary = if selected {
-            theme::with_alpha(th.text, 0.72)
-        } else {
-            th.text_faint
-        };
+        let text_x = qx + row::text_x();
+        let gutter_right = qx + GEOM.row_inset + GEOM.gutter;
+        // Index column: right-aligned digits in the caption face at the faintest ink on
+        // purpose — the position in the queue is navigation aid, not content. The playing row
+        // trades its number for the equaliser, so the two never fight for the same pixels.
+        if !playing {
+            let idx_label = format!("{:02}", i + 1);
+            let idx_w = fonts.measure(&idx_label, TYPE.caption, Face::Mono);
+            fonts.layout_line(
+                &mut list,
+                &idx_label,
+                gutter_right - idx_w,
+                y + 9.0,
+                TYPE.caption,
+                Face::Mono,
+                if selected {
+                    theme::with_alpha(th.text, 0.55)
+                } else {
+                    theme::with_alpha(th.text_faint, 0.8)
+                },
+            );
+        }
+        let title_w = qw - (text_x - qx) - 96.0;
+        let title_ink = row::title_ink(th, selected, playing);
+        // Two lines per row: the title carries weight (and, for the playing row, the accent),
+        // the artist steps down to the caption face in the faintest ink.
         fonts.layout_fitted(
             &mut list,
             &song.title,
-            qx + 68.0,
-            y + 4.0,
+            text_x,
+            y + 3.0,
             TYPE.body,
-            face,
-            title_color,
+            Face::UiMedium,
+            title_ink,
             title_w,
         );
         fonts.layout_fitted(
             &mut list,
             &song.artist,
-            qx + 68.0,
-            y + 19.0,
+            text_x,
+            y + 20.0,
             TYPE.caption,
             Face::UiRegular,
-            secondary,
+            row::meta_ink(th, selected),
             title_w,
         );
         let dur = fmt_time(song.duration);
@@ -2619,16 +2636,35 @@ fn draw_ui(
         fonts.layout_line(
             &mut list,
             &dur,
-            qx + qw - 20.0 - dw,
+            qx + qw - GEOM.row_inset - 12.0 - dw,
             y + 9.0,
             TYPE.caption,
             Face::Mono,
             if selected {
-                theme::with_alpha(th.text, 0.75)
+                theme::with_alpha(th.text, 0.7)
+            } else if playing {
+                theme::with_alpha(th.accent, 0.8)
             } else {
-                th.text_faint
+                theme::with_alpha(th.text_faint, 0.85)
             },
         );
+        // Playing marker: three bars that breathe, right-aligned in the index gutter.
+        if playing {
+            for b in 0..3 {
+                let phase = t * 5.5 + b as f32 * 0.9;
+                let amp = 0.30 + 0.70 * (phase.sin() * 0.5 + 0.5);
+                let bh = 3.0 + amp * 9.0;
+                list.rounded(
+                    gutter_right - 13.0 + b as f32 * 5.0,
+                    y + (row_h - GEOM.row_gap) * 0.5 - bh * 0.5,
+                    2.5,
+                    bh,
+                    1.25,
+                    th.accent,
+                    th.accent2,
+                );
+            }
+        }
     }
     if std::env::var("PLAYER_DEBUG_DRAW").is_ok() {
         eprintln!(

@@ -56,20 +56,33 @@ cargo build --release
 and `cover` (FLAC/ID3 album art).
 
 Design tokens live in `src/theme.rs`: `Theme` (surfaces, text tones, accent pair, states), `TYPE` (a
-~1.2 modular scale anchored at 13 px) and `GEOM` (spacing, radii, row height). Two variants ship,
-`dark` (default) and `warm`, switchable at runtime with `t` or at launch with `--theme=warm`. Fonts
-are explicit: Inter (Regular/Medium/SemiBold) for text and FiraCode Nerd Font Mono for numerals,
-timings, indices and transport symbols, loaded through `FontSystem::new_with_fonts` with a fallback
-chain to DejaVu. Colours are authored as sRGB and linearised on the CPU (`scene::linear`) because
-the swapchain is an SRGB format — without that step the driver encodes them twice and the whole UI
-looks washed out.
+~1.2 modular scale anchored at 13 px) and `GEOM` (spacing, radii, row pitch, row inset, index gutter,
+accent rail). Two variants ship, `dark` (default) and `warm`, switchable at runtime with `t` or at
+launch with `--theme=warm`. One face carries everything: the user's Iosevka build
+(`~/.local/share/fonts/iosevka-neg`, Regular/Medium/Bold), registered by absolute path through
+`FontSystem::new_with_fonts` so the nix-store Iosevka of the same family name is never picked, with a
+fallback chain to DejaVu. Iosevka is monospaced, so digits in the index and duration columns line up
+without a second family. Colours are authored as sRGB and linearised on the CPU (`scene::linear`)
+because the swapchain is an SRGB format — without that step the driver encodes them twice and the
+whole UI looks washed out.
 
-Layout: top bar with tabs and MPD state, left library pane with incremental filtering, centre queue
-(or search results) with number/title/artist/duration, animated equaliser on the playing row,
-selection pill and scrollbar; right now-playing panel with rounded album art + dimmed "backdrop"
-wash, title (auto-shrinking before ellipsis), artist/album/track position, progress with knob,
-transport, volume and mode chips; bottom hint bar. Responsive: below 1080 px the library pane is
-dropped, below 820 px the now-playing panel moves into the status bar.
+Rows share one grid (`row::surface` / `row::text_x`): a surface inset `GEOM.row_inset` from the pane
+edge with a `GEOM.row_gap` gap between rows, then an index column of `GEOM.gutter` (digits in mono at
+the faintest ink — position is navigation aid, not content), then the title, then a trailing column
+(duration, or a chevron for directories). The title is the only bright ink; the secondary line and
+the trailing column step down to `text_faint`. The cursor draws a vertical gradient wash
+(`selection` → `selection_edge`) plus a `GEOM.rail_w` accent rail, the playing row gets a weaker flat
+wash (`playing_bg`) with a thin rail, and a playing queue row trades its index for an animated
+equaliser. The library, the queue, the search results and the three name pickers all use that one
+grid, so the panes read as one system.
+
+Layout: top bar with tabs and MPD state, left library pane with incremental filtering (one-line rows
+in every window size), centre queue (or search results) with a two-line title/artist row, plus
+scrollbar; right now-playing panel with rounded album art + dimmed "backdrop" wash, title
+(auto-shrinking before ellipsis), artist/album/track position, progress with knob, transport, volume
+and mode chips; bottom hint bar. The centre pane carries a 1 px accent ring while it owns the cursor,
+drawn under the panel so only its edge shows. Responsive: below 1080 px the library pane is dropped,
+below 820 px the now-playing panel moves into the status bar.
 
 Panes: Queue, Library (directories), **Artists**, **Albums**, **Playlists**, Search — the name lists
 come from MPD `list Artist`, `list Album` and `listplaylists`, and `enter` on a name plays that

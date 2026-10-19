@@ -52,6 +52,14 @@ pub struct Geometry {
     pub radius_pill: f32,
     pub radius_art: f32,
     pub line: f32, // hairline thickness
+    /// Inset of a list row's surface from its pane edge. Rows never bleed to the border.
+    pub row_inset: f32,
+    /// Vertical gap between a row surface and the next row's surface.
+    pub row_gap: f32,
+    /// Accent rail drawn on the selected row.
+    pub rail_w: f32,
+    /// Index column of a list row: three digits in the caption face plus air.
+    pub gutter: f32,
 }
 
 pub const GEOM: Geometry = Geometry {
@@ -67,6 +75,10 @@ pub const GEOM: Geometry = Geometry {
     radius_pill: 12.0,
     radius_art: 18.0,
     line: 1.0,
+    row_inset: 10.0,
+    row_gap: 4.0,
+    rail_w: 3.0,
+    gutter: 34.0,
 };
 
 pub struct Theme {
@@ -94,7 +106,11 @@ pub struct Theme {
     pub accent_bright: Rgba,
     pub warn: Rgba,
     pub accent_soft: Rgba,
+    /// Top of the selected-row wash; `selection_edge` is the bottom, so the cursor reads as a
+    /// lit surface instead of a flat overlay.
     pub selection: Rgba,
+    pub selection_edge: Rgba,
+    /// Flat wash behind the playing row, always weaker than the cursor.
     pub playing_bg: Rgba,
     // states
     pub danger: Rgba,
@@ -125,8 +141,9 @@ pub const DARK: Theme = Theme {
     accent_bright: [0.5608, 0.8784, 1.0, 1.0],     // #8FE0FF
     warn: [0.9647, 0.7765, 0.4039, 1.0],           // #F6C667
     accent_soft: [0.3725, 0.8196, 1.0, 0.16],
-    selection: [0.3725, 0.8196, 1.0, 0.16],
-    playing_bg: [0.3725, 0.8196, 1.0, 0.10],
+    selection: [0.3725, 0.8196, 1.0, 0.20],
+    selection_edge: [0.5490, 0.6078, 1.0, 0.07],
+    playing_bg: [0.3725, 0.8196, 1.0, 0.08],
     danger: [1.0, 0.4824, 0.4824, 1.0],     // #FF7B7B
     success: [0.3294, 0.8510, 0.5490, 1.0], // #54D98C
     backdrop: [0.25, 0.29, 0.40, 0.15],
@@ -152,8 +169,9 @@ pub const WARM: Theme = Theme {
     accent_bright: [1.0, 0.812, 0.529, 1.0],
     warn: [0.9647, 0.7765, 0.4039, 1.0],
     accent_soft: [1.0, 0.722, 0.361, 0.16],
-    selection: [1.0, 0.722, 0.361, 0.20],
-    playing_bg: [1.0, 0.722, 0.361, 0.09],
+    selection: [1.0, 0.722, 0.361, 0.22],
+    selection_edge: [1.0, 0.541, 0.404, 0.07],
+    playing_bg: [1.0, 0.722, 0.361, 0.10],
     danger: [0.937, 0.400, 0.400, 1.0],
     success: [0.353, 0.890, 0.596, 1.0],
     backdrop: [0.40, 0.29, 0.20, 0.15],
