@@ -168,6 +168,18 @@ families through fontconfig, so every string was rendered in a monospace face. T
 contrast-checked values (`TEXT_3 #7F8DA0` is 5.2:1 on `panel`; the previous `#5A6576` was 3.1:1 and
 failed AA on every 11 px label).
 
+### Running it
+
+`launch-live.sh` is the only supported entry point: NixOS has no `ld.so.cache`, so it builds
+`LD_LIBRARY_PATH` from `libs.sh` (vulkaninfo's RUNPATH minus the glibc/gcc entries, plus the
+64-bit `libxkbcommon`) and **preflight-checks** that `libwayland-client`, `libxkbcommon` and
+`libvulkan` actually dlopen before exec'ing the binary. A dirty `.libs` therefore produces a
+readable diagnosis instead of winit's `NoWaylandLib` panic: the launcher prints one line per
+library (`ok` / `FAIL <lib>: <reason>`) plus the command that rebuilds the cache.
+
+The player also survives a missing compositor: instead of panicking it prints which of
+`WAYLAND_DISPLAY`, `XDG_RUNTIME_DIR` and the socket is wrong.
+
 ## Numbers so far (llvmpipe, software rasterizer — NOT a GPU result)
 
 Startup, median over 5-7 runs, `process+ms` (age from `fork`, see the trap below):
