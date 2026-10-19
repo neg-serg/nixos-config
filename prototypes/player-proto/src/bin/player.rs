@@ -2444,11 +2444,15 @@ fn draw_ui(
         &m.queue
     };
     let rows_offset = if search_mode { 0.0 } else { m.queue_scroll };
+    let mut drawn_rows = 0usize;
     for (i, song) in rows.iter().enumerate().filter(|_| !skip_row_loop) {
         let y = q_rows_y + i as f32 * row_h - rows_offset * row_h;
         if y < q_rows_y - row_h || y > body_bottom {
             continue;
         }
+        drawn_rows += 1;
+        let verts_before = list.vertices.len();
+        let _ = verts_before;
         let selected = active_centre && i == m.queue_sel;
         hit(
             hits,
@@ -2584,6 +2588,14 @@ fn draw_ui(
             } else {
                 th.text_faint
             },
+        );
+    }
+    if std::env::var("PLAYER_DEBUG_DRAW").is_ok() {
+        eprintln!(
+            "[draw] rows={} drawn={} q_rows_y={q_rows_y} body_bottom={body_bottom} row_h={row_h} h={h} verts={}",
+            rows.len(),
+            drawn_rows,
+            list.vertices.len()
         );
     }
     if rows.is_empty() && !search_mode {
@@ -3464,6 +3476,10 @@ impl winit::application::ApplicationHandler for App {
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
                 eprintln!("[event] scale_factor={scale_factor}");
                 self.scale = scale_factor as f32;
+                if let Some(fonts) = self.fonts.as_mut() {
+                    fonts.set_scale(self.scale);
+                    // Glyph cache stays valid: atlas UVs do not depend on scale.
+                }
                 // The buffer has to be rebuilt even if the logical size did not change: the
                 // physical size did. Re-derive from the window, not from the old extent.
                 if let Some(w) = self.window.as_ref() {
@@ -3487,6 +3503,9 @@ impl winit::application::ApplicationHandler for App {
                 // Layout size: logical units by default (physical / scale), or the pinned
                 // capture size. The shader gets exactly this as its resolution, so the UI always
                 // fills the surface instead of covering a fraction of it.
+                if let Some(fonts) = self.fonts.as_mut() {
+                    fonts.set_scale(self.scale);
+                }
                 let (lw, lh) = self.logical_size();
                 let extent = match self.render_size {
                     Some((w, h)) => ash::vk::Extent2D {
@@ -3515,6 +3534,9 @@ impl winit::application::ApplicationHandler for App {
                         .unwrap_or_default();
                     self.sync_surface(size.width.max(1), size.height.max(1));
                     if let Some(gpu) = self.gpu.as_ref() {
+                        if let Some(fonts) = self.fonts.as_mut() {
+                            fonts.set_scale(self.scale);
+                        }
                         let (lw, lh) = self.logical_size();
                         let _ = (lw, lh, gpu.extent);
                     }
@@ -3583,6 +3605,13 @@ impl winit::application::ApplicationHandler for App {
                         self.model.queue.len(),
                         self.model.lib_entries.len(),
                         self.model.connected
+                    );
+                    eprintln!(
+                        "[frame] extent={}x{} h={} body_h={} rows",
+                        extent.width,
+                        extent.height,
+                        self.logical_size().1,
+                        self.model.queue.len()
                     );
                 }
                 if std::env::var("PLAYER_DEBUG").is_ok() && self.frames % 30 == 0 {

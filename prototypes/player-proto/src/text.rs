@@ -1,28 +1,42 @@
 //! Text shaping (cosmic-text) and glyph rasterisation into a CPU-side alpha atlas.
+//!
+//! The face is the user's own Iosevka build (`~/.local/share/fonts/iosevka-neg`), loaded by
+//! absolute path: the family name "Iosevka" is shared with a different build in the nix store,
+//! so resolving by name would pick the wrong binary. Only these files are registered, which also
+//! removes the fontconfig alias that made every generic family resolve to Iosevka anyway.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
+use cosmic_text::fontdb;
 use cosmic_text::{
     Attrs, Buffer, CacheKey, Family, FontSystem, Metrics, Shaping, SwashCache, Weight, Wrap,
 };
 
+use crate::scene::{Atlas, DrawList};
 use crate::theme::Face;
 
-/// Families we prefer, in order. Both are installed on this host; if neither resolves the
-/// shaper falls back to the generic sans/mono families, so the app still works elsewhere.
-const UI_FAMILIES: [&str; 3] = ["Inter", "Inter Display", "DejaVu Sans"];
-/// JetBrains Mono's digits are exactly 0.600 em, so timers stop jittering; Inter's are
-/// proportional (1 = 0.4067 em vs 4 = 0.6460 em), and cosmic-text 0.14 cannot enable `tnum`.
-const MONO_FAMILIES: [&str; 3] = [
-    "JetBrainsMono Nerd Font",
-    "FiraCode Nerd Font Mono",
-    "DejaVu Sans Mono",
+/// The user's Iosevka, in the weights the UI actually uses. Iosevka is monospaced, so the
+/// "mono" faces are the same family: the design relies on tabular digits everywhere.
+const IOSEVKA_WEIGHTS: [(&str, Weight); 3] = [
+    ("Iosevkaneg-Regular.ttf", Weight::NORMAL),
+    ("Iosevkaneg-Medium.ttf", Weight::MEDIUM),
+    ("Iosevkaneg-Bold.ttf", Weight::BOLD),
 ];
-/// Geometric symbols (▸ ▮ ◀ ▶ ♪) are missing from Inter and from JetBrains Mono; DejaVu Sans is
-/// the only family on this host that covers all of them.
-const SYMBOL_FAMILIES: [&str; 2] = ["DejaVu Sans", "DejaVu Sans Mono"];
 
-use crate::scene::{Atlas, DrawList};
+fn iosevka_sources() -> Option<Vec<fontdb::Source>> {
+    let home = std::env::var_os("HOME")?;
+    let dir = PathBuf::from(home).join(".local/share/fonts/iosevka-neg");
+    let files: Vec<PathBuf> = IOSEVKA_WEIGHTS
+        .iter()
+        .map(|(name, _)| dir.join(name))
+        .filter(|p| p.is_file())
+        .collect();
+    if files.len() < 2 {
+        return None;
+    }
+    Some(files.into_iter().map(fontdb::Source::File).collect())
+}
 
 #[derive(Clone, Copy, Default)]
 struct GlyphPlacement {
@@ -42,23 +56,26 @@ pub struct Fonts {
     /// CacheKey -> atlas rect + placement. Without this the atlas would be re-filled every
     /// frame and would fill up (and then stop drawing text entirely) within seconds.
     glyph_cache: HashMap<CacheKey, GlyphPlacement>,
+    /// Physical pixels per logical unit; glyph positions are snapped to this grid so text stays
+    /// crisp on a 2x panel instead of landing on half pixels.
+    scale: f32,
 }
 
 impl Fonts {
     pub fn new() -> Self {
-        let font_system = FontSystem::new();
-        for fam in UI_FAMILIES
-            .iter()
-            .chain(MONO_FAMILIES.iter())
-            .chain(SYMBOL_FAMILIES.iter())
-        {
-            if !font_system
-                .db()
-                .faces()
-                .any(|f| f.families.iter().any(|(n, _)| n == fam))
-            {
-                eprintln!("[fonts] family not installed: {fam}");
+        let font_system = match iosevka_sources() {
+            Some(sources) => FontSystem::new_with_fonts(sources),
+            None => {
+                eprintln!("[fonts] ~/.local/share/fonts/iosevka-neg not found, falling back to system fonts");
+                FontSystem::new()
             }
+        };
+        if !font_system
+            .db()
+            .faces()
+            .any(|f| f.families.iter().any(|(n, _)| n == "Iosevka"))
+        {
+            eprintln!("[fonts] family Iosevka not found in the loaded set");
         }
         Self {
             font_system,
@@ -66,22 +83,27 @@ impl Fonts {
             atlas: Atlas::new(),
             atlas_dirty: false,
             glyph_cache: HashMap::new(),
+            scale: 1.0,
         }
     }
 
     fn attrs(face: Face) -> Attrs<'static> {
-        let (families, weight): (&[&'static str], Weight) = match face {
-            Face::UiRegular => (&UI_FAMILIES[..], Weight::NORMAL),
-            Face::UiMedium => (&UI_FAMILIES[..], Weight::MEDIUM),
-            Face::UiSemiBold => (&UI_FAMILIES[..], Weight::SEMIBOLD),
-            Face::Mono => (&MONO_FAMILIES[..], Weight::NORMAL),
-            Face::MonoMedium => (&MONO_FAMILIES[..], Weight::MEDIUM),
-            Face::Symbols => (&SYMBOL_FAMILIES[..], Weight::NORMAL),
+        // One family, three weights: Iosevka carries the UI, the digits and the symbols.
+        let weight = match face {
+            Face::UiRegular | Face::Mono | Face::Symbols => Weight::NORMAL,
+            Face::UiMedium | Face::MonoMedium => Weight::MEDIUM,
+            Face::UiSemiBold => Weight::BOLD,
         };
-        // Family names are &'static str, so borrowing them into Attrs<'static> is sound.
-        Attrs::new()
-            .family(Family::Name(families[0]))
-            .weight(weight)
+        Attrs::new().family(Family::Name("Iosevka")).weight(weight)
+    }
+
+    pub fn set_scale(&mut self, scale: f32) {
+        self.scale = scale.max(0.5);
+    }
+
+    /// Snap a logical coordinate to the physical pixel grid.
+    fn snap(&self, v: f32) -> f32 {
+        (v * self.scale).round() / self.scale
     }
 
     fn buffer(&mut self, text: &str, size: f32, face: Face) -> Buffer {
@@ -162,8 +184,8 @@ impl Fonts {
                     }
                 };
                 if let Some(uv) = placement.uv {
-                    let gx = x + physical.x as f32 + placement.left as f32;
-                    let gy = y + run.line_y + physical.y as f32 - placement.top as f32;
+                    let gx = self.snap(x + physical.x as f32 + placement.left as f32);
+                    let gy = self.snap(y + run.line_y + physical.y as f32 - placement.top as f32);
                     list.glyph(gx, gy, placement.w as f32, placement.h as f32, uv, color);
                 }
             }

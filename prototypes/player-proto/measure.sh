@@ -12,11 +12,14 @@ libs=$(cat "$here/.libs")
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 for i in $(seq 1 "$runs"); do
-  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" "$bin" --frames 1 --json > "$tmp/out.json" 2>"$tmp/err.log" || {
-    echo "run $i failed:"; tail -5 "$tmp/err.log"; exit 1; }
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" "$bin" --frames 1 --json > "$tmp/out.json" 2> "$tmp/err.log" || {
+    echo "run $i failed:"
+    tail -5 "$tmp/err.log"
+    exit 1
+  }
   rg -o '"first_present":\{"rel_ms":[0-9.]+,"proc_ms":[0-9.]+' "$tmp/out.json" >> "$tmp/all.txt"
 done
-python3 - "$tmp/all.txt" <<'PY'
+python3 - "$tmp/all.txt" << 'PY'
 import re, sys
 rows = []
 for line in open(sys.argv[1]):
