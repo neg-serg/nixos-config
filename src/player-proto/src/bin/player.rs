@@ -7506,16 +7506,20 @@ fn main() {
                     "не найден"
                 }
             );
-            for lib in [
-                "libwayland-client.so.0",
-                "libxkbcommon.so.0",
-                "libvulkan.so.1",
-            ] {
-                eprintln!("  {lib}: ищи через launch-live.sh (он выставляет LD_LIBRARY_PATH)");
+            // Name the libraries the loader shim could not resolve: "no Wayland" on NixOS is
+            // almost always a dlopen that found nothing, and guessing at it costs more than
+            // printing the list. `src/preload.rs` already tried, so it knows.
+            let missing = player_proto::preload::missing();
+            if missing.is_empty() {
+                eprintln!("  библиотеки найдены: проблема в самом соединении, а не в загрузке");
+            } else {
+                for lib in &missing {
+                    eprintln!("  {lib}: не найдена");
+                }
+                eprintln!(
+                    "подсказка: укажи каталоги с библиотеками в PLAYER_LIB_DIRS (через двоеточие)"
+                );
             }
-            eprintln!(
-                "подсказка: запускай через ./launch-live.sh — он проверяет библиотеки до старта"
-            );
             std::process::exit(1);
         }
     };
