@@ -62,23 +62,27 @@ focus_agent = "prefix+alt+1..9"
 # (packages/herdr/patches, applied by packages/overlays/tools.nix) and mirror
 # kitty's tab.conf: the focused tab is bold-italic with an accent `❯>` marker
 # and no bright bar, the others sit flat in kitty's near-invisible grey; the
-# strip itself keeps the neg panel colour. Stock herdr 0.9.3 ignores these keys
-# (serde is not deny_unknown_fields), so the file stays valid on both builds.
+# strip itself keeps the neg panel colour. A parser without the series still
+# loads the file and runs, but flags every key below: `herdr config check`
+# answers "issues found" ("unknown config key ui.<name>; ignoring key") and
+# `herdr server reload-config` answers `partial`. A running server keeps the
+# parser it booted with, so after the patched build lands, hand the session
+# over with `herdr server live-handoff` — restarting the client does not help.
 # Herdr has no tab_fade / tab_separator / tab_bar_align equivalents.
 [ui]
 tab_bar_position = "bottom"
 hide_tab_bar_when_single_tab = true
 
 # Kit Kat: kitty #000000 is left alone — the strip keeps theme.custom.panel_bg.
-active_tab_fg = "#6c7e96" # kitty foreground, used for the active tab text
-active_tab_bg = "#040f1c" # panel_bg: no accent bar behind the focused tab
-inactive_tab_fg = "#1b1f25" # kitty's inactive tab text
-inactive_tab_bg = "#040f1c" # panel_bg: tabs are flat on the strip
-active_tab_style = "bold-italic" # kitty active_tab_font_style
-inactive_tab_style = "normal" # kitty inactive_tab_font_style
-tab_title_template = "{index}:{title}" # kitty inactive template
+active_tab_fg = "#6c7e96"                             # kitty foreground, used for the active tab text
+active_tab_bg = "#040f1c"                             # panel_bg: no accent bar behind the focused tab
+inactive_tab_fg = "#1b1f25"                           # kitty's inactive tab text
+inactive_tab_bg = "#040f1c"                           # panel_bg: tabs are flat on the strip
+active_tab_style = "bold-italic"                      # kitty active_tab_font_style
+inactive_tab_style = "normal"                         # kitty inactive_tab_font_style
+tab_title_template = "{index}:{title}"                # kitty inactive template
 active_tab_title_template = "{marker}{index} {title}" # kitty active template
-tab_active_marker = "❯> " # painted in theme.custom.accent (#005faf)
+tab_active_marker = "❯> "                             # painted in theme.custom.accent (#005faf)
 
 # Agent rows in the sidebar: keep the location line, add the session title
 # Herdr strips of its spinner, then the agent label. For dsh the title is the
