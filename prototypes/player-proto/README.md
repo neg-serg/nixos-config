@@ -57,7 +57,8 @@ and `cover` (FLAC/ID3 album art).
 
 Design tokens live in `src/theme.rs`: `Theme` (surfaces, text tones, accent pair, states), `TYPE` (a
 ~1.2 modular scale anchored at 13 px) and `GEOM` (spacing, radii, row pitch, row inset, index gutter,
-accent rail). Two variants ship, `dark` (default) and `warm`, switchable at runtime with `t` or at
+accent rail, and the `stack`/`inner` rhythm every vertical block in the app is spaced with). Two
+variants ship, `dark` (default) and `warm`, switchable at runtime with `t` or at
 launch with `--theme=warm`. One face carries everything: the user's Iosevka build
 (`~/.local/share/fonts/iosevka-neg`, Regular/Medium/Bold), registered by absolute path through
 `FontSystem::new_with_fonts` so the nix-store Iosevka of the same family name is never picked, with a
@@ -78,11 +79,21 @@ grid, so the panes read as one system.
 
 Layout: top bar with tabs and MPD state, left library pane with incremental filtering (one-line rows
 in every window size), centre queue (or search results) with a two-line title/artist row, plus
-scrollbar; right now-playing panel with rounded album art + dimmed "backdrop" wash, title
-(auto-shrinking before ellipsis), artist/album/track position, progress with knob, transport, volume
-and mode chips; bottom hint bar. The centre pane carries a 1 px accent ring while it owns the cursor,
-drawn under the panel so only its edge shows. Responsive: below 1080 px the library pane is dropped,
-below 820 px the now-playing panel moves into the status bar.
+scrollbar; right now-playing panel; bottom hint bar. The centre pane carries a 1 px accent ring
+while it owns the cursor, drawn under the panel so only its edge shows. Responsive: below 1080 px the
+library pane is dropped, below 820 px the now-playing panel moves into the status bar.
+
+The now-playing panel is the frame's anchor and is drawn as one *measured* vertical stack: album art
+→ title/artist/album (with the queue position riding the album line) → progress with knob and
+timestamps → transport → volume → mode chips → next-up card → stream-format footer under a hairline.
+Block heights are derived from `TYPE`, gaps from `GEOM.stack`/`GEOM.inner`, and the stack is measured
+before anything is drawn, then centred in the panel. That buys three things: the art has equal air
+left/right (it is a square centred in the inner column) and equal air above/below the stack at any
+window size; a short window shrinks the art and then drops the next-up card and finally the chips
+instead of pushing the transport out of the panel; and the hierarchy is explicit — the play button is
+the only filled accent shape, the title is the only `text`-bright line (artist `text_dim`, album and
+counter `text_faint`). The next-up block is not a label floating at the bottom any more: it is an
+inset card carrying the same accent rail the list rows use, so it reads as a row that is coming.
 
 Panes: Queue, Library (directories), **Artists**, **Albums**, **Playlists**, Search — the name lists
 come from MPD `list Artist`, `list Album` and `listplaylists`, and `enter` on a name plays that

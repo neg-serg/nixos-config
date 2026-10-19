@@ -2709,8 +2709,20 @@ fn draw_ui(
     list.set_clip(None);
 
     // ---------------- now playing
+    //
+    // The panel is the anchor of the frame, so it is composed as one vertical stack with a
+    // single rhythm instead of hand-tuned offsets: art → metadata → progress → transport →
+    // volume → modes → next-up card, closed by a stream-format footer under a hairline. Every
+    // height is derived from TYPE and GEOM, and the whole stack is measured before anything is
+    // drawn, so a short window shrinks the art (and finally drops the next-up card and the mode
+    // chips) instead of pushing the transport out of the panel.
     if show_right {
         let rx = w - right_w - 16.0;
+        let px = rx + pad;
+        let pw = right_w - pad * 2.0;
+        let inner_top = body_top + pad;
+        let inner_bottom = body_bottom - pad;
+
         list.shadow(rx, body_top, right_w, body_h, GEOM.radius_lg, 26.0, 0.35);
         list.rounded(
             rx,
@@ -2737,60 +2749,109 @@ fn draw_ui(
             );
         }
 
-        let art_size = right_w - pad * 2.0;
-        let art_y = body_top + pad;
-        list.glow(
-            rx + pad - 18.0,
-            art_y - 18.0,
-            art_size + 36.0,
-            art_size + 36.0,
-            GEOM.radius_art + 8.0,
-            96.0,
-            theme::with_alpha(th.accent, 0.12),
-        );
-        list.shadow(
-            rx + pad,
-            art_y + 8.0,
-            art_size,
-            art_size,
-            GEOM.radius_art,
-            24.0,
-            0.50,
-        );
-        if m.art.is_some() {
-            list.image(
-                rx + pad,
-                art_y,
-                art_size,
-                art_size,
-                GEOM.radius_art,
-                [1.0, 1.0, 1.0, 1.0],
-            );
-        } else {
-            list.rounded(
-                rx + pad,
-                art_y,
-                art_size,
-                art_size,
-                GEOM.radius_art,
-                th.panel_inset,
-                th.panel,
-            );
-            let glyph = "♪";
-            let gw = fonts.measure(glyph, 64.0, Face::Symbols);
-            fonts.layout_line(
-                &mut list,
-                glyph,
-                rx + pad + (art_size - gw) * 0.5,
-                art_y + art_size * 0.33,
-                64.0,
-                Face::Symbols,
-                theme::with_alpha(th.text, 0.08),
-            );
-        }
+        // --- block metrics, in logical units, taken from the type scale
+        let title_h = (TYPE.display * 1.30).round();
+        let artist_h = (TYPE.label * 1.55).round();
+        let album_h = (TYPE.label * 1.45).round();
+        let meta_h = title_h + artist_h + album_h;
+        let bar_h = 6.0;
+        let times_h = (TYPE.caption * 1.30).round();
+        let progress_h = bar_h + GEOM.inner + times_h;
+        let transport_h = 36.0;
+        let volume_h = (TYPE.caption * 1.45).round().max(16.0);
+        let chips_h = 22.0;
+        let next_h = 56.0;
+        let footer_h = (TYPE.caption * 1.30).round();
+        let footer_block = footer_h + GEOM.inner + GEOM.stack;
+        let footer = match (&m.status.audio, m.status.bitrate) {
+            (Some(audio), Some(bps)) => format!("{audio} · {bps} kbps"),
+            (Some(audio), None) => audio.clone(),
+            (None, _) => String::new(),
+        };
 
-        let info_y = art_y + art_size + 18.0;
-        let info_w = right_w - pad * 2.0;
+        // Blocks that always fit: metadata, progress, transport, volume.
+        let base = meta_h + progress_h + transport_h + volume_h;
+        let base_gaps = GEOM.stack * 2.0 + (GEOM.inner + 4.0);
+        let chips_block = chips_h + (GEOM.inner + 4.0);
+        let next_block = next_h + GEOM.stack;
+        let footer_extra = if footer.is_empty() { 0.0 } else { footer_block };
+        let area_h = (inner_bottom - inner_top).max(1.0);
+        // Below this the optional blocks go away rather than letting the art squash the controls.
+        let min_art = 96.0;
+        let art_gap = GEOM.stack + GEOM.inner;
+        let art_room = |extra: f32| area_h - (base + base_gaps + extra + footer_extra) - art_gap;
+        let next_song = m.status.song.and_then(|pos| m.queue.get(pos + 1));
+        let show_next = next_song.is_some() && art_room(next_block + chips_block) >= min_art;
+        let extra = if show_next {
+            next_block + chips_block
+        } else {
+            chips_block
+        };
+        let show_chips = art_room(extra) >= min_art;
+        let extra = if show_chips {
+            extra
+        } else {
+            extra - chips_block
+        };
+        let art_size = art_room(extra).clamp(0.0, pw);
+        // Even margins: whatever the art does not fill is split above and below the stack, so
+        // the panel reads as one centred composition instead of a block glued to the top.
+        let content_h = art_size + art_gap + base + base_gaps + extra + footer_extra;
+        let mut y = inner_top + ((area_h - content_h) * 0.5).max(0.0);
+
+        // --- album art: square, centred, equal air left and right
+        let art_x = px + (pw - art_size) * 0.5;
+        if art_size > 1.0 {
+            list.glow(
+                art_x - 14.0,
+                y - 14.0,
+                art_size + 28.0,
+                art_size + 28.0,
+                GEOM.radius_art + 6.0,
+                80.0,
+                theme::with_alpha(th.accent, 0.12),
+            );
+            list.shadow(
+                art_x,
+                y + 6.0,
+                art_size,
+                art_size,
+                GEOM.radius_art,
+                20.0,
+                0.50,
+            );
+            if m.art.is_some() {
+                list.image(art_x, y, art_size, art_size, GEOM.radius_art, [1.0; 4]);
+            } else {
+                list.rounded(
+                    art_x,
+                    y,
+                    art_size,
+                    art_size,
+                    GEOM.radius_art,
+                    th.panel_inset,
+                    th.panel,
+                );
+                let glyph = "♪";
+                let glyph_size = (art_size * 0.26).clamp(20.0, 64.0);
+                let gw = fonts.measure(glyph, glyph_size, Face::Symbols);
+                fonts.layout_line(
+                    &mut list,
+                    glyph,
+                    art_x + (art_size - gw) * 0.5,
+                    y + art_size * 0.5 - glyph_size * 0.55,
+                    glyph_size,
+                    Face::Symbols,
+                    theme::with_alpha(th.text, 0.08),
+                );
+            }
+        }
+        // The art is a heavy mass, so it gets more air under it than two text blocks would
+        // (art_gap above): the title must read as a separate zone, not as a caption of the cover.
+        y += art_size + art_gap;
+
+        // --- metadata: title, artist, album with the queue position riding the album line
+        let meta_y = y;
         let title = m
             .current
             .as_ref()
@@ -2809,54 +2870,62 @@ fn draw_ui(
         let mut title_size = TYPE.display;
         for candidate in [TYPE.display, TYPE.display - 2.0, TYPE.display - 4.0] {
             title_size = candidate;
-            if fonts.measure(&title, candidate, Face::UiSemiBold) <= info_w {
+            if fonts.measure(&title, candidate, Face::UiSemiBold) <= pw {
                 break;
             }
         }
         fonts.layout_fitted_end(
             &mut list,
             &title,
-            rx + pad,
-            info_y,
+            px,
+            meta_y,
             title_size,
             Face::UiSemiBold,
             th.text,
-            info_w,
+            pw,
         );
         fonts.layout_fitted_end(
             &mut list,
             &artist,
-            rx + pad,
-            info_y + 30.0,
+            px,
+            meta_y + title_h,
             TYPE.label + 1.0,
             Face::UiMedium,
-            th.accent,
-            info_w,
-        );
-        fonts.layout_fitted_end(
-            &mut list,
-            &album,
-            rx + pad,
-            info_y + 50.0,
-            TYPE.label,
-            Face::UiRegular,
             th.text_dim,
-            info_w,
+            pw,
         );
-        if let (Some(pos), true) = (m.status.song, !m.queue.is_empty()) {
-            let line = format!("{:02} / {:02}", pos + 1, m.queue.len());
+        let counter = match (m.status.song, m.queue.is_empty()) {
+            (Some(pos), false) => Some(format!("{:02}/{:02}", pos + 1, m.queue.len())),
+            _ => None,
+        };
+        let album_w = if let Some(c) = &counter {
+            let cw2 = fonts.measure(c, TYPE.caption, Face::Mono);
             fonts.layout_line(
                 &mut list,
-                &line,
-                rx + pad,
-                info_y + 68.0,
+                c,
+                px + pw - cw2,
+                meta_y + title_h + artist_h + 1.0,
                 TYPE.caption,
                 Face::Mono,
                 th.text_faint,
             );
-        }
+            (pw - cw2 - GEOM.gap).max(0.0)
+        } else {
+            pw
+        };
+        fonts.layout_fitted_end(
+            &mut list,
+            &album,
+            px,
+            meta_y + title_h + artist_h,
+            TYPE.label,
+            Face::UiRegular,
+            th.text_faint,
+            album_w,
+        );
+        y = meta_y + meta_h + GEOM.stack;
 
-        // progress
+        // --- progress: bar, then the two timestamps under it
         let total = m.duration();
         let elapsed = m.elapsed().min(total.max(0.001));
         let progress = if total > 0.0 {
@@ -2864,45 +2933,45 @@ fn draw_ui(
         } else {
             0.0
         };
-        let bar_y = info_y + 94.0;
-        let bar_w = info_w;
+        let bar_y = y;
         list.rounded(
-            rx + pad,
+            px,
             bar_y,
-            bar_w,
-            6.0,
-            3.0,
+            pw,
+            bar_h,
+            bar_h * 0.5,
             th.panel_inset,
             th.panel_inset,
         );
         hit(
             hits,
-            rx + pad - 6.0,
-            bar_y - 8.0,
-            bar_w + 12.0,
-            22.0,
-            Hit::Seek(bar_w),
+            px - GEOM.inner,
+            bar_y - GEOM.inner,
+            pw + GEOM.inner * 2.0,
+            bar_h + GEOM.inner * 2.0,
+            Hit::Seek(pw),
         );
         if progress > 0.0 {
-            let filled = (bar_w * progress.clamp(0.0, 1.0)).max(6.0);
-            list.rounded(rx + pad, bar_y, filled, 6.0, 3.0, th.accent, th.accent2);
+            let filled = (pw * progress.clamp(0.0, 1.0)).max(bar_h);
+            list.rounded(px, bar_y, filled, bar_h, bar_h * 0.5, th.accent, th.accent2);
             list.rounded(
-                rx + pad + filled - 5.0,
-                bar_y - 3.5,
+                px + filled - 5.0,
+                bar_y - 3.0,
                 10.0,
-                12.0,
-                5.0,
+                bar_h + 6.0,
+                (bar_h + 6.0) * 0.5,
                 th.text,
                 theme::with_alpha(th.text, 0.9),
             );
         }
+        let times_y = bar_y + bar_h + GEOM.inner;
         let e_label = fmt_time(elapsed);
         let t_label = fmt_time(total);
         fonts.layout_line(
             &mut list,
             &e_label,
-            rx + pad,
-            bar_y + 10.0,
+            px,
+            times_y,
             TYPE.caption,
             Face::Mono,
             th.text_dim,
@@ -2911,89 +2980,100 @@ fn draw_ui(
         fonts.layout_line(
             &mut list,
             &t_label,
-            rx + pad + bar_w - tw2,
-            bar_y + 10.0,
+            px + pw - tw2,
+            times_y,
             TYPE.caption,
             Face::Mono,
             th.text_faint,
         );
+        y += progress_h + GEOM.stack;
 
-        // transport
-        let ty = bar_y + 42.0;
-        let center = rx + pad + bar_w * 0.5;
+        // --- transport: the play button is the one filled accent shape in the panel, so it is
+        // where the eye lands; prev/next stay plain glyphs to keep that hierarchy.
         let playing = m.status.state == "play";
-        list.rounded(
-            center - 26.0,
-            ty - 7.0,
-            52.0,
-            34.0,
-            GEOM.radius_pill,
-            theme::with_alpha(th.accent, 0.16),
-            theme::with_alpha(th.accent2, 0.10),
+        let center = px + pw * 0.5;
+        let ty = y + transport_h * 0.5;
+        let side_dx = 58.0;
+        hit(
+            hits,
+            center - side_dx - 20.0,
+            y,
+            40.0,
+            transport_h,
+            Hit::Transport(-1),
         );
         hit(
             hits,
-            center - 100.0,
-            ty - 8.0,
+            center - transport_h * 0.5,
+            y,
+            transport_h,
+            transport_h,
+            Hit::Transport(0),
+        );
+        hit(
+            hits,
+            center + side_dx - 20.0,
+            y,
             40.0,
-            34.0,
-            Hit::Transport(-1),
+            transport_h,
+            Hit::Transport(1),
         );
-        hit(hits, center - 26.0, ty - 8.0, 52.0, 34.0, Hit::Transport(0));
-        hit(hits, center + 60.0, ty - 8.0, 40.0, 34.0, Hit::Transport(1));
         list.rounded(
-            center - 26.0,
-            ty - 7.0,
-            52.0,
-            34.0,
-            GEOM.radius_pill,
-            [0.0; 4],
-            [0.0; 4],
+            center - transport_h * 0.5,
+            y,
+            transport_h,
+            transport_h,
+            transport_h * 0.5,
+            th.accent,
+            th.accent2,
         );
-        for (sym, dx, size, color, face) in [
-            ("◀◀", -74.0, 15.0, th.text_dim, Face::Symbols),
+        for (sym, dx, size, color) in [
+            ("◀◀", -side_dx, 15.0, th.text_dim),
             (
                 if playing { "▮▮" } else { "▶" },
                 0.0,
                 19.0,
-                th.text,
-                Face::Symbols,
+                th.text_on_accent,
             ),
-            ("▶▶", 74.0, 15.0, th.text_dim, Face::Symbols),
+            ("▶▶", side_dx, 15.0, th.text_dim),
         ] {
-            let sw = fonts.measure(sym, size, face);
+            let sw = fonts.measure(sym, size, Face::Symbols);
             fonts.layout_line(
                 &mut list,
                 sym,
                 center + dx - sw * 0.5,
-                ty,
+                ty - size * 0.55,
                 size,
-                face,
+                Face::Symbols,
                 color,
             );
         }
+        y += transport_h + GEOM.inner + 4.0;
 
-        // volume
-        let vol_y = ty + 44.0;
+        // --- volume: label, bar, value on one baseline
         let vol = if m.status.volume < 0 {
             0
         } else {
             m.status.volume
         };
+        let vol_label = format!("{vol}%");
+        let label_w = fonts.measure("VOL", TYPE.micro, Face::UiMedium);
+        let value_w = fonts.measure(&vol_label, TYPE.caption, Face::Mono);
+        let vbar_x = px + label_w + GEOM.gap;
+        let vbar_w = (pw - label_w - value_w - GEOM.gap * 2.0).max(24.0);
+        let vcy = y + volume_h * 0.5;
         fonts.layout_line(
             &mut list,
             "VOL",
-            rx + pad,
-            vol_y - 1.0,
+            px,
+            vcy - TYPE.micro * 0.62,
             TYPE.micro,
             Face::UiMedium,
             th.text_faint,
         );
-        let vbar_x = rx + pad + 34.0;
-        let vbar_w = info_w - 74.0;
         list.rounded(
             vbar_x,
-            vol_y,
+            vcy - 2.0,
             vbar_w,
             4.0,
             2.0,
@@ -3003,7 +3083,7 @@ fn draw_ui(
         hit(
             hits,
             vbar_x - 6.0,
-            vol_y - 8.0,
+            vcy - 10.0,
             vbar_w + 12.0,
             20.0,
             Hit::Volume(vbar_w),
@@ -3011,7 +3091,7 @@ fn draw_ui(
         if vol > 0 {
             list.rounded(
                 vbar_x,
-                vol_y,
+                vcy - 2.0,
                 vbar_w * (vol as f32 / 100.0),
                 4.0,
                 2.0,
@@ -3019,67 +3099,90 @@ fn draw_ui(
                 theme::with_alpha(th.text, 0.6),
             );
         }
-        let vol_label = format!("{vol}%");
-        let vw = fonts.measure(&vol_label, TYPE.caption, Face::Mono);
         fonts.layout_line(
             &mut list,
             &vol_label,
-            rx + pad + info_w - vw,
-            vol_y - 2.0,
+            px + pw - value_w,
+            vcy - TYPE.caption * 0.62,
             TYPE.caption,
             Face::Mono,
             th.text_dim,
         );
+        y += volume_h + GEOM.inner + 4.0;
 
-        // mode chips
-        let mut cx = rx + pad;
-        let chip_y = vol_y + 24.0;
-        for (chip_index, (label, on)) in [
-            ("repeat", m.status.repeat),
-            ("random", m.status.random),
-            ("single", m.status.single),
-            ("consume", m.status.consume),
-        ]
-        .into_iter()
-        .enumerate()
-        {
-            let cw2 = fonts.measure(label, TYPE.caption, Face::UiMedium) + 18.0;
-            hit(hits, cx, chip_y, cw2, 22.0, Hit::Chip(chip_index as u8));
-            let (bg1, bg2, fg) = if on {
-                (
-                    th.accent_soft,
-                    theme::with_alpha(th.accent2, 0.12),
-                    th.accent,
-                )
-            } else {
-                (
-                    theme::with_alpha(th.text, 0.05),
-                    theme::with_alpha(th.text, 0.03),
-                    th.text_faint,
-                )
-            };
-            list.rounded(cx, chip_y, cw2, 22.0, GEOM.radius_pill, bg1, bg2);
-            fonts.layout_line(
-                &mut list,
-                label,
-                cx + 9.0,
-                chip_y + 4.0,
-                TYPE.caption,
-                Face::UiMedium,
-                fg,
-            );
-            cx += cw2 + 6.0;
+        // --- mode chips
+        if show_chips {
+            let mut cx = px;
+            let chip_y = y;
+            for (chip_index, (label, on)) in [
+                ("repeat", m.status.repeat),
+                ("random", m.status.random),
+                ("single", m.status.single),
+                ("consume", m.status.consume),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let cw2 = fonts.measure(label, TYPE.caption, Face::UiMedium) + 18.0;
+                hit(hits, cx, chip_y, cw2, chips_h, Hit::Chip(chip_index as u8));
+                let (bg1, bg2, fg) = if on {
+                    (
+                        th.accent_soft,
+                        theme::with_alpha(th.accent2, 0.12),
+                        th.accent,
+                    )
+                } else {
+                    (
+                        theme::with_alpha(th.text, 0.05),
+                        theme::with_alpha(th.text, 0.03),
+                        th.text_faint,
+                    )
+                };
+                list.rounded(cx, chip_y, cw2, chips_h, GEOM.radius_pill, bg1, bg2);
+                fonts.layout_line(
+                    &mut list,
+                    label,
+                    cx + 9.0,
+                    chip_y + 5.0,
+                    TYPE.caption,
+                    Face::UiMedium,
+                    fg,
+                );
+                cx += cw2 + 6.0;
+            }
+            y += chips_block;
         }
 
-        // "next up": the queue entry after the playing one, when known.
-        if let Some(pos) = m.status.song {
-            if let Some(next) = m.queue.get(pos + 1) {
-                let y = chip_y + 62.0;
+        // --- next-up: an inset card in the stack instead of a label orphaned at the bottom.
+        // The accent rail is the same mark the list rows use, so the card reads as "a row that
+        // is coming", not as another section.
+        if show_next {
+            if let Some(next) = next_song {
+                list.rounded(
+                    px,
+                    y,
+                    pw,
+                    next_h,
+                    GEOM.radius_md,
+                    th.panel_inset,
+                    th.panel_inset,
+                );
+                list.rounded(
+                    px + GEOM.line,
+                    y + 10.0,
+                    GEOM.rail_w * 0.66,
+                    next_h - 20.0,
+                    GEOM.rail_w * 0.33,
+                    th.accent,
+                    th.accent2,
+                );
+                let tx = px + 12.0;
+                let tw3 = (pw - 22.0).max(0.0);
                 fonts.layout_line(
                     &mut list,
                     "ДАЛЕЕ",
-                    rx + pad,
-                    y,
+                    tx,
+                    y + 8.0,
                     TYPE.micro,
                     Face::UiMedium,
                     th.text_faint,
@@ -3087,44 +3190,43 @@ fn draw_ui(
                 fonts.layout_fitted_end(
                     &mut list,
                     &next.title,
-                    rx + pad,
-                    y + 16.0,
+                    tx,
+                    y + 22.0,
                     TYPE.label,
                     Face::UiMedium,
                     theme::with_alpha(th.text, 0.86),
-                    info_w,
+                    tw3,
                 );
                 fonts.layout_fitted(
                     &mut list,
                     &next.artist,
-                    rx + pad,
-                    y + 32.0,
+                    tx,
+                    y + 37.0,
                     TYPE.caption,
                     Face::UiRegular,
                     th.text_faint,
-                    info_w,
+                    tw3,
                 );
+                y += next_block;
             }
         }
 
-        if let Some(audio) = &m.status.audio {
-            let line = match m.status.bitrate {
-                Some(b) => format!("{audio} · {b} kbps"),
-                None => audio.clone(),
-            };
+        // --- footer: the stream format, closed off by a hairline. It is part of the measured
+        // stack, not pinned to the panel bottom, so what is drawn is exactly what was fitted.
+        if !footer.is_empty() {
+            list.rect(px, y, pw, GEOM.line, th.border);
             fonts.layout_fitted(
                 &mut list,
-                &line,
-                rx + pad,
-                body_bottom - 22.0,
+                &footer,
+                px,
+                y + GEOM.inner,
                 TYPE.caption,
                 Face::Mono,
                 th.text_faint,
-                info_w,
+                pw,
             );
         }
     }
-
     // ---------------- status bar
     list.gradient(
         0.0,
