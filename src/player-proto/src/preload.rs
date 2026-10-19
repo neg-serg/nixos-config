@@ -40,6 +40,16 @@ const NEEDED: &[&str] = &[
     "libvulkan.so.1",
 ];
 
+/// Libraries this process could not resolve, in `NEEDED` order. Filled by
+/// `ensure_graphics_libs` and read by the failure path in the binaries, so a "no Wayland" exit
+/// can name what is actually missing instead of guessing.
+static MISSING: std::sync::Mutex<Vec<&'static str>> = std::sync::Mutex::new(Vec::new());
+
+/// What `ensure_graphics_libs` could not find. Empty when everything resolved.
+pub fn missing() -> Vec<&'static str> {
+    MISSING.lock().map(|v| v.clone()).unwrap_or_default()
+}
+
 /// Resolve and preload everything in `NEEDED`. Returns the number of libraries newly loaded,
 /// which makes the function observable in a log line without making the caller care.
 ///
@@ -47,10 +57,12 @@ const NEEDED: &[&str] = &[
 /// session, or without Vulkan, and the toolkit's own error message is better than ours.
 pub fn ensure_graphics_libs() -> usize {
     let mut loaded = 0;
+    let mut missing: Vec<&'static str> = Vec::new();
     for soname in NEEDED {
         if already_resolvable(soname) {
             continue;
         }
+        let mut found = false;
         for dir in search_dirs() {
             let candidate = dir.join(soname);
             if !candidate.is_file() {
@@ -59,9 +71,16 @@ pub fn ensure_graphics_libs() -> usize {
             if dlopen_global(&candidate) {
                 loaded += 1;
                 remember(&candidate);
+                found = true;
                 break;
             }
         }
+        if !found {
+            missing.push(soname);
+        }
+    }
+    if let Ok(mut slot) = MISSING.lock() {
+        *slot = missing;
     }
     loaded
 }
