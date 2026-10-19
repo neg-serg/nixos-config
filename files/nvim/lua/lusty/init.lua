@@ -1,8 +1,8 @@
 -- Lusty pickers for the files/nvim config (native Rust backend).
 --
---   :LustyFilesystemExplorer [path]   filesystem float (cwd or the given path)
---   :LustyFilesystemExplorerFromHere  filesystem float from the current file's dir
---   :LustyBufferExplorer              MRU buffer float
+--   :LustyFilesystemExplorer [path]   filesystem picker (cwd or the given path)
+--   :LustyFilesystemExplorerFromHere  filesystem picker from the current file's dir
+--   :LustyBufferExplorer              MRU buffer picker
 --   :LustyBufferGrep                  Ruby-ish regex over the loaded buffers
 --   :LustyRecent                      recent files / visited dirs
 --
@@ -11,7 +11,7 @@
 --   <C-g>       buffer grep
 --   <Leader>.   recent files
 -- The filesystem explorer keys (,l from here / ,C cwd) moved to broot
--- (plugins/files.lua — broot is the file manager now); the float itself stays
+-- (plugins/files.lua — broot is the file manager now); the picker itself stays
 -- available through the :LustyFilesystemExplorer* commands below.
 --
 -- The pickers are rendered by the Rust backend (`lusty serve`, see native.lua);

@@ -1,7 +1,8 @@
--- Lusty picker: Rust backend (lusty serve) rendered as a normal
--- nvim floating window with real highlights. No terminal buffer involved, so
--- it renders reliably even when nvim itself runs inside a web xterm. This is
--- the only picker implementation (the historical Lua port was removed).
+-- Lusty picker: Rust backend (lusty serve) rendered as a regular bottom split
+-- with real highlights — no floating window and no frame. No terminal buffer
+-- involved, so it renders reliably even when nvim itself runs inside a web
+-- xterm. This is the only picker implementation (the historical Lua port was
+-- removed).
 --
 -- Backend protocol (plain lines, tab separated):
 --   Q <from> <to> <query> [sort] -> "N <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
@@ -351,8 +352,8 @@ end
 local Picker = {}
 Picker.__index = Picker
 
--- Geometry, the float window, the keymap base, cursor/query handling and the
--- teardown are shared with the generic list float (`lusty.native_pick`).
+-- Geometry, the picker split, the keymap base, cursor/query handling and the
+-- teardown are shared with the generic list picker (`lusty.native_pick`).
 core.bind(Picker)
 
 function Picker.new(root, depth)
@@ -394,7 +395,7 @@ end
 
 --- Long-view column mask: LUSTY_COLUMNS wins over g:LustyExplorerColumns;
 --- unknown tokens are ignored, an empty result means all fields
---- (perm,user,size,time). CLI flags do not apply to the nvim float.
+--- (perm,user,size,time). CLI flags do not apply to the nvim picker.
 function Picker:meta_mask()
   local spec = os.getenv('LUSTY_COLUMNS')
   if spec == nil or spec == '' then
@@ -425,7 +426,7 @@ end
 --- Fetch eza-style metadata for the visible rows only (serve request M:
 --- mask first, then entry indices). The backend answers one "K <i> <meta>"
 --- line per index; meta lines attach to the matching window row, then the
---- float is redrawn. Skipped while another request is in flight; the draw
+--- picker is redrawn. Skipped while another request is in flight; the draw
 --- that follows that response re-runs ensure_meta if rows are still missing.
 function Picker:ensure_meta()
   if not self.long or #self.handlers > 0 then
@@ -480,30 +481,30 @@ function Picker:preview_width()
   return math.max(8, math.min(w, vim.o.columns - 20))
 end
 
---- Open the preview float to the right of the picker (focus stays on the
---- picker). Geometry is fixed at open time; reopen on C-r to resize.
+--- Open the preview pane as a vertical split to the right of the picker split
+--- (same height, no frame; focus stays on the picker). The picker narrows to
+--- the remaining columns and is redrawn, so the grid re-flows instead of
+--- overflowing. Reopen on C-r to re-request the content at the new size.
 function Picker:open_preview()
+  if not self.win or not api.nvim_win_is_valid(self.win) then
+    return
+  end
   local w = self:preview_width()
-  local ph = self:height()
-  local row = math.max(0, vim.o.lines - ph - 1)
-  local picker_col = math.max(0, math.floor((vim.o.columns - self:width()) / 2))
-  local col = math.min(vim.o.columns - w - 1, picker_col + self:width() + 1)
+  local picker_win = self.win
+  api.nvim_set_current_win(picker_win)
+  -- `rightbelow vsplit` splits the picker window itself, so the pane inherits
+  -- its height and lands directly beside it; the width is set explicitly.
+  vim.cmd('noautocmd rightbelow vsplit')
+  local win = api.nvim_get_current_win()
   local buf = api.nvim_create_buf(false, true)
-  local win = api.nvim_open_win(buf, false, {
-    relative = 'editor',
-    width = w,
-    height = ph,
-    row = row,
-    col = math.max(0, col),
-    style = 'minimal',
-    border = 'rounded',
-  })
+  api.nvim_win_set_buf(win, buf)
   vim.bo[buf].buftype = 'nofile'
   vim.bo[buf].swapfile = false
   vim.bo[buf].modifiable = true
   vim.bo[buf].bufhidden = 'wipe'
-  vim.wo[win].wrap = false
-  vim.wo[win].winhighlight = 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder'
+  core.apply_window_opts(win)
+  pcall(api.nvim_win_set_width, win, w)
+  api.nvim_set_current_win(picker_win)
   self.preview_buf = buf
   self.preview_win = win
   self.preview_key = nil
@@ -521,6 +522,11 @@ function Picker:close_preview()
   self.preview_buf = nil
   self.preview_key = nil
   self.preview_lines = nil
+  -- The picker got its columns back: re-flow the grid (draw is a no-op while
+  -- the whole picker is closing).
+  if self.win and api.nvim_win_is_valid(self.win) then
+    self:draw()
+  end
 end
 
 function Picker:toggle_preview()
@@ -531,6 +537,9 @@ function Picker:toggle_preview()
   self.preview_on = not self.preview_on
   if self.preview_on then
     self:open_preview()
+    -- The pane took its columns from the picker: re-flow the grid first, then
+    -- request the content for the now smaller pane.
+    self:draw()
     self:refresh_preview()
   else
     self:close_preview()
@@ -634,7 +643,7 @@ function Picker:setup_keymaps()
       ['<C-w>'] = 'updir',
       -- C-e: open the typed text as a new buffer (Lua-port parity; parent
       -- dirs are created). C-d: cycle the search depth 1..6 at runtime
-      -- (buffers/grep use C-d for delete instead; this is the filesystem float).
+      -- (buffers/grep use C-d for delete instead; this is the filesystem picker).
       ['<C-e>'] = 'create',
       ['<C-d>'] = 'cycle_depth',
       ['<C-Space>'] = 'mark',
@@ -741,6 +750,9 @@ function Picker:draw()
     return
   end
   pf('draw')
+  -- Remember what the grid was drawn for: ensure_geometry() compares against
+  -- the live window size on the next key.
+  self._drawn_w, self._drawn_h = self:width(), self:height()
   if self.loading then
     -- First listing is still in flight from the serve backend: show a plain
     -- box with a dim ellipsis and the path prompt (no [N] counter, no stale
@@ -1052,6 +1064,10 @@ function Picker:handle(action)
   if self.closed then
     return
   end
+  -- Cheap self-heal for a split that changed size without a display update
+  -- (the resize events need one), so the grid never stays padded to the old
+  -- width/height after a key.
+  self:ensure_geometry()
   pf('key:' .. tostring(action))
   if action == 'cancel' then
     self:close()
@@ -1132,7 +1148,7 @@ function Picker:handle(action)
     return
   end
   -- Cursor movement, column/page jumps, query editing and plain typing are
-  -- shared with the generic list float; '/' is intercepted before the typed
+  -- shared with the generic list picker; '/' is intercepted before the typed
   -- character is appended, and a dotfile-mode flip restarts the backend
   -- instead of scheduling a rerank.
   core.handle_common(self, action, 'rerank', {
@@ -1211,9 +1227,15 @@ function Picker:complete_slash(q)
   self:rerank()
 end
 
+--- Re-open the picker on another root (or depth): close + a fresh picker over
+--- the restored layout. The split height is carried over — a split is
+--- user-resizable, and navigating (Enter on a dir, C-w, C-d) must not snap it
+--- back to the default.
 function Picker:restart(root, depth)
+  local win_h = self:height()
   self:close() -- restores the caller window
   local np = Picker.new(root, depth or self.depth)
+  np.win_h = win_h
   np:startup()
   return np
 end
@@ -1263,7 +1285,7 @@ function Picker:open_current(action)
   end
   if item.kind == 'd' then
     -- Entering a directory is a visit too: record it so the dirs MRU
-    -- (,. then C-r) reflects where the filesystem float was used.
+    -- (,. then C-r) reflects where the filesystem picker was used.
     frecency.record(item.path)
     self:restart(item.path)
     return
@@ -1463,8 +1485,8 @@ function M.ensure_highlights()
   -- nearly-black but not #000000: the web/xterm layer treats exact black as
   -- the transparent default, while #0c0d14 rendered too gray on this setup
   api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000001', fg = '#d4d4d4' })
-  -- Frame one notch darker than the float body: the colorscheme's FloatBorder
-  -- (VertSplit link) reads too bright against the near-black panel
+  -- Window separator one notch darker than the panel body: the colorscheme's
+  -- default (VertSplit) reads too bright against the near-black picker
   api.nvim_set_hl(0, 'LustyNativeBorder', { fg = '#3a4454', bg = '#000001' })
   -- omp.zsh path segment colors (neg.omp.json)
   api.nvim_set_hl(0, 'LustyPromptTilde', { fg = '#287373' })

@@ -1,6 +1,6 @@
--- Generic bottom-float list picker for small item sets (native buffer
+-- Generic bottom-split list picker for small item sets (native buffer
 -- explorer / buffer grep). Same window geometry, colours and keys as the
--- native filesystem float, but items come from a Lua source function
+-- native filesystem picker, but items come from a Lua source function
 -- instead of the Rust backend, so it works for data that only nvim knows
 -- (buffers, grep hits).
 --
@@ -29,8 +29,8 @@ local active = nil
 local Pick = {}
 Pick.__index = Pick
 
--- Geometry, the float window, the keymap base, cursor/query handling and the
--- teardown are shared with the filesystem float (`lusty.native`).
+-- Geometry, the picker split, the keymap base, cursor/query handling and the
+-- teardown are shared with the filesystem picker (`lusty.native`).
 core.bind(Pick)
 
 function Pick.new(opts)
@@ -103,6 +103,9 @@ function Pick:draw()
   if self.closed or not api.nvim_buf_is_valid(self.buf) then
     return
   end
+  -- Remember what the grid was drawn for: ensure_geometry() compares against
+  -- the live window size on the next key.
+  self._drawn_w, self._drawn_h = self:width(), self:height()
   local cols = self:max_cols()
   local col_w = self:col_width()
   local h = self:height()
@@ -211,6 +214,10 @@ function Pick:handle(action)
   if self.closed then
     return
   end
+  -- Cheap self-heal for a split that changed size without a display update
+  -- (the resize events need one), so the grid never stays padded to the old
+  -- width/height after a key.
+  self:ensure_geometry()
   if action == 'cancel' then
     self:close()
     return
@@ -276,7 +283,7 @@ function Pick:handle(action)
     return
   end
   -- Cursor movement, column/page jumps and query editing are shared with the
-  -- filesystem float; 'refresh' is this picker's re-list entry point.
+  -- filesystem picker; 'refresh' is this picker's re-list entry point.
   core.handle_common(self, action, 'refresh')
 end
 

@@ -1,7 +1,7 @@
 -- Native float smoke: regression for lusty.native_pick and the pickers that
 -- use it (buffers, buffer grep, recent). Runs headless like smoke.lua:
 --   nvim --clean --headless -l files/nvim/lua/lusty/tests/native_float_smoke.lua
--- Floating windows work headless; keys are driven through Picker:handle.
+-- Split windows work headless; keys are driven through Picker:handle.
 
 local base = vim.fn.fnamemodify(arg[0], ':p:h') .. '/../..'
 package.path = base .. '/?.lua;' .. base .. '/?/init.lua;' .. package.path

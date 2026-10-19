@@ -1,5 +1,5 @@
 -- Native buffer grep: the Lusty buffer grep (Ruby-ish case-insensitive regex
--- over the open listed buffers) rendered in the native bottom float.
+-- over the open listed buffers) rendered in the native bottom split.
 -- An empty pattern lists the buffers themselves; typing greps them live.
 -- Enter/Tab switch to the buffer, C-t/C-o/C-v open in tab/split/vsplit and
 -- jump to the matched line.
