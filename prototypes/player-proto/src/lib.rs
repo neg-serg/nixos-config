@@ -115,3 +115,43 @@ pub fn process_age_ms() -> Option<f64> {
 }
 
 // ---------------------------------------------------------------- geometry
+
+// ---- layout contract -------------------------------------------------------
+//
+// `draw_ui` records the rectangles it composes the frame from, so the *invariants* a design
+// review cares about (what is centred, what is flush, what shares an edge) can be asserted
+// arithmetically instead of guessed from pixels. Enabled only under PLAYER_RECTS so the normal
+// run pays nothing.
+
+use std::sync::{Mutex, OnceLock};
+
+static RECTS: Mutex<Vec<(String, [f32; 4])>> = Mutex::new(Vec::new());
+
+fn rects_enabled() -> bool {
+    static ON: OnceLock<bool> = OnceLock::new();
+    *ON.get_or_init(|| std::env::var("PLAYER_RECTS").is_ok())
+}
+
+/// Record one composed element, in logical units.
+pub fn record_rect(name: &str, x: f32, y: f32, w: f32, h: f32) {
+    if !rects_enabled() {
+        return;
+    }
+    if let Ok(mut v) = RECTS.lock() {
+        v.push((name.to_string(), [x, y, w, h]));
+    }
+}
+
+/// Write the recorded rectangles as JSON lines: `{"name":[x,y,w,h], ...}`.
+pub fn dump_rects(path: &str) -> std::io::Result<()> {
+    let rects = RECTS.lock().map(|v| v.clone()).unwrap_or_default();
+    let mut out = String::from("{");
+    for (i, (name, [x, y, w, h])) in rects.iter().enumerate() {
+        if i > 0 {
+            out.push(',');
+        }
+        out.push_str(&format!("\"{name}\":[{x:.2},{y:.2},{w:.2},{h:.2}]"));
+    }
+    out.push('}');
+    std::fs::write(path, out)
+}
