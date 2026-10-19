@@ -1,10 +1,10 @@
 # Global LazyTail config, discovered when no project-local lazytail.yaml is
 # found (search order: walking up from CWD, then ~/.config/lazytail/config.yaml).
 # Upstream: https://github.com/raaymax/lazytail
-# Deployed by modules/user/nix-maid/cli/lazytail.nix; the theme below is
-# generated from the Ghostty palette in files/cli/ghostty/config.
+# Deployed by modules/user/nix-maid/cli/lazytail.nix; the theme is the neg.nvim
+# palette in files/lazytail/themes/neg.yaml.
 name: global
-theme: ghostty
+theme: neg
 
 # Key bindings (patched lazytail: upstream 0.10.0 hard-codes every chord; see
 # packages/lazytail/keymap.patch). A list replaces the built-in chords for that

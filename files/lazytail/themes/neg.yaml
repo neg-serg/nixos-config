@@ -1,0 +1,97 @@
+# neg — LazyTail theme in the neg.nvim palette.
+#
+# Two layers, both taken from existing sources instead of being invented:
+#
+# 1. `palette:` is the *terminal* palette this viewer lives in — the same hexes
+#    as files/kitty/theme.conf (which ghostty.yaml was imported from). LazyTail
+#    paints named colours as truecolor, so mirroring the terminal keeps a line
+#    that says `error` here identical to the same ANSI colour in the shell.
+#    Its fg/bg/selection are already neg's own values (norm/bclr/selection_bg),
+#    so the family matches neg.nvim without a second palette to maintain.
+#
+# 2. `ui:` is the neg.nvim semantic mapping — see the neg groups in brackets.
+#    LazyTail derives these from the palette by default; the overrides below
+#    pin them to the neg role instead of whatever the ANSI slot happened to be.
+#
+# Where neg keeps a colour too dark to read as text on #000000 (neg uses
+# `diff_delete` #6B0F2A for error signs and undercurls, never as body text), the
+# bright member of the same hue family is used for the text roles and the dark
+# one is kept for the tinted backgrounds.
+#
+# Regenerate/edit freely: `lazytail theme list` shows this file as `neg`.
+base: dark
+
+palette:
+  black: "#020202"
+  red: "#8a2f58"
+  green: "#287373"
+  yellow: "#914e89"
+  blue: "#395573"
+  magenta: "#5e468c"
+  cyan: "#31658c"
+  white: "#899ca1"
+  bright_black: "#3d3d3d"
+  bright_red: "#cf4f88"
+  bright_green: "#53a6a6"
+  bright_yellow: "#bf85cc"
+  bright_blue: "#477ab3"
+  bright_magenta: "#7e62b3"
+  bright_cyan: "#6096bf"
+  bright_white: "#617287"
+  foreground: "#6c7e96"
+  background: "#000000"
+  selection: "#0d1824"
+
+ui:
+  # Normal (fg on bg)
+  fg: "#6c7e96"
+  bg: "#000000"
+  # Comment — neg computes it as darken(norm, 50%); timestamps, hints, help text
+  muted: "#363f4b"
+  # keyword1 family (@variable/@function blue); section headers, borders, the
+  # modified-source dot, panel markers
+  accent: "#477ab3"
+  # neg `high` — search matches, source spinner, aggregation bars
+  highlight: "#a5c1e6"
+  # neg `whit` (PmenuSel fg) — key chords, aggregation counts
+  primary: "#d1e5ff"
+  # diff_add / DiagnosticOk family — the follow marker, OK states
+  positive: "#53a6a6"
+  # bright red — the deny chord in dialogs (neg keeps its reds for signs)
+  negative: "#cf4f88"
+  # Selection: neg's kitty-inspired pair, identical in kitty's theme.conf
+  selection_bg: "#0d1824"
+  selection_fg: "#367bbf"
+  # Expanded multi-line entry: neg `bg_float` = lighten(bclr, 8)
+  expanded_bg: "#141414"
+  # Whole-line severity stripes: neg's U.alpha(hue, bg, a) idiom, applied to the
+  # terminal hues. Alphas are higher than neg's 0.14–0.22 panel tints because a
+  # full-width stripe on pure black has to read at a glance.
+  severity_warn_bg: "#20111e"
+  severity_error_bg: "#270d19"
+  severity_fatal_bg: "#3e1528"
+  # Severity text roles shown in the source panel's counters
+  severity_fatal: "#cf4f88"
+  severity_error: "#cf4f88"
+  severity_warn: "#bf85cc"
+  severity_info: "#53a6a6"
+  severity_debug: "#6096bf"
+  severity_trace: "#363f4b"
+  # Filter input border, per mode: plain / regex / structured query / error
+  filter_plain: "#395573"
+  filter_regex: "#31658c"
+  filter_query: "#477ab3"
+  filter_error: "#cf4f88"
+  # Help and confirmation popups: neg `bg_float`
+  popup_bg: "#141414"
+  # One dot per source in the panel; spread over the neg hue families (teal,
+  # lilac, blue, red, green, cyan, violet, magenta)
+  source_colors:
+    - "#53a6a6"
+    - "#bf85cc"
+    - "#477ab3"
+    - "#cf4f88"
+    - "#287373"
+    - "#6096bf"
+    - "#7e62b3"
+    - "#914e89"
