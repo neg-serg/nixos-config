@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # Start the player in the real session, sized like the design target.
 # Fails loudly with a diagnosis instead of letting winit panic on a missing library.
+#
+# Every argument is forwarded to the player, so the capture flags work here directly:
+#   --size=WxH        window size in logical units
+#   --scale=N         pin the device scale (1 = 1x capture, 2 = 2x capture of the same
+#                     logical layout); without it the monitor's scale is used
+#   --shot-after=N    frame at which the run captures and then exits
+# With PLAYER_DUMP_SWAPCHAIN set the run always ends by itself after the dump, so a scripted
+# capture never needs an external kill.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 bin="$here/target/release/player"

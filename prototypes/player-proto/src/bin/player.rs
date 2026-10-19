@@ -895,6 +895,15 @@ struct App {
     /// Frame at which a scripted run exits; a short linger lets the MPD worker drain the
     /// commands the script produced (it polls every 300 ms).
     exit_frame: Option<u64>,
+    /// `PLAYER_DUMP_SWAPCHAIN`: read the presented image back to this path, then exit.
+    dump_path: Option<String>,
+    /// Set once the swapchain dump was taken, so a resize cannot make the run dump twice.
+    dump_done: bool,
+    /// Swapchain generation and image index presented on the previous frame. The dump reads
+    /// this image, not the one handed over in the current frame: llvmpipe's WSI images are
+    /// shared with the compositor, and copying one while it is still being read segfaults the
+    /// driver. One frame of latency is invisible in a capture.
+    prev_present: Option<(u64, u32)>,
     hits: Vec<HitArea>,
     cursor: (f32, f32),
     last_click: Option<(Instant, Pane, usize)>,
@@ -945,6 +954,9 @@ impl App {
                 .find(|a| a.starts_with("--scale="))
                 .and_then(|a| a[8..].parse().ok()),
             exit_frame: None,
+            dump_path: std::env::var("PLAYER_DUMP_SWAPCHAIN").ok(),
+            dump_done: false,
+            prev_present: None,
             hits: Vec::new(),
             cursor: (0.0, 0.0),
             last_click: None,
@@ -3849,6 +3861,10 @@ impl winit::application::ApplicationHandler for App {
                         event_loop.exit();
                         return;
                     }
+                    // Hand the previous frame's image to the dump below and remember this one
+                    // for the next frame.
+                    let presented = (gpu.swapchain_generation, gpu.last_present_index);
+                    let previous = self.prev_present.replace(presented);
                     if let Some(frames) = self.bench_frames {
                         if self.frames == self.shot_frames as u64 {
                             if unsafe { gpu.bench(&list, frames, clear) }.is_ok() {
@@ -3867,12 +3883,38 @@ impl winit::application::ApplicationHandler for App {
                             self.exit_frame = Some(self.frames + 40);
                         }
                     }
-                    if let Ok(path) = std::env::var("PLAYER_DUMP_SWAPCHAIN") {
-                        if self.frames == 90 {
-                            if let Err(e) =
-                                unsafe { gpu.dump_presented(gpu.last_present_index, &path) }
-                            {
-                                eprintln!("swapchain dump failed: {e}");
+                    // A swapchain dump is a capture like any other: it fires on the
+                    // --shot-after frame and then ends the run, so `dumpframe.sh` returns on its
+                    // own instead of waiting for a key press. One frame knob for both capture
+                    // paths keeps 1x and 2x dumps comparable.
+                    if let Some(path) = self.dump_path.clone() {
+                        // Read back the image presented on the *previous* frame: the one handed
+                        // over right now may still be mapped by the compositor, and copying a
+                        // WSI image under llvmpipe segfaults. A generation mismatch means the
+                        // swapchain was just rebuilt and there is nothing safe to copy yet, so
+                        // the dump waits for the next frame instead of hanging.
+                        let ready = previous.filter(|(gen, _)| *gen == gpu.swapchain_generation);
+                        if !self.dump_done && self.frames >= self.shot_frames as u64 {
+                            if let Some((_, index)) = ready {
+                                self.dump_done = true;
+                                match unsafe { gpu.dump_presented(index, &path) } {
+                                    Ok(()) => eprintln!(
+                                        "[dump] swapchain {}x{} (scale {}) frame {} -> {path}",
+                                        gpu.extent.width,
+                                        gpu.extent.height,
+                                        self.scale,
+                                        self.frames
+                                    ),
+                                    // Still exit: a capture that failed must not hang the caller.
+                                    Err(e) => eprintln!("swapchain dump failed: {e}"),
+                                }
+                                self.exit_frame = Some(self.frames + 2);
+                            } else if self.frames >= self.shot_frames as u64 + 180 {
+                                // The compositor keeps reconfiguring the swapchain, so no frame
+                                // is ever safe to read back. End the run instead of hanging the
+                                // caller that is waiting for the capture.
+                                eprintln!("swapchain dump skipped: the swapchain never settled");
+                                self.exit_frame = Some(self.frames + 2);
                             }
                         }
                     }

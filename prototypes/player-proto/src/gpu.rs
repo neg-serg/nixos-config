@@ -79,6 +79,10 @@ pub struct Gpu {
     in_flight: vk::Fence,
     /// Index of the swapchain image handed to the compositor most recently.
     pub last_present_index: u32,
+    /// Bumped on every swapchain rebuild. A presented image index is only meaningful together
+    /// with the generation it was presented in: indices from an older swapchain point at
+    /// destroyed images.
+    pub swapchain_generation: u64,
     /// Set when acquire/present reported SUBOPTIMAL or OUT_OF_DATE; the app rebuilds and retries.
     pub needs_resize: bool,
     /// Resolution passed to the vertex shader. With a HiDPI surface the UI is laid out in
@@ -228,6 +232,9 @@ impl Gpu {
             self.device.destroy_image_view(v, None);
         }
         self.swapchain_fn.destroy_swapchain(self.swapchain, None);
+        // Every image of the old swapchain is gone: any index recorded against the old
+        // generation must not be read back.
+        self.swapchain_generation += 1;
 
         let caps = self
             .surface_fn
@@ -261,6 +268,16 @@ impl Gpu {
         } else {
             caps.max_image_count
         });
+        // TRANSFER_SRC is what makes the swapchain dump legal: PLAYER_DUMP_SWAPCHAIN copies
+        // the presented image back to a host buffer, and llvmpipe segfaults inside its transfer
+        // path when a swapchain image was created without that usage bit.
+        let mut usage = vk::ImageUsageFlags::COLOR_ATTACHMENT;
+        if caps
+            .supported_usage_flags
+            .contains(vk::ImageUsageFlags::TRANSFER_SRC)
+        {
+            usage |= vk::ImageUsageFlags::TRANSFER_SRC;
+        }
         let swapchain = self.swapchain_fn.create_swapchain(
             &vk::SwapchainCreateInfoKHR::default()
                 .surface(self.surface)
@@ -269,7 +286,7 @@ impl Gpu {
                 .image_color_space(self.color_space)
                 .image_extent(extent)
                 .image_array_layers(1)
-                .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
+                .image_usage(usage)
                 .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
                 .pre_transform(caps.current_transform)
                 .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
@@ -806,6 +823,15 @@ pub fn create_gpu(
             caps.max_image_count
         });
 
+        // Same usage as the resize path below (see there): the dump reads the presented image
+        // back, which needs TRANSFER_SRC on the swapchain images.
+        let mut usage = vk::ImageUsageFlags::COLOR_ATTACHMENT;
+        if caps
+            .supported_usage_flags
+            .contains(vk::ImageUsageFlags::TRANSFER_SRC)
+        {
+            usage |= vk::ImageUsageFlags::TRANSFER_SRC;
+        }
         let swapchain = swapchain_fn
             .create_swapchain(
                 &vk::SwapchainCreateInfoKHR::default()
@@ -815,7 +841,7 @@ pub fn create_gpu(
                     .image_color_space(format.color_space)
                     .image_extent(extent)
                     .image_array_layers(1)
-                    .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
+                    .image_usage(usage)
                     .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
                     .pre_transform(caps.current_transform)
                     .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
@@ -1195,6 +1221,7 @@ pub fn create_gpu(
             render_sem,
             in_flight,
             last_present_index: 0,
+            swapchain_generation: 0,
             needs_resize: false,
             push_res: [extent.width as f32, extent.height as f32],
             text_gamma: std::env::var("PLAYER_TEXT_GAMMA")
@@ -1487,6 +1514,9 @@ impl Gpu {
             .image_indices(&indices);
         self.swapchain_fn
             .queue_present(self.present_queue, &present)?;
+        // Remember which image the compositor just got: the swapchain dump reads a presented
+        // image back and has to know its index instead of assuming image 0.
+        self.last_present_index = idx;
         Ok(())
     }
 

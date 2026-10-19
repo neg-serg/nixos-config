@@ -31,7 +31,14 @@ cargo build --release
 ./measure.sh 20                # 20 runs, min/median/max for process->first_present
 ./run.sh --frames 1 --shot /tmp/frame.ppm   # offscreen render of the same quads, as PPM
 ./run.sh --frames 1 --hdr      # HDR probe: HDR10 swapchain + VK_EXT_hdr_metadata
+./dumpframe.sh --size=1440x900 --scale=1 --shot-after=200   # real window at 1x -> /tmp/frame.ppm
+./dumpframe.sh --size=1440x900 --scale=2 --shot-after=200   # same layout, 2x device pixels
 ```
+
+A `--shot-after`/`--shot`/`PLAYER_DUMP_SWAPCHAIN` run always ends by itself: the capture is taken
+at that frame and the app exits a couple of frames later, so a script never has to kill the player
+(killing it has taken the compositor down before). `--scale=N` pins the device scale and `--size`
+is then the logical layout size, which is what makes a 1x and a 2x capture comparable.
 
 ## NixOS gotchas this prototype hit (all measured)
 
