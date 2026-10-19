@@ -1,0 +1,174 @@
+//! Design tokens: colour, type and geometry.
+//!
+//! Everything the UI draws reads from a `Theme`, so a variant is a data change, not a code
+//! change. Colours are linear-ish 0..1 float triples for direct upload to the shader; the hex
+//! values in the comments are the sRGB source of truth.
+
+pub type Rgba = [f32; 4];
+
+/// Which face to shape with. The UI keeps two families: Inter for text, FiraCode Nerd Font
+/// Mono for numerals, times and the transport/symbol glyphs.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Face {
+    UiRegular,
+    UiMedium,
+    UiSemiBold,
+    Mono,
+    MonoMedium,
+    /// Geometric/icon glyphs: ▸ ▮ ◀ ▶ ♪ ▏
+    Symbols,
+}
+
+/// Type scale (px). A ~1.2 modular scale anchored at 13 px for list rows.
+pub struct TypeScale {
+    pub display: f32, // now-playing title
+    pub title: f32,   // app name
+    pub heading: f32, // pane headers, tabs
+    pub body: f32,    // row titles
+    pub label: f32,   // row secondary, chips
+    pub caption: f32, // timings, hints
+    pub micro: f32,   // uppercase pane labels
+}
+
+pub const TYPE: TypeScale = TypeScale {
+    display: 20.0,
+    title: 18.0,
+    heading: 14.0,
+    body: 14.0,
+    label: 12.0,
+    caption: 11.0,
+    micro: 11.0,
+};
+
+/// Spacing and shape. Multiples of 2 px so half-pixel offsets disappear at 1x scaling.
+pub struct Geometry {
+    pub pad: f32,
+    pub gap: f32,
+    pub row_h: f32,
+    pub row_h_compact: f32,
+    pub radius_sm: f32,
+    pub radius_md: f32,
+    pub radius_lg: f32,
+    pub radius_pill: f32,
+    pub radius_art: f32,
+    pub line: f32, // hairline thickness
+}
+
+pub const GEOM: Geometry = Geometry {
+    pad: 20.0,
+    gap: 12.0,
+    /// Two-line rows (queue, search): 14/18 title + 12/16 secondary + breathing room.
+    row_h: 40.0,
+    /// One-line rows (library).
+    row_h_compact: 36.0,
+    radius_sm: 3.0,
+    radius_md: 8.0,
+    radius_lg: 14.0,
+    radius_pill: 12.0,
+    radius_art: 18.0,
+    line: 1.0,
+};
+
+pub struct Theme {
+    pub name: &'static str,
+    // surfaces
+    pub bg_top: Rgba,
+    pub bg_bottom: Rgba,
+    pub panel: Rgba,
+    pub panel_hi: Rgba,
+    /// Recessed wells: art placeholder, progress bed.
+    pub panel_inset: Rgba,
+    pub border: Rgba,
+    /// 1 px top highlight; the only thing that separates panels on this palette
+    /// (black shadows reach 1.08-1.12:1 against the background, i.e. nothing).
+    pub border_hi: Rgba,
+    pub shadow: Rgba,
+    // text
+    pub text: Rgba,
+    pub text_dim: Rgba,
+    pub text_faint: Rgba,
+    pub text_on_accent: Rgba,
+    // accents
+    pub accent: Rgba,
+    pub accent2: Rgba,
+    pub accent_bright: Rgba,
+    pub warn: Rgba,
+    pub accent_soft: Rgba,
+    pub selection: Rgba,
+    pub playing_bg: Rgba,
+    // states
+    pub danger: Rgba,
+    pub success: Rgba,
+    /// Alpha wash used under the album art backdrop.
+    pub backdrop: Rgba,
+}
+
+/// Cool blue-on-charcoal, the default. Contrast of every text/background pair was computed
+/// with the WCAG 2.1 formula (see FONTS-AND-THEME.md section 6.3); text_faint alone is 5.2:1 on
+/// `panel`, so 11 px labels pass AA.
+pub const DARK: Theme = Theme {
+    name: "dark",
+    bg_top: [0.0588, 0.0784, 0.1059, 1.0],      // #0F141B
+    bg_bottom: [0.0314, 0.0392, 0.0549, 1.0],   // #080A0E
+    panel: [0.0784, 0.0980, 0.1333, 1.0],       // #141922
+    panel_hi: [0.1059, 0.1333, 0.1765, 1.0],    // #1B222D
+    panel_inset: [0.0510, 0.0667, 0.0902, 1.0], // #0D1117
+    border: [1.0, 1.0, 1.0, 0.07],
+    border_hi: [1.0, 1.0, 1.0, 0.14],
+    shadow: [0.0, 0.0, 0.0, 0.45],
+    text: [0.9098, 0.9294, 0.9608, 1.0],           // #E8EDF5
+    text_dim: [0.6549, 0.7020, 0.7686, 1.0],       // #A7B3C4
+    text_faint: [0.4980, 0.5529, 0.6275, 1.0],     // #7F8DA0
+    text_on_accent: [0.0314, 0.0392, 0.0549, 1.0], // #080A0E
+    accent: [0.3725, 0.8196, 1.0, 1.0],            // #5FD1FF
+    accent2: [0.5490, 0.6078, 1.0, 1.0],           // #8C9BFF
+    accent_bright: [0.5608, 0.8784, 1.0, 1.0],     // #8FE0FF
+    warn: [0.9647, 0.7765, 0.4039, 1.0],           // #F6C667
+    accent_soft: [0.3725, 0.8196, 1.0, 0.16],
+    selection: [0.3725, 0.8196, 1.0, 0.16],
+    playing_bg: [0.3725, 0.8196, 1.0, 0.10],
+    danger: [1.0, 0.4824, 0.4824, 1.0],     // #FF7B7B
+    success: [0.3294, 0.8510, 0.5490, 1.0], // #54D98C
+    backdrop: [0.25, 0.29, 0.40, 0.15],
+};
+
+/// Warm amber-on-ink alternative; same token names so the UI code is unaware.
+pub const WARM: Theme = Theme {
+    name: "warm",
+    bg_top: [0.071, 0.055, 0.043, 1.0], // #12100b-ish
+    bg_bottom: [0.039, 0.031, 0.024, 1.0],
+    panel: [0.086, 0.071, 0.055, 1.0],
+    panel_hi: [0.118, 0.098, 0.075, 1.0],
+    panel_inset: [0.055, 0.043, 0.031, 1.0],
+    border: [1.0, 0.94, 0.86, 0.07],
+    border_hi: [1.0, 0.94, 0.86, 0.14],
+    shadow: [0.0, 0.0, 0.0, 0.55],
+    text: [0.965, 0.941, 0.902, 1.0], // #f6f0e6
+    text_dim: [0.706, 0.647, 0.573, 1.0],
+    text_faint: [0.451, 0.404, 0.349, 1.0],
+    text_on_accent: [0.10, 0.06, 0.02, 1.0],
+    accent: [1.0, 0.722, 0.361, 1.0],  // #ffb85c
+    accent2: [1.0, 0.541, 0.404, 1.0], // #ff8a67
+    accent_bright: [1.0, 0.812, 0.529, 1.0],
+    warn: [0.9647, 0.7765, 0.4039, 1.0],
+    accent_soft: [1.0, 0.722, 0.361, 0.16],
+    selection: [1.0, 0.722, 0.361, 0.20],
+    playing_bg: [1.0, 0.722, 0.361, 0.09],
+    danger: [0.937, 0.400, 0.400, 1.0],
+    success: [0.353, 0.890, 0.596, 1.0],
+    backdrop: [0.40, 0.29, 0.20, 0.15],
+};
+
+impl Theme {
+    pub fn by_name(name: &str) -> &'static Theme {
+        match name {
+            "warm" => &WARM,
+            _ => &DARK,
+        }
+    }
+}
+
+/// Alpha helpers, so call sites read as intent instead of float arithmetic.
+pub fn with_alpha(c: Rgba, a: f32) -> Rgba {
+    [c[0], c[1], c[2], a]
+}
