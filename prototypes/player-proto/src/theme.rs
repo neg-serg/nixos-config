@@ -34,8 +34,8 @@ pub const TYPE: TypeScale = TypeScale {
     display: 20.0,
     title: 18.0,
     heading: 14.0,
-    body: 14.0,
-    label: 12.0,
+    body: 13.0,
+    label: 11.5,
     caption: 11.0,
     micro: 11.0,
 };
@@ -117,8 +117,8 @@ pub const DARK: Theme = Theme {
     border_hi: [1.0, 1.0, 1.0, 0.14],
     shadow: [0.0, 0.0, 0.0, 0.45],
     text: [0.9098, 0.9294, 0.9608, 1.0],           // #E8EDF5
-    text_dim: [0.6549, 0.7020, 0.7686, 1.0],       // #A7B3C4
-    text_faint: [0.4980, 0.5529, 0.6275, 1.0],     // #7F8DA0
+    text_dim: [0.7020, 0.7451, 0.8078, 1.0],       // #B3BECE
+    text_faint: [0.5569, 0.6118, 0.6863, 1.0],     // #8E9CAF
     text_on_accent: [0.0314, 0.0392, 0.0549, 1.0], // #080A0E
     accent: [0.3725, 0.8196, 1.0, 1.0],            // #5FD1FF
     accent2: [0.5490, 0.6078, 1.0, 1.0],           // #8C9BFF
