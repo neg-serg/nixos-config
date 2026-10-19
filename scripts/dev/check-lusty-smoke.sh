@@ -18,12 +18,13 @@ log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
 
 # All headless suites: the native picker suites (native_pick pickers, the
-# serve-backed filesystem picker, the split-window contract) plus the
-# shared-helper and parity checks.
+# serve-backed filesystem picker, the split-window contract, the one-line
+# mode) plus the shared-helper and parity checks.
 suites=(
   files/nvim/lua/lusty/tests/grep_pattern_smoke.lua
   files/nvim/lua/lusty/tests/native_float_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_split_smoke.lua
+  files/nvim/lua/lusty/tests/one_line_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_icons_smoke.lua
   files/nvim/lua/lusty/tests/filesystem_float_dirs_rev_smoke.lua

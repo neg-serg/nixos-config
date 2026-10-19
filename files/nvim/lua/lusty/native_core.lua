@@ -30,14 +30,40 @@ function M.width(self)
   return math.max(1, vim.o.columns)
 end
 
+--- One-line mode: the picker is a single row and the prompt and the selected
+--- entry share it (no grid). `LUSTY_ONE_LINE` wins over
+--- `g:LustyExplorerOneLine`, like the other options; read live so it can be
+--- flipped between runs.
+function M.one_line(self)
+  local e = os.getenv('LUSTY_ONE_LINE')
+  if e ~= nil and e ~= '' then
+    return e == '1' or e == 'true'
+  end
+  local gv = vim.g.LustyExplorerOneLine
+  if type(gv) == 'boolean' then
+    return gv
+  end
+  if type(gv) == 'number' then
+    return gv == 1
+  end
+  if type(gv) == 'string' then
+    return gv == '1' or gv == 'true'
+  end
+  return false
+end
+
 --- Picker height in rows. Once open it is the window height, so an interactive
 --- resize (or the preview open/close) is picked up by the next draw; before
 --- that it is the requested height: the height the split had before a
 --- re-open (`win_h`, see Picker:restart — a split is user-resizable, so
 --- navigating must not snap it back), else LUSTY_ROWS as in the standalone
 --- `--rows`, else five entry rows plus the prompt. A split has no border rows,
---- so the env value is the window height as is.
+--- so the env value is the window height as is. The one-line mode always asks
+--- for a single row and ensure_geometry() keeps the window there.
 function M.height(self)
+  if self:one_line() then
+    return 1
+  end
   if self.win and api.nvim_win_is_valid(self.win) then
     return math.max(1, api.nvim_win_get_height(self.win))
   end
@@ -60,7 +86,7 @@ end
 --- Max columns of the entry grid: choose a pitch that fits the split width
 --- exactly (col_w + 2 separator), so rows never overflow or wrap.
 function M.max_cols(self)
-  if self.long or self.single then
+  if self.long or self.single or self:one_line() then
     return 1
   end
   local w = self:width()
@@ -85,8 +111,13 @@ function M.col_width(self)
   return math.max(6, math.floor(text_w / cols))
 end
 
---- Number of positions covered by one screenful of the grid.
+--- Number of positions covered by one screenful of the grid. The one-line mode
+--- keeps a normal page behind the single visible row: C-n/C-p then walk the
+--- already fetched list instead of asking the backend once per keystroke.
 function M.screen_count(self)
+  if self:one_line() then
+    return 50
+  end
   return self:list_rows() * self:max_cols()
 end
 
@@ -209,6 +240,11 @@ end
 function M.ensure_geometry(self)
   if self.closed or not self.win or not api.nvim_win_is_valid(self.win) then
     return
+  end
+  -- The one-line mode owns exactly one row: any other height (a resize, a
+  -- leftover layout) is snapped back instead of leaving a half-empty window.
+  if self:one_line() and api.nvim_win_get_height(self.win) ~= 1 then
+    pcall(api.nvim_win_set_height, self.win, 1)
   end
   if self._drawn_w ~= api.nvim_win_get_width(self.win)
     or self._drawn_h ~= api.nvim_win_get_height(self.win)
@@ -340,7 +376,7 @@ end
 --- `refresh` names the method that re-lists the picker ('rerank' for the
 --- filesystem picker, 'refresh' for the list picker).
 function M.column_nav(self, delta, refresh)
-  if self.single then
+  if self.single or self:one_line() then
     return
   end
   local rows = self:list_rows()
@@ -531,11 +567,22 @@ function M.prompt_segments()
   local col = 0
   local function add(text, group)
     if text and #text > 0 then
-      segs[#segs + 1] = { col, #text, group }
+      segs[#segs + 1] = { col, #text, group, text }
       col = col + #text
     end
   end
   return add, segs
+end
+
+--- Concatenate a segment list into the plain text it paints. The segments keep
+--- their own text, so the prompt line and the one-line mode render from one
+--- source instead of two hand-kept copies of the same concatenation.
+function M.segments_text(segs)
+  local parts = {}
+  for _, seg in ipairs(segs) do
+    parts[#parts + 1] = seg[4]
+  end
+  return table.concat(parts)
 end
 
 --- Paint one prompt line from a `prompt_segments()` list into `ns`.
@@ -547,10 +594,48 @@ function M.paint_segments(self, ns, line, segs)
   end
 end
 
+--- Paint the one-line mode: the picker's prompt segments plus `tail` (the
+--- selected entry, or a placeholder) on the single row. The tail gets the
+--- selection bar, so the row still reads as "this is what Enter opens". An
+--- overflowing line is cut from the right — the query, which is what the user
+--- is typing, keeps its position.
+function M.paint_one_line(self, ns, head_segs, tail)
+  local w = self:width()
+  local head = M.segments_text(head_segs)
+  local sep = '  '
+  local tail = tail or ''
+  local text = M.fit(head .. sep .. tail, w)
+  api.nvim_buf_set_lines(self.buf, 0, -1, false, {
+    text .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(text))),
+  })
+  api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
+  for _, seg in ipairs(head_segs) do
+    if seg[3] and seg[1] < #text then
+      -- A cut line may end inside a segment: clamp instead of highlighting
+      -- past the end of the buffer text.
+      api.nvim_buf_add_highlight(
+        self.buf,
+        ns,
+        seg[3],
+        0,
+        seg[1],
+        math.min(seg[1] + seg[2], #text)
+      )
+    end
+  end
+  local from = #head + #sep
+  local to = math.min(#text, from + #tail)
+  if to > from then
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', 0, from, to)
+  end
+  return text
+end
+
 -- Methods a picker class can bind directly (same signature, no per-picker
 -- callbacks). Everything else is wrapped by the class with its own re-list
 -- entry point.
 M.BOUND = {
+  'one_line',
   'width',
   'height',
   'list_rows',

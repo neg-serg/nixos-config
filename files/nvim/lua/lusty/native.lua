@@ -530,6 +530,10 @@ function Picker:close_preview()
 end
 
 function Picker:toggle_preview()
+  if self:one_line() then
+    vim.notify('lusty: the preview pane needs the grid (one-line mode)', vim.log.levels.WARN)
+    return
+  end
   if not self.caps.preview then
     vim.notify('lusty: this backend has no preview (no X preview)', vim.log.levels.WARN)
     return
@@ -753,6 +757,10 @@ function Picker:draw()
   -- Remember what the grid was drawn for: ensure_geometry() compares against
   -- the live window size on the next key.
   self._drawn_w, self._drawn_h = self:width(), self:height()
+  if self:one_line() then
+    self:draw_one_line()
+    return
+  end
   if self.loading then
     -- First listing is still in flight from the serve backend: show a plain
     -- box with a dim ellipsis and the path prompt (no [N] counter, no stale
@@ -943,33 +951,12 @@ function Picker:draw()
 end
 
 --- Bottom prompt: current path with Lusty prompt colors, then > query.
-function Picker:prompt_text()
-  local path = self.root
+--- Prompt segment list: path, query and the counters, with their colours. The
+--- single source for the prompt line, the one-line mode and the plain-text
+--- form below.
+function Picker:prompt_segments()
   local home = os.getenv('HOME') or ''
-  if home ~= '' and path:sub(1, #home) == home then
-    path = '~' .. path:sub(#home + 1)
-  end
-  local tail = path .. ' \u{f105} ' .. self.query
-  if self.icons then
-    tail = ICON_DIR .. ' ' .. tail
-  end
-  if self.total > 0 then
-    tail = tail .. ' [' .. self.total .. ']'
-  end
-  if self.sort > 0 then
-    tail = tail .. ' <' .. SORT_LABELS[self.sort + 1] .. '>'
-  end
-  if #self.mark_order > 0 then
-    tail = tail .. ' (' .. #self.mark_order .. ' marked)'
-  end
-  tail = tail .. '  d' .. tostring(self.depth)
-  return tail
-end
-
-function Picker:paint_prompt(h)
-  local line = h - 1
-  local home = os.getenv('HOME') or ''
-  local add, segs = core.prompt_segments() -- {start, len, group}
+  local add, segs = core.prompt_segments()
   if self.icons then
     add(ICON_DIR .. ' ', 'LustyPromptSep')
   end
@@ -1005,9 +992,42 @@ function Picker:paint_prompt(h)
   if #self.mark_order > 0 then
     add(' (' .. #self.mark_order .. ' marked)', 'LustyPromptPath')
   end
-  -- Search depth (C-d cycles it), dimmed; must stay in sync with prompt_text.
+  -- Search depth (C-d cycles it), dimmed
   add('  d' .. tostring(self.depth), 'LustyNativeMeta')
-  core.paint_segments(self, ns, line, segs)
+  return segs
+end
+
+--- Plain text of the prompt line (the same bytes the segments paint).
+function Picker:prompt_text()
+  return core.segments_text(self:prompt_segments())
+end
+
+function Picker:paint_prompt(h)
+  core.paint_segments(self, ns, h - 1, self:prompt_segments())
+end
+
+--- One-line mode (g:LustyExplorerOneLine / LUSTY_ONE_LINE): a single row with
+--- the prompt and the selected entry on it, no grid.
+function Picker:draw_one_line()
+  local tail
+  if self.loading then
+    tail = '…'
+  else
+    local item = self.window[self.selected - self.offset + 1]
+    if item then
+      tail = (self.icons and (icon_for(item) .. ' ') or '') .. item.label
+      if item.kind == 'd' and not self.icons then
+        tail = tail .. '/'
+      end
+      if self.long and item.meta and item.meta ~= '' then
+        tail = item.meta .. ' ' .. tail
+      end
+    else
+      tail = '(no matches)'
+    end
+  end
+  core.paint_one_line(self, ns, self:prompt_segments(), tail)
+  self:ensure_meta()
 end
 
 --- Move one grid column left/right (wrap), mirroring the Lua port.

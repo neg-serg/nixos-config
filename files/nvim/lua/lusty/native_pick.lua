@@ -106,6 +106,10 @@ function Pick:draw()
   -- Remember what the grid was drawn for: ensure_geometry() compares against
   -- the live window size on the next key.
   self._drawn_w, self._drawn_h = self:width(), self:height()
+  if self:one_line() then
+    self:draw_one_line()
+    return
+  end
   local cols = self:max_cols()
   local col_w = self:col_width()
   local h = self:height()
@@ -137,9 +141,7 @@ function Pick:draw()
       lines[i] = ''
     end
   end
-  lines[h] = self.title .. ' ' .. self.arrow .. ' ' .. self.query
-    .. (self.total > 0 and (' [' .. self.total .. ']') or '')
-    .. (#self.mark_order > 0 and (' (' .. #self.mark_order .. ' marked)') or '')
+  lines[h] = core.segments_text(self:prompt_segments())
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
@@ -190,7 +192,12 @@ function Pick:draw()
 end
 
 function Pick:paint_prompt(h)
-  local line = h - 1
+  core.paint_segments(self, ns, h - 1, self:prompt_segments())
+end
+
+--- Prompt segment list: title, query and counters, with their colours. The
+--- single source for the prompt line and the one-line mode.
+function Pick:prompt_segments()
   local add, segs = core.prompt_segments()
   add(self.title, 'LustyPromptPath')
   add(' ', 'LustyPromptSep')
@@ -203,7 +210,14 @@ function Pick:paint_prompt(h)
   if #self.mark_order > 0 then
     add(' (' .. #self.mark_order .. ' marked)', 'LustyPromptPath')
   end
-  core.paint_segments(self, ns, line, segs)
+  return segs
+end
+
+--- One-line mode (g:LustyExplorerOneLine / LUSTY_ONE_LINE): a single row with
+--- the prompt and the selected entry on it, no grid.
+function Pick:draw_one_line()
+  local item = self.items[self.selected + 1]
+  core.paint_one_line(self, ns, self:prompt_segments(), item and item.label or '(no items)')
 end
 
 function Pick:column_nav(delta)
