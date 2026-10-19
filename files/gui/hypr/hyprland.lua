@@ -633,6 +633,45 @@ local function binde_reset(key, fn)
   hl.bind(key, hl.dsp.submap("reset"), { repeating = true })
 end
 
+-- Visual-effects master switch (special submap: Alt+E -> b).
+--
+-- One press strips the eye candy — window and layer blur, motion blur, animations,
+-- dim and hyprglass — and the next press puts the shipped values back. hyprglass
+-- belongs to the set: with manage_window_blur it *owns* the window blur and runs
+-- its own five-pass gaussian, so leaving it enabled would keep the most expensive
+-- half of the look alive. The start hook pushes the glass settings on every
+-- `hyprland.start` (and the watchdog repairs drift), so a reload brings glass
+-- back — same as every other stripped value here, since the file is the source
+-- of truth.
+--
+-- The state is read back from the compositor instead of kept in a Lua variable:
+-- `hyprctl reload` re-applies the shipped values and a stale variable would then
+-- flip the wrong way on the first press. `decoration.blur.enabled` is the marker
+-- because it is on in the shipped look and off in the stripped one; shadow,
+-- rounding and opacity are already off/neutral in this config, so they carry no
+-- direction and are pinned to their shipped values on both halves of the toggle.
+local function toggle_visual_effects()
+  local enable = hl.get_config("decoration.blur.enabled") == false
+  local cfg = {
+    decoration = {
+      blur = { enabled = enable },
+      shadow = { enabled = false },
+      motion_blur = { enabled = enable },
+      dim_inactive = false,
+      dim_special = false,
+    },
+    animations = { enabled = enable },
+  }
+  -- The plugin key exists only once the .so is loaded, and that happens after
+  -- this file is parsed (start hook) — same guard as the dynamic_cursors block
+  -- at the top. hyprglass registers `enabled` as an int, but the config parser
+  -- takes the boolean the same way the shipped hyprglass.lua writes it.
+  if hl.plugin and hl.plugin.hyprglass then
+    cfg.plugin = { hyprglass = { enabled = enable } }
+  end
+  hl.config(cfg)
+end
+
 -- Submap: resize (resize.conf)
 hl.bind(M4 .. "+" .. M1 .. "+r", hl.dsp.submap("resize"))
 hl.define_submap("resize", "reset", function()
@@ -667,6 +706,10 @@ hl.define_submap("special", "reset", function()
   hl.bind("semicolon", hl.dsp.submap("reset"), { repeating = true })
   binde_reset(SH .. "+w", hl.dsp.exec_cmd("pkill iwmenu || iwmenu"))
   binde_reset("o", hl.dsp.exec_cmd('raise --match "title:regex=' .. m.file_dialog .. '"'))
+  -- Master switch for the whole look (blur, motion blur, animations, dim,
+  -- hyprglass): press once to strip it, again to restore. Leaves the submap so
+  -- the next Alt+E -> b works from the main bindings.
+  binde_reset("b", toggle_visual_effects)
 end)
 
 
