@@ -31,10 +31,14 @@ function M.width(self)
 end
 
 --- One-line mode: the picker is a single row and the prompt and the selected
---- entry share it (no grid). `LUSTY_ONE_LINE` wins over
---- `g:LustyExplorerOneLine`, like the other options; read live so it can be
---- flipped between runs.
+--- entry share it (no grid). The per-picker `one_line_override` (set by the
+--- C-x toggle) wins over `LUSTY_ONE_LINE`, which wins over
+--- `g:LustyExplorerOneLine`; the option is read live so it can be flipped
+--- between runs.
 function M.one_line(self)
+  if self.one_line_override ~= nil then
+    return self.one_line_override
+  end
   local e = os.getenv('LUSTY_ONE_LINE')
   if e ~= nil and e ~= '' then
     return e == '1' or e == 'true'
@@ -273,6 +277,41 @@ function M.on_win_resized(self)
   end)
 end
 
+--- Switch between the one-line row and the grid (C-x) without losing the query
+--- or the selection: the split stays where it is, only its height changes. The
+--- collapsed grid height is remembered per picker, so two toggles land back on
+--- the height the user had. `refresh` re-lists for the new geometry (the
+--- one-line row keeps a wider page behind it than the grid does).
+function M.toggle_one_line(self, refresh)
+  if not self.win or not api.nvim_win_is_valid(self.win) then
+    return
+  end
+  if self:one_line() then
+    self.one_line_override = false
+    local h = self.grid_h or tonumber(os.getenv('LUSTY_ROWS')) or 6
+    self.grid_h = nil
+    pcall(api.nvim_win_set_height, self.win, math.max(2, math.min(h, vim.o.lines - 3)))
+  else
+    self.grid_h = api.nvim_win_get_height(self.win)
+    self.one_line_override = true
+    pcall(api.nvim_win_set_height, self.win, 1)
+    -- A pane needs the grid: close the preview instead of leaving it next to a
+    -- one-row split.
+    if self.preview_on then
+      self.preview_on = false
+      if self.close_preview then
+        self:close_preview()
+      end
+    end
+  end
+  self:ensure_visible()
+  if refresh then
+    self[refresh](self)
+  else
+    self:draw()
+  end
+end
+
 -- ---------------------------------------------------------------------------
 -- Keymaps
 
@@ -283,6 +322,8 @@ end
 local BASE_KEYS = {
   { '<Tab>', 'enter' },
   { '<CR>', 'enter' },
+  -- C-x: switch between the one-line row and the grid (keeps query/selection).
+  { '<C-x>', 'toggle_one_line' },
   { '<BS>', 'backspace' },
   { '<C-h>', 'backspace' },
   { '<C-n>', 'down' },
@@ -414,7 +455,10 @@ function M.handle_common(self, action, refresh, hooks)
   -- for the typing pause before re-asking the backend); navigation always
   -- re-lists immediately.
   local query_refresh = hooks.query_refresh or refresh
-  if action == 'colnext' or action == 'colprev' then
+  if action == 'toggle_one_line' then
+    M.toggle_one_line(self, refresh)
+    return true
+  end  if action == 'colnext' or action == 'colprev' then
     M.column_nav(self, action == 'colnext' and 1 or -1, refresh)
     return true
   end
@@ -636,6 +680,7 @@ end
 -- entry point.
 M.BOUND = {
   'one_line',
+  'toggle_one_line',
   'width',
   'height',
   'list_rows',
