@@ -7,6 +7,7 @@ use std::time::Instant;
 pub mod cover;
 pub mod gpu;
 pub mod mpd;
+pub mod panels;
 pub mod scene;
 pub mod text;
 pub mod theme;

@@ -13,6 +13,15 @@ gpu-allocator = { version = "0.27", default-features = false, features = [
   "vulkan",
 ] }
 cosmic-text = "0.14"
+# Rasterisation goes straight to swash instead of through cosmic-text's SwashCache: that cache
+# hints against a fractional font size and bakes a quarter-pixel phase into every bitmap, and
+# this UI needs the other arrangement (whole-pixel ppem, no phase, hinting on demand). Same
+# version and features cosmic-text already pulls in, so cargo keeps a single copy.
+swash = { version = "0.2", default-features = false, features = [
+  "render",
+  "scale",
+  "std",
+] }
 libc = "0.2"
 image = { version = "0.25", default-features = false, features = [
   "jpeg",

@@ -1132,6 +1132,7 @@ dependencies = [
  "image",
  "libc",
  "raw-window-handle",
+ "swash",
  "winit",
 ]
 

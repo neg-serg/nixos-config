@@ -5,13 +5,15 @@
 //! three pipelines (SDF shapes, glyph atlas, textured quads); MPD talks over plain TCP in a
 //! worker thread, so the UI never blocks on the socket.
 
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use ash::vk;
 use winit::event::{ElementState, KeyEvent, MouseScrollDelta, WindowEvent};
-use winit::keyboard::{Key, NamedKey};
+use winit::keyboard::{Key, ModifiersState, NamedKey};
+use winit::platform::modifier_supplement::KeyEventExtModifierSupplement;
 
 use player_proto::gpu::{create_gpu, InitTiming};
 use player_proto::mpd::{Client, Entry, Song, Status};
@@ -19,6 +21,212 @@ use player_proto::scene::DrawList;
 use player_proto::text::Fonts;
 use player_proto::theme::{self};
 use player_proto::Timing;
+
+// ---------------------------------------------------------------- ui zoom
+
+/// The interface zoom is a multiplier on the device scale, not a change to any constant in the
+/// design: the layout is authored in logical units, so rendering it at `scale * zoom` device
+/// pixels per unit makes every pane, row and glyph that much bigger, and the snapping grid
+/// (`physical / logical`) keeps every edge on a whole device pixel at any combination of the
+/// two. The range is wide enough to rescue a dense layout on a small screen and to fill a 4K
+/// panel, and narrow enough that the panes still have room to lay out.
+const ZOOM_MIN: f32 = 0.5;
+const ZOOM_MAX: f32 = 3.0;
+/// One key press (and one `:zoom +N`) is this many percent points.
+const ZOOM_STEP: f32 = 0.05;
+
+fn clamp_zoom(zoom: f32) -> f32 {
+    if zoom.is_finite() {
+        zoom.clamp(ZOOM_MIN, ZOOM_MAX)
+    } else {
+        1.0
+    }
+}
+
+/// Which columns the frame is made of and how wide they are. The design has three: the library
+/// browser on the left, the wide centre (queue, search or the active picker) and the now-playing
+/// column on the right. A narrow window cannot hold all three, and different people want
+/// different sets — rmpc's three columns, ncmpcpp's queue-plus-now, or just the queue — so the
+/// set is data, not layout code: widths in logical units, 0 meaning "take the rest", and a preset
+/// name that says where the numbers came from.
+/// Which side column a layout command addresses.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum Slot {
+    Library,
+    Now,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+struct Layout {
+    library: bool,
+    library_w: u32,
+    now: bool,
+    now_w: u32,
+    preset: &'static str,
+}
+
+impl Layout {
+    fn preset(name: &str) -> Option<Self> {
+        Some(match name {
+            // Three columns, the design's own shape.
+            "rmpc" => Self {
+                library: true,
+                library_w: 292,
+                now: true,
+                now_w: 344,
+                preset: "rmpc",
+            },
+            // Queue and now-playing only: the two things ncmpcpp puts on its playlist screen.
+            "ncmpcpp" => Self {
+                library: false,
+                library_w: 292,
+                now: true,
+                now_w: 300,
+                preset: "ncmpcpp",
+            },
+            // A wider browser for big libraries.
+            "wide" => Self {
+                library: true,
+                library_w: 360,
+                now: true,
+                now_w: 344,
+                preset: "wide",
+            },
+            // Just the list — the shape a tiled 900px window actually has room for.
+            "narrow" => Self {
+                library: false,
+                library_w: 292,
+                now: false,
+                now_w: 0,
+                preset: "narrow",
+            },
+            _ => return None,
+        })
+    }
+
+    const PRESETS: [&'static str; 4] = ["rmpc", "ncmpcpp", "wide", "narrow"];
+
+    fn next_preset(self) -> Self {
+        let i = Self::PRESETS
+            .iter()
+            .position(|p| *p == self.preset)
+            .unwrap_or(0);
+        let next = Self::PRESETS[(i + 1) % Self::PRESETS.len()];
+        Self::preset(next).unwrap_or(self)
+    }
+
+    /// Column widths for a frame `w` wide. The centre column keeps at least 320 logical units:
+    /// a column that cannot hold a row is worse than a missing one, so the now-playing column
+    /// gives way first and the library second. That is also what makes a narrow window degrade
+    /// instead of drawing three unusable slivers.
+    fn resolve(&self, w: f32) -> (f32, f32, f32) {
+        const CENTRE_MIN: f32 = 320.0;
+        let gap = 8.0;
+        let mut left = if self.library {
+            self.library_w as f32
+        } else {
+            0.0
+        };
+        let mut right = if self.now { self.now_w as f32 } else { 0.0 };
+        if left > 0.0 && w - left - right - gap * 2.0 < CENTRE_MIN {
+            right = 0.0;
+        }
+        if left > 0.0 && w - left - gap < CENTRE_MIN {
+            left = (w - CENTRE_MIN - gap).max(0.0).min(self.library_w as f32);
+        }
+        (
+            left,
+            right,
+            (w - left - right - gap * 2.0).max(CENTRE_MIN * 0.5),
+        )
+    }
+
+    fn has_library(&self, w: f32) -> bool {
+        self.resolve(w).0 > 0.0
+    }
+
+    /// The config line this layout is stored as, and the reader for it. One line, so a hand
+    /// edit of the state file is a one-word change.
+    fn to_state(&self) -> String {
+        format!(
+            "layout={}:{}{}",
+            self.preset,
+            if self.library { "library" } else { "-" },
+            if self.now { "+now" } else { "" }
+        )
+    }
+
+    fn from_state(line: &str) -> Option<Self> {
+        let rest = line.strip_prefix("layout=")?;
+        let mut base = Self::preset(rest.split(':').next().unwrap_or(""))?;
+        // The `preset:library+now` suffix overrides the preset's own flags, so a preset name
+        // followed by an explicit toggle survives a restart without inventing a new preset.
+        if let Some((_, flags)) = rest.split_once(':') {
+            let mut parts = flags.split('+');
+            base.library = parts.next().map(|f| f != "-").unwrap_or(base.library);
+            base.now = parts.any(|f| f == "now");
+        }
+        Some(base)
+    }
+}
+
+impl Default for Layout {
+    fn default() -> Self {
+        Self::preset("rmpc").expect("rmpc preset")
+    }
+}
+
+/// A scripted capture has to be reproducible, so `--render-size`, `--shot`, `--shot-seq` and
+/// `--bench` pin the zoom at 1.0 as well: the user's remembered zoom must never leak into a
+/// reference frame. `--zoom=` still goes through — a capture that wants 1.25x asks for it.
+fn capture_mode() -> bool {
+    std::env::args().any(|a| {
+        a.starts_with("--render-size=")
+            || a.starts_with("--shot=")
+            || a.starts_with("--shot-seq=")
+            || a.starts_with("--bench=")
+    })
+}
+
+/// Where the zoom is remembered between runs. A preference the application writes itself, so
+/// `XDG_STATE_HOME` rather than `XDG_CONFIG_HOME`. `PLAYER_UI_STATE` overrides the path, which
+/// is what a test uses to keep its own preference and prove the round trip; without it a dry
+/// run or a pinned capture keeps its hands off the user's file.
+fn state_file() -> Option<PathBuf> {
+    if let Some(path) = std::env::var_os("PLAYER_UI_STATE") {
+        return Some(PathBuf::from(path));
+    }
+    if capture_mode() || std::env::var("PLAYER_DRY_RUN").is_ok() {
+        return None;
+    }
+    let base = std::env::var_os("XDG_STATE_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/state")))?;
+    Some(base.join("player-proto").join("ui.conf"))
+}
+
+/// One `key=value` line from the state file.
+fn read_state_line(path: &Path, key: &str) -> Option<String> {
+    let text = std::fs::read_to_string(path).ok()?;
+    let prefix = format!("{key}=");
+    text.lines()
+        .find_map(|l| l.trim().strip_prefix(prefix.as_str()).map(str::to_string))
+}
+
+/// Read `zoom=` out of the state file. Every failure means the same thing — no preference
+/// stored — so the caller starts at 1.0 instead of guessing.
+fn read_zoom(path: &Path) -> Option<f32> {
+    let zoom: f32 = read_state_line(path, "zoom")?.trim().parse().ok()?;
+    zoom.is_finite().then(|| clamp_zoom(zoom))
+}
+
+fn read_layout(path: &Path) -> Option<Layout> {
+    Layout::from_state(&format!("layout={}", read_state_line(path, "layout")?))
+}
+
+fn read_theme(path: &Path) -> Option<String> {
+    read_state_line(path, "theme")
+}
 
 // ---------------------------------------------------------------- rows
 
@@ -171,10 +379,31 @@ enum Cmd {
     EnqueueDir(String),
     Search(String),
     Refresh,
+    /// Fade `N` seconds into the next track. 0 turns crossfading off.
+    Crossfade(i32),
+    /// `off` / `track` / `album` / `auto`.
+    ReplayGain(String),
+    Shuffle,
+    /// Reorder priority of a queue range (`prio N start:end`).
+    Priority {
+        value: u8,
+        start: usize,
+        end: usize,
+    },
+    UpdateDb,
+    Rescan,
+    /// `seekcur 50%` — a seek the progress bar's own scale is written in.
+    SeekPercent(f64),
+    /// Replace the queue with a saved playlist (`load "<name>"`).
+    LoadPlaylist(String),
+    /// Ask the daemon for its counters; the answer comes back as `Update::ServerInfo`.
+    Stats,
 }
 
 #[derive(Debug)]
 enum Update {
+    /// `stats` reply, already turned into (label, value) pairs for the server overlay.
+    ServerInfo(Vec<(String, String)>),
     Status {
         status: Status,
         song: Option<Song>,
@@ -323,6 +552,7 @@ fn spawn_mpd_worker(addr: String, tx: Sender<Update>, rx_cmd: Receiver<Cmd>) {
                             | Cmd::RefreshOutputs
                             | Cmd::Search(_)
                             | Cmd::Refresh
+                            | Cmd::Stats
                     );
                     if !read_only {
                         eprintln!("[dry-run] {cmd:?}");
@@ -441,6 +671,48 @@ fn spawn_mpd_worker(addr: String, tx: Sender<Update>, rx_cmd: Receiver<Cmd>) {
                             Ok(())
                         }
                         Cmd::AddToPlaylist { name, uri } => c.playlist_add(&name, &uri),
+                        // Typed client calls rather than raw strings: the client owns the
+                        // quoting, the range checks and the two protocol quirks this daemon has
+                        // (no `crossfade` readback, no `seekcur N%` in 0.24).
+                        Cmd::Crossfade(secs) => c
+                            .crossfade(Some(secs.clamp(0, 20)))
+                            .map(|_| ())
+                            .map_err(bridge),
+                        Cmd::ReplayGain(mode) => {
+                            let mode = player_proto::mpd::ReplayGainMode::parse(&mode)
+                                .unwrap_or(player_proto::mpd::ReplayGainMode::Off);
+                            c.replay_gain_mode(mode).map_err(bridge)
+                        }
+                        Cmd::Shuffle => c.shuffle().map_err(bridge),
+                        Cmd::Priority { value, start, end } => {
+                            c.prio(value, start, end.max(start)).map_err(bridge)
+                        }
+                        Cmd::UpdateDb => c.update(None).map(|_| ()).map_err(bridge),
+                        Cmd::Rescan => c.rescan(None).map(|_| ()).map_err(bridge),
+                        Cmd::SeekPercent(pct) => c
+                            .seek_cur(player_proto::mpd::SeekSpec::Percent(pct.clamp(0.0, 100.0)))
+                            .map_err(bridge),
+                        Cmd::LoadPlaylist(name) => c.load(&name).map_err(bridge),
+                        Cmd::Stats => {
+                            let stats = c.stats().map_err(bridge)?;
+                            let lines = vec![
+                                ("исполнители".to_string(), stats.artists.to_string()),
+                                ("альбомы".to_string(), stats.albums.to_string()),
+                                ("треки".to_string(), stats.songs.to_string()),
+                                ("аптайм, с".to_string(), stats.uptime_secs.to_string()),
+                                ("время игры, с".to_string(), stats.playtime_secs.to_string()),
+                                (
+                                    "длительность базы, с".to_string(),
+                                    stats.db_playtime_secs.to_string(),
+                                ),
+                                (
+                                    "база обновлена".to_string(),
+                                    stats.db_update_secs.to_string(),
+                                ),
+                            ];
+                            let _ = tx.send(Update::ServerInfo(lines));
+                            Ok(())
+                        }
                         Cmd::RefreshOutputs => {
                             let v = c.outputs()?;
                             let _ = tx.send(Update::Outputs(v));
@@ -681,11 +953,308 @@ const KEYMAP: &[KeyHint] = &[
         group: Group::App,
     },
     KeyHint {
+        keys: "h / l",
+        action: "−5 / +5 секунд (ncmpcpp)",
+        group: Group::Playback,
+    },
+    KeyHint {
+        keys: "x / X",
+        action: "кроссфейд: вкл-выкл / +2 с",
+        group: Group::Modes,
+    },
+    KeyHint {
+        keys: "Y",
+        action: "replay gain: off → track → album → auto",
+        group: Group::Modes,
+    },
+    KeyHint {
+        keys: "Z",
+        action: "перемешать очередь",
+        group: Group::Modes,
+    },
+    KeyHint {
+        keys: "M",
+        action: "mute / вернуть громкость",
+        group: Group::Playback,
+    },
+    KeyHint {
+        keys: "T",
+        action: "space/enter: добавлять или заменять очередь",
+        group: Group::Modes,
+    },
+    KeyHint {
+        keys: "S",
+        action: "сохранить очередь в плейлист",
+        group: Group::Modes,
+    },
+    KeyHint {
+        keys: "'",
+        action: "к текущему треку (из любой панели)",
+        group: Group::Move,
+    },
+    KeyHint {
+        keys: "@",
+        action: "счётчики сервера",
+        group: Group::App,
+    },
+    KeyHint {
+        keys: "F12",
+        action: "часы и таймер (space — пуск/стоп)",
+        group: Group::App,
+    },
+    KeyHint {
+        keys: "F2 / F3 / F4",
+        action: "колонки: пресет / библиотека / now-playing",
+        group: Group::App,
+    },
+    KeyHint {
+        keys: "[ / ]",
+        action: "ширина колонки библиотеки",
+        group: Group::App,
+    },
+    KeyHint {
+        keys: ":layout · :columns",
+        action: "колонки из командной строки (rmpc · ncmpcpp · wide · narrow)",
+        group: Group::App,
+    },
+    KeyHint {
+        keys: "ctrl+= / ctrl+- / ctrl+0",
+        action: "масштаб интерфейса: больше / меньше / сброс",
+        group: Group::App,
+    },
+    KeyHint {
+        keys: ":zoom [% | +N | -N | reset]",
+        action: "то же из командной строки, запоминается между запусками",
+        group: Group::App,
+    },
+    KeyHint {
         keys: "q",
         action: "выход",
         group: Group::App,
     },
 ];
+
+/// What a command's argument can be completed from. `Free` means "type it", the others name a
+/// list the app already holds: the playlist names come from the daemon, the themes and the zoom
+/// spellings from the binary itself.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ArgKind {
+    None,
+    Free,
+    Playlist,
+    Theme,
+    Zoom,
+}
+
+struct CommandSpec {
+    name: &'static str,
+    arg: ArgKind,
+    help: &'static str,
+}
+
+/// The `:` vocabulary, in the order it is offered. Every entry here has an arm in
+/// `run_command`; the table exists so the line can be completed and explained before it runs.
+const COMMANDS: &[CommandSpec] = &[
+    CommandSpec {
+        name: "play",
+        arg: ArgKind::Free,
+        help: "играть строку очереди (1-based)",
+    },
+    CommandSpec {
+        name: "pause",
+        arg: ArgKind::None,
+        help: "пауза",
+    },
+    CommandSpec {
+        name: "resume",
+        arg: ArgKind::None,
+        help: "продолжить",
+    },
+    CommandSpec {
+        name: "next",
+        arg: ArgKind::None,
+        help: "следующий трек",
+    },
+    CommandSpec {
+        name: "prev",
+        arg: ArgKind::None,
+        help: "предыдущий трек",
+    },
+    CommandSpec {
+        name: "stop",
+        arg: ArgKind::None,
+        help: "стоп",
+    },
+    CommandSpec {
+        name: "seek",
+        arg: ArgKind::Free,
+        help: "перейти к секунде N",
+    },
+    CommandSpec {
+        name: "vol",
+        arg: ArgKind::Free,
+        help: "громкость 0..100",
+    },
+    CommandSpec {
+        name: "volume",
+        arg: ArgKind::Free,
+        help: "то же, что vol",
+    },
+    CommandSpec {
+        name: "repeat",
+        arg: ArgKind::Free,
+        help: "repeat on|off",
+    },
+    CommandSpec {
+        name: "random",
+        arg: ArgKind::Free,
+        help: "random on|off",
+    },
+    CommandSpec {
+        name: "single",
+        arg: ArgKind::Free,
+        help: "single on|off",
+    },
+    CommandSpec {
+        name: "consume",
+        arg: ArgKind::Free,
+        help: "consume on|off",
+    },
+    CommandSpec {
+        name: "save",
+        arg: ArgKind::Free,
+        help: "сохранить очередь в плейлист",
+    },
+    CommandSpec {
+        name: "rmplaylist",
+        arg: ArgKind::Playlist,
+        help: "удалить плейлист",
+    },
+    CommandSpec {
+        name: "renameplaylist",
+        arg: ArgKind::Playlist,
+        help: "переименовать: <старый> <новый>",
+    },
+    CommandSpec {
+        name: "theme",
+        arg: ArgKind::Theme,
+        help: "тема интерфейса",
+    },
+    CommandSpec {
+        name: "search",
+        arg: ArgKind::Free,
+        help: "искать в библиотеке",
+    },
+    CommandSpec {
+        name: "zoom",
+        arg: ArgKind::Zoom,
+        help: "масштаб: N% | +N | -N | reset",
+    },
+    CommandSpec {
+        name: "toggle",
+        arg: ArgKind::Free,
+        help: "переключить repeat|random|single|consume",
+    },
+    CommandSpec {
+        name: "crossfade",
+        arg: ArgKind::Free,
+        help: "кроссфейд 0..20 секунд",
+    },
+    CommandSpec {
+        name: "gain",
+        arg: ArgKind::Free,
+        help: "replay gain: off|track|album|auto",
+    },
+    CommandSpec {
+        name: "shuffle",
+        arg: ArgKind::None,
+        help: "перемешать очередь",
+    },
+    CommandSpec {
+        name: "prio",
+        arg: ArgKind::Free,
+        help: "приоритет 0..255 на очередь",
+    },
+    CommandSpec {
+        name: "update",
+        arg: ArgKind::None,
+        help: "обновить базу MPD",
+    },
+    CommandSpec {
+        name: "rescan",
+        arg: ArgKind::None,
+        help: "перечитать базу MPD целиком",
+    },
+    CommandSpec {
+        name: "stats",
+        arg: ArgKind::None,
+        help: "счётчики демона",
+    },
+    CommandSpec {
+        name: "clock",
+        arg: ArgKind::None,
+        help: "часы и таймер (F12)",
+    },
+    CommandSpec {
+        name: "server",
+        arg: ArgKind::None,
+        help: "то же, что stats",
+    },
+    CommandSpec {
+        name: "load",
+        arg: ArgKind::Playlist,
+        help: "заменить очередь плейлистом",
+    },
+    CommandSpec {
+        name: "add",
+        arg: ArgKind::Free,
+        help: "добавить uri в очередь",
+    },
+    CommandSpec {
+        name: "screen",
+        arg: ArgKind::Free,
+        help: "перейти на панель: queue|library|…",
+    },
+    CommandSpec {
+        name: "layout",
+        arg: ArgKind::Free,
+        help: "колонки: rmpc|ncmpcpp|wide|narrow|next",
+    },
+    CommandSpec {
+        name: "columns",
+        arg: ArgKind::Free,
+        help: "набор колонок: library,queue,now",
+    },
+    CommandSpec {
+        name: "column",
+        arg: ArgKind::Free,
+        help: "то же, что columns",
+    },
+    CommandSpec {
+        name: "volume_up",
+        arg: ArgKind::None,
+        help: "громкость +5",
+    },
+    CommandSpec {
+        name: "volume_down",
+        arg: ArgKind::None,
+        help: "громкость −5",
+    },
+    CommandSpec {
+        name: "q",
+        arg: ArgKind::None,
+        help: "выход",
+    },
+    CommandSpec {
+        name: "quit",
+        arg: ArgKind::None,
+        help: "выход",
+    },
+];
+
+/// Theme names `:theme` accepts; `Theme::by_name` falls back to dark for anything else, which
+/// is exactly why the line should offer these instead of letting a typo repaint the app.
+const THEME_NAMES: [&str; 2] = ["dark", "warm"];
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Destructive {
@@ -738,8 +1307,8 @@ fn parse_point(text: &str) -> Option<(f32, f32)> {
     Some((x.trim().parse().ok()?, y.trim().parse().ok()?))
 }
 
-fn focus_pane(view: Pane, w: f32) -> Focus {
-    if view == Pane::Library && w >= 1080.0 {
+fn focus_pane(view: Pane, layout: &Layout, w: f32) -> Focus {
+    if view == Pane::Library && layout.has_library(w) {
         Focus::Library
     } else {
         Focus::Centre
@@ -890,6 +1459,29 @@ struct Model {
     /// True once an `outputs` reply arrived; the overlay tells "none configured" from "still
     /// asking" by this flag alone.
     outputs_loaded: bool,
+    /// `F12`: the clock panel is open — local time, date and a stopwatch that needs no daemon.
+    clock_open: bool,
+    /// Stopwatch: when it was last started, and what it accrued before stopping.
+    timer_started: Option<Instant>,
+    timer_accrued: Duration,
+    /// `@`: the daemon's counters, empty until the first `stats` reply lands.
+    server_info: Vec<(String, String)>,
+    server_open: bool,
+    /// Crossfade seconds as last set from this UI. The daemon also reports it in `status`; this
+    /// copy is what the command line echoes back before the next reply lands.
+    crossfade: i32,
+    /// Replay-gain mode this UI last asked for (`off`/`track`/`album`/`auto`).
+    replay_gain: String,
+    /// Last non-zero crossfade, so `x` can flip it back on without asking for a number.
+    last_crossfade: i32,
+    /// Volume before `M` muted, restored on the next press.
+    muted_at: Option<i32>,
+    /// Which columns the frame is built from. Data, because a window that cannot hold three
+    /// columns must still be able to show the one the user asked for.
+    layout: Layout,
+    /// `T`: whether `space`/`enter` append to the queue or replace it. A pane-level preference,
+    /// not a mode: it changes what the *same* keys do, and the footer chip says so.
+    add_mode: bool,
     outputs_open: bool,
     outputs_focus: usize,
     /// `Some` while the lusty finder overlay is open.
@@ -909,6 +1501,17 @@ struct Model {
     search_active: bool,
     mode: InputMode,
     cmdline: String,
+    /// What the current `:` line could become, and which of those the next Tab takes. Recomputed
+    /// on every edit so the popup is always about the text that is actually in the line.
+    compl: Vec<String>,
+    /// The word the list was built for; a later Tab only walks the list while the word still
+    /// starts with it.
+    compl_prefix: String,
+    compl_sel: usize,
+    /// Set once a candidate was written, so the next Tab advances instead of re-taking the first.
+    compl_used: bool,
+    /// True while the list completes an argument rather than the command name.
+    compl_arg: bool,
     /// Numeric prefix for the next motion (`3j`), cleared after use.
     count: Option<u32>,
     search_results: Vec<Song>,
@@ -941,6 +1544,17 @@ impl Model {
             playlists: Picker::default(),
             outputs: Vec::new(),
             outputs_loaded: false,
+            clock_open: false,
+            timer_started: None,
+            timer_accrued: Duration::ZERO,
+            server_info: Vec::new(),
+            server_open: false,
+            crossfade: 0,
+            last_crossfade: 0,
+            muted_at: None,
+            layout: Layout::default(),
+            replay_gain: "off".into(),
+            add_mode: false,
             outputs_open: false,
             outputs_focus: 0,
             finder: None,
@@ -961,6 +1575,11 @@ impl Model {
             search_active: false,
             mode: InputMode::Normal,
             cmdline: String::new(),
+            compl: Vec::new(),
+            compl_prefix: String::new(),
+            compl_sel: 0,
+            compl_used: false,
+            compl_arg: false,
             count: None,
             search_results: Vec::new(),
             art: None,
@@ -995,6 +1614,9 @@ impl Model {
 
     fn apply(&mut self, update: Update) {
         match update {
+            Update::ServerInfo(lines) => {
+                self.server_info = lines;
+            }
             Update::Status { status, song } => {
                 // `select_current_song_on_change: false` in the user's rmpc config: the cursor
                 // stays where it is when the track changes. Space jumps to the current track.
@@ -1076,6 +1698,134 @@ impl Model {
 }
 
 /// Fuzzy file/album lookup over the MPD music root, answered by the `lusty` binary.
+impl Model {
+    /// The part of the line that is being completed: the command name while there is no space
+    /// yet, the last word after that (so `:renameplaylist a b<Tab>` completes the new name).
+    fn cmd_prefix(&self) -> &str {
+        match self.cmdline.rsplit_once(' ') {
+            Some((_, tail)) => tail,
+            None => self.cmdline.as_str(),
+        }
+    }
+
+    /// What the line could become. Empty means "nothing to offer", which is also the answer for a
+    /// command whose argument has no list behind it.
+    fn cmd_candidates(&self) -> Vec<String> {
+        // A pane prompt borrows the command line, so it completes too: renaming offers the
+        // playlists it can rename, saving asks for a fresh name and offers nothing.
+        if let Some(prompt) = &self.prompt {
+            return match prompt {
+                Prompt::NewPlaylist => Vec::new(),
+                Prompt::RenamePlaylist { .. } => {
+                    playlists_starting_with(&self.playlists, self.cmd_prefix())
+                }
+            };
+        }
+        let prefix = self.cmd_prefix();
+        let Some((head, _)) = self.cmdline.split_once(' ') else {
+            return COMMANDS
+                .iter()
+                .filter(|c| c.name.starts_with(prefix))
+                .map(|c| c.name.to_string())
+                .collect();
+        };
+        match COMMANDS.iter().find(|c| c.name == head).map(|c| c.arg) {
+            Some(ArgKind::Playlist) => playlists_starting_with(&self.playlists, prefix),
+            Some(ArgKind::Theme) => THEME_NAMES
+                .iter()
+                .filter(|t| t.starts_with(prefix))
+                .map(|t| t.to_string())
+                .collect(),
+            Some(ArgKind::Zoom) => ["reset"]
+                .iter()
+                .filter(|z| z.starts_with(prefix))
+                .map(|z| z.to_string())
+                .collect(),
+            _ => Vec::new(),
+        }
+    }
+
+    /// Recompute the popup for the line as it stands and preselect the first candidate. Called on
+    /// every edit, so the list always describes the text that is actually in the line.
+    fn cmd_refresh(&mut self) {
+        self.compl = self.cmd_candidates();
+        self.compl_prefix = self.cmd_prefix().to_string();
+        self.compl_arg = self.cmdline.contains(' ');
+        self.compl_sel = 0;
+        self.compl_used = false;
+    }
+
+    /// Tab (+1) and Shift-Tab (-1): write the selected candidate into the last word. The first
+    /// press takes the preselected candidate, later presses walk the list; the walk continues
+    /// only while the word still starts with the prefix the list was built for, so completing a
+    /// command name re-scopes the popup to that command's argument instead of cycling the name
+    /// list again (`:rm` + Tab + Tab must offer playlists, not `rmplaylist rmplaylist`).
+    fn cmd_complete(&mut self, dir: i32) {
+        let prefix = self.cmd_prefix().to_string();
+        if self.compl.is_empty() || (!self.compl_used && !prefix.starts_with(&self.compl_prefix)) {
+            self.cmd_refresh();
+            if self.compl.is_empty() {
+                return;
+            }
+        } else if self.compl_used {
+            let n = self.compl.len() as i32;
+            self.compl_sel = (self.compl_sel as i32 + dir).rem_euclid(n) as usize;
+        }
+        let naming = !self.compl_arg;
+        let pick = self.compl[self.compl_sel].clone();
+        self.cmdline = if naming {
+            // The whole line is the command name being completed, so it is replaced, not
+            // appended to: walking the list must not turn `resume ` into `resume repeat`.
+            format!("{pick} ")
+        } else {
+            match self.cmdline.rsplit_once(' ') {
+                // A value is one token for `run_command`: no space after it, or the next word
+                // would become a second argument.
+                Some((head, _)) => format!("{head} {pick}"),
+                None => format!("{pick} "),
+            }
+        };
+        self.compl_used = true;
+        // A name completed into a command that *takes* a value ends that list and starts the next
+        // one: the popup shows the values this command accepts, so the following Tab picks one
+        // instead of walking back through names the line no longer contains. A command without a
+        // value keeps its list, which is what makes `:r<Tab><Tab><Tab>` walk resume → repeat →
+        // random.
+        if naming {
+            // Drill down into the values this command accepts — but only if it has any to offer.
+            // A command whose value has no list (`:repeat on|off` is typed, not picked) keeps the
+            // name list, so Tab goes on walking resume → repeat → random instead of dead-ending.
+            let (names, sel) = (self.compl.clone(), self.compl_sel);
+            self.cmd_refresh();
+            if self.compl.is_empty() {
+                self.compl = names;
+                self.compl_arg = false;
+                self.compl_sel = sel;
+                self.compl_used = true;
+            }
+        }
+    }
+
+    /// Drop the popup: the line is gone or has just been committed.
+    fn cmd_clear(&mut self) {
+        self.compl.clear();
+        self.compl_prefix.clear();
+        self.compl_sel = 0;
+        self.compl_used = false;
+    }
+}
+
+/// Playlist names the daemon reported, filtered by what was typed.
+fn playlists_starting_with(picker: &Picker, prefix: &str) -> Vec<String> {
+    picker
+        .items
+        .iter()
+        .filter(|name| name.starts_with(prefix))
+        .take(24)
+        .cloned()
+        .collect()
+}
+
 struct Finder {
     query: String,
     results: Vec<String>,
@@ -1193,11 +1943,103 @@ struct App {
     art_uploaded: String,
     started: Instant,
     theme_name: String,
+    /// Interface zoom, a multiplier on the device scale (see [`ZOOM_MIN`]). 1.0 is the layout as
+    /// designed; the keys and `:zoom` move it, and the state file remembers it.
+    zoom: f32,
+    /// Where that zoom is remembered, or `None` when this run must not touch a preference.
+    zoom_store: Option<PathBuf>,
+    /// The modifiers held right now, straight from winit. Bindings are written against the
+    /// *physical* key, so the chord state has to come from here: `logical_key` already has the
+    /// modifiers applied, and ctrl+d reaches the handler as U+0004 rather than as "d".
+    modifiers: ModifiersState,
+}
+
+/// The three shapes a position can be given in: a time, a step, a fraction of the track.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum SeekArg {
+    Absolute(f64),
+    Relative(f64),
+    Percent(f64),
+}
+
+impl std::str::FromStr for SeekArg {
+    type Err = ();
+    fn from_str(raw: &str) -> Result<Self, ()> {
+        let raw = raw.trim();
+        let (sign, body) = match raw.strip_prefix('+') {
+            Some(rest) => (1.0, rest),
+            None => match raw.strip_prefix('-') {
+                Some(rest) => (-1.0, rest),
+                None => (0.0, raw),
+            },
+        };
+        if let Some(pct) = body.strip_suffix('%') {
+            let pct: f64 = pct.trim().parse().map_err(|_| ())?;
+            return (0.0..=100.0)
+                .contains(&pct)
+                .then_some(SeekArg::Percent(pct))
+                .ok_or(());
+        }
+        let secs: f64 = body.trim().parse().map_err(|_| ())?;
+        if !secs.is_finite() || secs.abs() > 86_400.0 {
+            return Err(());
+        }
+        Ok(match sign {
+            0.0 => SeekArg::Absolute(secs),
+            _ => SeekArg::Relative(sign * secs),
+        })
+    }
+}
+
+/// `:vol 40` sets, `:vol +5` steps. Parsed apart from `i64` on purpose: `"+5".parse::<i64>()`
+/// succeeds, so a shared numeric path would read `:vol +5` as "set the volume to 5%".
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum VolumeArg {
+    Absolute(i32),
+    Relative(i32),
+}
+
+impl std::str::FromStr for VolumeArg {
+    type Err = ();
+    fn from_str(raw: &str) -> Result<Self, ()> {
+        let raw = raw.trim();
+        if let Some(rest) = raw.strip_prefix('+') {
+            return Ok(VolumeArg::Relative(
+                rest.trim().parse::<i32>().map_err(|_| ())?,
+            ));
+        }
+        if let Some(rest) = raw.strip_prefix('-') {
+            return Ok(VolumeArg::Relative(
+                -rest.trim().parse::<i32>().map_err(|_| ())?,
+            ));
+        }
+        let value: i32 = raw.parse().map_err(|_| ())?;
+        (0..=100)
+            .contains(&value)
+            .then_some(VolumeArg::Absolute(value))
+            .ok_or(())
+    }
 }
 
 impl App {
     fn new(tx: Sender<Cmd>, update_tx: Sender<Update>, rx: Receiver<Update>) -> Self {
-        Self {
+        // Resolved before the struct so the remembered zoom and the file it came from cannot
+        // disagree: `--zoom=` wins over the store, the store wins over the design default.
+        let zoom_store = state_file();
+        let remembered = zoom_store.as_deref().and_then(read_zoom).unwrap_or(1.0);
+        // The column set and the theme come from the same file, so one run restores the whole
+        // interface instead of only its scale.
+        let remembered_layout = zoom_store
+            .as_deref()
+            .and_then(read_layout)
+            .unwrap_or_default();
+        let remembered_theme = zoom_store.as_deref().and_then(read_theme);
+        let zoom = std::env::args()
+            .find(|a| a.starts_with("--zoom="))
+            .and_then(|a| a[7..].parse::<f32>().ok())
+            .map(clamp_zoom)
+            .unwrap_or(remembered);
+        let mut app = Self {
             window: None,
             gpu: None,
             fonts: None,
@@ -1262,7 +2104,125 @@ impl App {
             theme_name: std::env::args()
                 .find(|a| a.starts_with("--theme="))
                 .map(|a| a[8..].to_string())
+                .or(remembered_theme)
                 .unwrap_or_else(|| "dark".to_string()),
+            zoom,
+            zoom_store,
+            modifiers: ModifiersState::empty(),
+        };
+        // The remembered column set lands on the model the struct just built: `Model::new` has
+        // no access to the state file, and the layout is the only preference it carries.
+        app.model.layout = remembered_layout;
+        app
+    }
+
+    /// Device pixels per logical unit the layout is drawn at: the monitor's scale times the
+    /// user's zoom. Everything downstream (the snapping grid, the glyph atlas, the size of the
+    /// logical canvas) is derived from this one number, so a zoom change reflows the frame
+    /// exactly like a resize would — only without touching the layout constants.
+    fn ui_scale(&self) -> f32 {
+        (self.scale * self.zoom).clamp(0.25, 8.0)
+    }
+
+    /// Set the crossfade and remember the last non-zero value, so the toggle has something to
+    /// come back to. One place because three keys and one command all end up here.
+    fn set_crossfade(&mut self, secs: i32) {
+        let secs = secs.clamp(0, 20);
+        if secs > 0 {
+            self.model.last_crossfade = secs;
+        }
+        self.model.crossfade = secs;
+        let _ = self.tx.send(Cmd::Crossfade(secs));
+        let label = if secs == 0 {
+            "crossfade выключен".to_string()
+        } else {
+            format!("crossfade: {secs} с")
+        };
+        self.model.toast = Some((label, Instant::now()));
+    }
+
+    /// F2: the next column preset, remembered like every other preference.
+    fn cycle_layout(&mut self) {
+        let next = if self.model.layout.preset.is_empty() {
+            Layout::default()
+        } else {
+            self.model.layout.next_preset()
+        };
+        self.apply_layout(next);
+    }
+
+    /// Turn one side column on or off. The centre takes the freed width immediately, so the
+    /// change is visible in the same frame.
+    fn toggle_column(&mut self, slot: Slot) {
+        let mut next = self.model.layout;
+        match slot {
+            Slot::Library => next.library = !next.library,
+            Slot::Now => next.now = !next.now,
+        }
+        next.preset = "custom";
+        self.apply_layout(next);
+    }
+
+    /// Widen or narrow the library column by `delta` logical units.
+    fn resize_library(&mut self, delta: i32) {
+        let mut next = self.model.layout;
+        let width = (next.library_w as i32 + delta).clamp(220, 520) as u32;
+        next.library_w = width;
+        if !next.library {
+            next.library = true;
+        }
+        next.preset = "custom";
+        self.apply_layout(next);
+    }
+
+    fn apply_layout(&mut self, layout: Layout) {
+        self.model.layout = layout;
+        self.save_ui();
+        let cols = format!(
+            "{}{}{}",
+            if layout.library { "library " } else { "" },
+            "queue ",
+            if layout.now { "now" } else { "" }
+        );
+        self.model.toast = Some((
+            format!("колонки: {} ({})", cols.trim(), layout.preset),
+            Instant::now(),
+        ));
+    }
+
+    /// Apply a new zoom: clamp it, keep the change quiet when nothing moved, remember it.
+    fn set_zoom(&mut self, zoom: f32) {
+        let zoom = clamp_zoom(zoom);
+        if (zoom - self.zoom).abs() < 1e-4 {
+            return;
+        }
+        self.zoom = zoom;
+        self.save_ui();
+        self.model.toast = Some((
+            format!("масштаб интерфейса: {}%", (zoom * 100.0).round() as i32),
+            Instant::now(),
+        ));
+    }
+
+    /// Write the UI preferences out so the next run starts where this one ended: the zoom and the
+    /// column set, one `key=value` per line. Atomic, because a preference half-written by a kill
+    /// would come back as a parse failure and reset the interface.
+    fn save_ui(&self) {
+        let Some(path) = self.zoom_store.as_ref() else {
+            return;
+        };
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        let tmp = path.with_extension("tmp");
+        let body = format!(
+            "zoom={:.4}\ntheme={}\n{}\n",
+            self.zoom,
+            self.theme_name,
+            self.model.layout.to_state()
+        );
+        if std::fs::write(&tmp, body).is_ok() {
+            let _ = std::fs::rename(&tmp, path);
         }
     }
 
@@ -1277,6 +2237,7 @@ impl App {
                     if std::env::var("PLAYER_DEBUG_UPDATES").is_ok() {
                         let tag = match &u {
                             Update::Status { .. } => "status",
+                            Update::ServerInfo(_) => "stats",
                             Update::Queue(q) => {
                                 return {
                                     eprintln!("[update] queue({})", q.len());
@@ -1408,10 +2369,32 @@ impl App {
                 None => return (1440, 900),
             },
         };
+        // The zoom sits in the denominator: a bigger zoom means fewer logical units across the
+        // same surface, so every constant in the design covers more device pixels. The floor
+        // keeps a very high zoom on a small window from collapsing the layout to nothing.
+        let scale = self.ui_scale();
         (
-            (physical.0 as f32 / self.scale).round().max(1.0) as u32,
-            (physical.1 as f32 / self.scale).round().max(1.0) as u32,
+            (physical.0 as f32 / scale).round().max(240.0) as u32,
+            (physical.1 as f32 / scale).round().max(160.0) as u32,
         )
+    }
+
+    /// Exact logical -> device ratio: the physical surface over the logical size the shader
+    /// divides by. It equals `self.scale` whenever the physical size is a whole multiple of it —
+    /// every integer scale — but a fractional one rounds the logical size (1441 px at 1.25x is
+    /// 1152.8 logical, so 1153), and then only the *real* ratio keeps snapped edges on device
+    /// pixels. Glyphs and quads share this one number, so text and geometry sit on the same grid
+    /// instead of drifting apart by a fraction of a pixel.
+    fn device_ratio(&self) -> f32 {
+        let (lw, _) = self.logical_size();
+        let physical = match self.render_size {
+            Some((w, _)) => w,
+            None => match self.gpu.as_ref() {
+                Some(g) => g.extent.width,
+                None => lw,
+            },
+        };
+        physical as f32 / lw.max(1) as f32
     }
 
     fn visible_rows(&self) -> usize {
@@ -1480,12 +2463,25 @@ impl App {
             .collect()
     }
 
-    fn handle_key(&mut self, event: &KeyEvent, shift: bool, ctrl: bool) {
+    fn handle_key(&mut self, event: &KeyEvent) {
         if event.state != ElementState::Pressed {
             return;
         }
-        let key = event.logical_key.clone();
-        self.handle_key_spec(&key, shift, ctrl);
+        let chord =
+            self.modifiers.control_key() || self.modifiers.alt_key() || self.modifiers.super_key();
+        // `key_without_modifiers` is the physical key; `logical_key` is what the layout produced
+        // with the modifiers applied (ctrl+d is U+0004, not "d"). A chord is matched against the
+        // former, so `ctrl+d` reaches the same arm the scripted `ctrl+d` token does.
+        let key = if chord {
+            event.key_without_modifiers()
+        } else {
+            event.logical_key.clone()
+        };
+        self.handle_key_spec(
+            &key,
+            self.modifiers.shift_key(),
+            self.modifiers.control_key(),
+        );
     }
 
     /// The keyboard state machine, separated from winit's event type so scripted runs
@@ -1527,10 +2523,12 @@ impl App {
                         self.model.mode = InputMode::Normal;
                         self.model.cmdline.clear();
                         self.model.prompt = None;
+                        self.model.cmd_clear();
                     }
                     Key::Named(NamedKey::Enter) => {
                         let line = std::mem::take(&mut self.model.cmdline);
                         self.model.mode = InputMode::Normal;
+                        self.model.cmd_clear();
                         match self.model.prompt.take() {
                             Some(prompt) => self.apply_prompt(prompt, &line),
                             None => self.run_command(&line),
@@ -1538,13 +2536,46 @@ impl App {
                     }
                     Key::Named(NamedKey::Backspace) => {
                         self.model.cmdline.pop();
+                        self.model.cmd_refresh();
                     }
-                    Key::Character(ch) => self.model.cmdline.push_str(ch),
+                    Key::Named(NamedKey::Tab) => {
+                        self.model.cmd_complete(if shift { -1 } else { 1 })
+                    }
+                    Key::Character(ch) => {
+                        self.model.cmdline.push_str(ch);
+                        self.model.cmd_refresh();
+                    }
                     _ => {}
                 }
                 return;
             }
             InputMode::Normal => {}
+        }
+
+        // The interface zoom is a preference about the window, not a binding inside a pane, so it
+        // answers the same chord everywhere: normal mode, the outputs overlay, the finder and the
+        // queue filter alike. It sits before the filter on purpose — otherwise ctrl+equals would
+        // type an `=` into the filter instead of scaling the frame.
+        if ctrl {
+            if let Key::Character(ch) = key {
+                match ch.as_str() {
+                    "=" | "+" => {
+                        let zoom = self.zoom + ZOOM_STEP;
+                        self.set_zoom(zoom);
+                        return;
+                    }
+                    "-" => {
+                        let zoom = self.zoom - ZOOM_STEP;
+                        self.set_zoom(zoom);
+                        return;
+                    }
+                    "0" => {
+                        self.set_zoom(1.0);
+                        return;
+                    }
+                    _ => {}
+                }
+            }
         }
 
         // The queue pane's filter takes the keys before any binding: while it is collecting
@@ -1659,6 +2690,28 @@ impl App {
                     self.model.outputs_open = false;
                     return;
                 }
+                // `a` and `!` are ncmpcpp's "enable all" / "disable all": one key per intent
+                // beats pressing enter on every row of a long output list.
+                Key::Character(c) if c == "a" => {
+                    for out in &self.model.outputs {
+                        let _ = self.tx.send(Cmd::SetOutput {
+                            id: out.id,
+                            on: true,
+                        });
+                    }
+                    self.model.toast = Some(("все выходы включены".into(), Instant::now()));
+                    return;
+                }
+                Key::Character(c) if c == "!" => {
+                    for out in &self.model.outputs {
+                        let _ = self.tx.send(Cmd::SetOutput {
+                            id: out.id,
+                            on: false,
+                        });
+                    }
+                    self.model.toast = Some(("все выходы выключены".into(), Instant::now()));
+                    return;
+                }
                 Key::Character(c) if c == "j" => {
                     self.model.outputs_focus = (self.model.outputs_focus + 1).min(last);
                     return;
@@ -1715,6 +2768,14 @@ impl App {
                 self.model.view = ORDER[next];
             }
             Key::Named(NamedKey::Enter) => self.activate(),
+            // While the clock is open it owns space (start/stop the stopwatch): the panel is a
+            // screen of its own, not a decoration over the queue.
+            Key::Named(NamedKey::Space) if self.model.clock_open => {
+                match self.model.timer_started.take() {
+                    Some(started) => self.model.timer_accrued += started.elapsed(),
+                    None => self.model.timer_started = Some(Instant::now()),
+                }
+            }
             Key::Named(NamedKey::Space) => match self.model.view {
                 Pane::Queue => {
                     if let Some(pos) = self.model.status.song {
@@ -1753,8 +2814,20 @@ impl App {
                 let _ = self.tx.send(Cmd::SeekRelative(-5.0 * repeat as f64));
             }
             Key::Named(NamedKey::F1) => self.model.mode = InputMode::Help,
+            // Column set: F2 walks the presets, F3/F4 toggle the two side columns, [ and ]
+            // resize the library one. Nothing here needs a daemon, so it works on any screen.
+            Key::Named(NamedKey::F2) => self.cycle_layout(),
+            Key::Named(NamedKey::F12) => self.model.clock_open = !self.model.clock_open,
+            Key::Named(NamedKey::F3) => self.toggle_column(Slot::Library),
+            Key::Named(NamedKey::F4) => self.toggle_column(Slot::Now),
             Key::Named(NamedKey::Escape) => {
-                if self.model.view != Pane::Queue {
+                if self.model.clock_open {
+                    self.model.clock_open = false;
+                } else if self.model.server_open {
+                    // The counters panel is modal-lite: esc closes it before anything else, and
+                    // so does a second `@`.
+                    self.model.server_open = false;
+                } else if self.model.view != Pane::Queue {
                     self.model.view = Pane::Queue;
                 } else if !self.model.queue_filter.is_empty() {
                     // Second meaning of esc inside the queue: drop the filter before anything
@@ -1794,7 +2867,14 @@ impl App {
                     ("k", false, _) => self.move_selection(-repeat),
                     ("g", false, false) => self.jump_selection(false),
                     ("G", _, _) => self.jump_selection(true),
-                    ("h", false, _) | ("l", false, _) => {} // Left/Right: no side-by-side panes here
+                    // ncmpcpp's seek keys. The design has no side-by-side panes to move
+                    // between, so the letters that would do that there do the useful thing here.
+                    ("h", false, _) => {
+                        let _ = self.tx.send(Cmd::SeekRelative(-5.0 * repeat as f64));
+                    }
+                    ("l", false, _) => {
+                        let _ = self.tx.send(Cmd::SeekRelative(5.0 * repeat as f64));
+                    }
                     ("d", true, _) => self.move_selection(page / 2 * repeat),
                     ("u", true, _) => self.move_selection(-(page / 2) * repeat),
                     ("n", true, _) => self.move_selection(repeat),
@@ -1824,6 +2904,7 @@ impl App {
                         // rmpc <C-s> = Save: open the command line pre-filled.
                         self.model.mode = InputMode::Command;
                         self.model.cmdline = "save ".into();
+                        self.model.cmd_refresh();
                     }
                     (">", _, _) => {
                         let _ = self.tx.send(Cmd::Next);
@@ -1837,11 +2918,99 @@ impl App {
                     ("b", false, _) => {
                         let _ = self.tx.send(Cmd::SeekRelative(-5.0 * repeat as f64));
                     }
-                    ("=", _, _) => {
+                    ("=", _, _) | ("+", _, _) => {
                         let _ = self.tx.send(Cmd::VolumeRelative(5 * repeat));
                     }
                     ("-", _, _) => {
                         let _ = self.tx.send(Cmd::VolumeRelative(-5 * repeat));
+                    }
+                    // Crossfade: `x` flips it between off and the last value used (five seconds
+                    // the first time), `X` walks it up so one key is enough to dial a value in.
+                    ("x", false, _) => {
+                        let next = if self.model.crossfade > 0 {
+                            0
+                        } else if self.model.last_crossfade > 0 {
+                            self.model.last_crossfade
+                        } else {
+                            5
+                        };
+                        self.set_crossfade(next);
+                    }
+                    ("X", _, _) => {
+                        let next = (self.model.crossfade + 2).clamp(0, 20);
+                        self.set_crossfade(next);
+                    }
+                    // Replay gain cycles the four modes a daemon knows.
+                    ("Y", _, _) => {
+                        let next = match self.model.replay_gain.as_str() {
+                            "off" => "track",
+                            "track" => "album",
+                            "album" => "auto",
+                            _ => "off",
+                        };
+                        let _ = self.tx.send(Cmd::ReplayGain(next.to_string()));
+                        self.model.replay_gain = next.to_string();
+                        self.model.toast = Some((format!("replay gain: {next}"), Instant::now()));
+                    }
+                    // Shuffle the queue. The pane refetches because the playlist version moved.
+                    ("Z", _, _) => {
+                        let _ = self.tx.send(Cmd::Shuffle);
+                        self.model.toast = Some(("очередь перемешана".into(), Instant::now()));
+                    }
+                    // Server counters.
+                    ("@", _, _) => {
+                        self.model.server_open = !self.model.server_open;
+                        if self.model.server_open {
+                            let _ = self.tx.send(Cmd::Stats);
+                        }
+                    }
+                    // Add or replace: the same keys (space, enter) do one or the other, so the
+                    // footer has to say which.
+                    ("T", _, _) => {
+                        self.model.add_mode = !self.model.add_mode;
+                        let what = if self.model.add_mode {
+                            "добавлять в очередь"
+                        } else {
+                            "заменять очередь"
+                        };
+                        self.model.toast = Some((what.into(), Instant::now()));
+                    }
+                    // Jump to the playing track: the same scroll `space` does in the queue,
+                    // reachable from any pane.
+                    ("'", _, _) => {
+                        let _ = self.tx.send(Cmd::JumpToCurrent);
+                        if let Some(pos) = self.model.status.song {
+                            if !queue_view(&self.model).contains(&pos) {
+                                self.model.queue_filter.clear();
+                            }
+                            let row = queue_view(&self.model)
+                                .iter()
+                                .position(|i| *i == pos)
+                                .unwrap_or(0);
+                            self.model.queue_sel = pos;
+                            self.model.queue_scroll_target = row as f32;
+                        }
+                        self.model.view = Pane::Queue;
+                    }
+                    // Save the queue under a name without going through the Playlists pane.
+                    ("S", _, _) => self.open_prompt(Prompt::NewPlaylist),
+                    ("[", _, _) => self.resize_library(-20),
+                    ("]", _, _) => self.resize_library(20),
+                    // Mute is volume 0 with the old value remembered, like a mixer.
+                    ("M", _, _) => {
+                        // The remembered value, not `status.volume`: the daemon's reply lands a
+                        // poll later, and a dry run never changes it at all, so reading it back
+                        // would make the second press mute again instead of restoring.
+                        let (target, label) = match self.model.muted_at.take() {
+                            Some(prev) => (prev, "звук включён"),
+                            None => {
+                                let prev = self.model.status.volume.max(1);
+                                self.model.muted_at = Some(prev);
+                                (0, "звук выключен")
+                            }
+                        };
+                        let _ = self.tx.send(Cmd::Volume(target));
+                        self.model.toast = Some((label.into(), Instant::now()));
                     }
                     ("z", false, _) => {
                         let on = !self.model.status.repeat;
@@ -1886,6 +3055,10 @@ impl App {
                         self.model.mode = InputMode::Command;
                         self.model.cmdline.clear();
                         self.model.prompt = None;
+                        // `:rm<Tab>` completes playlist names, so the list has to be on its way
+                        // even if no pane ever showed it.
+                        let _ = self.tx.send(Cmd::LoadPlaylists);
+                        self.model.cmd_refresh();
                     }
                     // The Playlists pane manages the lists it shows: `c` saves the queue under a
                     // typed name, `e` renames the playlist under the cursor and `A` appends the
@@ -2070,6 +3243,13 @@ impl App {
 
     /// Switch panes and lazily fetch the list the pane needs.
     fn switch_pane(&mut self, pane: Pane) {
+        // Asking for a pane the current column set does not draw would be a key that does
+        // nothing: the layout gives way and shows the column instead, so a narrow window still
+        // reaches the browser — it just loses the column that was there.
+        if pane == Pane::Library && !self.model.layout.library {
+            self.model.layout.library = true;
+            self.save_ui();
+        }
         self.model.view = pane;
         // The filter belongs to the queue pane: leaving it ends the typing, but the text stays
         // so coming back shows the same subset.
@@ -2307,8 +3487,41 @@ impl App {
         let arg = parts.next();
         let n: Option<i64> = arg.and_then(|a| a.parse().ok());
         let flag = arg;
+        // Everything after the command, spaces included: a playlist name or a search query is a
+        // phrase, not a word, and `split_whitespace` above exists only for the numeric forms.
+        let rest_of_line = line
+            .trim()
+            .split_once(' ')
+            .map(|(_, r)| r.trim())
+            .unwrap_or("");
         match (cmd, n) {
             ("q" | "quit", _) => std::process::exit(0),
+            // `:zoom 125` sets the interface scale to 125%, `:zoom +5` / `:zoom -5` step it by
+            // five points (the same step the key chord uses), `:zoom reset` goes back to 100%
+            // and a bare `:zoom` only reports where it is.
+            ("zoom", _) => match arg {
+                None => {
+                    self.model.toast = Some((
+                        format!(
+                            "масштаб интерфейса: {}%",
+                            (self.zoom * 100.0).round() as i32
+                        ),
+                        Instant::now(),
+                    ));
+                }
+                Some("reset") => self.set_zoom(1.0),
+                Some(a) => match a.trim_end_matches('%').parse::<f32>() {
+                    Ok(pct) if a.starts_with('+') => self.set_zoom(self.zoom + pct / 100.0),
+                    Ok(pct) if a.starts_with('-') => self.set_zoom(self.zoom + pct / 100.0),
+                    Ok(pct) if pct > 0.0 => self.set_zoom(pct / 100.0),
+                    _ => {
+                        self.model.toast = Some((
+                            "usage: :zoom [50..300 | +N | -N | reset]".into(),
+                            Instant::now(),
+                        ))
+                    }
+                },
+            },
             ("play", Some(idx)) => {
                 let _ = self.tx.send(Cmd::PlayIndex((idx.max(1) - 1) as usize));
             }
@@ -2327,12 +3540,221 @@ impl App {
             ("stop", _) => {
                 let _ = self.tx.send(Cmd::Stop);
             }
-            ("seek", Some(secs)) => {
-                let _ = self.tx.send(Cmd::Seek(secs as f64));
+            // `:seek 30` jumps, `:seek +5` / `:seek -5` step, `:seek 42%` is the same as
+            // dragging the progress bar to 42 — three shapes because they answer three
+            // different questions, and rmpc's own config uses all of them.
+            ("seek", _) => match rest_of_line.parse::<SeekArg>().ok() {
+                Some(SeekArg::Absolute(secs)) => {
+                    let _ = self.tx.send(Cmd::Seek(secs));
+                }
+                Some(SeekArg::Relative(delta)) => {
+                    let _ = self.tx.send(Cmd::SeekRelative(delta));
+                }
+                Some(SeekArg::Percent(pct)) => {
+                    let _ = self.tx.send(Cmd::SeekPercent(pct));
+                }
+                None => {
+                    self.model.toast =
+                        Some(("usage: :seek <сек | +N | -N | N%>".into(), Instant::now()));
+                }
+            },
+            ("vol" | "volume" | "volume_up" | "volume_down", _) => {
+                let delta = match cmd {
+                    "volume_up" => Some(5),
+                    "volume_down" => Some(-5),
+                    _ => None,
+                };
+                match (delta, rest_of_line.parse::<VolumeArg>().ok()) {
+                    (Some(d), _) => {
+                        let _ = self.tx.send(Cmd::VolumeRelative(d));
+                    }
+                    (None, Some(VolumeArg::Absolute(v))) => {
+                        let _ = self.tx.send(Cmd::Volume(v));
+                    }
+                    (None, Some(VolumeArg::Relative(d))) => {
+                        let _ = self.tx.send(Cmd::VolumeRelative(d));
+                    }
+                    (None, None) => {
+                        self.model.toast =
+                            Some(("usage: :vol <0..100 | +N | -N>".into(), Instant::now()));
+                    }
+                }
             }
-            ("vol" | "volume", Some(v)) => {
-                let _ = self.tx.send(Cmd::Volume(v as i32));
+            // `:toggle repeat` flips whatever it is now — the form ncmpcpp's console uses, and
+            // the only way to toggle from the line without reading the footer first.
+            ("toggle", _) => {
+                let on_off = match rest_of_line {
+                    "repeat" => Some(Cmd::Repeat(!self.model.status.repeat)),
+                    "random" => Some(Cmd::Random(!self.model.status.random)),
+                    "single" => Some(Cmd::Single(!self.model.status.single)),
+                    "consume" => Some(Cmd::Consume(!self.model.status.consume)),
+                    _ => None,
+                };
+                match on_off {
+                    Some(cmd) => {
+                        let _ = self.tx.send(cmd);
+                    }
+                    None => {
+                        self.model.toast = Some((
+                            "usage: :toggle repeat|random|single|consume".into(),
+                            Instant::now(),
+                        ))
+                    }
+                }
             }
+            ("crossfade", _) => {
+                let secs = if rest_of_line.is_empty() {
+                    Some(self.model.crossfade)
+                } else {
+                    rest_of_line.parse::<i32>().ok()
+                };
+                match secs {
+                    Some(secs) => {
+                        let _ = self.tx.send(Cmd::Crossfade(secs));
+                        self.model.crossfade = secs.clamp(0, 20);
+                        self.model.toast = Some((
+                            format!("crossfade: {} с", self.model.crossfade),
+                            Instant::now(),
+                        ));
+                    }
+                    None => {
+                        self.model.toast =
+                            Some(("usage: :crossfade <0..20>".into(), Instant::now()))
+                    }
+                }
+            }
+            ("gain" | "replaygain", _) => {
+                let mode = match rest_of_line {
+                    "off" | "track" | "album" | "auto" => rest_of_line,
+                    _ => "off",
+                };
+                let _ = self.tx.send(Cmd::ReplayGain(mode.to_string()));
+                self.model.replay_gain = mode.to_string();
+                self.model.toast = Some((format!("replay gain: {mode}"), Instant::now()));
+            }
+            ("shuffle", _) => {
+                let _ = self.tx.send(Cmd::Shuffle);
+                self.model.toast = Some(("очередь перемешана".into(), Instant::now()));
+            }
+            ("prio", _) => match rest_of_line.parse::<u8>() {
+                Ok(value) => {
+                    let start = 0;
+                    let end = self.model.queue.len().saturating_sub(1).max(1);
+                    let _ = self.tx.send(Cmd::Priority { value, start, end });
+                    self.model.toast =
+                        Some((format!("приоритет {value} на всю очередь"), Instant::now()));
+                }
+                Err(_) => self.model.toast = Some(("usage: :prio <0..255>".into(), Instant::now())),
+            },
+            ("update", _) => {
+                let _ = self.tx.send(Cmd::UpdateDb);
+                self.model.toast = Some(("обновляю базу MPD".into(), Instant::now()));
+            }
+            ("rescan", _) => {
+                let _ = self.tx.send(Cmd::Rescan);
+                self.model.toast = Some(("перечитываю базу MPD целиком".into(), Instant::now()));
+            }
+            ("clock" | "time", _) => self.model.clock_open = !self.model.clock_open,
+            ("stats" | "server", _) => {
+                let _ = self.tx.send(Cmd::Stats);
+                self.model.server_open = true;
+            }
+            ("load", _) => {
+                if rest_of_line.is_empty() {
+                    self.model.toast = Some(("usage: :load <плейлист>".into(), Instant::now()));
+                } else {
+                    let _ = self.tx.send(Cmd::LoadPlaylist(rest_of_line.to_string()));
+                    self.model.toast =
+                        Some((format!("загружен плейлист: {rest_of_line}"), Instant::now()));
+                }
+            }
+            ("add", _) => {
+                if rest_of_line.is_empty() {
+                    self.model.toast = Some(("usage: :add <uri>".into(), Instant::now()));
+                } else {
+                    let _ = self.tx.send(Cmd::AddUri(rest_of_line.to_string()));
+                    self.model.toast = Some((format!("в очередь: {rest_of_line}"), Instant::now()));
+                }
+            }
+            // Column set from the line, in the vocabulary the help overlay uses.
+            // `:layout` alone reports, `:layout next` walks the presets like F2 does.
+            ("layout", _) => match rest_of_line {
+                "" => {
+                    let l = self.model.layout;
+                    let cols = format!(
+                        "{}{}{}",
+                        if l.library { "library " } else { "" },
+                        "queue ",
+                        if l.now { "now" } else { "" }
+                    );
+                    self.model.toast = Some((
+                        format!("колонки: {} ({})", cols.trim(), l.preset),
+                        Instant::now(),
+                    ));
+                }
+                "next" => self.cycle_layout(),
+                name => match Layout::preset(name) {
+                    Some(layout) => self.apply_layout(layout),
+                    None => {
+                        self.model.toast = Some((
+                            format!("пресеты: {}", Layout::PRESETS.join(" · ")),
+                            Instant::now(),
+                        ))
+                    }
+                },
+            },
+            // `:columns library,queue,now` — the set, in order, with the command verb first so
+            // the completion can offer the pane names after it.
+            ("columns", _) | ("column", _) => {
+                let panes: Vec<&str> = rest_of_line
+                    .split(|c: char| c == ',' || c.is_whitespace())
+                    .filter(|p| !p.is_empty())
+                    .collect();
+                if panes.is_empty() {
+                    self.model.toast =
+                        Some(("usage: :columns library,queue,now".into(), Instant::now()));
+                } else {
+                    let mut layout = self.model.layout;
+                    layout.library = false;
+                    layout.now = false;
+                    let mut unknown: Vec<&str> = Vec::new();
+                    for pane in &panes {
+                        match *pane {
+                            "library" | "browser" => layout.library = true,
+                            "queue" | "list" => {}
+                            "now" | "nowplaying" => layout.now = true,
+                            _ => unknown.push(pane),
+                        }
+                    }
+                    if unknown.is_empty() {
+                        layout.preset = "custom";
+                        self.apply_layout(layout);
+                    } else {
+                        self.model.toast = Some((
+                            format!("неизвестная колонка: {}", unknown.join(", ")),
+                            Instant::now(),
+                        ));
+                    }
+                }
+            }
+            ("screen", _) => match rest_of_line {
+                "queue" | "1" => self.switch_pane(Pane::Queue),
+                "library" | "browser" | "2" => self.switch_pane(Pane::Library),
+                "artists" | "3" => self.switch_pane(Pane::Artists),
+                "albums" | "4" => self.switch_pane(Pane::Albums),
+                "playlists" | "5" => self.switch_pane(Pane::Playlists),
+                "search" | "6" => {
+                    self.model.view = Pane::Search;
+                    self.model.mode = InputMode::Search;
+                    self.model.search_input.clear();
+                }
+                _ => {
+                    self.model.toast = Some((
+                        "usage: :screen queue|library|artists|albums|playlists|search".into(),
+                        Instant::now(),
+                    ))
+                }
+            },
             ("repeat" | "random" | "single" | "consume", _) => {
                 let on = matches!(flag, Some("1") | Some("on") | Some("true"));
                 let _ = match cmd {
@@ -2431,6 +3853,10 @@ impl App {
             "esc" => Some(NamedKey::Escape),
             "backspace" => Some(NamedKey::Backspace),
             "f1" => Some(NamedKey::F1),
+            "f2" => Some(NamedKey::F2),
+            "f3" => Some(NamedKey::F3),
+            "f4" => Some(NamedKey::F4),
+            "f12" => Some(NamedKey::F12),
             _ => None,
         };
         // Aliases for characters that are awkward to pass through a comma-separated argv.
@@ -2489,7 +3915,11 @@ impl App {
         };
         // Same rule the frame uses to choose the raised pane, so a test can assert focus
         // without reading pixels.
-        let focus = match focus_pane(self.model.view, self.logical_size().0 as f32) {
+        let focus = match focus_pane(
+            self.model.view,
+            &self.model.layout,
+            self.logical_size().0 as f32,
+        ) {
             Focus::Library => "library",
             Focus::Centre => "centre",
         };
@@ -2550,8 +3980,12 @@ impl App {
         let qmatch = queue_view(&self.model).len();
         let qstate = queue_state(&self.model);
         let qedit = self.model.queue_filter_edit;
+        // The zoom and the logical canvas it produces: a test that presses the zoom chord has to
+        // see both — the multiplier it asked for and the frame actually laid out at that size,
+        // because a reflow (compact rows, the library pane disappearing) is part of the answer.
+        let (lw, lh) = self.logical_size();
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} qfilter='{qfilter}' qmatch={qmatch} qstate={qstate} qedit={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta} finder={finder_state}",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} qfilter='{qfilter}' qmatch={qmatch} qstate={qstate} qedit={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta} finder={finder_state} zoom={zoom:.2} size={lw}x{lh} compl={compl_len}:{compl_sel} xfade={xfade} gain={gain} addmode={addmode} server={server} cols={cols} clock={clock}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             qedit as u8,
@@ -2569,6 +4003,15 @@ impl App {
             self.model.artists.state(),
             self.model.albums.state(),
             self.model.playlists.state(),
+            zoom = self.zoom,
+            compl_len = self.model.compl.len(),
+            compl_sel = self.model.compl_sel,
+            xfade = self.model.crossfade,
+            gain = self.model.replay_gain,
+            addmode = self.model.add_mode as u8,
+            server = self.model.server_open as u8,
+            cols = self.model.layout.preset,
+            clock = self.model.clock_open as u8,
         );
         // `PLAYER_DUMP_HITS=1`: print the interactive rectangles of the last frame, so a test
         // can aim the pointer at a real target instead of hard-coding coordinates that drift
@@ -2665,11 +4108,21 @@ impl App {
             self.collection_kind(),
             self.active_picker().and_then(|p| p.selected().cloned()),
         ) {
-            let _ = self.tx.send(Cmd::PlayCollection {
-                kind,
-                name: name.clone(),
-            });
-            self.model.toast = Some((format!("играю: {name}"), Instant::now()));
+            // Add mode changes what the same key means: append the collection instead of
+            // replacing the queue with it and starting to play.
+            if self.model.add_mode {
+                let _ = self.tx.send(Cmd::EnqueueCollection {
+                    kind,
+                    name: name.clone(),
+                });
+                self.model.toast = Some((format!("в очередь: {name}"), Instant::now()));
+            } else {
+                let _ = self.tx.send(Cmd::PlayCollection {
+                    kind,
+                    name: name.clone(),
+                });
+                self.model.toast = Some((format!("играю: {name}"), Instant::now()));
+            }
             return;
         }
         match self.model.view {
@@ -2704,7 +4157,12 @@ impl App {
                             let _ = self.tx.send(Cmd::LoadDir(path.clone()));
                         }
                         Entry::Song { path, .. } => {
-                            let _ = self.tx.send(Cmd::PlayUri(path.clone()));
+                            let cmd = if self.model.add_mode {
+                                Cmd::AddUri(path.clone())
+                            } else {
+                                Cmd::PlayUri(path.clone())
+                            };
+                            let _ = self.tx.send(cmd);
                         }
                     }
                 }
@@ -2713,13 +4171,112 @@ impl App {
     }
 
     fn animate(&mut self) {
-        let lerp = |cur: f32, target: f32| cur + (target - cur) * 0.35;
+        // A pinned capture must not animate: the scroll lerp would put the list at a position
+        // that depends on how many frames arrived since the queue did, which is exactly the kind
+        // of one-pixel drift a reference frame cannot tolerate. Snap to the target instead.
+        let snap = self.render_size.is_some();
+        let lerp = |cur: f32, target: f32| {
+            if snap {
+                target
+            } else {
+                cur + (target - cur) * 0.35
+            }
+        };
         self.model.queue_scroll = lerp(self.model.queue_scroll, self.model.queue_scroll_target);
         self.model.lib_scroll = lerp(self.model.lib_scroll, self.model.lib_scroll_target);
     }
 }
 
 // ---------------------------------------------------------------- drawing
+
+/// Quote one MPD argument. The protocol takes `"`-quoted arguments and escapes `"` and `\`
+/// inside them; a playlist name with a space is exactly the case that needs this.
+fn quote_mpd(arg: &str) -> String {
+    let mut out = String::with_capacity(arg.len() + 2);
+    out.push('"');
+    for ch in arg.chars() {
+        match ch {
+            '"' | '\\' => {
+                out.push('\\');
+                out.push(ch);
+            }
+            _ => out.push(ch),
+        }
+    }
+    out.push('"');
+    out
+}
+
+/// The client's newer calls speak `io::Result`, the worker collects `MpdError`; one conversion in
+/// one place keeps the arms short.
+fn bridge(err: std::io::Error) -> player_proto::mpd::MpdError {
+    player_proto::mpd::MpdError(err.to_string())
+}
+
+/// Days-since-epoch -> civil date. Howard Hinnant's algorithm in a dozen lines: the alternative
+/// is a date crate for two format strings the clock panel needs once a second.
+fn civil_from_unix(secs: i64) -> (i64, u32, u32, u32, u32, u32) {
+    let days = secs.div_euclid(86_400);
+    let rem = secs.rem_euclid(86_400);
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = if m <= 2 { y + 1 } else { y };
+    (
+        year,
+        m as u32,
+        d as u32,
+        (rem / 3600) as u32,
+        ((rem % 3600) / 60) as u32,
+        (rem % 60) as u32,
+    )
+}
+
+fn fmt_clock_time(unix: i64) -> String {
+    let (_, _, _, h, m, s) = civil_from_unix(unix);
+    format!("{h:02}:{m:02}:{s:02}")
+}
+
+fn fmt_clock_date(unix: i64) -> String {
+    const MONTHS: [&str; 12] = [
+        "января",
+        "февраля",
+        "марта",
+        "апреля",
+        "мая",
+        "июня",
+        "июля",
+        "августа",
+        "сентября",
+        "октября",
+        "ноября",
+        "декабря",
+    ];
+    // 1970-01-01 was a Thursday, which is where the index starts.
+    const WEEKDAYS: [&str; 7] = [
+        "четверг",
+        "пятница",
+        "суббота",
+        "воскресенье",
+        "понедельник",
+        "вторник",
+        "среда",
+    ];
+    let (y, m, d, ..) = civil_from_unix(unix);
+    let weekday = WEEKDAYS[unix.div_euclid(86_400).rem_euclid(7) as usize];
+    format!("{d} {} {y}, {weekday}", MONTHS[(m as usize - 1).min(11)])
+}
+
+fn fmt_stopwatch(elapsed: Duration) -> String {
+    let secs = elapsed.as_secs();
+    format!("{}:{:02}:{:02}", secs / 3600, (secs % 3600) / 60, secs % 60)
+}
 
 fn fmt_time(secs: f64) -> String {
     let s = secs.max(0.0) as u64;
@@ -2731,6 +4288,7 @@ fn draw_ui(
     fonts: &mut Fonts,
     m: &Model,
     extent: vk::Extent2D,
+    ratio: f32,
     t: f32,
     th: &theme::Theme,
     hover: Option<Hit>,
@@ -2739,6 +4297,9 @@ fn draw_ui(
     use player_proto::theme::{Face, GEOM, TYPE};
 
     let mut list = DrawList::new();
+    // Every primitive below is authored in logical units and snapped to the device grid here,
+    // once: see `DrawList::set_scale`.
+    list.set_scale(ratio);
     let (w, h) = (extent.width as f32, extent.height as f32);
     // Short windows trade row height for visible tracks instead of wasting 40 px per two-line row.
     let row_h = if h < 760.0 {
@@ -2935,7 +4496,7 @@ fn draw_ui(
 
     // One pane owns the keyboard; it is the only one that sits a level higher. Resolving the
     // pair here (instead of at each call site) keeps the three panes on one z axis.
-    let focused = focus_pane(m.view, w);
+    let focused = focus_pane(m.view, &m.layout, w);
     let (left_elev, centre_elev) = if focused == Focus::Library {
         (th.pane_raised, th.pane_rest)
     } else {
@@ -3719,9 +5280,11 @@ fn draw_ui(
         let next_h = 56.0;
         let footer_h = (TYPE.caption * 1.30).round();
         let footer_block = footer_h + GEOM.inner + GEOM.stack;
+        // A daemon that reports no bitrate (a stub, or a stream) must not print "0 kbps": the
+        // line is metadata, and a zero there reads as a defect rather than as an unknown.
         let footer = match (&m.status.audio, m.status.bitrate) {
-            (Some(audio), Some(bps)) => format!("{audio} · {bps} kbps"),
-            (Some(audio), None) => audio.clone(),
+            (Some(audio), Some(bps)) if bps > 0 => format!("{audio} · {bps} kbps"),
+            (Some(audio), _) => audio.clone(),
             (None, _) => String::new(),
         };
 
@@ -4367,6 +5930,80 @@ fn draw_ui(
             th.text_faint,
             w - pad * 2.0 - lw - 20.0,
         );
+        // Completion popup: the candidates for the line being typed, just above it. Six rows of
+        // "name — what it does" is enough to choose from; the selection follows Tab.
+        if !m.compl.is_empty() {
+            let rows = m.compl.len().min(6);
+            let first = m
+                .compl_sel
+                .saturating_sub(rows.saturating_sub(1))
+                .min(m.compl.len().saturating_sub(rows));
+            let row_h = 18.0;
+            let box_h = rows as f32 * row_h + 10.0;
+            let box_w = 420.0_f32.min(w - pad * 2.0 + 8.0);
+            let box_y = (h - 42.0 - box_h).max(4.0);
+            // Opaque on purpose: a suggestion list that lets the queue rows read through it is
+            // unreadable, and a shadow is what separates it from the list underneath.
+            list.shadow(
+                pad - 8.0,
+                box_y - 4.0,
+                box_w + 8.0,
+                box_h + 10.0,
+                GEOM.radius_lg,
+                10.0,
+                0.55,
+            );
+            list.rounded(
+                pad - 4.0,
+                box_y,
+                box_w,
+                box_h,
+                GEOM.radius_md,
+                theme::with_alpha(th.bg_top, 1.0),
+                theme::with_alpha(th.bg_bottom, 1.0),
+            );
+            for (i, name) in m.compl[first..first + rows].iter().enumerate() {
+                let row_y = box_y + 5.0 + i as f32 * row_h;
+                let selected = first + i == m.compl_sel;
+                if selected {
+                    list.rounded(
+                        pad - 1.0,
+                        row_y - 1.0,
+                        box_w - 6.0,
+                        row_h,
+                        GEOM.radius_sm,
+                        th.selection,
+                        th.selection,
+                    );
+                }
+                let help = COMMANDS
+                    .iter()
+                    .find(|c| c.name == name.as_str())
+                    .map(|c| c.help)
+                    .unwrap_or("");
+                fonts.layout_line(
+                    &mut list,
+                    name,
+                    pad + 8.0,
+                    row_y,
+                    TYPE.caption,
+                    Face::Mono,
+                    if selected { th.text } else { th.text_dim },
+                );
+                if !help.is_empty() {
+                    fonts.layout_fitted(
+                        &mut list,
+                        help,
+                        pad + 104.0,
+                        row_y,
+                        TYPE.caption,
+                        Face::UiRegular,
+                        th.text_faint,
+                        box_w - 116.0,
+                    );
+                }
+            }
+        }
     } else if show_right || w < 700.0 {
         let hints = "j/k move · tab pane · enter play · p pause · s stop · >/< track · f/b ±5s · =/- vol · z r y R modes · / filter · esc clear · : cmd · w help · q quit";
         fonts.layout_fitted(
@@ -4512,6 +6149,75 @@ fn draw_ui(
             Face::UiRegular,
             th.text_faint,
         );
+    }
+
+    // Mode strip: the three settings that change what the *same* keys do, so the screen says
+    // them without a menu. Drawn before the overlays so a modal panel covers it.
+    let gains = player_proto::panels::Gains {
+        crossfade: m.crossfade,
+        replay_gain: m.replay_gain.clone(),
+        add_mode: m.add_mode,
+        shuffle_hint: false,
+    };
+    player_proto::panels::draw_gains(&mut list, fonts, (w, h - 40.0), th, &gains);
+
+    // `F12`: the clock screen. It needs no daemon, so it is also the one overlay that can be
+    // captured with no MPD at all.
+    if m.clock_open {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64;
+        // The panel module draws the text only (it is also used for whole-frame views), so the
+        // surface is here: a scrim and a centred card, the same recipe the outputs overlay uses.
+        list.rect(0.0, 0.0, w, h, theme::with_alpha(th.bg_bottom, 0.82));
+        let card_w = 340.0_f32.min(w - 80.0);
+        let card_h = if m.timer_started.is_some() || m.timer_accrued > Duration::ZERO {
+            146.0
+        } else {
+            118.0
+        };
+        list.shadow(
+            (w - card_w) / 2.0 - 8.0,
+            (h - card_h) / 2.0 - 4.0,
+            card_w + 16.0,
+            card_h + 12.0,
+            GEOM.radius_lg,
+            16.0,
+            0.5,
+        );
+        list.rounded(
+            (w - card_w) / 2.0,
+            (h - card_h) / 2.0,
+            card_w,
+            card_h,
+            GEOM.radius_lg,
+            th.panel_hi,
+            th.panel,
+        );
+        let live = m.timer_started.map(|t| t.elapsed()).unwrap_or_default();
+        let clock = player_proto::panels::Clock {
+            time: fmt_clock_time(now),
+            date: fmt_clock_date(now),
+            timer: (m.timer_started.is_some() || m.timer_accrued > Duration::ZERO)
+                .then(|| format!("таймер {}", fmt_stopwatch(m.timer_accrued + live))),
+        };
+        if player_proto::panels::draw_clock(&mut list, fonts, (w, h), th, &clock).is_some() {
+            hit(hits, 0.0, 0.0, w, h, Hit::CloseOverlay);
+        }
+    }
+
+    // `@`: the daemon's counters, its own panel with its own scrim.
+    if m.server_open {
+        let info = player_proto::panels::ServerInfo {
+            lines: m.server_info.clone(),
+        };
+        if player_proto::panels::draw_server_info(&mut list, fonts, (w, h), th, "сервер", &info)
+            .is_some()
+        {
+            // The panel takes the pointer like every other modal: a click anywhere closes it.
+            hit(hits, 0.0, 0.0, w, h, Hit::CloseOverlay);
+        }
     }
 
     if m.outputs_open {
@@ -4901,7 +6607,8 @@ impl winit::application::ApplicationHandler for App {
     ) {
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
-            WindowEvent::KeyboardInput { event, .. } => self.handle_key(&event, false, false),
+            WindowEvent::ModifiersChanged(mods) => self.modifiers = mods.state(),
+            WindowEvent::KeyboardInput { event, .. } => self.handle_key(&event),
             WindowEvent::CursorMoved { position, .. } => {
                 // winit speaks physical pixels, the UI is authored in logical units.
                 self.pointer = (
@@ -4935,10 +6642,8 @@ impl winit::application::ApplicationHandler for App {
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
                 eprintln!("[event] scale_factor={scale_factor}");
                 self.scale = self.capture_scale(scale_factor as f32);
-                if let Some(fonts) = self.fonts.as_mut() {
-                    fonts.set_scale(self.scale);
-                    // Glyph cache stays valid: atlas UVs do not depend on scale.
-                }
+                // The glyph cache stays valid (atlas UVs do not depend on the scale); the
+                // per-frame path re-derives the snapping ratio from the new extent.
                 // The buffer has to be rebuilt even if the logical size did not change: the
                 // physical size did. Re-derive from the window, not from the old extent.
                 if let Some(w) = self.window.as_ref() {
@@ -4960,20 +6665,22 @@ impl winit::application::ApplicationHandler for App {
                 self.drain_updates();
                 self.animate();
                 // Layout size: logical units by default (physical / scale), or the pinned
-                // capture size. The shader gets exactly this as its resolution, so the UI always
-                // fills the surface instead of covering a fraction of it.
-                if let Some(fonts) = self.fonts.as_mut() {
-                    fonts.set_scale(self.scale);
-                }
-                // The draw list is authored in logical units. The shader divides by this size,
-                // so the same list lands on a 1x capture and on a 2x swapchain unchanged.
+                // capture size. The draw list is authored in these units and snapped to the
+                // device grid before upload, so the same layout lands on a 1x capture and on a
+                // 1.5x or 2x swapchain unchanged.
                 let (lw, lh) = self.logical_size();
                 let extent = ash::vk::Extent2D {
                     width: lw,
                     height: lh,
                 };
+                let ratio = self.device_ratio();
+                if let Some(fonts) = self.fonts.as_mut() {
+                    fonts.set_scale(ratio);
+                }
                 if let Some(gpu) = self.gpu.as_mut() {
-                    gpu.set_push_res(extent.width as f32, extent.height as f32);
+                    // Device pixels in, device pixels out: the shader divides by the extent it
+                    // covers, and every vertex already sits on a whole one.
+                    gpu.set_push_res(gpu.extent.width as f32, gpu.extent.height as f32);
                 }
                 // The driver says the surface no longer matches the swapchain: rebuild before
                 // the next frame instead of accumulating mismatched buffers.
@@ -4988,13 +6695,6 @@ impl winit::application::ApplicationHandler for App {
                         .map(|w| w.inner_size())
                         .unwrap_or_default();
                     self.sync_surface(size.width.max(1), size.height.max(1));
-                    if let Some(gpu) = self.gpu.as_ref() {
-                        if let Some(fonts) = self.fonts.as_mut() {
-                            fonts.set_scale(self.scale);
-                        }
-                        let (lw, lh) = self.logical_size();
-                        let _ = (lw, lh, gpu.extent);
-                    }
                 }
 
                 // upload art once per track
@@ -5048,6 +6748,7 @@ impl winit::application::ApplicationHandler for App {
                     self.fonts.as_mut().unwrap(),
                     &self.model,
                     extent,
+                    ratio,
                     t,
                     theme,
                     hover,
