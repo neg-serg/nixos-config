@@ -196,6 +196,8 @@ enum Update {
     Playlists(Vec<String>),
     Outputs(Vec<player_proto::mpd::Output>),
     Connected(bool),
+    /// The worker finished a poll cycle: nothing older than this is still in flight.
+    Idle,
     /// Results of a `lusty --list` run. `gen` discards answers to a stale query.
     Finder {
         gen: u64,
@@ -493,6 +495,9 @@ fn spawn_mpd_worker(addr: String, tx: Sender<Update>, rx_cmd: Receiver<Cmd>) {
                     continue;
                 }
             }
+            // One heartbeat per cycle: a scripted run can then tell "the worker has answered
+            // everything it was asked so far" from "it is still busy".
+            let _ = tx.send(Update::Idle);
             thread::sleep(Duration::from_millis(300));
         }
     });
@@ -1062,6 +1067,7 @@ impl Model {
                     }
                 }
             }
+            Update::Idle => {}
             Update::Error(e) => {
                 self.toast = Some((e, Instant::now()));
             }
@@ -1146,6 +1152,13 @@ struct App {
     pending_shot: bool,
     dump_state_each_key: bool,
     /// Last swapchain recreation, used to rate-limit resize storms.
+    /// Frame of the most recent update from the worker, used to wait for a quiet stream.
+    last_update_frame: u64,
+    /// Earliest frame the next scripted token may fire: set when the previous one settled.
+    next_key_frame: u64,
+    /// Frame of the newest worker heartbeat, and the frame the current token was applied at.
+    idle_frame: u64,
+    token_frame: u64,
     /// Token whose "settled" state still has to be dumped, and the frame it is due at.
     settle_token: Option<String>,
     settle_at: u64,
@@ -1217,6 +1230,10 @@ impl App {
             key_cursor: 0,
             pending_shot: false,
             dump_state_each_key: std::env::var("PLAYER_DUMP_STATE").is_ok(),
+            last_update_frame: 0,
+            next_key_frame: 60,
+            idle_frame: 0,
+            token_frame: 0,
             settle_token: None,
             settle_at: 0,
             last_resize: Instant::now() - Duration::from_secs(1),
@@ -1253,6 +1270,10 @@ impl App {
         loop {
             match self.rx.try_recv() {
                 Ok(u) => {
+                    self.last_update_frame = self.frames;
+                    if matches!(u, Update::Idle) {
+                        self.idle_frame = self.frames;
+                    }
                     if std::env::var("PLAYER_DEBUG_UPDATES").is_ok() {
                         let tag = match &u {
                             Update::Status { .. } => "status",
@@ -1304,6 +1325,7 @@ impl App {
                                     self.model.apply(u)
                                 }
                             }
+                            Update::Idle => return self.model.apply(u),
                             Update::Art { .. } => "art",
                             Update::Connected(b) => {
                                 return {
@@ -2434,9 +2456,14 @@ impl App {
     /// Dump the current state again once the async replies for the last key have arrived.
     fn maybe_dump_settled(&mut self) {
         if let (Some(token), Some(due)) = (self.settle_token.clone(), Some(self.settle_at)) {
-            if self.frames >= due {
+            // Wait for a quiet stream: the worker answers asynchronously, and a fixed window
+            // either dumps too early (stale data) or wastes frames. A hard cap keeps a silent
+            // worker from stalling the run.
+            let answered = self.idle_frame > self.token_frame;
+            if self.frames >= due && answered {
                 self.dump_state(&format!("{token} settle=1"));
                 self.settle_token = None;
+                self.next_key_frame = self.frames + 2;
             }
         }
     }
@@ -4983,10 +5010,16 @@ impl winit::application::ApplicationHandler for App {
                 }
                 // Scripted keys: one token per 30 frames, so each state gets its own capture.
                 if !self.keys.is_empty() {
+                    // Fixed cadence: 30 frames per token, with the settle dump 20 frames later,
+                    // is slow but predictable; the wall-clock win comes from running the
+                    // independent suites in parallel instead of racing the worker.
                     let due = 60 + self.key_cursor * 30;
                     if self.frames as usize >= due && self.key_cursor < self.keys.len() {
                         let token = self.keys[self.key_cursor].clone();
                         self.apply_token(&token);
+                        // Fallback cadence for runs that do not dump state: 14 frames per token.
+                        self.next_key_frame = self.frames + 14;
+                        self.token_frame = self.frames;
                         self.key_cursor += 1;
                         self.pending_shot = true;
                         eprintln!(
@@ -5103,7 +5136,7 @@ impl winit::application::ApplicationHandler for App {
                         if unsafe { gpu.shot(&list, &path, clear) }.is_ok()
                             && self.key_cursor == self.keys.len()
                         {
-                            self.exit_frame = Some(self.frames + 40);
+                            self.exit_frame = Some(self.frames + 20);
                         }
                     }
                     // A swapchain dump is a capture like any other: it fires on the
