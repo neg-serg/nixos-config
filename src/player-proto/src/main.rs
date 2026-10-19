@@ -258,7 +258,7 @@ impl winit::application::ApplicationHandler for App {
                 let Some(quads) = self.quads.as_ref() else {
                     return;
                 };
-                match unsafe { gpu.draw(quads, [0.055, 0.063, 0.078, 1.0]) } {
+                match unsafe { gpu.draw(None, quads, [0.055, 0.063, 0.078, 1.0]) } {
                     Ok(()) => {
                         self.frames_drawn += 1;
                         if self.frames_drawn == 1 {
@@ -292,6 +292,9 @@ impl winit::application::ApplicationHandler for App {
 }
 
 fn main() {
+    // Resolve the libraries winit/ash dlopen by soname before they ask for them: this is what
+    // makes `./player-proto` runnable straight from `target/release` on NixOS.
+    player_proto::preload::ensure_graphics_libs();
     let mut json = false;
     let mut frames = 1u32;
     let mut shot: Option<String> = None;

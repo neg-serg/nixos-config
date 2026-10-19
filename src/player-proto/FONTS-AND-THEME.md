@@ -11,6 +11,14 @@ Note on language: this document is deliberately ASCII-only (no Cyrillic, no CJK)
 lint `scripts/dev/check-markdown-language.sh` rejects both in `*.md`. The Russian UI strings are
 therefore referenced by code line and described, never quoted literally.
 
+> **Status:** this document is the *font* audit plus the palette proposal that shipped before the
+> theme was replaced. Sections 1-5 (fonts, licensing, typography scale, glyph-atlas rules) are
+> current. **Section 6 (the palette) and the colour half of section 9 are historical**: the app
+> now paints with `neg.nvim`'s palette, and the authoritative colour contract is
+> `src/theme.rs` (tokens and their derivation rule), `THEME-AUDIT.md` (measured contrast, OKLab
+> and CIEDE2000 distances, dichromacy simulation) and the tests in `src/theme.rs` / `src/skin.rs`
+> that assert those numbers on every build.
+
 ______________________________________________________________________
 
 ## 0. How to reproduce the checks

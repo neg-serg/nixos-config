@@ -71,7 +71,7 @@ impl Layout {
             // Three columns, the design's own shape.
             "rmpc" => Self {
                 library: true,
-                library_w: 292,
+                library_w: 324,
                 now: true,
                 now_w: 344,
                 preset: "rmpc",
@@ -79,7 +79,7 @@ impl Layout {
             // Queue and now-playing only: the two things ncmpcpp puts on its playlist screen.
             "ncmpcpp" => Self {
                 library: false,
-                library_w: 292,
+                library_w: 324,
                 now: true,
                 now_w: 300,
                 preset: "ncmpcpp",
@@ -95,7 +95,7 @@ impl Layout {
             // Just the list — the shape a tiled 900px window actually has room for.
             "narrow" => Self {
                 library: false,
-                library_w: 292,
+                library_w: 324,
                 now: false,
                 now_w: 0,
                 preset: "narrow",
@@ -228,6 +228,10 @@ fn read_theme(path: &Path) -> Option<String> {
     read_state_line(path, "theme")
 }
 
+fn read_list_style(path: &Path) -> Option<ListStyle> {
+    read_state_line(path, "list").map(|v| ListStyle::parse(&v))
+}
+
 // ---------------------------------------------------------------- rows
 
 /// Everything a row needs to look right is a design decision and lives in the theme; this
@@ -255,8 +259,10 @@ mod row {
         hovered: bool,
         playing: bool,
     ) {
+        // Flat fills, no vertical gradients: neg paints a list row as a single tone
+        // (`PmenuSel` is one grey), and a gradient on a 40 px bar only muddies its edge.
         if hovered && !selected {
-            list.rounded(x, y, w, h, GEOM.radius_md, th.hover, th.hover_edge);
+            list.rounded(x, y, w, h, GEOM.radius_md, th.hover, th.hover);
         }
         if playing && !selected {
             list.rounded(x, y, w, h, GEOM.radius_md, th.playing_bg, th.playing_bg);
@@ -266,12 +272,12 @@ mod row {
                 GEOM.rail_w * 0.66,
                 h - 14.0,
                 GEOM.rail_w * 0.33,
-                th.accent,
-                th.accent,
+                th.accent2,
+                th.accent2,
             );
         }
         if selected {
-            list.rounded(x, y, w, h, GEOM.radius_md, th.selection, th.selection_edge);
+            list.rounded(x, y, w, h, GEOM.radius_md, th.selection, th.selection);
             list.rounded(
                 x,
                 y + 5.0,
@@ -279,25 +285,36 @@ mod row {
                 h - 10.0,
                 GEOM.rail_w * 0.5,
                 th.accent,
-                th.accent2,
+                th.accent,
             );
         }
     }
 
-    /// Ink for the primary label of a row. The cursor's wash already carries the accent, so the
-    /// accent ink is reserved for the playing row when the cursor is elsewhere.
+    /// Ink for the primary label of a row.
+    ///
+    /// The ladder is neg's own: a resting row reads in `text_dim` (neg `high`), while the row
+    /// the keyboard is on — and the row that is playing — read in `text` (neg `whit`). That is
+    /// exactly `Pmenu` versus `PmenuSel`: in this theme "this is the current item" is always
+    /// the brightest ink and never a hue. What marks a playing row is the wash and the rail,
+    /// not the colour of its letters.
     pub fn title_ink(th: &theme::Theme, selected: bool, playing: bool) -> [f32; 4] {
-        if playing && !selected {
-            th.accent
-        } else {
+        if selected || playing {
             th.text
+        } else {
+            th.text_dim
         }
     }
 
     /// Ink for anything that only supports the title.
-    pub fn meta_ink(th: &theme::Theme, selected: bool) -> [f32; 4] {
-        if selected {
-            theme::with_alpha(th.text, 0.68)
+    ///
+    /// `lit` means the row is painted on a wash — the cursor bar or the playing tint. The
+    /// under-label then steps up to `text_dim`, because `text_faint` on the cursor bar measures
+    /// 3.6:1 and the supporting line must not lose the readability the title keeps. Nothing
+    /// here is a transparent ink: a wash under a translucent label is a contrast measurement
+    /// nobody can predict by eye.
+    pub fn meta_ink(th: &theme::Theme, lit: bool) -> [f32; 4] {
+        if lit {
+            th.text_dim
         } else {
             th.text_faint
         }
@@ -1252,9 +1269,75 @@ const COMMANDS: &[CommandSpec] = &[
     },
 ];
 
-/// Theme names `:theme` accepts; `Theme::by_name` falls back to dark for anything else, which
-/// is exactly why the line should offer these instead of letting a typo repaint the app.
-const THEME_NAMES: [&str; 2] = ["dark", "warm"];
+/// Skin names `:skin` and `:theme` accept. A skin is palette + wallpaper + surface treatment,
+/// so it is the one switch that changes the whole look; `Skin::by_name` falls back to `neg` for
+/// anything else, which is exactly why the line should offer the real names instead of letting
+/// a typo repaint the app.
+// The names are not a constant any more: a run may load extra skins from `skins.toml`, so the
+// completion list and the error message both read the resolved set (see `App::skin_names`).
+
+/// How a list draws its rows. Two styles, one grid: the *thin* one is a dense one-line-per-track
+/// scan down the queue, the *thick* one trades rows for a cover tile and a second line, which is
+/// what makes an album legible as a cover rather than as a name. The style is app-wide (it is
+/// persisted with the layout) because a list that changes height per pane would break the shared
+/// row grid the whole UI is built on.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+enum ListStyle {
+    #[default]
+    Thin,
+    Thick,
+}
+
+impl ListStyle {
+    fn as_str(self) -> &'static str {
+        match self {
+            ListStyle::Thin => "thin",
+            ListStyle::Thick => "thick",
+        }
+    }
+
+    /// Anything that is not `thick` is thin: an unreadable state file must not invent a style.
+    fn parse(text: &str) -> Self {
+        match text.trim() {
+            "thick" => ListStyle::Thick,
+            _ => ListStyle::Thin,
+        }
+    }
+
+    fn next(self) -> Self {
+        match self {
+            ListStyle::Thin => ListStyle::Thick,
+            ListStyle::Thick => ListStyle::Thin,
+        }
+    }
+}
+
+impl App {
+    /// The active skin. The name is the persisted key, so an unknown name (a skin removed from
+    /// the config since the last run) falls back to the first one instead of panicking.
+    fn skin(&self) -> &player_proto::skin::Resolved {
+        self.skins
+            .iter()
+            .find(|s| s.name == self.theme_name)
+            .unwrap_or(&self.skins[0])
+    }
+
+    fn skin_names(&self) -> Vec<&str> {
+        self.skins.iter().map(|s| s.name.as_str()).collect()
+    }
+
+    /// The skin after the active one, wrapping around — one function for the key, so `t` and
+    /// `:skin` can never disagree about the order.
+    fn next_skin(&self) -> &player_proto::skin::Resolved {
+        let current = self.skin();
+        let index = self
+            .skins
+            .iter()
+            .position(|s| s.name == current.name)
+            .unwrap_or(0);
+        &self.skins[(index + 1) % self.skins.len()]
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Destructive {
@@ -1342,6 +1425,18 @@ enum Hit {
     Volume(f32),
     Output(usize),
     CloseOverlay,
+}
+
+/// Stable name of a pane, shared by the state dump and the `wait!view=` predicate.
+fn pane_name(pane: Pane) -> &'static str {
+    match pane {
+        Pane::Queue => "queue",
+        Pane::Library => "library",
+        Pane::Artists => "artists",
+        Pane::Albums => "albums",
+        Pane::Playlists => "playlists",
+        Pane::Search => "search",
+    }
 }
 
 /// Stable name of a hit target. Used by the state dump so a test can assert what the pointer
@@ -1526,9 +1621,58 @@ struct Model {
     last_update: Instant,
     elapsed_base: f64,
     elapsed_at: Instant,
+    /// Oscilloscope history. Fed by `scope_feed`; when nothing is being fed it draws its own
+    /// slow idle trace rather than an empty box.
+    scope: player_proto::widgets::Scope,
+    /// Numeric pipe for the scope (`--scope-fifo`), one or more floats per line.
+    scope_feed: player_proto::widgets::Fifo,
+    /// Text pipe (`--fifo`): whatever the user wants to keep an eye on.
+    feed: player_proto::widgets::Fifo,
+    /// How many lines of `feed` the widget shows.
+    feed_rows: usize,
+    /// Thin or thick list rows. It lives on the model because the draw functions read it, and it
+    /// is persisted with the zoom and the skin by the app.
+    list_style: ListStyle,
+    /// Names the `:skin` line completes against. Filled from the resolved skin list at startup
+    /// (built-ins plus the user's config), because completion runs on the model and the skins
+    /// themselves belong to the app.
+    skin_names: Vec<String>,
+}
+
+/// Default pipe paths, under the runtime dir so they vanish with the session:
+/// `$XDG_RUNTIME_DIR/player-fifo` (text) and `$XDG_RUNTIME_DIR/player-scope` (numbers).
+fn pipe_path(name: &str) -> PathBuf {
+    let base = std::env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "/tmp".into());
+    PathBuf::from(base).join(name)
+}
+
+/// `--fifo=PATH` / `--scope-fifo=PATH`, falling back to the runtime-dir defaults.
+fn arg_path(flag: &str, default: &str) -> PathBuf {
+    std::env::args()
+        .find(|a| a.starts_with(flag))
+        .map(|a| PathBuf::from(&a[flag.len()..]))
+        .unwrap_or_else(|| pipe_path(default))
 }
 
 impl Model {
+    /// The outputs overlay's load state, as the dump prints it: a capture can wait on this
+    /// instead of counting frames and hoping the daemon answered.
+    fn outputs_state(&self) -> &'static str {
+        match (self.outputs_loaded, self.outputs.is_empty()) {
+            (false, _) => "loading",
+            (true, true) => "empty",
+            (true, false) => "filled",
+        }
+    }
+
+    /// Finder overlay state, same shape as the dump's field.
+    fn finder_state(&self) -> String {
+        match self.finder.as_ref() {
+            None => "closed".to_string(),
+            Some(f) => format!("open:{}:{}", f.query, f.results.len()),
+        }
+    }
+
     fn new() -> Self {
         Self {
             status: Status::default(),
@@ -1591,6 +1735,17 @@ impl Model {
             last_update: Instant::now(),
             elapsed_base: 0.0,
             elapsed_at: Instant::now(),
+            // `attach` rather than `open`: a pipe that nobody has started writing to yet is
+            // the normal state, and the model comes alive on its own once a producer appears.
+            scope: player_proto::widgets::Scope::new(2048),
+            scope_feed: player_proto::widgets::Fifo::attach(arg_path(
+                "--scope-fifo=",
+                "player-scope",
+            )),
+            feed: player_proto::widgets::Fifo::attach(arg_path("--fifo=", "player-fifo")),
+            feed_rows: 3,
+            list_style: ListStyle::default(),
+            skin_names: Vec::new(),
         }
     }
 
@@ -1731,8 +1886,12 @@ impl Model {
         };
         match COMMANDS.iter().find(|c| c.name == head).map(|c| c.arg) {
             Some(ArgKind::Playlist) => playlists_starting_with(&self.playlists, prefix),
-            Some(ArgKind::Theme) => THEME_NAMES
+            Some(ArgKind::Theme) => self
+                .skin_names
                 .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .into_iter()
                 .filter(|t| t.starts_with(prefix))
                 .map(|t| t.to_string())
                 .collect(),
@@ -1919,9 +2078,19 @@ struct App {
     /// `--scale=N`: pins the device scale so a scripted capture does not depend on the monitor
     /// the window happens to land on.
     scale_override: Option<f32>,
+    /// `wait:<label>` is holding the scripted keys until the pointer resolves to this label.
+    wait_hover: Option<String>,
+    /// `wait!field=value` token: hold the scripted cadence until the app's own state says so.
+    /// The hover wait above answers "is the pointer on the thing", this one answers "has the
+    /// daemon replied / has the overlay opened", which is the other reason a capture used to
+    /// need a guessed number of `noop`s.
+    wait_state: Option<(String, String)>,
     /// Frame at which a scripted run exits; a short linger lets the MPD worker drain the
     /// commands the script produced (it polls every 300 ms).
     exit_frame: Option<u64>,
+    /// Every skin this run offers: the built-ins in their documented order, then whatever
+    /// `skins.toml` adds or overrides.
+    skins: Vec<player_proto::skin::Resolved>,
     /// `PLAYER_DUMP_SWAPCHAIN`: read the presented image back to this path, then exit.
     dump_path: Option<String>,
     /// Set once the swapchain dump was taken, so a resize cannot make the run dump twice.
@@ -2040,6 +2209,7 @@ impl App {
             .map(clamp_zoom)
             .unwrap_or(remembered);
         let mut app = Self {
+            skins: Vec::new(),
             window: None,
             gpu: None,
             fonts: None,
@@ -2083,6 +2253,8 @@ impl App {
             scale_override: std::env::args()
                 .find(|a| a.starts_with("--scale="))
                 .and_then(|a| a[8..].parse().ok()),
+            wait_state: None,
+            wait_hover: None,
             exit_frame: None,
             dump_path: std::env::var("PLAYER_DUMP_SWAPCHAIN").ok(),
             dump_done: false,
@@ -2102,10 +2274,18 @@ impl App {
             art_uploaded: String::new(),
             started: Instant::now(),
             theme_name: std::env::args()
-                .find(|a| a.starts_with("--theme="))
-                .map(|a| a[8..].to_string())
+                .find(|a| a.starts_with("--skin="))
+                .map(|a| a[7..].to_string())
+                .or_else(|| {
+                    std::env::args()
+                        .find(|a| a.starts_with("--theme="))
+                        .map(|a| a[8..].to_string())
+                })
                 .or(remembered_theme)
-                .unwrap_or_else(|| "dark".to_string()),
+                // Legacy palette names ("dark", "warm", "neg-hc") and typos from an older
+                // state file resolve to a real skin before they are ever shown or saved.
+                .map(|name| player_proto::skin::Skin::canonical(&name).to_string())
+                .unwrap_or_else(|| player_proto::skin::NEG_SKIN.name.to_string()),
             zoom,
             zoom_store,
             modifiers: ModifiersState::empty(),
@@ -2216,9 +2396,10 @@ impl App {
         }
         let tmp = path.with_extension("tmp");
         let body = format!(
-            "zoom={:.4}\ntheme={}\n{}\n",
+            "zoom={:.4}\ntheme={}\nlist={}\n{}\n",
             self.zoom,
             self.theme_name,
+            self.model.list_style.as_str(),
             self.model.layout.to_state()
         );
         if std::fs::write(&tmp, body).is_ok() {
@@ -3085,13 +3266,25 @@ impl App {
                     }
                     ("a", false, _) => self.start_playlist_pick(),
                     ("F", _, _) => self.open_finder(),
+                    ("L", false, _) => {
+                        // Two row styles, one key: dense scan vs cover-rich list.
+                        self.model.list_style = self.model.list_style.next();
+                        self.model.toast = Some((
+                            match self.model.list_style {
+                                ListStyle::Thin => "список: тонкий".to_string(),
+                                ListStyle::Thick => "список: толстый, с обложкой".to_string(),
+                            },
+                            Instant::now(),
+                        ));
+                    }
                     ("t", false, _) => {
                         self.model.toast = None;
-                        self.theme_name = if self.theme_name == "warm" {
-                            "dark".into()
-                        } else {
-                            "warm".into()
-                        }
+                        // Cycle through every skin this run offers — the built-ins and whatever
+                        // `skins.toml` added — in the order the list already has, so the key,
+                        // `:skin` and the saved state can never disagree.
+                        let next = self.next_skin().clone();
+                        self.theme_name = next.name.clone();
+                        self.model.toast = Some((next.note.clone(), Instant::now()));
                     }
                     ("q", false, _) => std::process::exit(0),
                     ("q", true, _) => std::process::exit(0),
@@ -3796,13 +3989,20 @@ impl App {
                     }
                 }
             }
-            ("theme", _) => {
-                let name = flag.unwrap_or("dark");
-                self.theme_name = if theme::Theme::by_name(name).name == name {
-                    name.to_string()
+            ("theme" | "skin", _) => {
+                let name = flag.unwrap_or("neg");
+                let found = self.skins.iter().find(|s| s.name == name).cloned();
+                // An unknown name is reported instead of silently repainting the app: the user
+                // typed a skin that does not exist, and the list is right there in the message.
+                if let Some(skin) = found {
+                    self.theme_name = skin.name.clone();
+                    self.model.toast = Some((skin.note.clone(), Instant::now()));
                 } else {
-                    "dark".into()
-                };
+                    self.model.toast = Some((
+                        format!("нет скина {name}: {}", self.skin_names().join(", ")),
+                        Instant::now(),
+                    ));
+                }
             }
             ("search", _) => {
                 if let Some(q) = flag {
@@ -3822,6 +4022,27 @@ impl App {
         use winit::keyboard::SmolStr;
         if token == "noop" {
             // burns one scripted interval so async MPD replies can land before the next dump
+            return;
+        }
+        // `wait:<label>`: hold the scripted cadence until the pointer resolves to that hover
+        // label (or `none`). A capture that has to *reach* a target cannot be timed with frame
+        // counts — how many frames a hover takes depends on what else the machine is doing —
+        // so the token waits for the answer instead of guessing it.
+        if let Some(want) = token.strip_prefix("wait:") {
+            self.wait_hover = Some(want.to_string());
+            return;
+        }
+        // `wait!field=value`: hold the cadence until the app reports that field as that value.
+        // A capture that must wait for the daemon's reply cannot count frames for it — how many
+        // frames a reply takes depends on what else the machine is doing — so it waits for the
+        // answer instead of guessing it (the same argument as `wait:` for hovers).
+        if let Some(predicate) = token.strip_prefix("wait!") {
+            match predicate.split_once('=') {
+                Some((field, value)) => {
+                    self.wait_state = Some((field.trim().to_string(), value.trim().to_string()))
+                }
+                None => eprintln!("[keys] bad wait! token (want field=value): {token}"),
+            }
             return;
         }
         if let Some(at) = token.strip_prefix("cursor:") {
@@ -3985,7 +4206,7 @@ impl App {
         // because a reflow (compact rows, the library pane disappearing) is part of the answer.
         let (lw, lh) = self.logical_size();
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} qfilter='{qfilter}' qmatch={qmatch} qstate={qstate} qedit={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta} finder={finder_state} zoom={zoom:.2} size={lw}x{lh} compl={compl_len}:{compl_sel} xfade={xfade} gain={gain} addmode={addmode} server={server} cols={cols} clock={clock}",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} qfilter='{qfilter}' qmatch={qmatch} qstate={qstate} qedit={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}{outmeta} finder={finder_state} zoom={zoom:.2} size={lw}x{lh} compl={compl_len}:{compl_sel} xfade={xfade} gain={gain} addmode={addmode} server={server} cols={cols} clock={clock} list={list}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             qedit as u8,
@@ -4012,6 +4233,7 @@ impl App {
             server = self.model.server_open as u8,
             cols = self.model.layout.preset,
             clock = self.model.clock_open as u8,
+            list = self.model.list_style.as_str(),
         );
         // `PLAYER_DUMP_HITS=1`: print the interactive rectangles of the last frame, so a test
         // can aim the pointer at a real target instead of hard-coding coordinates that drift
@@ -4283,6 +4505,211 @@ fn fmt_time(secs: f64) -> String {
     format!("{}:{:02}", s / 60, s % 60)
 }
 
+/// Pane surface: a flat elevation fill, or a frosted slab when the skin is a glass skin.
+///
+/// The three panes and every overlay go through this so a skin can never frost one pane and
+/// leave its neighbour opaque — the mismatch is instantly visible at the seam, and it also
+/// decides whether the pane's own text sits on a known tone or on a sampled backdrop.
+fn pane_surface(
+    list: &mut DrawList,
+    skin: &player_proto::skin::Resolved,
+    th: &theme::Theme,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    elev: theme::Elevation,
+) {
+    match skin.glass {
+        Some(glass) => list.glass(
+            x,
+            y,
+            w,
+            h,
+            theme::GEOM.radius_lg,
+            glass.tint,
+            glass.refraction,
+        ),
+        None => {
+            // The strict skin keeps the elevation fill: glass is the only surface that does not
+            // have a theme token behind it, so nothing else may take its place.
+            let surface = if elev.surface == [0.0, 0.0, 0.0, 1.0] {
+                th.pane_rest.surface
+            } else {
+                elev.surface
+            };
+            list.rounded(x, y, w, h, theme::GEOM.radius_lg, surface, surface);
+        }
+    }
+}
+
+/// Cover tile for a thick list row.
+///
+/// The app keeps exactly one cover texture — the current track's — so a rich list cannot show a
+/// different sleeve per row without decoding artwork per file. Rather than fake that, the row
+/// that is playing gets the real cover and every other row gets a monogram plate: the album's
+/// initial, and a hue rail picked by hashing the album name. The hash is stable across runs, so a
+/// given album is always the same colour, and the set of hues is the theme's accent vocabulary —
+/// a queue then reads as a stack of sleeves without inventing a second palette.
+fn cover_tile(
+    list: &mut DrawList,
+    fonts: &mut Fonts,
+    th: &theme::Theme,
+    x: f32,
+    y: f32,
+    size: f32,
+    song: &Song,
+    playing: bool,
+    has_art: bool,
+) {
+    use player_proto::theme::{Face, GEOM, TYPE};
+    let r = GEOM.radius_sm;
+    if playing && has_art {
+        // tint 1,1,1,1 = the artwork untouched; anything else multiplies it.
+        list.image(x, y, size, size, r, [1.0, 1.0, 1.0, 1.0]);
+        return;
+    }
+    list.rounded(x, y, size, size, r, th.panel_inset, th.panel_inset);
+    let key = if song.album.is_empty() {
+        song.title.as_str()
+    } else {
+        song.album.as_str()
+    };
+    let hues = [th.accent, th.accent2, th.success, th.warn];
+    let pick = key
+        .bytes()
+        .fold(0u32, |acc, b| acc.wrapping_mul(31).wrapping_add(b as u32));
+    let hue = hues[pick as usize % hues.len()];
+    // The rail is the same device the cursor row uses: a 2 px bar on the leading edge, so the
+    // tile carries a colour without tinting the letter that has to stay readable.
+    list.rect(x + 2.0, y + size - 5.0, size - 4.0, 2.0, hue);
+    if let Some(initial) = key.chars().next() {
+        let label: String = initial.to_uppercase().collect();
+        let w = fonts.measure(&label, TYPE.label, Face::UiSemiBold);
+        fonts.layout_line(
+            list,
+            &label,
+            x + (size - w) * 0.5,
+            y + size * 0.5 - TYPE.label * 0.75,
+            TYPE.label,
+            Face::UiSemiBold,
+            th.text_dim,
+        );
+    }
+}
+
+// ------***------------------------- live widgets
+
+/// Oscilloscope trace, drawn from axis-aligned quads.
+///
+/// The renderer has no polyline primitive (`scene::DrawList` offers rectangles, gradients,
+/// rounded rectangles, shadows, glows, images and glyphs), so the trace is built the way a
+/// hardware scope draws it: one narrow column per sample, and a vertical segment joining each
+/// sample to the previous one. Adjacent columns share an edge, so the result is a continuous
+/// line — a stroke, not a bar chart.
+///
+/// `samples` is expected to be already resampled to roughly the pixel width of the bed
+/// (`Scope::resample`), and every value is clamped to -1..1 so a stray spike cannot draw
+/// outside its panel.
+fn draw_scope(
+    list: &mut DrawList,
+    th: &theme::Theme,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    samples: &[f32],
+    t: f32,
+) {
+    use player_proto::theme::GEOM;
+    if w < 8.0 || h < 8.0 {
+        return;
+    }
+    // The bed is a recessed well: `panel_inset` is the one token that reads as "inside" on a
+    // black ground.
+    list.rounded(x, y, w, h, GEOM.radius_sm, th.panel_inset, th.panel_inset);
+    let mid = y + h * 0.5;
+    // Three rules: the zero line in the divider ink, the quarter lines weaker still, so the
+    // grid orients the eye without becoming a second drawing.
+    for (i, ink) in [(0.25, th.hover), (0.5, th.rule), (0.75, th.hover)] {
+        list.rect(x + 1.0, (y + h * i).round(), w - 2.0, 1.0, ink);
+    }
+    let half = (h * 0.5 - 2.0).max(1.0);
+    let columns = ((w - 4.0).max(1.0)) as usize;
+    let trace = if samples.len() == columns {
+        samples.to_vec()
+    } else {
+        // Cheap resample so the caller never has to match the pixel width exactly.
+        (0..columns)
+            .map(|i| {
+                if samples.is_empty() {
+                    0.0
+                } else {
+                    let pos = i as f32 * (samples.len() - 1) as f32 / (columns.max(2) - 1) as f32;
+                    let a = pos.floor() as usize;
+                    let b = (a + 1).min(samples.len() - 1);
+                    let f = pos - a as f32;
+                    samples[a] * (1.0 - f) + samples[b] * f
+                }
+            })
+            .collect()
+    };
+    let column_w = 2.0;
+    let mut prev = mid;
+    for (i, v) in trace.iter().enumerate() {
+        let value = v.clamp(-1.0, 1.0);
+        let here = mid - value * half;
+        let (top, bottom) = if here < prev {
+            (here, prev)
+        } else {
+            (prev, here)
+        };
+        // A sample that lands exactly on the previous one still gets one pixel, otherwise a
+        // silent signal would draw nothing at all.
+        let height = (bottom - top).max(1.0);
+        let cx = x + 2.0 + i as f32 * column_w;
+        if cx > x + w - 2.0 {
+            break;
+        }
+        // The trace breathes by a few percent so a static signal still reads as live; the
+        // modulation is tiny because this is an instrument, not an animation.
+        let pulse = 0.86 + 0.14 * (t * 1.7).sin().abs();
+        list.rect(
+            cx,
+            top,
+            column_w.min(x + w - 2.0 - cx),
+            height,
+            theme::with_alpha(th.accent, pulse),
+        );
+        prev = here;
+    }
+}
+
+/// The FIFO feed: the tail of a named pipe, newest last, in the mono face at the faintest ink.
+///
+/// A pipe is the cheapest way to get anything into the UI without teaching the app a protocol
+/// (`mpc idle` output, a `cava` line, a build status, a sensor). The widget shows the tail and
+/// nothing else: it never scrolls, never pops up, and an empty pipe draws nothing rather than
+/// an empty box.
+fn draw_feed(
+    list: &mut DrawList,
+    fonts: &mut Fonts,
+    th: &theme::Theme,
+    x: f32,
+    y: f32,
+    w: f32,
+    lines: &[&str],
+    size: f32,
+) -> f32 {
+    use player_proto::theme::Face;
+    let mut dy = 0.0;
+    for line in lines {
+        fonts.layout_fitted_end(list, line, x, y + dy, size, Face::Mono, th.text_faint, w);
+        dy += (size * 1.32).ceil();
+    }
+    dy
+}
+
 /// One frame of UI. Every colour, size and radius comes from the theme, so a variant is data.
 fn draw_ui(
     fonts: &mut Fonts,
@@ -4291,6 +4718,7 @@ fn draw_ui(
     ratio: f32,
     t: f32,
     th: &theme::Theme,
+    skin: &player_proto::skin::Resolved,
     hover: Option<Hit>,
     hits: &mut Vec<HitArea>,
 ) -> DrawList {
@@ -4313,17 +4741,16 @@ fn draw_ui(
     list.gradient(0.0, 0.0, w, h, th.bg_top, th.bg_bottom);
 
     // ---------------- top bar
-    let top = 56.0;
-    list.gradient(
-        0.0,
-        0.0,
-        w,
-        top,
-        theme::with_alpha(th.panel_hi, 0.9),
-        theme::with_alpha(th.panel_hi, 0.55),
-    );
+    let top = 62.0;
+    // neg gives the status line `bg = NONE`: the bar is the ground plus a hairline, and state
+    // is carried by hue, not by a fill. Same here — a filled header would be the one surface in
+    // the frame that has no counterpart in the theme.
+    list.rect(0.0, 0.0, w, top, th.bg_top);
     list.rect(0.0, top - GEOM.line, w, GEOM.line, th.border);
 
+    // The mark is an inverted chip — dark glyph on the emphasis grey — the same device the
+    // theme uses for `MatchParen` (dark ink on `high`). No gradient: a two-hue gradient on a
+    // 28 px square reads as decoration, and neg reserves hue for meaning.
     let logo = 28.0;
     list.rounded(
         pad,
@@ -4331,8 +4758,8 @@ fn draw_ui(
         logo,
         logo,
         GEOM.radius_sm,
-        th.accent,
-        th.accent2,
+        th.text_dim,
+        th.text_dim,
     );
     let logo_w = fonts.measure("P", 15.0, Face::UiSemiBold);
     fonts.layout_line(
@@ -4374,16 +4801,9 @@ fn draw_ui(
             continue;
         }
         if active {
-            list.rounded(
-                tx,
-                15.0,
-                tw,
-                26.0,
-                GEOM.radius_pill,
-                th.accent_soft,
-                theme::with_alpha(th.accent2, 0.10),
-            );
-            list.rounded(tx, 15.0, tw, 26.0, GEOM.radius_pill, [0.0; 4], [0.0; 4]);
+            // No pill behind the active tab: neg selects a tab by ink and a rule under it
+            // (`TabLineSel` is a fill only because a tabline has no other channel). The ink
+            // steps to `text` and the 2 px rule below carries the accent.
         } else if hot {
             // An inactive tab under the pointer takes the same pill shape, at the hover wash
             // instead of the accent: the active tab stays the only lit one.
@@ -4398,11 +4818,11 @@ fn draw_ui(
             );
         }
         let fg = if active {
-            th.accent
-        } else if hot {
             th.text
-        } else {
+        } else if hot {
             th.text_dim
+        } else {
+            th.text_faint
         };
         fonts.layout_line(
             &mut list,
@@ -4421,7 +4841,7 @@ fn draw_ui(
                 2.0,
                 1.0,
                 th.accent,
-                th.accent2,
+                th.accent,
             );
         }
         hit(hits, tx, 12.0, tw, 32.0, Hit::Tab(pane));
@@ -4480,16 +4900,16 @@ fn draw_ui(
     // ---------------- panels
     let show_left = w >= 1080.0;
     let show_right = w >= 820.0;
-    let left_w = if show_left { 292.0 } else { 0.0 };
+    let left_w = if show_left { 324.0 } else { 0.0 };
     // The now-playing column never takes more than ~28% of the width, so the queue keeps room
     // for a full track title.
     let right_w = if show_right {
-        (w * 0.28).clamp(260.0, 344.0)
+        (w * 0.30).clamp(300.0, 430.0)
     } else {
         0.0
     };
-    let body_top = top + 12.0;
-    let body_bottom = h - 40.0;
+    let body_top = top + 10.0;
+    let body_bottom = h - 44.0;
     player_proto::record_rect("top_bar", 0.0, 0.0, w, top);
     player_proto::record_rect("footer", 0.0, body_bottom, w, h - body_bottom);
     let body_h = body_bottom - body_top;
@@ -4514,14 +4934,8 @@ fn draw_ui(
             26.0,
             left_elev.shadow,
         );
-        list.rounded(
-            20.0,
-            body_top,
-            left_w,
-            body_h,
-            GEOM.radius_lg,
-            left_elev.surface,
-            left_elev.surface,
+        pane_surface(
+            &mut list, skin, th, 20.0, body_top, left_w, body_h, left_elev,
         );
         list.rect(20.0, body_top, left_w, GEOM.line, th.border_hi);
         player_proto::record_rect("library_pane", 20.0, body_top, left_w, body_h);
@@ -4634,28 +5048,20 @@ fn draw_ui(
                 &mut list,
                 &label,
                 20.0 + lib_text_x,
-                y + 7.0,
+                y + 10.0,
                 TYPE.body,
                 Face::UiRegular,
-                if selected || is_dir {
-                    th.text
-                } else {
-                    theme::with_alpha(th.text, 0.86)
-                },
+                row::title_ink(th, selected, false),
                 title_w,
             );
             fonts.layout_line(
                 &mut list,
                 &meta,
                 meta_x,
-                y + 9.0,
+                y + 11.0,
                 TYPE.caption,
                 Face::Mono,
-                if is_dir {
-                    theme::with_alpha(th.text_faint, 0.75)
-                } else {
-                    row::meta_ink(th, selected)
-                },
+                row::meta_ink(th, selected),
             );
         }
         if lib_filtered.is_empty() {
@@ -4720,19 +5126,11 @@ fn draw_ui(
             qw + GEOM.line * 2.0,
             body_h + GEOM.line * 2.0,
             GEOM.radius_lg + GEOM.line,
-            theme::with_alpha(th.accent, 0.55),
-            theme::with_alpha(th.accent2, 0.35),
+            th.accent,
+            th.accent,
         );
     }
-    list.rounded(
-        qx,
-        body_top,
-        qw,
-        body_h,
-        GEOM.radius_lg,
-        centre_elev.surface,
-        centre_elev.surface,
-    );
+    pane_surface(&mut list, skin, th, qx, body_top, qw, body_h, centre_elev);
     list.rect(qx, body_top, qw, GEOM.line, th.border_hi);
 
     let search_mode = m.view == Pane::Search;
@@ -4917,11 +5315,7 @@ fn draw_ui(
                 y + 10.0,
                 TYPE.caption,
                 Face::Mono,
-                if selected {
-                    theme::with_alpha(th.text, 0.55)
-                } else {
-                    theme::with_alpha(th.text_faint, 0.8)
-                },
+                if selected { th.text_dim } else { th.text_faint },
             );
             let text_x = qx + row::text_x();
             fonts.layout_fitted(
@@ -5015,6 +5409,11 @@ fn draw_ui(
         queue_view(m)
     };
     let rows_offset = if search_mode { 0.0 } else { m.queue_scroll };
+    // The style owns the row pitch when it is on: a thick row has to hold a cover tile, so it
+    // cannot follow the window-driven default, and every row in the pane has to agree or the
+    // scroll maths and the hit rects drift apart.
+    let thick = m.list_style == ListStyle::Thick;
+    let row_h = if thick { GEOM.row_h_thick } else { row_h };
     let mut drawn_rows = 0usize;
     for (pos, i) in drawn.iter().copied().enumerate().filter(|_| !skip_row_loop) {
         let Some(song) = rows.get(i) else {
@@ -5045,7 +5444,24 @@ fn draw_ui(
             hot,
             playing,
         );
-        let text_x = qx + row::text_x();
+        let mut text_x = qx + row::text_x();
+        if thick {
+            // The tile sits between the index gutter and the text, so the row grid stays the
+            // one the whole app uses and only the text column moves right.
+            let tile = GEOM.cover_tile;
+            cover_tile(
+                &mut list,
+                fonts,
+                th,
+                text_x,
+                y + (row_h - GEOM.row_gap - tile) * 0.5,
+                tile,
+                song,
+                playing,
+                m.art.is_some(),
+            );
+            text_x += tile + GEOM.gap;
+        }
         if drawn_rows == 1 {
             // Geometry of the first visible row: enough to pin the row inset, the text column
             // and the duration column without recording every row of the frame.
@@ -5078,13 +5494,13 @@ fn draw_ui(
                 &mut list,
                 &idx_label,
                 gutter_right - idx_w,
-                y + 9.0,
+                y + 5.0,
                 TYPE.caption,
                 Face::Mono,
-                if selected {
-                    theme::with_alpha(th.text, 0.55)
+                if selected || playing {
+                    th.text_dim
                 } else {
-                    theme::with_alpha(th.text_faint, 0.8)
+                    th.text_faint
                 },
             );
         }
@@ -5096,7 +5512,7 @@ fn draw_ui(
             &mut list,
             &song.title,
             text_x,
-            y + 3.0,
+            y + 4.0,
             TYPE.body,
             Face::UiMedium,
             title_ink,
@@ -5106,10 +5522,10 @@ fn draw_ui(
             &mut list,
             &song.artist,
             text_x,
-            y + 20.0,
+            y + 23.0,
             TYPE.caption,
             Face::UiRegular,
-            row::meta_ink(th, selected),
+            row::meta_ink(th, selected || playing),
             title_w,
         );
         let dur = fmt_time(song.duration);
@@ -5118,15 +5534,15 @@ fn draw_ui(
             &mut list,
             &dur,
             qx + qw - GEOM.row_inset - 12.0 - dw,
-            y + 9.0,
+            y + 5.0,
             TYPE.caption,
             Face::Mono,
-            if selected {
-                theme::with_alpha(th.text, 0.7)
-            } else if playing {
-                theme::with_alpha(th.accent, 0.8)
+            // Opaque tokens only: a translucent ink over a wash is a contrast nobody can
+            // predict, and the duration is read, not decorated.
+            if selected || playing {
+                th.text_dim
             } else {
-                theme::with_alpha(th.text_faint, 0.85)
+                th.text_faint
             },
         );
         // Playing marker: three bars that breathe, right-aligned in the index gutter.
@@ -5241,30 +5657,21 @@ fn draw_ui(
             26.0,
             th.pane_rest.shadow,
         );
-        list.rounded(
+        pane_surface(
+            &mut list,
+            skin,
+            th,
             rx,
             body_top,
             right_w,
             body_h,
-            GEOM.radius_lg,
-            th.pane_rest.surface,
-            th.pane_rest.surface,
+            th.pane_rest,
         );
         list.rect(rx, body_top, right_w, GEOM.line, th.border_hi);
-        if m.art.is_some() {
-            list.set_clip(Some([rx, body_top, right_w, body_h]));
-            list.image(rx, body_top, right_w, body_h, GEOM.radius_lg, th.backdrop);
-            list.set_clip(None);
-            list.rounded(
-                rx,
-                body_top,
-                right_w,
-                body_h,
-                GEOM.radius_lg,
-                theme::with_alpha(th.bg_bottom, 0.55),
-                theme::with_alpha(th.bg_bottom, 0.82),
-            );
-        }
+        // No tinted cover backdrop behind the panel. A stretched, dimmed copy of the art is a
+        // *decorative* surface, and neg has exactly one: the ground. The pane stays black and
+        // the square cover is the only image in the frame. (The ghost copy also read as stray
+        // noise at 1x, where the upscale smears the JPEG's own text across the column.)
 
         // --- block metrics, in logical units, taken from the type scale
         let title_h = (TYPE.display * 1.30).round();
@@ -5291,7 +5698,18 @@ fn draw_ui(
         // Blocks that always fit: metadata, progress, transport, volume.
         let base = meta_h + progress_h + transport_h + volume_h;
         let base_gaps = GEOM.stack * 2.0 + (GEOM.inner + 4.0);
-        let chips_block = chips_h + (GEOM.inner + 4.0);
+        // The oscilloscope strip: a label line, the trace, and the tail of the text pipe. It
+        // rides inside the chips block so the existing fallback (drop the optional blocks when
+        // the window is short) covers it too — a low window loses the tracer before it loses the
+        // transport.
+        let scope_h = 54.0;
+        let feed_h = if m.feed.is_empty() {
+            0.0
+        } else {
+            m.feed_rows as f32 * (TYPE.caption * 1.32).ceil() + GEOM.inner
+        };
+        let viz_block = TYPE.micro * 1.4 + GEOM.inner + scope_h + feed_h;
+        let chips_block = chips_h + (GEOM.inner + 4.0) + viz_block;
         let next_block = next_h + GEOM.stack;
         let footer_extra = if footer.is_empty() { 0.0 } else { footer_block };
         let area_h = (inner_bottom - inner_top).max(1.0);
@@ -5491,15 +5909,17 @@ fn draw_ui(
         );
         if progress > 0.0 {
             let filled = (pw * progress.clamp(0.0, 1.0)).max(bar_h);
-            list.rounded(px, bar_y, filled, bar_h, bar_h * 0.5, th.accent, th.accent2);
+            list.rounded(px, bar_y, filled, bar_h, bar_h * 0.5, th.accent, th.accent);
+            // The scrub thumb is the emphasis grey, not the brightest ink: neg's progress
+            // vocabulary is one hue for "elapsed" and a neutral for the handle.
             list.rounded(
                 px + filled - 5.0,
                 bar_y - 3.0,
                 10.0,
                 bar_h + 6.0,
                 (bar_h + 6.0) * 0.5,
-                th.text,
-                theme::with_alpha(th.text, 0.9),
+                th.text_dim,
+                th.text_dim,
             );
         } else if hot_bar {
             list.rounded(
@@ -5508,8 +5928,8 @@ fn draw_ui(
                 10.0,
                 bar_h + 6.0,
                 (bar_h + 6.0) * 0.5,
-                th.text,
-                theme::with_alpha(th.text, 0.9),
+                th.text_dim,
+                th.text_dim,
             );
         }
         let times_y = bar_y + bar_h + GEOM.inner;
@@ -5603,7 +6023,7 @@ fn draw_ui(
                 transport_h + 4.0,
                 (transport_h + 4.0) * 0.5,
                 th.accent_soft,
-                theme::with_alpha(th.accent2, 0.16),
+                th.accent_soft,
             );
         }
         list.rounded(
@@ -5613,7 +6033,7 @@ fn draw_ui(
             transport_h,
             transport_h * 0.5,
             th.accent,
-            th.accent2,
+            th.accent,
         );
         let side_ink = |hot: bool| if hot { th.text } else { th.text_dim };
         for (sym, dx, size, color) in [
@@ -5695,8 +6115,8 @@ fn draw_ui(
                 vbar_w * (vol as f32 / 100.0),
                 if hot_vol { 6.0 } else { 4.0 },
                 if hot_vol { 3.0 } else { 2.0 },
-                theme::with_alpha(th.text, if hot_vol { 0.9 } else { 0.75 }),
-                theme::with_alpha(th.text, if hot_vol { 0.75 } else { 0.6 }),
+                if hot_vol { th.accent } else { th.accent_bright },
+                if hot_vol { th.accent } else { th.accent_bright },
             );
         }
         if hot_vol {
@@ -5707,8 +6127,8 @@ fn draw_ui(
                 10.0,
                 10.0,
                 5.0,
-                th.text,
-                theme::with_alpha(th.text, 0.9),
+                th.text_dim,
+                th.text_dim,
             );
         }
         fonts.layout_line(
@@ -5738,26 +6158,18 @@ fn draw_ui(
                 let cw2 = fonts.measure(label, TYPE.caption, Face::UiMedium) + 18.0;
                 hit(hits, cx, chip_y, cw2, chips_h, Hit::Chip(chip_index as u8));
                 let hot = hover == Some(Hit::Chip(chip_index as u8));
+                // A mode is a switch, and neg states a switch the way it states a list row:
+                // an on chip takes the selection grey with the brightest ink (`PmenuSel`), a
+                // hovered one takes the hover wash with the middle ink, a resting one is bare
+                // ground with a hairline — no coloured pill anywhere.
                 let (bg1, bg2, fg) = if on {
-                    (
-                        th.accent_soft,
-                        theme::with_alpha(th.accent2, 0.12),
-                        th.accent,
-                    )
+                    (th.selection, th.selection, th.text)
                 } else if hot {
-                    // An off chip under the pointer lifts to the hover wash and readable ink;
-                    // an on chip keeps its accent, which stays the strongest chip state.
-                    (
-                        theme::with_alpha(th.text, 0.10),
-                        theme::with_alpha(th.text, 0.06),
-                        th.text,
-                    )
+                    (th.hover, th.hover, th.text_dim)
                 } else {
-                    (
-                        theme::with_alpha(th.text, 0.05),
-                        theme::with_alpha(th.text, 0.03),
-                        th.text_faint,
-                    )
+                    // A resting chip is a recessed well, not a bare label: it has to read as
+                    // something you can press, and `panel_inset` keeps the ink at 4.86:1.
+                    (th.panel_inset, th.panel_inset, th.text_faint)
                 };
                 list.rounded(cx, chip_y, cw2, chips_h, GEOM.radius_pill, bg1, bg2);
                 fonts.layout_line(
@@ -5771,7 +6183,47 @@ fn draw_ui(
                 );
                 cx += cw2 + 6.0;
             }
-            y += chips_block;
+            // --- oscilloscope + pipe tail
+            y += chips_h + GEOM.inner;
+            fonts.layout_line(
+                &mut list,
+                "ОСЦИЛЛОГРАФ",
+                px,
+                y,
+                TYPE.micro,
+                Face::UiMedium,
+                th.text_faint,
+            );
+            // Peak/RMS on the right of the label: an instrument says what it measures.
+            let stats = format!("pk {:.2}  rms {:.2}", m.scope.peak(), m.scope.rms());
+            let stats_w = fonts.measure(&stats, TYPE.caption, Face::Mono);
+            fonts.layout_line(
+                &mut list,
+                &stats,
+                px + pw - stats_w,
+                y,
+                TYPE.caption,
+                Face::Mono,
+                th.rule,
+            );
+            let trace_y = y + (TYPE.micro * 1.4).ceil() + GEOM.inner * 0.5;
+            let columns = (pw.max(8.0)) as usize;
+            let samples = m.scope.resample(columns);
+            draw_scope(&mut list, th, px, trace_y, pw, scope_h, &samples, t);
+            if feed_h > 0.0 {
+                let lines = m.feed.last(m.feed_rows);
+                draw_feed(
+                    &mut list,
+                    fonts,
+                    th,
+                    px,
+                    trace_y + scope_h + GEOM.inner * 0.5,
+                    pw,
+                    &lines,
+                    TYPE.caption,
+                );
+            }
+            y += viz_block + GEOM.inner;
         }
 
         // --- next-up: an inset card in the stack instead of a label orphaned at the bottom.
@@ -5815,7 +6267,7 @@ fn draw_ui(
                     y + 22.0,
                     TYPE.label,
                     Face::UiMedium,
-                    theme::with_alpha(th.text, 0.86),
+                    th.text_dim,
                     tw3,
                 );
                 fonts.layout_fitted(
@@ -5849,15 +6301,8 @@ fn draw_ui(
         }
     }
     // ---------------- status bar
-    list.gradient(
-        0.0,
-        h - 36.0,
-        w,
-        36.0,
-        theme::with_alpha(th.panel_hi, 0.7),
-        theme::with_alpha(th.panel, 0.9),
-    );
-    list.rect(0.0, h - 36.0, w, GEOM.line, th.border);
+    list.rect(0.0, h - 40.0, w, 40.0, th.bg_top);
+    list.rect(0.0, h - 40.0, w, GEOM.line, th.border);
     if m.mode == InputMode::Command || m.mode == InputMode::Search {
         // A pane prompt borrows the command line's editing mode, so only the label and the hint
         // change: `c` in the Playlists pane reads as a question the line is answering, with the
@@ -6334,16 +6779,8 @@ fn draw_ui(
                 panel_w - 32.0,
                 out_row_h - 4.0,
                 GEOM.radius_md,
-                if on {
-                    th.playing_bg
-                } else {
-                    theme::with_alpha(th.text, 0.03)
-                },
-                if on {
-                    theme::with_alpha(th.accent2, 0.12)
-                } else {
-                    theme::with_alpha(th.text, 0.02)
-                },
+                if on { th.playing_bg } else { th.bg_top },
+                if on { th.playing_bg } else { th.bg_top },
             );
             if hot {
                 list.rounded(
@@ -6362,16 +6799,8 @@ fn draw_ui(
                 8.0,
                 8.0,
                 4.0,
-                if on {
-                    th.success
-                } else {
-                    theme::with_alpha(th.text, 0.25)
-                },
-                if on {
-                    th.success
-                } else {
-                    theme::with_alpha(th.text, 0.25)
-                },
+                if on { th.success } else { th.rule },
+                if on { th.success } else { th.rule },
             );
             // The name is the row's one bright line; the metadata below it is a hint, so it
             // never competes for the eye and simply disappears when the daemon shared nothing.
@@ -6394,11 +6823,7 @@ fn draw_ui(
                     y + 20.0,
                     TYPE.caption,
                     Face::UiRegular,
-                    if on {
-                        theme::with_alpha(th.text, 0.55)
-                    } else {
-                        theme::with_alpha(th.text_faint, 0.8)
-                    },
+                    if on { th.text_dim } else { th.text_faint },
                     panel_w - 160.0,
                 );
             }
@@ -6641,6 +7066,14 @@ impl winit::application::ApplicationHandler for App {
             }
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
                 eprintln!("[event] scale_factor={scale_factor}");
+                // A capture run has a pinned size by construction: honouring a late scale change
+                // would rebuild the swapchain in the very frames the dump reads back, and
+                // copying a WSI image the compositor has just re-bound segfaults inside
+                // llvmpipe. The pinned render size is the contract of `--render-size`.
+                if self.dump_path.is_some() && self.render_size.is_some() {
+                    eprintln!("[event] scale change ignored: the capture size is pinned");
+                    return;
+                }
                 self.scale = self.capture_scale(scale_factor as f32);
                 // The glyph cache stays valid (atlas UVs do not depend on the scale); the
                 // per-frame path re-derives the snapping ratio from the new extent.
@@ -6709,7 +7142,39 @@ impl winit::application::ApplicationHandler for App {
                     }
                 }
                 // Scripted keys: one token per 30 frames, so each state gets its own capture.
-                if !self.keys.is_empty() {
+                // A `wait:` token holds the cadence: the next key does not fire until the hover
+                // resolves to the label it asked for. The cap keeps a target that never appears
+                // from stalling the run instead of failing it.
+                // `wait!field=value`: clear the brake as soon as the app's own state matches. The
+                // fields are the ones a capture can block on — everything else is either
+                // immediate or already covered by the hover wait.
+                if let Some((field, want)) = self.wait_state.clone() {
+                    let current = match field.as_str() {
+                        "outputs" => self.model.outputs_open.to_string(),
+                        "server" => self.model.server_open.to_string(),
+                        "outs" => self.model.outputs_state().to_string(),
+                        "finder" => self.model.finder_state(),
+                        "connected" => self.model.connected.to_string(),
+                        "list" => self.model.list_style.as_str().to_string(),
+                        "skin" => self.theme_name.clone(),
+                        "view" => pane_name(self.model.view).to_string(),
+                        _ => String::new(),
+                    };
+                    if current == want || self.frames > self.token_frame + 600 {
+                        self.wait_state = None;
+                    }
+                }
+                if let Some(want) = self.wait_hover.clone() {
+                    let current = self
+                        .hover
+                        .as_ref()
+                        .map(hit_label)
+                        .unwrap_or_else(|| "none".to_string());
+                    if current == want || self.frames > self.token_frame + 300 {
+                        self.wait_hover = None;
+                    }
+                }
+                if !self.keys.is_empty() && self.wait_hover.is_none() && self.wait_state.is_none() {
                     // Fixed cadence: 30 frames per token, with the settle dump 20 frames later,
                     // is slow but predictable; the wall-clock win comes from running the
                     // independent suites in parallel instead of racing the worker.
@@ -6737,13 +7202,40 @@ impl winit::application::ApplicationHandler for App {
                     }
                 }
                 self.maybe_dump_settled();
-                let t = self.started.elapsed().as_secs_f32();
-                let theme = theme::Theme::by_name(&self.theme_name);
+                // Animation clock. A capture run reads it off the frame counter instead of the
+                // wall clock: the golden frames compare pixel for pixel, and a trace or an
+                // equaliser that moves with real time can never match a reference taken a second
+                // earlier. Pinned runs are otherwise identical frame for frame, which is what
+                // makes "the look changed" a meaningful diff.
+                let t = if self.dump_path.is_some() || self.shot_path.is_some() {
+                    self.frames as f32 / 60.0
+                } else {
+                    self.started.elapsed().as_secs_f32()
+                };
+                // Live widgets: poll both pipes, never block. An unused pipe is not an error —
+                // the scope draws its own slow idle trace so the strip reads as "waiting for a
+                // producer" instead of as a broken panel.
+                self.model.feed.poll();
+                {
+                    let (scope, scope_feed) = (&mut self.model.scope, &mut self.model.scope_feed);
+                    scope.feed_from(scope_feed);
+                    if scope.is_empty() {
+                        scope.idle_pattern(t);
+                    }
+                }
                 let mut hits: Vec<HitArea> = Vec::new();
                 // Hover is resolved against the rectangles of the frame the user is looking
-                // at, before this frame replaces them.
+                // at, before this frame replaces them. It has to happen before the skin is
+                // borrowed, because resolving it mutates `self`.
                 self.hover = self.hit_under_pointer().map(|a| a.action);
                 let hover = self.hover;
+                // The skin owns both halves of "how does this look": the palette it paints
+                // with and the wallpaper/glass treatment on top of it.
+                // Cloned once per frame: the resolved skin is a handful of pointers and two
+                // short strings, and owning it here keeps the frame free of borrow conflicts
+                // with the font system and the hit list.
+                let skin = self.skin().clone();
+                let theme = &skin.theme;
                 let list = draw_ui(
                     self.fonts.as_mut().unwrap(),
                     &self.model,
@@ -6751,11 +7243,57 @@ impl winit::application::ApplicationHandler for App {
                     ratio,
                     t,
                     theme,
+                    &skin,
                     hover,
                     &mut hits,
                 );
                 self.hits = hits;
                 let clear = theme.bg_bottom;
+                // Background layer: drawn into the quarter-resolution backdrop image, which is
+                // what glass slabs sample. Built only when the skin actually has one, so the
+                // strict skin keeps paying nothing.
+                let mut bg = DrawList::new();
+                bg.set_scale(ratio);
+                if skin.has_backdrop() {
+                    match skin.backdrop {
+                        player_proto::skin::Backdrop::Effect(mode) => bg.effect(
+                            0.0,
+                            0.0,
+                            lw as f32,
+                            lh as f32,
+                            mode as f32,
+                            // Scale: cell size for plasma, depth step for the tunnel, bar count
+                            // for the spectrum. One knob, one meaning per mode.
+                            match mode {
+                                1 => 1.0,
+                                2 => 1.6,
+                                _ => 1.0,
+                            },
+                            skin.backdrop_strength,
+                            theme.bg_top,
+                            // The procedural backgrounds are drawn *through* a frosted slab, so
+                            // they are tinted with the bright accent rather than the working one:
+                            // the slab already costs them most of their contrast.
+                            theme.accent_bright,
+                        ),
+                        player_proto::skin::Backdrop::Art => {
+                            if self.model.art.is_some() {
+                                bg.image(0.0, 0.0, lw as f32, lh as f32, 0.0, theme.backdrop);
+                            }
+                        }
+                        player_proto::skin::Backdrop::None => {}
+                    }
+                    // A dimming sheet over the wallpaper: `backdrop_strength` is how much of it
+                    // survives, so 1.0 would leave the art at full brightness and the panes
+                    // would be the only thing separating text from a cover.
+                    bg.rect(
+                        0.0,
+                        0.0,
+                        lw as f32,
+                        lh as f32,
+                        theme::with_alpha(theme.bg_top, 1.0 - skin.backdrop_strength),
+                    );
+                }
                 // Glyphs land in the CPU atlas while building the list, so the GPU copy has to
                 // happen after layout and before the draw that references those UVs.
                 if let Some(fonts) = self.fonts.as_mut() {
@@ -6796,6 +7334,11 @@ impl winit::application::ApplicationHandler for App {
                             player_proto::scene::Kind::Shape => shape += b.count,
                             player_proto::scene::Kind::Text => text += b.count,
                             player_proto::scene::Kind::Image => image += b.count,
+                            // Glass and effect quads are counted as shapes: they are drawn by
+                            // the same batch loop and the number that matters in this log is
+                            // how much geometry a frame carries.
+                            player_proto::scene::Kind::Glass
+                            | player_proto::scene::Kind::Effect => shape += b.count,
                         }
                     }
                     eprintln!(
@@ -6813,7 +7356,9 @@ impl winit::application::ApplicationHandler for App {
                     );
                 }
                 if let (Some(gpu), Some(window)) = (self.gpu.as_mut(), self.window.as_ref()) {
-                    if let Err(e) = unsafe { gpu.draw(&list, clear) } {
+                    gpu.set_frame_time(t);
+                    let bg_layer = if skin.has_backdrop() { Some(&bg) } else { None };
+                    if let Err(e) = unsafe { gpu.draw(bg_layer, &list, clear) } {
                         eprintln!("draw failed: {e}");
                         event_loop.exit();
                         return;
@@ -6902,6 +7447,10 @@ impl winit::application::ApplicationHandler for App {
 }
 
 fn main() {
+    // Resolve the libraries winit/ash dlopen by soname before they ask for them: this is what
+    // makes `./player` runnable straight from `target/release` on NixOS, with no wrapper script
+    // and no LD_LIBRARY_PATH.
+    player_proto::preload::ensure_graphics_libs();
     let addr = std::env::args()
         .find(|a| a.starts_with("--mpd="))
         .map(|a| a[6..].to_string())
@@ -6909,7 +7458,36 @@ fn main() {
     let (tx_cmd, rx_cmd) = std::sync::mpsc::channel();
     let (tx_up, rx_up) = std::sync::mpsc::channel();
     spawn_mpd_worker(addr, tx_up.clone(), rx_cmd);
+    // Skins: the built-ins plus the user's `skins.toml` (`--skins=PATH` overrides its location).
+    let mut skin_problems: Vec<String> = Vec::new();
+    let config_path = std::env::args()
+        .find(|a| a.starts_with("--skins="))
+        .map(|a| PathBuf::from(a[8..].to_string()));
+    let config = player_proto::config::load(config_path.as_deref());
+    skin_problems.extend(config.problems.iter().cloned());
+    let skins = player_proto::skin::resolve(&config, &mut skin_problems);
+
     let mut app = App::new(tx_cmd, tx_up, rx_up);
+    app.skins = skins;
+    // The `:skin` line completes against the resolved names, including the user's own.
+    app.model.skin_names = app.skins.iter().map(|s| s.name.clone()).collect();
+    if !skin_problems.is_empty() {
+        // Reported once at startup instead of swallowed: a config that half-applies is the one
+        // thing a skin file must never do.
+        for problem in &skin_problems {
+            eprintln!("[skins] {problem}");
+        }
+        app.model.toast = Some((skin_problems.join(" · "), std::time::Instant::now()));
+    }
+    if !app.skins.iter().any(|s| s.name == app.theme_name) {
+        app.theme_name = app.skins[0].name.clone();
+    }
+    // The row style is part of the saved layout: read it once at startup, next to the zoom.
+    if let Some(store) = state_file() {
+        if let Some(style) = read_list_style(&store) {
+            app.model.list_style = style;
+        }
+    }
     let event_loop = match winit::event_loop::EventLoop::new() {
         Ok(el) => el,
         Err(e) => {
