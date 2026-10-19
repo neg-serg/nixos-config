@@ -180,6 +180,16 @@ library (`ok` / `FAIL <lib>: <reason>`) plus the command that rebuilds the cache
 The player also survives a missing compositor: instead of panicking it prints which of
 `WAYLAND_DISPLAY`, `XDG_RUNTIME_DIR` and the socket is wrong.
 
+### Display scaling
+
+The UI is authored in logical units: every frame the layout size is `swapchain extent / scale
+factor`, and that same logical size is handed to the vertex shader as its resolution, so the
+geometry always covers the whole surface (a 4K panel at scale 2 gets 2x bigger glyphs, not a
+quarter-size UI in the corner). `Resized` and `ScaleFactorChanged` recreate the swapchain
+(debounced to 200 ms, and skipped when the new size is within 2 px), `SUBOPTIMAL`/`OUT_OF_DATE`
+from acquire/present trigger the same rebuild, and the compositor's `currentExtent` wins over the
+window size, which stops the tiling-vs-buffer size feedback loop.
+
 ## Numbers so far (llvmpipe, software rasterizer — NOT a GPU result)
 
 Startup, median over 5-7 runs, `process+ms` (age from `fork`, see the trap below):
