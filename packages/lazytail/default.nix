@@ -38,9 +38,16 @@ rustPlatform.buildRustPackage rec {
   # scratchpad tab in files/kitty/teardown.session — stayed empty forever. The
   # patch flushes a partial batch after 100 ms of silence and splits lines on
   # raw bytes, so a multi-byte character across two reads is no longer mangled.
+  #
+  # Third local patch: global renderers. v0.10.0 reads `renderers:` from a
+  # project lazytail.yaml only, so a renderer preset could not live next to the
+  # global `sources:`/`keys:`/`theme:` it belongs to (files/lazytail/config.yaml).
+  # The patch loads presets from the global config too — project presets shadow
+  # them by name — and teaches `lazytail config validate`/`show` about them.
   patches = [
     ./keymap.patch
     ./stream-flush.patch
+    ./global-renderers.patch
   ];
 
   # Kept off: the in-tree tests do compile and pass at v0.10.0 (783 tests on
