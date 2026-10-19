@@ -28,9 +28,9 @@ in
   # patched build needs `herdr server live-handoff` to take effect.
   herdr = prev.herdr.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
-      ../herdr/patches/0001-ui-per-state-tab-colours-and-font-styles.patch
-      ../herdr/patches/0002-ui-tab-title-templates-and-the-active-marker.patch
-      ../herdr/patches/0003-docs-document-the-tab-appearance-keys.patch
+      (paths.path "packages/herdr/patches/0001-ui-per-state-tab-colours-and-font-styles.patch")
+      (paths.path "packages/herdr/patches/0002-ui-tab-title-templates-and-the-active-marker.patch")
+      (paths.path "packages/herdr/patches/0003-docs-document-the-tab-appearance-keys.patch")
     ];
   });
 
