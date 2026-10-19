@@ -1523,14 +1523,15 @@ impl App {
     /// near-identical configures are coalesced, and a size that is already close enough is
     /// accepted as is — otherwise a tiling compositor and the app can chase each other.
     fn sync_surface(&mut self, width: u32, height: u32) {
+        if self.render_size.is_some() {
+            // A pinned capture size owns the swapchain; following the compositor here would
+            // desynchronise it from the offscreen image the capture copies.
+            return;
+        }
         let Some(gpu) = self.gpu.as_mut() else { return };
         let (cur_w, cur_h) = (gpu.extent.width, gpu.extent.height);
         let close = width.abs_diff(cur_w) <= 2 && height.abs_diff(cur_h) <= 2;
         if close {
-            return;
-        }
-        if self.last_resize.elapsed() < Duration::from_millis(200) {
-            // Debounced, but make sure the next event still gets through.
             return;
         }
         self.last_resize = Instant::now();
@@ -2098,7 +2099,13 @@ fn draw_ui(
     let show_left = w >= 1080.0;
     let show_right = w >= 820.0;
     let left_w = if show_left { 292.0 } else { 0.0 };
-    let right_w = if show_right { 344.0 } else { 0.0 };
+    // The now-playing column never takes more than ~28% of the width, so the queue keeps room
+    // for a full track title.
+    let right_w = if show_right {
+        (w * 0.28).clamp(260.0, 344.0)
+    } else {
+        0.0
+    };
     let body_top = top + 12.0;
     let body_bottom = h - 40.0;
     let body_h = body_bottom - body_top;
@@ -2737,7 +2744,7 @@ fn draw_ui(
                 break;
             }
         }
-        fonts.layout_fitted(
+        fonts.layout_fitted_end(
             &mut list,
             &title,
             rx + pad,
@@ -2747,7 +2754,7 @@ fn draw_ui(
             th.text,
             info_w,
         );
-        fonts.layout_fitted(
+        fonts.layout_fitted_end(
             &mut list,
             &artist,
             rx + pad,
@@ -2757,7 +2764,7 @@ fn draw_ui(
             th.accent,
             info_w,
         );
-        fonts.layout_fitted(
+        fonts.layout_fitted_end(
             &mut list,
             &album,
             rx + pad,
@@ -3008,7 +3015,7 @@ fn draw_ui(
                     Face::UiMedium,
                     th.text_faint,
                 );
-                fonts.layout_fitted(
+                fonts.layout_fitted_end(
                     &mut list,
                     &next.title,
                     rx + pad,
