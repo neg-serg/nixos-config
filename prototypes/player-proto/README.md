@@ -180,12 +180,20 @@ Artists tab).
 
 `./keys-test.sh` asserts the state machine end to end: tokens go through `apply_token` →
 `handle_key_spec` (the same path as a real keyboard), the MPD worker runs with `PLAYER_DRY_RUN=1` so
-playback is never touched, and 53 checks cover selection, tab cycling, search mode, command
+playback is never touched, and 63 checks cover selection, tab cycling, search mode, command
 execution, help, the count prefix and clamping at the end of the list, which pane is raised, what
-the pointer hovers, and the playlist commands the pane's own keys emit. The hover checks are
-geometry-driven rather than coordinate-driven: one run dumps the frame's hit rectangles
-(`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through the middle of the rectangles the
-test picked, asserting the `hover=` field of every state dump.
+the pointer hovers, the playlist commands the pane's own keys emit, and the three list states. The
+hover checks are geometry-driven rather than coordinate-driven: one run dumps the frame's hit
+rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through the middle of the
+rectangles the test picked, asserting the `hover=` field of every state dump.
+
+"Empty" needs a server that answers with nothing, so the last run in the test talks to a stub MPD
+that speaks the protocol and holds no artists, albums, playlists or outputs, and delays its list
+replies by 120 ms. That makes both halves of the pair observable in one run: the immediate dump of a
+pane key still reads `loading` and a later one reads `empty`, which is what proves the panes no
+longer print the loading hint forever and that the outputs overlay has a state of its own. The same
+words are exposed in every state dump (`artists=`, `albums=`, `playlists=`, `outs=`), each one of
+`loading`, `empty` or `filled`.
 
 MPD: `player --mpd=127.0.0.1:6600` (default). A worker thread polls `status`/`currentsong` every 300
 ms and refetches the queue when `playlistlength` changes, so the UI never blocks on the socket.

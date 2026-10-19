@@ -723,6 +723,10 @@ struct Picker {
     sel: usize,
     scroll: f32,
     target: f32,
+    /// True once MPD has answered this picker at least once. An empty list before that answer
+    /// means "still asking"; an empty list after it means "the library really has none", and the
+    /// two must not print the same sentence — the old frame said "загружаю…" forever.
+    loaded: bool,
 }
 
 impl Picker {
@@ -731,6 +735,18 @@ impl Picker {
         self.sel = 0;
         self.scroll = 0.0;
         self.target = 0.0;
+        self.loaded = true;
+    }
+
+    /// `loading` / `empty` / `filled`: the three states the pane and the `[state]` dump share.
+    fn state(&self) -> &'static str {
+        if !self.items.is_empty() {
+            "filled"
+        } else if self.loaded {
+            "empty"
+        } else {
+            "loading"
+        }
     }
 
     fn len(&self) -> usize {
@@ -776,6 +792,9 @@ struct Model {
     albums: Picker,
     playlists: Picker,
     outputs: Vec<player_proto::mpd::Output>,
+    /// True once an `outputs` reply arrived; the overlay tells "none configured" from "still
+    /// asking" by this flag alone.
+    outputs_loaded: bool,
     outputs_open: bool,
     outputs_focus: usize,
     /// Some(uri) while the Playlists pane is in "add this song" mode (`a`).
@@ -822,6 +841,7 @@ impl Model {
             albums: Picker::default(),
             playlists: Picker::default(),
             outputs: Vec::new(),
+            outputs_loaded: false,
             outputs_open: false,
             outputs_focus: 0,
             pick_target: None,
@@ -923,7 +943,10 @@ impl Model {
             Update::Artists(v) => self.artists.set(v),
             Update::Albums(v) => self.albums.set(v),
             Update::Playlists(v) => self.playlists.set(v),
-            Update::Outputs(v) => self.outputs = v,
+            Update::Outputs(v) => {
+                self.outputs = v;
+                self.outputs_loaded = true;
+            }
             Update::Search(results) => {
                 self.search_results = results;
                 self.view = Pane::Search;
@@ -2139,8 +2162,18 @@ impl App {
             None => "none",
         };
         let playlist = self.model.playlists.selected().cloned().unwrap_or_default();
+        // `artists/albums/playlists` are the three pane states (`loading` / `empty` / `filled`)
+        // and `outs` is the same word for the outputs overlay, so a test can tell a genuinely
+        // empty MPD from one that has not answered yet without reading pixels.
+        let outs_state = if !self.model.outputs.is_empty() {
+            "filled"
+        } else if self.model.outputs_loaded {
+            "empty"
+        } else {
+            "loading"
+        };
         eprintln!(
-            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}'",
+            "[state] token={token} mode={mode} view={view} focus={focus} hover={hover} sel={sel} song={} qlen={} lib={} cmd='{}' search='{}' theme={} outputs={} pn={} prompt={prompt} pl='{playlist}' artists={} albums={} playlists={} outs={outs_state}",
             self.model.status.song.map(|v| v as i64).unwrap_or(-1),
             self.model.queue.len(),
             self.model.lib_entries.len(),
@@ -2153,7 +2186,10 @@ impl App {
                 Pane::Albums => self.model.albums.len(),
                 Pane::Playlists => self.model.playlists.len(),
                 _ => 0,
-            }
+            },
+            self.model.artists.state(),
+            self.model.albums.state(),
+            self.model.playlists.state(),
         );
         // `PLAYER_DUMP_HITS=1`: print the interactive rectangles of the last frame, so a test
         // can aim the pointer at a real target instead of hard-coding coordinates that drift
@@ -2877,14 +2913,38 @@ fn draw_ui(
             );
         }
         if picker.items.is_empty() {
+            // Two different truths share one empty vector: "MPD has not answered yet" and "MPD
+            // answered and this library has none". The first is transient, the second is what a
+            // fresh install looks like, so they get different words instead of one permanent
+            // "загружаю…" that never resolves.
+            let (title, note, ink) = if picker.loaded {
+                let note = match m.view {
+                    Pane::Artists => "в библиотеке нет ни одного тега Artist",
+                    Pane::Albums => "в библиотеке нет ни одного тега Album",
+                    _ => "MPD не хранит ни одного плейлиста — c сохранит очередь",
+                };
+                ("ничего нет", note, th.text_dim)
+            } else {
+                ("загружаю…", "список ещё не пришёл от MPD", th.text_faint)
+            };
             fonts.layout_line(
                 &mut list,
-                "загружаю…",
+                title,
                 qx + 20.0,
                 q_rows_y + 8.0,
                 TYPE.label,
                 Face::UiRegular,
+                ink,
+            );
+            fonts.layout_fitted(
+                &mut list,
+                note,
+                qx + 20.0,
+                q_rows_y + 30.0,
+                TYPE.caption,
+                Face::UiRegular,
                 th.text_faint,
+                qw - 40.0,
             );
         }
         if picker.items.len() as f32 > 1.0 {
@@ -3037,7 +3097,10 @@ fn draw_ui(
             list.vertices.len()
         );
     }
-    if rows.is_empty() && !search_mode {
+    // The queue's own empty note must not paint over a picker: with an empty queue every picker
+    // frame used to carry "очередь пуста" on top of whatever the picker said, because `rows`
+    // is the queue regardless of the visible pane.
+    if rows.is_empty() && !search_mode && !picker_active {
         fonts.layout_line(
             &mut list,
             "очередь пуста · добавь трек из библиотеки (enter)",
@@ -3806,7 +3869,14 @@ fn draw_ui(
         hit(hits, 0.0, 0.0, w, h, Hit::CloseOverlay);
         let panel_w = 520.0_f32.min(w - 80.0);
         let row_h2 = 34.0;
-        let panel_h = 92.0 + m.outputs.len().max(1) as f32 * row_h2;
+        // No outputs is a state of its own: the panel keeps room for a headline plus a note
+        // instead of shrinking to a single placeholder row that looked like a broken list.
+        let body_h2 = if m.outputs.is_empty() {
+            row_h2 + 26.0
+        } else {
+            m.outputs.len() as f32 * row_h2
+        };
+        let panel_h = 92.0 + body_h2;
         let px = (w - panel_w) * 0.5;
         let py = (h - panel_h) * 0.5;
         list.rounded(px, py, panel_w, panel_h, GEOM.radius_lg, th.panel, th.panel);
@@ -3820,7 +3890,13 @@ fn draw_ui(
             Face::UiMedium,
             th.text_faint,
         );
-        let hint = "клик / space — переключить · o или esc — закрыть";
+        // With nothing to switch, the toggle half of the hint is a promise the panel cannot
+        // keep, so the empty state only advertises the way out.
+        let hint = if m.outputs.is_empty() {
+            "o или esc — закрыть"
+        } else {
+            "клик / space — переключить · o или esc — закрыть"
+        };
         let hw = fonts.measure(hint, TYPE.caption, Face::UiRegular);
         fonts.layout_line(
             &mut list,
@@ -3832,14 +3908,35 @@ fn draw_ui(
             th.text_faint,
         );
         if m.outputs.is_empty() {
+            // Same split as the pickers: "not answered yet" and "answered, there are none" are
+            // different facts, and the overlay used to call both of them "нет данных".
+            let (title, note, ink) = if m.outputs_loaded {
+                (
+                    "нет выходов",
+                    "MPD не сообщает ни одного audio_output",
+                    th.text_dim,
+                )
+            } else {
+                ("запрашиваю…", "список ещё не пришёл от MPD", th.text_faint)
+            };
             fonts.layout_line(
                 &mut list,
-                "нет данных — нажми o",
+                title,
                 px + 24.0,
                 py + 56.0,
                 TYPE.label,
                 Face::UiRegular,
+                ink,
+            );
+            fonts.layout_fitted(
+                &mut list,
+                note,
+                px + 24.0,
+                py + 78.0,
+                TYPE.caption,
+                Face::UiRegular,
                 th.text_faint,
+                panel_w - 48.0,
             );
         }
         for (i, out) in m.outputs.iter().enumerate() {
