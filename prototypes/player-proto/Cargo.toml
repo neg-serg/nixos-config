@@ -9,10 +9,15 @@ ash = { version = "0.38", features = ["loaded"] }
 ash-window = "0.13"
 raw-window-handle = "0.6"
 winit = "0.30"
-gpu-allocator = { version = "0.27", default-features = false, features = ["vulkan"] }
+gpu-allocator = { version = "0.27", default-features = false, features = [
+  "vulkan",
+] }
 cosmic-text = "0.14"
 libc = "0.2"
-image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+image = { version = "0.25", default-features = false, features = [
+  "jpeg",
+  "png",
+] }
 
 [profile.release]
 opt-level = 3

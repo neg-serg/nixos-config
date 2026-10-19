@@ -4,7 +4,7 @@
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 rm -f /tmp/radv-self.ppm /tmp/diag.log
-"$here/launch-live.sh" --size=1200x800 --shot=/tmp/radv-self.ppm --shot-after=60 >/tmp/diag-launcher.log 2>&1
+"$here/launch-live.sh" --size=1200x800 --shot=/tmp/radv-self.ppm --shot-after=60 > /tmp/diag-launcher.log 2>&1
 echo "rc=$?" >> /tmp/diag.log
-cp /tmp/live-app.log /tmp/diag.log 2>/dev/null || true
+cp /tmp/live-app.log /tmp/diag.log 2> /dev/null || true
 ls -l /tmp/radv-self.ppm >> /tmp/diag.log 2>&1

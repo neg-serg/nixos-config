@@ -11,7 +11,7 @@ set -euo pipefail
 dirs=()
 while IFS= read -r dir; do
   case "$dir" in
-    *-glibc-*|*-gcc-*) continue ;;
+    *-glibc-* | *-gcc-*) continue ;;
   esac
   [ -n "$dir" ] && dirs+=("$dir")
 done < <(readelf -d /run/current-system/sw/bin/vulkaninfo | sed -n 's/.*RUNPATH.*\[\(.*\)\]/\1/p' | tr ':' '\n')
@@ -23,6 +23,7 @@ while IFS= read -r cand; do
     dirs+=("$(dirname "$cand")")
     break
   fi
-done < <(fd -t l -d 3 '^libxkbcommon\.so\.0$' /nix/store 2>/dev/null)
+done < <(fd -t l -d 3 '^libxkbcommon\.so\.0$' /nix/store 2> /dev/null)
 
-IFS=':' ; echo "${dirs[*]}"
+IFS=':'
+echo "${dirs[*]}"

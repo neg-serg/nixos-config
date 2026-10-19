@@ -12,4 +12,4 @@ rm -f /tmp/radv-*.ppm
 : > "$LOG"
 run "$here/target/release/player" --render-size=1440x900 --shot-seq=/tmp/radv --keys=down,down,tab,space
 run "$here/target/release/player" --render-size=1440x900 --bench=300 --shot-after=60
-echo "exit=$? shots=$(ls /tmp/radv-*.ppm 2>/dev/null | wc -l)" >> "$LOG"
+echo "exit=$? shots=$(ls /tmp/radv-*.ppm 2> /dev/null | wc -l)" >> "$LOG"

@@ -4,7 +4,7 @@
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 : > /tmp/resize-test.txt
-PLAYER_DUMP_SWAPCHAIN=/tmp/p-resize.ppm "$here/launch-live.sh" --size=800x600 --shot-after=400 >/dev/null 2>&1 &
+PLAYER_DUMP_SWAPCHAIN=/tmp/p-resize.ppm "$here/launch-live.sh" --size=800x600 --shot-after=400 > /dev/null 2>&1 &
 app=$!
 sleep 1
 addr=$(hyprctl -j clients | jq -r '[.[] | select(.class=="player")] | last | .address // empty')

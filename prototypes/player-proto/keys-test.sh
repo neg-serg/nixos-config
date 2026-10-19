@@ -12,8 +12,8 @@ out=$(mktemp)
 trap 'rm -f "$out"' EXIT
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
-  "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" >"$out" 2>&1
-python3 - "$out" <<'PY'
+  "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
+python3 - "$out" << 'PY'
 import re, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]

@@ -5,7 +5,7 @@ set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 out=/tmp/look.txt
 : > "$out"
-"$here/launch-live.sh" --size=1200x800 --shot=/tmp/look-self.ppm --shot-after=240 >/dev/null 2>&1 &
+"$here/launch-live.sh" --size=1200x800 --shot=/tmp/look-self.ppm --shot-after=240 > /dev/null 2>&1 &
 app=$!
 sleep 2
 {
@@ -18,5 +18,5 @@ sleep 2
 } >> "$out" 2>&1
 env -u LD_LIBRARY_PATH grim /tmp/look-screen.png >> "$out" 2>&1 || echo "grim failed" >> "$out"
 magick /tmp/look-screen.png -format "screen %wx%h mean=%[mean]\n" info: >> "$out" 2>&1
-wait "$app" 2>/dev/null
+wait "$app" 2> /dev/null
 tail -3 /tmp/live-app.log >> "$out" 2>&1

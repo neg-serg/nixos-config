@@ -12,11 +12,14 @@ fi
 
 # The cache is a convenience only; an empty/absent file must not silently break the run.
 if [ ! -s "$here/.libs" ]; then
-  "$here/libs.sh" > "$here/.libs" || { echo "libs.sh не смог собрать пути" >&2; exit 1; }
+  "$here/libs.sh" > "$here/.libs" || {
+    echo "libs.sh не смог собрать пути" >&2
+    exit 1
+  }
 fi
 libs=$(cat "$here/.libs")
 
-if ! env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" python3 - <<'PYCHK' >/dev/null 2>&1
+if ! env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" python3 - << 'PYCHK' > /dev/null 2>&1
 import ctypes, sys
 for lib in ("libwayland-client.so.0", "libxkbcommon.so.0", "libvulkan.so.1"):
     try:
@@ -27,7 +30,7 @@ for lib in ("libwayland-client.so.0", "libxkbcommon.so.0", "libvulkan.so.1"):
 PYCHK
 then
   echo "не грузятся библиотеки из .libs:" >&2
-  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" python3 - <<'PYCHK' >&2 || true
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$libs" python3 - << 'PYCHK' >&2 || true
 import ctypes
 for lib in ("libwayland-client.so.0", "libxkbcommon.so.0", "libvulkan.so.1"):
     try:

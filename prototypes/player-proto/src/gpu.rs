@@ -84,6 +84,8 @@ pub struct Gpu {
     /// Resolution passed to the vertex shader. With a HiDPI surface the UI is laid out in
     /// logical units, so this is the *logical* size while the swapchain stays physical.
     push_res: [f32; 2],
+    /// Coverage gamma for glyph blending; 1.0 = raw linear blend (thin text on an SRGB target).
+    text_gamma: f32,
 }
 
 pub fn find_memory_type(
@@ -931,9 +933,9 @@ pub fn create_gpu(
             )
             .ok()?;
         let push = [vk::PushConstantRange::default()
-            .stage_flags(vk::ShaderStageFlags::VERTEX)
+            .stage_flags(vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT)
             .offset(0)
-            .size(8)];
+            .size(16)];
         let layout = device
             .create_pipeline_layout(
                 &vk::PipelineLayoutCreateInfo::default()
@@ -1191,6 +1193,10 @@ pub fn create_gpu(
             last_present_index: 0,
             needs_resize: false,
             push_res: [extent.width as f32, extent.height as f32],
+            text_gamma: std::env::var("PLAYER_TEXT_GAMMA")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(2.2),
         })
     }
 }
@@ -1278,8 +1284,9 @@ impl Gpu {
         self.device.cmd_set_viewport(self.cmd, 0, &viewport);
         // Logical resolution: on a HiDPI surface the layout is in logical units, so the
         // shader must divide by the logical size even though the swapchain is physical.
-        let res = self.push_res;
-        let res_bytes = std::slice::from_raw_parts(res.as_ptr() as *const u8, 8);
+        // xy = logical resolution, z = text gamma, w = reserved
+        let params = [self.push_res[0], self.push_res[1], self.text_gamma, 0.0];
+        let res_bytes = std::slice::from_raw_parts(params.as_ptr() as *const u8, 16);
         self.device
             .cmd_bind_vertex_buffers(self.cmd, 0, &[vbuf], &[0]);
         self.device.cmd_push_constants(
@@ -1298,16 +1305,25 @@ impl Gpu {
             scissor,
         } in list.batches.iter().copied()
         {
+            // Clip rects arrive in logical units (the frame's layout space) while the scissor is
+            // applied to the physical framebuffer, so they have to be scaled - otherwise a 2x
+            // surface clips every list to half its height.
+            let k = extent.width as f32 / self.push_res[0].max(1.0);
             let rect = scissor
-                .map(|[x, y, w, h]| vk::Rect2D {
-                    offset: vk::Offset2D {
-                        x: x.max(0.0) as i32,
-                        y: y.max(0.0) as i32,
-                    },
-                    extent: vk::Extent2D {
-                        width: (w.max(0.0) as u32).min(extent.width),
-                        height: (h.max(0.0) as u32).min(extent.height),
-                    },
+                .map(|[x, y, w, h]| {
+                    let (x, y) = (x.max(0.0) * k, y.max(0.0) * k);
+                    vk::Rect2D {
+                        offset: vk::Offset2D {
+                            x: x as i32,
+                            y: y as i32,
+                        },
+                        extent: vk::Extent2D {
+                            width: ((w.max(0.0) * k) as u32)
+                                .min(extent.width.saturating_sub(x as u32)),
+                            height: ((h.max(0.0) * k) as u32)
+                                .min(extent.height.saturating_sub(y as u32)),
+                        },
+                    }
                 })
                 .unwrap_or(vk::Rect2D {
                     offset: vk::Offset2D { x: 0, y: 0 },
