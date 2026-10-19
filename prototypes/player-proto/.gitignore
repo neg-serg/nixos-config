@@ -1,0 +1,4 @@
+# The golden reference frames are committed on purpose: they are the layout contract the test
+# suite enforces. They are gzip-compressed PPM dumps (~40 KB and ~95 KB), which the repo-wide
+# `*.gz` rule would otherwise keep out of the tree.
+!golden/*.gz

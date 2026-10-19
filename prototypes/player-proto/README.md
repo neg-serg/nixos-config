@@ -200,13 +200,14 @@ Artists tab).
 
 `./keys-test.sh` asserts the state machine end to end: tokens go through `apply_token` →
 `handle_key_spec` (the same path as a real keyboard), the MPD worker runs with `PLAYER_DRY_RUN=1` so
-playback is never touched, and 79 checks cover selection, tab cycling, search mode, command
+playback is never touched, and 93 checks cover selection, tab cycling, search mode, command
 execution, help, the count prefix and clamping at the end of the list, which pane is raised, what
 the pointer hovers, the playlist commands the pane's own keys emit, the three list states, the
-outputs metadata and the queue filter (text, match count, `nomatch`, and the *real* index the pane
-plays). The hover checks are geometry-driven rather than coordinate-driven: one run dumps
-the frame's hit rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer through the
-middle of the rectangles the test picked, asserting the `hover=` field of every state dump.
+outputs metadata, the queue filter (text, match count, `nomatch`, and the *real* index the pane
+plays) and the golden frames. The hover checks are geometry-driven rather than coordinate-driven:
+one run dumps the frame's hit rectangles (`PLAYER_DUMP_HITS=1`) and the next run walks the pointer
+through the middle of the rectangles the test picked, asserting the `hover=` field of every state
+dump.
 
 "Empty" needs a server that answers with nothing, so one run in the test talks to `stub-mpd.py`, a
 stand-in that speaks the protocol and holds no artists, albums, playlists or outputs, and delays its
@@ -228,6 +229,18 @@ letters, which is what makes the queue filter testable: a one-letter filter matc
 so `qmatch=1` and `sel=2` together prove the pane filtered without renumbering, and the dry-run log
 proves `enter` played queue index 2 and not index 0. The same run types `q` into the filter, which
 would quit the player if the pane did not own the keys while it is collecting characters.
+
+The golden frames are the layout contract: `golden/queue-1440x900-s1.ppm.gz` and
+`golden/queue-2880x1800-s2.ppm.gz` are two captures of one layout at two device scales, taken
+through the offscreen `--shot` path against the `--queue` stub (whose `state: stop` keeps the frame
+still — no equaliser, no progress, no elapsed digits). The comparison is per region and reports the
+normalised RMSE of the area that moved: top bar, connection status, library pane, queue pane,
+now-playing pane and footer, plus the whole frame, which covers the gaps between them. The regions
+stop short of the connection pulse dot in the top-right corner; that dot is the only live pixel in
+the frame and is left to the whole-frame tolerance. Regenerate the pair only when the change to the
+layout is the point: `./keys-test.sh --update-golden` rewrites both references and then compares
+against them. The references are gzip-compressed PPM dumps (39 KB and 96 KB) committed despite the
+repo-wide `*.gz` ignore rule, which `prototypes/player-proto/.gitignore` re-includes for `golden/`.
 
 MPD: `player --mpd=127.0.0.1:6600` (default). A worker thread polls `status`/`currentsong` every 300
 ms and refetches the queue when `playlistlength` changes, so the UI never blocks on the socket.
