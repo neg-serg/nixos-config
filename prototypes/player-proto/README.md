@@ -285,6 +285,18 @@ Iosevka, and cosmic-text resolves generic families through fontconfig, so every 
 in a monospace face. The palette moved to contrast-checked values (`TEXT_3 #7F8DA0` is 5.2:1 on
 `panel`; the previous `#5A6576` was 3.1:1 and failed AA on every 11 px label).
 
+### Fuzzy finding with lusty
+
+`F` opens a finder over the MPD music root. The rows are produced by the user's own `lusty`
+binary in its non-interactive mode (`lusty --list <root> --depth 2 --query Q`), so the ranking is
+the one they already use for files instead of a second, weaker matcher in the player. Typing
+narrows the query (each keystroke is a separate `--list` run on a worker thread, and answers carry
+a generation number so a slow reply cannot overwrite a newer one), `j`/`k` move, `enter` appends
+the picked album or file with `add "<uri>"` — the queue is never cleared — and `esc` closes.
+
+The root comes from the same probe the cover reader uses (`MPD_MUSIC_DIR`, `~/music`, `~/Music`,
+`/music`, `/var/lib/mpd/music`), because MPD refuses `config` for non-local clients.
+
 ### Running it
 
 `launch-live.sh` is the only supported entry point: NixOS has no `ld.so.cache`, so it builds

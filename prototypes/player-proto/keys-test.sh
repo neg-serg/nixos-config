@@ -7,7 +7,7 @@ set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 bin=${PROTO_BIN:-$here/target/release/player}
 [ -s "$here/.libs" ] || "$here/libs.sh" > "$here/.libs"
-keys="down,down,tab,tab,tab,slash,abc,esc,colon,vol 30,enter,w,esc,5,j,p,>,<,f,b,=,-,z,r,y,R,d,d,colon,save ktl,enter,colon,renameplaylist ktl ktl2,enter,colon,rmplaylist ktl2,enter,J,K,2,noop,noop,noop,noop,3,noop,noop,noop,noop,P,noop,noop,noop,noop,1,a,noop,noop,noop,noop,enter,ctrl+s,esc,o,noop,noop,down,enter,esc"
+keys="down,down,tab,tab,tab,slash,abc,esc,colon,vol 30,enter,w,esc,5,j,p,>,<,f,b,=,-,z,r,y,R,d,d,colon,save ktl,enter,colon,renameplaylist ktl ktl2,enter,colon,rmplaylist ktl2,enter,J,K,2,noop,noop,noop,noop,3,noop,noop,noop,noop,P,noop,noop,noop,noop,1,a,noop,noop,noop,noop,enter,ctrl+s,esc,F,noop,noop,b,u,enter,o,noop,noop,down,enter,esc"
 out=$(mktemp)
 wide=$(mktemp)
 hitslog=$(mktemp)
@@ -65,7 +65,8 @@ PLAYER_DUMP_HITS=1 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
 # pointer), a queue row, a tab, the transport play button, a mode chip, the volume bar and — once
 # the overlay is open — an output row.
 coords=$(python3 - "$hitslog" << 'PY'
-import re, sys
+import re
+import sys
 closed, opened, scope = {}, {}, "closed"
 for line in open(sys.argv[1], errors="replace"):
     if line.startswith("[state]"):
@@ -273,7 +274,7 @@ kill "$q_pid" 2>/dev/null
 wait "$q_pid" 2>/dev/null
 
 python3 - "$out" "$wide" "$hoverlog" "$plog" "$emptylog" "$metalog" "$qlog" << 'PY'
-import re, sys
+import re, shutil, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]
 dry = [l for l in lines if l.startswith("[dry-run]")]
@@ -362,6 +363,15 @@ check("':renameplaylist' renames", sent("RenamePlaylist"))
 check("':rmplaylist' deletes", sent("DeletePlaylist"))
 
 oes = seq("o")
+# The finder shells out to the user's own `lusty` binary; skip where it is not installed.
+if shutil.which("lusty"):
+    check("F opens the lusty finder", any("finder=open:" in s for s in states), f"{[s.split('finder=')[1] for s in states if 'finder=' in s][:2]}")
+    check("typing narrows the finder query", any("finder=open:bu" in s for s in states), "")
+    ent = seq("enter")
+    check("enter closes the finder", ent and "finder=closed" in ent, str(ent))
+else:
+    print("skip finder checks: lusty not installed")
+
 check("'o' opens the outputs overlay", oes and field(oes, "outputs") == "true", str(oes))
 check("outputs overlay toggles an output", sent("SetOutput"), str([l for l in dry if "SetOutput" in l]))
 d_after_o = [s for s in states if "token=down " in s]
@@ -398,7 +408,6 @@ hover_states = [
     l for l in open(sys.argv[3], errors="replace").read().splitlines() if l.startswith("[state]")
 ]
 settled_hover = [field(s, "hover") for s in hover_states if "settle=1" in s]
-visited = settled_hover[::2]
 want_hover = [
     ("an empty corner hovers nothing", "none"),
     ("a queue row hovers itself", "row:queue:2"),
@@ -409,9 +418,14 @@ want_hover = [
     ("the overlay scrim takes the pointer off the pane underneath", "close"),
     ("an output row hovers itself", "output:1"),
 ]
-for index, (name, want) in enumerate(want_hover):
-    got = visited[index] if index < len(visited) else "<no dump>"
-    check(name, got == want, f"got {got} want {want}")
+# Ordered subsequence instead of a fixed stride: one settled dump per hovered target is the
+# expected shape, but a dropped dump used to shift every later expectation by one.
+cursor = 0
+for name, want in want_hover:
+    while cursor < len(settled_hover) and settled_hover[cursor] != want:
+        cursor += 1
+    check(name, cursor < len(settled_hover), f"seq {settled_hover[:6]} …")
+    cursor += 1
 check(
     "hovering never moves the selection",
     bool(hover_states) and all(field(s, "sel") == "0" for s in hover_states),
