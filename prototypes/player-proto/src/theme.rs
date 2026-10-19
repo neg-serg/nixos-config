@@ -6,6 +6,19 @@
 
 pub type Rgba = [f32; 4];
 
+/// One step on the z axis: the surface a pane paints and the alpha of the drop shadow it casts.
+///
+/// The two travel together on purpose. A lighter surface over an unchanged shadow reads as a
+/// paint mistake, and a deeper shadow under an unchanged surface only muddies the edge, so
+/// elevation is one token of two fields instead of two free-floating numbers. Two levels cover
+/// this layout: the panes at rest and the single pane that owns the keyboard.
+#[derive(Clone, Copy)]
+pub struct Elevation {
+    pub surface: Rgba,
+    /// Alpha of the black drop shadow the pane throws on the background.
+    pub shadow: f32,
+}
+
 /// Which face to shape with. The UI keeps two families: Inter for text, FiraCode Nerd Font
 /// Mono for numerals, times and the transport/symbol glyphs.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -93,10 +106,16 @@ pub struct Theme {
     // surfaces
     pub bg_top: Rgba,
     pub bg_bottom: Rgba,
+    /// Base surface of anything painted on a pane: chips, overlays, popovers.
     pub panel: Rgba,
     pub panel_hi: Rgba,
     /// Recessed wells: art placeholder, progress bed.
     pub panel_inset: Rgba,
+    /// Elevation of the panes that do not hold the keyboard.
+    pub pane_rest: Elevation,
+    /// Elevation of the pane that does: a lighter surface and a deeper shadow, so focus is
+    /// legible from the pane body itself instead of only from an accent outline.
+    pub pane_raised: Elevation,
     pub border: Rgba,
     /// 1 px top highlight; the only thing that separates panels on this palette
     /// (black shadows reach 1.08-1.12:1 against the background, i.e. nothing).
@@ -127,8 +146,8 @@ pub struct Theme {
 }
 
 /// Cool blue-on-charcoal, the default. Contrast of every text/background pair was computed
-/// with the WCAG 2.1 formula (see FONTS-AND-THEME.md section 6.3); text_faint alone is 5.2:1 on
-/// `panel`, so 11 px labels pass AA.
+/// with the WCAG 2.1 formula (see FONTS-AND-THEME.md section 6.3); text_faint alone is 6.3:1 on
+/// `panel` and 5.9:1 on the raised pane, so 11 px labels pass AA on either surface.
 pub const DARK: Theme = Theme {
     name: "dark",
     bg_top: [0.0588, 0.0784, 0.1059, 1.0],      // #0F141B
@@ -136,6 +155,15 @@ pub const DARK: Theme = Theme {
     panel: [0.0784, 0.0980, 0.1333, 1.0],       // #141922
     panel_hi: [0.1059, 0.1333, 0.1765, 1.0],    // #1B222D
     panel_inset: [0.0510, 0.0667, 0.0902, 1.0], // #0D1117
+    pane_rest: Elevation {
+        surface: [0.0784, 0.0980, 0.1333, 1.0], // #141922
+        shadow: 0.35,
+    },
+    pane_raised: Elevation {
+        // One step below `panel_hi`, so chips and wells painted on a raised pane still read.
+        surface: [0.0980, 0.1255, 0.1725, 1.0], // #19202C
+        shadow: 0.55,
+    },
     border: [1.0, 1.0, 1.0, 0.07],
     border_hi: [1.0, 1.0, 1.0, 0.14],
     shadow: [0.0, 0.0, 0.0, 0.45],
@@ -164,6 +192,14 @@ pub const WARM: Theme = Theme {
     panel: [0.086, 0.071, 0.055, 1.0],
     panel_hi: [0.118, 0.098, 0.075, 1.0],
     panel_inset: [0.055, 0.043, 0.031, 1.0],
+    pane_rest: Elevation {
+        surface: [0.086, 0.071, 0.055, 1.0],
+        shadow: 0.40,
+    },
+    pane_raised: Elevation {
+        surface: [0.110, 0.090, 0.070, 1.0],
+        shadow: 0.62,
+    },
     border: [1.0, 0.94, 0.86, 0.07],
     border_hi: [1.0, 0.94, 0.86, 0.14],
     shadow: [0.0, 0.0, 0.0, 0.55],

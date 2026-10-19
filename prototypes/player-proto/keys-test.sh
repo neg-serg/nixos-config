@@ -9,11 +9,18 @@ bin=${PROTO_BIN:-$here/target/release/player}
 [ -s "$here/.libs" ] || "$here/libs.sh" > "$here/.libs"
 keys="down,down,tab,tab,tab,slash,abc,esc,colon,vol 30,enter,w,esc,5,j,p,>,<,f,b,=,-,z,r,y,R,d,d,colon,save ktl,enter,colon,renameplaylist ktl ktl2,enter,colon,rmplaylist ktl2,enter,J,K,2,noop,noop,noop,noop,3,noop,noop,noop,noop,P,noop,noop,noop,noop,1,a,noop,noop,noop,noop,enter,ctrl+s,esc,o,noop,noop,down,enter,esc"
 out=$(mktemp)
-trap 'rm -f "$out"' EXIT
+wide=$(mktemp)
+trap 'rm -f "$out" "$wide"' EXIT
 PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
   env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
   "$bin" --render-size=800x600 --shot-seq=/tmp/keys-test --keys="$keys" > "$out" 2>&1
-python3 - "$out" << 'PY'
+# Pane focus (which drives the elevation of the panes) depends on the layout width: the library
+# pane exists only at >= 1080 logical units, and only then does its tab take the keys. The main
+# run is deliberately narrow, so a second, wide run is what exercises the library case.
+PLAYER_DUMP_STATE=1 PLAYER_DRY_RUN=1 \
+  env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$(cat "$here/.libs")" \
+  "$bin" --render-size=1440x900 --shot-seq=/tmp/keys-focus --keys="tab,noop,tab" > "$wide" 2>&1
+python3 - "$out" "$wide" << 'PY'
 import re, sys
 lines = open(sys.argv[1], errors="replace").read().splitlines()
 states = [l for l in lines if l.startswith("[state]")]
@@ -107,5 +114,28 @@ check("'o' opens the outputs overlay", oes and field(oes, "outputs") == "true", 
 check("outputs overlay toggles an output", sent("SetOutput"), str([l for l in dry if "SetOutput" in l]))
 d_after_o = [s for s in states if "token=down " in s]
 check("arrows inside the overlay do not move the queue cursor", d_after_o and field(d_after_o[-1], "outputs") == "true", str(d_after_o[-1:]))
+
+# ---- pane focus (the raised pane). The frame picks its elevation from the same rule, so an
+# assertion on `focus` is the cheapest proxy for "the right pane is raised".
+wide_states = [
+    l for l in open(sys.argv[2], errors="replace").read().splitlines() if l.startswith("[state]")
+]
+wlib = [s for s in wide_states if field(s, "view") == "library"]
+check(
+    "at 1440 the library tab raises the library pane",
+    bool(wlib) and all(field(s, "focus") == "library" for s in wlib),
+    str(wlib[:1]),
+)
+wart = [s for s in wide_states if field(s, "view") == "artists"]
+check(
+    "at 1440 a picker tab raises the centre pane",
+    bool(wart) and all(field(s, "focus") == "centre" for s in wart),
+    str(wart[:1]),
+)
+check(
+    "at 800 the hidden library pane never takes focus",
+    bool(states) and all(field(s, "focus") == "centre" for s in states),
+    str([s for s in states if field(s, "focus") != "centre"][:1]),
+)
 sys.exit(1 if fails else 0)
 PY

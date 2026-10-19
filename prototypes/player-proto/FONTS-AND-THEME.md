@@ -430,7 +430,8 @@ ______________________________________________________________________
 Current geometry (verified in `player.rs`): `row_h = 34.0` (`:788`), top bar `56.0` (`:748`), status
 bar `40.0` (`:1041`), pane gutter `20.0`/`12.0` (`:783-786`), panel padding `20.0` (`:927`), radii
 14 (panels), 18 (art), 8/9 (rows), 11/13 (chips/tabs), 3 (bars); shadows `(radius, blur, alpha)` =
-`(14, 26, 0.35)` panels, `(18, 24, 0.45)` art, `(40, 90, 0.10)` "glow".
+`(14, 26, 0.35)` panes at rest, `(14, 26, 0.55)` the raised pane, `(18, 24, 0.45)` art,
+`(40, 90, 0.10)` "glow".
 
 Proposal:
 
@@ -466,6 +467,16 @@ alpha are almost irrelevant against a `#080A0E` background**. Panel separation m
 `BORDER_HI` (1 px top highlight, 1.52:1) and from the `PANEL` vs `BG` value step, not from bigger
 blur radii. Keep the shadow tokens for the album art (where they separate against the art itself),
 drop the ambition of a floating-panel look.
+
+Elevation (implemented in `theme.rs`): panes are drawn from an `Elevation` pair — `surface` plus the
+alpha of the pane's own shadow — in two levels, `pane_rest` (`#141922`, alpha 0.35) and `pane_raised`
+(`#19202C`, alpha 0.55). The pane that owns the keyboard takes the raised level. Per the check
+above, the value step is what carries focus (a 1.08:1 change over a whole pane is legible where the
+same step on a 1 px border would not be), and the deeper shadow only darkens the seam between the
+panes. The pair is one token on purpose: a lighter surface over an unchanged shadow reads as a paint
+error. `pane_raised` stays one step below `panel_hi`, so chips and wells painted on a raised pane
+still separate, and every text tier stays above AA on it (`text` 13.9:1, `text_dim` 8.7:1,
+`text_faint` 5.9:1).
 
 ______________________________________________________________________
 
