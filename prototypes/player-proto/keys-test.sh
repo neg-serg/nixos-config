@@ -24,8 +24,12 @@ def field(line, name):
     return m.group(2) if m and m.group(2) is not None else (m.group(1) if m else None)
 
 def seq(token, occurrence=0):
+    # Prefer the settled dump: it is taken after the worker's replies for this key landed, so
+    # assertions do not race the poll loop.
     hits = [s for s in states if f"token={token} " in s]
-    return hits[occurrence] if len(hits) > occurrence else None
+    settled = [s for s in hits if "settle=1" in s]
+    pool = settled or hits
+    return pool[occurrence] if len(pool) > occurrence else None
 
 fails = []
 def check(name, cond, detail=""):
@@ -33,11 +37,14 @@ def check(name, cond, detail=""):
     if not cond:
         fails.append(name)
 
-sels = [int(field(s, "sel")) for s in states]
+# Immediate dumps describe the key itself; the "settle=1" repeats describe the state after the
+# worker replied, so the motion/tab sequences are read from the immediate ones.
+immediate = [s for s in states if "settle=1" not in s]
+sels = [int(field(s, "sel")) for s in immediate]
 songs = [int(field(s, "song")) for s in states]
 
 check("j/down move one row", len(sels) > 1 and sels[1] == sels[0] + 1, f"sels={sels[:3]}")
-tabs = [field(s, "view") for s in states if "token=tab " in s]
+tabs = [field(s, "view") for s in immediate if "token=tab " in s]
 check(
     "tab cycles the panes in order",
     tabs[:3] == ["library", "artists", "albums"],

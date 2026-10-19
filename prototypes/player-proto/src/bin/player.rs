@@ -823,6 +823,9 @@ struct App {
     pending_shot: bool,
     dump_state_each_key: bool,
     /// Last swapchain recreation, used to rate-limit resize storms.
+    /// Token whose "settled" state still has to be dumped, and the frame it is due at.
+    settle_token: Option<String>,
+    settle_at: u64,
     last_resize: Instant,
     /// Monitor scale factor, refreshed from winit on every scale/resize event.
     scale: f32,
@@ -871,6 +874,8 @@ impl App {
             key_cursor: 0,
             pending_shot: false,
             dump_state_each_key: std::env::var("PLAYER_DUMP_STATE").is_ok(),
+            settle_token: None,
+            settle_at: 0,
             last_resize: Instant::now() - Duration::from_secs(1),
             scale: 1.0,
             exit_frame: None,
@@ -1777,6 +1782,16 @@ impl App {
     }
 
     /// One-line state dump for the scripted test harness (`--dump-state`).
+    /// Dump the current state again once the async replies for the last key have arrived.
+    fn maybe_dump_settled(&mut self) {
+        if let (Some(token), Some(due)) = (self.settle_token.clone(), Some(self.settle_at)) {
+            if self.frames >= due {
+                self.dump_state(&format!("{token} settle=1"));
+                self.settle_token = None;
+            }
+        }
+    }
+
     fn dump_state(&self, token: &str) {
         let view = match self.model.view {
             Pane::Queue => "queue",
@@ -3587,9 +3602,15 @@ impl winit::application::ApplicationHandler for App {
                         );
                         if self.dump_state_each_key {
                             self.dump_state(&token);
+                            // A second dump 20 frames later shows the state after the worker's
+                            // replies for this key have landed, so assertions do not depend on
+                            // how busy the poll loop happens to be.
+                            self.settle_token = Some(token.clone());
+                            self.settle_at = self.frames + 20;
                         }
                     }
                 }
+                self.maybe_dump_settled();
                 let t = self.started.elapsed().as_secs_f32();
                 let theme = theme::Theme::by_name(&self.theme_name);
                 let mut hits: Vec<HitArea> = Vec::new();
