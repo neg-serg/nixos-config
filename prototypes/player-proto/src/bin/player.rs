@@ -2739,6 +2739,7 @@ fn draw_ui(
             left_elev.surface,
         );
         list.rect(20.0, body_top, left_w, GEOM.line, th.border_hi);
+        player_proto::record_rect("library_pane", 20.0, body_top, left_w, body_h);
 
         let active = m.view == Pane::Library;
         fonts.layout_line(
@@ -2936,6 +2937,7 @@ fn draw_ui(
             _ => "QUEUE",
         }
     };
+    player_proto::record_rect("queue_header", qx + 18.0, body_top + 6.0, qw - 36.0, 30.0);
     fonts.layout_line(
         &mut list,
         centre_title,
