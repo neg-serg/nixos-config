@@ -38,7 +38,11 @@ songs = [int(field(s, "song")) for s in states]
 
 check("j/down move one row", len(sels) > 1 and sels[1] == sels[0] + 1, f"sels={sels[:3]}")
 tabs = [field(s, "view") for s in states if "token=tab " in s]
-check("tab cycles queue -> library -> search -> queue", tabs[:3] == ["library", "search", "queue"], f"{tabs[:3]}")
+check(
+    "tab cycles the panes in order",
+    tabs[:5] == ["library", "artists", "albums", "playlists", "search"],
+    f"{tabs[:5]}",
+)
 check("'/' enters search mode", (seq("slash") or "") and field(seq("slash"), "mode") == "search")
 check("typing fills the search buffer", (seq("abc") or "") and field(seq("abc"), "search") == "abc")
 esc = seq("esc")

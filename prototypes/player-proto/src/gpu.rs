@@ -774,20 +774,24 @@ pub fn create_gpu(
         };
 
         let size = window.inner_size();
-        let preferred = forced_size
-            .filter(|_| caps.current_extent.width == u32::MAX)
-            .map(|(w, h)| (w.max(1), h.max(1)))
-            .unwrap_or((size.width.max(1), size.height.max(1)));
-        let mut extent = vk::Extent2D {
-            width: if caps.current_extent.width == u32::MAX {
-                preferred.0
-            } else {
-                caps.current_extent.width
+        // A pinned capture size wins over the compositor: scripted runs need a fixed extent, and
+        // llvmpipe crashes when an image->buffer copy crosses two different framebuffer sizes.
+        let mut extent = match forced_size {
+            Some((w, h)) => vk::Extent2D {
+                width: w.max(1),
+                height: h.max(1),
             },
-            height: if caps.current_extent.height == u32::MAX {
-                preferred.1
-            } else {
-                caps.current_extent.height
+            None => vk::Extent2D {
+                width: if caps.current_extent.width == u32::MAX {
+                    size.width.max(1)
+                } else {
+                    caps.current_extent.width
+                },
+                height: if caps.current_extent.height == u32::MAX {
+                    size.height.max(1)
+                } else {
+                    caps.current_extent.height
+                },
             },
         };
         extent.width = extent

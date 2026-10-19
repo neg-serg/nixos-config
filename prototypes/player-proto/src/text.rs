@@ -142,6 +142,28 @@ impl Fonts {
         String::new()
     }
 
+    /// Like [`Self::fit`], but keeps the tail of the string: track titles share long prefixes
+    /// ("CD VII. …"), so cutting from the front-middle keeps them distinguishable.
+    pub fn fit_middle(&mut self, text: &str, size: f32, max_w: f32, face: Face) -> String {
+        if max_w <= 0.0 || self.measure(text, size, face) <= max_w {
+            return text.to_string();
+        }
+        let chars: Vec<char> = text.chars().collect();
+        let mut keep = chars.len().saturating_sub(1);
+        while keep > 2 {
+            let head = (keep + 1) / 2;
+            let tail = keep - head;
+            let candidate: String = chars[..head].iter().collect::<String>()
+                + "…"
+                + &chars[chars.len() - tail..].iter().collect::<String>();
+            if self.measure(&candidate, size, face) <= max_w {
+                return candidate;
+            }
+            keep -= 1;
+        }
+        self.fit(text, size, max_w, face)
+    }
+
     /// Shape a single line and emit one quad per glyph. Returns the advanced width.
     pub fn layout_line(
         &mut self,
@@ -195,7 +217,9 @@ impl Fonts {
     }
 
     /// Convenience: fit + layout one line inside `max_w`, returns the width used.
-    pub fn layout_fitted(
+    /// Truncate from the end. Used where the tail carries no information (song titles in the
+    /// now-playing block) - middle truncation is only for lists with shared prefixes.
+    pub fn layout_fitted_end(
         &mut self,
         list: &mut DrawList,
         text: &str,
@@ -207,6 +231,21 @@ impl Fonts {
         max_w: f32,
     ) -> f32 {
         let fitted = self.fit(text, size, max_w, face);
+        self.layout_line(list, &fitted, x, y, size, face, color)
+    }
+
+    pub fn layout_fitted(
+        &mut self,
+        list: &mut DrawList,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+        face: Face,
+        color: [f32; 4],
+        max_w: f32,
+    ) -> f32 {
+        let fitted = self.fit_middle(text, size, max_w, face);
         self.layout_line(list, &fitted, x, y, size, face, color)
     }
 }
