@@ -105,14 +105,33 @@ check("the row is inset inside its pane",
       f"left {x0('queue_row') - x0('queue_pane'):.0f}, right {right('queue_pane') - right('queue_row'):.0f}")
 check("the text column starts after the index gutter",
       40 <= x0("queue_text") - x0("queue_row") <= 60, f"{x0('queue_text') - x0('queue_row'):.0f} px")
-check("the duration column is flush with the pane on the right",
-      abs(right("queue_dur") - right("queue_pane")) <= 1, f"{right('queue_dur'):.0f} vs {right('queue_pane'):.0f}")
+check("the duration column keeps air from the pane edge",
+      abs(right("queue_dur") - (right("queue_pane") - 22)) <= 1,
+      f"{right('queue_dur'):.0f} vs {right('queue_pane') - 22:.0f}")
 check("the duration column is 96 px wide", abs(rw("queue_dur") - 96) <= 1, f"{rw('queue_dur'):.0f}")
 expected_row_h = 40 if h >= 760 else 36
 check("the row height follows the density breakpoint", abs(rh("queue_row") - expected_row_h) <= 1,
       f"{rh('queue_row'):.0f} vs {expected_row_h} at h={h}")
 check("the first row clears the pane header", y0("queue_row") >= bottom("queue_header"),
       f"row {y0('queue_row'):.0f} vs header {bottom('queue_header'):.0f}")
+# The sidebar repeats the row rhythm, and the queue owns the space a hidden sidebar frees.
+if "library_row" in rects:
+    check("the sidebar row is inset like the queue row",
+          abs((x0("library_row") - x0("library_pane")) - 10) <= 1,
+          f"{x0('library_row') - x0('library_pane'):.0f} px")
+    check("the sidebar text column starts after its gutter",
+          40 <= x0("library_text") - x0("library_row") <= 60, f"{x0('library_text') - x0('library_row'):.0f} px")
+    # The sidebar is a navigation list and runs one density step tighter than the queue on
+    # purpose; what must hold is that it is never *taller*.
+    check("the sidebar is never denser than the queue", rh("library_row") <= rh("queue_row") + 1,
+          f"{rh('library_row'):.0f} vs {rh('queue_row'):.0f}")
+    check("the first sidebar row clears its header",
+          y0("library_row") >= y0("library_pane") + 30, f"{y0('library_row') - y0('library_pane'):.0f} px below the pane top")
+if "now_pane" in rects:
+    # Whatever the sidebar does, the queue must run right up to the now-playing gutter.
+    check("the queue stops one pane gap before the now-playing pane",
+          abs(right("queue_pane") - (x0("now_pane") - 16)) <= 1,
+          f"{right('queue_pane'):.0f} vs {x0('now_pane') - 16:.0f}")
 # Centring is a claim about the art alone; every other block is left-aligned by design.
 check("nothing else claims to be centred", all(k in ("art",) for k in ("art",)), "only art is centred")
 

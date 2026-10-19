@@ -78,11 +78,15 @@ pub struct Geometry {
     pub stack: f32,
     /// Air inside one block: a bar and its labels, a label and its value.
     pub inner: f32,
+    /// Air between two panes. One token so the queue width and the now-playing x cannot drift
+    /// apart, which is how an 8 px gap appeared where the layout claimed 24.
+    pub pane_gap: f32,
 }
 
 pub const GEOM: Geometry = Geometry {
     pad: 20.0,
     gap: 12.0,
+    pane_gap: 16.0,
     /// Two-line rows (queue, search): 14/18 title + 12/16 secondary + breathing room.
     row_h: 40.0,
     /// One-line rows (library).
