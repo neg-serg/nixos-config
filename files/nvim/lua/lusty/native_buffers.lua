@@ -1,6 +1,6 @@
 -- Native buffer explorer: the Lusty buffer explorer (MRU order, current
 -- buffer last, modified [+] marker, extension colours) rendered in the
--- native bottom float instead of the Lua table UI. C-d unloads the selected
+-- native bottom split instead of the Lua table UI. C-d unloads the selected
 -- buffer, Enter/Tab switch to it, C-t/C-o/C-v open it in a tab/split/vsplit.
 -- C-Space marks buffers (multi-select): C-d then unloads the whole marked set.
 

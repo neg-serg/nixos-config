@@ -1,9 +1,9 @@
--- Shared core of the native Lusty pickers: the filesystem float
--- (`lusty.native`, Rust backend) and the generic list float
--- (`lusty.native_pick`, Lua source). Both render the same bottom-anchored
--- rounded float with the same geometry, colours and key handling, so the
--- common half lives here; each picker only supplies the parts that differ
--- (long view vs item groups, backend job vs Lua source).
+-- Shared core of the native Lusty pickers: the filesystem picker
+-- (`lusty.native`, Rust backend) and the generic list picker
+-- (`lusty.native_pick`, Lua source). Both render the same frameless
+-- full-width bottom split with the same geometry, colours and key handling,
+-- so the common half lives here; each picker only supplies the parts that
+-- differ (long view vs item groups, backend job vs Lua source).
 --
 -- The module is a stateless method bag: functions take the picker as their
 -- first argument, so a picker class either binds the shared methods with
@@ -19,26 +19,36 @@ local M = {}
 -- ---------------------------------------------------------------------------
 -- Geometry
 
+--- Picker width in display cells. Once the split exists its real width is
+--- authoritative: the split spans the tabpage and only narrows while the
+--- preview pane holds the right side. Before that the editor width is the best
+--- available guess (used by the pre-open geometry queries).
 function M.width(self)
-  local envw = tonumber(os.getenv('LUSTY_WIDTH'))
-  if envw and envw >= 60 then
-    return math.max(60, math.min(envw, vim.o.columns - 4))
+  if self.win and api.nvim_win_is_valid(self.win) then
+    return math.max(1, api.nvim_win_get_width(self.win))
   end
-  local ratio = tonumber(vim.g.LustyExplorerWidthRatio) or 0.8
-  ratio = math.max(0.5, math.min(0.98, ratio))
-  return math.max(60, math.floor(vim.o.columns * ratio))
+  return math.max(1, vim.o.columns)
 end
 
+--- Picker height in rows. Once open it is the window height, so an interactive
+--- resize (or the preview open/close) is picked up by the next draw; before
+--- that it is the requested height: the height the split had before a
+--- re-open (`win_h`, see Picker:restart — a split is user-resizable, so
+--- navigating must not snap it back), else LUSTY_ROWS as in the standalone
+--- `--rows`, else five entry rows plus the prompt. A split has no border rows,
+--- so the env value is the window height as is.
 function M.height(self)
-  local envr = tonumber(os.getenv('LUSTY_ROWS'))
-  if envr and envr >= 4 then
-    -- Total box height including the two rounded-border rows, matching the
-    -- standalone `--rows`; the window itself is two rows shorter.
-    return math.max(2, math.min(envr - 2, vim.o.lines - 2))
+  if self.win and api.nvim_win_is_valid(self.win) then
+    return math.max(1, api.nvim_win_get_height(self.win))
   end
-  -- 8 rows in total on screen: the rounded border takes two, the window holds
-  -- five entry rows plus the prompt.
-  return math.min(6, math.max(1, vim.o.lines - 2))
+  if self.win_h then
+    return math.max(2, math.min(self.win_h, vim.o.lines - 3))
+  end
+  local envr = tonumber(os.getenv('LUSTY_ROWS'))
+  if envr and envr >= 3 then
+    return math.max(2, math.min(envr, vim.o.lines - 3))
+  end
+  return math.min(6, math.max(1, vim.o.lines - 3))
 end
 
 function M.list_rows(self)
@@ -47,7 +57,7 @@ function M.list_rows(self)
   return math.max(1, self:height() - 1)
 end
 
---- Max columns of the entry grid: choose a pitch that fits the float width
+--- Max columns of the entry grid: choose a pitch that fits the split width
 --- exactly (col_w + 2 separator), so rows never overflow or wrap.
 function M.max_cols(self)
   if self.long or self.single then
@@ -83,37 +93,70 @@ end
 -- ---------------------------------------------------------------------------
 -- Window
 
+--- Window options shared by the picker split and its preview pane: the panel
+--- look without any frame. A regular window has no border; the window's own
+--- statusline is blanked and painted in the body colour, so the split reads as
+--- one flat panel instead of a boxed float, and the gutter options are off so
+--- the grid starts at column 1. `statuscolumn` must go too: `:split` copies
+--- the window-local options of the source window, and a rendered status column
+--- would push the grid right while the rows are padded to the full width.
+function M.apply_window_opts(win)
+  local o = vim.wo[win]
+  o.wrap = false
+  o.number = false
+  o.relativenumber = false
+  o.signcolumn = 'no'
+  o.statuscolumn = ''
+  o.foldcolumn = '0'
+  o.cursorline = false
+  o.cursorcolumn = false
+  o.colorcolumn = ''
+  o.list = false
+  o.spell = false
+  o.scrolloff = 0
+  o.sidescrolloff = 0
+  -- Normal is the panel body, WinSeparator the single line against the window
+  -- above / the preview, and the statusline groups blend the picker's own
+  -- statusline row into it. A literal space hides the buffer name: an empty
+  -- 'statusline' would fall back to the global value.
+  o.winhighlight = 'Normal:LustyNativeFloat,WinSeparator:LustyNativeBorder,'
+    .. 'StatusLine:LustyNativeFloat,StatusLineNC:LustyNativeFloat,EndOfBuffer:LustyNativeFloat'
+  o.statusline = ' '
+  o.winbar = ''
+  o.fillchars = 'eob: '
+end
+
 function M.open_window(self)
-  local w, h = self:width(), self:height()
-  -- bottom orientation (original Lusty gravity): anchored just above the
-  -- statusline, horizontally centered
-  local row = math.max(0, vim.o.lines - h - 1)
-  local col = math.max(0, math.floor((vim.o.columns - w) / 2))
+  local h = self:height()
   local buf = api.nvim_create_buf(false, true)
-  local win = api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = w,
-    height = h,
-    row = row,
-    col = col,
-    style = 'minimal',
-    border = 'rounded',
-  })
+  -- Snapshot the window sizes of the tab before splitting: nvim re-equalizes
+  -- the layout when a split is opened and closed ('equalalways', default on),
+  -- so a plain cancel would hand back the user's layout with different window
+  -- heights. The snapshot is replayed in close(), after the split is gone.
+  self.restore_cmd = vim.fn.winrestcmd()
+  self.restore_tab = api.nvim_get_current_tabpage()
+  -- A regular bottom split instead of a floating window: `botright` pins the
+  -- picker to the full-width bottom row of the tabpage (a vertical layout above
+  -- stays intact) and closing the window restores that layout. `noautocmd`
+  -- keeps the temporary window — it still shows the current buffer — from
+  -- firing the user's WinNew/BufEnter hooks.
+  vim.cmd('noautocmd botright split')
+  local win = api.nvim_get_current_win()
+  api.nvim_win_set_buf(win, buf)
+  api.nvim_win_set_height(win, h)
   vim.bo[buf].buftype = 'nofile'
   vim.bo[buf].swapfile = false
   vim.bo[buf].modifiable = true
   vim.bo[buf].bufhidden = 'wipe'
-  vim.wo[win].wrap = false
-  vim.wo[win].winhighlight = 'Normal:LustyNativeFloat,FloatBorder:LustyNativeBorder'
-  vim.wo[win].winblend = 0
+  M.apply_window_opts(win)
   api.nvim_buf_set_lines(buf, 0, -1, false, {})
   self.buf = buf
   self.win = win
   self:setup_keymaps()
-  -- Modal picker: if focus ever leaves the float (e.g. a click on the
-  -- underlying buffer), pull it straight back. Otherwise letters typed
-  -- outside land in the original buffer, where 'c' starts the change
-  -- operator and nvim waits a timeoutlen for a motion.
+  -- Modal picker: if focus ever leaves the picker (e.g. a click on the buffer
+  -- above), pull it straight back. Otherwise letters typed outside land in the
+  -- original buffer, where 'c' starts the change operator and nvim waits a
+  -- timeoutlen for a motion.
   local self_ref = self
   self.leave_grp = api.nvim_create_augroup('LustyPickFocus' .. buf, { clear = true })
   api.nvim_create_autocmd('BufLeave', {
@@ -129,6 +172,69 @@ function M.open_window(self)
       end
     end,
   })
+  -- A split follows the editor/layout, unlike a fixed-size float: redraw when
+  -- the geometry changes (terminal resize, the preview pane opening or
+  -- closing, `:only`), otherwise the grid stays padded to the old width.
+  self.resize_grp = api.nvim_create_augroup('LustyPickResize' .. buf, { clear = true })
+  api.nvim_create_autocmd({ 'VimResized', 'WinResized' }, {
+    group = self.resize_grp,
+    callback = function()
+      self_ref:on_win_resized()
+    end,
+  })
+  -- The window or the buffer can disappear outside the key handlers (`:q`,
+  -- `:close`, `:only`, a plugin, a session restore). Tie the teardown to that
+  -- death, otherwise `lusty serve` keeps running with no UI to feed.
+  self.dead_grp = api.nvim_create_augroup('LustyPickDead' .. buf, { clear = true })
+  api.nvim_create_autocmd('WinClosed', {
+    group = self.dead_grp,
+    pattern = tostring(win),
+    callback = function()
+      self_ref:close()
+    end,
+  })
+  api.nvim_create_autocmd('BufWipeout', {
+    group = self.dead_grp,
+    buffer = buf,
+    callback = function()
+      self_ref:close()
+    end,
+  })
+end
+
+--- Redraw once when the drawn grid no longer matches the window. The resize
+--- events are delivered after a display update, so a size change made through
+--- the API (or in a headless run, where nothing is ever displayed) would leave
+--- a stale grid until the next listing; every key checks this first.
+function M.ensure_geometry(self)
+  if self.closed or not self.win or not api.nvim_win_is_valid(self.win) then
+    return
+  end
+  if self._drawn_w ~= api.nvim_win_get_width(self.win)
+    or self._drawn_h ~= api.nvim_win_get_height(self.win)
+  then
+    self:draw()
+  end
+end
+
+--- Redraw after the split geometry changed. Pickers with side panes also
+--- re-request their content, but only when the pane really changed size: the
+--- preview response is keyed by width/height, so clearing the key here would
+--- turn every unrelated resize into a full backend render (chafa/git/man) for
+--- each display frame of an interactive drag.
+function M.on_win_resized(self)
+  if self.closed then
+    return
+  end
+  vim.schedule(function()
+    if self.closed or not self.buf or not api.nvim_buf_is_valid(self.buf) then
+      return
+    end
+    self:draw()
+    if self.preview_on and self.refresh_preview then
+      self:refresh_preview()
+    end
+  end)
 end
 
 -- ---------------------------------------------------------------------------
@@ -232,7 +338,7 @@ end
 
 --- Move one grid column left/right (wrap), mirroring the Lua port.
 --- `refresh` names the method that re-lists the picker ('rerank' for the
---- filesystem float, 'refresh' for the list float).
+--- filesystem picker, 'refresh' for the list picker).
 function M.column_nav(self, delta, refresh)
   if self.single then
     return
@@ -263,12 +369,12 @@ end
 --- method; `hooks.query_refresh` (optional) overrides it for query edits
 --- (debounced typing); `hooks.on_char` (optional) runs for a single typed
 --- character before it is appended and may consume it (`/` in the filesystem
---- float); `hooks.on_query` (optional) runs after a query change and may
---- consume the rerank (the filesystem float restarts its backend when the
+--- picker); `hooks.on_query` (optional) runs after a query change and may
+--- consume the rerank (the filesystem picker restarts its backend when the
 --- dotfile mode flips).
 function M.handle_common(self, action, refresh, hooks)
   hooks = hooks or {}
-  -- Query edits may use a debounced entry point (the filesystem float waits
+  -- Query edits may use a debounced entry point (the filesystem picker waits
   -- for the typing pause before re-asking the backend); navigation always
   -- re-lists immediately.
   local query_refresh = hooks.query_refresh or refresh
@@ -337,16 +443,35 @@ end
 -- ---------------------------------------------------------------------------
 -- Teardown
 
---- Tear down the float, timer, backend job and preview. Idempotent; returns
---- true when it actually closed the picker.
+--- Tear down the picker split, timer, backend job and preview. Idempotent;
+--- returns true when it actually closed the picker.
 function M.close(self)
   if self.closed then
     return false
   end
   self.closed = true
+  -- `*_grp` holds the numeric group id; nvim_del_augroup_by_name wants the
+  -- name and rejects a number ("Invalid 'name': Expected Lua string"), which
+  -- pcall would swallow — a picker re-opened on navigation would then leave its
+  -- global VimResized/WinResized autocmd behind for the rest of the session.
   if self.leave_grp then
-    pcall(api.nvim_del_augroup_by_name, self.leave_grp)
+    pcall(api.nvim_del_augroup_by_id, self.leave_grp)
     self.leave_grp = nil
+  end
+  if self.resize_grp then
+    pcall(api.nvim_del_augroup_by_id, self.resize_grp)
+    self.resize_grp = nil
+  end
+  if self.dead_grp then
+    local grp = self.dead_grp
+    self.dead_grp = nil
+    -- Deleting the group that is running right now raises E936 (the external
+    -- close path), so retry on the next tick instead of leaking the autocmds.
+    if not pcall(api.nvim_del_augroup_by_id, grp) then
+      vim.schedule(function()
+        pcall(api.nvim_del_augroup_by_id, grp)
+      end)
+    end
   end
   if self._timer then
     self._timer:stop()
@@ -358,14 +483,22 @@ function M.close(self)
   if self.close_preview then
     self:close_preview()
   end
-  -- close the float window itself first: deleting the buffer of a shown
-  -- window can leave an empty floating shell behind
+  -- close the picker window first: deleting the buffer of a shown window can
+  -- leave an empty shell behind, and closing the split restores the layout
   if self.win and api.nvim_win_is_valid(self.win) then
     pcall(api.nvim_win_close, self.win, true)
   end
   if self.buf and api.nvim_buf_is_valid(self.buf) then
     pcall(api.nvim_buf_delete, self.buf, { force = true })
   end
+  -- Put the pre-picker window sizes back: closing the split makes nvim
+  -- re-equalize the remaining windows, which would otherwise resize the user's
+  -- layout every time the picker is used.
+  if self.restore_cmd and self.restore_tab == api.nvim_get_current_tabpage() then
+    pcall(vim.cmd, self.restore_cmd)
+  end
+  self.restore_cmd = nil
+  self.restore_tab = nil
   if api.nvim_win_is_valid(self.orig_win) then
     pcall(api.nvim_set_current_win, self.orig_win)
   end
@@ -425,6 +558,8 @@ M.BOUND = {
   'col_width',
   'screen_count',
   'open_window',
+  'on_win_resized',
+  'ensure_geometry',
   'ensure_visible',
 }
 

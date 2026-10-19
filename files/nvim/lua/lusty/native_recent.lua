@@ -1,5 +1,5 @@
 -- Native recent-file explorer: LustyRecent rendered in the native bottom
--- float. Items come from nvim's oldfiles (v:oldfiles, most recent first),
+-- split. Items come from nvim's oldfiles (v:oldfiles, most recent first),
 -- restricted to files that still exist, deduped, capped at 150. Labels are
 -- relative to the cwd when possible so the same basename from different
 -- directories stays distinguishable.
@@ -121,7 +121,7 @@ local M = source.define({
     return not it.is_dir
   end,
   -- Enter with marks opens every marked file: the first via edit, the rest
-  -- as buffers (same semantics as the filesystem float).
+  -- as buffers (same semantics as the filesystem picker).
   on_open_many = function(items, m)
     local files = {}
     for _, it in ipairs(items) do

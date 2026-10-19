@@ -5,7 +5,7 @@
 -- maintained around the picker callbacks.
 --
 -- It sits next to `native_pick` instead of in `native_core`: the core is the
--- stateless float/method bag and stays below `native_pick` in the require
+-- stateless geometry/method bag and stays below `native_pick` in the require
 -- graph (native_pick requires native_core), while this runner closes the loop
 -- by calling `native_pick.pick`.
 
