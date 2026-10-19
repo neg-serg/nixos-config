@@ -638,17 +638,55 @@ function M.paint_segments(self, ns, line, segs)
   end
 end
 
---- Paint the one-line mode: the picker's prompt segments plus `tail` (the
---- selected entry, or a placeholder) on the single row. The tail gets the
---- selection bar, so the row still reads as "this is what Enter opens". An
+--- Paint the one-line mode: the picker's prompt segments plus the entries on
+--- the single row. `tail` is either the text of the selected entry or a list of
+--- `{ text = ..., selected = ... }` cells: the row then carries the selection
+--- and the entries that follow it, so a one-row picker still shows the variants
+--- on offer instead of hiding them behind the cursor. Only the selected cell
+--- gets the bar, so the row still reads as "this is what Enter opens". An
 --- overflowing line is cut from the right — the query, which is what the user
 --- is typing, keeps its position.
 function M.paint_one_line(self, ns, head_segs, tail)
   local w = self:width()
   local head = M.segments_text(head_segs)
   local sep = '  '
-  local tail = tail or ''
-  local text = M.fit(head .. sep .. tail, w)
+  local cells
+  if type(tail) == 'table' then
+    cells = tail
+  else
+    cells = { { text = tail or '', selected = true } }
+  end
+  local text = head .. sep
+  local used = vim.fn.strdisplaywidth(text)
+  local sel_from, sel_to = nil, nil
+  for i, cell in ipairs(cells) do
+    local body = cell.text or ''
+    local room = w - used
+    local width = vim.fn.strdisplaywidth(body)
+    if width > room then
+      -- The selected cell is always shown, cut to the room that is left; a
+      -- following cell that does not fit whole ends the strip instead.
+      if i > 1 or room <= 0 then
+        break
+      end
+      body = M.fit(body, room)
+      width = vim.fn.strdisplaywidth(body)
+    end
+    if width == 0 then
+      break
+    end
+    local from = #text
+    text = text .. body
+    if cell.selected then
+      sel_from, sel_to = from, from + #body
+    end
+    used = used + width
+    if i < #cells and used + #sep < w then
+      text = text .. sep
+      used = used + #sep
+    end
+  end
+  text = M.fit(text, w)
   api.nvim_buf_set_lines(self.buf, 0, -1, false, {
     text .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(text))),
   })
@@ -667,10 +705,15 @@ function M.paint_one_line(self, ns, head_segs, tail)
       )
     end
   end
-  local from = #head + #sep
-  local to = math.min(#text, from + #tail)
-  if to > from then
-    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', 0, from, to)
+  if sel_from and sel_to and sel_from < #text then
+    api.nvim_buf_add_highlight(
+      self.buf,
+      ns,
+      'LustyNativeSel',
+      0,
+      sel_from,
+      math.min(sel_to, #text)
+    )
   end
   return text
 end

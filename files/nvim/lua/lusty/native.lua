@@ -1007,26 +1007,39 @@ function Picker:paint_prompt(h)
 end
 
 --- One-line mode (g:LustyExplorerOneLine / LUSTY_ONE_LINE): a single row with
---- the prompt and the selected entry on it, no grid.
+--- the prompt and the entries on it, no grid. The selected entry comes first
+--- (it carries the bar), followed by the entries after it that still fit: one
+--- row must show the variants on offer, not just the cursor.
 function Picker:draw_one_line()
-  local tail
   if self.loading then
-    tail = '…'
-  else
-    local item = self.window[self.selected - self.offset + 1]
-    if item then
-      tail = (self.icons and (icon_for(item) .. ' ') or '') .. item.label
-      if item.kind == 'd' and not self.icons then
-        tail = tail .. '/'
-      end
-      if self.long and item.meta and item.meta ~= '' then
-        tail = item.meta .. ' ' .. tail
-      end
-    else
-      tail = '(no matches)'
+    core.paint_one_line(self, ns, self:prompt_segments(), '…')
+    self:ensure_meta()
+    return
+  end
+  local cells = {}
+  local start = self.selected - self.offset + 1
+  for i = start, #self.window do
+    local item = self.window[i]
+    if not item then
+      break
+    end
+    local text = (self.icons and (icon_for(item) .. ' ') or '') .. item.label
+    if item.kind == 'd' and not self.icons then
+      text = text .. '/'
+    end
+    if self.long and item.meta and item.meta ~= '' then
+      text = item.meta .. ' ' .. text
+    end
+    cells[#cells + 1] = { text = text, selected = (i == start) }
+    -- The painter stops at the row width; this only bounds the work.
+    if #cells >= 24 then
+      break
     end
   end
-  core.paint_one_line(self, ns, self:prompt_segments(), tail)
+  if #cells == 0 then
+    cells[1] = { text = '(no matches)', selected = true }
+  end
+  core.paint_one_line(self, ns, self:prompt_segments(), cells)
   self:ensure_meta()
 end
 
