@@ -97,6 +97,22 @@ check("pane headers sit on the same baseline as the queue header",
       abs(y0("queue_header") - (y0("queue_pane") + 6)) <= 1, f"{y0('queue_header'):.0f}")
 check("headers stay inside their pane", right("queue_header") <= right("queue_pane") + 1,
       f"{right('queue_header'):.0f} <= {right('queue_pane'):.0f}")
+# Row geometry: the list is the busiest surface, so its rhythm is pinned too.
+row_h_seen = art  # placeholder to keep the tuple unpacking below readable
+check("the row is inset inside its pane",
+      abs((x0("queue_row") - x0("queue_pane")) - 10) <= 1
+      and abs(right("queue_pane") - right("queue_row") - 10) <= 1,
+      f"left {x0('queue_row') - x0('queue_pane'):.0f}, right {right('queue_pane') - right('queue_row'):.0f}")
+check("the text column starts after the index gutter",
+      40 <= x0("queue_text") - x0("queue_row") <= 60, f"{x0('queue_text') - x0('queue_row'):.0f} px")
+check("the duration column is flush with the pane on the right",
+      abs(right("queue_dur") - right("queue_pane")) <= 1, f"{right('queue_dur'):.0f} vs {right('queue_pane'):.0f}")
+check("the duration column is 96 px wide", abs(rw("queue_dur") - 96) <= 1, f"{rw('queue_dur'):.0f}")
+expected_row_h = 40 if h >= 760 else 36
+check("the row height follows the density breakpoint", abs(rh("queue_row") - expected_row_h) <= 1,
+      f"{rh('queue_row'):.0f} vs {expected_row_h} at h={h}")
+check("the first row clears the pane header", y0("queue_row") >= bottom("queue_header"),
+      f"row {y0('queue_row'):.0f} vs header {bottom('queue_header'):.0f}")
 # Centring is a claim about the art alone; every other block is left-aligned by design.
 check("nothing else claims to be centred", all(k in ("art",) for k in ("art",)), "only art is centred")
 
