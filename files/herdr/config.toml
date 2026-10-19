@@ -56,17 +56,29 @@ focus_agent = "prefix+alt+1..9"
 
 # Tabs, laid out the way kitty draws them (files/kitty/tab.conf): along the
 # bottom edge of the workspace, and no tab row at all while there is a single
-# tab (kitty: tab_bar_edge bottom + tab_bar_min_tabs 2). The active-tab marker
-# already matches kitty's accent: theme.custom.accent above is #005faf, the same
-# colour kitty uses for the `❯>` prompt (files/kitty/tab.conf).
+# tab (kitty: tab_bar_edge bottom + tab_bar_min_tabs 2).
 #
-# Herdr 0.9.3 exposes no further tab chrome: there is no title template, no
-# per-tab fg/bg, no separator, alignment or fade knob (compare kitty's
-# tab_title_template / tab_fade / tab_separator / tab_bar_align), so the bar's
-# own colours come from the theme tokens above.
+# The colours and templates below come from the local patch series
+# (packages/herdr/patches, applied by packages/overlays/tools.nix) and mirror
+# kitty's tab.conf: the focused tab is bold-italic with an accent `❯>` marker
+# and no bright bar, the others sit flat in kitty's near-invisible grey; the
+# strip itself keeps the neg panel colour. Stock herdr 0.9.3 ignores these keys
+# (serde is not deny_unknown_fields), so the file stays valid on both builds.
+# Herdr has no tab_fade / tab_separator / tab_bar_align equivalents.
 [ui]
 tab_bar_position = "bottom"
 hide_tab_bar_when_single_tab = true
+
+# Kit Kat: kitty #000000 is left alone — the strip keeps theme.custom.panel_bg.
+active_tab_fg = "#6c7e96" # kitty foreground, used for the active tab text
+active_tab_bg = "#040f1c" # panel_bg: no accent bar behind the focused tab
+inactive_tab_fg = "#1b1f25" # kitty's inactive tab text
+inactive_tab_bg = "#040f1c" # panel_bg: tabs are flat on the strip
+active_tab_style = "bold-italic" # kitty active_tab_font_style
+inactive_tab_style = "normal" # kitty inactive_tab_font_style
+tab_title_template = "{index}:{title}" # kitty inactive template
+active_tab_title_template = "{marker}{index} {title}" # kitty active template
+tab_active_marker = "❯> " # painted in theme.custom.accent (#005faf)
 
 # Agent rows in the sidebar: keep the location line, add the session title
 # Herdr strips of its spinner, then the agent label. For dsh the title is the
