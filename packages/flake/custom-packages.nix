@@ -25,6 +25,7 @@
   aurora = pkgs.neg.aurora; # aurora: local MPD player with a Vulkan UI (winit + ash + cosmic-text)
 
   mpd-voice = pkgs.mpd-voice; # voice control for MPD: local STT -> player commands
+  audio-cpp = pkgs.audio-cpp; # ggml audio runtime (Audio Flamingo Next, TTS, ASR) — prebuilt Vulkan build
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
   lusty = pkgs.neg.lusty; # Native file/buffer picker for Neovim (Lusty successor)
