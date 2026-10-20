@@ -71,7 +71,7 @@ library Meta strict {
         size: 118 * scale, capsule.height * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+            Capsule(w, h, scale: 1) {
                 row line {
                     gap: 4
                     align: center
