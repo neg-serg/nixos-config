@@ -337,7 +337,7 @@ scene bar {
             text "{glyph}" {
                 at: icon / 2, strip / 2
                 anchor: center
-                size: 22
+                size: 13
                 color: fill
                 family: "Material Symbols Outlined"
             }
@@ -459,14 +459,16 @@ scene bar {
             // The legacy order from the left: media · MPD · systray · mic ·
             // volume · Genelec. The tray is still an extension point.
             row media_slot { show: widget.media and media.present; MediaCapsule(media_prev, media_toggle, media_next) }
-            row mpd_slot { show: widget.mpd; mpd.Flags() }
+            // QS shows the flag badges only while media is up AND there is a
+            // flag to show; with none it still drew an empty capsule here.
+            row mpd_slot { show: widget.mpd and media.present and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags() }
             MicCapsule(toggle_mic) { show: widget.mic and mic.shown }
             VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and vol.shown }
             // Genelec, the rightmost module, as in the legacy bar — and, as in
             // the legacy bar, only while the cursor is on it: QS's tile sets
             // `hideIconWhenIdle`, which collapses the whole capsule (width and
             // opacity) until `panelHovering` or a level change brings it back.
-            row genelec_slot { show: widget.genelec and (Genelec.hot or strip.hot); gen.Tile() }
+            row genelec_slot { show: widget.genelec and Genelec.hot; gen.Tile() }
         }
     }
 
