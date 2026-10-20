@@ -10,6 +10,9 @@
   lib,
   rustPlatform,
   makeWrapper,
+  pkg-config,
+  freetype,
+  zlib,
   vulkan-loader,
   libGL,
   libxkbcommon,
@@ -61,7 +64,16 @@ rustPlatform.buildRustPackage {
   # runs without a window).
   doCheck = false;
 
-  nativeBuildInputs = [ makeWrapper ];
+  # FreeType is the text rasteriser (the glyphs are hinted the way Pango hints them), so the
+  # build asks pkg-config for it; zlib is freetype-sys's own dependency.
+  nativeBuildInputs = [
+    makeWrapper
+    pkg-config
+  ];
+  buildInputs = [
+    freetype
+    zlib
+  ];
 
   postFixup = ''
     for prog in aurora aurora-probe; do
