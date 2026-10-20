@@ -26,6 +26,9 @@ in
   # clients), so the closure is Python plus whatever speech stack the host
   # enables separately.
   mpd-voice = call (pkg "mpd-voice") { };
+  # ggml-based runtime for local audio models (prebuilt Vulkan build); it runs
+  # Audio Flamingo Next GGUF on the GPU when the ROCm torch path cannot.
+  audio-cpp = call (pkg "audio-cpp") { };
   # Kernel module (RME HDSPe ALSA driver) — takes `kernel`; the default kernel
   # set is a placeholder, the host overrides it with the actual boot kernel.
   snd-hdspe = call (pkg "snd-hdspe") { kernel = prev.linuxPackages.kernel; };

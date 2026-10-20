@@ -57,6 +57,7 @@ in
         # (FLAC/Ogg/MP3/M4A through one code path). It also arrives with beets,
         # but the tool must not depend on that staying enabled.
         pkgs.python3Packages.mutagen
+        pkgs.audio-cpp # ggml audio runtime: Audio Flamingo Next on Vulkan (the only 8B path that fits the GPU)
       ];
 
       # Model cache for CLAP/MERT and the MTG tagger's EffNet/head models:

@@ -246,6 +246,10 @@ music-ai-rocm *ARGS:
 # Create/fill the trained MTG tagger (venv-mtg with essentia-tensorflow) and
 # fetch its EffNet/head models; --check/--dry-run are read-only. Feeds
 # music-mtg-tags: Discogs-400 styles + Jamendo mood/theme/instrument.
+# audio.cpp model files (Audio Flamingo Next GGUF, ~8.7 GiB).
+audio-cpp-models *ARGS:
+    bash "{{repo_root}}/scripts/dev/audio-cpp-models.sh" {{ARGS}}
+
 music-mtg-setup *ARGS:
     bash "{{repo_root}}/scripts/dev/music-mtg-setup.sh" {{ARGS}}
 
