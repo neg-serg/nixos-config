@@ -189,8 +189,8 @@ scene bar {
                 group net {
                     size: w - 2 * capsule.pad, ih
                     ellipse { at: 3, ih / 2; radius: 2.5; color: if(network.online, highlight, warn) }
-                    text "{network.kind} {network.name}" { at: 9, ih / 2; anchor: left center; size: 10; width: 72; lines: 1; color: if(network.online, ink, ink.off); family: "Iosevka" }
-                    text "{network.strength, 0} %" { at: w - 2 * capsule.pad - 2, ih / 2; anchor: right center; size: 10; color: ink.dim; family: "Iosevka" }
+                    text "{network.kind} {network.name}" { at: 9, ih / 2; anchor: left center; size: 11; width: 72; lines: 1; color: if(network.online, ink, ink.off); family: "Iosevka" }
+                    text "{network.strength, 0} %" { at: w - 2 * capsule.pad - 2, ih / 2; anchor: right center; size: 11; color: ink.dim; family: "Iosevka" }
                 }
             }
             zone box net { from: 0, 0; size: w, h; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
@@ -214,7 +214,7 @@ scene bar {
                 group track {
                     size: iw, ih
                     box { from: 0, 0; size: iw * level, ih; corner: corner.small; color: mix(volume.low, volume.high, level) }
-                    text "{audio.volume * 100, 0} %" { at: iw / 2, ih / 2; anchor: center; size: 10; weight: 600; color: ink; family: "Iosevka" }
+                    text "{audio.volume * 100, 0} %" { at: iw / 2, ih / 2; anchor: center; size: 11; weight: 600; color: ink; family: "Iosevka" }
                 }
             }
             zone box vol { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
