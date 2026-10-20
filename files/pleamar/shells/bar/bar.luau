@@ -86,16 +86,56 @@ end)
 -- && (isPlaying || isPaused)`. A player that is there but stopped (mpc with an
 -- empty queue) is not enough, and that is what made the port draw a capsule
 -- the reference did not have.
+-- A pause has no field of its own: the media service answers `playing` and
+-- nothing about paused. QS keeps the capsule through a pause (`isPaused`), so
+-- the port holds `media.present` for a while after `playing` was last true —
+-- long enough to cover a pause, short enough that a player left stopped lets
+-- the capsule go. The proper fix is a `paused` field in the service
+-- (~/src/pleamar, outside this tree); this is the cheap stand-in.
+local MEDIA_HOLD_MS = 10000
+local mediaShown = false
+local mediaHold = nil
+
+local function showMedia(on)
+    if mediaShown == on then return end
+    mediaShown = on
+    fact["media.present"] = on
+end
+
 sys.watch("media", function(m)
     local player, playing = nil, false
     if type(m) == "table" then
         player = m.player
         playing = m.playing == true
     end
-    -- Known gap: the media service reports `playing` and no `paused`, so a
-    -- paused track hides the capsule here where QS keeps it. Stopped (mpc with
-    -- an empty queue) is the case the gate sees, and that one matches.
-    fact["media.present"] = (type(player) == "string") and (player ~= "") and playing
+    local has = (type(player) == "string") and (player ~= "")
+    -- No player at all: the capsule goes at once, like QS's `hasPlayer`.
+    if not has then
+        if mediaHold then
+            cancel(mediaHold)
+            mediaHold = nil
+        end
+        showMedia(false)
+        return
+    end
+    if playing then
+        if mediaHold then
+            cancel(mediaHold)
+            mediaHold = nil
+        end
+        showMedia(true)
+        return
+    end
+    -- A player that is there but not playing: keep what is on screen for the
+    -- hold, then let it go (mpc with an empty queue ends here). The hold is
+    -- armed once per pause, not per update, so a player that keeps reporting
+    -- a paused state cannot keep the capsule up for ever.
+    if mediaShown and not mediaHold then
+        mediaHold = after(MEDIA_HOLD_MS, function()
+            mediaHold = nil
+            showMedia(false)
+        end)
+    end
 end)
 
 -- The transport strip: the three glyph buttons of the media capsule.
