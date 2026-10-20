@@ -122,7 +122,7 @@ scene bar {
 
     service clock as now { time: text; date: text }
     // The track the capsule shows (QS: MusicManager.trackTitle/trackArtist).
-    service media { playing: bool; title: text; artist: text; player: text }
+    service media { playing: bool; title: text; artist: text; player: text; position: number; length: number }
     service workspaces { list: spaces }
     service audio { volume: number; muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
@@ -147,8 +147,7 @@ scene bar {
         group zoom {
             scale: scale
             column { at: 0, 3; gap: 1
-                text "{now.time}" { size: 13; weight: 500; color: time.tone; family: "Iosevka" }
-                text "{now.date}" { size: 10; color: ink.dim; family: "Iosevka" }
+                text "{now.time}" { size: 10; weight: 500; color: time.tone; family: "Iosevka" }
             }
             zone box clock { from: 0, 0; size: 64, 34; corner: corner; label: "Clock {now.time}"; role: region }
         }
@@ -166,8 +165,16 @@ scene bar {
             prop lit = 0 ~ui.quick
             follow lit = if(ws.active, 1, 0)
 
-            box { from: 0, 0; size: pill.height, pill.height; corner: pill.height / 2; color: mix(slate, highlight, lit) }
-            text "{ws.name}" { at: pill.height / 2, pill.height / 2; anchor: center; size: 11.5; weight: 600; color: mix(ink, coal, lit); width: pill.height - 8; lines: 1; align: center; family: "Iosevka" }
+            box { from: 0, 0; size: pill.height, pill.height; corner: corner.small; color: mix(slate, highlight, lit); opacity: 70% }
+            text "{ws.name}" { at: pill.height / 2, pill.height / 2; anchor: center; size: 10; weight: 600; color: mix(ink, coal, lit); width: pill.height - 6; lines: 1; align: center; family: "Iosevka" }
+            // The active marker: QS's triangle at the capsule's edge.
+            path { at: 0, 0; show: ws.active
+                move 0, pill.height / 2 - 3
+                line 3, pill.height / 2
+                line 0, pill.height / 2 + 3
+                close
+                color: highlight
+            }
 
             zone box tab { from: 0, 0; size: pill.height, pill.height; corner: pill.height / 2; cursor: pointer; label: "Workspace {ws.name}"; role: tab; selected: ws.active }
             on press tab { emit focus(ws.id) }
@@ -258,11 +265,11 @@ scene bar {
         // analyser is `iconPreferredWidth` wide (~ the art).
         let h = bar.height
         let art.w = bar.height
-        let text.w = 168
+        let text.w = 240
         let spec.w = bar.height
         let btn.w = 16
         let w = art.w + bar.gap + text.w + bar.gap + spec.w + 2 * bar.gap + 3 * btn.w
-        size: (bar.height + bar.gap + 168 + bar.gap + bar.height + 2 * bar.gap + 3 * 16) * scale, bar.height * scale
+        size: (bar.height + bar.gap + 240 + bar.gap + bar.height + 2 * bar.gap + 3 * 16) * scale, bar.height * scale
         group zoom {
             scale: scale
             // pad_y 0: the art is square, as in QS ("Disable vertical padding to
@@ -273,6 +280,7 @@ scene bar {
                     align: center
                     art.Art(w: 22, h: 22)
                     text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 14; color: ink; family: "Iosevka" }
+                    text "({media.position, time}/{media.length, time})" { size: 12; color: amber; family: "Iosevka" }
                     spec.Bars(width: 22, height: 20, gap: 1)
                     // Fixed 16 px boxes so the hit zones below can name the same
                     // cells the layout hands out.
@@ -321,7 +329,7 @@ scene bar {
     // asks for shadow room; impossible while a surface size is a literal).
     body {
         color: coal
-        opacity: veil
+        opacity: 100%
         rim: 8%
         box { from: 0, 0; size: screen.width, strip; corner: corner }
     }
