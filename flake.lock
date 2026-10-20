@@ -3,11 +3,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792532378,
-        "narHash": "sha256-AKdG6oaIYrM3xN3YqhCmyYMFQJGE3HcGWFDxL6FnNpM=",
+        "lastModified": 1792535066,
+        "narHash": "sha256-zXdUFLKYpf9QuqLCPxIbxR85fVRA09PkVaTURNLB90Q=",
         "ref": "refs/heads/main",
-        "rev": "2e35927f1291d7836a95a2cf1444b34bac9bb0fa",
-        "revCount": 76,
+        "rev": "5b3168b06d5208261d3a6a8481c510272fc5c77c",
+        "revCount": 87,
         "type": "git",
         "url": "file:///home/neg/src/neg-player"
       },
