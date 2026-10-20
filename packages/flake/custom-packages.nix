@@ -22,6 +22,8 @@
 
   sola-mpd = pkgs.sola-mpd; # browser MPD client (Node backend + React UI)
 
+  aurora = pkgs.neg.aurora; # aurora: local MPD player with a Vulkan UI (winit + ash + cosmic-text)
+
   mpd-voice = pkgs.mpd-voice; # voice control for MPD: local STT -> player commands
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
