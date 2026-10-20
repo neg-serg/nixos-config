@@ -159,10 +159,13 @@ plugin-sandbox:
 #   just parity-bar DIR             keep the artifacts in DIR
 #   just parity-bar DIR approve     also approve the plugins, so their data
 #                                   (cover, analyser, flags, dB) is live
+#   just parity-bar DIR approve hide  stop quickshell for the capture (its bar
+#                                   would otherwise show through the port's
+#                                   transparent parts) and start it again after
 # (`just` owns its own flags, so `--approve` cannot be passed through the
 # recipe; the word `approve` is the switch.)
-parity-bar out="" approve="":
-    bash "{{repo_root}}/scripts/dev/parity-bar.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}} {{if approve != "" { "--approve" } else { "" }}}
+parity-bar out="" approve="" hide="":
+    bash "{{repo_root}}/scripts/dev/parity-bar.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}} {{if approve != "" { "--approve" } else { "" }}} {{if hide != "" { "--hide-qs" } else { "" }}}
 
 # Render every plugin's proof scene, one PNG each, into a temp dir
 # (`just render-plugins DIR` to keep them). Uses pleamar-wm headless when it is
