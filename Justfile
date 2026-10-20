@@ -132,6 +132,7 @@ lint:
     bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-qml-lint.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-markdown-language.sh" && \
@@ -144,6 +145,17 @@ lint:
 # the binary is missing from PATH; also runs as part of `lint`.
 pleamar-check:
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}"
+
+# The hostile-plugin gate: an unapproved plugin must be refused (and touch
+# nothing), the same plugin must run once approved. Runs in `lint` too.
+plugin-sandbox:
+    bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}"
+
+# Render every plugin's proof scene headlessly, one PNG each, into a temp dir
+# (`just render-plugins DIR` to keep them). Needs a graphics adapter: without one
+# every scene is skipped with the reason, which is what happens in a sandbox.
+render-plugins out="":
+    bash "{{repo_root}}/scripts/dev/check-plugin-render.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}}
 
 # Resolve repo paths by name (see lib/README.md → Which resolver, where):
 #   just paths keys files        what to write in Nix for files/…
