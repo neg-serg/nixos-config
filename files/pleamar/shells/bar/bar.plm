@@ -47,6 +47,9 @@ language 0.4
 
 import "../../lib/palette.plm"
 import "../../lib/capsule.plm"
+import "../../lib/plugins/pill/pill.plm" as pill
+import "../../lib/plugins/mpd/mpd.plm" as mpd
+import "../../lib/plugins/genelec/genelec.plm" as gen
 
 scene bar {
 
@@ -62,8 +65,11 @@ scene bar {
     fact user_scale = 1.0
     fact widget.clock = true
     fact widget.workspaces = true
+    fact widget.pill = true
     fact widget.network = true
+    fact widget.mpd = true
     fact widget.volume = true
+    fact widget.genelec = true
 
     // --------------------------------------------------------------- surface
     // 44 px is the pleamar bar strip; the surface is exactly that tall and
@@ -207,8 +213,14 @@ scene bar {
             row tabs { show: widget.workspaces; gap: ws.gap * scale
                 for ws in spaces { Tab(ws, focus_workspace) }
             }
-            // Extension point: the pill capsule and the keyboard layout go here
-            // (legacy order: clock · workspaces · pill · keyboard · network).
+            // The pill capsule (legacy order: clock · workspaces · pill ·
+            // keyboard · network). The keyboard layout is still an extension
+            // point; `Pill.Mark()` draws the QS pill, its click handled by the
+            // plugin's own logic.
+            // A `show:` on a copy of a strict-library component is read inside
+            // the library, where the scene's `widget.pill` does not exist; the
+            // slot row carries the condition instead.
+            row pill_slot { show: widget.pill; pill.Mark() }
             NetCapsule() { show: widget.network }
             // Extension point: sysmon, then weather, go here.
         }
@@ -216,10 +228,14 @@ scene bar {
 
     component Right(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         row { at: screen.width - side * scale, strip / 2; anchor: right middle; gap: bar.gap * scale
-            // Extension point: media, MPD flags, sysmon, the tray and the
-            // microphone go here (legacy order, left of the volume).
+            // The MPD flags (legacy order: media · MPD · systray · mic ·
+            // volume · Genelec). The media capsule, the tray and the microphone
+            // are still extension points; the media capsule is the next slice
+            // (cover + track text + spectrum + transport).
+            row mpd_slot { show: widget.mpd; mpd.Flags() }
             VolCapsule(wheel_volume, toggle_mute) { show: widget.volume }
-            // Extension point: Genelec, the rightmost module, goes here.
+            // Genelec, the rightmost module, as in the legacy bar.
+            row genelec_slot { show: widget.genelec; gen.Tile() }
         }
     }
 

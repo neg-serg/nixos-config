@@ -52,27 +52,37 @@ library Genelec strict {
     event turn ->
     event toggle ->
 
+    // The monitor's silhouette, the same file the QS tree draws
+    // (files/quickshell/art/genelec/genelec-ones.svg, copied here so the plugin
+    // travels with its piece).
+    image ones = file "genelec-ones.svg", 16, 16
+
     // ------------------------------------------------------------------ tile
+    // The QS GenelecWidget: the monitor's own silhouette (the SVG the QS tree
+    // draws, travelling with this plugin) that stays hidden until the capsule is
+    // hovered (`hideIconWhenIdle`), and the whole dB label beside it — `-40dB`,
+    // no space, as the QS pill prints it. Wheel is ±1 dB, a press toggles mute.
+    fact hot = false
+
     component Tile(scale: number = ui) {
-        let w = 60
+        let size.icon = 16
+        let label.w = 36
+        let w = 2 * capsule.pad + 16 + capsule.gap + 36
         let h = capsule.height
-        let iw = w - 2 * capsule.pad
-        let ih = h - 2 * capsule.pad.y
-        // dB is negative, so the bar grows as it gets louder; the QS compression
-        // (pow 0.4) is left to the scene — this is the plain share of the range.
-        let t = clamp((volume - minVolume) / (maxVolume - minVolume), 0, 1)
-        size: 60 * scale, capsule.height * scale
+        size: (2 * capsule.pad + 16 + capsule.gap + 36) * scale, capsule.height * scale
         group zoom {
             scale: scale
             Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
-                group track {
-                    size: iw, ih
-                    box { from: 0, 0; size: iw * t, ih; corner: corner.small; color: if(muted, ink.off, mix(volume.low, volume.high, t)) }
-                    text "{volume, 0} dB" { at: iw / 2, ih / 2; anchor: center; size: 10; weight: 600; color: ink; family: "Iosevka"; show: not muted }
-                    text "MUTED" { at: iw / 2, ih / 2; anchor: center; size: 10; weight: 600; color: ink.off; family: "Iosevka"; show: muted }
+                row tile {
+                    gap: capsule.gap
+                    align: center
+                    image ones { size: 16, 16; tint: if(muted, ink.off, ink); opacity: if(hot, 1, 0) }
+                    text "{volume, 0}dB" { family: "Iosevka"; size: 11; weight: 600; color: if(muted, ink.off, ink) }
                 }
             }
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
+            on enter tile { hot = true }
+            on leave tile { hot = false }
             on scroll tile { emit turn(wheel) }
             on press tile { emit toggle }
         }
