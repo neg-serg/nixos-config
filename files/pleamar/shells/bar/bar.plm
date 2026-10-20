@@ -197,7 +197,8 @@ scene bar {
         size: 72 * scale, 34 * scale
         group zoom {
             scale: scale
-            column { at: 0, 3; gap: 1
+            box { from: 0, 5; size: 84, 14; corner: 6; color: coal; opacity: 53% }
+            column { at: 4, 3; gap: 1
                 text "{now.time}" { size: 14; weight: 500; color: time.tone; family: "Iosevka" }
             }
             zone box clock { from: 0, 0; size: 72, 34; corner: corner; label: "Clock {now.time}"; role: region }
@@ -215,12 +216,13 @@ scene bar {
         // The glyph and the label are laid out side by side; the glyph's width
         // is only known once it is shaped, so it is measured.
         measure glyph
-        size: (28 + 14) * scale, strip * scale
+        size: 50 * scale, strip * scale
         group zoom {
             scale: scale
-            text "{ws_icon}" { measure: glyph; at: 0, strip / 2; anchor: left center; size: 14; color: accent.hover; family: "FiraCode Nerd Font Mono" }
-            text "{ws_label}" { at: glyph.width + capsule.gap, strip / 2; anchor: left center; size: 14; weight: 500; color: ink; family: "Iosevka" }
-            zone box ws { from: 0, 0; size: 28, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
+            box { from: 0, 5; size: 50, 14; corner: 6; color: coal; opacity: 53% }
+            text "{ws_icon}" { measure: glyph; at: 4, strip / 2; anchor: left center; size: 14; color: accent.hover; family: "FiraCode Nerd Font Mono" }
+            text "{ws_label}" { at: 4 + glyph.width + capsule.gap, strip / 2; anchor: left center; size: 14; weight: 500; color: ink; family: "Iosevka" }
+            zone box ws { from: 0, 0; size: 50, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on press ws { emit focus }
         }
     }
@@ -254,13 +256,18 @@ scene bar {
         // `horizontalPadding * 2 + metricsRow.implicitWidth`, and a metric the
         // idle rule took away takes its width with it.
         let shown = 1 + 1 + if(has.gpu, 1, 0) + 1 + 1 + if(has.swap and swap >= 0.4, 1, 0)
-        size: (shown * 11 + (shown - 1) * 3) * scale, strip * scale
+        let inner = shown * 11 + (shown - 1) * 3
+        size: (shown * 11 + (shown - 1) * 3 + 8) * scale, strip * scale
         group zoom {
             scale: scale
+            // A `box` placed at a NEGATIVE `from:` draws nothing at all (five
+            // faces written that way never appeared); the face starts at 0 and
+            // the content is inset by the capsule's padding instead.
+            box { from: 0, 5; size: inner + 8, 14; corner: 6; color: coal; opacity: 53% }
             row metrics {
                 gap: 3
                 align: center
-                at: 0, strip / 2 - 12
+                at: 4, strip / 2 - 12
                 SysmonPair("memory_alt", cpu, true, cpu < 0.03, 0.5, 0.8)
                 SysmonPair("memory", ram, true, ram < 0.03, 0.5, 0.8)
                 SysmonPair("developer_board", gpu, has.gpu, gpu < 0.03, 0.5, 0.8)
@@ -273,12 +280,13 @@ scene bar {
 
     // ------------------------------------------------------ left: the keyboard
     component KeyboardCluster(scale: number = ui * user_scale) {
-        size: 42 * scale, strip * scale
+        size: 46 * scale, strip * scale
         group zoom {
             scale: scale
-            text "keyboard" { at: 0, strip / 2; anchor: left center; size: 14; color: ink.dim; family: "Material Symbols Outlined" }
-            text "{kb_layout}" { at: 20, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
-            zone box kb { from: 0, 0; size: 42, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
+            box { from: 0, 5; size: 46, 14; corner: 6; color: coal; opacity: 53% }
+            text "keyboard" { at: 4, strip / 2; anchor: left center; size: 14; color: ink.dim; family: "Material Symbols Outlined" }
+            text "{kb_layout}" { at: 24, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
+            zone box kb { from: 0, 0; size: 46, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
         }
     }
 
@@ -291,14 +299,15 @@ scene bar {
     // cluster after the tabs.
     component NetCluster(scale: number = ui * user_scale) {
         let icon = 14
-        let text.x = 18
-        size: 66 * scale, strip * scale
+        let text.x = 22
+        size: 70 * scale, strip * scale
         group zoom {
             scale: scale
-            text "lan" { at: 0, strip / 2; anchor: left center; size: 14; color: if(network.online, accent, ink.off); family: "Material Symbols Outlined" }
+            box { from: 0, 5; size: 70, 14; corner: 6; color: coal; opacity: 53% }
+            text "lan" { at: 4, strip / 2; anchor: left center; size: 14; color: if(network.online, accent, ink.off); family: "Material Symbols Outlined" }
             text "{net_rx}" { at: text.x, strip / 2 - 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
             text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
-            zone box net { from: 0, 0; size: 66, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
+            zone box net { from: 0, 0; size: 70, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
         }
     }
 
