@@ -236,9 +236,25 @@ sys.watch("workspaces", workspacesChanged)
 -- low for one sample, nothing worse.
 local through = nil
 
-local function fmt_kib(v)
-    if type(v) ~= "number" or v ~= v or v < 0 then return "--" end
-    return string.format("%05.1f", v)
+-- ConnUi.formatScaledKiBps: KiB/s auto-scaled to K/M/G/T, the integer part
+-- zero-padded to three digits and one decimal, the unit letter after it. QS
+-- drops the decimal only when everything is zero ("000K").
+local UNITS = { "K", "M", "G", "T" }
+
+local function fmt_rate(kib)
+    if type(kib) ~= "number" or kib ~= kib or kib < 0 then return "--" end
+    local v, unit = kib, 1
+    while v >= 999.95 and unit < #UNITS do
+        v = v / 1024
+        unit = unit + 1
+    end
+    local fixed = string.format("%.1f", v)
+    local int, dec = fixed:match("^(%d+)%.(%d)$")
+    if not int then int, dec = fixed, "0" end
+    local padded = string.rep("0", 3 - #int) .. int
+    if #int > 3 then padded = int end
+    if padded == "000" and dec == "0" then return padded .. UNITS[unit] end
+    return padded .. "." .. dec .. UNITS[unit]
 end
 
 local function sample()
@@ -257,8 +273,8 @@ local function sample()
             end
         end
         if through then
-            text.net_rx = fmt_kib((rx - through.rx) / 2048)
-            text.net_tx = fmt_kib((tx - through.tx) / 2048)
+            text.net_rx = fmt_rate((rx - through.rx) / 2048)
+            text.net_tx = fmt_rate((tx - through.tx) / 2048)
         end
         through = { rx = rx, tx = tx }
     end)
