@@ -265,6 +265,47 @@ end
 
 sys.watch("workspaces", workspacesChanged)
 
+-- ------------------------------------------------------------- tooltips
+-- QS gives every capsule a PanelTooltip whose text TooltipText.compose builds
+-- out of a title, a value and a list of hints. The scene says which capsule the
+-- cursor is on (`emit tip(n)`), and the line is written here, because only the
+-- logic can compose text.
+-- (permissions: "clock", nothing else — the rest it already watches)
+local tipClock = ""
+
+sys.watch("clock", function(c)
+    if type(c) == "table" and type(c.date) == "string" then tipClock = c.date end
+end)
+
+local function tip_line(i)
+    if i == 0 then
+        return tipClock ~= "" and tipClock or "Clock"
+    elseif i == 1 then
+        return "Workspace " .. (text.ws_label ~= "" and text.ws_label or "?")
+    elseif i == 2 then
+        return "Keyboard layout " .. (text.kb_layout ~= "" and text.kb_layout or "?")
+    elseif i == 3 then
+        -- ConnUi prints the pair as "<rx> / <tx>"; the tooltip says both.
+        return "Throughput " .. (text.net_rx ~= "" and text.net_rx or "--")
+            .. " down, " .. (text.net_tx ~= "" and text.net_tx or "--") .. " up"
+    elseif i == 4 then
+        local cpu = math.floor((fact.cpu or 0) * 100 + 0.5)
+        local ram = math.floor((fact.ram or 0) * 100 + 0.5)
+        return string.format("CPU %d %%, RAM %d %%", cpu, ram)
+    elseif i == 5 then
+        local parts = { "Weather" }
+        if text["weather.temp"] ~= "" then parts[#parts + 1] = text["weather.temp"] end
+        if text["weather.hum"] ~= "" then parts[#parts + 1] = text["weather.hum"] end
+        if text["weather.wind"] ~= "" then parts[#parts + 1] = text["weather.wind"] .. " m/s" end
+        return table.concat(parts, " · ")
+    end
+    return ""
+end
+
+on("tip", function(i)
+    text.tip_body = tip_line(i or 0)
+end)
+
 -- ---------------------------------------------------------------- tray
 -- The icons come from the StatusNotifier host as they are: a record's fields are
 -- `key`, `title`, `icon` (a name or a path) with the rest ignored, so the list

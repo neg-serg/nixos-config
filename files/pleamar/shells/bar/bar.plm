@@ -197,6 +197,9 @@ scene bar {
     text weather.temp = "--°C"
     text weather.hum = ""
     text weather.wind = ""
+    // What the tooltip says. The scene cannot compose text, so it says which
+    // capsule the cursor is on (`emit tip(n)`) and bar.luau writes the line.
+    text tip_body = ""
     // QS Services/SystemMonitor: six 0..1 metrics and whether two of them are
     // there at all (the machine's GPU exposes a busy file, its swap is on).
     fact cpu = 0
@@ -261,7 +264,7 @@ scene bar {
             box { from: 0, 0; size: 240, 30; corner: 6 }
             box { from: 0, 0; size: 2, 30; corner: 1; color: accent }
         }
-        text "{now.date}" { at: 10, 15; anchor: left center; size: 13; color: ink; family: "Iosevka" }
+        text "{tip_body}" { at: 10, 15; anchor: left center; size: 13; color: ink; family: "Iosevka" }
     }
 
     // What is drawn inside the surface, in the same design pixels.
@@ -311,6 +314,8 @@ scene bar {
     // A click on a tray icon: the record's index, because an event carries a
     // number and the keys live in the logic, which is what the tray is told with.
     event tray_press ->
+    // The cursor came onto a left capsule; the number is its place in the row.
+    event tip ->
     event wheel_volume ->
     event toggle_mute ->
     event toggle_mic ->
@@ -330,7 +335,7 @@ scene bar {
             box { from: 0, 1; size: 50, 23; corner: 6; color: coal; opacity: 69% }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
-            on enter clock { tip_open = true }
+            on enter clock { tip_open = true; emit tip(0) }
         }
     }
 
@@ -352,6 +357,7 @@ scene bar {
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: accent.hover; family: "FiraCode Nerd Font Mono" }
             text "{ws_label}" { at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: ink; family: "Iosevka" }
             zone box ws { from: 0, 0; size: 38, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
+            on enter ws { tip_open = true; emit tip(1) }
             on press ws { emit focus }
         }
     }
@@ -459,6 +465,7 @@ scene bar {
             box { from: 122, 6; size: 12, 12; corner: 6; color: ink.dim }
             box { from: 122 + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: coal; opacity: 84% }
             zone box weather { from: 0, 0; size: 148, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
+            on enter weather { tip_open = true; emit tip(5) }
         }
     }
 
@@ -471,6 +478,7 @@ scene bar {
             text "keyboard" { at: 6, strip / 2; anchor: left center; size: 14; color: ink.dim; family: "Material Symbols Outlined" }
             text "{kb_layout}" { at: 28, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
+            on enter kb { tip_open = true; emit tip(2) }
         }
     }
 
@@ -492,6 +500,7 @@ scene bar {
             text "{net_rx}" { at: text.x, strip / 2 - 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
             text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
             zone box net { from: 0, 0; size: 54, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
+            on enter net { tip_open = true; emit tip(3) }
         }
     }
 
