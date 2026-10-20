@@ -69,6 +69,8 @@ scene bar {
     fact widget.workspaces = true
     fact widget.pill = true
     fact widget.network = true
+    fact widget.keyboard = true
+    fact widget.sysmon = true
     fact widget.mpd = true
     fact widget.volume = true
     fact widget.mic = true
@@ -92,6 +94,27 @@ scene bar {
     // brings the Genelec tile (idle-hidden) back. (Not `bar.hot`: the palette
     // already has a `bar.hot` — panel.hotzone.width.)
     fact strip.hot = false
+    // What QS's WsIndicator shows for the ACTIVE workspace: its icon (a Nerd
+    // Font glyph, the same codepoint the tree's SVGs are cut from) and the name
+    // with Hyprland's `:name` prefix stripped. bar.luau fills them; the scene
+    // cannot compare workspace names itself (text, not numbers).
+    text ws_icon = ""
+    text ws_label = ""
+    // The two halves of the network readout, as QS prints them.
+    text net_rx = "--"
+    text net_tx = "--"
+    // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
+    text kb_layout = ""
+    // QS Services/SystemMonitor: six 0..1 metrics and whether two of them are
+    // there at all (the machine's GPU exposes a busy file, its swap is on).
+    fact cpu = 0
+    fact ram = 0
+    fact gpu = 0
+    fact temp = 0
+    fact io = 0
+    fact swap = 0
+    fact has.gpu = false
+    fact has.swap = false
 
     // The transport's three commands, handled by bar.luau through the `media`
     // service (QS calls MusicManager.toggle/next/previous).
@@ -124,7 +147,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "media", "media.*", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "dash"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "media", "media.*", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -176,54 +199,97 @@ scene bar {
         }
     }
 
-    // -------------------------------------------------- left: workspace tabs
-    // One round tab per record the service reports; the active one on its monitor
-    // is lit through a spring. A press hands the id to the logic, which commands
-    // `workspaces.focus`.
-    component Tab(ws: record, focus: event,
-                  scale: number = ui * user_scale) {
-        size: pill.height * scale, pill.height * scale
+    // ------------------------------------------------- left: the workspace
+    // QS's WsIndicator is ONE capsule for the workspace that is focused — the
+    // icon in the accent, the name beside it in the text colour — and not a row
+    // of tabs per workspace. The port drew a tab per record (four of them here),
+    // each a filled capsule with a triangle, which is what made the left end
+    // read far brighter than the reference.
+    component WsCapsule(focus: event,
+                       scale: number = ui * user_scale) {
+        // The glyph and the label are laid out side by side; the glyph's width
+        // is only known once it is shaped, so it is measured.
+        measure glyph
+        size: (28 + 14) * scale, strip * scale
         group zoom {
             scale: scale
-            prop lit = 0 ~ui.quick
-            follow lit = if(ws.active, 1, 0)
-
-            box { from: 0, 0; size: pill.height, pill.height; corner: corner.small; color: mix(slate, highlight, lit); opacity: 70% }
-            text "{ws.name}" { at: pill.height / 2, pill.height / 2; anchor: center; size: 10; weight: 600; color: mix(ink, coal, lit); width: pill.height - 6; lines: 1; align: center; family: "Iosevka" }
-            // The active marker: QS's triangle at the capsule's edge.
-            path { at: 0, 0; show: ws.active
-                move 0, pill.height / 2 - 3
-                line 3, pill.height / 2
-                line 0, pill.height / 2 + 3
-                close
-                color: highlight
-            }
-
-            zone box tab { from: 0, 0; size: pill.height, pill.height; corner: pill.height / 2; cursor: pointer; label: "Workspace {ws.name}"; role: tab; selected: ws.active }
-            on press tab { emit focus(ws.id) }
+            text "{ws_icon}" { measure: glyph; at: 0, strip / 2; anchor: left center; size: 14; color: accent.hover; family: "FiraCode Nerd Font Mono" }
+            text "{ws_label}" { at: glyph.width + capsule.gap, strip / 2; anchor: left center; size: 14; weight: 500; color: ink; family: "Iosevka" }
+            zone box ws { from: 0, 0; size: 28, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
+            on press ws { emit focus }
         }
     }
 
-    // ------------------------------------------------------ left: the network
-    // What the service reports: online (the dot), kind, name, strength. The
-    // label is the standard one — `Network {name}`, or `Network: offline` — and
-    // clicking it will open the network drawer in a later slice.
-    component NetCapsule(scale: number = ui * user_scale) {
-        let w = 118
-        let h = capsule.height
-        let ih = h - 2 * capsule.pad.y
-        size: 118 * scale, capsule.height * scale
+    // ---------------------------------------------------- left: system monitor
+    // QS SystemMonitorCapsule: six `icon + vertical bar` pairs in one capsule,
+    // in the fixed order CPU · RAM · GPU · temperature · I/O · swap. Each pair
+    // is `panel.icons.iconSizeSmall`-ish glyph and a `systemMonitorBarWidth`
+    // bar as tall as `panelHeight * 0.55` (palette bar.height / 2), filled from
+    // the bottom and coloured by the metric's own thresholds
+    // (SystemMonitorUi.thresholdColor). A metric under the idle threshold
+    // (systemMonitorHideIdle, 3 %) keeps its place but dims to textDisabled,
+    // and I/O disappears outright — that is the reference's own rule, and it is
+    // why the cluster is often narrower than six pairs.
+    component SysmonPair(glyph: text, value: number, shown: bool, idle: bool,
+                         warn: number, crit: number,
+                         scale: number = ui * user_scale) {
+        let bh = 12
+        size: 11 * scale, strip * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
-                group net {
-                    size: w - 2 * capsule.pad, ih
-                    ellipse { at: 3, ih / 2; radius: 2.5; color: if(network.online, highlight, warn) }
-                    text "{network.kind} {network.name}" { at: 9, ih / 2; anchor: left center; size: 10; width: 72; lines: 1; color: if(network.online, ink, ink.off); family: "Iosevka" }
-                    text "{network.strength, 0} %" { at: w - 2 * capsule.pad - 2, ih / 2; anchor: right center; size: 10; color: ink.dim; family: "Iosevka" }
-                }
+            text glyph { at: 0, strip / 2; anchor: left center; size: 9; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, ink.dim))); family: "Material Symbols Outlined"; show: shown }
+            // MonitorBar draws the fill and nothing else: no track behind it, so
+            // a 5 % metric is a short dash, not a dot on a rail.
+            box { from: 8, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, ink.dim)); show: shown }
+        }
+    }
+
+    component SysmonCluster(scale: number = ui * user_scale) {
+        size: 84 * scale, strip * scale
+        group zoom {
+            scale: scale
+            row metrics {
+                gap: 3
+                align: center
+                at: 0, strip / 2 - 12
+                SysmonPair("memory_alt", cpu, true, cpu < 0.03, 0.5, 0.8)
+                SysmonPair("memory", ram, true, ram < 0.03, 0.5, 0.8)
+                SysmonPair("developer_board", gpu, has.gpu, gpu < 0.03, 0.5, 0.8)
+                SysmonPair("thermostat", temp, true, temp < 0.03, 0.43, 0.71)
+                SysmonPair("storage", io, true, io < 0.03, 0.5, 0.8)
+                SysmonPair("swap_horiz", swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8)
             }
-            zone box net { from: 0, 0; size: w, h; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
+        }
+    }
+
+    // ------------------------------------------------------ left: the keyboard
+    component KeyboardCluster(scale: number = ui * user_scale) {
+        size: 42 * scale, strip * scale
+        group zoom {
+            scale: scale
+            text "keyboard" { at: 0, strip / 2; anchor: left center; size: 14; color: ink.dim; family: "Material Symbols Outlined" }
+            text "{kb_layout}" { at: 20, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
+            zone box kb { from: 0, 0; size: 42, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
+        }
+    }
+
+    // -------------------------------------------------------- left: network
+    // QS NetFlowCapsule -> NetClusterCapsule: the link glyph in the accent and,
+    // beside it, the two-row throughput readout — receive over transmit, small
+    // type, three digits and a decimal (ConnUi.formatRxText/formatTxText).
+    // The port drew `wired net1 1 %` in a capsule instead: a different widget
+    // with a different width, and the biggest single difference in the left
+    // cluster after the tabs.
+    component NetCluster(scale: number = ui * user_scale) {
+        let icon = 14
+        let text.x = 18
+        size: 66 * scale, strip * scale
+        group zoom {
+            scale: scale
+            text "lan" { at: 0, strip / 2; anchor: left center; size: 14; color: if(network.online, accent, ink.off); family: "Material Symbols Outlined" }
+            text "{net_rx}" { at: text.x, strip / 2 - 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
+            text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
+            zone box net { from: 0, 0; size: 66, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
         }
     }
 
@@ -305,9 +371,11 @@ scene bar {
     component Left(scale: number = ui * user_scale) {
         row { at: side * scale, strip / 2; anchor: left middle; gap: bar.gap * scale
             Clock() { show: widget.clock }
-            row tabs { show: widget.workspaces; gap: ws.gap * scale
-                for ws in spaces { Tab(ws, focus_workspace) }
-            }
+            WsCapsule(focus_workspace) { show: widget.workspaces }
+
+            // QS KeyboardLayoutHypr: the keyboard glyph and the active layout,
+            // nothing else (the icon is not in a square, `iconSquare: false`).
+            KeyboardCluster() { show: widget.keyboard }
             // The pill capsule (legacy order: clock · workspaces · pill ·
             // keyboard · network) rides in only when it is wanted: QS wraps it
             // in a SlideReveal revealed by `PillTracker.reminderActive ||
@@ -316,8 +384,9 @@ scene bar {
             // copy of a strict-library component is read inside the library,
             // where the scene's `widget.pill` does not exist; the slot row
             // carries the condition instead.
-            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
-            NetCapsule() { show: widget.network }
+            row pill_slot { show: widget.pill and Pill.taken and strip.hot; pill.Mark() }
+            NetCluster() { show: widget.network }
+            SysmonCluster() { show: widget.sysmon }
             // Extension point: sysmon, then weather, go here.
         }
     }
