@@ -9,7 +9,8 @@
 # Usage:
 #   music-refresh.sh [--index-args "ARGS"] [--tags-file FILE] [--playlists DIR]
 #                    [--by GROUPS] [--music-dir DIR] [--min-score X]
-#                    [--per-list N] [--skip-tags] [--skip-playlists]
+#                    [--per-list N] [--describe-limit N] [--mf-tags FILE]
+#                    [--skip-tags] [--skip-playlists] [--skip-describe]
 #                    [--check] [--dry-run]
 #
 #   --index-args     extra arguments for music-index (quoted string; the timer
@@ -20,6 +21,12 @@
 #   --music-dir      library root (default ~/music)
 #   --min-score      playlist score floor (default 0.15)
 #   --per-list       tracks per playlist (default 120)
+#   --describe-limit describe up to N new tracks with music-describe and write
+#                    MTG-shaped tag rows (0 = off; each track costs minutes on
+#                    CPU, so the weekly run takes a handful, not the library)
+#   --mf-tags        where those rows go (default
+#                    ~/.cache/music-describe/tags.jsonl)
+#   --skip-describe  keep the index/tags/playlists steps only
 #   --skip-tags      only refresh the index (and playlists from existing tags)
 #   --skip-playlists skip playlist generation
 #   --check          report which tools exist and what would run, change nothing
@@ -35,7 +42,10 @@ BY="mood,parent"
 MUSIC_DIR="${MUSIC_DIR:-$HOME/music}"
 MIN_SCORE="0.15"
 PER_LIST="120"
+DESCRIBE_LIMIT="0"
+MF_TAGS="${MUSIC_DESCRIBE_TAGS:-$HOME/.cache/music-describe/tags.jsonl}"
 SKIP_TAGS=""
+SKIP_DESCRIBE=""
 SKIP_PLAYLISTS=""
 MODE="apply"
 
@@ -73,6 +83,18 @@ while [[ $# -gt 0 ]]; do
     --per-list)
       PER_LIST="${2:?--per-list needs a number}"
       shift 2
+      ;;
+    --describe-limit)
+      DESCRIBE_LIMIT="${2:?--describe-limit needs a number}"
+      shift 2
+      ;;
+    --mf-tags)
+      MF_TAGS="${2:?--mf-tags needs a path}"
+      shift 2
+      ;;
+    --skip-describe)
+      SKIP_DESCRIBE=1
+      shift
       ;;
     --skip-tags)
       SKIP_TAGS=1
@@ -129,6 +151,13 @@ if [[ -z "$SKIP_TAGS" ]]; then
     steps+=("tags:MISSING")
   fi
 fi
+if [[ -z "$SKIP_DESCRIBE" && "$DESCRIBE_LIMIT" -gt 0 ]]; then
+  if describe_tool="$(resolve_tool music-describe)"; then
+    steps+=("describe:$describe_tool --tags --quiet --dir $MUSIC_DIR --out $MF_TAGS --limit $DESCRIBE_LIMIT")
+  else
+    steps+=("describe:MISSING")
+  fi
+fi
 if [[ -z "$SKIP_PLAYLISTS" ]]; then
   if tag_tool="$(resolve_tool music-mtg-tags)"; then
     # --by takes one group per run, so a comma list becomes one step each
@@ -139,12 +168,21 @@ if [[ -z "$SKIP_PLAYLISTS" ]]; then
       [[ -n "$group" ]] || continue
       steps+=("playlists-$group:$tag_tool --tags $TAGS_FILE --playlists $PLAYLISTS --music-dir $MUSIC_DIR --by $group --min-score $MIN_SCORE --per-list $PER_LIST")
     done
+    # Music Flamingo rows carry score 1.0, so the same builder works; they
+    # live in their own subdirectory because one .m3u per label would
+    # otherwise overwrite the MTG lists.
+    if [[ -z "$SKIP_DESCRIBE" && "$DESCRIBE_LIMIT" -gt 0 && -s "$MF_TAGS" ]] && describe_tool="$(resolve_tool music-mtg-tags)"; then
+      steps+=("playlists-mf:$describe_tool --tags $MF_TAGS --playlists $PLAYLISTS/mf --music-dir $MUSIC_DIR --by mood --min-score $MIN_SCORE --per-list $PER_LIST")
+    fi
   else
     steps+=("playlists:MISSING")
   fi
 fi
 
 echo "music-refresh: music_dir=$MUSIC_DIR tags=$TAGS_FILE playlists=$PLAYLISTS"
+if [[ "$DESCRIBE_LIMIT" -gt 0 && -z "$SKIP_DESCRIBE" ]]; then
+  echo "  describe -> up to $DESCRIBE_LIMIT new track(s) into $MF_TAGS"
+fi
 for step in "${steps[@]}"; do
   echo "  ${step%%:*} -> ${step#*:}"
 done

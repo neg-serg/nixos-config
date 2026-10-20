@@ -37,6 +37,12 @@ let
     "--quiet --threads 4"
     + lib.optionalString (autoIndex.limit > 0) " --limit ${toString autoIndex.limit}"
     + lib.optionalString (autoIndex.extraArgs != [ ]) " ${lib.escapeShellArgs autoIndex.extraArgs}";
+  # A bounded music-describe pass belongs to the refresh chain; without it the
+  # timer only embeds and never spends minutes per track on descriptions.
+  describeArgs = lib.optionalString (
+    autoIndex.describeLimit > 0
+  ) " --describe-limit ${toString autoIndex.describeLimit}";
+  useRefreshChain = autoIndex.tagsAndPlaylists || autoIndex.describeLimit > 0;
 in
 {
   config = lib.mkMerge [
@@ -74,10 +80,12 @@ in
         description = "Refresh the MERT similarity index incrementally";
         serviceConfig = {
           ExecStart =
-            if autoIndex.tagsAndPlaylists then
-              # The chain refreshes index -> tags -> playlists; each step is
+            if useRefreshChain then
+              # The chain refreshes index -> tags -> describe -> playlists;
+              # each step is incremental, so an unchanged library costs
+              # seconds.
               # incremental, so an unchanged library costs seconds.
-              "${pkgs.bash}/bin/bash ${refreshScript} --index-args '${indexArgs}'"
+              "${pkgs.bash}/bin/bash ${refreshScript} --index-args '${indexArgs}'${describeArgs}"
             else
               "%h/.local/bin/music-index ${indexArgs}";
           # A cold pass over the whole library is hours (12h covers the measured

@@ -201,6 +201,11 @@ in
     # One weekly pass refreshes the index, the MTG tags and the mood/genre
     # playlists; every step skips work whose inputs did not change.
     tagsAndPlaylists = true;
+    # Trickle Music Flamingo descriptions into the tag file: ten new tracks a
+    # week cost ~25 min of CPU in the Sunday run (1.5-2.5 min each) and feed
+    # the mf playlists. The whole library would be months, so it stays a
+    # trickle for albums that actually arrive.
+    describeLimit = 10;
     extraArgs = [
       "--layer"
       "-1"
