@@ -85,3 +85,4 @@ gpucore.*
 # live copy under $XDG_CONFIG_HOME/quickshell/Theme. A tracked copy only ever ships a stale
 # snapshot (June 2026, pre-nixie keys) to the tools that read it by default.
 files/quickshell/Theme/.theme.json
+.agent/plans/bar-gaps.md
