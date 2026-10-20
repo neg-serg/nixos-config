@@ -79,11 +79,34 @@ rustPlatform.buildRustPackage {
     Name=aurora
     Comment=MPD client with a Vulkan UI
     Exec=aurora
+    Icon=aurora
     Terminal=false
     Categories=AudioVideo;Audio;Player;
     Keywords=mpd;music;player;audio;
     StartupWMClass=aurora
     DESKTOP
+        # The same four curtain ribbons the top bar and the window icon draw, as a scalable
+        # asset: one mark, three renderers, no file that can drift out of date.
+        install -Dm644 /dev/stdin $out/share/icons/hicolor/scalable/apps/aurora.svg <<'SVG'
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+      <style>
+        .tile { fill: #14161b; }
+        .ribbon { fill: url(#fade); }
+        .crest { fill: #8aa2c0; }
+      </style>
+      <defs>
+        <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
+        </linearGradient>
+      </defs>
+      <rect class="tile" x="6" y="6" width="116" height="116" rx="28"/>
+      <rect class="ribbon" x="34" y="58" width="15" height="36" rx="3"/>
+      <rect class="ribbon" x="52" y="44" width="15" height="50" rx="3"/>
+      <rect class="crest" x="70" y="26" width="15" height="68" rx="3"/>
+      <rect class="ribbon" x="88" y="38" width="15" height="56" rx="3"/>
+    </svg>
+    SVG
         install -Dm644 /dev/stdin $out/share/metainfo/aurora.metainfo.xml <<'META'
     <?xml version="1.0" encoding="UTF-8"?>
     <component type="desktop-application">
