@@ -127,6 +127,35 @@
           default = "/zero/ai/music-ai/hf";
           description = "HuggingFace cache directory for the tagging/embedding models.";
         };
+        describeModel = lib.mkOption {
+          type = lib.types.str;
+          default = "nvidia/music-flamingo-2601-hf";
+          description = ''
+            Audio-language model behind music-describe (Music Flamingo, 8B).
+            It answers free-form questions about a track (genre, tempo, key,
+            instrumentation, production, lyrics, cultural context) over up to
+            20 minutes of audio in 30 s windows and needs 15.4 GiB in bf16,
+            fetched into `hfHome` on first use. Measured on trantor/CPU (16
+            threads): 1.5-2.3 tokens/s, so 1.5-2.5 min for a 200-250 token
+            answer, plus ~5 s to map the weights. The weights are under the
+            NVIDIA OneWay Noncommercial License (research use only); a local
+            directory works as well as a HuggingFace id.
+          '';
+        };
+        describeDevice = lib.mkOption {
+          type = lib.types.enum [
+            "auto"
+            "cpu"
+            "cuda"
+          ];
+          default = "cpu";
+          description = ''
+            Device for music-describe. CPU is the default on purpose: an 8B
+            model makes the GPU worth having, but the ROCm path already
+            crashed this host once (2026-10-12, memory access fault), so the
+            GPU stays opt-in via this option or `--device`.
+          '';
+        };
         mtgVenv = lib.mkOption {
           type = lib.types.str;
           default = "/zero/ai/music-ai/venv-mtg";

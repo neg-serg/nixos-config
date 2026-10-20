@@ -71,7 +71,7 @@ note() {
 # --- wrappers -------------------------------------------------------------
 tools_ok=0
 tools_missing=()
-for tool in music-embed music-tags music-index music-similar music-mtg-tags mpd-voice; do
+for tool in music-embed music-tags music-index music-similar music-mtg-tags music-describe mpd-voice; do
   if [[ -x "$HOME_DIR/.local/bin/$tool" ]] || command -v "$tool" > /dev/null 2>&1; then
     tools_ok=$((tools_ok + 1))
   else
@@ -79,9 +79,9 @@ for tool in music-embed music-tags music-index music-similar music-mtg-tags mpd-
   fi
 done
 if [[ ${#tools_missing[@]} -eq 0 ]]; then
-  note ok "wrappers" "all 6 in ~/.local/bin"
+  note ok "wrappers" "all 7 in ~/.local/bin"
 else
-  note warn "wrappers" "${tools_ok}/6 present, missing: ${tools_missing[*]} (switch a newer generation)"
+  note warn "wrappers" "${tools_ok}/7 present, missing: ${tools_missing[*]} (switch a newer generation)"
 fi
 
 # --- index ----------------------------------------------------------------
@@ -168,11 +168,16 @@ clap=0
 [[ -d "$HF_HOME_DIR/hub" ]] && mert=$(find "$HF_HOME_DIR/hub" -maxdepth 1 -name 'models--m-a-p--MERT*' 2> /dev/null | wc -l)
 [[ -d "$HF_HOME_DIR/hub" ]] && clap=$(find "$HF_HOME_DIR/hub" -maxdepth 1 -name 'models--laion--clap*' 2> /dev/null | wc -l)
 mtg=$(find "$MTG_MODELS" -maxdepth 1 -name '*.pb' 2> /dev/null | wc -l)
+# Music Flamingo is 15.4 GiB and opt-in: its absence is a hint, not a fault.
+mf=$(find "$HF_HOME_DIR/hub" -maxdepth 1 -name 'models--nvidia--music-flamingo*' 2> /dev/null | wc -l)
 say() { [[ "$1" -gt 0 ]] && printf 'yes' || printf 'no'; }
-detail="HF: MERT $(say "$mert"), CLAP $(say "$clap") in $HF_HOME_DIR; MTG: $mtg graphs"
+detail="HF: MERT $(say "$mert"), CLAP $(say "$clap"), MF $(say "$mf") in $HF_HOME_DIR; MTG: $mtg graphs"
 status="ok"
 if [[ "$clap" -eq 0 ]]; then
   detail+=" — CLAP downloads on the first music-tags run"
+fi
+if [[ "$mf" -eq 0 ]]; then
+  detail+=" — MF (music-describe) downloads on its first run, ~15.4 GiB"
 fi
 # Backbone + genre + mood + instrument = 4 graphs for the core set.
 if [[ "$mtg" -lt 4 ]]; then

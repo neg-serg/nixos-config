@@ -52,6 +52,10 @@
           # TensorflowPredict* classes, plus the pinned model directory.
           "@MUSIC_MTG_VENV@" = config.features.media.audio.musicTagging.mtgVenv;
           "@MUSIC_MTG_MODELS@" = config.features.media.audio.musicTagging.mtgModels;
+          # Music Flamingo 8B audio LLM behind music-describe: model id (or a
+          # local directory) and the device the wrapper defaults to.
+          "@MUSIC_DESCRIBE_MODEL@" = config.features.media.audio.musicTagging.describeModel;
+          "@MUSIC_DESCRIBE_DEVICE@" = config.features.media.audio.musicTagging.describeDevice;
         };
         subst = lib.replaceStrings (builtins.attrNames substs) (builtins.attrValues substs);
 
