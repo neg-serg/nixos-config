@@ -52,7 +52,7 @@ library Mpd strict {
         size: (2 * capsule.pad + (repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, capsule.height * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+            Capsule(w, h, scale: 1) {
                 row flags {
                     gap: 2
                     align: center

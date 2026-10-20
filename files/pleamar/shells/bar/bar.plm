@@ -415,7 +415,7 @@ scene bar {
             scale: scale
             // pad_y 0: the art is square, as in QS ("Disable vertical padding to
             // allow square cover art in all modes").
-            Capsule(w, h, scale: 1, pad_y: 0, pad: 2, shadow: 25%, rim: 0.06) {
+            Capsule(w, h, scale: 1, pad_y: 0, pad: 2) {
                 row media_row {
                     gap: bar.gap
                     align: center

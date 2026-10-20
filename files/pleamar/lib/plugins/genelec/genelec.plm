@@ -72,7 +72,7 @@ library Genelec strict {
         size: (2 * capsule.pad + 16 + capsule.gap + 40) * scale, capsule.height * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+            Capsule(w, h, scale: 1) {
                 row tile {
                     gap: capsule.gap
                     align: center

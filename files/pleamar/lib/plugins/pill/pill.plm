@@ -65,7 +65,7 @@ library Pill strict {
         size: (2 * capsule.pad + 10) * scale, capsule.height * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+            Capsule(w, h, scale: 1) {
                 row mark {
                     align: center
                     text "pill" { family: "Material Symbols Outlined"; size: 10; color: if(taken, highlight, ink.dim); opacity: if(reminder, 0.65 + pulse, 1) }
