@@ -3,11 +3,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792510315,
-        "narHash": "sha256-IFnAt65T6Ab3Km5NWJerX6q9hYUPEs+539puUCFzrAQ=",
+        "lastModified": 1792511451,
+        "narHash": "sha256-A4JYVJ94EXAadGEbEjX8T/ghca/l+hdZai8VjE8Q9q4=",
         "ref": "refs/heads/main",
-        "rev": "233eccbc02d6ab19c9f199239722cfca1e582b19",
-        "revCount": 50,
+        "rev": "46867ba74adedea849b6ba76531ad58d6f3170f6",
+        "revCount": 52,
         "type": "git",
         "url": "file:///home/neg/src/neg-player"
       },
@@ -41,11 +41,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791316944,
-        "narHash": "sha256-VCrRKi0Dn7S+y/48ZlPaHckZpRx59urYQwbeSyfAJBM=",
+        "lastModified": 1792248446,
+        "narHash": "sha256-9DPMOnQkjY3/mI7VktLxmdKiNnHtXv/eYUuOqEQUoBQ=",
         "owner": "JustVugg",
         "repo": "colibri",
-        "rev": "bf2442915d6e3dd4cdfd2eb9c2a3d2aa44a25850",
+        "rev": "e0db083cdc9e563e0766cc6fc661ef23c32298e0",
         "type": "github"
       },
       "original": {
@@ -1026,11 +1026,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791710405,
-        "narHash": "sha256-mVD4XIc5JkqMW2K04IkFUzHgHmyJZlzw5ktfgMDCbKU=",
+        "lastModified": 1792056300,
+        "narHash": "sha256-YU1LjDe1o2Ymg5zEiCHbmMXLkDCtxHQRiVqZ3nC5GGk=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "ee48786c6f9160d2c1a084aac841f68195b8420c",
+        "rev": "44931708c62937c2b1bf7953902989fa5bb9ee1b",
         "type": "github"
       },
       "original": {
