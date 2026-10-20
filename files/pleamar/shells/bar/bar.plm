@@ -189,13 +189,18 @@ scene bar {
     // The service writes time and date itself; no slot here pads numbers, so
     // neither is composed from hour/minute.
     component Clock(scale: number = ui * user_scale) {
-        size: 64 * scale, 34 * scale
+        // QS's ClockWidget prints the time at fontSizeSmall * timeFontScale (14 *
+        // 0.7 = 9.8 design) — but that is a Qt pixel size, and the port's `size:`
+        // is the em of the glyph, so 10 drew it 27% narrower than the reference
+        // (`18:46` measured 56 px of ink against QS's 76). 14 is where the two
+        // agree, and the box follows the wider text.
+        size: 72 * scale, 34 * scale
         group zoom {
             scale: scale
             column { at: 0, 3; gap: 1
-                text "{now.time}" { size: 10; weight: 500; color: time.tone; family: "Iosevka" }
+                text "{now.time}" { size: 14; weight: 500; color: time.tone; family: "Iosevka" }
             }
-            zone box clock { from: 0, 0; size: 64, 34; corner: corner; label: "Clock {now.time}"; role: region }
+            zone box clock { from: 0, 0; size: 72, 34; corner: corner; label: "Clock {now.time}"; role: region }
         }
     }
 
