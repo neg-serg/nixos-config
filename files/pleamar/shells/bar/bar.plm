@@ -98,6 +98,12 @@ scene bar {
     // interWidgetRatio: round(4 * 1.15) = 5 logical, times 1.35 rounds to 7 —
     // 6.1 design px, six here.
     let row.gap = 6
+    // How many of the six monitor pairs are there at all: the reference's own
+    // rule (SystemMonitorCapsule._vis*), the GPU only on a machine that has
+    // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
+    // component would not do: a component's `size:` is read in the caller's
+    // scope, and there the name `shown` is the scene's own fact.
+    let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
     // per-monitor fit; `widget.*` decide which widgets of this slice are there.
     fact user_scale = 1.0
@@ -107,6 +113,7 @@ scene bar {
     fact widget.network = true
     fact widget.keyboard = true
     fact widget.sysmon = true
+    fact widget.weather = true
     fact widget.mpd = true
     fact widget.volume = true
     fact widget.mic = true
@@ -141,6 +148,18 @@ scene bar {
     text net_tx = "--"
     // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
     text kb_layout = ""
+    // The weather capsule, filled by bar.luau from open-meteo through its own
+    // on-disk cache: the glyph of the WMO code, the readouts, and the wind
+    // arrow's angle (meteorological degrees + 180, where the wind blows TO).
+    // `have` stays false until an answer — cached or fresh — has landed.
+    fact weather.have = false
+    fact weather.dir = 0
+    // The moon's phase, 0 = new, 0.5 = full: the disc's shadow is placed by it.
+    fact weather.moon = 0
+    text weather.icon = "partly_cloudy_day"
+    text weather.temp = "--°C"
+    text weather.hum = ""
+    text weather.wind = ""
     // QS Services/SystemMonitor: six 0..1 metrics and whether two of them are
     // there at all (the machine's GPU exposes a busy file, its swap is on).
     fact cpu = 0
@@ -183,7 +202,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { run: "cat", "hyprctl", "dash"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "media", "media.*", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "dash", "curl", "date"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "media", "media.*", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -289,9 +308,8 @@ scene bar {
         // The box is as wide as the pairs that show: QS's capsule is
         // `horizontalPadding * 2 + metricsRow.implicitWidth`, and a metric the
         // idle rule took away takes its width with it.
-        let shown = 1 + 1 + if(has.gpu, 1, 0) + 1 + 1 + if(has.swap and swap >= 0.4, 1, 0)
-        let inner = shown * 16 + (shown - 1) * 2.5
-        size: (shown * 16 + (shown - 1) * 2.5 + 12) * scale, strip * scale
+        let inner = sysmon.pairs * 16 + (sysmon.pairs - 1) * 2.5
+        size: (sysmon.pairs * 16 + (sysmon.pairs - 1) * 2.5 + 12) * scale, strip * scale
         group zoom {
             scale: scale
             // A `box` placed at a NEGATIVE `from:` draws nothing at all (five
@@ -306,9 +324,46 @@ scene bar {
                 SysmonPair("memory", ram, true, ram < 0.03, 0.5, 0.8)
                 SysmonPair("developer_board", gpu, has.gpu, gpu < 0.03, 0.5, 0.8)
                 SysmonPair("thermostat", temp, true, temp < 0.03, 0.43, 0.71)
-                SysmonPair("storage", io, true, io < 0.03, 0.5, 0.8)
+                // I/O is the one metric the reference takes away outright when
+                // it is idle (`_visIo = showIoMonitor && !_idleIo`), where the
+                // others stay and only dim: it is worth 44 physical px of the
+                // row, and a cluster that keeps it pushes everything after it
+                // (the weather) to the right.
+                SysmonPair("storage", io, io >= 0.03, io < 0.03, 0.5, 0.8)
                 SysmonPair("swap_horiz", swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8)
             }
+        }
+    }
+
+    // ------------------------------------------------------- left: the weather
+    // QS WeatherButton: one row of pieces — the code's glyph in the accent, the
+    // temperature, water_drop and the humidity, the navigation arrow turned by
+    // the wind with its speed beside it, and the moon — inside one
+    // WidgetCapsule whose width is `horizontalPadding * 2 + content`. The
+    // offsets below are the reference's ink, read off its strip at 2.3 physical
+    // px per design: glyph 6, temp 24, water_drop 48, humidity 66, arrow 87,
+    // wind 106, moon 122 design px from the face's left edge.
+    component WeatherCapsule(scale: number = ui * user_scale) {
+        size: 148 * scale, strip * scale
+        group zoom {
+            scale: scale
+            box { from: 0, 5; size: 148, 14; corner: 6; color: coal; opacity: 53% }
+            text "{weather.icon}" { at: 6, strip / 2; anchor: left center; size: 14; color: accent; family: "Material Symbols Outlined" }
+            text "{weather.temp}" { at: 24, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
+            text "water_drop" { at: 48, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Material Symbols Outlined" }
+            text "{weather.hum}" { at: 66, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Iosevka" }
+            // `text` has no `rotate`: the arrow turns inside a group whose pivot
+            // is the glyph's own centre (its advance is about 12 design wide).
+            group arrow { pivot: 93, strip / 2; rotate: weather.dir
+                text "navigation" { at: 87, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Material Symbols Outlined" }
+            }
+            text "{weather.wind}" { at: 106, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Iosevka" }
+            // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
+            // the phase — at new moon it sits on the disc, at full moon clear of
+            // it. The shadow is the face's own colour, as in the reference.
+            box { from: 122, 6; size: 12, 12; corner: 6; color: ink.dim }
+            box { from: 122 + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: coal; opacity: 84% }
+            zone box weather { from: 0, 0; size: 148, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
         }
     }
 
@@ -439,6 +494,7 @@ scene bar {
             row pill_slot { show: widget.pill and Pill.taken and strip.hot; pill.Mark() }
             NetCluster() { show: widget.network }
             SysmonCluster() { show: widget.sysmon }
+            WeatherCapsule() { show: widget.weather and weather.have }
             // Extension point: sysmon, then weather, go here.
         }
     }

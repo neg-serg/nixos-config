@@ -18,7 +18,7 @@ local D = {
 -- set. An order cannot be applied at runtime (the scene paints in the order it
 -- is written), and entries this slice does not know yet (pill, keyboard, media,
 -- …) are kept in the file for the slices that do.
-local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "sysmon", "media", "mpd", "volume", "mic", "genelec" }
+local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "sysmon", "weather", "media", "mpd", "volume", "mic", "genelec" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
@@ -322,6 +322,105 @@ end
 
 sample()
 every(2000, sample)
+
+-- -------------------------------------------------------------- weather
+-- QS WeatherButton: the WMO code as a Material glyph, N °C, water_drop + N %,
+-- a navigation arrow turned by the wind direction with the speed beside it, and
+-- the moon's phase on the end. open-meteo answers in one to two seconds, which
+-- is longer than the parity gate waits, so the answer is cached on disk and the
+-- capsule fills from the cache first — the fetch only refreshes it.
+--
+-- The units are open-meteo's own: `wind_speed_unit=ms` asks for metres per
+-- second. Without it the answer is km/h, and the bar's figure would be one
+-- / 3.6 too large (WeatherIcons prints what it is given).
+-- (permissions: "files", "files.write")
+local WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
+    .. "?latitude=59.9375&longitude=30.3086"
+    .. "&current=temperature_2m,relative_humidity_2m,weather_code,"
+    .. "wind_speed_10m,wind_direction_10m&wind_speed_unit=ms"
+local WEATHER_CACHE = "weather.json"
+local WEATHER_REFRESH_MS = 900000
+
+-- WeatherIcons.materialSymbolForCode, the same ladder.
+local function weather_icon(code)
+    if code == 0 then return "sunny" end
+    if code == 1 or code == 2 then return "partly_cloudy_day" end
+    if code == 3 then return "cloud" end
+    if code >= 45 and code <= 48 then return "foggy" end
+    if code >= 51 and code <= 67 then return "rainy" end
+    if code >= 71 and code <= 77 then return "weather_snowy" end
+    if code >= 80 and code <= 82 then return "rainy" end
+    if code >= 95 and code <= 99 then return "thunderstorm" end
+    return "cloud"
+end
+
+-- The synodic month from the new moon of 2000-01-06 18:14 UTC — the same
+-- reference WeatherIcons.moonAge counts from.
+local function moon_phase(epoch)
+    if type(epoch) ~= "number" then return 0 end
+    local days = (epoch - 947182440) / 86400
+    local cycles = days / 29.53059
+    local frac = cycles - math.floor(cycles)
+    if frac < 0 then frac = frac + 1 end
+    return frac
+end
+
+local function show_weather(w)
+    if type(w) ~= "table" then return end
+    local code = tonumber(w.code)
+    local temp = tonumber(w.temp)
+    if not code or not temp then return end
+    local hum = tonumber(w.hum)
+    local wind = tonumber(w.wind)
+    text["weather.icon"] = weather_icon(code)
+    text["weather.temp"] = string.format("%d°C", math.floor(temp + 0.5))
+    if hum then text["weather.hum"] = string.format("%d%%", math.floor(hum + 0.5)) end
+    -- WeatherIcons.formatWindSpeed: one decimal, no unit in the bar.
+    if wind then text["weather.wind"] = string.format("%.1f", wind) end
+    fact["weather.dir"] = tonumber(w.dir) or 0
+    fact["weather.have"] = true
+end
+
+local function weather_cached()
+    local ok, got = pcall(function() return sys.ask("files.read", WEATHER_CACHE, "json") end)
+    if ok then show_weather(got) end
+end
+
+-- The answer is flat enough to read with patterns: each field of `current`
+-- appears once as a number, and the copies inside `*_units` are strings.
+local function weather_fetch()
+    run("curl", { "-s", "--max-time", "4", WEATHER_URL }, function(out, code)
+        if code ~= 0 or type(out) ~= "string" or out == "" then return end
+        local function n(key)
+            return tonumber(out:match('"' .. key .. '"%s*:%s*(-?%d+%.?%d*)'))
+        end
+        local w = {
+            code = n("weather_code"),
+            temp = n("temperature_2m"),
+            hum = n("relative_humidity_2m"),
+            wind = n("wind_speed_10m"),
+            dir = n("wind_direction_10m"),
+        }
+        if not w.code or not w.temp then return end
+        show_weather(w)
+        sys.call("files.write", WEATHER_CACHE,
+            string.format('{\n  "code": %d,\n  "dir": %d,\n  "hum": %d,\n  "temp": %.1f,\n  "wind": %.1f\n}\n',
+                w.code, w.dir or 0, w.hum or 0, w.temp, w.wind or 0))
+    end)
+end
+
+local function moon_tick()
+    run("date", { "+%s" }, function(out)
+        local epoch = tonumber(out)
+        if epoch then fact["weather.moon"] = moon_phase(epoch) end
+    end)
+end
+
+weather_cached()
+weather_fetch()
+moon_tick()
+every(WEATHER_REFRESH_MS, weather_fetch)
+every(WEATHER_REFRESH_MS, moon_tick)
 
 -- ------------------------------------------------------------- keyboard
 -- QS KeyboardLayoutHypr reads the active keymap out of `hyprctl devices -j`;
