@@ -195,6 +195,17 @@
             description = "Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.";
           };
           tagsAndPlaylists = mkBool "also refresh MTG tags and the mood/genre playlists in the same run" false;
+          describeLimit = lib.mkOption {
+            type = lib.types.int;
+            default = 0;
+            description = ''
+              Describe up to N new tracks per refresh with music-describe and
+              write MTG-shaped tag rows (0 = off). Each cold track costs 1.5-2.5
+              minutes of CPU, so this is a trickle — a handful per night, not
+              the library — and the rows are what `music-refresh.sh` turns into
+              the `mf` mood playlists under the playlist directory.
+            '';
+          };
           extraArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [ ];
