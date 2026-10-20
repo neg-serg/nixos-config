@@ -31,6 +31,11 @@
   topowall = pkgs.neg.topowall; # Topographic contour wallpapers from real elevation data (GPU render)
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
 
+  # pleamar scene runtime (the shell port's compiler and the plugin render gate).
+  # `nix run .#pleamar -- --scene …` works without enabling features.gui.pleamar,
+  # which is how the render gate reaches the binary when it is not on PATH.
+  pleamar = pkgs.pleamar;
+
   dsh = pkgs.neg.dsh;
 
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)

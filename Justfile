@@ -151,8 +151,10 @@ pleamar-check:
 plugin-sandbox:
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}"
 
-# Render every plugin's proof scene headlessly, one PNG each, into a temp dir
-# (`just render-plugins DIR` to keep them). Needs a graphics adapter: without one
+# Render every plugin's proof scene, one PNG each, into a temp dir
+# (`just render-plugins DIR` to keep them). Uses pleamar-wm headless when it is
+# on PATH, otherwise the live session (`grim` + Hyprland); the pleamar binary
+# itself comes from PATH or from the flake. Needs a graphics adapter: without one
 # every scene is skipped with the reason, which is what happens in a sandbox.
 render-plugins out="":
     bash "{{repo_root}}/scripts/dev/check-plugin-render.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}}
