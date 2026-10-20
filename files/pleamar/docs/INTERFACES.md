@@ -31,6 +31,8 @@ files/pleamar/
   lib/capsule.plm            the widget background component                 (this PH1)
   lib/menu.plm               menu rows, frozen in §5, not written yet        (next lib task)
   lib/icons.plm              icon helpers, frozen in §5.3, not written yet   (next lib task)
+  lib/plugins/<name>/        a plugin: `<name>.plm` (library) + `<name>.luau` (its logic), §10
+  lib/plugins/<name>/<name>.check.plm  that plugin's compile proof (a scene, not deployed), §9.1
   shells/<scene>/<scene>.plm the scene; directory name == scene name == IPC name
   shells/<scene>/<scene>.luau its logic, optional, next to the scene
   shells/<scene>/pages/*.plm parts of the scene (`include`, they do not import)
@@ -1038,16 +1040,15 @@ surface default is yes.
 - Before handoff: `just pleamar-check` (runs `scripts/dev/check-plm.sh` over every tracked `.plm`)
   and `just lint`. While the binary is not in `PATH` the gate prints a skip notice and exits 0;
   never mistake the skip for a pass.
-- **Known gate defect (reported to the integrator, not fixed here):** `check-plm.sh` compiles every
-  `.plm` including `lib/*.plm`, and `--check` refuses a library file, so with the binary in `PATH`
-  it ends `FAILED: 2 of 3 scene(s)`. A failure on `lib/*.plm` is this defect, not a scene error; the
-  gate must skip library files (or be given the consumer scenes to check them through).
 - A library file cannot be checked alone: the compiler answers `this is a library: it is not opened`
-  (exit 1) for `lib/*.plm`. Check libraries through a consumer scene; keep the consumer in `/tmp`,
-  never in the repo, and let it import the library by relative path
-  (`import "../../etc/nixos/files/pleamar/lib/palette.plm"` from `/tmp/dm-consumer/`). The PH1
-  consumers are in `/tmp/plm-consumer/` (`palette_probe.plm` exercises every let and spring,
-  `capsule_use.plm` every capsule parameter).
+  (exit 1) for `lib/*.plm`, and a component is only type-checked where it is used. `check-plm.sh`
+  therefore skips `library`/`part` files instead of failing on them, and libraries are compiled
+  through a scene that imports them.
+- Where that consumer lives: **scratch consumers stay in `/tmp`** (`import` by absolute path, e.g.
+  `import "/etc/nixos/files/pleamar/lib/palette.plm"`); a **plugin** ships its own
+  `<name>.check.plm` beside it, because nothing else in the repo would ever compile it (§10). The
+  PH1 scratch consumers are in `/tmp/plm-consumer/` (`palette_probe.plm` exercises every let and
+  spring, `capsule_use.plm` every capsule parameter).
 - Per scene, before a task is done: headless PNG reviewed, `describe` snapshot committed under
   `tests/`, budget row in `tests/evidence/` (harness owned by PH0-T3/PH0-T4).
 - The behavior of a runtime change is not proven by `--check`; it is proven by a headless run plus a
@@ -1093,7 +1094,128 @@ These were found while writing the two libraries; they are the traps that cost t
 ### 9.3 Change control
 
 An interface change is: a palette name, a capsule/menu/icon signature, a scene or drawer name, a
-fact in §2.1, a settings key, the helper protocol, a standard label or the agent policy. Change it
-here first, run every consumer, and announce it where the PH2 writers read (the parent agent's
-report). Adding a palette token is not an interface change if the name is new; renaming or
-re-meaning an existing one is.
+fact in §2.1, a settings key, the helper protocol, a standard label, the agent policy, or a plugin
+boundary (its facts, model, permissions, component signatures — §10). Change it here first, run
+every consumer, and announce it where the PH2 writers read (the parent agent's report). Adding a
+palette token is not an interface change if the name is new; renaming or re-meaning an existing one
+is.
+
+## 10. Plugins (`lib/plugins/**`)
+
+A **plugin** is a library with its logic beside it: `<name>.plm` (the `library`) and `<name>.luau`
+(the logic next to it). The language calls it a plugin (reference §5). The shell uses one where a UI
+element's state lives in a process of its own — the CAVA analyser, the Genelec bridge, the MPD
+flags, the cover resolver — so a scene imports the drawing *and* an autonomous producer together,
+and neither the scene's logic nor its permissions grow by a line.
+
+### 10.1 The boundary
+
+- **The boundary lives under the library's name.** `library Spectrum` declares `fact mirror`, so the
+  scene writes `Spectrum.mirror = false` and the library's own code writes `mirror`. The *import
+  surname* renames components only (`import "…/spectrum.plm" as spec` → `spec.Bars(…)`); it never
+  renames a fact, a text, a model or an event.
+- **Facts are set from a rule, not loose.** A bare `Spectrum.mirror = false` at scene level is
+  `I don't know what 'Spectrum.mirror' is`; the assignment belongs inside `on <event> { … }`.
+- **The permissions are the plugin's, not the scene's.**
+  `permissions { run: "cava"; services: "media" }` is declared in the plugin's `.plm` file and
+  approved per scene: `pleamar --approve <scene>.plm` shows what each plugin asks for and asks.
+  Unapproved, the plugin runs touching nothing and says so on the console; when its logic or what it
+  asks for changes, it goes back to unapproved. A scene's own logic is not approved this way:
+  opening the scene is already the decision.
+- **The logic sees only its own boundary**, runs in its own Luau state and its own thread, cannot
+  read another plugin's or the scene's names, and does not hear the keyboard or the mouse. It has no
+  surface of its own: what it draws, it draws in the components the scene calls.
+- **A library holds no loose rules** — a rule belongs to a component or to the scene. What a plugin
+  wants the shell to hear, it emits as an event of its own (`event tapped ->`), and the scene
+  decides (`on Spectrum.tapped { … }`).
+
+### 10.2 Repository conventions
+
+- `lib/plugins/<name>/<name>.plm` — the library; `<name>.luau` beside it — the logic. One directory
+  per plugin; the directory, the `library` name and the `.luau` stem are the same string.
+- `<name>.check.plm` — **the compile proof**. A library is not opened by `--check`, and a component
+  is only type-checked where it is used (§9.1), so the plugin ships one small scene that imports it,
+  calls every component, and sets every fact from a rule. `scripts/dev/check-plm.sh`
+  (`just pleamar-check`, `just lint`) compiles every tracked scene, so the plugin is checked in CI
+  without any change to the gate.
+- The check scene is not deployed and not rendered by the smoke matrix (`smoke.sh` walks `shells/`
+  only). Its numbers are labels, not a layout contract.
+- Palette tokens are the only place a plugin takes lengths, times and colours from
+  (`spectrum.decay`, `spectrum.gap`, …); a literal in a plugin needs the reason written next to it.
+- A plugin is not a scene: no surface, no IPC name, no unit, no settings file of its own beyond the
+  one it reads from its own folder through the `files` service.
+
+### 10.3 Compiler facts a plugin author hits (0.4.11, verified while writing the spectrum plugin)
+
+1. **A colour `if` does not take a colour parameter or a colour `let` in a branch.**
+   `if(v.lit, tone, mix(tone, coal, 65%))` with `tone: color` is `there is nothing called 'tone'`.
+   Write it as a mix: `let c = mix(mix(base, coal, 65%), base, v.lit)`, and keep the numeric
+   `if(cond, t, 0)` for the knob inside `mix`.
+1. **`repeat` takes literal bounds** (`repeat s in 0..9`), so a count cannot be a component
+   parameter: the LED renderer is fixed at ten segments for that reason.
+1. **A `repeat` index is usable directly in expressions** (`s`), while `$s` is a text substitution
+   for names (`hit.$i`) and becomes a broken name inside an expression.
+1. **A component's parameters are positional then named; a trailing comma is an error.**
+1. **The type check of a component happens at its use site**, which is why the check scene must call
+   every component: an unused component is an unchecked one.
+
+### 10.4 The reference plugin: Spectrum
+
+`lib/plugins/spectrum/` is the shape the rest of the port follows (PH3-P):
+
+| file                 | what it is                                                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `spectrum.plm`       | `library Spectrum strict`: the boundary, `Bars` (rounded mirrored columns, optional cross-bar gradient, peak marks) and `Led` (ten-segment IPhoneSpectrum mode) |
+| `spectrum.luau`      | the cava process, the peak decay, the band, and the `values` model                                                                                              |
+| `spectrum.check.plm` | the compile proof: a 320×140 scene calling both components and setting every fact                                                                               |
+
+Boundary:
+
+| name                                  | kind                                     | meaning                                                         |
+| ------------------------------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| `Spectrum.mirror`                     | fact, `true`                             | bars above and below the centre line; `false` = bottom-anchored |
+| `Spectrum.peaks`                      | fact, `true`                             | the falling peak marks (`spectrum.peak.*`)                      |
+| `Spectrum.gradient`                   | fact, `true`                             | `tone` → `end` across the bars (the QS `spectrumUseGradient`)   |
+| `Spectrum.lowHz` · `highHz`           | facts, `15` · `24000`                    | the range cava's bins map onto, linearly                        |
+| `Spectrum.colorLowHz` · `colorHighHz` | facts, `15` · `24000`                    | the coloured band; bars outside it are dimmed                   |
+| `Spectrum.values`                     | model, 43 records `{ level; peak; lit }` | filled by the logic at cava's cadence                           |
+
+What the logic does, in the QS numbers: `cava` is spawned with the analyser config on stdin (43
+bars, framerate 30, autosens, gravity 20000, noise reduction 5, mono average) and
+`data_format = ascii`, which is what turns the 8-bit stream into one line per frame; it starts while
+the `media` service reports something playing and is killed when nothing is (the QS
+`autoStart: MusicManager.isPlaying`), with no media service it runs and reads silence. The peak
+falls by `0.04` every `spectrum.decay` (50 ms), like `LinearSpectrum`'s timer. Only the facts the
+logic writes travel to the renderer, so a still frame costs nothing.
+
+A scene uses it with an import and a call, and optionally sets facts from its own rules:
+
+```pleamar
+import "../../lib/palette.plm"
+import "../../lib/plugins/spectrum/spectrum.plm" as spec
+
+spec.Bars(width: 120, height: 18, tone: accent, end: highlight)
+spec.Led(width: 120, height: 18)
+
+on media_playing { Spectrum.mirror = false }
+```
+
+First run of any scene using it: `pleamar --approve <scene>.plm` (the console prints
+`plugin 'Spectrum' wants to run 'cava', but nobody has approved its permissions` until then).
+
+Not proven yet, and named so nobody reads more into the gate than it says: the plugin compiles and
+its permissions are approved and reported at startup, but **the render path was not exercised on
+this host** (a sandboxed session has no graphics surface), so the visual parity with
+`IPhoneSpectrum`/`LinearSpectrum` is still to be checked by eye in a real session; the cava feed
+itself was verified separately (config on stdin → 25 ascii lines/s).
+
+### 10.5 Port order (PH3-P)
+
+One plugin per commit, each with its `.check.plm` and its row here:
+
+1. **spectrum** — done (this section).
+1. **Genelec** — genlc/glm-vol/glm-midi and the `$XDG_RUNTIME_DIR/genlc-volume` watch, negative-dB
+   semantics, the `genelecMaxVolume` clamp.
+1. **MPD flags** — `mpc idle options player`, the QS fallback timer (`mpd.flags`, 2500 ms).
+1. **PillTracker** — its state JSON and the ICS write.
+1. **CoverResolver / MusicMeta** — ffprobe/mediainfo/sox.

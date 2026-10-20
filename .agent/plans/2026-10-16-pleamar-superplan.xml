@@ -340,6 +340,7 @@ CONTEXT: /home/neg/src/pleamar (v0.4.11, flake.nix, nix/package.nix, Cargo.lock)
           <goal>Plugin ports with approved permissions: Genelec (genlc/glm-vol/glm-midi + $XDG_RUNTIME_DIR/genlc-volume watch, negative-dB semantics, genelecMaxVolume clamp), MPD flags (mpc idle options player), Cava spectrum (cava spawn + IPhoneSpectrum/LinearSpectrum visuals), PillTracker (state JSON + ICS write), CoverResolver/MusicMeta (ffprobe/mediainfo/sox).</goal>
           <deliverable>Each plugin declares its own permissions; a hostile plugin test proves the boundary.</deliverable>
           <verification>Plugin runs with only approved permissions; removal test; hostile plugin refused; sandbox cut-off behaviour checked.</verification>
+          <progress date="2026-10-20">Spectrum landed as the reference plugin: files/pleamar/lib/plugins/spectrum/{spectrum.plm,spectrum.luau,spectrum.check.plm}; its boundary and the plugin conventions are frozen in INTERFACES.md §10. The compile proof is green (pleamar --check); the render path is not exercised yet (sandboxed session has no graphics surface), and the hostile-plugin test of the exit criterion is still open.</progress>
         </task>
       </tasks>
     </phase>
