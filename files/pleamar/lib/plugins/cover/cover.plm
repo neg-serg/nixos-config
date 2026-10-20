@@ -44,6 +44,7 @@ library Cover strict {
     image art = from cover, 200, 200
 
     component Art(w: number = 200, h: number = 200) {
+        size: w, h
         image art { at: 0, 0; size: w, h; show: found }
         // The face of "no cover": a quiet plate, so a scene does not need its
         // own placeholder.
