@@ -1,0 +1,59 @@
+language 0.4
+
+// mpd.plm — the MPD flags capsule as a plugin: the state MPD reports and the
+// badge row that shows it.
+//
+// Legacy: files/quickshell/Bar/Modules/MpdFlags.qml (the `mpc status` parser,
+// the idle watch, the 2500 ms fallback poll) and the QS token
+// `media.mpd.flags.fallbackMs` -> palette `mpd.flags`.
+//
+// The badges are text, not icons: `lib/icons.plm` is not written yet
+// (INTERFACES §5.3), and a plugin that reached into the scene's icon names
+// would break the moment one moved. The short keys are the QS tooltip's names.
+//
+//     import "../../lib/plugins/mpd/mpd.plm" as mpd
+//     mpd.Flags()
+//
+// Compile proof: mpd.check.plm.
+
+import "../../palette.plm"
+import "../../capsule.plm"
+
+library Mpd strict {
+
+    // mpc only: the QS fallback `rmpc status` is a second binary for a second
+    // client library, and this shell talks to MPD, not to a wrapper.
+    permissions { run: "mpc" }
+
+    // ------------------------------------------------------------- boundary
+    fact state: playing | paused | stopped | unknown = unknown
+    fact repeat = false
+    fact random = false
+    fact single = false
+    fact consume = false
+    fact xfade = false
+    // mpc could not reach MPD (no socket, no server): the scene hides the tile.
+    fact available = true
+
+    // ----------------------------------------------------------------- flags
+    component Flags(scale: number = ui) {
+        let w = 74
+        let h = capsule.height
+        size: 74 * scale, capsule.height * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+                row badges {
+                    gap: 4
+                    align: center
+                    text "REP" { size: 9; weight: 600; family: "Iosevka"; color: if(state == playing, highlight, ink.dim); show: repeat }
+                    text "RND" { size: 9; weight: 600; family: "Iosevka"; color: if(state == playing, highlight, ink.dim); show: random }
+                    text "1" { size: 9; weight: 600; family: "Iosevka"; color: if(state == playing, highlight, ink.dim); show: single }
+                    text "CNS" { size: 9; weight: 600; family: "Iosevka"; color: if(state == playing, highlight, ink.dim); show: consume }
+                    text "XF" { size: 9; weight: 600; family: "Iosevka"; color: if(state == playing, highlight, ink.dim); show: xfade }
+                }
+            }
+            zone box flags { from: 0, 0; size: 74, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
+        }
+    }
+}
