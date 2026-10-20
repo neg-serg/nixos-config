@@ -102,18 +102,23 @@ read -r MON_NAME MON_SIZE MON_SCALE <<< "$monitor_line"
 MON_W="${MON_SIZE%x*}"
 MON_H_LOG="${MON_SIZE#*x}"
 
-# The bar strip: the QS bar is `panelHeight * scale` tall (22 * scale) plus its
-# hotzone below it; the pleamar bar surface is 44 design px in the same place.
+# Both hyprctl's monitor size and grim's frames are in the output's own (physical)
+# pixels, so the logical bar height is what gets multiplied by the scale — the
+# size from hyprctl is not.
+PHYS_W="$MON_W"
+PHYS_H="$MON_H_LOG"
+# The bar strip: QS's `panelHeight` (22) plus its hotzone (9), in physical px,
+# with a little slack so the capsule shadows are inside the crop.
 if [ -z "$STRIP" ]; then
-  STRIP="$(awk -v s="$MON_SCALE" 'BEGIN { printf "%d", 22 * s + 12 }')"
+  STRIP="$(awk -v s="$MON_SCALE" 'BEGIN { printf "%d", (22 + 9) * s + 8 }')"
 fi
-# Physical pixels for the crop: grim with -o reports the output's own pixels.
-PHYS_H="$(awk -v h="$MON_H_LOG" -v s="$MON_SCALE" 'BEGIN { printf "%d", h * s + 0.5 }')"
 Y="$((PHYS_H - STRIP))"
-REGION="0,$Y ${MON_W}x${STRIP}"
+REGION="0,$Y ${PHYS_W}x${STRIP}"
 
-echo "parity-bar: monitor $MON_NAME, ${MON_W}×${PHYS_H} @${MON_SCALE}x, strip ${STRIP}px -> $OUT_DIR"
+echo "parity-bar: monitor $MON_NAME, ${PHYS_W}×${PHYS_H} physical @${MON_SCALE}x, strip ${STRIP}px -> $OUT_DIR"
 
+# `-g` is a geometry in the output's own pixels; without it the whole monitor is
+# captured and the crop below does the same job (slower, same result).
 capture() {
   grim -o "$MON_NAME" -g "$REGION" "$1" 2> /dev/null || grim -o "$MON_NAME" "$1" 2> /dev/null
 }
@@ -139,8 +144,10 @@ wait "$pid" 2> /dev/null || true
 }
 
 # Same geometry for both, whatever each capture really measured.
-magick "$OUT_DIR/qs.png" -resize "${MON_W}x${STRIP}!" "$OUT_DIR/qs-fit.png"
-magick "$OUT_DIR/plm.png" -resize "${MON_W}x${STRIP}!" "$OUT_DIR/plm-fit.png"
+magick "$OUT_DIR/qs.png" -crop "${PHYS_W}x${STRIP}+0+${Y}" +repage "$OUT_DIR/qs-fit.png" 2> /dev/null \
+  || magick "$OUT_DIR/qs.png" -resize "${PHYS_W}x${STRIP}!" "$OUT_DIR/qs-fit.png"
+magick "$OUT_DIR/plm.png" -crop "${PHYS_W}x${STRIP}+0+${Y}" +repage "$OUT_DIR/plm-fit.png" 2> /dev/null \
+  || magick "$OUT_DIR/plm.png" -resize "${PHYS_W}x${STRIP}!" "$OUT_DIR/plm-fit.png"
 
 mean="$(magick "$OUT_DIR/qs-fit.png" "$OUT_DIR/plm-fit.png" -compose difference -composite -colorspace gray -format '%[fx:mean]' info: 2> /dev/null)"
 # Pixels that differ by more than 8/255: the "visible" share.

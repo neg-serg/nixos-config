@@ -77,7 +77,7 @@ library Genelec strict {
                     gap: capsule.gap
                     align: center
                     image ones { size: 16, 16; tint: if(muted, ink.off, ink); opacity: if(hot, 1, 0) }
-                    text "{volume, 0}dB" { family: "Iosevka"; size: 15; weight: 600; color: if(muted, ink.off, ink) }
+                    text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
                 }
             }
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }

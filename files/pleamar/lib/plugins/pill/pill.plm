@@ -57,18 +57,18 @@ library Pill strict {
     // 0.3 → 1 over a second, `SequentialAnimation` in QS) while the deadline has
     // passed. `wave` is the language's own sine: 0.35 · sin(2π t) around 0.65.
     component Mark(scale: number = ui) {
-        let size.icon = 11
-        let w = 2 * capsule.pad + 11
+        let size.icon = 10
+        let w = 2 * capsule.pad + 10
         let h = capsule.height
         prop pulse = 0
         wave pulse = 0.35 at 6.28
-        size: (2 * capsule.pad + 11) * scale, capsule.height * scale
+        size: (2 * capsule.pad + 10) * scale, capsule.height * scale
         group zoom {
             scale: scale
             Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
                 row mark {
                     align: center
-                    text "pill" { family: "Material Symbols Outlined"; size: 11; color: if(taken, highlight, ink.dim); opacity: if(reminder, 0.65 + pulse, 1) }
+                    text "pill" { family: "Material Symbols Outlined"; size: 10; color: if(taken, highlight, ink.dim); opacity: if(reminder, 0.65 + pulse, 1) }
                 }
             }
             zone box mark { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
