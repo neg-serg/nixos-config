@@ -385,7 +385,10 @@ hl.bind(M4 .. "+" .. C .. "+z", hl.dsp.exec_cmd("kitty-font-zoom toggle"))
 -- scratchpad-geometry still treat it as the same pad (files/kitty/teardown.session).
 hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty-glass --class teardown --session ~/.config/kitty/teardown.session' special"))
 hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch toggle telegram"))
-hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hyprscratch music 'kitty-glass --class music -e rmpc' special"))
+-- mod4+f is the new player now (aurora, its own window), not the rmpc scratchpad: the
+-- migration is on, and the key has to lead to the thing being used. The launcher brings the
+-- window up if aurora is already running instead of starting a second copy.
+hl.bind(M4 .. "+f", hl.dsp.exec_cmd("aurora-focus"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class torrment -e rustmission' special"))
 hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty-glass --class vpn -e tun status' special"))
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch toggle mixer"))
