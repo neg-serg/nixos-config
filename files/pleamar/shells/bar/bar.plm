@@ -50,6 +50,8 @@ import "../../lib/capsule.plm"
 import "../../lib/plugins/pill/pill.plm" as pill
 import "../../lib/plugins/mpd/mpd.plm" as mpd
 import "../../lib/plugins/genelec/genelec.plm" as gen
+import "../../lib/plugins/spectrum/spectrum.plm" as spec
+import "../../lib/plugins/cover/cover.plm" as art
 
 scene bar {
 
@@ -70,6 +72,19 @@ scene bar {
     fact widget.mpd = true
     fact widget.volume = true
     fact widget.genelec = true
+    fact widget.media = true
+    // Set by bar.luau from the `media` service: a player is there (the QS
+    // `MusicManager.hasPlayer`). The language compares numbers only, so the
+    // scene cannot ask `media.player != ""` itself.
+    fact media.present = false
+    // The cursor is over the media capsule: the transport strip rides in.
+    fact media.hot = false
+
+    // The transport's three commands, handled by bar.luau through the `media`
+    // service (QS calls MusicManager.toggle/next/previous).
+    event media_prev ->
+    event media_toggle ->
+    event media_next ->
 
     // --------------------------------------------------------------- surface
     // 44 px is the pleamar bar strip; the surface is exactly that tall and
@@ -90,7 +105,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "files", "files.write" }
+    permissions { services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "media", "media.*", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -106,6 +121,8 @@ scene bar {
     model spaces max 9 { id: number; name: text; monitor: text; active: bool }
 
     service clock as now { time: text; date: text }
+    // The track the capsule shows (QS: MusicManager.trackTitle/trackArtist).
+    service media { playing: bool; title: text; artist: text; player: text }
     service workspaces { list: spaces }
     service audio { volume: number; muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
@@ -226,12 +243,67 @@ scene bar {
         }
     }
 
+    // ------------------------------------------------------- media capsule
+    // The QS `Media` capsule, as far as this slice reaches: square album art on
+    // the left (the Cover plugin), "artist — title" beside it, the analyser
+    // (the Spectrum plugin) when there is one, and the transport as three
+    // Material glyphs that fade in while the cursor is over the capsule (QS
+    // slides a whole strip out; the slide needs the panel-level hover tracker
+    // the bar does not have yet). Clicking the cover opens the now-playing
+    // panel in QS — no panel exists here, so a cover click does nothing.
+    component MediaCapsule(prev: event, toggle: event, next: event,
+                           scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        let h = bar.height
+        let art.w = bar.height
+        let text.w = 168
+        let spec.w = 30
+        let btn.w = 16
+        let w = art.w + bar.gap + text.w + bar.gap + spec.w + 2 * bar.gap + 3 * btn.w
+        size: (bar.height + bar.gap + 168 + bar.gap + 30 + 2 * bar.gap + 3 * 16) * scale, bar.height * scale
+        group zoom {
+            scale: scale
+            // pad_y 0: the art is square, as in QS ("Disable vertical padding to
+            // allow square cover art in all modes").
+            Capsule(w, h, scale: 1, pad_y: 0, pad: 2, shadow: 25%, rim: 0.06) {
+                row media_row {
+                    gap: bar.gap
+                    align: center
+                    art.Art(w: 22, h: 22)
+                    text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 10; color: ink; family: "Iosevka" }
+                    spec.Bars(width: 30, height: 16, gap: 1)
+                    // Fixed 16 px boxes so the hit zones below can name the same
+                    // cells the layout hands out.
+                    row btn_prev { size: 16, h; align: center
+                        text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot, 1, 0) }
+                    }
+                    row btn_play { size: 16, h; align: center
+                        text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot and media.playing, 1, 0) }
+                        text "pause" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot and not media.playing, 1, 0) }
+                    }
+                    row btn_next { size: 16, h; align: center
+                        text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot, 1, 0) }
+                    }
+                }
+            }
+            let bx = art.w + bar.gap + text.w + bar.gap + spec.w + 2 * bar.gap
+            zone box media_zone { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Media"; role: region; value: "{media.title}" }
+            zone box z_prev { from: bx, 0; size: 16, h; corner: corner; cursor: pointer; label: "Previous track"; role: button }
+            zone box z_play { from: bx + 16 + bar.gap, 0; size: 16, h; corner: corner; cursor: pointer; label: "Play or pause"; role: button }
+            zone box z_next { from: bx + 2 * (16 + bar.gap), 0; size: 16, h; corner: corner; cursor: pointer; label: "Next track"; role: button }
+            on enter media_zone { media.hot = true }
+            on leave media_zone { media.hot = false }
+            on press z_prev { emit prev }
+            on press z_play { emit toggle }
+            on press z_next { emit next }
+        }
+    }
+
     component Right(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
         row { at: screen.width - side * scale, strip / 2; anchor: right middle; gap: bar.gap * scale
-            // The MPD flags (legacy order: media · MPD · systray · mic ·
-            // volume · Genelec). The media capsule, the tray and the microphone
-            // are still extension points; the media capsule is the next slice
-            // (cover + track text + spectrum + transport).
+            // The legacy order from the left: media · MPD · systray · mic ·
+            // volume · Genelec. The tray and the microphone are still extension
+            // points.
+            row media_slot { show: widget.media and media.present; MediaCapsule(media_prev, media_toggle, media_next) }
             row mpd_slot { show: widget.mpd; mpd.Flags() }
             VolCapsule(wheel_volume, toggle_mute) { show: widget.volume }
             // Genelec, the rightmost module, as in the legacy bar.

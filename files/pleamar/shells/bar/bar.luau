@@ -18,7 +18,7 @@ local D = {
 -- set. An order cannot be applied at runtime (the scene paints in the order it
 -- is written), and entries this slice does not know yet (pill, keyboard, media,
 -- …) are kept in the file for the slices that do.
-local WIDGETS = { "clock", "workspaces", "pill", "network", "mpd", "volume", "genelec" }
+local WIDGETS = { "clock", "workspaces", "pill", "network", "media", "mpd", "volume", "genelec" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
@@ -76,6 +76,30 @@ end)
 -- (permissions: "workspaces", "workspaces.focus")
 on("focus_workspace", function(id)
     sys.call("workspaces.focus", id)
+end)
+
+-- A player is there (the QS `hasPlayer`): the capsule shows only then. The
+-- scene cannot compare `media.player` with "" itself — the language compares
+-- numbers only — so the logic decides and hands over a fact.
+-- (permissions: "media")
+sys.watch("media", function(m)
+    local player = nil
+    if type(m) == "table" then player = m.player end
+    fact["media.present"] = (type(player) == "string") and (player ~= "")
+end)
+
+-- The transport strip: the three glyph buttons of the media capsule.
+-- (permissions: "media.*")
+on("media_toggle", function()
+    sys.call("media.toggle")
+end)
+
+on("media_next", function()
+    sys.call("media.next")
+end)
+
+on("media_prev", function()
+    sys.call("media.previous")
 end)
 
 -- The wheel turned over the volume capsule: one step per notch (+ is upwards;
