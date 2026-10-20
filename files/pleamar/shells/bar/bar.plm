@@ -114,6 +114,15 @@ scene bar {
     // The tray's slot, in design px: 22 = max(CapsuleMetrics.inner 16,
     // panelHeight 22) * 1.15 rounded, which is QS's trayIconSlot. A scene-level
     // let because a component's `size:` is read in the caller's scope.
+    // The seam between the halves is 8 logical px wide and slanted
+    // (`BarLayout.wedgeWidthNorm` caps the wedge at the same 8): tried as a gap
+    // of 7 design px between two leaning paths, and the centre of the strip got
+    // WORSE (mean over 1860..1980 went 3.88 -> 6.73), so the gap as drawn does
+    // not match the reference's window: on this wallpaper neither shows, and
+    // what looks like a diagonal in the reference is the WEATHER capsule's own
+    // right triangle (`capsule.rightTriangleVisible`, width factor 0.75,
+    // highlight `max(2, 3 * s)` in a darkened accent), not a seam.
+    let seam = 7
     let tray.slot = 22
     let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
@@ -367,7 +376,26 @@ scene bar {
         size: 148 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 5; size: 148, 14; corner: 6; color: coal; opacity: 53% }
+            // The reference cuts this capsule's right end on a SLANT and runs a
+            // hairline along the cut (`rightTriangleVisible` zeroes the right
+            // radii and lays a triangle of `_triangleWidth` = round(1.15 * 1 * 1
+            // * 16) = 18 logical px at `rightTriangleWidthFactor` 0.75 past the
+            // right edge, so the face gains the point while the cut takes it
+            // back). Measured off the strip: the cut leans "/" over ~13 design
+            // px, the hairline is `triangleHighlightWidth` = 3 logical px.
+            path {
+                at: 0, 5
+                move 0, 0
+                line 162, 0
+                line 148, 14
+                line 0, 14
+                close
+                color: coal
+                opacity: 53%
+            }
+            // QS's triangleHighlightColor is the accent put through black twice
+            // (towardsBlack(saturate(...), 0.3) x2), so a dark saturated blue.
+            line { from: 162, 5; to: 148, 19; width: 2.6; color: mix(accent, coal, 55%) }
             text "{weather.icon}" { at: 6, strip / 2; anchor: left center; size: 14; color: accent; family: "Material Symbols Outlined" }
             text "{weather.temp}" { at: 24, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
             text "water_drop" { at: 48, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Material Symbols Outlined" }
