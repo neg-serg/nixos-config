@@ -24,7 +24,9 @@
 # Artifacts go to a temp directory by default (`--out DIR` keeps them): committed
 # shots belong under `files/pleamar/tests/`, written deliberately, not by a gate.
 #
-# Usage: check-plugin-render.sh [REPO_ROOT] [--out DIR] [--seconds N]
+# Usage: check-plugin-render.sh [REPO_ROOT] [--out DIR] [--seconds N] [--probe]
+#        --probe prints what the gate found (binary, session, capture tools) and
+#        exits: that is the first thing to run when a scene is skipped.
 # Env:   PLEAMAR_BIN, PLEAMAR_WM_BIN
 #
 # Exit: 0 all rendered (or skipped for want of a renderer), 1 a scene failed.
@@ -36,8 +38,13 @@ shift || true
 
 OUT_DIR=""
 SECONDS_PER_SCENE=4
+PROBE=0
 while [ $# -gt 0 ]; do
   case "$1" in
+    --probe)
+      PROBE=1
+      shift
+      ;;
     --out)
       OUT_DIR="${2:?--out needs a directory}"
       shift 2
@@ -66,23 +73,61 @@ fi
 mkdir -p "$OUT_DIR"
 REPO_ABS="$(cd "$REPO_ROOT" && pwd)"
 
-# Which capture is available: the WM's headless session, or the live one.
+# Which capture is available: the WM's headless session, or the live one. The
+# live one needs a Wayland session, grim, ImageMagick and a Hyprland that answers
+# `hyprctl monitors`; every miss is named, so a skip is actionable.
 HAVE_WM=0
 command -v "$PLEAMAR_WM_BIN" > /dev/null 2>&1 && HAVE_WM=1
+
 HAVE_SESSION=0
-MON_X=0
-MON_Y=0
-MON_W=0
-if [ -n "${WAYLAND_DISPLAY:-}" ] && command -v grim > /dev/null 2>&1 && command -v hyprctl > /dev/null 2>&1; then
-  geometry="$(hyprctl -j monitors 2> /dev/null | jq -r '((map(select(.focused == true))[0]) // .[0]) | "\(.x) \(.y) \(.width)"' 2> /dev/null || true)"
-  if [ -n "$geometry" ]; then
-    read -r MON_X MON_Y MON_W <<< "$geometry"
+MON_NAME="${PLEAMAR_RENDER_MONITOR:-}"
+SESSION_PROBLEM=""
+if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+  SESSION_PROBLEM="WAYLAND_DISPLAY is not set"
+elif ! command -v grim > /dev/null 2>&1; then
+  SESSION_PROBLEM="grim is not on PATH"
+elif ! command -v hyprctl > /dev/null 2>&1; then
+  SESSION_PROBLEM="hyprctl is not on PATH (not a Hyprland session?)"
+elif ! command -v magick > /dev/null 2>&1; then
+  SESSION_PROBLEM="ImageMagick (magick) is not on PATH"
+else
+  # The focused monitor's name and size, from the text form: `hyprctl monitors`
+  # prints one paragraph per monitor, `focused: yes` in the one in use.
+  monitor_line="$(hyprctl monitors 2> /dev/null | awk '
+    BEGIN { RS = ""; FS = "\n" }
+    /focused: yes/ {
+      name = $1; sub(/^Monitor /, "", name); sub(/ .*/, "", name)
+      size = ""
+      for (i = 1; i <= NF; i++) if ($i ~ / at /) { size = $i; sub(/^[[:space:]]*/, "", size); sub(/@.*/, "", size) }
+      print name, size
+      exit
+    }' || true)"
+  if [ -z "$monitor_line" ]; then
+    SESSION_PROBLEM="hyprctl sees no focused monitor (HYPRLAND_INSTANCE_SIGNATURE / XDG_RUNTIME_DIR?)"
+  else
+    [ -n "$MON_NAME" ] || MON_NAME="${monitor_line%% *}"
     HAVE_SESSION=1
   fi
 fi
 
+if [ "$PROBE" -eq 1 ]; then
+  echo "render probe:"
+  echo "  pleamar     $PLEAMAR_BIN"
+  echo "  pleamar-wm  $(command -v "$PLEAMAR_WM_BIN" 2> /dev/null || echo '(not found)')"
+  echo "  wayland     ${WAYLAND_DISPLAY:-'(not set)'}"
+  echo "  grim        $(command -v grim 2> /dev/null || echo '(not found)')"
+  echo "  hyprctl     $(command -v hyprctl 2> /dev/null || echo '(not found)')"
+  echo "  magick      $(command -v magick 2> /dev/null || echo '(not found)')"
+  if [ "$HAVE_SESSION" -eq 1 ]; then
+    echo "  session     monitor $MON_NAME"
+  else
+    echo "  session     unusable: $SESSION_PROBLEM"
+  fi
+  exit 0
+fi
+
 if [ "$HAVE_WM" -eq 0 ] && [ "$HAVE_SESSION" -eq 0 ]; then
-  echo "check-plugin-render: no pleamar-wm and no capturable session — skipping (nothing to open a scene with)"
+  echo "check-plugin-render: no pleamar-wm and no capturable session — skipping ($SESSION_PROBLEM)"
   exit 0
 fi
 
@@ -96,7 +141,7 @@ if [ "${#SCENES[@]}" -eq 0 ]; then
   exit 0
 fi
 
-echo "plugin render pass: ${#SCENES[@]} scene(s) -> $OUT_DIR"
+echo "plugin render pass: ${#SCENES[@]} scene(s) -> $OUT_DIR (monitor ${MON_NAME:-headless wm})"
 
 # The declared surface of a check scene: `surface { size: W, H; … }`.
 scene_size() {
@@ -114,23 +159,40 @@ render_headless() {
     > "$log" 2>&1 || true
 }
 
-# A scene's own frame from the live session: the region its surface declares,
-# captured once without the scene and once while it is up.
+# One monitor's frame, cropped to the box a scene declares at its top centre:
+# a scene anchored `top` sits there, and the crop keeps the desktop's own
+# animation out of the comparison.
+capture_monitor() {
+  local png="$1" w="$2" h="$3" full="$OUT_DIR/_full.png" fw fh x y
+  if ! grim -o "$MON_NAME" "$full" > /dev/null 2>&1; then
+    grim "$full" > /dev/null 2>&1 || return 1
+  fi
+  read -r fw fh <<< "$(magick identify -format '%w %h' "$full" 2> /dev/null || echo 0 0)"
+  [ "${fw:-0}" -gt 0 ] || return 1
+  x=$(((fw - w) / 2))
+  y=$(((fh - h) / 2))
+  [ "$y" -lt 0 ] && y=0
+  # Four pixels of slack each way: shadows and rounded corners stay inside.
+  x=$((x - 4))
+  [ "$x" -lt 0 ] && x=0
+  magick "$full" -crop "$((w + 8))x$((h + 8))+$x+$y" +repage "$png" > /dev/null 2>&1
+}
+
+# A scene's own frame from the live session: the same crop once without the
+# scene and once while it is up.
 render_session() {
-  local scene="$1" png="$2" log="$3" size w h region pid
+  local scene="$1" png="$2" log="$3" size w h pid
   size="$(scene_size "$scene")"
   if [ -z "$size" ]; then
     echo "no surface size in the scene" > "$log"
     return 0
   fi
   read -r w h <<< "$size"
-  # Four pixels of slack: shadows and rounded corners stay inside the crop.
-  region="$((MON_X + (MON_W - w) / 2 - 4)),$((MON_Y - 4)) $((w + 8))x$((h + 8))"
-  grim -g "$region" "$OUT_DIR/_before.png" > "$log" 2>&1 || true
+  capture_monitor "$OUT_DIR/_before.png" "$w" "$h" || echo "grim could not capture $MON_NAME" > "$log"
   timeout -k 5 "$((SECONDS_PER_SCENE + 20))" "$PLEAMAR_BIN" --scene "$scene" --no-hud --seconds "$SECONDS_PER_SCENE" >> "$log" 2>&1 &
   pid=$!
   sleep 2
-  grim -g "$region" "$png" >> "$log" 2>&1 || true
+  capture_monitor "$png" "$w" "$h" >> "$log" 2>&1 || true
   wait "$pid" || true
 }
 
