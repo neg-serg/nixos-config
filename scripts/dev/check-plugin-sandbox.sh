@@ -26,11 +26,16 @@ set -euo pipefail
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 REPO_ROOT="$(repo_root "${1:-}")"
 
-PLEAMAR_BIN="${PLEAMAR_BIN:-pleamar}"
 PLEAMAR_WM_BIN="${PLEAMAR_WM_BIN:-pleamar-wm}"
 
-if ! command -v "$PLEAMAR_BIN" > /dev/null 2>&1; then
-  echo "pleamar not found — skipping the hostile-plugin test (install pkgs.pleamar to enable it)"
+# PATH first, then the flake (`nix build .#pleamar`): the shell's package is not
+# installed while features.gui.pleamar is off, and the gate must not depend on it
+# being installed to hold.
+if [ -z "${PLEAMAR_BIN:-}" ]; then
+  PLEAMAR_BIN="$(resolve_pleamar_tool pleamar "$REPO_ROOT" || true)"
+fi
+if [ -z "$PLEAMAR_BIN" ]; then
+  echo "pleamar not found — skipping the hostile-plugin test (no PATH entry and no flake output)"
   exit 0
 fi
 

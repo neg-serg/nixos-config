@@ -49,3 +49,18 @@ summary() {
   echo "$1: $pass passed, $fail failed"
   [ "$fail" -eq 0 ]
 }
+
+# Resolve a tool the pleamar gates need: $1 on PATH first, else the flake output
+# of the same name (built with `--option substitute false`, the repo's build
+# rule). Prints the path; returns 1 when it cannot be had — the caller then skips
+# with a notice, like every other gate does for a missing tool.
+resolve_pleamar_tool() {
+  local name="$1" root="${2:-.}" out
+  if command -v "$name" > /dev/null 2>&1; then
+    command -v "$name"
+    return 0
+  fi
+  out="$(nix build --no-link --print-out-paths "$root#$name" --option substitute false 2> /dev/null)" || return 1
+  [ -x "$out/bin/$name" ] || return 1
+  printf '%s\n' "$out/bin/$name"
+}

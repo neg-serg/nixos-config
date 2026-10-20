@@ -1355,13 +1355,22 @@ a missing tool. The renderer is never part of the verdict — the logic runs on 
 GPU-less sandbox can panic after the refusal — only the log line and the marker are asserted.
 
 **The render pass.** `scripts/dev/check-plugin-render.sh` (`just render-plugins [DIR]`) opens every
-`lib/plugins/*/*.check.plm` through `pleamar-wm headless`, captures one PNG per plugin (temp
-directory by default, so the tree stays clean) and calls a scene rendered only when the frame
-differs from the same headless session with **no** scene at all — a compositor frame alone is a
-wallpaper, not proof. A scene needs a Vulkan adapter that can make a Wayland surface (`src/lib.rs`:
-`wgpu::Backends::PRIMARY`; the compositor itself can fall back to GL, a scene cannot), so an
-environment without one skips every scene with that reason instead of failing. Run it in a real
-session to get the frames and compare them against `files/quickshell`'s look.
+`lib/plugins/*/*.check.plm`, captures one PNG per plugin (temp directory by default, so the tree
+stays clean) and calls a scene rendered only when the frame differs from the same region with **no**
+scene in it — a compositor's wallpaper is not proof. Two routes, in order:
+
+- `pleamar-wm headless`, when that binary is on PATH: nothing appears on the desktop and the frame
+  comes from `PLEAMAR_HEADLESS_PNG`;
+- otherwise the live session: the scene opens over the desktop for a few seconds and `grim` captures
+  the region its `surface { size: W, H }` declares on the focused monitor (Hyprland only).
+
+The `pleamar` binary itself comes from PATH or from the flake
+(`nix build .#pleamar --option substitute false` — the package is exposed for this, so
+`nix run .#pleamar` works while `features.gui.pleamar` is off). A scene needs a Vulkan adapter that
+can make a Wayland surface (`src/lib.rs`: `wgpu::Backends::PRIMARY`; the compositor itself can fall
+back to GL, a scene cannot), so an environment without one skips every scene with that reason
+instead of failing. Run it in a real session to get the frames and compare them against
+`files/quickshell`'s look.
 
 Both gates pass in this tree where the environment allows; the sandbox this was written in reports
 `skip ... (no graphics adapter that can make a Wayland surface)` for all six render scenes, which is
