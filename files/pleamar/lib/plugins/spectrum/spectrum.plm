@@ -1,0 +1,116 @@
+language 0.4
+
+// spectrum.plm — the CAVA analyser as a plugin: a library plus the logic next
+// to it (`spectrum.luau`), which owns the cava process and fills `values`.
+//
+// Legacy: files/quickshell/Components/Cava.qml (the process and its config),
+// LinearSpectrum.qml (mirrored rounded bars, optional cross-bar gradient,
+// peaks) and IPhoneSpectrum.qml (segmented LED columns). This file ports the
+// behaviour that the frozen tokens already describe; INTERFACES.md §6.4 names
+// the spectrum tokens, and this library reads them from palette.plm instead of
+// writing numbers of its own.
+//
+// What a plugin is (pleamar reference, §5): a library with a `.luau` beside it.
+// Its boundary —facts, model, permissions— lives under the library's name, so
+// a scene writes `Spectrum.Bars(...)`, sets `Spectrum.mirror`, and never sees
+// cava. The scene is the owner of the facts; the logic fills the model.
+//
+//     import "../../lib/plugins/spectrum/spectrum.plm"
+//     Spectrum.Bars(width: 120, height: 18)
+//     Spectrum.Led(width: 120, height: 18, tone: accent)
+//
+// Permissions belong to THIS plugin, not to the scene that imports it
+// (reference §5): `run: "cava"` is the spawn, `services: "media"` is the watch
+// that says when something plays. Unapproved, the plugin runs with none and
+// says so on the console; approving is `pleamar --approve <scene>.plm`.
+//
+// The compile proof lives next to it: `spectrum.check.plm` is the consumer the
+// gate compiles (a library is not opened, and a component is only checked where
+// it is used), so the plugin cannot rot without `just lint` saying so.
+//
+// The two knobs a scene may turn instead of taking the defaults:
+//   Spectrum.mirror   — bars above and below the centre line (default true)
+//   Spectrum.peaks    — the falling peak marks (default true)
+//   Spectrum.gradient — tone → end across the bars (default true)
+// and the frequency band, in the QS sense: bars whose bin falls inside
+// color.low..color.high are painted in the tone, the rest dimmed.
+
+import "../../palette.plm"
+
+library Spectrum strict {
+
+    // Its logic's, not the scene's: cava is spawned by `spectrum.luau`, and the
+    // `media` watch is how it knows when to spawn and when to stop.
+    permissions { run: "cava"; services: "media" }
+
+    // ------------------------------------------------------------- boundary
+    // A scene may set these; the defaults are the QS ones (IPhoneSpectrum).
+    fact mirror = true
+    fact peaks = true
+    fact gradient = true
+
+    // The analyser's range and the coloured band, in Hz. cava's bins are
+    // mapped onto them linearly, like IPhoneSpectrum's spectrumMinHz..MaxHz.
+    fact lowHz: number = 15
+    fact highHz: number = 24000
+    fact colorLowHz: number = 15
+    fact colorHighHz: number = 24000
+
+    // One record per bar, filled by the logic at cava's cadence: level 0..1,
+    // the falling peak 0..1, and whether the bar is inside the coloured band.
+    model values max 43 {
+        level: number
+        peak: number = 0
+        lit: bool = true
+    }
+
+    // ------------------------------------------------------------------ bars
+    // Rounded columns, mirrored about the centre line. `width`/`height` are the
+    // box the scene gives the analyser; the bar width follows from it and the
+    // gap token, never below `spectrum.bar.min`.
+    component Bars(width: number, height: number = 18, tone: color = highlight, end: color = accent, gap: number = spectrum.gap) {
+        let bw = max(spectrum.bar.min, (width - gap * (values.count - 1)) / max(1, values.count))
+        let half = if(mirror, height / 2, height)
+        for v in values {
+            let bh = clamp(v.level * half, 0, half)
+            let t = if(values.count > 1, v.index / (values.count - 1), 0)
+            let base = mix(tone, end, if(gradient, t, 0))
+            let c = mix(mix(base, coal, 65%), base, v.lit)
+            let x = v.index * (bw + gap)
+            // Mirrored: one column growing up from the centre, one down.
+            box { from: x, height / 2 - bh; size: bw, bh; corner: min(bw / 2, 2); color: c; opacity: spectrum.fill.alpha; show: mirror }
+            box { from: x, height / 2; size: bw, bh; corner: min(bw / 2, 2); color: c; opacity: spectrum.fill.alpha; show: mirror }
+            // One-sided: bottom-anchored.
+            box { from: x, height - bh; size: bw, bh; corner: min(bw / 2, 2); color: c; opacity: spectrum.fill.alpha; show: not mirror }
+            // Peak marks, at the value the logic decays (`spectrum.decay`).
+            let py = clamp(v.peak, 0, 1) * half
+            box { from: x, height / 2 - py - spectrum.peak.height; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and py > 0.01 }
+            box { from: x, height / 2 + py; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and py > 0.01 }
+            box { from: x, height - py - spectrum.peak.height; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: not mirror and peaks and py > 0.01 }
+        }
+    }
+
+    // ------------------------------------------------------------------- led
+    // IPhoneSpectrum's `led` render mode: the same frame cut into ten segments
+    // per bar, a lit segment for every tenth of the level. `segments` is fixed
+    // by the language (`repeat` takes literals), so ten is the shape.
+    component Led(width: number, height: number = 18, tone: color = highlight, end: color = accent, gap: number = spectrum.gap) {
+        let bw = max(spectrum.bar.min, (width - gap * (values.count - 1)) / max(1, values.count))
+        let seg = max(2, (height - 9) / 10)
+        let half = if(mirror, height / 2, height)
+        for v in values {
+            let t = if(values.count > 1, v.index / (values.count - 1), 0)
+            let base = mix(tone, end, if(gradient, t, 0))
+            let c = mix(mix(base, coal, 65%), base, v.lit)
+            let x = v.index * (bw + gap)
+            repeat s in 0..9 {
+                box { from: x, height / 2 - (s + 1) * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
+                box { from: x, height / 2 + s * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
+                box { from: x, height - (s + 1) * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: not mirror and v.level * 10 > s }
+            }
+            box { from: x, height / 2 - clamp(v.peak, 0, 1) * half - spectrum.peak.height; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and v.peak > 0.01 }
+            box { from: x, height / 2 + clamp(v.peak, 0, 1) * half; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and v.peak > 0.01 }
+            box { from: x, height - clamp(v.peak, 0, 1) * half - spectrum.peak.height; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: not mirror and peaks and v.peak > 0.01 }
+        }
+    }
+}
