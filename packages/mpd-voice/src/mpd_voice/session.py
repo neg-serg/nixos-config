@@ -48,6 +48,7 @@ RU = {
     "similar_no_dir": "Каталог музыки не задан или не существует.",
     "similar_missing": "Не нашёл файл текущего трека в каталоге музыки.",
     "similar_failed": "Помощник по похожим трекам не сработал.",
+    "describe_failed": "Описание трека не получилось.",
     "mood_added": "Добавил {count} треков в настроении {mood}.",
     "mood_empty": "Не нашёл треков в настроении {mood}.",
     "mood_no_dir": "Каталог музыки не задан или не существует.",
@@ -101,6 +102,7 @@ EN = {
     "similar_no_dir": "The music directory is not set or does not exist.",
     "similar_missing": "The current track is not under the music directory.",
     "similar_failed": "The similarity helper failed.",
+    "describe_failed": "The description helper failed.",
     "mood_added": "Added {count} {mood} tracks to the queue.",
     "mood_empty": "No tracks found with mood {mood}.",
     "mood_no_dir": "The music directory is not set or does not exist.",
@@ -652,6 +654,76 @@ class Controller:
             return Reply(text=self._t("similar_empty", intent.lang), ok=False)
         added = self.client.add_many(uris)
         return Reply(text=self._t("similar_added", intent.lang, count=added))
+
+    def _do_describe_track(self, intent: Intent) -> Reply:
+        """Describe the current track with music-describe (cached after the first run).
+
+        The helper is an 8B audio language model: a cold answer costs minutes
+        on CPU and a repeat one comes back from the helper's own cache in
+        milliseconds, so the same track is never paid for twice.  The prose
+        arrives in the ``text`` field of its ``--json`` line, and it is in the
+        model's language (English), not the reply language.
+        """
+        song = self.client.current_song()
+        if not song or not song.get("file"):
+            return Reply(
+                text=self._t("similar_nothing", intent.lang), ok=False
+            )
+        if not self.cfg.music_dir:
+            return Reply(text=self._t("similar_no_dir", intent.lang), ok=False)
+        music_dir = Path(self.cfg.music_dir).expanduser()
+        if not music_dir.is_dir():
+            return Reply(text=self._t("similar_no_dir", intent.lang), ok=False)
+        query = music_dir / song["file"]
+        if not query.is_file():
+            return Reply(
+                text=self._t("similar_missing", intent.lang), ok=False
+            )
+        try:
+            argv = [
+                os.path.expanduser(part)
+                for part in shlex.split(self.cfg.describe_cmd)
+            ]
+        except ValueError:
+            return Reply(
+                text=self._t("describe_failed", intent.lang), ok=False
+            )
+        if not argv:
+            return Reply(
+                text=self._t("describe_failed", intent.lang), ok=False
+            )
+        try:
+            result = subprocess.run(
+                argv + [str(query)],
+                capture_output=True,
+                text=True,
+                errors="replace",
+                timeout=self.cfg.describe_timeout,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return Reply(
+                text=self._t("describe_failed", intent.lang), ok=False
+            )
+        if result.returncode != 0:
+            return Reply(
+                text=self._t("describe_failed", intent.lang), ok=False
+            )
+        prose = ""
+        for line in reversed(result.stdout.strip().splitlines()):
+            try:
+                payload = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(payload, dict) and isinstance(
+                payload.get("text"), str
+            ):
+                prose = payload["text"].strip()
+            break
+        if not prose:
+            return Reply(
+                text=self._t("describe_failed", intent.lang), ok=False
+            )
+        return Reply(text=prose)
 
     def _do_play_mood(self, intent: Intent) -> Reply:
         """Queue tracks tagged with a Jamendo mood label from ``tags_file``.

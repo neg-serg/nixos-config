@@ -33,6 +33,14 @@ class ParseTests(unittest.TestCase):
         ("what is the volume", "volume_get", "", None),
         ("выключи звук", "mute", "", None),
         ("верни звук", "unmute", "", None),
+        ("что это за трек", "describe_track", "", None),
+        ("что там за песня", "describe_track", "", None),
+        ("опиши этот трек", "describe_track", "", None),
+        ("расскажи про песню", "describe_track", "", None),
+        ("describe this track", "describe_track", "", None),
+        # The player already answers "что за трек" with metadata; only the
+        # "это/там" form asks for a description.
+        ("что за трек", "now_playing", "", None),
         ("что играет", "now_playing", "", None),
         ("what is playing", "now_playing", "", None),
         ("перемотай вперёд на 30 секунд", "seek_forward", "", 30),
