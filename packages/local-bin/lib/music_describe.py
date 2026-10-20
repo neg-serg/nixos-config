@@ -2,8 +2,10 @@
 """Rich text descriptions of a track with Music Flamingo (8B audio-language model).
 
 Usage:
-  music_describe.py [-p PROMPT] [--model ID|DIR] [--device auto|cpu|cuda]
-                    [--max-new N] [--threads N] [--json] [--quiet] AUDIO...
+  music_describe.py [-p PROMPT] [--engine mf|afnext] [--gpu]
+                    [--model ID|DIR] [--gguf FILE] [--backend vulkan|cpu]
+                    [--device auto|cpu|cuda] [--max-new N] [--threads N]
+                    [--json] [--quiet] AUDIO...
   music_describe.py --now [--cache FILE] [--json]
   music_describe.py --dir MUSIC_DIR --out DESCRIPTIONS.jsonl
                     [--limit N] [--force] [--exclude GLOB]
@@ -44,6 +46,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -86,6 +89,20 @@ AUDIO_RATE = 16000
 # The processor truncates past this itself; decoding less keeps a 30-minute DJ
 # set from costing 300 MB of PCM for audio the model will never see.
 MAX_AUDIO_SECONDS = 1200
+
+# Two engines, same interface. "mf" is Music Flamingo through transformers on
+# the CPU (1.5-2.5 min per cold answer, 15.4 GiB of RAM); "afnext" is Audio
+# Flamingo Next through audio.cpp on the GPU over Vulkan (4.4 s for a 120-token
+# answer, 8.7 GiB GGUF, 5.5 GB RSS). The cache, tag parsing and every output
+# mode are shared, so the engine only changes how the prose is produced.
+DEFAULT_ENGINE = os.environ.get("MUSIC_DESCRIBE_ENGINE", "mf")
+AFNEXT_FAMILY = "audio_flamingo"
+AFNEXT_TOOL = os.environ.get("MUSIC_AFNEXT_TOOL", "audiocpp_cli")
+AFNEXT_MODEL = os.environ.get(
+    "MUSIC_AFNEXT_MODEL",
+    "/zero/ai/music-ai/audio-cpp/audio-flamingo-next-q8_0.gguf",
+)
+AFNEXT_BACKEND = os.environ.get("MUSIC_AFNEXT_BACKEND", "vulkan")
 
 
 def _ffmpeg_binary() -> str:
@@ -198,6 +215,123 @@ def load_model(model: str, device: str):
     if device != "cpu":
         mf = mf.to(device)
     return processor, mf
+
+
+def parse_afnext_output(stdout: str) -> tuple[str, dict]:
+    """Split audio.cpp's ``key=value`` report into ``(text, metrics)``.
+
+    The CLI prints ``text_output=...`` followed by the answer, then a block of
+    ``metrics.*`` lines.  A wrapped answer would otherwise be swallowed, so
+    everything after the text key is kept until the next ``key=`` line.
+    """
+    text_lines: list[str] = []
+    metrics: dict = {}
+    in_text = False
+    for line in stdout.splitlines():
+        key, sep, value = line.partition("=")
+        if sep and re.fullmatch(r"[a-z_.]+", key.strip()):
+            key = key.strip()
+            in_text = key == "text_output"
+            if in_text:
+                text_lines = [value]
+            else:
+                metrics[key] = value
+            continue
+        if in_text:
+            text_lines.append(line)
+    return "\n".join(text_lines).strip(), metrics
+
+
+def describe_afnext(
+    pcm, prompt: str, max_new: int, model: str, backend: str, threads: int
+) -> tuple[str, dict]:
+    """Answer through audio.cpp + Audio Flamingo Next (GPU over Vulkan).
+
+    The runtime takes a WAV path rather than samples, so the decoded track is
+    written out once per call (16 kHz mono, a few MB for a five-minute track)
+    and removed afterwards.  Its understanding families answer through
+    ``--task asr``; ``cls`` is refused with a message saying exactly that.
+    """
+    import soundfile as sf
+
+    tool = shutil.which(AFNEXT_TOOL)
+    if not tool:
+        raise RuntimeError(
+            f"{AFNEXT_TOOL} is not in PATH (package: audio-cpp)"
+        )
+    if not Path(model).exists():
+        raise RuntimeError(
+            f"GGUF not found: {model} (run: just audio-cpp-models)"
+        )
+
+    handle = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    wav = handle.name
+    handle.close()
+    try:
+        sf.write(wav, pcm, AUDIO_RATE, subtype="PCM_16")
+        argv = [
+            tool,
+            "--task",
+            "asr",
+            "--family",
+            AFNEXT_FAMILY,
+            "--model",
+            model,
+            "--backend",
+            backend,
+            "--audio",
+            wav,
+            "--text",
+            prompt,
+            "--max-tokens",
+            str(max_new),
+            "--metrics",
+        ]
+        if threads:
+            argv += ["--threads", str(threads)]
+        # The wrapper exports LD_LIBRARY_PATH with the venv's torch lib dir so
+        # that our own interpreter can load torch.  audio.cpp's Vulkan backend
+        # cannot live with that: the plugin either fails to register ("Vulkan
+        # backend requested but it is not registered in this build") or loses
+        # the device entirely, both reproduced 2026-10-21.  Give the child a
+        # clean library path — it needs none of our Python stack.
+        env = dict(os.environ)
+        keep = [
+            entry
+            for entry in env.get("LD_LIBRARY_PATH", "").split(":")
+            if entry and "torch/lib" not in entry
+        ]
+        if keep:
+            env["LD_LIBRARY_PATH"] = ":".join(keep)
+        else:
+            env.pop("LD_LIBRARY_PATH", None)
+        env.pop("PYTHONPATH", None)
+        completed = subprocess.run(
+            argv,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=900,
+            env=env,
+        )
+    finally:
+        Path(wav).unlink(missing_ok=True)
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip().splitlines()
+        raise RuntimeError(
+            f"audio.cpp failed: {detail[-1] if detail else completed.returncode}"
+        )
+    text, metrics = parse_afnext_output(completed.stdout)
+    if not text:
+        raise RuntimeError("audio.cpp returned no text")
+    wall = float(metrics.get("metrics.wall_ms") or 0) / 1000.0
+    return text, {
+        "audio_tokens": 0,
+        "new_tokens": 0,
+        "preprocess_seconds": 0.0,
+        "generate_seconds": round(wall, 2),
+        "rtf": metrics.get("metrics.rtf"),
+    }
 
 
 def describe(processor, model, pcm, prompt: str, max_new: int):
@@ -408,6 +542,24 @@ def selftest() -> int:
     if parse_tags("no structure here"):
         print("fail: tag parsing invented labels")
         return 1
+    text, metrics = parse_afnext_output(
+        "mode=offline\n"
+        "text_output=Industrial techno, 136 BPM.\n"
+        "metrics.wall_ms=4411.49\n"
+        "metrics.rtf=0.0367\n"
+    )
+    if (
+        text != "Industrial techno, 136 BPM."
+        or metrics.get("metrics.rtf") != "0.0367"
+    ):
+        print(f"fail: audio.cpp report parsing ({text!r}, {metrics})")
+        return 1
+    wrapped, _ = parse_afnext_output(
+        "text_output=first line\nsecond line\nmetrics.wall_ms=1\n"
+    )
+    if wrapped != "first line\nsecond line":
+        print(f"fail: wrapped answer lost lines ({wrapped!r})")
+        return 1
     print("ok music_describe")
     return 0
 
@@ -451,6 +603,29 @@ def main(argv: list[str]) -> int:
         "--model",
         default=DEFAULT_MODEL,
         help=f"HuggingFace id or local directory (default {DEFAULT_MODEL})",
+    )
+    parser.add_argument(
+        "--gpu",
+        action="store_true",
+        help="shortcut for --engine afnext (audio.cpp on the GPU)",
+    )
+    parser.add_argument(
+        "--engine",
+        default=DEFAULT_ENGINE,
+        choices=["mf", "afnext"],
+        help="mf: Music Flamingo via transformers on the CPU; afnext: Audio "
+        "Flamingo Next via audio.cpp on the GPU",
+    )
+    parser.add_argument(
+        "--gguf",
+        default=AFNEXT_MODEL,
+        help=f"Audio Flamingo Next GGUF for --engine afnext (default {AFNEXT_MODEL})",
+    )
+    parser.add_argument(
+        "--backend",
+        default=AFNEXT_BACKEND,
+        choices=["vulkan", "cpu"],
+        help="audio.cpp backend for --engine afnext",
     )
     parser.add_argument(
         "--device",
@@ -517,6 +692,12 @@ def main(argv: list[str]) -> int:
     if args.selftest:
         return selftest()
 
+    # The engine decides what "the model" means for the cache: a HuggingFace id
+    # for mf, the GGUF path for afnext. Keeping them in the same field is what
+    # makes a cache built by one engine invisible to the other.
+    engine = "afnext" if args.gpu else args.engine
+    model_ref = args.gguf if engine == "afnext" else args.model
+
     def log(msg: str):
         if not args.quiet:
             print(msg, file=sys.stderr, flush=True)
@@ -566,7 +747,7 @@ def main(argv: list[str]) -> int:
                 entry
                 and entry.get("mtime") == mtime
                 and entry.get("size") == size
-                and entry.get("model") == args.model
+                and entry.get("model") == model_ref
                 and entry.get("prompt_sha") == prompt_sha
             ):
                 continue
@@ -605,7 +786,7 @@ def main(argv: list[str]) -> int:
         return (
             row.get("mtime") == mtime
             and row.get("size") == size
-            and row.get("model") == args.model
+            and row.get("model") == model_ref
             and row.get("prompt_sha") == prompt_sha
         )
 
@@ -625,13 +806,19 @@ def main(argv: list[str]) -> int:
             log("[music-describe] served from cache")
             return 0
 
-    device = pick_device(args.device)
-    log(
-        f"[music-describe] loading {args.model} on {device} (8B, this takes a moment)"
-    )
-    t0 = time.time()
-    processor, model = load_model(args.model, device)
-    log(f"[music-describe] model ready in {time.time() - t0:.1f}s")
+    processor = model = None
+    if engine == "afnext":
+        log(
+            f"[music-describe] engine afnext: {Path(args.gguf).name} on {args.backend}"
+        )
+    else:
+        device = pick_device(args.device)
+        log(
+            f"[music-describe] loading {args.model} on {device} (8B, this takes a moment)"
+        )
+        t0 = time.time()
+        processor, model = load_model(args.model, device)
+        log(f"[music-describe] model ready in {time.time() - t0:.1f}s")
 
     failures = 0
     for index, path in enumerate(todo, 1):
@@ -639,9 +826,19 @@ def main(argv: list[str]) -> int:
             t0 = time.time()
             pcm = decode_audio(str(path))
             decode_s = time.time() - t0
-            answer, stats = describe(
-                processor, model, pcm, prompt, args.max_new
-            )
+            if engine == "afnext":
+                answer, stats = describe_afnext(
+                    pcm,
+                    prompt,
+                    args.max_new,
+                    args.gguf,
+                    args.backend,
+                    args.threads,
+                )
+            else:
+                answer, stats = describe(
+                    processor, model, pcm, prompt, args.max_new
+                )
         except (
             Exception
         ) as exc:  # noqa: BLE001 - one bad file must not kill a batch
@@ -655,7 +852,7 @@ def main(argv: list[str]) -> int:
             "path": str(path),
             "mtime": mtime,
             "size": size,
-            "model": args.model,
+            "model": model_ref,
             "prompt_sha": prompt_sha,
             "audio_seconds": round(len(pcm) / AUDIO_RATE, 2),
             "decode_seconds": round(decode_s, 2),
@@ -663,7 +860,7 @@ def main(argv: list[str]) -> int:
             **stats,
         }
         if args.tags:
-            entry["engine"] = "mf"
+            entry["engine"] = engine
             entry["tags"] = parse_tags(answer)
         out_file = args.out if args.dir else cache_path
         if out_file:
@@ -673,14 +870,20 @@ def main(argv: list[str]) -> int:
         if args.dir:
             log(
                 f"[music-describe] {index}/{len(todo)} {path.name}: "
-                f"{stats['new_tokens']} tok in {stats['generate_seconds']}s"
+                f"{stats['generate_seconds']}s ({engine})"
             )
         else:
             emit(entry, path)
-            log(
-                f"[music-describe] {stats['new_tokens']} tokens in "
-                f"{stats['generate_seconds']}s ({stats['new_tokens'] / max(stats['generate_seconds'], 1e-6):.2f} tok/s)"
-            )
+            if stats.get("rtf") is not None:
+                log(
+                    f"[music-describe] {stats['generate_seconds']}s wall "
+                    f"(rtf {stats['rtf']}, audio.cpp)"
+                )
+            else:
+                log(
+                    f"[music-describe] {stats['new_tokens']} tokens in "
+                    f"{stats['generate_seconds']}s ({stats['new_tokens'] / max(stats['generate_seconds'], 1e-6):.2f} tok/s)"
+                )
     return 1 if failures else 0
 
 
