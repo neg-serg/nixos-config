@@ -1366,11 +1366,13 @@ scene in it — a compositor's wallpaper is not proof. Two routes, in order:
 
 The `pleamar` binary itself comes from PATH or from the flake
 (`nix build .#pleamar --option substitute false` — the package is exposed for this, so
-`nix run .#pleamar` works while `features.gui.pleamar` is off). A scene needs a Vulkan adapter that
-can make a Wayland surface (`src/lib.rs`: `wgpu::Backends::PRIMARY`; the compositor itself can fall
-back to GL, a scene cannot), so an environment without one skips every scene with that reason
-instead of failing. Run it in a real session to get the frames and compare them against
-`files/quickshell`'s look.
+`nix run .#pleamar` works while `features.gui.pleamar` is off). When a scene is skipped, `--probe`
+names what the gate found and what is missing (`scripts/dev/check-plugin-render.sh . --probe`):
+binary, session, monitor, grim, hyprctl, ImageMagick. A scene needs a Vulkan adapter that can make a
+Wayland surface (`src/lib.rs`: `wgpu::Backends::PRIMARY`; the compositor itself can fall back to GL,
+a scene cannot), so an environment without one skips every scene with that reason instead of
+failing. Run it in a real session to get the frames and compare them against `files/quickshell`'s
+look.
 
 Both gates pass in this tree where the environment allows; the sandbox this was written in reports
 `skip ... (no graphics adapter that can make a Wayland surface)` for all six render scenes, which is
