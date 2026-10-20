@@ -200,6 +200,7 @@ music-selftest:
       if PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" -c 'import numpy' >/dev/null 2>&1; then
         PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_index.py" --selftest
         PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_similar.py" --selftest
+        PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_describe.py" --selftest
         exit 0
       fi
     done
