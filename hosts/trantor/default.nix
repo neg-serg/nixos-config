@@ -213,6 +213,10 @@ in
       "cpu"
     ];
   };
+  # Music Flamingo (music-describe) is a 15.4 GiB checkpoint that lives outside
+  # the HuggingFace cache, so point the wrapper at the directory instead of the
+  # hub id — otherwise the first run downloads it again into hfHome.
+  features.media.audio.musicTagging.describeModel = "/zero/ai/music-ai/music-flamingo";
   hardware.gpu.corectrl.enable = true;
   # Override default networkUnits: trantor uses systemd-networkd, not NetworkManager
   features.system.logTtys.networkUnits = [
