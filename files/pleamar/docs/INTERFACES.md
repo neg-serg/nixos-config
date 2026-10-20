@@ -1159,7 +1159,7 @@ and neither the scene's logic nor its permissions grow by a line.
 1. **The type check of a component happens at its use site**, which is why the check scene must call
    every component: an unused component is an unchecked one.
 
-### 10.4 The reference plugin: Spectrum
+### 10.4 The reference plugins
 
 `lib/plugins/spectrum/` is the shape the rest of the port follows (PH3-P):
 
@@ -1209,13 +1209,111 @@ this host** (a sandboxed session has no graphics surface), so the visual parity 
 `IPhoneSpectrum`/`LinearSpectrum` is still to be checked by eye in a real session; the cava feed
 itself was verified separately (config on stdin → 25 ascii lines/s).
 
+#### Genelec (`lib/plugins/genelec/`)
+
+| file                | what it is                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `genelec.plm`       | `library Genelec strict`: the dB facts, the two gestures, and `Tile` (a capsule with the dB) |
+| `genelec.luau`      | the adapter probe, the two transports, the commit coalescing, the state read-back            |
+| `genelec.check.plm` | the compile proof: two tiles, every fact set from a rule                                     |
+
+| name                              | kind               | meaning                                                    |
+| --------------------------------- | ------------------ | ---------------------------------------------------------- |
+| `Genelec.volume`                  | number, -40        | the target, whole dB (GLM CC20 is an integer)              |
+| `Genelec.muted`                   | fact               | the label shows `MUTED`, the bar goes grey                 |
+| `Genelec.available`               | fact               | `genlc discover` answered (the adapter is on the host)     |
+| `Genelec.midi`                    | fact               | the adapter is in the VM: CC20 goes over the MIDI bridge   |
+| `Genelec.minVolume` · `maxVolume` | numbers, -95 · -20 | the clamp (`genelecMaxVolume` in QS Settings.json)         |
+| `Genelec.turn`                    | event              | a wheel notch (payload: notches), emitted by `Tile`'s zone |
+| `Genelec.toggle`                  | event              | mute / unmute                                              |
+
+The logic is the QS state machine without its timers' clocks (the sandbox has no `os`): 150 ms after
+the last notch one absolute target is committed, never within 400 ms of the previous send (GLM drops
+bursts); the host path runs `genlc set-volume --volume <dB>dB`; the VM path writes the target with
+`glm-vol` and re-anchors the absolute CC20 at 400 ms, 2 s and 8 s; `genlc discover` every 30 s
+decides which path is live; `glm-vol read` every 2 s adopts a target the wheel did not set, but only
+after 2.5 s of quiet and never while muted. The slider and the tooltip stay in the scene — the
+plugin owns the hardware, not the popup.
+
+#### MPD flags (`lib/plugins/mpd/`)
+
+| file            | what it is                                                               |
+| --------------- | ------------------------------------------------------------------------ |
+| `mpd.plm`       | `library Mpd strict`: the five option facts, the state enum, and `Flags` |
+| `mpd.luau`      | the `mpc status` parser, the `mpc idle` watch, the 2500 ms fallback poll |
+| `mpd.check.plm` | the compile proof                                                        |
+
+| name                                                     | kind                                           | meaning                    |
+| -------------------------------------------------------- | ---------------------------------------------- | -------------------------- |
+| `Mpd.state`                                              | enum `playing \| paused \| stopped \| unknown` | the QS `mpdState`          |
+| `Mpd.repeat` · `random` · `single` · `consume` · `xfade` | facts                                          | the badges, one per option |
+| `Mpd.available`                                          | fact                                           | mpc reached MPD            |
+
+The QS command was `(mpc status || rmpc status)`; this plugin speaks **mpc only** — one binary, one
+permission — and reports `available = false` instead of asking a second client. The badges are text
+(`REP`, `RND`, `1`, `CNS`, `XF`) because `lib/icons.plm` is not written yet (§5.3); they become
+icons when it is, without changing the boundary.
+
+#### Pill (`lib/plugins/pill/`)
+
+| file             | what it is                                                                 |
+| ---------------- | -------------------------------------------------------------------------- |
+| `pill.plm`       | `library Pill strict`: today's state, the streak, the reminder, and `Mark` |
+| `pill.luau`      | the state JSON, the midnight rollover, the ICS write, the streak walk      |
+| `pill.check.plm` | the compile proof                                                          |
+
+| name                                           | kind            | meaning                                                                           |
+| ---------------------------------------------- | --------------- | --------------------------------------------------------------------------------- |
+| `Pill.taken` · `Pill.streak` · `Pill.reminder` | facts           | today's state, the run of taken days, the deadline passed                         |
+| `Pill.takenAt` · `Pill.today`                  | live texts      | `HH:MM` and `YYYY-MM-DD`                                                          |
+| `Pill.deadlineHour` · `deadlineMinute`         | numbers, 12 · 0 | the QS `pillReminderDeadline`, split because a text is not assignable from a rule |
+| `Pill.toggle`                                  | event           | the mark was pressed                                                              |
+
+The state JSON moves into the plugin's own folder (the files service owns it); the calendar event
+stays where vdirsyncer syncs it, `<HOME>/.config/vdirsyncer/calendars/pills/pill-<date>.ics`,
+written with `tee` and removed with `rm`. `streak` is the QS `calculateStreak` exactly: today
+counted only when taken, then the run of taken days immediately before it, a gap ending it. The
+reminder recomputes on every minute the `clock` service reports.
+
+#### Cover (`lib/plugins/cover/`)
+
+| file              | what it is                                                                              |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| `cover.plm`       | `library Cover strict`: the resolved path, `found`, the declared `art` image, and `Art` |
+| `cover.luau`      | the media watch, the album-directory listing, the canonical ranking                     |
+| `cover.check.plm` | the compile proof                                                                       |
+
+| name          | kind      | meaning                                                           |
+| ------------- | --------- | ----------------------------------------------------------------- |
+| `Cover.cover` | live text | the resolved picture as a plain path (`image … = from` needs one) |
+| `Cover.raw`   | live text | the URL the player reported, for tooltips and reports             |
+| `Cover.found` | fact      | a picture was resolved                                            |
+
+The QS `CoverResolver.qml` ranking is kept: `cover` · `front` · `folder` · `album`, then any other
+image, over jpg/jpeg/png/gif/webp, resolved 60 ms after the metadata settles (the QS
+`media.art.debounce`). The listing is `ls -1` — a plugin's files service cannot leave its own folder
+— and its lines are ranked in the logic. A remote (http) art URL is reported as not found: pleamar
+paints a path or an icon name, not a URL.
+
 ### 10.5 Port order (PH3-P)
 
 One plugin per commit, each with its `.check.plm` and its row here:
 
-1. **spectrum** — done (this section).
-1. **Genelec** — genlc/glm-vol/glm-midi and the `$XDG_RUNTIME_DIR/genlc-volume` watch, negative-dB
-   semantics, the `genelecMaxVolume` clamp.
-1. **MPD flags** — `mpc idle options player`, the QS fallback timer (`mpd.flags`, 2500 ms).
-1. **PillTracker** — its state JSON and the ICS write.
-1. **CoverResolver / MusicMeta** — ffprobe/mediainfo/sox.
+1. **spectrum** — done.
+1. **Genelec** — done.
+1. **MPD flags** — done (mpc only; `rmpc` is left out on purpose).
+1. **PillTracker** — done (state file moved into the plugin's folder).
+1. **CoverResolver** — done.
+1. **MusicMeta** — **blocked, not skipped.** The QS service introspects the track file with
+   `ffprobe -print_format json -show_streams -show_format <path>`, then falls back to
+   `mediainfo --Output=JSON` and `sox --i`; it needs the track's **file path**. pleamar's `media`
+   service reports `playing/title/artist/album/length/position/rate/art/player/players` and no URL,
+   and `playerctl metadata xesam:url` is not a substitute: with two MPRIS players up it answers
+   `No player could handle this command`, and the player pleamar picked is not a `playerctl -p`
+   name. The port needs `url` (the `xesam:url` MPRIS field) on the `media` service; until then the
+   file-derived facts (`genre`, `label`, `year`, `codec`, `bitDepth`, `sampleRate`, `bitrateKbps`,
+   `channels`, `container`, `size`, `track`, `disc`, `albumArtist`, `composer`) have no source.
+
+Still open from the PH3 exit criteria: the hostile-plugin test (a plugin that asks for a command it
+was not approved for must be refused) and the render pass over every plugin's components in a real
+session — a sandboxed session has no graphics surface, so `--check` is all that runs here.
