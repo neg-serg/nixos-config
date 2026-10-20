@@ -16,21 +16,21 @@ language 0.4
 // marked extension point below.
 //
 // Interfaces this file follows: files/pleamar/docs/INTERFACES.md — §2 (surface,
-// facts `shown`/`startup`), §3.2 (the per-monitor scale), §4 (the Capsule API),
+// facts `shown`/`startup`), §3.2 (the scale), §4 (the Capsule API),
 // §6 (the settings keys, merged by bar.luau), §8 (labels and roles).
 //
 // Two compiler facts shape the file:
 //   · A surface `size:`/`reserve:` and a text `size:`/`weight:` take a LITERAL
 //     number (`c.num()` in compiler.rs): `bar.height * 2` is refused by a
 //     surface, and `12 * scale` inside a text would silently draw at 12. So the
-//     surface height is spelled out (44: the pleamar bar strip, the examples'
-//     own bar), and every widget draws in DESIGN PIXELS inside a
-//     `group { scale: scale }`, the group scaling once for the monitor; a lib
+//     surface height is spelled out (25), and every widget draws in DESIGN
+//     PIXELS inside a `group { scale: scale }`, the group scaling once; a lib
 //     Capsule is asked for `scale: 1` inside it so the group is the only
 //     multiplier.
 //   · A component parameter default is read at the use site (INTERFACES §4), so
 //     a `scale:` default is per monitor. Call sites pass no scale; the default
-//     is the palette rule-2 expression with the user's `scale` setting on top.
+//     is `ui * user_scale` — the QS `Theme.scale()` for a bar, which is where
+//     the design numbers in this file come from.
 //
 // Settings, merged by bar.luau from the scene's own settings.json:
 //   edge          top | bottom, default bottom   — applied: the `bar_edge` fact
@@ -71,6 +71,7 @@ scene bar {
     fact widget.network = true
     fact widget.mpd = true
     fact widget.volume = true
+    fact widget.mic = true
     fact widget.genelec = true
     fact widget.media = true
     // Set by bar.luau from the `media` service: a player is there (the QS
@@ -79,6 +80,18 @@ scene bar {
     fact media.present = false
     // The cursor is over the media capsule: the transport strip rides in.
     fact media.hot = false
+    // The audio capsules (QS AudioLevelCapsule): `shown` is the reference's own
+    // visibility rule — not at 100 %, not muted — carried by bar.luau because
+    // it needs the timers and the two fields; `hot` is the cursor over them,
+    // which brings the pill up.
+    fact vol.shown = false
+    fact vol.hot = false
+    fact mic.shown = false
+    fact mic.hot = false
+    // The cursor is anywhere on the strip: QS's `panelHovering`, which is what
+    // brings the Genelec tile (idle-hidden) back. (Not `bar.hot`: the palette
+    // already has a `bar.hot` — panel.hotzone.width.)
+    fact strip.hot = false
 
     // The transport's three commands, handled by bar.luau through the `media`
     // service (QS calls MusicManager.toggle/next/previous).
@@ -87,20 +100,26 @@ scene bar {
     event media_next ->
 
     // --------------------------------------------------------------- surface
-    // The strip is QS's `panelHeight` = 22 (Theme/panel.jsonc), not a number of
-    // its own: the port's 44 was twice the reference and every capsule in it sat
-    // twice as far from the edge. The surface reserves the same 22, so windows
-    // stop at the bar as they do under Quickshell.
+    // 25, not QS's `panelHeight` of 22: the reference draws that 22 at
+    // `Theme.scale(screen)` = panel.scale 1.15 (drawn on a 2x monitor it lands
+    // at 2.3 physical px per design px, a 25-logical-px surface). pleamar's
+    // `screen.width`/`height` are the SURFACE's, not the monitor's, so the
+    // per-monitor fit of palette rule 2 reads 22/1080 here and clamps to
+    // fit.min — the port drew everything at 0.92 instead of 1.15, 20% small.
+    // A bar surface has one scale, so it is `ui` and the surface is 22 * 1.15
+    // rounded: 25. The reserve is the same 25, so windows stop at the bar
+    // exactly where they do under Quickshell (measured: hyprctl reports the QS
+    // panel at 0,1055 1920x25).
     surface {
-        size: full, 22
+        size: full, 25
         anchor: bar_edge
         level: top
-        reserve: 22 while shown
+        reserve: 25 while shown
         screens: each
     }
 
     // What is drawn inside the surface, in the same design pixels.
-    let strip = 22
+    let strip = 25
 
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
@@ -124,7 +143,7 @@ scene bar {
     // The track the capsule shows (QS: MusicManager.trackTitle/trackArtist).
     service media { playing: bool; title: text; artist: text; player: text; position: number; length: number }
     service workspaces { list: spaces }
-    service audio { volume: number; muted: bool }
+    service audio { volume: number; muted: bool; input: number; input_muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
 
     // --------------------------------------------------------- facts & events
@@ -134,15 +153,19 @@ scene bar {
     // The volume fill is a spring carried by rules, never touched per frame.
     prop level = 0 ~calm
     follow level = if(audio.muted, 0, audio.volume)
+    // The microphone's level only tints its glyph (same rule).
+    prop mic.level = 0 ~calm
+    follow mic.level = if(audio.input_muted, 0, audio.input)
 
     event focus_workspace ->
     event wheel_volume ->
     event toggle_mute ->
+    event toggle_mic ->
 
     // -------------------------------------------------------- left: the clock
     // The service writes time and date itself; no slot here pads numbers, so
     // neither is composed from hour/minute.
-    component Clock(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+    component Clock(scale: number = ui * user_scale) {
         size: 64 * scale, 34 * scale
         group zoom {
             scale: scale
@@ -158,7 +181,7 @@ scene bar {
     // is lit through a spring. A press hands the id to the logic, which commands
     // `workspaces.focus`.
     component Tab(ws: record, focus: event,
-                  scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+                  scale: number = ui * user_scale) {
         size: pill.height * scale, pill.height * scale
         group zoom {
             scale: scale
@@ -185,7 +208,7 @@ scene bar {
     // What the service reports: online (the dot), kind, name, strength. The
     // label is the standard one — `Network {name}`, or `Network: offline` — and
     // clicking it will open the network drawer in a later slice.
-    component NetCapsule(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+    component NetCapsule(scale: number = ui * user_scale) {
         let w = 118
         let h = capsule.height
         let ih = h - 2 * capsule.pad.y
@@ -204,47 +227,96 @@ scene bar {
         }
     }
 
-    // ------------------------------------------------------ right: the volume
-    // The fill follows the level spring; the wheel steps the volume and a press
-    // toggles silence, both through events the logic carries to `audio.step`
-    // and `audio.mute`.
-    component VolCapsule(step: event, mute: event,
-                         scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
-        let w = 78
-        let h = capsule.height
-        let iw = w - 2 * capsule.pad
-        let ih = h - 2 * capsule.pad.y
-        size: 78 * scale, capsule.height * scale
+    // ---------------------------------------------- right: microphone, volume
+    // QS AudioEndpointCapsule -> AudioLevelCapsule -> PillIndicator, as far as
+    // the bar shows it at rest and under the cursor:
+    //   · at rest the capsule is the Material glyph of the level, tinted with
+    //     the level's own colour (panel.volume.lowColor -> highColor). The port
+    //     used to paint the level as a filled bar inside a capsule — not the
+    //     reference, and what made the right end read much lighter;
+    //   · the pill (rounded fill, glyph, "NN %") rides out to the LEFT of the
+    //     glyph while the cursor is over the capsule, over its neighbours, so
+    //     the row never moves (PillIndicator does the same);
+    //   · the capsule is not there at all when the endpoint is silent: QS hides
+    //     the volume capsule at 100 % once panel.volume.fullHideMs has passed
+    //     and the microphone when it is muted. `vol.shown`/`mic.shown` carry
+    //     that (bar.luau), so the layout closes up like the reference's.
+    component AudioTile(glyph: text, on: bool, readout: text, hot: bool, fill: color,
+                        scale: number = ui * user_scale) {
+        let icon = pill.icon
+        size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
-                group track {
-                    size: iw, ih
-                    box { from: 0, 0; size: iw * level, ih; corner: corner.small; color: mix(volume.low, volume.high, level) }
-                    text "{audio.volume * 100, 0} %" { at: iw / 2, ih / 2; anchor: center; size: 10; weight: 600; color: ink; family: "Iosevka" }
-                }
+            box {
+                from: icon / 2 - 44, (strip - pill.height) / 2
+                size: 44, pill.height
+                corner: corner.small
+                color: coal
+                opacity: 53%
+                show: hot
             }
-            zone box vol { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
+            text "{readout}" {
+                at: icon / 2 - pill.pad, strip / 2
+                anchor: right center
+                size: 14
+                weight: 600
+                color: ink
+                family: "Iosevka"
+                show: hot
+            }
+            text "{glyph}" {
+                at: icon / 2, strip / 2
+                anchor: center
+                size: 22
+                color: fill
+                family: "Material Symbols Outlined"
+            }
+        }
+    }
+
+    component VolCapsule(step: event, mute: event,
+                         scale: number = ui * user_scale) {
+        size: (2 * capsule.pad + pill.icon) * scale, strip * scale
+        group zoom {
+            scale: scale
+            AudioTile("volume_up", vol.shown, "{audio.volume * 100, 0} %", vol.hot, mix(volume.low, volume.high, level))
+            zone box vol { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
+            on enter vol { vol.hot = true }
+            on leave vol { vol.hot = false }
             on scroll vol { emit step(wheel) }
             on press vol { emit mute }
         }
     }
 
+    component MicCapsule(mute: event,
+                         scale: number = ui * user_scale) {
+        size: (2 * capsule.pad + pill.icon) * scale, strip * scale
+        group zoom {
+            scale: scale
+            AudioTile("mic", mic.shown, "{audio.input * 100, 0} %", mic.hot, mix(volume.low, volume.high, mic.level))
+            zone box mic { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
+            on enter mic { mic.hot = true }
+            on leave mic { mic.hot = false }
+            on press mic { emit mute }
+        }
+    }
+
     // ------------------------------------------------------------------ rows
-    component Left(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+    component Left(scale: number = ui * user_scale) {
         row { at: side * scale, strip / 2; anchor: left middle; gap: bar.gap * scale
             Clock() { show: widget.clock }
             row tabs { show: widget.workspaces; gap: ws.gap * scale
                 for ws in spaces { Tab(ws, focus_workspace) }
             }
             // The pill capsule (legacy order: clock · workspaces · pill ·
-            // keyboard · network). The keyboard layout is still an extension
-            // point; `Pill.Mark()` draws the QS pill, its click handled by the
-            // plugin's own logic.
-            // A `show:` on a copy of a strict-library component is read inside
-            // the library, where the scene's `widget.pill` does not exist; the
-            // slot row carries the condition instead.
-            row pill_slot { show: widget.pill; pill.Mark() }
+            // keyboard · network) rides in only when it is wanted: QS wraps it
+            // in a SlideReveal revealed by `PillTracker.reminderActive ||
+            // (PillTracker.taken && hovering the left row)`, so at rest the bar
+            // has no pill at all and the neighbours close up. A `show:` on a
+            // copy of a strict-library component is read inside the library,
+            // where the scene's `widget.pill` does not exist; the slot row
+            // carries the condition instead.
+            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
             NetCapsule() { show: widget.network }
             // Extension point: sysmon, then weather, go here.
         }
@@ -259,7 +331,7 @@ scene bar {
     // the bar does not have yet). Clicking the cover opens the now-playing
     // panel in QS — no panel exists here, so a cover click does nothing.
     component MediaCapsule(prev: event, toggle: event, next: event,
-                           scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+                           scale: number = ui * user_scale) {
         // QS `baseHeight = max(capsule.capsuleHeight, panelHeight * scale)` = 25,
         // the art is that square, the text is `musicTextPx = 16` and the
         // analyser is `iconPreferredWidth` wide (~ the art).
@@ -309,30 +381,41 @@ scene bar {
         }
     }
 
-    component Right(scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+    component Right(scale: number = ui * user_scale) {
         row { at: screen.width - side * scale, strip / 2; anchor: right middle; gap: bar.gap * scale
             // The legacy order from the left: media · MPD · systray · mic ·
-            // volume · Genelec. The tray and the microphone are still extension
-            // points.
+            // volume · Genelec. The tray is still an extension point.
             row media_slot { show: widget.media and media.present; MediaCapsule(media_prev, media_toggle, media_next) }
             row mpd_slot { show: widget.mpd; mpd.Flags() }
-            VolCapsule(wheel_volume, toggle_mute) { show: widget.volume }
-            // Genelec, the rightmost module, as in the legacy bar.
-            row genelec_slot { show: widget.genelec; gen.Tile() }
+            MicCapsule(toggle_mic) { show: widget.mic and mic.shown }
+            VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and vol.shown }
+            // Genelec, the rightmost module, as in the legacy bar — and, as in
+            // the legacy bar, only while the cursor is on it: QS's tile sets
+            // `hideIconWhenIdle`, which collapses the whole capsule (width and
+            // opacity) until `panelHovering` or a level change brings it back.
+            row genelec_slot { show: widget.genelec and (Genelec.hot or strip.hot); gen.Tile() }
         }
     }
 
     // -------------------------------------------------------------- the strip
-    // One bottom strip: translucent coal with a light rim. The widget rows are
-    // placed inside it by the surface copies. No drop shadow: the surface is
-    // exactly the strip, and a shadow below it would be cut (INTERFACES §2.3
-    // asks for shadow room; impossible while a surface size is a literal).
+    // One face across the whole width, translucent: measured off the reference
+    // (grim, DP-2 @2x) the bar strip is a uniform near-black that still follows
+    // the wallpaper behind it — rgb(12,14,16) over bright rock, rgb(6,7,8) over
+    // the dark part — i.e. coal at ~84%, not the opaque 100% the port used
+    // (which read as a flat slab) and not nothing at all (which let the
+    // wallpaper through unbroken). No rim and no shadow: QS paints neither
+    // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
     body {
         color: coal
-        opacity: 100%
-        rim: 8%
-        box { from: 0, 0; size: screen.width, strip; corner: corner }
+        opacity: 84%
+        box { from: 0, 0; size: screen.width, strip }
     }
+    // The whole strip is a hover target for the widgets that hide at idle
+    // (QS's `panelHovering`): declared before the rows, so every widget's own
+    // zone is above it and keeps its clicks.
+    zone box strip_hover { from: 0, 0; size: screen.width, strip; label: "Bar"; role: region }
+    on enter strip_hover { strip.hot = true }
+    on leave strip_hover { strip.hot = false }
 
     Left()
     Right()
