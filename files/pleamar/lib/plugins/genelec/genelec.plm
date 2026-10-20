@@ -1,0 +1,80 @@
+language 0.4
+
+// genelec.plm — the Genelec SAM volume widget as a plugin: the tile, the facts
+// and the logic (`genelec.luau`) that talks to the monitors.
+//
+// Legacy: files/quickshell/Services/Genelec.qml (the state machine, the two
+// transports, the commit coalescing) and Bar/Modules/GenelecWidget.qml (the
+// tile: whole dB, wheel ±1, muted label). The dB range is the QS one: -95 at
+// the bottom, `genelecMaxVolume` (Settings.json -20) at the top, whole dB only,
+// because GLM's CC20 is an integer.
+//
+// Two transports, chosen by the adapter's placement (the logic probes it):
+//   host — `genlc set-volume --volume <dB>dB` (the GLM adapter is on the host);
+//   VM   — `glm-vol <dB>` writes $XDG_RUNTIME_DIR/genlc-volume and the absolute
+//          CC20 goes out over `glm-midi` (relay :9004 -> dockur VM -> GLM).
+// The dB target is written by `glm-vol` on the VM path; the logic reads it back with
+// `glm-vol read` (a spawned read, because the files service is sandboxed to the
+// plugin's own folder), which is the port of the QS FileView watch on that file.
+//
+//     import "../../lib/plugins/genelec/genelec.plm" as gen
+//     gen.Tile()
+//
+// The scene sets the cap if it differs from the frozen default:
+//     Genelec.maxVolume = -30                       // from a rule
+//
+// Compile proof: genelec.check.plm.
+
+import "../../palette.plm"
+import "../../capsule.plm"
+
+library Genelec strict {
+
+    // Its logic's, not the scene's: the host path, the state file's owner and
+    // the VM MIDI bridge.
+    permissions { run: "genlc", "glm-vol", "glm-midi" }
+
+    // ------------------------------------------------------------- boundary
+    // The target volume, whole dB (the QS displayDb/volume). The logic owns the
+    // writes; a scene may read it.
+    fact volume: number = -40
+    fact muted = false
+    // `available` is the host path answering (genlc discover); `midi` says the
+    // adapter sits in the VM, where the MIDI bridge is the only way in.
+    fact available = true
+    fact midi = false
+    // The clamp, per host: Settings.json genelecMaxVolume (-20) and the QS floor.
+    fact minVolume: number = -95
+    fact maxVolume: number = -20
+
+    // The tile's two gestures; the logic does the work (a rule cannot run a
+    // program).
+    event turn ->
+    event toggle ->
+
+    // ------------------------------------------------------------------ tile
+    component Tile(scale: number = ui) {
+        let w = 60
+        let h = capsule.height
+        let iw = w - 2 * capsule.pad
+        let ih = h - 2 * capsule.pad.y
+        // dB is negative, so the bar grows as it gets louder; the QS compression
+        // (pow 0.4) is left to the scene — this is the plain share of the range.
+        let t = clamp((volume - minVolume) / (maxVolume - minVolume), 0, 1)
+        size: 60 * scale, capsule.height * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+                group track {
+                    size: iw, ih
+                    box { from: 0, 0; size: iw * t, ih; corner: corner.small; color: if(muted, ink.off, mix(volume.low, volume.high, t)) }
+                    text "{volume, 0} dB" { at: iw / 2, ih / 2; anchor: center; size: 10; weight: 600; color: ink; family: "Iosevka"; show: not muted }
+                    text "MUTED" { at: iw / 2, ih / 2; anchor: center; size: 10; weight: 600; color: ink.off; family: "Iosevka"; show: muted }
+                }
+            }
+            zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
+            on scroll tile { emit turn(wheel) }
+            on press tile { emit toggle }
+        }
+    }
+}

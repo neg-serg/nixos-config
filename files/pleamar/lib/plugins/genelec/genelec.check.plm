@@ -1,0 +1,22 @@
+language 0.4
+
+// genelec.check.plm — the compile proof of the Genelec plugin (INTERFACES §10.2).
+
+import "../../palette.plm"
+import "./genelec.plm" as gen
+
+scene genelec_check {
+    surface { size: 200, 80; anchor: top; level: overlay; agent: hidden }
+
+    gen.Tile()
+    gen.Tile(scale: 1.5)
+
+    on demo {
+        Genelec.maxVolume = -30
+        Genelec.minVolume = -95
+        Genelec.midi = true
+        Genelec.muted = false
+        emit Genelec.turn(1)
+        emit Genelec.toggle
+    }
+}
