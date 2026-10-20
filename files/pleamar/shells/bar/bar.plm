@@ -167,6 +167,13 @@ scene bar {
     // brings the Genelec tile (idle-hidden) back. (Not `bar.hot`: the palette
     // already has a `bar.hot` — panel.hotzone.width.)
     fact strip.hot = false
+    // The tooltip: QS gives every capsule one on its own layer surface
+    // (PanelTooltip + TooltipText.compose), and this bar's own surface is 25 px
+    // tall, so it cannot hold one. `tip.shown` is the cursor being on a capsule.
+    // Named without a dot on purpose: `pleamar --say bar fact tip.shown true`
+    // is refused ("I don't understand 'tip.shown'"), so a fact an outside tool
+    // may want to poke carries no dot.
+    fact tip_open = false
     // What QS's WsIndicator shows for the ACTIVE workspace: its icon (a Nerd
     // Font glyph, the same codepoint the tree's SVGs are cut from) and the name
     // with Hyprland's `:name` prefix stripped. bar.luau fills them; the scene
@@ -224,6 +231,33 @@ scene bar {
         level: top
         reserve: 25 while shown
         screens: each
+    }
+
+    // A named surface carries what it draws and shares every fact with the bar,
+    // so a tooltip needs no round trip. `level: overlay` so it reads over the
+    // bar; `open:` so it costs nothing while nobody is on a capsule.
+    //
+    // IT DOES NOT SHOW YET, and the reason is the bar's own surface: pleamar
+    // sizes surfaces in LOGICAL px while their content is drawn at `ui` 1.15, so
+    // this 25-logical surface holds only 21.7 design px. The reference gets away
+    // with a 26-logical capsule because its content surface is panelHeight 25
+    // plus the hotzone 9 * 1.15 = 10, ~34 logical tall, and only the reserve is
+    // 25. The renderer says so itself, once: "a drawing is cut: it needs 2 px
+    // above more than this 1920 x 25 surface has". So the next step is not this
+    // surface but the bar's: size it ~34 logical, reserve 25, and shift the whole
+    // design strip down by the hotzone (10 logical = 8.7 design).
+    surface tip {
+        size: 240, 30
+        anchor: bottom
+        margin: 0, 0, 29, 0
+        level: overlay
+        open: tip_open
+        body {
+            color: coal
+            opacity: 96%
+            box { from: 0, 0; size: 240, 30; corner: 6 }
+        }
+        text "{now.date}" { at: 10, 15; anchor: left center; size: 13; color: ink; family: "Iosevka" }
     }
 
     // What is drawn inside the surface, in the same design pixels.
@@ -292,6 +326,8 @@ scene bar {
             box { from: 0, 1; size: 50, 23; corner: 6; color: coal; opacity: 69% }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
+            on enter clock { tip_open = true }
+            on leave clock { tip_open = false }
         }
     }
 
