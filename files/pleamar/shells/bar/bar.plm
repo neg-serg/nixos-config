@@ -57,7 +57,15 @@ language 0.4
 //     inside the component is not visible there (inline the expression); inside
 //     a `group` it is.
 //
-// Open, in order: the left capsules' widths and the gaps between them (the
+// Open, in order: the tray PAINTS NOTHING. Its list arrives (four items, the
+// right titles), its zones land where they should — `--say bar describe` shows
+// `trayhit#Right34#r0..r3 «Vicinae» «Steam» «TelegramDesktop» «neru» at 1766,-2
+// 25×29` — and a press emits `tray_press`, but neither the frame nor the picture
+// inside a `for`-built component reaches the screen: first a `for` inside a
+// `group`, then a record-taking component in a nested row (the idiom
+// shells/notifications uses), and an opaque warning-red box the size of the slot
+// painted nothing in both. What is left to try is a `for` straight in the row,
+// and asking upstream. Then the left capsules' widths and the gaps between them (the
 // port's keyboard capsule is visibly narrower than the reference's), the tray
 // (`service tray { list }`), the weather capsule (its fetch, JSON parse, the
 // km/h -> m/s conversion and the on-disk cache are written and were reverted
@@ -103,6 +111,10 @@ scene bar {
     // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
     // component would not do: a component's `size:` is read in the caller's
     // scope, and there the name `shown` is the scene's own fact.
+    // The tray's slot, in design px: 22 = max(CapsuleMetrics.inner 16,
+    // panelHeight 22) * 1.15 rounded, which is QS's trayIconSlot. A scene-level
+    // let because a component's `size:` is read in the caller's scope.
+    let tray.slot = 22
     let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
     // per-monitor fit; `widget.*` decide which widgets of this slice are there.
@@ -114,6 +126,7 @@ scene bar {
     fact widget.keyboard = true
     fact widget.sysmon = true
     fact widget.weather = true
+    fact widget.systray = true
     fact widget.mpd = true
     fact widget.volume = true
     fact widget.mic = true
@@ -202,7 +215,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { run: "cat", "hyprctl", "dash", "curl", "date"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "media", "media.*", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "dash", "curl", "date"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "media", "media.*", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -223,6 +236,10 @@ scene bar {
     service workspaces { list: spaces }
     service audio { volume: number; muted: bool; input: number; input_muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
+    // The tray, straight from the StatusNotifier host: `key` is what a click is
+    // sent back with, `icon` comes as a name or a path, ready to paint.
+    model icons max 12 { key: text; title: text; icon: image 18, 18 }
+    service tray { list: icons }
 
     // --------------------------------------------------------- facts & events
     // `side` is the side margin in design px (palette bar.side): a later
@@ -236,6 +253,9 @@ scene bar {
     follow mic.level = if(audio.input_muted, 0, audio.input)
 
     event focus_workspace ->
+    // A click on a tray icon: the record's index, because an event carries a
+    // number and the keys live in the logic, which is what the tray is told with.
+    event tray_press ->
     event wheel_volume ->
     event toggle_mute ->
     event toggle_mic ->
@@ -398,6 +418,31 @@ scene bar {
             text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
             zone box net { from: 0, 0; size: 54, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
         }
+    }
+
+    // ---------------------------------------------------- right: the tray
+    // QS SystemTray, in the settings this bar runs (`hideSystemTrayCapsule`,
+    // `collapseSystemTray`, `systemTrayTightSpacing`): at rest the capsule is not
+    // there at all and the icons appear only while the tray is expanded — which
+    // is why the reference strip shows no tray even with applets running. What
+    // "expanded" is here: the whole strip being under the cursor (`strip.hot`),
+    // the same fact that brings the pill back.
+    //
+    // Geometry from SystemTray.qml: a slot of `trayIconSlot` = max(inner 16,
+    // panelHeight 22) * 1.15 = 25 logical px, the icon `trayIconSize` = 20 inside
+    // a 21 px frame, slots 2 logical px apart. At 2.3 physical px per design that
+    // is a 22 design slot and an 18 design icon, with no capsule padding
+    // (`horizontalPadding` is 0 while the spacing is tight).
+    // One icon: its frame, the picture and the hit zone. A component taking the
+    // record, because that is how a list is walked here (notifications does the
+    // same) — a `for` inside a `group` painted nothing at all.
+    component TrayIcon(r: record, scale: number) {
+        size: tray.slot * scale, strip * scale
+        // The frame each icon sits in: QS's surfaceHover is textPrimary at 6 %.
+        box { from: 1 * scale, 2 * scale; size: (tray.slot - 2) * scale, 21 * scale; corner: 6 * scale; color: ink; opacity: 6% }
+        image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale }
+        zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
+        on press trayhit { emit tray_press(r.index) }
     }
 
     // ---------------------------------------------- right: microphone, volume
@@ -566,6 +611,9 @@ scene bar {
             // QS shows the flag badges only while media is up AND there is a
             // flag to show; with none it still drew an empty capsule here.
             row mpd_slot { show: widget.mpd and media.present and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags() }
+            row tray_slot { show: widget.systray and icons.count > 0 and strip.hot; gap: 0; align: center
+                for r in icons { TrayIcon(r, scale) }
+            }
             MicCapsule(toggle_mic) { show: widget.mic and mic.shown }
             VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and vol.shown }
             // Genelec, the rightmost module, as in the legacy bar — and, as in

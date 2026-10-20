@@ -265,6 +265,28 @@ end
 
 sys.watch("workspaces", workspacesChanged)
 
+-- ---------------------------------------------------------------- tray
+-- The icons come from the StatusNotifier host as they are: a record's fields are
+-- `key`, `title`, `icon` (a name or a path) with the rest ignored, so the list
+-- goes straight into the model. A click comes back as the record's INDEX — an
+-- event carries a number — so the keys are kept here, in the same order.
+local trayItems = {}
+
+sys.watch("tray", function(list)
+    trayItems = (type(list) == "table") and list or {}
+    model.icons = trayItems
+end)
+
+-- QS's left click on an icon is `modelData.activate()`, which is what
+-- `tray.activate` asks the item for. Its right click opens the item's own menu
+-- (`sys.ask("tray.menu", key)` drawn in a popup): that needs a popup surface the
+-- bar does not have yet, and a right press the scene cannot report.
+on("tray_press", function(index)
+    local item = trayItems[(index or 0) + 1]
+    if type(item) ~= "table" or type(item.key) ~= "string" then return end
+    sys.call("tray.activate", item.key)
+end)
+
 -- ----------------------------------------------------------- throughput
 -- QS's ConnectivityState.throughputText: the bar shows receive over transmit,
 -- each as three digits and a decimal (ConnUi.formatRxText / formatTxText).
