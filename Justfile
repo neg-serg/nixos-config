@@ -154,9 +154,15 @@ plugin-sandbox:
 # Measure the pleamar bar against the live Quickshell bar, pixel by pixel:
 # captures the bar strip before (quickshell) and while the pleamar scene is up,
 # prints the mean difference and the share of visibly changed pixels, and writes
-# qs | pleamar | diff into DIR. `--approve` lets the plugins' data run too.
-parity-bar out="":
-    bash "{{repo_root}}/scripts/dev/parity-bar.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}}
+# qs | pleamar | diff into DIR.
+#   just parity-bar                 measure the chrome only
+#   just parity-bar DIR             keep the artifacts in DIR
+#   just parity-bar DIR approve     also approve the plugins, so their data
+#                                   (cover, analyser, flags, dB) is live
+# (`just` owns its own flags, so `--approve` cannot be passed through the
+# recipe; the word `approve` is the switch.)
+parity-bar out="" approve="":
+    bash "{{repo_root}}/scripts/dev/parity-bar.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}} {{if approve != "" { "--approve" } else { "" }}}
 
 # Render every plugin's proof scene, one PNG each, into a temp dir
 # (`just render-plugins DIR` to keep them). Uses pleamar-wm headless when it is
