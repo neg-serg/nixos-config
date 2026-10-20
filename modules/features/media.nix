@@ -46,6 +46,9 @@
       apps.enable = mkBool "enable audio apps (players, tools)" true;
       creation.enable = mkBool "enable audio creation stack (DAW, synths)" true;
       mpd.enable = mkBool "enable MPD stack (mpd, clients, mpd-mpris)" true;
+      # aurora: the local Vulkan MPD player (workspace in ~/src/neg-player,
+      # packaged here from the aurora-src git input).
+      aurora.enable = mkBool "enable aurora (local MPD player, Vulkan UI)" true;
       # listenbrainz-mpd: MPD -> ListenBrainz scrobbler (the Last.fm-free path;
       # mpdas stays Last.fm-only). The package, config.toml and the systemd user
       # unit are emitted only when secrets/home/listenbrainz-mpd.sops.yaml

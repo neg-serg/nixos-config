@@ -79,6 +79,13 @@
       inputs.wl.follows = "wl";
       inputs.rsmetrx.follows = "rsmetrx";
     };
+    # aurora: the local MPD player's git tree, so the package builds a commit
+    # rather than whatever happens to be in the working directory. Re-lock with
+    # `nix flake lock --update-input aurora-src` after committing to it.
+    aurora-src = {
+      url = "git+file:///home/neg/src/neg-player";
+      flake = false;
+    };
     # Vendored Renoise/Redux installers (licensed builds, >100 MB). They cannot
     # live in this repo — GitHub rejects files >100 MB — and moving them inside
     # the tree does not help: the flake source contains tracked files only,
