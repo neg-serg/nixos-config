@@ -38,7 +38,10 @@ local function apply(text)
         or text:match("state:%s*(paused)")
         or text:match("state:%s*(stopped)")
     fact.state = state or "unknown"
-    fact.repeat = isOn(text:match("repeat:%s*(%w+)"))
+    -- `repeat` is a Luau keyword, so the boundary fact of that name is reached
+    -- through the table: `fact.repeat` does not parse (`Expected identifier,
+    -- got 'repeat'`), and the scene's own `Mpd.repeat` reads it fine.
+    fact["repeat"] = isOn(text:match("repeat:%s*(%w+)"))
     fact.random = isOn(text:match("random:%s*(%w+)"))
     fact.single = isOn(text:match("single:%s*(%w+)"))
     fact.consume = isOn(text:match("consume:%s*(%w+)"))

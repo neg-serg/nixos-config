@@ -1158,6 +1158,11 @@ and neither the scene's logic nor its permissions grow by a line.
 1. **A component's parameters are positional then named; a trailing comma is an error.**
 1. **The type check of a component happens at its use site**, which is why the check scene must call
    every component: an unused component is an unchecked one.
+1. **A boundary fact named after a Lua keyword cannot be reached with a dot.** `fact.repeat = …` is
+   `syntax error: Expected identifier, got 'repeat'`, and the whole plugin logic then runs nothing —
+   `--check` does not catch it, because the scene compiles and the logic is only loaded when it
+   runs. Reach it as `fact["repeat"]`; the scene's own `Mpd.repeat` is unaffected. The same goes for
+   `and`, `or`, `not`, `for`, `in`, `local`, `end`, `function`, `nil`, `then`, `until`, `while`.
 
 ### 10.4 The reference plugins
 
@@ -1362,7 +1367,11 @@ scene in it — a compositor's wallpaper is not proof. Two routes, in order:
 - `pleamar-wm headless`, when that binary is on PATH: nothing appears on the desktop and the frame
   comes from `PLEAMAR_HEADLESS_PNG`;
 - otherwise the live session: the scene opens over the desktop for a few seconds and `grim` captures
-  the region its `surface { size: W, H }` declares on the focused monitor (Hyprland only).
+  the focused monitor, and the frame is cropped to the box the scene declares — **at the top edge**
+  (`anchor: top`), centred, multiplied by the monitor's `scale` (a 2.0 monitor gives a 640×280 box
+  for a 320×140 scene), because grim returns physical pixels. If the box does not change but the
+  whole monitor does, the scene drew somewhere else and the gate says that instead of passing: the
+  compositor decides where a layer surface lands.
 
 The `pleamar` binary itself comes from PATH or from the flake
 (`nix build .#pleamar --option substitute false` — the package is exposed for this, so

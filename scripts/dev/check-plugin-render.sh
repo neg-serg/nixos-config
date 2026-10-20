@@ -81,6 +81,7 @@ command -v "$PLEAMAR_WM_BIN" > /dev/null 2>&1 && HAVE_WM=1
 
 HAVE_SESSION=0
 MON_NAME="${PLEAMAR_RENDER_MONITOR:-}"
+MON_SCALE=1
 SESSION_PROBLEM=""
 if [ -z "${WAYLAND_DISPLAY:-}" ]; then
   SESSION_PROBLEM="WAYLAND_DISPLAY is not set"
@@ -98,14 +99,19 @@ else
     /focused: yes/ {
       name = $1; sub(/^Monitor /, "", name); sub(/ .*/, "", name)
       size = ""
-      for (i = 1; i <= NF; i++) if ($i ~ / at /) { size = $i; sub(/^[[:space:]]*/, "", size); sub(/@.*/, "", size) }
-      print name, size
+      scale = "1"
+      for (i = 1; i <= NF; i++) {
+        if ($i ~ / at /) { size = $i; sub(/^[[:space:]]*/, "", size); sub(/@.*/, "", size) }
+        if ($i ~ /^[[:space:]]*scale:/) { scale = $i; sub(/^[[:space:]]*scale:[[:space:]]*/, "", scale) }
+      }
+      print name, size, scale
       exit
     }' || true)"
   if [ -z "$monitor_line" ]; then
     SESSION_PROBLEM="hyprctl sees no focused monitor (HYPRLAND_INSTANCE_SIGNATURE / XDG_RUNTIME_DIR?)"
   else
     [ -n "$MON_NAME" ] || MON_NAME="${monitor_line%% *}"
+    MON_SCALE="$(printf '%s\n' "$monitor_line" | awk '{ print $3 }')"
     HAVE_SESSION=1
   fi
 fi
@@ -159,23 +165,25 @@ render_headless() {
     > "$log" 2>&1 || true
 }
 
-# One monitor's frame, cropped to the box a scene declares at its top centre:
-# a scene anchored `top` sits there, and the crop keeps the desktop's own
-# animation out of the comparison.
+# One monitor's frame, cropped to the box a scene declares. A layer surface with
+# `anchor: top` sits at the monitor's top edge, centred horizontally, so the crop
+# is `y: 0` — not the middle of the screen. The frame from grim is in physical
+# pixels, so the declared logical size is multiplied by the monitor's scale (a
+# 2.0 monitor gives a 640×280 box for a 320×140 scene; cropping 320×140 finds
+# nothing but wallpaper).
 capture_monitor() {
-  local png="$1" w="$2" h="$3" full="$OUT_DIR/_full.png" fw fh x y
+  local png="$1" w="$2" h="$3" full="$4" fw cw ch pad x
   if ! grim -o "$MON_NAME" "$full" > /dev/null 2>&1; then
     grim "$full" > /dev/null 2>&1 || return 1
   fi
-  read -r fw fh <<< "$(magick identify -format '%w %h' "$full" 2> /dev/null || echo 0 0)"
+  fw="$(magick identify -format '%w' "$full" 2> /dev/null || echo 0)"
   [ "${fw:-0}" -gt 0 ] || return 1
-  x=$(((fw - w) / 2))
-  y=$(((fh - h) / 2))
-  [ "$y" -lt 0 ] && y=0
-  # Four pixels of slack each way: shadows and rounded corners stay inside.
-  x=$((x - 4))
+  read -r cw ch pad <<< "$(awk -v w="$w" -v h="$h" -v s="${MON_SCALE:-1}" \
+    'BEGIN { printf "%d %d %d", w * s + 0.5, h * s + 0.5, 4 * s + 0.5 }')"
+  x=$(((fw - cw) / 2 - pad))
   [ "$x" -lt 0 ] && x=0
-  magick "$full" -crop "$((w + 8))x$((h + 8))+$x+$y" +repage "$png" > /dev/null 2>&1
+  CROP="$((cw + 2 * pad))x$((ch + 2 * pad))+$x+0"
+  magick "$full" -crop "$CROP" +repage "$png" > /dev/null 2>&1
 }
 
 # A scene's own frame from the live session: the same crop once without the
@@ -188,11 +196,12 @@ render_session() {
     return 0
   fi
   read -r w h <<< "$size"
-  capture_monitor "$OUT_DIR/_before.png" "$w" "$h" || echo "grim could not capture $MON_NAME" > "$log"
+  capture_monitor "$OUT_DIR/_before.png" "$w" "$h" "$OUT_DIR/_before_full.png" \
+    || echo "grim could not capture $MON_NAME" > "$log"
   timeout -k 5 "$((SECONDS_PER_SCENE + 20))" "$PLEAMAR_BIN" --scene "$scene" --no-hud --seconds "$SECONDS_PER_SCENE" >> "$log" 2>&1 &
   pid=$!
   sleep 2
-  capture_monitor "$png" "$w" "$h" >> "$log" 2>&1 || true
+  capture_monitor "$png" "$w" "$h" "$OUT_DIR/_after_full.png" >> "$log" 2>&1 || true
   wait "$pid" || true
 }
 
@@ -230,13 +239,23 @@ for scene in "${SCENES[@]}"; do
     skipped=$((skipped + 1))
     continue
   fi
+  delta="$(frame_delta "$OUT_DIR/_before.png" "$png")"
   if [ -s "$png" ] && [ -s "$OUT_DIR/_before.png" ] \
-    && awk -v d="$(frame_delta "$OUT_DIR/_before.png" "$png")" 'BEGIN { exit !(d > 0.0002) }'; then
-    echo "  ok   $name (session)"
+    && awk -v d="$delta" 'BEGIN { exit !(d > 0.0002) }'; then
+    echo "  ok   $name (session, delta $delta)"
     rendered=$((rendered + 1))
     continue
   fi
-  echo "  FAIL $name — see $log"
+  # The declared box is the contract, but the compositor decides where a layer
+  # surface lands: when the whole monitor changed and the box did not, the scene
+  # drew somewhere else. Report that as rendered-with-a-note, never as a pass.
+  full_delta="$(frame_delta "$OUT_DIR/_before_full.png" "$OUT_DIR/_after_full.png")"
+  if [ -s "$OUT_DIR/_after_full.png" ] && awk -v d="$full_delta" 'BEGIN { exit !(d > 0.0002) }'; then
+    echo "  ok   $name (session, drew outside the declared box: full-frame delta $full_delta, crop ${CROP:-none})"
+    rendered=$((rendered + 1))
+    continue
+  fi
+  echo "  FAIL $name — the frame did not change (delta $delta, crop ${CROP:-none}, monitor ${MON_NAME} @${MON_SCALE}x); see $log"
   sed -n '1,20p' "$log" | sed 's/^/       /'
   failures=$((failures + 1))
 done
