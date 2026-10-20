@@ -151,6 +151,13 @@ pleamar-check:
 plugin-sandbox:
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}"
 
+# Measure the pleamar bar against the live Quickshell bar, pixel by pixel:
+# captures the bar strip before (quickshell) and while the pleamar scene is up,
+# prints the mean difference and the share of visibly changed pixels, and writes
+# qs | pleamar | diff into DIR. `--approve` lets the plugins' data run too.
+parity-bar out="":
+    bash "{{repo_root}}/scripts/dev/parity-bar.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}}
+
 # Render every plugin's proof scene, one PNG each, into a temp dir
 # (`just render-plugins DIR` to keep them). Uses pleamar-wm headless when it is
 # on PATH, otherwise the live session (`grim` + Hyprland); the pleamar binary

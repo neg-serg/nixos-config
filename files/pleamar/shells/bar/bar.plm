@@ -253,13 +253,16 @@ scene bar {
     // panel in QS — no panel exists here, so a cover click does nothing.
     component MediaCapsule(prev: event, toggle: event, next: event,
                            scale: number = ui * user_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
-        let h = bar.height
-        let art.w = bar.height
+        // QS `baseHeight = max(capsule.capsuleHeight, panelHeight * scale)` = 25,
+        // the art is that square, the text is `musicTextPx = 16` and the
+        // analyser is `iconPreferredWidth` wide (~ the art).
+        let h = 25
+        let art.w = 25
         let text.w = 168
-        let spec.w = 30
+        let spec.w = 25
         let btn.w = 16
         let w = art.w + bar.gap + text.w + bar.gap + spec.w + 2 * bar.gap + 3 * btn.w
-        size: (bar.height + bar.gap + 168 + bar.gap + 30 + 2 * bar.gap + 3 * 16) * scale, bar.height * scale
+        size: (25 + bar.gap + 168 + bar.gap + 25 + 2 * bar.gap + 3 * 16) * scale, 25 * scale
         group zoom {
             scale: scale
             // pad_y 0: the art is square, as in QS ("Disable vertical padding to
@@ -268,20 +271,20 @@ scene bar {
                 row media_row {
                     gap: bar.gap
                     align: center
-                    art.Art(w: 22, h: 22)
-                    text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 10; color: ink; family: "Iosevka" }
-                    spec.Bars(width: 30, height: 16, gap: 1)
+                    art.Art(w: 25, h: 25)
+                    text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 16; color: ink; family: "Iosevka" }
+                    spec.Bars(width: 25, height: 23, gap: 1)
                     // Fixed 16 px boxes so the hit zones below can name the same
                     // cells the layout hands out.
                     row btn_prev { size: 16, h; align: center
-                        text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot, 1, 0) }
+                        text "skip_previous" { family: "Material Symbols Outlined"; size: 16; color: ink; opacity: if(media.hot, 1, 0) }
                     }
                     row btn_play { size: 16, h; align: center
-                        text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot and media.playing, 1, 0) }
-                        text "pause" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot and not media.playing, 1, 0) }
+                        text "play_arrow" { family: "Material Symbols Outlined"; size: 16; color: ink; opacity: if(media.hot and media.playing, 1, 0) }
+                        text "pause" { family: "Material Symbols Outlined"; size: 16; color: ink; opacity: if(media.hot and not media.playing, 1, 0) }
                     }
                     row btn_next { size: 16, h; align: center
-                        text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot, 1, 0) }
+                        text "skip_next" { family: "Material Symbols Outlined"; size: 16; color: ink; opacity: if(media.hot, 1, 0) }
                     }
                 }
             }
