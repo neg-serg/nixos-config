@@ -214,6 +214,17 @@ _RULES: list[RuleSpec] = [
         r"help|what can you do|commands)",
     ),
     (
+        # Before now_playing: the player already answers "что за трек" with
+        # metadata, while "что это за трек" asks what the track *is*. The
+        # pattern requires the "это/там" so the two cannot collide.
+        "describe_track",
+        r"(?:что (?:это|там) за (?:трек|песн\w*|композици\w*)|"
+        r"опиши (?:этот |текущ\w+ )?(?:трек|песн\w*|композици\w*|музыку)|"
+        r"расскажи (?:про|о) (?:этот |текущ\w+ )?(?:трек|песн\w*|композици\w*)|"
+        r"describe (?:this |the )?(?:track|song)|"
+        r"tell me about (?:this|the) (?:track|song))",
+    ),
+    (
         "now_playing",
         r"(?:что (?:сейчас )?играет|что за (?:трек|песн\w*|композици\w*)|"
         r"какой (?:трек|альбом|исполнител\w*) (?:сейчас )?играет|"
@@ -469,6 +480,7 @@ EXAMPLES: dict[str, tuple[str, ...]] = {
     "stop": ("стоп", "stop"),
     "next": ("следующий трек", "next track"),
     "previous": ("предыдущий", "previous"),
+    "describe_track": ("что это за трек", "describe this track"),
     "now_playing": ("что играет", "what is playing"),
     "volume_up": ("громче", "louder"),
     "volume_down": ("тише на 10", "turn it down"),

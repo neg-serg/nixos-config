@@ -744,3 +744,69 @@ class TagsConfigEnvTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DescribeTrackTests(unittest.TestCase):
+    """`describe_track` against a fake music-describe helper."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.music = Path(self.tmp.name) / "music"
+        self.current = "Agalloch/The Mantle/01 - Falling Snow.flac"
+        current = self.music / self.current
+        current.parent.mkdir(parents=True)
+        current.write_bytes(b"")
+        self.args_log = Path(self.tmp.name) / "describe-args.txt"
+        self.fake = FakeMPD().start()
+        self.addCleanup(self.fake.stop)
+        self.client = MPDClient("127.0.0.1", self.fake.port, timeout=5)
+        self.addCleanup(self.client.close)
+
+    def _body(self, text: str = "Post-rock with distorted guitars.") -> str:
+        row = json.dumps({"path": "/x", "text": text})
+        return (
+            "import sys\n"
+            f"open({str(self.args_log)!r}, 'w').write(sys.argv[-1])\n"
+            f"print({row!r})\n"
+        )
+
+    def _controller(self, body: str, play: bool = True) -> Controller:
+        script = _script(self.tmp.name, "music-describe", body)
+        config = Config(
+            language="ru",
+            describe_cmd=f"{script} --json",
+            music_dir=str(self.music),
+        )
+        controller = Controller(self.client, config)
+        if play:
+            self.assertTrue(
+                controller.handle_text("включи альбом The Mantle").ok
+            )
+        return controller
+
+    def test_describe_returns_the_prose(self) -> None:
+        controller = self._controller(self._body())
+        reply = controller.handle_text("что это за трек")
+        self.assertTrue(reply.ok)
+        self.assertIn("Post-rock", reply.text)
+        self.assertEqual(
+            self.args_log.read_text(), str(self.music / self.current)
+        )
+
+    def test_describe_without_a_track(self) -> None:
+        controller = self._controller(self._body(), play=False)
+        reply = controller.handle_text("что это за трек")
+        self.assertFalse(reply.ok)
+        self.assertFalse(self.args_log.exists())
+
+    def test_describe_failure_is_reported(self) -> None:
+        controller = self._controller("import sys\nsys.exit(2)\n")
+        reply = controller.handle_text("что это за трек")
+        self.assertFalse(reply.ok)
+        self.assertIn("не получилось", reply.text)
+
+    def test_describe_ignores_unparsable_output(self) -> None:
+        controller = self._controller("print('not json')\n")
+        reply = controller.handle_text("опиши трек")
+        self.assertFalse(reply.ok)

@@ -52,6 +52,20 @@ class Config:
     similar_cmd: str = "music-similar --json -k 10"
     music_dir: str = "~/music"
 
+    # Free-form description of the current track comes from an 8B audio
+    # language model (music-describe).  The first run for a track takes
+    # minutes on CPU; the helper caches the answer, so a repeated question
+    # returns in milliseconds.  The cache path is spelled out because the
+    # helper only writes to it when told to.
+    describe_cmd: str = (
+        "music-describe --json --cache "
+        "~/.cache/music-describe/descriptions.jsonl"
+    )
+    # A cold description is one model load plus a 200-320 token answer: 2-3
+    # minutes measured on CPU, so the default 120 s of the other helpers would
+    # cut it off.
+    describe_timeout: float = 900.0
+
     # Mood tags come from the trained MTG Jamendo head (music-mtg-tags).  The
     # cache lives outside the repo because it is derived and machine specific:
     # one tagging run writes it, `music-mtg-tags --dir ~/music --out
