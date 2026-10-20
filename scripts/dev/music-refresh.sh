@@ -21,7 +21,8 @@
 #   --music-dir      library root (default ~/music)
 #   --min-score      playlist score floor (default 0.15)
 #   --per-list       tracks per playlist (default 120)
-#   --describe-limit describe up to N new tracks with music-describe and write
+#   --describe-limit describe up to N tracks with music-describe (newest
+#                    files first) and write
 #                    MTG-shaped tag rows (0 = off; each track costs minutes on
 #                    CPU, so the weekly run takes a handful, not the library)
 #   --mf-tags        where those rows go (default

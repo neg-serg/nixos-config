@@ -231,8 +231,10 @@
             type = lib.types.int;
             default = 0;
             description = ''
-              Describe up to N new tracks per refresh with music-describe and
-              write MTG-shaped tag rows (0 = off). Each cold track costs 1.5-2.5
+              Describe up to N tracks per refresh with music-describe and
+              write MTG-shaped tag rows (0 = off). The batch takes the most
+              recently modified undescribed files first, so a fresh album is
+              described before the back catalogue. Each cold track costs 1.5-2.5
               minutes of CPU, so this is a trickle — a handful per night, not
               the library — and the rows are what `music-refresh.sh` turns into
               the `mf` mood playlists under the playlist directory.
