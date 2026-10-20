@@ -18,8 +18,8 @@ record shape the MTG tagger writes, which is what ``music-mtg-tags
 --tags FILE --playlists DIR --by mood`` expects — build the lists into their
 own subdirectory, since those recipes rewrite one .m3u per label.
 
-Single-file mode prints the answer.  Batch mode walks a music library and
-appends one JSON object per track to the output file
+Single-file mode prints the answer.  Batch mode walks a music library newest
+first and appends one JSON object per track to the output file
 (``{"path", "mtime", "size", "model", "prompt_sha", "text", "audio_seconds",
 "generate_seconds"}``); rows whose path+mtime+size+model+prompt already match
 are skipped, so an interrupted pass resumes and a re-run only describes new or
@@ -523,6 +523,19 @@ def selftest() -> int:
             print("fail: corrupt input decoded without an error")
             return 1
 
+        lib = Path(tmp) / "lib"
+        lib.mkdir()
+        older = lib / "a.flac"
+        newer = lib / "b.flac"
+        older.write_bytes(b"")
+        newer.write_bytes(b"")
+        os.utime(older, (1_000_000, 1_000_000))
+        os.utime(newer, (2_000_000, 2_000_000))
+        order = [item.name for item in _iter_library(lib, None)]
+        if order != ["b.flac", "a.flac"]:
+            print(f"fail: batch order is not newest-first ({order})")
+            return 1
+
         out = Path(tmp) / "descriptions.jsonl"
         out.write_text(
             json.dumps(
@@ -592,11 +605,23 @@ def _iter_library(root: Path, exclude: str | None):
         ".aiff",
         ".aif",
     }
-    for path in sorted(root.rglob("*")):
+    # Newest first: a batch that stopped at --limit should have described the
+    # albums that just arrived, not the ones that happen to sort first.  The
+    # tie-break on the path keeps the order stable across runs, and every file
+    # is stat'ed once up front (37k stats cost about a second).
+    found: list[tuple[float, str, Path]] = []
+    for path in root.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in exts:
             continue
         if exclude and Path(path).match(exclude):
             continue
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            continue
+        found.append((-mtime, str(path), path))
+    found.sort()
+    for _, _, path in found:
         yield path
 
 
