@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "aurora-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792502861,
+        "narHash": "sha256-Scbq/yiDZnnuM89LJEFW0Rq+gq3IFnyGogprKJRDi4s=",
+        "ref": "refs/heads/main",
+        "rev": "2cfaa497e2d622ba019b6f7fab92eb5c6f5d61e8",
+        "revCount": 42,
+        "type": "git",
+        "url": "file:///home/neg/src/neg-player"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/neg/src/neg-player"
+      }
+    },
     "bdwgc": {
       "flake": false,
       "locked": {
@@ -878,6 +894,7 @@
     },
     "root": {
       "inputs": {
+        "aurora-src": "aurora-src",
         "colibri": "colibri",
         "determinate": "determinate",
         "extra-container": "extra-container",

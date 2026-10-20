@@ -96,6 +96,9 @@ in
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
       vowel = final.callPackage ./vowel { inherit (final.neg.functions) mkScQuark; }; # Vowel SC quark (formant tables) used by SuperDirt
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
+      aurora = final.callPackage ./aurora.nix {
+        src = inputs.aurora-src;
+      }; # aurora: local MPD player with a Vulkan UI
       renoise-redux = final.callPackage ./renoise-redux {
         renoiseSrc = inputs.renoise-src;
       }; # Renoise Redux VST3 plugin (licensed build)
