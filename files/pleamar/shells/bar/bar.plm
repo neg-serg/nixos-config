@@ -249,13 +249,17 @@ scene bar {
     surface tip {
         size: 240, 30
         anchor: bottom
-        margin: 0, 0, 29, 0
+        // Measured: with `margin: 0, 0, 29, 0` the card's bottom edge sat 38
+        // logical px above the bar's top (the anchor is the work area, not the
+        // surface), so it hugs it instead.
+        margin: 0, 0, 0, 0
         level: overlay
         open: tip_open
         body {
-            color: coal
+            color: slate
             opacity: 96%
             box { from: 0, 0; size: 240, 30; corner: 6 }
+            box { from: 0, 0; size: 2, 30; corner: 1; color: accent }
         }
         text "{now.date}" { at: 10, 15; anchor: left center; size: 13; color: ink; family: "Iosevka" }
     }
@@ -327,7 +331,6 @@ scene bar {
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { tip_open = true }
-            on leave clock { tip_open = false }
         }
     }
 
@@ -716,7 +719,7 @@ scene bar {
     // zone is above it and keeps its clicks.
     zone box strip_hover { from: 0, 0; size: screen.width, strip; label: "Bar"; role: region }
     on enter strip_hover { strip.hot = true }
-    on leave strip_hover { strip.hot = false }
+    on leave strip_hover { strip.hot = false; tip_open = false }
 
     Left()
     Right()
