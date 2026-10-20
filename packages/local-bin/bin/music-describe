@@ -3,6 +3,7 @@
 #
 #   music-describe FILE [FILE...]                 # genre/tempo/key/instruments/mood
 #   music-describe -p "what language are the vocals in?" FILE
+#   music-describe --gpu FILE                     # same, but Audio Flamingo Next on the GPU
 #   music-describe --now                          # the playing track (playerctl), cached
 #   music-describe --json FILE                    # one JSON object per file
 #   music-describe --tags --dir ~/music --out ~/mf-tags.jsonl --limit 50
@@ -14,7 +15,9 @@
 # which is what the playlist builder above reads; point it at a subdirectory so
 # it does not overwrite the MTG-derived lists.
 #
-# Weights are fetched into $MUSIC_AI_HF_HOME on first use (~15.4 GiB bf16).
+# Weights are fetched into $MUSIC_AI_HF_HOME on first use (~15.4 GiB bf16);
+# --gpu/--engine afnext uses the audio.cpp GGUF instead (just audio-cpp-models)
+# and needs free VRAM — a resident ollama model will starve it.
 # CPU by default: the ROCm path has crashed on this host (see
 # docs/howto/local-music-ai.md); --device cuda overrides, --device auto asks
 # torch. Payload: packages/local-bin/lib/music_describe.py.
@@ -26,6 +29,8 @@ MUSIC_AI_SELF=$0 . "$(dirname "$0")/_music_ai_env.sh"
 # Rendered from features.media.audio.musicTagging.{describeModel,describeDevice}.
 MUSIC_DESCRIBE_MODEL="${MUSIC_DESCRIBE_MODEL:-@MUSIC_DESCRIBE_MODEL@}"
 MUSIC_DESCRIBE_DEVICE="${MUSIC_DESCRIBE_DEVICE:-@MUSIC_DESCRIBE_DEVICE@}"
-export MUSIC_DESCRIBE_MODEL MUSIC_DESCRIBE_DEVICE
+MUSIC_DESCRIBE_ENGINE="${MUSIC_DESCRIBE_ENGINE:-@MUSIC_DESCRIBE_ENGINE@}"
+MUSIC_AFNEXT_MODEL="${MUSIC_AFNEXT_MODEL:-@MUSIC_AFNEXT_MODEL@}"
+export MUSIC_DESCRIBE_MODEL MUSIC_DESCRIBE_DEVICE MUSIC_DESCRIBE_ENGINE MUSIC_AFNEXT_MODEL
 
 exec "$PY" "$LIB/music_describe.py" "$@"

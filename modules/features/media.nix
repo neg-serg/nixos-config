@@ -142,6 +142,34 @@
             directory works as well as a HuggingFace id.
           '';
         };
+        describeEngine = lib.mkOption {
+          type = lib.types.enum [
+            "mf"
+            "afnext"
+          ];
+          default = "mf";
+          description = ''
+            Which model answers music-describe by default.
+
+            `mf` is Music Flamingo through transformers on the CPU: 1.5-2.5
+            minutes per cold answer, 15.4 GiB of RAM, 20 minutes of audio.
+            `afnext` is Audio Flamingo Next through audio.cpp on the GPU: a
+            120-token answer took 4.4 s (rtf 0.037) on the RX 9070 XT over
+            Vulkan with an 8.7 GiB q8_0 GGUF — but it needs free VRAM, and
+            ollama's loaded models (10 GB for an 8B) will starve it into
+            `ErrorDeviceLost`. `--engine`/`--gpu` on the command line override
+            this per run; the two engines keep separate cache entries.
+          '';
+        };
+        describeGpuModel = lib.mkOption {
+          type = lib.types.str;
+          default = "/zero/ai/music-ai/audio-cpp/audio-flamingo-next-q8_0.gguf";
+          description = ''
+            GGUF weights for the `afnext` engine, fetched by
+            scripts/dev/audio-cpp-models.sh (`just audio-cpp-models`), which
+            pins the size and sha256. The runtime itself is pkgs.audio-cpp.
+          '';
+        };
         describeDevice = lib.mkOption {
           type = lib.types.enum [
             "auto"

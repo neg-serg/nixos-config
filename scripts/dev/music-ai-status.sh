@@ -182,10 +182,17 @@ mtg=$(find "$MTG_MODELS" -maxdepth 1 -name '*.pb' 2> /dev/null | wc -l)
 # It may sit in the HF cache (hub id) or in a plain directory (describeModel
 # points the wrapper at one), so ask the deployed wrapper what it defaults to.
 mf=$(find "$HF_HOME_DIR/hub" -maxdepth 1 -name 'models--nvidia--music-flamingo*' 2> /dev/null | wc -l)
-mf_dir=$(rg -o 'MUSIC_DESCRIBE_MODEL:-[^}"]+' "$HOME_DIR/.local/bin/music-describe" 2> /dev/null | sed 's/.*:-//' | head -1)
+mf_dir=$(rg -o 'MUSIC_DESCRIBE_MODEL:-[^}"]+' "$HOME_DIR/.local/bin/music-describe" 2> /dev/null | sed 's/.*:-//' | head -1 || true)
 if [[ -n "$mf_dir" && -d "$mf_dir" ]]; then mf=$((mf + 1)); fi
+# The GPU engine's GGUF is a separate file with its own fetcher.
+afnex=$(rg -o 'MUSIC_AFNEXT_MODEL:-[^}"]+' "$HOME_DIR/.local/bin/music-describe" 2> /dev/null | sed 's/.*:-//' | head -1 || true)
+afnex_ok=0
+if [[ -n "$afnex" && -f "$afnex" ]]; then
+  afnex_ok=1
+  mf=$((mf + 1))
+fi
 say() { [[ "$1" -gt 0 ]] && printf 'yes' || printf 'no'; }
-detail="HF: MERT $(say "$mert"), CLAP $(say "$clap"), MF $(say "$mf") (${mf_dir:-hub}); MTG: $mtg graphs"
+detail="HF: MERT $(say "$mert"), CLAP $(say "$clap"); MF $(say "$mf") (${mf_dir:-hub}); AF-Next $(say "$afnex_ok") (${afnex:-none}); MTG: $mtg graphs"
 status="ok"
 if [[ "$clap" -eq 0 ]]; then
   detail+=" — CLAP downloads on the first music-tags run"

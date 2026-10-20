@@ -56,6 +56,8 @@
           # local directory) and the device the wrapper defaults to.
           "@MUSIC_DESCRIBE_MODEL@" = config.features.media.audio.musicTagging.describeModel;
           "@MUSIC_DESCRIBE_DEVICE@" = config.features.media.audio.musicTagging.describeDevice;
+          "@MUSIC_DESCRIBE_ENGINE@" = config.features.media.audio.musicTagging.describeEngine;
+          "@MUSIC_AFNEXT_MODEL@" = config.features.media.audio.musicTagging.describeGpuModel;
         };
         subst = lib.replaceStrings (builtins.attrNames substs) (builtins.attrValues substs);
 
