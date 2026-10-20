@@ -45,14 +45,13 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = "${src}/Cargo.lock";
 
-  # Only the player and its probe: the workspace also carries eleven plugin
-  # crates, and they are dependencies of the player, not separate binaries.
+  # One package, two binaries: `cargo build -p aurora` builds both `aurora` and
+  # `aurora-probe` — they are two `[[bin]]` targets of the root package. The
+  # workspace's eleven plugin crates are dependencies, not separate binaries.
   cargoBuildFlags = [
     "--locked"
     "-p"
     "aurora"
-    "-p"
-    "aurora-probe"
   ];
 
   # The test suite is a development contract, not a packaging step: it asserts
