@@ -82,20 +82,29 @@ mkdir -p "$OUT_DIR"
 REPO_ABS="$(cd "$REPO_ROOT" && pwd)"
 
 # The monitor the bar is on: the focused one, with its geometry and scale.
-monitor_line="$(hyprctl monitors 2> /dev/null | awk '
+# The focused monitor, or the first one that has a geometry: a bar is on one of
+# them, and a session where no output reports `focused: yes` still has a bar.
+# `PARITY_MONITOR=NAME` names it outright.
+MONITORS_RAW="$(hyprctl monitors 2> /dev/null || true)"
+monitor_line="$(printf '%s\n' "$MONITORS_RAW" | awk '
   BEGIN { RS = ""; FS = "\n" }
-  /focused: yes/ {
+  {
     name = $1; sub(/^Monitor /, "", name); sub(/ .*/, "", name)
-    size = ""; scale = "1"
+    size = ""; scale = "1"; hot = ($0 ~ /focused: yes/)
     for (i = 1; i <= NF; i++) {
       if ($i ~ / at /) { size = $i; sub(/^[[:space:]]*/, "", size); sub(/@.*/, "", size) }
       if ($i ~ /^[[:space:]]*scale:/) { scale = $i; sub(/^[[:space:]]*scale:[[:space:]]*/, "", scale) }
     }
-    print name, size, scale
-    exit
+    want = (ENVIRON["PARITY_MONITOR"] != "")
+    if (size == "") next
+    if (want && name != ENVIRON["PARITY_MONITOR"]) next
+    if (!want && !hot && seen) next
+    if (size != "") { print name, size, scale; exit }
   }' || true)"
 [ -n "$monitor_line" ] || {
-  echo "parity-bar: hyprctl sees no focused monitor" >&2
+  echo "parity-bar: no monitor with a geometry — hyprctl said:" >&2
+  printf '%s\n' "$MONITORS_RAW" | head -5 | sed 's/^/    /' >&2
+  echo "  (set PARITY_MONITOR=<name> to choose one outright)" >&2
   exit 1
 }
 read -r MON_NAME MON_SIZE MON_SCALE <<< "$monitor_line"
