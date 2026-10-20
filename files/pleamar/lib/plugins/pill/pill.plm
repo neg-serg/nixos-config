@@ -1,0 +1,74 @@
+language 0.4
+
+// pill.plm — the pill tracker as a plugin: today's state, the streak, and the
+// mark that shows whether it happened.
+//
+// Legacy: files/quickshell/Services/PillTracker.qml (the state JSON, the
+// midnight rollover, the deadline reminder, the ICS write into the synced
+// calendar) and Helpers/PillHistory.js (the streak arithmetic).
+//
+// Where the files live is the one thing that changed: the QS service kept its
+// state under $XDG_STATE_HOME/quickshell/, while a plugin owns a folder of its
+// own (`$XDG_DATA_HOME/pleamar/<scene>/` through the files service) — so the
+// state is `state.json` in that folder, and only the calendar event stays
+// outside, in the directory vdirsyncer syncs (written with `tee`, removed with
+// `rm`, both through `run`).
+//
+//     import "../../lib/plugins/pill/pill.plm" as pill
+//     pill.Mark()
+//
+// The deadline is the scene's (the QS `pillReminderDeadline`, 12:00), split into
+// two numbers because a text is not assignable from a rule:
+//     on settings_ready { Pill.deadlineHour = 9; Pill.deadlineMinute = 30 }
+//
+// Compile proof: pill.check.plm.
+
+import "../../palette.plm"
+import "../../capsule.plm"
+
+library Pill strict {
+
+    // The plugin's own: its folder (state), the calendar directory (create,
+    // write, remove), HOME to find it, and the minute clock it runs on.
+    permissions {
+        run: "mkdir", "tee", "rm"
+        services: "files", "files.write", "env", "clock"
+    }
+
+    // ------------------------------------------------------------- boundary
+    // Live texts, not facts: a fact is a number, a yes/no or an enum, and a
+    // fact of text is `text name = "…"` in this language.
+    text takenAt = ""
+    text today = ""
+    fact taken = false
+    fact streak: number = 0
+    // True after the deadline while nothing is taken (the QS reminderActive).
+    fact reminder = false
+    // The scene's, from its settings: the QS default is 12:00, split because a
+    // text is not assignable from a rule.
+    fact deadlineHour: number = 12
+    fact deadlineMinute: number = 0
+
+    event toggle ->
+
+    // ----------------------------------------------------------------- mark
+    component Mark(scale: number = ui) {
+        let w = 58
+        let h = capsule.height
+        size: 58 * scale, capsule.height * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+                row mark {
+                    gap: 4
+                    align: center
+                    text "PILL" { size: 9; weight: 600; family: "Iosevka"; color: if(reminder, amber, ink.dim) }
+                    text "✓" { size: 11; weight: 600; family: "Iosevka"; color: if(reminder, amber, highlight); show: taken }
+                    text "·" { size: 11; weight: 600; family: "Iosevka"; color: if(reminder, amber, ink.off); show: not taken }
+                }
+            }
+            zone box mark { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
+            on press mark { emit toggle }
+        }
+    }
+}
