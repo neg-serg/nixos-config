@@ -1,0 +1,84 @@
+language 0.4
+
+// meta.plm — extended track metadata as a plugin: what the playing file is,
+// not what the player claims about it.
+//
+// Legacy: files/quickshell/Services/MusicMeta.qml. That service introspects the
+// track file with `ffprobe -print_format json -show_streams -show_format`, falls
+// back to `mediainfo --Output=JSON`, and only then to `sox --i`; everything it
+// knows (codec, bit depth, sample rate, bitrate, channels, container, size, the
+// tags) comes from the file, not from MPRIS.
+//
+// Where the path comes from is the deviation: pleamar's `media` service reports
+// no file URL (`playing/title/artist/album/length/position/rate/art/player/
+// players`), and MPRIS over `playerctl` cannot stand in for it (with two players
+// up it answers `No player could handle this command`, and the player pleamar
+// picked is not a `playerctl -p` name). So this plugin asks **MPD** for the
+// file: `mpc -f '%file%' current` is relative to MPD's music_directory, and the
+// root is the plugin's own settings file (`meta.json` in its folder, default
+// /home/neg/music) — the scene never has to know. Players that report no file
+// (a browser tab, a stream) simply leave the facts empty, which is the honest
+// answer for them.
+//
+// The tag fallbacks (`tags.GENRE` capitalised, then lowercase, then
+// `format.tags`) and the mediainfo retry are the QS order; `sox --i` is left out
+// (its text output is a third parser for the tail of a tail).
+//
+//     import "../../lib/plugins/meta/meta.plm" as meta
+//     meta.Line()
+//
+// Compile proof: meta.check.plm.
+
+import "../../palette.plm"
+import "../../capsule.plm"
+
+library Meta strict {
+
+    // Its logic's own: mpc for the file, ffprobe as the introspection tool, and
+    // mediainfo as the fallback; media says which track; files reads its own
+    // settings (the music root).
+    permissions {
+        run: "mpc", "ffprobe", "mediainfo"
+        services: "media", "files"
+    }
+
+    // ------------------------------------------------------------- boundary
+    // Numbers are facts, strings are live texts (a fact is a number, a yes/no
+    // or an enum).
+    fact bitDepth: number = 0
+    fact sampleRate: number = 0
+    fact bitrateKbps: number = 0
+    fact channels: number = 0
+    fact sizeBytes: number = 0
+    fact trackNo: number = 0
+    fact discNo: number = 0
+    fact year: number = 0
+    text codec = ""
+    text container = ""
+    text genre = ""
+    text label = ""
+    text albumArtist = ""
+    text composer = ""
+    text file = ""
+    // The QS "quality summary" line, composed here so a scene does not have to:
+    // "FLAC 24/96 · 1024 kbps".
+    text summary = ""
+
+    // ----------------------------------------------------------------- line
+    component Line(scale: number = ui) {
+        let w = 118
+        let h = capsule.height
+        size: 118 * scale, capsule.height * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
+                row line {
+                    gap: 4
+                    align: center
+                    text "{summary}" { size: 9; weight: 600; family: "Iosevka"; color: ink.dim }
+                }
+            }
+            zone box line { from: 0, 0; size: 118, h; corner: corner; label: "Track quality"; role: region; value: "{summary}" }
+        }
+    }
+}
