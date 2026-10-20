@@ -222,6 +222,10 @@ in
   # the HuggingFace cache, so point the wrapper at the directory instead of the
   # hub id — otherwise the first run downloads it again into hfHome.
   features.media.audio.musicTagging.describeModel = "/zero/ai/music-ai/music-flamingo";
+  # GPU first (3-6 s per track), CPU fallback when ollama or a game holds
+  # the VRAM — the nightly describe step and the voice command then never
+  # fail, they only get slower.
+  features.media.audio.musicTagging.describeEngine = "auto";
   hardware.gpu.corectrl.enable = true;
   # Override default networkUnits: trantor uses systemd-networkd, not NetworkManager
   features.system.logTtys.networkUnits = [

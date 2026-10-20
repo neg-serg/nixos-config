@@ -207,6 +207,18 @@ if [[ "$mtg" -lt 4 ]]; then
 fi
 note "$status" "models" "$detail"
 
+# --- GPU engine (audio.cpp + Audio Flamingo Next) -------------------------
+# The engine fails as ErrorDeviceLost when something else holds the VRAM, and
+# that something is usually ollama. Say so here instead of at the first run.
+if command -v ollama > /dev/null 2>&1; then
+  busy=$(timeout 5 ollama ps 2> /dev/null | tail -n +2 | rg -N "GPU" | awk '{print $1}' | paste -sd, - || true)
+  if [[ -n "$busy" ]]; then
+    note warn "gpu engine" "ollama holds VRAM ($busy) — music-describe --gpu fails until it unloads (ollama stop <model>)"
+  else
+    note ok "gpu engine" "no ollama model resident; music-describe --gpu has the VRAM"
+  fi
+fi
+
 # --- venvs and GPU --------------------------------------------------------
 fix_script="$(dirname "$(readlink -f "$0")")/fix-music-venvs.sh"
 if [[ -x "$fix_script" ]]; then

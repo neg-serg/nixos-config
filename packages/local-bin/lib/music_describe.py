@@ -242,6 +242,22 @@ def parse_afnext_output(stdout: str) -> tuple[str, dict]:
     return "\n".join(text_lines).strip(), metrics
 
 
+def _afnext_hint(detail: str) -> str:
+    """Turn audio.cpp's failure line into something actionable."""
+    lowered = detail.lower()
+    if "devicelost" in lowered or "no device" in lowered:
+        return (
+            " — the GPU is busy or out of VRAM; `ollama ps` lists resident "
+            "models and `ollama stop <name>` frees one"
+        )
+    if "not registered in this build" in lowered:
+        return (
+            " — a foreign LD_LIBRARY_PATH hides the Vulkan plugin; run outside "
+            "the venv environment (torch/lib on the path is the usual culprit)"
+        )
+    return ""
+
+
 def describe_afnext(
     pcm, prompt: str, max_new: int, model: str, backend: str, threads: int
 ) -> tuple[str, dict]:
@@ -318,9 +334,8 @@ def describe_afnext(
         Path(wav).unlink(missing_ok=True)
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip().splitlines()
-        raise RuntimeError(
-            f"audio.cpp failed: {detail[-1] if detail else completed.returncode}"
-        )
+        reason = detail[-1] if detail else str(completed.returncode)
+        raise RuntimeError(f"audio.cpp failed: {reason}{_afnext_hint(reason)}")
     text, metrics = parse_afnext_output(completed.stdout)
     if not text:
         raise RuntimeError("audio.cpp returned no text")
@@ -612,9 +627,10 @@ def main(argv: list[str]) -> int:
     parser.add_argument(
         "--engine",
         default=DEFAULT_ENGINE,
-        choices=["mf", "afnext"],
+        choices=["mf", "afnext", "auto"],
         help="mf: Music Flamingo via transformers on the CPU; afnext: Audio "
-        "Flamingo Next via audio.cpp on the GPU",
+        "Flamingo Next via audio.cpp on the GPU; auto: afnext with a CPU "
+        "fallback when the GPU is busy",
     )
     parser.add_argument(
         "--gguf",
@@ -697,6 +713,10 @@ def main(argv: list[str]) -> int:
     # makes a cache built by one engine invisible to the other.
     engine = "afnext" if args.gpu else args.engine
     model_ref = args.gguf if engine == "afnext" else args.model
+    if engine == "auto":
+        # Keyed to the pair: a row written by the GPU engine must not be
+        # served to a plain --engine mf run, and vice versa.
+        model_ref = f"auto+{Path(args.gguf).name}+{args.model}"
 
     def log(msg: str):
         if not args.quiet:
@@ -806,19 +826,46 @@ def main(argv: list[str]) -> int:
             log("[music-describe] served from cache")
             return 0
 
-    processor = model = None
+    mf_loaded: dict = {}
+
+    def run_mf(pcm, prompt: str, max_new: int):
+        """CPU engine, loaded on first use — auto may never need it."""
+        if not mf_loaded:
+            device = pick_device(args.device)
+            log(
+                f"[music-describe] loading {args.model} on {device} "
+                "(8B, this takes a moment)"
+            )
+            t0 = time.time()
+            proc, mdl = load_model(args.model, device)
+            mf_loaded["processor"], mf_loaded["model"] = proc, mdl
+            log(f"[music-describe] model ready in {time.time() - t0:.1f}s")
+        return describe(
+            mf_loaded["processor"], mf_loaded["model"], pcm, prompt, max_new
+        )
+
+    def run_engine(pcm, prompt: str, max_new: int):
+        if engine == "mf":
+            return run_mf(pcm, prompt, max_new)
+        try:
+            return describe_afnext(
+                pcm, prompt, max_new, args.gguf, args.backend, args.threads
+            )
+        except RuntimeError as exc:
+            if engine != "auto":
+                raise
+            log(f"[music-describe] GPU engine unavailable ({exc}); using CPU")
+            return run_mf(pcm, prompt, max_new)
+
     if engine == "afnext":
         log(
             f"[music-describe] engine afnext: {Path(args.gguf).name} on {args.backend}"
         )
-    else:
-        device = pick_device(args.device)
+    elif engine == "auto":
         log(
-            f"[music-describe] loading {args.model} on {device} (8B, this takes a moment)"
+            f"[music-describe] engine auto: {Path(args.gguf).name} on "
+            f"{args.backend}, CPU fallback"
         )
-        t0 = time.time()
-        processor, model = load_model(args.model, device)
-        log(f"[music-describe] model ready in {time.time() - t0:.1f}s")
 
     failures = 0
     for index, path in enumerate(todo, 1):
@@ -826,19 +873,7 @@ def main(argv: list[str]) -> int:
             t0 = time.time()
             pcm = decode_audio(str(path))
             decode_s = time.time() - t0
-            if engine == "afnext":
-                answer, stats = describe_afnext(
-                    pcm,
-                    prompt,
-                    args.max_new,
-                    args.gguf,
-                    args.backend,
-                    args.threads,
-                )
-            else:
-                answer, stats = describe(
-                    processor, model, pcm, prompt, args.max_new
-                )
+            answer, stats = run_engine(pcm, prompt, args.max_new)
         except (
             Exception
         ) as exc:  # noqa: BLE001 - one bad file must not kill a batch
