@@ -52,19 +52,23 @@ library Pill strict {
     event toggle ->
 
     // ----------------------------------------------------------------- mark
+    // The QS PillCapsule: one `pill` Material glyph in a capsule the size of the
+    // icon plus its padding, accent-coloured once taken and pulsing (opacity
+    // 0.3 → 1 over a second, `SequentialAnimation` in QS) while the deadline has
+    // passed. `wave` is the language's own sine: 0.35 · sin(2π t) around 0.65.
     component Mark(scale: number = ui) {
-        let w = 58
+        let size.icon = 14
+        let w = 2 * capsule.pad + 14
         let h = capsule.height
-        size: 58 * scale, capsule.height * scale
+        prop pulse = 0
+        wave pulse = 0.35 at 6.28
+        size: (2 * capsule.pad + 14) * scale, capsule.height * scale
         group zoom {
             scale: scale
             Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
                 row mark {
-                    gap: 4
                     align: center
-                    text "PILL" { size: 9; weight: 600; family: "Iosevka"; color: if(reminder, amber, ink.dim) }
-                    text "✓" { size: 11; weight: 600; family: "Iosevka"; color: if(reminder, amber, highlight); show: taken }
-                    text "·" { size: 11; weight: 600; family: "Iosevka"; color: if(reminder, amber, ink.off); show: not taken }
+                    text "pill" { family: "Material Symbols Outlined"; size: 14; color: if(taken, highlight, ink.dim); opacity: if(reminder, 0.65 + pulse, 1) }
                 }
             }
             zone box mark { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }

@@ -1255,9 +1255,11 @@ plugin owns the hardware, not the popup.
 | `Mpd.available`                                          | fact                                           | mpc reached MPD            |
 
 The QS command was `(mpc status || rmpc status)`; this plugin speaks **mpc only** — one binary, one
-permission — and reports `available = false` instead of asking a second client. The badges are text
-(`REP`, `RND`, `1`, `CNS`, `XF`) because `lib/icons.plm` is not written yet (§5.3); they become
-icons when it is, without changing the boundary.
+permission — and reports `available = false` instead of asking a second client. The capsule is as
+wide as its flags (`horizontalPadding * 2 + content`), and the glyphs are the Material Symbols names
+QS passed to `MaterialIcon` — `repeat`, `shuffle`, `repeat_one`, `auto_delete`, `blur_linear` —
+drawn from the installed Material Symbols Outlined font with its ligatures, at the QS size (14) and
+emphasis opacity.
 
 #### Pill (`lib/plugins/pill/`)
 

@@ -18,7 +18,7 @@ local D = {
 -- set. An order cannot be applied at runtime (the scene paints in the order it
 -- is written), and entries this slice does not know yet (pill, keyboard, media,
 -- …) are kept in the file for the slices that do.
-local WIDGETS = { "clock", "workspaces", "network", "volume" }
+local WIDGETS = { "clock", "workspaces", "pill", "network", "mpd", "volume", "genelec" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
