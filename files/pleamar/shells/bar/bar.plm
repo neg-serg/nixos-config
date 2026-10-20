@@ -32,6 +32,38 @@ language 0.4
 //     is `ui * user_scale` — the QS `Theme.scale()` for a bar, which is where
 //     the design numbers in this file come from.
 //
+// Parity notes (measured, not guessed). The gate is `just parity-bar DIR
+// approve hide`: it shoots the live QS strip, hides quickshell, shoots the port
+// over the same strip and prints mean / visible-share. It has to run OUTSIDE
+// the agent's file sandbox — grim needs /dev/shm and the GPU is needed for the
+// scene's dmabuf frames — which the `hub` tool does (a plain bash call fails
+// with `failed to create buffer`).
+//
+// What the reference is, measured off its own strip (DP-2, 3840x2160 @2x; the
+// bar occupies the last 50 physical rows, the gate's crop starts 20 above it):
+//   · one surface 25 logical px tall, reserving 25 — QS draws panelHeight 22 at
+//     Theme.scale() 1.15, and 22 * 1.15 rounds to 25;
+//   · a full-width face of coal at ~84 % (rgb(12,14,16) over bright wallpaper,
+//     rgb(6,7,8) over dark), no rim, no shadow;
+//   · each widget on its own WidgetCapsule face: 53 % coal, radius 6, ~14
+//     design px tall;
+//   · left cluster order and ink spans: clock · workspace · keyboard · network ·
+//     sysmon · weather.
+//
+// Two pleamar rules this file learned the hard way:
+//   · a `box` at a NEGATIVE `from:` draws nothing at all, silently (--check is
+//     happy) — a face starts at 0 and the content is inset instead;
+//   · a component's `size:` is read in the CALLER's scope, so a `let` written
+//     inside the component is not visible there (inline the expression); inside
+//     a `group` it is.
+//
+// Open, in order: the left capsules' widths and the gaps between them (the
+// port's keyboard capsule is visibly narrower than the reference's), the tray
+// (`service tray { list }`), the weather capsule (its fetch, JSON parse, the
+// km/h -> m/s conversion and the on-disk cache are written and were reverted
+// only because its columns did not land where the design numbers say), and a
+// `paused` field for the media capsule.
+//
 // Settings, merged by bar.luau from the scene's own settings.json:
 //   edge          top | bottom, default bottom   — applied: the `bar_edge` fact
 //                 drives `anchor:` (the fact cannot be called `edge`: that name
