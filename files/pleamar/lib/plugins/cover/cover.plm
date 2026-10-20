@@ -13,13 +13,11 @@ language 0.4
 //     import "../../lib/plugins/cover/cover.plm" as cover
 //     cover.Art(w: 200, h: 200)
 //
-// MusicMeta (ffprobe/mediainfo/sox introspection, the other half of PH3-P's
-// last item) is NOT here: pleamar's `media` service reports no file URL
-// (playing/title/artist/album/length/position/rate/art/player/players), and
-// ffprobe needs a path. `playerctl metadata xesam:url` cannot stand in — it
-// answers "No player could handle this command" whenever more than one MPRIS
-// player is up, and the player pleamar reports is not a `playerctl -p` name.
-// The port needs `url` on the `media` service first; INTERFACES §10.5 says so.
+// The other half of PH3-P's last item (MusicMeta: ffprobe/mediainfo/sox) is
+// `lib/plugins/meta/`, which takes the file path from MPD — pleamar's `media`
+// service reports no URL, and `playerctl metadata xesam:url` is not a stand-in
+// whenever more than one MPRIS player is up. INTERFACES §10.5 carries the
+// deviation and the upstream ask (a `url` field on `media`).
 //
 // Compile proof: cover.check.plm.
 
