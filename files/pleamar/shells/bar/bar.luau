@@ -18,7 +18,7 @@ local D = {
 -- set. An order cannot be applied at runtime (the scene paints in the order it
 -- is written), and entries this slice does not know yet (pill, keyboard, media,
 -- …) are kept in the file for the slices that do.
-local WIDGETS = { "clock", "workspaces", "pill", "network", "media", "mpd", "volume", "mic", "genelec" }
+local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "media", "mpd", "volume", "mic", "genelec" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
@@ -170,3 +170,227 @@ sys.watch("audio", audioChanged)
 on("toggle_mic", function()
     sys.call("audio.input_mute")
 end)
+
+-- ------------------------------------------------------------ workspaces
+-- QS's WsIndicator draws ONE capsule: the active workspace's icon and its
+-- name. The icon is the Nerd Font glyph `Bar/Icons/workspaces/icon-map.json`
+-- gives that workspace's slug (the tree renders them from the SVGs generated
+-- out of the same codepoints), and the name is what follows the `𐌸:`-style
+-- prefix Hyprland stores in the workspace name.
+--
+-- Both are text, so they travel to the scene as `text` declarations; the map
+-- is by workspace id (the manifest's own numbering), which is what the bar
+-- sees for a workspace that was never renamed.
+local WS_GLYPH = {
+    [1] = "\u{EA85}",  -- term
+    [2] = "\u{F269}",  -- web
+    [3] = "\u{F4B0}",  -- dev
+    [4] = "\u{F1B7}",  -- games
+    [5] = "\u{F15C}",  -- doc
+    [6] = "\u{F008}",  -- vid
+    [7] = "\u{273D}",  -- obs
+    [8] = "\u{F03E}",  -- pic
+    [9] = "\u{EA7A}",  -- vm
+    [10] = "\u{F1CB}", -- wine
+    [12] = "\u{F001}", -- daw
+    [13] = "\u{F0ED}", -- dw
+    [14] = "\u{F11C}", -- keyboard
+    [15] = "\u{F086}", -- im
+    [16] = "\u{F019}", -- remote
+    [17] = "\u{F24D}", -- notes
+    [18] = "\u{F1DE}", -- vital
+    [19] = "\u{F02C1}", -- rack
+}
+
+-- The name without the glyph prefix Hyprland keeps in it ("<icon>:term" -> "term").
+local function label_of(name)
+    if type(name) ~= "string" then return "" end
+    local rest = name:match("^[^:]*:(.*)$")
+    if rest and rest ~= "" then return rest end
+    return name
+end
+
+local function workspacesChanged(w)
+    if type(w) ~= "table" or type(w.list) ~= "table" then return end
+    for _, ws in ipairs(w.list) do
+        if type(ws) == "table" and ws.active == true then
+            text.ws_label = label_of(ws.name)
+            text.ws_icon = WS_GLYPH[tonumber(ws.id) or -1] or ""
+            return
+        end
+    end
+    text.ws_label = ""
+    text.ws_icon = ""
+end
+
+sys.watch("workspaces", workspacesChanged)
+
+-- ----------------------------------------------------------- throughput
+-- QS's ConnectivityState.throughputText: the bar shows receive over transmit,
+-- each as three digits and a decimal (ConnUi.formatRxText / formatTxText).
+-- Two samples of /proc/net/dev, every timers.genericTickMs (2000), summing
+-- every interface but the loopback.
+--
+-- The interval is the timer's, not a clock reading: the sandbox closes `os`, so
+-- the logic has no wall clock of its own. A missed tick makes the figure read
+-- low for one sample, nothing worse.
+local through = nil
+
+local function fmt_kib(v)
+    if type(v) ~= "number" or v ~= v or v < 0 then return "--" end
+    return string.format("%05.1f", v)
+end
+
+local function sample()
+    run("cat", { "/proc/net/dev" }, function(out)
+        if type(out) ~= "string" then return end
+        local rx, tx = 0, 0
+        for line in out:gmatch("[^\n]+") do
+            local name, rest = line:match("^%s*([%w%._%-]+):%s*(.*)$")
+            if name and name ~= "lo" then
+                local fields = {}
+                for f in rest:gmatch("%S+") do fields[#fields + 1] = tonumber(f) end
+                if fields[1] and fields[9] then
+                    rx = rx + fields[1]
+                    tx = tx + fields[9]
+                end
+            end
+        end
+        if through then
+            text.net_rx = fmt_kib((rx - through.rx) / 2048)
+            text.net_tx = fmt_kib((tx - through.tx) / 2048)
+        end
+        through = { rx = rx, tx = tx }
+    end)
+end
+
+sample()
+every(2000, sample)
+
+-- ------------------------------------------------------------- keyboard
+-- QS KeyboardLayoutHypr reads the active keymap out of `hyprctl devices -j`;
+-- the first keyboard that reports one is the one Hyprland types with, and its
+-- first keymap is the active layout.
+-- `active_keymap` is the name of the layout in force ("Russian", "English (US)");
+-- QS shortens it (KeyboardLayoutHypr.shortenLayout maps the same names to the
+-- two-letter code the bar shows).
+local SHORT = {
+    ["english (us)"] = "en", ["english (uk)"] = "en-uk", ["russian"] = "ru",
+    ["us"] = "en", ["us-intl"] = "en", ["us(international)"] = "en",
+    ["en_us"] = "en", ["en-us"] = "en", ["ru"] = "ru", ["ru_ru"] = "ru",
+    ["ru-ru"] = "ru", ["german"] = "de", ["french"] = "fr", ["finnish"] = "fi",
+}
+
+local function shorten(name)
+    if type(name) ~= "string" then return nil end
+    local key = name:lower():gsub("^%s+", ""):gsub("%s+$", "")
+    if key == "" then return nil end
+    if SHORT[key] then return SHORT[key] end
+    local inner = key:match("%(([^)]+)%)")
+    if inner then
+        inner = inner:lower()
+        if inner == "us" or inner:sub(1, 2) == "en" then return "en" end
+        if inner == "ru" or inner:sub(1, 2) == "ru" then return "ru" end
+        return inner:sub(1, 2)
+    end
+    return key:sub(1, 3)
+end
+
+local function layout()
+    run("hyprctl", { "devices", "-j" }, function(out)
+        if type(out) ~= "string" then return end
+        local short = shorten(out:match('"active_keymap"%s*:%s*"([^"]*)"'))
+        if short then text.kb_layout = short end
+    end)
+end
+
+layout()
+every(2000, layout)
+
+-- ------------------------------------------------------------- system monitor
+-- QS Services/SystemMonitor.qml, same probe and same arithmetic: one dash and
+-- one awk over the four procfs files plus the GPU and CPU-temperature paths
+-- discovered once per probe. The bar shows the same six metrics with the same
+-- thresholds and the same idle rule (panel: systemMonitorHideIdle, 3%).
+local SYS_PROBE = [[
+tp=''
+for h in /sys/class/hwmon/hwmon*/; do
+  n=$(cat "$h/name" 2>/dev/null)
+  case $n in k10temp|coretemp|zenpower) f="${h}temp1_input"; [ -r "$f" ] && tp=$f && break;; esac
+done
+[ -n "$tp" ] || tp=/sys/class/thermal/thermal_zone0/temp
+gp=''; bv=0
+for d in /sys/class/drm/card[0-9]*/device; do
+  [ -f "$d/gpu_busy_percent" ] || continue
+  v=$(cat "$d/mem_info_vram_total" 2>/dev/null) || v=0
+  [ "$v" -gt "$bv" ] && bv=$v && gp=$d/gpu_busy_percent
+done
+awk -v tp="$tp" -v gp="$gp" '
+  FILENAME=="/proc/stat"      { if (FNR==1) print "cpu", $2,$3,$4,$5,$6,$7,$8,$9; next }
+  FILENAME=="/proc/meminfo"   { if ($1=="MemTotal:") t=$2; else if ($1=="MemAvailable:") a=$2; next }
+  FILENAME=="/proc/swaps"     { if (FNR>1) { st+=$3; su+=$4 } next }
+  FILENAME=="/proc/diskstats" { if ($3 ~ /^(sd[a-z]|nvme[0-9]+n[0-9]+|vd[a-z])$/) { r+=$6; w+=$10 } next }
+  FILENAME==tp                { print "temp", $1+0; next }
+  FILENAME==gp                { print "gpu", $1+0; next }
+  END { print "mem", t+0, a+0; print "swap", st+0, su+0; print "io", r+0, w+0 }
+' /proc/stat /proc/meminfo /proc/swaps /proc/diskstats "$tp" "$gp" 2>/dev/null
+]]
+
+local POLL_MS = 2000
+local IO_MAX_KIBPS = 512000
+local prevCpu, prevIo = nil, nil
+
+local function clamp01(v)
+    if v ~= v then return 0 end
+    if v < 0 then return 0 end
+    if v > 1 then return 1 end
+    return v
+end
+
+local function applyLine(line)
+    local tag, rest = line:match("^(%a+)%s+(.*)$")
+    if not tag then return end
+    local n = {}
+    for f in rest:gmatch("%S+") do n[#n + 1] = tonumber(f) or 0 end
+    if tag == "cpu" and #n >= 8 then
+        local total = 0
+        for i = 1, 8 do total = total + n[i] end
+        local idle = n[4] + n[5]
+        if prevCpu then
+            local dTotal = total - prevCpu.total
+            local dIdle = idle - prevCpu.idle
+            if dTotal > 0 then fact.cpu = clamp01((dTotal - dIdle) / dTotal) end
+        end
+        prevCpu = { total = total, idle = idle }
+    elseif tag == "mem" and #n >= 2 then
+        local total, avail = n[1], n[2]
+        fact.ram = total > 0 and clamp01((total - avail) / total) or 0
+    elseif tag == "swap" and #n >= 2 then
+        local total, used = n[1], n[2]
+        fact["has.swap"] = total > 0
+        fact.swap = total > 0 and clamp01(used / total) or 0
+    elseif tag == "io" and #n >= 2 then
+        local sectors = n[1] + n[2]
+        if prevIo then
+            local kbps = (sectors - prevIo) / 2 / (POLL_MS / 1000)
+            fact.io = clamp01(kbps / IO_MAX_KIBPS)
+        end
+        prevIo = sectors
+    elseif tag == "temp" and #n >= 1 then
+        local c = n[1] / 1000
+        fact.temp = clamp01((c - 30) / 70)
+    elseif tag == "gpu" and #n >= 1 then
+        fact["has.gpu"] = true
+        fact.gpu = clamp01(n[1] / 100)
+    end
+end
+
+local function sysmon()
+    run("dash", { "-c", SYS_PROBE }, function(out)
+        if type(out) ~= "string" then return end
+        for line in out:gmatch("[^\n]+") do applyLine(line) end
+    end)
+end
+
+sysmon()
+every(POLL_MS, sysmon)
