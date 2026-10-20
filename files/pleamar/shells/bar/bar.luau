@@ -18,7 +18,7 @@ local D = {
 -- set. An order cannot be applied at runtime (the scene paints in the order it
 -- is written), and entries this slice does not know yet (pill, keyboard, media,
 -- …) are kept in the file for the slices that do.
-local WIDGETS = { "clock", "workspaces", "pill", "network", "media", "mpd", "volume", "genelec" }
+local WIDGETS = { "clock", "workspaces", "pill", "network", "media", "mpd", "volume", "mic", "genelec" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
@@ -82,10 +82,20 @@ end)
 -- scene cannot compare `media.player` with "" itself — the language compares
 -- numbers only — so the logic decides and hands over a fact.
 -- (permissions: "media")
+-- QS shows the capsule only while a player has something to play: `hasPlayer
+-- && (isPlaying || isPaused)`. A player that is there but stopped (mpc with an
+-- empty queue) is not enough, and that is what made the port draw a capsule
+-- the reference did not have.
 sys.watch("media", function(m)
-    local player = nil
-    if type(m) == "table" then player = m.player end
-    fact["media.present"] = (type(player) == "string") and (player ~= "")
+    local player, playing = nil, false
+    if type(m) == "table" then
+        player = m.player
+        playing = m.playing == true
+    end
+    -- Known gap: the media service reports `playing` and no `paused`, so a
+    -- paused track hides the capsule here where QS keeps it. Stopped (mpc with
+    -- an empty queue) is the case the gate sees, and that one matches.
+    fact["media.present"] = (type(player) == "string") and (player ~= "") and playing
 end)
 
 -- The transport strip: the three glyph buttons of the media capsule.
@@ -114,4 +124,49 @@ end)
 -- state here. (permissions: "audio", "audio.*")
 on("toggle_mute", function()
     sys.call("audio.mute")
+end)
+
+-- ------***---------------------- audio capsules
+-- QS AudioEndpointCapsule hides itself for two reasons, and the bar has to do
+-- the same or the right end is heavier than the reference:
+--   · the endpoint is muted (autoHideWhenMuted) — for the microphone that is
+--     the whole story;
+--   · the sink sits at 100 %: `fullHideTimer` (panel.volume.fullHideMs = 800)
+--     collapses the capsule once it has been there that long, and a level that
+--     leaves 100 % brings it straight back.
+-- The pill text and the icon stay the scene's (`audio.volume`/`audio.input`);
+-- only the presence is decided here, because it needs timers and the two
+-- fields the language cannot compare.
+local FULL_HIDE_MS = 800
+local fullHide = nil
+
+local function hideVolume()
+    fullHide = nil
+    fact["vol.shown"] = false
+end
+
+local function audioChanged(a)
+    if type(a) ~= "table" then return end
+    fact["mic.shown"] = a.input_muted ~= true
+    if a.muted == true then
+        if fullHide then cancel(fullHide) end
+        hideVolume()
+        return
+    end
+    local volume = tonumber(a.volume) or 0
+    if volume >= 0.995 then
+        if fullHide == nil then fullHide = after(FULL_HIDE_MS, hideVolume) end
+    else
+        if fullHide then cancel(fullHide) end
+        fullHide = nil
+        fact["vol.shown"] = true
+    end
+end
+
+sys.watch("audio", audioChanged)
+
+-- A press on the microphone capsule: `audio.input_mute` flips the source's
+-- silence (QS Microphone.toggleMicMute). (permissions: "audio", "audio.*")
+on("toggle_mic", function()
+    sys.call("audio.input_mute")
 end)
