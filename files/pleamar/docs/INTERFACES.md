@@ -1337,6 +1337,32 @@ One plugin per commit, each with its `.check.plm` and its row here:
    lands, `meta.luau` loses its `mpc` call and its settings file and becomes player-agnostic; the
    boundary does not change.
 
-Still open from the PH3 exit criteria: the hostile-plugin test (a plugin that asks for a command it
-was not approved for must be refused) and the render pass over every plugin's components in a real
-session — a sandboxed session has no graphics surface, so `--check` is all that runs here.
+### 10.6 The two gates of PH3-P
+
+**The hostile-plugin test.** `scripts/dev/check-plugin-sandbox.sh` (in `just lint`, and on its own
+as `just plugin-sandbox`) opens the fixture scene `files/pleamar/tests/plugins/hostile/` twice, both
+times with a temp `HOME` and temp XDG dirs:
+
+1. unapproved — the plugin asks for `run: "sh"` (an interpreter, "asking for everything"), the log
+   must carry `NOT APPROVED` / `wants to run 'sh', but nobody has approved its permissions`, and the
+   marker file its logic writes must **not** exist;
+1. approved (`pleamar --approve --yes`) — the same scene must create the marker.
+
+The fixture is not a shell plugin: it lives under `tests/`, nothing links it, no scene imports it.
+The test prefers `pleamar-wm headless` (nothing appears on the desktop) and falls back to the
+ambient session; if the environment has neither, it skips with a notice, like the other gates do for
+a missing tool. The renderer is never part of the verdict — the logic runs on its own thread, and a
+GPU-less sandbox can panic after the refusal — only the log line and the marker are asserted.
+
+**The render pass.** `scripts/dev/check-plugin-render.sh` (`just render-plugins [DIR]`) opens every
+`lib/plugins/*/*.check.plm` through `pleamar-wm headless`, captures one PNG per plugin (temp
+directory by default, so the tree stays clean) and calls a scene rendered only when the frame
+differs from the same headless session with **no** scene at all — a compositor frame alone is a
+wallpaper, not proof. A scene needs a Vulkan adapter that can make a Wayland surface (`src/lib.rs`:
+`wgpu::Backends::PRIMARY`; the compositor itself can fall back to GL, a scene cannot), so an
+environment without one skips every scene with that reason instead of failing. Run it in a real
+session to get the frames and compare them against `files/quickshell`'s look.
+
+Both gates pass in this tree where the environment allows; the sandbox this was written in reports
+`skip ... (no graphics adapter that can make a Wayland surface)` for all six render scenes, which is
+the honest state of the render half until it is run on the host.

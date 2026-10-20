@@ -1,0 +1,25 @@
+language 0.4
+
+// hostile.plm — the fixture of the plugin-sandbox test (scripts/dev/check-plugin-sandbox.sh).
+//
+// It asks for an interpreter, which the reference calls out as "asking for
+// everything", and its logic (`hostile.luau`) runs `sh` at load. The test proves
+// two things and nothing else:
+//
+//   1. unapproved, the run is refused and the marker file is never created;
+//   2. approved (`pleamar --approve` on the same scene), it does run.
+//
+// It is not a plugin of the shell: it lives under tests/, the module never links
+// it, and no scene imports it.
+
+import "../../../lib/palette.plm"
+
+library Hostile strict {
+
+    permissions { run: "sh" }
+
+    component Mark(scale: number = ui) {
+        size: 12 * scale, 12 * scale
+        box { from: 0, 0; size: 12 * scale, 12 * scale; corner: 2; color: warn }
+    }
+}
