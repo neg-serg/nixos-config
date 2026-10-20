@@ -17,6 +17,10 @@
 #               the data-driven parts (cover, analyser, MPD flags, dB) are live.
 #               Without it the plugins run with no permissions: the chrome is
 #               still drawn, the content is not.
+#   --hide-qs   stop quickshell for the capture and start it again after: with
+#               its bar still up, the pleamar bar draws over it and anywhere the
+#               port draws nothing the reference shows through — a comparison
+#               that can only ever pass. Needs the user session's systemd.
 #
 # Exit: 0 measured (whatever the number), 1 the frames could not be taken.
 set -euo pipefail
@@ -30,6 +34,7 @@ SCENE="files/pleamar/shells/bar/bar.plm"
 SECONDS_TO_RUN=6
 STRIP=""
 APPROVE=0
+HIDE_QS=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --out)
@@ -50,6 +55,10 @@ while [ $# -gt 0 ]; do
       ;;
     --approve)
       APPROVE=1
+      shift
+      ;;
+    --hide-qs)
+      HIDE_QS=1
       shift
       ;;
     *)
@@ -137,6 +146,30 @@ capture "$OUT_DIR/qs.png" || {
   exit 1
 }
 
+# Quickshell's own bar has to be out of the way: the port draws over it, and its
+# transparent parts would show the reference underneath (a diff of zero even
+# where the port drew nothing).
+QS_UNITS=""
+qs_stop() {
+  local unit
+  for unit in quickshell.service quickshell-health.timer; do
+    if systemctl --user is-active --quiet "$unit" 2> /dev/null; then
+      systemctl --user stop "$unit" 2> /dev/null && QS_UNITS="$QS_UNITS $unit"
+    fi
+  done
+}
+qs_start() {
+  local unit
+  for unit in $QS_UNITS; do systemctl --user start "$unit" 2> /dev/null || true; done
+  QS_UNITS=""
+}
+if [ "$HIDE_QS" -eq 1 ]; then
+  qs_stop
+  [ -n "$QS_UNITS" ] || echo "parity-bar: nothing to hide — quickshell.service is not running here" >&2
+  trap 'qs_start' EXIT
+  sleep 1
+fi
+
 if [ "$APPROVE" -eq 1 ]; then
   "$PLEAMAR_BIN" --approve "$REPO_ABS/$SCENE" --yes > "$OUT_DIR/approve.log" 2>&1 || true
 fi
@@ -146,6 +179,10 @@ pid=$!
 sleep 3
 capture "$OUT_DIR/plm.png" || true
 wait "$pid" 2> /dev/null || true
+if [ "$HIDE_QS" -eq 1 ]; then
+  qs_start
+  trap - EXIT
+fi
 
 [ -s "$OUT_DIR/qs.png" ] && [ -s "$OUT_DIR/plm.png" ] || {
   echo "parity-bar: the pleamar bar did not come up; see $OUT_DIR/scene.log" >&2
