@@ -4,8 +4,17 @@
 Usage:
   music_describe.py [-p PROMPT] [--model ID|DIR] [--device auto|cpu|cuda]
                     [--max-new N] [--threads N] [--json] [--quiet] AUDIO...
+  music_describe.py --now [--cache FILE] [--json]
   music_describe.py --dir MUSIC_DIR --out DESCRIPTIONS.jsonl
                     [--limit N] [--force] [--exclude GLOB]
+  music_describe.py --tags --dir MUSIC_DIR --out TAGS.jsonl [--limit N]
+
+``--now`` takes the track from playerctl and caches it, so the first listen of
+a track costs the model run and every later one is instant.  ``--tags`` asks
+for a one-line GENRES/MOODS/INSTRUMENTS answer and parses it into the same
+record shape the MTG tagger writes, which is what ``music-mtg-tags
+--tags FILE --playlists DIR --by mood`` expects — build the lists into their
+own subdirectory, since those recipes rewrite one .m3u per label.
 
 Single-file mode prints the answer.  Batch mode walks a music library and
 appends one JSON object per track to the output file
@@ -34,11 +43,13 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 # transformers imports librosa (and joblib) on the audio processors; both try
 # to write caches next to the read-only venv tree and warn or fail there.
@@ -57,6 +68,19 @@ DEFAULT_MAX_NEW = int(os.environ.get("MUSIC_DESCRIBE_MAX_NEW", "320"))
 DEFAULT_PROMPT = (
     "Describe this track in full detail - tell me the genre, tempo, and key, then dive "
     "into the instruments, production style, and overall mood it creates."
+)
+# Machine-readable variant: the answer is parsed into the same shape the MTG
+# tagger writes, so music-mtg-tags --playlists can group tracks by it.
+TAGS_PROMPT = (
+    "Answer with exactly one line and nothing else: "
+    "GENRES: <up to 3 comma separated lowercase genres> | "
+    "MOODS: <up to 3 comma separated lowercase moods> | "
+    "INSTRUMENTS: <up to 3 comma separated lowercase instruments>"
+)
+TAG_HEADS = ("genre", "mood", "instrument")
+# One label per head, same keys as the MTG tagger's records.
+DEFAULT_CACHE = os.path.expanduser(
+    "~/.cache/music-describe/descriptions.jsonl"
 )
 AUDIO_RATE = 16000
 # The processor truncates past this itself; decoding less keeps a 30-minute DJ
@@ -211,6 +235,82 @@ def describe(processor, model, pcm, prompt: str, max_new: int):
     }
 
 
+def parse_tags(answer: str) -> dict:
+    """Turn the one-line GENRES/MOODS/INSTRUMENTS answer into tag records.
+
+    The shape matches the MTG tagger's JSONL (``{"genre": [{"label", "score"}]}``)
+    with score 1.0 for every parsed label: the parser is the confidence there,
+    not a softmax, and music-mtg-tags --playlists only reads the top label.
+    A missing or unparsable line yields an empty dict rather than an error —
+    the raw answer still lands in ``text``, so nothing is silently lost.
+    """
+    heads = {
+        "genres": "genre",
+        "genre": "genre",
+        "moods": "mood",
+        "mood": "mood",
+        "instruments": "instrument",
+        "instrument": "instrument",
+    }
+    tags: dict[str, list[dict]] = {}
+    for chunk in re.split(r"[|;\n]", answer):
+        name, _, value = chunk.partition(":")
+        head = heads.get(name.strip().lower().strip("*"))
+        if not head or not value.strip():
+            continue
+        labels = []
+        for raw in re.split(r"[,/]", value):
+            label = raw.strip().strip("-*.").strip().lower()
+            label = re.sub(r"\s+", " ", label)
+            if label and label not in labels:
+                labels.append(label)
+        if labels:
+            tags.setdefault(head, []).extend(
+                {"label": label, "score": 1.0} for label in labels[:3]
+            )
+    if tags:
+        return tags
+    # The model sometimes drops the labels and answers with the bare
+    # "genres | moods | instruments" line it was asked for (seen on instrumental
+    # techno). Trust that only when the answer has the pipe structure and short
+    # fields: a prose sentence parses to nothing rather than to one giant label.
+    chunks = [
+        chunk.strip() for chunk in re.split(r"[|\n]", answer) if chunk.strip()
+    ]
+    if len(chunks) < 2 or any(len(chunk) > 40 for chunk in chunks[:3]):
+        return tags
+    for index, chunk in enumerate(chunks[:3]):
+        labels = []
+        for raw in re.split(r"[,/]", chunk):
+            label = raw.strip().strip("-*. ").strip().lower()
+            label = re.sub(r"\s+", " ", label)
+            if label and label not in labels:
+                labels.append(label)
+        if labels:
+            tags[TAG_HEADS[index]] = [
+                {"label": label, "score": 1.0} for label in labels[:3]
+            ]
+    return tags
+
+
+def current_track() -> str | None:
+    """Path of the track the player reports (MPRIS via playerctl)."""
+    try:
+        completed = subprocess.run(
+            ["playerctl", "metadata", "xesam:url"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    url = completed.stdout.strip()
+    if completed.returncode != 0 or not url:
+        return None
+    return unquote(urlparse(url).path)
+
+
 def _sha(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:12]
 
@@ -294,6 +394,19 @@ def selftest() -> int:
 
     if _sha("abc") != _sha("abc") or _sha("abc") == _sha("abd"):
         print("fail: prompt hashing is not stable")
+        return 1
+
+    parsed = parse_tags(
+        "GENRES: Industrial Techno, Acid | MOODS: Dark | INSTRUMENTS: Synthesizer"
+    )
+    if [tag["label"] for tag in parsed.get("genre", [])] != [
+        "industrial techno",
+        "acid",
+    ]:
+        print(f"fail: tag parsing lost labels ({parsed})")
+        return 1
+    if parse_tags("no structure here"):
+        print("fail: tag parsing invented labels")
         return 1
     print("ok music_describe")
     return 0
@@ -379,6 +492,23 @@ def main(argv: list[str]) -> int:
     )
     parser.add_argument("--exclude", help="batch mode: glob of paths to skip")
     parser.add_argument(
+        "--tags",
+        action="store_true",
+        help="ask for the one-line GENRES/MOODS/INSTRUMENTS answer and parse it "
+        "into a tag record (same shape as the MTG tagger)",
+    )
+    parser.add_argument(
+        "--now",
+        action="store_true",
+        help="describe the track the player reports (playerctl) and cache it in "
+        f"{DEFAULT_CACHE}",
+    )
+    parser.add_argument(
+        "--cache",
+        help="JSONL file to read cached descriptions from and append to "
+        "(single-file mode only)",
+    )
+    parser.add_argument(
         "--selftest",
         action="store_true",
         help="run the offline checks (no torch, no model) and exit",
@@ -391,23 +521,46 @@ def main(argv: list[str]) -> int:
         if not args.quiet:
             print(msg, file=sys.stderr, flush=True)
 
+    # --tags swaps the free-form prompt for the machine-readable one unless the
+    # caller passed their own; the answer is parsed into tag records below.
+    prompt = (
+        TAGS_PROMPT
+        if (args.tags and args.prompt == DEFAULT_PROMPT)
+        else args.prompt
+    )
+    cache_path = None
+    if args.cache:
+        cache_path = Path(args.cache).expanduser()
+    elif args.now:
+        cache_path = Path(DEFAULT_CACHE).expanduser()
+    if args.now:
+        track = current_track()
+        if not track:
+            print(
+                "[music-describe] --now: playerctl reports no track",
+                file=sys.stderr,
+            )
+            return 1
+        args.paths = [track]
+
     if args.dir and not args.out:
         parser.error("--dir requires --out")
     if not args.dir and not args.paths:
-        parser.error("give at least one audio file, or --dir with --out")
+        parser.error(
+            "give at least one audio file, --dir with --out, or --now"
+        )
     if args.threads:
         import torch
 
         torch.set_num_threads(args.threads)
 
+    prompt_sha = _sha(prompt)
     todo: list[Path] = []
     done: dict = {}
     if args.dir:
         done = {} if args.force else _load_done(args.out)
-        prompt_sha = _sha(args.prompt)
         for path in _iter_library(args.dir, args.exclude):
-            key = str(path)
-            entry = done.get(key)
+            entry = done.get(str(path))
             mtime, size = _stat(path)
             if (
                 entry
@@ -430,6 +583,47 @@ def main(argv: list[str]) -> int:
         )
     else:
         todo = [Path(p) for p in args.paths]
+        if cache_path:
+            done = {} if args.force else _load_done(cache_path)
+
+    def emit(row: dict, path: Path, cached: bool = False) -> None:
+        if args.json:
+            print(json.dumps(row, ensure_ascii=False))
+            return
+        print(f"== {path}" + (" (cached)" if cached else ""))
+        print(row.get("text", ""))
+        if len(todo) > 1:
+            print()
+
+    def is_fresh(row: dict | None, path: Path) -> bool:
+        if not row:
+            return False
+        try:
+            mtime, size = _stat(path)
+        except OSError:
+            return False
+        return (
+            row.get("mtime") == mtime
+            and row.get("size") == size
+            and row.get("model") == args.model
+            and row.get("prompt_sha") == prompt_sha
+        )
+
+    # Answer from the cache before touching the model: a hit must not pay the
+    # 8B checkpoint's load time (that is the point of describing the playing
+    # track — the first listen costs minutes, every later one is instant).
+    if not args.dir and cache_path:
+        pending = []
+        for path in todo:
+            row = done.get(str(path))
+            if is_fresh(row, path):
+                emit(row, path, cached=True)
+            else:
+                pending.append(path)
+        todo = pending
+        if not todo:
+            log("[music-describe] served from cache")
+            return 0
 
     device = pick_device(args.device)
     log(
@@ -446,7 +640,7 @@ def main(argv: list[str]) -> int:
             pcm = decode_audio(str(path))
             decode_s = time.time() - t0
             answer, stats = describe(
-                processor, model, pcm, args.prompt, args.max_new
+                processor, model, pcm, prompt, args.max_new
             )
         except (
             Exception
@@ -462,26 +656,27 @@ def main(argv: list[str]) -> int:
             "mtime": mtime,
             "size": size,
             "model": args.model,
-            "prompt_sha": _sha(args.prompt),
+            "prompt_sha": prompt_sha,
             "audio_seconds": round(len(pcm) / AUDIO_RATE, 2),
             "decode_seconds": round(decode_s, 2),
             "text": answer,
             **stats,
         }
-        if args.dir:
-            with args.out.open("a", encoding="utf-8") as handle:
+        if args.tags:
+            entry["engine"] = "mf"
+            entry["tags"] = parse_tags(answer)
+        out_file = args.out if args.dir else cache_path
+        if out_file:
+            out_file.parent.mkdir(parents=True, exist_ok=True)
+            with out_file.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        if args.dir:
             log(
                 f"[music-describe] {index}/{len(todo)} {path.name}: "
                 f"{stats['new_tokens']} tok in {stats['generate_seconds']}s"
             )
-        elif args.json:
-            print(json.dumps(entry, ensure_ascii=False))
         else:
-            print(f"== {path}")
-            print(answer)
-            if len(todo) > 1:
-                print()
+            emit(entry, path)
             log(
                 f"[music-describe] {stats['new_tokens']} tokens in "
                 f"{stats['generate_seconds']}s ({stats['new_tokens'] / max(stats['generate_seconds'], 1e-6):.2f} tok/s)"

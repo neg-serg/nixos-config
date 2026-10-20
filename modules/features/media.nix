@@ -150,10 +150,15 @@
           ];
           default = "cpu";
           description = ''
-            Device for music-describe. CPU is the default on purpose: an 8B
-            model makes the GPU worth having, but the ROCm path already
-            crashed this host once (2026-10-12, memory access fault), so the
-            GPU stays opt-in via this option or `--device`.
+            Device for music-describe. CPU is the default on purpose. The
+            ROCm path crashed this host once (2026-10-12, memory access
+            fault), and a retest on 2026-10-20 went differently but no
+            better: torch sees the card and the bf16 weights do land in VRAM
+            (16.6 of 17.1 GB used), yet the model's device move never
+            finished — 6+ minutes at ~100% CPU with no forward pass. An 8B
+            model does not fit this card with room for activations anyway, so
+            the GPU stays opt-in via this option or `--device`, and 4-bit
+            weights would be the way to make it usable.
           '';
         };
         mtgVenv = lib.mkOption {

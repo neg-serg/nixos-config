@@ -150,6 +150,16 @@ else
   note warn "tags" "no $TAGS_FILE (run: just music-refresh --skip-playlists)"
 fi
 
+# --- descriptions (music-describe) ---------------------------------------
+# Optional and paid per track on the CPU, so an empty cache is not a fault.
+DESCRIBE_CACHE="${MUSIC_DESCRIBE_CACHE:-$HOME_DIR/.cache/music-describe/descriptions.jsonl}"
+if [[ -f "$DESCRIBE_CACHE" ]]; then
+  described=$(rg -c '' "$DESCRIBE_CACHE" 2> /dev/null || echo 0)
+  note ok "descriptions" "$described track(s) in $DESCRIBE_CACHE"
+else
+  note ok "descriptions" "none yet (music-describe --now describes the playing track)"
+fi
+
 # --- playlists ------------------------------------------------------------
 if [[ -d "$PLAYLISTS" ]]; then
   m3u=$(find "$PLAYLISTS" -maxdepth 1 -name '*.m3u' 2> /dev/null | wc -l)
@@ -169,9 +179,13 @@ clap=0
 [[ -d "$HF_HOME_DIR/hub" ]] && clap=$(find "$HF_HOME_DIR/hub" -maxdepth 1 -name 'models--laion--clap*' 2> /dev/null | wc -l)
 mtg=$(find "$MTG_MODELS" -maxdepth 1 -name '*.pb' 2> /dev/null | wc -l)
 # Music Flamingo is 15.4 GiB and opt-in: its absence is a hint, not a fault.
+# It may sit in the HF cache (hub id) or in a plain directory (describeModel
+# points the wrapper at one), so ask the deployed wrapper what it defaults to.
 mf=$(find "$HF_HOME_DIR/hub" -maxdepth 1 -name 'models--nvidia--music-flamingo*' 2> /dev/null | wc -l)
+mf_dir=$(rg -o 'MUSIC_DESCRIBE_MODEL:-[^}"]+' "$HOME_DIR/.local/bin/music-describe" 2> /dev/null | sed 's/.*:-//' | head -1)
+if [[ -n "$mf_dir" && -d "$mf_dir" ]]; then mf=$((mf + 1)); fi
 say() { [[ "$1" -gt 0 ]] && printf 'yes' || printf 'no'; }
-detail="HF: MERT $(say "$mert"), CLAP $(say "$clap"), MF $(say "$mf") in $HF_HOME_DIR; MTG: $mtg graphs"
+detail="HF: MERT $(say "$mert"), CLAP $(say "$clap"), MF $(say "$mf") (${mf_dir:-hub}); MTG: $mtg graphs"
 status="ok"
 if [[ "$clap" -eq 0 ]]; then
   detail+=" — CLAP downloads on the first music-tags run"

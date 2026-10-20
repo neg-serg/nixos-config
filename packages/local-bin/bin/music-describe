@@ -3,8 +3,16 @@
 #
 #   music-describe FILE [FILE...]                 # genre/tempo/key/instruments/mood
 #   music-describe -p "what language are the vocals in?" FILE
+#   music-describe --now                          # the playing track (playerctl), cached
 #   music-describe --json FILE                    # one JSON object per file
-#   music-describe --dir ~/music --out ~/desc.jsonl --limit 50
+#   music-describe --tags --dir ~/music --out ~/mf-tags.jsonl --limit 50
+#   music-mtg-tags --tags ~/mf-tags.jsonl --playlists ~/.config/mpd/playlists/mf --by mood
+#
+# --now answers from ~/.cache/music-describe/descriptions.jsonl when the track
+# was described before, so the 8B run is paid once per track. --tags asks for a
+# one-line GENRES/MOODS/INSTRUMENTS answer and writes MTG-shaped tag records,
+# which is what the playlist builder above reads; point it at a subdirectory so
+# it does not overwrite the MTG-derived lists.
 #
 # Weights are fetched into $MUSIC_AI_HF_HOME on first use (~15.4 GiB bf16).
 # CPU by default: the ROCm path has crashed on this host (see
