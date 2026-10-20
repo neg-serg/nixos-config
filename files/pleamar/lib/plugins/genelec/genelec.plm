@@ -66,10 +66,10 @@ library Genelec strict {
 
     component Tile(scale: number = ui) {
         let size.icon = 16
-        let label.w = 36
-        let w = 2 * capsule.pad + 16 + capsule.gap + 36
+        let label.w = 40
+        let w = 2 * capsule.pad + 16 + capsule.gap + 40
         let h = capsule.height
-        size: (2 * capsule.pad + 16 + capsule.gap + 36) * scale, capsule.height * scale
+        size: (2 * capsule.pad + 16 + capsule.gap + 40) * scale, capsule.height * scale
         group zoom {
             scale: scale
             Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
@@ -77,7 +77,7 @@ library Genelec strict {
                     gap: capsule.gap
                     align: center
                     image ones { size: 16, 16; tint: if(muted, ink.off, ink); opacity: if(hot, 1, 0) }
-                    text "{volume, 0}dB" { family: "Iosevka"; size: 11; weight: 600; color: if(muted, ink.off, ink) }
+                    text "{volume, 0}dB" { family: "Iosevka"; size: 15; weight: 600; color: if(muted, ink.off, ink) }
                 }
             }
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }

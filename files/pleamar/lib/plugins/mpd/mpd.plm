@@ -45,22 +45,22 @@ library Mpd strict {
     // (fontSizeSmall * capsuleScale = 14) and its emphasis opacity.
     component Flags(scale: number = ui) {
         let glyph.gap = 2
-        let glyph.size = 14
+        let glyph.size = 16
         let shown = repeat + random + single + consume + xfade
         let w = 2 * capsule.pad + shown * glyph.size + max(0, shown - 1) * glyph.gap
         let h = capsule.height
-        size: (2 * capsule.pad + (repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, capsule.height * scale
+        size: (2 * capsule.pad + (repeat + random + single + consume + xfade) * 16 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, capsule.height * scale
         group zoom {
             scale: scale
             Capsule(w, h, scale: 1, shadow: 25%, rim: 0.06) {
                 row flags {
                     gap: 2
                     align: center
-                    text "repeat" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: repeat }
-                    text "shuffle" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: random }
-                    text "repeat_one" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: single }
-                    text "auto_delete" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: consume }
-                    text "blur_linear" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: xfade }
+                    text "repeat" { family: "Material Symbols Outlined"; size: 16; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: repeat }
+                    text "shuffle" { family: "Material Symbols Outlined"; size: 16; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: random }
+                    text "repeat_one" { family: "Material Symbols Outlined"; size: 16; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: single }
+                    text "auto_delete" { family: "Material Symbols Outlined"; size: 16; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: consume }
+                    text "blur_linear" { family: "Material Symbols Outlined"; size: 16; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: xfade }
                 }
             }
             zone box flags { from: 0, 0; size: w, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
