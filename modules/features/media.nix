@@ -146,6 +146,7 @@
           type = lib.types.enum [
             "mf"
             "afnext"
+            "auto"
           ];
           default = "mf";
           description = ''
@@ -153,6 +154,9 @@
 
             `mf` is Music Flamingo through transformers on the CPU: 1.5-2.5
             minutes per cold answer, 15.4 GiB of RAM, 20 minutes of audio.
+            `auto` tries `afnext` first and falls back to `mf` when the GPU is
+            busy (a resident ollama model is the usual reason), so an
+            unattended timer and the voice client keep working either way.
             `afnext` is Audio Flamingo Next through audio.cpp on the GPU: a
             120-token answer took 4.4 s (rtf 0.037) on the RX 9070 XT over
             Vulkan with an 8.7 GiB q8_0 GGUF — but it needs free VRAM, and
