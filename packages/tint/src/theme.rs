@@ -322,6 +322,58 @@ impl Theme {
         theme
     }
 
+    /// The `neg.nvim` palette, as truecolor.
+    ///
+    /// Colours are taken from the editor theme itself (palette.lua and
+    /// groups/diagnostics.lua), not invented: errors are the diff-delete
+    /// burgundy, warnings the lilac `dwarn`, success the diff-add spruce, hints
+    /// the identifier blue, strings `lstr`, delimiters `dlim`, keywords `ops*`.
+    /// Use it when the terminal background is the same near-black the editor
+    /// uses (`#000000`); otherwise `dark` follows whatever ANSI palette the
+    /// terminal has, which on this host is already the neg-tinted one.
+    pub fn neg() -> Theme {
+        let rgb = Style::fg_rgb;
+        // One deliberate deviation: neg.nvim paints diagnostics with the
+        // diff-delete burgundy #6b0f2a, which is 1.7:1 against the #000000
+        // background — fine in the editor, where an undercurl and virtual text
+        // carry the message, but unreadable for a one-line CLI error. The error
+        // family therefore uses the bright red of the same terminal palette
+        // (kitty color9 #cf4f88, 5.1:1). Override with
+        // `theme.style.err = "#6b0f2a"` if the exact editor look is wanted.
+        let red = rgb(0xcf, 0x4f, 0x88);
+        Theme::from_styles([
+            red.bold(),                        // Err        bright red of the palette
+            rgb(0xc8, 0xa8, 0xef),             // Warn       dwarn
+            rgb(0x00, 0x7a, 0x66),             // Ok         diff_add
+            rgb(0x70, 0x95, 0xb0),             // Info       preproc_light
+            rgb(0x62, 0x89, 0xb3),             // Note       identifier
+            rgb(0x50, 0x6a, 0x7d),             // Dim        preproc_dark
+            rgb(0x39, 0x55, 0x73),             // Num        ops4
+            rgb(0x14, 0x87, 0x87),             // Size       literal2
+            rgb(0x2b, 0x76, 0x94),             // Dur        ops2
+            rgb(0x12, 0x7a, 0x57),             // TempCool   literal3
+            red.bold(),                        // TempHot    bright red
+            rgb(0x12, 0x7a, 0x57),             // PctLow     literal3
+            rgb(0xc8, 0xa8, 0xef),             // PctMid     dwarn
+            red.bold(),                        // PctHigh    bright red
+            rgb(0x62, 0x89, 0xb3).underline(), // Path    identifier
+            rgb(0x36, 0x7c, 0xb0).underline(), // Url     ops1
+            rgb(0x14, 0x87, 0x87),             // Ip         literal2
+            rgb(0x2b, 0x76, 0x94),             // Mac        ops2
+            rgb(0x39, 0x55, 0x73),             // Port       ops4
+            rgb(0x50, 0x6a, 0x7d),             // Time       preproc_dark
+            rgb(0x36, 0x7c, 0xb0),             // Hash       ops1
+            rgb(0x6e, 0x87, 0x9f),             // Str        lstr
+            rgb(0x70, 0x95, 0xb0).bold(),      // Key        func
+            rgb(0x50, 0x6a, 0x7d),             // Unit       preproc_dark
+            rgb(0xa5, 0xc1, 0xe6).bold(),      // Hdr        high
+            rgb(0x39, 0x55, 0x73),             // Sep        ops4
+            rgb(0x00, 0x7a, 0x66),             // Add        diff_add
+            red,                               // Del        bright red
+            rgb(0x2b, 0x76, 0x94),             // Ctx        ops2
+        ])
+    }
+
     /// Attributes only — for colour-blind users, monochrome terminals and
     /// screenshots that must survive greyscale printing.
     pub fn mono() -> Theme {
@@ -369,6 +421,7 @@ impl Theme {
             "dark" | "auto" | "" => Some(Theme::dark()),
             "light" => Some(Theme::light()),
             "vivid" | "256" => Some(Theme::vivid()),
+            "neg" | "neg.nvim" | "negnvim" => Some(Theme::neg()),
             "mono" => Some(Theme::mono()),
             "none" | "plain" => Some(Theme::plain()),
             _ => None,
@@ -404,6 +457,25 @@ mod tests {
             assert_eq!(style.fg, None, "{kind:?} has a foreground colour");
             assert_eq!(style.bg, None, "{kind:?} has a background colour");
         }
+    }
+
+    #[test]
+    fn neg_theme_uses_the_editor_palette() {
+        let theme = Theme::neg();
+        assert_eq!(
+            theme.get(Kind::Err).fg,
+            Some(Color::Rgb(0xcf, 0x4f, 0x88)),
+            "errors use the bright red of the same palette, not the 1.7:1 burgundy"
+        );
+        assert_eq!(
+            theme.get(Kind::Warn).fg,
+            Some(Color::Rgb(0xc8, 0xa8, 0xef)),
+            "warnings take neg.nvim's dwarn lilac"
+        );
+        assert_eq!(
+            Theme::by_name("neg").map(|t| t.get(Kind::Str)),
+            Some(Theme::neg().get(Kind::Str))
+        );
     }
 
     #[test]

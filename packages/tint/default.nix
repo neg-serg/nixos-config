@@ -24,11 +24,29 @@
 #    line prefixes (`;; ANSWER SECTION:`, `--- `, `error:`). A ruleset is a
 #    delta on the scanners, so adding a tool is a few lines of table.
 # 3. *Themes* (`src/theme.rs`) map the semantic slots to ANSI styles, so
-#    `--theme light|vivid|mono|none`, `NO_COLOR` and `TERM=dumb` are one
-#    table swap instead of a second code path.
+#    `--theme light|neg|vivid|mono|none`, `NO_COLOR` and `TERM=dumb` are one
+#    table swap instead of a second code path. `dark` (the default) paints with
+#    the terminal's own 16 colours — no assumption about the palette, so it
+#    follows whatever theme the terminal runs. `neg` is the `neg.nvim` palette
+#    as truecolor, taken from the editor's own palette.lua and
+#    groups/diagnostics.lua; the one deviation is the error family, which uses
+#    the bright red of the same palette (`#cf4f88`, 5.1:1 on black) instead of
+#    the editor's diff-delete burgundy (`#6b0f2a`, 1.7:1), because a one-line
+#    CLI error has no undercurl to carry the message.
 #
 # Spans never nest: all candidates are sorted by (start, priority, length) and
 # overlapping ones are dropped (`src/hit.rs`), so the renderer walks a line once.
+#
+# ## Streaming
+#
+# The output loop is built for live sources, not just files: a line is forwarded
+# as soon as its terminator arrives, and whatever is buffered goes out whenever a
+# read comes back short — which is what a slow pipe, `journalctl -f`, `tail -f`,
+# `dmesg -w` or `ping` look like. A carriage return counts as a terminator, so
+# in-place progress redraws (curl, cargo, rsync, nix) are coloured and flushed
+# instead of waiting for a newline that never comes; a `\r\n` pair stays intact
+# even when its two bytes arrive in different reads. Latency is pinned by tests:
+# a probe reader asserts the first chunk was written before the second was read.
 #
 # ## Modes
 #
@@ -81,9 +99,20 @@
 #
 # ## Measured
 #
-# 32 MB / 261 303 lines of `journalctl -b --no-pager` through
-# `tint -r journalctl --color=always`: 224 ms, 1 125 427 spans, 137 MiB/s on the
-# 9950X3D (2026-10-21). The 48 unit tests run in the build (`cargo test`).
+# On the 9950X3D, 2026-10-21:
+#
+# - throughput: 32 MB / 261 303 lines of `journalctl -b --no-pager` through
+#   `tint -r journalctl --color=always` take 311 ms at 1 109 506 spans, i.e.
+#   98 MiB/s on the most token-dense input available (log lines carry
+#   timestamps, PIDs, addresses, paths, quoted strings and durations). Plain
+#   prose is faster; the scanners are the cost, and they are what buys colour
+#   for programs nobody wrote rules for.
+# - startup: `df -h` 1.1 ms, `tint -- df -h` 1.3 ms, `tint --color=always --
+#   df -h` 1.4 ms, so a wrapper adds 0.2-0.3 ms to a short command.
+# - streaming: a one-line-at-a-time stream is forwarded per read, pinned by the
+#   probe test (the first chunk is written before the second is read).
+#
+# The 58 unit tests run in the build (`cargo test`).
 
 {
   lib,

@@ -194,8 +194,36 @@ fn inside_identifier(line: &[u8], i: usize) -> bool {
     }
 }
 
+/// Byte-class tables: a match with ten alternatives per byte is the hot spot in
+/// the scanners, a table lookup is a single load.
+const fn class_table() -> [bool; 256] {
+    let mut table = [false; 256];
+    let mut i = 0;
+    while i < 256 {
+        let b = i as u8;
+        table[i] = b.is_ascii_alphanumeric() || b == b'_';
+        i += 1;
+    }
+    table
+}
+
+const fn relpath_table() -> [bool; 256] {
+    let mut table = [false; 256];
+    let mut i = 0;
+    while i < 256 {
+        let b = i as u8;
+        table[i] = b.is_ascii_alphanumeric()
+            || matches!(b, b'/' | b'.' | b'_' | b'-' | b'+' | b'@' | b'%');
+        i += 1;
+    }
+    table
+}
+
+static WORD_BYTE: [bool; 256] = class_table();
+static RELPATH_BYTE: [bool; 256] = relpath_table();
+
 fn is_word_byte(b: u8) -> bool {
-    b.is_ascii_alphanumeric() || b == b'_'
+    WORD_BYTE[b as usize]
 }
 
 fn word_end(line: &[u8], start: usize) -> usize {
@@ -545,6 +573,10 @@ fn try_ipv6(line: &[u8], i: usize) -> Option<usize> {
 /// `123e4567-e89b-12d3-a456-426614174000`: eight, four, four, four, twelve.
 fn try_uuid(line: &[u8], i: usize) -> Option<usize> {
     const GROUPS: [usize; 5] = [8, 4, 4, 4, 12];
+    // Two cheap rejects before the group walk: most tokens are not UUIDs.
+    if i + 36 > line.len() || line[i + 8] != b'-' || line[i + 13] != b'-' {
+        return None;
+    }
     if !boundary_before(line, i) {
         return None;
     }
@@ -883,17 +915,11 @@ fn try_relpath(line: &[u8], i: usize) -> Option<usize> {
     let mut j = i;
     let mut slashes = 0;
     let mut letters = 0;
-    while j < n {
+    while j < n && RELPATH_BYTE[line[j] as usize] {
         let b = line[j];
-        let ok = b.is_ascii_alphanumeric()
-            || matches!(b, b'/' | b'.' | b'_' | b'-' | b'+' | b'@' | b'%');
-        if !ok {
-            break;
-        }
         if b == b'/' {
             slashes += 1;
-        }
-        if b.is_ascii_alphabetic() {
+        } else if b.is_ascii_alphabetic() {
             letters += 1;
         }
         j += 1;

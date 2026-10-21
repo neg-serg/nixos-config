@@ -1,6 +1,8 @@
 //! Spans produced by the scanners and rules, and the overlap resolution that
 //! turns them into a paintable list.
 
+use std::cmp::Ordering;
+
 use crate::theme::Kind;
 
 /// A candidate coloured span inside one line.
@@ -53,12 +55,15 @@ impl Hit {
 /// the cursor has moved past the first.
 pub fn normalize(hits: &mut Vec<Hit>) {
     hits.retain(|h| h.end > h.start);
-    hits.sort_unstable_by(|a, b| {
-        a.start
-            .cmp(&b.start)
-            .then(b.prio.cmp(&a.prio))
-            .then(b.len().cmp(&a.len()))
-    });
+    // Insertion sort: a rendered line carries a handful of spans, and the
+    // general sort's setup costs more than the comparisons it saves.
+    for i in 1..hits.len() {
+        let mut j = i;
+        while j > 0 && order(&hits[j], &hits[j - 1]) == Ordering::Less {
+            hits.swap(j, j - 1);
+            j -= 1;
+        }
+    }
     let mut cursor: u32 = 0;
     let mut write = 0usize;
     for read in 0..hits.len() {
@@ -70,6 +75,14 @@ pub fn normalize(hits: &mut Vec<Hit>) {
         }
     }
     hits.truncate(write);
+}
+
+/// Earlier start first, then higher priority, then the longer span.
+fn order(a: &Hit, b: &Hit) -> Ordering {
+    a.start
+        .cmp(&b.start)
+        .then(b.prio.cmp(&a.prio))
+        .then(b.len().cmp(&a.len()))
 }
 
 #[cfg(test)]
