@@ -3,13 +3,14 @@
  * dsh-herdr plugin functional test.
  *
  * The plugin is plumbing: dsh lifecycle events -> `herdr pane report-agent`
- * calls against the pane the server injected. What the assertions pin is that
- * plumbing's steady-state contract — the argv Herdr receives, the state
+ * calls against the pane the server injected, plus `herdr pane
+ * report-metadata` for the turn/token/session row. What the assertions pin is
+ * that plumbing's steady-state contract — the argv Herdr receives, the state
  * mapping, the main-session filter, deduplication, the blocked/back-to-work
- * handshake, and that everything is inert outside a Herdr pane or when the
- * kill switch is set.
+ * handshake, the metadata throttle, dedupe and TTL, and that everything is inert
+ * outside a Herdr pane or when the kill switch is set.
  */
-import { apply, blockedMessage, herdrTarget, inject, name, parseHerdrVersion } from './lib/index.js'
+import { apply, blockedMessage, formatTokens, herdrTarget, inject, name, parseHerdrVersion } from './lib/index.js'
 
 let pass = 0
 let fail = 0
@@ -30,9 +31,15 @@ const BASE_ENV = {
 }
 
 /** Fake ctx that records spawns and lets the test drive the event bus. */
-function harness({ env = { ...BASE_ENV }, graceMs = 0, version = 'herdr 0.9.3\n' } = {}) {
+function harness({
+  env = { ...BASE_ENV },
+  graceMs = 0,
+  version = 'herdr 0.9.3\n',
+  metadataIntervalMs = 0,
+} = {}) {
   const spawns = []
   const probes = []
+  const metadata = []
   const listeners = {}
   const cleanups = []
   const ctx = {
@@ -53,6 +60,15 @@ function harness({ env = { ...BASE_ENV }, graceMs = 0, version = 'herdr 0.9.3\n'
             collected: { stdout: { readFrom: () => ({ text: version }) } },
           }
         }
+        // Display metadata is chrome next to the lifecycle report: keep the two
+        // apart so the state assertions below count reports only.
+        if (spec.argv.includes('report-metadata')) {
+          metadata.push(spec)
+          return {
+            done: Promise.resolve({ exitCode: 0, signal: null }),
+            collected: { stdout: { readFrom: () => ({ text: '' }) } },
+          }
+        }
         spawns.push(spec)
         return {
           done: Promise.resolve({ exitCode: 0, signal: null }),
@@ -61,10 +77,11 @@ function harness({ env = { ...BASE_ENV }, graceMs = 0, version = 'herdr 0.9.3\n'
       },
     },
   }
-  apply(ctx, { env, graceMs, cwd: '/tmp/wt-x' })
+  apply(ctx, { env, graceMs, metadataIntervalMs, cwd: '/tmp/wt-x' })
   return {
     spawns,
     probes,
+    metadata,
     listeners,
     cleanups,
     emit: (event, ...args) => {
@@ -127,6 +144,65 @@ ok(args(h.spawns[2]).includes('--agent-session-id s1'), 'the main session id rid
 
 h.emit('agent/status', { agent: { session: { id: 'sub-1' } }, status: 'idle' })
 ok(h.spawns.length === 3, 'subagent status never drives the pane state')
+
+// ── display metadata ─────────────────────────────────────────────────────────
+
+ok(formatTokens(842) === '842', 'small token counts stay exact')
+ok(formatTokens(619_123) === '619k', 'token counts are compacted like the status line')
+ok(formatTokens(1_800) === '2k', 'token counts round to whole thousands')
+ok(formatTokens(null) === null, 'a missing count formats to null')
+
+const meta = harness()
+meta.emit('session/event', { id: 's9' }, { type: 'turn/start' })
+meta.emit('session/event', { id: 's9' }, {
+  type: 'assistant/message',
+  data: { turn: 4, usage: { inputTokens: 1180, cacheReadTokens: 20 } },
+})
+ok(meta.metadata.length === 1, 'an assistant message reports metadata once')
+ok(
+  args(meta.metadata[0]).includes('pane report-metadata w1:p1'),
+  'metadata addresses the pane',
+)
+ok(args(meta.metadata[0]).includes('--source dsh-herdr'), 'metadata carries the same source')
+ok(args(meta.metadata[0]).includes('--token turn=4'), 'the turn rides along')
+ok(args(meta.metadata[0]).includes('--token tokens=1k'), 'input plus cached tokens are summed')
+ok(args(meta.metadata[0]).includes('--token session=s9'), 'the session id is exposed, shortened')
+ok(args(meta.metadata[0]).includes('--ttl-ms '), 'metadata expires')
+
+meta.emit('session/event', { id: 's9' }, {
+  type: 'assistant/message',
+  data: { turn: 4, usage: { inputTokens: 1180, cacheReadTokens: 20 } },
+})
+ok(meta.metadata.length === 1, 'identical metadata is deduplicated')
+
+meta.emit('session/event', { id: 's9' }, { type: 'turn/end', data: { turn: 5 } })
+ok(meta.metadata.length === 2, 'a turn boundary flushes metadata')
+ok(args(meta.metadata[1]).includes('--token turn=5'), 'the flushed metadata carries the new turn')
+
+meta.emit('session/event', { id: 'sub-2' }, {
+  type: 'assistant/message',
+  data: { turn: 9, usage: { inputTokens: 9000 } },
+})
+ok(meta.metadata.length === 2, 'subagent usage never reaches the pane metadata')
+
+const throttled = harness({ metadataIntervalMs: 60_000 })
+throttled.emit('session/event', { id: 's10' }, { type: 'turn/start' })
+throttled.emit('session/event', { id: 's10' }, {
+  type: 'assistant/message',
+  data: { turn: 1, usage: { inputTokens: 1000 } },
+})
+throttled.emit('session/event', { id: 's10' }, {
+  type: 'assistant/message',
+  data: { turn: 1, usage: { inputTokens: 2000 } },
+})
+ok(throttled.metadata.length === 1, 'streaming usage is throttled to one report per interval')
+
+const metaOff = harness({ env: {} })
+metaOff.emit('session/event', { id: 's11' }, {
+  type: 'assistant/message',
+  data: { turn: 1, usage: { inputTokens: 1000 } },
+})
+ok(metaOff.metadata.length === 0, 'outside Herdr metadata is never reported')
 
 // ── resume stays off on older servers ────────────────────────────────────────
 

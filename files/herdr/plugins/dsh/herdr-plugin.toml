@@ -1,0 +1,71 @@
+# Herdr plugin: dsh actions in the Herdr UI.
+#
+# linked with `herdr plugin link /etc/nixos/files/herdr/plugins/dsh` (see
+# docs/howto/herdr.md); the registry lives in ~/.config/herdr/plugins.json, so
+# the link survives restarts and is re-pointed only when the path changes.
+#
+# The panes are the interactive half: a plugin action has no terminal of its
+# own, so each action opens its popup entrypoint through `herdr plugin pane
+# open`. Both panes are thin wrappers over the dsh-worktree helper
+# (packages/local-bin/bin/dsh-worktree), which owns every policy decision.
+id = "dsh"
+name = "dsh"
+version = "1"
+min_herdr_version = "0.9.0"
+description = "dsh worktree actions for Herdr: create a tree in a popup, list the existing ones"
+platforms = ["linux"]
+
+# `dsh-worktree new <name>` needs the name up front and the checkout directory
+# the action was invoked from; the script prompts for the first and reads the
+# second out of HERDR_PLUGIN_CONTEXT_JSON.
+[[panes]]
+id = "worktree-new"
+title = "dsh: new worktree"
+description = "Prompt for a name, create the git worktree and open it as a Herdr workspace"
+placement = "popup"
+width = "70%"
+height = "45%"
+command = ["bash", "-lc", "\"$HERDR_PLUGIN_ROOT/bin/worktree-new.sh\""]
+
+# Read-only view of the trees for the checkout in context; it stays on screen
+# until the user presses enter, because a popup closes with its command.
+[[panes]]
+id = "worktrees"
+title = "dsh: worktrees"
+description = "List the worktrees of the current checkout"
+placement = "popup"
+width = "70%"
+height = "45%"
+command = ["bash", "-lc", "\"$HERDR_PLUGIN_ROOT/bin/worktree-list.sh\""]
+
+[[actions]]
+id = "worktree-new"
+title = "dsh: new worktree"
+description = "Create a git worktree and open it as a dsh session"
+contexts = ["workspace", "pane"]
+command = [
+  "herdr",
+  "plugin",
+  "pane",
+  "open",
+  "--plugin",
+  "dsh",
+  "--entrypoint",
+  "worktree-new",
+]
+
+[[actions]]
+id = "worktrees"
+title = "dsh: worktrees"
+description = "List the worktrees of the current checkout"
+contexts = ["workspace", "pane"]
+command = [
+  "herdr",
+  "plugin",
+  "pane",
+  "open",
+  "--plugin",
+  "dsh",
+  "--entrypoint",
+  "worktrees",
+]
