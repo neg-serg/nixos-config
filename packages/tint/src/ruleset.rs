@@ -47,7 +47,9 @@ const TABLE: ScanFlags = ScanFlags {
     numbers: true,
     headers: true,
     ports: false,
-    keyval: true,
+    // No key/value colouring: `ps` prints `--flag=value` in its COMMAND column
+    // and the rest of the table has no keys at all.
+    keyval: false,
 };
 
 /// Network tools: numbers, ports, no header heuristic (their headers carry
@@ -656,7 +658,7 @@ pub const RULESETS: &[RulesetDef] = &[
     RulesetDef {
         name: "uptime",
         about: "uptime/w/last sessions",
-        flags: NUMBERS,
+        flags: TABLE,
         words: &[("load average:", Kind::Key), ("up", Kind::Ok)],
         lines: &[],
         parts: &[],

@@ -73,8 +73,10 @@ rec {
     # Herdr state reporting: maps agent/status + the approval/question
     # waterfalls onto `herdr pane report-agent`, so the pane shows up as a
     # first-class agent (working/idle/blocked) in the sidebar, notifications and
-    # `herdr agent wait`. Inert outside a Herdr pane (HERDR_ENV=1); injects
-    # `subprocess` only. See docs/howto/herdr.md.
+    # `herdr agent wait`, and publishes turn/tokens/session as display metadata
+    # (`herdr pane report-metadata`) for scripts and `$token` sidebar rows.
+    # Inert outside a Herdr pane (HERDR_ENV=1); injects `subprocess` only.
+    # See docs/howto/herdr.md.
     "dsh-herdr"
     # /diff + show_diff: the diff-review surface. The tool declares the harness's
     # `card: "diff"` presenter (the same one the edit-approval preview uses), so

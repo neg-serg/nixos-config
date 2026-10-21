@@ -18,7 +18,9 @@ in
   #
   # The config is deployed as a live link (neg.live): editing
   # files/herdr/config.toml in the repo applies after
-  # `herdr server reload-config`, no rebuild needed.
+  # `herdr server reload-config`, no rebuild needed. The dsh action plugin in
+  # files/herdr/plugins/dsh is linked by path (`herdr plugin link`), so it is
+  # not deployed either — see docs/howto/herdr.md.
   config = lib.mkIf (ai.enable && ai.herdr.enable) (
     lib.mkMerge [
       {

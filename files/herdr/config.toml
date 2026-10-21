@@ -105,3 +105,17 @@ rows = [
     "agent",
   ],
 ]
+
+# dsh actions from the local Herdr plugin (files/herdr/plugins/dsh, linked once
+# with `herdr plugin link /etc/nixos/files/herdr/plugins/dsh`): a popup that
+# prompts for a worktree name and lets `dsh-worktree new` open the tree as a
+# workspace of its own, and a read-only list of the checkout's trees.
+[[keys.command]]
+key = "prefix+shift+w"
+type = "plugin_action"
+command = "worktree-new"
+
+[[keys.command]]
+key = "prefix+shift+e"
+type = "plugin_action"
+command = "worktrees"

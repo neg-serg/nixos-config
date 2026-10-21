@@ -181,6 +181,19 @@ fn is_hex(b: u8) -> bool {
     b.is_ascii_hexdigit()
 }
 
+/// True when the digit run continues an identifier: `i2c-11`, `nvme0`, `a_5`.
+/// A number after a space, a colon or an opening bracket is a value.
+fn inside_identifier(line: &[u8], i: usize) -> bool {
+    if i == 0 {
+        return false;
+    }
+    match line[i - 1] {
+        b if is_word_byte(b) => true,
+        b'-' => i >= 2 && is_word_byte(line[i - 2]),
+        _ => false,
+    }
+}
+
 fn is_word_byte(b: u8) -> bool {
     b.is_ascii_alphanumeric() || b == b'_'
 }
@@ -315,7 +328,7 @@ fn scan_numeric(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Opt
         out.push(Hit::new(i, num_end, Kind::Port, PRIO_NUM));
         return Some(num_end);
     }
-    if cfg.numbers {
+    if cfg.numbers && !inside_identifier(line, i) {
         out.push(Hit::new(i, num_end, Kind::Num, PRIO_NUM));
     }
     Some(num_end)
@@ -533,8 +546,10 @@ fn try_hex(line: &[u8], i: usize) -> Option<usize> {
     if !(7..=40).contains(&len) || !boundary_after(line, j) {
         return None;
     }
-    // Require at least one digit: `frontend` is not an object id.
-    if !line[i..j].iter().any(u8::is_ascii_digit) {
+    // Require a digit *and* a letter: `frontend` is not an object id, and a
+    // seven-digit PID (`2255555`) is a number, not a hash.
+    let slice = &line[i..j];
+    if !slice.iter().any(u8::is_ascii_digit) || !slice.iter().any(u8::is_ascii_alphabetic) {
         return None;
     }
     Some(j)
@@ -559,7 +574,7 @@ fn try_size(line: &[u8], start: usize) -> Option<usize> {
     if line.get(j) == Some(&b' ') {
         j += 1;
     }
-    let mut end = match line.get(j) {
+    let end = match line.get(j) {
         Some(b'K' | b'k' | b'M' | b'G' | b'T' | b'P' | b'E') => {
             let mut end = j + 1;
             if line.get(end) == Some(&b'i') {
@@ -604,6 +619,14 @@ fn scan_word(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Option
     if cfg.times && boundary_before(line, i) {
         if let Some(end) = try_syslog_time(line, i) {
             out.push(Hit::new(i, end, Kind::Time, PRIO_TIME));
+            return Some(end);
+        }
+    }
+    // Relative paths (`src/main.rs`, `target/debug/tint`) carry a slash and at
+    // least one letter; absolute ones are handled on the `/` path.
+    if cfg.paths && boundary_before(line, i) {
+        if let Some(end) = try_relpath(line, i) {
+            out.push(Hit::new(i, end, Kind::Path, PRIO_PATH));
             return Some(end);
         }
     }
@@ -805,6 +828,53 @@ fn scan_path(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Option
         return None;
     }
     out.push(Hit::new(i, j, Kind::Path, PRIO_PATH));
+    Some(j)
+}
+
+/// A token that looks like a relative path: `src/main.rs`, `a/b/c`, `./x`.
+fn try_relpath(line: &[u8], i: usize) -> Option<usize> {
+    let n = line.len();
+    let mut j = i;
+    let mut slashes = 0;
+    let mut letters = 0;
+    while j < n {
+        let b = line[j];
+        let ok = b.is_ascii_alphanumeric()
+            || matches!(b, b'/' | b'.' | b'_' | b'-' | b'+' | b'@' | b'%');
+        if !ok {
+            break;
+        }
+        if b == b'/' {
+            slashes += 1;
+        }
+        if b.is_ascii_alphabetic() {
+            letters += 1;
+        }
+        j += 1;
+    }
+    if slashes == 0 || letters == 0 || j - i < 3 {
+        return None;
+    }
+    // Trailing punctuation belongs to the sentence, not the path; `a//b` is not
+    // a path either.
+    while j > i && matches!(line[j - 1], b'.' | b'-' | b'/' | b'%' | b'@') {
+        j -= 1;
+    }
+    let slice = &line[i..j];
+    if slice.windows(2).any(|w| w == b"//") || slice.is_empty() {
+        return None;
+    }
+    // One slash alone is too weak a signal (`and/or`, `read/write`, the `df`
+    // pool name `tank/nixos`): ask for a second slash or an extension.
+    let last_segment = &slice[slice.iter().rposition(|b| *b == b'/').unwrap_or(0) + 1..];
+    let has_extension = last_segment.iter().any(|b| *b == b'.') && last_segment.len() > 1;
+    let solid = slice.iter().filter(|b| **b == b'/').count() >= 2 || has_extension;
+    if !solid {
+        return None;
+    }
+    if !boundary_after(line, j) {
+        return None;
+    }
     Some(j)
 }
 
@@ -1120,6 +1190,35 @@ mod tests {
     fn hashes() {
         assert_eq!(find("commit 3f2a1c9dd0", Kind::Hash), ["3f2a1c9dd0"]);
         assert!(find("word 1234", Kind::Hash).is_empty());
+        // A long all-digit field is a PID or a counter, not an object id.
+        assert!(find("zsh 2255555 neg", Kind::Hash).is_empty());
+    }
+
+    #[test]
+    fn digits_inside_identifiers_stay_plain() {
+        let mut cfg = ScanCfg::default();
+        cfg.numbers = true;
+        let row = hits("spd5118-i2c-11-51 42 -7", &cfg);
+        let numbers: Vec<&str> = row
+            .iter()
+            .filter(|(_, _, k)| *k == Kind::Num)
+            .map(|(s, e, _)| &"spd5118-i2c-11-51 42 -7"[*s..*e])
+            .collect();
+        assert_eq!(numbers, ["42", "7"], "{row:?}");
+    }
+
+    #[test]
+    fn relative_paths() {
+        assert_eq!(find("built src/main.rs fine", Kind::Path), ["src/main.rs"]);
+        assert_eq!(
+            find("see target/debug/tint", Kind::Path),
+            ["target/debug/tint"]
+        );
+        assert!(
+            find("and/or ratio", Kind::Path).is_empty(),
+            "words are not paths"
+        );
+        assert!(find("a//b", Kind::Path).is_empty());
     }
 
     #[test]

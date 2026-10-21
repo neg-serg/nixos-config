@@ -23,6 +23,16 @@
  * trailing argv, so the plugin probes `herdr --version` once and attaches the
  * command only when it is supported.
  *
+ * Besides the lifecycle state the plugin publishes display metadata through
+ * `herdr pane report-metadata --token name=value`: the turn, the context tokens
+ * and the short session id. Herdr keeps those on the pane (`herdr pane get`
+ * shows them under `.tokens`) for scripts, and a sidebar row can render them
+ * with a `$tokens`/`$turn` token in `[ui.sidebar.agents]`. The values are
+ * display-only and expire (`--ttl-ms`), so a dead session cannot leave a stale
+ * turn behind. Metadata is throttled and deduplicated: `assistant/message`
+ * updates it at most once per interval, and a turn boundary or a state change
+ * flushes it immediately.
+ *
  * Reports are fire-and-forget: a missing binary, a stopped server or a slow
  * socket must never disturb the session. Only the main session drives the pane
  * state — subagent sessions run, finish and question inside the same pane.
@@ -42,6 +52,15 @@ const AGENT = 'dsh'
 
 /** How long a request stays pending before the pane is marked blocked (ms). */
 const DEFAULT_GRACE_MS = 3_000
+
+/** Minimum spacing between metadata reports while tokens stream in (ms). */
+const DEFAULT_METADATA_INTERVAL_MS = 5_000
+
+/** Display metadata expires so a dead session leaves no stale numbers behind. */
+const METADATA_TTL_MS = 3_600_000
+
+/** How much of the session id the `session` token keeps. */
+const SESSION_TOKEN_CHARS = 8
 
 const MAX_MESSAGE_CHARS = 200
 const COLLECT_BYTES = 1024
@@ -82,6 +101,16 @@ function atLeast(version, want) {
   return true
 }
 
+/**
+ * Compact token count, matching what the status line prints (`619k tok`).
+ * @param value - token count, or null when the session reported none.
+ */
+export function formatTokens(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null
+  if (value < 1000) return String(Math.round(value))
+  return Math.round(value / 1000) + 'k'
+}
+
 /** Control characters would let a message inject its own arguments. */
 function sanitize(text, limit = MAX_MESSAGE_CHARS) {
   return String(text ?? '')
@@ -111,7 +140,7 @@ export function blockedMessage(event, payload) {
 /**
  * Mount the reporter.
  * @param ctx - plugin context; the event bus and `ctx.subprocess` are the only seams used.
- * @param config - optional `graceMs`, `env` (tests), `cwd` (tests).
+ * @param config - optional `graceMs`, `metadataIntervalMs`, `env` (tests), `cwd` (tests).
  */
 export function apply(ctx, config) {
   const settings = config ?? {}
@@ -122,6 +151,12 @@ export function apply(ctx, config) {
 
   const state = { seq: Date.now(), last: null, sessionId: null, resume: false }
   const timers = new Set()
+  // Display metadata: the last values the main session reported, plus the
+  // throttle/dedupe bookkeeping that keeps the chrome from churning.
+  const meta = { turn: null, tokens: null, sent: null, at: 0 }
+  const metadataIntervalMs = Number.isFinite(settings.metadataIntervalMs)
+    ? settings.metadataIntervalMs
+    : DEFAULT_METADATA_INTERVAL_MS
 
   /**
    * Attach the resume command only when the pane's Herdr accepts it: 0.9.2 is
@@ -193,6 +228,56 @@ export function apply(ctx, config) {
         /* a report must never disturb the session */
       }
     })()
+    // A state change is worth a fresh turn/token row; the throttle only guards
+    // the streaming case, so this flush is forced.
+    flushMetadata(true)
+  }
+
+  /** `--token` payload for the values the session has reported so far. */
+  function metadataTokens() {
+    const tokens = []
+    if (meta.turn !== null) tokens.push(['turn', String(meta.turn)])
+    const counted = formatTokens(meta.tokens)
+    if (counted !== null) tokens.push(['tokens', counted])
+    if (state.sessionId !== null) tokens.push(['session', String(state.sessionId).slice(0, SESSION_TOKEN_CHARS)])
+    return tokens
+  }
+
+  /**
+   * Publish turn/tokens/session as display metadata.
+   * @param force - bypass the interval throttle (a turn boundary or a state change).
+   */
+  function flushMetadata(force) {
+    if (disabled(env)) return
+    const tokens = metadataTokens()
+    // The session id alone is not worth a call: wait for a turn or a token count.
+    if (meta.turn === null && formatTokens(meta.tokens) === null) return
+    const signature = tokens.map(([key, value]) => key + '=' + value).join('\u0000')
+    if (signature === meta.sent) return
+    const now = Date.now()
+    if (!force && now - meta.at < metadataIntervalMs) return
+    meta.sent = signature
+    meta.at = now
+    const argv = [target.bin, 'pane', 'report-metadata', target.pane, '--source', SOURCE, '--agent', AGENT]
+    for (const [key, value] of tokens) argv.push('--token', key + '=' + value)
+    argv.push('--ttl-ms', String(METADATA_TTL_MS))
+    void (async () => {
+      try {
+        const handle = ctx.subprocess.spawn({
+          argv,
+          cwd: settings.cwd ?? process.cwd(),
+          stdio: {
+            stdin: 'ignore',
+            stdout: { maxBytes: COLLECT_BYTES },
+            stderr: { maxBytes: COLLECT_BYTES },
+          },
+          graceMs: 1000,
+        })
+        await handle.done
+      } catch {
+        /* metadata is chrome: a failed report changes nothing */
+      }
+    })()
   }
 
   /** The first session observed is the interactive one; subagents come later. */
@@ -204,7 +289,26 @@ export function apply(ctx, config) {
 
   ctx.on('session/event', (session, event) => {
     if (event === undefined || !mainSession(session)) return
-    if (event.type === 'turn/start') report('working')
+    if (event.type === 'turn/start') {
+      report('working')
+      return
+    }
+    // Usage arrives with the assistant message; the turn number with the turn
+    // boundary. Both feed the display metadata, never the lifecycle state.
+    if (event.type === 'assistant/message') {
+      const usage = event.data?.usage
+      if (typeof usage?.inputTokens === 'number') {
+        const cached = typeof usage.cacheReadTokens === 'number' ? usage.cacheReadTokens : 0
+        meta.tokens = usage.inputTokens + cached
+      }
+      if (typeof event.data?.turn === 'number') meta.turn = event.data.turn
+      flushMetadata(false)
+      return
+    }
+    if (event.type === 'turn/end') {
+      if (typeof event.data?.turn === 'number') meta.turn = event.data.turn
+      flushMetadata(true)
+    }
   })
 
   ctx.on('agent/status', (payloadEvent) => {
