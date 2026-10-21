@@ -17,6 +17,7 @@
   neru = pkgs.neg.neru; # Desktop keyboard navigation: hints, grids, vim-style modes (upstream main)
 
   brrtfetch = pkgs.neg.brrtfetch;
+  tint = pkgs.neg.tint; # colouriser for CLI output (scanners + per-tool rulesets)
 
   omp = pkgs.neg.omp; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
 

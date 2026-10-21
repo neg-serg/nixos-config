@@ -1,0 +1,12 @@
+[package]
+name = "tint"
+version = "0.1.0"
+edition = "2021"
+description = "Fast, zero-dependency colouriser for command-line program output"
+license = "MIT"
+
+[[bin]]
+name = "tint"
+path = "src/main.rs"
+
+[dependencies]

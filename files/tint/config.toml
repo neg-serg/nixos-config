@@ -1,0 +1,46 @@
+# tint — colouriser for CLI output. Everything here is a delta on the builtin
+# behaviour: token scanners (sizes, percentages, addresses, paths, timestamps,
+# severity words) already run for every ruleset, and each ruleset adds only the
+# words its own tool prints. See `tint --list`, `tint --show <ruleset>` and
+# `tint --help`.
+#
+# Colour names, #rrggbb, idx:N, on-<colour> (background), and the attributes
+# bold/dim/italic/underline are accepted; a value may also be a theme slot
+# (err, warn, ok, info, note, path, ip, hash, ...), which reuses the theme.
+
+theme = "dark"
+
+# Follow the terminal: always | never | auto (auto = colour only on a tty, and
+# never when NO_COLOR/TERM=dumb are set).
+color = "auto"
+
+# --- extra rules ---------------------------------------------------------
+# Words that the generic severity table does not know. `keyword.` matches on
+# word boundaries, `literal.` anywhere, `prefix.` at line start, `suffix.` at
+# line end.
+keyword.SUCCESS = "ok"
+keyword.FAILURE = "err"
+# Punctuation in a needle needs a quoted key (the file stays valid TOML for
+# taplo; the parser accepts the quotes).
+"prefix.###" = "brightmagenta,bold"
+"prefix.>>>" = "brightmagenta,bold"
+
+# --- wrappers ------------------------------------------------------------
+# Commands to put in front of `tint` in the generated shell integration, beyond
+# the builtin table: df, du, free, lsblk, ip, ss, ping, traceroute, dig/host,
+# mount/findmnt, dmesg, ps, lsof, sensors, lspci/lsusb, smartctl/nvme, uptime,
+# w, last, env, find, tar, diff, nmap, iptables/nft, systemd-analyze.
+#
+# Not wrapped on purpose: git, systemctl, journalctl, cargo, nix/nh,
+# nixos-rebuild, python, docker/podman, kubectl, curl, openssl, make. A wrapped
+# command sees a pipe instead of a terminal, which would take their pager, their
+# progress bar or their `-it` away. Those keep a ruleset and are used explicitly:
+#     journalctl -b | tint -r journalctl
+# Uncomment to opt in anyway (e.g. on a machine where build output matters more):
+# wrap = "nix nh nixos-rebuild cargo make gcc python3 pytest curl"
+wrap = ""
+skip = ""
+
+# --- per-slot restyling --------------------------------------------------
+# theme.style.hdr = "bold"
+# theme.style.path = "idx:33,underline"

@@ -75,6 +75,18 @@ _exists lazytail && {
     alias lt=lazytail # TUI log viewer (sources from ~/.config/lazytail/config.yaml)
     ltc(){ lazytail -n "$@" } # cmd | ltc NAME  ->  ~/.config/lazytail/data/NAME.log (tee-like)
 }
+# Colour wrappers for the tools that print plain text and never need a terminal
+# (df, du, free, lsblk, ip, ss, ping, traceroute, dig, mount, dmesg, ps, lsof,
+# sensors, lspci, smartctl, uptime, env, find, tar, diff, nmap, iptables,
+# systemd-analyze). The command list lives in the tint package (builtin table)
+# plus ~/.config/tint/config.toml, so the wrappers are generated here instead of
+# being a second copy in this file. Pager/progress/tty tools (git, nix, cargo,
+# python, docker, kubectl, journalctl, ...) are deliberately not wrapped; use
+# `cmd | tint -r NAME`. tint execs the
+# command when stdout is not a tty, so a pipe pays one exec and keeps its exit
+# code; lines that a tool already coloured are passed through untouched.
+_exists tint && eval "$(tint --shell zsh)"
+
 autoload zc
 
 # vim: ft=zsh:nowrap
