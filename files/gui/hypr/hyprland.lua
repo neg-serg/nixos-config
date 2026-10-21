@@ -1126,11 +1126,16 @@ hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 1, spring = "s
 hl.window_rule({ name = "nm-connection-editor", match = { class = "^(nm-connection-editor)$" }, float = true, size = "45% 45%", center = true, animation = "popin 80%", tag = "nm-connection-editor" })
 hl.window_rule({ name = "picture-in-picture", match = { title = m.pip }, float = true, keep_aspect_ratio = true, move = "73% 72%", size = "25% 25%", pin = true, animation = "popin 90%", tag = "pip" })
 -- player (Vulkan MPD frontend, ~/src/neg-player): a fixed-size floating window, because tiling
--- it into a column hides most of the three-pane layout. The geometry copies the rmpc scratchpad
--- (music-scratchpad below: 70% x 40% at 15%/30%, i.e. centred) so the key that swapped one player
--- for the other does not also swap the footprint; on a 1920x1080 logical monitor this is 1344x432
--- at 288,324 — the size rmpc is saved at in ~/.local/state/hyprscratch/geometry.json.
-hl.window_rule({ name = "player", match = { class = "^(player)$" }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", animation = "popin 90%" })
+-- it into a column hides most of the three-pane layout. The base geometry is the rmpc scratchpad
+-- (music-scratchpad below: 70% x 40% at 15%/30%, i.e. centred) grown by 30% on both axes —
+-- 0.7 * 1.3 = 0.91 wide, 0.4 * 1.3 = 0.52 tall, still centred — so the key that swapped one player
+-- for the other does not swap the footprint back. On the 1920x1080 logical monitor that is
+-- 1747x562 at 86,259 (rmpc itself saves 1344x432 at 288,324 in ~/.local/state/hyprscratch/geometry.json).
+--
+-- The window is parked on its own special workspace from the start: mod4+f toggles that workspace
+-- (aurora-focus), which is the only reliable "hide" Hyprland offers here. `silent` keeps the view
+-- where it is while the player maps behind it.
+hl.window_rule({ name = "player", match = { class = "^(player)$" }, float = true, workspace = "special:aurora silent", size = "monitor_w*0.91 monitor_h*0.52", move = "monitor_w*0.045 monitor_h*0.24", animation = "popin 90%" })
 hl.window_rule({ name = "file-dialog", match = { title = m.file_dialog }, center = true, float = true, animation = "popin 80%", tag = "file-dialog" })
 hl.window_rule({ name = "telegram-wrapped", match = { class = m.telegram_wrapped }, center = true, tag = "telegram" })
 hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, float = true, tag = "telegram" })
