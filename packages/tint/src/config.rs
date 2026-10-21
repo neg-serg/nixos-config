@@ -56,6 +56,10 @@ pub struct Config {
     pub extra_wrappers: Vec<String>,
     /// Never wrap these commands.
     pub skip_wrappers: Vec<String>,
+    /// Wrap these commands with `--pty` (a terminal of their own).
+    pub pty_wrapped: Vec<String>,
+    /// Wrap these commands with `--pager` (tint pages the colourised output).
+    pub pager_wrapped: Vec<String>,
     pub rules: Vec<Rule>,
     pub styles: StyleTable,
     /// Raw `theme`-relative style for a kind: `theme_style.err = "red,bold"`.
@@ -85,6 +89,8 @@ pub fn parse(text: &str) -> Result<Config, String> {
             "color" | "colour" => config.color = Some(unquoted),
             "wrap" => config.extra_wrappers.extend(split_words(&unquoted)),
             "skip" => config.skip_wrappers.extend(split_words(&unquoted)),
+            "pty" => config.pty_wrapped.extend(split_words(&unquoted)),
+            "pager" => config.pager_wrapped.extend(split_words(&unquoted)),
             _ => {
                 if let Some(kind_name) = key.strip_prefix("theme.style.") {
                     let kind = Kind::by_name(kind_name)
@@ -292,6 +298,13 @@ mod tests {
         let cfg = parse("wrap = \"go rustup\"\nskip = \"find, tar\"\n").unwrap();
         assert_eq!(cfg.extra_wrappers, ["go", "rustup"]);
         assert_eq!(cfg.skip_wrappers, ["find", "tar"]);
+    }
+
+    #[test]
+    fn parses_pty_and_pager_modes() {
+        let cfg = parse("pty = \"cargo rustc\"\npager = \"systemctl journalctl\"\n").unwrap();
+        assert_eq!(cfg.pty_wrapped, ["cargo", "rustc"]);
+        assert_eq!(cfg.pager_wrapped, ["systemctl", "journalctl"]);
     }
 
     #[test]

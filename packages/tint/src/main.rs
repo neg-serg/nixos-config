@@ -12,6 +12,7 @@
 mod config;
 mod engine;
 mod hit;
+mod pty;
 mod rule;
 mod ruleset;
 mod scan;
@@ -20,6 +21,7 @@ mod style;
 mod theme;
 
 use std::io::{self, IsTerminal, Read, Write};
+use std::os::fd::AsRawFd;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
@@ -44,6 +46,10 @@ struct Args {
     ansi: Option<String>,
     config: Option<String>,
     stats: bool,
+    /// Give the child a terminal of its own (`--pty`).
+    pty: bool,
+    /// Page the colourised output (`--pager`).
+    pager: bool,
     list: bool,
     show: Option<String>,
     shell: Option<String>,
@@ -167,6 +173,32 @@ fn run() -> i32 {
                 1
             }
         }
+    } else if args.pty {
+        match run_pty(&engine, &args.command) {
+            Ok(outcome) => {
+                if args.stats {
+                    print_stats(&outcome.stats, started);
+                }
+                outcome.code
+            }
+            Err(err) => {
+                eprintln!("tint: {}", err.message);
+                err.code
+            }
+        }
+    } else if args.pager {
+        match run_pager(&engine, &args.command, color) {
+            Ok(outcome) => {
+                if args.stats {
+                    print_stats(&outcome.stats, started);
+                }
+                outcome.code
+            }
+            Err(err) => {
+                eprintln!("tint: {}", err.message);
+                err.code
+            }
+        }
     } else {
         match wrap(&engine, &args.command, color) {
             Ok(outcome) => {
@@ -211,6 +243,9 @@ fn parse_args(argv: Vec<String>) -> Result<Args, String> {
             "-V" | "--version" => args.version = true,
             "--list" => args.list = true,
             "--stats" => args.stats = true,
+            "--pty" => args.pty = true,
+            "--pager" => args.pager = true,
+            "--no-pager" => args.pager = false,
             "-r" | "--ruleset" => args.ruleset = Some(value!()),
             "-t" | "--theme" => args.theme = Some(value!()),
             "--color" | "--colour" => args.color = Some(value!()),
@@ -424,6 +459,143 @@ fn wrap(engine: &Engine, argv: &[String], color: bool) -> Result<Outcome, Failur
     })
 }
 
+/// Page the colourised output: the child writes into a pipe, we colour it into
+/// the pager's stdin, and the pager draws on the real terminal. This is what
+/// makes `git log`, `journalctl` and `systemctl status` wrappable without taking
+/// their paging away.
+fn run_pager(engine: &Engine, argv: &[String], color: bool) -> Result<Outcome, Failure> {
+    let program = &argv[0];
+    if !color {
+        // No colour: nothing to page through us, just run it.
+        let err = Command::new(program).args(&argv[1..]).exec();
+        return Err(Failure {
+            code: if err.kind() == io::ErrorKind::NotFound {
+                127
+            } else {
+                126
+            },
+            message: format!("{program}: {err}"),
+        });
+    }
+    let mut child = Command::new(program)
+        .args(&argv[1..])
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(|err| Failure {
+            code: if err.kind() == io::ErrorKind::NotFound {
+                127
+            } else {
+                126
+            },
+            message: format!("{program}: {err}"),
+        })?;
+    let child_out = child.stdout.take().expect("piped stdout");
+
+    let mut pager = Command::new("sh")
+        .arg("-c")
+        .arg(pager_command())
+        .stdin(Stdio::piped())
+        .spawn()
+        .ok();
+    let pager_stdin = pager.as_mut().and_then(|pager| pager.stdin.take());
+
+    let mut stats = engine::Stats::default();
+    let mut broken_pipe = false;
+    match pager_stdin {
+        Some(pipe) => match engine::process(engine, child_out, pipe) {
+            Ok(counted) => stats = counted,
+            // The pager was quit: the child gets SIGPIPE, we stop reading.
+            Err(err) if err.kind() == io::ErrorKind::BrokenPipe => broken_pipe = true,
+            Err(err) => {
+                return Err(Failure {
+                    code: 1,
+                    message: err.to_string(),
+                })
+            }
+        },
+        None => {
+            let stdout = io::stdout();
+            stats = engine::process(engine, child_out, stdout).map_err(|err| Failure {
+                code: 1,
+                message: err.to_string(),
+            })?;
+        }
+    }
+
+    let status = child.wait().map_err(|err| Failure {
+        code: 126,
+        message: format!("{program}: {err}"),
+    })?;
+    if let Some(mut pager) = pager {
+        let _ = pager.wait();
+    }
+    Ok(Outcome {
+        code: if broken_pipe { 0 } else { exit_code(status) },
+        stats,
+    })
+}
+
+/// The pager to use: `$TINT_PAGER`, then `$PAGER`, then `less -FRX` (raw
+/// colours, quit when the output fits one screen, no screen clearing).
+fn pager_command() -> String {
+    ["TINT_PAGER", "PAGER"]
+        .iter()
+        .find_map(|name| std::env::var(name).ok())
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty() && value != "cat")
+        .unwrap_or_else(|| "less -FRX".to_string())
+}
+
+/// Run the child on a pty of its own and relay the terminal through the
+/// colouriser (see `pty.rs`). Progress bars, `-it` and pagers keep working
+/// because the child really does see a terminal.
+fn run_pty(engine: &Engine, argv: &[String]) -> Result<Outcome, Failure> {
+    let program = &argv[0];
+    let mut pty = pty::Pty::open().map_err(|err| Failure {
+        code: 1,
+        message: format!("--pty: cannot allocate a pty: {err}"),
+    })?;
+    let stdin = io::stdin();
+    let stdout = io::stdout();
+    let stdin_fd = stdin.as_raw_fd();
+    pty::Pty::copy_winsize(
+        if stdout.is_terminal() {
+            stdout.as_raw_fd()
+        } else {
+            stdin_fd
+        },
+        pty.master_fd(),
+    );
+    let raw = if stdin.is_terminal() {
+        pty::RawMode::enable(stdin_fd)
+    } else {
+        None
+    };
+    let mut child = pty.spawn(program, &argv[1..]).map_err(|err| Failure {
+        code: if err.kind() == io::ErrorKind::NotFound {
+            127
+        } else {
+            126
+        },
+        message: format!("{program}: {err}"),
+    })?;
+    pty.close_slave();
+    let mut out = io::stdout();
+    let stats = pty::relay(engine, pty.master_fd(), stdin_fd, &mut out).map_err(|err| Failure {
+        code: 1,
+        message: format!("--pty ({}): {err}", pty.name),
+    })?;
+    let status = child.wait().map_err(|err| Failure {
+        code: 126,
+        message: format!("{program}: {err}"),
+    })?;
+    drop(raw);
+    Ok(Outcome {
+        code: exit_code(status),
+        stats,
+    })
+}
+
 fn exit_code(status: ExitStatus) -> i32 {
     if let Some(code) = status.code() {
         return code;
@@ -526,6 +698,11 @@ OPTIONS
       --color WHEN     auto | always | never                  (default: auto)
       --ansi WHEN      skip | extend   lines that already carry ANSI escapes
                        are passed through (skip) or re-coloured (extend)
+      --pty            give the child a terminal of its own (progress bars,
+                       `-it`, REPLs keep working); screen-control output is
+                       relayed untouched
+      --pager          page the colourised output (`$TINT_PAGER`, `$PAGER`,
+                       else `less -FRX`)
   -c, --config PATH    config file, default $XDG_CONFIG_HOME/tint/config.toml
       --stats          counters and throughput on stderr
   -h, --help           this text
@@ -542,6 +719,8 @@ CONFIG (flat TOML subset)
   theme.style.warn = \"yellow,bold\"     restyle a semantic slot
   wrap = \"go rustup\"                   wrap extra commands
   skip = \"find tar\"                    never wrap these
+  pty = \"cargo rustc\"                  wrap with --pty (terminal of its own)
+  pager = \"journalctl\"                 wrap with --pager (page the colour)
   keyword.FATAL = \"red,bold\"           word rule; value is a style or a slot
   \"prefix.!!!\" = \"brightred\"          line-start rule
   suffix.done = \"ok\"                   line-end rule
