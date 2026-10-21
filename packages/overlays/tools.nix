@@ -55,6 +55,7 @@ in
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
     termeverything = callPkg (pkg "termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (pkg "zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
+    tint = callPkg (pkg "tint") { }; # Colouriser for CLI output — token scanners + per-tool rulesets, no dependencies
     rtpmidid = callPkg (pkg "rtpmidid") { }; # RTP-MIDI (AppleMIDI) daemon — ALSA seq <-> network MIDI (GLM VM bridge)
     flow = callPkg (pkg "flow") { }; # Terminal dashboard for real-time network throughput
     lsfg-vk = callPkg (pkg "lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)

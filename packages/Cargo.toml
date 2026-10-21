@@ -8,5 +8,6 @@ members = [
   "tidalctl",
   "nixie",
   "nixbuild-status",
+  "tint",
 ]
 resolver = "2"
