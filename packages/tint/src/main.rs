@@ -131,7 +131,7 @@ fn run() -> i32 {
         .or_else(|| config.theme.clone())
         .unwrap_or_else(|| "dark".to_string());
     let Some(theme) = Theme::by_name(&theme_name) else {
-        eprintln!("tint: unknown theme `{theme_name}` (dark, light, vivid, mono, none)");
+        eprintln!("tint: unknown theme `{theme_name}` (dark, neg, light, vivid, mono, none)");
         return 2;
     };
 
@@ -522,7 +522,7 @@ USAGE
 
 OPTIONS
   -r, --ruleset NAME   ruleset to use; inferred from COMMAND when omitted
-  -t, --theme NAME     dark | light | vivid | mono | none     (default: dark)
+  -t, --theme NAME     dark | neg | light | vivid | mono | none (default: dark)
       --color WHEN     auto | always | never                  (default: auto)
       --ansi WHEN      skip | extend   lines that already carry ANSI escapes
                        are passed through (skip) or re-coloured (extend)

@@ -43,6 +43,14 @@ impl Style {
         }
     }
 
+    /// Direct-colour foreground.
+    pub const fn fg_rgb(r: u8, g: u8, b: u8) -> Style {
+        Style {
+            fg: Some(Color::Rgb(r, g, b)),
+            ..Style::NONE
+        }
+    }
+
     pub const fn bold(mut self) -> Style {
         self.bold = true;
         self

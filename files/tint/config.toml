@@ -8,7 +8,11 @@
 # bold/dim/italic/underline are accepted; a value may also be a theme slot
 # (err, warn, ok, info, note, path, ip, hash, ...), which reuses the theme.
 
-theme = "dark"
+# `neg` = the neg.nvim palette as truecolor (errors use the bright red of the
+# terminal palette for contrast); `dark` = whatever ANSI palette the terminal
+# has, which on this host is already the neg-tinted one. `light`, `vivid`,
+# `mono` (attributes only) and `none` exist too.
+theme = "neg"
 
 # Follow the terminal: always | never | auto (auto = colour only on a tty, and
 # never when NO_COLOR/TERM=dumb are set).

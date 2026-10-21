@@ -137,6 +137,14 @@ impl Engine {
     }
 }
 
+/// Line terminators. `\r` counts because progress meters redraw in place.
+static TERMINATOR: [bool; 256] = {
+    let mut table = [false; 256];
+    table[b'\n' as usize] = true;
+    table[b'\r' as usize] = true;
+    table
+};
+
 /// Counters for `--stats`.
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Stats {
@@ -145,10 +153,16 @@ pub struct Stats {
     pub spans: u64,
 }
 
-/// Colourise everything `reader` yields into `writer`, line by line.
+/// Colourise everything `reader` yields into `writer`.
 ///
-/// Lines are forwarded as soon as they are complete, so `journalctl -f` and
-/// other infinite sources stream instead of buffering.
+/// The loop is built for live sources as much as for files: a line is forwarded
+/// as soon as its terminator arrives, and any buffered output is handed to the
+/// writer whenever a read comes back short — which is exactly what a slow pipe,
+/// `journalctl -f` or `tail -f` look like. Carriage returns are treated as line
+/// terminators, so in-place progress redraws (`\r`-updates from curl, cargo,
+/// rsync, nix) are coloured and flushed instead of waiting for a newline that
+/// never comes. A `\r\n` pair is kept intact even when the two bytes arrive in
+/// different reads.
 pub fn process<R: Read, W: Write>(
     engine: &Engine,
     mut reader: R,
@@ -156,13 +170,15 @@ pub fn process<R: Read, W: Write>(
 ) -> io::Result<Stats> {
     let mut stats = Stats::default();
     let mut inbuf = vec![0u8; 64 * 1024];
+    // A line longer than the read buffer is assembled here; everything else
+    // borrows straight from `inbuf`.
     let mut pending: Vec<u8> = Vec::new();
     let mut out: Vec<u8> = Vec::with_capacity(64 * 1024);
     let mut hits: Vec<Hit> = Vec::with_capacity(32);
     let mut sgr = SgrWriter::new();
+    // A CR ended the previous read: it may be the first half of a CRLF pair.
+    let mut carry_cr = false;
 
-    // Reusable line scratch: a line longer than the read buffer is assembled
-    // here, everything else borrows straight from `inbuf`.
     loop {
         let read = match reader.read(&mut inbuf) {
             Ok(0) => break,
@@ -173,26 +189,68 @@ pub fn process<R: Read, W: Write>(
         stats.bytes += read as u64;
         let chunk = &inbuf[..read];
         let mut start = 0usize;
-        while let Some(offset) = chunk[start..].iter().position(|b| *b == b'\n') {
-            let end = start + offset;
-            let mut line: &[u8] = &chunk[start..end];
-            if !pending.is_empty() {
-                pending.extend_from_slice(line);
-                line = &pending;
+        if carry_cr {
+            if chunk[0] == b'\n' {
+                out.extend_from_slice(b"\r\n");
+                start = 1;
+            } else {
+                out.push(b'\r');
             }
+            carry_cr = false;
+        }
+        while start < chunk.len() {
+            let Some(offset) = chunk[start..].iter().position(|b| TERMINATOR[*b as usize]) else {
+                pending.extend_from_slice(&chunk[start..]);
+                break;
+            };
+            let end = start + offset;
+            let term = chunk[end];
+            let line: &[u8] = if pending.is_empty() {
+                &chunk[start..end]
+            } else {
+                pending.extend_from_slice(&chunk[start..end]);
+                &pending
+            };
             stats.spans += render(engine, line, &mut hits, &mut sgr, &mut out) as u64;
             stats.lines += 1;
-            out.push(b'\n');
-            start = end + 1;
+            pending.clear();
+            match term {
+                b'\n' => {
+                    out.push(b'\n');
+                    start = end + 1;
+                }
+                _ => match chunk.get(end + 1) {
+                    Some(b'\n') => {
+                        out.extend_from_slice(b"\r\n");
+                        start = end + 2;
+                    }
+                    Some(_) => {
+                        out.push(b'\r');
+                        start = end + 1;
+                    }
+                    None => {
+                        // CRLF split across reads: decide on the next read.
+                        carry_cr = true;
+                        start = end + 1;
+                    }
+                },
+            }
             if out.len() >= 60 * 1024 {
                 writer.write_all(&out)?;
                 out.clear();
             }
-            pending.clear();
         }
-        if start < chunk.len() {
-            pending.extend_from_slice(&chunk[start..]);
+        // A short read means the source has nothing more ready: push what we
+        // have so a live stream keeps its latency, instead of sitting on it
+        // until 60 KiB pile up.
+        if !out.is_empty() && read < inbuf.len() {
+            writer.write_all(&out)?;
+            out.clear();
+            writer.flush()?;
         }
+    }
+    if carry_cr {
+        out.push(b'\r');
     }
     if !pending.is_empty() {
         let line = std::mem::take(&mut pending);
@@ -327,6 +385,87 @@ mod tests {
         let long = "x".repeat(70_000);
         let input = format!("error {long}\n");
         assert_eq!(strip(&render_all(&engine, &input)), input);
+    }
+
+    /// Reader that hands out one chunk per read and can check what the writer
+    /// has already seen; Writer that records everything it is given.
+    struct ProbeReader {
+        chunks: Vec<Vec<u8>>,
+        index: usize,
+        written: std::sync::Arc<std::sync::Mutex<Vec<u8>>>,
+    }
+
+    impl Read for ProbeReader {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            if self.index > 0 && self.index < self.chunks.len() {
+                let seen = self.written.lock().unwrap();
+                assert!(
+                    !seen.is_empty(),
+                    "chunk {} was read before chunk {} was written out",
+                    self.index + 1,
+                    self.index
+                );
+            }
+            let Some(chunk) = self.chunks.get(self.index) else {
+                return Ok(0);
+            };
+            self.index += 1;
+            buf[..chunk.len()].copy_from_slice(chunk);
+            Ok(chunk.len())
+        }
+    }
+
+    struct ProbeWriter(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+    impl Write for ProbeWriter {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(buf);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn live_stream_is_flushed_before_the_next_chunk_arrives() {
+        let engine = engine_for("generic");
+        let written = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let reader = ProbeReader {
+            chunks: vec![b"error one\n".to_vec(), b"error two\n".to_vec()],
+            index: 0,
+            written: written.clone(),
+        };
+        let stats = process(&engine, reader, ProbeWriter(written.clone())).unwrap();
+        assert_eq!(stats.lines, 2);
+        let out = String::from_utf8(written.lock().unwrap().clone()).unwrap();
+        assert!(strip(&out).contains("error one\nerror two\n"));
+    }
+
+    #[test]
+    fn carriage_return_progress_updates_are_kept_and_rendered() {
+        let engine = engine_for("generic");
+        let output = render_all(&engine, "step 1\rstep 2\rdone\n");
+        assert_eq!(strip(&output), "step 1\rstep 2\rdone\n");
+        assert!(
+            output.contains("\x1b["),
+            "progress segments are coloured too"
+        );
+    }
+
+    #[test]
+    fn crlf_split_across_reads_is_not_turned_into_an_extra_line() {
+        let engine = engine_for("generic");
+        let written = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let reader = ProbeReader {
+            chunks: vec![b"error one\r".to_vec(), b"\nerror two\r\n".to_vec()],
+            index: 0,
+            written: written.clone(),
+        };
+        let stats = process(&engine, reader, ProbeWriter(written.clone())).unwrap();
+        assert_eq!(stats.lines, 2);
+        let out = String::from_utf8(written.lock().unwrap().clone()).unwrap();
+        assert_eq!(strip(&out), "error one\r\nerror two\r\n");
     }
 
     #[test]
