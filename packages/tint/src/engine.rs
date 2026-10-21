@@ -153,32 +153,154 @@ pub struct Stats {
     pub spans: u64,
 }
 
-/// Colourise everything `reader` yields into `writer`.
+/// Incremental colouring state: feed it whatever the reader produced, take the
+/// rendered bytes out.
 ///
-/// The loop is built for live sources as much as for files: a line is forwarded
-/// as soon as its terminator arrives, and any buffered output is handed to the
-/// writer whenever a read comes back short — which is exactly what a slow pipe,
-/// `journalctl -f` or `tail -f` look like. Carriage returns are treated as line
-/// terminators, so in-place progress redraws (`\r`-updates from curl, cargo,
-/// rsync, nix) are coloured and flushed instead of waiting for a newline that
-/// never comes. A `\r\n` pair is kept intact even when the two bytes arrive in
-/// different reads.
+/// A line is emitted as soon as its terminator arrives, so a live source keeps
+/// its latency; `\r` counts as a terminator because progress meters redraw in
+/// place; a `\r\n` pair stays intact even when its two bytes land in different
+/// reads. The struct owns every buffer the hot path needs, so feeding costs no
+/// allocations.
+pub struct Streamer<'a> {
+    engine: &'a Engine,
+    pending: Vec<u8>,
+    out: Vec<u8>,
+    hits: Vec<Hit>,
+    sgr: SgrWriter,
+    /// A CR ended the previous chunk: it may be the first half of a CRLF pair.
+    carry_cr: bool,
+    pub stats: Stats,
+}
+
+impl<'a> Streamer<'a> {
+    pub fn new(engine: &'a Engine) -> Streamer<'a> {
+        Streamer {
+            engine,
+            pending: Vec::new(),
+            out: Vec::with_capacity(64 * 1024),
+            hits: Vec::with_capacity(32),
+            sgr: SgrWriter::new(),
+            carry_cr: false,
+            stats: Stats::default(),
+        }
+    }
+
+    /// Rendered bytes waiting to be written out.
+    pub fn out(&self) -> &[u8] {
+        &self.out
+    }
+
+    /// Call after the bytes from [`Streamer::out`] have been written.
+    pub fn clear_out(&mut self) {
+        self.out.clear();
+    }
+
+    /// Colour one chunk of input.
+    pub fn feed(&mut self, chunk: &[u8]) {
+        if chunk.is_empty() {
+            return;
+        }
+        self.stats.bytes += chunk.len() as u64;
+        let mut start = 0usize;
+        if self.carry_cr {
+            if chunk[0] == b'\n' {
+                self.out.extend_from_slice(b"\r\n");
+                start = 1;
+            } else {
+                self.out.push(b'\r');
+            }
+            self.carry_cr = false;
+        }
+        while start < chunk.len() {
+            let Some(offset) = chunk[start..].iter().position(|b| TERMINATOR[*b as usize]) else {
+                self.pending.extend_from_slice(&chunk[start..]);
+                break;
+            };
+            let end = start + offset;
+            let term = chunk[end];
+            let line: &[u8] = if self.pending.is_empty() {
+                &chunk[start..end]
+            } else {
+                self.pending.extend_from_slice(&chunk[start..end]);
+                &self.pending
+            };
+            self.stats.spans += render(
+                self.engine,
+                line,
+                &mut self.hits,
+                &mut self.sgr,
+                &mut self.out,
+            ) as u64;
+            self.stats.lines += 1;
+            self.pending.clear();
+            match term {
+                b'\n' => {
+                    self.out.push(b'\n');
+                    start = end + 1;
+                }
+                _ => match chunk.get(end + 1) {
+                    Some(b'\n') => {
+                        self.out.extend_from_slice(b"\r\n");
+                        start = end + 2;
+                    }
+                    Some(_) => {
+                        self.out.push(b'\r');
+                        start = end + 1;
+                    }
+                    None => {
+                        // CRLF split across reads: decide on the next read.
+                        self.carry_cr = true;
+                        start = end + 1;
+                    }
+                },
+            }
+        }
+    }
+
+    /// Hand a buffered partial line back untouched.
+    ///
+    /// The pty relay uses this when the stream switches to raw screen control:
+    /// the fragment must keep its position in the byte stream, even though it
+    /// cannot be coloured as a line.
+    pub fn spill_pending(&mut self) {
+        if self.carry_cr {
+            self.out.push(b'\r');
+            self.carry_cr = false;
+        }
+        if !self.pending.is_empty() {
+            let pending = std::mem::take(&mut self.pending);
+            self.out.extend_from_slice(&pending);
+        }
+    }
+
+    /// Flush a trailing partial line (no terminator was seen).
+    pub fn finish(&mut self) {
+        if self.carry_cr {
+            self.out.push(b'\r');
+            self.carry_cr = false;
+        }
+        if !self.pending.is_empty() {
+            let line = std::mem::take(&mut self.pending);
+            self.stats.spans += render(
+                self.engine,
+                &line,
+                &mut self.hits,
+                &mut self.sgr,
+                &mut self.out,
+            ) as u64;
+            self.stats.lines += 1;
+        }
+    }
+}
+
+/// Colourise everything `reader` yields into `writer`.
 pub fn process<R: Read, W: Write>(
     engine: &Engine,
     mut reader: R,
     mut writer: W,
 ) -> io::Result<Stats> {
-    let mut stats = Stats::default();
+    let mut streamer = Streamer::new(engine);
     let mut inbuf = vec![0u8; 64 * 1024];
-    // A line longer than the read buffer is assembled here; everything else
-    // borrows straight from `inbuf`.
-    let mut pending: Vec<u8> = Vec::new();
-    let mut out: Vec<u8> = Vec::with_capacity(64 * 1024);
-    let mut hits: Vec<Hit> = Vec::with_capacity(32);
-    let mut sgr = SgrWriter::new();
-    // A CR ended the previous read: it may be the first half of a CRLF pair.
-    let mut carry_cr = false;
-
     loop {
         let read = match reader.read(&mut inbuf) {
             Ok(0) => break,
@@ -186,82 +308,24 @@ pub fn process<R: Read, W: Write>(
             Err(err) if err.kind() == io::ErrorKind::Interrupted => continue,
             Err(err) => return Err(err),
         };
-        stats.bytes += read as u64;
-        let chunk = &inbuf[..read];
-        let mut start = 0usize;
-        if carry_cr {
-            if chunk[0] == b'\n' {
-                out.extend_from_slice(b"\r\n");
-                start = 1;
-            } else {
-                out.push(b'\r');
-            }
-            carry_cr = false;
-        }
-        while start < chunk.len() {
-            let Some(offset) = chunk[start..].iter().position(|b| TERMINATOR[*b as usize]) else {
-                pending.extend_from_slice(&chunk[start..]);
-                break;
-            };
-            let end = start + offset;
-            let term = chunk[end];
-            let line: &[u8] = if pending.is_empty() {
-                &chunk[start..end]
-            } else {
-                pending.extend_from_slice(&chunk[start..end]);
-                &pending
-            };
-            stats.spans += render(engine, line, &mut hits, &mut sgr, &mut out) as u64;
-            stats.lines += 1;
-            pending.clear();
-            match term {
-                b'\n' => {
-                    out.push(b'\n');
-                    start = end + 1;
-                }
-                _ => match chunk.get(end + 1) {
-                    Some(b'\n') => {
-                        out.extend_from_slice(b"\r\n");
-                        start = end + 2;
-                    }
-                    Some(_) => {
-                        out.push(b'\r');
-                        start = end + 1;
-                    }
-                    None => {
-                        // CRLF split across reads: decide on the next read.
-                        carry_cr = true;
-                        start = end + 1;
-                    }
-                },
-            }
-            if out.len() >= 60 * 1024 {
-                writer.write_all(&out)?;
-                out.clear();
-            }
-        }
+        streamer.feed(&inbuf[..read]);
         // A short read means the source has nothing more ready: push what we
-        // have so a live stream keeps its latency, instead of sitting on it
+        // have so a live stream keeps its latency instead of sitting on it
         // until 60 KiB pile up.
-        if !out.is_empty() && read < inbuf.len() {
-            writer.write_all(&out)?;
-            out.clear();
-            writer.flush()?;
+        if streamer.out().len() >= 60 * 1024 || read < inbuf.len() {
+            if !streamer.out().is_empty() {
+                writer.write_all(streamer.out())?;
+                streamer.clear_out();
+                writer.flush()?;
+            }
         }
     }
-    if carry_cr {
-        out.push(b'\r');
-    }
-    if !pending.is_empty() {
-        let line = std::mem::take(&mut pending);
-        stats.spans += render(engine, &line, &mut hits, &mut sgr, &mut out) as u64;
-        stats.lines += 1;
-    }
-    if !out.is_empty() {
-        writer.write_all(&out)?;
+    streamer.finish();
+    if !streamer.out().is_empty() {
+        writer.write_all(streamer.out())?;
     }
     writer.flush()?;
-    Ok(stats)
+    Ok(streamer.stats)
 }
 
 fn render(

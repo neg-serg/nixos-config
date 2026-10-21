@@ -70,12 +70,34 @@
 # files/shell/zsh/02-cmds.zsh sources it once per interactive shell, deferred,
 # so the list lives here and in the user's config, never in a second copy.
 #
-# Everything else is *deliberately* not wrapped. A wrapped command sees a pipe
-# where a terminal used to be, which would take `git`'s pager (delta),
-# `journalctl`/`systemctl`/`man` paging, `cargo`/`nix`/`nh` build progress,
-# `docker`/`kubectl -it` and the `python` REPL. Those rulesets exist and are
-# reached explicitly — `journalctl -b | tint -r journalctl` — and the opt-in list
-# is one commented line in files/tint/config.toml.
+# `git`, `curl`, `docker`, `kubectl`, `make`, `python` and `openssl` are
+# *deliberately* not wrapped: they own a pager, an editor or an interactive
+# prompt. Their rulesets exist and are reached explicitly —
+# `git log | tint -r git`.
+#
+# ## Terminals, pagers and progress bars (`--pty`, `--pager`)
+#
+# A wrapped command normally sees a pipe, which is why `git`, `nix`, `cargo`,
+# `docker` and `journalctl` are not wrapped by default: their pager, progress bar
+# or `-it` would disappear. Two modes close that gap.
+#
+# - `--pager`: the child writes into a pipe, `tint` colours it into a pager's
+#   stdin (`$TINT_PAGER`, then `$PAGER`, else `less -FRX`), and the pager draws on
+#   the real terminal. `systemctl` is wrapped this way by default — a status fits
+#   one screen, so `less -FRX` prints it and quits.
+# - `--pty`: the child gets a real terminal of its own (`posix_openpt`,
+#   `setsid` + `TIOCSCTTY`, our stdin switched to raw, window size propagated),
+#   and the bytes are relayed here. A chunk that carries an ANSI escape is written
+#   through untouched — it belongs to a full-screen application and inserting our
+#   own sequences would corrupt it — while plain chunks are coloured as usual.
+#
+# `--pty` is deliberately *not* in the default wrapper table: a relay bug inside a
+# build command costs more than missing colour. Enable it per command in the
+# config (`pty = "cargo rustc nix nh nixos-rebuild"`), and try it first with
+# `tint --pty -- cargo --version`. Its relay loop is covered by tests over a
+# socket pair (colour of plain chunks, keystroke forwarding, escape passthrough),
+# but the interactive path itself needs a terminal, which the agent sandbox cannot
+# allocate — verify it in a real one.
 #
 # ## Already-coloured lines
 #

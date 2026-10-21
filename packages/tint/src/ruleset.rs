@@ -555,6 +555,24 @@ pub const RULESETS: &[RulesetDef] = &[
         ],
     },
     RulesetDef {
+        name: "rsync",
+        about: "rsync --progress transfers",
+        flags: NUMBERS,
+        words: &[
+            ("sent", Kind::Ok),
+            ("received", Kind::Ok),
+            ("total", Kind::Info),
+            ("deleting", Kind::Warn),
+            ("skipping", Kind::Dim),
+            ("up-to-date", Kind::Note),
+        ],
+        lines: &[
+            ("building file list", Kind::Info),
+            ("Number of files:", Kind::Hdr),
+        ],
+        parts: &[],
+    },
+    RulesetDef {
         name: "sensors",
         about: "lm-sensors readings",
         flags: NUMBERS,
@@ -665,7 +683,9 @@ pub const RULESETS: &[RulesetDef] = &[
     },
 ];
 
-/// Which commands get a shell wrapper, and with which ruleset.
+/// Command → ruleset map. Everything here is also inferred for `tint CMD ...`;
+/// the shell integration wraps only the entries that are not in
+/// [`EXPLICIT_ONLY`], unless the config asks for them.
 ///
 /// Only commands that cannot be interactive and do not depend on a terminal for
 /// progress are listed. A wrapped command sees a pipe instead of a tty, so
@@ -675,6 +695,7 @@ pub const RULESETS: &[RulesetDef] = &[
 pub const WRAPPERS: &[(&str, &[&str])] = &[
     // `duf` and `dust` colour their own output and are already aliased in the
     // shell; piping them would throw their theme away.
+    ("cargo", &["cargo", "rustc"]),
     ("df", &["df"]),
     ("diff", &["diff"]),
     ("dig", &["dig", "host", "nslookup"]),
@@ -685,24 +706,49 @@ pub const WRAPPERS: &[(&str, &[&str])] = &[
     ("free", &["free"]),
     ("ip", &["ip"]),
     ("iptables", &["iptables", "nft", "ufw"]),
+    ("journalctl", &["journalctl"]),
     ("lsof", &["lsof"]),
     ("lspci", &["lspci", "lsusb"]),
     ("lsblk", &["lsblk"]),
     ("mount", &["mount", "findmnt"]),
+    (
+        "nix",
+        &["nix", "nix-build", "nixos-rebuild", "nh", "nix-store"],
+    ),
     ("nmap", &["nmap"]),
     ("ping", &["ping"]),
     ("ps", &["ps"]),
+    ("rsync", &["rsync"]),
     ("sensors", &["sensors"]),
     ("smartctl", &["smartctl", "nvme"]),
     ("ss", &["ss", "netstat"]),
+    ("systemctl", &["systemctl"]),
     ("systemd-analyze", &["systemd-analyze"]),
     ("tar", &["tar"]),
     ("traceroute", &["traceroute"]),
     ("uptime", &["uptime", "w", "last"]),
 ];
 
+/// Commands wrapped with `--pty` by default: none.
+///
+/// The relay hands the child a real terminal, which is what progress bars,
+/// `-it` and REPLs need, but a relay bug inside a build command costs more than
+/// missing colour. Opt in per command in the config:
+///
+///     pty = "cargo rustc nix nh nixos-rebuild rsync python3"
+///
+/// `PTY_WRAPPED` stays as the list of commands the shell integration *knows how*
+/// to wrap this way; the config lists add to it.
+pub const PTY_WRAPPED: &[&str] = &[];
+
+/// Commands wrapped with `--pager` by default: `systemctl` only, because a
+/// status fits one screen and `less -FRX` prints it and quits. Add more with
+/// `pager = "journalctl"` in the config — but not follow modes (`journalctl -f`),
+/// which a pager would swallow.
+pub const PAGER_WRAPPED: &[&str] = &["systemctl"];
+
 /// Rulesets that must be asked for explicitly (`cmd | tint -r NAME`) because
-/// wrapping the command would hide a pager, a progress bar or a tty.
+/// wrapping the command would hide a pager, an editor or an interactive prompt.
 pub const EXPLICIT_ONLY: &[&str] = &[
     "cargo",
     "curl",
@@ -714,7 +760,7 @@ pub const EXPLICIT_ONLY: &[&str] = &[
     "nix",
     "openssl",
     "python",
-    "systemctl",
+    "rsync",
 ];
 
 /// Look a ruleset up by name.

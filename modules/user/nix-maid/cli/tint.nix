@@ -7,8 +7,8 @@
 # Only the user config is managed here: it is the place for extra rules
 # (`keyword.`/`prefix.`/`suffix.`/`literal.`), extra or skipped wrappers, the
 # theme (`neg` = the neg.nvim palette as truecolor, `dark` = follow the
-# terminal's own ANSI palette), and per-slot restyling
-# (`theme.style.<slot>`). Nothing in it is required — an empty file means
+# terminal's own ANSI palette), per-slot restyling (`theme.style.<slot>`), and the
+# wrapper modes `pty`/`pager` for tools that need a terminal or a pager. Nothing in it is required — an empty file means
 # "builtin behaviour only" — so it is deployed as a live link and can be
 # edited without a rebuild.
 { config, neg, ... }:

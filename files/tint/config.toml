@@ -40,8 +40,22 @@ keyword.FAILURE = "err"
 # command sees a pipe instead of a terminal, which would take their pager, their
 # progress bar or their `-it` away. Those keep a ruleset and are used explicitly:
 #     journalctl -b | tint -r journalctl
-# Uncomment to opt in anyway (e.g. on a machine where build output matters more):
-# wrap = "nix nh nixos-rebuild cargo make gcc python3 pytest curl"
+# Modes for the wrappers, one command list each:
+#
+#   pty   = "..."   give the child a terminal of its own (--pty). Progress bars,
+#                   `docker run -it` and REPLs keep working; screen-control
+#                   output is relayed untouched. Off by default: a relay bug in a
+#                   build command is worse than no colour. Try it first with
+#                       tint --pty -- cargo --version
+#   pager = "..."   page the colourised output itself (--pager, `less -FRX`).
+#                   systemctl is already on; journalctl works too, but not its
+#                   follow mode (`journalctl -f`), which a pager would swallow.
+#
+# Other tools are left alone on purpose (git, curl, docker, kubectl, make,
+# python): they own a pager, an editor or an interactive prompt. Reach them
+# explicitly with `cmd | tint -r NAME`.
+pty = ""
+pager = ""
 wrap = ""
 skip = ""
 
