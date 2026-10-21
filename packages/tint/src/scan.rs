@@ -261,6 +261,12 @@ fn scan_numeric(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Opt
             return Some(end);
         }
     }
+    if cfg.hashes {
+        if let Some(end) = try_uuid(line, i) {
+            out.push(Hit::new(i, end, Kind::Hash, PRIO_NUM));
+            return Some(end);
+        }
+    }
     if cfg.ips {
         if let Some(end) = try_ipv4(line, i) {
             out.push(Hit::new(i, end, Kind::Ip, PRIO_ADDR));
@@ -536,6 +542,31 @@ fn try_ipv6(line: &[u8], i: usize) -> Option<usize> {
     Some(j)
 }
 
+/// `123e4567-e89b-12d3-a456-426614174000`: eight, four, four, four, twelve.
+fn try_uuid(line: &[u8], i: usize) -> Option<usize> {
+    const GROUPS: [usize; 5] = [8, 4, 4, 4, 12];
+    if !boundary_before(line, i) {
+        return None;
+    }
+    let mut j = i;
+    for (index, len) in GROUPS.iter().enumerate() {
+        if j + len > line.len() || !line[j..j + len].iter().all(|b| is_hex(*b)) {
+            return None;
+        }
+        j += len;
+        if index < GROUPS.len() - 1 {
+            if line.get(j) != Some(&b'-') {
+                return None;
+            }
+            j += 1;
+        }
+    }
+    if !boundary_after(line, j) {
+        return None;
+    }
+    Some(j)
+}
+
 fn try_hex(line: &[u8], i: usize) -> Option<usize> {
     let n = line.len();
     let mut j = i;
@@ -632,6 +663,12 @@ fn scan_word(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Option
     }
     // IPv6 and MAC addresses may start with a hex letter (`fe80::1`, `aa:bb:..`),
     // so they are tried here as well as on the numeric path.
+    if cfg.hashes && boundary_before(line, i) {
+        if let Some(end) = try_uuid(line, i) {
+            out.push(Hit::new(i, end, Kind::Hash, PRIO_NUM));
+            return Some(end);
+        }
+    }
     if cfg.macs && boundary_before(line, i) {
         if let Some(end) = try_mac(line, i) {
             out.push(Hit::new(i, end, Kind::Mac, PRIO_ADDR));
@@ -772,6 +809,15 @@ fn scan_string(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Opti
         match line[j] {
             b'\\' => j += 2,
             b if b == quote => {
+                let inner = &line[i + 1..j];
+                // `'/nix/store/x.drv'` is a path in quotes: let the path scanner
+                // colour it instead of painting the whole string green.
+                let bare_path = !inner.is_empty()
+                    && (inner[0] == b'/' || inner[0] == b'~' || inner.starts_with(b"./"))
+                    && !inner.iter().any(|b| b.is_ascii_whitespace());
+                if bare_path {
+                    return Some(i + 1);
+                }
                 if j > i + 1 {
                     out.push(Hit::new(i + 1, j, Kind::Str, PRIO_STR));
                 }
@@ -1224,6 +1270,25 @@ mod tests {
     #[test]
     fn quoted_strings() {
         assert_eq!(find("msg \"hello world\" end", Kind::Str), ["hello world"]);
+        // A quoted path stays a path; a quoted sentence stays a string.
+        assert_eq!(
+            find("open '/nix/store/x.drv' now", Kind::Str),
+            [] as [&str; 0]
+        );
+        assert_eq!(
+            find("open '/nix/store/x.drv' now", Kind::Path),
+            ["/nix/store/x.drv"]
+        );
+    }
+
+    #[test]
+    fn uuids_are_one_hash() {
+        let uuid = "123e4567-e89b-12d3-a456-426614174000";
+        assert_eq!(find(&format!("uuid {uuid} here"), Kind::Hash), [uuid]);
+        assert_eq!(
+            find(&format!("uuid {uuid} here"), Kind::Ip),
+            [] as [&str; 0]
+        );
     }
 
     #[test]
