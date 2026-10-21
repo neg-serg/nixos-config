@@ -13,11 +13,17 @@ let
   enabled = config.lib.neg.enabled "media.audio.aurora";
   # mod4+f runs this: the player is a normal window, so the key has to both start it and, on a
   # second press, bring it to the front instead of starting a twin.
+  #
+  # The window class is `player`, not `aurora`: the crate sets that Wayland app_id itself
+  # (~/src/neg-player, with_name("player", "player")) and the Hyprland rules in
+  # files/gui/hypr/hyprland.lua match `^(player)$`. Matching the binary name here focused
+  # nothing, so every press fell through to starting another copy.
+  playerClass = "player";
   aurora-focus = pkgs.writeShellScriptBin "aurora-focus" ''
     set -eu
-    if ${pkgs.jq}/bin/jq -e 'any(.[]; .class == "aurora")' \
+    if ${pkgs.jq}/bin/jq -e --arg c ${lib.escapeShellArg playerClass} 'any(.[]; .class == $c)' \
       < <(${pkgs.hyprland}/bin/hyprctl clients -j 2>/dev/null || echo '[]') > /dev/null; then
-      exec ${pkgs.hyprland}/bin/hyprctl dispatch focuswindow class:aurora
+      exec ${pkgs.hyprland}/bin/hyprctl dispatch focuswindow class:${playerClass}
     fi
     # Not running: start detached, so the launcher does not hold the window.
     exec setsid ${pkgs.neg.aurora}/bin/aurora "$@" > /dev/null 2>&1 < /dev/null
