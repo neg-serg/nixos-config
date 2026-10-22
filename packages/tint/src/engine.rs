@@ -219,7 +219,7 @@ impl<'a> Streamer<'a> {
             self.carry_cr = false;
         }
         while start < chunk.len() {
-            let Some(offset) = chunk[start..].iter().position(|b| TERMINATOR[*b as usize]) else {
+            let Some(offset) = crate::fast::find2(b'\n', b'\r', &chunk[start..]) else {
                 self.pending.extend_from_slice(&chunk[start..]);
                 break;
             };

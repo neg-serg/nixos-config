@@ -11,6 +11,7 @@
 
 mod config;
 mod engine;
+mod fast;
 mod hit;
 mod pty;
 mod rule;
