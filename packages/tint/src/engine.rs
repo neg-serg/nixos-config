@@ -6,6 +6,7 @@
 //! it behind a shared reference and read the same engine from several readers.
 
 use std::io::{self, Read, Write};
+use std::time::Instant;
 
 use crate::config::{Config, StyleTable};
 use crate::hit::{normalize, Hit};
@@ -286,6 +287,16 @@ impl<'a> Streamer<'a> {
         (self.out, self.stats)
     }
 
+    /// Hand the buffered partial line over (the live path promotes to the bulk
+    /// path when the source turns out to be a dump, not a follow).
+    pub fn take_pending(&mut self) -> Vec<u8> {
+        if self.carry_cr {
+            self.pending.push(b'\r');
+            self.carry_cr = false;
+        }
+        std::mem::take(&mut self.pending)
+    }
+
     /// Flush a trailing partial line (no terminator was seen).
     pub fn finish(&mut self) {
         if self.carry_cr {
@@ -329,6 +340,7 @@ pub fn process<R: Read, W: Write>(
         first.truncate(read);
         return process_bulk(engine, reader, writer, first);
     }
+    let first_len = read as u64;
     first.truncate(read);
     let mut streamer = Streamer::new(engine);
     streamer.feed(&first);
@@ -337,6 +349,8 @@ pub fn process<R: Read, W: Write>(
         streamer.clear_out();
         writer.flush()?;
     }
+    let started = Instant::now();
+    let mut seen = first_len;
     let mut inbuf = vec![0u8; 64 * 1024];
     loop {
         let read = match reader.read(&mut inbuf) {
@@ -345,6 +359,25 @@ pub fn process<R: Read, W: Write>(
             Err(err) if err.kind() == io::ErrorKind::Interrupted => continue,
             Err(err) => return Err(err),
         };
+        seen += read as u64;
+        // A source that hands over a lot of data quickly is a dump that arrived
+        // through a pipe, not a live stream: promote it to the parallel path
+        // instead of colouring the rest one thread at a time. Short and slow is
+        // what `tail -f` looks like, and stays live.
+        if seen >= PROMOTE_BYTES && started.elapsed() < PROMOTE_WINDOW {
+            streamer.feed(b"");
+            if !streamer.out().is_empty() {
+                writer.write_all(streamer.out())?;
+                streamer.clear_out();
+            }
+            let carry = streamer.take_pending();
+            let head = streamer.stats;
+            let mut rest = process_bulk(engine, reader, writer, carry)?;
+            rest.bytes += head.bytes;
+            rest.lines += head.lines;
+            rest.spans += head.spans;
+            return Ok(rest);
+        }
         streamer.feed(&inbuf[..read]);
         // A short read means the source has nothing more ready: push what we
         // have so a live stream keeps its latency instead of sitting on it
@@ -364,6 +397,11 @@ pub fn process<R: Read, W: Write>(
     writer.flush()?;
     Ok(streamer.stats)
 }
+
+/// Promotion thresholds for a piped dump: this much data this fast is a bulk
+/// source that arrived through a pipe.
+const PROMOTE_BYTES: u64 = 1024 * 1024;
+const PROMOTE_WINDOW: std::time::Duration = std::time::Duration::from_millis(50);
 
 /// Per-thread slice of a batch. Batches are `threads x this`, capped so a run
 /// never holds more than ~64 MiB of input: the barrier between batches costs far
