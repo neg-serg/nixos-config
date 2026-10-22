@@ -10,12 +10,22 @@
 //! two agree, so a build for another architecture (or a CPU without SSE2) is
 //! correct, just slower.
 
+/// Whether AVX2 is available, asked once per process.
+#[cfg(target_arch = "x86_64")]
+fn have_avx2() -> bool {
+    static HAVE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *HAVE.get_or_init(|| std::arch::is_x86_feature_detected!("avx2"))
+}
+
 /// Index of the first byte equal to `a` or `b`.
 pub fn find2(a: u8, b: u8, hay: &[u8]) -> Option<usize> {
     #[cfg(target_arch = "x86_64")]
     {
-        // SAFETY: SSE2 is part of the x86-64 baseline, so the target feature is
-        // always present; the intrinsics only read `hay`.
+        // SAFETY: `have_avx2` gates the AVX2 path, SSE2 is part of the x86-64
+        // baseline, and the intrinsics only read `hay`.
+        if hay.len() >= 64 && have_avx2() {
+            return unsafe { avx::find2(a, b, hay) };
+        }
         return unsafe { x86::find2(a, b, hay) };
     }
     #[allow(unreachable_code)]
@@ -26,8 +36,10 @@ pub fn find2(a: u8, b: u8, hay: &[u8]) -> Option<usize> {
 pub fn word_run(hay: &[u8]) -> usize {
     #[cfg(target_arch = "x86_64")]
     {
-        // SAFETY: SSE2 is part of the x86-64 baseline, so the target feature is
-        // always present; the intrinsics only read `hay`.
+        // SAFETY: as in `find2` -- AVX2 gated, SSE2 baseline, reads only.
+        if hay.len() >= 64 && have_avx2() {
+            return unsafe { avx::word_run(hay) };
+        }
         return unsafe { x86::word_run(hay) };
     }
     #[allow(unreachable_code)]
@@ -38,8 +50,10 @@ pub fn word_run(hay: &[u8]) -> usize {
 pub fn digit_run(hay: &[u8]) -> usize {
     #[cfg(target_arch = "x86_64")]
     {
-        // SAFETY: SSE2 is part of the x86-64 baseline, so the target feature is
-        // always present; the intrinsics only read `hay`.
+        // SAFETY: as in `find2` -- AVX2 gated, SSE2 baseline, reads only.
+        if hay.len() >= 64 && have_avx2() {
+            return unsafe { avx::digit_run(hay) };
+        }
         return unsafe { x86::digit_run(hay) };
     }
     #[allow(unreachable_code)]
@@ -50,7 +64,10 @@ pub fn digit_run(hay: &[u8]) -> usize {
 pub fn count_byte(needle: u8, hay: &[u8]) -> usize {
     #[cfg(target_arch = "x86_64")]
     {
-        // SAFETY: SSE2 is baseline on x86-64 and the intrinsics only read `hay`.
+        // SAFETY: as in `find2` -- AVX2 gated, SSE2 baseline, reads only.
+        if hay.len() >= 64 && have_avx2() {
+            return unsafe { avx::count_byte(needle, hay) };
+        }
         return unsafe { x86::count_byte(needle, hay) };
     }
     #[allow(unreachable_code)]
@@ -61,8 +78,10 @@ pub fn count_byte(needle: u8, hay: &[u8]) -> usize {
 pub fn path_run(hay: &[u8]) -> usize {
     #[cfg(target_arch = "x86_64")]
     {
-        // SAFETY: SSE2 is part of the x86-64 baseline, so the target feature is
-        // always present; the intrinsics only read `hay`.
+        // SAFETY: as in `find2` -- AVX2 gated, SSE2 baseline, reads only.
+        if hay.len() >= 64 && have_avx2() {
+            return unsafe { avx::path_run(hay) };
+        }
         return unsafe { x86::path_run(hay) };
     }
     #[allow(unreachable_code)]
@@ -203,6 +222,136 @@ mod x86 {
             i += 16;
         }
         i + super::scalar::path_run(&hay[i..])
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[allow(unsafe_code)]
+mod avx {
+    //! 32 bytes per instruction on Zen 5, with the SSE2 path as the fallback.
+
+    use std::arch::x86_64::*;
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    unsafe fn word_mask(chunk: __m256i) -> __m256i {
+        let digit = _mm256_and_si256(
+            _mm256_cmpgt_epi8(chunk, _mm256_set1_epi8((b'0' - 1) as i8)),
+            _mm256_cmpgt_epi8(_mm256_set1_epi8((b'9' + 1) as i8), chunk),
+        );
+        let upper = _mm256_and_si256(
+            _mm256_cmpgt_epi8(chunk, _mm256_set1_epi8((b'A' - 1) as i8)),
+            _mm256_cmpgt_epi8(_mm256_set1_epi8((b'Z' + 1) as i8), chunk),
+        );
+        let lower = _mm256_and_si256(
+            _mm256_cmpgt_epi8(chunk, _mm256_set1_epi8((b'a' - 1) as i8)),
+            _mm256_cmpgt_epi8(_mm256_set1_epi8((b'z' + 1) as i8), chunk),
+        );
+        let underscore = _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(b'_' as i8));
+        _mm256_or_si256(
+            _mm256_or_si256(digit, upper),
+            _mm256_or_si256(lower, underscore),
+        )
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    unsafe fn leading(mask: __m256i) -> usize {
+        (_mm256_movemask_epi8(mask) as u32).trailing_ones() as usize
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn find2(a: u8, b: u8, hay: &[u8]) -> Option<usize> {
+        let mut i = 0usize;
+        let lane_a = _mm256_set1_epi8(a as i8);
+        let lane_b = _mm256_set1_epi8(b as i8);
+        while i + 32 <= hay.len() {
+            let chunk = _mm256_loadu_si256(hay.as_ptr().add(i) as *const __m256i);
+            let hit = _mm256_or_si256(
+                _mm256_cmpeq_epi8(chunk, lane_a),
+                _mm256_cmpeq_epi8(chunk, lane_b),
+            );
+            let mask = _mm256_movemask_epi8(hit) as u32;
+            if mask != 0 {
+                return Some(i + mask.trailing_zeros() as usize);
+            }
+            i += 32;
+        }
+        super::x86::find2(a, b, &hay[i..]).map(|offset| i + offset)
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn word_run(hay: &[u8]) -> usize {
+        let mut i = 0usize;
+        while i + 32 <= hay.len() {
+            let chunk = _mm256_loadu_si256(hay.as_ptr().add(i) as *const __m256i);
+            let matched = leading(word_mask(chunk));
+            if matched < 32 {
+                return i + matched;
+            }
+            i += 32;
+        }
+        i + super::x86::word_run(&hay[i..])
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn digit_run(hay: &[u8]) -> usize {
+        let mut i = 0usize;
+        let low = _mm256_set1_epi8((b'0' - 1) as i8);
+        let high = _mm256_set1_epi8((b'9' + 1) as i8);
+        while i + 32 <= hay.len() {
+            let chunk = _mm256_loadu_si256(hay.as_ptr().add(i) as *const __m256i);
+            let mask = _mm256_and_si256(
+                _mm256_cmpgt_epi8(chunk, low),
+                _mm256_cmpgt_epi8(high, chunk),
+            );
+            let matched = leading(mask);
+            if matched < 32 {
+                return i + matched;
+            }
+            i += 32;
+        }
+        i + super::x86::digit_run(&hay[i..])
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn path_run(hay: &[u8]) -> usize {
+        let mut i = 0usize;
+        while i + 32 <= hay.len() {
+            let chunk = _mm256_loadu_si256(hay.as_ptr().add(i) as *const __m256i);
+            let mut mask = word_mask(chunk);
+            for special in [b'/', b'.', b'-', b'~', b'+', b'@', b'%'] {
+                mask = _mm256_or_si256(
+                    mask,
+                    _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(special as i8)),
+                );
+            }
+            let matched = leading(mask);
+            if matched < 32 {
+                return i + matched;
+            }
+            i += 32;
+        }
+        i + super::x86::path_run(&hay[i..])
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn count_byte(needle: u8, hay: &[u8]) -> usize {
+        let mut count = 0usize;
+        let mut i = 0usize;
+        let lane = _mm256_set1_epi8(needle as i8);
+        while i + 32 <= hay.len() {
+            let chunk = _mm256_loadu_si256(hay.as_ptr().add(i) as *const __m256i);
+            count +=
+                (_mm256_movemask_epi8(_mm256_cmpeq_epi8(chunk, lane)) as u32).count_ones() as usize;
+            i += 32;
+        }
+        count + super::x86::count_byte(needle, &hay[i..])
     }
 }
 
