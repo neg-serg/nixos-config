@@ -2,10 +2,10 @@
 # GUI toolkit). Two binaries: aurora (the player) and aurora-probe (the
 # start-up measurement the project grew out of).
 #
-# The source is ~/src/neg-player, which lives outside this flake. It arrives as
-# the aurora-src git input, so the package builds the *committed* tree:
-# installing what was committed is the point, and untracked files (target/)
-# stay out of the store.
+# The source is neg-serg/aurora (private; checkout ~/src/aurora), which lives
+# outside this flake. It arrives as the aurora-src git input, so the package
+# builds the *committed* tree: installing what was committed is the point, and
+# untracked files (target/) stay out of the store.
 {
   lib,
   rustPlatform,

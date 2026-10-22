@@ -15,7 +15,7 @@ let
   # next one parks it out of sight, the one after that brings it back.
   #
   # The window class is `player`, not `aurora`: the crate sets that Wayland app_id itself
-  # (~/src/neg-player, with_name("player", "player")) and the Hyprland rules in
+  # (~/src/aurora, with_name("player", "player")) and the Hyprland rules in
   # files/gui/hypr/hyprland.lua match `^(player)$`. Matching the binary name here focused
   # nothing, so every press fell through to starting another copy.
   #

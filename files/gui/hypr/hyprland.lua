@@ -1043,7 +1043,7 @@ hl.bind(M4 .. "+l", hy3(function(p) return p.move_focus("r") end))
 hl.bind(M4 .. "+up",   hy3(function(p) return p.move_focus("u") end))
 hl.bind(M4 .. "+down", hy3(function(p) return p.move_focus("d") end))
 
--- The player (its own repository now, ~/src/neg-player) draws and times its own frames: nothing
+-- The player (its own repository now, ~/src/aurora) draws and times its own frames: nothing
 -- in it animates on open, move or close, so a compositor animation only puts a blurry
 -- intermediate frame between the user and the UI — and inside every captured reference frame.
 -- `player` is the class the app's own capture scripts match on.
@@ -1125,7 +1125,7 @@ hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 1, spring = "s
 -- 60% popin on a 45%-wide dialog reads as a blink.
 hl.window_rule({ name = "nm-connection-editor", match = { class = "^(nm-connection-editor)$" }, float = true, size = "45% 45%", center = true, animation = "popin 80%", tag = "nm-connection-editor" })
 hl.window_rule({ name = "picture-in-picture", match = { title = m.pip }, float = true, keep_aspect_ratio = true, move = "73% 72%", size = "25% 25%", pin = true, animation = "popin 90%", tag = "pip" })
--- player (Vulkan MPD frontend, ~/src/neg-player): a fixed-size floating window, because tiling
+-- player (Vulkan MPD frontend, ~/src/aurora): a fixed-size floating window, because tiling
 -- it into a column hides most of the three-pane layout. The base geometry is the rmpc scratchpad
 -- (music-scratchpad below: 70% x 40% at 15%/30%, i.e. centred) grown by 30% on both axes —
 -- 0.7 * 1.3 = 0.91 wide, 0.4 * 1.3 = 0.52 tall, still centred — so the key that swapped one player

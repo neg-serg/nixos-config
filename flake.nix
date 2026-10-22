@@ -79,11 +79,14 @@
       inputs.wl.follows = "wl";
       inputs.rsmetrx.follows = "rsmetrx";
     };
-    # aurora: the local MPD player's git tree, so the package builds a commit
-    # rather than whatever happens to be in the working directory. Re-lock with
-    # `nix flake lock --update-input aurora-src` after committing to it.
+    # aurora: the MPD player's own repository — private, so the source stays off
+    # the shelf while the package still builds the *committed* tree instead of
+    # whatever sits in the working directory (~/src/aurora). It arrives over SSH,
+    # which authenticates with the fetching user's GitHub key, so no token has to
+    # be stored anywhere. Re-lock with
+    # `nix flake lock --update-input aurora-src` after pushing to it.
     aurora-src = {
-      url = "git+file:///home/neg/src/neg-player";
+      url = "git+ssh://git@github.com/neg-serg/aurora";
       flake = false;
     };
     # Vendored Renoise/Redux installers (licensed builds, >100 MB). They cannot
