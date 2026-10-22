@@ -9,9 +9,6 @@
 //! Everything is byte-oriented and allocation-free: no regex compilation at
 //! startup, no per-line allocation beyond the shared hit vector.
 
-use std::collections::HashMap;
-use std::sync::OnceLock;
-
 use crate::hit::Hit;
 use crate::theme::Kind;
 
@@ -979,168 +976,152 @@ fn looks_like_header(line: &[u8]) -> bool {
     !trimmed.iter().any(u8::is_ascii_digit)
 }
 
-/// Keyword table, built once. Words are matched lower-cased.
-fn keywords() -> &'static HashMap<&'static str, Kind> {
-    static TABLE: OnceLock<HashMap<&'static str, Kind>> = OnceLock::new();
+/// Word → severity, sorted for binary search.
+static KEYWORDS: &[(&str, Kind)] = &[
+    ("abort", Kind::Err),
+    ("aborted", Kind::Err),
+    ("active", Kind::Ok),
+    ("alive", Kind::Ok),
+    ("already", Kind::Note),
+    ("available", Kind::Ok),
+    ("broken", Kind::Err),
+    ("building", Kind::Info),
+    ("built", Kind::Info),
+    ("cached", Kind::Note),
+    ("cannot", Kind::Err),
+    ("changed", Kind::Note),
+    ("connected", Kind::Ok),
+    ("copying", Kind::Info),
+    ("corrupt", Kind::Err),
+    ("corrupted", Kind::Err),
+    ("crash", Kind::Err),
+    ("crashed", Kind::Err),
+    ("created", Kind::Info),
+    ("creating", Kind::Info),
+    ("critical", Kind::Err),
+    ("dead", Kind::Warn),
+    ("debug", Kind::Dim),
+    ("degraded", Kind::Warn),
+    ("denied", Kind::Err),
+    ("deprecated", Kind::Warn),
+    ("died", Kind::Err),
+    ("dirty", Kind::Warn),
+    ("disabled", Kind::Warn),
+    ("done", Kind::Ok),
+    ("down", Kind::Warn),
+    ("enabled", Kind::Ok),
+    ("err", Kind::Err),
+    ("error", Kind::Err),
+    ("errors", Kind::Err),
+    ("established", Kind::Ok),
+    ("exceeded", Kind::Err),
+    ("expired", Kind::Warn),
+    ("fail", Kind::Err),
+    ("failed", Kind::Err),
+    ("failure", Kind::Err),
+    ("false", Kind::Warn),
+    ("fatal", Kind::Err),
+    ("flaky", Kind::Warn),
+    ("found", Kind::Ok),
+    ("healthy", Kind::Ok),
+    ("hint", Kind::Note),
+    ("inactive", Kind::Warn),
+    ("info", Kind::Info),
+    ("information", Kind::Info),
+    ("invalid", Kind::Err),
+    ("killed", Kind::Err),
+    ("listening", Kind::Ok),
+    ("loaded", Kind::Ok),
+    ("loading", Kind::Info),
+    ("missing", Kind::Err),
+    ("modified", Kind::Note),
+    ("mounted", Kind::Ok),
+    ("mounting", Kind::Info),
+    ("nan", Kind::Dim),
+    ("nil", Kind::Dim),
+    ("no", Kind::Warn),
+    ("none", Kind::Dim),
+    ("note", Kind::Note),
+    ("notice", Kind::Info),
+    ("null", Kind::Dim),
+    ("off", Kind::Warn),
+    ("ok", Kind::Ok),
+    ("online", Kind::Ok),
+    ("overflow", Kind::Err),
+    ("panic", Kind::Err),
+    ("pass", Kind::Ok),
+    ("passed", Kind::Ok),
+    ("phase", Kind::Info),
+    ("reached", Kind::Note),
+    ("ready", Kind::Ok),
+    ("refused", Kind::Err),
+    ("retries", Kind::Warn),
+    ("retry", Kind::Warn),
+    ("retrying", Kind::Warn),
+    ("running", Kind::Ok),
+    ("searched", Kind::Note),
+    ("segfault", Kind::Err),
+    ("skipped", Kind::Note),
+    ("slow", Kind::Warn),
+    ("stale", Kind::Warn),
+    ("started", Kind::Info),
+    ("starting", Kind::Info),
+    ("stopped", Kind::Info),
+    ("stopping", Kind::Info),
+    ("succeeded", Kind::Ok),
+    ("success", Kind::Ok),
+    ("successful", Kind::Ok),
+    ("suspicious", Kind::Warn),
+    ("timed", Kind::Err),
+    ("timeout", Kind::Err),
+    ("trace", Kind::Dim),
+    ("true", Kind::Ok),
+    ("unable", Kind::Err),
+    ("unchanged", Kind::Note),
+    ("undefined", Kind::Dim),
+    ("unmodified", Kind::Note),
+    ("unmounted", Kind::Warn),
+    ("unreachable", Kind::Err),
+    ("up", Kind::Ok),
+    ("up-to-date", Kind::Note),
+    ("verbose", Kind::Dim),
+    ("warn", Kind::Warn),
+    ("warning", Kind::Warn),
+    ("warnings", Kind::Warn),
+    ("yes", Kind::Ok),
+];
+
+/// Cheap 12-bit hash of a word: length, first byte and last byte.
+///
+/// Collisions are resolved by falling back to the sorted table, so the table
+/// stays correct for any entry list; the point is that the common cases — a hit
+/// and a clear miss — cost one load and at most one comparison, while a real
+/// `HashMap` pays SipHash on every word of every line.
+fn key_slot(word: &[u8]) -> usize {
+    let len = word.len();
+    ((len << 4) ^ (word[0] as usize) ^ ((word[len - 1] as usize) << 7)) & (SLOTS - 1)
+}
+
+const SLOTS: usize = 4096;
+const SLOT_EMPTY: u16 = 0;
+const SLOT_COLLIDED: u16 = u16::MAX;
+
+/// keyword slot table: `index + 1` of the single candidate, `SLOT_COLLIDED`
+/// when more than one keyword hashes there, `SLOT_EMPTY` when none does.
+fn slot_table() -> &'static [u16; SLOTS] {
+    static TABLE: std::sync::OnceLock<[u16; SLOTS]> = std::sync::OnceLock::new();
     TABLE.get_or_init(|| {
-        let mut map = HashMap::with_capacity(96);
-        let mut add = |words: &[&'static str], kind: Kind| {
-            for w in words {
-                map.insert(*w, kind);
-            }
-        };
-        add(
-            &[
-                "error",
-                "errors",
-                "err",
-                "failed",
-                "failure",
-                "fail",
-                "fatal",
-                "critical",
-                "panic",
-                "denied",
-                "refused",
-                "unreachable",
-                "timeout",
-                "timed",
-                "abort",
-                "aborted",
-                "segfault",
-                "corrupt",
-                "corrupted",
-                "broken",
-                "invalid",
-                "missing",
-                "cannot",
-                "unable",
-                "exceeded",
-                "overflow",
-                "killed",
-                "died",
-                "crash",
-                "crashed",
-            ],
-            Kind::Err,
-        );
-        add(
-            &[
-                "warn",
-                "warning",
-                "warnings",
-                "deprecated",
-                "degraded",
-                "retry",
-                "retrying",
-                "retries",
-                "slow",
-                "suspicious",
-                "flaky",
-                "stale",
-                "expired",
-                "dirty",
-                "degraded:",
-            ],
-            Kind::Warn,
-        );
-        add(
-            &[
-                "ok",
-                "success",
-                "successful",
-                "succeeded",
-                "done",
-                "active",
-                "running",
-                "enabled",
-                "connected",
-                "established",
-                "passed",
-                "pass",
-                "ready",
-                "listening",
-                "true",
-                "yes",
-                "found",
-                "alive",
-                "healthy",
-                "online",
-                "up",
-                "loaded",
-                "mounted",
-                "available",
-            ],
-            Kind::Ok,
-        );
-        add(
-            &[
-                "info",
-                "information",
-                "notice",
-                "started",
-                "starting",
-                "stopped",
-                "stopping",
-                "loading",
-                "mounting",
-                "created",
-                "creating",
-                "built",
-                "building",
-                "copying",
-                "running:",
-                "phase",
-            ],
-            Kind::Info,
-        );
-        add(
-            &[
-                "note",
-                "hint",
-                "changed",
-                "modified",
-                "reached",
-                "searched",
-                "skipped",
-                "already",
-                "unchanged",
-                "unmodified",
-                "up-to-date",
-                "cached",
-            ],
-            Kind::Note,
-        );
-        add(
-            &[
-                "debug",
-                "trace",
-                "verbose",
-                "null",
-                "none",
-                "nil",
-                "undefined",
-                "nan",
-            ],
-            Kind::Dim,
-        );
-        add(
-            &[
-                "no",
-                "false",
-                "off",
-                "disabled",
-                "inactive",
-                "dead",
-                "down",
-                "stopped:",
-                "unmounted",
-                "unreachable:",
-                "deprecated:",
-            ],
-            Kind::Warn,
-        );
-        map
+        let mut table = [SLOT_EMPTY; SLOTS];
+        for (index, (word, _)) in KEYWORDS.iter().enumerate() {
+            let bytes = word.as_bytes();
+            let slot = key_slot(bytes);
+            table[slot] = if table[slot] == SLOT_EMPTY {
+                (index + 1) as u16
+            } else {
+                SLOT_COLLIDED
+            };
+        }
+        table
     })
 }
 
@@ -1154,8 +1135,22 @@ fn keyword(word: &[u8]) -> Option<Kind> {
     for (dst, src) in buf.iter_mut().zip(word.iter()) {
         *dst = src.to_ascii_lowercase();
     }
-    let lower = std::str::from_utf8(&buf[..word.len()]).ok()?;
-    keywords().get(lower).copied()
+    let lower = &buf[..word.len()];
+    match slot_table()[key_slot(lower)] {
+        SLOT_EMPTY => None,
+        SLOT_COLLIDED => KEYWORDS
+            .binary_search_by(|(candidate, _)| candidate.as_bytes().cmp(lower))
+            .ok()
+            .map(|index| KEYWORDS[index].1),
+        slot => {
+            let (candidate, kind) = KEYWORDS[slot as usize - 1];
+            if candidate.as_bytes() == lower {
+                Some(kind)
+            } else {
+                None
+            }
+        }
+    }
 }
 
 #[cfg(test)]
