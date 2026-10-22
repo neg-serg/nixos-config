@@ -133,15 +133,23 @@
 #
 # On the 9950X3D, 2026-10-21:
 #
-# - throughput: 32 MB / 261 303 lines of `journalctl -b --no-pager` through
-#   `tint -r journalctl --color=always` take 94 ms at 1 109 506 spans, i.e.
-#   ~350 MiB/s, against 365 ms for the single-threaded build. Plain prose is
-#   faster; the scanners are the cost, and they are what buys colour for programs
-#   nobody wrote rules for. The ceiling here is not the colouriser: eight
-#   independent `tint` processes on the same 32 MB finish in 42 ms (762 MiB/s), so
-#   threads inside one address space lose about a third of the scaling to page
-#   faults on fresh output buffers, and 10x (900 MiB/s) is above what this host
-#   can do at all. `TINT_THREADS` pins the worker count for measurements.
+# - throughput, 32 MB / 261 303 lines of `journalctl -b --no-pager` through
+#   `tint -r journalctl --color=always`, measured with hyperfine on this host:
+#
+#   | build                                   | wall    | user    |
+#   | --------------------------------------- | ------- | ------- |
+#   | single thread (`TINT_THREADS=1`)        | 293 ms  | 288 ms  |
+#   | 16 threads (default)                    | 84 ms   | 369 ms  |
+#   | `--color=never` (pure copy)             | 4.1 ms  | 1.5 ms  |
+#
+#   So: the parallel path buys 3.5x of *wall clock* on 16 cores and costs 27%
+#   more CPU, while a copy of the same bytes takes 4 ms. The work is
+#   classification and escape emission, not I/O — about 6.8 ns per input byte in
+#   a scalar scanner that runs up to six speculative matchers per token. That is
+#   where a 10x would have to come from: a one-pass tokenizer with SIMD/memchr
+#   line and delimiter search and a cheaper escape encoding. None of that is
+#   implemented; the crate contains no SIMD intrinsics at all. `TINT_THREADS`
+#   pins the worker count for measurements.
 # - startup: `df -h` 1.1 ms, `tint -- df -h` 1.3 ms, `tint --color=always --
 #   df -h` 1.4 ms, so a wrapper adds 0.2-0.3 ms to a short command.
 # - streaming: a one-line-at-a-time stream is forwarded per read, pinned by the
