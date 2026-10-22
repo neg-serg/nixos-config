@@ -138,14 +138,6 @@ impl Engine {
     }
 }
 
-/// Line terminators. `\r` counts because progress meters redraw in place.
-static TERMINATOR: [bool; 256] = {
-    let mut table = [false; 256];
-    table[b'\n' as usize] = true;
-    table[b'\r' as usize] = true;
-    table
-};
-
 /// Counters for `--stats`.
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Stats {
@@ -176,6 +168,20 @@ pub struct Streamer<'a> {
 impl<'a> Streamer<'a> {
     pub fn new(engine: &'a Engine) -> Streamer<'a> {
         Streamer::with_capacity(engine, 64 * 1024)
+    }
+
+    /// Same, reusing an output buffer from a previous batch (see
+    /// [`process_batch`]: a warm buffer costs no page faults) and reserving
+    /// `reserve` bytes for the new one.
+    pub fn with_buffer(engine: &'a Engine, mut out: Vec<u8>, reserve: usize) -> Streamer<'a> {
+        out.clear();
+        out.reserve(reserve);
+        Streamer::with_capacity(engine, 0).with_out(out)
+    }
+
+    fn with_out(mut self, out: Vec<u8>) -> Streamer<'a> {
+        self.out = out;
+        self
     }
 
     /// Same, with the output buffer sized up front: the parallel path knows how
@@ -434,6 +440,7 @@ fn process_bulk<R: Read, W: Write>(
     }
     let batch_limit = (threads * SLICE).min(MAX_BATCH);
     let mut stats = Stats::default();
+    let mut pool: Vec<Vec<u8>> = Vec::new();
     let mut batch = first;
     batch.reserve(batch_limit);
     let mut chunk = vec![0u8; 64 * 1024];
@@ -458,9 +465,17 @@ fn process_bulk<R: Read, W: Write>(
             None => 0,
         };
         if cut > 0 {
-            let (head, tail) = batch.split_at(cut);
-            process_batch(engine, head, threads, &mut writer, &mut stats)?;
-            batch = tail.to_vec();
+            process_batch(
+                engine,
+                &batch[..cut],
+                threads,
+                &mut pool,
+                &mut writer,
+                &mut stats,
+            )?;
+            // Move the partial line (usually one short tail) to the front
+            // instead of allocating a fresh vector for it.
+            batch.drain(..cut);
         }
         if eof {
             if !batch.is_empty() {
@@ -481,10 +496,16 @@ fn process_bulk<R: Read, W: Write>(
 }
 
 /// Colour one batch on `threads` threads, writing the pieces in input order.
+///
+/// `pool` holds one output buffer per worker between batches. Allocating fresh
+/// buffers per batch means a page fault per 4 KiB of output, and those faults
+/// serialise on the shared address space: it is what stopped the parallel path
+/// from scaling, not the classification work.
 fn process_batch<W: Write>(
     engine: &Engine,
     data: &[u8],
     threads: usize,
+    pool: &mut Vec<Vec<u8>>,
     writer: &mut W,
     stats: &mut Stats,
 ) -> io::Result<()> {
@@ -505,13 +526,24 @@ fn process_batch<W: Write>(
         }
     }
     bounds.push(data.len());
+    let pieces = bounds.len() - 1;
+
+    while pool.len() < pieces {
+        pool.push(Vec::new());
+    }
+    let mut buffers: Vec<Vec<u8>> = Vec::with_capacity(pieces);
+    for _ in 0..pieces {
+        buffers.push(pool.pop().unwrap_or_default());
+    }
 
     let results: Vec<(Vec<u8>, Stats)> = std::thread::scope(|scope| {
-        let mut handles = Vec::with_capacity(bounds.len());
-        for pair in bounds.windows(2) {
+        let mut handles = Vec::with_capacity(pieces);
+        for (index, pair) in bounds.windows(2).enumerate() {
             let slice = &data[pair[0]..pair[1]];
+            let buffer = std::mem::take(&mut buffers[index]);
             handles.push(scope.spawn(move || {
-                let mut streamer = Streamer::with_capacity(engine, slice.len() * 3 / 2 + 4096);
+                let reserve = slice.len() * 3 / 2 + 4096;
+                let mut streamer = Streamer::with_buffer(engine, buffer, reserve);
                 streamer.feed(slice);
                 streamer.into_output()
             }));
@@ -521,11 +553,15 @@ fn process_batch<W: Write>(
             .map(|handle| handle.join().expect("colouriser thread panicked"))
             .collect()
     });
+
     for (out, piece) in results {
         writer.write_all(&out)?;
         stats.lines += piece.lines;
         stats.bytes += piece.bytes;
         stats.spans += piece.spans;
+        let mut buffer = out;
+        buffer.clear();
+        pool.push(buffer);
     }
     Ok(())
 }

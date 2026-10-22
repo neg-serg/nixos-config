@@ -288,19 +288,24 @@ fn scan_numeric(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Opt
             return Some(end);
         }
     }
-    if cfg.ips {
+    // The byte after the digit run decides which address shapes are possible,
+    // so plain numbers stop here instead of paying for four address parsers.
+    let digits_end = i + crate::fast::digit_run(&line[i..]);
+    let after = line.get(digits_end).copied();
+    if after == Some(b'.') && cfg.ips {
         if let Some(end) = try_ipv4(line, i) {
             out.push(Hit::new(i, end, Kind::Ip, PRIO_ADDR));
             return Some(end);
         }
     }
-    if cfg.macs {
+    let hexish = matches!(after, Some(b':')) || after.is_some_and(|b| b.is_ascii_hexdigit());
+    if hexish && cfg.macs {
         if let Some(end) = try_mac(line, i) {
             out.push(Hit::new(i, end, Kind::Mac, PRIO_ADDR));
             return Some(end);
         }
     }
-    if cfg.ips {
+    if hexish && cfg.ips {
         if let Some(end) = try_ipv6(line, i) {
             out.push(Hit::new(i, end, Kind::Ip, PRIO_ADDR));
             return Some(end);
@@ -871,17 +876,7 @@ fn scan_path(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Option
             return None;
         }
     }
-    let n = line.len();
-    let mut j = i;
-    while j < n {
-        let b = line[j];
-        let ok = b.is_ascii_alphanumeric()
-            || matches!(b, b'/' | b'.' | b'-' | b'_' | b'~' | b'+' | b'@' | b'%');
-        if !ok {
-            break;
-        }
-        j += 1;
-    }
+    let mut j = i + crate::fast::path_run(&line[i..]);
     while j > i + 1 && matches!(line[j - 1], b'.' | b'-' | b'/' | b'%' | b'@') {
         j -= 1;
     }
@@ -891,7 +886,7 @@ fn scan_path(line: &[u8], i: usize, cfg: &ScanCfg, out: &mut Vec<Hit>) -> Option
     // A lone `/x` is more likely a division or a flag; require a directory-ish
     // shape (a second slash, a dot-suffix, or a tilde) to be sure.
     let slice = &line[i..j];
-    let solid = slice.iter().skip(1).filter(|b| **b == b'/').count() >= 1
+    let solid = crate::fast::count_byte(b'/', slice) >= 2
         || slice.contains(&b'.')
         || slice[0] == b'~'
         || slice.len() > 4;
