@@ -3,17 +3,17 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792570771,
-        "narHash": "sha256-Q/OYpk19OYaDqbH4SBBWdgYPpNw/w2u1SJ8MNAEEASI=",
+        "lastModified": 1792702598,
+        "narHash": "sha256-t/A4hy3ZeGjYdWf03yel4PJa5O8CoUUkQScJaPuOsT8=",
         "ref": "refs/heads/main",
-        "rev": "0f2d35d35532ab0368658351b44c8fe574181c1e",
-        "revCount": 113,
+        "rev": "a45a640fb4ae302ba78aeebc7bf3041bf5d3e42e",
+        "revCount": 358,
         "type": "git",
-        "url": "file:///home/neg/src/neg-player"
+        "url": "ssh://git@github.com/neg-serg/aurora"
       },
       "original": {
         "type": "git",
-        "url": "file:///home/neg/src/neg-player"
+        "url": "ssh://git@github.com/neg-serg/aurora"
       }
     },
     "bdwgc": {
