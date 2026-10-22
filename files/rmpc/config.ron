@@ -30,7 +30,6 @@
         ),
         ( name: "Directories", pane: Pane(Directories),),
         ( name: "Artists", pane: Pane(Artists),),
-        ( name: "Album Artists", pane: Pane(AlbumArtists),),
         ( name: "Albums", pane: Pane(Albums),),
         ( name: "Playlists", pane: Pane(Playlists),),
         ( name: "Search", pane: Pane(Search),),
