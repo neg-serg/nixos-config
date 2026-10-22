@@ -174,10 +174,16 @@ pub struct Streamer<'a> {
 
 impl<'a> Streamer<'a> {
     pub fn new(engine: &'a Engine) -> Streamer<'a> {
+        Streamer::with_capacity(engine, 64 * 1024)
+    }
+
+    /// Same, with the output buffer sized up front: the parallel path knows how
+    /// much text it is about to colour and would rather not reallocate.
+    pub fn with_capacity(engine: &'a Engine, capacity: usize) -> Streamer<'a> {
         Streamer {
             engine,
             pending: Vec::new(),
-            out: Vec::with_capacity(64 * 1024),
+            out: Vec::with_capacity(capacity),
             hits: Vec::with_capacity(32),
             sgr: SgrWriter::new(),
             carry_cr: false,
@@ -273,6 +279,13 @@ impl<'a> Streamer<'a> {
         }
     }
 
+    /// Finish and hand the rendered bytes over, for callers that write whole
+    /// blocks at once (the parallel bulk path).
+    pub fn into_output(mut self) -> (Vec<u8>, Stats) {
+        self.finish();
+        (self.out, self.stats)
+    }
+
     /// Flush a trailing partial line (no terminator was seen).
     pub fn finish(&mut self) {
         if self.carry_cr {
@@ -294,12 +307,36 @@ impl<'a> Streamer<'a> {
 }
 
 /// Colourise everything `reader` yields into `writer`.
+///
+/// Two paths. A source that fills the first read buffer is treated as *bulk*
+/// (a file, a big log dump, `nix log | tint`): the input is taken in batches and
+/// the batches are coloured by one thread per core, then written in order. A
+/// source that hands over less than the buffer is a *live* stream (`tail -f`,
+/// `journalctl -f`, a slow pipe) and stays on the single-threaded path, where a
+/// line is written out as soon as its terminator arrives.
 pub fn process<R: Read, W: Write>(
     engine: &Engine,
     mut reader: R,
     mut writer: W,
 ) -> io::Result<Stats> {
+    let mut first = vec![0u8; 64 * 1024];
+    let read = match reader.read(&mut first) {
+        Ok(n) => n,
+        Err(err) if err.kind() == io::ErrorKind::Interrupted => 0,
+        Err(err) => return Err(err),
+    };
+    if read == first.len() {
+        first.truncate(read);
+        return process_bulk(engine, reader, writer, first);
+    }
+    first.truncate(read);
     let mut streamer = Streamer::new(engine);
+    streamer.feed(&first);
+    if !streamer.out().is_empty() {
+        writer.write_all(streamer.out())?;
+        streamer.clear_out();
+        writer.flush()?;
+    }
     let mut inbuf = vec![0u8; 64 * 1024];
     loop {
         let read = match reader.read(&mut inbuf) {
@@ -318,6 +355,165 @@ pub fn process<R: Read, W: Write>(
                 streamer.clear_out();
                 writer.flush()?;
             }
+        }
+    }
+    streamer.finish();
+    if !streamer.out().is_empty() {
+        writer.write_all(streamer.out())?;
+    }
+    writer.flush()?;
+    Ok(streamer.stats)
+}
+
+/// Per-thread slice of a batch. Batches are `threads x this`, capped so a run
+/// never holds more than ~64 MiB of input: the barrier between batches costs far
+/// more than the copy it saves, so the slice is generous.
+const SLICE: usize = 2 * 1024 * 1024;
+const MAX_BATCH: usize = 64 * 1024 * 1024;
+/// One thread per core, but not more than this (the writer is a bottleneck too).
+const MAX_THREADS: usize = 16;
+
+fn process_bulk<R: Read, W: Write>(
+    engine: &Engine,
+    mut reader: R,
+    mut writer: W,
+    first: Vec<u8>,
+) -> io::Result<Stats> {
+    // `TINT_THREADS` pins the worker count (tests and benchmarks); otherwise one
+    // worker per core, capped.
+    let threads = std::env::var("TINT_THREADS")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or_else(|| {
+            std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(1)
+        })
+        .min(MAX_THREADS);
+    if threads < 2 {
+        return process_sequential(engine, reader, writer, first);
+    }
+    let batch_limit = (threads * SLICE).min(MAX_BATCH);
+    let mut stats = Stats::default();
+    let mut batch = first;
+    batch.reserve(batch_limit);
+    let mut chunk = vec![0u8; 64 * 1024];
+    loop {
+        let mut eof = false;
+        while batch.len() < batch_limit {
+            let read = match reader.read(&mut chunk) {
+                Ok(0) => {
+                    eof = true;
+                    break;
+                }
+                Ok(n) => n,
+                Err(err) if err.kind() == io::ErrorKind::Interrupted => continue,
+                Err(err) => return Err(err),
+            };
+            batch.extend_from_slice(&chunk[..read]);
+        }
+        // Split at the last full line: everything after it belongs to the next
+        // batch, so no line is ever processed by two threads.
+        let cut = match batch.iter().rposition(|b| *b == b'\n') {
+            Some(index) => index + 1,
+            None => 0,
+        };
+        if cut > 0 {
+            let (head, tail) = batch.split_at(cut);
+            process_batch(engine, head, threads, &mut writer, &mut stats)?;
+            batch = tail.to_vec();
+        }
+        if eof {
+            if !batch.is_empty() {
+                // Trailing partial line (no terminator).
+                let mut streamer = Streamer::new(engine);
+                streamer.feed(&batch);
+                let (out, piece) = streamer.into_output();
+                writer.write_all(&out)?;
+                stats.lines += piece.lines;
+                stats.bytes += piece.bytes;
+                stats.spans += piece.spans;
+            }
+            break;
+        }
+    }
+    writer.flush()?;
+    Ok(stats)
+}
+
+/// Colour one batch on `threads` threads, writing the pieces in input order.
+fn process_batch<W: Write>(
+    engine: &Engine,
+    data: &[u8],
+    threads: usize,
+    writer: &mut W,
+    stats: &mut Stats,
+) -> io::Result<()> {
+    let mut bounds = Vec::with_capacity(threads + 1);
+    bounds.push(0usize);
+    for piece in 1..threads {
+        let target = data.len() * piece / threads;
+        if target <= *bounds.last().expect("non-empty") {
+            continue;
+        }
+        // Advance to the next line boundary so a line stays in one piece.
+        let end = match data[target..].iter().position(|b| *b == b'\n') {
+            Some(offset) => target + offset + 1,
+            None => continue,
+        };
+        if end > *bounds.last().expect("non-empty") && end < data.len() {
+            bounds.push(end);
+        }
+    }
+    bounds.push(data.len());
+
+    let results: Vec<(Vec<u8>, Stats)> = std::thread::scope(|scope| {
+        let mut handles = Vec::with_capacity(bounds.len());
+        for pair in bounds.windows(2) {
+            let slice = &data[pair[0]..pair[1]];
+            handles.push(scope.spawn(move || {
+                let mut streamer = Streamer::with_capacity(engine, slice.len() * 3 / 2 + 4096);
+                streamer.feed(slice);
+                streamer.into_output()
+            }));
+        }
+        handles
+            .into_iter()
+            .map(|handle| handle.join().expect("colouriser thread panicked"))
+            .collect()
+    });
+    for (out, piece) in results {
+        writer.write_all(&out)?;
+        stats.lines += piece.lines;
+        stats.bytes += piece.bytes;
+        stats.spans += piece.spans;
+    }
+    Ok(())
+}
+
+/// The single-threaded path, re-entered when only one core is available.
+fn process_sequential<R: Read, W: Write>(
+    engine: &Engine,
+    mut reader: R,
+    mut writer: W,
+    first: Vec<u8>,
+) -> io::Result<Stats> {
+    let mut streamer = Streamer::new(engine);
+    streamer.feed(&first);
+    let mut inbuf = vec![0u8; 64 * 1024];
+    loop {
+        let read = match reader.read(&mut inbuf) {
+            Ok(0) => break,
+            Ok(n) => n,
+            Err(err) if err.kind() == io::ErrorKind::Interrupted => continue,
+            Err(err) => return Err(err),
+        };
+        streamer.feed(&inbuf[..read]);
+        if !streamer.out().is_empty() {
+            writer.write_all(streamer.out())?;
+            streamer.clear_out();
+            writer.flush()?;
         }
     }
     streamer.finish();
@@ -530,6 +726,50 @@ mod tests {
         assert_eq!(stats.lines, 2);
         let out = String::from_utf8(written.lock().unwrap().clone()).unwrap();
         assert_eq!(strip(&out), "error one\r\nerror two\r\n");
+    }
+
+    #[test]
+    fn bulk_path_matches_the_sequential_renderer() {
+        let engine = engine_for("journalctl");
+        // Enough lines to take several batches? One batch is 8 MiB; this test
+        // only needs the bulk path to be taken, and parity to hold across many
+        // piece boundaries.
+        let mut input = String::new();
+        for i in 0..4000 {
+            input.push_str(&format!(
+                "Oct 21 22:00:{:02} trantor svc[{}]: error {} 192.168.1.{} /nix/store/x-{}.drv\n",
+                i % 60,
+                i,
+                i % 7,
+                i % 250,
+                i
+            ));
+        }
+        let mut reference = Streamer::new(&engine);
+        reference.feed(input.as_bytes());
+        let (expected, expected_stats) = reference.into_output();
+
+        let mut got: Vec<u8> = Vec::new();
+        let stats = process(&engine, std::io::Cursor::new(input.as_bytes()), &mut got).unwrap();
+
+        assert_eq!(got.len(), expected.len(), "different output length");
+        assert!(got == expected, "parallel output differs from sequential");
+        assert_eq!(stats.lines, expected_stats.lines);
+        assert_eq!(stats.spans, expected_stats.spans);
+    }
+
+    #[test]
+    fn streaming_sources_take_the_live_path() {
+        // A source that hands over small chunks must not wait for a batch.
+        let engine = engine_for("generic");
+        let written = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let reader = ProbeReader {
+            chunks: vec![b"error one\n".to_vec(), b"error two\n".to_vec()],
+            index: 0,
+            written: written.clone(),
+        };
+        let stats = process(&engine, reader, ProbeWriter(written.clone())).unwrap();
+        assert_eq!(stats.lines, 2);
     }
 
     #[test]

@@ -37,6 +37,16 @@
 # Spans never nest: all candidates are sorted by (start, priority, length) and
 # overlapping ones are dropped (`src/hit.rs`), so the renderer walks a line once.
 #
+# ## Bulk vs live input
+#
+# `process` reads once and decides: a source that fills the 64 KiB buffer is
+# bulk (a file, `nix log | tint`, a big dump) and is coloured in batches of
+# `threads x 2 MiB`, one thread per core, written out in input order — the pieces
+# are split at line boundaries, so no line crosses two threads and the parallel
+# output is byte-identical to the sequential one (a test asserts exactly that).
+# A source that returns short is live (`tail -f`, `journalctl -f`, a slow pipe)
+# and stays on the single-threaded path, where latency is one line.
+#
 # ## Streaming
 #
 # The output loop is built for live sources, not just files: a line is forwarded
@@ -124,11 +134,14 @@
 # On the 9950X3D, 2026-10-21:
 #
 # - throughput: 32 MB / 261 303 lines of `journalctl -b --no-pager` through
-#   `tint -r journalctl --color=always` take 311 ms at 1 109 506 spans, i.e.
-#   98 MiB/s on the most token-dense input available (log lines carry
-#   timestamps, PIDs, addresses, paths, quoted strings and durations). Plain
-#   prose is faster; the scanners are the cost, and they are what buys colour
-#   for programs nobody wrote rules for.
+#   `tint -r journalctl --color=always` take 94 ms at 1 109 506 spans, i.e.
+#   ~350 MiB/s, against 365 ms for the single-threaded build. Plain prose is
+#   faster; the scanners are the cost, and they are what buys colour for programs
+#   nobody wrote rules for. The ceiling here is not the colouriser: eight
+#   independent `tint` processes on the same 32 MB finish in 42 ms (762 MiB/s), so
+#   threads inside one address space lose about a third of the scaling to page
+#   faults on fresh output buffers, and 10x (900 MiB/s) is above what this host
+#   can do at all. `TINT_THREADS` pins the worker count for measurements.
 # - startup: `df -h` 1.1 ms, `tint -- df -h` 1.3 ms, `tint --color=always --
 #   df -h` 1.4 ms, so a wrapper adds 0.2-0.3 ms to a short command.
 # - streaming: a one-line-at-a-time stream is forwarded per read, pinned by the
