@@ -58,16 +58,19 @@ impl Rule {
 #[derive(Debug)]
 pub struct RuleSet {
     prefixes: Vec<Rule>,
-    others: Vec<Rule>,
-    first_bytes: [bool; 256],
+    /// Rules that end the line, checked once.
+    suffixes: Vec<Rule>,
+    /// Everything else, bucketed by the first byte of the needle: one pass over
+    /// the line visits only the positions where a rule can start.
+    buckets: Vec<Vec<Rule>>,
 }
 
 impl Default for RuleSet {
     fn default() -> RuleSet {
         RuleSet {
             prefixes: Vec::new(),
-            others: Vec::new(),
-            first_bytes: [false; 256],
+            suffixes: Vec::new(),
+            buckets: vec![Vec::new(); 256],
         }
     }
 }
@@ -82,13 +85,11 @@ impl RuleSet {
         for rule in rules {
             match &rule.matcher {
                 Matcher::Prefix(_) => set.prefixes.push(rule),
+                Matcher::Suffix(_) => set.suffixes.push(rule),
                 _ => {
-                    if let Some(needle) = rule.matcher.needle() {
-                        if let Some(first) = needle.first() {
-                            set.first_bytes[*first as usize] = true;
-                        }
+                    if let Some(first) = rule.matcher.needle().and_then(|n| n.first()) {
+                        set.buckets[*first as usize].push(rule);
                     }
-                    set.others.push(rule);
                 }
             }
         }
@@ -97,10 +98,15 @@ impl RuleSet {
 
     /// Number of compiled rules (for `--show` and tests).
     pub fn count(&self) -> usize {
-        self.prefixes.len() + self.others.len()
+        self.prefixes.len() + self.suffixes.len() + self.buckets.iter().map(Vec::len).sum::<usize>()
     }
 
     /// Append every match found in `line`.
+    ///
+    /// One pass over the line, with a first-byte bucket to skip the positions
+    /// where no needle can start. The previous version ran a separate substring
+    /// search per rule, which for a ruleset with seven words meant seven passes
+    /// over every line.
     pub fn matches(&self, line: &[u8], out: &mut Vec<Hit>) {
         for rule in &self.prefixes {
             if let Matcher::Prefix(needle) = &rule.matcher {
@@ -115,54 +121,40 @@ impl RuleSet {
                 }
             }
         }
-        if self.others.is_empty() {
-            return;
-        }
-        // Quick reject: a line without a single possible first byte cannot
-        // contain any needle.
-        let interesting = line.iter().any(|b| self.first_bytes[*b as usize]);
-        if !interesting {
-            return;
-        }
-        for rule in &self.others {
-            let Some(needle) = rule.matcher.needle() else {
-                continue;
-            };
-            if needle.is_empty() {
-                continue;
-            }
-            match rule.matcher {
-                Matcher::Suffix(_) => {
-                    if line.ends_with(needle) {
-                        let start = line.len() - needle.len();
-                        out.push(Hit::styled(
-                            start,
-                            line.len(),
-                            rule.kind,
-                            rule.prio,
-                            rule.style,
-                        ));
-                    }
-                }
-                Matcher::Word(_) => {
-                    let mut from = 0;
-                    while let Some(pos) = find_from(line, needle, from) {
-                        let end = pos + needle.len();
-                        let before_ok = pos == 0 || !is_word_byte(line[pos - 1]);
-                        let after_ok = end >= line.len() || !is_word_byte(line[end]);
-                        if before_ok && after_ok {
-                            out.push(Hit::styled(pos, end, rule.kind, rule.prio, rule.style));
+        if !self.buckets.is_empty() {
+            for (position, byte) in line.iter().enumerate() {
+                let bucket = &self.buckets[*byte as usize];
+                for rule in bucket {
+                    let Some(needle) = rule.matcher.needle() else {
+                        continue;
+                    };
+                    if line[position..].starts_with(needle) {
+                        let end = position + needle.len();
+                        let word_ok = match rule.matcher {
+                            Matcher::Word(_) => {
+                                (position == 0 || !is_word_byte(line[position - 1]))
+                                    && (end >= line.len() || !is_word_byte(line[end]))
+                            }
+                            _ => true,
+                        };
+                        if word_ok {
+                            out.push(Hit::styled(position, end, rule.kind, rule.prio, rule.style));
                         }
-                        from = pos + 1;
                     }
                 }
-                _ => {
-                    let mut from = 0;
-                    while let Some(pos) = find_from(line, needle, from) {
-                        let end = pos + needle.len();
-                        out.push(Hit::styled(pos, end, rule.kind, rule.prio, rule.style));
-                        from = end.max(pos + 1);
-                    }
+            }
+        }
+        for rule in &self.suffixes {
+            if let Matcher::Suffix(needle) = &rule.matcher {
+                if line.ends_with(needle) {
+                    let start = line.len() - needle.len();
+                    out.push(Hit::styled(
+                        start,
+                        line.len(),
+                        rule.kind,
+                        rule.prio,
+                        rule.style,
+                    ));
                 }
             }
         }

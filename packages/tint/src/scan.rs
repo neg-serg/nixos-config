@@ -224,11 +224,7 @@ fn is_word_byte(b: u8) -> bool {
 }
 
 fn word_end(line: &[u8], start: usize) -> usize {
-    let mut j = start;
-    while j < line.len() && is_word_byte(line[j]) {
-        j += 1;
-    }
-    j
+    start + crate::fast::word_run(&line[start..])
 }
 
 fn boundary_before(line: &[u8], i: usize) -> bool {
