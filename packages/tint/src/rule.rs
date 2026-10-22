@@ -161,34 +161,6 @@ impl RuleSet {
     }
 }
 
-/// Naive substring search; needles are short and lines are short, so the
-/// `memchr` crate would be a dependency for no measurable win.
-fn find_from(haystack: &[u8], needle: &[u8], from: usize) -> Option<usize> {
-    if needle.len() > haystack.len() {
-        return None;
-    }
-    let first = needle[0];
-    let mut i = from;
-    while i + needle.len() <= haystack.len() {
-        // Look for the first byte anywhere in the tail: a windowed search
-        // would step over matches that start on the window edge.
-        match haystack[i..].iter().position(|b| *b == first) {
-            Some(offset) => {
-                let pos = i + offset;
-                if pos + needle.len() > haystack.len() {
-                    return None;
-                }
-                if &haystack[pos..pos + needle.len()] == needle {
-                    return Some(pos);
-                }
-                i = pos + 1;
-            }
-            None => return None,
-        }
-    }
-    None
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
