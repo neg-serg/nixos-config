@@ -414,8 +414,8 @@ const PROMOTE_WINDOW: std::time::Duration = std::time::Duration::from_millis(50)
 /// more than the copy it saves, so the slice is generous.
 const SLICE: usize = 2 * 1024 * 1024;
 const MAX_BATCH: usize = 64 * 1024 * 1024;
-/// One thread per core, but not more than this (the writer is a bottleneck too).
-const MAX_THREADS: usize = 16;
+/// Hardware threads to use at most: the 9950X3D has 16 cores and 32 threads.
+const MAX_THREADS: usize = 32;
 
 fn process_bulk<R: Read, W: Write>(
     engine: &Engine,
@@ -423,44 +423,39 @@ fn process_bulk<R: Read, W: Write>(
     mut writer: W,
     first: Vec<u8>,
 ) -> io::Result<Stats> {
-    // `TINT_THREADS` pins the worker count (tests and benchmarks); otherwise one
-    // worker per core, capped.
-    let threads = std::env::var("TINT_THREADS")
-        .ok()
-        .and_then(|value| value.parse::<usize>().ok())
-        .filter(|value| *value > 0)
-        .unwrap_or_else(|| {
-            std::thread::available_parallelism()
-                .map(|n| n.get())
-                .unwrap_or(1)
-        })
-        .min(MAX_THREADS);
+    let threads = worker_count().min(MAX_THREADS);
     if threads < 2 {
         return process_sequential(engine, reader, writer, first);
     }
     let batch_limit = (threads * SLICE).min(MAX_BATCH);
     let mut stats = Stats::default();
     let mut pool: Vec<Vec<u8>> = Vec::new();
-    let mut batch = first;
-    batch.reserve(batch_limit);
-    let mut chunk = vec![0u8; 64 * 1024];
+
+    // One input buffer for the whole run, read into directly: the previous
+    // version copied every batch out of the 64 KiB read buffer, which is 32 MB
+    // of pointless memcpy plus a page fault per 4 KiB of a fresh buffer.
+    let mut batch = vec![0u8; batch_limit];
+    let mut filled = first.len();
+    batch[..filled].copy_from_slice(&first);
+    drop(first);
+
     loop {
         let mut eof = false;
-        while batch.len() < batch_limit {
-            let read = match reader.read(&mut chunk) {
+        while filled < batch_limit {
+            // Read straight into the buffer: no intermediate chunk, no copy.
+            match reader.read(&mut batch[filled..]) {
                 Ok(0) => {
                     eof = true;
                     break;
                 }
-                Ok(n) => n,
+                Ok(read) => filled += read,
                 Err(err) if err.kind() == io::ErrorKind::Interrupted => continue,
                 Err(err) => return Err(err),
-            };
-            batch.extend_from_slice(&chunk[..read]);
+            }
         }
         // Split at the last full line: everything after it belongs to the next
         // batch, so no line is ever processed by two threads.
-        let cut = match batch.iter().rposition(|b| *b == b'\n') {
+        let cut = match batch[..filled].iter().rposition(|b| *b == b'\n') {
             Some(index) => index + 1,
             None => 0,
         };
@@ -473,15 +468,14 @@ fn process_bulk<R: Read, W: Write>(
                 &mut writer,
                 &mut stats,
             )?;
-            // Move the partial line (usually one short tail) to the front
-            // instead of allocating a fresh vector for it.
-            batch.drain(..cut);
+            // Move the partial line to the front instead of allocating.
+            batch.copy_within(cut..filled, 0);
+            filled -= cut;
         }
         if eof {
-            if !batch.is_empty() {
-                // Trailing partial line (no terminator).
+            if filled > 0 {
                 let mut streamer = Streamer::new(engine);
-                streamer.feed(&batch);
+                streamer.feed(&batch[..filled]);
                 let (out, piece) = streamer.into_output();
                 writer.write_all(&out)?;
                 stats.lines += piece.lines;
@@ -493,6 +487,20 @@ fn process_bulk<R: Read, W: Write>(
     }
     writer.flush()?;
     Ok(stats)
+}
+
+/// How many colouriser threads to run: `TINT_THREADS` when set, otherwise one
+/// per hardware thread (the 9950X3D reports 32), capped.
+fn worker_count() -> usize {
+    std::env::var("TINT_THREADS")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or_else(|| {
+            std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(1)
+        })
 }
 
 /// Colour one batch on `threads` threads, writing the pieces in input order.
