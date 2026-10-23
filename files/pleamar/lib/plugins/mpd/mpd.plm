@@ -52,13 +52,16 @@ library Mpd strict {
         let glyph.gap = 2
         let glyph.size = 14
         let shown = repeat + random + single + consume + xfade
-        let w = 2 * capsule.pad + shown * glyph.size + max(0, shown - 1) * glyph.gap
+        // No capsule around the badges: MpdFlags.qml wraps them in a WidgetCapsule that draws
+        // nothing, and the plate this port added was the whole difference — measured, the
+        // reference's shuffle badge is 11 logical px of ink, the port's 25, because the 25 was
+        // the capsule's rim, not the glyph.
+        let w = shown * glyph.size + max(0, shown - 1) * glyph.gap
         let h = capsule.height
-        size: (2 * capsule.pad + (repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, capsule.height * scale
+        size: ((repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, capsule.height * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1) {
-                row flags {
+            row flags {
                     gap: 2
                     align: center
                     text "repeat" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: repeat }
@@ -66,7 +69,6 @@ library Mpd strict {
                     text "repeat_one" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: single }
                     text "auto_delete" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: consume }
                     text "blur_linear" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: xfade }
-                }
             }
             zone box flags { from: 0, 0; size: w, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
         }
