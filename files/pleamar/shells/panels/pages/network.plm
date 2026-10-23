@@ -104,18 +104,18 @@ part NetPanel {
                 for v in flow {
                     box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
                         size: column.w, max(v.tx / max(net_max_tx, 1) * 150, 1.5)
-                        color: amber; opacity: 40%; show: v.tx > 200 }
+                        color: amber; opacity: 40%; show: v.tx > net_max_tx * 0.03 }
                     box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
-                        size: column.w, 1.1; color: amber; opacity: 95% }
+                        size: column.w, 1.1; color: amber; opacity: 95%; show: v.tx > net_max_tx * 0.03 }
                 }
 
                 // ----***------------------------ download (front row)
                 for v in flow {
                     box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
                         size: column.w, max(v.rx / max(net_max_rx, 1) * 176, 1.5)
-                        color: highlight; opacity: 62%; show: v.rx > 200 }
+                        color: highlight; opacity: 62%; show: v.rx > net_max_rx * 0.03 }
                     box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
-                        size: column.w, 1.1; color: ink; opacity: 70% }
+                        size: column.w, 1.1; color: ink; opacity: 70%; show: v.rx > net_max_rx * 0.03 }
                 }
 
                 text "waiting for flow…" { at: 235, 165; anchor: center; family: "Iosevka"; size: 12; color: ink.off
