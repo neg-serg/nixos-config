@@ -150,32 +150,19 @@ local function stop()
     handle = nil
 end
 
--- `media` reports what plays; a pause is not a stop (the QS Cava stops with
--- `MusicManager.isPlaying`, so this does the same). The watch hands the current
--- state over right away, so nothing here starts on a maybe.
-local function on_media(m)
-    playing = m ~= nil and m.playing == true
-    if playing then start() else stop() end
-end
+-- The scene decides: `Spectrum.active` is set by the rule that opens the card
+-- and cleared by the one that closes it, so the analyser runs exactly while
+-- something draws it. The watch is still worth having — a player that stops
+-- should empty the band rather than freeze it — but it no longer starts cava.
+local running = false
+every(1000, function()
+    local want = fact.active == true
+    if want == running then return end
+    running = want
+    if want then start() else stop() end
+end)
 
--- The watch is the truth, but the state it reports *now* cannot be asked for:
--- a plugin's `sys.ask` on a scene service refuses ("this system cannot answer
--- 'media' yet"), and a track that was already playing produces no change event.
--- So the analyser starts with the scene and the watch stops it the first time it
--- reports that nothing plays. cava reading silence costs a fraction of a core,
--- and an analyser that never starts is worse than one that idles.
-if not sys.watch("media", on_media) then
-    -- No media service on this system: the analyser runs and reads silence.
+if fact.active then
+    running = true
     start()
 end
-
--- Not at once: a spawn made while the scene is still building its pipes gets
--- no config on its input, and cava exits before it reads a line — which looks
--- exactly like "the analyser never starts". Half a second later it takes, and
--- the watch keeps it honest from then on.
-local booted = false
-every(500, function()
-    if booted then return end
-    booted = true
-    if not handle then start() end
-end)

@@ -45,6 +45,11 @@ library Spectrum strict {
 
     // ------------------------------------------------------------- boundary
     // A scene may set these; the defaults are the QS ones (IPhoneSpectrum).
+    // The scene owns whether the analyser is worth running: it is the one that
+    // knows if anything on screen uses it. Default off — a plugin that decides
+    // for itself keeps a cava process and a decay timer alive in a scene that
+    // draws nothing, which cost 14.5 MB and 2.5 % of a core in the panels unit.
+    fact active = false
     fact mirror = true
     fact peaks = true
     fact gradient = true
