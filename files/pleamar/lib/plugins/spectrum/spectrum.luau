@@ -158,43 +158,15 @@ local function on_media(m)
     if playing then start() else stop() end
 end
 
--- Asked once as well as watched: a track that was already playing when the
--- scene started is in the service, but the first delivery of a watch can be the
--- empty one (the service was not up yet), and then the analyser never starts —
--- which looks exactly like a broken analyser. What the service actually answers
--- here is logged once per distinct answer, so a silent analyser can be told
--- from a misreading one.
-local lastAnswer = nil
-
-local function probe(why)
-    local ok, cur = pcall(sys.ask, "media")
-    local answer
-    if not ok then
-        answer = "ask failed: " .. tostring(cur)
-    elseif type(cur) ~= "table" then
-        answer = "no record: " .. type(cur)
-    else
-        answer = "playing=" .. tostring(cur.playing) .. " player=" .. tostring(cur.player)
-    end
-    if answer ~= lastAnswer then
-        lastAnswer = answer
-        log("spectrum: media (" .. why .. ") " .. answer)
-    end
-    if ok and type(cur) == "table" then on_media(cur) end
-end
-
-probe("load")
-
+-- The watch is the truth, but the state it reports *now* cannot be asked for:
+-- a plugin's `sys.ask` on a scene service refuses ("this system cannot answer
+-- 'media' yet"), and a track that was already playing produces no change event.
+-- So the analyser starts with the scene and the watch stops it the first time it
+-- reports that nothing plays. cava reading silence costs a fraction of a core,
+-- and an analyser that never starts is worse than one that idles.
 if not sys.watch("media", on_media) then
     -- No media service on this system: the analyser runs and reads silence.
     start()
 end
 
--- The watch only reports *changes*, and a track that was already playing when
--- the scene started never produces one. The poll is the floor under that: while
--- nothing plays it asks again every two seconds, and stops asking the moment
--- the analyser is up.
-every(2000, function()
-    if playing then return end
-    probe("poll")
-end)
+start()
