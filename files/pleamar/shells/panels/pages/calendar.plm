@@ -24,13 +24,13 @@ part Calendar {
         group {
             // Bottom-left, like the legacy calendar popup (calendar.popupMargin).
             // The bar's edge is bar.height + bar.gap design px above the bottom.
-            move: 4, 4 + (1 - lift) * (480 + 4) * scale
+            move: 0, (1 - lift) * 480 * scale
 
             // ----***----------------------------- the card
             body {
                 color: coal
                 opacity: 85%
-                box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 6 * scale }
+                box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 0 }
             }
             box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: accent; opacity: 25% }
 
