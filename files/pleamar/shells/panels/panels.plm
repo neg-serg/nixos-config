@@ -80,8 +80,16 @@ scene panels {
     // by luck. An open surface that draws nothing costs nothing extra: the cards
     // are hidden by their own `show:`, and the catcher below is hidden too, so
     // with no drawer there is no zone to catch a press.
-    surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
-              keyboard: on_demand; open: true }
+    // Sized to the widest card (the system monitor, 1040 x 384 design px) rather
+    // than to the monitor, and that is measured on 2026-10-23, not taste: on a
+    // 1920 x 1030 layer the cards' 75 % plate let the text behind it through
+    // unblurred, and Hyprland's layer blur never reached it; on a layer the size
+    // of the cards both behave. The reference gives every popup its own window,
+    // sized to it, for the same reason.
+    // The price, recorded because it is visible: a press outside the card closes
+    // the drawer only where this surface reaches.
+    surface { size: 1200, 420; anchor: bottom_right; margin: 4, 0, 30, 4
+              level: overlay; reserve: 0; screens: each; keyboard: on_demand; open: true }
 
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
@@ -161,6 +169,11 @@ scene panels {
     text net.peak_tx = "--"
     // Why the dashboard has no numbers, when it has none for a reason.
     text net.err = ""
+    // Axis labels for the chart: the reference prints the top of the scale and
+    // its thirds on the right of the plot, compact (`1.2K`, `3.4M`).
+    text net.ax1 = ""
+    text net.ax2 = ""
+    text net.ax3 = ""
 
     // ----***---- models filled by panels.luau (columns the drawers draw)
     model forecast max 5 { day: text; cond: text; hi: text; lo: text }
@@ -225,6 +238,10 @@ scene panels {
     on open_network { drawer = network; Spectrum.active = false }
     on close_drawer { drawer = none; Spectrum.active = false }
 
+    // The cards, on a surface sized to the widest of them (the system monitor is
+    // 1040 x 384; the rest are smaller and anchored to its bottom-right corner
+    // by their own `move:`). Sized, not full-screen: a layer the size of the
+    // card composites its plate correctly, a full-screen one does not.
     // ----***------------------------ the drawers
     include "pages/volume.plm"
     include "pages/calendar.plm"

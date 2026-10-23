@@ -1,50 +1,45 @@
 // pages/network.plm — the flow dashboard (`drawer == network`).
 //
-// Legacy: files/quickshell/Bar/Modules/NetFlowPopup.qml (470 × 338 dp): the
-// `flow` title, two big readouts (down/up) and a rolling history chart. The
-// data is the same stream the reference reads — `flow -json-stream`, ~10 Hz,
+// Legacy: files/quickshell/Bar/Modules/NetFlowPopup.qml (470 x 338 dp). What
+// that card actually draws, and this port follows it rather than an idea of a
+// network graph:
+//   `flow` at 17 bold, the interface in a pill at 11, LIVE/IDLE/OFF at 10;
+//   two readouts — the arrow caption at 10 bold in the disabled tone, the value
+//   at 20 bold, the peak at 10 — one per direction;
+//   a plot with three horizontal grid rules, each labelled on the right with a
+//   compact value (`1.2K`), and two series as a translucent area under a bright
+//   line, upload first (1.4 wide) and download over it (2.0 wide);
+//   a footer line, `flow — see your network breathe · ~10 Hz · N s window`.
+// The earlier version of this file drew a three-dimensional waterfall of
+// columns; the reference has no such thing.
+//
+// The data is the stream the reference reads — `flow -json-stream` at ~10 Hz,
 // one JSON record a line — spawned by panels.luau while this drawer is open and
-// killed when it closes.
+// killed when it closes. Colours: the reference chains blue to cyan for download
+// and green to lime for upload; this palette has no green, so download is
+// `highlight` and upload `amber`.
 //
-// The history is drawn as a three-dimensional waterfall: each sample is a
-// column standing on a receding floor, with a lit top face, a shaded right face
-// and a faint reflection — the oblique projection (a fixed shear per unit of
-// depth) is what makes it read as depth rather than as a row of bars. Two rows
-// of columns, upload behind download, share the same floor and the same peak,
-// so the two directions are comparable at a glance.
+// Every length is a design-pixel literal inside `group zoom { scale }`: `size:`
+// and `weight:` take ONE number and drop the rest (INTERFACES §9.2).
 //
-// Not ported, because the reference's versions of them are QS effects rather
-// than behaviour: the chart's "moving sheen" and the pulsing LIVE badge. Here
-// the live state is the dot's opacity (a rule on `net_live`).
+// The part is `NetPanel`, not `Network`: identifiers are case-insensitive here,
+// so a part named after the drawer's enum value shadows it and `show: drawer ==
+// network` never fires.
 //
-// Colours: the reference chains blue → cyan for download and green → lime for
-// upload. This shell has no green token, and inventing one would put a colour
-// outside palette.plm, so download is `highlight` and upload is `amber` — the
-// palette's two hues that read on a dark plate.
-//
-// Every length here is a design-pixel literal inside `group zoom { scale }`:
-// `size:` and `weight:` take ONE number and silently drop the rest of the
-// expression (INTERFACES §9.2), so `size: 1 * type.body * scale` draws at 1 px
-// — which is exactly what the first version of this card did. `text_scale`
-// (the fontScale setting) is therefore not applied here yet; that needs the
-// size expression to survive the compiler first.
-//
-// The part is `NetPanel`, not `Network`: an identifier is case-insensitive
-// here, so a part named after the drawer's own enum value shadows it —
-// `show: drawer == network` then compares the fact with the part, the rule
-// never fires, and the scene (whose surface is that rule's `show`) exits a
-// couple of seconds after the drawer opens.
-
 part NetPanel {
     component NetPanelDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
         size: 470 * scale, 338 * scale
 
-        // The projection: one unit of depth moves 6.5 px right and 3.4 px up.
-        // Both rows of columns and the floor are drawn with it, so they agree.
-        let depth.x = 6.5
-        let depth.y = 3.4
-        let column.w = 5.1
-        let pitch = 4.6
+        // The plot: 14..414 across, 116..296 down, so the compact axis labels
+        // have room on the right where the reference puts them.
+        let plot.x = 14
+        let plot.w = 400
+        let plot.y = 116
+        let plot.h = 180
+        // Stretched over what there is, like `xAt(i)` in the reference: eleven
+        // samples span the plot, not a tenth of it.
+        let pitch = plot.w / max(flow.total, 1)
+        let column.w = plot.w / max(flow.total, 1)
 
         group {
             move: screen.width - (470 + 4) * scale, screen.height - (338 + bar.height + 1) * scale + (1 - lift) * (338 + bar.height + 1) * scale
@@ -53,74 +48,60 @@ part NetPanel {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(470, 338, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
+                Capsule(470, 338, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: 1)
 
                 // ----***------------------------ header
-                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: ink }
+                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: ink }
 
                 group { move: 62, 9
                     Capsule(96, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
-                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 12; color: ink }
+                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 11; color: ink }
                 }
 
-                ellipse { at: 348, 20; radius: 4; color: accent; opacity: pick(net_live, 100%, 30%) }
-                text "LIVE" { at: 358, 20; anchor: left center; family: "Iosevka"; size: 9; color: ink.dim }
-
-                group { move: 412, 10
-                    Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: 1)
-                    text "Close" { at: 22, 10; anchor: center; family: "Iosevka"; size: 12; color: ink }
-                    zone box close { from: 0, 0; size: 44, 20; corner: 10
-                        label: "Close {drawer}"; role: button }
-                    on press close { drawer = none }
-                }
-
-                box { from: 12, 36; size: 446, 1; color: ink; opacity: ink.subtle }
+                ellipse { at: 404, 20; radius: 3.5; color: accent; opacity: pick(net_live, 100%, 30%) }
+                text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: ink.dim }
 
                 // ----***----------------------- readouts
-                text "{net.rx}" { at: 14, 64; anchor: left center; family: "Iosevka"; size: 32; color: highlight }
-                text "download" { at: 14, 86; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
-                text "peak {net.peak_rx}" { at: 14, 104; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+                text "↓ DOWN" { at: 14, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
+                text "{net.rx}" { at: 14, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: highlight }
+                text "peak {net.peak_rx}" { at: 14, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
-                text "{net.tx}" { at: 240, 64; anchor: left center; family: "Iosevka"; size: 32; color: amber }
-                text "upload" { at: 240, 86; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
-                text "peak {net.peak_tx}" { at: 240, 104; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+                text "↑ UP" { at: 240, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
+                text "{net.tx}" { at: 240, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: amber }
+                text "peak {net.peak_tx}" { at: 240, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
-                // ----***-------------------------- floor
-                // The plane the two rows stand on: a front edge, the receding
-                // lines that give it a horizon, and one line at the base of each
-                // row. Everything is derived from `depth`, so floor and data
-                // cannot drift apart.
-                box { from: 14, 120; size: 442, 186; corner: 4; color: coal; opacity: 26% }
-                repeat g in 0..5 {
-                    box { from: 14, 120 + g * 37; size: 442, 1; color: ink; opacity: 4% }
+                // ----***--------------------------- plot
+                // Three rules at the thirds, each labelled to the right.
+                repeat g in 0..3 {
+                    box { from: plot.x, plot.y + plot.h - g * plot.h / 3; size: plot.w, 1; color: ink; opacity: 18% }
                 }
-                box { from: 14, 300; size: 442, 1; color: ink; opacity: 12% }
-                box { from: 14 + 6 * depth.x, 300 - 6 * depth.y; size: 442, 1; color: ink; opacity: 8% }
+                text "{net.ax1}" { at: 422, plot.y + plot.h - plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+                text "{net.ax2}" { at: 422, plot.y + plot.h - 2 * plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+                text "{net.ax3}" { at: 422, plot.y + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
 
-                // ----***------------------------ upload (back row)
-                // Drawn first so the download row stands in front of it. Six
-                // units of depth separate the rows; the lit top face is what
-                // turns a filled area into a surface with an edge.
+                // Upload first, download over it, the way the reference stacks
+                // the two series. The area is the column, the line its top edge.
                 for v in flow {
-                    box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
-                        size: column.w, max(v.tx / max(net_max_tx, 1) * 150, 1.5)
-                        color: amber; opacity: 40%; show: v.tx > net_max_tx * 0.03 }
-                    box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
-                        size: column.w, 1.1; color: amber; opacity: 95%; show: v.tx > net_max_tx * 0.03 }
+                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.tx / max(net_max_tx, 1) * plot.h, 0)
+                        size: column.w, max(v.tx / max(net_max_tx, 1) * plot.h, 0)
+                        color: amber; opacity: 22%; show: v.tx > net_max_tx * 0.02 }
+                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.tx / max(net_max_tx, 1) * plot.h, 0)
+                        size: column.w, 1.4; color: amber; show: v.tx > net_max_tx * 0.02 }
                 }
-
-                // ----***------------------------ download (front row)
                 for v in flow {
-                    box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
-                        size: column.w, max(v.rx / max(net_max_rx, 1) * 176, 1.5)
-                        color: highlight; opacity: 62%; show: v.rx > net_max_rx * 0.03 }
-                    box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
-                        size: column.w, 1.1; color: ink; opacity: 70%; show: v.rx > net_max_rx * 0.03 }
+                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.rx / max(net_max_rx, 1) * plot.h, 0)
+                        size: column.w, max(v.rx / max(net_max_rx, 1) * plot.h, 0)
+                        color: highlight; opacity: 28%; show: v.rx > net_max_rx * 0.02 }
+                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.rx / max(net_max_rx, 1) * plot.h, 0)
+                        size: column.w, 2; color: highlight; show: v.rx > net_max_rx * 0.02 }
                 }
 
-                text "waiting for flow…" { at: 235, 165; anchor: center; family: "Iosevka"; size: 12; color: ink.off
+                text "waiting for flow…" { at: 214, 206; anchor: center; family: "Iosevka"; size: 11; color: ink.off
                     show: flow.total == 0 }
-                text "{net.err}" { at: 235, 236; anchor: center; family: "Iosevka"; size: 11; color: warn }
+                text "{net.err}" { at: 214, 214; anchor: center; family: "Iosevka"; size: 10; color: warn }
+
+                // ----***------------------------- footer
+                text "flow — see your network breathe   ·   ~10 Hz   ·   {flow.total} samples" { at: 14, 318; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
             }
         }
     }
