@@ -33,8 +33,9 @@ library Skin strict {
     // colors.text.primary role: the lightest cluster.
     let skin.ink = #CBD6E5
 
-    // colors.text.secondary role: ink mixed 35 % toward surface.
-    let skin.ink.dim = mix(skin.ink, skin.surface, 35%)
+    // colors.text.secondary (Settings/colors.jsonc) — the static token the reference
+    // draws its secondary text with, not a mix of the two other tones.
+    let skin.ink.dim = #AEB9C8
 
     // colors.accent.primary role: the wallpaper's accent, hue-matched onto the
     // theme's own #006FCC.
