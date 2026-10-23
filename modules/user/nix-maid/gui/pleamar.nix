@@ -97,6 +97,16 @@ let
     "launcher"
   ];
 
+  # Scenes that must come back from *any* exit, not only a crash: the bar and
+  # the ones that live for the whole session. `panels` is deliberately not
+  # here — a drawer scene may close itself and must not be resurrected.
+  pleamarResidentScenes = [
+    "bar"
+    "notifications"
+    "toast"
+    "launcher"
+  ];
+
   # Scene the hang watchdog probes: the bar is the one the session cannot lose.
   # A scene with no deployed file is skipped by its own condition, so the name
   # may be listed before the file lands (the bar scene exists since PH2-A).
@@ -215,6 +225,12 @@ let
       };
       serviceConfig = {
         ExecStart = "${pkgs.pleamar}/bin/pleamar --scene %h/.config/pleamar/shells/${scene}/${scene}.plm --no-hud";
+        # `on-failure` is not enough for a scene the session cannot lose: when
+        # Hyprland restarts it closes its clients, the scene exits 0, and the
+        # bar stays gone until somebody starts it by hand. The bar and the
+        # always-resident scenes come back from any exit; `panels` keeps the
+        # failure-only policy, since it is the one scene that may close itself.
+        Restart = if builtins.elem scene pleamarResidentScenes then "always" else "on-failure";
         RestartSec = 5;
         # Starter ceilings (PH0) measured wrong: every scene sat pinned at the
         # 64M MemoryHigh, while the bar alone needs ~73M peak with no cap;
