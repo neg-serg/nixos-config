@@ -10,11 +10,12 @@ rustmission) | | `dosemu/` | DOSBox / dosemu configs | | `fastfetch/` | Fastfetc
 (skull) | | `git/` | Git config and ignore | | `gui/` | Hyprland, zellij, swayimg, vicinae configs |
 | `kitty/` | Kitty terminal | | `media/` | PipeWire / WirePlumber configs | | `mpv/` | MPV player
 configs | | `nvim/` | Neovim configuration | | `obsidian-vault/` | Obsidian vault seed | |
-`patches/` | Patch files used by packages | | `quickshell/` | Status bar and greeter | | `rmpc/` |
-RMPC music client configs | | `shell/` | Zsh, bash, environment | | `tealdeer/` | Tealdeer (tldr)
-config | | `transmission/` | Transmission daemon configs | | `vale/` | Vale prose linter styles | |
-`virt/` | Virtualisation configs (libvirt domains) | | `vivaldi/` | Vivaldi browser configs | |
-`winapps/` | WinApps (RDP bridge) app configs |
+`patches/` | Patch files used by packages | | `qs-wallpaperpicker/` | Wallpaper picker (standalone
+Quickshell config) | | `quickshell/` | Status bar and greeter | | `rmpc/` | RMPC music client
+configs | | `shell/` | Zsh, bash, environment | | `tealdeer/` | Tealdeer (tldr) config | |
+`transmission/` | Transmission daemon configs | | `vale/` | Vale prose linter styles | | `virt/` |
+Virtualisation configs (libvirt domains) | | `vivaldi/` | Vivaldi browser configs | | `winapps/` |
+WinApps (RDP bridge) app configs |
 
 Plus top-level `surfingkeys.js` (hand-written Surfingkeys config, wired via
 `packages/overlays/gui.nix`).

@@ -392,6 +392,10 @@ hl.bind(M4 .. "+f", hl.dsp.exec_cmd("aurora-focus"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class torrment -e rustmission' special"))
 hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty-glass --class vpn -e tun status' special"))
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch toggle mixer"))
+-- Wallpaper deck: opens over the current wallpaper and sets the card Enter lands
+-- on (unit + settings seed: modules/user/nix-maid/gui/wallpaper-picker.nix).
+-- M4+w raises the browser and M4+S+w is the player, so the deck sits on M4+C+w.
+hl.bind(M4 .. "+" .. C .. "+w", hl.dsp.exec_cmd("qs-wallpaperpicker toggle"), { locked = true })
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 -- --- Overview (hyprexpo) ───────────────────────────────────────────────
 -- `hypr-expo` (modules/user/nix-maid/hyprland/main.nix) is the same command the

@@ -13,6 +13,14 @@
     # default: wl-daemon owns the background layer, and a pinned full-screen
     # window covers it — the two wallpaper systems do not compose.
     wallpaperVideo = mkBool "enable the looped video wallpaper window (mpv + hyprwinwrap)" false;
+    # Swatch-deck wallpaper picker: a standalone Quickshell config (`qs -p
+    # ~/.config/qs-wallpaperpicker`), so it runs beside the bar instead of
+    # replacing it. Which folder it browses and which program paints the chosen
+    # picture is the settings seed owned by
+    # modules/user/nix-maid/gui/wallpaper-picker.nix (`wl img {}` on trantor).
+    wallpaperPicker = {
+      enable = mkBool "enable the Quickshell wallpaper picker (qs-wallpaperpicker)" false;
+    };
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     hyprwhspr.enable = mkBool "enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland)" false;
     hyprKdeconnect.enable = mkBool "enable hypr-kdeconnect-fix (RemoteDesktop portal backend feeding KDE Connect/Deskflow input into Hyprland's virtual-input protocols)" true;

@@ -10,6 +10,9 @@ REPO_ROOT="$(repo_root "${1:-}")"
 # Directories containing QML files
 QML_DIRS=(
   "$REPO_ROOT/files/quickshell"
+  # Vendored third-party tree (qs-wallpaperpicker, see files/qs-wallpaperpicker):
+  # parse check only — the qmllint pass and its baseline cover files/quickshell.
+  "$REPO_ROOT/files/qs-wallpaperpicker"
 )
 
 echo "Checking QML syntax..."
