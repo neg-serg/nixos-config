@@ -151,7 +151,6 @@ lint:
     bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-qml-lint.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-plm-theme.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
@@ -165,6 +164,13 @@ lint:
 # the binary is missing from PATH; also runs as part of `lint`.
 pleamar-check:
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}"
+
+# The palette gate: every scene that paints with `accent`, `coal`, `slate`, `ink`
+# or `ink.dim` must import theme.plm, or it is silently drawing the frozen
+# palette. Its own recipe rather than a line inside `lint`: that recipe keeps the
+# checks it had, and this one is opted into.
+plm-theme:
+    bash "{{repo_root}}/scripts/dev/check-plm-theme.sh" "{{repo_root}}"
 
 # The hostile-plugin gate: an unapproved plugin must be refused (and touch
 # nothing), the same plugin must run once approved. Runs in `lint` too.
