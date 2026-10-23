@@ -27,7 +27,7 @@ part Weather {
                 Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
                 text "Close" { at: 22 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
                 zone box close { from: 0, 0; size: 44 * scale, 20 * scale; corner: 10 * scale
-                    cursor: pointer; label: "Close {drawer}"; role: button }
+                    label: "Close {drawer}"; role: button }
                 on press close { drawer = none }
             }
 

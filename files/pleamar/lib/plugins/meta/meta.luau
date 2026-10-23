@@ -292,10 +292,24 @@ local function refresh()
     if not ok then clear() end
 end
 
-sys.watch("media", function(media)
+local function on_media(media)
     if type(media) ~= "table" then return end
     local key = tostring(media.title or "") .. "|" .. tostring(media.artist or "")
     if key == lastKey then return end
     lastKey = key
+    refresh()
+end
+
+sys.watch("media", on_media)
+
+-- The watch only reports *changes*: a track that was already playing when the
+-- scene started never produces one, and the card would sit with no tags at all
+-- until the next track — which reads as "the plugin does nothing". Ask once at
+-- load and keep asking every three seconds until the tags are there, then stop.
+local asked, current = pcall(sys.ask, "media")
+if asked and type(current) == "table" then on_media(current) end
+
+every(3000, function()
+    if lastFile or #model.rows > 0 then return end
     refresh()
 end)

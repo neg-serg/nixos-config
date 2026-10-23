@@ -34,21 +34,21 @@ part Calendar {
                 Capsule(24, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
                 text "‹" { at: 12 * scale, 10 * scale; anchor: center; size: 1 * type.body * text_scale * scale; color: ink }
                 zone box prev { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
-                    cursor: pointer; label: "Previous month"; role: button }
+                    label: "Previous month"; role: button }
                 on press prev { emit cal_prev }
             }
             group { move: 300 * scale, 10 * scale
                 Capsule(24, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
                 text "›" { at: 12 * scale, 10 * scale; anchor: center; size: 1 * type.body * text_scale * scale; color: ink }
                 zone box next { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
-                    cursor: pointer; label: "Next month"; role: button }
+                    label: "Next month"; role: button }
                 on press next { emit cal_next }
             }
             group { move: 336 * scale, 10 * scale
                 Capsule(30, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
                 text "Close" { at: 15 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
                 zone box close { from: 0, 0; size: 30 * scale, 20 * scale; corner: 10 * scale
-                    cursor: pointer; label: "Close {drawer}"; role: button }
+                    label: "Close {drawer}"; role: button }
                 on press close { drawer = none }
             }
             text cal.title { at: 168 * scale, 20 * scale; anchor: center; size: 1 * type.body * text_scale * scale; weight: 1 * weight.medium; color: accent }
@@ -76,7 +76,7 @@ part Calendar {
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; weight: 1 * weight.medium; color: accent; show: c.today }
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.off; show: not c.this }
                         zone box day { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
-                            cursor: pointer; label: c.label; role: button; selected: c.this and c.day == sel_day }
+                            label: c.label; role: button; selected: c.this and c.day == sel_day }
                         on press day { sel_day = c.day }
                     }
                 }

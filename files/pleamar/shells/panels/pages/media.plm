@@ -1,35 +1,40 @@
 // pages/media.plm — the now-playing card (`drawer == media`).
 //
-// Legacy: files/quickshell/Widgets/SidePanel/Music.qml (the card's content;
-// MusicPopup.qml is only the window and its auto-hide). What the card is, in
-// the reference's own words (Music.qml:705): "Track title removed on request:
-// the card carries the identity rows below and the bar keeps the title". So the
-// card is cover · identity rows · analyser band, bottom-anchored, and the
-// transport stays where QS keeps it — in the bar capsule, not here.
+// Legacy: files/quickshell/Widgets/SidePanel/Music.qml. The card is cover ·
+// identity rows · analyser band, bottom-anchored, and the transport stays where
+// QS keeps it — in the bar capsule, not here (Music.qml:705: "Track title
+// removed on request: the card carries the identity rows below and the bar
+// keeps the title"). There is no close button either: the reference closes on
+// Escape and on an outside press, and the drawer family already does both.
 //
-// Geometry from the reference tokens: card width `musicPopupWidth` 420, padding
-// `musicPopupPadding` 12, cover `sidePanelAlbumArtSize` 200, band height 84
-// with the scrub line pinned to its bottom edge. The card is square-cornered in
-// QS (`sidePanelCornerRadius` is 0); this drawer keeps the shell's own
-// `overlay.corner` so it matches its siblings — the one deliberate visual
-// deviation, and it is a token in palette.plm, not a number of its own.
+// Geometry from the reference's own tokens: `musicPopupWidth` 420 (Settings.json),
+// `sidePanel.albumArtSize` 200 (Theme/sidePanel.jsonc), padding 12, band 84 with
+// the scrub line on its bottom edge, and the type family `Theme.fontFamily` —
+// Iosevka — with the rows' DemiBold (MusicDetailRow sets `Font.DemiBold`).
 //
-// The rows are a model filled by panels.luau: a scene cannot ask whether a text
-// is empty (the language compares numbers only), and an icon without a value is
-// exactly the defect that rule exists to avoid. The logic reads the service and
-// the Meta plugin, drops the rows it has no value for, and the card draws only
-// what it is handed.
+// Every length here is a design-pixel literal inside `group zoom { scale }`:
+// `size:` and `weight:` take ONE number and drop the rest of the expression
+// (INTERFACES §9.2), so `size: 11 * scale` draws at 11 px no matter how large
+// the card is — the text stayed small while the card grew, which reads as "the
+// size is wrong and the fonts are wrong" at the same time. Scaling through the
+// group is the only way a text size follows the card.
 //
-// Deviation, recorded rather than invented: the band is display-only. `media`
-// answers `toggle`, `next`, `previous` and `choose` — there is no `seek` verb in
-// 0.4.11 (checked against the runtime, not assumed), so the QS scrubArea's
-// click-and-drag seek has no counterpart here.
-
-// The part is `NowPlaying`, not `Media`: an identifier is case-insensitive here,
-// so a part named after the drawer's own enum value shadows it and
+// The rows are two models, drawn one after the other: the service's own fields
+// (artist, album) and the tag rows the Meta plugin composes (genre, year,
+// label, composer, quality). A row arrives only when it has a value — a scene
+// cannot test a text for emptiness, and an icon with nothing after it is the
+// defect that rule exists to avoid.
+//
+// The band is display-only: `media` answers `toggle`, `next`, `previous` and
+// `choose` — there is no `seek` verb in 0.4.11 (checked against the runtime),
+// so the QS scrubArea's click-and-drag seek has no counterpart.
+//
+// The part is `NowPlaying`, not `Media`: an identifier is case-insensitive
+// here, so a part named after the drawer's own enum value shadows it and
 // `show: drawer == media` compares the fact with the part — the rule never
 // fires, the surface never opens, and the scene exits a couple of seconds after
-// the drawer is asked for. `Network` cost the same afternoon; see network.plm.
+// the drawer is asked for.
+
 part NowPlaying {
     component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
         size: 420 * scale, 312 * scale
@@ -37,75 +42,70 @@ part NowPlaying {
         group {
             move: (screen.width - 420 * scale) / 2, screen.height - (312 + bar.height + bar.gap) * scale + (1 - lift) * (312 + bar.height + bar.gap) * scale
 
-            // ----***----------------------------- the card
-            Capsule(420, 312, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: scale)
+            group zoom {
+                scale: scale
 
-            // ----***------------------------ album art
-            // The cover plugin resolves the real album-directory file behind the
-            // player's URL; with nothing resolvable it draws its own quiet plate,
-            // which is the reference's "album glyph on the plate" fallback.
-            group { move: 12 * scale, 12 * scale
-                Cover.Art(w: 200 * scale, h: 200 * scale)
-            }
+                // ----***------------------------- the card
+                Capsule(420, 312, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
 
-            // ----***--------------------- identity rows
-            // Two models, drawn one after the other: the service's own fields
-            // (artist, album — MPRIS through `media`) and the tag rows the Meta
-            // plugin composes (genre, year, label, composer, quality — MPRIS
-            // first, the file only for the quality line). Each row arrives only
-            // when it has a value, so nothing here is a slot waiting to be
-            // filled, and the icons stay the quiet `ink.dim` of the reference
-            // instead of the accent.
-            column rows {
-                at: 216 * scale, 12 * scale
-                view: 192 * scale, 200 * scale
-                gap: 1 * scale
-                for r in media_rows {
-                    group {
-                        size: 192 * scale, 17 * scale
-                        text r.glyph { at: 0, 8 * scale; anchor: left center; family: "Material Symbols Outlined"
-                            size: 12 * text_scale * scale; color: ink.dim }
-                        text r.value { at: 17 * scale, 8 * scale; anchor: left center; width: 175 * scale; lines: 1
-                            size: 11 * text_scale * scale; color: ink }
+                // ----***--------------------- album art
+                // The cover plugin resolves the real album-directory file behind
+                // the player's URL; with nothing resolvable it draws its own
+                // quiet plate, which is the reference's fallback.
+                group { move: 12, 12
+                    Cover.Art(w: 200, h: 200)
+                }
+
+                // ----***------------------ identity rows
+                column rows {
+                    at: 216, 12
+                    view: 192, 200
+                    gap: 1
+                    for r in media_rows {
+                        group {
+                            size: 192, 17
+                            text r.glyph { at: 0, 8; anchor: left center
+                                family: "Material Symbols Outlined"; size: 12; color: ink.dim }
+                            text r.value { at: 17, 8; anchor: left center; width: 175; lines: 1
+                                family: "Iosevka"; weight: 600; size: 11; color: ink }
+                        }
+                    }
+                    for r in Meta.rows {
+                        group {
+                            size: 192, 17
+                            text r.glyph { at: 0, 8; anchor: left center
+                                family: "Material Symbols Outlined"; size: 12; color: ink.dim }
+                            text r.value { at: 17, 8; anchor: left center; width: 175; lines: 1
+                                family: "Iosevka"; weight: 600; size: 11; color: ink }
+                        }
                     }
                 }
-                for r in Meta.rows {
-                    group {
-                        size: 192 * scale, 17 * scale
-                        text r.glyph { at: 0, 8 * scale; anchor: left center; family: "Material Symbols Outlined"
-                            size: 12 * text_scale * scale; color: ink.dim }
-                        text r.value { at: 17 * scale, 8 * scale; anchor: left center; width: 175 * scale; lines: 1
-                            size: 11 * text_scale * scale; color: ink }
-                    }
+
+                // ----***---------- analyser band (bottom edge)
+                // QS draws IPhoneSpectrum here, one-sided, with the scrub line
+                // over its bottom edge; panels.plm sets `Spectrum.mirror`.
+                group { move: 12, 216
+                    spec.Bars(width: 396, height: 84, tone: accent, end: highlight, gap: 0)
                 }
-            }
 
-            // ----***------------- analyser band (bottom edge)
-            // QS draws IPhoneSpectrum here with `mirror = false` and the scrub
-            // line over its bottom edge; panels.plm sets `Spectrum.mirror` once
-            // for this drawer.
-            group { move: 12 * scale, 216 * scale
-                spec.Bars(width: 396 * scale, height: 84 * scale, tone: accent, end: highlight, gap: 0)
-            }
+                // The scrub line: track at 14 %, fill on top of it.
+                box { from: 12, 297; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
+                box { from: 12, 297; corner: 1.5
+                    size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 3
+                    color: accent }
+                text "{media.position, time} / {media.length, time}" {
+                    at: 12, 306; anchor: left bottom
+                    family: "Iosevka"; size: 9; color: ink.dim }
 
-            // The scrub line: track at 14 %, fill on top of it.
-            box { from: 12 * scale, 297 * scale; size: 396 * scale, 3 * scale; corner: 1.5 * scale
-                color: accent; opacity: 14% }
-            box { from: 12 * scale, 297 * scale; corner: 1.5 * scale
-                size: 396 * clamp(media.position / max(media.length, 1), 0, 1) * scale, 3 * scale
-                color: accent }
-            text "{media.position, time} / {media.length, time}" {
-                at: 12 * scale, 306 * scale; anchor: left bottom
-                size: 9 * text_scale * scale; color: ink.dim }
-
-            // ----***-------------------- nothing playing
-            // The reference replaces the whole content with a centred glyph and
-            // this sentence when no player reports a track.
-            group { show: media_rows.total == 0
-                text "music_note" { at: 210 * scale, 140 * scale; anchor: center; family: "Material Symbols Outlined"
-                    size: 28 * text_scale * scale; color: ink.dim }
-                text "No music player detected" { at: 210 * scale, 172 * scale; anchor: center
-                    size: 1 * type.caption * text_scale * scale; color: ink.off }
+                // ----***---------------- nothing playing
+                // The reference replaces the content with a centred glyph and a
+                // sentence when no player reports a track.
+                group { show: media_rows.total == 0
+                    text "music_note" { at: 210, 140; anchor: center
+                        family: "Material Symbols Outlined"; size: 28; color: ink.dim }
+                    text "No music player detected" { at: 210, 172; anchor: center
+                        family: "Iosevka"; size: 12; color: ink.off }
+                }
             }
         }
     }
