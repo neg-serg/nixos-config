@@ -264,12 +264,19 @@ local WS_GLYPH = {
     [19] = "\u{F02C1}", -- rack
 }
 
--- The name without the glyph prefix Hyprland keeps in it ("<icon>:term" -> "term").
+-- The name as Hyprland stores it, minus a leading private-use glyph — the rule QS
+-- keeps in Helpers/WorkspaceName.js (`restAfterIcon`): one leading glyph, nothing
+-- else. This used to cut everything up to the first colon, so a workspace the owner
+-- named "p:term" was drawn as "term" and the port disagreed with the reference about
+-- a name it had no business editing (measured on the bars: QS "p:term", here "term").
 local function label_of(name)
-    if type(name) ~= "string" then return "" end
-    local rest = name:match("^[^:]*:(.*)$")
-    if rest and rest ~= "" then return rest end
-    return name
+    if type(name) ~= "string" or name == "" then return "" end
+    local ok, cp = pcall(utf8.codepoint, name, 1)
+    if ok and cp >= 0xE000 and cp <= 0xF8FF then
+        local after = utf8.offset(name, 2) or (#name + 1)
+        name = name:sub(after)
+    end
+    return (name:gsub("^%s+", ""))
 end
 
 local function workspacesChanged(w)
