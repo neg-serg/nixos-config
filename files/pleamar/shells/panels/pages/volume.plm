@@ -37,7 +37,7 @@ part Volume {
                 Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
                 text "Close" { at: 22 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
                 zone box close { from: 0, 0; size: 44 * scale, 20 * scale; corner: 10 * scale
-                    cursor: pointer; label: "Close {drawer}"; role: button }
+                    label: "Close {drawer}"; role: button }
                 on press close { drawer = none }
             }
 
@@ -55,7 +55,7 @@ part Volume {
             ellipse { at: 14 * scale + 216 * audio.volume * scale, 77 * scale; radius: 6 * scale; color: ink }
             text "{audio.volume * 100, 0} %" { at: 240 * scale, 77 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink }
             zone box vol_out { from: 14 * scale, 64 * scale; size: 216 * scale, 26 * scale; corner: 13 * scale
-                cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
+                label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
             on press vol_out { emit set_out(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
             on drag vol_out { emit set_out(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
 
@@ -63,7 +63,7 @@ part Volume {
                 Capsule(52, 22, fill: slate, alpha: pick(audio.muted, 60%, 100%), radius: 11, scale: scale)
                 text pick(audio.muted, "Mute", "Unmute") { at: 26 * scale, 11 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: pick(audio.muted, ink, on.accent) }
                 zone box mute_out { from: 0, 0; size: 52 * scale, 22 * scale; corner: 11 * scale
-                    cursor: pointer; label: pick(audio.muted, "Mute output", "Unmute output"); role: toggle; checked: audio.muted }
+                    label: pick(audio.muted, "Mute output", "Unmute output"); role: toggle; checked: audio.muted }
                 on press mute_out { emit toggle_out }
             }
 
@@ -74,7 +74,7 @@ part Volume {
                     Capsule(88, 16, fill: slate, alpha: pick(o.default, 55%, 100%), radius: 8, scale: scale)
                     text "{o.name}" { at: 44 * scale, 8 * scale; anchor: center; width: 80 * scale; lines: 1; size: 1 * type.caption * text_scale * scale; color: pick(o.default, ink.dim, ink) }
                     zone box out_chip { from: 0, 0; size: 88 * scale, 16 * scale; corner: 8 * scale
-                        cursor: pointer; label: "Output device {o.name}"; role: button; checked: o.default }
+                        label: "Output device {o.name}"; role: button; checked: o.default }
                     on press out_chip { emit set_default_out(o.index) }
                 }
             }
@@ -93,7 +93,7 @@ part Volume {
             ellipse { at: 14 * scale + 216 * audio.input * scale, 165 * scale; radius: 6 * scale; color: ink }
             text "{audio.input * 100, 0} %" { at: 240 * scale, 165 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink }
             zone box vol_in { from: 14 * scale, 152 * scale; size: 216 * scale, 26 * scale; corner: 13 * scale
-                cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
+                label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on press vol_in { emit set_in(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
             on drag vol_in { emit set_in(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
 
@@ -101,7 +101,7 @@ part Volume {
                 Capsule(52, 22, fill: slate, alpha: pick(audio.input_muted, 60%, 100%), radius: 11, scale: scale)
                 text pick(audio.input_muted, "Mute", "Unmute") { at: 26 * scale, 11 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: pick(audio.input_muted, ink, on.accent) }
                 zone box mute_in { from: 0, 0; size: 52 * scale, 22 * scale; corner: 11 * scale
-                    cursor: pointer; label: pick(audio.input_muted, "Mute microphone", "Unmute microphone"); role: toggle; checked: audio.input_muted }
+                    label: pick(audio.input_muted, "Mute microphone", "Unmute microphone"); role: toggle; checked: audio.input_muted }
                 on press mute_in { emit toggle_in }
             }
 
@@ -111,7 +111,7 @@ part Volume {
                     Capsule(88, 16, fill: slate, alpha: pick(i.default, 55%, 100%), radius: 8, scale: scale)
                     text "{i.name}" { at: 44 * scale, 8 * scale; anchor: center; width: 80 * scale; lines: 1; size: 1 * type.caption * text_scale * scale; color: pick(i.default, ink.dim, ink) }
                     zone box in_chip { from: 0, 0; size: 88 * scale, 16 * scale; corner: 8 * scale
-                        cursor: pointer; label: "Input device {i.name}"; role: button; checked: i.default }
+                        label: "Input device {i.name}"; role: button; checked: i.default }
                     on press in_chip { emit set_default_in(i.index) }
                 }
             }
@@ -138,7 +138,7 @@ part Volume {
                         ellipse { at: 104 * scale + 120 * s.volume * scale, 16 * scale; radius: 4 * scale; color: ink }
                         text "{s.volume * 100, 0} %" { at: 238 * scale, 16 * scale; anchor: right center; width: 34 * scale; size: 1 * type.caption * text_scale * scale; color: ink.dim }
                         zone box app_vol { from: 104 * scale, 4 * scale; size: 120 * scale, 26 * scale; corner: 13 * scale
-                            cursor: pointer; label: "Volume {s.name} {s.index, 0}"; role: slider; value: "{s.volume * 100, 0} %" }
+                            label: "Volume {s.name} {s.index, 0}"; role: slider; value: "{s.volume * 100, 0} %" }
                         on press app_vol { emit app_set(s.index * 1000 + round(clamp((local.x - 104 * scale) / (120 * scale), 0, 1) * 1000)) }
                         on drag app_vol { emit app_set(s.index * 1000 + round(clamp((local.x - 104 * scale) / (120 * scale), 0, 1) * 1000)) }
 
@@ -146,7 +146,7 @@ part Volume {
                             Capsule(46, 18, fill: slate, alpha: pick(s.muted, 60%, 100%), radius: 9, scale: scale)
                             text pick(s.muted, "Mute", "Unmute") { at: 23 * scale, 9 * scale; anchor: center; size: 9 * text_scale * scale; color: pick(s.muted, ink, on.accent) }
                             zone box mute_row { from: 0, 0; size: 46 * scale, 18 * scale; corner: 9 * scale
-                                cursor: pointer; label: "Mute {s.name} {s.index, 0}"; role: toggle; checked: s.muted }
+                                label: "Mute {s.name} {s.index, 0}"; role: toggle; checked: s.muted }
                             on press mute_row { emit app_mute(s.index) }
                         }
                     }

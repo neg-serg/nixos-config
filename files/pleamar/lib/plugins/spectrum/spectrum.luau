@@ -161,9 +161,29 @@ end
 -- Asked once as well as watched: a track that was already playing when the
 -- scene started is in the service, but the first delivery of a watch can be the
 -- empty one (the service was not up yet), and then the analyser never starts —
--- which looks exactly like a broken analyser.
-local asked, now = pcall(sys.ask, "media")
-if asked and type(now) == "table" then on_media(now) end
+-- which looks exactly like a broken analyser. What the service actually answers
+-- here is logged once per distinct answer, so a silent analyser can be told
+-- from a misreading one.
+local lastAnswer = nil
+
+local function probe(why)
+    local ok, cur = pcall(sys.ask, "media")
+    local answer
+    if not ok then
+        answer = "ask failed: " .. tostring(cur)
+    elseif type(cur) ~= "table" then
+        answer = "no record: " .. type(cur)
+    else
+        answer = "playing=" .. tostring(cur.playing) .. " player=" .. tostring(cur.player)
+    end
+    if answer ~= lastAnswer then
+        lastAnswer = answer
+        log("spectrum: media (" .. why .. ") " .. answer)
+    end
+    if ok and type(cur) == "table" then on_media(cur) end
+end
+
+probe("load")
 
 if not sys.watch("media", on_media) then
     -- No media service on this system: the analyser runs and reads silence.
@@ -176,6 +196,5 @@ end
 -- the analyser is up.
 every(2000, function()
     if playing then return end
-    local ok, cur = pcall(sys.ask, "media")
-    if ok and type(cur) == "table" then on_media(cur) end
+    probe("poll")
 end)

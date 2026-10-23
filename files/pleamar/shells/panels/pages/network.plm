@@ -56,34 +56,34 @@ part NetPanel {
                 Capsule(470, 338, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
 
                 // ----***------------------------ header
-                text "flow" { at: 14, 20; anchor: left center; size: 16; weight: 500; color: ink }
+                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 16; weight: 600; color: ink }
 
                 group { move: 62, 9
                     Capsule(96, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
-                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; size: 12; color: ink }
+                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 12; color: ink }
                 }
 
                 ellipse { at: 348, 20; radius: 4; color: accent; opacity: pick(net_live, 100%, 30%) }
-                text "LIVE" { at: 358, 20; anchor: left center; size: 9; color: ink.dim }
+                text "LIVE" { at: 358, 20; anchor: left center; family: "Iosevka"; size: 9; color: ink.dim }
 
                 group { move: 408, 9
                     Capsule(48, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
-                    text "Close" { at: 24, 11; anchor: center; size: 12; color: ink }
+                    text "Close" { at: 24, 11; anchor: center; family: "Iosevka"; size: 12; color: ink }
                     zone box close { from: 0, 0; size: 48, 22; corner: 11
-                        cursor: pointer; label: "Close {drawer}"; role: button }
+                        label: "Close {drawer}"; role: button }
                     on press close { drawer = none }
                 }
 
                 box { from: 12, 36; size: 446, 1; color: ink; opacity: ink.subtle }
 
                 // ----***----------------------- readouts
-                text "{net.rx}" { at: 14, 64; anchor: left center; size: 32; weight: 500; color: highlight }
-                text "download" { at: 14, 86; anchor: left center; size: 12; color: ink.dim }
-                text "peak {net.peak_rx}" { at: 14, 104; anchor: left center; size: 10; color: ink.off }
+                text "{net.rx}" { at: 14, 64; anchor: left center; family: "Iosevka"; size: 32; weight: 600; color: highlight }
+                text "download" { at: 14, 86; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
+                text "peak {net.peak_rx}" { at: 14, 104; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
-                text "{net.tx}" { at: 240, 64; anchor: left center; size: 32; weight: 500; color: amber }
-                text "upload" { at: 240, 86; anchor: left center; size: 12; color: ink.dim }
-                text "peak {net.peak_tx}" { at: 240, 104; anchor: left center; size: 10; color: ink.off }
+                text "{net.tx}" { at: 240, 64; anchor: left center; family: "Iosevka"; size: 32; weight: 600; color: amber }
+                text "upload" { at: 240, 86; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
+                text "peak {net.peak_tx}" { at: 240, 104; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
                 // ----***-------------------------- floor
                 // The plane the two rows stand on: a front edge, the receding
@@ -118,9 +118,9 @@ part NetPanel {
                         size: column.w, 1.1; color: ink; opacity: 70% }
                 }
 
-                text "waiting for flow…" { at: 235, 165; anchor: center; size: 12; color: ink.off
+                text "waiting for flow…" { at: 235, 165; anchor: center; family: "Iosevka"; size: 12; color: ink.off
                     show: flow.total == 0 }
-                text "{net.err}" { at: 235, 236; anchor: center; size: 11; color: warn }
+                text "{net.err}" { at: 235, 236; anchor: center; family: "Iosevka"; size: 11; color: warn }
             }
         }
     }
