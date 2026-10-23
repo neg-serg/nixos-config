@@ -151,6 +151,7 @@ lint:
     bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-qml-lint.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-plm-theme.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
@@ -169,6 +170,15 @@ pleamar-check:
 # nothing), the same plugin must run once approved. Runs in `lint` too.
 plugin-sandbox:
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}"
+
+# Measure the bar's widgets against the reference's, window by window: the drift
+# of the ink profile (gated at 4 logical px) and the icon pairs of the right
+# window (gated at 4 px of position and 3 of width). The left window's ink
+# profile and run table are printed and not gated — that window carries the
+# throughput digits and the weather, which differ between the bars by
+# construction. `--shot FILE` measures an existing frame.
+parity-clusters *ARGS:
+    bash "{{repo_root}}/scripts/dev/parity-clusters.sh" "{{repo_root}}" {{ARGS}}
 
 # Measure the pleamar bar against the live Quickshell bar, pixel by pixel:
 # captures the bar strip before (quickshell) and while the pleamar scene is up,
