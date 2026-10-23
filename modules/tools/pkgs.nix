@@ -14,6 +14,7 @@
     pkgs.nix-output-monitor # fancy nix output (nom)
     pkgs.npins # dependency pinning (Rust, alternative to niv)
     pkgs.nix-fast-build # parallel evaluation+building with log renderer
+    pkgs.nix-eval-jobs # parallel flake evaluator behind nix-fast-build; does the cache-status preflight for `just preflight`
     pkgs.dix # diff closures: dix /run/current-system result (Rust rewrite of nvd)
     pkgs.nix-melt # TUI for nix flake lock --update
     pkgs.neg.nixard # TUI for exploring NixOS package closures and generating Nix declarations
