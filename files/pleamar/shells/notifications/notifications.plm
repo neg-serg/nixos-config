@@ -224,7 +224,7 @@ scene notifications {
     component ToastCard(t: record, scale: number) {
         size: 340 * scale, 96 * scale
 
-        Capsule(340, 96, fill: notify.tone, alpha: 94%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 30%, shadow: 45%, scale: scale) { }
+        Capsule(340, 96, fill: notify.tone, alpha: 95%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 12%, shadow: 45%, scale: scale) { }
         box { from: 2 * scale, 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(t.urgency == 2, warn, if(t.urgency == 1, amber, notify.accent)) }
         image t.pic { at: 12 * scale, 18 * scale; size: 44 * scale, 44 * scale }
         text t.title { at: 66 * scale, 24 * scale; anchor: left center; width: 230 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
@@ -280,7 +280,7 @@ scene notifications {
 
         group dim { opacity: if(n.old == 1, 74%, 100%)
             group bg { move: 0, oy
-                Capsule(336, 96, fill: notify.tone, alpha: 94%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 30%, scale: scale) { }
+                Capsule(336, 96, fill: notify.tone, alpha: 95%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 12%, shadow: 30%, scale: scale) { }
             }
             box { from: 2 * scale, oy + 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(n.urgency == 2, warn, if(n.urgency == 1, amber, notify.accent)) }
             image n.pic { at: 12 * scale, oy + 18 * scale; size: 40 * scale, 40 * scale }

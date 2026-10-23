@@ -42,16 +42,16 @@
 
 part NowPlaying {
     component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
-        size: 420 * scale, 324 * scale
+        size: 420 * scale, 316 * scale
 
         group {
-            move: screen.width - (420 + 4) * scale, screen.height - (324 + bar.height + 1) * scale + (1 - lift) * (324 + bar.height + 1) * scale
+            move: screen.width - (420 + 4) * scale, screen.height - (316 + bar.height + 1) * scale + (1 - lift) * (316 + bar.height + 1) * scale
 
             group zoom {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(420, 324, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: 1)
+                Capsule(420, 316, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: 1)
 
                 // ----***--------------------- album art
                 // The cover plugin resolves the real album-directory file behind
@@ -81,19 +81,15 @@ part NowPlaying {
                 // QS draws IPhoneSpectrum here, one-sided, with the scrub line
                 // under it; panels.plm sets `Spectrum.mirror`.
                 group { move: 12, 220
-                    spec.Bars(width: 396, height: 76, tone: accent, end: highlight, gap: 0)
+                    spec.Bars(width: 396, height: 80, tone: accent, end: highlight, gap: 0)
                 }
 
-                // ----***------------------- times and scrub line
-                // The times sit above the line, one at each end: on the line they
-                // were unreadable where the fill ran under them.
-                text "{media.position, time}" { at: 12, 296; anchor: left bottom
-                    family: "Iosevka"; size: 9; color: ink.dim }
-                text "{media.length, time}" { at: 408, 296; anchor: right bottom
-                    family: "Iosevka"; size: 9; color: ink.dim }
-
-                box { from: 12, 303; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
-                box { from: 12, 303; corner: 1.5
+                // ----***----------------------- scrub line
+                // On the band's bottom edge, full width, as Music.qml anchors it.
+                // The elapsed and total timestamps belong to the hover preview in
+                // the reference, so at rest the card shows none.
+                box { from: 12, 300; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
+                box { from: 12, 300; corner: 1.5
                     size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 3
                     color: accent }
 
