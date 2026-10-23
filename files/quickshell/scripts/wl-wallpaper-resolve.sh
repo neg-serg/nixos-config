@@ -10,10 +10,16 @@
 # jump/flash exactly when the lock is released, so both ask this script.
 #
 # Priority — the first candidate that is a readable file wins:
-#   1. wl state.json                      — what the session itself uses
-#   2. ~/.cache/quickshell-wallpaper-path — what wl wrote last (wl-state-sync)
+#   1. ~/.cache/quickshell-wallpaper-path — what the session last applied, whichever
+#                                           program applied it: wl-state-sync writes it
+#                                           in wl mode, the picker's scripts/wallpaper-apply
+#                                           writes it while the picker paints (the default)
+#   2. wl state.json                      — what the wl daemon itself uses
 #   3. last-good                          — last path that existed when checked
 #   4. any image in ~/pic/wl (random)     — keeps a fresh install from a blank screen
+#
+# The notify file goes first because in picker mode wl's state is a leftover from
+# before the switch and would pin the login screen to the old wallpaper.
 #
 # 2026-09-19: state.json and the notify file both named
 # ~/pic/wl/light/ball_glow_light_192913_3840x2400.jpg, which no longer exists
@@ -52,12 +58,12 @@ usable() {
   return 1
 }
 
-if [ -r "$state" ]; then
-  usable "$(jq -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state" 2> /dev/null || true)" && exit 0
-fi
-
 if [ -r "$notify" ]; then
   usable "$(head -n1 "$notify" 2> /dev/null || true)" && exit 0
+fi
+
+if [ -r "$state" ]; then
+  usable "$(jq -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state" 2> /dev/null || true)" && exit 0
 fi
 
 if [ -r "$last_good" ]; then

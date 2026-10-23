@@ -6,6 +6,10 @@
 }:
 let
   cfg = config.features.gui;
+  # The picker paints the background when its drawsWallpaper flag is on; the wl units
+  # below then skip on the marker it publishes (modules/user/nix-maid/gui/wallpaper-picker.nix).
+  pickerDraws = config.lib.neg.wallpaperPickerDraws;
+  pickerOwnsBackground = lib.optional pickerDraws "!/etc/wallpaper-owner/picker";
   jq = lib.getExe' pkgs.jq "jq";
   systemdUser = config.lib.neg.systemdUser;
   mainHome = config.lib.neg.homeDir;
@@ -178,6 +182,9 @@ lib.mkIf (cfg.enable or false) {
     unitConfig = {
       StartLimitIntervalSec = "60";
       StartLimitBurst = "10";
+      # Skipped, not failed, while the picker owns the layer: hyprland.lua, the
+      # greeter's lock and wl-restore all start this unit by name.
+      ConditionPathExists = pickerOwnsBackground;
     };
     serviceConfig = {
       Type = "simple";
@@ -203,6 +210,9 @@ lib.mkIf (cfg.enable or false) {
     unitConfig = {
       StartLimitIntervalSec = "60";
       StartLimitBurst = "10";
+      # Nothing to re-apply: with the picker drawing, `wl restore` would paint a
+      # second background from a state file that is no longer maintained.
+      ConditionPathExists = pickerOwnsBackground;
     };
     serviceConfig = {
       Type = "simple";
@@ -264,6 +274,9 @@ lib.mkIf (cfg.enable or false) {
     # greeter chain stayed dead for the rest of the session.
     unitConfig = {
       StartLimitIntervalSec = 0;
+      # wl's state.json is a leftover once the picker paints; letting this oneshot
+      # run would overwrite the notify file with that stale path.
+      ConditionPathExists = pickerOwnsBackground;
     };
   };
 
@@ -271,6 +284,7 @@ lib.mkIf (cfg.enable or false) {
     description = "Watch wl state.json for wallpaper changes";
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
+    unitConfig.ConditionPathExists = pickerOwnsBackground;
     pathConfig = {
       PathChanged = "%h/.local/state/wl/state.json";
       Unit = "wl-state-sync.service";
