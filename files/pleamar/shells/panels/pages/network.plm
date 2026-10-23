@@ -56,7 +56,7 @@ part NetPanel {
                 Capsule(470, 338, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
 
                 // ----***------------------------ header
-                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 16; weight: 600; color: ink }
+                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: ink }
 
                 group { move: 62, 9
                     Capsule(96, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
@@ -77,11 +77,11 @@ part NetPanel {
                 box { from: 12, 36; size: 446, 1; color: ink; opacity: ink.subtle }
 
                 // ----***----------------------- readouts
-                text "{net.rx}" { at: 14, 64; anchor: left center; family: "Iosevka"; size: 32; weight: 600; color: highlight }
+                text "{net.rx}" { at: 14, 64; anchor: left center; family: "Iosevka"; size: 32; color: highlight }
                 text "download" { at: 14, 86; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
                 text "peak {net.peak_rx}" { at: 14, 104; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
-                text "{net.tx}" { at: 240, 64; anchor: left center; family: "Iosevka"; size: 32; weight: 600; color: amber }
+                text "{net.tx}" { at: 240, 64; anchor: left center; family: "Iosevka"; size: 32; color: amber }
                 text "upload" { at: 240, 86; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
                 text "peak {net.peak_tx}" { at: 240, 104; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
@@ -104,7 +104,7 @@ part NetPanel {
                 for v in flow {
                     box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
                         size: column.w, max(v.tx / max(net_max_tx, 1) * 150, 1.5)
-                        color: amber; opacity: 40% }
+                        color: amber; opacity: 40%; show: v.tx > 200 }
                     box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
                         size: column.w, 1.1; color: amber; opacity: 95% }
                 }
@@ -113,7 +113,7 @@ part NetPanel {
                 for v in flow {
                     box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
                         size: column.w, max(v.rx / max(net_max_rx, 1) * 176, 1.5)
-                        color: highlight; opacity: 62% }
+                        color: highlight; opacity: 62%; show: v.rx > 200 }
                     box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
                         size: column.w, 1.1; color: ink; opacity: 70% }
                 }

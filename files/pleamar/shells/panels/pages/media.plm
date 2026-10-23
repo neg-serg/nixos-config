@@ -5,48 +5,53 @@
 // QS keeps it — in the bar capsule, not here (Music.qml:705: "Track title
 // removed on request: the card carries the identity rows below and the bar
 // keeps the title"). There is no close button either: the reference closes on
-// Escape and on an outside press, and the drawer family already does both.
+// Escape and on an outside press, and the drawer family does both.
 //
-// Geometry from the reference's own tokens: `musicPopupWidth` 420 (Settings.json),
-// `sidePanel.albumArtSize` 200 (Theme/sidePanel.jsonc), padding 12, band 84 with
-// the scrub line on its bottom edge, and the type family `Theme.fontFamily` —
-// Iosevka — with the rows' DemiBold (MusicDetailRow sets `Font.DemiBold`).
+// Layout, from the reference's own tokens — `musicPopupWidth` 420
+// (Settings.json), `sidePanel.albumArtSize` 200 (Theme/sidePanel.jsonc), padding
+// 12, band 76 with the scrub line under it:
 //
-// Every length here is a design-pixel literal inside `group zoom { scale }`:
-// `size:` and `weight:` take ONE number and drop the rest of the expression
-// (INTERFACES §9.2), so `size: 11 * scale` draws at 11 px no matter how large
-// the card is — the text stayed small while the card grew, which reads as "the
-// size is wrong and the fonts are wrong" at the same time. Scaling through the
-// group is the only way a text size follows the card.
+//     +--------------------------------------------------+
+//     | [cover 200]  rows: icon + value, 18 apart        |
+//     |                                                  |
+//     | band (analyser)                                  |
+//     | elapsed                                     total|
+//     | ================ scrub line ==================== |
+//     +--------------------------------------------------+
 //
-// The rows are two models, drawn one after the other: the service's own fields
-// (artist, album) and the tag rows the Meta plugin composes (genre, year,
-// label, composer, quality). A row arrives only when it has a value — a scene
-// cannot test a text for emptiness, and an icon with nothing after it is the
-// defect that rule exists to avoid.
+// Every element has its own coordinates and its own box: nothing is stacked by
+// a layout that could change its mind. That is deliberate — a `column` sizes
+// itself to what it holds, so the block moved a few pixels whenever a tag row
+// appeared or a value grew, which reads as the card twitching around its centre.
+// Rows sit at `12 + index * 18` instead, and the tag rows continue from the
+// number of service rows (`media_rows.total`), so a row never lands on another.
 //
-// The band is display-only: `media` answers `toggle`, `next`, `previous` and
-// `choose` — there is no `seek` verb in 0.4.11 (checked against the runtime),
-// so the QS scrubArea's click-and-drag seek has no counterpart.
+// Icon and value are anchored by their **bottom** edge, on the same line: a
+// Material glyph and a text centred at the same y do not share an optical
+// baseline, and the icons looked like they were floating.
 //
-// The part is `NowPlaying`, not `Media`: an identifier is case-insensitive
-// here, so a part named after the drawer's own enum value shadows it and
+// Every length is a design-pixel literal inside `group zoom { scale }`: `size:`
+// and `weight:` take ONE number and drop the rest of the expression
+// (INTERFACES §9.2), so `size: 11 * scale` draws at 11 px while the card grows.
+//
+// The part is `NowPlaying`, not `Media`: an identifier is case-insensitive here,
+// so a part named after the drawer's own enum value shadows it and
 // `show: drawer == media` compares the fact with the part — the rule never
 // fires, the surface never opens, and the scene exits a couple of seconds after
 // the drawer is asked for.
 
 part NowPlaying {
     component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
-        size: 420 * scale, 312 * scale
+        size: 420 * scale, 324 * scale
 
         group {
-            move: (screen.width - 420 * scale) / 2, screen.height - (312 + bar.height + bar.gap) * scale + (1 - lift) * (312 + bar.height + bar.gap) * scale
+            move: (screen.width - 420 * scale) / 2, screen.height - (324 + bar.height + bar.gap) * scale + (1 - lift) * (324 + bar.height + bar.gap) * scale
 
             group zoom {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(420, 312, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
+                Capsule(420, 324, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
 
                 // ----***--------------------- album art
                 // The cover plugin resolves the real album-directory file behind
@@ -57,54 +62,47 @@ part NowPlaying {
                 }
 
                 // ----***------------------ identity rows
-                column rows {
-                    at: 216, 12
-                    view: 192, 200
-                    gap: 1
-                    for r in media_rows {
-                        group {
-                            size: 192, 17
-                            text r.glyph { at: 0, 8; anchor: left center
-                                family: "Material Symbols Outlined"; size: 12; color: ink.dim }
-                            text r.value { at: 17, 8; anchor: left center; width: 175; lines: 1
-                                family: "Iosevka"; weight: 600; size: 11; color: ink }
-                        }
-                    }
-                    for r in Meta.rows {
-                        group {
-                            size: 192, 17
-                            text r.glyph { at: 0, 8; anchor: left center
-                                family: "Material Symbols Outlined"; size: 12; color: ink.dim }
-                            text r.value { at: 17, 8; anchor: left center; width: 175; lines: 1
-                                family: "Iosevka"; weight: 600; size: 11; color: ink }
-                        }
-                    }
+                // Row n sits at 12 + n * 18; the tag rows continue after the
+                // service's own, and the whole block ends before the band.
+                for r in media_rows {
+                    text r.glyph { at: 216, 12 + r.index * 18 + 13; anchor: left bottom
+                        family: "Material Symbols Outlined"; size: 11; color: ink.dim }
+                    text r.value { at: 234, 12 + r.index * 18 + 13; anchor: left bottom; width: 174; lines: 1
+                        family: "Iosevka"; weight: 700; size: 11; color: ink }
+                }
+                for r in Meta.rows {
+                    text r.glyph { at: 216, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom
+                        family: "Material Symbols Outlined"; size: 11; color: ink.dim }
+                    text r.value { at: 234, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom; width: 174; lines: 1
+                        family: "Iosevka"; weight: 700; size: 11; color: ink }
                 }
 
-                // ----***---------- analyser band (bottom edge)
+                // ----***---------- analyser band
                 // QS draws IPhoneSpectrum here, one-sided, with the scrub line
-                // over its bottom edge; panels.plm sets `Spectrum.mirror`.
-                group { move: 12, 216
-                    spec.Bars(width: 396, height: 84, tone: accent, end: highlight, gap: 0)
+                // under it; panels.plm sets `Spectrum.mirror`.
+                group { move: 12, 220
+                    spec.Bars(width: 396, height: 76, tone: accent, end: highlight, gap: 0)
                 }
 
-                // The scrub line: track at 14 %, fill on top of it.
-                box { from: 12, 297; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
-                box { from: 12, 297; corner: 1.5
-                    size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 3
-                    color: accent }
-                text "{media.position, time} / {media.length, time}" {
-                    at: 12, 306; anchor: left bottom
+                // ----***------------------- times and scrub line
+                // The times sit above the line, one at each end: on the line they
+                // were unreadable where the fill ran under them.
+                text "{media.position, time}" { at: 12, 296; anchor: left bottom
+                    family: "Iosevka"; size: 9; color: ink.dim }
+                text "{media.length, time}" { at: 408, 296; anchor: right bottom
                     family: "Iosevka"; size: 9; color: ink.dim }
 
+                box { from: 12, 303; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
+                box { from: 12, 303; corner: 1.5
+                    size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 3
+                    color: accent }
+
                 // ----***---------------- nothing playing
-                // The reference replaces the content with a centred glyph and a
-                // sentence when no player reports a track.
                 group { show: media_rows.total == 0
-                    text "music_note" { at: 210, 140; anchor: center
+                    text "music_note" { at: 210, 146; anchor: center
                         family: "Material Symbols Outlined"; size: 28; color: ink.dim }
-                    text "No music player detected" { at: 210, 172; anchor: center
-                        family: "Iosevka"; size: 12; color: ink.off }
+                    text "No music player detected" { at: 210, 178; anchor: center
+                        family: "Iosevka"; size: 11; color: ink.off }
                 }
             }
         }
