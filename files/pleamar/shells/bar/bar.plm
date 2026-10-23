@@ -362,13 +362,17 @@ scene bar {
         // The glyph and the label are laid out side by side; the glyph's width
         // is only known once it is shaped, so it is measured.
         measure glyph
-        size: 38 * scale, strip * scale
+        // 69, not 38: that is the reference's plate (measured off its strip — the plates sit
+        // at 8, 72, 158, 223, 287 and are 54, 79, 58, 57, 95 LOGICAL px wide, which is 47, 69,
+        // 50, 50, 83 in this scene's design px), and at 38 the label was cut to "λ:te": a
+        // capsule sized for the glyph and nothing else.
+        size: 69 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 38, 23; corner: 6; color: skin.coal; opacity: 69% }
+            box { from: 0, 1; size: 69, 23; corner: 6; color: skin.coal; opacity: 69% }
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
             text "{ws_label}" { at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
-            zone box ws { from: 0, 0; size: 38, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
+            zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { tip_open = true; emit tip(1) }
             on press ws { emit focus }
         }
@@ -508,14 +512,14 @@ scene bar {
     component NetCluster(scale: number = ui * user_scale) {
         let icon = 14
         let text.x = 22
-        size: 54 * scale, strip * scale
+        size: 50 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 54, 23; corner: 6; color: skin.coal; opacity: 69% }
+            box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
             text "lan" { at: 6, strip / 2; anchor: left center; size: 14; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
             text "{net_rx}" { at: text.x, strip / 2 - 5; anchor: left center; size: 10; color: skin.ink; family: "Iosevka" }
             text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: skin.ink; family: "Iosevka" }
-            zone box net { from: 0, 0; size: 54, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
+            zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { tip_open = true; emit tip(3) }
             on press net { emit open_network_panel }
         }
