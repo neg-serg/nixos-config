@@ -88,7 +88,15 @@ part NowPlaying {
                 // On the band's bottom edge, full width, as Music.qml anchors it.
                 // The elapsed and total timestamps belong to the hover preview in
                 // the reference, so at rest the card shows none.
+                // The band, as Music.qml draws it: a hairline track tinted with the
+                // fill colour at 0.14, the played part at full strength under it,
+                // and a vertical bloom rising 30 % of the band behind the fill
+                // (a gradient from nothing to 0.38 there; one box at a fifth
+                // here, since a box carries one colour).
                 box { from: 12, 300; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
+                box { from: 12, 275; corner: 3
+                    size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 25
+                    color: accent; opacity: 15% }
                 box { from: 12, 300; corner: 1.5
                     size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 3
                     color: accent }

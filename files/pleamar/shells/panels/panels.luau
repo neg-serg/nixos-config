@@ -342,6 +342,7 @@ local function weather_apply(d, topic)
     local t = tonumber(cur.temp_c)
     if t and fact.use_fahrenheit == true then t = t * 9 / 5 + 32 end
     text["weather.temp"] = t and fmt1(t) or "--"
+    text["weather.unit"] = (fact.use_fahrenheit == true) and "°F" or "°C"
     text["weather.cond"] = cond_text(tonumber(cur.weather_code))
     local wind = tonumber(cur.wind_ms)
     text["weather.wind"] = wind and (wind_dir(tonumber(cur.wind_dir_deg)) .. fmt1(wind) .. " m/s") or "--"

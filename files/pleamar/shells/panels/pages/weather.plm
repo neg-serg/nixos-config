@@ -13,38 +13,46 @@
 
 part Weather {
     component WeatherDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
-        size: 300 * scale, 138 * scale
+        size: 300 * scale, 196 * scale
 
         group {
-            move: screen.width - (300 + 4) * scale, screen.height - (174 + bar.height + 1) * scale + (1 - lift) * (174 + bar.height + 1) * scale
+            move: screen.width - (300 + 4) * scale, screen.height - (196 + bar.height + 1) * scale + (1 - lift) * (196 + bar.height + 1) * scale
 
             // ----***----------------------------- the card
-            Capsule(300, 174, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: scale)
+            // Widgets/SidePanel/Weather.qml: `Color.withAlpha(Theme.surface, 0.85)`,
+            // `borderWidth: 0`, `radius: 0`, and one 1 px line of the accent at
+            // 0.25 across the top edge.
+            Capsule(300, 196, fill: coal, alpha: 85%, radius: 0, scale: scale)
+            box { from: 0, 0; size: 300, 1; color: accent; opacity: 25% }
 
             // ----***--------------------- current conditions
-            text weather.city { at: 14 * scale, 16 * scale; anchor: left center; width: 150 * scale; lines: 1; family: "Iosevka"; size: 12; color: ink.dim }
-            text weather.temp { at: 14 * scale, 50 * scale; anchor: left center; family: "Iosevka"; size: 32; weight: 700; color: ink }
-            text pick(use_fahrenheit, "°F", "°C") { at: 84 * scale, 52 * scale; anchor: left center; family: "Iosevka"; size: 16; color: ink.dim }
-            text weather.cond { at: 120 * scale, 40 * scale; anchor: left center; width: 166 * scale; lines: 2; family: "Iosevka"; size: 12; color: ink }
+            text weather.city { at: 14, 16; anchor: left center; width: 200; lines: 1; family: "Iosevka"; weight: 700; size: 12; color: ink }
+            text weather.temp { at: 14, 50; anchor: left center; family: "Iosevka"; size: 32; weight: 700; color: ink }
+            text weather.unit { at: 84, 54; anchor: left center; family: "Iosevka"; size: 14; color: ink.dim }
+            text weather.cond { at: 124, 50; anchor: left center; width: 162; lines: 2; family: "Iosevka"; size: 12; color: ink.dim }
 
-            text weather.wind { at: 14 * scale, 76 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
-            text weather.humidity { at: 112 * scale, 76 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
-            text weather.pressure { at: 208 * scale, 76 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
+            // ----***-------------------------- metrics
+            text weather.wind { at: 14, 82; anchor: left center; family: "Iosevka"; size: 10; color: ink.dim }
+            text weather.humidity { at: 112, 82; anchor: left center; family: "Iosevka"; size: 10; color: ink.dim }
+            text weather.pressure { at: 208, 82; anchor: left center; family: "Iosevka"; size: 10; color: ink.dim }
+
+            box { from: 14, 96; size: 272, 1; color: ink; opacity: ink.subtle }
 
             // ----***--------------------------- forecast
-            row days { at: 14 * scale, 90 * scale; gap: 6 * scale
+            // One column per day, nothing stacked on anything: the day above,
+            // the high and the low under it, 54 wide each.
+            row days { at: 14, 108; gap: 0
                 for f in forecast {
                     group {
-                        size: 48 * scale, 30 * scale
-                        text f.day { at: 24 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.dim }
-                        text f.cond { at: 24 * scale, 28 * scale; anchor: center; width: 46 * scale; lines: 2; family: "Iosevka"; size: 9 * text_scale * scale; color: ink }
-                        text f.hi { at: 24 * scale, 14 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink }
-                        text f.lo { at: 24 * scale, 26 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off }
+                        size: 54, 62
+                        text f.day { at: 27, 8; anchor: center; family: "Iosevka"; size: 10; color: ink.dim }
+                        text f.hi { at: 27, 26; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: ink }
+                        text f.lo { at: 27, 44; anchor: center; family: "Iosevka"; size: 10; color: ink.off }
                     }
                 }
             }
 
-            text weather.err { at: 150 * scale, 165 * scale; anchor: center; family: "Iosevka"; size: 12; color: warn }
+            text weather.err { at: 150, 186; anchor: center; family: "Iosevka"; size: 10; color: warn }
         }
     }
 
