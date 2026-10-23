@@ -1,6 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
+import "../../theme.plm"
 import "../../lib/capsule.plm"
 import "../../lib/icons.plm"
 
@@ -115,7 +116,7 @@ scene launcher {
     // The scrim dims what is under the launcher. The catcher is the full-monitor
     // zone that closes it on an outside press; it is declared before the panel,
     // so every panel zone sits above it (INTERFACES §2.2's pattern).
-    box { from: 0, 0; size: screen.width, screen.height; color: coal; opacity: shadow.strong; show: open }
+    box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: shadow.strong; show: open }
 
     zone box catcher {
         from: 0, 0; size: screen.width, screen.height
@@ -167,13 +168,13 @@ scene launcher {
 
             box wash {
                 from: 0, 0; size: w, h; corner: menu.item.corner
-                color: mix(slate, accent, 0.18 + 0.22 * lit)
+                color: mix(skin.surface, skin.accent, 0.18 + 0.22 * lit)
                 opacity: max(0.10 + 0.55 * lit, hit.hover * 0.8)
             }
             image a.icon { at: 5, 5; size: 16, 16 }
             text a.local_name {
                 at: 27, h / 2; anchor: left center; width: 256; lines: 1
-                size: 14; weight: 500; color: ink
+                size: 14; weight: 500; color: skin.ink
             }
             text a.id {
                 at: w - 6, h / 2; anchor: right center; width: 120; lines: 1
@@ -205,21 +206,21 @@ scene launcher {
             group zoom {
                 scale: scale
 
-                Capsule(w, h, fill: coal, alpha: 96%, radius: overlay.corner, shadow: 45%, scale: 1) { }
+                Capsule(w, h, fill: skin.coal, alpha: 96%, radius: overlay.corner, shadow: 45%, scale: 1) { }
 
                 // The card swallows the presses that land on it, so they do not
                 // reach the dismissal catcher underneath. Not pressable, so no
                 // label (INTERFACES §8.1).
                 zone box body { from: 0, 0; size: w, h; corner: overlay.corner; role: region }
 
-                image Icons.search { at: 18, 13; size: 22, 22; tint: ink.dim }
+                image Icons.search { at: 18, 13; size: 22, 22; tint: skin.ink.dim }
                 input query {
                     at: 52, 12; width: 390
-                    size: 15; color: ink; family: "Iosevka"; selection: accent.deep
+                    size: 15; color: skin.ink; family: "Iosevka"; selection: skin.accent.deep
                     placeholder: "Search applications"
                     label: "Search applications"
                 }
-                box { from: 0, 47; size: w, 1; color: ink; opacity: ink.subtle }
+                box { from: 0, 47; size: w, 1; color: skin.ink; opacity: ink.subtle }
 
                 text "No applications found" {
                     at: w / 2, (54 + max_results * (menu.item.height + menu.item.gap)) / 2

@@ -1,6 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
+import "../../theme.plm"
 import "../../lib/capsule.plm"
 
 // proof.plm — the first real pleamar scene of this shell (PH0 / task T5).
@@ -65,7 +66,7 @@ scene proof {
     // ------------------------------------------------------------ the strip
     // 44 px of bar; the remaining 4 px of the surface are kept for its shadow.
     body {
-        color: coal
+        color: skin.coal
         rim: 8%
         box { from: 0, 0; size: screen.width, 44 }
     }
@@ -74,7 +75,7 @@ scene proof {
     // The service hands a prewritten "10:41" form: no slot padds numbers, so
     // `{now.hour}:{now.minute}` would show "9:5" at nine past nine.
     text t = "{now.time}"
-    text t { at: 16, 22; anchor: left center; size: 13; weight: 600; color: ink }
+    text t { at: 16, 22; anchor: left center; size: 13; weight: 600; color: skin.ink }
 
     // ------------------------------------------------------ centre: workspaces
     // One tab per record the service reports. The active one is lit through a
@@ -89,8 +90,8 @@ scene proof {
 
                 // The tab background is a capsule; the zone comes after it so
                 // the press and the tooltip belong to the whole pill.
-                Capsule(28, 28, fill: mix(slate, accent, lit), alpha: 1, radius: 14, scale: 1) {
-                    text "{ws.name}" { width: 20; align: center; size: 12; weight: 600; color: mix(ink, on.accent, lit) }
+                Capsule(28, 28, fill: mix(skin.surface, skin.accent, lit), alpha: 1, radius: 14, scale: 1) {
+                    text "{ws.name}" { width: 20; align: center; size: 12; weight: 600; color: mix(skin.ink, skin.on.accent, lit) }
                 }
                 zone box tab {
                     from: 0, 0; size: 28, 28; corner: 14; cursor: pointer
@@ -113,11 +114,11 @@ scene proof {
     follow level = if(audio.muted, 0, audio.volume)
 
     group speaker { move: caps.x, caps.y
-        Capsule(78, 18, fill: slate, alpha: 1, radius: 9, scale: 1, pad: 2, pad_y: 2, shadow: 45%) {
-            box { size: 74 * level, 14; corner: 7; color: mix(accent, warn, audio.muted) }
+        Capsule(78, 18, fill: skin.surface, alpha: 1, radius: 9, scale: 1, pad: 2, pad_y: 2, shadow: 45%) {
+            box { size: 74 * level, 14; corner: 7; color: mix(skin.accent, warn, audio.muted) }
         }
     }
-    text "{audio.volume * 100, 0} %" { at: caps.x + 39, 24; anchor: center; size: 10; weight: 600; color: ink }
+    text "{audio.volume * 100, 0} %" { at: caps.x + 39, 24; anchor: center; size: 10; weight: 600; color: skin.ink }
 
     // The capsule is one zone: wheel steps the volume, press toggles silence.
     // Both leave through events; the logic carries the service commands.
@@ -132,8 +133,8 @@ scene proof {
     // The extra labelled button: it emits only the declared `proof` event; the
     // number it shows comes back from the logic through the `pings` fact.
     group ping_bg { move: screen.width - 90, 11
-        Capsule(76, 26, fill: slate, alpha: 1, radius: 13, scale: 1) {
-            text "proof {pings}" { width: 68; align: center; size: 11; weight: 600; color: ink }
+        Capsule(76, 26, fill: skin.surface, alpha: 1, radius: 13, scale: 1) {
+            text "proof {pings}" { width: 68; align: center; size: 11; weight: 600; color: skin.ink }
         }
     }
     zone box ping {

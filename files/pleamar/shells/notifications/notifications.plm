@@ -1,6 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
+import "../../theme.plm"
 import "../../lib/capsule.plm"
 
 // notifications.plm — the notification scene of the pleamar shell (PH2-C).
@@ -153,7 +154,7 @@ scene notifications {
     // The centre: a scrim, the drawer and its zones. Hidden as a whole while
     // it is closed, so nothing of it is drawn, described or pressed.
     group { show: centre
-        box { from: 0, 0; size: screen.width, screen.height; color: coal; opacity: 25% }
+        box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: 25% }
         Centre()
     }
 
@@ -172,8 +173,8 @@ scene notifications {
         follow dnd_knob = dnd
 
         // The drawer and its left hairline.
-        box { from: x, 0; size: w, h; color: coal; opacity: 94% }
-        box { from: x, 0; size: 1 * scale, h; color: ink; opacity: 12% }
+        box { from: x, 0; size: w, h; color: skin.coal; opacity: 94% }
+        box { from: x, 0; size: 1 * scale, h; color: skin.ink; opacity: 12% }
 
         // Header: the title, a close button, the DND toggle and clear-all.
         text "Notifications" { at: x + 18 * scale, 28 * scale; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: notify.ink }
@@ -182,15 +183,15 @@ scene notifications {
         zone box close_zone { from: x + w - 36 * scale, 14 * scale; size: 26 * scale, 26 * scale; corner: 6 * scale; cursor: pointer; label: "Close notifications"; role: button }
         on press close_zone { centre = false }
 
-        box { from: x + 20 * scale, 57 * scale; size: 30 * scale, 14 * scale; corner: 7 * scale; color: mix(slate, accent, dnd); opacity: 1 }
-        ellipse { at: x + 20 * scale + (7 + 16 * dnd_knob) * scale, 64 * scale; radius: 6 * scale; color: ink }
+        box { from: x + 20 * scale, 57 * scale; size: 30 * scale, 14 * scale; corner: 7 * scale; color: mix(skin.surface, skin.accent, dnd); opacity: 1 }
+        ellipse { at: x + 20 * scale + (7 + 16 * dnd_knob) * scale, 64 * scale; radius: 6 * scale; color: skin.ink }
         text "Do not disturb" { at: x + 60 * scale, 63 * scale; anchor: left center; family: "Iosevka"; size: 14; color: notify.ink; opacity: if(dnd, 100%, 75%) }
         zone box dnd_zone { from: x + 12 * scale, 48 * scale; size: 176 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Do not disturb"; role: toggle; checked: dnd }
         on press dnd_zone { toggle dnd }
 
-        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: slate; opacity: 1 }
-        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: ink; opacity: ink.hover * clear_zone.hover }
-        text "Clear all" { at: x + w - 94 * scale, 63 * scale; anchor: center; family: "Iosevka"; size: 14; color: ink }
+        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: skin.surface; opacity: 1 }
+        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: skin.ink; opacity: ink.hover * clear_zone.hover }
+        text "Clear all" { at: x + w - 94 * scale, 63 * scale; anchor: center; family: "Iosevka"; size: 14; color: skin.ink }
         zone box clear_zone { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Clear all notifications"; role: button; agent: no }
         on press clear_zone { emit clear_all }
 
@@ -296,8 +297,8 @@ scene notifications {
     component Action(a: record, scale: number) {
         size: 96 * scale, 22 * scale
 
-        box { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; color: mix(slate, ink, 0.2 * hit.hover); opacity: 1 }
-        text a.label { at: 48 * scale, 11 * scale; anchor: center; width: 88 * scale; align: center; lines: 1; family: "Iosevka"; size: 12; color: ink }
+        box { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; color: mix(skin.surface, skin.ink, 0.2 * hit.hover); opacity: 1 }
+        text a.label { at: 48 * scale, 11 * scale; anchor: center; width: 88 * scale; align: center; lines: 1; family: "Iosevka"; size: 12; color: skin.ink }
         zone box hit { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; cursor: pointer; label: "{a.label}"; role: button }
         on press hit { emit act(a.ix) }
     }

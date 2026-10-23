@@ -1,6 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
+import "../../theme.plm"
 import "../../lib/capsule.plm"
 
 // toast.plm — the toast scene of the pleamar shell (PH2-D).
@@ -146,18 +147,18 @@ scene toast {
 
                 // The box: translucent coal (the legacy 85%) with the outline
                 // hairline the legacy border drew.
-                Capsule(w, h, fill: coal, alpha: 95%, radius: 4, edge: 1, edge_tone: outline, edge_alpha: 12%, shadow: 45%, scale: 1) { }
+                Capsule(w, h, fill: skin.coal, alpha: 95%, radius: 4, edge: 1, edge_tone: outline, edge_alpha: 12%, shadow: 45%, scale: 1) { }
 
                 // ------***----------- preview
                 // 428 x 280 plate, the picture fitted inside it (the legacy
                 // Image with PreserveAspectFit).
-                box { from: 16, 16; size: 428, 280; corner: 4; color: slate; opacity: 45% }
+                box { from: 16, 16; size: 428, 280; corner: 4; color: skin.surface; opacity: 45% }
                 image shot { at: 19, 19; size: 422, 274; show: shot_ok }
                 // The legacy camera glyph, drawn from shapes: an icon name is
                 // not guaranteed in the session's theme, three boxes are.
                 group cam { show: not shot_ok; opacity: 55%
                     box { from: 199, 133; size: 62, 46; corner: 8; color: ink.off }
-                    ellipse { at: 230, 156; radius: 12; color: coal }
+                    ellipse { at: 230, 156; radius: 12; color: skin.coal }
                     box { from: 214, 123; size: 32, 10; corner: 4; color: ink.off }
                 }
                 zone box preview { from: 16, 16; size: 428, 280; corner: 4; cursor: pointer; label: "Open screenshot"; role: button }
@@ -166,8 +167,8 @@ scene toast {
                 on leave preview { emit hover_out }
 
                 // ------***----------- title and close
-                text "Screenshot captured" { at: 16, 318; anchor: left center; size: 14; weight: 500; color: ink }
-                text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; color: ink.dim }
+                text "Screenshot captured" { at: 16, 318; anchor: left center; size: 14; weight: 500; color: skin.ink }
+                text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; color: skin.ink.dim }
                 line { from: 436, 312; to: 448, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
                 line { from: 448, 312; to: 436, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
                 zone box close_zone { from: 426, 302; size: 32, 32; corner: 6; cursor: pointer; label: "Dismiss screenshot"; role: button }
@@ -227,8 +228,8 @@ scene toast {
     // be parameterised, §9) and its hover spring reaches this copy as a number.
     component Action(title: text, x: number, y: number, w: number, hover: number) {
         size: w, 36
-        box { from: x, y; size: w, 36; corner: 6; color: mix(coal, slate, 65% + 35% * hover) }
-        text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; weight: 500; color: ink }
+        box { from: x, y; size: w, 36; corner: 6; color: mix(skin.coal, skin.surface, 65% + 35% * hover) }
+        text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; weight: 500; color: skin.ink }
     }
 
     Card()
