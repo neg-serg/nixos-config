@@ -163,13 +163,21 @@ for name, (x0, x1) in windows.items():
     # пары иконок гейтятся только там, где данные не участвуют
     pairs = []
     if name == "right":
-        if len(ref_runs) != len(port_runs):
-            failures.append(f"{name}: the reference draws {len(ref_runs)} icons, the port {len(port_runs)}")
-        for i, ((rx, rw), (px, pw)) in enumerate(zip(ref_runs, port_runs)):
+        # The right edge is anchored, and what sits on it changes with the music: a
+        # playing track puts the media capsule there and a paused one takes it away, on
+        # the two bars at different moments. So the icons are paired *from the right*,
+        # and a different number of runs is reported as information, not a failure —
+        # what is gated is that the icons both bars do draw sit on top of each other.
+        n = min(len(ref_runs), len(port_runs))
+        for k in range(n):
+            rx, rw = ref_runs[-1 - k]
+            px, pw = port_runs[-1 - k]
             dx, dw = round(px - rx, 1), round(pw - rw, 1)
-            pairs.append((i, rx, px, dx, dw))
+            pairs.append((f"from right {k}", rx, px, dx, dw))
             if abs(dx) > tol_pos or abs(dw) > tol_w:
-                failures.append(f"{name}[{i}]: Δx {dx:+} Δw {dw:+} (reference {rx:.0f}/{rw:.0f}, port {px:.0f}/{pw:.0f})")
+                failures.append(f"{name} (from the right, #{k}): Δx {dx:+} Δw {dw:+} (reference {rx:.0f}/{rw:.0f}, port {px:.0f}/{pw:.0f})")
+        if len(ref_runs) != len(port_runs):
+            pairs.append(("count", "-", f"{len(port_runs)} vs {len(ref_runs)}", "-", "-"))
     else:
         for i, ((rx, rw), (px, pw)) in enumerate(zip(ref_runs, port_runs)):
             pairs.append((i, rx, px, round(px - rx, 1), round(pw - rw, 1)))
@@ -188,10 +196,14 @@ else:
         print(f"{window:7s} {drift:>+7.1f} {mismatch * 100:>8.1f}% {rr:>7d}/{pr:<6d}  {gated}")
     print()
     print("per-run Δ (logical px, information on the left — gated on the right):")
-    print(f"  {'window':7s} {'#':>3s} {'ref x':>6s} {'port x':>6s} {'Δx':>6s} {'Δw':>6s}")
+    print(f"  {'window':7s} {'#':>12s} {'ref x':>6s} {'port x':>6s} {'Δx':>6s} {'Δw':>6s}")
     for window, _, _, _, _, pairs in rows:
         for index, rx, px, dx, dw in pairs:
-            print(f"  {window:7s} {index:>3d} {rx:>6.0f} {px:>6.0f} {dx:>+6.1f} {dw:>+6.1f}")
+            def cell(v, fmt=None):
+                if isinstance(v, str):
+                    return f"{v:>6s}"
+                return format(v, fmt) if fmt else str(v)
+            print(f"  {window:7s} {str(index):>12s} {cell(rx, '6.0f')} {cell(px, '6.0f')} {cell(dx, '+6.1f')} {cell(dw, '+6.1f')}")
     print()
     for failure in failures:
         print("FAIL " + failure)
