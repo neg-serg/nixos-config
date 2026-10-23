@@ -88,7 +88,13 @@ scene panels {
     // sized to it, for the same reason.
     // The price, recorded because it is visible: a press outside the card closes
     // the drawer only where this surface reaches.
-    surface { size: 1200, 420; anchor: bottom_right; margin: 4, 0, 30, 4
+    // Full width, but only as tall as the tallest card: the reference puts the
+    // flow popup bottom-left (aligned with its capsule) and the now-playing card
+    // bottom-right, so one surface has to span the screen horizontally — yet a
+    // layer the height of the monitor is what broke the plate (the text behind
+    // it came through unblurred and Hyprland's blur never reached it). Short and
+    // wide keeps both.
+    surface { size: full, 420; anchor: bottom; margin: 0, 0, 30, 0
               level: overlay; reserve: 0; screens: each; keyboard: on_demand; open: true }
 
     // Commands the logic runs (workers), services it listens to (audio, own

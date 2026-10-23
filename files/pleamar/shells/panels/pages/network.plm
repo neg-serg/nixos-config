@@ -32,6 +32,13 @@ part NetPanel {
 
         // The plot: 14..414 across, 116..296 down, so the compact axis labels
         // have room on the right where the reference puts them.
+        // flow's palette, which the reference hard-codes rather than taking
+        // from the theme: download blue to cyan, upload green to lime.
+        let down.a = #3B82F6
+        let down.b = #00F5D4
+        let up.a = #10B981
+        let up.b = #A3E635
+
         let plot.x = 14
         let plot.w = 400
         let plot.y = 116
@@ -42,32 +49,32 @@ part NetPanel {
         let column.w = plot.w / max(flow.total, 1)
 
         group {
-            move: screen.width - (470 + 4) * scale, screen.height - (338 + bar.height + 1) * scale + (1 - lift) * (338 + bar.height + 1) * scale
+            move: 4 * scale, screen.height - (338 + 36) * scale + (1 - lift) * (338 + 36) * scale
 
             group zoom {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(470, 338, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: 1)
+                Capsule(470, 338, fill: coal, alpha: 92%, radius: 0, scale: 1)
 
                 // ----***------------------------ header
                 text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: ink }
 
                 group { move: 62, 9
-                    Capsule(96, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
+                    Capsule(96, 22, fill: accent, alpha: 15%, edge: 1, edge_tone: accent, edge_alpha: 35%, radius: 9, scale: 1)
                     text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 11; color: ink }
                 }
 
-                ellipse { at: 404, 20; radius: 3.5; color: accent; opacity: pick(net_live, 100%, 30%) }
+                ellipse { at: 404, 20; radius: 3.5; color: pick(net_live, down.b, ink.off) }
                 text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: ink.dim }
 
                 // ----***----------------------- readouts
                 text "↓ DOWN" { at: 14, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
-                text "{net.rx}" { at: 14, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: highlight }
+                text "{net.rx}" { at: 14, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: down.b }
                 text "peak {net.peak_rx}" { at: 14, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
                 text "↑ UP" { at: 240, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
-                text "{net.tx}" { at: 240, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: amber }
+                text "{net.tx}" { at: 240, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: up.b }
                 text "peak {net.peak_tx}" { at: 240, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
 
                 // ----***--------------------------- plot
@@ -82,18 +89,20 @@ part NetPanel {
                 // Upload first, download over it, the way the reference stacks
                 // the two series. The area is the column, the line its top edge.
                 for v in flow {
+                    let t.up = if(flow.total > 1, v.index / (flow.total - 1), 0)
                     box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.tx / max(net_max_tx, 1) * plot.h, 0)
                         size: column.w, max(v.tx / max(net_max_tx, 1) * plot.h, 0)
-                        color: amber; opacity: 22%; show: v.tx > net_max_tx * 0.02 }
+                        color: mix(up.a, up.b, t.up); opacity: 22%; show: v.tx > net_max_tx * 0.02 }
                     box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.tx / max(net_max_tx, 1) * plot.h, 0)
-                        size: column.w, 1.4; color: amber; show: v.tx > net_max_tx * 0.02 }
+                        size: column.w, 1.4; color: mix(up.a, up.b, t.up); show: v.tx > net_max_tx * 0.02 }
                 }
                 for v in flow {
+                    let t.down = if(flow.total > 1, v.index / (flow.total - 1), 0)
                     box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.rx / max(net_max_rx, 1) * plot.h, 0)
                         size: column.w, max(v.rx / max(net_max_rx, 1) * plot.h, 0)
-                        color: highlight; opacity: 28%; show: v.rx > net_max_rx * 0.02 }
+                        color: mix(down.a, down.b, t.down); opacity: 28%; show: v.rx > net_max_rx * 0.02 }
                     box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.rx / max(net_max_rx, 1) * plot.h, 0)
-                        size: column.w, 2; color: highlight; show: v.rx > net_max_rx * 0.02 }
+                        size: column.w, 2; color: mix(down.a, down.b, t.down); show: v.rx > net_max_rx * 0.02 }
                 }
 
                 text "waiting for flow…" { at: 214, 206; anchor: center; family: "Iosevka"; size: 11; color: ink.off
