@@ -433,12 +433,16 @@ scene bar {
     // QS WeatherButton: one row of pieces — the code's glyph in the accent, the
     // temperature, water_drop and the humidity, the navigation arrow turned by
     // the wind with its speed beside it, and the moon — inside one
-    // WidgetCapsule whose width is `horizontalPadding * 2 + content`. The
-    // offsets below are the reference's ink, read off its strip at 2.3 physical
-    // px per design: glyph 6, temp 24, water_drop 48, humidity 66, arrow 87,
-    // wind 106, moon 122 design px from the face's left edge.
+    // WidgetCapsule whose width is `horizontalPadding * 2 + content`.
+    //
+    // The offsets are the reference's ink, measured again against its bar with
+    // both strips in one screenshot (the earlier set came from a single strip and
+    // had drifted: by the wind the port was 6 design px right of the reference and
+    // by the moon 19). Relative to the glyph, QS places temp +19.6, water_drop
+    // +32.2, humidity +38.3, arrow +51.3, wind +57.8, moon +70.4 design px, with
+    // its Row's `spacing: 4 * capsuleScale` between them.
     component WeatherCapsule(scale: number = ui * user_scale) {
-        size: 148 * scale, strip * scale
+        size: 96 * scale, strip * scale
         group zoom {
             scale: scale
             // The reference cuts this capsule's right end on a SLANT and runs a
@@ -451,8 +455,8 @@ scene bar {
             path {
                 at: 0, 1
                 move 0, 0
-                line 162, 0
-                line 148, 22
+                line 110, 0
+                line 96, 22
                 line 0, 22
                 close
                 color: skin.coal
@@ -460,23 +464,23 @@ scene bar {
             }
             // QS's triangleHighlightColor is the accent put through black twice
             // (towardsBlack(saturate(...), 0.3) x2), so a dark saturated blue.
-            line { from: 162, 1; to: 148, 23; width: 2.6; color: mix(skin.accent, skin.coal, 55%) }
-            text "{weather.icon}" { at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent; family: "Material Symbols Outlined" }
-            text "{weather.temp}" { at: 24, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
-            text "water_drop" { at: 48, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Material Symbols Outlined" }
-            text "{weather.hum}" { at: 66, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Iosevka" }
+            line { from: 110, 1; to: 96, 23; width: 2.6; color: mix(skin.accent, skin.coal, 55%) }
+            text "{weather.icon}" { at: 6, strip / 2; anchor: left center; size: 13; color: skin.accent; family: "Material Symbols Outlined" }
+            text "{weather.temp}" { at: 26, strip / 2; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+            text "water_drop" { at: 38, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "{weather.hum}" { at: 44, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre (its advance is about 12 design wide).
-            group arrow { pivot: 93, strip / 2; rotate: weather.dir
-                text "navigation" { at: 87, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            group arrow { pivot: 60, strip / 2; rotate: weather.dir
+                text "navigation" { at: 57, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
             }
-            text "{weather.wind}" { at: 106, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { at: 64, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
-            box { from: 122, 6; size: 12, 12; corner: 6; color: skin.ink.dim }
-            box { from: 122 + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: skin.coal; opacity: 84% }
-            zone box weather { from: 0, 0; size: 148, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
+            box { from: 76, 6; size: 12, 12; corner: 6; color: skin.ink.dim }
+            box { from: 76 + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: skin.coal; opacity: 84% }
+            zone box weather { from: 0, 0; size: 96, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { tip_open = true; emit tip(5) }
         }
     }
