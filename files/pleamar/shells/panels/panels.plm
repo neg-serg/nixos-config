@@ -206,16 +206,20 @@ scene panels {
 
     zone box catcher { from: 0, 0; size: screen.width, screen.height
         label: "Dismiss drawer"; role: region; show: drawer != none }
-    on press catcher while close_on_outside and drawer != none { drawer = none }
-    on key Escape while close_on_escape and drawer != none { drawer = none }
+    on press catcher while close_on_outside and drawer != none { drawer = none; Spectrum.active = false }
+    on key Escape while close_on_escape and drawer != none { drawer = none; Spectrum.active = false }
 
     on open_volume { drawer = volume }
     on open_calendar { drawer = calendar }
     on open_weather { drawer = weather }
     on open_system { drawer = system }
-    on open_media { drawer = media; Spectrum.mirror = false }
-    on open_network { drawer = network }
-    on close_drawer { drawer = none }
+    // The analyser runs only while the card that draws it is up (see spectrum.plm:
+    // a plugin deciding for itself kept cava and its decay timer alive in a
+    // scene with nothing on screen). `mirror = true`: the reference's band is
+    // symmetric.
+    on open_media { drawer = media; Spectrum.mirror = true; Spectrum.active = true }
+    on open_network { drawer = network; Spectrum.active = false }
+    on close_drawer { drawer = none; Spectrum.active = false }
 
     // ----***------------------------ the drawers
     include "pages/volume.plm"
