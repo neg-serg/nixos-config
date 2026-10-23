@@ -140,7 +140,7 @@
  	bool shiftMonitor(Hy3Node&, ShiftDirection, bool follow);
  	Hy3Node* focusMonitor(ShiftDirection);
  
-@@ -194,9 +199,25 @@
+@@ -194,9 +199,23 @@
  	void updateAutotileWorkspaces();
  	bool shouldAutotileWorkspace(const CWorkspace* workspace);
  
@@ -161,8 +161,6 @@
  	// Per-instance event listeners
  	CHyprSignalListener m_windowActiveListener;
  	CHyprSignalListener m_mouseButtonListener;
-+	CHyprSignalListener m_windowDestroyListener;
-+	CHyprSignalListener m_windowMoveToWorkspaceListener;
  
  	struct {
  		std::string raw_workspaces;
@@ -176,7 +174,7 @@
  #include <hyprutils/math/Vector2D.hpp>
  #include <hyprland/src/config/shared/ConfigErrors.hpp>
  #include <hyprland/src/config/shared/complex/ComplexDataTypes.hpp>
-@@ -98,10 +99,40 @@
+@@ -98,10 +99,17 @@
  					return;
  				}
  
@@ -185,35 +183,12 @@
  	    }
  	);
  
-+	// A detached window has left the tiled layer, so its close/destroy (and its move
-+	// to another workspace) go to the floating algorithm and hy3 never hears about
-+	// them: prune such nodes here, with recalcGeometry as the catch-all for every
-+	// other way a floating window can go away.
-+	m_windowDestroyListener = Event::bus()->m_events.window.destroy.listen(
-+		    [this](PHLWINDOWREF) {
-+			if (!this->pruneDetachedNodes()) return;
-+
-+			this->recalcGeometry();
-+			this->updateGroupBorderColors();
-+		    }
-+	);
-+
-+	m_windowMoveToWorkspaceListener = Event::bus()->m_events.window.moveToWorkspace.listen(
-+		    [this](PHLWINDOW window, PHLWORKSPACE) {
-+			if (window) {
-+				auto* node = this->getNodeFromWindow(window.get());
-+				// Only detached nodes survive a move on their own: a tiled one is
-+				// removed from this layout by Hyprland itself.
-+				if (node == nullptr || !node->detached_tree()) return;
-+			}
-+
-+			if (!this->pruneDetachedNodes()) return;
-+
-+			this->recalcGeometry();
-+			this->updateGroupBorderColors();
-+		    }
-+	);
-+
++	// Detached nodes are pruned from recalcGeometry, never from a window.destroy /
++	// moveToWorkspace listener: those fire while Hyprland is tearing a window down,
++	// and pruning from there read a half-dead node (crash report 122669, SEGV in
++	// Hy3Layout::detachedNodeAlive <- findDeadDetachedNode <- pruneDetachedNodes).
++	// recalcGeometry runs on every relayout of this workspace and prunes the same
++	// nodes one walk later.
  	m_mouseButtonListener = Event::bus()->m_events.input.mouse.button.listen(
  	    [this](IPointer::SButtonEvent event, Event::SCallbackInfo& info) {
  		    if (event.state != 1 || event.button != 272) return;
