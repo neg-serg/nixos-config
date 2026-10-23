@@ -176,7 +176,7 @@ scene notifications {
         box { from: x, 0; size: 1 * scale, h; color: ink; opacity: 12% }
 
         // Header: the title, a close button, the DND toggle and clear-all.
-        text "Notifications" { at: x + 18 * scale, 28 * scale; anchor: left center; size: 1 * type.body * type.scale * scale; weight: 1 * weight.medium; color: notify.ink }
+        text "Notifications" { at: x + 18 * scale, 28 * scale; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: notify.ink }
         line { from: x + w - 31 * scale, 19 * scale; to: x + w - 19 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
         line { from: x + w - 19 * scale, 19 * scale; to: x + w - 31 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
         zone box close_zone { from: x + w - 36 * scale, 14 * scale; size: 26 * scale, 26 * scale; corner: 6 * scale; cursor: pointer; label: "Close notifications"; role: button }
@@ -184,13 +184,13 @@ scene notifications {
 
         box { from: x + 20 * scale, 57 * scale; size: 30 * scale, 14 * scale; corner: 7 * scale; color: mix(slate, accent, dnd); opacity: 1 }
         ellipse { at: x + 20 * scale + (7 + 16 * dnd_knob) * scale, 64 * scale; radius: 6 * scale; color: ink }
-        text "Do not disturb" { at: x + 60 * scale, 63 * scale; anchor: left center; size: 1 * type.small * type.scale * scale; color: notify.ink; opacity: if(dnd, 100%, 75%) }
+        text "Do not disturb" { at: x + 60 * scale, 63 * scale; anchor: left center; family: "Iosevka"; size: 14; color: notify.ink; opacity: if(dnd, 100%, 75%) }
         zone box dnd_zone { from: x + 12 * scale, 48 * scale; size: 176 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Do not disturb"; role: toggle; checked: dnd }
         on press dnd_zone { toggle dnd }
 
         box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: slate; opacity: 1 }
         box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: ink; opacity: ink.hover * clear_zone.hover }
-        text "Clear all" { at: x + w - 94 * scale, 63 * scale; anchor: center; size: 1 * type.small * type.scale * scale; color: ink }
+        text "Clear all" { at: x + w - 94 * scale, 63 * scale; anchor: center; family: "Iosevka"; size: 14; color: ink }
         zone box clear_zone { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Clear all notifications"; role: button; agent: no }
         on press clear_zone { emit clear_all }
 
@@ -206,7 +206,7 @@ scene notifications {
             for n in entries { CentreCard(n, scale) }
         }
         on change floor(list.scroll / scale) { emit slid(floor(list.scroll / scale)) }
-        text "No notifications" { at: x + w / 2, h / 2; anchor: center; size: 1 * type.body * type.scale * scale; color: notify.ink; opacity: 55%; show: entries.count == 0 }
+        text "No notifications" { at: x + w / 2, h / 2; anchor: center; family: "Iosevka"; size: 16; color: notify.ink; opacity: 55%; show: entries.count == 0 }
 
         // Pressing outside the drawer closes it.
         zone box catcher { from: 0, 0; size: x, h; label: "Dismiss notification centre"; role: region }
@@ -227,8 +227,8 @@ scene notifications {
         Capsule(340, 96, fill: notify.tone, alpha: 94%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 30%, shadow: 45%, scale: scale) { }
         box { from: 2 * scale, 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(t.urgency == 2, warn, if(t.urgency == 1, amber, notify.accent)) }
         image t.pic { at: 12 * scale, 18 * scale; size: 44 * scale, 44 * scale }
-        text t.title { at: 66 * scale, 24 * scale; anchor: left center; width: 230 * scale; lines: 1; size: 1 * type.small * type.scale * scale; weight: 1 * weight.medium; color: notify.ink }
-        text t.body { at: 66 * scale, 38 * scale; anchor: left top; width: 230 * scale; lines: 2; size: 1 * type.caption * type.scale * scale; color: notify.ink; opacity: 85% }
+        text t.title { at: 66 * scale, 24 * scale; anchor: left center; width: 230 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
+        text t.body { at: 66 * scale, 38 * scale; anchor: left top; width: 230 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
 
         // The body is private. `text` cannot carry `agent:` itself, and a
         // hidden zone does not claim the words drawn in it — they would surface
@@ -264,7 +264,7 @@ scene notifications {
         size: 336 * scale, 96 * scale + if(n.first == 1, 22 * scale, 0)
         let oy = if(n.first == 1, 22 * scale, 0)
 
-        text "Earlier" { at: 2 * scale, 12 * scale; anchor: left center; size: 1 * type.caption * type.scale * scale; weight: 1 * weight.medium; color: notify.ink; opacity: 60%; show: n.first == 1 }
+        text "Earlier" { at: 2 * scale, 12 * scale; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: notify.ink; opacity: 60%; show: n.first == 1 }
 
         // The body is private here too: the hidden zone marks the area first,
         // then the card zone (declared after, so the pointer reaches it) claims
@@ -284,8 +284,8 @@ scene notifications {
             }
             box { from: 2 * scale, oy + 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(n.urgency == 2, warn, if(n.urgency == 1, amber, notify.accent)) }
             image n.pic { at: 12 * scale, oy + 18 * scale; size: 40 * scale, 40 * scale }
-            text n.title { at: 60 * scale, oy + 24 * scale; anchor: left center; width: 262 * scale; lines: 1; size: 1 * type.small * type.scale * scale; weight: 1 * weight.medium; color: notify.ink }
-            text n.body { at: 60 * scale, oy + 38 * scale; anchor: left top; width: 262 * scale; lines: 2; size: 1 * type.caption * type.scale * scale; color: notify.ink; opacity: 85% }
+            text n.title { at: 60 * scale, oy + 24 * scale; anchor: left center; width: 262 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
+            text n.body { at: 60 * scale, oy + 38 * scale; anchor: left top; width: 262 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
             row acts { at: 12 * scale, oy + 70 * scale; gap: 6 * scale; align: start
                 for a in n.acts { Action(a, scale) }
             }
@@ -297,7 +297,7 @@ scene notifications {
         size: 96 * scale, 22 * scale
 
         box { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; color: mix(slate, ink, 0.2 * hit.hover); opacity: 1 }
-        text a.label { at: 48 * scale, 11 * scale; anchor: center; width: 88 * scale; align: center; lines: 1; size: 1 * type.caption * type.scale * scale; color: ink }
+        text a.label { at: 48 * scale, 11 * scale; anchor: center; width: 88 * scale; align: center; lines: 1; family: "Iosevka"; size: 12; color: ink }
         zone box hit { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; cursor: pointer; label: "{a.label}"; role: button }
         on press hit { emit act(a.ix) }
     }
