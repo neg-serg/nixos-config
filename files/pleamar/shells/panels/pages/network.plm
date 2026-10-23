@@ -66,10 +66,10 @@ part NetPanel {
                 ellipse { at: 348, 20; radius: 4; color: accent; opacity: pick(net_live, 100%, 30%) }
                 text "LIVE" { at: 358, 20; anchor: left center; family: "Iosevka"; size: 9; color: ink.dim }
 
-                group { move: 408, 9
-                    Capsule(48, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
-                    text "Close" { at: 24, 11; anchor: center; family: "Iosevka"; size: 12; color: ink }
-                    zone box close { from: 0, 0; size: 48, 22; corner: 11
+                group { move: 412, 10
+                    Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: 1)
+                    text "Close" { at: 22, 10; anchor: center; family: "Iosevka"; size: 12; color: ink }
+                    zone box close { from: 0, 0; size: 44, 20; corner: 10
                         label: "Close {drawer}"; role: button }
                     on press close { drawer = none }
                 }

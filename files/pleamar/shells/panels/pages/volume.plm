@@ -32,7 +32,7 @@ part Volume {
             Capsule(340, 356, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: scale)
 
             // ----***---------------------------- header
-            text "Volume" { at: 14 * scale, 20 * scale; anchor: left center; family: "Iosevka"; size: 16; weight: 1 * weight.medium; color: ink }
+            text "Volume" { at: 14 * scale, 20 * scale; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: ink }
             group { move: 282 * scale, 10 * scale
                 Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
                 text "Close" { at: 22 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink }
