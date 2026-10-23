@@ -448,7 +448,13 @@ scene bar {
     // +32.2, humidity +38.3, arrow +51.3, wind +57.8, moon +70.4 design px, with
     // its Row's `spacing: 4 * capsuleScale` between them.
     component WeatherCapsule(scale: number = ui * user_scale) {
-        size: 96 * scale, strip * scale
+        measure w.icon
+        measure w.temp
+        measure w.drop
+        measure w.hum
+        measure w.arrow
+        measure w.wind
+        size: 140 * scale, strip * scale
         group zoom {
             scale: scale
             // The reference cuts this capsule's right end on a SLANT and runs a
@@ -461,8 +467,8 @@ scene bar {
             path {
                 at: 0, 1
                 move 0, 0
-                line 110, 0
-                line 96, 22
+                line 154, 0
+                line 140, 22
                 line 0, 22
                 close
                 color: skin.coal
@@ -470,23 +476,35 @@ scene bar {
             }
             // QS's triangleHighlightColor is the accent put through black twice
             // (towardsBlack(saturate(...), 0.3) x2), so a dark saturated blue.
-            line { from: 110, 1; to: 96, 23; width: 2.6; color: mix(skin.accent, skin.coal, 55%) }
-            text "{weather.icon}" { at: 6, strip / 2; anchor: left center; size: 13; color: skin.accent; family: "Material Symbols Outlined" }
-            text "{weather.temp}" { at: 26, strip / 2; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
-            text "water_drop" { at: 38, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
-            text "{weather.hum}" { at: 44, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
+            line { from: 154, 1; to: 140, 23; width: 2.6; color: mix(skin.accent, skin.coal, 55%) }
+            // Laid out after their own widths, not at fixed offsets: the offsets were read
+            // off the reference once and then the port's glyphs turned out wider, so the
+            // temperature ran into the water drop ("11°C◯67%") and the capsule measured 114
+            // logical px of ink where the reference's is 155. `measure` is what fixes that —
+            // the same mechanism the workspace capsule uses for its glyph.
+            let gap.g = 4
+            let x.temp = 6 + w.icon.width + gap.g
+            let x.drop = x.temp + w.temp.width + gap.g
+            let x.hum = x.drop + w.drop.width + gap.g
+            let x.arrow = x.hum + w.hum.width + gap.g
+            let x.wind = x.arrow + w.arrow.width + gap.g
+            let x.moon = x.wind + w.wind.width + gap.g
+            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2; anchor: left center; size: 13; color: skin.accent; family: "Material Symbols Outlined" }
+            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+            text "water_drop" { measure: w.drop; at: x.drop, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
-            // is the glyph's own centre (its advance is about 12 design wide).
-            group arrow { pivot: 60, strip / 2; rotate: weather.dir
-                text "navigation" { at: 57, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            // is the glyph's own centre.
+            group arrow { pivot: x.arrow + w.arrow.width / 2, strip / 2; rotate: weather.dir
+                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
             }
-            text "{weather.wind}" { at: 64, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
-            box { from: 76, 6; size: 12, 12; corner: 6; color: skin.ink.dim }
-            box { from: 76 + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: skin.coal; opacity: 84% }
-            zone box weather { from: 0, 0; size: 96, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
+            box { from: x.moon, 6; size: 12, 12; corner: 6; color: skin.ink.dim }
+            box { from: x.moon + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: skin.coal; opacity: 84% }
+            zone box weather { from: 0, 0; size: 140, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { tip_open = true; emit tip(5) }
         }
     }
