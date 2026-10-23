@@ -252,11 +252,25 @@ if [[ -n "$WALLPAPER" ]]; then
   fi
 fi
 
+# The shell's tones are the theme's own; only the accent is the wallpaper's.
+#
+# QS' bar and panels take their background, surface and text from
+# Settings/colors.jsonc (#000000, #242A35, #CBD6E5) and derive `accentPrimary` from the
+# wallpaper alone (`Color.matchHue(_wpAccent, "#006FCC")`). The image's k-means tones are
+# the *greeter's* palette; wiring them into the shell made every scene's text darker
+# than the reference's — measured on the two bars, "ru" was #757a80 here against
+# #aeb9c8 there, and the drawers' plates lost their black.
+if ((EXTRACTED == 1)); then
+  COAL="#000000"
+  SURFACE="#242A35"
+  INK="#CBD6E5"
+fi
+
 # What each tone is, for the generated file's comments.
 if ((EXTRACTED == 1)); then
-  COAL_NOTE="colors.background role: the wallpaper's darkest Oklab k-means cluster."
-  SURFACE_NOTE="colors.surfaceVariant role: the wallpaper's second-darkest cluster."
-  INK_NOTE="colors.text.primary role: the lightest cluster, pushed to 4.5:1 contrast on skin.surface."
+  COAL_NOTE="colors.background (Settings/colors.jsonc): the shell's tones are the theme's own."
+  SURFACE_NOTE="colors.surfaceVariant (Settings/colors.jsonc)."
+  INK_NOTE="colors.text.primary (Settings/colors.jsonc) — not the image's lightest cluster."
   ACCENT_NOTE="colors.accent.primary role: the wallpaper's mean saturated colour, hue-matched onto #006FCC (Settings/Theme.qml accentPrimary)."
 else
   COAL_NOTE="colors.background, the QS fallback #ff000000 (opaque part): no wallpaper was sampled."
@@ -356,9 +370,9 @@ render() {
   printf '    // %s\n' "$INK_NOTE"
   printf '    let skin.ink = %s\n' "$INK"
   printf '\n'
-  printf '    // colors.text.secondary role: skin.ink mixed 35%% toward skin.surface —\n'
-  printf '    // the formula follows whatever ink/surface this file holds.\n'
-  printf '    let skin.ink.dim = mix(skin.ink, skin.surface, 35%%)\n'
+  printf '    // colors.text.secondary (Settings/colors.jsonc), the same static token the\n'
+  printf '    // reference draws its secondary text with — not a mix of the two sampled tones.\n'
+  printf '    let skin.ink.dim = #AEB9C8\n'
   printf '\n'
   printf '    // %s\n' "$ACCENT_NOTE"
   printf '    let skin.accent = %s\n' "$ACCENT"
