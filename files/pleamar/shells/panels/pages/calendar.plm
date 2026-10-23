@@ -24,22 +24,23 @@ part Calendar {
         group {
             // Bottom-left, like the legacy calendar popup (calendar.popupMargin).
             // The bar's edge is bar.height + bar.gap design px above the bottom.
-            move: calendar.popup * scale, screen.height - (480 + bar.height + bar.gap) * scale + (1 - lift) * (480 + bar.height + bar.gap) * scale
+            move: calendar.popup * scale, screen.height - (480 + 4) * scale + (1 - lift) * (480 + 4) * scale
 
             // ----***----------------------------- the card
-            Capsule(380, 480, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: scale)
+            Capsule(380, 480, fill: coal, alpha: 85%, radius: 6, scale: scale)
+            box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: accent; opacity: 25% }
 
             // ----***------------------ header: month and arrows
             group { move: 14 * scale, 10 * scale
                 Capsule(24, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
-                text "‹" { at: 12 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 16; color: ink }
+                text "chevron_left" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: ink }
                 zone box prev { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Previous month"; role: button }
                 on press prev { emit cal_prev }
             }
             group { move: 300 * scale, 10 * scale
                 Capsule(24, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
-                text "›" { at: 12 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 16; color: ink }
+                text "chevron_right" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: ink }
                 zone box next { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Next month"; role: button }
                 on press next { emit cal_next }
@@ -61,13 +62,10 @@ part Calendar {
                     group {
                         size: 48 * scale, 40 * scale
                         box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: accent; opacity: ink.active; show: c.this and c.day == sel_day }
-                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.2 * scale; color: accent; show: c.today }
-                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1 * scale; color: warn; opacity: 55%; show: c.weekend and c.this and not c.today }
-                        ellipse { at: 6 * scale, 6 * scale; radius: 2.5 * scale; color: accent; show: c.mark == 1 }
-                        ellipse { at: 42 * scale, 6 * scale; radius: 2.5 * scale; color: warn; show: c.mark == 2 }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink; show: c.this and not c.today }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: accent; show: c.today }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off; show: not c.this }
+                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.5 * scale; color: accent; show: c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink; show: c.this and not c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; weight: 700; color: accent; show: c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: not c.this }
                         zone box day { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
                             label: c.label; role: button; selected: c.this and c.day == sel_day }
                         on press day { sel_day = c.day }
