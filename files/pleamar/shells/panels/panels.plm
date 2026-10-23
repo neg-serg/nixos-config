@@ -157,6 +157,10 @@ scene panels {
     text sysmon.err = ""
     text weather.city = ""
     text weather.temp = ""
+    // Published together with the value, not read from the flag at draw time:
+    // the label and the number could then disagree (the number is converted
+    // when the sample arrives, the label was picked per frame).
+    text weather.unit = "°C"
     text weather.cond = ""
     text weather.wind = ""
     text weather.humidity = ""
