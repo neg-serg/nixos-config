@@ -17,6 +17,15 @@ still=$("$(dirname "$0")/wallpaper-still" "$file") || { echo "wallpaper-apply: n
 
 ln -sfn "$file" "$HOME/.cache/current_wallpaper_source"
 ln -sfn "$still" "$HOME/.cache/current_wallpaper"
+
+# NixOS (trantor): the picker owns the desktop wallpaper, so it also feeds what used
+# to hang off wl-daemon — ~/.cache/quickshell-wallpaper-path (read by the bar accent
+# and by wl-greeter-sync, which copies the file into the login screen's cache) and
+# wl's last-good fallback. The *still*, never the source: the login screen runs
+# k-means over it and the bar extracts colours, and neither can read a video.
+mkdir -p "$HOME/.local/state/wl"
+printf '%s\n' "$still" > "$HOME/.cache/quickshell-wallpaper-path"
+printf '%s\n' "$still" > "$HOME/.local/state/wl/last-good"
 # The colour scheme, for those who use matugen. Niced: reading a big image
 # takes it most of a second on every core, which would cost the shell's
 # animations (the picker's) their frames.

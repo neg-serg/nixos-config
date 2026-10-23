@@ -9,20 +9,33 @@
 #
 # ## Who draws the wallpaper
 #
-# The picker can draw the wallpaper itself (that is its default), but on trantor
-# wl-daemon owns the background layer: it also paints behind the login screen,
-# and modules/user/nix-maid/sys/wallpaper-sync.nix turns every wl change into
-# ~/.cache/quickshell-wallpaper-path, which feeds the bar accent and the greeter
-# copy. Two painters would fight over the same layer and leave the login screen on
-# the previous picture, so the settings seed below hands each chosen wallpaper to
-# `wl img {}`: the deck becomes a front end of the same daemon, and the login
-# screen, the bar accent and `wl restore` all follow it. The one cost: video
-# wallpapers stay the deck's preview only (wl takes images); the colour-sorted
-# cards, the favourites and Wallhaven are unaffected.
+# The picker does (features.gui.wallpaperPicker.drawsWallpaper, default on): its
+# WallpaperLayer paints one WlrLayer.Background window per screen and handles what
+# wl cannot — animated GIF/WebP and videos (muted, looping, paused while a window
+# covers them) — so an image, an animated picture and a clip all work the same way.
 #
-# To let Quickshell paint instead, clear the wallpaper command in the picker's gear
-# (the field applies on Enter) and stop wl-daemon first — the same one-owner rule
-# features.gui.wallpaperVideo documents for its pinned window.
+# Exactly one program may own that layer, so while the picker draws:
+#
+#   - `environment.etc."wallpaper-owner/picker"` exists, and the
+#     wallpaper-sync.nix units (`wl-daemon`, `wl-monitor-watch`, `wl-state-sync`)
+#     carry `ConditionPathExists=!/etc/wallpaper-owner/picker` and skip. They stay
+#     *defined* on purpose: hyprland.lua starts `wl-daemon.service` by name in the
+#     login phase and in the session branch, the greeter's lock restarts it, and
+#     wl-restore starts it — with the condition those calls are no-ops instead of
+#     failures, and nothing paints a second background under the picker's.
+#   - the login screen, the bar accent and wl's last-good fallback follow the
+#     *still*: scripts/wallpaper-apply (the one local patch on the vendored tree)
+#     writes ~/.cache/quickshell-wallpaper-path and ~/.local/state/wl/last-good
+#     next to the two ~/.cache/current_wallpaper* links, which is what
+#     wl-greeter-sync copies into the greeter's cache. A video's still is the frame
+#     scripts/wallpaper-still grabs with ffmpeg, so the k-means on the login screen
+#     and the bar's colour extraction keep working.
+#   - `wl-wallpaper-resolve.sh` asks that notify file before wl's state.json: in
+#     this mode wl's state is a leftover from before the switch.
+#
+# To hand the layer back to wl-daemon: set `drawsWallpaper = false`, switch, and
+# put the painter back in the picker's gear — `wl img {}` (see features.gui
+# .wallpaperVideo for the same one-owner rule).
 #
 # ## Deployment
 #
@@ -45,6 +58,9 @@ let
   # Feature gate (single source: config.lib.neg.wallpaperPickerEnabled)
   pickerEnabled = config.lib.neg.wallpaperPickerEnabled;
 
+  # The picker paints the background itself (see the header)
+  pickerDraws = config.lib.neg.wallpaperPickerDraws;
+
   pickerSrcLive = config.lib.neg.live "files/qs-wallpaperpicker";
 
   # Read-only half of the config. `colors/Colors.qml` is linked on its own
@@ -66,9 +82,10 @@ let
     source = "${pickerSrcLive}/${name}";
   });
 
-  # First-run settings: the host's wallpaper collection and wl as the painter (see
-  # the header). JsonAdapter keeps the picker's own defaults for every key left
-  # out here, so only the two host-specific ones are written.
+  # First-run settings: the host's wallpaper collection, and an empty wallpaper
+  # command so Quickshell draws (images, animated pictures and videos — see the
+  # header). JsonAdapter keeps the picker's own defaults for every key left out
+  # here, so only these two are written.
   pickerInit = pkgs.writeShellScript "qs-wallpaperpicker-init" ''
     set -eu
     cfg="''${XDG_CONFIG_HOME:-$HOME/.config}/qs-wallpaperpicker"
@@ -77,7 +94,7 @@ let
     cat > "$cfg/settings.json" <<'JSON'
     {
       "wallpaperDir": "~/pic/wl",
-      "wallpaperCommand": "wl img {}"
+      "wallpaperCommand": ""
     }
     JSON
   '';
@@ -110,7 +127,7 @@ lib.mkIf pickerEnabled (
           StartLimitIntervalSec = 30;
           StartLimitBurst = 5;
           # The greeter owns the screen until the password is accepted — the same
-          # login-phase contract quickshell.service and wayle follow.
+          # login-phase contract quickshell.service follows.
           ConditionPathExists = [ "!%t/quickshell-login/login-phase" ];
         };
         serviceConfig = {
@@ -127,5 +144,17 @@ lib.mkIf pickerEnabled (
     }
 
     (neg.mkHomeFiles pickerHomeFiles)
+
+    # Ownership marker: the wallpaper-sync.nix conditions key off it, so wl-daemon and
+    # its helpers stand down while the picker paints (see the header). Declarative on
+    # purpose — a marker a user toggles by hand would let two painters come back.
+    (lib.mkIf pickerDraws {
+      environment.etc."wallpaper-owner/picker".text = ''
+        qs-wallpaperpicker draws the desktop wallpaper
+        (features.gui.wallpaperPicker.drawsWallpaper = true).
+        wl-daemon, wl-monitor-watch and wl-state-sync skip while this file exists;
+        see modules/user/nix-maid/gui/wallpaper-picker.nix.
+      '';
+    })
   ]
 )
