@@ -153,10 +153,19 @@ end
 -- `media` reports what plays; a pause is not a stop (the QS Cava stops with
 -- `MusicManager.isPlaying`, so this does the same). The watch hands the current
 -- state over right away, so nothing here starts on a maybe.
-if not sys.watch("media", function(m)
-        playing = m ~= nil and m.playing == true
-        if playing then start() else stop() end
-    end) then
+local function on_media(m)
+    playing = m ~= nil and m.playing == true
+    if playing then start() else stop() end
+end
+
+-- Asked once as well as watched: a track that was already playing when the
+-- scene started is in the service, but the first delivery of a watch can be the
+-- empty one (the service was not up yet), and then the analyser never starts —
+-- which looks exactly like a broken analyser.
+local asked, now = pcall(sys.ask, "media")
+if asked and type(now) == "table" then on_media(now) end
+
+if not sys.watch("media", on_media) then
     -- No media service on this system: the analyser runs and reads silence.
     start()
 end

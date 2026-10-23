@@ -1,0 +1,129 @@
+// pages/network.plm — the flow dashboard (`drawer == network`).
+//
+// Legacy: files/quickshell/Bar/Modules/NetFlowPopup.qml (470 × 338 dp): the
+// `flow` title, two big readouts (down/up) and a rolling history chart. The
+// data is the same stream the reference reads — `flow -json-stream`, ~10 Hz,
+// one JSON record a line — spawned by panels.luau while this drawer is open and
+// killed when it closes.
+//
+// The history is drawn as a three-dimensional waterfall: each sample is a
+// column standing on a receding floor, with a lit top face, a shaded right face
+// and a faint reflection — the oblique projection (a fixed shear per unit of
+// depth) is what makes it read as depth rather than as a row of bars. Two rows
+// of columns, upload behind download, share the same floor and the same peak,
+// so the two directions are comparable at a glance.
+//
+// Not ported, because the reference's versions of them are QS effects rather
+// than behaviour: the chart's "moving sheen" and the pulsing LIVE badge. Here
+// the live state is the dot's opacity (a rule on `net_live`).
+//
+// Colours: the reference chains blue → cyan for download and green → lime for
+// upload. This shell has no green token, and inventing one would put a colour
+// outside palette.plm, so download is `highlight` and upload is `amber` — the
+// palette's two hues that read on a dark plate.
+//
+// Every length here is a design-pixel literal inside `group zoom { scale }`:
+// `size:` and `weight:` take ONE number and silently drop the rest of the
+// expression (INTERFACES §9.2), so `size: 1 * type.body * scale` draws at 1 px
+// — which is exactly what the first version of this card did. `text_scale`
+// (the fontScale setting) is therefore not applied here yet; that needs the
+// size expression to survive the compiler first.
+//
+// The part is `NetPanel`, not `Network`: an identifier is case-insensitive
+// here, so a part named after the drawer's own enum value shadows it —
+// `show: drawer == network` then compares the fact with the part, the rule
+// never fires, and the scene (whose surface is that rule's `show`) exits a
+// couple of seconds after the drawer opens.
+
+part NetPanel {
+    component NetPanelDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+        size: 470 * scale, 338 * scale
+
+        // The projection: one unit of depth moves 6.5 px right and 3.4 px up.
+        // Both rows of columns and the floor are drawn with it, so they agree.
+        let depth.x = 6.5
+        let depth.y = 3.4
+        let column.w = 5.1
+        let pitch = 4.6
+
+        group {
+            move: (screen.width - 470 * scale) / 2, screen.height - (338 + bar.height + bar.gap) * scale + (1 - lift) * (338 + bar.height + bar.gap) * scale
+
+            group zoom {
+                scale: scale
+
+                // ----***------------------------- the card
+                Capsule(470, 338, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
+
+                // ----***------------------------ header
+                text "flow" { at: 14, 20; anchor: left center; size: 16; weight: 500; color: ink }
+
+                group { move: 62, 9
+                    Capsule(96, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
+                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; size: 12; color: ink }
+                }
+
+                ellipse { at: 348, 20; radius: 4; color: accent; opacity: pick(net_live, 100%, 30%) }
+                text "LIVE" { at: 358, 20; anchor: left center; size: 9; color: ink.dim }
+
+                group { move: 408, 9
+                    Capsule(48, 22, fill: slate, alpha: 60%, radius: 11, scale: 1)
+                    text "Close" { at: 24, 11; anchor: center; size: 12; color: ink }
+                    zone box close { from: 0, 0; size: 48, 22; corner: 11
+                        cursor: pointer; label: "Close {drawer}"; role: button }
+                    on press close { drawer = none }
+                }
+
+                box { from: 12, 36; size: 446, 1; color: ink; opacity: ink.subtle }
+
+                // ----***----------------------- readouts
+                text "{net.rx}" { at: 14, 64; anchor: left center; size: 32; weight: 500; color: highlight }
+                text "download" { at: 14, 86; anchor: left center; size: 12; color: ink.dim }
+                text "peak {net.peak_rx}" { at: 14, 104; anchor: left center; size: 10; color: ink.off }
+
+                text "{net.tx}" { at: 240, 64; anchor: left center; size: 32; weight: 500; color: amber }
+                text "upload" { at: 240, 86; anchor: left center; size: 12; color: ink.dim }
+                text "peak {net.peak_tx}" { at: 240, 104; anchor: left center; size: 10; color: ink.off }
+
+                // ----***-------------------------- floor
+                // The plane the two rows stand on: a front edge, the receding
+                // lines that give it a horizon, and one line at the base of each
+                // row. Everything is derived from `depth`, so floor and data
+                // cannot drift apart.
+                box { from: 14, 120; size: 442, 186; corner: 4; color: coal; opacity: 26% }
+                repeat g in 0..5 {
+                    box { from: 14, 120 + g * 37; size: 442, 1; color: ink; opacity: 4% }
+                }
+                box { from: 14, 300; size: 442, 1; color: ink; opacity: 12% }
+                box { from: 14 + 6 * depth.x, 300 - 6 * depth.y; size: 442, 1; color: ink; opacity: 8% }
+
+                // ----***------------------------ upload (back row)
+                // Drawn first so the download row stands in front of it. Six
+                // units of depth separate the rows; the lit top face is what
+                // turns a filled area into a surface with an edge.
+                for v in flow {
+                    box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
+                        size: column.w, max(v.tx / max(net_max_tx, 1) * 150, 1.5)
+                        color: amber; opacity: 40% }
+                    box { from: 14 + 6 * depth.x + v.index * pitch, 300 - 6 * depth.y - max(v.tx / max(net_max_tx, 1) * 150, 1.5)
+                        size: column.w, 1.1; color: amber; opacity: 95% }
+                }
+
+                // ----***------------------------ download (front row)
+                for v in flow {
+                    box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
+                        size: column.w, max(v.rx / max(net_max_rx, 1) * 176, 1.5)
+                        color: highlight; opacity: 62% }
+                    box { from: 14 + v.index * pitch, 300 - max(v.rx / max(net_max_rx, 1) * 176, 1.5)
+                        size: column.w, 1.1; color: ink; opacity: 70% }
+                }
+
+                text "waiting for flow…" { at: 235, 165; anchor: center; size: 12; color: ink.off
+                    show: flow.total == 0 }
+                text "{net.err}" { at: 235, 236; anchor: center; size: 11; color: warn }
+            }
+        }
+    }
+
+    NetPanelDrawer() { show: drawer == network }
+}

@@ -249,6 +249,36 @@ on("app_mute", function(i)
     if rec and type(rec.id) == "string" then sys.call("audio.app_mute", rec.id) end
 end)
 
+-- ========================= the media service =========================
+-- The now-playing card's identity rows (pages/media.plm). A scene cannot ask
+-- whether a text is empty (the language compares numbers), and an icon with no
+-- value is the defect that rule exists to avoid — so the emptiness test lives
+-- here and the card draws only the rows it is handed.
+--
+-- Two rows come from the service itself (artist, album — MPRIS through
+-- `media`); the rest of the reference's rows are the Meta plugin's, and a scene
+-- cannot read a plugin's texts or facts from its logic (a plugin only sees what
+-- its own library declares, and the other way round it exports only what its
+-- .plm names). So the plugin hands its rows over as a model and the card draws
+-- `Meta.rows` beside these. An icon with nothing after it is what neither side
+-- may produce: the emptiness test happens where the values are.
+
+local function media_apply(m)
+    local rows = {}
+    local function add(glyph, value)
+        if type(value) == "string" and value ~= "" then
+            rows[#rows + 1] = { glyph = glyph, value = value }
+        end
+    end
+    if type(m) == "table" then
+        add("person", m.artist)
+        add("album", m.album)
+    end
+    model.media_rows = rows
+end
+
+sys.watch("media", media_apply)
+
 -- ==================== samples into the drawing ====================
 
 -- ---- sysmon: one `tiles` record per metric -------------------------------
@@ -624,6 +654,97 @@ on("cal_next", function()
     set_month(y, m)
 end)
 
+-- ========================= the flow dashboard =========================
+-- The `network` drawer (pages/network.plm). QS streams `flow -json-stream`
+-- (~10 Hz) into NetFlowPopup and keeps the last 600 samples in QML; a scene
+-- cannot hold an array of its own, so the ring lives here and the card draws
+-- what it is handed. The stream is started when the drawer opens and killed
+-- when it closes — no process outlives its drawer, the same rule the workers
+-- follow (INTERFACES §7).
+
+local FLOW_LEN = 96
+local FLOW_PUBLISH_EVERY = 1
+local flow_id, flow_ring = nil, {}
+local flow_max_rx, flow_max_tx = 1, 1
+-- Smoothed values: `flow` reports instantaneous bursts (a rate-limited
+-- download arrives in clumps), and a chart drawn from raw samples looks like
+-- separate towers. An exponential average makes it a curve instead.
+local ema_rx, ema_tx = 0, 0
+local FLOW_SMOOTH = 0.22
+local flow_peak_rx, flow_peak_tx, flow_n = 0, 0, 0
+
+local function flow_publish()
+    local rows = {}
+    for i = 1, #flow_ring do
+        rows[i] = flow_ring[i]
+    end
+    model.flow = rows
+    -- Each direction is scaled by its own peak: one 7 MB/s download must not
+    -- flatten the upload curve, which is what a shared maximum does.
+    fact.net_max_rx = flow_max_rx
+    fact.net_max_tx = flow_max_tx
+end
+
+local function flow_stop()
+    if flow_id then
+        kill(flow_id, "term")
+        flow_id = nil
+    end
+    fact.net_live = false
+end
+
+local function flow_line(line)
+    local ok, v = pcall(json.decode, line)
+    if not ok or type(v) ~= "table" then return end
+    local rx = tonumber(v.download_bps) or 0
+    local tx = tonumber(v.upload_bps) or 0
+    if type(v.interface) == "string" and v.interface ~= "" then text["net.iface"] = v.interface end
+    if type(v.download_human) == "string" then text["net.rx"] = v.download_human end
+    if type(v.upload_human) == "string" then text["net.tx"] = v.upload_human end
+    fact.net_live = (rx > 1) or (tx > 1)
+    if rx > flow_peak_rx then
+        flow_peak_rx = rx
+        text["net.peak_rx"] = v.download_human or "--"
+    end
+    if tx > flow_peak_tx then
+        flow_peak_tx = tx
+        text["net.peak_tx"] = v.upload_human or "--"
+    end
+    ema_rx = ema_rx + (rx - ema_rx) * FLOW_SMOOTH
+    ema_tx = ema_tx + (tx - ema_tx) * FLOW_SMOOTH
+    flow_ring[#flow_ring + 1] = { rx = ema_rx, tx = ema_tx }
+    if #flow_ring > FLOW_LEN then table.remove(flow_ring, 1) end
+    if rx > flow_max_rx then flow_max_rx = rx end
+    if tx > flow_max_tx then flow_max_tx = tx end
+    -- 10 Hz into a 180-column chart is more redraws than a chart can use; the
+    -- ring keeps every sample, the model is published at ~2 Hz.
+    flow_n = flow_n + 1
+    if flow_n % FLOW_PUBLISH_EVERY == 0 then flow_publish() end
+end
+
+local function flow_start()
+    if flow_id then return end
+    flow_ring, flow_n = {}, 0
+    flow_max_rx, flow_max_tx = 1, 1
+    ema_rx, ema_tx = 0, 0
+    flow_peak_rx, flow_peak_tx = 0, 0
+    -- A spawn that cannot start must not take the fact handler down with it
+    -- (the overlay's inhibitor does the same): pcall, then say why.
+    local ok = pcall(function()
+        flow_id = spawn("flow", { "-json-stream" }, flow_line, function()
+            flow_id = nil
+            fact.net_live = false
+        end)
+    end)
+    if not ok or flow_id == nil then
+        flow_id = nil
+        text["net.err"] = "flow could not start"
+        log("flow: could not start")
+    else
+        text["net.err"] = ""
+    end
+end
+
 -- ==================== drawer lifecycle ====================
 
 -- One worker at a time, only while its drawer is open. Whatever changed the
@@ -654,6 +775,8 @@ on("fact:drawer", function(v)
         last_events, last_holidays = {}, {}
         cal_rebuild()
     end
+    -- The flow stream follows its drawer, like a worker does.
+    if v == "network" then flow_start() else flow_stop() end
     reconcile()
 end)
 
@@ -664,3 +787,8 @@ fact.cal_year, fact.cal_month = today_y, today_m
 fact.sel_day = today_d
 cal_rebuild()
 reconcile()
+
+-- The same for the flow stream: reloading the logic while its drawer is open
+-- (saving the file during a session) must not leave it without data — the
+-- `fact:drawer` listener only hears changes, and the change already happened.
+if fact.drawer == "network" then flow_start() end

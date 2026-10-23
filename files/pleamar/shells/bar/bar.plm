@@ -216,6 +216,12 @@ scene bar {
     event media_prev ->
     event media_toggle ->
     event media_next ->
+    // The capsule's cover opens the now-playing card in the `panels` scene.
+    // That scene exits while no drawer is open (its only surface is the drawer),
+    // so the logic has to start the unit and then say where to go.
+    event open_media_panel ->
+    // QS opens NetFlowPopup from the network capsule; same drawer family here.
+    event open_network_panel ->
 
     // --------------------------------------------------------------- surface
     // 25, not QS's `panelHeight` of 22: the reference draws that 22 at
@@ -273,7 +279,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { run: "cat", "hyprctl", "dash", "curl", "date"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "media", "media.*", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "pleamar", "systemctl"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "media", "media.*", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -501,6 +507,7 @@ scene bar {
             text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
             zone box net { from: 0, 0; size: 54, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { tip_open = true; emit tip(3) }
+            on press net { emit open_network_panel }
         }
     }
 
@@ -680,6 +687,7 @@ scene bar {
             zone box z_play { from: bx + 16 + bar.gap, 0; size: 16, h; corner: corner; cursor: pointer; label: "Play or pause"; role: button }
             zone box z_next { from: bx + 2 * (16 + bar.gap), 0; size: 16, h; corner: corner; cursor: pointer; label: "Next track"; role: button }
             on enter media_zone { media.hot = true }
+            on press media_zone { emit open_media_panel }
             on leave media_zone { media.hot = false }
             on press z_prev { emit prev }
             on press z_play { emit toggle }

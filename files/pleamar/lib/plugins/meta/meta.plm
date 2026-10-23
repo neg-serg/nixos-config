@@ -1,24 +1,18 @@
-language 0.4
-
-// meta.plm — extended track metadata as a plugin: what the playing file is,
-// not what the player claims about it.
+// meta.plm — extended track metadata as a plugin: what is playing, and what the
+// file behind it is.
 //
-// Legacy: files/quickshell/Services/MusicMeta.qml. That service introspects the
-// track file with `ffprobe -print_format json -show_streams -show_format`, falls
-// back to `mediainfo --Output=JSON`, and only then to `sox --i`; everything it
-// knows (codec, bit depth, sample rate, bitrate, channels, container, size, the
-// tags) comes from the file, not from MPRIS.
+// Legacy: files/quickshell/Services/MusicMeta.qml, whose order is kept — the
+// player's own metadata first (genre, album artist, composer, date, track
+// number), the file only for what a player cannot say (codec, depth, sample
+// rate, bitrate). The source is MPRIS, read through `playerctl -a`: every player
+// is asked at once and the playing one answers, so nothing here is wired to a
+// particular player. pleamar's `media` service still reports no url (upstream
+// ask, INTERFACES §10.5), which is why the url comes from MPRIS `xesam:url`.
 //
-// Where the path comes from is the deviation: pleamar's `media` service reports
-// no file URL (`playing/title/artist/album/length/position/rate/art/player/
-// players`), and MPRIS over `playerctl` cannot stand in for it (with two players
-// up it answers `No player could handle this command`, and the player pleamar
-// picked is not a `playerctl -p` name). So this plugin asks **MPD** for the
-// file: `mpc -f '%file%' current` is relative to MPD's music_directory, and the
-// root is the plugin's own settings file (`meta.json` in its folder, default
-// /home/neg/music) — the scene never has to know. Players that report no file
-// (a browser tab, a stream) simply leave the facts empty, which is the honest
-// answer for them.
+// A player that publishes no url — mpd's own bridge is one — still has genre and
+// the year, so the card keeps its tags and only the quality line stays empty; a
+// stream reports a url that is not a file, and is treated the same way. Nothing
+// is guessed at, and no path is invented from a music directory.
 //
 // The tag fallbacks (`tags.GENRE` capitalised, then lowercase, then
 // `format.tags`) and the mediainfo retry are the QS order; `sox --i` is left out
@@ -34,12 +28,12 @@ import "../../capsule.plm"
 
 library Meta strict {
 
-    // Its logic's own: mpc for the file, ffprobe as the introspection tool, and
-    // mediainfo as the fallback; media says which track; files reads its own
-    // settings (the music root).
+    // Its logic's own: playerctl asks every MPRIS player (the universal read —
+    // no player is hard-wired), ffprobe is the introspection tool and mediainfo
+    // its fallback; media says when the track changed.
     permissions {
-        run: "mpc", "ffprobe", "mediainfo"
-        services: "media", "files"
+        run: "playerctl", "ffprobe", "mediainfo"
+        services: "media"
     }
 
     // ------------------------------------------------------------- boundary
@@ -63,6 +57,12 @@ library Meta strict {
     // The QS "quality summary" line, composed here so a scene does not have to:
     // "FLAC 24/96 · 1024 kbps".
     text summary = ""
+    // The tag rows a card draws under the title, in the QS order and with the
+    // QS glyphs (MusicDetailRow: person/album/category/calendar_month/sell/
+    // piano/high_quality). Filled here for the same reason the summary is: only
+    // the logic can tell whether a text is empty, and a scene cannot — so a row
+    // that has no value is never handed over, and no icon is drawn over nothing.
+    model rows max 6 { glyph: text; value: text }
 
     // ----------------------------------------------------------------- line
     component Line(scale: number = ui) {

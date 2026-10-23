@@ -152,6 +152,28 @@ on("media_prev", function()
     sys.call("media.previous")
 end)
 
+-- The bar opens drawers in the `panels` scene: the cover opens the now-playing
+-- card, the network capsule opens the flow dashboard — QS's two side panels.
+-- That scene is not resident (its only surface is the drawer itself), so it
+-- exits a couple of seconds after the last drawer closes; starting the unit and
+-- saying where to go is one step. The fact has to arrive *after* the scene has
+-- loaded: a `--say` that lands while it is still starting is overwritten by its
+-- own defaults (drawer = none), no surface opens, and the scene exits. So wait
+-- past the load, then keep asserting the fact for a moment — it is a state, not
+-- a press, and saying it twice costs nothing.
+local function open_drawer(name)
+    run("dash", {
+        "-c",
+        "systemctl --user start pleamar-panels.service; sleep 1.1; "
+            .. "for i in $(seq 1 10); do "
+            .. "pleamar --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 || break; "
+            .. "sleep 0.15; done",
+    })
+end
+
+on("open_media_panel", function() open_drawer("media") end)
+on("open_network_panel", function() open_drawer("network") end)
+
 -- The wheel turned over the volume capsule: one step per notch (+ is upwards;
 -- the step is the frozen QS one, not yet a settings key).
 -- (permissions: "audio", "audio.*")
