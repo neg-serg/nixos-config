@@ -146,7 +146,7 @@ scene toast {
 
                 // The box: translucent coal (the legacy 85%) with the outline
                 // hairline the legacy border drew.
-                Capsule(w, h, fill: coal, alpha: 85%, radius: 4, edge: 1, edge_tone: outline, edge_alpha: 100%, shadow: 45%, scale: 1) { }
+                Capsule(w, h, fill: coal, alpha: 95%, radius: 4, edge: 1, edge_tone: outline, edge_alpha: 12%, shadow: 45%, scale: 1) { }
 
                 // ------***----------- preview
                 // 428 x 280 plate, the picture fitted inside it (the legacy
