@@ -29,7 +29,16 @@ let
   # ~/src/ai-tools (its interpreter went stale on a python bump and `marker`
   # has been dead since). Bound as a python env because the CLI ships with the
   # python package; Tesseract above stays the OCR engine for scanned pages.
-  docling = pkgs.python3.withPackages (ps: [ ps.docling ]);
+  #
+  # ignoreCollisions: in the pinned nixpkgs (docling 2.118.0) the full package
+  # propagates `docling-slim` and BOTH install bin/docling-tools, so buildEnv
+  # refuses the environment outright ("two given paths contain a conflicting
+  # subpath", exit 25) and the whole system fails to build. The two copies come
+  # from the same version, so the file is interchangeable: keep the first.
+  doclingEnv = pkgs.python3.withPackages (ps: [ ps.docling ]);
+  docling = doclingEnv.overrideAttrs (_: {
+    ignoreCollisions = true;
+  });
 in
 {
   environment.systemPackages = [

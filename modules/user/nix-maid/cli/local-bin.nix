@@ -30,7 +30,15 @@
           "@ZSTD_LIB_DIR@" = "${pkgs.zstd.out}/lib"; # libzstd (torch >= 2.13 links it)
           # docling (drives the pdf2md wrapper): the CLI ships inside a python
           # env, not as a top-level attribute — pin that env's bin/docling here.
-          "@DOCLING_BIN@" = "${pkgs.python3.withPackages (ps: [ ps.docling ])}/bin/docling";
+          # Same env as modules/cli/ocr.nix, with the docling/docling-slim
+          # bin/docling-tools collision ignored there (see the note on
+          # doclingEnv); the two expressions must stay identical so both sites
+          # resolve to one store path.
+          "@DOCLING_BIN@" = "${
+            (pkgs.python3.withPackages (ps: [ ps.docling ])).overrideAttrs (_: {
+              ignoreCollisions = true;
+            })
+          }/bin/docling";
           # The music-AI venv tree lives outside the repo; the scripts used to
           # spell the path out 19 times. Rendered output is unchanged (the
           # substitution is the same string), so this only moves the one place
