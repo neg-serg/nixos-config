@@ -12,7 +12,12 @@
     # Looped video wallpaper (mpv in a hyprwinwrap-pinned window). Off by
     # default: wl-daemon owns the background layer, and a pinned full-screen
     # window covers it — the two wallpaper systems do not compose.
-    wallpaperVideo = mkBool "enable the looped video wallpaper window (mpv + hyprwinwrap)" false;
+    # Submodule shape like every other flag: lib.neg.enabled reads
+    # features.<path>.enable, and a flat mkBool made this one impossible to turn
+    # on (x.enable or false swallowed the type error into false).
+    wallpaperVideo = {
+      enable = mkBool "enable the looped video wallpaper window (mpv + hyprwinwrap)" false;
+    };
     # Swatch-deck wallpaper picker: a standalone Quickshell config (`qs -p
     # ~/.config/qs-wallpaperpicker`), so it runs beside the bar instead of
     # replacing it. Which folder it browses and which program paints the chosen
