@@ -94,7 +94,7 @@ scene panels {
     // layer the height of the monitor is what broke the plate (the text behind
     // it came through unblurred and Hyprland's blur never reached it). Short and
     // wide keeps both.
-    surface { size: full, 420; anchor: bottom; margin: 0, 0, 30, 0
+    surface { size: full, 560; anchor: bottom; margin: 0, 0, 30, 0
               level: overlay; reserve: 0; screens: each; keyboard: on_demand; open: true }
 
     // Commands the logic runs (workers), services it listens to (audio, own
