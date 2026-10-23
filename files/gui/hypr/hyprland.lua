@@ -1362,6 +1362,12 @@ local blur_layers = {
   -- one namespace (`hyprctl layers` shows "pleamar" for all five). Without it
   -- the drawers' 75 % plate has nothing behind it to be glass over — the card
   -- read as a flat dark rectangle, which is what it looked like.
+  -- pleamar's drawers draw real glass (`glass: 100%`, `smoke: 100%`), but this
+  -- Hyprland answers no `ext-background-effect`, so the scene's own blur request
+  -- goes nowhere and the glass is a tint with its lit edge and nothing frosted
+  -- behind it. The layer rule does that part: it blurs what is under the layer.
+  -- Measured 2026-10-23: glass alone reads as transparent; the rule alone reads
+  -- as a flat plate; both together are the reference's card.
   { ns = "pleamar",         ia = 0.05 },
   { ns = "quickshell-bar-reserve", ia = 0.05 }, -- the bar's shared backdrop strip; a bare
                                                 -- "quickshell" entry matched no surface (layer

@@ -51,7 +51,11 @@ part NowPlaying {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(420, 320, fill: coal, alpha: 75%, radius: 0, scale: 1)
+                body {
+                    color: coal
+                    opacity: 75%
+                        box { from: 0, 0; size: 420, 320; corner: 0 }
+                }
 
                 // ----***--------------------- album art
                 // The cover plugin resolves the real album-directory file behind

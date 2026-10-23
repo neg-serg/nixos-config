@@ -20,51 +20,68 @@ part SysPanel {
         // of the CPU: the title, the journal's state beside it, three figures
         // (log lines, errors, services) and the last few entries with a time, a
         // unit and a message.
-        size: 760 * scale, 344 * scale
+        size: 1040 * scale, 344 * scale
 
         group {
             move: 4, 4 + (1 - lift) * (344 + 4) * scale
 
-            Capsule(760, 344, fill: coal, alpha: 85%, radius: 0, scale: scale)
+            body {
+                color: coal
+                opacity: 85%
+
+                box { from: 0, 0; size: 1040 * scale, 344 * scale; corner: 0 }
+            }
 
             // ----***---------------------------- header
-            text "System Dashboard" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: ink }
-            ellipse { at: 656, 20; radius: 5; color: pick(journal_ok, #00F5D4, ink.off) }
-            text "Journal" { at: 668, 20; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
+            text "System Dashboard" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: ink }
+            ellipse { at: 930, 20; radius: 5; color: pick(journal_ok, #00F5D4, ink.off) }
+            text "Journal" { at: 942, 20; anchor: left center; family: "Iosevka"; size: 13; color: ink.dim }
 
-            box { from: 14, 36; size: 732, 1; color: ink; opacity: ink.subtle }
+            box { from: 14, 36; size: 1012, 1; color: ink; opacity: ink.subtle }
 
             // ----***-------------------------- figures
             // Three cards of equal width, the value above the label, as the
             // reference lays them out (value at medium, label at small).
             group { move: 14, 46
-                Capsule(238, 62, fill: slate, alpha: 40%, radius: 6, scale: 1)
-                text sys.logs { at: 16, 24; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: ink }
-                text "Log Lines" { at: 16, 46; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
+                body {
+                    color: slate
+                    opacity: 40%
+                    box { from: 0, 0; size: 330, 56; corner: 6 }
+                }
+                text sys.logs { at: 16, 22; anchor: left center; family: "Iosevka"; size: 19; weight: 700; color: ink }
+                text "Log Lines" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 13; color: ink.dim }
             }
-            group { move: 261, 46
-                Capsule(238, 62, fill: slate, alpha: 40%, radius: 6, scale: 1)
-                text sys.errors { at: 16, 24; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: warn }
-                text "Errors" { at: 16, 46; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
+            group { move: 356, 46
+                body {
+                    color: slate
+                    opacity: 40%
+                    box { from: 0, 0; size: 330, 56; corner: 6 }
+                }
+                text sys.errors { at: 16, 22; anchor: left center; family: "Iosevka"; size: 19; weight: 700; color: warn }
+                text "Errors" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 13; color: ink.dim }
             }
-            group { move: 508, 46
-                Capsule(238, 62, fill: slate, alpha: 40%, radius: 6, scale: 1)
-                text sys.services { at: 16, 24; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: ink }
-                text "Services" { at: 16, 46; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
+            group { move: 698, 46
+                body {
+                    color: slate
+                    opacity: 40%
+                    box { from: 0, 0; size: 330, 56; corner: 6 }
+                }
+                text sys.services { at: 16, 22; anchor: left center; family: "Iosevka"; size: 19; weight: 700; color: ink }
+                text "Services" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 13; color: ink.dim }
             }
 
             // ----***----------------------- recent logs
-            text "Recent Logs" { at: 14, 128; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: ink }
+            text "Recent Logs" { at: 14, 128; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: ink }
 
             // The table's head, then a row per entry: time, unit, message.
-            text "Time" { at: 20, 150; anchor: left center; family: "Iosevka"; size: 11; color: ink.off }
-            text "Service" { at: 90, 150; anchor: left center; family: "Iosevka"; size: 11; color: ink.off }
-            text "Message" { at: 250, 150; anchor: left center; family: "Iosevka"; size: 11; color: ink.off }
+            text "Time" { at: 20, 150; anchor: left center; family: "Iosevka"; size: 12; color: ink.off }
+            text "Service" { at: 90, 150; anchor: left center; family: "Iosevka"; size: 12; color: ink.off }
+            text "Message" { at: 250, 150; anchor: left center; family: "Iosevka"; size: 12; color: ink.off }
 
             for e in journal {
-                text e.time { at: 20, 168 + e.index * 20; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
-                text e.service { at: 90, 168 + e.index * 20; anchor: left center; width: 152; lines: 1; family: "Iosevka"; size: 11; color: ink.dim }
-                text e.msg { at: 250, 168 + e.index * 20; anchor: left center; width: 496; lines: 1; family: "Iosevka"; size: 11; color: ink }
+                text e.time { at: 20, 168 + e.index * 20; anchor: left center; family: "Iosevka"; size: 13; color: ink.dim }
+                text e.service { at: 90, 168 + e.index * 20; anchor: left center; width: 152; lines: 1; family: "Iosevka"; size: 13; color: ink.dim }
+                text e.msg { at: 250, 168 + e.index * 20; anchor: left center; width: 770; lines: 1; family: "Iosevka"; size: 13; color: ink }
             }
 
             text "no journal entries in the last day" { at: 380, 200; anchor: center; family: "Iosevka"; size: 11; color: ink.off

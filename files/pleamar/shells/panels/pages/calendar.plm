@@ -27,7 +27,11 @@ part Calendar {
             move: 4, 4 + (1 - lift) * (480 + 4) * scale
 
             // ----***----------------------------- the card
-            Capsule(380, 480, fill: coal, alpha: 85%, radius: 6, scale: scale)
+            body {
+                color: coal
+                opacity: 85%
+                box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 6 * scale }
+            }
             box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: accent; opacity: 25% }
 
             // ----***------------------ header: month and arrows

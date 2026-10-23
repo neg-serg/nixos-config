@@ -29,7 +29,11 @@ part Volume {
             move: 4, 4 + (1 - lift) * (320 + 4) * scale
 
             // ----***----------------------------- the card
-            Capsule(340, 320, fill: coal, alpha: 75%, radius: 0, scale: scale)
+            body {
+                color: coal
+                opacity: 75%
+                box { from: 0, 0; size: 340 * scale, 320 * scale; corner: 0 }
+            }
 
             // ----***----------------------- output volume
             text "Output" { at: 14 * scale, 16 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
