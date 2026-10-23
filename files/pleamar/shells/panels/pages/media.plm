@@ -45,7 +45,7 @@ part NowPlaying {
         size: 420 * scale, 324 * scale
 
         group {
-            move: (screen.width - 420 * scale) / 2, screen.height - (324 + bar.height + bar.gap) * scale + (1 - lift) * (324 + bar.height + bar.gap) * scale
+            move: screen.width - (420 + 4) * scale, screen.height - (324 + bar.height + 1) * scale + (1 - lift) * (324 + bar.height + 1) * scale
 
             group zoom {
                 scale: scale

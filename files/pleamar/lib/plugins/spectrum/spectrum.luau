@@ -18,7 +18,7 @@
 -- Unapproved, cava is not spawned and every bar stays at zero; the console says
 -- why. Approve with `pleamar --approve <scene>.plm`.
 
-local BARS = 43          -- == model values max in spectrum.plm
+local BARS = 26          -- == model values max in spectrum.plm; the reference's targetBars
 local DECAY_MS = 50      -- palette spectrum.decay
 local FALL = 0.04        -- LinearSpectrum: the peak falls this much per decay
 local LEVEL_RANGE = 255  -- cava's ascii data_format writes 0..255 per bar

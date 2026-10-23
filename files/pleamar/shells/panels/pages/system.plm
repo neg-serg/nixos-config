@@ -18,7 +18,7 @@ part System {
         size: 1040 * scale, 348 * scale
 
         group {
-            move: (screen.width - min(1040 * scale, screen.width - 48 * scale)) / 2, screen.height - (384 + bar.height + bar.gap) * scale + (1 - lift) * (384 + bar.height + bar.gap) * scale
+            move: (screen.width - min(1040 * scale, screen.width - 48 * scale)) / 2, screen.height - (384 + bar.height + 1) * scale + (1 - lift) * (384 + bar.height + 1) * scale
 
             // ----***----------------------------- the card
             Capsule(1040, 384, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: scale)

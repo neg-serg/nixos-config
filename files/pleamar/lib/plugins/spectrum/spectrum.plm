@@ -63,7 +63,7 @@ library Spectrum strict {
 
     // One record per bar, filled by the logic at cava's cadence: level 0..1,
     // the falling peak 0..1, and whether the bar is inside the coloured band.
-    model values max 43 {
+    model values max 26 {
         level: number
         peak: number = 0
         lit: bool = true
@@ -73,32 +73,33 @@ library Spectrum strict {
     // Rounded columns, mirrored about the centre line. `width`/`height` are the
     // box the scene gives the analyser; the bar width follows from it and the
     // gap token, never below `spectrum.bar.min`.
-    component Bars(width: number, height: number = 18, tone: color = highlight, end: color = accent, gap: number = spectrum.gap) {
-        let bw = max(spectrum.bar.min, (width - gap * (values.count - 1)) / max(1, values.count))
+    // The reference's analyser (Components/IPhoneSpectrum.qml, `renderMode` its
+    // default "bars"): a rounded bar per band, grown from the vertical centre
+    // both ways when mirrored, a glassy halo behind it, and a perspective that
+    // shortens the bars towards the edges (threeDDepth 0.35). Silence draws
+    // nothing at all, and the colour runs from `tone` to `end` across the band.
+    component Bars(width: number, height: number = 18, tone: color = highlight, end: color = accent, gap: number = 1) {
+        let bw = max(2, (width - gap * (values.count - 1)) / max(1, values.count))
         let half = if(mirror, height / 2, height)
         for v in values {
-            let bh = clamp(v.level * half, 0, half)
             let t = if(values.count > 1, v.index / (values.count - 1), 0)
+            let persp = 1 - 0.35 * abs(2 * t - 1)
             let base = mix(tone, end, if(gradient, t, 0))
             let c = mix(mix(base, coal, 65%), base, v.lit)
+            let bh = clamp(v.level * half * persp, 0, half)
             let x = v.index * (bw + gap)
-            // Mirrored: one column growing up from the centre, one down.
-            box { from: x, height / 2 - bh; size: bw, bh; corner: min(bw / 2, 2); color: c; opacity: spectrum.fill.alpha; show: mirror }
-            box { from: x, height / 2; size: bw, bh; corner: min(bw / 2, 2); color: c; opacity: spectrum.fill.alpha; show: mirror }
-            // One-sided: bottom-anchored.
-            box { from: x, height - bh; size: bw, bh; corner: min(bw / 2, 2); color: c; opacity: spectrum.fill.alpha; show: not mirror }
-            // Peak marks, at the value the logic decays (`spectrum.decay`).
-            let py = clamp(v.peak, 0, 1) * half
-            box { from: x, height / 2 - py - spectrum.peak.height; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and py > 0.01 }
-            box { from: x, height / 2 + py; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and py > 0.01 }
-            box { from: x, height - py - spectrum.peak.height; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: not mirror and peaks and py > 0.01 }
+            let on = v.level > 0.001
+            // The halo: twice as wide, behind, a fifth of the bar's opacity.
+            box { from: x - bw / 2, height / 2 - bh; size: bw * 2, bh; corner: bw; color: c; opacity: 15%; show: mirror and on }
+            box { from: x - bw / 2, height / 2; size: bw * 2, bh; corner: bw; color: c; opacity: 15%; show: mirror and on }
+            box { from: x - bw / 2, height - bh; size: bw * 2, bh; corner: bw; color: c; opacity: 15%; show: not mirror and on }
+            // The bar itself.
+            box { from: x, height / 2 - bh; size: bw, bh; corner: bw / 2; color: c; opacity: 75%; show: mirror and on }
+            box { from: x, height / 2; size: bw, bh; corner: bw / 2; color: c; opacity: 75%; show: mirror and on }
+            box { from: x, height - bh; size: bw, bh; corner: bw / 2; color: c; opacity: 75%; show: not mirror and on }
         }
     }
 
-    // ------------------------------------------------------------------- led
-    // IPhoneSpectrum's `led` render mode: the same frame cut into ten segments
-    // per bar, a lit segment for every tenth of the level. `segments` is fixed
-    // by the language (`repeat` takes literals), so ten is the shape.
     component Led(width: number, height: number = 18, tone: color = highlight, end: color = accent, gap: number = spectrum.gap) {
         let bw = max(spectrum.bar.min, (width - gap * (values.count - 1)) / max(1, values.count))
         let seg = max(2, (height - 9) / 10)
