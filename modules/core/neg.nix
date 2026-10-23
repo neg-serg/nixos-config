@@ -87,12 +87,6 @@ in
         # the chosen picture to wl-daemon (modules/user/nix-maid/gui/wallpaper-picker.nix).
         wallpaperPickerEnabled = enabled "gui" && enabled "gui.wallpaperPicker";
 
-        # Who paints the background: the picker itself unless its drawsWallpaper
-        # flag is off. Read directly, not through `enabled`: drawsWallpaper is a
-        # plain bool inside the picker submodule, and `enabled` looks for `.enable`.
-        wallpaperPickerDraws =
-          wallpaperPickerEnabled && (config.features.gui.wallpaperPicker.drawsWallpaper or false);
-
         # Repo-root resolver (`path`, `pathExists`, `readFile`, `tree`, `find`) is
         # spread in above from the top-level `repo` binding: repoRoot is a real
         # path, so `repo.path "files/x"` carries Nix path context — used in a

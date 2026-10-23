@@ -26,9 +26,18 @@ Singleton {
     readonly property string link: Quickshell.env("HOME") + "/.cache/current_wallpaper"
     readonly property string sourceLink: Quickshell.env("HOME") + "/.cache/current_wallpaper_source"
 
-    // The wallpaper command ("" when Quickshell draws the wallpaper).
+    // The wallpaper command ("" when Quickshell never draws the wallpaper).
     readonly property string command: SettingsConfig.wallpaperCommand.trim()
-    readonly property bool external: command !== ""
+    // NixOS (trantor): the command is `wl img {}` and wl-daemon keeps painting the
+    // desktop, but wl only takes still images. So the split is by file kind, not by
+    // the command: an image goes to the command and Quickshell opens no background
+    // window at all (wl's own surface is then the wallpaper, which keeps `wl query`,
+    // `wl restore`, the vicinae wl-switcher and the login screen in agreement), while
+    // an animated picture or a video is drawn here — WallpaperLayer puts those
+    // windows on WlrLayer.Bottom, above wl's background surface and below every
+    // normal window.
+    readonly property bool drawsKind: kind(current) !== "image"
+    readonly property bool external: command !== "" && !drawsKind
     // Why the last run of the command failed ("" when it didn't).
     property string commandError: ""
 
