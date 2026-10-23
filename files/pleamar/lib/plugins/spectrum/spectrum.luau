@@ -169,3 +169,13 @@ if not sys.watch("media", on_media) then
     -- No media service on this system: the analyser runs and reads silence.
     start()
 end
+
+-- The watch only reports *changes*, and a track that was already playing when
+-- the scene started never produces one. The poll is the floor under that: while
+-- nothing plays it asks again every two seconds, and stops asking the moment
+-- the analyser is up.
+every(2000, function()
+    if playing then return end
+    local ok, cur = pcall(sys.ask, "media")
+    if ok and type(cur) == "table" then on_media(cur) end
+end)

@@ -62,8 +62,11 @@
 #
 # Notifications still miss their budget (1.0 % of a core against the 0.5 % target) and
 # `tests/evidence/` is missing, so the G3/SC2 gates are unproven. The plugin phase (PH3-P) has
-# landed six plugins, but `spectrum.luau` never starts cava in a live scene: the analyser in the
-# media card is drawn from values that stay at zero. The superplan carries the per-phase status.
+# landed six plugins. The analyser in the media card is the one unverified path: `spectrum.luau`
+# only heard about `media` through its watch, and a track that was already playing when the scene
+# started produces no change event — it now asks once at load and polls every two seconds while
+# nothing plays. Confirm cava is a child of the scene after a fresh start before trusting it; the
+# superplan carries the per-phase status.
 
 {
   pkgs,
