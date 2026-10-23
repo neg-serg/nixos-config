@@ -13,31 +13,62 @@
 // and log files, which this slice does not port: the worker is the metrics
 // source the port froze (INTERFACES.md §7), the journal dashboard is deferred.
 
-part System {
+part SysPanel {
     component SystemDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
-        size: 1040 * scale, 348 * scale
+        // Bar/Modules/SystemMonitorPopup.qml: `Color.withAlpha(Theme.surface,
+        // 0.85)`, `borderWidth: 0`, radius 0 — a dashboard of the journal, not
+        // of the CPU: the title, the journal's state beside it, three figures
+        // (log lines, errors, services) and the last few entries with a time, a
+        // unit and a message.
+        size: 760 * scale, 344 * scale
 
         group {
-            move: (screen.width - min(1040 * scale, screen.width - 48 * scale)) / 2, screen.height - (384 + bar.height + 1) * scale + (1 - lift) * (384 + bar.height + 1) * scale
+            move: screen.width - (760 + 4) * scale, screen.height - (344 + bar.height + 1) * scale + (1 - lift) * (344 + bar.height + 1) * scale
 
-            // ----***----------------------------- the card
-            Capsule(1040, 384, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: scale)
+            Capsule(760, 344, fill: coal, alpha: 85%, radius: 0, scale: scale)
 
-            // ----***---------------------------- samples
-            text "Sampling…" { at: 520 * scale, 204 * scale; anchor: center; family: "Iosevka"; size: 16; color: ink.off; show: tiles.total == 0 }
+            // ----***---------------------------- header
+            text "System Dashboard" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: ink }
+            ellipse { at: 656, 20; radius: 5; color: pick(journal_ok, #00F5D4, ink.off) }
+            text "Journal" { at: 668, 20; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
 
-            column rows { at: 16 * scale, 28 * scale; gap: 6 * scale
-                for t in tiles {
-                    group {
-                        size: 1008 * scale, 12 * scale
-                        box { from: 0, 0; size: 1008 * scale, 12 * scale; corner: 4 * scale; color: ink; opacity: ink.hover }
-                        text t.label { at: 14 * scale, 24 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
-                        text t.value { at: 994 * scale, 15 * scale; anchor: right center; family: "Iosevka"; size: 16; weight: 700; color: ink }
-                        box { from: 14 * scale, 4 * scale; size: 980 * scale, 5 * scale; corner: 2.5 * scale; color: ink; opacity: ink.active }
-                        box { from: 14 * scale, 4 * scale; size: 980 * t.level * scale, 5 * scale; corner: 2.5 * scale; color: pick(t.tone, accent, amber, warn) }
-                    }
-                }
+            box { from: 14, 36; size: 732, 1; color: ink; opacity: ink.subtle }
+
+            // ----***-------------------------- figures
+            // Three cards of equal width, the value above the label, as the
+            // reference lays them out (value at medium, label at small).
+            group { move: 14, 46
+                Capsule(238, 62, fill: slate, alpha: 40%, radius: 6, scale: 1)
+                text sys.logs { at: 16, 24; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: ink }
+                text "Log Lines" { at: 16, 46; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
             }
+            group { move: 261, 46
+                Capsule(238, 62, fill: slate, alpha: 40%, radius: 6, scale: 1)
+                text sys.errors { at: 16, 24; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: warn }
+                text "Errors" { at: 16, 46; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
+            }
+            group { move: 508, 46
+                Capsule(238, 62, fill: slate, alpha: 40%, radius: 6, scale: 1)
+                text sys.services { at: 16, 24; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: ink }
+                text "Services" { at: 16, 46; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
+            }
+
+            // ----***----------------------- recent logs
+            text "Recent Logs" { at: 14, 128; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: ink }
+
+            // The table's head, then a row per entry: time, unit, message.
+            text "Time" { at: 20, 150; anchor: left center; family: "Iosevka"; size: 11; color: ink.off }
+            text "Service" { at: 90, 150; anchor: left center; family: "Iosevka"; size: 11; color: ink.off }
+            text "Message" { at: 250, 150; anchor: left center; family: "Iosevka"; size: 11; color: ink.off }
+
+            for e in journal {
+                text e.time { at: 20, 168 + e.index * 20; anchor: left center; family: "Iosevka"; size: 11; color: ink.dim }
+                text e.service { at: 90, 168 + e.index * 20; anchor: left center; width: 152; lines: 1; family: "Iosevka"; size: 11; color: ink.dim }
+                text e.msg { at: 250, 168 + e.index * 20; anchor: left center; width: 496; lines: 1; family: "Iosevka"; size: 11; color: ink }
+            }
+
+            text "no journal entries in the last day" { at: 380, 200; anchor: center; family: "Iosevka"; size: 11; color: ink.off
+                show: journal.total == 0 }
         }
     }
 

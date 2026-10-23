@@ -785,6 +785,31 @@ local function reconcile()
     end
 end
 
+-- The journal worker (`pleamar-journal`): one JSON snapshot per call, counts and
+-- the last few entries. Nothing streams here — a dashboard opened on demand does
+-- not need a process of its own to sit there.
+local function journal_refresh()
+    local ok = pcall(run, "pleamar-journal", {}, function(out)
+        if type(out) ~= "string" then return end
+        local got, v = pcall(json.decode, out:match("[^\n]+") or out)
+        if not got or type(v) ~= "table" or type(v.data) ~= "table" then return end
+        local d = v.data
+        text["sys.logs"] = d.logs and tostring(d.logs) or "--"
+        text["sys.errors"] = d.errors and tostring(d.errors) or "--"
+        text["sys.services"] = d.services and tostring(d.services) or "--"
+        local rows = {}
+        for _, e in ipairs(d.entries or {}) do
+            rows[#rows + 1] = { time = e.time or "", service = e.service or "", msg = e.msg or "" }
+        end
+        model.journal = rows
+        fact.journal_ok = true
+    end)
+    if not ok then
+        text["sys.logs"], text["sys.errors"], text["sys.services"] = "--", "--", "--"
+        fact.journal_ok = false
+    end
+end
+
 on("fact:drawer", function(v)
     if v == "calendar" then
         -- Like the legacy popup: opening the calendar comes back to today.
@@ -795,6 +820,10 @@ on("fact:drawer", function(v)
     end
     -- The flow stream follows its drawer, like a worker does.
     if v == "network" then flow_start() else flow_stop() end
+
+    -- The system dashboard reads the journal once, when it opens: the worker
+    -- prints a single line and exits.
+    if v == "system" then journal_refresh() end
 
     -- The analyser runs only while the card that draws it is up. A scene rule
     -- cannot set a plugin fact — it compiles and silently does nothing — so the
