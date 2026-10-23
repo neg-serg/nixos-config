@@ -727,7 +727,7 @@ scene bar {
                 // out as one run of ink).
                 space 2
                 text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 14; color: skin.ink; family: "Iosevka" }
-                text "({media.position, time}/{media.length, time})" { size: 13; color: amber; family: "Iosevka" }
+                text "({media.position, time}/{media.length, time})" { size: 14; color: amber; family: "Iosevka" }
                 row extras { show: media.hot
                     gap: bar.gap
                     align: center
