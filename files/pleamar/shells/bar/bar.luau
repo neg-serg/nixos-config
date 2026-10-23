@@ -413,6 +413,22 @@ local function sample()
             local txb, txu = fmt_rate((tx - through.tx) / 2048)
             text.net_rx, text.net_rx_unit = rxb, rxu
             text.net_tx, text.net_tx_unit = txb, txu
+            -- QS dims the leading zeros of the integer part (NetClusterCapsule's
+            -- _dimLeadingZeros, in textDisabled). A scene's text cannot look at its own
+            -- characters, so the count travels as a fact and letter_opacity uses it.
+            local function zeros(body)
+                local n = 0
+                for i = 1, #body do
+                    if body:sub(i, i) == "0" then n = n + 1 else break end
+                end
+                return n
+            end
+            fact.net_rx_zeros = zeros(rxb)
+            fact.net_tx_zeros = zeros(txb)
+            -- QS draws the unit letter in the accent and drops "K" altogether, so the
+            -- boolean travels too: a component cannot compare a text fact.
+            fact.net_rx_show_unit = (rxu ~= "" and rxu ~= "K")
+            fact.net_tx_show_unit = (txu ~= "" and txu ~= "K")
         end
         through = { rx = rx, tx = tx }
     end)

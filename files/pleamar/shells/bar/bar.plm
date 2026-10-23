@@ -191,6 +191,12 @@ scene bar {
     text net_tx = "--"
     text net_rx_unit = ""
     text net_tx_unit = ""
+    // How many leading zeros the readout starts with (QS dims them in textDisabled);
+    // the letter of the unit is drawn in the accent, and "K" is not drawn at all.
+    fact net_rx_zeros = 0
+    fact net_tx_zeros = 0
+    fact net_rx_show_unit = false
+    fact net_tx_show_unit = false
     // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
     text kb_layout = ""
     // The weather capsule, filled by bar.luau from open-meteo through its own
@@ -533,6 +539,8 @@ scene bar {
     // with a different width, and the biggest single difference in the left
     // cluster after the tabs.
     component NetCluster(scale: number = ui * user_scale) {
+        measure w.rx
+        measure w.tx
         let icon = 14
         let text.x = 22
         size: 50 * scale, strip * scale
@@ -543,8 +551,10 @@ scene bar {
             // Weight 900: NetClusterCapsule draws both rows with `font.weight: Font.Black`
             // and 0.5 px of letter spacing, and the port drew them at the default weight —
             // measured, ours read noticeably thinner at the same size.
-            text "{net_rx}" { at: text.x, strip / 2 - 5; anchor: left center; size: 10; weight: 900; color: skin.ink; family: "Iosevka" }
-            text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; weight: 900; color: skin.ink; family: "Iosevka" }
+            text "{net_rx}" { measure: w.rx; at: text.x, strip / 2 - 5; anchor: left center; size: 10; weight: 900; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx_unit}" { at: text.x + w.rx.width, strip / 2 - 5; anchor: left center; size: 10; weight: 900; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; at: text.x, strip / 2 + 5; anchor: left center; size: 10; weight: 900; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 5; anchor: left center; size: 10; weight: 900; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { tip_open = true; emit tip(3) }
             on press net { emit open_network_panel }
