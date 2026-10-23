@@ -114,17 +114,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pleamar = {
-      # v0.4.11 @ 57568fa plus the commits on `neg-serg/pleamar`, branch
-      # fix/import-relative-to-the-path-as-given: an `import` is resolved beside the
-      # path the importing file was reached by, not beside its canonicalized
-      # checkout. Without it a scene loaded from ~/.config/pleamar (a symlink farm
-      # into this repository) imported the repository's neighbours, so the palette
-      # generated next to the live tree was never read and every scene kept the
-      # frozen colours — the accent stayed #006FCC instead of the wallpaper's, and
-      # the drawers kept a black plate. Nothing else differs from the tag; send it
-      # upstream when convenient. Update with:
+      # v0.4.29 (8cd42c5) plus two commits on `neg-serg/pleamar`, branch
+      # fix/import-path-v0.4.29: an `import` is resolved beside the path the
+      # importing file was reached by, not beside its canonicalized checkout.
+      # Without it a scene loaded from ~/.config/pleamar (a symlink farm into this
+      # repository) imported the repository's neighbours, so the palette generated
+      # next to the live tree was never read and every scene kept the frozen
+      # colours — the accent stayed #006FCC instead of the wallpaper's, and the
+      # drawers kept a black plate. The patch is `src/language/mod.rs` only
+      # (+40/−6), rebased onto the v0.4.29 tag; nothing is sent upstream. Update
+      # with:
       # nix flake lock --update-input pleamar
-      url = "github:neg-serg/pleamar/97cc39dbc38cd1b9e578164ed2213d4a640f803e";
+      url = "github:neg-serg/pleamar/eaf6020623588716f2608d249dc9e6abd51a2bec";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
