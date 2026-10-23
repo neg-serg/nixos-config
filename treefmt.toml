@@ -24,6 +24,10 @@ excludes = [
   "files/quickshell/Chaldea/glyphs/**",
   "files/quickshell/Chaldea/interactive-art/**",
   "files/quickshell/Chaldea/lockscreens/**",
+  # Vendored qs-wallpaperpicker tree — kept byte-identical to the upstream export
+  # its .package-export pins; its Python is excluded from black in the Justfile
+  # lint recipe for the same reason.
+  "files/qs-wallpaperpicker/**",
 ]
 
 # Nix files: format with nixfmt

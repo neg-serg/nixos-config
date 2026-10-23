@@ -192,6 +192,10 @@ in
   # the replacement did not work out, so Quickshell stays the session shell.
   # The scenes and pkgs.pleamar stay in the tree; flip this back on to retry.
   features.gui.pleamar.enable = false;
+  # Wallpaper picker (features.gui.wallpaperPicker): the swatch deck browses
+  # ~/pic/wl and hands the chosen card to wl-daemon (`wl img {}`), so the login
+  # screen, the bar accent and `wl restore` keep following one owner.
+  features.gui.wallpaperPicker.enable = true;
   # Weekly incremental refresh of the MERT similarity index (music-index): warm
   # runs embed only new/changed albums. --layer -1 pins the settings of the
   # index built on 2026-10-12; without it the timer would rebuild everything,

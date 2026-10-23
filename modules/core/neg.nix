@@ -82,6 +82,11 @@ in
         # another one — its pinned background window covers wl-daemon's output.
         wallpaperVideoEnabled = enabled "gui" && enabled "gui.wallpaperVideo";
 
+        # Wallpaper picker: full GUI plus its own flag, never implied by another
+        # one — it is a second Quickshell instance, and its settings seed hands
+        # the chosen picture to wl-daemon (modules/user/nix-maid/gui/wallpaper-picker.nix).
+        wallpaperPickerEnabled = enabled "gui" && enabled "gui.wallpaperPicker";
+
         # Repo-root resolver (`path`, `pathExists`, `readFile`, `tree`, `find`) is
         # spread in above from the top-level `repo` binding: repoRoot is a real
         # path, so `repo.path "files/x"` carries Nix path context — used in a
