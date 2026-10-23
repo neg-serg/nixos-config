@@ -48,6 +48,10 @@ in
         # hyprwinwrap-setup; the plugin itself is loaded at session start.
         ".config/hypr/hyprwinwrap.lua".text = config.lib.neg.readFile "files/gui/hypr/hyprwinwrap.lua";
 
+        # Hymission (Mission Control) settings and trackpad gestures. Pushed by
+        # hymission-setup after the .so is loaded, same load-then-push pattern.
+        ".config/hypr/hymission.lua".text = config.lib.neg.readFile "files/gui/hypr/hymission.lua";
+
         # HyprDynamicCursors stretch settings. Pushed by
         # hyprdynamiccursors-setup; the plugin is loaded in the session phase.
         ".config/hypr/hyprdynamiccursors.lua".text =

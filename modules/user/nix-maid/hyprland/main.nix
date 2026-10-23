@@ -64,9 +64,9 @@
 #
 # 1. Bump nixpkgs (`nix flake lock --update-input nixpkgs`) — the compositor and the nixpkgs-built
 #    plugins move together.
-# 1. Third-party plugins pinned in `overlay.nix` (hyprexpo, GloView, HyprWindowShade, hyprwinwrap) and
-#    `hypr-dynamic-cursors` carry revs or patches pinned to a Hyprland commit; bump them with the
-#    compositor and re-check the patch headers.
+# 1. Third-party plugins pinned in `overlay.nix` (hyprexpo, GloView, Hymission, HyprWindowShade,
+#    hyprwinwrap) and `hypr-dynamic-cursors` carry revs or patches pinned to a Hyprland commit; bump
+#    them with the compositor and re-check the patch headers.
 # 1. Rebuild with `sudo nixos-rebuild switch --flake /etc/nixos#<host>` (or the agent-switch flow).
 # 1. A compositor reload keeps loaded plugins but resets their runtime config; re-run the affected
 #    `*-setup` helper. hy3 itself needs nothing beyond the load.
@@ -115,10 +115,15 @@
 #   would shadow hy3.
 # - **Keys**: focus/move/tab binds go through the plugin's Lua factories — `hy3.move_focus` (M4+hjkl,
 #   arrows, M4+ALT+n/p/f/b), `hy3.move_window` (M4+CTRL+j/k and the tiling submap's SH+hjkl),
-#   `hy3.move_to_workspace` (M4+SHIFT+1..9/0), `hy3.make_group("tab")` (M4+CTRL+g) and `hy3.focus_tab`
-#   (M4+CTRL+h/l, M4+CTRL+SHIFT+1..5). The binds are lazy: hy3 is loaded *after* `hyprland.lua` is
-#   parsed, so the `hy3()` helper resolves `hl.plugin.hy3` at press time and skips silently when the
-#   plugin is not there.
+#   `hy3.move_to_workspace` (M4+SHIFT+1..9/0), `hy3.make_group("tab")` (M4+CTRL+g), `hy3.focus_tab`
+#   (M4+CTRL+h/l, M4+CTRL+SHIFT+1..5), `hy3.expand` (M4+CTRL+e for expand, +SHIFT+e for shrink, +b for
+#   base; the same three on e/s/b in the tiling submap) and `hy3.change_group` (M4+CTRL+i flips the
+#   containing split h<->v, M4+CTRL+t turns it into a tab group in place). The tiling submap adds
+#   `hy3.change_focus("raise"/"lower")` on h/l, `hy3.equalize` on `equal` and `hy3.toggle_focus_layer`
+#   on `f`. `hy3:expand`'s "maximize"/"fullscreen" modes parse but are empty switch cases in 0.56.0.1
+#   (src/Hy3Layout.cpp), so nothing is bound to them — the fullscreen-ish toggles stay M4+r / M4+SHIFT+f.
+#   The binds are lazy: hy3 is loaded *after* `hyprland.lua` is parsed, so the `hy3()` helper resolves
+#   `hl.plugin.hy3` at press time and skips silently when the plugin is not there.
 # - **Dormant tape keys**: the core layoutmsg binds (column width, consume/expel, fit/center, the
 #   scrolling keys) stay in the file but no-op on hy3 — `L(...)` passes no fallback for a hy3
 #   workspace. The per-app `scrolling_width` rules and the `scrolling`/`master` config blocks stay for
@@ -466,6 +471,43 @@
 #   preview, a bogus size, and Copy/Open acted on a partial file. The script also ignores files older
 #   than ~20 s (a delete or rename triggers the directory watch too) and skips a file it already
 #   announced; the unit is session-scoped.
+#
+# ### Hymission (Mission Control overview)
+#
+# - **Build**: upstream `gfhdhytghd/hymission` at d0e847d9 (0.11.0), pinned in `overlay.nix` and built
+#   with `mkHyprlandPlugin` against this nixpkgs' Hyprland 0.56.2 — the release line its own
+#   `docs/changelog/releases.json` names for 0.11.0. Upstream ships CMake + a hyprpm manifest; the
+#   package builds the plugin module and the GTK4/libadwaita/gtk4-layer-shell search helper the plugin
+#   posix_spawns, and installs the helper into `$out/lib` next to `libhymission.so` because the plugin
+#   resolves `hymission-search-input` among its own siblings first (upstream's `install()` would put
+#   it in libexec). `-DBUILD_TESTING=OFF` skips the CTest suite (13 cases, several LD_PRELOADed
+#   against the Hyprland binary) — a development target, not a packaging one.
+# - **Why the helper**: without cmake in `nativeBuildInputs` its setup hook never claims
+#   `configurePhase` and the build falls back to "no configure script, doing nothing", so the
+#   derivation lists `cmake` and `pkg-config` explicitly instead of inheriting them.
+# - **Load**: `hymission-setup` (in PATH) from the start hook, before the login/session split like
+#   hyprexpo/gloview — PLUGIN_INIT registers `plugin.hymission.*`, the Lua factories and requests a
+#   config reload, so the .so must not be dlopen'd while `hyprland.lua` is parsed. The helper polls
+#   `hyprctl plugin list` for ~5 s (the hyprdynamiccursors login-transition race) and then pushes
+#   `files/gui/hypr/hymission.lua` (settings + the three-finger vertical gesture) with `hyprctl eval`.
+# - **Binds**: `SUPER+Tab` toggles Mission Control on the current workspace scope, `SUPER+SHIFT+Tab`
+#   the same across all workspaces, `SUPER+CTRL+Tab` closes it. All three are lazy closures: the
+#   namespace does not exist while `hyprland.lua` is parsed, and `hyprctl dispatch` mangles plugin
+#   dispatchers in Lua config mode. `SUPER+Tab` used to be `hl.dsp.window.cycle_next` — Mission
+#   Control selects a window directly, so the cycle was dropped; `ALT+Tab` (workspace back) and
+#   `SUPER+grave` (hyprexpo) are untouched.
+# - **Verified at install time** (2026-08-05): the package builds against this nixpkgs' Hyprland
+#   0.56.2, `libhymission.so` exports `pluginInit`/`pluginExit`/`pluginAPIVersion`, the embedded API
+#   version string is `0.56.2`, the search helper resolves all its libraries and sits next to the
+#   module in `$out/lib` (the plugin's first lookup among its own siblings), the generated
+#   `hymission-setup` carries the plugin path, and a `BUILD_TESTING=ON` build passes upstream's whole
+#   suite: 13/13 CTest cases, including the two LD_PRELOAD contract probes that run against the real
+#   Hyprland binary (native framebuffer cast, snapshot HDR/CM range). `luac -p` parses both Lua files.
+# - **Not verified at runtime**: a nested instance is impossible from the agent sandbox (aquamarine's
+#   `CBackend::create()` fails there, same as for HyprCapture above), so nothing here proves the
+#   overview renders. The first live load is a first load: run `hymission-setup` in a session (it logs
+#   to `$XDG_RUNTIME_DIR/hymission-setup.log`) and check `hyprctl plugin list` plus
+#   `hyprctl getoption plugin:hymission:backdrop_blur` before trusting the binds.
 #
 # ## Testing a plugin without endangering the session
 #
@@ -862,6 +904,46 @@ let
     "$hyprctl_bin" plugin load "$plugin" || true
   '';
 
+  # Hymission (Mission-Control overview): load-then-push like hyprexpo/gloview,
+  # plus the load retry hyprdynamiccursors needs. Its PLUGIN_INIT registers the
+  # plugin.hymission.* config keys, the Lua factories
+  # (hl.plugin.hymission.toggle/open/close/stage_*/gesture) and asks for a
+  # config reload, so none of that exists while hyprland.lua is parsed:
+  # files/gui/hypr/hymission.lua is pushed with `hyprctl eval` after the load,
+  # and the binds in hyprland.lua are lazy closures resolving the namespace at
+  # press time. Re-runnable in a live session (`hymission-setup`) — also the way
+  # to re-apply the settings after a compositor reload, which keeps the loaded
+  # plugin but resets its config to the plugin defaults.
+  hymissionSetup = pkgs.writeShellScriptBin "hymission-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+    plugin=${pkgs.hyprlandPlugins.hymission}/lib/libhymission.so
+
+    exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hymission-setup.log" 2>&1
+    echo "--- $(date '+%F %T') hymission-setup"
+
+    loaded() {
+      "$hyprctl_bin" plugin list 2>/dev/null | grep -q "^Plugin hymission "
+    }
+
+    # ~5 s budget: the login-transition race hyprdynamiccursors hits too — a
+    # load issued while the compositor is still settling does not stick.
+    for _ in $(seq 1 20); do
+      loaded && break
+      "$hyprctl_bin" plugin load "$plugin" || true
+      sleep 0.25
+    done
+
+    if ! loaded; then
+      echo "plugin never reported as loaded"
+      exit 1
+    fi
+
+    # hyprctl eval takes the code as one argument and reads a leading "--"
+    # (Lua comment) as a flag, hence the leading newline.
+    "$hyprctl_bin" eval "
+    $(cat ${pkgs.writeText "hymission.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hymission.lua"))})"
+  '';
+
   # HyprCapture (screenshots/recording): loaded with the session target (the
   # user unit below), not from hyprland.lua. Its PLUGIN_INIT calls
   # HyprlandAPI::reloadConfig() to register the plugin.hyprcapture.* keys, and a
@@ -954,6 +1036,7 @@ let
         "@hyprwinwrap_setup@"
         "@hyprdynamiccursors_setup@"
         "@gloview_setup@"
+        "@hymission_setup@"
       ]
       [
         "${hy3Setup}/bin/hy3-setup"
@@ -963,6 +1046,7 @@ let
         "${hyprwinwrapSetup}/bin/hyprwinwrap-setup"
         "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup"
         "${gloviewSetup}/bin/gloview-setup"
+        "${hymissionSetup}/bin/hymission-setup"
       ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
@@ -985,6 +1069,7 @@ in
           hyprwinwrapSetup # loads the plugin and (re)applies the background-window declarations
           hyprdynamiccursorsSetup # loads the plugin and (re)applies the cursor stretch settings
           gloviewSetup # loads the macOS-style overview plugin (dispatch: hl.plugin.gloview.toggle())
+          hymissionSetup # loads the Mission-Control plugin and (re)applies its settings + gestures
           hyprcaptureSetup # loads the plugin and (re)applies the screenshot/recording settings
           hyprExpo # `hypr-expo toggle|push`: loads the overview plugin on demand
         ];

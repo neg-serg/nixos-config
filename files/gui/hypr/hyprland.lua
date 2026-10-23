@@ -349,7 +349,8 @@ hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
 
 hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
-hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
+-- SUPER+Tab is Mission Control (see the Hymission block below); window cycling
+-- lost its key there and can be re-bound here if it is missed.
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
@@ -423,6 +424,29 @@ hl.bind(M4 .. "+grave", hl.dsp.exec_cmd("hypr-expo toggle"))
 -- to toggle it by hand in the meantime:
 --   hyprctl eval 'hl.plugin.gloview.toggle()'
 -- hl.bind(M4 .. "+o", function() hl.plugin.gloview.toggle() end)
+
+-- --- Mission Control (Hymission) ────────────────────────────────────────
+-- hymission-setup dlopen's the plugin from the start hook (main.nix), so
+-- hl.plugin.hymission is nil *here*: the binds below are lazy closures that
+-- resolve the namespace at press time, the same pattern as GloView above and
+-- for the same reason (a plugin cannot be loaded while this file is parsed).
+-- The settings and the three-finger gesture are pushed by the helper from
+-- files/gui/hypr/hymission.lua; re-run `hymission-setup` after a reload.
+--
+-- SUPER+Tab was window cycling (hl.dsp.window.cycle_next) and now opens Mission
+-- Control, whose previews pick any window directly — restore the old bind on a
+-- free key if the cycle is still wanted.
+local hymission = function(mode)
+  return function()
+    if hl.plugin and hl.plugin.hymission then hl.plugin.hymission.toggle(mode) end
+  end
+end
+
+hl.bind(M4 .. "+Tab", hymission(nil)) -- Mission Control, current workspace scope
+hl.bind(M4 .. "+" .. SH .. "+Tab", hymission("forceall")) -- every workspace
+hl.bind(M4 .. "+" .. C .. "+Tab", function()
+  if hl.plugin and hl.plugin.hymission then hl.plugin.hymission.close() end
+end)
 
 -- The overview is driven from its own submap: on open the plugin enters `hyprexpo`
 -- and resets it on close, exactly as upstream documents it (`hl.define_submap` for
@@ -737,6 +761,19 @@ hl.define_submap("tiling", "reset", function()
   binde_reset("o", hl.dsp.window.move({ out_of_group = true })) -- window out of the tab group, back into its own column
   -- ion3's detach is META+K → D; the everyday key is Alt+E → e (special submap).
   hl.bind("d", hy3detach)                                      -- detach the focused node into a float (or reattach it)
+  -- Tree and ratio verbs, too rare for the main layer: h/l walk up and down the
+  -- container tree (hy3:changefocus raise/lower — move_window is guesswork once the
+  -- layout nests), e/s/b repeat the zoom from M4+CTRL+e/SHIFT+e/b, `equal` evens the
+  -- ratios of the focused node's siblings and `f` hops to the floating layer and back
+  -- (the way home from a detached node).
+  hl.bind("h", hy3(function(p) return p.change_focus("raise") end))
+  hl.bind("l", hy3(function(p) return p.change_focus("lower") end))
+  hl.bind("e", hy3(function(p) return p.expand("expand") end), { repeating = true })
+  hl.bind("s", hy3(function(p) return p.expand("shrink") end), { repeating = true })
+  hl.bind("b", hy3(function(p) return p.expand("base") end))
+  -- One-shots leave the submap, like i/o above.
+  binde_reset("equal", hy3(function(p) return p.equalize({ scope = "group" }) end))
+  binde_reset("f", hy3(function(p) return p.toggle_focus_layer() end))
 end)
 
 -- Submap: music (MPD transport with ncmpcpp/rmpc letter bindings)
@@ -1021,6 +1058,20 @@ for i = 1, 5 do
   local n = i
   hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+" .. tostring(n), hy3(function(p) return p.focus_tab({ index = n }) end))
 end
+
+-- Zoom and structure: hy3:expand covers one more sibling per press, hy3:shrink gives a
+-- level back, hy3:base drops every expansion — the closest thing hy3 has to ion3's
+-- zoom. Not bound: "maximize"/"fullscreen" — they parse, but their switch cases are
+-- empty in 0.56.0.1 (src/Hy3Layout.cpp), and the fullscreen-ish toggles already live
+-- on M4+r and M4+SHIFT+f. hy3:changegroup opposite flips an existing split h<->v;
+-- toggletab turns the current group into a tab group in place, where make_group tab
+-- (M4+CTRL+g) wraps the node in a new one. Tree walking, equalize and the
+-- floating-layer hop are in the tiling submap (M4+minus): too rare for this layer.
+hl.bind(M4 .. "+" .. C .. "+e", hy3(function(p) return p.expand("expand") end), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+" .. SH .. "+e", hy3(function(p) return p.expand("shrink") end), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+b", hy3(function(p) return p.expand("base") end))
+hl.bind(M4 .. "+" .. C .. "+i", hy3(function(p) return p.change_group("opposite") end)) -- invert the containing split: h <-> v
+hl.bind(M4 .. "+" .. C .. "+t", hy3(function(p) return p.change_group("toggletab") end)) -- tab <-> split, in place
 
 -- Detach/float (ion3-style): the focused node — a single window or a whole tab
 -- group — floats above the layout but keeps its slot in it, so the neighbours do
@@ -1389,12 +1440,14 @@ hl.on("hyprland.start", function()
   -- systemd units of its own (hyprglass-apply, hyprglass-watch) that load and
   -- configure it after the login layer is gone, and the login screen must not be
   -- glazed. Re-runnable in a live session: `hy3-setup` / `hyprexpo-setup` /
-  -- `hyprwindowshade-setup` / `hyprwinwrap-setup` / `gloview-setup` (also in PATH).
+  -- `hyprwindowshade-setup` / `hyprwinwrap-setup` / `gloview-setup` /
+  -- `hymission-setup` (also in PATH).
   hl.exec_cmd("@hy3_setup@")
   hl.exec_cmd("@hyprexpo_setup@")
   hl.exec_cmd("@hyprwindowshade_setup@")
   hl.exec_cmd("@hyprwinwrap_setup@")
   hl.exec_cmd("@gloview_setup@")
+  hl.exec_cmd("@hymission_setup@")
 
   if loginPhase then
     -- Login phase: start the login layer instead of the desktop. Nothing of the
