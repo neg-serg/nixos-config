@@ -102,6 +102,7 @@ let
   # here — a drawer scene may close itself and must not be resurrected.
   pleamarResidentScenes = [
     "bar"
+    "panels" # a compositor reload closes its layer surfaces, and the drawer scene exits 0
     "notifications"
     "toast"
     "launcher"

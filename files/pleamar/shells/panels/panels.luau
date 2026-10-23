@@ -693,6 +693,22 @@ local function flow_stop()
     fact.net_live = false
 end
 
+-- `1.2K` / `3.4M`: the axis labels the reference prints beside the grid.
+local function compact(v)
+    if v >= 1e9 then return string.format("%.1fG", v / 1e9) end
+    if v >= 1e6 then return string.format("%.1fM", v / 1e6) end
+    if v >= 1e3 then return string.format("%.0fK", v / 1e3) end
+    return tostring(math.floor(v + 0.5))
+end
+
+local function axis_publish()
+    local peak = math.max(flow_peak_rx, flow_peak_tx, 1)
+    local ymax = peak * 1.15
+    text["net.ax1"] = compact(ymax / 3)
+    text["net.ax2"] = compact(ymax * 2 / 3)
+    text["net.ax3"] = compact(ymax)
+end
+
 local function flow_line(line)
     local ok, v = pcall(json.decode, line)
     if not ok or type(v) ~= "table" then return end
@@ -710,6 +726,7 @@ local function flow_line(line)
         flow_peak_tx = tx
         text["net.peak_tx"] = v.upload_human or "--"
     end
+    axis_publish()
     ema_rx = ema_rx + (rx - ema_rx) * FLOW_SMOOTH
     ema_tx = ema_tx + (tx - ema_tx) * FLOW_SMOOTH
     flow_ring[#flow_ring + 1] = { rx = ema_rx, tx = ema_tx }
