@@ -802,7 +802,13 @@ scene bar {
     body {
         color: skin.coal
         opacity: 88%
-        box { from: 0, 0; size: screen.width, strip }
+        // The shape, not a second coat of paint: a body fills its own extent, and a box
+        // inside it with no colour of its own inherits the body's and fills it again. The
+        // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
+        // 88 % over that wallpaper, the port's #040404, and 1 - (1 - 0.88)^2 = 0.9856 with
+        // 0.0144 * rgb(242,250,255) is exactly #040404. `opacity: 0%` keeps the shape the
+        // body needs and drops the second coat.
+        box { from: 0, 0; size: screen.width, strip; opacity: 0% }
     }
     // The whole strip is a hover target for the widgets that hide at idle
     // (QS's `panelHovering`): declared before the rows, so every widget's own
