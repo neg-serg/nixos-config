@@ -106,7 +106,9 @@ scene bar {
     // The gap between two capsules, QS panel.widgetSpacing 4 at the 1.35
     // interWidgetRatio: round(4 * 1.15) = 5 logical, times 1.35 rounds to 7 —
     // 6.1 design px, six here.
-    let row.gap = 6
+    // 7, not 6: the reference's plates sit at 5, 72, 158, 223 with gaps of 9 then 7,
+    // and a uniform 6 left every capsule after the clock 3 logical px short.
+    let row.gap = 7
     // How many of the six monitor pairs are there at all: the reference's own
     // rule (SystemMonitorCapsule._vis*), the GPU only on a machine that has
     // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
@@ -495,8 +497,11 @@ scene bar {
         group zoom {
             scale: scale
             box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
-            text "keyboard" { at: 6, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
-            text "{kb_layout}" { at: 28, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
+            // from its own edge (its glyph measures at 170 inside a plate at 158), while the
+            // other capsules inset 6 — measured, not guessed.
+            text "keyboard" { at: 10, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { tip_open = true; emit tip(2) }
         }
@@ -710,13 +715,20 @@ scene bar {
     }
 
     component Right(scale: number = ui * user_scale) {
-        row { at: screen.width - side * scale, strip / 2; anchor: right middle; gap: row.gap * scale
+        // `side` keeps the left row off the edge; the right row needs 8 design px less of it.
+        // Measured: the mic's ink ended 9 logical px short of the reference's (1894 against
+        // 1903 on a 1920 bar).
+        row { at: screen.width - (side - 8) * scale, strip / 2; anchor: right middle; gap: row.gap * scale
             // The legacy order from the left: media · MPD · systray · mic ·
             // volume · Genelec. The tray is still an extension point.
             row media_slot { show: widget.media and media.present; MediaCapsule(media_prev, media_toggle, media_next) }
             // QS shows the flag badges only while media is up AND there is a
             // flag to show; with none it still drew an empty capsule here.
-            row mpd_slot { show: widget.mpd and media.present and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags() }
+            // No `media.present` here: measured on the two bars, the reference draws the
+            // shuffle badge while the port drew nothing, because the port had tied the badges
+            // to "something is playing" and nothing was. A flag the owner set is not a media
+            // state — it is shown while any flag is on.
+            row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags() }
             row tray_slot { show: widget.systray and icons.count > 0 and strip.hot; gap: 0; align: center
                 for r in icons { TrayIcon(r, scale) }
             }
