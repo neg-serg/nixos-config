@@ -22,14 +22,23 @@ import qs.services as Services
 // wanted.
 Scope {
     Variants {
-        // None while another program draws the wallpaper (a wallpaper
-        // command is set).
-        model: Services.WallpaperEngine.external ? [] : Quickshell.screens
+        // NixOS (trantor): always one window per screen. Quickshell does not
+        // instantiate a delegate when a model goes from empty back to a list, so
+        // gating the model on `external` left the layer without any window after a
+        // clip was chosen at runtime (the wallpaper silently stayed with wl). The
+        // window is unmapped instead — `visible` below — while another program
+        // paints.
+        model: Quickshell.screens
 
         PanelWindow {
             id: win
 
             required property ShellScreen modelData
+
+            // Mapped only while Quickshell draws (a clip: see
+            // services/WallpaperEngine.qml); otherwise wl-daemon's own background
+            // surface is the wallpaper.
+            visible: !Services.WallpaperEngine.external
 
             // Transition per desktop theme (see the shader).
             readonly property var modes: ({ "": 0, hud: 1, terminal: 2, cosmos: 3, zen: 4, xianxia: 5, cyberpunk: 6, wabisabi: 7, artdeco: 8, gothic: 9, newspaper: 10, wasteland: 11, observatory: 12, abyss: 13, devaloka: 14, siege: 15 })
@@ -101,7 +110,11 @@ Scope {
             }
 
             screen: modelData
-            WlrLayershell.layer: WlrLayer.Background
+            // NixOS (trantor): Bottom, not Background — wl-daemon keeps its own
+            // background surface for images, and this window carries what wl cannot
+            // paint (animated pictures, videos). Bottom is still under every normal
+            // window, so the clip is the wallpaper and nothing else moves.
+            WlrLayershell.layer: WlrLayer.Bottom
             WlrLayershell.namespace: "quickshell:wallpaper"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             exclusionMode: ExclusionMode.Ignore

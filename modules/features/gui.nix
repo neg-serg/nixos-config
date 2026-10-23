@@ -25,12 +25,10 @@
     # modules/user/nix-maid/gui/wallpaper-picker.nix (`wl img {}` on trantor).
     wallpaperPicker = {
       enable = mkBool "enable the Quickshell wallpaper picker (qs-wallpaperpicker)" false;
-      # Who paints the background. On (default) the picker does: images, animated
-      # GIF/WebP and videos, drawn by Quickshell — and wl-daemon plus its helpers
-      # are condition-gated off (modules/user/nix-maid/sys/wallpaper-sync.nix), so
-      # exactly one program owns the layer. Off leaves the background to wl and the
-      # picker hands each choice over as `wl img {}` (the gear's wallpaper command).
-      drawsWallpaper = mkBool "let the picker draw the wallpaper itself (images, animated pictures, videos); wl-daemon and its helpers are skipped" true;
+      # wl-daemon keeps painting the desktop background; the picker hands it every
+      # image (the gear's `wl img {}`) and paints only what wl cannot — animated
+      # GIF/WebP and videos — on a layer above wl's, under every window. See
+      # modules/user/nix-maid/gui/wallpaper-picker.nix.
     };
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     hyprwhspr.enable = mkBool "enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland)" false;

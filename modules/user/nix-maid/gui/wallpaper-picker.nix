@@ -7,35 +7,40 @@
 # to the bar without touching it. Source: files/qs-wallpaperpicker (vendored from
 # dhrruvsharma/qs-wallpaperpicker 3cfae35, see .package-export there).
 #
-# ## Who draws the wallpaper
+# ## Who draws the wallpaper — both, split by what each can paint
 #
-# The picker does (features.gui.wallpaperPicker.drawsWallpaper, default on): its
-# WallpaperLayer paints one WlrLayer.Background window per screen and handles what
-# wl cannot — animated GIF/WebP and videos (muted, looping, paused while a window
-# covers them) — so an image, an animated picture and a clip all work the same way.
+# wl-daemon stays the owner of the desktop background and of the login screen's
+# backdrop (modules/user/nix-maid/sys/wallpaper-sync.nix), and the deck is its front
+# end: an image chosen here is handed over as `wl img {}` and Quickshell opens no
+# background window for it, so `wl query`, `wl restore`, the vicinae wl-switcher and
+# the login screen keep agreeing with what is on screen.
 #
-# Exactly one program may own that layer, so while the picker draws:
+# What wl cannot paint — an animated GIF/WebP or a video — the picker draws itself:
+# WallpaperLayer puts one window per screen on WlrLayer.Bottom, i.e. above wl's
+# background surface and below every normal window, so the clip really is the
+# wallpaper and the daemon underneath is simply covered. services/WallpaperEngine
+# picks the side per file kind (`external` is false only for those two kinds), so
+# the gear's `wl img {}` command never sees a file wl would choke on.
 #
-#   - `environment.etc."wallpaper-owner/picker"` exists, and the
-#     wallpaper-sync.nix units (`wl-daemon`, `wl-monitor-watch`, `wl-state-sync`)
-#     carry `ConditionPathExists=!/etc/wallpaper-owner/picker` and skip. They stay
-#     *defined* on purpose: hyprland.lua starts `wl-daemon.service` by name in the
-#     login phase and in the session branch, the greeter's lock restarts it, and
-#     wl-restore starts it — with the condition those calls are no-ops instead of
-#     failures, and nothing paints a second background under the picker's.
-#   - the login screen, the bar accent and wl's last-good fallback follow the
-#     *still*: scripts/wallpaper-apply (the one local patch on the vendored tree)
-#     writes ~/.cache/quickshell-wallpaper-path and ~/.local/state/wl/last-good
-#     next to the two ~/.cache/current_wallpaper* links, which is what
-#     wl-greeter-sync copies into the greeter's cache. A video's still is the frame
-#     scripts/wallpaper-still grabs with ffmpeg, so the k-means on the login screen
-#     and the bar's colour extraction keep working.
-#   - `wl-wallpaper-resolve.sh` asks that notify file before wl's state.json: in
-#     this mode wl's state is a leftover from before the switch.
+# Two details of that pairing are deliberate, both learned the hard way:
+#   - the layer's window exists for every screen from startup and is *unmapped*
+#     (`visible: !external`) for images, not created on demand: Quickshell does not
+#     instantiate a delegate when a model goes from empty back to a list, which
+#     silently left the clip with no window at all;
+#   - the layer is Bottom, not the vendored Background: wl paints Background, and a
+#     Background window of ours created later was composited above it *by accident*
+#     — Bottom is above it by the protocol's layer order.
 #
-# To hand the layer back to wl-daemon: set `drawsWallpaper = false`, switch, and
-# put the painter back in the picker's gear — `wl img {}` (see features.gui
-# .wallpaperVideo for the same one-owner rule).
+# The asymmetry is by construction: while a clip is on screen, a wallpaper set from
+# wl's side (`wl random`, the vicinae wl-switcher) lands underneath it — pick
+# anything in the deck, or any image, and wl's picture is back on top.
+#
+# The login screen, the bar accent and wl's last-good fallback follow either kind:
+# scripts/wallpaper-apply (the one local patch on the vendored tree) writes
+# ~/.cache/quickshell-wallpaper-path and ~/.local/state/wl/last-good, and puts the
+# *still* there — for a clip the frame scripts/wallpaper-still grabs with ffmpeg —
+# because the k-means on the login screen and the bar's colour extraction cannot
+# read a video. wl-wallpaper-resolve.sh asks that file before wl's state.json.
 #
 # ## Deployment
 #
@@ -58,9 +63,6 @@ let
   # Feature gate (single source: config.lib.neg.wallpaperPickerEnabled)
   pickerEnabled = config.lib.neg.wallpaperPickerEnabled;
 
-  # The picker paints the background itself (see the header)
-  pickerDraws = config.lib.neg.wallpaperPickerDraws;
-
   pickerSrcLive = config.lib.neg.live "files/qs-wallpaperpicker";
 
   # Read-only half of the config. `colors/Colors.qml` is linked on its own
@@ -82,10 +84,10 @@ let
     source = "${pickerSrcLive}/${name}";
   });
 
-  # First-run settings: the host's wallpaper collection, and an empty wallpaper
-  # command so Quickshell draws (images, animated pictures and videos — see the
-  # header). JsonAdapter keeps the picker's own defaults for every key left out
-  # here, so only these two are written.
+  # First-run settings: the host's wallpaper collection, and wl-daemon as the
+  # painter — the deck hands every image over through it, while it draws the
+  # animated pictures and clips itself (see the header). JsonAdapter keeps the
+  # picker's own defaults for every key left out here, so only these two are written.
   pickerInit = pkgs.writeShellScript "qs-wallpaperpicker-init" ''
     set -eu
     cfg="''${XDG_CONFIG_HOME:-$HOME/.config}/qs-wallpaperpicker"
@@ -94,7 +96,7 @@ let
     cat > "$cfg/settings.json" <<'JSON'
     {
       "wallpaperDir": "~/pic/wl",
-      "wallpaperCommand": ""
+      "wallpaperCommand": "wl img {}"
     }
     JSON
   '';
@@ -144,17 +146,5 @@ lib.mkIf pickerEnabled (
     }
 
     (neg.mkHomeFiles pickerHomeFiles)
-
-    # Ownership marker: the wallpaper-sync.nix conditions key off it, so wl-daemon and
-    # its helpers stand down while the picker paints (see the header). Declarative on
-    # purpose — a marker a user toggles by hand would let two painters come back.
-    (lib.mkIf pickerDraws {
-      environment.etc."wallpaper-owner/picker".text = ''
-        qs-wallpaperpicker draws the desktop wallpaper
-        (features.gui.wallpaperPicker.drawsWallpaper = true).
-        wl-daemon, wl-monitor-watch and wl-state-sync skip while this file exists;
-        see modules/user/nix-maid/gui/wallpaper-picker.nix.
-      '';
-    })
   ]
 )
