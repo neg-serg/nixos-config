@@ -169,4 +169,13 @@ if not sys.watch("media", on_media) then
     start()
 end
 
-start()
+-- Not at once: a spawn made while the scene is still building its pipes gets
+-- no config on its input, and cava exits before it reads a line — which looks
+-- exactly like "the analyser never starts". Half a second later it takes, and
+-- the watch keeps it honest from then on.
+local booted = false
+every(500, function()
+    if booted then return end
+    booted = true
+    if not handle then start() end
+end)
