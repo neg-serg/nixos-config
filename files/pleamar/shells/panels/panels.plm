@@ -55,7 +55,7 @@ import "../../lib/plugins/spectrum/spectrum.plm" as spec
 //
 // The scale model (INTERFACES.md §3.2)
 // ------------------------------------
-// scaleNow = ui * clamp(min(screen.width / design.width, screen.height / design.height),
+// scaleNow = ui * clamp(min(screen.width / design.width, screen.height / fit.height),
 //                       fit.min, fit.max) * zoom
 // It is never a loose `let`/`prop`/`fact`: every drawer component carries it as
 // the default of its own `scale` parameter, so each monitor copy reads its own
@@ -63,6 +63,17 @@ import "../../lib/plugins/spectrum/spectrum.plm" as spec
 // and every text size additionally times the `text_scale` fact (fontScale).
 
 scene panels {
+
+    // The fit divisor is the work area, not the monitor. Inside a scene `screen.height` is
+    // what the surfaces get (1080 minus the bars' reserves = 1030 here), while palette's
+    // `design.height` is the monitor's 1080 — so the stock expression shaved the scale to
+    // 1.15 * 1030/1080 = 1.0968 and every drawer came out 4.5 % smaller than the
+    // reference's. Measured on 2026-10-23: the flow plate drew 515 x 371 where the popup is
+    // 540 x 389, and the 26 transparent pixels left over on the right were the surface
+    // showing through. `fit.height` is the work area the drawers are fitted to, named so it
+    // does not shadow the palette token (the compiler says why: a `screens: each` scene may
+    // take one or the other per copy).
+    let fit.height = 1030
 
     // The drawer surface: full monitor, anchored top (geometry origin), overlay
     // level, reserve 0 so the bar's exclusive zone is the bar's alone. It is
@@ -89,11 +100,16 @@ scene panels {
     surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
               keyboard: on_demand; open: true }
 
-    // The panel rectangles are the reference's own numbers, read from its popups
-    // and not eyeballed: `size` is the plate and nothing else (the port used to
-    // add 8 design pixels around every plate, which made every panel bigger and
-    // stopped it matching), and the margins are what each popup anchors with —
-    // top, right, bottom, left:
+    // The panel rectangles are the reference's own numbers, read from its popups and
+    // not eyeballed. The units matter and cost a round: a surface's `size:`/`margin:`
+    // are LITERAL logical pixels (bar.plm says the same in its own header — its surface
+    // height is spelled out as 25, the scaled value of QS' 22), while what a page draws
+    // inside is design pixels times its `scale`. So a surface here is the QS rectangle at
+    // the theme's scale (dp * 1.15 on this monitor), not the dp number: a surface declared
+    // in design pixels clips the plate by 15 %, which is what "LIV" instead of "LIVE" at
+    // the right edge of the flow card was.
+    //
+    // What each popup anchors with — top, right, bottom, left:
     //   media    420 x 320   right 4 (sidePanelPopupOuterMargin), bottom 1
     //   network  470 x 338   left 4 (max with the capsule's x), bottom 36
     //   volume   340 x 320   no popup in the reference; aligned with media
@@ -104,22 +120,22 @@ scene panels {
     // Radius is 0 everywhere: panelOverlayRadius and cornerRadiusLarge are both
     // 0 in the reference theme, so a plate is a plain rectangle.
 
-    surface media_card { size: 420, 320; anchor: bottom_right; margin: 0, 4, 1, 0
+    surface media_card { size: 483, 368; anchor: bottom_right; margin: 0, 5, 1, 0
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
                          open: drawer == media
         include "pages/media.plm"
     }
-    surface network_card { size: 470, 338; anchor: bottom_left; margin: 0, 0, 36, 4
+    surface network_card { size: 540, 389; anchor: bottom_left; margin: 0, 0, 41, 5
                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
                            open: drawer == network
         include "pages/network.plm"
     }
-    surface volume_card { size: 340, 320; anchor: bottom_right; margin: 0, 4, 1, 0
+    surface volume_card { size: 391, 368; anchor: bottom_right; margin: 0, 5, 1, 0
                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
                           open: drawer == volume
         include "pages/volume.plm"
     }
-    surface weather_card { size: 300, 196; anchor: bottom; margin: 0, 0, 40, 0
+    surface weather_card { size: 345, 225; anchor: bottom; margin: 0, 0, 46, 0
                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
                            open: drawer == weather
         include "pages/weather.plm"
@@ -129,7 +145,7 @@ scene panels {
                           open: drawer == system
         include "pages/system.plm"
     }
-    surface calendar_card { size: 380, 480; anchor: bottom_left; margin: 0, 0, 2, 2
+    surface calendar_card { size: 437, 552; anchor: bottom_left; margin: 0, 0, 2, 2
                             level: overlay; reserve: 0; screens: each; keyboard: on_demand
                             open: drawer == calendar
         include "pages/calendar.plm"

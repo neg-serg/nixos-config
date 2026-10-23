@@ -20,7 +20,7 @@
 // is multiplied by it inline and every text size additionally by `text_scale`.
 
 part Volume {
-    component VolumeDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+    component VolumeDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
         size: 340 * scale, 320 * scale
 
         group {

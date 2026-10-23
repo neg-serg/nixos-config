@@ -12,7 +12,7 @@
 // (WeatherButton.qml anchors it to the bar's centre with panelModuleHeight + 4).
 
 part Weather {
-    component WeatherDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+    component WeatherDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
         size: 300 * scale, 196 * scale
 
         group {
