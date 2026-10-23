@@ -28,7 +28,7 @@ part Calendar {
 
             // ----***----------------------------- the card
             body {
-                color: skin.coal
+                color: coal
                 opacity: 85%
                 box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 0 }
             }
