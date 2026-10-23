@@ -1358,6 +1358,11 @@ end
 -- blur with per-namespace ignore_alpha
 local blur_layers = {
   { ns = "qs-.*",           ia = 0.05 }, -- was 0.6: the bar chips are semi-transparent, 0.6 dropped their blur
+  -- pleamar: every scene's layer surface, bar and drawers alike, carries this
+  -- one namespace (`hyprctl layers` shows "pleamar" for all five). Without it
+  -- the drawers' 75 % plate has nothing behind it to be glass over — the card
+  -- read as a flat dark rectangle, which is what it looked like.
+  { ns = "pleamar",         ia = 0.05 },
   { ns = "quickshell-bar-reserve", ia = 0.05 }, -- the bar's shared backdrop strip; a bare
                                                 -- "quickshell" entry matched no surface (layer
                                                 -- rules match a namespace in full)
