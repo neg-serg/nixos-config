@@ -58,7 +58,7 @@ part NetPanel {
                 body {
                     color: coal
                     opacity: 92%
-                        box { from: 0, 0; size: 470, 338; corner: 0 }
+                        box { from: 0, 0; size: 470, 338; corner: 0; opacity: 0% }
                 }
 
                 // ----***------------------------ header

@@ -30,7 +30,7 @@ part Calendar {
             body {
                 color: coal
                 opacity: 85%
-                box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 0 }
+                box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 0; opacity: 0% }
             }
             box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: skin.accent; opacity: 25% }
 
