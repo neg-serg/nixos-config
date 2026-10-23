@@ -14,22 +14,22 @@
 // source the port froze (INTERFACES.md §7), the journal dashboard is deferred.
 
 part SysPanel {
-    component SystemDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+    component SystemDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
         // Bar/Modules/SystemMonitorPopup.qml: `Color.withAlpha(Theme.surface,
         // 0.85)`, `borderWidth: 0`, radius 0 — a dashboard of the journal, not
         // of the CPU: the title, the journal's state beside it, three figures
         // (log lines, errors, services) and the last few entries with a time, a
         // unit and a message.
-        size: 1040 * scale, 1020 * scale
+        size: 904 * scale, 887 * scale
 
         group {
-            move: 0, (1 - lift) * 1020 * scale
+            move: 0, (1 - lift) * 887 * scale
 
             body {
                 color: coal
                 opacity: 85%
 
-                box { from: 0, 0; size: 1040 * scale, 1020 * scale; corner: 0 }
+                box { from: 0, 0; size: 904 * scale, 887 * scale; corner: 0 }
             }
 
             // ----***---------------------------- header

@@ -27,7 +27,7 @@
 // network` never fires.
 //
 part NetPanel {
-    component NetPanelDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+    component NetPanelDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
         size: 470 * scale, 338 * scale
 
         // The plot: 14..414 across, 116..296 down, so the compact axis labels

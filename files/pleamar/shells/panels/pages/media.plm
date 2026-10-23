@@ -41,7 +41,7 @@
 // the drawer is asked for.
 
 part NowPlaying {
-    component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
+    component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
         size: 420 * scale, 320 * scale
 
         group {
