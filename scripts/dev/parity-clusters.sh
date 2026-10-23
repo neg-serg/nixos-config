@@ -61,13 +61,34 @@ REF=low
 JSON=0
 while [ $# -gt 0 ]; do
   case "$1" in
-    --shot) SHOT="${2:-}"; shift 2 ;;
-    --strip) STRIP="${2:-}"; shift 2 ;;
-    --tol-pos) TOL_POS="${2:-}"; shift 2 ;;
-    --tol-w) TOL_W="${2:-}"; shift 2 ;;
-    --ref) REF="${2:-}"; shift 2 ;;
-    --json) JSON=1; shift ;;
-    *) echo "parity-clusters: unknown argument \$1" >&2; exit 2 ;;
+    --shot)
+      SHOT="${2:-}"
+      shift 2
+      ;;
+    --strip)
+      STRIP="${2:-}"
+      shift 2
+      ;;
+    --tol-pos)
+      TOL_POS="${2:-}"
+      shift 2
+      ;;
+    --tol-w)
+      TOL_W="${2:-}"
+      shift 2
+      ;;
+    --ref)
+      REF="${2:-}"
+      shift 2
+      ;;
+    --json)
+      JSON=1
+      shift
+      ;;
+    *)
+      echo "parity-clusters: unknown argument \$1" >&2
+      exit 2
+      ;;
   esac
 done
 
@@ -75,21 +96,27 @@ cd "$REPO_ROOT"
 
 if [ -z "$SHOT" ]; then
   for tool in grim magick python3; do
-    command -v "$tool" >/dev/null || { echo "parity-clusters: $tool is missing" >&2; exit 2; }
+    command -v "$tool" > /dev/null || {
+      echo "parity-clusters: $tool is missing" >&2
+      exit 2
+    }
   done
   [ -n "${WAYLAND_DISPLAY:-}" ] || {
     echo "parity-clusters: WAYLAND_DISPLAY is not set — run it from the session that shows the bar" >&2
     exit 2
   }
   SHOT="$(mktemp -t parity-clusters-XXXXXX.png)"
-  grim "$SHOT" 2>/dev/null || {
+  grim "$SHOT" 2> /dev/null || {
     echo "parity-clusters: grim could not capture the screen" >&2
     exit 2
   }
 fi
-[ -f "$SHOT" ] || { echo "parity-clusters: no frame at $SHOT" >&2; exit 2; }
+[ -f "$SHOT" ] || {
+  echo "parity-clusters: no frame at $SHOT" >&2
+  exit 2
+}
 
-python3 - "$SHOT" "$STRIP" "$TOL_POS" "$TOL_W" "$REF" "$JSON" <<'PY'
+python3 - "$SHOT" "$STRIP" "$TOL_POS" "$TOL_W" "$REF" "$JSON" << 'PY'
 import json
 import sys
 from PIL import Image
