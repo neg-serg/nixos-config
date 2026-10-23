@@ -777,6 +777,13 @@ on("fact:drawer", function(v)
     end
     -- The flow stream follows its drawer, like a worker does.
     if v == "network" then flow_start() else flow_stop() end
+
+    -- The analyser runs only while the card that draws it is up. A scene rule
+    -- cannot set a plugin fact — it compiles and silently does nothing — so the
+    -- logic says it over IPC, the same way the bar opens a drawer.
+    -- `--say` takes the whole command as one argument: split into words it
+    -- answered "I do not understand 'false'" and set a fact called ''.
+    run("pleamar", { "--say", "panels", "fact Spectrum.active " .. ((v == "media") and "true" or "false") })
     reconcile()
 end)
 

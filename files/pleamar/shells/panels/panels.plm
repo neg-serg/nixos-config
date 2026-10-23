@@ -85,7 +85,7 @@ scene panels {
 
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "flow"
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "flow", "pleamar"
                   services: "audio", "audio.*", "files", "files.write", "media" }
 
     // ----***--------------- drawer state and settings
@@ -217,7 +217,11 @@ scene panels {
     // a plugin deciding for itself kept cava and its decay timer alive in a
     // scene with nothing on screen). `mirror = true`: the reference's band is
     // symmetric.
-    on open_media { drawer = media; Spectrum.mirror = true; Spectrum.active = true }
+    // A rule cannot set a plugin fact (it compiled and did nothing); the logic
+    // says it over IPC instead, the way the bar opens a drawer.
+    on open_media { drawer = media }
+    // One effect per rule for a plugin fact: a rule that also moves the drawer
+    // dropped these silently, which is why the analyser never woke up.
     on open_network { drawer = network; Spectrum.active = false }
     on close_drawer { drawer = none; Spectrum.active = false }
 

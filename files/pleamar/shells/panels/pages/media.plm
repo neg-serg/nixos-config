@@ -42,37 +42,22 @@
 
 part NowPlaying {
     component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
-        size: 420 * scale, 364 * scale
+        size: 420 * scale, 324 * scale
 
         group {
-            move: (screen.width - 420 * scale) / 2, screen.height - (364 + bar.height + bar.gap) * scale + (1 - lift) * (364 + bar.height + bar.gap) * scale
+            move: (screen.width - 420 * scale) / 2, screen.height - (324 + bar.height + bar.gap) * scale + (1 - lift) * (324 + bar.height + bar.gap) * scale
 
             group zoom {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(420, 364, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: 1)
-
-                // ----***------------------------ header
-                // The family's header, unchanged across the six drawers: title at
-                // 14/20 in the theme's family at 16 and Bold, the close chip at
-                // 44 x 20 in the top right corner, the hairline at 36.
-                text "Media" { at: 14, 20; anchor: left center
-                    family: "Iosevka"; size: 16; weight: 700; color: ink }
-                group { move: 362, 10
-                    Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: 1)
-                    text "Close" { at: 22, 10; anchor: center; family: "Iosevka"; size: 12; color: ink }
-                    zone box close { from: 0, 0; size: 44, 20; corner: 10
-                        label: "Close {drawer}"; role: button }
-                    on press close { drawer = none }
-                }
-                box { from: 12, 36; size: 396, 1; color: ink; opacity: ink.subtle }
+                Capsule(420, 324, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: 1)
 
                 // ----***--------------------- album art
                 // The cover plugin resolves the real album-directory file behind
                 // the player's URL; with nothing resolvable it draws its own
                 // quiet plate, which is the reference's fallback.
-                group { move: 12, 48
+                group { move: 12, 12
                     Cover.Art(w: 200, h: 200)
                 }
 
@@ -80,43 +65,43 @@ part NowPlaying {
                 // Row n sits at 12 + n * 18; the tag rows continue after the
                 // service's own, and the whole block ends before the band.
                 for r in media_rows {
-                    text r.glyph { at: 216, 48 + r.index * 18 + 13; anchor: left bottom
+                    text r.glyph { at: 216, 12 + r.index * 18 + 13; anchor: left bottom
                         family: "Material Symbols Outlined"; size: 11; color: ink.dim }
-                    text r.value { at: 234, 48 + r.index * 18 + 13; anchor: left bottom; width: 174; lines: 1
+                    text r.value { at: 234, 12 + r.index * 18 + 13; anchor: left bottom; width: 174; lines: 1
                         family: "Iosevka"; weight: 700; size: 11; color: ink }
                 }
                 for r in Meta.rows {
-                    text r.glyph { at: 216, 48 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom
+                    text r.glyph { at: 216, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom
                         family: "Material Symbols Outlined"; size: 11; color: ink.dim }
-                    text r.value { at: 234, 48 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom; width: 174; lines: 1
+                    text r.value { at: 234, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom; width: 174; lines: 1
                         family: "Iosevka"; weight: 700; size: 11; color: ink }
                 }
 
                 // ----***---------- analyser band
                 // QS draws IPhoneSpectrum here, one-sided, with the scrub line
                 // under it; panels.plm sets `Spectrum.mirror`.
-                group { move: 12, 256
+                group { move: 12, 220
                     spec.Bars(width: 396, height: 76, tone: accent, end: highlight, gap: 0)
                 }
 
                 // ----***------------------- times and scrub line
                 // The times sit above the line, one at each end: on the line they
                 // were unreadable where the fill ran under them.
-                text "{media.position, time}" { at: 12, 332; anchor: left bottom
+                text "{media.position, time}" { at: 12, 296; anchor: left bottom
                     family: "Iosevka"; size: 9; color: ink.dim }
-                text "{media.length, time}" { at: 408, 332; anchor: right bottom
+                text "{media.length, time}" { at: 408, 296; anchor: right bottom
                     family: "Iosevka"; size: 9; color: ink.dim }
 
-                box { from: 12, 339; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
-                box { from: 12, 339; corner: 1.5
+                box { from: 12, 303; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
+                box { from: 12, 303; corner: 1.5
                     size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 3
                     color: accent }
 
                 // ----***---------------- nothing playing
                 group { show: media_rows.total == 0
-                    text "music_note" { at: 210, 182; anchor: center
+                    text "music_note" { at: 210, 146; anchor: center
                         family: "Material Symbols Outlined"; size: 28; color: ink.dim }
-                    text "No music player detected" { at: 210, 214; anchor: center
+                    text "No music player detected" { at: 210, 178; anchor: center
                         family: "Iosevka"; size: 11; color: ink.off }
                 }
             }
