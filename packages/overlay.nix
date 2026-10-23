@@ -133,6 +133,10 @@ in
   # push of the palette into the terminal config — see packages/huebox/default.nix
   huebox = final.callPackage ./huebox { };
 
+  # graf: terminal force-directed graph of markdown wikilinks (ratatui canvas +
+  # fdg-sim physics) — see packages/graf/default.nix
+  graf = final.callPackage ./graf { };
+
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
   # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H).
   # One parameterized derivation (packages/ttf-code) with a per-variant table;
