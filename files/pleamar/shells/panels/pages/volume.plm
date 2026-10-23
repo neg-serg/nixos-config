@@ -32,7 +32,7 @@ part Volume {
             body {
                 color: coal
                 opacity: 75%
-                box { from: 0, 0; size: 340 * scale, 320 * scale; corner: 0 }
+                box { from: 0, 0; size: 340 * scale, 320 * scale; corner: 0; opacity: 0% }
             }
 
             // ----***----------------------- output volume

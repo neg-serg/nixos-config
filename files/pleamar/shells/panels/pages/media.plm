@@ -54,7 +54,7 @@ part NowPlaying {
                 body {
                     color: coal
                     opacity: 75%
-                        box { from: 0, 0; size: 420, 320; corner: 0 }
+                        box { from: 0, 0; size: 420, 320; corner: 0; opacity: 0% }
                 }
 
                 // ----***--------------------- album art

@@ -25,7 +25,7 @@ part Weather {
             body {
                 color: coal
                 opacity: 85%
-                box { from: 0, 0; size: 300 * scale, 196 * scale; corner: 0 }
+                box { from: 0, 0; size: 300 * scale, 196 * scale; corner: 0; opacity: 0% }
             }
             box { from: 0, 0; size: 300, 1; color: skin.accent; opacity: 25% }
 
