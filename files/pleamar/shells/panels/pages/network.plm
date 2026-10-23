@@ -55,7 +55,11 @@ part NetPanel {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(470, 338, fill: coal, alpha: 92%, radius: 0, scale: 1)
+                body {
+                    color: coal
+                    opacity: 92%
+                        box { from: 0, 0; size: 470, 338; corner: 0 }
+                }
 
                 // ----***------------------------ header
                 text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: ink }

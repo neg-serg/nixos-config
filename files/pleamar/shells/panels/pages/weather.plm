@@ -22,7 +22,11 @@ part Weather {
             // Widgets/SidePanel/Weather.qml: `Color.withAlpha(Theme.surface, 0.85)`,
             // `borderWidth: 0`, `radius: 0`, and one 1 px line of the accent at
             // 0.25 across the top edge.
-            Capsule(300, 196, fill: coal, alpha: 85%, radius: 0, scale: scale)
+            body {
+                color: coal
+                opacity: 85%
+                box { from: 0, 0; size: 300 * scale, 196 * scale; corner: 0 }
+            }
             box { from: 0, 0; size: 300, 1; color: accent; opacity: 25% }
 
             // ----***--------------------- current conditions

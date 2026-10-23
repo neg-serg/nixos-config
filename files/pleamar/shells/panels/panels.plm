@@ -109,7 +109,7 @@ scene panels {
                            open: drawer == weather
         include "pages/weather.plm"
     }
-    surface system_card { size: 768, 352; anchor: bottom_right; margin: 4, 0, 30, 0
+    surface system_card { size: 1048, 352; anchor: bottom_right; margin: 4, 0, 30, 0
                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
                           open: drawer == system
         include "pages/system.plm"
