@@ -182,8 +182,13 @@ scene bar {
     text ws_icon = ""
     text ws_label = ""
     // The two halves of the network readout, as QS prints them.
+    // The two readouts, without their unit letter — the capsule draws the number
+    // beside a link glyph and the tooltip appends the letter (measured against the
+    // reference: it reads "022.6", the port used to read "015.7K").
     text net_rx = "--"
     text net_tx = "--"
+    text net_rx_unit = ""
+    text net_tx_unit = ""
     // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
     text kb_layout = ""
     // The weather capsule, filled by bar.luau from open-meteo through its own

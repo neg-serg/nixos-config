@@ -315,8 +315,8 @@ local function tip_line(i)
         return "Keyboard layout " .. (text.kb_layout ~= "" and text.kb_layout or "?")
     elseif i == 3 then
         -- ConnUi prints the pair as "<rx> / <tx>"; the tooltip says both.
-        return "Throughput " .. (text.net_rx ~= "" and text.net_rx or "--")
-            .. " down, " .. (text.net_tx ~= "" and text.net_tx or "--") .. " up"
+        return "Throughput " .. (text.net_rx ~= "" and (text.net_rx .. text.net_rx_unit) or "--")
+            .. " down, " .. (text.net_tx ~= "" and (text.net_tx .. text.net_tx_unit) or "--") .. " up"
     elseif i == 4 then
         local cpu = math.floor((fact.cpu or 0) * 100 + 0.5)
         local ram = math.floor((fact.ram or 0) * 100 + 0.5)
@@ -369,8 +369,12 @@ end)
 local through = nil
 
 -- ConnUi.formatScaledKiBps: KiB/s auto-scaled to K/M/G/T, the integer part
--- zero-padded to three digits and one decimal, the unit letter after it. QS
--- drops the decimal only when everything is zero ("000K").
+-- zero-padded to three digits and one decimal. QS drops the decimal only when
+-- everything is zero ("000").
+--
+-- The letter is *not* part of the readout: measured on the two bars at the same
+-- moment, the reference capsule showed "022.6" beside its link glyph while the
+-- port showed "015.7K". The letter belongs to the glyph and to the tooltip.
 local UNITS = { "K", "M", "G", "T" }
 
 local function fmt_rate(kib)
@@ -385,8 +389,8 @@ local function fmt_rate(kib)
     if not int then int, dec = fixed, "0" end
     local padded = string.rep("0", 3 - #int) .. int
     if #int > 3 then padded = int end
-    if padded == "000" and dec == "0" then return padded .. UNITS[unit] end
-    return padded .. "." .. dec .. UNITS[unit]
+    local body = (padded == "000" and dec == "0") and padded or (padded .. "." .. dec)
+    return body, UNITS[unit] or ""
 end
 
 local function sample()
@@ -405,8 +409,10 @@ local function sample()
             end
         end
         if through then
-            text.net_rx = fmt_rate((rx - through.rx) / 2048)
-            text.net_tx = fmt_rate((tx - through.tx) / 2048)
+            local rxb, rxu = fmt_rate((rx - through.rx) / 2048)
+            local txb, txu = fmt_rate((tx - through.tx) / 2048)
+            text.net_rx, text.net_rx_unit = rxb, rxu
+            text.net_tx, text.net_tx_unit = txb, txu
         end
         through = { rx = rx, tx = tx }
     end)
