@@ -63,7 +63,7 @@ library Spectrum strict {
 
     // One record per bar, filled by the logic at cava's cadence: level 0..1,
     // the falling peak 0..1, and whether the bar is inside the coloured band.
-    model values max 26 {
+    model values max 64 {
         level: number
         peak: number = 0
         lit: bool = true
