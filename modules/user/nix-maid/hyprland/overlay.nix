@@ -199,6 +199,71 @@
             };
           };
 
+          # Hymission: Mission-Control-style overview — live compositor-side
+          # previews of every window, workspace strip, Stage mode, trackpad
+          # gestures and a search box. Upstream ships CMake + a hyprpm manifest;
+          # its docs/changelog/releases.json names Hyprland 0.56.2 for 0.11.0,
+          # the same 0.56.2 commit this nixpkgs ships, so plugin and compositor
+          # stay in one commit family. Built with the nixpkgs helper against the
+          # session's Hyprland. Two artifacts: the plugin module, and the search
+          # helper the plugin posix_spawns — it resolves
+          # `hymission-search-input` next to its own .so first
+          # (src/overview_controller.cpp), so the helper is installed into
+          # $out/lib beside libhymission.so instead of upstream's install()
+          # libexec dir. Review note: the pinned tree has no network or shell
+          # calls; the only spawn is that helper.
+          # The .so is dlopen'd by the generated hymission-setup helper at
+          # session start (see main.nix): PLUGIN_INIT registers the
+          # plugin.hymission.* keys and reloads the config, which must not
+          # happen while hyprland.lua is still being parsed.
+          hymission = final.hyprlandPlugins.mkHyprlandPlugin {
+            pluginName = "hymission";
+            version = "0.11.0";
+
+            src = final.fetchFromGitHub {
+              owner = "gfhdhytghd";
+              repo = "hymission";
+              rev = "d0e847d9208076d74f94d4c0cf42911c92bfad50";
+              hash = "sha256-H1NnR/235b9j69pu/+X32x1ByERffPvzCRdjlNXtpes=";
+            };
+
+            # The helper's own nativeBuildInputs (cmake, pkg-config) do not
+            # survive an override, and without cmake in nativeBuildInputs its
+            # setup hook never claims configurePhase (the build then falls back
+            # to "no configure script, doing nothing").
+            nativeBuildInputs = [
+              final.cmake
+              final.pkg-config
+            ];
+            # CMake pkg-configs hyprland and lua for the plugin (both arrive
+            # through mkHyprlandPlugin's hyprland.buildInputs; lua5_5 is the
+            # interpreter Hyprland itself links) plus glib-2.0, and the search
+            # helper additionally needs the GTK4 stack.
+            buildInputs = [
+              final.glib
+              final.gtk4
+              final.libadwaita
+              final.gtk4-layer-shell
+            ];
+            env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
+            # The CTest suite (13 cases, several of them LD_PRELOADed against
+            # the Hyprland binary) is a development target; skip it here.
+            cmakeFlags = [ "-DBUILD_TESTING=OFF" ];
+
+            # libhymission.so lands in $out/lib through the default phases
+            # (install(TARGETS … LIBRARY)), the helper follows it there.
+            postInstall = ''
+              install -Dm755 hymission-search-input $out/lib/hymission-search-input
+            '';
+
+            meta = {
+              homepage = "https://github.com/gfhdhytghd/hymission";
+              description = "Mission Control-style window overview for Hyprland";
+              license = final.lib.licenses.gpl3Only;
+              platforms = final.lib.platforms.linux;
+            };
+          };
+
           # HyprCapture: the compositor half of a screenshot/recording overlay
           # (frozen-compositor artifacts, region/window/scrolling capture,
           # annotation, pinning, recording with sound). Upstream ships
