@@ -22,10 +22,10 @@ part Weather {
             Capsule(300, 210, fill: coal, alpha: 92%, rim: 0.06, shadow: 40%, radius: overlay.corner, scale: scale)
 
             // ----***---------------------------- header
-            text "Weather" { at: 14 * scale, 20 * scale; anchor: left center; size: 1 * type.body * text_scale * scale; weight: 1 * weight.medium; color: ink }
+            text "Weather" { at: 14 * scale, 20 * scale; anchor: left center; family: "Iosevka"; size: 16; weight: 1 * weight.medium; color: ink }
             group { move: 242 * scale, 10 * scale
                 Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
-                text "Close" { at: 22 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
+                text "Close" { at: 22 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink }
                 zone box close { from: 0, 0; size: 44 * scale, 20 * scale; corner: 10 * scale
                     label: "Close {drawer}"; role: button }
                 on press close { drawer = none }
@@ -34,29 +34,29 @@ part Weather {
             box { from: 12 * scale, 36 * scale; size: 276 * scale, 1 * scale; color: ink; opacity: ink.subtle }
 
             // ----***--------------------- current conditions
-            text weather.city { at: 14 * scale, 52 * scale; anchor: left center; width: 150 * scale; lines: 1; size: 1 * type.caption * text_scale * scale; color: ink.dim }
-            text weather.temp { at: 14 * scale, 86 * scale; anchor: left center; size: 1 * type.header * weather.header * text_scale * scale; weight: 1 * weight.medium; color: ink }
-            text pick(use_fahrenheit, "°F", "°C") { at: 84 * scale, 88 * scale; anchor: left center; size: 1 * type.body * text_scale * scale; color: ink.dim }
-            text weather.cond { at: 120 * scale, 76 * scale; anchor: left center; width: 166 * scale; lines: 2; size: 1 * type.caption * text_scale * scale; color: ink }
+            text weather.city { at: 14 * scale, 52 * scale; anchor: left center; width: 150 * scale; lines: 1; family: "Iosevka"; size: 12; color: ink.dim }
+            text weather.temp { at: 14 * scale, 86 * scale; anchor: left center; family: "Iosevka"; size: 32; weight: 700; color: ink }
+            text pick(use_fahrenheit, "°F", "°C") { at: 84 * scale, 88 * scale; anchor: left center; family: "Iosevka"; size: 16; color: ink.dim }
+            text weather.cond { at: 120 * scale, 76 * scale; anchor: left center; width: 166 * scale; lines: 2; family: "Iosevka"; size: 12; color: ink }
 
-            text weather.wind { at: 14 * scale, 112 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
-            text weather.humidity { at: 112 * scale, 112 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
-            text weather.pressure { at: 208 * scale, 112 * scale; anchor: left center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
+            text weather.wind { at: 14 * scale, 112 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
+            text weather.humidity { at: 112 * scale, 112 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
+            text weather.pressure { at: 208 * scale, 112 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }
 
             // ----***--------------------------- forecast
             row days { at: 14 * scale, 126 * scale; gap: 6 * scale
                 for f in forecast {
                     group {
                         size: 48 * scale, 66 * scale
-                        text f.day { at: 24 * scale, 10 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.dim }
-                        text f.cond { at: 24 * scale, 28 * scale; anchor: center; width: 46 * scale; lines: 2; size: 9 * text_scale * scale; color: ink }
-                        text f.hi { at: 24 * scale, 50 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink }
-                        text f.lo { at: 24 * scale, 62 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: ink.off }
+                        text f.day { at: 24 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.dim }
+                        text f.cond { at: 24 * scale, 28 * scale; anchor: center; width: 46 * scale; lines: 2; family: "Iosevka"; size: 9 * text_scale * scale; color: ink }
+                        text f.hi { at: 24 * scale, 50 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink }
+                        text f.lo { at: 24 * scale, 62 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off }
                     }
                 }
             }
 
-            text weather.err { at: 150 * scale, 201 * scale; anchor: center; size: 1 * type.caption * text_scale * scale; color: warn }
+            text weather.err { at: 150 * scale, 201 * scale; anchor: center; family: "Iosevka"; size: 12; color: warn }
         }
     }
 
