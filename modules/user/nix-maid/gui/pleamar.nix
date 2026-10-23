@@ -156,6 +156,9 @@ let
     ".local/bin/pleamar-weather" = {
       source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/weather.sh";
     };
+    ".local/bin/pleamar-journal" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/journal.sh";
+    };
     ".local/bin/pleamar-calendar" = {
       source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/calendar.sh";
     };

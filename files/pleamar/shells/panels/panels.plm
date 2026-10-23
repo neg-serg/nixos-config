@@ -99,7 +99,7 @@ scene panels {
 
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "flow", "pleamar"
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "flow", "pleamar"
                   services: "audio", "audio.*", "files", "files.write", "media" }
 
     // ----***--------------- drawer state and settings
@@ -161,6 +161,14 @@ scene panels {
     // the label and the number could then disagree (the number is converted
     // when the sample arrives, the label was picked per frame).
     text weather.unit = "°C"
+
+    // The system dashboard's figures (SystemMonitorPopup.qml: Log Lines,
+    // Errors, Services) and its last few journal entries.
+    fact journal_ok = false
+    text sys.logs = "--"
+    text sys.errors = "--"
+    text sys.services = "--"
+    model journal max 8 { time: text; service: text; msg: text }
     text weather.cond = ""
     text weather.wind = ""
     text weather.humidity = ""
