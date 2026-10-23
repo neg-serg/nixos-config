@@ -28,34 +28,34 @@ part Calendar {
 
             // ----***----------------------------- the card
             body {
-                color: coal
+                color: skin.coal
                 opacity: 85%
                 box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 0 }
             }
-            box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: accent; opacity: 25% }
+            box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: skin.accent; opacity: 25% }
 
             // ----***------------------ header: month and arrows
             group { move: 14 * scale, 10 * scale
-                Capsule(24, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
-                text "chevron_left" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: ink }
+                Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
+                text "chevron_left" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
                 zone box prev { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Previous month"; role: button }
                 on press prev { emit cal_prev }
             }
             group { move: 300 * scale, 10 * scale
-                Capsule(24, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
-                text "chevron_right" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: ink }
+                Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
+                text "chevron_right" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
                 zone box next { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Next month"; role: button }
                 on press next { emit cal_next }
             }
-            text cal.title { at: 168 * scale, 20 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: accent }
+            text cal.title { at: 168 * scale, 20 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: skin.accent }
 
-            box { from: 12 * scale, 36 * scale; size: 356 * scale, 1 * scale; color: ink; opacity: ink.subtle }
+            box { from: 12 * scale, 36 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
 
             // ----***------------------------- weekday row
             repeat c in 0..6 {
-                text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 40 * scale + c * 48 * scale, 48 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.dim }
+                text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 40 * scale + c * 48 * scale, 48 * scale; anchor: center; family: "Iosevka"; size: 12; color: skin.ink.dim }
             }
 
             // ----***--------------------------- month grid
@@ -65,10 +65,10 @@ part Calendar {
                 for c in cells {
                     group {
                         size: 48 * scale, 40 * scale
-                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: accent; opacity: ink.active; show: c.this and c.day == sel_day }
-                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.5 * scale; color: accent; show: c.today }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink; show: c.this and not c.today }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; weight: 700; color: accent; show: c.today }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.accent; opacity: ink.active; show: c.this and c.day == sel_day }
+                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.5 * scale; color: skin.accent; show: c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.ink; show: c.this and not c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; weight: 700; color: skin.accent; show: c.today }
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: not c.this }
                         zone box day { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
                             label: c.label; role: button; selected: c.this and c.day == sel_day }
@@ -77,11 +77,11 @@ part Calendar {
                 }
             }
 
-            box { from: 12 * scale, 312 * scale; size: 356 * scale, 1 * scale; color: ink; opacity: ink.subtle }
+            box { from: 12 * scale, 312 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
             text cal.err { at: 190 * scale, 320 * scale; anchor: center; family: "Iosevka"; size: 12; color: warn }
 
             // ----***------------------- the selected day's entries
-            text "Selected day" { at: 14 * scale, 336 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim; show: sel_day > 0 }
+            text "Selected day" { at: 14 * scale, 336 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sel_day > 0 }
             column daylist {
                 at: 14 * scale, 346 * scale
                 view: 352 * scale, 106 * scale
@@ -91,16 +91,16 @@ part Calendar {
                         show: h.day == sel_day and sel_day > 0
                         size: 352 * scale, 16 * scale
                         ellipse { at: 5 * scale, 8 * scale; radius: 3 * scale; color: warn }
-                        text h.name { at: 16 * scale, 8 * scale; anchor: left center; width: 330 * scale; lines: 1; family: "Iosevka"; size: 12; color: ink.dim }
+                        text h.name { at: 16 * scale, 8 * scale; anchor: left center; width: 330 * scale; lines: 1; family: "Iosevka"; size: 12; color: skin.ink.dim }
                     }
                 }
                 for e in events {
                     group {
                         show: e.day == sel_day and sel_day > 0
                         size: 352 * scale, 16 * scale
-                        ellipse { at: 5 * scale, 8 * scale; radius: 3 * scale; color: accent }
-                        text e.title { at: 16 * scale, 8 * scale; anchor: left center; width: 244 * scale; lines: 1; family: "Iosevka"; size: 12; color: ink.dim }
-                        text e.time { at: 266 * scale, 8 * scale; anchor: left center; width: 44 * scale; family: "Iosevka"; size: 12; color: accent }
+                        ellipse { at: 5 * scale, 8 * scale; radius: 3 * scale; color: skin.accent }
+                        text e.title { at: 16 * scale, 8 * scale; anchor: left center; width: 244 * scale; lines: 1; family: "Iosevka"; size: 12; color: skin.ink.dim }
+                        text e.time { at: 266 * scale, 8 * scale; anchor: left center; width: 44 * scale; family: "Iosevka"; size: 12; color: skin.accent }
                         text e.cal { at: 314 * scale, 8 * scale; anchor: left center; width: 34 * scale; lines: 1; family: "Iosevka"; size: 12; color: ink.off }
                     }
                 }

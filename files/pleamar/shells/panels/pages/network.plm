@@ -56,21 +56,21 @@ part NetPanel {
 
                 // ----***------------------------- the card
                 body {
-                    color: coal
+                    color: skin.coal
                     opacity: 92%
                         box { from: 0, 0; size: 470, 338; corner: 0 }
                 }
 
                 // ----***------------------------ header
-                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: ink }
+                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: skin.ink }
 
                 group { move: 62, 9
-                    Capsule(96, 22, fill: accent, alpha: 15%, edge: 1, edge_tone: accent, edge_alpha: 35%, radius: 9, scale: 1)
-                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 11; color: ink }
+                    Capsule(96, 22, fill: skin.accent, alpha: 15%, edge: 1, edge_tone: skin.accent, edge_alpha: 35%, radius: 9, scale: 1)
+                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 11; color: skin.ink }
                 }
 
                 ellipse { at: 404, 20; radius: 3.5; color: pick(net_live, down.b, ink.off) }
-                text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: ink.dim }
+                text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
 
                 // ----***----------------------- readouts
                 text "↓ DOWN" { at: 14, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
@@ -84,7 +84,7 @@ part NetPanel {
                 // ----***--------------------------- plot
                 // Three rules at the thirds, each labelled to the right.
                 repeat g in 0..3 {
-                    box { from: plot.x, plot.y + plot.h - g * plot.h / 3; size: plot.w, 1; color: ink; opacity: 18% }
+                    box { from: plot.x, plot.y + plot.h - g * plot.h / 3; size: plot.w, 1; color: skin.ink; opacity: 18% }
                 }
                 text "{net.ax1}" { at: 422, plot.y + plot.h - plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
                 text "{net.ax2}" { at: 422, plot.y + plot.h - 2 * plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }

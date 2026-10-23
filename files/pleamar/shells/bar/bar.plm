@@ -86,6 +86,7 @@ language 0.4
 //   monitorScale                                   later slices; not applied
 
 import "../../lib/palette.plm"
+import "../../theme.plm"
 import "../../lib/capsule.plm"
 import "../../lib/plugins/pill/pill.plm" as pill
 import "../../lib/plugins/mpd/mpd.plm" as mpd
@@ -265,12 +266,12 @@ scene bar {
         level: overlay
         open: tip_open
         body {
-            color: slate
+            color: skin.surface
             opacity: 96%
             box { from: 0, 0; size: 240, 30; corner: 6 }
-            box { from: 0, 0; size: 2, 30; corner: 1; color: accent }
+            box { from: 0, 0; size: 2, 30; corner: 1; color: skin.accent }
         }
-        text "{tip_body}" { at: 10, 15; anchor: left center; size: 13; color: ink; family: "Iosevka" }
+        text "{tip_body}" { at: 10, 15; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
     }
 
     // What is drawn inside the surface, in the same design pixels.
@@ -338,7 +339,7 @@ scene bar {
         size: 50 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 50, 23; corner: 6; color: coal; opacity: 69% }
+            box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { tip_open = true; emit tip(0) }
@@ -359,9 +360,9 @@ scene bar {
         size: 38 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 38, 23; corner: 6; color: coal; opacity: 69% }
-            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: accent.hover; family: "FiraCode Nerd Font Mono" }
-            text "{ws_label}" { at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: ink; family: "Iosevka" }
+            box { from: 0, 1; size: 38, 23; corner: 6; color: skin.coal; opacity: 69% }
+            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
+            text "{ws_label}" { at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
             zone box ws { from: 0, 0; size: 38, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { tip_open = true; emit tip(1) }
             on press ws { emit focus }
@@ -385,10 +386,10 @@ scene bar {
         size: 16 * scale, strip * scale
         group zoom {
             scale: scale
-            text glyph { at: 0, strip / 2; anchor: left center; size: 12; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, ink.dim))); family: "Material Symbols Outlined"; show: shown }
+            text glyph { at: 0, strip / 2; anchor: left center; size: 12; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
-            box { from: 13, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, ink.dim)); show: shown }
+            box { from: 13, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
         }
     }
 
@@ -403,7 +404,7 @@ scene bar {
             // A `box` placed at a NEGATIVE `from:` draws nothing at all (five
             // faces written that way never appeared); the face starts at 0 and
             // the content is inset by the capsule's padding instead.
-            box { from: 0, 1; size: inner + 12, 23; corner: 6; color: coal; opacity: 69% }
+            box { from: 0, 1; size: inner + 12, 23; corner: 6; color: skin.coal; opacity: 69% }
             row metrics {
                 gap: 2.5
                 align: center
@@ -449,27 +450,27 @@ scene bar {
                 line 148, 22
                 line 0, 22
                 close
-                color: coal
+                color: skin.coal
                 opacity: 69%
             }
             // QS's triangleHighlightColor is the accent put through black twice
             // (towardsBlack(saturate(...), 0.3) x2), so a dark saturated blue.
-            line { from: 162, 1; to: 148, 23; width: 2.6; color: mix(accent, coal, 55%) }
-            text "{weather.icon}" { at: 6, strip / 2; anchor: left center; size: 14; color: accent; family: "Material Symbols Outlined" }
-            text "{weather.temp}" { at: 24, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
-            text "water_drop" { at: 48, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Material Symbols Outlined" }
-            text "{weather.hum}" { at: 66, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Iosevka" }
+            line { from: 162, 1; to: 148, 23; width: 2.6; color: mix(skin.accent, skin.coal, 55%) }
+            text "{weather.icon}" { at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent; family: "Material Symbols Outlined" }
+            text "{weather.temp}" { at: 24, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            text "water_drop" { at: 48, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "{weather.hum}" { at: 66, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre (its advance is about 12 design wide).
             group arrow { pivot: 93, strip / 2; rotate: weather.dir
-                text "navigation" { at: 87, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Material Symbols Outlined" }
+                text "navigation" { at: 87, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Material Symbols Outlined" }
             }
-            text "{weather.wind}" { at: 106, strip / 2; anchor: left center; size: 12; color: ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { at: 106, strip / 2; anchor: left center; size: 12; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
-            box { from: 122, 6; size: 12, 12; corner: 6; color: ink.dim }
-            box { from: 122 + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: coal; opacity: 84% }
+            box { from: 122, 6; size: 12, 12; corner: 6; color: skin.ink.dim }
+            box { from: 122 + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: skin.coal; opacity: 84% }
             zone box weather { from: 0, 0; size: 148, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { tip_open = true; emit tip(5) }
         }
@@ -480,9 +481,9 @@ scene bar {
         size: 50 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 50, 23; corner: 6; color: coal; opacity: 69% }
-            text "keyboard" { at: 6, strip / 2; anchor: left center; size: 14; color: ink.dim; family: "Material Symbols Outlined" }
-            text "{kb_layout}" { at: 28, strip / 2; anchor: left center; size: 14; color: ink; family: "Iosevka" }
+            box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
+            text "keyboard" { at: 6, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "{kb_layout}" { at: 28, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { tip_open = true; emit tip(2) }
         }
@@ -501,10 +502,10 @@ scene bar {
         size: 54 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 54, 23; corner: 6; color: coal; opacity: 69% }
-            text "lan" { at: 6, strip / 2; anchor: left center; size: 14; color: if(network.online, accent, ink.off); family: "Material Symbols Outlined" }
-            text "{net_rx}" { at: text.x, strip / 2 - 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
-            text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: ink; family: "Iosevka" }
+            box { from: 0, 1; size: 54, 23; corner: 6; color: skin.coal; opacity: 69% }
+            text "lan" { at: 6, strip / 2; anchor: left center; size: 14; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
+            text "{net_rx}" { at: text.x, strip / 2 - 5; anchor: left center; size: 10; color: skin.ink; family: "Iosevka" }
+            text "{net_tx}" { at: text.x, strip / 2 + 5; anchor: left center; size: 10; color: skin.ink; family: "Iosevka" }
             zone box net { from: 0, 0; size: 54, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { tip_open = true; emit tip(3) }
             on press net { emit open_network_panel }
@@ -530,7 +531,7 @@ scene bar {
     component TrayIcon(r: record, scale: number) {
         size: tray.slot * scale, strip * scale
         // The frame each icon sits in: QS's surfaceHover is textPrimary at 6 %.
-        box { from: 1 * scale, 2 * scale; size: (tray.slot - 2) * scale, 21 * scale; corner: 6 * scale; color: ink; opacity: 6% }
+        box { from: 1 * scale, 2 * scale; size: (tray.slot - 2) * scale, 21 * scale; corner: 6 * scale; color: skin.ink; opacity: 6% }
         image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale }
         zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
         on press trayhit { emit tray_press(r.index) }
@@ -560,7 +561,7 @@ scene bar {
                 from: icon / 2 - 44, (strip - pill.height) / 2
                 size: 44, pill.height
                 corner: corner.small
-                color: coal
+                color: skin.coal
                 opacity: 53%
                 show: hot
             }
@@ -569,7 +570,7 @@ scene bar {
                 anchor: right center
                 size: 14
                 weight: 600
-                color: ink
+                color: skin.ink
                 family: "Iosevka"
                 show: hot
             }
@@ -664,20 +665,20 @@ scene bar {
                     gap: bar.gap
                     align: center
                     art.Art(w: 22, h: 22)
-                    text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 14; color: ink; family: "Iosevka" }
+                    text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 14; color: skin.ink; family: "Iosevka" }
                     text "({media.position, time}/{media.length, time})" { size: 12; color: amber; family: "Iosevka" }
                     spec.Bars(width: 22, height: 20, gap: 1)
                     // Fixed 16 px boxes so the hit zones below can name the same
                     // cells the layout hands out.
                     row btn_prev { size: 16, h; align: center
-                        text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot, 1, 0) }
+                        text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: if(media.hot, 1, 0) }
                     }
                     row btn_play { size: 16, h; align: center
-                        text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot and media.playing, 1, 0) }
-                        text "pause" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot and not media.playing, 1, 0) }
+                        text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: if(media.hot and media.playing, 1, 0) }
+                        text "pause" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: if(media.hot and not media.playing, 1, 0) }
                     }
                     row btn_next { size: 16, h; align: center
-                        text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: ink; opacity: if(media.hot, 1, 0) }
+                        text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: if(media.hot, 1, 0) }
                     }
                 }
             }
@@ -727,7 +728,7 @@ scene bar {
     // wallpaper through unbroken). No rim and no shadow: QS paints neither
     // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
     body {
-        color: coal
+        color: skin.coal
         opacity: 88%
         box { from: 0, 0; size: screen.width, strip }
     }

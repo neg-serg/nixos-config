@@ -1,6 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
+import "../../theme.plm"
 import "../../lib/capsule.plm"
 import "../../lib/plugins/cover/cover.plm" as Cover
 import "../../lib/plugins/meta/meta.plm" as Meta
@@ -287,7 +288,7 @@ scene panels {
     // the fact that opens a drawer would then have to land in a window of
     // milliseconds. One design pixel at 2 % keeps the scene resident without
     // being visible; the cards are the only thing the eye sees.
-    box { from: 0, 0; size: 1, 1; color: coal; opacity: 2% }
+    box { from: 0, 0; size: 1, 1; color: skin.coal; opacity: 2% }
 
     zone box catcher { from: 0, 0; size: screen.width, screen.height
         label: "Dismiss drawer"; role: region; show: drawer != none }
