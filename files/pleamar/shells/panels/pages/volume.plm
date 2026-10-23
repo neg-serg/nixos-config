@@ -21,12 +21,12 @@
 
 part Volume {
     component VolumeDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
-        size: 340 * scale, 284 * scale
+        size: 340 * scale, 320 * scale
 
         group {
             // The bar is bottom-anchored: the drawer rests bar.height + bar.gap
             // above the monitor's bottom edge and slides the rest of the way out.
-            move: 4, 4 + (1 - lift) * (320 + 4) * scale
+            move: 0, (1 - lift) * 320 * scale
 
             // ----***----------------------------- the card
             body {

@@ -45,7 +45,7 @@ part NowPlaying {
         size: 420 * scale, 320 * scale
 
         group {
-            move: 4, 4 + (1 - lift) * (320 + 4) * scale
+            move: 0, (1 - lift) * 320 * scale
 
             group zoom {
                 scale: scale
