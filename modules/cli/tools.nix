@@ -59,6 +59,7 @@ in
     pkgs.erdtree # modern tree
     pkgs.eza # modern 'ls' replacement
     pkgs.fsel # fast TUI app launcher and fuzzy finder (dmenu pipe, clipboard history)
+    pkgs.graf # terminal force-directed graph of markdown wikilinks (TUI; -d <vault dir>)
     pkgs.huebox # terminal theme editor (TUI): live colour preview, pushes the palette into the kitty/ghostty/alacritty config
     pkgs.lazytail # TUI log viewer: live filtering, follow mode, multi-tab; also runs as an MCP server (lazytail --mcp)
     pkgs.libnotify # notify-send helper used by CLI scripts
