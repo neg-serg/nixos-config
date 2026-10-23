@@ -72,8 +72,16 @@ scene panels {
     // keyboard: exclusive while the surface exists (drawer != none): Escape must
     // reach the open drawer without a click first, and a modal drawer is the one
     // moment the shell may hold the keyboard. Compositor-level binds still fire.
+    // The surface stays for the life of the session, not only while a drawer is
+    // open: a scene whose only surface is closed exits a second or so after it
+    // starts, and then the fact that opens a drawer has to land in the handful
+    // of milliseconds between the end of the load and that exit — which is why
+    // `pleamar --say panels "fact drawer media"` from outside used to work only
+    // by luck. An open surface that draws nothing costs nothing extra: the cards
+    // are hidden by their own `show:`, and the catcher below is hidden too, so
+    // with no drawer there is no zone to catch a press.
     surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
-              keyboard: exclusive; open: drawer != none }
+              keyboard: on_demand; open: true }
 
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
@@ -190,8 +198,14 @@ scene panels {
     // ----***---------------------- close behaviour
     // Declared before the parts: a later zone is on top, so the catcher is under
     // every drawer zone and a press inside a drawer does not close it.
+    // A drawer scene with nothing drawn stops itself after a second or two, and
+    // the fact that opens a drawer would then have to land in a window of
+    // milliseconds. One design pixel at 2 % keeps the scene resident without
+    // being visible; the cards are the only thing the eye sees.
+    box { from: 0, 0; size: 1, 1; color: coal; opacity: 2% }
+
     zone box catcher { from: 0, 0; size: screen.width, screen.height
-        label: "Dismiss drawer"; role: region }
+        label: "Dismiss drawer"; role: region; show: drawer != none }
     on press catcher while close_on_outside and drawer != none { drawer = none }
     on key Escape while close_on_escape and drawer != none { drawer = none }
 
