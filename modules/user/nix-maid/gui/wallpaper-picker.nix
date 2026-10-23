@@ -84,6 +84,72 @@ let
     source = "${pickerSrcLive}/${name}";
   });
 
+  # Backwards half of the pairing: wl is the other writer of the background
+  # (`wl random`, the vicinae wl-switcher, `wl restore` when a monitor comes back),
+  # so the deck follows it instead of keeping a clip on screen over a wallpaper the
+  # user just picked somewhere else. Three rules keep that honest:
+  #
+  #   - only a readable file wl actually names is adopted;
+  #   - wl's own restore at login re-applies exactly the file the deck last handed it
+  #     (~/.cache/qs-picker-wl-last, written by scripts/wallpaper-apply) — adopting
+  #     that would swap the user's clip back to the last still image on every login;
+  #   - a live deck is switched through its IPC, and a deck that is down gets its
+  #     stored state (scripts/wallpaper-apply) pointed at wl's picture instead: on its
+  #     next start the deck re-applies what it has stored, so without this a pick made
+  #     through wl while the deck was gone would be overwritten at startup.
+  #
+  # `qs-wallpaperpicker set` then writes the same state back (it is idempotent: the
+  # second state.json write it causes finds `new == current` and stops), so the
+  # loop terminates in one round.
+  pickerAdopt = pkgs.writeShellScript "qs-wallpaper-adopt" ''
+    set -eu
+    export PATH="${
+      lib.makeBinPath [
+        pkgs.bash # scripts/wallpaper-apply and -still run under a bash shebang
+        pkgs.coreutils # seq, sleep, cat, readlink, nice
+        pkgs.jq # wl's state.json
+        pkgs.matugen # the palette behind the adopted wallpaper, as on any set
+        pkgs.ffmpeg # a video's still frame (wallpaper-still), should wl ever name one
+        pkgs.qs-wallpaperpicker # the deck's own CLI (qs ipc)
+      ]
+    }"
+
+    state="$HOME/.local/state/wl/state.json"
+    [ -r "$state" ] || exit 0
+
+    # Bounded wait for the deck's IPC: this unit is ordered after the picker's, but
+    # QML still needs a moment before it answers at session start.
+    ready=0
+    cur=""
+    for _ in $(seq 1 30); do
+      if cur="$(qs-wallpaperpicker current 2> /dev/null)"; then
+        ready=1
+        break
+      fi
+      sleep 0.2
+    done
+
+    new="$(${lib.getExe' pkgs.jq "jq"} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state" 2> /dev/null || true)"
+    [ -n "$new" ] && [ -f "$new" ] || exit 0
+    [ "$new" = "$cur" ] && exit 0
+
+    last="$(cat "$HOME/.cache/qs-picker-wl-last" 2> /dev/null || true)"
+    [ -n "$last" ] && [ "$new" = "$last" ] && exit 0
+
+    if [ "$ready" = 1 ]; then
+      # Live deck: switch it, so a clip's window gives way to the picture wl shows.
+      qs-wallpaperpicker set "$new"
+    else
+      # Deck down: on its next start it re-applies the wallpaper it has stored
+      # (WallpaperEngine runs the command once at startup), which would overwrite the
+      # pick made through wl while it was gone. Point that stored state at wl's
+      # picture instead — the deck then starts on the right wallpaper, and wl is
+      # already showing it, so no second command is needed here.
+      apply="''${XDG_CONFIG_HOME:-$HOME/.config}/qs-wallpaperpicker/scripts/wallpaper-apply"
+      [ -x "$apply" ] && "$apply" "$new"
+    fi
+  '';
+
   # First-run settings: the host's wallpaper collection, and wl-daemon as the
   # painter — the deck hands every image over through it, while it draws the
   # animated pictures and clips itself (see the header). JsonAdapter keeps the
@@ -135,6 +201,11 @@ lib.mkIf pickerEnabled (
         serviceConfig = {
           ExecStartPre = pickerInit;
           ExecStart = "${lib.getExe' pkgs.qs-wallpaperpicker "qs-wallpaperpicker"} start";
+          # Re-run the adoption after a (re)start of the deck: a wallpaper picked on
+          # wl's side while the deck was down stays invisible behind its clip until
+          # something asks. Fire-and-forget — the adopt unit waits for IPC itself, so
+          # the deck's start is not held up by it.
+          ExecStartPost = "${lib.getExe' pkgs.systemd "systemctl"} --user start --no-block qs-wallpaper-adopt.service";
           RestartSec = 5;
           # Same ceilings as the bar: the shell is flat when idle (the deck is
           # unloaded while closed), and the pictures are what can grow.
@@ -146,5 +217,38 @@ lib.mkIf pickerEnabled (
     }
 
     (neg.mkHomeFiles pickerHomeFiles)
+
+    {
+      # Fires on every wl state write: the picker's own sets (a no-op second round) and
+      # the wallpapers picked on wl's side, which are the point of this unit.
+      systemd.user.services.qs-wallpaper-adopt = systemdUser.mkUserService {
+        description = "Adopt a wallpaper set through wl into the Quickshell picker";
+        presets = [ "oneshot" ];
+        after = [
+          "qs-wallpaperpicker.service"
+          "graphical-session-pre.target"
+        ];
+        wants = [ "qs-wallpaperpicker.service" ];
+        # Also runs once per session: a wallpaper picked while the deck was down must
+        # not stay invisible behind it once it is back.
+        wantedBy = [ "hyprland-session.target" ];
+        unitConfig = {
+          # wl writes its state in bursts while outputs settle; the default start rate
+          # limit would fail the oneshot and kill the path unit with it.
+          StartLimitIntervalSec = 0;
+        };
+        serviceConfig.ExecStart = pickerAdopt;
+      };
+
+      systemd.user.paths.qs-wallpaper-adopt = {
+        description = "Watch wl state.json for wallpapers set outside the picker";
+        wantedBy = [ "hyprland-session.target" ];
+        partOf = [ "hyprland-session.target" ];
+        pathConfig = {
+          PathChanged = "%h/.local/state/wl/state.json";
+          Unit = "qs-wallpaper-adopt.service";
+        };
+      };
+    }
   ]
 )
