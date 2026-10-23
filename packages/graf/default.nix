@@ -26,6 +26,18 @@ rustPlatform.buildRustPackage rec {
 
   cargoHash = "sha256-6Pu3RZPT8KdHvvRLXPIDBVj8zebmnmCYSfHJjYALQVc=";
 
+  # Local patch: relative markdown links as graph edges. Upstream builds the
+  # graph from `[[wikilinks]]` only, resolved against note titles, so a vault
+  # that links with `[text](../note.md)` collapses to the few notes carrying a
+  # wikilink — 3 nodes / 2 edges on ~/notes, out of 568 scanned files. With the
+  # patch the same vault yields 515 linked notes / 2053 edges. The patch also
+  # skips fenced blocks and inline code spans for both syntaxes, because
+  # upstream's regexes read documentation examples (`[[listenbrainz]]` in a TOML
+  # snippet) as real links. Regenerate against a new upstream tag by applying
+  # the same commit on a clone and re-running `git format-patch -1`; drop it
+  # once upstream parses markdown links itself.
+  patches = [ ./md-links.patch ];
+
   meta = lib.mkMeta {
     description = "Terminal-based force-directed graph visualizer for markdown wikilinks";
     homepage = "https://github.com/reekta92/graf";
