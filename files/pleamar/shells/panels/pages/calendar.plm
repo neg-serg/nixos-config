@@ -44,14 +44,14 @@ part Calendar {
                     label: "Next month"; role: button }
                 on press next { emit cal_next }
             }
-            group { move: 336 * scale, 10 * scale
-                Capsule(30, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
-                text "Close" { at: 15 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink }
-                zone box close { from: 0, 0; size: 30 * scale, 20 * scale; corner: 10 * scale
+            group { move: 322 * scale, 10 * scale
+                Capsule(44, 20, fill: slate, alpha: 60%, radius: 10, scale: scale)
+                text "Close" { at: 22 * scale, 10 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink }
+                zone box close { from: 0, 0; size: 44 * scale, 20 * scale; corner: 10 * scale
                     label: "Close {drawer}"; role: button }
                 on press close { drawer = none }
             }
-            text cal.title { at: 168 * scale, 20 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 1 * weight.medium; color: accent }
+            text cal.title { at: 168 * scale, 20 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: accent }
 
             box { from: 12 * scale, 36 * scale; size: 356 * scale, 1 * scale; color: ink; opacity: ink.subtle }
 
@@ -73,7 +73,7 @@ part Calendar {
                         ellipse { at: 6 * scale, 6 * scale; radius: 2.5 * scale; color: accent; show: c.mark == 1 }
                         ellipse { at: 42 * scale, 6 * scale; radius: 2.5 * scale; color: warn; show: c.mark == 2 }
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink; show: c.this and not c.today }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 12; weight: 1 * weight.medium; color: accent; show: c.today }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: accent; show: c.today }
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off; show: not c.this }
                         zone box day { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
                             label: c.label; role: button; selected: c.this and c.day == sel_day }
