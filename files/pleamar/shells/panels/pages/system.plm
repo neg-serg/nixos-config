@@ -26,7 +26,7 @@ part SysPanel {
             move: 0, (1 - lift) * 887 * scale
 
             body {
-                color: skin.coal
+                color: coal
                 opacity: 85%
 
                 box { from: 0, 0; size: 904 * scale, 887 * scale; corner: 0 }

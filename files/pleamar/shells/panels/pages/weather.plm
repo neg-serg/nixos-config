@@ -23,7 +23,7 @@ part Weather {
             // `borderWidth: 0`, `radius: 0`, and one 1 px line of the accent at
             // 0.25 across the top edge.
             body {
-                color: skin.coal
+                color: coal
                 opacity: 85%
                 box { from: 0, 0; size: 300 * scale, 196 * scale; corner: 0 }
             }

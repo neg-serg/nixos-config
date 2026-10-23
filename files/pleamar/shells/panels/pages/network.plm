@@ -56,7 +56,7 @@ part NetPanel {
 
                 // ----***------------------------- the card
                 body {
-                    color: skin.coal
+                    color: coal
                     opacity: 92%
                         box { from: 0, 0; size: 470, 338; corner: 0 }
                 }

@@ -52,7 +52,7 @@ part NowPlaying {
 
                 // ----***------------------------- the card
                 body {
-                    color: skin.coal
+                    color: coal
                     opacity: 75%
                         box { from: 0, 0; size: 420, 320; corner: 0 }
                 }
