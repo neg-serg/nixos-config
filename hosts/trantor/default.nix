@@ -188,10 +188,12 @@ in
   features.wine.enable = true;
   features.wine.apps = { }; # Windows apps for the wineapps CLI; add only what you need
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
-  # Pleamar shell (features.gui.pleamar): disabled after the dual-run trial —
-  # the replacement did not work out, so Quickshell stays the session shell.
-  # The scenes and pkgs.pleamar stay in the tree; flip this back on to retry.
-  features.gui.pleamar.enable = false;
+  # Pleamar shell (features.gui.pleamar): back on for the parity push — the
+  # scene set (bar, panels, notifications, toast, launcher) is complete and
+  # `pleamar --check` is green for all nine scenes. Quickshell stays on until
+  # the cutover gate (`tests/evidence/` budgets, PH4-S) is proven, so both
+  # shells come up; that dual run is the documented trial mode, not the target.
+  features.gui.pleamar.enable = true;
   # Wallpaper picker (features.gui.wallpaperPicker): the swatch deck browses
   # ~/pic/wl and hands the chosen card to wl-daemon (`wl img {}`), so the login
   # screen, the bar accent and `wl restore` keep following one owner.
