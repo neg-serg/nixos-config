@@ -16,6 +16,7 @@ language 0.4
 //
 // Compile proof: mpd.check.plm.
 
+import "../../../theme.plm"
 import "../../palette.plm"
 import "../../capsule.plm"
 
@@ -43,6 +44,10 @@ library Mpd strict {
     // (`repeat`, `shuffle`, `repeat_one`, `auto_delete`, `blur_linear`), drawn
     // from the same font with its ligatures, at the QS size
     // (fontSizeSmall * capsuleScale = 14) and its emphasis opacity.
+    // The badges are the reference's ink and its colour: MpdFlags.qml draws them in
+    // `Theme.textPrimary` (not the "playing" highlight) at
+    // `Theme.uiIconEmphasisOpacity`, whether or not anything is playing. Measured on the
+    // two bars: the reference's shuffle badge is #804060, the port's was ink.dim grey.
     component Flags(scale: number = ui) {
         let glyph.gap = 2
         let glyph.size = 14
@@ -56,11 +61,11 @@ library Mpd strict {
                 row flags {
                     gap: 2
                     align: center
-                    text "repeat" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: repeat }
-                    text "shuffle" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: random }
-                    text "repeat_one" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: single }
-                    text "auto_delete" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: consume }
-                    text "blur_linear" { family: "Material Symbols Outlined"; size: 14; color: if(state == playing, highlight, ink.dim); opacity: 75%; show: xfade }
+                    text "repeat" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: repeat }
+                    text "shuffle" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: random }
+                    text "repeat_one" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: single }
+                    text "auto_delete" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: consume }
+                    text "blur_linear" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: xfade }
                 }
             }
             zone box flags { from: 0, 0; size: w, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
