@@ -58,12 +58,14 @@ hl.config({
         -- showed a pseudo-backdrop. It takes the bar's route instead — Hyprland's
         -- own layer blur (rule `blur-qs-.*`) samples the live framebuffer — plus
         -- the card's own translucent fill and 1 px hairline.
-        -- pleamar: every scene's layer carries this one namespace (the shell sets
-        -- none of its own — `title:` is a window's, not a layer's), so the bar
-        -- and the drawers cannot be told apart here. The drawers are the reason
-        -- this entry exists: their 75 % plate is the reference's plate and it
-        -- wants the real glass, not Hyprland's plain layer blur.
-        namespaces = "notifications,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup,pleamar",
+        -- pleamar is deliberately NOT here, measured 2026-10-23: with the entry
+        -- in, the drawers came out transparent with the text behind them
+        -- unblurred — the plugin's layer pass samples the wallpaper instead of
+        -- what is under the surface, the same failure this file already records
+        -- for the bar and for qs-music. The drawers get Hyprland's own layer
+        -- blur (`layerrule blur-pleamar`, 0.05) instead, which samples the live
+        -- framebuffer, and their own 75 % plate on top of it.
+        namespaces = "notifications,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup",
         -- namespace_presets is left empty: its only entry ever was
         -- qs-music:media-dark, and that namespace is no longer glassed by the
         -- plugin (the `media-dark` preset is gone from hyprglass-apply for the
@@ -71,7 +73,7 @@ hl.config({
         -- plugin parses these with parseKeyValuePairs(..., ':'), unlike the mask
         -- thresholds which use '='.
         -- Above the shadow alpha, otherwise shadows trigger glass on the whole surface
-        namespace_mask_thresholds = "quickshell=0.3,notifications=0.3,qs-music=0.3,pleamar=0.3",
+        namespace_mask_thresholds = "quickshell=0.3,notifications=0.3,qs-music=0.3",
         -- The layer pass re-samples the backdrop between frames and the result
         -- reads as a ghost of whatever is behind the surface (the bar was taken
         -- out of this pass for the same reason). Off: the glass still blurs and
