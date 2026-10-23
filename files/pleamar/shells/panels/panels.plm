@@ -2,6 +2,9 @@ language 0.4
 
 import "../../lib/palette.plm"
 import "../../lib/capsule.plm"
+import "../../lib/plugins/cover/cover.plm" as Cover
+import "../../lib/plugins/meta/meta.plm" as Meta
+import "../../lib/plugins/spectrum/spectrum.plm" as spec
 
 // panels.plm — the drawer surface of the shell (scene `panels`, PH2-B slice 1).
 //
@@ -10,9 +13,10 @@ import "../../lib/capsule.plm"
 // reserves nothing and draws the drawers upward from the bar's top edge.
 // The drawers themselves are parts under pages/, which the scene imports for;
 // a part has no name of its own and is not checked alone (INTERFACES.md §1.3).
-// Slice 1 ships calendar, system, weather and volume; microphone, network,
-// bluetooth, media, keyboard, tray, power and settings stay reserved and get
-// their own parts in later slices (the `drawer` fact already names them).
+// Slice 1 shipped calendar, system, weather and volume; slice 2 adds media —
+// the now-playing card the bar's cover opens. Microphone, network, bluetooth,
+// keyboard, tray, power and settings stay reserved for later slices (the
+// `drawer` fact already names them).
 //
 // Opening and closing
 // -------------------
@@ -73,8 +77,8 @@ scene panels {
 
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar"
-                  services: "audio", "audio.*", "files", "files.write" }
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "flow"
+                  services: "audio", "audio.*", "files", "files.write", "media" }
 
     // ----***--------------- drawer state and settings
     fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | keyboard | tray | system | power | settings = none
@@ -91,6 +95,11 @@ scene panels {
 
     // Worker state, read by the drawers.
     fact sysmon_online = 0
+    // The flow dashboard: live state, the window's own peak, and the scale the
+    // chart normalises by (panels.luau keeps the ring buffer).
+    fact net_live = false
+    fact net_max_rx: number = 1
+    fact net_max_tx: number = 1
     fact weather_ok = 0
 
     // The shared slide: every drawer leaves and arrives with the same motion.
@@ -104,6 +113,8 @@ scene panels {
     event open_calendar
     event open_weather
     event open_system
+    event open_media
+    event open_network
     event close_drawer
 
     // Calendar navigation (panels.luau re-asks the worker for the month).
@@ -133,8 +144,19 @@ scene panels {
     text cal.err = ""
     text cal.today = ""
 
+    // The flow dashboard (pages/network.plm): human rates as the reference's own
+    // `flow` prints them, plus the peaks of the running window.
+    text net.rx = "--"
+    text net.tx = "--"
+    text net.iface = "—"
+    text net.peak_rx = "--"
+    text net.peak_tx = "--"
+    // Why the dashboard has no numbers, when it has none for a reason.
+    text net.err = ""
+
     // ----***---- models filled by panels.luau (columns the drawers draw)
     model forecast max 5 { day: text; cond: text; hi: text; lo: text }
+    model flow max 180 { rx: number; tx: number }
     model tiles max 8 { label: text; value: text; level: number; tone: number }
     model cells max 42 { day: number; this: bool; today: bool; weekend: bool; mark: number; label: text }
     model events max 60 { day: number; time: text; title: text; cal: text }
@@ -142,12 +164,28 @@ scene panels {
     model streams max 8 { id: text; name: text; binary: text; title: text; volume: number; muted: bool; playing: bool }
     model sinks max 8 { id: text; name: text; default: bool }
     model sources max 8 { id: text; name: text; default: bool }
+    model media_rows max 8 { glyph: text; value: text }
 
     // ----***------------------- audio (no worker)
     // Volume, microphone and the per-stream mixers come from the service; the
     // mixer drawer stays live while it is on screen, there is nothing to start.
     service audio { volume: number; muted: bool; input: number; input_muted: bool
                     outputs: sinks; inputs: sources; apps: streams }
+
+    // The now-playing card reads the media service directly: MPRIS already
+    // carries every field the card shows. The service's `art` is the player's
+    // URL (often a temp file the player exported), so the picture itself comes
+    // from the cover plugin, which resolves the real album-directory file.
+    service media { playing: bool; title: text; artist: text; album: text
+                    player: text; position: number; length: number }
+
+    // The media card's analyser is one-sided, as in QS (`mirror = false`).
+    // A plugin fact is set from a rule, never loose (spectrum.check.plm), so
+    // this rides on the drawer's own opening rule.
+
+
+
+
 
     // ----***---------------------- close behaviour
     // Declared before the parts: a later zone is on top, so the catcher is under
@@ -161,6 +199,8 @@ scene panels {
     on open_calendar { drawer = calendar }
     on open_weather { drawer = weather }
     on open_system { drawer = system }
+    on open_media { drawer = media; Spectrum.mirror = false }
+    on open_network { drawer = network }
     on close_drawer { drawer = none }
 
     // ----***------------------------ the drawers
@@ -168,4 +208,6 @@ scene panels {
     include "pages/calendar.plm"
     include "pages/weather.plm"
     include "pages/system.plm"
+    include "pages/media.plm"
+    include "pages/network.plm"
 }

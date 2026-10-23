@@ -29,9 +29,12 @@
 # - `pleamar-<scene>.service` for every scene in `pleamarScenes` (`bar`, `panels`, `notifications`,
 #   `toast`, `launcher`), each running
 #   `pleamar --scene ~/.config/pleamar/shells/<scene>/<scene>.plm --no-hud` with memory/CPU caps.
-#   `lock`, `overlay`, `overview` and `proof` exist under `files/pleamar/shells/` but are not started
-#   by the module — `lock` is not in the scene list at all, `overview` is a deliberate omission (a
-#   resident process for one IPC verb costs more than the bind).
+#   `overlay` and `proof` exist under `files/pleamar/shells/` but are not started by the module;
+#   `overview` is a deliberate omission (a resident process for one IPC verb costs more than the
+#   bind). `lock` gets a unit too, but from `pleamarOnDemandUnits`: the scene is born locked
+#   (`fact locked = true`), so autostart would put the pleamar lock screen in front of every login
+#   before PH3-L's PAM matrix has been run by hand. Start it when it is wanted —
+#   `systemctl --user start pleamar-lock.service`.
 # - `pleamar-health` + `pleamar-health.timer` — hang watchdog: probes the bar scene (2-minute period,
 #   first run after 5 minutes) and restarts the scene when it stops answering.
 # - `pleamar-theme` — runs the theme pipeline (`files/pleamar/scripts/theme`) on every wallpaper
@@ -57,9 +60,10 @@
 #
 # ## Open state (2026-10-17)
 #
-# Notifications still miss their budget (1.0 % of a core against the 0.5 % target), `tests/evidence/`
-# is missing so the G3/SC2 gates are unproven, the lock scene is not wired into `pleamarScenes`, and
-# the plugin phase (PH3-P) has not started. The superplan carries the per-phase status.
+# Notifications still miss their budget (1.0 % of a core against the 0.5 % target) and
+# `tests/evidence/` is missing, so the G3/SC2 gates are unproven. The plugin phase (PH3-P) has
+# landed six plugins, but `spectrum.luau` never starts cava in a live scene: the analyser in the
+# media card is drawn from values that stay at zero. The superplan carries the per-phase status.
 
 {
   pkgs,
@@ -240,6 +244,23 @@ let
     }) pleamarScenes
   );
 
+  # Scenes that must not come up with the session. `lock` is born locked
+  # (`fact locked = true` in shells/lock/lock.plm), so a unit wanted by
+  # hyprland-session.target would put the pleamar lock screen in front of every
+  # login — and PH3-L's PAM matrix is a human gate that has not been run yet
+  # (superplan: `human-gate="yes"`; the Quickshell login layer stays the
+  # fallback until it has). The unit still exists, with the same caps, restart
+  # policy and scene condition, so a bind or hypridle can start it:
+  #
+  #     systemctl --user start pleamar-lock.service     # lock now
+  #     pleamar --say lock "fact locked false"          # unlock (PAM first)
+  pleamarOnDemandUnits = {
+    pleamar-lock = (pleamarSceneUnit "lock") // {
+      wantedBy = [ ];
+      partOf = [ ];
+    };
+  };
+
   # Hang watchdog: `Restart=on-failure` covers a scene that *exits*; a scene
   # that keeps running with dead logic is invisible to systemd. One
   # `--say <scene> describe` round-trip every 2 minutes notices it; the probe
@@ -339,46 +360,49 @@ lib.mkIf pleamarEnabled (
         pkgs.pleamar # Wayland desktop shell runtime (bars/launchers/notifications as scenes)
       ];
 
-      systemd.user.services = pleamarUnits // {
-        pleamar-health = systemdUser.mkUserService {
-          description = "Restart the pleamar scene when it stops answering";
-          presets = [ "oneshot" ];
-          # User units start with a minimal PATH: the probe needs its own CLI
-          # plus timeout/systemctl/cut.
-          path = [
-            pkgs.coreutils # timeout and cut, used by the probe
-            pkgs.systemd # systemctl --user: the liveness check and the restart
-            pkgs.pleamar # the scene's own CLI for `pleamar --say`
-          ];
-          serviceConfig = {
-            ExecStart = pleamarHealth;
+      systemd.user.services =
+        pleamarUnits
+        // pleamarOnDemandUnits
+        // {
+          pleamar-health = systemdUser.mkUserService {
+            description = "Restart the pleamar scene when it stops answering";
+            presets = [ "oneshot" ];
+            # User units start with a minimal PATH: the probe needs its own CLI
+            # plus timeout/systemctl/cut.
+            path = [
+              pkgs.coreutils # timeout and cut, used by the probe
+              pkgs.systemd # systemctl --user: the liveness check and the restart
+              pkgs.pleamar # the scene's own CLI for `pleamar --say`
+            ];
+            serviceConfig = {
+              ExecStart = pleamarHealth;
+            };
+          };
+          pleamar-cleanup-symlink = pleamarCleanup;
+          pleamar-theme = systemdUser.mkUserService {
+            description = "Write ~/.config/pleamar/theme.plm from the current wallpaper";
+            presets = [ "oneshot" ];
+            after = [
+              "maid-activation.service"
+              "wl-state-sync.service"
+            ];
+            wants = [ "maid-activation.service" ];
+            wantedBy = [ "graphical-session.target" ];
+            # Runs on every wallpaper change: bursts are normal, not a failure.
+            unitConfig.StartLimitIntervalSec = 0;
+            # theme.sh shells out to imagemagick, gawk and jq.
+            path = [
+              pkgs.coreutils # install and text tools used by the wrapper and the script
+              pkgs.bash # interpreter for theme.sh
+              pkgs.imagemagick # samples the wallpaper's colours
+              pkgs.gawk # runs theme-extract.awk
+              pkgs.jq # JSON reads in the pipeline
+            ];
+            serviceConfig = {
+              ExecStart = pleamarThemeRun;
+            };
           };
         };
-        pleamar-cleanup-symlink = pleamarCleanup;
-        pleamar-theme = systemdUser.mkUserService {
-          description = "Write ~/.config/pleamar/theme.plm from the current wallpaper";
-          presets = [ "oneshot" ];
-          after = [
-            "maid-activation.service"
-            "wl-state-sync.service"
-          ];
-          wants = [ "maid-activation.service" ];
-          wantedBy = [ "graphical-session.target" ];
-          # Runs on every wallpaper change: bursts are normal, not a failure.
-          unitConfig.StartLimitIntervalSec = 0;
-          # theme.sh shells out to imagemagick, gawk and jq.
-          path = [
-            pkgs.coreutils # install and text tools used by the wrapper and the script
-            pkgs.bash # interpreter for theme.sh
-            pkgs.imagemagick # samples the wallpaper's colours
-            pkgs.gawk # runs theme-extract.awk
-            pkgs.jq # JSON reads in the pipeline
-          ];
-          serviceConfig = {
-            ExecStart = pleamarThemeRun;
-          };
-        };
-      };
 
       systemd.user.timers.pleamar-health = {
         description = "Timer: pleamar scene hang watchdog";

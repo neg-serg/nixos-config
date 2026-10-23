@@ -1,53 +1,56 @@
 -- meta.luau — the logic of the track-metadata plugin (see meta.plm).
 --
--- Legacy: files/quickshell/Services/MusicMeta.qml, minus `sox --i`.
+-- Legacy: files/quickshell/Services/MusicMeta.qml, which reads the **player's
+-- own metadata** first (genre, album artist, composer, date, track number) and
+-- only then opens the file for what the player cannot say (codec, depth, sample
+-- rate, bitrate). This plugin does the same, through MPRIS instead of one
+-- hard-wired player:
 --
---   media (title/artist) changes  ->  `mpc -f '%file%' current` for the file,
---                                     resolved against the music root;
---   file changes                  ->  `ffprobe -v quiet -print_format json
---                                     -show_streams -show_format <path>`;
---   ffprobe fails                 ->  `mediainfo --Output=JSON <path>`;
---   nothing to inspect            ->  every fact cleared (a stream is a stream).
+--   media changes  ->  `playerctl -a metadata --format …`: every player, one
+--                      line each; the playing one (else the paused one) answers;
+--   its `xesam:url` ->  `ffprobe -v quiet -print_format json … <path>`;
+--   ffprobe fails  ->  `mediainfo --Output=JSON <path>`;
+--   no url at all   ->  the tags stay as MPRIS reported them and only the
+--                      quality line is empty (a player that streams or does not
+--                      publish a url — mpd's own bridge is one — still has
+--                      genre and the year, and that is what the card shows).
 --
--- The music root is the plugin's own settings file, `meta.json` in its folder,
--- with the QS MusicManager's directory as the default. A plugin's folder is the
--- only place its files service can read, so the setting lives there and the
--- scene keeps out of it.
---
--- Permissions are the plugin's own: mpc, ffprobe, mediainfo; media, files.
+-- Permissions are the plugin's own: playerctl, ffprobe, mediainfo; media.
 
-local SETTINGS = "meta.json"
-local DEFAULT_ROOT = "/home/neg/music"
-
-local root = DEFAULT_ROOT
 local lastKey = nil
 local lastFile = nil
 local introspecting = false
 
-local function clear()
+-- Declared before `clear()` uses it: a local is bound where it is written, and
+-- `clear()` sits above the tags.
+local publish_rows
+
+-- What only a file can say. Cleared whenever the tags change and the new track
+-- has no readable file, so a stale codec never sits under a new title.
+local function clear_file()
     fact.bitDepth = 0
     fact.sampleRate = 0
     fact.bitrateKbps = 0
     fact.channels = 0
     fact.sizeBytes = 0
-    fact.trackNo = 0
-    fact.discNo = 0
-    fact.year = 0
     text.codec = ""
     text.container = ""
-    text.genre = ""
-    text.label = ""
-    text.albumArtist = ""
-    text.composer = ""
     text.file = ""
     text.summary = ""
 end
 
-local function settings()
-    local ok, state = pcall(sys.ask, "files.read", SETTINGS, "json")
-    if ok and type(state) == "table" and type(state.root) == "string" and state.root ~= "" then
-        root = state.root
-    end
+-- Nothing playing at all: every fact and text goes, the card falls back to what
+-- the service itself reports.
+local function clear()
+    clear_file()
+    fact.trackNo = 0
+    fact.discNo = 0
+    fact.year = 0
+    text.genre = ""
+    text.label = ""
+    text.albumArtist = ""
+    text.composer = ""
+    publish_rows()
 end
 
 -- Tags arrive as "6" or "6/12": the leading number is the one that matters.
@@ -84,6 +87,25 @@ local function summary()
     text.summary = table.concat(parts, " · ")
 end
 
+-- The tag rows a card draws under the title, in the QS order and with the QS
+-- glyphs. Filled here, not in the scene: only the logic can ask whether a text
+-- is empty, and an icon with nothing after it is the defect that rule exists to
+-- avoid.
+function publish_rows()
+    local rows = {}
+    local function add(glyph, value)
+        if value ~= nil and tostring(value) ~= "" then
+            rows[#rows + 1] = { glyph = glyph, value = tostring(value) }
+        end
+    end
+    add("category", text.genre)
+    if fact.year > 0 then add("calendar_month", fact.year) end
+    add("sell", text.label)
+    add("piano", text.composer)
+    add("high_quality", text.summary)
+    model.rows = rows
+end
+
 local function publishFfprobe(data)
     local stream, format = nil, {}
     if type(data.streams) == "table" then
@@ -116,6 +138,7 @@ local function publishFfprobe(data)
     text.albumArtist = tag(tags, "album_artist") ~= "" and tag(tags, "album_artist") or tag(tags, "albumartist")
     text.composer = tag(tags, "composer")
     summary()
+    publish_rows()
     return true
 end
 
@@ -146,6 +169,7 @@ local function publishMediainfo(data)
     text.albumArtist = tostring(track.Album_Performer or "")
     text.composer = tostring(track.Composer or "")
     summary()
+    publish_rows()
     return true
 end
 
@@ -186,29 +210,87 @@ local function introspect(path)
     end
 end
 
--- `mpc -f '%file%' current` is relative to music_directory; `current` is empty
--- when nothing is loaded, which clears the line (no file, nothing to say).
+-- MPRIS, asked of every player at once: one line each, the fields in the order
+-- below. `--format` keeps one call per update instead of one per field.
+local MPRIS_FORMAT = "{{status}}\t{{xesam:title}}\t{{xesam:artist}}\t{{xesam:album}}"
+    .. "\t{{xesam:genre}}\t{{xesam:albumArtist}}\t{{xesam:composer}}"
+    .. "\t{{xesam:contentCreated}}\t{{xesam:trackNumber}}\t{{xesam:url}}"
+
+local function decode(path)
+    return (path:gsub("%%(%x%x)", function(hex)
+        return string.char(tonumber(hex, 16))
+    end))
+end
+
+-- A url a file can be read from, or nothing: a stream has no file behind it, and
+-- a player that publishes no url (mpd's bridge does not) leaves the quality line
+-- empty instead of guessing at a path.
+local function url_to_path(url)
+    if type(url) ~= "string" or url == "" then return nil end
+    if url:match("^https?://") or url:match("^icy://") then return nil end
+    if url:sub(1, 7) == "file://" then return decode(url:sub(8)) end
+    if url:sub(1, 1) == "/" then return url end
+    return nil
+end
+
+local function fields(line)
+    local out = {}
+    for field in (line .. "\t"):gmatch("([^\t]*)\t") do
+        out[#out + 1] = field
+    end
+    return out
+end
+
+-- The playing player answers; with none playing, the paused one (the same choice
+-- the `media` service makes, and what QS's `hasPlayer` means).
 local function refresh()
-    local ok, _ = pcall(run, "mpc", { "-f", "%file%", "current" }, function(out, code)
-        local relative = nil
-        if code == 0 and type(out) == "string" then
-            relative = out:match("^%s*(.-)%s*$")
-            if relative == "" then relative = nil end
+    local ok = pcall(run, "playerctl", { "-a", "metadata", "--format", MPRIS_FORMAT }, function(out)
+        local playing, paused = nil, nil
+        if type(out) == "string" then
+            for line in out:gmatch("[^\n]+") do
+                local row = fields(line)
+                if row[1] == "Playing" then
+                    playing = playing or row
+                elseif row[1] == "Paused" then
+                    paused = paused or row
+                end
+            end
         end
-        if not relative then
+        local row = playing or paused
+        if not row then
             lastFile = nil
             clear()
             return
         end
-        if relative == lastFile then return end
-        lastFile = relative
-        text.file = relative
-        introspect(root .. "/" .. relative)
+
+        -- The tags MPRIS itself carries (the QS first source). The year comes
+        -- out of `xesam:contentCreated`, a full date.
+        text.genre = row[5] or ""
+        text.albumArtist = row[6] or ""
+        text.composer = row[7] or ""
+        fact.trackNo = number(row[9])
+        local created = row[8] or ""
+        fact.year = tonumber(created:match("(%d%d%d%d)")) or 0
+
+        local path = url_to_path(row[10])
+        if not path then
+            lastFile = nil
+            clear_file()
+            text.file = ""
+            publish_rows()
+            return
+        end
+        if path == lastFile then
+            publish_rows()
+            return
+        end
+        lastFile = path
+        text.file = path
+        publish_rows()
+        introspect(path)
     end)
     if not ok then clear() end
 end
-
-settings()
 
 sys.watch("media", function(media)
     if type(media) ~= "table" then return end

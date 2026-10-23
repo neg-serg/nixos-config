@@ -1090,6 +1090,12 @@ These were found while writing the two libraries; they are the traps that cost t
    layout. The capsule slot is a `row`, which is why capsule content needs no `at`.
 1. **`--record` marks component copies** (`px#Hat2`); the `describe` names are the labels, not the
    internal names.
+1. **A `part` named after its drawer's enum value shadows it.** Identifiers are case-insensitive, so
+   `part Media` makes `show: drawer == media` compare the fact with the *part*: the rule never
+   fires, the surface never opens, and the scene exits a couple of seconds after the drawer is asked
+   for — with no error anywhere, which reads as a renderer crash. `part Network` and `part Media`
+   both cost an afternoon in PH2; the products are `NetPanel` and `NowPlaying`. Name a part after
+   what it draws, never after the drawer it belongs to.
 
 ### 9.3 Change control
 
