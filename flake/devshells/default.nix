@@ -6,10 +6,10 @@
 }:
 let
   # `base.nix` backs the `default` devshell; every other shell module maps to a
-  # devshell of the same name. The space-separated string keeps the 25-name
+  # devshell of the same name. The space-separated string keeps the 26-name
   # list compact instead of one line per name.
   shellNames = lib.splitString " " (
-    "lint tools haskell rust cpp java re infra python android qmk radicle "
+    "lint tools haskell rust cpp java re infra python ai android qmk radicle "
     + "pentest elf graphics latex misc media virt text pro-audio web-archive db k8s wine"
   );
 in

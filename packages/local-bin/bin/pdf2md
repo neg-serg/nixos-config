@@ -1,0 +1,51 @@
+#!/bin/sh
+# pdf2md: PDF/DOCX/HTML/images → Markdown through docling, entirely from the
+# nix store (pkgs.python3Packages.docling, wired in modules/cli/ocr.nix).
+#
+# Replaces the old `marker` wrapper: marker-pdf was a hand-kept pip venv in
+# ~/src/ai-tools whose interpreter died on a python 3.12 → 3.14 bump
+# (`ModuleNotFoundError: No module named 'marker'`).
+#
+# Layout/table weights are HuggingFace assets kept in /zero/ai/ocr (the "all AI
+# assets on /zero/ai" convention), so a store GC never touches them. Scanned
+# pages fall back to Tesseract (eng/rus/osd, see modules/cli/ocr.nix).
+#
+# Usage:
+#   pdf2md file.pdf              # → ./file.md
+#   pdf2md -o out/ a.pdf b.pdf   # → out/a.md, out/b.md
+#   pdf2md --to json file.pdf    # every docling flag passes through
+set -eu
+
+DOCLING=@DOCLING_BIN@
+
+if [ $# -eq 0 ] || [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+  exit 0
+fi
+
+# Keep the model cache next to the other AI assets instead of ~/.cache.
+if [ -d /zero/ai/ocr ]; then
+  export HF_HOME="${HF_HOME:-/zero/ai/ocr}"
+fi
+
+# docling defaults to Markdown already, but state it explicitly so the wrapper
+# keeps working if the upstream default changes; a caller-supplied --to/--from
+# comes later on the command line and wins.
+case "${1:-}" in
+  -o | --output)
+    [ $# -ge 2 ] || {
+      echo "pdf2md: -o needs a directory" >&2
+      exit 2
+    }
+    out="$2"
+    shift 2
+    exec "$DOCLING" --to md --output "$out" "$@"
+    ;;
+  --output=*)
+    out="${1#--output=}"
+    shift
+    exec "$DOCLING" --to md --output "$out" "$@"
+    ;;
+esac
+
+exec "$DOCLING" --to md "$@"

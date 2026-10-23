@@ -28,9 +28,9 @@
           "@GCC_LIB_DIR@" = "${pkgs.gcc.cc.lib}/lib"; # libstdc++/libgomp for the torch wheels
           "@ZLIB_LIB_DIR@" = "${pkgs.zlib}/lib"; # libz
           "@ZSTD_LIB_DIR@" = "${pkgs.zstd.out}/lib"; # libzstd (torch >= 2.13 links it)
-          # marker falls back to this when llama-server is not in PATH; the
-          # literal it used to carry (llama-cpp-9190) is gone from the store.
-          "@LLAMA_SERVER_BIN@" = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
+          # docling (drives the pdf2md wrapper): the CLI ships inside a python
+          # env, not as a top-level attribute — pin that env's bin/docling here.
+          "@DOCLING_BIN@" = "${pkgs.python3.withPackages (ps: [ ps.docling ])}/bin/docling";
           # The music-AI venv tree lives outside the repo; the scripts used to
           # spell the path out 19 times. Rendered output is unchanged (the
           # substitution is the same string), so this only moves the one place
