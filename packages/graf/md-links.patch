@@ -1,0 +1,376 @@
+From dccefe88517fc87c74f60001ca3c599908e060be Mon Sep 17 00:00:00 2001
+From: neg <neg@trantor>
+Date: Fri, 23 Oct 2026 10:06:10 +0300
+Subject: [PATCH] linker: treat relative markdown links as graph edges
+
+Vaults that write [text](../note.md) instead of [[wikilink]] produced a
+three-node graph: only wikilink targets were parsed, and titles are the
+graph key, so a path has to be resolved before it can become an edge.
+
+Extract markdown links to .md/.mdx (anchors and queries stripped), resolve
+them against the scanned file set relative to the linking note, and append
+the target titles to the note's link list. Unresolved, external, anchor-only
+and non-markdown targets are dropped. Fenced code blocks and inline code
+spans are ignored for both link syntaxes so documentation examples stop
+inventing nodes.
+---
+ src/linker.rs | 295 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 293 insertions(+), 2 deletions(-)
+
+diff --git a/src/linker.rs b/src/linker.rs
+index eb6fd0d..d7596dc 100644
+--- a/src/linker.rs
++++ b/src/linker.rs
+@@ -1,6 +1,6 @@
+ use std::collections::{HashMap, HashSet};
+ use std::fs;
+-use std::path::Path;
++use std::path::{Component, Path, PathBuf};
+ 
+ use glob::glob;
+ use regex::Regex;
+@@ -8,6 +8,9 @@ use std::sync::LazyLock;
+ 
+ static WIKILINK_RE: LazyLock<Regex> =
+     LazyLock::new(|| Regex::new(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]").unwrap());
++static MD_LINK_RE: LazyLock<Regex> =
++    LazyLock::new(|| Regex::new(r"\[[^\]]*\]\(([^)\s]+)(?:\s+[^)]*)?\)").unwrap());
++static INLINE_CODE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"`[^`\n]*`").unwrap());
+ static FRONTMATTER_RE: LazyLock<Regex> =
+     LazyLock::new(|| Regex::new(r"(?s)^---\s*\n(.*?)\n---\s*\n").unwrap());
+ static TAGS_RE: LazyLock<Regex> =
+@@ -20,7 +23,12 @@ pub struct FileData {
+     pub relative_path: String,
+     pub title: String,
+     pub tags: Vec<String>,
++    /// Link targets usable by the graph: `[[wikilink]]` titles plus titles
++    /// resolved from relative markdown links such as `[text](../note.md)`.
+     pub wikilinks: Vec<String>,
++    /// Raw markdown link targets as written in the file, kept for rewriting
++    /// and for diagnostics; `wikilinks` holds the resolved form.
++    pub md_links: Vec<String>,
+ }
+ 
+ pub fn scan_markdown_files(
+@@ -52,6 +60,7 @@ pub fn scan_markdown_files(
+     }
+ 
+     files.sort_by(|a, b| a.relative_path.cmp(&b.relative_path));
++    resolve_md_links(&mut files);
+     files
+ }
+ 
+@@ -97,6 +106,7 @@ fn parse_markdown_file(path: &Path, base: &Path) -> anyhow::Result<FileData> {
+ 
+     let tags = extract_tags(&content);
+     let wikilinks = extract_wikilinks(&content);
++    let md_links = extract_md_links(&content);
+     let title = extract_title(&content).unwrap_or_else(|| {
+         path.file_stem()
+             .map(|s| s.to_string_lossy().to_string())
+@@ -108,16 +118,163 @@ fn parse_markdown_file(path: &Path, base: &Path) -> anyhow::Result<FileData> {
+         title,
+         tags,
+         wikilinks,
++        md_links,
+     })
+ }
+ 
++/// Blank out fenced code blocks and inline code spans before link extraction.
++///
++/// A vault documents syntax as often as it uses it: ``[[name]]`` inside a code
++/// span is an example, not a link, and treating it as one invents nodes that do
++/// not exist. Only fences (``` / ~~~) and single-line code spans are handled;
++/// indented code blocks keep their links, as upstream does.
++fn strip_code(content: &str) -> String {
++    let mut kept = String::with_capacity(content.len());
++    let mut fence: Option<&str> = None;
++    for line in content.lines() {
++        let trimmed = line.trim_start();
++        let marker = if trimmed.starts_with("```") {
++            Some("```")
++        } else if trimmed.starts_with("~~~") {
++            Some("~~~")
++        } else {
++            None
++        };
++        match (fence, marker) {
++            (None, Some(open)) => {
++                fence = Some(open);
++                continue;
++            }
++            (Some(open), Some(close)) if open == close => {
++                fence = None;
++                continue;
++            }
++            _ => {}
++        }
++        if fence.is_none() {
++            kept.push_str(line);
++            kept.push('\n');
++        }
++    }
++    INLINE_CODE_RE.replace_all(&kept, "").into_owned()
++}
++
+ fn extract_wikilinks(content: &str) -> Vec<String> {
++    let text = strip_code(content);
+     WIKILINK_RE
+-        .captures_iter(content)
++        .captures_iter(&text)
+         .filter_map(|c| c.get(1).map(|m| m.as_str().trim().to_string()))
+         .collect()
+ }
+ 
++/// Markdown links pointing at another note in the vault: `[text](note.md)`,
++/// `[text](../dir/note.md#anchor)`, `[text](/note.mdx)`. External URLs,
++/// anchors-only links and non-markdown targets are dropped.
++fn extract_md_links(content: &str) -> Vec<String> {
++    let text = strip_code(content);
++    MD_LINK_RE
++        .captures_iter(&text)
++        .filter_map(|c| c.get(1).map(|m| m.as_str().trim().to_string()))
++        .filter(|target| {
++            let lower = target.to_lowercase();
++            !(lower.starts_with("http://")
++                || lower.starts_with("https://")
++                || lower.starts_with("ftp://")
++                || lower.starts_with("mailto:")
++                || lower.starts_with('#'))
++        })
++        .filter(|target| {
++            let path = strip_anchor(target).to_lowercase();
++            path.ends_with(".md") || path.ends_with(".mdx")
++        })
++        .collect()
++}
++
++/// Drop a trailing `#anchor` / `?query` from a link target.
++fn strip_anchor(target: &str) -> &str {
++    match target.find(['#', '?']) {
++        Some(idx) => &target[..idx],
++        None => target,
++    }
++}
++
++/// Collapse `.`/`..` components so two spellings of the same vault path meet.
++fn normalize_relative(path: &Path) -> String {
++    let mut parts: Vec<String> = Vec::new();
++    for component in path.components() {
++        match component {
++            Component::ParentDir => {
++                parts.pop();
++            }
++            Component::CurDir => {}
++            Component::Normal(part) => parts.push(part.to_string_lossy().to_string()),
++            _ => {}
++        }
++    }
++    parts.join("/")
++}
++
++/// Append the titles of markdown-link targets to each note's link list so the
++/// graph can use them: the force graph keys edges by title, while a markdown
++/// link names a file. Links that do not resolve to a scanned note are dropped,
++/// which keeps dangling references out of the layout.
++fn resolve_md_links(files: &mut [FileData]) {
++    if files.is_empty() {
++        return;
++    }
++
++    let path_to_title: HashMap<String, String> = files
++        .iter()
++        .map(|file| {
++            (
++                normalize_relative(Path::new(&file.relative_path)),
++                file.title.clone(),
++            )
++        })
++        .collect();
++
++    let mut resolved: Vec<(usize, Vec<String>)> = Vec::new();
++    for (idx, file) in files.iter().enumerate() {
++        if file.md_links.is_empty() {
++            continue;
++        }
++        let dir = Path::new(&file.relative_path)
++            .parent()
++            .map(Path::to_path_buf)
++            .unwrap_or_default();
++        let mut titles: Vec<String> = Vec::new();
++        for raw in &file.md_links {
++            let target = strip_anchor(raw);
++            if target.is_empty() {
++                continue;
++            }
++            let joined: PathBuf = if let Some(absolute) = target.strip_prefix('/') {
++                PathBuf::from(absolute)
++            } else {
++                dir.join(target)
++            };
++            let key = normalize_relative(&joined);
++            let Some(title) = path_to_title.get(&key) else {
++                continue;
++            };
++            if title != &file.title && !titles.contains(title) {
++                titles.push(title.clone());
++            }
++        }
++        if !titles.is_empty() {
++            resolved.push((idx, titles));
++        }
++    }
++
++    for (idx, titles) in resolved {
++        for title in titles {
++            if !files[idx].wikilinks.contains(&title) {
++                files[idx].wikilinks.push(title);
++            }
++        }
++    }
++}
++
+ fn extract_tags(content: &str) -> Vec<String> {
+     if let Some(fm) = FRONTMATTER_RE.captures(content) {
+         let fm_content = fm.get(1).unwrap().as_str();
+@@ -185,3 +342,137 @@ pub fn resolve_links(files: &[FileData], exclude_tags: &[String]) -> HashMap<Str
+ 
+     links
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    /// Build a throwaway vault: `files` maps vault-relative paths to contents.
++    fn write_fixture(name: &str, files: &[(&str, &str)]) -> PathBuf {
++        let dir = std::env::temp_dir().join(format!("graf-linker-{}-{name}", std::process::id()));
++        let _ = fs::remove_dir_all(&dir);
++        for (rel, content) in files {
++            let path = dir.join(rel);
++            fs::create_dir_all(path.parent().expect("fixture file has a parent")).unwrap();
++            fs::write(&path, content).unwrap();
++        }
++        dir
++    }
++
++    fn links_of<'a>(files: &'a [FileData], path: &str) -> &'a [String] {
++        &files
++            .iter()
++            .find(|file| file.relative_path == *path)
++            .expect("fixture note was scanned")
++            .wikilinks
++    }
++
++    #[test]
++    fn relative_markdown_links_resolve_to_note_titles() {
++        let dir = write_fixture(
++            "relative",
++            &[
++                ("notes/alpha.md", "# Alpha\n\nSee [beta](beta.md#part).\n"),
++                ("notes/beta.md", "# Beta\n"),
++                ("root.md", "# Root\n"),
++            ],
++        );
++        let files = scan_markdown_files(&dir, &[], 0);
++
++        // Sibling link, anchor stripped.
++        let alpha_links = links_of(&files, "notes/alpha.md");
++        assert_eq!(alpha_links.len(), 1, "{alpha_links:?}");
++        assert_eq!(alpha_links[0], "Beta");
++        assert!(
++            files
++                .iter()
++                .find(|file| file.relative_path == "notes/alpha.md")
++                .expect("alpha exists")
++                .md_links
++                .contains(&"beta.md#part".to_string()),
++            "raw target is preserved for rewriting"
++        );
++        let _ = fs::remove_dir_all(&dir);
++    }
++
++    #[test]
++    fn parent_and_root_relative_links_resolve() {
++        let dir = write_fixture(
++            "parents",
++            &[
++                ("a/b/deep.md", "# Deep\n\n[up](../../top.md) [abs](/a/mid.md)\n"),
++                ("top.md", "# Top\n"),
++                ("a/mid.md", "# Mid\n"),
++            ],
++        );
++        let files = scan_markdown_files(&dir, &[], 0);
++        let links = links_of(&files, "a/b/deep.md");
++        assert!(links.contains(&"Top".to_string()), "{links:?}");
++        assert!(links.contains(&"Mid".to_string()), "{links:?}");
++        let _ = fs::remove_dir_all(&dir);
++    }
++
++    #[test]
++    fn external_anchor_and_non_markdown_links_are_ignored() {
++        let dir = write_fixture(
++            "ignored",
++            &[(
++                "note.md",
++                "# Note\n\n[web](https://example.com/x.md) [frag](#local) [img](pic.png) [mail](mailto:a@b.c)\n",
++            )],
++        );
++        let files = scan_markdown_files(&dir, &[], 0);
++        assert!(links_of(&files, "note.md").is_empty());
++        let _ = fs::remove_dir_all(&dir);
++    }
++
++    #[test]
++    fn dangling_markdown_links_are_dropped() {
++        let dir = write_fixture(
++            "dangling",
++            &[("note.md", "# Note\n\n[gone](missing.md)\n")],
++        );
++        let files = scan_markdown_files(&dir, &[], 0);
++        assert!(links_of(&files, "note.md").is_empty());
++        let _ = fs::remove_dir_all(&dir);
++    }
++
++    #[test]
++    fn code_spans_and_fences_do_not_produce_links() {
++        let dir = write_fixture(
++            "code",
++            &[
++                (
++                    "note.md",
++                    "# Note\n\nInline `[[bogus]]` and `[x](other.md)` examples.\n\n```toml\n[[listenbrainz]]\nurl = \"x\"\n```\n\n~~~\n[shown](shown.md)\n~~~\n",
++                ),
++                ("other.md", "# Other\n"),
++                ("bogus.md", "# Bogus\n"),
++                ("shown.md", "# Shown\n"),
++            ],
++        );
++        let files = scan_markdown_files(&dir, &[], 0);
++        assert!(
++            links_of(&files, "note.md").is_empty(),
++            "{:?}",
++            links_of(&files, "note.md")
++        );
++        let _ = fs::remove_dir_all(&dir);
++    }
++
++    #[test]
++    fn wikilinks_survive_the_code_filter() {
++        let dir = write_fixture(
++            "wikilinks",
++            &[
++                ("note.md", "# Note\n\nBody [[Beta]] and `[[code]]`.\n"),
++                ("beta.md", "# Beta\n"),
++            ],
++        );
++        let files = scan_markdown_files(&dir, &[], 0);
++        let rendered = links_of(&files, "note.md");
++        assert_eq!(rendered.len(), 1, "{rendered:?}");
++        assert_eq!(rendered[0], "Beta");
++        let _ = fs::remove_dir_all(&dir);
++    }
++}
+-- 
+2.55.0
+
