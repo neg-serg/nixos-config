@@ -80,22 +80,45 @@ scene panels {
     // by luck. An open surface that draws nothing costs nothing extra: the cards
     // are hidden by their own `show:`, and the catcher below is hidden too, so
     // with no drawer there is no zone to catch a press.
-    // Sized to the widest card (the system monitor, 1040 x 384 design px) rather
-    // than to the monitor, and that is measured on 2026-10-23, not taste: on a
-    // 1920 x 1030 layer the cards' 75 % plate let the text behind it through
-    // unblurred, and Hyprland's layer blur never reached it; on a layer the size
-    // of the cards both behave. The reference gives every popup its own window,
-    // sized to it, for the same reason.
-    // The price, recorded because it is visible: a press outside the card closes
-    // the drawer only where this surface reaches.
-    // Full width, but only as tall as the tallest card: the reference puts the
-    // flow popup bottom-left (aligned with its capsule) and the now-playing card
-    // bottom-right, so one surface has to span the screen horizontally — yet a
-    // layer the height of the monitor is what broke the plate (the text behind
-    // it came through unblurred and Hyprland's blur never reached it). Short and
-    // wide keeps both.
-    surface { size: full, 560; anchor: bottom; margin: 0, 0, 30, 0
-              level: overlay; reserve: 0; screens: each; keyboard: on_demand; open: true }
+    // A surface per drawer, sized exactly to the card it draws — the reference's
+    // shape (one window per popup), and the only arrangement where the glass
+    // edge falls on the card's own boundary: drawn inside one big layer,
+    // Hyprland's blur leaves a visible seam around the plate.
+    // The unnamed full-monitor surface is the catcher — the press outside that
+    // dismisses the drawer. It paints nothing.
+    surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
+              keyboard: on_demand; open: true }
+
+    surface media_card { size: 428, 328; anchor: bottom_right; margin: 4, 0, 30, 0
+                         level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                         open: drawer == media
+        include "pages/media.plm"
+    }
+    surface network_card { size: 478, 346; anchor: bottom_left; margin: 4, 0, 30, 0
+                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                           open: drawer == network
+        include "pages/network.plm"
+    }
+    surface volume_card { size: 348, 328; anchor: bottom_right; margin: 4, 0, 30, 0
+                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                          open: drawer == volume
+        include "pages/volume.plm"
+    }
+    surface weather_card { size: 308, 204; anchor: bottom_right; margin: 4, 0, 30, 0
+                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                           open: drawer == weather
+        include "pages/weather.plm"
+    }
+    surface system_card { size: 768, 352; anchor: bottom_right; margin: 4, 0, 30, 0
+                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                          open: drawer == system
+        include "pages/system.plm"
+    }
+    surface calendar_card { size: 388, 488; anchor: bottom_left; margin: 2, 0, 30, 0
+                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                            open: drawer == calendar
+        include "pages/calendar.plm"
+    }
 
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
@@ -256,15 +279,4 @@ scene panels {
     on open_network { drawer = network; Spectrum.active = false }
     on close_drawer { drawer = none; Spectrum.active = false }
 
-    // The cards, on a surface sized to the widest of them (the system monitor is
-    // 1040 x 384; the rest are smaller and anchored to its bottom-right corner
-    // by their own `move:`). Sized, not full-screen: a layer the size of the
-    // card composites its plate correctly, a full-screen one does not.
-    // ----***------------------------ the drawers
-    include "pages/volume.plm"
-    include "pages/calendar.plm"
-    include "pages/weather.plm"
-    include "pages/system.plm"
-    include "pages/media.plm"
-    include "pages/network.plm"
 }

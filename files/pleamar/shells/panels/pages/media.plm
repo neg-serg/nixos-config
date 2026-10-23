@@ -42,16 +42,16 @@
 
 part NowPlaying {
     component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max) * zoom) {
-        size: 420 * scale, 316 * scale
+        size: 420 * scale, 320 * scale
 
         group {
-            move: screen.width - (420 + 4) * scale, screen.height - (316 + 4) * scale + (1 - lift) * (316 + 4) * scale
+            move: 4, 4 + (1 - lift) * (320 + 4) * scale
 
             group zoom {
                 scale: scale
 
                 // ----***------------------------- the card
-                Capsule(420, 316, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: 1)
+                Capsule(420, 320, fill: coal, alpha: 75%, radius: 0, scale: 1)
 
                 // ----***--------------------- album art
                 // The cover plugin resolves the real album-directory file behind
@@ -80,8 +80,8 @@ part NowPlaying {
                 // ----***---------- analyser band
                 // QS draws IPhoneSpectrum here, one-sided, with the scrub line
                 // under it; panels.plm sets `Spectrum.mirror`.
-                group { move: 12, 220
-                    spec.Bars(width: 396, height: 80, tone: accent, end: highlight, gap: 0)
+                group { move: 12, 224
+                    spec.Bars(width: 396, height: 76, tone: accent, end: highlight, gap: 0)
                 }
 
                 // ----***----------------------- scrub line
@@ -93,11 +93,11 @@ part NowPlaying {
                 // and a vertical bloom rising 30 % of the band behind the fill
                 // (a gradient from nothing to 0.38 there; one box at a fifth
                 // here, since a box carries one colour).
-                box { from: 12, 300; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
-                box { from: 12, 275; corner: 3
+                box { from: 12, 305; size: 396, 3; corner: 1.5; color: accent; opacity: 14% }
+                box { from: 12, 280; corner: 3
                     size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 25
                     color: accent; opacity: 15% }
-                box { from: 12, 300; corner: 1.5
+                box { from: 12, 305; corner: 1.5
                     size: 396 * clamp(media.position / max(media.length, 1), 0, 1), 3
                     color: accent }
 

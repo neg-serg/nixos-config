@@ -49,7 +49,7 @@ part NetPanel {
         let column.w = plot.w / max(flow.total, 1)
 
         group {
-            move: 4 * scale, screen.height - (338 + 36) * scale + (1 - lift) * (338 + 36) * scale
+            move: 4, 4 + (1 - lift) * (338 + 4) * scale
 
             group zoom {
                 scale: scale
