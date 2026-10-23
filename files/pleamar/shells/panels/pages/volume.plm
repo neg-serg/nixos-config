@@ -26,10 +26,10 @@ part Volume {
         group {
             // The bar is bottom-anchored: the drawer rests bar.height + bar.gap
             // above the monitor's bottom edge and slides the rest of the way out.
-            move: screen.width - (340 + 4) * scale, screen.height - (320 + 4) * scale + (1 - lift) * (320 + 4) * scale
+            move: 4, 4 + (1 - lift) * (320 + 4) * scale
 
             // ----***----------------------------- the card
-            Capsule(340, 320, fill: coal, alpha: 75%, edge: 1, edge_tone: ink, edge_alpha: 10%, radius: 0, scale: scale)
+            Capsule(340, 320, fill: coal, alpha: 75%, radius: 0, scale: scale)
 
             // ----***----------------------- output volume
             text "Output" { at: 14 * scale, 16 * scale; anchor: left center; family: "Iosevka"; size: 12; color: ink.dim }

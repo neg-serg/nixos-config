@@ -24,7 +24,7 @@ part Calendar {
         group {
             // Bottom-left, like the legacy calendar popup (calendar.popupMargin).
             // The bar's edge is bar.height + bar.gap design px above the bottom.
-            move: calendar.popup * scale, screen.height - (480 + 4) * scale + (1 - lift) * (480 + 4) * scale
+            move: 4, 4 + (1 - lift) * (480 + 4) * scale
 
             // ----***----------------------------- the card
             Capsule(380, 480, fill: coal, alpha: 85%, radius: 6, scale: scale)

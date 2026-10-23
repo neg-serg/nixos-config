@@ -16,7 +16,7 @@ part Weather {
         size: 300 * scale, 196 * scale
 
         group {
-            move: screen.width - (300 + 4) * scale, screen.height - (196 + 4) * scale + (1 - lift) * (196 + 4) * scale
+            move: 4, 4 + (1 - lift) * (196 + 4) * scale
 
             // ----***----------------------------- the card
             // Widgets/SidePanel/Weather.qml: `Color.withAlpha(Theme.surface, 0.85)`,

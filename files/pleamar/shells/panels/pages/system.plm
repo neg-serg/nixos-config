@@ -23,7 +23,7 @@ part SysPanel {
         size: 760 * scale, 344 * scale
 
         group {
-            move: screen.width - (760 + 4) * scale, screen.height - (344 + 4) * scale + (1 - lift) * (344 + 4) * scale
+            move: 4, 4 + (1 - lift) * (344 + 4) * scale
 
             Capsule(760, 344, fill: coal, alpha: 85%, radius: 0, scale: scale)
 
