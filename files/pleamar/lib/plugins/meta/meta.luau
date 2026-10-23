@@ -245,24 +245,35 @@ end
 -- the `media` service makes, and what QS's `hasPlayer` means).
 local function refresh()
     local ok = pcall(run, "playerctl", { "-a", "metadata", "--format", MPRIS_FORMAT }, function(out)
-        local playing, paused, stopped = nil, nil, nil
+        -- Every player is kept, with its state, and the choice is made after:
+        -- a browser tab that is paused has no tags at all, and it used to win
+        -- over the music player that does — the card then showed a title and no
+        -- genre while `playerctl` was answering with both.
+        local rows = {}
         if type(out) == "string" then
             for line in out:gmatch("[^\n]+") do
                 local row = fields(line)
-                if row[1] == "Playing" then
-                    playing = playing or row
-                elseif row[1] == "Paused" then
-                    paused = paused or row
-                elseif row[1] == "Stopped" then
-                    stopped = stopped or row
+                if row[1] == "Playing" or row[1] == "Paused" or row[1] == "Stopped" then
+                    rows[#rows + 1] = row
                 end
             end
         end
-        -- `Stopped` counts: a player that has a track loaded but is not playing
-        -- still has its tags, and the card draws that track (the `media` service
-        -- reports the last one). Refusing it left the card with a title and no
-        -- genre at all.
-        local row = playing or paused or stopped
+        local function rank(state)
+            if state == "Playing" then return 1 elseif state == "Paused" then return 2 else return 3 end
+        end
+        local function tagged(row)
+            return (row[5] or "") ~= "" or (row[8] or "") ~= "" or (row[6] or "") ~= ""
+        end
+        -- A tagged row first, whatever its state; among equals, the one closest
+        -- to playing.
+        table.sort(rows, function(a, b)
+            local ta, tb = tagged(a), tagged(b)
+            if ta ~= tb then return ta end
+            return rank(a[1]) < rank(b[1])
+        end)
+        -- `Stopped` counts too: a player with a track loaded but not playing has
+        -- its tags, and the card still draws that track.
+        local row = rows[1]
         if not row then
             lastFile = nil
             clear()
