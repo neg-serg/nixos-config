@@ -48,6 +48,25 @@ switch host="trantor":
 switch-sudo host="trantor":
     sudo nixos-rebuild switch --flake .#{{ host }} --option substitute false < /dev/null
 
+# Cache-status preflight for a rebuild: per host, how much of the *whole closure*
+# still has to be built from source and how much can be substituted. Matters here
+# because the rollout runs with `--option substitute false`, so a flake bump that
+# drops a host out of cache means hours of compiling.
+# nix-eval-jobs walks the closure (neededBuilds/neededSubstitutes), ~20s per host;
+# 2 workers because one NixOS eval peaks at ~3.6GiB.
+# The substituter override is not optional: install.determinate.systems (in the
+# default list) stalls 120s per narinfo, one lookup per store path, which turns
+# this into a multi-hour hang.
+# Usage: just preflight [host]
+preflight host="":
+    nix-eval-jobs --check-cache-status \
+      --option substituters "https://cache.nixos.org/" \
+      --option connect-timeout 15 \
+      --workers 2 \
+      --select 'cfgs: builtins.mapAttrs (_: c: c.config.system.build.toplevel) cfgs' \
+      --flake .#nixosConfigurations \
+    | jq -r --arg host "{{ host }}" 'select($host == "" or .attr == $host) | "\(.attr)\t\(.cacheStatus)\tbuild=\(.neededBuilds | length)\tsubst=\(.neededSubstitutes | length)"'
+
 # Agent rollout: activate the /etc/nixos flake without a password. The argument is
 # the toplevel the agent already built and verified — the root-owned unit refuses to
 # switch when the tree now builds something else (modules/security/agent-switch.nix).
