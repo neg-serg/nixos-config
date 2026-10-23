@@ -495,14 +495,14 @@ scene bar {
             let x.arrow = x.hum + w.hum.width + gap.g
             let x.wind = x.arrow + w.arrow.width + gap.g
             let x.moon = x.wind + w.wind.width + gap.g
-            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2; anchor: left center; size: 13; color: skin.accent; family: "Material Symbols Outlined" }
+            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2; anchor: left center; size: 12; color: skin.accent; family: "Material Symbols Outlined" }
             text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
-            text "water_drop" { measure: w.drop; at: x.drop, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "water_drop" { measure: w.drop; at: x.drop, strip / 2; anchor: left center; size: 10; color: skin.ink.dim; family: "Material Symbols Outlined" }
             text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
             group arrow { pivot: x.arrow + w.arrow.width / 2, strip / 2; rotate: weather.dir
-                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Material Symbols Outlined" }
+                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2; anchor: left center; size: 10; color: skin.ink.dim; family: "Material Symbols Outlined" }
             }
             text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
@@ -547,14 +547,17 @@ scene bar {
         group zoom {
             scale: scale
             box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
-            text "lan" { at: 6, strip / 2; anchor: left center; size: 14; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
-            // Weight 900: NetClusterCapsule draws both rows with `font.weight: Font.Black`
-            // and 0.5 px of letter spacing, and the port drew them at the default weight —
-            // measured, ours read noticeably thinner at the same size.
-            text "{net_rx}" { measure: w.rx; at: text.x, strip / 2 - 5; anchor: left center; size: 10; weight: 900; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
-            text "{net_rx_unit}" { at: text.x + w.rx.width, strip / 2 - 5; anchor: left center; size: 10; weight: 900; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; at: text.x, strip / 2 + 5; anchor: left center; size: 10; weight: 900; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
-            text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 5; anchor: left center; size: 10; weight: 900; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            text "lan" { at: 6, strip / 2; anchor: left center; size: 13; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
+            // 700, not the 900 QS asks for: the installed Iosevka has Regular, Medium and
+            // Bold only (fc-match Iosevka:weight=black -> Iosevka Bold), so 700 names the
+            // face Qt would actually pick and cosmic-text cannot fall back on a lighter one.
+            // 9.6 design px is the reference's 11 logical px (round(round(14 * 1.0) * 0.7))
+            // divided by this scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel
+            // too tall.
+            text "{net_rx}" { measure: w.rx; at: text.x, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx_unit}" { at: text.x + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; at: text.x, strip / 2 + 5; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 5; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { tip_open = true; emit tip(3) }
             on press net { emit open_network_panel }
