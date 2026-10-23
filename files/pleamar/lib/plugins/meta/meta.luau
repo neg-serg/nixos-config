@@ -245,7 +245,7 @@ end
 -- the `media` service makes, and what QS's `hasPlayer` means).
 local function refresh()
     local ok = pcall(run, "playerctl", { "-a", "metadata", "--format", MPRIS_FORMAT }, function(out)
-        local playing, paused = nil, nil
+        local playing, paused, stopped = nil, nil, nil
         if type(out) == "string" then
             for line in out:gmatch("[^\n]+") do
                 local row = fields(line)
@@ -253,10 +253,16 @@ local function refresh()
                     playing = playing or row
                 elseif row[1] == "Paused" then
                     paused = paused or row
+                elseif row[1] == "Stopped" then
+                    stopped = stopped or row
                 end
             end
         end
-        local row = playing or paused
+        -- `Stopped` counts: a player that has a track loaded but is not playing
+        -- still has its tags, and the card draws that track (the `media` service
+        -- reports the last one). Refusing it left the card with a title and no
+        -- genre at all.
+        local row = playing or paused or stopped
         if not row then
             lastFile = nil
             clear()
