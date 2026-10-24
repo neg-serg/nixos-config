@@ -261,7 +261,7 @@ scene bar {
     }
 
     // Who blurs the bar: 100 % the scene, 0 % the compositor (§ the strip below).
-    let strip.glass = 100%
+    let strip.glass = 0%
 
     // The moon's own shader: the phase terminator, stippled (moon.wgsl).
     shader moon_face = file "moon.wgsl"
@@ -897,7 +897,7 @@ scene bar {
     // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
     body {
         color: skin.coal
-        opacity: 88%
+        opacity: 60%
         // The glass sits here, not on the capsules: in the reference the compositor
         // (a Hyprland plugin, `hyprglass`) blurs and refracts the whole surface, and
         // the widgets are flat fills over it. A scene cannot ask that plugin for
