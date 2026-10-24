@@ -185,6 +185,19 @@ scene bar {
     // catcher, below).
     fact tray_open = false
     fact tray_index = 0
+    // The open menu's rows, flattened by the logic from `sys.ask("tray.menu", key)` — the
+    // engine reads `com.canonical.dbusmenu` and answers a list of records, which a scene
+    // cannot hold: it draws them from these eight texts, and `tm.count` says how many of
+    // them are real.
+    fact tm.count = 0
+    text tm.1 = ""
+    text tm.2 = ""
+    text tm.3 = ""
+    text tm.4 = ""
+    text tm.5 = ""
+    text tm.6 = ""
+    text tm.7 = ""
+    text tm.8 = ""
     // What QS's WsIndicator shows for the ACTIVE workspace: its icon (a Nerd
     // Font glyph, the same codepoint the tree's SVGs are cut from) and the name
     // with Hyprland's `:name` prefix stripped. bar.luau fills them; the scene
@@ -342,16 +355,30 @@ scene bar {
             box { from: 0, 0; size: 240, 164; corner: 6 }
         }
         column { at: 4, 4; size: 232, 156; gap: 0
-            for r in icons {
-                group item { show: r.index == tray_index
-                    for it in r.menu {
-                        row line { size: 232, 26;
-                            text it.title { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
-                        }
-                    }
-                }
+            row line1 { size: 232, 26; show: tm.count > 0
+                text "{tm.1}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
             }
-        }
+            row line2 { size: 232, 26; show: tm.count > 1
+                text "{tm.2}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            }
+            row line3 { size: 232, 26; show: tm.count > 2
+                text "{tm.3}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            }
+            row line4 { size: 232, 26; show: tm.count > 3
+                text "{tm.4}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            }
+            row line5 { size: 232, 26; show: tm.count > 4
+                text "{tm.5}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            }
+            row line6 { size: 232, 26; show: tm.count > 5
+                text "{tm.6}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            }
+            row line7 { size: 232, 26; show: tm.count > 6
+                text "{tm.7}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            }
+            row line8 { size: 232, 26; show: tm.count > 7
+                text "{tm.8}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            }        }
     }
 
     // What is drawn inside the surface, in the same design pixels.
@@ -383,18 +410,15 @@ scene bar {
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
     // The tray, straight from the StatusNotifier host: `key` is what a click is
     // sent back with, `icon` comes as a name or a path, ready to paint.
-    // The tray's records carry the item's own menu (`menu` in the engine's record: a tree,
-    // like an application's), so the bar can draw it instead of forwarding the right button
-    // to the application — which on Wayland often answers nothing, because the menu it opens
-    // belongs to a window that is not there.
+    // The tray's records: `menu` is a flag —the item says it has a menu— and the tree itself
+    // comes from `sys.ask("tray.menu", key)` in the logic, which is where the engine already
+    // reads `com.canonical.dbusmenu` (src/platform/tray.rs: query). A scene cannot hold a
+    // table, so the logic flattens it into the `tm.*` texts the menu surface draws.
     model icons max 12 {
         key: text
         title: text
         icon: image 18, 18
-        // No block: the children are records of this same shape, nested — a menu tree. A
-        // block would make them flat records with fields of their own, which a nested menu
-        // is not (`list children max 6 depth 2` is the language's tree form).
-        list menu max 12 depth 2
+        menu: bool = false
     }
     service tray { list: icons }
 
