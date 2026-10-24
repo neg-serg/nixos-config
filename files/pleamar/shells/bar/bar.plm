@@ -94,6 +94,7 @@ import "../../lib/plugins/mpd/mpd.plm" as mpd
 import "../../lib/plugins/genelec/genelec.plm" as gen
 import "../../lib/plugins/spectrum/spectrum.plm" as spec
 import "../../lib/plugins/cover/cover.plm" as art
+import "../../lib/plugins/build/build.plm" as build
 
 scene bar {
 
@@ -152,6 +153,7 @@ scene bar {
     fact widget.volume = true
     fact widget.mic = true
     fact widget.genelec = true
+    fact widget.build = true
     fact widget.media = true
     // Set by bar.luau from the `media` service: a player is there (the QS
     // `MusicManager.hasPlayer`). The language compares numbers only, so the
@@ -1002,7 +1004,11 @@ scene bar {
             NetCluster() { show: widget.network }
             SysmonCluster() { show: widget.sysmon }
             WeatherCapsule() { show: widget.weather and weather.have }
-            // Extension point: sysmon, then weather, go here.
+            // The build badge, last in the row. QS draws `BuildStatus` on a panel of its
+            // own, centred along the bottom edge — a second layer surface this slice does
+            // not have — so it rides here instead, and takes no space at rest: the tool
+            // reports `idle` with no builds, which is `Build.busy` false.
+            row build_slot { show: widget.build and Build.busy; build.Tile() }
         }
     }
 

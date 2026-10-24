@@ -1,0 +1,76 @@
+language 0.4
+
+// build.plm — the Nix build badge: what a `nix build`, `nixos-rebuild` or a
+// flake check is doing right now, from the `nixbuild-status` tool this repo
+// ships (packages/nixbuild-status).
+//
+// Legacy: files/quickshell/Bar/Modules/BuildStatus.qml (the capsule: state icon,
+// summary, only while something runs) and BuildStatusPopup.qml (one row per
+// build). QS streamed the tool with `--watch 1 --json`; this plugin spawns the
+// same tool in its waybar format, which is one JSON object per line:
+// `{ text, alt, class, tooltip, count, builds, drvs }`.
+//
+// Detection lives in the tool (/proc and the derivation log directory), never
+// here — the plugin reads one line per state change and nothing else.
+//
+// The badge takes no bar space while the state is `idle`: that is QS's
+// `capsuleVisible: statusText.length > 0`, and it is why the row can be
+// unconditional in the scene (`show: Build.busy`, or a row of its own).
+//
+//     import "../../lib/plugins/build/build.plm" as build
+//     build.Tile()
+//
+// Compile proof: build.check.plm.
+
+import "../../palette.plm"
+import "../../capsule.plm"
+
+library Build strict {
+
+    // The stream is the plugin's own program, not the scene's.
+    permissions { run: "nixbuild-status" }
+
+    // ----------------------------------------------------------------- facts
+    // A fact is a number or a yes-or-no and nothing else (the language's rule), so
+    // the words are `text`: the phase (`idle | evaluating | building | activating`,
+    // as the tool names it), the glyph the tile draws for it, the line beside it and
+    // the tooltip the tool prints.
+    fact count: number = 0
+    fact busy = false
+    // Which tone the tile paints: a fact, because a component of a `strict` library
+    // cannot compare the library's own `text` (the resolver reads it as the scene's).
+    // 0 plain, 1 the work's own accent, 2 the one that wants attention.
+    fact tone: number = 0
+    text phase = "idle"
+    text glyph = "check_circle"
+    text summary = ""
+    text detail = ""
+
+    fact hot = false
+
+    // ------------------------------------------------------------------- tile
+    // One capsule, as in QS: the phase's glyph in its tone and the summary beside it.
+    // `label.w` is fixed because a plugin cannot measure text; the summary is one
+    // line and the engine elides what does not fit.
+    component Tile(scale: number = ui) {
+        let size.icon = 14
+        let label.w = 150
+        let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
+        let h = capsule.height
+        size: w * scale, h * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1) {
+                row tile {
+                    gap: capsule.gap
+                    align: center
+                    text "{glyph}" { family: "Material Symbols Outlined"; size: size.icon; color: if(tone == 2, amber, if(tone == 1, accent, ink.dim)); opacity: if(hot, 1, 0.85) }
+                    text "{summary}" { family: "Iosevka"; size: 13; weight: 500; width: label.w; lines: 1; color: if(tone == 2, amber, ink) }
+                }
+            }
+            zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Nix build"; role: button }
+            on enter tile { hot = true }
+            on leave tile { hot = false }
+        }
+    }
+}
