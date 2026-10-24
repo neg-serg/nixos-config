@@ -489,16 +489,23 @@ hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Ob
 -- The swayosd-client calls these binds inherited from the Mango session are dead
 -- config: that package left with the session (25de0c3b) and nothing in the
 -- closure provides the binary, so each one was an exec that failed with
--- "not found". The audible half — genlc-media, which owns the Genelec runtime
--- volume — is what the keys actually did, and it stays. The mic key gets the
--- equivalent it never had (wpctl). Brightness stays unwired on purpose: there is
--- no /sys/class/backlight device on this desktop, and ddcutil over the monitor's
--- DDC hangs even in `detect` here — decide on that separately.
+-- "not found". The mic key gets the equivalent it never had (wpctl). Brightness
+-- stays unwired on purpose: there is no /sys/class/backlight device on this
+-- desktop, and ddcutil over the monitor's DDC hangs even in `detect` here —
+-- decide on that separately.
+--
+-- The Genelec keys drive the same state machine the bar's tile does, through the
+-- only thing that knows both transports: the plugin's logic probes where the
+-- adapter is, coalesces a burst of notches and re-anchors the CC20. A shell
+-- one-liner kept getting that wrong — on the VM path `genlc-media` moved the
+-- state file and sent nothing at all, because the file it wrote was watched by
+-- Quickshell, and Quickshell is gone (2026-10-25: the knob turned, the monitors
+-- did not). Next/Prev still go through the script; it sends on both paths now.
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("genlc-media up"), { repeating = true, locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("genlc-media down"), { repeating = true, locked = true })
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("genlc-media up"), { repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("genlc-media down"), { repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("genlc-media mute"), { repeating = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd('pleamar --say bar "emit Genelec.turn 1"'), { repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd('pleamar --say bar "emit Genelec.turn -1"'), { repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd('pleamar --say bar "emit Genelec.toggle"'), { repeating = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { repeating = true })
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("swayosd-client --brightness +10"), { repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("swayosd-client --brightness -10"), { repeating = true })
