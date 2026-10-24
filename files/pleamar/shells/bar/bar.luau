@@ -482,16 +482,21 @@ end)
 -- and it raises when it does not get both — which is why a press used to leave the menu open:
 -- the handler died before it could close it.
 on("tray_click", function(n)
+    log("TRAYCLICK " .. tostring(n))
     local at = tonumber(n) or 0
     local key = text["tray_key"]
     local id = fact["tm.id." .. at]
     fact.tray_open = false
     if type(key) == "string" and key ~= "" and type(id) == "number" and id > 0 then
-        sys.call("tray.menu_click", key, id)
+        -- Wrapped: a failing call must not roll back `tray_open` — a menu that stays up after a
+        -- press is worse than a click that did nothing.
+        local ok, err = pcall(function() sys.call("tray.menu_click", key, id) end)
+        if not ok then log("TRAYCLICK failed: " .. tostring(err)) end
     end
 end)
 
 on("tray_close", function()
+    log("TRAYCLOSE")
     fact.tray_open = false
 end)
 
