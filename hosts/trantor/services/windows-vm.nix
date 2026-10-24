@@ -67,6 +67,11 @@ let
       echo "windows is already running"
       exit 0
     fi
+    # QEMU cannot claim the adapter while usbhid holds it, and the auto policy would otherwise
+    # spend a restart discovering exactly that: detach usbhid first, as `glm-adapter attach`
+    # does. Not fatal — the device may already be detached, and the timer heals a placement that
+    # went wrong.
+    sudo /run/current-system/sw/bin/glm-adapter-priv to-vm 2>/dev/null || true
     ${podman} start windows
   '';
 in
