@@ -43,11 +43,16 @@ library Cover strict {
     // the shape the picture is fitted into.
     image art = from cover, 200, 200
 
-    component Art(w: number = 200, h: number = 200) {
+    // `radius`: QS paints the bar's cover in `albumArtContainer`, a rounded square at
+    // `Theme.cornerRadiusSmall` (shape.cornerRadiusSmall = 6). Without it a sleeve whose own
+    // pixels are light shows four square corners outside the rounded plate it sits on — which
+    // is what "the pill is not like the one in Quickshell" was looking at.
+    component Art(w: number = 200, h: number = 200, radius: number = corner.small) {
         size: w, h
+        clip box { from: 0, 0; size: w, h; corner: radius }
         image art { at: 0, 0; size: w, h; show: found }
         // The face of "no cover": a quiet plate, so a scene does not need its
         // own placeholder.
-        box { from: 0, 0; size: w, h; corner: corner.small; color: slate; opacity: 35%; show: not found }
+        box { from: 0, 0; size: w, h; corner: radius; color: slate; opacity: 35%; show: not found }
     }
 }
