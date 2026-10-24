@@ -193,6 +193,8 @@ scene bar {
     // the logic cannot read the model.
     text tray_key = ""
     fact tm.count = 0
+    // Which row the cursor is on (1-based, 0 = none): the wash under a menu line.
+    fact tm.hot = 0
     text tm.1 = ""
     text tm.2 = ""
     text tm.3 = ""
@@ -358,30 +360,106 @@ scene bar {
             box { from: 0, 0; size: 240, 164; corner: 6 }
         }
         column { at: 4, 4; size: 232, 156; gap: 0
-            row line1 { size: 232, 26; show: tm.count > 0
-                text "{tm.1}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line1 { size: 232, 19; show: tm.count > 0
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 1 }
+                text "{tm.1}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area1 { size: 232, 19
+                    zone box hit1 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.1}"; role: button }
+                }
+                on enter hit1 { tm.hot = 1 }
+                on leave hit1 { tm.hot = 0 }
+                on press hit1 { emit tray_close }
             }
-            row line2 { size: 232, 26; show: tm.count > 1
-                text "{tm.2}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line2 { size: 232, 19; show: tm.count > 1
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 2 }
+                text "{tm.2}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area2 { size: 232, 19
+                    zone box hit2 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.2}"; role: button }
+                }
+                on enter hit2 { tm.hot = 2 }
+                on leave hit2 { tm.hot = 0 }
+                on press hit2 { emit tray_close }
             }
-            row line3 { size: 232, 26; show: tm.count > 2
-                text "{tm.3}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line3 { size: 232, 19; show: tm.count > 2
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 3 }
+                text "{tm.3}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area3 { size: 232, 19
+                    zone box hit3 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.3}"; role: button }
+                }
+                on enter hit3 { tm.hot = 3 }
+                on leave hit3 { tm.hot = 0 }
+                on press hit3 { emit tray_close }
             }
-            row line4 { size: 232, 26; show: tm.count > 3
-                text "{tm.4}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line4 { size: 232, 19; show: tm.count > 3
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 4 }
+                text "{tm.4}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area4 { size: 232, 19
+                    zone box hit4 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.4}"; role: button }
+                }
+                on enter hit4 { tm.hot = 4 }
+                on leave hit4 { tm.hot = 0 }
+                on press hit4 { emit tray_close }
             }
-            row line5 { size: 232, 26; show: tm.count > 4
-                text "{tm.5}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line5 { size: 232, 19; show: tm.count > 4
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 5 }
+                text "{tm.5}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area5 { size: 232, 19
+                    zone box hit5 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.5}"; role: button }
+                }
+                on enter hit5 { tm.hot = 5 }
+                on leave hit5 { tm.hot = 0 }
+                on press hit5 { emit tray_close }
             }
-            row line6 { size: 232, 26; show: tm.count > 5
-                text "{tm.6}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line6 { size: 232, 19; show: tm.count > 5
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 6 }
+                text "{tm.6}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area6 { size: 232, 19
+                    zone box hit6 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.6}"; role: button }
+                }
+                on enter hit6 { tm.hot = 6 }
+                on leave hit6 { tm.hot = 0 }
+                on press hit6 { emit tray_close }
             }
-            row line7 { size: 232, 26; show: tm.count > 6
-                text "{tm.7}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line7 { size: 232, 19; show: tm.count > 6
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 7 }
+                text "{tm.7}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area7 { size: 232, 19
+                    zone box hit7 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.7}"; role: button }
+                }
+                on enter hit7 { tm.hot = 7 }
+                on leave hit7 { tm.hot = 0 }
+                on press hit7 { emit tray_close }
             }
-            row line8 { size: 232, 26; show: tm.count > 7
-                text "{tm.8}" { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            row line8 { size: 232, 19; show: tm.count > 7
+                // The wash the reference gives a menu line under the pointer (surfaceHover).
+                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 8 }
+                text "{tm.8}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+                group hit_area8 { size: 232, 19
+                    zone box hit8 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.8}"; role: button }
+                }
+                on enter hit8 { tm.hot = 8 }
+                on leave hit8 { tm.hot = 0 }
+                on press hit8 { emit tray_close }
             }        }
+    }
+
+    // The catcher: a full-monitor, invisible surface under the menu while it is open, so a
+    // click anywhere closes it. Without one the menu could only be dismissed by asking for it
+    // again — which is not how any menu on a desktop works.
+    surface tray_catcher {
+        size: full, full
+        anchor: center
+        level: overlay
+        open: tray_open
+        zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: default; label: "Close"; role: region }
+        on press anywhere { emit tray_close }
     }
 
     // What is drawn inside the surface, in the same design pixels.
@@ -444,6 +522,7 @@ scene bar {
     // number and the keys live in the logic, which is what the tray is told with.
     event tray_press ->
     // The same index from a right press: the item's own menu is what it asks for.
+    event tray_close ->
     event tray_menu ->
     // The cursor came onto a left capsule; the number is its place in the row.
     event tip ->
