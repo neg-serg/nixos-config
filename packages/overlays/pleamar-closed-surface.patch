@@ -1,0 +1,64 @@
+diff --git a/src/gpu.rs b/src/gpu.rs
+index a52152f..4cfd1a7 100644
+--- a/src/gpu.rs
++++ b/src/gpu.rs
+@@ -4052,6 +4052,12 @@ impl Sheet {
+     pub fn keyboard(&self, t: Keyboard) {
+         self.window.keyboard(t);
+     }
++
++    /// A closed sheet takes no clicks: its input region is emptied, so the press goes to
++    /// whatever is under it instead of to a menu nobody opened.
++    pub fn hide(&self) {
++        self.window.hide();
++    }
+ }
+ 
+ /// Header, frame history and, at the end, the lens: whether there is a background to show.
+diff --git a/src/platform/mod.rs b/src/platform/mod.rs
+index 35ee464..7e7502b 100644
+--- a/src/platform/mod.rs
++++ b/src/platform/mod.rs
+@@ -1019,6 +1019,10 @@ pub trait PlatformWindow: Send {
+     /// Grab or release the keyboard with the scene running: a launcher wants it
+     /// entirely while it's open, and not at all when it isn't.
+     fn keyboard(&self, t: crate::scene::Keyboard);
++    /// Take the surface out of the compositor's input for as long as it is closed: a closed one
++    /// is not seen and cannot be pressed, which `open:` promises and, before this, did not do —
++    /// a menu's catcher stayed a target for the whole monitor and swallowed every click.
++    fn hide(&self) {}
+     /// That the system report (`ToRender::Frame`) when it wants the frame after
+     /// the one about to be presented. Where that's unknown, it doesn't report, and the clock sets the pace.
+     fn request_frame(&self) {}
+diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
+index 2bdfa68..7e90534 100644
+--- a/src/platform/wayland.rs
++++ b/src/platform/wayland.rs
+@@ -631,6 +631,11 @@ impl PlatformWindow for WaylandWindow {
+     /// Committed now, like the input region: a surface that has just closed
+     /// paints no more frames, and a keyboard it was lent stayed lent —what
+     /// was typed after closing Marea's calendar kept going to her—.
++    fn hide(&self) {
++        self.update_input_region(&[]);
++        self.commit();
++    }
++
+     fn keyboard(&self, t: Keyboard) {
+         if let Some(layer) = &self.layer {
+             layer.set_keyboard_interactivity(keyboard_interactivity(t));
+diff --git a/src/render.rs b/src/render.rs
+index ea1f2a7..96f7ead 100644
+--- a/src/render.rs
++++ b/src/render.rs
+@@ -2593,6 +2593,11 @@ pub fn run(
+                     mode
+                 };
+                 if l.keyboard_mode != Some(its) {
++                    // The same moment the keyboard is taken away: a surface that is not shown
++                    // must not be a target either.
++                    if !(l.open || l.view.popup.is_some()) {
++                        l.hide();
++                    }
+                     l.keyboard(its);
+                     l.keyboard_mode = Some(its);
+                     // It is applied with the frame that gets presented: let there be one.

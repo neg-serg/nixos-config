@@ -59,6 +59,7 @@ in
       ./pleamar-cursor-shape.patch
       ./pleamar-right-click.patch
       ./pleamar-dbusmenu.patch
+      ./pleamar-closed-surface.patch
     ];
   });
 
