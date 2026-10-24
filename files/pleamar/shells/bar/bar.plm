@@ -362,12 +362,11 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                // Glass, not a flat plate: the reference's capsule is a translucent
-                // fill over what the bar has behind it, and pleamar's glass is what
-                // gives that — the fill as a tint, the edge lit from the top left, and
-                // what is behind bent at the bevel. It replaces the hand-drawn hairline
-                // this used to carry.
-                glass: 100%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14.4; weight: 500; color: time.tone; family: "Iosevka" }
@@ -398,12 +397,11 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                // Glass, not a flat plate: the reference's capsule is a translucent
-                // fill over what the bar has behind it, and pleamar's glass is what
-                // gives that — the fill as a tint, the edge lit from the top left, and
-                // what is behind bent at the bevel. It replaces the hand-drawn hairline
-                // this used to carry.
-                glass: 100%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 69, 23; corner: 6 }
             }
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
@@ -453,12 +451,11 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                // Glass, not a flat plate: the reference's capsule is a translucent
-                // fill over what the bar has behind it, and pleamar's glass is what
-                // gives that — the fill as a tint, the edge lit from the top left, and
-                // what is behind bent at the bevel. It replaces the hand-drawn hairline
-                // this used to carry.
-                glass: 100%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: inner + 12, 23; corner: 6 }
             }
             row metrics {
@@ -569,12 +566,11 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                // Glass, not a flat plate: the reference's capsule is a translucent
-                // fill over what the bar has behind it, and pleamar's glass is what
-                // gives that — the fill as a tint, the edge lit from the top left, and
-                // what is behind bent at the bevel. It replaces the hand-drawn hairline
-                // this used to carry.
-                glass: 100%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
@@ -605,12 +601,11 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                // Glass, not a flat plate: the reference's capsule is a translucent
-                // fill over what the bar has behind it, and pleamar's glass is what
-                // gives that — the fill as a tint, the edge lit from the top left, and
-                // what is behind bent at the bevel. It replaces the hand-drawn hairline
-                // this used to carry.
-                glass: 100%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
             // QS does not paint the accent here: NetClusterCapsule's linkIconColor is
@@ -793,12 +788,11 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                // Glass, not a flat plate: the reference's capsule is a translucent
-                // fill over what the bar has behind it, and pleamar's glass is what
-                // gives that — the fill as a tint, the edge lit from the top left, and
-                // what is behind bent at the bevel. It replaces the hand-drawn hairline
-                // this used to carry.
-                glass: 100%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 0; size: w, h; corner: corner }
             }
 
@@ -901,6 +895,12 @@ scene bar {
     body {
         color: skin.coal
         opacity: 88%
+        // The glass sits here, not on the capsules: in the reference the compositor
+        // (a Hyprland plugin, `hyprglass`) blurs and refracts the whole surface, and
+        // the widgets are flat fills over it. A scene cannot ask that plugin for
+        // anything, so the surface draws its own.
+        glass: 100%
+        lens: false
         // The shape, not a second coat of paint: a body fills its own extent, and a box
         // inside it with no colour of its own inherits the body's and fills it again. The
         // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
