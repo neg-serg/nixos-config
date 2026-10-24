@@ -89,8 +89,18 @@ library Genelec strict {
                     }
                 }
             }
-            // At rest the level, bare on the strip, in the plate's own place.
-            text "{volume, 0}dB" { at: w / 2, h / 2; anchor: center; family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink); show: not hot }
+            // At rest the silhouette and the level, bare on the strip: a monitor's outline is
+            // what says whose level this is, and without it the number hung there alone while
+            // the microphone beside it kept its glyph.
+            row rest {
+                at: w / 2, h / 2
+                anchor: center
+                gap: capsule.gap
+                align: center
+                show: not hot
+                image ones { size: capsule.height - 4, capsule.height - 4; tint: if(muted, ink.off, ink) }
+                text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
+            }
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
             on enter tile { hot = true }
             on leave tile { hot = false }
