@@ -506,7 +506,7 @@ scene bar {
             }
             // QS's triangleHighlightColor is the accent put through black twice
             // (towardsBlack(saturate(...), 0.3) x2), so a dark saturated blue.
-            line { from: 154, 1; to: 140, 23; width: 2.6; color: mix(skin.accent, skin.coal, 55%) }
+            line { from: 154, 1; to: 140, 23; width: 2.6; color: mix(skin.accent, skin.coal, 45%) }
             // Laid out after their own widths, not at fixed offsets: the offsets were read
             // off the reference once and then the port's glyphs turned out wider, so the
             // temperature ran into the water drop ("11°C◯67%") and the capsule measured 114
@@ -540,7 +540,7 @@ scene bar {
             // disc over a full moon.
             // The moon: dithered by its own shader (moon.wgsl), which takes the phase
             // QS's MoonPhaseIcon takes and stipples the terminator the same way.
-            shader moon_face { at: x.moon, 6; size: 12, 12; values: weather.moon; colors: skin.ink.dim, skin.coal }
+            shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
             zone box weather { from: 0, 0; size: 140, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { tip_open = true; emit tip(5) }
         }
