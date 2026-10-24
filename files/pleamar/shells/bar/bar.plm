@@ -87,6 +87,7 @@ language 0.4
 
 import "../../lib/palette.plm"
 import "../../theme.plm"
+import "../../art.plm" as artacc
 import "../../lib/capsule.plm"
 import "../../lib/plugins/pill/pill.plm" as pill
 import "../../lib/plugins/mpd/mpd.plm" as mpd
@@ -786,11 +787,18 @@ scene bar {
                 // out as one run of ink).
                 space 2
                 text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 14; color: skin.ink; family: "Iosevka" }
-                // QS paints the time in textPrimary while playing and textSecondary
-                // while paused, at media.time.alpha.playing 1.0 / .paused 0.8 —
-                // amber was the port's own invention and the one warm thing on a
-                // cold bar.
-                text "({media.position, time}/{media.length, time})" { size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                // The time, in the two colours QS uses: the brackets and the slash wear
+                // the cover's accent (MusicManager.accentColor, sampled from the art), the
+                // digits wear textPrimary while playing and textSecondary while paused, at
+                // media.time.alpha.playing 1.0 / .paused 0.8.
+                row time_row {
+                    gap: 0
+                    text "(" { size: 14; color: cover_accent; family: "Iosevka" }
+                    text "{media.position, time}" { size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "/" { size: 14; color: cover_accent; family: "Iosevka" }
+                    text "{media.length, time}" { size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text ")" { size: 14; color: cover_accent; family: "Iosevka" }
+                }
                 row extras { show: media.hot
                     gap: bar.gap
                     align: center
