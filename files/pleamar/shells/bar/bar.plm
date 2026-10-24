@@ -180,6 +180,11 @@ scene bar {
     // is refused ("I don't understand 'tip.shown'"), so a fact an outside tool
     // may want to poke carries no dot.
     fact tip_open = false
+    // The tray's menu, open on the item `tray_index` names: the logic sets both when the
+    // right button lands on an icon, and a press anywhere closes it (this scene's own
+    // catcher, below).
+    fact tray_open = false
+    fact tray_index = 0
     // What QS's WsIndicator shows for the ACTIVE workspace: its icon (a Nerd
     // Font glyph, the same codepoint the tree's SVGs are cut from) and the name
     // with Hyprland's `:name` prefix stripped. bar.luau fills them; the scene
@@ -319,6 +324,34 @@ scene bar {
             box { from: 0, 0; size: 2, 30; corner: 1; color: skin.accent }
         }
         text "{tip_body}" { at: 10, 15; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+    }
+
+    // The tray's menu: a surface of its own above the bar's right end, because a menu
+    // cannot live inside a 39 logical px strip. Rows come from the item's own `menu` tree
+    // (the engine's record carries it), two levels deep.
+    surface tray_menu {
+        size: 240, 164
+        anchor: bottom_right
+        margin: 0, 8, 39, 0
+        level: overlay
+        open: tray_open
+        body {
+            color: skin.surface
+            opacity: 96%
+            border: 1, mix(skin.coal, skin.ink, 12%)
+            box { from: 0, 0; size: 240, 164; corner: 6 }
+        }
+        column { at: 4, 4; size: 232, 156; gap: 0
+            for r in icons {
+                group item { show: r.index == tray_index
+                    for it in r.menu {
+                        row line { size: 232, 26;
+                            text it.title { at: 8, 13; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // What is drawn inside the surface, in the same design pixels.

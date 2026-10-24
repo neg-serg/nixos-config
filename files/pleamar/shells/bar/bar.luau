@@ -469,15 +469,37 @@ end)
 -- is the parity step that still waits for a popup here.
 
 on("tray_press", function(index)
+    fact.tray_open = false
     local item = trayItems[(index or 0) + 1]
     if type(item) ~= "table" or type(item.key) ~= "string" then return end
     sys.call("tray.activate", item.key)
 end)
 
+-- The right button opens the item's own menu in the scene now: the record carries the tree
+-- (`menu`, a nested list in the model), so the bar draws it rather than asking the
+-- application — which on Wayland often answers nothing, because the menu it opens belongs to
+-- a window that is not there. A second press on the same icon closes it; a left click does too.
 on("tray_menu", function(index)
-    local item = trayItems[(index or 0) + 1]
-    if type(item) ~= "table" or type(item.key) ~= "string" then return end
-    sys.call("tray.context", item.key)
+    local at = index or 0
+    if fact.tray_open and fact.tray_index == at then
+        fact.tray_open = false
+        return
+    end
+    -- The engine answers `tray.menu` with the item's tree, and the bar draws it. When there
+    -- is no tree to draw (an item that does not speak dbusmenu, or a host that answers
+    -- nothing), the panel must not open on an empty box: the right button falls back to
+    -- asking the application, which is what it did before the menu was drawable.
+    local item = trayItems[at + 1]
+    local tree = (type(item) == "table" and type(item.key) == "string")
+        and sys.ask("tray.menu", item.key) or nil
+    if type(tree) ~= "table" or #tree == 0 then
+        if type(item) == "table" and type(item.key) == "string" then
+            sys.call("tray.context", item.key)
+        end
+        return
+    end
+    fact.tray_index = at
+    fact.tray_open = true
 end)
 
 -- ----------------------------------------------------------- throughput
