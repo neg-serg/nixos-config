@@ -186,17 +186,21 @@ local function probe()
 end
 
 -- --------------------------------------------------------------- read back
-local function poll()
-    if not quiet or muted then return end
-    run("glm-vol", { "read" }, function(out)
-        local value = tonumber((out or ""):match("-?%d+"))
-        if value and clampDb(value) ~= target then
-            setVolume(value)
-        end
+-- The level lives in a state file anything may write (`glm-vol -43` in a terminal, this
+-- plugin, another shell), and the reference *watched* it: its `FileView` reported a change the
+-- moment it happened. Reading it with a fresh process every two seconds was both late — the
+-- number stood still while somebody turned the knob — and a fork each time.
+--
+-- One `bash` for the life of the scene, six looks a second, printing only what changed: the
+-- immediacy of a watch without a process per look.
+local function watchLevel()
+    local script = "f=\"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/genlc-volume\"\nlast=\"\"\nwhile :; do\n  v=$(cat \"$f\" 2>/dev/null)\n  if [ -n \"$v\" ] && [ \"$v\" != \"$last\" ]; then printf \"%s\n\" \"$v\"; last=\"$v\"; fi\n  sleep 0.15\ndone"
+    spawn("bash", { "-c", script }, function(line)
+        local value = tonumber((line or ""):match("-?%d+"))
+        if value and clampDb(value) ~= target then setVolume(value) end
     end)
 end
 
 probe()
-poll()
+watchLevel()
 every(PROBE_MS, probe)
-every(POLL_MS, poll)
