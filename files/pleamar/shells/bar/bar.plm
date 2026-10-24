@@ -182,6 +182,9 @@ scene bar {
     // with Hyprland's `:name` prefix stripped. bar.luau fills them; the scene
     // cannot compare workspace names itself (text, not numbers).
     text ws_icon = ""
+    // The Old Italic letter the owner puts in front of the name, kept apart: only
+    // Code2001 has U+10330 among the faces here, and the label's Iosevka does not.
+    text ws_lead = ""
     text ws_label = ""
     // The two halves of the network readout, as QS prints them.
     // The two readouts, without their unit letter — the capsule draws the number
@@ -344,11 +347,11 @@ scene bar {
     // The service writes time and date itself; no slot here pads numbers, so
     // neither is composed from hour/minute.
     component Clock(scale: number = ui * user_scale) {
-        // QS's ClockWidget prints the time at fontSizeSmall * timeFontScale (14 *
-        // 0.7 = 9.8 design) — but that is a Qt pixel size, and the port's `size:`
-        // is the em of the glyph, so 10 drew it 27% narrower than the reference
-        // (`18:46` measured 56 px of ink against QS's 76). 14 is where the two
-        // agree, and the box follows the wider text.
+        // QS's ClockWidget prints the time at round(fontSizeSmall 14 * timeFontScale
+        // 0.7 * capsuleScale 1.15) = 11 logical px. 14 design px here is 16.1 over
+        // the group's scale and measured 34 px of ink against the reference's 28;
+        // 11.5 is 13.2 and lines up. (An earlier note claimed 14 "agrees" — it was
+        // measuring width against a different face.)
         size: 50 * scale, strip * scale
         group zoom {
             scale: scale
@@ -358,7 +361,7 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
-            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka" }
+            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 9.6; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { tip_open = true; emit tip(0) }
         }
@@ -372,9 +375,10 @@ scene bar {
     // read far brighter than the reference.
     component WsCapsule(focus: event,
                        scale: number = ui * user_scale) {
-        // The glyph and the label are laid out side by side; the glyph's width
-        // is only known once it is shaped, so it is measured.
+        // The glyph, the Old Italic letter and the label are laid out side by side;
+        // a width is only known once the text is shaped, so both are measured.
         measure glyph
+        measure lead
         // 69, not 38: that is the reference's plate (measured off its strip — the plates sit
         // at 8, 72, 158, 223, 287 and are 54, 79, 58, 57, 95 LOGICAL px wide, which is 47, 69,
         // 50, 50, 83 in this scene's design px), and at 38 the label was cut to "λ:te": a
@@ -389,7 +393,8 @@ scene bar {
                 box { from: 0, 1; size: 69, 23; corner: 6 }
             }
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
-            text "{ws_label}" { at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
+            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Code2001" }
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { tip_open = true; emit tip(1) }
             on press ws { emit focus }
