@@ -49,6 +49,28 @@ line: "ported" means the thing works in the port, not that its QML was translate
 | `Modules/BuildStatus`                            | —                                                 | absent  | nix build badge                                            |
 | `Modules/BuildStatusPopup`                       | —                                                 | absent  |                                                            |
 
+### The tray's menu, and where it has to come from
+
+The engine's tray record carries `menu`, but it arrives empty for every item on this host, so the
+bar's `tray_menu` surface has nothing to draw and the right button falls back to `tray.context`. The
+data is reachable over D-Bus, checked by hand on 2026-10-24:
+
+```
+busctl --user call :1.5944 /org/ayatana/NotificationItem/steam/Menu \
+    com.canonical.dbusmenu GetLayout iias 0 3 0
+→ u(ia{sv}av) 767 0 1 "children-display" s "submenu" 15 (ia{sv}av) 377 1 "label" s "Deadzone Rogue 2 Demo" …
+```
+
+Three things this settles. An item's menu is `com.canonical.dbusmenu` at the path its `Menu`
+property names (`/org/ayatana/NotificationItem/steam/Menu` for Steam, `/MenuBar` for vicinae). **The
+signature differs by implementation**: Steam takes `iias` (the old `parentId` as `i`), the spec's
+newer form is `uias`, so a client tries both. And vicinae's `/MenuBar` is not dbusmenu at all — it
+answers "No such method `GetLayout`" — so its own icon can only be activated, not drawn.
+
+That is work for a plugin (`lib/plugins/traymenu`), not for the scene: the scene can draw rows, but
+a plugin is what runs `busctl`, parses the layout and hands the labels over as texts. Activation is
+`com.canonical.dbusmenu.Event(id, "clicked", variant, timestamp)`.
+
 ## Components (`Components/`, 42 files)
 
 | QuickShell object                                                                                                                                                            | port counterpart                     | status  | note                                                                        |
@@ -135,7 +157,7 @@ the port has instead; a row with no port file is not implemented at all.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The tray draws nothing: the list arrives, the frame and the picture do not paint                                                                                                                                          | `Bar/Modules/SystemTray.qml:134-173`                                                                                                                                                 | `bar.plm:656-667` — a zone and a press, no visible icon                                                                                                                         |
 | The tray's state machine: long hold 2500, short hold 1500, collapse delay 5000, guard 120 ms, `collapsedTrayIcon`, `trayFallbackIcon "broken_image"`                                                                      | `Services/TrayController.qml:17-50`, `Bar/Modules/SystemTray.qml:75-77,216-253`                                                                                                      | `bar.plm:881-883` — `strip.hot` only                                                                                                                                            |
-| A drawn tray menu with submenus and a search field                                                                                                                                                                        | `Bar/Modules/CustomTrayMenu.qml:9-16`, `Components/SubmenuHost.qml:23-30,170`                                                                                                        | `lib/menu.plm` exists and nothing uses it; the right button asks the application instead (`tray.context`)                                                                       |
+| A drawn tray menu with submenus and a search field                                                                                                                                                                        | `Bar/Modules/CustomTrayMenu.qml:9-16`, `Components/SubmenuHost.qml:23-30,170`                                                                                                        | the bar has the surface (`shells/bar`, `tray_menu`) and the rows; the tree has to come from D-Bus — see the note below the Bar table                                            |
 | Raising the application's window after a tray click                                                                                                                                                                       | `Components/TrayRaise.qml:1`                                                                                                                                                         | nothing (`rg raise` finds no counterpart)                                                                                                                                       |
 | Tooltips: a tool window per capsule, delay, flip when off-screen, clamp to the monitor; one composed line per module (title, value, hints)                                                                                | `Components/PanelTooltip.qml:10-15`, `Components/StyledTooltip.qml:8-80`, `Helpers/TooltipText.js:9-27`                                                                              | `surface tip` (`bar.plm:282-298`) never appears — the bar's surface is 25 logical px and clips it; media, sysmon, tray, volume, mic, genelec, mpd and pill emit no `tip` at all |
 | Build status capsule and its popup (a `nixbuild-status` stream)                                                                                                                                                           | `Bar/Modules/BuildStatus.qml:16-57`, `BuildStatusPopup.qml:1-30`                                                                                                                     | absent (`rg nixbuild-status` finds nothing)                                                                                                                                     |
