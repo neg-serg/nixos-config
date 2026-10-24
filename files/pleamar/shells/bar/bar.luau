@@ -479,26 +479,32 @@ end)
 -- (`menu`, a nested list in the model), so the bar draws it rather than asking the
 -- application — which on Wayland often answers nothing, because the menu it opens belongs to
 -- a window that is not there. A second press on the same icon closes it; a left click does too.
-on("tray_menu", function(index)
-    local at = index or 0
-    if fact.tray_open and fact.tray_index == at then
+-- The right button on an icon: the item's own menu, drawn by the bar. The scene hands the
+-- key over (the record's `key`, which names the bus name and the object path), so the logic
+-- needs no copy of the list — a watch can arrive late, and a click cannot wait for it.
+on("tray_menu", function(key)
+    if type(key) ~= "string" or key == "" then return end
+    if fact.tray_open then
         fact.tray_open = false
         return
     end
-    -- The engine answers `tray.menu` with the item's tree, and the bar draws it. When there
-    -- is no tree to draw (an item that does not speak dbusmenu, or a host that answers
-    -- nothing), the panel must not open on an empty box: the right button falls back to
-    -- asking the application, which is what it did before the menu was drawable.
-    local item = trayItems[at + 1]
-    local tree = (type(item) == "table" and type(item.key) == "string")
-        and sys.ask("tray.menu", item.key) or nil
+    local tree = sys.ask("tray.menu", key)
     if type(tree) ~= "table" or #tree == 0 then
-        if type(item) == "table" and type(item.key) == "string" then
-            sys.call("tray.context", item.key)
-        end
+        -- Nothing to draw: ask the application for its own menu, as the right button did
+        -- before there was a surface to draw one in.
+        sys.call("tray.context", key)
         return
     end
-    fact.tray_index = at
+    local shown = 0
+    for _, it in ipairs(tree) do
+        if shown >= 8 then break end
+        local label = (type(it) == "table" and it.label) or ""
+        if type(it) == "table" and it.separator then label = "---" end
+        shown = shown + 1
+        text["tm." .. shown] = tostring(label)
+    end
+    for i = shown + 1, 8 do text["tm." .. i] = "" end
+    fact["tm.count"] = shown
     fact.tray_open = true
 end)
 
