@@ -520,6 +520,7 @@ on("tray_menu", function(index)
         return
     end
     local shown = 0
+    local widest = 0
     for _, it in ipairs(tree) do
         if shown >= 8 then break end
         local label = (type(it) == "table" and it.label) or ""
@@ -527,11 +528,15 @@ on("tray_menu", function(index)
         fact["tm.sep." .. (shown + 1)] = sep
         shown = shown + 1
         text["tm." .. shown] = tostring(label)
+        widest = math.max(widest, #label)
         fact["tm.id." .. shown] = (type(it) == "table" and tonumber(it.id)) or 0
     end
     for i = shown + 1, 8 do text["tm." .. i] = "" end
     fact["tm.count"] = shown
     fact["tm.panel_h"] = 12 + 20 * shown
+    -- 6.5 px per character at size 13, plus the plate's 10 px of padding on each side, clamped
+    -- to what the surface can hold.
+    fact["tm.w"] = math.min(300, math.max(120, math.floor(widest * 6.5) + 28))
     fact.tray_open = true
 end)
 
