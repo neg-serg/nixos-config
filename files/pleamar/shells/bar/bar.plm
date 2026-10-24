@@ -158,6 +158,8 @@ scene bar {
     // scene cannot ask `media.player != ""` itself.
     fact media.present = false
     // The cursor is over the media capsule: the transport strip rides in.
+    // The track's position in seconds, kept by the logic (see the time row below).
+    fact media.pos = 0
     fact media.hot = false
     // The audio capsules (QS AudioLevelCapsule): `shown` is the reference's own
     // visibility rule — not at 100 %, not muted — carried by bar.luau because
@@ -873,7 +875,11 @@ scene bar {
                 row time_row {
                     gap: 0
                     text "(" { size: 14; color: cover_accent; family: "Iosevka" }
-                    text "{media.position, time}" { measure: tp; size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    // The position is the scene's own fact, not `media.position`: the engine
+                    // reports that one on a change and never polls it, so it stood still while the
+                    // track played (measured: 149 for three minutes against MPD's 5:37). The logic
+                    // ticks it every second and resyncs on every media event.
+                    text "{media.pos, time}" { measure: tp; size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                     text "/" { size: 14; color: cover_accent; family: "Iosevka" }
                     text "{media.length, time}" { measure: tl; size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                     text ")" { size: 14; color: cover_accent; family: "Iosevka" }
