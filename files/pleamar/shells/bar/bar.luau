@@ -478,6 +478,10 @@ end)
 -- The right button on an icon: the item's own menu, drawn by the bar. The scene hands over
 -- the record's index; the key that names the bus name and the object path is looked up here.
 -- A second press closes it, and a left click does too.
+on("tray_close", function()
+    fact.tray_open = false
+end)
+
 on("tray_menu", function(index)
     local at = index or 0
     if fact.tray_open then
