@@ -381,6 +381,9 @@ scene bar {
         anchor: top_left
         level: overlay
         open: tray_open
+        // The menu takes the keyboard while it is up, so Esc can close it: a modal list that
+        // cannot be left from the keyboard is a modal list on a mouse-only leash.
+        keyboard: exclusive while tray_open
         // A surface takes input where it draws, so the catcher draws *only while the menu is
         // open*: pleamar keeps a named surface mapped and an unconditional body would make the
         // whole monitor a target for as long as the bar runs — every click in every
