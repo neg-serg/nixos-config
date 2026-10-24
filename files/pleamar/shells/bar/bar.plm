@@ -812,7 +812,12 @@ scene bar {
         // by `trackContainer.implicitWidth`, the title text's own width (Media.qml:103-106),
         // so the plate hugs the string it holds. A fixed box left a hole after every short
         // title — the capsule measured 331 logical px against the reference's ~200.
-        let text.w = media_w
+        // The track's box is the string's own width, measured here: QS sizes the capsule by
+        // `trackContainer.implicitWidth` (Media.qml:103-106), and the fact the logic used to
+        // write (`media_w`) could only be a guess — a long title was elided with room to
+        // spare, and a short one left a hole.
+        measure tw
+        let text.w = tw.width
         let spec.w = bar.height
         let btn.w = 16
         // The time row is measured, not reserved: the two digit texts are, and the two
@@ -822,11 +827,13 @@ scene bar {
         let time.w = tp.width + tl.width + 21
         // art, the space the reference leaves before the track, the track, the space after
         // it, the time: three row gaps and the 2 px `space` the row carries.
-        // The analyser keeps its room whether or not the cursor is up: QS's
-        // `iconPreferredWidth` is part of the capsule's own width, and leaving it out is
-        // what pushed the plate's content past its box — the pill came out narrower than
-        // what it holds, and the neighbour took the overflow.
-        let w = art.w + capsule.gap + text.w + time.w + spec.w + 4 * bar.gap
+        // The analyser's room is taken *while it is shown*, not always: at rest the plate
+        // hugs what it holds, and hovering widens it by one analyser's width. That is what
+        // the reference does (`transportRevealed`, an analyser at `opacity: 0` until then,
+        // with the neighbours sliding aside) and what the first version of this capsule got
+        // wrong in both directions — the empty band after the time was the analyser's room
+        // reserved for a picture that was not there.
+        let w = art.w + capsule.gap + text.w + time.w + 3 * bar.gap + pick(media.hot, spec.w + bar.gap, 0)
         size: w * scale, bar.height * scale
         group zoom {
             scale: scale
@@ -856,7 +863,9 @@ scene bar {
                 // own gap is 6, and measured they were flush (the art and the first word came
                 // out as one run of ink).
                 space 2
-                text "{media.artist} — {media.title}" { width: text.w; lines: 1; size: 14; color: skin.ink; family: "Iosevka" }
+                // Its own width, no `width:` — the box would be computed from what it is meant to
+                // measure, and a measurement of nothing is what left a lone "…" in the plate.
+                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 14; color: skin.ink; family: "Iosevka" }
                 // The time, in the two colours QS uses: the brackets and the slash wear
                 // the cover's accent (MusicManager.accentColor, sampled from the art), the
                 // digits wear textPrimary while playing and textSecondary while paused, at
@@ -871,7 +880,9 @@ scene bar {
                 }
                 // The analyser, revealed with the transport: QS keeps it inside the
                 // capsule (`iconPreferredWidth`) and its room is in `w` above.
-                spec.Bars(width: 22, height: 20, gap: 1)
+                // A library component is read in its own scope, so `show` has to sit on a
+                // box of this scene's: the slot collapses while the analyser is not shown.
+                row spec_slot { show: media.hot; spec.Bars(width: 22, height: 20, gap: 1) }
             }
             // The transport is not in here: it is its own pill, to the left of this
             // capsule (`Transport` below), which is where QS's `MediaTransport` rides out
