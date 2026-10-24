@@ -1185,7 +1185,10 @@ scene bar {
             // the legacy bar, only while the cursor is on it: QS's tile sets
             // `hideIconWhenIdle`, which collapses the whole capsule (width and
             // opacity) until `panelHovering` or a level change brings it back.
-            row genelec_slot { show: widget.genelec and Genelec.hot; gen.Tile() }
+            // Always there: the reference hides the tile until `panelHovering`, but its reveal is
+            // on the *strip's* hover while this slot was gated on the tile's own — a tile that is
+            // not drawn cannot be hovered, so it never came back at all.
+            row genelec_slot { show: widget.genelec; gen.Tile() }
         }
     }
 
