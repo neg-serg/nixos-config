@@ -46,3 +46,22 @@ index 2bdfa68..7e90534 100644
      fn keyboard(&self, t: Keyboard) {
          if let Some(layer) = &self.layer {
              layer.set_keyboard_interactivity(keyboard_interactivity(t));
+diff --git a/src/render.rs b/src/render.rs
+index ea1f2a7..057f42c 100644
+--- a/src/render.rs
++++ b/src/render.rs
+@@ -4112,7 +4112,13 @@ pub fn run(
+                 // region is committed with the next frame presented, and a
+                 // surface that draws nothing —a full-screen catcher— may never
+                 // present another, leaving its new region pending for ever.
+-                if l.input_region != its_own && l.presented {
++                // `l.presented` used to be part of this, and it is what kept a catcher deaf: a
++                // surface that draws nothing —a full-screen catcher with a transparent body—
++                // never presents another frame, so its new region stayed pending for ever and
++                // every click outside a menu went to nobody. `update_input_region` commits the
++                // region itself (a commit without a buffer only applies the pending state), so a
++                // surface that paints nothing can still say where it takes the mouse.
++                if l.input_region != its_own {
+                     if std::env::var_os("PLEAMAR_REGIONS").is_some() {
+                         eprintln!("regions · surface {} ({}): {:?}", l.view.surface, scene.surfaces.get(l.view.surface).map_or("", |s| s.name.as_str()), its_own);
+                     }
