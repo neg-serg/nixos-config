@@ -478,6 +478,13 @@ end)
 -- The right button on an icon: the item's own menu, drawn by the bar. The scene hands over
 -- the record's index; the key that names the bus name and the object path is looked up here.
 -- A second press closes it, and a left click does too.
+on("tray_click", function(n)
+    local at = tonumber(n) or 0
+    local id = fact["tm.id." .. at]
+    if type(id) == "number" and id > 0 then sys.call("tray.menu_click", id) end
+    fact.tray_open = false
+end)
+
 on("tray_close", function()
     fact.tray_open = false
 end)
@@ -505,12 +512,15 @@ on("tray_menu", function(index)
     for _, it in ipairs(tree) do
         if shown >= 8 then break end
         local label = (type(it) == "table" and it.label) or ""
-        if type(it) == "table" and it.separator then label = "---" end
+        local sep = type(it) == "table" and it.separator == true
+        fact["tm.sep." .. (shown + 1)] = sep
         shown = shown + 1
         text["tm." .. shown] = tostring(label)
+        fact["tm.id." .. shown] = (type(it) == "table" and tonumber(it.id)) or 0
     end
     for i = shown + 1, 8 do text["tm." .. i] = "" end
     fact["tm.count"] = shown
+    fact["tm.panel_h"] = 8 + 19 * shown
     fact.tray_open = true
 end)
 
