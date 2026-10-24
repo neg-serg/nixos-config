@@ -47,10 +47,10 @@ index 2bdfa68..7e90534 100644
          if let Some(layer) = &self.layer {
              layer.set_keyboard_interactivity(keyboard_interactivity(t));
 diff --git a/src/render.rs b/src/render.rs
-index ea1f2a7..f1c4c67 100644
+index ea1f2a7..a06a781 100644
 --- a/src/render.rs
 +++ b/src/render.rs
-@@ -4112,7 +4112,23 @@ pub fn run(
+@@ -4112,7 +4112,33 @@ pub fn run(
                  // region is committed with the next frame presented, and a
                  // surface that draws nothing —a full-screen catcher— may never
                  // present another, leaving its new region pending for ever.
@@ -65,6 +65,16 @@ index ea1f2a7..f1c4c67 100644
 +                // gathered earlier — so the filter above answers [] for a menu, a tooltip or a
 +                // catcher, and a surface with no region takes no clicks at all. One that has a
 +                // name is interactive by definition: it gets its own rectangle instead.
++                let named = scene.surfaces.get(l.view.surface).is_some_and(|s| !s.name.is_empty());
++                let its_own = if named && its_own.is_empty() {
++                    vec![[0, 0, (v[2] - v[0]) as i32, (v[3] - v[1]) as i32]]
++                } else {
++                    its_own
++                };
++                // A named surface's zones are not in `boxes` — that list is the main surface's, gathered
++                // earlier — so the filter above answers [] for a menu, a tooltip or a catcher, and a
++                // surface with no region takes no clicks at all. One that has a name is interactive by
++                // definition: it gets its own rectangle instead.
 +                let named = scene.surfaces.get(l.view.surface).is_some_and(|s| !s.name.is_empty());
 +                let its_own = if named && its_own.is_empty() {
 +                    vec![[0, 0, (v[2] - v[0]) as i32, (v[3] - v[1]) as i32]]
