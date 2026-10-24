@@ -478,11 +478,17 @@ end)
 -- The right button on an icon: the item's own menu, drawn by the bar. The scene hands over
 -- the record's index; the key that names the bus name and the object path is looked up here.
 -- A second press closes it, and a left click does too.
+-- The engine wants the icon's key *and* the line's id (`tray.menu_click`, tray.rs:command),
+-- and it raises when it does not get both — which is why a press used to leave the menu open:
+-- the handler died before it could close it.
 on("tray_click", function(n)
     local at = tonumber(n) or 0
+    local key = text["tray_key"]
     local id = fact["tm.id." .. at]
-    if type(id) == "number" and id > 0 then sys.call("tray.menu_click", id) end
     fact.tray_open = false
+    if type(key) == "string" and key ~= "" and type(id) == "number" and id > 0 then
+        sys.call("tray.menu_click", key, id)
+    end
 end)
 
 on("tray_close", function()
