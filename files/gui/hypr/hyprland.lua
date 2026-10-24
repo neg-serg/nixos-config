@@ -690,7 +690,8 @@ hl.define_submap("special", "reset", function()
 end)
 
 
--- Wallpaper submap removed with the shuffle hotkeys (M4+SH+y used to open it).
+-- Wallpaper submap stays gone (M4+SH+y is free): the shuffle key came back on its
+-- own as M4+SH+c, and the deck on M4+C+w is the picker.
 
 -- Submap: tiling (tiling.conf)
 hl.bind(M4 .. "+minus", hl.dsp.submap("tiling"))
