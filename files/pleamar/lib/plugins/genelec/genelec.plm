@@ -32,7 +32,7 @@ library Genelec strict {
 
     // Its logic's, not the scene's: the host path, the state file's owner and
     // the VM MIDI bridge.
-    permissions { run: "genlc", "glm-vol", "glm-midi" }
+    permissions { run: "genlc", "glm-vol", "glm-midi", "bash" }
 
     // ------------------------------------------------------------- boundary
     // The target volume, whole dB (the QS displayDb/volume). The logic owns the
