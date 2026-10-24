@@ -46,19 +46,3 @@ index 2bdfa68..7e90534 100644
      fn keyboard(&self, t: Keyboard) {
          if let Some(layer) = &self.layer {
              layer.set_keyboard_interactivity(keyboard_interactivity(t));
-diff --git a/src/render.rs b/src/render.rs
-index ea1f2a7..96f7ead 100644
---- a/src/render.rs
-+++ b/src/render.rs
-@@ -2593,6 +2593,11 @@ pub fn run(
-                     mode
-                 };
-                 if l.keyboard_mode != Some(its) {
-+                    // The same moment the keyboard is taken away: a surface that is not shown
-+                    // must not be a target either.
-+                    if !(l.open || l.view.popup.is_some()) {
-+                        l.hide();
-+                    }
-                     l.keyboard(its);
-                     l.keyboard_mode = Some(its);
-                     // It is applied with the frame that gets presented: let there be one.
