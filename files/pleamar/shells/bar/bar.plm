@@ -362,7 +362,12 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                // Glass, not a flat plate: the reference's capsule is a translucent
+                // fill over what the bar has behind it, and pleamar's glass is what
+                // gives that — the fill as a tint, the edge lit from the top left, and
+                // what is behind bent at the bevel. It replaces the hand-drawn hairline
+                // this used to carry.
+                glass: 100%
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14.4; weight: 500; color: time.tone; family: "Iosevka" }
@@ -393,7 +398,12 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                // Glass, not a flat plate: the reference's capsule is a translucent
+                // fill over what the bar has behind it, and pleamar's glass is what
+                // gives that — the fill as a tint, the edge lit from the top left, and
+                // what is behind bent at the bevel. It replaces the hand-drawn hairline
+                // this used to carry.
+                glass: 100%
                 box { from: 0, 1; size: 69, 23; corner: 6 }
             }
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
@@ -443,7 +453,12 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                // Glass, not a flat plate: the reference's capsule is a translucent
+                // fill over what the bar has behind it, and pleamar's glass is what
+                // gives that — the fill as a tint, the edge lit from the top left, and
+                // what is behind bent at the bevel. It replaces the hand-drawn hairline
+                // this used to carry.
+                glass: 100%
                 box { from: 0, 1; size: inner + 12, 23; corner: 6 }
             }
             row metrics {
@@ -554,7 +569,12 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                // Glass, not a flat plate: the reference's capsule is a translucent
+                // fill over what the bar has behind it, and pleamar's glass is what
+                // gives that — the fill as a tint, the edge lit from the top left, and
+                // what is behind bent at the bevel. It replaces the hand-drawn hairline
+                // this used to carry.
+                glass: 100%
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
@@ -585,7 +605,12 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                // Glass, not a flat plate: the reference's capsule is a translucent
+                // fill over what the bar has behind it, and pleamar's glass is what
+                // gives that — the fill as a tint, the edge lit from the top left, and
+                // what is behind bent at the bevel. It replaces the hand-drawn hairline
+                // this used to carry.
+                glass: 100%
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
             // QS does not paint the accent here: NetClusterCapsule's linkIconColor is
@@ -768,7 +793,12 @@ scene bar {
             body {
                 color: skin.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                // Glass, not a flat plate: the reference's capsule is a translucent
+                // fill over what the bar has behind it, and pleamar's glass is what
+                // gives that — the fill as a tint, the edge lit from the top left, and
+                // what is behind bent at the bevel. It replaces the hand-drawn hairline
+                // this used to carry.
+                glass: 100%
                 box { from: 0, 0; size: w, h; corner: corner }
             }
 
