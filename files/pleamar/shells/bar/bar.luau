@@ -118,24 +118,22 @@ sys.watch("media", function(m)
         showMedia(false)
         return
     end
-    if playing then
-        if mediaHold then
-            cancel(mediaHold)
-            mediaHold = nil
-        end
-        showMedia(true)
-        return
+    -- A player that is there is enough: QS's Media.qml keeps the capsule for
+    -- `isPlaying || isPaused`, and the paused half is what the reference shows
+    -- while the queue sits where the owner left it. The hold this used to arm
+    -- (ten seconds after a pause, then gone) was the one visible difference —
+    -- the cover disappeared from the bar whenever the music did.
+    --
+    -- The media service reports `playing`, not a playback state, so "paused" and
+    -- "stopped" cannot be told apart here. A track that is still loaded is the
+    -- signal: an empty title means the queue let go of the song, and that is
+    -- when the capsule goes.
+    local title = (type(m.title) == "string") and m.title or ""
+    if mediaHold then
+        cancel(mediaHold)
+        mediaHold = nil
     end
-    -- A player that is there but not playing: keep what is on screen for the
-    -- hold, then let it go (mpc with an empty queue ends here). The hold is
-    -- armed once per pause, not per update, so a player that keeps reporting
-    -- a paused state cannot keep the capsule up for ever.
-    if mediaShown and not mediaHold then
-        mediaHold = after(MEDIA_HOLD_MS, function()
-            mediaHold = nil
-            showMedia(false)
-        end)
-    end
+    showMedia(title ~= "")
 end)
 
 -- The transport strip: the three glyph buttons of the media capsule.
