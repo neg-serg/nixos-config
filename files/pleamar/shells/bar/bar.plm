@@ -303,7 +303,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "pleamar", "systemctl"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "media", "media.*", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "pleamar", "systemctl"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "media", "media.*", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -344,6 +344,8 @@ scene bar {
     // A click on a tray icon: the record's index, because an event carries a
     // number and the keys live in the logic, which is what the tray is told with.
     event tray_press ->
+    // The same index from a right press: the item's own menu is what it asks for.
+    event tray_menu ->
     // The cursor came onto a left capsule; the number is its place in the row.
     event tip ->
     event wheel_volume ->
@@ -658,6 +660,10 @@ scene bar {
         image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale }
         zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
         on press trayhit { emit tray_press(r.index) }
+        // The item's own menu. A scene that uses the right button is never closed by one
+        // (`press right`, language reference §14), which is why this trigger is also what
+        // keeps a stray right click from closing the bar.
+        on press right trayhit { emit tray_menu(r.index) }
     }
 
     // ---------------------------------------------- right: microphone, volume

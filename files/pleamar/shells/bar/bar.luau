@@ -411,13 +411,22 @@ sys.watch("tray", function(list)
 end)
 
 -- QS's left click on an icon is `modelData.activate()`, which is what
--- `tray.activate` asks the item for. Its right click opens the item's own menu
--- (`sys.ask("tray.menu", key)` drawn in a popup): that needs a popup surface the
--- bar does not have yet, and a right press the scene cannot report.
+-- `tray.activate` asks the item for. The right button is the item's own menu, and
+-- the reference's SystemTray asks the application for it rather than drawing one:
+-- `tray.context` is that request, so this scene needs no popup surface for it. A
+-- drawn menu (`sys.ask("tray.menu", key)` as a tree, `lib/menu.plm` painting it)
+-- is the parity step that still waits for a popup here.
+
 on("tray_press", function(index)
     local item = trayItems[(index or 0) + 1]
     if type(item) ~= "table" or type(item.key) ~= "string" then return end
     sys.call("tray.activate", item.key)
+end)
+
+on("tray_menu", function(index)
+    local item = trayItems[(index or 0) + 1]
+    if type(item) ~= "table" or type(item.key) ~= "string" then return end
+    sys.call("tray.context", item.key)
 end)
 
 -- ----------------------------------------------------------- throughput
