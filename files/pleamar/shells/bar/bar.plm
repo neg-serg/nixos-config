@@ -388,10 +388,10 @@ scene bar {
         // open*: pleamar keeps a named surface mapped and an unconditional body would make the
         // whole monitor a target for as long as the bar runs — every click in every
         // application would be eaten by a menu nobody opened.
-        body { color: skin.coal; opacity: 1%; show: tray_open
+        body { color: skin.coal; opacity: 1%
             box { from: 0, 0; size: screen.width, screen.height }
         }
-        zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: pointer; label: "Close"; role: button; show: tray_open }
+        zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: pointer; label: "Close"; role: button }
         // Either button: a menu is dismissed by the first press anywhere else, whatever it is.
         on press anywhere { emit tray_close }
         on press right anywhere { emit tray_close }
