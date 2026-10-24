@@ -1,0 +1,16 @@
+--- a/src/platform/wayland.rs
++++ b/src/platform/wayland.rs
+@@ -1846,8 +1846,11 @@
+                     };
+                     // As long as a scene makes no use of the right button, it closes: it's the
+                     // emergency exit of a prototype without a keyboard. A scene that uses it
+-                    // is not a quick prototype, and a right click never closes it.
+-                    if btn == 1 && down && self.wanted.iter().all(|s| s.right_click_quits) {
++                    // is not a quick prototype, and a right click never closes it. One surface
++                    // saying so speaks for the whole scene: `press right` writes the flag on the
++                    // scene's own surface, while a scene may declare others (a bar and its
++                    // tooltip) that keep the default.
++                    if btn == 1 && down && !self.wanted.iter().any(|s| !s.right_click_quits) {
+                         self.quit = true;
+                         continue;
+                     }
