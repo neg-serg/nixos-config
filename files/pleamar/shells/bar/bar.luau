@@ -277,15 +277,33 @@ local function label_of(name)
     return (name:gsub("^%s+", ""))
 end
 
+-- The workspace names the owner set carry an Old Italic letter in front
+-- (`𐌰:term`), and no face the bar uses has it: Iosevka and FiraCode both fall
+-- back, fontconfig answers U+10330 with Code2001 while cosmic-text picks another
+-- font, so the same name came out with two shapes. The letter is handed to the
+-- scene on its own, to be drawn in Code2001 — the face Qt lands on for it.
+local function split_lead(name)
+    if type(name) ~= "string" or name == "" then return "", "" end
+    local ok, cp = pcall(utf8.codepoint, name, 1)
+    if ok and cp >= 0x10300 and cp <= 0x1034F then
+        local after = utf8.offset(name, 2) or (#name + 1)
+        return name:sub(1, after - 1), name:sub(after)
+    end
+    return "", name
+end
+
 local function workspacesChanged(w)
     if type(w) ~= "table" or type(w.list) ~= "table" then return end
     for _, ws in ipairs(w.list) do
         if type(ws) == "table" and ws.active == true then
-            text.ws_label = label_of(ws.name)
+            local lead, rest = split_lead(label_of(ws.name))
+            text.ws_lead = lead
+            text.ws_label = rest
             text.ws_icon = WS_GLYPH[tonumber(ws.id) or -1] or ""
             return
         end
     end
+    text.ws_lead = ""
     text.ws_label = ""
     text.ws_icon = ""
 end
