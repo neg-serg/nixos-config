@@ -176,6 +176,16 @@ sys.watch("media", function(m)
     -- signal: an empty title means the queue let go of the song, and that is
     -- when the capsule goes.
     local title = (type(m.title) == "string") and m.title or ""
+    local artist = (type(m.artist) == "string") and m.artist or ""
+    -- How wide the track's box has to be, in design px. QS sizes the capsule by
+    -- `trackContainer.implicitWidth`, which is the title text's own width (Media.qml:103-106),
+    -- so the plate hugs the string it holds; the port's fixed 168 left a hole after every
+    -- short one and cut long ones early. Iosevka's advance is half an em, so at the
+    -- capsule's 14 design px a character is 7; 40 to 200 is the range the reference's own
+    -- marquee works in.
+    local track = (artist ~= "" and title ~= "") and (artist .. " — " .. title) or title
+    local n = utf8.len(track) or #track
+    fact.media_w = math.min(200, math.max(40, n * 7))
     if mediaHold then
         cancel(mediaHold)
         mediaHold = nil
@@ -652,6 +662,31 @@ end
 
 layout()
 every(2000, layout)
+
+-- Hyprland says every layout change down its event socket (`activelayout>>device,Layout`,
+-- the event HyprlandWatcherImpl reads: Services/HyprlandWatcherImpl.qml:156), so the label
+-- changes on the keystroke instead of on the next poll. The two-second `hyprctl devices -j`
+-- above stays as the safety net: a missed event, or the socket going away, costs a tick.
+--
+-- `nc -U` writes one line per event and runs until the socket closes; re-arming after a
+-- second is the backoff the MPD flags plugin uses (lib/plugins/mpd/mpd.luau).
+local watcher = nil
+local function watch_layout()
+    if watcher then return end
+    local dir, sig = sys.ask("env", "XDG_RUNTIME_DIR"), sys.ask("env", "HYPRLAND_INSTANCE_SIGNATURE")
+    if type(dir) ~= "string" or type(sig) ~= "string" or dir == "" or sig == "" then return end
+    local ok, handle = pcall(spawn, "nc", { "-U", dir .. "/hypr/" .. sig .. "/.socket2.sock" }, function(line)
+        local head, payload = tostring(line):match("^([%w_]+)>>(.*)$")
+        if head ~= "activelayout" and head ~= "activelayoutv2" then return end
+        local short = shorten(payload:match("^[^,]*,%s*(.+)$"))
+        if short and short ~= text.kb_layout then text.kb_layout = short end
+    end, function()
+        watcher = nil
+        after(1000, watch_layout)
+    end)
+    if ok then watcher = handle end
+end
+watch_layout()
 
 -- ------------------------------------------------------------- system monitor
 -- QS Services/SystemMonitor.qml, same probe and same arithmetic: one dash and
