@@ -22,32 +22,32 @@ line: "ported" means the thing works in the port, not that its QML was translate
 
 ## Bar (`Bar/`, 24 files)
 
-| QuickShell object                                | port counterpart                                  | status  | note                                                       |
-| ------------------------------------------------ | ------------------------------------------------- | ------- | ---------------------------------------------------------- |
-| `Bar.qml` (three layer surfaces, reserve, slide) | `shells/bar/bar.plm`                              | ported  | one surface, reserve and slide via `surface`/`body`        |
-| `Modules/ClockWidget`                            | bar `Clock`                                       | ported  | size and tone measured; heals its own size on 0.4.29       |
-| `Modules/Time`                                   | bar `Clock` (date part)                           | ported  |                                                            |
-| `Modules/WsIndicator`                            | bar `WsCapsule`                                   | ported  | SVG icon vs font glyph; the owner keeps the smaller glyph  |
-| `Modules/KeyboardLayoutHypr`                     | bar `KeyboardCluster`                             | ported  |                                                            |
-| `Modules/NetClusterCapsule`                      | bar `NetCluster`                                  | ported  | digits, tracking, leading-zero dimming, unit in the accent |
-| `Modules/NetFlowCapsule`                         | bar + `panels/pages/network.plm`                  | ported  |                                                            |
-| `Modules/NetFlowPopup`                           | `panels/pages/network.plm`                        | partial | live flow chart and per-app table not compared             |
-| `Modules/SystemMonitorCapsule`                   | bar `SysmonPair`                                  | ported  | glyph sizes measured against the reference                 |
-| `Modules/SystemMonitorPopup`                     | `panels/pages/system.plm`                         | partial | history plot absent                                        |
-| `Modules/Media`                                  | bar `MediaCapsule`                                | ported  | cover, title, time, cover-derived accent                   |
-| `Modules/MediaTransport`                         | bar `MediaCapsule` hover row                      | ported  | prev/play/next + analyser on hover                         |
-| `Modules/MpdFlags`                               | `lib/plugins/mpd`                                 | ported  |                                                            |
-| `Modules/Volume`                                 | bar `VolCapsule` + `panels/pages/volume.plm`      | ported  |                                                            |
-| `Modules/AudioEndpointTile`                      | `panels/pages/volume.plm`                         | partial | endpoint tiles drawn; device switching unverified          |
-| `Modules/Microphone`                             | bar `MicCapsule` + volume page                    | ported  |                                                            |
-| `Modules/GenelecWidget`                          | `lib/plugins/genelec` + bar `Gen` capsule         | ported  |                                                            |
-| `Modules/WeatherButton`                          | bar `WeatherCapsule` + `panels/pages/weather.plm` | partial | values come from the port's own cache; no network here     |
-| `Modules/Calendar`                               | `panels/pages/calendar.plm`                       | ported  |                                                            |
-| `Modules/PillCapsule`                            | `lib/plugins/pill` + bar pill                     | ported  |                                                            |
-| `Modules/SystemTray`                             | bar `TrayIcon` rows                               | partial | icons and hover expand; no menu, no raise                  |
-| `Modules/CustomTrayMenu`                         | —                                                 | absent  | `lib/menu.plm` exists but nothing uses it yet              |
-| `Modules/BuildStatus`                            | —                                                 | absent  | nix build badge                                            |
-| `Modules/BuildStatusPopup`                       | —                                                 | absent  |                                                            |
+| QuickShell object                                | port counterpart                                  | status  | note                                                                    |
+| ------------------------------------------------ | ------------------------------------------------- | ------- | ----------------------------------------------------------------------- |
+| `Bar.qml` (three layer surfaces, reserve, slide) | `shells/bar/bar.plm`                              | ported  | one surface, reserve and slide via `surface`/`body`                     |
+| `Modules/ClockWidget`                            | bar `Clock`                                       | ported  | size and tone measured; heals its own size on 0.4.29                    |
+| `Modules/Time`                                   | bar `Clock` (date part)                           | ported  |                                                                         |
+| `Modules/WsIndicator`                            | bar `WsCapsule`                                   | ported  | SVG icon vs font glyph; the owner keeps the smaller glyph               |
+| `Modules/KeyboardLayoutHypr`                     | bar `KeyboardCluster`                             | ported  |                                                                         |
+| `Modules/NetClusterCapsule`                      | bar `NetCluster`                                  | ported  | digits, tracking, leading-zero dimming, unit in the accent              |
+| `Modules/NetFlowCapsule`                         | bar + `panels/pages/network.plm`                  | ported  |                                                                         |
+| `Modules/NetFlowPopup`                           | `panels/pages/network.plm`                        | partial | live flow chart and per-app table not compared                          |
+| `Modules/SystemMonitorCapsule`                   | bar `SysmonPair`                                  | ported  | glyph sizes measured against the reference                              |
+| `Modules/SystemMonitorPopup`                     | `panels/pages/system.plm`                         | partial | history plot absent                                                     |
+| `Modules/Media`                                  | bar `MediaCapsule`                                | ported  | cover, title, time, cover-derived accent                                |
+| `Modules/MediaTransport`                         | bar `MediaCapsule` hover row                      | ported  | prev/play/next + analyser on hover                                      |
+| `Modules/MpdFlags`                               | `lib/plugins/mpd`                                 | ported  |                                                                         |
+| `Modules/Volume`                                 | bar `VolCapsule` + `panels/pages/volume.plm`      | ported  |                                                                         |
+| `Modules/AudioEndpointTile`                      | `panels/pages/volume.plm`                         | partial | endpoint tiles drawn; device switching unverified                       |
+| `Modules/Microphone`                             | bar `MicCapsule` + volume page                    | ported  |                                                                         |
+| `Modules/GenelecWidget`                          | `lib/plugins/genelec` + bar `Gen` capsule         | ported  |                                                                         |
+| `Modules/WeatherButton`                          | bar `WeatherCapsule` + `panels/pages/weather.plm` | partial | values come from the port's own cache; no network here                  |
+| `Modules/Calendar`                               | `panels/pages/calendar.plm`                       | ported  |                                                                         |
+| `Modules/PillCapsule`                            | `lib/plugins/pill` + bar pill                     | ported  |                                                                         |
+| `Modules/SystemTray`                             | bar `TrayIcon` rows                               | partial | icons and hover expand; no menu, no raise                               |
+| `Modules/CustomTrayMenu`                         | `shells/bar` surface `tray_menu`                  | ported  | the item's `dbusmenu` tree, drawn by the bar; a press outside closes it |
+| `Modules/BuildStatus`                            | —                                                 | absent  | nix build badge                                                         |
+| `Modules/BuildStatusPopup`                       | —                                                 | absent  |                                                                         |
 
 ### The tray's menu, and where it has to come from
 

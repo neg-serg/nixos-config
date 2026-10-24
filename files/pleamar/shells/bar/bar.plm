@@ -391,9 +391,9 @@ scene bar {
         // monitor because a press is matched to a zone: it has to land in `anywhere` for the menu
         // to be dismissed.
         body { color: skin.coal; opacity: 4%
-            box { from: 0, 0; size: screen.width, screen.height }
+            box { from: 0, 0; size: tray_catcher.width, tray_catcher.height }
         }
-        zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: pointer; label: "Close"; role: button }
+        zone box anywhere { from: 0, 0; size: tray_catcher.width, tray_catcher.height; cursor: pointer; label: "Close"; role: button }
         // Either button: a menu is dismissed by the first press anywhere else, whatever it is.
         on press anywhere { emit tray_close }
         on press right anywhere { emit tray_close }
