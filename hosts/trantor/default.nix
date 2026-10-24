@@ -154,10 +154,27 @@ in
   };
   users.main.hashedPasswordFile = config.sops.secrets."user-password-hash".path;
 
-  # Console font (visible during early boot and on tty1-6)
+  # Console font (visible on tty1-6; plymouth owns the screen during boot)
   console = {
     earlySetup = true;
     font = "${pkgs.terminus_font}/share/consolefonts/ter-124n.psf.gz";
+  };
+
+  # Boot splash. `splash` already rides in boot.kernelParams through
+  # profiles.performance.quietBoot, so this only adds the daemon, the initrd
+  # payload and the theme. adi1090x ships all ~30 themes in one derivation;
+  # `selected_themes` keeps the closure to the two we switch between.
+  boot.plymouth = {
+    enable = true;
+    theme = "lone";
+    themePackages = [
+      (pkgs.adi1090x-plymouth-themes.override {
+        selected_themes = [
+          "lone"
+          "green_blocks"
+        ];
+      })
+    ];
   };
 
   # Host-specific overrides (above profile defaults)
