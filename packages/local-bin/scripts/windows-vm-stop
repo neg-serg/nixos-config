@@ -115,7 +115,7 @@ log "'$CT' is down"
 # gone nothing claims it back. `genlc` — the host path, and the bar's Genelec tile with it — then
 # sees no HID device at all while the adapter sits on usbfs. Hand it over before leaving; a later
 # start takes it back (`windows-vm-start` runs `glm-adapter-priv to-vm`, which unbinds usbhid).
-if sudo /run/current-system/sw/bin/glm-adapter-priv to-host 2>/dev/null; then
+if /run/wrappers/bin/sudo /run/current-system/sw/bin/glm-adapter-priv to-host 2>/dev/null; then
   log "adapter handed back to the host"
 else
   warn "could not hand the adapter back to the host — 'glm-adapter host' does it by hand"

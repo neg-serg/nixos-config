@@ -71,7 +71,7 @@ let
     # spend a restart discovering exactly that: detach usbhid first, as `glm-adapter attach`
     # does. Not fatal — the device may already be detached, and the timer heals a placement that
     # went wrong.
-    sudo /run/current-system/sw/bin/glm-adapter-priv to-vm 2>/dev/null || true
+    /run/wrappers/bin/sudo /run/current-system/sw/bin/glm-adapter-priv to-vm 2>/dev/null || true
     ${podman} start windows
   '';
 in
