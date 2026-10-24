@@ -1,0 +1,19 @@
+diff --git a/src/platform/tray.rs b/src/platform/tray.rs
+index 58dfdde..754d316 100644
+--- a/src/platform/tray.rs
++++ b/src/platform/tray.rs
+@@ -334,7 +334,13 @@ pub fn query(what: &str, args: &[SysValue]) -> Result<SysValue, String> {
+     let menu = menu_of(c, key)?;
+     // Many do not fill in their menu until they are told it is about to be shown.
+     let _ = menu.call_method("AboutToShow", &(0i32,));
+-    let reply = menu.call_method("GetLayout", &(0i32, -1i32, Vec::<&str>::new())).map_err(|e| e.to_string())?;
++    // Two generations of the agreement: the original takes `parentId` as `i`, the spec's
++    // newer form as `u`. Items disagree — Steam answers `iias` and refuses `uias`, the
++    // newer ones the other way round — so both are tried and the first answer is used.
++    let reply = menu
++        .call_method("GetLayout", &(0i32, -1i32, Vec::<&str>::new()))
++        .or_else(|_| menu.call_method("GetLayout", &(0u32, -1i32, Vec::<&str>::new())))
++        .map_err(|e| e.to_string())?;
+     let body = reply.body();
+     // Of the root only its children matter: the root itself is nothing that can be clicked.
+     type Root = (i32, std::collections::HashMap<String, zbus::zvariant::OwnedValue>, Vec<zbus::zvariant::OwnedValue>);

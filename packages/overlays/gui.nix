@@ -50,11 +50,15 @@ in
   # bar from leaving Hyprland's single global cursor stale or empty under it
   # (upstream hyprwm/Hyprland#14906; pleamar-cursor-shape.patch), and the right
   # click, which closed a scene that declares more than one surface no matter
-  # what it does with the button (pleamar-right-click.patch).
+  # what it does with the button (pleamar-right-click.patch). And the tray's menu: an item's
+  # `com.canonical.dbusmenu` takes `parentId` as `i` in its first form and `u` in the spec's
+  # newer one, items disagree, and the ask tried one of them — so half the tray answered
+  # nothing (pleamar-dbusmenu.patch).
   pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
       ./pleamar-cursor-shape.patch
       ./pleamar-right-click.patch
+      ./pleamar-dbusmenu.patch
     ];
   });
 
