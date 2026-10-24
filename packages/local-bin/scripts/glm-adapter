@@ -563,6 +563,19 @@ cmd_auto() {
     # heal, not a state to leave — vm_restart carries the lock, the hourly budget
     # and the notifications.
     if [ "$cst" != "exited" ]; then
+      # A VM that was stopped on purpose leaves the adapter on usbfs: usbhid was unbound so QEMU
+      # could claim the device, and with no QEMU nothing claims it back — `genlc` then sees no HID
+      # device at all, so the host path is blind while the adapter sits right there on the bus.
+      # That is the state the bar's Genelec tile died in on 2026-10-25 02:04: its volume went to
+      # the MIDI relay with no GLM behind it, and nothing said so. Hand the device back to the
+      # host; a later VM start detaches usbhid again (windows-vm-start runs `to-vm` first), so
+      # this costs the VM nothing.
+      if [ "$(qemu_usb)" -ge 1 ] && ! host_genlc_ok; then
+        warn "VM '$CT' is down and the adapter is still on usbfs — binding it back to the host"
+        sudo "$PRIV" to-host 2>/dev/null || true
+        sleep 2
+        if host_genlc_ok; then ok "host genlc: adapter usable"; else fail "host genlc: adapter still NOT usable"; fi
+      fi
       notify_reset
       return 0
     fi
