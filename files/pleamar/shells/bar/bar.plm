@@ -388,7 +388,7 @@ scene bar {
         body { color: skin.coal; opacity: 1%; show: tray_open
             box { from: 0, 0; size: screen.width, screen.height }
         }
-        zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: default; label: "Close"; role: region; show: tray_open }
+        zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: pointer; label: "Close"; role: button; show: tray_open }
         // Either button: a menu is dismissed by the first press anywhere else, whatever it is.
         on press anywhere { emit tray_close }
         on press right anywhere { emit tray_close }
