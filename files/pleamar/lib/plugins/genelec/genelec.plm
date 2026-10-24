@@ -76,14 +76,21 @@ library Genelec strict {
         size: (2 * capsule.pad + size.icon + capsule.gap + 40) * scale, capsule.height * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1) {
-                row tile {
-                    gap: capsule.gap
-                    align: center
-                    image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink); opacity: if(hot, 1, 0) }
-                    text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
+            // The plate is the capsule's, and a capsule only wears one while the pointer is on it:
+            // the microphone and the volume tile beside it do exactly that. Drawn always, this one
+            // was the single dark pill standing at the end of an otherwise bare right side.
+            group plate { show: hot
+                Capsule(w, h, scale: 1) {
+                    row tile {
+                        gap: capsule.gap
+                        align: center
+                        image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
+                        text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
+                    }
                 }
             }
+            // At rest the level, bare on the strip, in the plate's own place.
+            text "{volume, 0}dB" { at: w / 2, h / 2; anchor: center; family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink); show: not hot }
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
             on enter tile { hot = true }
             on leave tile { hot = false }
