@@ -648,8 +648,6 @@ local function binde_reset(key, fn)
   hl.bind(key, fn, { repeating = true })
   hl.bind(key, hl.dsp.submap("reset"), { repeating = true })
 end
-  hl.config(cfg)
-end
 
 -- Submap: resize (resize.conf)
 hl.bind(M4 .. "+" .. M1 .. "+r", hl.dsp.submap("resize"))
@@ -685,10 +683,8 @@ hl.define_submap("special", "reset", function()
   hl.bind("semicolon", hl.dsp.submap("reset"), { repeating = true })
   binde_reset(SH .. "+w", hl.dsp.exec_cmd("pkill iwmenu || iwmenu"))
   binde_reset("o", hl.dsp.exec_cmd('raise --match "title:regex=' .. m.file_dialog .. '"'))
-  -- Master switch for the whole look (blur, motion blur, animations, dim,
-  -- hyprglass): press once to strip it, again to restore. Leaves the submap so
-  -- the next Alt+E -> b works from the main bindings.
-  binde_reset("b", toggle_visual_effects)
+  -- Alt+E -> b is free: the master switch for the whole look went with
+  -- hyprglass (fecd2919), which is the only part of it hyprglass still owned.
 end)
 
 
