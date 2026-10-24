@@ -376,10 +376,14 @@ scene bar {
         level: overlay
         open: tray_open
         body {
-            color: skin.surface
-            opacity: 96%
-            border: 1, mix(skin.coal, skin.ink, 12%)
+            // The plate the bar's capsules wear, not a lonely grey slab: the same coal at the
+            // same 69 %, a faint rim, and the accent hairline down the left edge that the
+            // reference's menus carry.
+            color: skin.coal
+            opacity: 69%
+            border: 1, mix(skin.coal, skin.ink, 10%)
             box { from: 0, 0; size: 240, tm.panel_h; corner: 8 }
+            box { from: 0, 4; size: 2, tm.panel_h - 8; corner: 1; color: skin.accent }
         }
         column { at: 4, 4; size: 232, 156; gap: 0
             row line1 { size: 232, 19; show: tm.count > 0
@@ -391,7 +395,7 @@ scene bar {
                     zone box hit1 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.1}"; role: button }
                 }
                 on enter hit1 { tm.hot = 1 }
-                on leave hit1 { tm.hot = 0 }
+
                 on press hit1 { emit tray_click(1) }
             }
             row line2 { size: 232, 19; show: tm.count > 1
@@ -403,7 +407,7 @@ scene bar {
                     zone box hit2 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.2}"; role: button }
                 }
                 on enter hit2 { tm.hot = 2 }
-                on leave hit2 { tm.hot = 0 }
+
                 on press hit2 { emit tray_click(2) }
             }
             row line3 { size: 232, 19; show: tm.count > 2
@@ -415,7 +419,7 @@ scene bar {
                     zone box hit3 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.3}"; role: button }
                 }
                 on enter hit3 { tm.hot = 3 }
-                on leave hit3 { tm.hot = 0 }
+
                 on press hit3 { emit tray_click(3) }
             }
             row line4 { size: 232, 19; show: tm.count > 3
@@ -427,7 +431,7 @@ scene bar {
                     zone box hit4 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.4}"; role: button }
                 }
                 on enter hit4 { tm.hot = 4 }
-                on leave hit4 { tm.hot = 0 }
+
                 on press hit4 { emit tray_click(4) }
             }
             row line5 { size: 232, 19; show: tm.count > 4
@@ -439,7 +443,7 @@ scene bar {
                     zone box hit5 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.5}"; role: button }
                 }
                 on enter hit5 { tm.hot = 5 }
-                on leave hit5 { tm.hot = 0 }
+
                 on press hit5 { emit tray_click(5) }
             }
             row line6 { size: 232, 19; show: tm.count > 5
@@ -451,7 +455,7 @@ scene bar {
                     zone box hit6 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.6}"; role: button }
                 }
                 on enter hit6 { tm.hot = 6 }
-                on leave hit6 { tm.hot = 0 }
+
                 on press hit6 { emit tray_click(6) }
             }
             row line7 { size: 232, 19; show: tm.count > 6
@@ -463,7 +467,7 @@ scene bar {
                     zone box hit7 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.7}"; role: button }
                 }
                 on enter hit7 { tm.hot = 7 }
-                on leave hit7 { tm.hot = 0 }
+
                 on press hit7 { emit tray_click(7) }
             }
             row line8 { size: 232, 19; show: tm.count > 7
@@ -475,7 +479,7 @@ scene bar {
                     zone box hit8 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.8}"; role: button }
                 }
                 on enter hit8 { tm.hot = 8 }
-                on leave hit8 { tm.hot = 0 }
+
                 on press hit8 { emit tray_click(8) }
             }        }
     }
@@ -488,6 +492,10 @@ scene bar {
         anchor: center
         level: overlay
         open: tray_open
+        // A surface takes input where it draws: without a body the region would be empty and
+        // the catcher would catch nothing. One percent of coal is invisible over a wallpaper
+        // and enough to make the whole monitor a target.
+        body { color: skin.coal; opacity: 1%; box { from: 0, 0; size: screen.width, screen.height } }
         zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: default; label: "Close"; role: region }
         on press anywhere { emit tray_close }
     }
