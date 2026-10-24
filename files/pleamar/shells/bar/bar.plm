@@ -264,9 +264,11 @@ scene bar {
     // said so itself — "a drawing is cut: it needs 2 px above more than this 1920 x 25
     // surface has".
     let hot = 10
-    // The strip sits in the bottom of the surface, so everything it draws moves down by
-    // the hotzone. Design px, because that is what the drawing below is written in.
-    let push = hot / ui
+    // How tall the strip is inside the surface: 25 design px drawn at `ui` 1.15. The
+    // coordinates at this level are logical (a row's `at:` is not multiplied by the scale;
+    // only a component's `size:` is), which is why this one number is written in logical px
+    // and the design numbers below it are not.
+    let band = 29
     surface {
         // 25 design px of content are 28.75 logical at `ui` 1.15, plus 10 of hotzone. A
         // surface's `size:` takes a literal (header, line 23), so the arithmetic is here and
@@ -766,7 +768,7 @@ scene bar {
 
     // ------------------------------------------------------------------ rows
     component Left(scale: number = ui * user_scale) {
-        row { at: side * scale, strip / 2 + push; anchor: left middle; gap: row.gap * scale
+        row { at: side * scale, hot + band / 2; anchor: left middle; gap: row.gap * scale
             Clock() { show: widget.clock }
             WsCapsule(focus_workspace) { show: widget.workspaces }
 
@@ -938,7 +940,7 @@ scene bar {
         // `side` keeps the left row off the edge; the right row needs 8 design px less of it.
         // Measured: the mic's ink ended 9 logical px short of the reference's (1894 against
         // 1903 on a 1920 bar).
-        row { at: screen.width - (side - 8) * scale, strip / 2 + push; anchor: right middle; gap: row.gap * scale
+        row { at: screen.width - (side - 8) * scale, hot + band / 2; anchor: right middle; gap: row.gap * scale
             // The legacy order from the left: media · MPD · systray · mic ·
             // volume · Genelec. The tray is still an extension point.
             // The controls ride out to the left of the capsule, so they are declared
@@ -994,14 +996,14 @@ scene bar {
         // 88 % over that wallpaper, the port's #040404, and 1 - (1 - 0.88)^2 = 0.9856 with
         // 0.0144 * rgb(242,250,255) is exactly #040404. `opacity: 0%` keeps the shape the
         // body needs and drops the second coat.
-        box { from: 0, push; size: screen.width, strip; opacity: 0% }
+        box { from: 0, hot; size: screen.width, band; opacity: 0% }
     }
     // The whole strip is a hover target for the widgets that hide at idle
     // (QS's `panelHovering`): declared before the rows, so every widget's own
     // zone is above it and keeps its clicks.
     // The hotzone counts as the bar for `strip.hot`: the widgets that hide at idle come
     // back when the pointer enters the band above the strip, which is what QS does.
-    zone box strip_hover { from: 0, 0; size: screen.width, strip + push; label: "Bar"; role: region }
+    zone box strip_hover { from: 0, 0; size: screen.width, hot + band; label: "Bar"; role: region }
     on enter strip_hover { strip.hot = true }
     on leave strip_hover { strip.hot = false; tip_open = false }
 
