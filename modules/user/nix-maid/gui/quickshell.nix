@@ -127,8 +127,18 @@ lib.mkIf quickshellEnabled (
       ];
 
       # Quickshell panel service — ExecStartPre deploys writable config before start
+      #
+      # One shell per session. With the pleamar flag on, this panel must not start: both
+      # draw at the bottom edge, and the pleamar bar — anchored to the same edge — lands 25
+      # px higher because Quickshell's exclusive zone already reserved that strip. Seen in a
+      # live session on 2026-10-24: two bars, one at y=1055 and one at y=1030, each with a
+      # clock, a media capsule and a tray, which reads as "the bar is in the wrong place"
+      # rather than as "there are two bars".
       systemd.user.services.quickshell = systemdUser.mkUserService {
-        enable = true;
+        # Not started while the pleamar shell owns the session (see above): one shell
+        # per session. `enable = false` is how a unit is off here — an attribute wrapped
+        # in `mkIf` stays behind with its defaults instead.
+        enable = !config.lib.neg.pleamarEnabled;
         description = "Quickshell - QtQuick based shell for Wayland";
         documentation = [ "https://github.com/outfoxxed/quickshell" ];
         presets = [ "restartOnFailure" ];
