@@ -350,7 +350,19 @@ scene bar {
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
     // The tray, straight from the StatusNotifier host: `key` is what a click is
     // sent back with, `icon` comes as a name or a path, ready to paint.
-    model icons max 12 { key: text; title: text; icon: image 18, 18 }
+    // The tray's records carry the item's own menu (`menu` in the engine's record: a tree,
+    // like an application's), so the bar can draw it instead of forwarding the right button
+    // to the application — which on Wayland often answers nothing, because the menu it opens
+    // belongs to a window that is not there.
+    model icons max 12 {
+        key: text
+        title: text
+        icon: image 18, 18
+        // No block: the children are records of this same shape, nested — a menu tree. A
+        // block would make them flat records with fields of their own, which a nested menu
+        // is not (`list children max 6 depth 2` is the language's tree form).
+        list menu max 12 depth 2
+    }
     service tray { list: icons }
 
     // --------------------------------------------------------- facts & events
