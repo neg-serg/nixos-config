@@ -577,7 +577,14 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
-            text "lan" { at: 6, strip / 2; anchor: left center; size: 13; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
+            // QS does not paint the accent here: NetClusterCapsule's linkIconColor is
+            // Color.desaturate(accentPrimary, vpn.desaturateAmount 0.45), the accent
+            // mixed 45 % toward its own luminance grey. The scene language has no
+            // luminance, and the group's own `saturation` is exactly that mix on the
+            // GPU — 0.55 of the accent's saturation is what 45 % of grey leaves.
+            group lan_tone { saturation: 0.55
+                text "lan" { at: 6, strip / 2; anchor: left center; size: 13; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
+            }
             // 700, not the 900 QS asks for: the installed Iosevka has Regular, Medium and
             // Bold only (fc-match Iosevka:weight=black -> Iosevka Bold), so 700 names the
             // face Qt would actually pick and cosmic-text cannot fall back on a lighter one.
