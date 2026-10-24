@@ -384,14 +384,16 @@ scene bar {
         // The menu takes the keyboard while it is up, so Esc can close it: a modal list that
         // cannot be left from the keyboard is a modal list on a mouse-only leash.
         keyboard: exclusive while tray_open
-        // A surface takes input where it draws, so the catcher draws *only while the menu is
-        // open*: pleamar keeps a named surface mapped and an unconditional body would make the
-        // whole monitor a target for as long as the bar runs — every click in every
-        // application would be eaten by a menu nobody opened.
+        // `open:` is what keeps the desktop safe, not the size of the body: the engine empties the
+        // input region of a surface it is not showing, so a catcher nobody opened takes no click
+        // while the open one owns the monitor. A named surface's zones never reach `boxes`, so the
+        // patch hands this surface —and only this one— its own rectangle. The zone is the whole
+        // monitor because a press is matched to a zone: it has to land in `anywhere` for the menu
+        // to be dismissed.
         body { color: skin.coal; opacity: 4%
-            box { from: 0, 0; size: tray_catcher.width, tray_catcher.height }
+            box { from: 0, 0; size: screen.width, screen.height }
         }
-        zone box anywhere { from: 0, 0; size: 1, 1; cursor: pointer; label: "Close"; role: button }
+        zone box anywhere { from: 0, 0; size: screen.width, screen.height; cursor: pointer; label: "Close"; role: button }
         // Either button: a menu is dismissed by the first press anywhere else, whatever it is.
         on press anywhere { emit tray_close }
         on press right anywhere { emit tray_close }
