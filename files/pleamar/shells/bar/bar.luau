@@ -148,6 +148,9 @@ local function accentFrom(art)
     run("dash", { "-c", ACCENT_SCRIPT, "accent", art })
 end
 
+local mediaPos = 0
+local mediaPlaying = false
+
 sys.watch("media", function(m)
     local player, playing = nil, false
     if type(m) == "table" then
@@ -191,6 +194,22 @@ sys.watch("media", function(m)
         mediaHold = nil
     end
     showMedia(title ~= "")
+end)
+
+-- The engine reports `media.position` when the player says something, and never polls it, so
+-- the bar's clock would stand still while the track plays. The logic keeps its own: a second
+-- per tick while the player is playing, resynced from every report.
+sys.watch("media", function(m)
+    if type(m) ~= "table" then return end
+    if type(m.position) == "number" then mediaPos = math.floor(m.position) end
+    mediaPlaying = m.playing == true
+    fact["media.pos"] = mediaPos
+end)
+
+every(1000, function()
+    if not mediaPlaying then return end
+    mediaPos = mediaPos + 1
+    fact["media.pos"] = mediaPos
 end)
 
 -- The transport strip: the three glyph buttons of the media capsule.
