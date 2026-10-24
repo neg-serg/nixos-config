@@ -102,9 +102,56 @@ local function showMedia(on)
     fact["media.present"] = on
 end
 
+-- ------------------------------------------------- cover accent (QS MusicManager)
+-- QS samples the current cover with Helpers/AccentSampler.js — the mean of its
+-- saturated pixels, two passes — and paints the time's brackets and separator with
+-- it. A colour is not a fact, so the scene reads it from an imported file the way
+-- it reads theme.plm: this writes ~/.config/pleamar/art.plm and the running scene
+-- re-reads that import when it changes.
+--
+-- It lives here and not in the Cover plugin, because that plugin's logic is
+-- approved for `ls` alone: sampling wants magick, and a plugin asking for a new
+-- command stops the scene until somebody approves it by hand. The bar runs dash
+-- already.
+local ACCENT_SCRIPT = [[
+set -e
+art="$1"
+[ -n "$art" ] || exit 0
+case "$art" in http*|"") exit 0 ;; esac
+art="${art#file://}"
+[ -r "$art" ] || exit 0
+hex=$(magick "$art" -resize 48x48! -depth 8 txt:- 2>/dev/null | awk '
+  $2 ~ /^\(/ {
+    t = $2; gsub(/[()]/, "", t); n = split(t, a, ",")
+    if (n < 3) next
+    r = a[1] + 0; g = a[2] + 0; b = a[3] + 0
+    hi = r; if (g > hi) hi = g; if (b > hi) hi = b
+    lo = r; if (g < lo) lo = g; if (b < lo) lo = b
+    sat = hi - lo; lum = (r + g + b) / 3
+    if (sat >= 10 && lum >= 20 && lum <= 235) { r1 += r; g1 += g; b1 += b; n1++ }
+    if (sat >= 8  && lum >= 20 && lum <= 240) { r2 += r; g2 += g; b2 += b; n2++ }
+  }
+  END {
+    if (n1 > 0)      printf "#%02x%02x%02x", r1 / n1, g1 / n1, b1 / n1
+    else if (n2 > 0) printf "#%02x%02x%02x", r2 / n2, g2 / n2, b2 / n2
+  }')
+[ -n "$hex" ] || exit 0
+mkdir -p "$HOME/.config/pleamar"
+printf '// generated from the cover\nlibrary Art strict {\n\n    let cover_accent = %s\n}\n' "$hex" > "$HOME/.config/pleamar/art.plm"
+]]
+
+local lastArt = nil
+
+local function accentFrom(art)
+    if type(art) ~= "string" or art == "" or art == lastArt then return end
+    lastArt = art
+    run("dash", { "-c", ACCENT_SCRIPT, "accent", art })
+end
+
 sys.watch("media", function(m)
     local player, playing = nil, false
     if type(m) == "table" then
+        accentFrom(m.art)
         player = m.player
         playing = m.playing == true
     end
