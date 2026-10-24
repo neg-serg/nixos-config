@@ -511,7 +511,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "nc", "pleamar", "systemctl"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "media", "media.*", "env", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "nc", "pleamar", "systemctl"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
