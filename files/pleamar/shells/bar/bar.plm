@@ -352,7 +352,12 @@ scene bar {
         size: 50 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 50, 23; corner: 6 }
+            }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { tip_open = true; emit tip(0) }
@@ -377,7 +382,12 @@ scene bar {
         size: 69 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 69, 23; corner: 6; color: skin.coal; opacity: 69% }
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 69, 23; corner: 6 }
+            }
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
             text "{ws_label}" { at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
@@ -421,7 +431,12 @@ scene bar {
             // A `box` placed at a NEGATIVE `from:` draws nothing at all (five
             // faces written that way never appeared); the face starts at 0 and
             // the content is inset by the capsule's padding instead.
-            box { from: 0, 1; size: inner + 12, 23; corner: 6; color: skin.coal; opacity: 69% }
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: inner + 12, 23; corner: 6 }
+            }
             row metrics {
                 gap: 2.5
                 align: center
@@ -520,7 +535,12 @@ scene bar {
         size: 50 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 50, 23; corner: 6 }
+            }
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
@@ -546,7 +566,12 @@ scene bar {
         size: 50 * scale, strip * scale
         group zoom {
             scale: scale
-            box { from: 0, 1; size: 50, 23; corner: 6; color: skin.coal; opacity: 69% }
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 50, 23; corner: 6 }
+            }
             text "lan" { at: 6, strip / 2; anchor: left center; size: 13; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
             // 700, not the 900 QS asks for: the installed Iosevka has Regular, Medium and
             // Bold only (fc-match Iosevka:weight=black -> Iosevka Bold), so 700 names the
@@ -712,11 +737,18 @@ scene bar {
         size: 288 * scale, bar.height * scale
         group zoom {
             scale: scale
-            // No capsule plate: the reference's WidgetCapsule draws nothing here, and the
-            // plate this port wrapped the track in was the whole difference — measured on
-            // the two bars, the port's media read as one 400 px run of ink (its rounded
-            // rim) where the reference's is art, title and time, 321 px, on the bare bar.
-            //
+            // The plate is QS's WidgetCapsule: `WidgetBg.color(..., "media", …)` fills
+            // with widgetBackgrounds.default `#000000b0` (69 %) and `borderVisible` adds
+            // `textPrimary` at panel.capsule.borderOpacity 0.08, one `uiBorderWidth` wide —
+            // two layers, the dark one under the faint light one. The port drew no plate
+            // at all here, which read as the track floating on the strip.
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 0; size: w, h; corner: corner }
+            }
+
             // The analyser and the transport are revealed on hover in the reference
             // (`transportRevealed`, an analyser at `opacity: 0` until then), so they live in
             // a row that only exists while the capsule is hot: at rest the bar must reserve
@@ -730,7 +762,11 @@ scene bar {
                 // out as one run of ink).
                 space 2
                 text "{media.artist} — {media.title}" { width: 168; lines: 1; size: 14; color: skin.ink; family: "Iosevka" }
-                text "({media.position, time}/{media.length, time})" { size: 14; color: amber; family: "Iosevka" }
+                // QS paints the time in textPrimary while playing and textSecondary
+                // while paused, at media.time.alpha.playing 1.0 / .paused 0.8 —
+                // amber was the port's own invention and the one warm thing on a
+                // cold bar.
+                text "({media.position, time}/{media.length, time})" { size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                 row extras { show: media.hot
                     gap: bar.gap
                     align: center
