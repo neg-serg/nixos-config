@@ -1026,6 +1026,39 @@ let
     "$hyprctl_bin" eval "
     $(cat ${pkgs.writeText "hyprdynamiccursors.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprdynamiccursors.lua"))})"
   '';
+  # hyprliquid (Liquid Glass / Acrylic / Mica / Aero). Unlike hyprglass it also
+  # matches layer namespaces, which is what the bar needs: hyprglass handles only
+  # windows and popups now, so a layer surface got no compositor glass at all.
+  # Loaded from the start hook like the rest, with the retry the login transition
+  # needs (a load issued while the compositor is busy does not always stick), then
+  # the rules in files/gui/hypr/hyprliquid.lua are pushed through `hyprctl eval`.
+  hyprliquidSetup = pkgs.writeShellScriptBin "hyprliquid-setup" ''
+    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
+    plugin=${pkgs.hyprliquid}/lib/libhyprliquid.so
+
+    exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hyprliquid-setup.log" 2>&1
+    echo "--- $(date '+%F %T') hyprliquid-setup"
+
+    loaded() {
+      "$hyprctl_bin" plugin list 2>/dev/null | grep -q "^Plugin hyprliquid "
+    }
+
+    for _ in $(seq 1 20); do
+      loaded && break
+      "$hyprctl_bin" plugin load "$plugin" || true
+      sleep 0.25
+    done
+
+    if ! loaded; then
+      echo "plugin never reported as loaded"
+      exit 1
+    fi
+
+    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
+    # comment) as a flag, hence the leading newline.
+    "$hyprctl_bin" eval "
+    $(cat ${pkgs.writeText "hyprliquid.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprliquid.lua"))})"
+  '';
   hyprlandLuaText =
     builtins.replaceStrings
       [
@@ -1037,6 +1070,7 @@ let
         "@hyprdynamiccursors_setup@"
         "@gloview_setup@"
         "@hymission_setup@"
+        "@hyprliquid_setup@"
       ]
       [
         "${hy3Setup}/bin/hy3-setup"
@@ -1047,6 +1081,7 @@ let
         "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup"
         "${gloviewSetup}/bin/gloview-setup"
         "${hymissionSetup}/bin/hymission-setup"
+        "${hyprliquidSetup}/bin/hyprliquid-setup"
       ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
@@ -1064,6 +1099,7 @@ in
         environment.systemPackages = services.packages ++ [
           hy3Setup # loads the hy3 layout plugin; re-run to re-select the layout in a live session
           hyprglassSetup
+          hyprliquidSetup # loads the plugin and (re)applies the layer-surface materials of files/gui/hypr/hyprliquid.lua
           hyprexpoSetup
           hyprwindowshadeSetup
           hyprwinwrapSetup # loads the plugin and (re)applies the background-window declarations

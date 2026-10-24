@@ -82,6 +82,44 @@
           '';
         };
 
+        # hyprliquid — Liquid Glass / Acrylic / Mica / Aero for windows *and* layer
+        # surfaces. hyprglass handles only windows and popups now
+        # (`manage_window_blur`), so the bar, which is a layer surface, lost the
+        # compositor's glass and fell back to plain blur; hyprliquid matches layer
+        # namespaces, which is the only handle a layer surface offers.
+        #
+        # Built against this session's Hyprland: the plugin's hyprpm pins name the
+        # commit this nixpkgs ships (v0.56.2, efb50993), so the ABI matches and no
+        # patch is needed — unlike hyprglass, which carries one.
+        hyprliquid = final.hyprland.stdenv.mkDerivation {
+          pname = "hyprliquid";
+          version = "0.2.1";
+          src = final.fetchFromGitHub {
+            owner = "zaregototsukai";
+            repo = "hyprliquid";
+            rev = "4bbb70286f0f14ad6bfafc26115412f3806064a2";
+            hash = "sha256-F331z7pj8bbli6hjIDDCzcldHylnelbURtA8lhf5/Gs=";
+          };
+          nativeBuildInputs = with final; [
+            cmake
+            pkg-config
+          ];
+          buildInputs = [
+            final.hyprland.dev
+            final.stb
+          ]
+          ++ final.hyprland.buildInputs;
+          cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Release" ];
+          # CMake's output directory depends on the generator (build/ or
+          # build/Release/), so take whatever it produced.
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/lib
+            cp "$(find . -name 'libhyprliquid.so' -print -quit)" $out/lib/
+            runHook postInstall
+          '';
+        };
+
         hyprlandPlugins = prev.hyprlandPlugins // {
           # hy3: nixpkgs' own 0.56.0.1 build (upstream tag hl0.56.0.1, built by
           # mkHyprlandPlugin against the same Hyprland 0.56.2 commit as the session

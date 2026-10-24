@@ -1517,6 +1517,11 @@ hl.on("hyprland.start", function()
   -- Liquid glass: loads the plugin and pushes files/gui/hypr/hyprglass.lua
   hl.exec_cmd("@hyprglass_setup@")
 
+  -- Liquid Glass materials for layer surfaces as well: hyprglass handles only
+  -- windows and popups, and the bar is a layer surface. Rules live in
+  -- files/gui/hypr/hyprliquid.lua.
+  hl.exec_cmd("@hyprliquid_setup@")
+
   -- Dynamic cursors (stretch): this exec only covers a hand-started compositor
   -- (no login phase) — after a greetd login nothing re-parses the config, so
   -- the `hyprdynamiccursors` user unit loads the plugin with
