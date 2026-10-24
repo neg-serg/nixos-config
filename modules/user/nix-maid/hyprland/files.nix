@@ -32,15 +32,9 @@ in
 
         ".config/hypr/hyprlock.conf".text = config.lib.neg.readFile "files/gui/hypr/hyprlock.conf";
 
-        # hyprglass defaults, also deployed as a file: `hyprglass-apply` re-reads
-        # them to push the settings into a *running* session (the plugin only
-        # reads them when they are pushed) and the Glass panel keeps its overrides
-        # next to this file in hyprglass.json.
-        ".config/hypr/hyprglass.lua".text = config.lib.neg.readFile "files/gui/hypr/hyprglass.lua";
-
         # HyprWindowShade rules (per-window / per-layer fragment shaders). Pushed
         # into the running session by hyprwindowshade-setup, same load-then-push
-        # pattern as hyprglass.lua.
+        # pattern as hyprland.lua.
         ".config/hypr/hyprwindowshade.lua".text =
           config.lib.neg.readFile "files/gui/hypr/hyprwindowshade.lua";
 

@@ -60,29 +60,6 @@ let
       (r.readFile "modules/user/nix-maid/hyprland/kitty-glass-frost.sh")
   );
 
-  # Push the hyprglass settings into a running session (see hyprglass-apply.sh).
-  # The runtime paths are substituted here because systemd user services and the
-  # session shell both run with a minimal PATH.
-  hyprglassApply = pkgs.writeShellScriptBin "hyprglass-apply" (
-    builtins.replaceStrings
-      [ "@hyprctl@" "@plugin@" ]
-      [ "${lib.getExe' pkgs.hyprland "hyprctl"}" "${pkgs.hyprglass}/lib/hyprglass.so" ]
-      (r.readFile "modules/user/nix-maid/hyprland/hyprglass-apply.sh")
-  );
-
-  # PATH for the units that run it (see the two hyprglass units below): the script
-  # needs jq to read the panel's JSON overrides, the usual text tools, and hyprctl
-  # — the only way to talk to the plugin. Both units share it: without it the drift
-  # watchdog could not even read the overrides and died with "jq is missing" on
-  # every timer tick, so nothing repaired the glass after a compositor reload.
-  hyprglassPath = lib.makeBinPath [
-    pkgs.coreutils # shell plumbing (mkdir, mv, tr, date)
-    pkgs.gnused # rewrites the generated lua's numbers
-    pkgs.gnugrep # scans the plugin list
-    pkgs.gawk # compares the reported values with the wanted ones
-    pkgs.jq # reads the Glass panel's JSON overrides
-    pkgs.hyprland # hyprctl, the only way to talk to the plugin
-  ];
 in
 {
   # Helper scripts for the themed unit files (./glass.nix, ./scratchpad.nix)
@@ -92,8 +69,6 @@ in
       hyprWinList
       scratchpadGeometry
       kittyGlassFrost
-      hyprglassApply
-      hyprglassPath
       ;
   };
 
@@ -101,7 +76,6 @@ in
     pkgs.hypridle # idle daemon (locks to a fading black screen)
     # pkgs.hyprlock — temporarily removed (2026-08-31); re-add to restore the lock screen
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
-    hyprglassApply # pushes glass settings into the running session (panel, path unit)
     kittyGlassFrost # fallback pane frost (baked wallpaper slice; unused by the launcher)
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
