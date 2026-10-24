@@ -126,10 +126,34 @@ export const nativePressKey = async (combo) => {
 /* ── 2. CUL MCP bridge ──────────────────────────────────────────────── */
 
 export class CulMCP {
-  constructor(culBin) { this.culBin = culBin; this.pending = new Map(); this.id = 0; }
+  constructor(culBin) { this.culBin = culBin; this.pending = new Map(); this.id = 0; this.exitReason = null; }
+  // Reject every in-flight call once the child is gone, instead of letting the
+  // stream's 'error' stay unhandled. An unhandled EPIPE (or ENOENT at spawn)
+  // kills the whole host process — the host here is dsh-tui itself, so one dead
+  // helper took the interactive session down with it (crash.log: "write EPIPE"
+  // thrown from _call). A tool error is recoverable; a dead shell is not.
+  _failAll(message) {
+    this.exitReason = this.exitReason ?? message;
+    const err = new Error(this.exitReason);
+    for (const [, p] of this.pending) p.reject(err);
+    this.pending.clear();
+  }
+  _guard(child) {
+    child.on("error", (e) => this._failAll("CUL spawn failed: " + e.message));
+    child.stdin.on("error", (e) => this._failAll("CUL stdin closed: " + e.message));
+    child.stdout.on("error", () => this._failAll("CUL stdout closed"));
+    child.on("exit", (code, signal) => this._failAll("CUL exited (" + (signal ?? code) + ")"));
+  }
+  _send(payload) {
+    const stdin = this.proc?.stdin;
+    if (this.exitReason) throw new Error(this.exitReason);
+    if (!stdin || stdin.destroyed || !stdin.writable) throw new Error("CUL process is not running");
+    stdin.write(payload);
+  }
   async start() {
     const { spawn } = await import("node:child_process");
     this.proc = spawn(this.culBin, ["mcp"], { stdio: ["pipe", "pipe", "inherit"] });
+    this._guard(this.proc);
     this.proc.stdout.on("data", (d) => this._onData(d));
     await this._call("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "dsh-desktop", version: "1.0" } });
     this._notify("notifications/initialized", {});
@@ -153,11 +177,17 @@ export class CulMCP {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => { this.pending.delete(id); reject(new Error("MCP timeout: " + method)); }, 15000);
       this.pending.set(id, { resolve: (v) => { clearTimeout(timer); resolve(v); }, reject: (e) => { clearTimeout(timer); reject(e); } });
-      this.proc.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
+      try {
+        this._send(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
+      } catch (e) {
+        this.pending.delete(id);
+        clearTimeout(timer);
+        reject(e);
+      }
     });
   }
   _notify(method, params) {
-    this.proc.stdin.write(JSON.stringify({ jsonrpc: "2.0", method, params }) + "\n");
+    try { this._send(JSON.stringify({ jsonrpc: "2.0", method, params }) + "\n"); } catch { /* best effort */ }
   }
   async tools() {
     const res = await this._call("tools/list", {});
