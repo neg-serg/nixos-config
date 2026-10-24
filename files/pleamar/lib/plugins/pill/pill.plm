@@ -65,7 +65,10 @@ library Pill strict {
         size: (2 * capsule.pad + 10) * scale, capsule.height * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1) {
+            // The plate the neighbours wear: the bar's capsules are `coal` at 69 %, and the
+            // library's defaults (`slate` at `veil`) read as a lighter, greyer pill sitting off
+            // the strip's tone.
+            Capsule(w, h, fill: coal, alpha: 69%, scale: 1) {
                 row mark {
                     align: center
                     text "pill" { family: "Material Symbols Outlined"; size: 10; color: if(taken, highlight, ink.dim); opacity: if(reminder, 0.65 + pulse, 1) }
