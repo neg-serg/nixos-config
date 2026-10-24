@@ -357,7 +357,40 @@ let
         fi
         # Helper links live in ~/.local/bin: drop the broken ones pointing into this repo.
         find "$HOME/.local/bin" -maxdepth 1 -type l -lname '*files/pleamar*' -xtype l -delete 2>/dev/null || true
-        rm -rf "$HOME/.local/state/nix-maid/static/.config/pleamar" 2>/dev/null || true
+        # The static tree the links point at is NOT removed here: pruning it before
+        # activation is what left every deployed scene dangling for the length of a copy —
+        # 2 "cannot read … .plm" errors per switch (bar and notifications, 18:06 today).
+        # `pleamarPrune` does it after activation instead.
+      '';
+    };
+  };
+
+  # Prune the static copy AFTER activation, which is where the old `rm -rf` belonged.
+  #
+  # Every deployed scene is a link into ~/.local/state/nix-maid/static/.config/pleamar, so
+  # deleting that tree before activation left each link dangling for as long as the copy took:
+  # that is the "cannot read … .plm" pair per switch (bar and notifications, 18:06 today). The
+  # purpose — a scene or library removed from `files/pleamar/` must not leave a stale copy — is
+  # served just as well afterwards, when everything live already resolves and the prune can only
+  # remove what no link names any more.
+  pleamarPrune = {
+    description = "Prune pleamar's static copy after activation";
+    after = [ "maid-activation.service" ];
+    wantedBy = [ "maid-activation.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "pleamar-prune-static" ''
+        static="$HOME/.local/state/nix-maid/static/.config/pleamar"
+        dst="$HOME/.config/pleamar"
+        [ -d "$static" ] || exit 0
+        for sub in shells lib; do
+          [ -d "$static/$sub" ] || continue
+          for entry in "$static/$sub"/*; do
+            [ -e "$entry" ] || continue
+            name="''${entry##*/}"
+            [ -e "$dst/$sub/$name" ] || rm -rf "$entry" 2>/dev/null || true
+          done
+        done
       '';
     };
   };
@@ -402,6 +435,7 @@ lib.mkIf pleamarEnabled (
             };
           };
           pleamar-cleanup-symlink = pleamarCleanup;
+          pleamar-prune-static = pleamarPrune;
           pleamar-theme = systemdUser.mkUserService {
             description = "Write ~/.config/pleamar/theme.plm from the current wallpaper";
             presets = [ "oneshot" ];
