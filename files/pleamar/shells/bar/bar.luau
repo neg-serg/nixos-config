@@ -526,7 +526,7 @@ on("tray_menu", function(index)
     end
     for i = shown + 1, 8 do text["tm." .. i] = "" end
     fact["tm.count"] = shown
-    fact["tm.panel_h"] = 8 + 19 * shown
+    fact["tm.panel_h"] = 12 + 20 * shown
     fact.tray_open = true
 end)
 
