@@ -473,8 +473,10 @@ hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch
 hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch "kitty --class nwim -e /home/neg/.local/bin/v"'))
 hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch "~/.local/bin/pl video"'))
 hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg(_[0-9]+)?$" --launch "swayimg ~/dw"'))
--- Wallpaper shuffle hotkey removed with the per-workspace feature (2026-10-14):
--- no bind may repaint the desktop.
+-- Wallpaper shuffle: a random image from the pool, painted on every output. The
+-- key came back on request after 9f4d6374 dropped it with the per-workspace feature;
+-- the deck below (M4+C+w) stays the picker, this is the one-key shortcut to it.
+hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
 
 -- --- System ────────────────────────────────────────────────────────────
 hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty-glass --class rebuild -e nh os switch /etc/nixos#trantor --option substitute false' special"))
