@@ -64,7 +64,9 @@ library Pill strict {
         let h = capsule.height
         prop pulse = 0
         wave pulse = 0.35 at 6.28
-        size: (2 * capsule.pad + 10) * scale, capsule.height * scale
+        // The slot is the plate's size, not the plate the glyph had before it grew: 22 drawn
+        // inside an 18 slot ran into the keyboard capsule beside it, hit zone and all.
+        size: (2 * capsule.pad + size.icon) * scale, capsule.height * scale
         group zoom {
             scale: scale
             // The plate the neighbours wear: the bar's capsules are `coal` at 69 %, and the

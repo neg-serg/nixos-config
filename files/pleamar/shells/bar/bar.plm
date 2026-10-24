@@ -959,7 +959,7 @@ scene bar {
         size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile("volume_up", vol.shown, "{audio.volume * 100, 0} %", vol.hot, mix(volume.low, volume.high, level))
+            AudioTile("volume_up", vol.shown, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level))
             zone box vol { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
             on enter vol { vol.hot = true }
             on leave vol { vol.hot = false }
@@ -973,7 +973,7 @@ scene bar {
         size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile("mic", mic.shown, "{audio.input * 100, 0} %", mic.hot, mix(volume.low, volume.high, mic.level))
+            AudioTile("mic", mic.shown, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level))
             zone box mic { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on enter mic { mic.hot = true }
             on leave mic { mic.hot = false }
@@ -1192,8 +1192,11 @@ scene bar {
             row tray_slot { show: widget.systray and icons.count > 0 and strip.hot; gap: 0; align: center
                 for r in icons { TrayIcon(r, scale) }
             }
-            MicCapsule(toggle_mic) { show: widget.mic and mic.shown }
-            VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and vol.shown }
+            // `or strip.hot`: the reference brings a muted (or 100 %) capsule back while the
+            // pointer is on the panel, and without that there is nothing on the bar to press to
+            // unmute — the control vanished exactly when it was needed.
+            MicCapsule(toggle_mic) { show: widget.mic and (mic.shown or strip.hot) }
+            VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and (vol.shown or strip.hot) }
             // Genelec, the rightmost module, as in the legacy bar. The reference hides it until
             // `panelHovering` (the strip's hover) — but this slot was gated on the tile's own
             // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
@@ -1215,7 +1218,9 @@ scene bar {
     // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
     body {
         color: skin.coal
-        opacity: 60%
+        // `panel.seam.opacity` is 0.88 in the reference; at 60 % the wallpaper read through
+        // the strip three times as loud as it should.
+        opacity: 88%
         // The glass sits here, not on the capsules: in the reference the compositor
         // (a Hyprland plugin, `hyprglass`) blurs and refracts the whole surface, and
         // the widgets are flat fills over it. A scene cannot ask that plugin for
