@@ -228,7 +228,11 @@ let
         ];
       };
       serviceConfig = {
-        ExecStart = "${pkgs.pleamar}/bin/pleamar --scene %h/.config/pleamar/shells/${scene}/${scene}.plm --no-hud";
+        # `--stall 0`: pleamar's own default is 600 ms of live-lock after every decision — a
+        # debug aid for its decoupled logic thread, and the reason a click in this bar took half
+        # a second to show and sometimes did not show at all. The scene's work is microseconds;
+        # nothing here needs to prove the renderer survives a blocking logic.
+        ExecStart = "${pkgs.pleamar}/bin/pleamar --scene %h/.config/pleamar/shells/${scene}/${scene}.plm --no-hud --stall 0";
         # `on-failure` is not enough for a scene the session cannot lose: when
         # Hyprland restarts it closes its clients, the scene exits 0, and the
         # bar stays gone until somebody starts it by hand. The bar and the
