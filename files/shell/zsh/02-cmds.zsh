@@ -48,6 +48,14 @@ if [[ -e /etc/NIXOS ]]; then
     }
     foobar(){nix run github:emmanuelrosa/erosanix#foobar2000}
     flake-checker(){nix run github:DeterminateSystems/flake-checker}
+    # Root-side /etc/nixos work over the git+ssh flake inputs (aurora-src, wl):
+    # sudo scrubs the environment, so nix would clone them with root's own ssh
+    # setup and stop at "Permission denied (publickey)". Hand the caller's key
+    # over explicitly. Extra arguments are appended, so an override such as
+    # `nfu --option substitute false` beats the defaults baked in below.
+    _nix_root_ssh="ssh -F $HOME/.ssh/config -i $HOME/.ssh/id_ed25519 -o IdentitiesOnly=yes"
+    nfu(){ sudo env GIT_SSH_COMMAND="$_nix_root_ssh" nix flake update --flake /etc/nixos "$@" || return; [[ -w /etc/nixos/flake.lock ]] || sudo chown --reference=/etc/nixos/flake.nix /etc/nixos/flake.lock } # root rewrote flake.lock: give it back to the caller, or the next user-side `just update` hits EACCES
+    nsw(){ sudo env GIT_SSH_COMMAND="$_nix_root_ssh" nixos-rebuild switch --flake /etc/nixos --option substituters https://cache.nixos.org "$@" } # same, for the switch
 
     qi(){ NIXPKGS_ALLOW_UNFREE=1 nix shell --impure 'nixpkgs#'$1 }
     q(){ nix shell 'nixpkgs#'$1 }

@@ -10,6 +10,7 @@
     pkgs.git-lfs # git extension for large files
     pkgs.git # my favorite DVCS
     pkgs.gh # GitHub CLI
+    pkgs.gh-enhance # TUI for GitHub Actions (upstream `gh` extension)
     pkgs.gist # manage GitHub gists
   ];
 }

@@ -237,6 +237,11 @@ scene bar {
     // The capsule's cover opens the now-playing card in the `panels` scene.
     // That scene exits while no drawer is open (its only surface is the drawer),
     // so the logic has to start the unit and then say where to go.
+    // The cursor went onto the media capsule or its transport pill, or left them.
+    // The scene cannot hold a grace period of its own, and without one the pill would
+    // vanish in the gap between the two: the logic keeps it up for 300 ms (reference:
+    // MediaTransport's closeGrace).
+    event media_hover ->
     event open_media_panel ->
     // QS opens NetFlowPopup from the network capsule; same drawer family here.
     event open_network_panel ->
@@ -800,7 +805,11 @@ scene bar {
         let time.w = tp.width + tl.width + 21
         // art, the space the reference leaves before the track, the track, the space after
         // it, the time: three row gaps and the 2 px `space` the row carries.
-        let w = art.w + capsule.gap + text.w + time.w + 3 * bar.gap
+        // The analyser keeps its room whether or not the cursor is up: QS's
+        // `iconPreferredWidth` is part of the capsule's own width, and leaving it out is
+        // what pushed the plate's content past its box — the pill came out narrower than
+        // what it holds, and the neighbour took the overflow.
+        let w = art.w + capsule.gap + text.w + time.w + spec.w + 4 * bar.gap
         size: w * scale, bar.height * scale
         group zoom {
             scale: scale
@@ -820,10 +829,8 @@ scene bar {
                 box { from: 0, 0; size: w, h; corner: corner }
             }
 
-            // The analyser and the transport are revealed on hover in the reference
-            // (`transportRevealed`, an analyser at `opacity: 0` until then), so they live in
-            // a row that only exists while the capsule is hot: at rest the bar must reserve
-            // no room for them, which is what the 48 px of button boxes used to do.
+            // What the capsule holds, in the order QS lays it out: the art, the track, the
+            // time, and the analyser at the end — whose room `w` reserves, hover or not.
             row media_row {
                 gap: bar.gap
                 align: center
@@ -845,33 +852,67 @@ scene bar {
                     text "{media.length, time}" { measure: tl; size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                     text ")" { size: 14; color: cover_accent; family: "Iosevka" }
                 }
-                row extras { show: media.hot
-                    gap: bar.gap
-                    align: center
-                    spec.Bars(width: 22, height: 20, gap: 1)
-                    // Fixed 16 px boxes so the hit zones below can name the same
-                    // cells the layout hands out.
-                    row btn_prev { size: 16, h; align: center
-                        text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: skin.ink }
-                    }
-                    row btn_play { size: 16, h; align: center
-                        text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; show: media.playing }
-                        text "pause" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; show: not media.playing }
-                    }
-                    row btn_next { size: 16, h; align: center
-                        text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: skin.ink }
-                    }
+                // The analyser, revealed with the transport: QS keeps it inside the
+                // capsule (`iconPreferredWidth`) and its room is in `w` above.
+                spec.Bars(width: 22, height: 20, gap: 1)
+            }
+            // The transport is not in here: it is its own pill, to the left of this
+            // capsule (`Transport` below), which is where QS's `MediaTransport` rides out
+            // and why its buttons used to land under the plate's edge and its hit zones
+            // past it.
+        }
+    }
+
+    // The playback controls, as QS's `MediaTransport` under a `SlideReveal`: their own
+    // pill to the LEFT of the media capsule, which slides aside while it is up.
+    //
+    // Sizes from the reference (Theme.fontSizeSmall 14, capsuleScale 1.15): a button is
+    // round(round(14 * 1.15 * 1.1) * 1.6) = 29 logical px, the row's spacing is
+    // round(6 * 1.15) = 7, and the pill's padding is 1.5 * 6 = 9. In this scene's design
+    // pixels that is 25, 5 and 8, and 101 wide with the two gaps.
+    component Transport(prev: event, toggle: event, next: event,
+                        scale: number = ui * user_scale) {
+        let btn = 25
+        let gap = 5
+        let pad = 8
+        let w = 3 * btn + 2 * gap + 2 * pad
+        size: w * scale, strip * scale
+        group zoom {
+            scale: scale
+            // The same plate as the capsule: `backgroundKey: "media"` in the reference,
+            // so the two pills read as one family when the strip is up.
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 0; size: w, strip; corner: corner }
+            }
+            row controls { at: pad, strip / 2; anchor: left middle; gap: gap
+                row btn_prev { size: btn, strip; align: center
+                    text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: skin.ink }
+                }
+                row btn_play { size: btn, strip; align: center
+                    text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; show: media.playing }
+                    text "pause" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; show: not media.playing }
+                }
+                row btn_next { size: btn, strip; align: center
+                    text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: skin.ink }
                 }
             }
-            // Where the hover transport starts: right after the plate's content.
-            let bx = w + bar.gap
-            zone box media_zone { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Media"; role: region; value: "{media.title}" }
-            zone box z_prev { from: bx, 0; size: 16, h; corner: corner; cursor: pointer; label: "Previous track"; role: button; show: media.hot }
-            zone box z_play { from: bx + 16 + bar.gap, 0; size: 16, h; corner: corner; cursor: pointer; label: "Play or pause"; role: button; show: media.hot }
-            zone box z_next { from: bx + 2 * (16 + bar.gap), 0; size: 16, h; corner: corner; cursor: pointer; label: "Next track"; role: button; show: media.hot }
-            on enter media_zone { media.hot = true }
-            on press media_zone { emit open_media_panel }
-            on leave media_zone { media.hot = false }
+            // The zones sit on the buttons they name — the reason the old ones missed is
+            // that they were placed past the capsule's width while the buttons were drawn
+            // inside it.
+            zone box z_prev { from: pad, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Previous track"; role: button }
+            zone box z_play { from: pad + btn + gap, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Play or pause"; role: button }
+            zone box z_next { from: pad + 2 * (btn + gap), 0; size: btn, strip; corner: corner; cursor: pointer; label: "Next track"; role: button }
+            // Entering the strip keeps it up: the cursor has to be able to walk from the
+            // capsule onto the controls without the pill vanishing under it.
+            on enter z_prev { emit media_hover(true) }
+            on enter z_play { emit media_hover(true) }
+            on enter z_next { emit media_hover(true) }
+            on leave z_prev { emit media_hover(false) }
+            on leave z_play { emit media_hover(false) }
+            on leave z_next { emit media_hover(false) }
             on press z_prev { emit prev }
             on press z_play { emit toggle }
             on press z_next { emit next }
@@ -885,6 +926,10 @@ scene bar {
         row { at: screen.width - (side - 8) * scale, strip / 2; anchor: right middle; gap: row.gap * scale
             // The legacy order from the left: media · MPD · systray · mic ·
             // volume · Genelec. The tray is still an extension point.
+            // The controls ride out to the left of the capsule, so they are declared
+            // before it: the row grows leftwards and the capsule slides aside, which is
+            // what `SlideReveal` does in the reference.
+            row transport_slot { show: widget.media and media.present and media.hot; Transport(media_prev, media_toggle, media_next) }
             row media_slot { show: widget.media and media.present; MediaCapsule(media_prev, media_toggle, media_next) }
             // QS shows the flag badges only while media is up AND there is a
             // flag to show; with none it still drew an empty capsule here.

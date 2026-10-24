@@ -203,6 +203,28 @@ on("media_next", function()
     sys.call("media.next")
 end)
 
+-- The transport pill rides out to the left of the capsule, and the cursor has to be
+-- able to cross the gap between them: QS holds it open with a 300 ms closeGrace
+-- (MediaTransport.qml), and the scene can only say "entered" and "left", so the
+-- timer lives here.
+local HOVER_HOLD_MS = 300
+local hoverTimer = nil
+
+on("media_hover", function(hot)
+    if hot then
+        if hoverTimer then cancel(hoverTimer) end
+        hoverTimer = nil
+        fact["media.hot"] = true
+        return
+    end
+    if not fact["media.hot"] then return end
+    if hoverTimer then cancel(hoverTimer) end
+    hoverTimer = after(HOVER_HOLD_MS, function()
+        hoverTimer = nil
+        fact["media.hot"] = false
+    end)
+end)
+
 on("media_prev", function()
     sys.call("media.previous")
 end)
