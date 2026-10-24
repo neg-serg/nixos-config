@@ -475,23 +475,25 @@ on("tray_press", function(index)
     sys.call("tray.activate", item.key)
 end)
 
--- The right button opens the item's own menu in the scene now: the record carries the tree
--- (`menu`, a nested list in the model), so the bar draws it rather than asking the
--- application — which on Wayland often answers nothing, because the menu it opens belongs to
--- a window that is not there. A second press on the same icon closes it; a left click does too.
--- The right button on an icon: the item's own menu, drawn by the bar. The scene hands the
--- key over (the record's `key`, which names the bus name and the object path), so the logic
--- needs no copy of the list — a watch can arrive late, and a click cannot wait for it.
-on("tray_menu", function(key)
-    if type(key) ~= "string" or key == "" then return end
+-- The right button on an icon: the item's own menu, drawn by the bar. The scene hands over
+-- the record's index; the key that names the bus name and the object path is looked up here.
+-- A second press closes it, and a left click does too.
+on("tray_menu", function(index)
+    local at = index or 0
     if fact.tray_open then
         fact.tray_open = false
         return
     end
-    local tree = sys.ask("tray.menu", key)
+    local key = text["tray_key"]
+    if type(key) ~= "string" or key == "" then return end
+    local ok, tree = pcall(function() return sys.ask("tray.menu", key) end)
+    if not ok then
+        text["tm.1"] = tostring(tree)
+        fact["tm.count"] = 1
+        fact.tray_open = true
+        return
+    end
     if type(tree) ~= "table" or #tree == 0 then
-        -- Nothing to draw: ask the application for its own menu, as the right button did
-        -- before there was a surface to draw one in.
         sys.call("tray.context", key)
         return
     end
