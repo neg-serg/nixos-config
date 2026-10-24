@@ -596,6 +596,11 @@ end
 weather_cached()
 weather_fetch()
 moon_tick()
+-- The scene's own defaults land after the logic's first pass — the same trap the
+-- drawer fact hits — so a phase set here is overwritten by the `0` the scene
+-- declared, and the next tick is fifteen minutes away. Say it again once the
+-- scene has its feet; the moon was drawing a new moon for a quarter of an hour.
+after(1500, moon_tick)
 every(WEATHER_REFRESH_MS, weather_fetch)
 every(WEATHER_REFRESH_MS, moon_tick)
 

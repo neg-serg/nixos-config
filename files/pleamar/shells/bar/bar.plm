@@ -260,6 +260,9 @@ scene bar {
         screens: each
     }
 
+    // The moon's own shader: the phase terminator, stippled (moon.wgsl).
+    shader moon_face = file "moon.wgsl"
+
     // A named surface carries what it draws and shares every fact with the bar,
     // so a tooltip needs no round trip. `level: overlay` so it reads over the
     // bar; `open:` so it costs nothing while nobody is on a capsule.
@@ -535,14 +538,9 @@ scene bar {
             // sin(phase * 180) is the illuminated fraction, so the shadow is that many
             // twelfths short of the face. The old (phase - 0.5) * 24 offset put a fully dark
             // disc over a full moon.
-            box { from: x.moon, 6; size: 12, 12; corner: 6; color: skin.ink.dim }
-            box {
-                from: pick(weather.moon < 0.5, x.moon, x.moon + 12 * sin(weather.moon * 180)), 6
-                size: 12 * (1 - sin(weather.moon * 180)), 12
-                corner: 6
-                color: skin.coal
-                opacity: 84%
-            }
+            // The moon: dithered by its own shader (moon.wgsl), which takes the phase
+            // QS's MoonPhaseIcon takes and stipples the terminator the same way.
+            shader moon_face { at: x.moon, 6; size: 12, 12; values: weather.moon; colors: skin.ink.dim, skin.coal }
             zone box weather { from: 0, 0; size: 140, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { tip_open = true; emit tip(5) }
         }
