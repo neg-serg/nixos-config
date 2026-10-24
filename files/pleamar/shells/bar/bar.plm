@@ -370,7 +370,7 @@ scene bar {
     // cannot live inside a 39 logical px strip. Rows come from the item's own `menu` tree
     // (the engine's record carries it), two levels deep.
     surface tray_menu {
-        size: 240, 164
+        size: 300, 176
         anchor: bottom_right
         margin: 0, 8, 39, 0
         level: overlay
@@ -382,101 +382,103 @@ scene bar {
             color: skin.coal
             opacity: 69%
             border: 1, mix(skin.coal, skin.ink, 10%)
-            box { from: 0, 0; size: 240, tm.panel_h; corner: 8 }
-            box { from: 0, 4; size: 2, tm.panel_h - 8; corner: 1; color: skin.accent }
+            // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
+            // it from the top left a gap between the menu and the strip it came out of.
+            box { from: 0, 176 - tm.panel_h; size: 300, tm.panel_h; corner: 8 }
+            box { from: 0, 182 - tm.panel_h; size: 2, tm.panel_h - 12; corner: 1; color: skin.accent }
         }
-        column { at: 4, 4; size: 232, 156; gap: 0
-            row line1 { size: 232, 19; show: tm.count > 0
+        column { at: 8, 182 - tm.panel_h; size: 284, 164; gap: 0
+            row line1 { size: 284, 20; show: tm.count > 0
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 1 }
-                text "{tm.1}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.1 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.1 }
-                group hit_area1 { size: 232, 19
-                    zone box hit1 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.1}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 1 }
+                text "{tm.1}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.1 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.1 }
+                group hit_area1 { size: 284, 20
+                    zone box hit1 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.1}"; role: button }
                 }
                 on enter hit1 { tm.hot = 1 }
 
                 on press hit1 { emit tray_click(1) }
             }
-            row line2 { size: 232, 19; show: tm.count > 1
+            row line2 { size: 284, 20; show: tm.count > 1
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 2 }
-                text "{tm.2}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.2 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.2 }
-                group hit_area2 { size: 232, 19
-                    zone box hit2 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.2}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 2 }
+                text "{tm.2}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.2 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.2 }
+                group hit_area2 { size: 284, 20
+                    zone box hit2 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.2}"; role: button }
                 }
                 on enter hit2 { tm.hot = 2 }
 
                 on press hit2 { emit tray_click(2) }
             }
-            row line3 { size: 232, 19; show: tm.count > 2
+            row line3 { size: 284, 20; show: tm.count > 2
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 3 }
-                text "{tm.3}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.3 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.3 }
-                group hit_area3 { size: 232, 19
-                    zone box hit3 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.3}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 3 }
+                text "{tm.3}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.3 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.3 }
+                group hit_area3 { size: 284, 20
+                    zone box hit3 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.3}"; role: button }
                 }
                 on enter hit3 { tm.hot = 3 }
 
                 on press hit3 { emit tray_click(3) }
             }
-            row line4 { size: 232, 19; show: tm.count > 3
+            row line4 { size: 284, 20; show: tm.count > 3
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 4 }
-                text "{tm.4}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.4 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.4 }
-                group hit_area4 { size: 232, 19
-                    zone box hit4 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.4}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 4 }
+                text "{tm.4}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.4 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.4 }
+                group hit_area4 { size: 284, 20
+                    zone box hit4 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.4}"; role: button }
                 }
                 on enter hit4 { tm.hot = 4 }
 
                 on press hit4 { emit tray_click(4) }
             }
-            row line5 { size: 232, 19; show: tm.count > 4
+            row line5 { size: 284, 20; show: tm.count > 4
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 5 }
-                text "{tm.5}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.5 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.5 }
-                group hit_area5 { size: 232, 19
-                    zone box hit5 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.5}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 5 }
+                text "{tm.5}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.5 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.5 }
+                group hit_area5 { size: 284, 20
+                    zone box hit5 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.5}"; role: button }
                 }
                 on enter hit5 { tm.hot = 5 }
 
                 on press hit5 { emit tray_click(5) }
             }
-            row line6 { size: 232, 19; show: tm.count > 5
+            row line6 { size: 284, 20; show: tm.count > 5
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 6 }
-                text "{tm.6}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.6 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.6 }
-                group hit_area6 { size: 232, 19
-                    zone box hit6 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.6}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 6 }
+                text "{tm.6}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.6 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.6 }
+                group hit_area6 { size: 284, 20
+                    zone box hit6 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.6}"; role: button }
                 }
                 on enter hit6 { tm.hot = 6 }
 
                 on press hit6 { emit tray_click(6) }
             }
-            row line7 { size: 232, 19; show: tm.count > 6
+            row line7 { size: 284, 20; show: tm.count > 6
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 7 }
-                text "{tm.7}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.7 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.7 }
-                group hit_area7 { size: 232, 19
-                    zone box hit7 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.7}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 7 }
+                text "{tm.7}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.7 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.7 }
+                group hit_area7 { size: 284, 20
+                    zone box hit7 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.7}"; role: button }
                 }
                 on enter hit7 { tm.hot = 7 }
 
                 on press hit7 { emit tray_click(7) }
             }
-            row line8 { size: 232, 19; show: tm.count > 7
+            row line8 { size: 284, 20; show: tm.count > 7
                 // The wash the reference gives a menu line under the pointer (surfaceHover).
-                box { from: 0, 0; size: 232, 19; corner: 4; color: skin.ink; opacity: 5%; show: tm.hot == 8 }
-                text "{tm.8}" { at: 8, 9.5; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; show: not tm.sep.8 }
-                box { from: 6, 9; size: 220, 1; color: skin.ink; opacity: 12%; show: tm.sep.8 }
-                group hit_area8 { size: 232, 19
-                    zone box hit8 { from: 0, 0; size: 232, 19; corner: 4; cursor: pointer; label: "{tm.8}"; role: button }
+                box { from: 0, 0; size: 284, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 8 }
+                text "{tm.8}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: 264; lines: 1; show: not tm.sep.8 }
+                box { from: 10, 10; size: 264, 1; color: skin.ink; opacity: 12%; show: tm.sep.8 }
+                group hit_area8 { size: 284, 20
+                    zone box hit8 { from: 0, 0; size: 284, 20; corner: 4; cursor: pointer; label: "{tm.8}"; role: button }
                 }
                 on enter hit8 { tm.hot = 8 }
 
