@@ -397,7 +397,9 @@ scene bar {
     surface tray_menu {
         size: 300, 176
         anchor: bottom_right
-        margin: 0, 8, 39, 0
+        // No bottom margin: `margin` is measured from the work area, whose lower edge is already
+        // the bar's top — 39 px more lifted the menu clear off the strip it belongs to.
+        margin: 0, 8, 0, 0
         level: overlay
         open: tray_open
         body {
