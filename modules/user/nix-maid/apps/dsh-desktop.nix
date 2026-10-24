@@ -17,20 +17,38 @@ let
   ldSo = "${pkgs.glibc}/lib/ld-linux-x86-64.so.2";
   culRpath = "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.glibc}/lib";
 
+  # A glibc bump moves the store paths, and a binary patched against the old
+  # one dies with "symbol lookup error: ... undefined symbol: __pointer_chk_guard,
+  # version GLIBC_PRIVATE" — interpreter and libc from different glibc builds.
+  # The binary is a plain file in ~/.local/bin, so nothing re-patches it on its
+  # own: every `desktop` CUL call then spawns a process that dies instantly, and
+  # before backends.js grew its error handling that EPIPE took dsh-tui down.
+  # Hence the drift check below, not only the "file is missing" fetch.
   installCul = pkgs.writeShellScript "dsh-desktop-cul" ''
     set -eu
     export PATH=/run/current-system/sw/bin:$PATH
-    # CUL prebuilt binary: fetch once, verify sha256, patchelf for NixOS.
     BIN="${homeDir}/.local/bin/computer-use-linux"
+    PATCH=${pkgs.patchelf}/bin/patchelf
+    # CUL prebuilt binary: fetch once, verify sha256, patchelf for NixOS.
     if [ ! -x "$BIN" ]; then
       mkdir -p "${homeDir}/.local/bin"
       TMP="$(mktemp)"
       curl -sL --max-time 180 --proxy socks5h://127.0.0.1:10808 -o "$TMP" "${culUrl}" || curl -sL --max-time 180 -o "$TMP" "${culUrl}"
       echo "${culSha256}  $TMP" | sha256sum -c -
-      ${pkgs.patchelf}/bin/patchelf --set-interpreter "${ldSo}" --set-rpath "${culRpath}" "$TMP"
+      "$PATCH" --set-interpreter "${ldSo}" --set-rpath "${culRpath}" "$TMP"
       install -m755 "$TMP" "$BIN"
       rm -f "$TMP"
       echo "computer-use-linux ${culVersion} installed to $BIN"
+    else
+      # Re-patch in place when the interpreter or the runpath no longer match
+      # the current system glibc; an unreadable ELF counts as drifted.
+      cur_ld="$("$PATCH" --print-interpreter "$BIN" 2>/dev/null || true)"
+      cur_rp="$("$PATCH" --print-rpath "$BIN" 2>/dev/null || true)"
+      if [ "$cur_ld" != "${ldSo}" ] || [ "$cur_rp" != "${culRpath}" ]; then
+        chmod u+w "$BIN"
+        "$PATCH" --set-interpreter "${ldSo}" --set-rpath "${culRpath}" "$BIN"
+        echo "computer-use-linux re-patched for ${pkgs.glibc.name}"
+      fi
     fi
   '';
 in
