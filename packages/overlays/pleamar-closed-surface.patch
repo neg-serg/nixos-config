@@ -47,14 +47,14 @@ index 2bdfa68..7e90534 100644
          if let Some(layer) = &self.layer {
              layer.set_keyboard_interactivity(keyboard_interactivity(t));
 diff --git a/src/render.rs b/src/render.rs
-index ea1f2a7..c9b9772 100644
+index ea1f2a7..663bd27 100644
 --- a/src/render.rs
 +++ b/src/render.rs
 @@ -4112,6 +4112,7 @@ pub fn run(
                  // region is committed with the next frame presented, and a
                  // surface that draws nothing —a full-screen catcher— may never
                  // present another, leaving its new region pending for ever.
-+                let its_own = if its_own.is_empty() && scene.surfaces.get(l.view.surface).is_some_and(|s| matches!(s.name.as_str(), "tray_catcher" | "tray_menu" | "tip")) { vec![[0, 0, (v[2] - v[0]) as i32, (v[3] - v[1]) as i32]] } else { its_own };
++                let its_own = if its_own.is_empty() && scene.surfaces.get(l.view.surface).is_some_and(|s| s.name == "tray_catcher") { vec![[0, 0, (v[2] - v[0]) as i32, (v[3] - v[1]) as i32]] } else { its_own };
                  if l.input_region != its_own && l.presented {
                      if std::env::var_os("PLEAMAR_REGIONS").is_some() {
                          eprintln!("regions · surface {} ({}): {:?}", l.view.surface, scene.surfaces.get(l.view.surface).map_or("", |s| s.name.as_str()), its_own);
