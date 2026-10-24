@@ -421,7 +421,7 @@ scene bar {
             // reference's menus carry.
             color: skin.coal
             opacity: 69%
-            border: 1, mix(skin.coal, skin.ink, 10%)
+            border: 1, mix(skin.coal, skin.ink, 8%)
             // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
             // it from the top left a gap between the menu and the strip it came out of.
             box { from: 0, 176 - tm.panel_h; size: tm.w, tm.panel_h; corner: 8 }
