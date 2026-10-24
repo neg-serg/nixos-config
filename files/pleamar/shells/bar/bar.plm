@@ -528,8 +528,20 @@ scene bar {
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
+            // The face, and the dark side of it. QS's MoonPhaseIcon works the illuminated
+            // fraction out of the same reference (the new moon of 2000-01-06 18:14 UTC) and
+            // dithers the terminator; the amount of darkness here is the phase's own:
+            // sin(phase * 180) is the illuminated fraction, so the shadow is that many
+            // twelfths short of the face. The old (phase - 0.5) * 24 offset put a fully dark
+            // disc over a full moon.
             box { from: x.moon, 6; size: 12, 12; corner: 6; color: skin.ink.dim }
-            box { from: x.moon + (weather.moon - 0.5) * 24, 6; size: 12, 12; corner: 6; color: skin.coal; opacity: 84% }
+            box {
+                from: pick(weather.moon < 0.5, x.moon, x.moon + 12 * sin(weather.moon * 180)), 6
+                size: 12 * (1 - sin(weather.moon * 180)), 12
+                corner: 6
+                color: skin.coal
+                opacity: 84%
+            }
             zone box weather { from: 0, 0; size: 140, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { tip_open = true; emit tip(5) }
         }
