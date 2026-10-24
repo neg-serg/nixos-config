@@ -47,10 +47,28 @@ end
 local function idle()
     fact.busy = false
     fact.count = 0
-    text.phase = "idle"
+    model.builds = {}
+    text.stage = "idle"
     text.glyph = GLYPH.idle
     fact.tone = 0
     text.summary = ""
+end
+
+-- The tool prints its own summary in `text` ("<icon> building probe-drawer +2 17s") and
+-- names the build better than its own `drvs` list does — the first entry there is whatever
+-- is being compiled at that instant, not what the reader asked for. So the word beside the
+-- glyph is the tool's: the nerd-font icon and the phase word come off, the rest stays.
+local function summaryOf(value, class)
+    local text = tostring(value or "")
+    text = text:gsub("^[^%w]+", "")
+    if class ~= "" then
+        text = text:gsub("^" .. class .. "%s+", "")
+    end
+    -- The clock at the end ("9s") moves every second: the badge is a caption, not a
+    -- stopwatch, and a width that changes once a second is a bar that jitters. The popup
+    -- has the row's own elapsed for that.
+    text = text:gsub("%s+%d+[smhd]%s*$", "")
+    return (text:gsub("%s+$", ""))
 end
 
 local function apply(line)
@@ -62,7 +80,7 @@ local function apply(line)
     end
     local class = tostring(state.class or "idle")
     local count = tonumber(state.count) or 0
-    text.phase = class
+    text.stage = class
     text.glyph = GLYPH[class] or "build"
     fact.tone = TONE[class] or 0
     text.detail = tostring(state.tooltip or "")
@@ -70,15 +88,29 @@ local function apply(line)
     fact.busy = count > 0 and class ~= "idle"
     if not fact.busy then
         text.summary = ""
+        model.builds = {}
         return
     end
     local builds = state.builds
-    local first = type(builds) == "table" and builds[1] or nil
-    local name = nameOf(first)
-    if name == "" then name = class end
-    if count > 1 then
-        name = name .. " +" .. tostring(count - 1)
+    -- The popup's list, in the tool's own order, capped at the model's 8.
+    local rows = {}
+    if type(builds) == "table" then
+        for i = 1, math.min(#builds, 8) do
+            local b = builds[i]
+            if type(b) == "table" then
+                rows[#rows + 1] = {
+                    name = nameOf(b),
+                    stage = tostring(b.phase or class),
+                    elapsed = tostring(b.elapsed_text or ""),
+                }
+            end
+        end
     end
+    model.builds = rows
+    local first = type(builds) == "table" and builds[1] or nil
+    local name = summaryOf(state.text, class)
+    if name == "" then name = nameOf(first) end
+    if name == "" then name = class end
     text.summary = name
 end
 

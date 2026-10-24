@@ -10,9 +10,10 @@ scene build_check {
 
     build.Tile()
     build.Tile(scale: 1.5)
+    build.Rows(width: 300)
 
     on demo {
-        Build.phase = "building"
+        Build.stage = "building"
         Build.tone = 1
         Build.glyph = "build"
         Build.summary = "probe-build-status +1"

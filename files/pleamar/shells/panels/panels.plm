@@ -6,6 +6,7 @@ import "../../lib/capsule.plm"
 import "../../lib/plugins/cover/cover.plm" as Cover
 import "../../lib/plugins/meta/meta.plm" as Meta
 import "../../lib/plugins/spectrum/spectrum.plm" as spec
+import "../../lib/plugins/build/build.plm" as build
 
 // panels.plm — the drawer surface of the shell (scene `panels`, PH2-B slice 1).
 //
@@ -141,6 +142,11 @@ scene panels {
                            open: drawer == weather
         include "pages/weather.plm"
     }
+    surface build_card { size: 384, 214; anchor: bottom_left; margin: 0, 0, 2, 2
+                         level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                         open: drawer == build
+        include "pages/build.plm"
+    }
     surface system_card { size: 1040, 1020; anchor: center; margin: 0
                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
                           open: drawer == system
@@ -158,7 +164,7 @@ scene panels {
                   services: "audio", "audio.*", "files", "files.write", "media" }
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | keyboard | tray | system | power | settings = none
+    fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | build | keyboard | tray | system | power | settings = none
     fact close_on_escape = true
     fact close_on_outside = true
     fact zoom = 1
@@ -189,6 +195,7 @@ scene panels {
     event open_volume
     event open_calendar
     event open_weather
+    event open_build
     event open_system
     event open_media
     event open_network

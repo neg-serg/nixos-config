@@ -1194,13 +1194,11 @@ scene bar {
             }
             MicCapsule(toggle_mic) { show: widget.mic and mic.shown }
             VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and vol.shown }
-            // Genelec, the rightmost module, as in the legacy bar — and, as in
-            // the legacy bar, only while the cursor is on it: QS's tile sets
-            // `hideIconWhenIdle`, which collapses the whole capsule (width and
-            // opacity) until `panelHovering` or a level change brings it back.
-            // Always there: the reference hides the tile until `panelHovering`, but its reveal is
-            // on the *strip's* hover while this slot was gated on the tile's own — a tile that is
-            // not drawn cannot be hovered, so it never came back at all.
+            // Genelec, the rightmost module, as in the legacy bar. The reference hides it until
+            // `panelHovering` (the strip's hover) — but this slot was gated on the tile's own
+            // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
+            // hidden. The plate is a hover thing inside the tile; the silhouette and the level
+            // are always there, as the microphone's glyph is.
             row genelec_slot { show: widget.genelec; gen.Tile() }
         }
     }
