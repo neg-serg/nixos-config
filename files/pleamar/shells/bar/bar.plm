@@ -362,7 +362,7 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
-            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 9.6; weight: 500; color: time.tone; family: "Iosevka" }
+            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14.4; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { tip_open = true; emit tip(0) }
         }
@@ -604,10 +604,10 @@ scene bar {
             // 9.6 design px is the reference's 11 logical px (round(round(14 * 1.0) * 0.7))
             // divided by this scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel
             // too tall.
-            text "{net_rx}" { measure: w.rx; at: text.x, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
-            text "{net_rx_unit}" { at: text.x + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; at: text.x, strip / 2 + 5; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
-            text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 5; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            text "{net_rx}" { measure: w.rx; at: text.x, strip / 2 - 5; anchor: left center; size: 9.6; weight: 600; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx_unit}" { at: text.x + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6; weight: 400; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; at: text.x, strip / 2 + 5; anchor: left center; size: 9.6; weight: 600; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 5; anchor: left center; size: 9.6; weight: 400; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { tip_open = true; emit tip(3) }
             on press net { emit open_network_panel }
