@@ -135,95 +135,6 @@
 #   and `move_focus`/`move_window`/`focus_tab` all return `ok`; `Hyprland --verify-config` on the
 #   deployed `hyprland.lua` reports `config ok`; no crash lines in the nested log.
 #
-# ### hyprglass (liquid glass)
-#
-# - **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — v0.8.1, the release pinned to Hyprland
-#   0.56.2 upstream (`hyprpm.toml` pin); the 0.55 `postPatch` is gone.
-#   - The build carries one local patch, `hyprglass-layer-backdrop-live.patch`. v0.8.1 parses the
-#     layer namespace filters only at load and on a config reload, so the keys this session pushes
-#     *after* the load (they exist only once the plugin registered them) left the whitelist empty —
-#     and an empty whitelist means "glass every layer", which put the bar and the media card into the
-#     glass pass with the plugin's *cached* backdrop instead of Hyprland's live layer blur (frozen
-#     frost until the surface was re-mapped, with its slide animation forcing the re-sample). The
-#     patch re-parses the filters when the raw values change and invalidates a layer's cached backdrop
-#     when a commit lands in its sample region — a wallpaper switch is exactly such a commit — while
-#     the re-sample itself stays rate limited by `layers.live_resample_fps`. `hyprglass-apply --check`
-#     now covers the layer keys too: a compositor reload resets them to the same dangerous defaults
-#     while the nine panel keys stay in sync, so nothing else noticed.
-# - **Load + configure**: the `hyprland.start` hook in `files/gui/hypr/hyprland.lua` runs the
-#   generated `hyprglass-setup` helper, which does `hyprctl plugin load` and then pushes
-#   `files/gui/hypr/hyprglass.lua` through `hyprctl eval`. The helper is in PATH, so the glass can be
-#   (re)applied in a running session without a relogin.
-# - **Why keys and not the plugin's Lua API**: a plugin cannot be dlopen'd while `hyprland.lua` is
-#   still being parsed (`hl.plugin.load` is a silent no-op there), and calling
-#   `hl.plugin.hyprglass.config({...})` at runtime **aborts the compositor** — SIGABRT with the stack
-#   in `forwardLuaConfig` ← `handleLuaConfig`, reproducible on 0.56.2 + v0.8.1 in a nested instance.
-#   The regular `plugin = { hyprglass = … }` keys go through the config manager and are stable, so the
-#   settings live in that form.
-# - **Glass off**: window rules `hgrm-term` (kitty/term), `hgrm-mpv`, `hgrm-fullscreen` via the
-#   `hyprglass_disabled` tag.
-# - **Presets** (custom, defined by `hyprglass-apply` — see below): `scratch` and `media-dark`.
-#   - `scratch` is attached by tag to every scratchpad window rule in `files/gui/hypr/hyprland.lua`
-#     (`hyprglass_preset_scratch`): `blur_strength 16` with the maximum of 5 gaussian passes and
-#     `adaptive_dim = 0`, against the global pair (10.5/4 in the panel's JSON at the time of writing),
-#     so the desk behind a scratchpad is frosted much harder — and, per the request that the heavier
-#     frost must not darken the pad, without the adaptive dim that would otherwise ride along: the
-#     shader scales the frosted colour by `1 - adaptiveDim * smoothstep(0.25, 0.55, blurredLum)`,
-#     whose curve is tuned for the luminance range a normal-strength blur compresses into.
-#   - **Per-window overrides** are edited in the Glass panel (win+shift+g, the section below the
-#     global sliders) and stored in `Settings.json` (`glassWindowOverrides`) plus
-#     `~/.config/hypr/hyprglass.json`. `hyprglass-apply` turns each entry into a custom preset
-#     (`win_<class-slug>`) and the `hyprglass_preset_win_<slug>` window rule for that class; the Lua
-#     is generated from the JSON, never typed by hand. Two mechanics decide what "live" means here:
-#     preset *values* are resolved by the plugin every frame, so re-tuning an entry re-tunes open
-#     windows immediately, while a window's *tags* are computed at map time, so the rule itself
-#     reaches windows of that class opened after the push. A disabled entry gets an empty preset,
-#     which makes any leftover tag resolve to the theme/global values instead of its old preset.
-#     Scriptable equivalent (same functions the panel's buttons call):
-#     `quickshell ipc call globalIPC setGlassWindowOverride '{"class":"music", "enabled":true,"blurStrength":16,"glassOpacity":0.9,"adaptiveDim":0,"tint":"000000cc"}'`,
-#     `… removeGlassWindowOverride music`, `… listGlassWindowOverrides`. `tint` is RRGGBBAA (the
-#     plugin's packing, see the shader's closing `mix`) and `""` means "inherit".
-#   - `music_strong` is the same for the rmpc scratchpad (`music-scratchpad` rule, tag
-#     `hyprglass_preset_music_strong`): `blur_strength 64` — 4x the scratch preset, a 768 px radius —
-#     with the same 5 passes and no adaptive dim. The pane draws nothing over its backdrop (0.45
-#     opacity, no baked slice any more), so the plugin's frost is the whole picture there, and 16 read
-#     as too weak. `blur_strength` is a plain scale (`value * 12` px) with no clamp: 64, 128 and 256
-#     are all accepted by the config manager, so this is the knob to turn.
-#   - `media-dark` (now removed) was attached to the panel's now-playing card through
-#     `layers.namespace_presets = "qs-music:media-dark"` in `files/gui/hypr/hyprglass.lua`:
-#     `dark.brightness = 0.40` — ~2x the dark theme's 0.82 — plus the hardest frost
-#     (`blur_strength 16`, all 5 gaussian passes) and `adaptive_dim = 0`, so the darkness is the tint
-#     and nothing else. The first pass was `0.55` (exactly 1.5x) with the adaptive dim still riding on
-#     top; taking that dim off (it multiplied by up to `1 - 0.4` more on a bright backdrop) made the
-#     plate read too light, hence the lower tint and the extra blur now. The whole namespace was taken
-#     out of the plugin's layer pass afterwards: that pass frosts the wallpaper it re-samples instead
-#     of the real backdrop (the reason the bar's surfaces were removed from it), i.e. exactly the
-#     pseudo-backdrop the card must not show. `qs-music` now uses Hyprland's own layer blur
-#     (`blur-qs-.*`, `ignore_alpha 0.05` — live framebuffer) over the card's translucent fill, and its
-#     frame is the thin 1 px hairline the card draws itself. The preset also zeroes the plugin's own
-#     rim (`fresnel_strength`, `specular_strength`, `edge_thickness`, `refraction_strength`): around a
-#     small plate that refractive band reads as a thick glowing border, and the frame wanted there is
-#     the thin 1 px hairline the card draws itself (`Widgets/SidePanel/Music.qml`,
-#     `border.width: Theme.uiBorderWidth`). Preset values are resolved every frame, so this is a
-#     push-only knob (no remap of the layer surface). Note the pair separator is `:` (the plugin
-#     parses these with `parseKeyValuePairs(..., ':')`, `src/main.cpp`), unlike the mask thresholds
-#     which use `=`.
-#   - Both are pushed by `hyprglass-apply` with `hyprctl eval` + the plugin's
-#     `hl.plugin.hyprglass.preset(...)`, because custom presets cannot be expressed as config values
-#     and the `preset` keyword is unavailable in Lua-config mode —
-#     `hyprctl keyword plugin:hyprglass:preset …` answers "keyword can't work with non-legacy parsers.
-#     Use eval." (measured in a nested 0.56.2). `preset()` itself is safe: it goes through
-#     `handleLuaPreset`, while it is `config()` that aborts the compositor. A `hyprctl reload` drops
-#     the presets along with the nine knobs, and the next push restores both.
-# - **Layer glass**: popups and notifications only (`quickshell`, `notifications`, `qs-music`,
-#   `qs-calendar`, `qs-monitor`, `qs-weather`, `sideleft-weather`, `sysmon-popup`). The always-on bar
-#   surfaces (`qs-panel`, `quickshell-bar-reserve`, `qs-content-left/right`) are deliberately left to
-#   Hyprland's own layer blur: hyprglass's layer pass re-samples the background between frames, so the
-#   glass there flickered between none / normal / double strength (bar strip chroma 1.4 / 9.9 / 18.7,
-#   std 4.4; 0.06 with the layer glass off), measured on 0.56.2 + v0.8.1 on 2026-09-17. The plugin
-#   keeps the layer surfaces it has already registered, so a changed namespace list only applies once
-#   those surfaces are recreated (a quickshell restart).
-#
 # ### hyprexpo (exposé / workspace overview)
 #
 # - **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — upstream retired hyprexpo from
@@ -605,31 +516,6 @@ let
   # keys, NOT the plugin's Lua API: that path aborts the compositor) are pushed
   # through `hyprctl eval`. builtins.replaceStrings (not pkgs.replaceVars): files.nix
   # assigns the lua text to a home-file `.text` entry, which must be a string.
-  hyprglassSetup = pkgs.writeShellScriptBin "hyprglass-setup" ''
-    hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
-
-    # Already loaded (e.g. the hook re-ran) → the load fails, that is fine
-    "$hyprctl_bin" plugin load ${pkgs.hyprglass}/lib/hyprglass.so || true
-
-    # hyprctl eval takes the code as one argument and reads a leading "--" (Lua
-    # comment) as a flag, hence the leading newline.
-    "$hyprctl_bin" eval "
-    $(cat ${pkgs.writeText "hyprglass.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprglass.lua"))})" || true
-
-    # The session's Hyprland socket signature is what hyprctl needs, and systemd's
-    # user environment does not have it: without this the glass watchdog (and any
-    # other user service calling hyprctl) can never reach the compositor and just
-    # reports failure forever. Imported at session start, it is there for every
-    # service of this session.
-    systemctl --user import-environment HYPRLAND_INSTANCE_SIGNATURE XDG_RUNTIME_DIR >/dev/null 2>&1 || true
-
-    # Then the real thing: the deployed base plus the values the Glass panel keeps
-    # in ~/.config/hypr/hyprglass.json, and it checks that they landed. The eval
-    # above is the fallback for the case where the deployed file is not there yet
-    # (the activation order is not guaranteed).
-    hyprglass-apply >/dev/null 2>&1 || true
-  '';
-
   # hy3 (i3-style manual tiling). The plugin cannot be dlopen'd while
   # hyprland.lua is being parsed, so it is loaded from the session-start hook;
   # the layout itself lives in hyprland.lua (`general:layout = "hy3"`). Until
@@ -1063,7 +949,6 @@ let
     builtins.replaceStrings
       [
         "@hy3_setup@"
-        "@hyprglass_setup@"
         "@hyprexpo_setup@"
         "@hyprwindowshade_setup@"
         "@hyprwinwrap_setup@"
@@ -1074,7 +959,6 @@ let
       ]
       [
         "${hy3Setup}/bin/hy3-setup"
-        "${hyprglassSetup}/bin/hyprglass-setup"
         "${hyprexpoSetup}/bin/hyprexpo-setup"
         "${hyprwindowshadeSetup}/bin/hyprwindowshade-setup"
         "${hyprwinwrapSetup}/bin/hyprwinwrap-setup"
@@ -1098,7 +982,6 @@ in
         # running session without logging out (the start hook only fires on start).
         environment.systemPackages = services.packages ++ [
           hy3Setup # loads the hy3 layout plugin; re-run to re-select the layout in a live session
-          hyprglassSetup
           hyprliquidSetup # loads the plugin and (re)applies the layer-surface materials of files/gui/hypr/hyprliquid.lua
           hyprexpoSetup
           hyprwindowshadeSetup

@@ -154,21 +154,9 @@ hl.monitor({ output = "DP-4", disabled = true })
 
 
 -- ---------------------------------------------------------------------
--- hyprglass: put the settings back after anything that drops them
 -- ---------------------------------------------------------------------
 -- The plugin holds its config only until something re-initialises its state: a
 -- `hyprctl reload` drops it back to the plugin defaults (blur_strength 2,
--- vibrancy -1, glass_opacity 1) while the files still say otherwise.
---
--- `config.reloaded` sounds like the hook for that, but it does not fire for a
--- compositor reload (measured: a file-writing handler stayed empty across
--- `hyprctl reload`), so the repair lives in a timer instead — see
--- hyprglass-watch in modules/user/nix-maid. The session start is still worth
--- hooking here, and `hyprglass-apply` checks its work instead of assuming it.
-hl.on("hyprland.start", function()
-  hl.exec_cmd("hyprglass-apply >/dev/null 2>&1 || true")
-end)
-
 -- ---------------------------------------------------------------------
 -- Environment (from env.conf)
 -- ---------------------------------------------------------------------
@@ -577,9 +565,6 @@ hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 -- 2026-10-13 each press left another stuck client behind until the shell was
 -- restarted (the quickshell-health timer now does that on its own).
 hl.bind(M4 .. "+n", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleNotificationCenter"))
--- Glass panel: live tuning for the hyprglass settings (see the panel module and
--- hyprglass-apply). Next to the notification centre bind, same IPC shape.
-hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleGlassPanel"))
 -- Panel toggles and transport for the same shell (audit #7): the calendar and
 -- weather capsules register names with OverlayManager; media goes through the
 -- MPRIS manager. M4+SH+j/u/x were the free slots in this keymap.
@@ -663,43 +648,6 @@ local function binde_reset(key, fn)
   hl.bind(key, fn, { repeating = true })
   hl.bind(key, hl.dsp.submap("reset"), { repeating = true })
 end
-
--- Visual-effects master switch (special submap: Alt+E -> b).
---
--- One press strips the eye candy — window and layer blur, motion blur, animations,
--- dim and hyprglass — and the next press puts the shipped values back. hyprglass
--- belongs to the set: with manage_window_blur it *owns* the window blur and runs
--- its own five-pass gaussian, so leaving it enabled would keep the most expensive
--- half of the look alive. The start hook pushes the glass settings on every
--- `hyprland.start` (and the watchdog repairs drift), so a reload brings glass
--- back — same as every other stripped value here, since the file is the source
--- of truth.
---
--- The state is read back from the compositor instead of kept in a Lua variable:
--- `hyprctl reload` re-applies the shipped values and a stale variable would then
--- flip the wrong way on the first press. `decoration.blur.enabled` is the marker
--- because it is on in the shipped look and off in the stripped one; shadow,
--- rounding and opacity are already off/neutral in this config, so they carry no
--- direction and are pinned to their shipped values on both halves of the toggle.
-local function toggle_visual_effects()
-  local enable = hl.get_config("decoration.blur.enabled") == false
-  local cfg = {
-    decoration = {
-      blur = { enabled = enable },
-      shadow = { enabled = false },
-      motion_blur = { enabled = enable },
-      dim_inactive = false,
-      dim_special = false,
-    },
-    animations = { enabled = enable },
-  }
-  -- The plugin key exists only once the .so is loaded, and that happens after
-  -- this file is parsed (start hook) — same guard as the dynamic_cursors block
-  -- at the top. hyprglass registers `enabled` as an int, but the config parser
-  -- takes the boolean the same way the shipped hyprglass.lua writes it.
-  if hl.plugin and hl.plugin.hyprglass then
-    cfg.plugin = { hyprglass = { enabled = enable } }
-  end
   hl.config(cfg)
 end
 
@@ -1209,14 +1157,14 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 -- longer carries the pane: rmpc moved to the scratchpad opacity of 0.85 (services.nix),
 -- so the frost sits behind a nearly opaque surface and 64 is insurance. Set 0.45 back
 -- there (or write a number into ~/.config/kitty/glass-opacity) to hand the pane back to it.
-hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, tag = "+hyprglass_preset_music_strong", size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
-hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
-hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
-hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
-hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
-hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
-hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, tag = "+hyprglass_preset_scratch", size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
+hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
+hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
+hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
+hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
+hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
+hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
+hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
+hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 
 -- Scratchpads are frosted like the media popup: hyprglass replaces Hyprland's
 -- window blur pass, so a class keeps blur enabled here (window rules only carry
@@ -1259,10 +1207,7 @@ end
 hl.window_rule({ name = "soulstone-survivors", match = { class = "^(steam_app_2066020)$" }, render_unfocused = true, no_blur = true })
 hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, immediate = true })
 -- Exclude kitty from hyprglass glass shader
-hl.window_rule({ name = "hgrm-term", match = { class = "^(kitty|term)$" }, tag = "+hyprglass_disabled" })
 -- Glass over video and over fullscreen surfaces only costs GPU time
-hl.window_rule({ name = "hgrm-mpv", match = { class = "^(mpv)$" }, tag = "+hyprglass_disabled" })
-hl.window_rule({ name = "hgrm-fullscreen", match = { fullscreen = true }, tag = "+hyprglass_disabled" })
 
 -- Stretch only the dedicated term workspace window to fill the monitor
 -- (kitty launched as class=term; plain kitty keeps its own size)
@@ -1513,9 +1458,6 @@ hl.on("hyprland.start", function()
   -- portals and stop/start hyprland-session.target so quickshell, hypridle,
   -- hyprscratch and ru-layout come back after a Hyprland (re)start.
   hl.exec_cmd("hypr-start")
-
-  -- Liquid glass: loads the plugin and pushes files/gui/hypr/hyprglass.lua
-  hl.exec_cmd("@hyprglass_setup@")
 
   -- Liquid Glass materials for layer surfaces as well: hyprglass handles only
   -- windows and popups, and the bar is a layer surface. Rules live in
