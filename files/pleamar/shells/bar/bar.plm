@@ -189,6 +189,9 @@ scene bar {
     // engine reads `com.canonical.dbusmenu` and answers a list of records, which a scene
     // cannot hold: it draws them from these eight texts, and `tm.count` says how many of
     // them are real.
+    // The tray item the menu belongs to: a text, because an event carries numbers only and
+    // the logic cannot read the model.
+    text tray_key = ""
     fact tm.count = 0
     text tm.1 = ""
     text tm.2 = ""
@@ -760,7 +763,7 @@ scene bar {
         // The item's own menu. A scene that uses the right button is never closed by one
         // (`press right`, language reference §14), which is why this trigger is also what
         // keeps a stray right click from closing the bar.
-        on press right trayhit { emit tray_menu(r.index) }
+        on press right trayhit { tray_key = r.key; emit tray_menu(r.index) }
     }
 
     // ---------------------------------------------- right: microphone, volume
