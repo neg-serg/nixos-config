@@ -257,11 +257,26 @@ scene bar {
     // rounded: 25. The reserve is the same 25, so windows stop at the bar
     // exactly where they do under Quickshell (measured: hyprctl reports the QS
     // panel at 0,1055 1920x25).
+    // The hotzone: QS's `panel.hotzone.width` is 9 design px (10 logical at panel.scale
+    // 1.15), carried by the surface *above* the strip and reserved by nothing — it is the
+    // band a tooltip lives in and the pointer enters from. Without it the scene could not
+    // hold one: the tooltip's own surface needs room above the strip, and the renderer
+    // said so itself — "a drawing is cut: it needs 2 px above more than this 1920 x 25
+    // surface has".
+    let hot = 10
+    // The strip sits in the bottom of the surface, so everything it draws moves down by
+    // the hotzone. Design px, because that is what the drawing below is written in.
+    let push = hot / ui
     surface {
-        size: full, 25
+        // 25 design px of content are 28.75 logical at `ui` 1.15, plus 10 of hotzone. A
+        // surface's `size:` takes a literal (header, line 23), so the arithmetic is here and
+        // not in the language: 29 + 10.
+        size: full, 39
         anchor: bar_edge
         level: top
-        reserve: 25 while shown
+        // The reserve is the strip alone, as in the reference: the hotzone is not taken
+        // from the windows, it only catches the pointer.
+        reserve: 29 while shown
         screens: each
     }
 
@@ -751,7 +766,7 @@ scene bar {
 
     // ------------------------------------------------------------------ rows
     component Left(scale: number = ui * user_scale) {
-        row { at: side * scale, strip / 2; anchor: left middle; gap: row.gap * scale
+        row { at: side * scale, strip / 2 + push; anchor: left middle; gap: row.gap * scale
             Clock() { show: widget.clock }
             WsCapsule(focus_workspace) { show: widget.workspaces }
 
@@ -923,7 +938,7 @@ scene bar {
         // `side` keeps the left row off the edge; the right row needs 8 design px less of it.
         // Measured: the mic's ink ended 9 logical px short of the reference's (1894 against
         // 1903 on a 1920 bar).
-        row { at: screen.width - (side - 8) * scale, strip / 2; anchor: right middle; gap: row.gap * scale
+        row { at: screen.width - (side - 8) * scale, strip / 2 + push; anchor: right middle; gap: row.gap * scale
             // The legacy order from the left: media · MPD · systray · mic ·
             // volume · Genelec. The tray is still an extension point.
             // The controls ride out to the left of the capsule, so they are declared
@@ -979,12 +994,14 @@ scene bar {
         // 88 % over that wallpaper, the port's #040404, and 1 - (1 - 0.88)^2 = 0.9856 with
         // 0.0144 * rgb(242,250,255) is exactly #040404. `opacity: 0%` keeps the shape the
         // body needs and drops the second coat.
-        box { from: 0, 0; size: screen.width, strip; opacity: 0% }
+        box { from: 0, push; size: screen.width, strip; opacity: 0% }
     }
     // The whole strip is a hover target for the widgets that hide at idle
     // (QS's `panelHovering`): declared before the rows, so every widget's own
     // zone is above it and keeps its clicks.
-    zone box strip_hover { from: 0, 0; size: screen.width, strip; label: "Bar"; role: region }
+    // The hotzone counts as the bar for `strip.hot`: the widgets that hide at idle come
+    // back when the pointer enters the band above the strip, which is what QS does.
+    zone box strip_hover { from: 0, 0; size: screen.width, strip + push; label: "Bar"; role: region }
     on enter strip_hover { strip.hot = true }
     on leave strip_hover { strip.hot = false; tip_open = false }
 
