@@ -351,7 +351,10 @@ scene bar {
     // above more than this 1920 x 25 surface has". So the next step is not this
     // surface but the bar's: size it ~34 logical, reserve 25, and shift the whole
     // design strip down by the hotzone (10 logical = 8.7 design).
-    surface tip {
+    // Renamed away from `tip`: the engine build on this host hands a rectangle to `tip` and
+    // `tray_menu`, which swallows the pointer. This name is nobody's rule, and the catcher
+    // (the one surface that needs the rectangle) keeps its own.
+    surface bartip {
         size: 240, 30
         anchor: bottom
         // Measured: with `margin: 0, 0, 29, 0` the card's bottom edge sat 38
@@ -376,7 +379,7 @@ scene bar {
     // The catcher: a full-monitor, invisible surface under the menu while it is open, so a
     // click anywhere closes it. Without one the menu could only be dismissed by asking for it
     // again — which is not how any menu on a desktop works.
-    surface tray_catcher {
+    surface barcatcher {
         size: full, full
         anchor: top_left
         level: overlay
@@ -391,9 +394,9 @@ scene bar {
         // monitor because a press is matched to a zone: it has to land in `anywhere` for the menu
         // to be dismissed.
         body { color: skin.coal; opacity: 4%
-            box { from: 0, 0; size: tray_catcher.width, tray_catcher.height }
+            box { from: 0, 0; size: barcatcher.width, barcatcher.height }
         }
-        zone box anywhere { from: 0, 0; size: tray_catcher.width, tray_catcher.height; cursor: pointer; label: "Close"; role: button }
+        zone box anywhere { from: 0, 0; size: barcatcher.width, barcatcher.height; cursor: pointer; label: "Close"; role: button }
         // Either button: a menu is dismissed by the first press anywhere else, whatever it is.
         on press anywhere { emit tray_close }
         on press right anywhere { emit tray_close }
@@ -402,7 +405,7 @@ scene bar {
     // The tray's menu: a surface of its own above the bar's right end, because a menu
     // cannot live inside a 39 logical px strip. Rows come from the item's own `menu` tree
     // (the engine's record carries it), two levels deep.
-    surface tray_menu {
+    surface barmenu {
         size: 300, 176
         anchor: bottom_right
         // No bottom margin: `margin` is measured from the work area, whose lower edge is already
@@ -925,7 +928,9 @@ scene bar {
                 size: 44, pill.height
                 corner: corner.small
                 color: skin.coal
-                opacity: 53%
+                // Same plate as every other capsule in the row: 69 %, `coal` (the reference's own
+                // `pill` fill is 53 %, but one lighter tile among seven reads as a mistake).
+                opacity: 69%
                 show: hot
             }
             text "{readout}" {
