@@ -495,6 +495,14 @@ on("tray_click", function(n)
     end
 end)
 
+-- Esc closes the menu: the surface asks for the keyboard while it is open (`keyboard:
+-- exclusive while tray_open`), so the key reaches this scene and not the application under it.
+on("key", function(name)
+    if name == "Escape" and fact.tray_open then
+        fact.tray_open = false
+    end
+end)
+
 on("tray_close", function()
     log("TRAYCLOSE")
     fact.tray_open = false
