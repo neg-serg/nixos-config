@@ -41,7 +41,7 @@ library Build strict {
     // cannot compare the library's own `text` (the resolver reads it as the scene's).
     // 0 plain, 1 the work's own accent, 2 the one that wants attention.
     fact tone: number = 0
-    text phase = "idle"
+    text stage = "idle"
     text glyph = "check_circle"
     text summary = ""
     text detail = ""
@@ -71,6 +71,38 @@ library Build strict {
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Nix build"; role: button }
             on enter tile { hot = true }
             on leave tile { hot = false }
+        }
+    }
+
+    // ------------------------------------------------------------- the popup
+    // One row per build the tool reports — the QS `BuildStatusPopup` list. A model,
+    // because a fact carries no words and no table: the logic fills it from the
+    // stream's own `builds` array, and the drawer iterates it.
+    model builds max 8 { name: text; stage: text; elapsed: text }
+
+    // The list itself: the phase word dim on the left, the derivation in body ink, the
+    // clock on the right. `width` is the plate's inner width, so a row cannot outgrow the
+    // drawer it stands in.
+    component Rows(scale: number = ui, width: number = 300) {
+        let w = width
+        let clock.w = 46
+        let stage.w = 62
+        let name.w = w - clock.w - stage.w - 12
+        size: w * scale, builds.count * 20 * scale
+        group zoom {
+            scale: scale
+            column rows {
+                gap: 2
+                for b in builds {
+                    row line {
+                        gap: 6
+                        align: center
+                        text b.stage { family: "Iosevka"; size: 11; width: stage.w; lines: 1; color: ink.dim }
+                        text b.name { family: "Iosevka"; size: 12; width: name.w; lines: 1; color: ink }
+                        text b.elapsed { family: "Iosevka"; size: 11; width: clock.w; lines: 1; color: ink.off }
+                    }
+                }
+            }
         }
     }
 }
