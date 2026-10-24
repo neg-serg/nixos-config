@@ -403,10 +403,10 @@ scene bar {
         size: 16 * scale, strip * scale
         group zoom {
             scale: scale
-            text glyph { at: 0, strip / 2; anchor: left center; size: 12; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
+            text glyph { at: 0, strip / 2; anchor: left center; size: 11; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
-            box { from: 13, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
+            box { from: 12, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
         }
     }
 
