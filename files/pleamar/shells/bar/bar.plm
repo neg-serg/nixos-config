@@ -845,8 +845,9 @@ scene bar {
 
             // QS KeyboardLayoutHypr: the keyboard glyph and the active layout,
             // nothing else (the icon is not in a square, `iconSquare: false`).
+            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
             KeyboardCluster() { show: widget.keyboard }
-            // The pill capsule (legacy order: clock · workspaces · pill ·
+            // The pill capsule, in the legacy order — clock · workspaces · pill ·
             // keyboard · network) rides in only when it is wanted: QS wraps it
             // in a SlideReveal revealed by `PillTracker.reminderActive ||
             // (PillTracker.taken && hovering the left row)`, so at rest the bar
@@ -856,7 +857,6 @@ scene bar {
             // carries the condition instead.
             // The overdue half is the half that matters: `reminder` keeps the pill up
             // while nothing is taken, and a taken one still shows while the strip is hot.
-            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
             NetCluster() { show: widget.network }
             SysmonCluster() { show: widget.sysmon }
             WeatherCapsule() { show: widget.weather and weather.have }
