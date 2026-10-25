@@ -305,6 +305,12 @@ end
 
 local function audioChanged(a)
     if type(a) ~= "table" then return end
+    -- The glyph follows the state, not a constant: what the capsule shows is the first
+    -- thing that should say "muted".
+    text["mic.glyph"] = (a.input_muted == true) and "mic_off" or "mic"
+    local lvl = tonumber(a.volume) or 0
+    text["vol.glyph"] = (a.muted == true) and "volume_off"
+        or (lvl < 0.5 and "volume_down" or "volume_up")
     fact["mic.shown"] = a.input_muted ~= true
     if a.muted == true then
         if fullHide then cancel(fullHide) end
@@ -395,6 +401,9 @@ local function workspacesChanged(w)
     for _, ws in ipairs(w.list) do
         if type(ws) == "table" and ws.active == true then
             local lead, rest = split_lead(label_of(ws.name))
+            -- A workspace with no name (or a name that is only a private-use glyph) drew an
+            -- empty plate; the reference falls back to the number, and so does this.
+            if rest == "" then rest = tostring(ws.id) end
             text.ws_lead = lead
             text.ws_label = rest
             text.ws_icon = WS_GLYPH[tonumber(ws.id) or -1] or ""
