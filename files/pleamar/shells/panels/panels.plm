@@ -242,6 +242,9 @@ scene panels {
     // Calendar navigation (panels.luau re-asks the worker for the month).
     event cal_prev ->
     event cal_next ->
+    // The arrow keys in the grid, in days: -1 and 1 walk a day, -7 and 7 a week. The logic moves
+    // the month when the walk leaves it.
+    event cal_step ->
     // The pill tracker published (a toggle, a rollover, the state file written by another
     // instance): the grid's markers and the streak header are rebuilt from it.
 
