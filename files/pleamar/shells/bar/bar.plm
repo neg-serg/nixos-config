@@ -638,7 +638,12 @@ scene bar {
         // the group's scale and measured 34 px of ink against the reference's 28;
         // 11.5 is 13.2 and lines up. (An earlier note claimed 14 "agrees" — it was
         // measuring width against a different face.)
-        size: 50 * scale, strip * scale
+        // As wide as the time it prints, plus the capsule's 6 px of padding on each side: 50 held a
+        // fixed 38 px of text and left the rest as dead plate.
+        // 47 = 6 + 35 (five glyphs of Iosevka at 14 are 7 px each) + 6. A `measure` on the text
+        // below is not in scope for a `let` above it, so the sum is written out.
+        let w.card = 47
+        size: w.card * scale, strip * scale
         group zoom {
             scale: scale
             body {
@@ -649,10 +654,10 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 1; size: 50, 23; corner: 6 }
+                box { from: 0, 1; size: w.card, 23; corner: 6 }
             }
-            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 38; lines: 1 }
-            zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
+            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 35; lines: 1 }
+            zone box clock { from: 0, 0; size: w.card, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { emit tip(0) }
         }
     }
