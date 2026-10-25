@@ -712,14 +712,19 @@ scene bar {
     component SysmonPair(glyph: text, value: number, shown: bool, idle: bool,
                          warn: number, crit: number,
                          scale: number = ui * user_scale) {
+        // One pair, laid out once: the glyph 13 wide, three of air, the bar 3 — 21 in all. The
+        // cluster's step is written with the same numbers, so the four pairs read as one row.
         let bh = 12
-        size: 16 * scale, strip * scale
+        let glyph.w = 13
+        let gap = 3
+        let bar.w = 3
+        size: (glyph.w + gap + bar.w + 2) * scale, strip * scale
         group zoom {
             scale: scale
-            text glyph { at: 0, strip / 2 + 1; anchor: left center; size: 7.8; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
+            text glyph { at: 0, strip / 2 + 1; anchor: left center; size: 13; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
-            box { from: 12, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
+            box { from: glyph.w + gap, strip / 2 + bh / 2 - value * bh; size: bar.w, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
         }
     }
 
@@ -727,8 +732,8 @@ scene bar {
         // The box is as wide as the pairs that show: QS's capsule is
         // `horizontalPadding * 2 + metricsRow.implicitWidth`, and a metric the
         // idle rule took away takes its width with it.
-        let inner = sysmon.pairs * 16 + (sysmon.pairs - 1) * 2.5
-        size: (sysmon.pairs * 16 + (sysmon.pairs - 1) * 2.5 + 12) * scale, strip * scale
+        let inner = sysmon.pairs * 21 + (sysmon.pairs - 1) * 4
+        size: (sysmon.pairs * 21 + (sysmon.pairs - 1) * 4 + 12) * scale, strip * scale
         group zoom {
             scale: scale
             // A `box` placed at a NEGATIVE `from:` draws nothing at all (five
@@ -814,7 +819,9 @@ scene bar {
             }
             // QS's triangleHighlightColor is the accent put through black twice
             // (towardsBlack(saturate(...), 0.3) x2), so a dark saturated blue.
-            line { from: 182, 1; to: 168, 23; width: 2.6; color: mix(skin.accent, skin.coal, 45%) }
+            // A hairline along the cut, inside the plate: at 2.6 wide and 45 % accent it read as a
+            // slash stuck on the capsule's end rather than as the cut itself.
+            line { from: 180, 1; to: 170, 23; width: 1.6; color: mix(skin.accent, skin.coal, 30%) }
             // Laid out after their own widths, not at fixed offsets: the offsets were read
             // off the reference once and then the port's glyphs turned out wider, so the
             // temperature ran into the water drop ("11°C◯67%") and the capsule measured 114
