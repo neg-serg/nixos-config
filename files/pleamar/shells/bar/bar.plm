@@ -993,12 +993,18 @@ scene bar {
     // ------------------------------------------------------------------ rows
     component Left(scale: number = ui * user_scale) {
         row { at: side * scale, hot + band / 2; anchor: left middle; gap: row.gap * scale
-            Clock() { show: widget.clock }
+            // Clock and pill sit close together — the reference's `clockPillGroup`, whose own
+            // spacing is `max(1, round(2 * s))`, two logical px against the row's seven. The pill
+            // used to stand after the workspaces, which is not where it is in the shell this bar
+            // is a port of.
+            row clock_pill { gap: 2 * scale
+                Clock() { show: widget.clock }
+                row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
+            }
             WsCapsule(focus_workspace) { show: widget.workspaces }
 
             // QS KeyboardLayoutHypr: the keyboard glyph and the active layout,
             // nothing else (the icon is not in a square, `iconSquare: false`).
-            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
             KeyboardCluster() { show: widget.keyboard }
             // The pill capsule, in the legacy order — clock · workspaces · pill ·
             // keyboard · network) rides in only when it is wanted: QS wraps it
