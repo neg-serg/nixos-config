@@ -265,14 +265,16 @@ end)
 -- The drawer is a fact in the panels scene, which runs all the time: the press sends it and
 -- nothing else. This used to start the unit, sleep a whole 1.1 s "so it is up", and only then talk
 -- to it — a click that arrived in its frame and was answered a second later.
+local PLEAMAR = "/run/current-system/sw/bin/pleamar"
+
 local function open_drawer(name)
     run("dash", {
         "-c",
-        "'/run/current-system/sw/bin/pleamar' --say panels 'emit open_ .. name .. "' >/dev/null 2>&1 && exit 0; "
+        "\'" .. PLEAMAR .. "\' --say panels \'fact drawer " .. name .. "\' >/dev/null 2>&1 && exit 0; "
             .. "systemctl --user start pleamar-panels.service; "
-            .. "for i in $(seq 1 30); do "
-            .. "'/run/current-system/sw/bin/pleamar' --say panels 'emit open_ .. name .. "' >/dev/null 2>&1 && exit 0; "
-            .. "sleep 0.1; done",
+            .. "for i in 1 2 3 4 5 6 7 8 9 10; do "
+            .. "\'" .. PLEAMAR .. "\' --say panels \'fact drawer " .. name .. "\' >/dev/null 2>&1 && exit 0; "
+            .. "sleep 0.05; done",
     })
 end
 
