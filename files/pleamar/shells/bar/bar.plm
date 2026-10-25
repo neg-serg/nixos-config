@@ -342,17 +342,17 @@ scene bar {
     // coordinates at this level are logical (a row's `at:` is not multiplied by the scale;
     // only a component's `size:` is), which is why this one number is written in logical px
     // and the design numbers below it are not.
-    let band = 29
+    let band = 25
     surface {
         // 25 design px of content are 28.75 logical at `ui` 1.15, plus 10 of hotzone. A
         // surface's `size:` takes a literal (header, line 23), so the arithmetic is here and
         // not in the language: 29 + 10.
-        size: full, 39
+        size: full, 35
         anchor: bar_edge
         level: top
         // The reserve is the strip alone, as in the reference: the hotzone is not taken
         // from the windows, it only catches the pointer.
-        reserve: 29 while shown
+        reserve: 25 while shown
         screens: each
     }
 
@@ -364,8 +364,8 @@ scene bar {
 
     // Icons as SVG, not as a glyph font: a text glyph is rasterised at 14 * 1.15 = 16.1 logical px
     // and the fraction is what blurs it, while a vector is drawn at the device pixel grid.
-    image icon_keyboard = file "../../icons/keyboard.svg", 14, 14
-    image icon_network = file "../../icons/network.svg", 14, 14
+    image icon_keyboard = file "icons/keyboard.svg", 14, 14
+    image icon_network = file "icons/network.svg", 14, 14
 
     // A named surface carries what it draws and shares every fact with the bar,
     // so a tooltip needs no round trip. `level: overlay` so it reads over the

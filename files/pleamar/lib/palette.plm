@@ -44,7 +44,10 @@
 library Palette strict {
 
     // ---------------------------------------------------------------- scale
-    let ui = 1.15                 // panel.scale 1.15 * fontSizeMultiplier 1.0
+    // 1, not the reference's 1.15: at 1.15 every size lands on a fraction (14 * 1.15 = 16.1) and
+    // every centred text on a half pixel (25 / 2 = 12.5), which is what the whole strip looked
+    // soft from. At 1 design px is 1 logical px and the grid is whole.
+    let ui = 1
     let design.width = 1920       // the logical monitor the lengths were tuned on
     let design.height = 1080
     let fit.min = 0.8             // per-monitor clamp (lower than this stays 0.8)
