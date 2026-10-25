@@ -374,7 +374,10 @@
 #   on — the record binds use `screenrec`, not HyprCapture, so the thumbnail loss is theirs too.
 # - **Screenshot toast**: the `screenshot-toast.path` unit (`main.nix`) watches the shots directory
 #   and runs `screenshot-toast` (`packages/local-bin/bin/screenshot-toast`), which forwards the newest
-#   file to `pic-info` → `pic-notify` → quickshell `ScreenshotToast`. It is the *only* producer: no
+#   file to `pic-info` → `pic-notify` → the shell's toast (pleamar's `toast` scene, which polls
+#   `$XDG_CACHE_HOME/pleamar/screenshot-event.json`; `pic-notify` also keeps writing the legacy
+#   `~/.cache/quickshell` pair, and falls back to `notify-send` only when neither shell answers its
+#   IPC). It is the *only* producer: no
 #   bind calls `pic-info` itself, so one capture yields one toast. `PathChanged` on a directory fires
 #   on the writer's first write event, not on close, and both writers grow the PNG in place (grim
 #   writes it, HyprCapture wrote ~280 KB of a 5 MB capture before the event landed) — so the script
