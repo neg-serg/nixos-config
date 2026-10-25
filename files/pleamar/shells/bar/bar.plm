@@ -1191,7 +1191,7 @@ scene bar {
                 space 2
                 // Its own width, no `width:` — the box would be computed from what it is meant to
                 // measure, and a measurement of nothing is what left a lone "…" in the plate.
-                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 16; weight: 500; color: skin.ink; family: "Iosevka" }
+                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
                 // The time, in the two colours QS uses: the brackets and the slash wear
                 // the cover's accent (MusicManager.accentColor, sampled from the art), the
                 // digits wear textPrimary while playing and textSecondary while paused, at
@@ -1203,9 +1203,9 @@ scene bar {
                     // reports that one on a change and never polls it, so it stood still while the
                     // track played (measured: 149 for three minutes against MPD's 5:37). The logic
                     // ticks it every second and resyncs on every media event.
-                    text "{media.pos, time}" { measure: tp; size: 16; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "{media.pos, time}" { measure: tp; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                     text "/" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
-                    text "{media.length, time}" { measure: tl; size: 16; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "{media.length, time}" { measure: tl; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                     text ")" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
                 }
                 // The analyser, revealed with the transport: QS keeps it inside the
