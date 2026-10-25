@@ -1013,9 +1013,9 @@ scene bar {
         // while the pointer is on it. Drawn as two boxes before — a fixed 30 px capsule with a
         // second pill sliding out to its left — which left black plate sticking out to the right
         // of the glyph and put the number outside the capsule it belongs to.
-        // The slot is the caller's, and the plate is the slot: a plate that sized itself while the
-        // row reserved a constant ran out of its cell and under the neighbour.
-        let w = slot
+        // The plate *is* the slot, and the slot shrinks with the tile: a plate drawn wider than what
+        // it holds is the empty pill that sat to the right of the microphone.
+        let w = pick(hot, slot, 2 * capsule.pad + icon)
         size: w * scale, strip * scale
         group zoom {
             scale: scale
@@ -1048,7 +1048,7 @@ scene bar {
 
     component VolCapsule(step: event, mute: event,
                          scale: number = ui * user_scale) {
-        let slot = pick(vol.hot, 62, 30)
+        let slot = pick(vol.hot, 46, 26)
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1058,12 +1058,13 @@ scene bar {
             on leave vol { vol.hot = false }
             on scroll vol { emit step(wheel) }
             on press vol { emit mute }
+            on change (vol.hot and not (vol.shown or strip.hot)) { vol.hot = false }
         }
     }
 
     component MicCapsule(mute: event,
                          scale: number = ui * user_scale) {
-        let slot = pick(mic.hot, 62, 30)
+        let slot = pick(mic.hot, 46, 26)
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1072,6 +1073,9 @@ scene bar {
             on enter mic { mic.hot = true }
             on leave mic { mic.hot = false }
             on press mic { emit mute }
+            // A zone that goes away takes its pointer with it, and `leave` never comes: the tile
+            // stayed "hovered" and its plate kept the open width.
+            on change (mic.hot and not (mic.shown or strip.hot)) { mic.hot = false }
         }
     }
 
