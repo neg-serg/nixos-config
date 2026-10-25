@@ -458,6 +458,8 @@ local today_y, today_m, today_d = today.year, today.month, today.day
 
 local last_events = {}
 local last_holidays = {}
+local last_pills = {}
+local last_streak = 0
 
 local function label_for(y, m, d, inside)
     if inside then
@@ -466,8 +468,45 @@ local function label_for(y, m, d, inside)
     return tostring(y) .. "-" .. pad2(m) .. "-" .. pad2(d) .. " (outside)"
 end
 
+-- ---- the pill tracker's days
+-- Calendar.qml computed four states per cell (`computePillStatus`): a day with a history record
+-- is taken or missed, today is taken or still pending, a past day with no record at all is "no
+-- data", and a day still to come says nothing. A model field is a number, so the states are
+-- numbers and the page says what each one is worth.
+local PILL = { none = 0, taken = 1, missed = 2, pending = 3, nodata = 4 }
+
+local function dkey(y, m, d)
+    return string.format("%04d-%02d-%02d", y, m, d)
+end
+
+-- The pill tracker's history, as the `pleamar-calendar` worker reports it (`pills`, newest first),
+-- as a date → taken table for the 42 cells. It comes from the worker and not from the pill plugin
+-- because a scene's logic cannot read a plugin's boundary: `fact["Pill.streak"]` reads what the
+-- library declared, not what its logic published — measured 2026-10-25, the calendar saw 0 while
+-- `pleamar --say panels "get Pill.streak"` answered 1. The worker reads the tracker's own state
+-- file instead, which is the same data from the same place.
+local function pill_marks()
+    local out = {}
+    for _, d in ipairs(last_pills) do
+        if type(d) == "table" and type(d.date) == "string" then
+            out[d.date] = d.taken == true
+        end
+    end
+    return out
+end
+
+-- ISO keys compare as dates, which is what the "past day" half of the reference test needs.
+local function pill_status(key, day_today, taken_today, marks)
+    local had = marks[key]
+    if had ~= nil then return had and PILL.taken or PILL.missed end
+    if day_today == "" then return PILL.none end
+    if key == day_today then return taken_today and PILL.taken or PILL.pending end
+    if key < day_today then return PILL.nodata end
+    return PILL.none
+end
+
 -- The 42 cells of the month grid, Sunday first, adjacent months included so the
--- drawing never moves. Marks: 1 an event, 2 a public holiday.
+-- drawing never moves. Marks: 1 an event, 2 a public holiday. Pill: see PILL above.
 local function cal_rebuild()
     local y, m = fact.cal_year, fact.cal_month
     if y == 0 or m < 1 or m > 12 then return end
@@ -475,6 +514,15 @@ local function cal_rebuild()
     local evt_by_day, hol_by_day = {}, {}
     for _, e in ipairs(last_events) do evt_by_day[e.day] = true end
     for _, h in ipairs(last_holidays) do hol_by_day[h.day] = true end
+
+    -- The pill history covers the whole 42-cell window, the adjacent months' days included: the
+    -- reference precomputed the three months around the one on screen for the same reason.
+    local marks = pill_marks()
+    -- Today is the logic's own date (the tracker's `Pill.today` is a plugin text, and a scene's
+    -- logic reads a plugin's boundary only as its declaration — see `pill_marks`), and "taken
+    -- today" is the same history the marks come from.
+    local pill_today = dkey(today_y, today_m, today_d)
+    local pill_taken = marks[pill_today] == true
 
     local cells = {}
     local first = weekday(y, m, 1)
@@ -488,7 +536,8 @@ local function cal_rebuild()
         local d = prev_dim - i
         cells[#cells + 1] = { day = d, this = false, today = false,
                               weekend = (weekday(py, pm, d) == 0 or weekday(py, pm, d) == 6),
-                              mark = 0, label = label_for(py, pm, d, false) }
+                              mark = 0, label = label_for(py, pm, d, false),
+                              pill = pill_status(dkey(py, pm, d), pill_today, pill_taken, marks) }
     end
     for d = 1, days_in_month(y, m) do
         local wd = weekday(y, m, d)
@@ -498,13 +547,15 @@ local function cal_rebuild()
         cells[#cells + 1] = { day = d, this = true,
                               today = (y == today_y and m == today_m and d == today_d),
                               weekend = (wd == 0 or wd == 6), mark = mark,
-                              label = label_for(y, m, d, true) }
+                              label = label_for(y, m, d, true),
+                              pill = pill_status(dkey(y, m, d), pill_today, pill_taken, marks) }
     end
     local nd = 1
     while #cells < 42 do
         cells[#cells + 1] = { day = nd, this = false, today = false,
                               weekend = (weekday(ny, nm, nd) == 0 or weekday(ny, nm, nd) == 6),
-                              mark = 0, label = label_for(ny, nm, nd, false) }
+                              mark = 0, label = label_for(ny, nm, nd, false),
+                              pill = pill_status(dkey(ny, nm, nd), pill_today, pill_taken, marks) }
         nd = nd + 1
     end
 
@@ -521,6 +572,13 @@ local function cal_rebuild()
         end
     end
     text["cal.today"] = table.concat(names, " · ")
+
+    -- The streak header (Calendar.qml:186-197): the run of days taken, with the word the
+    -- reference pluralised by hand. The number is for the page to test, the words for it to draw.
+    -- the worker computes it (lib/plugins/pill/pill.luau `streakNow`) beside the history
+    local streak = tonumber(last_streak) or 0
+    fact.cal_streak = streak
+    text["cal.streak"] = (streak == 1) and "1 day" or (tostring(streak) .. " days")
 end
 
 local function calendar_apply(d, topic)
@@ -545,7 +603,15 @@ local function calendar_apply(d, topic)
             holidays[#holidays + 1] = { day = day, name = name }
         end
     end
+    local pills = {}
+    local ps = type(d.pills) == "table" and d.pills or {}
+    for _, p in ipairs(ps) do
+        if type(p) == "table" and type(p.date) == "string" and #pills < 120 then
+            pills[#pills + 1] = { date = p.date, taken = p.taken == true }
+        end
+    end
     last_events, last_holidays = events, holidays
+    last_pills, last_streak = pills, tonumber(d.streak) or 0
     cal_rebuild()
 end
 
@@ -746,6 +812,173 @@ on("cal_next", function()
     set_month(y, m)
 end)
 
+-- The pill tracker published (`Pill.rev` moved): a toggle in the bar, the midnight rollover, or
+-- the state file written by the other instance of the plugin. Only the grid changes, so the
+-- workers are left alone — this is not a month navigation.
+on("pill_sync", function()
+    cal_rebuild()
+end)
+
+-- ==================== link, internet and the tunnel ====================
+-- QS answers two questions about a connection and never confuses them
+-- (Services/Connectivity.qml): is there a LINK — some non-loopback interface that is up — and is
+-- there INTERNET — a ping that comes back. Which of the three states that leaves is what the
+-- drawer's detail row says, in the reference's own words (NetClusterCapsule.qml:231-235:
+-- "No connection" / "Local network, no internet" / "Internet: available", then "VPN: …"), with
+-- the tunnel read off the same interface list (ConnectivityState.qml:25-46).
+--
+-- WHY THIS IS HERE AND IN bar.luau TOO: QS has one Connectivity singleton for the whole shell;
+-- pleamar's scenes cannot read each other's facts, and an IPC round trip for a sentence that
+-- changes every four seconds is worse than the duplication. Both copies carry the same timings
+-- and the same commands, and each names the reference line it comes from.
+--
+-- The timings are the reference's: the link every 4 s (Connectivity.qml:47-49, Theme.qml:754
+-- `networkLinkPollMs`), the ping every 30 s (Connectivity.qml:86-88, Settings.qml:217
+-- `networkPingIntervalMs`), and every 500 ms for the 10 s after a link comes up
+-- (Connectivity.qml:23-26 and 115-127, `fastIntervalMs` / `fastDurationMs`), against 8.8.8.8
+-- (Settings.qml:218 `networkPingTarget`). The tunnel is recomputed on each link poll, which is
+-- where QS does it (ConnectivityState.qml:66-71) — `network.vpnPollMs` (Theme.qml:752) is a
+-- token nothing in the reference reads.
+local PING_TARGET = "8.8.8.8"
+local LINK_POLL_MS = 4000
+local PING_SLOW_MS = 30000
+local PING_FAST_MS = 500
+local PING_FAST_FOR_MS = 10000
+
+local net_link, net_internet, net_vpn, net_vpn_name = false, false, false, ""
+local net_fast, net_ping_busy = false, false
+local net_link_timer, net_slow_timer, net_fast_timer, net_fast_stop = nil, nil, nil, nil
+
+-- ConnectivityState.qml:25-46: a tunnel is an interface whose name says so (`awg`, `amnez`,
+-- `tun`, `outline-tun`) and that has an address on it.
+local function net_tunnel_of(name, addrs)
+    local lower = name:lower()
+    local looks = lower:find("awg", 1, true) ~= nil
+        or lower:find("amnez", 1, true) ~= nil
+        or lower:sub(1, 3) == "tun"
+        or lower:sub(1, 11) == "outline-tun"
+    return looks and addrs > 0
+end
+
+-- The sentence the drawer prints, and the two facts the dot beside it is coloured by.
+local function net_publish()
+    if fact["net.link"] ~= net_link then fact["net.link"] = net_link end
+    if fact["net.internet"] ~= net_internet then fact["net.internet"] = net_internet end
+    local line
+    if not net_link then
+        line = "No connection"
+    elseif not net_internet then
+        line = "Local network, no internet"
+    else
+        line = "Internet: available"
+    end
+    if net_vpn then
+        line = line .. " · VPN: " .. (net_vpn_name ~= "" and net_vpn_name or "connected")
+    end
+    if text["net.state"] ~= line then text["net.state"] = line end
+end
+
+local function net_leave_fast()
+    if not net_fast then return end
+    net_fast = false
+    if net_fast_stop then
+        cancel(net_fast_stop)
+        net_fast_stop = nil
+    end
+end
+
+local net_ping
+
+local function net_enter_fast()
+    if net_fast then return end
+    net_fast = true
+    -- Connectivity.qml:123-127: the fast mode stops by itself after 10 s.
+    if net_fast_stop then cancel(net_fast_stop) end
+    net_fast_stop = after(PING_FAST_FOR_MS, function()
+        net_fast_stop = nil
+        net_fast = false
+    end)
+    net_ping()
+end
+
+net_ping = function()
+    -- One ping in flight at a time, as the reference guards its slow path (Connectivity.qml:87-93).
+    if net_ping_busy then return end
+    if not net_link then
+        -- Connectivity.qml:90-92: no link, no internet, and nothing to wait for.
+        net_internet = false
+        net_publish()
+        return
+    end
+    net_ping_busy = true
+    run("ping", { "-n", "-c", "1", "-W", "1", PING_TARGET }, function(_, code)
+        net_ping_busy = false
+        local ok = (code == 0)
+        if ok == net_internet then return end
+        net_internet = ok
+        -- Connectivity.qml:55-58: the internet answered, so the fast mode has done its job.
+        if ok then net_leave_fast() end
+        net_publish()
+    end)
+end
+
+local function net_probe_link()
+    run("ip", { "-j", "-br", "a" }, function(out, code)
+        if code ~= 0 or type(out) ~= "string" then return end
+        local ok, list = pcall(json.decode, out)
+        if not ok or type(list) ~= "table" then return end
+        -- Connectivity.qml:59-76: an interface `UP`, or one that says `UNKNOWN` and has an
+        -- address; the loopback never counts.
+        local link, vpn, name = false, false, ""
+        for _, it in ipairs(list) do
+            if type(it) == "table" and type(it.ifname) == "string" and it.ifname ~= "lo" then
+                local state = (type(it.operstate) == "string") and it.operstate or ""
+                local addrs = (type(it.addr_info) == "table") and #it.addr_info or 0
+                if state == "UP" or (state == "UNKNOWN" and addrs > 0) then link = true end
+                if net_tunnel_of(it.ifname, addrs) then vpn, name = true, it.ifname end
+            end
+        end
+        local was_link = net_link
+        net_link, net_vpn, net_vpn_name = link, vpn, name
+        if not link then
+            -- Connectivity.qml:52-55: the link went, so the internet went with it.
+            net_internet = false
+            net_leave_fast()
+        end
+        net_publish()
+        if link and not was_link then
+            -- Connectivity.qml:44-51: a link that has just come up is asked at once, and then
+            -- every 500 ms until it answers or the 10 s are gone.
+            net_enter_fast()
+        end
+    end)
+end
+
+-- The probes live exactly as long as their drawer does, like the flow stream.
+local function net_start()
+    if net_link_timer then return end
+    net_publish()
+    net_probe_link()
+    net_link_timer = every(LINK_POLL_MS, net_probe_link)
+    -- The two cadences kept apart, as the reference keeps them: the slow one off while the fast
+    -- mode holds (Connectivity.qml:86-88) and the fast one only then (Connectivity.qml:114-121).
+    net_slow_timer = every(PING_SLOW_MS, function()
+        if not net_fast then net_ping() end
+    end)
+    net_fast_timer = every(PING_FAST_MS, function()
+        if net_fast and net_link then net_ping() end
+    end)
+end
+
+local function net_stop()
+    if not net_link_timer then return end
+    cancel(net_link_timer)
+    cancel(net_slow_timer)
+    cancel(net_fast_timer)
+    net_link_timer, net_slow_timer, net_fast_timer = nil, nil, nil
+    net_leave_fast()
+end
+
 -- ========================= the flow dashboard =========================
 -- The `network` drawer (pages/network.plm). QS streams `flow -json-stream`
 -- (~10 Hz) into NetFlowPopup and keeps the last 600 samples in QML; a scene
@@ -920,8 +1153,14 @@ on("fact:drawer", function(v)
         last_events, last_holidays = {}, {}
         cal_rebuild()
     end
-    -- The flow stream follows its drawer, like a worker does.
-    if v == "network" then flow_start() else flow_stop() end
+    -- The flow stream and the connection's two probes follow their drawer, like a worker does.
+    if v == "network" then
+        flow_start()
+        net_start()
+    else
+        flow_stop()
+        net_stop()
+    end
 
     -- The system dashboard reads the journal once, when it opens: the worker
     -- prints a single line and exits. Its history starts from the first sample of this open.
@@ -951,4 +1190,7 @@ reconcile()
 -- The same for the flow stream: reloading the logic while its drawer is open
 -- (saving the file during a session) must not leave it without data — the
 -- `fact:drawer` listener only hears changes, and the change already happened.
-if fact.drawer == "network" then flow_start() end
+if fact.drawer == "network" then
+    flow_start()
+    net_start()
+end

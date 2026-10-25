@@ -7,6 +7,11 @@ import "../../lib/plugins/cover/cover.plm" as Cover
 import "../../lib/plugins/meta/meta.plm" as Meta
 import "../../lib/plugins/spectrum/spectrum.plm" as spec
 import "../../lib/plugins/build/build.plm" as build
+// The calendar drawer marks the days the pill was taken, was missed, is still pending or has no
+// record of. The history comes from the `pleamar-calendar` worker, which reads the tracker's own
+// state file: a scene's logic cannot read a plugin's boundary (that is the plugin's alone), so the
+// calendar is fed the same way its events and holidays are.
+// whenever it moves — a rule cannot hear a model change, and `today` is a text, not a fact.
 
 // panels.plm — the drawer surface of the shell (scene `panels`, PH2-B slice 1).
 //
@@ -118,7 +123,8 @@ scene panels {
     //   weather  300 x 196   centred across the monitor, bottom 40
     //                        ((panelModuleHeight 36 + 4) * scale)
     //   system  1040 x 1020  min(1040, 0.92 W) x max(480, H - 60), centred
-    //   calendar 380 x 480   left 2, bottom 2 (calendarPopupMargin)
+    //   calendar 380 x 500   left 2, bottom 2 (calendarPopupMargin); the QS popup is 480 and
+    //                        grows to 520 with the pill overlay on — the streak row takes 20 here
     // Radius is 0 everywhere: panelOverlayRadius and cornerRadiusLarge are both
     // 0 in the reference theme, so a plate is a plain rectangle.
 
@@ -152,15 +158,17 @@ scene panels {
                           open: drawer == system
         include "pages/system.plm"
     }
-    surface calendar_card { size: 437, 552; anchor: bottom_left; margin: 0, 0, 2, 2
+    surface calendar_card { size: 437, 575; anchor: bottom_left; margin: 0, 0, 2, 2
                             level: overlay; reserve: 0; screens: each; keyboard: on_demand
                             open: drawer == calendar
         include "pages/calendar.plm"
     }
 
     // Commands the logic runs (workers), services it listens to (audio, own
-    // settings file) and commands it sends (audio.*).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "flow", "pleamar"
+    // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
+    // own two probes while the network drawer is open — the same commands QS's
+    // Connectivity.qml runs.
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "flow", "ip", "ping", "pleamar"
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
 
     // ----***--------------- drawer state and settings
@@ -178,6 +186,9 @@ scene panels {
     fact sel_day = 0
     fact cal_year = 0
     fact cal_month = 0
+    // The pill tracker's streak, as a number the page can test; the words it draws
+    // ("5 days" — a text, because words are not facts) are in `cal.streak` below.
+    fact cal_streak = 0
 
     // The media card's position, kept by the logic (`media_apply` + `every(1000)` in panels.luau):
     // the service reports `media.position` only when the player says something, so the progress
@@ -220,6 +231,8 @@ scene panels {
     // Calendar navigation (panels.luau re-asks the worker for the month).
     event cal_prev ->
     event cal_next ->
+    // The pill tracker published (a toggle, a rollover, the state file written by another
+    // instance): the grid's markers and the streak header are rebuilt from it.
 
     // Mixer (the logic carries them to sys.call("audio.…")).
     event set_out ->
@@ -255,6 +268,9 @@ scene panels {
     text cal.title = ""
     text cal.err = ""
     text cal.today = ""
+    // The pill streak header: "1 day" / "5 days", written by panels.luau from the `streak` the
+    // calendar worker reports beside the history.
+    text cal.streak = ""
 
     // The flow dashboard (pages/network.plm): human rates as the reference's own
     // `flow` prints them, plus the peaks of the running window.
@@ -270,6 +286,14 @@ scene panels {
     text net.ax1 = ""
     text net.ax2 = ""
     text net.ax3 = ""
+    // The connection's own two questions, as QS asks them (Services/Connectivity.qml): is there
+    // a link (an interface up) and is there internet (a ping, every 30 s). The reference's
+    // drawer has neither — it draws the stream — but the words it uses for the state are its
+    // own (NetClusterCapsule.qml:231-235), and `state` is that sentence with the tunnel's name
+    // on the end when one is up. panels.luau probes them while this drawer is open.
+    fact net.link = false
+    fact net.internet = false
+    text net.state = ""
 
     // ----***---- models filled by panels.luau (columns the drawers draw)
     model forecast max 5 { day: text; cond: text; hi: text; lo: text }
@@ -278,7 +302,9 @@ scene panels {
     // The system drawer's history: one record per worker sample, oldest first. The worker
     // samples once a second while the drawer is open, so 60 records are a one-minute window.
     model sys_hist max 60 { cpu: number; ram: number; gpu: number; temp: number }
-    model cells max 42 { day: number; this: bool; today: bool; weekend: bool; mark: number; label: text }
+    // `mark`: 1 a day with an event, 2 a public holiday. `pill`: 0 nothing known, 1 taken,
+    // 2 missed, 3 still pending (today), 4 a past day with no record — the QS statuses.
+    model cells max 42 { day: number; this: bool; today: bool; weekend: bool; mark: number; pill: number; label: text }
     model events max 60 { day: number; time: text; title: text; cal: text }
     model holidays max 10 { day: number; name: text }
     model streams max 8 { id: text; name: text; binary: text; title: text; volume: number; muted: bool; playing: bool }
@@ -338,5 +364,6 @@ scene panels {
     // dropped these silently, which is why the analyser never woke up.
     on open_network { drawer = network; Spectrum.active = false }
     on close_drawer { drawer = none; Spectrum.active = false }
+
 
 }

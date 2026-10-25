@@ -70,7 +70,18 @@ part NetPanel {
                 }
 
                 ellipse { at: 404, 20; radius: 3.5; color: pick(net_live, down.b, ink.off) }
+
                 text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+
+                // ----***--------------- connection detail row
+                // The reference keeps the link/internet/tunnel state in the capsule's tooltip
+                // (NetClusterCapsule.qml:229-245) and this drawer has nothing of the kind — it
+                // draws the stream. The words are the reference's own, the ink is the same
+                // three-way as the link glyph (NetClusterCapsule.qml:41-43): status.error with
+                // no link, status.warning with a link but no internet, the accent with both.
+                // panels.luau asks the two questions while this drawer is open.
+                ellipse { at: 16, 38; radius: 3; color: if(net.link, if(net.internet, skin.accent, amber), warn) }
+                text "{net.state}" { at: 24, 38; anchor: left center; width: 420; lines: 1; family: "Iosevka"; size: 9.5; color: ink.off }
 
                 // ----***----------------------- readouts
                 text "↓ DOWN" { at: 14, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }

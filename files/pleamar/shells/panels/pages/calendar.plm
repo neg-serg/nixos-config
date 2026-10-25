@@ -14,23 +14,36 @@
 // the grid and shows `cal.err` ("not available") instead of pretending there
 // are events; the same text carries a worker error.
 //
+// The grid also carries what the reference's calendar carried beyond a month:
+// a day with an event or a public holiday gets a corner dot (red for a
+// holiday, accent for an event) and a holiday its faint wash, and — when the
+// pill tracker knows the day — the plate and the dot that say taken, missed,
+// still pending or no record at all (Calendar.qml:35-42, 269-272, 309). Under
+// the month title sits the tracker's streak ("5 days", Calendar.qml:186-197).
+// Both come from the pill plugin's boundary: `cal_streak` and `cal.streak` for
+// the header, and the `pill` field of every cell for the markers, all of them
+// decided in panels.luau.
+//
 // Roles and labels follow INTERFACES.md §8.2; every repeated cell carries its
 // own month-qualified label from the model so `--say press` is unambiguous.
 
 part Calendar {
+    // 500, not the reference's 480: the card carries the pill tracker's streak row under the month
+    // (Calendar.qml:186-197), and the QS popup grew the same way when its pill overlay was on
+    // (480 -> 520). The 20 design px are the streak row and the extra line in the day list.
     component CalendarDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
-        size: 380 * scale, 480 * scale
+        size: 380 * scale, 500 * scale
 
         group {
             // Bottom-left, like the legacy calendar popup (calendar.popupMargin).
             // The bar's edge is bar.height + bar.gap design px above the bottom.
-            move: 0, (1 - lift) * 480 * scale
+            move: 0, (1 - lift) * 500 * scale
 
             // ----***----------------------------- the card
             body {
                 color: coal
                 opacity: 85%
-                box { from: 0, 0; size: 380 * scale, 480 * scale; corner: 0; opacity: 0% }
+                box { from: 0, 0; size: 380 * scale, 500 * scale; corner: 0; opacity: 0% }
             }
             box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: skin.accent; opacity: 25% }
 
@@ -49,26 +62,59 @@ part Calendar {
                     label: "Next month"; role: button }
                 on press next { emit cal_next }
             }
-            text cal.title { at: 168 * scale, 20 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: skin.accent }
+            text cal.title { at: 168 * scale, 18 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: skin.accent }
 
-            box { from: 12 * scale, 36 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
+            // ----***--------------------- the pill tracker's streak
+            // Calendar.qml:186-197: a flame and "N days", centred under the month, and only while
+            // there is a run to show. The glyph sits to the left of the words, whose width is
+            // measured rather than guessed — the count changes what "N days" takes.
+            measure streakw
+            text cal.streak { at: 168 * scale, 35 * scale; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink.dim
+                              measure: streakw; show: cal_streak > 0 }
+            text "local_fire_department" { at: 168 * scale - streakw.width / 2 - 9 * scale, 35 * scale; anchor: center
+                                           family: "Material Symbols Outlined"; size: 14; color: amber; show: cal_streak > 0 }
+
+            box { from: 12 * scale, 48 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
 
             // ----***------------------------- weekday row
             repeat c in 0..6 {
-                text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 40 * scale + c * 48 * scale, 48 * scale; anchor: center; family: "Iosevka"; size: 12; color: skin.ink.dim }
+                text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 40 * scale + c * 48 * scale, 60 * scale; anchor: center; family: "Iosevka"; size: 12; color: skin.ink.dim }
             }
 
             // ----***--------------------------- month grid
             // wrap: 7 is the grid (7 per line); the 42 cells are always there,
             // so nothing moves when a month is short.
-            row { at: 16 * scale, 58 * scale; wrap: 7; gap: 2 * scale
+            row { at: 16 * scale, 68 * scale; wrap: 7; gap: 2 * scale
                 for c in cells {
                     group {
                         size: 48 * scale, 40 * scale
+                        // The pill tracker's plate, under the selection so a chosen day still reads
+                        // as chosen: taken is the accent at 35 %, missed the error tone at 28 %,
+                        // today still pending a fainter 12 %, and a past day with no record at all
+                        // a 6 % grey (Calendar.qml:269-272). A public holiday gets its own 10 % wash
+                        // when the tracker says nothing about that day (Calendar.qml:274).
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.accent; opacity: 35%; show: c.pill == 1 }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 28%; show: c.pill == 2 }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 12%; show: c.pill == 3 }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.ink; opacity: 6%; show: c.pill == 4 }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 10%; show: c.mark == 2 and c.pill == 0 }
                         box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.accent; opacity: ink.active; show: c.this and c.day == sel_day }
                         box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.5 * scale; color: skin.accent; show: c.today }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.ink; show: c.this and not c.today }
-                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; weight: 700; color: skin.accent; show: c.today }
+                        // The corner marks: a public holiday (or a day with only events) at the top
+                        // right, the pill's own at the top left, both 4 dp dots on a 2 dp margin
+                        // (Calendar.qml:309).
+                        ellipse { at: 44 * scale, 4 * scale; radius: 2 * scale; color: skin.accent; show: c.mark == 1 }
+                        ellipse { at: 44 * scale, 4 * scale; radius: 2 * scale; color: warn; show: c.mark == 2 }
+                        ellipse { at: 4 * scale, 4 * scale; radius: 2 * scale; color: skin.accent; show: c.pill == 1 }
+                        ellipse { at: 4 * scale, 4 * scale; radius: 2 * scale; color: warn; show: c.pill == 2 }
+                        // The number wears the pill's colour, as it did in the reference
+                        // (Calendar.qml:285-288); today keeps its accent and its weight.
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; weight: 700; color: skin.accent; show: c.this and c.today and (c.pill == 0 or c.pill == 1) }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.accent; show: c.this and not c.today and c.pill == 1 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: warn; show: c.this and c.pill == 2 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.ink.dim; show: c.this and c.pill == 3 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.ink; show: c.this and not c.today and c.pill == 0 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: c.this and c.pill == 4 }
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: not c.this }
                         zone box day { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
                             label: c.label; role: button; selected: c.this and c.day == sel_day }
@@ -77,14 +123,14 @@ part Calendar {
                 }
             }
 
-            box { from: 12 * scale, 312 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
-            text cal.err { at: 190 * scale, 320 * scale; anchor: center; family: "Iosevka"; size: 12; color: warn }
+            box { from: 12 * scale, 322 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
+            text cal.err { at: 190 * scale, 330 * scale; anchor: center; family: "Iosevka"; size: 12; color: warn }
 
             // ----***------------------- the selected day's entries
-            text "Selected day" { at: 14 * scale, 336 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sel_day > 0 }
+            text "Selected day" { at: 14 * scale, 346 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sel_day > 0 }
             column daylist {
-                at: 14 * scale, 346 * scale
-                view: 352 * scale, 106 * scale
+                at: 14 * scale, 356 * scale
+                view: 352 * scale, 116 * scale
                 gap: 2 * scale
                 for h in holidays {
                     group {
@@ -106,7 +152,7 @@ part Calendar {
                 }
             }
 
-            text cal.today { at: 190 * scale, 466 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off }
+            text cal.today { at: 190 * scale, 486 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off }
         }
     }
 
