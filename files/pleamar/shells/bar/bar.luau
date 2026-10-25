@@ -500,9 +500,8 @@ local function tip_line(i)
 end
 
 -- QS's tooltip waits `tooltip.delayMs` (Settings/Theme.qml, 150 ms) before it appears, so a
--- pointer crossing the strip does not flash a card per capsule. The scene's own capsules set
--- `tip_open` themselves (they are wired in the scene); the two that had no tooltip at all are
--- driven from here, where the delay lives, and the same delay applies to both paths.
+-- pointer crossing the strip does not flash a card per capsule. The scene emits `tip(n)` on
+-- enter and `tip_hide` on leave; a leave inside the 150 ms window cancels the pending card.
 local TIP_DELAY = 150
 local tipTimer = nil
 
@@ -533,14 +532,7 @@ local function showTip(i)
 end
 
 on("tip", showTip)
-
--- The volume and microphone capsules: they had no `emit tip` in the scene, so the logic listens
--- for the pointer on their zones instead (`on("enter:<zone>")`, the shape the reference's hover
--- is). A zone of its own for the system monitor would need the scene's row, so sysmon waits.
-on("enter:vol", function() showTip(7) end)
-on("enter:mic", function() showTip(8) end)
-on("leave:vol", hideTip)
-on("leave:mic", hideTip)
+on("tip_hide", hideTip)
 
 -- ---------------------------------------------------------------- tray
 -- The icons come from the StatusNotifier host as they are: a record's fields are
