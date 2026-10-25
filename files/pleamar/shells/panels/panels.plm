@@ -122,7 +122,7 @@ scene panels {
     // Radius is 0 everywhere: panelOverlayRadius and cornerRadiusLarge are both
     // 0 in the reference theme, so a plate is a plain rectangle.
 
-    surface media_card { size: 483, 368; anchor: bottom; margin: 0, 0, 0, 0
+    surface media_card { size: 420, 320; anchor: bottom_right; margin: 0, 131, 0, 0
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
                          open: drawer == media or page == 5
         include "pages/media.plm"
