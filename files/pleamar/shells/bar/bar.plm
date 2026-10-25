@@ -982,10 +982,12 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 2 * capsule.pad + pill.icon, 23; corner: corner }
             }
-            // The readout pill that slides out to the left while the cursor is on the capsule.
+            // The readout pill that slides out to the left while the cursor is on the capsule. Its
+            // width is the readout's: a fixed 44 was too tight for "100%" and a slab of empty
+            // glass behind "40%" — which is what a stretched pill reads as.
             box {
-                from: icon / 2 - 44, (strip - pill.height) / 2
-                size: 44, pill.height
+                from: icon / 2 - (w.out.width + 2 * pill.pad), (strip - pill.height) / 2
+                size: w.out.width + 2 * pill.pad, pill.height
                 corner: corner.small
                 color: skin.coal
                 // Same plate as every other capsule in the row: 69 %, `coal` (the reference's own
@@ -994,9 +996,10 @@ scene bar {
                 show: hot
             }
             text "{readout}" {
+                measure w.out
                 at: icon / 2 - pill.pad, strip / 2
                 anchor: right center
-                size: 14
+                size: 13
                 weight: 600
                 color: skin.ink
                 family: "Iosevka"
@@ -1007,7 +1010,9 @@ scene bar {
                 // and the microphone read as a glyph sliding out of the strip.
                 at: icon / 2, strip / 2 - 2
                 anchor: center
-                size: 13
+                // 14, the size the keyboard's glyph and the workspaces' icon are set in: at 13 the
+                // mark read small inside a 30 px plate, at 18 it stood taller than every neighbour.
+                size: 14
                 color: fill
                 family: "Material Symbols Outlined"
             }
