@@ -96,9 +96,9 @@ library Genelec strict {
                             align: center
                             image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
                             row db { gap: 0; align: center
-                                text "-" { family: "Iosevka"; size: 14; weight: 600; color: if(muted, ink.off, accent); show: volume < 0 }
-                                text "{max(volume, 0 - volume), 0}" { family: "Iosevka"; size: 14; weight: 600; color: if(muted, ink.off, ink) }
-                                text "dB" { family: "Iosevka"; size: 14; weight: 600; color: if(muted, ink.off, accent) }
+                                text "-" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, ink.off, accent); show: volume < 0 }
+                                text "{max(volume, 0 - volume), 0}" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, ink.off, ink) }
+                                text "dB" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, ink.off, accent) }
                             }
                         }
                     }

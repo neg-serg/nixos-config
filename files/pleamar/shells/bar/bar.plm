@@ -1015,7 +1015,7 @@ scene bar {
                 at: icon / 2 - pill.pad, strip / 2
                 anchor: right center
                 size: 14
-                weight: 600
+                weight: 500
                 color: skin.ink
                 family: "Iosevka"
                 show: hot
