@@ -1167,10 +1167,13 @@ scene bar {
             // The reading arrives ready-made from the logic — the route's name on a pro sink, the
             // percentage otherwise (QS prints `labelText`, the route's short label, there).
             AudioTile(vol.kind, slot, vol.readout, vol.hot, mix(volume.low, volume.high, level), scale: 1)
-            zone box vol { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
+            // On a pro sink the capsule is a route switch, not a fader: QS's `wheelEnabled` is
+            // `!isProAudioSink` there (`Volume.qml`), because a pro-audio output's level is the
+            // hardware's (here the Genelec capsule's) and the software fader moves nothing audible.
+            zone box vol { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: pick(vol.pro, "Volume {audio.volume * 100, 0} %", "Output route {vol.route}, click toggles"); role: slider; value: "{audio.volume * 100, 0} %" }
             on enter vol { vol.hot = true; emit tip(7) }
             on leave vol { vol.hot = false; emit tip_hide }
-            on scroll vol { emit step(wheel) }
+            on scroll vol while not vol.pro { emit step(wheel) }
             on press vol { emit route }
             on change vol.shown while not vol.shown { vol.hot = false; emit tip_hide }
         }
