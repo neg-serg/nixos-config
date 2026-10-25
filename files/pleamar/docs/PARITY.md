@@ -240,10 +240,12 @@ network, media, workspaces/window, tray list, notifications).
    capsules open them, that timer is what a click looks like from the outside — and it is also what
    empties the weather card, whose worker needs 8.6 s for its first sample here.
 1. The pill: it is the only reminder the shell has.
-1. The overlay host, then the calendar keyboard navigation — the one drawer a keyboard user cannot
-   work. The notification centre's keys are done and were measured on 2026-10-26 with real presses
-   (`pleamar --say notifications "key ctrl+n"` moved `entries.0.sel` and `selY` 0 -> 104; `ctrl+p`
-   back, `ctrl+e` to the last entry, `ctrl+b` five up, `ctrl+a` to the first). drawers a keyboard
-   user cannot work.
+1. The overlay host — the one surface no agent or keyboard can drive yet. The drawers are done: the
+   calendar answers the arrows (`<-, ->` a day, `^, v` a week, crossing the month's edge and
+   carrying the day over, measured 2026-10-26: 26 -> 27 -> 28 -> 4 Nov -> 3 Nov -> 27 Oct) and the
+   notification centre its own set (see above). work. The notification centre's keys are done and
+   were measured on 2026-10-26 with real presses (`pleamar --say notifications "key ctrl+n"` moved
+   `entries.0.sel` and `selY` 0 -> 104; `ctrl+p` back, `ctrl+e` to the last entry, `ctrl+b` five up,
+   `ctrl+a` to the first). drawers a keyboard user cannot work.
 1. Everything else in the tables above, with the settings surface folded into whichever widget is
    being ported.

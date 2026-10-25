@@ -163,5 +163,14 @@ part Calendar {
         }
     }
 
+    // The arrows walk the grid: a day left and right, a week up and down, with the month following
+    // when the walk leaves it (the reference's popup is a mouse calendar and has no keys at all;
+    // this is the port's own, and it is the last drawer that answers them). Escape is the scene's
+    // (`close_on_escape`), and nothing else is needed: a day is selected by being walked onto.
+    on key Left while drawer == calendar { emit cal_step(-1) }
+    on key Right while drawer == calendar { emit cal_step(1) }
+    on key Up while drawer == calendar { emit cal_step(-7) }
+    on key Down while drawer == calendar { emit cal_step(7) }
+
     CalendarDrawer() { show: drawer == calendar }
 }

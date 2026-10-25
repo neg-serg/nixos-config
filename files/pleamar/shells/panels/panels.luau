@@ -889,10 +889,12 @@ end
 
 -- ---- month navigation (ask the worker for the new month) ------------------
 
-local function set_month(y, m)
+local function set_month(y, m, want_day)
     fact.cal_year = y
     fact.cal_month = m
-    fact.sel_day = (y == today_y and m == today_m) and today_d or 0
+    -- A walked-onto day is carried across the month's edge; a plain month flip comes back to today
+    -- (the reference's own behaviour when a popup reopens).
+    fact.sel_day = want_day or ((y == today_y and m == today_m) and today_d or 0)
     last_events, last_holidays = {}, {}
     cal_rebuild()
     local h = H.calendar
@@ -901,6 +903,48 @@ local function set_month(y, m)
         write(h.id, '{"cmd":"sample","month":"' .. tostring(y) .. "-" .. pad2(m) .. '"}\n')
     end
 end
+
+-- The arrow keys (see `cal_step` in panels.plm): the walk is a date, and the month follows it. The
+-- selection is a day of the month on screen, so a walk off the edge needs the same call the
+-- prev/next buttons make — with the day carried over instead of a reset to today.
+local function cal_walk(days)
+    local y, m, d = fact.cal_year, fact.cal_month, fact.sel_day
+    if y == 0 or m < 1 or m > 12 then return end
+    if d == 0 then
+        d = (y == today_y and m == today_m) and today_d or 1
+    end
+    if d > days_in_month(y, m) then d = days_in_month(y, m) end
+    local nd = d + days
+    while nd < 1 do
+        m = m - 1
+        if m < 1 then y, m = y - 1, 12 end
+        nd = nd + days_in_month(y, m)
+    end
+    while nd > days_in_month(y, m) do
+        nd = nd - days_in_month(y, m)
+        m = m + 1
+        if m > 12 then y, m = y + 1, 1 end
+    end
+    if y ~= fact.cal_year or m ~= fact.cal_month then
+        set_month(y, m, nd)
+    else
+        fact.sel_day = nd
+    end
+end
+
+-- One press, one step. A single synthetic press reaches the rule four times here (measured
+-- 2026-10-26: `pleamar --say panels "key Right"` answers four `cal_step` events from one rule, and
+-- the day moved by four), so steps that arrive within 12 ms of each other are the same press and
+-- only the first counts. Twelve, not more: a held arrow repeats every 28 ms on this engine, and a
+-- repeat is a step of its own.
+local last_step_ms = 0
+on("cal_step", function(days)
+    if type(days) ~= "number" or days == 0 then return end
+    local now = math.floor(os.clock() * 1000)
+    if now - last_step_ms < 12 then return end
+    last_step_ms = now
+    cal_walk(math.floor(days))
+end)
 
 on("cal_prev", function()
     local y, m = fact.cal_year, fact.cal_month - 1
