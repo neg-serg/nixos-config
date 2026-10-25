@@ -151,6 +151,7 @@ lint:
     bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-qml-lint.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-scene-events.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
@@ -174,7 +175,8 @@ plm-theme:
 
 # Every `emit` in a scene must reach something: a logic handler, a scene rule, a component's event
 # parameter, or a plugin's own logic. The class of bug it guards is the one the port was reported
-# for — a capsule that compiles, presses, and does nothing.
+# for — a capsule that compiles, presses, and does nothing. Pure python and no scene binary, so it
+# runs inside `lint` as well.
 scene-events:
     bash "{{repo_root}}/scripts/dev/check-scene-events.sh" "{{repo_root}}"
 
