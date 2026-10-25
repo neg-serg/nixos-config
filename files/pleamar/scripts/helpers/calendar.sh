@@ -8,7 +8,9 @@
 # in the locale's dd.mm.yyyy form when khal rejects them, because khal parses
 # CLI dates with the format from its own config (this host's khal needs the
 # retry, the legacy Quickshell helper passed ISO and silently got nothing).
-# Public holidays are optional (--country) and come from date.nager.at.
+# Public holidays are optional (--country) and come from date.nager.at; with the same country the
+# production calendar comes from isdayoff.ru — the days it calls non-working, shortened or moved
+# (a working Saturday), which no holiday list knows about.
 #
 # Protocol (README.md has the full text):
 #   handshake  {"ok":true,"worker":"calendar","version":1,"topics":["calendar"]}
@@ -19,6 +21,7 @@
 #   sample     {"ok":true,"worker":"calendar","topic":"calendar","t":<ms>,
 #              "data":{month,first,last,events[{date,time,title,calendar}],
 #                      holidays[{date,name,name_en}],holidays_error,
+#                      workdays[{date,code}],workdays_error,
 #                      pills[{date,taken}],streak,
 #                      fetched_at,cached,age_s}}
 #
@@ -34,7 +37,8 @@
 # the handshake plus one sample and exits. A closed stdin finishes the worker.
 #
 # Usage: calendar.sh [--month YYYY-MM] [--country CC] [--cache-dir DIR]
-#                    [--interval-ms N] [--once] [--holidays-base URL] [--help]
+#                    [--interval-ms N] [--once] [--holidays-base URL]
+#                    [--workdays-base URL] [--help]
 #
 # Exit: 0 when stdin closes or on stop; 1 when the worker cannot start.
 
@@ -56,6 +60,7 @@ Options:
                        (default: 300000)
   --once               print the handshake and one sample, then exit
   --holidays-base URL  holidays API base (default: https://date.nager.at/api/v3)
+  --workdays-base URL  production calendar base (default: https://isdayoff.ru/api/getdata)
   -h, --help           this text
 
 Topic: calendar. Commands: subscribe, unsubscribe, set, sample, stop, with an
@@ -79,6 +84,10 @@ CACHE_DIR=""
 INTERVAL_MS=300000
 ONCE=0
 HOLIDAY_BASE="${PLEAMAR_HOLIDAYS_BASE:-https://date.nager.at/api/v3}"
+# isdayoff answers one digit per day of the month: 0 working, 1 non-working, 2 shortened (a working
+# day made an hour shorter), 4 a moved working day (usually a Saturday that works). `cc` takes the
+# same two-letter code the holiday list does.
+WORKDAY_BASE="${PLEAMAR_WORKDAYS_BASE:-https://isdayoff.ru/api/getdata}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -104,6 +113,11 @@ while [ $# -gt 0 ]; do
       ;;
     --once)
       ONCE=1
+      shift
+      ;;
+    --workdays-base)
+      [ $# -ge 2 ] || die "--workdays-base needs a value"
+      WORKDAY_BASE=$2
       shift
       ;;
     --holidays-base)
@@ -203,6 +217,9 @@ cleanup() {
   if [ -n "$HOLIDAY_TMP" ]; then
     rm -rf -- "$HOLIDAY_TMP"
   fi
+  if [ -n "$WORKDAY_TMP" ]; then
+    rm -rf -- "$WORKDAY_TMP"
+  fi
 }
 trap cleanup EXIT
 trap 'cleanup; exit 0' INT TERM
@@ -218,9 +235,12 @@ trim() {
 KHAL_TEXT=""
 ERR_MSG=""
 HOLIDAY_TMP=""
+WORKDAY_TMP=""
 CURL_PID=""
 HOLIDAYS_JSON="[]"
 HOLIDAY_ERROR=""
+WORKDAYS_JSON="[]"
+WORKDAY_ERROR=""
 
 # Run khal for the month; ISO dates first, the locale's dd.mm.yyyy second.
 # Sets KHAL_TEXT on 0 and ERR_MSG on 1.
@@ -323,6 +343,75 @@ holidays_json() {
   return 0
 }
 
+# Sets WORKDAYS_JSON and WORKDAY_ERROR. The production calendar, when a country is set: the days
+# of the month that are not plain working days, as {date, code}. Cached per month for a day — the
+# calendar changes a few times a year, not hourly.
+workdays_from() {
+  printf '%s' "$1" | awk -v y="$YEAR" -v m="${MONTH#*-}" '
+    {
+      for (i = 1; i <= length($0); i++) {
+        d = substr($0, i, 1)
+        if (d != "0") {
+          printf "%s{\"date\":\"%s-%02d-%02d\",\"code\":%s}", (n++ ? "," : ""), y, m, i, d
+        }
+      }
+    }
+    END { }' | sed 's/^/[/; s/$/]/'
+}
+
+workdays_json() {
+  local file raw mtime age rc body
+  WORKDAY_ERROR=""
+  WORKDAYS_JSON="[]"
+  if [ -z "$COUNTRY" ]; then
+    return 0
+  fi
+  file="$CACHE_DIR/workdays-$YEAR-$MONTH-$COUNTRY.txt"
+  if [ -f "$file" ]; then
+    mtime=$(stat -c %Y -- "$file" 2> /dev/null || echo 0)
+    age=$((NOW - mtime))
+    if [ "$age" -lt 86400 ]; then
+      body=$(< "$file")
+      WORKDAYS_JSON=$(workdays_from "$body")
+      return 0
+    fi
+  fi
+  if ! command -v curl > /dev/null 2>&1; then
+    WORKDAY_ERROR="curl not installed"
+    return 0
+  fi
+  WORKDAY_TMP=$(mktemp -d "${TMPDIR:-/tmp}/pleamar-calendar-http.XXXXXX")
+  curl --fail --silent --show-error --location --max-time 8 \
+    --user-agent "pleamar-calendar/1.0" \
+    "$WORKDAY_BASE?year=$YEAR&month=${MONTH#*-}&cc=$COUNTRY" \
+    > "$WORKDAY_TMP/body" 2> "$WORKDAY_TMP/err" &
+  CURL_PID=$!
+  rc=0
+  wait "$CURL_PID" || rc=$?
+  CURL_PID=""
+  if [ "$rc" -ne 0 ]; then
+    raw=$(< "$WORKDAY_TMP/err")
+    WORKDAY_ERROR="work calendar request failed: ${raw##*$'\n'}"
+    rm -rf -- "$WORKDAY_TMP"
+    WORKDAY_TMP=""
+    return 0
+  fi
+  body=$(< "$WORKDAY_TMP/body")
+  rm -rf -- "$WORKDAY_TMP"
+  WORKDAY_TMP=""
+  # One character per day and nothing else; an error document ("error", "101") must not be cached
+  # for the rest of the day.
+  if [[ ! "$body" =~ ^[0-9]+$ ]]; then
+    WORKDAY_ERROR="work calendar gave no day codes"
+    return 0
+  fi
+  mkdir -p -- "$CACHE_DIR"
+  if printf '%s' "$body" > "$CACHE_DIR/.workdays.$$.tmp" 2> /dev/null; then
+    mv -f -- "$CACHE_DIR/.workdays.$$.tmp" "$file"
+  fi
+  WORKDAYS_JSON=$(workdays_from "$body")
+}
+
 PAYLOAD=""
 
 # Cache or khal; sets PAYLOAD on 0, ERR_MSG on 1.
@@ -347,18 +436,25 @@ build_payload() {
   fi
   events=$(parse_events "$KHAL_TEXT")
   holidays_json
+  workdays_json
   payload=$(jq -cn --arg month "$MONTH" --arg first "$FIRST" --arg last "$LAST" \
     --argjson events "$events" --argjson holidays "$HOLIDAYS_JSON" \
-    --arg holi_err "$HOLIDAY_ERROR" --argjson now "$NOW" \
+    --arg holi_err "$HOLIDAY_ERROR" --argjson workdays "$WORKDAYS_JSON" \
+    --arg work_err "$WORKDAY_ERROR" --argjson now "$NOW" \
     '{month:$month, first:$first, last:$last, events:$events, holidays:$holidays,
       holidays_error:(if $holi_err == "" then null else $holi_err end),
+      workdays:$workdays,
+      workdays_error:(if $work_err == "" then null else $work_err end),
       fetched_at:$now, cached:false, age_s:0}')
   mkdir -p -- "$CACHE_DIR"
   jq -cn --arg month "$MONTH" --arg first "$FIRST" --arg last "$LAST" \
     --argjson events "$events" --argjson holidays "$HOLIDAYS_JSON" \
-    --arg holi_err "$HOLIDAY_ERROR" --argjson now "$NOW" \
+    --arg holi_err "$HOLIDAY_ERROR" --argjson workdays "$WORKDAYS_JSON" \
+    --arg work_err "$WORKDAY_ERROR" --argjson now "$NOW" \
     '{month:$month, first:$first, last:$last, events:$events, holidays:$holidays,
       holidays_error:(if $holi_err == "" then null else $holi_err end),
+      workdays:$workdays,
+      workdays_error:(if $work_err == "" then null else $work_err end),
       fetched_at:$now, cached:true}' > "$CACHE_DIR/.calendar.$$.tmp"
   mv -f -- "$CACHE_DIR/.calendar.$$.tmp" "$cache_file"
   PAYLOAD=$payload
