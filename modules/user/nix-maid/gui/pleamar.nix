@@ -29,7 +29,7 @@
 # - `pleamar-<scene>.service` for every scene in `pleamarScenes` (`bar`, `panels`, `notifications`,
 #   `toast`, `launcher`), each running
 #   `pleamar --scene ~/.config/pleamar/shells/<scene>/<scene>.plm --no-hud` with memory/CPU caps.
-#   `overlay` and `proof` exist under `files/pleamar/shells/` but are not started by the module;
+#   `overlay` is an on-demand unit (`pleamarOnDemandUnits`) and `proof` is not started at all;
 #   `overview` is a deliberate omission (a resident process for one IPC verb costs more than the
 #   bind). `lock` gets a unit too, but from `pleamarOnDemandUnits`: the scene is born locked
 #   (`fact locked = true`), so autostart would put the pleamar lock screen in front of every login
@@ -284,6 +284,18 @@ let
   #     pleamar --say lock "fact locked false"          # unlock (PAM first)
   pleamarOnDemandUnits = {
     pleamar-lock = (pleamarSceneUnit "lock") // {
+      wantedBy = [ ];
+      partOf = [ ];
+    };
+    # The overlay scene: the shared dismissal catcher, the semaphore relay and the idle inhibitor
+    # (`systemd-inhibit` while `fact inhibit` holds). Nothing it does is worth a resident process —
+    # its only verbs are IPC (`pleamar --say overlay "fact inhibit true"`), which is the module's own
+    # argument against autostarting `overview` — but it should be startable when it is wanted:
+    #   systemctl --user start pleamar-overlay.service
+    #   pleamar --say overlay "fact inhibit true"     # keep the session awake
+    #   pleamar --say overlay "fact inhibit false"    # let it idle again
+    # Its surface is `open: active`, so an idle overlay maps nothing at all.
+    pleamar-overlay = (pleamarSceneUnit "overlay") // {
       wantedBy = [ ];
       partOf = [ ];
     };
