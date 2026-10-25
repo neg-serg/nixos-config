@@ -1156,15 +1156,30 @@ scene bar {
                 box { from: 0, 0; size: w, strip; corner: corner }
             }
             row controls { at: pad, strip / 2; anchor: left middle; gap: gap
+                // Three buttons of one width in a row of equal gaps: the glyphs are what a hand
+                // aims at, and until now nothing under them answered a press — the transport was
+                // three pictures.
                 row btn_prev { size: btn, strip; align: center
                     text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
+                    group hit_prev_hit { size: btn, strip
+                        zone box hit_prev { from: 0, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Previous track"; role: button }
+                        on press hit_prev { emit prev }
+                    }
                 }
                 row btn_play { size: btn, strip; align: center
                     text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
                     text "pause" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
+                    group hit_play_hit { size: btn, strip
+                        zone box hit_play { from: 0, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Play or pause"; role: button }
+                        on press hit_play { emit toggle }
+                    }
                 }
                 row btn_next { size: btn, strip; align: center
                     text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
+                    group hit_next_hit { size: btn, strip
+                        zone box hit_next { from: 0, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Next track"; role: button }
+                        on press hit_next { emit next }
+                    }
                 }
             }
             // The zones sit on the buttons they name — the reason the old ones missed is
