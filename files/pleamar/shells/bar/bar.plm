@@ -386,9 +386,10 @@ scene bar {
         anchor: top_left
         level: overlay
         open: tray_open
-        // The menu takes the keyboard while it is up, so Esc can close it: a modal list that
-        // cannot be left from the keyboard is a modal list on a mouse-only leash.
-        keyboard: exclusive while tray_open
+        // `on_demand`, not `exclusive`: exclusive takes the keyboard from the whole session for as
+        // long as the fact holds, and a fact that gets stuck (a debug `--say`, a scene that dies
+        // with the menu open) leaves a desktop that types into nothing. On demand the compositor
+        // hands the keys over when the surface is focused, and Esc still reaches the scene.
         // `open:` is what keeps the desktop safe, not the size of the body: the engine empties the
         // input region of a surface it is not showing, so a catcher nobody opened takes no click
         // while the open one owns the monitor. A named surface's zones never reach `boxes`, so the
@@ -1140,14 +1141,14 @@ scene bar {
             }
             row controls { at: pad, strip / 2; anchor: left middle; gap: gap
                 row btn_prev { size: btn, strip; align: center
-                    text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: skin.ink }
+                    text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
                 }
                 row btn_play { size: btn, strip; align: center
-                    text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; show: media.playing }
-                    text "pause" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; show: not media.playing }
+                    text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
+                    text "pause" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
                 }
                 row btn_next { size: btn, strip; align: center
-                    text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: skin.ink }
+                    text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
                 }
             }
             // The zones sit on the buttons they name — the reason the old ones missed is
