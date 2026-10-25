@@ -663,6 +663,11 @@ end)
 -- when it closes — no process outlives its drawer, the same rule the workers
 -- follow (INTERFACES §7).
 
+-- 96 samples, where the reference keeps 600 (`NetFlowPopup.qml:22`, the 60 s window). 600
+-- was tried on 2026-10-25 and the plate went to 17-20 ms frames ("render · slow frame"):
+-- the scene rebuilds every column of the model on each publish, and 600 columns at 10 Hz
+-- is more than this path can carry. A tenth of the window is the honest trade until the
+-- renderer can take the ring without rebuilding it.
 local FLOW_LEN = 96
 local FLOW_PUBLISH_EVERY = 1
 local flow_id, flow_ring = nil, {}

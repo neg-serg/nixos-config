@@ -243,6 +243,12 @@ scene bar {
     // The two readouts, without their unit letter — the capsule draws the number
     // beside a link glyph and the tooltip appends the letter (measured against the
     // reference: it reads "022.6", the port used to read "015.7K").
+    // The glyph is the state, as in the reference (`Volume.qml` / `Microphone.qml`):
+    // `volume_off` when muted, `volume_down` below half, `volume_up` above; `mic_off` when the
+    // input is muted. The logic decides and writes these, because a `pick` of strings inside a
+    // component's `text` parameter is refused at load.
+    text vol.glyph = "volume_up"
+    text mic.glyph = "mic"
     text net_rx = "--"
     text net_tx = "--"
     text net_rx_unit = ""
@@ -650,7 +656,9 @@ scene bar {
             }
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
             text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Code2001" }
-            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
+            // `width:` and one line: a long name used to run over the plate and onto the keyboard
+            // capsule beside it, which is what the fixed 69 design px are there to prevent.
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { tip_open = true; emit tip(1) }
             on press ws { emit focus }
@@ -960,7 +968,7 @@ scene bar {
         size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile("volume_up", vol.shown, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level))
+            AudioTile(vol.glyph, vol.shown, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level))
             zone box vol { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
             on enter vol { vol.hot = true }
             on leave vol { vol.hot = false }
@@ -974,7 +982,7 @@ scene bar {
         size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile("mic", mic.shown, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level))
+            AudioTile(mic.glyph, mic.shown, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level))
             zone box mic { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on enter mic { mic.hot = true }
             on leave mic { mic.hot = false }
@@ -1004,7 +1012,9 @@ scene bar {
             // while nothing is taken, and a taken one still shows while the strip is hot.
             NetCluster() { show: widget.network }
             SysmonCluster() { show: widget.sysmon }
-            WeatherCapsule() { show: widget.weather and weather.have }
+            // No `weather.have`: the reference keeps the capsule at `--°C` until an answer arrives,
+            // and the left row used to shift the moment the first one did.
+            WeatherCapsule() { show: widget.weather }
             // The build badge, last in the row. QS draws `BuildStatus` on a panel of its
             // own, centred along the bottom edge — a second layer surface this slice does
             // not have — so it rides here instead, and takes no space at rest: the tool
