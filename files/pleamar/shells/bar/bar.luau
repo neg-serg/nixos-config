@@ -303,8 +303,13 @@ local function hideVolume()
     fact["vol.shown"] = false
 end
 
+-- The last sample, kept for the tooltip: only the logic can compose a line, and the volume
+-- capsule's line is two numbers out of this table.
+local audioNow = {}
+
 local function audioChanged(a)
     if type(a) ~= "table" then return end
+    audioNow = a
     -- The glyph follows the state, not a constant: what the capsule shows is the first
     -- thing that should say "muted".
     text["mic.glyph"] = (a.input_muted == true) and "mic_off" or "mic"
@@ -451,6 +456,13 @@ local function tip_line(i)
         local l2 = media.album or ""
         local l3 = (media.player and media.player ~= "") and media.player or ""
         return table.concat({ l1 ~= "" and l1 or "Nothing playing", l2, l3 }, "\n")
+    elseif i == 7 then
+        -- The volume capsule: the mixer's own numbers, as the capsule prints them.
+        local pct = math.floor((tonumber(audioNow.volume) or 0) * 100 + 0.5)
+        return string.format("Volume %d %%%s", pct, audioNow.muted == true and " (muted)" or "")
+    elseif i == 8 then
+        local pct = math.floor((tonumber(audioNow.input) or 0) * 100 + 0.5)
+        return string.format("Microphone %d %%%s", pct, audioNow.input_muted == true and " (muted)" or "")
     elseif i == 5 then
         local parts = { "Weather" }
         if text["weather.temp"] ~= "" then parts[#parts + 1] = text["weather.temp"] end
@@ -461,9 +473,39 @@ local function tip_line(i)
     return ""
 end
 
-on("tip", function(i)
+-- QS's tooltip waits `tooltip.delayMs` (Settings/Theme.qml, 150 ms) before it appears, so a
+-- pointer crossing the strip does not flash a card per capsule. The scene's own capsules set
+-- `tip_open` themselves (they are wired in the scene); the two that had no tooltip at all are
+-- driven from here, where the delay lives, and the same delay applies to both paths.
+local TIP_DELAY = 150
+local tipTimer = nil
+
+local function hideTip()
+    if tipTimer then
+        cancel(tipTimer)
+        tipTimer = nil
+    end
+    fact.tip_open = false
+end
+
+local function showTip(i)
     text.tip_body = tip_line(i or 0)
-end)
+    if tipTimer then cancel(tipTimer) end
+    tipTimer = after(TIP_DELAY, function()
+        tipTimer = nil
+        fact.tip_open = true
+    end)
+end
+
+on("tip", showTip)
+
+-- The volume and microphone capsules: they had no `emit tip` in the scene, so the logic listens
+-- for the pointer on their zones instead (`on("enter:<zone>")`, the shape the reference's hover
+-- is). A zone of its own for the system monitor would need the scene's row, so sysmon waits.
+on("enter:vol", function() showTip(7) end)
+on("enter:mic", function() showTip(8) end)
+on("leave:vol", hideTip)
+on("leave:mic", hideTip)
 
 -- ---------------------------------------------------------------- tray
 -- The icons come from the StatusNotifier host as they are: a record's fields are
