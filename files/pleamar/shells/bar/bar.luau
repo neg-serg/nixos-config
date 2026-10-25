@@ -1298,11 +1298,21 @@ setMenu = function(open)
     end
 end
 
+-- An event carries a number, so the scene's `emit tray_hot(1)` arrives here as 1 and not as `true`
+-- — `1 == true` is false in Luau, and every one of the tray's three hover handlers compared it that
+-- way: the reveal corner, the icons and the strip all did nothing, and the tray could only be
+-- opened by `--say bar "emit tray_toggle"`. Measured 2026-10-26: three StatusNotifier items were
+-- registered and the bar drew none of them.
+local function truthy(v)
+    if v == true then return true end
+    return (tonumber(v) or 0) ~= 0
+end
+
 --- The corner over the bar's bottom right — QS's hot zone, `Bar.qml:1246-1260` — whose only job is
 --- this (`onHotHoverChanged`, SystemTray.qml:38-50): coming onto it brings the tray out at once and
 --- calls off a pending short hold; leaving it starts one, unless the menu or the strip hold it.
 on("tray_hot", function(hot)
-    local on = hot == true
+    local on = truthy(hot)
     if trayHot == on then return end
     trayHot = on
     if on then
@@ -1318,7 +1328,7 @@ end)
 --- hover area, SystemTray.qml:129-132): entering brings it out, leaving takes it away at once
 --- unless the strip, the corner, the menu or a short hold still want it.
 on("tray_icons", function(over)
-    local on = over == true
+    local on = truthy(over)
     if trayOverIcons == on then return end
     trayOverIcons = on
     if on then
@@ -1333,7 +1343,7 @@ end)
 --- bar is what `Bar.qml:1284-1290` does after its 350 ms grace, and the grace is not reproduced,
 --- so the tray goes as the pointer leaves.
 on("tray_panel", function(over)
-    local on = over == true
+    local on = truthy(over)
     if trayPanel == on then return end
     trayPanel = on
     if on then return end
