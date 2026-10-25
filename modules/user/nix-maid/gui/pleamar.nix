@@ -111,7 +111,15 @@ let
   # Scene the hang watchdog probes: the bar is the one the session cannot lose.
   # A scene with no deployed file is skipped by its own condition, so the name
   # may be listed before the file lands (the bar scene exists since PH2-A).
-  pleamarHealthScene = "bar";
+  # The scenes the watchdog watches: a wedged bar is the obvious one, but the panels scene draws
+  # every drawer, and a wedged panels looks like a dead shell while the bar keeps ticking. `toast`,
+  # `launcher` and `notifications` are left out on purpose — they are on demand, and a hung one is
+  # noticed by the thing that asked for it.
+  pleamarHealthScenes = [
+    "bar"
+    "panels"
+  ];
+  healthScenes = lib.concatStringsSep " " (map (s: "\"${s}\"") pleamarHealthScenes);
 
   # Login-phase contract shared with the Quickshell bar: while the marker
   # exists the greeter owns the screen and no session scene may start. systemd
@@ -309,45 +317,46 @@ let
   pleamarHealth = pkgs.writeShellScript "pleamar-health" ''
     set -uo pipefail
 
-    scene="${pleamarHealthScene}"
-    unit="pleamar-$scene.service"
-    fails_file="''${XDG_RUNTIME_DIR:-/tmp}/pleamar-health-$scene.fails"
+    for scene in ${healthScenes}; do
+      unit="pleamar-$scene.service"
+      fails_file="''${XDG_RUNTIME_DIR:-/tmp}/pleamar-health-$scene.fails"
 
-    # A stopped or crashed scene is not this probe's business: restartOnFailure
-    # owns that path, and the login-phase condition keeps scenes down on
-    # purpose behind the greeter.
-    [ "$(systemctl --user is-active "$unit" 2>/dev/null || true)" = "active" ] || exit 0
+      # A stopped or crashed scene is not this probe's business: restartOnFailure
+      # owns that path, and the login-phase condition keeps scenes down on
+      # purpose behind the greeter.
+      [ "$(systemctl --user is-active "$unit" 2>/dev/null || true)" = "active" ] || continue
 
-    if timeout 15 pleamar --say "$scene" describe > /dev/null 2>&1; then
+      if timeout 15 pleamar --say "$scene" describe > /dev/null 2>&1; then
+        rm -f "$fails_file" 2>/dev/null || true
+        exit 0
+      fi
+
+      # Only an instance that has been up for a while can be called wedged: a
+      # scene that is still starting (or one that just restarted) answers late.
+      active_us="$(systemctl --user show -p ActiveEnterTimestampMonotonic --value "$unit" 2>/dev/null || true)"
+      active_us="''${active_us:-0}"
+      case "$active_us" in
+        *[!0-9]*) continue ;;
+      esac
+      [ "$active_us" -gt 0 ] || continue
+
+      uptime_s="$(cut -d. -f1 /proc/uptime)"
+      active_s=$((active_us / 1000000))
+      [ $((uptime_s - active_s)) -ge 90 ] || continue
+
+      # Consecutive misses: one slow probe (a busy scene) must not restart it.
+      fails=0
+      if [ -r "$fails_file" ]; then
+        fails="$(cat "$fails_file" 2>/dev/null || echo 0)"
+      fi
+      case "$fails" in *[!0-9]* | "") fails=0 ;; esac
+      fails=$((fails + 1))
+      printf '%s' "$fails" > "$fails_file" 2>/dev/null || true
+      [ "$fails" -ge 2 ] || continue
       rm -f "$fails_file" 2>/dev/null || true
-      exit 0
-    fi
 
-    # Only an instance that has been up for a while can be called wedged: a
-    # scene that is still starting (or one that just restarted) answers late.
-    active_us="$(systemctl --user show -p ActiveEnterTimestampMonotonic --value "$unit" 2>/dev/null || true)"
-    active_us="''${active_us:-0}"
-    case "$active_us" in
-      *[!0-9]*) exit 0 ;;
-    esac
-    [ "$active_us" -gt 0 ] || exit 0
-
-    uptime_s="$(cut -d. -f1 /proc/uptime)"
-    active_s=$((active_us / 1000000))
-    [ $((uptime_s - active_s)) -ge 90 ] || exit 0
-
-    # Consecutive misses: one slow probe (a busy scene) must not restart it.
-    fails=0
-    if [ -r "$fails_file" ]; then
-      fails="$(cat "$fails_file" 2>/dev/null || echo 0)"
-    fi
-    case "$fails" in *[!0-9]* | "") fails=0 ;; esac
-    fails=$((fails + 1))
-    printf '%s' "$fails" > "$fails_file" 2>/dev/null || true
-    [ "$fails" -ge 2 ] || exit 0
-    rm -f "$fails_file" 2>/dev/null || true
-
-    systemctl --user restart "$unit"
+      systemctl --user restart "$unit"
+    done
   '';
 
   # Remove STALE nix-maid symlinks before activation redeploys them: a link
