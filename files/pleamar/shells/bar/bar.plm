@@ -182,6 +182,12 @@ scene bar {
     // is refused ("I don't understand 'tip.shown'"), so a fact an outside tool
     // may want to poke carries no dot.
     fact tip_open = false
+    // The card's own size: one line is a strip, three are a block. The surface is the ceiling
+    // (a `size:` takes a literal), so the plate hangs from its bottom edge and the logic says
+    // how tall and wide it is — otherwise a one-line tooltip drew a 64 px slab of empty glass.
+    fact tip.h = 30
+    fact tip.w = 240
+    fact tip.lines = 1
     // Where the card hangs: the reference's tool window follows the capsule it belongs to
     // (`PanelTooltip` reads that capsule's `x`), and the capsule is wherever the pointer is.
     // A scene cannot ask a zone where it sits, but it can read the pointer on the strip
@@ -284,6 +290,8 @@ scene bar {
     // What the tooltip says. The scene cannot compose text, so it says which
     // capsule the cursor is on (`emit tip(n)`) and bar.luau writes the line.
     text tip_body = ""
+    // The tray item's own title, for the tooltip: a record's field, so the scene copies it out.
+    text tip_title = ""
     // QS Services/SystemMonitor: six 0..1 metrics and whether two of them are
     // there at all (the machine's GPU exposes a busy file, its swap is on).
     fact cpu = 0
@@ -637,7 +645,7 @@ scene bar {
             }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14.4; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
-            on enter clock { tip_open = true; emit tip(0) }
+            on enter clock { emit tip(0) }
         }
     }
 
@@ -676,7 +684,7 @@ scene bar {
             // capsule beside it, which is what the fixed 69 design px are there to prevent.
             text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
-            on enter ws { tip_open = true; emit tip(1) }
+            on enter ws { emit tip(1) }
             on press ws { emit focus }
         }
     }
@@ -742,6 +750,11 @@ scene bar {
                 SysmonPair("storage", io, io >= 0.03, io < 0.03, 0.5, 0.8)
                 SysmonPair("swap_horiz", swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8)
             }
+            // The cluster had no zone at all, so a hand could not hover it and the line
+            // `tip_line` already writes for it (case 4) never reached the screen. The plate is
+            // the pressable area, as on every other capsule; nothing is pressed here yet.
+            zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; label: "System monitor"; role: region }
+            on enter sysmon { emit tip(4) }
         }
     }
 
@@ -822,7 +835,7 @@ scene bar {
             // QS's MoonPhaseIcon takes and stipples the terminator the same way.
             shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
             zone box weather { from: 0, 0; size: 140, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
-            on enter weather { tip_open = true; emit tip(5) }
+            on enter weather { emit tip(5) }
         }
     }
 
@@ -847,7 +860,7 @@ scene bar {
             text "keyboard" { at: 10, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
             text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
-            on enter kb { tip_open = true; emit tip(2) }
+            on enter kb { emit tip(2) }
         }
     }
 
@@ -896,7 +909,7 @@ scene bar {
             text "{net_tx}" { measure: w.tx; at: text.x, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
             text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
-            on enter net { tip_open = true; emit tip(3) }
+            on enter net { emit tip(3) }
             on press net { emit open_network_panel }
         }
     }
@@ -919,10 +932,19 @@ scene bar {
     // same) — a `for` inside a `group` painted nothing at all.
     component TrayIcon(r: record, scale: number) {
         size: tray.slot * scale, strip * scale
-        // The frame each icon sits in: QS's surfaceHover is textPrimary at 6 %.
-        box { from: 1 * scale, 2 * scale; size: (tray.slot - 2) * scale, 21 * scale; corner: 6 * scale; color: skin.ink; opacity: 6% }
+        // The plate every other capsule in the strip wears. This was a 6 % wash on the bare
+        // strip, which read as a hole between the network cluster and the microphone; QS draws
+        // the tray inside `InlineTrayCapsule`, whose fill is the same as its neighbours'.
+        body {
+            color: skin.coal
+            opacity: 69%
+            border: 1, mix(skin.coal, skin.ink, 8%)
+            box { from: 1 * scale, 2 * scale; size: (tray.slot - 2) * scale, 21 * scale; corner: 6 * scale }
+        }
         image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale }
         zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
+        // The item's title is the record's, so the scene hands it over and the logic prints it.
+        on enter trayhit { tip_title = r.title; emit tip(12) }
         on press trayhit { emit tray_press(r.index) }
         // The item's own menu. A scene that uses the right button is never closed by one
         // (`press right`, language reference §14), which is why this trigger is also what
@@ -1190,7 +1212,7 @@ scene bar {
             }
             // The capsule itself: hovering it asks for the three-line card (title, album, player).
             zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
-            on enter z_media { tip_open = true; emit tip(6) }
+            on enter z_media { emit tip(6) }
 
             // The zones sit on the buttons they name — the reason the old ones missed is
             // that they were placed past the capsule's width while the buttons were drawn
