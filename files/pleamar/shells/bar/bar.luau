@@ -33,12 +33,24 @@ local D = {
     mediaPriority = { "mpdPlaying", "anyPlaying", "mpdRecent", "recent", "manual", "first" },
     mediaPreset = "default",
     mediaRecent = {},
+    -- The reference reads these from Settings.qml (`weatherCity`, `useFahrenheit`); the port had
+    -- them written into the URL and the readout. Empty city means the coordinates below, so a host
+    -- that never writes the file keeps the weather it had.
+    weatherCity = "",
+    weatherLat = 59.9375,
+    weatherLon = 30.3086,
+    useFahrenheit = false,
 }
 
 -- The widgets this slice draws; `widgets` in the file is read as the visible
 -- set. An order cannot be applied at runtime (the scene paints in the order it
 -- is written), and entries this slice does not know yet (pill, keyboard, media,
 -- …) are kept in the file for the slices that do.
+-- The place and the unit the reference keeps in Settings.qml; `apply` below fills them.
+local weatherCity = ""
+local weatherLat, weatherLon = 59.9375, 30.3086
+local useFahrenheit = false
+
 local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "sysmon", "weather", "media", "mpd", "volume", "mic", "genelec" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
@@ -143,6 +155,12 @@ local function apply(raw)
     for _, name in ipairs(WIDGETS) do
         fact["widget." .. name] = (wanted == nil) or (wanted[name] == true)
     end
+
+    -- The weather's own two settings, clamped like everything else here.
+    weatherCity = (type(raw.weatherCity) == "string") and raw.weatherCity or ""
+    weatherLat = num(raw.weatherLat, -90, 90, 59.9375)
+    weatherLon = num(raw.weatherLon, -180, 180, 30.3086)
+    useFahrenheit = (raw.useFahrenheit == true)
 
     -- The player policy, same rule: a wrong type is ignored, never fatal.
     mediaPinned = id_set(id_list(raw.mediaPinned, 24))
@@ -1606,7 +1624,21 @@ every(2000, sample)
 -- The reference refreshes every `ttlMs` 60 s (Services/Weather.qml:15); the port refreshed every
 -- 15 minutes, which is longer than anyone stares at a bar.
 -- (permissions: "files", "files.write", "curl")
-local WEATHER_URL = "https://wttr.in/59.9375,30.3086?format=%c|%t|%h|%w|%C|%p|%P"
+-- `wttr.in/<place>?format=…` takes either "lat,lon" or a name, and a name has to be escaped
+-- byte by byte: a Cyrillic city is UTF-8, and curl is given the URL as one argument, so nothing
+-- else would encode it.
+local function url_escape(s)
+    return (tostring(s):gsub("[^%w%-%._~]", function(c)
+        return string.format("%%%02X", string.byte(c))
+    end))
+end
+
+local WEATHER_FORMAT = "?format=%c|%t|%h|%w|%C|%p|%P"
+
+local function weather_url()
+    if weatherCity ~= "" then return "https://wttr.in/" .. url_escape(weatherCity) .. WEATHER_FORMAT end
+    return string.format("https://wttr.in/%.4f,%.4f%s", weatherLat, weatherLon, WEATHER_FORMAT)
+end
 local WEATHER_CACHE = "weather.json"
 local WEATHER_REFRESH_MS = 60000
 
@@ -1643,7 +1675,9 @@ local function show_weather(w)
     local hum = tonumber(w.hum)
     local wind = tonumber(w.wind)
     fact["weather.kind"] = weather_icon(code)
-    text["weather.temp"] = string.format("%d°C", math.floor(temp + 0.5))
+    -- The reference converts at the point it prints (`useFahrenheit`: `t * 9 / 5 + 32`).
+    if useFahrenheit then temp = temp * 9 / 5 + 32 end
+    text["weather.temp"] = string.format("%d°%s", math.floor(temp + 0.5), useFahrenheit and "F" or "C")
     if hum then text["weather.hum"] = string.format("%d%%", math.floor(hum + 0.5)) end
     -- WeatherIcons.formatWindSpeed: one decimal, no unit in the bar.
     if wind then text["weather.wind"] = string.format("%.1f", wind) end
@@ -1662,7 +1696,7 @@ end
 -- go through the same ladder the worker uses (`scripts/helpers/weather.sh`, `case "$cond"`), so
 -- both halves of the shell name a WMO code the same way.
 local function weather_fetch()
-    run("curl", { "-s", "--max-time", "6", WEATHER_URL }, function(out, code)
+    run("curl", { "-s", "--max-time", "6", weather_url() }, function(out, code)
         if code ~= 0 or type(out) ~= "string" or out == "" then return end
         local _, temp, hum, wind, cond, _, pres = out:match("^([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)")
         local num = function(s) return tonumber((tostring(s or "")):match("[-+]?%d+%.?%d*")) end
