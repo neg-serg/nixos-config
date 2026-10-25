@@ -444,6 +444,13 @@ local function tip_line(i)
         local cpu = math.floor((fact.cpu or 0) * 100 + 0.5)
         local ram = math.floor((fact.ram or 0) * 100 + 0.5)
         return string.format("CPU %d %%, RAM %d %%", cpu, ram)
+    elseif i == 6 then
+        -- The media card in the reference: title — artist, the album, the player. Three lines
+        -- to the others' one, and the card is sized for that.
+        local l1 = (media.title or "") .. ((media.artist and media.artist ~= "") and (" — " .. media.artist) or "")
+        local l2 = media.album or ""
+        local l3 = (media.player and media.player ~= "") and media.player or ""
+        return table.concat({ l1 ~= "" and l1 or "Nothing playing", l2, l3 }, "\n")
     elseif i == 5 then
         local parts = { "Weather" }
         if text["weather.temp"] ~= "" then parts[#parts + 1] = text["weather.temp"] end
