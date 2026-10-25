@@ -100,8 +100,7 @@ library Genelec strict {
             // what says whose level this is, and without it the number hung there alone while
             // the microphone beside it kept its glyph.
             row rest {
-                at: w / 2, row / 2
-                anchor: center
+                size: w, row
                 gap: capsule.gap
                 align: center
                 show: not hot
