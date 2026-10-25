@@ -319,12 +319,12 @@ local audioNow = {}
 local function audioChanged(a)
     if type(a) ~= "table" then return end
     audioNow = a
-    -- The glyph follows the state, not a constant: what the capsule shows is the first
-    -- thing that should say "muted".
-    text["mic.glyph"] = (a.input_muted == true) and "mic_off" or "mic"
+    -- The icon follows the state, not a constant: what the capsule shows is the first
+    -- thing that should say "muted". The scene cannot choose an image from an `if`, so
+    -- it gets a number: 0 up, 1 down, 2 off for the sink; 0 live, 1 muted for the source.
+    fact["mic.kind"] = (a.input_muted == true) and 1 or 0
     local lvl = tonumber(a.volume) or 0
-    text["vol.glyph"] = (a.muted == true) and "volume_off"
-        or (lvl < 0.5 and "volume_down" or "volume_up")
+    fact["vol.kind"] = (a.muted == true) and 2 or (lvl < 0.5 and 1 or 0)
     fact["mic.shown"] = a.input_muted ~= true
     if a.muted == true then
         if fullHide then cancel(fullHide) end
@@ -759,17 +759,18 @@ local WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 local WEATHER_CACHE = "weather.json"
 local WEATHER_REFRESH_MS = 900000
 
--- WeatherIcons.materialSymbolForCode, the same ladder.
+-- WeatherIcons.materialSymbolForCode, the same ladder: 0 sunny, 1 partly cloudy,
+-- 2 cloudy, 3 fog, 4 rain, 5 snow, 6 thunderstorm.
 local function weather_icon(code)
-    if code == 0 then return "sunny" end
-    if code == 1 or code == 2 then return "partly_cloudy_day" end
-    if code == 3 then return "cloud" end
-    if code >= 45 and code <= 48 then return "foggy" end
-    if code >= 51 and code <= 67 then return "rainy" end
-    if code >= 71 and code <= 77 then return "weather_snowy" end
-    if code >= 80 and code <= 82 then return "rainy" end
-    if code >= 95 and code <= 99 then return "thunderstorm" end
-    return "cloud"
+    if code == 0 then return 0 end
+    if code == 1 or code == 2 then return 1 end
+    if code == 3 then return 2 end
+    if code >= 45 and code <= 48 then return 3 end
+    if code >= 51 and code <= 67 then return 4 end
+    if code >= 71 and code <= 77 then return 5 end
+    if code >= 80 and code <= 82 then return 4 end
+    if code >= 95 and code <= 99 then return 6 end
+    return 2
 end
 
 -- The synodic month from the new moon of 2000-01-06 18:14 UTC — the same
@@ -790,7 +791,7 @@ local function show_weather(w)
     if not code or not temp then return end
     local hum = tonumber(w.hum)
     local wind = tonumber(w.wind)
-    text["weather.icon"] = weather_icon(code)
+    fact["weather.kind"] = weather_icon(code)
     text["weather.temp"] = string.format("%d°C", math.floor(temp + 0.5))
     if hum then text["weather.hum"] = string.format("%d%%", math.floor(hum + 0.5)) end
     -- WeatherIcons.formatWindSpeed: one decimal, no unit in the bar.
