@@ -755,7 +755,7 @@ scene bar {
                 box { from: 0, 1; size: inner + 12, 23; corner: 6 }
             }
             row metrics {
-                gap: 2.5
+                gap: 4
                 align: center
                 // 0, not `strip / 2 - 12`: the pairs are `strip` tall and already centred by the
                 // row's own `align`, and each one carries its own `scale` — inside this `group zoom`
