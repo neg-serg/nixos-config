@@ -227,13 +227,25 @@ on("set_in", function(v) sys.call("audio.input", v) end)
 on("toggle_out", function() sys.call("audio.mute") end)
 on("toggle_in", function() sys.call("audio.input_mute") end)
 
+-- The service hands a device's `id` as a NUMBER (PulseAudio's own index:
+-- `platform/pulse.rs` builds `SysValue::Num(i.index)`), so a guard that took only strings
+-- refused every id the service sent: the tiles and the app rows were drawn, clicked, and
+-- nothing happened. On 2026-10-25 the default sink did not move through the drawer at all
+-- (`pw-dump` still said `game-stereo` after `set_default_out 0` and `1`).
+local function idOf(rec)
+    if type(rec) ~= "table" then return nil end
+    local id = rec.id
+    if type(id) == "string" or type(id) == "number" then return id end
+    return nil
+end
+
 on("set_default_out", function(i)
-    local rec = pick_rec(audio_raw.outputs, model.sinks, i)
-    if rec and type(rec.id) == "string" then sys.call("audio.default", rec.id) end
+    local id = idOf(pick_rec(audio_raw.outputs, model.sinks, i))
+    if id then sys.call("audio.default", id) end
 end)
 on("set_default_in", function(i)
-    local rec = pick_rec(audio_raw.inputs, model.sources, i)
-    if rec and type(rec.id) == "string" then sys.call("audio.default", rec.id) end
+    local id = idOf(pick_rec(audio_raw.inputs, model.sources, i))
+    if id then sys.call("audio.default", id) end
 end)
 
 -- app_set packs the stream index and the volume into one number
@@ -242,11 +254,13 @@ on("app_set", function(p)
     local i = math.floor(p / 1000)
     local v = (p % 1000) / 1000
     local rec = pick_rec(audio_raw.apps, model.streams, i)
-    if rec and type(rec.id) == "string" then sys.call("audio.app_volume", rec.id, v) end
+    local id = idOf(rec)
+    if id then sys.call("audio.app_volume", id, v) end
 end)
 on("app_mute", function(i)
     local rec = pick_rec(audio_raw.apps, model.streams, i)
-    if rec and type(rec.id) == "string" then sys.call("audio.app_mute", rec.id) end
+    local id = idOf(rec)
+    if id then sys.call("audio.app_mute", id) end
 end)
 
 -- ========================= the media service =========================
