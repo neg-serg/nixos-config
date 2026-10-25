@@ -150,10 +150,14 @@ end
 
 local mediaPos = 0
 local mediaPlaying = false
+-- The last media record, kept for the three-line tooltip: logic does not get the scene's
+-- service binding as a variable, so `media.title` there would index nil.
+local mediaNow = {}
 
 sys.watch("media", function(m)
     local player, playing = nil, false
     if type(m) == "table" then
+        mediaNow = m
         accentFrom(m.art)
         player = m.player
         playing = m.playing == true
@@ -351,6 +355,15 @@ on("toggle_mic", function()
     sys.call("audio.input_mute")
 end)
 
+-- The wheel over the microphone tile: QS's Microphone.qml calls
+-- `changeMicVolume(notches * 0.05)`. The service has no `audio.input_step`, only
+-- the absolute `audio.input(0..1)`, so the notch is added to the last sample here.
+on("mic_step", function(notches)
+    local cur = tonumber(audioNow.input) or 0
+    local next = math.max(0, math.min(1, cur + (tonumber(notches) or 0) * 0.05))
+    sys.call("audio.input", next)
+end)
+
 -- ------------------------------------------------------------ workspaces
 -- QS's WsIndicator draws ONE capsule: the active workspace's icon and its
 -- name. The icon is the Nerd Font glyph `Bar/Icons/workspaces/icon-map.json`
@@ -463,9 +476,9 @@ local function tip_line(i)
     elseif i == 6 then
         -- The media card in the reference: title — artist, the album, the player. Three lines
         -- to the others' one, and the card is sized for that.
-        local l1 = (media.title or "") .. ((media.artist and media.artist ~= "") and (" — " .. media.artist) or "")
-        local l2 = media.album or ""
-        local l3 = (media.player and media.player ~= "") and media.player or ""
+        local l1 = (mediaNow.title or "") .. ((mediaNow.artist and mediaNow.artist ~= "") and (" — " .. mediaNow.artist) or "")
+        local l2 = mediaNow.album or ""
+        local l3 = (mediaNow.player and mediaNow.player ~= "") and mediaNow.player or ""
         return table.concat({ l1 ~= "" and l1 or "Nothing playing", l2, l3 }, "\n")
     elseif i == 7 then
         -- The volume capsule: the mixer's own numbers, as the capsule prints them.
@@ -555,6 +568,22 @@ on("tray_press", function(index)
     sys.call("tray.activate", item.key)
 end)
 
+--- Raise the window behind the tray item whose menu was just clicked. `window-activate` is a
+--- no-op for a label that is not an open request (exit 1), so the helper can be asked on every
+--- row; only a real failure (2) is worth a line in the scene's log.
+local function raise_tray()
+    local id = text["tray_id"]
+    local title = text["tray_title"]
+    if type(id) ~= "string" or id == "" then return end
+    run("window-activate", { "--raise-for", id, "--tray-title", title or "", "--stdout-report" }, function(out, code)
+        if code == 0 then
+            log("raise: " .. tostring(out))
+        elseif code == 2 then
+            log("raise failed: " .. tostring(out))
+        end
+    end)
+end
+
 -- The right button on an icon: the item's own menu, drawn by the bar. The scene hands over
 -- the record's index; the key that names the bus name and the object path is looked up here.
 -- A second press closes it, and a left click does too.
@@ -574,41 +603,13 @@ on("tray_click", function(n)
         if not ok then log("TRAYCLICK failed: " .. tostring(err)) end
     end
     -- "Open Telegram" is a request for a window, and the menu item alone does not bring one up
-    -- on this compositor. The reference hands it to `window-activate`, which finds the window
-    -- by class and raises it; here the same step is a dispatcher call, because Hyprland has no
-    -- `wlr-foreign-toplevel` list for `window.activate` to walk.
-    raise_for(text["tm." .. at])
+    -- on this compositor. The reference uses its `window-activate` helper, which owns the policy
+    -- (which labels mean "bring it up", and the tray-id -> class exceptions) and finds the window
+    -- through Hyprland, special workspaces included. The bar calls the same helper: its own
+    -- `hyprctl dispatch focuswindow` is the deprecated shorthand under Hyprland's Lua config and
+    -- mangles the dispatcher, while the helper knows the runtime API.
+    raise_tray()
 end)
-
---- Bring up whatever a menu item names: "Open <something>" raises the window whose class (or,
---- failing that, whose title) matches, which is what the reference's `window-activate` does.
-local function raise_for(label)
-    if type(label) ~= "string" then return end
-    local target = label:match("^%s*[Oo]pen%s+(.+)$")
-    if not target then return end
-    target = target:gsub("%s+$", "")
-    if target == "" then return end
-    local escaped = target:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
-    local attempts = {
-        "class:^(?i)" .. escaped .. "$",
-        "class:^(?i).*" .. escaped .. ".*$",
-        "title:^(?i).*" .. escaped .. ".*$",
-    }
-    local function attempt(i)
-        if i > #attempts then
-            log("raise: no window for '" .. target .. "'")
-            return
-        end
-        run("hyprctl", { "dispatch", "focuswindow", attempts[i] }, function(_, code)
-            if code == 0 then
-                log("raise: '" .. target .. "' with " .. attempts[i])
-            else
-                attempt(i + 1)
-            end
-        end)
-    end
-    attempt(1)
-end
 
 -- Esc closes the menu: the surface asks for the keyboard while it is open (`keyboard:
 -- exclusive while tray_open`), so the key reaches this scene and not the application under it.

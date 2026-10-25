@@ -206,8 +206,11 @@ scene bar {
     // cannot hold: it draws them from these eight texts, and `tm.count` says how many of
     // them are real.
     // The tray item the menu belongs to: a text, because an event carries numbers only and
-    // the logic cannot read the model.
+    // the logic cannot read the model. `tray_id` and `tray_title` are what `window-activate`
+    // needs for `--raise-for`: the bus key is not the item id the helper maps.
     text tray_key = ""
+    text tray_id = ""
+    text tray_title = ""
     fact tm.count = 0
     // Which row the cursor is on (1-based, 0 = none): the wash under a menu line.
     fact tm.hot = 0
@@ -421,22 +424,25 @@ scene bar {
         // surface), so it hugs it instead.
         margin: 0, 0, 0, 0
         level: overlay
-        // Tooltips are off: one card for every capsule read as clutter over the strip, and
-        // the three-line one needed a size the surface could not follow. Off is honest.
-        open: false
+        // The logic keeps the card up for one line (30 px) or the media card's three (64 px),
+        // and `tip_open` is the 150 ms delay plus the pointer still being on a capsule. The
+        // surface stays the full 64 px so the three-line card is never cut; the plate inside
+        // is only as tall as the fact, and hangs from the surface's bottom edge against the bar.
+        open: tip_open
         // The card's left edge, as wide as the logic says, centred on the pointer and kept 8 px
         // inside the strip.
         let card.left = clamp(tip.x - tip.w / 2, 8, screen.width - (tip.w + 8))
+        let card.top = 64 - tip.h
         body {
             color: skin.surface
             opacity: 96%
-            box { from: card.left, 0; size: tip.w, 64; corner: 6 }
-            box { from: card.left, 0; size: 2, 64; corner: 1; color: skin.accent }
+            box { from: card.left, card.top; size: tip.w, tip.h; corner: 6 }
+            box { from: card.left, card.top; size: 2, tip.h; corner: 1; color: skin.accent }
         }
         // Three lines, as `TooltipText.compose` builds them in the reference (title, the detail,
         // the extra): the logic writes them separated by newlines and the card is tall enough
         // to hold them.
-        text "{tip_body}" { at: card.left + 12, 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: tip.w - 24; lines: 3 }
+        text "{tip_body}" { at: card.left + 12, card.top + 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: tip.w - 24; lines: 3 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -592,7 +598,7 @@ scene bar {
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file.
-    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "nc", "pleamar", "systemctl"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "nc", "pleamar", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -621,6 +627,7 @@ scene bar {
     // table, so the logic flattens it into the `tm.*` texts the menu surface draws.
     model icons max 12 {
         key: text
+        id: text
         title: text
         icon: image 18, 18
         menu: bool = false
@@ -657,6 +664,9 @@ scene bar {
     event wheel_volume ->
     event toggle_mute ->
     event toggle_mic ->
+    // The wheel over the microphone tile: the sink has `audio.step`; the source only
+    // takes an absolute `audio.input`, so the logic adds the notch to the last sample.
+    event mic_step ->
 
     // -------------------------------------------------------- left: the clock
     // The service writes time and date itself; no slot here pads numbers, so
@@ -1036,7 +1046,7 @@ scene bar {
         // The item's own menu. A scene that uses the right button is never closed by one
         // (`press right`, language reference §14), which is why this trigger is also what
         // keeps a stray right click from closing the bar.
-        on press right trayhit { tray_key = r.key; emit tray_menu(r.index) }
+        on press right trayhit { tray_key = r.key; tray_id = r.id; tray_title = r.title; emit tray_menu(r.index) }
     }
 
     // ---------------------------------------------- right: microphone, volume
@@ -1111,7 +1121,7 @@ scene bar {
         }
     }
 
-    component MicCapsule(mute: event,
+    component MicCapsule(mute: event, step: event,
                          scale: number = ui * user_scale) {
         let slot = pick(strip.hot, 46, 26)
         size: slot * scale, strip * scale
@@ -1121,6 +1131,7 @@ scene bar {
             zone box mic { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on enter mic { mic.hot = true }
             on leave mic { mic.hot = false }
+            on scroll mic { emit step(wheel) }
             on press mic { emit mute }
             // A zone that goes away takes its pointer with it, and `leave` never comes: the tile
             // stayed "hovered" and its plate kept the open width.
@@ -1264,7 +1275,7 @@ scene bar {
             }
             // The capsule answers for itself: a press opens the now-playing page, as the
             // reference's `Media.qml` opens its panel, and the pointer on it asks for the card.
-            zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: button }
+            zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Media: {media.title}"; role: button }
             on press z_track { emit open_media_panel }
             on enter z_track { tip_open = true; emit tip(6) }
 
@@ -1364,7 +1375,7 @@ scene bar {
             // `or strip.hot`: the reference brings a muted (or 100 %) capsule back while the
             // pointer is on the panel, and without that there is nothing on the bar to press to
             // unmute — the control vanished exactly when it was needed.
-            MicCapsule(toggle_mic) { show: widget.mic and (mic.shown or strip.hot) }
+            MicCapsule(toggle_mic, mic_step) { show: widget.mic and (mic.shown or strip.hot) }
             VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and (vol.shown or strip.hot) }
             // Genelec, the rightmost module, as in the legacy bar. The reference hides it until
             // `panelHovering` (the strip's hover) — but this slot was gated on the tile's own
