@@ -897,7 +897,7 @@ scene bar {
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
-            image icon_keyboard { at: 10, strip / 2 - 7; size: 14, 14; tint: skin.ink.dim }
+            image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim }
             text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
