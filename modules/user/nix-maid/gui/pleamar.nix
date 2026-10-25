@@ -252,14 +252,15 @@ let
           # ~/.local/bin first: scenes shell out to user helpers that live there
           # (glm-vol, rsmetrx, …), then the system profile.
           "PATH=%h/.local/bin:/run/current-system/sw/bin:\${PATH}"
-          # The shell stays out of cursor-shape traffic: Hyprland keeps one
-          # global cursor shape and wipes the current image whenever a client
-          # sets one, and it does not re-evaluate the cursor while the pointer
-          # sits on a layer surface (upstream hyprwm/Hyprland#14906) — a bar
-          # asking for the pointing hand is how the mouse went missing. Unset
-          # this to restore the hand cursor: the patched runtime then re-says
-          # the shape while the pointer is inside, repairing a wipe in ~0.5 s.
-          "PLEAMAR_NO_CURSOR_SHAPES=1"
+          # No `PLEAMAR_NO_CURSOR_SHAPES=1` any more. It was the workaround for
+          # hyprwm/Hyprland#14906 — one global cursor shape, wiped whenever a client set
+          # one, never re-evaluated while the pointer sits on a layer surface — and it
+          # paid for that with the cursor itself: a scene that never sets a shape has
+          # nothing to show over its own surfaces, so the pointer vanished for as long as
+          # a drawer was up (seen 2026-10-25 with `drawer network` open). The shell now
+          # carries `pleamar-cursor-shape.patch`, which re-says the shape while the
+          # pointer is inside and repairs a wipe in ~0.5 s. If #14906 starts biting again,
+          # re-adding this line is the escape hatch, hand cursor and all.
         ];
       };
     };
