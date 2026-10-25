@@ -122,9 +122,9 @@ scene panels {
     // Radius is 0 everywhere: panelOverlayRadius and cornerRadiusLarge are both
     // 0 in the reference theme, so a plate is a plain rectangle.
 
-    surface media_card { size: 483, 368; anchor: bottom_right; margin: 0, 5, 1, 0
+    surface media_card { size: 483, 368; anchor: bottom; margin: 0, 0, 1, 0
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
-                         open: drawer == media
+                         open: drawer == media or page == 5
         include "pages/media.plm"
     }
     surface network_card { size: 540, 389; anchor: bottom_left; margin: 0, 0, 41, 5
@@ -165,6 +165,9 @@ scene panels {
 
     // ----***--------------- drawer state and settings
     fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | build | keyboard | tray | system | power | settings = none
+    // Numbers are what `--say fact` can set; the enum `drawer` above is not accepted by the socket
+    // in this version. `page` mirrors it for the outside: 5 is media, 6 calendar, …
+    fact page = 0
     fact close_on_escape = true
     fact close_on_outside = true
     fact zoom = 1
