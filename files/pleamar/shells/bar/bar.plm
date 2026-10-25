@@ -1177,6 +1177,12 @@ scene bar {
                 // box of this scene's: the slot collapses while the analyser is not shown.
                 row spec_slot { show: media.hot; spec.Bars(width: 22, height: 20, gap: 1) }
             }
+            // The capsule answers for itself: a press opens the now-playing page, as the
+            // reference's `Media.qml` opens its panel, and the pointer on it asks for the card.
+            zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: button }
+            on press z_track { emit open_media_panel }
+            on enter z_track { tip_open = true; emit tip(6) }
+
             // The transport is not in here: it is its own pill, to the left of this
             // capsule (`Transport` below), which is where QS's `MediaTransport` rides out
             // and why its buttons used to land under the plate's edge and its hit zones
