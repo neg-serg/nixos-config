@@ -982,54 +982,37 @@ scene bar {
     component AudioTile(glyph: text, on: bool, readout: text, hot: bool, fill: color,
                         scale: number = ui * user_scale) {
         let icon = pill.icon
-        size: (2 * capsule.pad + pill.icon) * scale, strip * scale
+        // One plate, as wide as it needs to be: the icon alone at rest, the icon and its reading
+        // while the pointer is on it. Drawn as two boxes before — a fixed 30 px capsule with a
+        // second pill sliding out to its left — which left black plate sticking out to the right
+        // of the glyph and put the number outside the capsule it belongs to.
+        let w = pick(hot, w.out.width + 3 * capsule.pad + icon, 2 * capsule.pad + icon)
+        size: w * scale, strip * scale
         group zoom {
             scale: scale
-            // The capsule's own plate, as every neighbour wears it (`coal` at 69 % with the 8 %
-            // hairline). Without it the volume and the microphone were two bare glyphs between
-            // the Genelec tile and the media capsule — the poor relations of the row.
             body {
                 color: skin.coal
                 opacity: 69%
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 1; size: 2 * capsule.pad + pill.icon, 23; corner: corner }
+                box { from: 0, 1; size: w, 23; corner: corner }
             }
-            // The readout pill that slides out to the left while the cursor is on the capsule. Its
-            // width is the readout's: a fixed 44 was too tight for "100%" and a slab of empty
-            // glass behind "40%" — which is what a stretched pill reads as.
-            box {
-                // `1`, not `(strip - pill.height) / 2`: that was −1.5, and a box at a negative
-                // `from:` draws nothing at all (the rule this file states twice). 23 is the height
-                // every plate in the row wears.
-                from: icon / 2 - (w.out.width + 2 * pill.pad), 1
-                size: w.out.width + 2 * pill.pad, 23
-                corner: corner.small
-                color: skin.coal
-                // Same plate as every other capsule in the row: 69 %, `coal` (the reference's own
-                // `pill` fill is 53 %, but one lighter tile among seven reads as a mistake).
-                opacity: 69%
-                show: hot
+            // The icon keeps the right end of the plate, the reading grows to its left.
+            text "{glyph}" {
+                at: pick(hot, w - capsule.pad - icon / 2, w / 2), strip / 2 + 1
+                anchor: center
+                size: 14
+                color: fill
+                family: "Material Symbols Outlined"
             }
             text "{readout}" {
                 measure w.out
-                at: icon / 2 - pill.pad, strip / 2
+                at: w - 2 * capsule.pad - icon, strip / 2
                 anchor: right center
                 size: 14
                 weight: 500
                 color: skin.ink
                 family: "Iosevka"
                 show: hot
-            }
-            text "{glyph}" {
-                // Two logical px above the middle: Material ink hangs below the centre of its box,
-                // and the microphone read as a glyph sliding out of the strip.
-                at: icon / 2, strip / 2 + 1
-                anchor: center
-                // 14, the size the keyboard's glyph and the workspaces' icon are set in: at 13 the
-                // mark read small inside a 30 px plate, at 18 it stood taller than every neighbour.
-                size: 14
-                color: fill
-                family: "Material Symbols Outlined"
             }
         }
     }
