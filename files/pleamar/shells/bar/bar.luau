@@ -509,7 +509,42 @@ on("tray_click", function(n)
         local ok, err = pcall(function() sys.call("tray.menu_click", key, id) end)
         if not ok then log("TRAYCLICK failed: " .. tostring(err)) end
     end
+    -- "Open Telegram" is a request for a window, and the menu item alone does not bring one up
+    -- on this compositor. The reference hands it to `window-activate`, which finds the window
+    -- by class and raises it; here the same step is a dispatcher call, because Hyprland has no
+    -- `wlr-foreign-toplevel` list for `window.activate` to walk.
+    raise_for(text["tm." .. at])
 end)
+
+--- Bring up whatever a menu item names: "Open <something>" raises the window whose class (or,
+--- failing that, whose title) matches, which is what the reference's `window-activate` does.
+local function raise_for(label)
+    if type(label) ~= "string" then return end
+    local target = label:match("^%s*[Oo]pen%s+(.+)$")
+    if not target then return end
+    target = target:gsub("%s+$", "")
+    if target == "" then return end
+    local escaped = target:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+    local attempts = {
+        "class:^(?i)" .. escaped .. "$",
+        "class:^(?i).*" .. escaped .. ".*$",
+        "title:^(?i).*" .. escaped .. ".*$",
+    }
+    local function attempt(i)
+        if i > #attempts then
+            log("raise: no window for '" .. target .. "'")
+            return
+        end
+        run("hyprctl", { "dispatch", "focuswindow", attempts[i] }, function(_, code)
+            if code == 0 then
+                log("raise: '" .. target .. "' with " .. attempts[i])
+            else
+                attempt(i + 1)
+            end
+        end)
+    end
+    attempt(1)
+end
 
 -- Esc closes the menu: the surface asks for the keyboard while it is open (`keyboard:
 -- exclusive while tray_open`), so the key reaches this scene and not the application under it.
