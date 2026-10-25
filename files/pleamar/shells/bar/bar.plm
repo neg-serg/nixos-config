@@ -686,7 +686,9 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 69, 23; corner: 6 }
             }
-            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "Material Symbols Outlined" }
+            // The glyphs this reads are Nerd Font code points (`WS_GLYPH` in the logic), so they need
+            // the face they were chosen in — Material has no such names and drew squares.
+            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
             text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
             // `width:` and one line: a long name used to run over the plate and onto the keyboard
             // capsule beside it, which is what the fixed 69 design px are there to prevent.
