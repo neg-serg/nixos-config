@@ -396,13 +396,13 @@ scene bar {
         body {
             color: skin.surface
             opacity: 96%
-            box { from: card.left, 0; size: 260, 64; corner: 6 }
+            box { from: card.left, 0; size: tip.w, 64; corner: 6 }
             box { from: card.left, 0; size: 2, 64; corner: 1; color: skin.accent }
         }
         // Three lines, as `TooltipText.compose` builds them in the reference (title, the detail,
         // the extra): the logic writes them separated by newlines and the card is tall enough
         // to hold them.
-        text "{tip_body}" { at: card.left + 12, 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: 236; lines: 3 }
+        text "{tip_body}" { at: card.left + 12, 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: tip.w - 24; lines: 3 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -644,7 +644,7 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
-            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 11.5; weight: 500; color: time.tone; family: "Iosevka" }
+            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 11.5; weight: 500; color: time.tone; family: "Iosevka"; width: 38; lines: 1 }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { emit tip(0) }
         }
@@ -781,7 +781,7 @@ scene bar {
         measure w.hum
         measure w.arrow
         measure w.wind
-        size: 140 * scale, strip * scale
+        size: 158 * scale, strip * scale
         group zoom {
             scale: scale
             // The reference cuts this capsule's right end on a SLANT and runs a
@@ -838,7 +838,7 @@ scene bar {
             // The moon: dithered by its own shader (moon.wgsl), which takes the phase
             // QS's MoonPhaseIcon takes and stipples the terminator the same way.
             shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
-            zone box weather { from: 0, 0; size: 140, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
+            zone box weather { from: 0, 0; size: 158, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { emit tip(5) }
         }
     }
@@ -862,7 +862,7 @@ scene bar {
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
             text "keyboard" { at: 10, strip / 2 + 1; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
-            text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
         }
@@ -908,9 +908,9 @@ scene bar {
             // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
             // The reference also sets letterSpacing 0.5, which the scene language has no
             // property for (its `letter_*` effects move glyphs without opening the line).
-            text "{net_rx}" { measure: w.rx; at: text.x, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
             text "{net_rx_unit}" { at: text.x + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; at: text.x, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
             text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { emit tip(3) }
@@ -1112,7 +1112,10 @@ scene bar {
         // write (`media_w`) could only be a guess — a long title was elided with room to
         // spare, and a short one left a hole.
         measure tw
-        let text.w = tw.width
+        // It hugs the string (QS sizes the capsule by `trackContainer.implicitWidth`), but a long
+        // title must not grow the capsule past the room the row has: 132 characters used to make
+        // the whole right row 1208 px wide and push its left edge off the surface.
+        let text.w = min(tw.width, 420)
         let spec.w = bar.height
         let btn.w = 16
         // The time row is measured, not reserved: the two digit texts are, and the two
