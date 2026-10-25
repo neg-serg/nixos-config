@@ -74,7 +74,9 @@ library Genelec strict {
         let size.icon = 17
         let label.w = 32
         let w = 2 * capsule.pad + size.icon + capsule.gap + 32
-        let h = capsule.height + 2
+        // 23 design: the height every other capsule's plate is drawn at. A taller one pokes out of
+        // the strip at its rounded corner, which is the black notch at the right end.
+        let h = 23
         // The slot is as tall as the row's: every other capsule in the bar answers a press over
         // the full `row`, and this one answered over 18 design px sitting at the top of it —
         // a tile that looked a few pixels high and clicked even less.
