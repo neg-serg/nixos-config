@@ -988,14 +988,16 @@ scene bar {
     //     the volume capsule at 100 % once panel.volume.fullHideMs has passed
     //     and the microphone when it is muted. `vol.shown`/`mic.shown` carry
     //     that (bar.luau), so the layout closes up like the reference's.
-    component AudioTile(glyph: text, on: bool, readout: text, hot: bool, fill: color,
+    component AudioTile(glyph: text, slot: number, readout: text, hot: bool, fill: color,
                         scale: number = ui * user_scale) {
         let icon = pill.icon
         // One plate, as wide as it needs to be: the icon alone at rest, the icon and its reading
         // while the pointer is on it. Drawn as two boxes before — a fixed 30 px capsule with a
         // second pill sliding out to its left — which left black plate sticking out to the right
         // of the glyph and put the number outside the capsule it belongs to.
-        let w = pick(hot, w.out.width + 3 * capsule.pad + icon, 2 * capsule.pad + icon)
+        // The slot is the caller's, and the plate is the slot: a plate that sized itself while the
+        // row reserved a constant ran out of its cell and under the neighbour.
+        let w = slot
         size: w * scale, strip * scale
         group zoom {
             scale: scale
@@ -1028,11 +1030,12 @@ scene bar {
 
     component VolCapsule(step: event, mute: event,
                          scale: number = ui * user_scale) {
-        size: (2 * capsule.pad + pill.icon) * scale, strip * scale
+        let slot = pick(vol.hot, 62, 30)
+        size: slot * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(vol.glyph, vol.shown, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level), scale: 1)
-            zone box vol { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
+            AudioTile(vol.glyph, slot, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level), scale: 1)
+            zone box vol { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
             on enter vol { vol.hot = true }
             on leave vol { vol.hot = false }
             on scroll vol { emit step(wheel) }
@@ -1042,11 +1045,12 @@ scene bar {
 
     component MicCapsule(mute: event,
                          scale: number = ui * user_scale) {
-        size: (2 * capsule.pad + pill.icon) * scale, strip * scale
+        let slot = pick(mic.hot, 62, 30)
+        size: slot * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(mic.glyph, mic.shown, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
-            zone box mic { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
+            AudioTile(mic.glyph, slot, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
+            zone box mic { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on enter mic { mic.hot = true }
             on leave mic { mic.hot = false }
             on press mic { emit mute }
