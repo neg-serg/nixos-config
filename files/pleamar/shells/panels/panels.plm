@@ -222,9 +222,12 @@ scene panels {
     // The shared slide: every drawer leaves and arrives with the same motion.
     // A loose prop in a `screens: each` scene is shared by the copies on purpose:
     // the drawer is one thing on every monitor, not one per monitor.
-    // `ui.overlay` is a 180 ms slide — measured against the pointer it read as the click being
-    // slow, not as the drawer being animated. `ui.quick` is the same motion in 120 ms.
-    prop lift = 0 ~ui.quick
+    // The reference's own number: `panelAnimStdMs` is 280 ms with `InExpo` on the way in and
+    // `OutExpo` on the way out (`Settings/Theme.qml:717,917,918`), and `NumberStdIn/StdOutBehavior`
+    // are nothing but those two presets. It used to run at 120 ms (`ui.quick`), which read as the
+    // click being instant; a spring said in time (`~280ms`) is that 280 ms without bouncing, and
+    // it keeps its speed if something interrupts it.
+    prop lift = 0 ~280ms
     follow lift = if(drawer == none, 0, 1)
 
     // ----***--------------------- entry points
