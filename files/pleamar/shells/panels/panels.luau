@@ -297,6 +297,20 @@ sys.watch("media", media_apply)
 
 -- ---- sysmon: one `tiles` record per metric -------------------------------
 
+-- The worker samples once a second while the drawer exists; this ring keeps the last minute
+-- for the history chart. It is cleared when the drawer opens, so a close/open gap does not
+-- draw a straight line across time that was never sampled.
+local SYS_HIST_LEN = 60
+local sys_hist = {}
+
+local function sysmon_publish()
+    local rows = {}
+    for i = 1, #sys_hist do
+        rows[i] = sys_hist[i]
+    end
+    model.sys_hist = rows
+end
+
 local function sysmon_apply(d, topic)
     -- The `sysmon` topic carries the whole sample; a subtopic we did not
     -- subscribe to is not merged (its fields are the worker's, not this scene's).
@@ -336,6 +350,11 @@ local function sysmon_apply(d, topic)
           tone = tc and tone(tc, 75, 90) or 0 },
     }
 
+    sys_hist[#sys_hist + 1] = { cpu = cpu_pct / 100, ram = mp / 100, gpu = (gp or 0) / 100, temp = tp / 100 }
+    if #sys_hist > SYS_HIST_LEN then table.remove(sys_hist, 1) end
+    sysmon_publish()
+    fact.sysmon_gpu = (gp ~= nil) and 1 or 0
+    fact.sysmon_temp = (tc ~= nil) and 1 or 0
     fact.sysmon_online = 1
     text["sysmon.err"] = ""
 end
@@ -853,8 +872,12 @@ on("fact:drawer", function(v)
     if v == "network" then flow_start() else flow_stop() end
 
     -- The system dashboard reads the journal once, when it opens: the worker
-    -- prints a single line and exits.
-    if v == "system" then journal_refresh() end
+    -- prints a single line and exits. Its history starts from the first sample of this open.
+    if v == "system" then
+        sys_hist = {}
+        sysmon_publish()
+        journal_refresh()
+    end
 
     -- The analyser runs only while the card that draws it is up. A scene rule
     -- cannot set a plugin fact — it compiles and silently does nothing — so the
