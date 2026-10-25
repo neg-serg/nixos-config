@@ -1086,8 +1086,8 @@ scene bar {
         // of the glyph and put the number outside the capsule it belongs to.
         // The plate *is* the slot, and the slot shrinks with the tile: a plate drawn wider than what
         // it holds is the empty pill that sat to the right of the microphone.
-        let w = pick(hot, slot, 2 * capsule.pad + icon)
-        let gx = pick(hot, w - capsule.pad - icon / 2, w / 2)
+        let w = pick(hot, 2 * capsule.pad + icon, slot)
+        let gx = pick(hot, w / 2, w - capsule.pad - icon / 2)
         size: w * scale, strip * scale
         group zoom {
             scale: scale
@@ -1120,7 +1120,7 @@ scene bar {
 
     component VolCapsule(step: event, mute: event,
                          scale: number = ui * user_scale) {
-        let slot = pick(strip.hot, 46, 26)
+        let slot = pick(strip.hot, 26, 46)
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1136,7 +1136,7 @@ scene bar {
 
     component MicCapsule(mute: event, step: event,
                          scale: number = ui * user_scale) {
-        let slot = pick(strip.hot, 46, 26)
+        let slot = pick(strip.hot, 26, 46)
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1230,7 +1230,7 @@ scene bar {
         // `space 2`), the track, `gap`, the time, and — only while the analyser is up — `gap` and the
         // analyser. The old sum counted three gaps always and 2 px where the row uses `gap + 2`,
         // which is why the time and the analyser hung 4 px past the plate.
-        let w = 6 + art.w + (bar.gap + 2) + text.w + bar.gap + time.w + pick(media.hot, bar.gap + spec.w, 0) + 6
+        let w = 6 + art.w + (bar.gap + 2) + text.w + bar.gap + time.w + pick(media.hot, 0, bar.gap + spec.w) + 6
         size: w * scale, bar.height * scale
         group zoom {
             scale: scale
@@ -1329,14 +1329,14 @@ scene bar {
                 // aims at, and until now nothing under them answered a press — the transport was
                 // three pictures.
                 row btn_prev { size: btn, strip; align: center
-                    image icon_prev { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink) }
+                    image icon_prev { size: 14, 14; tint: pick(media.hot, skin.ink, skin.accent) }
                 }
                 row btn_play { size: btn, strip; align: center
-                    image icon_play { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink); show: media.playing }
-                    image icon_pause { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
+                    image icon_play { size: 14, 14; tint: pick(media.hot, skin.ink, skin.accent); show: media.playing }
+                    image icon_pause { size: 14, 14; tint: pick(media.hot, skin.ink, skin.accent); show: not media.playing }
                 }
                 row btn_next { size: btn, strip; align: center
-                    image icon_next { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink) }
+                    image icon_next { size: 14, 14; tint: pick(media.hot, skin.ink, skin.accent) }
                 }
             }
             // The capsule itself: hovering it asks for the media card (title and metadata).
