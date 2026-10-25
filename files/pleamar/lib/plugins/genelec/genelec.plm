@@ -64,44 +64,53 @@ library Genelec strict {
     // no space, as the QS pill prints it. Wheel is ±1 dB, a press toggles mute.
     fact hot = false
 
-    component Tile(scale: number = ui) {
+    component Tile(scale: number = ui, row: number = 25) {
         // The silhouette reads smaller than a glyph of the same size — it is a thin monitor
-        // outline, not a solid shape — so it is drawn at the strip's own height, not the
+        // outline, not a solid shape — so it is drawn at the row's own height, not the
         // capsule's inner 14: the tile keeps its 18 px pill and the icon stands a pixel proud of
         // it, which is what makes it legible next to the volume capsule's icon.
         let size.icon = 20
         let label.w = 40
         let w = 2 * capsule.pad + size.icon + capsule.gap + 40
         let h = capsule.height
-        size: (2 * capsule.pad + size.icon + capsule.gap + 40) * scale, capsule.height * scale
+        // The slot is as tall as the row's: every other capsule in the bar answers a press over
+        // the full `row`, and this one answered over 18 design px sitting at the top of it —
+        // a tile that looked a few pixels high and clicked even less.
+        size: (2 * capsule.pad + size.icon + capsule.gap + 40) * scale, row * scale
         group zoom {
             scale: scale
             // The plate is the capsule's, and a capsule only wears one while the pointer is on it:
             // the microphone and the volume tile beside it do exactly that. Drawn always, this one
             // was the single dark pill standing at the end of an otherwise bare right side.
             group plate { show: hot
-                Capsule(w, h, scale: 1) {
-                    row tile {
-                        gap: capsule.gap
-                        align: center
-                        image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
-                        text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
+                // Centred in the slot: the plate is 18 tall, the row is 29, and a `row` with
+                // `align: center` is how the transport's buttons sit in theirs too.
+                row cap { size: w, row; align: center
+                    Capsule(w, h, scale: 1) {
+                        row tile {
+                            gap: capsule.gap
+                            align: center
+                            image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
+                            text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
+                        }
                     }
                 }
             }
-            // At rest the silhouette and the level, bare on the strip: a monitor's outline is
+            // At rest the silhouette and the level, bare on the row: a monitor's outline is
             // what says whose level this is, and without it the number hung there alone while
             // the microphone beside it kept its glyph.
             row rest {
-                at: w / 2, h / 2
+                at: w / 2, row / 2
                 anchor: center
                 gap: capsule.gap
                 align: center
                 show: not hot
-                image ones { size: capsule.height - 4, capsule.height - 4; tint: if(muted, ink.off, ink) }
+                // The same silhouette the plate shows on hover: at `capsule.height - 4` it read
+                // as a smaller icon that grew when the pointer arrived.
+                image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
                 text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
             }
-            zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
+            zone box tile { from: 0, 0; size: w, row; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
             on enter tile { hot = true }
             on leave tile { hot = false }
             on scroll tile { emit turn(wheel) }

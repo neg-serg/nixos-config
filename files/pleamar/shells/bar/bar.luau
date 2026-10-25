@@ -682,7 +682,8 @@ local function show_weather(w)
     if hum then text["weather.hum"] = string.format("%d%%", math.floor(hum + 0.5)) end
     -- WeatherIcons.formatWindSpeed: one decimal, no unit in the bar.
     if wind then text["weather.wind"] = string.format("%.1f", wind) end
-    fact["weather.dir"] = tonumber(w.dir) or 0
+    -- The arrow points where the wind goes, the reading says where it comes from:
+    fact["weather.dir"] = ((tonumber(w.dir) or 0) + 180) % 360
     fact["weather.have"] = true
 end
 
