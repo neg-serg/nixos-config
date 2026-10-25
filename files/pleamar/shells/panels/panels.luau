@@ -829,7 +829,19 @@ local function journal_refresh()
     end
 end
 
+-- A drawer left alone closes itself: the same gesture as an outside press, on a clock. Any
+-- change of the fact re-arms it, so moving between drawers starts the wait again.
+local DRAWER_TIMEOUT_MS = 6000
+local drawerTimer = nil
+
 on("fact:drawer", function(v)
+    if drawerTimer then cancel(drawerTimer); drawerTimer = nil end
+    if v ~= "none" then
+        drawerTimer = after(DRAWER_TIMEOUT_MS, function()
+            drawerTimer = nil
+            fact.drawer = "none"
+        end)
+    end
     if v == "calendar" then
         -- Like the legacy popup: opening the calendar comes back to today.
         fact.cal_year, fact.cal_month = today_y, today_m
