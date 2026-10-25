@@ -71,10 +71,10 @@ library Genelec strict {
         // it, which is what makes it legible next to the volume capsule's icon.
         // The silhouette sits inside the plate, not above it: at 20 against a 13 px plate its
         // bottom edge hung out of the pill.
-        let size.icon = 14
-        let label.w = 30
-        let w = 2 * capsule.pad + size.icon + capsule.gap + 30
-        let h = capsule.height
+        let size.icon = 17
+        let label.w = 32
+        let w = 2 * capsule.pad + size.icon + capsule.gap + 32
+        let h = capsule.height + 2
         // The slot is as tall as the row's: every other capsule in the bar answers a press over
         // the full `row`, and this one answered over 18 design px sitting at the top of it —
         // a tile that looked a few pixels high and clicked even less.
