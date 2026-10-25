@@ -363,7 +363,7 @@ scene bar {
     // `tray_menu`, which swallows the pointer. This name is nobody's rule, and the catcher
     // (the one surface that needs the rectangle) keeps its own.
     surface bartip {
-        size: 240, 30
+        size: 260, 64
         anchor: bottom
         // Measured: with `margin: 0, 0, 29, 0` the card's bottom edge sat 38
         // logical px above the bar's top (the anchor is the work area, not the
@@ -374,10 +374,13 @@ scene bar {
         body {
             color: skin.surface
             opacity: 96%
-            box { from: 0, 0; size: 240, 30; corner: 6 }
-            box { from: 0, 0; size: 2, 30; corner: 1; color: skin.accent }
+            box { from: 0, 0; size: 260, 64; corner: 6 }
+            box { from: 0, 0; size: 2, 64; corner: 1; color: skin.accent }
         }
-        text "{tip_body}" { at: 10, 15; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
+        // Three lines, as `TooltipText.compose` builds them in the reference (title, the detail,
+        // the extra): the logic writes them separated by newlines and the card is tall enough
+        // to hold them.
+        text "{tip_body}" { at: 12, 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: 236; lines: 3 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -550,7 +553,7 @@ scene bar {
 
     service clock as now { time: text; date: text }
     // The track the capsule shows (QS: MusicManager.trackTitle/trackArtist).
-    service media { playing: bool; title: text; artist: text; player: text; position: number; length: number }
+    service media { playing: bool; title: text; artist: text; album: text; player: text; position: number; length: number }
     service workspaces { list: spaces }
     service audio { volume: number; muted: bool; input: number; input_muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
@@ -1161,27 +1164,19 @@ scene bar {
                 // three pictures.
                 row btn_prev { size: btn, strip; align: center
                     text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
-                    group hit_prev_hit { size: btn, strip
-                        zone box hit_prev { from: 0, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Previous track"; role: button }
-                        on press hit_prev { emit prev }
-                    }
                 }
                 row btn_play { size: btn, strip; align: center
                     text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
                     text "pause" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
-                    group hit_play_hit { size: btn, strip
-                        zone box hit_play { from: 0, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Play or pause"; role: button }
-                        on press hit_play { emit toggle }
-                    }
                 }
                 row btn_next { size: btn, strip; align: center
                     text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
-                    group hit_next_hit { size: btn, strip
-                        zone box hit_next { from: 0, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Next track"; role: button }
-                        on press hit_next { emit next }
-                    }
                 }
             }
+            // The capsule itself: hovering it asks for the three-line card (title, album, player).
+            zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
+            on enter z_media { tip_open = true; emit tip(6) }
+
             // The zones sit on the buttons they name — the reason the old ones missed is
             // that they were placed past the capsule's width while the buttons were drawn
             // inside it.
