@@ -389,7 +389,9 @@ scene bar {
         // surface), so it hugs it instead.
         margin: 0, 0, 0, 0
         level: overlay
-        open: tip_open
+        // Tooltips are off: one card for every capsule read as clutter over the strip, and
+        // the three-line one needed a size the surface could not follow. Off is honest.
+        open: false
         // The card's left edge, as wide as the logic says, centred on the pointer and kept 8 px
         // inside the strip.
         let card.left = clamp(tip.x - tip.w / 2, 8, screen.width - (tip.w + 8))
@@ -465,7 +467,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line1 { size: tm.w - 16, 20; show: tm.count > 0
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 1 }
-                text "{tm.1}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.1 }
+                text "{tm.1}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.1 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.1 }
                 zone box hit1 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.1}"; role: button }
                 on enter hit1 { tm.hot = 1 }
@@ -476,7 +478,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line2 { size: tm.w - 16, 20; show: tm.count > 1
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 2 }
-                text "{tm.2}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.2 }
+                text "{tm.2}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.2 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.2 }
                 zone box hit2 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.2}"; role: button }
                 on enter hit2 { tm.hot = 2 }
@@ -487,7 +489,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line3 { size: tm.w - 16, 20; show: tm.count > 2
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 3 }
-                text "{tm.3}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.3 }
+                text "{tm.3}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.3 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.3 }
                 zone box hit3 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.3}"; role: button }
                 on enter hit3 { tm.hot = 3 }
@@ -498,7 +500,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line4 { size: tm.w - 16, 20; show: tm.count > 3
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 4 }
-                text "{tm.4}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.4 }
+                text "{tm.4}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.4 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.4 }
                 zone box hit4 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.4}"; role: button }
                 on enter hit4 { tm.hot = 4 }
@@ -509,7 +511,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line5 { size: tm.w - 16, 20; show: tm.count > 4
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 5 }
-                text "{tm.5}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.5 }
+                text "{tm.5}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.5 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.5 }
                 zone box hit5 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.5}"; role: button }
                 on enter hit5 { tm.hot = 5 }
@@ -520,7 +522,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line6 { size: tm.w - 16, 20; show: tm.count > 5
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 6 }
-                text "{tm.6}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.6 }
+                text "{tm.6}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.6 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.6 }
                 zone box hit6 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.6}"; role: button }
                 on enter hit6 { tm.hot = 6 }
@@ -531,7 +533,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line7 { size: tm.w - 16, 20; show: tm.count > 6
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 7 }
-                text "{tm.7}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.7 }
+                text "{tm.7}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.7 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.7 }
                 zone box hit7 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.7}"; role: button }
                 on enter hit7 { tm.hot = 7 }
@@ -542,7 +544,7 @@ scene bar {
             // wash, the label and the zone lie on top of each other.
             group line8 { size: tm.w - 16, 20; show: tm.count > 7
                 box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == 8 }
-                text "{tm.8}" { at: 10, 10; anchor: left center; size: 13; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.8 }
+                text "{tm.8}" { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not tm.sep.8 }
                 box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: tm.sep.8 }
                 zone box hit8 { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: "{tm.8}"; role: button }
                 on enter hit8 { tm.hot = 8 }
@@ -644,7 +646,7 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
-            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 11.5; weight: 500; color: time.tone; family: "Iosevka"; width: 38; lines: 1 }
+            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 38; lines: 1 }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { emit tip(0) }
         }
@@ -816,16 +818,16 @@ scene bar {
             let x.arrow = x.hum + w.hum.width + gap.g
             let x.wind = x.arrow + w.arrow.width + gap.g
             let x.moon = x.wind + w.wind.width + gap.g
-            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2 + 1; anchor: left center; size: 9.6; color: skin.accent; family: "Material Symbols Outlined" }
+            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2 + 1; anchor: left center; size: 14; color: skin.accent; family: "Material Symbols Outlined" }
             text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
-            text "water_drop" { measure: w.drop; at: x.drop, strip / 2 + 1; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Material Symbols Outlined" }
-            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Iosevka" }
+            text "water_drop" { measure: w.drop; at: x.drop, strip / 2 + 1; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
             group arrow { pivot: x.arrow + w.arrow.width / 2, strip / 2 + 1; rotate: weather.dir
-                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2 + 1; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Material Symbols Outlined" }
+                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2 + 1; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
             }
-            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
@@ -899,7 +901,7 @@ scene bar {
             // luminance, and the group's own `saturation` is exactly that mix on the
             // GPU — 0.55 of the accent's saturation is what 45 % of grey leaves.
             group lan_tone { saturation: 0.55
-                text "lan" { at: 6, strip / 2 + 1; anchor: left center; size: 13; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
+                text "lan" { at: 6, strip / 2 + 1; anchor: left center; size: 14; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
             }
             // The weight is 700 because that is the face QS gets: it asks for Font.Black and
             // fontconfig answers with Iosevka Bold (`fc-match Iosevka:weight=black`), while
@@ -1005,7 +1007,7 @@ scene bar {
                 measure w.out
                 at: icon / 2 - pill.pad, strip / 2
                 anchor: right center
-                size: 13
+                size: 14
                 weight: 600
                 color: skin.ink
                 family: "Iosevka"
@@ -1164,7 +1166,7 @@ scene bar {
                 space 2
                 // Its own width, no `width:` — the box would be computed from what it is meant to
                 // measure, and a measurement of nothing is what left a lone "…" in the plate.
-                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 16; weight: 500; color: skin.ink; family: "Iosevka" }
+                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
                 // The time, in the two colours QS uses: the brackets and the slash wear
                 // the cover's accent (MusicManager.accentColor, sampled from the art), the
                 // digits wear textPrimary while playing and textSecondary while paused, at
@@ -1176,9 +1178,9 @@ scene bar {
                     // reports that one on a change and never polls it, so it stood still while the
                     // track played (measured: 149 for three minutes against MPD's 5:37). The logic
                     // ticks it every second and resyncs on every media event.
-                    text "{media.pos, time}" { measure: tp; size: 16; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "{media.pos, time}" { measure: tp; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                     text "/" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
-                    text "{media.length, time}" { measure: tl; size: 16; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "{media.length, time}" { measure: tl; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
                     text ")" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
                 }
                 // The analyser, revealed with the transport: QS keeps it inside the
@@ -1229,14 +1231,14 @@ scene bar {
                 // aims at, and until now nothing under them answered a press — the transport was
                 // three pictures.
                 row btn_prev { size: btn, strip; align: center
-                    text "skip_previous" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink) }
+                    text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
                 }
                 row btn_play { size: btn, strip; align: center
-                    text "play_arrow" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
-                    text "pause" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
+                    text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
+                    text "pause" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
                 }
                 row btn_next { size: btn, strip; align: center
-                    text "skip_next" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink) }
+                    text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
                 }
             }
             // The capsule itself: hovering it asks for the three-line card (title, album, player).
