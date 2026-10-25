@@ -257,12 +257,12 @@ scene bar {
     // The two readouts, without their unit letter — the capsule draws the number
     // beside a link glyph and the tooltip appends the letter (measured against the
     // reference: it reads "022.6", the port used to read "015.7K").
-    // The glyph is the state, as in the reference (`Volume.qml` / `Microphone.qml`):
+    // The icon is the state, as in the reference (`Volume.qml` / `Microphone.qml`):
     // `volume_off` when muted, `volume_down` below half, `volume_up` above; `mic_off` when the
-    // input is muted. The logic decides and writes these, because a `pick` of strings inside a
-    // component's `text` parameter is refused at load.
-    text vol.glyph = "volume_up"
-    text mic.glyph = "mic"
+    // input is muted. The logic writes a number because the scene cannot pass a different
+    // image from an `if`: 0 up, 1 down, 2 off for the sink; 0 live, 1 muted for the source.
+    fact vol.kind = 0
+    fact mic.kind = 0
     text net_rx = "--"
     text net_tx = "--"
     text net_rx_unit = ""
@@ -276,14 +276,15 @@ scene bar {
     // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
     text kb_layout = ""
     // The weather capsule, filled by bar.luau from open-meteo through its own
-    // on-disk cache: the glyph of the WMO code, the readouts, and the wind
+    // on-disk cache: the WMO code as one of seven pictures, the readouts, and the wind
     // arrow's angle (meteorological degrees + 180, where the wind blows TO).
     // `have` stays false until an answer — cached or fresh — has landed.
     fact weather.have = false
     fact weather.dir = 0
     // The moon's phase, 0 = new, 0.5 = full: the disc's shadow is placed by it.
     fact weather.moon = 0
-    text weather.icon = "partly_cloudy_day"
+    // 0 sunny, 1 partly cloudy, 2 cloudy, 3 fog, 4 rain, 5 snow, 6 thunderstorm.
+    fact weather.kind = 1
     text weather.temp = "--°C"
     text weather.hum = ""
     text weather.wind = ""
@@ -363,9 +364,35 @@ scene bar {
     shader moon_face = file "moon.wgsl"
 
     // Icons as SVG, not as a glyph font: a text glyph is rasterised at 14 * 1.15 = 16.1 logical px
-    // and the fraction is what blurs it, while a vector is drawn at the device pixel grid.
+    // and the fraction is what blurs it, while a vector is drawn at the device pixel grid. The
+    // Material-shaped files are the font's own outlines, so the pictures do not change — only
+    // their edges: resvg rasterises them at the surface's scale instead of hinting a 14 px font.
     image icon_keyboard = file "icons/keyboard.svg", 14, 14
     image icon_network = file "icons/network.svg", 14, 14
+    image icon_vol_up = file "icons/volume.svg", 14, 14
+    image icon_vol_down = file "icons/volume-down.svg", 14, 14
+    image icon_vol_off = file "icons/volume-off.svg", 14, 14
+    image icon_mic = file "icons/microphone.svg", 14, 14
+    image icon_mic_off = file "icons/microphone-off.svg", 14, 14
+    image icon_prev = file "icons/transport-prev.svg", 14, 14
+    image icon_play = file "icons/transport-play.svg", 14, 14
+    image icon_pause = file "icons/transport-pause.svg", 14, 14
+    image icon_next = file "icons/transport-next.svg", 14, 14
+    image icon_cpu = file "icons/sysmon-cpu.svg", 13, 13
+    image icon_ram = file "icons/sysmon-ram.svg", 13, 13
+    image icon_gpu = file "icons/sysmon-gpu.svg", 13, 13
+    image icon_temp = file "icons/sysmon-temp.svg", 13, 13
+    image icon_io = file "icons/sysmon-io.svg", 13, 13
+    image icon_swap = file "icons/sysmon-swap.svg", 13, 13
+    image icon_weather_sunny = file "icons/weather-sunny.svg", 14, 14
+    image icon_weather_partly = file "icons/weather-partly.svg", 14, 14
+    image icon_weather_cloud = file "icons/weather-cloud.svg", 14, 14
+    image icon_weather_fog = file "icons/weather-fog.svg", 14, 14
+    image icon_weather_rain = file "icons/weather-rain.svg", 14, 14
+    image icon_weather_snow = file "icons/weather-snow.svg", 14, 14
+    image icon_weather_thunder = file "icons/weather-thunder.svg", 14, 14
+    image icon_weather_drop = file "icons/weather-drop.svg", 14, 14
+    image icon_weather_wind = file "icons/weather-wind.svg", 14, 14
 
     // A named surface carries what it draws and shares every fact with the bar,
     // so a tooltip needs no round trip. `level: overlay` so it reads over the
@@ -716,7 +743,7 @@ scene bar {
     // (systemMonitorHideIdle, 3 %) keeps its place but dims to textDisabled,
     // and I/O disappears outright — that is the reference's own rule, and it is
     // why the cluster is often narrower than six pairs.
-    component SysmonPair(glyph: text, value: number, shown: bool, idle: bool,
+    component SysmonPair(glyph: image, value: number, shown: bool, idle: bool,
                          warn: number, crit: number,
                          scale: number = ui * user_scale) {
         // One pair, laid out once: the glyph 13 wide, three of air, the bar 3 — 21 in all. The
@@ -728,7 +755,7 @@ scene bar {
         size: (glyph.w + gap + bar.w + 2) * scale, strip * scale
         group zoom {
             scale: scale
-            text glyph { at: 0, strip / 2 + 1; anchor: left center; size: 13; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
+            image glyph { at: 0, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
             box { from: glyph.w + gap, strip / 2 + bh / 2 - value * bh; size: bar.w, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
@@ -763,17 +790,17 @@ scene bar {
                 // row's own `align`, and each one carries its own `scale` — inside this `group zoom`
                 // that made every pair 1.15² and the row taller than the strip.
                 at: 6, 0
-                SysmonPair("memory_alt", cpu, true, cpu < 0.03, 0.5, 0.8, scale: 1)
-                SysmonPair("memory", ram, true, ram < 0.03, 0.5, 0.8, scale: 1)
-                SysmonPair("developer_board", gpu, has.gpu, gpu < 0.03, 0.5, 0.8, scale: 1)
-                SysmonPair("thermostat", temp, true, temp < 0.03, 0.43, 0.71, scale: 1)
+                SysmonPair(icon_cpu, cpu, true, cpu < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_ram, ram, true, ram < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_gpu, gpu, has.gpu, gpu < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_temp, temp, true, temp < 0.03, 0.43, 0.71, scale: 1)
                 // I/O is the one metric the reference takes away outright when
                 // it is idle (`_visIo = showIoMonitor && !_idleIo`), where the
                 // others stay and only dim: it is worth 44 physical px of the
                 // row, and a cluster that keeps it pushes everything after it
                 // (the weather) to the right.
-                SysmonPair("storage", io, io >= 0.03, io < 0.03, 0.5, 0.8, scale: 1)
-                SysmonPair("swap_horiz", swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_io, io, io >= 0.03, io < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_swap, swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8, scale: 1)
             }
             // The cluster had no zone at all, so a hand could not hover it and the line
             // `tip_line` already writes for it (case 4) never reached the screen. The plate is
@@ -796,11 +823,9 @@ scene bar {
     // +32.2, humidity +38.3, arrow +51.3, wind +57.8, moon +70.4 design px, with
     // its Row's `spacing: 4 * capsuleScale` between them.
     component WeatherCapsule(scale: number = ui * user_scale) {
-        measure w.icon
+        // The pictures are fixed at 14 design px; only the live text still measures itself.
         measure w.temp
-        measure w.drop
         measure w.hum
-        measure w.arrow
         measure w.wind
         // 168, not 158: with the row's type at 14 the group grew, and the capsule has to be
         // wider than the moon (it ends at ~153) so the slant cuts the capsule's end.
@@ -853,20 +878,33 @@ scene bar {
             // logical px of ink where the reference's is 155. `measure` is what fixes that —
             // the same mechanism the workspace capsule uses for its glyph.
             let gap.g = 4
-            let x.temp = 6 + w.icon.width + gap.g
+            let icon.w = 14
+            let drop.w = 14
+            let arrow.w = 14
+            let x.temp = 6 + icon.w + gap.g
             let x.drop = x.temp + w.temp.width + gap.g
-            let x.hum = x.drop + w.drop.width + gap.g
+            let x.hum = x.drop + drop.w + gap.g
             let x.arrow = x.hum + w.hum.width + gap.g
-            let x.wind = x.arrow + w.arrow.width + gap.g
+            let x.wind = x.arrow + arrow.w + gap.g
             let x.moon = x.wind + w.wind.width + gap.g
-            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2 + 1; anchor: left center; size: 14; color: skin.accent; family: "Material Symbols Outlined" }
+            // One picture of seven: the logic turns the WMO code into this number, because a
+            // component cannot choose a different image from an `if`.
+            group weather_face { move: 6, strip / 2 + 1 - icon.w / 2
+                image icon_weather_sunny { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 0 }
+                image icon_weather_partly { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 1 }
+                image icon_weather_cloud { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 2 }
+                image icon_weather_fog { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 3 }
+                image icon_weather_rain { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 4 }
+                image icon_weather_snow { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 5 }
+                image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 6 }
+            }
             text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
-            text "water_drop" { measure: w.drop; at: x.drop, strip / 2 + 1; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            image icon_weather_drop { at: x.drop, strip / 2 + 1 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
             text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
-            group arrow { pivot: x.arrow + w.arrow.width / 2, strip / 2 + 1; rotate: weather.dir
-                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2 + 1; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            group arrow { pivot: x.arrow + arrow.w / 2, strip / 2 + 1; rotate: weather.dir
+                image icon_weather_wind { at: x.arrow, strip / 2 + 1 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
             }
             text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
@@ -944,7 +982,7 @@ scene bar {
             // luminance, and the group's own `saturation` is exactly that mix on the
             // GPU — 0.55 of the accent's saturation is what 45 % of grey leaves.
             group lan_tone { saturation: 0.55
-                text "lan" { at: 6, strip / 2 + 1; anchor: left center; size: 14; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
+                image icon_network { at: 6, strip / 2 + 1 - icon / 2; size: icon, icon; tint: if(network.online, skin.accent, ink.off) }
             }
             // The weight is 700 because that is the face QS gets: it asks for Font.Black and
             // fontconfig answers with Iosevka Bold (`fc-match Iosevka:weight=black`), while
@@ -1015,9 +1053,10 @@ scene bar {
     //     the volume capsule at 100 % once panel.volume.fullHideMs has passed
     //     and the microphone when it is muted. `vol.shown`/`mic.shown` carry
     //     that (bar.luau), so the layout closes up like the reference's.
-    component AudioTile(glyph: text, slot: number, readout: text, hot: bool, fill: color,
+    component AudioTile(glyph: number, slot: number, readout: text, hot: bool, fill: color,
                         scale: number = ui * user_scale) {
         let icon = pill.icon
+        let glyph.w = 14
         // One plate, as wide as it needs to be: the icon alone at rest, the icon and its reading
         // while the pointer is on it. Drawn as two boxes before — a fixed 30 px capsule with a
         // second pill sliding out to its left — which left black plate sticking out to the right
@@ -1025,6 +1064,7 @@ scene bar {
         // The plate *is* the slot, and the slot shrinks with the tile: a plate drawn wider than what
         // it holds is the empty pill that sat to the right of the microphone.
         let w = pick(hot, slot, 2 * capsule.pad + icon)
+        let gx = pick(hot, w - capsule.pad - icon / 2, w / 2)
         size: w * scale, strip * scale
         group zoom {
             scale: scale
@@ -1034,14 +1074,14 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: w, 23; corner: corner }
             }
-            // The icon keeps the right end of the plate, the reading grows to its left.
-            text "{glyph}" {
-                at: pick(hot, w - capsule.pad - icon / 2, w / 2), strip / 2 + 1
-                anchor: center
-                size: 14
-                color: fill
-                family: "Material Symbols Outlined"
-            }
+            // The icon keeps the right end of the plate, the reading grows to its left. One of
+            // five pictures, chosen by the logic's number: 0 up, 1 down, 2 off, 3 live mic,
+            // 4 muted mic. The glyph stays 14 px inside the pill's 22 px icon cell.
+            image icon_vol_up { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 0 }
+            image icon_vol_down { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 1 }
+            image icon_vol_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 2 }
+            image icon_mic { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 3 }
+            image icon_mic_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 4 }
             text "{readout}" {
                 measure w.out
                 at: w - 2 * capsule.pad - icon, strip / 2
@@ -1061,7 +1101,7 @@ scene bar {
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(vol.glyph, slot, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level), scale: 1)
+            AudioTile(vol.kind, slot, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level), scale: 1)
             zone box vol { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
             on enter vol { vol.hot = true }
             on leave vol { vol.hot = false }
@@ -1077,7 +1117,7 @@ scene bar {
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(mic.glyph, slot, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
+            AudioTile(mic.kind + 3, slot, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
             zone box mic { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on enter mic { mic.hot = true }
             on leave mic { mic.hot = false }
@@ -1264,14 +1304,14 @@ scene bar {
                 // aims at, and until now nothing under them answered a press — the transport was
                 // three pictures.
                 row btn_prev { size: btn, strip; align: center
-                    text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
+                    image icon_prev { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink) }
                 }
                 row btn_play { size: btn, strip; align: center
-                    text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
-                    text "pause" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
+                    image icon_play { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink); show: media.playing }
+                    image icon_pause { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
                 }
                 row btn_next { size: btn, strip; align: center
-                    text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
+                    image icon_next { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink) }
                 }
             }
             // The capsule itself: hovering it asks for the three-line card (title, album, player).
