@@ -1158,7 +1158,7 @@ scene bar {
         // with the neighbours sliding aside) and what the first version of this capsule got
         // wrong in both directions — the empty band after the time was the analyser's room
         // reserved for a picture that was not there.
-        let w = art.w + capsule.gap + text.w + time.w + 3 * bar.gap + pick(media.hot, spec.w + bar.gap, 0)
+        let w = 6 + art.w + capsule.gap + text.w + time.w + 3 * bar.gap + 6 + pick(media.hot, spec.w + bar.gap, 0)
         size: w * scale, bar.height * scale
         group zoom {
             scale: scale
