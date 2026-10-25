@@ -69,7 +69,9 @@ library Genelec strict {
         // outline, not a solid shape — so it is drawn at the row's own height, not the
         // capsule's inner 14: the tile keeps its 18 px pill and the icon stands a pixel proud of
         // it, which is what makes it legible next to the volume capsule's icon.
-        let size.icon = 20
+        // The silhouette sits inside the plate, not above it: at 20 against a 13 px plate its
+        // bottom edge hung out of the pill.
+        let size.icon = 14
         let label.w = 30
         let w = 2 * capsule.pad + size.icon + capsule.gap + 30
         let h = capsule.height
@@ -86,7 +88,7 @@ library Genelec strict {
                 // Centred in the slot: the plate is 18 tall, the row is 29, and a `row` with
                 // `align: center` is how the transport's buttons sit in theirs too.
                 row cap { size: w, row; align: center
-                    Capsule(w, h, scale: 1) {
+                    Capsule(w, h, fill: coal, alpha: 69%, scale: 1) {
                         row tile {
                             gap: capsule.gap
                             align: center
