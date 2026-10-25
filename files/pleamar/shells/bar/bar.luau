@@ -182,13 +182,18 @@ sys.watch("media", function(m)
     local artist = (type(m.artist) == "string") and m.artist or ""
     -- How wide the track's box has to be, in design px. QS sizes the capsule by
     -- `trackContainer.implicitWidth`, which is the title text's own width (Media.qml:103-106),
-    -- so the plate hugs the string it holds; the port's fixed 168 left a hole after every
-    -- short one and cut long ones early. Iosevka's advance is half an em, so at the
-    -- capsule's 14 design px a character is 7; 40 to 200 is the range the reference's own
-    -- marquee works in.
+    -- so the plate hugs the string it holds. The scene cannot ask a measured text for its
+    -- width and cap it: a text with `measure:` reports the width it was given, not the
+    -- string's own (pleamar's `Layout::size` is `width.unwrap_or(w)`), so `min(tw.width,
+    -- 420)` always returned 420. The width is therefore a fact: Iosevka's advance is half
+    -- an em, so at the capsule's 14 design px every character is exactly 7. Beyond 420 the
+    -- text keeps that width and the engine draws the ellipsis; below it the plate hugs the
+    -- string with no hole.
+    local MEDIA_TRACK_CHAR = 7
+    local MEDIA_TRACK_MAX = 420
     local track = (artist ~= "" and title ~= "") and (artist .. " — " .. title) or title
     local n = utf8.len(track) or #track
-    fact.media_w = math.min(200, math.max(40, n * 7))
+    fact.media_w = math.min(MEDIA_TRACK_MAX, n * MEDIA_TRACK_CHAR)
     if mediaHold then
         cancel(mediaHold)
         mediaHold = nil

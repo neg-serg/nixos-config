@@ -605,8 +605,10 @@ scene bar {
     // settings round may expose it, the frozen schema does not.
     fact side = 4
     // The media capsule's track box, in design px: the logic keeps it on the length of
-    // "artist — title" (bar.luau), since the plate is sized by the string it holds.
-    fact media_w = 168
+    // "artist — title" (bar.luau), since the plate is sized by the string it holds. At
+    // 420 the text keeps this width and the engine elides it; shorter tracks set their
+    // own exact width, so no fixed box leaves a hole after a short title.
+    fact media_w = 420
     // The volume fill is a spring carried by rules, never touched per frame.
     prop level = 0 ~calm
     follow level = if(audio.muted, 0, audio.volume)
@@ -1139,17 +1141,12 @@ scene bar {
         let art.w = bar.height
         // The track's box comes from the logic (`fact media_w`): QS sizes the whole capsule
         // by `trackContainer.implicitWidth`, the title text's own width (Media.qml:103-106),
-        // so the plate hugs the string it holds. A fixed box left a hole after every short
-        // title — the capsule measured 331 logical px against the reference's ~200.
-        // The track's box is the string's own width, measured here: QS sizes the capsule by
-        // `trackContainer.implicitWidth` (Media.qml:103-106), and the fact the logic used to
-        // write (`media_w`) could only be a guess — a long title was elided with room to
-        // spare, and a short one left a hole.
-        measure tw
-        // It hugs the string (QS sizes the capsule by `trackContainer.implicitWidth`), but a long
-        // title must not grow the capsule past the room the row has: 132 characters used to make
-        // the whole right row 1208 px wide and push its left edge off the surface.
-        let text.w = min(tw.width, 420)
+        // so the plate hugs the string it holds. The width has to be a fact and not a
+        // `measure:` capped with `min()`: a text given `width:` reports that width from
+        // `measure:`, so the cap always won and a long title grew the plate while the text
+        // spilled out of it. The logic writes 7 px per character (Iosevka at 14) and stops
+        // at 420; `width: media_w` makes the engine elide long tracks with an ellipsis.
+        let text.w = media_w
         let spec.w = bar.height
         let btn.w = 16
         // The time row is measured, not reserved: the two digit texts are, and the two
@@ -1200,9 +1197,9 @@ scene bar {
                 // own gap is 6, and measured they were flush (the art and the first word came
                 // out as one run of ink).
                 space 2
-                // Its own width, no `width:` — the box would be computed from what it is meant to
-                // measure, and a measurement of nothing is what left a lone "…" in the plate.
-                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
+                // The fact's width, not a measurement: it is the string's own width until 420,
+                // and past that the engine cuts it with an ellipsis instead of growing the plate.
+                text "{media.artist} — {media.title}" { width: text.w; lines: 1; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
                 // The time, in the two colours QS uses: the brackets and the slash wear
                 // the cover's accent (MusicManager.accentColor, sampled from the art), the
                 // digits wear textPrimary while playing and textSecondary while paused, at
