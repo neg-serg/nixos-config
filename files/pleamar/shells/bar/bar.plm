@@ -1172,10 +1172,11 @@ scene bar {
     }
 
     component Right(scale: number = ui * user_scale) {
-        // `side` keeps the left row off the edge; the right row needs 8 design px less of it.
-        // Measured: the mic's ink ended 9 logical px short of the reference's (1894 against
-        // 1903 on a 1920 bar).
-        row { at: screen.width - (side - 8) * scale, hot + band / 2; anchor: right middle; gap: row.gap * scale
+
+        // `side`, not `side - 8`: with the Genelec tile always present the row ends 5 logical px
+        // past the screen edge (`describe` measured the tile's zone at 1844 + 81 = 1925 on a
+        // 1920 bar). The same 4 design px the left row keeps is what the right row keeps now.
+        row { at: screen.width - side * scale, hot + band / 2; anchor: right middle; gap: row.gap * scale
             // The legacy order from the left: media · MPD · systray · mic ·
             // volume · Genelec. The tray is still an extension point.
             // The controls ride out to the left of the capsule, so they are declared
@@ -1203,7 +1204,7 @@ scene bar {
             // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
             // hidden. The plate is a hover thing inside the tile; the silhouette and the level
             // are always there, as the microphone's glyph is.
-            row genelec_slot { show: widget.genelec; gen.Tile() }
+            row genelec_slot { show: widget.genelec; gen.Tile(row: strip) }
         }
     }
 
