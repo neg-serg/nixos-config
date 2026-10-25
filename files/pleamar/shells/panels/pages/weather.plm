@@ -48,9 +48,23 @@ part Weather {
             // ----***-------------------------- metrics
             // The details row (Weather.qml's second card): an arrow turned by the wind's angle, a
             // drop with the humidity, and the moon with its name and illumination.
-            group wind_arrow { pivot: 14, 100; rotate: weather.dir * 1deg
+            // `RotateBehavior` of the reference: the arrow turns to the new angle over
+            // `ui.anim.rotateMs` 220 ms instead of jumping (`~220ms` is that time, as a spring that
+            // does not overshoot; reduced motion settles it at once).
+            prop wind_angle = 0 ~220ms
+            follow wind_angle = weather.dir
+            group wind_arrow { pivot: 14, 100; rotate: wind_angle * 1deg
                 text "navigation" { at: 14, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
             }
+
+            // The reference's Spinner while the card waits (`Components/Spinner.qml`: a 270° arc,
+            // one turn per `ui.spinner.durationMs` 1000 ms, the gap carrying round). `spin` is the
+            // language's own per-second rotation and it freezes under `--reduced-motion`, so the
+            // spinner stops being a spinner exactly when it should.
+            prop spin_angle = 0
+            spin spin_angle by 360
+            arc { at: 158, 40; radius: 9; span: 270deg; width: 2; color: skin.accent
+                  rotate: spin_angle * 1deg; show: weather.loading }
             text weather.wind { at: 25, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
             text "water_drop" { at: 104, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
             text weather.humidity { at: 115, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
@@ -77,7 +91,7 @@ part Weather {
                 }
             }
 
-            text "Loading the weather…" { at: 150, 196; anchor: center; family: "Iosevka"; size: 10; color: ink.off; show: weather.loading }
+            text "Loading the weather…" { at: 168, 196; anchor: left center; family: "Iosevka"; size: 10; color: ink.off; show: weather.loading }
             text weather.err { at: 150, 196; anchor: center; family: "Iosevka"; size: 10; color: warn }
         }
     }
