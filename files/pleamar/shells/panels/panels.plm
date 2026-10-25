@@ -207,6 +207,17 @@ scene panels {
     fact net_max_rx: number = 1
     fact net_max_tx: number = 1
     fact weather_ok = 0
+    // The card is not left blank while the worker answers (Weather.qml shows a spinner and "--°C"):
+    // `loading` is on from the drawer's open until the first sample or its failure, `have` says a
+    // sample has ever landed (so a placeholder is not painted over real values), and `code` is the
+    // WMO number the watermark and the icon pick from.
+    fact weather.loading = false
+    fact weather.have = false
+    fact weather.code = 2
+    // The wind's angle in degrees, like the reference's `windRotation`: the card turns its arrow.
+    fact weather.dir = 0
+    // The moon, as the reference's details row shows it (`moonName` + `moonIllumination`).
+    fact weather.moonpct = 0
 
     // The shared slide: every drawer leaves and arrives with the same motion.
     // A loose prop in a `screens: each` scene is shared by the copies on purpose:
@@ -261,6 +272,10 @@ scene panels {
     text sys.services = "--"
     model journal max 8 { time: text; service: text; msg: text }
     text weather.cond = ""
+    // The Material glyph of the current condition and of each forecast day
+    // (`WeatherIcons.materialSymbolForCode` in the reference): a ligature the fonts draw.
+    text weather.glyph = "cloud"
+    text weather.moon = ""
     text weather.wind = ""
     text weather.humidity = ""
     text weather.pressure = ""
@@ -296,7 +311,7 @@ scene panels {
     text net.state = ""
 
     // ----***---- models filled by panels.luau (columns the drawers draw)
-    model forecast max 5 { day: text; cond: text; hi: text; lo: text }
+    model forecast max 5 { day: text; cond: text; glyph: text; hi: text; lo: text }
     model flow max 180 { rx: number; tx: number }
     model tiles max 8 { label: text; value: text; level: number; tone: number }
     // The system drawer's history: one record per worker sample, oldest first. The worker

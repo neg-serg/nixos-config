@@ -28,7 +28,7 @@
 #                   [--ttl SECONDS] [--force] [--interval-ms N]
 #                   [--forecast-days N] [--timeout SECONDS] [--once]
 #                   [--api-base URL] [--geocoding-base URL] [--wttr-base URL]
-#                   [--no-fallback] [--help]
+#                   [--metno-base URL] [--no-fallback] [--help]
 #
 # Exit: 0 when stdin closes or on stop; 1 when the worker cannot start.
 
@@ -55,6 +55,8 @@ Options:
   --api-base URL       Open-Meteo forecast base (default: https://api.open-meteo.com/v1)
   --geocoding-base URL Open-Meteo geocoding base
   --wttr-base URL      wttr.in fallback base (default: https://wttr.in)
+  --metno-base URL     MET Norway forecast base (default:
+                       https://api.met.no/weatherapi/locationforecast/2.0)
   --no-fallback        do not use wttr.in when Open-Meteo fails
   -h, --help           this text
 
@@ -85,6 +87,11 @@ TIMEOUT=8
 API_BASE="${PLEAMAR_WEATHER_API_BASE:-https://api.open-meteo.com/v1}"
 GEO_BASE="${PLEAMAR_WEATHER_GEOCODING_BASE:-https://geocoding-api.open-meteo.com/v1}"
 WTTR_BASE="${PLEAMAR_WEATHER_WTTR_BASE:-https://wttr.in}"
+# The forecast source that answers on this host: Open-Meteo is unreachable and wttr.in's JSON
+# stream arrives truncated (10-13 KB of a ~40 KB document, measured 2026-10-26), so `daily` used to
+# be empty and the card's forecast row drew nothing. MET Norway is keyless, needs a User-Agent (the
+# same one), and reports `symbol_code` names instead of WMO numbers.
+METNO_BASE="${PLEAMAR_WEATHER_METNO_BASE:-https://api.met.no/weatherapi/locationforecast/2.0}"
 FALLBACK=1
 USER_AGENT="${PLEAMAR_WEATHER_USER_AGENT:-pleamar-weather/1.0}"
 
@@ -147,6 +154,11 @@ while [ $# -gt 0 ]; do
       [ $# -ge 2 ] || die "--geocoding-base needs a value"
       GEO_BASE=$2
       shift 2
+      ;;
+    --metno-base)
+      [ $# -ge 2 ] || die "--metno-base needs a value"
+      METNO_BASE=$2
+      shift
       ;;
     --wttr-base)
       [ $# -ge 2 ] || die "--wttr-base needs a value"
@@ -228,10 +240,12 @@ ack() {
   printf '{"ok":true,"ack":"%s"}\n' "$1"
 }
 
-# One cached JSON document (empty when there is none or it is unreadable).
+# One cached JSON document (empty when there is none, it is unreadable, or it was written by a
+# version that knew no `daily`: a payload without a forecast is stale whatever its age says, and
+# serving it would keep the card's forecast row empty for a whole TTL after an upgrade).
 CACHE_JSON=""
 if [ -f "$CACHE_FILE" ]; then
-  CACHE_JSON=$(jq -c . "$CACHE_FILE" 2> /dev/null || true)
+  CACHE_JSON=$(jq -c 'select(.daily != null)' "$CACHE_FILE" 2> /dev/null || true)
 fi
 
 NOW=0
@@ -332,7 +346,62 @@ fetch_openmeteo() {
 }
 
 # Sets PAYLOAD on 0, ERR_MSG on 1. wttr.in's text format is deliberately
-# used (its JSON stream is often truncated); there is no daily forecast.
+# used (its JSON stream is often truncated here: 10-13 KB of a ~40 KB document), so the daily
+# forecast comes from MET Norway, which is keyless and answers.
+# Sets DAILY_JSON (a JSON array) on 0, or leaves it "[]" when the service cannot be reached or
+# what it said does not parse. Each day: {date, tmax_c, tmin_c, weather_code}, the shape the
+# card's forecast row draws and the same one Open-Meteo's answer is normalized into.
+daily_from_metno() {
+  DAILY_JSON="[]"
+  if ! http_get "$METNO_BASE/compact?lat=$LAT&lon=$LON"; then
+    ERR_MSG="met.no request failed: $HTTP_ERROR"
+    return 1
+  fi
+  local out
+  out=$(printf '%s' "$HTTP_BODY" | jq -c --argjson n "$FORECAST_DAYS" '
+    # met.no names the sky; the card knows WMO numbers (WeatherIcons.materialSymbolForCode). The
+    # order matters: a thunder day is a thunder day whatever else its name says, "heavysnow" is a
+    # heavy snowfall and not a light one, and "partlycloudy" is not "cloudy".
+    def wmo:
+      (gsub("_(day|night|polartwilight)$"; "")) as $k
+      | if ($k | test("thunder")) then 95
+        elif ($k | test("heavysnow")) then 75
+        elif ($k | test("lightsnow")) then 71
+        elif ($k | test("snow|sleet")) then 73
+        elif ($k | test("heavyrain")) then 65
+        elif ($k | test("lightrain|lightrainshowers|lightdrizzle")) then 61
+        elif ($k | test("rain|drizzle")) then 63
+        elif ($k | test("fog")) then 45
+        elif ($k | test("partlycloudy")) then 2
+        elif ($k | test("cloudy")) then 3
+        elif ($k | test("fair")) then 1
+        elif ($k | test("clearsky")) then 0
+        else 2 end;
+    [ .properties.timeseries[]?
+      | { date: (.time[0:10]),
+          hour: (.time[11:13]),
+          temp: .data.instant.details.air_temperature,
+          code: ((.data.next_1_hours.summary.symbol_code
+                  // .data.next_6_hours.summary.symbol_code
+                  // .data.next_12_hours.summary.symbol_code
+                  // "cloudy") | wmo) } ]
+    | map(select(.date != null and .temp != null))
+    | group_by(.date)
+    | map({ date: .[0].date,
+            tmax_c: (map(.temp) | max),
+            tmin_c: (map(.temp) | min),
+            # Noon says what the day looked like; a day whose hours stop earlier takes its middle.
+            weather_code: ((map(select(.hour == "12")) | .[0].code)
+                           // (.[((length / 2) | floor)].code) // 2) })
+    | .[0:$n]') || return 1
+  if [ -z "$out" ]; then
+    ERR_MSG="met.no answer has no days"
+    return 1
+  fi
+  DAILY_JSON=$out
+  return 0
+}
+
 fetch_wttr() {
   local raw temp hum wind cond pres code temp_c hum_pct wind_ms wind_dir pressure
   if ! http_get "$WTTR_BASE/$LAT,$LON?format=%c|%t|%h|%w|%C|%p|%P|%u"; then
@@ -370,10 +439,15 @@ fetch_wttr() {
     *Sun* | *Clear*) code=0 ;;
     *) code=2 ;;
   esac
+  # The current conditions are wttr.in's; the forecast is met.no's, because nothing else answers
+  # here. Its failure is not this provider's failure: the card still gets the current weather.
+  DAILY_JSON="[]"
+  daily_from_metno || true
   PAYLOAD=$(jq -cn \
     --argjson now "$NOW" --arg city "$CITY" --argjson lat "$LAT" --argjson lon "$LON" \
     --argjson temp "$temp_c" --argjson hum "$hum_pct" --argjson wind "$wind_ms" \
-    --argjson dir "$wind_dir" --argjson code "$code" --argjson pres "$pressure" '
+    --argjson dir "$wind_dir" --argjson code "$code" --argjson pres "$pressure" \
+    --argjson daily "$DAILY_JSON" '
       {
         city: $city, latitude: $lat, longitude: $lon,
         provider: "wttr.in", fetched_at: $now, age_s: 0, cached: false,
@@ -381,7 +455,7 @@ fetch_wttr() {
           temp_c: $temp, weather_code: $code, wind_ms: $wind, wind_dir_deg: $dir,
           is_day: null, humidity_pct: $hum, pressure_hpa: $pres
         },
-        daily: []
+        daily: $daily
       }')
   return 0
 }

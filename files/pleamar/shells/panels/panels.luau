@@ -178,6 +178,48 @@ local function cond_text(code)
     return "Weather"
 end
 
+-- The moon, as `Helpers/WeatherIcons.js` works it: the phase from the new moon of 2000-01-06 18:14
+-- UTC (the same reference the bar's capsule counts from), the illumination as 50 * (1 - cos), and
+-- the eight names the reference's details row prints.
+local MOON_NAMES = { "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
+                     "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent" }
+
+local function moon_phase(epoch)
+    if type(epoch) ~= "number" then return 0 end
+    local days = (epoch - 947182440) / 86400
+    local cycles = days / 29.53059
+    local frac = cycles - math.floor(cycles)
+    if frac < 0 then frac = frac + 1 end
+    return frac
+end
+
+local function moon_illumination(phase)
+    return 50 * (1 - math.cos(2 * math.pi * phase))
+end
+
+local function moon_name(phase)
+    -- `Math.round(age * 8) % 8` of the reference: the eighth nearest phase, and 8 wraps to 0.
+    local i = math.floor(phase * 8 + 0.5) % 8
+    return MOON_NAMES[i + 1]
+end
+
+-- The Material Symbols name for a WMO code, the property of `WeatherIcons.materialSymbolForCode`
+-- (Helpers/WeatherIcons.js: the same ladder the bar's capsule draws from). The card wants a picture
+-- beside the words, and a ligature is how this tree draws one.
+local function cond_glyph(code)
+    if type(code) ~= "number" then return "cloud" end
+    if code == 0 then return "sunny" end
+    if code <= 2 then return "partly_cloudy_day" end
+    if code == 3 then return "cloud" end
+    if code == 45 or code == 48 then return "foggy" end
+    if code <= 57 then return "rainy" end
+    if code <= 67 then return "rainy" end
+    if code <= 77 then return "weather_snowy" end
+    if code <= 82 then return "rainy" end
+    if code >= 95 then return "thunderstorm" end
+    return "cloud"
+end
+
 local function cond_short(code)
     if type(code) ~= "number" then return "--" end
     if code == 0 then return "Clear" end
@@ -424,6 +466,17 @@ local function weather_apply(d, topic)
     if city == "" then city = conf.weatherCity end
     if city == "" then city = "Weather" end
     text["weather.city"] = city
+    -- The sample landed: the card stops saying it is loading and may paint real values.
+    fact["weather.loading"] = false
+    fact["weather.have"] = true
+    -- The moon is the same computation the bar's capsule does (WeatherIcons.moonIllumination), and
+    -- it needs nothing but the clock, so it is redone here rather than asked of the worker.
+    local epoch = tonumber(d.fetched_at)
+    if epoch then
+        local phase = moon_phase(epoch)
+        fact["weather.moonpct"] = math.floor(moon_illumination(phase) + 0.5)
+        text["weather.moon"] = moon_name(phase)
+    end
 
     local cur = type(d.current) == "table" and d.current or {}
     local t = tonumber(cur.temp_c)
@@ -431,6 +484,12 @@ local function weather_apply(d, topic)
     text["weather.temp"] = t and fmt1(t) or "--"
     text["weather.unit"] = (fact.use_fahrenheit == true) and "°F" or "°C"
     text["weather.cond"] = cond_text(tonumber(cur.weather_code))
+    text["weather.glyph"] = cond_glyph(tonumber(cur.weather_code))
+    fact["weather.code"] = tonumber(cur.weather_code) or 2
+    -- The reference turns its navigation glyph by `windRotation(wind_direction_10m)`; the port has
+    -- the angle in degrees and the scene turns the glyph with it.
+    -- `windRotation`: the arrow points where the wind blows TO, which is the reading + 180.
+    fact["weather.dir"] = ((tonumber(cur.wind_dir_deg) or 0) + 180) % 360
     local wind = tonumber(cur.wind_ms)
     text["weather.wind"] = wind and (wind_dir(tonumber(cur.wind_dir_deg)) .. fmt1(wind) .. " m/s") or "--"
     local hum = tonumber(cur.humidity_pct)
@@ -445,7 +504,8 @@ local function weather_apply(d, topic)
         local y, m, dd = isodate_parts(day.date)
         local label = "--"
         if y then label = WDAY[weekday(y, m, dd) + 1] end
-        days[i] = { day = label, cond = cond_short(tonumber(day.weather_code)),
+        local dcode = tonumber(day.weather_code)
+        days[i] = { day = label, cond = cond_short(dcode), glyph = cond_glyph(dcode),
                     hi = fmt0(tonumber(day.tmax_c)) .. "°", lo = fmt0(tonumber(day.tmin_c)) .. "°" }
     end
     model.forecast = days
@@ -683,6 +743,7 @@ local function fail_worker(name, why)
         text["sysmon.err"] = "System monitor " .. why
     elseif name == "weather" then
         fact.weather_ok = 0
+        fact["weather.loading"] = false
         text["weather.err"] = "Weather " .. why
     elseif name == "calendar" then
         text["cal.err"] = "Calendar " .. why
@@ -1146,6 +1207,18 @@ end
 -- timer (its popups close on Escape or an outside press), and the outside press is the catcher
 -- below, so a forgotten drawer is dismissed by the next click anywhere.
 on("fact:drawer", function(v)
+    if v == "weather" then
+        -- The card is never a blank plate while the worker answers: placeholders and a line that
+        -- says it is loading, until the first sample (the reference shows a spinner and "--°C").
+        if fact["weather.have"] ~= true then
+            text["weather.err"] = ""
+            text["weather.temp"] = "--"
+            text["weather.unit"] = (fact.use_fahrenheit == true) and "°F" or "°C"
+            text["weather.cond"] = ""
+            text["weather.city"] = conf.weatherCity
+            fact["weather.loading"] = true
+        end
+    end
     if v == "calendar" then
         -- Like the legacy popup: opening the calendar comes back to today.
         fact.cal_year, fact.cal_month = today_y, today_m

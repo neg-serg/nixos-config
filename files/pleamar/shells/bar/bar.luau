@@ -1583,20 +1583,22 @@ every(2000, sample)
 -- -------------------------------------------------------------- weather
 -- QS WeatherButton: the WMO code as a Material glyph, N °C, water_drop + N %,
 -- a navigation arrow turned by the wind direction with the speed beside it, and
--- the moon's phase on the end. open-meteo answers in one to two seconds, which
--- is longer than the parity gate waits, so the answer is cached on disk and the
--- capsule fills from the cache first — the fetch only refreshes it.
+-- the moon's phase on the end. The answer is cached on disk and the capsule fills
+-- from the cache first — the fetch only refreshes it.
 --
--- The units are open-meteo's own: `wind_speed_unit=ms` asks for metres per
--- second. Without it the answer is km/h, and the bar's figure would be one
--- / 3.6 too large (WeatherIcons prints what it is given).
--- (permissions: "files", "files.write")
-local WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
-    .. "?latitude=59.9375&longitude=30.3086"
-    .. "&current=temperature_2m,relative_humidity_2m,weather_code,"
-    .. "wind_speed_10m,wind_direction_10m&wind_speed_unit=ms"
+-- The source is wttr.in's compact text format, the same one `pleamar-weather` reads, and not
+-- open-meteo: Open-Meteo cannot be reached from this host, so every fetch failed and the capsule
+-- sat on whatever the cache held — three days old on 2026-10-26, which is what "the weather does
+-- not work" looked like. Its `%t` is °C, `%w` is km/h (divided by 3.6 for the metres per second
+-- WeatherIcons prints), and the sky comes as words, which the ladder below turns back into the
+-- WMO numbers the capsule's glyph is chosen by.
+--
+-- The reference refreshes every `ttlMs` 60 s (Services/Weather.qml:15); the port refreshed every
+-- 15 minutes, which is longer than anyone stares at a bar.
+-- (permissions: "files", "files.write", "curl")
+local WEATHER_URL = "https://wttr.in/59.9375,30.3086?format=%c|%t|%h|%w|%C|%p|%P"
 local WEATHER_CACHE = "weather.json"
-local WEATHER_REFRESH_MS = 900000
+local WEATHER_REFRESH_MS = 60000
 
 -- WeatherIcons.materialSymbolForCode, the same ladder: 0 sunny, 1 partly cloudy,
 -- 2 cloudy, 3 fog, 4 rain, 5 snow, 6 thunderstorm.
@@ -1645,22 +1647,37 @@ local function weather_cached()
     if ok then show_weather(got) end
 end
 
--- The answer is flat enough to read with patterns: each field of `current`
--- appears once as a number, and the copies inside `*_units` are strings.
+-- `%c|%t|%h|%w|%C|%p|%P`: an arrow, the temperature, the humidity, the wind, the sky in words,
+-- the precipitation and the pressure. Each field is read for its first number, and the sky's words
+-- go through the same ladder the worker uses (`scripts/helpers/weather.sh`, `case "$cond"`), so
+-- both halves of the shell name a WMO code the same way.
 local function weather_fetch()
-    run("curl", { "-s", "--max-time", "4", WEATHER_URL }, function(out, code)
+    run("curl", { "-s", "--max-time", "6", WEATHER_URL }, function(out, code)
         if code ~= 0 or type(out) ~= "string" or out == "" then return end
-        local function n(key)
-            return tonumber(out:match('"' .. key .. '"%s*:%s*(-?%d+%.?%d*)'))
+        local _, temp, hum, wind, cond, _, pres = out:match("^([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)")
+        local num = function(s) return tonumber((tostring(s or "")):match("[-+]?%d+%.?%d*")) end
+        local arrow = tostring(wind or ""):match("^%s*(%S+)")
+        local WIND_DIR = { ["↑"] = 0, ["↗"] = 45, ["→"] = 90, ["↘"] = 135,
+                           ["↓"] = 180, ["↙"] = 225, ["←"] = 270, ["↖"] = 315 }
+        local c = tostring(cond or "")
+        local wcode = 2
+        if c:find("Thunder") then wcode = 95
+        elseif c:find("Snow") or c:find("Sleet") or c:find("Blizzard") then wcode = 71
+        elseif c:find("Rain") or c:find("Drizzle") or c:find("Shower") then wcode = 61
+        elseif c:find("Fog") or c:find("Mist") or c:find("Haze") then wcode = 45
+        elseif c:find("Overcast") then wcode = 3
+        elseif c:find("Cloud") then wcode = 2
+        elseif c:find("Sun") or c:find("Clear") then wcode = 0
         end
         local w = {
-            code = n("weather_code"),
-            temp = n("temperature_2m"),
-            hum = n("relative_humidity_2m"),
-            wind = n("wind_speed_10m"),
-            dir = n("wind_direction_10m"),
+            code = wcode,
+            temp = num(temp),
+            hum = num(hum) or 0,
+            wind = (num(wind) or 0) / 3.6,
+            dir = WIND_DIR[arrow] or 0,
+            pres = num(pres),
         }
-        if not w.code or not w.temp then return end
+        if not w.temp then return end
         show_weather(w)
         sys.call("files.write", WEATHER_CACHE,
             string.format('{\n  "code": %d,\n  "dir": %d,\n  "hum": %d,\n  "temp": %.1f,\n  "wind": %.1f\n}\n',
