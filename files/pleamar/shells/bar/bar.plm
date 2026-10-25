@@ -357,6 +357,11 @@ scene bar {
         // The reserve is the strip alone, as in the reference: the hotzone is not taken
         // from the windows, it only catches the pointer.
         reserve: 25 while shown
+        // The bar is low-motion: clock, media time and hover tooltips do not need 240 frames a
+        // second. Measured on DP-2, this scene drew one 1920x35 frame in 4.2 ms while the
+        // 240 Hz monitor gives it 4.16 ms — missing frames at the screen rate and burning a
+        // core. 60 Hz leaves the whole 16.7 ms budget for the same picture.
+        rate: 60
         screens: each
     }
 
