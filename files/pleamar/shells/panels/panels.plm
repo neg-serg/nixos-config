@@ -161,7 +161,7 @@ scene panels {
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*).
     permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "flow", "pleamar"
-                  services: "audio", "audio.*", "files", "files.write", "media" }
+                  services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
 
     // ----***--------------- drawer state and settings
     fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | build | keyboard | tray | system | power | settings = none
@@ -178,6 +178,11 @@ scene panels {
     fact sel_day = 0
     fact cal_year = 0
     fact cal_month = 0
+
+    // The media card's position, kept by the logic (`media_apply` + `every(1000)` in panels.luau):
+    // the service reports `media.position` only when the player says something, so the progress
+    // line reads this and moves under a playing track.
+    fact media.pos = 0
 
     // Worker state, read by the drawers.
     fact sysmon_online = 0
@@ -208,6 +213,8 @@ scene panels {
     event open_system
     event open_media
     event open_network
+    // A press or a drag on the media card's progress band: how far along the track, 0..1.
+    event seek ->
     event close_drawer
 
     // Calendar navigation (panels.luau re-asks the worker for the month).
@@ -289,8 +296,10 @@ scene panels {
     // carries every field the card shows. The service's `art` is the player's
     // URL (often a temp file the player exported), so the picture itself comes
     // from the cover plugin, which resolves the real album-directory file.
+    // `can_seek` is the player's own answer (`CanSeek` over MPRIS): MPD says no, so the progress
+    // band is a readout there and a control only where the player takes a seek.
     service media { playing: bool; title: text; artist: text; album: text
-                    player: text; position: number; length: number }
+                    player: text; position: number; length: number; can_seek: bool }
 
     // The media card's analyser is one-sided, as in QS (`mirror = false`).
     // A plugin fact is set from a rule, never loose (spectrum.check.plm), so

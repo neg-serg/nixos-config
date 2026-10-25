@@ -277,7 +277,25 @@ end)
 -- `Meta.rows` beside these. An icon with nothing after it is what neither side
 -- may produce: the emptiness test happens where the values are.
 
+-- What the card needs besides its rows: the length, so a press on the progress band can be turned
+-- into a position. `media.length` is in seconds (the same unit `media.position` is reported in, and
+-- the same one `media.seek` takes).
+--
+-- The position is kept here and carried on a second at a time while the player plays: the service
+-- reports `position` only when the player says something (a pause, a seek, a new song), so a card
+-- drawing the service's value stood still under a playing track — measured 2026-10-25 on MPD, where
+-- `media.position` stayed at 2 while `mpc` counted 4:34. `bar.luau` does the same for its capsule.
+local mediaNow = {}
+local mediaPos = 0
+local mediaPlaying = false
+
 local function media_apply(m)
+    if type(m) == "table" then
+        mediaNow = m
+        if type(m.position) == "number" then mediaPos = math.floor(m.position) end
+        mediaPlaying = m.playing == true
+        fact["media.pos"] = mediaPos
+    end
     local rows = {}
     local function add(glyph, value)
         if type(value) == "string" and value ~= "" then
@@ -292,6 +310,42 @@ local function media_apply(m)
 end
 
 sys.watch("media", media_apply)
+
+-- A second per tick while the player plays, resynced from every report the service does send.
+every(1000, function()
+    if not mediaPlaying then return end
+    mediaPos = mediaPos + 1
+    fact["media.pos"] = mediaPos
+end)
+
+-- A press or a drag on the media card's progress band (pages/media.plm): QS's `seekFromX` maps the
+-- pointer to a fraction of the track and calls `MusicManager.seek`.
+--
+-- The service refuses a player whose `CanSeek` is false with a runtime error in the journal (MPD's
+-- MPRIS answers false while stopped, measured 2026-10-25: "mpd.instance4313 cannot seek"), and a
+-- stream has no length to seek in at all, so both are checked here instead of asking for a seek
+-- that will be refused. The band says the same thing on screen: its label and its cursor follow
+-- `can_seek`.
+--
+-- Where the request lands is the player's business: pleamar sends `SetPosition` to a track that has
+-- an id and `Seek` by the difference otherwise, and mpd-mpris (which has no id and reports a stale
+-- `Position`) lands ~90 s off — measured: a press at the middle of a 525.8 s track ended at 353 s.
+-- The fraction this scene computes was 0.5 exactly, so nothing here is off; a player that reports
+-- where it is seeks exactly.
+-- (permissions: "media", "media.*")
+on("seek", function(frac)
+    if type(frac) ~= "number" then return end
+    if mediaNow.can_seek ~= true then return end
+    local length = tonumber(mediaNow.length) or 0
+    if length <= 0 then return end
+    local f = math.max(0, math.min(1, frac))
+    local to = length * f
+    sys.call("media.seek", to)
+    -- The card's own position jumps at once, whatever the player reports back: a player that never
+    -- says `Seeked` (MPD's MPRIS is one) would otherwise leave the line where it was.
+    mediaPos = math.floor(to)
+    fact["media.pos"] = mediaPos
+end)
 
 -- ==================== samples into the drawing ====================
 
