@@ -257,13 +257,17 @@ end)
 -- own defaults (drawer = none), no surface opens, and the scene exits. So wait
 -- past the load, then keep asserting the fact for a moment — it is a state, not
 -- a press, and saying it twice costs nothing.
+-- The drawer is a fact in the panels scene, which runs all the time: the press sends it and
+-- nothing else. This used to start the unit, sleep a whole 1.1 s "so it is up", and only then talk
+-- to it — a click that arrived in its frame and was answered a second later.
 local function open_drawer(name)
     run("dash", {
         "-c",
-        "systemctl --user start pleamar-panels.service; sleep 1.1; "
-            .. "for i in $(seq 1 10); do "
-            .. "pleamar --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 || break; "
-            .. "sleep 0.15; done",
+        "pleamar --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 && exit 0; "
+            .. "systemctl --user start pleamar-panels.service; "
+            .. "for i in 1 2 3 4 5 6 7 8 9 10; do "
+            .. "pleamar --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 && exit 0; "
+            .. "sleep 0.05; done",
     })
 end
 
