@@ -9,9 +9,30 @@ local FILE = "settings.json"
 -- Defaults live in code; the file holds what the user changed. The frozen keys
 -- of INTERFACES §6.3 that this slice cannot apply yet (height, fontScale,
 -- animations, startupClean, monitorScale) are left untouched in the file.
+--
+-- The `media*` keys are this scene's own (INTERFACES §6.3 asks for them here). The first four are
+-- QS Settings.json's player policy under the names the bar uses; `mediaRecent` is the reference's
+-- MRU stack (its StateCache `lastActivePlayers`), which this logic keeps and writes itself:
+--   mediaPinned    array of text, max 24,      — ids that win a tie (QS `pinnedPlayers`)
+--                  default []
+--   mediaIgnored   array of text, max 24,      — ids the bar never shows (QS `ignoredPlayers`)
+--                  default []
+--   mediaPriority  array of text, default ["mpdPlaying", "anyPlaying", "mpdRecent", "recent",
+--                  "manual", "first"] — the rule order (QS `playerSelectionPriority`). The default
+--                  is this host's own list, Settings.json:49, not the code's longer fallback in
+--                  MusicPlayers.qml:186 — `pinned` is not in it, so a pinned player only wins once
+--                  the user puts the rule back.
+--   mediaPreset    text, default "default"     — manualFirst | playingFirst | mpdBias | default
+--                  (QS `playerSelectionPreset`), read only when `mediaPriority` holds no known rule
+--   mediaRecent    array of text, default []   — the MRU stack, at most five ids, kept by the logic
 local D = {
     edge = "bottom", -- top | bottom; bottom on trantor
     scale = 1.0,     -- user multiplier on top of ui and the per-monitor fit
+    mediaPinned = {},
+    mediaIgnored = {},
+    mediaPriority = { "mpdPlaying", "anyPlaying", "mpdRecent", "recent", "manual", "first" },
+    mediaPreset = "default",
+    mediaRecent = {},
 }
 
 -- The widgets this slice draws; `widgets` in the file is read as the visible
@@ -25,6 +46,72 @@ local function num(v, lo, hi, def)
     if type(v) ~= "number" or v ~= v then return def end
     return math.max(lo, math.min(hi, v))
 end
+
+-- ---------------------------------------------------------------- player policy
+-- QS picks the bar's player itself (Services/MusicPlayers.qml) and everything that shows or
+-- commands music reads that pick. The service here picks one too — the one playing, else the one
+-- that played last, else the first — but it cannot know the reference's rules: a pinned player, an
+-- ignored one, MPD first. So the rules live in this logic, and the pick is pinned into the service
+-- with `media.choose`; that is what makes `media.player`, the track fields and `media.toggle`,
+-- `next` and `previous` all speak of the same player.
+--
+-- The rule names, in the order the reference's own header lists them (MusicPlayers.qml:9), and the
+-- set it accepts (:156). A name it does not know is dropped and a repeat ignored, as
+-- `_sanitizeRules` does (:157-171).
+local MEDIA_RULES = { "pinnedPlaying", "mpdPlaying", "anyPlaying", "mpdRecent", "pinned", "recent", "manual", "first" }
+
+-- The presets, verbatim from `presetRules` (:172-188); there `default` and `mpdBias` are one list.
+local MEDIA_PRESETS = {
+    mpdBias = { "pinnedPlaying", "mpdPlaying", "anyPlaying", "mpdRecent", "pinned", "recent", "manual", "first" },
+    manualFirst = { "manual", "pinnedPlaying", "anyPlaying", "pinned", "recent", "first" },
+    playingFirst = { "pinnedPlaying", "anyPlaying", "mpdPlaying", "pinned", "manual", "recent", "first" },
+}
+
+-- The id lists a settings file may carry: strings, empties and repeats dropped, and never more
+-- than the cap (INTERFACES §6.2 — a huge array is a typo, not a wish).
+local function id_list(v, cap)
+    local out, seen = {}, {}
+    if type(v) == "table" then
+        for i = 1, math.min(#v, cap) do
+            local id = v[i]
+            if type(id) == "string" and id ~= "" and not seen[id] then
+                seen[id] = true
+                out[#out + 1] = id
+            end
+        end
+    end
+    return out
+end
+
+local function id_set(list)
+    local s = {}
+    for _, id in ipairs(list) do s[id] = true end
+    return s
+end
+
+-- `playerSelectionPriority` wins whenever it holds one usable rule; otherwise the preset, whose
+-- unknown name falls back to `default` (:189-199).
+local function media_rules_from(priority, preset)
+    local known = id_set(MEDIA_RULES)
+    local out = {}
+    for _, rule in ipairs(id_list(priority, 8)) do
+        if known[rule] then out[#out + 1] = rule end
+    end
+    if #out > 0 then return out end
+    return MEDIA_PRESETS[preset] or MEDIA_PRESETS.mpdBias
+end
+
+-- What the file says, resolved once and again on every change of it.
+local mediaPinned = id_set(D.mediaPinned)
+local mediaIgnored = id_set(D.mediaIgnored)
+local mediaRules = media_rules_from(D.mediaPriority, D.mediaPreset)
+-- The MRU stack, front first, at most five ids (:37): what was heard last, and the order the
+-- `recent` and `mpdRecent` rules read. Loaded from the file once (:216-224), then kept here.
+local mediaStack = {}
+local mediaStackLoaded = false
+-- What each player's `playing` was when it was last heard, by id: a change is what moves a player
+-- to the front of the stack (:233-241).
+local mediaSeen = {}
 
 -- Read only: a missing file is the defaults; a broken one keeps the defaults
 -- too, and says so (`pcall`: `files.read` raises when the JSON cannot be read).
@@ -56,20 +143,37 @@ local function apply(raw)
     for _, name in ipairs(WIDGETS) do
         fact["widget." .. name] = (wanted == nil) or (wanted[name] == true)
     end
+
+    -- The player policy, same rule: a wrong type is ignored, never fatal.
+    mediaPinned = id_set(id_list(raw.mediaPinned, 24))
+    mediaIgnored = id_set(id_list(raw.mediaIgnored, 24))
+    mediaRules = media_rules_from(raw.mediaPriority, raw.mediaPreset)
+    -- Read once. After that the stack belongs to the running logic: re-reading it on every save
+    -- would pull an older front back in, and the file is written by this very logic (see
+    -- `media_touch`).
+    if not mediaStackLoaded then
+        mediaStack = id_list(raw.mediaRecent, 5)
+        mediaStackLoaded = true
+    end
 end
 
-apply(read_file())
+-- The table as it was read: `apply` does not keep it, but a write must (INTERFACES §6.1 — mutate
+-- this one, never build another), and the media stack below is written back through it.
+local raw = read_file()
+apply(raw)
 
 -- An editor, or another copy of the scene, changed the file: read it again and
 -- take the new values, clamped the same way (the file is the source, so the
 -- change is honoured live).
 sys.watch("files:" .. FILE, function()
-    apply(read_file())
+    raw = read_file()
+    apply(raw)
 end)
 
 -- Writes arrive with the settings UI of a later slice: mutate `raw` (`raw[key]
 -- = value`) and `sys.call("files.write", FILE, raw)`, never a table built from
--- scratch, so keys another version put there survive (INTERFACES §6.1).
+-- scratch, so keys another version put there survive (INTERFACES §6.1). The
+-- media stack below is the one writer this slice has.
 
 -- ---------------------------------------------------------------- commands
 -- Show a workspace by id. No press of the strip emits this: the workspace capsule shows the
@@ -92,9 +196,10 @@ end)
 -- numbers only — so the logic decides and hands over a fact.
 -- (permissions: "media")
 -- QS shows the capsule only while a player has something to play: `hasPlayer
--- && (isPlaying || isPaused)`. A player that is there but stopped (mpc with an
--- empty queue) is not enough, and that is what made the port draw a capsule
--- the reference did not have.
+-- && (isPlaying || isPaused)` (Bar/Modules/Media.qml:112). A player that is
+-- there but stopped (mpc with an empty queue) is not enough, and that is what
+-- made the port draw a capsule the reference did not have. "There" is the
+-- reference's answer and not the service's: the player the rules below pick.
 -- A pause has no field of its own: the media service answers `playing` and
 -- nothing about paused. QS keeps the capsule through a pause (`isPaused`), so
 -- the port holds `media.present` for a while after `playing` was last true —
@@ -163,17 +268,164 @@ local mediaPlaying = false
 -- service binding as a variable, so `media.title` there would index nil.
 local mediaNow = {}
 
+-- The stack, as `touchActive` keeps it (MusicPlayers.qml:27-44): the player that changed goes to
+-- the front, and only the front five are worth keeping.
+local function media_touch(id)
+    if type(id) ~= "string" or id == "" then return end
+    if mediaStack[1] == id then return end
+    local out = { id }
+    for _, old in ipairs(mediaStack) do
+        if old ~= id and #out < 5 then out[#out + 1] = old end
+    end
+    mediaStack = out
+    -- Written back as the reference writes it (:36-42), so a restart still knows what was heard
+    -- last. The whole table is mutated, never rebuilt (INTERFACES §6.1). A failed write is no
+    -- reason to lose the media logic — `sys.call` raises — so it is caught, not left to skip the
+    -- rest of the handler.
+    raw.mediaRecent = mediaStack
+    local ok = pcall(function() sys.call("files.write", FILE, raw) end)
+    if not ok then log("settings: mediaRecent not saved") end
+end
+
+-- MusicIds.js:1-10 — MPD and the players built on it, by bus name and by the name the player
+-- gives itself. The reference's regex is `(mpd|mpdris|mopidy|music\s*player\s*daemon)`, folded to
+-- lower case; Lua patterns have no alternation, and `mpd` already covers `mpdris`.
+local function media_is_mpd(p)
+    for _, s in ipairs({ p.id, p.name }) do
+        if type(s) == "string" then
+            local low = string.lower(s)
+            if low:find("mpd", 1, true) or low:find("mopidy", 1, true)
+                or low:find("music player daemon", 1, true) or low:find("musicplayerdaemon", 1, true) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- The player the reference would have picked (:87-206), by id; "" when it would have none.
+local function media_pick(list)
+    -- `getAvailablePlayers` (:76-85): what the service lists, minus the ignored. (QS also drops
+    -- the players it cannot control; `players` carries only the ones it can.)
+    local avail, by_id = {}, {}
+    if type(list) == "table" then
+        for _, p in ipairs(list) do
+            if type(p) == "table" and type(p.id) == "string" and p.id ~= "" and not mediaIgnored[p.id] then
+                avail[#avail + 1] = p
+                by_id[p.id] = p
+            end
+        end
+    end
+
+    -- `pruneStack` (:46-56): a player that has gone leaves the stack. Not saved here — the
+    -- reference does not save it either; the next touch writes what is left.
+    local kept = {}
+    for _, id in ipairs(mediaStack) do
+        if by_id[id] then kept[#kept + 1] = id end
+    end
+    mediaStack = kept
+
+    -- `touchActive` on a state change (:233-241). Only `playing` is visible here, and a change in
+    -- either direction is one: a pause moves a player to the front in the reference as a play does.
+    local seen = {}
+    if type(list) == "table" then
+        for _, p in ipairs(list) do
+            if type(p) == "table" and type(p.id) == "string" and p.id ~= "" then
+                local now = p.playing == true
+                if mediaSeen[p.id] ~= nil and mediaSeen[p.id] ~= now then media_touch(p.id) end
+                seen[p.id] = now
+            end
+        end
+    end
+    mediaSeen = seen
+
+    local function in_stack(test)
+        for _, id in ipairs(mediaStack) do
+            local p = by_id[id]
+            if p and test(p) then return p end
+        end
+        return nil
+    end
+
+    local function in_list(test)
+        for _, p in ipairs(avail) do
+            if test(p) then return p end
+        end
+        return nil
+    end
+
+    local function playing(p) return p.playing == true end
+    local function pinned(p) return mediaPinned[p.id] == true end
+
+    -- One rule each, and the same order of attempts as the reference: the stack first, the whole
+    -- list after it (:94-152).
+    local RULE = {
+        pinnedPlaying = function() -- :96-102
+            return in_stack(function(p) return playing(p) and pinned(p) end)
+                or in_list(function(p) return playing(p) and pinned(p) end)
+        end,
+        mpdPlaying = function() -- :103-116
+            return in_stack(function(p) return playing(p) and media_is_mpd(p) end)
+                or in_list(function(p) return playing(p) and media_is_mpd(p) end)
+        end,
+        anyPlaying = function() return in_stack(playing) or in_list(playing) end, -- :117-124
+        mpdRecent = function() return in_stack(media_is_mpd) or in_list(media_is_mpd) end, -- :125-131
+        pinned = function() return in_stack(pinned) or in_list(pinned) end, -- :132-138
+        recent = function() return in_stack(function() return true end) end, -- :139-144
+        -- `selectedPlayerIndex` is 0 in the reference and nothing ever sets it (:14), so `manual`
+        -- is its first available player; here, the first the service lists.
+        manual = function() return avail[1] end, -- :145-147
+        first = function() return avail[1] end, -- :148-149
+    }
+
+    for _, rule in ipairs(mediaRules) do
+        local check = RULE[rule]
+        local hit = check and check()
+        if hit then return hit.id end
+    end
+    -- :205 — past every rule, the reference still answers with the first available player.
+    return avail[1] and avail[1].id or ""
+end
+
+-- The pick, pinned into the service. `media.choose` takes an id from `players` and makes it the
+-- one `media` reports and commands, for the whole process; "" goes back to the service's own
+-- default. The pin is only asked for when it is not already in force: a choice makes the service
+-- report again, and this runs inside that report.
+-- (permissions: "media.*")
+local function media_select(list)
+    local want = media_pick(list)
+    local now = ""
+    if type(list) == "table" then
+        for _, p in ipairs(list) do
+            if type(p) == "table" and p.chosen == true and type(p.id) == "string" then
+                now = p.id
+                break
+            end
+        end
+    end
+    if want ~= now then sys.call("media.choose", want) end
+    return want
+end
+
 sys.watch("media", function(m)
-    local player, playing = nil, false
+    local players = (type(m) == "table") and m.players or nil
     if type(m) == "table" then
         mediaNow = m
         accentFrom(m.art)
-        player = m.player
-        playing = m.playing == true
     end
-    local has = (type(player) == "string") and (player ~= "")
-    -- No player at all: the capsule goes at once, like QS's `hasPlayer`.
-    if not has then
+    -- The reference's pick, with the service pinned on it: from here on `media.player`, the track
+    -- and the transport all speak of that player.
+    local picked = media_select(players)
+    -- A report that carries no `players` at all (an engine older than the field, or one that could
+    -- not read the bus) cannot be chosen from: the pick falls back to the player the service names
+    -- itself, which is what the bar showed before these rules. Wrong wherever the rules would have
+    -- disagreed — and better than a capsule that never comes back.
+    if type(players) ~= "table" then
+        picked = (type(m) == "table" and type(m.player) == "string") and m.player or ""
+    end
+    -- Nobody the reference would show — no player on the bus, or every one of them ignored. The
+    -- service still reports the ignored player it kept, so the capsule is taken down here.
+    if picked == "" then
         if mediaHold then
             cancel(mediaHold)
             mediaHold = nil
@@ -549,6 +801,195 @@ end
 
 sys.watch("workspaces", workspacesChanged)
 
+-- ---------------------------------------------- link, internet and the tunnel
+-- QS asks three separate questions about the connection and never confuses them
+-- (Services/Connectivity.qml): is there a LINK — some non-loopback interface that is up —, is
+-- there INTERNET — a ping that comes back —, and is there a TUNNEL among those interfaces
+-- (Components/ConnectivityState.qml). The kernel's `network.online` is one flag: it cannot say
+-- "the cable is in and the router has no uplink", which is the state the capsule's warning ink
+-- exists for (NetClusterCapsule.qml:41-43).
+--
+-- The timings are the reference's own:
+--   · the link is read from `ip -j -br a` every 4 s   — Connectivity.qml:47-49, Theme.qml:754
+--                                                       (`networkLinkPollMs`)
+--   · the ping runs every 30 s                         — Connectivity.qml:86-88, Settings.qml:217
+--                                                       (`networkPingIntervalMs`)
+--   · and every 500 ms for 10 s after a link comes up  — Connectivity.qml:23-26 and 115-127
+--                                                       (`fastIntervalMs` / `fastDurationMs`)
+--   · the target is 8.8.8.8                            — Settings.qml:218 (`networkPingTarget`)
+-- The reference wraps the ping in `dash -c … && echo OK || echo FAIL` (Connectivity.qml:107-110)
+-- because its ProcessRunner collects lines rather than exit codes; `ping`'s own exit code says
+-- the same, so the command is asked directly and nothing is spawned in between.
+local PING_TARGET = "8.8.8.8"
+local LINK_POLL_MS = 4000
+local PING_SLOW_MS = 30000
+local PING_FAST_MS = 500
+local PING_FAST_FOR_MS = 10000
+
+local net_link, net_internet, net_vpn = false, false, false
+local net_vpn_state = ""
+local net_fast, net_ping_busy = false, false
+local net_fast_stop = nil
+-- The Hiddify tray item (ConnectivityState.qml:48-60): the reference finds it by id or title,
+-- draws its icon in the VPN slot and gives the slot's presses to it.
+local net_hiddify, net_hiddify_key = false, ""
+
+-- ConnectivityState.qml:25-46: a tunnel is an interface whose name says so (`awg`, `amnez`,
+-- `tun`, `outline-tun`) and that has an address on it; its name is what the tooltip prints.
+local function tunnel_of(name, addrs)
+    local lower = name:lower()
+    local looks = lower:find("awg", 1, true) ~= nil
+        or lower:find("amnez", 1, true) ~= nil
+        or lower:sub(1, 3) == "tun"
+        or lower:sub(1, 11) == "outline-tun"
+    return looks and addrs > 0
+end
+
+local function net_publish()
+    if fact["net.link"] ~= net_link then fact["net.link"] = net_link end
+    if fact["net.internet"] ~= net_internet then fact["net.internet"] = net_internet end
+    if fact["net.vpn"] ~= net_vpn then fact["net.vpn"] = net_vpn end
+    -- `vpnInterface` when it has one, "connected" otherwise: the reference's own word for the
+    -- tooltip is "VPN: connected" (NetClusterCapsule.qml:234), and the name is the detail.
+    local state = net_vpn and (net_vpn_state ~= "" and net_vpn_state or "connected") or ""
+    if text["net.vpn_state"] ~= state then text["net.vpn_state"] = state end
+end
+
+-- The reference's hint line, verbatim (NetClusterCapsule.qml:231-235).
+local function net_state_line()
+    local line
+    if not net_link then
+        line = "No connection"
+    elseif not net_internet then
+        line = "Local network, no internet"
+    else
+        line = "Internet: available"
+    end
+    if net_vpn then
+        line = line .. " · VPN: " .. (net_vpn_state ~= "" and net_vpn_state or "connected")
+    end
+    return line
+end
+
+local function net_leave_fast()
+    if not net_fast then return end
+    net_fast = false
+    if net_fast_stop then
+        cancel(net_fast_stop)
+        net_fast_stop = nil
+    end
+end
+
+local net_ping
+
+local function net_enter_fast()
+    if net_fast then return end
+    net_fast = true
+    -- Connectivity.qml:123-127: the fast mode stops by itself after 10 s, however the ping went.
+    if net_fast_stop then cancel(net_fast_stop) end
+    net_fast_stop = after(PING_FAST_FOR_MS, function()
+        net_fast_stop = nil
+        net_fast = false
+    end)
+    net_ping()
+end
+
+net_ping = function()
+    -- One ping in flight at a time: at 500 ms a probe against a black-holed target would
+    -- otherwise pile up processes (the reference guards its slow path the same way,
+    -- Connectivity.qml:87-93).
+    if net_ping_busy then return end
+    if not net_link then
+        -- Connectivity.qml:90-92: no link, no internet, and nothing to wait for.
+        net_internet = false
+        net_publish()
+        return
+    end
+    net_ping_busy = true
+    run("ping", { "-n", "-c", "1", "-W", "1", PING_TARGET }, function(_, code)
+        net_ping_busy = false
+        local ok = (code == 0)
+        if ok == net_internet then return end
+        net_internet = ok
+        -- Connectivity.qml:55-58: the internet answered, so the fast mode has done its job.
+        if ok then net_leave_fast() end
+        net_publish()
+    end)
+end
+
+local function net_probe_link()
+    run("ip", { "-j", "-br", "a" }, function(out, code)
+        if code ~= 0 or type(out) ~= "string" then return end
+        local ok, list = pcall(json.decode, out)
+        if not ok or type(list) ~= "table" then return end
+        -- Connectivity.qml:59-76: an interface `UP`, or one that says `UNKNOWN` and has an
+        -- address; the loopback never counts.
+        local link, vpn, name = false, false, ""
+        for _, it in ipairs(list) do
+            if type(it) == "table" and type(it.ifname) == "string" and it.ifname ~= "lo" then
+                local state = (type(it.operstate) == "string") and it.operstate or ""
+                local addrs = (type(it.addr_info) == "table") and #it.addr_info or 0
+                if state == "UP" or (state == "UNKNOWN" and addrs > 0) then link = true end
+                if tunnel_of(it.ifname, addrs) then vpn, name = true, it.ifname end
+            end
+        end
+        local was_link = net_link
+        net_link, net_vpn, net_vpn_state = link, vpn, name
+        if not link then
+            -- Connectivity.qml:52-55: the link went, so the internet went with it.
+            net_internet = false
+            net_leave_fast()
+        end
+        net_publish()
+        if link and not was_link then
+            -- Connectivity.qml:44-51: a link that has just come up is asked at once, and then
+            -- every 500 ms until it answers or the 10 s are gone.
+            net_enter_fast()
+        end
+    end)
+end
+
+-- Connectivity.qml:129-130: one link check on start-up, then the poll.
+net_probe_link()
+every(LINK_POLL_MS, net_probe_link)
+-- The two ping cadences, exactly as the reference keeps them apart: the slow one is off while
+-- the fast mode holds (Connectivity.qml:86-88, `running: !root.fastMode`) and the fast one runs
+-- only then (Connectivity.qml:114-121).
+every(PING_SLOW_MS, function()
+    if not net_fast then net_ping() end
+end)
+every(PING_FAST_MS, function()
+    if net_fast and net_link then net_ping() end
+end)
+
+-- ConnectivityState.qml:48-60: the Hiddify item is the tray record whose id or title says so.
+-- `net.hiddify` is what the scene can act on — the item has a picture to draw in the VPN slot;
+-- the key stays here, because an activation and a menu both take it.
+local function net_read_hiddify(list)
+    local found, key, icon = false, "", ""
+    for _, it in ipairs(list or {}) do
+        if type(it) == "table" then
+            local id = (type(it.id) == "string") and it.id:lower() or ""
+            local title = (type(it.title) == "string") and it.title:lower() or ""
+            if id:find("hiddify", 1, true) ~= nil or title:find("hiddify", 1, true) ~= nil then
+                found = true
+                key = (type(it.key) == "string") and it.key or ""
+                icon = (type(it.icon) == "string") and it.icon or ""
+                break
+            end
+        end
+    end
+    net_hiddify_key = found and key or ""
+    -- QS hides the shield only when it has a picture to put in its place
+    -- (`hiddifyHasTrayIcon`, NetClusterCapsule.qml:35): an item without one keeps the shield.
+    local has_icon = found and icon ~= ""
+    if has_icon ~= net_hiddify then
+        net_hiddify = has_icon
+        fact["net.hiddify"] = has_icon
+    end
+    if text["net.hiddify_icon"] ~= icon then text["net.hiddify_icon"] = icon end
+end
+
 -- ------------------------------------------------------------- tooltips
 -- QS gives every capsule a PanelTooltip whose text TooltipText.compose builds
 -- out of a title, a value and a list of hints. The scene says which capsule the
@@ -569,9 +1010,13 @@ local function tip_line(i)
     elseif i == 2 then
         return "Keyboard layout " .. (text.kb_layout ~= "" and text.kb_layout or "?")
     elseif i == 3 then
-        -- ConnUi prints the pair as "<rx> / <tx>"; the tooltip says both.
+        -- ConnUi prints the pair as "<rx> / <tx>"; the tooltip says both, and under them the
+        -- connection's state in the reference's own words (NetClusterCapsule.qml:229-245):
+        -- "No connection" / "Local network, no internet" / "Internet: available", then
+        -- "VPN: connected". The card takes the second line (its `lines:` is three).
         return "Throughput " .. (text.net_rx ~= "" and (text.net_rx .. text.net_rx_unit) or "--")
             .. " down, " .. (text.net_tx ~= "" and (text.net_tx .. text.net_tx_unit) or "--") .. " up"
+            .. "\n" .. net_state_line()
     elseif i == 4 then
         local cpu = math.floor((fact.cpu or 0) * 100 + 0.5)
         local ram = math.floor((fact.ram or 0) * 100 + 0.5)
@@ -693,9 +1138,218 @@ on("tip_hide", hideTip)
 -- event carries a number — so the keys are kept here, in the same order.
 local trayItems = {}
 
+-- An item that brings no picture is drawn with the reference's stand-in glyph
+-- (`Components/TrayIcon.qml:126` — no source, or one that failed to load — with
+-- `trayFallbackIcon`, "broken_image" on this host). The scene compares numbers only and cannot
+-- look inside a text, so each row carries the answer as a flag of its own; a picture that fails
+-- to load is the engine's to report and cannot be seen from here at all.
 sys.watch("tray", function(list)
     trayItems = (type(list) == "table") and list or {}
-    model.icons = trayItems
+    local rows = {}
+    for i, item in ipairs(trayItems) do
+        if type(item) == "table" then
+            rows[i] = {
+                key = item.key,
+                id = item.id,
+                title = item.title,
+                icon = item.icon,
+                menu = item.menu,
+                no_icon = (type(item.icon) ~= "string" or item.icon == ""),
+            }
+        end
+    end
+    model.icons = rows
+    -- The Hiddify item among them: the VPN slot in the network capsule draws its icon and takes
+    -- its presses (NetClusterCapsule.qml:34-36, 96-131).
+    net_read_hiddify(trayItems)
+end)
+
+-- ------------------------------------------------ tray: the hold/collapse machine
+-- QS keeps four timers in `Services/TrayController.qml` and the flags they move in
+-- `Bar/Modules/SystemTray.qml`. A rule cannot run a program, and a scene cannot hold a timer, so
+-- both live here: the scene reports where the pointer is (`tray_hot`, `tray_icons`, `tray_panel`)
+-- and what was pressed (`tray_toggle`, `tray_press`, `tray_menu`, `tray_close`), and reads back
+-- one fact — `tray.expanded` — to draw the icons or nothing.
+--
+-- Durations, each with the token it is: `panel.tray.longHoldMs` 2500 (Settings/Theme.qml:721),
+-- `panel.tray.shortHoldMs` 1500 (:722), `panel.tray.guardMs` 120 (:723),
+-- `panel.tray.overlayDismissDelayMs` 5000 (:724). palette.plm already carries the same four
+-- (`tray.long`, `tray.short`, `tray.guard`, `tray.dismiss`), but a scene's import is not readable
+-- from the logic, so they are written again here and the palette stays the one the drawing reads.
+local TRAY_LONG_HOLD, TRAY_SHORT_HOLD = 2500, 1500
+local TRAY_GUARD, TRAY_DISMISS = 120, 5000
+
+local trayOn = false        -- `expanded`        (SystemTray.qml:76)
+local trayHot = false       -- `hotHover`        (:25) — the corner over the bar's bottom right
+local trayOverIcons = false -- the icons' own hover, QS's inline box (:129-132)
+local trayPanel = false     -- `panelHover`      (:14) — the whole strip
+local trayHold = false      -- `holdOpen`        (:26) — the tray's menu has been seen
+local trayShort = false     -- `shortHoldActive` (:27)
+local trayGuard = false     -- `openGuard`       (:77)
+local longT, shortT, guardT, dismissT = nil, nil, nil, nil
+
+local function stopLongHold()
+    if longT then
+        cancel(longT)
+        longT = nil
+    end
+end
+
+-- `shortHoldActive` is the caller's flag in the reference (TrayController only stops the timer,
+-- SystemTray clears it) and both are always cleared together, so the flag goes with the timer.
+local function stopShortHold()
+    if shortT then
+        cancel(shortT)
+        shortT = nil
+    end
+    trayShort = false
+end
+
+local function stopDismiss()
+    if dismissT then
+        cancel(dismissT)
+        dismissT = nil
+    end
+end
+
+-- Forward-declared: the tray going out closes its menu, and the menu closing is what arms the
+-- long hold, so one of the two has to name the other before either is written.
+local setMenu
+
+--- The one fact the drawing reads. Going out takes the menu with it (SystemTray.qml:232-237).
+local function trayShow(on)
+    if trayOn == on then return end
+    trayOn = on
+    fact["tray.expanded"] = on
+    if on then return end
+    -- A tray that is out has no collapse delay left to run: QS's programmatic dismissal stops it
+    -- before it folds the tray away (`SystemTray.qml:92-95`).
+    stopDismiss()
+    -- The icons are gone, so nothing can be over them: a zone that disappears takes its pointer
+    -- with it and the scene says no `leave`, which would leave this flag set for good.
+    trayOverIcons = false
+    if fact.tray_open == true then setMenu(false) end
+end
+
+--- A collapse asked for while the trigger's guard is up is dropped. The reference arms `openGuard`
+--- and clears it 120 ms later (`SystemTray.qml:77`, `:226`, `:35`) and then never reads it; what the
+--- name says it is for is this, and a press on the trigger is the only thing that sets it.
+local function trayCollapse()
+    if trayGuard then return end
+    trayShow(false)
+end
+
+--- `onLongHold` (SystemTray.qml:32): the menu has been gone for 2500 ms and the tray goes with it,
+--- whatever the pointer is doing.
+local function startLongHold()
+    stopLongHold()
+    longT = after(TRAY_LONG_HOLD, function()
+        longT = nil
+        trayHold = false
+        trayCollapse()
+    end)
+end
+
+--- `onShortHold` (:33): the pointer left the corner and nothing else holds the tray.
+local function startShortHold()
+    stopShortHold()
+    trayShort = true
+    shortT = after(TRAY_SHORT_HOLD, function()
+        shortT = nil
+        trayShort = false
+        if trayPanel or trayHot or trayHold then return end
+        trayCollapse()
+    end)
+end
+
+--- `onCollapseDelay` (:34): a press outside the tray's menu gives it 5000 ms, not an instant exit.
+local function startDismiss()
+    stopDismiss()
+    dismissT = after(TRAY_DISMISS, function()
+        dismissT = nil
+        trayCollapse()
+    end)
+end
+
+--- `onGuardOff` (:35).
+local function startGuard()
+    trayGuard = true
+    if guardT then cancel(guardT) end
+    guardT = after(TRAY_GUARD, function()
+        guardT = nil
+        trayGuard = false
+    end)
+end
+
+--- The menu's own visibility, and what QS does around it (SystemTray.qml:239-253): while it is
+--- open the tray cannot go away and both holds are called off; when it closes, `holdOpen` stays
+--- set and the long hold runs, so the tray stands 2500 ms more and then leaves.
+setMenu = function(open)
+    if fact.tray_open == open then return end
+    fact.tray_open = open
+    if open then
+        trayShow(true)
+        trayHold = true
+        stopLongHold()
+        stopShortHold()
+    else
+        trayHold = true
+        startLongHold()
+    end
+end
+
+--- The corner over the bar's bottom right — QS's hot zone, `Bar.qml:1246-1260` — whose only job is
+--- this (`onHotHoverChanged`, SystemTray.qml:38-50): coming onto it brings the tray out at once and
+--- calls off a pending short hold; leaving it starts one, unless the menu or the strip hold it.
+on("tray_hot", function(hot)
+    local on = hot == true
+    if trayHot == on then return end
+    trayHot = on
+    if on then
+        stopShortHold()
+        trayShow(true)
+        return
+    end
+    if trayPanel or fact.tray_open == true or trayHold then return end
+    startShortHold()
+end)
+
+--- The icons themselves keep the tray out while the pointer is on them (the reference's inline
+--- hover area, SystemTray.qml:129-132): entering brings it out, leaving takes it away at once
+--- unless the strip, the corner, the menu or a short hold still want it.
+on("tray_icons", function(over)
+    local on = over == true
+    if trayOverIcons == on then return end
+    trayOverIcons = on
+    if on then
+        trayShow(true)
+        return
+    end
+    if trayPanel or trayHot or trayHold or trayShort then return end
+    trayCollapse()
+end)
+
+--- The whole strip (`panelHover`): it never brings the tray out, it only keeps it up — leaving the
+--- bar is what `Bar.qml:1284-1290` does after its 350 ms grace, and the grace is not reproduced,
+--- so the tray goes as the pointer leaves.
+on("tray_panel", function(over)
+    local on = over == true
+    if trayPanel == on then return end
+    trayPanel = on
+    if on then return end
+    if trayHot or trayHold or trayShort or fact.tray_open == true then return end
+    trayCollapse()
+end)
+
+--- A press on the collapsed trigger (SystemTray.qml:224-229): it turns the tray over and, when it
+--- brings it out, arms the guard.
+on("tray_toggle", function()
+    if trayOn then
+        trayShow(false)
+        return
+    end
+    trayShow(true)
+    startGuard()
 end)
 
 -- QS's left click on an icon is `modelData.activate()`, which is what
@@ -706,10 +1360,13 @@ end)
 -- is the parity step that still waits for a popup here.
 
 on("tray_press", function(index)
-    fact.tray_open = false
+    setMenu(false)
     local item = trayItems[(index or 0) + 1]
-    if type(item) ~= "table" or type(item.key) ~= "string" then return end
-    sys.call("tray.activate", item.key)
+    if type(item) == "table" and type(item.key) == "string" then
+        sys.call("tray.activate", item.key)
+    end
+    -- SystemTray.qml:185-189: the press also folds the tray away, it does not only activate.
+    trayCollapse()
 end)
 
 --- Raise the window behind the tray item whose menu was just clicked. `window-activate` is a
@@ -739,7 +1396,7 @@ on("tray_click", function(n)
     local at = tonumber(n) or 0
     local key = text["tray_key"]
     local id = fact["tm.id." .. at]
-    fact.tray_open = false
+    setMenu(false)
     if type(key) == "string" and key ~= "" and type(id) == "number" and id > 0 then
         -- Wrapped: a failing call must not roll back `tray_open` — a menu that stays up after a
         -- press is worse than a click that did nothing.
@@ -759,28 +1416,34 @@ end)
 -- exclusive while tray_open`), so the key reaches this scene and not the application under it.
 on("key", function(name)
     if name == "Escape" and fact.tray_open then
-        fact.tray_open = false
+        setMenu(false)
     end
 end)
 
+-- A press anywhere else is QS's dismissed overlay (SystemTray.qml:88-98): the menu goes first —
+-- and closing it is what arms the long hold, so that is the whole answer — while a tray without a
+-- menu gets the 5000 ms collapse delay instead of being taken away under the pointer.
 on("tray_close", function()
     log("TRAYCLOSE")
-    fact.tray_open = false
-end)
-
-on("tray_menu", function(index)
-    local at = index or 0
     if fact.tray_open then
-        fact.tray_open = false
+        setMenu(false)
         return
     end
-    local key = text["tray_key"]
+    if not trayOn then return end
+    if trayHold or trayHot or trayPanel then return end
+    startDismiss()
+end)
+
+-- One menu, opened for an item's key: the item's own tree when the engine can read it, the
+-- application's own context menu otherwise (`tray.context`). The tray icons' right button and
+-- the Hiddify slot of the network capsule both land here.
+local function open_tray_menu(key)
     if type(key) ~= "string" or key == "" then return end
     local ok, tree = pcall(function() return sys.ask("tray.menu", key) end)
     if not ok then
         text["tm.1"] = tostring(tree)
         fact["tm.count"] = 1
-        fact.tray_open = true
+        setMenu(true)
         return
     end
     if type(tree) ~= "table" or #tree == 0 then
@@ -805,7 +1468,36 @@ on("tray_menu", function(index)
     -- 6.5 px per character at size 13, plus the plate's 10 px of padding on each side, clamped
     -- to what the surface can hold.
     fact["tm.w"] = math.min(300, math.max(120, math.floor(widest * 6.5) + 28))
-    fact.tray_open = true
+    setMenu(true)
+end
+
+-- The right button on the Hiddify slot of the network capsule asks for the same menu the tray
+-- icon's right button does (NetClusterCapsule.qml:120-127 opens `hiddifyMenu` over the slot).
+-- `tray_key` is set too, because a press on one of the menu's lines comes back here and needs it.
+on("vpn_menu", function()
+    if net_hiddify_key == "" then return end
+    if fact.tray_open then
+        setMenu(false)
+        return
+    end
+    text.tray_key = net_hiddify_key
+    open_tray_menu(net_hiddify_key)
+end)
+
+-- The slot's left press: QS's MouseArea over it calls `hiddifyTrayItem.activate()`
+-- (NetClusterCapsule.qml:112-118), the same `tray.activate` every tray icon answers.
+on("vpn_press", function()
+    if net_hiddify_key == "" then return end
+    setMenu(false)
+    sys.call("tray.activate", net_hiddify_key)
+end)
+
+on("tray_menu", function(index)
+    if fact.tray_open then
+        setMenu(false)
+        return
+    end
+    open_tray_menu(text["tray_key"])
 end)
 
 -- ----------------------------------------------------------- throughput

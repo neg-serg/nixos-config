@@ -79,6 +79,16 @@ language 0.4
 //   scale         0.5..2.0, default 1.0          — applied: `user_scale`
 //   widgets       array of text, max 24          — applied as visibility for
 //                 this slice's four: clock, workspaces, network, volume
+//   mediaPriority array of text, max 8, default  — which player the media capsule, its
+//                 mpdPlaying · anyPlaying ·        tooltip and the transport act on: the
+//                 mpdRecent · recent · manual ·    rules of QS MusicPlayers.qml, in order;
+//                 first                             the logic picks with them and pins the
+//                                                   pick with `media.choose`
+//   mediaPreset   default | manualFirst |        — the rule order used when mediaPriority
+//                 playingFirst | mpdBias            holds nothing the port knows
+//   mediaPinned   array of text, default []      — ids that win a tie (QS pinnedPlayers)
+//   mediaIgnored  array of text, default []      — ids the bar never shows (ignoredPlayers)
+//   mediaRecent   array of text, max 5           — the MRU stack, written by the logic
 //   height        16..64, default 22             — frozen, not applied: a
 //                 surface size cannot name a fact in 0.4.11 (checked:
 //                 `size: full, h` is `expected a number here`)
@@ -137,6 +147,14 @@ scene bar {
     //   corner `shape.cornerRadiusSmall` = 6.
     let seam = 7
     let tray.slot = 22
+    // The corner that reveals the tray, in design px: QS's `panelHotzoneWidth` 16 and
+    // `panelHotzoneHeight` 9 (Settings/Theme.qml:687-688), a hover target of its own over the
+    // panel's bottom-right corner (`Bar.qml:1246-1260`) and nothing else. The reference insets it
+    // from the panel's right edge by `width * panelHotzoneRightShift` (:689, 1.15); the port keeps
+    // it flush against the surface's edge instead, because here the corner is the one place a hand
+    // reaching for it actually lands.
+    let tray.reveal.w = 16 * ui * user_scale
+    let tray.reveal.h = 9 * ui * user_scale
     let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
     // per-monitor fit; `widget.*` decide which widgets of this slice are there.
@@ -201,6 +219,18 @@ scene bar {
     // catcher, below).
     fact tray_open = false
     fact tray_index = 0
+    // The tray's own state, and the only part of it the scene can decide for itself: whether the
+    // icons are there at all. QS keeps it as `expanded` (`Bar/Modules/SystemTray.qml:76`, drawn by
+    // `inlineBox.visible: expanded`) and moves it from four timers that live in
+    // `Services/TrayController.qml:17-50`; timers cannot run in a rule, so they are in bar.luau and
+    // this fact is what it tells the scene.
+    fact tray.expanded = false
+    // The collapsed trigger (`collapsedTrayIcon`, SystemTray.qml:222): QS declares it and then keeps
+    // it off the strip (`visible: false`, :219 — the tray is revealed by the hot corner instead), and
+    // the port keeps that default. With the fact on, the bar shows the same button, which turns its
+    // arrow a quarter while the tray is out (`iconRotation`, :223). No dot in the name, as with
+    // `tip_open`: `pleamar --say bar "fact tray_trigger true"` is how a tool turns it on.
+    fact tray_trigger = false
     // The open menu's rows, flattened by the logic from `sys.ask("tray.menu", key)` — the
     // engine reads `com.canonical.dbusmenu` and answers a list of records, which a scene
     // cannot hold: it draws them from these eight texts, and `tm.count` says how many of
@@ -283,6 +313,23 @@ scene bar {
     fact net_tx_zeros = 0
     fact net_rx_show_unit = false
     fact net_tx_show_unit = false
+    // The connection asks two questions, not one: is there a LINK (an interface that is up,
+    // Connectivity.qml:59-76) and is there INTERNET (a ping every 30 s, Connectivity.qml:86-110),
+    // plus whether a TUNNEL is among those interfaces (ConnectivityState.qml:25-46). The kernel's
+    // `network.online` is a single flag and cannot tell a dead cable from a router with no uplink,
+    // which is what the link glyph's three inks say (NetClusterCapsule.qml:41-43). bar.luau
+    // probes them; the scene only draws what it says.
+    fact net.link = false
+    fact net.internet = false
+    fact net.vpn = false
+    // The tunnel's interface name, or "connected" when it did not say one
+    // (ConnectivityState.qml:44 `vpnInterface`); words, so a text.
+    text net.vpn_state = ""
+    // The Hiddify tray item, when the host has one: the reference draws its own icon in the VPN
+    // slot instead of the shield (NetClusterCapsule.qml:96-108), and the item is the thing the
+    // slot's press activates (NetClusterCapsule.qml:110-131). `hiddify_icon` is a name or a path.
+    fact net.hiddify = false
+    text net.hiddify_icon = ""
     // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
     text kb_layout = ""
     // The weather capsule, filled by bar.luau from open-meteo through its own
@@ -330,6 +377,12 @@ scene bar {
     event open_media_panel ->
     // QS opens NetFlowPopup from the network capsule; same drawer family here.
     event open_network_panel ->
+    // The VPN slot inside the network capsule is QS's MouseArea over it
+    // (NetClusterCapsule.qml:110-131): a left press activates the Hiddify tray item, a right
+    // press asks that item for its own menu. Both are events because only the logic may
+    // command a service, and only it knows which tray record the slot stands for.
+    event vpn_press ->
+    event vpn_menu ->
     // The rest of the reference's pressable capsules, each opening the drawer QS opened
     // from it: the clock its calendar (ClockWidget's `calendar.toggle()`), the weather
     // capsule its card (WeatherButton's overlay), the system cluster the monitoring
@@ -399,6 +452,12 @@ scene bar {
     // their edges: resvg rasterises them at the surface's scale instead of hinting a 14 px font.
     image icon_keyboard = file "icons/keyboard.svg", 14, 14
     image icon_network = file "icons/network.svg", 14, 14
+    // The Material `verified_user` outline NetClusterCapsule.qml:91 asks for as `"verified_user"`
+    // (its `mode: "material"` slot), cut to the same 24-unit grid as the icons above.
+    image icon_vpn = file "icons/vpn.svg", 14, 14
+    // The Hiddify item's own picture when the host runs one (NetClusterCapsule.qml:96-108 draws
+    // `hiddifyTrayItem.icon`): a name from the icon theme or a path, whichever the tray reports.
+    image vpn_tray = from net.hiddify_icon, 14, 14
     image icon_vol_up = file "icons/volume.svg", 14, 14
     image icon_vol_down = file "icons/volume-down.svg", 14, 14
     image icon_vol_off = file "icons/volume-off.svg", 14, 14
@@ -423,6 +482,11 @@ scene bar {
     image icon_weather_thunder = file "icons/weather-thunder.svg", 14, 14
     image icon_weather_drop = file "icons/weather-drop.svg", 14, 14
     image icon_weather_wind = file "icons/weather-wind.svg", 14, 14
+    // The tray's two stand-in pictures, both Material outlines like the ones above: the glyph of
+    // the collapsed trigger (`collapsedTrayIcon`, `expand_more` — Docs/SettingsSchema.json:89) and
+    // the one an item with no icon is drawn with (`trayFallbackIcon`, `broken_image` — :90).
+    image icon_tray_expand = file "icons/tray-expand.svg", 14, 14
+    image icon_tray_broken = file "icons/tray-broken-image.svg", 18, 18
 
     // A named surface carries what it draws and shares every fact with the bar,
     // so a tooltip needs no round trip. `level: overlay` so it reads over the
@@ -625,8 +689,10 @@ scene bar {
     // audio.* (step/mute) and the scene's own settings file. `hypr-expo` is the workspace
     // capsule's overview (QS ran the same helper from Services/Expo.qml); `hyprctl` also
     // switches the keyboard layout on the keyboard capsule's press; `pwroute` is the volume
-    // capsule's route toggle (the RME's AES/Analog pair).
-    permissions { run: "cat", "hyprctl", "hypr-expo", "dash", "curl", "date", "nc", "pleamar", "pwroute", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
+    // capsule's route toggle (the RME's AES/Analog pair); `ip` reads the interfaces — the
+    // link, and the tunnel's name — and `ping` is the internet's own probe, exactly the two
+    // commands QS's Connectivity.qml runs for the same two questions.
+    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pwroute", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -653,12 +719,17 @@ scene bar {
     // comes from `sys.ask("tray.menu", key)` in the logic, which is where the engine already
     // reads `com.canonical.dbusmenu` (src/platform/tray.rs: query). A scene cannot hold a
     // table, so the logic flattens it into the `tm.*` texts the menu surface draws.
+    // `no_icon` is the one thing the scene cannot see for itself: the reference's TrayIcon paints a
+    // stand-in glyph when the item brings no picture (`Components/TrayIcon.qml:28` `trayFallbackIcon`,
+    // default `broken_image` in Docs/SettingsSchema.json:90), and an empty field is a text the
+    // language cannot test — bar.luau sets it while it walks the list.
     model icons max 12 {
         key: text
         id: text
         title: text
         icon: image 18, 18
         menu: bool = false
+        no_icon: bool = false
     }
     service tray { list: icons }
 
@@ -687,6 +758,15 @@ scene bar {
     event tray_click ->
     event tray_close ->
     event tray_menu ->
+    // The three hover inputs of the reference's machine, each a `1` on entering and a `0` on
+    // leaving: the reveal corner (`hotHover`, SystemTray.qml:25-50), the icons themselves (the
+    // inline hover area, :129-132) and the whole strip (`panelHover`, :14 — the same thing
+    // `strip.hot` carries, sent again because the logic has to hear the moment it ends).
+    event tray_hot ->
+    event tray_icons ->
+    event tray_panel ->
+    // A press on the collapsed trigger, QS's `collapsedButton.onClicked` (SystemTray.qml:224-229).
+    event tray_toggle ->
     // The cursor came onto a left capsule; the number is its place in the row.
     event tip ->
     // The cursor left that capsule (or the whole strip): the logic cancels the pending show
@@ -1024,7 +1104,18 @@ scene bar {
         measure w.tx
         let icon = 14
         let text.x = 22
-        size: 50 * scale, strip * scale
+        // The VPN slot rides BEFORE the link glyph and exists only while a tunnel is up
+        // (NetClusterCapsule.qml:80-83, `visible: root.vpnConnected`), so the capsule grows by
+        // it. In QS that slot is a ConnectivityIconSlot of CapsuleMetrics.inner = 11 logical px
+        // plus panel.netCluster.spacing 1, about 10 design px; this port draws a 14 design px
+        // glyph and keeps the 2 px step it already uses between a glyph and what follows it
+        // (icon at 6, text at 22), so the slot advances by those 16. `pick` is an index
+        // selector — no tunnel, no advance, and the capsule keeps its 50. The width is spelled
+        // out again in `size:` on purpose: a component's `size:` is read in the caller's scope,
+        // where this `let` does not exist (the header's own rule), while everything inside the
+        // `group` below reads it as usual.
+        let vpn.w = pick(net.vpn, 0, 16)
+        size: (50 + pick(net.vpn, 0, 16)) * scale, strip * scale
         group zoom {
             scale: scale
             body {
@@ -1035,16 +1126,28 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 1; size: 50, 23; corner: 6 }
+                box { from: 0, 1; size: 50 + vpn.w, 23; corner: 6 }
             }
-            // QS does not paint the accent here: NetClusterCapsule's linkIconColor is
-            // Color.desaturate(accentPrimary, vpn.desaturateAmount 0.45), the accent
-            // mixed 45 % toward its own luminance grey. The scene language has no
-            // luminance, and the group's own `saturation` is exactly that mix on the
-            // GPU — 0.55 of the accent's saturation is what 45 % of grey leaves.
+            // NetClusterCapsule.qml:41-43 asks the link glyph three inks: status.error with no
+            // link at all, status.warning with a link but no internet, the accent with both. The
+            // accent is `accentColor`, QS's Color.desaturate(accentPrimary, vpn.desaturateAmount
+            // 0.45) — the accent mixed 45 % toward its own luminance grey. The scene language has
+            // no luminance, and the group's own `saturation` is exactly that mix on the GPU: 0.55
+            // of the accent's saturation is what 45 % of grey leaves. The two warning tones are
+            // the theme's own (ConnUi.errorColor / warningColor, colors.status.*), never
+            // desaturated, so they are drawn outside that group.
+            image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: warn; show: not net.link }
+            image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: amber; show: net.link and not net.internet }
             group lan_tone { saturation: 0.55
-                image icon_network { at: 6, strip / 2 + 1 - icon / 2; size: icon, icon; tint: if(network.online, skin.accent, ink.off) }
+                image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: skin.accent; show: net.internet }
+                // The tunnel's shield, in `vpnIconColor` — the same desaturated accent, and the
+                // slot is only there while the tunnel is (NetClusterCapsule.qml:83, 87-95).
+                image icon_vpn { at: 6, strip / 2 + 1 - icon / 2; size: icon, icon; tint: skin.accent; show: net.vpn and not net.hiddify }
             }
+            // QS paints the Hiddify item's own icon on top of the slot and makes the shield
+            // underneath transparent (NetClusterCapsule.qml:95, 100-108): the app's real picture,
+            // four logical px smaller than the slot.
+            image vpn_tray { at: 8, strip / 2 + 1 - 5; size: 10, 10; show: net.vpn and net.hiddify }
             // The weight is 700 because that is the face QS gets: it asks for Font.Black and
             // fontconfig answers with Iosevka Bold (`fc-match Iosevka:weight=black`), while
             // 600 lands on Medium — a visibly lighter readout. 9.6 design px is the
@@ -1052,14 +1155,28 @@ scene bar {
             // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
             // The reference also sets letterSpacing 0.5, which the scene language has no
             // property for (its `letter_*` effects move glyphs without opening the line).
-            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
-            text "{net_rx_unit}" { at: text.x + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
-            text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
-            zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            // The capsule's own press zone starts after the VPN slot, so the two never overlap:
+            // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
+            // opens the flow drawer and carries the capsule's tooltip.
+            zone box net { from: vpn.w, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { emit tip(3) }
             on leave net { emit tip_hide }
             on press net { emit open_network_panel }
+            // The tunnel, as §8 of INTERFACES.md names it: a button that says `VPN: <state>`.
+            // Its presses are the reference's: left activates the Hiddify item, right asks for
+            // that item's menu — both land in bar.luau, which is the one holding the record.
+            // Entering it opens the same card the capsule does (the reference's tooltip belongs
+            // to the whole capsule, slot included); it has no `leave` on purpose — the strip's
+            // own `strip_hover` zone emits `tip_hide` when the pointer leaves the band, so a
+            // pointer crossing from the slot to the readout does not close and reopen the card.
+            zone box vpn { from: 0, 0; size: vpn.w, strip; corner: corner; label: "VPN: {net.vpn_state}"; role: button; cursor: pointer; show: net.vpn }
+            on enter vpn { emit tip(3) }
+            on press vpn { emit vpn_press }
+            on press right vpn { emit vpn_menu }
         }
     }
 
@@ -1067,9 +1184,16 @@ scene bar {
     // QS SystemTray, in the settings this bar runs (`hideSystemTrayCapsule`,
     // `collapseSystemTray`, `systemTrayTightSpacing`): at rest the capsule is not
     // there at all and the icons appear only while the tray is expanded — which
-    // is why the reference strip shows no tray even with applets running. What
-    // "expanded" is here: the whole strip being under the cursor (`strip.hot`),
-    // the same fact that brings the pill back.
+    // is why the reference strip shows no tray even with applets running.
+    //
+    // What "expanded" is: not the strip being under the cursor, which is what this port used to
+    // draw (`strip.hot`, so the icons were out whenever the pointer was anywhere on the bar). It is
+    // the reference's own machine — `Bar/Modules/SystemTray.qml:25-50` with its four timers in
+    // `Services/TrayController.qml:17-50` — and its inputs are three hover areas and two presses:
+    // the corner over the bar's bottom right (`hotHover`), the icons themselves (the inline box,
+    // :129-132), the whole strip (`panelHover`, which keeps it up but never brings it out), the
+    // collapsed trigger and the tray's own menu. All of them reach bar.luau as events, and
+    // `tray.expanded` is what comes back: this file draws, the logic counts the milliseconds.
     //
     // Geometry from SystemTray.qml: a slot of `trayIconSlot` = max(inner 16,
     // panelHeight 22) * 1.15 = 25 logical px, the icon `trayIconSize` = 20 inside
@@ -1090,16 +1214,49 @@ scene bar {
             border: 1, mix(skin.coal, skin.ink, 8%)
             box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
         }
-        image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale }
+        // The item's own picture, or the stand-in QS puts in its place: an item that brings no icon
+        // (`Components/TrayIcon.qml:126` — no source, or one that failed to load) is drawn as
+        // `trayFallbackIcon`, `broken_image` here (Docs/SettingsSchema.json:90), in `textSecondary`
+        // (:30 `fallbackColor`). A picture that fails to load cannot be seen from the scene, so what
+        // is caught is the item that brings none.
+        image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale; show: not r.no_icon }
+        image icon_tray_broken { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale; tint: skin.ink.dim; show: r.no_icon }
         zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
-        // The item's title is the record's, so the scene hands it over and the logic prints it.
-        on enter trayhit { tip_title = r.title; emit tip(12) }
-        on leave trayhit { emit tip_hide }
+        // The item's title is the record's, so the scene hands it over and the logic prints it. The
+        // icons hold the tray out while the pointer is on them (SystemTray.qml:129-132), so the same
+        // two triggers say that as well.
+        on enter trayhit { tip_title = r.title; emit tip(12); emit tray_icons(1) }
+        on leave trayhit { emit tip_hide; emit tray_icons(0) }
         on press trayhit { emit tray_press(r.index) }
         // The item's own menu. A scene that uses the right button is never closed by one
         // (`press right`, language reference §14), which is why this trigger is also what
         // keeps a stray right click from closing the bar.
         on press right trayhit { tray_key = r.key; tray_id = r.id; tray_title = r.title; emit tray_menu(r.index) }
+    }
+
+    // The collapsed trigger, QS's `collapsedButton` (`SystemTray.qml:216-230`): a capsule the size
+    // of an icon slot whose glyph is `collapsedTrayIcon` (`expand_more`, `Docs/SettingsSchema.json:89`),
+    // turned a quarter while the tray is out (:223 `iconRotation: expanded ? 90 : 0`). The reference
+    // keeps it off the strip (:219 `visible: false` — the tray is revealed from the corner instead),
+    // and `tray_trigger` is that same choice; what it is worth on the port is the press path and its
+    // 120 ms guard (`openGuard`, :77, :226).
+    component TrayTrigger(scale: number) {
+        size: tray.slot * scale, strip * scale
+        body {
+            color: skin.coal
+            opacity: 69%
+            border: 1, mix(skin.coal, skin.ink, 8%)
+            box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
+        }
+        // A group, because `image` has no rotation of its own: the arrow turns about its centre.
+        group turn { pivot: (tray.slot / 2) * scale, (strip / 2) * scale; rotate: pick(tray.expanded, 0, 90)
+            image icon_tray_expand { at: (tray.slot - 14) / 2 * scale, (strip - 14) / 2 * scale; size: 14 * scale, 14 * scale; tint: skin.ink }
+        }
+        zone box tray_trigger { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: pick(tray.expanded, "Show the system tray", "Hide the system tray"); role: button }
+        // Hovering it is the hot corner's own job (:38-42): it brings the tray out.
+        on enter tray_trigger { emit tray_hot(1) }
+        on leave tray_trigger { emit tray_hot(0) }
+        on press tray_trigger { emit tray_toggle }
     }
 
     // ---------------------------------------------- right: microphone, volume
@@ -1429,8 +1586,18 @@ scene bar {
             // to "something is playing" and nothing was. A flag the owner set is not a media
             // state — it is shown while any flag is on.
             row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags() }
-            row tray_slot { show: widget.systray and icons.count > 0 and strip.hot; gap: 0; align: center
+            // The icons, while the tray is out: `tray.expanded` is the whole state machine's answer
+            // (`SystemTray.qml:102-105` draws the box on the same property), so the strip keeps the
+            // reference's resting look — no tray at all — instead of showing it whenever the pointer
+            // is on the bar. No gap between the icons: `systemTrayTightSpacing` on this host.
+            row tray_slot { show: widget.systray and icons.count > 0 and tray.expanded; gap: 0; align: center
                 for r in icons { TrayIcon(r, scale) }
+            }
+            // The collapsed trigger, to the right of the icons as in the reference (:216, declared
+            // after the inline box). `tray_trigger` is false on this host, as the reference's own
+            // `visible: false` keeps it.
+            row tray_button { show: widget.systray and tray_trigger; gap: 0; align: center
+                TrayTrigger(scale)
             }
             // `or strip.hot`: the reference brings a muted (or 100 %) capsule back while the
             // pointer is on the panel, and without that there is nothing on the bar to press to
@@ -1489,8 +1656,9 @@ scene bar {
     on change Mpd.hot while not Mpd.hot { emit tip_hide }
     on change Genelec.hot while Genelec.hot { emit tip(11) }
     on change Genelec.hot while not Genelec.hot { emit tip_hide }
-    // The pill's right press opens the calendar, as QS's second TapHandler did (`calendar.toggle()`
-    // with the pill markers; this calendar has none yet — PARITY says so).
+    // The pill's right press opens the calendar, as QS's second TapHandler did (`calendar.toggle()`),
+    // and that drawer now marks the tracked days and their streak: it reads the same `Pill.days`
+    // model this mark is drawn from (`pages/calendar.plm`).
     on change Pill.asks { emit open_calendar_panel }
 
     // The whole strip is a hover target for the widgets that hide at idle
@@ -1499,8 +1667,19 @@ scene bar {
     // The hotzone counts as the bar for `strip.hot`: the widgets that hide at idle come
     // back when the pointer enters the band above the strip, which is what QS does.
     zone box strip_hover { from: 0, 0; size: screen.width, hot + band; label: "Bar"; role: region }
-    on enter strip_hover { strip.hot = true }
-    on leave strip_hover { strip.hot = false; emit tip_hide }
+    // `tray_panel` is the same moment told to the logic: the tray machine needs to know when the
+    // strip is *left* (`panelHover`, SystemTray.qml:14), which a fact cannot say.
+    on enter strip_hover { strip.hot = true; emit tray_panel(1) }
+    on leave strip_hover { strip.hot = false; emit tip_hide; emit tray_panel(0) }
+
+    // The corner the tray is revealed from: QS's hot zone (`Bar.qml:1246-1260`) — a hover target of
+    // its own over the bottom right of the panel, 16 by 9 design px (`Settings/Theme.qml:687-688`),
+    // drawing nothing. Here it is a zone like any other, declared with the strip's own hover target
+    // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
+    // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
+    zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region }
+    on enter tray_reveal { emit tray_hot(1) }
+    on leave tray_reveal { emit tray_hot(0) }
 
     Left()
     Right()

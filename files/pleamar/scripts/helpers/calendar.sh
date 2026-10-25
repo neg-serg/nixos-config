@@ -19,7 +19,14 @@
 #   sample     {"ok":true,"worker":"calendar","topic":"calendar","t":<ms>,
 #              "data":{month,first,last,events[{date,time,title,calendar}],
 #                      holidays[{date,name,name_en}],holidays_error,
+#                      pills[{date,taken}],streak,
 #                      fetched_at,cached,age_s}}
+#
+# `pills` is the pill tracker's own history and `streak` its run of taken days, read from
+# $XDG_DATA_HOME/pleamar/Pill/state.json (the tracker's file, written by the pill plugin). They are
+# here and not asked of the plugin because a scene's logic cannot read a plugin's boundary: the
+# drawer gets its marks the same way it gets its events. A missing or broken state file is no
+# error — the two fields are then empty and 0, and the calendar marks no days.
 #   error      {"ok":false,"worker":"calendar","err":"…","t":<ms>}
 #
 # `calendar` is auto-subscribed at --interval-ms (300000 by default), so a
@@ -358,11 +365,45 @@ build_payload() {
   return 0
 }
 
+# The pill tracker's history as the drawer wants it: one record per day it knows about (today
+# first) and the streak the tracker computes — today counted only when taken, then the run of
+# taken days immediately before it, a gap ends it (lib/plugins/pill/pill.luau `streakNow`).
+PILL_STATE="${XDG_DATA_HOME:-$HOME/.local/share}/pleamar/Pill/state.json"
+PILL_FILTER='
+  def prevday: (strptime("%Y-%m-%d") | mktime - 86400 | strftime("%Y-%m-%d"));
+  . as $s
+  | (if ($s.taken == true) then
+       (reduce ($s.history // [])[] as $e
+          ({n: 1, cur: $s.today, stop: false};
+           if .stop then .
+           elif ($e.taken == true and $e.date == (.cur | prevday))
+             then {n: (.n + 1), cur: $e.date, stop: false}
+           else {n: .n, cur: .cur, stop: true} end) | .n)
+     else 0 end) as $streak
+  | { pills: ([{date: $s.today, taken: ($s.taken == true)}]
+              + (($s.history // []) | map({date: .date, taken: (.taken == true)}))),
+      streak: $streak }'
+
+pill_fields() {
+  if [ ! -r "$PILL_STATE" ]; then
+    printf '{"pills":[],"streak":0}'
+    return 0
+  fi
+  if ! jq -c "$PILL_FILTER" "$PILL_STATE" 2> /dev/null; then
+    printf '{"pills":[],"streak":0}'
+  fi
+  return 0
+}
+
 emit_sample() {
-  local now
+  local now pf
   now_ms
   now=$NOW_MS
   if build_payload; then
+    pf=$(pill_fields)
+    # Read fresh on every sample and never cached: the tracker writes the file while the drawer is
+    # open, and a cached copy would show yesterday's gap until the worker's next 5-minute tick.
+    PAYLOAD=$(printf '%s' "$PAYLOAD" | jq -c --argjson pf "$pf" '. + {pills: $pf.pills, streak: $pf.streak}')
     printf '{"ok":true,"worker":"%s","topic":"calendar","t":%s,"data":%s}\n' "$WORKER" "$now" "$PAYLOAD"
   else
     sample_error "$ERR_MSG"

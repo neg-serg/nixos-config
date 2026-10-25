@@ -23,6 +23,15 @@
 --   · dismissal: `notifications.dismiss` by id, actions through
 --     `notifications.invoke` (the payload the scene sends is an index into the
 --     flat action table this builds on every model refresh).
+--   · the centre's cursor: the legacy centre kept a `currentIndex` over its
+--     list and moved it with the Emacs keys (NotificationCenter.qml:46-89). A
+--     `key` rule cannot count rows, so the scene sends which key was pressed
+--     (`nav`, see notifications.plm) and the cursor, its bounds and the row it
+--     sits on are kept here; the scene draws the row `sel` marks and scrolls it
+--     into sight.
+--   · the cards' action glyphs: the legacy card picked a Material glyph for each
+--     action by reading its label (NotificationCard.qml:42-62). That is a rule
+--     about words, so it lives here, and the scene gets the glyph's name.
 --
 -- Settings (this scene's own folder, bare names; INTERFACES §6): settings.json
 --   dnd           (bool,   false)           do not disturb
@@ -105,6 +114,32 @@ local function actions_of(n)
     return out
 end
 
+-- The glyph the legacy card drew before an action's label, chosen from the
+-- label alone (NotificationCard.qml:42-62): the same names, in the same order,
+-- with the same case-insensitive substring test, so a label that earned a glyph
+-- there earns it here. "" is the reference's `return ""` — no glyph at all, and
+-- the label stays centred. The names are Material Symbols ligatures, which the
+-- installed Material Symbols Outlined font draws (the MPD flags do the same).
+local function glyph_of(label)
+    local l = string.lower(label or "")
+    local function has(word) return string.find(l, word, 1, true) ~= nil end
+    if has("open") then return "folder_open" end
+    if has("reply") then return "reply" end
+    if has("read") then return "done" end
+    if has("dismiss") or has("delete") or has("clear") or has("remove") then return "delete" end
+    if has("accept") or has("approve") or l == "yes" then return "check_circle" end
+    if has("decline") or has("reject") or l == "no" then return "cancel" end
+    if has("snooze") then return "snooze" end
+    if has("mute") then return "notifications_off" end
+    if has("call") then return "call" end
+    if has("video") then return "videocam" end
+    if has("view") then return "visibility" end
+    if has("download") then return "download" end
+    if has("send") then return "send" end
+    if has("like") then return "thumb_up" end
+    return ""
+end
+
 local function new_record(n)
     nt_slot = nt_slot + 1
     local app = clean(n.app, "Notification")
@@ -169,7 +204,14 @@ local function entry_of(r, old, first, with_actions)
         for _, a in ipairs(r.actions) do
             if a.key ~= "default" and #acts < 3 then
                 nt_acts[#nt_acts + 1] = { id = r.id, key = a.key, on = r.on }
-                acts[#acts + 1] = { ix = #nt_acts - 1, label = clean(a.label, a.key) }
+                local label = clean(a.label, a.key)
+                local glyph = glyph_of(label)
+                acts[#acts + 1] = {
+                    ix = #nt_acts - 1,
+                    label = label,
+                    glyph = glyph,
+                    mark = (glyph ~= "") and 1 or 0,
+                }
             end
         end
         for _, a in ipairs(r.actions) do
@@ -210,8 +252,39 @@ local VIEW = 1150       -- design pixels a window must cover (4K at fit.max)
 local nt_rows = {}      -- the whole centre, newest first: entries with y/h
 local nt_total = 0      -- how long the whole list is, design pixels
 local nt_scroll = 0     -- where the centre is scrolled, design pixels
-local nt_win = 0        -- first row of the window (1-based), 0 = none
-local nt_win_n = 0      -- how many rows the window holds
+local nt_first = 0      -- first row of the window (1-based), 0 = none
+local nt_last = 0       -- last row the window holds
+local nt_shown = -1     -- the window the scene was last handed (-1: nothing yet)
+local nt_sel = -1       -- the cursor: a 1-based row of nt_rows, -1 = none
+local nt_sel_shown = -2 -- the cursor the scene's rows were last marked with
+
+-- The model is the window: the rows the scene draws, with `sel` on the one the
+-- keyboard has (the reference's `ListView.isCurrentItem`, NotificationCenter.qml
+-- :155-163). Handed over again only when the window or the cursor moved: every
+-- design pixel of a scroll comes through `window_at`.
+local function emit_window()
+    if nt_first == nt_shown and nt_sel == nt_sel_shown then return end
+    nt_shown, nt_sel_shown = nt_first, nt_sel
+    local slice = {}
+    for k = math.max(nt_first, 1), nt_last do
+        local e = nt_rows[k]
+        e.sel = (k == nt_sel) and 1 or 0
+        slice[#slice + 1] = e
+    end
+    model.entries = slice
+    fact.entryFirst = (nt_first > 0) and (nt_first - 1) or 0
+    fact.entryFirstY = (nt_first > 0) and nt_rows[nt_first].y or 0
+    fact.entryTotal = nt_total
+end
+
+-- Where the cursor's row sits in the whole list, and how tall it is, in design
+-- pixels: the scene needs both to centre it in its own drawer, whose height only
+-- that copy knows.
+local function emit_cursor()
+    local e = (nt_sel > 0) and nt_rows[nt_sel] or nil
+    fact.selY = e and e.y or 0
+    fact.selH = e and e.h or 0
+end
 
 -- `s` is where the centre is scrolled, in design pixels (`list.scroll / scale`
 -- from the scene). The row that contains it starts the window; WINDOW rows
@@ -221,31 +294,20 @@ local function window_at(s)
     nt_scroll = s
     local n = #nt_rows
     if n == 0 then
-        nt_win, nt_win_n = 0, 0
-        model.entries = {}
-        fact.entryFirst = 0
-        fact.entryFirstY = 0
-        fact.entryTotal = 0
-        return
+        nt_first, nt_last = 0, 0
+    else
+        if s < 0 then s = 0 end
+        if s > nt_total then s = nt_total end
+        local first = 1
+        while first < n and nt_rows[first + 1].y <= s do first = first + 1 end
+        if first + WINDOW - 1 > n then
+            first = n - WINDOW + 1
+            if first < 1 then first = 1 end
+        end
+        nt_first, nt_last = first, math.min(first + WINDOW - 1, n)
     end
-    if s < 0 then s = 0 end
-    if s > nt_total then s = nt_total end
-    local first = 1
-    while first < n and nt_rows[first + 1].y <= s do first = first + 1 end
-    local last = first + WINDOW - 1
-    if last > n then
-        last = n
-        first = last - WINDOW + 1
-        if first < 1 then first = 1 end
-    end
-    if nt_win_n > 0 and first == nt_win then return end
-    local slice = {}
-    for k = first, last do slice[#slice + 1] = nt_rows[k] end
-    nt_win, nt_win_n = first, #slice
-    fact.entryFirst = first - 1
-    fact.entryFirstY = nt_rows[first].y
-    fact.entryTotal = nt_total
-    model.entries = slice
+    emit_window()
+    emit_cursor()
 end
 
 local function rebuild()
@@ -289,7 +351,15 @@ local function rebuild()
     end
     nt_rows = rows
     nt_total = (at > 0) and (at - GAP_H) or 0
-    nt_win, nt_win_n = 0, 0
+    -- The cursor rides the list: a row that went away leaves it on the one that
+    -- took its place, and a list that emptied has none. (The reference's
+    -- `currentIndex` stays put the same way; only the moves ever set it.)
+    if #nt_rows == 0 then
+        nt_sel = -1
+    elseif nt_sel > #nt_rows then
+        nt_sel = #nt_rows
+    end
+    nt_shown = -1 -- the rows themselves changed: hand them over again
     window_at(nt_scroll)
 
     fact.count = count
@@ -432,12 +502,12 @@ on("act", function(v)
     save_hist()
 end)
 
--- A toast's dismiss mark, or a centre card: a record the server still keeps is
--- dismissed (the application finds out); one already gone is forgotten from
--- the history (the legacy centre's "Earlier" cards were inert; this is the
--- port's one deviation, and the only way to drop a single entry).
-on("drop", function(v)
-    local slot = math.floor(num(v, -1, 1e9, -1))
+-- A record under the hand: one the server still keeps is dismissed (the
+-- application finds out); one already gone is forgotten from the history (the
+-- legacy centre's "Earlier" cards were inert; this is the port's one deviation,
+-- and the only way to drop a single entry). Reached from the X of a toast, from
+-- a press on a card, and from the cursor (C-k and Return).
+local function drop_slot(slot)
     local r = nil
     for _, x in ipairs(nt_hist) do
         if x.slot == slot then
@@ -459,6 +529,75 @@ on("drop", function(v)
     end
     rebuild()
     save_hist()
+end
+
+-- A toast's dismiss mark, or a centre card, by the record's handle.
+on("drop", function(v)
+    drop_slot(math.floor(num(v, -1, 1e9, -1)))
+end)
+
+-- ----- the centre's cursor ---------------------------------------------------
+
+-- The ops the scene's key rules send, in the order notifications.plm documents
+-- them: one per key of the legacy list (NotificationCenter.qml:57-71, 82-89).
+local NAV_NEXT, NAV_PREV = 0, 1
+local NAV_FIVE_DOWN, NAV_FIVE_UP = 2, 3
+local NAV_FIRST, NAV_LAST, NAV_TAKE = 4, 5, 6
+-- The reference's `Math.min(idx + 5, …)`: five rows a page, not a screenful.
+local PAGE = 5
+
+-- The cursor moved. The arithmetic, the bounds and the five rows are the
+-- reference's (`NotificationCenter.qml:57-62`): a cursor of -1 means nothing has
+-- been chosen yet, and the first move takes the first row instead of stepping
+-- off it; every move stops at an end. With nothing to move over it does nothing
+-- at all (`if (notifList.count === 0) return`, :48).
+--
+-- The window is NOT moved here: the scene scrolls the cursor's row to the middle
+-- of its drawer, as the reference did with `positionViewAtIndex(…, Center)`, and
+-- the scroll coming back through `slid` moves the window under it. What leaves
+-- from here is the row (`sel`, in the model) and its place (`selY`, `selH`).
+local function move_cursor(op)
+    local n = #nt_rows
+    if n == 0 then
+        nt_sel = -1
+        emit_window()
+        emit_cursor()
+        return
+    end
+    local i = nt_sel
+    if op == NAV_TAKE then
+        -- `idx = idx < 0 ? 0 : idx` (:64): with no cursor the first row is the
+        -- one that goes, and the row under it is the one the reference discards
+        -- (:68) — the same thing a press on the card does in this port.
+        if i < 1 then i = 1 end
+        nt_sel = i
+        emit_window()
+        emit_cursor()
+        drop_slot(nt_rows[i].slot)
+        return
+    elseif op == NAV_NEXT then
+        i = (i < 1) and 1 or math.min(i + 1, n)
+    elseif op == NAV_PREV then
+        i = (i < 1) and 1 or math.max(i - 1, 1)
+    elseif op == NAV_FIVE_DOWN then
+        i = (i < 1) and 1 or math.min(i + PAGE, n)
+    elseif op == NAV_FIVE_UP then
+        i = (i < 1) and 1 or math.max(i - PAGE, 1)
+    elseif op == NAV_FIRST then
+        i = 1
+    else -- NAV_LAST
+        i = n
+    end
+    if i < 1 then i = 1 end
+    if i > n then i = n end
+    nt_sel = i
+    emit_window()
+    emit_cursor()
+end
+
+-- A key of the centre was pressed: `emit nav <op>` from the scene's key rules.
+on("nav", function(v)
+    move_cursor(math.floor(num(v, 0, 6, 0)))
 end)
 
 -- The centre scrolled: the scene sends where it is, in design pixels, and the
