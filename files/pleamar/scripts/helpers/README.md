@@ -129,23 +129,31 @@ only what the view shows. A missing source is an `err` object inside `data`, nev
 weather.sh [--city NAME] [--lat N --lon N] [--cache-file PATH] [--ttl SECONDS]
            [--force] [--interval-ms N] [--once] [--forecast-days N]
            [--timeout SECONDS] [--api-base URL] [--geocoding-base URL]
-           [--wttr-base URL] [--no-fallback]
+           [--wttr-base URL] [--metno-base URL] [--no-fallback]
 ```
 
 City from `--city` or `PLEAMAR_WEATHER_CITY`; coordinates from `--lat/--lon` (geocoding skipped) or
 Open-Meteo's geocoding API (cached 24 h). `data`: `city`, `latitude`, `longitude`, `provider`
 (`open-meteo` or `wttr.in`), `fetched_at`, `age_s`, `cached`,
 `current{temp_c,weather_code,wind_ms, wind_dir_deg,is_day,humidity_pct,pressure_hpa}` and
-`daily[{date,tmax_c,tmin_c,weather_code}]` (empty in the wttr.in fallback). The payload cache
-(`$XDG_CACHE_HOME/pleamar/helpers/weather.json`, TTL `--ttl`, default 300 s) is served without
-network; `--force` ignores a fresh one. Needs `curl` and `jq`; a failed provider is an `err` line
-and the worker retries on the next sample. No API keys, no secrets.
+`daily[{date,tmax_c,tmin_c,weather_code}]`.
+
+The providers split on this host: `current` is wttr.in's (Open-Meteo cannot be reached here) and
+`daily` is MET Norway's (`--metno-base`, keyless, the same User-Agent), because wttr.in's JSON
+stream arrives truncated (10-13 KB of a ~40 KB document, measured 2026-10-26) and Open-Meteo's daily
+forecast is out of reach. MET Norway names the sky (`symbol_code`), so the worker turns it into the
+WMO numbers the card knows, thunder first and "partlycloudy" before "cloudy". A payload written
+before `daily` existed is not served from the cache — a forecast-less payload is stale whatever its
+age says. The payload cache (`$XDG_CACHE_HOME/pleamar/helpers/weather.json`, TTL `--ttl`, default
+300 s) is served without network; `--force` ignores a fresh one. Needs `curl` and `jq`; a failed
+provider is an `err` line and the worker retries on the next sample. No API keys, no secrets.
 
 ### calendar.sh — `pleamar-calendar`
 
 ```
 calendar.sh [--month YYYY-MM] [--country CC] [--cache-dir DIR]
             [--interval-ms N] [--once] [--holidays-base URL]
+            [--workdays-base URL]
 ```
 
 `khal list` for the month, day lines skipped and `{start-date}|{start-time}|{title}|{calendar}`
@@ -155,11 +163,14 @@ uses the locale format, and the legacy Quickshell helper passed ISO and silently
 navigation: `{"cmd":"sample","month":"2026-11"}` (or `set`/`subscribe` with `month`) re-asks khal
 for another month and re-emits. `--country CC` adds `holidays[{date,name,name_en}]` from
 date.nager.at (24 h file cache) and `holidays_error` carries a failed holiday fetch without failing
-the events. Other `data` keys: `month`, `first`, `last`, `fetched_at`, `cached`, `age_s`. Event
-results are cached for 120 s in `calendar-YYYY-MM.json` under `--cache-dir` (default
-`$XDG_CACHE_HOME/pleamar/helpers`). khal missing is a start error
-(`{"ok":false,"worker":"calendar","err":"khal not installed"}`, exit 1). Needs `jq` and `khal`;
-`curl` only when `--country` asks for holidays.
+the events. The same `--country` adds the production calendar from isdayoff.ru as
+`workdays[{date,code}]` — `1` a day off, `2` a shortened day, `4` a moved working day (a Saturday
+that works), cached per month for 24 h, and `workdays_error` carries a failed fetch the same way. It
+is what tells a working Saturday from a weekend, which no holiday list knows. Other `data` keys:
+`month`, `first`, `last`, `fetched_at`, `cached`, `age_s`. Event results are cached for 120 s in
+`calendar-YYYY-MM.json` under `--cache-dir` (default `$XDG_CACHE_HOME/pleamar/helpers`). khal
+missing is a start error (`{"ok":false,"worker":"calendar","err":"khal not installed"}`, exit 1).
+Needs `jq` and `khal`; `curl` only when `--country` asks for holidays and the production calendar.
 
 ### kbd.sh — `pleamar-kbdlayout`
 
