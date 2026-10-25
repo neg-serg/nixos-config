@@ -210,26 +210,6 @@ scene bar {
     // (`PanelTooltip` reads that capsule's `x`), and the capsule is wherever the pointer is.
     // A scene cannot ask a zone where it sits, but it can read the pointer on the strip
     // (`pointer.x`) and follow it, which is the same thing while the cursor is on the capsule.
-    // ---- parallax: the two halves as two layers
-    // A deliberate departure from the reference, which draws one flat strip (PARITY.md). The bar is
-    // two halves side by side, and the pointer over the strip pulls them by different amounts — the
-    // left one follows it up to 3 logical px, the right one lags at 1.2 — so the pair shears against
-    // itself and reads as two plates at different depths rather than one print.
-    //
-    // `pointer.x` is the mouse on the surface, and it is only readable inside a rule, which is what
-    // `follow` is; `strip.hot` gates it because the pointer keeps its last value when it leaves and
-    // the halves would otherwise stay where it left them. `round(...)` happens at the point of use
-    // (`move:`), so the motion is smooth and the drawing still lands on whole logical pixels — a
-    // text re-sharpened at a fraction of a pixel every frame shimmers. `~calm` smooths the ~30 Hz
-    // reading out, and `--reduced-motion` settles both at once, so the effect needs no gate of its
-    // own. The brightness term is the depth cue: the half that comes closer catches a little more
-    // light. It is not a drop shadow on purpose — the reference's plates have none
-    // (`WidgetCapsule`: `panel.capsule.borderWidth` 0, no shadow).
-    prop par.l = 0 ~calm
-    prop par.r = 0 ~calm
-    follow par.l = strip.hot * 3 * ((pointer.x - screen.width / 2) / (screen.width / 2))
-    follow par.r = strip.hot * 1.2 * ((pointer.x - screen.width / 2) / (screen.width / 2))
-
     // The card is clamped inside the strip when drawn: a tooltip that hangs off the monitor is
     // a tooltip nobody reads.
     prop tip.x = 960 ~calm
@@ -1701,14 +1681,8 @@ scene bar {
     on enter tray_reveal { emit tray_hot(1) }
     on leave tray_reveal { emit tray_hot(0) }
 
-    // The halves, each in a group of its own so the parallax can move it whole: the group's unit is
-    // logical px (a row's `at:` is not scaled), and `round` keeps the plates on the pixel grid.
-    group par_left { move: round(par.l), 0
-        Left()
-    }
-    group par_right { move: round(par.r), 0
-        Right()
-    }
+    Left()
+    Right()
 
     // The build badge, in the middle of the strip: QS puts `BuildStatus` on a panel of its own
     // centred along the bottom edge, so its capsule stands where the bar's centre is — not at
