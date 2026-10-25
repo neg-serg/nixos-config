@@ -973,6 +973,16 @@ scene bar {
         size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
+            // The capsule's own plate, as every neighbour wears it (`coal` at 69 % with the 8 %
+            // hairline). Without it the volume and the microphone were two bare glyphs between
+            // the Genelec tile and the media capsule — the poor relations of the row.
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 2 * capsule.pad + pill.icon, 23; corner: corner }
+            }
+            // The readout pill that slides out to the left while the cursor is on the capsule.
             box {
                 from: icon / 2 - 44, (strip - pill.height) / 2
                 size: 44, pill.height
@@ -1062,11 +1072,8 @@ scene bar {
             // No `weather.have`: the reference keeps the capsule at `--°C` until an answer arrives,
             // and the left row used to shift the moment the first one did.
             WeatherCapsule() { show: widget.weather }
-            // The build badge, last in the row. QS draws `BuildStatus` on a panel of its
-            // own, centred along the bottom edge — a second layer surface this slice does
-            // not have — so it rides here instead, and takes no space at rest: the tool
-            // reports `idle` with no builds, which is `Build.busy` false.
-            row build_slot { show: widget.build and Build.busy; build.Tile() }
+            // The build badge is not here: QS draws `BuildStatus` centred along the bar, and the
+            // strip has a middle of its own (see the row after `Right()`).
         }
     }
 
@@ -1315,6 +1322,14 @@ scene bar {
 
     Left()
     Right()
+
+    // The build badge, in the middle of the strip: QS puts `BuildStatus` on a panel of its own
+    // centred along the bottom edge, so its capsule stands where the bar's centre is — not at
+    // the end of a row where it shoved the weather and the clock around every time a build
+    // started. It takes no space at rest (`Build.busy` is false while nothing runs).
+    row build_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; show: widget.build and Build.busy
+        build.Tile()
+    }
 
     // ------------------------------------------------------------ what waits
     // Later slices (rest of PH2-A): the pill capsule, the keyboard layout, the
