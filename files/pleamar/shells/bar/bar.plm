@@ -970,7 +970,9 @@ scene bar {
                 show: hot
             }
             text "{glyph}" {
-                at: icon / 2, strip / 2
+                // Two logical px above the middle: Material ink hangs below the centre of its box,
+                // and the microphone read as a glyph sliding out of the strip.
+                at: icon / 2, strip / 2 - 2
                 anchor: center
                 size: 13
                 color: fill
