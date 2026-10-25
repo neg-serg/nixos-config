@@ -182,11 +182,11 @@ scene bar {
     // is refused ("I don't understand 'tip.shown'"), so a fact an outside tool
     // may want to poke carries no dot.
     fact tip_open = false
-    // The card's own size: one line is a strip, three are a block. The surface is the ceiling
-    // (a `size:` takes a literal), so the plate hangs from its bottom edge and the logic says
-    // how tall and wide it is — otherwise a one-line tooltip drew a 64 px slab of empty glass.
-    fact tip.h = 30
-    fact tip.w = 240
+    // The card's own size: one line is a compact strip, three are a short block. The surface is
+    // the ceiling (a `size:` takes a literal), so the logic writes the exact height: 25 px for
+    // one line, 40 for two, 55 for three, with 12 px type and 9/5 px padding.
+    fact tip.h = 25
+    fact tip.w = 160
     fact tip.lines = 1
     // Where the card hangs: the reference's tool window follows the capsule it belongs to
     // (`PanelTooltip` reads that capsule's `x`), and the capsule is wherever the pointer is.
@@ -424,25 +424,23 @@ scene bar {
         // surface), so it hugs it instead.
         margin: 0, 0, 0, 0
         level: overlay
-        // The logic keeps the card up for one line (30 px) or the media card's three (64 px),
-        // and `tip_open` is the 150 ms delay plus the pointer still being on a capsule. The
-        // surface stays the full 64 px so the three-line card is never cut; the plate inside
-        // is only as tall as the fact, and hangs from the surface's bottom edge against the bar.
+        // The logic keeps the card up for one compact line or the media card's two. The
+        // surface stays the full 64 px so the tallest card is never cut; the plate inside is
+        // only as tall as the fact and floats 4 px above the bar.
         open: tip_open
         // The card's left edge, as wide as the logic says, centred on the pointer and kept 8 px
         // inside the strip.
         let card.left = clamp(tip.x - tip.w / 2, 8, screen.width - (tip.w + 8))
-        let card.top = 64 - tip.h
+        let card.top = 64 - tip.h - 4
         body {
-            color: skin.surface
+            color: skin.coal
             opacity: 96%
-            box { from: card.left, card.top; size: tip.w, tip.h; corner: 6 }
-            box { from: card.left, card.top; size: 2, tip.h; corner: 1; color: skin.accent }
+            border: 1, mix(skin.coal, skin.ink, 12%)
+            box { from: card.left, card.top; size: tip.w, tip.h; corner: 5 }
         }
-        // Three lines, as `TooltipText.compose` builds them in the reference (title, the detail,
-        // the extra): the logic writes them separated by newlines and the card is tall enough
-        // to hold them.
-        text "{tip_body}" { at: card.left + 12, card.top + 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: tip.w - 24; lines: 3 }
+        // Up to three lines: the media card is a title plus one metadata line, and a title long
+        // enough to wrap takes a third. The logic writes the newlines and sizes the card.
+        text "{tip_body}" { at: card.left + 9, card.top + 5; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: tip.w - 18; lines: 3 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -1272,9 +1270,9 @@ scene bar {
                     // reports that one on a change and never polls it, so it stood still while the
                     // track played (measured: 149 for three minutes against MPD's 5:37). The logic
                     // ticks it every second and resyncs on every media event.
-                    text "{media.pos, time}" { measure: tp; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "{media.pos, time}" { measure: tp; size: 14; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
                     text "/" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
-                    text "{media.length, time}" { measure: tl; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "{media.length, time}" { measure: tl; size: 14; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
                     text ")" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
                 }
                 // The analyser, revealed with the transport: QS keeps it inside the
@@ -1336,7 +1334,7 @@ scene bar {
                     image icon_next { size: 14, 14; tint: pick(media.hot, skin.accent, skin.ink) }
                 }
             }
-            // The capsule itself: hovering it asks for the three-line card (title, album, player).
+            // The capsule itself: hovering it asks for the media card (title and metadata).
             zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
             on enter z_media { emit tip(6) }
             on leave z_media { emit tip_hide }

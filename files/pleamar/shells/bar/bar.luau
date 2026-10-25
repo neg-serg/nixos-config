@@ -150,7 +150,7 @@ end
 
 local mediaPos = 0
 local mediaPlaying = false
--- The last media record, kept for the three-line tooltip: logic does not get the scene's
+-- The last media record, kept for the media tooltip: logic does not get the scene's
 -- service binding as a variable, so `media.title` there would index nil.
 local mediaNow = {}
 
@@ -474,12 +474,16 @@ local function tip_line(i)
         local ram = math.floor((fact.ram or 0) * 100 + 0.5)
         return string.format("CPU %d %%, RAM %d %%", cpu, ram)
     elseif i == 6 then
-        -- The media card in the reference: title — artist, the album, the player. Three lines
-        -- to the others' one, and the card is sized for that.
+        -- The media card: title — artist, then one compact line of album and player. The album
+        -- is dropped when it repeats the artist (MPD often hands the same string for both).
         local l1 = (mediaNow.title or "") .. ((mediaNow.artist and mediaNow.artist ~= "") and (" — " .. mediaNow.artist) or "")
-        local l2 = mediaNow.album or ""
-        local l3 = (mediaNow.player and mediaNow.player ~= "") and mediaNow.player or ""
-        return table.concat({ l1 ~= "" and l1 or "Nothing playing", l2, l3 }, "\n")
+        if l1 == "" then l1 = "Nothing playing" end
+        local meta = {}
+        local album = mediaNow.album or ""
+        if album ~= "" and album ~= (mediaNow.artist or "") then meta[#meta + 1] = album end
+        if mediaNow.player and mediaNow.player ~= "" then meta[#meta + 1] = mediaNow.player end
+        if #meta > 0 then return l1 .. "\n" .. table.concat(meta, " · ") end
+        return l1
     elseif i == 7 then
         -- The volume capsule: the mixer's own numbers, as the capsule prints them.
         local pct = math.floor((tonumber(audioNow.volume) or 0) * 100 + 0.5)
@@ -516,14 +520,21 @@ end
 local function showTip(i)
     local body = tip_line(i or 0)
     text.tip_body = body
-    -- Three lines for the media card, one for the rest, and the plate as wide as the widest
-    -- line: 6.5 px a character at size 13 plus the card's own 12 px of padding on each side.
-    local lines = select(2, body:gsub("\n", "\n")) + 1
-    local widest = 0
-    for line in body:gmatch("[^\n]+") do widest = math.max(widest, #line) end
-    fact["tip.lines"] = lines > 1 and 3 or 1
-    fact["tip.h"] = (lines > 1) and 64 or 30
-    fact["tip.w"] = math.min(340, math.max(120, math.floor(widest * 7) + 26))
+    -- Compact card: 12 px Iosevka is 6 px a character, 9 px of horizontal padding each side,
+    -- 5 px above and below, 15 px per line. A line longer than the 260 px ceiling wraps, and the
+    -- height follows the visible lines (up to the media card's three).
+    local TIP_CHAR, TIP_PAD_X, TIP_PAD_Y, TIP_LINE_H, TIP_MAX_W, TIP_MIN_W = 6, 18, 10, 15, 260, 160
+    local per_line = math.floor((TIP_MAX_W - TIP_PAD_X) / TIP_CHAR)
+    local lines, widest = 0, 0
+    for line in body:gmatch("[^\n]+") do
+        local n = utf8.len(line) or #line
+        widest = math.max(widest, n)
+        lines = lines + math.max(1, math.ceil(n / per_line))
+    end
+    lines = math.min(3, math.max(1, lines))
+    fact["tip.lines"] = lines
+    fact["tip.h"] = TIP_PAD_Y + lines * TIP_LINE_H
+    fact["tip.w"] = math.min(TIP_MAX_W, math.max(TIP_MIN_W, math.floor(widest * TIP_CHAR) + TIP_PAD_X))
     if tipTimer then cancel(tipTimer) end
     tipTimer = after(TIP_DELAY, function()
         tipTimer = nil
