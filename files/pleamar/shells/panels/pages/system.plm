@@ -86,6 +86,47 @@ part SysPanel {
 
             text "no journal entries in the last day" { at: 380, 200; anchor: center; family: "Iosevka"; size: 11; color: ink.off
                 show: journal.total == 0 }
+
+            // ----***--------------------------- history
+            // The worker samples while the drawer is open; panels.luau keeps the last 60
+            // records. Four series share the same 0..100 % scale, so the chart is a
+            // comparison, not four separate sparklines. GPU and temperature appear only
+            // when the worker has a real reading for them.
+            let hist.x = 14
+            let hist.y = 388
+            let hist.w = 876
+            let hist.h = 176
+            let hist.pitch = hist.w / max(sys_hist.total, 1)
+            text "History" { at: 14, 350; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: skin.ink }
+            text "last 60 s" { at: 92, 350; anchor: left center; family: "Iosevka"; size: 12; color: ink.off }
+            box { from: 14, 367; size: 8, 8; corner: 4; color: skin.accent }
+            text "CPU" { at: 28, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            box { from: 76, 367; size: 8, 8; corner: 4; color: amber }
+            text "RAM" { at: 90, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            box { from: 138, 367; size: 8, 8; corner: 4; color: highlight; show: sysmon_gpu == 1 }
+            text "GPU" { at: 152, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sysmon_gpu == 1 }
+            box { from: 200, 367; size: 8, 8; corner: 4; color: warn; show: sysmon_temp == 1 }
+            text "TEMP" { at: 214, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sysmon_temp == 1 }
+
+            repeat g in 0..3 {
+                box { from: hist.x, hist.y + hist.h - g * hist.h / 3; size: hist.w, 1; color: skin.ink; opacity: 12% }
+            }
+            text "100 %" { at: hist.x + hist.w - 2, hist.y - 8; anchor: right center; family: "Iosevka"; size: 10; color: ink.off }
+            text "0 %" { at: hist.x + hist.w - 2, hist.y + hist.h - 8; anchor: right center; family: "Iosevka"; size: 10; color: ink.off }
+
+            for h in sys_hist {
+                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.cpu * hist.h
+                    size: max(hist.pitch, 1), 1.5; color: skin.accent; opacity: 85% }
+                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.ram * hist.h
+                    size: max(hist.pitch, 1), 1.5; color: amber; opacity: 85% }
+                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.gpu * hist.h
+                    size: max(hist.pitch, 1), 1.5; color: highlight; opacity: 75%; show: sysmon_gpu == 1 }
+                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.temp * hist.h
+                    size: max(hist.pitch, 1), 1.5; color: warn; opacity: 75%; show: sysmon_temp == 1 }
+            }
+            text "waiting for samples…" { at: hist.x + hist.w / 2, hist.y + hist.h / 2; anchor: center
+                family: "Iosevka"; size: 11; color: ink.off; show: sys_hist.total == 0 }
+            text "1 sample / s · 60 s window" { at: 14, 584; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
         }
     }
 
