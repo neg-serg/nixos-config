@@ -172,6 +172,12 @@ pleamar-check:
 plm-theme:
     bash "{{repo_root}}/scripts/dev/check-plm-theme.sh" "{{repo_root}}"
 
+# Every `emit` in a scene must reach something: a logic handler, a scene rule, a component's event
+# parameter, or a plugin's own logic. The class of bug it guards is the one the port was reported
+# for — a capsule that compiles, presses, and does nothing.
+scene-events:
+    bash "{{repo_root}}/scripts/dev/check-scene-events.sh" "{{repo_root}}"
+
 # The theme pipeline's own suite: hermetic, runs theme.sh against image fixtures in a
 # throwaway HOME and pins the extractor's goldens. A recipe of its own because nothing ran
 # it and it rotted: seven of its checks were red on 2026-10-26, all of them stale
