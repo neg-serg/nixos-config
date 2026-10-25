@@ -661,6 +661,9 @@ scene bar {
     event tray_menu ->
     // The cursor came onto a left capsule; the number is its place in the row.
     event tip ->
+    // The cursor left that capsule (or the whole strip): the logic cancels the pending show
+    // and closes the card, so a 150 ms timer armed on enter cannot fire after the pointer left.
+    event tip_hide ->
     event wheel_volume ->
     event toggle_mute ->
     event toggle_mic ->
@@ -698,6 +701,7 @@ scene bar {
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 35; lines: 1 }
             zone box clock { from: 0, 0; size: w.card, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { emit tip(0) }
+            on leave clock { emit tip_hide }
         }
     }
 
@@ -739,6 +743,7 @@ scene bar {
             text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { emit tip(1) }
+            on leave ws { emit tip_hide }
             on press ws { emit focus }
         }
     }
@@ -817,6 +822,7 @@ scene bar {
             // the pressable area, as on every other capsule; nothing is pressed here yet.
             zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; label: "System monitor"; role: region }
             on enter sysmon { emit tip(4) }
+            on leave sysmon { emit tip_hide }
         }
     }
 
@@ -931,6 +937,7 @@ scene bar {
             shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
             zone box weather { from: 0, 0; size: 178, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { emit tip(5) }
+            on leave weather { emit tip_hide }
         }
     }
 
@@ -958,6 +965,7 @@ scene bar {
             text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             zone box kb { from: 0, 0; size: 54, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
+            on leave kb { emit tip_hide }
         }
     }
 
@@ -1007,6 +1015,7 @@ scene bar {
             text "{net_tx_unit}" { at: text.x + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             zone box net { from: 0, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { emit tip(3) }
+            on leave net { emit tip_hide }
             on press net { emit open_network_panel }
         }
     }
@@ -1042,6 +1051,7 @@ scene bar {
         zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
         // The item's title is the record's, so the scene hands it over and the logic prints it.
         on enter trayhit { tip_title = r.title; emit tip(12) }
+        on leave trayhit { emit tip_hide }
         on press trayhit { emit tray_press(r.index) }
         // The item's own menu. A scene that uses the right button is never closed by one
         // (`press right`, language reference §14), which is why this trigger is also what
@@ -1113,11 +1123,11 @@ scene bar {
             scale: scale
             AudioTile(vol.kind, slot, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level), scale: 1)
             zone box vol { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
-            on enter vol { vol.hot = true }
-            on leave vol { vol.hot = false }
+            on enter vol { vol.hot = true; emit tip(7) }
+            on leave vol { vol.hot = false; emit tip_hide }
             on scroll vol { emit step(wheel) }
             on press vol { emit mute }
-            on change vol.shown while not vol.shown { vol.hot = false }
+            on change vol.shown while not vol.shown { vol.hot = false; emit tip_hide }
         }
     }
 
@@ -1129,13 +1139,13 @@ scene bar {
             scale: scale
             AudioTile(mic.kind + 3, slot, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
             zone box mic { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
-            on enter mic { mic.hot = true }
-            on leave mic { mic.hot = false }
+            on enter mic { mic.hot = true; emit tip(8) }
+            on leave mic { mic.hot = false; emit tip_hide }
             on scroll mic { emit step(wheel) }
             on press mic { emit mute }
             // A zone that goes away takes its pointer with it, and `leave` never comes: the tile
             // stayed "hovered" and its plate kept the open width.
-            on change mic.shown while not mic.shown { mic.hot = false }
+            on change mic.shown while not mic.shown { mic.hot = false; emit tip_hide }
         }
     }
 
@@ -1278,6 +1288,7 @@ scene bar {
             zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Media: {media.title}"; role: button }
             on press z_track { emit open_media_panel }
             on enter z_track { tip_open = true; emit tip(6) }
+            on leave z_track { emit tip_hide }
 
             // The transport is not in here: it is its own pill, to the left of this
             // capsule (`Transport` below), which is where QS's `MediaTransport` rides out
@@ -1328,6 +1339,7 @@ scene bar {
             // The capsule itself: hovering it asks for the three-line card (title, album, player).
             zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
             on enter z_media { emit tip(6) }
+            on leave z_media { emit tip_hide }
 
             // The zones sit on the buttons they name — the reason the old ones missed is
             // that they were placed past the capsule's width while the buttons were drawn
@@ -1425,7 +1437,7 @@ scene bar {
     // back when the pointer enters the band above the strip, which is what QS does.
     zone box strip_hover { from: 0, 0; size: screen.width, hot + band; label: "Bar"; role: region }
     on enter strip_hover { strip.hot = true }
-    on leave strip_hover { strip.hot = false; tip_open = false }
+    on leave strip_hover { strip.hot = false; emit tip_hide }
 
     Left()
     Right()
