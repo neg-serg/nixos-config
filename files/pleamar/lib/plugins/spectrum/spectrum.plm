@@ -79,7 +79,11 @@ library Spectrum strict {
     // shortens the bars towards the edges (threeDDepth 0.35). Silence draws
     // nothing at all, and the colour runs from `tone` to `end` across the band.
     component Bars(width: number, height: number = 18, tone: color = highlight, end: color = accent, gap: number = 1) {
-        let bw = max(2, (width - gap * (values.count - 1)) / max(1, values.count))
+        // `width` is the analyser's width, not a hint: the bars share the box they were asked for.
+        // A 2-design-px floor meant 64 bars asked for 22 px drew 191 px of ink, and the analyser
+        // ran 55 px past the right edge of the bar, over the tray and the audio capsules.
+        let pitch = width / max(1, values.count)
+        let bw = max(0.3, pitch - gap)
         let half = if(mirror, height / 2, height)
         for v in values {
             let t = if(values.count > 1, v.index / (values.count - 1), 0)
@@ -87,7 +91,7 @@ library Spectrum strict {
             let base = mix(tone, end, if(gradient, t, 0))
             let c = mix(mix(base, coal, 65%), base, v.lit)
             let bh = clamp(v.level * half * persp, 0, half)
-            let x = v.index * (bw + gap)
+            let x = v.index * pitch
             let on = v.level > 0.001
             // The halo: twice as wide, behind, a fifth of the bar's opacity.
             box { from: x - bw / 2, height / 2 - bh; size: bw * 2, bh; corner: bw; color: c; opacity: 15%; show: mirror and on }
@@ -101,14 +105,16 @@ library Spectrum strict {
     }
 
     component Led(width: number, height: number = 18, tone: color = highlight, end: color = accent, gap: number = spectrum.gap) {
-        let bw = max(spectrum.bar.min, (width - gap * (values.count - 1)) / max(1, values.count))
+        // The same rule as `Bars`: the LED columns share the width they were given.
+        let pitch = width / max(1, values.count)
+        let bw = max(0.3, pitch - gap)
         let seg = max(2, (height - 9) / 10)
         let half = if(mirror, height / 2, height)
         for v in values {
             let t = if(values.count > 1, v.index / (values.count - 1), 0)
             let base = mix(tone, end, if(gradient, t, 0))
             let c = mix(mix(base, coal, 65%), base, v.lit)
-            let x = v.index * (bw + gap)
+            let x = v.index * pitch
             repeat s in 0..9 {
                 box { from: x, height / 2 - (s + 1) * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
                 box { from: x, height / 2 + s * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
