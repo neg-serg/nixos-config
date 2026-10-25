@@ -49,6 +49,14 @@ library Pill strict {
     fact deadlineHour: number = 12
     fact deadlineMinute: number = 0
 
+    // The cursor is on the mark. The tooltip is the bar's to draw (a plugin has no surface): the
+    // scene watches this and asks the logic for the line.
+    fact hot = false
+    // How many times the mark was right-pressed. A plugin cannot open a drawer — the `panels` scene
+    // owns those — so the press counts here and the scene turns the change into its own event; a
+    // counter and not a yes/no, or the second press would change nothing and do nothing.
+    fact asks: number = 0
+
     event toggle ->
 
     // ----------------------------------------------------------------- mark
@@ -76,13 +84,20 @@ library Pill strict {
             // library's defaults (`slate` at `veil`) read as a lighter, greyer pill sitting off
             // the strip's tone.
             Capsule(w, h, fill: coal, alpha: 69%, scale: 1) {
-                row mark {
+                // `row content`, not `row mark`: a named layout is a region of its own, and a row
+                // called `mark` next to the `zone box mark` below made two zones of one name — the
+                // right press went to the region, so the calendar never opened.
+                row content {
                     align: center
                     text "pill" { family: "Material Symbols Outlined"; size: size.icon; color: if(taken, highlight, ink.dim); opacity: if(reminder, 0.65 + pulse, 1) }
                 }
             }
             zone box mark { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
+            on enter mark { hot = true }
+            on leave mark { hot = false }
             on press mark { emit toggle }
+            // QS PillCapsule's second TapHandler: the right button opens the shared calendar.
+            on press right mark { asks = asks + 1 }
         }
     }
 }

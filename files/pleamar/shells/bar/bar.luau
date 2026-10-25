@@ -599,6 +599,39 @@ local function tip_line(i)
     elseif i == 8 then
         local pct = math.floor((tonumber(audioNow.input) or 0) * 100 + 0.5)
         return string.format("Microphone %d %%%s", pct, audioNow.input_muted == true and " (muted)" or "")
+    elseif i == 9 then
+        -- The pill (QS PillCapsule's PanelTooltip): "Taken at <time>", or that it is not taken —
+        -- with the streak the plugin keeps, which the reference only drew in the calendar.
+        local streak = tonumber(fact["Pill.streak"]) or 0
+        local line
+        if fact["Pill.taken"] == true then
+            local at = tostring(text["Pill.takenAt"] or "")
+            line = (at ~= "") and ("Pill taken at " .. at) or "Pill taken"
+        elseif fact["Pill.reminder"] == true then
+            line = "Pill not taken yet!"
+        else
+            line = "Pill not taken yet"
+        end
+        if streak > 0 then line = line .. " · streak " .. streak end
+        return line
+    elseif i == 10 then
+        -- The MPD flags (QS MpdFlags': the title, the state, and one hint per flag that is on).
+        local state = tostring(fact["Mpd.state"] or "unknown")
+        local flags = {}
+        if fact["Mpd.repeat"] == true then flags[#flags + 1] = "Repeat" end
+        if fact["Mpd.random"] == true then flags[#flags + 1] = "Random" end
+        if fact["Mpd.single"] == true then flags[#flags + 1] = "Single" end
+        if fact["Mpd.consume"] == true then flags[#flags + 1] = "Consume" end
+        if fact["Mpd.xfade"] == true then flags[#flags + 1] = "Crossfade" end
+        local on = (#flags > 0) and table.concat(flags, " · ") or "No active flags"
+        return "MPD · " .. state .. "\n" .. on
+    elseif i == 11 then
+        -- Genelec (QS GenelecWidget's tooltip: the reading, the clamp and where the volume lives).
+        local db = math.floor((tonumber(fact["Genelec.volume"]) or 0) + 0.5)
+        local cap = math.floor((tonumber(fact["Genelec.maxVolume"]) or 0) + 0.5)
+        local muted = fact["Genelec.muted"] == true
+        local mode = (fact["Genelec.midi"] == true) and "VM MIDI bridge" or "host GLM adapter"
+        return string.format("Genelec SAM · %d dB%s\ncap %d dB · %s", db, muted and " (muted)" or "", cap, mode)
     elseif i == 12 then
         return text.tip_title ~= "" and text.tip_title or "Tray item"
     elseif i == 5 then
