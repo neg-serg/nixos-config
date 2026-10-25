@@ -72,9 +72,18 @@ end)
 -- scratch, so keys another version put there survive (INTERFACES §6.1).
 
 -- ---------------------------------------------------------------- commands
--- A workspace tab was pressed: show that workspace.
+-- Show a workspace by id. No press of the strip emits this: the workspace capsule shows the
+-- workspace that is already in force and its click is the overview (`open_overview` below), as
+-- in the reference. It stays as the bar's IPC entry point — `pleamar --say bar "emit
+-- focus_workspace 3"` — and it is why the payload is checked: an emit without one used to
+-- reach `sys.call` as nil and the runtime answered "I don't know how to do 'workspaces.focus'
+-- with that" in the journal.
 -- (permissions: "workspaces", "workspaces.focus")
 on("focus_workspace", function(id)
+    if type(id) ~= "number" then
+        log("bar: focus_workspace needs a workspace id, got " .. tostring(id))
+        return
+    end
     sys.call("workspaces.focus", id)
 end)
 
@@ -284,6 +293,40 @@ end
 
 on("open_media_panel", function() open_drawer("media") end)
 on("open_network_panel", function() open_drawer("network") end)
+-- The rest of the reference's pressable capsules, each with the drawer QS opened from it:
+-- the clock its calendar, the weather capsule its card, the system cluster the monitoring
+-- dashboard, the build badge the list of what is building. The drawer names are the ones
+-- `panels` declares (`panels.plm`'s `drawer` enum), so nothing here invents a name.
+on("open_calendar_panel", function() open_drawer("calendar") end)
+on("open_weather_panel", function() open_drawer("weather") end)
+on("open_system_panel", function() open_drawer("system") end)
+on("open_build_panel", function() open_drawer("build") end)
+
+-- The workspace capsule's press: QS's WsIndicator calls `Expo.toggle()`, which is the
+-- `hypr-expo` helper this host's hyprexpo is loaded and configured by. The capsule shows the
+-- workspace that is already active, so focusing it would be a press that does nothing — and
+-- used to be worse than that: `emit focus` carried no payload, so `workspaces.focus` was
+-- called with none and the runtime answered "I don't know how to do 'workspaces.focus' with
+-- that" (`bar.luau:78` in the journal).
+-- (permissions: "hypr-expo")
+on("open_overview", function()
+    run("hypr-expo", { "toggle" }, function(_, code)
+        if code ~= 0 then log("bar: hypr-expo toggle exited " .. tostring(code)) end
+    end)
+end)
+
+-- The keyboard capsule's press: QS's KeyboardLayoutHypr calls `switchKeyboardLayout()`, which is
+-- `hyprctl switchxkblayout current next` — and `current` is wrong on this host: kanata's virtual
+-- keyboard is the last active device, so `current` switches that one alone and leaves the layouts
+-- of the boards actually typed on behind ("ok" is all it answers either way). The compositor's own
+-- bind says so and uses `all` (`files/gui/hypr/hyprland.lua`, SUPER+S). The label does not change
+-- here: the event socket above reports it, and the two-second poll is the net under it.
+-- (permissions: "hyprctl")
+on("next_layout", function()
+    run("hyprctl", { "switchxkblayout", "all", "next" }, function(_, code)
+        if code ~= 0 then log("bar: hyprctl switchxkblayout exited " .. tostring(code)) end
+    end)
+end)
 
 -- The wheel turned over the volume capsule: one step per notch (+ is upwards;
 -- the step is the frozen QS one, not yet a settings key).
