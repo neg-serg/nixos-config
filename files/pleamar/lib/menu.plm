@@ -79,7 +79,7 @@ library Menu strict {
             at: indent * scale, menu.item.height / 2 * scale
             anchor: left center
             width: room * scale
-            // `size:` and `weight:` take one literal number in 0.4.11: the
+            // `size:` and `weight:` take one literal number in 0.4.11: the; family: "Iosevka"
             // design size of `type.small`, and `weight.medium`.
             size: 14
             weight: 500
@@ -147,7 +147,7 @@ library Menu strict {
             at: labelx * scale, menu.item.height / 2 * scale
             anchor: left center
             width: room * scale
-            // `size:` and `weight:` take one literal number in 0.4.11: the
+            // `size:` and `weight:` take one literal number in 0.4.11: the; family: "Iosevka"
             // design size of `type.small`, and `weight.medium`.
             size: 14
             weight: 500

@@ -174,11 +174,11 @@ scene launcher {
             image a.icon { at: 5, 5; size: 16, 16 }
             text a.local_name {
                 at: 27, h / 2; anchor: left center; width: 256; lines: 1
-                size: 14; weight: 500; color: skin.ink
+                size: 14; family: "Iosevka"; weight: 500; color: skin.ink
             }
             text a.id {
                 at: w - 6, h / 2; anchor: right center; width: 120; lines: 1
-                size: 10; color: ink.off
+                size: 10; family: "Iosevka"; color: ink.off
             }
 
             // The row zone: the standard launcher-result label `{app.local_name}`
