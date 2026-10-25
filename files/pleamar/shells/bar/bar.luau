@@ -263,11 +263,11 @@ end)
 local function open_drawer(name)
     run("dash", {
         "-c",
-        "pleamar --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 && exit 0; "
+        "'/run/current-system/sw/bin/pleamar' --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 && exit 0; "
             .. "systemctl --user start pleamar-panels.service; "
-            .. "for i in 1 2 3 4 5 6 7 8 9 10; do "
-            .. "pleamar --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 && exit 0; "
-            .. "sleep 0.05; done",
+            .. "for i in $(seq 1 30); do "
+            .. "'/run/current-system/sw/bin/pleamar' --say panels 'fact drawer " .. name .. "' >/dev/null 2>&1 && exit 0; "
+            .. "sleep 0.1; done",
     })
 end
 
