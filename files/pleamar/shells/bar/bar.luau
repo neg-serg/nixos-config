@@ -463,6 +463,8 @@ local function tip_line(i)
     elseif i == 8 then
         local pct = math.floor((tonumber(audioNow.input) or 0) * 100 + 0.5)
         return string.format("Microphone %d %%%s", pct, audioNow.input_muted == true and " (muted)" or "")
+    elseif i == 12 then
+        return text.tip_title ~= "" and text.tip_title or "Tray item"
     elseif i == 5 then
         local parts = { "Weather" }
         if text["weather.temp"] ~= "" then parts[#parts + 1] = text["weather.temp"] end
@@ -489,7 +491,16 @@ local function hideTip()
 end
 
 local function showTip(i)
-    text.tip_body = tip_line(i or 0)
+    local body = tip_line(i or 0)
+    text.tip_body = body
+    -- Three lines for the media card, one for the rest, and the plate as wide as the widest
+    -- line: 6.5 px a character at size 13 plus the card's own 12 px of padding on each side.
+    local lines = select(2, body:gsub("\n", "\n")) + 1
+    local widest = 0
+    for line in body:gmatch("[^\n]+") do widest = math.max(widest, #line) end
+    fact["tip.lines"] = lines > 1 and 3 or 1
+    fact["tip.h"] = (lines > 1) and 64 or 30
+    fact["tip.w"] = math.min(340, math.max(120, math.floor(widest * 7) + 26))
     if tipTimer then cancel(tipTimer) end
     tipTimer = after(TIP_DELAY, function()
         tipTimer = nil
