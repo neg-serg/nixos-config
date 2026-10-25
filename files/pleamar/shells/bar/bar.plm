@@ -362,6 +362,11 @@ scene bar {
     // The moon's own shader: the phase terminator, stippled (moon.wgsl).
     shader moon_face = file "moon.wgsl"
 
+    // Icons as SVG, not as a glyph font: a text glyph is rasterised at 14 * 1.15 = 16.1 logical px
+    // and the fraction is what blurs it, while a vector is drawn at the device pixel grid.
+    image icon_keyboard = file "../../icons/keyboard.svg", 14, 14
+    image icon_network = file "../../icons/network.svg", 14, 14
+
     // A named surface carries what it draws and shares every fact with the bar,
     // so a tooltip needs no round trip. `level: overlay` so it reads over the
     // bar; `open:` so it costs nothing while nobody is on a capsule.
@@ -863,7 +868,7 @@ scene bar {
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
-            text "keyboard" { at: 10, strip / 2 + 1; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            image icon_keyboard { at: 10, strip / 2 - 7; size: 14, 14; tint: skin.ink.dim }
             text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
