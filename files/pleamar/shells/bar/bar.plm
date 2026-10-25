@@ -182,6 +182,14 @@ scene bar {
     // is refused ("I don't understand 'tip.shown'"), so a fact an outside tool
     // may want to poke carries no dot.
     fact tip_open = false
+    // Where the card hangs: the reference's tool window follows the capsule it belongs to
+    // (`PanelTooltip` reads that capsule's `x`), and the capsule is wherever the pointer is.
+    // A scene cannot ask a zone where it sits, but it can read the pointer on the strip
+    // (`pointer.x`) and follow it, which is the same thing while the cursor is on the capsule.
+    // The card is clamped inside the strip when drawn: a tooltip that hangs off the monitor is
+    // a tooltip nobody reads.
+    prop tip.x = 960 ~calm
+    follow tip.x = pointer.x
     // The tray's menu, open on the item `tray_index` names: the logic sets both when the
     // right button lands on an icon, and a press anywhere closes it (this scene's own
     // catcher, below).
@@ -363,7 +371,10 @@ scene bar {
     // `tray_menu`, which swallows the pointer. This name is nobody's rule, and the catcher
     // (the one surface that needs the rectangle) keeps its own.
     surface bartip {
-        size: 260, 64
+        // Full width, so the card inside can stand where the pointer is: a surface is placed by
+        // literals (its own `margin` cannot read a fact), and the plate inside can. Nothing here
+        // takes a press — no zone, so the surface's input region is empty.
+        size: full, 64
         anchor: bottom
         // Measured: with `margin: 0, 0, 29, 0` the card's bottom edge sat 38
         // logical px above the bar's top (the anchor is the work area, not the
@@ -371,16 +382,18 @@ scene bar {
         margin: 0, 0, 0, 0
         level: overlay
         open: tip_open
+        // The card's left edge, 260 wide and centred on the pointer, kept 8 px inside the strip.
+        let card.left = clamp(tip.x - 130, 8, screen.width - 268)
         body {
             color: skin.surface
             opacity: 96%
-            box { from: 0, 0; size: 260, 64; corner: 6 }
-            box { from: 0, 0; size: 2, 64; corner: 1; color: skin.accent }
+            box { from: card.left, 0; size: 260, 64; corner: 6 }
+            box { from: card.left, 0; size: 2, 64; corner: 1; color: skin.accent }
         }
         // Three lines, as `TooltipText.compose` builds them in the reference (title, the detail,
         // the extra): the logic writes them separated by newlines and the card is tall enough
         // to hold them.
-        text "{tip_body}" { at: 12, 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: 236; lines: 3 }
+        text "{tip_body}" { at: card.left + 12, 10; anchor: left top; size: 13; color: skin.ink; family: "Iosevka"; width: 236; lines: 3 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -685,10 +698,10 @@ scene bar {
         size: 16 * scale, strip * scale
         group zoom {
             scale: scale
-            text glyph { at: 0, strip / 2; anchor: left center; size: 11; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
+            text glyph { at: 0, strip / 2 - 2; anchor: left center; size: 11; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
-            box { from: 12, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
+            box { from: 12, strip / 2 - 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
         }
     }
 
