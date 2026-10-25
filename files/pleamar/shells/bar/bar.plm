@@ -886,7 +886,9 @@ scene bar {
 
     // ------------------------------------------------------ left: the keyboard
     component KeyboardCluster(scale: number = ui * user_scale) {
-        size: 50 * scale, strip * scale
+        // 8 + 20 (the icon) + 6 + 14 (two glyphs of the layout) + 6. The 50 it held clipped the
+        // layout to `r` once the icon grew.
+        size: 54 * scale, strip * scale
         group zoom {
             scale: scale
             body {
@@ -897,14 +899,14 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 1; size: 50, 23; corner: 6 }
+                box { from: 0, 1; size: 54, 23; corner: 6 }
             }
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
             image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim }
-            text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
-            zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
+            text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
+            zone box kb { from: 0, 0; size: 54, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
         }
     }
