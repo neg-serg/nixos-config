@@ -644,7 +644,7 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: 50, 23; corner: 6 }
             }
-            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14.4; weight: 500; color: time.tone; family: "Iosevka" }
+            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 11.5; weight: 500; color: time.tone; family: "Iosevka" }
             zone box clock { from: 0, 0; size: 50, strip; corner: corner; label: "Clock {now.time}"; role: region }
             on enter clock { emit tip(0) }
         }
@@ -707,10 +707,10 @@ scene bar {
         size: 16 * scale, strip * scale
         group zoom {
             scale: scale
-            text glyph { at: 0, strip / 2 - 2; anchor: left center; size: 11; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
+            text glyph { at: 0, strip / 2 + 1; anchor: left center; size: 7.8; color: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); family: "Material Symbols Outlined"; show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
-            box { from: 12, strip / 2 - 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
+            box { from: 12, strip / 2 + bh / 2 - value * bh; size: 3, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
         }
     }
 
@@ -738,18 +738,21 @@ scene bar {
             row metrics {
                 gap: 2.5
                 align: center
-                at: 6, strip / 2 - 12
-                SysmonPair("memory_alt", cpu, true, cpu < 0.03, 0.5, 0.8)
-                SysmonPair("memory", ram, true, ram < 0.03, 0.5, 0.8)
-                SysmonPair("developer_board", gpu, has.gpu, gpu < 0.03, 0.5, 0.8)
-                SysmonPair("thermostat", temp, true, temp < 0.03, 0.43, 0.71)
+                // 0, not `strip / 2 - 12`: the pairs are `strip` tall and already centred by the
+                // row's own `align`, and each one carries its own `scale` — inside this `group zoom`
+                // that made every pair 1.15² and the row taller than the strip.
+                at: 6, 0
+                SysmonPair("memory_alt", cpu, true, cpu < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair("memory", ram, true, ram < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair("developer_board", gpu, has.gpu, gpu < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair("thermostat", temp, true, temp < 0.03, 0.43, 0.71, scale: 1)
                 // I/O is the one metric the reference takes away outright when
                 // it is idle (`_visIo = showIoMonitor && !_idleIo`), where the
                 // others stay and only dim: it is worth 44 physical px of the
                 // row, and a cluster that keeps it pushes everything after it
                 // (the weather) to the right.
-                SysmonPair("storage", io, io >= 0.03, io < 0.03, 0.5, 0.8)
-                SysmonPair("swap_horiz", swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8)
+                SysmonPair("storage", io, io >= 0.03, io < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair("swap_horiz", swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8, scale: 1)
             }
             // The cluster had no zone at all, so a hand could not hover it and the line
             // `tip_line` already writes for it (case 4) never reached the screen. The plate is
@@ -792,8 +795,8 @@ scene bar {
                 at: 0, 1
                 move 0, 0
                 line 154, 0
-                line 140, 22
-                line 0, 22
+                line 140, 23
+                line 0, 23
                 close
                 color: skin.coal
                 opacity: 69%
@@ -813,16 +816,16 @@ scene bar {
             let x.arrow = x.hum + w.hum.width + gap.g
             let x.wind = x.arrow + w.arrow.width + gap.g
             let x.moon = x.wind + w.wind.width + gap.g
-            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2; anchor: left center; size: 12; color: skin.accent; family: "Material Symbols Outlined" }
-            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 13; color: skin.ink; family: "Iosevka" }
-            text "water_drop" { measure: w.drop; at: x.drop, strip / 2; anchor: left center; size: 10; color: skin.ink.dim; family: "Material Symbols Outlined" }
-            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.icon}" { measure: w.icon; at: 6, strip / 2 + 1; anchor: left center; size: 9.6; color: skin.accent; family: "Material Symbols Outlined" }
+            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            text "water_drop" { measure: w.drop; at: x.drop, strip / 2 + 1; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
-            group arrow { pivot: x.arrow + w.arrow.width / 2, strip / 2; rotate: weather.dir
-                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2; anchor: left center; size: 10; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            group arrow { pivot: x.arrow + w.arrow.width / 2, strip / 2 + 1; rotate: weather.dir
+                text "navigation" { measure: w.arrow; at: x.arrow, strip / 2 + 1; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Material Symbols Outlined" }
             }
-            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 11; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 12.2; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
@@ -858,7 +861,7 @@ scene bar {
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
-            text "keyboard" { at: 10, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
+            text "keyboard" { at: 10, strip / 2 + 1; anchor: left center; size: 14; color: skin.ink.dim; family: "Material Symbols Outlined" }
             text "{kb_layout}" { at: 32, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
             zone box kb { from: 0, 0; size: 50, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
@@ -896,7 +899,7 @@ scene bar {
             // luminance, and the group's own `saturation` is exactly that mix on the
             // GPU — 0.55 of the accent's saturation is what 45 % of grey leaves.
             group lan_tone { saturation: 0.55
-                text "lan" { at: 6, strip / 2; anchor: left center; size: 13; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
+                text "lan" { at: 6, strip / 2 + 1; anchor: left center; size: 13; color: if(network.online, skin.accent, ink.off); family: "Material Symbols Outlined" }
             }
             // The weight is 700 because that is the face QS gets: it asks for Font.Black and
             // fontconfig answers with Iosevka Bold (`fc-match Iosevka:weight=black`), while
@@ -940,7 +943,7 @@ scene bar {
             color: skin.coal
             opacity: 69%
             border: 1, mix(skin.coal, skin.ink, 8%)
-            box { from: 1 * scale, 2 * scale; size: (tray.slot - 2) * scale, 21 * scale; corner: 6 * scale }
+            box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
         }
         image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale }
         zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
@@ -986,8 +989,11 @@ scene bar {
             // width is the readout's: a fixed 44 was too tight for "100%" and a slab of empty
             // glass behind "40%" — which is what a stretched pill reads as.
             box {
-                from: icon / 2 - (w.out.width + 2 * pill.pad), (strip - pill.height) / 2
-                size: w.out.width + 2 * pill.pad, pill.height
+                // `1`, not `(strip - pill.height) / 2`: that was −1.5, and a box at a negative
+                // `from:` draws nothing at all (the rule this file states twice). 23 is the height
+                // every plate in the row wears.
+                from: icon / 2 - (w.out.width + 2 * pill.pad), 1
+                size: w.out.width + 2 * pill.pad, 23
                 corner: corner.small
                 color: skin.coal
                 // Same plate as every other capsule in the row: 69 %, `coal` (the reference's own
@@ -1008,7 +1014,7 @@ scene bar {
             text "{glyph}" {
                 // Two logical px above the middle: Material ink hangs below the centre of its box,
                 // and the microphone read as a glyph sliding out of the strip.
-                at: icon / 2, strip / 2 - 2
+                at: icon / 2, strip / 2 + 1
                 anchor: center
                 // 14, the size the keyboard's glyph and the workspaces' icon are set in: at 13 the
                 // mark read small inside a 30 px plate, at 18 it stood taller than every neighbour.
@@ -1024,7 +1030,7 @@ scene bar {
         size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(vol.glyph, vol.shown, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level))
+            AudioTile(vol.glyph, vol.shown, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level), scale: 1)
             zone box vol { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
             on enter vol { vol.hot = true }
             on leave vol { vol.hot = false }
@@ -1038,7 +1044,7 @@ scene bar {
         size: (2 * capsule.pad + pill.icon) * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(mic.glyph, mic.shown, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level))
+            AudioTile(mic.glyph, mic.shown, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
             zone box mic { from: 0, 0; size: 2 * capsule.pad + pill.icon, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on enter mic { mic.hot = true }
             on leave mic { mic.hot = false }
@@ -1139,12 +1145,13 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 0; size: w, h; corner: corner }
+                box { from: 0, 1.5; size: w, h; corner: corner }
             }
 
             // What the capsule holds, in the order QS lays it out: the art, the track, the
             // time, and the analyser at the end — whose room `w` reserves, hover or not.
             row media_row {
+                at: 0, 1.5
                 gap: bar.gap
                 align: center
                 art.Art(w: 22, h: 22)
@@ -1154,22 +1161,22 @@ scene bar {
                 space 2
                 // Its own width, no `width:` — the box would be computed from what it is meant to
                 // measure, and a measurement of nothing is what left a lone "…" in the plate.
-                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 14; color: skin.ink; family: "Iosevka" }
+                text "{media.artist} — {media.title}" { measure: tw; lines: 1; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
                 // The time, in the two colours QS uses: the brackets and the slash wear
                 // the cover's accent (MusicManager.accentColor, sampled from the art), the
                 // digits wear textPrimary while playing and textSecondary while paused, at
                 // media.time.alpha.playing 1.0 / .paused 0.8.
                 row time_row {
                     gap: 0
-                    text "(" { size: 14; color: cover_accent; family: "Iosevka" }
+                    text "(" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
                     // The position is the scene's own fact, not `media.position`: the engine
                     // reports that one on a change and never polls it, so it stood still while the
                     // track played (measured: 149 for three minutes against MPD's 5:37). The logic
                     // ticks it every second and resyncs on every media event.
-                    text "{media.pos, time}" { measure: tp; size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
-                    text "/" { size: 14; color: cover_accent; family: "Iosevka" }
-                    text "{media.length, time}" { measure: tl; size: 14; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
-                    text ")" { size: 14; color: cover_accent; family: "Iosevka" }
+                    text "{media.pos, time}" { measure: tp; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text "/" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
+                    text "{media.length, time}" { measure: tl; size: 14; weight: 500; color: pick(media.playing, skin.ink, skin.ink.dim); opacity: pick(media.playing, 100%, 80%); family: "Iosevka" }
+                    text ")" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
                 }
                 // The analyser, revealed with the transport: QS keeps it inside the
                 // capsule (`iconPreferredWidth`) and its room is in `w` above.
@@ -1212,21 +1219,21 @@ scene bar {
                 color: skin.coal
                 opacity: 69%
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 0; size: w, strip; corner: corner }
+                box { from: 0, 1; size: w, 23; corner: corner }
             }
             row controls { at: pad, strip / 2; anchor: left middle; gap: gap
                 // Three buttons of one width in a row of equal gaps: the glyphs are what a hand
                 // aims at, and until now nothing under them answered a press — the transport was
                 // three pictures.
                 row btn_prev { size: btn, strip; align: center
-                    text "skip_previous" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
+                    text "skip_previous" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink) }
                 }
                 row btn_play { size: btn, strip; align: center
-                    text "play_arrow" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
-                    text "pause" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
+                    text "play_arrow" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink); show: media.playing }
+                    text "pause" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink); show: not media.playing }
                 }
                 row btn_next { size: btn, strip; align: center
-                    text "skip_next" { family: "Material Symbols Outlined"; size: 14; color: pick(media.hot, skin.accent, skin.ink) }
+                    text "skip_next" { family: "Material Symbols Outlined"; size: 15.6; color: pick(media.hot, skin.accent, skin.ink) }
                 }
             }
             // The capsule itself: hovering it asks for the three-line card (title, album, player).
