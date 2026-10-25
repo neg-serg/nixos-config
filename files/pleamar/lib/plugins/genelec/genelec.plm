@@ -91,7 +91,7 @@ library Genelec strict {
                             gap: capsule.gap
                             align: center
                             image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
-                            text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 500; color: if(muted, ink.off, ink.dim) }
+                            text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, accent) }
                         }
                     }
                 }
@@ -107,7 +107,7 @@ library Genelec strict {
                 // The same silhouette the plate shows on hover: at `capsule.height - 4` it read
                 // as a smaller icon that grew when the pointer arrived.
                 image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
-                text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 500; color: if(muted, ink.off, ink.dim) }
+                text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, accent) }
             }
             zone box tile { from: 0, 0; size: w, row; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
             on enter tile { hot = true }
