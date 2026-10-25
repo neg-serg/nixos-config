@@ -222,7 +222,7 @@ scene launcher {
                 }
                 box { from: 0, 47; size: w, 1; color: skin.ink; opacity: ink.subtle }
 
-                text "No applications found" {
+                text "No applications found" { family: "Iosevka";
                     at: w / 2, (54 + max_results * (menu.item.height + menu.item.gap)) / 2
                     anchor: center; size: 13; color: ink.off
                     show: results.total == 0

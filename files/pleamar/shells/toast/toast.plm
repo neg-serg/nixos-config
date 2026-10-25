@@ -167,7 +167,7 @@ scene toast {
                 on leave preview { emit hover_out }
 
                 // ------***----------- title and close
-                text "Screenshot captured" { at: 16, 318; anchor: left center; size: 14; weight: 500; color: skin.ink }
+                text "Screenshot captured" { family: "Iosevka"; at: 16, 318; anchor: left center; size: 14; weight: 500; color: skin.ink }
                 text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; color: skin.ink.dim }
                 line { from: 436, 312; to: 448, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
                 line { from: 448, 312; to: 436, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
