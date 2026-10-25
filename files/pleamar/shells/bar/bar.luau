@@ -845,6 +845,9 @@ local PING_FAST_MS = 500
 local PING_FAST_FOR_MS = 10000
 
 local net_link, net_internet, net_vpn = false, false, false
+-- "ifname: address" for the links that are up, at most two, the way the reference's tooltip names
+-- them (`NetClusterCapsule.qml:229-245`: one hint per interface, `name: 1.2.3.4`).
+local net_hints = {}
 local net_vpn_state = ""
 local net_fast, net_ping_busy = false, false
 local net_fast_stop = nil
@@ -886,6 +889,10 @@ local function net_state_line()
     if net_vpn then
         line = line .. " · VPN: " .. (net_vpn_state ~= "" and net_vpn_state or "connected")
     end
+    -- The links themselves, named with their first IPv4 address, as the reference's tooltip does
+    -- (`NetClusterCapsule.qml:229-245`: one hint per interface, `name: 1.2.3.4`); the card holds
+    -- two of them, so the probe keeps two.
+    if #net_hints > 0 then line = line .. " · " .. table.concat(net_hints, " · ") end
     return line
 end
 
@@ -943,14 +950,34 @@ local function net_probe_link()
         -- Connectivity.qml:59-76: an interface `UP`, or one that says `UNKNOWN` and has an
         -- address; the loopback never counts.
         local link, vpn, name = false, false, ""
+        local hints = {}
         for _, it in ipairs(list) do
             if type(it) == "table" and type(it.ifname) == "string" and it.ifname ~= "lo" then
                 local state = (type(it.operstate) == "string") and it.operstate or ""
                 local addrs = (type(it.addr_info) == "table") and #it.addr_info or 0
-                if state == "UP" or (state == "UNKNOWN" and addrs > 0) then link = true end
+                if state == "UP" or (state == "UNKNOWN" and addrs > 0) then
+                    link = true
+                    -- The address the reference's tooltip prints beside the interface: the first
+                    -- IPv4 one, and the name alone when the link carries none yet.
+                    if #hints < 2 then
+                        local ip = ""
+                        for _, a in ipairs((type(it.addr_info) == "table") and it.addr_info or {}) do
+                            -- `local` is a reserved word in Lua and `ip -j -br a` names the field that
+                            -- way, so it is read with a bracket; brief mode leaves `family` out
+                            -- entirely (measured), and an address with a colon is the IPv6 one.
+                            local addr = type(a) == "table" and a["local"] or nil
+                            if type(addr) == "string" and not addr:find(":") then
+                                ip = addr
+                                break
+                            end
+                        end
+                        hints[#hints + 1] = (ip ~= "") and (it.ifname .. ": " .. ip) or it.ifname
+                    end
+                end
                 if tunnel_of(it.ifname, addrs) then vpn, name = true, it.ifname end
             end
         end
+        net_hints = hints
         local was_link = net_link
         net_link, net_vpn, net_vpn_state = link, vpn, name
         if not link then
