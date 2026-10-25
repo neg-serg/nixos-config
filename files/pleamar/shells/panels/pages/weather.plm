@@ -29,34 +29,56 @@ part Weather {
             }
             box { from: 0, 0; size: 300, 1; color: skin.accent; opacity: 25% }
 
+            // What the reference draws with a canvas of clouds, rain, snow or a bolt at 25 % over
+            // the whole card (`Weather.qml` `weatherDecor`): here it is the condition's own glyph,
+            // large and faint in the corner, because a picture is one ligature in this language and
+            // forty hand-placed raindrops are not worth the frame. Declared before the readings so
+            // it stays behind them, and only once a sample has landed.
+            text weather.glyph { at: 258, 66; anchor: center; family: "Material Symbols Outlined"
+                                 size: 84; color: skin.accent; opacity: 8%; show: weather.have }
+
             // ----***--------------------- current conditions
             text weather.city { at: 14, 16; anchor: left center; width: 200; lines: 1; family: "Iosevka"; weight: 700; size: 12; color: skin.ink }
             text weather.temp { at: 14, 50; anchor: left center; family: "Iosevka"; size: 32; weight: 700; color: skin.ink }
             text weather.unit { at: 84, 54; anchor: left center; family: "Iosevka"; size: 14; color: skin.ink.dim }
-            text weather.cond { at: 124, 50; anchor: left center; width: 162; lines: 2; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            text weather.cond { at: 132, 50; anchor: left center; width: 154; lines: 2; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            // The reference's Material icon beside the condition (Weather.qml `_wicon`).
+            text weather.glyph { at: 116, 50; anchor: center; family: "Material Symbols Outlined"; size: 16; color: skin.ink; opacity: 80%; show: weather.have }
 
             // ----***-------------------------- metrics
-            text weather.wind { at: 14, 82; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
-            text weather.humidity { at: 112, 82; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
-            text weather.pressure { at: 208, 82; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+            // The details row (Weather.qml's second card): an arrow turned by the wind's angle, a
+            // drop with the humidity, and the moon with its name and illumination.
+            group wind_arrow { pivot: 14, 100; rotate: weather.dir * 1deg
+                text "navigation" { at: 14, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+            }
+            text weather.wind { at: 25, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+            text "water_drop" { at: 104, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+            text weather.humidity { at: 115, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+            text "dark_mode" { at: 166, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+            text weather.moon { at: 177, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+            text "{weather.moonpct}%" { at: 286, 100; anchor: right center; family: "Iosevka"; size: 9; color: ink.off }
 
-            box { from: 14, 96; size: 272, 1; color: skin.ink; opacity: ink.subtle }
+            box { from: 14, 110; size: 272, 1; color: skin.ink; opacity: ink.subtle }
 
             // ----***--------------------------- forecast
             // One column per day, nothing stacked on anything: the day above,
             // the high and the low under it, 54 wide each.
-            row days { at: 14, 108; gap: 0
+            row days { at: 14, 120; gap: 0
                 for f in forecast {
                     group {
-                        size: 54, 62
-                        text f.day { at: 27, 8; anchor: center; family: "Iosevka"; size: 10; color: skin.ink.dim }
-                        text f.hi { at: 27, 26; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink }
-                        text f.lo { at: 27, 44; anchor: center; family: "Iosevka"; size: 10; color: ink.off }
+                        size: 54, 68
+                        text f.day { at: 27, 7; anchor: center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+                        // The day's own glyph, as the reference's forecast column draws one
+                        // (`materialSymbolForCode` on that day's code).
+                        text f.glyph { at: 27, 24; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 85% }
+                        text f.hi { at: 27, 42; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink }
+                        text f.lo { at: 27, 58; anchor: center; family: "Iosevka"; size: 10; color: ink.off }
                     }
                 }
             }
 
-            text weather.err { at: 150, 186; anchor: center; family: "Iosevka"; size: 10; color: warn }
+            text "Loading the weather…" { at: 150, 196; anchor: center; family: "Iosevka"; size: 10; color: ink.off; show: weather.loading }
+            text weather.err { at: 150, 196; anchor: center; family: "Iosevka"; size: 10; color: warn }
         }
     }
 
