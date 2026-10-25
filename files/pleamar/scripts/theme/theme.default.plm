@@ -19,8 +19,9 @@ library Skin strict {
     // colors.text.primary, the QS fallback #CBD6E5.
     let skin.ink = #CBD6E5
 
-    // colors.text.secondary role: skin.ink mixed 35% toward skin.surface.
-    let skin.ink.dim = mix(skin.ink, skin.surface, 35%)
+    // colors.text.secondary (Settings/colors.jsonc), the static token the reference draws its
+    // secondary text with.
+    let skin.ink.dim = #AEB9C8
 
     // colors.accent.primary, the QS fallback #006FCC.
     let skin.accent = #006FCC

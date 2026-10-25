@@ -110,7 +110,8 @@ Colours:
     as it was. A colour given without a wallpaper keeps the QS base palette
     for the tones it did not name (colors.background #000000,
     colors.surfaceVariant #242A35, colors.text.primary #CBD6E5,
-    colors.accent.primary #006FCC); skin.ink.dim stays the mix of the two
+    colors.accent.primary #006FCC); skin.ink.dim is the static #AEB9C8 (colors.text.secondary), as
+    the reference draws its secondary text — not a mix of two tones it no longer samples
     text/surface tones above.
 
 Environment: MAGICK_BIN (magick), AWK_BIN (awk), JQ_BIN (jq, --from-json only).

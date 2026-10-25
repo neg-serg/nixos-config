@@ -25,6 +25,7 @@ THEME_SH="$SCRIPT_DIR/theme.sh"
 TOOL_NAME="theme-test"
 
 MAGICK_BIN="${MAGICK_BIN:-magick}"
+AWK_BIN="${AWK_BIN:-awk}"
 PLEAMAR_BIN="${PLEAMAR_BIN:-pleamar}"
 
 KEEP=0
@@ -106,6 +107,20 @@ theme_value() { # file name
 
 # run_theme HOME ARGS… — run theme.sh with that HOME/XDG, stdout to $OUT_LOG,
 # stderr to $ERR_LOG, exit status in $RC.
+# WCAG contrast ratio of two "#rrggbb" colours, two decimals (what 4.5:1 is measured by).
+contrast_ratio() {
+  local h1="${1#\#}" h2="${2#\#}"
+  awk -v r1=$((16#${h1:0:2})) -v g1=$((16#${h1:2:2})) -v b1=$((16#${h1:4:2})) \
+    -v r2=$((16#${h2:0:2})) -v g2=$((16#${h2:2:2})) -v b2=$((16#${h2:4:2})) '
+    function lin(c) { c = c / 255; return (c <= 0.03928) ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4 }
+    function lum(r, g, b) { return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) }
+    BEGIN {
+      l1 = lum(r1, g1, b1); l2 = lum(r2, g2, b2)
+      if (l1 < l2) { t = l1; l1 = l2; l2 = t }
+      printf "%.2f", (l1 + 0.05) / (l2 + 0.05)
+    }'
+}
+
 run_theme() {
   local home="$1"
   shift
@@ -142,11 +157,24 @@ assert_contains "$theme1" '^library Skin strict {' "generated file is a strict S
 assert_contains "$theme1" 'let skin\.on\.accent = #ffffff' "all eight skin names are declared"
 # Golden values for this fixture: they pin the two samplers (a magick or
 # algorithm change is expected to fail here and be re-blessed deliberately).
-assert_eq "$(theme_value "$theme1" coal)" '#061c38' "blue fixture: coal = darkest Oklab cluster"
-assert_eq "$(theme_value "$theme1" surface)" '#023663' "blue fixture: surface = second-darkest cluster"
-assert_eq "$(theme_value "$theme1" ink)" '#66a6d7' "blue fixture: ink is light and readable"
+# The sampler is checked directly, because theme.sh does not publish its tones
+# any more: the shell's coal/surface/ink are the reference's own tokens (see the
+# next block), and only the accent is the wallpaper's. The greeter still wants
+# the image's palette, and this is what it gets from the same extractor.
+extracted="$("$MAGICK_BIN" "$WORK/blue.png" -auto-orient -colorspace sRGB -resize '48x48!' -alpha off -depth 8 txt:- \
+  | "$AWK_BIN" -f "$SCRIPT_DIR/theme-extract.awk")"
+assert_eq "$(printf '%s\n' "$extracted" | sed -n 's/^coal=//p')" '#061c38' "extract.awk: coal = darkest Oklab cluster"
+assert_eq "$(printf '%s\n' "$extracted" | sed -n 's/^surface=//p')" '#023663' "extract.awk: surface = second-darkest cluster"
+assert_eq "$(printf '%s\n' "$extracted" | sed -n 's/^ink=//p')" '#66a6d7' "extract.awk: ink is light and readable"
+assert_eq "$(printf '%s\n' "$extracted" | sed -n 's/^accent=//p')" '#0067cc' "extract.awk: accent = hue-matched mean (#006FCC family)"
+
+# What theme.plm carries: the reference's own tones (Settings/colors.jsonc) and the
+# wallpaper's accent, which is the whole point of the shell's half of the pipeline.
+assert_eq "$(theme_value "$theme1" coal)" '#000000' "blue fixture: coal is the reference's #000000"
+assert_eq "$(theme_value "$theme1" surface | tr 'A-F' 'a-f')" '#242a35' "blue fixture: surface is the reference's #242A35"
+assert_eq "$(theme_value "$theme1" ink | tr 'A-F' 'a-f')" '#cbd6e5' "blue fixture: ink is the reference's #CBD6E5"
 assert_eq "$(theme_value "$theme1" accent)" '#0067cc' "blue fixture: accent = hue-matched mean (#006FCC family)"
-assert_eq "$(theme_value "$theme1" 'ink\.dim')" "mix(skin.ink, skin.surface, 35%)" "ink.dim is the QS secondary step"
+assert_eq "$(theme_value "$theme1" 'ink\.dim' | tr 'A-F' 'a-f')" '#aeb9c8' "ink.dim is the reference's textSecondary"
 assert_contains "$home1/.config/pleamar/keep.txt" 'sentinel' "nothing else under ~/.config/pleamar is touched"
 
 # ---- 2. the new cache path wins over the legacy one -------------------------
@@ -159,18 +187,19 @@ run_theme "$home2"
 assert_eq "$RC" 0 "pleamar cache path: exit 0"
 assert_contains "$OUT_LOG" "source $WORK/light.png" "INTERFACES §1.2 path wins over the legacy cache"
 theme2="$home2/.config/pleamar/theme.plm"
-# A light wallpaper: the clamp must give a dark ink that contrasts on surface.
-ink2="$(theme_value "$theme2" ink)"
-if [[ "$ink2" =~ ^#[0-9a-f]{6}$ ]]; then
-  hex="${ink2#\#}"
-  lum=$(((16#${hex:0:2} * 299 + 16#${hex:2:2} * 587 + 16#${hex:4:2} * 114) / 1000))
-  if ((lum < 128)); then
-    pass "light fixture: ink is a dark tone (readability clamp, luma $lum)"
+# A light wallpaper must not change the shell's tones or its readability: ink stays the
+# reference's token and keeps its 4.5:1 on the surface it is drawn on.
+ink2="$(theme_value "$theme2" ink | tr 'A-F' 'a-f')"
+surface2="$(theme_value "$theme2" surface | tr 'A-F' 'a-f')"
+if [[ "$ink2" =~ ^#[0-9a-f]{6}$ && "$surface2" =~ ^#[0-9a-f]{6}$ ]]; then
+  ratio=$(contrast_ratio "$ink2" "$surface2")
+  if awk -v r="$ratio" 'BEGIN { exit !(r >= 4.5) }'; then
+    pass "light fixture: ink contrasts ${ratio}:1 on surface"
   else
-    fail "light fixture: ink is not dark ($ink2, luma $lum)"
+    fail "light fixture: ink only ${ratio}:1 on surface ($ink2 on $surface2)"
   fi
 else
-  fail "light fixture: ink is not a colour ($ink2)"
+  fail "light fixture: not colours ($ink2, $surface2)"
 fi
 
 # ---- 3. --accent overrides the extracted accent only ------------------------
@@ -178,7 +207,7 @@ fi
 run_theme "$home1" --accent '#AbCdEf'
 assert_eq "$RC" 0 "--accent: exit 0"
 assert_eq "$(theme_value "$theme1" accent)" '#abcdef' "--accent: accent replaced (and lower-cased)"
-assert_eq "$(theme_value "$theme1" coal)" '#061c38' "--accent: the sampled tones stay"
+assert_eq "$(theme_value "$theme1" coal)" '#000000' "--accent: the tones stay the reference's"
 
 # ---- 4. --from-json, without a wallpaper ------------------------------------
 

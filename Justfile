@@ -172,6 +172,13 @@ pleamar-check:
 plm-theme:
     bash "{{repo_root}}/scripts/dev/check-plm-theme.sh" "{{repo_root}}"
 
+# The theme pipeline's own suite: hermetic, runs theme.sh against image fixtures in a
+# throwaway HOME and pins the extractor's goldens. A recipe of its own because nothing ran
+# it and it rotted: seven of its checks were red on 2026-10-26, all of them stale
+# expectations from before the shell's tones became the reference's own tokens.
+theme-test:
+    bash "{{repo_root}}/files/pleamar/scripts/theme/test.sh"
+
 # The hostile-plugin gate: an unapproved plugin must be refused (and touch
 # nothing), the same plugin must run once approved. Runs in `lint` too.
 plugin-sandbox:
