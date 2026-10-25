@@ -70,8 +70,8 @@ library Genelec strict {
         // capsule's inner 14: the tile keeps its 18 px pill and the icon stands a pixel proud of
         // it, which is what makes it legible next to the volume capsule's icon.
         let size.icon = 20
-        let label.w = 40
-        let w = 2 * capsule.pad + size.icon + capsule.gap + 40
+        let label.w = 34
+        let w = 2 * capsule.pad + size.icon + capsule.gap + 34
         let h = capsule.height
         // The slot is as tall as the row's: every other capsule in the bar answers a press over
         // the full `row`, and this one answered over 18 design px sitting at the top of it —
@@ -82,7 +82,7 @@ library Genelec strict {
             // The plate is the capsule's, and a capsule only wears one while the pointer is on it:
             // the microphone and the volume tile beside it do exactly that. Drawn always, this one
             // was the single dark pill standing at the end of an otherwise bare right side.
-            group plate { show: hot
+            group plate {
                 // Centred in the slot: the plate is 18 tall, the row is 29, and a `row` with
                 // `align: center` is how the transport's buttons sit in theirs too.
                 row cap { size: w, row; align: center
@@ -91,23 +91,14 @@ library Genelec strict {
                             gap: capsule.gap
                             align: center
                             image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
-                            text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, accent) }
+                            row db { gap: 0; align: center
+                                text "-" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, accent); show: volume < 0 }
+                                text "{max(volume, 0 - volume), 0}" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, ink) }
+                                text "dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, accent) }
+                            }
                         }
                     }
                 }
-            }
-            // At rest the silhouette and the level, bare on the row: a monitor's outline is
-            // what says whose level this is, and without it the number hung there alone while
-            // the microphone beside it kept its glyph.
-            row rest {
-                size: w, row
-                gap: capsule.gap
-                align: center
-                show: not hot
-                // The same silhouette the plate shows on hover: at `capsule.height - 4` it read
-                // as a smaller icon that grew when the pointer arrived.
-                image ones { size: size.icon, size.icon; tint: if(muted, ink.off, ink) }
-                text "{volume, 0}dB" { family: "Iosevka"; size: 13; weight: 600; color: if(muted, ink.off, accent) }
             }
             zone box tile { from: 0, 0; size: w, row; corner: corner; cursor: pointer; label: "Genelec SAM"; role: slider; value: "{volume, 0} dB" }
             on enter tile { hot = true }
