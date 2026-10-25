@@ -319,7 +319,11 @@ scene panels {
     model sys_hist max 60 { cpu: number; ram: number; gpu: number; temp: number }
     // `mark`: 1 a day with an event, 2 a public holiday. `pill`: 0 nothing known, 1 taken,
     // 2 missed, 3 still pending (today), 4 a past day with no record — the QS statuses.
-    model cells max 42 { day: number; this: bool; today: bool; weekend: bool; mark: number; pill: number; label: text }
+    // `dayoff` is a day off as the production calendar has it (isdayoff.ru: a weekend, a holiday or a
+    // moved day), which knows more than the weekday arithmetic does — a working Saturday is a
+    // Saturday that is *not* off, and that is the whole point of the calendar. `weekend` stays as
+    // the weekday's own answer for when the work calendar could not be read.
+    model cells max 42 { day: number; this: bool; today: bool; weekend: bool; dayoff: number; mark: number; pill: number; label: text }
     model events max 60 { day: number; time: text; title: text; cal: text }
     model holidays max 10 { day: number; name: text }
     model streams max 8 { id: text; name: text; binary: text; title: text; volume: number; muted: bool; playing: bool }

@@ -41,7 +41,7 @@ local D = {
     fontScale = 1.0,                   -- multiplies type.* sizes
     weatherCity = "Saint Petersburg",  -- the legacy Quickshell default
     useFahrenheit = false,
-    calendarCountry = "",              -- ISO country for public holidays; empty: none
+    calendarCountry = "ru",            -- ISO country for the holiday list and the work calendar; empty: neither
 }
 
 local conf = { weatherCity = D.weatherCity, calendarCountry = D.calendarCountry }
@@ -518,6 +518,10 @@ local today_y, today_m, today_d = today.year, today.month, today.day
 
 local last_events = {}
 local last_holidays = {}
+-- The production calendar (isdayoff.ru, through the worker): the days the month holds that are not
+-- plain working days, and the moved ones that are. `off` wins over the weekday arithmetic, so a
+-- working Saturday stops looking like a day off and a holiday on a Tuesday starts.
+local last_workdays = {}
 local last_pills = {}
 local last_streak = 0
 
@@ -565,6 +569,21 @@ local function pill_status(key, day_today, taken_today, marks)
     return PILL.none
 end
 
+-- Is that date a day off? The production calendar answers when it has the date (and then a working
+-- Saturday answers "no"); without it the weekday's own answer stands — the grid is 42 cells over
+-- three months, and the calendar covers the month on screen only.
+--
+-- The cell field is `dayoff` and not `off`: `off` is one of the language's own yes/no words, so a
+-- record field with that name never reaches the drawing — the page read the literal and the wash
+-- was never painted (measured 2026-10-26).
+local function off_flag(y, m, d, off_by_date, moved_by_date)
+    local key = dkey(y, m, d)
+    if off_by_date[key] then return 1 end
+    if moved_by_date[key] then return 0 end
+    local wd = weekday(y, m, d)
+    return (wd == 0 or wd == 6) and 1 or 0
+end
+
 -- The 42 cells of the month grid, Sunday first, adjacent months included so the
 -- drawing never moves. Marks: 1 an event, 2 a public holiday. Pill: see PILL above.
 local function cal_rebuild()
@@ -574,6 +593,13 @@ local function cal_rebuild()
     local evt_by_day, hol_by_day = {}, {}
     for _, e in ipairs(last_events) do evt_by_day[e.day] = true end
     for _, h in ipairs(last_holidays) do hol_by_day[h.day] = true end
+    -- The work calendar speaks of dates, and the grid holds three months of them.
+    local off_by_date, moved_by_date = {}, {}
+    for _, w in ipairs(last_workdays) do
+        local code = tonumber(w.code)
+        if code == 1 then off_by_date[w.date] = true
+        elseif code == 4 then moved_by_date[w.date] = true end
+    end
 
     -- The pill history covers the whole 42-cell window, the adjacent months' days included: the
     -- reference precomputed the three months around the one on screen for the same reason.
@@ -596,6 +622,7 @@ local function cal_rebuild()
         local d = prev_dim - i
         cells[#cells + 1] = { day = d, this = false, today = false,
                               weekend = (weekday(py, pm, d) == 0 or weekday(py, pm, d) == 6),
+                              dayoff = off_flag(py, pm, d, off_by_date, moved_by_date),
                               mark = 0, label = label_for(py, pm, d, false),
                               pill = pill_status(dkey(py, pm, d), pill_today, pill_taken, marks) }
     end
@@ -606,7 +633,8 @@ local function cal_rebuild()
         if hol_by_day[d] then mark = 2 end
         cells[#cells + 1] = { day = d, this = true,
                               today = (y == today_y and m == today_m and d == today_d),
-                              weekend = (wd == 0 or wd == 6), mark = mark,
+                              weekend = (wd == 0 or wd == 6),
+                              dayoff = off_flag(y, m, d, off_by_date, moved_by_date), mark = mark,
                               label = label_for(y, m, d, true),
                               pill = pill_status(dkey(y, m, d), pill_today, pill_taken, marks) }
     end
@@ -614,6 +642,7 @@ local function cal_rebuild()
     while #cells < 42 do
         cells[#cells + 1] = { day = nd, this = false, today = false,
                               weekend = (weekday(ny, nm, nd) == 0 or weekday(ny, nm, nd) == 6),
+                              dayoff = off_flag(ny, nm, nd, off_by_date, moved_by_date),
                               mark = 0, label = label_for(ny, nm, nd, false),
                               pill = pill_status(dkey(ny, nm, nd), pill_today, pill_taken, marks) }
         nd = nd + 1
@@ -653,6 +682,17 @@ local function calendar_apply(d, topic)
                                     title = str(e.title, ""), cal = str(e.calendar, "") }
         end
     end
+    -- The production calendar; a payload from before it existed has no `workdays` at all, and a
+    -- failed request has an empty list with `workdays_error` beside it, which is the same to draw.
+    local workdays = {}
+    for _, w in ipairs(type(d.workdays) == "table" and d.workdays or {}) do
+        local date = tostring(w.date or "")
+        if date ~= "" then
+            workdays[#workdays + 1] = { date = date, code = tonumber(w.code) or 0 }
+        end
+    end
+    last_workdays = workdays
+
     local holidays = {}
     local hs = type(d.holidays) == "table" and d.holidays or {}
     for _, h in ipairs(hs) do

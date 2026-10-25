@@ -115,7 +115,7 @@ library Spectrum strict {
             let base = mix(tone, end, if(gradient, t, 0))
             let c = mix(mix(base, coal, 65%), base, v.lit)
             let x = v.index * pitch
-            repeat s in 0..9 {
+            repeat s in 0..10 {
                 box { from: x, height / 2 - (s + 1) * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
                 box { from: x, height / 2 + s * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
                 box { from: x, height - (s + 1) * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: not mirror and v.level * 10 > s }

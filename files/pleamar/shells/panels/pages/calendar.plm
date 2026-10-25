@@ -77,7 +77,7 @@ part Calendar {
             box { from: 12 * scale, 48 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
 
             // ----***------------------------- weekday row
-            repeat c in 0..6 {
+            repeat c in 0..7 {
                 text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 40 * scale + c * 48 * scale, 60 * scale; anchor: center; family: "Iosevka"; size: 12; color: skin.ink.dim }
             }
 
@@ -98,6 +98,13 @@ part Calendar {
                         box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 12%; show: c.pill == 3 }
                         box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.ink; opacity: 6%; show: c.pill == 4 }
                         box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 10%; show: c.mark == 2 and c.pill == 0 }
+                        // A day off, as the production calendar has it (isdayoff.ru, through the
+                        // worker): the wash the reference paints in gold at 22 % (Calendar.qml:269-272),
+                        // here the ink's own 10 %, so a weekend and a holiday on a weekday read as
+                        // "nothing here today" without competing with the tracker's colours.
+                        // A working Saturday from the calendar is not a day off — that is the one
+                        // thing weekday arithmetic cannot tell, and it is why the source exists.
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.ink; opacity: 10%; show: c.dayoff == 1 and c.pill == 0 and c.mark == 0 }
                         box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.accent; opacity: ink.active; show: c.this and c.day == sel_day }
                         box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.5 * scale; color: skin.accent; show: c.today }
                         // The corner marks: a public holiday (or a day with only events) at the top
