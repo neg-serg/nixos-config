@@ -1478,6 +1478,21 @@ scene bar {
         // body needs and drops the second coat.
         box { from: 0, hot; size: screen.width, band; opacity: 0% }
     }
+    // ---- hover relays for the three capsules whose tooltip the plugin cannot draw
+    // A plugin has no surface, so the card is the bar's: the plugin keeps its own `hot` fact and
+    // the scene turns it into the tooltip's own events. The indexes are `tip_line`'s in bar.luau —
+    // 9 the pill, 10 the MPD flags, 11 Genelec; the rest of the strip is wired in place (`emit tip`
+    // beside each `on enter`), and these three live here because their zones are the plugins'.
+    on change Pill.hot while Pill.hot { emit tip(9) }
+    on change Pill.hot while not Pill.hot { emit tip_hide }
+    on change Mpd.hot while Mpd.hot { emit tip(10) }
+    on change Mpd.hot while not Mpd.hot { emit tip_hide }
+    on change Genelec.hot while Genelec.hot { emit tip(11) }
+    on change Genelec.hot while not Genelec.hot { emit tip_hide }
+    // The pill's right press opens the calendar, as QS's second TapHandler did (`calendar.toggle()`
+    // with the pill markers; this calendar has none yet — PARITY says so).
+    on change Pill.asks { emit open_calendar_panel }
+
     // The whole strip is a hover target for the widgets that hide at idle
     // (QS's `panelHovering`): declared before the rows, so every widget's own
     // zone is above it and keeps its clicks.

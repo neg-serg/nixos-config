@@ -35,6 +35,10 @@ library Mpd strict {
     fact xfade = false
     // mpc could not reach MPD (no socket, no server): the scene hides the tile.
     fact available = true
+    // The cursor is on the capsule. The tooltip card is the bar's surface, not the plugin's (a
+    // plugin has none), so the scene watches this fact and asks the logic for the line — the same
+    // arrangement the Genelec tile uses.
+    fact hot = false
 
     // ----------------------------------------------------------------- flags
     // The QS capsule is as wide as its content (`horizontalPadding * 2 +
@@ -71,6 +75,8 @@ library Mpd strict {
                     text "blur_linear" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: xfade }
             }
             zone box flags { from: 0, 0; size: w, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
+            on enter flags { hot = true }
+            on leave flags { hot = false }
         }
     }
 }
