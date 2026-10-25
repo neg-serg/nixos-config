@@ -1055,7 +1055,7 @@ scene bar {
 
     component VolCapsule(step: event, mute: event,
                          scale: number = ui * user_scale) {
-        let slot = pick(vol.hot, 46, 26)
+        let slot = pick(strip.hot, 46, 26)
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1065,13 +1065,13 @@ scene bar {
             on leave vol { vol.hot = false }
             on scroll vol { emit step(wheel) }
             on press vol { emit mute }
-            on change (vol.hot and not (vol.shown or strip.hot)) { vol.hot = false }
+            on change vol.shown while not vol.shown { vol.hot = false }
         }
     }
 
     component MicCapsule(mute: event,
                          scale: number = ui * user_scale) {
-        let slot = pick(mic.hot, 46, 26)
+        let slot = pick(strip.hot, 46, 26)
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1082,7 +1082,7 @@ scene bar {
             on press mic { emit mute }
             // A zone that goes away takes its pointer with it, and `leave` never comes: the tile
             // stayed "hovered" and its plate kept the open width.
-            on change (mic.hot and not (mic.shown or strip.hot)) { mic.hot = false }
+            on change mic.shown while not mic.shown { mic.hot = false }
         }
     }
 
