@@ -168,7 +168,7 @@ scene toast {
 
                 // ------***----------- title and close
                 text "Screenshot captured" { family: "Iosevka"; at: 16, 318; anchor: left center; size: 14; weight: 500; color: skin.ink }
-                text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; color: skin.ink.dim }
+                text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; family: "Iosevka"; color: skin.ink.dim }
                 line { from: 436, 312; to: 448, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
                 line { from: 448, 312; to: 436, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
                 zone box close_zone { from: 426, 302; size: 32, 32; corner: 6; cursor: pointer; label: "Dismiss screenshot"; role: button }
@@ -177,8 +177,8 @@ scene toast {
                 on leave close_zone { emit hover_out }
 
                 // ------***----------- path row (private)
-                text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; color: ink.off }
-                text shot_ts { at: 444, 372; anchor: right center; size: 11; color: ink.off }
+                text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; family: "Iosevka"; color: ink.off }
+                text shot_ts { at: 444, 372; anchor: right center; size: 11; family: "Iosevka"; color: ink.off }
                 // The screenshot path is private (INTERFACES §8.1). `agent: hidden`
                 // on a zone does not hide the words drawn over it in 0.4.11 —
                 // checked with a probe scene and `--say describe`: the zone
@@ -229,7 +229,7 @@ scene toast {
     component Action(title: text, x: number, y: number, w: number, hover: number) {
         size: w, 36
         box { from: x, y; size: w, 36; corner: 6; color: mix(skin.coal, skin.surface, 65% + 35% * hover) }
-        text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; weight: 500; color: skin.ink }
+        text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; family: "Iosevka"; weight: 500; color: skin.ink }
     }
 
     Card()
