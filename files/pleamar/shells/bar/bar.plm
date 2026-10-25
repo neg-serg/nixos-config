@@ -797,7 +797,7 @@ scene bar {
         measure w.wind
         // 168, not 158: with the row's type at 14 the group grew, and the capsule has to be
         // wider than the moon (it ends at ~153) so the slant cuts the capsule's end.
-        size: 168 * scale, strip * scale
+        size: 178 * scale, strip * scale
         group zoom {
             scale: scale
             // The reference cuts this capsule's right end on a SLANT and runs a
@@ -839,7 +839,7 @@ scene bar {
             // slash stuck on the capsule's end rather than as the cut itself. Its round caps
             // are pulled 0.8 in along the cut — half the stroke — so its ends stop at the
             // cut's corners instead of poking out past the plate.
-            line { from: 161.6, 1.7; to: 148.4, 23.3; width: 1.6; color: mix(skin.accent, skin.coal, 30%) }
+            line { from: 171.6, 1.7; to: 158.4, 23.3; width: 1.6; color: mix(skin.accent, skin.coal, 30%) }
             // Laid out after their own widths, not at fixed offsets: the offsets were read
             // off the reference once and then the port's glyphs turned out wider, so the
             // temperature ran into the water drop ("11°C◯67%") and the capsule measured 114
@@ -874,7 +874,7 @@ scene bar {
             // The moon: dithered by its own shader (moon.wgsl), which takes the phase
             // QS's MoonPhaseIcon takes and stipples the terminator the same way.
             shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
-            zone box weather { from: 0, 0; size: 168, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
+            zone box weather { from: 0, 0; size: 178, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { emit tip(5) }
         }
     }
