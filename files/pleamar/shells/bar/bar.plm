@@ -707,7 +707,9 @@ scene bar {
     // comparison in the language or a helper worker that distributes per monitor.
     model spaces max 9 { id: number; name: text; monitor: text; active: bool }
 
-    service clock as now { time: text; date: text }
+    // `minute` is here for the tick below: a `change` needs a number to watch, and the printed
+    // reading is a text.
+    service clock as now { time: text; date: text; minute: number }
     // The track the capsule shows (QS: MusicManager.trackTitle/trackArtist).
     service media { playing: bool; title: text; artist: text; album: text; player: text; position: number; length: number }
     service workspaces { list: spaces }
@@ -772,6 +774,14 @@ scene bar {
     // The cursor left that capsule (or the whole strip): the logic cancels the pending show
     // and closes the card, so a 150 ms timer armed on enter cannot fire after the pointer left.
     event tip_hide ->
+    // The one number on the bar everybody watches: a shove on its spring when the clock's reading
+    // changes (the reference's `NumberFadeBehavior`, as far as a printed text can go).
+    prop tick.dip = 0 ~120ms
+    // 34 px/s against a 120 ms spring is a 3 px rise that is gone before the eye settles, which
+    // is what a number changing should look like; the mechanism was measured with a 3 s spring
+    // and a 600 px/s shove (the reading rose and faded), because 120 ms is not photogenic.
+    on change now.minute { impulse tick.dip 34 }
+
     event wheel_volume ->
     // The volume capsule's press: QS's `toggleRoute()` — `pwroute toggle`, the RME's AES/Analog pair.
     // The mute it used to be is what bar.luau falls back to when there is no RME sink to move.
@@ -784,7 +794,7 @@ scene bar {
     // -------------------------------------------------------- left: the clock
     // The service writes time and date itself; no slot here pads numbers, so
     // neither is composed from hour/minute.
-    component Clock(scale: number = ui * user_scale) {
+    component Clock(dip: number = 0, scale: number = ui * user_scale) {
         // QS's ClockWidget prints the time at round(fontSizeSmall 14 * timeFontScale
         // 0.7 * capsuleScale 1.15) = 11 logical px. 14 design px here is 16.1 over
         // the group's scale and measured 34 px of ink against the reference's 28;
@@ -808,7 +818,14 @@ scene bar {
                 border: 1, mix(skin.coal, skin.ink, 8%)
                 box { from: 0, 1; size: w.card, 23; corner: 6 }
             }
-            text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 35; lines: 1 }
+            // QS rolls its numbers (`NumberFadeBehavior` in `Components/`), which a language that
+            // prints a text cannot do: what a text can do is leave and come back. The minute change
+            // shoves a spring (`tick.dip`, the scene's — a component cannot hear the clock service in
+            // a rule), and the reading rises 3 px and fades for ~120 ms: the fade half of the
+            // reference's roll, in this language's own terms.
+            group tick_zone { move: 0, -clamp(dip, 0, 3); opacity: 1 - clamp(dip, 0, 3) * 0.22
+                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 35; lines: 1 }
+            }
             // Pressable, as in the reference: ClockWidget's TapHandler is `calendar.toggle()`,
             // so the capsule is a button and not a label.
             zone box clock { from: 0, 0; size: w.card, strip; corner: corner; cursor: pointer; label: "Clock {now.time}"; role: button }
@@ -1249,7 +1266,11 @@ scene bar {
             box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
         }
         // A group, because `image` has no rotation of its own: the arrow turns about its centre.
-        group turn { pivot: (tray.slot / 2) * scale, (strip / 2) * scale; rotate: pick(tray.expanded, 0, 90)
+        // `RotateBehavior` of the reference: 220 ms (`ui.anim.rotateMs`), no overshoot, and reduced
+        // motion settles it at once — `~220ms` is that time said as a spring.
+        prop turn.deg = 0 ~220ms
+        follow turn.deg = pick(tray.expanded, 0, 90)
+        group turn { pivot: (tray.slot / 2) * scale, (strip / 2) * scale; rotate: turn.deg * 1deg
             image icon_tray_expand { at: (tray.slot - 14) / 2 * scale, (strip - 14) / 2 * scale; size: 14 * scale, 14 * scale; tint: skin.ink }
         }
         zone box tray_trigger { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: pick(tray.expanded, "Show the system tray", "Hide the system tray"); role: button }
@@ -1362,7 +1383,7 @@ scene bar {
             // used to stand after the workspaces, which is not where it is in the shell this bar
             // is a port of.
             row clock_pill { gap: 2 * scale
-                Clock() { show: widget.clock }
+                Clock(tick.dip) { show: widget.clock }
                 row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
             }
             WsCapsule(open_overview) { show: widget.workspaces }
