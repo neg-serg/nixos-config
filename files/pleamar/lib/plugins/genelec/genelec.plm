@@ -70,8 +70,8 @@ library Genelec strict {
         // capsule's inner 14: the tile keeps its 18 px pill and the icon stands a pixel proud of
         // it, which is what makes it legible next to the volume capsule's icon.
         let size.icon = 20
-        let label.w = 34
-        let w = 2 * capsule.pad + size.icon + capsule.gap + 34
+        let label.w = 30
+        let w = 2 * capsule.pad + size.icon + capsule.gap + 30
         let h = capsule.height
         // The slot is as tall as the row's: every other capsule in the bar answers a press over
         // the full `row`, and this one answered over 18 design px sitting at the top of it —

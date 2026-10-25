@@ -60,7 +60,10 @@ library Pill strict {
         // The glyph fills the capsule it sits in: 10 inside an 18 px plate read as a speck on
         // a square, which is what "too small" was looking at.
         let size.icon = capsule.height - 4
-        let w = 2 * capsule.pad + size.icon
+        // Tighter than a capsule's padding: the mark is one glyph, and the capsule's 4 px on each
+        // side left it floating in a pill wider than the thing it holds.
+        let pad.mark = capsule.pad - 2
+        let w = 2 * pad.mark + size.icon
         let h = capsule.height
         prop pulse = 0
         wave pulse = 0.35 at 6.28
