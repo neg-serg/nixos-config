@@ -519,7 +519,11 @@ local function worker_args(name)
     if name == "sysmon" then
         return {}
     elseif name == "weather" then
-        local args = { "--forecast-days", "5" }
+        -- `--timeout 3`, not the helper's 8: Open-Meteo cannot be reached from this host, so every
+        -- sample spends the whole timeout there before falling back to wttr.in — 8.6 s for the first
+        -- one, measured 2026-10-25, and the card says nothing until it lands. Three seconds is
+        -- still ample for an API that answers in a fraction of one when it is reachable.
+        local args = { "--forecast-days", "5", "--timeout", "3" }
         if conf.weatherCity ~= "" then
             table.insert(args, "--city")
             table.insert(args, conf.weatherCity)
@@ -848,19 +852,13 @@ local function journal_refresh()
     end
 end
 
--- A drawer left alone closes itself: the same gesture as an outside press, on a clock. Any
--- change of the fact re-arms it, so moving between drawers starts the wait again.
-local DRAWER_TIMEOUT_MS = 6000
-local drawerTimer = nil
-
+-- A drawer closes on Escape, on a press outside it, or when the fact is set to `none` — and on
+-- nothing else. It used to close itself after six seconds (`DRAWER_TIMEOUT_MS`, 6000), which is
+-- what made a click on a bar capsule look like a click that leads nowhere: the calendar or the
+-- system dashboard appeared and went away while it was being read. The reference has no such
+-- timer (its popups close on Escape or an outside press), and the outside press is the catcher
+-- below, so a forgotten drawer is dismissed by the next click anywhere.
 on("fact:drawer", function(v)
-    if drawerTimer then cancel(drawerTimer); drawerTimer = nil end
-    if v ~= "none" then
-        drawerTimer = after(DRAWER_TIMEOUT_MS, function()
-            drawerTimer = nil
-            fact.drawer = "none"
-        end)
-    end
     if v == "calendar" then
         -- Like the legacy popup: opening the calendar comes back to today.
         fact.cal_year, fact.cal_month = today_y, today_m

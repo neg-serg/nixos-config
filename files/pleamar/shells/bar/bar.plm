@@ -323,6 +323,21 @@ scene bar {
     event open_media_panel ->
     // QS opens NetFlowPopup from the network capsule; same drawer family here.
     event open_network_panel ->
+    // The rest of the reference's pressable capsules, each opening the drawer QS opened
+    // from it: the clock its calendar (ClockWidget's `calendar.toggle()`), the weather
+    // capsule its card (WeatherButton's overlay), the system cluster the monitoring
+    // dashboard (SystemMonitorCapsule's `qs-monitor` overlay), the build badge the build
+    // list (BuildStatus's `qs-buildstatus` popup). Drawer names are §2.2 of INTERFACES.md;
+    // the logic says which, because a rule cannot run `pleamar --say`.
+    event open_calendar_panel ->
+    event open_weather_panel ->
+    event open_system_panel ->
+    event open_build_panel ->
+    // The workspace capsule asked for hyprexpo (QS: `Services.Expo.toggle()`), and the
+    // keyboard capsule for the next layout of the boards (`KeyboardLayoutHypr`'s
+    // `switchKeyboardLayout()`; the logic spells out why it is `all` and not `current`).
+    event open_overview ->
+    event next_layout ->
 
     // --------------------------------------------------------------- surface
     // 25, not QS's `panelHeight` of 22: the reference draws that 22 at
@@ -600,8 +615,10 @@ scene bar {
 
     // ----------------------------------------------------------- permissions
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
-    // audio.* (step/mute) and the scene's own settings file.
-    permissions { run: "cat", "hyprctl", "dash", "curl", "date", "nc", "pleamar", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
+    // audio.* (step/mute) and the scene's own settings file. `hypr-expo` is the workspace
+    // capsule's overview (QS ran the same helper from Services/Expo.qml); `hyprctl` also
+    // switches the keyboard layout on the keyboard capsule's press.
+    permissions { run: "cat", "hyprctl", "hypr-expo", "dash", "curl", "date", "nc", "pleamar", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -702,9 +719,12 @@ scene bar {
                 box { from: 0, 1; size: w.card, 23; corner: 6 }
             }
             text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 35; lines: 1 }
-            zone box clock { from: 0, 0; size: w.card, strip; corner: corner; label: "Clock {now.time}"; role: region }
+            // Pressable, as in the reference: ClockWidget's TapHandler is `calendar.toggle()`,
+            // so the capsule is a button and not a label.
+            zone box clock { from: 0, 0; size: w.card, strip; corner: corner; cursor: pointer; label: "Clock {now.time}"; role: button }
             on enter clock { emit tip(0) }
             on leave clock { emit tip_hide }
+            on press clock { emit open_calendar_panel }
         }
     }
 
@@ -714,7 +734,10 @@ scene bar {
     // of tabs per workspace. The port drew a tab per record (four of them here),
     // each a filled capsule with a triangle, which is what made the left end
     // read far brighter than the reference.
-    component WsCapsule(focus: event,
+    // The capsule shows the workspace that is already in force, so "focus it" would be the
+    // press doing nothing: what WsIndicator.qml:19 does on a click is `Expo.toggle()`, and
+    // that is the event the copy is handed.
+    component WsCapsule(overview: event,
                        scale: number = ui * user_scale) {
         // The glyph, the Old Italic letter and the label are laid out side by side;
         // a width is only known once the text is shaped, so both are measured.
@@ -747,7 +770,7 @@ scene bar {
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { emit tip(1) }
             on leave ws { emit tip_hide }
-            on press ws { emit focus }
+            on press ws { emit overview }
         }
     }
 
@@ -822,10 +845,12 @@ scene bar {
             }
             // The cluster had no zone at all, so a hand could not hover it and the line
             // `tip_line` already writes for it (case 4) never reached the screen. The plate is
-            // the pressable area, as on every other capsule; nothing is pressed here yet.
-            zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; label: "System monitor"; role: region }
+            // the pressable area, as on every other capsule, and the press opens the
+            // monitoring dashboard (QS: `autoToggleOnTap` on SystemMonitorCapsule).
+            zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; cursor: pointer; label: "System monitor"; role: button }
             on enter sysmon { emit tip(4) }
             on leave sysmon { emit tip_hide }
+            on press sysmon { emit open_system_panel }
         }
     }
 
@@ -941,6 +966,7 @@ scene bar {
             zone box weather { from: 0, 0; size: 178, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { emit tip(5) }
             on leave weather { emit tip_hide }
+            on press weather { emit open_weather_panel }
         }
     }
 
@@ -966,9 +992,13 @@ scene bar {
             // other capsules inset 6 — measured, not guessed.
             image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim }
             text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
-            zone box kb { from: 0, 0; size: 54, strip; corner: corner; label: "Keyboard {kb_layout}"; role: button }
+            // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
+            // layout of the device in force (`switchKeyboardLayout()`), and the label follows
+            // from the event socket a moment later.
+            zone box kb { from: 0, 0; size: 54, strip; corner: corner; cursor: pointer; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
             on leave kb { emit tip_hide }
+            on press kb { emit next_layout }
         }
     }
 
@@ -1163,7 +1193,7 @@ scene bar {
                 Clock() { show: widget.clock }
                 row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
             }
-            WsCapsule(focus_workspace) { show: widget.workspaces }
+            WsCapsule(open_overview) { show: widget.workspaces }
 
             // QS KeyboardLayoutHypr: the keyboard glyph and the active layout,
             // nothing else (the icon is not in a square, `iconSquare: false`).
@@ -1448,9 +1478,10 @@ scene bar {
     // The build badge, in the middle of the strip: QS puts `BuildStatus` on a panel of its own
     // centred along the bottom edge, so its capsule stands where the bar's centre is — not at
     // the end of a row where it shoved the weather and the clock around every time a build
-    // started. It takes no space at rest (`Build.busy` is false while nothing runs).
+    // started. It takes no space at rest (`Build.busy` is false while nothing runs), and a
+    // press on it opens the build drawer (QS: `autoToggleOnTap` on BuildStatus).
     row build_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; show: widget.build and Build.busy
-        build.Tile()
+        build.Tile(open_build_panel)
     }
 
     // ------------------------------------------------------------ what waits

@@ -18,7 +18,8 @@ language 0.4
 // unconditional in the scene (`show: Build.busy`, or a row of its own).
 //
 //     import "../../lib/plugins/build/build.plm" as build
-//     build.Tile()
+//     event open_build_panel ->          // the scene's: the tile cannot open a drawer itself
+//     build.Tile(open_build_panel)
 //
 // Compile proof: build.check.plm.
 
@@ -52,7 +53,11 @@ library Build strict {
     // One capsule, as in QS: the phase's glyph in its tone and the summary beside it.
     // `label.w` is fixed because a plugin cannot measure text; the summary is one
     // line and the engine elides what does not fit.
-    component Tile(scale: number = ui) {
+    // The tile is a button, and what a press means is the scene's to say: QS's BuildStatus is
+    // `autoToggleOnTap` and opens its popup, which here is the `build` drawer, and a plugin
+    // may not run `pleamar --say`. So the event comes in as a parameter, as `chosen` does in
+    // the language's own example.
+    component Tile(tap: event, scale: number = ui) {
         let size.icon = 14
         let label.w = 150
         let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
@@ -61,7 +66,10 @@ library Build strict {
         group zoom {
             scale: scale
             Capsule(w, h, scale: 1) {
-                row tile {
+                // `row content`, not `row tile`: a named layout is a region of its own, so a row
+                // called `tile` next to the `zone box tile` below made two zones of one name and
+                // the button read as "covered by" its own decoration in `describe`/`press`.
+                row content {
                     gap: capsule.gap
                     align: center
                     text "{glyph}" { family: "Material Symbols Outlined"; size: size.icon; color: if(tone == 2, amber, if(tone == 1, accent, ink.dim)); opacity: if(hot, 1, 0.85) }
@@ -71,6 +79,7 @@ library Build strict {
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Nix build"; role: button }
             on enter tile { hot = true }
             on leave tile { hot = false }
+            on press tile { emit tap }
         }
     }
 
