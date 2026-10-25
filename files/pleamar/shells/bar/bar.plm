@@ -390,8 +390,9 @@ scene bar {
         margin: 0, 0, 0, 0
         level: overlay
         open: tip_open
-        // The card's left edge, 260 wide and centred on the pointer, kept 8 px inside the strip.
-        let card.left = clamp(tip.x - 130, 8, screen.width - 268)
+        // The card's left edge, as wide as the logic says, centred on the pointer and kept 8 px
+        // inside the strip.
+        let card.left = clamp(tip.x - tip.w / 2, 8, screen.width - (tip.w + 8))
         body {
             color: skin.surface
             opacity: 96%
