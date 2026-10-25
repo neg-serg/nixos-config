@@ -335,13 +335,6 @@ on("wheel_volume", function(notches)
     sys.call("audio.step", notches * 0.05)
 end)
 
--- The capsule was pressed: `audio.mute` with no argument flips the sink's
--- silence (pleamar's pulse.rs: set_mute(..., !muted)), so the toggle needs no
--- state here. (permissions: "audio", "audio.*")
-on("toggle_mute", function()
-    sys.call("audio.mute")
-end)
-
 -- ------***---------------------- audio capsules
 -- QS AudioEndpointCapsule hides itself for two reasons, and the bar has to do
 -- the same or the right end is heavier than the reference:
@@ -364,6 +357,42 @@ end
 -- The last sample, kept for the tooltip: only the logic can compose a line, and the volume
 -- capsule's line is two numbers out of this table.
 local audioNow = {}
+
+-- The route the capsule prints instead of the software percentage, and the line the tooltip
+-- appends. QS only shows it for a pro-audio sink (`Volume.qml`'s `labelText` and `tooltipValue`
+-- are the route's short label when `device.profile.pro` is set); pleamar's audio service does not
+-- report that property, so the proxy is `pwroute current` answering something other than
+-- `unknown` — which is the same statement from the hardware's side: there is an RME sink and it
+-- has an active output pair.
+local ROUTE_LABEL = { an = "Analog", aes = "AES/EBU", spdif = "SPDIF", phones = "Phones" }
+-- QS's `routeShortLabels`, the ones its capsule prints: the plate is 46 px wide at most and
+-- "AES/EBU" does not fit in it, which is why the reference keeps two sets of names.
+local ROUTE_SHORT = { an = "AN", aes = "AES", spdif = "SPDIF", phones = "HP" }
+local routeNow = "unknown"
+
+-- What the capsule prints while the pointer is on it: the route on a pro sink, the software
+-- percentage everywhere else (QS: `labelText` + `labelSuffix`). One live text, because a scene
+-- cannot choose between two strings from an `if` and the tile wants a `text`.
+local function vol_readout()
+    local route = ROUTE_SHORT[routeNow]
+    if route then
+        text["vol.readout"] = route
+        return
+    end
+    local pct = math.floor((tonumber(audioNow.volume) or 0) * 100 + 0.5)
+    text["vol.readout"] = string.format("%d%%", pct)
+end
+
+local function route_read()
+    run("pwroute", { "current" }, function(out, code)
+        local key = (code == 0) and (tostring(out or ""):match("^%s*([%a]+)")) or nil
+        if key == nil then key = "unknown" end
+        routeNow = key
+        fact["vol.pro"] = (key ~= "unknown")
+        text["vol.route"] = ROUTE_LABEL[key] or ""
+        vol_readout()
+    end)
+end
 
 local function audioChanged(a)
     if type(a) ~= "table" then return end
@@ -388,9 +417,40 @@ local function audioChanged(a)
         fullHide = nil
         fact["vol.shown"] = true
     end
+    -- The reading is composed here as well: a percentage that moves while the pointer is on the
+    -- capsule has to move, and the route is the only other thing it can say.
+    vol_readout()
 end
 
+-- Registered here, not at the top of the section: the service reports as soon as it is watched,
+-- and `audioChanged` ends by asking for the reading, which needs the route definitions above.
 sys.watch("audio", audioChanged)
+
+-- Once at start, then slowly: a route changes when somebody changes it, and the press below asks
+-- again after its own toggle. Two seconds is the keyboard layout's cadence for the same reason.
+local ROUTE_POLL_MS = 2000
+route_read()
+every(ROUTE_POLL_MS, route_read)
+
+-- The volume capsule was pressed. QS's Volume.qml does one thing there — `Services.Audio.
+-- toggleRoute()`, which is `pwroute toggle`: the RME AIO Pro's output pair moves between AES/EBU
+-- and Analog (this repo's own `packages/pwroute`), whatever sink is default. The port muted
+-- instead, which was the only sound command the audio service had, and the capsule said nothing
+-- either way.
+--
+-- `pwroute` exits non-zero when there is no RME sink to move (a laptop, or the card unplugged),
+-- and then the press keeps the mute it used to have rather than doing nothing at all. That is a
+-- fallback, not parity: the reference had no mute on this press.
+-- (permissions: "pwroute", "audio", "audio.*")
+on("toggle_route", function()
+    run("pwroute", { "toggle" }, function(_, code)
+        if code ~= 0 then
+            log("bar: pwroute toggle exited " .. tostring(code) .. "; muting instead")
+            sys.call("audio.mute")
+        end
+        route_read()
+    end)
+end)
 
 -- A press on the microphone capsule: `audio.input_mute` flips the source's
 -- silence (QS Microphone.toggleMicMute). (permissions: "audio", "audio.*")
@@ -528,9 +588,14 @@ local function tip_line(i)
         if #meta > 0 then return l1 .. "\n" .. table.concat(meta, " · ") end
         return l1
     elseif i == 7 then
-        -- The volume capsule: the mixer's own numbers, as the capsule prints them.
+        -- The volume capsule: the mixer's own numbers, as the capsule prints them, and the RME
+        -- route beside them when there is one — QS's Volume.qml prints the route through
+        -- `tooltipValue` and its "Left click to toggle AES / Analog." hint on a pro-audio sink.
         local pct = math.floor((tonumber(audioNow.volume) or 0) * 100 + 0.5)
-        return string.format("Volume %d %%%s", pct, audioNow.muted == true and " (muted)" or "")
+        local line = string.format("Volume %d %%%s", pct, audioNow.muted == true and " (muted)" or "")
+        local route = ROUTE_LABEL[routeNow]
+        if route then line = line .. " · " .. route .. " (click toggles)" end
+        return line
     elseif i == 8 then
         local pct = math.floor((tonumber(audioNow.input) or 0) * 100 + 0.5)
         return string.format("Microphone %d %%%s", pct, audioNow.input_muted == true and " (muted)" or "")

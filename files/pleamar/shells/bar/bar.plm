@@ -266,6 +266,13 @@ scene bar {
     // image from an `if`: 0 up, 1 down, 2 off for the sink; 0 live, 1 muted for the source.
     fact vol.kind = 0
     fact mic.kind = 0
+    // The RME AIO Pro's output route, kept by the logic (`pwroute current`): `pro` says there is one
+    // (the press then toggles AES/Analog, as QS's Volume.qml did on a pro-audio sink), `route` is its
+    // name for the tooltip and for whoever asks the bar over IPC, and `readout` is what the capsule
+    // prints in place of the software percentage — the route's short label, which is QS's `labelText`.
+    fact vol.pro = false
+    text vol.route = ""
+    text vol.readout = ""
     text net_rx = "--"
     text net_tx = "--"
     text net_rx_unit = ""
@@ -617,8 +624,9 @@ scene bar {
     // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
     // audio.* (step/mute) and the scene's own settings file. `hypr-expo` is the workspace
     // capsule's overview (QS ran the same helper from Services/Expo.qml); `hyprctl` also
-    // switches the keyboard layout on the keyboard capsule's press.
-    permissions { run: "cat", "hyprctl", "hypr-expo", "dash", "curl", "date", "nc", "pleamar", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
+    // switches the keyboard layout on the keyboard capsule's press; `pwroute` is the volume
+    // capsule's route toggle (the RME's AES/Analog pair).
+    permissions { run: "cat", "hyprctl", "hypr-expo", "dash", "curl", "date", "nc", "pleamar", "pwroute", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -685,7 +693,9 @@ scene bar {
     // and closes the card, so a 150 ms timer armed on enter cannot fire after the pointer left.
     event tip_hide ->
     event wheel_volume ->
-    event toggle_mute ->
+    // The volume capsule's press: QS's `toggleRoute()` — `pwroute toggle`, the RME's AES/Analog pair.
+    // The mute it used to be is what bar.luau falls back to when there is no RME sink to move.
+    event toggle_route ->
     event toggle_mic ->
     // The wheel over the microphone tile: the sink has `audio.step`; the source only
     // takes an absolute `audio.input`, so the logic adds the notch to the last sample.
@@ -1148,18 +1158,20 @@ scene bar {
         }
     }
 
-    component VolCapsule(step: event, mute: event,
+    component VolCapsule(step: event, route: event,
                          scale: number = ui * user_scale) {
         let slot = pick(strip.hot, 26, 46)
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(vol.kind, slot, "{audio.volume * 100, 0}%", vol.hot, mix(volume.low, volume.high, level), scale: 1)
+            // The reading arrives ready-made from the logic — the route's name on a pro sink, the
+            // percentage otherwise (QS prints `labelText`, the route's short label, there).
+            AudioTile(vol.kind, slot, vol.readout, vol.hot, mix(volume.low, volume.high, level), scale: 1)
             zone box vol { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
             on enter vol { vol.hot = true; emit tip(7) }
             on leave vol { vol.hot = false; emit tip_hide }
             on scroll vol { emit step(wheel) }
-            on press vol { emit mute }
+            on press vol { emit route }
             on change vol.shown while not vol.shown { vol.hot = false; emit tip_hide }
         }
     }
@@ -1421,7 +1433,7 @@ scene bar {
             // pointer is on the panel, and without that there is nothing on the bar to press to
             // unmute — the control vanished exactly when it was needed.
             MicCapsule(toggle_mic, mic_step) { show: widget.mic and (mic.shown or strip.hot) }
-            VolCapsule(wheel_volume, toggle_mute) { show: widget.volume and (vol.shown or strip.hot) }
+            VolCapsule(wheel_volume, toggle_route) { show: widget.volume and (vol.shown or strip.hot) }
             // Genelec, the rightmost module, as in the legacy bar. The reference hides it until
             // `panelHovering` (the strip's hover) — but this slot was gated on the tile's own
             // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
