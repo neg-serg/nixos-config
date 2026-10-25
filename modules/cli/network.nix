@@ -13,6 +13,7 @@
     pkgs.netwatch # TUI network diagnostics (per-connection process view; sudo for capture)
 
     # Remote access
+    pkgs.neg.dnsglobe # TUI: watch one DNS record propagate across 34 public resolvers on a world map
     pkgs.abduco # CLI session detach
     pkgs.xxh # SSH wrapper for jumping into remote shells
   ];

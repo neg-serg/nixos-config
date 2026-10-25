@@ -18,6 +18,9 @@
     pkgs.lnav # Log File Navigator - advanced log viewer for terminal
     pkgs.zfxtop # system monitor with focus on process grouping and ZFX style
 
+    # Containers
+    pkgs.oxker # TUI to view and control containers (Docker API; /var/run/docker.sock points at the podman socket)
+
     # Shell enhancements
     pkgs.blesh # full-featured line editor written in pure Bash (syntax highlighting, etc.)
     pkgs.expect # tool for automating interactive applications
