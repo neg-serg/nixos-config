@@ -29,9 +29,10 @@ import "../../capsule.plm"
 library Pill strict {
 
     // The plugin's own: its folder (state), the calendar directory (create,
-    // write, remove), HOME to find it, and the minute clock it runs on.
+    // write, remove, list — the listing is the history the port inherited),
+    // HOME to find it, and the minute clock it runs on.
     permissions {
-        run: "mkdir", "tee", "rm"
+        run: "mkdir", "tee", "rm", "ls"
         services: "files", "files.write", "env", "clock"
     }
 

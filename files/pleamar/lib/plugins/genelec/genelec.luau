@@ -31,6 +31,11 @@ local POLL_MS = 2000
 
 local target = fact.volume or -40
 local muted = false
+-- The volume the host had before the mute. A local would forget it on every restart — the plugin
+-- is restarted whenever its scene reloads — and the next unmute would push -40 dB instead of what
+-- was playing. QS keeps the same pair in its StateCache (`genelecPreMuteVolume`,
+-- Services/Genelec.qml:55-73); here it is the plugin's own `state.json`.
+local STATE = "state.json"
 local preMute = target
 local busy = false
 local cooling = false
@@ -38,6 +43,18 @@ local quiet = true
 local commitTimer = nil
 local quietTimer = nil
 local anchors = {}
+
+local function persist()
+    local ok, err = pcall(sys.call, "files.write", STATE, { preMute = preMute, target = target })
+    if not ok then log("genelec: state not saved: " .. tostring(err)) end
+end
+
+local function restore()
+    local ok, state = pcall(sys.ask, "files.read", STATE, "json")
+    if not ok or type(state) ~= "table" then return end
+    local pre = tonumber(state.preMute)
+    if pre and pre ~= preMute then preMute = pre end
+end
 
 local function maxDb()
     local max = fact.maxVolume or -20
@@ -158,10 +175,12 @@ on("toggle", function()
         muted = false
         fact.muted = false
         setVolume(preMute)
+        persist()
         commitHost()
         return
     end
     preMute = target
+    persist()
     muted = true
     fact.muted = true
     if busy then return end
@@ -201,6 +220,7 @@ local function watchLevel()
     end)
 end
 
+restore()
 probe()
 watchLevel()
 every(PROBE_MS, probe)

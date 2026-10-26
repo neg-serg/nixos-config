@@ -4,7 +4,9 @@
 -- Same behaviour, same shapes:
 --
 --   - one JSON state — today's date, whether it is taken and at what time, and
---     the history of the days before (newest first) — rolled over at midnight;
+--     the history of the days before (newest first) — rolled over at midnight,
+--     and reconciled at start with the calendar events, which are the record
+--     that outlived the cutover from Quickshell (see `syncFromCalendar`);
 --   - taking it writes an all-day VEVENT into the synced calendar
 --     (`<HOME>/.config/vdirsyncer/calendars/pills/pill-<date>.ics`), untaking it
 --     removes that file;
@@ -13,7 +15,7 @@
 --   - `streak` is the QS `calculateStreak`: today counted only when taken, then
 --     the run of taken days immediately before it (a gap ends it).
 --
--- Permissions are the plugin's own: mkdir, tee, rm; files (its own folder),
+-- Permissions are the plugin's own: mkdir, tee, rm, ls; files (its own folder),
 -- env (HOME), clock (the minute).
 
 local STATE = "state.json"
@@ -132,6 +134,43 @@ local function publish()
     fact.streak = streakNow()
 end
 
+-- The calendar is the record that outlived the cutover: Quickshell wrote a
+-- `pill-<date>.ics` there on every take and this plugin writes the same file, so
+-- the days before the port existed are on disk even though `state.json` is
+-- younger than them. Listing the directory gives the streak its history instead
+-- of restarting at zero on the day the port took over — the QS service's own
+-- `_syncFromCalendar` did the same.
+local HISTORY_MAX = 400
+
+local function syncFromCalendar()
+    local ok = pcall(run, "ls", { "-1", calDir() }, function(out)
+        if type(out) ~= "string" then return end
+        local onDisk = {}
+        for name in out:gmatch("[^\r\n]+") do
+            local date = name:match("^pill%-(%d%d%d%d%-%d%d%-%d%d)%.ics$")
+            if date then onDisk[date] = true end
+        end
+        local merged, known = {}, {}
+        for _, entry in ipairs(history) do
+            if type(entry) == "table" and type(entry.date) == "string" then
+                known[entry.date] = true
+                -- A file on disk means the day was taken, whatever the state says.
+                if onDisk[entry.date] then entry.taken = true end
+                merged[#merged + 1] = entry
+            end
+        end
+        for date in pairs(onDisk) do
+            if not known[date] then merged[#merged + 1] = { date = date, taken = true, takenAt = "" } end
+        end
+        table.sort(merged, function(a, b) return a.date > b.date end)
+        while #merged > HISTORY_MAX do table.remove(merged) end
+        history = merged
+        persist()
+        publish()
+    end)
+    if not ok then log("pill: the calendar could not be listed") end
+end
+
 local function deadlinePassed()
     if not lastClock then return false end
     local hour = fact.deadlineHour or 12
@@ -205,4 +244,5 @@ end)
 pcall(run, "mkdir", { "-p", calDir() })
 load()
 publish()
+syncFromCalendar()
 sys.watch("clock", onClock)
