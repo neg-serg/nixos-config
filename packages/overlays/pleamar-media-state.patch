@@ -1,0 +1,56 @@
+diff --git a/src/language/vocabulary.rs b/src/language/vocabulary.rs
+index 3e95fc5..36da3e9 100644
+--- a/src/language/vocabulary.rs
++++ b/src/language/vocabulary.rs
+@@ -135,7 +135,7 @@ pub const SERVICES: &[(&str, &[&str])] = &[
+     ("brightness", &["present", "level"]),
+     ("network", &["online", "kind", "name", "strength", "wifi", "error", "networks"]),
+     ("bluetooth", &["present", "powered", "discovering", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),
+-    ("media", &["playing", "title", "artist", "album", "length", "position", "rate", "can_seek", "art", "player", "players"]),
++    ("media", &["playing", "paused", "title", "artist", "album", "length", "position", "rate", "can_seek", "can_go_next", "art", "player", "players"]),
+     ("window", &["title", "class", "monitor", "fullscreen", "maximized", "list"]),
+     ("thumbnails", &["list", "capturing"]),
+     ("workspaces", &["active", "list"]),
+diff --git a/src/platform/mpris.rs b/src/platform/mpris.rs
+index 63eb68b..8e35b33 100644
+--- a/src/platform/mpris.rs
++++ b/src/platform/mpris.rs
+@@ -64,6 +64,13 @@ fn is_playing(p: &Proxy) -> bool {
+     p.get_property::<String>("PlaybackStatus").is_ok_and(|s| s == "Playing")
+ }
+ 
++/// The other half of `is_playing`: a player that holds a song where it was left. The three states
++/// of `PlaybackStatus` are `Playing`, `Paused` and `Stopped`, and a scene that keeps a capsule for
++/// `playing || paused` (the way a bar does) cannot tell the last two apart from `playing` alone.
++fn is_paused(p: &Proxy) -> bool {
++    p.get_property::<String>("PlaybackStatus").is_ok_and(|s| s == "Paused")
++}
++
+ /// What a pause falls back to: see `LAST`.
+ fn remember(name: &str) {
+     if let Ok(mut l) = LAST.lock() { name.clone_into(&mut l) }
+@@ -173,12 +180,13 @@ fn jump(to: f64, now: f64, length: f64, track: Option<OwnedObjectPath>) -> Jump
+ fn now(c: &Connection) -> SysValue {
+     let field = |k: &str, v: SysValue| (k.to_owned(), v);
+     let Some((name, p, playing)) = active_player(c) else {
+-        return SysValue::Map(vec![field("playing", SysValue::Bool(false)), field("title", SysValue::Text(String::new())), field("artist", SysValue::Text(String::new())), field("album", SysValue::Text(String::new())), field("length", SysValue::Num(0.0)), field("position", SysValue::Num(0.0)), field("rate", SysValue::Num(1.0)), field("can_seek", SysValue::Bool(false)), field("art", SysValue::Text(String::new())), field("player", SysValue::Text(String::new())), field("players", SysValue::List(Vec::new()))]);
++        return SysValue::Map(vec![field("playing", SysValue::Bool(false)), field("paused", SysValue::Bool(false)), field("title", SysValue::Text(String::new())), field("artist", SysValue::Text(String::new())), field("album", SysValue::Text(String::new())), field("length", SysValue::Num(0.0)), field("position", SysValue::Num(0.0)), field("rate", SysValue::Num(1.0)), field("can_seek", SysValue::Bool(false)), field("can_go_next", SysValue::Bool(false)), field("art", SysValue::Text(String::new())), field("player", SysValue::Text(String::new())), field("players", SysValue::List(Vec::new()))]);
+     };
+     let metadata: HashMap<String, OwnedValue> = p.get_property("Metadata").unwrap_or_default();
+     let from_metadata = |k: &str| SysValue::Text(metadata.get(k).map(text).unwrap_or_default());
+     SysValue::Map(vec![
+         field("playing", SysValue::Bool(playing)),
++        field("paused", SysValue::Bool(is_paused(&p))),
+         field("title", from_metadata("xesam:title")),
+         field("artist", from_metadata("xesam:artist")),
+         field("album", from_metadata("xesam:album")),
+@@ -187,6 +195,9 @@ fn now(c: &Connection) -> SysValue {
+         // The spec's default; a player that cannot change it may leave it out.
+         field("rate", SysValue::Num(p.get_property::<f64>("Rate").unwrap_or(1.0))),
+         field("can_seek", SysValue::Bool(can_seek(&p))),
++        // What a transport button needs to know: `CanGoNext` is the spec's, and a player that does
++        // not answer it is taken to have nothing after this song.
++        field("can_go_next", SysValue::Bool(p.get_property::<bool>("CanGoNext").unwrap_or(false))),
+         field("art", SysValue::Text(metadata.get("mpris:artUrl").map(text).map_or_else(String::new, |u| art_path(&u)))),
+         field("player", SysValue::Text(name.trim_start_matches(PREFIX).split('.').next().unwrap_or_default().to_owned())),
+         field("players", all_players(c)),
