@@ -47,7 +47,7 @@ function parseDefinedSettingsKeys(qmlSource) {
 //   Settings.settings.<key>          the usual read
 //   <obj>.settings.<key>             a renamed alias of the singleton
 //   <any>.settings.<key>             `settings` passed as a parameter (helpers)
-//   key: "<key>"                     table-driven panels (GlassPanel presets)
+//   key: "<key>"                     table-driven components (a preset row carrying its key)
 // Deliberately not "any string equal to the key": a stale name mentioned only
 // in a comment must still be reported.
 const usedPatterns = [

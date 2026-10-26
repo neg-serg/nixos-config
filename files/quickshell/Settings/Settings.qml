@@ -33,11 +33,13 @@ Singleton {
             property real panelBgAlphaScale: 0.2
 
             // Enable wedge clip ShaderEffect path (env vars can override in debug)
-            // Per-window hyprglass overrides, edited in the Glass panel
-            // (win+shift+g) and turned into custom presets + window-rule tags by
-            // hyprglass-apply. Shape: [{ class, enabled, blurStrength,
-            // glassOpacity, adaptiveDim, tint }] — tint is RRGGBBAA or "" to
-            // inherit, and a missing field means "inherit the global value".
+            // Per-window hyprglass overrides, consumed by hyprglass-apply (it turns
+            // them into custom presets + window-rule tags). The Glass panel that used
+            // to edit them was removed on 2026-10-26; hyprglass is not loaded on this
+            // host (hyprliquid owns the glass), so these are inert until it is.
+            // Shape: [{ class, enabled, blurStrength, glassOpacity, adaptiveDim,
+            // tint }] — tint is RRGGBBAA or "" to inherit, and a missing field means
+            // "inherit the global value".
             property var glassWindowOverrides: []
 
             property bool enableWedgeClipShader: false
@@ -57,11 +59,12 @@ Singleton {
             // matters more than the CPU cost.
             property bool panelTintEnabled: false
 
-            // Glass (hyprglass) values, driven by the Glass panel
-            // (Widgets/Glass/GlassPanel.qml). The panel writes them through to
-            // ~/.config/hypr/hyprglass.json, and hyprglass-apply turns that into
-            // the plugin's config, pushes it and verifies it; the shipped defaults
-            // live in files/gui/hypr/hyprglass.lua.
+            // Glass (hyprglass) values. hyprglass-apply turns them into the plugin's
+            // config, pushes it and verifies it; the shipped defaults live in
+            // files/gui/hypr/hyprglass.lua. The Glass panel that wrote them through to
+            // ~/.config/hypr/hyprglass.json was removed on 2026-10-26, and hyprglass is
+            // not loaded on this host (hyprliquid owns the glass) — these are inert
+            // until it is, and the JSON is hand-edited when it is.
             property real glassBlurStrength: 6
             property int glassBlurIterations: 5
             property real glassVibrancy: 0.5
@@ -71,12 +74,12 @@ Singleton {
             property real glassFresnel: 0.3
             property real glassSpecular: 0.1
             property real glassAdaptiveDim: 0.5
-            // Frosted tint against the light theme: the panel's switch for it.
+            // Frosted tint against the light theme.
             property bool glassLightFrost: false
             // Per-class tints of the scratchpad terminals (warm for rebuilds, cold
             // blue for downloads, green for the VPN, ...). Off = plain kitty
-            // background for every pane, which is what the Glass panel's switch
-            // flips. The rmpc pane is black either way (see kitty-glass).
+            // background for every pane. The rmpc pane is black either way (see
+            // kitty-glass).
             property bool scratchpadTint: true
             property string weatherCity: "Saint Petersburg"
             property string userAgent: "NegPanel"

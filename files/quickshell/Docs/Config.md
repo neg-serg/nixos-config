@@ -193,8 +193,8 @@ Tools
 - Find settings keys that drifted apart: `node Tools/lint-settings.mjs` — lists keys declared in
   `Settings/Settings.qml` that no code reads (dead tokens) and keys read but never declared (typos;
   non-zero exit). A key counts as used when it appears as `settings.<key>` (the singleton, a helper
-  parameter, a re-aliased object) or as a table entry `key: "<key>"` (GlassPanel presets); `Tools/`
-  is skipped, while a name mentioned only in a comment still counts as dead.
+  parameter, a re-aliased object) or as a table entry `key: "<key>"` (a preset row); `Tools/` is
+  skipped, while a name mentioned only in a comment still counts as dead.
 
 Settings.json schema and samples
 
