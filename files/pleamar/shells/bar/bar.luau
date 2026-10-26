@@ -607,6 +607,10 @@ end)
 -- only offers the relative `audio.step`, so the snap is computed here and the
 -- difference handed over; the service still clamps.
 -- (permissions: "audio", "audio.*")
+-- The last audio sample, kept for the wheel handlers and the tooltip: only the logic can compose a
+-- line, and the volume capsule's line is two numbers out of this table.
+local audioNow = {}
+
 local function step5(pct, notches, step)
     local target = math.floor((pct + (tonumber(notches) or 0) * step) / step + 0.5) * step
     return math.max(0, math.min(100, target))
@@ -639,10 +643,7 @@ local function hideVolume()
     fact["vol.shown"] = false
 end
 
--- The last sample, kept for the tooltip: only the logic can compose a line, and the volume
--- capsule's line is two numbers out of this table.
-local audioNow = {}
-
+-- (`audioNow`, the last sample, is declared above the wheels that read it.
 -- The route the capsule prints instead of the software percentage, and the line the tooltip
 -- appends. QS only shows it for a pro-audio sink (`Volume.qml`'s `labelText` and `tooltipValue`
 -- are the route's short label when `device.profile.pro` is set); pleamar's audio service does not
