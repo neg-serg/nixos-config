@@ -168,7 +168,9 @@ scene panels {
     // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
     // own two probes while the network drawer is open — the same commands QS's
     // Connectivity.qml runs.
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "flow", "ip", "ping", "pleamar"
+    // `wl-copy` is the reference's clipboard copy of the journal's problems (SystemMonitorPopup.qml:17-40
+    // runs it every time the dashboard opens, so a paste into a chat carries the lines).
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "flow", "ip", "ping", "pleamar", "wl-copy"
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
 
     // ----***--------------- drawer state and settings

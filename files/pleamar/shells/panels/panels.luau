@@ -1275,11 +1275,20 @@ local function journal_refresh()
         text["sys.logs"] = d.logs and tostring(d.logs) or "--"
         text["sys.errors"] = d.errors and tostring(d.errors) or "--"
         text["sys.services"] = d.services and tostring(d.services) or "--"
-        local rows = {}
+        local rows, lines = {}, {}
         for _, e in ipairs(d.entries or {}) do
             rows[#rows + 1] = { time = e.time or "", service = e.service or "", msg = e.msg or "" }
+            lines[#lines + 1] = "[" .. (e.time or "") .. "] " .. (e.service or "") .. ": " .. (e.msg or "")
         end
         model.journal = rows
+        -- The reference copies the journal's problems to the clipboard every time the dashboard is
+        -- opened (SystemMonitorPopup.qml:17-40, `onOpened` -> `copyProblemsToClipboard`), so a paste
+        -- into a chat carries the lines; the worker hands over the problems themselves, with no
+        -- level to filter on. A clipboard with nothing to say is left alone.
+        if #lines > 0 then
+            local copied = pcall(run, "wl-copy", {}, nil, { input = table.concat(lines, "\n") })
+            if not copied then log("panels: the journal was not copied") end
+        end
         fact.journal_ok = true
     end)
     if not ok then
