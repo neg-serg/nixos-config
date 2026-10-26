@@ -19,7 +19,7 @@
 #              The plain line `switch [next|prev|DEVICE [next|prev]]` is also
 #              accepted (the Quickshell capsule's wire command).
 #   sample     {"ok":true,"worker":"kbdlayout","topic":"layout","t":<ms>,
-#              "data":{device,main,index,keymap,code,layouts,submap,
+#              "data":{device,main,index,keymap,code,layouts,submap,caps,
 #                      keyboards[{name,main}]}}
 #   error      {"ok":false,"worker":"kbdlayout","err":"…","t":<ms>}
 #
@@ -153,8 +153,24 @@ LAST_STATUS=""
 ERR_MSG=""
 
 # Query hyprctl for the selected keyboard; sets STATUS_JSON on 0, ERR_MSG on 1.
+# Caps Lock is not in what the compositor reports: it is a kernel LED, one per keyboard that has it
+# (`/sys/class/leds/*capslock*/brightness`), which is the only place a shell can see it — the legacy
+# lock screen read the same files (LockContent.qml:99-140). Any one of them lit means the next
+# letter the user types is a capital, which is exactly what a password field must say out loud.
+caps_locked() {
+  local led
+  for led in /sys/class/leds/*capslock*/brightness; do
+    [ -r "$led" ] || continue
+    if [ "$(cat "$led" 2> /dev/null)" = "1" ]; then
+      printf 'true'
+      return 0
+    fi
+  done
+  printf 'false'
+}
+
 build_status() {
-  local devices_json submap_out submap
+  local devices_json submap_out submap caps
   if ! devices_json=$("$HYPRCTL" -j devices 2> /dev/null); then
     ERR_MSG="hyprctl -j devices failed (is Hyprland running?)"
     return 1
@@ -170,7 +186,8 @@ build_status() {
       default | reset) submap="" ;;
     esac
   fi
-  STATUS_JSON=$(printf '%s' "$devices_json" | jq -c --arg submap "$submap" '
+  caps=$(caps_locked)
+  STATUS_JSON=$(printf '%s' "$devices_json" | jq -c --arg submap "$submap" --argjson caps "$caps" '
     (.keyboards // []) as $k
     | ([ $k[] | select(.main == true) ]
        + [ $k[] | select((((.name // "") | ascii_downcase | test("virtual")) | not)
@@ -185,6 +202,7 @@ build_status() {
         code: ($layouts[($sel.active_layout_index // 0)] // ""),
         layouts: $layouts,
         submap: $submap,
+        caps: $caps,
         keyboards: [ $k[] | {name: (.name // ""), main: (.main // false)} ]
       }')
   return 0

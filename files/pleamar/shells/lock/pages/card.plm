@@ -105,12 +105,37 @@ part Card {
             color: lock.accent; show: busy
         }
 
+        // ------------------------------------------- the keyboard-layout chip
+        // The reference's `layoutChip` (`LockContent.qml:964-990`): a pill under the field, on the
+        // left, saying which layout the next keystroke will type in — the one thing a lock screen
+        // must not leave to be discovered after a failed password. A press asks for the next layout
+        // (the compositor switches it; the worker reports the new one a moment later).
+        group chip {
+            show: kb_on
+            box chip_bg {
+                from: -192, 92; size: 78, 22; corner: 11
+                color: lock.ink; opacity: 8%
+            }
+            // 78 design px: "layout: ru" is ten glyphs of Iosevka at 14 (≈6.5 each) plus the
+            // pill's 12 px of padding on each side, rounded up for a three-letter code.
+            text "layout: {kb_layout}" {
+                at: -181, 103; anchor: left center; size: 14; family: "Iosevka"; color: lock.ink.dim
+            }
+            zone box chip_hit {
+                from: -192, 92; size: 78, 22; corner: 11; cursor: pointer
+                label: "Keyboard layout {kb_layout}"; role: button
+            }
+            on press chip_hit { emit toggle_layout }
+        }
+
         // ---------------------------------------------------- the status line
         // Keeps its place whether or not it says something: the card never
-        // grows a row on a typo and never moves the field.
+        // grows a row on a typo and never moves the field. It is the reference's one line under
+        // the field (`LockContent.qml:244-253`): the failure first, then Caps Lock, then a note —
+        // and the first two are warnings, so the line wears the danger colour for both.
         text status {
             at: 0, 113; anchor: center; size: 16; family: "Iosevka"
-            color: if(failed, lock.danger, lock.ink.dim)
+            color: if(status_danger, lock.danger, lock.ink.dim)
         }
     }
 

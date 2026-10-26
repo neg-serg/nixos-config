@@ -129,12 +129,60 @@ clock12()
 local busy = false
 local armed = true
 
+-- The status line is one line with three claims on it, in the reference's order
+-- (`LockContent.qml:244-253`): what the failure said, then Caps Lock, then whatever the card was
+-- going to say anyway. Keeping the base message apart is what lets Caps Lock cover a "checking…"
+-- or an idle line without losing it.
+local status_base = ""
+
+local function publish_status()
+    local line = status_base
+    local danger = false
+    if fact.failed and status_base ~= "" then
+        danger = true
+    elseif fact.kb_caps then
+        line = "Caps Lock is on"
+        danger = true
+    end
+    text.status = line
+    fact.status_ok = line ~= ""
+    fact.status_danger = danger
+end
+
 local function set_status(message)
-    text.status = message
-    fact.status_ok = message ~= ""
+    status_base = message
+    publish_status()
 end
 
 set_status("")
+
+-- The chip and the Caps Lock line: one worker, shared with the preview (kb.luau). The lock
+-- exists while the session is locked, and the worker lives exactly that long.
+local kb = require("kb")(publish_status)
+on("fact:locked", function(v)
+    if v == true then kb.start() else kb.stop() end
+end)
+kb.start()
+    if kb then return end
+    local ok, id = pcall(spawn, "pleamar-kbdlayout", {}, kb_line, function() kb = nil end, { stdin = "open" })
+    if not ok or not id then
+        log("lock: the keyboard worker did not start")
+        return
+    end
+    kb = id
+    write(id, '{"cmd":"subscribe","topic":"layout","interval_ms":' .. KB_INTERVAL .. '}\n')
+end
+
+on("toggle_layout", function()
+    if not kb then return end
+    write(kb, '{"cmd":"switch","device":"current","direction":"next"}\n')
+end)
+
+-- The lock exists while the session is locked; the worker goes when the lock does.
+on("fact:locked", function(v)
+    if v == true then kb_start() else kb_stop() end
+end)
+kb_start()
 
 -- Give the caret to the field as soon as there is a surface to hold it, and
 -- again after every answer: the screen is the only way in.
