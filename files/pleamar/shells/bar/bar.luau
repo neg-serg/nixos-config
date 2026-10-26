@@ -1369,6 +1369,9 @@ end
 setMenu = function(open)
     if fact.tray_open == open then return end
     fact.tray_open = open
+    -- A new menu opens with no row under the cursor: the wash is the pointer's, and the last menu's
+    -- row would be lit on a menu the pointer never touched.
+    if open then fact["tm.hot"] = 0 end
     if open then
         trayShow(true)
         trayHold = true
@@ -1487,7 +1490,7 @@ on("tray_click", function(n)
     log("TRAYCLICK " .. tostring(n))
     local at = tonumber(n) or 0
     local key = text["tray_key"]
-    local id = fact["tm.id." .. at]
+    local id = tray_menu_ids[at]
     setMenu(false)
     if type(key) == "string" and key ~= "" and type(id) == "number" and id > 0 then
         -- Wrapped: a failing call must not roll back `tray_open` — a menu that stays up after a
@@ -1529,12 +1532,20 @@ end)
 -- One menu, opened for an item's key: the item's own tree when the engine can read it, the
 -- application's own context menu otherwise (`tray.context`). The tray icons' right button and
 -- the Hiddify slot of the network capsule both land here.
+-- The menu's rows, as the last `open_tray_menu` published them, and the ids that go with them: the
+-- scene draws the model and hands back a row number, and a model is one way — the id that
+-- `tray.menu_click` wants stays here, at the same place in this list.
+local TRAY_MENU_MAX = 22
+local tray_menu_ids = {}
+
 local function open_tray_menu(key)
     if type(key) ~= "string" or key == "" then return end
     local ok, tree = pcall(function() return sys.ask("tray.menu", key) end)
     if not ok then
-        text["tm.1"] = tostring(tree)
+        tray_menu_ids = {}
+        model.tray_menu = { { label = tostring(tree), sep = false } }
         fact["tm.count"] = 1
+        fact["tm.panel_h"] = 12 + 20
         setMenu(true)
         return
     end
@@ -1542,19 +1553,17 @@ local function open_tray_menu(key)
         sys.call("tray.context", key)
         return
     end
-    local shown = 0
-    local widest = 0
+    local rows, ids, widest = {}, {}, 0
     for _, it in ipairs(tree) do
-        if shown >= 8 then break end
+        if #rows >= TRAY_MENU_MAX then break end
         local label = (type(it) == "table" and it.label) or ""
-        local sep = type(it) == "table" and it.separator == true
-        fact["tm.sep." .. (shown + 1)] = sep
-        shown = shown + 1
-        text["tm." .. shown] = tostring(label)
+        rows[#rows + 1] = { label = tostring(label), sep = type(it) == "table" and it.separator == true }
+        ids[#ids + 1] = (type(it) == "table" and tonumber(it.id)) or 0
         widest = math.max(widest, #label)
-        fact["tm.id." .. shown] = (type(it) == "table" and tonumber(it.id)) or 0
     end
-    for i = shown + 1, 8 do text["tm." .. i] = "" end
+    model.tray_menu = rows
+    tray_menu_ids = ids
+    local shown = #rows
     fact["tm.count"] = shown
     fact["tm.panel_h"] = 12 + 20 * shown
     -- 6.5 px per character at size 13, plus the plate's 10 px of padding on each side, clamped
