@@ -32,7 +32,8 @@ scene preview {
 
     // The same reads as the lock scene: auth for the real password path, clock
     // for the face, env for PREVIEW_WALLPAPER, files for the settings.
-    permissions { run: "cat"; services: "auth", "clock", "env", "files" }
+    // `pleamar-kbdlayout` — the chip and the Caps Lock line, as in lock.plm.
+    permissions { run: "cat", "pleamar-kbdlayout"; services: "auth", "clock", "env", "files" }
 
     include "pages/state.plm"
 

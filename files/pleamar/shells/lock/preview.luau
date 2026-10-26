@@ -108,12 +108,35 @@ clock12()
 local busy = false
 local armed = true
 
+-- The reference's one line under the field (`LockContent.qml:244-253`): the failure first, then
+-- Caps Lock, then whatever the card was going to say. Kept apart so Caps Lock can cover a note
+-- without losing it.
+local status_base = ""
+
+local function publish_status()
+    local line = status_base
+    local danger = false
+    if fact.failed and status_base ~= "" then
+        danger = true
+    elseif fact.kb_caps then
+        line = "Caps Lock is on"
+        danger = true
+    end
+    text.status = line
+    fact.status_ok = line ~= ""
+    fact.status_danger = danger
+end
+
 local function set_status(message)
-    text.status = message
-    fact.status_ok = message ~= ""
+    status_base = message
+    publish_status()
 end
 
 set_status("")
+
+-- The chip and the Caps Lock line, from the same worker the lock uses: the preview is the harness
+-- for looking at the card, and a part of it that only exists in the lock would go unseen.
+require("kb")(publish_status).start()
 
 focus("password")
 after(400, function() focus("password") end)

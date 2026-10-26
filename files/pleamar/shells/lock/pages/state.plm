@@ -24,6 +24,14 @@ part State {
     fact wall_ok = false           // an absolute wallpaper path is published
     fact avatar_ok = false         // an avatar image path is published
     fact status_ok = false         // the status line has something to say
+    // Caps Lock is on: the kernel's own LED, read by the keyboard worker (there is nowhere else a
+    // shell can see it). The status line says it in the danger colour, as the reference does
+    // (LockContent.qml:244-253: the failure first, then Caps Lock, then the rest).
+    fact kb_caps = false
+    // The worker has answered at least once: the chip is drawn only then, because a live text
+    // cannot be compared in an expression and an empty pill would be worse than none.
+    fact kb_on = false
+    fact status_danger = false     // the status line is a warning, not a note
     fact retry_delay = 800         // ms before another submit counts (settings)
 
     // --------------------------------------------------------- live texts
@@ -33,6 +41,9 @@ part State {
     text avatar = ""               // absolute path to the portrait, or empty
     text clock12 = ""              // the 12-hour form, when clock24h is false
     text user = ""                 // session user
+    // The keyboard layout in force, as the chip prints it (`layout: ru`). Empty until the worker
+    // answers, and the chip is hidden while it is.
+    text kb_layout = ""
     text host = ""                 // "@host", or empty
     text monogram = "?"            // the fallback letter
 
@@ -80,4 +91,7 @@ part State {
     // is the handover contract (README.md, "The handover").
     event rejected ->
     event unlocked ->
+    // The keyboard-layout chip was pressed: the logic asks the compositor for the next layout of
+    // the device in force (`switchxkblayout current next`, what the bar's capsule does too).
+    event toggle_layout ->
 }

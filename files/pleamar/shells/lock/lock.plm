@@ -43,7 +43,9 @@ scene lock {
 
     // The lock is the whole screen: auth check, clock, and its own settings.
     // `cat` reads /etc/hostname for the identity line (fixed, read-only path).
-    permissions { run: "cat"; services: "auth", "clock", "env", "files" }
+    // `pleamar-kbdlayout` is the keyboard worker: the layout in force and Caps Lock (its LED) in
+    // one sample, and `switch` for the chip's press.
+    permissions { run: "cat", "pleamar-kbdlayout"; services: "auth", "clock", "env", "files" }
 
     // `locked` is INTERFACES.md §2.1: the lock surface wants the session (the
     // compositor's own `lock.held` says whether it has it). It is born true:
