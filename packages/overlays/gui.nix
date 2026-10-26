@@ -53,13 +53,17 @@ in
   # what it does with the button (pleamar-right-click.patch). And the tray's menu: an item's
   # `com.canonical.dbusmenu` takes `parentId` as `i` in its first form and `u` in the spec's
   # newer one, items disagree, and the ask tried one of them — so half the tray answered
-  # nothing (pleamar-dbusmenu.patch).
+  # nothing (pleamar-dbusmenu.patch). And what the media service tells a scene: `playing` is a
+  # bool, so a paused player and a stopped one look alike and a bar cannot keep its capsule through
+  # a pause the way the reference shell does (pleamar-media-state.patch adds `paused` and
+  # `can_go_next` beside `can_seek`).
   pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
       ./pleamar-cursor-shape.patch
       ./pleamar-right-click.patch
       ./pleamar-dbusmenu.patch
       ./pleamar-closed-surface.patch
+      ./pleamar-media-state.patch
     ];
   });
 
