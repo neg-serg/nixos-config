@@ -257,6 +257,25 @@ local function ensure_audio_watch()
     end) ~= false
 end
 
+local DRAWER_IDLE_MS = 20000
+local drawer_timer = nil
+
+local function hide_drawer()
+    if drawer_timer then
+        cancel(drawer_timer)
+        drawer_timer = nil
+    end
+    if fact.drawer ~= "none" then fact.drawer = "none" end
+end
+
+-- Whatever the hand did inside a card: the card stays, the clock restarts. Every event a drawer's
+-- zones emit passes through here, and so do the two facts the scene changes on a press (the chosen
+-- day and the page), which the logic watches below.
+local function touch_drawer()
+    if fact.drawer == "none" then return end
+    if drawer_timer then cancel(drawer_timer) end
+    drawer_timer = after(DRAWER_IDLE_MS, hide_drawer)
+end
 local function pick_rec(raw, model_rec, i)
     local rec = nil
     if type(raw) == "table" then rec = raw[i + 1] end
@@ -264,10 +283,22 @@ local function pick_rec(raw, model_rec, i)
     return rec
 end
 
-on("set_out", function(v) sys.call("audio.volume", v) end)
-on("set_in", function(v) sys.call("audio.input", v) end)
-on("toggle_out", function() sys.call("audio.mute") end)
-on("toggle_in", function() sys.call("audio.input_mute") end)
+on("set_out", function(v)
+    touch_drawer()
+    sys.call("audio.volume", v)
+end)
+on("set_in", function(v)
+    touch_drawer()
+    sys.call("audio.input", v)
+end)
+on("toggle_out", function()
+    touch_drawer()
+    sys.call("audio.mute")
+end)
+on("toggle_in", function()
+    touch_drawer()
+    sys.call("audio.input_mute")
+end)
 
 -- The service hands a device's `id` as a NUMBER (PulseAudio's own index:
 -- `platform/pulse.rs` builds `SysValue::Num(i.index)`), so a guard that took only strings
@@ -376,6 +407,7 @@ end)
 -- where it is seeks exactly.
 -- (permissions: "media", "media.*")
 on("seek", function(frac)
+    touch_drawer()
     if type(frac) ~= "number" then return end
     if mediaNow.can_seek ~= true then return end
     local length = tonumber(mediaNow.length) or 0
@@ -939,6 +971,7 @@ end
 -- repeat is a step of its own.
 local last_step_ms = 0
 on("cal_step", function(days)
+    touch_drawer()
     if type(days) ~= "number" or days == 0 then return end
     local now = math.floor(os.clock() * 1000)
     if now - last_step_ms < 12 then return end
@@ -947,11 +980,13 @@ on("cal_step", function(days)
 end)
 
 on("cal_prev", function()
+    touch_drawer()
     local y, m = fact.cal_year, fact.cal_month - 1
     if m < 1 then y, m = y - 1, 12 end
     set_month(y, m)
 end)
 on("cal_next", function()
+    touch_drawer()
     local y, m = fact.cal_year, fact.cal_month + 1
     if m > 12 then y, m = y + 1, 1 end
     set_month(y, m)
@@ -1297,13 +1332,28 @@ local function journal_refresh()
     end
 end
 
--- A drawer closes on Escape, on a press outside it, or when the fact is set to `none` — and on
--- nothing else. It used to close itself after six seconds (`DRAWER_TIMEOUT_MS`, 6000), which is
--- what made a click on a bar capsule look like a click that leads nowhere: the calendar or the
--- system dashboard appeared and went away while it was being read. The reference has no such
--- timer (its popups close on Escape or an outside press), and the outside press is the catcher
--- below, so a forgotten drawer is dismissed by the next click anywhere.
+-- A drawer closes on Escape, on a press outside it, on `WIN+SPACE` (the bind asks this scene the
+-- same way it asks the notification centre), or when the fact is set to `none`.
+--
+-- It also closes itself when left alone: a card nobody dismisses would otherwise stand there for
+-- the rest of the session, which is what "the plates hang forever" looked like. The first timer
+-- was six seconds (`DRAWER_TIMEOUT_MS`, 6000) and it closed cards while they were being read —
+-- the calendar turned to the wrong month, the system dashboard went away mid-look — so the wait
+-- is twenty now, and every new fact, drawer change or press on the card's own zones starts it
+-- over (`touch_drawer`).
+on("fact:sel_day", function() touch_drawer() end)
+on("fact:page", function() touch_drawer() end)
+
 on("fact:drawer", function(v)
+    -- Every change of the fact re-arms the idle wait, so moving from one drawer to the next (or
+    -- re-opening the same one) starts the count again.
+    if drawer_timer then
+        cancel(drawer_timer)
+        drawer_timer = nil
+    end
+    if v ~= "none" then
+        drawer_timer = after(DRAWER_IDLE_MS, hide_drawer)
+    end
     if v == "weather" then
         -- The card is never a blank plate while the worker answers: placeholders and a line that
         -- says it is loading, until the first sample (the reference shows a spinner and "--°C").
