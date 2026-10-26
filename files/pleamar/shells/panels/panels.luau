@@ -1126,47 +1126,30 @@ end
 
 -- ========================= the flow dashboard =========================
 -- The `network` drawer (pages/network.plm). QS streams `flow -json-stream`
--- (~10 Hz) into NetFlowPopup and keeps the last 600 samples in QML; a scene
--- cannot hold an array of its own, so the ring lives here and the card draws
--- what it is handed. The stream is started when the drawer opens and killed
--- when it closes — no process outlives its drawer, the same rule the workers
--- follow (INTERFACES §7).
+-- into NetFlowPopup and keeps the last 600 samples in QML; a scene cannot hold
+-- an array of its own, so the ring lives here and the card draws what it is
+-- handed. The stream is started when the drawer opens and killed when it
+-- closes — no process outlives its drawer, the same rule the workers follow
+-- (INTERFACES §7).
 
--- 96 samples, where the reference keeps 600 (`NetFlowPopup.qml:22`, the 60 s window). 600
--- was tried on 2026-10-25 and the plate went to 17-20 ms frames ("render · slow frame"):
--- the scene rebuilds every column of the model on each publish, and 600 columns at 10 Hz
--- is more than this path can carry. A tenth of the window is the honest trade until the
--- renderer can take the ring without rebuilding it.
-local FLOW_LEN = 96
-local FLOW_PUBLISH_EVERY = 1
+-- The card plots the stream itself: every sample is a point of one continuous curve, and what the
+-- model carries is the segment between two neighbours — `t0, t1` along the window and `rx0, rx1` /
+-- `tx0, tx1` as shares of the window's own peak. No bucketing and no smoothing: an earlier version
+-- published one column a second (the peak of ten samples) because 600 boxes cost 17-20 ms a frame
+-- (measured 2026-10-25); two `line`s per sample is the geometry of a curve, and it is what the
+-- stream says rather than a shape it is squeezed into. The frame cost of the curve is in PARITY.
+--
+-- `-refresh 250ms`, and not the program's own 100 ms, because of what the kernel gives it: the
+-- interface counters move about four times a second, so a 100 ms poll reads the same counter four
+-- times (a rate) and then zero six times (a counter that did not budge) — the readout blinked
+-- between 0 B/s and a spike, and the curve was a comb. Measured against `/sys/…/statistics/rx_bytes`
+-- under a ~150 KB/s download: 250 ms gives a mean of 158 KB/s for a real 152 KB/s with one zero in
+-- twenty samples, 100 ms gives 16 KB/s mean for 15.5 KB/s real with twelve zeros in twenty — the
+-- average is right either way, the samples are only honest at 250 ms. That is also the window the
+-- reference keeps: 60 s at 4 Hz.
+local FLOW_POINTS = 240 -- the window: 60 s at the stream's 4 Hz
+local FLOW_REFRESH = "250ms"
 local flow_id, flow_ring = nil, {}
-local flow_max_rx, flow_max_tx = 1, 1
--- Smoothed values: `flow` reports instantaneous bursts (a rate-limited
--- download arrives in clumps), and a chart drawn from raw samples looks like
--- separate towers. An exponential average makes it a curve instead.
-local ema_rx, ema_tx = 0, 0
-local FLOW_SMOOTH = 0.22
-local flow_peak_rx, flow_peak_tx, flow_n = 0, 0, 0
-
-local function flow_publish()
-    local rows = {}
-    for i = 1, #flow_ring do
-        rows[i] = flow_ring[i]
-    end
-    model.flow = rows
-    -- Each direction is scaled by its own peak: one 7 MB/s download must not
-    -- flatten the upload curve, which is what a shared maximum does.
-    fact.net_max_rx = flow_max_rx
-    fact.net_max_tx = flow_max_tx
-end
-
-local function flow_stop()
-    if flow_id then
-        kill(flow_id, "term")
-        flow_id = nil
-    end
-    fact.net_live = false
-end
 
 -- `1.2K` / `3.4M`: the axis labels the reference prints beside the grid.
 local function compact(v)
@@ -1176,12 +1159,50 @@ local function compact(v)
     return tostring(math.floor(v + 0.5))
 end
 
-local function axis_publish()
-    local peak = math.max(flow_peak_rx, flow_peak_tx, 1)
-    local ymax = peak * 1.15
+-- The scale of the plot: the window's peak with a little headroom, its thirds printed on the right.
+-- Each direction keeps its own peak, so one 7 MB/s download does not flatten the upload curve.
+local function axis_publish(mx, mt)
+    local ymax = math.max(mx, mt, 1) * 1.15
     text["net.ax1"] = compact(ymax / 3)
     text["net.ax2"] = compact(ymax * 2 / 3)
     text["net.ax3"] = compact(ymax)
+    text["net.peak_rx"] = compact(mx) .. "B/s"
+    text["net.peak_tx"] = compact(mt) .. "B/s"
+end
+
+local function flow_publish()
+    local n = #flow_ring
+    local mx, mt = 1, 1
+    for i = 1, n do
+        local s = flow_ring[i]
+        if s.rx > mx then mx = s.rx end
+        if s.tx > mt then mt = s.tx end
+    end
+    -- A segment per pair of neighbours. `t` runs over the whole window, so the curve grows in from
+    -- the left until the window is full and slides after that, one sample a step.
+    local span = math.max(FLOW_POINTS - 1, 1)
+    local rows = {}
+    for k = 2, n do
+        local a, b = flow_ring[k - 1], flow_ring[k]
+        rows[#rows + 1] = {
+            t0 = (k - 2) / span,
+            t1 = (k - 1) / span,
+            rx0 = a.rx / mx,
+            rx1 = b.rx / mx,
+            tx0 = a.tx / mt,
+            tx1 = b.tx / mt,
+        }
+    end
+    model.flow = rows
+    axis_publish(mx, mt)
+end
+
+local function flow_stop()
+    if flow_id then
+        kill(flow_id, "term")
+        flow_id = nil
+    end
+    fact.net_live = false
 end
 
 local function flow_line(line)
@@ -1193,37 +1214,20 @@ local function flow_line(line)
     if type(v.download_human) == "string" then text["net.rx"] = v.download_human end
     if type(v.upload_human) == "string" then text["net.tx"] = v.upload_human end
     fact.net_live = (rx > 1) or (tx > 1)
-    if rx > flow_peak_rx then
-        flow_peak_rx = rx
-        text["net.peak_rx"] = v.download_human or "--"
-    end
-    if tx > flow_peak_tx then
-        flow_peak_tx = tx
-        text["net.peak_tx"] = v.upload_human or "--"
-    end
-    axis_publish()
-    ema_rx = ema_rx + (rx - ema_rx) * FLOW_SMOOTH
-    ema_tx = ema_tx + (tx - ema_tx) * FLOW_SMOOTH
-    flow_ring[#flow_ring + 1] = { rx = ema_rx, tx = ema_tx }
-    if #flow_ring > FLOW_LEN then table.remove(flow_ring, 1) end
-    if rx > flow_max_rx then flow_max_rx = rx end
-    if tx > flow_max_tx then flow_max_tx = tx end
-    -- 10 Hz into a 180-column chart is more redraws than a chart can use; the
-    -- ring keeps every sample, the model is published at ~2 Hz.
-    flow_n = flow_n + 1
-    if flow_n % FLOW_PUBLISH_EVERY == 0 then flow_publish() end
+    flow_ring[#flow_ring + 1] = { rx = rx, tx = tx }
+    if #flow_ring > FLOW_POINTS then table.remove(flow_ring, 1) end
+    flow_publish()
 end
 
 local function flow_start()
     if flow_id then return end
-    flow_ring, flow_n = {}, 0
-    flow_max_rx, flow_max_tx = 1, 1
-    ema_rx, ema_tx = 0, 0
-    flow_peak_rx, flow_peak_tx = 0, 0
+    flow_ring = {}
+    model.flow = {}
+    text["net.peak_rx"], text["net.peak_tx"] = "--", "--"
     -- A spawn that cannot start must not take the fact handler down with it
     -- (the overlay's inhibitor does the same): pcall, then say why.
     local ok = pcall(function()
-        flow_id = spawn("flow", { "-json-stream" }, flow_line, function()
+        flow_id = spawn("flow", { "-json-stream", "-refresh", FLOW_REFRESH }, flow_line, function()
             flow_id = nil
             fact.net_live = false
         end)
