@@ -1076,10 +1076,13 @@ local function tip_line(i)
         return "Workspace: " .. (text.ws_label ~= "" and text.ws_label or "?")
             .. "\nClick — workspace overview"
     elseif i == 2 then
-        local line = "Keyboard layout " .. (text.kb_layout ~= "" and text.kb_layout or "?")
-        -- The reference's own hint (KeyboardLayoutHypr.qml:16): "Mode: <submap>".
-        if text.kb_mode ~= "" then line = line .. " · Mode: " .. text.kb_mode end
-        return line
+        -- `compose("Layout", layout, ["Device: <name>", "Mode: <submap>", "Click — next layout"])`,
+        -- the reference's own three hints (KeyboardLayoutHypr.qml:12-18).
+        local lines = { "Layout: " .. (text.kb_layout ~= "" and text.kb_layout or "?") }
+        if text.kb_device ~= "" then lines[#lines + 1] = "Device: " .. text.kb_device end
+        if text.kb_mode ~= "" then lines[#lines + 1] = "Mode: " .. text.kb_mode end
+        lines[#lines + 1] = "Click — next layout"
+        return table.concat(lines, "\n")
     elseif i == 3 then
         -- ConnUi prints the pair as "<rx> / <tx>"; the tooltip says both, and under them the
         -- connection's state in the reference's own words (NetClusterCapsule.qml:229-245):
@@ -1849,11 +1852,58 @@ local function shorten(name)
     return key:sub(1, 3)
 end
 
+-- Which keyboard the indicator follows. The reference's `pickDevice`
+-- (KeyboardLayoutHypr.qml:230-252) walks the list with a reason behind every step: the pinned device
+-- first, then the one Hyprland calls `main`, then the first that is not a virtual helper and has a
+-- keymap, then whatever is there. Reading the first `active_keymap` in the file — which is what this
+-- did — is what made the capsule say `en` while the hands typed Russian: the list opens with the
+-- receiver's consumer-control nodes, and the layout of a pseudo-device is not the one in force.
+-- The device it picked, kept: `main` on this host moves between two helper devices (`neru-scroll`
+-- and `neru-keyboard-proxy` both claim it within seconds — measured 2026-10-26), and following it
+-- is what made the capsule flip between `ru` and `en`. The reference pins its device for the same
+-- reason (`deviceName`/`deviceNeedle`, KeyboardLayoutHypr.qml:230-240), only from settings.
+local kb_pin = ""
+
+local function pick_keyboard(devs)
+    local list = type(devs) == "table" and devs.keyboards or nil
+    if type(list) ~= "table" or #list == 0 then return nil end
+    -- The one already chosen, while it is still there.
+    if kb_pin ~= "" then
+        for _, k in ipairs(list) do
+            if type(k) == "table" and (k.name == kb_pin or k.identifier == kb_pin) then return k end
+        end
+        kb_pin = ""
+    end
+    local chosen
+    for _, k in ipairs(list) do
+        if type(k) == "table" and k.main == true then chosen = k break end
+    end
+    if not chosen then
+        for _, k in ipairs(list) do
+            local name = type(k) == "table" and tostring(k.name or "") or ""
+            if name ~= "" and not name:lower():find("virtual", 1, true)
+                and (k.active_keymap or k.layout) then
+                chosen = k
+                break
+            end
+        end
+    end
+    chosen = chosen or list[1]
+    if type(chosen) == "table" then kb_pin = tostring(chosen.name or chosen.identifier or "") end
+    return chosen
+end
+
 local function layout()
     run("hyprctl", { "devices", "-j" }, function(out)
         if type(out) ~= "string" then return end
-        local short = shorten(out:match('"active_keymap"%s*:%s*"([^"]*)"'))
+        local ok, devs = pcall(json.decode, out)
+        if not ok then return end
+        local k = pick_keyboard(devs)
+        if type(k) ~= "table" then return end
+        local short = shorten(k.active_keymap or k.layout)
         if short then text.kb_layout = short end
+        local name = k.name or k.identifier or ""
+        if name ~= "" and name ~= text.kb_device then text.kb_device = name end
     end)
 end
 
@@ -1895,7 +1945,12 @@ local function watch_layout()
             return
         end
         if head ~= "activelayout" and head ~= "activelayoutv2" then return end
-        local short = shorten(payload:match("^[^,]*,%s*(.+)$"))
+        -- `activelayout>>device,Layout`: a helper's own chatter is not the layout in force, so an
+        -- event from a device the poll did not choose is left to the two-second pass, which asks
+        -- `hyprctl` for the whole list and knows which one counts.
+        local device, name = payload:match("^([^,]*),%s*(.+)$")
+        if text.kb_device ~= "" and device ~= nil and device ~= text.kb_device then return end
+        local short = shorten(name)
         if short and short ~= text.kb_layout then text.kb_layout = short end
     end, function()
         watcher = nil

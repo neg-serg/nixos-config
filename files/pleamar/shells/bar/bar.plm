@@ -320,6 +320,9 @@ scene bar {
     // is a badge at all is the logic's answer as a fact.
     text kb_badge = ""
     text kb_mode = ""
+    // The keyboard the indicator follows (`pick_keyboard` in bar.luau): the tooltip prints it, and
+    // the event socket only speaks for this device.
+    text kb_device = ""
     fact kb_badge_on = false
     // The weather capsule, filled by bar.luau from open-meteo through its own
     // on-disk cache: the WMO code as one of seven pictures, the readouts, and the wind
