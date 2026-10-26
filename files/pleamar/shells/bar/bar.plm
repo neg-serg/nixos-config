@@ -334,6 +334,12 @@ scene bar {
     text net.hiddify_icon = ""
     // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
     text kb_layout = ""
+    // The submap's glyph and name (`resize` -> ⇔), set by bar.luau from the compositor's socket.
+    // A live text cannot be compared in an expression (`text` is drawn, not asked), so whether there
+    // is a badge at all is the logic's answer as a fact.
+    text kb_badge = ""
+    text kb_mode = ""
+    fact kb_badge_on = false
     // The weather capsule, filled by bar.luau from open-meteo through its own
     // on-disk cache: the WMO code as one of seven pictures, the readouts, and the wind
     // arrow's angle (meteorological degrees + 180, where the wind blows TO).
@@ -1099,7 +1105,14 @@ scene bar {
             // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
-            image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim }
+            // While a submap is in force its glyph takes the keyboard picture's place (`✦` special,
+            // `⇔` resize, `▩` tiling, `🖼` wallpaper — `KeyboardLayoutHypr.qml:295-303`), in the
+            // accent. The reference instead grows its capsule and prints `glyph ⌨ layout`; here a
+            // row reads its child's `size:` once, when it lays the row out (bar.plm's own note on
+            // component sizes), so a capsule that grew and shrank again would not reflow — the mode
+            // is drawn in the 20 px the icon already owns, and the layout keeps its place.
+            image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim; show: not kb_badge_on }
+            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18; color: skin.accent; show: kb_badge_on }
             text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
