@@ -229,14 +229,29 @@ network, media, workspaces/window, tray list, notifications).
 
 ### The order the gaps fight each other in
 
-1. The tray: the engine's tray service reports 0 items while three StatusNotifier items are
-   registered with the watcher pleamar itself owns (`busctl` says 3, `sys.watch("tray")` in the bar
-   says 0, measured 2026-10-26), so nothing paints and the bar looks broken rather than unfinished.
-1. Tooltips: every capsule in the reference explains itself on hover (a title, a value, hints of
-   their own); the port has one 25 px line and no flip at the screen's edge.
-1. The pill: it is the only reminder the shell has, and its history still starts from nothing — the
-   reference's `pill-tracker.json` is never read.
-1. The settings surface: the widget order is the order the scene is written in (`bar.luau`'s
-   `WIDGETS`), so the reference's `panelLayout` cannot be honoured.
+1. The lock screen's own cost, at its own size. The preview says so itself:
+   `this scene does not keep up: 8.6 ms a frame against the 4.2 the screen gives` at 1280x720, and
+   the lock is a fullscreen glass card on a 4K monitor. A lock that stutters is the first thing a
+   session shows; measure `pleamar --report lock` on the real size before the login path is trusted
+   with it.
+1. The media capsule: the engine now answers `paused` and `can_go_next` (see the backlog), but no
+   scene declares them until the machine is switched to the patched build, so the capsule still
+   guesses "playing" from an empty title.
+1. The tray's depth: the engine hands `children` over and `open_tray_menu` drops them. Nothing on
+   this host nests, so it waits for an application that does.
+1. Two plugin tails that cost one approval round to close (below).
 1. Everything else in the tables above, with the settings surface folded into whichever widget is
    being ported.
+
+## Backlog: the work nobody is doing yet
+
+Written down 2026-10-26 so it is not rediscovered: each line says what to touch and how to know it
+is done. Nothing here is a defect in what ships today.
+
+| What                                                 | Where                                                                                                                                                                                                                                                                      | Done when                                                                                                                                |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Media capsule on `playing \|\| paused`**           | `packages/overlays/pleamar-media-state.patch` adds both fields to the engine; after the switch, `bar.plm`'s `service media { … }` declares `paused: bool; can_go_next: bool`, `bar.luau` drops the empty-title guess and the transport's next button follows `can_go_next` | `get media.paused` answers in the Live bar and the capsule survives a pause                                                              |
+| **Tray submenus**                                    | `bar.luau`'s `open_tray_menu` walks the top level only; the engine's node carries `children` (`src/platform/tray.rs:322`). A synthetic `com.canonical.dbusmenu` server (python, one parent with children) is the fixture this host lacks                                   | the fixture's submenu is drawn and its leaf activates                                                                                    |
+| **The lock's frame cost**                            | `scripts/measure.sh --scene lock --live` or `pleamar --report lock` on the locked session's size                                                                                                                                                                           | p95 inside the screen's own period at 3840x2160, the way the panels scene is (4.2 ms)                                                    |
+| **Genelec: `muted` across a scene restart**          | `lib/plugins/genelec/genelec.luau` persists `preMute`/`target` but not `muted`, so after a reload the capsule shows unmuted and the first press mutes again; and `fact.available` is `false` on the MIDI path where the reference says it is always available              | a mute survives `systemctl --user restart pleamar-bar` and one press unmutes                                                             |
+| **Fingerprint at the lock (a decision, not a task)** | the reference's `greeter/lock/pam/fprint.conf`; the port's `auth.check` is one PAM stack, so fprint means either a stack that tries the reader then the password, or a second ask beside it (`shells/lock/lock.luau`, the only reader of `text.password`)                  | the owner decides whether a finger may open the session at all; if yes, the stack falls back to the password and says which one was used |
