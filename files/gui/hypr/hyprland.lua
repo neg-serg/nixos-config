@@ -587,12 +587,21 @@ hl.bind(M4 .. "+" .. C .. "+period", hl.dsp.exec_cmd("timeout 3 quickshell ipc c
 hl.bind(M4 .. "+" .. C .. "+comma", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaPrev"))
 hl.bind(M4 .. "+" .. C .. "+equal", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC volumeStep -- 5"), { repeating = true })
 hl.bind(M4 .. "+" .. C .. "+minus", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC volumeStep -- -5"), { repeating = true })
-hl.bind(M4 .. "+space", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-close-all"), { locked = true })
-
--- --- Overlay dismissal (quickshell widgets) ---
--- Global fallback: M4+Escape or M4+Shift+K / M4+Shift+D
-hl.bind(M4 .. "+" .. SH .. "+k", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/dismiss-overlay"))
-hl.bind(M4 .. "+" .. SH .. "+d", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/dismiss-overlay"))
+-- What the shell has put on screen is dismissed over its own IPC: the notification centre takes
+-- `dismiss_all`, the drawer cards answer to `fact drawer none` (the panels scene's own words). The
+-- legacy path was a semaphore file that quickshell watched (`~/.cache/quickshell/notif-close-all`),
+-- and nothing reads it now — the port's scenes are the only shell running, so the bind talks to
+-- them directly. `M4+space` closes the cards, `M4+Shift+K` / `M4+Shift+D` are the same action under
+-- the names the old overlay fallback used.
+local function dismiss_shell()
+  return hl.dsp.exec_cmd(
+    'pleamar --say notifications "emit dismiss_all" >/dev/null 2>&1; '
+      .. 'pleamar --say panels "fact drawer none" >/dev/null 2>&1; true'
+  )
+end
+hl.bind(M4 .. "+space", dismiss_shell(), { locked = true })
+hl.bind(M4 .. "+" .. SH .. "+k", dismiss_shell())
+hl.bind(M4 .. "+" .. SH .. "+d", dismiss_shell())
 
 
 
