@@ -1070,7 +1070,10 @@ local function tip_line(i)
     elseif i == 1 then
         return "Workspace " .. (text.ws_label ~= "" and text.ws_label or "?")
     elseif i == 2 then
-        return "Keyboard layout " .. (text.kb_layout ~= "" and text.kb_layout or "?")
+        local line = "Keyboard layout " .. (text.kb_layout ~= "" and text.kb_layout or "?")
+        -- The reference's own hint (KeyboardLayoutHypr.qml:16): "Mode: <submap>".
+        if text.kb_mode ~= "" then line = line .. " · Mode: " .. text.kb_mode end
+        return line
     elseif i == 3 then
         -- ConnUi prints the pair as "<rx> / <tx>"; the tooltip says both, and under them the
         -- connection's state in the reference's own words (NetClusterCapsule.qml:229-245):
@@ -1838,6 +1841,22 @@ every(2000, layout)
 --
 -- `nc -U` writes one line per event and runs until the socket closes; re-arming after a
 -- second is the backoff the MPD flags plugin uses (lib/plugins/mpd/mpd.luau).
+-- A Hyprland submap is the reference's badge: `_submapGlyph` (KeyboardLayoutHypr.qml:295-303) knows
+-- four of them, and `_richLabel` prints that glyph in the accent before the layout, so the strip says
+-- which mode the keyboard is in. Hyprland announces it on the same socket the layout arrives on —
+-- `submap>>music` as it is entered, `submap>>` (nothing) as it ends — and `hyprctl submap` answers
+-- `default` for "no mode of its own".
+local SUBMAP_GLYPH = { special = "✦", resize = "⇔", tiling = "▩", wallpaper = "🖼" }
+local function set_submap(name)
+    name = tostring(name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "default" then name = "" end
+    if name ~= text.kb_mode then text.kb_mode = name end
+    local glyph = SUBMAP_GLYPH[name:lower()] or ""
+    if glyph ~= text.kb_badge then text.kb_badge = glyph end
+    -- The scene cannot ask a text whether it is empty, so the badge's presence is a fact.
+    if fact.kb_badge_on ~= (glyph ~= "") then fact.kb_badge_on = (glyph ~= "") end
+end
+
 local watcher = nil
 local function watch_layout()
     if watcher then return end
@@ -1845,6 +1864,10 @@ local function watch_layout()
     if type(dir) ~= "string" or type(sig) ~= "string" or dir == "" or sig == "" then return end
     local ok, handle = pcall(spawn, "nc", { "-U", dir .. "/hypr/" .. sig .. "/.socket2.sock" }, function(line)
         local head, payload = tostring(line):match("^([%w_]+)>>(.*)$")
+        if head == "submap" then
+            set_submap(payload)
+            return
+        end
         if head ~= "activelayout" and head ~= "activelayoutv2" then return end
         local short = shorten(payload:match("^[^,]*,%s*(.+)$"))
         if short and short ~= text.kb_layout then text.kb_layout = short end
@@ -1855,6 +1878,8 @@ local function watch_layout()
     if ok then watcher = handle end
 end
 watch_layout()
+-- The mode the session starts in, before any event: the socket only says what changes.
+run("hyprctl", { "submap" }, function(out) set_submap(out) end)
 
 -- ------------------------------------------------------------- system monitor
 -- QS Services/SystemMonitor.qml, same probe and same arithmetic: one dash and
