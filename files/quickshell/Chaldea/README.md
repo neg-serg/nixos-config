@@ -7,7 +7,9 @@ config so the designs can be tried and imported without the web generator.
 ## Provenance
 
 - Upstream: `Aleph1-9012/Chaldea`, revision `8b088b47bf7927b7c029d501eacecff4c53b7b32` (2026-10-12),
-  all 38 published widgets.
+  all 38 published widgets. Six of them — the quick-notes family — were dropped from this tree on
+  2026-10-26 (owner): no shell ever loaded them and the port has no notes feature. 32 remain, and
+  the six designs are in git history.
 - Generated 2026-10-16 with the upstream CLI at default settings: `make content` in the repository
   root (Rust packager), then `bun run export <widget-id> <output-dir>` inside `frontend/`.
 - Baseline: Quickshell 0.3.0 / Qt 6.11.2 (this host runs Quickshell 0.3.1).
@@ -48,8 +50,6 @@ The path is relative to the importing file. Customization properties sit at the 
 
 ## Behaviour notes
 
-- Quick notes hold their notes in memory only - there is no disk storage. A host can listen to
-  `notesEdited()` and read `snapshot()`.
 - Player exports use MPRIS in the native QML; the browser previews do not.
 - Lockscreen exports are visual components and demo interactions only: they do not authenticate
   users or lock the session.
@@ -60,12 +60,6 @@ The path is relative to the importing file. Customization properties sit at the 
 
 | Family          | Design                                      | Folder                                                 | Widget ID                                          |
 | --------------- | ------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------- |
-| Quick notes     | Notes a cassette                            | `quick-notes/cassette/`                                | `quick-notes-cassette`                             |
-| Quick notes     | Notes b index                               | `quick-notes/index/`                                   | `quick-notes-index`                                |
-| Quick notes     | Notes c console                             | `quick-notes/console/`                                 | `quick-notes-console`                              |
-| Quick notes     | Notes d ash                                 | `quick-notes/ash/`                                     | `quick-notes-ash`                                  |
-| Quick notes     | Notes preview                               | `quick-notes/preview/`                                 | `quick-notes-preview`                              |
-| Quick notes     | Notes refined                               | `quick-notes/refined/`                                 | `quick-notes-refined`                              |
 | Player          | Player directions / Ledger                  | `player/ledger/`                                       | `player-ledger`                                    |
 | Player          | Player directions / Matrix                  | `player/matrix/`                                       | `player-matrix`                                    |
 | Player          | Player directions / Rail                    | `player/rail/`                                         | `player-rail`                                      |
