@@ -600,9 +600,24 @@ end)
 
 -- The wheel turned over the volume capsule: one step per notch (+ is upwards;
 -- the step is the frozen QS one, not yet a settings key).
+--
+-- QS does not just add the step: `Audio.qml:43,81-88` rounds the level to whole
+-- percent and then to the nearest 5 (`roundToStep`), so the wheel lands on 0, 5, 10
+-- and never on 43 — and one notch on 43 goes to 50, because 48 rounds up. The engine
+-- only offers the relative `audio.step`, so the snap is computed here and the
+-- difference handed over; the service still clamps.
 -- (permissions: "audio", "audio.*")
+local function step5(pct, notches, step)
+    local target = math.floor((pct + (tonumber(notches) or 0) * step) / step + 0.5) * step
+    return math.max(0, math.min(100, target))
+end
+
 on("wheel_volume", function(notches)
-    sys.call("audio.step", notches * 0.05)
+    local cur = tonumber(audioNow.volume) or 0
+    local pct = math.max(0, math.min(100, math.floor(cur * 100 + 0.5)))
+    local target = step5(pct, notches, 5)
+    if target == pct then return end
+    sys.call("audio.step", target / 100 - cur)
 end)
 
 -- ------***---------------------- audio capsules
@@ -729,12 +744,14 @@ on("toggle_mic", function()
 end)
 
 -- The wheel over the microphone tile: QS's Microphone.qml calls
--- `changeMicVolume(notches * 0.05)`. The service has no `audio.input_step`, only
--- the absolute `audio.input(0..1)`, so the notch is added to the last sample here.
+-- `changeMicVolume(notches * 0.05)`, which goes through `Audio.setMicVolume` and its
+-- own 5 % snap (`Audio.qml:43,98-104`) — the same rule the sink follows above. The
+-- service has no `audio.input_step`, only the absolute `audio.input(0..1)`, so the
+-- notch is added to the last sample here.
 on("mic_step", function(notches)
     local cur = tonumber(audioNow.input) or 0
-    local next = math.max(0, math.min(1, cur + (tonumber(notches) or 0) * 0.05))
-    sys.call("audio.input", next)
+    local pct = math.max(0, math.min(100, math.floor(cur * 100 + 0.5)))
+    sys.call("audio.input", step5(pct, notches, 5) / 100)
 end)
 
 -- ------------------------------------------------------------ workspaces
