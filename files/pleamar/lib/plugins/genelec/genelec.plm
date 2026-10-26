@@ -32,7 +32,9 @@ library Genelec strict {
 
     // Its logic's, not the scene's: the host path, the state file's owner and
     // the VM MIDI bridge.
-    permissions { run: "genlc", "glm-vol", "glm-midi", "bash" }
+    // `files`/`files.write` are the plugin's own folder: the pre-mute volume lives there so a
+    // restart does not lose it (the QS service kept the same pair in its StateCache).
+    permissions { run: "genlc", "glm-vol", "glm-midi", "bash"; services: "files", "files.write" }
 
     // ------------------------------------------------------------- boundary
     // The target volume, whole dB (the QS displayDb/volume). The logic owns the
