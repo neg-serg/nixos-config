@@ -117,12 +117,20 @@ local function streakNow()
     if not taken then return 0 end
     local count = 1
     local cursor = today
+    local seenToday = false
     for _, entry in ipairs(history) do
-        if type(entry) ~= "table" or entry.taken ~= true then break end
-        local expected = prevDay(cursor)
-        if not expected or entry.date ~= expected then break end
-        count = count + 1
-        cursor = entry.date
+        if type(entry) ~= "table" then break end
+        -- An entry dated today is the state above, not the day before it: step over it once.
+        if entry.date == today and not seenToday then
+            seenToday = true
+        elseif entry.taken ~= true then
+            break
+        else
+            local expected = prevDay(cursor)
+            if not expected or entry.date ~= expected then break end
+            count = count + 1
+            cursor = entry.date
+        end
     end
     return count
 end
@@ -150,9 +158,13 @@ local function syncFromCalendar()
             local date = name:match("^pill%-(%d%d%d%d%-%d%d%-%d%d)%.ics$")
             if date then onDisk[date] = true end
         end
+        -- Today is the state above (`taken`/`takenAt`), never a history entry: a file dated today
+        -- means the pill is taken today, and an entry for it would eat the streak — `streakNow` walks
+        -- back from yesterday and would find today where it expects yesterday. An older state file
+        -- may carry such an entry (this sync wrote one before it knew better), so it is dropped.
         local merged, known = {}, {}
         for _, entry in ipairs(history) do
-            if type(entry) == "table" and type(entry.date) == "string" then
+            if type(entry) == "table" and type(entry.date) == "string" and entry.date ~= today then
                 known[entry.date] = true
                 -- A file on disk means the day was taken, whatever the state says.
                 if onDisk[entry.date] then entry.taken = true end
@@ -160,7 +172,11 @@ local function syncFromCalendar()
             end
         end
         for date in pairs(onDisk) do
-            if not known[date] then merged[#merged + 1] = { date = date, taken = true, takenAt = "" } end
+            if date == today then
+                if not taken then taken = true end
+            elseif not known[date] then
+                merged[#merged + 1] = { date = date, taken = true, takenAt = "" }
+            end
         end
         table.sort(merged, function(a, b) return a.date > b.date end)
         while #merged > HISTORY_MAX do table.remove(merged) end
