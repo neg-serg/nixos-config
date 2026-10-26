@@ -337,13 +337,16 @@ start_runner() {
       return 1
     fi
     RUNNER_UNIT="pleamar-snap-${SCENE_NAME}-$$"
+    # The scene keeps the sandbox's runtime dir (its socket lives there); systemd-run itself is told
+    # to find the user manager where the real one is, hence the prefix on the call below.
+    local scene_runtime="$XDG_RUNTIME_DIR"
     say "starting the scene as $RUNNER_UNIT (systemd-run --user)"
     XDG_RUNTIME_DIR="$LIVE_RUNTIME" systemd-run --user --unit="$RUNNER_UNIT" --collect --quiet \
       --property=StandardOutput="append:$SCENE_LOG" \
       --property=StandardError="append:$SCENE_LOG" \
       --setenv=HOME="$HOME" --setenv=XDG_CONFIG_HOME="$XDG_CONFIG_HOME" \
       --setenv=XDG_DATA_HOME="$XDG_DATA_HOME" --setenv=XDG_CACHE_HOME="$XDG_CACHE_HOME" \
-      --setenv=XDG_STATE_HOME="$XDG_STATE_HOME" --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+      --setenv=XDG_STATE_HOME="$XDG_STATE_HOME" --setenv=XDG_RUNTIME_DIR="$scene_runtime" \
       --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
       "$PLEAMAR" --scene "$file" --no-hud --seconds "$budget" >> "$SCENE_LOG" 2>&1 || return 1
     return 0
