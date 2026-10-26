@@ -34,6 +34,7 @@ let
     hyprctl=${pkgs.hyprland}/bin/hyprctl
     jq=${pkgs.jq}/bin/jq
     up() { $hyprctl clients -j 2>/dev/null | $jq -e --arg c ${lib.escapeShellArg playerClass} 'any(.[]; .class == $c)' > /dev/null; }
+    shown() { $hyprctl monitors -j 2>/dev/null | $jq -e --arg w "special:${playerWorkspace}" 'any(.[]; .specialWorkspace.name == $w)' > /dev/null; }
 
     if ! up; then
       # Start detached, so the launcher does not hold the window.
@@ -46,7 +47,20 @@ let
       done
       up || exit 1
     fi
-    exec $hyprctl dispatch ${lib.escapeShellArg ''hl.dsp.workspace.toggle_special("${playerWorkspace}")''}
+    # The key owns both halves: the same press shows and hides the player.
+    $hyprctl dispatch ${lib.escapeShellArg ''hl.dsp.workspace.toggle_special("${playerWorkspace}")''}
+    # Hiding parks the player, and the press is finished: the pointer stays where the user left it.
+    # Showing hands the screen to the player, so the pointer goes with the screen — to the middle of
+    # the window, read out of the client list because nothing else lives on this workspace.
+    # `cursor:warp_on_change_workspace` does not do this for a special workspace (measured on
+    # 0.56.2: the toggle leaves the pointer where it was), so the move is explicit.
+    shown || exit 0
+    pos=$($hyprctl clients -j 2>/dev/null | $jq -r --arg c ${lib.escapeShellArg playerClass} \
+      '[.[] | select(.class == $c)][0] | "\(.at[0] + ((.size[0] / 2) | floor)) \(.at[1] + ((.size[1] / 2) | floor))"')
+    [ -n "$pos" ] || exit 0
+    x=''${pos% *}
+    y=''${pos#* }
+    $hyprctl dispatch "hl.dsp.cursor.move({ x = $x, y = $y })"
   '';
 in
 {
