@@ -3,7 +3,8 @@
 # the json form is tried first and used when the binary offers it).
 #
 # Starts one scene in a sandbox (pleamar-wm headless when available; with
-# --live, directly in the current session), waits until its socket answers
+# --live, directly in the current session; --systemd as a transient user unit,
+# which is the only way from a sandbox with no /dev/dri), waits until its socket answers
 # `pleamar --say NAME describe`, captures the tree into
 # tests/<scene>.describe.txt and kills what it started. Without --update the
 # captured tree is diffed against the committed snapshot and the script exits
@@ -27,6 +28,7 @@ TOOL_NAME="describe-snap"
 
 SNAP_UPDATE=0
 LIVE=0
+SYSTEMD=0
 KEEP_TMP=0
 SOFT=0
 TIMEOUT=15
@@ -83,6 +85,11 @@ Options:
   --live            use the ambient environment: starts a real surface in the
                     current session when WAYLAND_DISPLAY is set (killed after)
   --keep-tmp        keep the per-run temp dir for debugging
+  --systemd         start the scene as a transient --user unit (systemd-run) with
+                    the same hermetic HOME/XDG sandbox, and point it at the live
+                    compositor: the way to run from an agent sandbox, which cannot
+                    open /dev/dri or create Wayland buffers itself (the scene then
+                    draws briefly on the real screen)
   --soft            software Vulkan: export VK_ICD_FILENAMES=<lavapipe>
                     (default /run/opengl-driver/share/vulkan/icd.d/lvp_icd.x86_64.json)
                     unless VK_ICD_FILENAMES is already set; not the default
@@ -192,10 +199,23 @@ require_uint() {
 }
 
 setup_env() {
+  local live_display="${WAYLAND_DISPLAY:-}"
+  # What systemd-run and systemctl need to reach the user manager: the sandbox below moves
+  # XDG_RUNTIME_DIR off the real one, and the bus socket lives in the real one.
+  LIVE_RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
   TEMPROOT="$(mktemp -d "${PLEAMAR_TMPDIR:-/tmp}/pleamar-${TOOL_NAME}.XXXXXX")"
   if [ "$LIVE" -eq 1 ]; then
     warn "using the ambient environment (--live)"
     return 0
+  fi
+  # --systemd keeps the hermetic files (a snapshot of the defaults) and only borrows the
+  # compositor, because the scene cannot make a surface without one and this sandbox cannot make
+  # one itself. WAYLAND_DISPLAY has to be absolute: XDG_RUNTIME_DIR is the sandbox's from here on.
+  if [ "$SYSTEMD" -eq 1 ] && [ -n "$live_display" ]; then
+    case "$live_display" in
+      /*) ;;
+      *) live_display="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/$live_display" ;;
+    esac
   fi
   mkdir -p -- "$TEMPROOT/home" "$TEMPROOT/config" "$TEMPROOT/data" \
     "$TEMPROOT/cache" "$TEMPROOT/state" "$TEMPROOT/run" "$TEMPROOT/pleamar-config"
@@ -208,6 +228,10 @@ setup_env() {
   export XDG_RUNTIME_DIR="$TEMPROOT/run"
   export PLEAMAR_CONFIG="$TEMPROOT/pleamar-config"
   unset WAYLAND_DISPLAY WAYLAND_SOCKET 2> /dev/null || true
+  if [ "$SYSTEMD" -eq 1 ] && [ -n "$live_display" ]; then
+    export WAYLAND_DISPLAY="$live_display"
+    say "hermetic files, the live compositor ($WAYLAND_DISPLAY), run through systemd-run"
+  fi
   say "hermetic environment under $TEMPROOT"
 }
 
@@ -307,6 +331,23 @@ start_runner() {
     STARTED_PIDS+=("$RUNNER_PID")
     return 0
   fi
+  if [ "$SYSTEMD" -eq 1 ]; then
+    if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+      say "--systemd needs a compositor and WAYLAND_DISPLAY is unset"
+      return 1
+    fi
+    RUNNER_UNIT="pleamar-snap-${SCENE_NAME}-$$"
+    say "starting the scene as $RUNNER_UNIT (systemd-run --user)"
+    XDG_RUNTIME_DIR="$LIVE_RUNTIME" systemd-run --user --unit="$RUNNER_UNIT" --collect --quiet \
+      --property=StandardOutput="append:$SCENE_LOG" \
+      --property=StandardError="append:$SCENE_LOG" \
+      --setenv=HOME="$HOME" --setenv=XDG_CONFIG_HOME="$XDG_CONFIG_HOME" \
+      --setenv=XDG_DATA_HOME="$XDG_DATA_HOME" --setenv=XDG_CACHE_HOME="$XDG_CACHE_HOME" \
+      --setenv=XDG_STATE_HOME="$XDG_STATE_HOME" --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+      --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
+      "$PLEAMAR" --scene "$file" --no-hud --seconds "$budget" >> "$SCENE_LOG" 2>&1 || return 1
+    return 0
+  fi
   if [ -n "$PLEAMAR_WM" ]; then
     say "starting the scene in pleamar-wm headless"
     autostart="$TEMPROOT/autostart"
@@ -353,6 +394,10 @@ wait_for_socket() {
     if [ -n "$RUNNER_PID" ] && ! kill -0 "$RUNNER_PID" 2> /dev/null; then
       return 2
     fi
+    if [ -z "$RUNNER_PID" ] && [ -n "${RUNNER_UNIT:-}" ] \
+      && ! XDG_RUNTIME_DIR="$LIVE_RUNTIME" systemctl --user is-active --quiet "$RUNNER_UNIT"; then
+      return 2
+    fi
     sleep 0.25
     i=$((i + 1))
   done
@@ -366,7 +411,23 @@ stop_scene() {
   if [ -n "$RUNNER_PID" ]; then
     terminate "$RUNNER_PID"
   fi
+  if [ -n "${RUNNER_UNIT:-}" ]; then
+    XDG_RUNTIME_DIR="$LIVE_RUNTIME" systemctl --user stop "$RUNNER_UNIT" > /dev/null 2>&1 || true
+    RUNNER_UNIT=""
+  fi
   return 0
+}
+
+# What a snapshot is about is the tree — zones, roles, labels' own words — not the content those
+# labels happen to hold: the clock's minute, the track that is playing, the weather outside, the
+# level the speakers sit at. Those change between two runs of the same scene and would make every
+# verification a drift; they are masked in both shapes.
+mask_volatile() {
+  sed -e 's/[0-9][0-9]:[0-9][0-9]/HH:MM/g' \
+    -e 's/«Media: [^»]*»/«Media: …»/g' \
+    -e 's/«Weather [^»]*»/«Weather …»/g' \
+    -e 's/"-\{0,1\}[0-9][0-9]* dB"/"-NN dB"/g' \
+    -e '/Media: …/ s/ at [0-9][0-9]*,[0-9][0-9]* [0-9][0-9]*×[0-9][0-9]*/ at …,NN …×NN/g'
 }
 
 canonicalize() {
@@ -376,16 +437,15 @@ canonicalize() {
   case "$first" in
     "{" | "[")
       if [ -n "$JQ" ]; then
-        "$JQ" -S . "$file"
+        "$JQ" -S . "$file" | mask_volatile
       else
-        cat -- "$file"
+        mask_volatile < "$file"
       fi
       ;;
     *)
       # The 0.4.11 build answers `describe` with the human-readable tree (its
-      # json form arrived later): normalise trailing whitespace, mask the parts
-      # that move on their own (the clock in a label) and diff text.
-      sed -e 's/[[:space:]]*$//' -e 's/[0-9][0-9]:[0-9][0-9]/HH:MM/g' -- "$file"
+      # json form arrived later): normalise trailing whitespace and diff text.
+      sed -e 's/[[:space:]]*$//' -- "$file" | mask_volatile
       ;;
   esac
 }
@@ -451,6 +511,10 @@ while [ $# -gt 0 ]; do
       LIVE=1
       shift
       ;;
+    --systemd)
+      SYSTEMD=1
+      shift
+      ;;
     --keep-tmp)
       KEEP_TMP=1
       shift
@@ -510,25 +574,56 @@ if [ "$wait_rc" -ne 0 ]; then
 fi
 
 RAW="$TEMPROOT/describe.raw"
-FIRST=""
-if "$PLEAMAR" --say "$SCENE_NAME" describe json > "$RAW" 2> "$TEMPROOT/describe.err"; then
-  FIRST=$(head -c 1 -- "$RAW" 2> /dev/null || true)
-fi
-case "$FIRST" in
-  "{" | "[") : ;; # a machine-readable tree
-  *)
-    if ! "$PLEAMAR" --say "$SCENE_NAME" describe > "$RAW" 2> "$TEMPROOT/describe.err"; then
-      printf 'describe-snap: error: describe failed:\n' >&2
-      head -n 5 -- "$TEMPROOT/describe.err" >&2 2> /dev/null || true
-      show_log_tail
-      die "could not capture the agent tree"
-    fi
-    ;;
-esac
-
 OLD="$TEMPROOT/old.json"
 NEW="$TEMPROOT/new.json"
-if ! canonicalize "$RAW" > "$NEW" 2> "$TEMPROOT/jq.err"; then
+PREV="$TEMPROOT/preview.json"
+
+# The socket answering is not the tree being built: a scene says `describe` the moment its logic
+# runs, and the zones arrive a frame later (measured 2026-10-26: one run in four captured a bar with
+# its header only). So the tree is read until two reads in a row agree, and that is what is compared.
+capture_once() {
+  local first=""
+  if "$PLEAMAR" --say "$SCENE_NAME" describe json > "$RAW" 2> "$TEMPROOT/describe.err"; then
+    first=$(head -c 1 -- "$RAW" 2> /dev/null || true)
+  fi
+  case "$first" in
+    "{" | "[") : ;; # a machine-readable tree
+    *)
+      if ! "$PLEAMAR" --say "$SCENE_NAME" describe > "$RAW" 2> "$TEMPROOT/describe.err"; then
+        return 1
+      fi
+      ;;
+  esac
+  canonicalize "$RAW" > "$1" 2> "$TEMPROOT/jq.err"
+}
+
+settle_tries=0
+if ! capture_once "$PREV"; then
+  printf 'describe-snap: error: describe failed:\n' >&2
+  head -n 5 -- "$TEMPROOT/describe.err" >&2 2> /dev/null || true
+  show_log_tail
+  die "could not capture the agent tree"
+fi
+while :; do
+  settle_tries=$((settle_tries + 1))
+  if ! capture_once "$NEW"; then
+    printf 'describe-snap: error: describe failed:\n' >&2
+    head -n 5 -- "$TEMPROOT/describe.err" >&2 2> /dev/null || true
+    show_log_tail
+    die "could not capture the agent tree"
+  fi
+  if cmp -s "$PREV" "$NEW"; then
+    break
+  fi
+  if [ "$settle_tries" -ge 10 ]; then
+    say "the tree was still moving after $settle_tries reads; using the last one"
+    break
+  fi
+  cp -- "$NEW" "$PREV"
+  sleep 0.5
+done
+
+if [ ! -s "$NEW" ]; then
   printf 'describe-snap: error: the agent tree could not be normalised:\n' >&2
   head -n 5 -- "$RAW" >&2 2> /dev/null || true
   die "cannot snapshot the agent tree (--keep-tmp keeps the raw output)"

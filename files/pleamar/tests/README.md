@@ -37,9 +37,11 @@ shot.
 ### `scripts/describe-snap.sh` — agent-tree snapshots
 
 Starts one scene hermetically, waits until its socket answers `pleamar --say NAME describe` (retry
-until `--timeout`, default 15 s), captures the tree into `tests/<scene>.describe.txt`, then kills
-what it started. Without `--update` it diffs the captured tree against the committed snapshot and
-fails with a human-readable drift summary (changed top-level keys plus the first changed lines).
+until `--timeout`, default 15 s), reads the tree until two reads agree (the socket answers before
+the zones are built — one run in four used to capture a bar with its header only), captures it into
+`tests/<scene>.describe.txt`, then kills what it started. Without `--update` it diffs the captured
+tree against the committed snapshot and fails with a human-readable drift summary (changed top-level
+keys plus the first changed lines).
 
 ```sh
 files/pleamar/scripts/describe-snap.sh proof            # verify
@@ -52,6 +54,19 @@ scene in the tree it is selected automatically. The snapshot is canonicalised wi
 output is JSON and `jq` is available, so committed and fresh output are compared in the same shape.
 Missing snapshot or drift is exit 1. Other flags: `--update`, `--timeout N` (socket wait, default 15
 s), `--live`, `--keep-tmp`, `--soft`, `-h/--help`.
+
+Flags of `describe-snap.sh`: `--update`, `--scene NAME`, `--timeout N`, `--live`, `--systemd`,
+`--keep-tmp`, `--soft`, `-h/--help`.
+
+`--systemd` runs the scene as a transient `--user` unit (`systemd-run`) with the same hermetic
+HOME/XDG sandbox, pointed at the live compositor. It exists for agent sandboxes, which cannot open
+`/dev/dri` or create Wayland buffers themselves (Vulkan falls back to llvmpipe and the renderer
+panics on `get_image_drm_format_properties_ext`); the scene does draw on the real screen for the
+second or two it lives. Measured 2026-10-26, it is how the committed snapshots were regenerated.
+
+A snapshot is the tree, not the content the labels hold: the clock's minute, the track that is
+playing, the weather, the speakers' level and the media capsule's width follow the host, so
+`canonicalize` masks them (`HH:MM`, `«Media: …»`, `«Weather …»`, `"-NN dB"`, `at …,NN …×NN`).
 
 ### `scripts/measure.sh` — budget table
 
