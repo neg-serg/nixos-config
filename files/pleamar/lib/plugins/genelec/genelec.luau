@@ -167,8 +167,13 @@ on("toggle", function()
                 if code ~= 0 then log("genelec: glm-midi mute exited with " .. tostring(code)) end
             end)
         end
+        -- The MIDI path mutes at the adapter, so the volume never leaves the monitor: what has to
+        -- survive a restart is the same pair as on the host path (`preMute` above all), and this
+        -- branch returned before either was written.
+        if not muted then preMute = target end
         muted = not muted
         fact.muted = muted
+        persist()
         return
     end
     if muted then
