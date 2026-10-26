@@ -7,15 +7,23 @@
 //   two readouts — the arrow caption at 10 bold in the disabled tone, the value
 //   at 20 bold, the peak at 10 — one per direction;
 //   a plot with three horizontal grid rules, each labelled on the right with a
-//   compact value (`1.2K`), and two series as a translucent area under a bright
-//   line, upload first (1.4 wide) and download over it (2.0 wide);
-//   a footer line, `flow — see your network breathe · ~10 Hz · N s window`.
+//   compact value (`1.2K`), and two series as an area under a bright line,
+//   upload first (1.4 wide) and download over it (2.0 wide);
+//   a footer line, `flow — see your network breathe · ~4 Hz · 60 s window`.
 // The earlier version of this file drew a three-dimensional waterfall of
 // columns; the reference has no such thing.
 //
-// The data is the stream the reference reads — `flow -json-stream` at ~10 Hz,
-// one JSON record a line — spawned by panels.luau while this drawer is open and
-// killed when it closes. Colours: the reference chains blue to cyan for download
+// The series are drawn as the stream gives them: one `line` per pair of samples, so what is on
+// screen is the traffic's own curve and not a column built out of a second of it. The reference
+// also fills the area under each line; this card does not — a fill needs the whole silhouette of
+// the curve, which a scene cannot address while it moves (one `path` carries at most 64 written
+// points, and the curve is 240 short segments).
+//
+// The data is the stream the reference reads — `flow -json-stream`, one JSON
+// record a line, at 250 ms a record (the counters the kernel gives it move about
+// that often; at the program's own 100 ms the samples blink to zero between
+// reads — see panels.luau) — spawned while this drawer is open and killed when
+// it closes. Colours: the reference chains blue to cyan for download
 // and green to lime for upload; this palette has no green, so download is
 // `highlight` and upload `amber`.
 //
@@ -43,10 +51,6 @@ part NetPanel {
         let plot.w = 400
         let plot.y = 116
         let plot.h = 180
-        // Stretched over what there is, like `xAt(i)` in the reference: eleven
-        // samples span the plot, not a tenth of it.
-        let pitch = plot.w / max(flow.total, 1)
-        let column.w = plot.w / max(flow.total, 1)
 
         group {
             move: 0, (1 - lift) * 338 * scale
@@ -101,23 +105,19 @@ part NetPanel {
                 text "{net.ax2}" { at: 422, plot.y + plot.h - 2 * plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
                 text "{net.ax3}" { at: 422, plot.y + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
 
-                // Upload first, download over it, the way the reference stacks
-                // the two series. The area is the column, the line its top edge.
+                // Upload first, download over it, the way the reference stacks the two series, and
+                // one `line` per segment: the point `v.t0, v.rx0` is where the sample before this
+                // one sat in the window. Colours run along the window (blue to cyan, green to
+                // lime), as the reference's gradient does.
                 for v in flow {
-                    let t.up = if(flow.total > 1, v.index / (flow.total - 1), 0)
-                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.tx / max(net_max_tx, 1) * plot.h, 0)
-                        size: column.w, max(v.tx / max(net_max_tx, 1) * plot.h, 0)
-                        color: mix(up.a, up.b, t.up); opacity: 22%; show: v.tx > net_max_tx * 0.02 }
-                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.tx / max(net_max_tx, 1) * plot.h, 0)
-                        size: column.w, 1.4; color: mix(up.a, up.b, t.up); show: v.tx > net_max_tx * 0.02 }
+                    line { from: plot.x + v.t0 * plot.w, plot.y + plot.h - v.tx0 * plot.h
+                        to: plot.x + v.t1 * plot.w, plot.y + plot.h - v.tx1 * plot.h
+                        width: 1.4; color: mix(up.a, up.b, v.t1) }
                 }
                 for v in flow {
-                    let t.down = if(flow.total > 1, v.index / (flow.total - 1), 0)
-                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.rx / max(net_max_rx, 1) * plot.h, 0)
-                        size: column.w, max(v.rx / max(net_max_rx, 1) * plot.h, 0)
-                        color: mix(down.a, down.b, t.down); opacity: 28%; show: v.rx > net_max_rx * 0.02 }
-                    box { from: plot.x + v.index * pitch, plot.y + plot.h - max(v.rx / max(net_max_rx, 1) * plot.h, 0)
-                        size: column.w, 2; color: mix(down.a, down.b, t.down); show: v.rx > net_max_rx * 0.02 }
+                    line { from: plot.x + v.t0 * plot.w, plot.y + plot.h - v.rx0 * plot.h
+                        to: plot.x + v.t1 * plot.w, plot.y + plot.h - v.rx1 * plot.h
+                        width: 2; color: mix(down.a, down.b, v.t1) }
                 }
 
                 text "waiting for flow…" { at: 214, 206; anchor: center; family: "Iosevka"; size: 11; color: ink.off
@@ -125,7 +125,7 @@ part NetPanel {
                 text "{net.err}" { at: 214, 214; anchor: center; family: "Iosevka"; size: 10; color: warn }
 
                 // ----***------------------------- footer
-                text "flow — see your network breathe   ·   ~10 Hz   ·   {flow.total} samples" { at: 14, 318; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+                text "flow — see your network breathe   ·   ~4 Hz   ·   60 s window" { at: 14, 318; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
             }
         }
     }
