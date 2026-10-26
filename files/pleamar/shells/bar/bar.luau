@@ -1067,9 +1067,14 @@ end)
 
 local function tip_line(i)
     if i == 0 then
-        return tipClock ~= "" and tipClock or "Clock"
+        -- `compose("Clock", <date>, ["Click — calendar"])` (ClockWidget.qml:19-29): the card's first
+        -- line is the title and its value, then the hints, one per line.
+        return "Clock: " .. (tipClock ~= "" and tipClock or "—") .. "\nClick — calendar"
     elseif i == 1 then
-        return "Workspace " .. (text.ws_label ~= "" and text.ws_label or "?")
+        -- `compose("Workspace", <id>, [<description>, "Click — workspace overview"])`
+        -- (WsIndicator.qml:90-98). The port has no description table, so the hint is the click.
+        return "Workspace: " .. (text.ws_label ~= "" and text.ws_label or "?")
+            .. "\nClick — workspace overview"
     elseif i == 2 then
         local line = "Keyboard layout " .. (text.kb_layout ~= "" and text.kb_layout or "?")
         -- The reference's own hint (KeyboardLayoutHypr.qml:16): "Mode: <submap>".
@@ -1084,9 +1089,20 @@ local function tip_line(i)
             .. " down, " .. (text.net_tx ~= "" and (text.net_tx .. text.net_tx_unit) or "--") .. " up"
             .. "\n" .. net_state_line()
     elseif i == 4 then
-        local cpu = math.floor((fact.cpu or 0) * 100 + 0.5)
-        local ram = math.floor((fact.ram or 0) * 100 + 0.5)
-        return string.format("CPU %d %%, RAM %d %%", cpu, ram)
+        -- SystemMonitorCapsule.qml:22-35, `TooltipText.compose("Monitoring", "", hints)`: CPU, GPU
+        -- (only when the probe found one), RAM with the pair, the temperature, and the click line.
+        local lines = { "Monitoring" }
+        lines[#lines + 1] = string.format("CPU: %d%%", math.floor((fact.cpu or 0) * 100 + 0.5))
+        if fact["has.gpu"] == true then
+            lines[#lines + 1] = string.format("GPU: %d%%", math.floor((fact.gpu or 0) * 100 + 0.5))
+        end
+        lines[#lines + 1] = string.format("RAM: %d%% (%.1f / %d GiB)",
+            math.floor((fact.ram or 0) * 100 + 0.5), tonumber(fact.ram_used_gib) or 0,
+            tonumber(fact.ram_total_gib) or 0)
+        local c = (tonumber(fact.temp) or 0) * 70 + 30
+        lines[#lines + 1] = string.format("Temperature: %d°C", math.floor(c + 0.5))
+        lines[#lines + 1] = "Click — monitoring panel"
+        return table.concat(lines, "\n")
     elseif i == 6 then
         -- The media card: title — artist, then one compact line of album and player. The album
         -- is dropped when it repeats the artist (MPD often hands the same string for both).
@@ -1175,7 +1191,7 @@ local function showTip(i)
     -- Compact card: 12 px Iosevka is 6 px a character, 9 px of horizontal padding each side,
     -- 5 px above and below, 15 px per line. A line longer than the 260 px ceiling wraps, and the
     -- height follows the visible lines (up to the media card's three).
-    local TIP_CHAR, TIP_PAD_X, TIP_PAD_Y, TIP_LINE_H, TIP_MAX_W, TIP_MIN_W = 6, 18, 10, 15, 260, 160
+    local TIP_CHAR, TIP_PAD_X, TIP_PAD_Y, TIP_LINE_H, TIP_MAX_W, TIP_MIN_W = 6, 18, 10, 15, 300, 160
     local per_line = math.floor((TIP_MAX_W - TIP_PAD_X) / TIP_CHAR)
     local lines, widest = 0, 0
     for line in body:gmatch("[^\n]+") do
@@ -1183,7 +1199,7 @@ local function showTip(i)
         widest = math.max(widest, n)
         lines = lines + math.max(1, math.ceil(n / per_line))
     end
-    lines = math.min(3, math.max(1, lines))
+    lines = math.min(6, math.max(1, lines))
     fact["tip.lines"] = lines
     fact["tip.h"] = TIP_PAD_Y + lines * TIP_LINE_H
     fact["tip.w"] = math.min(TIP_MAX_W, math.max(TIP_MIN_W, math.floor(widest * TIP_CHAR) + TIP_PAD_X))
@@ -1940,6 +1956,9 @@ local function applyLine(line)
     elseif tag == "mem" and #n >= 2 then
         local total, avail = n[1], n[2]
         fact.ram = total > 0 and clamp01((total - avail) / total) or 0
+        -- The tooltip prints the pair beside the share, as the reference does ("7.2 / 16 GiB").
+        fact.ram_total_gib = math.floor(total / 1048576 + 0.5)
+        fact.ram_used_gib = math.floor((total - avail) / 104857.6 + 0.5) / 10
     elseif tag == "swap" and #n >= 2 then
         local total, used = n[1], n[2]
         fact["has.swap"] = total > 0

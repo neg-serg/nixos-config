@@ -210,12 +210,14 @@ scene bar {
     fact tip.lines = 1
     // Where the card hangs: the reference's tool window follows the capsule it belongs to
     // (`PanelTooltip` reads that capsule's `x`), and the capsule is wherever the pointer is.
-    // A scene cannot ask a zone where it sits, but it can read the pointer on the strip
-    // (`pointer.x`) and follow it, which is the same thing while the cursor is on the capsule.
+    // A scene cannot ask a zone where it sits, so it follows the mouse — and the mouse is
+    // `cursor.x`, not `pointer.x`: the tooltip surface takes no input (no zone on it), so the
+    // pointer is never "over" it and `pointer.x` there reads 0, which pinned every card to the
+    // strip's left edge. `cursor` is the mouse wherever it is, in the scene's own coordinates.
     // The card is clamped inside the strip when drawn: a tooltip that hangs off the monitor is
     // a tooltip nobody reads.
     prop tip.x = 960 ~calm
-    follow tip.x = pointer.x
+    follow tip.x = cursor.x
     // The tray's menu, open on the item `tray_index` names: the logic sets both when the
     // right button lands on an icon, and a press anywhere closes it (this scene's own
     // catcher, below).
@@ -362,6 +364,10 @@ scene bar {
     // there at all (the machine's GPU exposes a busy file, its swap is on).
     fact cpu = 0
     fact ram = 0
+    // The reference's RAM hint prints the pair as well as the share ("7.2 / 16 GiB"), so the probe
+    // publishes them: whole GiB for the total, tenths for what is in use.
+    fact ram_used_gib = 0
+    fact ram_total_gib = 0
     fact gpu = 0
     fact temp = 0
     fact io = 0
@@ -516,7 +522,12 @@ scene bar {
         // Full width, so the card inside can stand where the pointer is: a surface is placed by
         // literals (its own `margin` cannot read a fact), and the plate inside can. Nothing here
         // takes a press — no zone, so the surface's input region is empty.
-        size: full, 64
+        // 104 = six 15 px lines plus the card's 10 px of padding and the 4 px it floats above the
+        // bar: the monitoring tooltip is the tallest the reference has — its title, four hints and
+        // the click line (`TooltipText.compose`). The surface is bigger than any card it holds; the
+        // card's own height is `tip.h`, and nothing here takes a press, so the extra room is
+        // click-through.
+        size: full, 104
         anchor: bottom
         // Measured: with `margin: 0, 0, 29, 0` the card's bottom edge sat 38
         // logical px above the bar's top (the anchor is the work area, not the
@@ -530,16 +541,17 @@ scene bar {
         // The card's left edge, as wide as the logic says, centred on the pointer and kept 8 px
         // inside the strip.
         let card.left = clamp(tip.x - tip.w / 2, 8, screen.width - (tip.w + 8))
-        let card.top = 64 - tip.h - 4
+        let card.top = 104 - tip.h - 4
         body {
             color: skin.coal
             opacity: 96%
             border: 1, mix(skin.coal, skin.ink, 12%)
             box { from: card.left, card.top; size: tip.w, tip.h; corner: 5 }
         }
-        // Up to three lines: the media card is a title plus one metadata line, and a title long
-        // enough to wrap takes a third. The logic writes the newlines and sizes the card.
-        text "{tip_body}" { at: card.left + 9, card.top + 5; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: tip.w - 18; lines: 3 }
+        // Up to six lines, which is the reference's tallest (`TooltipText.compose`: a title with
+        // its value, then the hints, one per line — the monitoring capsule's title, four hints and
+        // a click line). The logic writes the newlines and sizes the card.
+        text "{tip_body}" { at: card.left + 9, card.top + 5; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: tip.w - 18; lines: 6 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
