@@ -57,19 +57,21 @@ language 0.4
 //     inside the component is not visible there (inline the expression); inside
 //     a `group` it is.
 //
-// Open, in order: the tray PAINTS NOTHING. Its list arrives (four items, the
-// right titles), its zones land where they should — `--say bar describe` shows
-// `trayhit#Right34#r0..r3 «Vicinae» «Steam» «TelegramDesktop» «neru» at 1766,-2
-// 25×29` — and a press emits `tray_press`, but neither the frame nor the picture
-// inside a `for`-built component reaches the screen: first a `for` inside a
-// `group`, then a record-taking component in a nested row (the idiom
-// shells/notifications uses), and an opaque warning-red box the size of the slot
-// painted nothing in both. What is left to try is a `for` straight in the row,
-// and asking upstream. Then the left capsules' widths and the gaps between them (the
-// port's keyboard capsule is visibly narrower than the reference's), the tray
-// (`service tray { list }`), the weather capsule (its fetch, JSON parse, the
-// km/h -> m/s conversion and the on-disk cache are written and were reverted
-// only because its columns did not land where the design numbers say), and a
+// The tray works, verified on 2026-10-26 (the comment here used to say it painted
+// nothing: that was true of the engine's tray list on 0.4.11 and is not true of
+// 0.4.29). A pointer in the bottom-right corner expands it (`on enter tray_reveal`
+// -> `tray_hot`), `--say bar describe` then shows `trayhit#Right44#r0..r3
+// «Vicinae» «neru» «TelegramDesktop» «Steam» at 1721,10 22×25`, the four icons
+// paint on their plates, and the right button opens the item's own dbusmenu tree —
+// `sys.ask("tray.menu", key)` answers it, the engine reading it off the bus, so no
+// `lib/plugins/traymenu` is needed: `get tm.count` was 8 for vicinae («Toggle
+// Vicinae», «Vicinae v0.29.0 [unknown]», a separator, «About Vicinae»,
+// «Settings…», …) and for Steam its five recent games and its Shop and Library entries.
+// What is still missing is depth: the menu is a flat list of at most 8 rows (the
+// surface is 300×176), so an item whose menu nests loses its children.
+//
+// Open after that: the left capsules' widths and the gaps between them (the
+// port's keyboard capsule is visibly narrower than the reference's), and a
 // `paused` field for the media capsule.
 //
 // Settings, merged by bar.luau from the scene's own settings.json:
