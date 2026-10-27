@@ -227,6 +227,17 @@ pill, spectrum, genelec), the palette pipeline and the theme scripts, the launch
 reference does not have at all), and the six services pleamar itself provides (clock, audio,
 network, media, workspaces/window, tray list, notifications).
 
+The panels scene was the heaviest thing in the shell for the wrong reason: its catcher — the
+full-monitor surface that dismisses a drawer on an outside press — stayed mapped for the life of
+the session, so a 3840×2110 layer with an empty draw was painted at the screen's rate for a scene
+with nothing on screen. What it cost was frames, not memory: **2423 frames in 10 s and 2 % of a
+core before, 305 and 0 % after** (measured live on 2026-10-27, the same drawer opened and closed
+in both runs; memory 79.8 MiB against 78.3, so a closed sheet keeps its buffers either way —
+`tests/evidence/2026-10-27-panels.*`). The catcher now opens with the drawer it catches and closes
+with it, a 1×1 keeper keeps the scene loaded, and the idle pace is 30 fps instead of 240 — 30 and
+not 1, because the pace is also how long a `fact drawer …` waits to be drawn: at 1 fps the card
+took **1.4 s** to appear, at 30 it takes ~40 ms.
+
 One plugin fact outlives its scene: the Genelec mute. `state.json` carries `muted` beside `preMute`
 since 2026-10-27, and `restore()` adopts it only together with a `preMute` to come back to. Verified
 live: a press that mutes, `systemctl --user restart pleamar-bar`, a press that lifts it — the file
