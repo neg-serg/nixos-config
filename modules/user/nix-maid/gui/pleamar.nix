@@ -442,6 +442,21 @@ lib.mkIf pleamarEnabled (
         pkgs.pleamar # Wayland desktop shell runtime (bars/launchers/notifications as scenes)
       ];
 
+      # The lock scene checks the password through the PAM service the engine names in its
+      # own source — `/etc/pam.d/pleamar`, `sys.ask("auth.check", …)` — and NixOS writes that
+      # file only for a service somebody declared. Without this the lock has nothing to ask:
+      # `auth.check` fails before it ever reaches a password.
+      #
+      # `unixAuth` is that password; `fprintAuth` is `control = "sufficient"` in nixpkgs, so
+      # the reader is tried first and the password decides when there is no finger — the order
+      # of the reference's `greeter/lock/pam/fprint.conf`. No reader is plugged into this host,
+      # so the finger half falls through every time (same story as the Caps Lock LED, which the
+      # kanata remap `caps → lctl` never lights).
+      security.pam.services.pleamar = {
+        unixAuth = true;
+        fprintAuth = true;
+      };
+
       systemd.user.services =
         pleamarUnits
         // pleamarOnDemandUnits
