@@ -218,15 +218,11 @@ end)
 -- there but stopped (mpc with an empty queue) is not enough, and that is what
 -- made the port draw a capsule the reference did not have. "There" is the
 -- reference's answer and not the service's: the player the rules below pick.
--- A pause has no field of its own: the media service answers `playing` and
--- nothing about paused. QS keeps the capsule through a pause (`isPaused`), so
--- the port holds `media.present` for a while after `playing` was last true —
--- long enough to cover a pause, short enough that a player left stopped lets
--- the capsule go. The proper fix is a `paused` field in the service
--- (~/src/pleamar, outside this tree); this is the cheap stand-in.
-local MEDIA_HOLD_MS = 10000
+-- The paused half used to be guessed: the service answered `playing` alone, so the port held
+-- `media.present` for ten seconds after `playing` was last true and let a longer pause fall
+-- through the gap. The engine answers `paused` since the `pleamar-media-state.patch` build, so
+-- the capsule is the reference's own `playing || paused` and nothing here holds a timer.
 local mediaShown = false
-local mediaHold = nil
 
 local function showMedia(on)
     if mediaShown == on then return end
@@ -444,23 +440,17 @@ sys.watch("media", function(m)
     -- Nobody the reference would show — no player on the bus, or every one of them ignored. The
     -- service still reports the ignored player it kept, so the capsule is taken down here.
     if picked == "" then
-        if mediaHold then
-            cancel(mediaHold)
-            mediaHold = nil
-        end
         showMedia(false)
         return
     end
     -- A player that is there is enough: QS's Media.qml keeps the capsule for
-    -- `isPlaying || isPaused`, and the paused half is what the reference shows
-    -- while the queue sits where the owner left it. The hold this used to arm
-    -- (ten seconds after a pause, then gone) was the one visible difference —
-    -- the cover disappeared from the bar whenever the music did.
+    -- `isPlaying || isPaused`, and the paused half is what the reference shows while the queue
+    -- sits where the owner left it. Both halves come from the player's own `PlaybackStatus`
+    -- now, so this is the reference's condition and not a timer's guess: a pause keeps the
+    -- cover, a stop takes it down at once.
     --
-    -- The media service reports `playing`, not a playback state, so "paused" and
-    -- "stopped" cannot be told apart here. A track that is still loaded is the
-    -- signal: an empty title means the queue let go of the song, and that is
-    -- when the capsule goes.
+    -- A stopped player also has an empty title — the queue let go of the song — and that keeps
+    -- the plate from standing blank for a player with nothing loaded.
     local title = (type(m.title) == "string") and m.title or ""
     local artist = (type(m.artist) == "string") and m.artist or ""
     -- How wide the track's box has to be, in design px. QS sizes the capsule by
@@ -477,11 +467,7 @@ sys.watch("media", function(m)
     local track = (artist ~= "" and title ~= "") and (artist .. " — " .. title) or title
     local n = utf8.len(track) or #track
     fact.media_w = math.min(MEDIA_TRACK_MAX, n * MEDIA_TRACK_CHAR)
-    if mediaHold then
-        cancel(mediaHold)
-        mediaHold = nil
-    end
-    showMedia(title ~= "")
+    showMedia((m.playing == true or m.paused == true) and title ~= "")
 end)
 
 -- The engine reports `media.position` when the player says something, and never polls it, so

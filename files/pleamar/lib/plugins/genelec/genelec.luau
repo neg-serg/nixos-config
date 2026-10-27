@@ -34,7 +34,9 @@ local muted = false
 -- The volume the host had before the mute. A local would forget it on every restart — the plugin
 -- is restarted whenever its scene reloads — and the next unmute would push -40 dB instead of what
 -- was playing. QS keeps the same pair in its StateCache (`genelecPreMuteVolume`,
--- Services/Genelec.qml:55-73); here it is the plugin's own `state.json`.
+-- Services/Genelec.qml:55-73); here it is the plugin's own `state.json`. The mute flag itself
+-- rides along: the monitors keep their state across the restart (the mute went to the adapter or
+-- to the host), so a plugin that came back unmuted would mute again on the first press.
 local STATE = "state.json"
 local preMute = target
 local busy = false
@@ -45,7 +47,7 @@ local quietTimer = nil
 local anchors = {}
 
 local function persist()
-    local ok, err = pcall(sys.call, "files.write", STATE, { preMute = preMute, target = target })
+    local ok, err = pcall(sys.call, "files.write", STATE, { preMute = preMute, target = target, muted = muted })
     if not ok then log("genelec: state not saved: " .. tostring(err)) end
 end
 
@@ -54,6 +56,12 @@ local function restore()
     if not ok or type(state) ~= "table" then return end
     local pre = tonumber(state.preMute)
     if pre and pre ~= preMute then preMute = pre end
+    -- Adopted only with a `preMute` beside it: an unmute with no level to come back to would push
+    -- the -40 default over whatever was playing.
+    if state.muted == true and pre then
+        muted = true
+        fact.muted = true
+    end
 end
 
 local function maxDb()
@@ -151,9 +159,13 @@ end
 on("turn", function(notches)
     if type(notches) ~= "number" then return end
     markInput()
+    -- A wheel turn unmutes (QS): the flag and the file follow, or a restart would come back
+    -- muted over monitors that are not. Written only on the flip — a notch is no reason to write.
+    local wasMuted = muted
     muted = false
     fact.muted = false
     setVolume(target + notches)
+    if wasMuted then persist() end
     scheduleCommit()
 end)
 
