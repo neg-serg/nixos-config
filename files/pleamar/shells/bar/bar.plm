@@ -196,17 +196,17 @@ scene bar {
     fact strip.hot = false
     // The tooltip: QS gives every capsule one on its own layer surface
     // (PanelTooltip + TooltipText.compose), and this bar's own surface is 25 px
-    // tall, so it cannot hold one. `tip.shown` is the cursor being on a capsule.
-    // Named without a dot on purpose: `pleamar --say bar fact tip.shown true`
-    // is refused ("I don't understand 'tip.shown'"), so a fact an outside tool
-    // may want to poke carries no dot.
+    // tall, so it cannot hold one.
+    // Named without a dot on purpose: `pleamar --say bar fact tip_open true`
+    // is refused ("I don't understand 'tip_open'"), so a fact an outside tool
+    // may want to poke carries no dot. `tip_open` is the card being up.
     fact tip_open = false
-    // The card's own size: one line is a compact strip, three are a short block. The surface is
-    // the ceiling (a `size:` takes a literal), so the logic writes the exact height: 25 px for
-    // one line, 40 for two, 55 for three, with 12 px type and 9/5 px padding.
-    fact tip.h = 25
-    fact tip.w = 160
-    fact tip.lines = 1
+    // And `tip_hover` is the surface the card is drawn on, up from the moment the pointer lands
+    // on a capsule to the moment it leaves: the card takes its size from a text measured in
+    // that surface (see `bartip`), and a measurement is a frame behind, so the room has to be
+    // there for the `tooltip.delay` the card waits before it shows.
+    fact tip_hover = false
+
     // Where the card hangs: the reference's tool window follows the capsule it belongs to
     // (`PanelTooltip` reads that capsule's `x`), and the capsule is wherever the pointer is.
     // A scene cannot ask a zone where it sits, so it follows the mouse — and the mouse is
@@ -254,8 +254,14 @@ scene bar {
     // stand in a six-row box. The surface is the tallest it may be; the plate inside it is
     // not.
     // The plate's width, from the longest line: a 300 px plate behind a two-word menu is a
-    // slab of empty glass.
-    fact tm.w = 300
+    // slab of empty glass. The logic keeps that one label (`tm_widest`) and the bar measures it
+    // in `tmw`, in the words the rows are drawn with — the same trick as the tooltip's card.
+    // The twin lives here, in the bar's own surface, and not in `barmenu`: a measure is filled
+    // by the frame before, and a surface that is up only while the menu is open has no frame
+    // before — the bar, always up, has, so the menu opens on a width it already knows.
+    measure tmw
+    text tm_widest = ""
+    text "{tm_widest}" { measure: tmw; show: false; at: 0, 0; anchor: left top; size: 14; color: skin.ink; family: "Iosevka"; lines: 1 }
     fact tm.panel_h = 0
     // The engine's id for each line: what `tray.menu_click` takes to click it.
     // A line that is a separator: no label, one hairline instead.
@@ -485,17 +491,15 @@ scene bar {
 
     // A named surface carries what it draws and shares every fact with the bar,
     // so a tooltip needs no round trip. `level: overlay` so it reads over the
-    // bar; `open:` so it costs nothing while nobody is on a capsule.
+    // bar; `open:` so it costs nothing while nobody is on a capsule. It is up while the pointer is
+    // on a capsule (`tip_hover`) and the card inside it waits for the reference's delay
+    // (`tip_open`): a card that took its size from a text has to be measured where it is drawn,
+    // so the room is there for a frame before the card is.
     //
-    // IT DOES NOT SHOW YET, and the reason is the bar's own surface: pleamar
-    // sizes surfaces in LOGICAL px while their content is drawn at `ui` 1.15, so
-    // this 25-logical surface holds only 21.7 design px. The reference gets away
-    // with a 26-logical capsule because its content surface is panelHeight 25
-    // plus the hotzone 9 * 1.15 = 10, ~34 logical tall, and only the reserve is
-    // 25. The renderer says so itself, once: "a drawing is cut: it needs 2 px
-    // above more than this 1920 x 25 surface has". So the next step is not this
-    // surface but the bar's: size it ~34 logical, reserve 25, and shift the whole
-    // design strip down by the hotzone (10 logical = 8.7 design).
+    // It used to be impossible to show at all: pleamar sizes surfaces in LOGICAL px while their
+    // content is drawn at `ui` 1.15, so a surface 25 px tall held only 21.7 design px and the
+    // card was cut ("a drawing is cut: it needs 2 px above more than this 1920 x 25 surface
+    // has"). The bar's own surface pays for the hotzone now, and this one is 104 tall.
     // Renamed away from `tip`: the engine build on this host hands a rectangle to `tip` and
     // `tray_menu`, which swallows the pointer. This name is nobody's rule, and the catcher
     // (the one surface that needs the rectangle) keeps its own.
@@ -505,9 +509,8 @@ scene bar {
         // takes a press — no zone, so the surface's input region is empty.
         // 104 = six 15 px lines plus the card's 10 px of padding and the 4 px it floats above the
         // bar: the monitoring tooltip is the tallest the reference has — its title, four hints and
-        // the click line (`TooltipText.compose`). The surface is bigger than any card it holds; the
-        // card's own height is `tip.h`, and nothing here takes a press, so the extra room is
-        // click-through.
+        // the click line (`TooltipText.compose`). The surface is the ceiling (a `size:` takes a
+        // literal) and the card is never taller than the six lines it may hold.
         size: full, 104
         anchor: bottom
         // Measured: with `margin: 0, 0, 29, 0` the card's bottom edge sat 38
@@ -515,24 +518,37 @@ scene bar {
         // surface), so it hugs it instead.
         margin: 0, 0, 0, 0
         level: overlay
-        // The logic keeps the card up for one compact line or the media card's two. The
-        // surface stays the full 64 px so the tallest card is never cut; the plate inside is
-        // only as tall as the fact and floats 4 px above the bar.
-        open: tip_open
-        // The card's left edge, as wide as the logic says, centred on the pointer and kept 8 px
-        // inside the strip.
-        let card.left = clamp(tip.x - tip.w / 2, 8, screen.width - (tip.w + 8))
-        let card.top = 104 - tip.h - 4
+        // Up while the pointer is on a capsule, and while the card is up: an outside tool may
+        // poke `tip_open` without ever hovering, and then there is nothing to measure in.
+        open: tip_hover or tip_open
+        // The card's own size, taken from the words rather than guessed. `tipw` is a hidden twin
+        // of the body, in the same font and with no `width:` of its own, left to take what its
+        // longest line needs — `show:` is an opacity, so the renderer still shapes it and fills
+        // the measure. `tiph` is the text that is drawn: it wraps at the card's own width and so
+        // says how tall the block came out. 9 px of padding each side, 5 above and below; the
+        // floor is the port's own 160 (the reference's `tooltip.min` is 20, and a two-word card
+        // that narrow reads as a dot) and 300 the widest before a line wraps.
+        measure tipw
+        measure tiph
+        let card.w = clamp(tipw.width + 18, 160, 300)
+        let card.h = tiph.height + 10
+        // The card's left edge, centred on the pointer and kept 8 px inside the strip.
+        let card.left = clamp(tip.x - card.w / 2, 8, screen.width - (card.w + 8))
+        let card.top = 104 - card.h - 4
         body {
             color: skin.coal
             opacity: 96%
+            show: tip_open
             border: 1, mix(skin.coal, skin.ink, 12%)
-            box { from: card.left, card.top; size: tip.w, tip.h; corner: 5 }
+            box { from: card.left, card.top; size: card.w, card.h; corner: 5 }
         }
+        // The measure of the widest line: the body's own words, the same font, no `width:` of its
+        // own, and never seen.
+        text "{tip_body}" { measure: tipw; show: false; at: 0, 0; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; lines: 6 }
         // Up to six lines, which is the reference's tallest (`TooltipText.compose`: a title with
         // its value, then the hints, one per line — the monitoring capsule's title, four hints and
-        // a click line). The logic writes the newlines and sizes the card.
-        text "{tip_body}" { at: card.left + 9, card.top + 5; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: tip.w - 18; lines: 6 }
+        // a click line). The logic writes the newlines; the card takes the size they measure.
+        text "{tip_body}" { measure: tiph; show: tip_open; at: card.left + 9, card.top + 5; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: card.w - 18; lines: 6 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -582,6 +598,13 @@ scene bar {
         margin: 0, 8, 0, 0
         level: overlay
         open: tray_open
+        // The plate's width, measured rather than guessed: `tmw` is the longest label, shaped in
+        // the rows' own face (14 px Iosevka), and 36 is what the plate and its rows take around
+        // it — 8 px of plate on each side, 10 px of row on each side. The plate hangs from the
+        // right, against the monitor's edge, so a short menu grows leftwards instead of walking
+        // away from the icon it came out of: 300 is this surface's own literal width.
+        let menu.w = clamp(tmw.width + 36, 120, 300)
+        let menu.left = 300 - menu.w
         body {
             // The plate the bar's capsules wear, not a lonely grey slab: the same coal at the
             // same 69 %, a faint rim, and the accent hairline down the left edge that the
@@ -591,19 +614,19 @@ scene bar {
             border: 1, mix(skin.coal, skin.ink, 8%)
             // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
             // it from the top left a gap between the menu and the strip it came out of.
-            box { from: 0, 468 - tm.panel_h; size: tm.w, tm.panel_h; corner: 8 }
-            box { from: 0, 474 - tm.panel_h; size: 2, tm.panel_h - 12; corner: 1; color: skin.accent }
+            box { from: menu.left, 468 - tm.panel_h; size: menu.w, tm.panel_h; corner: 8 }
+            box { from: menu.left, 474 - tm.panel_h; size: 2, tm.panel_h - 12; corner: 1; color: skin.accent }
         }
-        column { at: 8, 474 - tm.panel_h; size: tm.w - 16, tm.panel_h - 12; gap: 0
+        column { at: menu.left + 8, 474 - tm.panel_h; size: menu.w - 16, tm.panel_h - 12; gap: 0
             // One turn per row the item's menu has: a `group` so the wash, the label, the separator
             // rule and the zone lie on top of each other (a `row` would lay them out sideways, and
             // the zone used to land 284 px to the right of the line it was meant to catch).
             for m in tray_menu {
-                group line { size: tm.w - 16, 20
-                    box { from: 0, 0; size: tm.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == m.index + 1 }
-                    text m.label { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: tm.w - 36; lines: 1; show: not m.sep }
-                    box { from: 10, 10; size: tm.w - 36, 1; color: skin.ink; opacity: 12%; show: m.sep }
-                    zone box hit { from: 0, 0; size: tm.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button }
+                group line { size: menu.w - 16, 20
+                    box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == m.index + 1 }
+                    text m.label { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: menu.w - 36; lines: 1; show: not m.sep }
+                    box { from: 10, 10; size: menu.w - 36, 1; color: skin.ink; opacity: 12%; show: m.sep }
+                    zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button }
                     on enter hit { tm.hot = m.index + 1 }
                     on press hit { emit tray_click(m.index + 1) }
                 }
@@ -1454,7 +1477,11 @@ scene bar {
             // reference's `Media.qml` opens its panel, and the pointer on it asks for the card.
             zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Media: {media.title}"; role: button }
             on press z_track { emit open_media_panel }
-            on enter z_track { tip_open = true; emit tip(6) }
+            // `emit tip(6)` and nothing else: this rule used to set `tip_open` itself, which
+            // showed the card on the frame the surface came up — before the words had been
+            // measured in it. It waits the reference's 150 ms like every other capsule now, and
+            // that wait is what the measurement needs.
+            on enter z_track { emit tip(6) }
             on leave z_track { emit tip_hide }
 
             // The transport is not in here: it is its own pill, to the left of this
