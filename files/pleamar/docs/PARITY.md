@@ -227,6 +227,11 @@ pill, spectrum, genelec), the palette pipeline and the theme scripts, the launch
 reference does not have at all), and the six services pleamar itself provides (clock, audio,
 network, media, workspaces/window, tray list, notifications).
 
+One plugin fact outlives its scene: the Genelec mute. `state.json` carries `muted` beside `preMute`
+since 2026-10-27, and `restore()` adopts it only together with a `preMute` to come back to. Verified
+live: a press that mutes, `systemctl --user restart pleamar-bar`, a press that lifts it — the file
+ends at `muted: false`, which is reachable only if the restored flag was `true`.
+
 ### The order the gaps fight each other in
 
 1. The lock screen's own cost, at its own size. The preview says so itself:
