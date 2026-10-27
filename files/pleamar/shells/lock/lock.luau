@@ -163,26 +163,6 @@ on("fact:locked", function(v)
     if v == true then kb.start() else kb.stop() end
 end)
 kb.start()
-    if kb then return end
-    local ok, id = pcall(spawn, "pleamar-kbdlayout", {}, kb_line, function() kb = nil end, { stdin = "open" })
-    if not ok or not id then
-        log("lock: the keyboard worker did not start")
-        return
-    end
-    kb = id
-    write(id, '{"cmd":"subscribe","topic":"layout","interval_ms":' .. KB_INTERVAL .. '}\n')
-end
-
-on("toggle_layout", function()
-    if not kb then return end
-    write(kb, '{"cmd":"switch","device":"current","direction":"next"}\n')
-end)
-
--- The lock exists while the session is locked; the worker goes when the lock does.
-on("fact:locked", function(v)
-    if v == true then kb_start() else kb_stop() end
-end)
-kb_start()
 
 -- Give the caret to the field as soon as there is a surface to hold it, and
 -- again after every answer: the screen is the only way in.
