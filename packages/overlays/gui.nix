@@ -56,7 +56,11 @@ in
   # nothing (pleamar-dbusmenu.patch). And what the media service tells a scene: `playing` is a
   # bool, so a paused player and a stopped one look alike and a bar cannot keep its capsule through
   # a pause the way the reference shell does (pleamar-media-state.patch adds `paused` and
-  # `can_go_next` beside `can_seek`).
+  # `can_go_next` beside `can_seek`). And the lock: the render thread starts before the
+  # platform has made the connection to ask with, its one request for `ext-session-lock` was
+  # refused and remembered as sent, so a scene whose only surface is the lock never locked
+  # anything and never painted (pleamar-lock-engage.patch makes the request repeatable and has
+  # the platform wake the render once it can take it).
   pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
       ./pleamar-cursor-shape.patch
@@ -64,6 +68,7 @@ in
       ./pleamar-dbusmenu.patch
       ./pleamar-closed-surface.patch
       ./pleamar-media-state.patch
+      ./pleamar-lock-engage.patch
     ];
   });
 

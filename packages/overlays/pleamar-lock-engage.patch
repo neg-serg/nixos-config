@@ -1,0 +1,107 @@
+diff --git a/src/platform/mod.rs b/src/platform/mod.rs
+index 7e7502b..daeab8b 100644
+--- a/src/platform/mod.rs
++++ b/src/platform/mod.rs
+@@ -300,11 +300,19 @@ pub fn popup(k: usize, what: Option<([i32; 4], (f32, f32))>) {
+ /// On Wayland it's `ext-session-lock`: the compositor guarantees it, not the drawing.
+ /// On Windows it will be `LockWorkStation`, which brings its own screen; on macOS, the
+ /// screen saver with password.
+-pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), crate::scene::Screens)>) {
++/// It answers whether the request was taken: `false` is "not now", and the caller asks
++/// again on the next frame — the render starts before the platform has the connection to
++/// ask with, and a request believed taken would never be made.
++pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), crate::scene::Screens)>) -> bool {
+     #[cfg(target_os = "linux")]
+-    wayland::lock_screen(which, what);
++    {
++        wayland::lock_screen(which, what)
++    }
+     #[cfg(not(target_os = "linux"))]
+-    let _ = (which, what);
++    {
++        let _ = (which, what);
++        false
++    }
+ }
+ 
+ /// The render has let go of the sheet of surface `id`, and with it of its
+diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
+index a864088..4e6f323 100644
+--- a/src/platform/wayland.rs
++++ b/src/platform/wayland.rs
+@@ -1116,8 +1116,10 @@ static LOCKS: std::sync::OnceLock<Locks> = std::sync::OnceLock::new();
+ 
+ /// `Some((bounds, origin, screens))` engages the lock of surface `which`; `None`
+ /// releases it. The render calls it, having already released what it painted before releasing it.
+-pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>) {
+-    let Some(c) = LOCKS.get() else { return };
++pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>) -> bool {
++    // Before `LOCKS` is here there is nothing to ask with: the render started first, so it
++    // is told "not now" and asks again after the `ToRender::Repaint` sent below.
++    let Some(c) = LOCKS.get() else { return false };
+     let mut engaged = c.engaged.lock().unwrap();
+     let Some((bounds, origin, screens)) = what else {
+         if let Some(e) = engaged.take() {
+@@ -1126,16 +1128,16 @@ pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>
+             let _ = c.connection.flush();
+             println!("lock   · unlocked");
+         }
+-        return;
++        return true;
+     };
+     if engaged.is_some() {
+-        return;
++        return true;
+     }
+     let lock = match c.manager.lock(&c.qh) {
+         Ok(l) => l,
+         Err(_) => {
+             eprintln!("lock   · this compositor has no ext-session-lock: the session cannot be locked from here");
+-            return;
++            return false;
+         }
+     };
+     // One face per monitor, and all at once: until they're all there, the
+@@ -1158,6 +1160,7 @@ pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>
+     drop(monitors);
+     *engaged = Some(Engaged { which, bounds, origin, screens, lock, faces, retiring: Vec::new() });
+     let _ = c.connection.flush();
++    true
+ }
+ 
+ /// The lock face of one monitor: the scene, if `shows`, or else a plain black
+@@ -1653,6 +1656,11 @@ pub fn run_event_loop(wanted: Vec<Surface>, extra_height: u32, instance: wgpu::I
+     if state.placed.is_empty() {
+         eprintln!("warning: none of the monitors asked for ({:?}) is plugged in; waiting for one to appear", state.wanted.iter().map(|s| &s.screens).collect::<Vec<_>>());
+     }
++    // The render has been up since before `LOCKS` and the monitors were: what it asked
++    // for then was refused, and it asks again on the frame this wakes. Without it a scene
++    // whose only surface is a lock never asked at the right time and never painted again —
++    // it sat at rest with the session unlocked.
++    let _ = state.to_render.send(ToRender::Repaint);
+     while !state.quit {
+         // The compositor went away (its session ended): nothing left to show on.
+         if let Err(e) = events.blocking_dispatch(&mut state) {
+diff --git a/src/render.rs b/src/render.rs
+index e0686b5..fb0eef9 100644
+--- a/src/render.rs
++++ b/src/render.rs
+@@ -3526,9 +3526,16 @@ pub fn run(
+         for (k, wants) in want {
+             let was = locks.contains(&k);
+             if wants && !was {
+-                locks.push(k);
+                 let s = &scene.surfaces[k];
+-                crate::platform::lock_screen(k, Some(((s.width, s.height), s.origin, s.screens.clone())));
++                // Noted as asked for only once the platform took the request: this thread
++                // starts before the platform has made `LOCKS`, so the first ask can be
++                // refused — and a request remembered as sent was never made again, which
++                // left a scene whose only surface is the lock with nothing on screen at
++                // all. A refused one is asked for again on the next frame, and the platform
++                // sends `ToRender::Repaint` once it can ask (see `wayland.rs`).
++                if crate::platform::lock_screen(k, Some(((s.width, s.height), s.origin, s.screens.clone()))) {
++                    locks.push(k);
++                }
+             } else if !wants && was {
+                 locks.retain(|x| *x != k);
+                 sheets.retain(|l| !(l.view.surface == k && l.view.popup.is_none()));
