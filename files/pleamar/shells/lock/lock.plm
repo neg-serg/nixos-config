@@ -54,21 +54,28 @@ scene lock {
     // runtime with `pleamar --say lock "get locked"`.
     fact locked = true
     // The handover contract (README.md): the logic raises it once `auth.check`
-    // answered true, and the integration releases the session with
-    // `fact locked false` only after the marker is on disk.
+    // answered true, and the rule below the surface releases the session there and then. The
+    // upstream contract has an integration write the login marker and only then say
+    // `fact locked false`; this port has no such integration and no marker to write — the login
+    // phase belongs to the greeter, which is absent, and the port locks inside the session — so a
+    // lock that waited for one would never open on a right password. `unlocked` is raised in the
+    // `auth.check` success branch alone; an outside caller can still say
+    // `pleamar --say lock "emit unlocked"`, and `fact locked false` keeps working by hand.
     fact unlocked = false
 
     include "pages/state.plm"
 
-    // One lock face per monitor (`screens: each`); the protocol covers every
-    // other monitor with plain black by itself. `agent: hidden` and
-    // `captures: hidden` are the policy for the whole surface (§8.1): an agent
-    // never reads it, a screenshot never catches it.
+    // One lock face per monitor, which is what `kind: lock` is: the protocol gives it a copy on
+    // every monitor by itself and covers the others with plain black. `screens: each` here asked
+    // for four numbered copies instead, and the engine never matched them to the plugged outputs:
+    // `screens: each` made it wait for [0,1,2,3] and `lock.held` stayed 0 on a live session and in
+    // a headless sway alike. `screens:` belongs on this surface only to keep it off monitors
+    // (`screens: "DP-2"`). `agent: hidden` and `captures: hidden` are the policy for the whole
+    // surface (§8.1): an agent never reads it, a screenshot never catches it.
     surface screen_lock {
         kind: lock
         size: full, full
         open: locked
-        screens: each
         keyboard: exclusive while locked
         agent: hidden
         captures: hidden
@@ -77,4 +84,10 @@ scene lock {
         include "pages/clock.plm"
         include "pages/card.plm"
     }
+
+    // A right password releases the session: `open: locked` is the protocol's own switch, so
+    // clearing it makes the compositor drop `lock.held` and hand the desktop back. Before this
+    // rule the scene raised `unlocked` and waited for an integration that does not exist, which
+    // left a live session locked with no way in but `pleamar --say lock "fact locked false"`.
+    on unlocked { locked = false }
 }
