@@ -1163,6 +1163,13 @@ end
 -- QS's tooltip waits `tooltip.delayMs` (Settings/Theme.qml, 150 ms) before it appears, so a
 -- pointer crossing the strip does not flash a card per capsule. The scene emits `tip(n)` on
 -- enter and `tip_hide` on leave; a leave inside the 150 ms window cancels the pending card.
+--
+-- The card's size is not guessed here. The bar measures the text it draws (`measure tipw` and
+-- `tiph` in `bar.plm`), and a measure is what the frame before produced — so the surface the
+-- card lives on goes up at once (`tip_hover`) and the card follows after the delay: by the time
+-- it shows, the words have been shaped in the room it is drawn in. What was here before — six
+-- px a character, fifteen a line — was the advance of Iosevka at 12 px, and wrong for every
+-- face that is not: a tray title, a wide glyph, a Cyrillic word.
 local TIP_DELAY = 150
 local tipTimer = nil
 
@@ -1172,26 +1179,12 @@ local function hideTip()
         tipTimer = nil
     end
     fact.tip_open = false
+    fact.tip_hover = false
 end
 
 local function showTip(i)
-    local body = tip_line(i or 0)
-    text.tip_body = body
-    -- Compact card: 12 px Iosevka is 6 px a character, 9 px of horizontal padding each side,
-    -- 5 px above and below, 15 px per line. A line longer than the 260 px ceiling wraps, and the
-    -- height follows the visible lines (up to the media card's three).
-    local TIP_CHAR, TIP_PAD_X, TIP_PAD_Y, TIP_LINE_H, TIP_MAX_W, TIP_MIN_W = 6, 18, 10, 15, 300, 160
-    local per_line = math.floor((TIP_MAX_W - TIP_PAD_X) / TIP_CHAR)
-    local lines, widest = 0, 0
-    for line in body:gmatch("[^\n]+") do
-        local n = utf8.len(line) or #line
-        widest = math.max(widest, n)
-        lines = lines + math.max(1, math.ceil(n / per_line))
-    end
-    lines = math.min(6, math.max(1, lines))
-    fact["tip.lines"] = lines
-    fact["tip.h"] = TIP_PAD_Y + lines * TIP_LINE_H
-    fact["tip.w"] = math.min(TIP_MAX_W, math.max(TIP_MIN_W, math.floor(widest * TIP_CHAR) + TIP_PAD_X))
+    text.tip_body = tip_line(i or 0)
+    fact.tip_hover = true
     if tipTimer then cancel(tipTimer) end
     tipTimer = after(TIP_DELAY, function()
         tipTimer = nil
@@ -1532,9 +1525,11 @@ local function open_tray_menu(key)
     local ok, tree = pcall(function() return sys.ask("tray.menu", key) end)
     if not ok then
         tray_menu_ids = {}
-        model.tray_menu = { { label = tostring(tree), sep = false } }
+        local why = tostring(tree)
+        model.tray_menu = { { label = why, sep = false } }
         fact["tm.count"] = 1
         fact["tm.panel_h"] = 12 + 20
+        text.tm_widest = why
         setMenu(true)
         return
     end
@@ -1542,22 +1537,28 @@ local function open_tray_menu(key)
         sys.call("tray.context", key)
         return
     end
-    local rows, ids, widest = {}, {}, 0
+    -- The plate is sized by its widest label, and the scene measures it: the logic hands over the
+    -- one string to shape (`text.tm_widest`), not a width in pixels. The rows are drawn in
+    -- Iosevka, monospaced at half an em, so the longest label by characters is also the widest in
+    -- pixels; a proportional face would need every row measured and the widest of them taken,
+    -- which the language has no runtime `max` for.
+    local rows, ids, widest = {}, {}, ""
     for _, it in ipairs(tree) do
         if #rows >= TRAY_MENU_MAX then break end
         local label = (type(it) == "table" and it.label) or ""
         rows[#rows + 1] = { label = tostring(label), sep = type(it) == "table" and it.separator == true }
         ids[#ids + 1] = (type(it) == "table" and tonumber(it.id)) or 0
-        widest = math.max(widest, #label)
+        -- Characters, not bytes: a Cyrillic letter is two bytes, and counting those ranked a short
+        -- menu above a long one.
+        local n = utf8.len(label) or #label
+        if n > (utf8.len(widest) or #widest) then widest = label end
     end
     model.tray_menu = rows
     tray_menu_ids = ids
     local shown = #rows
     fact["tm.count"] = shown
     fact["tm.panel_h"] = 12 + 20 * shown
-    -- 6.5 px per character at size 13, plus the plate's 10 px of padding on each side, clamped
-    -- to what the surface can hold.
-    fact["tm.w"] = math.min(300, math.max(120, math.floor(widest * 6.5) + 28))
+    text.tm_widest = widest
     setMenu(true)
 end
 
