@@ -8,6 +8,7 @@ or re-checked. This serves a real player whose answers are arguments:
 
     files/pleamar/scripts/fixtures/mpris-stub.py --can-go-next false   # the dimmed one
     files/pleamar/scripts/fixtures/mpris-stub.py --can-go-next true    # the plain one
+    files/pleamar/scripts/fixtures/mpris-stub.py --can-go-prev false --can-play false --can-pause false
 
 It owns an `org.mpris.MediaPlayer2.stub` name, so the engine's `media` service follows
 it as the most recent player (the bar's own priority rules prefer an mpd that plays,
@@ -84,8 +85,14 @@ def main() -> int:
     ap.add_argument(
         "--can-go-next", choices=("true", "false"), default="false"
     )
+    ap.add_argument("--can-go-prev", choices=("true", "false"), default="true")
+    ap.add_argument("--can-play", choices=("true", "false"), default="true")
+    ap.add_argument("--can-pause", choices=("true", "false"), default="true")
     args = ap.parse_args()
     can_next = args.can_go_next == "true"
+    can_prev = args.can_go_prev == "true"
+    can_play = args.can_play == "true"
+    can_pause = args.can_pause == "true"
     track = "/org/stub/Track/1"
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -129,9 +136,9 @@ def main() -> int:
             "MinimumRate": dbus.Double(1.0),
             "MaximumRate": dbus.Double(1.0),
             "CanGoNext": dbus.Boolean(can_next),
-            "CanGoPrevious": dbus.Boolean(True),
-            "CanPlay": dbus.Boolean(True),
-            "CanPause": dbus.Boolean(True),
+            "CanGoPrevious": dbus.Boolean(can_prev),
+            "CanPlay": dbus.Boolean(can_play),
+            "CanPause": dbus.Boolean(can_pause),
             "CanSeek": dbus.Boolean(False),
             "CanControl": dbus.Boolean(True),
         },
