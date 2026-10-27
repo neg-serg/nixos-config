@@ -217,7 +217,11 @@ local function probe()
         busy = false
         local onHost = code == 0
         fact.midi = not onHost
-        fact.available = onHost
+        -- `available` is `adapterOnHost ? genlcOk : true` in the reference (Services/Genelec.qml:50):
+        -- through the bridge the tile is never dimmed, because an adapter inside the dockur VM is this
+        -- host's normal arrangement, not a failure. On the host path `onHost` *is* genlcOk, and a write
+        -- that fails there still takes the tile's ink away (`commitHost`).
+        fact.available = true
     end)
 end
 
