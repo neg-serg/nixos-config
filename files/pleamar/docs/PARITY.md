@@ -254,6 +254,33 @@ is done. Nothing here is a defect in what ships today.
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **The transport's next button on `can_go_next`**     | `packages/overlays/pleamar-media-state.patch` puts `can_go_next` on the engine and no scene declares it yet: the reference dims `MediaTransport`'s next button where the player answers `CanGoNext: false`                                                                                                | the button is dimmed for a player that cannot skip (`mpc` is one)                                                                        |
 | **Tray submenus**                                    | `bar.luau`'s `open_tray_menu` walks the top level only; the engine's node carries `children` (`src/platform/tray.rs:322`). A synthetic `com.canonical.dbusmenu` server (python, one parent with children) is the fixture this host lacks                                                                  | the fixture's submenu is drawn and its leaf activates                                                                                    |
-| **The lock's frame cost**                            | `scripts/measure.sh --scene lock --live` or `pleamar --report lock` on the locked session's size                                                                                                                                                                                                          | p95 inside the screen's own period at 3840x2160, the way the panels scene is (4.2 ms)                                                    |
+| **The lock's own engine path** (2026-10-27)          | two defects of the engine, measured — see "The lock as the engine runs it" below; nothing in this tree works around the second one                                                                                                                                                                        | a lock scene shows its card and `lock.held` reads 1                                                                                      |
+| **The lock's frame cost**                            | `scripts/measure.sh --scene lock --live` or `pleamar --report lock` on the locked session's size — it waits for the row above: a lock that never shows cannot be measured                                                                                                                                 | p95 inside the screen's own period at 3840x2160, the way the panels scene is (4.2 ms)                                                    |
 | **Genelec: `fact.available` on the MIDI path**       | `genelec.luau`'s `probe()` sets `fact.available = onHost`, while the reference's `Services/Genelec.qml:50` has `available: adapterOnHost ? genlcOk : true` — usable through the bridge. Nothing in the scene reads the fact, so the tile never dims the way the reference's icon does (`Genelec.qml:168`) | the fact is true on the MIDI path, and the tile's icon takes the reference's disabled tone while it is false                             |
 | **Fingerprint at the lock (a decision, not a task)** | the reference's `greeter/lock/pam/fprint.conf`; the port's `auth.check` is one PAM stack, so fprint means either a stack that tries the reader then the password, or a second ask beside it (`shells/lock/lock.luau`, the only reader of `text.password`)                                                 | the owner decides whether a finger may open the session at all; if yes, the stack falls back to the password and says which one was used |
+
+### The lock as the engine runs it (measured 2026-10-27)
+
+The scene is not what stops the lock; the engine is. Both runs below are on the live session, and
+the headless sway stand reproduces them.
+
+- **Nothing to place, nothing engaged.** `src/render.rs:3520` engages the lock from the render loop
+  once the surface's `open:` is true, and `src/platform/wayland.rs:893-897` skips lock surfaces
+  while placing, on purpose. A scene whose only surface is the lock therefore leaves `placed` empty,
+  and the warning that follows — `none of the monitors asked for ([All]) is plugged in`
+  (`wayland.rs:1635`) — is a false lead: it is about placement, not about monitors.
+  `WAYLAND_DEBUG=1` shows the engine binding `ext_session_lock_manager_v1` and then never sending
+  `lock` at all: the render never runs, so nothing engages, and `lock.held` stays 0 while `locked`
+  reads true.
+- **Given something to place, it paints and dies.** The same scene with one extra closed surface
+  (`surface idle { size: 1, 1; level: background; open: false }`) gets a running render, and the
+  process aborts while painting the lock face: `dmabuf::export_as` →
+  `ash … get_image_drm_format_modifier_properties_ext`,
+  `thread caused non-unwinding panic. aborting.`, core dumped.
+- **`describe` cannot see it.** `pleamar --say lock describe` answers `nothing on screen`, which is
+  the protocol working: a `kind: lock` surface and `agent: hidden` are never told. A lock scene with
+  no surface at all looks exactly as healthy from outside.
+- **The password has no stack either.** The engine asks `/etc/pam.d/pleamar`; this host has no such
+  file — `security.pam.services.pleamar` is declared nowhere — so `auth.check` cannot answer even
+  with a lock on screen. No fingerprint reader is plugged in, so the reference's `fprint.conf` has
+  nothing to talk to here.
