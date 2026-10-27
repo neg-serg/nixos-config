@@ -1,0 +1,22 @@
+diff --git a/src/dmabuf.rs b/src/dmabuf.rs
+index 20ceeb1..47986d1 100644
+--- a/src/dmabuf.rs
++++ b/src/dmabuf.rs
+@@ -675,6 +675,17 @@ unsafe fn export_image(hal: &wgpu::hal::vulkan::Device, extent: wgpu::Extent3d,
+     let raw = hal.raw_device();
+     let instance = hal.shared_instance().raw_instance();
+     let pd = hal.raw_physical_device();
++    // `ash` resolves these entry points when the device is made and aborts when the extension is
++    // not there, which is what a software ICD did inside `export_as` instead of letting the caller
++    // fall back to the system's swapchain (measured 2026-10-28: llvmpipe, no readable
++    // `/dev/dri`, `Unable to load get_image_drm_format_modifier_properties_ext`, abort). Asked of
++    // what the device enabled, before anything is created.
++    let enabled = hal.enabled_device_extensions();
++    for want in [c"VK_EXT_image_drm_format_modifier", c"VK_EXT_external_memory_dma_buf"] {
++        if !enabled.iter().any(|e| *e == want) {
++            return Err(format!("the driver has no {}: it cannot hand frames to the compositor as dmabufs", want.to_string_lossy()));
++        }
++    }
+     // Of the layouts the compositor takes, those the card paints in (or reads
+     // from), of one plane.
+     let (usage, need) = if read {

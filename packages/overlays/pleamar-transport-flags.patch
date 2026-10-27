@@ -1,0 +1,48 @@
+diff --git a/src/language/vocabulary.rs b/src/language/vocabulary.rs
+index 36da3e9..dfe20df 100644
+--- a/src/language/vocabulary.rs
++++ b/src/language/vocabulary.rs
+@@ -135,7 +135,7 @@ pub const SERVICES: &[(&str, &[&str])] = &[
+     ("brightness", &["present", "level"]),
+     ("network", &["online", "kind", "name", "strength", "wifi", "error", "networks"]),
+     ("bluetooth", &["present", "powered", "discovering", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),
+-    ("media", &["playing", "paused", "title", "artist", "album", "length", "position", "rate", "can_seek", "can_go_next", "art", "player", "players"]),
++    ("media", &["playing", "paused", "title", "artist", "album", "length", "position", "rate", "can_seek", "can_go_next", "can_go_prev", "can_play", "can_pause", "art", "player", "players"]),
+     ("window", &["title", "class", "monitor", "fullscreen", "maximized", "list"]),
+     ("thumbnails", &["list", "capturing"]),
+     ("workspaces", &["active", "list"]),
+diff --git a/src/platform/mpris.rs b/src/platform/mpris.rs
+index 8e35b33..6f26c82 100644
+--- a/src/platform/mpris.rs
++++ b/src/platform/mpris.rs
+@@ -1,7 +1,7 @@
+ //! What is playing, through MPRIS: the D-Bus agreement that players and browsers
+ //! follow on Linux. On Windows it will be SMTC; on macOS, MediaRemote.
+ //!
+-//! `{ playing, title, artist, album, length, position, rate, can_seek, art, player, players }`. If there are
++//! `{ playing, paused, title, artist, album, length, position, rate, can_seek, can_go_next, can_go_prev, can_play, can_pause, art, player, players }`. If there are
+ //! several, the one chosen with `media.choose` is reported, while it is there; otherwise the one
+ //! that is playing; if none is, the one that played last; and before anything has played, the
+ //! first. With no players, `player = ""`. `players` is all of them, `{ id, name, playing,
+@@ -180,7 +180,7 @@ fn jump(to: f64, now: f64, length: f64, track: Option<OwnedObjectPath>) -> Jump
+ fn now(c: &Connection) -> SysValue {
+     let field = |k: &str, v: SysValue| (k.to_owned(), v);
+     let Some((name, p, playing)) = active_player(c) else {
+-        return SysValue::Map(vec![field("playing", SysValue::Bool(false)), field("paused", SysValue::Bool(false)), field("title", SysValue::Text(String::new())), field("artist", SysValue::Text(String::new())), field("album", SysValue::Text(String::new())), field("length", SysValue::Num(0.0)), field("position", SysValue::Num(0.0)), field("rate", SysValue::Num(1.0)), field("can_seek", SysValue::Bool(false)), field("can_go_next", SysValue::Bool(false)), field("art", SysValue::Text(String::new())), field("player", SysValue::Text(String::new())), field("players", SysValue::List(Vec::new()))]);
++        return SysValue::Map(vec![field("playing", SysValue::Bool(false)), field("paused", SysValue::Bool(false)), field("title", SysValue::Text(String::new())), field("artist", SysValue::Text(String::new())), field("album", SysValue::Text(String::new())), field("length", SysValue::Num(0.0)), field("position", SysValue::Num(0.0)), field("rate", SysValue::Num(1.0)), field("can_seek", SysValue::Bool(false)), field("can_go_next", SysValue::Bool(false)), field("can_go_prev", SysValue::Bool(false)), field("can_play", SysValue::Bool(false)), field("can_pause", SysValue::Bool(false)), field("art", SysValue::Text(String::new())), field("player", SysValue::Text(String::new())), field("players", SysValue::List(Vec::new()))]);
+     };
+     let metadata: HashMap<String, OwnedValue> = p.get_property("Metadata").unwrap_or_default();
+     let from_metadata = |k: &str| SysValue::Text(metadata.get(k).map(text).unwrap_or_default());
+@@ -198,6 +198,12 @@ fn now(c: &Connection) -> SysValue {
+         // What a transport button needs to know: `CanGoNext` is the spec's, and a player that does
+         // not answer it is taken to have nothing after this song.
+         field("can_go_next", SysValue::Bool(p.get_property::<bool>("CanGoNext").unwrap_or(false))),
++        // The rest of what a transport's buttons are gated on (`MediaTransport.qml:71-76`): a
++        // player that answers nothing is taken to be able to go back and to play, which is what the
++        // spec's defaults say.
++        field("can_go_prev", SysValue::Bool(p.get_property::<bool>("CanGoPrevious").unwrap_or(true))),
++        field("can_play", SysValue::Bool(p.get_property::<bool>("CanPlay").unwrap_or(true))),
++        field("can_pause", SysValue::Bool(p.get_property::<bool>("CanPause").unwrap_or(true))),
+         field("art", SysValue::Text(metadata.get("mpris:artUrl").map(text).map_or_else(String::new, |u| art_path(&u)))),
+         field("player", SysValue::Text(name.trim_start_matches(PREFIX).split('.').next().unwrap_or_default().to_owned())),
+         field("players", all_players(c)),
