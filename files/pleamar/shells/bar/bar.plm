@@ -71,8 +71,7 @@ language 0.4
 // surface is 300×176), so an item whose menu nests loses its children.
 //
 // Open after that: the left capsules' widths and the gaps between them (the
-// port's keyboard capsule is visibly narrower than the reference's), and a
-// `paused` field for the media capsule.
+// port's keyboard capsule is visibly narrower than the reference's).
 //
 // Settings, merged by bar.luau from the scene's own settings.json:
 //   edge          top | bottom, default bottom   — applied: the `bar_edge` fact
@@ -643,7 +642,10 @@ scene bar {
     // reading is a text.
     service clock as now { time: text; date: text; minute: number }
     // The track the capsule shows (QS: MusicManager.trackTitle/trackArtist).
-    service media { playing: bool; title: text; artist: text; album: text; player: text; position: number; length: number }
+    // `playing` and `paused` are the player's own `PlaybackStatus` (the engine's
+    // `pleamar-media-state.patch`): with one bool for both, a paused track and a stopped
+    // one looked alike and the capsule had to guess its visibility from an empty title.
+    service media { playing: bool; paused: bool; title: text; artist: text; album: text; player: text; position: number; length: number }
     service workspaces { list: spaces }
     service audio { volume: number; muted: bool; input: number; input_muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
