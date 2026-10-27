@@ -26,7 +26,7 @@ index 7e7502b..daeab8b 100644
  
  /// The render has let go of the sheet of surface `id`, and with it of its
 diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
-index a864088..4e6f323 100644
+index a864088..0f07c24 100644
 --- a/src/platform/wayland.rs
 +++ b/src/platform/wayland.rs
 @@ -1116,8 +1116,10 @@ static LOCKS: std::sync::OnceLock<Locks> = std::sync::OnceLock::new();
@@ -82,6 +82,21 @@ index a864088..4e6f323 100644
      while !state.quit {
          // The compositor went away (its session ended): nothing left to show on.
          if let Err(e) = events.blocking_dispatch(&mut state) {
+@@ -1740,6 +1748,14 @@ impl smithay_client_toolkit::session_lock::SessionLockHandler for State {
+     }
+     /// It didn't grant it —there's already another locker—, or it has ended it.
+     fn finished(&mut self, _: &Connection, _: &QueueHandle<Self>, _: smithay_client_toolkit::session_lock::SessionLock) {
++        // The compositor has finished this lock, so the proxy is gone: asking it to `unlock` is
++        // `wl_display: error 0: invalid object`, and it takes the whole connection — and the scene,
++        // with the session unlocked and no way to ask again — down with it. What was engaged is let
++        // go of here, so the release that follows the `LockScreen(false)` below finds nothing to
++        // unlock and the scene goes on to lock again when the scene asks.
++        if let Some(c) = LOCKS.get() {
++            c.engaged.lock().unwrap().take();
++        }
+         eprintln!("lock   · the compositor did not grant the lock, or ended it: is another locker running?");
+         let _ = self.to_render.send(ToRender::LockScreen(false));
+     }
 diff --git a/src/render.rs b/src/render.rs
 index e0686b5..fb0eef9 100644
 --- a/src/render.rs
