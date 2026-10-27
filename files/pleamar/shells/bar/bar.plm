@@ -236,10 +236,12 @@ scene bar {
     fact tray_trigger = false
     // The open menu's rows, flattened by the logic from `sys.ask("tray.menu", key)` — the
     // engine reads `com.canonical.dbusmenu` and answers a list of records, which a scene
-    // The rows of the tray's menu, as many as the item's tree has (the engine flattens it, so
-    // there is no depth to draw): one record per line, `sep` marking a separator. A scene cannot
-    // hold a table, so the logic publishes this and keeps the ids to itself.
-    model tray_menu max 22 { label: text; sep: bool }
+    // The rows of the tray's menu: one record per line, `sep` marking a separator, `depth` how
+    // far into a submenu the line sits (`lib/menu.plm` indents by it), and `sub` a line that has
+    // children under it — the reference draws a chevron beside those and opens a flyout, and a
+    // menu here is one plate, so the flyout is its rows indented under their parent. A scene
+    // cannot hold a table, so the logic publishes this and keeps the ids to itself.
+    model tray_menu max 22 { label: text; sep: bool; depth: number; sub: bool }
 
     // The tray item the menu belongs to: a text, because an event carries numbers only and
     // the logic cannot read the model. `tray_id` and `tray_title` are what `window-activate`
@@ -263,6 +265,8 @@ scene bar {
     text tm_widest = ""
     text "{tm_widest}" { measure: tmw; show: false; at: 0, 0; anchor: left top; size: 14; color: skin.ink; family: "Iosevka"; lines: 1 }
     fact tm.panel_h = 0
+    // How deep the deepest drawn row sits: the plate has to be wide enough for its indent.
+    fact tm.indent = 0
     // The engine's id for each line: what `tray.menu_click` takes to click it.
     // A line that is a separator: no label, one hairline instead.
     // What QS's WsIndicator shows for the ACTIVE workspace: its icon (a Nerd
@@ -603,7 +607,8 @@ scene bar {
         // it — 8 px of plate on each side, 10 px of row on each side. The plate hangs from the
         // right, against the monitor's edge, so a short menu grows leftwards instead of walking
         // away from the icon it came out of: 300 is this surface's own literal width.
-        let menu.w = clamp(tmw.width + 36, 120, 300)
+        // The indent of a submenu row costs width too: `tm.indent` is the deepest row's depth.
+        let menu.w = clamp(tmw.width + 36 + tm.indent * 12, 120, 300)
         let menu.left = 300 - menu.w
         body {
             // The plate the bar's capsules wear, not a lonely grey slab: the same coal at the
@@ -624,8 +629,11 @@ scene bar {
             for m in tray_menu {
                 group line { size: menu.w - 16, 20
                     box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == m.index + 1 }
-                    text m.label { at: 10, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: menu.w - 36; lines: 1; show: not m.sep }
+                    text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
                     box { from: 10, 10; size: menu.w - 36, 1; color: skin.ink; opacity: 12%; show: m.sep }
+                    // A line with children under it: the reference's own chevron, and no action of
+                    // its own — a dbusmenu parent is a container, not something to click.
+                    text "›" { at: menu.w - 30, 10; anchor: right center; size: 14; color: skin.ink.dim; family: "Iosevka"; show: m.sub }
                     zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button }
                     on enter hit { tm.hot = m.index + 1 }
                     on press hit { emit tray_click(m.index + 1) }
