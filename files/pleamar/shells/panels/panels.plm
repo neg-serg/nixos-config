@@ -90,22 +90,36 @@ scene panels {
     // keyboard: exclusive while the surface exists (drawer != none): Escape must
     // reach the open drawer without a click first, and a modal drawer is the one
     // moment the shell may hold the keyboard. Compositor-level binds still fire.
-    // The surface stays for the life of the session, not only while a drawer is
-    // open: a scene whose only surface is closed exits a second or so after it
-    // starts, and then the fact that opens a drawer has to land in the handful
-    // of milliseconds between the end of the load and that exit — which is why
-    // `pleamar --say panels "fact drawer media"` from outside used to work only
-    // by luck. An open surface that draws nothing costs nothing extra: the cards
-    // are hidden by their own `show:`, and the catcher below is hidden too, so
-    // with no drawer there is no zone to catch a press.
+    // An open surface that draws nothing is not free, and what it costs is frames: the catcher
+    // below was mapped for the life of the session, so a 3840x2110 layer with an empty draw was
+    // blitted at the screen's 240 Hz for a scene with nothing on screen (measured 2026-10-27,
+    // same drawers opened and closed in both runs: 2423 frames in 10 s and 2 % of a core before,
+    // 305 and 0 % after; the memory did not move — 79.8 MiB against 78.3 — because a closed
+    // sheet keeps its buffers either way). So the catcher is up exactly while a drawer is, and
+    // what keeps the scene alive with every surface closed is the one-pixel keeper under it: a
+    // scene whose last surface closes exits a second or so later, and then
+    // `pleamar --say panels "fact drawer media"` would have to land in the handful of
+    // milliseconds between the end of the load and that exit.
     // A surface per drawer, sized exactly to the card it draws — the reference's
     // shape (one window per popup), and the only arrangement where the glass
     // edge falls on the card's own boundary: drawn inside one big layer,
     // Hyprland's blur leaves a visible seam around the plate.
+    // The keeper: one pixel, no body, no input — the scene's reason to stay loaded while no
+    // drawer is open. Behind everything, so it is never in the way. What it costs is the pace
+    // declared on the catcher below, not a rate of its own: `rate:` is the scene's, and the
+    // surface that drives the pace only decides which frames are asked for.
+    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each }
+
     // The unnamed full-monitor surface is the catcher — the press outside that
-    // dismisses the drawer. It paints nothing.
+    // dismisses the drawer. It paints nothing, so it is up only while it has something to
+    // catch; a closed surface takes no press (the engine empties its input region).
+    // `rate:` is the scene's own pace, so the idle rate lives here: 30 frames a second while no
+    // drawer is open (nothing of this scene is on screen) and the monitor's the moment one is.
+    // Without it the scene kept asking for the screen's 240 Hz to draw nothing. Not lower: the
+    // pace is also how long a `fact drawer …` waits before it is drawn, and at 1 fps the card
+    // took 1.4 s to appear (measured; 30 fps is ~40 ms).
     surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
-              keyboard: on_demand; open: true }
+              keyboard: on_demand; open: drawer != none; rate: 240, 30 while drawer == none }
 
     // The panel rectangles are the reference's own numbers, read from its popups and
     // not eyeballed. The units matter and cost a round: a surface's `size:`/`margin:`
