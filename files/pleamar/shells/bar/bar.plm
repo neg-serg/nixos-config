@@ -668,7 +668,10 @@ scene bar {
     // `playing` and `paused` are the player's own `PlaybackStatus` (the engine's
     // `pleamar-media-state.patch`): with one bool for both, a paused track and a stopped
     // one looked alike and the capsule had to guess its visibility from an empty title.
-    service media { playing: bool; paused: bool; title: text; artist: text; album: text; player: text; position: number; length: number }
+    // `can_go_next` is MPRIS's `CanGoNext`, from the same patch: the reference's next button is
+    // `enabled: MusicManager.canGoNext` (`MediaTransport.qml:81`), and `mpc` is a player that
+    // answers `false`.
+    service media { playing: bool; paused: bool; title: text; artist: text; album: text; player: text; position: number; length: number; can_go_next: bool }
     service workspaces { list: spaces }
     service audio { volume: number; muted: bool; input: number; input_muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
@@ -1526,8 +1529,14 @@ scene bar {
                     image icon_play { size: 14, 14; tint: pick(media.hot, skin.ink, skin.accent); show: media.playing }
                     image icon_pause { size: 14, 14; tint: pick(media.hot, skin.ink, skin.accent); show: not media.playing }
                 }
+                // A player with nothing after this song keeps the button and loses its ink:
+                // the reference paints `Color.withAlpha(textPrimary, 0.35)` there
+                // (`MediaTransport.qml:111-113`), and the port's own `text.disabled` says the
+                // same thing without an alpha at the drawing site. `pick` is by place, so the
+                // first argument is the one a false condition takes.
                 row btn_next { size: btn, strip; align: center
-                    image icon_next { size: 14, 14; tint: pick(media.hot, skin.ink, skin.accent) }
+                    image icon_next { size: 14, 14
+                        tint: pick(media.can_go_next, ink.off, pick(media.hot, skin.ink, skin.accent)) }
                 }
             }
             // The capsule itself: hovering it asks for the media card (title and metadata).
@@ -1540,7 +1549,10 @@ scene bar {
             // inside it.
             zone box z_prev { from: pad, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Previous track"; role: button }
             zone box z_play { from: pad + btn + gap, 0; size: btn, strip; corner: corner; cursor: pointer; label: "Play or pause"; role: button }
-            zone box z_next { from: pad + 2 * (btn + gap), 0; size: btn, strip; corner: corner; cursor: pointer; label: "Next track"; role: button }
+            zone box z_next { from: pad + 2 * (btn + gap), 0; size: btn, strip; corner: corner
+                cursor: pick(media.can_go_next, default, pointer)
+                label: pick(media.can_go_next, "Next track (this player cannot skip)", "Next track")
+                role: button }
             // Entering the strip keeps it up: the cursor has to be able to walk from the
             // capsule onto the controls without the pill vanishing under it.
             on enter z_prev { emit media_hover(true) }
@@ -1551,7 +1563,9 @@ scene bar {
             on leave z_next { emit media_hover(false) }
             on press z_prev { emit prev }
             on press z_play { emit toggle }
-            on press z_next { emit next }
+            // The reference's MouseArea is `enabled: canGoNext`, so a press on a dimmed button
+            // does nothing at all rather than reaching a player that will refuse it.
+            on press z_next while media.can_go_next { emit next }
         }
     }
 
