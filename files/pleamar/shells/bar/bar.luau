@@ -1462,6 +1462,12 @@ local function raise_tray()
     end)
 end
 
+-- The menu's rows, as the last `open_tray_menu` published them, and the ids that go with them: the
+-- scene draws the model and hands back a row number, and a model is one way — the id that
+-- `tray.menu_click` wants stays here, at the same place in this list.
+local TRAY_MENU_MAX = 22
+local tray_menu_ids = {}
+
 -- The right button on an icon: the item's own menu, drawn by the bar. The scene hands over
 -- the record's index; the key that names the bus name and the object path is looked up here.
 -- A second press closes it, and a left click does too.
@@ -1514,19 +1520,13 @@ end)
 -- One menu, opened for an item's key: the item's own tree when the engine can read it, the
 -- application's own context menu otherwise (`tray.context`). The tray icons' right button and
 -- the Hiddify slot of the network capsule both land here.
--- The menu's rows, as the last `open_tray_menu` published them, and the ids that go with them: the
--- scene draws the model and hands back a row number, and a model is one way — the id that
--- `tray.menu_click` wants stays here, at the same place in this list.
-local TRAY_MENU_MAX = 22
-local tray_menu_ids = {}
-
 local function open_tray_menu(key)
     if type(key) ~= "string" or key == "" then return end
     local ok, tree = pcall(function() return sys.ask("tray.menu", key) end)
     if not ok then
         tray_menu_ids = {}
         local why = tostring(tree)
-        model.tray_menu = { { label = why, sep = false } }
+        model.tray_menu = { { label = why, sep = false, depth = 0, sub = false } }
         fact["tm.count"] = 1
         fact["tm.panel_h"] = 12 + 20
         text.tm_widest = why
@@ -1542,21 +1542,41 @@ local function open_tray_menu(key)
     -- Iosevka, monospaced at half an em, so the longest label by characters is also the widest in
     -- pixels; a proportional face would need every row measured and the widest of them taken,
     -- which the language has no runtime `max` for.
+    --
+    -- The tree, not its top level: `tray.menu` answers every node with its `children`
+    -- (src/platform/tray.rs:322), and the reference opens those as a submenu flyout
+    -- (`SubmenuHost`). A menu here is one plate and `lib/menu.plm` indents by `depth`, so a
+    -- submenu is drawn as its rows indented under the parent, with the parent carrying the
+    -- reference's chevron and no action of its own — a dbusmenu parent is a container.
     local rows, ids, widest = {}, {}, ""
-    for _, it in ipairs(tree) do
-        if #rows >= TRAY_MENU_MAX then break end
-        local label = (type(it) == "table" and it.label) or ""
-        rows[#rows + 1] = { label = tostring(label), sep = type(it) == "table" and it.separator == true }
-        ids[#ids + 1] = (type(it) == "table" and tonumber(it.id)) or 0
-        -- Characters, not bytes: a Cyrillic letter is two bytes, and counting those ranked a short
-        -- menu above a long one.
-        local n = utf8.len(label) or #label
-        if n > (utf8.len(widest) or #widest) then widest = label end
+    local deepest = 0
+    local function walk(nodes, depth)
+        for _, it in ipairs(nodes) do
+            if #rows >= TRAY_MENU_MAX then return end
+            if type(it) == "table" then
+                local label = tostring(it.label or "")
+                local kids = type(it.children) == "table" and it.children or {}
+                local under = 0
+                for _, c in ipairs(kids) do
+                    if type(c) == "table" and c.separator ~= true then under = under + 1 end
+                end
+                rows[#rows + 1] = { label = label, sep = it.separator == true, depth = depth, sub = under > 0 }
+                ids[#ids + 1] = (under == 0 and tonumber(it.id)) or 0
+                -- Characters, not bytes: a Cyrillic letter is two bytes, and counting those ranked a
+                -- short menu above a long one.
+                local n = utf8.len(label) or #label
+                if n > (utf8.len(widest) or #widest) then widest = label end
+                if depth > deepest then deepest = depth end
+                if under > 0 then walk(kids, depth + 1) end
+            end
+        end
     end
+    walk(tree, 0)
     model.tray_menu = rows
     tray_menu_ids = ids
     local shown = #rows
     fact["tm.count"] = shown
+    fact["tm.indent"] = deepest
     fact["tm.panel_h"] = 12 + 20 * shown
     text.tm_widest = widest
     setMenu(true)
