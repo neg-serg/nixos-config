@@ -141,10 +141,13 @@ Absent outright: `SubmenuHost`'s search field inside a submenu, the number-roll 
 Chaldea's 340 art files (by design: the behaviour lives in `panels/pages/media.plm` and
 `shells/lock`).
 
-Partial, with the gap named above: connectivity/VPN, weather values (no network on this host), the
-greeter's theme variants, the helper set, and the settings surface. Notifications are no longer on
-this list: the history is the scene's own `history.json` (INTERFACES §6), it survives a restart, and
-since 2026-10-28 the toasts, the windows and the cards' clipping were measured again.
+Still partial, with the gap named in the tables below: the build status capsule and its popup, the
+number-roll animations and the bar's slide reveals, the text shadow with its contrast guard, the
+media capsule's transport reveal and hover-open delay, one-overlay-at-a-time registration, the
+now-playing popup as a window of its own, the settings surface, and in the lock tree the fingerprint
+PAM path, user and session selection, the nixie lab and the greeter's theme variants. Connectivity,
+weather values and the notification history are no longer on this list — they were closed on
+2026-10-26/28, and the notifications pass of 2026-10-28 is written up above.
 
 Not to be ported for now, by the owner's word (2026-10-28): the nixie glass on the lock's clock. The
 lock draws a slab, and that is where it stays until it is asked for again — the same call as the
