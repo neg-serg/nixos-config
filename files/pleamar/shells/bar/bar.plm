@@ -241,7 +241,7 @@ scene bar {
     // children under it — the reference draws a chevron beside those and opens a flyout, and a
     // menu here is one plate, so the flyout is its rows indented under their parent. A scene
     // cannot hold a table, so the logic publishes this and keeps the ids to itself.
-    model tray_menu max 22 { label: text; sep: bool; depth: number; sub: bool }
+    model tray_menu max 64 { label: text; sep: bool; depth: number; sub: bool }
 
     // The tray item the menu belongs to: a text, because an event carries numbers only and
     // the logic cannot read the model. `tray_id` and `tray_title` are what `window-activate`
@@ -595,12 +595,14 @@ scene bar {
     // cannot live inside a 39 logical px strip. Rows come from the item's own `menu` tree
     // (the engine's record carries it), two levels deep.
     surface barmenu {
-        // 468 = 12 px of plate padding plus 22 rows of 20, the model's own ceiling — a literal,
+        // 300 = 12 px of plate padding plus 14 rows of 20 — the rows that fit at once, the same
+        // count the reference shows. A longer menu scrolls inside the plate instead of losing its
+        // tail (bar.luau's `TRAY_MENU_ROWS` clamps `tm.panel_h` to those 14 rows). A literal,
         // because a surface's `size:` takes numbers and nothing else (checked: `size: 300, menu.h`
         // is `expected a number here`). The plate and everything in it hang from the bottom, so a
         // short menu leaves the space above it empty — and empty means no zone, which the engine
         // turns into a click-through region.
-        size: 300, 468
+        size: 300, 300
         anchor: bottom_right
         // No bottom margin: `margin` is measured from the work area, whose lower edge is already
         // the bar's top — 39 px more lifted the menu clear off the strip it belongs to.
@@ -615,6 +617,10 @@ scene bar {
         // The indent of a submenu row costs width too: `tm.indent` is the deepest row's depth.
         let menu.w = clamp(tmw.width + 36 + tm.indent * 12, 120, 300)
         let menu.left = 300 - menu.w
+        // The surface's height and the plate's: the plate hangs from the bottom, so everything is
+        // measured down from `menu.h`, and the rows start 6 px inside it.
+        let menu.h = 300
+        let menu.top = menu.h - tm.panel_h
         body {
             // The plate the bar's capsules wear, not a lonely grey slab: the same coal at the
             // same 69 %, a faint rim, and the accent hairline down the left edge that the
@@ -624,10 +630,14 @@ scene bar {
             border: 1, mix(skin.coal, skin.ink, 8%)
             // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
             // it from the top left a gap between the menu and the strip it came out of.
-            box { from: menu.left, 468 - tm.panel_h; size: menu.w, tm.panel_h; corner: 8 }
-            box { from: menu.left, 474 - tm.panel_h; size: 2, tm.panel_h - 12; corner: 1; color: skin.accent }
+            box { from: menu.left, menu.top; size: menu.w, tm.panel_h; corner: 8 }
+            box { from: menu.left, menu.top + 6; size: 2, tm.panel_h - 12; corner: 1; color: skin.accent }
         }
-        column { at: menu.left + 8, 474 - tm.panel_h; size: menu.w - 16, tm.panel_h - 12; gap: 0
+        // `view:` is the window the rows are seen through and `content:` the whole list, so a menu
+        // longer than 14 rows is scrolled with the wheel (a layout with `view:` is dragged and
+        // wheeled by the engine) instead of ending at the plate's edge.
+        column { at: menu.left + 8, menu.top + 6; gap: 0
+                 view: menu.w - 16, tm.panel_h - 12; content: 20 * tm.count
             // One turn per row the item's menu has: a `group` so the wash, the label, the separator
             // rule and the zone lie on top of each other (a `row` would lay them out sideways, and
             // the zone used to land 284 px to the right of the line it was meant to catch).

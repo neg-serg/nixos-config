@@ -1488,7 +1488,11 @@ end
 -- The menu's rows, as the last `open_tray_menu` published them, and the ids that go with them: the
 -- scene draws the model and hands back a row number, and a model is one way — the id that
 -- `tray.menu_click` wants stays here, at the same place in this list.
-local TRAY_MENU_MAX = 22
+-- How many rows the menu can hold at all (a tray menu that long is a menu nobody reads), and how
+-- many of them fit in the plate at once: the rest scroll, so a longer menu is reachable instead of
+-- being cut off at the edge of the window.
+local TRAY_MENU_MAX = 64
+local TRAY_MENU_ROWS = 14
 local tray_menu_ids = {}
 
 -- The right button on an icon: the item's own menu, drawn by the bar. The scene hands over
@@ -1600,7 +1604,7 @@ local function open_tray_menu(key)
     local shown = #rows
     fact["tm.count"] = shown
     fact["tm.indent"] = deepest
-    fact["tm.panel_h"] = 12 + 20 * shown
+    fact["tm.panel_h"] = 12 + 20 * math.min(shown, TRAY_MENU_ROWS)
     text.tm_widest = widest
     setMenu(true)
 end
