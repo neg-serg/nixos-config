@@ -50,6 +50,14 @@ part NowPlaying {
             group zoom {
                 scale: scale
 
+                // The card is glass, and on a bright wallpaper its fill washes the rows out. The
+                // reference shadows them there (`MusicDetailRow`, and the row texts in
+                // `Music.qml`), gated by `Theme.textShadowEnabled` alone — on by default, with no
+                // `backdropIsLight` term — so the edge here is not gated by `skin.light` either.
+                // Measured at 11 px on a pale plate: the soft shadow alone leaves 1.2:1 against
+                // the plate, the 0.5 outline 7.7:1.
+                let glass.edge = 0.5
+
                 // ----***------------------------- the card
                 body {
                     color: coal
@@ -72,13 +80,15 @@ part NowPlaying {
                     text r.glyph { at: 216, 12 + r.index * 18 + 13; anchor: left bottom
                         family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
                     text r.value { at: 234, 12 + r.index * 18 + 13; anchor: left bottom; width: 174; lines: 1
-                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink
+                        outline: glass.edge, #000000; shadow: 0, 1, 1, 100%, #000000 }
                 }
                 for r in Meta.rows {
                     text r.glyph { at: 216, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom
                         family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
                     text r.value { at: 234, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom; width: 174; lines: 1
-                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink
+                        outline: glass.edge, #000000; shadow: 0, 1, 1, 100%, #000000 }
                 }
 
                 // ----***---------- analyser band
