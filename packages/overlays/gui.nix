@@ -70,6 +70,13 @@ in
   # the platform wake the render once it can take it).
   pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
+      # The one commit the pin used to carry in `neg-serg/pleamar`
+      # (`fix/import-path-v0.4.29`): an `import` is resolved beside the path the
+      # importing file was reached by, not beside its canonicalized checkout. It
+      # applies cleanly on upstream main, and the scenes are loaded through a
+      # symlink farm in ~/.config/pleamar, so without it the palette generated next
+      # to the live tree is never read.
+      ./pleamar-import-path.patch
       ./pleamar-cursor-shape.patch
       ./pleamar-right-click.patch
       ./pleamar-dbusmenu.patch
