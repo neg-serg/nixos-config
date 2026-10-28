@@ -576,19 +576,25 @@ hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 -- and this CLI would block forever (2026-10-13, every press left a stuck client
 -- behind until the shell was restarted).
 hl.bind(M4 .. "+n", hl.dsp.exec_cmd('timeout 3 pleamar --say notifications "emit toggle_centre"'))
--- Panel toggles and transport for the same shell (audit #7): the calendar and
--- weather capsules register names with OverlayManager; media goes through the
--- MPRIS manager. M4+SH+j/u/x were the free slots in this keymap.
-hl.bind(M4 .. "+" .. SH .. "+u", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleCalendar"))
-hl.bind(M4 .. "+" .. SH .. "+x", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleWeather"))
-hl.bind(M4 .. "+" .. SH .. "+j", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaPlayPause"))
--- The rest of the transport and the shell volume steps: M4+C+period/comma mimic
--- the > and < keys, equal/minus stand in for the volume rocker (the XF86 keys
--- stay on the Genelec path). `--` keeps the negative step out of the flag parser.
-hl.bind(M4 .. "+" .. C .. "+period", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaNext"))
-hl.bind(M4 .. "+" .. C .. "+comma", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC mediaPrev"))
-hl.bind(M4 .. "+" .. C .. "+equal", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC volumeStep -- 5"), { repeating = true })
-hl.bind(M4 .. "+" .. C .. "+minus", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC volumeStep -- -5"), { repeating = true })
+-- Panel and transport binds, the same shell's own events (audit #7): the clock
+-- opens the calendar drawer, the weather capsule its card, the transport goes
+-- through the bar's MPRIS service. These were the free slots in this keymap.
+-- The drawer names are `panels.plm`'s own enum, reached through the bar's
+-- `open_*_panel` events (bar.luau's `open_drawer`, which also starts the panels
+-- unit when its socket is gone). They OPEN, they do not toggle: `panels` has no
+-- toggle event, only `fact drawer <name>` and `close_drawer`, and M4+space or
+-- Escape is what closes a drawer here.
+hl.bind(M4 .. "+" .. SH .. "+u", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit open_calendar_panel"'))
+hl.bind(M4 .. "+" .. SH .. "+x", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit open_weather_panel"'))
+hl.bind(M4 .. "+" .. SH .. "+j", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit media_toggle"'))
+-- The rest of the transport and the volume steps: M4+C+period/comma mimic the >
+-- and < keys, equal/minus stand in for the volume rocker (the XF86 keys stay on
+-- the Genelec path). The bar's `wheel_volume` takes notches and steps in 5 %
+-- (`step5` in bar.luau), which is what the legacy `volumeStep ±5` meant.
+hl.bind(M4 .. "+" .. C .. "+period", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit media_next"'))
+hl.bind(M4 .. "+" .. C .. "+comma", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit media_prev"'))
+hl.bind(M4 .. "+" .. C .. "+equal", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit wheel_volume 1"'), { repeating = true })
+hl.bind(M4 .. "+" .. C .. "+minus", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit wheel_volume -1"'), { repeating = true })
 -- What the shell has put on screen is dismissed over its own IPC: the notification centre takes
 -- `dismiss_all`, the drawer cards answer to `fact drawer none` (the panels scene's own words). The
 -- legacy path was a semaphore file that quickshell watched (`~/.cache/quickshell/notif-close-all`),
