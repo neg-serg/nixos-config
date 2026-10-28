@@ -57,6 +57,11 @@ in
       # packages (no build step) — see packages/lib/mkScQuark.nix.
       mkScQuark = prev.callPackage (paths.path "packages/lib/mkScQuark.nix") { };
 
+      # mkScPlugin: shared builder for the SuperCollider UGen plugin packages
+      # (cmake against sc-plugin-farm + the plugin/extension install layout) —
+      # see packages/lib/mkScPlugin.nix.
+      mkScPlugin = prev.callPackage (paths.path "packages/lib/mkScPlugin.nix") { };
+
       # mkVicinaeExtension: shared builder for the local Vicinae extensions
       # (install-as-is node bundles) — see packages/lib/mkVicinaeExtension.nix.
       mkVicinaeExtension = prev.callPackage (paths.path "packages/lib/mkVicinaeExtension.nix") {

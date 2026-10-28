@@ -9,12 +9,20 @@
 # Source: https://github.com/madskjeldgaard/softcut-sc
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+let
+  # monome softcut-lib (same rev the plugin's CPM pins: main @ 2024-12-31)
+  softcutLib = fetchFromGitHub {
+    owner = "monome";
+    repo = "softcut-lib";
+    rev = "14241f2a94a7cd2e6c91b9bdc4e500d68abef907";
+    hash = "sha256-0bkkDwQE3vaiFqmc5Opqhnm0oFczdscBab39B3jzIOM=";
+  };
+in
+mkScPlugin {
   pname = "softcut-sc";
   version = "unstable-2025-02-09";
 
@@ -23,14 +31,6 @@ stdenv.mkDerivation rec {
     repo = "softcut-sc";
     rev = "b1828ee2774943163d0d64fd246ce070e396dc8a";
     hash = "sha256-zXeGyAtD6wVtMRctFZzTimpDLV+Yz1SPK9h0zOuJte8=";
-  };
-
-  # monome softcut-lib (same rev the plugin's CPM pins: main @ 2024-12-31)
-  softcutLib = fetchFromGitHub {
-    owner = "monome";
-    repo = "softcut-lib";
-    rev = "14241f2a94a7cd2e6c91b9bdc4e500d68abef907";
-    hash = "sha256-0bkkDwQE3vaiFqmc5Opqhnm0oFczdscBab39B3jzIOM=";
   };
 
   postUnpack = ''
@@ -43,21 +43,18 @@ stdenv.mkDerivation rec {
   # at configure time, which is not allowed in the nix sandbox.
   patches = [ ./no-cpm.patch ];
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
   cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-    "-DSUPERNOVA=OFF"
     "-DSCSYNTH=ON"
     "-DNOVA_SIMD=OFF"
   ];
 
-  postInstall = ''
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/Softcut"
-    find "$out/Softcut" -name '*_scsynth.so' -exec mv {} "$out/lib/SuperCollider/plugins/" \;
-    find "$out/Softcut" -name '*.sc' -exec cp {} "$out/share/SuperCollider/extensions/Softcut/" \;
-    find "$out/Softcut" -type d -name HelpSource -exec cp -r {} "$out/share/SuperCollider/extensions/Softcut/" \;
+  installDir = "Softcut";
+  install = ''
+    find "$out/Softcut" -name '*_scsynth.so' -exec mv {} "$pluginsDir/" \;
+    find "$out/Softcut" -name '*.sc' -exec cp {} "$extdir/" \;
+    find "$out/Softcut" -type d -name HelpSource -exec cp -r {} "$extdir/" \;
     rm -rf "$out/Softcut"
   '';
 

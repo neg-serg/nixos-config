@@ -7,11 +7,10 @@
 # Source: https://github.com/michaeldzjap/MDUGens (MIT)
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+mkScPlugin {
   pname = "mdugens";
   version = "unstable-2025-02-12";
 
@@ -19,28 +18,25 @@ stdenv.mkDerivation rec {
   # In-repo copy so pure evaluation works (absolute paths outside the flake are forbidden).
   src = ./mdugens.tar.gz;
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
   cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
     "-DCPP14=ON"
-    "-DSUPERNOVA=OFF"
     # CMakeLists declares cmake_minimum_required(2.8); modern CMake dropped
     # compatibility below 3.5 — opt back in.
     "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
   ];
 
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/mdugens/Classes"
-    cp -v *.so "$out/lib/SuperCollider/plugins/"
+  # No install rules upstream: the .so files stay in the build dir and the
+  # class sources sit under the unpacked MDUGens tree.
+  installDir = "mdugens";
+  upstreamInstalls = false;
+  install = ''
+    mkdir -p "$extdir/Classes"
+    cp -v *.so "$pluginsDir/"
     scdir="$(find "$NIX_BUILD_TOP" -type d -path '*MDUGens*/sc' | head -1)"
-    cp -v "$scdir"/*.sc "$out/share/SuperCollider/extensions/mdugens/Classes/"
-    cp -rv "$scdir/HelpSource" "$out/share/SuperCollider/extensions/mdugens/"
-
-    runHook postInstall
+    cp -v "$scdir"/*.sc "$extdir/Classes/"
+    cp -rv "$scdir/HelpSource" "$extdir/"
   '';
 
   meta = lib.mkMeta {

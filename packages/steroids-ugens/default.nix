@@ -5,12 +5,11 @@
 # Source: https://github.com/tai-studio/steroids-ugens
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+mkScPlugin {
   pname = "steroids-ugens";
   version = "unstable-2020-11-14";
 
@@ -21,7 +20,7 @@ stdenv.mkDerivation rec {
     hash = "sha256-IR02yiwMbS0/fYgLVFw+ShRCBQ9mpoht/M7Z2XoUNU0=";
   };
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
   # The repo pins C++11, but SC 3.14 headers need C++14+ (SC_Unit.h uses
   # std::remove_cv_t / auto return types). Bump the standard at configure time.
@@ -30,22 +29,18 @@ stdenv.mkDerivation rec {
   '';
 
   cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-    "-DSUPERNOVA=OFF"
     "-DSCSYNTH=ON"
     "-DNOVA_SIMD=OFF"
   ];
 
-  postInstall = ''
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/Steroids"
-
+  installDir = "Steroids";
+  install = ''
     for dir in "$out"/Steroids/*/; do
       name="$(basename "$dir")"
-      mv "$dir"/*_scsynth.so "$out/lib/SuperCollider/plugins/"
-      mkdir -p "$out/share/SuperCollider/extensions/Steroids/$name"
-      cp -r "$dir/Classes" "$out/share/SuperCollider/extensions/Steroids/$name/" 2>/dev/null || true
-      cp -r "$dir/HelpSource" "$out/share/SuperCollider/extensions/Steroids/$name/" 2>/dev/null || true
+      mv "$dir"/*_scsynth.so "$pluginsDir/"
+      mkdir -p "$extdir/$name"
+      cp -r "$dir/Classes" "$extdir/$name/" 2>/dev/null || true
+      cp -r "$dir/HelpSource" "$extdir/$name/" 2>/dev/null || true
     done
     rm -rf "$out/Steroids"
   '';
