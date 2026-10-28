@@ -555,6 +555,29 @@ on("open_network_panel", function() open_drawer("network") end)
 -- `panels` declares (`panels.plm`'s `drawer` enum), so nothing here invents a name.
 on("open_calendar_panel", function() open_drawer("calendar") end)
 on("open_weather_panel", function() open_drawer("weather") end)
+
+-- What the compositor binds call (M4+SH+u/x): the same drawer a second time closes
+-- it, the way the legacy `toggleCalendar`/`toggleWeather` did. The drawer's current
+-- name comes back from the panels scene in one `--say` — a fact is readable, which a
+-- press is not — so nothing here has to remember what is on screen. A closed scene
+-- answers nothing, which reads as "not open" and takes the `open_drawer` path.
+local function toggle_drawer(name)
+    local said = '"' .. PLEAMAR .. '" --say panels \'get drawer\' 2>/dev/null'
+    run("dash", {
+        "-c",
+        "cur=$(" .. said .. "); "
+            .. "if [ \"$cur\" = \"" .. name .. "\" ]; then "
+            .. '"' .. PLEAMAR .. '" --say panels \'fact drawer none\' >/dev/null 2>&1; exit 0; fi; '
+            .. '"' .. PLEAMAR .. '" --say panels \'fact drawer ' .. name .. '\' >/dev/null 2>&1 && exit 0; '
+            .. "systemctl --user start pleamar-panels.service; "
+            .. "for i in 1 2 3 4 5 6 7 8 9 10; do "
+            .. '"' .. PLEAMAR .. '" --say panels \'fact drawer ' .. name .. '\' >/dev/null 2>&1 && exit 0; '
+            .. "sleep 0.05; done",
+    })
+end
+
+on("toggle_calendar_panel", function() toggle_drawer("calendar") end)
+on("toggle_weather_panel", function() toggle_drawer("weather") end)
 on("open_system_panel", function() open_drawer("system") end)
 on("open_build_panel", function() open_drawer("build") end)
 
