@@ -9,12 +9,21 @@
 # Source: https://github.com/sonoro1234/MyUGens
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+let
+  # fetchFromGitHub does not fetch submodules; DWGReverb is one. Fetch the
+  # same rev the submodule pins and unpack it into place.
+  dwgReverb = fetchFromGitHub {
+    owner = "sonoro1234";
+    repo = "DWGReverb";
+    rev = "25a51cab241af0198b7a1d25949808684668a315";
+    hash = "sha256-VUW4k2tYegZkRPD/b8gdVEcLnV1QcIevLFv2jNrq9ic=";
+  };
+in
+mkScPlugin {
   pname = "my-ugens";
   version = "unstable-2025-02-10";
 
@@ -23,15 +32,6 @@ stdenv.mkDerivation rec {
     repo = "MyUGens";
     rev = "f62135a1314076a30e1bafd2229ba9b85264b373";
     hash = "sha256-isjJG7qoVWxYsg15siskCA9ukNoEhzeQNsDNMkezk38=";
-  };
-
-  # fetchFromGitHub does not fetch submodules; DWGReverb is one. Fetch the
-  # same rev the submodule pins and unpack it into place.
-  dwgReverb = fetchFromGitHub {
-    owner = "sonoro1234";
-    repo = "DWGReverb";
-    rev = "25a51cab241af0198b7a1d25949808684668a315";
-    hash = "sha256-VUW4k2tYegZkRPD/b8gdVEcLnV1QcIevLFv2jNrq9ic=";
   };
 
   postUnpack = ''
@@ -43,17 +43,16 @@ stdenv.mkDerivation rec {
     rm -f "$sourceRoot/DWGReverb/CMakeLists.txt"
   '';
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
-  cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-    "-DSUPERNOVA=OFF"
-  ];
-
-  postInstall = ''
-    # Upstream installs straight into the standard SC layout:
-    #   lib/SuperCollider/plugins/*.so
-    #   share/SuperCollider/Extensions/Myplugins/<Name>/
+  # Upstream installs straight into the standard SC layout
+  #   lib/SuperCollider/plugins/*.so
+  #   share/SuperCollider/Extensions/Myplugins/<Name>/
+  # (capital E, like SC3plugins and VSTPlugin), so there is nothing to hoist:
+  # assert the layout instead, and a silent upstream change fails the build
+  # instead of the plugin never loading.
+  installDir = null;
+  install = ''
     test -d "$out/lib/SuperCollider/plugins"
     test -d "$out/share/SuperCollider/Extensions/Myplugins"
   '';

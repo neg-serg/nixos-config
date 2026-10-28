@@ -6,12 +6,11 @@
 # Source: https://github.com/redFrik/f0plugins
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+mkScPlugin {
   pname = "f0plugins";
   version = "unstable-2025-02-11";
 
@@ -22,30 +21,24 @@ stdenv.mkDerivation rec {
     hash = "sha256-yNSDoX4yJ9f0mXiUGfvX9kHZbzNwGg4C21BUsJPZzxg=";
   };
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
-  cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-    "-DSUPERNOVA=OFF"
-    "-DSCSYNTH=ON"
-  ];
+  cmakeFlags = [ "-DSCSYNTH=ON" ];
 
-  postInstall = ''
-    # Reorganize the per-plugin install tree into the standard SC layout:
-    #   .so files  -> $out/lib/SuperCollider/plugins/
-    #   classes    -> $out/share/SuperCollider/extensions/f0plugins/<Name>/
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/f0plugins"
-
+  # Every plugin gets its own directory under the extension root (upstream
+  # builds one install tree per plugin, so one shared extensions/ dir would
+  # merge 19 unrelated class sets into one namespace).
+  installDir = "f0plugins";
+  install = ''
     for dir in "$out"/f0plugins/*/; do
       name="$(basename "$dir")"
       # server plugin .so
-      find "$dir/linux" -name '*_scsynth.so' -exec mv {} "$out/lib/SuperCollider/plugins/" \;
+      find "$dir/linux" -name '*_scsynth.so' -exec mv {} "$pluginsDir/" \;
       # class file + help + tests
-      mkdir -p "$out/share/SuperCollider/extensions/f0plugins/$name"
-      cp "$dir"/*.sc "$out/share/SuperCollider/extensions/f0plugins/$name/" 2>/dev/null || true
-      cp -r "$dir/HelpSource" "$out/share/SuperCollider/extensions/f0plugins/$name/" 2>/dev/null || true
-      cp -r "$dir/Tests" "$out/share/SuperCollider/extensions/f0plugins/$name/" 2>/dev/null || true
+      mkdir -p "$extdir/$name"
+      cp "$dir"/*.sc "$extdir/$name/" 2>/dev/null || true
+      cp -r "$dir/HelpSource" "$extdir/$name/" 2>/dev/null || true
+      cp -r "$dir/Tests" "$extdir/$name/" 2>/dev/null || true
     done
     rm -rf "$out/f0plugins"
   '';

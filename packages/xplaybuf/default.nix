@@ -5,12 +5,11 @@
 # Source: https://github.com/elgiano/XPlayBuf
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+mkScPlugin {
   pname = "xplaybuf";
   version = "unstable-2024-06-26";
 
@@ -21,21 +20,19 @@ stdenv.mkDerivation rec {
     hash = "sha256-SBXl1RWyDQn23joBMtULQWyXtuwB6AnmfSCZJ0s4nk8=";
   };
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
   cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-    "-DSUPERNOVA=OFF"
     "-DSCSYNTH=ON"
     "-DNOVA_SIMD=OFF"
   ];
 
-  postInstall = ''
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/XPlayBuf"
-    mv "$out/XPlayBuf"/*_scsynth.so "$out/lib/SuperCollider/plugins/"
-    cp -r "$out/XPlayBuf/Classes" "$out/share/SuperCollider/extensions/XPlayBuf/" 2>/dev/null || true
-    cp -r "$out/XPlayBuf/HelpSource" "$out/share/SuperCollider/extensions/XPlayBuf/" 2>/dev/null || true
+  installDir = "XPlayBuf";
+  # Upstream installs one tree per plugin; hoist it into the SC layout.
+  install = ''
+    mv "$out/XPlayBuf"/*_scsynth.so "$pluginsDir/"
+    cp -r "$out/XPlayBuf/Classes" "$extdir/" 2>/dev/null || true
+    cp -r "$out/XPlayBuf/HelpSource" "$extdir/" 2>/dev/null || true
     rm -rf "$out/XPlayBuf"
   '';
 

@@ -7,15 +7,16 @@
 # Source: https://github.com/elgiano/super-bufrd
 {
   # allow-relative-file: every `../` in this file is the unpacked source tree's
-  # own layout (../SuperBufRd.sc, ../HelpSource in installPhase), not a repo path.
+  # own layout (../SuperBufRd.sc, ../HelpSource in the install body), not a repo
+  # path — the package has no install rules upstream, so the files are installed
+  # by hand from the cmake build directory.
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   boost,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+mkScPlugin {
   pname = "super-bufrd";
   version = "unstable-2020-04-29";
 
@@ -26,7 +27,7 @@ stdenv.mkDerivation rec {
     hash = "sha256-r1kcxvQm5qnyeukPmWWM7NwzfT+l1BWATMLTQiVMDI0=";
   };
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
   buildInputs = [ boost ];
 
   # Upstream CMakeLists requires cmake < 3.5 (removed in cmake 4.x); bump.
@@ -37,23 +38,18 @@ stdenv.mkDerivation rec {
   '';
 
   cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-    "-DSUPERNOVA=OFF"
     "-DCPP11=OFF"
     "-DCMAKE_CXX_FLAGS=-std=c++17"
   ];
 
-  # NOTE: phases run inside the cmake build dir. The .so files land here
-  # (no install rules upstream); the .sc sources are one level up.
-  installPhase = ''
-    runHook preInstall
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/SuperBufRd"
-
-    install -m755 SuperBufRd.so SuperPoll.so SuperBinaryOpUGen.so "$out/lib/SuperCollider/plugins/"
-    install -m644 ../SuperBufRd.sc ../SuperPair.sc ../extSuperPair.sc "$out/share/SuperCollider/extensions/SuperBufRd/"
-    cp -r ../HelpSource "$out/share/SuperCollider/extensions/SuperBufRd/"
-    runHook postInstall
+  # NOTE: the install body runs inside the cmake build dir. The .so files land
+  # here (no install rules upstream); the .sc sources are one level up.
+  installDir = "SuperBufRd";
+  upstreamInstalls = false;
+  install = ''
+    install -m755 SuperBufRd.so SuperPoll.so SuperBinaryOpUGen.so "$pluginsDir/"
+    install -m644 ../SuperBufRd.sc ../SuperPair.sc ../extSuperPair.sc "$extdir/"
+    cp -r ../HelpSource "$extdir/"
   '';
 
   meta = lib.mkMeta {

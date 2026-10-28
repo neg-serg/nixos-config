@@ -6,12 +6,11 @@
 # Source: https://github.com/madskjeldgaard/guttersynth-sc
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+mkScPlugin {
   pname = "guttersynth-sc";
   version = "unstable-2026-06-16";
 
@@ -22,20 +21,15 @@ stdenv.mkDerivation rec {
     hash = "sha256-AvN5Kvig0b2mmrESsBhuweOdrO0YAvu7O5mfTp1bCc4=";
   };
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
-  cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-    "-DSUPERNOVA=OFF"
-    "-DSCSYNTH=ON"
-  ];
+  cmakeFlags = [ "-DSCSYNTH=ON" ];
 
-  postInstall = ''
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/GutterSynth"
-    find "$out/GutterSynth" -name '*_scsynth.so' -exec mv {} "$out/lib/SuperCollider/plugins/" \;
-    find "$out/GutterSynth" -name '*.sc' -exec cp {} "$out/share/SuperCollider/extensions/GutterSynth/" \;
-    find "$out/GutterSynth" -type d -name HelpSource -exec cp -r {} "$out/share/SuperCollider/extensions/GutterSynth/" \;
+  installDir = "GutterSynth";
+  install = ''
+    find "$out/GutterSynth" -name '*_scsynth.so' -exec mv {} "$pluginsDir/" \;
+    find "$out/GutterSynth" -name '*.sc' -exec cp {} "$extdir/" \;
+    find "$out/GutterSynth" -type d -name HelpSource -exec cp -r {} "$extdir/" \;
     rm -rf "$out/GutterSynth"
   '';
 

@@ -6,12 +6,22 @@
 # Source: https://github.com/v7b1/mi-UGens
 {
   lib,
-  stdenv,
-  cmake,
+  mkScPlugin,
   fetchFromGitHub,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+let
+  # MiBraids links a static libsamplerate that upstream keeps as a git
+  # submodule (fetchFromGitHub does not fetch submodules). Fetch the exact
+  # submodule rev and unpack it into place before configuring.
+  libsamplerate = fetchFromGitHub {
+    owner = "libsndfile";
+    repo = "libsamplerate";
+    rev = "2ccde9568cca73c7b32c97fefca2e418c16ae5e3";
+    hash = "sha256-GmgfmdrawAK8ktKtMgHMnzD2p80e373YNYlGg1edF/Q=";
+  };
+in
+mkScPlugin {
   pname = "mi-ugens";
   version = "unstable-2026-04-10";
 
@@ -22,32 +32,18 @@ stdenv.mkDerivation rec {
     hash = "sha256-16XeG3wXGPkiLd9oi6ZNF7jbndbKeVvf6hP/Verm2zg=";
   };
 
-  # MiBraids links a static libsamplerate that upstream keeps as a git
-  # submodule (fetchFromGitHub does not fetch submodules). Fetch the exact
-  # submodule rev and unpack it into place before configuring.
-  libsamplerate = fetchFromGitHub {
-    owner = "libsndfile";
-    repo = "libsamplerate";
-    rev = "2ccde9568cca73c7b32c97fefca2e418c16ae5e3";
-    hash = "sha256-GmgfmdrawAK8ktKtMgHMnzD2p80e373YNYlGg1edF/Q=";
-  };
-
   postUnpack = ''
     rm -rf "$sourceRoot/projects/MiBraids/libsamplerate"
     cp -r ${libsamplerate} "$sourceRoot/projects/MiBraids/libsamplerate"
     chmod -R u+w "$sourceRoot/projects/MiBraids/libsamplerate"
   '';
 
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
   # Local-only build (substitute=false) on Zen 5 — -march=native is safe and
   # speeds up the DSP-heavy MI modules (Clouds, Rings, Plaits). Realtime
   # audio: no -ffast-math (NaN/denormal semantics must stay IEEE-754).
   env.NIX_CFLAGS_COMPILE = "-march=native";
-
-  cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
-  ];
 
   # Parallel make race: MiBraids links libsamplerate.a by path without a
   # declared dependency, so the first parallel pass can fail with "No rule to
@@ -56,12 +52,11 @@ stdenv.mkDerivation rec {
     cmake --build . --target samplerate
   '';
 
-  postInstall = ''
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/mi-UGens"
-    mv "$out/mi-UGens"/*.so "$out/lib/SuperCollider/plugins/"
-    cp -r "$out/mi-UGens/Classes" "$out/share/SuperCollider/extensions/mi-UGens/"
-    cp -r "$out/mi-UGens/HelpSource" "$out/share/SuperCollider/extensions/mi-UGens/"
+  installDir = "mi-UGens";
+  install = ''
+    mv "$out/mi-UGens"/*.so "$pluginsDir/"
+    cp -r "$out/mi-UGens/Classes" "$extdir/"
+    cp -r "$out/mi-UGens/HelpSource" "$extdir/"
     rm -rf "$out/mi-UGens"
   '';
 

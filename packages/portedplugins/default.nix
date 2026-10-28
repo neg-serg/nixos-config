@@ -6,12 +6,15 @@
 # Source: https://github.com/madskjeldgaard/portedplugins (GPL-3)
 {
   lib,
-  stdenv,
-  cmake,
-
+  mkScPlugin,
   scPluginFarm,
 }:
-stdenv.mkDerivation rec {
+let
+  # CMakeLists downloads CPM.cmake from GitHub at configure time; vendor it
+  # from the locally staged copy (GitHub is blocked on this host).
+  cpm = ./CPM_0.36.0.cmake;
+in
+mkScPlugin {
   pname = "portedplugins";
   version = "unstable-2025-02-06";
 
@@ -19,11 +22,7 @@ stdenv.mkDerivation rec {
   # In-repo copies so pure evaluation works (absolute paths outside the flake are forbidden).
   src = ./portedplugins.tar.gz;
 
-  # CMakeLists downloads CPM.cmake from GitHub at configure time; vendor it
-  # from the locally staged copy (GitHub is blocked on this host).
-  cpm = ./CPM_0.36.0.cmake;
-
-  nativeBuildInputs = [ cmake ];
+  inherit scPluginFarm;
 
   postPatch = ''
     mkdir -p cmake build/cmake
@@ -32,19 +31,15 @@ stdenv.mkDerivation rec {
   '';
 
   cmakeFlags = [
-    "-DSC_PATH=${scPluginFarm}"
     "-DSCSYNTH=ON"
-    "-DSUPERNOVA=OFF"
     "-DUSE_DAISYSP_LIB=OFF"
   ];
 
-  postInstall = ''
-    # Reorganize the per-plugin install tree into the standard SC layout:
-    mkdir -p "$out/lib/SuperCollider/plugins"
-    mkdir -p "$out/share/SuperCollider/extensions/portedplugins"
-    cp -v "$out/PortedPlugins"/*_scsynth.so "$out/lib/SuperCollider/plugins/"
-    cp -rv "$out/PortedPlugins/Classes" "$out/share/SuperCollider/extensions/portedplugins/"
-    cp -rv "$out/PortedPlugins/HelpSource" "$out/share/SuperCollider/extensions/portedplugins/"
+  installDir = "portedplugins";
+  install = ''
+    cp -v "$out/PortedPlugins"/*_scsynth.so "$pluginsDir/"
+    cp -rv "$out/PortedPlugins/Classes" "$extdir/"
+    cp -rv "$out/PortedPlugins/HelpSource" "$extdir/"
     rm -rf "$out/PortedPlugins"
   '';
 
