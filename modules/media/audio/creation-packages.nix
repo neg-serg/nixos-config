@@ -9,6 +9,11 @@
 }:
 let
   enabled = config.lib.neg.enabled "media.audio.creation";
+
+  # pw-jack launcher unit (lib/jack-app.nix): ExecStart under pw-jack, the
+  # audio-graph ordering and the restart policy live there.
+  jackApp = config.lib.neg.jackApp;
+
   packages = [
     # -- Live Coding --
     pkgs.supercollider # SuperCollider IDE and audio engine
@@ -74,52 +79,31 @@ in
     # Vital standalone synth — on-demand: systemctl --user start vital-standalone.
     # Runs under pw-jack (JACK via PipeWire); LIBGL_ALWAYS_SOFTWARE=1 avoids the
     # black window on Wayland/XWayland (JUCE/OpenGL rendering). Not autostarted.
-    systemd.user.services.vital-standalone = config.lib.neg.systemdUser.mkUserService {
-      presets = [ "restartOnFailure" ];
+    systemd.user.services.vital-standalone = jackApp.mkPwJackUnit {
       description = "Vital standalone synthesizer (pw-jack, software GL)";
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      serviceConfig = {
-        Type = "simple";
-        Environment = "WAYLAND_DISPLAY=wayland-1 LIBGL_ALWAYS_SOFTWARE=1";
-        ExecStart = "${pkgs.pipewire.jack}/bin/pw-jack ${pkgs.vital}/bin/Vital";
-        RestartSec = 3;
-      };
+      command = "${pkgs.vital}/bin/Vital";
+      environment = "WAYLAND_DISPLAY=wayland-1 LIBGL_ALWAYS_SOFTWARE=1";
     };
 
     # VCV Rack standalone — on-demand: systemctl --user start rack.
     # Runs under pw-jack (JACK via PipeWire) so it joins the same audio graph
     # as SuperCollider/Vital and can be patched with helvum/pw-link.
     # Not autostarted; WAYLAND_DISPLAY is required for the GLFW window on Hyprland.
-    systemd.user.services.rack = config.lib.neg.systemdUser.mkUserService {
-      presets = [ "restartOnFailure" ];
+    systemd.user.services.rack = jackApp.mkPwJackUnit {
       description = "VCV Rack modular synthesizer (pw-jack)";
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      serviceConfig = {
-        Type = "simple";
-        Environment = "WAYLAND_DISPLAY=wayland-1";
-        ExecStart = "${pkgs.pipewire.jack}/bin/pw-jack ${pkgs.vcv-rack}/bin/Rack";
-        RestartSec = 3;
-      };
+      command = "${pkgs.vcv-rack}/bin/Rack";
+      environment = "WAYLAND_DISPLAY=wayland-1";
     };
     # virtual-midi — virtual ALSA seq MIDI ports for stable synth routing
     # slots (SuperCollider connects to these instead of the hardware ports,
     # avoiding loops through the Osmose and surviving unplugs).
     systemd.user.services.virtual-midi = config.lib.neg.systemdUser.mkUserService {
       presets = [
+        "audioGraph"
         "graphicalWanted"
         "restartOnFailure"
       ];
       description = "Virtual ALSA sequencer MIDI ports (synth routing slots)";
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.neg.virtual-midi}/bin/virtual-midi 4";

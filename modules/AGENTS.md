@@ -21,7 +21,8 @@ Guidelines
 - Presets carry scheduling (`after`/`wants`/`partOf`/`wantedBy`) *and* service defaults
   (`Restart`/`RestartSec`/`Type`): `defaultWanted`, `restartOnFailure` (`Restart=on-failure`, no
   `RestartSec` — pass your own when the unit had one), `oneshot`, `graphicalSession`,
-  `graphicalWanted`. Your own `serviceConfig` key wins over the preset, so
+  `graphicalWanted`, `audioGraph` (client of the running PipeWire graph: after `pipewire` +
+  `wireplumber`). Your own `serviceConfig` key wins over the preset, so
   `presets = [ "restartOnFailure" ]; serviceConfig = { RestartSec = 3; }` keeps the shared policy
   and tunes only the delay. A raw `Restart = "on-failure"` inside `systemd.user.services` is
   rejected by the `restart-preset` rule of `scripts/dev/lint-guards.sh` (system-level

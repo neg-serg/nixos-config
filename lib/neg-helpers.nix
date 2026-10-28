@@ -210,6 +210,12 @@ rec {
   # (lib/llama-server.nix) as a factory, wired exactly like systemdUser.
   llamaServer = lib: import ./llama-server.nix { inherit lib; };
 
+  # jackApp { lib, pkgs, pipewire, mkUserService } — the PipeWire/JACK unit
+  # shapes (port watcher, pw-jack launcher) from lib/jack-app.nix. Takes the
+  # mkUserService it builds on as an argument instead of importing
+  # systemd-user.nix a second time, so both live in one unit-policy world.
+  jackApp = args: import ./jack-app.nix args;
+
   # rooted ROOT — the root-anchored resolver for call sites that have no
   # `config`: a top-level `let`, a host module, a package. `rooted repoRoot`
   # (or any other root path) answers with the same vocabulary as

@@ -52,6 +52,21 @@ let
       wantedBy = [ "graphical-session.target" ];
       partOf = [ ];
     };
+    # Client of the running PipeWire graph (JACK apps, pw-link watchers).
+    # pipewire-jack hands the app a JACK client and WirePlumber ignores those
+    # nodes, so the ordering is the only cooperation the unit gets: the server
+    # and the session manager must be up before it starts. Both are user units,
+    # hence `after` (plus `wants` for the pull-in) rather than a system-level
+    # dependency.
+    audioGraph = {
+      after = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      wants = [ ];
+      wantedBy = [ ];
+      partOf = [ ];
+    };
   };
 
   # mergeList — preset/argument list merge that a caller can escape.
