@@ -31,4 +31,7 @@ library Skin strict {
     let skin.accent.deep = mix(skin.accent, skin.coal, 80%)
     // colors.onAccent, unchanged.
     let skin.on.accent = #ffffff
+
+    // Theme.backdropIsLight — false for the fallback palette (a dark default).
+    let skin.light = false
 }

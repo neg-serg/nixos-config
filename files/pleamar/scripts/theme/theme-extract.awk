@@ -257,8 +257,16 @@ END {
     ib = bB + (tB - bB) * t
   }
 
+  # Is the backdrop light? The reference's own criterion (`Theme.backdropIsLight`,
+  # Settings/Theme.qml:627): the wallpaper's accent over `ui.textShadow.lightThreshold`
+  # (0.5) of WCAG luminance. Scenes use it to put a shadow under glyphs that sit on
+  # glass — a bright wallpaper washes fill and text out, and a shadow restores the
+  # reading without darkening the plate.
+  light = (rel_lum(acR, acG, acB) > 0.5) ? 1 : 0
+
   print "coal=" hex(coalR, coalG, coalB)
   print "surface=" hex(surfR, surfG, surfB)
   print "ink=" hex(ir, ig, ib)
   print "accent=" hex(acR, acG, acB)
+  print "light=" light
 }

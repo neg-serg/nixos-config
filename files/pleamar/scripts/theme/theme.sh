@@ -42,6 +42,7 @@ COAL=""
 SURFACE=""
 INK=""
 ACCENT=""
+LIGHT=""
 COAL_NOTE=""
 SURFACE_NOTE=""
 INK_NOTE=""
@@ -208,6 +209,7 @@ load_pairs() {
       surface) SURFACE="$value" ;;
       ink) INK="$value" ;;
       accent) ACCENT="$value" ;;
+      light) LIGHT="$value" ;;
       *)
         err "extractor: unexpected key '$key'"
         return 1
@@ -337,6 +339,7 @@ COAL="${COAL:-#000000}"
 SURFACE="${SURFACE:-#242A35}"
 INK="${INK:-#CBD6E5}"
 ACCENT="${ACCENT:-#006FCC}"
+LIGHT="${LIGHT:-0}"
 
 # ---- write ------------------------------------------------------------------
 
@@ -383,6 +386,13 @@ render() {
   printf '    let skin.accent.deep = mix(skin.accent, skin.coal, 80%%)\n'
   printf '    // colors.onAccent, unchanged.\n'
   printf '    let skin.on.accent = #ffffff\n'
+  printf '\n'
+  printf '    // Theme.backdropIsLight (Settings/Theme.qml:627): the wallpaper accent is lighter\n'
+  printf '    // than ui.textShadow.lightThreshold (0.5), so what sits on glass behind it is washed\n'
+  printf '    // out. A scene reads it to put a shadow under its glyphs — the reference does the\n'
+  printf '    // same in WeatherButton and the media card — and a hairline outline with it, which\n'
+  printf '    // is what a blurred shadow alone cannot give on a pale plate.\n'
+  printf '    let skin.light = %s\n' "$([[ "$LIGHT" == "1" ]] && echo true || echo false)"
   printf '}\n'
 }
 
