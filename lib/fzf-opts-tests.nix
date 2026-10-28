@@ -5,10 +5,8 @@
 # drops the rest of FZF_*_OPTS; '#' inside a token or inside quotes is literal.
 let
   h = import ./neg-helpers.nix;
-  check = cond: msg: {
-    inherit msg;
-    ok = cond;
-  };
+  t = import ./test-suite.nix;
+  inherit (t) check;
   checks = [
     (check (h.hasFzfHashComment "--bind=x # comment") "flags inline comment after a bind")
     (check (h.hasFzfHashComment "# comment") "flags comment at the start")
@@ -23,8 +21,4 @@ let
     ) "allows brackets/quotes without hash")
   ];
 in
-{
-  inherit checks;
-  failures = builtins.filter (c: !c.ok) checks;
-  report = builtins.concatStringsSep "; " (map (f: f.msg) (builtins.filter (c: !c.ok) checks));
-}
+t.suite checks

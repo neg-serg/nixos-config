@@ -68,7 +68,8 @@ let
     line: builtins.match actionPat line != null && builtins.match "[ -~]*" line == null
   ) "non-ASCII key";
 
-  check = ok: msg: { inherit ok msg; };
+  t = import ./test-suite.nix;
+  inherit (t) check;
 
   checks = [
     (check (inlineComments == [ ])
@@ -82,8 +83,4 @@ let
     )
   ];
 in
-{
-  inherit checks;
-  failures = builtins.filter (c: !c.ok) checks;
-  report = builtins.concatStringsSep "; " (map (f: f.msg) (builtins.filter (c: !c.ok) checks));
-}
+t.suite checks
