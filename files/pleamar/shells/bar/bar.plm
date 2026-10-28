@@ -1034,15 +1034,34 @@ scene bar {
                 image icon_weather_snow { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 5 }
                 image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 6 }
             }
-            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            // On a wallpaper light enough to wash the plate out (`skin.light`) the glyphs take a
+            // shadow and a hairline edge; on a dark one both are off (blur 0 and alpha 0 draw
+            // nothing) and the strip is exactly what the reference draws.
+            //
+            // The shadow alone is the reference's answer (Components/GlyphShadow: blur 0.55,
+            // opacity 0.75) and it was measured not to be enough here: on a pale plate at 14 px
+            // it takes the backdrop under the strokes down to 188 of 237 — 1.24:1 against the
+            // plate, which reads as fog. The same text with a 0.5 outline reaches 26, 6.0:1, and
+            // the glyph weight stays the reference's (a 1 px outline draws it a weight bolder).
+            // Numbers from a stand of nine variants on a #dfe6ec plate, `pleamar --check` clean.
+            let glyph.edge = if(skin.light, 0.5, 0)
+            let glyph.shadow = if(skin.light, 1, 0)
+            let glyph.alpha = if(skin.light, 100%, 0%)
+            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"
+                                  outline: glyph.edge, #000000
+                                  shadow: 0, 1, glyph.shadow, glyph.alpha, #000000 }
             image icon_weather_drop { at: x.drop, strip / 2 + 1 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
-            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka"
+                                 outline: glyph.edge, #000000
+                                 shadow: 0, 1, glyph.shadow, glyph.alpha, #000000 }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
             group arrow { pivot: x.arrow + arrow.w / 2, strip / 2 + 1; rotate: weather.dir
                 image icon_weather_wind { at: x.arrow, strip / 2 + 1 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
             }
-            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka"
+                                  outline: glyph.edge, #000000
+                                  shadow: 0, 1, glyph.shadow, glyph.alpha, #000000 }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
