@@ -170,7 +170,7 @@ Read them with `pleamar --say <scene> "get <fact>"` and set them with
 `bar` | `shown` | bool | `true` | the strip is there; `reserve` counts only while true | | `bar` |
 `startup` | bool | `false` | login gate is up (clean bar) — written by its logic, read by tests | |
 `panels` | `drawer` | enum
-`none \| volume \| microphone \| network \| bluetooth \| media \| calendar \| weather \| keyboard \| tray \| system \| power \| settings`
+`none \| volume \| microphone \| network \| bluetooth \| media \| calendar \| weather \| build \| keyboard \| tray \| system \| power`
 | `none` | which drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` |
 do not disturb | | `notifications` | `centre` | bool | `false` | the notification centre is open | |
 `notifications` | `count` | number | `0` | notifications currently shown or kept (read-only for
@@ -202,8 +202,12 @@ order.
 `panels/*` is the shell's name for the drawer family; each entry is a *drawer name*, not a scene,
 and all of them live in the one `panels` process:
 
-`volume`, `microphone`, `network`, `bluetooth`, `media`, `calendar`, `weather`, `keyboard`, `tray`,
-`system`, `power`, `settings`.
+`volume`, `microphone`, `network`, `bluetooth`, `media`, `calendar`, `weather`, `build`,
+`keyboard`, `tray`, `system`, `power`.
+
+There is no `settings` drawer and none is planned (owner, 2026-10-28): the shell's settings are the
+per-scene JSON files (INTERFACES §6), edited by hand. `build` was added when its page landed and
+was missing from this list; it is in the `drawer` fact.
 
 Each drawer is a part under `shells/panels/pages/<name>.plm` (owned by PH2-B), included by
 `panels.plm`; a drawer that is too big for a part may be split into more parts, but the drawer name
@@ -213,9 +217,9 @@ rules cannot run programs; the bar's *logic* does it with `run`/`spawn`, permiss
 `run: "pleamar"`), and `panels` closes on Escape, on outside press and when `drawer` is set to
 `none`.
 
-The names `none`, `volume`, …, `settings` are also the placeholders for the drawer titles: use the
+The names `none`, `volume`, …, `power` are also the placeholders for the drawer titles: use the
 label texts in §8 (`Volume`, `Microphone`, `Network`, `Bluetooth`, `Media`, `Calendar`, `Weather`,
-`Keyboard`, `Tray`, `System monitor`, `Power`, `Settings`).
+`Build`, `Keyboard`, `Tray`, `System monitor`, `Power`).
 
 ### 2.3 Surfaces, screens and reserve
 

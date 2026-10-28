@@ -20,10 +20,11 @@ import "../../lib/plugins/build/build.plm" as build
 // reserves nothing and draws the drawers upward from the bar's top edge.
 // The drawers themselves are parts under pages/, which the scene imports for;
 // a part has no name of its own and is not checked alone (INTERFACES.md §1.3).
-// Slice 1 shipped calendar, system, weather and volume; slice 2 adds media —
-// the now-playing card the bar's cover opens. Microphone, network, bluetooth,
-// keyboard, tray, power and settings stay reserved for later slices (the
-// `drawer` fact already names them).
+// Shipped: volume, network, media (the now-playing card the bar's cover opens),
+// calendar, weather, build and system. Microphone, bluetooth, keyboard, tray and
+// power stay reserved for later slices (the `drawer` fact already names them).
+// There is no settings drawer and none is planned: the shell's settings are the
+// JSON files described below, edited by hand.
 //
 // Opening and closing
 // -------------------
@@ -44,9 +45,9 @@ import "../../lib/plugins/build/build.plm" as build
 //   weatherCity       text    "Saint Petersburg"  empty: let the helper fall back to its env
 //   useFahrenheit     bool    false   weather temperatures in °F instead of °C
 //   calendarCountry   text    ""      ISO country for public holidays, empty: none
-// Slice 1 only reads and clamps these; there is no settings UI yet, so nothing
-// writes the file. A later slice that adds one must mutate the parsed table so
-// keys another version put there survive.
+// The scene only reads and clamps these: nothing here writes the file, it is
+// edited by hand (and by whatever a provisioning script wants). Reads keep the
+// parsed table and mutate it, so keys another version put there survive a save.
 //
 // Helper workers (INTERFACES.md §7; installed into PATH as pleamar-<name>)
 // ------***--------------------------------
@@ -188,7 +189,7 @@ scene panels {
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | build | keyboard | tray | system | power | settings = none
+    fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | build | keyboard | tray | system | power = none
     // Numbers are what `--say fact` can set; the enum `drawer` above is not accepted by the socket
     // in this version. `page` mirrors it for the outside: 5 is media, 6 calendar, …
     fact page = 0
