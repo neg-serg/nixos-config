@@ -122,6 +122,25 @@ scene bar {
     // 7, not 6: the reference's plates sit at 5, 72, 158, 223 with gaps of 9 then 7,
     // and a uniform 6 left every capsule after the clock 3 logical px short.
     let row.gap = 7
+    // ---- glyph edge on glass -------------------------------------------------
+    // The reference helps its glyphs with a soft shadow when the wallpaper is light
+    // (Components/GlyphShadow: blur 0.55, opacity 0.75), and that alone is measured not to be
+    // enough: on a pale plate at 14 px it leaves the backdrop under the strokes at 188 of 237 —
+    // 1.24:1 against the plate, fog rather than an edge. A hairline `outline` is what gives one:
+    // 0.5 px at 14 px reads 6.2:1, 0.65 at 18 px 11.5:1, and 0.5 at 11 px 7.7:1.
+    //
+    // The width has a sub-pixel floor, and it is not size/something: below about 0.7 the outline is
+    // spread thin and gives no dark edge at all, which is what the 9.6 px net rows met (1.7:1 at
+    // 0.5). They carry 0.85 instead, 4.4:1, and a 0.5 would draw nothing.
+    //
+    // All of it is 0 when the wallpaper is dark: `outline: 0` and a zero blur with zero alpha
+    // draw nothing at all (measured: pixel-identical to no effects over 41 600 px), so the bar is
+    // the reference's bar there.
+    let glass.edge = if(skin.light, 0.5, 0)
+    let glass.edge.big = if(skin.light, 0.65, 0)
+    let glass.edge.small = if(skin.light, 0.85, 0)
+    let glass.blur = if(skin.light, 1, 0)
+    let glass.alpha = if(skin.light, 100%, 0%)
     // How many of the six monitor pairs are there at all: the reference's own
     // rule (SystemMonitorCapsule._vis*), the GPU only on a machine that has
     // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
@@ -809,7 +828,9 @@ scene bar {
             // a rule), and the reading rises 3 px and fades for ~120 ms: the fade half of the
             // reference's roll, in this language's own terms.
             group tick_zone { move: 0, -clamp(dip, 0, 3); opacity: 1 - clamp(dip, 0, 3) * 0.22
-                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 35; lines: 1 }
+                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: time.tone; family: "Iosevka"; width: 35; lines: 1
+                                outline: glass.edge, #000000
+                                shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             }
             // Pressable, as in the reference: ClockWidget's TapHandler is `calendar.toggle()`,
             // so the capsule is a button and not a label.
@@ -855,10 +876,14 @@ scene bar {
             // The glyphs this reads are Nerd Font code points (`WS_GLYPH` in the logic), so they need
             // the face they were chosen in — Material has no such names and drew squares.
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
-            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
+            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"
+                               outline: glass.edge, #000000
+                               shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             // `width:` and one line: a long name used to run over the plate and onto the keyboard
             // capsule beside it, which is what the fixed 69 design px are there to prevent.
-            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1
+                                outline: glass.edge, #000000
+                                shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { emit tip(1) }
             on leave ws { emit tip_hide }
@@ -1034,34 +1059,23 @@ scene bar {
                 image icon_weather_snow { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 5 }
                 image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 6 }
             }
-            // On a wallpaper light enough to wash the plate out (`skin.light`) the glyphs take a
-            // shadow and a hairline edge; on a dark one both are off (blur 0 and alpha 0 draw
-            // nothing) and the strip is exactly what the reference draws.
-            //
-            // The shadow alone is the reference's answer (Components/GlyphShadow: blur 0.55,
-            // opacity 0.75) and it was measured not to be enough here: on a pale plate at 14 px
-            // it takes the backdrop under the strokes down to 188 of 237 — 1.24:1 against the
-            // plate, which reads as fog. The same text with a 0.5 outline reaches 26, 6.0:1, and
-            // the glyph weight stays the reference's (a 1 px outline draws it a weight bolder).
-            // Numbers from a stand of nine variants on a #dfe6ec plate, `pleamar --check` clean.
-            let glyph.edge = if(skin.light, 0.5, 0)
-            let glyph.shadow = if(skin.light, 1, 0)
-            let glyph.alpha = if(skin.light, 100%, 0%)
+            // The glyph tokens are the scene's (see `glass.edge` at the top): the weather strip is
+            // the one capsule the reference shadows on `backdropIsLight` alone (WeatherButton).
             text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"
-                                  outline: glyph.edge, #000000
-                                  shadow: 0, 1, glyph.shadow, glyph.alpha, #000000 }
+                                  outline: glass.edge, #000000
+                                  shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             image icon_weather_drop { at: x.drop, strip / 2 + 1 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
             text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka"
-                                 outline: glyph.edge, #000000
-                                 shadow: 0, 1, glyph.shadow, glyph.alpha, #000000 }
+                                 outline: glass.edge, #000000
+                                 shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
             group arrow { pivot: x.arrow + arrow.w / 2, strip / 2 + 1; rotate: weather.dir
                 image icon_weather_wind { at: x.arrow, strip / 2 + 1 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
             }
             text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka"
-                                  outline: glyph.edge, #000000
-                                  shadow: 0, 1, glyph.shadow, glyph.alpha, #000000 }
+                                  outline: glass.edge, #000000
+                                  shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
@@ -1108,8 +1122,12 @@ scene bar {
             // component sizes), so a capsule that grew and shrank again would not reflow — the mode
             // is drawn in the 20 px the icon already owns, and the layout keeps its place.
             image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim; show: not kb_badge_on }
-            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18; color: skin.accent; show: kb_badge_on }
-            text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
+            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18; color: skin.accent; show: kb_badge_on
+                                outline: glass.edge.big, #000000
+                                shadow: 0, 1, glass.blur, glass.alpha, #000000 }
+            text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1
+                                 outline: glass.edge, #000000
+                                 shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
             // from the event socket a moment later.
@@ -1183,10 +1201,18 @@ scene bar {
             // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
             // The reference also sets letterSpacing 0.5, which the scene language has no
             // property for (its `letter_*` effects move glyphs without opening the line).
-            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
-            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
-            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%)
+                              outline: glass.edge.small, #000000
+                              shadow: 0, 1, glass.blur, glass.alpha, #000000 }
+            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit
+                                   outline: glass.edge.small, #000000
+                                   shadow: 0, 1, glass.blur, glass.alpha, #000000 }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%)
+                              outline: glass.edge.small, #000000
+                              shadow: 0, 1, glass.blur, glass.alpha, #000000 }
+            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit
+                                   outline: glass.edge.small, #000000
+                                   shadow: 0, 1, glass.blur, glass.alpha, #000000 }
             // The capsule's own press zone starts after the VPN slot, so the two never overlap:
             // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
             // opens the flow drawer and carries the capsule's tooltip.
@@ -1343,6 +1369,8 @@ scene bar {
                 color: skin.ink
                 family: "Iosevka"
                 show: hot
+                outline: glass.edge, #000000
+                shadow: 0, 1, glass.blur, glass.alpha, #000000
             }
         }
     }
