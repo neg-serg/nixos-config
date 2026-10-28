@@ -287,14 +287,20 @@ scene notifications {
         zone box clear_zone { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Clear all notifications"; role: button; agent: no }
         on press clear_zone { emit clear_all }
 
-        // The history, scrolled: the list zone is the standard "Notifications"
-        // list and sits under the cards (declared before them), so a card keeps
-        // its own clicks. `content:` is the whole list, so the wheel and the
-        // drag run over it; the copies are only the window (`entries`), placed
-        // where they belong by `entryFirstY` in CentreCard. Whenever the
-        // scroll crosses a design pixel the logic is told where it is, and it
-        // answers with the slice that now fits.
-        zone box list_zone { from: x + 14 * scale, 88 * scale; size: 336 * scale, h - 102 * scale; label: "Notifications"; role: list }
+        // The history, scrolled. The named `column list` IS the list zone — its
+        // whole box, underneath the cards — so there is no separate `zone box
+        // list_zone` here any more: a plain zone with the same box and the same
+        // role stood on top of the layout, and an agent asking `describe` got
+        // the header and nothing else — no cards to read, none to press
+        // (measured 2026-10-28; dropping it brings back the list and its
+        // `item` rows, which is the half of INTERFACES §8 that matters here).
+        // The standard "Notifications" label went with it: a layout that carries
+        // `label:`/`role:` stops being a scrolling layout in 0.4.29 (`list.scroll`
+        // disappears), so the label stays the header text above.
+        // `content:` is the whole list, so the wheel and the drag run over it;
+        // the copies are only the window (`entries`), placed where they belong by
+        // `entryFirstY` in CentreCard. Whenever the scroll crosses a design pixel
+        // the logic is told where it is, and it answers with the slice that fits.
         column list ~ui.overlay { at: x + 14 * scale, 88 * scale; gap: 8 * scale; view: 336 * scale, h - 102 * scale; content: entryTotal * scale
             for n in entries { CentreCard(n, scale) }
         }

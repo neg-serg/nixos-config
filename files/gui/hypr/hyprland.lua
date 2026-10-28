@@ -568,12 +568,14 @@ hl.bind(M1 .. "+q", hl.dsp.exec_cmd(menu))
 hl.bind("Caps_Lock", hl.dsp.exec_cmd("swayosd-client --caps-lock"))
 hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 
--- --- Notifications (quickshell notification center) ---
--- `timeout` on both IPC calls: a wedged shell keeps its process (and its IPC
--- socket) alive without answering, and this CLI then blocks forever — on
--- 2026-10-13 each press left another stuck client behind until the shell was
--- restarted (the quickshell-health timer now does that on its own).
-hl.bind(M4 .. "+n", hl.dsp.exec_cmd("timeout 3 quickshell ipc call globalIPC toggleNotificationCenter"))
+-- --- Notifications (the pleamar notifications scene) ---
+-- M4+n opens and closes the notification centre, M4+space (below) dismisses
+-- everything. The scene is the `org.freedesktop.Notifications` server while it
+-- runs, its IPC name is the scene name, and `timeout` stays on the call for the
+-- reason it was added: a wedged scene keeps its socket alive without answering
+-- and this CLI would block forever (2026-10-13, every press left a stuck client
+-- behind until the shell was restarted).
+hl.bind(M4 .. "+n", hl.dsp.exec_cmd('timeout 3 pleamar --say notifications "emit toggle_centre"'))
 -- Panel toggles and transport for the same shell (audit #7): the calendar and
 -- weather capsules register names with OverlayManager; media goes through the
 -- MPRIS manager. M4+SH+j/u/x were the free slots in this keymap.
