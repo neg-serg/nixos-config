@@ -1,0 +1,82 @@
+diff --git a/src/language/mod.rs b/src/language/mod.rs
+index f0273b3..3385ec4 100644
+--- a/src/language/mod.rs
++++ b/src/language/mod.rs
+@@ -76,7 +76,7 @@ impl Reader {
+     fn open(&mut self, path: &Path) -> Result<Vec<tree::Entry>, CompileError> {
+         let k = self.files.len();
+         let canonical = path.canonicalize().unwrap_or_else(|_| path.to_owned());
+-        let source = match self.unsaved.iter().find(|(r, _)| *r == canonical) {
++        let source = match self.unsaved.iter().find(|(r, _)| *r == canonical || *r == path) {
+             Some((_, t)) => t.clone(),
+             None => std::fs::read_to_string(path).map_err(|e| CompileError::at(0, 0, format!("cannot read {}: {e}", path.display())))?,
+         };
+@@ -114,8 +114,10 @@ impl Reader {
+             let (Some(TokenKind::Str(which)), 2, None) = (n.head.get(1).map(|f| &f.kind), n.head.len(), &n.body) else {
+                 return Err(CompileError::at(n.line, n.col, "an include is `include \"path/to/the/part.plm\"`: a piece of this scene, in a file of its own"));
+             };
+-            let target = path.parent().unwrap_or(Path::new(".")).join(which);
+-            let target = target.canonicalize().map_err(|e| CompileError::at(n.line, n.head[1].col, format!("cannot find '{which}' (looking in {}): {e}", target.display())))?;
++            let target = normalize(&path.parent().unwrap_or(Path::new(".")).join(which));
++            if !target.is_file() {
++                return Err(CompileError::at(n.line, n.head[1].col, format!("cannot find '{which}' (looking in {})", target.display())));
++            }
+             if self.open_stack.contains(&target) {
+                 return Err(CompileError::at(n.line, n.head[1].col, format!("'{which}' ends up including itself: {}", self.open_stack.iter().chain([&target]).map(|p| p.file_name().unwrap_or_default().to_string_lossy()).collect::<Vec<_>>().join(" → "))));
+             }
+@@ -178,8 +180,17 @@ impl Reader {
+                 }
+                 t
+             } else {
+-                let target = path.parent().unwrap_or(Path::new(".")).join(which);
+-                target.canonicalize().map_err(|e| CompileError::at(n.line, n.head[1].col, format!("cannot find '{which}' (looking in {}): {e}", target.display())))?
++                // Relative to the importing file *as it was reached*, symlinks and all —
++                // which is what the documentation promises. Canonicalizing first made a
++                // scene loaded from ~/.config/pleamar (a symlink farm into a checkout)
++                // import the checkout's neighbours rather than its own, so a palette
++                // generated next to the live tree was never read. `..` is folded
++                // lexically, so one library reached by two routes is still one file.
++                let target = normalize(&path.parent().unwrap_or(Path::new(".")).join(which));
++                if !target.is_file() {
++                    return Err(CompileError::at(n.line, n.head[1].col, format!("cannot find '{which}' (looking in {})", target.display())));
++                }
++                target
+             };
+             if self.open_stack.contains(&target) {
+                 return Err(CompileError::at(n.line, n.head[1].col, format!("'{which}' ends up importing itself: {}", self.open_stack.iter().chain([&target]).map(|p| p.file_name().unwrap_or_default().to_string_lossy()).collect::<Vec<_>>().join(" → "))));
+@@ -360,7 +371,9 @@ fn read_with(path: &str, unsaved: Vec<(PathBuf, String)>) -> Result<(Scene, Vec<
+ /// needs them even when the file is half-written and does not compile.
+ fn read_with_symbols(path: &str, unsaved: Vec<(PathBuf, String)>) -> (Result<(Scene, Vec<PathBuf>), (Vec<CompileError>, Vec<(PathBuf, String)>)>, Vec<compiler::Symbol>) {
+     let mut l = Reader { unsaved, ..Default::default() };
+-    let main = Path::new(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path));
++    // The scene's own path, symlinks and all: the resolved imports hang off it, and a
++    // deployed tree (a symlink farm) must import its own neighbours.
++    let main = normalize(Path::new(path));
+     let mut symbols = Vec::new();
+     let compiled = (|| {
+         l.open_stack.push(main.clone());
+@@ -512,3 +525,24 @@ mod tests {
+         }
+     }
+ }
++
++/// The path with `.` and `..` folded lexically. Symlinks are **not** followed, so the
++/// result still names the file where the importing scene's own path does — that is the
++/// whole point: a scene loaded from `~/.config/pleamar` (a symlink farm into a
++/// checkout) imports what sits beside *that* path, not beside the checkout.
++fn normalize(path: &Path) -> PathBuf {
++    use std::path::Component;
++    let mut out = PathBuf::new();
++    for part in path.components() {
++        match part {
++            Component::CurDir => {}
++            Component::ParentDir => {
++                if !out.pop() {
++                    out.push("..");
++                }
++            }
++            other => out.push(other.as_os_str()),
++        }
++    }
++    out
++}

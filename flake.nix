@@ -114,18 +114,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pleamar = {
-      # v0.4.29 (8cd42c5) plus two commits on `neg-serg/pleamar`, branch
-      # fix/import-path-v0.4.29: an `import` is resolved beside the path the
-      # importing file was reached by, not beside its canonicalized checkout.
-      # Without it a scene loaded from ~/.config/pleamar (a symlink farm into this
-      # repository) imported the repository's neighbours, so the palette generated
-      # next to the live tree was never read and every scene kept the frozen
-      # colours — the accent stayed #006FCC instead of the wallpaper's, and the
-      # drawers kept a black plate. The patch is `src/language/mod.rs` only
-      # (+40/−6), rebased onto the v0.4.29 tag; nothing is sent upstream. Update
-      # with:
+      # Upstream `main` (2026-10-28) — v0.4.29 plus ten commits: a zone goes with
+      # its own surface and a closed one lets go at once, a hidden field's zone is
+      # switched off with it, `pointer.x/y` inside a named surface are the
+      # surface's, a popup comes out of a popup beside the row it belongs to, a
+      # tray menu longer than its window scrolls, lists are grabbed and let go from
+      # the inside. The import-path fix the pin used to borrow from
+      # `neg-serg/pleamar` (`fix/import-path-v0.4.29`) is a patch in
+      # `packages/overlays/pleamar-import-path.patch` now, so the pin follows
+      # upstream and nothing has to be rebased and pushed. Every local patch in
+      # `packages/overlays/gui.nix` was checked to apply in order on this commit.
+      # Update with:
       # nix flake lock --update-input pleamar
-      url = "github:neg-serg/pleamar/eaf6020623588716f2608d249dc9e6abd51a2bec";
+      url = "github:k4ditano/pleamar/63b40bfe9cceb3a02c9c120aedaff2abb5337c85";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
