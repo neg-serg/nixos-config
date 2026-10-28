@@ -170,15 +170,14 @@ Read them with `pleamar --say <scene> "get <fact>"` and set them with
 `bar` | `shown` | bool | `true` | the strip is there; `reserve` counts only while true | | `bar` |
 `startup` | bool | `false` | login gate is up (clean bar) — written by its logic, read by tests | |
 `panels` | `drawer` | enum
-`none \| volume \| network \| media \| calendar \| weather \| build \| system`
-| `none` | which drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` |
-do not disturb | | `notifications` | `centre` | bool | `false` | the notification centre is open | |
-`notifications` | `count` | number | `0` | notifications currently shown or kept (read-only for
-other scenes) | | `toast` | `visible` | number | `0` | how many toasts are on screen | | `overlay` |
-`active` | bool | `false` | the dismissal catcher is up | | `lock` | `locked` | bool | `false` | the
-lock surface wants the session (the compositor's own `lock.held` says whether it has it) | |
-`launcher` | `open` | bool | `false` | the launcher is up | | `launcher` | `query` | text | `""` |
-what has been typed |
+`none \| volume \| network \| media \| calendar \| weather \| build \| system` | `none` | which
+drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` | do not disturb | |
+`notifications` | `centre` | bool | `false` | the notification centre is open | | `notifications` |
+`count` | number | `0` | notifications currently shown or kept (read-only for other scenes) | |
+`toast` | `visible` | number | `0` | how many toasts are on screen | | `overlay` | `active` | bool |
+`false` | the dismissal catcher is up | | `lock` | `locked` | bool | `false` | the lock surface
+wants the session (the compositor's own `lock.held` says whether it has it) | | `launcher` | `open`
+| bool | `false` | the launcher is up | | `launcher` | `query` | text | `""` | what has been typed |
 
 IPC examples that other tools (Hyprland binds, health probe, scripts) may rely on:
 
@@ -207,8 +206,8 @@ and all of them live in the one `panels` process:
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
 `microphone`, `bluetooth`, `keyboard`, `tray`, `power` and `settings` were reserved names with no
 part, so a press on them opened an empty window; the owner dropped them on 2026-10-28, and there is
-no settings drawer to come — the shell's settings are the per-scene JSON files (§6), edited by
-hand. `build` was added when its page landed and was missing from this list.
+no settings drawer to come — the shell's settings are the per-scene JSON files (§6), edited by hand.
+`build` was added when its page landed and was missing from this list.
 
 Each drawer is a part under `shells/panels/pages/<name>.plm` (owned by PH2-B), included by
 `panels.plm`; a drawer that is too big for a part may be split into more parts, but the drawer name
