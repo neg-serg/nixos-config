@@ -6,6 +6,8 @@
 }:
 let
   ru = import ./ru-keys.nix;
+  t = import ./test-suite.nix;
+  inherit (t) check;
 
   latinLower = lib.stringToCharacters "qwertyuiopasdfghjklzxcvbnm";
   latinUpper = lib.stringToCharacters "QWERTYUIOPASDFGHJKLZXCVBNM";
@@ -14,8 +16,6 @@ let
   # langmapper.nvim). mkLangmap must reproduce it byte-for-byte: if the table
   # and the lua ever diverge, this check fails first.
   langmapGolden = "ЁЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ;~QWERTYUIOP{}ASDFGHJKL:\\\"ZXCVBNM<>,ёйцукенгшщзхъфывапролджэячсмить;`qwertyuiop[]asdfghjkl\\;'zxcvbnm";
-
-  check = ok: msg: { inherit ok msg; };
 
   checks = [
     (check (builtins.length latinLower == 26) "lowercase latin alphabet must be 26 chars")
@@ -91,8 +91,4 @@ let
     (check (ru.mkLangmap == langmapGolden) "mkLangmap must match neovim langmapper output exactly")
   ];
 in
-{
-  inherit checks;
-  failures = builtins.filter (c: !c.ok) checks;
-  report = builtins.concatStringsSep "; " (map (f: f.msg) (builtins.filter (c: !c.ok) checks));
-}
+t.suite checks

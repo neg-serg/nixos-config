@@ -9,18 +9,29 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 - `neg-helpers.nix` — structural helpers: the home-file helper (`mkHomeFiles`), `importDir`
   (directory auto-import for every module aggregator, with `nameFilter` for dropping entries by
   name) and the by-name resolver `tree` / `leaves` / `find`; `systemdUser` closes `systemd-user.nix`
-  over a given `lib`. Single source for `specialArgs.neg` (flake/nixos.nix) and `flake/checks.nix`;
-  also re-exports `ruKeys` from `ru-keys.nix`.
+  over a given `lib`, `jackApp` closes `jack-app.nix` over it plus `pkgs`/`mkUserService`. Single
+  source for `specialArgs.neg` (flake/nixos.nix) and `flake/checks.nix`; also re-exports `ruKeys`
+  from `ru-keys.nix`.
 - `systemd-user.nix` — systemd unit helpers: `mkUnitFromPresets` plus the module-shaped
   `mkUserService` / `mkUserOneshot` / `mkUserActivation`, and the system-level oneshot+timer factory
   `mkOneshotTimer` used by `hosts/trantor`; the legacy `mkSimple*` helpers were removed. The
   `presets` table holds both scheduling keys
   (`after`/`wants`/`requires`/`bindsTo`/`partOf`/`wantedBy`) and a `service` attrset
   (`Restart`/`RestartSec`/`Type`): `defaultWanted`, `restartOnFailure`, `oneshot`,
-  `graphicalSession`, `graphicalWanted`. Preset service keys are merged under the caller's own
-  `serviceConfig` (caller wins per key), so `presets = [ "restartOnFailure" ]` + `RestartSec = 3`
-  keeps the shared policy while tuning the delay; a raw `Restart = "on-failure"` inside
-  `systemd.user.services` is rejected by the `restart-preset` rule in `scripts/dev/lint-guards.sh`.
+  `graphicalSession`, `graphicalWanted`, `audioGraph` (client of the running PipeWire graph — after
+  `pipewire` + `wireplumber`). Preset service keys are merged under the caller's own `serviceConfig`
+  (caller wins per key), so `presets = [ "restartOnFailure" ]` + `RestartSec = 3` keeps the shared
+  policy while tuning the delay; a raw `Restart = "on-failure"` inside `systemd.user.services` is
+  rejected by the `restart-preset` rule in `scripts/dev/lint-guards.sh`.
+- `jack-app.nix` — the two PipeWire/JACK unit shapes the audio stack repeats, built on
+  `mkUserService`: `mkUnit` is the port *watcher* (poll `pw-link -o`, link the app's out ports into
+  the `game-stereo` sink as soon as they appear — pipewire-jack never auto-connects and WirePlumber
+  ignores JACK nodes, so without it the app is silently mute), `mkPwJackUnit` launches a standalone
+  synth under `pw-jack`. Exposed as `config.lib.neg.jackApp` (needs `pkgs` and the host's pipewire
+  package, so it is built in `modules/core/neg.nix`, not in `neg-helpers.nix`).
+- `test-suite.nix` — `check cond msg` + `suite checks`: the assertion harness every
+  `lib/*-tests.nix` file shares (the `checks`/`failures`/`report` trio `mkOkCheck` consumes). A new
+  suite is then imports + assertions only.
 - `llama-server.nix` — `mkService { description, execStart, user }`, the systemd unit skeleton
   shared by `modules/llm/llama-server.nix` and `llama-server-flash-next.nix` (manual-start-only
   policy, `render`/`video` groups); exposed as `config.lib.neg.llamaServer` like `systemdUser`.

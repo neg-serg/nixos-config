@@ -160,8 +160,12 @@ identical import lines (23, includes two `mkUserService` conversions).
   win is structural (one definition instead of seven), not in volume, so it does not pay for the
   indirection. The four large harnesses stay as they are.
 - **Unifying `mkBoolOpt`/`mkBool`/`mkEnableOption`**, `package-checks.nix`'s table, `ru-keys`
-  (golden-tested), the two `*-tests.nix` harnesses, `importDir` internals, "hosts vs modules" (no
+  (golden-tested), the `*-tests.nix` harnesses, `importDir` internals, "hosts vs modules" (no
   duplicated logic), `unbound-hosts`/`hardware` (data), merging `apps.nix`+`devshells.nix`.
+  - *Amended 2026-10-28:* the harness count had grown from two suites to five, and the owner asked
+    for the shared `lib/test-suite.nix` anyway. Measured afterwards: net +10 lines, i.e. the
+    "structural, not volume" verdict stands — do not extend it further on volume grounds (see the
+    2026-10-28 section).
 - **QML idioms** (`Rectangle {` ×122, `anchors.fill: parent` ×118, `Layout.fillWidth` ×77,
   `pragma ComponentBehavior: Bound` ×48) — framework-inherent, not reducible.
 - **hyprlock themes** (kept on purpose, see the audit), the Neg Dark palette copies (0 lines to
@@ -271,3 +275,38 @@ claims in that report as unverified until re-checked.
    check; for the INI theme, `diff` the deployed file against the previous one (must be empty).
 1. Land each idea as its own commit with the `[scope]` prefix, so a regression is bisectable.
 1. Keep the generators fresh: `just codebase`, `just docs-modules`, then `just docs-guard`.
+
+## Pass 2026-10-28 — SC plugin builder, PipeWire/JACK units, test harness
+
+Owner-requested pass over the three duplication clusters this survey left open. All three are
+*centralisations*: the per-site boilerplate disappears, the shared builder stays, so the volume
+delta is small or positive while the cost of the next instance drops.
+
+| Change                                                                                                                                                                                                               | Δ at the call sites            | Builder cost                                   | Net  | Per-new-instance cost |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------- | ---- | --------------------- |
+| `packages/lib/mkScPlugin.nix` for the ten SuperCollider UGen packages (`f0plugins`, `guttersynth-sc`, `mi-ugens`, `my-ugens`, `softcut-sc`, `steroids-ugens`, `xplaybuf`, `super-bufrd`, `mdugens`, `portedplugins`) | +138 / −181 → −43              | +105                                           | +62  | ~25 → ~9 lines        |
+| `lib/jack-app.nix` + the `audioGraph` preset: the two pw-link watchers (`renoise-link`, `supercollider-link`) and three audio-graph units (`vital-standalone`, `rack`, `virtual-midi`)                               | +63 / −105 → −42 in `modules/` | +143 (`jack-app.nix` 122, preset 15, wiring 6) | +101 | ~30 → ~12 lines       |
+| `lib/test-suite.nix` for the five `lib/*-tests.nix` suites                                                                                                                                                           | +15 / −41 → −26                | +36                                            | +10  | —                     |
+
+Evidence:
+
+- **mkScPlugin** — the ten `drvPath`s were recorded before the change; afterwards all ten rebuild
+  and every output's file tree (`find` over files + symlinks) is *identical* to the pre-change store
+  path (f0plugins 74 entries, portedplugins 64, my-ugens 52, mi-ugens 36, super-bufrd 18, mdugens
+  13, steroids-ugens 6, guttersynth-sc / softcut-sc / xplaybuf 3 each). The `drvPath` itself moves:
+  the shared base now spells `-DSUPERNOVA=OFF` for `mi-ugens` and `portedplugins` as well (the
+  upstream cmake default there), which is why the comparison is on the output tree, not on the
+  derivation.
+- **jack-app** — `nixosConfigurations.trantor.config.systemd.user.services` compared per unit
+  (`description` / `after` / `wantedBy` / `enable` / `serviceConfig`) for all five migrated units,
+  and both generated watchers were built and are `bash -n`-clean. One deliberate widening: the port
+  match is `^<client>[^:]*:<port>$` for both watchers (renoise already had it, `supercollider-link`
+  pinned the bare name), so a `-N` suffix after a restart storm no longer leaves the engine
+  unmatched.
+- **test-suite** — each of the four config-free suites evaluates to
+  `{ failures = 0; n = 9/26/16/3 }` and `feature-flags` passes inside `just check`; the failure path
+  was exercised directly (`suite [ ok, failed ]` → one failure, `report` = the failed message).
+  `just lint` (statix, deadnix, guards) and `just check` are green.
+
+The survey's rejection of a shared test harness ("structural win, not volume") is confirmed by the
++10 net here; it is implemented because the owner asked for it, not because it pays.

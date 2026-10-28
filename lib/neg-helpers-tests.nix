@@ -7,6 +7,8 @@
 # (lib/) on purpose: a test is allowed to know where it sits.
 let
   neg = import ./neg-helpers.nix;
+  ts = import ./test-suite.nix;
+  inherit (ts) check;
 
   libTree = neg.tree { dir = ./.; };
   modules = neg.tree { dir = ../modules; };
@@ -30,11 +32,6 @@ let
 
   missing = builtins.tryEval (neg.find libTree "definitely-not-a-file");
   leaf = name: t: builtins.head (builtins.filter (l: l.name == name) (neg.leaves t));
-
-  check = cond: msg: {
-    inherit msg;
-    ok = cond;
-  };
 
   checks = [
     # tree: names instead of paths; default.nix addresses its own directory
@@ -105,8 +102,4 @@ let
     ) "nameFilter can drop every entry")
   ];
 in
-{
-  inherit checks;
-  failures = builtins.filter (c: !c.ok) checks;
-  report = builtins.concatStringsSep "; " (map (f: f.msg) (builtins.filter (c: !c.ok) checks));
-}
+ts.suite checks

@@ -71,10 +71,8 @@ let
 
   unresolved = builtins.filter (p: !resolves p) flags;
 
-  check = cond: msg: {
-    inherit msg;
-    ok = cond;
-  };
+  t = import ./test-suite.nix;
+  inherit (t) check;
 
   checks = [
     (check (scannedFlags != [ ]) "flag scan found at least one lib.neg.enabled call")
@@ -87,8 +85,4 @@ let
     ))
   ];
 in
-{
-  inherit checks;
-  failures = builtins.filter (c: !c.ok) checks;
-  report = lib.concatStringsSep "; " (map (f: f.msg) (builtins.filter (c: !c.ok) checks));
-}
+t.suite checks
