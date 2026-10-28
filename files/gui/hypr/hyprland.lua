@@ -1478,8 +1478,11 @@ hl.on("hyprland.start", function()
   ))
 
   -- Session phase: restart the session target chain: import env, clean stale
-  -- portals and stop/start hyprland-session.target so quickshell, hypridle,
-  -- hyprscratch and ru-layout come back after a Hyprland (re)start.
+  -- portals and stop/start hyprland-session.target so the pleamar scenes (bar,
+  -- launcher, panels, notifications, toast), hypridle, hyprscratch and ru-layout
+  -- come back after a Hyprland (re)start. Every pleamar unit is `PartOf=` +
+  -- `WantedBy=hyprland-session.target` (modules/user/nix-maid/gui/pleamar.nix),
+  -- so restarting the target restarts them and nothing else has to say so.
   hl.exec_cmd("hypr-start")
 
   -- Liquid Glass materials for layer surfaces as well: hyprglass handles only
@@ -1497,7 +1500,6 @@ hl.on("hyprland.start", function()
   -- HyprExpo and HyprWindowShade are loaded above, before the login branch — they
   -- must come up in the login phase too (see the comment at the top of this handler).
 
-  hl.exec_cmd("systemctl --user restart quickshell.service")
   hl.exec_cmd("systemctl --user restart hyprscratch.service")
   hl.exec_cmd("systemctl --user start wl-daemon.service")
   hl.exec_cmd("wl-restore")
@@ -1518,15 +1520,16 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_QPA_PLATFORMTHEME")
 end)
 
--- Ensure the quickshell panel is running after every config reload
+-- Ensure the shell's bar is running after every config reload
 -- (systemctl start is a no-op when the service is already active,
--- so this never spawns more than one instance).
+-- so this never spawns more than one instance); pleamar-health.timer is the
+-- watchdog that brings back a scene which stopped answering on its own.
 hl.on("config.reloaded", function()
   -- Not during the login phase: the marker still says "login", the login layer
   -- owns the screen, and a reload (or the desktop shell starting behind the
   -- login screen) would put the panel on top of it.
   if loginPhase then return end
-  hl.exec_cmd("systemctl --user start quickshell.service")
+  hl.exec_cmd("systemctl --user start pleamar-bar.service")
 end)
 
 -- Keep the primary monitor as the home for all workspaces
