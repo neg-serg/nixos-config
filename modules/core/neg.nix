@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   neg,
   repoRoot,
   config,
@@ -112,6 +113,16 @@ in
 
         # Shared llama-server systemd unit skeleton (lib/llama-server.nix).
         llamaServer = neg.llamaServer lib;
+
+        # PipeWire/JACK unit shapes (lib/jack-app.nix): the port watcher and the
+        # pw-jack launcher, built on the same mkUserService as every other user
+        # unit here. `pipewire` is the package the host actually runs, so a unit
+        # never mixes pw-link with a server from another build.
+        jackApp = neg.jackApp {
+          inherit lib pkgs;
+          pipewire = config.services.pipewire.package;
+          mkUserService = systemdUser.mkUserService;
+        };
       };
   };
 }

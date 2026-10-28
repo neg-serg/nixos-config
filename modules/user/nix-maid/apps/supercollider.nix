@@ -11,8 +11,9 @@ let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
 
-  # Module-shaped systemd user units (lib/systemd-user.nix)
-  systemdUser = config.lib.neg.systemdUser;
+  # PipeWire/JACK unit shape (lib/jack-app.nix): the pw-link watcher links
+  # scsynth's out ports whenever they appear, surviving engine restarts.
+  jackApp = config.lib.neg.jackApp;
 
   # SuperDirt and Vowel now come from nix packages (packages/superdirt,
   # packages/vowel) symlinked into SC's default extension dir below — the
@@ -64,23 +65,6 @@ let
     "${pkgs.sc-faust}/lib/SuperCollider/plugins" # sc_faust: Faust JIT compiler UGen
   ];
 
-  # SuperCollider runs as a pipewire-jack client (LD_LIBRARY_PATH above), but
-  # pipewire-jack does NOT auto-connect client ports and WirePlumber ignores
-  # JACK nodes (they carry no media.class) — so scsynth's out ports stay
-  # unlinked and the engine is silent. This watcher links SuperCollider:out_1/2 →
-  # game-stereo (the hdspe module routes that sink to the RME AES pair)
-  # whenever the ports appear, surviving engine restarts.
-  supercolliderLinkScript = pkgs.writeShellScript "supercollider-link" ''
-    set -u
-    while true; do
-      if [[ "$(pw-link -o 2>/dev/null)" == *"SuperCollider:out_1"* ]]; then
-        pw-link SuperCollider:out_1 game-stereo:playback_FL 2>/dev/null || true
-        pw-link SuperCollider:out_2 game-stereo:playback_FR 2>/dev/null || true
-      fi
-      sleep 2
-    done
-  '';
-
 in
 {
   config = lib.mkIf enabled {
@@ -91,27 +75,25 @@ in
       SC_PLUGIN_PATH = scPluginPath;
     };
 
-    # Keep scsynth's JACK out ports linked to the game-stereo virtual sink.
-    systemd.user.services."supercollider-link" = systemdUser.mkUserService {
+    # Keep scsynth's JACK out ports linked to the game-stereo virtual sink (the
+    # hdspe module routes that sink to the RME AES pair). SuperCollider runs as
+    # a pipewire-jack client (LD_LIBRARY_PATH above), and pipewire-jack does NOT
+    # auto-connect client ports, so without the watcher the engine is silent.
+    systemd.user.services."supercollider-link" = jackApp.mkUnit {
+      name = "supercollider-link";
       description = "Link SuperCollider JACK out ports to game-stereo";
-      presets = [
-        "graphicalWanted"
-        "restartOnFailure"
+      client = "SuperCollider";
+      pairs = [
+        {
+          from = "out_1";
+          to = "playback_FL";
+        }
+        {
+          from = "out_2";
+          to = "playback_FR";
+        }
       ];
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${supercolliderLinkScript}";
-        Environment = "PATH=${
-          lib.makeBinPath [
-            config.services.pipewire.package # pw-link
-            pkgs.coreutils # sleep
-          ]
-        }";
-      };
+      sink = "game-stereo";
     };
     # No separate engine unit: the live-coding flow runs the engine inside the
     # scnvim sclang session (nvim + scnvim REPL boots scsynth itself under

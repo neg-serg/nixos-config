@@ -6,56 +6,37 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
 
-  # Module-shaped systemd user units (lib/systemd-user.nix)
-  systemdUser = config.lib.neg.systemdUser;
-
-  # Renoise's JACK client name is "renoise" (PipeWire appends -N on name
-  # collisions), and its stereo output ports are output_01_left/right. Link
-  # them to the game-stereo virtual sink (routed to the RME AES pair by the
-  # hdspe module) whenever they appear, surviving tracker restarts.
-  renoiseLinkScript = pkgs.writeShellScript "renoise-link" ''
-    set -u
-    while true; do
-      left=$(pw-link -o 2>/dev/null | grep -m1 -E '^renoise[^:]*:output_01_left$' || true)
-      right=$(pw-link -o 2>/dev/null | grep -m1 -E '^renoise[^:]*:output_01_right$' || true)
-      if [[ -n "$left" && -n "$right" ]]; then
-        pw-link "$left" game-stereo:playback_FL 2>/dev/null || true
-        pw-link "$right" game-stereo:playback_FR 2>/dev/null || true
-      fi
-      sleep 2
-    done
-  '';
+  # Port watcher unit (lib/jack-app.nix): the pw-link poll loop, the unit
+  # policy and the PATH live there, shared with the other JACK clients.
+  jackApp = config.lib.neg.jackApp;
 in
 {
   config = lib.mkIf enabled {
-    systemd.user.services."renoise-link" = systemdUser.mkUserService {
+    # Renoise's JACK client name is "renoise" (PipeWire appends -N on name
+    # collisions), and its stereo output ports are output_01_left/right. Link
+    # them to the game-stereo virtual sink (routed to the RME AES pair by the
+    # hdspe module) whenever they appear, surviving tracker restarts.
+    systemd.user.services."renoise-link" = jackApp.mkUnit {
+      name = "renoise-link";
       description = "Link Renoise JACK out ports to game-stereo";
-      presets = [
-        "graphicalWanted"
-        "restartOnFailure"
+      client = "renoise";
+      pairs = [
+        {
+          from = "output_01_left";
+          to = "playback_FL";
+        }
+        {
+          from = "output_01_right";
+          to = "playback_FR";
+        }
       ];
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${renoiseLinkScript}";
-        Environment = "PATH=${
-          lib.makeBinPath [
-            config.services.pipewire.package # pw-link
-            pkgs.gnugrep # grep
-            pkgs.coreutils # sleep
-          ]
-        }";
-      };
+      sink = "game-stereo";
     };
   };
 }
