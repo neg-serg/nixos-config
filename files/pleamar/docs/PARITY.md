@@ -142,8 +142,11 @@ Chaldea's 340 art files (by design: the behaviour lives in `panels/pages/media.p
 `shells/lock`).
 
 Partial, with the gap named above: connectivity/VPN, weather values (no network on this host),
-notifications history, the greeter's theme variants, the helper set, the settings surface, and the
-nixie glass on the lock's clock (a slab today).
+notifications history, the greeter's theme variants, the helper set, and the settings surface.
+
+Not to be ported for now, by the owner's word (2026-10-28): the nixie glass on the lock's clock. The
+lock draws a slab, and that is where it stays until it is asked for again — the same call as the
+`SubmenuHost` search field and the fingerprint reader.
 
 ## Not ported: the list, area by area (audit of 2026-10-24)
 
@@ -248,10 +251,10 @@ ends at `muted: false`, which is reachable only if the restored flag was `true`.
 
 1. The settings surface, folded into whichever widget is ported next — the widget order it cannot
    carry, since a scene paints in the order it is written.
-1. Everything else in the tables above, one at a time: the nixie glass on the lock's clock, the
-   greeter's theme variants, `SubmenuHost`'s search field, and the fingerprint decision, which is
-   the owner's and not a task. The lock itself — cost, engage, release — is measured and out of the
-   way.
+1. Everything else in the tables above, one at a time: the greeter's theme variants, `SubmenuHost`'s
+   search field, and the fingerprint decision, which is the owner's and not a task. The lock itself
+   — cost, engage, release — is measured and out of the way, and its nixie glass waits for the owner
+   to ask for it again.
 
 ## Backlog: what is left
 
