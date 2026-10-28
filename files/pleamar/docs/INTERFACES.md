@@ -140,9 +140,13 @@ battery, media, weather, keyboard, tray, system monitor, startup gate | PH2-A | 
 `shells/panels/panels.plm` | one per monitor (`screens: each`), anchor `top`, `level: overlay`,
 `reserve: 0`, open while a drawer is open | every drawer hanging from the bar: music, weather,
 network, calendar, mixer, tray menus, system monitor, settings | PH2-B | | `notifications` |
-`shells/notifications/notifications.plm` | one per monitor for the centre, plus the toast placement
-it owns | notification centre, persistent history, DND, actions, images; it is the
-`org.freedesktop.Notifications` server while it runs (D6) | PH2-C | | `toast` |
+`shells/notifications/notifications.plm` | three windows per monitor (`screens: each`): `centre_panel`
+364 × monitor anchored `right`, `toast_stack` 360 × 660 anchored `bottom_right`, and a 1 × 1 `keeper`
+that holds the process. There is no full-monitor surface and no catcher — a zone claims the pointer for
+its whole box, so the full-monitor version claimed the desktop and its cursor with it. `keyboard:
+on_demand`, so compositor binds (`M4+space`) still reach the shell | notification centre, persistent
+history, DND, actions, images, toasts; it is the `org.freedesktop.Notifications` server while it runs
+(D6) | PH2-C | | `toast` |
 `shells/toast/toast.plm` | one per monitor, `level: overlay`, `agent: hidden` on decorative parts |
 transient stacked toasts (max 2), screenshot toast with OCR actions | PH2-D | | `overlay` |
 `shells/overlay/overlay.plm` | one per monitor, full size, `level: overlay` | full-screen dismissal
