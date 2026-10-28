@@ -49,4 +49,10 @@ library Skin strict {
 
     // colors.onAccent, unchanged.
     let skin.on.accent = #ffffff
+
+    // Theme.backdropIsLight: the wallpaper accent is lighter than the reference's
+    // `ui.textShadow.lightThreshold` (0.5) of WCAG luminance, so glyphs on glass sit
+    // on a washed-out backdrop and want a shadow. The generator computes it
+    // (scripts/theme/theme-extract.awk, `light=`); this default says "dark wallpaper".
+    let skin.light = false
 }
