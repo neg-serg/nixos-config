@@ -15,7 +15,10 @@
 --     stack after `autoDismissMs` (never for urgency 2) **without** being
 --     dismissed — the legacy `handleDismiss` did the same, and the record
 --     stays for the centre. The X and an action press DO tell the application
---     (`notifications.dismiss`), like the legacy `handleDiscard`.
+--     (`notifications.dismiss`), like the legacy `handleDiscard`. An arrival is
+--     decided against `nt_live` (what the server keeps now), never against the
+--     history: the two share id numbers across processes, and matching on them
+--     cost every toast and overwrote old entries (2026-10-28).
 --   · DND is the `dnd` fact (INTERFACES §2.1): while it holds, arrivals are
 --     kept and listed in the centre but never toasted. Toggling the fact —
 --     from the centre, from a rule or with `pleamar --say notifications "fact
@@ -93,7 +96,16 @@ local hist_raw = read_file(HIST)
 -- ----- state -----------------------------------------------------------------
 
 local nt_hist = {}    -- the records, newest first: { id, app, title, body, icon, image, pic, urgency, time, actions, on, slot }
-local nt_known = {}   -- id -> record
+-- The records the server keeps RIGHT NOW, by its own id. Not to be confused with
+-- `nt_hist`: the server numbers its records from 1 in every process, so the id a
+-- restored history entry carries belongs to a process that is gone. Keyed by the
+-- id alone, the two collided — every record of a fresh session looked "already
+-- known" because the history held a record with that number, so nothing toasted,
+-- and `refresh()` overwrote the old entry with the new title and body. Measured
+-- 2026-10-28: a notify-send got id 1, the toast count stayed 0 and history
+-- entry 1 became the new notification. So freshness is decided here, against
+-- what the server said last time, and history never enters this table.
+local nt_live = {}    -- id -> record, only while the server keeps it
 local nt_toast = {}   -- ids on screen, oldest first
 local nt_timers = {}  -- id -> the timer that takes the toast away
 local nt_acts = {}    -- flat action table, rebuilt with the models
@@ -197,6 +209,27 @@ end
 
 -- ----- models ----------------------------------------------------------------
 
+-- The body as a card can hold it: two hard lines at most, the rest said with one
+-- ellipsis. The scene's `lines: 2` ends a WRAPPED line with an ellipsis, but it
+-- leaves a body that carries its own newlines alone (a bot's digest, a log
+-- tail), and such a body drew straight out of its card and over the row below —
+-- measured 2026-10-28. The record keeps the body verbatim (history.json is the
+-- history); this is the view only, so nothing is lost by shortening it.
+local function view_body(s)
+    if type(s) ~= "string" then return "" end
+    local kept, seen = {}, 0
+    for line in s:gmatch("[^\r\n]+") do
+        line = line:gsub("^%s+", ""):gsub("%s+$", "")
+        if line ~= "" then
+            seen = seen + 1
+            if seen <= 2 then kept[#kept + 1] = line end
+        end
+    end
+    if seen == 0 then return "" end
+    if seen > 2 then return table.concat(kept, "\n") .. " …" end
+    return table.concat(kept, "\n")
+end
+
 local function entry_of(r, old, first, with_actions)
     local acts = {}
     local def = -1
@@ -225,7 +258,7 @@ local function entry_of(r, old, first, with_actions)
         slot = r.slot,
         app = r.app,
         title = r.title,
-        body = r.body,
+        body = view_body(r.body),
         pic = r.pic,
         urgency = r.urgency,
         old = old,
@@ -314,7 +347,7 @@ local function rebuild()
     nt_acts = {}
     local toasts = {}
     for _, id in ipairs(nt_toast) do
-        local r = nt_known[id]
+        local r = nt_live[id]
         if r then toasts[#toasts + 1] = entry_of(r, 0, 0, true) end
     end
     model.toasts = toasts
@@ -388,7 +421,7 @@ local function trim_history()
             kept[#kept + 1] = r
             if not r.on then old_kept = old_kept + 1 end
         else
-            nt_known[r.id] = nil
+            if nt_live[r.id] == r then nt_live[r.id] = nil end
             hide_toast(r.id)
         end
     end
@@ -434,21 +467,29 @@ local function on_notifications(list)
         local n = list[i]
         if type(n) == "table" and n.id ~= nil then
             seen[n.id] = true
-            local r = nt_known[n.id]
+            local r = nt_live[n.id]
             if r then
                 refresh(r, n)
             else
                 r = new_record(n)
-                nt_known[n.id] = r
+                nt_live[n.id] = r
                 table.insert(nt_hist, 1, r)
                 fresh[#fresh + 1] = r
             end
         end
     end
 
-    -- What the server no longer keeps is history now.
+    -- What the server no longer keeps is history now. Decided by identity, not
+    -- by id: the ids a restored history carries belong to a process that is
+    -- gone, and matching on them made every live record look like an old one.
+    for id, r in pairs(nt_live) do
+        if seen[id] ~= true then
+            nt_live[id] = nil
+            r.on = false
+        end
+    end
     for _, r in ipairs(nt_hist) do
-        r.on = seen[r.id] == true
+        r.on = nt_live[r.id] == r
     end
     for i = #nt_toast, 1, -1 do
         local id = nt_toast[i]
@@ -495,7 +536,7 @@ on("act", function(v)
     if a == nil or a.on ~= true then return end
     pcall(sys.call, "notifications.invoke", a.id, a.key)
     pcall(sys.call, "notifications.dismiss", a.id)
-    local r = nt_known[a.id]
+    local r = nt_live[a.id]
     if r then r.on = false end
     hide_toast(a.id)
     rebuild()
@@ -524,7 +565,7 @@ local function drop_slot(slot)
         for i = #nt_hist, 1, -1 do
             if nt_hist[i] == r then table.remove(nt_hist, i) end
         end
-        nt_known[r.id] = nil
+        if nt_live[r.id] == r then nt_live[r.id] = nil end
         hide_toast(r.id)
     end
     rebuild()
@@ -626,7 +667,7 @@ on("clear_all", function()
     nt_timers = {}
     nt_toast = {}
     nt_hist = {}
-    nt_known = {}
+    nt_live = {}
     save_hist()
     rebuild()
 end)
@@ -673,7 +714,6 @@ local function load_history()
                 slot = nt_slot,
             }
             nt_hist[#nt_hist + 1] = r
-            nt_known[r.id] = r
         end
     end
 end

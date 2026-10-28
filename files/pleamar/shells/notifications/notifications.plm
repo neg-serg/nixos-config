@@ -16,14 +16,14 @@ import "../../lib/capsule.plm"
 // urgency-coloured), the notification centre with history, DND, per-record
 // actions and the default action, and images.
 //
-// One surface per monitor (`screens: each`, the scene's own): full size,
-// `level: overlay`, `reserve: -1` — nothing reserves room for it. It is open
-// only while the centre is up or a toast is on screen, and only its zones take
-// clicks, so the empty part lets everything through. The centre drawer and the
-// toast stack live in the same surface, which keeps `screen.width` /
-// `screen.height` (the frozen per-monitor scale expression, INTERFACES §3.2)
-// measuring the monitor and not a small corner window: in pleamar 0.4.11 only
-// the scene's own surface feeds those names, and a `size:` is a literal.
+// Three windows per monitor (`screens: each`), none of them the screen: the
+// drawer is 364 design px wide and as tall as the monitor (`centre_panel`), the
+// toast stack is a corner box (`toast_stack`), and a one-pixel `keeper` holds the
+// process — and the notification server it IS — while both are closed. All three
+// are `level: overlay`, `reserve: -1`: nothing reserves room for them, and only
+// their zones take clicks. Windows rather than one full-monitor surface because
+// a zone claims the pointer for the whole box it covers, so the full-monitor
+// version claimed the desktop and its cursor with it; see the window block below.
 //
 // Persistence (INTERFACES §6), inside this scene's own folder
 // `~/.local/share/pleamar/notifications/`, written only by notifications.luau:
@@ -79,6 +79,13 @@ import "../../lib/capsule.plm"
 // component parameter default is read where the copy is used.
 
 scene notifications {
+
+    // The colour of a card's plate. `notify.tone` is #000000 and the drawer the
+    // centre draws is `skin.coal` — black on black, so the cards read as loose
+    // text rather than as cards (seen 2026-10-28). Mixing the palette's two
+    // surface tokens keeps the card inside the theme's own colours while giving
+    // it an edge to be seen against; `notify.accent` at 24 % is that edge.
+    let notify.card = mix(skin.coal, skin.surface, 55%)
 
     // ---------------------------------------------------------------- data
     // What the toast stack draws; the logic fills it oldest first, so the
@@ -154,15 +161,58 @@ scene notifications {
     // carries need `notifications.*` (INTERFACES §6 / logic docs §Permissions).
     permissions { services: "notifications", "notifications.*", "files", "files.write", "sound" }
 
-    // -------------------------------------------------------------- window
-    surface {
-        size: full, full
+    // ------------------------------------------------------------- windows
+    // Three windows, and none of them the screen. The drawer is as wide as the
+    // drawer (364 design px — the reference's own width) and as tall as the
+    // monitor; the toast stack is a corner box that holds six cards; the keeper
+    // is one pixel and holds the process — and with it
+    // `org.freedesktop.Notifications` — while both are closed, because a scene
+    // whose last surface closes exits a second or so later and the server would
+    // go with it (panels.plm keeps the same keeper for the same reason).
+    //
+    // The earlier version was one full-monitor surface with a catcher under the
+    // drawer, and that catcher was the whole desktop taken: every press on the
+    // monitor went to it, and, because a zone makes pleamar claim the pointer for
+    // the whole box it covers (src/render.rs:2664), so did the cursor — the arrow
+    // over the drawer was the scene's arrow everywhere. Measured 2026-10-28.
+    // There is no catcher now: the centre closes on its X, on Escape, or on the
+    // compositor's `M4+space` bind, which runs
+    // `pleamar --say notifications "emit dismiss_all"`.
+    //
+    // `keyboard: on_demand` rather than `exclusive`: with exclusive the
+    // compositor keeps the focus until something else asks for it, so the bind
+    // that opened the centre cannot take the keyboard back to close it (Marea
+    // gave up on exclusive for the same reason). The price is one click — the
+    // Emacs keys and Escape reach the scene once the pointer has been over it,
+    // which is also when a row has been picked.
+    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each }
+
+    surface centre_panel {
+        size: 364, full
         anchor: right
         level: overlay
         reserve: -1
         screens: each
-        open: centre or toasts.count > 0
-        keyboard: exclusive while centre
+        open: centre
+        keyboard: on_demand
+        Centre()
+    }
+
+    // A toast card is 340 design px wide and 96 tall; six of them plus their
+    // gaps is the tallest the stack can get (`model toasts max 6`).
+    surface toast_stack {
+        size: 360, 660
+        anchor: bottom_right
+        margin: 0, 12, 12, 0
+        level: overlay
+        reserve: -1
+        screens: each
+        // Not while the centre is open: the drawer covers this corner, and a
+        // toast under it would be a card nobody can see (the arrival is in the
+        // centre's list anyway). Its timer keeps running, so what is left of
+        // the stack shows up when the drawer closes.
+        open: toasts.count > 0 and not centre
+        ToastStack()
     }
 
     // --------------------------------------------------------------- rules
@@ -190,23 +240,25 @@ scene notifications {
     on key Return while centre { emit nav(6) }
 
     // ------------------------------------------------------------- drawing
-    // The centre: a scrim, the drawer and its zones. Hidden as a whole while
-    // it is closed, so nothing of it is drawn, described or pressed.
-    group { show: centre
-        box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: 25% }
-        Centre()
-    }
-
-    // The toast stack, bottom right.
-    ToastStack()
+    // Nothing is loose here: a scene's loose drawing belongs to its own unnamed
+    // surface, and this scene has none — the centre and the toasts draw inside
+    // the windows declared above, so what is on screen is exactly those.
 
     // ---------------------------------------------------------- components
-    // scaleNow (INTERFACES §3.2). The default is read where the copy is used —
-    // inside the repeated drawing — so each monitor gets its own value.
-    component Centre(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
-        let x = screen.width - 364 * scale
-        let w = 364 * scale
-        let h = screen.height
+    // `scale` is `ui` here, not the per-monitor `scaleNow` of INTERFACES §3.2:
+    // that expression reads `screen.width`/`screen.height`, and inside a named
+    // surface those measure the WINDOW, not the monitor — with a 360 px toast
+    // window the clamp bottomed out at 0.8 and every card came out a fifth
+    // smaller than its own text (measured 2026-10-28). palette.plm's rule 2
+    // says the same: a scene that is not one full-monitor surface uses `ui`.
+    component Centre(scale: number = ui) {
+        // The drawer fills its own window (`centre_panel`: 364 design px wide and
+        // the monitor tall), so it draws from that window's corner and takes the
+        // numbers from the window itself — a reload cannot disagree with them.
+        // `x` stays a name so the header arithmetic below reads as it always has.
+        let x = 0
+        let w = centre_panel.width
+        let h = centre_panel.height
         let vh = h - 102 * scale
 
         prop dnd_knob = 0 ~ui.quick
@@ -257,14 +309,13 @@ scene notifications {
         // the wheel, and the logic answers with the window that now fits.
         on change selY { list.scroll: clamp(selY * scale + selH * scale / 2 - vh / 2, 0, max(0, entryTotal * scale - vh)) }
         text "No notifications" { at: x + w / 2, h / 2; anchor: center; family: "Iosevka"; size: 16; color: notify.ink; opacity: 55%; show: entries.count == 0 }
-
-        // Pressing outside the drawer closes it.
-        zone box catcher { from: 0, 0; size: x, h; label: "Dismiss notification centre"; role: region }
-        on press catcher { centre = false }
     }
 
-    component ToastStack(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
-        column stack ~ui.overlay { at: screen.width - 12 * scale, screen.height - 54 * scale; anchor: right bottom; gap: 6 * scale
+    component ToastStack(scale: number = ui) {
+        // The stack hangs from the bottom-right corner of its own window
+        // (`toast_stack`), so the window's size is what places it: the newest
+        // card stays at the bottom edge and the older ones are pushed up.
+        column stack ~ui.overlay { at: toast_stack.width, toast_stack.height; anchor: right bottom; gap: 6 * scale
             for t in toasts { ToastCard(t, scale) }
         }
     }
@@ -274,11 +325,22 @@ scene notifications {
     component ToastCard(t: record, scale: number) {
         size: 340 * scale, 96 * scale
 
-        Capsule(340, 96, fill: notify.tone, alpha: 95%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 12%, shadow: 45%, scale: scale) { }
+        Capsule(340, 96, fill: notify.card, alpha: 92%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 45%, scale: scale) { }
         box { from: 2 * scale, 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(t.urgency == 2, warn, if(t.urgency == 1, amber, notify.accent)) }
         image t.pic { at: 12 * scale, 18 * scale; size: 44 * scale, 44 * scale }
         text t.title { at: 66 * scale, 24 * scale; anchor: left center; width: 230 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
-        text t.body { at: 66 * scale, 38 * scale; anchor: left top; width: 230 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
+
+        // Two lines of body, and a box the text cannot leave. `lines: 2` ends a
+        // WRAPPED line with an ellipsis; it does not touch a body that carries
+        // its own newlines (a bot's digest), which then drew straight past the
+        // card and over the one below it — measured 2026-10-28, six hard lines
+        // landing on the next card's title. The clip is the guarantee, whatever
+        // the text does; notifications.luau shortens such a body to two lines
+        // before the scene ever sees it, so no word is cut in half either.
+        group {
+            clip box { from: 64 * scale, 35 * scale; size: 242 * scale, 33 * scale }
+            text t.body { at: 66 * scale, 38 * scale; anchor: left top; width: 230 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
+        }
 
         // The body is private. `text` cannot carry `agent:` itself, and a
         // hidden zone does not claim the words drawn in it — they would surface
@@ -337,12 +399,18 @@ scene notifications {
 
             group dim { opacity: if(n.old == 1, 74%, 100%)
                 group bg { move: 0, oy
-                    Capsule(336, 96, fill: notify.tone, alpha: 95%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 12%, shadow: 30%, scale: scale) { }
+                    Capsule(336, 96, fill: notify.card, alpha: 92%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 30%, scale: scale) { }
                 }
                 box { from: 2 * scale, oy + 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(n.urgency == 2, warn, if(n.urgency == 1, amber, notify.accent)) }
                 image n.pic { at: 12 * scale, oy + 18 * scale; size: 40 * scale, 40 * scale }
                 text n.title { at: 60 * scale, oy + 24 * scale; anchor: left center; width: 262 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
-                text n.body { at: 60 * scale, oy + 38 * scale; anchor: left top; width: 262 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
+                // The same two lines and the same clip as a toast (see ToastCard):
+                // a body with hard newlines in it used to be drawn past the card
+                // and over the row below.
+                group {
+                    clip box { from: 58 * scale, oy + 35 * scale; size: 272 * scale, 33 * scale }
+                    text n.body { at: 60 * scale, oy + 38 * scale; anchor: left top; width: 262 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
+                }
                 row acts { at: 12 * scale, oy + 70 * scale; gap: 6 * scale; align: start
                     for a in n.acts { Action(a, scale) }
                 }
