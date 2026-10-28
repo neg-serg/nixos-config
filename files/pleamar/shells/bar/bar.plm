@@ -396,6 +396,11 @@ scene bar {
     // the logic says which, because a rule cannot run `pleamar --say`.
     event open_calendar_panel ->
     event open_weather_panel ->
+    // The keybinds toggle instead of opening: the same drawer a second time closes
+    // it (the legacy `toggleCalendar`/`toggleWeather` did), so the two events below
+    // read the drawer's current name first and flip it (bar.luau's `toggle_drawer`).
+    event toggle_calendar_panel ->
+    event toggle_weather_panel ->
     event open_system_panel ->
     event open_build_panel ->
     // The workspace capsule asked for hyprexpo (QS: `Services.Expo.toggle()`), and the

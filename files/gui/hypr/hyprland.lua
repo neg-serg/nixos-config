@@ -580,12 +580,12 @@ hl.bind(M4 .. "+n", hl.dsp.exec_cmd('timeout 3 pleamar --say notifications "emit
 -- opens the calendar drawer, the weather capsule its card, the transport goes
 -- through the bar's MPRIS service. These were the free slots in this keymap.
 -- The drawer names are `panels.plm`'s own enum, reached through the bar's
--- `open_*_panel` events (bar.luau's `open_drawer`, which also starts the panels
--- unit when its socket is gone). They OPEN, they do not toggle: `panels` has no
--- toggle event, only `fact drawer <name>` and `close_drawer`, and M4+space or
--- Escape is what closes a drawer here.
-hl.bind(M4 .. "+" .. SH .. "+u", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit open_calendar_panel"'))
-hl.bind(M4 .. "+" .. SH .. "+x", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit open_weather_panel"'))
+-- `toggle_*_panel` events (bar.luau's `toggle_drawer`: it reads the drawer's
+-- current name from the scene and flips it, so the same key closes what it
+-- opened, as the legacy `toggleCalendar`/`toggleWeather` did, and it still
+-- starts the panels unit when the scene is not there).
+hl.bind(M4 .. "+" .. SH .. "+u", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_calendar_panel"'))
+hl.bind(M4 .. "+" .. SH .. "+x", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_weather_panel"'))
 hl.bind(M4 .. "+" .. SH .. "+j", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit media_toggle"'))
 -- The rest of the transport and the volume steps: M4+C+period/comma mimic the >
 -- and < keys, equal/minus stand in for the volume rocker (the XF86 keys stay on
