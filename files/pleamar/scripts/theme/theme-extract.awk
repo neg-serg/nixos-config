@@ -174,6 +174,19 @@ END {
   }
   aR = ars / an; aG = ags / an; aB = abs / an
 
+  # ---- how light the wallpaper is -----------------------------------------
+  # The mean WCAG luminance of the sampled pixels. `backdropIsLight` in the
+  # reference reads the *accent* (`Settings/Theme.qml:627`), which is right for
+  # its own accent-tinted surfaces; the shell's plates are not accent-tinted —
+  # they are `skin.coal` at 69..96 %, so what decides whether ink can still be
+  # read on them is the wallpaper behind, not the colour it is hue-matched to.
+  # Measured: a #CBD6E5 capsule at 69 % over a white wallpaper leaves the dim
+  # tone at 4.12:1, under the 4.5 the rest of the shell keeps, and it is the
+  # wallpaper's brightness that walks the number there.
+  ysum = 0
+  for (i = 1; i <= n; i++) ysum += rel_lum(PR[i], PG[i], PB[i])
+  yw = ysum / n
+
   to_hsl(aR, aG, aB)
   if (SS == 0) {
     acR = 0; acG = 0x6f; acB = 0xcc           # colors.accent.primary fallback
@@ -257,12 +270,11 @@ END {
     ib = bB + (tB - bB) * t
   }
 
-  # Is the backdrop light? The reference's own criterion (`Theme.backdropIsLight`,
-  # Settings/Theme.qml:627): the wallpaper's accent over `ui.textShadow.lightThreshold`
-  # (0.5) of WCAG luminance. Scenes use it to put a shadow under glyphs that sit on
-  # glass — a bright wallpaper washes fill and text out, and a shadow restores the
-  # reading without darkening the plate.
-  light = (rel_lum(acR, acG, acB) > 0.5) ? 1 : 0
+  # Is the backdrop light? Same threshold as the reference's
+  # `ui.textShadow.lightThreshold` (0.5), applied to the wallpaper's own mean
+  # luminance (above) rather than to the accent's. Scenes read it to put a shadow
+  # and a hairline edge under glyphs that sit on glass.
+  light = (yw > 0.5) ? 1 : 0
 
   print "coal=" hex(coalR, coalG, coalB)
   print "surface=" hex(surfR, surfG, surfB)

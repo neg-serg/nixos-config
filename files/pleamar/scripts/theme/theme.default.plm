@@ -32,6 +32,6 @@ library Skin strict {
     // colors.onAccent, unchanged.
     let skin.on.accent = #ffffff
 
-    // Theme.backdropIsLight — false for the fallback palette (a dark default).
+    // Is the wallpaper light — false for the fallback palette (a dark default).
     let skin.light = false
 }

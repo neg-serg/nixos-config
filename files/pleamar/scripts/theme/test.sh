@@ -175,6 +175,7 @@ assert_eq "$(theme_value "$theme1" surface | tr 'A-F' 'a-f')" '#242a35' "blue fi
 assert_eq "$(theme_value "$theme1" ink | tr 'A-F' 'a-f')" '#cbd6e5' "blue fixture: ink is the reference's #CBD6E5"
 assert_eq "$(theme_value "$theme1" accent)" '#0067cc' "blue fixture: accent = hue-matched mean (#006FCC family)"
 assert_eq "$(theme_value "$theme1" 'ink\.dim' | tr 'A-F' 'a-f')" '#aeb9c8' "ink.dim is the reference's textSecondary"
+assert_eq "$(theme_value "$theme1" light)" 'false' "blue fixture (dark wallpaper): skin.light is false"
 assert_contains "$home1/.config/pleamar/keep.txt" 'sentinel' "nothing else under ~/.config/pleamar is touched"
 
 # ---- 2. the new cache path wins over the legacy one -------------------------
@@ -201,6 +202,8 @@ if [[ "$ink2" =~ ^#[0-9a-f]{6}$ && "$surface2" =~ ^#[0-9a-f]{6}$ ]]; then
 else
   fail "light fixture: not colours ($ink2, $surface2)"
 fi
+
+assert_eq "$(theme_value "$theme2" light)" 'true' "light fixture (near-white wallpaper): skin.light is true"
 
 # ---- 3. --accent overrides the extracted accent only ------------------------
 

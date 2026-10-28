@@ -115,7 +115,10 @@ warns about a re-declared `let` — “this one changes what `x` means in everyt
 scene copied per monitor each copy may take one or the other” — and that warning is a real hazard
 for every `screens: each` scene (the copies are made while imports are being read). theme.plm
 therefore declares names under its own `skin.` prefix (`skin.accent`, `skin.surface`, `skin.ink`,
-`skin.ink.dim`, …), and a scene that opts into the wallpaper look uses `skin.*` names explicitly.
+`skin.ink.dim`, `skin.light`, …), and a scene that opts into the wallpaper look uses `skin.*` names
+explicitly. `skin.light` is a yes or no — the wallpaper's own mean WCAG luminance over the
+reference's 0.5 threshold — and it is what a scene reads before putting a shadow and a hairline edge
+under glyphs that sit on glass.
 
 For a palette that changes while the scene runs (wallpaper switch without a reload), use the
 language's own runtime route instead: three facts (for example `pal.red`, `pal.green`, `pal.blue`)
