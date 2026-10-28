@@ -20,11 +20,12 @@ import "../../lib/plugins/build/build.plm" as build
 // reserves nothing and draws the drawers upward from the bar's top edge.
 // The drawers themselves are parts under pages/, which the scene imports for;
 // a part has no name of its own and is not checked alone (INTERFACES.md §1.3).
-// Shipped: volume, network, media (the now-playing card the bar's cover opens),
-// calendar, weather, build and system. Microphone, bluetooth, keyboard, tray and
-// power stay reserved for later slices (the `drawer` fact already names them).
-// There is no settings drawer and none is planned: the shell's settings are the
-// JSON files described below, edited by hand.
+// The drawers: volume, network, media (the now-playing card the bar's cover
+// opens), calendar, weather, build and system — one part each under pages/. The
+// `drawer` fact names exactly those and nothing else: a name with no page behind
+// it is a press that opens an empty window. There is no settings drawer and none
+// is planned: the shell's settings are the JSON files described below, edited by
+// hand.
 //
 // Opening and closing
 // -------------------
@@ -189,7 +190,7 @@ scene panels {
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | microphone | network | bluetooth | media | calendar | weather | build | keyboard | tray | system | power = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system = none
     // Numbers are what `--say fact` can set; the enum `drawer` above is not accepted by the socket
     // in this version. `page` mirrors it for the outside: 5 is media, 6 calendar, …
     fact page = 0
