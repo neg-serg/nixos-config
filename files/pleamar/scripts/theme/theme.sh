@@ -387,11 +387,12 @@ render() {
   printf '    // colors.onAccent, unchanged.\n'
   printf '    let skin.on.accent = #ffffff\n'
   printf '\n'
-  printf '    // Theme.backdropIsLight (Settings/Theme.qml:627): the wallpaper accent is lighter\n'
-  printf '    // than ui.textShadow.lightThreshold (0.5), so what sits on glass behind it is washed\n'
-  printf '    // out. A scene reads it to put a shadow under its glyphs — the reference does the\n'
-  printf '    // same in WeatherButton and the media card — and a hairline outline with it, which\n'
-  printf '    // is what a blurred shadow alone cannot give on a pale plate.\n'
+  printf '    // Is the wallpaper light? Its mean WCAG luminance over the threshold the\n'
+  printf '    // reference uses for this flag, ui.textShadow.lightThreshold (0.5). The reference\n'
+  printf '    // measures the accent (Settings/Theme.qml:627), and the accent is not what the\n'
+  printf '    // plates are made of: they are skin.coal at 69..96 percent, so the wallpaper behind\n'
+  printf '    // them is what decides whether ink still reads. A scene answers with a shadow and a\n'
+  printf '    // hairline edge under its glyphs.\n'
   printf '    let skin.light = %s\n' "$([[ "$LIGHT" == "1" ]] && echo true || echo false)"
   printf '}\n'
 }
