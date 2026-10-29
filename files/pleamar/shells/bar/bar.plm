@@ -1701,7 +1701,7 @@ scene bar {
         // more, its colour kept — so a window under the bar stops competing with the strip's own
         // words instead of being covered up. The light theme keeps none: there `milk` is the
         // counterpart, and it is not asked for yet.
-        smoke: if(skin.light, 0%, 60%)
+        smoke: if(skin.light, 0%, 90%)
         // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
         // the strip wants the frosted reading everywhere, it is 25 px tall.
         frost: 100%
