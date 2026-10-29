@@ -1700,9 +1700,15 @@ scene bar {
         // the strip wants the frosted reading everywhere, it is 25 px tall.
         frost: 100%
         refraction: 70%
-        dispersion: 80%
-        mirror: 45%
-        highlight: 55%
+        dispersion: 45%
+        // Rim light is a per-theme number, and this is why: the strip's top edge measured +5
+        // levels against its interior in the light theme and level with it in the dark one at
+        // the same 45 / 55, and dropping to 14 / 18 took the dark theme's edge 23 levels *below*
+        // its interior — a lit border in one theme, a dark line in the other. The light theme
+        // asks for less (a white bar on a dark desktop wears its rim like an outline), the dark
+        // one for more (there the rim is what keeps the fill from thinning to black).
+        mirror: if(skin.light, 16%, 45%)
+        highlight: if(skin.light, 20%, 55%)
         // The shape, not a second coat of paint: a body fills its own extent, and a box
         // inside it with no colour of its own inherits the body's and fills it again. The
         // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
