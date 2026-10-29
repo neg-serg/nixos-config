@@ -66,7 +66,13 @@ library Genelec strict {
     // no space, as the QS pill prints it. Wheel is ±1 dB, a press toggles mute.
     fact hot = false
 
-    component Tile(scale: number = ui, row: number = 25) {
+    // The tile's tones come from the caller: a library cannot see the scene's `skin.*`, and the
+    // shell now has two palettes (light and dark), so the frozen `coal`/`ink` this used to paint
+    // with left a black pill standing at the end of a light bar. The defaults are those frozen
+    // tones, so a bench that does not care keeps working.
+    component Tile(scale: number = ui, row: number = 25,
+                   plate: color = coal, tone: color = ink, tone.dim: color = ink.off,
+                   loud: color = accent) {
         // The silhouette reads smaller than a glyph of the same size — it is a thin monitor
         // outline, not a solid shape — so it is drawn at the row's own height, not the
         // capsule's inner 14: the tile keeps its 18 px pill and the icon stands a pixel proud of
@@ -92,7 +98,7 @@ library Genelec strict {
                 // Centred in the slot: the plate is 18 tall, the row is 29, and a `row` with
                 // `align: center` is how the transport's buttons sit in theirs too.
                 row cap { size: w, row; align: center
-                    Capsule(w, h, fill: coal, alpha: 69%, scale: 1) {
+                    Capsule(w, h, fill: plate, alpha: 69%, scale: 1) {
                         // `row content`, not `row tile`: a named layout is a region of its own, and a
                         // row called `tile` next to the `zone box tile` below made two zones of one
                         // name — `describe`/`press` then saw the button as "covered by" its own
@@ -105,11 +111,11 @@ library Genelec strict {
                             // dim is the icon's alone. The port's silhouette reads better in `ink` than in
                             // the accent, which the dB row already carries, so only the `available` half of
                             // the reference's colour is ported here.
-                            image ones { size: size.icon, size.icon; tint: if(available and not muted, ink, ink.off) }
+                            image ones { size: size.icon, size.icon; tint: if(available and not muted, tone, tone.dim) }
                             row db { gap: 0; align: center
-                                text "-" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, ink.off, accent); show: volume < 0 }
-                                text "{max(volume, 0 - volume), 0}" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, ink.off, ink) }
-                                text "dB" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, ink.off, accent) }
+                                text "-" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, tone.dim, loud); show: volume < 0 }
+                                text "{max(volume, 0 - volume), 0}" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, tone.dim, tone) }
+                                text "dB" { family: "Iosevka"; size: 14; weight: 700; color: if(muted, tone.dim, loud) }
                             }
                         }
                     }

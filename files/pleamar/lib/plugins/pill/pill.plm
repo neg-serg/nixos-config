@@ -65,7 +65,11 @@ library Pill strict {
     // icon plus its padding, accent-coloured once taken and pulsing (opacity
     // 0.3 → 1 over a second, `SequentialAnimation` in QS) while the deadline has
     // passed. `wave` is the language's own sine: 0.35 · sin(2π t) around 0.65.
-    component Mark(scale: number = ui) {
+    // The plate and the glyph's tones come from the caller: a library cannot see the scene's
+    // `skin.*`, and with two palettes in the shell the frozen `coal` plate left a black pill in
+    // the light bar. The defaults are the frozen tones a bench expects.
+    component Mark(scale: number = ui, plate: color = coal, tone.on: color = highlight,
+                   tone.off: color = ink.dim) {
         // The glyph fills the capsule it sits in: 10 inside an 18 px plate read as a speck on
         // a square, which is what "too small" was looking at.
         let size.icon = capsule.height - 4
@@ -84,13 +88,13 @@ library Pill strict {
             // The plate the neighbours wear: the bar's capsules are `coal` at 69 %, and the
             // library's defaults (`slate` at `veil`) read as a lighter, greyer pill sitting off
             // the strip's tone.
-            Capsule(w, h, fill: coal, alpha: 69%, scale: 1) {
+            Capsule(w, h, fill: plate, alpha: 69%, scale: 1) {
                 // `row content`, not `row mark`: a named layout is a region of its own, and a row
                 // called `mark` next to the `zone box mark` below made two zones of one name — the
                 // right press went to the region, so the calendar never opened.
                 row content {
                     align: center
-                    text "pill" { family: "Material Symbols Outlined"; size: size.icon; color: if(taken, highlight, ink.dim); opacity: if(reminder, 0.65 + pulse, 1) }
+                    text "pill" { family: "Material Symbols Outlined"; size: size.icon; color: if(taken, tone.on, tone.off); opacity: if(reminder, 0.65 + pulse, 1) }
                 }
             }
             zone box mark { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
