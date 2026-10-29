@@ -204,7 +204,14 @@ extract_palette() {
     || tool_die "no '$AWK_BIN' on PATH (AWK_BIN overrides it)"
   # sRGB + 8 bit so every line carries a six-digit #RRGGBB; `!` keeps the
   # sample square whatever the wallpaper's aspect ratio is.
-  "$MAGICK_BIN" "$wall" -auto-orient -colorspace sRGB -resize '48x48!' -alpha off -depth 8 txt:- \
+  #
+  # `-define jpeg:size` + `-thumbnail`, not `-resize`: a wallpaper can be huge
+  # (this host has a 17665x9937 one), and a full decode of 175 megapixels for a
+  # 48x48 sample took **6.1 s and 1.9 GB** — the whole theme unit, which every
+  # wallpaper change waits for, measured 6.66 s that way. The hint makes libjpeg
+  # decode at 1/8 scale, and `-thumbnail` is what honours it: 163 ms, and the same
+  # tones to within a couple of percent (`ink` #ae8e92 → #a17c81 on that image).
+  "$MAGICK_BIN" -define jpeg:size=384x384 "$wall" -auto-orient -colorspace sRGB -thumbnail '48x48!' -alpha off -depth 8 txt:- \
     | "$AWK_BIN" -f "$SCRIPT_DIR/theme-extract.awk"
 }
 
@@ -463,6 +470,24 @@ mkdir -p -- "$out_dir"
 TMP_FILE="$(mktemp --tmpdir="$out_dir" .theme.plm.XXXXXX)"
 render > "$TMP_FILE"
 chmod 0644 "$TMP_FILE"
+
+# A wallpaper change fires this pipeline more than once — the pleamar cache, the legacy
+# cache and wl's own state each move, and every one of them rewrites the path file. Each
+# rewrite used to replace theme.plm, and every pleamar scene re-reads its imports when that
+# file moves: four switches of one wallpaper became four reloads of the whole shell. The
+# generated file names its source and the moment it was written, so two runs for one
+# wallpaper differ only in that timestamp; compare without it and leave the file alone when
+# nothing else moved.
+if [[ -f "$OUT" ]]; then
+  strip_stamp() { grep -v -e '^// written:' -e '^// source:' "$1"; }
+  if diff -q <(strip_stamp "$TMP_FILE") <(strip_stamp "$OUT") > /dev/null; then
+    rm -f -- "$TMP_FILE"
+    TMP_FILE=""
+    printf '%s: unchanged (%s)\n' "$TOOL_NAME" "$OUT"
+    exit 0
+  fi
+fi
+
 mv -f -- "$TMP_FILE" "$OUT"
 TMP_FILE=""
 
