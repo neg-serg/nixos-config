@@ -52,30 +52,32 @@ part Calendar {
             box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: skin.accent; opacity: 25% }
 
             // ----***------------------ header: month and arrows
-            group { move: 14 * scale, 10 * scale
+            // The header is mirrored: 14 px from each edge, and the capsules are 20 tall, so
+            // they start at 8 to sit on the title's line (18) rather than 2 px under it.
+            group { move: 14 * scale, 8 * scale
                 Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
                 text "chevron_left" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
                 zone box prev { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Previous month"; role: button }
                 on press prev { emit cal_prev }
             }
-            group { move: 300 * scale, 10 * scale
+            group { move: 342 * scale, 8 * scale
                 Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
                 text "chevron_right" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
                 zone box next { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Next month"; role: button }
                 on press next { emit cal_next }
             }
-            text cal.title { at: 168 * scale, 18 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: skin.accent }
+            text cal.title { at: 190 * scale, 18 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: skin.accent }
 
             // ----***--------------------- the pill tracker's streak
             // Calendar.qml:186-197: a flame and "N days", centred under the month, and only while
             // there is a run to show. The glyph sits to the left of the words, whose width is
             // measured rather than guessed — the count changes what "N days" takes.
             measure streakw
-            text cal.streak { at: 168 * scale, 35 * scale; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink.dim
+            text cal.streak { at: 190 * scale, 35 * scale; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink.dim
                               measure: streakw; show: cal_streak > 0 }
-            text "local_fire_department" { at: 168 * scale - streakw.width / 2 - 9 * scale, 35 * scale; anchor: center
+            text "local_fire_department" { at: 190 * scale - streakw.width / 2 - 9 * scale, 35 * scale; anchor: center
                                            family: "Material Symbols Outlined"; size: 14; color: amber; show: cal_streak > 0 }
 
             box { from: 12 * scale, 48 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
