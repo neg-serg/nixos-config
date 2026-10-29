@@ -451,7 +451,7 @@ scene bar {
     }
 
     // Who blurs the bar: 100 % the scene, 0 % the compositor (§ the strip below).
-    let strip.glass = 0%
+    let strip.glass = 100%
 
     // The moon's own shader: the phase terminator, stippled (moon.wgsl).
     shader moon_face = file "moon.wgsl"
@@ -1679,18 +1679,30 @@ scene bar {
     // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
     body {
         color: skin.coal
-        // `panel.seam.opacity` is 0.88 in the reference; at 60 % the wallpaper read through
-        // the strip three times as loud as it should.
-        opacity: 88%
+        // `panel.seam.opacity` is 0.88 in the reference, where the blur is the compositor's;
+        // here the surface does the blur, so a flat 0.88 hid the glass and 0.62 let the
+        // wallpaper's own colour through as a pink slab. 0.84 keeps the glass a texture under
+        // the plate instead of a window.
+        opacity: 84%
         // The glass sits here, not on the capsules: in the reference the compositor
         // (a Hyprland plugin, `hyprglass`) blurs and refracts the whole surface, and
-        // the widgets are flat fills over it. A scene cannot ask that plugin for
-        // anything, so the surface draws its own.
-        // One number to decide who does the glass. 100 % while no compositor plugin
-        // is doing it (this host loads none); 0 % the moment `hyprglass` or
-        // `hyprliquid` is back, or the bar would be blurred twice.
-        glass: strip.glass
-        lens: false
+        // the widgets are flat fills over it. No plugin is loaded on this host
+        // (`hyprctl plugin list` has only `hyprwinwrap`), so the surface draws its own:
+        // a lens that bends the edge, `frost: auto` — frosted where what is behind is busy,
+        // which is what keeps a terminal's words from fighting the bar's, clear over a bare
+        // wallpaper — and a faint rim highlight where the light catches the bevel.
+        // One number decides who does the glass; 0 % the moment `hyprglass` or `hyprliquid`
+        // is back, or the bar would be blurred twice.
+        glass: 70% * strip.glass
+        lens: true
+        tint: 42%
+        // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
+        // the strip wants the frosted reading everywhere, it is 25 px tall.
+        frost: 100%
+        refraction: 70%
+        dispersion: 80%
+        mirror: 45%
+        highlight: 55%
         // The shape, not a second coat of paint: a body fills its own extent, and a box
         // inside it with no colour of its own inherits the body's and fills it again. The
         // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
