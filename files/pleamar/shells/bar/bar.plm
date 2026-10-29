@@ -1475,7 +1475,9 @@ scene bar {
             // What the capsule holds, in the order QS lays it out: the art, the track, the
             // time, and the analyser at the end — whose room `w` reserves, hover or not.
             row media_row {
-                at: 0, 1.5
+                // 6, not 0: `w` reserves 6 px at each end, and a row at 0 left the art flush
+                // against the plate's left edge while the same 6 at the right went unused.
+                at: 6, 1.5
                 gap: bar.gap
                 align: center
                 art.Art(w: 22, h: 22)
