@@ -68,8 +68,14 @@ library Pill strict {
     // The plate and the glyph's tones come from the caller: a library cannot see the scene's
     // `skin.*`, and with two palettes in the shell the frozen `coal` plate left a black pill in
     // the light bar. The defaults are the frozen tones a bench expects.
+    // `plate.h` and `plate.top` are the bar's own numbers, and they are not `capsule.height`:
+    // every other capsule in the strip draws `box { from: 0, 1; size: w, 23 }` inside a 25 px
+    // strip, so its plate spans y 1..24 and its centre is 12.5. This one drew 18 px from y 0 —
+    // centre 9, three and a half design px above every neighbour, which is what read as a pill
+    // hanging off the strip. A bench that wants the bare capsule keeps the defaults.
     component Mark(scale: number = ui, plate: color = coal, tone.on: color = highlight,
-                   tone.off: color = ink.dim) {
+                   tone.off: color = ink.dim, plate.h: number = capsule.height,
+                   plate.top: number = 0) {
         // The glyph fills the capsule it sits in: 10 inside an 18 px plate read as a speck on
         // a square, which is what "too small" was looking at.
         let size.icon = capsule.height - 4
@@ -77,17 +83,18 @@ library Pill strict {
         // side left it floating in a pill wider than the thing it holds.
         let pad.mark = capsule.pad - 2
         let w = 2 * pad.mark + size.icon
-        let h = capsule.height
+        let h = plate.h
         prop pulse = 0
         wave pulse = 0.35 at 6.28
         // The slot is the plate's size, not the plate the glyph had before it grew: 22 drawn
         // inside an 18 slot ran into the keyboard capsule beside it, hit zone and all.
-        size: (2 * capsule.pad + size.icon) * scale, capsule.height * scale
+        size: (2 * capsule.pad + size.icon) * scale, (plate.top + plate.h) * scale
         group zoom {
             scale: scale
             // The plate the neighbours wear: the bar's capsules are `coal` at 69 %, and the
             // library's defaults (`slate` at `veil`) read as a lighter, greyer pill sitting off
             // the strip's tone.
+            group { move: 0, plate.top
             Capsule(w, h, fill: plate, alpha: 69%, scale: 1) {
                 // `row content`, not `row mark`: a named layout is a region of its own, and a row
                 // called `mark` next to the `zone box mark` below made two zones of one name — the
@@ -97,7 +104,8 @@ library Pill strict {
                     text "pill" { family: "Material Symbols Outlined"; size: size.icon; color: if(taken, tone.on, tone.off); opacity: if(reminder, 0.65 + pulse, 1) }
                 }
             }
-            zone box mark { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
+            }
+            zone box mark { from: 0, 0; size: w, plate.top + h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
             on enter mark { hot = true }
             on leave mark { hot = false }
             on press mark { emit toggle }
