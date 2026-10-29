@@ -1017,7 +1017,9 @@ scene bar {
             let icon.w = 14
             let drop.w = 14
             let arrow.w = 14
-            let x.temp = 6 + icon.w + gap.g
+            // 4, not 6: the row's last glyph ended 2.5 px from the cut while the first sat 6.5
+            // from the plate's left edge, and even air is what a plate is judged by.
+            let x.temp = 4 + icon.w + gap.g
             let x.drop = x.temp + w.temp.width + gap.g
             let x.hum = x.drop + drop.w + gap.g
             let x.arrow = x.hum + w.hum.width + gap.g
@@ -1025,7 +1027,7 @@ scene bar {
             let x.moon = x.wind + w.wind.width + gap.g
             // One picture of seven: the logic turns the WMO code into this number, because a
             // component cannot choose a different image from an `if`.
-            group weather_face { move: 6, strip / 2 + 1 - icon.w / 2
+            group weather_face { move: 4, strip / 2 + 1 - icon.w / 2
                 image icon_weather_sunny { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 0 }
                 image icon_weather_partly { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 1 }
                 image icon_weather_cloud { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 2 }
@@ -1164,10 +1166,10 @@ scene bar {
             // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
             // The reference also sets letterSpacing 0.5, which the scene language has no
             // property for (its `letter_*` effects move glyphs without opening the line).
-            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
-            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
-            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 3; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 3; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             // The capsule's own press zone starts after the VPN slot, so the two never overlap:
             // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
             // opens the flow drawer and carries the capsule's tooltip.
@@ -1374,10 +1376,11 @@ scene bar {
             // spacing is `max(1, round(2 * s))`, two logical px against the row's seven. The pill
             // used to stand after the workspaces, which is not where it is in the shell this bar
             // is a port of.
-            row clock_pill { gap: 2 * scale
-                Clock(tick.dip) { show: widget.clock }
-                row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: skin.coal, tone.on: skin.accent.hover, tone.off: skin.ink.dim, plate.h: 23, plate.top: 1) }
-            }
+            // Clock and pill are siblings of the row and share its gap: the reference keeps them
+            // 2 px apart in a group of their own, but a hidden pill still cost that group its
+            // gap, which is why the first space measured 9 while every other one was 7.
+            Clock(tick.dip) { show: widget.clock }
+            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: skin.coal, tone.on: skin.accent.hover, tone.off: skin.ink.dim, plate.h: 23, plate.top: 1) }
             WsCapsule(open_overview) { show: widget.workspaces }
 
             // QS KeyboardLayoutHypr: the keyboard glyph and the active layout,
@@ -1748,7 +1751,10 @@ scene bar {
     // zone is above it and keeps its clicks.
     // The hotzone counts as the bar for `strip.hot`: the widgets that hide at idle come
     // back when the pointer enters the band above the strip, which is what QS does.
-    zone box strip_hover { from: 0, 0; size: screen.width, hot + band; label: "Bar"; role: region }
+    // Hover is the strip, not the tooltip's headroom: the 10 px above the paint exist so the
+    // tooltip card is not cut, and counting them as the bar's zone took the pointer over the
+    // windows below for a band nothing is drawn in.
+    zone box strip_hover { from: 0, hot; size: screen.width, band; label: "Bar"; role: region }
     // `tray_panel` is the same moment told to the logic: the tray machine needs to know when the
     // strip is *left* (`panelHover`, SystemTray.qml:14), which a fact cannot say.
     on enter strip_hover { strip.hot = true; emit tray_panel(1) }
@@ -1759,7 +1765,10 @@ scene bar {
     // drawing nothing. Here it is a zone like any other, declared with the strip's own hover target
     // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
     // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
-    zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region }
+    // Only while the tray is there: this corner sits on the Genelec tile's plate (the tile ends
+    // 8 px short of the row's right edge), and on a host with no tray trigger it was a dead zone
+    // lying over a control.
+    zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and tray_trigger }
     on enter tray_reveal { emit tray_hot(1) }
     on leave tray_reveal { emit tray_hot(0) }
 
