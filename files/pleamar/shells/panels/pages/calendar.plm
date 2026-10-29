@@ -88,15 +88,23 @@ part Calendar {
                 for c in cells {
                     group {
                         size: 48 * scale, 40 * scale
+                        // The tracker's wash fades in and out instead of appearing with the state
+                        // (the reference's PillIndicator animates its pill's width and opacity, `NumberStdOut`
+                        // in: 1 -> maxPillWidth and 0 -> 1, and `NumberStdIn` back out). One spring per
+                        // cell, not one per state: the state picks the colour and the alpha, the spring
+                        // only says whether the plate is there yet, so a month change fades the washes
+                        // away instead of blinking them.
+                        prop wash = 0 ~ui.quick
+                        follow wash = if(c.pill == 0, 0, 1)
                         // The pill tracker's plate, under the selection so a chosen day still reads
                         // as chosen: taken is the accent at 35 %, missed the error tone at 28 %,
                         // today still pending a fainter 12 %, and a past day with no record at all
                         // a 6 % grey (Calendar.qml:269-272). A public holiday gets its own 10 % wash
                         // when the tracker says nothing about that day (Calendar.qml:274).
-                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.accent; opacity: 35%; show: c.pill == 1 }
-                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 28%; show: c.pill == 2 }
-                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 12%; show: c.pill == 3 }
-                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.ink; opacity: 6%; show: c.pill == 4 }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale
+                              color: pick(c.pill, skin.ink, skin.accent, warn, warn, skin.ink)
+                              opacity: pick(c.pill, 6%, 35%, 28%, 12%, 6%) * wash
+                              show: c.pill > 0 or wash > 0.01 }
                         box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 10%; show: c.mark == 2 and c.pill == 0 }
                         // A day off, as the production calendar has it (isdayoff.ru, through the
                         // worker): the wash the reference paints in gold at 22 % (Calendar.qml:269-272),
