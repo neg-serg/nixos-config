@@ -75,66 +75,6 @@ in
               "server.address" = [ "unix:native" ];
             };
           };
-          # Harman Target sub-shelf EQ — boosts 55Hz +2.24dB for loudness compensation.
-          # Ported from legacy Salt config (99-harman-subshelf.conf).
-          "93-harman-eq" = {
-            "context.modules" = [
-              {
-                name = "libpipewire-module-filter-chain";
-                args = {
-                  "node.description" = "Harman Sub Shelf EQ";
-                  "media.name" = "Harman EQ";
-                  "filter.graph" = {
-                    nodes = [
-                      {
-                        type = "lv2";
-                        name = "eq";
-                        plugin = "http://lsp-plug.in/plugins/lv2/para_equalizer_x32_stereo";
-                        control = {
-                          "enabled" = 1;
-                          "g_in" = 1.0;
-                          "g_out" = 1.0;
-                          "ft_0" = 5;
-                          "fm_0" = 0;
-                          "f_0" = 55.0;
-                          "g_0" = 2.239;
-                          "q_0" = 0.707;
-                          "s_0" = 0;
-                        };
-                      }
-                    ];
-                    inputs = [
-                      "eq:in_l"
-                      "eq:in_r"
-                    ];
-                    outputs = [
-                      "eq:out_l"
-                      "eq:out_r"
-                    ];
-                  };
-                  "capture.props" = {
-                    "node.name" = "harman_shelf_sink";
-                    "media.class" = "Audio/Sink";
-                    "audio.channels" = 2;
-                    "audio.position" = [
-                      "FL"
-                      "FR"
-                    ];
-                  };
-                  "playback.props" = {
-                    "node.name" = "harman_shelf_source";
-                    "media.class" = "Audio/Source";
-                    "audio.channels" = 2;
-                    "audio.position" = [
-                      "FL"
-                      "FR"
-                    ];
-                  };
-                };
-              }
-            ];
-          };
-
           # Game audio virtual stereo sink is now in
           # files/media/pipewire/pipewire.conf.d/20-game-stereo.conf — a loopback
           # that creates actual playback ports (playback_FL/playback_FR) routable
@@ -218,10 +158,6 @@ in
       # WirePlumber queries UPower for battery info; make sure UPower is up first
       systemd.user.services.wireplumber.after = [ "upower.service" ];
       systemd.user.services.wireplumber.wants = [ "upower.service" ];
-
-      # Extend LV2_PATH to include lsp-plugins (needed for Harman EQ filter-chain)
-      systemd.user.services.pipewire.environment.LV2_PATH =
-        lib.mkForce "${pkgs.lsp-plugins}/lib/lv2:${config.services.pipewire.package}/lib/lv2";
 
       # Try to make RNNoise the default source automatically once WirePlumber is up
       systemd.user.services."wp-rnnoise-default" = lib.mkIf (cfg.enable or false) (
