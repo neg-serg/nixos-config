@@ -1697,6 +1697,11 @@ scene bar {
         glass: 70% * strip.glass
         lens: true
         tint: 42%
+        // Smoked glass in the dark theme: what is seen through is taken down, the brighter the
+        // more, its colour kept — so a window under the bar stops competing with the strip's own
+        // words instead of being covered up. The light theme keeps none: there `milk` is the
+        // counterpart, and it is not asked for yet.
+        smoke: if(skin.light, 0%, 60%)
         // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
         // the strip wants the frosted reading everywhere, it is 25 px tall.
         frost: 100%
