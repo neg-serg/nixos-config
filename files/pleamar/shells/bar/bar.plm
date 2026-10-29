@@ -1379,7 +1379,7 @@ scene bar {
             // is a port of.
             row clock_pill { gap: 2 * scale
                 Clock(tick.dip) { show: widget.clock }
-                row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark() }
+                row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: skin.coal, tone.on: skin.accent.hover, tone.off: skin.ink.dim) }
             }
             WsCapsule(open_overview) { show: widget.workspaces }
 
@@ -1660,7 +1660,10 @@ scene bar {
             // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
             // hidden. The plate is a hover thing inside the tile; the silhouette and the level
             // are always there, as the microphone's glyph is.
-            row genelec_slot { show: widget.genelec; gen.Tile(row: strip) }
+            // The tile's own tones are the theme's: the plugin is a library and cannot read
+            // `skin.*`, so the plate, the ink and the accent are handed to it here.
+            row genelec_slot { show: widget.genelec
+                gen.Tile(row: strip, plate: skin.coal, tone: skin.ink, tone.dim: skin.ink.dim, loud: skin.accent) }
         }
     }
 
