@@ -446,7 +446,12 @@ scene bar {
         // 1920x35 frame costs 4.2 ms while 240 Hz gives it only 4.16 ms, so the screen rate
         // missed frames. 120 Hz leaves an 8.3 ms budget — twice the measured cost — while
         // keeping hover and tooltip motion ahead of a 60 Hz panel.
-        rate: 120
+        // 120 while the pointer is on the strip, 30 when nobody is near it: the engine paints at
+        // the surface's pace and never idles on its own, so a full-width layer at 120 fps is paid
+        // for on every compositor frame whether anything changed or not. Measured: 1205 frames in
+        // 10 s at rest, `waiting for the screen` in every slow frame — the bar's own paint is
+        // 0.6 ms, so what it costs is the round, not the drawing.
+        rate: 120, 30 while not strip.hot
         screens: each
     }
 
