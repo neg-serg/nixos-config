@@ -84,7 +84,10 @@ library Genelec strict {
         // drawn that narrow with 8 px of slot left over to its right — the gap that kept the row
         // from ending where the screen does. The slot is the plate now, and the plate holds the
         // whole label.
-        let label.w = 46
+        // 48 is what `-51 dB` inks at 14 px: the plate is the content plus the capsule's own 4 px
+        // on each side, so the air left of the icon and right of the label are the same. 46 ran the
+        // label into the plate's edge, and 55 or 60 left a strip of empty plate after it.
+        let label.w = 48
         let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
         // 23 design: the height every other capsule's plate is drawn at. A taller one pokes out of
         // the strip at its rounded corner, which is the black notch at the right end.
