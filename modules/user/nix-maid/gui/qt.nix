@@ -8,7 +8,14 @@
 let
   qtEnabled = config.lib.neg.enabled "gui.qt";
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";
-  kvantumTheme = "KvCurves3d1";
+  # Qt6 Kvantum bridge: owns the style plugin plus the bundled themes and their
+  # matching .colors schemes.
+  kvantumPkg = pkgs.kdePackages.qtstyleplugin-kvantum;
+  # Neutral dark theme with a blue selection, which is what the panel palette
+  # (#006FCC accent on a near-black surface) asks for. Must be a theme shipped by
+  # kvantumPkg (or symlinked under ~/.config/Kvantum below); changing it switches
+  # both the widgets and the platform-theme palette.
+  kvantumTheme = "KvSimplicityDark";
 in
 {
   config = lib.mkIf qtEnabled (
@@ -35,10 +42,10 @@ in
           [
             (pkgs.writeShellApplication {
               name = "kvantummanager";
-              runtimeInputs = [ pkgs.kdePackages.qtstyleplugin-kvantum ];
+              runtimeInputs = [ kvantumPkg ];
               text = ''
                 export QT_PLUGIN_PATH="${svgPlugin}:${waylandPlugin}:${basePlugin}"
-                exec ${lib.getExe' pkgs.kdePackages.qtstyleplugin-kvantum "kvantummanager"}
+                exec ${lib.getExe' kvantumPkg "kvantummanager"}
               '';
             })
           ];
@@ -53,9 +60,20 @@ in
           # Managed by features.gui.qt (modules/user/nix-maid/gui/qt.nix).
           theme {
             style = kvantum
-            color_scheme = ${pkgs.kdePackages.qtstyleplugin-kvantum}/share/color-schemes/${kvantumTheme}.colors
+            color_scheme = ${kvantumPkg}/share/color-schemes/${kvantumTheme}.colors
             icon_theme = ${iconTheme}
           }
+        '';
+
+        # Active Kvantum theme. Kvantum's style plugin reads this file only, so the
+        # name has to match the `color_scheme` above: pointing it at a theme dir
+        # without a <name>/<name>.kvconfig (e.g. a leftover of a removed theme)
+        # makes Kvantum fall back to its builtin default and the palette stops
+        # matching the widgets. Declarative on purpose — KvantumManager's "Use this
+        # theme" writes are reverted on the next switch.
+        ".config/Kvantum/kvantum.kvconfig".text = ''
+          [General]
+          theme=${kvantumTheme}
         '';
 
         ".config/qt6ct/qt6ct.conf".text = ''
@@ -67,33 +85,18 @@ in
 
         # Kvantum themes for KvantumManager discovery (read-only symlinks is OK)
         ".config/Kvantum/KvDark/KvDark.kvconfig".source =
-          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvDark/KvDark.kvconfig";
-        ".config/Kvantum/KvDark/KvDark.svg".source =
-          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvDark/KvDark.svg";
+          "${kvantumPkg}/share/Kvantum/KvDark/KvDark.kvconfig";
+        ".config/Kvantum/KvDark/KvDark.svg".source = "${kvantumPkg}/share/Kvantum/KvDark/KvDark.svg";
         ".config/Kvantum/KvArcDark/KvArcDark.kvconfig".source =
-          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvArcDark/KvArcDark.kvconfig";
+          "${kvantumPkg}/share/Kvantum/KvArcDark/KvArcDark.kvconfig";
         ".config/Kvantum/KvArcDark/KvArcDark.svg".source =
-          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvArcDark/KvArcDark.svg";
+          "${kvantumPkg}/share/Kvantum/KvArcDark/KvArcDark.svg";
         ".config/Kvantum/KvSimplicityDark/KvSimplicityDark.kvconfig".source =
-          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvSimplicityDark/KvSimplicityDark.kvconfig";
+          "${kvantumPkg}/share/Kvantum/KvSimplicityDark/KvSimplicityDark.kvconfig";
         ".config/Kvantum/KvSimplicityDark/KvSimplicityDark.svg".source =
-          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvSimplicityDark/KvSimplicityDark.svg";
+          "${kvantumPkg}/share/Kvantum/KvSimplicityDark/KvSimplicityDark.svg";
 
       })
-      # Bootstrap writable kvantum.kvconfig (not a nix store symlink)
-      # so KvantumManager can change the active theme via "Use this theme".
-      {
-        systemd.user.services.kvantum-bootstrap = {
-          description = "Create writable Kvantum config (replace nix store symlink)";
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${lib.getExe pkgs.bash} -c 'KVC=\"$HOME/.config/Kvantum/kvantum.kvconfig\"; [ -L \"$KVC\" ] && rm -f \"$KVC\"; if [ ! -f \"$KVC\" ]; then mkdir -p \"$(dirname \"$KVC\")\"; printf \"[General]\\ntheme=${kvantumTheme}\\n\" > \"$KVC\"; fi'";
-          };
-          after = [ "graphical-session.target" ];
-          wants = [ "graphical-session.target" ];
-          wantedBy = [ "graphical-session.target" ];
-        };
-      }
     ]
   );
 }
