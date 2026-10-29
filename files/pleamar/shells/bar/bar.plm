@@ -1379,7 +1379,7 @@ scene bar {
             // is a port of.
             row clock_pill { gap: 2 * scale
                 Clock(tick.dip) { show: widget.clock }
-                row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: skin.coal, tone.on: skin.accent.hover, tone.off: skin.ink.dim) }
+                row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: skin.coal, tone.on: skin.accent.hover, tone.off: skin.ink.dim, plate.h: 23, plate.top: 1) }
             }
             WsCapsule(open_overview) { show: widget.workspaces }
 
