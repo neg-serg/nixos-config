@@ -968,7 +968,7 @@ scene bar {
         measure w.wind
         // 168, not 158: with the row's type at 14 the group grew, and the capsule has to be
         // wider than the moon (it ends at ~153) so the slant cuts the capsule's end.
-        size: 178 * scale, strip * scale
+        size: 180 * scale, strip * scale
         group zoom {
             scale: scale
             // The reference cuts this capsule's right end on a SLANT and runs a
@@ -1001,7 +1001,11 @@ scene bar {
                     color: skin.coal
                     opacity: 69%
                     border: 1, mix(skin.coal, skin.ink, 8%)
-                    box { from: 0, 1; size: 168, 23; corner: corner }
+                    // 180, not 168: the clip's trapezoid runs to 180 at the top and 166 at the
+                    // bottom, so a 168-wide box was cut only near its lower edge and the rest of
+                    // the end stayed square — a shoulder standing to the right of the moon. The
+                    // box reaches the clip's far edge and the cut is the shape.
+                    box { from: 0, 1; size: 180, 23; corner: corner }
                 }
             }
             // The cut carries no hairline. QS draws one there (`triangleHighlightColor`, the
@@ -1057,7 +1061,7 @@ scene bar {
             // The moon: dithered by its own shader (moon.wgsl), which takes the phase
             // QS's MoonPhaseIcon takes and stipples the terminator the same way.
             shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
-            zone box weather { from: 0, 0; size: 178, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
+            zone box weather { from: 0, 0; size: 180, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { emit tip(5) }
             on leave weather { emit tip_hide }
             on press weather { emit open_weather_panel }
