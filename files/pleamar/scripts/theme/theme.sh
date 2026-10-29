@@ -86,6 +86,7 @@ theme.sh — build ~/.config/pleamar/theme.plm from the wallpaper.
 
 Usage:
   theme.sh [--wallpaper FILE] [--accent '#RRGGBB'] [--from-json FILE]
+           [--mode auto|light|dark]
   theme.sh --help
 
 Where the wallpaper is found, in this order:
@@ -115,6 +116,11 @@ Colours:
     the reference draws its secondary text — not a mix of two tones it no longer samples
     text/surface tones above.
 
+The theme is light or dark: `--mode auto` (the default) follows the wallpaper — its mean
+WCAG luminance over the reference's own 0.5 threshold — and `--mode light|dark` forces one.
+The default mode is read from `~/.config/pleamar/theme.mode` (one word, `auto` when the
+file is absent), so the switch is a file, not a rebuild.
+
 Environment: MAGICK_BIN (magick), AWK_BIN (awk), JQ_BIN (jq, --from-json only).
 
 Exit: 0 written, 1 nothing to write or a bad input, 2 usage or missing tool.
@@ -126,6 +132,7 @@ EOF
 WALLPAPER_ARG=""
 ACCENT_ARG=""
 FROM_JSON=""
+MODE_ARG=""
 
 while (($# > 0)); do
   case "$1" in
@@ -142,6 +149,11 @@ while (($# > 0)); do
     --from-json)
       (($# >= 2)) || usage_die "--from-json needs a FILE"
       FROM_JSON="$2"
+      shift 2
+      ;;
+    --mode)
+      (($# >= 2)) || usage_die "--mode needs auto, light or dark"
+      MODE_ARG="$2"
       shift 2
       ;;
     --help | -h)
@@ -282,6 +294,63 @@ else
   ACCENT_NOTE="colors.accent.primary, the QS fallback #006FCC: no wallpaper was sampled."
 fi
 
+if ((EXTRACTED == 0)) && [[ -z "$ACCENT_ARG$FROM_JSON" ]]; then
+  err "nothing to extract: no wallpaper found and no --accent/--from-json colour"
+  err "looked at: $CACHE_HOME/pleamar/wallpaper-path, $CACHE_HOME/quickshell-wallpaper-path"
+  err "pass --wallpaper FILE, --accent '#RRGGBB' or --from-json FILE"
+  exit 1
+fi
+
+# ---- light or dark ---------------------------------------------------------
+# `auto` follows the wallpaper (`light=` from the extractor: its mean WCAG luminance over
+# 0.5); `light` and `dark` force one. The mode defaults to whatever
+# ~/.config/pleamar/theme.mode says, and to `auto` when that file is absent — so the shell
+# follows the wallpaper out of the box and the switch needs no rebuild.
+mode_file="$CONFIG_HOME/pleamar/theme.mode"
+MODE="$MODE_ARG"
+if [[ -z "$MODE" && -r "$mode_file" ]]; then
+  MODE="$(tr -d '[:space:]' < "$mode_file")"
+fi
+MODE="${MODE:-auto}"
+mode_from="--mode"
+if [[ -z "$MODE_ARG" && -r "$mode_file" ]]; then mode_from="$mode_file"; fi
+case "$MODE" in
+  auto)
+    if ((LIGHT == 1)); then
+      THEME="light"
+      mode_note="auto: the wallpaper is light"
+    else
+      THEME="dark"
+      mode_note="auto: the wallpaper is dark"
+    fi
+    ;;
+  light)
+    THEME="light"
+    mode_note="forced light by $mode_from"
+    ;;
+  dark)
+    THEME="dark"
+    mode_note="forced dark by $mode_from"
+    ;;
+  *) usage_die "--mode: expected auto, light or dark: $MODE" ;;
+esac
+
+# The two palettes. Dark is the reference's own (Settings/colors.jsonc); light is the same
+# roles turned round: plates nearly white, ink dark. Measured on the light one — ink 14.8:1
+# and ink.dim 6.9:1 on the coal plate, and 7.1:1 / 3.4:1 for a capsule at 69 % over a dark
+# window, its worst case.
+if [[ "$THEME" == "light" ]]; then
+  COAL="#F6F3F8"
+  SURFACE="#E6E2EB"
+  INK="#1B2127"
+  INK_DIM="#4B5464"
+else
+  COAL="#000000"
+  SURFACE="#242A35"
+  INK="#CBD6E5"
+  INK_DIM="#AEB9C8"
+fi
+
 if [[ -n "$FROM_JSON" ]]; then
   [[ -r "$FROM_JSON" ]] || die "--from-json: cannot read $FROM_JSON"
   command -v "$JQ_BIN" > /dev/null 2>&1 \
@@ -327,13 +396,6 @@ if [[ -n "$ACCENT_ARG" ]]; then
   fi
 fi
 
-if [[ -z "$COAL$SURFACE$INK$ACCENT" ]]; then
-  err "nothing to extract: no wallpaper found and no --accent/--from-json colour"
-  err "looked at: $CACHE_HOME/pleamar/wallpaper-path, $CACHE_HOME/quickshell-wallpaper-path"
-  err "pass --wallpaper FILE, --accent '#RRGGBB' or --from-json FILE"
-  exit 1
-fi
-
 # Fallbacks for tones an explicit colour did not name.
 COAL="${COAL:-#000000}"
 SURFACE="${SURFACE:-#242A35}"
@@ -354,6 +416,7 @@ render() {
   printf '//\n'
   printf '// source:  %s\n' "$source_line"
   printf '// written: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  printf '// mode:    %s (%s)\n' "$THEME" "$mode_note"
   printf '//\n'
   printf '// Import it after the palette (INTERFACES.md §1.4) and read skin.* names:\n'
   printf '//\n'
@@ -374,9 +437,9 @@ render() {
   printf '    // %s\n' "$INK_NOTE"
   printf '    let skin.ink = %s\n' "$INK"
   printf '\n'
-  printf '    // colors.text.secondary (Settings/colors.jsonc), the same static token the\n'
-  printf '    // reference draws its secondary text with — not a mix of the two sampled tones.\n'
-  printf '    let skin.ink.dim = #AEB9C8\n'
+  printf '    // colors.text.secondary (Settings/colors.jsonc) in the dark theme, its own dark tone\n'
+  printf '    // in the light one — not a mix of the two sampled tones.\n'
+  printf '    let skin.ink.dim = %s\n' "$INK_DIM"
   printf '\n'
   printf '    // %s\n' "$ACCENT_NOTE"
   printf '    let skin.accent = %s\n' "$ACCENT"
@@ -387,13 +450,11 @@ render() {
   printf '    // colors.onAccent, unchanged.\n'
   printf '    let skin.on.accent = #ffffff\n'
   printf '\n'
-  printf '    // Is the wallpaper light? Its mean WCAG luminance over the threshold the\n'
-  printf '    // reference uses for this flag, ui.textShadow.lightThreshold (0.5). The reference\n'
-  printf '    // measures the accent (Settings/Theme.qml:627), and the accent is not what the\n'
-  printf '    // plates are made of: they are skin.coal at 69..96 percent, so the wallpaper behind\n'
-  printf '    // them is what decides whether ink still reads. A scene answers with a shadow and a\n'
-  printf '    // hairline edge under its glyphs.\n'
-  printf '    let skin.light = %s\n' "$([[ "$LIGHT" == "1" ]] && echo true || echo false)"
+  printf '    // Is the theme light? True when this palette is the light one — the wallpaper is\n'
+  printf '    // light on its mean WCAG luminance (the same 0.5 the reference uses), or\n'
+  printf '    // --mode/~/.config/pleamar/theme.mode forced it. A scene reads it to pick the part\n'
+  printf '    // of a design that only one theme has, never to patch the ink: the ink is here.\n'
+  printf '    let skin.light = %s\n' "$([[ "$THEME" == "light" ]] && echo true || echo false)"
   printf '}\n'
 }
 

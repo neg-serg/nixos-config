@@ -205,6 +205,36 @@ fi
 
 assert_eq "$(theme_value "$theme2" light)" 'true' "light fixture (near-white wallpaper): skin.light is true"
 
+# ---- 2b. the mode: forced, and the switch file ---------------------------------
+# `auto` follows the wallpaper; `--mode` and ~/.config/pleamar/theme.mode override it, and
+# the palette flips with the mode: plates nearly white and ink dark in the light one.
+home3="$WORK/home3"
+mkdir -p "$home3/.cache/pleamar" "$home3/.config/pleamar"
+printf '%s\n' "$WORK/light.png" > "$home3/.cache/pleamar/wallpaper-path"
+run_theme "$home3" --mode dark
+assert_eq "$(theme_value "$home3/.config/pleamar/theme.plm" coal)" '#000000' "--mode dark on a light wallpaper: coal is the dark plate"
+assert_eq "$(theme_value "$home3/.config/pleamar/theme.plm" light)" 'false' "--mode dark on a light wallpaper: skin.light is false"
+
+printf 'light\n' > "$home3/.config/pleamar/theme.mode"
+printf '%s\n' "$WORK/blue.png" > "$home3/.cache/pleamar/wallpaper-path"
+run_theme "$home3"
+assert_eq "$(theme_value "$home3/.config/pleamar/theme.plm" coal)" '#F6F3F8' "theme.mode=light on a dark wallpaper: coal is the light plate"
+assert_eq "$(theme_value "$home3/.config/pleamar/theme.plm" light)" 'true' "theme.mode=light on a dark wallpaper: skin.light is true"
+ink3="$(theme_value "$home3/.config/pleamar/theme.plm" ink)"
+ratio3=$(contrast_ratio "$ink3" "$(theme_value "$home3/.config/pleamar/theme.plm" coal)")
+if awk -v r="$ratio3" 'BEGIN { exit !(r >= 4.5) }'; then
+  pass "light theme: ink contrasts ${ratio3}:1 on coal"
+else
+  fail "light theme: ink only ${ratio3}:1 on coal ($ink3)"
+fi
+
+rm -f "$home3/.config/pleamar/theme.mode"
+run_theme "$home3"
+assert_eq "$(theme_value "$home3/.config/pleamar/theme.plm" coal)" '#000000' "no theme.mode: auto puts a dark wallpaper back to the dark plate"
+
+run_theme "$home3" --mode blue
+assert_eq "$RC" 2 "--mode: a word that is not auto/light/dark is a usage error"
+
 # ---- 3. --accent overrides the extracted accent only ------------------------
 
 run_theme "$home1" --accent '#AbCdEf'
