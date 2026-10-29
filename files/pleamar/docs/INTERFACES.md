@@ -116,9 +116,17 @@ scene copied per monitor each copy may take one or the other” — and that war
 for every `screens: each` scene (the copies are made while imports are being read). theme.plm
 therefore declares names under its own `skin.` prefix (`skin.accent`, `skin.surface`, `skin.ink`,
 `skin.ink.dim`, `skin.light`, …), and a scene that opts into the wallpaper look uses `skin.*` names
-explicitly. `skin.light` is a yes or no — the wallpaper's own mean WCAG luminance over the
-reference's 0.5 threshold — and it is what a scene reads before putting a shadow and a hairline edge
-under glyphs that sit on glass.
+explicitly.
+
+**The palette is light or dark as a whole.** `--mode auto` (the default) follows the wallpaper — its
+mean WCAG luminance over the reference's own 0.5 threshold — and `--mode light|dark` forces one; the
+default mode comes from `~/.config/pleamar/theme.mode` (one word, absent means `auto`), so the
+switch is a file and needs no rebuild. Dark is the reference's own palette (`#000000` / `#242A35` /
+`#CBD6E5`); light is the same roles turned round: `#F6F3F8` and `#E6E2EB` for the plates, `#1B2127`
+for ink and `#4B5464` for `ink.dim`, which measure 14.8:1 and 6.9:1 on the coal plate — and 7.1:1 /
+3.4:1 for a capsule at 69 % over a dark window, their worst case. `skin.light` says which theme a
+scene is looking at; read it to pick the part of a design that only one theme has, never to patch
+the ink, which is the palette's own job.
 
 For a palette that changes while the scene runs (wallpaper switch without a reload), use the
 language's own runtime route instead: three facts (for example `pal.red`, `pal.green`, `pal.blue`)
