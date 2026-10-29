@@ -1004,13 +1004,10 @@ scene bar {
                     box { from: 0, 1; size: 168, 23; corner: corner }
                 }
             }
-            // QS's triangleHighlightColor is the accent put through black twice
-            // (towardsBlack(saturate(...), 0.3) x2), so a dark saturated blue.
-            // A hairline along the cut, inside the plate: at 2.6 wide and 45 % accent it read as a
-            // slash stuck on the capsule's end rather than as the cut itself. Its round caps
-            // are pulled 0.8 in along the cut — half the stroke — so its ends stop at the
-            // cut's corners instead of poking out past the plate.
-            line { from: 171.6, 1.7; to: 158.4, 23.3; width: 1.6; color: mix(skin.accent, skin.coal, 30%) }
+            // The cut carries no hairline. QS draws one there (`triangleHighlightColor`, the
+            // accent put through black twice) and the port followed it, but on this bar it read
+            // as a coloured slash laid across the capsule's end rather than as the cut itself —
+            // the clip's own edge, with the plate's border on it, is where the shape ends.
             // Laid out after their own widths, not at fixed offsets: the offsets were read
             // off the reference once and then the port's glyphs turned out wider, so the
             // temperature ran into the water drop ("11°C◯67%") and the capsule measured 114
