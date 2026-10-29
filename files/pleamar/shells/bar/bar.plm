@@ -1679,11 +1679,12 @@ scene bar {
     // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
     body {
         color: skin.coal
-        // `panel.seam.opacity` is 0.88 in the reference, where the blur is the compositor's;
-        // here the surface does the blur, so a flat 0.88 hid the glass and 0.62 let the
-        // wallpaper's own colour through as a pink slab. 0.84 keeps the glass a texture under
-        // the plate instead of a window.
-        opacity: 84%
+        // `panel.seam.opacity` is 0.88 in the reference, where the blur is the compositor's; here
+        // the surface does the blur, so a flat 0.88 hid the glass and 0.62 let a light
+        // wallpaper's own colour through as a slab. The dark theme needs the lower number and the
+        // light one does not: `skin.coal` is #000000 there, so 0.84 of it is a black wall with
+        // nothing behind it to bend, and the glass reads as paint.
+        opacity: if(skin.light, 84%, 60%)
         // The glass sits here, not on the capsules: in the reference the compositor
         // (a Hyprland plugin, `hyprglass`) blurs and refracts the whole surface, and
         // the widgets are flat fills over it. No plugin is loaded on this host
@@ -1699,16 +1700,23 @@ scene bar {
         // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
         // the strip wants the frosted reading everywhere, it is 25 px tall.
         frost: 100%
-        refraction: 70%
-        dispersion: 45%
-        // Rim light is a per-theme number, and this is why: the strip's top edge measured +5
-        // levels against its interior in the light theme and level with it in the dark one at
-        // the same 45 / 55, and dropping to 14 / 18 took the dark theme's edge 23 levels *below*
-        // its interior — a lit border in one theme, a dark line in the other. The light theme
-        // asks for less (a white bar on a dark desktop wears its rim like an outline), the dark
-        // one for more (there the rim is what keeps the fill from thinning to black).
-        mirror: if(skin.light, 16%, 45%)
-        highlight: if(skin.light, 20%, 55%)
+        // No rim. The bevel is a band the glass leaves open at the silhouette: it either catches
+        // the light — the lit border that had to go — or shows what is behind it, which with no
+        // `highlight` and no `mirror` measured 15.6 against an interior of 50.9, a dark line of
+        // its own. So the band is capped with the plate's own colour: a 1 px `border` in
+        // `skin.coal` closes it at the surface's tone, and what is left bends without ever
+        // catching anything.
+        // `refraction` is how thick the glass is — how far its edge pulls what is behind it in;
+        // 200 % is the thick lens of the language's own example. 180 % on a 25 px strip bends
+        // the wallpaper where it meets the plate, `dispersion: 60%` splits the bend a little
+        // (red, green and blue each by their own index) and `dome: 8%` magnifies the middle
+        // faintly, so the plate reads as a piece of glass rather than a pane of water.
+        refraction: 180%
+        dispersion: 60%
+        dome: 8%
+        mirror: 0%
+        highlight: 0%
+        border: 1, skin.coal
         // The shape, not a second coat of paint: a body fills its own extent, and a box
         // inside it with no colour of its own inherits the body's and fills it again. The
         // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
