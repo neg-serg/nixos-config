@@ -40,6 +40,12 @@
     atrium = {
       enable = mkBool "enable atrium (Wayland multiseat display manager)" false;
     };
+    # sonda: a file manager whose search knows what the files hold (pleamar scene window,
+    # EmbeddingGemma 2 on llama.cpp). The package is packages/sonda; the models arrive on first
+    # `sonda setup` (865 MB into $XDG_DATA_HOME), see modules/user/nix-maid/gui/sonda.nix.
+    sonda = {
+      enable = mkBool "enable sonda (file manager searching files by content)" false;
+    };
     iconTheme = lib.mkOption {
       type = lib.types.str;
       default = "kora-pgrey";
