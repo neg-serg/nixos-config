@@ -45,6 +45,7 @@
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
   atrium = pkgs.atrium; # Wayland multiseat display manager
   wordcraft = pkgs.wordcraft; # Word-style word processor (.docx/.odt/.rtf) + converter CLI
+  sonda = pkgs.sonda; # file manager searching files by what they contain (EmbeddingGemma 2 on llama.cpp)
   graf = pkgs.graf; # terminal force-directed graph of markdown wikilinks (TUI)
   ttf-code2000 = pkgs.ttf-code2000; # Code2000 shareware Unicode TrueType font
   ttf-code2001 = pkgs.ttf-code2001; # Code2001 freeware font: Plane 1 ancient scripts

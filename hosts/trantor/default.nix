@@ -212,6 +212,11 @@ in
   # stays buildable: `features.gui.quickshell` is still on, its service masked
   # by hand, so one shell owns the screen and the other is one unmask away.
   features.gui.pleamar.enable = true;
+  # Sonda (features.gui.sonda): a file manager whose search knows the contents
+  # of the files, with its window as one more pleamar scene. Installed, not
+  # autostarted: the window starts the reader itself, and the models come with
+  # the first `sonda setup` (865 MB into ~/.local/share/sonda).
+  features.gui.sonda.enable = true;
   # Wallpaper picker (features.gui.wallpaperPicker): the swatch deck browses
   # ~/pic/wl and hands the chosen card to wl-daemon (`wl img {}`), so the login
   # screen, the bar accent and `wl restore` keep following one owner.
