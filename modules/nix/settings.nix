@@ -145,6 +145,30 @@ in
     MemorySwapMax = "42G"; # RAM+swap cap: only 2GB swap allowed
   };
 
+  # Proxy for everything nix-daemon itself fetches — substituters
+  # (cache.nixos.org), flake inputs, `builtin:fetchurl` fixed-output
+  # derivations. Direct access to cache.nixos.org and download.qt.io is blocked
+  # from this host, while the same URLs answer 200 through the sing-box SOCKS5
+  # proxy (`cache.nixos.org/nix-cache-info` verified), so binary substitution
+  # works again.
+  #
+  # Deliberately scoped and with known edges:
+  #   - Sandboxed *builds* still get no network at all: they run in a private
+  #     network namespace, and nixpkgs' `impureEnvVars` are filled from this
+  #     daemon environment, not the caller's. Blocked sources are seeded
+  #     client-side by `scripts/dev/nix-seed-fods.sh` (`just seed`).
+  #   - If `sing-box-proxy` (user service, started at login) is down, daemon
+  #     fetches fail instead of falling back to a direct connection that cannot
+  #     work anyway. `no_proxy` keeps loopback and the LAN direct.
+  #   - `socks5h://`, not `socks5://`: the proxy resolves names, because the
+  #     local resolver sinks some blocked domains into sinkhole addresses.
+  systemd.services.nix-daemon.environment = lib.mkIf (config.lib.neg.enabled "net.nixDaemonProxy") {
+    http_proxy = "socks5h://127.0.0.1:10808";
+    https_proxy = "socks5h://127.0.0.1:10808";
+    all_proxy = "socks5h://127.0.0.1:10808";
+    no_proxy = "localhost,127.0.0.1,::1,.local,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16";
+  };
+
   # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
   # nix.custom.conf, so sops-managed netrc path doesn't take effect.
   # This service copies the sops-decrypted netrc to the Determinate-managed path.
