@@ -16,6 +16,7 @@
       tailscale.enable = mkBool "enable Tailscale mesh VPN and Tailray GUI" false;
       wifi.enable = mkBool "enable Wi-Fi stack and management tools (iwd, wavemon, etc.)" false;
       proxy.enable = mkBool "enable Xray SOCKS5 proxy (127.0.0.1:10808)" false;
+      nixDaemonProxy.enable = mkBool "route nix-daemon fetches (substituters, flake inputs) through the local SOCKS5 proxy" true;
       zapret2.enable = mkBool "enable Zapret2 DPI bypass via nfqueue (requires zapret2 package)" false;
       rknDomains.enable = mkBool "enable RKN domain blocklist fetcher with daily timer" false;
       netHealth.enable = mkBool "enable periodic network/DNS/zapret2 health check with self-heal and ntfy push" false;

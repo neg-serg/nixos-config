@@ -33,7 +33,7 @@ Quick Commands
 - Quick switch (user, primary): `nh os switch /etc/nixos#trantor --option substitute false`
 - Agent rollout (no password): `just agent-switch "$(readlink -f result)"` — the root-owned
   `nixos-agent-switch.service` activates the toplevel you already built and verified
-  (`modules/security/agent-switch.nix`); details under "Builds: substitute = false" below.
+  (`modules/security/agent-switch.nix`); details under "Builds: substitution through the proxy" below.
 - Human fallback (mechanism off, not yet activated, or the change *is* the mechanism):
   `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
 - Build & switch (alternative): `sudo nixos-rebuild switch --flake .#trantor --option substitute false`
@@ -201,10 +201,20 @@ Automation: desktop only, CDP is not used (hard rule)
   screenshots exceed the local VL context (4096 tokens). Desktop tool verified live end-to-end
   (screenshot → vision reading of real windows).
 
-Builds: substitute = false
-- This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
-- Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
+Builds: substitution through the proxy
+- `cache.nixos.org` is unreliable for direct connections from this region (it answers, but with
+  `HTTP/2 framing layer` errors and timeouts; `download.qt.io` and `codeload.github.com` are blocked
+  outright), while it answers reliably through the sing-box SOCKS5 proxy, which `nix-daemon` now
+  uses (`systemd.services.nix-daemon.environment`, flag `features.net.nixDaemonProxy`). Binary
+  substitution is enabled again, and the deploy recipes run without `--option substitute false`.
+- Pass `--option substitute false` for one-off debugging/comparison builds, and whenever
+  `sing-box-proxy` is down (then every substitute lookup stalls instead of falling back):
   `nix build .#nixosConfigurations.trantor.config.system.build.toplevel --dry-run --option substitute false`
+  A substituter that stalls costs minutes per lookup; `--option substituters https://cache.nixos.org/`
+  narrows the list when `install.determinate.systems` hangs.
+- Sandboxed builds still have no network at all, so a source that is neither in the store nor in a
+  binary cache cannot be fetched by the build itself. `just seed` (`scripts/dev/nix-seed-fods.sh`)
+  prefetches such sources client-side through SOCKS5 — run it when a build fails on a blocked URL.
 - Rollout (rebuild+switch) needs root, and the agent finishes it itself: build the closure, then
   `just agent-switch "$(readlink -f result)"`. That writes the verified toplevel into
   `/etc/nixos/.agent/switch-request` and starts the root-owned `nixos-agent-switch.service`, which
@@ -222,8 +232,8 @@ Builds: substitute = false
 - Agent-side rollout, in order: `git status` clean/intentional (the switch consumes the working tree,
   so foreign edits get baked in — the unit prints the dirty-file list into the journal rather than
   guessing) → `just fmt` → `just lint` → build the closure
-  (`nix build .#nixosConfigurations.trantor.config.system.build.toplevel --out-link result
-  --option substitute false`) → verify what the build actually contains (grep the store paths
+  (`nix build .#nixosConfigurations.trantor.config.system.build.toplevel --out-link result`,
+  adding `--option substitute false` only when the proxy is down) → verify what the build actually contains (grep the store paths
   `result` points at) → `just agent-switch "$(readlink -f result)"`. Hand the switch over to the human
   only when the mechanism is off or not activated yet, or when the change *is* the mechanism:
   `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
@@ -233,14 +243,15 @@ Builds: substitute = false
   writes the root-owned `/nix/var/nix/profiles` (`drwxr-xr-x root root`, not writable by `neg`), and
   nixos-rebuild does not escalate by itself — it would build the whole system and only then fail.
 - Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
-  (`systemctl start/stop xray|sing-box-tun` — with sudo's `""` exact-arguments marker —, `reboot`,
+  (`systemctl start/stop xray` — with sudo's `""` exact-arguments marker —, `reboot`,
   `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`, `glm-adapter-priv`); everything else,
   `sudo -n` included, prompts. The agent switch is not in this list: it is triggered by a polkit
   rule for one unit and the `start` verb.
-- The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false` — keep
-  that flag convention in any new bindings/scripts.
-- The repo's own targets already pass this flag: `just deploy*`, `just check`,
-  `just flag`. Do not introduce nix invocations without it.
+- The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false`; the
+  flag there is now optional (it forces a from-source build when the proxy is down).
+- `just check` and `just flag` still pass the flag; the deploy targets do not, because
+  substitution now works through the proxy. Keep that split in mind for new recipes: substitute,
+  unless the target is a check or a one-off comparison.
 
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/trantor] …`, `[dev/pkgs] …`, `[docs] …`.

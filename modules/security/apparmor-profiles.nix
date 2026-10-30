@@ -213,26 +213,20 @@
     exe = "sing-box";
     rules = ''
       # sing-box-proxy (user unit) reads -c ~/.config/sing-box-trojan/
-      # config.json; the system unit sing-box-tun runs the same binary with
-      # /run/sing-box-tun/config.json and opens the TUN device. One profile
-      # covers both.
+      # config.json and serves the local SOCKS5 port; the full-TUN system unit
+      # was removed, so this is the only consumer left.
       /home/*/.config/sing-box*/ r,
       /home/*/.config/sing-box*/** r,
-      /run/sing-box-tun/ r,
-      /run/sing-box-tun/** r,
-      /dev/net/tun rw,
       /proc/*/cgroup r,
       /proc/*/mountinfo r,
       /proc/sys/net/core/ r,
       /proc/sys/net/core/somaxconn r,
-      # The Go runtime reads its own cgroup CPU quota (GOMAXPROCS): the
-      # session slice for the user proxy, the system slice for the TUN unit.
+      # The Go runtime reads its own cgroup CPU quota (GOMAXPROCS) from the
+      # session slice.
       /sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/sing-box-proxy.service/cpu.max r,
-      /sys/fs/cgroup/system.slice/sing-box-tun.service/cpu.max r,
-      # The TUN instance creates routes and the interface (its unit holds
-      # ambient CAP_NET_ADMIN); the SOCKS inbound with password auth binds
-      # an unprivileged port.
-      capability net_admin,
+      # netlink reads the interface list (auto_detect_interface); the SOCKS
+      # inbound with password auth binds an unprivileged port. No CAP_NET_ADMIN
+      # without a TUN device and the routes it created.
       capability net_raw,
       network netlink raw,
       network inet stream,

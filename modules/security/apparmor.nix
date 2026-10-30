@@ -23,8 +23,7 @@
 # | aria2        | `…-aria2-*/bin/aria2c`            | `features.security.apparmor.aria2`        | `complain` |
 #
 # A profile attaches to the executable path, so a session service is confined exactly like a system
-# one — but note that one binary can back two units: `sing-box` is both the user SOCKS proxy and the
-# system `sing-box-tun` service, and a single profile covers both. The path in the profile is the
+# one — which is how the user-unit `sing-box` SOCKS proxy is covered. The path in the profile is the
 # *resolved* one: `avahi-daemon` is exec'd as `…-avahi-0.8/sbin/avahi-daemon`, but `sbin/` is a
 # symlink to `bin/`, so the profile attaches to `…/bin/avahi-daemon` (same reason a rule for `/etc/x`
 # needs the store target behind the symlink — see below).

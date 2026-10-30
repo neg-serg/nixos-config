@@ -4,8 +4,25 @@ set shell := ["bash", "-cu"]
 # Repository root for the repo-wide recipes. Every recipe run evaluates this
 # backtick, so it falls back to the invocation dir when not in a git repo.
 repo_root := `git rev-parse --show-toplevel 2>/dev/null || pwd`
+# Shared invocation of scripts/dev/nix-seed-fods.sh: called directly from the
+# deploy recipes rather than through `just seed`, because a nested `just` needs a
+# writable runtime dir and dies in a sandboxed runner.
+seed_fods := "bash " + repo_root + "/scripts/dev/nix-seed-fods.sh"
 
 # --- System Management -----------------------------------------------------------
+
+# Seed missing fixed-output sources (tarballs, patches) through the SOCKS5 proxy.
+# Builds are sandboxed into a private network namespace, so a proxy on 127.0.0.1
+# is unreachable from inside a fetch, and nixpkgs' `impureEnvVars` (http_proxy,
+# all_proxy, ...) are filled from the nix-daemon's environment, not the
+# caller's. This downloads the sources client-side instead: the expected
+# fixed-output store paths appear, and the real build needs no network at all.
+# Needed because cache.nixos.org, download.qt.io and friends are blocked here.
+# Usage: just seed [host]
+seed host="trantor":
+    {{seed_fods}} \
+      ".#nixosConfigurations.{{ host }}.config.system.build.toplevel" \
+      --option substitute false
 
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
@@ -15,8 +32,7 @@ deploy host="trantor":
       --out-link result \
       --option connect-timeout 60 \
       --option download-attempts 2 \
-      --option stalled-download-timeout 600 \
-      --option substitute false
+      --option stalled-download-timeout 600
 
     # Update system profile
     sudo nix-env -p /nix/var/nix/profiles/system --set $(readlink -f result)
@@ -25,11 +41,11 @@ deploy host="trantor":
 
 # Deploy (Legacy/Slow) - keeps nh features like pretty print
 deploy-nh host="trantor":
-    nh os switch . --hostname {{ host }} --option substitute false
+    nh os switch . --hostname {{ host }}
 
 # Deploy with maximum verbosity (logs + trace + verbose)
 deploy-debug host="trantor":
-    nh os switch . --hostname {{ host }} -L -t -v --option substitute false
+    nh os switch . --hostname {{ host }} -L -t -v
 
 # Alias for deploy
 switch host="trantor":
@@ -46,7 +62,7 @@ switch host="trantor":
 # cache.nixos.org is unreliable from this host.
 # Usage: just switch-sudo [host]
 switch-sudo host="trantor":
-    sudo nixos-rebuild switch --flake .#{{ host }} --option substitute false < /dev/null
+    sudo nixos-rebuild switch --flake .#{{ host }} < /dev/null
 
 # Cache-status preflight for a rebuild: per host, how much of the *whole closure*
 # still has to be built from source and how much can be substituted. Matters here
