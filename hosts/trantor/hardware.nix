@@ -103,9 +103,9 @@ in
 
     initrd = {
       kernelModules = kernelData.initrdKernelModules;
-      # Enable systemd in initrd; keep logs quiet for faster boot now
-      systemd.enable = true;
-      verbose = false;
+      # No `systemd.enable` / `verbose` here: the 2026-10 nixpkgs removed both
+      # options together with the scripted stage 1, so systemd in initrd is the
+      # only implementation left and the old quiet-boot switch no longer exists.
     };
 
     # Lower console log level during/after boot; messages stay in journalctl

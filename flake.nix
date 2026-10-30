@@ -36,10 +36,10 @@
     # --recreate-lock-file all leave it at the old rev). Bump this rev with
     # `nix flake lock --update-input nixpkgs` once the ref resolution settles.
     # The current rev is the published nixos-unstable channel release of
-    # 2026-10-14 (Herdr 0.9.3): a channel release keeps the closure
+    # 2026-10-27 (Herdr 0.9.5): a channel release keeps the closure
     # substitutable from cache.nixos.org instead of building from source, and
     # Herdr >= 0.9.2 is what enables native agent-session restore.
-    nixpkgs.url = "github:NixOS/nixpkgs/7fd4004d0511991fff3a0524856a9be09e28c5f0";
+    nixpkgs.url = "github:NixOS/nixpkgs/31ecbaca1bdefa45dffc409f0250bd8039ea0010";
 
     # ROCm/PyTorch env is pinned to the previous rev (packages/torch-rocm):
     # the 2026-09 nixpkgs ships python3-torch 2.13.0, whose HIP build needs
