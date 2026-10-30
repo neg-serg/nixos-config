@@ -112,4 +112,28 @@ _: _: finalPrev: {
       export PATH=$TMPDIR/ninja-wrapper:$PATH
     '';
   });
+
+  # Flaky test suites in the python3.14 mail stack that nix-maid pulls in
+  # (extract-msg/mail-parser/rtfde -> python3.14-env). Their checks fail
+  # non-deterministically: rtfde compares random bytes against their RTF
+  # round-trip (CRLF gets normalised to LF), syrupy 6.0.0 mismatches its own
+  # snapshot expectations under pytest-xdist. Both are upstream test bugs, the
+  # packaging is fine. Note the env resolves through python314Packages, which is
+  # a separate attribute from the python3Packages alias — override both.
+  python314Packages = finalPrev.python314Packages // {
+    rtfde = finalPrev.python314Packages.rtfde.overrideAttrs (_old: {
+      doCheck = false;
+    });
+    syrupy = finalPrev.python314Packages.syrupy.overrideAttrs (_old: {
+      doCheck = false;
+    });
+  };
+  python3Packages = finalPrev.python3Packages // {
+    rtfde = finalPrev.python314Packages.rtfde.overrideAttrs (_old: {
+      doCheck = false;
+    });
+    syrupy = finalPrev.python314Packages.syrupy.overrideAttrs (_old: {
+      doCheck = false;
+    });
+  };
 }
