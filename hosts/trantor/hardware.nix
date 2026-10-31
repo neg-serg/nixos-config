@@ -52,9 +52,12 @@ in
   # ZRAM: zstd compressor (Zen 5 has hw-accelerated zstd, better ratio than lzo-rle)
   # SCX BPF scheduler — V-Cache CCD aware, replaces isolcpus
   features.optimization.enable = true;
-  # Torvalds' experimental noref-filemap-read-with-llm kernel (v7.3-rc6 + the
-  # no-refcount page-cache read path) — see modules/system/kernel/localmodconfig.nix.
-  features.system.norefKernel.enable = true;
+  # Kernel: the latest stable point release of the 7.3 series (7.3.1), built
+  # from kernel.org sources with this host's reduced .config — see
+  # modules/system/kernel/localmodconfig.nix. The experimental
+  # noref-filemap-read-with-llm branch (v7.3-rc6 plus nine page-cache commits)
+  # stays in the module, off, so the flag is only flipped to go back to it.
+  features.system.norefKernel.enable = false;
   # ROCm compute (amdkfd + clr/rocm-smi userspace); torch-rocm env via features.dev.ai.rocm
   features.hardware.amdgpu.rocm.enable = true;
   zramSwap.algorithm = "zstd";

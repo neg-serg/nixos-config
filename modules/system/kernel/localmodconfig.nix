@@ -19,6 +19,16 @@ let
   # btusb.c carries USB_DEVICE(0x13d3, 0x3588) and btmtk.c picks
   # (num_altsetting > 1) ? 1 : 0; both are in-tree. Kernels older than 7.2
   # (6.18.x LTS and below) are not supported on this host.
+  # Latest stable point release of the 7.3 series. nixpkgs' linux_7_3 still
+  # points at the 7.3 release (modDirVersion 7.3.0), so the tarball comes from
+  # kernel.org and is pinned by content hash. `linuxManualConfig` takes version,
+  # modDirVersion and src as plain arguments, so they are passed explicitly in
+  # `minimalKernel` below rather than smuggled in through an overrideAttrs.
+  stableVersion = "7.3.1";
+  stableSrc = pkgs.fetchurl {
+    url = "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-${stableVersion}.tar.xz";
+    hash = "sha256-+llarZNzT4KcljwqkO98NnMiT9f9rntJQG45fN4t4jE=";
+  };
   baseKernel = pkgs.linuxPackages_latest.kernel;
 
   # Kernel config = generated base + deliberate manual overlay
@@ -96,12 +106,10 @@ let
   # so derivation hash changes when .config content changes.
   configHash = builtins.hashFile "sha256" configfile;
   minimalKernel = pkgs.linuxManualConfig {
-    inherit (baseKernel)
-      version
-      modDirVersion
-      features
-      ;
-    src = baseKernel.src;
+    inherit (baseKernel) features;
+    version = stableVersion;
+    modDirVersion = stableVersion;
+    src = stableSrc;
     inherit configfile;
     config = kernelConfig;
     extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
@@ -142,31 +150,28 @@ in
       noref = config.features.system.norefKernel.enable;
       kernelPackages = pkgs.linuxKernel.packagesFor (if noref then norefKernel else minimalKernel);
     in
-    if noref then
-      kernelPackages.extend (
-        _self: super: {
-          # zfs_2_4 (2.4.4) declares support only through 7.2, so nixpkgs marks
-          # the module broken on 7.3-rc6 and withholds --enable-linux-experimental.
-          # Both are cleared here: the ZFS root on this host must stay mountable.
-          # The four patches are the 7.3 API backports from OpenZFS master
-          # (bvec_iter.bi_bvec_done -> bi_offset, cpu_feature_enabled,
-          # iops->create without the flag arg, host fs for kernel threads);
-          # zfs-2.4.5-staging does not carry them yet.
-          zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [
-              (r.path "files/patches/zfs-7.3-bvec-bi-offset.patch")
-              (r.path "files/patches/zfs-7.3-cpu-feature-enabled.patch")
-              (r.path "files/patches/zfs-7.3-iops-create-no-flag.patch")
-              (r.path "files/patches/zfs-7.3-kthread-host-fs.patch")
-            ];
-            configureFlags = (old.configureFlags or [ ]) ++ [ "--enable-linux-experimental" ];
-            meta = (old.meta or { }) // {
-              broken = false;
-            };
-          });
-        }
-      )
-    else
-      kernelPackages
+    # zfs_2_4 (2.4.4) declares support only through 7.2, so nixpkgs marks the
+    # module broken on 7.3.x and withholds --enable-linux-experimental. Both are
+    # cleared here for every 7.3 kernel, experimental branch or stable point
+    # release: the ZFS root on this host has to stay mountable. The four patches
+    # are the 7.3 API backports from OpenZFS master (bvec_iter.bi_bvec_done ->
+    # bi_offset, cpu_feature_enabled, iops->create without the flag arg, host fs
+    # for kernel threads); zfs-2.4.5-staging does not carry them yet.
+    kernelPackages.extend (
+      _self: super: {
+        zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            (r.path "files/patches/zfs-7.3-bvec-bi-offset.patch")
+            (r.path "files/patches/zfs-7.3-cpu-feature-enabled.patch")
+            (r.path "files/patches/zfs-7.3-iops-create-no-flag.patch")
+            (r.path "files/patches/zfs-7.3-kthread-host-fs.patch")
+          ];
+          configureFlags = (old.configureFlags or [ ]) ++ [ "--enable-linux-experimental" ];
+          meta = (old.meta or { }) // {
+            broken = false;
+          };
+        });
+      }
+    )
   );
 }
