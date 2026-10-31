@@ -91,6 +91,13 @@ in
         "blake3-hashes" # BLAKE3: faster parallel hashing for store paths
         "recursive-nix" # allow Nix builds to call nix (nested evaluation)
         "fetch-closure" # fetch store paths from binary caches by closure hash
+        # Determinate-only feature (upstream CppNix has no such switch; Lix does
+        # not either). Measured on this host 2026-10-31, `nix eval --raw
+        # .#nixosConfigurations.trantor.config.system.build.toplevel.drvPath`
+        # with eval-cache off: 16.6s ± 0.5 -> 12.0s ± 2.4 (1.38x). `nix flake
+        # show --json` showed no change (5.5s both), so the win is the NixOS
+        # module tree, not flake-output enumeration.
+        "parallel-eval"
       ];
       eval-cache = true;
       eval-system = "x86_64-linux"; # only evaluate for host platform, skip aarch64
