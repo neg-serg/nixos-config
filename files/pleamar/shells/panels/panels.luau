@@ -507,6 +507,8 @@ local function weather_apply(d, topic)
     if epoch then
         local phase = moon_phase(epoch)
         fact["weather.moonpct"] = math.floor(moon_illumination(phase) + 0.5)
+        -- The index the card's moon shader takes (`MoonPhaseIcon`'s `phase`): 0 new, 0.5 full.
+        fact["weather.moonphase"] = phase
         text["weather.moon"] = moon_name(phase)
     end
 

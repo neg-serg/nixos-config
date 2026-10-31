@@ -68,7 +68,10 @@ part Weather {
             text weather.wind { at: 25, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
             text "water_drop" { at: 104, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
             text weather.humidity { at: 115, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
-            text "dark_mode" { at: 166, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+            // The phase, drawn: QS puts `MoonPhaseIcon` here, not a static crescent — the disc
+            // with the terminator stippled (`Components/MoonPhaseIcon.qml`). 11 x 11 centred on the
+            // (166, 100) the glyph had, in the tones of the name printed beside it.
+            shader moon_face { at: 160.5, 94.5; size: 11, 11; values: weather.moonphase; colors: skin.ink.dim, skin.coal }
             text weather.moon { at: 177, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
             text "{weather.moonpct}%" { at: 286, 100; anchor: right center; family: "Iosevka"; size: 9; color: ink.off }
 

@@ -234,6 +234,16 @@ scene panels {
     fact weather.dir = 0
     // The moon, as the reference's details row shows it (`moonName` + `moonIllumination`).
     fact weather.moonpct = 0
+    // The phase itself, 0 = new, 0.5 = full, 1 = new again: the terminator the moon's own shader
+    // draws. The same number the bar's capsule carries, computed once by the logic.
+    fact weather.moonphase = 0
+
+    // QS draws the moon with a Canvas (`Components/MoonPhaseIcon.qml`: the terminator plus a 4x4
+    // Bayer stipple along it); this is that, in one fragment. The bar's capsule draws the same
+    // file, and the copy here is deliberate: the deployed tree links `shells/<scene>/` as a whole
+    // and `lib/` file by file (`modules/user/nix-maid/gui/pleamar.nix`), so a shader shared
+    // through `lib/` would only reach the live tree at the next switch.
+    shader moon_face = file "shaders/moon.wgsl"
 
     // The shared slide: every drawer leaves and arrives with the same motion.
     // A loose prop in a `screens: each` scene is shared by the copies on purpose:
