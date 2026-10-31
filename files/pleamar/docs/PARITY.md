@@ -142,13 +142,19 @@ Chaldea's 340 art files (by design: the behaviour lives in `panels/pages/media.p
 `shells/lock`).
 
 Still partial, with the gap named in the tables below: the number-roll animations and the bar's
-slide reveals, the text shadow with its contrast guard, the media capsule's transport reveal and
-hover-open delay, one-overlay-at-a-time registration, the now-playing popup as a window of its own,
-the settings surface's keys the compiler refuses (`height`, `animations`, `startupClean`) and its
-widget order, and in the lock tree the fingerprint PAM path, user and session selection, the nixie
-lab and the greeter's theme variants. Connectivity, weather values and the notification history are
-no longer on this list — they were closed on 2026-10-26/28, and the notifications pass of 2026-10-28
-is written up above.
+slide reveals (a text cannot roll a digit), the media capsule's transport reveal and the hover-open
+delay the port refuses on purpose, the settings surface's keys the compiler refuses (`height`,
+`animations`, `startupClean`) and its widget order, the `SunIcon` over the weather card's
+conditions, the media tooltip's track quality (it reads a plugin's boundary — see «The plugin
+boundary does not reach the scene's logic»), and in the lock tree the fingerprint PAM path, user and
+session selection, the nixie lab and the greeter's nixie/CRT variants.
+
+Closed since this paragraph was first written, so they are off the list: connectivity, weather
+values and the notification history (2026-10-26/28); the tray's menus, their host, the audio
+capsules and the workspace watcher (2026-10-31); the settings surface's `fontScale` and
+`monitorScale`, the moon's drawn disc, the cover's remote art, one-overlay-at-a-time, the
+now-playing popup, the greeter's theme tokens and the glyph shadow (2026-10-31, this session's
+commits name each one).
 
 Not to be ported for now, by the owner's word (2026-10-28): the nixie glass on the lock's clock. The
 lock draws a slab, and that is where it stays until it is asked for again — the same call as the
@@ -255,12 +261,15 @@ ends at `muted: false`, which is reachable only if the restored flag was `true`.
 
 ### The order the gaps fight each other in
 
-1. The settings surface, folded into whichever widget is ported next — the widget order it cannot
-   carry, since a scene paints in the order it is written.
-1. Everything else in the tables above, one at a time: the greeter's theme variants, `SubmenuHost`'s
-   search field, and the fingerprint decision, which is the owner's and not a task. The lock itself
-   — cost, engage, release — is measured and out of the way, and its nixie glass waits for the owner
-   to ask for it again.
+1. The plugin boundary: a plugin's facts and texts are live for the renderer and stale for the
+   scene's logic, which is what stops the media tooltip's quality line and the build badge's hover
+   card. It is one decision — sync the boundary in the engine, or let each card ask its own source
+   at hover time — and the owner's, not a scene's; the probes are written up above.
+1. `SunIcon` over the weather card's conditions: 72 shimmering rays in the reference, and a 300×196
+   card with no room for them — a layout call before it is a drawing one.
+1. Everything else in the tables above, one at a time: `SubmenuHost`'s search field and the
+   fingerprint decision, both the owner's, and the lock's nixie glass, which waits for the owner to
+   ask for it again. The settings surface is closed as far as the compiler carries it.
 
 ## Backlog: what is left
 
