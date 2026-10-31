@@ -6,9 +6,16 @@
 
 local FILE = "settings.json"
 
+-- How many monitors the per-monitor scale reaches: the engine repeats a `screens: each` surface
+-- on 4 monitors at most unless a scene says otherwise (reference §surfaces), which is exactly what
+-- these facts cover. The read is `mon_scale[min(screen.index, 3)]` in the scene, because reading a
+-- numbered name past its last element is -1 there, and a negative scale would draw backwards.
+local MAX_SCREENS = 4
+
 -- Defaults live in code; the file holds what the user changed. The frozen keys
--- of INTERFACES §6.3 that this slice cannot apply yet (height, fontScale,
--- animations, startupClean, monitorScale) are left untouched in the file.
+-- of INTERFACES §6.3 that this slice still cannot apply (height, animations,
+-- startupClean) are left untouched in the file, each with its reason — the
+-- compiler's, not a guess — in bar.plm's settings note.
 --
 -- The `media*` keys are this scene's own (INTERFACES §6.3 asks for them here). The first four are
 -- QS Settings.json's player policy under the names the bar uses; `mediaRecent` is the reference's
@@ -28,6 +35,12 @@ local FILE = "settings.json"
 local D = {
     edge = "bottom", -- top | bottom; bottom on trantor
     scale = 1.0,     -- user multiplier on top of ui and the per-monitor fit
+    -- Type only, the way the reference's `fontSizeMultiplier` is: the plates keep the
+    -- widths their design gives them, and the glyphs inside them take this.
+    fontScale = 1.0,
+    -- Per monitor, read through `screen.index`; empty or short means 1.0 for the monitors the
+    -- array does not reach (the reference's `monitorScaleOverrides`, also an array).
+    monitorScale = {},
     mediaPinned = {},
     mediaIgnored = {},
     mediaPriority = { "mpdPlaying", "anyPlaying", "mpdRecent", "recent", "manual", "first" },
@@ -144,6 +157,16 @@ local function apply(raw)
     fact.bar_edge = edge
 
     fact.user_scale = num(raw.scale, 0.5, 2.0, D.scale)
+
+    -- INTERFACES §6.2: `fontScale` multiplies the type and nothing else, `monitorScale` is one
+    -- multiplier per monitor. Both are read here and applied by bar.plm's components, whose
+    -- `scale:` default is read at the use site — that is what makes a per-monitor value possible
+    -- at all (`mon_scale[screen.index]`, one fact per monitor, defaulting to the fourth).
+    fact.text_scale = num(raw.fontScale, 0.5, 2.0, D.fontScale)
+    local mon = (type(raw.monitorScale) == "table") and raw.monitorScale or {}
+    for i = 0, MAX_SCREENS - 1 do
+        fact["mon_scale." .. i] = num(mon[i + 1], 0.5, 2.5, 1.0)
+    end
 
     local wanted = nil
     if type(raw.widgets) == "table" then

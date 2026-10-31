@@ -20,17 +20,23 @@ language 0.4
 // §6 (the settings keys, merged by bar.luau), §8 (labels and roles).
 //
 // Two compiler facts shape the file:
-//   · A surface `size:`/`reserve:` and a text `size:`/`weight:` take a LITERAL
-//     number (`c.num()` in compiler.rs): `bar.height * 2` is refused by a
-//     surface, and `12 * scale` inside a text would silently draw at 12. So the
-//     surface height is spelled out (25), and every widget draws in DESIGN
-//     PIXELS inside a `group { scale: scale }`, the group scaling once; a lib
-//     Capsule is asked for `scale: 1` inside it so the group is the only
-//     multiplier.
+//   · A surface `size:`/`reserve:`/`margin:` takes a PLAIN NUMBER (the reference:
+//     "the slots that take a plain number —a surface's `margin:` and `reserve:`
+//     — say so too when something follows it"; checked on 0.4.31: `size: full,
+//     h` answers `expected a number here`). So the surface height is spelled out
+//     (25), and every widget draws in DESIGN PIXELS inside a
+//     `group { scale: scale }`, the group scaling once; a lib Capsule is asked
+//     for `scale: 1` inside it so the group is the only multiplier.
+//   · A text's `size:` and `weight:` are EXPRESSIONS and follow facts (reference
+//     §text: "`size: 21 * u` is 21 times `u` … `size: 12 + 4 * lane` follows
+//     `lane` as it changes"), which is what makes `fontScale` reachable at all:
+//     every text size in this file and in the plugins it draws is multiplied by
+//     the `text_scale` fact.
 //   · A component parameter default is read at the use site (INTERFACES §4), so
 //     a `scale:` default is per monitor. Call sites pass no scale; the default
-//     is `ui * user_scale` — the QS `Theme.scale()` for a bar, which is where
-//     the design numbers in this file come from.
+//     is `ui * user_scale * mon_scale[min(screen.index, 3)]` — the QS `Theme.scale()`
+//     for a bar, which is where the design numbers in this file come from, with
+//     the user's own multipliers on top.
 //
 // Parity notes (measured, not guessed). The gate is `just parity-bar DIR
 // approve hide`: it shoots the live QS strip, hides quickshell, shoots the port
@@ -90,11 +96,28 @@ language 0.4
 //   mediaPinned   array of text, default []      — ids that win a tie (QS pinnedPlayers)
 //   mediaIgnored  array of text, default []      — ids the bar never shows (ignoredPlayers)
 //   mediaRecent   array of text, max 5           — the MRU stack, written by the logic
-//   height        16..64, default 22             — frozen, not applied: a
-//                 surface size cannot name a fact in 0.4.11 (checked:
-//                 `size: full, h` is `expected a number here`)
-//   fontScale, animations, startupClean,         — the features they tune are
-//   monitorScale                                   later slices; not applied
+//   height        16..64, default 22             — not applied: a surface's
+//                 `size:` takes a plain number, so the strip cannot follow a
+//                 runtime value (checked on 0.4.31: `size: full, h` answers
+//                 `expected a number here`, and the reference says so too —
+//                 "the slots that take a plain number —a surface's `margin:`
+//                 and `reserve:`— say so when something follows it")
+//   fontScale     0.5..2.0, default 1.0          — applied: the `text_scale`
+//                 fact multiplies every text size and nothing else (the QS
+//                 `fontSizeMultiplier`). Plates keep their design widths, so a
+//                 multiplier well above 1.0 elides inside them — the reference's
+//                 capsules measure their content, these are constants.
+//   monitorScale  array of numbers, ≤ 4,         — applied: one fact per monitor
+//                 each 0.5..2.5, default []         (`mon_scale.0..3`), read by
+//                 every component's `scale:` default through `screen.index`
+//                 Both multipliers scale the drawing against a surface whose height is a
+//                 literal, so above 1.0 the plates are drawn taller than the strip — the
+//                 same limit `scale` has had since the slice was written, and the one
+//                 `height` would lift if a surface could take a runtime value.
+//   animations, startupClean                     — not applied: `animations`
+//                 would have to choose a spring at runtime, and a `~spring` is
+//                 a name written when the scene loads; `startupClean` is the
+//                 login gate, which lives in the deployment, not in a scene
 
 import "../../lib/palette.plm"
 import "../../theme.plm"
@@ -160,6 +183,18 @@ scene bar {
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
     // per-monitor fit; `widget.*` decide which widgets of this slice are there.
     fact user_scale = 1.0
+    // `fontScale` (INTERFACES §6.2): every text size is multiplied by this and by nothing else,
+    // which is what the reference's `fontSizeMultiplier` does. The plates keep their design
+    // widths — they are constants here, not measurements of their content — so a multiplier far
+    // from 1.0 crowds the type inside them instead of widening them.
+    fact text_scale = 1.0
+    // `monitorScale`, one per monitor, read by every component's `scale:` default through
+    // `screen.index` (a component's parameter default is read at its use site, so each monitor
+    // copy reads its own). 1.0 is the fourth: a monitor the array does not reach keeps the design.
+    fact mon_scale.0 = 1.0
+    fact mon_scale.1 = 1.0
+    fact mon_scale.2 = 1.0
+    fact mon_scale.3 = 1.0
     fact widget.clock = true
     fact widget.workspaces = true
     fact widget.pill = true
@@ -263,7 +298,7 @@ scene bar {
     // before — the bar, always up, has, so the menu opens on a width it already knows.
     measure tmw
     text tm_widest = ""
-    text "{tm_widest}" { measure: tmw; show: false; at: 0, 0; anchor: left top; size: 14; color: skin.ink; family: "Iosevka"; lines: 1 }
+    text "{tm_widest}" { measure: tmw; show: false; at: 0, 0; anchor: left top; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; lines: 1 }
     fact tm.panel_h = 0
     // How deep the deepest drawn row sits: the plate has to be wide enough for its indent.
     fact tm.indent = 0
@@ -558,11 +593,11 @@ scene bar {
         }
         // The measure of the widest line: the body's own words, the same font, no `width:` of its
         // own, and never seen.
-        text "{tip_body}" { measure: tipw; show: false; at: 0, 0; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; lines: 6 }
+        text "{tip_body}" { measure: tipw; show: false; at: 0, 0; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: skin.ink; family: "Iosevka"; lines: 6 }
         // Up to six lines, which is the reference's tallest (`TooltipText.compose`: a title with
         // its value, then the hints, one per line — the monitoring capsule's title, four hints and
         // a click line). The logic writes the newlines; the card takes the size they measure.
-        text "{tip_body}" { measure: tiph; show: tip_open; at: card.left + 9, card.top + 5; anchor: left top; size: 12; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: card.w - 18; lines: 6 }
+        text "{tip_body}" { measure: tiph; show: tip_open; at: card.left + 9, card.top + 5; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: card.w - 18; lines: 6 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -649,11 +684,11 @@ scene bar {
             for m in tray_menu {
                 group line { size: menu.w - 16, 20
                     box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == m.index + 1 }
-                    text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
+                    text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
                     box { from: 10, 10; size: menu.w - 36, 1; color: skin.ink; opacity: 12%; show: m.sep }
                     // A line with children under it: the reference's own chevron, and no action of
                     // its own — a dbusmenu parent is a container, not something to click.
-                    text "›" { at: menu.w - 30, 10; anchor: right center; size: 14; color: skin.ink.dim; family: "Iosevka"; show: m.sub }
+                    text "›" { at: menu.w - 30, 10; anchor: right center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka"; show: m.sub }
                     zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button }
                     on enter hit { tm.hot = m.index + 1 }
                     on press hit { emit tray_click(m.index + 1) }
@@ -784,7 +819,7 @@ scene bar {
     // -------------------------------------------------------- left: the clock
     // The service writes time and date itself; no slot here pads numbers, so
     // neither is composed from hour/minute.
-    component Clock(dip: number = 0, scale: number = ui * user_scale) {
+    component Clock(dip: number = 0, scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // QS's ClockWidget prints the time at round(fontSizeSmall 14 * timeFontScale
         // 0.7 * capsuleScale 1.15) = 11 logical px. 14 design px here is 16.1 over
         // the group's scale and measured 34 px of ink against the reference's 28;
@@ -817,7 +852,7 @@ scene bar {
                 // `time.tone` is the palette's role for this glyph and it is the frozen
                 // `ink`; the clock has to follow the theme like every other label, so it takes
                 // the wallpaper's ink — the same token `time.text.color` names in the reference.
-                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"; width: 35; lines: 1 }
+                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 35; lines: 1 }
             }
             // Pressable, as in the reference: ClockWidget's TapHandler is `calendar.toggle()`,
             // so the capsule is a button and not a label.
@@ -838,7 +873,7 @@ scene bar {
     // press doing nothing: what WsIndicator.qml:19 does on a click is `Expo.toggle()`, and
     // that is the event the copy is handed.
     component WsCapsule(overview: event,
-                       scale: number = ui * user_scale) {
+                       scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // The glyph, the Old Italic letter and the label are laid out side by side;
         // a width is only known once the text is shaped, so both are measured.
         measure glyph
@@ -862,11 +897,11 @@ scene bar {
             }
             // The glyphs this reads are Nerd Font code points (`WS_GLYPH` in the logic), so they need
             // the face they were chosen in — Material has no such names and drew squares.
-            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
-            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
+            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
+            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
             // `width:` and one line: a long name used to run over the plate and onto the keyboard
             // capsule beside it, which is what the fixed 69 design px are there to prevent.
-            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
             on enter ws { emit tip(1) }
             on leave ws { emit tip_hide }
@@ -886,7 +921,7 @@ scene bar {
     // why the cluster is often narrower than six pairs.
     component SysmonPair(glyph: image, value: number, shown: bool, idle: bool,
                          warn: number, crit: number,
-                         scale: number = ui * user_scale) {
+                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // One pair, laid out once: the glyph 13 wide, three of air, the bar 3 — 21 in all. The
         // cluster's step is written with the same numbers, so the four pairs read as one row.
         let bh = 12
@@ -903,7 +938,7 @@ scene bar {
         }
     }
 
-    component SysmonCluster(scale: number = ui * user_scale) {
+    component SysmonCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // The box is as wide as the pairs that show: QS's capsule is
         // `horizontalPadding * 2 + metricsRow.implicitWidth`, and a metric the
         // idle rule took away takes its width with it.
@@ -966,7 +1001,7 @@ scene bar {
     // by the moon 19). Relative to the glyph, QS places temp +19.6, water_drop
     // +32.2, humidity +38.3, arrow +51.3, wind +57.8, moon +70.4 design px, with
     // its Row's `spacing: 4 * capsuleScale` between them.
-    component WeatherCapsule(scale: number = ui * user_scale) {
+    component WeatherCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // The pictures are fixed at 14 design px; only the live text still measures itself.
         measure w.temp
         measure w.hum
@@ -1045,15 +1080,15 @@ scene bar {
                 image icon_weather_snow { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 5 }
                 image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 6 }
             }
-            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka" }
+            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka" }
             image icon_weather_drop { at: x.drop, strip / 2 + 1 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
-            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
             group arrow { pivot: x.arrow + arrow.w / 2, strip / 2 + 1; rotate: weather.dir
                 image icon_weather_wind { at: x.arrow, strip / 2 + 1 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
             }
-            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
@@ -1074,7 +1109,7 @@ scene bar {
     }
 
     // ------------------------------------------------------ left: the keyboard
-    component KeyboardCluster(scale: number = ui * user_scale) {
+    component KeyboardCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // 8 + 20 (the icon) + 6 + 14 (two glyphs of the layout) + 6. The 50 it held clipped the
         // layout to `r` once the icon grew.
         size: 54 * scale, strip * scale
@@ -1100,8 +1135,8 @@ scene bar {
             // component sizes), so a capsule that grew and shrank again would not reflow — the mode
             // is drawn in the 20 px the icon already owns, and the layout keeps its place.
             image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim; show: not kb_badge_on }
-            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18; color: skin.accent; show: kb_badge_on }
-            text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
+            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: skin.accent; show: kb_badge_on }
+            text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
             // from the event socket a moment later.
@@ -1119,7 +1154,7 @@ scene bar {
     // The port drew `wired net1 1 %` in a capsule instead: a different widget
     // with a different width, and the biggest single difference in the left
     // cluster after the tabs.
-    component NetCluster(scale: number = ui * user_scale) {
+    component NetCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         measure w.rx
         measure w.tx
         let icon = 14
@@ -1175,10 +1210,10 @@ scene bar {
             // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
             // The reference also sets letterSpacing 0.5, which the scene language has no
             // property for (its `letter_*` effects move glyphs without opening the line).
-            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
-            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 3; anchor: left center; size: 9.6; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
-            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 3; anchor: left center; size: 9.6; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 5; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 3; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 3; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             // The capsule's own press zone starts after the VPN slot, so the two never overlap:
             // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
             // opens the flow drawer and carries the capsule's tooltip.
@@ -1298,7 +1333,7 @@ scene bar {
     //     and the microphone when it is muted. `vol.shown`/`mic.shown` carry
     //     that (bar.luau), so the layout closes up like the reference's.
     component AudioTile(glyph: number, slot: number, readout: text, hot: bool, fill: color,
-                        scale: number = ui * user_scale) {
+                        scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         let icon = pill.icon
         let glyph.w = 14
         // One plate, as wide as it needs to be: the icon alone at rest, the icon and its reading
@@ -1330,7 +1365,7 @@ scene bar {
                 measure w.out
                 at: w - 2 * capsule.pad - icon, strip / 2
                 anchor: right center
-                size: 14
+                size: 14 * text_scale
                 weight: 500
                 color: skin.ink
                 family: "Iosevka"
@@ -1340,7 +1375,7 @@ scene bar {
     }
 
     component VolCapsule(step: event, route: event,
-                         scale: number = ui * user_scale) {
+                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         let slot = pick(strip.hot, 26, 46)
         size: slot * scale, strip * scale
         group zoom {
@@ -1361,7 +1396,7 @@ scene bar {
     }
 
     component MicCapsule(mute: event, step: event,
-                         scale: number = ui * user_scale) {
+                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         let slot = pick(strip.hot, 26, 46)
         size: slot * scale, strip * scale
         group zoom {
@@ -1379,7 +1414,7 @@ scene bar {
     }
 
     // ------------------------------------------------------------------ rows
-    component Left(scale: number = ui * user_scale) {
+    component Left(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         row { at: side * scale, hot + band / 2; anchor: left middle; gap: row.gap * scale
             // Clock and pill sit close together — the reference's `clockPillGroup`, whose own
             // spacing is `max(1, round(2 * s))`, two logical px against the row's seven. The pill
@@ -1424,7 +1459,7 @@ scene bar {
     // the bar does not have yet). Clicking the cover opens the now-playing
     // panel in QS — no panel exists here, so a cover click does nothing.
     component MediaCapsule(prev: event, toggle: event, next: event,
-                           scale: number = ui * user_scale) {
+                           scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // QS `baseHeight = max(capsule.capsuleHeight, panelHeight * scale)` = 25,
         // the art is that square, the text is `musicTextPx = 16` and the
         // analyser is `iconPreferredWidth` wide (~ the art).
@@ -1492,22 +1527,22 @@ scene bar {
                 space 2
                 // The fact's width, not a measurement: it is the string's own width until 420,
                 // and past that the engine cuts it with an ellipsis instead of growing the plate.
-                text "{media.artist} — {media.title}" { width: text.w; lines: 1; size: 14; weight: 500; color: skin.ink; family: "Iosevka" }
+                text "{media.artist} — {media.title}" { width: text.w; lines: 1; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
                 // The time, in the two colours QS uses: the brackets and the slash wear
                 // the cover's accent (MusicManager.accentColor, sampled from the art), the
                 // digits wear textPrimary while playing and textSecondary while paused, at
                 // media.time.alpha.playing 1.0 / .paused 0.8.
                 row time_row {
                     gap: 0
-                    text "(" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
+                    text "(" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
                     // The position is the scene's own fact, not `media.position`: the engine
                     // reports that one on a change and never polls it, so it stood still while the
                     // track played (measured: 149 for three minutes against MPD's 5:37). The logic
                     // ticks it every second and resyncs on every media event.
-                    text "{media.pos, time}" { measure: tp; size: 14; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
-                    text "/" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
-                    text "{media.length, time}" { measure: tl; size: 14; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
-                    text ")" { size: 14; weight: 500; color: cover_accent; family: "Iosevka" }
+                    text "{media.pos, time}" { measure: tp; size: 14 * text_scale; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
+                    text "/" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
+                    text "{media.length, time}" { measure: tl; size: 14 * text_scale; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
+                    text ")" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
                 }
                 // The analyser, revealed with the transport: QS keeps it inside the
                 // capsule (`iconPreferredWidth`) and its room is in `w` above.
@@ -1541,7 +1576,7 @@ scene bar {
     // round(6 * 1.15) = 7, and the pill's padding is 1.5 * 6 = 9. In this scene's design
     // pixels that is 25, 5 and 8, and 101 wide with the two gaps.
     component Transport(prev: event, toggle: event, next: event,
-                        scale: number = ui * user_scale) {
+                        scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         let btn = 25
         let gap = 5
         let pad = 8
@@ -1628,7 +1663,7 @@ scene bar {
         }
     }
 
-    component Right(scale: number = ui * user_scale) {
+    component Right(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
 
         // `side`, not `side - 8`: with the Genelec tile always present the row ends 5 logical px
         // past the screen edge (`describe` measured the tile's zone at 1844 + 81 = 1925 on a
@@ -1647,7 +1682,7 @@ scene bar {
             // shuffle badge while the port drew nothing, because the port had tied the badges
             // to "something is playing" and nothing was. A flag the owner set is not a media
             // state — it is shown while any flag is on.
-            row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags() }
+            row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags(type_scale: text_scale) }
             // The icons, while the tray is out: `tray.expanded` is the whole state machine's answer
             // (`SystemTray.qml:102-105` draws the box on the same property), so the strip keeps the
             // reference's resting look — no tray at all — instead of showing it whenever the pointer
@@ -1674,7 +1709,7 @@ scene bar {
             // The tile's own tones are the theme's: the plugin is a library and cannot read
             // `skin.*`, so the plate, the ink and the accent are handed to it here.
             row genelec_slot { show: widget.genelec
-                gen.Tile(row: strip, plate: skin.coal, tone: skin.ink, tone.dim: skin.ink.dim, loud: skin.accent) }
+                gen.Tile(row: strip, type_scale: text_scale, plate: skin.coal, tone: skin.ink, tone.dim: skin.ink.dim, loud: skin.accent) }
         }
     }
 
@@ -1792,7 +1827,7 @@ scene bar {
     // started. It takes no space at rest (`Build.busy` is false while nothing runs), and a
     // press on it opens the build drawer (QS: `autoToggleOnTap` on BuildStatus).
     row build_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; show: widget.build and Build.busy
-        build.Tile(open_build_panel)
+        build.Tile(open_build_panel, type_scale: text_scale)
     }
 
     // ------------------------------------------------------------ what waits
