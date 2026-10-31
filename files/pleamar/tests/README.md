@@ -34,6 +34,29 @@ Artifacts: `tests/shots/<YYYY-MM-DD>/<scene>.png` plus `<scene>.log` (set `--out
 directory). A stale PNG is deleted before each render, so a failure can never be masked by an older
 shot.
 
+### Shooting a drawer without the live session (verified 2026-10-31)
+
+`smoke.sh` renders each scene in its default state, so a drawer — the thing most pixel work is about
+— never appears in its shots. One can be shot the same way by hand: a headless wlroots compositor,
+the scene on it, the drawer opened through IPC, `grim` of that display.
+
+- **`sway` works; `cage` cannot.** cage 0.3.1 has no layer-shell and the scene exits with
+  `panicked at src/platform/wayland.rs:1590: the compositor has no layer-shell: NotPresent`. Neither
+  binary is on `PATH` on this host; both are in the store (`sway-1.12`, `cage-0.3.1`) and the store
+  path can be used directly.
+- The scene registers its IPC socket in `/run/user/1000/pleamar/<scene>.sock` whichever display it
+  is on, so `pleamar --say panels 'fact drawer media'` reaches it — the answer names the display.
+- **Two scenes of one name may not run at once**: the second takes the socket while the first keeps
+  drawing on its own display, which is how a shot came out empty.
+- `--seconds N` bounds the run; the compositor and the scene both have to be killed afterwards.
+- The palette a scene draws with is the `theme.plm` next to the tree it was started from: the repo
+  copy when it is started from `shells/`, the generated one under `~/.config/pleamar` when started
+  from there. So a *look* is rehearsed by editing the repo copy and never the user's file — but note
+  that `skin.light` is only a flag: flipping it does not turn the repo's dark values into a light
+  palette, which takes `scripts/theme/theme.sh --mode light`.
+- A light background for the compositor makes glass legible in the shot:
+  `printf 'output * bg #ffffff solid_color\n' > sway.conf` and `sway -c sway.conf`.
+
 ### `scripts/describe-snap.sh` — agent-tree snapshots
 
 Starts one scene hermetically, waits until its socket answers `pleamar --say NAME describe` (retry
