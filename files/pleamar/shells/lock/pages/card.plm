@@ -37,9 +37,9 @@ part Card {
             color: mix(lock.card, lock.danger, alarm * 0.25)
             opacity: lock.card.alpha
             glass: 100%
-            refraction: 150%
-            dispersion: 110%
-            frost: 100%
+            refraction: lock.card.refraction
+            dispersion: lock.card.dispersion
+            frost: lock.glass.frost
             shine: pointer
             shadow: 0, 10, 28, 45%
             box { from: -240, -165; size: 480, 320; corner: 6 }
@@ -83,7 +83,7 @@ part Card {
         box field_bg {
             from: -192, 33; size: 384, 58; corner: 8
             color: coal; opacity: 55%
-            glass: 100%; refraction: 70%; frost: 100%
+            glass: 100%; refraction: lock.field.refraction; frost: lock.glass.frost
         }
         text ">" {
             at: -174, 62; anchor: left center; size: 20; color: lock.accent

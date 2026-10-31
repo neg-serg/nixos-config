@@ -101,6 +101,22 @@ library Palette strict {
     let lock.seam = #FFFFFF       // greeter.separatorColor #60ffffff
     let lock.seam.alpha = 38%
 
+    // The card's and the clock's glass, as the greeter's own theme carries it: QS reads
+    // `glassBlur` / `glassRefract` / `glassChroma` from `~/.config/quickshell/Theme/.theme.json`
+    // (GreeterTheme.qml:105-113) and hands them to shaders/glass_card.frag, which the language
+    // replaces with the renderer's own `glass` slab — so the numbers are the port's, measured
+    // against the reference's look, and they live here where a theme can reach them instead of
+    // inside the three boxes that draw them.
+    //   greeter.glassBlur    9     → `frost` 100 % (the slab frosts what is behind it)
+    //   greeter.glassRefract 10    → `refraction`: 150 % on the card, 130 % on the clock's
+    //                                tube row, 70 % on the field's own slab
+    //   greeter.glassChroma  0.5   → `dispersion` 110 % on the card (the fringing at its edge)
+    let lock.glass.frost = 100%
+    let lock.card.refraction = 150%
+    let lock.card.dispersion = 110%
+    let lock.field.refraction = 70%
+    let lock.clock.refraction = 130%
+
     // ----------------------------------------------------- shape and spacing
     let corner = 6                // shape.cornerRadius
     let corner.small = 6          // shape.cornerRadiusSmall

@@ -26,8 +26,8 @@ part Clock {
             color: lock.widget
             opacity: lock.widget.alpha
             glass: 100%
-            refraction: 130%
-            frost: 100%
+            refraction: lock.clock.refraction
+            frost: lock.glass.frost
         }
 
         text "{now.time}" {
