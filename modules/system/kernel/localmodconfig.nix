@@ -3,7 +3,6 @@
   pkgs,
   neg,
   repoRoot,
-  config,
   ...
 }:
 
@@ -115,31 +114,6 @@ let
     extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
     allowImportFromDerivation = false;
   };
-
-  # Experimental kernel from torvalds/linux branch noref-filemap-read-with-llm:
-  # v7.3-rc6 plus nine commits that read the page cache without taking folio
-  # references and free retired folios only after an RCU grace period. Built
-  # with the same reduced .config as the default kernel. The branch has no
-  # GitHub mirror, so it is fetched from git.kernel.org; bump norefRev when
-  # advancing, then re-check norefVersion against the Makefile and boot it.
-  norefRev = "4c0f3697118eb3a708ea79175f7f07c43339bfab";
-  norefVersion = "7.3.0-rc6"; # Makefile: VERSION=7 PATCHLEVEL=3 SUBLEVEL=0 EXTRAVERSION=-rc6
-  norefSrc = builtins.fetchGit {
-    url = "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git";
-    rev = norefRev;
-    # linux.git is ~5 GB; shallow keeps the fetch to the pinned commit.
-    shallow = true;
-  };
-  norefKernel = pkgs.linuxManualConfig {
-    version = norefVersion;
-    modDirVersion = norefVersion;
-    inherit (baseKernel) features;
-    src = norefSrc;
-    inherit configfile;
-    config = kernelConfig;
-    extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
-    allowImportFromDerivation = false;
-  };
 in
 {
   # Use mkOverride 40 to beat hardware.nix's lib.mkForce (priority 50)
@@ -147,16 +121,15 @@ in
   # forces LTS kernel via lib.mkForce
   boot.kernelPackages = lib.mkOverride 40 (
     let
-      noref = config.features.system.norefKernel.enable;
-      kernelPackages = pkgs.linuxKernel.packagesFor (if noref then norefKernel else minimalKernel);
+      kernelPackages = pkgs.linuxKernel.packagesFor minimalKernel;
     in
-    # zfs_2_4 (2.4.4) declares support only through 7.2, so nixpkgs marks the
-    # module broken on 7.3.x and withholds --enable-linux-experimental. Both are
-    # cleared here for every 7.3 kernel, experimental branch or stable point
-    # release: the ZFS root on this host has to stay mountable. The four patches
-    # are the 7.3 API backports from OpenZFS master (bvec_iter.bi_bvec_done ->
-    # bi_offset, cpu_feature_enabled, iops->create without the flag arg, host fs
-    # for kernel threads); zfs-2.4.5-staging does not carry them yet.
+    # zfs_2_4 (2.4.4) declares support only through 7.2 (kernelMaxSupportedMajorMinor
+    # in nixpkgs' zfs/2_4.nix), so nixpkgs marks the module broken on 7.3.x and
+    # withholds --enable-linux-experimental. Both are cleared here: the ZFS root on
+    # this host has to stay mountable. The four patches are the 7.3 API backports
+    # from OpenZFS master (bvec_iter.bi_bvec_done -> bi_offset,
+    # cpu_feature_enabled, iops->create without the flag arg, host fs for kernel
+    # threads); zfs-2.4.5-staging does not carry them yet.
     kernelPackages.extend (
       _self: super: {
         zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {

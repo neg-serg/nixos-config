@@ -28,14 +28,13 @@
 # Note: extra out-of-tree modules (e.g., `amneziawg`) are pulled from the selected
 # `boot.kernelPackages` when available.
 #
-# ## noref page-cache kernel (experimental)
+# ## Kernel source
 #
-# - Toggle: `features.system.norefKernel.enable = true;` (enabled on trantor).
-# - Builds torvalds/linux `noref-filemap-read-with-llm` — v7.3-rc6 plus the no-refcount page-cache
-#   read path — with the same reduced `.config` as the default kernel. The pinned revision lives in
-#   `modules/system/kernel/localmodconfig.nix`.
-# - ZFS is built with `--enable-linux-experimental`: zfs 2.4.4 declares support only through kernel
-#   7.2, but the ZFS root has to stay mountable on 7.3-rc6.
+# - `localmodconfig.nix` builds the minimized kernel from the stable point release of the 7.3
+#   series (7.3.1, tarball pinned by hash from kernel.org) with this host's reduced `.config`.
+# - ZFS is built with `--enable-linux-experimental` plus four 7.3 API backports: zfs 2.4.4
+#   declares support only through kernel 7.2 (`kernelMaxSupportedMajorMinor` in nixpkgs'
+#   `zfs/2_4.nix`), but the ZFS root has to stay mountable on 7.3.
 #
 # ## Debug/Profiling (optional)
 #

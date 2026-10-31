@@ -52,12 +52,6 @@ in
   # ZRAM: zstd compressor (Zen 5 has hw-accelerated zstd, better ratio than lzo-rle)
   # SCX BPF scheduler — V-Cache CCD aware, replaces isolcpus
   features.optimization.enable = true;
-  # Kernel: the latest stable point release of the 7.3 series (7.3.1), built
-  # from kernel.org sources with this host's reduced .config — see
-  # modules/system/kernel/localmodconfig.nix. The experimental
-  # noref-filemap-read-with-llm branch (v7.3-rc6 plus nine page-cache commits)
-  # stays in the module, off, so the flag is only flipped to go back to it.
-  features.system.norefKernel.enable = false;
   # ROCm compute (amdkfd + clr/rocm-smi userspace); torch-rocm env via features.dev.ai.rocm
   features.hardware.amdgpu.rocm.enable = true;
   zramSwap.algorithm = "zstd";
@@ -85,19 +79,16 @@ in
   boot = {
     # Note: this is a fallback only — modules/system/kernel/localmodconfig.nix
     # overrides boot.kernelPackages (mkOverride 40) with the minimized kernel
-    # built from pkgs.linuxPackages_latest (7.2.x since 2026-10), or from
-    # torvalds' v7.3-rc6 noref branch while features.system.norefKernel is on.
+    # built from the stable 7.3.1 sources.
     # The "ZFS does not build with latest 7.x" caveat is gone: nixpkgs ships
     # zfs_2_4 = 2.4.4, which upstream declares compatible with 6.18 through 7.2
-    # (localmodconfig.nix lifts that ceiling for the 7.3-rc6 experiment).
+    # (localmodconfig.nix lifts that ceiling for 7.3).
     kernelPackages = lib.mkDefault pkgs.linuxPackages;
 
-    # Removed the amdgpu-hmm-userptr-vm-bo-null backport (patch file kept at
-    # files/patches/amdgpu-hmm-userptr-parent-fix.patch): upstream commit
-    # 52f650963d88 ("drm/amdgpu: fix check in amdgpu_hmm_invalidate_gfx") is
-    # first released in 6.18.42, so it is already present in the nixos-unstable
-    # kernel (6.18.x). Re-applying it there fails because patch sees a reversed
-    # (already-applied) hunk and exits non-zero. Do NOT re-add for kernels >= 6.18.42.
+    # The amdgpu-hmm-userptr backport is gone for good, not parked: upstream
+    # commit 52f650963d88 ("drm/amdgpu: fix check in amdgpu_hmm_invalidate_gfx")
+    # is first released in 6.18.42 and is present in every later kernel,
+    # including 7.3.1, so re-applying it makes patch see a reversed hunk and die.
 
     kernelParams = kernelData.kernelParams;
 
