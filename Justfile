@@ -120,6 +120,17 @@ diff:
     @files=$(find /nix/var/nix/profiles -maxdepth 1 -name "system-*-link" | sort -V | tail -n 2); \
     nix run nixpkgs#dix -- $files
 
+# Report what the pending configuration is *before* any build or switch:
+# channel version, code name, revision and kernel come from a single pure
+# evaluation, and the package-level delta comes from the derivation closures of
+# the pending toplevel and of the running system (`nix-store -qR` over .drv
+# files) — nothing here compiles. Once `result` holds a build, its realized
+# closure is diffed against the running system for exact old→new versions, the
+# only part that needs the artifact.
+# Usage: just pending [host]
+pending host="trantor":
+    bash "{{repo_root}}/scripts/dev/pending-version.sh" "{{repo_root}}" "{{ host }}"
+
 # Copy the live lazy.nvim lockfile (~/.local/state) into the repo snapshot.
 # Run after :Lazy sync in nvim; shows the diff, then commit manually.
 nvim-lock-sync:
