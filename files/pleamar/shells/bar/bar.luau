@@ -559,7 +559,17 @@ end)
 -- to it — a click that arrived in its frame and was answered a second later.
 local PLEAMAR = "/run/current-system/sw/bin/pleamar"
 
+-- QS's `OverlayManager.registerOverlay` dismisses whatever was open before it
+-- (`Services/OverlayManager.qml:47-53`), and the tray's menu is an overlay like any other — so a
+-- drawer opens with the menu shut, and the menu opens with the drawer shut (below). The bar owns
+-- only half of that pair: the drawers live in the `panels` scene, which is why one direction is a
+-- `--say` and the other is a local call.
+-- Forward-declared: the menu's own state machine (`setMenu`) is written after the tray section,
+-- because it needs the holds and the collapse; this is the one call the drawer path makes into it.
+local close_tray_menu
+
 local function open_drawer(name)
+    if close_tray_menu then close_tray_menu() end
     run("dash", {
         "-c",
         "\'" .. PLEAMAR .. "\' --say panels \'fact drawer " .. name .. "\' >/dev/null 2>&1 && exit 0; "
@@ -1411,6 +1421,10 @@ setMenu = function(open)
     end
 end
 
+close_tray_menu = function()
+    if fact.tray_open == true then setMenu(false) end
+end
+
 -- An event carries a number, so the scene's `emit tray_hot(1)` arrives here as 1 and not as `true`
 -- — `1 == true` is false in Luau, and every one of the tray's three hover handlers compared it that
 -- way: the reveal corner, the icons and the strip all did nothing, and the tray could only be
@@ -1572,6 +1586,10 @@ end)
 -- the Hiddify slot of the network capsule both land here.
 local function open_tray_menu(key)
     if type(key) ~= "string" or key == "" then return end
+    -- The other half of the one-overlay rule: a menu opening dismisses the drawer, exactly as
+    -- `registerOverlay` dismisses the overlay that was active. No silence when nothing is open —
+    -- the scene is asked and answers `none`.
+    sys.call("say", "panels", "fact drawer none")
     local ok, tree = pcall(function() return sys.ask("tray.menu", key) end)
     if not ok then
         tray_menu_ids = {}
