@@ -81,6 +81,10 @@ def main() -> int:
     ap.add_argument("--name", default="org.mpris.MediaPlayer2.stub")
     ap.add_argument("--title", default="Stub track")
     ap.add_argument("--artist", default="Stub artist")
+    # The cover the resolver is handed. A path or a URL: the cover plugin
+    # treats `file://`, a bare path and an http(s) URL differently
+    # (`CoverResolver.qml:163-168`).
+    ap.add_argument("--art", default="file:///tmp/stub-cover.jpg")
     ap.add_argument("--status", default="Playing")
     ap.add_argument(
         "--can-go-next", choices=("true", "false"), default="false"
@@ -111,6 +115,7 @@ def main() -> int:
                 "mpris:trackid": dbus.ObjectPath(track),
                 "xesam:title": dbus.String(args.title),
                 "xesam:artist": dbus.Array([args.artist], signature="s"),
+                "mpris:artUrl": dbus.String(args.art),
             },
             signature="sv",
         )

@@ -12,10 +12,13 @@
 -- `media.art.debounce` (60 ms) so a burst of metadata changes is one listing.
 --
 -- The result is a plain path: pleamar's `image … = from` paints an icon name or
--- a path that starts with `/`, so a remote http(s) art URL is reported as "not
--- found" rather than handed over broken.
+-- a path that starts with `/`. A remote http(s) art URL — which Qt could load by
+-- itself, and which the reference hands over with a cache buster
+-- (`_bustCache`, CoverResolver.qml:163-168,205) — is therefore fetched once into
+-- the user's cache and published as that path (`fetchRemote` below).
 --
--- Permissions are the plugin's own: ls; media (the art URL and the track).
+-- Permissions are the plugin's own: ls, curl, mkdir, rm; media (the art URL and
+-- the track), env (where the cache is).
 
 local DEBOUNCE_MS = 60
 local CANONICAL = { "cover", "front", "folder", "album" }
@@ -69,6 +72,52 @@ local function publish(path, found, raw)
     fact.found = found == true
 end
 
+-- ---------------------------------------------------------------- remote art
+-- A picture at an http(s) URL is fetched once and published as a local path. The name carries a
+-- counter because the renderer keeps a texture by its path: overwriting one file would leave the
+-- previous track's cover on screen, which is the very reload the reference's cache buster asks
+-- for. One file behind is removed — the picture on screen, and one more for a renderer that is
+-- still holding the last texture, is all that is ever needed.
+local cacheDirSeen = nil
+local seq = 0
+local lastFetch = nil
+
+local function cacheDir()
+    if cacheDirSeen then return cacheDirSeen end
+    local base = sys.ask("env", "XDG_CACHE_HOME")
+    if base == nil or base == "" then
+        base = tostring(sys.ask("env", "HOME") or "") .. "/.cache"
+    end
+    cacheDirSeen = base .. "/pleamar/cover"
+    run("mkdir", { "-p", cacheDirSeen }, function() end)
+    return cacheDirSeen
+end
+
+local function isRemote(url)
+    return type(url) == "string" and url:match("^https?://") ~= nil
+end
+
+local function fetchRemote(url, raw)
+    seq = seq + 1
+    -- Filesystem-safe and bounded: the URL's own tail, so a name can be read back, plus the counter.
+    local name = url:gsub("[^%w]", "_")
+    if #name > 48 then name = name:sub(#name - 47) end
+    local path = string.format("%s/%s-%d.jpg", cacheDir(), name, seq)
+    local previous = lastFetch
+    local ok = pcall(run, "curl", { "-fsSL", "--max-time", "10", "-o", path, url }, function(_, code)
+        if code ~= 0 then
+            -- A picture that could not be fetched is not a picture: the scene falls back to its own
+            -- plate, exactly as it does for an art URL nothing could be resolved from.
+            publish("", false, raw)
+            return
+        end
+        lastFetch = path
+        publish(path, true, raw)
+        if previous and previous ~= path then run("rm", { "-f", previous }, function() end) end
+    end)
+    if not ok then publish("", false, raw) end
+end
+
 local function choose(candidates, dir, raw)
     local best, bestRank = nil, nil
     for _, name in ipairs(candidates) do
@@ -89,6 +138,10 @@ local function choose(candidates, dir, raw)
 end
 
 local function resolve(raw)
+    if isRemote(raw) then
+        fetchRemote(raw, raw)
+        return
+    end
     local path = pathOf(raw)
     if not path then
         publish("", false, raw)
