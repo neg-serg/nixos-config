@@ -129,4 +129,14 @@
     cp ${config.lib.neg.path "files/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin"} \
       $out/lib/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin
   '';
+
+  # MediaTek MT7927 (PCI 14c3:7927) ASPM quirk, inherited from the out-of-tree
+  # mt7927 module that used to own this device: L1 ASPM has to stay off or the
+  # card drops off the bus. The module is gone (the 7.3 kernel carries mt7925e
+  # in-tree), the quirk is not.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="pci", \
+      ATTR{vendor}=="0x14c3", ATTR{device}=="0x7927", \
+      ATTR{link/l1_aspm}="0"
+  '';
 }

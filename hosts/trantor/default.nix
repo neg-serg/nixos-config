@@ -119,8 +119,6 @@ in
   # unbound-hosts.nix is generated data (a list), imported by services/policy.nix —
   # not a module, so it stays out of the auto-import.
   imports = [
-    # Out-of-tree MT7927/MT6639 WiFi (mt76/mt7925e) — see hardware flags below
-    inputs.mt7927.nixosModules.default
     # NERV boot menu — reads the BLS entries systemd-boot writes and hands the
     # picked entry back to systemd-boot
     inputs.nerv-boot.nixosModules.default
@@ -281,14 +279,11 @@ in
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
   features.hardware.usbAutomount.enable = true;
   features.hardware.bluetooth.enable = true; # BlueZ — BT audio + HID (gamepads/keyboards/mice), needs kernel BT_HIDP/UHID
-  # MediaTek MT7927/MT6639 WiFi via out-of-tree mt76 (cmspam/mt7927-nixos).
-  # enableBluetooth = false: BT already handled in-tree (6.18 mt6639 backport).
-  hardware.mediatek-mt7927 = {
-    enable = true;
-    enableWifi = true;
-    enableBluetooth = false;
-    disableAspm = true;
-  };
+  # MediaTek MT7927/MT6639 WiFi: in-tree since 7.3 — the mt76 mt7925e driver is
+  # built from modules/system/kernel/overlay.config (H22, CONFIG_MT7925E=m), so
+  # the out-of-tree cmspam/mt7927-nixos package is gone. Bluetooth was always
+  # in-tree (BT_MTK + BT_HCIBTUSB_MTK); the MT6639 RAM-code blob comes from
+  # hosts/trantor/hardware/system.nix.
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.ruHotkeys.enable = true; # us layout in kitty/mpv on focus (RU hotkey fix)
   features.input.neru.enable = true; # Ctrl+Alt+… hints/grids/vim-keys navigation (neru daemon)

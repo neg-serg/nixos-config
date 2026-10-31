@@ -156,10 +156,9 @@
     # (jetm dkms port). WiFi only: BT is handled by the in-tree 6.18 backport.
     # Pinned rev: API rate-limits block unpinned resolution; update with
     # `nix flake lock --update-input mt7927` once the limit clears.
-    mt7927 = {
-      url = "github:cmspam/mt7927-nixos/2b6cd295d7c520f79bb490cdfe70fe8311de0c0e";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # REMOVED 2026-10-31: the 7.3 kernel carries mt7925e/MT7925 natively
+    # (CONFIG_MT7925E), so the out-of-tree build is no longer needed — see
+    # hosts/trantor/hardware.nix and modules/system/kernel/overlay.config (H22).
     # Pin any top-level nixpkgs attribute (pkgs.*) to an exact version from a
     # single flake input (no juggling multiple nixpkgs pins). Enabled via
     # modules/system/multiverse.nix; add pins there.
