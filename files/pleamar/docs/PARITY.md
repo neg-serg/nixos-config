@@ -265,13 +265,15 @@ ends at `muted: false`, which is reachable only if the restored flag was `true`.
    scene's logic, which is what stops the media tooltip's quality line and the build badge's hover
    card. It is one decision — sync the boundary in the engine, or let each card ask its own source
    at hover time — and the owner's, not a scene's; the probes are written up above.
-1. `SunIcon` over the weather card's conditions: 72 shimmering rays in the reference. Two problems,
-   and the first was measured on 2026-10-31 rather than assumed: a ring written as
-   `repeat i in 0..71 { line ray.$i { from: … cos(0.0872665 * i) … } }` renders all 72 rays on the
-   same angle — one ray on screen, unchanged after inlining the arithmetic — so this version of the
-   language substitutes `$i` into a name but does not let `i` reach an expression, which is what the
-   reference's Canvas loop needs. The second is the card: 300×196 has no room for a 70 px sun over
-   its conditions row, so where it goes is a layout call on top of that.
+1. `SunIcon` over the weather card's conditions: the **drawing is done** (`lib/sun.plm`), the
+   placement is not. A ring written as
+   `repeat i in 0..71 { line ray.$i { … cos(0.0872665 * i) … } }` put all 72 rays on one angle —
+   `$i` reaches a name in this version, not an expression — so the per-ray constants are literals,
+   generated once and written out: 72 lines, each angle, phase and length a number, with only `t`
+   (`time`) left to vary at run time. Rendered 2026-10-31 in a headless sway session at three sizes:
+   the ring, the glow and the core are there, and two shots two seconds apart differ in **1757 px**,
+   so it shimmers. What is left is the card: 300×196 has no room for a 70 px sun over its conditions
+   row, so where it goes is a layout call.
 1. Everything else in the tables above, one at a time: `SubmenuHost`'s search field and the
    fingerprint decision, both the owner's, and the lock's nixie glass, which waits for the owner to
    ask for it again. The settings surface is closed as far as the compiler carries it.

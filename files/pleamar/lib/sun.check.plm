@@ -1,0 +1,19 @@
+language 0.4
+
+// sun.check.plm — the compile and render proof of the weather card's sun (INTERFACES §10.2).
+// A plain surface with the sun at three sizes, so a headless render shows the drawing itself
+// without the card's layout.
+
+import "./palette.plm"
+import "./sun.plm" as sun
+
+scene sun_check {
+    surface { size: 320, 160; anchor: top; level: overlay; agent: hidden }
+    sun.Sun(120) { }
+    group { move: 150, 0
+        sun.Sun(72) { }
+    }
+    group { move: 240, 80
+        sun.Sun(40) { }
+    }
+}
