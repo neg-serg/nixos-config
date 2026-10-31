@@ -2,12 +2,15 @@
   pkgs,
   lib,
   config,
+  neg,
   ...
 }:
 let
   # Literal data tables live next to the consumer in hardware/ (no default.nix,
   # so hosts/trantor's importDir { includeDirs = true; } leaves the directory alone).
-  kernelData = import ./hardware/kernel.nix { inherit lib config pkgs; };
+  kernelData = import ./hardware/kernel.nix {
+    inherit lib config pkgs neg;
+  };
   systemData = import ./hardware/system.nix { inherit pkgs config; };
 in
 {

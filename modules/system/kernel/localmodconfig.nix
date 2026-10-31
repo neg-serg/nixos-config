@@ -130,20 +130,30 @@ in
     # from OpenZFS master (bvec_iter.bi_bvec_done -> bi_offset,
     # cpu_feature_enabled, iops->create without the flag arg, host fs for kernel
     # threads); zfs-2.4.5-staging does not carry them yet.
+    #
+    # Signing goes here rather than in the host's extraModulePackages list: the
+    # nixpkgs ZFS module contributes `boot.kernelPackages.zfs_2_4` itself
+    # (nixos/modules/tasks/filesystems/zfs.nix), so signing at the source covers
+    # that entry too — and adding our own copy on top is what produced two
+    # zfs-kernel drvs in the list. asus-ec-sensors is signed the same way, so
+    # every consumer of these attributes gets the cert-bearing build.
     kernelPackages.extend (
       _self: super: {
-        zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [
-            (r.path "files/patches/zfs-7.3-bvec-bi-offset.patch")
-            (r.path "files/patches/zfs-7.3-cpu-feature-enabled.patch")
-            (r.path "files/patches/zfs-7.3-iops-create-no-flag.patch")
-            (r.path "files/patches/zfs-7.3-kthread-host-fs.patch")
-          ];
-          configureFlags = (old.configureFlags or [ ]) ++ [ "--enable-linux-experimental" ];
-          meta = (old.meta or { }) // {
-            broken = false;
-          };
-        });
+        zfs_2_4 = neg.signKernelModule pkgs (
+          super.zfs_2_4.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              (r.path "files/patches/zfs-7.3-bvec-bi-offset.patch")
+              (r.path "files/patches/zfs-7.3-cpu-feature-enabled.patch")
+              (r.path "files/patches/zfs-7.3-iops-create-no-flag.patch")
+              (r.path "files/patches/zfs-7.3-kthread-host-fs.patch")
+            ];
+            configureFlags = (old.configureFlags or [ ]) ++ [ "--enable-linux-experimental" ];
+            meta = (old.meta or { }) // {
+              broken = false;
+            };
+          })
+        );
+        asus-ec-sensors = neg.signKernelModule pkgs super.asus-ec-sensors;
       }
     )
   );

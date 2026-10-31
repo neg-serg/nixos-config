@@ -6,13 +6,19 @@
   lib,
   config,
   pkgs,
+  neg,
 }:
 let
   # Wired through the overlay (packages/overlays/media.nix); the host
   # kernel is passed here since a kernel module must match the boot kernel.
-  snd-hdspe = pkgs.snd-hdspe.override {
-    kernel = config.boot.kernelPackages.kernel;
-  };
+  # snd-hdspe's installPhase is a bare `install *.ko`, which skips kbuild's
+  # `modules_install` and therefore the module certificate nixpkgs concatenates
+  # into `modules.cer` — `neg.signKernelModule` produces it (lib/neg-helpers.nix).
+  snd-hdspe = neg.signKernelModule pkgs (
+    pkgs.snd-hdspe.override {
+      kernel = config.boot.kernelPackages.kernel;
+    }
+  );
 in
 {
   # Host-specific kernel parameters and boot tuning
@@ -66,6 +72,7 @@ in
   kernelModules = [
     "ec_sys"
     "asus_ec_sensors"
+    "mt7925e" # MT7927 WiFi, in-tree since 7.3 (CONFIG_MT7925E, overlay.config H22) — preloaded before lockKernelModules
     "snd-hdspe" # RME HDSPe driver (replaces in-tree snd-hdspm)
     "hid-playstation" # PlayStation controllers (DS4, DualSense, Edge) — pre-loaded before lockKernelModules
     "hid-sony" # Sony PS3 pads (Sixaxis/DS3) + PS Move
@@ -80,15 +87,15 @@ in
     # the unit sat there for ~2.5 min. Autoload does the same job in background.
   ];
 
-  # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
-  # Plain list (no mkForce): lets the mt7927 module append its out-of-tree
-  # mt76 package to boot.extraModulePackages (mkForce would drop it).
+  # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed).
+  # zfs is NOT listed here: nixpkgs' ZFS module contributes
+  # `boot.kernelPackages.zfs_2_4` itself (nixos/modules/tasks/filesystems/zfs.nix),
+  # and that attribute is already signed in modules/system/kernel/localmodconfig.nix —
+  # listing it again was what put two zfs-kernel drvs into the closure.
+  # The signing of asus-ec-sensors lives there too.
   extraModulePackages =
     lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
       config.boot.kernelPackages."asus-ec-sensors"
-    ++
-      lib.optional (builtins.hasAttr pkgs.zfs.kernelModuleAttribute config.boot.kernelPackages)
-        config.boot.kernelPackages.${pkgs.zfs.kernelModuleAttribute}
     ++ [ snd-hdspe ];
 
   # Load heavy GPU driver early in initrd to reduce userspace module-load time.

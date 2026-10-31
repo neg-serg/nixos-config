@@ -38,6 +38,26 @@ rec {
       source = "${sourceDir}/${name}";
     });
 
+  # Sign an out-of-tree kernel module the way kbuild would.
+  #
+  # `modules_install` is where kbuild signs each module and writes the matching
+  # `<mod>.ko.cer`; nixpkgs then concatenates exactly those certificates into
+  # `lib/modules/<ver>/modules.cer` for every entry of `modules.order`
+  # (pkgs/os-specific/linux/kernel/build.nix) and fails with exit 123 when one is
+  # missing. Packages whose installPhase is a bare `install *.ko` never reach
+  # `modules_install`, so the certificate has to be produced explicitly:
+  # kmodigest signs the module in place and leaves the certificate next to it,
+  # which is where the aggregate step looks.
+  signKernelModule =
+    pkgs: pkg:
+    pkg.overrideAttrs (old: {
+      postInstall = (old.postInstall or "") + ''
+        for ko in $(find "$out" -name '*.ko'); do
+          ${pkgs.kmodigest}/bin/kmodigest "$ko"
+        done
+      '';
+    });
+
   # Suffix test — shared by importDir and tree (it used to live inside
   # importDir only).
   hasSuffix =
