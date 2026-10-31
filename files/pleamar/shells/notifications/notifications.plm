@@ -186,7 +186,15 @@ scene notifications {
     // gave up on exclusive for the same reason). The price is one click — the
     // Emacs keys and Escape reach the scene once the pointer has been over it,
     // which is also when a row has been picked.
-    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each }
+    // The pace: a scene's pace is that of its fastest open surface, and the keeper
+    // is the one surface that is always open — without a `rate:` the scene asked for
+    // the monitor's 240 frames a second to draw one pixel. Measured 2026-10-31 with
+    // `pleamar --report`: 2911 frames in 12 s with nothing on screen, and every one
+    // of them is a compositor frame on a 4K/240 output (a cursor move rides one too).
+    // 30 while idle, not lower, for the reason panels.plm:118 gives: the pace is also
+    // how long a `fact` change waits before it is drawn (at 1 fps a card took 1.4 s).
+    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each
+                     rate: 240, 30 while not centre and toasts.count == 0 }
 
     surface centre_panel {
         size: 364, full
