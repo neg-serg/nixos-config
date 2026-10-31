@@ -48,13 +48,34 @@ rec {
   # `modules_install`, so the certificate has to be produced explicitly:
   # kmodigest signs the module in place and leaves the certificate next to it,
   # which is where the aggregate step looks.
+  #
+  # The hook is `preFixup`, not `postInstall`: `postInstall` is only a hook
+  # *inside* the default installPhase (stdenv's setup.sh calls `runHook
+  # postInstall` there), and the packages that need this — asus-ec-sensors
+  # (pkgs/os-specific/linux/asus-ec-sensors) and snd-hdspe — replace
+  # installPhase wholesale with `install …`, so a postInstall hook never runs and
+  # the certificate is silently never produced. fixupPhase always runs, so
+  # preFixup is reached no matter how installPhase is written.
+  #
+  # `chmod u+w` is not cosmetic: those packages install with `-m444`, and
+  # kmodigest then only writes the `.cer` and leaves the module itself
+  # unsigned — it appends the signature to a writable file (verified: a 0644
+  # copy gains the `~Module signature appended~` trailer, a 0444 one does not)
+  # and exits 0 either way.
+  #
+  # `dontStrip` is what keeps the signature there at all: otherwise fixupPhase
+  # strips the just-appended trailer straight back off (63370 -> 63136 bytes,
+  # no marker) and the module ships signed-on-paper only. The kernel's own
+  # modules are never stripped either.
   signKernelModule =
     pkgs: pkg:
     pkg.overrideAttrs (old: {
-      postInstall = (old.postInstall or "") + ''
-        for ko in $(find "$out" -name '*.ko'); do
+      dontStrip = true;
+      preFixup = (old.preFixup or "") + ''
+        while IFS= read -r -d "" ko; do
+          chmod u+w "$ko"
           ${pkgs.kmodigest}/bin/kmodigest "$ko"
-        done
+        done < <(find "$out" -name '*.ko' -print0)
       '';
     });
 
