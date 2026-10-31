@@ -27,12 +27,15 @@ library Cover strict {
 
     // The plugin's own: the media service for the art URL, `ls` to look at the
     // album directory (the files service is sandboxed to the plugin's folder,
-    // and the album is not in it).
-    permissions { run: "ls"; services: "media" }
+    // and the album is not in it), and `curl`/`mkdir`/`rm` for a remote URL —
+    // fetched once into `$XDG_CACHE_HOME/pleamar/cover` and published as a path,
+    // because `image … = from` paints a path and not a URL.
+    permissions { run: "ls", "curl", "mkdir", "rm"; services: "media", "env" }
 
     // ------------------------------------------------------------- boundary
-    // The resolved picture, as a plain path; empty while nothing is known or
-    // when the art is a remote URL that cannot be painted from a path.
+    // The resolved picture, as a plain path — a sister file in the album's
+    // directory, the player's own export, or a remote URL fetched into the cache;
+    // empty while nothing is known or when nothing could be resolved.
     text cover = ""
     fact found = false
     // The URL the player reported, kept for the scene's tooltip and for the
