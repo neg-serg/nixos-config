@@ -71,15 +71,19 @@ part NowPlaying {
                 // service's own, and the whole block ends before the band.
                 for r in media_rows {
                     text r.glyph { at: 216, 12 + r.index * 18 + 13; anchor: left bottom
-                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim
+                        shadow: 0, 1, 2, if(skin.light, 75%, 0%), #000000 }
                     text r.value { at: 234, 12 + r.index * 18 + 13; anchor: left bottom; width: 174; lines: 1
-                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink
+                        shadow: 0, 1, 2, if(skin.light, 75%, 0%), #000000 }
                 }
                 for r in Meta.rows {
                     text r.glyph { at: 216, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom
-                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim
+                        shadow: 0, 1, 2, if(skin.light, 75%, 0%), #000000 }
                     text r.value { at: 234, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom; width: 174; lines: 1
-                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink
+                        shadow: 0, 1, 2, if(skin.light, 75%, 0%), #000000 }
                 }
 
                 // ----***---------- analyser band
