@@ -717,6 +717,21 @@ const skEngines = [
     }),
   },
   {
+    alias: 'rd', name: 'crates-docs',
+    search: 'https://docs.rs/releases/search?query=',
+    compl: 'https://crates.io/api/v1/crates?t=1&q=',
+    favicon: ddgIcon('docs.rs'),
+    cb: (r) => JSON.parse(r.text).crates.map((s) => {
+      const meta = (s.downloads ? `[↓${s.downloads}] ` : '') + (s.max_version ? `[v${s.max_version}] ` : '');
+      return skItem({ url: `https://docs.rs/${s.name}` })`
+        <div>
+          <div class="title"><strong>${s.name}</strong> ${meta}docs</div>
+          <div>${s.description ?? ''}</div>
+        </div>
+      `;
+    }),
+  },
+  {
     alias: 'hn', name: 'hackernews',
     search: 'https://hn.algolia.com/?query=',
     compl: 'https://hn.algolia.com/api/v1/search?tags=(story,comment)&query=',
@@ -861,6 +876,11 @@ const skEngines = [
     compl: 'https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=',
     favicon: ddgIcon('smile.amazon.com'),
     cb: (r) => JSON.parse(r.text)[1] || [],
+  },
+  {
+    alias: 'cs', name: 'chromestore',
+    search: 'https://chromewebstore.google.com/search/',
+    favicon: ddgIcon('chromewebstore.google.com'),
   },
   {
     alias: 'cl', name: 'craigslist',
@@ -1187,6 +1207,24 @@ api.mapkey('<Space>a', 'View question', () => api.Hints.create('a.s-link', api.H
 
 // AUR
 api.mapkey('<Space>a', 'View package', () => api.Hints.create('a[href^="/packages/"]', api.Hints.dispatchMouseClick), { domain: /aur\.archlinux\.org/i });
+
+// Bluesky
+api.mapkey('<Space>d', 'Copy user DID', () =>
+  api.Hints.create("img[src*='/did:plc:']", (e) => {
+    const did = (e.src.match('/(did:.*)/') || [])[1];
+    if (did) api.Clipboard.write(did);
+  }), { domain: /bsky\.app/i });
+api.mapkey('<Space>p', 'Copy user post ID', () =>
+  api.Hints.create('a[href*="/post/"]', (e) => {
+    const postID = (e.pathname.match(/^\/profile\/[^/]+\/post\/(\w+)/) || [])[1];
+    if (postID) api.Clipboard.write(postID);
+  }), { domain: /bsky\.app/i });
+
+// DeepSeek chat — the only LLM in this setup (no chatgpt/claude mappings on purpose)
+api.mapkey('i', 'Focus chat input', () => {
+  const el = document.querySelector('#chat-input, textarea, div[contenteditable="true"]');
+  if (el && el.focus) el.focus();
+}, { domain: /chat\.deepseek\.com/i });
 
 // ========== Hint Utilities (from b0o/surfingkeys-conf) ==========
 api.mapkey('yA', 'Copy link as Markdown', () =>
