@@ -144,6 +144,15 @@ fmt:
 check:
     nix flake check -L --option substitute false
 
+# Same check set as `just check`, but as a parallel queue: nix-eval-jobs
+# evaluates every `checks.<system>.*` attr concurrently, nix-build builds only
+# what no substituter has yet (`--skip-cached`). Substitution stays ON here —
+# the point is throughput, not a from-source determinism proof; use `just check`
+# when the question is "does it build from scratch".
+# `--eval-workers 2`: one NixOS eval peaks ~3.6GiB (see `preflight` above).
+check-fast:
+    nix-fast-build --flake .#checks --skip-cached --eval-workers 2 --no-link
+
 lint:
     set -eu
     statix check -- .
