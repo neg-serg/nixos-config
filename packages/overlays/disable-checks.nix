@@ -20,6 +20,16 @@ _: _: finalPrev: {
     doCheck = false;
   });
 
+  # Disable fclones tests: the three reflink cases
+  # (reflink::test::test_reflink_command_{fills_file_with_content_anyos,
+  # fills_file_with_content_not_ioctl_linux,works_with_files_too_large_anyos})
+  # need reflink support on the build filesystem and die with
+  # `Failed to deduplicate ... (Unsupported)`; the other 166 pass. The dedupe
+  # code itself is untouched, only the check phase is skipped.
+  fclones = finalPrev.fclones.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky libuv tests
   libuv = finalPrev.libuv.overrideAttrs (_old: {
     doCheck = false;
