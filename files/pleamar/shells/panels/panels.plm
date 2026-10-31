@@ -7,6 +7,7 @@ import "../../lib/plugins/cover/cover.plm" as Cover
 import "../../lib/plugins/meta/meta.plm" as Meta
 import "../../lib/plugins/spectrum/spectrum.plm" as spec
 import "../../lib/plugins/build/build.plm" as build
+import "../../lib/sun.plm" as sun
 // The calendar drawer marks the days the pill was taken, was missed, is still pending or has no
 // record of. The history comes from the `pleamar-calendar` worker, which reads the tracker's own
 // state file: a scene's logic cannot read a plugin's boundary (that is the plugin's alone), so the
