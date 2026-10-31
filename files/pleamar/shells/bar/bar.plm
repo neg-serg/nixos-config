@@ -709,7 +709,7 @@ scene bar {
     // capsule's route toggle (the RME's AES/Analog pair); `ip` reads the interfaces — the
     // link, and the tunnel's name — and `ping` is the internet's own probe, exactly the two
     // commands QS's Connectivity.qml runs for the same two questions.
-    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pwroute", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write" }
+    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pwroute", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
