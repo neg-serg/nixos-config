@@ -57,7 +57,9 @@ library Build strict {
     // `autoToggleOnTap` and opens its popup, which here is the `build` drawer, and a plugin
     // may not run `pleamar --say`. So the event comes in as a parameter, as `chosen` does in
     // the language's own example.
-    component Tile(tap: event, scale: number = ui) {
+    // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
+    // cannot read the scene's facts, so the multiplier comes in as a parameter.
+    component Tile(tap: event, scale: number = ui, type_scale: number = 1) {
         let size.icon = 14
         let label.w = 150
         let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
@@ -73,7 +75,7 @@ library Build strict {
                     gap: capsule.gap
                     align: center
                     text "{glyph}" { family: "Material Symbols Outlined"; size: size.icon; color: if(tone == 2, amber, if(tone == 1, accent, ink.dim)); opacity: if(hot, 1, 0.85) }
-                    text "{summary}" { family: "Iosevka"; size: 13; weight: 500; width: label.w; lines: 1; color: if(tone == 2, amber, ink) }
+                    text "{summary}" { family: "Iosevka"; size: 13 * type_scale; weight: 500; width: label.w; lines: 1; color: if(tone == 2, amber, ink) }
                 }
             }
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Nix build"; role: button }
@@ -92,7 +94,9 @@ library Build strict {
     // The list itself: the phase word dim on the left, the derivation in body ink, the
     // clock on the right. `width` is the plate's inner width, so a row cannot outgrow the
     // drawer it stands in.
-    component Rows(scale: number = ui, width: number = 300) {
+    // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
+    // cannot read the scene's facts, so the multiplier comes in as a parameter.
+    component Rows(scale: number = ui, type_scale: number = 1, width: number = 300) {
         let w = width
         let clock.w = 46
         let stage.w = 62
@@ -106,9 +110,9 @@ library Build strict {
                     row line {
                         gap: 6
                         align: center
-                        text b.stage { family: "Iosevka"; size: 11; width: stage.w; lines: 1; color: ink.dim }
-                        text b.name { family: "Iosevka"; size: 12; width: name.w; lines: 1; color: ink }
-                        text b.elapsed { family: "Iosevka"; size: 11; width: clock.w; lines: 1; color: ink.off }
+                        text b.stage { family: "Iosevka"; size: 11 * type_scale; width: stage.w; lines: 1; color: ink.dim }
+                        text b.name { family: "Iosevka"; size: 12 * type_scale; width: name.w; lines: 1; color: ink }
+                        text b.elapsed { family: "Iosevka"; size: 11 * type_scale; width: clock.w; lines: 1; color: ink.off }
                     }
                 }
             }

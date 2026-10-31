@@ -65,7 +65,9 @@ library Meta strict {
     model rows max 6 { glyph: text; value: text }
 
     // ----------------------------------------------------------------- line
-    component Line(scale: number = ui) {
+    // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
+    // cannot read the scene's facts, so the multiplier comes in as a parameter.
+    component Line(scale: number = ui, type_scale: number = 1) {
         let w = 118
         let h = capsule.height
         size: 118 * scale, capsule.height * scale
@@ -75,7 +77,7 @@ library Meta strict {
                 row line {
                     gap: 4
                     align: center
-                    text "{summary}" { size: 9; weight: 600; family: "Iosevka"; color: ink.dim }
+                    text "{summary}" { size: 9 * type_scale; weight: 600; family: "Iosevka"; color: ink.dim }
                 }
             }
             zone box line { from: 0, 0; size: 118, h; corner: corner; label: "Track quality"; role: region; value: "{summary}" }

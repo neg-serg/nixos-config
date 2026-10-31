@@ -52,7 +52,9 @@ library Mpd strict {
     // `Theme.textPrimary` (not the "playing" highlight) at
     // `Theme.uiIconEmphasisOpacity`, whether or not anything is playing. Measured on the
     // two bars: the reference's shuffle badge is #804060, the port's was ink.dim grey.
-    component Flags(scale: number = ui) {
+    // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
+    // cannot read the scene's facts, so the multiplier comes in as a parameter.
+    component Flags(scale: number = ui, type_scale: number = 1) {
         let glyph.gap = 2
         let glyph.size = 14
         let shown = repeat + random + single + consume + xfade
@@ -68,11 +70,11 @@ library Mpd strict {
             row flags {
                     gap: 2
                     align: center
-                    text "repeat" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: repeat }
-                    text "shuffle" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: random }
-                    text "repeat_one" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: single }
-                    text "auto_delete" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: consume }
-                    text "blur_linear" { family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 75%; show: xfade }
+                    text "repeat" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: repeat }
+                    text "shuffle" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: random }
+                    text "repeat_one" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: single }
+                    text "auto_delete" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: consume }
+                    text "blur_linear" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: xfade }
             }
             zone box flags { from: 0, 0; size: w, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
             on enter flags { hot = true }

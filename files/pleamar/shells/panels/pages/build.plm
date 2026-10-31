@@ -35,7 +35,7 @@ part Build {
 
             // ----***------------------------------- the list
             group list { at: 14, 42
-                build.Rows(width: 356)
+                build.Rows(width: 356, type_scale: text_scale)
             }
         }
     }
