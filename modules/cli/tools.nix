@@ -47,6 +47,7 @@ in
     # File management
     pkgs.convmv # convert filename encodings
     pkgs.dos2unix # file conversion
+    pkgs.elio # terminal file manager: places/files/preview panes, inline images, archive and trash handling
     pkgs.fd # better find
     pkgs.file # detect file type by content
     pkgs.massren # massive rename utility

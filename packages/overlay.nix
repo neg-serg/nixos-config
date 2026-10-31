@@ -125,6 +125,10 @@ in
   # an MCP server — see packages/lazytail/default.nix
   lazytail = final.callPackage ./lazytail { };
 
+  # elio: three-pane terminal file manager (places / files / preview) with inline
+  # image previews, archive handling and trash — see packages/elio/default.nix
+  elio = final.callPackage ./elio { };
+
   # tewi: TUI client for Transmission/qBittorrent/Deluge daemons
   # (python app, deps from nixpkgs + local geoip2fast, see packages/tewi/default.nix)
   tewi = final.callPackage ./tewi { };
