@@ -1149,6 +1149,8 @@ local function tip_line(i)
         lines[#lines + 1] = "Click — monitoring panel"
         return table.concat(lines, "\n")
     elseif i == 6 then
+        -- (the media card is built below from `mediaNow`, a *service* — those are live for this
+        -- logic, unlike a plugin's boundary; the quality line is added by `media_tip` on hover)
         -- The media card: title — artist, then one compact line of album and player. The album
         -- is dropped when it repeats the artist (MPD often hands the same string for both).
         local l1 = (mediaNow.title or "") .. ((mediaNow.artist and mediaNow.artist ~= "") and (" — " .. mediaNow.artist) or "")
@@ -1304,8 +1306,54 @@ local function genelec_tip()
     end)
 end
 
+-- The media card's quality line (QS prints "Quality: codec · bitrate · sample rate · bit depth").
+-- The base lines come from the `media` service, which this logic reads live; the figures need the
+-- track's own file, so they come from `playerctl` and `ffprobe` on hover — the same two tools the
+-- Meta plugin uses for the sidebar rows.
+local function quality_of(url)
+    local path = url:match("^file://(.+)$") or url:match("^(/.+)$")
+    if not path then return nil end
+    path = path:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end)
+    local done = false
+    run("ffprobe", {
+        "-v", "error", "-show_entries",
+        "stream=codec_name,bit_rate,sample_rate,bits_per_raw_sample,channels",
+        "-of", "default=nw=1:nk=0", path,
+    }, function(out)
+        -- The first stream wins: a track with embedded cover art has a second one, and ffprobe
+        -- prints `N/A` for what a stream does not carry (a FLAC's bit_rate is one of those).
+        local f = {}
+        for key, value in tostring(out or ""):gmatch("([%w_]+)=([^\r\n]+)") do
+            if f[key] == nil then f[key] = value end
+        end
+        local parts = {}
+        if f.codec_name and f.codec_name ~= "" and f.codec_name ~= "N/A" then
+            parts[#parts + 1] = f.codec_name
+        end
+        local kbps = math.floor((tonumber(f.bit_rate) or 0) / 1000 + 0.5)
+        if kbps > 0 then parts[#parts + 1] = kbps .. " kbps" end
+        local khz = (tonumber(f.sample_rate) or 0) / 1000
+        if khz > 0 then parts[#parts + 1] = string.format("%.1f kHz", khz) end
+        local bits = tonumber(f.bits_per_raw_sample) or 0
+        if bits > 0 then parts[#parts + 1] = bits .. "-bit" end
+        if #parts == 0 then return end
+        text.tip_body = text.tip_body .. "\nQuality: " .. table.concat(parts, " · ")
+    end)
+end
+
+local function media_tip()
+    showTip(6)
+    run("playerctl", { "metadata", "xesam:url" }, function(out)
+        local url = tostring(out or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if url == "" or url == "No player could handle this command" then return end
+        quality_of(url)
+    end)
+end
+
 on("tip", function(i)
-    if i == 10 then
+    if i == 6 then
+        media_tip()
+    elseif i == 10 then
         mpd_tip()
     elseif i == 11 then
         genelec_tip()
