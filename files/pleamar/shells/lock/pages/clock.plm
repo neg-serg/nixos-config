@@ -12,6 +12,12 @@
 // The whole block is one group: its `move` puts it in the upper part of the
 // monitor, its `scale` is `scaleNow` (the per-monitor fit times the user's
 // uiScale), so every length inside is a design pixel.
+//
+// Colours follow the wallpaper, as on the card: the numerals and the greetings are `skin.ink`,
+// the date `skin.ink.dim`, the discharge halo `skin.accent` and the date's shadow `skin.coal`.
+// The tube glass keeps the greeter's `lock.widget` (#CEFFFF at 15 %): theme.plm carries no wash
+// or highlight role, so that tint stays frozen, and it is the numerals' ink that carries the
+// reading when a light wallpaper turns the whole face light.
 
 part Clock {
 
@@ -20,7 +26,8 @@ part Clock {
         scale: ui_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)
 
         // The tube row, approximated: a lit glass slab. `glass` bends the
-        // wallpaper painted under it; the numerals are drawn on top.
+        // wallpaper painted under it; the numerals are drawn on top. The tint is the greeter's
+        // `lock.widget` wash and stays frozen (theme.plm has no wash role, see the header).
         box tube_glass {
             from: -272, -66; size: 544, 132; corner: 22
             color: lock.widget
@@ -31,22 +38,22 @@ part Clock {
         }
 
         text "{now.time}" {
-            at: 0, -8; anchor: center; size: 92; weight: 500; color: lock.ink; family: "Iosevka"
-            shadow: 0, 0, 30, 60%, lock.accent; show: clock_24h
+            at: 0, -8; anchor: center; size: 92; weight: 500; color: skin.ink; family: "Iosevka"
+            shadow: 0, 0, 30, 60%, skin.accent; show: clock_24h
         }
         text clock12 {
-            at: 0, -8; anchor: center; size: 92; weight: 500; color: lock.ink; family: "Iosevka"
-            shadow: 0, 0, 30, 60%, lock.accent; show: not clock_24h
+            at: 0, -8; anchor: center; size: 92; weight: 500; color: skin.ink; family: "Iosevka"
+            shadow: 0, 0, 30, 60%, skin.accent; show: not clock_24h
         }
         text "{now.date}" {
-            at: 0, 66; anchor: center; size: 24; color: lock.ink.dim; family: "Iosevka"
-            shadow: 0, 1, 10, 50%, coal
+            at: 0, 66; anchor: center; size: 24; color: skin.ink.dim; family: "Iosevka"
+            shadow: 0, 1, 10, 50%, skin.coal
         }
 
         // The greeting of LockContent.qml (`greeting`), one line per window.
-        text "Good morning" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 5 and now.hour < 12 }
-        text "Good afternoon" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 12 and now.hour < 17 }
-        text "Good evening" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 17 and now.hour < 23 }
-        text "Good night" { at: 0, 102; anchor: center; size: 22; color: lock.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 23 or now.hour < 5 }
+        text "Good morning" { at: 0, 102; anchor: center; size: 22; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 5 and now.hour < 12 }
+        text "Good afternoon" { at: 0, 102; anchor: center; size: 22; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 12 and now.hour < 17 }
+        text "Good evening" { at: 0, 102; anchor: center; size: 22; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 17 and now.hour < 23 }
+        text "Good night" { at: 0, 102; anchor: center; size: 22; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 23 or now.hour < 5 }
     }
 }
