@@ -18,15 +18,38 @@ PLEAMAR=${PLEAMAR:-$(command -v pleamar || echo /run/current-system/sw/bin/pleam
 SYSTEMCTL=${SYSTEMCTL:-$(command -v systemctl || echo /run/current-system/sw/bin/systemctl)}
 
 say() { "$PLEAMAR" --say picker "$1" >/dev/null 2>&1; }
+# The deck's own `open` fact, one word: `true` / `false` (empty when the scene does not answer).
+deck_open() { "$PLEAMAR" --say picker "get open" 2>/dev/null | tail -n 1; }
 
 case ${1:-toggle} in
     toggle)
-        # A running deck answers, and the scene decides what a toggle means.
-        say "emit toggle_picker" && exit 0
+        # A running deck answers, and the scene decides what a toggle means. When it closed, the
+        # process goes with it: a closed scene keeps a 1x1 "keeper" surface and stays resident,
+        # which measured 17% of a core, ~100 MB RSS and a few points of GPU with nothing on
+        # screen. The unit is on-demand, so the next verb starts it again.
+        #
+        # The close runs through the scene's own animation, so the fact flips a moment after the
+        # `emit` returns — asking once right away reads the *old* value and the unit would never
+        # stop (measured). Wait for the value to change, then decide; a toggle the scene swallowed
+        # changes nothing, and then the unit stays up, which is the safe direction.
+        was="$(deck_open)"
+        if say "emit toggle_picker"; then
+            for _ in $(seq 1 20); do
+                now="$(deck_open)"
+                if [ -n "$now" ] && [ "$now" != "$was" ]; then
+                    [ "$now" = "false" ] && "$SYSTEMCTL" --user stop pleamar-picker.service
+                    break
+                fi
+                sleep 0.1
+            done
+            exit 0
+        fi
         ;;
     open) ;;
     close)
         say "emit close_picker"
+        # Same reason as `toggle`: nothing on screen means nothing to keep running.
+        "$SYSTEMCTL" --user stop pleamar-picker.service
         exit 0
         ;;
     reload)
