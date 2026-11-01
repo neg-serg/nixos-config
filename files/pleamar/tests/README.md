@@ -34,6 +34,29 @@ Artifacts: `tests/shots/<YYYY-MM-DD>/<scene>.png` plus `<scene>.log` (set `--out
 directory). A stale PNG is deleted before each render, so a failure can never be masked by an older
 shot.
 
+### What an empty shot looks like (measured 2026-11-01)
+
+`smoke.sh` counts a PNG above `--min-bytes` (1024 by default) as a render, so a scene that draws
+nothing at rest passes exactly like one that draws its bar. The empty frame on this host is **2759
+B, 1280x720, one colour** — worth knowing before reading a green matrix.
+
+Run on 2026-11-01 with `sway` from the store on `PATH`, `--require-render --seconds 6`: 10 scenes
+checked, 10 rendered, and the sizes split cleanly in two.
+
+| draws content | bytes | colours | nothing at rest | bytes |
+| ------------- | ----- | ------- | --------------- | ----- |
+| `preview`     | 62824 | —       | `launcher`      | 2759  |
+| `lock`        | 25804 | —       | `notifications` | 2759  |
+| `bar`         | 10769 | 685     | `overlay`       | 2759  |
+| `proof`       | 7671  | —       | `overview`      | 2759  |
+|               |       |         | `panels`        | 2759  |
+|               |       |         | `toast`         | 2759  |
+
+The six are blank **on purpose**: `panels`, `notifications` and `overview` hold a 1x1 keeper while
+their drawers are closed, `overlay` and `toast` have no surface at rest, and the launcher waits for
+its shortcut. A scene in that group that starts drawing *something* is worth a look too — the point
+is that the matrix cannot tell you either way.
+
 ### Shooting a drawer without the live session (verified 2026-10-31)
 
 `smoke.sh` renders each scene in its default state, so a drawer — the thing most pixel work is about
