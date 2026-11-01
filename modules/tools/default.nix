@@ -51,17 +51,14 @@ in
 
               sed -i 's/┌/╭/' lib/NOM/Print/Tree.hs
 
-              # Determinate Nix 3.23 emits activity type 10113 (`actStringly`,
-              # CopySourcePath, added with its OpenTelemetry support) and result
-              # 10111 (resHttpStatus). 2.2.0 keeps a closed table (0, 100..112)
-              # and `fail`s on anything else, which aborts the whole `nom` run —
-              # `nh os switch` died on "invalid activity type: 10113" right
-              # after the Nix 3.23.3 bump. Upstream has no release with a fix;
-              # this is PR maralorn/nix-output-monitor#321, which turns unknown
-              # types/results into OtherType/OtherResult, and nom's Update.hs
-              # already ignores unknown messages. Drop the patch once a release
-              # carries it.
-              patch -p1 --no-backup-if-mismatch < ${./nom-activity-types.patch}
+              # Unknown activity types/results (activity 10113 from Determinate
+              # Nix 3.23, result 10111) need no local patch any more: nixpkgs
+              # backports maralorn/nix-output-monitor#321 itself on the
+              # 2026-10-27 pin, turning unknown values into OtherType/
+              # OtherResult instead of aborting the run. The former
+              # nom-activity-types.patch applied the same changes and now
+              # conflicts with that patch (reversed-patch detection), so it is
+              # not applied here.
             '';
           });
 
