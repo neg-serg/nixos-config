@@ -4,8 +4,13 @@ import subprocess
 import sys
 import time
 
-# Shared with the Quickshell PillTracker (panel pill capsule).
+# Shared with the pleamar panel's pill capsule (see telegram-units.nix).
 PANEL_STATE_FILE = pathlib.Path("@panelStateFile@")
+# The state lived under ~/.local/state/quickshell/ before the panel took its
+# own name. The legacy file is read while the new one does not exist yet, so a
+# mark recorded before the rename still suppresses today's reminder; the bot
+# writes the new path from the first mark on.
+LEGACY_PANEL_STATE_FILE = pathlib.Path("@legacyStateFile@")
 
 # Idempotency guard: on this VM snapshot restores / late boot catch-ups can
 # fire the timer more than once a day. Stamp the date on every successful
@@ -16,9 +21,15 @@ LAST_MSG_FILE = STATE_DIR / "last-message.json"
 TODAY = time.strftime("%Y-%m-%d")
 
 
+def panel_state_file():
+    if PANEL_STATE_FILE.exists():
+        return PANEL_STATE_FILE
+    return LEGACY_PANEL_STATE_FILE
+
+
 def already_taken_today():
     try:
-        state = json.loads(PANEL_STATE_FILE.read_text())
+        state = json.loads(panel_state_file().read_text())
     except (OSError, ValueError):
         return False
     return state.get("todayDate") == TODAY and bool(state.get("taken"))

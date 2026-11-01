@@ -7,12 +7,15 @@ language 0.4
 // midnight rollover, the deadline reminder, the ICS write into the synced
 // calendar) and Helpers/PillHistory.js (the streak arithmetic).
 //
-// Where the files live is the one thing that changed: the QS service kept its
-// state under $XDG_STATE_HOME/quickshell/, while a plugin owns a folder of its
-// own (`$XDG_DATA_HOME/pleamar/<scene>/` through the files service) — so the
-// state is `state.json` in that folder, and only the calendar event stays
-// outside, in the directory vdirsyncer syncs (written with `tee`, removed with
-// `rm`, both through `run`).
+// Where the files live is the one thing that changed: the QS service kept a
+// mirror of the tracked marks in $XDG_STATE_HOME/quickshell/pill-tracker.json
+// (the file the Telegram bridge reads and rewrites), while a plugin owns a
+// folder of its own (`$XDG_DATA_HOME/pleamar/<scene>/` through the files
+// service) — so the state is `state.json` in that folder, and only the
+// calendar event stays outside, in the directory vdirsyncer syncs (written
+// with `tee`, removed with `rm`, both through `run`). The bridge's copy now
+// lives in $XDG_STATE_HOME/pleamar/pill-tracker.json; it falls back to the
+// quickshell one until the new file exists (telegram-units.nix).
 //
 //     import "../../lib/plugins/pill/pill.plm" as pill
 //     pill.Mark()

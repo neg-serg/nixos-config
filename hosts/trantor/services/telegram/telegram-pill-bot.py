@@ -17,8 +17,13 @@ LAST_MSG_FILE = pathlib.Path(
     "/var/lib/telegram-pill-reminder/last-message.json"
 )
 
-# Quickshell PillTracker files owned by the desktop user's panel.
+# The panel's pill state and calendar event, owned by the desktop user (the
+# paths come from telegram-units.nix).
 PANEL_STATE_FILE = pathlib.Path("@panelStateFile@")
+# The state lived under ~/.local/state/quickshell/ before the panel took its
+# own name; it is read from there while the new file does not exist yet, and
+# every write already goes to PANEL_STATE_FILE — the first mark migrates it.
+LEGACY_PANEL_STATE_FILE = pathlib.Path("@legacyStateFile@")
 PANEL_ICS_DIR = pathlib.Path("@panelIcsDir@")
 PILL_OWNER = "@panelUser@"
 
@@ -79,8 +84,11 @@ def owner_ids():
 
 
 def read_panel_state():
+    path = PANEL_STATE_FILE
+    if not path.exists():
+        path = LEGACY_PANEL_STATE_FILE
     try:
-        return json.loads(PANEL_STATE_FILE.read_text())
+        return json.loads(path.read_text())
     except (OSError, ValueError):
         return {}
 
