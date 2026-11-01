@@ -889,6 +889,12 @@ installed into `PATH` as `pleamar-<name>` (`pleamar-sysmon`, `pleamar-weather`, 
 that bare name. A scene declares only the ones it uses: `permissions { run: "pleamar-sysmon" }`.
 Never `sh -c`, never a path, never a second worker name the module does not install.
 
+Two names install beside them and are **not** workers: `pleamar-wallpaper-palettes` and
+`pleamar-wallpaper-apply` are commands the `picker` scene runs to completion with `run(...)` — the
+schemes of a wallpaper folder (one §7 JSON line per wallpaper, and `--names DIR` for its list) and
+everything a new wallpaper sets (the caches, the wallpaper command, matugen). `pleamar-picker` is
+the same scene's command line for a compositor bind.
+
 **Lifecycle.** One worker per view that needs it, started when the view opens and killed when it
 closes:
 

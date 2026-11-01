@@ -1,0 +1,238 @@
+language 0.6
+
+import "../../lib/palette.plm"
+import "../../theme.plm"
+import "../../lib/capsule.plm"
+
+// picker.plm — the wallpaper deck (scene `picker`), the pleamar port of the swatch-deck picker
+// Quickshell ran (files/qs-wallpaperpicker stays in the tree as the reference for parity).
+//
+// What it does
+// ------------
+// Every wallpaper of the settings folder (`folder`, ~/pic/wl on trantor) is a card in a grid:
+// its own picture, the wallpaper's name, and the strip of colours matugen would dress the
+// desktop in, read ahead of time by `pleamar-wallpaper-palettes`
+// (files/pleamar/scripts/helpers). The arrows walk the deck, the wheel and a drag scroll it,
+// Enter hands the chosen card to `pleamar-wallpaper-apply` — caches, the wallpaper command
+// (`wl img {}` on trantor), matugen — and the deck closes.
+//
+// Commands (the Quickshell CLI's verbs, one shorthand per line under ~/.local/bin):
+//   pleamar --say picker "emit open_picker"      open (the compositor bind starts the unit first)
+//   pleamar --say picker "emit toggle_picker"    open/close
+//   pleamar --say picker "emit close_picker"     close
+//   pleamar --say picker "emit reload"           read the folder again
+//   pleamar --say picker "emit choose 3"         set the fourth card (0 is the first)
+//   pleamar --say picker "fact open true"        open through the fact alone
+//   pleamar --say picker describe                what every card and zone says
+//
+// Settings (~/.local/share/pleamar/picker/settings.json; read by picker.luau)
+//   folder    text    ~/pic/wl          the wallpapers to browse
+//   command   text    wl img {}         the tool that paints the desktop; {} is the path
+//   columns   number  4        1 – 8     how many cards a row holds
+// Nothing writes that file yet (there is no settings screen in the port), so the logic only
+// reads it and a key it does not know survives.
+//
+// What is not here yet: Wallhaven search and downloads, favourites, the settings screen, the
+// live preview of a clip, the fan-and-preview choreography of the reference. Wallpapers are
+// images: an animated GIF/WebP or a video cannot be painted by wl, and the Quickshell layer that
+// drew them went with the shell.
+
+scene picker {
+
+    // The deck's own surface: unnamed, so it is the scene's — what is drawn loose below belongs to
+    // it (a named surface carries only what its own block holds). One copy per monitor, full size,
+    // no reserve: the deck is modal on every screen while `open` holds, and a closed surface is
+    // neither seen nor pressed. The keyboard is held exclusively so the arrows and Enter reach the
+    // rules without a click first.
+    surface {
+        size: full, full
+        anchor: center
+        level: overlay
+        reserve: 0
+        screens: each
+        keyboard: exclusive while open
+        open: open
+    }
+
+    // The keeper: one pixel, no body, no input — the reason the scene stays loaded while `open`
+    // is false, exactly as panels.plm and launcher.plm do it. A closed surface drives no pace, so
+    // the rate lives here: 30 while closed, which is also how long `open` waits to be drawn.
+    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each
+                     rate: 240, 30 while not open }
+
+    // Two user helpers (installed from files/pleamar/scripts/helpers into ~/.local/bin):
+    // the colour schemes of the folder, and applying one. `files` is the scene's own folder,
+    // where settings.json lives.
+    permissions {
+        run: "pleamar-wallpaper-palettes", "pleamar-wallpaper-apply"
+        services: "env", "files"
+    }
+
+    // Four cards a row, sixteen rows: one page of the folder (picker.luau). A `let` and not a
+    // setting, because the deck's rows are laid out from it when the scene loads.
+    let cols = 4
+
+    // The interface.
+    fact open = false
+    fact sel = 0                  // the card the keyboard is on, within the page
+    fact page = 0                 // which page of cards is on screen (0 is the first)
+    fact pages = 1
+    fact shown = 0                // how many cards that page holds (picker.luau)
+    text folder = ""              // what the deck is showing
+    text status = ""              // a line about it, or why it is empty
+    text command = ""             // the wallpaper tool, with {} where the path goes
+
+    // The page on screen, a row of cards per record: a card is a component, and a component takes
+    // its record from a `for` — never from a computed place — so the rows are what the model holds
+    // and each row walks its own cells. `picture` is a path the scene paints.
+    model walls max 16 {
+        list cells max 4 {
+            name: text
+            picture: image 288, 180
+            list sw max 4 { r: number; g: number; b: number }
+        }
+    }
+
+    // `->` also reaches picker.luau: opening reads the folder the first time, reloading reads it
+    // again, a page turn reads that page's schemes, choosing applies one. The two the rules
+    // handle alone are the deck's own open and close.
+    event open_picker ->
+    event reload ->
+    event flip ->
+    event choose ->
+    event toggle_picker
+    event close_picker
+
+    // ---***------------------------------ keys
+    on key Escape while open { emit close_picker }
+    on key Right while open { sel = min(sel + 1, shown - 1) }
+    on key Left while open { sel = max(sel - 1, 0) }
+    on key Down while open { sel = min(sel + cols, shown - 1) }
+    on key Up while open { sel = max(sel - cols, 0) }
+    on key Home while open { sel = 0 }
+    on key End while open { sel = max(shown - 1, 0) }
+    on key Return while open { emit choose(sel) }
+    on key r while open { emit reload }
+    // A page at a time: the deck holds a page of cards, not the folder (see picker.luau).
+    on key Page_Down while open { emit flip(1) }
+    on key Page_Up while open { emit flip(-1) }
+    on key n while open { emit flip(1) }
+    on key p while open { emit flip(-1) }
+
+    // ---***------------------------------ the deck
+    // One card: the wallpaper's picture, its name, and the colours it would give the desktop.
+    // `chosen` is the scene's selection, so a card lights up as the keyboard reaches it.
+    component Card(c: record, at: number, chosen: number, pick: event) {
+        let CW = 288
+        let CH = 180
+
+        size: CW, CH
+
+        prop lit = 0 ~ui.quick
+        follow lit = if(chosen == at, 1, 0)
+
+        // Everything is clipped to the card's own corner: the picture is a rectangle of pixels,
+        // and the zone that catches the press follows the same shape.
+        group frame {
+            size: CW, CH
+            clip box { from: 0, 0; size: CW, CH; corner: 16 }
+            image c.picture { at: 0, 0; size: CW, CH; fit: cover }
+            // The cards behind the front one sit a little darker, and the hover lifts them.
+            box { from: 0, 0; size: CW, CH; corner: 16; color: skin.coal
+                  opacity: (0.45 - 0.30 * lit) * (1 - hit.hover * 0.5) }
+            // The wallpaper's palette: the scheme its card would give the desktop.
+            row chips { at: 12, CH - 28; gap: 4
+                for s in c.sw {
+                    group { size: 30, 12
+                        box { from: 0, 0; size: 30, 12; corner: 6; color: rgb(s.r, s.g, s.b)
+                              opacity: 1 - hit.hover * 0.25 }
+                    }
+                }
+            }
+            text c.name { at: 12, CH - 50; anchor: left center; width: CW - 24; lines: 1
+                          size: 12.5; color: skin.ink }
+            // The ring of the card the keyboard is on.
+            box { from: 0, 0; size: CW, CH; corner: 16; stroke: 2; color: skin.accent; opacity: lit }
+        }
+
+        zone box hit { from: 0, 0; size: CW, CH; corner: 16; cursor: pointer
+                       label: "{c.name}"; role: item; selected: chosen == at }
+        on press hit { emit pick(at) }
+    }
+
+    // The panel: a title, what it is showing, and the deck itself.
+    component Panel(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        let DW = 1400
+        let DH = 880
+        let cx = (screen.width - DW * scale) / 2
+        let cy = (screen.height - DH * scale) / 2
+        // What is seen of the deck; the card is 288 x 180 and the gap 16, so a row is 196.
+        let view_w = DW - 64
+        let view_h = DH - 168
+        let row_step = 196
+
+        group place {
+            move: cx, cy
+            group zoom {
+                scale: scale
+
+                Capsule(DW, DH, fill: skin.coal, alpha: 92%, radius: overlay.corner, shadow: 45%, scale: 1) { }
+
+                // The card swallows the presses that land on it, so they do not reach the
+                // dismissal catcher underneath. Not pressable, so no label.
+                zone box body { from: 0, 0; size: DW, DH; corner: overlay.corner; role: region }
+
+                text "Wallpapers" { at: 32, 42; anchor: left center; size: 17; weight: 600; color: skin.ink }
+                text folder { at: 32, 70; anchor: left center; width: DW - 260; lines: 1
+                              size: 11.5; color: skin.ink.dim }
+                text status { at: DW - 32, 42; anchor: right center; width: 520; lines: 1; align: right
+                              size: 11.5; color: skin.ink.dim }
+
+                // The deck: rows of cards the wheel and a drag scroll (`view:`), with the front
+                // card's row kept in sight by the rule below. A row is `cols` cards and as tall as
+                // one, so the whole page is `rows` rows of `row_step`.
+                column deck ~calm { at: 32, 96; view: view_w, view_h; gap: 16
+                    for r in walls {
+                        row { gap: 16
+                            for cell in r.cells {
+                                Card(cell, r.index * cols + cell.index, sel, choose)
+                            }
+                        }
+                    }
+                }
+
+                text "No wallpapers in {folder}" { at: DW / 2, 96 + view_h / 2; anchor: center
+                                                   size: 13; color: skin.ink.dim; show: walls.count == 0 }
+                text "arrows choose · enter sets · n / p next page · r reads the folder · esc closes"
+                    { at: DW / 2, DH - 30; anchor: center; size: 11; color: skin.ink.dim }
+
+                // The keyboard's card is always in sight: the deck scrolls to the row it is on
+                // when it changes hands, and when the deck opens.
+                on change sel {
+                    deck.scroll: clamp(floor(sel / cols) * row_step - view_h / 2 + row_step / 2,
+                                       0, max(deck.content - view_h, 0)) ~calm
+                }
+                on change open while open {
+                    deck.scroll: clamp(floor(sel / cols) * row_step - view_h / 2 + row_step / 2,
+                                       0, max(deck.content - view_h, 0)) ~calm
+                }
+            }
+        }
+    }
+
+    // The scrim dims what is under the deck; the catcher closes it on a press outside the panel.
+    // Declared before the panel, so every panel zone sits above it.
+    box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: shadow.strong; show: open }
+
+    zone box catcher { from: 0, 0; size: screen.width, screen.height
+                       label: "Close the wallpaper deck"; role: region }
+    on press catcher while open { emit close_picker }
+
+    // Opening and closing. The logic does the reading (and sets `open` too); the rule here is
+    // what makes a press of the key show the deck in the same frame.
+    on open_picker { open = true }
+    on toggle_picker { toggle open }
+    on close_picker { open = false }
+
+    Panel() { show: open }
+}
