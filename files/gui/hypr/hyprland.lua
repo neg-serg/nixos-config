@@ -248,15 +248,17 @@ hl.config({
     -- buys a cosmetic hide while typing, while its failure mode is exactly the
     -- reported "the cursor is stuck", so it stays off.
     hide_on_key_press = false, warp_on_change_workspace = false,
-    -- false is "do not fall back to a software cursor", which is what `auto` (the
-    -- default, 2) does: with the pointer composited into the frame it only moves
-    -- when a frame lands, and over a layer that repaints every frame — the bar —
-    -- that reads as the cursor sticking. Measured 2026-10-29: the bar's own paint
-    -- is 0.6 ms and every one of its late frames is `waiting for the screen`, so
-    -- the pointer was waiting on frames it had nothing to do with. Pushed live with
-    -- `hyprctl eval 'hl.config({ cursor = { no_hardware_cursors = false } })'`,
-    -- which is also how to test it again without a reload.
-    no_hardware_cursors = false,
+    -- 2, not `false`: the option reads `no_hardware_cursors`, so 1 asks for a software
+    -- cursor and 0 is `auto` — which is what `false` turned into, and auto is free to
+    -- fall back to a composited pointer. Composited means the pointer only moves when a
+    -- frame lands, and over a layer that repaints every frame — the bar — that reads as
+    -- the cursor sticking. Measured 2026-10-29: the bar's own paint is 0.6 ms and every
+    -- one of its late frames is `waiting for the screen`, so the pointer was waiting on
+    -- frames it had nothing to do with. 2 disables the option, i.e. hardware cursors: the
+    -- KMS cursor plane moves whatever the compositor is doing. Pushed live with
+    -- `hyprctl eval 'hl.config({ cursor = { no_hardware_cursors = 2 } })'`, which is also
+    -- how to test it again without a reload.
+    no_hardware_cursors = 2,
   },
   -- new_render_scheduling: 0.56's alternative frame scheduler (the old one is
   -- still the default). Reverting needs no reload — in a live session
