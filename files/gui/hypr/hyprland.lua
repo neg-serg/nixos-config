@@ -215,19 +215,24 @@ hl.config({
     -- (`decoration:blur:variant`, src/render/gl/blur/) — kawase, frost, ripple,
     -- drops, water, fluid_jar, prism, heat_shimmer, acrylic, aurora, haze. This
     -- replaces the hyprglass/hyprliquid plugins that used to frost the session
-    -- and are stubs on 0.57. frost = the glass relief itself: a refracted
-    -- pattern with a configurable roughness, tuned through
-    -- `blur:glass:{refraction,size,roughness}`, left at the shipped defaults
-    -- (20 px displacement, 40 px pattern, roughness 1). acrylic is the
-    -- neighbouring material if this one reads too flat — it adds a lens edge
-    -- and a tint (`blur:acrylic:*`), prism is frost plus chromatic dispersion.
+    -- and are stubs on 0.57. prism = the glass relief plus chromatic dispersion,
+    -- i.e. frost with colour fringing where the backdrop bends — the same
+    -- requirement class as frost (`preparedInput`, no live blur, no animation
+    -- clock), so it costs the same and does not repaint an idle desktop.
+    -- Its knobs are frost's: `blur:glass:{refraction,size,roughness}`, left at
+    -- the shipped defaults (20 px displacement, 40 px pattern, roughness 1).
+    -- Do NOT crank refraction/size for a stronger effect: the damage radius is
+    -- literally `dualKawaseDamageRadius(size, passes) + refraction`
+    -- (`CGlassBlurMaterial::sampleRadius`), so every added pixel of displacement
+    -- is re-blurred on every frame. acrylic (a lens with an edge and a tint,
+    -- `blur:acrylic:*`) is the neighbouring look.
     -- The choice is global on purpose — window rules know only `no_blur`, layer
     -- rules only `blur`, so per-surface material is not a thing here; per-window
     -- shaders remain HyprWindowShade's job. Try another material live with
     --   hyprctl eval 'hl.config({ decoration = { blur = { variant = "acrylic" } } })'
     -- (the animated ones — drops, water, fluid_jar, aurora, heat_shimmer,
-    -- ripple — cost GPU every frame).
-    blur = { enabled = true, variant = "frost", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
+    -- ripple — recompute the blur every frame).
+    blur = { enabled = true, variant = "prism", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
     -- motion blur: adds a smear while anything on screen is moving — the
     -- scrolling tape and dragged windows are where it reads. 24 samples is the
     -- tuning knob (higher = smoother, more GPU); `hyprctl eval 'hl.config({
