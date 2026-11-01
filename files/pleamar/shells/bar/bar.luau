@@ -1251,6 +1251,46 @@ end
 on("tip", showTip)
 on("tip_hide", hideTip)
 
+-- The build badge's card. QS keeps the tool's own text in `statusTooltip` and hands it to a
+-- `PanelTooltip`; this logic cannot read the plugin's boundary (a plugin's facts are live for the
+-- renderer and stale here — measured 2026-10-31), so it asks the tool the plugin runs, once, on
+-- hover. `--format plain` is the state line, `--format list` one line per build; together they are
+-- the card, capped at the six lines `bartip` holds.
+local function build_tip()
+    run("nixbuild-status", { "--format", "plain", "--icons", "none", "--no-color" }, function(out)
+        local head = tostring(out or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if head == "" then head = "nothing running" end
+        run("nixbuild-status", { "--format", "list", "--icons", "none", "--no-color" }, function(lines)
+            local body = { "Nix build: " .. head }
+            local seen = 0
+            for line in tostring(lines or ""):gmatch("[^\r\n]+") do
+                if seen >= 3 then break end
+                seen = seen + 1
+                body[#body + 1] = line
+            end
+            body[#body + 1] = "Click — build drawer"
+            text.tip_body = table.concat(body, "\n")
+        end)
+    end)
+end
+
+on("build_hover", function(inside)
+    if inside ~= 1 then
+        hideTip()
+        return
+    end
+    -- `showTip`'s shape, with an asynchronous body: the card opens on the same delay, and the text
+    -- lands in it whenever the tool answers (a live text, so the card fills itself).
+    text.tip_body = "Nix build: …"
+    fact.tip_hover = true
+    if tipTimer then cancel(tipTimer) end
+    tipTimer = after(TIP_DELAY, function()
+        tipTimer = nil
+        fact.tip_open = true
+    end)
+    build_tip()
+end)
+
 -- ---------------------------------------------------------------- tray
 -- The icons come from the StatusNotifier host as they are: a record's fields are
 -- `key`, `title`, `icon` (a name or a path) with the rest ignored, so the list
