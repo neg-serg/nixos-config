@@ -303,6 +303,18 @@
               rev = "a4c6b8af424a189072427c4c90ef2938e1b481d3";
               hash = "sha256-hFs3AVnH6j9ZnDzfG19pAL9cO+pVl21pT9q9A1c6DNw=";
             };
+            # 0.57 moved the window header one directory down.
+            postPatch = ''
+              substituteInPlace Globals.hpp \
+                --replace-fail "hyprland/src/desktop/view/Window.hpp" \
+                               "hyprland/src/desktop/view/window/Window.hpp"
+              # 0.57 hides the window fields behind accessors: the class is
+              # `metadata().appID()` now (`initialAppID()` for the initial one) and
+              # floating is `isFloating()`.
+              substituteInPlace main.cpp \
+                --replace-fail "->m_class" "->metadata().appID()" \
+                --replace-fail "->m_isFloating" "->isFloating()"
+            '';
 
             dontUseCmakeConfigure = true;
             # The Makefile asks pkg-config for Hyprland's flags and links
