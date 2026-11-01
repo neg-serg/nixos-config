@@ -144,6 +144,9 @@ printf '%s: workspace %s\n' "$TOOL_NAME" "$WORK"
 "$MAGICK_BIN" -size 320x240 xc:'#9a9a9a' "$WORK/gray.png"
 
 # ---- 1. the legacy cache path, a coloured fixture ---------------------------
+# theme.sh still honours `$XDG_CACHE_HOME/quickshell-wallpaper-path` as a legacy
+# fallback (`~/.cache/pleamar/wallpaper-path` is the canonical one, pinned in 2 and
+# 3); this fixture is what keeps that fallback from being dropped by accident.
 
 home1="$WORK/home1"
 mkdir -p "$home1/.cache" "$home1/.config/pleamar"

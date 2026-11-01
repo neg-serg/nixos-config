@@ -79,9 +79,10 @@ Wallpaper resolution order:
 
 1. `--wallpaper FILE` (unreadable is an error);
 1. `$XDG_CACHE_HOME/pleamar/wallpaper-path`, first line (`INTERFACES.md` §1.2 reserves the path for
-   this pipeline);
-1. `$XDG_CACHE_HOME/quickshell-wallpaper-path`, the legacy cache `WallpaperAccent.qml` watched —
-   what the session publishes today.
+   this pipeline — it is the canonical one);
+1. `$XDG_CACHE_HOME/quickshell-wallpaper-path`, the legacy cache the Quickshell
+   `WallpaperAccent.qml` watched — still what the session publishes today, and therefore kept as a
+   fallback; it is not a path a new producer should write.
 
 The writer is a module, not this script: `wl-state-sync.service` / the wallpaper daemon must publish
 `~/.cache/pleamar/wallpaper-path` (today only the legacy path is written; see the integration
@@ -211,8 +212,10 @@ The module task owns this (PH1-T2 does not edit `modules/`); the requirements ar
 
 1. **The trigger.** Something must run the script whenever the wallpaper changes. Today
    `wl-state-sync.service` already runs on every change and publishes
-   `~/.cache/quickshell-wallpaper-path`; the smallest correct step is an `ExecStartPost` on that
-   unit (or a path unit watching the same file). The README of this pipeline recommends moving the
+   `~/.cache/quickshell-wallpaper-path` (the legacy path); the path unit in
+   `modules/user/nix-maid/gui/pleamar.nix` therefore watches both that file and the canonical
+   `~/.cache/pleamar/wallpaper-path`. The smallest correct step is an `ExecStartPost` on that unit
+   (or a path unit watching the same file). The README of this pipeline recommends moving the
    publish to `~/.cache/pleamar/wallpaper-path` (§1.2 reserves it) and wiring:
 
    ```nix
