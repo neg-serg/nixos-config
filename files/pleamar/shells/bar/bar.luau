@@ -1248,8 +1248,39 @@ local function showTip(i)
     end)
 end
 
-on("tip", showTip)
 on("tip_hide", hideTip)
+
+-- The MPD card is built from `mpc status`, not from the flags plugin: those facts are live for the
+-- renderer and stale here (measured 2026-10-31 — `Mpd.repeat` true in the scene, the tool saying
+-- `repeat: on`, and this card answering "unknown / No active flags"), which is the same boundary the
+-- build badge hit. One `mpc status` per hover is the cheapest way to be right.
+local function mpd_tip()
+    text.tip_body = "MPD · …"
+    fact.tip_hover = true
+    if tipTimer then cancel(tipTimer) end
+    tipTimer = after(TIP_DELAY, function()
+        tipTimer = nil
+        fact.tip_open = true
+    end)
+    run("mpc", { "status" }, function(out)
+        local s = tostring(out or "")
+        -- `mpc status` prints the volume line and, only while something plays or pauses, a
+        -- `[playing]`/`[paused]` line under it: no marker is stopped, not "unknown".
+        local state = s:match("%[playing%]") and "playing"
+            or s:match("%[paused%]") and "paused"
+            or "stopped"
+        local on = {}
+        for _, name in ipairs({ "repeat", "random", "single", "consume" }) do
+            if s:match(name .. ":%s*on") then on[#on + 1] = name end
+        end
+        text.tip_body = "MPD · " .. state .. "\n"
+            .. ((#on > 0) and table.concat(on, " · ") or "No active flags")
+    end)
+end
+
+on("tip", function(i)
+    if i == 10 then mpd_tip() else showTip(i) end
+end)
 
 -- The build badge's card. QS keeps the tool's own text in `statusTooltip` and hands it to a
 -- `PanelTooltip`; this logic cannot read the plugin's boundary (a plugin's facts are live for the
