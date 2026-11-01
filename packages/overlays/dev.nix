@@ -41,4 +41,8 @@ in
   # ROCm PyTorch env (gfx1201). See packages/torch-rocm/default.nix.
   torchRocmEnv = import (pkg "torch-rocm") { inherit inputs; };
 
+  # ROCm vLLM env (gfx1201) — OpenAI-compatible server, reuses the torch-rocm
+  # closure. See packages/vllm-rocm/default.nix.
+  vllmRocmEnv = import (pkg "vllm-rocm") { inherit inputs paths; };
+
 }
