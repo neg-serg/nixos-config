@@ -77,6 +77,16 @@ scene launcher {
         open: open
     }
 
+    // The keeper: one pixel, no body, no input — the reason the scene stays loaded
+    // while `open` is false, and the surface that carries the pace, exactly as
+    // panels.plm and notifications.plm do it. A closed surface drives no pace: with
+    // the rate written on `launcher` alone the scene kept rounding at the monitor's
+    // frames (measured 2026-11-01: 238.3 fps while closed, and it was the heaviest of
+    // the five shells at 2.3% of a core). 30 while closed, not lower: the pace is also
+    // how long `open` waits to be drawn (panels.plm:118 measured 1.4 s at 1 fps).
+    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each
+                     rate: 240, 30 while not open }
+
     // Listening: apps (the declarative list below). Commanding: apps.launch.
     // Files: the scene's own settings.json, read and watched by launcher.luau.
     permissions { services: "apps", "apps.launch", "files" }
