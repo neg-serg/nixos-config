@@ -104,13 +104,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pleamar = {
-      # Upstream `main` (2026-11-01, runtime 0.7.4, scene language 0.8): the pin moved
+      # Upstream `main` (2026-11-01, runtime 0.7.7, scene language 0.9): the pin moved
       # from 0.4.31 after the shell was measured lagging, and every local patch in
       # `packages/overlays/gui.nix` was checked to apply in order on it. All scenes
       # still compile on the new language (`pleamar --check` over shells/*/*.plm).
-      # Update with:
-      # nix flake lock --update-input pleamar
-      url = "github:k4ditano/pleamar/0667cda33ee70871cdd68193a08d7493f4a34c65";
+      # Update with: edit the rev below to the new `main` commit, then
+      #   nix flake lock --update-input pleamar
+      url = "github:k4ditano/pleamar/bc710b193702d12f401cedea79541d94508861be";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
