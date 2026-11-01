@@ -15,13 +15,43 @@ let
   greeterWallpaperFallback = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   # The interactive login is no longer a greeter session: greetd runs this
   # wrapper as the main user and the compositor it starts paints the login
-  # screen itself (files/quickshell/greeter/login.qml, login phase in
-  # files/gui/hypr/hyprland.lua). See session-wrapper.sh for the marker that
-  # separates the two phases.
+  # screen itself (the pleamar lock scene, files/pleamar/shells/lock/lock.plm,
+  # from the login phase in files/gui/hypr/hyprland.lua). See session-wrapper.sh
+  # for the marker that separates the two phases.
   sessionWrapper = pkgs.writeScript "session-wrapper" (builtins.readFile ./greetd/session-wrapper.sh);
-  # Called from hyprland.lua during the login phase; the tree it loads is
-  # deployed at /etc/quickshell below.
-  loginLayer = pkgs.writeShellScriptBin "qs-login-layer" (builtins.readFile ./greetd/login-layer.sh);
+  # The pleamar tree the login layer loads the lock scene from. A store copy on
+  # purpose: during the login phase the session target has not started and
+  # nix-maid has not linked ~/.config/pleamar yet, so a scene read from the home
+  # directory could not be trusted to exist. files/pleamar is the whole import
+  # root (`shells/lock/lock.plm` imports ../../lib/*.plm, and the committed
+  # theme.plm sits at the root), so the copy is the tree, not one directory of it.
+  pleamarLoginTree = config.lib.neg.path "files/pleamar";
+  # The lock scene spawns its keyboard worker by name
+  # (`permissions { run: "pleamar-kbdlayout" }`): ~/.local/bin, where nix-maid
+  # puts it for the session, is not there yet at login, so the same script
+  # (files/pleamar/scripts/helpers/kbd.sh) is carried in the store under the name
+  # the scene asks for, with its `#!` pointed at the store's bash.
+  pleamarLoginHelpers = pkgs.runCommand "pleamar-login-helpers" { } ''
+    mkdir -p $out/bin
+    cp ${config.lib.neg.path "files/pleamar/scripts/helpers/kbd.sh"} $out/bin/pleamar-kbdlayout
+    chmod +x $out/bin/pleamar-kbdlayout
+    patchShebangs $out/bin
+  '';
+  # Called from hyprland.lua during the login phase; it launches the pleamar lock
+  # scene (files/pleamar/shells/lock/lock.plm) from the tree deployed at
+  # /etc/pleamar-lock below. The handover contract it relies on — `pleamar --say
+  # lock "wait unlocked == true"`, the "session" marker, the lock release and the
+  # `lock.held` guard — is described at the top of the script.
+  loginLayer = pkgs.writeShellScriptBin "pleamar-login-layer" (
+    builtins.readFile (
+      pkgs.replaceVars ./greetd/login-layer.sh {
+        pleamar = lib.getExe pkgs.pleamar;
+        jq = lib.getExe' pkgs.jq "jq";
+        pleamarTree = "/etc/pleamar-lock";
+        kbdHelpers = pleamarLoginHelpers;
+      }
+    )
+  );
   # Old greeter session config: kept, but nothing starts it any more — see
   # settings.default_session. It is the fallback if the single-compositor login
   # has to be reverted (point default_session back at it).
@@ -76,6 +106,15 @@ in
     # unnecessary nix-store calls that delay greeter start.
     systemd.user.services.maid-activation.unitConfig.ConditionUser = "!greeter";
     security.pam.services.greetd.enableGnomeKeyring = true;
+    # The lock scene checks the password through the PAM service `pleamar`
+    # (files/pleamar/shells/lock/lock.luau → `sys.ask("auth.check", …)`), and
+    # NixOS writes /etc/pam.d/pleamar only for a service somebody declared.
+    # modules/user/nix-maid/gui/pleamar.nix declares it whenever the shell is on;
+    # these mkDefaults keep the stack in place when that flag is off, because a
+    # login screen whose password field has no PAM stack behind it is a lockout
+    # and not a degraded mode. That module's own values win whenever it is on.
+    security.pam.services.pleamar.unixAuth = lib.mkDefault true;
+    security.pam.services.pleamar.fprintAuth = lib.mkDefault true;
     users.users.greeter = {
       home = "/home/greeter";
       createHome = true;
@@ -92,6 +131,11 @@ in
     # layer needs no absolute path.
     environment.etc."quickshell".source = config.lib.neg.path "files/quickshell";
     environment.systemPackages = [ loginLayer ];
+    # The pleamar tree the login layer loads its scene from: a store copy, for the
+    # reason above — the login phase runs before the session target, so
+    # ~/.config/pleamar is not guaranteed to be linked yet. Read by
+    # pleamar-login-layer, which prefers the /etc/nixos checkout while it exists.
+    environment.etc."pleamar-lock".source = pleamarLoginTree;
     # Kept for the greeter fallback (greetdHyprlandConfig / greetd.lua): the old
     # greeter reads its quickshell tree and its session launcher from /etc/greetd.
     # Nothing starts that session any more — see settings.default_session.
