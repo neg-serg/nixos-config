@@ -59,7 +59,10 @@ library Build strict {
     // the language's own example.
     // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
     // cannot read the scene's facts, so the multiplier comes in as a parameter.
-    component Tile(tap: event, scale: number = ui, type_scale: number = 1) {
+    // `hover` is the scene's own hook for its tooltip: QS shows `PanelTooltip { text:
+    // statusTooltip }` while the capsule is hovered (BuildStatus.qml:84-87), and a library emits
+    // nothing on its own.
+    component Tile(tap: event, hover: event, scale: number = ui, type_scale: number = 1) {
         let size.icon = 14
         let label.w = 150
         let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
@@ -79,8 +82,8 @@ library Build strict {
                 }
             }
             zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Nix build"; role: button }
-            on enter tile { hot = true }
-            on leave tile { hot = false }
+            on enter tile { hot = true; emit hover(1) }
+            on leave tile { hot = false; emit hover(0) }
             on press tile { emit tap }
         }
     }

@@ -8,11 +8,12 @@ import "./build.plm" as build
 scene build_check {
     surface { size: 260, 80; anchor: top; level: overlay; agent: hidden }
 
-    // The tile asks for the event a press means; the proof only has to name one.
+    // The tile asks for the events a press and a hover mean; the proof only has to name them.
     event tapped ->
+    event hovered ->
 
-    build.Tile(tapped)
-    build.Tile(tapped, scale: 1.5)
+    build.Tile(tapped, hovered)
+    build.Tile(tapped, hovered, scale: 1.5)
     build.Rows(width: 300)
 
     on demo {

@@ -438,6 +438,8 @@ scene bar {
     event toggle_weather_panel ->
     event open_system_panel ->
     event open_build_panel ->
+    // The build badge's pointer, for its tooltip (QS's `PanelTooltip` over `capsule.hovered`).
+    event build_hover ->
     // The workspace capsule asked for hyprexpo (QS: `Services.Expo.toggle()`), and the
     // keyboard capsule for the next layout of the boards (`KeyboardLayoutHypr`'s
     // `switchKeyboardLayout()`; the logic spells out why it is `all` and not `current`).
@@ -709,7 +711,7 @@ scene bar {
     // capsule's route toggle (the RME's AES/Analog pair); `ip` reads the interfaces — the
     // link, and the tunnel's name — and `ping` is the internet's own probe, exactly the two
     // commands QS's Connectivity.qml runs for the same two questions.
-    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pwroute", "systemctl", "window-activate"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels" }
+    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pwroute", "systemctl", "window-activate", "nixbuild-status"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels", "nixbuild-status" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -1827,7 +1829,10 @@ scene bar {
     // started. It takes no space at rest (`Build.busy` is false while nothing runs), and a
     // press on it opens the build drawer (QS: `autoToggleOnTap` on BuildStatus).
     row build_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; show: widget.build and Build.busy
-        build.Tile(open_build_panel, type_scale: text_scale)
+        build.Tile(open_build_panel, build_hover, type_scale: text_scale)
+        // A zone that goes away takes its pointer with it and `leave` never comes: a build that ends
+        // under the cursor takes its card too (the rule the audio capsules carry).
+        on change Build.busy while not Build.busy { emit tip_hide }
     }
 
     // ------------------------------------------------------------ what waits
