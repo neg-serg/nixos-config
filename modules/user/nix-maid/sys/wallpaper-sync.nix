@@ -128,9 +128,20 @@ let
     fi
 
     # The state names a file that is not there: restoring it would leave the
-    # screen empty. Ask the resolver (the same script the login layer uses) what
-    # is actually on disk and apply that.
-    candidate="$(/etc/quickshell/scripts/wl-wallpaper-resolve.sh 2> /dev/null || true)"
+    # screen empty. Ask the files the rest of the stack already writes what is
+    # actually on disk and apply that: wl's own last-good, the picker's
+    # canonical cache, then the legacy "current wallpaper" link. (The old
+    # /etc/quickshell/scripts/wl-wallpaper-resolve.sh went away with the
+    # Quickshell login layer.)
+    candidate=""
+    for f in "$HOME/.local/state/wl/last-good" \
+             "$HOME/.cache/pleamar/wallpaper-path" \
+             "$HOME/.cache/current_wallpaper_source"; do
+      [ -r "$f" ] || continue
+      read -r candidate < "$f" || true
+      [ -n "$candidate" ] && [ -r "$candidate" ] && break
+      candidate=""
+    done
     if [ -z "$candidate" ]; then
       echo "wl-restore-retry: no wallpaper to restore (state names '$current')" >&2
       exit 0
