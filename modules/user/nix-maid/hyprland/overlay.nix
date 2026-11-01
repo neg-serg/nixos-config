@@ -12,14 +12,12 @@
       # inputs.hyprland.overlays.hyprland-packages  # disabled: hyprutils 0.14.0 breaks hyprlock/hypridle
       # inputs.xdg-desktop-portal-hyprland.overlays.default  # disabled: see above
       (final: prev: {
-        # hyprliquid — Liquid Glass / Acrylic / Mica / Aero for windows *and* layer
-        # surfaces (the bar). Stubbed for now: the plugin is not ported to 0.57
-        # (`IHyprRenderer::m_renderData` went away with the rewritten renderer,
-        # CRenderContext), so nothing is built and every surface falls back to
-        # Hyprland's own decoration:blur. The 0.56 build and the ABI pin notes are
-        # in the git history; `hyprliquid-setup` and files/gui/hypr/hyprliquid.lua
-        # are already in place for the day it lands.
-        hyprliquid = final.runCommand "hyprliquid-not-ported-to-0.57" { } "mkdir -p $out/lib";
+        # No glass plugin on purpose: 0.57 ships blur materials natively
+        # (decoration:blur:variant — frost, acrylic, prism, haze, aurora, drops,
+        # water, ripple, heat_shimmer, fluid_jar in src/render/gl/blur/), applied
+        # globally. hyprliquid was never ported past 0.56 (`IHyprRenderer::
+        # m_renderData` went with the rewritten renderer), and per-window shaders
+        # still come from HyprWindowShade.
 
         hyprlandPlugins =
           let
