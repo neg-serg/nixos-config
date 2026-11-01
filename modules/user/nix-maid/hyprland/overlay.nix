@@ -217,6 +217,11 @@
               rev = "d0e847d9208076d74f94d4c0cf42911c92bfad50";
               hash = "sha256-H1NnR/235b9j69pu/+X32x1ByERffPvzCRdjlNXtpes=";
             };
+            # 0.57 replaced the hyprctl command API: `registerHyprCtlCommand` now takes
+            # `IPC::Socket1::SCommand` (name/match/handler) and returns an `SP<>`, and the
+            # handler is `(const SRequest&) -> SResponse` instead of
+            # `(eHyprCtlOutputFormat, std::string) -> std::string`.
+            patches = [ ./hymission-ipc-s1.patch ];
 
             # The helper's own nativeBuildInputs (cmake, pkg-config) do not
             # survive an override, and without cmake in nativeBuildInputs its
