@@ -58,11 +58,6 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   imported by `modules/nix/settings.nix`.
 - `python-packages.nix` — shared Python package list; single source for the system Python env
   (`modules/dev/python/pkgs.nix`) and the Python devshell (`flake/devshells/python.nix`).
-- `quickshell-wrapper.nix` — Quickshell wrapper helpers (used by
-  `modules/user/nix-maid/gui/quickshell.nix`).
-- `quickshell-wrapper-install.sh` — install-phase template read by `quickshell-wrapper.nix`
-  (`builtins.readFile`); builds the wrapped `qs` binary with the Qt/QML import paths, theme data and
-  `QT_QPA_PLATFORM=wayland`.
 
 Runtime helpers (`mkHomeFiles`, `path`, `pathExists`, `enabled`, …) live on `config.lib.neg`
 (defined in `flake/nixos.nix` specialArgs + exposed via `modules/core/neg.nix`), not under `lib/`.
