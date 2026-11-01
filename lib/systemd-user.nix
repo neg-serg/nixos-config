@@ -26,6 +26,22 @@ let
         Restart = "on-failure";
       };
     };
+    # Long-running unit that must come back whatever its exit looks like,
+    # a clean one included. For a client of the compositor that is the ordinary
+    # way out: its Wayland connection goes away with the compositor, it closes
+    # the display and exits 0 — which `on-failure` reads as success, leaving the
+    # unit down for the rest of the session (wl-daemon, 2026-11-02: alive on a
+    # dead connection after the first crash, then not started again after the
+    # second). Same note on RestartSec as above: the delay stays at the call site.
+    restartAlways = {
+      after = [ ];
+      wants = [ ];
+      wantedBy = [ ];
+      partOf = [ ];
+      service = {
+        Restart = "always";
+      };
+    };
     # Short-lived helper: no restart policy of its own and no target — the
     # caller says whether it is wanted by default.target, a timer, or nothing.
     oneshot = {

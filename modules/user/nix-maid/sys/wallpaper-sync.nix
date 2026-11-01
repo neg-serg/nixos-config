@@ -174,13 +174,29 @@ let
   );
 in
 lib.mkIf (cfg.enable or false) {
-  # wl-daemon: auto-restart on crash (DPMS output removal kills it)
+  # wl-daemon: the wallpaper is the one thing the desktop cannot lose, and a
+  # compositor crash is what normally takes this daemon down with it. Two holes
+  # let it stay down on 2026-11-02 (three Hyprland crashes in one evening, the
+  # last two caused by a GPU reset):
+  #   * `RestartSec` sat behind `Restart=on-failure`, but the ordinary way out is
+  #     a clean exit — the daemon closes the display once its Wayland connection
+  #     is gone — so nothing restarted it (it also survived as a zombie chasing
+  #     a dead socket, PID 5343 alive since boot while two compositors came and
+  #     went). `restartAlways` covers both.
+  #   * `PartOf`/`WantedBy=graphical-session.target` is not the target a crashed
+  #     session is rebuilt with: hypr-start stops and starts
+  #     `hyprland-session.target`, so the daemon was never even asked. It follows
+  #     both targets now — the session one makes the compositor restart bring up
+  #     a fresh daemon, whose ExecStartPost (`wl restore`) repaints from
+  #     ~/.local/state/wl/state.json.
   systemd.user.services."wl-daemon" = systemdUser.mkUserService {
     description = "wl wallpaper daemon (Vulkan)";
     presets = [
       "graphicalSession"
-      "restartOnFailure"
+      "restartAlways"
     ];
+    wantedBy = [ "hyprland-session.target" ];
+    partOf = [ "hyprland-session.target" ];
     after = [ "graphical-session-pre.target" ];
     # Cap restarts: systemd >= 254 defaults to unlimited retries, so a
     # persistent start failure (e.g. single-instance lock held elsewhere)
@@ -195,7 +211,10 @@ lib.mkIf (cfg.enable or false) {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.wl}-daemon";
       ExecStartPost = "${wlRestoreRetry}";
-      RestartSec = 2;
+      # Short: hypr-start only starts the session target once `hyprctl monitors`
+      # answers, so the compositor is there by the time this comes back — and the
+      # wallpaper belongs under the first window, not a second after it.
+      RestartSec = 1;
     };
   };
 
@@ -205,6 +224,12 @@ lib.mkIf (cfg.enable or false) {
       "graphicalSession"
       "restartOnFailure"
     ];
+    # Follows the session target the crashed session is rebuilt with, like the
+    # daemon above: its socat relay dies the moment the compositor's event
+    # socket does, and a watcher that never comes back silently loses the
+    # monitor-reconnect repaint.
+    wantedBy = [ "hyprland-session.target" ];
+    partOf = [ "hyprland-session.target" ];
     after = [
       "wl-daemon.service"
       "graphical-session-pre.target"
