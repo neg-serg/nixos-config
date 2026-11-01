@@ -211,7 +211,20 @@ hl.config({
     -- no layer rule turns xray back on — every surface blurs the live
     -- framebuffer. Cost: a stacked translucent window re-blurs an already
     -- blurred surface underneath.
-    blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
+    -- Glass, natively: 0.57 turned the blur into a set of materials
+    -- (`decoration:blur:variant`, src/render/gl/blur/) — kawase, frost, ripple,
+    -- drops, water, fluid_jar, prism, heat_shimmer, acrylic, aurora, haze. This
+    -- replaces the hyprglass/hyprliquid plugins that used to frost the session
+    -- and are stubs on 0.57. acrylic = a lens with a curved edge and a tint;
+    -- its knobs (`blur:acrylic:refraction|bulb|clarity|aberration|tint`) are
+    -- left at the shipped defaults, which land close to the old glass. The
+    -- choice is global on purpose — window rules know only `no_blur`, layer
+    -- rules only `blur`, so per-surface material is not a thing here; per-window
+    -- shaders remain HyprWindowShade's job. Try another material live with
+    --   hyprctl eval 'hl.config({ decoration = { blur = { variant = "frost" } } })'
+    -- (frost/prism share `blur:glass:*`; the animated ones — drops, water,
+    -- fluid_jar, aurora, heat_shimmer, ripple — cost GPU every frame).
+    blur = { enabled = true, variant = "acrylic", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
     -- motion blur: adds a smear while anything on screen is moving — the
     -- scrolling tape and dragged windows are where it reads. 24 samples is the
     -- tuning knob (higher = smoother, more GPU); `hyprctl eval 'hl.config({
