@@ -73,14 +73,18 @@ in
     # XDG compliance (xdg-ninja fixes)
     ANDROID_AVD_HOME = "${dataHome}/android/avd";
     ANDROID_USER_HOME = "${dataHome}/android";
+    BUN_INSTALL = "${dataHome}/bun"; # bun's global root (~/.bun otherwise)
+    ELM_HOME = "${cacheHome}/elm"; # elm package cache (~/.elm otherwise)
     GNUPGHOME = "${dataHome}/gnupg";
     GTK2_RC_FILES = "${configHome}/gtk-2.0/gtkrc";
+    IPYTHONDIR = "${configHome}/ipython"; # profiles + history (~/.ipython otherwise)
     KERAS_HOME = "${stateHome}/keras";
     NETHACKOPTIONS = "@${configHome}/nethack/config";
     NPM_CONFIG_CACHE = "${cacheHome}/npm";
     NPM_CONFIG_INIT_MODULE = "${configHome}/npm/config/npm-init.js";
     NPM_CONFIG_TMP = "$XDG_RUNTIME_DIR/npm";
     TEXMFVAR = "${cacheHome}/texlive/texmf-var";
+    TRITON_HOME = "${cacheHome}/triton"; # triton/torch kernel cache (~/.triton otherwise)
     W3M_DIR = "${dataHome}/w3m";
   };
 
