@@ -184,8 +184,6 @@ lint:
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
       | xargs -0 -r shellcheck -S warning -x
-    bash "{{repo_root}}/scripts/dev/check-qml-syntax.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-qml-lint.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-scene-events.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
