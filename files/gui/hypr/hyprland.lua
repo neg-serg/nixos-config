@@ -395,7 +395,9 @@ hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch toggle telegram"))
 -- window up if aurora is already running instead of starting a second copy.
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("aurora-focus"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class torrment -e rustmission' special"))
-hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty-glass --class vpn -e tun status' special"))
+-- M4+u used to open a `tun status` pad; full-TUN was dropped in 317181e6 and
+-- `tun` went with it, so the key spawned a kitty that died on exec. Removed
+-- rather than repointed: a status pad belongs to whatever proxy tool wins next.
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch toggle mixer"))
 -- Wallpaper deck: opens over the current wallpaper and sets the card Enter lands
 -- on (unit + settings seed: modules/user/nix-maid/gui/wallpaper-picker.nix).
@@ -1202,7 +1204,6 @@ hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }
 hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
 hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
-hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
 hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 
 -- Scratchpads are frosted like the media popup: hyprglass replaces Hyprland's
@@ -1219,7 +1220,7 @@ hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratc
 -- makes the desk arrive with the window. Covers every scratchpad class the config
 -- knows about: the kitty terminals plus the app scratchpads (telegram, mail).
 for i, pattern in ipairs({
-  "^teardown$", "^music$", "^torrment$", "^vpn$", "^mixer$", "^rebuild$",
+  "^teardown$", "^music$", "^torrment$", "^mixer$", "^rebuild$",
   m.im_scratchpad, m.mail_scratchpad,
 }) do
   hl.window_rule({ name = "anim-scratchpad-" .. i, match = { class = pattern }, animation = "slidefadevert 12%" })
