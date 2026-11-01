@@ -81,9 +81,16 @@ in
           ExecStart = "${serverPy}/bin/python ${eng}/whisper-server.py --port 8002 --host 127.0.0.1 --model ${eng}/voices/ggml-large-v3-turbo.bin --whisper-bin ${whisperCpp}/bin/whisper-cli";
         };
       };
+      # On demand, never at login: the venv loads torch on the GPU and holds
+      # ~3.2 GiB of VRAM for as long as the server runs, synthesising or not —
+      # measured with `amdgpu_top -p` on 2026-11-02, the largest single consumer
+      # on the 16 GiB card next to a 4K compositor and a browser, and a big part
+      # of why a VRAM-hungry game took the GPU down that evening. Being enabled
+      # paid that cost every session for a server used now and then; the cheap
+      # parts of the stack (Piper, whisper.cpp) keep `defaultWanted`.
+      # Start it when a voice is wanted: `systemctl --user start chatterbox-tts`.
       chatterbox-tts = systemdUser.mkUserService {
         presets = [
-          "defaultWanted"
           "restartOnFailure"
         ];
         description = "Chatterbox TTS Server (OpenAI-compatible, ROCm GPU)";
