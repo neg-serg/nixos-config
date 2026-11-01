@@ -113,10 +113,121 @@ fi
 hyprctl switchxkblayout all 0 > /dev/null 2>&1 || true
 
 LOG=/tmp/pleamar-login-layer.log
-"$PLEAMAR" --scene "$TREE/shells/lock/lock.plm" --no-hud --stall 0 > "$LOG" 2>&1 &
+
+# The lock face is engaged once and keeps the box the scene had at that moment
+# (`pleamar-lock-engage.patch`: a later request finds `engaged` and answers true),
+# while the scene goes on drawing with whatever monitor it is given. A scene
+# started before this compositor has settled its outputs —the 4K panel comes up
+# in a fallback mode and the `hl.monitor` rule switches it afterwards— therefore
+# freezes a face sized for a monitor that is not the one on screen: the login
+# card lands in one quarter of the panel, three quarters stay empty, and the face
+# is never re-made (cold boot 2026-11-02 00:11; a logout, where the mode is
+# already right, was fine).
+#
+# So the scene waits for the outputs to be up and to stop changing. The list is
+# read whole and compared with the previous sample, so any mode, scale or
+# refresh-rate change restarts the wait; three equal samples in a row (300 ms of
+# quiet) are what counts as settled, because a single repeat still fits inside a
+# mode switch. Bounded at 5 s: a compositor that never answers, or a panel that
+# never settles, must not keep the login screen away — a card in the wrong corner
+# is bad, a black screen with no way to type is worse.
+describe_outputs() {
+  hyprctl monitors -j 2> /dev/null \
+    | "$JQ" -r '[.[] | "\(.name) \(.width)x\(.height)@\(.refreshRate) scale \(.scale)"] | sort | join(",")' 2> /dev/null
+}
+#
+# No `hyprctl` and no `jq` — another compositor, or a session started by hand —
+# means nothing to read, so nothing to wait for: the scene starts at once, exactly
+# as it did before this gate existed.
+if command -v hyprctl > /dev/null 2>&1 && [ -x "$JQ" ]; then
+  quiet=0
+  samples=0
+  now=""
+  last=""
+  while [ "$samples" -lt 50 ]; do
+    now="$(describe_outputs)"
+    if [ -n "$now" ] && [ "$now" = "$last" ]; then
+      quiet=$((quiet + 1))
+      [ "$quiet" -ge 3 ] && break
+    else
+      quiet=1
+    fi
+    last="$now"
+    samples=$((samples + 1))
+    sleep 0.1
+  done
+  printf 'login layer: outputs "%s" after %d ms\n' "${now:-none}" "$((samples * 100))" >> "$LOG"
+else
+  printf 'login layer: no hyprctl/jq here; the scene starts without waiting for the outputs\n' >> "$LOG"
+fi
+
+# Appended, not truncated: a cold boot's own log used to be wiped by the next
+# attempt and by hyprland.lua's note, which is why the failure above left no
+# trace. The scene's own lines carry on after this header.
+started_at="$(wc -l < "$LOG" 2> /dev/null || echo 0)"
+"$PLEAMAR" --scene "$TREE/shells/lock/lock.plm" --no-hud --stall 0 >> "$LOG" 2>&1 &
 scene_pid=$!
 
 alive() { kill -0 "$scene_pid" 2> /dev/null; }
+
+# ---- what was actually drawn (best effort, never fatal) ----------------------
+#
+# A lock face draws the scene's box CENTRED on its monitor — in the runtime,
+# `configure` sets `view_origin = origin - (monitor - box) / 2`, so a box that is
+# not the monitor's logical size shifts the whole login screen by half the
+# difference. That is the cold-boot picture: the card in one quarter, the rest
+# empty (2026-11-02 00:11).
+#
+# The gate above is the preventive half. This is the observational one: the scene
+# prints the size it measured, and the compositor says what the monitor is. It only
+# *reports*, on purpose — killing a scene that may already hold the lock is a
+# lockout, not a fix (ext-session-lock keeps the session locked when its client
+# goes: pleamar --docs reference, the lock-screen section). The login itself stays
+# usable with a shifted card, and nothing here can block it.
+measured() {
+  tail -n "+$((started_at + 1))" "$LOG" 2> /dev/null \
+    | sed -n 's/.*surface [0-9][0-9]* on \([^ ][^ ]*\) (lock) · \([^ ][^ ]*\) ·.*/\1 \2/p' \
+    | tail -1
+}
+monitor_size() {
+  hyprctl monitors -j 2> /dev/null \
+    | "$JQ" -r --arg n "$1" '[.[] | select(.name == $n)][0] | "\((.width / .scale) | floor)x\((.height / .scale) | floor)"' 2> /dev/null
+}
+
+# The compositor holds the session only once every face is up; that is the fact the
+# scene's own handover rests on, so it is worth one line in the log. Bounded at 3 s
+# and silent about failure: a compositor that does not answer is not an error here.
+held=""
+polls=0
+while [ "$polls" -lt 30 ]; do
+  held="$("$PLEAMAR" --say lock "get lock.held" 2> /dev/null)"
+  case "$held" in 1 | true) break ;; esac
+  alive || break
+  polls=$((polls + 1))
+  sleep 0.1
+done
+
+# One line with both sizes, when the scene got as far as printing its own: the next
+# cold boot then answers "was the face the monitor's size at engage time" without a
+# rebuild and without a second logout.
+face="$(measured)"
+face_name=""
+face_size=""
+want=""
+if [ -n "$face" ]; then
+  face_name="${face%% *}"
+  # The scene prints `1920×1080` (U+00D7); the compositor is asked for `1920x1080`,
+  # so the two are compared in ASCII.
+  face_size="$(printf '%s' "${face#* }" | sed 's/×/x/')"
+  want="$(monitor_size "$face_name")"
+fi
+printf 'login layer: lock.held "%s" after %d ms; compositor "%s"; face "%s"; monitor "%s"\n' \
+  "${held:-none}" "$((polls * 100))" "${HYPRLAND_INSTANCE_SIGNATURE:+hyprland}" \
+  "${face_size:-none}" "${want:-unknown}" >> "$LOG"
+if [ -n "$face_size" ] && [ -n "$want" ] && [ "$face_size" != "$want" ]; then
+  printf 'login layer: WARNING the lock face is "%s" but %s is "%s": the login screen is shifted by half the difference; NOT restarted on purpose, a locker killed while it holds the lock leaves the session locked with nothing to type into\n' \
+    "$face_size" "$face_name" "$want" >> "$LOG"
+fi
 
 while alive; do
   answer="$("$PLEAMAR" --say lock "wait unlocked == true 55s" 2>&1)"

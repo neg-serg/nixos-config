@@ -30,5 +30,19 @@ part Backdrop {
     // lands on the clock and the card. It is `skin.coal` — the wallpaper's colors.background
     // role, the same tone the drawers and the launcher lay under themselves — so a light wallpaper
     // veils with its own light tone instead of frozen black. The vignette lives in paper.wgsl.
-    box scrim { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: 18% }
+    //
+    // It covers three screens' worth, centred on the scene's origin, because a lock surface does
+    // not own its own size: `size:` on a `kind: lock` surface is "the box that gets centred on
+    // each monitor", and the runtime's own reference says to paint the backdrop large, "what lies
+    // around it shows too" (pleamar --docs reference, the lock-screen section; its example draws
+    // its backdrop from -4000). On a monitor whose box and size agree this is the same 18 % pane
+    // as before; if they ever disagree — the boot-time face sized for a monitor that is not the
+    // one on screen — the login screen is at least filled instead of three quarters black with
+    // the card pushed into a corner.
+    box scrim {
+        from: -screen.width, -screen.height
+        size: screen.width * 3, screen.height * 3
+        color: skin.coal
+        opacity: 18%
+    }
 }
