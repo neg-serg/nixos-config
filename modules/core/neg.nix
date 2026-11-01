@@ -69,10 +69,13 @@ in
         # the net.wifi feature. Four modules used to repeat this predicate.
         wifiEnabled = (config.profiles.network.wifi.enable or false) || enabled "net.wifi";
 
-        # Quickshell panel: full GUI + Qt + quickshell flags, off in dev-speed
-        # mode. Three modules used to repeat this conjunction.
+        # Qt-capable GUI session: full GUI + Qt, off in dev-speed mode. The
+        # Quickshell *panel* module and its `features.gui.quickshell` flag are
+        # gone; what still gates on this only needs Qt and a GUI session —
+        # waylandar (which brings its own Quickshell build) and the GUI extras
+        # in modules/user/gui-packages.nix.
         quickshellEnabled =
-          enabled "gui" && enabled "gui.qt" && enabled "gui.quickshell" && !(enabled "devSpeed");
+          enabled "gui" && enabled "gui.qt" && !(enabled "devSpeed");
 
         # Pleamar shell: full GUI + the pleamar flag, off in dev-speed mode.
         # No Qt gate on purpose — pleamar is a single Rust binary and shares no

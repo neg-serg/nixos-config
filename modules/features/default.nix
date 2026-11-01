@@ -51,7 +51,6 @@ in
       features = {
         gui = {
           qt.enable = lib.mkForce false;
-          quickshell.enable = lib.mkForce false;
         };
       };
     })

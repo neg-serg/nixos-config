@@ -1,11 +1,8 @@
 { lib, mkBool, ... }:
 {
   options.features.gui = {
-    enable = mkBool "enable GUI stack (wayland/hyprland, quickshell, etc.)" true;
+    enable = mkBool "enable GUI stack (wayland/hyprland, qt, etc.)" true;
     qt.enable = mkBool "enable Qt integrations for GUI (hyprqt6engine, qt6ct fallback, hyprland-qt-*)" true;
-    quickshell = {
-      enable = mkBool "enable Quickshell (panel) at login" true;
-    };
     pleamar = {
       enable = mkBool "enable the pleamar shell at login" false;
     };
