@@ -402,11 +402,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783125727,
-        "narHash": "sha256-1UAsVmbF2+kavFUdey117ebKAbr8IfEcCvRKLdbUVeo=",
+        "lastModified": 1793557192,
+        "narHash": "sha256-QpC7/ECuWMjUtOFefD5BRYGxvBKCqIr7rp+kdYXrPJo=",
         "owner": "neg-serg",
         "repo": "hyprscratch",
-        "rev": "19cfa34003741e5fe39d380ad9021ecee003130b",
+        "rev": "03da4e51d6bd8ed48826fcab49144968ea728b10",
         "type": "github"
       },
       "original": {
