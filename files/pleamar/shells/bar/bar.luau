@@ -1174,12 +1174,15 @@ local function tip_line(i)
     elseif i == 9 then
         -- The pill (QS PillCapsule's PanelTooltip): "Taken at <time>", or that it is not taken —
         -- with the streak the plugin keeps, which the reference only drew in the calendar.
-        local streak = tonumber(fact["Pill.streak"]) or 0
+        -- The scene's mirror of the plugin's state (`bar.plm`'s `pill.*` rules): the plugin's own
+        -- facts do not reach this logic (measured 2026-10-31 — the scene had `Pill.taken` true and
+        -- this card answered «Pill not taken yet»).
+        local streak = tonumber(fact["pill.streak"]) or 0
         local line
-        if fact["Pill.taken"] == true then
-            local at = tostring(text["Pill.takenAt"] or "")
+        if fact["pill.taken"] == true then
+            local at = tostring(text["pill.at"] or "")
             line = (at ~= "") and ("Pill taken at " .. at) or "Pill taken"
-        elseif fact["Pill.reminder"] == true then
+        elseif fact["pill.reminder"] == true then
             line = "Pill not taken yet!"
         else
             line = "Pill not taken yet"

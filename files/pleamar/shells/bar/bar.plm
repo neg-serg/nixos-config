@@ -208,6 +208,14 @@ scene bar {
     fact widget.mic = true
     fact widget.genelec = true
     fact widget.build = true
+    // The pill's state, mirrored out of the plugin by the rules below. A plugin's facts and texts are
+    // live for this scene and stale for its logic (measured 2026-10-31), and the card is built by the
+    // logic — so the scene copies them into names the logic owns. `takenAt` is a text and a rule can
+    // only watch a fact, which is why it is copied when `taken` flips: the plugin sets both together.
+    fact pill.taken = false
+    fact pill.reminder = false
+    fact pill.streak = 0
+    text pill.at = ""
     fact widget.media = true
     // Set by bar.luau from the `media` service: a player is there (the QS
     // `MusicManager.hasPlayer`). The language compares numbers only, so the
@@ -1785,6 +1793,9 @@ scene bar {
     // beside each `on enter`), and these three live here because their zones are the plugins'.
     on change Pill.hot while Pill.hot { emit tip(9) }
     on change Pill.hot while not Pill.hot { emit tip_hide }
+    on change Pill.taken { pill.taken = Pill.taken; pill.at = Pill.takenAt }
+    on change Pill.reminder { pill.reminder = Pill.reminder }
+    on change Pill.streak { pill.streak = Pill.streak }
     on change Mpd.hot while Mpd.hot { emit tip(10) }
     on change Mpd.hot while not Mpd.hot { emit tip_hide }
     on change Genelec.hot while Genelec.hot { emit tip(11) }
