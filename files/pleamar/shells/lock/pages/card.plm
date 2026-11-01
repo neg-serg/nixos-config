@@ -19,6 +19,13 @@
 // The failure is visible three times over: the tint warms, the nudge plays and
 // the status line turns red — all through facts the logic sets, so a wrong
 // password can never look like a slow one.
+//
+// Colours come from the wallpaper palette the scene imports (theme.plm): `skin.surface` for the
+// card's plate, `skin.coal` for the field's well, `skin.ink`/`skin.ink.dim` for the ink and
+// `skin.accent` for the prompt, the caret and the progress line. Three greeter tokens stay frozen
+// because theme.plm carries no role for them: `lock.danger` (the refusal — the palette has no
+// error role), the `lock.edge` rim (no outline role) and `lock.card.alpha`, the plate's own
+// opacity, which is an alpha and not a colour.
 
 part Card {
 
@@ -30,11 +37,13 @@ part Card {
         opacity: appear
 
         // ------------------------------------------------------- the glass
-        // Legacy glassTint #c20a0e14: lock.card at lock.card.alpha, warmed by
-        // the failure. No frame: the glass paints its own rim; the drop shadow
-        // is a body's (`shadow:` is not a box property).
+        // Legacy glassTint #c20a0e14 — greeter.cardColor at lock.card.alpha — with the plate
+        // taken from the wallpaper: `skin.surface` is the theme's colors.surfaceVariant, the
+        // role a raised surface carries, so a new wallpaper repaints the card. The refusal still
+        // warms it with `lock.danger`, which theme.plm has no role for. No frame: the glass
+        // paints its own rim; the drop shadow is a body's (`shadow:` is not a box property).
         body {
-            color: mix(lock.card, lock.danger, alarm * 0.25)
+            color: mix(skin.surface, lock.danger, alarm * 0.25)
             opacity: lock.card.alpha
             glass: 100%
             refraction: lock.card.refraction
@@ -58,12 +67,14 @@ part Card {
             }
             box avatar_fallback {
                 from: -52, -52; size: 104, 104; corner: 16
-                color: slate; opacity: 30%; show: not avatar_ok
+                color: skin.surface; opacity: 30%; show: not avatar_ok
             }
             text monogram {
-                at: 0, 0; anchor: center; size: 46; weight: 500; color: lock.ink
+                at: 0, 0; anchor: center; size: 46; weight: 500; color: skin.ink
                 family: "Iosevka"; show: not avatar_ok
             }
+            // The ring is the greeter's white rim (`lock.edge`): the wallpaper palette carries no
+            // outline role, so the tone stays frozen and only the refusal recolours it.
             box avatar_ring {
                 from: -52, -52; size: 104, 104; corner: 16
                 stroke: 2; color: mix(lock.edge, lock.danger, alarm)
@@ -73,28 +84,30 @@ part Card {
 
         // --------------------------------------------------- user@host line
         row identity { at: 0, -2; anchor: center; gap: 0
-            text user { size: 22; color: lock.ink; family: "Iosevka" }
-            text host { size: 22; color: lock.ink.dim; opacity: 60%; family: "Iosevka" }
+            text user { size: 22; color: skin.ink; family: "Iosevka" }
+            text host { size: 22; color: skin.ink.dim; opacity: 60%; family: "Iosevka" }
         }
 
         // ------------------------------------------------------- the field
-        // A dark glass slab; the prompt glyph and the input sit on it. No
-        // frame: the slab's own rim and the caret say "type here".
+        // A glass well; the prompt glyph and the input sit on it. `skin.coal` is the theme's
+        // colors.background, so the well sits below the card's plate in either theme — dark on a
+        // dark wallpaper, light on a light one. No frame: the well's own rim and the caret say
+        // "type here".
         box field_bg {
             from: -192, 33; size: 384, 58; corner: 8
-            color: coal; opacity: 55%
+            color: skin.coal; opacity: 55%
             glass: 100%; refraction: lock.field.refraction; frost: lock.glass.frost
         }
         text ">" {
-            at: -174, 62; anchor: left center; size: 20; color: lock.accent
+            at: -174, 62; anchor: left center; size: 20; color: skin.accent
             opacity: if(busy, 90%, 35%); family: "Iosevka"
         }
         // The password field: `secret: true` and `agent: no` are the policy
         // (INTERFACES.md §8.1, frozen label `Password`). The logic is the only
         // reader of `text.password`; drawing never shows it.
         input password {
-            at: -150, 48; width: 330; size: 22; weight: 500; color: lock.ink
-            family: "Iosevka"; selection: lock.accent
+            at: -150, 48; width: 330; size: 22; weight: 500; color: skin.ink
+            family: "Iosevka"; selection: skin.accent
             secret: true; label: "Password"; agent: no
             placeholder: "type the password"
         }
@@ -102,7 +115,7 @@ part Card {
         // field (the legacy sweeping bar, as a fill — a sweep needs a loop).
         box field_progress {
             from: -177, 86; size: 354 * busy_progress, 2; corner: 1
-            color: lock.accent; show: busy
+            color: skin.accent; show: busy
         }
 
         // ------------------------------------------- the keyboard-layout chip
@@ -114,12 +127,12 @@ part Card {
             show: kb_on
             box chip_bg {
                 from: -192, 92; size: 78, 22; corner: 11
-                color: lock.ink; opacity: 8%
+                color: skin.ink; opacity: 8%
             }
             // 78 design px: "layout: ru" is ten glyphs of Iosevka at 14 (≈6.5 each) plus the
             // pill's 12 px of padding on each side, rounded up for a three-letter code.
             text "layout: {kb_layout}" {
-                at: -181, 103; anchor: left center; size: 14; family: "Iosevka"; color: lock.ink.dim
+                at: -181, 103; anchor: left center; size: 14; family: "Iosevka"; color: skin.ink.dim
             }
             zone box chip_hit {
                 from: -192, 92; size: 78, 22; corner: 11; cursor: pointer
@@ -135,7 +148,7 @@ part Card {
         // and the first two are warnings, so the line wears the danger colour for both.
         text status {
             at: 0, 113; anchor: center; size: 16; family: "Iosevka"
-            color: if(status_danger, lock.danger, lock.ink.dim)
+            color: if(status_danger, lock.danger, skin.ink.dim)
         }
     }
 

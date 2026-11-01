@@ -1,6 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
+import "../../theme.plm"
 import "../../lib/capsule.plm"
 
 // lock.plm — the session lock / login scene of the pleamar shell (PH3-L).
@@ -24,6 +25,14 @@ import "../../lib/capsule.plm"
 // (the same check the legacy PamContext ran) — and nothing else. The password
 // is read from `text.password`, never written to a file, never logged, and the
 // field is cleared before the answer is reported.
+//
+// Colours follow the wallpaper. The scene imports theme.plm like every other scene (`skin.*` is
+// the palette the theme pipeline regenerates when the wallpaper changes), so the card's plate, its
+// well, its ink and its accent are the wallpaper's own roles; pages/card.plm and pages/backdrop.plm
+// name them, and list the greeter tokens that stay frozen because theme.plm has no role for them
+// (`lock.danger`, the `lock.edge` rim, the `lock.widget` glass). The repository copy of theme.plm
+// is the committed fallback, so the login screen — loaded from /etc/pleamar-lock before
+// ~/.config/pleamar exists — still has a palette to read.
 //
 // Settings — `~/.local/share/pleamar/lock/settings.json`, read and watched by
 // lock.luau, defaults in code, unknown keys kept:
