@@ -10,8 +10,8 @@ LOG="/tmp/hypr-start.log"
 # --login tears nothing down. The session target has never been started in this
 # user manager; the session units that must already be up (wl-daemon — the
 # wallpaper behind the login screen — started deliberately in the login phase)
-# are running; the ones that must not run yet (quickshell the bar, hypridle) were
-# held back by the login-phase marker. Tearing the target down anyway is exactly
+# are running; the ones that must not run yet (the pleamar scenes, the bar,
+# hypridle) were held back by the login-phase marker. Tearing the target down anyway is exactly
 # what made the login feel slow: the stop/start below killed and restarted the
 # session shell right after the password (PartOf=hyprland-session.target) together
 # with the portals, and the socket wait added a second on top. 2026-09-19:
@@ -36,11 +36,12 @@ dbus-update-activation-environment --systemd --all
 systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL
 
 # The desktop may start now: drop the systemd-visible login-phase marker (see
-# modules/user/session/greetd/session-wrapper.sh). Without this, quickshell.service
-# and hypridle.service stay skipped (ConditionPathExists=!…) and the session would
-# come up without a bar. login.qml removes it as it writes "session"; this copy
-# covers the rescue bind and a hand-flipped marker — both modes, because reaching
-# this script at all means the session is allowed to start.
+# modules/user/session/greetd/session-wrapper.sh). Without this, every
+# pleamar-<scene>.service and hypridle.service stays skipped (ConditionPathExists=!…)
+# and the session would come up without a bar. pleamar-login-layer removes it as it
+# writes "session"; this copy covers the rescue bind and a hand-flipped marker —
+# both modes, because reaching this script at all means the session is allowed to
+# start.
 rm -f "${QS_LOGIN_STATE_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell-login}/login-phase"
 
 # A compositor that died leaves its /run/user/$UID/hypr/<signature>/ behind, complete

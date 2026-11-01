@@ -3,8 +3,8 @@
 #
 # Single-compositor login: greetd opens the PAM/logind session for the main user
 # and this script starts the session compositor. No greeter session, no second
-# compositor: the login screen is a quickshell session-lock layer inside this
-# compositor (files/quickshell/greeter/login.qml), started by
+# compositor: the login screen is the pleamar lock scene
+# (files/pleamar/shells/lock/lock.plm), an ext-session-lock surface started by
 # files/gui/hypr/hyprland.lua while the marker below reads "login".
 #
 # greetd starts the default session whenever no session is running — also after
@@ -22,9 +22,9 @@
 # anyone having to reset it. Linger is off for the main user — a lingering
 # runtime dir would keep "session" and bring the desktop straight back up.
 #
-# The same directory is exported to the compositor and to the login layer, so all
-# of them (including files/quickshell/scripts/login-wallpaper.sh) agree on one
-# path: hyprland.lua reads the marker, login.qml writes it.
+# The same directory is exported to the compositor and to the login layer, so both
+# agree on one path: hyprland.lua reads the marker, pleamar-login-layer writes
+# "session" into it (the lock scene itself never touches the file system).
 #
 # Only the Hyprland session can be started now: the greeter's session list went
 # away with the greeter — this compositor *is* the session, and its config is
@@ -49,6 +49,10 @@ export PATH="/run/wrappers/bin:/run/current-system/sw/bin:$PATH"
 
 : "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
 export XDG_RUNTIME_DIR
+# The directory keeps its historical name: the unit conditions in
+# modules/user/nix-maid/gui/pleamar.nix and pleamar.nix's loginPhaseGuard name the
+# same path, and renaming it buys nothing a login debug needs. Only the file names
+# (`state`, `login-phase`) and the values inside them are the contract.
 export QS_LOGIN_STATE_DIR="$XDG_RUNTIME_DIR/quickshell-login"
 
 # logind creates XDG_RUNTIME_DIR for the greetd session before this script runs;
@@ -66,22 +70,20 @@ if [ ! -r "$QS_LOGIN_STATE_DIR/state" ]; then
   printf 'login\n' > "$QS_LOGIN_STATE_DIR/state"
 fi
 
-# Systemd-visible half of the same marker: quickshell.service and hypridle.service
-# carry ConditionPathExists=!%t/quickshell-login/login-phase, i.e. they refuse to
-# start while the login screen is up. They have to: nix-maid's sd-switch starts
-# changed units *directly*, bypassing the session target, and did exactly that
-# during the login phase (2026-09-19 18:25:47 — the bar came up behind the lock
-# surface; hypr-start then killed and restarted it right after the password, which
-# is both wasted work and a visible blink). login.qml removes the file when the
-# password is accepted, and hypr-start removes it as well, so a crashed layer can
-# never leave the desktop blocked.
+# Systemd-visible half of the same marker: every pleamar scene unit and
+# hypridle.service carry ConditionPathExists=!%t/quickshell-login/login-phase, i.e.
+# they refuse to start while the login screen is up. They have to: nix-maid's
+# sd-switch starts changed units *directly*, bypassing the session target, and did
+# exactly that during the login phase (2026-09-19 18:25:47 — the bar came up
+# behind the lock surface; hypr-start then killed and restarted it right after the
+# password, which is both wasted work and a visible blink).
+# pleamar-login-layer removes the file when the password is accepted, and
+# hypr-start removes it as well, so a crashed layer can never leave the desktop
+# blocked.
 : > "$QS_LOGIN_STATE_DIR/login-phase"
 
-# Wallpaper for the login layer: resolved by the script the session side also
-# asks (scripts/wl-wallpaper-resolve.sh), so login and desktop show one image.
-
-if [ -x /etc/quickshell/scripts/login-wallpaper.sh ]; then
-  /etc/quickshell/scripts/login-wallpaper.sh || true
-fi
+# The login wallpaper is not resolved here: pleamar-login-layer publishes it into
+# the lock scene's own data folder while the login phase runs, from the wl state
+# the compositor is about to paint anyway (see that script).
 
 exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1
