@@ -27,14 +27,6 @@ in
   flight-gtk-theme = callPkg (pkg "flight-gtk-theme") { };
   matugen-themes = callPkg (pkg "matugen-themes") { };
   wl = callPkg (pkg "wl") { };
-  # qs-wallpaperpicker — swatch-deck wallpaper picker: a Quickshell config of its
-  # own, while the picture itself stays with wl (`wl img {}` in the settings
-  # seed). `pkgs` is the final set because the package builds its `qs` wrapper
-  # and PATH from it, and `wl` (overlay-owned) cannot come from prev.
-  qs-wallpaperpicker = callPkg (pkg "qs-wallpaperpicker") {
-    pkgs = final;
-    wl = final.wl;
-  };
   wl-switcher = callPkg (pkg "wl-switcher") { inherit mkVicinaeExtension; };
   wallhaven = callPkg (pkg "wallhaven") { inherit mkVicinaeExtension; };
   hyprwhspr = callPkg (pkg "hyprwhspr") { inherit mkVicinaeExtension; };

@@ -29,22 +29,6 @@ let
     state_file="$HOME/.local/state/wl/state.json"
     notify_file="$HOME/.cache/quickshell-wallpaper-path"
 
-    # With the picker drawing a clip, the notify file holds that clip's still frame —
-    # what the login screen must keep showing — while wl's state only names the image
-    # underneath it. Leave the notify file (and last-good) alone then: wl rewrites
-    # state.json on every restore, and in this mode that restore is not what is on
-    # screen. A deck that is down answers nothing and this returns at once, so the wl
-    # chain keeps working on its own.
-    case "$(readlink -f "$HOME/.cache/current_wallpaper_source" 2> /dev/null || true)" in
-      *.mp4 | *.webm | *.mkv | *.mov | *.m4v | *.gif | *.webp)
-        # The exit status is the liveness test, not the output: with no instance
-        # running the CLI prints its diagnostics on *stdout* and exits 255, so
-        # testing the text would read a dead deck as alive.
-        if ${lib.getExe' pkgs.qs-wallpaperpicker "qs-wallpaperpicker"} current > /dev/null 2>&1; then
-          exit 0
-        fi
-        ;;
-    esac
     if [ -f "$state_file" ]; then
       wallpaper_path="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2>/dev/null || true)"
       if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
