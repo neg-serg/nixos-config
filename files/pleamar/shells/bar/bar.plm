@@ -1742,13 +1742,13 @@ scene bar {
         // nothing behind it to bend, and the glass reads as paint.
         opacity: if(skin.light, 84%, 60%)
         // The glass sits here, not on the capsules: in the reference the compositor
-        // (a Hyprland plugin, `hyprglass`) blurs and refracts the whole surface, and
+        // (a Hyprland glass plugin) blurs and refracts the whole surface, and
         // the widgets are flat fills over it. No plugin is loaded on this host
         // (`hyprctl plugin list` has only `hyprwinwrap`), so the surface draws its own:
         // a lens that bends the edge, `frost: auto` — frosted where what is behind is busy,
         // which is what keeps a terminal's words from fighting the bar's, clear over a bare
         // wallpaper — and a faint rim highlight where the light catches the bevel.
-        // One number decides who does the glass; 0 % the moment `hyprglass` or `hyprliquid`
+        // One number decides who does the glass; 0 % the moment a glass plugin is back,
         // is back, or the bar would be blurred twice.
         glass: 70% * strip.glass
         lens: true

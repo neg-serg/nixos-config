@@ -71,7 +71,7 @@
 //
 // ## 7. Backdrop — real blur, not the plugin's pseudo-frost
 //
-// - The card is NOT in hyprglass's `layers.namespaces` any more: that pass frosts the wallpaper it
+// - The card is NOT in the glass plugin's `layers.namespaces`: that pass frosting the wallpaper it
 //   re-samples instead of the surface's real backdrop. `qs-music` uses Hyprland's own layer blur
 //   (`blur-qs-.*`, `ignore_alpha 0.05`, live framebuffer) plus the card's translucent fill, so what
 //   shows through is what is really behind the popup.
@@ -107,7 +107,7 @@ Item {
     function showAt()   { toast.showAt(); }
     function hidePopup(){ toast.hidePopup(); }
 
-    // Music toast as a WlrLayershell window (compositor blur, hyprglass).
+    // Music toast as a WlrLayershell window (compositor blur).
     // Mapping constraints in this Quickshell build (0.3.1 rev 2d3b3e9): a
     // surface appears only for full-height right/top/bottom anchors with
     // ExclusionMode.Normal, the default layer and NO WlrLayershell.margins.

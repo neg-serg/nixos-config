@@ -33,10 +33,10 @@ Singleton {
             property real panelBgAlphaScale: 0.2
 
             // Enable wedge clip ShaderEffect path (env vars can override in debug)
-            // Per-window hyprglass overrides, consumed by hyprglass-apply (it turns
-            // them into custom presets + window-rule tags). The Glass panel that used
-            // to edit them was removed on 2026-10-26; hyprglass is not loaded on this
-            // host (hyprliquid owns the glass), so these are inert until it is.
+            // Per-window glass overrides, leftovers from the removed hyprglass plugin
+            // (it turned them into custom presets + window-rule tags). The Glass panel
+            // that edited them went on 2026-10-26, and no glass plugin is loaded on
+            // this host, so they are inert.
             // Shape: [{ class, enabled, blurStrength, glassOpacity, adaptiveDim,
             // tint }] — tint is RRGGBBAA or "" to inherit, and a missing field means
             // "inherit the global value".
@@ -59,12 +59,10 @@ Singleton {
             // matters more than the CPU cost.
             property bool panelTintEnabled: false
 
-            // Glass (hyprglass) values. hyprglass-apply turns them into the plugin's
-            // config, pushes it and verifies it; the shipped defaults live in
-            // files/gui/hypr/hyprglass.lua. The Glass panel that wrote them through to
-            // ~/.config/hypr/hyprglass.json was removed on 2026-10-26, and hyprglass is
-            // not loaded on this host (hyprliquid owns the glass) — these are inert
-            // until it is, and the JSON is hand-edited when it is.
+            // Glass values, leftovers from the removed hyprglass plugin (it turned them
+            // into the plugin's config, pushed it and verified the push). The Glass panel
+            // that wrote them to ~/.config/hypr/hyprglass.json went on 2026-10-26, and
+            // no glass plugin is loaded here — inert.
             property real glassBlurStrength: 6
             property int glassBlurIterations: 5
             property real glassVibrancy: 0.5

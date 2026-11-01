@@ -1,10 +1,10 @@
 -- hyprliquid — Liquid Glass / Acrylic / Mica / Aero materials, for windows and
 -- layer surfaces.
 --
--- Why this plugin and not hyprglass: hyprglass glasses only windows and popups
--- now (`manage_window_blur`), so the bar — a layer surface — had no compositor
--- glass at all and leaned on Hyprland's plain blur. hyprliquid matches layer
--- namespaces, which is the only handle a layer surface gives.
+-- Why this plugin: it matches layer namespaces, which is the only handle a layer
+-- surface gives — a window-only glass plugin leaves the bar to Hyprland's plain
+-- blur. NOTE: stubbed on 0.57 (overlay.nix ships an empty lib dir), so this file
+-- is inert until the plugin is ported.
 --
 -- Loaded and applied by the generated `hyprliquid-setup` helper from the
 -- session-start hook, like every other plugin here: a plugin cannot be dlopen'd

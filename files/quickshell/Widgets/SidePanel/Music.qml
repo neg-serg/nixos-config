@@ -64,10 +64,10 @@ Rectangle {
             // hairline right under it is the frame (1 logical px) — crisp and
             // light, not a glassy rim. What frosts the backdrop is the compositor:
             // Hyprland's own layer blur (layer rule `blur-qs-.*`, the mechanism the
-            // bar's surfaces use) — hyprglass deliberately does not glass this
-            // namespace, and the card declares no blur region of its own, otherwise
-            // the two passes stacked and the plate read as a flat smear
-            // (files/gui/hypr/hyprglass.lua, Widgets/SidePanel/MusicPopup.qml).
+            // bar's surfaces use) — no glass plugin touches this namespace, and the
+            // card declares no blur region of its own, otherwise the two passes
+            // stacked and the plate read as a flat smear
+            // (Widgets/SidePanel/MusicPopup.qml).
             color: Color.withAlpha(Theme.surface, Theme.sidePanelPopupGlassOpacity)
             border.color: Color.withAlpha(Theme.textPrimary, Theme.sidePanelPopupGlassBorderOpacity)
             border.width: Theme.uiBorderWidth

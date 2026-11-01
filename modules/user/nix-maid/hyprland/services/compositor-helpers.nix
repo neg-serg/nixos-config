@@ -111,19 +111,16 @@ in
         /org/mpris/MediaPlayer2 \
         "org.mpris.MediaPlayer2.Player.$MEMBER"
     '')
-    # Glass scratchpad terminal. hyprglass frosts what is behind a window, so the
+    # Glass scratchpad terminal. The compositor frosts what is behind a window, so the
     # terminal itself has to be translucent for the backdrop to read through:
     # kitty's 0.88 default is nearly opaque and showed no glass at all. 0.85 black
     # keeps a hint of frost while staying decisively darker than the media card
     # (0.45) — a terminal that faint competes with its own text.
     #
-    # The music pane (rmpc) used to sit at the opposite end: its window is tagged
-    # with the plugin's `scratch` preset — blur_strength 16, i.e. a 192 px radius,
-    # all five gaussian passes and no adaptive dim (hyprglass-apply.sh) — so the
-    # strongest frost in the session is behind it and 0.45 black was enough to let
-    # it through. That frost is the wallpaper itself (xray), so the pane read as a
-    # washed slice of whatever was on screen rather than as a terminal; 0.85 puts
-    # it on the same footing as every other scratchpad, where the text wins over
+    # The music pane (rmpc) used to sit at the opposite end: it carried the glass
+    # plugin's strongest frost preset, so 0.45 black let the backdrop through. With
+    # the plugin gone there is no extra frost behind it, and 0.85 puts the pane on
+    # the same footing as every other scratchpad, where the text wins over
     # the backdrop. Measured over an opaque 200-grey window: 0.96 -> (6,6,6),
     # 0.92 -> (11,11,11), 0.85 -> (24,24,24), 0.70 -> (49,49,49).
     #

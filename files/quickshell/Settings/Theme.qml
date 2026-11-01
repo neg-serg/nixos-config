@@ -781,11 +781,11 @@ Singleton {
     property int sidePanelPopupOuterMargin: val('sidePanel.popup.outerMargin', 4)
     // Side-panel popup spacing (between inner items)
     property int sidePanelPopupSpacing: val('sidePanel.popup.spacing', 0)
-    // Fill of the now-playing card. It has to stay translucent: hyprglass
-    // blurs and refracts what is *behind* the surface, so the old hard-coded
-    // 0.92 black showed none of it (the popup stayed flat even though
-    // `qs-music` is in the plugin's layer namespace list). 0.75 is the dark end
-    // of that ranging: at 0.45 the fill let 55% of the blurred backdrop through,
+    // Fill of the now-playing card. It has to stay translucent: the compositor
+    // blurs what is *behind* the surface, so the old hard-coded 0.92 black showed
+    // none of it (the popup stayed flat even though `qs-music` is in the plugin's
+    // layer namespace list). 0.75 is the dark end of that ranging: at 0.45 the
+    // fill let 55% of the blurred backdrop through,
     // which read as barely darker than the panel it hangs over (measured against
     // a flat backdrop: card fill ~(96,109,117) over (200,200,200)). A quarter of
     // the frost is what is left now — still glass, decisively darker.

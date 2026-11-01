@@ -4,8 +4,9 @@
 #
 # Why at the pane and not in the compositor: nothing on that side moves this
 # window's blur any more. Measured with a high-frequency backdrop behind the open
-# pane, the hyprglass window presets (blur_strength 1 vs 16, plus a per-window
-# override pushed from the Glass panel) and Hyprland's own decoration:blur:size
+# pane, Hyprland's own decoration:blur:size (26 vs 90, both set before the window
+# mapped) and the removed glass plugin's per-window presets (blur_strength 1 vs
+# 16) all leave the frost bit-identical,
 # (26 vs 90, both set before the window mapped) all leave the frost bit-identical,
 # so the only knob left is the pane's own background.
 #
