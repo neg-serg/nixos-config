@@ -39,7 +39,7 @@
     # 2026-10-27 (Herdr 0.9.5): a channel release keeps the closure
     # substitutable from cache.nixos.org instead of building from source, and
     # Herdr >= 0.9.2 is what enables native agent-session restore.
-    nixpkgs.url = "github:NixOS/nixpkgs/31ecbaca1bdefa45dffc409f0250bd8039ea0010";
+    nixpkgs.url = "github:NixOS/nixpkgs/1c89083e451e891152365b799595cf7790a43325";
 
     # ROCm/PyTorch env is pinned to the previous rev (packages/torch-rocm):
     # the 2026-09 nixpkgs ships python3-torch 2.13.0, whose HIP build needs

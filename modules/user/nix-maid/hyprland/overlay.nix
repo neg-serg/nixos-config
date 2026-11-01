@@ -61,9 +61,18 @@
           # the .so is loaded by hy3-setup (main.nix) as before, and the keys live in
           # files/gui/hypr/hyprland.lua (M4+SHIFT+F, D in the tiling submap).
           hy3 = prev.hyprlandPlugins.hy3.overrideAttrs (old: {
-            # The patch is a plain unified diff against src/ of tag hl0.56.0.1: five
-            # files, no build changes, so the nixpkgs recipe (which already pins the
-            # tag and builds with mkHyprlandPlugin) is kept as is.
+            # The tag follows the compositor: nixpkgs still pinned hl0.56.0.1 after the
+            # 0.57 bump, and a plugin is ABI-bound to the Hyprland it was built against,
+            # so the source is named here instead. hl0.57.0 is upstream's own tag for
+            # 0.57; the local patch below is a plain unified diff against `src/` and is
+            # rebased onto it when it stops applying.
+            version = "0.57.0";
+            src = final.fetchFromGitHub {
+              owner = "outfoxxed";
+              repo = "hy3";
+              rev = "4c0199b42967b3511e3520b75cfa1f6411fb7e87"; # tag hl0.57.0
+              hash = "sha256-9qAw3Xsa0xN9b5ERiWEGL1fBq37GLskcrBj/6ax8PU4=";
+            };
             patches = (old.patches or [ ]) ++ [ ./hy3-detach-float.patch ];
           });
 
@@ -156,8 +165,22 @@
             };
 
             nativeBuildInputs = [ final.cmake ];
-            buildInputs = [ final.lua5_5 ];
-            env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
+            # glib: CMake asks pkg-config for pangocairo, which pulls glib, whose
+            # `.pc` names its own private deps (`sysprof-capture-4`, `libpcre2-8`,
+            # …). Those resolve through the wrapper's path only when glib itself is
+            # an input, so it is named here instead of chasing each dep by hand.
+            buildInputs = [
+              final.lua5_5
+              final.glib
+            ];
+            # Appended, not assigned: an assignment here *replaces* the search path
+            # the pkg-config wrapper builds from `buildInputs`, which is what made
+            # glib's dependencies unfindable on the 2026-10-30 nixpkgs. Hyprland
+            # keeps its `.pc` in `share/pkgconfig`, which is why the path is needed
+            # at all.
+            preConfigure = ''
+              export PKG_CONFIG_PATH="${final.hyprland.dev}/share/pkgconfig:''${PKG_CONFIG_PATH:-}"
+            '';
 
             meta = {
               homepage = "https://github.com/fedsfarm/gloview";
@@ -334,6 +357,15 @@
             };
 
             patches = [ ./hyprwinwrap-lua-window-merge.patch ];
+            # 0.57 moved the window header one directory down
+            # (`desktop/view/Window.hpp` -> `desktop/view/window/Window.hpp`); every
+            # other include this plugin uses still resolves. Kept as a substitution
+            # rather than a patch file: it is one string.
+            postPatch = ''
+              substituteInPlace main.cpp \
+                --replace-fail "hyprland/src/desktop/view/Window.hpp" \
+                               "hyprland/src/desktop/view/window/Window.hpp"
+            '';
 
             nativeBuildInputs = [ final.cmake ];
             # The CMakeLists asks pkg-config for hyprland, libdrm, libinput,
@@ -342,8 +374,22 @@
             # hyprland.buildInputs. Only the Lua headers need an explicit input:
             # lua5_5 is the interpreter Hyprland itself links, and its lua55.pc
             # is what the plugin's pkg_search_module(lua55 …) matches.
-            buildInputs = [ final.lua5_5 ];
-            env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
+            # glib: CMake asks pkg-config for pangocairo, which pulls glib, whose
+            # `.pc` names its own private deps (`sysprof-capture-4`, `libpcre2-8`,
+            # …). Those resolve through the wrapper's path only when glib itself is
+            # an input, so it is named here instead of chasing each dep by hand.
+            buildInputs = [
+              final.lua5_5
+              final.glib
+            ];
+            # Appended, not assigned: an assignment here *replaces* the search path
+            # the pkg-config wrapper builds from `buildInputs`, which is what made
+            # glib's dependencies unfindable on the 2026-10-30 nixpkgs. Hyprland
+            # keeps its `.pc` in `share/pkgconfig`, which is why the path is needed
+            # at all.
+            preConfigure = ''
+              export PKG_CONFIG_PATH="${final.hyprland.dev}/share/pkgconfig:''${PKG_CONFIG_PATH:-}"
+            '';
 
             meta = {
               homepage = "https://github.com/gen3vra/hyprwinwrap";
