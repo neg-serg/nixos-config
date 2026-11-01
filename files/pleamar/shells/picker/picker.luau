@@ -12,13 +12,20 @@
 --   · read the colour schemes of the page's wallpapers with `pleamar-wallpaper-palettes` and
 --     fill the cards' chips as the lines arrive (the pictures are there from the first frame);
 --   · hand the chosen card to `pleamar-wallpaper-apply` (caches, the wallpaper command, matugen)
---     and close.
+--     and close;
+--   · keep the favourites in favourites.json (`f` marks the card the keyboard is on) and lead
+--     the deck with them, or show only them (`tab`).
 --
 -- Settings (`~/.local/share/pleamar/picker/settings.json`):
 --   folder    text    ~/pic/wl        the wallpapers to browse
 --   command   text    wl img {}       the tool that paints the desktop; {} is the path
 -- The settings screen (picker.plm, `g`) is one writer of that file and an editor is another: the
 -- watcher below re-reads it, and a folder that moved is listed again there and then.
+--
+-- Favourites (`favourites.json`, the reference's WallpaperFavorites.qml):
+--   favourites  array of text   []      wallpapers by bare file name, the marked ones
+-- The logic is the only writer (`f`, or `--say picker "emit favourite 2"`), and a name the folder
+-- no longer holds stays in the file: the wallpaper may come back.
 --
 -- Why pages: a card is a picture, and a picture costs the atlas — ~290 x 180 of it each. The
 -- reference read the schemes of the cards in view for the same reason. A folder of five hundred
@@ -30,6 +37,9 @@
 -- and counted in the status line instead of being offered as cards wl cannot paint.
 
 local FILE = "settings.json"
+-- The favourites, in a file of their own so they never touch settings.json (the reference kept
+-- its own `wallpaper-favorites.json` beside them for the same reason).
+local FAV = "favourites.json"
 
 -- Defaults live here; the file holds only what the user changed.
 local D = {
@@ -59,15 +69,17 @@ local home = sys.ask("env", "HOME") or ""
 local dir = D.folder -- the folder as a program reads it (no ~)
 local names = {}     -- every wallpaper in the folder, in name order
 local by_time = {}   -- the same names, newest file first (what `ls -t` answered)
-local vis = {}       -- what the deck shows: `names` in the sort's order (and, later, filtered)
+local favs = {}      -- name -> true, the ones marked favourite (from favourites.json)
+local vis = {}       -- what the deck shows: `names` in the sort's order, favourites first
 local schemes = {}   -- name -> {{ r, g, b }, …}, what the reader has answered so far
 local reader = nil   -- the palettes process, while it runs
 local skipped = 0    -- files left out because they are clips
 local listed = false -- whether the folder has been listed since the scene started
 
--- Declared here, defined below: the settings screen may be saved at any moment, and what it
--- saves moves the folder the deck reads and the line it says about it.
-local list, status
+-- Declared here, defined below: the settings screen may be saved at any moment and the favourites
+-- marked at any moment, and either moves the folder the deck reads, the page it shows and the line
+-- it says about them.
+local list, status, refresh
 
 -- ======================= small helpers =======================
 
@@ -110,6 +122,8 @@ end
 
 -- `names` in the order the deck is sorting by. A name `ls -t` did not mention (a file that
 -- appeared after it answered) goes last, in name order, so the sort is always a total one.
+-- The favourites come first, in that same order, and with `only_favourites` they are all there
+-- is — the reference's leading sort key and its Favourites source in one place.
 local function ordered()
     local out = {}
     for i = 1, #names do out[i] = names[i] end
@@ -122,7 +136,21 @@ local function ordered()
             return a < b
         end)
     end
-    return out
+
+    local sorted = {}
+    if fact.only_favourites then
+        for _, name in ipairs(out) do
+            if favs[name] then sorted[#sorted + 1] = name end
+        end
+        return sorted
+    end
+    for _, name in ipairs(out) do
+        if favs[name] then sorted[#sorted + 1] = name end
+    end
+    for _, name in ipairs(out) do
+        if not favs[name] then sorted[#sorted + 1] = name end
+    end
+    return sorted
 end
 
 -- ======================= settings =======================
@@ -191,6 +219,77 @@ local function save_settings()
     end
 end
 
+-- ======================= favourites =======================
+
+-- The file this holds what it read, the same way settings.json is held: every change mutates it,
+-- so a key another version put there survives.
+local fav_raw = { favourites = {} }
+local fav_list = {} -- the names that read gave, in the file's order
+
+-- Whether two lists of names say the same thing, in the same order.
+local function same_names(a, b)
+    if #a ~= #b then return false end
+    for i = 1, #a do
+        if a[i] ~= b[i] then return false end
+    end
+    return true
+end
+
+-- favourites.json -> `favs`, the count the deck shows, and whether that set moved (which is what
+-- asks for the deck to be laid down again). A name the folder no longer holds is kept: the
+-- wallpaper may come back, and the reference kept them too.
+local function read_favourites()
+    local ok, got = pcall(function() return sys.ask("files.read", FAV, "json") end)
+    if not ok then
+        log("picker: favourites.json is broken; starting without")
+        got = nil
+    end
+    if type(got) ~= "table" then got = {} end
+    fav_raw = got
+    if type(fav_raw.favourites) ~= "table" then fav_raw.favourites = {} end
+
+    local list = {}
+    favs = {}
+    for _, name in ipairs(fav_raw.favourites) do
+        if type(name) == "string" and name ~= "" and not favs[name] then
+            favs[name] = true
+            list[#list + 1] = name
+        end
+    end
+    local moved = not same_names(list, fav_list)
+    fav_list = list
+    fact.favourites = #list
+    return moved
+end
+
+-- `f` on the card the keyboard is on: marked, or unmarked. Written at once — a mark is a small
+-- thing to lose — and the deck laid down again, since the order leads with the favourites.
+local function toggle_favourite(i)
+    local name = vis[fact.page * PAGE + i + 1]
+    if type(name) ~= "string" then return end
+
+    local kept = {}
+    local removed = false
+    for _, other in ipairs(fav_raw.favourites) do
+        if other == name then
+            removed = true
+        else
+            kept[#kept + 1] = other
+        end
+    end
+    if not removed then kept[#kept + 1] = name end
+    fav_raw.favourites = kept
+
+    local ok, why = pcall(function() sys.call("files.write", FAV, fav_raw) end)
+    if not ok then
+        text.status = "could not save the favourites"
+        log("picker: " .. tostring(why))
+        return
+    end
+    read_favourites()
+    refresh()
+end
+
 -- What the screen says about the folder it is on: how many wallpapers are there, or that there
 -- are none yet (the deck's own line says why when it could not read it at all).
 local function note_here()
@@ -215,6 +314,7 @@ local function publish()
             cells[#cells + 1] = {
                 name = name,
                 picture = dir .. "/" .. name,
+                fav = favs[name] == true,
                 sw = schemes[name] or {},
             }
             n = n + 1
@@ -231,10 +331,23 @@ end
 
 function status()
     local line = "page " .. tostring(fact.page + 1) .. " / " .. tostring(fact.pages)
-    if #vis > 0 then line = line .. " · " .. tostring(#vis) .. " wallpapers" end
+    if #vis > 0 then
+        line = line .. " · " .. tostring(#vis) .. (#vis == 1 and " wallpaper" or " wallpapers")
+    end
     if fact.order == "newest" then line = line .. " · newest first" end
+    if fact.only_favourites then line = line .. " · favourites only" end
+    if fact.favourites > 0 then
+        line = line .. " · " .. tostring(fact.favourites)
+            .. (fact.favourites == 1 and " favourite" or " favourites")
+    end
     if skipped > 0 then line = line .. " · " .. tostring(skipped) .. " clip(s) skipped" end
-    if #vis == 0 then line = "no wallpapers in " .. text.folder end
+    if #vis == 0 then
+        if fact.only_favourites then
+            line = "no favourites yet: press f on a wallpaper you like"
+        else
+            line = "no wallpapers in " .. text.folder
+        end
+    end
     text.status = line
 end
 
@@ -327,7 +440,7 @@ end
 -- cards laid down. Called by the listing and by every change of sort, so one place decides what
 -- the deck shows. The card the keyboard is on keeps hold of its wallpaper across a re-sort, as
 -- the reference's refocus() did, instead of the number staying put and another card taking it.
-local function refresh()
+function refresh()
     local had = vis[fact.page * PAGE + fact.sel + 1]
     vis = ordered()
     fact.pages = pages()
@@ -461,6 +574,24 @@ on("fact:order", function(which)
     log("picker: sorted by " .. tostring(which))
 end)
 
+-- `f` on a card: mark it favourite, or take the mark away. The deck is laid down again in
+-- `toggle_favourite`, because the favourites lead the order.
+on("favourite", function(i)
+    if type(i) == "number" then toggle_favourite(math.floor(i)) end
+end)
+
+-- `tab`: the deck shows the favourites and nothing else, or everything again.
+on("fact:only_favourites", function()
+    if #names == 0 then return end
+    refresh()
+end)
+
+-- An editor or a second copy changed the favourites: read them again, and lay the deck down if
+-- the set moved. Our own write lands here too, on the same answer it already has.
+sys.watch("files:" .. FAV, function()
+    if read_favourites() and #names > 0 then refresh() end
+end)
+
 -- The settings screen: opened, it says what is set now and puts the caret in the folder, so a
 -- person types over it; closed, the caret goes back to the deck's keys (`g`, the arrows, Enter).
 -- The fact is the scene's, so this covers every way in and out of the screen, not just the keys.
@@ -500,8 +631,10 @@ sys.watch("files:" .. FILE, function()
     if read_settings() then list() end
 end)
 
--- The folder and the command are known before the first open.
+-- The folder and the command are known before the first open, and so are the favourites: the
+-- deck's order leads with them from its first page.
 read_settings()
+read_favourites()
 fact.pages = 1
 status()
 
