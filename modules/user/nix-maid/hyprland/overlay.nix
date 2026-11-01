@@ -13,17 +13,12 @@
       # inputs.xdg-desktop-portal-hyprland.overlays.default  # disabled: see above
       (final: prev: {
         # hyprliquid — Liquid Glass / Acrylic / Mica / Aero for windows *and* layer
-        # surfaces. hyprglass handles only windows and popups now
-        # (`manage_window_blur`), so the bar, which is a layer surface, lost the
-        # compositor's glass and fell back to plain blur; hyprliquid matches layer
-        # namespaces, which is the only handle a layer surface offers.
-        #
-        # Built against this session's Hyprland: the plugin's hyprpm pins name the
-        # commit this nixpkgs ships (v0.56.2, efb50993), so the ABI matches and no
-        # patch is needed — unlike hyprglass, which carries one.
-        # Not ported to 0.57 yet: `IHyprRenderer::m_renderData` went away with the
-        # rewritten renderer (CRenderContext). The 0.56 build is in the git history.
-        # Without it layer surfaces lose the compositor-side glass and fall back to blur.
+        # surfaces (the bar). Stubbed for now: the plugin is not ported to 0.57
+        # (`IHyprRenderer::m_renderData` went away with the rewritten renderer,
+        # CRenderContext), so nothing is built and every surface falls back to
+        # Hyprland's own decoration:blur. The 0.56 build and the ABI pin notes are
+        # in the git history; `hyprliquid-setup` and files/gui/hypr/hyprliquid.lua
+        # are already in place for the day it lands.
         hyprliquid = final.runCommand "hyprliquid-not-ported-to-0.57" { } "mkdir -p $out/lib";
 
         hyprlandPlugins =

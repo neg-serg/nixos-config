@@ -142,7 +142,7 @@
 #   maintained fork `sandwichfarm/hyprexpo` is built with nixpkgs' `mkHyprlandPlugin` helper. The rev
 #   is the fork's own 0.56.2 pin from its `hyprpm.toml` (`5891014c…`), i.e. the plugin and the
 #   compositor are guaranteed to be the same commit family.
-# - **Load + configure**: the same load-then-push pattern as hyprglass, in one command: `hypr-expo`
+# - **Load + configure**: the same load-then-push pattern as hyprliquid, in one command: `hypr-expo`
 #   (`modules/user/nix-maid/hyprland/main.nix`). `hypr-expo push` `hyprctl plugin load`s
 #   `libhyprexpo.so` and pushes `files/gui/hypr/hyprexpo.lua` through `hyprctl eval`;
 #   `hypr-expo toggle` loads and configures the plugin *only while it is not registered*, then evals
@@ -154,7 +154,7 @@
 #   compositor parses this config once and the branch returns early, so a greetd login used to leave
 #   hyprexpo unloaded for the whole session (nothing re-parses the config after the password —
 #   hypr-start restarts units), and the capsule click therefore eval'd a nil namespace.
-#   HyprWindowShade is hoisted with it; hyprglass deliberately stays in the session branch, where its
+#   HyprWindowShade is hoisted with it; the glass plugin deliberately stays in the session branch, where its
 #   own units load it after the login layer is gone.
 # - **Why the toggle loads the plugin itself**: `hyprctl eval` of `hl.plugin.hyprexpo.*` answers `ok`
 #   when the plugin is *not* loaded — the namespace is simply nil — so a session that lost it (the
@@ -212,7 +212,7 @@
 #   is the commit its `hyprpm.toml` pins for the Hyprland commit we run (`efb5099378…` = 0.56.2), so
 #   plugin and compositor stay in one commit family. Upstream ships a Makefile that links GLES/EGL/GL,
 #   hence `dontUseCmakeConfigure` + `libglvnd` + the dev output of `hyprland` on `PKG_CONFIG_PATH`.
-# - **Load + configure**: same load-then-push pattern as hyprglass/hyprexpo — the `hyprland.start`
+# - **Load + configure**: same load-then-push pattern as hyprliquid/hyprexpo — the `hyprland.start`
 #   hook runs `hyprwindowshade-setup`, which `hyprctl plugin load`s `libHyprWindowShade.so` and pushes
 #   `files/gui/hypr/hyprwindowshade.lua` through `hyprctl eval`. The helper is in PATH, so the rules
 #   can be re-applied in a live session.
@@ -253,7 +253,7 @@
 #   `install(TARGETS)` drops `libhyprwinwrap.so` into `$out/lib`, so no custom install phase is
 #   needed; Lua headers come from `lua5_5` (the interpreter Hyprland links — its `lua55.pc` is what
 #   the plugin's `pkg_search_module(lua55 …)` matches).
-# - **Load + configure**: same load-then-push pattern as hyprglass/hyprexpo — the `hyprland.start`
+# - **Load + configure**: same load-then-push pattern as hyprliquid/hyprexpo — the `hyprland.start`
 #   hook runs `hyprwinwrap-setup`, which `hyprctl plugin load`s `libhyprwinwrap.so` and pushes
 #   `files/gui/hypr/hyprwinwrap.lua` through `hyprctl eval`. The helper is in PATH, so edited
 #   declarations can be re-applied in a live session. The load sits at the top of the handler, before
@@ -287,7 +287,7 @@
 #   patch instead of re-pinning a rev.
 # - **Load + configure**: the `hyprdynamiccursors-setup` helper `hyprctl plugin load`s
 #   `libhypr-dynamic-cursors.so` and pushes `files/gui/hypr/hyprdynamiccursors.lua` through
-#   `hyprctl eval` (the same load-then-push pattern as hyprglass/hyprexpo). The file sets
+#   `hyprctl eval` (the same load-then-push pattern as hyprliquid/hyprexpo). The file sets
 #   `plugin.dynamic_cursors.mode = "stretch"` (the Lua spelling the plugin README documents; the raw
 #   config section is `plugin:dynamic-cursors`). The keys only exist after the plugin registered them,
 #   so the config cannot live in `hyprland.lua` as static config.
@@ -295,7 +295,7 @@
 #   (`hypr-start` restarts units, it does not reload), so the `hl.exec_cmd` in the session branch —
 #   and with it the helper — never ran: the plugin stayed unloaded and stretch never applied (observed
 #   2026-10-15). The `hyprdynamiccursors` user unit now runs the helper with
-#   `hyprland-session.target`, the way hyprglass is loaded by its units, so the login screen still
+#   `hyprland-session.target`, the way the glass plugin is loaded by its unit, so the login screen still
 #   keeps the stock cursor; the `hl.exec_cmd` path remains for a hand-started compositor. The helper
 #   is idempotent (it skips an already-loaded plugin and re-pushes the settings), logs every run to
 #   `$XDG_RUNTIME_DIR/hyprdynamiccursors-setup.log` and polls `hyprctl plugin list` for up to ~5 s,
@@ -336,7 +336,7 @@
 #   `allowAliases = false`).
 # - **Load + configure**: the generated `hyprcapture-setup` helper `hyprctl plugin load`s
 #   `lib/libhyprcapture.so` and pushes `files/gui/hypr/hyprcapture.lua` through `hyprctl eval` (the
-#   same load-then-push pattern as hyprglass/hyprexpo). It is started by the `hyprcapture` user unit
+#   same load-then-push pattern as hyprliquid/hyprexpo). It is started by the `hyprcapture` user unit
 #   with `hyprland-session.target`, not from `hyprland.lua`: `PLUGIN_INIT` itself calls
 #   `HyprlandAPI::reloadConfig()` to register the `plugin.hyprcapture.*` keys, and a load issued while
 #   that file is still being parsed would re-enter the config parser mid-file. The binds in
@@ -440,7 +440,7 @@
 #     # in a second shell — the nested instance has its own socket + IPC socket:
 #     export XDG_RUNTIME_DIR="$stand/rt"
 #     export HYPRLAND_INSTANCE_SIGNATURE="$(ls -t "$stand/rt/hypr" | head -1)"
-#     hyprctl plugin load /nix/store/…-hyprglass-0.8.1/lib/hyprglass.so
+#     hyprctl plugin load /nix/store/…-hyprwinwrap/lib/libhyprwinwrap.so
 #     hyprctl plugin list
 #
 # Spawning windows inside the stand exercises the real render path:
@@ -513,10 +513,10 @@ let
   # so @hy3_setup@ only has to dlopen it — the layout is selected by
   # `general:layout = "hy3"` in hyprland.lua. hyprspace stays dropped: its
   # 0.55 CCompositor/monitor API no longer compiles against 0.56.
-  # hyprglass has to be loaded before its config keys exist, and a plugin cannot be
-  # dlopen'd while hyprland.lua is still being parsed — so the .so is loaded from the
-  # session-start hook and the settings (files/gui/hypr/hyprglass.lua, plain config
-  # keys, NOT the plugin's Lua API: that path aborts the compositor) are pushed
+  # A plugin has to be loaded before its config keys exist, and it cannot be
+  # dlopen'd while hyprland.lua is still being parsed — so the .so is loaded from
+  # the session-start hook and the settings (files/gui/hypr/hyprliquid.lua, plain
+  # config keys) are pushed
   # through `hyprctl eval`. builtins.replaceStrings (not pkgs.replaceVars): files.nix
   # assigns the lua text to a home-file `.text` entry, which must be a string.
   # hy3 (i3-style manual tiling). The plugin cannot be dlopen'd while
@@ -746,7 +746,7 @@ let
     exec ${hyprExpo}/bin/hypr-expo push
   '';
 
-  # HyprWindowShade: same load-then-push pattern as hyprglass/hyprexpo. Its actions
+  # HyprWindowShade: same load-then-push pattern as hyprliquid/hyprexpo. Its actions
   # are only surfaced through hl.plugin.HyprWindowShade.* after the .so is loaded,
   # so the rules in files/gui/hypr/hyprwindowshade.lua are pushed with hyprctl eval.
   hyprwindowshadeSetup = pkgs.writeShellScriptBin "hyprwindowshade-setup" ''
@@ -761,7 +761,7 @@ let
     $(cat ${pkgs.writeText "hyprwindowshade.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprwindowshade.lua"))})" || true
   '';
 
-  # Hyprwinwrap: same load-then-push pattern as hyprglass/hyprexpo. Its Lua API
+  # Hyprwinwrap: same load-then-push pattern as hyprliquid/hyprexpo. Its Lua API
   # (hl.plugin.hyprwinwrap.window/focus) only exists once the .so is loaded, so
   # the background-window declarations in files/gui/hypr/hyprwinwrap.lua are
   # pushed with hyprctl eval. Re-runnable in a live session (`hyprwinwrap-setup`):
@@ -779,7 +779,7 @@ let
     $(cat ${pkgs.writeText "hyprwinwrap.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprwinwrap.lua"))})" || true
   '';
 
-  # GloView: same load-then-push pattern as hyprglass/hyprexpo. It is passive
+  # GloView: same load-then-push pattern as hyprliquid/hyprexpo. It is passive
   # (nothing is painted until a dispatcher asks for it), so loading it while the
   # login layer is up is harmless. Its dispatchers (gloview:toggle/open/close,
   # gloview:next/prev, gloview:allworkspaces) and the gloview.* config helpers
@@ -875,7 +875,7 @@ let
   '';
 
   # HyprDynamicCursors (cursor stretch): same load-then-push pattern as
-  # hyprglass/hyprexpo. Its config keys (plugin.dynamic_cursors.*) only exist
+  # hyprliquid/hyprexpo. Its config keys (plugin.dynamic_cursors.*) only exist
   # once the .so is loaded, so files/gui/hypr/hyprdynamiccursors.lua is pushed
   # with hyprctl eval. Re-runnable in a live session
   # (`hyprdynamiccursors-setup`).
@@ -915,9 +915,10 @@ let
     "$hyprctl_bin" eval "
     $(cat ${pkgs.writeText "hyprdynamiccursors.lua" (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprdynamiccursors.lua"))})"
   '';
-  # hyprliquid (Liquid Glass / Acrylic / Mica / Aero). Unlike hyprglass it also
-  # matches layer namespaces, which is what the bar needs: hyprglass handles only
-  # windows and popups now, so a layer surface got no compositor glass at all.
+  # hyprliquid (Liquid Glass / Acrylic / Mica / Aero). It matches layer
+  # namespaces, which is what the bar needs. The package is a stub on 0.57 (see
+  # overlay.nix), so the load below fails until the plugin is ported — the helper
+  # exists for the day it lands.
   # Loaded from the start hook like the rest, with the retry the login transition
   # needs (a load issued while the compositor is busy does not always stick), then
   # the rules in files/gui/hypr/hyprliquid.lua are pushed through `hyprctl eval`.
@@ -973,7 +974,7 @@ let
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in
 {
-  # System-level Hyprland pieces (hyprglass overlay) — consolidated here from
+  # System-level Hyprland pieces (compositor overlay) — consolidated here from
   # the old `modules/nix` Hyprland module so the whole compositor stack lives in
   # one domain.
   imports = [ ./overlay.nix ];
@@ -981,7 +982,7 @@ in
   config = lib.mkIf guiEnabled (
     lib.mkMerge [
       {
-        # hyprglass-setup is in PATH as well, so the glass can be (re)applied in a
+        # hyprliquid-setup is in PATH as well, so the glass can be (re)applied in a
         # running session without logging out (the start hook only fires on start).
         environment.systemPackages = services.packages ++ [
           hy3Setup # loads the hy3 layout plugin; re-run to re-select the layout in a live session
@@ -1004,7 +1005,7 @@ in
           # password (hypr-start restarts units, it does not reload), so the
           # exec'd helper never ran on a normal login — the plugin stayed
           # unloaded until the setup was run by hand (observed 2026-10-15).
-          # Start it with the session target instead, the way hyprglass is
+          # Start it with the session target instead, the way the glass plugin is
           # loaded by its units; the helper is idempotent (it skips an
           # already-loaded plugin and re-pushes the stretch settings).
           hyprdynamiccursors = systemdUser.mkUserService {

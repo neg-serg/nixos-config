@@ -1,6 +1,6 @@
 -- HyprWindowShade — per-window, per-layer and per-class fragment shaders.
 --
--- Load-then-push, same as hyprglass and hyprexpo: the .so is dlopen'd by the
+-- Load-then-push, same as hyprliquid and hyprexpo: the .so is dlopen'd by the
 -- generated `hyprwindowshade-setup` helper *after* hyprland.lua has been parsed,
 -- so hl.plugin.HyprWindowShade.* is nil while the config is read — this file is
 -- fed to `hyprctl eval` instead. Re-runnable in a live session:

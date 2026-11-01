@@ -1,6 +1,6 @@
 -- HyprExpo (workspace overview) — configuration applied at session start.
 --
--- Same pattern as hyprglass.lua: the plugin's own Lua namespace
+-- Same load-then-push pattern as hyprliquid.lua: the plugin's own Lua namespace
 -- (hl.plugin.hyprexpo.*) is not available while hyprland.lua is parsed — the
 -- plugin is dlopen'd by the generated hyprexpo-setup helper AFTER the config
 -- parse (modules/user/nix-maid/hyprland/main.nix), which then feeds this file
