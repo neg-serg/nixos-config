@@ -90,6 +90,25 @@ Distinguish the three failure shapes first — they have different owners:
 - Note *when* it happens: after an overview, after neru navigation, after unlock, after a wallpaper
   change (the theme pipeline restarts scenes), or after a `pleamar-health` probe (every 2 min).
 
+## Measured 2026-11-01: the counter is rate-limited, so a negative proves nothing
+
+The Hyprland log is the only in-repo metric for the lag — libinput's own lines
+(`event256 - neru-keyboard-proxy: client bug: event processing lagging behind by 23ms ... 39ms`).
+
+- **Idle, 45 s, load 1.2**: 25 lines in the whole log, **0 new**.
+- **Eight CPU workers, 45 s, load 4.2 -> 5.1**: still **0 new**.
+- **Caveat that makes both numbers weak**: libinput rate-limits this message to five per hour per
+  device and then *discards* the rest ("WARNING: log rate limit exceeded (5 msgs per 60min).
+  Discarding future messages"), so once the quota is spent the log stays quiet whatever happens.
+
+So plain CPU contention alone did not reproduce anything, and the absence could also just be the
+quota. The one positive sample remains the 22:26 window: 25 lines, 23-39 ms, at load 19.4 with a
+from-source NixOS build and a full-monitor 240 fps overlay up.
+
+What would actually settle it: `libinput debug-events` (root, or the `input` group) to see whether an
+event is late or missing, or the A/B above with `systemctl --user stop neru` — neither was run here:
+the first needs privileges, the second stops the owner's tool while they are asleep.
+
 ## Open questions
 
 - Which of the three symptoms is it, and what precedes it?
