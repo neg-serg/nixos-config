@@ -263,14 +263,11 @@ let
           # ~/.local/bin first: scenes shell out to user helpers that live there
           # (glm-vol, rsmetrx, …), then the system profile.
           "PATH=%h/.local/bin:/run/current-system/sw/bin:\${PATH}"
-          # The cursor is not this shell's business: `pleamar-cursor-shape.patch` makes a scene ask
-          # the compositor for no cursor shape at all and take no other cursor action, which is the
-          # default and needs no variable. The story behind it: a compositor keeps ONE cursor for
-          # the whole session, and Hyprland drops a shape that arrives while another client holds
-          # the pointer (hyprwm/Hyprland#14906), so a layer surface asking for a hand can leave the
-          # pointer stuck — or gone. The old workaround was `PLEAMAR_NO_CURSOR_SHAPES=1` plus a
-          # patch that re-said the shape every 0.5 s to repair a wipe; both are gone, and
-          # `PLEAMAR_CURSOR_SHAPES=1` is the opt-in for the old asking, kept for measurement only.
+          # No cursor variables: the shell carries no cursor patch either, so a scene asks for the
+          # shape its own zones declare (arrow, hand, text) and gives the default back on leaving —
+          # upstream behaviour, nothing of ours in the pointer's way. `PLEAMAR_NO_CURSOR_SHAPES`
+          # never existed upstream; the local patch that replaced it is gone too (2026-11-01, on
+          # the owner's call: the pointer trouble was neru's stale evdev proxy, not this shell).
         ];
       };
     };

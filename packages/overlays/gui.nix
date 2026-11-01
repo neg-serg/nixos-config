@@ -47,11 +47,9 @@ in
   # pleamar — Wayland desktop shell runtime (bars, launchers, notification
   # centres, docks, lock screens as animated scenes). Rev-pinned input in
   # flake.nix; nixpkgs follows the top-level pin so the Rust build reuses the
-  # cached toolchain closure. The cursor: a scene asks the compositor for no cursor shape at all
-  # (`pleamar-cursor-shape.patch`; the pointer belongs to the compositor, and a layer surface that
-  # asks for one is what leaves Hyprland's single global cursor stale, stuck or gone — upstream
-  # hyprwm/Hyprland#14906); `PLEAMAR_CURSOR_SHAPES=1` restores the old asking, for measuring
-  # against it. And the right
+  # cached toolchain closure. The cursor is left exactly as upstream has it — no local patch touches
+  # it, so a scene asks for the shape its zones declare, on entry and on leaving, like any other
+  # client. And the right
   # click, which closed a scene that declares more than one surface no matter
   # what it does with the button (pleamar-right-click.patch). And the tray's menu: an item's
   # `com.canonical.dbusmenu` takes `parentId` as `i` in its first form and `u` in the spec's
@@ -80,7 +78,6 @@ in
       # symlink farm in ~/.config/pleamar, so without it the palette generated next
       # to the live tree is never read.
       ./pleamar-import-path.patch
-      ./pleamar-cursor-shape.patch
       ./pleamar-right-click.patch
       ./pleamar-dbusmenu.patch
       ./pleamar-closed-surface.patch
