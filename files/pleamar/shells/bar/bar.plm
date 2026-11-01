@@ -1369,11 +1369,6 @@ scene bar {
                 weight: 500
                 color: skin.ink
                 family: "Iosevka"
-                // QS's `GlyphShadow` on the audio pills (`layer.enabled: Theme.textShadowEnabled`,
-                // Components/GlyphShadow.qml:20-25): black at 75 %, one pixel down, a two-pixel
-                // blur — on a light wallpaper only, which is the same test the theme already
-                // computes for `skin.light` (its own `ui.textShadow.lightThreshold`).
-                shadow: 0, 1, 2, if(skin.light, 75%, 0%), #000000
                 show: hot
             }
         }
