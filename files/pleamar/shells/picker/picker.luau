@@ -6,6 +6,9 @@
 --     version put there stays);
 --   · list the wallpaper folder and page through it: one page of cards is what the model holds,
 --     and the deck draws the page it is on;
+--   · put that page in order — by name, or the newest wallpaper first (`ls -t`: no service
+--     reports a file's modification time, so it is the documented stopgap) — and follow the sort
+--     as it is turned over;
 --   · read the colour schemes of the page's wallpapers with `pleamar-wallpaper-palettes` and
 --     fill the cards' chips as the lines arrive (the pictures are there from the first frame);
 --   · hand the chosen card to `pleamar-wallpaper-apply` (caches, the wallpaper command, matugen)
@@ -55,6 +58,8 @@ local CHIPS = { "source_color", "primary", "secondary", "tertiary" }
 local home = sys.ask("env", "HOME") or ""
 local dir = D.folder -- the folder as a program reads it (no ~)
 local names = {}     -- every wallpaper in the folder, in name order
+local by_time = {}   -- the same names, newest file first (what `ls -t` answered)
+local vis = {}       -- what the deck shows: `names` in the sort's order (and, later, filtered)
 local schemes = {}   -- name -> {{ r, g, b }, …}, what the reader has answered so far
 local reader = nil   -- the palettes process, while it runs
 local skipped = 0    -- files left out because they are clips
@@ -100,7 +105,24 @@ local function tidy(path)
 end
 
 local function pages()
-    return math.max(1, math.ceil(#names / PAGE))
+    return math.max(1, math.ceil(#vis / PAGE))
+end
+
+-- `names` in the order the deck is sorting by. A name `ls -t` did not mention (a file that
+-- appeared after it answered) goes last, in name order, so the sort is always a total one.
+local function ordered()
+    local out = {}
+    for i = 1, #names do out[i] = names[i] end
+    if fact.order == "newest" and #by_time > 0 then
+        local rank = {}
+        for i = 1, #by_time do rank[by_time[i]] = i end
+        table.sort(out, function(a, b)
+            local ra, rb = rank[a] or math.huge, rank[b] or math.huge
+            if ra ~= rb then return ra < rb end
+            return a < b
+        end)
+    end
+    return out
 end
 
 -- ======================= settings =======================
@@ -188,7 +210,7 @@ local function publish()
     for r = 0, PAGE / COLS - 1 do
         local cells = {}
         for k = 0, COLS - 1 do
-            local name = names[at + r * COLS + k + 1]
+            local name = vis[at + r * COLS + k + 1]
             if name == nil then break end
             cells[#cells + 1] = {
                 name = name,
@@ -209,9 +231,10 @@ end
 
 function status()
     local line = "page " .. tostring(fact.page + 1) .. " / " .. tostring(fact.pages)
-    if #names > 0 then line = line .. " · " .. tostring(#names) .. " wallpapers" end
+    if #vis > 0 then line = line .. " · " .. tostring(#vis) .. " wallpapers" end
+    if fact.order == "newest" then line = line .. " · newest first" end
     if skipped > 0 then line = line .. " · " .. tostring(skipped) .. " clip(s) skipped" end
-    if #names == 0 then line = "no wallpapers in " .. text.folder end
+    if #vis == 0 then line = "no wallpapers in " .. text.folder end
     text.status = line
 end
 
@@ -246,11 +269,13 @@ local function read_page()
     end
 
     local at = fact.page * PAGE
+    -- Only what has not been read yet: a re-sort moves names the reader already answered onto
+    -- the page, and running matugen over them again would be work for nothing.
     local page_names = {}
     for k = 1, PAGE do
-        local name = names[at + k]
+        local name = vis[at + k]
         if name == nil then break end
-        page_names[k] = name
+        if schemes[name] == nil then page_names[#page_names + 1] = name end
     end
     if #page_names == 0 then return end
 
@@ -298,18 +323,37 @@ local function listed_names(out)
     return got
 end
 
-function list()
-    if type(reader) == "number" then
-        kill(reader)
-        reader = nil
+-- What the deck holds now: `names` through the sort, the page the chosen card lands on, the
+-- cards laid down. Called by the listing and by every change of sort, so one place decides what
+-- the deck shows. The card the keyboard is on keeps hold of its wallpaper across a re-sort, as
+-- the reference's refocus() did, instead of the number staying put and another card taking it.
+local function refresh()
+    local had = vis[fact.page * PAGE + fact.sel + 1]
+    vis = ordered()
+    fact.pages = pages()
+    local at = nil
+    if type(had) == "string" then
+        for i = 1, #vis do
+            if vis[i] == had then
+                at = i - 1
+                break
+            end
+        end
     end
-    names = {}
-    schemes = {}
-    fact.page = 0
-    fact.sel = 0
+    if at then
+        fact.page = math.min(math.floor(at / PAGE), fact.pages - 1)
+        fact.sel = at % PAGE
+    else
+        if fact.page > fact.pages - 1 then fact.page = fact.pages - 1 end
+        if fact.sel > fact.shown - 1 then fact.sel = math.max(fact.shown - 1, 0) end
+    end
     publish()
-    text.status = "reading " .. text.folder
+    status()
+    read_page()
+end
 
+-- The folder's list, from the palette helper: one bare name a line, in name order.
+local function read_names()
     local ok, why = pcall(run, "pleamar-wallpaper-palettes", { "--names", dir }, function(out, code)
         if code ~= 0 then
             text.status = "could not read " .. text.folder
@@ -317,11 +361,8 @@ function list()
             return
         end
         names = listed_names(out)
-        fact.pages = pages()
         listed = true
-        publish()
-        status()
-        read_page()
+        refresh()
     end)
 
     if not ok then
@@ -330,10 +371,46 @@ function list()
     end
 end
 
+function list()
+    if type(reader) == "number" then
+        kill(reader)
+        reader = nil
+    end
+    names = {}
+    vis = {}
+    by_time = {}
+    schemes = {}
+    fact.page = 0
+    fact.sel = 0
+    fact.shown = 0
+    publish()
+    text.status = "reading " .. text.folder
+
+    -- The folder by time, newest first, which is the whole of the "newest" sort. No service
+    -- reports a file's modification time, so it is `ls -t`: the documented stopgap until one
+    -- exists -- a scene sees the system through services, and the helpers own the rest.
+    local ok, why = pcall(run, "ls", { "-1", "-t", dir }, function(out, code)
+        by_time = {}
+        if code == 0 then
+            for line in string.gmatch(out or "", "[^\n]+") do
+                local name = trim(line)
+                if name ~= "" then by_time[#by_time + 1] = name end
+            end
+        end
+        -- A folder that cannot be read is the names run's to report: it says so in the status.
+        read_names()
+    end)
+
+    if not ok then
+        text.status = "could not read " .. text.folder
+        log("picker: " .. tostring(why))
+    end
+end
+
 -- ======================= applying =======================
 
 local function choose(i)
-    local name = names[fact.page * PAGE + i + 1]
+    local name = vis[fact.page * PAGE + i + 1]
     if type(name) ~= "string" then return end
     local path = dir .. "/" .. name
 
@@ -374,6 +451,14 @@ end)
 
 on("choose", function(i)
     if type(i) == "number" then choose(math.floor(i)) end
+end)
+
+-- The sort turned over (`s`, or `--say picker "fact order newest"`): the page is laid down again
+-- in the new order. Everything already read stays read: the schemes are looked up by name.
+on("fact:order", function(which)
+    if #names == 0 then return end
+    refresh()
+    log("picker: sorted by " .. tostring(which))
 end)
 
 -- The settings screen: opened, it says what is set now and puts the caret in the folder, so a
@@ -419,3 +504,7 @@ end)
 read_settings()
 fact.pages = 1
 status()
+
+-- A logic saved while the deck is up starts from nothing, and the scene stays as it was: read
+-- the folder again, or the deck would show cards this logic no longer knows about.
+if fact.open then list() end
