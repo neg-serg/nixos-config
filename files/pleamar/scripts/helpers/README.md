@@ -193,11 +193,11 @@ polls).
 
 ## The picker's commands
 
-Two of the names in `PATH` are not workers but commands a scene runs to completion — `run(...)`,
-not `spawn(...)`: `pleamar-wallpaper-palettes` (the schemes of a folder's wallpapers, one JSON line
-each, as in §7 — and `--names DIR` for the folder's list) and `pleamar-wallpaper-apply FILE
-[COMMAND]` (the caches a new wallpaper sets, the wallpaper command, matugen). `wallpaper-still` and
-`picker-toggle.sh` sit beside them as the piece each one calls: the still of a video, and the
-compositor bind's `pleamar-picker toggle` that starts the scene when a session has none running.
-Ported from `files/qs-wallpaperpicker/scripts/` (GPL-3.0-or-later), which stays in the tree as the
-reference; `shells/picker/picker.plm` is what runs them.
+Two of the names in `PATH` are not workers but commands a scene runs to completion — `run(...)`, not
+`spawn(...)`: `pleamar-wallpaper-palettes` (the schemes of a folder's wallpapers, one JSON line
+each, as in §7 — and `--names DIR` for the folder's list) and
+`pleamar-wallpaper-apply FILE [COMMAND]` (the caches a new wallpaper sets, the wallpaper command,
+matugen). `wallpaper-still` and `picker-toggle.sh` sit beside them as the piece each one calls: the
+still of a video, and the compositor bind's `pleamar-picker toggle` that starts the scene when a
+session has none running. Ported from `files/qs-wallpaperpicker/scripts/` (GPL-3.0-or-later), which
+stays in the tree as the reference; `shells/picker/picker.plm` is what runs them.

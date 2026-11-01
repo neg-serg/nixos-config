@@ -74,8 +74,7 @@ in
         # gone; what still gates on this only needs Qt and a GUI session —
         # waylandar (which brings its own Quickshell build) and the GUI extras
         # in modules/user/gui-packages.nix.
-        quickshellEnabled =
-          enabled "gui" && enabled "gui.qt" && !(enabled "devSpeed");
+        quickshellEnabled = enabled "gui" && enabled "gui.qt" && !(enabled "devSpeed");
 
         # Pleamar shell: full GUI + the pleamar flag, off in dev-speed mode.
         # No Qt gate on purpose — pleamar is a single Rust binary and shares no
