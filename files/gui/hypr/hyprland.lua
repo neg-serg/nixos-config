@@ -1415,10 +1415,10 @@ hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, ani
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
 -- The login layer is a session-lock surface inside this compositor
--- (files/quickshell/greeter/login.qml), so the login screen is painted by the
+-- (files/pleamar/shells/lock/lock.plm), so the login screen is painted by the
 -- same compositor that will run the session: no greeter process exits, no second
 -- Hyprland, no DRM mode re-set on login. The layer process itself is
--- `qs-login-layer` (modules/user/session/greetd/login-layer.sh).
+-- `pleamar-login-layer` (modules/user/session/greetd/login-layer.sh).
 --
 -- Phase detection reads the marker the session wrapper maintains and exports:
 --   $QS_LOGIN_STATE_DIR/state   "login" | "session"   (see greetd/session-wrapper.sh)
@@ -1464,12 +1464,13 @@ hl.on("hyprland.start", function()
   if loginPhase then
     -- Login phase: start the login layer instead of the desktop. Nothing of the
     -- session (target, shell, autostart apps) is started yet; the layer writes
-    -- "session" into the marker while it quits, and only then does the desktop
-    -- start (the `exec` also keeps hypr-start out of the layer's process tree).
+    -- "session" into the marker and releases the lock scene, and only then does
+    -- the desktop start (the `exec` also keeps hypr-start out of the layer's
+    -- process tree).
     --
     -- Wallpaper first, so it is painted *behind* the login screen: wl-daemon
-    -- paints the desktop's wallpaper (the same file the login layer shows, see
-    -- files/quickshell/scripts/wl-wallpaper-resolve.sh), so releasing the lock
+    -- paints the desktop's wallpaper, and the layer publishes the same file to
+    -- the lock scene (`wallpaper.path` in its data folder), so releasing the lock
     -- reveals an already-painted desktop instead of a bare compositor background.
     -- Doing it here also moves the daemon's ~1 s Vulkan init off the post-login
     -- path (before this, the daemon started only with the session target, i.e.
@@ -1492,11 +1493,11 @@ hl.on("hyprland.start", function()
     hl.exec_cmd([[
       sh -c '
         for _ in 1 2 3; do
-          qs-login-layer
+          pleamar-login-layer
           if grep -qx session "${QS_LOGIN_STATE_DIR:-/tmp}/state" 2>/dev/null; then exec hypr-start --login; fi
           sleep 1
         done
-        printf "login layer exited without a login, three times, at %s\n" "$(date)" >> /tmp/qs-login-layer.log
+        printf "login layer exited without a login, three times, at %s\n" "$(date)" >> /tmp/pleamar-login-layer.log
       '
     ]])
     return
