@@ -25,7 +25,7 @@ Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
 - Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
 - Nested AGENTS.md files exist for subtrees (`modules/`, `docs/`, `packages/`,
-  `scripts/`, `secrets/`, `hosts/`, `files/quickshell/`). Read the nearest
+  `scripts/`, `secrets/`, `hosts/`, `files/pleamar/`). Read the nearest
   applicable one before touching that subtree; nested rules take precedence
   where they conflict with this file.
 
@@ -51,7 +51,7 @@ Project Structure
 - `packages/` — custom overlays and packages
 - `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
-- `files/` — config files (Hyprland, Quickshell panel, scripts)
+- `files/` — config files (Hyprland, pleamar shell, scripts)
 - `docs/` — operational runbooks only (`docs/runbook-*.md`); everything else is documented in the
   code it describes (module headers, option descriptions, comments)
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)

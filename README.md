@@ -49,7 +49,7 @@
 - 🚄 **Blazingly Fast Builds** - Optimized evaluation with module archiving
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
-- 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom Quickshell panel
+- 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom pleamar shell
 - 📦 **30 Custom Packages** - Tailored tools for productivity and performance
 - 🧩 **Modular Architecture** - 27 domain modules with feature flags, 502 Nix files
 - 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
@@ -117,7 +117,7 @@ graph TB
     subgraph "👤 User Configuration"
         H[modules/user/nix-maid]
         I[Hyprland Config]
-        J[Quickshell Panel]
+        J[pleamar Shell]
     end
     
     subgraph "🎁 Custom Packages"
@@ -209,7 +209,7 @@ flowchart LR
 
 - 📐 **19 Workspaces** - Semantic routing (term, web, dev, games, etc.)
 - 💾 **8 Scratchpads** - Telegram, Music, Mail, Mixer, Torrents, Teardown, VPN, Rebuild
-- 🎛️ **Quickshell Panel** - Custom status bar with system info
+- 🎛️ **pleamar Shell** - Custom status bar, panels and toasts with system info
 
 </details>
 
@@ -261,7 +261,7 @@ flowchart LR
 │   └── ...
 ├── 📂 files/                         # 📝 Config files
 │   ├── 📁 gui/hypr/                  # Hyprland configs
-│   ├── 📁 quickshell/                # Panel configuration
+│   ├── 📁 pleamar/                   # Shell scenes and libraries
 ├── 📂 scripts/dev/                   # 🔧 Dev & CI scripts
 ├── 📂 docs/                          # 📚 Documentation (index, howto/, runbook-*.md)
 ```
@@ -316,7 +316,7 @@ pie title Module Categories Distribution
 - 🪟 **gui** - Hyprland, Wayland, Qt
 - 🔤 **fonts** - Font configuration
 - 🎵 **media** - Audio/video apps
-- 🎛️ **quickshell** - Panel config
+- 🎛️ **pleamar** - Shell scenes (status bar, panels, toasts)
 - 🌈 **theme** - GTK/Qt theming
 
 </details>
@@ -407,7 +407,6 @@ graph LR
 - ✅ Code formatting (nixfmt/treefmt)
 - ✅ Static analysis (statix)
 - ✅ CSS syntax validation
-- ✅ QML linting
 - ✅ Shell script checks
 - ✅ Full config evaluation
 
