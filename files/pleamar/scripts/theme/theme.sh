@@ -91,8 +91,8 @@ Usage:
 
 Where the wallpaper is found, in this order:
   --wallpaper FILE
-  $XDG_CACHE_HOME/pleamar/wallpaper-path      (INTERFACES.md §1.2, first line)
-  $XDG_CACHE_HOME/quickshell-wallpaper-path   (the legacy cache, first line)
+  $XDG_CACHE_HOME/pleamar/wallpaper-path      (canonical; INTERFACES.md §1.2, first line)
+  $XDG_CACHE_HOME/quickshell-wallpaper-path   (legacy fallback, first line)
 
 What is written: ~/.config/pleamar/theme.plm, a strict `library Skin { … }`
 with skin.coal/surface/ink/ink.dim/accent/accent.hover/accent.deep/on.accent.
@@ -245,6 +245,9 @@ if [[ -n "$WALLPAPER_ARG" ]]; then
     die "--wallpaper: not a readable file: $WALLPAPER"
   fi
 else
+  # The pleamar path is canonical; the quickshell one is the legacy location the
+  # pre-port session published to and is still honoured as a fallback, so a
+  # wallpaper that only reached the old file keeps theming the session.
   for cache_file in "$CACHE_HOME/pleamar/wallpaper-path" "$CACHE_HOME/quickshell-wallpaper-path"; do
     if WALLPAPER="$(read_path_file "$cache_file")"; then
       break
@@ -303,7 +306,7 @@ fi
 
 if ((EXTRACTED == 0)) && [[ -z "$ACCENT_ARG$FROM_JSON" ]]; then
   err "nothing to extract: no wallpaper found and no --accent/--from-json colour"
-  err "looked at: $CACHE_HOME/pleamar/wallpaper-path, $CACHE_HOME/quickshell-wallpaper-path"
+  err "looked at: $CACHE_HOME/pleamar/wallpaper-path (canonical), $CACHE_HOME/quickshell-wallpaper-path (legacy)"
   err "pass --wallpaper FILE, --accent '#RRGGBB' or --from-json FILE"
   exit 1
 fi

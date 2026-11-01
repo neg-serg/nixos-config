@@ -59,8 +59,8 @@ import "../../lib/capsule.plm"
 //                                              row · 5 the last · 6 take the
 //                                              cursor's row
 //
-// `emit dismiss_all` is the path a compositor bind calls: after the cutover it
-// replaces the legacy `touch ~/.cache/quickshell/notif-close-all`. The
+// `emit dismiss_all` is the path a compositor bind calls: it replaces the legacy
+// `touch ~/.cache/quickshell/notif-close-all`. The canonical
 // `~/.cache/pleamar/notif-close-all` semaphore of INTERFACES §1.2 cannot be
 // read from a scene — the files API never leaves the scene's own folder — so
 // the bind talks to this event instead (PH2-D owns the trigger files).
