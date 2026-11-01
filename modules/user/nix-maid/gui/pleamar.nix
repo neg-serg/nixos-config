@@ -86,6 +86,10 @@ let
   # Feature gate (single source: config.lib.neg.pleamarEnabled)
   pleamarEnabled = config.lib.neg.pleamarEnabled;
 
+  # The wallpaper deck (features.gui.wallpaperPicker) is a scene of this module: its flag decides
+  # whether the scene's unit and its helper commands exist at all.
+  pickerEnabled = config.lib.neg.wallpaperPickerEnabled;
+
   # ── Scenes ────────────────────────────────────────────────────────────────
   # The single scene list: the per-scene units, the deployed links and the
   # generated autostart file all derive from it. Later phases append names here
@@ -179,6 +183,25 @@ let
     };
   };
 
+  # The wallpaper deck's own commands (features.gui.wallpaperPicker): the colours of a wallpaper
+  # folder, applying one, and the `pleamar-picker` the compositor bind calls. They are not workers:
+  # the scene runs them to completion, and `pleamar-picker current` is what the theme pipeline's
+  # producer path already holds.
+  pleamarPickerHelperLinks = {
+    ".local/bin/pleamar-wallpaper-palettes" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/wallpaper-palettes.py";
+    };
+    ".local/bin/pleamar-wallpaper-apply" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/wallpaper-apply";
+    };
+    ".local/bin/pleamar-wallpaper-still" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/wallpaper-still";
+    };
+    ".local/bin/pleamar-picker" = {
+      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/picker-toggle.sh";
+    };
+  };
+
   # Icons: pleamar's `icon "…"` looks only under ~/.local/share/icons, ~/.icons and
   # /usr/share/icons, in the fixed theme list hicolor, Papirus, Papirus-Dark,
   # Adwaita, breeze, breeze-dark — never index.theme. On NixOS the themes live in
@@ -199,6 +222,7 @@ let
     neg.mkDirLinks ".config/pleamar/shells" pleamarShellsLive pleamarShellNames
     // neg.mkDirLinks ".config/pleamar/lib" pleamarLibLive pleamarLibNames
     // pleamarHelperLinks
+    // lib.optionalAttrs pickerEnabled pleamarPickerHelperLinks
     // pleamarIconLinks
     // pleamarThemeLinks
     // {
@@ -312,6 +336,23 @@ let
     #   pleamar --say overlay "fact inhibit false"    # let it idle again
     # Its surface is `open: active`, so an idle overlay maps nothing at all.
     pleamar-overlay = (pleamarSceneUnit "overlay") // {
+      wantedBy = [ ];
+      partOf = [ ];
+    };
+  };
+
+  # The wallpaper deck (features.gui.wallpaperPicker): opened by its bind
+  # (`~/.local/bin/pleamar-picker`, M4+C+w) and never wanted by the session — a deck nobody asked
+  # for costs a process per monitor, and its first frame is a folder to read. The on-demand shape
+  # the lock and the overlay use:
+  #
+  #     systemctl --user start pleamar-picker.service   # or: pleamar-picker toggle
+  #     pleamar --say picker "emit open_picker"         # what the command line does after that
+  #
+  # No `Restart=always`: a deck that is done exits 0 (Escape, or a card chosen) and stays closed
+  # until the bind asks again, which is what `Restart=on-failure` from `pleamarSceneUnit` gives.
+  pleamarPickerUnits = lib.optionalAttrs pickerEnabled {
+    pleamar-picker = (pleamarSceneUnit "picker") // {
       wantedBy = [ ];
       partOf = [ ];
     };
@@ -468,6 +509,7 @@ lib.mkIf pleamarEnabled (
       systemd.user.services =
         pleamarUnits
         // pleamarOnDemandUnits
+        // pleamarPickerUnits
         // {
           pleamar-health = systemdUser.mkUserService {
             description = "Restart the pleamar scene when it stops answering";

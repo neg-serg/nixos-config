@@ -84,8 +84,9 @@ in
         wallpaperVideoEnabled = enabled "gui" && enabled "gui.wallpaperVideo";
 
         # Wallpaper picker: full GUI plus its own flag, never implied by another
-        # one — it is a second Quickshell instance, and its settings seed hands
-        # the chosen picture to wl-daemon (modules/user/nix-maid/gui/wallpaper-picker.nix).
+        # one. It is the pleamar scene `picker` and its unit is on demand, but the
+        # scene still reads a folder and hands the chosen picture to wl-daemon
+        # (modules/user/nix-maid/gui/pleamar.nix, files/pleamar/shells/picker).
         wallpaperPickerEnabled = enabled "gui" && enabled "gui.wallpaperPicker";
 
         # Repo-root resolver (`path`, `pathExists`, `readFile`, `tree`, `find`) is

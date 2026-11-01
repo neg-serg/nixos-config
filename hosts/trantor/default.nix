@@ -215,9 +215,10 @@ in
   # autostarted: the window starts the reader itself, and the models come with
   # the first `sonda setup` (865 MB into ~/.local/share/sonda).
   features.gui.sonda.enable = true;
-  # Wallpaper picker (features.gui.wallpaperPicker): the swatch deck browses
-  # ~/pic/wl and hands the chosen card to wl-daemon (`wl img {}`), so the login
-  # screen, the bar accent and `wl restore` keep following one owner.
+  # Wallpaper picker (features.gui.wallpaperPicker): the swatch deck — the pleamar
+  # scene `picker` since the port, on M4+C+w — browses ~/pic/wl and hands the chosen
+  # card to wl-daemon (`wl img {}`), so the login screen, the bar accent and
+  # `wl restore` keep following one owner. Its unit is on demand, not autostarted.
   features.gui.wallpaperPicker.enable = true;
   # Weekly incremental refresh of the MERT similarity index (music-index): warm
   # runs embed only new/changed albums. --layer -1 pins the settings of the
