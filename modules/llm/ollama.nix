@@ -22,9 +22,14 @@ in
     systemd.services.ollama.environment = {
       HTTPS_PROXY = "socks5://127.0.0.1:10808";
       ALL_PROXY = "socks5://127.0.0.1:10808";
-      # Cloudflare R2 (blob CDN) is NOT reachable through the socks5 proxy
-      # (sing-box: connection failures); blob downloads must go direct.
-      NO_PROXY = "127.0.0.1,localhost,0.0.0.0,::1,*.r2.cloudflarestorage.com,r2.cloudflarestorage.com";
+      # Cloudflare R2 (the blob CDN every manifest points at) must go through the
+      # same proxy: measured 2026-11-01, `deepseek-r1:32b` stalled at "pulling
+      # manifest" for a minute and the daemon logged "net/http: TLS handshake
+      # timeout" against `*.r2.cloudflarestorage.com` on every part. The proxy
+      # itself answers R2 in 0.17 s (HTTP 400 on the bare bucket, i.e. TLS and
+      # routing are fine), while a direct connection times out — so the old
+      # exception, which assumed sing-box could not carry R2, only broke pulls.
+      NO_PROXY = "127.0.0.1,localhost,0.0.0.0,::1";
 
       # 16 GB VRAM (RX 9070 XT) tuning: keep one model resident, cap default
       # context to 32k and quantize the KV cache to Q8_0 so qwen3:8b runs fully
