@@ -263,10 +263,10 @@ in
 
   # Primary user (single source of truth for name/ids)
   users.main = {
-    name = "neg";
+    name = "neg"; # login stays ASCII: home, groups and every path depend on it
     uid = 1000;
     gid = 1000;
-    description = "Neg";
+    description = "Sergey Miroshnichenko"; # GECOS/real name: who/finger/lock screens
   };
 
   # Host-specific feature toggles
