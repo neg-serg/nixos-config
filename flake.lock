@@ -41,11 +41,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792248446,
-        "narHash": "sha256-9DPMOnQkjY3/mI7VktLxmdKiNnHtXv/eYUuOqEQUoBQ=",
+        "lastModified": 1793482152,
+        "narHash": "sha256-ddx8OAU5FsVmrPs96stnDQSm6V/7xshuao890sKYqFQ=",
         "owner": "JustVugg",
         "repo": "colibri",
-        "rev": "e0db083cdc9e563e0766cc6fc661ef23c32298e0",
+        "rev": "0a5504a1dc64f86fcd0fe7db298b0448c730e7e6",
         "type": "github"
       },
       "original": {
@@ -787,17 +787,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1793200437,
-        "narHash": "sha256-t2HLA0JmmPeYAdnejjHt8lG+UPcROY10HDGh15N19+U=",
+        "lastModified": 1793531354,
+        "narHash": "sha256-fDfu7lmFprDyT/ANe2vI9OusR3sPYvkAYxzqcgUghq4=",
         "owner": "k4ditano",
         "repo": "pleamar",
-        "rev": "63b40bfe9cceb3a02c9c120aedaff2abb5337c85",
+        "rev": "0667cda33ee70871cdd68193a08d7493f4a34c65",
         "type": "github"
       },
       "original": {
         "owner": "k4ditano",
         "repo": "pleamar",
-        "rev": "63b40bfe9cceb3a02c9c120aedaff2abb5337c85",
+        "rev": "0667cda33ee70871cdd68193a08d7493f4a34c65",
         "type": "github"
       }
     },

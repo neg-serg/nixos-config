@@ -117,19 +117,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pleamar = {
-      # Upstream `main` (2026-10-28) — v0.4.29 plus ten commits: a zone goes with
-      # its own surface and a closed one lets go at once, a hidden field's zone is
-      # switched off with it, `pointer.x/y` inside a named surface are the
-      # surface's, a popup comes out of a popup beside the row it belongs to, a
-      # tray menu longer than its window scrolls, lists are grabbed and let go from
-      # the inside. The import-path fix the pin used to borrow from
-      # `neg-serg/pleamar` (`fix/import-path-v0.4.29`) is a patch in
-      # `packages/overlays/pleamar-import-path.patch` now, so the pin follows
-      # upstream and nothing has to be rebased and pushed. Every local patch in
-      # `packages/overlays/gui.nix` was checked to apply in order on this commit.
+      # Upstream `main` (2026-11-01, runtime 0.7.4, scene language 0.8): the pin moved
+      # from 0.4.31 after the shell was measured lagging, and every local patch in
+      # `packages/overlays/gui.nix` was checked to apply in order on it. All scenes
+      # still compile on the new language (`pleamar --check` over shells/*/*.plm).
       # Update with:
       # nix flake lock --update-input pleamar
-      url = "github:k4ditano/pleamar/63b40bfe9cceb3a02c9c120aedaff2abb5337c85";
+      url = "github:k4ditano/pleamar/0667cda33ee70871cdd68193a08d7493f4a34c65";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
