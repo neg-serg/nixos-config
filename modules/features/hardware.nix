@@ -29,7 +29,6 @@
             "music" # rmpc (M4+f)
             "teardown" # btop + dmesg/lazytail tabs (M4+d)
             "torrment" # rustmission (M4+t)
-            "vpn" # tun status (M4+u)
             "hyprpwcenter" # PipeWire control center (M4+C+p)
             "rebuild" # nh os switch (M4+S+n)
             "mpv" # video player: no text input, vim-style keys
