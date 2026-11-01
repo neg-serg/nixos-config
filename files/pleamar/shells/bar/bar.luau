@@ -1278,8 +1278,37 @@ local function mpd_tip()
     end)
 end
 
+-- The Genelec card, for the same reason as the MPD one: the plugin's facts do not reach this logic.
+-- Measured 2026-10-31 — the scene said `Genelec.volume` -50, `glm-vol read` said -50, and the card
+-- said «-40 dB · host GLM adapter», which is the library's declared default *and* the wrong path
+-- (`genlc discover` answers "GLM USB adapter not found", so the adapter is in the VM).
+-- `glm-vol read` is the live level; the cap and the mode are left out rather than printed stale.
+local function genelec_tip()
+    text.tip_body = "Genelec SAM · …"
+    fact.tip_hover = true
+    if tipTimer then cancel(tipTimer) end
+    tipTimer = after(TIP_DELAY, function()
+        tipTimer = nil
+        fact.tip_open = true
+    end)
+    run("glm-vol", { "read" }, function(out, code)
+        local level = tostring(out or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if code ~= 0 or level == "" then
+            text.tip_body = "Genelec SAM · no reading"
+            return
+        end
+        text.tip_body = "Genelec SAM · " .. level .. " dB\nwheel — level · press — mute"
+    end)
+end
+
 on("tip", function(i)
-    if i == 10 then mpd_tip() else showTip(i) end
+    if i == 10 then
+        mpd_tip()
+    elseif i == 11 then
+        genelec_tip()
+    else
+        showTip(i)
+    end
 end)
 
 -- The build badge's card. QS keeps the tool's own text in `statusTooltip` and hands it to a
