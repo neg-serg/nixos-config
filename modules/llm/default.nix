@@ -84,6 +84,27 @@
 #       systemctl start llama-server          # 30b on 127.0.0.1:8080
 #       /zero/ai/llama/start-llama-server.sh  # same, manual run (optional port/model args)
 #
+# ### vLLM (OpenAI-compatible server, ROCm)
+#
+# - Module: `modules/llm/vllm.nix`; package: `pkgs.vllmRocmEnv`
+#   (`packages/vllm-rocm/default.nix` — vLLM 0.24.0 built against the ROCm torch 2.12.0
+#   closure of `torch-rocm`, gfx1201).
+# - Role: the throughput/high-concurrency server (continuous batching, paged attention,
+#   OpenAI-compatible API) — the Ollama/llama.cpp alternatives here are single-stream and
+#   the colibrì engine is disk-bound. Same weights, much faster under parallel load.
+# - Built from source, no binary cache for the HIP kernels: the first build takes tens of
+#   minutes, everything after that is store reuse. Coherent GPU kernel changes in
+#   `packages/vllm-rocm/default.nix`'s header.
+# - Model store: `/zero/ai/vllm` (HF cache + Triton kernel cache) — never on system disks.
+# - VRAM is shared with the desktop session and Ollama (~5.5 GB in use at idle), so
+#   `services.vllm.gpuMemoryUtilization` defaults to 0.6 instead of vLLM's 0.92 — at 0.92 the
+#   engine aborts at startup ("free memory … less than desired"). `ollama stop <model>` before
+#   raising it.
+# - Deliberately not auto-started:
+#       systemctl start vllm                  # service model on 127.0.0.1:8004
+#       vllm serve Qwen/Qwen3-8B-AWQ --port 8004   # one-off, any model
+#       curl http://127.0.0.1:8004/v1/models
+#
 # ### voxinput (voice → text)
 #
 # - Module: `modules/llm/pkgs.nix`
@@ -191,6 +212,8 @@
 #   tmpfiles)
 # - `/zero/ai/glm52_i4` — colibrì int4 model (~384 GB, 144 shards: out-00000..3.safetensors +
 #   config.json; moved here 2026-08-20, staging dir is empty)
+# - `/zero/ai/vllm` — vLLM: HF cache (`hf/`, weights + tokenizers), download dir (`hub/`) and the
+#   Triton kernel cache (`cache/`), created by the activation script
 #
 # ## Status on trantor
 #
@@ -209,7 +232,7 @@
 #   (~100 s / 40 tok, cold expert cache); with MTP + warm cache expect 0.8–1.6 tok/s. To auto-start
 #   instead, set `services.colibri.serve.enable = true` (module ready).
 # - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT), 8003 (colibri,
-#   manual)
+#   manual), 8004 (vLLM, manual), 8080 (llama-server, manual)
 
 {
   neg,
@@ -265,6 +288,8 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/whisperx
           # OCR models (marker/surya) — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/ocr
+          # vLLM weights, HF cache and Triton kernel cache — main user manages files
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/vllm
         '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }
