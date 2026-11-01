@@ -24,6 +24,7 @@ import "../../lib/capsule.plm"
 //   pleamar --say picker "emit choose 3"         set the fourth card (0 is the first)
 //   pleamar --say picker "emit open_settings"    the settings screen (the g key)
 //   pleamar --say picker "emit toggle_settings"  open/close the settings screen
+//   pleamar --say picker "fact order newest"     sort: newest first, or `name`
 //   pleamar --say picker "fact open true"        open through the fact alone
 //   pleamar --say picker describe                what every card and zone says
 //
@@ -69,8 +70,10 @@ scene picker {
     // Two user helpers (installed from files/pleamar/scripts/helpers into ~/.local/bin):
     // the colour schemes of the folder, and applying one. `files` is the scene's own folder,
     // where settings.json lives; `files.write` is what the settings screen saves through.
+    // `ls` is the newest-first sort and nothing else: no service reports a file's modification
+    // time, so the documented stopgap stands in for one (see picker.luau).
     permissions {
-        run: "pleamar-wallpaper-palettes", "pleamar-wallpaper-apply"
+        run: "pleamar-wallpaper-palettes", "pleamar-wallpaper-apply", "ls"
         services: "env", "files", "files.write"
     }
 
@@ -85,6 +88,10 @@ scene picker {
     fact pages = 1
     fact shown = 0                // how many cards that page holds (picker.luau)
     fact settings = false         // the settings screen is over the deck
+    // The deck's sort, the reference's `S` key: by name, or the newest wallpaper first. It is the
+    // session's, as it was there (WallpaperSwatches.sort), and picker.luau does the sorting: a
+    // model's records are laid down from what the logic hands it, so the order is decided there.
+    fact order: name | newest = name
     text folder = ""              // what the deck is showing
     text status = ""              // a line about it, or why it is empty
     text command = ""             // the wallpaper tool, with {} where the path goes
@@ -137,6 +144,8 @@ scene picker {
     on key End while open and not settings { sel = max(shown - 1, 0) }
     on key Return while open and not settings { emit choose(sel) }
     on key r while open and not settings { emit reload }
+    // `s` turns the sort over; the logic hears the fact change and lays the page down again.
+    on key s while open and not settings { order = if(order == name, newest, name) }
     // A page at a time: the deck holds a page of cards, not the folder (see picker.luau).
     on key Page_Down while open and not settings { emit flip(1) }
     on key Page_Up while open and not settings { emit flip(-1) }
@@ -236,7 +245,7 @@ scene picker {
 
                 text "No wallpapers in {folder}" { at: DW / 2, 96 + view_h / 2; anchor: center
                                                    size: 13; color: skin.ink.dim; show: walls.count == 0 }
-                text "arrows choose · enter sets · n / p next page · r reads the folder · g settings · esc closes"
+                text "arrows choose · enter sets · s sorts · n / p next page · r reads the folder · g settings · esc closes"
                     { at: DW / 2, DH - 30; anchor: center; size: 11; color: skin.ink.dim }
 
                 // The keyboard's card is always in sight: the deck scrolls to the row it is on
