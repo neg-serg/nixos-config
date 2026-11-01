@@ -59,10 +59,17 @@ let
 
   };
 
-  # Quickshell PillTracker state files (user neg): the panel pill capsule
-  # writes this state and the calendar event; the Telegram reminder and
-  # pill bot mirror marks in both directions (panel <-> chat).
-  pillPanelStateFile = "/home/neg/.local/state/quickshell/pill-tracker.json";
+  # Pleamar pill panel state (user neg): the panel pill capsule writes this
+  # state and the calendar event; the Telegram reminder and pill bot mirror
+  # marks in both directions (panel <-> chat).
+  #
+  # The state used to live under ~/.local/state/quickshell/ (the Quickshell
+  # service's own directory). It moved with the shell's name; both scripts
+  # below fall back to the legacy file while the new one does not exist yet, so
+  # a mark recorded before the rename is not lost on the first boot.
+  pillPanelStateFile = "/home/neg/.local/state/pleamar/pill-tracker.json";
+  pillPanelStateDir = "/home/neg/.local/state/pleamar";
+  pillPanelLegacyStateFile = "/home/neg/.local/state/quickshell/pill-tracker.json";
   pillPanelIcsDir = "/home/neg/.config/vdirsyncer/calendars/pills";
   pillPanelUser = "neg";
 
@@ -73,6 +80,7 @@ let
   # when the dose gets marked (or unmarked) from the panel.
   pillReminderScript = pkgs.replaceVars ./telegram/telegram-pill-reminder.py {
     panelStateFile = pillPanelStateFile;
+    legacyStateFile = pillPanelLegacyStateFile;
     botTokenPath = config.trantor.telegram.botTokenPath;
     chatIdPath = config.trantor.telegram.chatIdPath;
   };
@@ -80,13 +88,14 @@ let
   # Pill bot: long-polls getUpdates and turns presses of the "pill_taken"
   # button into a confirmation edit plus a dated line in the state log.
   # It is also the panel <-> Telegram bridge: a Telegram press marks the
-  # Quickshell PillTracker (capsule + vdirsyncer calendar event), and a
+  # panel's pill state (capsule + vdirsyncer calendar event), and a
   # panel-side mark/unmark edits the same Telegram reminder message, so
   # the pill can be confirmed from either source.
   pillBotScript = pkgs.replaceVars ./telegram/telegram-pill-bot.py {
     botTokenPath = config.trantor.telegram.botTokenPath;
     chatIdPath = config.trantor.telegram.chatIdPath;
     panelStateFile = pillPanelStateFile;
+    legacyStateFile = pillPanelLegacyStateFile;
     panelIcsDir = pillPanelIcsDir;
     panelUser = pillPanelUser;
   };
@@ -199,6 +208,13 @@ in
       })
 
       {
+        # The panel state directory the pill bot writes as root: the panel owns
+        # the file, the directory itself is declared here so the bot has
+        # somewhere to create it (it does not exist on a fresh session).
+        systemd.tmpfiles.rules = [
+          "d ${pillPanelStateDir} 0755 ${pillPanelUser} ${pillPanelUser} - -"
+        ];
+
         systemd.services."telegram-alert-bridge" = systemdUser.mkSystemService {
           description = "Alertmanager Telegram webhook bridge";
           documentation = [
@@ -231,7 +247,7 @@ in
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
           # Same sandbox as the bridge, except that this one legitimately
-          # writes into the panel: it rewrites the Quickshell pill state and
+          # writes into the panel: it rewrites the panel's pill state and
           # the vdirsyncer .ics (read-only home plus those two paths). It
           # runs as root and chown()s those files to neg, so the capability
           # set is left at systemd's default here — narrowing it is the next
@@ -242,8 +258,11 @@ in
             RestartSec = 5;
             StateDirectory = "telegram-pill-bot";
             ProtectHome = "read-only";
+            # The state directory, not the file: on the first boot after the
+            # rename the file does not exist yet and `-` would leave the whole
+            # directory read-only, so the bot could not write its own state.
             ReadWritePaths = [
-              "-${pillPanelStateFile}"
+              "-${pillPanelStateDir}"
               "-${pillPanelIcsDir}"
             ];
           };
