@@ -242,7 +242,12 @@ hl.config({
   },
   cursor = {
     sync_gsettings_theme = true, min_refresh_rate = 175, inactive_timeout = 0,
-    hide_on_key_press = true, warp_on_change_workspace = false,
+    -- false: with `true` every keypress blanks the cursor image until the pointer
+    -- next moves, and over a layer surface nothing asks for it again — measured
+    -- 2026-11-01: after typing, the pointer stayed invisible until a move. The option
+    -- buys a cosmetic hide while typing, while its failure mode is exactly the
+    -- reported "the cursor is stuck", so it stays off.
+    hide_on_key_press = false, warp_on_change_workspace = false,
     -- false is "do not fall back to a software cursor", which is what `auto` (the
     -- default, 2) does: with the pointer composited into the frame it only moves
     -- when a frame lands, and over a layer that repaints every frame — the bar —
