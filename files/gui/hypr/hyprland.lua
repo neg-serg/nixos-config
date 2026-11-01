@@ -419,10 +419,12 @@ hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class t
 -- `tun` went with it, so the key spawned a kitty that died on exec. Removed
 -- rather than repointed: a status pad belongs to whatever proxy tool wins next.
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch toggle mixer"))
--- Wallpaper deck: opens over the current wallpaper and sets the card Enter lands
--- on (unit + settings seed: modules/user/nix-maid/gui/wallpaper-picker.nix).
+-- Wallpaper deck: the pleamar scene `picker` (files/pleamar/shells/picker/picker.plm) opens over
+-- the current wallpaper and sets the card Enter lands on. `pleamar-picker` is the scene's command
+-- line: it starts the on-demand unit when the session has no deck running and then talks to it
+-- over IPC, so the key works from a cold session and a second press closes the deck.
 -- M4+w raises the browser and M4+S+w is the player, so the deck sits on M4+C+w.
-hl.bind(M4 .. "+" .. C .. "+w", hl.dsp.exec_cmd("qs-wallpaperpicker toggle"), { locked = true })
+hl.bind(M4 .. "+" .. C .. "+w", hl.dsp.exec_cmd("~/.local/bin/pleamar-picker toggle"), { locked = true })
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 -- --- Overview (hyprexpo) ───────────────────────────────────────────────
 -- `hypr-expo` (modules/user/nix-maid/hyprland/main.nix) is the same command the

@@ -18,17 +18,16 @@
     wallpaperVideo = {
       enable = mkBool "enable the looped video wallpaper window (mpv + hyprwinwrap)" false;
     };
-    # Swatch-deck wallpaper picker: a standalone Quickshell config (`qs -p
-    # ~/.config/qs-wallpaperpicker`), so it runs beside the bar instead of
-    # replacing it. Which folder it browses and which program paints the chosen
-    # picture is the settings seed owned by
-    # modules/user/nix-maid/gui/wallpaper-picker.nix (`wl img {}` on trantor).
+    # Swatch-deck wallpaper picker: the pleamar scene `picker`
+    # (files/pleamar/shells/picker/picker.plm) — a grid of the wallpaper folder's
+    # cards, each with the colours matugen would dress the desktop in, opened on
+    # M4+C+w. It is an on-demand unit, never a session scene: nothing runs until
+    # the bind asks for the deck. wl-daemon keeps painting the background and the
+    # deck hands it the chosen picture (`wl img {}`); everything else a new
+    # wallpaper sets — the caches the theme pipeline and the login screen read,
+    # matugen — is `pleamar-wallpaper-apply` (files/pleamar/scripts/helpers).
     wallpaperPicker = {
-      enable = mkBool "enable the Quickshell wallpaper picker (qs-wallpaperpicker)" false;
-      # wl-daemon keeps painting the desktop background; the picker hands it every
-      # image (the gear's `wl img {}`) and paints only what wl cannot — animated
-      # GIF/WebP and videos — on a layer above wl's, under every window. See
-      # modules/user/nix-maid/gui/wallpaper-picker.nix.
+      enable = mkBool "enable the wallpaper picker deck (pleamar scene `picker`)" false;
     };
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     hyprwhspr.enable = mkBool "enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland)" false;
