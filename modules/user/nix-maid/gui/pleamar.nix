@@ -43,8 +43,9 @@
 #   change, writing `~/.config/pleamar/theme.plm`.
 # - `pleamar-cleanup-symlink` — removes stale deployed links; without it a scene dies on a missing
 #   `.plm` between cleanup and activation.
-# - Login-phase guard: while `%t/quickshell-login/login-phase` exists the greeter owns the screen and
-#   no session scene may start; systemd re-evaluates the condition once the marker is gone.
+# - Login-phase guard: while `%t/quickshell-login/login-phase` exists the login layer owns the screen
+#   (`pleamar-login-layer`, which runs the lock scene by hand) and no session scene may start;
+#   systemd re-evaluates the condition once the marker is gone.
 #
 # ## Enable / disable
 #
@@ -124,10 +125,10 @@ let
   ];
   healthScenes = lib.concatStringsSep " " (map (s: "\"${s}\"") pleamarHealthScenes);
 
-  # Login-phase contract shared with the Quickshell bar: while the marker
-  # exists the greeter owns the screen and no session scene may start. systemd
-  # re-evaluates the condition when the marker is removed after the password,
-  # so the units still come up with hyprland-session.target.
+  # Login-phase contract shared with the login layer: while the marker exists the
+  # lock scene owns the screen and no session scene may start. systemd re-evaluates
+  # the condition when the marker is removed after the password, so the units still
+  # come up with hyprland-session.target.
   loginPhaseGuard = "!%t/quickshell-login/login-phase";
 
   # ── Deployment ────────────────────────────────────────────────────────────
@@ -282,13 +283,21 @@ let
   # Scenes that must not come up with the session. `lock` is born locked
   # (`fact locked = true` in shells/lock/lock.plm), so a unit wanted by
   # hyprland-session.target would put the pleamar lock screen in front of every
-  # login — and PH3-L's PAM matrix is a human gate that has not been run yet
-  # (superplan: `human-gate="yes"`; the Quickshell login layer stays the
-  # fallback until it has). The unit still exists, with the same caps, restart
-  # policy and scene condition, so a bind or hypridle can start it:
+  # session. The login phase runs the same scene by hand instead, from
+  # `pleamar-login-layer` (modules/user/session/greetd/login-layer.sh, started by
+  # the login branch of files/gui/hypr/hyprland.lua), which is the only place that
+  # may start it before a password has been accepted. The unit still exists, with
+  # the same caps, restart policy and scene condition, so a lock bind or hypridle
+  # can start it inside the session:
   #
   #     systemctl --user start pleamar-lock.service     # lock now
   #     pleamar --say lock "fact locked false"          # unlock (PAM first)
+  #
+  # Both halves are behind PH3-L's PAM matrix, a human gate (superplan:
+  # `human-gate="yes"`): the owner runs it at a logout, never a test. Until it has
+  # passed, the login screen rolls back to the previous generation — or to the
+  # Quickshell layer with a `git revert` of the login-layer commits, since
+  # files/quickshell stays in the tree until then.
   pleamarOnDemandUnits = {
     pleamar-lock = (pleamarSceneUnit "lock") // {
       wantedBy = [ ];
@@ -322,7 +331,7 @@ let
 
       # A stopped or crashed scene is not this probe's business: restartOnFailure
       # owns that path, and the login-phase condition keeps scenes down on
-      # purpose behind the greeter.
+      # purpose behind the login screen.
       [ "$(systemctl --user is-active "$unit" 2>/dev/null || true)" = "active" ] || continue
 
       if timeout 15 pleamar --say "$scene" describe > /dev/null 2>&1; then

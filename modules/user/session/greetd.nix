@@ -1,18 +1,12 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
   ...
 }:
 let
   guiEnabled = config.features.gui.enable or true;
-  mainHome = config.lib.neg.homeDir;
   inherit (config.lib.neg) mainUser;
-  greeterCache = "/home/greeter/.cache";
-  greeterWallpaperDst = "${greeterCache}/greeter-wallpaper";
-  # Fallback when no dynamic source yields a file at activation time.
-  greeterWallpaperFallback = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   # The interactive login is no longer a greeter session: greetd runs this
   # wrapper as the main user and the compositor it starts paints the login
   # screen itself (the pleamar lock scene, files/pleamar/shells/lock/lock.plm,
@@ -52,12 +46,6 @@ let
       }
     )
   );
-  # Old greeter session config: kept, but nothing starts it any more — see
-  # settings.default_session. It is the fallback if the single-compositor login
-  # has to be reverted (point default_session back at it).
-  greetdHyprlandConfig = pkgs.replaceVars (config.lib.neg.path "files/gui/hypr/greetd.lua") {
-    quickshell = lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  };
 
 in
 {
@@ -76,8 +64,10 @@ in
       # desktop's `systemctl --user start hyprland-session.target` needs.
       #
       # No authentication happens here (greetd has no one to ask): the session
-      # starts and the login layer in it asks for the password. The old greeter
-      # config is kept in `greetdHyprlandConfig` for a revert.
+      # starts and the login layer in it asks for the password. There is no
+      # second greeter to fall back to any more: a broken login is undone with
+      # the previous generation (or a `git revert` of the login wiring), not with
+      # a config switch.
       settings.default_session = {
         command = "${sessionWrapper}";
         user = mainUser;
@@ -100,10 +90,10 @@ in
       done
     '';
     # Prevent nix-maid's maid-activation.service from running for the greeter user.
-    # The greeter runs a minimal Hyprland+quickshell session and does not need
-    # user config management (tmpfiles, sd-switch, nix-store). Adding
-    # ConditionUser=!greeter skips the service on greeter login, avoiding
-    # unnecessary nix-store calls that delay greeter start.
+    # No session of its own ever starts for that account any more (the login runs
+    # as the main user), so the condition is a leftover guard: should anything run
+    # as greeter again, it must not spend nix-store calls on user config
+    # management it has no use for.
     systemd.user.services.maid-activation.unitConfig.ConditionUser = "!greeter";
     security.pam.services.greetd.enableGnomeKeyring = true;
     # The lock scene checks the password through the PAM service `pleamar`
@@ -123,28 +113,24 @@ in
       group = "greeter";
     };
     users.groups.greeter = { };
-    # The login layer (started by hyprland.lua in the login phase) loads the tree
-    # from /etc/quickshell: that phase runs before the session target, so
-    # ~/.config/quickshell — nix-maid's symlink farm — is not guaranteed to be
-    # deployed yet, and a login screen that depends on it could not be trusted.
-    # `quickshell` itself comes from the nix-maid wrapper (single source), so the
-    # layer needs no absolute path.
-    environment.etc."quickshell".source = config.lib.neg.path "files/quickshell";
     environment.systemPackages = [ loginLayer ];
-    # The pleamar tree the login layer loads its scene from: a store copy, for the
-    # reason above — the login phase runs before the session target, so
-    # ~/.config/pleamar is not guaranteed to be linked yet. Read by
-    # pleamar-login-layer, which prefers the /etc/nixos checkout while it exists.
+    # The pleamar tree the login layer loads its scene from: a store copy, because
+    # the login phase runs before the session target, so ~/.config/pleamar is not
+    # guaranteed to be linked yet. Read by pleamar-login-layer, which prefers the
+    # /etc/nixos checkout while it exists.
+    #
+    # This replaced both Quickshell deployments of the login screen
+    # (environment.etc."quickshell" and the greeter fallback under /etc/greetd):
+    # nothing reads files/quickshell at login any more. That also ends the
+    # theme copy modules/user/session/greetd/wallpaper.sh used to make — the login
+    # phase now runs as the main user, whose own ~/.config/pleamar/theme.plm is the
+    # live palette, and the tree here carries the committed files/pleamar/theme.plm
+    # for the `import "../../theme.plm"` slot, so there is no second account to
+    # copy a theme into.
     environment.etc."pleamar-lock".source = pleamarLoginTree;
-    # Kept for the greeter fallback (greetdHyprlandConfig / greetd.lua): the old
-    # greeter reads its quickshell tree and its session launcher from /etc/greetd.
-    # Nothing starts that session any more — see settings.default_session.
-    environment.etc."greetd/quickshell".source = config.lib.neg.path "files/quickshell";
+    # The wrapper is deployed as a readable copy of what greetd runs; greetd itself
+    # starts the store path above.
     environment.etc."greetd/session-wrapper".source = sessionWrapper;
-    # …and the old greeter's compositor config, so reverting is a one-line change
-    # (point default_session back at `${lib.getExe pkgs.hyprland} -c /etc/greetd/greetd-hyprland-config.lua`
-    # with user = "greeter").
-    environment.etc."greetd/greetd-hyprland-config.lua".source = greetdHyprlandConfig;
     # Expose the Wayland session .desktop files so the greeter can list and
     # switch sessions (Hyprland only; this host has no X sessions).
     environment.pathsToLink = lib.mkAfter [
@@ -156,25 +142,10 @@ in
       "d /usr/share 0755 root root -"
       "L+ /usr/share/wayland-sessions - - - - /run/current-system/sw/share/wayland-sessions"
       "d /home/greeter 0710 greeter greeter -"
+      # modules/user/nix-maid/sys/wallpaper-sync.nix keeps the login wallpaper in
+      # this cache (wl's own state lives in the main user's home, which the greeter
+      # account cannot read).
       "d /home/greeter/.cache 0775 greeter greeter -"
-      "d /home/greeter/.config/quickshell 0755 greeter greeter -"
-      "d /home/greeter/.config/quickshell/Theme 0755 greeter greeter -"
     ];
-    system.activationScripts.greetdWallpaper =
-      let
-        jq = lib.getExe' pkgs.jq "jq";
-      in
-      builtins.readFile (
-        pkgs.replaceVars ./greetd/wallpaper.sh {
-          themeDir = pkgs.copyPathToStore (config.lib.neg.path "files/quickshell/Theme");
-          inherit
-            greeterWallpaperDst
-            greeterWallpaperFallback
-            jq
-            mainHome
-            ;
-          gnused = pkgs.gnused;
-        }
-      );
   };
 }

@@ -55,11 +55,11 @@ let
   '';
 
   # Copy the current wallpaper into the greeter cache. wl only refreshes that
-  # copy for `wl random` (client/src/random.rs:greeter_sync) and
-  # system.activationScripts.greetdWallpaper only on a rebuild, so without this
-  # service the login screen keeps the wallpaper of the last rebuild. Same
-  # source order as greetd/wallpaper.sh: live notify file, daemon state, any
-  # image from the collection, then the activation fallback.
+  # copy for `wl random` (client/src/random.rs:greeter_sync), so without this
+  # service the copy would keep the wallpaper of the last rebuild. The login
+  # screen itself no longer reads it: the pleamar login layer publishes
+  # `wallpaper.path` into the lock scene's data folder from the same two sources
+  # this chain uses. The copy stays for the greeter account and the nixie tools.
   wlGreeterSync = pkgs.writeShellScript "wl-greeter-sync" ''
     set -euo pipefail
     export PATH="${
