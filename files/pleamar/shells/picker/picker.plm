@@ -22,20 +22,26 @@ import "../../lib/capsule.plm"
 //   pleamar --say picker "emit close_picker"     close
 //   pleamar --say picker "emit reload"           read the folder again
 //   pleamar --say picker "emit choose 3"         set the fourth card (0 is the first)
+//   pleamar --say picker "emit open_settings"    the settings screen (the g key)
+//   pleamar --say picker "emit toggle_settings"  open/close the settings screen
 //   pleamar --say picker "fact open true"        open through the fact alone
 //   pleamar --say picker describe                what every card and zone says
 //
-// Settings (~/.local/share/pleamar/picker/settings.json; read by picker.luau)
+// Settings (~/.local/share/pleamar/picker/settings.json; read and written by picker.luau)
 //   folder    text    ~/pic/wl          the wallpapers to browse
 //   command   text    wl img {}         the tool that paints the desktop; {} is the path
 //   columns   number  4        1 – 8     how many cards a row holds
-// Nothing writes that file yet (there is no settings screen in the port), so the logic only
-// reads it and a key it does not know survives.
+// `g` opens the screen that edits the first two — Enter in either field saves — and a key the
+// logic does not know survives the write, because the table it read is what it writes back. The
+// screen is not the only way in: the logic watches the file, and an edit by hand lands the same
+// way, the folder it lists moving without a restart.
 //
-// What is not here yet: Wallhaven search and downloads, favourites, the settings screen, the
-// live preview of a clip, the fan-and-preview choreography of the reference. Wallpapers are
-// images: an animated GIF/WebP or a video cannot be painted by wl, and the Quickshell layer that
-// drew them went with the shell.
+// What is not here yet: Wallhaven search and downloads, the live preview of a clip, the
+// fan-and-preview choreography of the reference. Wallpapers are images: an animated GIF/WebP or a
+// video cannot be painted by wl, and the Quickshell layer that drew them went with the shell. The
+// settings screen saves what it is given: the reference's "create that folder" and "try the
+// command on the wallpaper on screen" need the filesystem and the wallpaper on screen, neither of
+// which a scene may reach — its own folder is all of it (INTERFACES §6).
 
 scene picker {
 
@@ -62,10 +68,10 @@ scene picker {
 
     // Two user helpers (installed from files/pleamar/scripts/helpers into ~/.local/bin):
     // the colour schemes of the folder, and applying one. `files` is the scene's own folder,
-    // where settings.json lives.
+    // where settings.json lives; `files.write` is what the settings screen saves through.
     permissions {
         run: "pleamar-wallpaper-palettes", "pleamar-wallpaper-apply"
-        services: "env", "files"
+        services: "env", "files", "files.write"
     }
 
     // Four cards a row, sixteen rows: one page of the folder (picker.luau). A `let` and not a
@@ -78,9 +84,16 @@ scene picker {
     fact page = 0                 // which page of cards is on screen (0 is the first)
     fact pages = 1
     fact shown = 0                // how many cards that page holds (picker.luau)
+    fact settings = false         // the settings screen is over the deck
     text folder = ""              // what the deck is showing
     text status = ""              // a line about it, or why it is empty
     text command = ""             // the wallpaper tool, with {} where the path goes
+    // The settings screen's two fields and its line about them. An `input` is bound to the live
+    // text of its own name (as the launcher's `query` is): the logic fills them when the screen
+    // opens and reads them when Enter is pressed.
+    text field_folder = ""
+    text field_command = ""
+    text note = ""
 
     // The page on screen, a row of cards per record: a card is a component, and a component takes
     // its record from a `for` — never from a computed place — so the rows are what the model holds
@@ -94,30 +107,50 @@ scene picker {
     }
 
     // `->` also reaches picker.luau: opening reads the folder the first time, reloading reads it
-    // again, a page turn reads that page's schemes, choosing applies one. The two the rules
-    // handle alone are the deck's own open and close.
+    // again, a page turn reads that page's schemes, choosing applies one, saving the settings
+    // writes them back. The rest the rules handle alone: the deck's own open and close, and the
+    // settings screen, whose fact the logic watches instead (an edit by hand reaches it too).
     event open_picker ->
     event reload ->
     event flip ->
     event choose ->
+    event save_settings ->
     event toggle_picker
     event close_picker
+    event open_settings
+    event close_settings
+    event toggle_settings
 
     // ---***------------------------------ keys
-    on key Escape while open { emit close_picker }
-    on key Right while open { sel = min(sel + 1, shown - 1) }
-    on key Left while open { sel = max(sel - 1, 0) }
-    on key Down while open { sel = min(sel + cols, shown - 1) }
-    on key Up while open { sel = max(sel - cols, 0) }
-    on key Home while open { sel = 0 }
-    on key End while open { sel = max(shown - 1, 0) }
-    on key Return while open { emit choose(sel) }
-    on key r while open { emit reload }
+    // The settings screen has the caret and the keys while it is up: Escape closes it, Enter in a
+    // field saves (`on submit` below). Everything the deck does waits for it to be gone, because a
+    // focused field keeps the letters and may keep the arrows too.
+    on key Escape while settings { emit close_settings }
+    on key g while open and not settings { emit open_settings }
+
+    on key Escape while open and not settings { emit close_picker }
+    on key Right while open and not settings { sel = min(sel + 1, shown - 1) }
+    on key Left while open and not settings { sel = max(sel - 1, 0) }
+    on key Down while open and not settings { sel = min(sel + cols, shown - 1) }
+    on key Up while open and not settings { sel = max(sel - cols, 0) }
+    on key Home while open and not settings { sel = 0 }
+    on key End while open and not settings { sel = max(shown - 1, 0) }
+    on key Return while open and not settings { emit choose(sel) }
+    on key r while open and not settings { emit reload }
     // A page at a time: the deck holds a page of cards, not the folder (see picker.luau).
-    on key Page_Down while open { emit flip(1) }
-    on key Page_Up while open { emit flip(-1) }
-    on key n while open { emit flip(1) }
-    on key p while open { emit flip(-1) }
+    on key Page_Down while open and not settings { emit flip(1) }
+    on key Page_Up while open and not settings { emit flip(-1) }
+    on key n while open and not settings { emit flip(1) }
+    on key p while open and not settings { emit flip(-1) }
+
+    // The settings screen's own verbs. Enter in either of its fields is not here: the fields live
+    // inside the card (a component), so `submit field_folder` at the scene's level names the live
+    // text and no rule fires — picker.luau hears `submit:field_folder` instead.
+    on open_settings while open { settings = true }
+    on close_settings { settings = false }
+    // One rule and `toggle`, not two: two rules both look at the state the frame began with, so
+    // a pair guarded by `settings` and by `not settings` would both fire and the last would win.
+    on toggle_settings while open { toggle settings }
 
     // ---***------------------------------ the deck
     // One card: the wallpaper's picture, its name, and the colours it would give the desktop.
@@ -203,7 +236,7 @@ scene picker {
 
                 text "No wallpapers in {folder}" { at: DW / 2, 96 + view_h / 2; anchor: center
                                                    size: 13; color: skin.ink.dim; show: walls.count == 0 }
-                text "arrows choose · enter sets · n / p next page · r reads the folder · esc closes"
+                text "arrows choose · enter sets · n / p next page · r reads the folder · g settings · esc closes"
                     { at: DW / 2, DH - 30; anchor: center; size: 11; color: skin.ink.dim }
 
                 // The keyboard's card is always in sight: the deck scrolls to the row it is on
@@ -220,19 +253,106 @@ scene picker {
         }
     }
 
+    // The settings screen, the reference's gear: the folder the deck lists and the command that
+    // paints the desktop, as two fields a press cannot reach past (`body`), Enter in either
+    // saving through picker.luau, and the line under them saying what there is. The fields are
+    // the scene's live texts, so the logic fills them as the screen opens and reads them as it
+    // saves; the panel's own `show:` decides whether they are there at all.
+    component Sheet(scale: number = ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        let SW = 520
+        let SH = 300
+        let cx = (screen.width - SW * scale) / 2
+        let cy = (screen.height - SH * scale) / 2
+        let pad = 24
+        let fw = SW - 2 * pad
+
+        group place {
+            move: cx, cy
+            group zoom {
+                scale: scale
+
+                Capsule(SW, SH, fill: skin.coal, alpha: 96%, radius: overlay.corner, shadow: 50%,
+                        rim: 1, scale: 1) { }
+
+                // The card swallows the presses that land on it, so the deck's cards underneath
+                // keep out of the way. Not pressable, so no label.
+                zone box body { from: 0, 0; size: SW, SH; corner: overlay.corner; role: region }
+
+                text "Picker settings" { at: pad, 34; anchor: left center; size: 16; weight: 600
+                                         color: skin.ink }
+
+                text "WALLPAPER FOLDER" { at: pad, 72; anchor: left center; size: 10.5; weight: 600
+                                          color: skin.ink.dim }
+                input field_folder {
+                    at: pad, 84; width: fw; size: 13; color: skin.ink; family: "Iosevka"
+                    selection: skin.accent.deep; placeholder: "~/pic/wl"
+                    label: "Wallpaper folder"
+                }
+                box { from: pad, 116; size: fw, 1; color: skin.ink; opacity: ink.subtle }
+
+                text "WALLPAPER COMMAND" { at: pad, 142; anchor: left center; size: 10.5; weight: 600
+                                           color: skin.ink.dim }
+                input field_command {
+                    at: pad, 154; width: fw; size: 13; color: skin.ink; family: "Iosevka"
+                    selection: skin.accent.deep; placeholder: "wl img {}"
+                    label: "Wallpaper command"
+                }
+                box { from: pad, 186; size: fw, 1; color: skin.ink; opacity: ink.subtle }
+
+                text note { at: pad, 210; anchor: left center; width: fw; lines: 1; size: 11.5
+                            color: skin.ink.dim }
+
+                // A button is a painted box with a zone over it (the shape is the zone's; the
+                // paint is the box's — §8: a zone brings the springs and takes the press).
+                box { from: SW - 206, SH - 52; size: 84, 32; corner: 8; color: skin.accent
+                      opacity: 88% }
+                zone box save { from: SW - 206, SH - 52; size: 84, 32; corner: 8; cursor: pointer
+                                role: button; label: "Save the settings" }
+                text "Save" { at: SW - 164, SH - 36; anchor: center; size: 12; weight: 600
+                              color: skin.on.accent }
+
+                box { from: SW - 114, SH - 52; size: 84, 32; corner: 8; color: skin.ink
+                      opacity: 8% }
+                zone box close { from: SW - 114, SH - 52; size: 84, 32; corner: 8; cursor: pointer
+                                 role: button; label: "Close the settings" }
+                text "Close" { at: SW - 72, SH - 36; anchor: center; size: 12; weight: 600
+                               color: skin.ink }
+
+                text "Enter saves · Esc closes" { at: pad, SH - 36; anchor: left center; size: 11
+                                                  color: skin.ink.dim }
+
+                on press save { emit save_settings }
+                on press close { emit close_settings }
+            }
+        }
+    }
+
+
     // The scrim dims what is under the deck; the catcher closes it on a press outside the panel.
     // Declared before the panel, so every panel zone sits above it.
     box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: shadow.strong; show: open }
 
     zone box catcher { from: 0, 0; size: screen.width, screen.height
                        label: "Close the wallpaper deck"; role: region }
-    on press catcher while open { emit close_picker }
+    on press catcher while open and not settings { emit close_picker }
 
     // Opening and closing. The logic does the reading (and sets `open` too); the rule here is
     // what makes a press of the key show the deck in the same frame.
     on open_picker { open = true }
     on toggle_picker { toggle open }
-    on close_picker { open = false }
+    on close_picker { open = false; settings = false }
 
     Panel() { show: open }
+
+    // The settings screen: declared after the panel, so it paints over the deck and its catcher
+    // takes the presses before a card under it does. A press outside the card closes the screen,
+    // not the deck, and the deck's own close takes the screen with it (the rule above).
+    box { from: 0, 0; size: screen.width, screen.height; color: skin.coal
+          opacity: shadow.strong * 2; show: settings }
+    zone box sheet_catcher { from: 0, 0; size: screen.width, screen.height
+                             label: "Close the picker settings"; role: region
+                             show: settings }
+    on press sheet_catcher while settings { emit close_settings }
+
+    Sheet() { show: settings }
 }
