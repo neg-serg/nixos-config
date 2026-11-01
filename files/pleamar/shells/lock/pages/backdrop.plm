@@ -26,7 +26,9 @@ part Backdrop {
         }
     }
 
-    // The scrim of LockContent.qml: 18 % of black over the tube, so the eye
-    // lands on the clock and the card. The vignette lives in paper.wgsl.
-    box scrim { from: 0, 0; size: screen.width, screen.height; color: coal; opacity: 18% }
+    // The scrim of LockContent.qml: 18 % of the theme's darkest tone over the tube, so the eye
+    // lands on the clock and the card. It is `skin.coal` — the wallpaper's colors.background
+    // role, the same tone the drawers and the launcher lay under themselves — so a light wallpaper
+    // veils with its own light tone instead of frozen black. The vignette lives in paper.wgsl.
+    box scrim { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: 18% }
 }
