@@ -25,6 +25,8 @@ import "../../lib/capsule.plm"
 //   pleamar --say picker "emit open_settings"    the settings screen (the g key)
 //   pleamar --say picker "emit toggle_settings"  open/close the settings screen
 //   pleamar --say picker "fact order newest"     sort: newest first, or `name`
+//   pleamar --say picker "emit favourite 2"      favourite the third card (and unfavourite it)
+//   pleamar --say picker "fact only_favourites true"   show the favourites and nothing else
 //   pleamar --say picker "fact open true"        open through the fact alone
 //   pleamar --say picker describe                what every card and zone says
 //
@@ -81,6 +83,10 @@ scene picker {
     // setting, because the deck's rows are laid out from it when the scene loads.
     let cols = 4
 
+    // The mark a favourited card wears: Adwaita's `starred-symbolic`, the nearest thing the
+    // deployment's icon themes have to the reference's `favorite` heart.
+    image star = icon "starred-symbolic", 14, 14
+
     // The interface.
     fact open = false
     fact sel = 0                  // the card the keyboard is on, within the page
@@ -92,6 +98,11 @@ scene picker {
     // session's, as it was there (WallpaperSwatches.sort), and picker.luau does the sorting: a
     // model's records are laid down from what the logic hands it, so the order is decided there.
     fact order: name | newest = name
+    // Favourites, the reference's `F` key and its Favourites source: `favourites` is how many the
+    // file holds (picker.luau keeps it), and `only_favourites` is the deck showing nothing else —
+    // the reference's source switch, which Tab turns over here.
+    fact favourites = 0
+    fact only_favourites = false
     text folder = ""              // what the deck is showing
     text status = ""              // a line about it, or why it is empty
     text command = ""             // the wallpaper tool, with {} where the path goes
@@ -109,6 +120,7 @@ scene picker {
         list cells max 4 {
             name: text
             picture: image 288, 180
+            fav: bool
             list sw max 4 { r: number; g: number; b: number }
         }
     }
@@ -122,6 +134,7 @@ scene picker {
     event flip ->
     event choose ->
     event save_settings ->
+    event favourite ->
     event toggle_picker
     event close_picker
     event open_settings
@@ -146,6 +159,10 @@ scene picker {
     on key r while open and not settings { emit reload }
     // `s` turns the sort over; the logic hears the fact change and lays the page down again.
     on key s while open and not settings { order = if(order == name, newest, name) }
+    // `f` favourites the card the keyboard is on (and unfavourites it), `tab` shows only the
+    // favourites — the reference's source switch, on the key a deck of cards suggests.
+    on key f while open and not settings { emit favourite(sel) }
+    on key Tab while open and not settings { toggle only_favourites }
     // A page at a time: the deck holds a page of cards, not the folder (see picker.luau).
     on key Page_Down while open and not settings { emit flip(1) }
     on key Page_Up while open and not settings { emit flip(-1) }
@@ -190,6 +207,12 @@ scene picker {
                               opacity: 1 - hit.hover * 0.25 }
                     }
                 }
+            }
+            // A favourited card wears a star, on a disc dark enough to read over any picture.
+            group marked {
+                show: c.fav
+                box { from: CW - 30, 10; size: 22, 22; corner: 11; color: skin.coal; opacity: 55% }
+                image star { at: CW - 26, 14; size: 14, 14; tint: skin.accent }
             }
             text c.name { at: 12, CH - 50; anchor: left center; width: CW - 24; lines: 1
                           size: 12.5; color: skin.ink }
@@ -244,8 +267,12 @@ scene picker {
                 }
 
                 text "No wallpapers in {folder}" { at: DW / 2, 96 + view_h / 2; anchor: center
-                                                   size: 13; color: skin.ink.dim; show: walls.count == 0 }
-                text "arrows choose · enter sets · s sorts · n / p next page · r reads the folder · g settings · esc closes"
+                                                   size: 13; color: skin.ink.dim
+                                                   show: walls.count == 0 and not only_favourites }
+                text "No favourites yet: press f on a wallpaper you like"
+                    { at: DW / 2, 96 + view_h / 2; anchor: center; size: 13; color: skin.ink.dim
+                      show: walls.count == 0 and only_favourites }
+                text "arrows choose · enter sets · f favourite · s sorts · tab all / favourites · n / p next page · r reads the folder · g settings · esc closes"
                     { at: DW / 2, DH - 30; anchor: center; size: 11; color: skin.ink.dim }
 
                 // The keyboard's card is always in sight: the deck scrolls to the row it is on
