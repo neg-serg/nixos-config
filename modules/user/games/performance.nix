@@ -41,9 +41,19 @@ in
     # auto-oc: apply persistent CPU + GPU overclock at boot
     # CPU: PBO 230W, TDC 190A, Tctl 95C, Curve Optimizer -20 (9950X3D)
     # GPU: sclk +300MHz, vddgfx -100mV (RX 9070 XT optimum from OC sweep)
+    #
+    # TEMPORARILY OFF (2026-11-02): the GPU took the session down twice in one
+    # evening — `gfxhub page fault` from a game's `dxvk-submit`, then
+    # `ring gfx_0.0.0 timeout` and a MODE1 reset that lost VRAM — and an
+    # undervolt is the first thing to rule out before blaming Proton/DXVK.
+    # With no `wantedBy` nothing is applied at boot (nor on a switch, which
+    # re-ran this unit and reapplied +300/-100 every time). The profile stays in
+    # ExecStart for the test, and both halves are one command away:
+    #   sudo systemctl start auto-oc    # re-apply this profile now
+    #   sudo gpu-oc reset               # drop the GPU part (slot back to stock)
+    # Put `wantedBy = [ "multi-user.target" ];` back to restore the autostart.
     systemd.services.auto-oc = {
       description = "Apply persistent CPU/GPU overclock";
-      wantedBy = [ "multi-user.target" ];
       after = [ "systemd-modules-load.service" ];
       serviceConfig = {
         Type = "oneshot";
