@@ -123,6 +123,32 @@ _: _: finalPrev: {
     '';
   });
 
+  # sandwich 0.3.0.5's own test suite races on the node status TVar. When an
+  # exception escapes an introduceWith handler, the handler calls
+  # recordExceptionInStatus, which writes a premature
+  # `Done (Failure (GotException Nothing Nothing e))` into the node's status
+  # (src/Test/Sandwich/Interpreters/StartTree.hs, startTree RunNodeIntroduceWith;
+  # RunNodeAround has the same pattern). waitForTree unblocks on that write, so a
+  # reader can copy the status before runInAsync writes the authoritative result
+  # carrying the "Exception in introduceWith '<label>' handler" message, and
+  # test/IntroduceWith.hs:30/:44 then see failureMessage = Nothing instead of the
+  # expected message. Measured 12 failing runs out of 300 on the pinned GHC
+  # 9.10.3, while the very same derivation passed in another nix build — the
+  # annotation is not lost, the status is simply read too early. The library is
+  # unaffected, and nixpkgs pulls sandwich in only as a *test* dependency of
+  # fsnotify (nix-output-monitor -> nh), so skipping the suite drops nothing we
+  # ship.
+  # Haskell packages run their checks regardless of doCheckByDefault (the
+  # generic builder defaults to `doCheck ? !isCross`), hence the package-set
+  # override; a top-level `sandwich` attribute does not exist in nixpkgs.
+  haskellPackages = finalPrev.haskellPackages.override (old: {
+    overrides = finalPrev.lib.composeExtensions (old.overrides or (_: _: { })) (
+      _hfinal: hprev: {
+        sandwich = finalPrev.haskell.lib.dontCheck hprev.sandwich;
+      }
+    );
+  });
+
   # Flaky test suites in the python3.14 mail stack that nix-maid pulls in
   # (extract-msg/mail-parser/rtfde -> python3.14-env). Their checks fail
   # non-deterministically: rtfde compares random bytes against their RTF
