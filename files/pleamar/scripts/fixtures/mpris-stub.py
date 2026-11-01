@@ -85,6 +85,9 @@ def main() -> int:
     # treats `file://`, a bare path and an http(s) URL differently
     # (`CoverResolver.qml:163-168`).
     ap.add_argument("--art", default="file:///tmp/stub-cover.jpg")
+    # The track's own file. The media tooltip's quality line reads it with ffprobe
+    # (`lib/plugins/meta` does the same for the sidebar rows).
+    ap.add_argument("--url", default="")
     ap.add_argument("--status", default="Playing")
     ap.add_argument(
         "--can-go-next", choices=("true", "false"), default="false"
@@ -116,6 +119,7 @@ def main() -> int:
                 "xesam:title": dbus.String(args.title),
                 "xesam:artist": dbus.Array([args.artist], signature="s"),
                 "mpris:artUrl": dbus.String(args.art),
+                **({"xesam:url": dbus.String(args.url)} if args.url else {}),
             },
             signature="sv",
         )
