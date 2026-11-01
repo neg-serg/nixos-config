@@ -206,9 +206,9 @@ in
   # Pleamar shell (features.gui.pleamar): this is the session's shell — bar,
   # panels, notifications, toast and launcher run as their own units, all
   # 18 scene files compile, and the panels' frame cost is inside the screen's
-  # own period (tests/evidence/). The reference shell is the rollback path and
-  # stays buildable: `features.gui.quickshell` is still on, its service masked
-  # by hand, so one shell owns the screen and the other is one unmask away.
+  # own period (tests/evidence/). It is the only shell in the tree: the
+  # Quickshell reference panel and its `quickshell.service` are gone, so
+  # nothing else competes for the bottom edge.
   features.gui.pleamar.enable = true;
   # Sonda (features.gui.sonda): a file manager whose search knows the contents
   # of the files, with its window as one more pleamar scene. Installed, not

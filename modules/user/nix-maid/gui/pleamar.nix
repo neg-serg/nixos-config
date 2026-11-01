@@ -9,10 +9,9 @@
 # unit, so one can restart or be measured without touching the others.
 #
 # **On** since the parity push: `features.gui.pleamar.enable = true` in `hosts/trantor/default.nix`,
-# and this module's units are the session's shell. `features.gui.quickshell` is still `true` (its
-# `quickshell.service` is masked by hand as the rollback path, so the two do not both come up); the
-# scenes and `pkgs.pleamar` stay in the tree either way, and flipping the flag back stops the scenes
-# without removing anything the reference needs.
+# and this module's units are the session's shell. It is the only shell in the tree — the Quickshell
+# reference panel module is gone — and the scenes and `pkgs.pleamar` stay either way, so flipping the
+# flag off just stops the scenes.
 #
 # ## Sources of truth
 #
@@ -54,8 +53,8 @@
 #     $ nixos-rebuild switch --flake .#trantor --option substitute false
 #     # then log out and back in: the scenes are session units, not a live restart
 #
-# The two are not meant to run together: the reference shell comes back by unmasking
-# `quickshell.service` and flipping this flag off, and the scenes exit on their own when it is.
+# Flipping the flag off stops the scenes on their own, and nothing takes the screen
+# afterwards: there is no second shell left to fall back to.
 #
 # ## Gate
 #
