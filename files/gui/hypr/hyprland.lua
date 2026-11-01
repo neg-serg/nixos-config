@@ -76,7 +76,11 @@ local border_size            = 0 -- frameless: no window borders at all
 local col_border_active_base = "rgba(00285981)"
 local col_border_inactive    = "rgba(00000000)"
 local rounding               = 0
-local rounding_power         = 0
+-- Hyprland rejects 0 here ("value 0 is less than the minimum of 1.00"), so the
+-- old 0 never applied — the running session kept the compositor default of 2.
+-- 2 is spelled out to keep that behaviour; the knob is inert while rounding = 0
+-- and would matter again only if the frameless look goes away.
+local rounding_power         = 2
 local opacity_active         = 1.0
 local opacity_inactive       = 1.0
 local blur_size              = 26 -- was 9; the bar/panels dropped hyprglass's 36px layer blur
@@ -153,10 +157,6 @@ hl.monitor({ output = "DP-1", disabled = true })
 hl.monitor({ output = "DP-4", disabled = true })
 
 
--- ---------------------------------------------------------------------
--- ---------------------------------------------------------------------
--- The plugin holds its config only until something re-initialises its state: a
--- `hyprctl reload` drops it back to the plugin defaults (blur_strength 2,
 -- ---------------------------------------------------------------------
 -- Environment (from env.conf)
 -- ---------------------------------------------------------------------
