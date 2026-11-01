@@ -55,15 +55,31 @@
 #   missing-type              properties of our own QML components, which have no
 #                             generated qmltypes either
 #
+#   Re-measured 2026-11-01 against the shipped quickshell 0.3.2 stack: the gate
+#   takes its import paths from the deployed `qs` wrapper, so these numbers track
+#   that generation as much as this tree. Most categories fell — unqualified
+#   643 → 548, unresolved-type 11 → 3, uncreatable-type 7 → 5,
+#   signal-handler-parameters 3 → 0 — because types that used to be opaque now
+#   have qmltypes. The two categories that grew grew for that same reason:
+#   QuickshellScreenInfo, PopupAnchor and ScriptModel resolve far enough for
+#   qmllint to report the individual members it cannot see, where before the whole
+#   type counted as one unresolved-type (missing-property is 42, not 32, on the
+#   previous baseline's own tree when re-run with the current analyzer), and
+#   IdleInhibitor is known now, so shell.qml's IdleInhibitor-to-IdleInhibitor
+#   assignment is reported (incompatible-type 1 → 2). The tree itself added
+#   exactly two findings since that baseline: MusicPopup.qml:265 reads
+#   screen.height twice, the same inherent QuickshellScreenInfo member lookup as
+#   the `width` ones above.
+#
 # Look at them with QMLLINT_SHOW=1, or by running qmllint with the import paths
 # the gate prints.
-unqualified	643
-missing-property	32
-unresolved-type	11
+unqualified	548
+missing-property	44
+unresolved-type	3
 import	2
-uncreatable-type	7
-incompatible-type	1
+uncreatable-type	5
+incompatible-type	2
 property-override	2
-signal-handler-parameters	3
+signal-handler-parameters	0
 duplicate-property-binding	1
 missing-type	0
