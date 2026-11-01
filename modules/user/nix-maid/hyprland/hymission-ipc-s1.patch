@@ -1,0 +1,50 @@
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -23,8 +23,8 @@
+ inline HANDLE g_pluginHandle = nullptr;
+ inline std::unique_ptr<hymission::OverviewController> g_overviewController;
+ inline std::unique_ptr<hymission::StageController> g_stageController;
+-inline SP<SHyprCtlCommand> g_stageStateCommand;
+-inline SP<SHyprCtlCommand> g_stageRegionCommand;
++inline SP<IPC::Socket1::SCommand> g_stageStateCommand;
++inline SP<IPC::Socket1::SCommand> g_stageRegionCommand;
+ inline SP<SHyprCtlCommand> g_overviewStateCommand;
+ inline SP<SHyprCtlCommand> g_rawWindowRenderCommand;
+ inline SP<SHyprCtlCommand> g_captureInputCommand;
+@@ -478,20 +478,28 @@
+         return g_overviewController && g_overviewController->captureInputSuppressed();
+     });
+     g_stageController->initialize();
+-    g_stageStateCommand = HyprlandAPI::registerHyprCtlCommand(g_pluginHandle, SHyprCtlCommand{
++    g_stageStateCommand = HyprlandAPI::registerHyprCtlCommand(g_pluginHandle, IPC::Socket1::SCommand{
+         .name = "hymission-stage-state",
+-        .exact = true,
+-        .fn = [](eHyprCtlOutputFormat, std::string) { return g_stageController ? g_stageController->stateJson() : "{\"enabled\":false}\n"; },
++        .match = IPC::Socket1::COMMAND_MATCH_EXACT,
++        .handler = [](const IPC::Socket1::SRequest&) {
++            return IPC::Socket1::SResponse(g_stageController ? g_stageController->stateJson() : "{\"enabled\":false}\n");
++        },
+     });
+ 
+-    g_stageRegionCommand = HyprlandAPI::registerHyprCtlCommand(g_pluginHandle, SHyprCtlCommand{
+-        .name = "hymission-stage-region", .exact = false,
+-        .fn = [](eHyprCtlOutputFormat, std::string args) {
++    g_stageRegionCommand = HyprlandAPI::registerHyprCtlCommand(g_pluginHandle, IPC::Socket1::SCommand{
++        .name = "hymission-stage-region", .match = IPC::Socket1::COMMAND_MATCH_PREFIX,
++        .handler = [](const IPC::Socket1::SRequest& req) -> IPC::Socket1::SResponse {
++            // 0.57 hands the whole request over; the old API handed only what followed the
++            // command name. Strip the name when it is still there, so both readings work.
++            std::string args = req.command;
++            const std::string name = "hymission-stage-region";
++            if (args.rfind(name, 0) == 0) args.erase(0, name.size());
++            while (!args.empty() && args.front() == ' ') args.erase(0, 1);
+             const auto split = args.find(' ');
+             const auto r = split != std::string::npos && g_stageController ?
+                 g_stageController->holdRegion(args.substr(split + 1)) : std::nullopt;
+-            return r ? hymission::dumpStateJson(nlohmann::json{{"x", r->x}, {"y", r->y}, {"width", r->width}, {"height", r->height},
+-                                      {"monitor", args.substr(split + 1)}, {"visible", true}}) : "null";
++            return IPC::Socket1::SResponse(r ? hymission::dumpStateJson(nlohmann::json{{"x", r->x}, {"y", r->y}, {"width", r->width}, {"height", r->height},
++                                      {"monitor", args.substr(split + 1)}, {"visible", true}}) : "null");
+         },
+     });
+ 
