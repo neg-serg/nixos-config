@@ -103,19 +103,6 @@
       url = "github:neg-serg/hyprscratch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    quickshell = {
-      # v0.3.2 (2026-10): first release after the Qt 6.12 bump in nixpkgs
-      # 2026-10-27. The previous pin (master @ 2d3b3e9 = 0.3.1 + post-release
-      # fixes) dies on qtbase 6.12.0 with
-      #   qmetatype.h:381: error: static assertion failed:
-      #   Meta Types must be fully defined
-      # while building src/dbus/dbusmenu and src/wayland/hyprland/ipc.
-      # Revert to 2d3b3e9 if 0.3.2 regresses the QML side (session-lock
-      # reentrancy guard, tray /NO_DBUSMENU, pam free fix, scriptmodel compare,
-      # launch QCoreApplication ordering were all in that pin).
-      url = "github:quickshell-mirror/quickshell/8e2bb761d3e994fc04359c55dec269b747654b6a";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     pleamar = {
       # Upstream `main` (2026-11-01, runtime 0.7.4, scene language 0.8): the pin moved
       # from 0.4.31 after the shell was measured lagging, and every local patch in
