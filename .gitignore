@@ -75,11 +75,14 @@ gpucore.*
 .agent/tmp-runtime/
 .agent/*.log
 .agent/*.rc
+# A stray XDG cache tree an agent wrote into the repo root when $HOME was not writable.
+.nix-cache-tmp/
 # One-off helper scripts an agent writes to get a job done (a screenshot grabber, a parser for a
-# log it had to read twice). They are tooling for a single session, not part of the tree: the
-# blocks above already cover the caches and the logs, and leaving the scripts untracked made
-# every session start with a stray `?? .agent/*.py` in `git status`.
+# log it had to read twice, a `nix build` driver loop). They are tooling for a single session, not
+# part of the tree: the blocks above already cover the caches and the logs, and leaving the scripts
+# untracked made every session start with a stray `?? .agent/*.py` in `git status`.
 .agent/*.py
+.agent/*.sh
 
 # Generated theme artifact: Tools/build-theme.mjs writes it, and the running shell merges the
 # live copy under $XDG_CONFIG_HOME/quickshell/Theme. A tracked copy only ever ships a stale
