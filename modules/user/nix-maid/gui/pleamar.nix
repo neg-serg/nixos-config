@@ -263,15 +263,14 @@ let
           # ~/.local/bin first: scenes shell out to user helpers that live there
           # (glm-vol, rsmetrx, …), then the system profile.
           "PATH=%h/.local/bin:/run/current-system/sw/bin:\${PATH}"
-          # No `PLEAMAR_NO_CURSOR_SHAPES=1` any more. It was the workaround for
-          # hyprwm/Hyprland#14906 — one global cursor shape, wiped whenever a client set
-          # one, never re-evaluated while the pointer sits on a layer surface — and it
-          # paid for that with the cursor itself: a scene that never sets a shape has
-          # nothing to show over its own surfaces, so the pointer vanished for as long as
-          # a drawer was up (seen 2026-10-25 with `drawer network` open). The shell now
-          # carries `pleamar-cursor-shape.patch`, which re-says the shape while the
-          # pointer is inside and repairs a wipe in ~0.5 s. If #14906 starts biting again,
-          # re-adding this line is the escape hatch, hand cursor and all.
+          # The cursor is not this shell's business: `pleamar-cursor-shape.patch` makes a scene ask
+          # the compositor for no cursor shape at all and take no other cursor action, which is the
+          # default and needs no variable. The story behind it: a compositor keeps ONE cursor for
+          # the whole session, and Hyprland drops a shape that arrives while another client holds
+          # the pointer (hyprwm/Hyprland#14906), so a layer surface asking for a hand can leave the
+          # pointer stuck — or gone. The old workaround was `PLEAMAR_NO_CURSOR_SHAPES=1` plus a
+          # patch that re-said the shape every 0.5 s to repair a wipe; both are gone, and
+          # `PLEAMAR_CURSOR_SHAPES=1` is the opt-in for the old asking, kept for measurement only.
         ];
       };
     };
