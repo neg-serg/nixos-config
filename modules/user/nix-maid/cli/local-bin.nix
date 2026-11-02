@@ -69,9 +69,6 @@
         };
         subst = lib.replaceStrings (builtins.attrNames substs) (builtins.attrValues substs);
 
-        # Python library paths for special scripts
-        sp = pkgs.python3.sitePackages; # High-level dynamically-typed programming language
-
         # 1. Scripts from packages/local-bin/bin
         # We filter for regular files.
         binFiles =
