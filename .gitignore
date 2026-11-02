@@ -89,3 +89,11 @@ gpucore.*
 # snapshot (June 2026, pre-nixie keys) to the tools that read it by default.
 files/quickshell/Theme/.theme.json
 .agent/plans/bar-gaps.md
+
+# Stray unix sockets at the repo root (a probe harness from another session drops
+# `probe2.sock` here between runs). Nix copies untracked non-ignored files into the
+# flake source, and `git`-based flakes reject sockets outright ("unsupported type"),
+# so an ignored socket is the difference between a working eval and a flaky one:
+# it also kept `just agent-switch` refusing — the verified toplevel and the tree's
+# re-evaluation disagreed whenever the socket existed.
+*.sock
