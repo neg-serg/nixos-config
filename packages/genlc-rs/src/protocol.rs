@@ -501,6 +501,48 @@ impl SamGroup {
         self.transport.receive().ok()
     }
 
+    /// Send one frame and read exactly one reply.
+    ///
+    /// The adapter answers every probe and every unicast with exactly one frame, so a
+    /// strict one-in-one-out discipline keeps the stream aligned. `try_receive` used to
+    /// be used for both sides of the cycle, and when a reply arrived late the next
+    /// request consumed it: the 2026-11-02 capture shows a probe answered by the
+    /// adapter's status frame and a status poll answered by a monitor's hardware id —
+    /// every reply one request behind.
+    pub fn send_and_receive(&self, msg: &GNetMessage) -> Result<Frame> {
+        self.transport.send(msg)?;
+        let raw = self.transport.receive()?;
+        decode_frame(&raw)
+    }
+
+    /// Send one frame and read until a reply of the expected shape arrives.
+    ///
+    /// Positional pairing is not enough on this bus: while a host is connected the
+    /// adapter also broadcasts `F0 1F 00 00 00` about every 610 ms on its own, and a late
+    /// answer is otherwise consumed by the next request (measured 2026-11-02: a probe
+    /// read the adapter's 13-byte status frame, then the stream desynced into a bogus
+    /// PPP escape). So match by content, bounded by a deadline, and drop what does not fit.
+    pub fn send_and_match(
+        &self,
+        msg: &GNetMessage,
+        deadline: std::time::Duration,
+        mut accept: impl FnMut(&Frame) -> bool,
+    ) -> Result<Frame> {
+        self.transport.send(msg)?;
+        let start = std::time::Instant::now();
+        loop {
+            let raw = self.transport.receive()?;
+            if let Ok(frame) = decode_frame(&raw) {
+                if accept(&frame) {
+                    return Ok(frame);
+                }
+            }
+            if start.elapsed() > deadline {
+                anyhow::bail!("no matching reply within {deadline:?}");
+            }
+        }
+    }
+
     /// Send one already-built frame. The single way `genlc apply` puts a plan on the
     /// bus; it goes through `HidTransport::send`, so the forbidden-frame guard still
     /// applies.
@@ -573,10 +615,11 @@ impl SamGroup {
     pub fn take_leases(&self) -> Result<Vec<Lease>> {
         let mut leased: Vec<Lease> = Vec::new();
         let mut session = 0x02u8;
-        // Anything still queued from earlier traffic would be read as a probe answer and
-        // mis-parsed (seen on hardware: a 10-byte telemetry frame arrived instead), so
-        // start from an empty buffer.
-        for _ in 0..8 {
+        // Only the socket-owning daemon runs this, and it keeps the stream aligned with
+        // one reply per request, so the buffer should be empty. Anything left over means
+        // an earlier request went unanswered; clear it once here rather than letting it
+        // be read as a probe answer (a 10-byte telemetry frame used to be).
+        for _ in 0..4 {
             if self.transport.receive().is_err() {
                 break;
             }
@@ -585,24 +628,18 @@ impl SamGroup {
         // adapter keeps answering with hardware ids we cannot lease (a stuck monitor),
         // and looping forever would be worse than reporting it.
         for _ in 0..64 {
-            self.transport.send(&probe_message())?;
-            let mut answer = None;
-            // A reply can still be a late ack from the previous frame; read a few times
-            // before concluding anything.
-            for _ in 0..3 {
-                let frame = decode_frame(&self.transport.receive()?)?;
-                match parse_probe_answer(&frame) {
-                    Ok(parsed) => {
-                        answer = Some(parsed);
-                        break;
-                    }
-                    Err(_) => continue,
-                }
-            }
-            let Some(answer) = answer else {
-                anyhow::bail!("no valid probe answer after 3 replies");
-            };
-            let Some(hardware_id) = answer else {
+            // A probe answer is the adapter echoing a monitor's hardware id (`09` + 3
+            // bytes) or its own "nobody unleased" frame; anything else on the bus is
+            // skipped rather than mistaken for the answer.
+            let frame = self.send_and_match(
+                &probe_message(),
+                std::time::Duration::from_millis(400),
+                |f| {
+                    f.address == 0x01
+                        && (f.opcode == 0x7E || (f.opcode == 0x09 && f.data.len() == 3))
+                },
+            )?;
+            let Some(hardware_id) = parse_probe_answer(&frame)? else {
                 return Ok(leased); // nobody unleased is left
             };
             // Skip a session this host already handed out (a monitor may answer twice
@@ -614,8 +651,13 @@ impl SamGroup {
                 );
             }
             session = next_session(session)?;
-            self.transport.send(&lease_message(hardware_id, session))?;
-            let ack = decode_frame(&self.transport.receive()?)?;
+            let ack = self.send_and_match(
+                &lease_message(hardware_id, session),
+                std::time::Duration::from_millis(400),
+                // The ack carries the session, not the hardware id — accepting any `09`
+                // here matched a second probe answer and looked like a failed lease.
+                |f| f.address == 0x01 && f.opcode == 0x09 && f.data == [session],
+            )?;
             let ok = ack.opcode == 0x09 && ack.data.first() == Some(&session);
             if !ok {
                 anyhow::bail!(
